@@ -1,0 +1,15 @@
+{
+  "name": "nucleoid",
+  "version": "1.0.0",
+  "description": "Nucleoid Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://git.nucleoid.org"
+  },
+  "author": "Can Mingir",
+  "license": "UNLICENSED"
+}
