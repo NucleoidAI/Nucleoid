@@ -21,4 +21,10 @@ describe("Nucleoid", function() {
     nucleoid.run("au = 149597870700");
     assert.equal(nucleoid.run("au == 149597870700"), true);
   });
+
+  it("rejects variable if not declared", function() {
+    assert.throws(function() {
+      nucleoid.run("e == 2.71828");
+    }, ReferenceError);
+  });
 });
