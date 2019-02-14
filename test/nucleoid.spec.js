@@ -16,4 +16,9 @@ describe("Nucleoid", function() {
     nucleoid.run("pi = 3.14 ;");
     assert.equal(nucleoid.run("pi == 3.14"), true);
   });
+
+  it("allows statements without semicolon at the end", function() {
+    nucleoid.run("au = 149597870700");
+    assert.equal(nucleoid.run("au == 149597870700"), true);
+  });
 });
