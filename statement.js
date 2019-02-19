@@ -1,0 +1,84 @@
+module.exports = class Statement {
+  constructor(string) {
+    this.string = string;
+    this.characters = "";
+    this.token = "";
+    this.offset = 0;
+  }
+
+  next(checkFlag) {
+    if (this.markFlag) {
+      this.token = "state." + this.token;
+      this.markFlag = false;
+    }
+
+    if (this.skipFlag) {
+      this.skipFlag = false;
+    } else {
+      this.characters += this.token;
+    }
+
+    if (this.offset >= this.string.length) {
+      return null;
+    }
+
+    let token = "";
+    let active = false;
+    let count = 0;
+
+    let isDelimiter = function(character) {
+      return character == 32 ? true : false;
+    };
+
+    for (; this.offset < this.string.length; this.offset++, count++) {
+      let character = this.string.charCodeAt(this.offset);
+
+      if (character == 59) {
+        continue;
+      }
+
+      if (!isDelimiter(character) && active == false) {
+        active = true;
+        token += String.fromCharCode(character);
+      } else if (!isDelimiter(character) && active == true) {
+        token += String.fromCharCode(character);
+      } else if (isDelimiter(character) && active == true) {
+        break;
+      }
+    }
+
+    if (checkFlag) {
+      this.offset -= count;
+    } else {
+      this.token = token;
+    }
+
+    return token;
+  }
+
+  mark() {
+    this.markFlag = true;
+  }
+
+  skip() {
+    this.skipFlag = true;
+    return this.next();
+  }
+
+  check() {
+    this.skipFlag = true;
+    return this.next(true);
+  }
+
+  scan(validate) {
+    while (this.next()) {
+      if (validate(this.token)) {
+        this.mark();
+      }
+    }
+  }
+
+  toString() {
+    return this.characters;
+  }
+};

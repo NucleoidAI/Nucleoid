@@ -1,23 +1,23 @@
+var Statement = require("./statement");
+
 var state = { variables: [] }; // eslint-disable-line no-unused-vars
 
-module.exports.run = function(statement) {
-  statement = statement
-    .trim()
-    .replace(/^(var\s+)|([A-z]\w*(?=\s*=(?!=)))/g, function(match, pattern) {
-      if (pattern) {
-        return "";
-      } else {
-        state.variables[match] = true;
-        return match;
-      }
-    })
-    .replace(/[A-z]\w*/g, function(match) {
-      if (state.variables[match]) {
-        return "state.".concat(match);
-      } else {
-        return match;
-      }
-    });
+module.exports.run = function(string) {
+  let statement = new Statement(string);
 
-  return eval(statement);
+  if (statement.next() == "var") {
+    statement.skip();
+  }
+
+  if (statement.check() == "=") {
+    statement.mark();
+    state.variables[statement.token] = true;
+  } else {
+    if (state.variables[statement.token]) {
+      statement.mark();
+    }
+  }
+
+  statement.scan(token => state.variables[token]);
+  return eval(statement.toString());
 };
