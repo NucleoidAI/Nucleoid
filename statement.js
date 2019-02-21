@@ -1,7 +1,7 @@
 module.exports = class Statement {
   constructor(string) {
     this.string = string;
-    this.characters = "";
+    this.tokens = "";
     this.token = "";
     this.offset = 0;
   }
@@ -15,7 +15,7 @@ module.exports = class Statement {
     if (this.skipFlag) {
       this.skipFlag = false;
     } else {
-      this.characters += this.token;
+      this.tokens += this.token;
     }
 
     if (this.offset >= this.string.length) {
@@ -70,15 +70,15 @@ module.exports = class Statement {
     return this.next(true);
   }
 
-  scan(validate) {
+  scan(callback) {
     while (this.next()) {
-      if (validate(this.token)) {
+      if (callback(this.token)) {
         this.mark();
       }
     }
   }
 
   toString() {
-    return this.characters;
+    return this.tokens;
   }
 };
