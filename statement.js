@@ -69,7 +69,7 @@ module.exports = class Statement {
     return this.next(true);
   }
 
-  scan(callback) {
+  each(callback) {
     while (this.next()) {
       if (this.token == ";") {
         return;
@@ -90,7 +90,7 @@ module.exports = class Statement {
       this.mark();
     }
 
-    this.scan(token => graph[token]);
+    this.each(token => graph[token]);
     return eval(this.toString());
   }
 };

@@ -19,7 +19,7 @@ module.exports = class Variable extends Statement {
 
     let variable = this.token;
 
-    this.scan(function(token) {
+    this.each(function(token) {
       if (graph[token]) {
         graph[token].nodes[variable] = graph[variable];
 
