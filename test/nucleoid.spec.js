@@ -28,6 +28,11 @@ describe("Nucleoid", function() {
     }, ReferenceError);
   });
 
+  it("runs multiple statements in the state", function() {
+    nucleoid.run("k = 1 ; l = k + 1 ; k = 2");
+    assert.equal(nucleoid.run("l == 3"), true);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");

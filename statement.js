@@ -1,3 +1,6 @@
+var state = require("./state"); // eslint-disable-line no-unused-vars
+var graph = require("./state").state.graph;
+
 module.exports = class Statement {
   constructor(string) {
     this.string = string;
@@ -32,10 +35,6 @@ module.exports = class Statement {
 
     for (; this.offset < this.string.length; this.offset++, count++) {
       let character = this.string.charCodeAt(this.offset);
-
-      if (character == 59) {
-        continue;
-      }
 
       if (!isDelimiter(character) && active == false) {
         active = true;
@@ -72,6 +71,10 @@ module.exports = class Statement {
 
   scan(callback) {
     while (this.next()) {
+      if (this.token == ";") {
+        return;
+      }
+
       if (callback(this.token)) {
         this.mark();
       }
@@ -80,5 +83,14 @@ module.exports = class Statement {
 
   toString() {
     return this.tokens;
+  }
+
+  run() {
+    if (graph[this.token]) {
+      this.mark();
+    }
+
+    this.scan(token => graph[token]);
+    return eval(this.toString());
   }
 };
