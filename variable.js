@@ -1,35 +1,31 @@
-var graph = require("./state").state.graph;
-var Node = require("./state").state.Node;
-var Statement = require("./statement");
+var graph = require("./graph");
+var Token = require("./token");
+var STATEMENT = require("./statement");
+var $ASSIGN = require("./assignment");
 
-module.exports = class Variable extends Statement {
-  constructor(statement) {
-    super(statement.string);
-    this.type = "VAR";
-    this.tokens = statement.tokens;
-    this.token = statement.token;
-    this.offset = statement.offset;
+module.exports = function(string, offset) {
+  let context = Token.next(string, offset);
+
+  if (context.token == "var") {
+    offset = context.offset;
+    context = Token.next(string, context.offset);
   }
 
-  run() {
-    if (!graph[this.token]) {
-      graph[this.token] = new Node();
-    }
-
-    let variable = this.token;
-    this.key = variable;
-
-    this.each(function(token) {
-      if (graph[token]) {
-        graph[token].nodes[variable] = graph[variable];
-
-        return true;
-      } else {
-        return false;
-      }
-    });
-
-    graph[variable].data = { statement: this };
-    this.nodes = graph[variable].nodes;
+  if (context && !graph.node[context.token]) {
+    context = $ASSIGN(string, offset);
+    return {
+      statement: new VARIABLE(context.statement),
+      offset: context.offset
+    };
   }
 };
+
+class VARIABLE extends STATEMENT {
+  constructor(statement) {
+    super();
+    this.variable = statement.variable;
+    this.assignment = "state." + statement.assignment;
+    this.dependencies = statement.dependencies;
+  }
+}
+module.exports.VARIABLE = VARIABLE;

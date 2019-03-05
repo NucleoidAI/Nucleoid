@@ -1,41 +1,48 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
-var graph = require("./state").state.graph;
+var graph = require("./graph");
 var ControlFlow = require("./controlflow");
-var Variable = require("./variable");
-var If = require("./if");
+var VARIABLE = require("./variable").VARIABLE;
+var ASSIGNMENT = require("./assignment").ASSIGNMENT;
+var IF = require("./if").IF;
+var EXPRESSION = require("./expression").EXPRESSION;
 
 module.exports.run = function(string) {
-  let controlFlow = new ControlFlow(string);
-  let stack = controlFlow.extract();
+  let callStack = ControlFlow.extract(string);
+  let result;
 
-  while (stack.length != 0) {
-    let statement = stack.shift();
+  while (callStack.length != 0) {
+    let statement = callStack.shift();
 
     switch (statement.constructor) {
-      case Variable: {
-        eval(statement.tokens);
+      case VARIABLE:
+      case ASSIGNMENT: {
+        result = eval(statement.assignment);
         break;
       }
 
-      case If: {
-        let result = eval(statement.expression);
+      case EXPRESSION: {
+        result = eval(statement.expression);
+        break;
+      }
+
+      case IF: {
+        result = eval(statement.expression);
 
         if (result) {
-          let cf = new ControlFlow(statement.trueBlock);
-          let list = cf.extract();
-          stack = list.concat(stack);
+          let list = ControlFlow.extract(statement.true);
+          callStack = list.concat(callStack);
         }
 
         break;
       }
+    }
 
-      default: {
-        return eval(statement.tokens);
+    if (statement && statement.variable) {
+      for (let n in graph.node[statement.variable].edge) {
+        callStack.push(graph.node[n].statement);
       }
     }
-
-    for (let n in graph[statement.key].nodes) {
-      stack.push(graph[n].data.statement);
-    }
   }
+
+  return result;
 };

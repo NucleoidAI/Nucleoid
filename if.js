@@ -1,41 +1,39 @@
-var Statement = require("./statement");
-var graph = require("./state").state.graph;
-var Node = require("./state").state.Node;
-var crypto = require("crypto");
+var graph = require("./graph");
+var Token = require("./token");
+var STATEMENT = require("./statement");
 
-module.exports = class If extends Statement {
-  constructor(statement) {
-    super(statement.string);
-    this.tokens = statement.tokens;
-    this.token = statement.token;
-    this.offset = statement.offset;
+module.exports = function(string, offset) {
+  let context = Token.next(string, offset);
+
+  if (context && context.token == "if") {
+    context = Token.next(string, context.offset);
   }
 
-  run() {
-    this.next();
+  let dependencies = [];
 
-    let nodes = [];
-    let expression = this.each(function(token) {
-      if (graph[token]) {
-        nodes.push(token);
-        return true;
+  context = Token.each(
+    string,
+    context.offset,
+    function(token) {
+      if (graph.node[token]) {
+        dependencies.push(token);
+        return "state." + token;
       } else {
-        return false;
+        return token;
       }
-    }, ")");
+    },
+    ")"
+  );
 
-    let shasum = crypto
-      .createHash("sha1")
-      .update("if(" + expression + ")")
-      .digest("hex");
+  let statement = new IF();
+  statement.expression = context.tokens;
+  statement.dependencies = dependencies;
 
-    graph[shasum] = new Node();
-    graph[shasum].data = { statement: this };
-    nodes.forEach(e => (graph[e].nodes[shasum] = graph[shasum]));
-
-    this.expression = expression;
-    this.key = shasum;
-    this.next();
-    this.trueBlock = this.nextBlock();
-  }
+  context = Token.next(string, context.offset);
+  context = Token.nextBlock(string, context.offset);
+  statement.true = context.block;
+  return { statement: statement, offset: context.offset };
 };
+
+class IF extends STATEMENT {}
+module.exports.IF = IF;

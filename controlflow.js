@@ -1,49 +1,68 @@
-var Statement = require("./statement");
-var Variable = require("./variable");
-var If = require("./if");
+var graph = require("./graph");
+var Node = require("./node");
+var Token = require("./token");
+var VARIABLE = require("./variable").VARIABLE;
+var IF = require("./if").IF;
+var $VAR = require("./variable");
+var $ASSIGN = require("./assignment");
+var $IF = require("./if");
+var $EXP = require("./expression");
+var crypto = require("crypto");
 
-module.exports = class ControlFlow {
-  constructor(string) {
-    this.string = string;
-  }
+module.exports.extract = function(string) {
+  let list = [];
 
-  next() {
-    if (!this.statement) {
-      this.statement = new Statement(this.string);
+  for (let offset = 0; offset < string.length; ) {
+    let context = Token.next(string, offset);
+
+    if (Token.next(string, context.offset).token == "=") {
+      if (graph.node[context.token]) {
+        context = $ASSIGN(string, offset);
+      } else {
+        context = $VAR(string, offset);
+      }
     } else {
-      let offset = this.statement.offset;
-      this.statement = new Statement(this.string);
-      this.statement.offset = offset;
+      if (context.token == "var") {
+        context = $VAR(string, offset);
+      } else if (context.token == "if") {
+        context = $IF(string, offset);
+      } else {
+        context = $EXP(string, offset);
+      }
     }
 
-    let token = this.statement.next();
+    offset = context.offset;
+    list.push(context.statement);
 
-    if (!token) {
-      return null;
+    let statement = context.statement;
+
+    switch (statement.constructor) {
+      case VARIABLE: {
+        let variable = statement.variable;
+        graph.node[variable] = new Node();
+        graph.node[variable].statement = statement;
+
+        statement.dependencies.forEach(
+          e => (graph.node[e].edge[variable] = graph.node[variable])
+        );
+        break;
+      }
+
+      case IF: {
+        let shasum = crypto
+          .createHash("sha1")
+          .update("if(" + statement.expression + ")")
+          .digest("hex");
+
+        graph.node[shasum] = new Node();
+        graph.node[shasum].statement = statement;
+        statement.dependencies.forEach(
+          e => (graph.node[e].edge[shasum] = graph.node[shasum])
+        );
+        break;
+      }
     }
-
-    if (token == "var") {
-      this.statement.skip();
-    }
-
-    if (this.statement.check() == "=") {
-      this.statement = new Variable(this.statement);
-      this.statement.mark();
-    } else if (this.statement.token == "if") {
-      this.statement = new If(this.statement);
-    }
-
-    return this.statement;
   }
 
-  extract() {
-    let list = [];
-
-    while (this.next()) {
-      list.push(this.statement);
-      this.statement.run();
-    }
-
-    return list;
-  }
+  return list;
 };
