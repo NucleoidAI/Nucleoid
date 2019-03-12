@@ -60,4 +60,15 @@ describe("Nucleoid", function() {
     nucleoid.run("e = new Entity ( )");
     assert.equal(nucleoid.run("e.constructor == Entity"), true);
   });
+
+  it("creates property assignment", function() {
+    nucleoid.run("class User { }");
+    nucleoid.run("user = new User ( )");
+    nucleoid.run("user.name = 'sample'");
+    nucleoid.run("user.email = user.name + '@example.com'");
+    assert.equal(nucleoid.run("user.email"), "sample@example.com");
+
+    nucleoid.run("user.name = 'samplex'");
+    assert.equal(nucleoid.run("user.email"), "samplex@example.com");
+  });
 });
