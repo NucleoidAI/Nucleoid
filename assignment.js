@@ -1,30 +1,29 @@
-var graph = require("./graph");
 var Token = require("./token");
 var STATEMENT = require("./statement");
+var $EXP = require("./expression");
 
 module.exports = function(string, offset) {
   let context = Token.next(string, offset);
+  let variable = context.token;
 
-  if (Token.check(string, context.offset) == "=") {
-    let variable = context.token;
-    let dependencies = [];
+  context = Token.next(string, context.offset);
 
-    context = Token.each(string, offset, function(token) {
-      if (graph.node[token]) {
-        dependencies.push(token);
-        return "state." + token;
-      } else {
-        return token;
-      }
-    });
+  if (context && context.token == "=") {
+    context = $EXP(string, context.offset);
 
-    let statement = new ASSIGNMENT();
+    let statement = new ASSIGNMENT(context.statement);
     statement.variable = variable;
-    statement.assignment = context.tokens;
-    statement.dependencies = dependencies;
+    statement.assignment = "state." + variable + "=" + statement.expression;
+
     return { statement: statement, offset: context.offset };
   }
 };
 
-class ASSIGNMENT extends STATEMENT {}
+class ASSIGNMENT extends STATEMENT {
+  constructor(statement) {
+    super();
+    this.expression = statement.expression;
+    this.dependencies = statement.dependencies;
+  }
+}
 module.exports.ASSIGNMENT = ASSIGNMENT;

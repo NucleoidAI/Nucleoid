@@ -4,6 +4,7 @@ var ControlFlow = require("./controlflow");
 var VARIABLE = require("./variable").VARIABLE;
 var ASSIGNMENT = require("./assignment").ASSIGNMENT;
 var IF = require("./if").IF;
+var CLASS = require("./class").CLASS;
 var EXPRESSION = require("./expression").EXPRESSION;
 
 module.exports.run = function(string) {
@@ -34,6 +35,10 @@ module.exports.run = function(string) {
         }
 
         break;
+      }
+
+      case CLASS: {
+        result = eval(statement.definition);
       }
     }
 

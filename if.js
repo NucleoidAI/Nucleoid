@@ -1,6 +1,6 @@
-var graph = require("./graph");
 var Token = require("./token");
 var STATEMENT = require("./statement");
+var $EXP = require("./expression");
 
 module.exports = function(string, offset) {
   let context = Token.next(string, offset);
@@ -9,30 +9,18 @@ module.exports = function(string, offset) {
     context = Token.next(string, context.offset);
   }
 
-  let dependencies = [];
+  if (context && context.token == "(") {
+    context = $EXP(string, context.offset);
 
-  context = Token.each(
-    string,
-    context.offset,
-    function(token) {
-      if (graph.node[token]) {
-        dependencies.push(token);
-        return "state." + token;
-      } else {
-        return token;
-      }
-    },
-    ")"
-  );
+    let statement = new IF();
+    statement.expression = context.statement.expression;
+    statement.dependencies = context.statement.dependencies;
 
-  let statement = new IF();
-  statement.expression = context.tokens;
-  statement.dependencies = dependencies;
-
-  context = Token.next(string, context.offset);
-  context = Token.nextBlock(string, context.offset);
-  statement.true = context.block;
-  return { statement: statement, offset: context.offset };
+    context = Token.next(string, context.offset);
+    context = Token.nextBlock(string, context.offset);
+    statement.true = context.block;
+    return { statement: statement, offset: context.offset };
+  }
 };
 
 class IF extends STATEMENT {}

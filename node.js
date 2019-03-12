@@ -1,5 +1,6 @@
 module.exports = class Node {
-  constructor() {
+  constructor(statement) {
+    this.statement = statement;
     this.edge = {};
   }
 };

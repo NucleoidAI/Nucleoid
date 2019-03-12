@@ -34,6 +34,7 @@ module.exports.check = function(string, offset) {
 module.exports.each = function(string, offset, callback, end) {
   let tokens = "";
   let context = next(string, offset);
+  let parentheses = 0;
 
   while (context) {
     offset = context.offset;
@@ -45,6 +46,16 @@ module.exports.each = function(string, offset, callback, end) {
 
     if (end && token == end) {
       return { tokens: tokens, offset: offset };
+    }
+
+    if (token == "(") {
+      parentheses++;
+    } else if (token == ")") {
+      parentheses--;
+    }
+
+    if (parentheses < 0) {
+      break;
     }
 
     tokens += callback(token);

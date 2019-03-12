@@ -24,7 +24,7 @@ class VARIABLE extends STATEMENT {
   constructor(statement) {
     super();
     this.variable = statement.variable;
-    this.assignment = "state." + statement.assignment;
+    this.assignment = statement.assignment;
     this.dependencies = statement.dependencies;
   }
 }

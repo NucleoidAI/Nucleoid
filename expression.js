@@ -3,8 +3,20 @@ var Token = require("./token");
 var STATEMENT = require("./statement");
 
 module.exports = function(string, offset) {
+  let dependencies = [];
+
   let context = Token.each(string, offset, function(token) {
+    if (token == "new") {
+      return "new ";
+    }
+
+    let variable = token.split(".")[0];
+
     if (graph.node[token]) {
+      dependencies.push(token);
+    }
+
+    if (graph.node[variable]) {
       return "state." + token;
     } else {
       return token;
@@ -13,6 +25,7 @@ module.exports = function(string, offset) {
 
   let statement = new EXPRESSION();
   statement.expression = context.tokens;
+  statement.dependencies = dependencies;
 
   return { statement: statement, offset: context.offset };
 };

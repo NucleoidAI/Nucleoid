@@ -3,9 +3,11 @@ var Node = require("./node");
 var Token = require("./token");
 var VARIABLE = require("./variable").VARIABLE;
 var IF = require("./if").IF;
+var CLASS = require("./class").CLASS;
 var $VAR = require("./variable");
 var $ASSIGN = require("./assignment");
 var $IF = require("./if");
+var $CLASS = require("./class");
 var $EXP = require("./expression");
 var crypto = require("crypto");
 
@@ -27,6 +29,8 @@ module.exports.extract = function(string) {
         context = $VAR(string, offset);
       } else if (context.token == "if") {
         context = $IF(string, offset);
+      } else if (context.token == "class") {
+        context = $CLASS(string, offset);
       } else {
         context = $EXP(string, offset);
       }
@@ -40,8 +44,7 @@ module.exports.extract = function(string) {
     switch (statement.constructor) {
       case VARIABLE: {
         let variable = statement.variable;
-        graph.node[variable] = new Node();
-        graph.node[variable].statement = statement;
+        graph.node[variable] = new Node(statement);
 
         statement.dependencies.forEach(
           e => (graph.node[e].edge[variable] = graph.node[variable])
@@ -55,12 +58,15 @@ module.exports.extract = function(string) {
           .update("if(" + statement.expression + ")")
           .digest("hex");
 
-        graph.node[shasum] = new Node();
-        graph.node[shasum].statement = statement;
+        graph.node[shasum] = new Node(statement);
         statement.dependencies.forEach(
           e => (graph.node[e].edge[shasum] = graph.node[shasum])
         );
         break;
+      }
+
+      case CLASS: {
+        graph.node[statement.class] = new Node(statement);
       }
     }
   }

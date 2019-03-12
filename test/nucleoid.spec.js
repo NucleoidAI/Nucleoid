@@ -54,4 +54,10 @@ describe("Nucleoid", function() {
     nucleoid.run("m = true");
     assert.equal(nucleoid.run("n == true"), true);
   });
+
+  it("defines class in the state", function() {
+    nucleoid.run("class Entity { }");
+    nucleoid.run("e = new Entity ( )");
+    assert.equal(nucleoid.run("e.constructor == Entity"), true);
+  });
 });
