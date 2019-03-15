@@ -1,5 +1,7 @@
+var state = require("./state"); // eslint-disable-line no-unused-vars
+var graph = require("./graph");
+var Node = require("./node");
 var Token = require("./token");
-var STATEMENT = require("./statement");
 
 module.exports = function(string, offset) {
   let context = Token.next(string, offset);
@@ -19,5 +21,12 @@ module.exports = function(string, offset) {
   return { statement: statement, offset: context.offset };
 };
 
-class CLASS extends STATEMENT {}
+class CLASS {
+  run() {
+    let definition = this.definition;
+
+    graph.node[this.class] = new Node(this);
+    eval(definition);
+  }
+}
 module.exports.CLASS = CLASS;

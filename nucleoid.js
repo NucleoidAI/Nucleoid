@@ -1,44 +1,38 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
-var ControlFlow = require("./controlflow");
-var VARIABLE = require("./variable").VARIABLE;
-var ASSIGNMENT = require("./assignment").ASSIGNMENT;
+var Statement = require("./statement");
 var IF = require("./if").IF;
-var CLASS = require("./class").CLASS;
 var EXPRESSION = require("./expression").EXPRESSION;
 
 module.exports.run = function(string) {
-  let callStack = ControlFlow.extract(string);
+  let callStack = Statement.compile(string);
   let result;
 
   while (callStack.length != 0) {
     let statement = callStack.shift();
 
     switch (statement.constructor) {
-      case VARIABLE:
-      case ASSIGNMENT: {
-        result = eval(statement.assignment);
-        break;
-      }
-
-      case EXPRESSION: {
-        result = eval(statement.expression);
-        break;
-      }
-
       case IF: {
-        result = eval(statement.expression);
+        result = statement.run();
 
         if (result) {
-          let list = ControlFlow.extract(statement.true);
+          let list = Statement.compile(statement.true);
           callStack = list.concat(callStack);
         }
 
         break;
       }
 
-      case CLASS: {
-        result = eval(statement.definition);
+      case EXPRESSION: {
+        result = statement.run();
+        break;
+      }
+
+      default: {
+        result = statement.run();
+
+        if (result) {
+          callStack = result.concat(callStack);
+        }
       }
     }
 

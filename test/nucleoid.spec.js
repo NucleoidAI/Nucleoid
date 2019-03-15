@@ -80,4 +80,13 @@ describe("Nucleoid", function() {
     nucleoid.run("toy.color = 'RED'");
     assert.equal(nucleoid.run("toy.shape"), "CIRCLE");
   });
+
+  it("creates class assignment", function() {
+    nucleoid.run("class Shape { }");
+    nucleoid.run("shape = new Shape ( )");
+    nucleoid.run("shape.edge = 3");
+    nucleoid.run("Shape.angle = ( Shape.edge - 2 ) * 180");
+    nucleoid.run("shape.edge = 4");
+    assert.equal(nucleoid.run("shape.angle"), 360);
+  });
 });

@@ -32,7 +32,7 @@ module.exports.check = function(string, offset) {
 };
 
 module.exports.each = function(string, offset, callback, end) {
-  let tokens = "";
+  let tokens = [];
   let context = next(string, offset);
   let parentheses = 0;
 
@@ -58,7 +58,7 @@ module.exports.each = function(string, offset, callback, end) {
       break;
     }
 
-    tokens += callback(token);
+    tokens.push(callback(token));
     context = next(string, offset);
   }
 

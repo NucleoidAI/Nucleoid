@@ -1,34 +1,35 @@
+var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Token = require("./token");
-var STATEMENT = require("./statement");
 
 module.exports = function(string, offset) {
-  let dependencies = [];
-
   let context = Token.each(string, offset, function(token) {
     if (token == "new") {
       return "new ";
     }
 
-    let variable = token.split(".")[0];
-
-    if (graph.node[token]) {
-      dependencies.push(token);
-    }
-
-    if (graph.node[variable]) {
-      return "state." + token;
-    } else {
-      return token;
-    }
+    return token;
   });
 
   let statement = new EXPRESSION();
-  statement.expression = context.tokens;
-  statement.dependencies = dependencies;
+  statement.tokens = context.tokens;
 
   return { statement: statement, offset: context.offset };
 };
 
-class EXPRESSION extends STATEMENT {}
+class EXPRESSION {
+  run() {
+    let tokens = this.tokens;
+
+    for (let i = 0; i < tokens.length; i++) {
+      let token = tokens[i];
+
+      if (graph.node[token.split(".")[0]]) {
+        tokens[i] = "state." + token;
+      }
+    }
+
+    return eval(tokens.join(""));
+  }
+}
 module.exports.EXPRESSION = EXPRESSION;
