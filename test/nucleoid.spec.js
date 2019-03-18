@@ -71,4 +71,13 @@ describe("Nucleoid", function() {
     nucleoid.run("user.name = 'samplex'");
     assert.equal(nucleoid.run("user.email"), "samplex@example.com");
   });
+
+  it("creates if statement of property", function() {
+    nucleoid.run("class Toy { }");
+    nucleoid.run("toy = new Toy ( )");
+    nucleoid.run("toy.color = 'BLUE'");
+    nucleoid.run("if ( toy.color == 'RED' ) { toy.shape = 'CIRCLE' }");
+    nucleoid.run("toy.color = 'RED'");
+    assert.equal(nucleoid.run("toy.shape"), "CIRCLE");
+  });
 });
