@@ -66,6 +66,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("n == true"), true);
   });
 
+  it("updates if block of variable", function() {
+    nucleoid.run("p = 0.01");
+    nucleoid.run("s = 0.02");
+    nucleoid.run("if ( p < 1 ) { r = p * 10 }");
+    nucleoid.run("if ( p < 1 ) { r = s * 10 }");
+    assert.equal(nucleoid.run("r"), 0.2);
+
+    nucleoid.run("s = 0.03");
+    assert.equal(nucleoid.run("r"), 0.3);
+  });
+
   it("defines class in the state", function() {
     nucleoid.run("class Entity { }");
     nucleoid.run("e = new Entity ( )");
