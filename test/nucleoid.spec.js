@@ -164,4 +164,25 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("s1.class"), "Preschool");
     assert.equal(nucleoid.run("s2.class"), "Daycare");
   });
+
+  it("updates if block of class", function() {
+    nucleoid.run("class Inventory { }");
+    nucleoid.run("i1 = new Inventory ( )");
+    nucleoid.run("i1.quantity = 0");
+
+    nucleoid.run("i2 = new Inventory ( )");
+    nucleoid.run("i2.quantity = 1000");
+
+    nucleoid.run(
+      "if ( Inventory.quantity == 0 ) { Inventory.replenishment = true }"
+    );
+    assert.equal(nucleoid.run("i1.replenishment"), true);
+    assert.equal(nucleoid.run("i2.replenishment"), undefined);
+    nucleoid.run(
+      "if ( Inventory.quantity == 0 ) { Inventory.replenishment = false }"
+    );
+
+    assert.equal(nucleoid.run("i1.replenishment"), false);
+    assert.equal(nucleoid.run("i2.replenishment"), undefined);
+  });
 });
