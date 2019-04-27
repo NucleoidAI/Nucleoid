@@ -1,4 +1,6 @@
 #!/bin/sh
+set -e
+
 message=`cat $1`
 list=`echo $message | aspell list`
 
@@ -11,3 +13,5 @@ if [ -n "$list" ]; then
       exit 1
     fi
 fi
+
+(echo "$message" | grep -Pq "^\S((?!.*  ).*\S)?$") || (echo "There are multiple spaces in commit message." ; exit 2)
