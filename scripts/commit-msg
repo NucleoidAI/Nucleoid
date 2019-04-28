@@ -16,3 +16,10 @@ fi
 
 (echo "$message" | grep -Pq "^\S((?!.*  ).*\S)?$") || (echo "There are multiple spaces in commit message." ; exit 2)
 (echo "$message" | grep -Pq "^.{0,80}$") || (echo "The comment is too long." ; exit 3)
+
+line=`echo "$message" | wc -l`
+
+if [ $line -gt 1 ]; then
+  echo "The commit message contains newline."
+  exit 4
+fi
