@@ -92,6 +92,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("toy.shape"), "CIRCLE");
   });
 
+  it("updates property assignment", function() {
+    nucleoid.run("class Matter { }");
+    nucleoid.run("matter1 = new Matter ( )");
+    nucleoid.run("matter1.mass = 10");
+    nucleoid.run("matter1.weight = matter1.mass * 9.8");
+    assert.equal(nucleoid.run("matter1.weight"), 98);
+
+    nucleoid.run("matter1.weight = matter1.mass * 3.7");
+    assert.equal(nucleoid.run("matter1.weight"), 37);
+
+    nucleoid.run("matter1.mass = 20");
+    assert.equal(nucleoid.run("matter1.weight"), 74);
+  });
+
   it("creates class assignment", function() {
     nucleoid.run("class Shape { }");
     nucleoid.run("s1 = new Shape ( )");
