@@ -11,4 +11,9 @@ describe("Nucleoid", function() {
     nucleoid.run("var j = 1 ;");
     assert.equal(nucleoid.run("j + 2"), 3);
   });
+
+  it("allows variable declaration without var keyword", function() {
+    nucleoid.run("pi = 3.14 ;");
+    assert.equal(nucleoid.run("pi == 3.14"), true);
+  });
 });
