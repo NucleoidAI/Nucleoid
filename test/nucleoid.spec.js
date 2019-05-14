@@ -138,6 +138,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("matter1.weight"), 74);
   });
 
+  it("deletes property assignment", function() {
+    nucleoid.run("class Agent { }");
+    nucleoid.run("agent = new Agent ( )");
+    nucleoid.run("agent.time = 52926163455");
+    nucleoid.run("agent.location = 'CITY'");
+    nucleoid.run("agent.report = agent.time + '@' + agent.location");
+    assert.equal(nucleoid.run("agent.report"), "52926163455@CITY");
+
+    nucleoid.run("delete agent.report");
+    assert.equal(nucleoid.run("agent.report"), undefined);
+  });
+
   it("creates class assignment", function() {
     nucleoid.run("class Shape { }");
     nucleoid.run("s1 = new Shape ( )");
