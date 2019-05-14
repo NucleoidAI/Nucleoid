@@ -129,6 +129,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("s2.angle"), 180);
   });
 
+  it("updates class assignment", function() {
+    nucleoid.run("class Employee { }");
+    nucleoid.run("employee = new Employee ( )");
+    nucleoid.run("employee.id = 1");
+    nucleoid.run("Employee.username = 'E' + Employee.id");
+    assert.equal(nucleoid.run("employee.username"), "E1");
+    nucleoid.run("Employee.username = 'F' + Employee.id");
+    nucleoid.run("employee.id = 2");
+    assert.equal(nucleoid.run("employee.username"), "F2");
+  });
+
   it("creates if statement of class", function() {
     nucleoid.run("class Student { }");
     nucleoid.run("s1 = new Student ( )");
