@@ -14,8 +14,9 @@ module.exports.extract = function(string) {
 
   for (let offset = 0; offset < string.length; ) {
     let context = Token.next(string, offset);
+    let check = Token.next(string, context.offset);
 
-    if (Token.next(string, context.offset).token == "=") {
+    if (check && check.token == "=") {
       if (graph.node[context.token]) {
         context = $ASSIGN(string, offset);
       } else {
