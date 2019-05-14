@@ -56,6 +56,16 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("c"), 7);
   });
 
+  it("deletes variable assignment", function() {
+    nucleoid.run("t = 1");
+    nucleoid.run("q = t + 1");
+    nucleoid.run("delete q");
+    nucleoid.run("t = 2");
+    assert.throws(function() {
+      nucleoid.run("q");
+    }, ReferenceError);
+  });
+
   it("creates if statement of variable", function() {
     nucleoid.run("m = false");
     nucleoid.run("n = false");

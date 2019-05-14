@@ -4,6 +4,7 @@ var $IF = require("./$if");
 var $CLASS = require("./$class");
 var $EXP = require("./$expression");
 var $BLOCK = require("./$block");
+var $DELETE = require("./$delete");
 
 module.exports.compile = function(string) {
   let list = [];
@@ -23,6 +24,8 @@ module.exports.compile = function(string) {
         context = $CLASS(string, offset);
       } else if (context.token == "{") {
         context = $BLOCK(string, offset);
+      } else if (context.token == "delete") {
+        context = $DELETE(string, offset);
       } else {
         context = $EXP(string, offset);
       }

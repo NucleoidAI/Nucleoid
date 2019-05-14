@@ -43,7 +43,12 @@ module.exports.run = function(string) {
       }
     }
 
-    if (statement && statement.variable && !statement.instance) {
+    if (
+      statement &&
+      statement.variable &&
+      graph.node[statement.variable] &&
+      !statement.instance
+    ) {
       for (let n in graph.node[statement.variable].edge) {
         callStack.push({
           statement: graph.node[n].statement,
