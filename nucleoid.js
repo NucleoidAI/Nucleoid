@@ -1,7 +1,6 @@
 var graph = require("./graph");
 var Statement = require("./statement");
-var IF = require("./if").IF;
-var EXPRESSION = require("./expression").EXPRESSION;
+var EXPRESSION = require("./expression");
 
 module.exports.run = function(string) {
   let callStack = Statement.compile(string);
@@ -11,17 +10,6 @@ module.exports.run = function(string) {
     let statement = callStack.shift();
 
     switch (statement.constructor) {
-      case IF: {
-        result = statement.run();
-
-        if (result) {
-          let list = Statement.compile(statement.true);
-          callStack = list.concat(callStack);
-        }
-
-        break;
-      }
-
       case EXPRESSION: {
         result = statement.run();
         break;
@@ -30,14 +18,22 @@ module.exports.run = function(string) {
       default: {
         result = statement.run();
 
+        if (result && !Array.isArray(result)) {
+          result = [result];
+        }
+
         if (result) {
           callStack = result.concat(callStack);
         }
       }
     }
 
-    if (statement && statement.variable) {
+    if (statement && statement.variable && !statement.instance) {
       for (let n in graph.node[statement.variable].edge) {
+        callStack.push(graph.node[n].statement);
+      }
+    } else if (statement && statement.instance) {
+      for (let n in graph.node[statement.instance].edge) {
         callStack.push(graph.node[n].statement);
       }
     }

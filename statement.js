@@ -1,10 +1,11 @@
 var graph = require("./graph");
 var Token = require("./token");
-var $VAR = require("./variable");
-var $ASSIGN = require("./assignment");
-var $IF = require("./if");
-var $CLASS = require("./class");
-var $EXP = require("./expression");
+var $VAR = require("./$variable");
+var $ASSIGN = require("./$assignment");
+var $IF = require("./$if");
+var $CLASS = require("./$class");
+var $EXP = require("./$expression");
+var $BLOCK = require("./$block");
 
 module.exports.compile = function(string) {
   let list = [];
@@ -26,6 +27,8 @@ module.exports.compile = function(string) {
         context = $IF(string, offset);
       } else if (context.token == "class") {
         context = $CLASS(string, offset);
+      } else if (context.token == "{") {
+        context = $BLOCK(string, offset);
       } else {
         context = $EXP(string, offset);
       }

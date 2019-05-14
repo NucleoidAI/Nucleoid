@@ -2,11 +2,17 @@ var state = require("./state");
 var graph = require("./graph");
 var Node = require("./node");
 
-module.exports = class IF {
+module.exports = class IF$INSTANCE {
   run() {
     if (this.function && this.function(state)) return this.true;
 
-    const condition = this.condition;
+    const tokens = this.condition.tokens.map(token => {
+      let parts = token.split(".");
+      if (parts[0] == this.class) parts[0] = this.instance;
+      return parts.join(".");
+    });
+
+    const condition = { tokens: tokens };
     const key = "if(" + condition.tokens.join("") + ")";
     graph.node[key] = new Node(this);
 

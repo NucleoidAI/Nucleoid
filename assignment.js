@@ -1,37 +1,8 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Node = require("./node");
-var Token = require("./token");
-var $EXP = require("./expression");
-var CLASS = require("./class").CLASS;
 
-module.exports = function(string, offset) {
-  let context = Token.next(string, offset);
-  let variable = context.token;
-
-  context = Token.next(string, context.offset);
-
-  if (context && context.token == "=") {
-    context = $EXP(string, context.offset);
-
-    let statement = new ASSIGNMENT(context.statement);
-    statement.variable = variable;
-
-    let prefix = variable.split(".")[0];
-
-    if (graph.node[prefix] && graph.node[prefix].statement instanceof CLASS) {
-      statement.class = prefix;
-    }
-
-    return { statement: statement, offset: context.offset };
-  }
-};
-
-class ASSIGNMENT {
-  constructor(expression) {
-    this.expression = expression;
-  }
-
+module.exports = class ASSIGNMENT {
   run() {
     let variable = this.variable;
     let expression = this.expression;
@@ -54,5 +25,4 @@ class ASSIGNMENT {
 
     eval("state." + variable + "=" + expression.tokens.join(""));
   }
-}
-module.exports.ASSIGNMENT = ASSIGNMENT;
+};

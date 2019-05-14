@@ -2,7 +2,7 @@ var state = require("./state");
 var graph = require("./graph");
 var Node = require("./node");
 
-module.exports = class VARIABLE {
+module.exports = class VARIABLE$INSTANCE {
   run() {
     if (this.function) {
       this.function(state);
@@ -10,8 +10,20 @@ module.exports = class VARIABLE {
     }
 
     let variable = this.variable;
-    let expression = this.expression;
+    let parts = this.variable.split(".");
 
+    if (parts[0] == this.class) {
+      parts[0] = this.instance;
+      variable = parts.join(".");
+    }
+
+    const tokens = this.expression.tokens.map(token => {
+      let parts = token.split(".");
+      if (parts[0] == this.class) parts[0] = this.instance;
+      return parts.join(".");
+    });
+
+    const expression = { tokens: tokens };
     graph.node[variable] = new Node(this);
 
     expression.tokens.forEach(token => {
