@@ -1,5 +1,6 @@
 var Statement = require("./statement");
 var Variable = require("./variable");
+var If = require("./if");
 
 module.exports = class ControlFlow {
   constructor(string) {
@@ -18,7 +19,7 @@ module.exports = class ControlFlow {
     let token = this.statement.next();
 
     if (!token) {
-      return false;
+      return null;
     }
 
     if (token == "var") {
@@ -28,20 +29,21 @@ module.exports = class ControlFlow {
     if (this.statement.check() == "=") {
       this.statement = new Variable(this.statement);
       this.statement.mark();
+    } else if (this.statement.token == "if") {
+      this.statement = new If(this.statement);
     }
 
-    return true;
+    return this.statement;
   }
 
-  run() {
+  extract() {
+    let list = [];
+
     while (this.next()) {
-      var result = this.configuration(this.statement);
+      list.push(this.statement);
+      this.statement.run();
     }
 
-    return result;
-  }
-
-  configure(configuration) {
-    this.configuration = configuration;
+    return list;
   }
 };

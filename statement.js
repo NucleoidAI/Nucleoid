@@ -1,4 +1,3 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./state").state.graph;
 
 module.exports = class Statement {
@@ -69,16 +68,44 @@ module.exports = class Statement {
     return this.next(true);
   }
 
-  each(callback) {
+  each(callback, end) {
+    let tokens = "";
+
     while (this.next()) {
-      if (this.token == ";") {
-        return;
+      if (this.token == ";" || this.token == "}") {
+        return tokens;
+      }
+
+      if (end && this.token == end) {
+        return tokens;
       }
 
       if (callback(this.token)) {
         this.mark();
+        tokens = "state." + this.token;
+      } else {
+        tokens += this.token;
       }
     }
+
+    return tokens;
+  }
+
+  nextBlock() {
+    let block = "";
+
+    for (; this.offset < this.string.length; this.offset++) {
+      let character = this.string.charAt(this.offset);
+
+      if (character != "}") {
+        block += character;
+      } else {
+        break;
+      }
+    }
+
+    this.offset++;
+    return block;
   }
 
   toString() {
@@ -91,6 +118,5 @@ module.exports = class Statement {
     }
 
     this.each(token => graph[token]);
-    return eval(this.toString());
   }
 };

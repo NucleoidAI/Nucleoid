@@ -39,4 +39,14 @@ describe("Nucleoid", function() {
     nucleoid.run("x = 2");
     assert.equal(nucleoid.run("y == 4"), true);
   });
+
+  it("creates if statement of variable", function() {
+    nucleoid.run("m = false");
+    nucleoid.run("n = false");
+    nucleoid.run("if ( m == true ) { n = m && true }");
+    assert.equal(nucleoid.run("n == false"), true);
+
+    nucleoid.run("m = true");
+    assert.equal(nucleoid.run("n == true"), true);
+  });
 });

@@ -1,4 +1,3 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./state").state.graph;
 var Node = require("./state").state.Node;
 var Statement = require("./statement");
@@ -18,6 +17,7 @@ module.exports = class Variable extends Statement {
     }
 
     let variable = this.token;
+    this.key = variable;
 
     this.each(function(token) {
       if (graph[token]) {
@@ -30,21 +30,6 @@ module.exports = class Variable extends Statement {
     });
 
     graph[variable].data = { statement: this };
-
-    let result = eval(graph[variable].data.statement.toString());
-
-    let queue = [];
-    queue.push(variable);
-
-    while (queue.length != 0) {
-      let element = queue.shift();
-
-      for (let node in graph[element].nodes) {
-        queue.push(node);
-        eval(graph[node].data.statement.toString());
-      }
-    }
-
-    return result;
+    this.nodes = graph[variable].nodes;
   }
 };
