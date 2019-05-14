@@ -94,6 +94,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("user.email"), "samplex@example.com");
   });
 
+  it("updates if block of property", function() {
+    nucleoid.run("class Account { }");
+    nucleoid.run("account = new Account ( )");
+    nucleoid.run("account.balance = 1000");
+    nucleoid.run("if ( account.balance < 1500 ) { account.status = 'OK' }");
+    assert.equal(nucleoid.run("account.status"), "OK");
+
+    nucleoid.run("if ( account.balance < 1500 ) { account.status = 'LOW' }");
+    assert.equal(nucleoid.run("account.status"), "LOW");
+  });
+
   it("creates if statement of property", function() {
     nucleoid.run("class Toy { }");
     nucleoid.run("toy = new Toy ( )");
