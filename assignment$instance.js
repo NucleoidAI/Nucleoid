@@ -2,7 +2,7 @@ var state = require("./state");
 var graph = require("./graph");
 var Node = require("./node");
 
-module.exports = class VARIABLE$INSTANCE {
+module.exports = class ASSIGNMENT$INSTANCE {
   run() {
     if (this.function) {
       this.function(state);
@@ -24,12 +24,6 @@ module.exports = class VARIABLE$INSTANCE {
     });
 
     const expression = { tokens: tokens };
-    graph.node[variable] = new Node(this);
-
-    expression.tokens.forEach(token => {
-      if (graph.node[token])
-        graph.node[token].edge[variable] = graph.node[variable];
-    });
 
     let list = expression.tokens.map(token =>
       graph.node[token.split(".")[0]] ? "state." + token : token
@@ -40,5 +34,29 @@ module.exports = class VARIABLE$INSTANCE {
       "state." + variable + "=" + list.join("")
     );
     this.function(state);
+  }
+
+  graph() {
+    let variable = this.variable;
+    let parts = this.variable.split(".");
+
+    if (parts[0] == this.class) {
+      parts[0] = this.instance;
+      variable = parts.join(".");
+    }
+
+    const tokens = this.expression.tokens.map(token => {
+      let parts = token.split(".");
+      if (parts[0] == this.class) parts[0] = this.instance;
+      return parts.join(".");
+    });
+
+    const expression = { tokens: tokens };
+    graph.node[variable] = new Node(this);
+
+    expression.tokens.forEach(token => {
+      if (graph.node[token])
+        graph.node[token].edge[variable] = graph.node[variable];
+    });
   }
 };

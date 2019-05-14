@@ -3,11 +3,16 @@ var Statement = require("./statement");
 var EXPRESSION = require("./expression");
 
 module.exports.run = function(string) {
-  let callStack = Statement.compile(string);
+  let statements = Statement.compile(string);
+  let callStack = statements.map(statement => {
+    return { statement: statement, run: true, graph: true };
+  });
+
   let result;
 
   while (callStack.length != 0) {
-    let statement = callStack.shift();
+    let procedure = callStack.shift();
+    let statement = procedure.statement;
 
     switch (statement.constructor) {
       case EXPRESSION: {
@@ -16,25 +21,43 @@ module.exports.run = function(string) {
       }
 
       default: {
-        result = statement.run();
+        if (procedure.run) {
+          result = statement.run();
 
-        if (result && !Array.isArray(result)) {
-          result = [result];
+          if (result && !Array.isArray(result)) {
+            result = [result];
+          }
+
+          if (result) {
+            callStack = result
+              .map(statement => {
+                return { statement: statement, run: true, graph: true };
+              })
+              .concat(callStack);
+          }
         }
 
-        if (result) {
-          callStack = result.concat(callStack);
+        if (procedure.graph) {
+          statement.graph();
         }
       }
     }
 
     if (statement && statement.variable && !statement.instance) {
       for (let n in graph.node[statement.variable].edge) {
-        callStack.push(graph.node[n].statement);
+        callStack.push({
+          statement: graph.node[n].statement,
+          run: true,
+          graph: false
+        });
       }
     } else if (statement && statement.instance) {
       for (let n in graph.node[statement.instance].edge) {
-        callStack.push(graph.node[n].statement);
+        callStack.push({
+          statement: graph.node[n].statement,
+          run: true,
+          graph: false
+        });
       }
     }
   }

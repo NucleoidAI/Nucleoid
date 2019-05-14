@@ -1,6 +1,6 @@
-var VARIABLE = require("./variable");
-var VARIABLE$CLASS = require("./variable$class");
-var VARIABLE$INSTANCE = require("./variable$instance");
+var ASSIGNMENT = require("./assignment");
+var ASSIGNMENT$CLASS = require("./assignment$class");
+var ASSIGNMENT$INSTANCE = require("./assignment$instance");
 
 module.exports = class BLOCK$INSTANCE {
   constructor() {
@@ -12,9 +12,9 @@ module.exports = class BLOCK$INSTANCE {
 
     this.statements.forEach(statement => {
       switch (statement.constructor) {
-        case VARIABLE:
-        case VARIABLE$CLASS: {
-          let instance = new VARIABLE$INSTANCE();
+        case ASSIGNMENT:
+        case ASSIGNMENT$CLASS: {
+          let instance = new ASSIGNMENT$INSTANCE();
           instance.variable = statement.variable;
           instance.expression = statement.expression;
           instance.class = this.class;
@@ -33,4 +33,6 @@ module.exports = class BLOCK$INSTANCE {
 
     return statements;
   }
+
+  graph() {}
 };

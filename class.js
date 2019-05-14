@@ -4,9 +4,10 @@ var Node = require("./node");
 
 module.exports = class CLASS {
   run() {
-    let definition = this.definition;
+    eval(this.definition);
+  }
 
+  graph() {
     graph.node[this.class] = new Node(this);
-    eval(definition);
   }
 };

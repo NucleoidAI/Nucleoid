@@ -15,4 +15,6 @@ module.exports = class EXPRESSION {
 
     return eval(tokens.join(""));
   }
+
+  graph() {}
 };

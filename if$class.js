@@ -22,4 +22,6 @@ module.exports = class IF$CLASS {
 
     return list;
   }
+
+  graph() {}
 };

@@ -7,22 +7,32 @@ module.exports = class ASSIGNMENT {
     let variable = this.variable;
     let expression = this.expression;
 
-    if (!graph.node[variable]) {
+    let list = expression.tokens.map(token =>
+      graph.node[token.split(".")[0]] ? "state." + token : token
+    );
+
+    eval("state." + variable + "=" + list.join(""));
+  }
+
+  graph() {
+    let variable = this.variable;
+    let expression = this.expression;
+
+    if (graph.index[variable]) {
+      graph.index[variable].forEach(i => delete graph.node[i].edge[variable]);
+
+      graph.node[variable].statement = this;
+      graph.index[variable] = [];
+    } else {
       graph.node[variable] = new Node(this);
+      graph.index[variable] = [];
     }
 
-    for (let i = 0; i < expression.tokens.length; i++) {
-      let token = expression.tokens[i];
-
+    expression.tokens.forEach(token => {
       if (graph.node[token]) {
         graph.node[token].edge[variable] = graph.node[variable];
+        graph.index[variable].push(token);
       }
-
-      if (graph.node[token.split(".")[0]]) {
-        expression.tokens[i] = "state." + token;
-      }
-    }
-
-    eval("state." + variable + "=" + expression.tokens.join(""));
+    });
   }
 };

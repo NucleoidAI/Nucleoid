@@ -6,4 +6,6 @@ module.exports = class BLOCK {
   run() {
     return this.statements;
   }
+
+  graph() {}
 };

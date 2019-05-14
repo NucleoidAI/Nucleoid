@@ -33,7 +33,7 @@ describe("Nucleoid", function() {
     }, ReferenceError);
   });
 
-  it.skip("runs multiple statements in the state", function() {
+  it("runs multiple statements in the state", function() {
     nucleoid.run("k = 1 ; l = k + 1 ; k = 2");
     assert.equal(nucleoid.run("l == 3"), true);
   });
@@ -43,6 +43,17 @@ describe("Nucleoid", function() {
     nucleoid.run("y = x + 2");
     nucleoid.run("x = 2");
     assert.equal(nucleoid.run("y == 4"), true);
+  });
+
+  it("updates variable assignment", function() {
+    nucleoid.run("a = 1");
+    nucleoid.run("b = 2");
+    nucleoid.run("c = a + 3");
+    nucleoid.run("c = b + 3");
+    assert.equal(nucleoid.run("c"), 5);
+
+    nucleoid.run("b = 4");
+    assert.equal(nucleoid.run("c"), 7);
   });
 
   it("creates if statement of variable", function() {

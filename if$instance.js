@@ -13,12 +13,6 @@ module.exports = class IF$INSTANCE {
     });
 
     const condition = { tokens: tokens };
-    const key = "if(" + condition.tokens.join("") + ")";
-    graph.node[key] = new Node(this);
-
-    condition.tokens.forEach(token => {
-      if (graph.node[token]) graph.node[token].edge[key] = graph.node[key];
-    });
 
     let list = ["return "].concat(
       condition.tokens.map(token =>
@@ -28,5 +22,21 @@ module.exports = class IF$INSTANCE {
 
     this.function = new Function("state", list.join(""));
     if (this.function(state)) return this.true;
+  }
+
+  graph() {
+    const tokens = this.condition.tokens.map(token => {
+      let parts = token.split(".");
+      if (parts[0] == this.class) parts[0] = this.instance;
+      return parts.join(".");
+    });
+
+    const condition = { tokens: tokens };
+    const key = "if(" + condition.tokens.join("") + ")";
+    graph.node[key] = new Node(this);
+
+    condition.tokens.forEach(token => {
+      if (graph.node[token]) graph.node[token].edge[key] = graph.node[key];
+    });
   }
 };
