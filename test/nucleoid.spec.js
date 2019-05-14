@@ -6,4 +6,9 @@ describe("Nucleoid", function() {
     nucleoid.run("var i = 1 ;");
     assert.equal(nucleoid.run("i == 1"), true);
   });
+
+  it("runs expression statement", function() {
+    nucleoid.run("var j = 1 ;");
+    assert.equal(nucleoid.run("j + 2"), 3);
+  });
 });
