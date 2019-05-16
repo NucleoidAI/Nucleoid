@@ -3,7 +3,7 @@ var graph = require("./graph");
 var Node = require("./node");
 
 module.exports = class ASSIGNMENT$INSTANCE {
-  run() {
+  run(local) {
     if (this.function) {
       this.function(state);
       return;
@@ -25,9 +25,21 @@ module.exports = class ASSIGNMENT$INSTANCE {
 
     const expression = { tokens: tokens };
 
-    let list = expression.tokens.map(token =>
-      graph.node[token.split(".")[0]] ? "state." + token : token
-    );
+    let list = expression.tokens.map(token => {
+      if (graph.node[token.split(".")[0]]) {
+        return "state." + token;
+      } else if (local[token]) {
+        let value = local[token];
+
+        if (typeof value == "string") {
+          return '"' + value + '"';
+        } else {
+          return value;
+        }
+      } else {
+        return token;
+      }
+    });
 
     this.function = new Function(
       "state",

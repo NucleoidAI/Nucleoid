@@ -1,8 +1,9 @@
 var graph = require("./graph");
 var BLOCK$INSTANCE = require("./block$instance");
 var IF$INSTANCE = require("./if$instance");
+var $CLASS = require("./$class").$CLASS;
 
-module.exports = class IF$CLASS {
+module.exports = class IF$CLASS extends $CLASS {
   run() {
     let list = [];
 

@@ -228,4 +228,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("i1.replenishment"), false);
     assert.equal(nucleoid.run("i2.replenishment"), undefined);
   });
+
+  it("runs block statement of class", function() {
+    nucleoid.run("class Purchase { }");
+    nucleoid.run("purchase = new Purchase ( )");
+    nucleoid.run("purchase.price = 99");
+    nucleoid.run(
+      "{ let retailPrice = Purchase.price * 1.15 ; Purchase.retailPrice = retailPrice }"
+    );
+    assert.equal(nucleoid.run("purchase.retailPrice"), 113.85);
+
+    nucleoid.run("purchase.price = 199");
+    assert.equal(nucleoid.run("purchase.retailPrice"), 228.85);
+  });
 });

@@ -18,3 +18,5 @@ module.exports = function(string, offset) {
 
   return { statement: statement, offset: context.offset };
 };
+
+module.exports.$CLASS = class $CLASS {};
