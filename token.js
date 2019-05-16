@@ -67,14 +67,21 @@ module.exports.each = function(string, offset, callback, end) {
 
 module.exports.nextBlock = function(string, offset) {
   let block = "";
+  let brackets = 0;
 
   for (; offset < string.length; offset++) {
     let character = string.charAt(offset);
 
-    if (character != "}") {
-      block += character;
-    } else {
+    if (character == "{") {
+      brackets++;
+    } else if (character == "}") {
+      brackets--;
+    }
+
+    if (brackets < 0) {
       break;
+    } else {
+      block += character;
     }
   }
 

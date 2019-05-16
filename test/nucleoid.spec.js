@@ -87,6 +87,16 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("r"), 0.3);
   });
 
+  it("runs block statement of variable", function() {
+    nucleoid.run("h = 1");
+    nucleoid.run("j = undefined");
+    nucleoid.run("{ let value = h * 2 ; j = value * 2 }");
+    assert.equal(nucleoid.run("j"), 4);
+
+    nucleoid.run("h = 2");
+    assert.equal(nucleoid.run("j"), 8);
+  });
+
   it("defines class in the state", function() {
     nucleoid.run("class Entity { }");
     nucleoid.run("e = new Entity ( )");

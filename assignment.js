@@ -3,13 +3,19 @@ var graph = require("./graph");
 var Node = require("./node");
 
 module.exports = class ASSIGNMENT {
-  run() {
+  run(local) {
     let variable = this.variable;
     let expression = this.expression;
 
-    let list = expression.tokens.map(token =>
-      graph.node[token.split(".")[0]] ? "state." + token : token
-    );
+    let list = expression.tokens.map(token => {
+      if (graph.node[token.split(".")[0]]) {
+        return "state." + token;
+      } else if (local[token]) {
+        return local[token];
+      } else {
+        return token;
+      }
+    });
 
     eval("state." + variable + "=" + list.join(""));
   }

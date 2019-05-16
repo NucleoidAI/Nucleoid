@@ -5,6 +5,7 @@ var $CLASS = require("./$class");
 var $EXP = require("./$expression");
 var $BLOCK = require("./$block");
 var $DELETE = require("./$delete");
+var $LET = require("./$let");
 
 module.exports.compile = function(string) {
   let list = [];
@@ -26,6 +27,8 @@ module.exports.compile = function(string) {
         context = $BLOCK(string, offset);
       } else if (context.token == "delete") {
         context = $DELETE(string, offset);
+      } else if (context.token == "let") {
+        context = $LET(string, offset);
       } else {
         context = $EXP(string, offset);
       }
