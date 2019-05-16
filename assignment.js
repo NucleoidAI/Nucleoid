@@ -11,7 +11,13 @@ module.exports = class ASSIGNMENT {
       if (graph.node[token.split(".")[0]]) {
         return "state." + token;
       } else if (local[token]) {
-        return local[token];
+        let value = local[token];
+
+        if (typeof value == "string") {
+          return '"' + value + '"';
+        } else {
+          return value;
+        }
       } else {
         return token;
       }

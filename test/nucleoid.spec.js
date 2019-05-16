@@ -160,6 +160,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("agent.report"), undefined);
   });
 
+  it("runs block statement of property", function() {
+    nucleoid.run("class Item { }");
+    nucleoid.run("item1 = new Item ( )");
+    nucleoid.run("item1.sku = '0000001' ");
+    nucleoid.run("{ let custom = 'US' + item1.sku ; item1.custom = custom }");
+    assert.equal(nucleoid.run("item1.custom"), "US0000001");
+
+    nucleoid.run("item1.sku = '0000002' ");
+    assert.equal(nucleoid.run("item1.custom"), "US0000002");
+  });
+
   it("creates class assignment", function() {
     nucleoid.run("class Shape { }");
     nucleoid.run("s1 = new Shape ( )");
