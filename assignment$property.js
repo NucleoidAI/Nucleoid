@@ -15,6 +15,10 @@ module.exports = class ASSIGNMENT$PROPERTY extends Node {
 
     this.expression.tokens.forEach(token => {
       if (graph.node[token]) Node.direct(token, key, this);
+      else if (graph.node[token.split(".")[0]]) {
+        graph.node[token] = new Node();
+        Node.direct(token, key, this);
+      }
     });
   }
 };

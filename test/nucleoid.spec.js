@@ -103,7 +103,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("e.constructor == Entity"), true);
   });
 
-  it("creates property assignment", function() {
+  it("creates property assignment before declaration", function() {
+    nucleoid.run("class Order { }");
+    nucleoid.run("order1 = new Order ( )");
+    nucleoid.run("order1.upc = '04061' + order1.barcode");
+    nucleoid.run("order1.barcode = '94067'");
+    assert.equal(nucleoid.run("order1.upc"), "0406194067");
+  });
+
+  it("creates property assignment after declaration", function() {
     nucleoid.run("class User { }");
     nucleoid.run("user = new User ( )");
     nucleoid.run("user.name = 'sample'");
