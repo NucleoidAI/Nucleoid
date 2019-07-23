@@ -7,13 +7,13 @@ module.exports = class BLOCK$CLASS extends Node {
     super();
     this.statements = [];
   }
-  run() {
+  run(scope) {
     let list = [];
 
-    if (this.instance) {
+    if (scope.instance[this.class.name]) {
       let statement = new BLOCK$INSTANCE();
       statement.class = this.class;
-      statement.instance = this.instance;
+      statement.instance = scope.instance[this.class.name];
       statement.statements = this.statements;
       return statement;
     }

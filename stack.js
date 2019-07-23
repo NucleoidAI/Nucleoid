@@ -18,9 +18,9 @@ module.exports.process = function(statements) {
     let scope = instruction.scope;
 
     if (statement instanceof EXPRESSION) {
-      result = statement.run(scope.local);
+      result = statement.run(scope);
     } else {
-      result = statement.run(scope.local);
+      result = statement.run(scope);
 
       if (result && !Array.isArray(result)) {
         result = [result];
@@ -41,6 +41,7 @@ module.exports.process = function(statements) {
 
       if (instruction.graph) {
         statement.graph();
+        Object.freeze(statement);
       }
     }
 

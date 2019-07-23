@@ -3,13 +3,13 @@ var Node = require("./node");
 var ASSIGNMENT$INSTANCE = require("./assignment$instance");
 
 module.exports = class ASSIGNMENT$CLASS extends Node {
-  run() {
+  run(scope) {
     let statements = [];
 
-    if (this.instance) {
+    if (scope.instance[this.class.name]) {
       let statement = new ASSIGNMENT$INSTANCE();
       statement.class = this.class;
-      statement.instance = this.instance;
+      statement.instance = scope.instance[this.class.name];
       statement.property = this.property;
       statement.expression = this.expression;
       return statement;
@@ -30,5 +30,6 @@ module.exports = class ASSIGNMENT$CLASS extends Node {
   graph() {
     let key = this.class.name + "." + this.property;
     graph.node[key] = this;
+    this.class.declaration[key] = this;
   }
 };

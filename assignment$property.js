@@ -3,8 +3,9 @@ var graph = require("./graph");
 var Node = require("./node");
 
 module.exports = class ASSIGNMENT$PROPERTY extends Node {
-  run(local) {
-    state[this.instance.variable][this.property] = this.expression.run(local);
+  run(scope) {
+    let instance = state[this.instance.variable];
+    instance[this.property] = this.expression.run(scope.local);
   }
 
   graph() {

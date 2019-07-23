@@ -7,16 +7,9 @@ module.exports = class BLOCK$INSTANCE extends Node {
     this.statements = [];
   }
 
-  run() {
-    let statements = [];
-
-    this.statements.forEach(statement => {
-      statement.class = this.class;
-      statement.instance = this.instance;
-      statements.push(statement);
-    });
-
-    return statements;
+  run(scope) {
+    scope.instance[this.class.name] = this.instance;
+    return this.statements;
   }
 
   graph() {

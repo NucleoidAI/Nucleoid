@@ -6,6 +6,7 @@ module.exports = class CLASS extends Node {
   constructor() {
     super();
     this.instance = {};
+    this.declaration = {};
   }
 
   run() {

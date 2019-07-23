@@ -179,7 +179,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("item1.custom"), "US0000002");
   });
 
-  it("creates class assignment", function() {
+  it("creates class assignment before initialization", function() {
+    nucleoid.run("class Review { }");
+    nucleoid.run("Review.rate = Review.sum / 10");
+    nucleoid.run("review1 = new Review ( )");
+    nucleoid.run("review1.sum = 42");
+    assert.equal(nucleoid.run("review1.rate"), 4.2);
+  });
+
+  it("creates class assignment after initialization", function() {
     nucleoid.run("class Shape { }");
     nucleoid.run("s1 = new Shape ( )");
     nucleoid.run("s1.edge = 3");

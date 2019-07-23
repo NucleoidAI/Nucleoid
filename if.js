@@ -2,8 +2,8 @@ var graph = require("./graph");
 var Node = require("./node");
 
 module.exports = class IF extends Node {
-  run(local) {
-    if (this.condition.run(local)) {
+  run(scope) {
+    if (this.condition.run(scope.local)) {
       return this.true;
     }
   }
