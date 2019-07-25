@@ -19,11 +19,12 @@ module.exports = function(string, offset) {
   }
 
   context = Token.next(string, context.offset);
+  let expression = context;
 
   if (context && !graph.node[context.token]) {
     let check = Token.next(string, context.offset);
 
-    if (check && check.token == "new") {
+    instance: if (check && check.token == "new") {
       let statement = new INSTANCE();
       statement.variable = variable;
 
@@ -32,10 +33,13 @@ module.exports = function(string, offset) {
 
       if (graph.node[context.token] instanceof CLASS) {
         statement.class = graph.node[context.token];
+        context = Token.next(string, context.offset);
+        context = Token.next(string, context.offset);
+      } else {
+        context = expression;
+        break instance;
       }
 
-      context = Token.next(string, context.offset);
-      context = Token.next(string, context.offset);
       return {
         statement: statement,
         offset: context.offset

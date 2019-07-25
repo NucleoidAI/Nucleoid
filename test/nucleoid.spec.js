@@ -22,6 +22,11 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("au == 149597870700"), true);
   });
 
+  it("supports standard built-in objects", function() {
+    nucleoid.run("date = new Date ( '2019-7-24' )");
+    assert.equal(nucleoid.run("date.getYear()"), 119);
+  });
+
   it("retrieves value by variable", function() {
     nucleoid.run("number = -1");
     assert.equal(nucleoid.run("number"), -1);
