@@ -13,6 +13,10 @@ module.exports = class IF$INSTANCE extends Node {
     this.condition.tokens.forEach(token => {
       token = token.replace(/.+?(?=\.)/, this.instance.variable);
       if (graph.node[token]) Node.direct(token, key, this);
+      else if (graph.node[token.split(".")[0]]) {
+        graph.node[token] = new Node();
+        Node.direct(token, key, this);
+      }
     });
   }
 };

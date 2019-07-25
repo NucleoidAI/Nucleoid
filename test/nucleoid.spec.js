@@ -215,7 +215,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("employee.username"), "F2");
   });
 
-  it("creates if statement of class", function() {
+  it("creates if statement of class before initialization", function() {
+    nucleoid.run("class Ticket { }");
+    nucleoid.run(
+      "if ( Ticket.date > new Date ( '1993-1-1' ) ) { Ticket.status = 'EXPIRED' }"
+    );
+    nucleoid.run("ticket1 = new Ticket ( )");
+    assert.equal(nucleoid.run("ticket1.status"), undefined);
+    nucleoid.run("ticket1.date = new Date ( '1993-2-1' ) ");
+    assert.equal(nucleoid.run("ticket1.status"), "EXPIRED");
+  });
+
+  it("creates if statement of class after initialization", function() {
     nucleoid.run("class Student { }");
     nucleoid.run("s1 = new Student ( )");
     nucleoid.run("s1.age = 2");
