@@ -92,6 +92,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("r"), 0.3);
   });
 
+  it("creates else statement of variable", function() {
+    nucleoid.run("compound = 0.0001");
+    nucleoid.run("acidic = 'ACIDIC'");
+    nucleoid.run("basic = 'BASIC'");
+    nucleoid.run(
+      "if ( compound > 0.0000001 ) { pH = acidic } else { pH = basic }"
+    );
+    nucleoid.run("compound = 0.000000001");
+    assert.equal(nucleoid.run("pH"), "BASIC");
+
+    nucleoid.run("basic = '+7'");
+    assert.equal(nucleoid.run("pH"), "+7");
+  });
+
   it("runs block statement of variable", function() {
     nucleoid.run("h = 1");
     nucleoid.run("j = undefined");

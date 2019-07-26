@@ -42,6 +42,14 @@ module.exports = function(string, offset) {
     statement.condition = context.statement;
     context = $BLOCK(string, point);
     statement.true = context.statement;
+
+    point = Token.next(string, context.offset);
+
+    if (point && point.token == "else") {
+      context = $BLOCK(string, point.offset);
+      statement.false = context.statement;
+    }
+
     return { statement: statement, offset: context.offset };
   }
 };
