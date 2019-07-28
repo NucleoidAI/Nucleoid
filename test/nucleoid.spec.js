@@ -106,6 +106,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("pH"), "+7");
   });
 
+  it("creates else if statement of variable", function() {
+    nucleoid.run("g = 11");
+    nucleoid.run("earth = 9.8");
+    nucleoid.run("mars = 3.71");
+    nucleoid.run("mass = 10");
+    nucleoid.run(
+      "if ( g > 9 ) { weight = earth * mass } else if ( g > 3 ) { weight = mars * mass }"
+    );
+    nucleoid.run("g = 5");
+    assert.equal(nucleoid.run("weight"), 37.1);
+
+    nucleoid.run("mars = 3.72");
+    assert.equal(nucleoid.run("weight"), 37.2);
+  });
+
   it("runs block statement of variable", function() {
     nucleoid.run("h = 1");
     nucleoid.run("j = undefined");

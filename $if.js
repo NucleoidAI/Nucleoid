@@ -7,7 +7,7 @@ var CLASS = require("./class");
 var IF$CLASS = require("./if$class");
 var BLOCK$CLASS = require("./block$class");
 
-module.exports = function(string, offset) {
+var $IF = (module.exports = function(string, offset) {
   let context = Token.next(string, offset);
 
   if (context && context.token == "if")
@@ -46,10 +46,17 @@ module.exports = function(string, offset) {
     point = Token.next(string, context.offset);
 
     if (point && point.token == "else") {
-      context = $BLOCK(string, point.offset);
-      statement.false = context.statement;
+      let check = Token.next(string, point.offset);
+
+      if (check && check.token == "if") {
+        context = $IF(string, point.offset);
+        statement.false = context.statement;
+      } else {
+        context = $BLOCK(string, point.offset);
+        statement.false = context.statement;
+      }
     }
 
     return { statement: statement, offset: context.offset };
   }
-};
+});

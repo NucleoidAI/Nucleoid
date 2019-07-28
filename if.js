@@ -5,6 +5,8 @@ module.exports = class IF extends Node {
   run(scope) {
     if (this.condition.run(scope.local)) {
       return this.true;
+    } else if (this.false && this.false instanceof IF) {
+      return this.false.run(scope);
     } else {
       return this.false;
     }
