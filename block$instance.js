@@ -1,7 +1,8 @@
 var graph = require("./graph");
 var Node = require("./node");
+var BLOCK = require("./block");
 
-module.exports = class BLOCK$INSTANCE extends Node {
+module.exports = class BLOCK$INSTANCE extends BLOCK {
   constructor() {
     super();
     this.statements = [];
@@ -9,10 +10,14 @@ module.exports = class BLOCK$INSTANCE extends Node {
 
   run(scope) {
     scope.instance[this.class.name] = this.instance;
-    return this.statements;
+    return super.run(scope);
   }
 
   graph() {
+    if (!this.statements.length) {
+      return;
+    }
+
     let statement = this.statements[0];
     let expression = statement.expression;
 

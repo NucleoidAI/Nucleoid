@@ -1,8 +1,8 @@
 var graph = require("./graph");
-var Node = require("./node");
+var ASSIGNMENT = require("./assignment");
 var ASSIGNMENT$INSTANCE = require("./assignment$instance");
 
-module.exports = class ASSIGNMENT$CLASS extends Node {
+module.exports = class ASSIGNMENT$CLASS extends ASSIGNMENT {
   run(scope) {
     let statements = [];
 

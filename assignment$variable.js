@@ -1,8 +1,9 @@
 var state = require("./state");
 var graph = require("./graph");
 var Node = require("./node");
+var ASSIGNMENT = require("./assignment");
 
-module.exports = class ASSIGNMENT$VARIABLE extends Node {
+module.exports = class ASSIGNMENT$VARIABLE extends ASSIGNMENT {
   run(scope) {
     state[this.variable] = this.expression.run(scope.local);
   }

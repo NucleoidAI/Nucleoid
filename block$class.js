@@ -1,8 +1,9 @@
 var graph = require("./graph");
 var Node = require("./node");
+var BLOCK = require("./block");
 var BLOCK$INSTANCE = require("./block$instance");
 
-module.exports = class BLOCK$CLASS extends Node {
+module.exports = class BLOCK$CLASS extends BLOCK {
   constructor() {
     super();
     this.statements = [];

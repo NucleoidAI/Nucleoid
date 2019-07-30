@@ -1,9 +1,9 @@
 var graph = require("./graph");
-var Node = require("./node");
+var IF = require("./if");
 var BLOCK$INSTANCE = require("./block$instance");
 var IF$INSTANCE = require("./if$instance");
 
-module.exports = class IF$CLASS extends Node {
+module.exports = class IF$CLASS extends IF {
   run(scope) {
     let list = [];
 

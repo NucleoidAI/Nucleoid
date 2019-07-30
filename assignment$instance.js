@@ -1,8 +1,9 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Node = require("./node");
+var ASSIGNMENT = require("./assignment");
 
-module.exports = class ASSIGNMENT$INSTANCE extends Node {
+module.exports = class ASSIGNMENT$INSTANCE extends ASSIGNMENT {
   run(scope) {
     let instance = state[this.instance.variable];
     instance[this.property] = this.expression.run(scope.local, this.instance);

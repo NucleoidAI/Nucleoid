@@ -1,6 +1,5 @@
 var graph = require("./graph");
 var EXPRESSION = require("./expression");
-var BLOCK = require("./block");
 var Instruction = require("./instruction");
 var Scope = require("./scope");
 
@@ -27,16 +26,13 @@ module.exports.process = function(statements) {
       }
 
       if (result) {
-        if (statement instanceof BLOCK) {
-          let nestedScope = new Scope(statement.constructor);
-          instructions = result
-            .map(statement => new Instruction(nestedScope, statement))
-            .concat(instructions);
-        } else {
-          instructions = result
-            .map(statement => new Instruction(scope, statement))
-            .concat(instructions);
-        }
+        instructions = result
+          .map(statement => {
+            return statement instanceof Instruction
+              ? statement
+              : new Instruction(scope, statement);
+          })
+          .concat(instructions);
       }
 
       if (instruction.graph) {
