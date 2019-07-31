@@ -3,7 +3,7 @@ var Node = require("./node");
 
 module.exports = class IF extends Node {
   run(scope) {
-    if (this.condition.run(scope.local)) {
+    if (this.condition.run(scope)) {
       return this.true;
     } else if (this.false && this.false instanceof IF) {
       return this.false.run(scope);

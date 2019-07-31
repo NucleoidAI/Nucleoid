@@ -1,8 +1,9 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
+var Local = require("./local");
 
 module.exports = class EXPRESSION {
-  run(local, instance) {
+  run(scope, instance) {
     let tokens = this.tokens.map(token => {
       let parts = token.split(".");
 
@@ -11,11 +12,11 @@ module.exports = class EXPRESSION {
         token = parts.join(".");
       }
 
+      let value = Local.retrieve(scope, token);
+
       if (graph.node[parts[0]]) {
         return "state." + token;
-      } else if (local[token]) {
-        let value = local[token];
-
+      } else if (value) {
         if (typeof value == "string") {
           return '"' + value + '"';
         } else {

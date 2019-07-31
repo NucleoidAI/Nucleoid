@@ -6,10 +6,12 @@ module.exports = class ASSIGNMENT$CLASS extends ASSIGNMENT {
   run(scope) {
     let statements = [];
 
-    if (scope.instance[this.class.name]) {
+    let instance = scope.retrieve(scope, this.class.name);
+
+    if (instance) {
       let statement = new ASSIGNMENT$INSTANCE();
       statement.class = this.class;
-      statement.instance = scope.instance[this.class.name];
+      statement.instance = instance;
       statement.property = this.property;
       statement.expression = this.expression;
       return statement;

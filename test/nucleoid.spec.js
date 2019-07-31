@@ -131,6 +131,14 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("j"), 8);
   });
 
+  it("runs nested block statement of variable", function() {
+    nucleoid.run("radius = 10");
+    nucleoid.run(
+      "{ let area = Math.pow ( radius , 2 ) * 3.14 ; { volume = area * 5 } }"
+    );
+    assert.equal(nucleoid.run("volume"), 1570);
+  });
+
   it("defines class in the state", function() {
     nucleoid.run("class Entity { }");
     nucleoid.run("e = new Entity ( )");

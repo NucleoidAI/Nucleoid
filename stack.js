@@ -1,10 +1,11 @@
 var graph = require("./graph");
 var EXPRESSION = require("./expression");
+var BLOCK = require("./block");
 var Instruction = require("./instruction");
 var Scope = require("./scope");
 
 module.exports.process = function(statements) {
-  let root = new Scope("ROOT");
+  let root = new Scope();
   let instructions = statements.map(
     statement => new Instruction(root, statement)
   );
@@ -26,11 +27,17 @@ module.exports.process = function(statements) {
       }
 
       if (result) {
+        let s = scope;
+
+        if (statement instanceof BLOCK) {
+          s = new Scope(scope);
+        }
+
         instructions = result
           .map(statement => {
             return statement instanceof Instruction
               ? statement
-              : new Instruction(scope, statement);
+              : new Instruction(s, statement);
           })
           .concat(instructions);
       }

@@ -6,7 +6,7 @@ var ASSIGNMENT = require("./assignment");
 module.exports = class ASSIGNMENT$PROPERTY extends ASSIGNMENT {
   run(scope) {
     let instance = state[this.instance.variable];
-    instance[this.property] = this.expression.run(scope.local);
+    instance[this.property] = this.expression.run(scope);
   }
 
   graph() {

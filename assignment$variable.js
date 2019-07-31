@@ -5,7 +5,7 @@ var ASSIGNMENT = require("./assignment");
 
 module.exports = class ASSIGNMENT$VARIABLE extends ASSIGNMENT {
   run(scope) {
-    state[this.variable] = this.expression.run(scope.local);
+    state[this.variable] = this.expression.run(scope);
   }
 
   graph() {

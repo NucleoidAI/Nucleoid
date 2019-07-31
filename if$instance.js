@@ -4,7 +4,7 @@ var IF = require("./if");
 
 module.exports = class IF$INSTANCE extends IF {
   run(scope) {
-    if (this.condition.run(scope.local, this.instance)) return this.true;
+    if (this.condition.run(scope, this.instance)) return this.true;
   }
 
   graph() {

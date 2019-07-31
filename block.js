@@ -1,5 +1,6 @@
 var graph = require("./graph");
 var Node = require("./node");
+var Local = require("./local");
 var Instruction = require("./instruction");
 var ASSIGNMENT = require("./assignment");
 var LET = require("./let");
@@ -19,13 +20,13 @@ module.exports = class BLOCK extends Node {
 
       assignment: if (statement instanceof ASSIGNMENT) {
         for (let token of statement.expression.tokens) {
-          if (lets[token]) {
+          if (lets[token] || Local.retrieve(scope, token)) {
             result.push(statement);
             break assignment;
           }
         }
 
-        result.push(new Instruction(scope, statement));
+        result.push(new Instruction(scope.root, statement));
         this.statements.splice(index, 1);
       } else if (statement instanceof LET) {
         lets[statement.variable] = true;
