@@ -4,7 +4,7 @@
   "description": "Nucleoid Project",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha test/nucleoid.spec.js",
     "install": "cp scripts/commit-msg scripts/pre-commit .git/hooks/"
   },
   "repository": {
@@ -12,5 +12,8 @@
     "url": "http://git.nucleoid.org"
   },
   "author": "Can Mingir",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "yargs": "^13.3.0"
+  }
 }
