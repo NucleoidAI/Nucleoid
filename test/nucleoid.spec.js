@@ -123,6 +123,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("weight"), 37.2);
   });
 
+  it("runs let statement as a variable", function() {
+    nucleoid.run("integer = 30");
+    nucleoid.run(
+      "{ let division = integer / 10 ; equivalency = division * 10}"
+    );
+    assert.equal(nucleoid.run("equivalency"), 30);
+
+    nucleoid.run("integer = 40");
+    assert.equal(nucleoid.run("equivalency"), 40);
+  });
+
   it("runs block statement of variable", function() {
     nucleoid.run("h = 1");
     nucleoid.run("j = undefined");
