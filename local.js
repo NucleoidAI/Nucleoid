@@ -1,9 +1,15 @@
-module.exports.retrieve = function(scope, variable) {
+module.exports.retrieve = function(scope, assignment) {
   let index = scope;
 
+  let parts = assignment.split(".");
+  let reference = "scope.";
+
   while (index) {
-    let value = index.local[variable];
-    if (value) return index.local[variable];
+    if (index.local[parts[0]] != undefined) {
+      return reference + "local." + parts.join(".");
+    }
+
+    reference += "prior.";
     index = index.prior;
   }
 };

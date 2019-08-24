@@ -134,6 +134,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("equivalency"), 40);
   });
 
+  it("runs let statement as an object", function() {
+    nucleoid.run("class Seller { }");
+    nucleoid.run("class Commission { }");
+    nucleoid.run("seller1 = new Seller ( )");
+    nucleoid.run("seller1.sales = 1000000");
+    nucleoid.run("comm1 = new Commission ( )");
+    nucleoid.run("comm1.rate = 0.05");
+    nucleoid.run("seller1.commission = comm1");
+    nucleoid.run(
+      "{ let commission = Seller.commission ; Seller.pay = Seller.sales * commission.rate }"
+    );
+    assert.equal(nucleoid.run("seller1.pay"), 50000);
+  });
+
   it("runs block statement of variable", function() {
     nucleoid.run("h = 1");
     nucleoid.run("j = undefined");

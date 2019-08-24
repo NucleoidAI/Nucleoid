@@ -20,7 +20,9 @@ module.exports = class BLOCK extends Node {
 
       assignment: if (statement instanceof ASSIGNMENT) {
         for (let token of statement.expression.tokens) {
-          if (lets[token] || Local.retrieve(scope, token)) {
+          let t = token.split(".")[0];
+
+          if (lets[t] || Local.retrieve(scope, token)) {
             result.push(statement);
             break assignment;
           }

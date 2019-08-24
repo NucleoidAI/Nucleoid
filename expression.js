@@ -12,16 +12,12 @@ module.exports = class EXPRESSION {
         token = parts.join(".");
       }
 
-      let value = Local.retrieve(scope, token);
+      let reference = Local.retrieve(scope, token);
 
       if (graph.node[parts[0]]) {
         return "state." + token;
-      } else if (value) {
-        if (typeof value == "string") {
-          return '"' + value + '"';
-        } else {
-          return value;
-        }
+      } else if (reference) {
+        return reference;
       } else {
         return token;
       }
