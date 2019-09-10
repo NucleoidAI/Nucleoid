@@ -7,6 +7,10 @@ module.exports = function(string, offset) {
       return "new ";
     }
 
+    if (token == "return") {
+      return "return ";
+    }
+
     return token;
   });
 

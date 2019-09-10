@@ -29,6 +29,14 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("date.getYear()"), 119);
   });
 
+  it("supports function in expression", function() {
+    nucleoid.run("list = [1, 2, 3]");
+    assert.equal(
+      nucleoid.run("list.find ( ( element ) => { return element == 2 } )"),
+      2
+    );
+  });
+
   it("retrieves value by variable", function() {
     nucleoid.run("number = -1");
     assert.equal(nucleoid.run("number"), -1);

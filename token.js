@@ -35,17 +35,28 @@ module.exports.each = function(string, offset, callback, end) {
   let tokens = [];
   let context = next(string, offset);
   let parentheses = 0;
+  let brackets = 0;
 
   while (context) {
     offset = context.offset;
     let token = context.token;
 
-    if (token == ";" || token == "}") {
+    if (token == ";") {
       return { tokens: tokens, offset: offset };
     }
 
     if (end && token == end) {
       return { tokens: tokens, offset: offset };
+    }
+
+    if (token == "{") {
+      brackets++;
+    } else if (token == "}") {
+      brackets--;
+    }
+
+    if (brackets < 0) {
+      break;
     }
 
     if (token == "(") {
