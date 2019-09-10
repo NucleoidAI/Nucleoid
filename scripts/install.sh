@@ -11,3 +11,4 @@ git config --global user.email "$email"
 
 sudo npm install prettier -g
 sudo npm install eslint -g
+sudo npm install mocha -g
