@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "exit 0",
-    "install": "cp scripts/commit-msg .git/hooks/"
+    "install": "cp scripts/commit-msg scripts/pre-commit .git/hooks/"
   },
   "repository": {
     "type": "git",
