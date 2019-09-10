@@ -2,6 +2,7 @@
 sudo apt update
 sudo apt install nodejs -y
 sudo apt install npm -y
+sudo apt install aspell-en -y
 
 read -p "user.name: " name
 git config --global user.name "$name"

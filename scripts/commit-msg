@@ -1,0 +1,13 @@
+#!/bin/sh
+message=`cat $1`
+list=`echo $message | aspell list`
+
+if [ -n "$list" ]; then
+  echo "Misspelled Word(s):"
+  echo "$list"
+  read -p "Still continue? (Y): " input < /dev/tty
+
+    if [ "$input" != "Y" ]; then
+      exit 1
+    fi
+fi
