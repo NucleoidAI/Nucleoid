@@ -53,6 +53,13 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("l == 3"), true);
   });
 
+  it("runs dependent statements in the same transaction", function() {
+    nucleoid.run("class Vehicle { } ; Vehicle.tag = 'US-' + Vehicle.plate ");
+    nucleoid.run("vehicle1 = new Vehicle ( )");
+    nucleoid.run("vehicle1.plate = 'XSJ422'");
+    assert.equal(nucleoid.run("vehicle1.tag"), "US-XSJ422");
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
