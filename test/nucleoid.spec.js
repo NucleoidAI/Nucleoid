@@ -208,6 +208,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("hit"), false);
   });
 
+  it("runs nested else statement of variable", function() {
+    nucleoid.run("percentage = 28");
+    nucleoid.run("density = 0.899");
+    nucleoid.run("substance = 'NH3'");
+    nucleoid.run("molarConcentration = null");
+    nucleoid.run("default = 0");
+    nucleoid.run(
+      "{ let concentration = percentage * density / 100 * 1000 ; if ( substance == 'NH3' ) { molarConcentration = concentration / 17.04 } else { molarConcentration = default } }"
+    );
+    nucleoid.run("substance = 'NH16'");
+    nucleoid.run("default = 1");
+    assert.equal(nucleoid.run("molarConcentration"), 1);
+  });
+
   it("defines class in the state", function() {
     nucleoid.run("class Entity { }");
     nucleoid.run("e = new Entity ( )");
