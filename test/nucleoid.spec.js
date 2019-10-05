@@ -194,6 +194,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("volume"), 1570);
   });
 
+  it("runs nested if statement of variable", function() {
+    nucleoid.run("gravity = 9.8");
+    nucleoid.run("time = 10");
+    nucleoid.run("distance = 480");
+    nucleoid.run("target = true");
+    nucleoid.run(
+      "{ let dist = 1 / 2 * gravity * time * time ; if ( dist > distance ) { hit = target } }"
+    );
+    assert.equal(nucleoid.run("hit"), true);
+
+    nucleoid.run("target = false");
+    assert.equal(nucleoid.run("hit"), false);
+  });
+
   it("defines class in the state", function() {
     nucleoid.run("class Entity { }");
     nucleoid.run("e = new Entity ( )");
