@@ -1,14 +1,17 @@
-var Token = require("./token");
+var $ = require("./$");
 var DELETE = require("./delete");
 
-module.exports = function(string, offset) {
-  let context = Token.next(string, offset);
-  let statement = new DELETE();
-
-  if (context && context.token == "delete") {
-    context = Token.next(string, context.offset);
-    statement.variable = context.token;
-  }
-
-  return { statement: statement, offset: context.offset };
+module.exports = function(name) {
+  let statement = new $DELETE();
+  statement.name = name;
+  return statement;
 };
+
+class $DELETE extends $ {
+  run() {
+    let statement = new DELETE();
+    statement.name = this.name;
+    return statement;
+  }
+  graph() {}
+}

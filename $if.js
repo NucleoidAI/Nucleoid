@@ -1,62 +1,36 @@
+var $ = require("./$");
 var graph = require("./graph");
-var Token = require("./token");
-var $EXP = require("./$expression");
-var $BLOCK = require("./$block");
 var IF = require("./if");
 var CLASS = require("./class");
 var IF$CLASS = require("./if$class");
-var BLOCK$CLASS = require("./block$class");
 
-var $IF = (module.exports = function(string, offset) {
-  let context = Token.next(string, offset);
+module.exports = function(condition, trueB, p3) {
+  let statement = new $IF();
+  statement.condition = condition;
+  statement.true = trueB;
+  statement.false = p3;
+  return statement;
+};
 
-  if (context && context.token == "if")
-    context = Token.next(string, context.offset);
-
-  if (context && context.token == "(") {
-    context = $EXP(string, context.offset);
-
-    let point = context.offset;
-
-    const condition = context.statement;
-
-    for (let token of condition.tokens) {
+class $IF extends $ {
+  run() {
+    for (let token of this.condition.tokens) {
       let prefix = token.split(".")[0];
 
       if (graph.node[prefix] && graph.node[prefix] instanceof CLASS) {
         let statement = new IF$CLASS();
-
         statement.class = graph.node[prefix];
-        statement.condition = condition;
-
-        context = $BLOCK(string, context.offset);
-
-        let block = new BLOCK$CLASS();
-        block.statements = context.statement.statements;
-        statement.true = block;
-        return { statement: statement, offset: context.offset };
+        statement.condition = this.condition;
+        statement.true = this.true;
+        return statement;
       }
     }
 
     let statement = new IF();
-    statement.condition = context.statement;
-    context = $BLOCK(string, point);
-    statement.true = context.statement;
-
-    point = Token.next(string, context.offset);
-
-    if (point && point.token == "else") {
-      let check = Token.next(string, point.offset);
-
-      if (check && check.token == "if") {
-        context = $IF(string, point.offset);
-        statement.false = context.statement;
-      } else {
-        context = $BLOCK(string, point.offset);
-        statement.false = context.statement;
-      }
-    }
-
-    return { statement: statement, offset: context.offset };
+    statement.condition = this.condition;
+    statement.true = this.true;
+    statement.false = this.false;
+    return statement;
   }
-});
+  graph() {}
+}

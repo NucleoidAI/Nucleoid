@@ -1,21 +1,20 @@
 var state = require("./state");
 var graph = require("./graph");
 var Node = require("./node");
-var ASSIGNMENT = require("./assignment");
 
-module.exports = class ASSIGNMENT$PROPERTY extends ASSIGNMENT {
+module.exports = class PROPERTY extends Node {
   run(scope) {
-    let instance = state[this.instance.variable];
-    instance[this.property] = this.expression.run(scope);
+    let instance = state[this.instance.name];
+    instance[this.name] = this.value.run(scope);
   }
 
   graph() {
-    let key = this.instance.variable + "." + this.property;
+    let key = this.instance.name + "." + this.name;
 
     if (graph.node[key]) Node.replace(key, this);
     else graph.node[key] = this;
 
-    this.expression.tokens.forEach(token => {
+    this.value.tokens.forEach(token => {
       if (graph.node[token]) Node.direct(token, key, this);
       else if (graph.node[token.split(".")[0]]) {
         graph.node[token] = new Node();

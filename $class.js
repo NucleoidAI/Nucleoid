@@ -1,17 +1,17 @@
-var Token = require("./token");
 var CLASS = require("./class");
+var $ = require("./$");
 
-module.exports = function(string, offset) {
-  let context = Token.next(string, offset);
-  let statement = new CLASS();
-
-  if (context && context.token == "class") {
-    context = Token.next(string, context.offset);
-
-    statement.name = context.token;
-    context = Token.next(string, context.offset);
-    context = Token.nextBlock(string, context.offset);
-  }
-
-  return { statement: statement, offset: context.offset };
+module.exports = function(name) {
+  let statement = new $CLASS();
+  statement.name = name;
+  return statement;
 };
+
+class $CLASS extends $ {
+  run() {
+    let statement = new CLASS();
+    statement.name = this.name;
+    return statement;
+  }
+  graph() {}
+}

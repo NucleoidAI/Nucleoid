@@ -1,28 +1,28 @@
 var graph = require("./graph");
-var ASSIGNMENT = require("./assignment");
-var ASSIGNMENT$INSTANCE = require("./assignment$instance");
+var Node = require("./node");
+var PROPERTY$INSTANCE = require("./property$instance");
 
-module.exports = class ASSIGNMENT$CLASS extends ASSIGNMENT {
+module.exports = class PROPERTY$CLASS extends Node {
   run(scope) {
     let statements = [];
 
     let instance = scope.retrieve(scope, this.class.name);
 
     if (instance) {
-      let statement = new ASSIGNMENT$INSTANCE();
+      let statement = new PROPERTY$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
-      statement.property = this.property;
-      statement.expression = this.expression;
+      statement.name = this.name;
+      statement.value = this.value;
       return statement;
     }
 
     for (let node in this.class.instance) {
-      let statement = new ASSIGNMENT$INSTANCE();
+      let statement = new PROPERTY$INSTANCE();
       statement.class = this.class;
       statement.instance = this.class.instance[node];
-      statement.property = this.property;
-      statement.expression = this.expression;
+      statement.name = this.name;
+      statement.value = this.value;
       statements.push(statement);
     }
 
@@ -30,7 +30,7 @@ module.exports = class ASSIGNMENT$CLASS extends ASSIGNMENT {
   }
 
   graph() {
-    let key = this.class.name + "." + this.property;
+    let key = this.class.name + "." + this.name;
     graph.node[key] = this;
     this.class.declaration[key] = this;
   }

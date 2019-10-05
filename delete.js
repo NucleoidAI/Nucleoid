@@ -3,13 +3,13 @@ var graph = require("./graph");
 
 module.exports = class DELETE {
   run() {
-    eval("delete state." + this.variable);
+    eval("delete state." + this.name);
   }
 
   graph() {
-    for (let node in graph.node[this.variable].previous)
-      delete graph.node[node].next[this.variable];
+    for (let node in graph.node[this.name].previous)
+      delete graph.node[node].next[this.name];
 
-    delete graph.node[this.variable];
+    delete graph.node[this.name];
   }
 };

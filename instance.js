@@ -4,7 +4,7 @@ var Node = require("./node");
 
 module.exports = class INSTANCE extends Node {
   run(scope) {
-    state[this.variable] = eval("new state." + this.class.name + "()");
+    state[this.name] = eval("new state." + this.class.name + "()");
     scope.instance[this.class.name] = this;
 
     let list = [];
@@ -16,7 +16,7 @@ module.exports = class INSTANCE extends Node {
   }
 
   graph() {
-    graph.node[this.variable] = this;
-    this.class.instance[this.variable] = this;
+    graph.node[this.name] = this;
+    this.class.instance[this.name] = this;
   }
 };

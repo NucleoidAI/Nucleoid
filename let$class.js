@@ -1,7 +1,7 @@
-var LET = require("./let");
+var Node = require("./node");
 var LET$INSTANCE = require("./let$instance");
 
-module.exports = class LET$CLASS extends LET {
+module.exports = class LET$CLASS extends Node {
   run(scope) {
     let instance = scope.retrieve(scope, this.class.name);
 
@@ -9,8 +9,8 @@ module.exports = class LET$CLASS extends LET {
       let statement = new LET$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
-      statement.variable = this.variable;
-      statement.expression = this.expression;
+      statement.name = this.name;
+      statement.value = this.value;
       return statement;
     }
   }

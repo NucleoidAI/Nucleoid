@@ -1,82 +1,27 @@
-var graph = require("./graph");
-var Token = require("./token");
-var $EXP = require("./$expression");
-var CLASS = require("./class");
-var INSTANCE = require("./instance");
-var ASSIGNMENT$CLASS = require("./assignment$class");
-var ASSIGNMENT$PROPERTY = require("./assignment$property");
-var ASSIGNMENT$VARIABLE = require("./assignment$variable");
+var $PROPERTY = require("./$property");
+var $VARIABLE = require("./$variable");
+var Local = require("./local");
+var $LET = require("./$let");
+var $ = require("./$");
 
-module.exports = function(string, offset) {
-  let context = Token.next(string, offset);
-  let variable;
-
-  if (context.token == "var") {
-    context = Token.next(string, context.offset);
-    variable = context.token;
-  } else {
-    variable = context.token;
-  }
-
-  context = Token.next(string, context.offset);
-  let expression = context;
-
-  if (context && !graph.node[context.token]) {
-    let check = Token.next(string, context.offset);
-
-    instance: if (check && check.token == "new") {
-      let statement = new INSTANCE();
-      statement.variable = variable;
-
-      context = check;
-      context = Token.next(string, context.offset);
-
-      if (graph.node[context.token] instanceof CLASS) {
-        statement.class = graph.node[context.token];
-        context = Token.next(string, context.offset);
-        context = Token.next(string, context.offset);
-      } else {
-        context = expression;
-        break instance;
-      }
-
-      return {
-        statement: statement,
-        offset: context.offset
-      };
-    }
-
-    context = $EXP(string, context.offset);
-
-    let prefix = variable.split(".")[0];
-
-    let statement;
-
-    if (graph.node[prefix] && graph.node[prefix] instanceof CLASS) {
-      statement = new ASSIGNMENT$CLASS();
-      statement.class = graph.node[prefix];
-      statement.expression = context.statement;
-
-      let parts = variable.split(".");
-      parts.shift();
-      statement.property = parts.join(".");
-    } else if (graph.node[prefix] && graph.node[prefix] instanceof INSTANCE) {
-      statement = new ASSIGNMENT$PROPERTY();
-      statement.instance = graph.node[prefix];
-      statement.expression = context.statement;
-
-      let parts = variable.split(".");
-      parts.shift();
-      statement.property = parts.join(".");
-    } else {
-      statement = new ASSIGNMENT$VARIABLE();
-      statement.variable = variable;
-      statement.expression = context.statement;
-    }
-
-    return {
-      statement: statement,
-      offset: context.offset
-    };
-  }
+module.exports = function(left, right) {
+  let statement = new $ASSIGNMENT();
+  statement.left = left.split(".");
+  statement.right = right;
+  return statement;
 };
+
+class $ASSIGNMENT extends $ {
+  run(scope) {
+    if (this.left.length == 1) {
+      return $VARIABLE(this.left[0], this.right);
+    } else {
+      if (Local.check(scope, this.left[0])) {
+        return $LET(this.left.join("."), this.right);
+      } else {
+        return $PROPERTY(this.left[0], this.left[1], this.right);
+      }
+    }
+  }
+  graph() {}
+}

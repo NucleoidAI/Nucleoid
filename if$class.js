@@ -1,9 +1,9 @@
 var graph = require("./graph");
-var IF = require("./if");
-var BLOCK$INSTANCE = require("./block$instance");
 var IF$INSTANCE = require("./if$instance");
+var $BLOCK = require("./$block");
+var Node = require("./node");
 
-module.exports = class IF$CLASS extends IF {
+module.exports = class IF$CLASS extends Node {
   run(scope) {
     let list = [];
 
@@ -13,10 +13,9 @@ module.exports = class IF$CLASS extends IF {
       statement.instance = scope.instance[this.class.name];
       statement.condition = this.condition;
 
-      statement.true = new BLOCK$INSTANCE();
+      statement.true = $BLOCK(this.true.statements);
       statement.true.class = this.class;
       statement.true.instance = statement.instance;
-      statement.true.statements = this.true.statements;
       list.push(statement);
     }
 
@@ -26,8 +25,7 @@ module.exports = class IF$CLASS extends IF {
       statement.instance = this.class.instance[node];
       statement.condition = this.condition;
 
-      statement.true = new BLOCK$INSTANCE();
-      statement.true.statements = this.true.statements;
+      statement.true = $BLOCK(this.true.statements);
       statement.true.class = this.class;
       statement.true.instance = statement.instance;
       list.push(statement);

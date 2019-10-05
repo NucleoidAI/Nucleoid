@@ -1,22 +1,33 @@
-var Token = require("./token");
-var Statement = require("./statement");
 var BLOCK = require("./block");
 var BLOCK$CLASS = require("./block$class");
 var LET$CLASS = require("./let$class");
+var PROPERTY$CLASS = require("./property$class");
+var $ = require("./$");
 
-module.exports = function(string, offset) {
-  let context = Token.next(string, offset);
-  context = Token.nextBlock(string, context.offset);
+module.exports = function(statements) {
+  let statement = new $BLOCK();
+  statement.statements = statements;
+  return statement;
+};
 
-  let statements = Statement.compile(context.block, 0);
-  let dependent = statements[0];
-  let statement = new BLOCK();
+class $BLOCK extends $ {
+  run(scope) {
+    let dependent = this.statements[0];
+    while (dependent instanceof $) dependent = dependent.run(scope);
+    let list = this.statements;
+    list[0] = dependent;
 
-  if (dependent instanceof LET$CLASS) {
-    statement = new BLOCK$CLASS();
-    statement.class = dependent.class;
+    if (dependent instanceof LET$CLASS || dependent instanceof PROPERTY$CLASS) {
+      let statement = new BLOCK$CLASS();
+      statement.statements = list;
+      statement.class = dependent.class;
+      return statement;
+    } else {
+      let statement = new BLOCK();
+      statement.statements = list;
+      return statement;
+    }
   }
 
-  statement.statements = statements;
-  return { statement: statement, offset: context.offset };
-};
+  graph() {}
+}
