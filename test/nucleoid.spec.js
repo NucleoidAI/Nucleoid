@@ -290,6 +290,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("item1.custom"), "US0000002");
   });
 
+  it("runs nested if statement of property", function() {
+    nucleoid.run("class Sale { }");
+    nucleoid.run("sale1 = new Sale ( )");
+    nucleoid.run("sale1.price = 50");
+    nucleoid.run("sale1.quantity = 2");
+    nucleoid.run(
+      "{ let amount = sale1.price * sale1.quantity ; if ( amount > 100 ) { sale1.tax = amount * 10 / 100 } }"
+    );
+    assert.equal(nucleoid.run("sale1.tax"), undefined);
+
+    nucleoid.run("sale1.quantity = 3");
+    assert.equal(nucleoid.run("sale1.tax"), 15);
+  });
+
   it("creates class assignment before initialization", function() {
     nucleoid.run("class Review { }");
     nucleoid.run("Review.rate = Review.sum / 10");
