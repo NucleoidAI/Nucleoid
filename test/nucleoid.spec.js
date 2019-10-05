@@ -101,7 +101,6 @@ describe("Nucleoid", function() {
   it("updates if block of variable", function() {
     nucleoid.run("p = 0.01");
     nucleoid.run("s = 0.02");
-    nucleoid.run("r = null");
     nucleoid.run("if ( p < 1 ) { r = p * 10 }");
     nucleoid.run("if ( p < 1 ) { r = s * 10 }");
     assert.equal(nucleoid.run("r"), 0.2);
@@ -114,7 +113,6 @@ describe("Nucleoid", function() {
     nucleoid.run("compound = 0.0001");
     nucleoid.run("acidic = 'ACIDIC'");
     nucleoid.run("basic = 'BASIC'");
-    nucleoid.run("pH = null");
     nucleoid.run(
       "if ( compound > 0.0000001 ) { pH = acidic } else { pH = basic }"
     );
@@ -130,7 +128,6 @@ describe("Nucleoid", function() {
     nucleoid.run("earth = 9.8");
     nucleoid.run("mars = 3.71");
     nucleoid.run("mass = 10");
-    nucleoid.run("weight = null");
     nucleoid.run(
       "if ( g > 9 ) { weight = earth * mass } else if ( g > 3 ) { weight = mars * mass }"
     );
@@ -143,7 +140,6 @@ describe("Nucleoid", function() {
 
   it("runs let statement as a variable", function() {
     nucleoid.run("integer = 30");
-    nucleoid.run("equivalency = null");
     nucleoid.run(
       "{ let division = integer / 10 ; equivalency = division * 10}"
     );
@@ -183,7 +179,6 @@ describe("Nucleoid", function() {
 
   it("runs block statement of variable", function() {
     nucleoid.run("h = 1");
-    nucleoid.run("j = undefined");
     nucleoid.run("{ let value = h * 2 ; j = value * 2 }");
     assert.equal(nucleoid.run("j"), 4);
 
@@ -193,7 +188,6 @@ describe("Nucleoid", function() {
 
   it("runs nested block statement of variable", function() {
     nucleoid.run("radius = 10");
-    nucleoid.run("volume = null");
     nucleoid.run(
       "{ let area = Math.pow ( radius , 2 ) * 3.14 ; { volume = area * 5 } }"
     );

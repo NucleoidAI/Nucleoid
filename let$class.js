@@ -1,7 +1,6 @@
-var Node = require("./node");
 var LET$INSTANCE = require("./let$instance");
 
-module.exports = class LET$CLASS extends Node {
+class LET$CLASS {
   run(scope) {
     let instance = scope.retrieve(scope, this.class.name);
 
@@ -14,4 +13,9 @@ module.exports = class LET$CLASS extends Node {
       return statement;
     }
   }
-};
+
+  graph() {}
+}
+
+LET$CLASS.prototype.type = "CLASS";
+module.exports = LET$CLASS;

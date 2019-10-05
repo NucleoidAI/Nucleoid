@@ -1,9 +1,10 @@
 var state = require("./state");
-var graph = require("./graph");
 var Node = require("./node");
 
-module.exports = class INSTANCE extends Node {
+class INSTANCE extends Node {
   run(scope) {
+    this.id = this.name;
+
     state[this.name] = eval("new state." + this.class.name + "()");
     scope.instance[this.class.name] = this;
 
@@ -16,7 +17,9 @@ module.exports = class INSTANCE extends Node {
   }
 
   graph() {
-    graph.node[this.name] = this;
-    this.class.instance[this.name] = this;
+    this.class.instance[this.id] = this;
   }
-};
+}
+
+INSTANCE.prototype.type = "REGULAR";
+module.exports = INSTANCE;

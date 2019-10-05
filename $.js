@@ -1,1 +1,5 @@
-module.exports = class $ {};
+module.exports = class $ {
+  run() {}
+  beforeGraph() {}
+  graph() {}
+};

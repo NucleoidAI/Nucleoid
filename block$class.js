@@ -1,9 +1,10 @@
-var graph = require("./graph");
 var Node = require("./node");
 var BLOCK$INSTANCE = require("./block$instance");
+var Instruction = require("./instruction");
 
-module.exports = class BLOCK$CLASS {
+class BLOCK$CLASS extends Node {
   constructor() {
+    super();
     this.statements = [];
   }
 
@@ -17,7 +18,10 @@ module.exports = class BLOCK$CLASS {
       statement.class = this.class;
       statement.instance = instance;
       statement.statements = this.statements;
-      return statement;
+      return [
+        new Instruction(scope, statement, true, false),
+        new Instruction(scope, statement, false, true)
+      ];
     }
 
     for (let node in this.class.instance) {
@@ -25,20 +29,13 @@ module.exports = class BLOCK$CLASS {
       statement.class = this.class;
       statement.instance = this.class.instance[node];
       statement.statements = this.statements;
-      list.push(statement);
+      list.push(new Instruction(scope, statement, true, false));
+      list.push(new Instruction(scope, statement, false, true));
     }
 
     return list;
   }
+}
 
-  graph() {
-    let dependent = this.statements[0];
-
-    let key = Date.now();
-    graph.node[key] = this;
-
-    dependent.value.tokens.forEach(token => {
-      if (graph.node[token]) Node.direct(token, key, this);
-    });
-  }
-};
+BLOCK$CLASS.prototype.type = "CLASS";
+module.exports = BLOCK$CLASS;

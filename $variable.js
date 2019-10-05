@@ -22,5 +22,4 @@ class $VARIABLE extends $ {
       return statement;
     }
   }
-  graph() {}
 }

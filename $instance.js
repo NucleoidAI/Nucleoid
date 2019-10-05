@@ -14,5 +14,4 @@ class $INSTANCE extends $ {
     statement.class = graph.node[this.class];
     return statement;
   }
-  graph() {}
 }

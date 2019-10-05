@@ -30,5 +30,4 @@ class $LET extends $ {
     statement.value = this.value;
     return statement;
   }
-  graph() {}
 }

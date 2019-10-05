@@ -28,5 +28,4 @@ class $PROPERTY extends $ {
     statement.value = this.value;
     return statement;
   }
-  graph() {}
 }

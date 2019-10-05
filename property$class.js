@@ -1,9 +1,10 @@
-var graph = require("./graph");
 var Node = require("./node");
 var PROPERTY$INSTANCE = require("./property$instance");
 
-module.exports = class PROPERTY$CLASS extends Node {
+class PROPERTY$CLASS extends Node {
   run(scope) {
+    this.id = this.class.name + "." + this.name;
+
     let statements = [];
 
     let instance = scope.retrieve(scope, this.class.name);
@@ -30,8 +31,9 @@ module.exports = class PROPERTY$CLASS extends Node {
   }
 
   graph() {
-    let key = this.class.name + "." + this.name;
-    graph.node[key] = this;
-    this.class.declaration[key] = this;
+    this.class.declaration[this.id] = this;
   }
-};
+}
+
+PROPERTY$CLASS.prototype.type = "CLASS";
+module.exports = PROPERTY$CLASS;

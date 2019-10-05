@@ -3,6 +3,7 @@ var BLOCK$CLASS = require("./block$class");
 var LET$CLASS = require("./let$class");
 var PROPERTY$CLASS = require("./property$class");
 var $ = require("./$");
+var Instruction = require("./instruction");
 
 module.exports = function(statements) {
   let statement = new $BLOCK();
@@ -21,13 +22,18 @@ class $BLOCK extends $ {
       let statement = new BLOCK$CLASS();
       statement.statements = list;
       statement.class = dependent.class;
-      return statement;
+      return [
+        new Instruction(scope, statement, true, false),
+        new Instruction(scope, statement, false, true)
+      ];
     } else {
       let statement = new BLOCK();
       statement.statements = list;
-      return statement;
+
+      return [
+        new Instruction(scope, statement, true, false),
+        new Instruction(scope, statement, false, true)
+      ];
     }
   }
-
-  graph() {}
 }

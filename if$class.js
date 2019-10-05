@@ -1,10 +1,11 @@
-var graph = require("./graph");
 var IF$INSTANCE = require("./if$instance");
 var $BLOCK = require("./$block");
 var Node = require("./node");
 
-module.exports = class IF$CLASS extends Node {
+class IF$CLASS extends Node {
   run(scope) {
+    this.id = "if(" + this.condition.tokens.join("") + ")";
+
     let list = [];
 
     if (scope.instance[this.class.name]) {
@@ -35,8 +36,9 @@ module.exports = class IF$CLASS extends Node {
   }
 
   graph() {
-    let key = "if(" + this.condition.tokens.join("") + ")";
-    graph.node[key] = this;
-    this.class.declaration[key] = this;
+    this.class.declaration[this.id] = this;
   }
-};
+}
+
+IF$CLASS.prototype.type = "CLASS";
+module.exports = IF$CLASS;

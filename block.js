@@ -1,24 +1,35 @@
-var graph = require("./graph");
 var Node = require("./node");
+var $ = require("./$");
 
-module.exports = class BLOCK extends Node {
+class BLOCK extends Node {
   constructor() {
     super();
     this.statements = [];
   }
 
   run() {
-    return this.statements;
+    let list = this.statements;
+    this.statements = [];
+    return list;
   }
 
-  graph() {
-    let dependent = this.statements[0];
+  stage(instruction) {
+    if (
+      instruction.run &&
+      !(instruction.statement instanceof $) &&
+      instruction.statement.type != "CLASS"
+    ) {
+      let statement = instruction.statement;
+      let block = statement.block;
 
-    let key = Date.now();
-    graph.node[key] = this;
+      if (block && statement.id) {
+        block.statements = block.statements.filter(s => s.id != statement.id);
+      }
 
-    dependent.value.tokens.forEach(token => {
-      if (graph.node[token]) Node.direct(token, key, this);
-    });
+      this.statements.push(instruction.statement);
+    }
   }
-};
+}
+
+BLOCK.prototype.type = "REGULAR";
+module.exports = BLOCK;

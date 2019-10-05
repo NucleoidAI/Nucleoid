@@ -3,6 +3,7 @@ var graph = require("./graph");
 var IF = require("./if");
 var CLASS = require("./class");
 var IF$CLASS = require("./if$class");
+var Instruction = require("./instruction");
 
 module.exports = function(condition, trueB, p3) {
   let statement = new $IF();
@@ -13,7 +14,7 @@ module.exports = function(condition, trueB, p3) {
 };
 
 class $IF extends $ {
-  run() {
+  run(scope) {
     for (let token of this.condition.tokens) {
       let prefix = token.split(".")[0];
 
@@ -22,7 +23,10 @@ class $IF extends $ {
         statement.class = graph.node[prefix];
         statement.condition = this.condition;
         statement.true = this.true;
-        return statement;
+        return [
+          new Instruction(scope, statement, true, false),
+          new Instruction(scope, statement, false, true)
+        ];
       }
     }
 
@@ -30,7 +34,9 @@ class $IF extends $ {
     statement.condition = this.condition;
     statement.true = this.true;
     statement.false = this.false;
-    return statement;
+    return [
+      new Instruction(scope, statement, true, false),
+      new Instruction(scope, statement, false, true)
+    ];
   }
-  graph() {}
 }

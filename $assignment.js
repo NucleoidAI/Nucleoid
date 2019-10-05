@@ -23,5 +23,4 @@ class $ASSIGNMENT extends $ {
       }
     }
   }
-  graph() {}
 }

@@ -2,7 +2,7 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Local = require("./local");
 
-module.exports = class EXPRESSION {
+class EXPRESSION {
   run(scope, instance) {
     let tokens = this.tokens.map(token => {
       let parts = token.split(".");
@@ -25,4 +25,7 @@ module.exports = class EXPRESSION {
 
     return eval(tokens.join(""));
   }
-};
+}
+
+EXPRESSION.prototype.type = "REGULAR";
+module.exports = EXPRESSION;

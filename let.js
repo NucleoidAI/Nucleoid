@@ -1,7 +1,14 @@
-var Node = require("./node");
+var graph = require("./graph");
 
-module.exports = class LET extends Node {
+class LET {
   run(scope) {
     scope.local[this.name] = this.value.run(scope);
   }
-};
+
+  graph() {
+    return this.value.tokens.filter(token => graph.node[token]);
+  }
+}
+
+LET.prototype.type = "REGULAR";
+module.exports = LET;

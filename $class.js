@@ -13,5 +13,4 @@ class $CLASS extends $ {
     statement.name = this.name;
     return statement;
   }
-  graph() {}
 }

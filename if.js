@@ -1,23 +1,32 @@
 var graph = require("./graph");
 var Node = require("./node");
+var Instruction = require("./instruction");
+var Scope = require("./scope");
 
-module.exports = class IF extends Node {
+class IF extends Node {
   run(scope) {
+    this.id = "if(" + this.condition.tokens.join("") + ")";
+    let s = new Scope(scope);
+
     if (this.condition.run(scope)) {
-      return this.true;
+      return [
+        new Instruction(s, this.true, true, false),
+        new Instruction(s, this.true, false, true)
+      ];
     } else if (this.false && this.false instanceof IF) {
       return this.false.run(scope);
-    } else {
-      return this.false;
+    } else if (this.false) {
+      return [
+        new Instruction(s, this.false, true, false),
+        new Instruction(s, this.false, false, true)
+      ];
     }
   }
 
   graph() {
-    let key = "if(" + this.condition.tokens.join("") + ")";
-    graph.node[key] = this;
-
-    this.condition.tokens.forEach(token => {
-      if (graph.node[token]) Node.direct(token, key, this);
-    });
+    return this.condition.tokens.filter(token => graph.node[token]);
   }
-};
+}
+
+IF.prototype.type = "REGULAR";
+module.exports = IF;
