@@ -5,6 +5,10 @@ var Local = require("./local");
 class EXPRESSION {
   run(scope, instance) {
     let tokens = this.tokens.map(token => {
+      if (token == "typeof") {
+        return "typeof ";
+      }
+
       let parts = token.split(".");
 
       if (instance && parts[0] == instance.class.name) {

@@ -222,10 +222,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("molarConcentration"), 1);
   });
 
+  it("assigns object to variable", function() {
+    nucleoid.run("class Model { }");
+    nucleoid.run("model1 = new Model ( )");
+    assert.equal(nucleoid.run("typeof model1"), "object");
+  });
+
   it("defines class in the state", function() {
     nucleoid.run("class Entity { }");
-    nucleoid.run("e = new Entity ( )");
-    assert.equal(nucleoid.run("e.constructor == Entity"), true);
+    assert.equal(nucleoid.run("typeof Entity"), "function");
   });
 
   it("creates property assignment before declaration", function() {
