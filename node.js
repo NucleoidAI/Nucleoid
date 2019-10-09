@@ -1,11 +1,14 @@
 var graph = require("./graph");
 var uuidv4 = require("uuid/v4");
 
+var sequence = 0;
+
 module.exports = class Node {
   constructor() {
     this.next = {};
     this.previous = {};
     this.id = uuidv4();
+    this.sequence = sequence++;
   }
 
   run() {}

@@ -57,7 +57,11 @@ module.exports.process = function(statements) {
         }
 
         let list = statement.graph(instruction.scope);
-        if (list) dependencies = dependencies.concat(list);
+        if (list) {
+          dependencies = dependencies
+            .concat(list.filter(e => !dependencies.includes(e)))
+            .sort((a, b) => graph.node[a].sequence - graph.node[b].sequence);
+        }
 
         for (let node in statement.next) {
           let s = instruction.scope;

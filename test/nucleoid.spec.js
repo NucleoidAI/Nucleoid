@@ -60,6 +60,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("vehicle1.tag"), "US-XSJ422");
   });
 
+  it("runs dependencies in order as received", function() {
+    nucleoid.run("any = 0");
+    nucleoid.run("if ( any > 1 ) { result = 1 }");
+    nucleoid.run("if ( any > 2 ) { result = 2 }");
+    nucleoid.run("if ( any > 3 ) { result = 3 }");
+    nucleoid.run("if ( any > 2 ) { result = 4 }");
+    nucleoid.run("if ( any > 1 ) { result = 5 }");
+
+    nucleoid.run("any = 4");
+    assert.equal(nucleoid.run("result"), 5);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
