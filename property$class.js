@@ -7,7 +7,7 @@ class PROPERTY$CLASS extends Node {
 
     let statements = [];
 
-    let instance = scope.retrieve(scope, this.class.name);
+    let instance = scope.retrieve(this.class.name);
 
     if (instance) {
       let statement = new PROPERTY$INSTANCE();

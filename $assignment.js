@@ -3,6 +3,7 @@ var $VARIABLE = require("./$variable");
 var Local = require("./local");
 var $LET = require("./$let");
 var $ = require("./$");
+var Identifier = require("./identifier");
 
 module.exports = function(left, right) {
   let statement = new $ASSIGNMENT();
@@ -19,7 +20,8 @@ class $ASSIGNMENT extends $ {
       if (Local.check(scope, this.left[0])) {
         return $LET(this.left.join("."), this.right);
       } else {
-        return $PROPERTY(this.left[0], this.left[1], this.right);
+        let parts = Identifier.splitLast(this.left.join("."));
+        return $PROPERTY(parts[1], parts[0], this.right);
       }
     }
   }

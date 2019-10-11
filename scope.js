@@ -13,8 +13,8 @@ module.exports = class Scope {
     this.instance = {};
   }
 
-  retrieve(scope, instance) {
-    let index = scope;
+  retrieve(instance) {
+    let index = this;
 
     while (index) {
       let value = index.instance[instance];

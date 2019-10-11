@@ -264,6 +264,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("user.email"), "samplex@example.com");
   });
 
+  it("assigns object to property", function() {
+    nucleoid.run("class Product { }");
+    nucleoid.run("product1 = new Product ( )");
+    nucleoid.run("class Quality { }");
+    nucleoid.run("product1.quality = new Quality ( )");
+    nucleoid.run("product1.quality.score = 15");
+    nucleoid.run(
+      "Quality.class = String.fromCharCode ( 65 + Math.floor ( Quality.score / 10 ) )"
+    );
+    assert.equal(nucleoid.run("product1.quality.class"), "B");
+  });
+
   it("updates if block of property", function() {
     nucleoid.run("class Account { }");
     nucleoid.run("account = new Account ( )");

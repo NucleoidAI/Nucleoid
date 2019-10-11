@@ -12,7 +12,7 @@ class EXPRESSION {
       let parts = token.split(".");
 
       if (instance && parts[0] == instance.class.name) {
-        parts[0] = instance.name;
+        parts[0] = instance.identifier();
         token = parts.join(".");
       }
 

@@ -5,9 +5,10 @@ var PROPERTY = require("./property");
 
 class PROPERTY$INSTANCE extends PROPERTY {
   run(scope) {
-    this.id = this.instance.name + "." + this.name;
+    let prefix = this.instance.identifier();
+    this.id = prefix + "." + this.name;
 
-    let instance = state[this.instance.name];
+    let instance = eval("state." + prefix);
     instance[this.name] = this.value.run(scope, this.instance);
   }
 

@@ -2,6 +2,7 @@ var Token = require("../token");
 var $INSTANCE = require("../$instance");
 var $ASSIGNMENT = require("../$assignment");
 var $EXP = require("../$expression");
+var Identifier = require("../identifier");
 
 module.exports = function ES6$ASSIGNMENT(string, offset) {
   let context = Token.next(string, offset);
@@ -18,10 +19,18 @@ module.exports = function ES6$ASSIGNMENT(string, offset) {
       break standard;
     }
 
-    let instance = $INSTANCE(context.token);
+    let parts = Identifier.splitLast(left);
+    let instance;
+
+    if (parts.length > 1) {
+      instance = $INSTANCE(context.token, parts[0], parts[1]);
+    } else {
+      instance = $INSTANCE(context.token, left);
+    }
+
     context = Token.next(string, context.offset);
     context = Token.next(string, context.offset);
-    return { statement: $ASSIGNMENT(left, instance), offset: context.offset };
+    return { statement: instance, offset: context.offset };
   }
 
   context = $EXP(string, context.offset);

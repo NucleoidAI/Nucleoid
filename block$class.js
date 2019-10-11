@@ -11,7 +11,7 @@ class BLOCK$CLASS extends Node {
   run(scope) {
     let list = [];
 
-    let instance = scope.retrieve(scope, this.class.name);
+    let instance = scope.retrieve(this.class.name);
 
     if (instance) {
       let statement = new BLOCK$INSTANCE();

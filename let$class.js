@@ -2,7 +2,7 @@ var LET$INSTANCE = require("./let$instance");
 
 class LET$CLASS {
   run(scope) {
-    let instance = scope.retrieve(scope, this.class.name);
+    let instance = scope.retrieve(this.class.name);
 
     if (instance) {
       let statement = new LET$INSTANCE();

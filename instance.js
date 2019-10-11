@@ -1,11 +1,18 @@
-var state = require("./state");
+var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
 
 class INSTANCE extends Node {
   run(scope) {
-    this.id = this.name;
+    let name;
+    if (this.instance) {
+      name = this.instance.name + "." + this.name;
+    } else {
+      name = this.name;
+    }
 
-    state[this.name] = eval("new state." + this.class.name + "()");
+    this.id = name;
+
+    eval("state." + name + " = new state." + this.class.name + "()");
     scope.instance[this.class.name] = this;
 
     let list = [];
@@ -18,6 +25,18 @@ class INSTANCE extends Node {
 
   graph() {
     this.class.instance[this.id] = this;
+  }
+
+  identifier() {
+    let string = "";
+    let index = this;
+
+    while (index) {
+      string = index.name + "." + string;
+      index = index.instance;
+    }
+
+    return string.slice(0, -1);
   }
 }
 
