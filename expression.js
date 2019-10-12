@@ -2,19 +2,30 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 
 module.exports = class EXPRESSION {
-  run() {
-    let tokens = this.tokens;
+  run(local, instance) {
+    let tokens = this.tokens.map(token => {
+      let parts = token.split(".");
 
-    for (let i = 0; i < tokens.length; i++) {
-      let token = tokens[i];
-
-      if (graph.node[token.split(".")[0]]) {
-        tokens[i] = "state." + token;
+      if (instance && parts[0] == instance.class.name) {
+        parts[0] = instance.variable;
+        token = parts.join(".");
       }
-    }
+
+      if (graph.node[parts[0]]) {
+        return "state." + token;
+      } else if (local[token]) {
+        let value = local[token];
+
+        if (typeof value == "string") {
+          return '"' + value + '"';
+        } else {
+          return value;
+        }
+      } else {
+        return token;
+      }
+    });
 
     return eval(tokens.join(""));
   }
-
-  graph() {}
 };

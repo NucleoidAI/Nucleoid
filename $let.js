@@ -23,11 +23,11 @@ module.exports = function(string, offset) {
     for (let token of context.statement.tokens) {
       let prefix = token.split(".")[0];
 
-      if (graph.node[prefix] && graph.node[prefix].statement instanceof CLASS) {
+      if (graph.node[prefix] && graph.node[prefix] instanceof CLASS) {
         statement = new LET$CLASS();
+        statement.class = graph.node[prefix];
         statement.variable = variable;
         statement.expression = context.statement;
-        statement.class = prefix;
         break;
       }
     }

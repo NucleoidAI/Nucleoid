@@ -1,8 +1,9 @@
 var graph = require("./graph");
 var Node = require("./node");
 
-module.exports = class BLOCK$INSTANCE {
+module.exports = class BLOCK$INSTANCE extends Node {
   constructor() {
+    super();
     this.statements = [];
   }
 
@@ -22,18 +23,12 @@ module.exports = class BLOCK$INSTANCE {
     let statement = this.statements[0];
     let expression = statement.expression;
 
-    const tokens = expression.tokens.map(token => {
-      let parts = token.split(".");
-      if (parts[0] == this.class) parts[0] = this.instance;
-      return parts.join(".");
-    });
-
-    const id = Date.now();
-    graph.node[id] = new Node(this);
-    expression = { tokens: tokens };
+    let key = Date.now();
+    graph.node[key] = this;
 
     expression.tokens.forEach(token => {
-      if (graph.node[token]) graph.node[token].edge[id] = graph.node[id];
+      token = token.replace(/.+?(?=\.)/, this.instance.variable);
+      if (graph.node[token]) Node.direct(token, key, this);
     });
   }
 };

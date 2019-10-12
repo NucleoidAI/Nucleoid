@@ -1,22 +1,7 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
-var graph = require("./graph");
+var Node = require("./node");
 
-module.exports = class LET$INSTANCE {
+module.exports = class LET$INSTANCE extends Node {
   run(local) {
-    const tokens = this.expression.tokens.map(token => {
-      let parts = token.split(".");
-      if (parts[0] == this.class) parts[0] = this.instance;
-      return parts.join(".");
-    });
-
-    const expression = { tokens: tokens };
-
-    let list = expression.tokens.map(token =>
-      graph.node[token.split(".")[0]] ? "state." + token : token
-    );
-
-    local[this.variable] = eval(list.join(""));
+    local[this.variable] = this.expression.run(local, this.instance);
   }
-
-  graph() {}
 };

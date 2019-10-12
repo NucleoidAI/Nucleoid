@@ -7,9 +7,9 @@ module.exports = class DELETE {
   }
 
   graph() {
-    const variable = this.variable;
-    graph.index[variable].forEach(i => delete graph.node[i].edge[variable]);
-    delete graph.node[variable];
-    delete graph.index[variable];
+    for (let node in graph.node[this.variable].previous)
+      delete graph.node[node].next[this.variable];
+
+    delete graph.node[this.variable];
   }
 };

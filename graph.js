@@ -1,4 +1,3 @@
 module.exports = {
-  node: {},
-  index: {}
+  node: {}
 };

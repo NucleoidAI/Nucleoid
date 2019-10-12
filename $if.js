@@ -23,10 +23,10 @@ module.exports = function(string, offset) {
     for (let token of condition.tokens) {
       let prefix = token.split(".")[0];
 
-      if (graph.node[prefix] && graph.node[prefix].statement instanceof CLASS) {
+      if (graph.node[prefix] && graph.node[prefix] instanceof CLASS) {
         let statement = new IF$CLASS();
 
-        statement.class = prefix;
+        statement.class = graph.node[prefix];
         statement.condition = condition;
 
         context = $BLOCK(string, context.offset);

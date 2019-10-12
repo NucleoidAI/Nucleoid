@@ -1,74 +1,20 @@
-var state = require("./state");
+var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Node = require("./node");
 
-module.exports = class ASSIGNMENT$INSTANCE {
+module.exports = class ASSIGNMENT$INSTANCE extends Node {
   run(local) {
-    if (this.function) {
-      this.function(state);
-      return;
-    }
-
-    let variable = this.variable;
-    let parts = this.variable.split(".");
-
-    if (parts[0] == this.class) {
-      parts[0] = this.instance;
-      variable = parts.join(".");
-    }
-
-    const tokens = this.expression.tokens.map(token => {
-      let parts = token.split(".");
-      if (parts[0] == this.class) parts[0] = this.instance;
-      return parts.join(".");
-    });
-
-    const expression = { tokens: tokens };
-
-    let list = expression.tokens.map(token => {
-      if (graph.node[token.split(".")[0]]) {
-        return "state." + token;
-      } else if (local[token]) {
-        let value = local[token];
-
-        if (typeof value == "string") {
-          return '"' + value + '"';
-        } else {
-          return value;
-        }
-      } else {
-        return token;
-      }
-    });
-
-    this.function = new Function(
-      "state",
-      "state." + variable + "=" + list.join("")
-    );
-    this.function(state);
+    let instance = state[this.instance.variable];
+    instance[this.property] = this.expression.run(local, this.instance);
   }
 
   graph() {
-    let variable = this.variable;
-    let parts = this.variable.split(".");
+    let key = this.instance.variable + "." + this.property;
+    graph.node[key] = this;
 
-    if (parts[0] == this.class) {
-      parts[0] = this.instance;
-      variable = parts.join(".");
-    }
-
-    const tokens = this.expression.tokens.map(token => {
-      let parts = token.split(".");
-      if (parts[0] == this.class) parts[0] = this.instance;
-      return parts.join(".");
-    });
-
-    const expression = { tokens: tokens };
-    graph.node[variable] = new Node(this);
-
-    expression.tokens.forEach(token => {
-      if (graph.node[token])
-        graph.node[token].edge[variable] = graph.node[variable];
+    this.expression.tokens.forEach(token => {
+      token = token.replace(/.+?(?=\.)/, this.instance.variable);
+      if (graph.node[token]) Node.direct(token, key, this);
     });
   }
 };

@@ -1,28 +1,24 @@
-var graph = require("./graph");
+var Node = require("./node");
 var BLOCK$INSTANCE = require("./block$instance");
 var IF$INSTANCE = require("./if$instance");
-var $CLASS = require("./$class").$CLASS;
 
-module.exports = class IF$CLASS extends $CLASS {
+module.exports = class IF$CLASS extends Node {
   run() {
     let list = [];
 
-    for (let e in graph.node[this.class].edge) {
-      const statement = graph.node[this.class].edge[e].statement;
-      let instance = new IF$INSTANCE();
-      instance.condition = this.condition;
-      instance.class = this.class;
-      instance.instance = statement.variable;
+    for (let node in this.class.instance) {
+      let statement = new IF$INSTANCE();
+      statement.class = this.class;
+      statement.instance = this.class.instance[node];
+      statement.condition = this.condition;
 
-      instance.true = new BLOCK$INSTANCE();
-      this.true.statements.forEach(e => instance.true.statements.push(e));
-      instance.true.class = this.class;
-      instance.true.instance = statement.variable;
-      list.push(instance);
+      statement.true = new BLOCK$INSTANCE();
+      statement.true.statements = this.true.statements;
+      statement.true.class = this.class;
+      statement.true.instance = statement.instance;
+      list.push(statement);
     }
 
     return list;
   }
-
-  graph() {}
 };

@@ -1,45 +1,34 @@
 var graph = require("./graph");
 var Node = require("./node");
 var ASSIGNMENT$INSTANCE = require("./assignment$instance");
-var $CLASS = require("./$class").$CLASS;
 
-module.exports = class ASSIGNMENT$CLASS extends $CLASS {
+module.exports = class ASSIGNMENT$CLASS extends Node {
   run() {
-    let list = [];
+    let statements = [];
 
     if (this.instance) {
-      let instance = new ASSIGNMENT$INSTANCE();
-      instance.expression = this.expression;
-      instance.variable = this.variable;
-      instance.class = this.class;
-      instance.instance = this.instance;
-      return instance;
+      let statement = new ASSIGNMENT$INSTANCE();
+      statement.class = this.class;
+      statement.instance = this.instance;
+      statement.property = this.property;
+      statement.expression = this.expression;
+      return statement;
     }
 
-    for (let e in graph.node[this.class].edge) {
-      let statement = graph.node[this.class].edge[e].statement;
-
-      let instance = new ASSIGNMENT$INSTANCE();
-      instance.expression = this.expression;
-      instance.variable = this.variable;
-      instance.class = this.class;
-      instance.instance = statement.variable;
-
-      list.push(instance);
+    for (let node in this.class.instance) {
+      let statement = new ASSIGNMENT$INSTANCE();
+      statement.class = this.class;
+      statement.instance = this.class.instance[node];
+      statement.property = this.property;
+      statement.expression = this.expression;
+      statements.push(statement);
     }
 
-    return list;
+    return statements;
   }
 
   graph() {
-    const variable = this.variable;
-    const expression = this.expression;
-
-    graph.node[variable] = new Node(this);
-
-    expression.tokens.forEach(token => {
-      if (graph.node[token])
-        graph.node[token].edge[variable] = graph.node[variable];
-    });
+    let key = this.class.name + "." + this.property;
+    graph.node[key] = this;
   }
 };

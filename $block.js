@@ -2,7 +2,7 @@ var Token = require("./token");
 var Statement = require("./statement");
 var BLOCK = require("./block");
 var BLOCK$CLASS = require("./block$class");
-var $CLASS = require("./$class").$CLASS;
+var LET$CLASS = require("./let$class");
 
 module.exports = function(string, offset) {
   let context = Token.next(string, offset);
@@ -12,7 +12,7 @@ module.exports = function(string, offset) {
   let dependent = statements[0];
   let statement = new BLOCK();
 
-  if (dependent instanceof $CLASS) {
+  if (dependent instanceof LET$CLASS) {
     statement = new BLOCK$CLASS();
     statement.class = dependent.class;
   }
