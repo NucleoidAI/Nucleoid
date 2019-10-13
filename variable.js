@@ -1,5 +1,4 @@
 var state = require("./state");
-var graph = require("./graph");
 var Node = require("./node");
 
 class VARIABLE extends Node {
@@ -9,7 +8,7 @@ class VARIABLE extends Node {
   }
 
   graph() {
-    return this.value.tokens.filter(token => graph.node[token]);
+    return this.value.graph();
   }
 }
 

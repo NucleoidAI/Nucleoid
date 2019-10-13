@@ -1,6 +1,6 @@
 var $ = require("./$");
 var VARIABLE = require("./variable");
-var EXPRESSION = require("./expression");
+var Value = require("./value");
 
 module.exports = function(name, value) {
   let statement = new $VARIABLE();
@@ -11,13 +11,15 @@ module.exports = function(name, value) {
 
 class $VARIABLE extends $ {
   run() {
-    if (this.value instanceof EXPRESSION) {
+    let value = this.value.run();
+
+    if (value instanceof Value) {
       let statement = new VARIABLE();
       statement.name = this.name;
-      statement.value = this.value;
+      statement.value = value;
       return statement;
     } else {
-      let statement = this.value.run();
+      let statement = value;
       statement.name = this.name;
       return statement;
     }

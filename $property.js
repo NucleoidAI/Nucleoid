@@ -18,14 +18,14 @@ class $PROPERTY extends $ {
       let statement = new PROPERTY$CLASS();
       statement.class = graph.node[this.instance];
       statement.name = this.name;
-      statement.value = this.value;
+      statement.value = this.value.run();
       return statement;
     }
 
     let statement = new PROPERTY();
     statement.instance = graph.node[this.instance];
     statement.name = this.name;
-    statement.value = this.value;
+    statement.value = this.value.run();
     return statement;
   }
 }

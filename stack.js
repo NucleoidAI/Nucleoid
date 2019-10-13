@@ -1,11 +1,11 @@
 var graph = require("./graph");
-var EXPRESSION = require("./expression");
 var BLOCK = require("./block");
 var IF = require("./if");
 var Instruction = require("./instruction");
 var Scope = require("./scope");
 var Node = require("./node");
 var $ = require("./$");
+var Value = require("./value");
 
 module.exports.process = function(statements) {
   let root = new Scope();
@@ -22,7 +22,7 @@ module.exports.process = function(statements) {
     let instruction = instructions.shift();
     let statement = instruction.statement;
 
-    if (statement instanceof EXPRESSION) {
+    if (statement instanceof Value) {
       result = statement.run(instruction.scope);
     } else {
       if (instruction.run) {

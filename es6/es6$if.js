@@ -1,5 +1,5 @@
 var Token = require("../token");
-var $EXP = require("../$expression");
+var $VALUE = require("../$value");
 var $BLOCK = require("../$block");
 var $IF = require("../$if");
 var ES6 = require("./es6");
@@ -11,7 +11,7 @@ module.exports = function ES6$IF(string, offset) {
     context = Token.next(string, context.offset);
 
   if (context && context.token == "(") {
-    context = $EXP(string, context.offset);
+    context = $VALUE(string, context.offset);
     let condition = context.statement;
 
     context = Token.next(string, context.offset);

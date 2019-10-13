@@ -20,14 +20,14 @@ class $LET extends $ {
         let statement = new LET$CLASS();
         statement.class = graph.node[prefix];
         statement.name = this.name;
-        statement.value = this.value;
+        statement.value = this.value.run();
         return statement;
       }
     }
 
     let statement = new LET();
     statement.name = this.name;
-    statement.value = this.value;
+    statement.value = this.value.run();
     return statement;
   }
 }

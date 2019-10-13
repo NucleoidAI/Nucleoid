@@ -6,7 +6,7 @@ var ES6$BLOCK = require("./es6$block");
 var ES6$DELETE = require("./es6$delete");
 var ES6$IF = require("./es6$if");
 var ES6$LET = require("./es6$let");
-var $EXP = require("../$expression");
+var $VALUE = require("../$value");
 
 module.exports.compile = function compile(string) {
   let list = [];
@@ -23,7 +23,7 @@ module.exports.compile = function compile(string) {
       else if (context.token == "{") context = ES6$BLOCK(string, offset);
       else if (context.token == "delete") context = ES6$DELETE(string, offset);
       else if (context.token == "let") context = ES6$LET(string, offset);
-      else context = $EXP(string, offset);
+      else context = $VALUE(string, offset);
     }
 
     list.push(context.statement);

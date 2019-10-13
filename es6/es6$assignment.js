@@ -1,7 +1,7 @@
 var Token = require("../token");
 var $INSTANCE = require("../$instance");
 var $ASSIGNMENT = require("../$assignment");
-var $EXP = require("../$expression");
+var $VALUE = require("../$value");
 var Identifier = require("../identifier");
 
 module.exports = function ES6$ASSIGNMENT(string, offset) {
@@ -33,7 +33,7 @@ module.exports = function ES6$ASSIGNMENT(string, offset) {
     return { statement: instance, offset: context.offset };
   }
 
-  context = $EXP(string, context.offset);
+  context = $VALUE(string, context.offset);
   let right = context.statement;
   return { statement: $ASSIGNMENT(left, right), offset: context.offset };
 };

@@ -21,7 +21,7 @@ class $IF extends $ {
       if (graph.node[prefix] && graph.node[prefix] instanceof CLASS) {
         let statement = new IF$CLASS();
         statement.class = graph.node[prefix];
-        statement.condition = this.condition;
+        statement.condition = this.condition.run();
         statement.true = this.true;
         return [
           new Instruction(scope, statement, true, false),
@@ -31,7 +31,7 @@ class $IF extends $ {
     }
 
     let statement = new IF();
-    statement.condition = this.condition;
+    statement.condition = this.condition.run();
     statement.true = this.true;
     statement.false = this.false;
     return [

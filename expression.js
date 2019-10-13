@@ -1,8 +1,10 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Local = require("./local");
+var Node = require("./node");
+var Value = require("./value");
 
-class EXPRESSION {
+module.exports = class EXPRESSION extends Value {
   run(scope, instance) {
     let tokens = this.tokens.map(token => {
       if (token == "typeof") {
@@ -29,7 +31,14 @@ class EXPRESSION {
 
     return eval(tokens.join(""));
   }
-}
 
-EXPRESSION.prototype.type = "REGULAR";
-module.exports = EXPRESSION;
+  graph() {
+    return this.tokens.filter(token => {
+      if (graph.node[token]) return true;
+      else if (graph.node[token.split(".")[0]]) {
+        graph.node[token] = new Node();
+        return true;
+      }
+    });
+  }
+};
