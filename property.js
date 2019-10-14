@@ -1,10 +1,11 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
 var graph = require("./graph");
+var Identifier = require("./identifier");
 
 class PROPERTY extends Node {
   run(scope) {
-    let prefix = this.instance.identifier();
+    let prefix = Identifier.serialize(this.instance);
     this.id = prefix + "." + this.name;
     let instance = eval("state." + prefix);
     instance[this.name] = this.value.run(scope);

@@ -2,6 +2,7 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Local = require("./local");
 var Value = require("./value");
+var Identifier = require("./identifier");
 
 module.exports = class EXPRESSION extends Value {
   constructor(tokens) {
@@ -19,7 +20,7 @@ module.exports = class EXPRESSION extends Value {
       let reference = Local.retrieve(scope, token);
 
       if (graph.node[parts[0]]) {
-        return "state." + token;
+        return "state." + Identifier.reference(token);
       } else if (reference) {
         return reference;
       } else {
@@ -31,8 +32,10 @@ module.exports = class EXPRESSION extends Value {
   }
 
   graph() {
-    return this.tokens.filter(token => {
-      if (graph.node[token.split(".")[0]]) return true;
-    });
+    return this.tokens
+      .filter(token => {
+        if (graph.node[token.split(".")[0]]) return true;
+      })
+      .map(token => Identifier.reference(token));
   }
 };

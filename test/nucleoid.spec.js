@@ -347,6 +347,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("sale1.tax"), 15);
   });
 
+  it("creates dependency behalf if property has reference", function() {
+    nucleoid.run("class Schedule { }");
+    nucleoid.run("schedule1 = new Schedule ( )");
+    nucleoid.run("class Template { }");
+    nucleoid.run("template1 = new Template ( )");
+    nucleoid.run("template1.type = 'W'");
+    nucleoid.run("schedule1.template = template1");
+    nucleoid.run("schedule1.template.name = schedule1.template.type + '-0001'");
+    assert.equal(nucleoid.run("template1.name"), "W-0001");
+
+    nucleoid.run("template1.type = 'D'");
+    assert.equal(nucleoid.run("template1.name"), "D-0001");
+  });
+
   it("creates class assignment before initialization", function() {
     nucleoid.run("class Review { }");
     nucleoid.run("Review.rate = Review.sum / 10");

@@ -27,7 +27,7 @@ class $VALUE extends $ {
   run() {
     if (this.tokens.length == 1 && graph.node[this.tokens[0]]) {
       let statement = new REFERENCE();
-      statement.link = this.tokens[0];
+      statement.link = graph.node[this.tokens[0]];
       return statement;
     } else {
       let statement = new EXPRESSION();

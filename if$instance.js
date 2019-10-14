@@ -2,13 +2,15 @@ var graph = require("./graph");
 var IF = require("./if");
 var Node = require("./node");
 var EXPRESSION = require("./expression");
+var Identifier = require("./identifier");
 
 class IF$INSTANCE extends IF {
   run(scope) {
     this.condition = new EXPRESSION(
       this.declaration.condition.tokens.map(token => {
         let parts = token.split(".");
-        if (parts[0] == this.class.name) parts[0] = this.instance.identifier();
+        if (parts[0] == this.class.name)
+          parts[0] = Identifier.serialize(this.instance);
         return parts.join(".");
       })
     );

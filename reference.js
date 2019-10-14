@@ -1,12 +1,13 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var Value = require("./value");
+var Identifier = require("./identifier");
 
 module.exports = class REFERENCE extends Value {
   run() {
-    return eval("state." + this.link);
+    return eval("state." + Identifier.serialize(this.link));
   }
 
   graph() {
-    return [this.link];
+    return [Identifier.serialize(this.link)];
   }
 };

@@ -26,18 +26,6 @@ class INSTANCE extends Node {
   graph() {
     this.class.instance[this.id] = this;
   }
-
-  identifier() {
-    let string = "";
-    let index = this;
-
-    while (index) {
-      string = index.name + "." + string;
-      index = index.instance;
-    }
-
-    return string.slice(0, -1);
-  }
 }
 
 INSTANCE.prototype.type = "REGULAR";
