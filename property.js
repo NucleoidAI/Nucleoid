@@ -1,5 +1,6 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
+var graph = require("./graph");
 
 class PROPERTY extends Node {
   run(scope) {
@@ -10,7 +11,13 @@ class PROPERTY extends Node {
   }
 
   graph() {
-    return this.value.graph();
+    return this.value.graph().filter(token => {
+      if (graph.node[token]) return true;
+      else if (graph.node[token.split(".")[0]]) {
+        graph.node[token] = new Node();
+        return true;
+      }
+    });
   }
 }
 

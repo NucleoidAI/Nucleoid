@@ -9,7 +9,7 @@ class LET$CLASS {
       statement.class = this.class;
       statement.instance = instance;
       statement.name = this.name;
-      statement.value = this.value;
+      statement.declaration = this;
       return statement;
     }
   }

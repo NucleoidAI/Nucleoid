@@ -1,38 +1,33 @@
 var IF$INSTANCE = require("./if$instance");
 var $BLOCK = require("./$block");
 var Node = require("./node");
+var graph = require("./graph");
 
 class IF$CLASS extends Node {
   run(scope) {
     this.id = "if(" + this.condition.tokens.join("") + ")";
 
-    let list = [];
+    let instances;
+    let statements = [];
 
-    if (scope.instance[this.class.name]) {
+    let instance = scope.retrieve(this.class.name);
+
+    if (instance) instances = [instance];
+    else instances = Object.keys(this.class.instance).map(i => graph.node[i]);
+
+    for (let instance of instances) {
       let statement = new IF$INSTANCE();
       statement.class = this.class;
-      statement.instance = scope.instance[this.class.name];
-      statement.condition = this.condition;
+      statement.instance = instance;
+      statement.declaration = this;
 
       statement.true = $BLOCK(this.true.statements);
       statement.true.class = this.class;
       statement.true.instance = statement.instance;
-      list.push(statement);
+      statements.push(statement);
     }
 
-    for (let node in this.class.instance) {
-      let statement = new IF$INSTANCE();
-      statement.class = this.class;
-      statement.instance = this.class.instance[node];
-      statement.condition = this.condition;
-
-      statement.true = $BLOCK(this.true.statements);
-      statement.true.class = this.class;
-      statement.true.instance = statement.instance;
-      list.push(statement);
-    }
-
-    return list;
+    return statements;
   }
 
   graph() {

@@ -1,29 +1,25 @@
 var Node = require("./node");
 var PROPERTY$INSTANCE = require("./property$instance");
+var graph = require("./graph");
 
 class PROPERTY$CLASS extends Node {
   run(scope) {
     this.id = this.class.name + "." + this.name;
 
+    let instances;
     let statements = [];
 
     let instance = scope.retrieve(this.class.name);
 
-    if (instance) {
+    if (instance) instances = [instance];
+    else instances = Object.keys(this.class.instance).map(i => graph.node[i]);
+
+    for (let instance of instances) {
       let statement = new PROPERTY$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
       statement.name = this.name;
-      statement.value = this.value;
-      return statement;
-    }
-
-    for (let node in this.class.instance) {
-      let statement = new PROPERTY$INSTANCE();
-      statement.class = this.class;
-      statement.instance = this.class.instance[node];
-      statement.name = this.name;
-      statement.value = this.value;
+      statement.declaration = this;
       statements.push(statement);
     }
 

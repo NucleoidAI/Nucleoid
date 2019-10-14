@@ -1,6 +1,7 @@
 var Node = require("./node");
 var BLOCK$INSTANCE = require("./block$instance");
 var Instruction = require("./instruction");
+var graph = require("./graph");
 
 class BLOCK$CLASS extends Node {
   constructor() {
@@ -9,31 +10,24 @@ class BLOCK$CLASS extends Node {
   }
 
   run(scope) {
-    let list = [];
+    let instances;
+    let statements = [];
 
     let instance = scope.retrieve(this.class.name);
 
-    if (instance) {
+    if (instance) instances = [instance];
+    else instances = Object.keys(this.class.instance).map(i => graph.node[i]);
+
+    for (let instance of instances) {
       let statement = new BLOCK$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
       statement.statements = this.statements;
-      return [
-        new Instruction(scope, statement, true, false),
-        new Instruction(scope, statement, false, true)
-      ];
+      statements.push(new Instruction(scope, statement, true, false));
+      statements.push(new Instruction(scope, statement, false, true));
     }
 
-    for (let node in this.class.instance) {
-      let statement = new BLOCK$INSTANCE();
-      statement.class = this.class;
-      statement.instance = this.class.instance[node];
-      statement.statements = this.statements;
-      list.push(new Instruction(scope, statement, true, false));
-      list.push(new Instruction(scope, statement, false, true));
-    }
-
-    return list;
+    return statements;
   }
 }
 
