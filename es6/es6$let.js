@@ -9,5 +9,5 @@ module.exports = function ES6$LET(string, offset) {
   context = Token.next(string, context.offset);
   context = $VALUE(string, context.offset);
   let expression = context.statement;
-  return { statement: $LET(name, expression), offset: context.offset };
+  return { statement: $LET(null, name, expression), offset: context.offset };
 };

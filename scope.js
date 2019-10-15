@@ -11,6 +11,7 @@ module.exports = class Scope {
 
     this.local = {};
     this.instance = {};
+    this.graph = {};
   }
 
   retrieve(instance) {

@@ -9,6 +9,7 @@ class LET$CLASS {
       statement.class = this.class;
       statement.instance = instance;
       statement.name = this.name;
+      statement.object = scope.graph[this.object];
       statement.declaration = this;
       return statement;
     }

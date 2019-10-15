@@ -17,10 +17,11 @@ class $ASSIGNMENT extends $ {
     if (this.left.length == 1) {
       return $VARIABLE(this.left[0], this.right);
     } else {
+      let parts = Identifier.splitLast(this.left.join("."));
+
       if (Local.check(scope, this.left[0])) {
-        return $LET(this.left.join("."), this.right);
+        return $LET(parts[1], parts[0], this.right);
       } else {
-        let parts = Identifier.splitLast(this.left.join("."));
         return $PROPERTY(parts[1], parts[0], this.right);
       }
     }
