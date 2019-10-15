@@ -7,7 +7,7 @@ var Identifier = require("./identifier");
 
 class PROPERTY$INSTANCE extends PROPERTY {
   run(scope) {
-    let prefix = Identifier.serialize(this.instance);
+    let prefix = Identifier.serialize(this.object);
     this.id = prefix + "." + this.name;
 
     this.value = new EXPRESSION(

@@ -4,9 +4,9 @@ var CLASS = require("./class");
 var PROPERTY$CLASS = require("./property$class");
 var PROPERTY = require("./property");
 
-module.exports = function(instance, name, value) {
+module.exports = function(object, name, value) {
   let statement = new $PROPERTY();
-  statement.instance = instance;
+  statement.object = object;
   statement.name = name;
   statement.value = value;
   return statement;
@@ -14,16 +14,17 @@ module.exports = function(instance, name, value) {
 
 class $PROPERTY extends $ {
   run() {
-    if (graph.node[this.instance] instanceof CLASS) {
+    if (graph.node[this.object] instanceof CLASS) {
       let statement = new PROPERTY$CLASS();
-      statement.class = graph.node[this.instance];
+      statement.class = graph.node[this.object];
+      statement.object = this.object;
       statement.name = this.name;
       statement.value = this.value.run();
       return statement;
     }
 
     let statement = new PROPERTY();
-    statement.instance = graph.node[this.instance];
+    statement.object = graph.node[this.object];
     statement.name = this.name;
     statement.value = this.value.run();
     return statement;

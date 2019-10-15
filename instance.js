@@ -1,15 +1,10 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
+var Identifier = require("./identifier");
 
 class INSTANCE extends Node {
   run(scope) {
-    let name;
-    if (this.instance) {
-      name = this.instance.name + "." + this.name;
-    } else {
-      name = this.name;
-    }
-
+    let name = Identifier.serialize(this);
     this.id = name;
 
     eval("state." + name + " = new state." + this.class.name + "()");

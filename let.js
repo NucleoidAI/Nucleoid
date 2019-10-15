@@ -1,12 +1,11 @@
-var graph = require("./graph");
-
 class LET {
   run(scope) {
-    scope.local[this.name] = this.value.run(scope);
+    let value = this.value.run(scope); // eslint-disable-line no-unused-vars
+    eval("scope.local." + this.name + "=value");
   }
 
   graph() {
-    return this.value.tokens.filter(token => graph.node[token]);
+    return this.value.graph();
   }
 }
 

@@ -12,17 +12,17 @@ module.exports.splitLast = function(name) {
   return [parts[parts.length - 1], instance.slice(0, -1)];
 };
 
-module.exports.serialize = function(node) {
+module.exports.serialize = function(node, reference) {
   let string = "";
   let index = node;
 
   while (index) {
-    if (index.value instanceof REFERENCE) {
+    if (reference && index.value instanceof REFERENCE) {
       index = index.value.link;
     }
 
     string = index.name + "." + string;
-    index = index.instance;
+    index = index.object;
   }
 
   return string.slice(0, -1);
