@@ -21,8 +21,8 @@ class IF$INSTANCE extends IF {
     if (this.condition.run(scope, this.instance)) return this.true;
   }
 
-  graph() {
-    return this.condition.graph().filter(token => {
+  graph(scope) {
+    return this.condition.graph(scope).filter(token => {
       if (graph.node[token]) return true;
       else if (graph.node[token.split(".")[0]]) {
         graph.node[token] = new Node();

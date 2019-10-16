@@ -22,7 +22,7 @@ class LET$INSTANCE extends LET {
   // eslint-disable-next-line no-unused-vars
   graph(scope) {
     eval("scope.graph." + Identifier.serialize(this, false) + "=this");
-    return this.value.graph();
+    return this.value.graph(scope);
   }
 }
 

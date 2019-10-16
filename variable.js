@@ -10,8 +10,8 @@ class VARIABLE extends Node {
     state[this.name] = this.value.run(scope);
   }
 
-  graph() {
-    return this.value.graph();
+  graph(scope) {
+    return this.value.graph(scope);
   }
 }
 

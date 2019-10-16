@@ -361,6 +361,25 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("template1.name"), "D-0001");
   });
 
+  it("creates dependency behalf if let has reference", function() {
+    nucleoid.run("class Vote { }");
+    nucleoid.run("vote1 = new Vote ( )");
+    nucleoid.run("vote1.rate = 4");
+    nucleoid.run("class Question { }");
+    nucleoid.run("Question.rate = 0");
+    nucleoid.run("Question.count = 0");
+    nucleoid.run("question1 = new Question ( )");
+    nucleoid.run("vote1.question = question1");
+    nucleoid.run(
+      "{ let question = vote1.question ; question.rate = ( question.rate.toString () * question.count + vote1.rate ) / ( question.count + 1 ) ; question.count++ }"
+    );
+    assert.equal(nucleoid.run("question1.rate"), 4);
+    assert.equal(nucleoid.run("question1.count"), 1);
+
+    nucleoid.run("vote1.rate = 5");
+    assert.equal(nucleoid.run("question1.rate"), 4.5);
+  });
+
   it("creates class assignment before initialization", function() {
     nucleoid.run("class Review { }");
     nucleoid.run("Review.rate = Review.sum / 10");

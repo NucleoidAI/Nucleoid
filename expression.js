@@ -11,28 +11,31 @@ module.exports = class EXPRESSION extends Value {
   }
 
   run(scope) {
-    let tokens = this.tokens.map(token => {
-      if (token == "typeof") {
-        return "typeof ";
-      }
+    let tokens = this.tokens
+      .map(token => (token = Local.reference(scope, token)))
+      .map(token => {
+        if (token == "typeof") {
+          return "typeof ";
+        }
 
-      let parts = token.split(".");
-      let reference = Local.retrieve(scope, token);
+        let parts = token.split(".");
+        let reference = Local.retrieve(scope, token);
 
-      if (graph.node[parts[0]]) {
-        return "state." + Identifier.reference(token);
-      } else if (reference) {
-        return reference;
-      } else {
-        return token;
-      }
-    });
+        if (graph.node[parts[0]]) {
+          return "state." + Identifier.reference(token);
+        } else if (reference) {
+          return reference;
+        } else {
+          return token;
+        }
+      });
 
     return eval(tokens.join(""));
   }
 
-  graph() {
+  graph(scope) {
     return this.tokens
+      .map(token => Local.reference(scope, token))
       .filter(token => {
         if (graph.node[token.split(".")[0]]) return true;
       })
