@@ -11,7 +11,7 @@ module.exports.process = function(statements) {
   let root = new Scope();
 
   let instructions = statements.map(
-    statement => new Instruction(root, statement, true, false)
+    statement => new Instruction(root, statement, true, true, false)
   );
 
   let result;
@@ -25,6 +25,10 @@ module.exports.process = function(statements) {
     if (statement instanceof Value) {
       result = statement.run(instruction.scope);
     } else {
+      if (instruction.prepare) {
+        statement.prepare(instruction.scope);
+      }
+
       if (instruction.run) {
         result = statement.run(instruction.scope);
 
@@ -44,7 +48,7 @@ module.exports.process = function(statements) {
             .map(statement => {
               return statement instanceof Instruction
                 ? statement
-                : new Instruction(scope, statement);
+                : new Instruction(scope, statement, true, true, true);
             })
             .concat(instructions);
         }
@@ -69,10 +73,10 @@ module.exports.process = function(statements) {
 
           if (n instanceof BLOCK || n instanceof IF) {
             let scope = new Scope();
-            dependents.push(new Instruction(scope, n, true, false));
-            dependents.push(new Instruction(scope, n, false, true));
+            dependents.push(new Instruction(scope, n, false, true, false));
+            dependents.push(new Instruction(scope, n, false, false, true));
           } else {
-            dependents.push(new Instruction(s, n, true, false));
+            dependents.push(new Instruction(s, n, false, true, false));
           }
         }
 

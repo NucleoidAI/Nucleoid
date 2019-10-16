@@ -3,7 +3,7 @@ var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 
 class LET$INSTANCE extends LET {
-  run(scope) {
+  prepare() {
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map(token => {
         let parts = token.split(".");
@@ -12,7 +12,9 @@ class LET$INSTANCE extends LET {
         return parts.join(".");
       })
     );
+  }
 
+  run(scope) {
     let expression = this.value.run(scope, this.instance); // eslint-disable-line no-unused-vars
     eval("scope.local." + Identifier.serialize(this, false) + "=expression");
   }

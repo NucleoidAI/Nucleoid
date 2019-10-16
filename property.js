@@ -4,10 +4,13 @@ var graph = require("./graph");
 var Identifier = require("./identifier");
 
 class PROPERTY extends Node {
-  run(scope) {
+  prepare() {
     let prefix = Identifier.serialize(this.object, true);
     this.id = prefix + "." + this.name;
-    let instance = eval("state." + prefix);
+  }
+
+  run(scope) {
+    let instance = eval("state." + Identifier.serialize(this.object, true));
     instance[this.name] = this.value.run(scope);
   }
 

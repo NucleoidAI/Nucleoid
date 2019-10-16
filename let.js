@@ -1,4 +1,5 @@
 class LET {
+  prepare() {}
   run(scope) {
     let value = this.value.run(scope); // eslint-disable-line no-unused-vars
     eval("scope.local." + this.name + "=value");

@@ -6,7 +6,7 @@ var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 
 class PROPERTY$INSTANCE extends PROPERTY {
-  run(scope) {
+  prepare() {
     let prefix = Identifier.serialize(this.object);
     this.id = prefix + "." + this.name;
 
@@ -18,8 +18,10 @@ class PROPERTY$INSTANCE extends PROPERTY {
         return parts.join(".");
       })
     );
+  }
 
-    let instance = eval("state." + prefix);
+  run(scope) {
+    let instance = eval("state." + Identifier.serialize(this.object));
     instance[this.name] = this.value.run(scope);
   }
 

@@ -2,6 +2,7 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 
 class DELETE {
+  prepare() {}
   run() {
     eval("delete state." + this.name);
   }

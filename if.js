@@ -4,8 +4,11 @@ var Instruction = require("./instruction");
 var Scope = require("./scope");
 
 class IF extends Node {
-  run(scope) {
+  prepare() {
     this.id = "if(" + this.condition.tokens.join("") + ")";
+  }
+
+  run(scope) {
     let s = new Scope(scope);
 
     if (this.condition.run(scope)) {

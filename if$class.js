@@ -4,9 +4,11 @@ var Node = require("./node");
 var graph = require("./graph");
 
 class IF$CLASS extends Node {
-  run(scope) {
+  prepare() {
     this.id = "if(" + this.condition.tokens.join("") + ")";
+  }
 
+  run(scope) {
     let instances;
     let statements = [];
 

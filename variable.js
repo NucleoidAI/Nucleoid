@@ -2,8 +2,11 @@ var state = require("./state");
 var Node = require("./node");
 
 class VARIABLE extends Node {
-  run(scope) {
+  prepare() {
     this.id = this.name;
+  }
+
+  run(scope) {
     state[this.name] = this.value.run(scope);
   }
 

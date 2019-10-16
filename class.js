@@ -8,8 +8,11 @@ class CLASS extends Node {
     this.declaration = {};
   }
 
-  run() {
+  prepare() {
     this.id = this.name;
+  }
+
+  run() {
     eval("state." + this.name + "=" + "class" + "{}");
   }
 }

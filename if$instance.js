@@ -5,7 +5,7 @@ var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 
 class IF$INSTANCE extends IF {
-  run(scope) {
+  prepare() {
     this.condition = new EXPRESSION(
       this.declaration.condition.tokens.map(token => {
         let parts = token.split(".");
@@ -14,7 +14,9 @@ class IF$INSTANCE extends IF {
         return parts.join(".");
       })
     );
+  }
 
+  run(scope) {
     scope.instance[this.class.name] = this.instance;
     if (this.condition.run(scope, this.instance)) return this.true;
   }

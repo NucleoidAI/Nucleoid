@@ -23,16 +23,16 @@ class $BLOCK extends $ {
       statement.statements = list;
       statement.class = dependent.class;
       return [
-        new Instruction(scope, statement, true, false),
-        new Instruction(scope, statement, false, true)
+        new Instruction(scope, statement, true, true, false),
+        new Instruction(scope, statement, false, false, true)
       ];
     } else {
       let statement = new BLOCK();
       statement.statements = list;
 
       return [
-        new Instruction(scope, statement, true, false),
-        new Instruction(scope, statement, false, true)
+        new Instruction(scope, statement, true, true, false),
+        new Instruction(scope, statement, false, false, true)
       ];
     }
   }

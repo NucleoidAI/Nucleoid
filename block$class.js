@@ -23,8 +23,8 @@ class BLOCK$CLASS extends Node {
       statement.class = this.class;
       statement.instance = instance;
       statement.statements = this.statements;
-      statements.push(new Instruction(scope, statement, true, false));
-      statements.push(new Instruction(scope, statement, false, true));
+      statements.push(new Instruction(scope, statement, true, true, false));
+      statements.push(new Instruction(scope, statement, false, false, true));
     }
 
     return statements;

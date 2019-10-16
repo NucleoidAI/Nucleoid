@@ -4,9 +4,11 @@ var graph = require("./graph");
 var Identifier = require("./identifier");
 
 class PROPERTY$CLASS extends Node {
-  run(scope) {
+  prepare() {
     this.id = this.class.name + "." + this.name;
+  }
 
+  run(scope) {
     let instances;
     let statements = [];
 
