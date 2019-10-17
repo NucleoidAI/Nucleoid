@@ -347,6 +347,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("sale1.tax"), 15);
   });
 
+  it("creates property assignment with multiple properties", function() {
+    nucleoid.run("class Person { }");
+    nucleoid.run("person1 = new Person ( )");
+    nucleoid.run("class Address { }");
+    nucleoid.run("address1 = new Address ( )");
+    nucleoid.run("Address.print = Address.city + ',' + Address.state");
+    nucleoid.run("person1.address = new Address ( )");
+    nucleoid.run("person1.address.city = 'Syracuse'");
+    nucleoid.run("person1.address.state = 'NY'");
+    assert.equal(nucleoid.run("person1.address.print"), "Syracuse,NY");
+  });
+
   it("creates dependency behalf if property has reference", function() {
     nucleoid.run("class Schedule { }");
     nucleoid.run("schedule1 = new Schedule ( )");
