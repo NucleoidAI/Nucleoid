@@ -359,6 +359,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("person1.address.print"), "Syracuse,NY");
   });
 
+  it("creates property assignment as multiple properties as part of declaration", function() {
+    nucleoid.run("class Server { }");
+    nucleoid.run("server1 = new Server ( )");
+    nucleoid.run("server1.name = 'HOST1'");
+    nucleoid.run("class IP { }");
+    nucleoid.run("ip1 = new IP ( )");
+    nucleoid.run("server1.ip = ip1");
+    nucleoid.run("ip1.address = '10.0.0.1'");
+    nucleoid.run("server1.summary = server1.name + '@' + server1.ip.address");
+    assert.equal(nucleoid.run("server1.summary"), "HOST1@10.0.0.1");
+
+    nucleoid.run("ip1.address = '10.0.0.2'");
+    assert.equal(nucleoid.run("server1.summary"), "HOST1@10.0.0.2");
+  });
+
   it("creates dependency behalf if property has reference", function() {
     nucleoid.run("class Schedule { }");
     nucleoid.run("schedule1 = new Schedule ( )");
