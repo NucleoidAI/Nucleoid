@@ -26,8 +26,14 @@ class IF extends Node {
     }
   }
 
-  graph() {
-    return this.condition.tokens.filter(token => graph.node[token]);
+  graph(scope) {
+    return this.condition.graph(scope).filter(token => {
+      if (graph.node[token]) return true;
+      else if (graph.node[token.split(".")[0]]) {
+        graph.node[token] = new Node();
+        return true;
+      }
+    });
   }
 }
 

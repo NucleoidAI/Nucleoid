@@ -13,17 +13,6 @@ class LET$INSTANCE extends LET {
       })
     );
   }
-
-  run(scope) {
-    let expression = this.value.run(scope, this.instance); // eslint-disable-line no-unused-vars
-    eval("scope.local." + Identifier.serialize(this, false) + "=expression");
-  }
-
-  // eslint-disable-next-line no-unused-vars
-  graph(scope) {
-    eval("scope.graph." + Identifier.serialize(this, false) + "=this");
-    return this.value.graph(scope);
-  }
 }
 
 LET$INSTANCE.prototype.type = "INSTANCE";

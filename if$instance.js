@@ -1,6 +1,4 @@
-var graph = require("./graph");
 var IF = require("./if");
-var Node = require("./node");
 var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 
@@ -18,17 +16,7 @@ class IF$INSTANCE extends IF {
 
   run(scope) {
     scope.instance[this.class.name] = this.instance;
-    if (this.condition.run(scope, this.instance)) return this.true;
-  }
-
-  graph(scope) {
-    return this.condition.graph(scope).filter(token => {
-      if (graph.node[token]) return true;
-      else if (graph.node[token.split(".")[0]]) {
-        graph.node[token] = new Node();
-        return true;
-      }
-    });
+    return super.run(scope);
   }
 }
 

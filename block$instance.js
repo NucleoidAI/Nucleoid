@@ -8,9 +8,7 @@ class BLOCK$INSTANCE extends BLOCK {
 
   run(scope) {
     scope.instance[this.class.name] = this.instance;
-    let list = this.statements;
-    this.statements = [];
-    return list;
+    return super.run(scope);
   }
 }
 

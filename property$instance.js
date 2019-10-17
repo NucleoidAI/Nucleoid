@@ -1,6 +1,4 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
-var graph = require("./graph");
-var Node = require("./node");
 var PROPERTY = require("./property");
 var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
@@ -18,21 +16,6 @@ class PROPERTY$INSTANCE extends PROPERTY {
         return parts.join(".");
       })
     );
-  }
-
-  run(scope) {
-    let instance = eval("state." + Identifier.serialize(this.object));
-    instance[this.name] = this.value.run(scope);
-  }
-
-  graph(scope) {
-    return this.value.graph(scope).filter(token => {
-      if (graph.node[token]) return true;
-      else if (graph.node[token.split(".")[0]]) {
-        graph.node[token] = new Node();
-        return true;
-      }
-    });
   }
 }
 
