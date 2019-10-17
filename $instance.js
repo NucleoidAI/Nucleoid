@@ -13,9 +13,9 @@ module.exports = function(cls, name, object) {
 class $INSTANCE extends $ {
   run() {
     let statement = new INSTANCE();
-    statement.class = graph.node[this.class];
+    statement.class = graph[this.class];
     statement.name = this.name;
-    statement.object = graph.node[this.object];
+    statement.object = graph[this.object];
     return statement;
   }
 }

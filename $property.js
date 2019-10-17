@@ -14,9 +14,9 @@ module.exports = function(object, name, value) {
 
 class $PROPERTY extends $ {
   run() {
-    if (graph.node[this.object] instanceof CLASS) {
+    if (graph[this.object] instanceof CLASS) {
       let statement = new PROPERTY$CLASS();
-      statement.class = graph.node[this.object];
+      statement.class = graph[this.object];
       statement.object = this.object;
       statement.name = this.name;
       statement.value = this.value.run();
@@ -24,7 +24,7 @@ class $PROPERTY extends $ {
     }
 
     let statement = new PROPERTY();
-    statement.object = graph.node[this.object];
+    statement.object = graph[this.object];
     statement.name = this.name;
     statement.value = this.value.run();
     return statement;

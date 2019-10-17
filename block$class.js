@@ -16,7 +16,7 @@ class BLOCK$CLASS extends Node {
     let instance = scope.retrieve(this.class.name);
 
     if (instance) instances = [instance];
-    else instances = Object.keys(this.class.instance).map(i => graph.node[i]);
+    else instances = Object.keys(this.class.instance).map(i => graph[i]);
 
     for (let instance of instances) {
       let statement = new BLOCK$INSTANCE();

@@ -17,9 +17,9 @@ class $LET extends $ {
     for (let token of this.value.tokens) {
       let prefix = token.split(".")[0];
 
-      if (graph.node[prefix] && graph.node[prefix] instanceof CLASS) {
+      if (graph[prefix] && graph[prefix] instanceof CLASS) {
         let statement = new LET$CLASS();
-        statement.class = graph.node[prefix];
+        statement.class = graph[prefix];
         statement.name = this.name;
         statement.object = this.object;
         statement.value = this.value.run();

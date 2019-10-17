@@ -56,14 +56,14 @@ module.exports.process = function(statements) {
 
       if (instruction.graph) {
         if (statement instanceof Node) {
-          if (statement.key && graph.node[statement.key]) {
+          if (statement.key && graph[statement.key]) {
             Node.replace(statement.key, statement);
-          } else if (graph.node[statement.id]) {
+          } else if (graph[statement.id]) {
             Node.replace(statement.id, statement);
           } else if (statement.key) {
-            graph.node[statement.key] = statement;
+            graph[statement.key] = statement;
           } else {
-            graph.node[statement.id] = statement;
+            graph[statement.id] = statement;
           }
         }
 
@@ -71,12 +71,12 @@ module.exports.process = function(statements) {
         if (list) {
           dependencies = dependencies
             .concat(list.filter(e => !dependencies.includes(e)))
-            .sort((a, b) => graph.node[a].sequence - graph.node[b].sequence);
+            .sort((a, b) => graph[a].sequence - graph[b].sequence);
         }
 
         for (let node in statement.next) {
           let s = instruction.scope;
-          let n = graph.node[node];
+          let n = graph[node];
 
           if (n instanceof BLOCK || n instanceof IF) {
             let scope = new Scope();

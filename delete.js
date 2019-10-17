@@ -8,10 +8,10 @@ class DELETE {
   }
 
   graph() {
-    for (let node in graph.node[this.name].previous)
-      delete graph.node[node].next[this.name];
+    for (let node in graph[this.name].previous)
+      delete graph[node].next[this.name];
 
-    delete graph.node[this.name];
+    delete graph[this.name];
   }
 }
 

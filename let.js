@@ -12,9 +12,9 @@ class LET {
   graph(scope) {
     eval("scope.graph." + Identifier.serialize(this) + "=this");
     return this.value.graph(scope).filter(token => {
-      if (graph.node[token]) return true;
-      else if (graph.node[token.split(".")[0]]) {
-        graph.node[token] = new Node();
+      if (graph[token]) return true;
+      else if (graph[token.split(".")[0]]) {
+        graph[token] = new Node();
         return true;
       }
     });

@@ -15,9 +15,9 @@ class PROPERTY extends Node {
 
   graph(scope) {
     return this.value.graph(scope).filter(token => {
-      if (graph.node[token]) return true;
-      else if (graph.node[token.split(".")[0]]) {
-        graph.node[token] = new Node();
+      if (graph[token]) return true;
+      else if (graph[token.split(".")[0]]) {
+        graph[token] = new Node();
         return true;
       }
     });

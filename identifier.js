@@ -34,12 +34,9 @@ module.exports.reference = function(name) {
   for (let i = 0; i < parts.length; i++) {
     let reference = parts.slice(0, i + 1).join(".");
 
-    if (
-      graph.node[reference] &&
-      graph.node[reference].value instanceof REFERENCE
-    ) {
+    if (graph[reference] && graph[reference].value instanceof REFERENCE) {
       parts = parts.slice(i, parts.length);
-      parts[0] = graph.node[reference].value.link.key;
+      parts[0] = graph[reference].value.link.key;
       i = 0;
     }
   }

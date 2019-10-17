@@ -15,7 +15,7 @@ class PROPERTY$CLASS extends Node {
     let instance = scope.retrieve(this.class.name);
 
     if (instance) instances = [instance];
-    else instances = Object.keys(this.class.instance).map(i => graph.node[i]);
+    else instances = Object.keys(this.class.instance).map(i => graph[i]);
 
     for (let instance of instances) {
       let statement = new PROPERTY$INSTANCE();
@@ -24,7 +24,7 @@ class PROPERTY$CLASS extends Node {
       let parts = this.object.split(".");
       parts[0] = Identifier.serialize(instance);
 
-      statement.object = graph.node[parts.join(".")];
+      statement.object = graph[parts.join(".")];
       statement.name = this.name;
       statement.declaration = this;
       statements.push(statement);

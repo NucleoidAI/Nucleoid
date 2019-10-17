@@ -1,3 +1,1 @@
-module.exports = {
-  node: {}
-};
+module.exports = {};

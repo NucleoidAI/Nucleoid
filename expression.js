@@ -21,7 +21,7 @@ module.exports = class EXPRESSION extends Value {
         let parts = token.split(".");
         let reference = Local.retrieve(scope, token);
 
-        if (graph.node[parts[0]]) {
+        if (graph[parts[0]]) {
           return "state." + Identifier.reference(token);
         } else if (reference) {
           return reference;
@@ -37,7 +37,7 @@ module.exports = class EXPRESSION extends Value {
     return this.tokens
       .map(token => Local.reference(scope, token))
       .filter(token => {
-        if (graph.node[token.split(".")[0]]) return true;
+        if (graph[token.split(".")[0]]) return true;
       })
       .map(token => Identifier.reference(token));
   }

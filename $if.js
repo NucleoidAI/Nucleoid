@@ -18,9 +18,9 @@ class $IF extends $ {
     for (let token of this.condition.tokens) {
       let prefix = token.split(".")[0];
 
-      if (graph.node[prefix] && graph.node[prefix] instanceof CLASS) {
+      if (graph[prefix] && graph[prefix] instanceof CLASS) {
         let statement = new IF$CLASS();
-        statement.class = graph.node[prefix];
+        statement.class = graph[prefix];
         statement.condition = this.condition.run();
         statement.true = this.true;
         return [

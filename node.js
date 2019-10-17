@@ -16,22 +16,22 @@ module.exports = class Node {
   graph() {}
 
   static replace(sourceKey, targetNode) {
-    targetNode.block = graph.node[sourceKey].block;
+    targetNode.block = graph[sourceKey].block;
 
-    for (let node in graph.node[sourceKey].next) {
-      targetNode.next[node] = graph.node[sourceKey].next[node];
-      delete graph.node[sourceKey].next[node];
+    for (let node in graph[sourceKey].next) {
+      targetNode.next[node] = graph[sourceKey].next[node];
+      delete graph[sourceKey].next[node];
     }
 
-    for (let node in graph.node[sourceKey].previous) {
-      delete graph.node[node].next[sourceKey];
+    for (let node in graph[sourceKey].previous) {
+      delete graph[node].next[sourceKey];
     }
 
-    graph.node[sourceKey] = targetNode;
+    graph[sourceKey] = targetNode;
   }
 
   static direct(sourceKey, targetKey, targetNode) {
-    graph.node[sourceKey].next[targetKey] = targetNode;
-    targetNode.previous[sourceKey] = graph.node[targetKey];
+    graph[sourceKey].next[targetKey] = targetNode;
+    targetNode.previous[sourceKey] = graph[targetKey];
   }
 };
