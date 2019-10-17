@@ -5,7 +5,7 @@ var Scope = require("./scope");
 
 class IF extends Node {
   prepare() {
-    this.id = "if(" + this.condition.tokens.join("") + ")";
+    this.key = "if(" + this.condition.tokens.join("") + ")";
   }
 
   run(scope) {

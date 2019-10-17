@@ -39,7 +39,7 @@ module.exports.reference = function(name) {
       graph.node[reference].value instanceof REFERENCE
     ) {
       parts = parts.slice(i, parts.length);
-      parts[0] = graph.node[reference].value.link.id;
+      parts[0] = graph.node[reference].value.link.key;
       i = 0;
     }
   }

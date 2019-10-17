@@ -3,7 +3,7 @@ var Node = require("./node");
 
 class VARIABLE extends Node {
   prepare() {
-    this.id = this.name;
+    this.key = this.name;
   }
 
   run(scope) {

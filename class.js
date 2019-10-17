@@ -9,7 +9,7 @@ class CLASS extends Node {
   }
 
   prepare() {
-    this.id = this.name;
+    this.key = this.name;
   }
 
   run() {

@@ -39,7 +39,7 @@ module.exports.reference = function(scope, name) {
       scope.graph[reference].value instanceof REFERENCE
     ) {
       parts = parts.slice(i, parts.length);
-      parts[0] = scope.graph[reference].value.link.id;
+      parts[0] = scope.graph[reference].value.link.key;
       i = 0;
     }
   }

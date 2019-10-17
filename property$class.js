@@ -5,7 +5,7 @@ var Identifier = require("./identifier");
 
 class PROPERTY$CLASS extends Node {
   prepare() {
-    this.id = this.class.name + "." + this.name;
+    this.key = this.class.name + "." + this.name;
   }
 
   run(scope) {
@@ -34,7 +34,7 @@ class PROPERTY$CLASS extends Node {
   }
 
   graph() {
-    this.class.declaration[this.id] = this;
+    this.class.declaration[this.key] = this;
   }
 }
 

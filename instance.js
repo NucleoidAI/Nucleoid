@@ -4,7 +4,7 @@ var Identifier = require("./identifier");
 
 class INSTANCE extends Node {
   prepare() {
-    this.id = Identifier.serialize(this);
+    this.key = Identifier.serialize(this);
   }
 
   run(scope) {
@@ -22,7 +22,7 @@ class INSTANCE extends Node {
   }
 
   graph() {
-    this.class.instance[this.id] = this;
+    this.class.instance[this.key] = this;
   }
 }
 

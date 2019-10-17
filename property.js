@@ -5,8 +5,7 @@ var Identifier = require("./identifier");
 
 class PROPERTY extends Node {
   prepare() {
-    let prefix = Identifier.serialize(this.object, true);
-    this.id = prefix + "." + this.name;
+    this.key = Identifier.serialize(this);
   }
 
   run(scope) {

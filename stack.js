@@ -56,8 +56,15 @@ module.exports.process = function(statements) {
 
       if (instruction.graph) {
         if (statement instanceof Node) {
-          if (graph.node[statement.id]) Node.replace(statement.id, statement);
-          else graph.node[statement.id] = statement;
+          if (statement.key && graph.node[statement.key]) {
+            Node.replace(statement.key, statement);
+          } else if (graph.node[statement.id]) {
+            Node.replace(statement.id, statement);
+          } else if (statement.key) {
+            graph.node[statement.key] = statement;
+          } else {
+            graph.node[statement.id] = statement;
+          }
         }
 
         let list = statement.graph(instruction.scope);
@@ -83,7 +90,8 @@ module.exports.process = function(statements) {
         // Root scope is a scope, which does not have any prior.
         if (!instruction.scope.prior && !(statement instanceof $)) {
           dependencies.forEach(source => {
-            Node.direct(source, statement.id, statement);
+            let targetKey = statement.key ? statement.key : statement.id;
+            Node.direct(source, targetKey, statement);
           });
           dependencies = [];
 

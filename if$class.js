@@ -5,7 +5,7 @@ var graph = require("./graph");
 
 class IF$CLASS extends Node {
   prepare() {
-    this.id = "if(" + this.condition.tokens.join("") + ")";
+    this.key = "if(" + this.condition.tokens.join("") + ")";
   }
 
   run(scope) {
@@ -33,7 +33,7 @@ class IF$CLASS extends Node {
   }
 
   graph() {
-    this.class.declaration[this.id] = this;
+    this.class.declaration[this.key] = this;
   }
 }
 

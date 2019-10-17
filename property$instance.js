@@ -5,8 +5,7 @@ var Identifier = require("./identifier");
 
 class PROPERTY$INSTANCE extends PROPERTY {
   prepare() {
-    let prefix = Identifier.serialize(this.object);
-    this.id = prefix + "." + this.name;
+    this.key = Identifier.serialize(this);
 
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map(token => {
