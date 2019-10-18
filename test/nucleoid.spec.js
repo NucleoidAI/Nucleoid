@@ -518,4 +518,21 @@ describe("Nucleoid", function() {
     nucleoid.run("purchase.price = 199");
     assert.equal(nucleoid.run("purchase.retailPrice"), 228.85);
   });
+
+  it("runs nested if statement of class", function() {
+    nucleoid.run("class Building { }");
+    nucleoid.run("buildingType1 = 'SKYSCRAPER'");
+    nucleoid.run("building1 = new Building ( )");
+    nucleoid.run("building1.floors = 20");
+    nucleoid.run(
+      "{ let height = Building.floors * 14 ; if ( height > 330 ) { Building.type = buildingType1 } }"
+    );
+    assert.equal(nucleoid.run("building1.type"), undefined);
+
+    nucleoid.run("building1.floors = 25");
+    assert.equal(nucleoid.run("building1.type"), "SKYSCRAPER");
+
+    nucleoid.run("buildingType1 = 'S'");
+    assert.equal(nucleoid.run("building1.type"), "S");
+  });
 });
