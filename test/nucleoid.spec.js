@@ -189,6 +189,28 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("trade1.value"), 100);
   });
 
+  it("holds result of function in let", function() {
+    nucleoid.run("bugs = [ ]");
+    nucleoid.run("ticket = 1");
+    nucleoid.run("class Bug { }");
+    nucleoid.run("bug1 = new Bug ( )");
+    nucleoid.run("bug1.ticket = 1");
+    nucleoid.run("bug1.priority = 'LOW'");
+    nucleoid.run("bugs.push ( bug1 )");
+    nucleoid.run("bug2 = new Bug ( )");
+    nucleoid.run("bug2.ticket = 2");
+    nucleoid.run("bug2.priority = 'MEDIUM'");
+    nucleoid.run("bugs.push ( bug2 )");
+    nucleoid.run(
+      "{ let bug = bugs.find ( it => it.ticket == ticket ) ; bug.selected = true }"
+    );
+    assert.equal(nucleoid.run("bug1.selected"), true);
+    assert.equal(nucleoid.run("bug2.selected"), undefined);
+
+    nucleoid.run("ticket = 2");
+    assert.equal(nucleoid.run("bug2.selected"), true);
+  });
+
   it("runs block statement of variable", function() {
     nucleoid.run("h = 1");
     nucleoid.run("{ let value = h * 2 ; j = value * 2 }");
