@@ -37,6 +37,20 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("uses value property to indicate using value only", function() {
+    nucleoid.run("goldenRatio = 1.618");
+    nucleoid.run("altitude = 10");
+
+    nucleoid.run("width = goldenRatio.value * altitude");
+    assert.equal(nucleoid.run("width"), 16.18);
+
+    nucleoid.run("goldenRatio = 1.62");
+    assert.equal(nucleoid.run("width"), 16.18);
+
+    nucleoid.run("altitude = 100");
+    assert.equal(nucleoid.run("width"), 161.8);
+  });
+
   it("retrieves value by variable", function() {
     nucleoid.run("number = -1");
     assert.equal(nucleoid.run("number"), -1);

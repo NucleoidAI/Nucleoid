@@ -1,1 +1,5 @@
-module.exports = class Value {};
+module.exports = class Value {
+  prepare() {}
+  run() {}
+  graph() {}
+};

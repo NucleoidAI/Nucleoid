@@ -10,6 +10,15 @@ module.exports = class EXPRESSION extends Value {
     this.tokens = tokens;
   }
 
+  prepare() {
+    this.tokens = this.tokens.map(token => {
+      let parts = Identifier.splitLast(token);
+      if (parts[0] && parts[1] && parts[0] == "value" && graph[parts[1]])
+        return JSON.stringify(eval("state." + parts[1]));
+      else return token;
+    });
+  }
+
   run(scope) {
     let tokens = this.tokens
       .map(token => (token = Local.reference(scope, token)))
