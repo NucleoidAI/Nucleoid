@@ -20,7 +20,7 @@ class $ASSIGNMENT extends $ {
       let parts = Identifier.splitLast(this.left.join("."));
 
       if (Local.check(scope, this.left[0])) {
-        return $LET(parts[1], parts[0], this.right);
+        return $LET(this.left.join("."), this.right);
       } else {
         return $PROPERTY(parts[1], parts[0], this.right);
       }

@@ -2,11 +2,11 @@ var $ = require("./$");
 var graph = require("./graph");
 var INSTANCE = require("./instance");
 
-module.exports = function(cls, name, object) {
+module.exports = function(cls, name, instance) {
   let statement = new $INSTANCE();
   statement.class = cls;
   statement.name = name;
-  statement.object = object;
+  statement.instance = instance;
   return statement;
 };
 
@@ -15,7 +15,7 @@ class $INSTANCE extends $ {
     let statement = new INSTANCE();
     statement.class = graph[this.class];
     statement.name = this.name;
-    statement.object = graph[this.object];
+    statement.instance = graph[this.instance];
     return statement;
   }
 }

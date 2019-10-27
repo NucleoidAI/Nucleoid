@@ -22,7 +22,7 @@ module.exports.serialize = function(node, reference) {
     }
 
     string = index.name + "." + string;
-    index = index.object;
+    index = index.instance;
   }
 
   return string.slice(0, -1);

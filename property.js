@@ -9,7 +9,7 @@ class PROPERTY extends Node {
   }
 
   run(scope) {
-    let instance = eval("state." + Identifier.serialize(this.object, true));
+    let instance = eval("state." + Identifier.serialize(this.instance, true));
     instance[this.name] = this.value.run(scope);
   }
 
