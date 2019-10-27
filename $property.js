@@ -22,6 +22,10 @@ class $PROPERTY extends $ {
       return statement;
     }
 
+    if (!graph[this.instance]) {
+      throw TypeError();
+    }
+
     let statement = new PROPERTY();
     statement.instance = graph[this.instance];
     statement.name = this.name;

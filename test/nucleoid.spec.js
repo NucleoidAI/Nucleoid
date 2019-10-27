@@ -300,6 +300,14 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("user.email"), "samplex@example.com");
   });
 
+  it("creates property assignment only if instance is defined", function() {
+    nucleoid.run("class Channel { }");
+    nucleoid.run("channel1 = new Channel ( )");
+    assert.throws(function() {
+      nucleoid.run("channel1.frequency.type = 'ANGULAR'");
+    }, TypeError);
+  });
+
   it("assigns object to property", function() {
     nucleoid.run("class Product { }");
     nucleoid.run("product1 = new Product ( )");
