@@ -1,7 +1,7 @@
 var state = require("./state");
 var Node = require("./node");
 
-class VARIABLE extends Node {
+module.exports = class VARIABLE extends Node {
   prepare(scope) {
     this.key = this.name;
     this.value.prepare(scope);
@@ -14,7 +14,4 @@ class VARIABLE extends Node {
   graph(scope) {
     return this.value.graph(scope);
   }
-}
-
-VARIABLE.prototype.type = "REGULAR";
-module.exports = VARIABLE;
+};

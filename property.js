@@ -3,14 +3,14 @@ var Node = require("./node");
 var graph = require("./graph");
 var Identifier = require("./identifier");
 
-class PROPERTY extends Node {
+module.exports = class PROPERTY extends Node {
   prepare() {
     this.key = Identifier.serialize(this);
   }
 
   run(scope) {
-    let instance = eval("state." + Identifier.serialize(this.instance, true));
-    instance[this.name] = this.value.run(scope);
+    let object = eval("state." + Identifier.serialize(this.object, true));
+    object[this.name] = this.value.run(scope);
   }
 
   graph(scope) {
@@ -22,7 +22,4 @@ class PROPERTY extends Node {
       }
     });
   }
-}
-
-PROPERTY.prototype.type = "REGULAR";
-module.exports = PROPERTY;
+};

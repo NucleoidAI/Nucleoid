@@ -2,7 +2,7 @@ var $ = require("./$");
 var graph = require("./graph");
 var CLASS = require("./class");
 var LET = require("./let");
-var LET$CLASS = require("./let$class");
+var LET$PROTOTYPE = require("./let$declaration");
 
 module.exports = function(name, value) {
   let statement = new $LET();
@@ -17,7 +17,7 @@ class $LET extends $ {
       let prefix = token.split(".")[0];
 
       if (graph[prefix] && graph[prefix] instanceof CLASS) {
-        let statement = new LET$CLASS();
+        let statement = new LET$PROTOTYPE();
         statement.class = graph[prefix];
         statement.name = this.name;
         statement.value = this.value.run();

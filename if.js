@@ -3,7 +3,7 @@ var Node = require("./node");
 var Instruction = require("./instruction");
 var Scope = require("./scope");
 
-class IF extends Node {
+module.exports = class IF extends Node {
   prepare() {
     this.key = "if(" + this.condition.tokens.join("") + ")";
   }
@@ -35,7 +35,4 @@ class IF extends Node {
       }
     });
   }
-}
-
-IF.prototype.type = "REGULAR";
-module.exports = IF;
+};

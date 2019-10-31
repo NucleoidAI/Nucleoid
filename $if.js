@@ -2,7 +2,7 @@ var $ = require("./$");
 var graph = require("./graph");
 var IF = require("./if");
 var CLASS = require("./class");
-var IF$CLASS = require("./if$class");
+var IF$PROTOTYPE = require("./if$declaration");
 var Instruction = require("./instruction");
 
 module.exports = function(condition, trueB, p3) {
@@ -19,7 +19,7 @@ class $IF extends $ {
       let prefix = token.split(".")[0];
 
       if (graph[prefix] && graph[prefix] instanceof CLASS) {
-        let statement = new IF$CLASS();
+        let statement = new IF$PROTOTYPE();
         statement.class = graph[prefix];
         statement.condition = this.condition.run();
         statement.true = this.true;

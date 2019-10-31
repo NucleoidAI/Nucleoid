@@ -1,7 +1,7 @@
 var Node = require("./node");
 var $ = require("./$");
 
-class BLOCK extends Node {
+module.exports = class BLOCK extends Node {
   constructor() {
     super();
     this.statements = [];
@@ -17,7 +17,7 @@ class BLOCK extends Node {
     if (
       instruction.run &&
       !(instruction.statement instanceof $) &&
-      instruction.statement.type != "CLASS"
+      instruction.statement.type != "DECLARATION"
     ) {
       let statement = instruction.statement;
       let block = statement.block;
@@ -29,7 +29,4 @@ class BLOCK extends Node {
       this.statements.push(instruction.statement);
     }
   }
-}
-
-BLOCK.prototype.type = "REGULAR";
-module.exports = BLOCK;
+};

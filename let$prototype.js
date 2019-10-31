@@ -2,7 +2,7 @@ var LET = require("./let");
 var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 
-class LET$INSTANCE extends LET {
+class LET$PROTOTYPE extends LET {
   prepare() {
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map(token => {
@@ -15,5 +15,5 @@ class LET$INSTANCE extends LET {
   }
 }
 
-LET$INSTANCE.prototype.type = "INSTANCE";
-module.exports = LET$INSTANCE;
+LET$PROTOTYPE.prototype.type = "PROTOTYPE";
+module.exports = LET$PROTOTYPE;

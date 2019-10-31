@@ -1,7 +1,7 @@
 var graph = require("./graph");
 var Node = require("./node");
 
-class LET {
+module.exports = class LET {
   prepare() {}
   run(scope) {
     let value = this.value.run(scope); // eslint-disable-line no-unused-vars
@@ -18,7 +18,4 @@ class LET {
       }
     });
   }
-}
-
-LET.prototype.type = "REGULAR";
-module.exports = LET;
+};

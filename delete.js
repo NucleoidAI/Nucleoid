@@ -1,7 +1,7 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 
-class DELETE {
+module.exports = class DELETE {
   prepare() {}
   run() {
     eval("delete state." + this.name);
@@ -13,7 +13,4 @@ class DELETE {
 
     delete graph[this.name];
   }
-}
-
-DELETE.prototype.type = "REGULAR";
-module.exports = DELETE;
+};

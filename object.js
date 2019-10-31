@@ -2,7 +2,7 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
 var Identifier = require("./identifier");
 
-class INSTANCE extends Node {
+module.exports = class OBJECT extends Node {
   prepare() {
     this.key = Identifier.serialize(this);
   }
@@ -24,7 +24,4 @@ class INSTANCE extends Node {
   graph() {
     this.class.instance[this.key] = this;
   }
-}
-
-INSTANCE.prototype.type = "REGULAR";
-module.exports = INSTANCE;
+};
