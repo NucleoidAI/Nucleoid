@@ -577,4 +577,11 @@ describe("Nucleoid", function() {
     nucleoid.run("hospital1.clinic.beds = 2678");
     assert.equal(nucleoid.run("hospital1.patients"), 1997788);
   });
+
+  it("creates class assignment only if instance is defined", function() {
+    nucleoid.run("class Phone { }");
+    assert.throws(function() {
+      nucleoid.run("Phone.line.wired = true");
+    }, TypeError);
+  });
 });

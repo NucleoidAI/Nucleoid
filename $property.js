@@ -15,6 +15,10 @@ module.exports = function(object, name, value) {
 
 class $PROPERTY extends $ {
   run() {
+    if (!graph[this.object]) {
+      throw TypeError();
+    }
+
     if (
       graph[this.object] instanceof CLASS ||
       graph[this.object] instanceof OBJECT$DECLARATION
@@ -24,10 +28,6 @@ class $PROPERTY extends $ {
       statement.name = this.name;
       statement.value = this.value.run();
       return statement;
-    }
-
-    if (!graph[this.object]) {
-      throw TypeError();
     }
 
     let statement = new PROPERTY();
