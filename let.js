@@ -1,6 +1,3 @@
-var graph = require("./graph");
-var Node = require("./node");
-
 module.exports = class LET {
   prepare() {}
   run(scope) {
@@ -10,12 +7,6 @@ module.exports = class LET {
 
   graph(scope) {
     eval("scope.graph." + this.name + "=this");
-    return this.value.graph(scope).filter(token => {
-      if (graph[token]) return true;
-      else if (graph[token.split(".")[0]]) {
-        graph[token] = new Node();
-        return true;
-      }
-    });
+    return this.value.graph(scope);
   }
 };

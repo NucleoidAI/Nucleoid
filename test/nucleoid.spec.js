@@ -442,7 +442,7 @@ describe("Nucleoid", function() {
     nucleoid.run("question1 = new Question ( )");
     nucleoid.run("vote1.question = question1");
     nucleoid.run(
-      "{ let question = vote1.question ; question.rate = ( question.rate.toString () * question.count + vote1.rate ) / ( question.count + 1 ) ; question.count++ }"
+      "{ let question = vote1.question ; question.rate = ( question.rate * question.count + vote1.rate ) / ( question.count + 1 ) ; question.count++ }"
     );
     assert.equal(nucleoid.run("question1.rate"), 4);
     assert.equal(nucleoid.run("question1.count"), 1);

@@ -3,6 +3,7 @@ var graph = require("./graph");
 var Local = require("./local");
 var Value = require("./value");
 var Identifier = require("./identifier");
+var Node = require("./node");
 
 module.exports = class EXPRESSION extends Value {
   constructor(tokens) {
@@ -46,7 +47,11 @@ module.exports = class EXPRESSION extends Value {
     return this.tokens
       .map(token => Local.reference(scope, token))
       .filter(token => {
-        if (graph[token.split(".")[0]]) return true;
+        if (graph[token]) return true;
+        else if (graph[token.split(".")[0]]) {
+          graph[token] = new Node();
+          return true;
+        }
       })
       .map(token => Identifier.reference(token));
   }

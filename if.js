@@ -1,4 +1,3 @@
-var graph = require("./graph");
 var Node = require("./node");
 var Instruction = require("./instruction");
 var Scope = require("./scope");
@@ -27,12 +26,6 @@ module.exports = class IF extends Node {
   }
 
   graph(scope) {
-    return this.condition.graph(scope).filter(token => {
-      if (graph[token]) return true;
-      else if (graph[token.split(".")[0]]) {
-        graph[token] = new Node();
-        return true;
-      }
-    });
+    return this.condition.graph(scope);
   }
 };
