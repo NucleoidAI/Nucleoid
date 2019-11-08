@@ -1,9 +1,10 @@
+var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
-var PROPERTY$PROTOTYPE = require("./property$prototype");
-var graph = require("./graph");
 var Identifier = require("./identifier");
+var graph = require("./graph");
+var OBJECT$PROTOTYPE = require("./object$prototype");
 
-class PROPERTY$DECLARATION extends Node {
+module.exports = class OBJECT$DECLARATION extends Node {
   prepare() {
     this.key = Identifier.serialize(this);
   }
@@ -21,7 +22,7 @@ class PROPERTY$DECLARATION extends Node {
       );
 
     for (let instance of instances) {
-      let statement = new PROPERTY$PROTOTYPE();
+      let statement = new OBJECT$PROTOTYPE();
       statement.template = instance;
       statement.name = this.name;
       statement.declaration = this;
@@ -34,7 +35,4 @@ class PROPERTY$DECLARATION extends Node {
   graph() {
     Identifier.root(this).declaration[this.key] = this;
   }
-}
-
-PROPERTY$DECLARATION.prototype.type = "DECLARATION";
-module.exports = PROPERTY$DECLARATION;
+};

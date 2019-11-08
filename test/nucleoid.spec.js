@@ -557,4 +557,14 @@ describe("Nucleoid", function() {
     nucleoid.run("buildingType1 = 'S'");
     assert.equal(nucleoid.run("building1.type"), "S");
   });
+
+  it("creates class assignment with multiple properties", function() {
+    nucleoid.run("class Room { }");
+    nucleoid.run("Room.level = Room.number / 10");
+    nucleoid.run("class Guest { }");
+    nucleoid.run("Guest.room = new Room ( )");
+    nucleoid.run("guest1 = new Guest ( )");
+    nucleoid.run("guest1.room.number = 30");
+    assert.equal(nucleoid.run("guest1.room.level"), 3);
+  });
 });

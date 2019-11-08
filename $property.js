@@ -3,6 +3,7 @@ var graph = require("./graph");
 var CLASS = require("./class");
 var PROPERTY$DECLARATION = require("./property$declaration");
 var PROPERTY = require("./property");
+var OBJECT$DECLARATION = require("./object$declaration");
 
 module.exports = function(object, name, value) {
   let statement = new $PROPERTY();
@@ -14,7 +15,10 @@ module.exports = function(object, name, value) {
 
 class $PROPERTY extends $ {
   run() {
-    if (graph[this.object] instanceof CLASS) {
+    if (
+      graph[this.object] instanceof CLASS ||
+      graph[this.object] instanceof OBJECT$DECLARATION
+    ) {
       let statement = new PROPERTY$DECLARATION();
       statement.object = graph[this.object];
       statement.name = this.name;
