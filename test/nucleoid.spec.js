@@ -567,4 +567,14 @@ describe("Nucleoid", function() {
     nucleoid.run("guest1.room.number = 30");
     assert.equal(nucleoid.run("guest1.room.level"), 3);
   });
+
+  it("creates class assignment as multiple properties as part of declaration", function() {
+    nucleoid.run("class Hospital { }");
+    nucleoid.run("class Clinic { }");
+    nucleoid.run("Hospital.clinic = new Clinic ( )");
+    nucleoid.run("Hospital.patients = Hospital.clinic.beds * 746");
+    nucleoid.run("hospital1 = new Hospital ( )");
+    nucleoid.run("hospital1.clinic.beds = 2678");
+    assert.equal(nucleoid.run("hospital1.patients"), 1997788);
+  });
 });
