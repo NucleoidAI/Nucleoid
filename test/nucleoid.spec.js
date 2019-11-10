@@ -24,6 +24,10 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("au == 149597870700"), true);
   });
 
+  it("supports string in expression", function() {
+    assert.equal(nucleoid.run("'New String'"), "New String");
+  });
+
   it("supports standard built-in objects", function() {
     nucleoid.run("date = new Date ( '2019-7-24' )");
     assert.equal(nucleoid.run("date.getYear()"), 119);
@@ -396,11 +400,11 @@ describe("Nucleoid", function() {
     nucleoid.run("person1 = new Person ( )");
     nucleoid.run("class Address { }");
     nucleoid.run("address1 = new Address ( )");
-    nucleoid.run("Address.print = Address.city + ',' + Address.state");
+    nucleoid.run("Address.print = Address.city + ', ' + Address.state");
     nucleoid.run("person1.address = new Address ( )");
     nucleoid.run("person1.address.city = 'Syracuse'");
     nucleoid.run("person1.address.state = 'NY'");
-    assert.equal(nucleoid.run("person1.address.print"), "Syracuse,NY");
+    assert.equal(nucleoid.run("person1.address.print"), "Syracuse, NY");
   });
 
   it("creates property assignment as multiple properties as part of declaration", function() {
