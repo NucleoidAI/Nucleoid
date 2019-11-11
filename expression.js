@@ -21,22 +21,34 @@ module.exports = class EXPRESSION extends Value {
   }
 
   run(scope) {
-    let tokens = this.tokens
-      .map(token => (token = Local.reference(scope, token)))
-      .map(token => {
-        let parts = token.split(".");
-        let reference = Local.retrieve(scope, token);
+    try {
+      let tokens = this.tokens
+        .map(token => (token = Local.reference(scope, token)))
+        .map(token => {
+          let parts = token.split(".");
+          let reference = Local.retrieve(scope, token);
 
-        if (reference) {
-          return reference;
-        } else if (graph[parts[0]]) {
-          return "state." + Identifier.reference(token);
-        } else {
-          return token;
-        }
-      });
+          if (reference) {
+            let value = eval(reference);
 
-    return eval(tokens.join(""));
+            if (value == undefined || value == null) throw 0;
+            return reference;
+          } else if (graph[parts[0]]) {
+            let reference = "state." + Identifier.reference(token);
+            let value = eval(reference);
+
+            if (value == undefined || value == null) throw 1;
+            return reference;
+          } else {
+            return token;
+          }
+        });
+
+      return eval(tokens.join(""));
+    } catch (error) {
+      if (error instanceof Error) throw error;
+      return null;
+    }
   }
 
   graph(scope) {

@@ -103,6 +103,19 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("number"), 3);
   });
 
+  it("assigns null if any dependencies in expression is undefined or null", function() {
+    nucleoid.run("class Person { }");
+    nucleoid.run("person1 = new Person ( )");
+    nucleoid.run("person1.lastName = 'Brown'");
+    nucleoid.run(
+      "person1.fullName = person1.firstName + ' ' + person1.lastName"
+    );
+    assert.equal(nucleoid.run("person1.fullName"), null);
+
+    nucleoid.run("person1.firstName = null");
+    assert.equal(nucleoid.run("person1.fullName"), null);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
@@ -459,7 +472,7 @@ describe("Nucleoid", function() {
     nucleoid.run("question1 = new Question ( )");
     nucleoid.run("vote1.question = question1");
     nucleoid.run(
-      "{ let question = vote1.question ; question.rate = ( question.rate * question.count + vote1.rate ) / ( question.count + 1 ) ; question.count++ }"
+      "{ let question = vote1.question ; question.rate = ( question.rate * question.count + vote1.rate ) / ( question.count + 1 ) ; question.count =  question.count + 1}"
     );
     assert.equal(nucleoid.run("question1.rate"), 4);
     assert.equal(nucleoid.run("question1.count"), 1);
