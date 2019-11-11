@@ -1,8 +1,15 @@
 var assert = require("assert");
 var nucleoid = require("../nucleoid");
+var state = require("../state");
+var graph = require("../graph");
 
 describe("Nucleoid", function() {
   this.slow(1);
+
+  beforeEach(function() {
+    for (let property in state) delete state[property];
+    for (let property in graph) delete graph[property];
+  });
 
   it("runs statements in the state", function() {
     nucleoid.run("var i = 1 ;");
@@ -88,6 +95,12 @@ describe("Nucleoid", function() {
 
     nucleoid.run("any = 4");
     assert.equal(nucleoid.run("result"), 5);
+  });
+
+  it("searches variable in scope before state", function() {
+    nucleoid.run("e = 2.71828");
+    nucleoid.run("{ let e = 3 ; number = e }");
+    assert.equal(nucleoid.run("number"), 3);
   });
 
   it("creates variable assignment", function() {

@@ -31,10 +31,10 @@ module.exports = class EXPRESSION extends Value {
         let parts = token.split(".");
         let reference = Local.retrieve(scope, token);
 
-        if (graph[parts[0]]) {
-          return "state." + Identifier.reference(token);
-        } else if (reference) {
+        if (reference) {
           return reference;
+        } else if (graph[parts[0]]) {
+          return "state." + Identifier.reference(token);
         } else {
           return token;
         }
