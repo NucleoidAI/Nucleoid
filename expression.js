@@ -24,10 +24,6 @@ module.exports = class EXPRESSION extends Value {
     let tokens = this.tokens
       .map(token => (token = Local.reference(scope, token)))
       .map(token => {
-        if (token == "typeof") {
-          return "typeof ";
-        }
-
         let parts = token.split(".");
         let reference = Local.retrieve(scope, token);
 

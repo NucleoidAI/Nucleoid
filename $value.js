@@ -14,6 +14,10 @@ module.exports = function(string, offset) {
       return "return ";
     }
 
+    if (token == "typeof") {
+      return "typeof ";
+    }
+
     return token;
   });
 
