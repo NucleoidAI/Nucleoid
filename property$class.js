@@ -2,6 +2,7 @@ var Node = require("./node");
 var PROPERTY$INSTANCE = require("./property$instance");
 var graph = require("./graph");
 var Identifier = require("./identifier");
+var Instance = require("./instance");
 
 class PROPERTY$CLASS extends Node {
   prepare() {
@@ -12,7 +13,7 @@ class PROPERTY$CLASS extends Node {
     let instances;
     let statements = [];
 
-    let instance = scope.retrieve(Identifier.root(this).name);
+    let instance = Instance.retrieve(scope, Identifier.root(this).name);
 
     if (instance) instances = [instance];
     else

@@ -2,6 +2,7 @@ var IF$INSTANCE = require("./if$instance");
 var $BLOCK = require("./$block");
 var Node = require("./node");
 var graph = require("./graph");
+var Instance = require("./instance");
 
 class IF$CLASS extends Node {
   prepare() {
@@ -12,7 +13,7 @@ class IF$CLASS extends Node {
     let instances;
     let statements = [];
 
-    let instance = scope.retrieve(this.class.name);
+    let instance = Instance.retrieve(scope, this.class.name);
 
     if (instance) instances = [instance];
     else instances = Object.keys(this.class.instance).map(i => graph[i]);

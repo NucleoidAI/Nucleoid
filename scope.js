@@ -13,14 +13,4 @@ module.exports = class Scope {
     this.instance = {};
     this.graph = {};
   }
-
-  retrieve(instance) {
-    let index = this;
-
-    while (index) {
-      let value = index.instance[instance];
-      if (value) return value;
-      index = index.prior;
-    }
-  }
 };

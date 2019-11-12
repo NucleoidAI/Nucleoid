@@ -1,9 +1,10 @@
 var LET$INSTANCE = require("./let$instance");
+var Instance = require("./instance");
 
 class LET$CLASS {
   prepare() {}
   run(scope) {
-    let instance = scope.retrieve(this.class.name);
+    let instance = Instance.retrieve(scope, this.class.name);
 
     if (instance) {
       let statement = new LET$INSTANCE();

@@ -3,6 +3,7 @@ var Node = require("./node");
 var Identifier = require("./identifier");
 var graph = require("./graph");
 var OBJECT$INSTANCE = require("./object$instance");
+var Instance = require("./instance");
 
 module.exports = class OBJECT$CLASS extends Node {
   prepare() {
@@ -13,7 +14,7 @@ module.exports = class OBJECT$CLASS extends Node {
     let instances;
     let statements = [];
 
-    let instance = scope.retrieve(Identifier.root(this).name);
+    let instance = Instance.retrieve(scope, Identifier.root(this).name);
 
     if (instance) instances = [instance];
     else
