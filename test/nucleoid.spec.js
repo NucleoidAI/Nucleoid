@@ -212,7 +212,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("equivalency"), 40);
   });
 
-  it("runs let statement as an object", function() {
+  it("runs let statement as an object before declaration", function() {
+    nucleoid.run("class Plane { }");
+    nucleoid.run("class Trip { }");
+    nucleoid.run("plane1 = new Plane ( )");
+    nucleoid.run("plane1.speed = 903");
+    nucleoid.run("trip1 = new Trip ( )");
+    nucleoid.run("trip1.distance = 5540");
+    nucleoid.run(
+      "{ let trip = Plane.trip ; Plane.time = trip.distance / Plane.speed }"
+    );
+    nucleoid.run("plane1.trip = trip1");
+    assert.equal(nucleoid.run("plane1.time"), 6.135105204872647);
+  });
+
+  it("runs let statement as an object after declaration", function() {
     nucleoid.run("class Seller { }");
     nucleoid.run("class Commission { }");
     nucleoid.run("seller1 = new Seller ( )");
