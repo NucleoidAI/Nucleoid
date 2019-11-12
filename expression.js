@@ -28,19 +28,24 @@ module.exports = class EXPRESSION extends Value {
           let parts = token.split(".");
           let reference = Local.retrieve(scope, token);
 
-          if (reference) {
-            let value = eval(reference);
+          try {
+            if (reference) {
+              let value = eval(reference);
 
-            if (value == undefined || value == null) throw 0;
-            return reference;
-          } else if (graph[parts[0]]) {
-            let reference = "state." + Identifier.reference(token);
-            let value = eval(reference);
+              if (value == undefined || value == null) throw 0;
+              return reference;
+            } else if (graph[parts[0]]) {
+              let reference = "state." + Identifier.reference(token);
+              let value = eval(reference);
 
-            if (value == undefined || value == null) throw 1;
-            return reference;
-          } else {
-            return token;
+              if (value == undefined || value == null) throw 0;
+              return reference;
+            } else {
+              return token;
+            }
+          } catch (error) {
+            if (error instanceof TypeError) throw 1;
+            if (error == 0) throw 1;
           }
         });
 

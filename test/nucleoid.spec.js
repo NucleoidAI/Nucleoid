@@ -116,6 +116,13 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("person1.fullName"), null);
   });
 
+  it("assigns null if there is null pointer in expression", function() {
+    nucleoid.run("class Product { }");
+    nucleoid.run("product1 = new Product ( )");
+    nucleoid.run("score = product1.quality.score");
+    assert.equal(nucleoid.run("score"), null);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
