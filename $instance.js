@@ -1,7 +1,7 @@
 var $ = require("./$");
 var graph = require("./graph");
 var OBJECT = require("./object");
-var OBJECT$DECLARATION = require("./object$declaration");
+var OBJECT$CLASS = require("./object$class");
 var CLASS = require("./class");
 
 module.exports = function(cls, name, object) {
@@ -17,9 +17,9 @@ class $INSTANCE extends $ {
     if (
       this.object &&
       (graph[this.object] instanceof CLASS ||
-        graph[this.object] instanceof OBJECT$DECLARATION)
+        graph[this.object] instanceof OBJECT$CLASS)
     ) {
-      let statement = new OBJECT$DECLARATION();
+      let statement = new OBJECT$CLASS();
       statement.class = graph[this.class];
       statement.name = this.name;
       statement.object = graph[this.object];

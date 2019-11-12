@@ -1,6 +1,6 @@
 var BLOCK = require("./block");
 
-class BLOCK$PROTOTYPE extends BLOCK {
+class BLOCK$INSTANCE extends BLOCK {
   constructor() {
     super();
     this.statements = [];
@@ -12,5 +12,5 @@ class BLOCK$PROTOTYPE extends BLOCK {
   }
 }
 
-BLOCK$PROTOTYPE.prototype.type = "PROTOTYPE";
-module.exports = BLOCK$PROTOTYPE;
+BLOCK$INSTANCE.prototype.type = "INSTANCE";
+module.exports = BLOCK$INSTANCE;

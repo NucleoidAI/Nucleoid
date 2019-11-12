@@ -1,9 +1,9 @@
-var IF$PROTOTYPE = require("./if$prototype");
+var IF$INSTANCE = require("./if$instance");
 var $BLOCK = require("./$block");
 var Node = require("./node");
 var graph = require("./graph");
 
-class IF$DECLARATION extends Node {
+class IF$CLASS extends Node {
   prepare() {
     this.key = "if(" + this.condition.tokens.join("") + ")";
   }
@@ -18,7 +18,7 @@ class IF$DECLARATION extends Node {
     else instances = Object.keys(this.class.instance).map(i => graph[i]);
 
     for (let instance of instances) {
-      let statement = new IF$PROTOTYPE();
+      let statement = new IF$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
       statement.declaration = this;
@@ -37,5 +37,5 @@ class IF$DECLARATION extends Node {
   }
 }
 
-IF$DECLARATION.prototype.type = "DECLARATION";
-module.exports = IF$DECLARATION;
+IF$CLASS.prototype.type = "CLASS";
+module.exports = IF$CLASS;

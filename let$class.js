@@ -1,12 +1,12 @@
-var LET$PROTOTYPE = require("./let$prototype");
+var LET$INSTANCE = require("./let$instance");
 
-class LET$DECLARATION {
+class LET$CLASS {
   prepare() {}
   run(scope) {
     let instance = scope.retrieve(this.class.name);
 
     if (instance) {
-      let statement = new LET$PROTOTYPE();
+      let statement = new LET$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
       statement.name = this.name;
@@ -18,5 +18,5 @@ class LET$DECLARATION {
   graph() {}
 }
 
-LET$DECLARATION.prototype.type = "DECLARATION";
-module.exports = LET$DECLARATION;
+LET$CLASS.prototype.type = "CLASS";
+module.exports = LET$CLASS;

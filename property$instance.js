@@ -4,11 +4,11 @@ var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 var graph = require("./graph");
 
-class PROPERTY$PROTOTYPE extends PROPERTY {
+class PROPERTY$INSTANCE extends PROPERTY {
   prepare() {
     let declaration = Identifier.serialize(this.declaration);
     let parts = declaration.split(".");
-    parts[0] = Identifier.serialize(this.template);
+    parts[0] = Identifier.serialize(this.instance);
     let p = Identifier.splitLast(parts.join("."));
     this.object = graph[p[1]];
 
@@ -17,12 +17,12 @@ class PROPERTY$PROTOTYPE extends PROPERTY {
       this.declaration.value.tokens.map(token => {
         let parts = token.split(".");
         if (parts[0] == Identifier.root(this.declaration).name)
-          parts[0] = Identifier.serialize(this.template);
+          parts[0] = Identifier.serialize(this.instance);
         return parts.join(".");
       })
     );
   }
 }
 
-PROPERTY$PROTOTYPE.prototype.type = "PROTOTYPE";
-module.exports = PROPERTY$PROTOTYPE;
+PROPERTY$INSTANCE.prototype.type = "INSTANCE";
+module.exports = PROPERTY$INSTANCE;

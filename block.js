@@ -17,7 +17,7 @@ module.exports = class BLOCK extends Node {
     if (
       instruction.run &&
       !(instruction.statement instanceof $) &&
-      instruction.statement.type != "DECLARATION"
+      instruction.statement.type != "CLASS"
     ) {
       let statement = instruction.statement;
       let block = statement.block;

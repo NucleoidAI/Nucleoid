@@ -1,9 +1,9 @@
 var Node = require("./node");
-var BLOCK$PROTOTYPE = require("./block$prototype");
+var BLOCK$INSTANCE = require("./block$instance");
 var Instruction = require("./instruction");
 var graph = require("./graph");
 
-class BLOCK$DECLARATION extends Node {
+class BLOCK$CLASS extends Node {
   constructor() {
     super();
     this.statements = [];
@@ -19,7 +19,7 @@ class BLOCK$DECLARATION extends Node {
     else instances = Object.keys(this.class.instance).map(i => graph[i]);
 
     for (let instance of instances) {
-      let statement = new BLOCK$PROTOTYPE();
+      let statement = new BLOCK$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
       statement.statements = this.statements;
@@ -31,5 +31,5 @@ class BLOCK$DECLARATION extends Node {
   }
 }
 
-BLOCK$DECLARATION.prototype.type = "DECLARATION";
-module.exports = BLOCK$DECLARATION;
+BLOCK$CLASS.prototype.type = "CLASS";
+module.exports = BLOCK$CLASS;

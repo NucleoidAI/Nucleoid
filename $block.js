@@ -1,7 +1,7 @@
 var BLOCK = require("./block");
-var BLOCK$DECLARATION = require("./block$declaration");
-var LET$DECLARATION = require("./let$declaration");
-var PROPERTY$DECLARATION = require("./property$declaration");
+var BLOCK$CLASS = require("./block$class");
+var LET$CLASS = require("./let$class");
+var PROPERTY$CLASS = require("./property$class");
 var $ = require("./$");
 var Instruction = require("./instruction");
 
@@ -18,16 +18,16 @@ class $BLOCK extends $ {
     let list = this.statements;
     list[0] = dependent;
 
-    if (dependent instanceof LET$DECLARATION) {
-      let statement = new BLOCK$DECLARATION();
+    if (dependent instanceof LET$CLASS) {
+      let statement = new BLOCK$CLASS();
       statement.statements = list;
       statement.class = dependent.class;
       return [
         new Instruction(scope, statement, true, true, false),
         new Instruction(scope, statement, false, false, true)
       ];
-    } else if (dependent instanceof PROPERTY$DECLARATION) {
-      let statement = new BLOCK$DECLARATION();
+    } else if (dependent instanceof PROPERTY$CLASS) {
+      let statement = new BLOCK$CLASS();
       statement.statements = list;
       statement.class = dependent.object;
       return [

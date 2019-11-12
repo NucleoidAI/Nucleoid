@@ -1,6 +1,6 @@
 var Token = require("../token");
 var ES6$VARIABLE = require("./es6$variable");
-var ES6$PROTOTYPE = require("./es6$class");
+var ES6$CLASS = require("./es6$class");
 var ES6$ASSIGNMENT = require("./es6$assignment");
 var ES6$BLOCK = require("./es6$block");
 var ES6$DELETE = require("./es6$delete");
@@ -19,8 +19,7 @@ module.exports.compile = function compile(string) {
     else {
       if (context.token == "var") context = ES6$VARIABLE(string, offset);
       else if (context.token == "if") context = ES6$IF(string, offset);
-      else if (context.token == "class")
-        context = ES6$PROTOTYPE(string, offset);
+      else if (context.token == "class") context = ES6$CLASS(string, offset);
       else if (context.token == "{") context = ES6$BLOCK(string, offset);
       else if (context.token == "delete") context = ES6$DELETE(string, offset);
       else if (context.token == "let") context = ES6$LET(string, offset);
