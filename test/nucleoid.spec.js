@@ -606,7 +606,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("i2.replenishment"), undefined);
   });
 
-  it("runs block statement of class", function() {
+  it("runs block statement of class before initialization", function() {
+    nucleoid.run("class Stock { }"); //Stock
+    nucleoid.run(
+      "{ let change = Stock.before * 4 / 100 ; Stock.after = Stock.before + change }"
+    );
+    nucleoid.run("stock1 = new Stock ( )");
+    nucleoid.run("stock1.before = 57.25");
+    assert.equal(nucleoid.run("stock1.after"), 59.54);
+
+    nucleoid.run("stock1.before = 59.50");
+    assert.equal(nucleoid.run("stock1.after"), 61.88);
+  });
+
+  it("runs block statement of class after initialization", function() {
     nucleoid.run("class Purchase { }");
     nucleoid.run("purchase = new Purchase ( )");
     nucleoid.run("purchase.price = 99");
