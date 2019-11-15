@@ -21,7 +21,7 @@ module.exports.check = function(scope, assignment) {
   let parts = assignment.split(".");
 
   while (index) {
-    if (index.local[parts[0]]) return true;
+    if (index.local[parts[0]] !== undefined) return true;
     index = index.prior;
   }
 

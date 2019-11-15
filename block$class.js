@@ -24,11 +24,15 @@ class BLOCK$CLASS extends Node {
       statement.class = this.class;
       statement.instance = instance;
       statement.statements = this.statements;
+      statement.declaration = this;
       statements.push(new Instruction(scope, statement, true, true, false));
       statements.push(new Instruction(scope, statement, false, false, true));
     }
 
     return statements;
+  }
+  graph() {
+    this.class.declaration[this.id] = this;
   }
 }
 

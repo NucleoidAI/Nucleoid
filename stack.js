@@ -6,6 +6,7 @@ var Scope = require("./scope");
 var Node = require("./node");
 var $ = require("./$");
 var Value = require("./value");
+var BREAK = require("./break");
 
 module.exports.process = function(statements) {
   let root = new Scope();
@@ -22,7 +23,19 @@ module.exports.process = function(statements) {
     let instruction = instructions.shift();
     let statement = instruction.statement;
 
-    if (statement instanceof Value) {
+    if (statement instanceof BREAK) {
+      let inst = instructions[0];
+
+      while (
+        inst !== undefined &&
+        statement.block !== undefined &&
+        inst.scope.block === statement.block
+      ) {
+        instructions.shift();
+        inst = instructions[0];
+        statement.block.break = true;
+      }
+    } else if (statement instanceof Value) {
       result = statement.run(instruction.scope);
     } else {
       if (instruction.prepare) {

@@ -8,6 +8,12 @@ class BLOCK$INSTANCE extends BLOCK {
 
   run(scope) {
     scope.instance[this.class.name] = this.instance;
+
+    if (this.break) {
+      this.statements = this.declaration.statements;
+      this.break = false;
+    }
+
     return super.run(scope);
   }
 }

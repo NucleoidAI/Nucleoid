@@ -240,7 +240,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("seller1.pay"), 50000);
   });
 
-  it("reassigns let statement", function() {
+  it("reassigns let statement before initialization", function() {
+    nucleoid.run("class Order { }");
+    nucleoid.run("class Sale { }");
+    nucleoid.run(
+      "{ let sale = Order.sale ; sale.amount = sale.percentage / Order.amount * 100 }"
+    );
+    nucleoid.run("order1 = new Order ( )");
+    nucleoid.run("order1.amount = 100");
+    nucleoid.run("sale1 = new Sale ( )");
+    nucleoid.run("sale1.percentage = 10");
+    nucleoid.run("order1.sale = sale1");
+    assert.equal(nucleoid.run("sale1.amount"), 10);
+  });
+
+  it("reassigns let statement after initialization", function() {
     nucleoid.run("class Stock { }");
     nucleoid.run("class Trade { }");
     nucleoid.run("stock1 = new Stock ( )");

@@ -1,6 +1,7 @@
 var LET = require("./let");
 var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
+var BREAK = require("./break");
 
 class LET$INSTANCE extends LET {
   prepare() {
@@ -12,6 +13,16 @@ class LET$INSTANCE extends LET {
         return parts.join(".");
       })
     );
+  }
+
+  run(scope) {
+    try {
+      // eslint-disable-next-line no-unused-vars
+      let value = this.value.run(scope);
+      eval("scope.local." + this.name + "=value");
+    } catch (error) {
+      return new BREAK(scope.block);
+    }
   }
 }
 
