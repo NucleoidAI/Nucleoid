@@ -663,7 +663,7 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("building1.type"), "S");
   });
 
-  it("creates class assignment with multiple properties", function() {
+  it("creates class assignment with multiple properties before declaration", function() {
     nucleoid.run("class Room { }");
     nucleoid.run("Room.level = Room.number / 10");
     nucleoid.run("class Guest { }");
@@ -671,6 +671,16 @@ describe("Nucleoid", function() {
     nucleoid.run("guest1 = new Guest ( )");
     nucleoid.run("guest1.room.number = 30");
     assert.equal(nucleoid.run("guest1.room.level"), 3);
+  });
+
+  it("creates class assignment with multiple properties after declaration", function() {
+    nucleoid.run("class Channel { }");
+    nucleoid.run("class Frequency { }");
+    nucleoid.run("channel1 = new Channel ( )");
+    nucleoid.run("Channel.frequency = new Frequency ( )");
+    nucleoid.run("Frequency.hertz = 1 / Frequency.period");
+    nucleoid.run("channel1.frequency.period = 0.0025");
+    assert.equal(nucleoid.run("channel1.frequency.hertz"), 400);
   });
 
   it("creates class assignment as multiple properties as part of declaration", function() {
