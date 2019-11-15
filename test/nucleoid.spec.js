@@ -632,7 +632,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("purchase.retailPrice"), 228.85);
   });
 
-  it("runs nested if statement of class", function() {
+  it("runs nested if statement of class before initialization", function() {
+    nucleoid.run("class Mortgage { }");
+    nucleoid.run(
+      "{ let interest = Mortgage.annual / 12 ; if ( interest < 4 ) { Mortgage.rate = rate1 } }"
+    );
+    nucleoid.run("rate1 = 'EXCEPTIONAL'");
+    nucleoid.run("mortgage1 = new Mortgage ( )");
+    nucleoid.run("mortgage1.annual = 46");
+    assert.equal(nucleoid.run("mortgage1.rate"), "EXCEPTIONAL");
+
+    nucleoid.run("rate1 = 'E'");
+    assert.equal(nucleoid.run("mortgage1.rate"), "E");
+  });
+
+  it("runs nested if statement of class after initialization", function() {
     nucleoid.run("class Building { }");
     nucleoid.run("buildingType1 = 'SKYSCRAPER'");
     nucleoid.run("building1 = new Building ( )");
