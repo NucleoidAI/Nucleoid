@@ -11,10 +11,10 @@ module.exports = function ES6$ASSIGNMENT(string, offset) {
   let standard = (context = Token.next(string, context.offset));
   let point = Token.next(string, context.offset);
 
-  standard: if (point.token == "new") {
+  standard: if (point.token === "new") {
     context = Token.next(string, point.offset);
 
-    if (eval("typeof " + context.token) == "function") {
+    if (eval("typeof " + context.token) === "function") {
       context = standard;
       break standard;
     }

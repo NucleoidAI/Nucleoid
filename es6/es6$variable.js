@@ -10,7 +10,7 @@ module.exports = function ES6$VARIABLE(string, offset) {
   context = Token.next(string, context.offset);
 
   let check = Token.next(string, context.offset);
-  if (check.token == "new") {
+  if (check.token === "new") {
     context = Token.next(string, check.offset);
     let instance = $INSTANCE(context.token);
     context = Token.next(string, context.offset);

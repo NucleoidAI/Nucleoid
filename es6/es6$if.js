@@ -7,10 +7,10 @@ var ES6 = require("./es6");
 module.exports = function ES6$IF(string, offset) {
   let context = Token.next(string, offset);
 
-  if (context && context.token == "if")
+  if (context && context.token === "if")
     context = Token.next(string, context.offset);
 
-  if (context && context.token == "(") {
+  if (context && context.token === "(") {
     context = $VALUE(string, context.offset);
     let condition = context.statement;
 
@@ -21,10 +21,10 @@ module.exports = function ES6$IF(string, offset) {
     let elsePoint = Token.next(string, context.offset);
     let falseBlock;
 
-    if (elsePoint && elsePoint.token == "else") {
+    if (elsePoint && elsePoint.token === "else") {
       let check = Token.next(string, elsePoint.offset);
 
-      if (check && check.token == "if") {
+      if (check && check.token === "if") {
         context = ES6$IF(string, elsePoint.offset);
         falseBlock = context.statement;
       } else {

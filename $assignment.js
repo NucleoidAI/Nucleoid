@@ -14,7 +14,7 @@ module.exports = function(left, right) {
 
 class $ASSIGNMENT extends $ {
   run(scope) {
-    if (this.left.length == 1) {
+    if (this.left.length === 1) {
       return $VARIABLE(this.left[0], this.right);
     } else {
       let parts = Identifier.splitLast(this.left.join("."));

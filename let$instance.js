@@ -7,7 +7,7 @@ class LET$INSTANCE extends LET {
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map(token => {
         let parts = token.split(".");
-        if (parts[0] == this.class.name)
+        if (parts[0] === this.class.name)
           parts[0] = Identifier.serialize(this.instance, true);
         return parts.join(".");
       })

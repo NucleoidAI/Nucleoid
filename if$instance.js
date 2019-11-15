@@ -7,7 +7,7 @@ class IF$INSTANCE extends IF {
     this.condition = new EXPRESSION(
       this.declaration.condition.tokens.map(token => {
         let parts = token.split(".");
-        if (parts[0] == this.class.name)
+        if (parts[0] === this.class.name)
           parts[0] = Identifier.serialize(this.instance);
         return parts.join(".");
       })

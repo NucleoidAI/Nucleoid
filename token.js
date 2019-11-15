@@ -8,25 +8,25 @@ var next = (module.exports.next = function(string, offset) {
   let stringOn = false;
 
   let isDelimiter = function(character) {
-    return character == 32 ? true : false;
+    return character === 32 ? true : false;
   };
 
   for (; offset < string.length; offset++) {
     let character = string.charCodeAt(offset);
 
     if (stringOn) {
-      stringOn = character == 39 ? false : true;
+      stringOn = character === 39 ? false : true;
       token += String.fromCharCode(character);
       continue;
     }
 
-    if (!isDelimiter(character) && active == false) {
+    if (!isDelimiter(character) && active === false) {
       active = true;
-      stringOn = character == 39 ? true : false;
+      stringOn = character === 39 ? true : false;
       token += String.fromCharCode(character);
-    } else if (!isDelimiter(character) && active == true) {
+    } else if (!isDelimiter(character) && active === true) {
       token += String.fromCharCode(character);
-    } else if (isDelimiter(character) && active == true) {
+    } else if (isDelimiter(character) && active === true) {
       break;
     }
   }
@@ -49,17 +49,17 @@ module.exports.each = function(string, offset, callback, end) {
     offset = context.offset;
     let token = context.token;
 
-    if (token == ";") {
+    if (token === ";") {
       return { tokens: tokens, offset: offset };
     }
 
-    if (end && token == end) {
+    if (end && token === end) {
       return { tokens: tokens, offset: offset };
     }
 
-    if (token == "{") {
+    if (token === "{") {
       brackets++;
-    } else if (token == "}") {
+    } else if (token === "}") {
       brackets--;
     }
 
@@ -67,9 +67,9 @@ module.exports.each = function(string, offset, callback, end) {
       break;
     }
 
-    if (token == "(") {
+    if (token === "(") {
       parentheses++;
-    } else if (token == ")") {
+    } else if (token === ")") {
       parentheses--;
     }
 
@@ -91,9 +91,9 @@ module.exports.nextBlock = function(string, offset) {
   for (; offset < string.length; offset++) {
     let character = string.charAt(offset);
 
-    if (character == "{") {
+    if (character === "{") {
       brackets++;
-    } else if (character == "}") {
+    } else if (character === "}") {
       brackets--;
     }
 

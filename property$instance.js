@@ -16,7 +16,7 @@ class PROPERTY$INSTANCE extends PROPERTY {
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map(token => {
         let parts = token.split(".");
-        if (parts[0] == Identifier.root(this.declaration).name)
+        if (parts[0] === Identifier.root(this.declaration).name)
           parts[0] = Identifier.serialize(this.instance);
         return parts.join(".");
       })

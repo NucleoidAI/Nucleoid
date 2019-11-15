@@ -14,7 +14,7 @@ module.exports = class EXPRESSION extends Value {
   prepare() {
     this.tokens = this.tokens.map(token => {
       let parts = Identifier.splitLast(token);
-      if (parts[0] && parts[1] && parts[0] == "value" && graph[parts[1]])
+      if (parts[0] && parts[1] && parts[0] === "value" && graph[parts[1]])
         return JSON.stringify(eval("state." + parts[1]));
       else return token;
     });
@@ -32,20 +32,20 @@ module.exports = class EXPRESSION extends Value {
             if (reference) {
               let value = eval(reference);
 
-              if (value == undefined || value == null) throw 0;
+              if (value === undefined || value === null) throw 0;
               return reference;
             } else if (graph[parts[0]]) {
               let reference = "state." + Identifier.reference(token);
               let value = eval(reference);
 
-              if (value == undefined || value == null) throw 0;
+              if (value === undefined || value === null) throw 0;
               return reference;
             } else {
               return token;
             }
           } catch (error) {
             if (error instanceof TypeError) throw 1;
-            if (error == 0) throw 1;
+            if (error === 0) throw 1;
           }
         });
 

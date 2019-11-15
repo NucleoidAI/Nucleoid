@@ -18,7 +18,7 @@ module.exports.process = function(statements) {
   let dependencies = [];
   let dependents = [];
 
-  while (instructions.length != 0) {
+  while (instructions.length !== 0) {
     let instruction = instructions.shift();
     let statement = instruction.statement;
 
