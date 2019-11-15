@@ -373,7 +373,20 @@ describe("Nucleoid", function() {
     }, TypeError);
   });
 
-  it("assigns object to property", function() {
+  it("assigns object to property before initialization", function() {
+    nucleoid.run("class Agent { }");
+    nucleoid.run("class Distance { }");
+    nucleoid.run(
+      "Distance.total = Math.sqrt ( Distance.x * Distance.x + Distance.y * Distance.y )"
+    );
+    nucleoid.run("agent1 = new Agent ( )");
+    nucleoid.run("agent1.distance = new Distance ( )");
+    nucleoid.run("agent1.distance.x = 3");
+    nucleoid.run("agent1.distance.y = 4");
+    assert.equal(nucleoid.run("agent1.distance.total"), 5);
+  });
+
+  it("assigns object to property after initialization", function() {
     nucleoid.run("class Product { }");
     nucleoid.run("product1 = new Product ( )");
     nucleoid.run("class Quality { }");
