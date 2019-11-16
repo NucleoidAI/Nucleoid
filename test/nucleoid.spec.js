@@ -131,6 +131,12 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("Students.length"), 1);
   });
 
+  it("assigns unique variable for instance without variable name defined", function() {
+    nucleoid.run("class Vehicle { }");
+    nucleoid.run("new Vehicle ( )");
+    assert.equal(nucleoid.run("Vehicles.length"), 1);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");

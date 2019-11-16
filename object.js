@@ -5,11 +5,16 @@ var $VALUE = require("./$value");
 
 module.exports = class OBJECT extends Node {
   prepare() {
-    this.key = Identifier.serialize(this);
+    if (this.name === undefined && this.object === undefined) {
+      this.key = this.class.name.toLowerCase() + this.sequence;
+      this.name = this.key;
+    } else {
+      this.key = Identifier.serialize(this);
+    }
   }
 
   run(scope) {
-    let name = Identifier.serialize(this);
+    let name = this.key;
 
     eval("state." + name + " = new state." + this.class.name + "()");
     scope.instance[this.class.name] = this;

@@ -23,6 +23,7 @@ module.exports.compile = function compile(string) {
       else if (context.token === "{") context = ES6$BLOCK(string, offset);
       else if (context.token === "delete") context = ES6$DELETE(string, offset);
       else if (context.token === "let") context = ES6$LET(string, offset);
+      else if (context.token === "new") context = ES6$VARIABLE(string, offset);
       else context = $VALUE(string, offset);
     }
 
