@@ -664,6 +664,28 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("purchase.retailPrice"), 228.85);
   });
 
+  it("runs nested block statement of class before initialization", function() {
+    nucleoid.run("class Compound { }");
+    nucleoid.run(
+      "{ let mol = 69.94 / Compound.substance ; { Compound.sample = Math.floor ( mol * Compound.mol ) }"
+    );
+    nucleoid.run("compound1 = new Compound ( )");
+    nucleoid.run("compound1.substance = 55.85");
+    nucleoid.run("compound1.mol = 1000");
+    assert.equal(nucleoid.run("compound1.sample"), 1252);
+  });
+
+  it("runs nested block statement of class after initialization", function() {
+    nucleoid.run("class Bug { }");
+    nucleoid.run("bug1 = new Bug ( )");
+    nucleoid.run("bug1.initialScore = 1000");
+    nucleoid.run("bug1.aging = 24");
+    nucleoid.run(
+      "{ let score = Bug.aging * 10 ; { Bug.priorityScore = score + Bug.initialScore } }"
+    );
+    assert.equal(nucleoid.run("bug1.priorityScore"), 1240);
+  });
+
   it("runs nested if statement of class before initialization", function() {
     nucleoid.run("class Mortgage { }");
     nucleoid.run(
