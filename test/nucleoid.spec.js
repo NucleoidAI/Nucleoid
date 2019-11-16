@@ -103,6 +103,24 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("number"), 3);
   });
 
+  it("uses local variable at lowest scope as priority", function() {
+    nucleoid.run("pi = 3.14");
+    nucleoid.run("number = pi");
+
+    nucleoid.run("{ let pi = 3.141 ; { number = null ; { number = pi } } }");
+    assert.equal(nucleoid.run("number"), 3.141);
+
+    nucleoid.run(
+      "{ let pi = 3.141 ; { let number = pi ; { let pi = 3.1415 ; number = pi } } }"
+    );
+    assert.equal(nucleoid.run("number"), 3.1415);
+
+    nucleoid.run(
+      "{ let pi = 3.141 ; number = pi ; { let pi = 3.1415 ; let number = pi ; { let pi = 3.14159 ; number = pi } } }"
+    );
+    assert.equal(nucleoid.run("number"), 3.14159);
+  });
+
   it("assigns null if any dependencies in expression is undefined or null", function() {
     nucleoid.run("class Person { }");
     nucleoid.run("person1 = new Person ( )");
