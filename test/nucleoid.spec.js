@@ -123,6 +123,14 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("score"), null);
   });
 
+  it("places instance in the list of class when created", function() {
+    nucleoid.run("class Student { }");
+    assert.equal(nucleoid.run("Array.isArray ( Students )"), true);
+
+    nucleoid.run("student1 = new Student ( )");
+    assert.equal(nucleoid.run("Students.length"), 1);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
