@@ -697,7 +697,7 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("channel1.frequency.hertz"), 400);
   });
 
-  it("creates class assignment as multiple properties as part of declaration", function() {
+  it("creates class assignment as multiple properties as part of declaration before initialization", function() {
     nucleoid.run("class Hospital { }");
     nucleoid.run("class Clinic { }");
     nucleoid.run("Hospital.clinic = new Clinic ( )");
@@ -705,6 +705,16 @@ describe("Nucleoid", function() {
     nucleoid.run("hospital1 = new Hospital ( )");
     nucleoid.run("hospital1.clinic.beds = 2678");
     assert.equal(nucleoid.run("hospital1.patients"), 1997788);
+  });
+
+  it("creates class assignment as multiple properties as part of declaration after initialization", function() {
+    nucleoid.run("class Server { }");
+    nucleoid.run("class OS { }");
+    nucleoid.run("Server.os = new OS ( )");
+    nucleoid.run("server1 = new Server ( )");
+    nucleoid.run("server1.os.version = 14");
+    nucleoid.run("Server.build = Server.os.version + '.526291'");
+    assert.equal(nucleoid.run("server1.build"), "14.526291");
   });
 
   it("creates class assignment only if instance is defined", function() {
