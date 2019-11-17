@@ -451,6 +451,20 @@ describe("Nucleoid", function() {
     }, TypeError);
   });
 
+  it("keeps as null if value of property is null", function() {
+    nucleoid.run("class Interest { }");
+    nucleoid.run("interest1 = new Interest ( )");
+    nucleoid.run("interest1.rate = 3");
+    nucleoid.run("interest1.amount = null");
+    nucleoid.run(
+      "interest1.annual = interest1.rate * interest1.amount.value / 100"
+    );
+    assert.equal(nucleoid.run("interest1.annual"), 0);
+
+    nucleoid.run("interest1.amount = 10000");
+    assert.equal(nucleoid.run("interest1.annual"), 0);
+  });
+
   it("updates if block of property", function() {
     nucleoid.run("class Account { }");
     nucleoid.run("account = new Account ( )");
