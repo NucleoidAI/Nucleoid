@@ -442,6 +442,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("weight1.force"), 1352);
   });
 
+  it("rejects value of property if property is not defined", function() {
+    nucleoid.run("class Travel { }");
+    nucleoid.run("travel1 = new Travel ( )");
+    nucleoid.run("travel1.speed = 65");
+    assert.throws(function() {
+      nucleoid.run("travel1.time = travel1.distance.value / travel1.speed");
+    }, TypeError);
+  });
+
   it("updates if block of property", function() {
     nucleoid.run("class Account { }");
     nucleoid.run("account = new Account ( )");
