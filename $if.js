@@ -23,6 +23,7 @@ class $IF extends $ {
         statement.class = graph[prefix];
         statement.condition = this.condition.run();
         statement.true = this.true;
+        statement.false = this.false;
         return [
           new Instruction(scope, statement, true, true, false),
           new Instruction(scope, statement, false, false, true)

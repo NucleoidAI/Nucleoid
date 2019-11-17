@@ -687,6 +687,39 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("i2.replenishment"), undefined);
   });
 
+  it("creates else statement of class before initialization", function() {
+    nucleoid.run("class Count { }");
+    nucleoid.run(
+      "if ( Count.max > 1000 ) { Count.reset = urgent } else { Count.reset = regular }"
+    );
+    nucleoid.run("urgent = 'URGENT'");
+    nucleoid.run("regular = 'REGULAR'");
+    nucleoid.run("count1 = new Count ( )");
+    nucleoid.run("count1.max = 850");
+    assert.equal(nucleoid.run("count1.reset"), "REGULAR");
+
+    nucleoid.run("regular = 'R'");
+    assert.equal(nucleoid.run("count1.reset"), "R");
+  });
+
+  it("creates else statement of class after initialization", function() {
+    nucleoid.run("class Concentration { }");
+    nucleoid.run("serialDilution = '(c1V1+c2V2)/(V1+V2)'");
+    nucleoid.run("directDilution = 'c1/V1'");
+    nucleoid.run("concentration1 = new Concentration ( )");
+    nucleoid.run("concentration1.substances = 2");
+    nucleoid.run(
+      "if ( Concentration.substances == 1 ) { Concentration.formula = directDilution } else { Concentration.formula = serialDilution }"
+    );
+    assert.equal(nucleoid.run("concentration1.formula"), "(c1V1+c2V2)/(V1+V2)");
+
+    nucleoid.run("serialDilution = '(c1V1+c2V2+c3V3)/(V1+V2+V3)'");
+    assert.equal(
+      nucleoid.run("concentration1.formula"),
+      "(c1V1+c2V2+c3V3)/(V1+V2+V3)"
+    );
+  });
+
   it("runs block statement of class before initialization", function() {
     nucleoid.run("class Stock { }"); //Stock
     nucleoid.run(
