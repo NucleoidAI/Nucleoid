@@ -48,20 +48,6 @@ describe("Nucleoid", function() {
     );
   });
 
-  it("uses value property to indicate using value only", function() {
-    nucleoid.run("goldenRatio = 1.618");
-    nucleoid.run("altitude = 10");
-
-    nucleoid.run("width = goldenRatio.value * altitude");
-    assert.equal(nucleoid.run("width"), 16.18);
-
-    nucleoid.run("goldenRatio = 1.62");
-    assert.equal(nucleoid.run("width"), 16.18);
-
-    nucleoid.run("altitude = 100");
-    assert.equal(nucleoid.run("width"), 161.8);
-  });
-
   it("retrieves value by variable", function() {
     nucleoid.run("number = -1");
     assert.equal(nucleoid.run("number"), -1);
@@ -181,6 +167,20 @@ describe("Nucleoid", function() {
     assert.throws(function() {
       nucleoid.run("q");
     }, ReferenceError);
+  });
+
+  it("uses value property to indicate using only value of variable", function() {
+    nucleoid.run("goldenRatio = 1.618");
+    nucleoid.run("altitude = 10");
+
+    nucleoid.run("width = goldenRatio.value * altitude");
+    assert.equal(nucleoid.run("width"), 16.18);
+
+    nucleoid.run("goldenRatio = 1.62");
+    assert.equal(nucleoid.run("width"), 16.18);
+
+    nucleoid.run("altitude = 100");
+    assert.equal(nucleoid.run("width"), 161.8);
   });
 
   it("creates if statement of variable", function() {
@@ -428,6 +428,18 @@ describe("Nucleoid", function() {
       "Quality.class = String.fromCharCode ( 65 + Math.floor ( Quality.score / 10 ) )"
     );
     assert.equal(nucleoid.run("product1.quality.class"), "B");
+  });
+
+  it("uses value property to indicate using only value of property", function() {
+    nucleoid.run("class Weight { }");
+    nucleoid.run("weight1 = new Weight ( )");
+    nucleoid.run("weight1.gravity = 1.352");
+    nucleoid.run("weight1.mass = 1000");
+    nucleoid.run("weight1.force = weight1.gravity * weight1.mass.value");
+    assert.equal(nucleoid.run("weight1.force"), 1352);
+
+    nucleoid.run("weight1.mass = 2000");
+    assert.equal(nucleoid.run("weight1.force"), 1352);
   });
 
   it("updates if block of property", function() {

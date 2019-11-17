@@ -3,8 +3,9 @@ var Node = require("./node");
 var Identifier = require("./identifier");
 
 module.exports = class PROPERTY extends Node {
-  prepare() {
+  prepare(scope) {
     this.key = Identifier.serialize(this);
+    this.value.prepare(scope);
   }
 
   run(scope) {
