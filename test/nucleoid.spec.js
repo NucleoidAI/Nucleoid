@@ -117,6 +117,12 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("person1.fullName"), null);
   });
 
+  it("keeps as null if any dependencies as in local is null", function() {
+    nucleoid.run("a = 1");
+    nucleoid.run("{ let b = null ; c = b / a }");
+    assert.equal(nucleoid.run("c"), 0);
+  });
+
   it("keeps as null if any dependencies in expression is null", function() {
     nucleoid.run("class Schedule { }");
     nucleoid.run("schedule1 = new Schedule ( )");
