@@ -107,7 +107,7 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("number"), 3.14159);
   });
 
-  it("assigns null if any dependencies in expression is undefined or null", function() {
+  it("assigns null if any dependencies in expression is undefined", function() {
     nucleoid.run("class Person { }");
     nucleoid.run("person1 = new Person ( )");
     nucleoid.run("person1.lastName = 'Brown'");
@@ -115,9 +115,17 @@ describe("Nucleoid", function() {
       "person1.fullName = person1.firstName + ' ' + person1.lastName"
     );
     assert.equal(nucleoid.run("person1.fullName"), null);
+  });
 
-    nucleoid.run("person1.firstName = null");
-    assert.equal(nucleoid.run("person1.fullName"), null);
+  it("keeps as null if any dependencies in expression is null", function() {
+    nucleoid.run("class Schedule { }");
+    nucleoid.run("schedule1 = new Schedule ( )");
+    nucleoid.run("schedule1.expression = '0 */2 * * *'");
+    nucleoid.run("schedule1.script = null");
+    nucleoid.run(
+      "schedule1.run = schedule1.expression + '\t' + schedule1.script"
+    );
+    assert.equal(nucleoid.run("schedule1.run"), "0 */2 * * *\tnull");
   });
 
   it("assigns null if there is null pointer in expression", function() {

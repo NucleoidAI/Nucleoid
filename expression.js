@@ -41,7 +41,7 @@ module.exports = class EXPRESSION extends Value {
               let reference = "state." + Identifier.reference(token);
               let value = eval(reference);
 
-              if (value === undefined || value === null) throw 0;
+              if (value === undefined) throw 0;
               return reference;
             } else {
               return token;
