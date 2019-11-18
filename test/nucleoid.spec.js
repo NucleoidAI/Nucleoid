@@ -155,6 +155,13 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("Vehicles.length"), 1);
   });
 
+  it("throws error as a string", function() {
+    nucleoid.run("k = 99");
+    assert.throws(function() {
+      nucleoid.run("if ( k >= 99 ) { throw 'INVALID' }");
+    }, "INVALID");
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
