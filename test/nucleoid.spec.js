@@ -799,6 +799,36 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("building1.type"), "S");
   });
 
+  it("creates nested else statement of class before initialization", function() {
+    nucleoid.run("class Account { }");
+    nucleoid.run("noAlert = 'NO_ALERT'");
+    nucleoid.run("lowAlert = 'LOW_ALERT'");
+    nucleoid.run(
+      "{ let balance = Account.balance ; if ( balance > 1000 ) { Account.alert = noAlert } else { Account.alert = lowAlert } }"
+    );
+    nucleoid.run("account1 = new Account ( )");
+    nucleoid.run("account1.balance = 950");
+    assert.equal(nucleoid.run("account1.alert"), "LOW_ALERT");
+
+    nucleoid.run("lowAlert = 'L'");
+    assert.equal(nucleoid.run("account1.alert"), "L");
+  });
+
+  it("creates nested else statement of class after initialization", function() {
+    nucleoid.run("class Question { }");
+    nucleoid.run("high = 'HIGH'");
+    nucleoid.run("low = 'LOW'");
+    nucleoid.run("question1 = new Question ( )");
+    nucleoid.run("question1.count = 1");
+    nucleoid.run(
+      "{ let score = Question.count * 10 ; if ( score > 100 ) { Question.type = high } else { Question.type = low } }"
+    );
+    assert.equal(nucleoid.run("question1.type"), "LOW");
+
+    nucleoid.run("low = 'L'");
+    assert.equal(nucleoid.run("question1.type"), "L");
+  });
+
   it("creates class assignment with multiple properties before declaration", function() {
     nucleoid.run("class Room { }");
     nucleoid.run("Room.level = Room.number / 10");
