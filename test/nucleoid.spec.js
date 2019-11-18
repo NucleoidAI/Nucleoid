@@ -486,6 +486,14 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("interest1.annual"), 0);
   });
 
+  it("keeps same as its value when value property used for local", function() {
+    nucleoid.run("speedOfLight = 299792");
+    nucleoid.run(
+      "{ let time = speedOfLight / 225623 ; roundTrip = time.value * 2 }"
+    );
+    assert.equal(nucleoid.run("roundTrip"), 2.6574595675086314);
+  });
+
   it("updates if block of property", function() {
     nucleoid.run("class Account { }");
     nucleoid.run("account = new Account ( )");
