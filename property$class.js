@@ -7,6 +7,12 @@ var Instance = require("./instance");
 class PROPERTY$CLASS extends Node {
   prepare() {
     this.key = Identifier.serialize(this);
+    this.value.tokens.forEach(token => {
+      let parts = Identifier.splitLast(token);
+      if (parts[0] && parts[1] && parts[0] === "value") {
+        throw new TypeError();
+      }
+    });
   }
 
   run(scope) {

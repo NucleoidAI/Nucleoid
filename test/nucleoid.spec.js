@@ -890,4 +890,11 @@ describe("Nucleoid", function() {
       nucleoid.run("Phone.line.wired = true");
     }, TypeError);
   });
+
+  it("rejects using value of class", function() {
+    nucleoid.run("class Employee { }");
+    assert.throws(function() {
+      nucleoid.run("Employee.annual = Employee.biweekly.value * 52");
+    }, TypeError);
+  });
 });
