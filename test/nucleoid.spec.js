@@ -451,6 +451,14 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("product1.quality.class"), "B");
   });
 
+  it("rejects if property name is value", function() {
+    nucleoid.run("class Number { }");
+    nucleoid.run("value = new Number ( )");
+    assert.throws(function() {
+      nucleoid.run("value.value = 2147483647");
+    }, TypeError);
+  });
+
   it("uses value property to indicate using only value of property", function() {
     nucleoid.run("class Weight { }");
     nucleoid.run("weight1 = new Weight ( )");

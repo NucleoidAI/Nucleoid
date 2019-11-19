@@ -19,6 +19,10 @@ class $PROPERTY extends $ {
       throw TypeError();
     }
 
+    if (this.name === "value") {
+      throw new TypeError();
+    }
+
     if (
       graph[this.object] instanceof CLASS ||
       graph[this.object] instanceof OBJECT$CLASS
