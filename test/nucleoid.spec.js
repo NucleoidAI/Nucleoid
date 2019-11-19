@@ -536,6 +536,9 @@ describe("Nucleoid", function() {
     nucleoid.run("agent.report = agent.time + '@' + agent.location");
     assert.equal(nucleoid.run("agent.report"), "52926163455@CITY");
 
+    nucleoid.run("delete agent.time");
+    assert.equal(nucleoid.run("agent.report"), undefined);
+
     nucleoid.run("delete agent.report");
     assert.equal(nucleoid.run("agent.report"), undefined);
   });

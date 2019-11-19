@@ -1,16 +1,16 @@
 var $ = require("./$");
 var DELETE = require("./delete");
 
-module.exports = function(name) {
+module.exports = function(key) {
   let statement = new $DELETE();
-  statement.name = name;
+  statement.key = key;
   return statement;
 };
 
 class $DELETE extends $ {
   run() {
     let statement = new DELETE();
-    statement.name = this.name;
+    statement.key = this.key;
     return statement;
   }
 }
