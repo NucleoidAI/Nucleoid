@@ -31,6 +31,33 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("au == 149597870700"), true);
   });
 
+  it("validates syntax of class", function() {
+    assert.throws(
+      function() {
+        nucleoid.run("class Ratio ( }");
+      },
+      error =>
+        error instanceof SyntaxError && error.message === "Unexpected token ("
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("class Ratio { calculate() }");
+      },
+      error =>
+        error instanceof SyntaxError &&
+        error.message === "Methods are not supported."
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("class Ratio { calculate() )");
+      },
+      error =>
+        error instanceof SyntaxError && error.message === "Unexpected token )"
+    );
+  });
+
   it("supports string in expression", function() {
     assert.equal(nucleoid.run("'New String'"), "New String");
   });
@@ -845,7 +872,7 @@ describe("Nucleoid", function() {
   it("runs nested block statement of class before initialization", function() {
     nucleoid.run("class Compound { }");
     nucleoid.run(
-      "{ let mol = 69.94 / Compound.substance ; { Compound.sample = Math.floor ( mol * Compound.mol ) }"
+      "{ let mol = 69.94 / Compound.substance ; { Compound.sample = Math.floor ( mol * Compound.mol ) } }"
     );
     nucleoid.run("compound1 = new Compound ( )");
     nucleoid.run("compound1.substance = 55.85");

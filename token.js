@@ -87,9 +87,10 @@ module.exports.each = function(string, offset, callback, end) {
 module.exports.nextBlock = function(string, offset) {
   let block = "";
   let brackets = 0;
+  let character;
 
   for (; offset < string.length; offset++) {
-    let character = string.charAt(offset);
+    character = string.charAt(offset);
 
     if (character === "{") {
       brackets++;
@@ -98,12 +99,12 @@ module.exports.nextBlock = function(string, offset) {
     }
 
     if (brackets < 0) {
-      break;
+      offset++;
+      return { block: block, offset: offset };
     } else {
       block += character;
     }
   }
 
-  offset++;
-  return { block: block, offset: offset };
+  throw new SyntaxError(`Unexpected token ${character}`);
 };
