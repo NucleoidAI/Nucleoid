@@ -370,6 +370,10 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("bug2.selected"), true);
   });
 
+  it("skips if block is empty", function() {
+    nucleoid.run("{ }");
+  });
+
   it("runs block statement of variable", function() {
     nucleoid.run("h = 1");
     nucleoid.run("{ let value = h * 2 ; j = value * 2 }");
