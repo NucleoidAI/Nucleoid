@@ -556,6 +556,24 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("toy.shape"), "CIRCLE");
   });
 
+  it("creates else statement of property", function() {
+    nucleoid.run("class Engine { }");
+    nucleoid.run("engine1 = new Engine ( )");
+    nucleoid.run("engine1.type = 'V8'");
+    nucleoid.run("mpl = 'MPL'");
+    nucleoid.run("bsd = 'BSD'");
+    nucleoid.run(
+      "if ( engine1.type == 'Gecko' ) { engine1.license = mpl } else { engine1.license = bsd }"
+    );
+    assert.equal(nucleoid.run("engine1.license"), "BSD");
+
+    nucleoid.run("bsd = 'Berkeley Software Distribution'");
+    assert.equal(
+      nucleoid.run("engine1.license"),
+      "Berkeley Software Distribution"
+    );
+  });
+
   it("updates property assignment", function() {
     nucleoid.run("class Matter { }");
     nucleoid.run("matter1 = new Matter ( )");
