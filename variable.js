@@ -4,7 +4,7 @@ var Node = require("./node");
 module.exports = class VARIABLE extends Node {
   prepare(scope) {
     this.key = this.name;
-    this.value.prepare(scope);
+    this.value.prepare(scope, this.key);
   }
 
   run(scope) {

@@ -180,6 +180,12 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("c"), 7);
   });
 
+  it("uses its value when self variable used", function() {
+    nucleoid.run("radius = 10");
+    nucleoid.run("radius = radius + 10");
+    assert.equal(nucleoid.run("radius"), 20);
+  });
+
   it("deletes variable assignment", function() {
     nucleoid.run("t = 1");
     nucleoid.run("q = t + 1");

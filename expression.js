@@ -11,20 +11,22 @@ module.exports = class EXPRESSION extends Value {
     this.tokens = tokens;
   }
 
-  prepare(scope) {
-    this.tokens = this.tokens.map(token => {
-      let parts = Identifier.splitLast(token);
-      if (parts[0] && parts[1] && parts[0] === "value") {
-        if (Local.check(scope, parts[1])) {
-          return parts[1];
-        }
+  prepare(scope, self) {
+    this.tokens = this.tokens
+      .map(token => (token === self ? token + ".value" : token))
+      .map(token => {
+        let parts = Identifier.splitLast(token);
+        if (parts[0] && parts[1] && parts[0] === "value") {
+          if (Local.check(scope, parts[1])) {
+            return parts[1];
+          }
 
-        if (graph[parts[1]] !== undefined) {
-          let value = eval("state." + parts[1]);
-          return JSON.stringify(value);
-        } else throw TypeError();
-      } else return token;
-    });
+          if (graph[parts[1]] !== undefined) {
+            let value = eval("state." + parts[1]);
+            return JSON.stringify(value);
+          } else throw TypeError();
+        } else return token;
+      });
   }
 
   run(scope) {
