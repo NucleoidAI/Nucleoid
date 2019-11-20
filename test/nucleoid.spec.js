@@ -463,6 +463,14 @@ describe("Nucleoid", function() {
     }, TypeError);
   });
 
+  it("uses its value when self property used", function() {
+    nucleoid.run("class Construction { }");
+    nucleoid.run("construction1 = new Construction ( ) ");
+    nucleoid.run("construction1.timeline = 120");
+    nucleoid.run("construction1.timeline = 2 * construction1.timeline");
+    assert.equal(nucleoid.run("construction1.timeline"), 240);
+  });
+
   it("assigns object to property before initialization", function() {
     nucleoid.run("class Agent { }");
     nucleoid.run("class Distance { }");
