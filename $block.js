@@ -1,9 +1,12 @@
 var BLOCK = require("./block");
 var BLOCK$CLASS = require("./block$class");
-var LET$CLASS = require("./let$class");
 var PROPERTY$CLASS = require("./property$class");
 var $ = require("./$");
 var Instruction = require("./instruction");
+var Scope = require("./scope");
+var LET = require("./let");
+var OBJECT$CLASS = require("./object$class");
+var REFERENCE = require("./reference");
 
 module.exports = function(statements) {
   let statement = new $BLOCK();
@@ -13,30 +16,44 @@ module.exports = function(statements) {
 
 class $BLOCK extends $ {
   run(scope) {
-    let dependent = this.statements[0];
-    while (dependent instanceof $) dependent = dependent.run(scope);
-    let list = this.statements;
-    list[0] = dependent;
+    let test = new Scope();
+    let cls = null;
 
-    if (dependent instanceof LET$CLASS) {
+    test: for (let statement of this.statements) {
+      while (statement instanceof $) {
+        statement = statement.run(test);
+      }
+
+      if (statement instanceof LET && !(statement.value instanceof REFERENCE)) {
+        statement.run(test);
+        continue;
+      } else if (statement.type === "CLASS") {
+        if (
+          statement instanceof PROPERTY$CLASS ||
+          statement instanceof OBJECT$CLASS
+        ) {
+          cls = statement.object;
+        } else {
+          cls = statement.class;
+        }
+
+        break test;
+      } else {
+        break test;
+      }
+    }
+
+    if (cls) {
       let statement = new BLOCK$CLASS();
-      statement.statements = list;
-      statement.class = dependent.class;
-      return [
-        new Instruction(scope, statement, true, true, false),
-        new Instruction(scope, statement, false, false, true)
-      ];
-    } else if (dependent instanceof PROPERTY$CLASS) {
-      let statement = new BLOCK$CLASS();
-      statement.statements = list;
-      statement.class = dependent.object;
+      statement.statements = this.statements;
+      statement.class = cls;
       return [
         new Instruction(scope, statement, true, true, false),
         new Instruction(scope, statement, false, false, true)
       ];
     } else {
       let statement = new BLOCK();
-      statement.statements = list;
+      statement.statements = this.statements;
 
       return [
         new Instruction(scope, statement, true, true, false),

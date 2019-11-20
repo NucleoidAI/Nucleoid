@@ -29,7 +29,10 @@ module.exports.compile = function compile(string) {
       else context = $VALUE(string, offset);
     }
 
-    list.push(context.statement);
+    if (context.statement) {
+      list.push(context.statement);
+    }
+
     offset = context.offset;
   }
 

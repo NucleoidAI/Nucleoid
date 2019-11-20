@@ -3,6 +3,10 @@ var graph = require("./graph");
 var CLASS = require("./class");
 var LET = require("./let");
 var LET$CLASS = require("./let$class");
+var OBJECT = require("./object");
+var LET$OBJECT = require("./let$object");
+var EXPRESSION = require("./expression");
+var REFERENCE = require("./reference");
 
 module.exports = function(name, value) {
   let statement = new $LET();
@@ -13,21 +17,35 @@ module.exports = function(name, value) {
 
 class $LET extends $ {
   run() {
-    for (let token of this.value.tokens) {
-      let prefix = token.split(".")[0];
+    let value = this.value.run();
 
-      if (graph[prefix] && graph[prefix] instanceof CLASS) {
-        let statement = new LET$CLASS();
-        statement.class = graph[prefix];
-        statement.name = this.name;
-        statement.value = this.value.run();
-        return statement;
+    if (value instanceof EXPRESSION) {
+      for (let token of value.tokens) {
+        let prefix = token.split(".")[0];
+
+        if (graph[prefix] && graph[prefix] instanceof CLASS) {
+          let statement = new LET$CLASS();
+          statement.class = graph[prefix];
+          statement.name = this.name;
+          statement.value = value;
+          return statement;
+        }
       }
-    }
 
-    let statement = new LET();
-    statement.name = this.name;
-    statement.value = this.value.run();
-    return statement;
+      let statement = new LET();
+      statement.name = this.name;
+      statement.value = value;
+      return statement;
+    } else if (value instanceof REFERENCE) {
+      let statement = new LET();
+      statement.name = this.name;
+      statement.value = value;
+      return statement;
+    } else if (value instanceof OBJECT) {
+      let statement = new LET$OBJECT();
+      statement.name = this.name;
+      statement.class = value.class;
+      return statement;
+    }
   }
 }

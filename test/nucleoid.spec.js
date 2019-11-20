@@ -265,6 +265,33 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("equivalency"), 40);
   });
 
+  it("runs let statement of class as new instance before initialization", function() {
+    nucleoid.run("class Member { }");
+    nucleoid.run("class Registration { }");
+    nucleoid.run(
+      "{ let registration = new Registration ( ) ; registration.date = new Date ( '2019-1-2' ) ; Member.registration = registration }"
+    );
+
+    nucleoid.run("member1 = new Member ( )");
+    assert.equal(
+      nucleoid.run("member1.registration.date.toDateString()"),
+      "Wed Jan 02 2019"
+    );
+  });
+
+  it("runs let statement of class as new instance after initialization", function() {
+    nucleoid.run("class Distance { }");
+    nucleoid.run("class Location { }");
+    nucleoid.run("distance1 = new Distance ( )");
+    nucleoid.run(
+      "{ let location = new Location ( ) ; location.coordinates = '40.6976701,-74.2598779' ; Distance.startingPoint = location }"
+    );
+    assert.equal(
+      nucleoid.run("distance1.startingPoint.coordinates"),
+      "40.6976701,-74.2598779"
+    );
+  });
+
   it("runs let statement as an object before declaration", function() {
     nucleoid.run("class Plane { }");
     nucleoid.run("class Trip { }");

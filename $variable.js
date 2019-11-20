@@ -1,6 +1,7 @@
 var $ = require("./$");
 var VARIABLE = require("./variable");
 var Value = require("./value");
+var OBJECT = require("./object");
 
 module.exports = function(name, value) {
   let statement = new $VARIABLE();
@@ -18,7 +19,7 @@ class $VARIABLE extends $ {
       statement.name = this.name;
       statement.value = value;
       return statement;
-    } else {
+    } else if (value instanceof OBJECT) {
       let statement = value;
       statement.name = this.name;
       return statement;

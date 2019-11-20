@@ -21,6 +21,10 @@ module.exports = function(string, offset) {
     return token;
   });
 
+  if (context.tokens.length === 0) {
+    return { offset: context.offset };
+  }
+
   let statement = new $VALUE();
   statement.tokens = context.tokens;
 
