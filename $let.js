@@ -17,6 +17,10 @@ module.exports = function(name, value) {
 
 class $LET extends $ {
   run() {
+    let parts = this.name.split(".");
+    if (parts.length > 1 && parts[parts.length - 1] === "value")
+      throw new TypeError();
+
     let value = this.value.run();
 
     if (value instanceof EXPRESSION) {

@@ -343,9 +343,9 @@ describe("Nucleoid", function() {
     nucleoid.run("trade1.quantity = 1");
     nucleoid.run("stock1.trade = trade1");
     nucleoid.run(
-      "{ let trade = Stock.trade ; trade.value = Stock.price * trade.quantity }"
+      "{ let trade = Stock.trade ; trade.worth = Stock.price * trade.quantity }"
     );
-    assert.equal(nucleoid.run("trade1.value"), 100);
+    assert.equal(nucleoid.run("trade1.worth"), 100);
   });
 
   it("holds result of function in let", function() {
@@ -519,6 +519,13 @@ describe("Nucleoid", function() {
 
     nucleoid.run("interest1.amount = 10000");
     assert.equal(nucleoid.run("interest1.annual"), 0);
+  });
+
+  it("rejects if property of local name is value", function() {
+    nucleoid.run("class Alarm { }");
+    assert.throws(function() {
+      nucleoid.run("{ let value = new Alarm ( ) ; value.value = '22:00' }");
+    }, TypeError);
   });
 
   it("keeps same as its value when value property used for local", function() {
