@@ -75,6 +75,11 @@ module.exports = class EXPRESSION extends Value {
           return true;
         }
       })
-      .map(token => Identifier.reference(token));
+      .map(token => Identifier.reference(token))
+      .map(token => {
+        let parts = Identifier.splitLast(token);
+        if (parts[0] && parts[1] && parts[0] === "length") return parts[1];
+        else return token;
+      });
   }
 };

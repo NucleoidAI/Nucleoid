@@ -31,6 +31,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("au == 149597870700"), true);
   });
 
+  it("creates dependency based on length of identifier", function() {
+    nucleoid.run("str1 = 'ABC'");
+    nucleoid.run("i1 = str1.length + 1");
+    assert.equal(nucleoid.run("i1"), 4);
+
+    nucleoid.run("str1 = 'ABCD'");
+    assert.equal(nucleoid.run("i1"), 5);
+  });
+
   it("validates syntax of class", function() {
     assert.throws(
       function() {
