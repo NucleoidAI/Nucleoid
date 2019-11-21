@@ -71,7 +71,12 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("'New String'"), "New String");
   });
 
-  it("supports standard built-in objects", function() {
+  it("supports standard built-in functions", function() {
+    nucleoid.run("max = Number.MAX_SAFE_INTEGER");
+    nucleoid.run("now = Date.now ( )");
+  });
+
+  it("supports creating standard built-in objects", function() {
     nucleoid.run("date = new Date ( '2019-7-24' )");
     assert.equal(nucleoid.run("date.getYear()"), 119);
   });
