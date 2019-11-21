@@ -673,6 +673,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("sale1.tax"), 15);
   });
 
+  it("creates nested else statement of property", function() {
+    nucleoid.run("class Chart { }");
+    nucleoid.run("chart1 = new Chart ( )");
+    nucleoid.run("invalid = 'INVALID'");
+    nucleoid.run("valid = 'VALID'");
+    nucleoid.run(
+      "{ let ratio = chart1.percentage / 100 ; if ( ratio > 1 ) { chart1.status = invalid } else { chart1.status = valid } }"
+    );
+    assert.equal(nucleoid.run("chart1.status"), "VALID");
+
+    nucleoid.run("valid = 'V'");
+    assert.equal(nucleoid.run("chart1.status"), "V");
+  });
+
   it("creates property assignment with multiple properties", function() {
     nucleoid.run("class Person { }");
     nucleoid.run("person1 = new Person ( )");
