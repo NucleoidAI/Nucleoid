@@ -203,6 +203,20 @@ describe("Nucleoid", function() {
     }, "INVALID");
   });
 
+  it("throws error as a variable", function() {
+    nucleoid.run("length = 0.1");
+    assert.throws(
+      function() {
+        nucleoid.run("if ( length < 1 ) { throw length }");
+      },
+      error => error === 0.1
+    );
+
+    assert.throws(function() {
+      nucleoid.run("if ( length < 1.1 ) { throw 'length' }");
+    }, "length");
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
