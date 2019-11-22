@@ -4,6 +4,8 @@ var CLASS = require("./class");
 var PROPERTY$CLASS = require("./property$class");
 var PROPERTY = require("./property");
 var OBJECT$CLASS = require("./object$class");
+var REFERENCE = require("./reference");
+var PROPERTY$REFERENCE = require("./property$reference");
 
 module.exports = function(object, name, value) {
   let statement = new $PROPERTY();
@@ -34,10 +36,20 @@ class $PROPERTY extends $ {
       return statement;
     }
 
+    let value = this.value.run();
+
+    if (value instanceof REFERENCE) {
+      let statement = new PROPERTY$REFERENCE();
+      statement.object = graph[this.object];
+      statement.name = this.name;
+      statement.value = value;
+      return statement;
+    }
+
     let statement = new PROPERTY();
     statement.object = graph[this.object];
     statement.name = this.name;
-    statement.value = this.value.run();
+    statement.value = value;
     return statement;
   }
 }
