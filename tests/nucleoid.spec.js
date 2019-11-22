@@ -820,6 +820,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("question1.rate"), 4.5);
   });
 
+  it("runs expression statement of class", function() {
+    nucleoid.run("class Element { }");
+    nucleoid.run("alkalis = [ ]");
+    nucleoid.run("element1 = new Element ( )");
+    nucleoid.run("element1.number = 3");
+    nucleoid.run(
+      "{ let number = Element.number ; if ( number == 3 ) { alkalis.push ( Element ) } }"
+    );
+    assert.equal(nucleoid.run("alkalis.pop (  )"), nucleoid.run("element1"));
+  });
+
   it("creates class assignment before initialization", function() {
     nucleoid.run("class Review { }");
     nucleoid.run("Review.rate = Review.sum / 10");

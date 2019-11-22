@@ -3,7 +3,7 @@ var Node = require("./node");
 var $VAR = require("./$variable");
 var $VALUE = require("./$value");
 
-module.exports = class CLASS extends Node {
+var CLASS = class CLASS extends Node {
   constructor() {
     super();
     this.instance = {};
@@ -20,3 +20,6 @@ module.exports = class CLASS extends Node {
     return $VAR(this.name + "s", context.statement);
   }
 };
+
+CLASS.prototype.instanceof = "CLASS";
+module.exports = CLASS;

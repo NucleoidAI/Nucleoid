@@ -3,6 +3,7 @@ var EXPRESSION = require("./expression");
 var $ = require("./$");
 var graph = require("./graph");
 var REFERENCE = require("./reference");
+var EXPRESSION$CLASS = require("./expression$class");
 
 module.exports = function(string, offset) {
   let context = Token.each(string, offset, function(token) {
@@ -38,6 +39,17 @@ class $VALUE extends $ {
       statement.link = graph[this.tokens[0]];
       return statement;
     } else {
+      for (let token of this.tokens) {
+        let prefix = token.split(".")[0];
+
+        if (graph[prefix] && graph[prefix].instanceof === "CLASS") {
+          let statement = new EXPRESSION$CLASS();
+          statement.class = graph[prefix];
+          statement.tokens = this.tokens;
+          return statement;
+        }
+      }
+
       let statement = new EXPRESSION();
       statement.tokens = this.tokens;
       return statement;
