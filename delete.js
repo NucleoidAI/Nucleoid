@@ -2,7 +2,6 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Instruction = require("./instruction");
 var Node = require("./node");
-var VARIABLE = require("./variable");
 
 module.exports = class DELETE {
   prepare() {}
@@ -22,18 +21,14 @@ module.exports = class DELETE {
     for (let node in graph[this.key].previous)
       delete graph[node].next[this.key];
 
-    if (graph[this.key] instanceof VARIABLE) {
-      delete graph[this.key];
-    } else {
-      let empty = new Node();
+    let empty = new Node();
 
-      for (let node in graph[this.key].next) {
-        empty.next[node] = graph[this.key].next[node];
-        delete graph[this.key].next[node];
-      }
-
-      delete graph[this.key];
-      graph[this.key] = empty;
+    for (let node in graph[this.key].next) {
+      empty.next[node] = graph[this.key].next[node];
+      delete graph[this.key].next[node];
     }
+
+    delete graph[this.key];
+    graph[this.key] = empty;
   }
 };

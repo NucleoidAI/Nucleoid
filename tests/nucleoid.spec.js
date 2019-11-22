@@ -3,6 +3,10 @@ var nucleoid = require("../nucleoid");
 var state = require("../state");
 var graph = require("../graph");
 
+function validate(error, expectedError, expectedMessage) {
+  return error instanceof expectedError && error.message === expectedMessage;
+}
+
 describe("Nucleoid", function() {
   this.slow(1);
 
@@ -45,25 +49,21 @@ describe("Nucleoid", function() {
       function() {
         nucleoid.run("class Ratio ( }");
       },
-      error =>
-        error instanceof SyntaxError && error.message === "Unexpected token ("
+      error => validate(error, SyntaxError, "Unexpected token (")
     );
 
     assert.throws(
       function() {
         nucleoid.run("class Ratio { calculate() }");
       },
-      error =>
-        error instanceof SyntaxError &&
-        error.message === "Methods are not supported."
+      error => validate(error, SyntaxError, "Methods are not supported.")
     );
 
     assert.throws(
       function() {
         nucleoid.run("class Ratio { calculate() )");
       },
-      error =>
-        error instanceof SyntaxError && error.message === "Unexpected token )"
+      error => validate(error, SyntaxError, "Unexpected token )")
     );
   });
 
@@ -645,6 +645,18 @@ describe("Nucleoid", function() {
 
     nucleoid.run("matter1.mass = 20");
     assert.equal(nucleoid.run("matter1.weight"), 74);
+  });
+
+  it("deletes instance", function() {
+    nucleoid.run("class Circle { }");
+    nucleoid.run("circle1 = new Circle ( )");
+    nucleoid.run("delete circle1");
+    assert.throws(
+      function() {
+        nucleoid.run("circle1");
+      },
+      error => validate(error, ReferenceError, "circle1 is not defined")
+    );
   });
 
   it("deletes property assignment", function() {
