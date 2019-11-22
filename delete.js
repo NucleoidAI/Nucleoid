@@ -28,6 +28,8 @@ module.exports = class DELETE {
       delete graph[this.key].next[node];
     }
 
+    let name = graph[this.key].name;
+    delete graph[this.key].object.property[name];
     delete graph[this.key];
     graph[this.key] = empty;
   }

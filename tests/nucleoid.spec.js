@@ -659,6 +659,23 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("rejects deleting instance if it has any properties", function() {
+    nucleoid.run("class Channel { }");
+    nucleoid.run("channel1 = new Channel ( )");
+    nucleoid.run("channel1.frequency = 440");
+    assert.throws(
+      function() {
+        nucleoid.run("delete channel1");
+      },
+      error =>
+        validate(error, ReferenceError, "Cannot delete object 'channel1'")
+    );
+    assert.equal(nucleoid.run("channel1.frequency "), 440);
+
+    nucleoid.run("delete channel1.frequency");
+    nucleoid.run("delete channel1");
+  });
+
   it("deletes property assignment", function() {
     nucleoid.run("class Agent { }");
     nucleoid.run("agent = new Agent ( )");

@@ -4,6 +4,11 @@ var Identifier = require("./identifier");
 var $VALUE = require("./$value");
 
 module.exports = class OBJECT extends Node {
+  constructor() {
+    super();
+    this.property = {};
+  }
+
   prepare() {
     if (this.name === undefined && this.object === undefined) {
       this.key = this.class.name.toLowerCase() + this.sequence;
