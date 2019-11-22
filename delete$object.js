@@ -3,6 +3,11 @@ var graph = require("./graph");
 
 module.exports = class DELETE$OBJECT extends DELETE {
   run() {
+    let name = graph[this.key].name;
+
+    if (graph[this.key].object !== undefined)
+      delete graph[this.key].object.property[name];
+
     if (Object.keys(graph[this.key].property).length > 0) {
       throw new ReferenceError(`Cannot delete object '${this.key}'`);
     }

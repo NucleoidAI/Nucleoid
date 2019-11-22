@@ -38,6 +38,7 @@ module.exports = class OBJECT extends Node {
   }
 
   graph() {
+    if (this.object !== undefined) this.object.property[this.name] = this;
     this.class.instance[this.key] = this;
   }
 };
