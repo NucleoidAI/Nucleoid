@@ -326,6 +326,11 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("equivalency"), 40);
   });
 
+  it("runs let statement as standard built-in object", function() {
+    nucleoid.run("{ let f = new Boolean ( false ) ; condition = f }");
+    assert.equal(nucleoid.run("condition"), false);
+  });
+
   it("runs let statement of class as new instance before initialization", function() {
     nucleoid.run("class Member { }");
     nucleoid.run("class Registration { }");
