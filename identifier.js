@@ -5,6 +5,10 @@ module.exports.splitLast = function(name) {
   let parts = name.split(".");
   let instance = "";
 
+  if (parts.length === 1) {
+    return [name];
+  }
+
   for (let i = 0; i < parts.length - 1; i++) {
     instance += parts[i] + ".";
   }

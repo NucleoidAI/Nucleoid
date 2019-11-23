@@ -551,6 +551,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("product1.quality.class"), "B");
   });
 
+  it("rejects if name of instance as property is value", function() {
+    nucleoid.run("class Schedule { }");
+    nucleoid.run("class Place { }");
+    nucleoid.run("value = new Schedule ( )");
+    assert.throws(
+      function() {
+        nucleoid.run("value.value = new Place ( )");
+      },
+      error => validate(error, TypeError, "Cannot use 'value' as property")
+    );
+  });
+
   it("rejects if property name is value", function() {
     nucleoid.run("class Number { }");
     nucleoid.run("value = new Number ( )");

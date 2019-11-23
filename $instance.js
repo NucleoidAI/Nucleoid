@@ -14,6 +14,10 @@ module.exports = function(cls, name, object) {
 
 class $INSTANCE extends $ {
   run() {
+    if (this.object !== undefined && this.name === "value") {
+      throw new TypeError("Cannot use 'value' as property");
+    }
+
     if (
       this.object &&
       (graph[this.object] instanceof CLASS ||
