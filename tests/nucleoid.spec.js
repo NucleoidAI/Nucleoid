@@ -807,15 +807,26 @@ describe("Nucleoid", function() {
   it("creates dependency behalf if property has reference", function() {
     nucleoid.run("class Schedule { }");
     nucleoid.run("schedule1 = new Schedule ( )");
+
     nucleoid.run("class Template { }");
     nucleoid.run("template1 = new Template ( )");
     nucleoid.run("template1.type = 'W'");
+
     nucleoid.run("schedule1.template = template1");
     nucleoid.run("schedule1.template.name = schedule1.template.type + '-0001'");
     assert.equal(nucleoid.run("template1.name"), "W-0001");
+    assert.equal(nucleoid.run("schedule1.template.name"), "W-0001");
 
     nucleoid.run("template1.type = 'D'");
     assert.equal(nucleoid.run("template1.name"), "D-0001");
+
+    nucleoid.run("template1.shape = template1.type + '-Form'");
+    assert.equal(nucleoid.run("template1.shape"), "D-Form");
+    assert.equal(nucleoid.run("schedule1.template.shape"), "D-Form");
+
+    nucleoid.run("template1.type = 'C'");
+    assert.equal(nucleoid.run("template1.shape"), "C-Form");
+    assert.equal(nucleoid.run("schedule1.template.shape"), "C-Form");
   });
 
   it("creates dependency behalf if let has reference", function() {

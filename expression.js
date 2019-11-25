@@ -68,6 +68,7 @@ module.exports = class EXPRESSION extends Value {
   graph(scope) {
     return this.tokens
       .map(token => Local.reference(scope, token))
+      .map(token => Identifier.reference(token))
       .filter(token => {
         if (graph[token]) return true;
         else if (graph[token.split(".")[0]]) {
@@ -75,7 +76,6 @@ module.exports = class EXPRESSION extends Value {
           return true;
         }
       })
-      .map(token => Identifier.reference(token))
       .map(token => {
         let parts = Identifier.splitLast(token);
         if (parts[0] && parts[1] && parts[0] === "length") return parts[1];
