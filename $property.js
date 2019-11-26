@@ -17,8 +17,8 @@ module.exports = function(object, name, value) {
 
 class $PROPERTY extends $ {
   run() {
-    if (!graph[this.object]) {
-      throw TypeError();
+    if (graph[this.object] === undefined) {
+      throw new ReferenceError(`'${this.object}' is not defined`);
     }
 
     if (this.name === "value") {

@@ -556,9 +556,13 @@ describe("Nucleoid", function() {
   it("creates property assignment only if instance is defined", function() {
     nucleoid.run("class Channel { }");
     nucleoid.run("channel1 = new Channel ( )");
-    assert.throws(function() {
-      nucleoid.run("channel1.frequency.type = 'ANGULAR'");
-    }, TypeError);
+    assert.throws(
+      function() {
+        nucleoid.run("channel1.frequency.type = 'ANGULAR'");
+      },
+      error =>
+        validate(error, ReferenceError, "'channel1.frequency' is not defined")
+    );
   });
 
   it("uses its value when self property used", function() {
@@ -1158,9 +1162,12 @@ describe("Nucleoid", function() {
 
   it("creates class assignment only if instance is defined", function() {
     nucleoid.run("class Phone { }");
-    assert.throws(function() {
-      nucleoid.run("Phone.line.wired = true");
-    }, TypeError);
+    assert.throws(
+      function() {
+        nucleoid.run("Phone.line.wired = true");
+      },
+      error => validate(error, ReferenceError, "'Phone.line' is not defined")
+    );
   });
 
   it("rejects using value of class", function() {
