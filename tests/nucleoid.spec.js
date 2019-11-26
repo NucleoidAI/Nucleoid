@@ -160,6 +160,17 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("creates standard built-in object of let statement as property", function() {
+    nucleoid.run("class Shipment { }");
+    nucleoid.run(
+      "{ let shipment = new Shipment ( ) ; shipment.date = new Date ( '2019-1-3' ) ; shipment1 = shipment }"
+    );
+    assert.equal(
+      nucleoid.run("shipment1.date.toDateString ( )"),
+      "Thu Jan 03 2019"
+    );
+  });
+
   it("assigns null if any dependencies in expression is undefined", function() {
     nucleoid.run("class Person { }");
     nucleoid.run("person1 = new Person ( )");
