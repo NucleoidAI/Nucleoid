@@ -3,6 +3,8 @@ var graph = require("./graph");
 var OBJECT = require("./object");
 var OBJECT$CLASS = require("./object$class");
 var CLASS = require("./class");
+var Local = require("./local");
+var $LET = require("./$let");
 
 module.exports = function(cls, name, object) {
   let statement = new $INSTANCE();
@@ -13,9 +15,16 @@ module.exports = function(cls, name, object) {
 };
 
 class $INSTANCE extends $ {
-  run() {
+  run(scope) {
     if (this.object !== undefined && this.name === "value") {
       throw new TypeError("Cannot use 'value' as property");
+    }
+
+    let local = this.object + "." + this.name;
+    if (Local.check(scope, local)) {
+      let instance = new $INSTANCE();
+      instance.class = this.class;
+      return $LET(local, instance);
     }
 
     if (

@@ -364,6 +364,38 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("distance1.startingPoint.print"), undefined);
   });
 
+  it("runs multiple instance of let statement of class as value before initialization", function() {
+    nucleoid.run("class Account { }");
+    nucleoid.run("class Balance { }");
+    nucleoid.run("class Currency { }");
+    nucleoid.run("Currency.description = 'Code:' + Currency.code");
+    nucleoid.run(
+      "{ let balance = new Balance ( ) ; balance.currency = new Currency ( ) ; balance.currency.code = 'USD' ; Account.balance = balance }"
+    );
+    nucleoid.run("account1 = new Account ( )");
+    assert.equal(nucleoid.run("account1.balance.currency.code "), "USD");
+    assert.equal(
+      nucleoid.run("account1.balance.currency.description "),
+      undefined
+    );
+  });
+
+  it("runs multiple instance of let statement of class as value after initialization", function() {
+    nucleoid.run("class Warehouse { }");
+    nucleoid.run("class Inventory { }");
+    nucleoid.run("class Item { }");
+    nucleoid.run("warehouse1 = new Warehouse ( )");
+    nucleoid.run("Item.description = 'I' + Item.SKU");
+    nucleoid.run(
+      "{ let inventory = new Inventory ( ) ; inventory.item = new Item ( ) ; inventory.item.sku = '699546085767' ; Warehouse.inventory = inventory }"
+    );
+    assert.equal(nucleoid.run("warehouse1.inventory.item.sku"), "699546085767");
+    assert.equal(
+      nucleoid.run("warehouse1.inventory.item.description"),
+      undefined
+    );
+  });
+
   it("runs let statement as an object before declaration", function() {
     nucleoid.run("class Plane { }");
     nucleoid.run("class Trip { }");
