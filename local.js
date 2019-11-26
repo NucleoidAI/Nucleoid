@@ -18,14 +18,19 @@ module.exports.retrieve = function(scope, assignment) {
 
 module.exports.check = function(scope, assignment) {
   let index = scope;
-  let parts = assignment.split(".");
 
-  while (index) {
-    if (index.local[parts[0]] !== undefined) return true;
-    index = index.prior;
+  if (assignment === undefined) return false;
+  try {
+    while (index) {
+      if (eval("index.local." + assignment) !== undefined) return true;
+      index = index.prior;
+    }
+
+    return false;
+  } catch (error) {
+    if (error instanceof TypeError) return false;
+    throw error;
   }
-
-  return false;
 };
 
 module.exports.reference = function(scope, name) {

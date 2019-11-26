@@ -21,7 +21,7 @@ class $INSTANCE extends $ {
     }
 
     let local = this.object + "." + this.name;
-    if (Local.check(scope, local)) {
+    if (Local.check(scope, this.object)) {
       let instance = new $INSTANCE();
       instance.class = this.class;
       return $LET(local, instance);

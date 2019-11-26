@@ -148,6 +148,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("number"), 3.14159);
   });
 
+  it("creates let statement if its instance is defined", function() {
+    nucleoid.run("class Ticket { }");
+    assert.throws(
+      function() {
+        nucleoid.run(
+          "{ let ticket = new Ticket ( ) ; ticket.event.group = 'ENTERTAINMENT' }"
+        );
+      },
+      error => validate(error, ReferenceError, "'ticket.event' is not defined")
+    );
+  });
+
   it("assigns null if any dependencies in expression is undefined", function() {
     nucleoid.run("class Person { }");
     nucleoid.run("person1 = new Person ( )");
