@@ -331,9 +331,12 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("condition"), false);
   });
 
-  it("runs let statement of class as new instance before initialization", function() {
+  it("runs new instance of let statement of class as value before initialization", function() {
     nucleoid.run("class Member { }");
     nucleoid.run("class Registration { }");
+    nucleoid.run(
+      "Registration.age = Registration.date - new Date ( '2019-1-3' )"
+    );
     nucleoid.run(
       "{ let registration = new Registration ( ) ; registration.date = new Date ( '2019-1-2' ) ; Member.registration = registration }"
     );
@@ -343,11 +346,13 @@ describe("Nucleoid", function() {
       nucleoid.run("member1.registration.date.toDateString()"),
       "Wed Jan 02 2019"
     );
+    assert.equal(nucleoid.run("member1.registration.age"), undefined);
   });
 
-  it("runs let statement of class as new instance after initialization", function() {
+  it("runs new instance of let statement of class as value after initialization", function() {
     nucleoid.run("class Distance { }");
     nucleoid.run("class Location { }");
+    nucleoid.run("Location.print = '@' + Location.coordinates");
     nucleoid.run("distance1 = new Distance ( )");
     nucleoid.run(
       "{ let location = new Location ( ) ; location.coordinates = '40.6976701,-74.2598779' ; Distance.startingPoint = location }"
@@ -356,6 +361,7 @@ describe("Nucleoid", function() {
       nucleoid.run("distance1.startingPoint.coordinates"),
       "40.6976701,-74.2598779"
     );
+    assert.equal(nucleoid.run("distance1.startingPoint.print"), undefined);
   });
 
   it("runs let statement as an object before declaration", function() {
