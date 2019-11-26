@@ -565,6 +565,19 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("creates object assignment as property only if instance is defined", function() {
+    nucleoid.run("class Worker { }");
+    nucleoid.run("class Schedule { }");
+    nucleoid.run("worker1 = new Worker ( )");
+    assert.throws(
+      function() {
+        nucleoid.run("worker1.duty.schedule = new Schedule ( )");
+      },
+
+      error => validate(error, ReferenceError, "'worker1.duty' is not defined")
+    );
+  });
+
   it("uses its value when self property used", function() {
     nucleoid.run("class Construction { }");
     nucleoid.run("construction1 = new Construction ( ) ");

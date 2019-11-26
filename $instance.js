@@ -27,6 +27,9 @@ class $INSTANCE extends $ {
       return $LET(local, instance);
     }
 
+    if (this.object !== undefined && graph[this.object] === undefined)
+      throw new ReferenceError(`'${this.object}' is not defined`);
+
     if (
       this.object &&
       (graph[this.object] instanceof CLASS ||
