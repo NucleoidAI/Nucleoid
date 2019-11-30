@@ -1,4 +1,6 @@
-var next = (module.exports.next = function(string, offset) {
+var Identifier = require("./identifier");
+
+const next = function(string, offset) {
   if (offset >= string.length) {
     return null;
   }
@@ -32,79 +34,197 @@ var next = (module.exports.next = function(string, offset) {
   }
 
   return { token: token, offset: offset };
-});
-
-module.exports.check = function(string, offset) {
-  let context = next(string, offset);
-  return context.token;
 };
 
-module.exports.each = function(string, offset, callback, end) {
-  let tokens = [];
-  let context = next(string, offset);
-  let parentheses = 0;
-  let brackets = 0;
-
-  while (context) {
-    offset = context.offset;
-    let token = context.token;
-
-    if (token === ";") {
-      return { tokens: tokens, offset: offset };
-    }
-
-    if (end && token === end) {
-      return { tokens: tokens, offset: offset };
-    }
-
-    if (token === "{") {
-      brackets++;
-    } else if (token === "}") {
-      brackets--;
-    }
-
-    if (brackets < 0) {
-      break;
-    }
-
-    if (token === "(") {
-      parentheses++;
-    } else if (token === ")") {
-      parentheses--;
-    }
-
-    if (parentheses < 0) {
-      break;
-    }
-
-    tokens.push(callback(token));
-    context = next(string, offset);
+class Token {
+  static check(string, offset) {
+    let context = next(string, offset);
+    return context.token;
   }
 
-  return { tokens: tokens, offset: offset };
-};
+  static each(string, offset, callback, end) {
+    let tokens = [];
+    let context = next(string, offset);
+    let parentheses = 0;
+    let brackets = 0;
 
-module.exports.nextBlock = function(string, offset) {
-  let block = "";
-  let brackets = 0;
-  let character;
+    while (context) {
+      offset = context.offset;
+      let token = context.token;
 
-  for (; offset < string.length; offset++) {
-    character = string.charAt(offset);
+      if (token === ";") {
+        return { tokens: tokens, offset: offset };
+      }
 
-    if (character === "{") {
-      brackets++;
-    } else if (character === "}") {
-      brackets--;
+      if (end && token === end) {
+        return { tokens: tokens, offset: offset };
+      }
+
+      if (token === "{") {
+        brackets++;
+      } else if (token === "}") {
+        brackets--;
+      }
+
+      if (brackets < 0) {
+        break;
+      }
+
+      if (token === "(") {
+        parentheses++;
+      } else if (token === ")") {
+        parentheses--;
+      }
+
+      if (parentheses < 0) {
+        break;
+      }
+
+      tokens.push(callback(token));
+      context = next(string, offset);
     }
 
-    if (brackets < 0) {
-      offset++;
-      return { block: block, offset: offset };
-    } else {
-      block += character;
-    }
+    return { tokens: tokens, offset: offset };
   }
 
-  throw new SyntaxError(`Unexpected token ${character}`);
+  static nextBlock(string, offset) {
+    let block = "";
+    let brackets = 0;
+    let character;
+
+    for (; offset < string.length; offset++) {
+      character = string.charAt(offset);
+
+      if (character === "{") {
+        brackets++;
+      } else if (character === "}") {
+        brackets--;
+      }
+
+      if (brackets < 0) {
+        offset++;
+        return { block: block, offset: offset };
+      } else {
+        block += character;
+      }
+    }
+
+    throw new SyntaxError(`Unexpected token ${character}`);
+  }
+
+  constructor(string) {
+    this.string = string;
+  }
+
+  concat(string) {
+    this.string = this.string.concat(string);
+  }
+
+  construct() {
+    return this.string;
+  }
+}
+
+module.exports = Token;
+module.exports.next = next;
+module.exports.ARRAY = class ARRAY {
+  constructor() {
+    this.length = 0;
+  }
+
+  construct() {
+    let string = new String();
+
+    for (let index = 0; index < this.length; index++) {
+      string = string.concat(this[index].construct());
+    }
+
+    return string;
+  }
+
+  [Symbol.iterator]() {
+    let list = this;
+    let index = 0;
+
+    return {
+      next() {
+        if (index < list.length) {
+          return { done: false, value: list[index++] };
+        } else {
+          return { done: true };
+        }
+      }
+    };
+  }
+
+  forEach(fn) {
+    for (let index = 0; index < this.length; index++) fn(this[index].string);
+  }
+
+  map(fn) {
+    let list = new ARRAY();
+
+    for (let index = 0; index < this.length; index++) {
+      let token = this[index];
+      let string = fn(token.string);
+
+      if (token instanceof FUNCTION) {
+        let params = [];
+
+        for (let param of token.params) {
+          params.push(fn(param));
+        }
+
+        list.push(new FUNCTION(string, params));
+      } else {
+        list.push(new Token(string));
+      }
+    }
+
+    return list;
+  }
+
+  list() {
+    let list = [];
+
+    for (let index = 0; index < this.length; index++) {
+      let token = this[index];
+
+      if (token instanceof FUNCTION) {
+        let parts = Identifier.splitLast(token.string);
+
+        if (parts[1] !== undefined) {
+          list.push(parts[1]);
+        }
+
+        for (let param of token.params) {
+          list.push(param);
+        }
+      } else {
+        list.push(token.string);
+      }
+    }
+
+    return list;
+  }
+
+  push(token) {
+    this[this.length++] = token;
+  }
 };
+
+class FUNCTION extends Token {
+  constructor(string, params) {
+    super(string);
+    this.params = params;
+  }
+
+  construct() {
+    return this.string
+      .concat("(")
+      .concat(this.params.join(""))
+      .concat(")");
+  }
+}
+
+module.exports.FUNCTION = FUNCTION;

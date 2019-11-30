@@ -6,7 +6,7 @@ var Instance = require("./instance");
 
 class IF$CLASS extends Node {
   prepare() {
-    this.key = "if(" + this.condition.tokens.join("") + ")";
+    this.key = "if(" + this.condition.tokens.construct() + ")";
   }
 
   run(scope) {

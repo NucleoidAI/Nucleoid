@@ -240,6 +240,22 @@ describe("Nucleoid", function() {
     }, "length");
   });
 
+  it("assigns function as dependency", function() {
+    nucleoid.run("list = [ ]");
+    nucleoid.run("count = list.filter ( n => n % 2 )");
+    nucleoid.run("list.push ( 1 )");
+    assert.equal(nucleoid.run("count.length"), 1);
+
+    nucleoid.run("list.push ( 2 )");
+    assert.equal(nucleoid.run("count.length"), 1);
+
+    nucleoid.run("list.push ( 3 )");
+    assert.equal(nucleoid.run("count.length"), 2);
+
+    nucleoid.run("list.pop ( )");
+    assert.equal(nucleoid.run("count.length"), 1);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
@@ -934,7 +950,7 @@ describe("Nucleoid", function() {
     nucleoid.run(
       "{ let number = Element.number ; if ( number == 3 ) { alkalis.push ( Element ) } }"
     );
-    assert.equal(nucleoid.run("alkalis.pop (  )"), nucleoid.run("element1"));
+    assert.equal(nucleoid.run("alkalis.pop ( )"), nucleoid.run("element1"));
   });
 
   it("creates class assignment before initialization", function() {

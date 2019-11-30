@@ -4,7 +4,7 @@ var Scope = require("./scope");
 
 module.exports = class IF extends Node {
   prepare() {
-    this.key = "if(" + this.condition.tokens.join("") + ")";
+    this.key = "if(" + this.condition.tokens.construct() + ")";
   }
 
   run(scope) {

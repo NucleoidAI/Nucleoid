@@ -37,6 +37,20 @@ module.exports.process = function(statements) {
       }
     } else if (statement instanceof Value) {
       result = statement.run(instruction.scope);
+      let list = statement.next(instruction.scope);
+
+      if (list) {
+        instructions = list
+          .map(statement => {
+            if (statement instanceof Instruction) {
+              return statement;
+            } else {
+              let scope = instruction.scope;
+              return new Instruction(scope, statement, false, true, false);
+            }
+          })
+          .concat(instructions);
+      }
     } else {
       if (instruction.prepare) {
         statement.prepare(instruction.scope);
@@ -63,6 +77,7 @@ module.exports.process = function(statements) {
                 ? statement
                 : new Instruction(scope, statement, true, true, true);
             })
+            .filter(instruction => instruction.statement !== statement)
             .concat(instructions);
         }
       }

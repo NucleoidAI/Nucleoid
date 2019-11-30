@@ -15,7 +15,7 @@ module.exports = function(condition, trueB, p3) {
 
 class $IF extends $ {
   run(scope) {
-    for (let token of this.condition.tokens) {
+    for (let token of this.condition.tokens.list()) {
       let prefix = token.split(".")[0];
 
       if (graph[prefix] && graph[prefix] instanceof CLASS) {

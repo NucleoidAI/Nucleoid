@@ -4,6 +4,7 @@ var Local = require("./local");
 var Value = require("./value");
 var Identifier = require("./identifier");
 var Node = require("./node");
+var Token = require("./token");
 
 module.exports = class EXPRESSION extends Value {
   constructor(tokens) {
@@ -58,15 +59,32 @@ module.exports = class EXPRESSION extends Value {
           }
         });
 
-      return eval(tokens.join(""));
+      return eval(tokens.construct());
     } catch (error) {
       if (error instanceof Error) throw error;
       return null;
     }
   }
 
+  next() {
+    let list = [];
+
+    for (let token of this.tokens) {
+      if (token instanceof Token.FUNCTION) {
+        let parts = Identifier.splitLast(token.string);
+        if (parts[1] && graph[parts[1]]) {
+          for (let node in graph[parts[1]].next)
+            list.push(graph[parts[1]].next[node]);
+        }
+      }
+    }
+
+    return list;
+  }
+
   graph(scope) {
     return this.tokens
+      .list()
       .map(token => Local.reference(scope, token))
       .map(token => Identifier.reference(token))
       .filter(token => {

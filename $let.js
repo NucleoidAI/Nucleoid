@@ -32,7 +32,7 @@ class $LET extends $ {
     let value = this.value.run();
 
     if (value instanceof EXPRESSION) {
-      for (let token of value.tokens) {
+      for (let token of value.tokens.list()) {
         let prefix = token.split(".")[0];
 
         if (graph[prefix] && graph[prefix] instanceof CLASS) {
