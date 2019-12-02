@@ -36,10 +36,10 @@ module.exports = class EXPRESSION extends Value {
         .map(token => (token = Local.reference(scope, token)))
         .map(token => {
           let parts = token.split(".");
-          let reference = Local.retrieve(scope, token);
 
           try {
-            if (reference) {
+            if (Local.check(scope, parts[0])) {
+              let reference = Local.retrieve(scope, token);
               let value = eval(reference);
 
               if (value === undefined) throw 0;
@@ -55,14 +55,15 @@ module.exports = class EXPRESSION extends Value {
             }
           } catch (error) {
             if (error instanceof TypeError) throw 1;
-            if (error === 0) throw 1;
+            else if (error === 0) throw 1;
+            else throw error;
           }
         });
 
       return eval(tokens.construct());
     } catch (error) {
       if (error instanceof Error) throw error;
-      return null;
+      return undefined;
     }
   }
 

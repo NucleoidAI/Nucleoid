@@ -171,14 +171,14 @@ describe("Nucleoid", function() {
     );
   });
 
-  it("assigns null if any dependencies in expression is undefined", function() {
+  it("assigns undefined if any dependencies in expression is undefined", function() {
     nucleoid.run("class Person { }");
     nucleoid.run("person1 = new Person ( )");
     nucleoid.run("person1.lastName = 'Brown'");
     nucleoid.run(
       "person1.fullName = person1.firstName + ' ' + person1.lastName"
     );
-    assert.equal(nucleoid.run("person1.fullName"), null);
+    assert.equal(nucleoid.run("person1.fullName") === undefined, true);
   });
 
   it("keeps as null if any dependencies as in local is null", function() {
@@ -860,6 +860,7 @@ describe("Nucleoid", function() {
   it("creates nested else statement of property", function() {
     nucleoid.run("class Chart { }");
     nucleoid.run("chart1 = new Chart ( )");
+    nucleoid.run("chart1.percentage = 1");
     nucleoid.run("invalid = 'INVALID'");
     nucleoid.run("valid = 'VALID'");
     nucleoid.run(

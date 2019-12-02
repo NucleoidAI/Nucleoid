@@ -11,6 +11,6 @@ module.exports = class LET$OBJECT extends LET {
 
   // eslint-disable-next-line no-unused-vars
   graph(scope) {
-    eval("scope.graph." + this.name + "=this");
+    scope.graph[this.name] = this;
   }
 };

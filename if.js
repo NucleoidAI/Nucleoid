@@ -1,6 +1,7 @@
 var Node = require("./node");
 var Instruction = require("./instruction");
 var Scope = require("./scope");
+var BREAK = require("./break");
 
 module.exports = class IF extends Node {
   prepare() {
@@ -9,8 +10,13 @@ module.exports = class IF extends Node {
 
   run(scope) {
     let s = new Scope(scope);
+    let condition = this.condition.run(scope);
 
-    if (this.condition.run(scope)) {
+    if (condition === undefined) {
+      return new BREAK(scope.block);
+    }
+
+    if (condition) {
       return [
         new Instruction(s, this.true, true, false),
         new Instruction(s, this.true, false, true)

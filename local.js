@@ -22,7 +22,7 @@ module.exports.check = function(scope, assignment) {
   if (assignment === undefined) return false;
   try {
     while (index) {
-      if (eval("index.local." + assignment) !== undefined) return true;
+      if (index.graph[assignment] !== undefined) return true;
       index = index.prior;
     }
 

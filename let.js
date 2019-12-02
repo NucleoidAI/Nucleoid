@@ -6,7 +6,7 @@ module.exports = class LET {
   }
 
   graph(scope) {
-    eval("scope.graph." + this.name + "=this");
+    scope.graph[this.name] = this;
     return this.value.graph(scope);
   }
 };
