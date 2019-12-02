@@ -256,6 +256,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("count.length"), 1);
   });
 
+  it("supports regular expression literal", function() {
+    nucleoid.run("class User { }");
+    nucleoid.run(
+      "if ( ! /.{4,8}/.test ( User.password ) ) { throw 'INVALID_PASSWORD' }"
+    );
+    nucleoid.run("user1 = new User ( )");
+    assert.throws(function() {
+      nucleoid.run("user1.password = 'PAS'");
+    }, "INVALID_PASSWORD");
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
