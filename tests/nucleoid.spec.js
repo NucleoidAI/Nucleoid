@@ -279,6 +279,26 @@ describe("Nucleoid", function() {
     }, "INVALID_PASSWORD");
   });
 
+  it("rejects defining class declaration in non-class declaration block", function() {
+    nucleoid.run("class Person { }");
+    nucleoid.run("person1 = new Person ( )");
+    nucleoid.run("person1.weight = 90");
+    nucleoid.run("person1.height = 1.8");
+    assert.throws(
+      function() {
+        nucleoid.run(
+          "{ let weight = person1.weight ; let height = person1.height ; Person.bmi = weight / ( height * height ) }"
+        );
+      },
+      error =>
+        validate(
+          error,
+          SyntaxError,
+          "Cannot define class declaration in non-class block"
+        )
+    );
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");

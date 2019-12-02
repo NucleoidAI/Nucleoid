@@ -15,6 +15,15 @@ module.exports = class BLOCK extends Node {
 
   stage(instruction) {
     if (
+      instruction.scope.block.type === undefined &&
+      instruction.statement.type === "CLASS"
+    ) {
+      throw new SyntaxError(
+        "Cannot define class declaration in non-class block"
+      );
+    }
+
+    if (
       instruction.run &&
       !(instruction.statement instanceof $) &&
       instruction.statement.type !== "CLASS"
