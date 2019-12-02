@@ -256,6 +256,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("count.length"), 1);
   });
 
+  it("assigns parameter in function as dependency", function() {
+    nucleoid.run("str1 = 'ABC'");
+    nucleoid.run("str2 = str1.toLowerCase ( ) + 'd'");
+    nucleoid.run("str3 = str2.concat ( str1 )");
+    assert.equal(nucleoid.run("str2"), "abcd");
+    assert.equal(nucleoid.run("str3"), "abcdABC");
+
+    nucleoid.run("str1 = 'AAA'");
+    assert.equal(nucleoid.run("str2"), "aaad");
+    assert.equal(nucleoid.run("str3"), "aaadAAA");
+  });
+
   it("supports regular expression literal", function() {
     nucleoid.run("class User { }");
     nucleoid.run(
