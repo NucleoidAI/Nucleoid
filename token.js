@@ -7,7 +7,8 @@ const next = function(string, offset) {
 
   let token = "";
   let active = false;
-  let stringOn = false;
+  let singleOn = false;
+  let doubleOn = false;
 
   let isDelimiter = function(character) {
     return character === 32 ? true : false;
@@ -16,15 +17,26 @@ const next = function(string, offset) {
   for (; offset < string.length; offset++) {
     let character = string.charCodeAt(offset);
 
-    if (stringOn) {
-      stringOn = character === 39 ? false : true;
+    if (character === 96) {
+      throw new SyntaxError("Backtick is not supported.");
+    }
+
+    if (singleOn) {
+      singleOn = character === 39 ? false : true;
+      token += String.fromCharCode(character);
+      continue;
+    }
+
+    if (doubleOn) {
+      doubleOn = character === 34 ? false : true;
       token += String.fromCharCode(character);
       continue;
     }
 
     if (!isDelimiter(character) && active === false) {
       active = true;
-      stringOn = character === 39 ? true : false;
+      singleOn = character === 39 ? true : false;
+      doubleOn = character === 34 ? true : false;
       token += String.fromCharCode(character);
     } else if (!isDelimiter(character) && active === true) {
       token += String.fromCharCode(character);

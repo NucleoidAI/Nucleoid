@@ -69,6 +69,19 @@ describe("Nucleoid", function() {
 
   it("supports string in expression", function() {
     assert.equal(nucleoid.run("'New String'"), "New String");
+    assert.equal(nucleoid.run('"New String"'), "New String");
+    assert.throws(function() {
+      nucleoid.run(`'New String"`);
+    }, SyntaxError);
+    assert.throws(function() {
+      nucleoid.run(`"New String'`);
+    }, SyntaxError);
+    assert.throws(
+      function() {
+        nucleoid.run("`New ${a} String`");
+      },
+      error => validate(error, SyntaxError, "Backtick is not supported.")
+    );
   });
 
   it("supports standard built-in functions", function() {
