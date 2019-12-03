@@ -1188,6 +1188,34 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("creates else if statement of class before initialization", function() {
+    nucleoid.run("class Storage { }");
+    nucleoid.run("normal = 'NORMAL' ; low = 'LOW'");
+    nucleoid.run(
+      "if ( Storage.capacity > 25 ) { Storage.status = normal } else { Storage.status = low }"
+    );
+    nucleoid.run("storage1 = new Storage ( )");
+    nucleoid.run("storage1.capacity = 23");
+    assert.equal(nucleoid.run("storage1.status"), "LOW");
+
+    nucleoid.run("low = 'L'");
+    assert.equal(nucleoid.run("storage1.status"), "L");
+  });
+
+  it("creates else if statement of class after initialization", function() {
+    nucleoid.run("class Registration { }");
+    nucleoid.run("yes = 'YES' ; no = 'NO'");
+    nucleoid.run("registration1 = new Registration ( )");
+    nucleoid.run("registration1.available = 0");
+    nucleoid.run(
+      "if ( Registration.available > 0 ) { Registration.accepted = yes } else { Registration.accepted = no }"
+    );
+    assert.equal(nucleoid.run("registration1.accepted"), "NO");
+
+    nucleoid.run("yes = true ; no = false");
+    assert.equal(nucleoid.run("registration1.accepted"), false);
+  });
+
   it("runs block statement of class before initialization", function() {
     nucleoid.run("class Stock { }"); //Stock
     nucleoid.run(
