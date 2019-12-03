@@ -67,6 +67,71 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("validates syntax of instance creation", function() {
+    nucleoid.run("class Board { }");
+    nucleoid.run("class Card { }");
+    assert.throws(
+      function() {
+        nucleoid.run("board1 = new Board { )");
+      },
+      error => validate(error, SyntaxError, "Unexpected token {")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("board1 = new Board ( }");
+      },
+      error => validate(error, SyntaxError, "Unexpected token }")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("board1 = new Board (");
+      },
+      error => validate(error, SyntaxError, "Missing parenthesis")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("board1 = new Board");
+      },
+      error => validate(error, SyntaxError, "Missing parentheses")
+    );
+
+    nucleoid.run("board1 = new Board ( )");
+    assert.throws(
+      function() {
+        nucleoid.run("board1.card = new Card { )");
+      },
+      error => validate(error, SyntaxError, "Unexpected token {")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("board1.card = new Card ( }");
+      },
+      error => validate(error, SyntaxError, "Unexpected token }")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("board1.card = new Card (");
+      },
+      error => validate(error, SyntaxError, "Missing parenthesis")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("board1.card = new Card");
+      },
+      error => validate(error, SyntaxError, "Missing parentheses")
+    );
+
+    nucleoid.run("board1 instanceof Board");
+    nucleoid.run("board1.card = new Card ( )");
+    nucleoid.run("board1.card instanceof Card");
+  });
+
   it("supports string in expression", function() {
     assert.equal(nucleoid.run("'New String'"), "New String");
     assert.equal(nucleoid.run('"New String"'), "New String");

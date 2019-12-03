@@ -29,7 +29,19 @@ module.exports = function ES6$VARIABLE(string, offset) {
 
     let instance = $INSTANCE(context.token);
     context = Token.next(string, context.offset);
+    if (context === null || context.token === ";")
+      throw new SyntaxError("Missing parentheses");
+
+    if (context.token !== "(")
+      throw new SyntaxError(`Unexpected token ${context.token}`);
+
     context = Token.next(string, context.offset);
+    if (context === null || context.token === ";")
+      throw new SyntaxError("Missing parenthesis");
+
+    if (context.token !== ")")
+      throw new SyntaxError(`Unexpected token ${context.token}`);
+
     return { statement: $VAR(name, instance), offset: context.offset };
   }
 

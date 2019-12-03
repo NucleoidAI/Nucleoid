@@ -19,6 +19,10 @@ module.exports = function(string, offset) {
       return "typeof ";
     }
 
+    if (token === "instanceof") {
+      return " instanceof ";
+    }
+
     return token;
   });
 
