@@ -421,6 +421,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("weight"), 37.2);
   });
 
+  it("creates multiple else if statement of variable", function() {
+    nucleoid.run("fraction = -0.1");
+    nucleoid.run("point = 1");
+    nucleoid.run(
+      "if ( fraction > 1 ) { score = fraction * point * 3 } else if ( fraction > 0 ) { score = fraction * point * 2 } else { score = fraction * point }"
+    );
+    assert.equal(nucleoid.run("score"), -0.1);
+
+    nucleoid.run("point = 2");
+    assert.equal(nucleoid.run("score"), -0.2);
+  });
+
   it("runs let statement as a variable", function() {
     nucleoid.run("integer = 30");
     nucleoid.run(
