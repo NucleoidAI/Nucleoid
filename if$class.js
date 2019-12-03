@@ -28,8 +28,13 @@ class IF$CLASS extends Node {
       statement.true.class = this.class;
       statement.true.instance = statement.instance;
 
-      if (this.false) {
-        statement.false = $BLOCK(this.false.statements);
+      if (this.false !== undefined) {
+        if (this.false instanceof $BLOCK) {
+          statement.false = $BLOCK(this.false.statements);
+        } else {
+          statement.false = this.false;
+        }
+
         statement.false.class = this.class;
         statement.false.instance = statement.instance;
       }

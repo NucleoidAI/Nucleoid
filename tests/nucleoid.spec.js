@@ -1243,6 +1243,35 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("registration1.accepted"), false);
   });
 
+  it("creates multiple else if statement of class before initialization", function() {
+    nucleoid.run("class Capacity { }");
+    nucleoid.run(
+      "if ( Capacity.spare / Capacity.available > 0.5 ) { Capacity.total = Capacity.available +  Capacity.spare } else if ( Capacity.spare / Capacity.available > 0.1 ) { Capacity.total = Capacity.available +  Capacity.spare * 2 } else { Capacity.total = Capacity.available + Capacity.spare * 3 }"
+    );
+    nucleoid.run("capacity1 = new Capacity ( )");
+    nucleoid.run("capacity1.available = 100");
+    nucleoid.run("capacity1.spare = 5");
+    assert.equal(nucleoid.run("capacity1.total"), 115);
+
+    nucleoid.run("capacity1.spare = 1");
+    assert.equal(nucleoid.run("capacity1.total"), 103);
+  });
+
+  it("creates multiple else if statement of class after initialization", function() {
+    nucleoid.run("class Shape { }");
+    nucleoid.run("shape1 = new Shape ( )");
+    nucleoid.run("shape1.type = 'RECTANGLE'");
+    nucleoid.run("shape1.x = 5");
+    nucleoid.run("shape1.y = 6");
+    nucleoid.run(
+      "if ( Shape.type == 'SQUARE' ) { Shape.area = Math.pow( Shape.x, 2 ) } else if ( Shape.type == 'TRIANGLE' ) { Shape.area = Shape.x * Shape.y / 2 } else { Shape.area = Shape.x * Shape.y }"
+    );
+    assert.equal(nucleoid.run("shape1.area"), 30);
+
+    nucleoid.run("shape1.x = 7");
+    assert.equal(nucleoid.run("shape1.area"), 42);
+  });
+
   it("runs block statement of class before initialization", function() {
     nucleoid.run("class Stock { }"); //Stock
     nucleoid.run(
