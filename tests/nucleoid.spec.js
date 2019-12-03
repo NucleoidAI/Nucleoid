@@ -853,6 +853,21 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("creates else if statement of property", function() {
+    nucleoid.run("class Contact { }");
+    nucleoid.run("contact1 = new Contact ( )");
+    nucleoid.run("contact1.type = 'PERSON'");
+    nucleoid.run("contact1.first = 'First'");
+    nucleoid.run("contact1.last = 'Last'");
+    nucleoid.run(
+      "if ( contact1.type == 'BUSINESS' ) { contact1.full = 'B' + contact1.first } else { contact1.full = contact1.first + ' ' + contact1.last }"
+    );
+    assert.equal(nucleoid.run("contact1.full"), "First Last");
+
+    nucleoid.run("contact1.first = 'F' ; contact1.last = 'L'");
+    assert.equal(nucleoid.run("contact1.full"), "F L");
+  });
+
   it("updates property assignment", function() {
     nucleoid.run("class Matter { }");
     nucleoid.run("matter1 = new Matter ( )");
