@@ -452,6 +452,19 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("room1.meeting.id"), undefined);
   });
 
+  it("runs multiple instance of let statement of property as value", function() {
+    nucleoid.run("class Timesheet { }");
+    nucleoid.run("class Task { }");
+    nucleoid.run("class Project { }");
+    nucleoid.run("Project.code = 'N-' + Project.id");
+    nucleoid.run("timesheet1 = new Timesheet ( )");
+    nucleoid.run(
+      "{ let task = new Task ( ) ; task.project = new Project ( ) ; task.project.id = 3668347 ; timesheet1.task = task }"
+    );
+    assert.equal(nucleoid.run("timesheet1.task.project.id"), 3668347);
+    assert.equal(nucleoid.run("timesheet1.task.project.code"), undefined);
+  });
+
   it("runs new instance of let statement of class as value before initialization", function() {
     nucleoid.run("class Member { }");
     nucleoid.run("class Registration { }");
