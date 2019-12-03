@@ -880,6 +880,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("contact1.full"), "F L");
   });
 
+  it("creates multiple else if statement of property", function() {
+    nucleoid.run("class Taxpayer { }");
+    nucleoid.run("taxpayer1 = new Taxpayer ( )");
+    nucleoid.run("taxpayer1.income = 60000");
+    nucleoid.run("taxpayer1.member = 1");
+    nucleoid.run("rate = 22");
+    nucleoid.run(
+      "if ( taxpayer1.member > 4 ) { taxpayer1.tax = taxpayer1.income * rate / 100 - 2000 } else if ( taxpayer1.member > 2 ) { taxpayer1.tax = taxpayer1.income * rate / 100 - 1000 } else { taxpayer1.tax = taxpayer1.income * rate / 100 }"
+    );
+    assert.equal(nucleoid.run("taxpayer1.tax"), 13200);
+
+    nucleoid.run("rate = 23");
+    assert.equal(nucleoid.run("taxpayer1.tax"), 13800);
+  });
+
   it("updates property assignment", function() {
     nucleoid.run("class Matter { }");
     nucleoid.run("matter1 = new Matter ( )");
