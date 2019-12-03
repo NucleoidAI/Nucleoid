@@ -437,6 +437,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("condition"), false);
   });
 
+  it("runs new instance of let statement of property as value", function() {
+    nucleoid.run("class Room { }");
+    nucleoid.run("class Meeting { }");
+    nucleoid.run("room1 = new Room ( )");
+    nucleoid.run("Meeting.id = Date.now ( ) + '@' + Meeting.date");
+    nucleoid.run(
+      "{ let meeting = new Meeting ( ) ; meeting.date = new Date ( '2020-1-1' ) ; room1.meeting = meeting }"
+    );
+    assert.equal(
+      nucleoid.run("room1.meeting.date.toDateString()"),
+      "Wed Jan 01 2020"
+    );
+    assert.equal(nucleoid.run("room1.meeting.id"), undefined);
+  });
+
   it("runs new instance of let statement of class as value before initialization", function() {
     nucleoid.run("class Member { }");
     nucleoid.run("class Registration { }");
