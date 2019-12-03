@@ -312,6 +312,17 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("detects circular dependency", function() {
+    nucleoid.run("number1 = 10");
+    nucleoid.run("number2 = number1 * 10");
+    assert.throws(
+      function() {
+        nucleoid.run("number1 = number2 * 10");
+      },
+      error => validate(error, ReferenceError, "Circular Dependency")
+    );
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");

@@ -97,35 +97,41 @@ module.exports.process = function(statements) {
 
         let list = statement.graph(instruction.scope);
         if (list) {
+          list.forEach(e => {
+            if (graph[e].previous[statement.key] !== undefined) {
+              throw new ReferenceError("Circular Dependency");
+            }
+          });
+
           dependencies = dependencies
             .concat(list.filter(e => !dependencies.includes(e)))
             .sort((a, b) => graph[a].sequence - graph[b].sequence);
         }
+      }
 
-        for (let node in statement.next) {
-          let s = instruction.scope;
-          let n = graph[node];
+      for (let node in statement.next) {
+        let s = instruction.scope;
+        let n = graph[node];
 
-          if (n instanceof BLOCK || n instanceof IF) {
-            let scope = new Scope();
-            dependents.push(new Instruction(scope, n, false, true, false));
-            dependents.push(new Instruction(scope, n, false, false, true));
-          } else {
-            dependents.push(new Instruction(s, n, false, true, false));
-          }
+        if (n instanceof BLOCK || n instanceof IF) {
+          let scope = new Scope();
+          dependents.push(new Instruction(scope, n, false, true, false));
+          dependents.push(new Instruction(scope, n, false, false, true));
+        } else {
+          dependents.push(new Instruction(s, n, false, true, false));
         }
+      }
 
-        // Root scope is a scope, which does not have any prior.
-        if (!instruction.scope.prior && !(statement instanceof $)) {
-          dependencies.forEach(source => {
-            let targetKey = statement.key ? statement.key : statement.id;
-            Node.direct(source, targetKey, statement);
-          });
-          dependencies = [];
+      // Root scope is a scope, which does not have any prior.
+      if (!instruction.scope.prior && !(statement instanceof $)) {
+        dependencies.forEach(source => {
+          let targetKey = statement.key ? statement.key : statement.id;
+          Node.direct(source, targetKey, statement);
+        });
+        dependencies = [];
 
-          instructions = dependents.concat(instructions);
-          dependents = [];
-        }
+        instructions = dependents.concat(instructions);
+        dependents = [];
       }
 
       if (instruction.scope.block) {
