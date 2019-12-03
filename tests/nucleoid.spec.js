@@ -925,6 +925,20 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("item1.custom"), "US0000002");
   });
 
+  it("runs nested block statement of property", function() {
+    nucleoid.run("class Figure { }");
+    nucleoid.run("figure1 = new Figure ( )");
+    nucleoid.run("figure1.width = 9");
+    nucleoid.run("figure1.height = 10");
+    nucleoid.run(
+      "{ let base = Math.pow ( figure1.width , 2 ) ; { figure1.volume = base * figure1.height } }"
+    );
+    assert.equal(nucleoid.run("figure1.volume"), 810);
+
+    nucleoid.run("figure1.height = 9");
+    assert.equal(nucleoid.run("figure1.volume"), 729);
+  });
+
   it("runs nested if statement of property", function() {
     nucleoid.run("class Sale { }");
     nucleoid.run("sale1 = new Sale ( )");
