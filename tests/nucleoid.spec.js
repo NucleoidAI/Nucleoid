@@ -680,6 +680,31 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("typeof Entity"), "function");
   });
 
+  it("rejects creating instance if the class does not exist", function() {
+    assert.throws(
+      function() {
+        nucleoid.run("chart1 = new Chart ( )");
+      },
+      error => validate(error, ReferenceError, "'Chart' is not defined")
+    );
+
+    nucleoid.run("class Chart { }");
+    nucleoid.run("chart1 = new Chart ( )");
+    assert.throws(
+      function() {
+        nucleoid.run("chart1.plot = new Plot ( )");
+      },
+      error => validate(error, ReferenceError, "'Plot' is not defined")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("Chart.plot = new Plot ( )");
+      },
+      error => validate(error, ReferenceError, "'Plot' is not defined")
+    );
+  });
+
   it("creates property assignment before declaration", function() {
     nucleoid.run("class Order { }");
     nucleoid.run("var order1 = new Order ( )");

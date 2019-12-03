@@ -16,6 +16,9 @@ module.exports = function(cls, name, object) {
 
 class $INSTANCE extends $ {
   run(scope) {
+    if (graph[this.class] === undefined)
+      throw new ReferenceError(`'${this.class}' is not defined`);
+
     if (this.object !== undefined && this.name === "value") {
       throw new TypeError("Cannot use 'value' as property");
     }
