@@ -197,6 +197,11 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("supports array with brackets", function() {
+    nucleoid.run("states = [ 'NY' , 'GA' , 'CT' , 'MI' ]");
+    assert.equal(nucleoid.run("states [ 2 ]"), "CT");
+  });
+
   it("retrieves value by variable", function() {
     nucleoid.run("number = -1");
     assert.equal(nucleoid.run("number"), -1);
