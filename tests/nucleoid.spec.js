@@ -25,6 +25,22 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("j + 2"), 3);
   });
 
+  it("rejects variable declaration without definition", function() {
+    assert.throws(
+      function() {
+        nucleoid.run("var a");
+      },
+      error => validate(error, SyntaxError, "Missing definition")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("var a ;");
+      },
+      error => validate(error, SyntaxError, "Missing definition")
+    );
+  });
+
   it("allows variable declaration without var keyword", function() {
     nucleoid.run("pi = 3.14 ;");
     assert.equal(nucleoid.run("pi == 3.14"), true);

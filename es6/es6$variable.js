@@ -17,6 +17,10 @@ module.exports = function ES6$VARIABLE(string, offset) {
   context = Token.next(string, context.offset);
   let name = context.token;
   let standard = (context = Token.next(string, context.offset));
+
+  if (context === null || context.token === ";")
+    throw new SyntaxError("Missing definition");
+
   let check = Token.next(string, context.offset);
 
   standard: if (check.token === "new") {
