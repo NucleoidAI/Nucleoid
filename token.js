@@ -121,7 +121,7 @@ class Token {
       }
     }
 
-    throw new SyntaxError(`Unexpected token ${character}`);
+    throw new SyntaxError("Missing parenthesis");
   }
 
   constructor(string) {

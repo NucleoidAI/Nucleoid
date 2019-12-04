@@ -77,9 +77,23 @@ describe("Nucleoid", function() {
 
     assert.throws(
       function() {
+        nucleoid.run("class Ratio {");
+      },
+      error => validate(error, SyntaxError, "Missing parenthesis")
+    );
+
+    assert.throws(
+      function() {
+        nucleoid.run("class Ratio");
+      },
+      error => validate(error, SyntaxError, "Missing parentheses")
+    );
+
+    assert.throws(
+      function() {
         nucleoid.run("class Ratio { calculate() )");
       },
-      error => validate(error, SyntaxError, "Unexpected token )")
+      error => validate(error, SyntaxError, "Missing parenthesis")
     );
   });
 

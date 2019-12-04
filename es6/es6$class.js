@@ -7,6 +7,9 @@ module.exports = function ES6$CLASS(string, offset) {
   let name = context.token;
   context = Token.next(string, context.offset);
 
+  if (context === null || context.token === ";")
+    throw new SyntaxError("Missing parentheses");
+
   if (context.token !== "{")
     throw new SyntaxError(`Unexpected token ${context.token}`);
 
