@@ -64,7 +64,7 @@ class Token {
       offset = context.offset;
       let token = context.token;
 
-      if (token === ";") {
+      if (brackets <= 0 && token === ";") {
         return { tokens: tokens, offset: offset };
       }
 
@@ -180,14 +180,31 @@ module.exports.ARRAY = class ARRAY {
       let token = this[index];
       let string = fn(token.string);
 
-      if (token instanceof FUNCTION) {
+      if (token instanceof CALL) {
         let params = [];
 
         for (let param of token.params) {
-          params.push(fn(param));
+          if (param instanceof FUNCTION) {
+            let f = new FUNCTION();
+            f.short = param.short;
+            f.params = param.params;
+            f.block = [];
+
+            for (let p of param.block) {
+              if (param.params.includes(p)) {
+                f.block.push(p);
+              } else {
+                f.block.push(fn(p));
+              }
+            }
+
+            params.push(f);
+          } else {
+            params.push(fn(param));
+          }
         }
 
-        list.push(new FUNCTION(string, params));
+        list.push(new CALL(string, params));
       } else {
         list.push(new Token(string));
       }
@@ -202,7 +219,7 @@ module.exports.ARRAY = class ARRAY {
     for (let index = 0; index < this.length; index++) {
       let token = this[index];
 
-      if (token instanceof FUNCTION) {
+      if (token instanceof CALL) {
         let parts = Identifier.splitLast(token.string);
 
         if (parts[1] !== undefined) {
@@ -210,7 +227,11 @@ module.exports.ARRAY = class ARRAY {
         }
 
         for (let param of token.params) {
-          list.push(param);
+          if (param instanceof FUNCTION) {
+            list = list.concat(param.block);
+          } else {
+            list.push(param);
+          }
         }
       } else {
         list.push(token.string);
@@ -225,7 +246,7 @@ module.exports.ARRAY = class ARRAY {
   }
 };
 
-class FUNCTION extends Token {
+class CALL extends Token {
   constructor(string, params) {
     super(string);
     this.params = params;
@@ -234,9 +255,42 @@ class FUNCTION extends Token {
   construct() {
     return this.string
       .concat("(")
-      .concat(this.params.join(""))
+      .concat(
+        this.params
+          .map(param => {
+            if (param instanceof FUNCTION) {
+              return param.construct();
+            }
+
+            return param;
+          })
+          .join(" ")
+      )
       .concat(")");
   }
 }
 
+class FUNCTION extends Token {
+  constructor(short) {
+    super();
+    this.short = short;
+  }
+
+  construct() {
+    if (this.short === true) {
+      return "("
+        .concat(this.params.join(","))
+        .concat(")=>")
+        .concat(this.block.join(" "));
+    }
+
+    return "function"
+      .concat("(")
+      .concat(this.params.join(","))
+      .concat(")")
+      .concat(this.block.join(" "));
+  }
+}
+
+module.exports.CALL = CALL;
 module.exports.FUNCTION = FUNCTION;

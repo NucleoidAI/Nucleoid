@@ -192,8 +192,46 @@ describe("Nucleoid", function() {
   it("supports function in expression", function() {
     nucleoid.run("list = [1, 2, 3]");
     assert.equal(
-      nucleoid.run("list.find ( ( element ) => { return element == 2 } )"),
+      nucleoid.run(
+        "list.find ( function ( element ) { return element == 3 } )"
+      ),
+      3
+    );
+
+    assert.equal(
+      nucleoid.run("list.find ( element => { return element == 2 } )"),
       2
+    );
+
+    assert.equal(nucleoid.run("list.find ( element => element == 1 )"), 1);
+    assert.equal(nucleoid.run("list.find ( element => ( element == 1 ) )"), 1);
+  });
+
+  it("supports function with parameter in expression", function() {
+    nucleoid.run("samples = [ 38.2 , 39.1 , 38.8 , 39 ]");
+    nucleoid.run("ratio = 2.1");
+    nucleoid.run("element = 38.5");
+    assert.equal(
+      nucleoid.run(
+        "samples.find ( function ( element ) { let result = element * ratio ; return result == 81.48 } )"
+      ),
+      38.8
+    );
+
+    assert.equal(
+      nucleoid.run(
+        "samples.find ( element => { let result = element * ratio ; return result == 81.48 } )"
+      ),
+      38.8
+    );
+
+    assert.equal(
+      nucleoid.run("samples.find ( element => element == 38.8 )"),
+      38.8
+    );
+    assert.equal(
+      nucleoid.run("samples.find ( element => ( element == 38.8 ) )"),
+      38.8
     );
   });
 

@@ -71,7 +71,7 @@ module.exports = class EXPRESSION extends Value {
     let list = [];
 
     for (let token of this.tokens) {
-      if (token instanceof Token.FUNCTION) {
+      if (token instanceof Token.CALL) {
         let parts = Identifier.splitLast(token.string);
         if (parts[1] && graph[parts[1]]) {
           for (let node in graph[parts[1]].next)
