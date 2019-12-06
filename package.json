@@ -14,9 +14,7 @@
   "author": "Can Mingir",
   "license": "UNLICENSED",
   "dependencies": {
-    "uuid": "^3.3.3"
-  },
-  "devDependencies": {
+    "uuid": "^3.3.3",
     "yargs": "^13.3.0"
   }
 }

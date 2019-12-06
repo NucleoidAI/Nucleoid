@@ -5,6 +5,7 @@ var Value = require("./value");
 var Identifier = require("./identifier");
 var Node = require("./node");
 var Token = require("./token");
+const argv = require("yargs").argv;
 
 module.exports = class EXPRESSION extends Value {
   constructor(tokens) {
@@ -60,6 +61,7 @@ module.exports = class EXPRESSION extends Value {
           }
         });
 
+      if (argv.log === true || argv.l === true) console.log(tokens.construct());
       return eval(tokens.construct());
     } catch (error) {
       if (error instanceof Error) throw error;

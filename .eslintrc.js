@@ -10,6 +10,7 @@ module.exports = {
     sourceType: "module"
   },
   rules: {
-    eqeqeq: ["error", "always"]
+    eqeqeq: ["error", "always"],
+    "no-console": "off"
   }
 };
