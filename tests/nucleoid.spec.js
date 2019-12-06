@@ -235,6 +235,23 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("assigns block in function as dependency", function() {
+    nucleoid.run("class Student { }");
+    nucleoid.run("student1 = new Student ( )");
+    nucleoid.run("student1.age = 7");
+    nucleoid.run("student2 = new Student ( )");
+    nucleoid.run("student2.age = 8");
+    nucleoid.run("student3 = new Student ( )");
+    nucleoid.run("student3.age = 9");
+
+    nucleoid.run("age = 8");
+    nucleoid.run("student = Students.find ( s => s.age == age )");
+    assert.equal(nucleoid.run("student"), nucleoid.run("student2"));
+
+    nucleoid.run("age = 9");
+    assert.equal(nucleoid.run("student"), nucleoid.run("student3"));
+  });
+
   it("supports array with brackets", function() {
     nucleoid.run("states = [ 'NY' , 'GA' , 'CT' , 'MI' ]");
     assert.equal(nucleoid.run("states [ 2 ]"), "CT");
