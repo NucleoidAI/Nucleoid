@@ -19,7 +19,7 @@ module.exports = function ES6$VARIABLE(string, offset) {
   let standard = (context = Token.next(string, context.offset));
 
   if (context === null || context.token === ";")
-    throw new SyntaxError("Missing definition");
+    throw SyntaxError("Missing definition");
 
   let check = Token.next(string, context.offset);
 
@@ -34,17 +34,17 @@ module.exports = function ES6$VARIABLE(string, offset) {
     let instance = $INSTANCE(context.token);
     context = Token.next(string, context.offset);
     if (context === null || context.token === ";")
-      throw new SyntaxError("Missing parentheses");
+      throw SyntaxError("Missing parentheses");
 
     if (context.token !== "(")
-      throw new SyntaxError(`Unexpected token ${context.token}`);
+      throw SyntaxError(`Unexpected token ${context.token}`);
 
     context = Token.next(string, context.offset);
     if (context === null || context.token === ";")
-      throw new SyntaxError("Missing parenthesis");
+      throw SyntaxError("Missing parenthesis");
 
     if (context.token !== ")")
-      throw new SyntaxError(`Unexpected token ${context.token}`);
+      throw SyntaxError(`Unexpected token ${context.token}`);
 
     return { statement: $VAR(name, instance), offset: context.offset };
   }

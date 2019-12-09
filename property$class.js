@@ -10,7 +10,7 @@ class PROPERTY$CLASS extends Node {
     this.value.tokens.forEach(token => {
       let parts = Identifier.splitLast(token);
       if (parts[0] && parts[1] && parts[0] === "value") {
-        throw new TypeError();
+        throw TypeError("Cannot use 'value' as a property");
       }
     });
   }

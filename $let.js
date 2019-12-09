@@ -22,12 +22,12 @@ class $LET extends $ {
     let parts = Identifier.splitLast(this.name);
 
     if (parts[1] !== undefined && !Local.check(scope, parts[1])) {
-      throw ReferenceError(`'${parts[1]}' is not defined`);
+      throw ReferenceError(`${parts[1]} is not defined`);
     }
 
     parts = this.name.split(".");
     if (parts.length > 1 && parts[parts.length - 1] === "value")
-      throw new TypeError();
+      throw TypeError("Cannot use 'value' in local");
 
     let value = this.value.run();
 

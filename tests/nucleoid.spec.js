@@ -165,12 +165,18 @@ describe("Nucleoid", function() {
   it("supports string in expression", function() {
     assert.equal(nucleoid.run("'New String'"), "New String");
     assert.equal(nucleoid.run('"New String"'), "New String");
-    assert.throws(function() {
-      nucleoid.run(`'New String"`);
-    }, SyntaxError);
-    assert.throws(function() {
-      nucleoid.run(`"New String'`);
-    }, SyntaxError);
+    assert.throws(
+      function() {
+        nucleoid.run(`'New String"`);
+      },
+      error => validate(error, SyntaxError, "Invalid or unexpected token")
+    );
+    assert.throws(
+      function() {
+        nucleoid.run(`"New String'`);
+      },
+      error => validate(error, SyntaxError, "Invalid or unexpected token")
+    );
     assert.throws(
       function() {
         nucleoid.run("`New ${a} String`");
@@ -263,9 +269,12 @@ describe("Nucleoid", function() {
   });
 
   it("rejects variable if not declared", function() {
-    assert.throws(function() {
-      nucleoid.run("e == 2.71828");
-    }, ReferenceError);
+    assert.throws(
+      function() {
+        nucleoid.run("e == 2.71828");
+      },
+      error => validate(error, ReferenceError, "e is not defined")
+    );
   });
 
   it("runs multiple statements in the state", function() {
@@ -324,7 +333,7 @@ describe("Nucleoid", function() {
           "{ let ticket = new Ticket ( ) ; ticket.event.group = 'ENTERTAINMENT' }"
         );
       },
-      error => validate(error, ReferenceError, "'ticket.event' is not defined")
+      error => validate(error, ReferenceError, "ticket.event is not defined")
     );
   });
 
@@ -507,9 +516,12 @@ describe("Nucleoid", function() {
     nucleoid.run("q = t + 1");
     nucleoid.run("delete q");
     nucleoid.run("t = 2");
-    assert.throws(function() {
-      nucleoid.run("q");
-    }, ReferenceError);
+    assert.throws(
+      function() {
+        nucleoid.run("q");
+      },
+      error => validate(error, ReferenceError, "q is not defined")
+    );
   });
 
   it("uses value property to indicate using only value of variable", function() {
@@ -840,7 +852,7 @@ describe("Nucleoid", function() {
       function() {
         nucleoid.run("chart1 = new Chart ( )");
       },
-      error => validate(error, ReferenceError, "'Chart' is not defined")
+      error => validate(error, ReferenceError, "Chart is not defined")
     );
 
     nucleoid.run("class Chart { }");
@@ -849,14 +861,14 @@ describe("Nucleoid", function() {
       function() {
         nucleoid.run("chart1.plot = new Plot ( )");
       },
-      error => validate(error, ReferenceError, "'Plot' is not defined")
+      error => validate(error, ReferenceError, "Plot is not defined")
     );
 
     assert.throws(
       function() {
         nucleoid.run("Chart.plot = new Plot ( )");
       },
-      error => validate(error, ReferenceError, "'Plot' is not defined")
+      error => validate(error, ReferenceError, "Plot is not defined")
     );
   });
 
@@ -887,7 +899,7 @@ describe("Nucleoid", function() {
         nucleoid.run("channel1.frequency.type = 'ANGULAR'");
       },
       error =>
-        validate(error, ReferenceError, "'channel1.frequency' is not defined")
+        validate(error, ReferenceError, "channel1.frequency is not defined")
     );
   });
 
@@ -900,7 +912,7 @@ describe("Nucleoid", function() {
         nucleoid.run("worker1.duty.schedule = new Schedule ( )");
       },
 
-      error => validate(error, ReferenceError, "'worker1.duty' is not defined")
+      error => validate(error, ReferenceError, "worker1.duty is not defined")
     );
   });
 
@@ -945,16 +957,19 @@ describe("Nucleoid", function() {
       function() {
         nucleoid.run("value.value = new Place ( )");
       },
-      error => validate(error, TypeError, "Cannot use 'value' as property")
+      error => validate(error, TypeError, "Cannot use 'value' as a property")
     );
   });
 
   it("rejects if property name is value", function() {
     nucleoid.run("class Number { }");
     nucleoid.run("value = new Number ( )");
-    assert.throws(function() {
-      nucleoid.run("value.value = 2147483647");
-    }, TypeError);
+    assert.throws(
+      function() {
+        nucleoid.run("value.value = 2147483647");
+      },
+      error => validate(error, TypeError, "Cannot use 'value' as a name")
+    );
   });
 
   it("uses value property to indicate using only value of property", function() {
@@ -973,9 +988,13 @@ describe("Nucleoid", function() {
     nucleoid.run("class Travel { }");
     nucleoid.run("travel1 = new Travel ( )");
     nucleoid.run("travel1.speed = 65");
-    assert.throws(function() {
-      nucleoid.run("travel1.time = travel1.distance.value / travel1.speed");
-    }, TypeError);
+    assert.throws(
+      function() {
+        nucleoid.run("travel1.time = travel1.distance.value / travel1.speed");
+      },
+      error =>
+        validate(error, ReferenceError, "travel1.distance is not defined")
+    );
   });
 
   it("keeps as null if value of property is null", function() {
@@ -994,9 +1013,12 @@ describe("Nucleoid", function() {
 
   it("rejects if property of local name is value", function() {
     nucleoid.run("class Alarm { }");
-    assert.throws(function() {
-      nucleoid.run("{ let value = new Alarm ( ) ; value.value = '22:00' }");
-    }, TypeError);
+    assert.throws(
+      function() {
+        nucleoid.run("{ let value = new Alarm ( ) ; value.value = '22:00' }");
+      },
+      error => validate(error, TypeError, "Cannot use 'value' in local")
+    );
   });
 
   it("keeps same as its value when value property used for local", function() {
@@ -1607,14 +1629,17 @@ describe("Nucleoid", function() {
       function() {
         nucleoid.run("Phone.line.wired = true");
       },
-      error => validate(error, ReferenceError, "'Phone.line' is not defined")
+      error => validate(error, ReferenceError, "Phone.line is not defined")
     );
   });
 
   it("rejects using value of class", function() {
     nucleoid.run("class Employee { }");
-    assert.throws(function() {
-      nucleoid.run("Employee.annual = Employee.biweekly.value * 52");
-    }, TypeError);
+    assert.throws(
+      function() {
+        nucleoid.run("Employee.annual = Employee.biweekly.value * 52");
+      },
+      error => validate(error, TypeError, "Cannot use 'value' as a property")
+    );
   });
 });

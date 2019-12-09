@@ -27,7 +27,7 @@ const next = function(string, offset) {
     let character = string.charCodeAt(offset);
 
     if (character === 96) {
-      throw new SyntaxError("Backtick is not supported.");
+      throw SyntaxError("Backtick is not supported.");
     }
 
     if (singleOn) {
@@ -139,7 +139,7 @@ class Token {
       }
     }
 
-    throw new SyntaxError("Missing parenthesis");
+    throw SyntaxError("Missing parenthesis");
   }
 
   constructor(string) {

@@ -99,7 +99,7 @@ module.exports.process = function(statements) {
         if (list) {
           list.forEach(e => {
             if (graph[e].previous[statement.key] !== undefined) {
-              throw new ReferenceError("Circular Dependency");
+              throw ReferenceError("Circular Dependency");
             }
           });
 

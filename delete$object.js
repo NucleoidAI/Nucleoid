@@ -9,7 +9,7 @@ module.exports = class DELETE$OBJECT extends DELETE {
       delete graph[this.key].object.property[name];
 
     if (Object.keys(graph[this.key].property).length > 0) {
-      throw new ReferenceError(`Cannot delete object '${this.key}'`);
+      throw ReferenceError(`Cannot delete object '${this.key}'`);
     }
 
     super.run();

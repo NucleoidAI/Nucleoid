@@ -26,7 +26,7 @@ module.exports = class EXPRESSION extends Value {
           if (graph[parts[1]] !== undefined) {
             let value = eval("state." + parts[1]);
             return JSON.stringify(value);
-          } else throw TypeError();
+          } else throw ReferenceError(`${parts[1]} is not defined`);
         } else return token;
       });
   }

@@ -93,7 +93,7 @@ module.exports = function(string, offset) {
       }
 
       if (tokens[i + 1] && tokens[i + 1].charAt(0) === ".") {
-        throw new SyntaxError("Nested functions are not supported.");
+        throw SyntaxError("Nested functions are not supported.");
       }
 
       call.params = params;

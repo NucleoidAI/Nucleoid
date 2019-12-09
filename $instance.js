@@ -17,10 +17,10 @@ module.exports = function(cls, name, object) {
 class $INSTANCE extends $ {
   run(scope) {
     if (graph[this.class] === undefined)
-      throw new ReferenceError(`'${this.class}' is not defined`);
+      throw ReferenceError(`${this.class} is not defined`);
 
     if (this.object !== undefined && this.name === "value") {
-      throw new TypeError("Cannot use 'value' as property");
+      throw TypeError("Cannot use 'value' as a property");
     }
 
     let local = this.object + "." + this.name;
@@ -31,7 +31,7 @@ class $INSTANCE extends $ {
     }
 
     if (this.object !== undefined && graph[this.object] === undefined)
-      throw new ReferenceError(`'${this.object}' is not defined`);
+      throw ReferenceError(`${this.object} is not defined`);
 
     if (
       this.object &&
