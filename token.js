@@ -1,5 +1,18 @@
 var Identifier = require("./identifier");
 
+function isDelimiter(c) {
+  return !(
+    (48 <= c && c <= 57) ||
+    (65 <= c && c <= 90) ||
+    (97 <= c && c <= 122) ||
+    c === 34 ||
+    c === 36 ||
+    c === 39 ||
+    c === 46 ||
+    c === 95
+  );
+}
+
 const next = function(string, offset) {
   if (offset >= string.length) {
     return null;
@@ -9,10 +22,6 @@ const next = function(string, offset) {
   let active = false;
   let singleOn = false;
   let doubleOn = false;
-
-  let isDelimiter = function(character) {
-    return character === 32 ? true : false;
-  };
 
   for (; offset < string.length; offset++) {
     let character = string.charCodeAt(offset);
@@ -41,6 +50,15 @@ const next = function(string, offset) {
     } else if (!isDelimiter(character) && active === true) {
       token += String.fromCharCode(character);
     } else if (isDelimiter(character) && active === true) {
+      break;
+    } else if (isDelimiter(character) && active === false) {
+      if (character === 32) {
+        continue;
+      } else {
+        token = String.fromCharCode(character);
+      }
+
+      offset++;
       break;
     }
   }
@@ -264,7 +282,7 @@ class CALL extends Token {
 
             return param;
           })
-          .join(" ")
+          .join("")
       )
       .concat(")");
   }
@@ -281,14 +299,14 @@ class FUNCTION extends Token {
       return "("
         .concat(this.params.join(","))
         .concat(")=>")
-        .concat(this.block.join(" "));
+        .concat(this.block.join(""));
     }
 
     return "function"
       .concat("(")
       .concat(this.params.join(","))
       .concat(")")
-      .concat(this.block.join(" "));
+      .concat(this.block.join(""));
   }
 }
 

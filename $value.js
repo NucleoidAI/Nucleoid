@@ -4,9 +4,14 @@ var $ = require("./$");
 var graph = require("./graph");
 var REFERENCE = require("./reference");
 var EXPRESSION$CLASS = require("./expression$class");
+var Local = require("./local");
 
 module.exports = function(string, offset) {
   let context = Token.each(string, offset, function(token) {
+    if (token === "let") {
+      return "let ";
+    }
+
     if (token === "new") {
       return "new ";
     }
@@ -61,11 +66,11 @@ module.exports = function(string, offset) {
 
           params.push(fn);
           i = context.offset;
-        } else if (tokens[i + 1] === "=>") {
+        } else if (tokens[i + 1] === "=" && tokens[i + 2] === ">") {
           let fn = new Token.FUNCTION(true);
 
           fn.params = [token];
-          i += 2;
+          i += 3;
 
           token = tokens[i];
 
@@ -109,10 +114,15 @@ module.exports = function(string, offset) {
 };
 
 class $VALUE extends $ {
-  run() {
-    if (this.tokens.length === 1 && graph[this.tokens[0].string]) {
+  run(scope) {
+    if (
+      this.tokens.length === 1 &&
+      graph[this.tokens[0].string] &&
+      !Local.check(scope, this.tokens[0].string)
+    ) {
       let statement = new REFERENCE();
       statement.link = graph[this.tokens[0].string];
+      statement.tokens = this.tokens;
       return statement;
     } else {
       for (let token of this.tokens.list()) {

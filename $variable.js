@@ -11,8 +11,8 @@ module.exports = function(name, value) {
 };
 
 class $VARIABLE extends $ {
-  run() {
-    let value = this.value.run();
+  run(scope) {
+    let value = this.value.run(scope);
 
     if (value instanceof Value) {
       let statement = new VARIABLE();

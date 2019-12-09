@@ -16,18 +16,29 @@ module.exports.compile = function compile(string) {
     let context = Token.next(string, offset);
     let check = Token.next(string, context.offset);
 
-    if (check && check.token === "=") context = ES6$ASSIGNMENT(string, offset);
-    else {
-      if (context.token === "var") context = ES6$VARIABLE(string, offset);
-      else if (context.token === "if") context = ES6$IF(string, offset);
-      else if (context.token === "class") context = ES6$CLASS(string, offset);
-      else if (context.token === "{") context = ES6$BLOCK(string, offset);
-      else if (context.token === "delete") context = ES6$DELETE(string, offset);
-      else if (context.token === "let") context = ES6$LET(string, offset);
-      else if (context.token === "new") context = ES6$VARIABLE(string, offset);
-      else if (context.token === "throw") context = ES6$THROW(string, offset);
-      else context = $VALUE(string, offset);
+    if (check && check.token === "=") {
+      check = Token.next(string, check.offset);
+
+      if (check && check.token !== "=") {
+        context = ES6$ASSIGNMENT(string, offset);
+        if (context.statement) {
+          list.push(context.statement);
+        }
+
+        offset = context.offset;
+        continue;
+      }
     }
+
+    if (context.token === "var") context = ES6$VARIABLE(string, offset);
+    else if (context.token === "if") context = ES6$IF(string, offset);
+    else if (context.token === "class") context = ES6$CLASS(string, offset);
+    else if (context.token === "{") context = ES6$BLOCK(string, offset);
+    else if (context.token === "delete") context = ES6$DELETE(string, offset);
+    else if (context.token === "let") context = ES6$LET(string, offset);
+    else if (context.token === "new") context = ES6$VARIABLE(string, offset);
+    else if (context.token === "throw") context = ES6$THROW(string, offset);
+    else context = $VALUE(string, offset);
 
     if (context.statement) {
       list.push(context.statement);
