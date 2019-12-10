@@ -57,11 +57,11 @@ module.exports.process = function(statements) {
       }
 
       if (instruction.run) {
-        result = statement.run(instruction.scope);
+        let list = statement.run(instruction.scope);
 
-        if (result) {
+        if (list) {
           let scope = instruction.scope;
-          result = Array.isArray(result) ? result : [result];
+          list = Array.isArray(list) ? list : [list];
 
           if (statement instanceof BLOCK) {
             scope = new Scope(scope, statement);
@@ -71,7 +71,7 @@ module.exports.process = function(statements) {
             scope = new Scope(scope);
           }
 
-          instructions = result
+          instructions = list
             .map(statement => {
               return statement instanceof Instruction
                 ? statement
