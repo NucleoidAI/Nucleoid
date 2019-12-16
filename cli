@@ -1,0 +1,34 @@
+#!/usr/bin/env node
+const nucleoid = require("./nucleoid.js");
+
+process.stdout.write("> ");
+process.openStdin().addListener("data", function(data) {
+  let string = data.toString().trim();
+  run(string);
+  process.stdout.write("> ");
+});
+
+function run(string) {
+  try {
+    if (string == "exit") {
+      process.exit();
+    }
+
+    let details = nucleoid.run(string, true);
+
+    let result = details.result;
+    let time = details.time;
+
+    if (result instanceof Object) {
+      result = JSON.stringify(result);
+    }
+
+    if (result) {
+      console.log("%s \x1b[32m(%sms)\x1b[0m", result, time);
+    } else {
+      console.log("\x1b[32m(%sms)\x1b[0m", time);
+    }
+  } catch (error) {
+    console.log("%s", error.message);
+  }
+}
