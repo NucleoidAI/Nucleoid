@@ -31,6 +31,7 @@ class BLOCK$CLASS extends Node {
 
     return statements;
   }
+
   graph() {
     this.class.declaration[this.id] = this;
   }

@@ -7,8 +7,10 @@ var graph = require("./graph");
 class PROPERTY$INSTANCE extends PROPERTY {
   prepare() {
     let declaration = Identifier.serialize(this.declaration);
+
     let parts = declaration.split(".");
     parts[0] = Identifier.serialize(this.instance);
+
     let p = Identifier.splitLast(parts.join("."));
     this.object = graph[p[1]];
 

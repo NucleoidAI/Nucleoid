@@ -4,6 +4,7 @@ var graph = require("./graph");
 
 module.exports = class THROW {
   prepare() {}
+
   run() {
     let exception = graph[this.exception];
 
@@ -13,5 +14,6 @@ module.exports = class THROW {
 
     throw this.exception;
   }
+
   graph() {}
 };
