@@ -1,5 +1,5 @@
 const argv = require("yargs").argv;
-const nucleoid = require("../nucleoid");
+const nucleoid = require("../nucleoid.js");
 
 var n = argv.n ? argv.n : 2;
 var c = argv.c ? argv.c : 0;

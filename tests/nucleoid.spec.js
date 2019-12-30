@@ -1,5 +1,5 @@
 var assert = require("assert");
-var nucleoid = require("../nucleoid");
+var nucleoid = require("../nucleoid.js");
 var state = require("../state");
 var graph = require("../graph");
 
