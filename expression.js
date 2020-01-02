@@ -1,15 +1,14 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var graph = require("./graph");
 var Local = require("./local");
-var Value = require("./value");
 var Identifier = require("./identifier");
 var Node = require("./node");
 var Token = require("./token");
 const argv = require("yargs").argv;
+var Type = require("./type");
 
-module.exports = class EXPRESSION extends Value {
+class EXPRESSION {
   constructor(tokens) {
-    super();
     this.tokens = tokens;
   }
 
@@ -103,4 +102,7 @@ module.exports = class EXPRESSION extends Value {
         else return token;
       });
   }
-};
+}
+
+EXPRESSION.prototype.type = Type.EXPRESSION;
+module.exports = EXPRESSION;

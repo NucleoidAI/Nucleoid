@@ -6,7 +6,7 @@ var ES6$BLOCK = require("./es6$block");
 var ES6$DELETE = require("./es6$delete");
 var ES6$IF = require("./es6$if");
 var ES6$LET = require("./es6$let");
-var $VALUE = require("../$value");
+var $EXP = require("../$expression");
 var ES6$THROW = require("./es6$throw");
 
 module.exports.compile = function compile(string) {
@@ -38,7 +38,7 @@ module.exports.compile = function compile(string) {
     else if (context.token === "let") context = ES6$LET(string, offset);
     else if (context.token === "new") context = ES6$VARIABLE(string, offset);
     else if (context.token === "throw") context = ES6$THROW(string, offset);
-    else context = $VALUE(string, offset);
+    else context = $EXP(string, offset);
 
     if (context.statement) {
       list.push(context.statement);

@@ -107,13 +107,13 @@ module.exports = function(string, offset) {
     return { offset: context.offset };
   }
 
-  let statement = new $VALUE();
+  let statement = new $EXPRESSION();
   statement.tokens = list;
 
   return { statement: statement, offset: context.offset };
 };
 
-class $VALUE extends $ {
+class $EXPRESSION extends $ {
   run(scope) {
     if (
       this.tokens.length === 1 &&

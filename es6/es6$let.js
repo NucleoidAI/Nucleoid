@@ -1,6 +1,6 @@
 var Token = require("../token");
 var $LET = require("../$let");
-var $VALUE = require("../$value");
+var $EXP = require("../$expression");
 var $INSTANCE = require("../$instance");
 
 module.exports = function ES6$LET(string, offset) {
@@ -25,7 +25,7 @@ module.exports = function ES6$LET(string, offset) {
     return { statement: $LET(name, instance), offset: context.offset };
   }
 
-  context = $VALUE(string, context.offset);
+  context = $EXP(string, context.offset);
   let expression = context.statement;
   return { statement: $LET(name, expression), offset: context.offset };
 };

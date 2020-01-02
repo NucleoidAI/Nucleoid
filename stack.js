@@ -5,8 +5,8 @@ var Instruction = require("./instruction");
 var Scope = require("./scope");
 var Node = require("./node");
 var $ = require("./$");
-var Value = require("./value");
 var BREAK = require("./break");
+var Type = require("./type");
 
 module.exports.process = function(statements) {
   let root = new Scope();
@@ -35,7 +35,7 @@ module.exports.process = function(statements) {
         inst = instructions[0];
         statement.block.break = true;
       }
-    } else if (statement instanceof Value) {
+    } else if (statement.type === Type.EXPRESSION) {
       result = statement.run(instruction.scope);
       let list = statement.next(instruction.scope);
 

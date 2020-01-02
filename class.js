@@ -1,7 +1,7 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
 var $VAR = require("./$variable");
-var $VALUE = require("./$value");
+var $EXP = require("./$expression");
 
 var CLASS = class CLASS extends Node {
   constructor() {
@@ -16,7 +16,7 @@ var CLASS = class CLASS extends Node {
 
   run() {
     eval("state." + this.name + "=" + "class" + "{}");
-    let context = $VALUE("[]", 0);
+    let context = $EXP("[]", 0);
     return $VAR(this.name + "s", context.statement);
   }
 };

@@ -1,7 +1,7 @@
 var $VAR = require("../$variable");
 var Token = require("../token");
 var $INSTANCE = require("../$instance");
-var $VALUE = require("../$value");
+var $EXP = require("../$expression");
 
 module.exports = function ES6$VARIABLE(string, offset) {
   let context = Token.next(string, offset);
@@ -49,7 +49,7 @@ module.exports = function ES6$VARIABLE(string, offset) {
     return { statement: $VAR(name, instance), offset: context.offset };
   }
 
-  context = $VALUE(string, context.offset);
+  context = $EXP(string, context.offset);
   let expression = context.statement;
   return { statement: $VAR(name, expression), offset: context.offset };
 };

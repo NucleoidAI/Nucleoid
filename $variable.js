@@ -1,7 +1,7 @@
 var $ = require("./$");
 var VARIABLE = require("./variable");
-var Value = require("./value");
 var OBJECT = require("./object");
+var Type = require("./type");
 
 module.exports = function(name, value) {
   let statement = new $VARIABLE();
@@ -14,7 +14,7 @@ class $VARIABLE extends $ {
   run(scope) {
     let value = this.value.run(scope);
 
-    if (value instanceof Value) {
+    if (value.type === Type.EXPRESSION) {
       let statement = new VARIABLE();
       statement.name = this.name;
       statement.value = value;
