@@ -1,6 +1,22 @@
 #!/usr/bin/env node
 const nucleoid = require("./nucleoid.js");
 
+console.log("Nucleoid - Declarative Runtime System");
+console.log("https://nucleoid.org/");
+console.log();
+
+let messages = [
+  "To report an issue, go to \x1B[4mhttps://nucleoid.org/report/\x1B[0m",
+  "Power of Declarative Programming Welcomes You with ❤",
+  "Learn more at \x1B[4mhttps://nucleoid.org/tutorial/\x1B[0m",
+  "Read articles at \x1B[4mhttps://medium.com/@nucleoid\x1B[0m",
+  "Join conversations at \x1B[4mhttps://reddit.com/r/nucleoid/\x1B[0m"
+];
+
+let random = Math.floor(Math.random() * messages.length);
+console.log(messages[random]);
+console.log();
+
 process.stdout.write("> ");
 process.openStdin().addListener("data", function(data) {
   let string = data.toString().trim();
