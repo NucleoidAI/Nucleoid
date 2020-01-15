@@ -2,7 +2,7 @@ var IF = require("./if");
 var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 
-class IF$INSTANCE extends IF {
+module.exports = class IF$INSTANCE extends IF {
   prepare() {
     this.condition = new EXPRESSION(
       this.declaration.condition.tokens.map(token => {
@@ -18,7 +18,4 @@ class IF$INSTANCE extends IF {
     scope.instance[this.class.name] = this.instance;
     return super.run(scope);
   }
-}
-
-IF$INSTANCE.prototype.type = "INSTANCE";
-module.exports = IF$INSTANCE;
+};

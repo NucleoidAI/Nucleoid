@@ -5,7 +5,6 @@ var Identifier = require("./identifier");
 var Node = require("./node");
 var Token = require("./token");
 const argv = require("yargs").argv;
-var Type = require("./type");
 
 class EXPRESSION {
   constructor(tokens) {
@@ -104,5 +103,5 @@ class EXPRESSION {
   }
 }
 
-EXPRESSION.prototype.type = Type.EXPRESSION;
+EXPRESSION.prototype.instanceof = "EXPRESSION";
 module.exports = EXPRESSION;

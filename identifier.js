@@ -1,5 +1,4 @@
 var graph = require("./graph");
-var REFERENCE = require("./reference");
 
 module.exports.splitLast = function(name) {
   let parts = name.split(".");
@@ -21,7 +20,7 @@ module.exports.serialize = function(node, reference) {
   let index = node;
 
   while (index) {
-    if (reference && index.value instanceof REFERENCE) {
+    if (reference && index.value && index.value.instanceof === "REFERENCE") {
       index = index.value.link;
     }
 
@@ -37,8 +36,9 @@ module.exports.reference = function(name) {
 
   for (let i = 0; i < parts.length; i++) {
     let reference = parts.slice(0, i + 1).join(".");
+    let node = graph[reference];
 
-    if (graph[reference] && graph[reference].value instanceof REFERENCE) {
+    if (node && node.value && node.value.instanceof === "REFERENCE") {
       parts = parts.slice(i, parts.length);
       parts[0] = graph[reference].value.link.key;
       i = 0;

@@ -4,7 +4,7 @@ var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 var graph = require("./graph");
 
-class PROPERTY$INSTANCE extends PROPERTY {
+module.exports = class PROPERTY$INSTANCE extends PROPERTY {
   prepare() {
     let declaration = Identifier.serialize(this.declaration);
 
@@ -24,7 +24,4 @@ class PROPERTY$INSTANCE extends PROPERTY {
       })
     );
   }
-}
-
-PROPERTY$INSTANCE.prototype.type = "INSTANCE";
-module.exports = PROPERTY$INSTANCE;
+};

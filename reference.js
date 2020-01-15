@@ -1,8 +1,8 @@
 var state = require("./state"); // eslint-disable-line no-unused-vars
 var Identifier = require("./identifier");
-var Type = require("./type");
+var EXPRESSION = require("./expression");
 
-class REFERENCE {
+class REFERENCE extends EXPRESSION {
   prepare() {}
   run() {
     return eval("state." + Identifier.serialize(this.link));
@@ -14,5 +14,5 @@ class REFERENCE {
   }
 }
 
-REFERENCE.prototype.type = Type.EXPRESSION;
+REFERENCE.prototype.instanceof = "REFERENCE";
 module.exports = REFERENCE;

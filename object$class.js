@@ -5,7 +5,7 @@ var graph = require("./graph");
 var OBJECT$INSTANCE = require("./object$instance");
 var Instance = require("./instance");
 
-module.exports = class OBJECT$CLASS extends Node {
+class OBJECT$CLASS extends Node {
   prepare() {
     this.key = Identifier.serialize(this);
   }
@@ -36,4 +36,7 @@ module.exports = class OBJECT$CLASS extends Node {
   graph() {
     Identifier.root(this).declaration[this.key] = this;
   }
-};
+}
+
+OBJECT$CLASS.prototype.type = "CLASS";
+module.exports = OBJECT$CLASS;

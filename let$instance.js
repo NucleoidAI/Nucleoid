@@ -3,7 +3,7 @@ var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 var BREAK = require("./break");
 
-class LET$INSTANCE extends LET {
+module.exports = class LET$INSTANCE extends LET {
   prepare() {
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map(token => {
@@ -24,7 +24,4 @@ class LET$INSTANCE extends LET {
       return new BREAK(scope.block);
     }
   }
-}
-
-LET$INSTANCE.prototype.type = "INSTANCE";
-module.exports = LET$INSTANCE;
+};

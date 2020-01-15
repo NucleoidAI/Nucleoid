@@ -1,5 +1,3 @@
-var REFERENCE = require("./reference");
-
 module.exports.retrieve = function(scope, assignment) {
   let index = scope;
 
@@ -38,13 +36,11 @@ module.exports.reference = function(scope, name) {
 
   for (let i = 0; i < parts.length; i++) {
     let reference = parts.slice(0, i + 1).join(".");
+    let node = scope.graph[reference];
 
-    if (
-      scope.graph[reference] &&
-      scope.graph[reference].value instanceof REFERENCE
-    ) {
+    if (node && node.value && node.value.instanceof === "REFERENCE") {
       parts = parts.slice(i, parts.length);
-      parts[0] = scope.graph[reference].value.link.key;
+      parts[0] = node.value.link.key;
       i = 0;
     }
   }
