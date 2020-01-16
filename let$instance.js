@@ -4,7 +4,7 @@ var Identifier = require("./identifier");
 var BREAK = require("./break");
 
 module.exports = class LET$INSTANCE extends LET {
-  prepare() {
+  before() {
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map(token => {
         let parts = token.split(".");

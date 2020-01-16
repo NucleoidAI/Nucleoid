@@ -2,7 +2,7 @@ var EXPRESSION = require("./expression");
 var Instance = require("./instance");
 var Identifier = require("./identifier");
 
-module.exports = class EXPRESSION$CLASS extends EXPRESSION {
+module.exports = class EXPRESSION$INSTANCE extends EXPRESSION {
   run(scope) {
     let instance = Instance.retrieve(scope, this.class.name);
 

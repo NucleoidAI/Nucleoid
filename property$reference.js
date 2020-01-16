@@ -7,8 +7,8 @@ module.exports = class PROPERTY$REFERENCE extends PROPERTY {
     this.property = {};
   }
 
-  prepare(scope) {
+  before(scope) {
     this.key = Identifier.serialize(this, false);
-    this.value.prepare(scope, this.key);
+    this.value.before(scope, this.key);
   }
 };

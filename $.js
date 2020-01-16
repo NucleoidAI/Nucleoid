@@ -1,5 +1,4 @@
 module.exports = class $ {
-  prepare() {}
+  before() {}
   run() {}
-  graph() {}
 };

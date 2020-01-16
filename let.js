@@ -1,5 +1,5 @@
 module.exports = class LET {
-  prepare() {}
+  before() {}
   run(scope) {
     let value = this.value.run(scope); // eslint-disable-line no-unused-vars
     eval("scope.local." + this.name + "=value");

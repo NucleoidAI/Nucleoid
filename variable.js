@@ -2,9 +2,9 @@ var state = require("./state");
 var Node = require("./node");
 
 module.exports = class VARIABLE extends Node {
-  prepare(scope) {
+  before(scope) {
     this.key = this.name;
-    this.value.prepare(scope, this.key);
+    this.value.before(scope, this.key);
   }
 
   run(scope) {

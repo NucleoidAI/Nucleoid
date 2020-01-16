@@ -11,7 +11,7 @@ class EXPRESSION {
     this.tokens = tokens;
   }
 
-  prepare(scope, self) {
+  before(scope, self) {
     this.tokens = this.tokens
       .map(token => (token === self ? token + ".value" : token))
       .map(token => {

@@ -4,7 +4,7 @@ var OBJECT = require("./object");
 var graph = require("./graph");
 
 module.exports = class OBJECT$INSTANCE extends OBJECT {
-  prepare() {
+  before() {
     let declaration = Identifier.serialize(this.declaration);
 
     let parts = declaration.split(".");

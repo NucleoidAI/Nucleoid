@@ -5,7 +5,7 @@ var Identifier = require("./identifier");
 var Instance = require("./instance");
 
 class PROPERTY$CLASS extends Node {
-  prepare() {
+  before() {
     this.key = Identifier.serialize(this);
     this.value.tokens.forEach(token => {
       let parts = Identifier.splitLast(token);

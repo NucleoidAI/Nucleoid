@@ -3,7 +3,7 @@ var Identifier = require("./identifier");
 var EXPRESSION = require("./expression");
 
 class REFERENCE extends EXPRESSION {
-  prepare() {}
+  before() {}
   run() {
     return eval("state." + Identifier.serialize(this.link));
   }

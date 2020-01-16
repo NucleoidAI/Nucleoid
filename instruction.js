@@ -1,8 +1,8 @@
 module.exports = class Instruction {
-  constructor(scope, statement, prepare, run, graph) {
+  constructor(scope, statement, before, run, graph) {
     this.scope = scope;
     this.statement = statement;
-    this.prepare = prepare;
+    this.before = before;
     this.run = run;
     this.graph = graph;
   }

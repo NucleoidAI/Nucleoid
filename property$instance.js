@@ -5,7 +5,7 @@ var Identifier = require("./identifier");
 var graph = require("./graph");
 
 module.exports = class PROPERTY$INSTANCE extends PROPERTY {
-  prepare() {
+  before() {
     let declaration = Identifier.serialize(this.declaration);
 
     let parts = declaration.split(".");

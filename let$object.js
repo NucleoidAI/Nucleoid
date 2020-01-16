@@ -2,7 +2,7 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var LET = require("./let");
 
 module.exports = class LET$OBJECT extends LET {
-  prepare() {}
+  before() {}
 
   // eslint-disable-next-line no-unused-vars
   run(scope) {

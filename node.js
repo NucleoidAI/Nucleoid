@@ -11,7 +11,7 @@ module.exports = class Node {
     this.sequence = sequence++;
   }
 
-  prepare() {}
+  before() {}
   run() {}
   graph() {}
 

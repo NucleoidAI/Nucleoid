@@ -6,7 +6,7 @@ var OBJECT$INSTANCE = require("./object$instance");
 var Instance = require("./instance");
 
 class OBJECT$CLASS extends Node {
-  prepare() {
+  before() {
     this.key = Identifier.serialize(this);
   }
 

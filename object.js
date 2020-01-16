@@ -9,7 +9,7 @@ module.exports = class OBJECT extends Node {
     this.property = {};
   }
 
-  prepare() {
+  before() {
     if (this.name === undefined && this.object === undefined) {
       this.key = this.class.name.toLowerCase() + this.sequence;
       this.name = this.key;

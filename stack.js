@@ -52,8 +52,8 @@ module.exports.process = function(statements) {
           .concat(instructions);
       }
     } else {
-      if (instruction.prepare) {
-        statement.prepare(instruction.scope);
+      if (instruction.before) {
+        statement.before(instruction.scope);
       }
 
       if (instruction.run) {
@@ -82,61 +82,63 @@ module.exports.process = function(statements) {
         }
       }
 
-      if (instruction.graph) {
-        if (statement instanceof Node) {
-          if (statement.key && graph[statement.key]) {
-            Node.replace(statement.key, statement);
-          } else if (graph[statement.id]) {
-            Node.replace(statement.id, statement);
-          } else if (statement.key) {
-            graph[statement.key] = statement;
-          } else {
-            graph[statement.id] = statement;
+      if (!(statement instanceof $)) {
+        if (instruction.graph) {
+          if (statement instanceof Node) {
+            if (statement.key && graph[statement.key]) {
+              Node.replace(statement.key, statement);
+            } else if (graph[statement.id]) {
+              Node.replace(statement.id, statement);
+            } else if (statement.key) {
+              graph[statement.key] = statement;
+            } else {
+              graph[statement.id] = statement;
+            }
+          }
+
+          let list = statement.graph(instruction.scope);
+          if (list) {
+            list.forEach(e => {
+              if (graph[e].previous[statement.key] !== undefined) {
+                throw ReferenceError("Circular Dependency");
+              }
+            });
+
+            dependencies = dependencies
+              .concat(list.filter(e => !dependencies.includes(e)))
+              .sort((a, b) => graph[a].sequence - graph[b].sequence);
           }
         }
 
-        let list = statement.graph(instruction.scope);
-        if (list) {
-          list.forEach(e => {
-            if (graph[e].previous[statement.key] !== undefined) {
-              throw ReferenceError("Circular Dependency");
-            }
+        for (let node in statement.next) {
+          let s = instruction.scope;
+          let n = graph[node];
+
+          if (n instanceof BLOCK || n instanceof IF) {
+            let scope = new Scope();
+            dependents.push(new Instruction(scope, n, false, true, false));
+            dependents.push(new Instruction(scope, n, false, false, true));
+          } else {
+            dependents.push(new Instruction(s, n, false, true, false));
+          }
+        }
+
+        // Root scope is a scope, which does not have any prior.
+        if (!instruction.scope.prior) {
+          dependencies.forEach(source => {
+            let targetKey = statement.key ? statement.key : statement.id;
+            Node.direct(source, targetKey, statement);
           });
+          dependencies = [];
 
-          dependencies = dependencies
-            .concat(list.filter(e => !dependencies.includes(e)))
-            .sort((a, b) => graph[a].sequence - graph[b].sequence);
+          instructions = dependents.concat(instructions);
+          dependents = [];
         }
-      }
 
-      for (let node in statement.next) {
-        let s = instruction.scope;
-        let n = graph[node];
-
-        if (n instanceof BLOCK || n instanceof IF) {
-          let scope = new Scope();
-          dependents.push(new Instruction(scope, n, false, true, false));
-          dependents.push(new Instruction(scope, n, false, false, true));
-        } else {
-          dependents.push(new Instruction(s, n, false, true, false));
+        if (instruction.scope.block) {
+          instruction.scope.block.stage(instruction);
+          statement.block = instruction.scope.block;
         }
-      }
-
-      // Root scope is a scope, which does not have any prior.
-      if (!instruction.scope.prior && !(statement instanceof $)) {
-        dependencies.forEach(source => {
-          let targetKey = statement.key ? statement.key : statement.id;
-          Node.direct(source, targetKey, statement);
-        });
-        dependencies = [];
-
-        instructions = dependents.concat(instructions);
-        dependents = [];
-      }
-
-      if (instruction.scope.block) {
-        instruction.scope.block.stage(instruction);
-        statement.block = instruction.scope.block;
       }
     }
   }

@@ -3,7 +3,7 @@ var EXPRESSION = require("./expression");
 var Identifier = require("./identifier");
 
 module.exports = class IF$INSTANCE extends IF {
-  prepare() {
+  before() {
     this.condition = new EXPRESSION(
       this.declaration.condition.tokens.map(token => {
         let parts = token.split(".");

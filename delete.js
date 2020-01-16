@@ -4,7 +4,7 @@ var Instruction = require("./instruction");
 var Node = require("./node");
 
 module.exports = class DELETE {
-  prepare() {}
+  before() {}
   run(scope) {
     eval("delete state." + this.key);
 

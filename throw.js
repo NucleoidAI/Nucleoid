@@ -3,7 +3,7 @@ var Identifier = require("./identifier");
 var graph = require("./graph");
 
 module.exports = class THROW {
-  prepare() {}
+  before() {}
 
   run() {
     let exception = graph[this.exception];

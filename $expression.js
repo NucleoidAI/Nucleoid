@@ -3,7 +3,7 @@ var EXPRESSION = require("./expression");
 var $ = require("./$");
 var graph = require("./graph");
 var REFERENCE = require("./reference");
-var EXPRESSION$CLASS = require("./expression$class");
+var EXPRESSION$INSTANCE = require("./expression$instance");
 var Local = require("./local");
 
 module.exports = function(string, offset) {
@@ -129,7 +129,7 @@ class $EXPRESSION extends $ {
         let prefix = token.split(".")[0];
 
         if (graph[prefix] && graph[prefix].instanceof === "CLASS") {
-          let statement = new EXPRESSION$CLASS();
+          let statement = new EXPRESSION$INSTANCE();
           statement.class = graph[prefix];
           statement.tokens = this.tokens;
           return statement;

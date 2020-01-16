@@ -10,7 +10,7 @@ var CLASS = class CLASS extends Node {
     this.declaration = {};
   }
 
-  prepare() {
+  before() {
     this.key = this.name;
   }
 

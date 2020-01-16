@@ -5,7 +5,7 @@ var graph = require("./graph");
 var Instance = require("./instance");
 
 class IF$CLASS extends Node {
-  prepare() {
+  before() {
     this.key = "if(" + this.condition.tokens.construct() + ")";
   }
 
