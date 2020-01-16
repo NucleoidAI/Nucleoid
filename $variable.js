@@ -13,7 +13,7 @@ class $VARIABLE extends $ {
   run(scope) {
     let value = this.value.run(scope);
 
-    if (value.instanceof === "EXPRESSION") {
+    if (value.instanceof === "EXPRESSION" || value.instanceof === "REFERENCE") {
       let statement = new VARIABLE();
       statement.name = this.name;
       statement.value = value;

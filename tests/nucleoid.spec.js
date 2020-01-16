@@ -836,6 +836,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("molarConcentration"), 1);
   });
 
+  it("assigns variable to reference", function() {
+    nucleoid.run("a = 1");
+    nucleoid.run("b = a");
+    assert.equal(nucleoid.run("b"), 1);
+
+    nucleoid.run("a = 2");
+    assert.equal(nucleoid.run("b"), 2);
+  });
+
   it("assigns object to variable", function() {
     nucleoid.run("class Model { }");
     nucleoid.run("model1 = new Model ( )");
