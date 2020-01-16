@@ -4,7 +4,7 @@
   "description": "Nucleoid Project",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests/nucleoid.spec.js",
+    "test": "mocha tests/nucleoid.spec.js --forbidOnly --forbidPending",
     "install": "cp scripts/commit-msg scripts/pre-commit .git/hooks/"
   },
   "repository": {
