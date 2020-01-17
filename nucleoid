@@ -45,6 +45,10 @@ function run(string) {
       console.log("\x1b[32m(%sms)\x1b[0m", time);
     }
   } catch (error) {
-    console.log("%s", error.message);
+    if (error instanceof Error) {
+      console.log("%s", error.message);
+    } else {
+      console.log("%s", error);
+    }
   }
 }
