@@ -58,6 +58,10 @@ describe("Nucleoid", function() {
 
     nucleoid.run("str1 = 'ABCD'");
     assert.equal(nucleoid.run("i1"), 5);
+
+    nucleoid.run("if ( str1.length > 5 ) { i2 = i1 }");
+    nucleoid.run("str1 = 'ABCDEF'");
+    assert.equal(nucleoid.run("i2"), 7);
   });
 
   it("validates syntax of class", function() {
