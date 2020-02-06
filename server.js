@@ -1,3 +1,4 @@
+const argv = require("yargs").argv;
 const express = require("express");
 var bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
@@ -65,4 +66,4 @@ app.post("/", (req, res) => {
   }
 });
 
-app.listen(80);
+app.listen(argv.port ? argv.port : 80);
