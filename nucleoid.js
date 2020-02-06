@@ -9,8 +9,8 @@ module.exports.run = function(string, details) {
   let statements = Statement.compile(string);
   let result = stack.process(statements);
 
-  if (argv.path !== undefined) {
-    fs.appendFileSync(argv.path, string + "\n");
+  if (argv.id !== undefined) {
+    fs.appendFileSync("./data/" + argv.id, string + "\n");
   }
 
   let after = Date.now();

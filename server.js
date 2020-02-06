@@ -3,10 +3,9 @@ const express = require("express");
 var bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
 var fs = require("fs");
-var dir = "./data/";
 
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir);
+if (!fs.existsSync("./data/")) {
+  fs.mkdirSync("./data/");
 }
 
 const app = express();
@@ -26,7 +25,7 @@ app.post("/", (req, res) => {
     let proc = processes[key];
 
     if (proc === undefined) {
-      let pid = fork("./process.js", [`--path=${dir}${key}`]);
+      let pid = fork("./process.js", [`--id=${key}`]);
 
       proc = { pid, requests: [req] };
       processes[key] = proc;
@@ -62,6 +61,7 @@ app.post("/", (req, res) => {
       }
     }
 
+    fs.appendFileSync(`./data/process`, req.body + "\n");
     res.status(202).end();
   }
 });
