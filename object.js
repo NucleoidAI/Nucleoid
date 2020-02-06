@@ -32,6 +32,11 @@ module.exports = class OBJECT extends Node {
     if (this.object === undefined) {
       let context = $EXP(this.class.name + "s.push ( " + this.name + " )", 0);
       list.push(context.statement);
+
+      eval(`state.${name}.id="${name}"`);
+
+      context = $EXP(this.name, 0);
+      list.push(context.statement);
     }
 
     return list;
