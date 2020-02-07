@@ -6,6 +6,7 @@ var PROPERTY = require("./property");
 var OBJECT$CLASS = require("./object$class");
 var REFERENCE = require("./reference");
 var PROPERTY$REFERENCE = require("./property$reference");
+var Local = require("./local");
 
 module.exports = function(object, name, value) {
   let statement = new $PROPERTY();
@@ -16,7 +17,11 @@ module.exports = function(object, name, value) {
 };
 
 class $PROPERTY extends $ {
-  run() {
+  run(scope) {
+    if (this.object === "this") {
+      this.object = Local.object(scope);
+    }
+
     if (graph[this.object] === undefined) {
       throw ReferenceError(`${this.object} is not defined`);
     }

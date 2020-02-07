@@ -17,6 +17,7 @@ module.exports = function(statements) {
 class $BLOCK extends $ {
   run(scope) {
     let test = new Scope();
+    test.object = scope.object;
     let cls = null;
 
     test: for (let statement of this.statements) {

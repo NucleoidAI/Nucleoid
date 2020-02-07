@@ -2,6 +2,8 @@ var state = require("./state"); // eslint-disable-line no-unused-vars
 var Node = require("./node");
 var Identifier = require("./identifier");
 var $EXP = require("./$expression");
+var Instruction = require("./instruction");
+var LET = require("./let");
 
 module.exports = class OBJECT extends Node {
   constructor() {
@@ -23,8 +25,30 @@ module.exports = class OBJECT extends Node {
 
     eval("state." + name + " = new state." + this.class.name + "()");
     scope.instance[this.class.name] = this;
+    scope.object = this;
 
     let list = [];
+
+    for (let i = 0; i < this.class.args.length; i++) {
+      let local = new LET();
+      local.name = this.class.args[i];
+
+      if (this.args[i] !== undefined) {
+        let context = $EXP(this.args[i], 0);
+        local.value = context.statement.run();
+        list.push(local);
+      } else {
+        let context = $EXP("undefined", 0);
+        local.value = context.statement.run();
+        list.push(local);
+      }
+    }
+
+    if (this.class.construct !== undefined) {
+      let construct = this.class.construct;
+      let instruction = new Instruction(scope, construct, false, true, false);
+      list.push(instruction);
+    }
 
     for (let node in this.class.declaration)
       list.push(this.class.declaration[node]);

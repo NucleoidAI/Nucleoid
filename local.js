@@ -47,3 +47,15 @@ module.exports.reference = function(scope, name) {
 
   return parts.join(".");
 };
+
+module.exports.object = function(scope) {
+  let index = scope;
+
+  while (index) {
+    if (index.object !== undefined) {
+      return index.object.name;
+    }
+
+    index = index.prior;
+  }
+};

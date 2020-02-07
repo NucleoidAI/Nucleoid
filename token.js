@@ -142,6 +142,27 @@ class Token {
     throw SyntaxError("Missing parenthesis");
   }
 
+  static nextArgs(string, offset) {
+    let args = [];
+    let context = next(string, offset);
+
+    if (context.token === "}")
+      throw SyntaxError(`Unexpected token ${context.token}`);
+
+    while (context.token !== ")") {
+      args.push(context.token);
+
+      context = next(string, context.offset);
+      if (context.token === ")") {
+        break;
+      } else {
+        context = next(string, context.offset);
+      }
+    }
+
+    return { args, offset: context.offset };
+  }
+
   constructor(string) {
     this.string = string;
   }

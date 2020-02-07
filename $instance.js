@@ -6,11 +6,12 @@ var CLASS = require("./class");
 var Local = require("./local");
 var $LET = require("./$let");
 
-module.exports = function(cls, name, object) {
+module.exports = function(cls, name, object, args) {
   let statement = new $INSTANCE();
   statement.class = cls;
   statement.name = name;
   statement.object = object;
+  statement.args = args;
   return statement;
 };
 
@@ -49,6 +50,7 @@ class $INSTANCE extends $ {
     statement.class = graph[this.class];
     statement.name = this.name;
     statement.object = graph[this.object];
+    statement.args = this.args;
     return statement;
   }
 }

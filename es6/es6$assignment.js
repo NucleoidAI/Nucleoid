@@ -35,12 +35,12 @@ module.exports = function ES6$ASSIGNMENT(string, offset) {
     if (context.token !== "(")
       throw SyntaxError(`Unexpected token ${context.token}`);
 
-    context = Token.next(string, context.offset);
-    if (context === null || context.token === ";")
+    let check = Token.next(string, context.offset);
+    if (check === null || check.token === ";")
       throw SyntaxError("Missing parenthesis");
 
-    if (context.token !== ")")
-      throw SyntaxError(`Unexpected token ${context.token}`);
+    context = Token.nextArgs(string, context.offset);
+    instance.args = context.args;
 
     return { statement: instance, offset: context.offset };
   }

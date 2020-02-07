@@ -74,6 +74,15 @@ describe("Nucleoid", function() {
 
     assert.throws(
       function() {
+        nucleoid.run(
+          "class Ratio { constructor ( count ) { this.count = count } calculate ( ) }"
+        );
+      },
+      error => validate(error, SyntaxError, "Methods are not supported.")
+    );
+
+    assert.throws(
+      function() {
         nucleoid.run("class Ratio { calculate() }");
       },
       error => validate(error, SyntaxError, "Methods are not supported.")
@@ -99,6 +108,15 @@ describe("Nucleoid", function() {
       },
       error => validate(error, SyntaxError, "Missing parenthesis")
     );
+  });
+
+  it("creates class with constructor", function() {
+    nucleoid.run("class Device { constructor ( name ) { this.name = name } }");
+    nucleoid.run("device1 = new Device ( 'Entrance' )");
+    assert.equal(nucleoid.run("device1.name"), "Entrance");
+
+    let device = nucleoid.run("new Device ( 'Hall' )");
+    nucleoid.run(`${device.id}.name`, "Hall");
   });
 
   it("validates syntax of instance creation", function() {
