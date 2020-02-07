@@ -34,7 +34,7 @@ app.post("/", (req, res) => {
         let request = proc.requests.shift();
 
         if (request.get("Authorization") !== undefined) {
-          request.res.send(message);
+          request.res.type("application/json").send(message);
         }
 
         if (proc.requests.length > 0) {
