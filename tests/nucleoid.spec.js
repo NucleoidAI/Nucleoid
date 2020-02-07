@@ -323,6 +323,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("result"), 5);
   });
 
+  it("runs let at root scope", function() {
+    nucleoid.run("number = 13");
+    assert.equal(nucleoid.run("let i = number + 4; i;"), 17);
+    nucleoid.run("number = 14");
+    assert.throws(
+      function() {
+        nucleoid.run("i");
+      },
+      error => validate(error, ReferenceError, "i is not defined")
+    );
+  });
+
   it("searches variable in scope before state", function() {
     nucleoid.run("e = 2.71828");
     nucleoid.run("{ let e = 3 ; number = e }");

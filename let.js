@@ -7,6 +7,9 @@ module.exports = class LET {
 
   graph(scope) {
     scope.graph[this.name] = this;
-    return this.value.graph(scope);
+
+    if (scope.block !== undefined) {
+      return this.value.graph(scope);
+    }
   }
 };
