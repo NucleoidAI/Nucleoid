@@ -9,7 +9,7 @@ let messages = [
   "To report an issue, go to \x1B[4mhttps://nucleoid.org/report/\x1B[0m",
   "Power of Declarative Programming Welcomes You with ❤",
   "Learn more at \x1B[4mhttps://nucleoid.org/tutorial/\x1B[0m",
-  "Read articles at \x1B[4mhttps://medium.com/@nucleoid\x1B[0m",
+  "Read articles at \x1B[4mhttps://medium.com/nucleoid\x1B[0m",
   "Join conversations at \x1B[4mhttps://reddit.com/r/nucleoid/\x1B[0m"
 ];
 
