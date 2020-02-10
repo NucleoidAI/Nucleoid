@@ -4,8 +4,9 @@ var Scope = require("./scope");
 var BREAK = require("./break");
 
 module.exports = class IF extends Node {
-  before() {
+  before(scope) {
     this.key = "if(" + this.condition.tokens.construct() + ")";
+    this.condition.before(scope);
   }
 
   run(scope) {

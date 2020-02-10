@@ -1040,6 +1040,18 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("weight1.force"), 1352);
   });
 
+  it("uses value property in if condition to indicate using only value of variable", function() {
+    nucleoid.run("class Question { }");
+    nucleoid.run("question1 = new Question ( )");
+    nucleoid.run("question1.text = 'How was the service?'");
+    nucleoid.run(
+      "if ( question1.text != question1.text.value ) { throw 'QUESTION_ARCHIVED' }"
+    );
+    assert.throws(function() {
+      nucleoid.run("question1.text = 'How would you rate us?'");
+    }, "QUESTION_ARCHIVED");
+  });
+
   it("rejects value of property if property is not defined", function() {
     nucleoid.run("class Travel { }");
     nucleoid.run("travel1 = new Travel ( )");
