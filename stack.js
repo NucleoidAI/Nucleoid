@@ -82,7 +82,11 @@ module.exports.process = function(statements) {
         }
       }
 
-      if (!(statement instanceof $)) {
+      skip: if (!(statement instanceof $)) {
+        if (statement.type === "CLASS" && instruction.scope.prior) {
+          break skip;
+        }
+
         if (instruction.graph) {
           if (statement instanceof Node) {
             if (statement.key && graph[statement.key]) {
@@ -134,11 +138,11 @@ module.exports.process = function(statements) {
           instructions = dependents.concat(instructions);
           dependents = [];
         }
+      }
 
-        if (instruction.scope.block) {
-          instruction.scope.block.stage(instruction);
-          statement.block = instruction.scope.block;
-        }
+      if (instruction.scope.block) {
+        instruction.scope.block.stage(instruction);
+        statement.block = instruction.scope.block;
       }
     }
   }

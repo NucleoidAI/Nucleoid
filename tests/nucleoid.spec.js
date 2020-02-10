@@ -112,11 +112,24 @@ describe("Nucleoid", function() {
 
   it("creates class with constructor", function() {
     nucleoid.run("class Device { constructor ( name ) { this.name = name } }");
+    nucleoid.run("Device.active = false");
+    nucleoid.run("if ( Device.name ) { Device.active = true }");
+
     nucleoid.run("device1 = new Device ( 'Entrance' )");
     assert.equal(nucleoid.run("device1.name"), "Entrance");
+    assert.equal(nucleoid.run("device1.active"), true);
 
-    let device = nucleoid.run("new Device ( 'Hall' )");
-    nucleoid.run(`${device.id}.name`, "Hall");
+    let device2 = nucleoid.run("new Device ( 'Hall' )");
+    nucleoid.run(`${device2.id}.name`, "Hall");
+    nucleoid.run(`${device2.id}.active`, true);
+
+    nucleoid.run("device3 = new Device ( )");
+    assert.equal(nucleoid.run("device3.name"), undefined);
+    assert.equal(nucleoid.run("device3.active"), false);
+
+    let device4 = nucleoid.run("new Device ( )");
+    assert.equal(nucleoid.run(`${device4.id}.name`), undefined);
+    assert.equal(nucleoid.run(`${device4.id}.active`), false);
   });
 
   it("validates syntax of instance creation", function() {
@@ -1387,9 +1400,13 @@ describe("Nucleoid", function() {
       "if ( Ticket.date > new Date ( '1993-1-1' ) ) { Ticket.status = 'EXPIRED' }"
     );
     nucleoid.run("ticket1 = new Ticket ( )");
+
     assert.equal(nucleoid.run("ticket1.status"), undefined);
     nucleoid.run("ticket1.date = new Date ( '1993-2-1' ) ");
     assert.equal(nucleoid.run("ticket1.status"), "EXPIRED");
+
+    nucleoid.run("ticket2 = new Ticket ( )");
+    assert.equal(nucleoid.run("ticket2.status"), undefined);
   });
 
   it("creates if statement of class after initialization", function() {
