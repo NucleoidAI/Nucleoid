@@ -534,6 +534,16 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("creates imperative function in state", function() {
+    nucleoid.run("function generate ( number ) { return number * 10 }");
+    nucleoid.run("random = 10");
+    nucleoid.run("number = generate ( random )");
+    assert.equal(nucleoid.run("number"), 100);
+
+    nucleoid.run("random = 20");
+    assert.equal(nucleoid.run("number"), 200);
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");

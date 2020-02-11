@@ -117,6 +117,7 @@ class $EXPRESSION extends $ {
   run(scope) {
     if (
       this.tokens.length === 1 &&
+      !(this.tokens[0] instanceof Token.CALL) &&
       graph[this.tokens[0].string] &&
       !Local.check(scope, this.tokens[0].string)
     ) {

@@ -8,6 +8,7 @@ var ES6$IF = require("./es6$if");
 var ES6$LET = require("./es6$let");
 var $EXP = require("../$expression");
 var ES6$THROW = require("./es6$throw");
+var ES6$FUNCTION = require("./es6$function");
 
 module.exports.compile = function compile(string) {
   let list = [];
@@ -38,6 +39,8 @@ module.exports.compile = function compile(string) {
     else if (context.token === "let") context = ES6$LET(string, offset);
     else if (context.token === "new") context = ES6$VARIABLE(string, offset);
     else if (context.token === "throw") context = ES6$THROW(string, offset);
+    else if (context.token === "function")
+      context = ES6$FUNCTION(string, offset);
     else context = $EXP(string, offset);
 
     if (context.statement) {
