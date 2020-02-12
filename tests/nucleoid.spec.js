@@ -1107,6 +1107,14 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("roundTrip"), 2.6574595675086314);
   });
 
+  it("uses value property as part of class declaration", function() {
+    nucleoid.run("count = 0");
+    nucleoid.run("class Device { }");
+    nucleoid.run("device1 = new Device ( )");
+    nucleoid.run("{ Device.code = 'A' + count.value ; count = count + 1 }");
+    assert.equal(nucleoid.run("device1.code"), "A0");
+  });
+
   it("updates if block of property", function() {
     nucleoid.run("class Account { }");
     nucleoid.run("account = new Account ( )");
