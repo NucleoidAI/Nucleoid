@@ -317,6 +317,24 @@ describe("Nucleoid", function() {
     assert.equal(list[0].score, 10);
   });
 
+  it("supports nested functions as parameter in expression", function() {
+    nucleoid.run("name = 'AbCDE'");
+    nucleoid.run("pointer = 0");
+    nucleoid.run(
+      "if ( ! /[A-Z]/.test ( name.charAt ( pointer ) ) ) { throw 'INVALID_FIRST_CHARACTER' }"
+    );
+
+    assert.throws(function() {
+      nucleoid.run("name = 'bbCDE'");
+    }, "INVALID_FIRST_CHARACTER");
+
+    nucleoid.run("name = 'CbCDE'");
+
+    assert.throws(function() {
+      nucleoid.run("pointer = 1");
+    }, "INVALID_FIRST_CHARACTER");
+  });
+
   it("supports array with brackets", function() {
     nucleoid.run("states = [ 'NY' , 'GA' , 'CT' , 'MI' ]");
     assert.equal(nucleoid.run("states [ 2 ]"), "CT");

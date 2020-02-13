@@ -99,6 +99,20 @@ class EXPRESSION {
         let parts = Identifier.splitLast(token);
         if (parts[0] && parts[1] && parts[0] === "length") return parts[1];
         else return token;
+      })
+      .map(token => {
+        try {
+          var fn = eval("state." + token);
+        } catch (error) {
+          return token;
+        }
+
+        if (typeof fn === "function") {
+          let parts = Identifier.splitLast(token);
+          return parts[1];
+        } else {
+          return token;
+        }
       });
   }
 }
