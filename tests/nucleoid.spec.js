@@ -293,6 +293,30 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("student"), nucleoid.run("student3"));
   });
 
+  it("supports chained functions with parameter in expression", function() {
+    nucleoid.run(
+      "class Result { constructor ( score ) { this.score = score } }"
+    );
+    nucleoid.run("new Result ( 10 ) ; new Result ( 15 ) ; new Result ( 20 )");
+
+    nucleoid.run("upperThreshold = 18");
+    nucleoid.run("lowerThreshold = 12");
+    nucleoid.run(
+      "list = Results.filter ( r => r.score > lowerThreshold ) .filter ( r => r.score < upperThreshold )"
+    );
+    let list = nucleoid.run("list");
+    assert.equal(list[0].score, 15);
+
+    nucleoid.run("lowerThreshold = 7");
+    list = nucleoid.run("list");
+    assert.equal(list[0].score, 10);
+    assert.equal(list[1].score, 15);
+
+    nucleoid.run("upperThreshold = 14");
+    list = nucleoid.run("list");
+    assert.equal(list[0].score, 10);
+  });
+
   it("supports array with brackets", function() {
     nucleoid.run("states = [ 'NY' , 'GA' , 'CT' , 'MI' ]");
     assert.equal(nucleoid.run("states [ 2 ]"), "CT");

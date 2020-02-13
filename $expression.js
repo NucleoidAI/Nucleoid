@@ -36,68 +36,21 @@ module.exports = function(string, offset) {
 
   for (let i = 0; i < tokens.length; i++) {
     if (tokens[i + 1] === "(") {
-      let call = new Token.CALL(tokens[i]);
+      let context = parseCall(tokens, i);
+      list.push(context.call);
+      i = context.offset;
 
-      let params = [];
-      let parentheses = 1;
-      i += 2;
+      let chained = tokens[i];
 
-      for (; i < tokens.length; i++) {
-        let token = tokens[i];
+      while (chained && chained.charAt(0) === ".") {
+        let context = parseCall(tokens, i);
+        list.push(context.call);
+        i = context.offset;
 
-        if (token === "(") {
-          parentheses++;
-        } else if (token === ")") {
-          parentheses--;
-        }
-
-        if (parentheses <= 0) {
-          break;
-        }
-
-        if (token === "function") {
-          let fn = new Token.FUNCTION();
-
-          let context = getParams(tokens, ++i);
-          fn.params = context.params;
-
-          context = getBlock(tokens, context.offset);
-          fn.block = context.block;
-
-          params.push(fn);
-          i = context.offset;
-        } else if (tokens[i + 1] === "=" && tokens[i + 2] === ">") {
-          let fn = new Token.FUNCTION(true);
-
-          fn.params = [token];
-          i += 3;
-
-          token = tokens[i];
-
-          if (token === "{") {
-            let context = getBlock(tokens, i);
-            fn.block = context.block;
-
-            params.push(fn);
-            i = context.offset;
-          } else {
-            let context = untilBlock(tokens, i);
-            fn.block = context.block;
-
-            params.push(fn);
-            i = context.offset;
-          }
-        } else {
-          params.push(token);
-        }
+        chained = tokens[i];
       }
 
-      if (tokens[i + 1] && tokens[i + 1].charAt(0) === ".") {
-        throw SyntaxError("Nested functions are not supported.");
-      }
-
-      call.params = params;
-      list.push(call);
+      i--;
     } else {
       list.push(new Token(tokens[i]));
     }
@@ -112,6 +65,71 @@ module.exports = function(string, offset) {
 
   return { statement: statement, offset: context.offset };
 };
+
+function parseCall(tokens, offset) {
+  let call = new Token.CALL(tokens[offset]);
+
+  let params = [];
+  let parentheses = 1;
+  offset += 2;
+
+  let token = tokens[offset];
+
+  if (token === "(") {
+    parentheses++;
+  } else if (token === ")") {
+    parentheses--;
+  }
+
+  if (parentheses <= 0) {
+    call.params = params;
+    return { call, offset: ++offset };
+  }
+
+  if (token === "function") {
+    let fn = new Token.FUNCTION();
+
+    let context = getParams(tokens, ++offset);
+    fn.params = context.params;
+
+    context = getBlock(tokens, context.offset);
+    fn.block = context.block;
+
+    params.push(fn);
+    offset = context.offset + 1;
+  } else if (tokens[offset + 1] === "=" && tokens[offset + 2] === ">") {
+    let fn = new Token.FUNCTION(true);
+
+    fn.params = [token];
+    offset += 3;
+
+    token = tokens[offset];
+
+    if (token === "{") {
+      let context = getBlock(tokens, offset);
+      fn.block = context.block;
+
+      params.push(fn);
+      offset = context.offset + 1;
+    } else {
+      let context = untilBlock(tokens, offset);
+      fn.block = context.block;
+
+      params.push(fn);
+      offset = context.offset;
+    }
+  } else {
+    let context = untilBlock(tokens, offset);
+    offset = context.offset;
+
+    if (context.block) {
+      context.block.forEach(e => params.push(e));
+    }
+  }
+
+  call.params = params;
+  return { call, offset: ++offset };
+}
 
 class $EXPRESSION extends $ {
   run(scope) {
