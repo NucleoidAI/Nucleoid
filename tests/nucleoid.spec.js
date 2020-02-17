@@ -335,6 +335,24 @@ describe("Nucleoid", function() {
     }, "INVALID_FIRST_CHARACTER");
   });
 
+  it("supports property of chained functions in expression", function() {
+    nucleoid.run("class User { }");
+    nucleoid.run("class Registration { }");
+    nucleoid.run("user1 = new User ( )");
+
+    nucleoid.run("registration1 = new Registration ( )");
+    nucleoid.run("registration1.user = user1");
+
+    nucleoid.run("registration2 = new Registration ( )");
+    nucleoid.run("registration2.user = user1");
+
+    assert.throws(function() {
+      nucleoid.run(
+        "if ( Registrations.filter ( r => r.user == User ) .length > 1 ) { throw 'USER_ALREADY_REGISTERED' }"
+      );
+    }, "USER_ALREADY_REGISTERED");
+  });
+
   it("supports array with brackets", function() {
     nucleoid.run("states = [ 'NY' , 'GA' , 'CT' , 'MI' ]");
     assert.equal(nucleoid.run("states [ 2 ]"), "CT");

@@ -43,11 +43,16 @@ module.exports = function(string, offset) {
       let chained = tokens[i];
 
       while (chained && chained.charAt(0) === ".") {
-        let context = parseCall(tokens, i);
-        list.push(context.call);
-        i = context.offset;
+        if (tokens[i + 1] === "(") {
+          let context = parseCall(tokens, i);
+          list.push(context.call);
 
-        chained = tokens[i];
+          i = context.offset;
+          chained = tokens[i];
+        } else {
+          list.push(new Token(chained));
+          chained = tokens[++i];
+        }
       }
 
       i--;
