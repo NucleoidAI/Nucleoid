@@ -21,10 +21,16 @@ class EXPRESSION {
             return parts[1];
           }
 
-          if (graph[parts[1]] !== undefined) {
+          try {
             let value = eval("state." + parts[1]);
+
+            if (value === undefined)
+              throw ReferenceError(`${parts[1]} is not defined`);
+
             return JSON.stringify(value);
-          } else throw ReferenceError(`${parts[1]} is not defined`);
+          } catch (error) {
+            throw ReferenceError(`${parts[1]} is not defined`);
+          }
         } else return token;
       });
   }

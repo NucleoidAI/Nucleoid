@@ -1175,6 +1175,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("device1.code"), "A0");
   });
 
+  it("uses value property of class declaration", function() {
+    nucleoid.run(
+      "class Summary { constructor ( question ) { this.question = question } }"
+    );
+    nucleoid.run("class Question { }");
+    nucleoid.run("Summary.count = Summary.question.count.value");
+    nucleoid.run("question1 = new Question ( )");
+    nucleoid.run("question1.count = 10");
+    nucleoid.run("summary1 = new Summary ( question1 )");
+    assert.equal(nucleoid.run("summary1.count"), 10);
+
+    nucleoid.run("question1.count = 11");
+    assert.equal(nucleoid.run("summary1.count"), 10);
+  });
+
   it("updates if block of property", function() {
     nucleoid.run("class Account { }");
     nucleoid.run("account = new Account ( )");
@@ -1780,16 +1795,6 @@ describe("Nucleoid", function() {
         nucleoid.run("Phone.line.wired = true");
       },
       error => validate(error, ReferenceError, "Phone.line is not defined")
-    );
-  });
-
-  it("rejects using value of class", function() {
-    nucleoid.run("class Employee { }");
-    assert.throws(
-      function() {
-        nucleoid.run("Employee.annual = Employee.biweekly.value * 52");
-      },
-      error => validate(error, TypeError, "Cannot use 'value' as a property")
     );
   });
 });

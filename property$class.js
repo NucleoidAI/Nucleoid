@@ -3,22 +3,10 @@ var PROPERTY$INSTANCE = require("./property$instance");
 var graph = require("./graph");
 var Identifier = require("./identifier");
 var Instance = require("./instance");
-var CLASS = require("./class");
 
 class PROPERTY$CLASS extends Node {
   before() {
     this.key = Identifier.serialize(this);
-    this.value.tokens.forEach(token => {
-      let parts = Identifier.splitLast(token);
-      if (parts[0] && parts[1] && parts[0] === "value") {
-        let list = parts[1].split(".");
-        let cls = graph[list[0]];
-
-        if (cls && cls instanceof CLASS) {
-          throw TypeError("Cannot use 'value' as a property");
-        }
-      }
-    });
   }
 
   run(scope) {
