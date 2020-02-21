@@ -197,6 +197,20 @@ describe("Nucleoid", function() {
     nucleoid.run("board1.card instanceof Card");
   });
 
+  it("supports new line as replacing with space", function() {
+    nucleoid.run("a = 1 ; \n b = 2");
+    assert.equal(nucleoid.run("a"), 1);
+    assert.equal(nucleoid.run("b"), 2);
+
+    nucleoid.run("a = 3 ; \r b = 4");
+    assert.equal(nucleoid.run("a"), 3);
+    assert.equal(nucleoid.run("b"), 4);
+
+    nucleoid.run("a = 5 ; \r\n b = 6");
+    assert.equal(nucleoid.run("a"), 5);
+    assert.equal(nucleoid.run("b"), 6);
+  });
+
   it("supports string in expression", function() {
     assert.equal(nucleoid.run("'New String'"), "New String");
     assert.equal(nucleoid.run('"New String"'), "New String");

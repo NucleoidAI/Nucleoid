@@ -26,6 +26,10 @@ const next = function(string, offset) {
   for (; offset < string.length; offset++) {
     let character = string.charCodeAt(offset);
 
+    if (character === 10 || character === 13) {
+      continue;
+    }
+
     if (character === 96) {
       throw SyntaxError("Backtick is not supported.");
     }
