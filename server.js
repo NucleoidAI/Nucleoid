@@ -61,7 +61,10 @@ app.post("/", (req, res) => {
       }
     }
 
-    fs.appendFileSync(`./data/process`, req.body + "\n");
+    fs.appendFileSync(
+      `./data/process`,
+      JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
+    );
     res.status(202).end();
   }
 });

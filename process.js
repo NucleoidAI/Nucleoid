@@ -6,14 +6,20 @@ if (fs.existsSync("./data/" + argv.id)) {
   fs.readFileSync("./data/" + argv.id, "utf8")
     .split(/\n/)
     .forEach(line => {
-      nucleoid.run(line);
+      try {
+        let details = JSON.parse(line);
+        nucleoid.run(details.s, false, true);
+      } catch (error) {
+        return;
+      }
     });
 } else if (fs.existsSync("./data/process")) {
   fs.readFileSync("./data/process", "utf8")
     .split(/\n/)
     .forEach(line => {
       try {
-        nucleoid.run(line);
+        let details = JSON.parse(line);
+        nucleoid.run(details.s);
       } catch (error) {
         return;
       }

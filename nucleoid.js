@@ -3,20 +3,39 @@ var Statement = require("./statement");
 const fs = require("fs");
 const argv = require("yargs").argv;
 
-module.exports.run = function(string, details) {
+module.exports.run = function(string, details, cacheOnly) {
   let before = Date.now();
+  let result, statements;
 
-  let statements = Statement.compile(string);
-  let result = stack.process(statements);
+  try {
+    statements = Statement.compile(string);
+    result = stack.process(statements);
+  } catch (error) {
+    if (error instanceof Error) {
+      result = error.message;
+    } else {
+      result = error;
+    }
 
-  if (argv.id !== undefined) {
-    fs.appendFileSync("./data/" + argv.id, string + "\n");
+    if (!details) {
+      throw error;
+    }
   }
 
-  let after = Date.now();
+  if (argv.id !== undefined && !cacheOnly) {
+    fs.appendFileSync(
+      "./data/" + argv.id,
+      JSON.stringify({
+        s: string,
+        t: Date.now() - before,
+        r: result instanceof Object ? JSON.stringify(result) : result,
+        d: Date.now()
+      }) + "\n"
+    );
+  }
 
-  if (details === true) {
-    return { result, statements, time: after - before };
+  if (details) {
+    return { result, statements, time: Date.now() - before };
   } else {
     return result;
   }
