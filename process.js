@@ -1,6 +1,6 @@
 const fs = require("fs");
 const argv = require("yargs").argv;
-var nucleoid = require("./nucleoid.js");
+var nucleoid = require("./nucleoid");
 
 if (fs.existsSync("./data/" + argv.id)) {
   fs.readFileSync("./data/" + argv.id, "utf8")
