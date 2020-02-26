@@ -1,42 +1,51 @@
-var stack = require("./stack");
+var Stack = require("./stack");
 var Statement = require("./statement");
 const fs = require("fs");
 const argv = require("yargs").argv;
 
 module.exports.run = function(string, details, cacheOnly) {
   let before = Date.now();
-  let result, statements;
+  let error, message;
 
   try {
-    statements = Statement.compile(string);
-    result = stack.process(statements);
-  } catch (error) {
-    if (error instanceof Error) {
-      result = error.message;
-    } else {
-      result = error;
-    }
-
-    if (!details) {
-      throw error;
-    }
+    var statements = Statement.compile(string);
+    var result = Stack.process(statements);
+  } catch (e) {
+    result = e;
+    error = true;
   }
 
   if (argv.id !== undefined && !cacheOnly) {
+    try {
+      if (result instanceof Error) {
+        message = JSON.stringify(result.message);
+      } else {
+        message = JSON.stringify(result);
+      }
+    } catch (e) {
+      message = JSON.stringify(e.message);
+      error = true;
+    }
+
     fs.appendFileSync(
       "./data/" + argv.id,
       JSON.stringify({
         s: string,
         t: Date.now() - before,
-        r: result instanceof Object ? JSON.stringify(result) : result,
-        d: Date.now()
+        r: message,
+        d: Date.now(),
+        e: error
       }) + "\n"
     );
   }
 
   if (details) {
-    return { result, statements, time: Date.now() - before };
+    return { result, message, statements, time: Date.now() - before, error };
   } else {
+    if (error) {
+      throw result;
+    }
+
     return result;
   }
 };

@@ -19,7 +19,7 @@ app.post("/", (req, res) => {
 
   if (header !== undefined) {
     let parts = header.split(" ");
-    var payload = jwt.decode(parts[1]);
+    let payload = jwt.decode(parts[1]);
 
     let key = payload.username;
     let proc = processes[key];
@@ -32,9 +32,20 @@ app.post("/", (req, res) => {
 
       proc.pid.on("message", function(message) {
         let request = proc.requests.shift();
+        request.res.type("application/json");
 
         if (request.get("Authorization") !== undefined) {
-          request.res.type("application/json").send(message);
+          let details = JSON.parse(message);
+
+          if (details.error) {
+            request.res.status(400);
+          }
+
+          if (details.message !== undefined) {
+            request.res.send(details.message);
+          } else {
+            request.res.end();
+          }
         }
 
         if (proc.requests.length > 0) {
