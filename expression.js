@@ -37,6 +37,11 @@ class EXPRESSION {
 
   run(scope) {
     try {
+      if (this.tokens[0].string === "{") {
+        let string = this.tokens.construct();
+        return JSON.parse(string);
+      }
+
       let tokens = this.tokens
         .map(token => (token = Local.reference(scope, token)))
         .map(token => {

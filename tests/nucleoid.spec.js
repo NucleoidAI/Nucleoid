@@ -305,6 +305,14 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("supports JSON", function() {
+    let payload = nucleoid.run('let payload = { "data" : "TEST" } ; payload');
+    assert.equal(payload.data, "TEST");
+
+    nucleoid.run('message = { "pid" : 1200 }');
+    assert.equal(nucleoid.run("message.pid"), 1200);
+  });
+
   it("assigns block in function as dependency", function() {
     nucleoid.run("class Student { }");
     nucleoid.run("student1 = new Student ( )");
