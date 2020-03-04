@@ -50,8 +50,10 @@ module.exports = class OBJECT extends Node {
       list.push(instruction);
     }
 
-    for (let node in this.class.declaration)
-      list.push(this.class.declaration[node]);
+    for (let node in this.class.declaration) {
+      let declaration = this.class.declaration[node];
+      list.push(new Instruction(scope.root, declaration, true, true, true));
+    }
 
     if (this.object === undefined) {
       let context = $EXP(this.class.name + "s.push ( " + this.name + " )", 0);

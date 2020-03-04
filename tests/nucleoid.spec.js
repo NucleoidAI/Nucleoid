@@ -863,6 +863,17 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("creates instance inside block", function() {
+    nucleoid.run("class Device { constructor ( name ) { this.name = name } }");
+    nucleoid.run("Device.deleted = false");
+    nucleoid.run("Device.key = 'X-' + Device.name");
+    nucleoid.run("{ let name = 'Hall' ; device1 = new Device ( name ) }");
+
+    assert.equal(nucleoid.run("device1.name"), "Hall");
+    assert.equal(nucleoid.run("device1.key"), "X-Hall");
+    assert.equal(nucleoid.run("device1.deleted"), false);
+  });
+
   it("runs let statement as an object before declaration", function() {
     nucleoid.run("class Plane { }");
     nucleoid.run("class Trip { }");
