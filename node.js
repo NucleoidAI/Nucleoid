@@ -13,6 +13,7 @@ module.exports = class Node {
 
   before() {}
   run() {}
+  beforeGraph() {}
   graph() {}
 
   static replace(sourceKey, targetNode) {

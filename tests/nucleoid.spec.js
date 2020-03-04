@@ -132,6 +132,21 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run(`${device4.id}.active`), false);
   });
 
+  it("updates class definition", function() {
+    nucleoid.run("class Message { }");
+    nucleoid.run("Message.read = false");
+    nucleoid.run("message1 = new Message ( )");
+    nucleoid.run(
+      "class Message { constructor ( payload ) { this.payload = payload } }"
+    );
+    assert.equal(nucleoid.run("message1.read"), false);
+    assert.equal(nucleoid.run("message1.payload"), undefined);
+
+    nucleoid.run("message2 = new Message('MESSAGE')");
+    assert.equal(nucleoid.run("message2.read"), false);
+    assert.equal(nucleoid.run("message2.payload"), "MESSAGE");
+  });
+
   it("validates syntax of instance creation", function() {
     nucleoid.run("class Board { }");
     nucleoid.run("class Card { }");

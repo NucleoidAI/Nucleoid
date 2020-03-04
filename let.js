@@ -5,6 +5,7 @@ module.exports = class LET {
     eval("scope.local." + this.name + "=value");
   }
 
+  beforeGraph() {}
   graph(scope) {
     scope.graph[this.name] = this;
 

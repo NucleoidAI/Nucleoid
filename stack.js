@@ -88,6 +88,8 @@ module.exports.process = function(statements) {
         }
 
         if (instruction.graph) {
+          statement.beforeGraph(instruction.scope);
+
           if (statement instanceof Node) {
             if (statement.key && graph[statement.key]) {
               Node.replace(statement.key, statement);

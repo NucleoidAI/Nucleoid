@@ -17,6 +17,7 @@ module.exports = class DELETE {
     return list;
   }
 
+  beforeGraph() {}
   graph() {
     for (let node in graph[this.key].previous)
       delete graph[node].next[this.key];
