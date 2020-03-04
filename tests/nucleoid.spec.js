@@ -874,6 +874,19 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("device1.deleted"), false);
   });
 
+  it("creates variable inside block", function() {
+    nucleoid.run("a = 5 ; b = 10");
+    nucleoid.run("if ( a > 9 ) { let c = a + b ; d = c * 10 }");
+    nucleoid.run("a = 10");
+    assert.equal(nucleoid.run("d"), 200);
+
+    nucleoid.run("a = 15");
+    assert.equal(nucleoid.run("d"), 250);
+
+    nucleoid.run("b = 20");
+    assert.equal(nucleoid.run("d"), 350);
+  });
+
   it("runs let statement as an object before declaration", function() {
     nucleoid.run("class Plane { }");
     nucleoid.run("class Trip { }");
