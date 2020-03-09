@@ -641,6 +641,16 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("number"), 200);
   });
 
+  it("sends message to other Nucleoid instance", function() {
+    nucleoid.run(
+      "class Task { constructor ( ) { message ( '7c6bca38', 'CHECK' ) } }"
+    );
+
+    let details1 = nucleoid.run("task1 = new Task ( )", true);
+    assert.equal(details1.messages[0].process, "7c6bca38");
+    assert.equal(details1.messages[0].payload, '"CHECK"');
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");

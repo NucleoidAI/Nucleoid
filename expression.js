@@ -6,6 +6,9 @@ var Node = require("./node");
 var Token = require("./token");
 const argv = require("yargs").argv;
 
+// eslint-disable-next-line no-unused-vars
+var message = require("./message").message;
+
 class EXPRESSION {
   constructor(tokens) {
     this.tokens = tokens;

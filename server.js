@@ -14,45 +14,38 @@ app.use(bodyParser.text({ type: "*/*" }));
 const fork = require("child_process").fork;
 var processes = [];
 
+let pid = fork("./process.js", ["--id=global"]);
+let proc = { pid, id: "global", requests: [] };
+pid.on("message", m => receive(proc, m));
+processes["global"] = proc;
+
 app.post("/", (req, res) => {
-  let header = req.get("Authorization");
+  let authorization = req.get("Authorization");
+  let processHeader = req.get("Process");
 
-  if (header !== undefined) {
-    let parts = header.split(" ");
-    let payload = jwt.decode(parts[1]);
+  if (authorization !== undefined || processHeader !== undefined) {
+    req.type = "REQUEST";
 
-    let key = payload.username;
+    let key;
+
+    if (processHeader) {
+      key = processHeader;
+    } else {
+      let parts = authorization.split(" ");
+      let payload = jwt.decode(parts[1]);
+
+      key = payload.username;
+    }
+
     let proc = processes[key];
 
     if (proc === undefined) {
       let pid = fork("./process.js", [`--id=${key}`]);
 
-      proc = { pid, requests: [req] };
+      proc = { pid, id: key, requests: [req] };
       processes[key] = proc;
 
-      proc.pid.on("message", function(message) {
-        let request = proc.requests.shift();
-        request.res.type("application/json");
-
-        if (request.get("Authorization") !== undefined) {
-          let details = JSON.parse(message);
-
-          if (details.error) {
-            request.res.status(400);
-          }
-
-          if (details.message !== undefined) {
-            request.res.send(details.message);
-          } else {
-            request.res.end();
-          }
-        }
-
-        if (proc.requests.length > 0) {
-          let r = proc.requests[0];
-          proc.pid.send(r.body);
-        }
-      });
+      proc.pid.on("message", m => receive(proc, m));
 
       proc.pid.send(req.body);
     } else {
@@ -64,6 +57,8 @@ app.post("/", (req, res) => {
     }
   } else {
     for (let p in processes) {
+      if (p === "global") continue;
+
       let proc = processes[p];
       proc.requests.push(req);
 
@@ -81,3 +76,45 @@ app.post("/", (req, res) => {
 });
 
 app.listen(argv.port ? argv.port : 80);
+
+function receive(proc, message) {
+  let request = proc.requests.shift();
+
+  if (request.type === "REQUEST") {
+    request.res.type("application/json");
+    let details = JSON.parse(message);
+
+    if (details.e) {
+      request.res.status(400);
+    }
+
+    if (details.r !== undefined) {
+      request.res.send(details.r);
+    } else {
+      request.res.end();
+    }
+
+    if (details.m) {
+      let messages = details.m;
+      messages.forEach(m => {
+        let p = processes[m.process];
+        p.requests.push({
+          body: `let m={"pid":"${proc.id}","payload":${
+            m.payload
+          }};new Message(m)`,
+          type: "MESSAGE"
+        });
+
+        if (p.requests.length > 0) {
+          let r = p.requests[0];
+          p.pid.send(r.body);
+        }
+      });
+    }
+  }
+
+  if (proc.requests.length > 0) {
+    let r = proc.requests[0];
+    proc.pid.send(r.body);
+  }
+}

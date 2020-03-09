@@ -29,6 +29,6 @@ if (fs.existsSync("./data/" + argv.id)) {
 process.on("message", message => {
   var details = nucleoid.run(message, true);
   process.send(
-    JSON.stringify({ message: details.message, error: details.error })
+    JSON.stringify({ r: details.result, m: details.messages, e: details.error })
   );
 });
