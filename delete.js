@@ -1,4 +1,4 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
+var state = require("./state");
 var graph = require("./graph");
 var Instruction = require("./instruction");
 var Node = require("./node");
@@ -6,7 +6,7 @@ var Node = require("./node");
 module.exports = class DELETE {
   before() {}
   run(scope) {
-    eval("delete state." + this.key);
+    state.run(scope, "delete state." + this.key);
 
     let list = [];
 

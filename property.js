@@ -1,4 +1,4 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
+var state = require("./state");
 var Node = require("./node");
 var Identifier = require("./identifier");
 
@@ -9,8 +9,9 @@ module.exports = class PROPERTY extends Node {
   }
 
   run(scope) {
-    let object = eval("state." + Identifier.serialize(this.object, true));
-    object[this.name] = this.value.run(scope);
+    let object = Identifier.serialize(this.object, true);
+    let value = this.value.run(scope);
+    state.assign(scope, object + "." + this.name, value);
   }
 
   graph(scope) {

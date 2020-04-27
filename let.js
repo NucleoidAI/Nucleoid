@@ -1,8 +1,11 @@
+var state = require("./state");
+
 module.exports = class LET {
   before() {}
   run(scope) {
-    let value = this.value.run(scope); // eslint-disable-line no-unused-vars
-    eval("scope.local." + this.name + "=value");
+    let value = this.value.run(scope);
+    let expression = `scope.local.${this.name}=${value}`;
+    state.run(scope, expression);
   }
 
   beforeGraph() {}

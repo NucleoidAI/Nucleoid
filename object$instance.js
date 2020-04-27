@@ -1,4 +1,3 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
 var Identifier = require("./identifier");
 var OBJECT = require("./object");
 var graph = require("./graph");

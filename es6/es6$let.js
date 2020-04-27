@@ -14,6 +14,7 @@ module.exports = function ES6$LET(string, offset) {
   standard: if (check.token === "new") {
     context = Token.next(string, check.offset);
 
+    // eslint-disable-next-line no-eval
     if (eval("typeof " + context.token) === "function") {
       context = standard;
       break standard;

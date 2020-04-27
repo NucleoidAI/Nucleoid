@@ -11,6 +11,7 @@ module.exports = {
   },
   rules: {
     eqeqeq: ["error", "always"],
-    "no-console": "off"
+    "no-console": "off",
+    "no-eval": "error"
   }
 };

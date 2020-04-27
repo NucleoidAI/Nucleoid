@@ -1,15 +1,15 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
+var state = require("./state");
 var Identifier = require("./identifier");
 var graph = require("./graph");
 
 module.exports = class THROW {
   before() {}
 
-  run() {
+  run(scope) {
     let exception = graph[this.exception];
 
     if (exception) {
-      eval("throw state." + Identifier.serialize(exception));
+      state.run(scope, "throw state." + Identifier.serialize(exception));
     }
 
     throw this.exception;

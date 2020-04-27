@@ -1,4 +1,4 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
+var state = require("./state");
 var Node = require("./node");
 var Identifier = require("./identifier");
 var $EXP = require("./$expression");
@@ -23,7 +23,7 @@ module.exports = class OBJECT extends Node {
   run(scope) {
     let name = this.key;
 
-    eval("state." + name + " = new state." + this.class.name + "()");
+    state.assign(scope, name, `new state.${this.class.name}()`);
     scope.instance[this.class.name] = this;
     scope.object = this;
 
@@ -59,7 +59,7 @@ module.exports = class OBJECT extends Node {
       let context = $EXP(this.class.name + "s.push ( " + this.name + " )", 0);
       list.push(context.statement);
 
-      eval(`state.${name}.id="${name}"`);
+      state.run(scope, `state.${name}.id="${name}"`);
 
       context = $EXP(this.name, 0);
       list.push(context.statement);

@@ -1,6 +1,6 @@
 var assert = require("assert");
 var nucleoid = require("../nucleoid");
-var state = require("../state");
+var state = require("../state").state;
 var graph = require("../graph");
 
 function validate(error, expectedError, expectedMessage) {

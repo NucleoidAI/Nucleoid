@@ -7,6 +7,10 @@ var Node = require("./node");
 var $ = require("./$");
 var BREAK = require("./break");
 var EXPRESSION = require("./expression");
+var state = require("./state");
+
+// eslint-disable-next-line no-unused-vars
+var message = require("./message").message;
 
 module.exports.process = function(statements) {
   let root = new Scope();
@@ -36,8 +40,11 @@ module.exports.process = function(statements) {
         statement.block.break = true;
       }
     } else if (statement instanceof EXPRESSION) {
-      result = statement.run(instruction.scope);
-      let list = statement.next(instruction.scope);
+      let scope = instruction.scope;
+      let value = statement.run(scope);
+      result = state.run(scope, value);
+
+      let list = statement.next(scope);
 
       if (list) {
         instructions = list
@@ -64,7 +71,8 @@ module.exports.process = function(statements) {
           list = Array.isArray(list) ? list : [list];
 
           if (statement instanceof BLOCK) {
-            scope = new Scope(scope, statement);
+            scope = new Scope(scope);
+            scope.block = statement;
           }
 
           if (statement instanceof IF) {

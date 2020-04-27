@@ -14,6 +14,7 @@ module.exports = function ES6$ASSIGNMENT(string, offset) {
   standard: if (point.token === "new") {
     context = Token.next(string, point.offset);
 
+    // eslint-disable-next-line no-eval
     if (eval("typeof " + context.token) === "function") {
       context = standard;
       break standard;

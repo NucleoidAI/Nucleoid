@@ -6,7 +6,7 @@ module.exports = class FUNCTION extends Node {
     this.key = this.name;
   }
 
-  run() {
-    state[this.name] = new Function(this.args, this.block);
+  run(scope) {
+    state.assign(scope, this.name, new Function(this.args, this.block));
   }
 };

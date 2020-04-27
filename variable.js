@@ -8,7 +8,7 @@ module.exports = class VARIABLE extends Node {
   }
 
   run(scope) {
-    state[this.name] = this.value.run(scope);
+    state.assign(scope, this.name, this.value.run(scope));
   }
 
   graph(scope) {

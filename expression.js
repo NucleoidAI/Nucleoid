@@ -1,13 +1,10 @@
-var state = require("./state"); // eslint-disable-line no-unused-vars
+var state = require("./state");
 var graph = require("./graph");
 var Local = require("./local");
 var Identifier = require("./identifier");
 var Node = require("./node");
 var Token = require("./token");
 const argv = require("yargs").argv;
-
-// eslint-disable-next-line no-unused-vars
-var message = require("./message").message;
 
 class EXPRESSION {
   constructor(tokens) {
@@ -25,7 +22,7 @@ class EXPRESSION {
           }
 
           try {
-            let value = eval("state." + parts[1]);
+            let value = state.run(scope, "state." + parts[1]);
 
             if (value === undefined)
               throw ReferenceError(`${parts[1]} is not defined`);
@@ -41,8 +38,7 @@ class EXPRESSION {
   run(scope) {
     try {
       if (this.tokens[0].string === "{") {
-        let string = this.tokens.construct();
-        return JSON.parse(string);
+        return this.tokens.construct();
       }
 
       let tokens = this.tokens
@@ -53,13 +49,13 @@ class EXPRESSION {
           try {
             if (Local.check(scope, parts[0])) {
               let reference = Local.retrieve(scope, token);
-              let value = eval(reference);
+              let value = state.run(scope, reference);
 
               if (value === undefined) throw 0;
               return reference;
             } else if (graph[parts[0]]) {
               let reference = "state." + Identifier.reference(token);
-              let value = eval(reference);
+              let value = state.run(scope, reference);
 
               if (value === undefined) throw 0;
               return reference;
@@ -74,10 +70,10 @@ class EXPRESSION {
         });
 
       if (argv.log === true || argv.l === true) console.log(tokens.construct());
-      return eval(tokens.construct());
+      return tokens.construct();
     } catch (error) {
       if (error instanceof Error) throw error;
-      return undefined;
+      return "undefined";
     }
   }
 
@@ -116,7 +112,7 @@ class EXPRESSION {
       })
       .map(token => {
         try {
-          var fn = eval("state." + token);
+          var fn = state.run(scope, "state." + token);
         } catch (error) {
           return token;
         }
