@@ -104,9 +104,9 @@ module.exports.process = function(statements) {
             } else if (graph[statement.id]) {
               Node.replace(statement.id, statement);
             } else if (statement.key) {
-              graph[statement.key] = statement;
+              Node.register(statement.key, statement);
             } else {
-              graph[statement.id] = statement;
+              Node.register(statement.id, statement);
             }
           }
 
@@ -118,23 +118,26 @@ module.exports.process = function(statements) {
               }
             });
 
-            dependencies = dependencies
-              .concat(list.filter(e => !dependencies.includes(e)))
-              .sort((a, b) => graph[a].sequence - graph[b].sequence);
+            dependencies = dependencies.concat(
+              list.filter(e => !dependencies.includes(e))
+            );
           }
         }
 
-        for (let node in statement.next) {
-          let s = instruction.scope;
-          let n = graph[node];
+        if (statement.next) {
+          Object.values(statement.next)
+            .sort((a, b) => a.sequence - b.sequence)
+            .forEach(n => {
+              let s = instruction.scope;
 
-          if (n instanceof BLOCK || n instanceof IF) {
-            let scope = new Scope();
-            dependents.push(new Instruction(scope, n, false, true, false));
-            dependents.push(new Instruction(scope, n, false, false, true));
-          } else {
-            dependents.push(new Instruction(s, n, false, true, false));
-          }
+              if (n instanceof BLOCK || n instanceof IF) {
+                let scope = new Scope();
+                dependents.push(new Instruction(scope, n, false, true, false));
+                dependents.push(new Instruction(scope, n, false, false, true));
+              } else {
+                dependents.push(new Instruction(s, n, false, true, false));
+              }
+            });
         }
 
         // Root scope is a scope, which does not have any prior.

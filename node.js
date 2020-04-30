@@ -1,5 +1,6 @@
 var graph = require("./graph");
 var uuidv4 = require("uuid/v4");
+var transaction = require("./transaction");
 
 var sequence = 0;
 
@@ -16,23 +17,27 @@ module.exports = class Node {
   beforeGraph() {}
   graph() {}
 
+  static register(key, node) {
+    transaction.register(graph, key, node);
+  }
+
   static replace(sourceKey, targetNode) {
-    targetNode.block = graph[sourceKey].block;
+    transaction.register(targetNode.block, graph[sourceKey].block);
 
     for (let node in graph[sourceKey].next) {
-      targetNode.next[node] = graph[sourceKey].next[node];
-      delete graph[sourceKey].next[node];
+      transaction.register(targetNode.next, node, graph[sourceKey].next[node]);
+      transaction.register(graph[sourceKey].next, node, undefined);
     }
 
     for (let node in graph[sourceKey].previous) {
-      delete graph[node].next[sourceKey];
+      transaction.register(graph[node].next, sourceKey, undefined);
     }
 
-    graph[sourceKey] = targetNode;
+    transaction.register(graph, sourceKey, targetNode);
   }
 
   static direct(sourceKey, targetKey, targetNode) {
-    graph[sourceKey].next[targetKey] = targetNode;
-    targetNode.previous[sourceKey] = graph[targetKey];
+    transaction.register(graph[sourceKey].next, targetKey, targetNode);
+    transaction.register(targetNode.previous, sourceKey, graph[targetKey]);
   }
 };

@@ -3,6 +3,7 @@ var Statement = require("./statement");
 const fs = require("fs");
 const argv = require("yargs").argv;
 var Message = require("./message");
+var transaction = require("./transaction");
 
 module.exports.run = function(string, details, cacheOnly) {
   let before = Date.now();
@@ -10,8 +11,11 @@ module.exports.run = function(string, details, cacheOnly) {
 
   try {
     var statements = Statement.compile(string);
+    transaction.start();
     var result = Stack.process(statements);
+    transaction.end();
   } catch (e) {
+    transaction.rollback();
     result = e;
     error = true;
   }

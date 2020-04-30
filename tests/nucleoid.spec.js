@@ -651,6 +651,44 @@ describe("Nucleoid", function() {
     assert.equal(details1.messages[0].payload, '"CHECK"');
   });
 
+  it("rollbacks variable if exception is thrown", function() {
+    nucleoid.run("a = 5");
+    nucleoid.run("if ( a > 5 ) { throw 'INVALID_VALUE' }");
+
+    assert.throws(function() {
+      nucleoid.run("a = 6");
+    }, "INVALID_VALUE");
+    assert.equal(nucleoid.run("a"), 5);
+  });
+
+  it("rollbacks property if exception is thrown", function() {
+    nucleoid.run("class Item { }");
+    nucleoid.run("if ( Item.sku == 'A' ) { throw 'INVALID_SKU' }");
+    nucleoid.run("item1 = new Item ( )");
+
+    assert.throws(function() {
+      nucleoid.run("item1.sku = 'A'");
+    }, "INVALID_SKU");
+    assert.equal(nucleoid.run("item1.sku"), undefined);
+  });
+
+  it("rollbacks instance if exception is thrown", function() {
+    nucleoid.run(
+      "class User { constructor ( first , last ) { this.first = first ; this.last = last } }"
+    );
+    nucleoid.run("if ( User.first.length < 3 ) { throw 'INVALID_USER' }");
+
+    assert.throws(function() {
+      nucleoid.run("user1 = new User ( 'F' , 'L' )");
+    }, "INVALID_USER");
+    assert.throws(
+      function() {
+        nucleoid.run("user1");
+      },
+      error => validate(error, ReferenceError, "user1 is not defined")
+    );
+  });
+
   it("creates variable assignment", function() {
     nucleoid.run("x = 1");
     nucleoid.run("y = x + 2");
