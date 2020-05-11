@@ -37,9 +37,9 @@ module.exports.run = function(string, details, cacheOnly) {
   let date = Date.now();
   let time = date - before;
 
-  if (argv.id !== undefined && !cacheOnly) {
+  if (argv.id !== undefined && argv.path !== undefined && !cacheOnly) {
     fs.appendFileSync(
-      "./data/" + argv.id,
+      argv.path + argv.id,
       JSON.stringify({
         s: string,
         t: time,

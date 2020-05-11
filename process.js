@@ -2,8 +2,8 @@ const fs = require("fs");
 const argv = require("yargs").argv;
 var nucleoid = require("./nucleoid");
 
-if (fs.existsSync("./data/" + argv.id)) {
-  fs.readFileSync("./data/" + argv.id, "utf8")
+if (fs.existsSync("/var/lib/nucleoid/" + argv.id)) {
+  fs.readFileSync("/var/lib/nucleoid/" + argv.id, "utf8")
     .split(/\n/)
     .forEach(line => {
       try {
@@ -13,8 +13,8 @@ if (fs.existsSync("./data/" + argv.id)) {
         return;
       }
     });
-} else if (fs.existsSync("./data/process")) {
-  fs.readFileSync("./data/process", "utf8")
+} else if (fs.existsSync("/var/lib/nucleoid/process")) {
+  fs.readFileSync("/var/lib/nucleoid/process", "utf8")
     .split(/\n/)
     .forEach(line => {
       try {

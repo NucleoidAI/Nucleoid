@@ -4,17 +4,13 @@ var bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
 var fs = require("fs");
 
-if (!fs.existsSync("./data/")) {
-  fs.mkdirSync("./data/");
-}
-
 const app = express();
 app.use(bodyParser.text({ type: "*/*" }));
 
 const fork = require("child_process").fork;
 var processes = [];
 
-let pid = fork("./process.js", ["--id=global"]);
+let pid = fork("./process.js", ["--id=global", "--path=/var/lib/nucleoid/"]);
 let proc = { pid, id: "global", requests: [] };
 pid.on("message", m => receive(proc, m));
 processes["global"] = proc;
@@ -40,7 +36,10 @@ app.post("/", (req, res) => {
     let proc = processes[key];
 
     if (proc === undefined) {
-      let pid = fork("./process.js", [`--id=${key}`]);
+      let pid = fork("./process.js", [
+        `--id=${key}`,
+        "--path=/var/lib/nucleoid/"
+      ]);
 
       proc = { pid, id: key, requests: [req] };
       processes[key] = proc;
@@ -68,7 +67,7 @@ app.post("/", (req, res) => {
     }
 
     fs.appendFileSync(
-      `./data/process`,
+      "/var/lib/nucleoid/process",
       JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
     );
     res.status(202).end();
