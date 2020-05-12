@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha tests/nucleoid.spec.js --forbidOnly --forbidPending",
-    "install": "cp scripts/commit-msg scripts/pre-commit .git/hooks/"
+    "install": "cp scripts/git/commit-msg scripts/git/pre-commit .git/hooks/"
   },
   "repository": {
     "type": "git",

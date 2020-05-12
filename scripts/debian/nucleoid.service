@@ -1,0 +1,8 @@
+[Unit]
+Description=Declarative Runtime System
+
+[Service]
+ExecStart=/usr/bin/npm start --prefix /usr/lib/nucleoid/
+
+[Install]
+WantedBy=multi-user.target
