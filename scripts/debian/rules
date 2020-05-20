@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+%:
+	dh $@ --with-systemd
+
+override_dh_auto_install:
+	mv source/ debian/nucleoid
+	dh_systemd_enable
+	dh_systemd_start

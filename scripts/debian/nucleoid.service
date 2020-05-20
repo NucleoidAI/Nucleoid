@@ -1,5 +1,5 @@
 [Unit]
-Description=Declarative Runtime System
+Description=Nucleoid Runtime
 
 [Service]
 ExecStart=/usr/bin/npm start --prefix /usr/lib/nucleoid/
