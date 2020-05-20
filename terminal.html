@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nucleoid - Terminal</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <style>
+      body {
+        background-color: #202124;
+        font-family: Menlo, Terminal, monospace;
+        font-size: 15px;
+        color: #ffffff;
+      }
+
+      div {
+        cursor: default;
+      }
+
+      #entry {
+        background-color: #202124;
+        font-family: Menlo, Terminal, monospace;
+        font-size: 15px;
+        color: #ffffff;
+        cursor: default;
+        outline: none;
+        border: 0px;
+        width: calc(100% - 18.5px);
+      }
+    </style>
+
+    <script>
+      $(function() {
+        $("#entry").keypress(function(e) {
+          if (e.which === 13) {
+            var entry = $("#entry").val();
+
+            $.post("/", entry, function(response) {
+              let string = response;
+
+              if (typeof response === "object") {
+                string = JSON.stringify(response);
+              } else if (typeof response === "string") {
+                string = `'${response}'`;
+              }
+
+              $(`<div>>&nbsp;${entry}</div>`).appendTo("#entries");
+              $(`<div>${string}</div>`).appendTo("#entries");
+              $("#entry").val("");
+            }).fail(function(response) {
+              let string = response.responseJSON;
+
+              $(`<div>>&nbsp;${entry}</div>`).appendTo("#entries");
+              $(`<div>${string}</div>`).appendTo("#entries");
+              $("#entry").val("");
+            });
+          }
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="entries">
+      <div>Nucleoid - Declarative Runtime System</div>
+      <div>https://nucleoid.org/</div>
+      <div>&nbsp;</div>
+    </div>
+    <div><span>></span>&nbsp;<input id="entry" autofocus /></div>
+  </body>
+</html>

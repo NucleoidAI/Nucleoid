@@ -15,6 +15,10 @@ let proc = { pid, id: "global", requests: [] };
 pid.on("message", m => receive(proc, m));
 processes["global"] = proc;
 
+app.get("/", (req, res) => {
+  res.sendFile(`${__dirname}/terminal.html`);
+});
+
 app.post("/", (req, res) => {
   let authorization = req.get("Authorization");
   let processHeader = req.get("Process");
