@@ -34,6 +34,21 @@
           if (e.which === 13) {
             var entry = $("#entry").val();
 
+            use: if (entry.startsWith("use ")) {
+              let parts = entry.split(/ +/);
+              if (parts.length !== 2) break use;
+
+              $.ajaxSetup({
+                headers: {
+                  Process: parts[1]
+                }
+              });
+
+              $(`<div>>&nbsp;${entry}</div>`).appendTo("#entries");
+              $("#entry").val("");
+              return;
+            }
+
             $.post("/", entry, function(response) {
               let string = response;
 
