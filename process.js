@@ -2,8 +2,8 @@ const fs = require("fs");
 const argv = require("yargs").argv;
 var nucleoid = require("./nucleoid");
 
-if (fs.existsSync("/var/lib/nucleoid/" + argv.id)) {
-  fs.readFileSync("/var/lib/nucleoid/" + argv.id, "utf8")
+init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
+  fs.readFileSync(`${argv.path}/${argv.id}`, "utf8")
     .split(/\n/)
     .forEach(line => {
       try {
@@ -13,17 +13,27 @@ if (fs.existsSync("/var/lib/nucleoid/" + argv.id)) {
         return;
       }
     });
-} else if (fs.existsSync("/var/lib/nucleoid/process")) {
-  fs.readFileSync("/var/lib/nucleoid/process", "utf8")
-    .split(/\n/)
-    .forEach(line => {
-      try {
-        let details = JSON.parse(line);
-        nucleoid.run(details.s);
-      } catch (error) {
-        return;
-      }
-    });
+} else {
+  let parts = argv.id.toString().split("/");
+
+  if (parts.length === 1) {
+    break init;
+  }
+
+  let group = parts[0];
+
+  if (fs.existsSync(`${argv.path}/init/${group}`)) {
+    fs.readFileSync(`${argv.path}/init/${group}`, "utf8")
+      .split(/\n/)
+      .forEach(line => {
+        try {
+          let details = JSON.parse(line);
+          nucleoid.run(details.s);
+        } catch (error) {
+          return;
+        }
+      });
+  }
 }
 
 process.on("message", message => {

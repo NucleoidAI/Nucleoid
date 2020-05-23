@@ -39,7 +39,7 @@ module.exports.run = function(string, details, cacheOnly) {
 
   if (argv.id !== undefined && argv.path !== undefined && !cacheOnly) {
     fs.appendFileSync(
-      argv.path + argv.id,
+      `${argv.path}/${argv.id}`,
       JSON.stringify({
         s: string,
         t: time,

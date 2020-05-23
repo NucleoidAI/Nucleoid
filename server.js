@@ -1,52 +1,65 @@
-const argv = require("yargs").argv;
 const express = require("express");
 var bodyParser = require("body-parser");
-var jwt = require("jsonwebtoken");
-var fs = require("fs");
+const fs = require("fs");
 
 const app = express();
 app.use(bodyParser.text({ type: "*/*" }));
 
+const config = JSON.parse(
+  fs.readFileSync("/etc/nucleoid/configuration.json", "utf8")
+);
+
 const fork = require("child_process").fork;
 var processes = [];
 
-let pid = fork("./process.js", ["--id=global", "--path=/var/lib/nucleoid/"]);
-let proc = { pid, id: "global", requests: [] };
+let pid = fork("./process.js", ["--id=main", "--path=/var/lib/nucleoid/"]);
+let proc = { pid, id: "main", requests: [] };
 pid.on("message", m => receive(proc, m));
-processes["global"] = proc;
+processes["main"] = proc;
 
 app.get("/", (req, res) => {
   res.sendFile(`${__dirname}/terminal.html`);
 });
 
 app.post("/", (req, res) => {
-  let authorization = req.get("Authorization");
-  let processHeader = req.get("Process");
+  let processId = req.get("Process");
 
-  if (authorization !== undefined || processHeader !== undefined) {
-    req.type = "REQUEST";
+  if (!processId) {
+    processId = "main";
+  }
 
-    let key;
+  let path = `/var/lib/nucleoid/${processId}`;
 
-    if (processHeader) {
-      key = processHeader;
-    } else {
-      let parts = authorization.split(" ");
-      let payload = jwt.decode(parts[1]);
+  if (fs.existsSync(path) && fs.lstatSync(path).isDirectory()) {
+    req.type = "ASYNC";
 
-      key = payload.username;
-    }
+    fs.readdirSync(path).forEach(file => {
+      let proc = processes[`${processId}/${file}`];
+      proc.requests.push(req);
 
-    let proc = processes[key];
+      if (proc.requests.length === 1) {
+        proc.pid.send(req.body);
+      }
+    });
+
+    fs.appendFileSync(
+      `/var/lib/nucleoid/init/${processId}`,
+      JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
+    );
+    res.status(202).end();
+  } else {
+    req.type = "SYNC";
+
+    let proc = processes[processId];
 
     if (proc === undefined) {
       let pid = fork("./process.js", [
-        `--id=${key}`,
+        `--id=${processId}`,
         "--path=/var/lib/nucleoid/"
       ]);
 
-      proc = { pid, id: key, requests: [req] };
-      processes[key] = proc;
+      proc = { pid, id: processId, requests: [req] };
+      processes[processId] = proc;
 
       proc.pid.on("message", m => receive(proc, m));
 
@@ -58,32 +71,15 @@ app.post("/", (req, res) => {
         proc.pid.send(req.body);
       }
     }
-  } else {
-    for (let p in processes) {
-      if (p === "global") continue;
-
-      let proc = processes[p];
-      proc.requests.push(req);
-
-      if (proc.requests.length === 1) {
-        proc.pid.send(req.body);
-      }
-    }
-
-    fs.appendFileSync(
-      "/var/lib/nucleoid/process",
-      JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
-    );
-    res.status(202).end();
   }
 });
 
-app.listen(argv.port ? argv.port : 80);
+app.listen(config.port ? config.port : 80);
 
 function receive(proc, message) {
   let request = proc.requests.shift();
 
-  if (request.type === "REQUEST") {
+  if (request.type === "SYNC") {
     request.res.type("application/json");
     let details = JSON.parse(message);
 
