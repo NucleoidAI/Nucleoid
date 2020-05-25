@@ -9,6 +9,10 @@ const config = JSON.parse(
   fs.readFileSync("/etc/nucleoid/configuration.json", "utf8")
 );
 
+if (config.process) {
+  var fn = require(`/opt/nucleoid/${config.process}`);
+}
+
 const fork = require("child_process").fork;
 var processes = [];
 
@@ -22,7 +26,11 @@ app.post("/", (req, res) => {
   let processId = req.get("Process");
 
   if (!processId) {
-    processId = "main";
+    if (config.process) {
+      processId = fn(req, res);
+    } else {
+      processId = "main";
+    }
   }
 
   let path = `/var/lib/nucleoid/${processId}`;
