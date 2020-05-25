@@ -12,10 +12,7 @@ const config = JSON.parse(
 const fork = require("child_process").fork;
 var processes = [];
 
-let pid = fork("./process.js", ["--id=main", "--path=/var/lib/nucleoid/"]);
-let proc = { pid, id: "main", requests: [] };
-pid.on("message", m => receive(proc, m));
-processes["main"] = proc;
+start("main");
 
 app.get("/", (req, res) => {
   res.sendFile(`${__dirname}/terminal.html`);
@@ -34,47 +31,44 @@ app.post("/", (req, res) => {
     req.type = "ASYNC";
 
     fs.readdirSync(path).forEach(file => {
-      let proc = processes[`${processId}/${file}`];
-      proc.requests.push(req);
-
-      if (proc.requests.length === 1) {
-        proc.pid.send(req.body);
-      }
+      send(`${processId}/${file}`, req);
     });
 
     fs.appendFileSync(
       `/var/lib/nucleoid/init/${processId}`,
       JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
     );
+
     res.status(202).end();
   } else {
     req.type = "SYNC";
-
-    let proc = processes[processId];
-
-    if (proc === undefined) {
-      let pid = fork("./process.js", [
-        `--id=${processId}`,
-        "--path=/var/lib/nucleoid/"
-      ]);
-
-      proc = { pid, id: processId, requests: [req] };
-      processes[processId] = proc;
-
-      proc.pid.on("message", m => receive(proc, m));
-
-      proc.pid.send(req.body);
-    } else {
-      proc.requests.push(req);
-
-      if (proc.requests.length === 1) {
-        proc.pid.send(req.body);
-      }
-    }
+    send(processId, req);
   }
 });
 
 app.listen(config.port ? config.port : 80);
+
+function start(id) {
+  let pid = fork("./process.js", [`--id=${id}`, "--path=/var/lib/nucleoid/"]);
+  let proc = { pid, id, requests: [] };
+  pid.on("message", m => receive(proc, m));
+  processes[id] = proc;
+  return proc;
+}
+
+function send(id, request) {
+  let proc = processes[id];
+
+  if (!proc) {
+    proc = start(id);
+  }
+
+  proc.requests.push(request);
+
+  if (proc.requests.length === 1) {
+    proc.pid.send(request.body);
+  }
+}
 
 function receive(proc, message) {
   let request = proc.requests.shift();
@@ -96,18 +90,12 @@ function receive(proc, message) {
     if (details.m) {
       let messages = details.m;
       messages.forEach(m => {
-        let p = processes[m.process];
-        p.requests.push({
+        send(m.process, {
           body: `let m={"pid":"${proc.id}","payload":${
             m.payload
           }};new Message(m)`,
           type: "MESSAGE"
         });
-
-        if (p.requests.length > 0) {
-          let r = p.requests[0];
-          p.pid.send(r.body);
-        }
       });
     }
   }
