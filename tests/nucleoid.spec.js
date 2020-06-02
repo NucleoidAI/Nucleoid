@@ -275,6 +275,17 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("supports value function", function() {
+    nucleoid.run(
+      "function generate ( ) { return 65 + Math.round ( Math.random ( ) * 24 ) }"
+    );
+    nucleoid.run("generate.value = true");
+
+    let details = nucleoid.run("number1 = generate ( )", true);
+    nucleoid.run(details.string.replace("number1", "number2"));
+    assert.equal(nucleoid.run("number1 == number2"), true);
+  });
+
   it("supports function in expression", function() {
     nucleoid.run("list = [1, 2, 3]");
     assert.equal(

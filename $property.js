@@ -7,6 +7,7 @@ var OBJECT$CLASS = require("./object$class");
 var REFERENCE = require("./reference");
 var PROPERTY$REFERENCE = require("./property$reference");
 var Local = require("./local");
+var FUNCTION = require("./function");
 
 module.exports = function(object, name, value) {
   let statement = new $PROPERTY();
@@ -26,7 +27,7 @@ class $PROPERTY extends $ {
       throw ReferenceError(`${this.object} is not defined`);
     }
 
-    if (this.name === "value") {
+    if (this.name === "value" && !(graph[this.object] instanceof FUNCTION)) {
       throw TypeError("Cannot use 'value' as a name");
     }
 
