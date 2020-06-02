@@ -259,6 +259,22 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("date.getYear()"), 119);
   });
 
+  it("supports value function of standard built-in objects", function() {
+    let details = nucleoid.run("date1 = Date.now ( )", true);
+    nucleoid.run(details.string.replace("date1", "date2"));
+    assert.equal(nucleoid.run("date1 == date2"), true);
+
+    nucleoid.run("date3 = Date.parse ( '04 Dec 1995 00:12:00 GMT' )");
+    assert.equal(nucleoid.run("date3"), 818035920000);
+
+    assert.throws(
+      function() {
+        nucleoid.run("date4 = Date.wrong ( )");
+      },
+      error => validate(error, TypeError, "Date.wrong is not a function")
+    );
+  });
+
   it("supports function in expression", function() {
     nucleoid.run("list = [1, 2, 3]");
     assert.equal(

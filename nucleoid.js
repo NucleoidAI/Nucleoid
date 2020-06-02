@@ -4,13 +4,16 @@ const fs = require("fs");
 const argv = require("yargs").argv;
 var Message = require("./message");
 var transaction = require("./transaction");
+var Macro = require("./macro");
 
 module.exports.run = function(string, details, cacheOnly) {
   let before = Date.now();
   let error, json;
 
+  let s = Macro.apply(string);
+
   try {
-    var statements = Statement.compile(string);
+    var statements = Statement.compile(s);
     transaction.start();
     var result = Stack.process(statements);
     transaction.end();
@@ -41,7 +44,7 @@ module.exports.run = function(string, details, cacheOnly) {
     fs.appendFileSync(
       `${argv.path}/${argv.id}`,
       JSON.stringify({
-        s: string,
+        s,
         t: time,
         r: json,
         d: date,
@@ -52,7 +55,7 @@ module.exports.run = function(string, details, cacheOnly) {
   }
 
   if (details) {
-    return { result: json, statements, date, time, error, messages };
+    return { string: s, result: json, statements, date, time, error, messages };
   } else {
     if (error) {
       throw result;
