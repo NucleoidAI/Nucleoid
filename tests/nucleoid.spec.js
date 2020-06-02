@@ -657,6 +657,12 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("number"), 200);
   });
 
+  it("creates property assignment of function", function() {
+    nucleoid.run("function stamp ( ) { return Date.now ( ) }");
+    nucleoid.run("stamp.approved = true");
+    assert.equal(nucleoid.run("stamp.approved"), true);
+  });
+
   it("sends message to other Nucleoid instance", function() {
     nucleoid.run(
       "class Task { constructor ( ) { message ( '7c6bca38', 'CHECK' ) } }"

@@ -2,6 +2,11 @@ var state = require("./state");
 var Node = require("./node");
 
 module.exports = class FUNCTION extends Node {
+  constructor() {
+    super();
+    this.property = {};
+  }
+
   before() {
     this.key = this.name;
   }
