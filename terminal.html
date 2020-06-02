@@ -32,7 +32,14 @@
       $(function() {
         $("#entry").keypress(function(e) {
           if (e.which === 13) {
-            var entry = $("#entry").val();
+            var entry = $("#entry")
+              .val()
+              .trim();
+
+            if (!entry || entry == "" || entry == null || entry == undefined) {
+              display(entry);
+              return;
+            }
 
             use: if (entry.startsWith("use ")) {
               let parts = entry.split(/ +/);
@@ -58,19 +65,32 @@
                 string = `'${response}'`;
               }
 
-              $(`<div>>&nbsp;${entry}</div>`).appendTo("#entries");
-              $(`<div>${string}</div>`).appendTo("#entries");
-              $("#entry").val("");
+              display(entry, string);
             }).fail(function(response) {
-              let string = response.responseJSON;
+              if (response.readyState !== 4) {
+                display(entry, "Connection lost");
+                return;
+              }
 
-              $(`<div>>&nbsp;${entry}</div>`).appendTo("#entries");
-              $(`<div>${string}</div>`).appendTo("#entries");
-              $("#entry").val("");
+              if (response.status >= 500) {
+                display(entry, `Error: ${response.responseText}`);
+              } else {
+                display(entry, response.responseJSON);
+              }
             });
           }
         });
       });
+
+      function display(entry, string) {
+        $(`<div>>&nbsp;${entry}</div>`).appendTo("#entries");
+
+        if (string !== undefined) {
+          $(`<div>${string}</div>`).appendTo("#entries");
+        }
+
+        $("#entry").val("");
+      }
     </script>
   </head>
   <body>

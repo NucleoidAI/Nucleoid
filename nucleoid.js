@@ -22,7 +22,7 @@ module.exports.run = function(string, details, cacheOnly) {
 
   try {
     if (result instanceof Error) {
-      json = JSON.stringify(result.message);
+      json = JSON.stringify(`${result.constructor.name}: ${result.message}`);
     } else {
       json = JSON.stringify(result);
     }
