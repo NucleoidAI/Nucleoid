@@ -9,7 +9,7 @@ module.exports.apply = function(string) {
       let value = state.run(null, `state.${fnName}.value`);
 
       if (value === true) {
-        return state.run(null, `state.${fn}`);
+        return JSON.stringify(state.run(null, `state.${fn}`));
       } else {
         return fn;
       }
@@ -21,7 +21,7 @@ module.exports.apply = function(string) {
       let value = state.run(null, `${fnName}.value`);
 
       if (value === true) {
-        return state.run(null, fn);
+        return JSON.stringify(state.run(null, fn));
       } else {
         return fn;
       }

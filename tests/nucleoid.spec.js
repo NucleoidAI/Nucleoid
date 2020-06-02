@@ -277,13 +277,22 @@ describe("Nucleoid", function() {
 
   it("supports value function", function() {
     nucleoid.run(
-      "function generate ( ) { return 65 + Math.round ( Math.random ( ) * 24 ) }"
+      "function generateInt ( ) { return 65 + Math.round ( Math.random ( ) * 24 ) }"
     );
-    nucleoid.run("generate.value = true");
+    nucleoid.run("generateInt.value = true");
 
-    let details = nucleoid.run("number1 = generate ( )", true);
+    let details = nucleoid.run("number1 = generateInt ( )", true);
     nucleoid.run(details.string.replace("number1", "number2"));
     assert.equal(nucleoid.run("number1 == number2"), true);
+
+    nucleoid.run(
+      "function generateString ( ) { let number = 65 + Math.round ( Math.random ( ) * 24 ) ; return String.fromCharCode ( number ) ; }"
+    );
+    nucleoid.run("generateString.value = true");
+
+    details = nucleoid.run("string1 = generateString ( )", true);
+    nucleoid.run(details.string.replace("string1", "string2"));
+    assert.equal(nucleoid.run("string1 == string2"), true);
   });
 
   it("supports function in expression", function() {
