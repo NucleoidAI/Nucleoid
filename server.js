@@ -57,17 +57,26 @@ app.post("/", (req, res) => {
 app.listen(config.port ? config.port : 80);
 
 function start(id) {
-  let pid = fork("./process.js", [`--id=${id}`, "--path=/var/lib/nucleoid/"]);
-  let proc = { pid, id, requests: [] };
-  pid.on("message", m => receive(proc, m));
-  processes[id] = proc;
+  let proc = processes[id];
+
+  if (!proc) {
+    proc = { id, requests: [] };
+    processes[id] = proc;
+  }
+
+  proc.pid = fork("./process.js", [`--id=${id}`, "--path=/var/lib/nucleoid/"]);
+  proc.pid.on("message", m => receive(proc, m));
+  proc.pid.on("exit", () => {
+    delete proc.pid;
+  });
+
   return proc;
 }
 
 function send(id, request) {
   let proc = processes[id];
 
-  if (!proc) {
+  if (!proc || !proc.pid) {
     proc = start(id);
   }
 
@@ -99,9 +108,7 @@ function receive(proc, message) {
       let messages = details.m;
       messages.forEach(m => {
         send(m.process, {
-          body: `let m={"pid":"${proc.id}","payload":${
-            m.payload
-          }};new Message(m)`,
+          body: `let m={"pid":"${proc.id}","payload":${m.payload}};new Message(m)`,
           type: "MESSAGE"
         });
       });
