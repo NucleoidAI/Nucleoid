@@ -13,6 +13,10 @@ if (config.process) {
   var fn = require(`/opt/nucleoid/${config.process}`);
 }
 
+if (config.authorization) {
+  var authorization = require(`/opt/nucleoid/${config.authorization}`);
+}
+
 const fork = require("child_process").fork;
 var processes = [];
 
@@ -30,6 +34,19 @@ app.post("/", (req, res) => {
       processId = fn(req, res);
     } else {
       processId = "main";
+    }
+  }
+
+  if (config.authorization) {
+    try {
+      let valid = authorization(processId, req);
+
+      if (valid !== true) {
+        throw { status: 403, message: "Forbidden" };
+      }
+    } catch (e) {
+      res.status(e.status).send({ message: e.message });
+      return;
     }
   }
 
