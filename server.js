@@ -137,3 +137,8 @@ function receive(proc, message) {
     proc.pid.send(r.body);
   }
 }
+
+app.use(function(err, req, res) {
+  res.type("txt");
+  res.status(500).send(err.stack);
+});
