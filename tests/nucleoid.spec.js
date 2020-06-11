@@ -295,6 +295,23 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("string1 == string2"), true);
   });
 
+  it("supports multiple inline value functions", function() {
+    nucleoid.run(
+      "function generateInt ( ) { return Math.round ( Math.random ( ) * 100 ) }"
+    );
+    nucleoid.run("generateInt.value = true");
+
+    let details = nucleoid.run(
+      "number1 = generateInt ( ) ; number2 = generateInt ( )",
+      true
+    );
+    nucleoid.run(
+      details.string.replace("number1", "number3").replace("number2", "number4")
+    );
+    assert.equal(nucleoid.run("number1 == number3"), true);
+    assert.equal(nucleoid.run("number2 == number4"), true);
+  });
+
   it("supports function in expression", function() {
     nucleoid.run("list = [1, 2, 3]");
     assert.equal(
