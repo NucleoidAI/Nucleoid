@@ -30,7 +30,7 @@ module.exports = class DELETE {
     }
 
     let name = graph[this.key].name;
-    delete graph[this.key].object.property[name];
+    delete graph[this.key].object.properties[name];
     delete graph[this.key];
     graph[this.key] = empty;
   }

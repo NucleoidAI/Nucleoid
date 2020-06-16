@@ -4,7 +4,7 @@ var Identifier = require("./identifier");
 module.exports = class PROPERTY$REFERENCE extends PROPERTY {
   constructor() {
     super();
-    this.property = {};
+    this.properties = {};
   }
 
   before(scope) {

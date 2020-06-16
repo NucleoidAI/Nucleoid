@@ -7,8 +7,8 @@ var graph = require("./graph");
 var CLASS = class CLASS extends Node {
   constructor() {
     super();
-    this.instance = {};
-    this.declaration = {};
+    this.instances = {};
+    this.declarations = {};
   }
 
   before() {
@@ -23,7 +23,7 @@ var CLASS = class CLASS extends Node {
 
   beforeGraph() {
     if (graph[this.key] && graph[this.key] instanceof CLASS) {
-      this.declaration = graph[this.key].declaration;
+      this.declarations = graph[this.key].declarations;
     }
   }
 };

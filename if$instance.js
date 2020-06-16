@@ -15,7 +15,7 @@ module.exports = class IF$INSTANCE extends IF {
   }
 
   run(scope) {
-    scope.instance[this.class.name] = this.instance;
+    scope.instances[this.class.name] = this.instance;
     return super.run(scope);
   }
 };

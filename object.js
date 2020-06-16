@@ -8,7 +8,7 @@ var LET = require("./let");
 module.exports = class OBJECT extends Node {
   constructor() {
     super();
-    this.property = {};
+    this.properties = {};
   }
 
   before() {
@@ -24,7 +24,7 @@ module.exports = class OBJECT extends Node {
     let name = this.key;
 
     state.assign(scope, name, `new state.${this.class.name}()`);
-    scope.instance[this.class.name] = this;
+    scope.instances[this.class.name] = this;
     scope.object = this;
 
     let list = [];
@@ -50,8 +50,8 @@ module.exports = class OBJECT extends Node {
       list.push(instruction);
     }
 
-    for (let node in this.class.declaration) {
-      let declaration = this.class.declaration[node];
+    for (let node in this.class.declarations) {
+      let declaration = this.class.declarations[node];
       list.push(new Instruction(scope.root, declaration, true, true, true));
     }
 
@@ -69,7 +69,7 @@ module.exports = class OBJECT extends Node {
   }
 
   graph() {
-    if (this.object !== undefined) this.object.property[this.name] = this;
-    this.class.instance[this.key] = this;
+    if (this.object !== undefined) this.object.properties[this.name] = this;
+    this.class.instances[this.key] = this;
   }
 };

@@ -10,7 +10,7 @@ module.exports = class Scope {
     }
 
     this.local = {};
-    this.instance = {};
+    this.instances = {};
     this.graph = {};
   }
 };

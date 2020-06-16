@@ -4,7 +4,7 @@ var Node = require("./node");
 module.exports = class FUNCTION extends Node {
   constructor() {
     super();
-    this.property = {};
+    this.properties = {};
   }
 
   before() {

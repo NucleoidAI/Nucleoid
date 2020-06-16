@@ -15,7 +15,7 @@ module.exports = class PROPERTY extends Node {
   }
 
   graph(scope) {
-    this.object.property[this.name] = this;
+    this.object.properties[this.name] = this;
     return this.value.graph(scope);
   }
 };

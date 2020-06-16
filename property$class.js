@@ -17,7 +17,7 @@ class PROPERTY$CLASS extends Node {
 
     if (instance) instances = [instance];
     else
-      instances = Object.keys(Identifier.root(this).instance).map(
+      instances = Object.keys(Identifier.root(this).instances).map(
         i => graph[i]
       );
 
@@ -33,7 +33,7 @@ class PROPERTY$CLASS extends Node {
   }
 
   graph() {
-    Identifier.root(this).declaration[this.key] = this;
+    Identifier.root(this).declarations[this.key] = this;
   }
 }
 

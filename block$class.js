@@ -17,7 +17,7 @@ class BLOCK$CLASS extends Node {
     let instance = Instance.retrieve(scope, this.class.name);
 
     if (instance) instances = [instance];
-    else instances = Object.keys(this.class.instance).map(i => graph[i]);
+    else instances = Object.keys(this.class.instances).map(i => graph[i]);
 
     for (let instance of instances) {
       let statement = new BLOCK$INSTANCE();
@@ -33,7 +33,7 @@ class BLOCK$CLASS extends Node {
   }
 
   graph() {
-    this.class.declaration[this.id] = this;
+    this.class.declarations[this.id] = this;
   }
 }
 
