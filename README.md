@@ -1,14 +1,21 @@
 ## Install
 
 ```
-git clone https://gitlab.com/nucleoid/nucleoid.git
-cd nucleoid && npm install
+sudo apt-add-repository ppa:nucleoid/nucleoid
+sudo apt install nucleoid
+```
+
+## Docker
+
+```
+docker run -d -p 80:80 nucleoid/nucleoid
 ```
 
 ## Hello World
 
+Open the terminal on your browser
+
 ```
-./nucleoid
 > a = 1
 > b = a * 2
 > b
@@ -16,7 +23,6 @@ cd nucleoid && npm install
 > a = 2
 > b
 4
-> exit
 ```
 
 ## What is Nucleoid?
