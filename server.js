@@ -20,6 +20,14 @@ var processes = [];
 
 start("main");
 
+if (config.ide) {
+  require(config.ide)(app);
+} else {
+  app.get("/", (req, res) => {
+    res.sendFile(`${__dirname}/terminal.html`);
+  });
+}
+
 app.get("/", (req, res) => {
   res.sendFile(`${__dirname}/terminal.html`);
 });
