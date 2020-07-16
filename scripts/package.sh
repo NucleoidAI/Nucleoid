@@ -12,4 +12,4 @@ mkdir -p nucleoid/source/var/lib/nucleoid/init/
 mkdir -p nucleoid/source/opt/nucleoid/
 
 mkdir -p nucleoid/source/etc/nucleoid/
-echo "{}" > nucleoid/source/etc/nucleoid/configuration.json
+echo "{}" > nucleoid/source/etc/nucleoid/config.json

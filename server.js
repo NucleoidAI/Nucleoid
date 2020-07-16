@@ -5,9 +5,7 @@ const fs = require("fs");
 const app = express();
 app.use(bodyParser.text({ type: "*/*" }));
 
-const config = JSON.parse(
-  fs.readFileSync("/etc/nucleoid/configuration.json", "utf8")
-);
+const config = JSON.parse(fs.readFileSync("/etc/nucleoid/config.json", "utf8"));
 
 if (config.process) {
   var fn = require(`/opt/nucleoid/${config.process}`);
