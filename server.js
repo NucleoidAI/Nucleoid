@@ -144,7 +144,7 @@ function receive(proc, message) {
   }
 }
 
-app.use(function(err, req, res) {
+app.use(function(err, res) {
   res.type("txt");
   res.status(500).send(err.stack);
 });
