@@ -121,6 +121,10 @@ function receive(proc, message) {
       request.res.status(400);
     }
 
+    if (details.t !== undefined) {
+      request.res.set("Server-Timing", `nucleoid;dur=${details.t}`);
+    }
+
     if (details.r !== undefined) {
       request.res.send(details.r);
     } else {

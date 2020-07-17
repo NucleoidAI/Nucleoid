@@ -39,6 +39,11 @@ init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
 process.on("message", message => {
   var details = nucleoid.run(message, true);
   process.send(
-    JSON.stringify({ r: details.result, m: details.messages, e: details.error })
+    JSON.stringify({
+      r: details.result,
+      t: details.time,
+      m: details.messages,
+      e: details.error
+    })
   );
 });
