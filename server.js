@@ -28,10 +28,6 @@ if (config.ide) {
   });
 }
 
-app.get("/", (req, res) => {
-  res.sendFile(`${__dirname}/terminal.html`);
-});
-
 app.post("/", (req, res) => {
   let processId = req.get("Process");
 
