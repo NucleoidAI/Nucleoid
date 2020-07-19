@@ -6,7 +6,11 @@ var Message = require("./message");
 var transaction = require("./transaction");
 var Macro = require("./macro");
 
-module.exports.run = function(string, details, cacheOnly) {
+function start() {
+  run("Classes = []");
+}
+
+function run(string, details, cacheOnly) {
   let before = Date.now();
   let error, json;
 
@@ -63,4 +67,7 @@ module.exports.run = function(string, details, cacheOnly) {
 
     return result;
   }
-};
+}
+
+module.exports.start = start;
+module.exports.run = run;

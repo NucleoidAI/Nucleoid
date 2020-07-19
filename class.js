@@ -16,9 +16,17 @@ var CLASS = class CLASS extends Node {
   }
 
   run(scope) {
-    state.assign(scope, this.name, "class {}");
-    let context = $EXP("[]", 0);
-    return $VAR(this.name + "s", context.statement);
+    state.assign(scope, this.name, `class ${this.name}{}`);
+
+    let list = [];
+
+    let classContext = $EXP(`Classes.push(${this.name})`, 0);
+    list.push(classContext.statement);
+
+    let instanceContext = $EXP("[]", 0);
+    list.push($VAR(this.name + "s", instanceContext.statement));
+
+    return list;
   }
 
   beforeGraph() {

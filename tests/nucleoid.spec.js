@@ -13,6 +13,8 @@ describe("Nucleoid", function() {
   beforeEach(function() {
     for (let property in state) delete state[property];
     for (let property in graph) delete graph[property];
+
+    nucleoid.start();
   });
 
   it("runs statements in the state", function() {
@@ -130,6 +132,14 @@ describe("Nucleoid", function() {
     let device4 = nucleoid.run("new Device ( )");
     assert.equal(nucleoid.run(`${device4.id}.name`), undefined);
     assert.equal(nucleoid.run(`${device4.id}.active`), false);
+  });
+
+  it("adds created class in class list", function() {
+    nucleoid.run("class Student { }");
+    assert.equal(nucleoid.run("Classes.length"), 1);
+
+    nucleoid.run("class User { }");
+    assert.equal(nucleoid.run("Classes.length"), 2);
   });
 
   it("updates class definition", function() {
