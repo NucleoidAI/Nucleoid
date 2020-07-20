@@ -20,7 +20,13 @@ function graph(id) {
       object[prop] = {};
 
       for (let nprop in n) {
-        if (typeof n[nprop] !== "object") {
+        if (typeof n[nprop] === "object") {
+          object[prop][nprop] = {
+            id: n[nprop].id,
+            key: n[nprop].key,
+            type: n[nprop].constructor.name
+          };
+        } else {
           object[prop][nprop] = n[nprop];
         }
       }
