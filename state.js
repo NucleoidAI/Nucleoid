@@ -1,4 +1,7 @@
-var state = {}; // eslint-disable-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+var state = {
+  Classes: []
+};
 var _transaction = require("./transaction");
 var message = require("./message").message; // eslint-disable-line no-unused-vars
 var _graph = require("./graph");

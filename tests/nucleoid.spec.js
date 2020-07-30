@@ -14,7 +14,8 @@ describe("Nucleoid", function() {
     for (let property in state) delete state[property];
     for (let property in graph) delete graph[property];
 
-    nucleoid.start();
+    state["Classes"] = [];
+    graph["Classes"] = { name: "Classes" };
   });
 
   it("runs statements in the state", function() {
@@ -135,6 +136,8 @@ describe("Nucleoid", function() {
   });
 
   it("adds created class in class list", function() {
+    assert.equal(nucleoid.run("Classes.length"), 0);
+
     nucleoid.run("class Student { }");
     assert.equal(nucleoid.run("Classes.length"), 1);
 

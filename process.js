@@ -14,8 +14,6 @@ init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
       }
     });
 } else {
-  nucleoid.start();
-
   let parts = argv.id.toString().split("/");
 
   if (parts.length === 1) {
