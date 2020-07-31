@@ -39,7 +39,7 @@ app.get("/processes", (req, res) => {
 
   fs.readdirSync(`/var/lib/nucleoid/${group}`).forEach(file => {
     if (fs.lstatSync(`/var/lib/nucleoid/${group}/${file}`).isDirectory()) {
-      tree.push({ id: file, type: "group" });
+      if (file !== "init") tree.push({ id: file, type: "group" });
     } else {
       tree.push({ id: file, type: "process" });
     }
