@@ -547,6 +547,25 @@ describe("Nucleoid", function() {
     );
   });
 
+  it("declares let statement with undefined", function() {
+    nucleoid.run("class Device { constructor ( code ) { this.code = code } }");
+    nucleoid.run("device1 = new Device ( 'A0' )");
+    nucleoid.run("device2 = new Device ( 'B1' )");
+
+    assert.equal(
+      nucleoid.run("device1"),
+      nucleoid.run(
+        "let device = Devices.find ( d => d.code == 'A0' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
+      )
+    );
+
+    assert.throws(function() {
+      nucleoid.run(
+        "let device = Devices.find ( d => d.code == 'A1' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
+      );
+    }, "INVALID_DEVICE");
+  });
+
   it("creates standard built-in object of let statement as property", function() {
     nucleoid.run("class Shipment { }");
     nucleoid.run(

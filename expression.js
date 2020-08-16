@@ -48,11 +48,7 @@ class EXPRESSION {
 
           try {
             if (Local.check(scope, parts[0])) {
-              let reference = Local.retrieve(scope, token);
-              let value = state.run(scope, reference);
-
-              if (value === undefined) throw 0;
-              return reference;
+              return Local.retrieve(scope, token);
             } else if (graph[parts[0]]) {
               let reference = "state." + Identifier.reference(token);
               let value = state.run(scope, reference);
