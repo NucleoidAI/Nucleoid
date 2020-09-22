@@ -1013,6 +1013,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("device1.deleted"), false);
   });
 
+  it("creates instance inside block without variable name defined", function() {
+    nucleoid.run("class Summary { constructor ( rate ) { this.rate = rate } }");
+    nucleoid.run("Summary.score = Summary.rate * 100");
+    nucleoid.run("{ let rate = 4 ; new Summary ( rate ) }");
+
+    assert.equal(nucleoid.run("Summarys[0].rate"), 4);
+    assert.equal(nucleoid.run("Summarys[0].score"), 400);
+  });
+
   it("creates variable inside block", function() {
     nucleoid.run("a = 5 ; b = 10");
     nucleoid.run("if ( a > 9 ) { let c = a + b ; d = c * 10 }");
