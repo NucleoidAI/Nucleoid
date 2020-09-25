@@ -2006,4 +2006,20 @@ describe("Nucleoid", function() {
       error => validate(error, ReferenceError, "Phone.line is not defined")
     );
   });
+
+  it("creates for of statement", function() {
+    nucleoid.run(
+      "class Question { constructor ( rate ) { this.rate = rate } }"
+    );
+    nucleoid.run("question1 = new Question ( 4 )");
+    nucleoid.run("question2 = new Question ( 5 )");
+    nucleoid.run(
+      "class Summary { constructor ( question ) { this.question = question } }"
+    );
+    nucleoid.run("Summary.rate = Summary.question.rate.value");
+
+    nucleoid.run("for ( question of Questions ) { new Summary ( question ) }");
+    assert.equal(nucleoid.run("Summarys[0]").rate, 4);
+    assert.equal(nucleoid.run("Summarys[1]").rate, 5);
+  });
 });

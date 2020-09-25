@@ -85,7 +85,6 @@ module.exports.process = function(statements) {
                 ? statement
                 : new Instruction(scope, statement, true, true, true);
             })
-            .filter(instruction => instruction.statement !== statement)
             .concat(instructions);
         }
       }
