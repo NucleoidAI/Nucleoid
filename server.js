@@ -1,6 +1,7 @@
 const express = require("express");
 var bodyParser = require("body-parser");
 const fs = require("fs");
+var glob = require("glob");
 
 const app = express();
 app.use(bodyParser.text({ type: "*/*" }));
@@ -72,9 +73,12 @@ app.post("/", (req, res) => {
     }
   }
 
-  let path = `/var/lib/nucleoid/${processId}`;
+  let path = `/var/lib/nucleoid/`;
 
-  if (fs.existsSync(path) && fs.lstatSync(path).isDirectory()) {
+  if (
+    fs.existsSync(`${path}${processId}`) &&
+    fs.lstatSync(`${path}${processId}`).isDirectory()
+  ) {
     req.type = "ASYNC";
 
     fs.readdirSync(path).forEach(file => {
@@ -88,8 +92,19 @@ app.post("/", (req, res) => {
 
     res.status(202).end();
   } else {
-    req.type = "SYNC";
-    send(processId, req);
+    let files = glob.sync(processId, { cwd: path });
+
+    if (files.length <= 1) {
+      req.type = "SYNC";
+      send(processId, req);
+    } else {
+      req.type = "ASYNC";
+      files.forEach(processId => {
+        send(processId, req);
+      });
+
+      res.status(202).end();
+    }
   }
 });
 
