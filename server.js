@@ -53,6 +53,11 @@ app.post("/", (req, res) => {
   let processId = req.get("Process");
   let processIds = req.get("Processes");
 
+  if (processId && processIds) {
+    res.status(422).end();
+    return;
+  }
+
   if (!processId && !processIds) {
     if (config.process) {
       processId = fn(req, res);
