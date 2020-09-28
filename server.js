@@ -51,8 +51,9 @@ app.get("/processes", (req, res) => {
 
 app.post("/", (req, res) => {
   let processId = req.get("Process");
+  let processIds = req.get("Processes");
 
-  if (!processId) {
+  if (!processId && !processIds) {
     if (config.process) {
       processId = fn(req, res);
     } else {
@@ -62,7 +63,8 @@ app.post("/", (req, res) => {
 
   if (config.authorization) {
     try {
-      let valid = authorization(processId, req);
+      let expression = processId ? processId : processIds;
+      let valid = authorization(expression, req);
 
       if (valid !== true) {
         throw { status: 403, message: "Forbidden" };
@@ -75,36 +77,36 @@ app.post("/", (req, res) => {
 
   let path = `/var/lib/nucleoid/`;
 
-  if (
-    fs.existsSync(`${path}${processId}`) &&
-    fs.lstatSync(`${path}${processId}`).isDirectory()
-  ) {
-    req.type = "ASYNC";
-
-    fs.readdirSync(path).forEach(file => {
-      send(`${processId}/${file}`, req);
-    });
-
-    fs.appendFileSync(
-      `/var/lib/nucleoid/init/${processId}`,
-      JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
-    );
-
-    res.status(202).end();
-  } else {
-    let files = glob.sync(processId, { cwd: path });
-
-    if (files.length <= 1) {
-      req.type = "SYNC";
-      send(processId, req);
-    } else {
+  if (processId) {
+    if (
+      fs.existsSync(`${path}${processId}`) &&
+      fs.lstatSync(`${path}${processId}`).isDirectory()
+    ) {
       req.type = "ASYNC";
-      files.forEach(processId => {
-        send(processId, req);
+
+      fs.readdirSync(path).forEach(file => {
+        send(`${processId}/${file}`, req);
       });
 
+      fs.appendFileSync(
+        `/var/lib/nucleoid/init/${processId}`,
+        JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
+      );
+
       res.status(202).end();
+    } else {
+      req.type = "SYNC";
+      send(processId, req);
     }
+  } else {
+    let files = glob.sync(processIds, { cwd: path });
+
+    req.type = "ASYNC";
+    files.forEach(file => {
+      send(file, req);
+    });
+
+    res.status(202).send({ count: files.length });
   }
 });
 
