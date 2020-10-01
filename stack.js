@@ -22,6 +22,7 @@ module.exports.process = function(statements) {
   let result;
   let dependencies = [];
   let dependents = [];
+  let additionals = [];
 
   while (instructions.length !== 0) {
     let instruction = instructions.shift();
@@ -79,13 +80,14 @@ module.exports.process = function(statements) {
             scope = new Scope(scope);
           }
 
-          instructions = list
-            .map(statement => {
-              return statement instanceof Instruction
-                ? statement
-                : new Instruction(scope, statement, true, true, true);
-            })
-            .concat(instructions);
+          list = list.map(statement => {
+            return statement instanceof Instruction
+              ? statement
+              : new Instruction(scope, statement, true, true, true);
+          });
+
+          instructions = list.filter(i => !i.root).concat(instructions);
+          additionals = list.filter(i => i.root).concat(additionals);
         }
       }
 
@@ -147,8 +149,11 @@ module.exports.process = function(statements) {
           });
           dependencies = [];
 
-          instructions = dependents.concat(instructions);
+          instructions = instructions.concat(dependents);
+          instructions = instructions.concat(additionals);
+
           dependents = [];
+          additionals = [];
         }
       }
 

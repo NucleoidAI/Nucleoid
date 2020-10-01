@@ -4,6 +4,7 @@ var Identifier = require("./identifier");
 var $EXP = require("./$expression");
 var Instruction = require("./instruction");
 var LET = require("./let");
+var Scope = require("./scope");
 
 module.exports = class OBJECT extends Node {
   constructor() {
@@ -24,7 +25,6 @@ module.exports = class OBJECT extends Node {
     let name = this.key;
 
     state.assign(scope, name, `new state.${this.class.name}()`);
-    scope.instances[this.class.name] = this;
     scope.object = this;
 
     let list = [];
@@ -52,7 +52,9 @@ module.exports = class OBJECT extends Node {
 
     for (let node in this.class.declarations) {
       let declaration = this.class.declarations[node];
-      list.push(new Instruction(scope.root, declaration, true, true, true));
+      let scope = new Scope();
+      scope.instances[this.class.name] = this;
+      list.push(new Instruction(scope, declaration, true, true, true, true));
     }
 
     if (this.object === undefined) {
