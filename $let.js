@@ -54,10 +54,14 @@ class $LET extends $ {
       statement.value = value;
       return statement;
     } else if (value instanceof OBJECT) {
+      let object = new OBJECT();
+      object.class = value.class;
+
       let statement = new LET$OBJECT();
       statement.name = this.name;
-      statement.class = value.class;
-      return statement;
+      statement.object = object;
+
+      return [object, statement];
     }
   }
 }

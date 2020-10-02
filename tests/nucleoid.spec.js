@@ -909,11 +909,25 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("condition"), false);
   });
 
-  it("runs new instance of let statement of property as value", function() {
+  it("creates and assigns instance to let variable inside block", function() {
+    nucleoid.run("class Device { }");
+    nucleoid.run("Device.renew = Device.created + 604800000");
+
+    nucleoid.run(
+      "{ let device = new Device ( ) ; device.created = Date.now ( ) }"
+    );
+
+    let id = nucleoid.run("Devices[0].id");
+    assert.equal(nucleoid.run(`${id}.renew - ${id}.created`), 604800000);
+  });
+
+  it("runs new instance of let statement of property", function() {
     nucleoid.run("class Room { }");
     nucleoid.run("class Meeting { }");
     nucleoid.run("room1 = new Room ( )");
-    nucleoid.run("Meeting.id = Date.now ( ) + '@' + Meeting.date");
+    nucleoid.run(
+      "Meeting.time = Date.now ( ) + ' @ ' + Meeting.date.toDateString()"
+    );
     nucleoid.run(
       "{ let meeting = new Meeting ( ) ; meeting.date = new Date ( '2020-1-1' ) ; room1.meeting = meeting }"
     );
@@ -921,30 +935,29 @@ describe("Nucleoid", function() {
       nucleoid.run("room1.meeting.date.toDateString()"),
       "Wed Jan 01 2020"
     );
-    assert.equal(nucleoid.run("room1.meeting.id"), undefined);
+    assert.equal(
+      nucleoid.run("room1.meeting.time").substr(-17),
+      "@ Wed Jan 01 2020"
+    );
   });
 
-  it("runs multiple instance of let statement of property as value", function() {
+  it("runs multiple instance of let statement of property", function() {
     nucleoid.run("class Timesheet { }");
     nucleoid.run("class Task { }");
     nucleoid.run("class Project { }");
-    nucleoid.run("Project.code = 'N-' + Project.id");
+    nucleoid.run("Project.code = 'N-' + Project.number");
     nucleoid.run("timesheet1 = new Timesheet ( )");
     nucleoid.run(
-      "{ let task = new Task ( ) ; task.project = new Project ( ) ; task.project.id = 3668347 ; timesheet1.task = task }"
+      "{ let task = new Task ( ) ; task.project = new Project ( ) ; task.project.number = 3668347 ; timesheet1.task = task }"
     );
-    assert.equal(nucleoid.run("timesheet1.task.project.id"), 3668347);
-    assert.equal(nucleoid.run("timesheet1.task.project.code"), undefined);
+    assert.equal(nucleoid.run("timesheet1.task.project.number"), 3668347);
+    assert.equal(nucleoid.run("timesheet1.task.project.code"), "N-3668347");
   });
 
-  it("runs new instance of let statement of class as value before initialization", function() {
+  it("creates new object of let statement of class as value before initialization", function() {
     nucleoid.run("class Member { }");
-    nucleoid.run("class Registration { }");
     nucleoid.run(
-      "Registration.age = Registration.date - new Date ( '2019-1-3' )"
-    );
-    nucleoid.run(
-      "{ let registration = new Registration ( ) ; registration.date = new Date ( '2019-1-2' ) ; Member.registration = registration }"
+      "{ let registration = new Object ( ) ; registration.date = new Date ( '2019-1-2' ) ; Member.registration = registration }"
     );
 
     nucleoid.run("member1 = new Member ( )");
@@ -955,13 +968,11 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("member1.registration.age"), undefined);
   });
 
-  it("runs new instance of let statement of class as value after initialization", function() {
+  it("creates new object of let statement of class as value after initialization", function() {
     nucleoid.run("class Distance { }");
-    nucleoid.run("class Location { }");
-    nucleoid.run("Location.print = '@' + Location.coordinates");
     nucleoid.run("distance1 = new Distance ( )");
     nucleoid.run(
-      "{ let location = new Location ( ) ; location.coordinates = '40.6976701,-74.2598779' ; Distance.startingPoint = location }"
+      "{ let location = new Object ( ) ; location.coordinates = '40.6976701,-74.2598779' ; Distance.startingPoint = location }"
     );
     assert.equal(
       nucleoid.run("distance1.startingPoint.coordinates"),
@@ -970,13 +981,13 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("distance1.startingPoint.print"), undefined);
   });
 
-  it("runs multiple instance of let statement of class as value before initialization", function() {
+  it("creates multiple object of let statement of class as value before initialization", function() {
     nucleoid.run("class Account { }");
     nucleoid.run("class Balance { }");
     nucleoid.run("class Currency { }");
     nucleoid.run("Currency.description = 'Code:' + Currency.code");
     nucleoid.run(
-      "{ let balance = new Balance ( ) ; balance.currency = new Currency ( ) ; balance.currency.code = 'USD' ; Account.balance = balance }"
+      "{ let balance = new Object ( ) ; balance.currency = new Object ( ) ; balance.currency.code = 'USD' ; Account.balance = balance }"
     );
     nucleoid.run("account1 = new Account ( )");
     assert.equal(nucleoid.run("account1.balance.currency.code "), "USD");
@@ -986,14 +997,11 @@ describe("Nucleoid", function() {
     );
   });
 
-  it("runs multiple instance of let statement of class as value after initialization", function() {
+  it("creates multiple object of let statement of class as value after initialization", function() {
     nucleoid.run("class Warehouse { }");
-    nucleoid.run("class Inventory { }");
-    nucleoid.run("class Item { }");
     nucleoid.run("warehouse1 = new Warehouse ( )");
-    nucleoid.run("Item.description = 'I' + Item.SKU");
     nucleoid.run(
-      "{ let inventory = new Inventory ( ) ; inventory.item = new Item ( ) ; inventory.item.sku = '699546085767' ; Warehouse.inventory = inventory }"
+      "{ let inventory = new Object ( ) ; inventory.item = new Object ( ) ; inventory.item.sku = '699546085767' ; Warehouse.inventory = inventory }"
     );
     assert.equal(nucleoid.run("warehouse1.inventory.item.sku"), "699546085767");
     assert.equal(
