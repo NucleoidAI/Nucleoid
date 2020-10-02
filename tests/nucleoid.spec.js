@@ -921,6 +921,15 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run(`${id}.renew - ${id}.created`), 604800000);
   });
 
+  it("creates and assigns instance with constructor to let variable inside block", function() {
+    nucleoid.run(
+      "class Member { constructor ( first , last ) { this.first = first ; this.last = last } } "
+    );
+    nucleoid.run("Member.display = Member.last + ', ' + Member.first");
+    nucleoid.run("{ let member = new Member ( 'First', 'Last' ) }");
+    assert.equal(nucleoid.run("Members[0].display"), "Last, First");
+  });
+
   it("runs new instance of let statement of property", function() {
     nucleoid.run("class Room { }");
     nucleoid.run("class Meeting { }");

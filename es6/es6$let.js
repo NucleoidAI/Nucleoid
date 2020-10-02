@@ -22,7 +22,8 @@ module.exports = function ES6$LET(string, offset) {
 
     let instance = $INSTANCE(context.token);
     context = Token.next(string, context.offset);
-    context = Token.next(string, context.offset);
+    context = Token.nextArgs(string, context.offset);
+    instance.args = context.args;
     return { statement: $LET(name, instance), offset: context.offset };
   }
 

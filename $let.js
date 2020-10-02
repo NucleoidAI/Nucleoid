@@ -56,6 +56,7 @@ class $LET extends $ {
     } else if (value instanceof OBJECT) {
       let object = new OBJECT();
       object.class = value.class;
+      object.args = value.args;
 
       let statement = new LET$OBJECT();
       statement.name = this.name;
