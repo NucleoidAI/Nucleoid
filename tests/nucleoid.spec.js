@@ -2039,4 +2039,24 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("Summarys[0]").rate, 4);
     assert.equal(nucleoid.run("Summarys[1]").rate, 5);
   });
+
+  it("creates block of for statement without dependencies", function() {
+    nucleoid.run("class Item { }");
+    nucleoid.run("item1 = new Item ( )");
+    nucleoid.run("item2 = new Item ( )");
+    nucleoid.run("VALUE = 10");
+    nucleoid.run(
+      "for ( item of Items ) { let i = 10 * VALUE ; item.score = i }"
+    );
+
+    nucleoid.run("VALUE = 20");
+    assert.equal(nucleoid.run("item1.score"), 100);
+    assert.equal(nucleoid.run("item2.score"), 100);
+
+    nucleoid.run(
+      "for ( item of Items ) { let i = 10 * VALUE ; item.score = i }"
+    );
+    assert.equal(nucleoid.run("item1.score"), 200);
+    assert.equal(nucleoid.run("item2.score"), 200);
+  });
 });

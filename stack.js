@@ -143,15 +143,17 @@ module.exports.process = function(statements) {
 
         // Root scope is a scope, which does not have any prior.
         if (!instruction.scope.prior) {
-          dependencies.forEach(source => {
-            let targetKey = statement.key ? statement.key : statement.id;
-            Node.direct(source, targetKey, statement);
-          });
-          dependencies = [];
+          if (!instruction.statement.skip) {
+            dependencies.forEach(source => {
+              let targetKey = statement.key ? statement.key : statement.id;
+              Node.direct(source, targetKey, statement);
+            });
+          }
 
           instructions = instructions.concat(dependents);
           instructions = instructions.concat(additionals);
 
+          dependencies = [];
           dependents = [];
           additionals = [];
         }

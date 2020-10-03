@@ -17,7 +17,7 @@ module.exports = class FOR {
       let context = $EXP(object, 0);
 
       let statements = [$LET(this.variable, context.statement)];
-      let list = [$BLOCK(statements.concat(this.statements))];
+      let list = [$BLOCK(statements.concat(this.statements), true)];
       list.push(new Instruction(scope, this, false, true, false));
       return list;
     }
