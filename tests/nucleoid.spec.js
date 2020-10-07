@@ -2059,4 +2059,17 @@ describe("Nucleoid", function() {
     assert.equal(nucleoid.run("item1.score"), 200);
     assert.equal(nucleoid.run("item2.score"), 200);
   });
+
+  it("loops through only defined objects in for of statement", function() {
+    nucleoid.run("array = [ ]");
+    nucleoid.run("class Item { }");
+
+    nucleoid.run("item1 = new Object ( ) ;  array.push ( item1 )");
+    nucleoid.run("item2 = { id: 'item3' } ;   array.push ( item2 )");
+    nucleoid.run("item4 = new Item ( );   array.push ( item4 )");
+    nucleoid.run("count = 0;");
+
+    nucleoid.run("for ( item of array ) { count++ }");
+    assert.equal(nucleoid.run("count"), 1);
+  });
 });
