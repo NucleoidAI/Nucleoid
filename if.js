@@ -12,10 +12,16 @@ module.exports = class IF extends Node {
 
   run(scope) {
     let s = new Scope(scope);
-    let condition = this.condition.run(scope);
+    let condition;
 
-    if (condition === "undefined") {
-      return new BREAK(scope.block);
+    if (scope.block && scope.block.skip) {
+      condition = this.condition.run(scope, true);
+    } else {
+      condition = this.condition.run(scope);
+
+      if (condition === "undefined") {
+        return new BREAK(scope.block);
+      }
     }
 
     if (state.run(scope, condition)) {

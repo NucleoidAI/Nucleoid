@@ -35,7 +35,7 @@ class EXPRESSION {
       });
   }
 
-  run(scope) {
+  run(scope, skip) {
     try {
       if (this.tokens[0].string === "{") {
         return this.tokens.construct();
@@ -53,7 +53,7 @@ class EXPRESSION {
               let reference = "state." + Identifier.reference(token);
               let value = state.run(scope, reference);
 
-              if (value === undefined) throw 0;
+              if (value === undefined && !skip) throw 0;
               return reference;
             } else {
               return token;

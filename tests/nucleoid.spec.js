@@ -2072,4 +2072,25 @@ describe("Nucleoid", function() {
     nucleoid.run("for ( item of array ) { count++ }");
     assert.equal(nucleoid.run("count"), 1);
   });
+
+  it("supports if statement in for of statement", function() {
+    nucleoid.run("class Question { }");
+    nucleoid.run("question1 = new Question ( )");
+    nucleoid.run("question2 = new Question ( )");
+    nucleoid.run("question2.archived = true");
+    nucleoid.run("question3 = new Question ( )");
+    nucleoid.run(
+      "class Summary { constructor ( question ) { this.question = question } }"
+    );
+    nucleoid.run("Summary.type = 'DAILY'");
+    nucleoid.run(
+      "for ( question of Questions ) { if ( ! question.archived ) { new Summary ( question ) } }"
+    );
+
+    assert.equal(nucleoid.run("Summarys.length"), 2);
+    assert.equal(nucleoid.run("Summarys[0].question.id"), "question1");
+    assert.equal(nucleoid.run("Summarys[1].question.id"), "question3");
+    assert.equal(nucleoid.run("Summarys[0].type"), "DAILY");
+    assert.equal(nucleoid.run("Summarys[1].type"), "DAILY");
+  });
 });
