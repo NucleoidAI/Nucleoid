@@ -11,7 +11,7 @@ Vcs-Browser: https://git.nucleoid.org/cgit/nucleoid.git
 Package: nucleoid
 Architecture: amd64
 Depends: nodejs, npm
-Description: Declarative Runtime System
+Description: Declarative Runtime Environment
  Nucleoid is a runtime environment that allows declarative programming written
  in ES6 syntax. Since statements are declarative, the runtime provides logical
- integrity, multithreading, plasticity, persistency etc.
+ integrity, multiprocessing, plasticity, persistency etc.

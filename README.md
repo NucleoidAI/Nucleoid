@@ -31,9 +31,9 @@ Nucleoid is a runtime environment that allows declarative programming written in
 
 The runtime cumulatively stores each statement and builds in the state so that doesn't require external data storage like RDBMS. This design eliminates complexity of the architecture and gains high performance since no network communication required, especially, in locking situations.
 
-### Declarative Runtime System
+### Declarative Runtime Environment
 
-The declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical details. In this paradigm, there is no segregation regarding what data is or not, instead approaches how data is related with others so that any type of data including business rules can be added without requiring any additional actions such as compiling, configuring, restarting as a result of plasticity.
+The declarative runtime environment isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical details. In this paradigm, there is no segregation regarding what data is or not, instead approaches how data is related with others so that any type of data including business rules can be added without requiring any additional actions such as compiling, configuring, restarting as a result of plasticity.
 
 ### Syntax and Semantics
 
