@@ -27,7 +27,7 @@ Open the terminal on your browser
 
 ## What is Nucleoid?
 
-Nucleoid is a runtime environment that allows declarative programming written in ES6 syntax. Since statements are declarative, the runtime provides logical integrity, multithreading, plasticity, persistency etc.
+Nucleoid is an open source (Apache 2.0), a runtime environment for declarative programming in ES6/JavaScript syntax and runs as a datastore. Since statements are declarative, the runtime automatically provides logical integrity, multiprocessing, plasticity, persistency etc.
 
 The runtime cumulatively stores each statement and builds in the state so that doesn't require external data storage like RDBMS. This design eliminates complexity of the architecture and gains high performance since no network communication required, especially, in locking situations.
 

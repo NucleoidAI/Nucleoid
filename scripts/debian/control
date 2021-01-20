@@ -12,6 +12,7 @@ Package: nucleoid
 Architecture: amd64
 Depends: nodejs, npm
 Description: Declarative Runtime Environment
- Nucleoid is a runtime environment that allows declarative programming written
- in ES6 syntax. Since statements are declarative, the runtime provides logical
- integrity, multiprocessing, plasticity, persistency etc.
+ Nucleoid is an open source (Apache 2.0), a runtime environment for declarative
+ programming in ES6/JavaScript syntax and runs as a datastore. Since statements
+ are declarative, the runtime automatically provides logical integrity,
+ multiprocessing, plasticity, persistency etc.
