@@ -9,9 +9,6 @@ var BREAK = require("./break");
 var EXPRESSION = require("./expression");
 var state = require("./state");
 
-// eslint-disable-next-line no-unused-vars
-var message = require("./message").message;
-
 module.exports.process = function(statements) {
   let root = new Scope();
 

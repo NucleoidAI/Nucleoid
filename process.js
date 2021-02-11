@@ -43,6 +43,7 @@ process.on("message", message => {
       r: details.result,
       t: details.time,
       m: details.messages,
+      v: details.events,
       e: details.error
     })
   );

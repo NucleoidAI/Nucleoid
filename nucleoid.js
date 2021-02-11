@@ -3,6 +3,7 @@ var Statement = require("./statement");
 const fs = require("fs");
 const argv = require("yargs").argv;
 var Message = require("./message");
+var Event = require("./event");
 var transaction = require("./transaction");
 var Macro = require("./macro");
 
@@ -35,7 +36,10 @@ module.exports.run = function(string, details, cacheOnly) {
   }
 
   let messages = Message.list();
+  let events = Event.list();
+
   Message.clear();
+  Event.clear();
 
   let date = Date.now();
   let time = date - before;
@@ -49,13 +53,23 @@ module.exports.run = function(string, details, cacheOnly) {
         r: json,
         d: date,
         e: error,
-        m: messages
+        m: messages,
+        v: events
       }) + "\n"
     );
   }
 
   if (details) {
-    return { string: s, result: json, statements, date, time, error, messages };
+    return {
+      string: s,
+      result: json,
+      statements,
+      date,
+      time,
+      error,
+      messages,
+      events
+    };
   } else {
     if (error) {
       throw result;

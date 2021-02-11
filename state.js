@@ -4,6 +4,7 @@ var state = {
 };
 var _transaction = require("./transaction");
 var message = require("./message").message; // eslint-disable-line no-unused-vars
+var event = require("./event").event; // eslint-disable-line no-unused-vars
 var _graph = require("./graph");
 
 // eslint-disable-next-line no-unused-vars

@@ -16,6 +16,10 @@ if (config.authorization) {
   var authorization = require(`/opt/nucleoid/${config.authorization}`);
 }
 
+if (config.event) {
+  var event = require(`/opt/nucleoid/${config.event}`);
+}
+
 const fork = require("child_process").fork;
 var processes = [];
 
@@ -177,6 +181,12 @@ function receive(proc, message) {
           type: "MESSAGE"
         });
       });
+    }
+
+    if (details.v && event) {
+      for (let e of details.v) {
+        event(proc.id, e.name, e.payload);
+      }
     }
   }
 
