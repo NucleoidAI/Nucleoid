@@ -7,6 +7,8 @@ var message = require("./message").message; // eslint-disable-line no-unused-var
 var event = require("./event").event; // eslint-disable-line no-unused-vars
 var _graph = require("./graph");
 
+global.require = require;
+
 // eslint-disable-next-line no-unused-vars
 function graph(id) {
   let node = _graph[id];
