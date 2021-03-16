@@ -185,7 +185,11 @@ function receive(proc, message) {
 
     if (details.v && event) {
       for (let e of details.v) {
-        event(proc.id, e.name, e.payload);
+        try {
+          event(proc.id, e.name, e.payload);
+        } catch (e) {
+          e;
+        }
       }
     }
   }
