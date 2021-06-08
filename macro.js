@@ -1,5 +1,5 @@
-var state = require("./state");
-var funcRegex = /[A-z0-9$_.]+[ ]*\(.*?\)/g;
+const state = require("./state");
+const funcRegex = /[A-z0-9$_.]+[ ]*\(.*?\)/g;
 
 module.exports.apply = function (string) {
   return string.replace(funcRegex, function (fn) {

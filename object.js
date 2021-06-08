@@ -1,10 +1,10 @@
-var state = require("./state");
-var Node = require("./node");
-var Identifier = require("./identifier");
-var $EXP = require("./$expression");
-var Instruction = require("./instruction");
-var LET = require("./let");
-var Scope = require("./scope");
+const state = require("./state");
+const Node = require("./node");
+const Identifier = require("./identifier");
+const $EXP = require("./$expression");
+const Instruction = require("./instruction");
+const LET = require("./let");
+const Scope = require("./scope");
 
 module.exports = class OBJECT extends Node {
   constructor() {

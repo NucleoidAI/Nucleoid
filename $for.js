@@ -1,6 +1,6 @@
-var $ = require("./$");
-var FOR = require("./for");
-var Instruction = require("./instruction");
+const $ = require("./$");
+const FOR = require("./for");
+const Instruction = require("./instruction");
 
 module.exports = function (variable, array, statements) {
   let statement = new $FOR();

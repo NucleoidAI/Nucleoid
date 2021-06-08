@@ -1,10 +1,10 @@
-var $ = require("./$");
-var DELETE = require("./delete");
-var VARIABLE = require("./variable");
-var graph = require("./graph");
-var DELETE$VARIABLE = require("./delete$variable");
-var DELETE$OBJECT = require("./delete$object");
-var OBJECT = require("./object");
+const $ = require("./$");
+const DELETE = require("./delete");
+const VARIABLE = require("./variable");
+const graph = require("./graph");
+const DELETE$VARIABLE = require("./delete$variable");
+const DELETE$OBJECT = require("./delete$object");
+const OBJECT = require("./object");
 
 module.exports = function (key) {
   let statement = new $DELETE();

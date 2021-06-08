@@ -1,5 +1,5 @@
-var state = require("./state");
-var Node = require("./node");
+const state = require("./state");
+const Node = require("./node");
 
 module.exports = class FUNCTION extends Node {
   constructor() {

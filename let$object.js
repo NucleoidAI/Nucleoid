@@ -1,5 +1,5 @@
-var state = require("./state");
-var LET = require("./let");
+const state = require("./state");
+const LET = require("./let");
 
 module.exports = class LET$OBJECT extends LET {
   before() {}

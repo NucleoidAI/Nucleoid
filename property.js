@@ -1,6 +1,6 @@
-var state = require("./state");
-var Node = require("./node");
-var Identifier = require("./identifier");
+const state = require("./state");
+const Node = require("./node");
+const Identifier = require("./identifier");
 
 module.exports = class PROPERTY extends Node {
   before(scope) {

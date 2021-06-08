@@ -1,11 +1,11 @@
 // eslint-disable-next-line no-unused-vars
-var state = {
+const state = {
   Classes: [],
 };
-var _transaction = require("./transaction");
-var message = require("./message").message; // eslint-disable-line no-unused-vars
-var event = require("./event").event; // eslint-disable-line no-unused-vars
-var _graph = require("./graph");
+const _transaction = require("./transaction");
+const message = require("./message").message; // eslint-disable-line no-unused-vars
+const event = require("./event").event; // eslint-disable-line no-unused-vars
+const _graph = require("./graph");
 
 global.require = require;
 

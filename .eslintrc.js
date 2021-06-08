@@ -4,7 +4,7 @@ module.exports = {
     node: true,
     mocha: true,
   },
-  extends: "eslint:recommended",
+  extends: ["eslint:recommended", "prettier"],
   parserOptions: {
     ecmaVersion: 2018,
     sourceType: "module",
@@ -13,5 +13,6 @@ module.exports = {
     eqeqeq: ["error", "always"],
     "no-console": "off",
     "no-eval": "error",
+    "no-var": "error",
   },
 };

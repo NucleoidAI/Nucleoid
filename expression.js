@@ -1,9 +1,9 @@
-var state = require("./state");
-var graph = require("./graph");
-var Local = require("./local");
-var Identifier = require("./identifier");
-var Node = require("./node");
-var Token = require("./token");
+const state = require("./state");
+const graph = require("./graph");
+const Local = require("./local");
+const Identifier = require("./identifier");
+const Node = require("./node");
+const Token = require("./token");
 const argv = require("yargs").argv;
 
 class EXPRESSION {
@@ -107,8 +107,10 @@ class EXPRESSION {
         else return token;
       })
       .map((token) => {
+        let fn;
+
         try {
-          var fn = state.run(scope, "state." + token);
+          fn = state.run(scope, "state." + token);
         } catch (error) {
           return token;
         }

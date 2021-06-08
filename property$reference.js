@@ -1,5 +1,5 @@
-var PROPERTY = require("./property");
-var Identifier = require("./identifier");
+const PROPERTY = require("./property");
+const Identifier = require("./identifier");
 
 module.exports = class PROPERTY$REFERENCE extends PROPERTY {
   constructor() {

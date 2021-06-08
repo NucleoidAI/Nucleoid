@@ -1,7 +1,7 @@
-var state = require("./state");
-var graph = require("./graph");
-var Instruction = require("./instruction");
-var Node = require("./node");
+const state = require("./state");
+const graph = require("./graph");
+const Instruction = require("./instruction");
+const Node = require("./node");
 
 module.exports = class DELETE {
   before() {}

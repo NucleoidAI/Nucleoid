@@ -1,8 +1,8 @@
-var Token = require("../token");
-var $EXP = require("../$expression");
-var $BLOCK = require("../$block");
-var $IF = require("../$if");
-var ES6 = require("./es6");
+const Token = require("../token");
+const $EXP = require("../$expression");
+const $BLOCK = require("../$block");
+const $IF = require("../$if");
+const ES6 = require("./es6");
 
 module.exports = function ES6$IF(string, offset) {
   let context = Token.next(string, offset);

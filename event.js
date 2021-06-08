@@ -1,4 +1,4 @@
-var events = [];
+let events = [];
 
 module.exports.event = function (name, payload) {
   events.push({ name, payload: JSON.stringify(payload) });

@@ -1,13 +1,13 @@
-var graph = require("./graph");
-var BLOCK = require("./block");
-var IF = require("./if");
-var Instruction = require("./instruction");
-var Scope = require("./scope");
-var Node = require("./node");
-var $ = require("./$");
-var BREAK = require("./break");
-var EXPRESSION = require("./expression");
-var state = require("./state");
+const graph = require("./graph");
+const BLOCK = require("./block");
+const IF = require("./if");
+const Instruction = require("./instruction");
+const Scope = require("./scope");
+const Node = require("./node");
+const $ = require("./$");
+const BREAK = require("./break");
+const EXPRESSION = require("./expression");
+const state = require("./state");
 
 module.exports.process = function (statements) {
   let root = new Scope();

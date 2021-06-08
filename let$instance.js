@@ -1,8 +1,8 @@
-var LET = require("./let");
-var EXPRESSION = require("./expression");
-var Identifier = require("./identifier");
-var BREAK = require("./break");
-var state = require("./state");
+const LET = require("./let");
+const EXPRESSION = require("./expression");
+const Identifier = require("./identifier");
+const BREAK = require("./break");
+const state = require("./state");
 
 module.exports = class LET$INSTANCE extends LET {
   before() {

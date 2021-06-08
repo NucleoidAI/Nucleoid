@@ -1,9 +1,9 @@
-var $BLOCK = require("./$block");
-var Instruction = require("./instruction");
-var $LET = require("./$let");
-var state = require("./state");
-var $EXP = require("./$expression");
-var graph = require("./graph");
+const $BLOCK = require("./$block");
+const Instruction = require("./instruction");
+const $LET = require("./$let");
+const state = require("./state");
+const $EXP = require("./$expression");
+const graph = require("./graph");
 
 module.exports = class FOR {
   constructor() {

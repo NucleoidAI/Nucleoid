@@ -1,9 +1,9 @@
-var $PROPERTY = require("./$property");
-var $VARIABLE = require("./$variable");
-var Local = require("./local");
-var $LET = require("./$let");
-var $ = require("./$");
-var Identifier = require("./identifier");
+const $PROPERTY = require("./$property");
+const $VARIABLE = require("./$variable");
+const Local = require("./local");
+const $LET = require("./$let");
+const $ = require("./$");
+const Identifier = require("./identifier");
 
 module.exports = function (left, right) {
   let statement = new $ASSIGNMENT();

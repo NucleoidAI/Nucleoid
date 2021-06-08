@@ -1,6 +1,6 @@
-var EXPRESSION = require("./expression");
-var Instance = require("./instance");
-var Identifier = require("./identifier");
+const EXPRESSION = require("./expression");
+const Instance = require("./instance");
+const Identifier = require("./identifier");
 
 module.exports = class EXPRESSION$INSTANCE extends EXPRESSION {
   run(scope) {

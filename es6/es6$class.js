@@ -1,6 +1,6 @@
-var Token = require("../token");
-var $CLASS = require("../$class");
-var ES6$BLOCK = require("./es6$block");
+const Token = require("../token");
+let $CLASS = require("../$class");
+let ES6$BLOCK = require("./es6$block");
 
 module.exports = function ES6$CLASS(string, offset) {
   let context = Token.next(string, offset);
@@ -16,8 +16,8 @@ module.exports = function ES6$CLASS(string, offset) {
 
   context = Token.nextBlock(string, context.offset);
   let block = context.block.trim();
-  var construct;
-  var args;
+  let construct;
+  let args;
 
   if (block !== "") {
     let context = Token.next(block, 0);

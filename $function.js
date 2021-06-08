@@ -1,5 +1,5 @@
-var FUNCTION = require("./function");
-var $ = require("./$");
+const FUNCTION = require("./function");
+const $ = require("./$");
 
 module.exports = function (name, args, block) {
   let statement = new $FUNCTION();

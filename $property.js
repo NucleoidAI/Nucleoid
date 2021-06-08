@@ -1,13 +1,13 @@
-var $ = require("./$");
-var graph = require("./graph");
-var CLASS = require("./class");
-var PROPERTY$CLASS = require("./property$class");
-var PROPERTY = require("./property");
-var OBJECT$CLASS = require("./object$class");
-var REFERENCE = require("./reference");
-var PROPERTY$REFERENCE = require("./property$reference");
-var Local = require("./local");
-var FUNCTION = require("./function");
+const $ = require("./$");
+const graph = require("./graph");
+const CLASS = require("./class");
+const PROPERTY$CLASS = require("./property$class");
+const PROPERTY = require("./property");
+const OBJECT$CLASS = require("./object$class");
+const REFERENCE = require("./reference");
+const PROPERTY$REFERENCE = require("./property$reference");
+const Local = require("./local");
+const FUNCTION = require("./function");
 
 module.exports = function (object, name, value) {
   let statement = new $PROPERTY();

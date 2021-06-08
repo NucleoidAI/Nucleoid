@@ -1,9 +1,9 @@
-var $ = require("./$");
-var graph = require("./graph");
-var IF = require("./if");
-var CLASS = require("./class");
-var IF$CLASS = require("./if$class");
-var Instruction = require("./instruction");
+const $ = require("./$");
+const graph = require("./graph");
+const IF = require("./if");
+const CLASS = require("./class");
+const IF$CLASS = require("./if$class");
+const Instruction = require("./instruction");
 
 module.exports = function (condition, trueB, p3) {
   let statement = new $IF();

@@ -1,8 +1,8 @@
-var Node = require("./node");
-var BLOCK$INSTANCE = require("./block$instance");
-var Instruction = require("./instruction");
-var graph = require("./graph");
-var Instance = require("./instance");
+const Node = require("./node");
+const BLOCK$INSTANCE = require("./block$instance");
+const Instruction = require("./instruction");
+const graph = require("./graph");
+const Instance = require("./instance");
 
 class BLOCK$CLASS extends Node {
   constructor() {

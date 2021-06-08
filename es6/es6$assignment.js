@@ -1,8 +1,8 @@
-var Token = require("../token");
-var $INSTANCE = require("../$instance");
-var $ASSIGNMENT = require("../$assignment");
-var $EXP = require("../$expression");
-var Identifier = require("../identifier");
+const Token = require("../token");
+const $INSTANCE = require("../$instance");
+const $ASSIGNMENT = require("../$assignment");
+const $EXP = require("../$expression");
+const Identifier = require("../identifier");
 
 module.exports = function ES6$ASSIGNMENT(string, offset) {
   let context = Token.next(string, offset);

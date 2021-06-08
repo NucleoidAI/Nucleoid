@@ -1,12 +1,12 @@
-var BLOCK = require("./block");
-var BLOCK$CLASS = require("./block$class");
-var PROPERTY$CLASS = require("./property$class");
-var $ = require("./$");
-var Instruction = require("./instruction");
-var Scope = require("./scope");
-var LET = require("./let");
-var OBJECT$CLASS = require("./object$class");
-var REFERENCE = require("./reference");
+const BLOCK = require("./block");
+const BLOCK$CLASS = require("./block$class");
+const PROPERTY$CLASS = require("./property$class");
+const $ = require("./$");
+const Instruction = require("./instruction");
+const Scope = require("./scope");
+const LET = require("./let");
+const OBJECT$CLASS = require("./object$class");
+const REFERENCE = require("./reference");
 
 module.exports = function (statements, skip) {
   let statement = new $BLOCK();

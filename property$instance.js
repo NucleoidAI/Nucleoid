@@ -1,7 +1,7 @@
-var PROPERTY = require("./property");
-var EXPRESSION = require("./expression");
-var Identifier = require("./identifier");
-var graph = require("./graph");
+const PROPERTY = require("./property");
+const EXPRESSION = require("./expression");
+const Identifier = require("./identifier");
+const graph = require("./graph");
 
 module.exports = class PROPERTY$INSTANCE extends PROPERTY {
   before(scope) {

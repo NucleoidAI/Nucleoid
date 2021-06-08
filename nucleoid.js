@@ -1,22 +1,22 @@
-var Stack = require("./stack");
-var Statement = require("./statement");
+const Stack = require("./stack");
+const Statement = require("./statement");
 const fs = require("fs");
 const argv = require("yargs").argv;
-var Message = require("./message");
-var Event = require("./event");
-var transaction = require("./transaction");
-var Macro = require("./macro");
+const Message = require("./message");
+const Event = require("./event");
+const transaction = require("./transaction");
+const Macro = require("./macro");
 
 module.exports.run = function (string, details, cacheOnly) {
   let before = Date.now();
-  let error, json;
+  let statements, result, error, json;
 
   let s = Macro.apply(string);
 
   try {
-    var statements = Statement.compile(s);
+    statements = Statement.compile(s);
     transaction.start();
-    var result = Stack.process(statements);
+    result = Stack.process(statements);
     transaction.end();
   } catch (e) {
     transaction.rollback();

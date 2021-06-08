@@ -1,7 +1,7 @@
-var assert = require("assert");
-var nucleoid = require("../nucleoid");
-var state = require("../state").state;
-var graph = require("../graph");
+const assert = require("assert");
+const nucleoid = require("../nucleoid");
+const state = require("../state").state;
+const graph = require("../graph");
 
 function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;

@@ -1,6 +1,6 @@
-var Token = require("../token");
-var ES6 = require("./es6");
-var $BLOCK = require("../$block");
+const Token = require("../token");
+const ES6 = require("./es6");
+const $BLOCK = require("../$block");
 
 module.exports = function ES6$BLOCK(string, offset) {
   let context = Token.next(string, offset);

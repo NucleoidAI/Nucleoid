@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha tests/nucleoid.spec.js --forbidOnly --forbidPending",
-    "install": "cp scripts/git/commit-msg scripts/git/pre-commit .git/hooks/"
+    "install": "cp scripts/git/commit-msg scripts/git/pre-commit .git/hooks/",
+    "lint": "eslint --ext .js .",
+    "format": "prettier --check {**/*,*}.{js,json,md,html}"
   },
   "repository": {
     "type": "git",
@@ -22,6 +24,8 @@
     "yargs": "^13.3.0"
   },
   "devDependencies": {
+    "eslint": "^7.28.0",
+    "eslint-config-prettier": "^8.3.0",
     "mocha": "^7.0.0",
     "prettier": "^2.3.1"
   }

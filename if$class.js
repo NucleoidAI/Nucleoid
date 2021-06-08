@@ -1,8 +1,8 @@
-var IF$INSTANCE = require("./if$instance");
-var $BLOCK = require("./$block");
-var Node = require("./node");
-var graph = require("./graph");
-var Instance = require("./instance");
+const IF$INSTANCE = require("./if$instance");
+const $BLOCK = require("./$block");
+const Node = require("./node");
+const graph = require("./graph");
+const Instance = require("./instance");
 
 class IF$CLASS extends Node {
   before() {

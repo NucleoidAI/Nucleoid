@@ -1,5 +1,5 @@
-var $ = require("./$");
-var THROW = require("./throw");
+const $ = require("./$");
+const THROW = require("./throw");
 
 module.exports = function (exception) {
   let statement = new $THROW();

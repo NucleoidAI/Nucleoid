@@ -1,5 +1,5 @@
-var Node = require("./node");
-var $ = require("./$");
+const Node = require("./node");
+const $ = require("./$");
 
 module.exports = class BLOCK extends Node {
   constructor() {

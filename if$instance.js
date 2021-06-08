@@ -1,6 +1,6 @@
-var IF = require("./if");
-var EXPRESSION = require("./expression");
-var Identifier = require("./identifier");
+const IF = require("./if");
+const EXPRESSION = require("./expression");
+const Identifier = require("./identifier");
 
 module.exports = class IF$INSTANCE extends IF {
   before() {

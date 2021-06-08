@@ -1,8 +1,8 @@
-var Node = require("./node");
-var Identifier = require("./identifier");
-var graph = require("./graph");
-var OBJECT$INSTANCE = require("./object$instance");
-var Instance = require("./instance");
+const Node = require("./node");
+const Identifier = require("./identifier");
+const graph = require("./graph");
+const OBJECT$INSTANCE = require("./object$instance");
+const Instance = require("./instance");
 
 class OBJECT$CLASS extends Node {
   before() {

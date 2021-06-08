@@ -1,10 +1,10 @@
-var Token = require("./token");
-var EXPRESSION = require("./expression");
-var $ = require("./$");
-var graph = require("./graph");
-var REFERENCE = require("./reference");
-var EXPRESSION$INSTANCE = require("./expression$instance");
-var Local = require("./local");
+const Token = require("./token");
+const EXPRESSION = require("./expression");
+const $ = require("./$");
+const graph = require("./graph");
+const REFERENCE = require("./reference");
+const EXPRESSION$INSTANCE = require("./expression$instance");
+const Local = require("./local");
 
 module.exports = function (string, offset) {
   let context = Token.each(string, offset, function (token) {

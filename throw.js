@@ -1,6 +1,6 @@
-var state = require("./state");
-var Identifier = require("./identifier");
-var graph = require("./graph");
+const state = require("./state");
+const Identifier = require("./identifier");
+const graph = require("./graph");
 
 module.exports = class THROW {
   before() {}

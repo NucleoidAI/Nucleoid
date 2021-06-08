@@ -1,6 +1,6 @@
-var Identifier = require("./identifier");
-var OBJECT = require("./object");
-var graph = require("./graph");
+const Identifier = require("./identifier");
+const OBJECT = require("./object");
+const graph = require("./graph");
 
 module.exports = class OBJECT$INSTANCE extends OBJECT {
   before() {

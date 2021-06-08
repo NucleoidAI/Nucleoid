@@ -1,5 +1,5 @@
-var CLASS = require("./class");
-var $ = require("./$");
+const CLASS = require("./class");
+const $ = require("./$");
 
 module.exports = function (name, construct, args) {
   let statement = new $CLASS();

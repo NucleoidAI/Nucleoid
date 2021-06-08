@@ -1,6 +1,6 @@
-var $ = require("./$");
-var VARIABLE = require("./variable");
-var OBJECT = require("./object");
+const $ = require("./$");
+const VARIABLE = require("./variable");
+const OBJECT = require("./object");
 
 module.exports = function (name, value) {
   let statement = new $VARIABLE();

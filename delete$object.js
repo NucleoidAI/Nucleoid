@@ -1,5 +1,5 @@
-var DELETE = require("./delete");
-var graph = require("./graph");
+const DELETE = require("./delete");
+const graph = require("./graph");
 
 module.exports = class DELETE$OBJECT extends DELETE {
   run() {

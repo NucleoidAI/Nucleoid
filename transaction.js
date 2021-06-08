@@ -1,6 +1,6 @@
-var state = require("./state").state; // eslint-disable-line no-unused-vars
+const state = require("./state").state; // eslint-disable-line no-unused-vars
 
-var list = [];
+let list = [];
 
 module.exports.start = function () {
   list = [];

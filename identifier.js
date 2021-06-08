@@ -1,4 +1,4 @@
-var graph = require("./graph");
+const graph = require("./graph");
 
 module.exports.splitLast = function (name) {
   let parts = name.split(".");

@@ -1,7 +1,7 @@
-var Token = require("../token");
-var $LET = require("../$let");
-var $EXP = require("../$expression");
-var $INSTANCE = require("../$instance");
+const Token = require("../token");
+const $LET = require("../$let");
+const $EXP = require("../$expression");
+const $INSTANCE = require("../$instance");
 
 module.exports = function ES6$LET(string, offset) {
   let context = Token.next(string, offset);

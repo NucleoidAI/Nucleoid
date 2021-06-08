@@ -1,6 +1,6 @@
-var Token = require("../token");
-var ES6 = require("./es6");
-var $FOR = require("../$for");
+const Token = require("../token");
+const ES6 = require("./es6");
+const $FOR = require("../$for");
 
 module.exports = function ES6$FOR(string, offset) {
   let context = Token.next(string, offset);

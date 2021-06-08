@@ -1,4 +1,4 @@
-var messages = [];
+let messages = [];
 
 module.exports.message = function (process, payload) {
   messages.push({ process, payload: JSON.stringify(payload) });

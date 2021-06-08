@@ -1,10 +1,10 @@
-var state = require("./state");
-var Node = require("./node");
-var $VAR = require("./$variable");
-var $EXP = require("./$expression");
-var graph = require("./graph");
+const state = require("./state");
+const Node = require("./node");
+const $VAR = require("./$variable");
+const $EXP = require("./$expression");
+const graph = require("./graph");
 
-var CLASS = class CLASS extends Node {
+const CLASS = class CLASS extends Node {
   constructor() {
     super();
     this.instances = {};

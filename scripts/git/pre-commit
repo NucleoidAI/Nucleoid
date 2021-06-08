@@ -2,9 +2,5 @@
 set -e
 
 npm test
-
-files=$(git diff --cached --name-only --diff-filter=ACM "*.js" | sed 's| |\\ |g')
-[ -z "$files" ] && exit 0
-
-echo "$files" | xargs prettier -c
-echo "$files" | xargs eslint --no-ignore
+npm run lint
+npm run format

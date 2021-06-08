@@ -1,5 +1,5 @@
-var Identifier = require("./identifier");
-var EXPRESSION = require("./expression");
+const Identifier = require("./identifier");
+const EXPRESSION = require("./expression");
 
 class REFERENCE extends EXPRESSION {
   before() {}

@@ -1,6 +1,6 @@
 const fs = require("fs");
 const argv = require("yargs").argv;
-var nucleoid = require("./nucleoid");
+const nucleoid = require("./nucleoid");
 
 init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
   fs.readFileSync(`${argv.path}/${argv.id}`, "utf8")
@@ -37,7 +37,7 @@ init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
 }
 
 process.on("message", (message) => {
-  var details = nucleoid.run(message, true);
+  let details = nucleoid.run(message, true);
   process.send(
     JSON.stringify({
       r: details.result,

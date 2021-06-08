@@ -1,8 +1,8 @@
-var Node = require("./node");
-var Instruction = require("./instruction");
-var Scope = require("./scope");
-var BREAK = require("./break");
-var state = require("./state");
+const Node = require("./node");
+const Instruction = require("./instruction");
+const Scope = require("./scope");
+const BREAK = require("./break");
+const state = require("./state");
 
 module.exports = class IF extends Node {
   before(scope) {

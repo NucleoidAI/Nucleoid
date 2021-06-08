@@ -1,15 +1,15 @@
-var Token = require("../token");
-var ES6$VARIABLE = require("./es6$variable");
-var ES6$CLASS = require("./es6$class");
-var ES6$ASSIGNMENT = require("./es6$assignment");
-var ES6$BLOCK = require("./es6$block");
-var ES6$DELETE = require("./es6$delete");
-var ES6$IF = require("./es6$if");
-var ES6$LET = require("./es6$let");
-var $EXP = require("../$expression");
-var ES6$THROW = require("./es6$throw");
-var ES6$FUNCTION = require("./es6$function");
-var ES6$FOR = require("./es6$for");
+const Token = require("../token");
+const ES6$VARIABLE = require("./es6$variable");
+const ES6$CLASS = require("./es6$class");
+const ES6$ASSIGNMENT = require("./es6$assignment");
+const ES6$BLOCK = require("./es6$block");
+const ES6$DELETE = require("./es6$delete");
+const ES6$IF = require("./es6$if");
+const ES6$LET = require("./es6$let");
+const $EXP = require("../$expression");
+const ES6$THROW = require("./es6$throw");
+const ES6$FUNCTION = require("./es6$function");
+const ES6$FOR = require("./es6$for");
 
 module.exports.compile = function compile(string) {
   let list = [];

@@ -1,10 +1,10 @@
-var $ = require("./$");
-var graph = require("./graph");
-var OBJECT = require("./object");
-var OBJECT$CLASS = require("./object$class");
-var CLASS = require("./class");
-var Local = require("./local");
-var $LET = require("./$let");
+const $ = require("./$");
+const graph = require("./graph");
+const OBJECT = require("./object");
+const OBJECT$CLASS = require("./object$class");
+const CLASS = require("./class");
+const Local = require("./local");
+const $LET = require("./$let");
 
 module.exports = function (cls, name, object, args) {
   let statement = new $INSTANCE();

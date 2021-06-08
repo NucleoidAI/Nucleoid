@@ -1,27 +1,28 @@
 const express = require("express");
-var bodyParser = require("body-parser");
+const bodyParser = require("body-parser");
 const fs = require("fs");
-var glob = require("glob");
+const glob = require("glob");
 
 const app = express();
 app.use(bodyParser.text({ type: "*/*" }));
 
 const config = JSON.parse(fs.readFileSync("/etc/nucleoid/config.json", "utf8"));
+let fn, authorization, event;
 
 if (config.process) {
-  var fn = require(`/opt/nucleoid/${config.process}`);
+  fn = require(`/opt/nucleoid/${config.process}`);
 }
 
 if (config.authorization) {
-  var authorization = require(`/opt/nucleoid/${config.authorization}`);
+  authorization = require(`/opt/nucleoid/${config.authorization}`);
 }
 
 if (config.event) {
-  var event = require(`/opt/nucleoid/${config.event}`);
+  event = require(`/opt/nucleoid/${config.event}`);
 }
 
 const fork = require("child_process").fork;
-var processes = [];
+let processes = [];
 
 start("main");
 

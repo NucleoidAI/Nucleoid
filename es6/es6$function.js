@@ -1,5 +1,5 @@
-var Token = require("../token");
-var $FUNCTION = require("../$function");
+const Token = require("../token");
+const $FUNCTION = require("../$function");
 
 module.exports = function ES6$FUNCTION(string, offset) {
   let context = Token.next(string, offset);

@@ -1,14 +1,14 @@
-var $ = require("./$");
-var graph = require("./graph");
-var CLASS = require("./class");
-var LET = require("./let");
-var LET$CLASS = require("./let$class");
-var OBJECT = require("./object");
-var LET$OBJECT = require("./let$object");
-var EXPRESSION = require("./expression");
-var REFERENCE = require("./reference");
-var Local = require("./local");
-var Identifier = require("./identifier");
+const $ = require("./$");
+const graph = require("./graph");
+const CLASS = require("./class");
+const LET = require("./let");
+const LET$CLASS = require("./let$class");
+const OBJECT = require("./object");
+const LET$OBJECT = require("./let$object");
+const EXPRESSION = require("./expression");
+const REFERENCE = require("./reference");
+const Local = require("./local");
+const Identifier = require("./identifier");
 
 module.exports = function (name, value) {
   let statement = new $LET();

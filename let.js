@@ -1,4 +1,4 @@
-var state = require("./state");
+const state = require("./state");
 
 module.exports = class LET {
   before() {}

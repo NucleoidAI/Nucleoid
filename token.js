@@ -1,4 +1,4 @@
-var Identifier = require("./identifier");
+const Identifier = require("./identifier");
 
 function isDelimiter(c) {
   return !(

@@ -1,4 +1,4 @@
-var BLOCK = require("./block");
+const BLOCK = require("./block");
 
 class BLOCK$INSTANCE extends BLOCK {
   constructor() {
