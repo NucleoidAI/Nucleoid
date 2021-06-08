@@ -9,11 +9,11 @@ var BREAK = require("./break");
 var EXPRESSION = require("./expression");
 var state = require("./state");
 
-module.exports.process = function(statements) {
+module.exports.process = function (statements) {
   let root = new Scope();
 
   let instructions = statements.map(
-    statement => new Instruction(root, statement, true, true, false)
+    (statement) => new Instruction(root, statement, true, true, false)
   );
 
   let result;
@@ -46,7 +46,7 @@ module.exports.process = function(statements) {
 
       if (list) {
         instructions = list
-          .map(statement => {
+          .map((statement) => {
             if (statement instanceof Instruction) {
               return statement;
             } else {
@@ -77,14 +77,14 @@ module.exports.process = function(statements) {
             scope = new Scope(scope);
           }
 
-          list = list.map(statement => {
+          list = list.map((statement) => {
             return statement instanceof Instruction
               ? statement
               : new Instruction(scope, statement, true, true, true);
           });
 
-          instructions = list.filter(i => !i.root).concat(instructions);
-          additionals = list.filter(i => i.root).concat(additionals);
+          instructions = list.filter((i) => !i.root).concat(instructions);
+          additionals = list.filter((i) => i.root).concat(additionals);
         }
       }
 
@@ -110,14 +110,14 @@ module.exports.process = function(statements) {
 
           let list = statement.graph(instruction.scope);
           if (list) {
-            list.forEach(e => {
+            list.forEach((e) => {
               if (graph[e].previous[statement.key] !== undefined) {
                 throw ReferenceError("Circular Dependency");
               }
             });
 
             dependencies = dependencies.concat(
-              list.filter(e => !dependencies.includes(e))
+              list.filter((e) => !dependencies.includes(e))
             );
           }
         }
@@ -125,7 +125,7 @@ module.exports.process = function(statements) {
         if (statement.next) {
           Object.values(statement.next)
             .sort((a, b) => a.sequence - b.sequence)
-            .forEach(n => {
+            .forEach((n) => {
               let s = instruction.scope;
 
               if (n instanceof BLOCK || n instanceof IF) {
@@ -141,7 +141,7 @@ module.exports.process = function(statements) {
         // Root scope is a scope, which does not have any prior.
         if (!instruction.scope.prior) {
           if (!instruction.statement.skip) {
-            dependencies.forEach(source => {
+            dependencies.forEach((source) => {
               let targetKey = statement.key ? statement.key : statement.id;
               Node.direct(source, targetKey, statement);
             });

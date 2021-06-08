@@ -2,7 +2,7 @@ var $ = require("./$");
 var FOR = require("./for");
 var Instruction = require("./instruction");
 
-module.exports = function(variable, array, statements) {
+module.exports = function (variable, array, statements) {
   let statement = new $FOR();
   statement.variable = variable;
   statement.array = array;

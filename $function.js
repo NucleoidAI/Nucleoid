@@ -1,7 +1,7 @@
 var FUNCTION = require("./function");
 var $ = require("./$");
 
-module.exports = function(name, args, block) {
+module.exports = function (name, args, block) {
   let statement = new $FUNCTION();
   statement.name = name;
   statement.args = args;

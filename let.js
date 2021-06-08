@@ -2,6 +2,7 @@ var state = require("./state");
 
 module.exports = class LET {
   before() {}
+
   run(scope) {
     let value = this.value.run(scope);
     let expression = `scope.local.${this.name}=${value}`;
@@ -9,6 +10,7 @@ module.exports = class LET {
   }
 
   beforeGraph() {}
+
   graph(scope) {
     scope.graph[this.name] = this;
 

@@ -13,8 +13,11 @@ module.exports = class Node {
   }
 
   before() {}
+
   run() {}
+
   beforeGraph() {}
+
   graph() {}
 
   static register(key, node) {

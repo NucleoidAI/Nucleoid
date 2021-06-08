@@ -5,6 +5,7 @@ var Node = require("./node");
 
 module.exports = class DELETE {
   before() {}
+
   run(scope) {
     state.run(scope, "delete state." + this.key);
 
@@ -18,6 +19,7 @@ module.exports = class DELETE {
   }
 
   beforeGraph() {}
+
   graph() {
     for (let node in graph[this.key].previous)
       delete graph[node].next[this.key];

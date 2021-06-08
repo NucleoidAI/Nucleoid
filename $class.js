@@ -1,7 +1,7 @@
 var CLASS = require("./class");
 var $ = require("./$");
 
-module.exports = function(name, construct, args) {
+module.exports = function (name, construct, args) {
   let statement = new $CLASS();
   statement.name = name;
   statement.construct = construct;

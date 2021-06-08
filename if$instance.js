@@ -5,7 +5,7 @@ var Identifier = require("./identifier");
 module.exports = class IF$INSTANCE extends IF {
   before() {
     this.condition = new EXPRESSION(
-      this.declaration.condition.tokens.map(token => {
+      this.declaration.condition.tokens.map((token) => {
         let parts = token.split(".");
         if (parts[0] === this.class.name)
           parts[0] = Identifier.serialize(this.instance);

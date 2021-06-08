@@ -13,8 +13,8 @@ class EXPRESSION {
 
   before(scope, self) {
     this.tokens = this.tokens
-      .map(token => (token === self ? token + ".value" : token))
-      .map(token => {
+      .map((token) => (token === self ? token + ".value" : token))
+      .map((token) => {
         let parts = Identifier.splitLast(token);
         if (parts[0] && parts[1] && parts[0] === "value") {
           if (Local.check(scope, parts[1])) {
@@ -42,8 +42,8 @@ class EXPRESSION {
       }
 
       let tokens = this.tokens
-        .map(token => (token = Local.reference(scope, token)))
-        .map(token => {
+        .map((token) => (token = Local.reference(scope, token)))
+        .map((token) => {
           let parts = token.split(".");
 
           try {
@@ -92,21 +92,21 @@ class EXPRESSION {
   graph(scope) {
     return this.tokens
       .list()
-      .map(token => Local.reference(scope, token))
-      .map(token => Identifier.reference(token))
-      .filter(token => {
+      .map((token) => Local.reference(scope, token))
+      .map((token) => Identifier.reference(token))
+      .filter((token) => {
         if (graph[token]) return true;
         else if (graph[token.split(".")[0]]) {
           graph[token] = new Node();
           return true;
         }
       })
-      .map(token => {
+      .map((token) => {
         let parts = Identifier.splitLast(token);
         if (parts[0] && parts[1] && parts[0] === "length") return parts[1];
         else return token;
       })
-      .map(token => {
+      .map((token) => {
         try {
           var fn = state.run(scope, "state." + token);
         } catch (error) {

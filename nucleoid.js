@@ -7,7 +7,7 @@ var Event = require("./event");
 var transaction = require("./transaction");
 var Macro = require("./macro");
 
-module.exports.run = function(string, details, cacheOnly) {
+module.exports.run = function (string, details, cacheOnly) {
   let before = Date.now();
   let error, json;
 
@@ -54,7 +54,7 @@ module.exports.run = function(string, details, cacheOnly) {
         d: date,
         e: error,
         m: messages,
-        v: events
+        v: events,
       }) + "\n"
     );
   }
@@ -68,7 +68,7 @@ module.exports.run = function(string, details, cacheOnly) {
       time,
       error,
       messages,
-      events
+      events,
     };
   } else {
     if (error) {

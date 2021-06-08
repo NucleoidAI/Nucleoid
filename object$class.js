@@ -18,7 +18,7 @@ class OBJECT$CLASS extends Node {
     if (instance) instances = [instance];
     else
       instances = Object.keys(Identifier.root(this).instances).map(
-        i => graph[i]
+        (i) => graph[i]
       );
 
     for (let instance of instances) {

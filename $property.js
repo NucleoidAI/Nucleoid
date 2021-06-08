@@ -9,7 +9,7 @@ var PROPERTY$REFERENCE = require("./property$reference");
 var Local = require("./local");
 var FUNCTION = require("./function");
 
-module.exports = function(object, name, value) {
+module.exports = function (object, name, value) {
   let statement = new $PROPERTY();
   statement.object = object;
   statement.name = name;

@@ -37,7 +37,7 @@ module.exports = function ES6$IF(string, offset) {
 
     return {
       statement: $IF(condition, $BLOCK(trueBlock), falseBlock),
-      offset: context.offset
+      offset: context.offset,
     };
   }
 };

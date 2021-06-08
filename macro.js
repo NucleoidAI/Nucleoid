@@ -1,8 +1,8 @@
 var state = require("./state");
 var funcRegex = /[A-z0-9$_.]+[ ]*\(.*?\)/g;
 
-module.exports.apply = function(string) {
-  return string.replace(funcRegex, function(fn) {
+module.exports.apply = function (string) {
+  return string.replace(funcRegex, function (fn) {
     let fnName = fn.substr(0, fn.indexOf("("));
 
     try {

@@ -13,6 +13,7 @@ module.exports = class DELETE$OBJECT extends DELETE {
 
     super.run();
   }
+
   graph() {
     for (let node in graph[this.key].previous)
       delete graph[node].next[this.key];

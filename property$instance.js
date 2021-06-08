@@ -15,7 +15,7 @@ module.exports = class PROPERTY$INSTANCE extends PROPERTY {
 
     this.key = Identifier.serialize(this);
     this.value = new EXPRESSION(
-      this.declaration.value.tokens.map(token => {
+      this.declaration.value.tokens.map((token) => {
         let parts = token.split(".");
         if (parts[0] === Identifier.root(this.declaration).name)
           parts[0] = Identifier.serialize(this.instance);

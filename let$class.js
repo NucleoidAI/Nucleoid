@@ -3,6 +3,7 @@ var Instance = require("./instance");
 
 class LET$CLASS {
   before() {}
+
   run(scope) {
     let instance = Instance.retrieve(scope, this.class.name);
 

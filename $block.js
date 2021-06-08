@@ -8,7 +8,7 @@ var LET = require("./let");
 var OBJECT$CLASS = require("./object$class");
 var REFERENCE = require("./reference");
 
-module.exports = function(statements, skip) {
+module.exports = function (statements, skip) {
   let statement = new $BLOCK();
   statement.statements = statements;
   statement.skip = skip;
@@ -52,7 +52,7 @@ class $BLOCK extends $ {
       statement.class = cls;
       return [
         new Instruction(scope, statement, true, true, false),
-        new Instruction(scope, statement, false, false, true)
+        new Instruction(scope, statement, false, false, true),
       ];
     } else {
       let statement = new BLOCK();
@@ -61,7 +61,7 @@ class $BLOCK extends $ {
 
       return [
         new Instruction(scope, statement, true, true, false),
-        new Instruction(scope, statement, false, false, true)
+        new Instruction(scope, statement, false, false, true),
       ];
     }
   }

@@ -5,7 +5,7 @@ var $LET = require("./$let");
 var $ = require("./$");
 var Identifier = require("./identifier");
 
-module.exports = function(left, right) {
+module.exports = function (left, right) {
   let statement = new $ASSIGNMENT();
   statement.left = left.split(".");
   statement.right = right;

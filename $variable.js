@@ -2,7 +2,7 @@ var $ = require("./$");
 var VARIABLE = require("./variable");
 var OBJECT = require("./object");
 
-module.exports = function(name, value) {
+module.exports = function (name, value) {
   let statement = new $VARIABLE();
   statement.name = name;
   statement.value = value;

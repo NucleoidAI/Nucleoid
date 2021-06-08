@@ -6,8 +6,8 @@ var REFERENCE = require("./reference");
 var EXPRESSION$INSTANCE = require("./expression$instance");
 var Local = require("./local");
 
-module.exports = function(string, offset) {
-  let context = Token.each(string, offset, function(token) {
+module.exports = function (string, offset) {
+  let context = Token.each(string, offset, function (token) {
     if (token === "let") {
       return "let ";
     }
@@ -128,7 +128,7 @@ function parseCall(tokens, offset) {
     offset = context.offset;
 
     if (context.block) {
-      context.block.forEach(e => params.push(e));
+      context.block.forEach((e) => params.push(e));
     }
   }
 

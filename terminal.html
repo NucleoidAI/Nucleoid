@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <title>Nucleoid - Terminal</title>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.min.js"
+      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+      crossorigin="anonymous"
+    ></script>
     <style>
       body {
         background-color: #202124;
@@ -29,12 +33,10 @@
     </style>
 
     <script>
-      $(function() {
-        $("#entry").keypress(function(e) {
+      $(function () {
+        $("#entry").keypress(function (e) {
           if (e.which === 13) {
-            var entry = $("#entry")
-              .val()
-              .trim();
+            var entry = $("#entry").val().trim();
 
             if (!entry || entry == "" || entry == null || entry == undefined) {
               display(entry);
@@ -47,8 +49,8 @@
 
               $.ajaxSetup({
                 headers: {
-                  Process: parts[1]
-                }
+                  Process: parts[1],
+                },
               });
 
               $(`<div>>&nbsp;${entry}</div>`).appendTo("#entries");
@@ -56,7 +58,7 @@
               return;
             }
 
-            $.post("/", entry, function(response) {
+            $.post("/", entry, function (response) {
               let string = response;
 
               if (typeof response === "object") {
@@ -66,7 +68,7 @@
               }
 
               display(entry, string);
-            }).fail(function(response) {
+            }).fail(function (response) {
               if (response.readyState !== 4) {
                 display(entry, "Connection lost");
                 return;

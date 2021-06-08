@@ -17,6 +17,6 @@ module.exports = function ES6$FUNCTION(string, offset) {
 
   return {
     statement: $FUNCTION(name, args, context.block),
-    offset: context.offset
+    offset: context.offset,
   };
 };

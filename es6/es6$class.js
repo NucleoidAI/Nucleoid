@@ -43,6 +43,6 @@ module.exports = function ES6$CLASS(string, offset) {
 
   return {
     statement: $CLASS(name, construct, args),
-    offset: context.offset
+    offset: context.offset,
   };
 };

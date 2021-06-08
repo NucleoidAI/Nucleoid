@@ -10,7 +10,7 @@ var REFERENCE = require("./reference");
 var Local = require("./local");
 var Identifier = require("./identifier");
 
-module.exports = function(name, value) {
+module.exports = function (name, value) {
   let statement = new $LET();
   statement.name = name;
   statement.value = value;

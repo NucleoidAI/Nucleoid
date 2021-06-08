@@ -27,14 +27,14 @@ module.exports = class IF extends Node {
     if (state.run(scope, condition)) {
       return [
         new Instruction(s, this.true, true, false),
-        new Instruction(s, this.true, false, true)
+        new Instruction(s, this.true, false, true),
       ];
     } else if (this.false && this.false instanceof IF) {
       return this.false.run(scope);
     } else if (this.false) {
       return [
         new Instruction(s, this.false, true, false),
-        new Instruction(s, this.false, false, true)
+        new Instruction(s, this.false, false, true),
       ];
     }
   }

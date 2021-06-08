@@ -1,4 +1,4 @@
-module.exports.retrieve = function(scope, assignment) {
+module.exports.retrieve = function (scope, assignment) {
   let index = scope;
 
   let parts = assignment.split(".");
@@ -14,7 +14,7 @@ module.exports.retrieve = function(scope, assignment) {
   }
 };
 
-module.exports.check = function(scope, assignment) {
+module.exports.check = function (scope, assignment) {
   let index = scope;
 
   if (assignment === undefined) return false;
@@ -31,7 +31,7 @@ module.exports.check = function(scope, assignment) {
   }
 };
 
-module.exports.reference = function(scope, name) {
+module.exports.reference = function (scope, name) {
   let parts = name.split(".");
 
   for (let i = 0; i < parts.length; i++) {
@@ -48,7 +48,7 @@ module.exports.reference = function(scope, name) {
   return parts.join(".");
 };
 
-module.exports.object = function(scope) {
+module.exports.object = function (scope) {
   let index = scope;
 
   while (index) {

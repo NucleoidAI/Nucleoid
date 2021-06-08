@@ -1,4 +1,0 @@
-overrides:
-  - files: "*.html"
-    options:
-      printWidth: 1000

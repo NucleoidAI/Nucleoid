@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 var state = {
-  Classes: []
+  Classes: [],
 };
 var _transaction = require("./transaction");
 var message = require("./message").message; // eslint-disable-line no-unused-vars
@@ -30,7 +30,7 @@ function graph(id) {
           object[prop][nprop] = {
             id: n[nprop].id,
             key: n[nprop].key,
-            type: n[nprop].constructor.name
+            type: n[nprop].constructor.name,
           };
         } else {
           object[prop][nprop] = n[nprop];
@@ -45,11 +45,11 @@ function graph(id) {
 }
 
 module.exports.state = state;
-module.exports.assign = function(scope, variable, expression) {
+module.exports.assign = function (scope, variable, expression) {
   _transaction.register(variable, expression, scope);
 };
 
-module.exports.run = function(scope, expression) {
+module.exports.run = function (scope, expression) {
   // eslint-disable-next-line no-eval
   return eval(expression);
 };

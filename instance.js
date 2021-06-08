@@ -1,4 +1,4 @@
-module.exports.retrieve = function(scope, instance) {
+module.exports.retrieve = function (scope, instance) {
   let index = scope;
 
   while (index) {

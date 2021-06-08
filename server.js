@@ -42,7 +42,7 @@ app.get("/processes", (req, res) => {
     group = "";
   }
 
-  fs.readdirSync(`/var/lib/nucleoid/${group}`).forEach(file => {
+  fs.readdirSync(`/var/lib/nucleoid/${group}`).forEach((file) => {
     if (fs.lstatSync(`/var/lib/nucleoid/${group}/${file}`).isDirectory()) {
       if (file !== "init") tree.push({ id: file, type: "group" });
     } else {
@@ -93,7 +93,7 @@ app.post("/", (req, res) => {
     ) {
       req.type = "ASYNC";
 
-      fs.readdirSync(path).forEach(file => {
+      fs.readdirSync(path).forEach((file) => {
         send(`${processId}/${file}`, req);
       });
 
@@ -111,7 +111,7 @@ app.post("/", (req, res) => {
     let files = glob.sync(processIds, { cwd: path });
 
     req.type = "ASYNC";
-    files.forEach(file => {
+    files.forEach((file) => {
       send(file, req);
     });
 
@@ -130,7 +130,7 @@ function start(id) {
   }
 
   proc.pid = fork("./process.js", [`--id=${id}`, "--path=/var/lib/nucleoid/"]);
-  proc.pid.on("message", m => receive(proc, m));
+  proc.pid.on("message", (m) => receive(proc, m));
   proc.pid.on("exit", () => {
     delete proc.pid;
   });
@@ -175,10 +175,10 @@ function receive(proc, message) {
 
     if (details.m) {
       let messages = details.m;
-      messages.forEach(m => {
+      messages.forEach((m) => {
         send(m.process, {
           body: `let m={"pid":"${proc.id}","payload":${m.payload}};new Message(m)`,
-          type: "MESSAGE"
+          type: "MESSAGE",
         });
       });
     }
@@ -200,7 +200,7 @@ function receive(proc, message) {
   }
 }
 
-app.use(function(err, res) {
+app.use(function (err, res) {
   res.type("txt");
   res.status(500).send(err.stack);
 });

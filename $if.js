@@ -5,7 +5,7 @@ var CLASS = require("./class");
 var IF$CLASS = require("./if$class");
 var Instruction = require("./instruction");
 
-module.exports = function(condition, trueB, p3) {
+module.exports = function (condition, trueB, p3) {
   let statement = new $IF();
   statement.condition = condition;
   statement.true = trueB;
@@ -27,7 +27,7 @@ class $IF extends $ {
 
         return [
           new Instruction(scope, statement, true, true, false),
-          new Instruction(scope, statement, false, false, true)
+          new Instruction(scope, statement, false, false, true),
         ];
       }
     }
@@ -39,7 +39,7 @@ class $IF extends $ {
 
     return [
       new Instruction(scope, statement, true, true, false),
-      new Instruction(scope, statement, false, false, true)
+      new Instruction(scope, statement, false, false, true),
     ];
   }
 }

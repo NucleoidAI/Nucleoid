@@ -6,7 +6,7 @@ var DELETE$VARIABLE = require("./delete$variable");
 var DELETE$OBJECT = require("./delete$object");
 var OBJECT = require("./object");
 
-module.exports = function(key) {
+module.exports = function (key) {
   let statement = new $DELETE();
   statement.key = key;
   return statement;

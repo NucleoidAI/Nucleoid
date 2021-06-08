@@ -21,27 +21,27 @@ if (c > 3) nucleoid.run("shipment.test3 = shipment.tes2");
 if (c > 4)
   nucleoid.run("if ( shipment.test ) { shipment.test4 = shipment.test3 } ");
 
-describe("Nucleoid", function() {
+describe("Nucleoid", function () {
   this.timeout(0);
   this.slow(0);
 
-  it("create entity", function() {
+  it("create entity", function () {
     for (let i = 0; i < n; i++) nucleoid.run(`order${i} = new Order ( )`);
   });
 
-  it("updates all entities with class declaration", function() {
+  it("updates all entities with class declaration", function () {
     for (let i = 0; i < n; i++) nucleoid.run(`order${i}.barcode = ${i}`);
   });
 
-  it("updates the same entity with class declaration", function() {
+  it("updates the same entity with class declaration", function () {
     for (let i = 0; i < n; i++) nucleoid.run(`order.barcode = ${i}`);
   });
 
-  it("updates the same entity with property declaration", function() {
+  it("updates the same entity with property declaration", function () {
     for (let i = 0; i < n; i++) nucleoid.run(`shipment.test = ${i}`);
   });
 
-  it("delete entities", function() {
+  it("delete entities", function () {
     for (let i = 0; i < n; i++) nucleoid.run(`delete order${i}`);
   });
 });

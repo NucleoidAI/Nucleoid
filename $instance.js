@@ -6,7 +6,7 @@ var CLASS = require("./class");
 var Local = require("./local");
 var $LET = require("./$let");
 
-module.exports = function(cls, name, object, args) {
+module.exports = function (cls, name, object, args) {
   let statement = new $INSTANCE();
   statement.class = cls;
   statement.name = name;

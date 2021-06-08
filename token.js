@@ -13,7 +13,7 @@ function isDelimiter(c) {
   );
 }
 
-const next = function(string, offset) {
+const next = function (string, offset) {
   if (offset >= string.length) {
     return null;
   }
@@ -208,7 +208,7 @@ module.exports.ARRAY = class ARRAY {
         } else {
           return { done: true };
         }
-      }
+      },
     };
   }
 
@@ -300,7 +300,7 @@ class CALL extends Token {
       .concat("(")
       .concat(
         this.params
-          .map(param => {
+          .map((param) => {
             if (param instanceof FUNCTION) {
               return param.construct();
             }

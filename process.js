@@ -5,7 +5,7 @@ var nucleoid = require("./nucleoid");
 init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
   fs.readFileSync(`${argv.path}/${argv.id}`, "utf8")
     .split(/\n/)
-    .forEach(line => {
+    .forEach((line) => {
       try {
         let details = JSON.parse(line);
         nucleoid.run(details.s, false, true);
@@ -25,7 +25,7 @@ init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
   if (fs.existsSync(`${argv.path}/init/${group}`)) {
     fs.readFileSync(`${argv.path}/init/${group}`, "utf8")
       .split(/\n/)
-      .forEach(line => {
+      .forEach((line) => {
         try {
           let details = JSON.parse(line);
           nucleoid.run(details.s);
@@ -36,7 +36,7 @@ init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
   }
 }
 
-process.on("message", message => {
+process.on("message", (message) => {
   var details = nucleoid.run(message, true);
   process.send(
     JSON.stringify({
@@ -44,7 +44,7 @@ process.on("message", message => {
       t: details.time,
       m: details.messages,
       v: details.events,
-      e: details.error
+      e: details.error,
     })
   );
 });

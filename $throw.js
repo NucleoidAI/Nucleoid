@@ -1,7 +1,7 @@
 var $ = require("./$");
 var THROW = require("./throw");
 
-module.exports = function(exception) {
+module.exports = function (exception) {
   let statement = new $THROW();
   statement.exception = exception;
   return statement;

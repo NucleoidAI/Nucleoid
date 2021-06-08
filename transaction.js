@@ -2,15 +2,15 @@ var state = require("./state").state; // eslint-disable-line no-unused-vars
 
 var list = [];
 
-module.exports.start = function() {
+module.exports.start = function () {
   list = [];
 };
 
-module.exports.end = function() {
+module.exports.end = function () {
   list = [];
 };
 
-module.exports.register = function(p1, p2, p3) {
+module.exports.register = function (p1, p2, p3) {
   if (!p1) {
     return;
   }
@@ -40,7 +40,7 @@ module.exports.register = function(p1, p2, p3) {
   }
 };
 
-module.exports.rollback = function() {
+module.exports.rollback = function () {
   while (list.length) {
     let transaction = list.pop();
     let variable = transaction.variable;
