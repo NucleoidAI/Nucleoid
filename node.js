@@ -1,5 +1,5 @@
 const graph = require("./graph");
-const uuid = require("uuid/v4");
+const uuid = require("uuid").v4;
 const transaction = require("./transaction");
 
 let sequence = 0;
