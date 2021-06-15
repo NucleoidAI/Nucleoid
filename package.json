@@ -7,7 +7,7 @@
     "prepare": "husky install",
     "test": "mocha tests/nucleoid.spec.js --forbidOnly --forbidPending",
     "lint": "eslint --ext .js .",
-    "format": "prettier --check {**/*,*}.{js,json,md,html}"
+    "format": "prettier --check {**/*,*}.{js,json}"
   },
   "repository": {
     "type": "git",

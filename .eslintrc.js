@@ -9,6 +9,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: "module",
   },
+  ignorePatterns: "/node_modules",
   rules: {
     eqeqeq: ["error", "always"],
     "no-console": "off",
