@@ -26,14 +26,6 @@ let processes = [];
 
 start("main");
 
-if (config.ide) {
-  require(config.ide)(app);
-} else {
-  app.get("/", (req, res) => {
-    res.sendFile(`${__dirname}/terminal.html`);
-  });
-}
-
 app.post("/", (req, res) => {
   let processId = req.get("Process");
   let processIds = req.get("Processes");
