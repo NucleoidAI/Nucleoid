@@ -2,11 +2,14 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const fs = require("fs");
 const glob = require("glob");
+const File = require("./file");
 
 const app = express();
 app.use(bodyParser.text({ type: "*/*" }));
 
-const config = JSON.parse(fs.readFileSync("/etc/nucleoid/config.json", "utf8"));
+const config = File.config;
+const path = File.data;
+
 let fn, authorization, event;
 
 if (config.process) {
@@ -57,8 +60,6 @@ app.post("/", (req, res) => {
     }
   }
 
-  let path = `/var/lib/nucleoid/`;
-
   if (processId) {
     if (
       fs.existsSync(`${path}${processId}`) &&
@@ -71,7 +72,7 @@ app.post("/", (req, res) => {
       });
 
       fs.appendFileSync(
-        `/var/lib/nucleoid/init/${processId}`,
+        `${path}init/${processId}`,
         JSON.stringify({ s: req.body, d: Date.now() }) + "\n"
       );
 
@@ -102,7 +103,7 @@ function start(id) {
     processes[id] = proc;
   }
 
-  proc.pid = fork("./process.js", [`--id=${id}`, "--path=/var/lib/nucleoid/"]);
+  proc.pid = fork("./process.js", [`--id=${id}`, `--path=${path}`]);
   proc.pid.on("message", (m) => receive(proc, m));
   proc.pid.on("exit", () => {
     delete proc.pid;
