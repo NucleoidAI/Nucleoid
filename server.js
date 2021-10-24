@@ -34,26 +34,6 @@ if (config.ide) {
   });
 }
 
-app.get("/processes", (req, res) => {
-  let tree = [];
-
-  let group = req.query.group;
-
-  if (group === undefined) {
-    group = "";
-  }
-
-  fs.readdirSync(`/var/lib/nucleoid/${group}`).forEach((file) => {
-    if (fs.lstatSync(`/var/lib/nucleoid/${group}/${file}`).isDirectory()) {
-      if (file !== "init") tree.push({ id: file, type: "group" });
-    } else {
-      tree.push({ id: file, type: "process" });
-    }
-  });
-
-  res.send(tree);
-});
-
 app.post("/", (req, res) => {
   let processId = req.get("Process");
   let processIds = req.get("Processes");
