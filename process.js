@@ -2,7 +2,7 @@ const fs = require("fs");
 const argv = require("yargs").argv;
 const nucleoid = require("./nucleoid");
 
-init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
+if (fs.existsSync(`${argv.path}/${argv.id}`)) {
   fs.readFileSync(`${argv.path}/${argv.id}`, "utf8")
     .split(/\n/)
     .forEach((line) => {
@@ -13,27 +13,6 @@ init: if (fs.existsSync(`${argv.path}/${argv.id}`)) {
         return;
       }
     });
-} else {
-  let parts = argv.id.toString().split("/");
-
-  if (parts.length === 1) {
-    break init;
-  }
-
-  let group = parts[0];
-
-  if (fs.existsSync(`${argv.path}/init/${group}`)) {
-    fs.readFileSync(`${argv.path}/init/${group}`, "utf8")
-      .split(/\n/)
-      .forEach((line) => {
-        try {
-          let details = JSON.parse(line);
-          nucleoid.run(details.s);
-        } catch (error) {
-          return;
-        }
-      });
-  }
 }
 
 process.on("message", (message) => {
