@@ -61,7 +61,7 @@ module.exports.run = function (statement, config) {
       `${argv.path}/${argv.id}`,
       JSON.stringify({
         s,
-        c: declarative,
+        c: declarative ? true : undefined,
         t: time,
         r: json,
         d: date,

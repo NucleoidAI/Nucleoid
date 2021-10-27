@@ -26,7 +26,7 @@ if (fs.existsSync(`${argv.path}/${argv.id}`)) {
 }
 
 process.on("message", (message) => {
-  const config = { details: true };
+  const config = { details: true, declarative: false };
   let details = nucleoid.run(message, config);
   process.send(
     JSON.stringify({
