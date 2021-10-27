@@ -7,17 +7,29 @@ const Event = require("./event");
 const transaction = require("./transaction");
 const Macro = require("./macro");
 
-module.exports.run = function (string, details, cacheOnly) {
-  let before = Date.now();
-  let statements, result, error, json;
+module.exports.run = function (statement, config) {
+  config = config || {};
 
-  let s = Macro.apply(string);
+  {
+    const { declarative } = config;
+    config.declarative = declarative === undefined ? true : declarative;
+  }
+
+  const { details, cacheOnly, declarative } = config;
+
+  let before = Date.now();
+  let statements, result, error, json, execs;
+
+  let s = Macro.apply(statement);
 
   try {
     statements = Statement.compile(s);
     transaction.start();
-    result = Stack.process(statements);
-    transaction.end();
+    result = Stack.process(statements, config);
+    execs = transaction
+      .end()
+      .filter((t) => t.exec)
+      .map((t) => t.exec);
   } catch (e) {
     transaction.rollback();
     result = e;
@@ -49,12 +61,14 @@ module.exports.run = function (string, details, cacheOnly) {
       `${argv.path}/${argv.id}`,
       JSON.stringify({
         s,
+        c: declarative,
         t: time,
         r: json,
         d: date,
         e: error,
         m: messages,
         v: events,
+        x: execs && execs.length ? execs : undefined,
       }) + "\n"
     );
   }
@@ -69,6 +83,7 @@ module.exports.run = function (string, details, cacheOnly) {
       error,
       messages,
       events,
+      execs,
     };
   } else {
     if (error) {

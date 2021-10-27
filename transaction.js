@@ -7,7 +7,9 @@ module.exports.start = function () {
 };
 
 module.exports.end = function () {
+  const result = list;
   list = [];
+  return result;
 };
 
 module.exports.register = function (p1, p2, p3) {
@@ -20,16 +22,18 @@ module.exports.register = function (p1, p2, p3) {
     let expression = p2;
     let scope = p3; // eslint-disable-line no-unused-vars
 
-    // eslint-disable-next-line no-eval
-    list.push({ variable, value: eval(`state.${variable}`) });
+    let exec;
 
     if (typeof expression === "string") {
-      // eslint-disable-next-line no-eval
-      eval(`state.${variable}=${expression}`);
+      exec = `state.${variable}=${expression}`;
     } else {
-      // eslint-disable-next-line no-eval
-      eval(`state.${variable}=expression`);
+      exec = `state.${variable}=expression`;
     }
+
+    // eslint-disable-next-line no-eval
+    list.push({ variable, value: eval(`state.${variable}`), exec });
+    // eslint-disable-next-line no-eval
+    eval(exec);
   } else {
     let object = p1;
     let property = p2;

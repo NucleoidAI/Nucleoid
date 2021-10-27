@@ -3,6 +3,8 @@ const nucleoid = require("../nucleoid");
 const state = require("../state").state;
 const graph = require("../graph");
 
+const config = { details: true };
+
 function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;
 }
@@ -273,7 +275,7 @@ describe("Nucleoid", function () {
   });
 
   it("supports value function of standard built-in objects", function () {
-    let details = nucleoid.run("date1 = Date.now ( )", true);
+    let details = nucleoid.run("date1 = Date.now ( )", config);
     nucleoid.run(details.string.replace("date1", "date2"));
     assert.equal(nucleoid.run("date1 == date2"), true);
 
@@ -294,7 +296,7 @@ describe("Nucleoid", function () {
     );
     nucleoid.run("generateInt.value = true");
 
-    let details = nucleoid.run("number1 = generateInt ( )", true);
+    let details = nucleoid.run("number1 = generateInt ( )", config);
     nucleoid.run(details.string.replace("number1", "number2"));
     assert.equal(nucleoid.run("number1 == number2"), true);
 
@@ -303,7 +305,7 @@ describe("Nucleoid", function () {
     );
     nucleoid.run("generateString.value = true");
 
-    details = nucleoid.run("string1 = generateString ( )", true);
+    details = nucleoid.run("string1 = generateString ( )", config);
     nucleoid.run(details.string.replace("string1", "string2"));
     assert.equal(nucleoid.run("string1 == string2"), true);
   });
@@ -316,7 +318,7 @@ describe("Nucleoid", function () {
 
     let details = nucleoid.run(
       "number1 = generateInt ( ) ; number2 = generateInt ( )",
-      true
+      config
     );
     nucleoid.run(
       details.string.replace("number1", "number3").replace("number2", "number4")
@@ -737,7 +739,7 @@ describe("Nucleoid", function () {
       "class Task { constructor ( ) { message ( '7c6bca38', 'CHECK' ) } }"
     );
 
-    let details1 = nucleoid.run("task1 = new Task ( )", true);
+    let details1 = nucleoid.run("task1 = new Task ( )", config);
     assert.equal(details1.messages[0].process, "7c6bca38");
     assert.equal(details1.messages[0].payload, '"CHECK"');
   });

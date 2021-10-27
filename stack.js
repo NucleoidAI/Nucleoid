@@ -9,9 +9,10 @@ const BREAK = require("./break");
 const EXPRESSION = require("./expression");
 const state = require("./state");
 
-module.exports.process = function (statements) {
-  let root = new Scope();
+module.exports.process = function (statements, config) {
+  const { declarative, graphOnly } = config;
 
+  let root = new Scope();
   let instructions = statements.map(
     (statement) => new Instruction(root, statement, true, true, false)
   );
@@ -61,7 +62,10 @@ module.exports.process = function (statements) {
         statement.before(instruction.scope);
       }
 
-      if (instruction.run) {
+      if (
+        (instruction.run && !graphOnly) ||
+        (instruction.run && statement instanceof $)
+      ) {
         let list = statement.run(instruction.scope);
 
         if (list) {
@@ -108,17 +112,19 @@ module.exports.process = function (statements) {
             }
           }
 
-          let list = statement.graph(instruction.scope);
-          if (list) {
-            list.forEach((e) => {
-              if (graph[e].previous[statement.key] !== undefined) {
-                throw ReferenceError("Circular Dependency");
-              }
-            });
+          if (declarative) {
+            let list = statement.graph(instruction.scope);
+            if (list) {
+              list.forEach((e) => {
+                if (graph[e].previous[statement.key] !== undefined) {
+                  throw ReferenceError("Circular Dependency");
+                }
+              });
 
-            dependencies = dependencies.concat(
-              list.filter((e) => !dependencies.includes(e))
-            );
+              dependencies = dependencies.concat(
+                list.filter((e) => !dependencies.includes(e))
+              );
+            }
           }
         }
 
