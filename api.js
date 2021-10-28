@@ -31,6 +31,7 @@ const start = (nuc) => {
 
     Object.entries(value).forEach(([method, nucDoc]) => {
       const { action } = nucDoc;
+      const params = nucDoc.params || [];
 
       const apiDoc = {
         ...nucDoc,
@@ -51,20 +52,25 @@ const start = (nuc) => {
             },
           },
         },
+        parameters: params.map((param) => ({
+          ...param,
+          schema: { type: param.type },
+          type: undefined,
+        })),
+        request: undefined,
+        response: undefined,
+        action: undefined,
+        params: undefined,
       };
-
-      delete apiDoc.action;
-      delete apiDoc.request;
-      delete apiDoc.response;
 
       fs.appendFileSync(
         file,
-        `function ${method}(req, res){ Service.accept("let json=" + JSON.stringify(req.body) + ";${action}", req, res)};\n`
+        `function ${method}(req, res){ Service.accept("let json=" + JSON.stringify(req.body) + ";${action}", req, res)}`
       );
       fs.appendFileSync(file, `${method}.apiDoc = ${JSON.stringify(apiDoc)};`);
     });
     fs.appendFileSync(file, `return { ${Object.keys(value)} };`);
-    fs.appendFileSync(file, `};`);
+    fs.appendFileSync(file, `}`);
   });
 
   initialize({
@@ -86,6 +92,7 @@ const start = (nuc) => {
       ],
     },
     paths: `${openapi}`,
+    docsPath: "/openapi.json",
   });
 
   app.use(
@@ -93,7 +100,7 @@ const start = (nuc) => {
     swagger.serve,
     swagger.setup(null, {
       swaggerOptions: {
-        url: "/api/api-docs",
+        url: "/api/openapi.json",
       },
     })
   );
