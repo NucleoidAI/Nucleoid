@@ -78,6 +78,11 @@ const start = (nuc) => {
         schemas: nuc.types,
       },
       paths: {},
+      servers: [
+        {
+          url: "api",
+        },
+      ],
     },
     paths: `${openapi}`,
   });
