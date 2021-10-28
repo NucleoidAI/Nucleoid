@@ -2,6 +2,7 @@ const express = require("express");
 const initialize = require("express-openapi").initialize;
 const { openapi } = require("./file");
 const fs = require("fs");
+const swagger = require("swagger-ui-express");
 
 let server;
 
@@ -80,12 +81,22 @@ const start = (nuc) => {
       paths: {},
       servers: [
         {
-          url: "api",
+          url: "/api",
         },
       ],
     },
     paths: `${openapi}`,
   });
+
+  app.use(
+    "/",
+    swagger.serve,
+    swagger.setup(null, {
+      swaggerOptions: {
+        url: "/api/api-docs",
+      },
+    })
+  );
 
   server = app.listen(3000);
 };

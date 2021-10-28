@@ -21,6 +21,7 @@
     "express-openapi": "^9.3.0",
     "glob": "^7.1.7",
     "moment": "^2.29.1",
+    "swagger-ui-express": "^4.1.6",
     "uuid": "^8.3.2",
     "yargs": "^17.0.1"
   },
