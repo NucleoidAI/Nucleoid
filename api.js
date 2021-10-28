@@ -5,8 +5,11 @@ const fs = require("fs");
 const swagger = require("swagger-ui-express");
 
 let server;
+let started = false;
 
 const start = (nuc) => {
+  if (started) return;
+
   const app = express();
   app.use(express.json());
 
@@ -106,10 +109,14 @@ const start = (nuc) => {
   );
 
   server = app.listen(3000);
+  started = true;
 };
 
 const stop = () => {
+  if (!started) return;
+
   server.close();
+  started = false;
 };
 
 module.exports.start = start;
