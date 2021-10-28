@@ -15,7 +15,7 @@ const start = (nuc) => {
 
   Object.entries(api).forEach(([key, value]) => {
     const parts = key.substring(1).split("/");
-    const resource = parts.pop();
+    const resource = parts.pop() || "index";
     const path = parts.join("/");
 
     if (!fs.existsSync(`${openapi}/${path}`))
