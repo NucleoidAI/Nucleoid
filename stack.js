@@ -40,8 +40,11 @@ module.exports.process = function (statements, config) {
       }
     } else if (statement instanceof EXPRESSION) {
       let scope = instruction.scope;
-      let value = statement.run(scope);
-      result = state.run(scope, value);
+
+      if (!graphOnly) {
+        let value = statement.run(scope);
+        result = state.run(scope, value);
+      }
 
       let list = statement.next(scope);
 

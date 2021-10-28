@@ -9,11 +9,11 @@ module.exports = class LET {
     state.run(scope, expression);
   }
 
-  beforeGraph() {}
+  beforeGraph(scope) {
+    scope.graph[this.name] = this;
+  }
 
   graph(scope) {
-    scope.graph[this.name] = this;
-
     if (scope.block !== undefined) {
       return this.value.graph(scope);
     }

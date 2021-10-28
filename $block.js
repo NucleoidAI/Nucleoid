@@ -28,6 +28,7 @@ class $BLOCK extends $ {
 
       if (statement instanceof LET && !(statement.value instanceof REFERENCE)) {
         statement.run(test);
+        statement.beforeGraph(test);
         statement.graph(test);
         continue;
       } else if (statement.type === "CLASS") {
