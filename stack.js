@@ -8,8 +8,10 @@ const $ = require("./$");
 const BREAK = require("./break");
 const EXPRESSION = require("./expression");
 const state = require("./state");
+const Token = require("./token");
+const $CALL = require("./$call");
 
-module.exports.process = function (statements, config) {
+module.exports.process = function process(statements, config) {
   const { declarative, graphOnly } = config;
 
   let root = new Scope();
@@ -42,6 +44,16 @@ module.exports.process = function (statements, config) {
       let scope = instruction.scope;
 
       if (!graphOnly) {
+        const tokens = statement.tokens;
+
+        for (let i = 0; i < tokens.length; i++) {
+          const token = tokens[i];
+
+          if (token instanceof Token.CALL) {
+            process([$CALL(token.string, token.params)], config);
+          }
+        }
+
         let value = statement.run(scope);
         result = state.run(scope, value);
       }

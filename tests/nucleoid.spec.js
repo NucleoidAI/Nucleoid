@@ -3,13 +3,12 @@ const nucleoid = require("../nucleoid");
 const state = require("../state").state;
 const graph = require("../graph");
 
-const config = { details: true };
-
 function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;
 }
 
-describe("Nucleoid", function () {
+describe("Nucleoid (Declarative)", function () {
+  const config = { details: true, declarative: true };
   this.slow(1);
 
   beforeEach(function () {
@@ -288,43 +287,6 @@ describe("Nucleoid", function () {
       },
       (error) => validate(error, TypeError, "Date.wrong is not a function")
     );
-  });
-
-  it("supports value function", function () {
-    nucleoid.run(
-      "function generateInt ( ) { return 65 + Math.round ( Math.random ( ) * 24 ) }"
-    );
-    nucleoid.run("generateInt.value = true");
-
-    let details = nucleoid.run("number1 = generateInt ( )", config);
-    nucleoid.run(details.string.replace("number1", "number2"));
-    assert.equal(nucleoid.run("number1 == number2"), true);
-
-    nucleoid.run(
-      "function generateString ( ) { let number = 65 + Math.round ( Math.random ( ) * 24 ) ; return String.fromCharCode ( number ) ; }"
-    );
-    nucleoid.run("generateString.value = true");
-
-    details = nucleoid.run("string1 = generateString ( )", config);
-    nucleoid.run(details.string.replace("string1", "string2"));
-    assert.equal(nucleoid.run("string1 == string2"), true);
-  });
-
-  it("supports multiple inline value functions", function () {
-    nucleoid.run(
-      "function generateInt ( ) { return Math.round ( Math.random ( ) * 100 ) }"
-    );
-    nucleoid.run("generateInt.value = true");
-
-    let details = nucleoid.run(
-      "number1 = generateInt ( ) ; number2 = generateInt ( )",
-      config
-    );
-    nucleoid.run(
-      details.string.replace("number1", "number3").replace("number2", "number4")
-    );
-    assert.equal(nucleoid.run("number1 == number3"), true);
-    assert.equal(nucleoid.run("number2 == number4"), true);
   });
 
   it("supports function in expression", function () {
@@ -718,7 +680,7 @@ describe("Nucleoid", function () {
     );
   });
 
-  it("creates imperative function in state", function () {
+  it.skip("creates function in state", function () {
     nucleoid.run("function generate ( number ) { return number * 10 }");
     nucleoid.run("random = 10");
     nucleoid.run("number = generate ( random )");
@@ -726,12 +688,6 @@ describe("Nucleoid", function () {
 
     nucleoid.run("random = 20");
     assert.equal(nucleoid.run("number"), 200);
-  });
-
-  it("creates property assignment of function", function () {
-    nucleoid.run("function stamp ( ) { return Date.now ( ) }");
-    nucleoid.run("stamp.approved = true");
-    assert.equal(nucleoid.run("stamp.approved"), true);
   });
 
   it("sends message to other Nucleoid instance", function () {
@@ -2095,5 +2051,27 @@ describe("Nucleoid", function () {
     assert.equal(nucleoid.run("Summarys[1].question.id"), "question3");
     assert.equal(nucleoid.run("Summarys[0].type"), "DAILY");
     assert.equal(nucleoid.run("Summarys[1].type"), "DAILY");
+  });
+});
+
+describe("Nucleoid (Imperative)", function () {
+  this.slow(1);
+
+  const config = { details: true, declarative: false };
+
+  beforeEach(function () {
+    for (let property in state) delete state[property];
+    for (let property in graph) delete graph[property];
+
+    state["Classes"] = [];
+    graph["Classes"] = { name: "Classes" };
+  });
+
+  it("function", () => {
+    nucleoid.run("a = 1", config);
+    nucleoid.run("function copy ( val ) { b = val }", config);
+    const { execs } = nucleoid.run("copy ( a ) + 'A'", config);
+    assert.equal(execs[0], "state.b=state.a");
+    assert.equal(nucleoid.run("b"), "1");
   });
 });

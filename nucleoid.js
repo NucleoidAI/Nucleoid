@@ -20,10 +20,10 @@ module.exports.run = function (statement, config) {
   let before = Date.now();
   let statements, result, error, json, execs;
 
-  let s = Macro.apply(statement);
+  let s = Macro.apply(statement, config);
 
   try {
-    statements = Statement.compile(s);
+    statements = Statement.compile(s, config);
     transaction.start();
     result = Stack.process(statements, config);
     execs = transaction
