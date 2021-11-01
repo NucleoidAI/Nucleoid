@@ -8,10 +8,12 @@ const $ = require("./$");
 const BREAK = require("./break");
 const EXPRESSION = require("./expression");
 const state = require("./state");
-const Token = require("./token");
-const $CALL = require("./$call");
+const RETURN = require("./return");
 
-module.exports.process = function process(statements, config) {
+let config = {};
+
+module.exports.process = function process(statements, configParam) {
+  if (configParam) config = configParam;
   const { declarative, graphOnly } = config;
 
   let root = new Scope();
@@ -28,7 +30,11 @@ module.exports.process = function process(statements, config) {
     let instruction = instructions.shift();
     let statement = instruction.statement;
 
-    if (statement instanceof BREAK) {
+    if (statement instanceof RETURN) {
+      let scope = instruction.scope;
+      let result = statement.run(scope);
+      return result;
+    } else if (statement instanceof BREAK) {
       let inst = instructions[0];
 
       while (
@@ -44,16 +50,6 @@ module.exports.process = function process(statements, config) {
       let scope = instruction.scope;
 
       if (!graphOnly) {
-        const tokens = statement.tokens;
-
-        for (let i = 0; i < tokens.length; i++) {
-          const token = tokens[i];
-
-          if (token instanceof Token.CALL) {
-            process([$CALL(token.string, token.params)], config);
-          }
-        }
-
         let value = statement.run(scope);
         result = state.run(scope, value);
       }

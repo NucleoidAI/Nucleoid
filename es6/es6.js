@@ -10,6 +10,7 @@ const $EXP = require("../$expression");
 const ES6$THROW = require("./es6$throw");
 const ES6$FUNCTION = require("./es6$function");
 const ES6$FOR = require("./es6$for");
+const ES6$RETURN = require("./es6$return");
 
 module.exports.compile = function compile(string) {
   let list = [];
@@ -43,6 +44,7 @@ module.exports.compile = function compile(string) {
     else if (context.token === "function")
       context = ES6$FUNCTION(string, offset);
     else if (context.token === "for") context = ES6$FOR(string, offset);
+    else if (context.token === "return") context = ES6$RETURN(string, offset);
     else context = $EXP(string, offset);
 
     if (context.statement) {

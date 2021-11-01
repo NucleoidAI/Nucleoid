@@ -1272,8 +1272,8 @@ describe("Nucleoid (Declarative)", function () {
   });
 
   it("rejects if property name is value", function () {
-    nucleoid.run("class Number { }");
-    nucleoid.run("value = new Number ( )");
+    nucleoid.run("class Value { }");
+    nucleoid.run("value = new Value ( )");
     assert.throws(
       function () {
         nucleoid.run("value.value = 2147483647");
