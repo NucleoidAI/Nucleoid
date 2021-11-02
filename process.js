@@ -3,17 +3,19 @@ const argv = require("yargs").argv;
 const nucleoid = require("./nucleoid");
 const state = require("./state");
 
-if (fs.existsSync(`${argv.path}/${argv.id}`)) {
-  fs.readFileSync(`${argv.path}/${argv.id}`, "utf8")
+const processPath = `${argv.path}/${argv.id}`;
+if (fs.existsSync(processPath)) {
+  fs.readFileSync(processPath, "utf8")
     .split(/\n/)
     .forEach((line) => {
       try {
         let details = JSON.parse(line);
-        const config = {
+        const options = {
           declarative: details.c,
+          graphOnly: true,
           cacheOnly: true,
         };
-        nucleoid.run(details.s, config);
+        nucleoid.run(details.s, options);
 
         if (details.x) {
           details.x.map((exec) => state.run(null, exec));

@@ -14,7 +14,7 @@ let options = {};
 
 module.exports.process = function process(statements, optionsParam) {
   if (optionsParam) options = optionsParam;
-  const { declarative } = options;
+  const { declarative, graphOnly } = options;
 
   let root = new Scope();
   let instructions = statements.map(
@@ -32,8 +32,7 @@ module.exports.process = function process(statements, optionsParam) {
 
     if (statement instanceof RETURN) {
       let scope = instruction.scope;
-      let result = statement.run(scope);
-      return result;
+      return statement.run(scope);
     } else if (statement instanceof BREAK) {
       let inst = instructions[0];
 
@@ -49,8 +48,10 @@ module.exports.process = function process(statements, optionsParam) {
     } else if (statement instanceof EXPRESSION) {
       let scope = instruction.scope;
 
-      let value = statement.run(scope);
-      result = state.run(scope, value);
+      if (!graphOnly) {
+        let value = statement.run(scope);
+        result = state.run(scope, value);
+      }
 
       let list = statement.next(scope);
 
