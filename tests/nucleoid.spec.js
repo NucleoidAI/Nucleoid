@@ -289,6 +289,43 @@ describe("Nucleoid (Declarative)", function () {
     );
   });
 
+  it.skip("supports value function", function () {
+    nucleoid.run(
+      "function generateInt ( ) { return 65 + Math.round ( Math.random ( ) * 24 ) }"
+    );
+    nucleoid.run("generateInt.value = true");
+
+    let details = nucleoid.run("number1 = generateInt ( )", config);
+    nucleoid.run(details.string.replace("number1", "number2"));
+    assert.equal(nucleoid.run("number1 == number2"), true);
+
+    nucleoid.run(
+      "function generateString ( ) { let number = 65 + Math.round ( Math.random ( ) * 24 ) ; return String.fromCharCode ( number ) ; }"
+    );
+    nucleoid.run("generateString.value = true");
+
+    details = nucleoid.run("string1 = generateString ( )", config);
+    nucleoid.run(details.string.replace("string1", "string2"));
+    assert.equal(nucleoid.run("string1 == string2"), true);
+  });
+
+  it.skip("supports multiple inline value functions", function () {
+    nucleoid.run(
+      "function generateInt ( ) { return Math.round ( Math.random ( ) * 100 ) }"
+    );
+    nucleoid.run("generateInt.value = true");
+
+    let details = nucleoid.run(
+      "number1 = generateInt ( ) ; number2 = generateInt ( )",
+      config
+    );
+    nucleoid.run(
+      details.string.replace("number1", "number3").replace("number2", "number4")
+    );
+    assert.equal(nucleoid.run("number1 == number3"), true);
+    assert.equal(nucleoid.run("number2 == number4"), true);
+  });
+
   it("supports function in expression", function () {
     nucleoid.run("list = [1, 2, 3]");
     assert.equal(

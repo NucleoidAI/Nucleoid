@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "prepare": "husky install",
-    "test": "mocha tests/nucleoid.spec.js",
+    "test": "mocha tests/nucleoid.spec.js --forbidOnly",
     "lint": "eslint --ext .js .",
     "format": "prettier --check {**/*,*}.{js,json}"
   },

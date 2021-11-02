@@ -11,7 +11,6 @@ if (fs.existsSync(`${argv.path}/${argv.id}`)) {
         let details = JSON.parse(line);
         const config = {
           declarative: details.c,
-          graphOnly: true,
           cacheOnly: true,
         };
         nucleoid.run(details.s, config);

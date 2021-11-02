@@ -10,11 +10,11 @@ const EXPRESSION = require("./expression");
 const state = require("./state");
 const RETURN = require("./return");
 
-let config = {};
+let options = {};
 
-module.exports.process = function process(statements, configParam) {
-  if (configParam) config = configParam;
-  const { declarative, graphOnly } = config;
+module.exports.process = function process(statements, optionsParam) {
+  if (optionsParam) options = optionsParam;
+  const { declarative } = options;
 
   let root = new Scope();
   let instructions = statements.map(
@@ -49,10 +49,8 @@ module.exports.process = function process(statements, configParam) {
     } else if (statement instanceof EXPRESSION) {
       let scope = instruction.scope;
 
-      if (!graphOnly) {
-        let value = statement.run(scope);
-        result = state.run(scope, value);
-      }
+      let value = statement.run(scope);
+      result = state.run(scope, value);
 
       let list = statement.next(scope);
 
@@ -73,10 +71,7 @@ module.exports.process = function process(statements, configParam) {
         statement.before(instruction.scope);
       }
 
-      if (
-        (instruction.run && !graphOnly) ||
-        (instruction.run && statement instanceof $)
-      ) {
+      if (instruction.run) {
         let list = statement.run(instruction.scope);
 
         if (list) {
