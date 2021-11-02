@@ -48,7 +48,13 @@ class EXPRESSION {
           const value = require("./stack").process([
             require("./$call")(token.string, token.params),
           ]);
-          this.tokens[i].value = value;
+          this.tokens[i] = new Token(
+            value === undefined
+              ? "undefined"
+              : value === null
+              ? "null"
+              : value.toString()
+          );
         }
       }
 

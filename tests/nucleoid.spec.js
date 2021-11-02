@@ -2070,7 +2070,8 @@ describe("Nucleoid (Imperative)", function () {
   it("function", () => {
     nucleoid.run("a = 1", config);
     nucleoid.run("function copy ( val ) { b = val }", config);
-    const { execs } = nucleoid.run("copy ( a ) + 'A'", config);
+    const { result, execs } = nucleoid.run("copy ( a ) + 'A'", config);
+    assert.equal(result, '"undefinedA"');
     assert.equal(execs[0], "state.b=state.a");
     assert.equal(nucleoid.run("b"), "1");
   });
