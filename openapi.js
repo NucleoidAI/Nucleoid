@@ -68,7 +68,12 @@ const start = (nuc) => {
 
       fs.appendFileSync(
         file,
-        `function ${method}(req, res){ Service.accept("let json=" + JSON.stringify(req.body) + ";{${action}}", req, res)}`
+        `function ${method}(req, res) {` +
+          `Service.accept("` +
+          `let json=" + JSON.stringify(req.body) + ";` +
+          `let query=" + JSON.stringify(req.query) + ";` +
+          `{${action}};"` +
+          `, req, res)}`
       );
       fs.appendFileSync(file, `${method}.apiDoc = ${JSON.stringify(apiDoc)};`);
     });
