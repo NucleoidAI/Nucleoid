@@ -40,13 +40,16 @@ const start = (nuc) => {
 
       const apiDoc = {
         ...nucDoc,
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: nucDoc.request,
-            },
-          },
-        },
+        requestBody:
+          method !== "get"
+            ? {
+                content: {
+                  "application/json": {
+                    schema: nucDoc.request,
+                  },
+                },
+              }
+            : undefined,
         responses: {
           200: {
             description: "Successful Operation",
