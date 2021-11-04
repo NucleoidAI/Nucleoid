@@ -11,7 +11,7 @@ if (fs.existsSync(processPath)) {
       try {
         let details = JSON.parse(line);
         const options = {
-          declarative: details.c,
+          declarative: !!details.c,
           graphOnly: true,
           cacheOnly: true,
         };

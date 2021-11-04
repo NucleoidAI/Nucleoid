@@ -10,11 +10,11 @@ const EXPRESSION = require("./expression");
 const state = require("./state");
 const RETURN = require("./return");
 
-let options = {};
+let _options = {};
 
-module.exports.process = function process(statements, optionsParam) {
-  if (optionsParam) options = optionsParam;
-  const { declarative, graphOnly } = options;
+module.exports.process = function process(statements, options) {
+  if (options) _options = options;
+  const { declarative, graphOnly } = _options;
 
   let root = new Scope();
   let instructions = statements.map(
@@ -176,5 +176,6 @@ module.exports.process = function process(statements, optionsParam) {
     }
   }
 
+  _options = {};
   return result;
 };
