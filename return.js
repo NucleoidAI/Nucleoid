@@ -7,7 +7,5 @@ class RETURN extends Node {
     let result = state.run(scope, value);
     return result;
   }
-
-  graph() {}
 }
 module.exports = RETURN;

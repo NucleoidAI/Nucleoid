@@ -1,4 +1,4 @@
-const nucleoid = require("./nucleoid");
+const nucleoid = require("../nucleoid");
 
 module.exports.load = (nuc) => {
   if (!nuc || !nuc.functions) {

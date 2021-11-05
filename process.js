@@ -3,9 +3,10 @@ const argv = require("yargs").argv;
 const nucleoid = require("./nucleoid");
 const state = require("./state");
 
-const processPath = `${argv.path}/${argv.id}`;
-if (fs.existsSync(processPath)) {
-  fs.readFileSync(processPath, "utf8")
+const PROCESS_PATH = `${argv.path}/${argv.id}`;
+
+if (fs.existsSync(PROCESS_PATH)) {
+  fs.readFileSync(PROCESS_PATH, "utf8")
     .split(/\n/)
     .forEach((line) => {
       try {

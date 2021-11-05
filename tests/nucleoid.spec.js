@@ -2104,7 +2104,7 @@ describe("Nucleoid (Imperative)", function () {
     graph["Classes"] = { name: "Classes" };
   });
 
-  it("function", () => {
+  it("calls function", () => {
     nucleoid.run("a = 1", config);
     nucleoid.run("function copy ( val ) { b = val }", config);
     const { result, execs } = nucleoid.run("copy ( a ) + 'A'", config);
