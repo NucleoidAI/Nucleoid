@@ -8,9 +8,13 @@ const $ = require("./$");
 const BREAK = require("./break");
 const EXPRESSION = require("./expression");
 const state = require("./state");
+const RETURN = require("./return");
 
-module.exports.process = function (statements, config) {
-  const { declarative, graphOnly } = config;
+let _options = {};
+
+module.exports.process = function process(statements, options) {
+  if (options) _options = options;
+  const { declarative, graphOnly } = _options;
 
   let root = new Scope();
   let instructions = statements.map(
@@ -26,7 +30,10 @@ module.exports.process = function (statements, config) {
     let instruction = instructions.shift();
     let statement = instruction.statement;
 
-    if (statement instanceof BREAK) {
+    if (statement instanceof RETURN) {
+      let scope = instruction.scope;
+      return statement.run(scope);
+    } else if (statement instanceof BREAK) {
       let inst = instructions[0];
 
       while (
@@ -65,10 +72,7 @@ module.exports.process = function (statements, config) {
         statement.before(instruction.scope);
       }
 
-      if (
-        (instruction.run && !graphOnly) ||
-        (instruction.run && statement instanceof $)
-      ) {
+      if (instruction.run) {
         let list = statement.run(instruction.scope);
 
         if (list) {
@@ -172,5 +176,6 @@ module.exports.process = function (statements, config) {
     }
   }
 
+  _options = {};
   return result;
 };

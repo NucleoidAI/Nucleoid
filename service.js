@@ -17,14 +17,12 @@ const accept = (statement, req, res) => {
   let proc = req.get("Process") || "main";
   let files = glob.sync(proc, { cwd: path });
 
-  if (files.length < 2) {
-    req.type = "SYNC";
+  if (files.length <= 1) {
     send(proc, statement, req);
   } else {
-    req.type = "ASYNC";
-
     files.forEach((file) => {
-      send(file, statement, req);
+      // Async Process
+      send(file, statement);
     });
 
     res.status(202).send({ count: files.length });
@@ -55,7 +53,7 @@ function send(id, statement, request) {
     proc = start(id);
   }
 
-  proc.requests.push(request);
+  proc.requests.push({ statement, request });
 
   if (proc.requests.length === 1) {
     proc.pid.send(statement);
@@ -63,9 +61,9 @@ function send(id, statement, request) {
 }
 
 function receive(proc, message) {
-  let request = proc.requests.shift();
+  let { request } = proc.requests.shift();
 
-  if (request.type === "SYNC") {
+  if (request) {
     request.res.type("application/json");
     let details = JSON.parse(message);
 
@@ -97,8 +95,8 @@ function receive(proc, message) {
       for (let e of details.v) {
         try {
           event(proc.id, e.name, e.payload);
-        } catch (e) {
-          e;
+        } catch (error) {
+          error;
         }
       }
     }
@@ -106,9 +104,10 @@ function receive(proc, message) {
 
   if (proc.requests.length > 0) {
     let r = proc.requests[0];
-    proc.pid.send(r.body);
+    proc.pid.send(r.statement);
   }
 }
 
-module.exports.accept = accept;
 module.exports.start = start;
+module.exports.accept = accept;
+module.exports.send = send;

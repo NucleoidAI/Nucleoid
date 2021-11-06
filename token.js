@@ -296,7 +296,7 @@ class CALL extends Token {
   }
 
   construct() {
-    return this.string
+    return (this.value || this.string)
       .concat("(")
       .concat(
         this.params

@@ -1,8 +1,9 @@
 const express = require("express");
-const initialize = require("express-openapi").initialize;
+const OpenAPI = require("express-openapi");
 const { openapi } = require("./file");
 const fs = require("fs");
 const swagger = require("swagger-ui-express");
+const uuid = require("uuid").v4;
 
 let server;
 let started = false;
@@ -10,25 +11,26 @@ let started = false;
 const start = (nuc) => {
   if (started) return;
 
+  const tmp = uuid();
+
   const app = express();
   app.use(express.json());
 
   const { api } = nuc;
-  fs.rmdirSync(openapi, { recursive: true });
 
   Object.entries(api).forEach(([key, value]) => {
     const parts = key.substring(1).split("/");
     const resource = parts.pop() || "index";
     const path = parts.join("/");
 
-    if (!fs.existsSync(`${openapi}/${path}`))
-      fs.mkdirSync(`${openapi}/${path}`, { recursive: true });
+    if (!fs.existsSync(`${openapi}/${tmp}/${path}`))
+      fs.mkdirSync(`${openapi}/${tmp}/${path}`, { recursive: true });
 
-    const file = `${openapi}/${path}/${resource}.js`;
+    const file = `${openapi}/${tmp}/${path}/${resource}.js`;
     fs.appendFileSync(
       file,
       `const Service = require("${"../".repeat(
-        parts.length + 1
+        parts.length + 2
       )}service"); module.exports = function () {`
     );
 
@@ -38,13 +40,16 @@ const start = (nuc) => {
 
       const apiDoc = {
         ...nucDoc,
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: nucDoc.request,
-            },
-          },
-        },
+        requestBody:
+          method !== "get"
+            ? {
+                content: {
+                  "application/json": {
+                    schema: nucDoc.request,
+                  },
+                },
+              }
+            : undefined,
         responses: {
           200: {
             description: "Successful Operation",
@@ -68,7 +73,12 @@ const start = (nuc) => {
 
       fs.appendFileSync(
         file,
-        `function ${method}(req, res){ Service.accept("let json=" + JSON.stringify(req.body) + ";${action}", req, res)}`
+        `function ${method}(req, res) {` +
+          `Service.accept("` +
+          `let json=" + JSON.stringify(req.body) + ";` +
+          `let query=" + JSON.stringify(req.query) + \`;` +
+          `{${action}};\`` +
+          `, req, res)}`
       );
       fs.appendFileSync(file, `${method}.apiDoc = ${JSON.stringify(apiDoc)};`);
     });
@@ -76,7 +86,7 @@ const start = (nuc) => {
     fs.appendFileSync(file, `}`);
   });
 
-  initialize({
+  OpenAPI.initialize({
     app,
     apiDoc: {
       openapi: "3.0.1",
@@ -94,7 +104,7 @@ const start = (nuc) => {
         },
       ],
     },
-    paths: `${openapi}`,
+    paths: `${openapi}/${tmp}`,
     docsPath: "/openapi.json",
   });
 

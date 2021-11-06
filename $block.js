@@ -7,11 +7,14 @@ const Scope = require("./scope");
 const LET = require("./let");
 const OBJECT$CLASS = require("./object$class");
 const REFERENCE = require("./reference");
+const $LET = require("./$let");
+const $EXP = require("./$expression");
 
-module.exports = function (statements, skip) {
+module.exports = function (statements, skip, args) {
   let statement = new $BLOCK();
   statement.statements = statements;
   statement.skip = skip;
+  statement.args = args;
   return statement;
 };
 
@@ -59,6 +62,12 @@ class $BLOCK extends $ {
       let statement = new BLOCK();
       statement.statements = this.statements;
       statement.skip = this.skip;
+
+      if (this.args) {
+        statement.statements = Object.entries(this.args)
+          .map(([name, value]) => $LET(name, $EXP(value, 0).statement))
+          .concat(statement.statements);
+      }
 
       return [
         new Instruction(scope, statement, true, true, false),

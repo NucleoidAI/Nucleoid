@@ -7,25 +7,25 @@ const Event = require("./event");
 const transaction = require("./transaction");
 const Macro = require("./macro");
 
-module.exports.run = function (statement, config) {
-  config = config || {};
+module.exports.run = function (statement, options) {
+  options = options || {};
 
   {
-    const { declarative } = config;
-    config.declarative = declarative === undefined ? true : declarative;
+    const { declarative } = options;
+    options.declarative = declarative === undefined ? true : declarative;
   }
 
-  const { details, cacheOnly, declarative } = config;
+  const { details, cacheOnly, declarative } = options;
 
   let before = Date.now();
   let statements, result, error, json, execs;
 
-  let s = Macro.apply(statement);
+  let s = Macro.apply(statement, options);
 
   try {
-    statements = Statement.compile(s);
+    statements = Statement.compile(s, options);
     transaction.start();
-    result = Stack.process(statements, config);
+    result = Stack.process(statements, options);
     execs = transaction
       .end()
       .filter((t) => t.exec)

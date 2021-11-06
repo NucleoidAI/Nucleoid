@@ -6,7 +6,9 @@ const _transaction = require("./transaction");
 const _graph = require("./graph");
 const message = require("./message").message; // eslint-disable-line no-unused-vars
 const event = require("./event").event; // eslint-disable-line no-unused-vars
-const API = require("./api"); // eslint-disable-line no-unused-vars
+const OpenAPI = require("./openapi"); // eslint-disable-line no-unused-vars
+const NUC = require("./utils/nuc"); // eslint-disable-line no-unused-vars
+const Data = require("./utils/data"); // eslint-disable-line no-unused-vars
 
 global.require = require;
 

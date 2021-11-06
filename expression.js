@@ -41,6 +41,23 @@ class EXPRESSION {
         return this.tokens.construct();
       }
 
+      for (let i = 0; i < this.tokens.length; i++) {
+        const token = this.tokens[i];
+
+        if (token instanceof Token.CALL && graph[token.string]) {
+          const value = require("./stack").process([
+            require("./$call")(token.string, token.params),
+          ]);
+          this.tokens[i] = new Token(
+            value === undefined
+              ? "undefined"
+              : value === null
+              ? "null"
+              : value.toString()
+          );
+        }
+      }
+
       let tokens = this.tokens
         .map((token) => (token = Local.reference(scope, token)))
         .map((token) => {
