@@ -1,4 +1,5 @@
 const assert = require("assert");
+const { equal } = assert;
 const nucleoid = require("../nucleoid");
 const state = require("../state").state;
 const graph = require("../graph");
@@ -8,8 +9,7 @@ function validate(error, expectedError, expectedMessage) {
 }
 
 describe("Nucleoid (Declarative)", function () {
-  const config = { details: true, declarative: true };
-  this.slow(1);
+  const details = { details: true };
 
   beforeEach(function () {
     for (let property in state) delete state[property];
@@ -274,8 +274,8 @@ describe("Nucleoid (Declarative)", function () {
   });
 
   it("supports value function of standard built-in objects", function () {
-    let details = nucleoid.run("date1 = Date.now ( )", config);
-    nucleoid.run(details.string.replace("date1", "date2"));
+    const result = nucleoid.run("date1 = Date.now ( )", details);
+    nucleoid.run(result.string.replace("date1", "date2"));
     assert.equal(nucleoid.run("date1 == date2"), true);
 
     nucleoid.run("date3 = Date.parse ( '04 Dec 1995 00:12:00 GMT' )");
@@ -295,7 +295,7 @@ describe("Nucleoid (Declarative)", function () {
     );
     nucleoid.run("generateInt.value = true");
 
-    let details = nucleoid.run("number1 = generateInt ( )", config);
+    let details = nucleoid.run("number1 = generateInt ( )", details);
     nucleoid.run(details.string.replace("number1", "number2"));
     assert.equal(nucleoid.run("number1 == number2"), true);
 
@@ -304,7 +304,7 @@ describe("Nucleoid (Declarative)", function () {
     );
     nucleoid.run("generateString.value = true");
 
-    details = nucleoid.run("string1 = generateString ( )", config);
+    details = nucleoid.run("string1 = generateString ( )", details);
     nucleoid.run(details.string.replace("string1", "string2"));
     assert.equal(nucleoid.run("string1 == string2"), true);
   });
@@ -317,7 +317,7 @@ describe("Nucleoid (Declarative)", function () {
 
     let details = nucleoid.run(
       "number1 = generateInt ( ) ; number2 = generateInt ( )",
-      config
+      details
     );
     nucleoid.run(
       details.string.replace("number1", "number3").replace("number2", "number4")
@@ -732,7 +732,7 @@ describe("Nucleoid (Declarative)", function () {
       "class Task { constructor ( ) { message ( '7c6bca38', 'CHECK' ) } }"
     );
 
-    let details1 = nucleoid.run("task1 = new Task ( )", config);
+    let details1 = nucleoid.run("task1 = new Task ( )", details);
     assert.equal(details1.messages[0].process, "7c6bca38");
     assert.equal(details1.messages[0].payload, '"CHECK"');
   });
@@ -2092,9 +2092,7 @@ describe("Nucleoid (Declarative)", function () {
 });
 
 describe("Nucleoid (Imperative)", function () {
-  this.slow(1);
-
-  const config = { details: true, declarative: false };
+  const imperative = { declarative: false };
 
   beforeEach(function () {
     for (let property in state) delete state[property];
@@ -2104,12 +2102,24 @@ describe("Nucleoid (Imperative)", function () {
     graph["Classes"] = { name: "Classes" };
   });
 
-  it("calls function", () => {
-    nucleoid.run("a = 1", config);
-    nucleoid.run("function copy ( val ) { b = val }", config);
-    const { result, execs } = nucleoid.run("copy ( a ) + 'A'", config);
-    assert.equal(result, '"undefinedA"');
-    assert.equal(execs[0], "state.b=state.a");
-    assert.equal(nucleoid.run("b"), "1");
+  it("calls function with no return", () => {
+    nucleoid.run("a = 1", imperative);
+    nucleoid.run("function copy ( val ) { b = val }", imperative);
+    const result = nucleoid.run("copy ( a )", imperative);
+    assert.equal(result, undefined);
+  });
+
+  it("calls function with returning variable", () => {
+    nucleoid.run("a = 1", imperative);
+    nucleoid.run("function copy ( val ) { b = val; return b; }", imperative);
+    const result = nucleoid.run("copy ( a )", imperative);
+    equal(result, 1);
+  });
+
+  it("calls function with returning value", () => {
+    nucleoid.run("a = 1", imperative);
+    nucleoid.run("function copy ( val ) { b = val; return val; }", imperative);
+    const result = nucleoid.run("copy ( a )", imperative);
+    equal(result, 1);
   });
 });

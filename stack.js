@@ -151,7 +151,7 @@ module.exports.process = function process(statements, options) {
             });
         }
 
-        // Root scope is a scope, which does not have any prior.
+        // Root scope is a scope, which does not have any prior
         if (!instruction.scope.prior) {
           if (!instruction.statement.skip) {
             dependencies.forEach((source) => {
