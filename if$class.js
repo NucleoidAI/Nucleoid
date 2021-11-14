@@ -42,7 +42,7 @@ class IF$CLASS extends Node {
       statements.push(statement);
     }
 
-    return statements;
+    return { next: statements };
   }
 
   graph() {

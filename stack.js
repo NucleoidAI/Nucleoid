@@ -49,8 +49,9 @@ module.exports.process = function process(statements, options) {
       let scope = instruction.scope;
 
       if (!graphOnly) {
-        let value = statement.run(scope);
-        result = state.run(scope, value);
+        const expression = statement.run(scope);
+        const value = state.run(scope, expression);
+        if (!instruction.scope.prior) result = value;
       }
 
       let list = statement.next(scope);
@@ -62,10 +63,37 @@ module.exports.process = function process(statements, options) {
               return statement;
             } else {
               let scope = instruction.scope;
-              return new Instruction(scope, statement, false, true, false);
+              return new Instruction(
+                scope,
+                statement,
+                false,
+                true,
+                false,
+                null,
+                true
+              );
             }
           })
           .concat(instructions);
+      }
+    } else if (statement instanceof $) {
+      if (instruction.before) {
+        statement.before(instruction.scope);
+      }
+
+      if (instruction.run) {
+        let next = statement.run(instruction.scope);
+        let scope = instruction.scope;
+        next = Array.isArray(next) ? next : [next];
+
+        next = next.map((statement) => {
+          return statement instanceof Instruction
+            ? statement
+            : new Instruction(scope, statement, true, true, true);
+        });
+
+        instructions = next.filter((i) => !i.root).concat(instructions);
+        additionals = next.filter((i) => i.root).concat(additionals);
       }
     } else {
       if (instruction.before) {
@@ -73,11 +101,15 @@ module.exports.process = function process(statements, options) {
       }
 
       if (instruction.run) {
-        let list = statement.run(instruction.scope);
+        let { value, next } = statement.run(instruction.scope) || {};
 
-        if (list) {
+        if (!instruction.scope.prior && !instruction.derivative) {
+          result = value;
+        }
+
+        if (next) {
           let scope = instruction.scope;
-          list = Array.isArray(list) ? list : [list];
+          next = Array.isArray(next) ? next : [next];
 
           if (statement instanceof BLOCK) {
             scope = new Scope(scope);
@@ -88,14 +120,19 @@ module.exports.process = function process(statements, options) {
             scope = new Scope(scope);
           }
 
-          list = list.map((statement) => {
-            return statement instanceof Instruction
-              ? statement
-              : new Instruction(scope, statement, true, true, true);
-          });
+          next = next
+            .map((statement) => {
+              return statement instanceof Instruction
+                ? statement
+                : new Instruction(scope, statement, true, true, true);
+            })
+            .map((statement) => {
+              statement.derivative = true;
+              return statement;
+            });
 
-          instructions = list.filter((i) => !i.root).concat(instructions);
-          additionals = list.filter((i) => i.root).concat(additionals);
+          instructions = next.filter((i) => !i.root).concat(instructions);
+          additionals = next.filter((i) => i.root).concat(additionals);
         }
       }
 
@@ -143,10 +180,16 @@ module.exports.process = function process(statements, options) {
 
               if (n instanceof BLOCK || n instanceof IF) {
                 let scope = new Scope();
-                dependents.push(new Instruction(scope, n, false, true, false));
-                dependents.push(new Instruction(scope, n, false, false, true));
+                dependents.push(
+                  new Instruction(scope, n, false, true, false, null, true)
+                );
+                dependents.push(
+                  new Instruction(scope, n, false, false, true, null, true)
+                );
               } else {
-                dependents.push(new Instruction(s, n, false, true, false));
+                dependents.push(
+                  new Instruction(s, n, false, true, false, null, true)
+                );
               }
             });
         }
@@ -176,6 +219,5 @@ module.exports.process = function process(statements, options) {
     }
   }
 
-  _options = {};
   return result;
 };

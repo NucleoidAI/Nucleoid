@@ -22,7 +22,7 @@ module.exports = class LET$INSTANCE extends LET {
       let expression = "scope.local." + this.name + `=${value}`;
       state.run(scope, expression);
     } catch (error) {
-      return new BREAK(scope.block);
+      return { next: new BREAK(scope.block) };
     }
   }
 };

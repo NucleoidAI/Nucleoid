@@ -782,6 +782,11 @@ describe("Nucleoid (Declarative)", function () {
     assert.equal(nucleoid.run("y == 4"), true);
   });
 
+  it("return assigned value while variable assignment", function () {
+    const result = nucleoid.run("x = 1");
+    assert.equal(result, 1);
+  });
+
   it("updates variable assignment", function () {
     nucleoid.run("a = 1");
     nucleoid.run("b = 2");

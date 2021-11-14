@@ -29,7 +29,7 @@ class BLOCK$CLASS extends Node {
       statements.push(new Instruction(scope, statement, false, false, true));
     }
 
-    return statements;
+    return { next: statements };
   }
 
   graph() {

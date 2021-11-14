@@ -67,7 +67,7 @@ module.exports = class OBJECT extends Node {
       list.push(context.statement);
     }
 
-    return list;
+    return { value: name, next: list };
   }
 
   graph() {

@@ -10,7 +10,7 @@ module.exports = class BLOCK extends Node {
   run() {
     let list = this.statements;
     this.statements = [];
-    return list;
+    return { next: list };
   }
 
   stage(instruction) {
