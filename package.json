@@ -1,7 +1,9 @@
 {
   "name": "nucleoid",
-  "version": "1.1.0",
-  "description": "Nucleoid Project",
+  "version": "0.2.0",
+  "description": "Nucleoid",
+  "author": "Can Mingir",
+  "license": "Apache-2.0",
   "main": "index.js",
   "scripts": {
     "prepare": "husky install",
@@ -13,8 +15,6 @@
     "type": "git",
     "url": "https://git.nucleoid.org"
   },
-  "author": "Can Mingir",
-  "license": "Apache-2.0",
   "dependencies": {
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
