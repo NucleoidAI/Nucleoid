@@ -24,7 +24,7 @@ module.exports.process = function process(statements, options) {
   let result;
   let dependencies = [];
   let dependents = [];
-  let additionals = [];
+  let priorities = [];
 
   while (instructions.length !== 0) {
     let instruction = instructions.shift();
@@ -93,7 +93,7 @@ module.exports.process = function process(statements, options) {
         });
 
         instructions = next.filter((i) => !i.root).concat(instructions);
-        additionals = next.filter((i) => i.root).concat(additionals);
+        priorities = next.filter((i) => i.root).concat(priorities);
       }
     } else {
       if (instruction.before) {
@@ -132,7 +132,7 @@ module.exports.process = function process(statements, options) {
             });
 
           instructions = next.filter((i) => !i.root).concat(instructions);
-          additionals = next.filter((i) => i.root).concat(additionals);
+          priorities = next.filter((i) => i.root).concat(priorities);
         }
       }
 
@@ -204,11 +204,11 @@ module.exports.process = function process(statements, options) {
           }
 
           instructions = instructions.concat(dependents);
-          instructions = instructions.concat(additionals);
+          instructions = instructions.concat(priorities);
 
           dependencies = [];
           dependents = [];
-          additionals = [];
+          priorities = [];
         }
       }
 
