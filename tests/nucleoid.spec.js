@@ -1,5 +1,4 @@
 const assert = require("assert");
-const { equal } = assert;
 const nucleoid = require("../nucleoid");
 const state = require("../state").state;
 const graph = require("../graph");
@@ -8,7 +7,7 @@ function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;
 }
 
-describe("Nucleoid (Declarative)", function () {
+describe("Nucleoid", function () {
   const details = { details: true };
 
   beforeEach(function () {
@@ -324,6 +323,27 @@ describe("Nucleoid (Declarative)", function () {
     );
     assert.equal(nucleoid.run("number1 == number3"), true);
     assert.equal(nucleoid.run("number2 == number4"), true);
+  });
+
+  it("calls function with no return", () => {
+    nucleoid.run("a = 1");
+    nucleoid.run("function copy ( val ) { b = val }");
+    const result = nucleoid.run("copy ( a )");
+    assert.equal(result, undefined);
+  });
+
+  it("calls function with returning variable", () => {
+    nucleoid.run("a = 1");
+    nucleoid.run("function copy ( val ) { b = val; return b; }");
+    const result = nucleoid.run("copy ( a )");
+    assert.equal(result, 1);
+  });
+
+  it("calls function with returning value", () => {
+    nucleoid.run("a = 1");
+    nucleoid.run("function copy ( val ) { b = val; return val; }");
+    const result = nucleoid.run("copy ( a )");
+    assert.equal(result, 1);
   });
 
   it("supports function in expression", function () {
@@ -2094,37 +2114,44 @@ describe("Nucleoid (Declarative)", function () {
     assert.equal(nucleoid.run("Summarys[0].type"), "DAILY");
     assert.equal(nucleoid.run("Summarys[1].type"), "DAILY");
   });
-});
 
-describe("Nucleoid (Imperative)", function () {
-  const imperative = { declarative: false };
+  describe("Nucleoid (Imperative)", () => {
+    const imperative = { declarative: false };
 
-  beforeEach(function () {
-    for (let property in state) delete state[property];
-    for (let property in graph) delete graph[property];
+    beforeEach(function () {
+      for (let property in state) delete state[property];
+      for (let property in graph) delete graph[property];
 
-    state["Classes"] = [];
-    graph["Classes"] = { name: "Classes" };
-  });
+      state["Classes"] = [];
+      graph["Classes"] = { name: "Classes" };
+    });
 
-  it("calls function with no return", () => {
-    nucleoid.run("a = 1", imperative);
-    nucleoid.run("function copy ( val ) { b = val }", imperative);
-    const result = nucleoid.run("copy ( a )", imperative);
-    assert.equal(result, undefined);
-  });
+    it("creates variable assignment", () => {
+      nucleoid.run("x = 1", imperative);
+      nucleoid.run("y = x + 2", imperative);
+      nucleoid.run("x = 2", imperative);
+      assert.equal(nucleoid.run("y", imperative), 3);
+    });
 
-  it("calls function with returning variable", () => {
-    nucleoid.run("a = 1", imperative);
-    nucleoid.run("function copy ( val ) { b = val; return b; }", imperative);
-    const result = nucleoid.run("copy ( a )", imperative);
-    equal(result, 1);
-  });
+    it("creates if statement of variable", () => {
+      nucleoid.run("m = false", imperative);
+      nucleoid.run("n = false", imperative);
+      nucleoid.run("if ( m == true ) { n = m && true }", imperative);
+      assert.equal(nucleoid.run("n", imperative), false);
 
-  it("calls function with returning value", () => {
-    nucleoid.run("a = 1", imperative);
-    nucleoid.run("function copy ( val ) { b = val; return val; }", imperative);
-    const result = nucleoid.run("copy ( a )", imperative);
-    equal(result, 1);
+      nucleoid.run("m = true", imperative);
+      assert.equal(nucleoid.run("n", imperative), false);
+    });
+
+    it("creates property assignment", () => {
+      nucleoid.run("class Order { }", imperative);
+      nucleoid.run("var order1 = new Order ( )", imperative);
+      nucleoid.run("order1.upc = '04061' + order1.barcode", imperative);
+      nucleoid.run("order1.barcode = '94067'", imperative);
+      assert.equal(nucleoid.run("order1.upc", imperative), undefined);
+
+      nucleoid.run("order1.upc = '04061' + order1.barcode", imperative);
+      assert.equal(nucleoid.run("order1.upc", imperative), "0406194067");
+    });
   });
 });
