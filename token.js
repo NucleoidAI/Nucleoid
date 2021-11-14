@@ -35,21 +35,21 @@ const next = function (string, offset) {
     }
 
     if (singleOn) {
-      singleOn = character === 39 ? false : true;
+      singleOn = character !== 39;
       token += String.fromCharCode(character);
       continue;
     }
 
     if (doubleOn) {
-      doubleOn = character === 34 ? false : true;
+      doubleOn = character !== 34;
       token += String.fromCharCode(character);
       continue;
     }
 
     if (!isDelimiter(character) && active === false) {
       active = true;
-      singleOn = character === 39 ? true : false;
-      doubleOn = character === 34 ? true : false;
+      singleOn = character === 39;
+      doubleOn = character === 34;
       token += String.fromCharCode(character);
     } else if (!isDelimiter(character) && active === true) {
       token += String.fromCharCode(character);
