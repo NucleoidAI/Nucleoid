@@ -2115,6 +2115,21 @@ describe("Nucleoid", function () {
     assert.equal(nucleoid.run("Summarys[1].type"), "DAILY");
   });
 
+  it("returns integer in variable assignment", () => {
+    nucleoid.run("function test ( a ) { return a = 2 }");
+    assert.equal(nucleoid.run("b = 1 ; test ( b )"), 2);
+  });
+
+  it("returns string in variable assignment", () => {
+    nucleoid.run("function test ( a ) { return a = 'abc' }");
+    assert.equal(nucleoid.run("b = 1 ; test ( b )"), "abc");
+  });
+
+  it("returns object in variable assignment", () => {
+    nucleoid.run("function test ( a ) { return a = new Object ( ) }");
+    assert.deepEqual(nucleoid.run("b = 1 ; test ( b )"), {});
+  });
+
   describe("Nucleoid (Imperative)", () => {
     const imperative = { declarative: false };
 

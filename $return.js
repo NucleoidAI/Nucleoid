@@ -1,16 +1,14 @@
 const $ = require("./$");
 const RETURN = require("./return");
 
-module.exports = function (expression) {
+module.exports = function (statements) {
   const statement = new $RETURN();
-  statement.expression = expression;
+  statement.statements = statements;
   return statement;
 };
 
 class $RETURN extends $ {
   run() {
-    const statement = new RETURN();
-    statement.expression = this.expression.run();
-    return statement;
+    return new RETURN(this.statements);
   }
 }

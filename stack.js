@@ -12,11 +12,11 @@ const RETURN = require("./return");
 
 let _options = {};
 
-module.exports.process = function process(statements, options) {
+module.exports.process = function process(statements, options, prior) {
+  const root = new Scope(prior);
   if (options) _options = options;
   const { declarative, graphOnly } = _options;
 
-  let root = new Scope();
   let instructions = statements.map(
     (statement) => new Instruction(root, statement, true, true, false)
   );
@@ -32,7 +32,7 @@ module.exports.process = function process(statements, options) {
 
     if (statement instanceof RETURN) {
       let scope = instruction.scope;
-      return statement.run(scope);
+      return process(statement.statements, null, scope);
     } else if (statement instanceof BREAK) {
       let inst = instructions[0];
 
@@ -51,7 +51,10 @@ module.exports.process = function process(statements, options) {
       if (!graphOnly) {
         const expression = statement.run(scope);
         const value = state.run(scope, expression);
-        if (!instruction.scope.prior) result = value;
+
+        if (instruction.scope === root) {
+          result = value;
+        }
       }
 
       let list = statement.next(scope);
@@ -103,7 +106,7 @@ module.exports.process = function process(statements, options) {
       if (instruction.run) {
         let { value, next } = statement.run(instruction.scope) || {};
 
-        if (!instruction.scope.prior && !instruction.derivative) {
+        if (instruction.scope === root && !instruction.derivative) {
           result = value;
         }
 
