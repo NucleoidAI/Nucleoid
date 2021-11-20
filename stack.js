@@ -15,7 +15,7 @@ setImmediate(() => (Runtime = require("./runtime")));
 
 module.exports.process = function process(statements, prior) {
   const root = new Scope(prior);
-  const { declarative, graphOnly } = Runtime.options();
+  const { declarative } = Runtime.options();
 
   let instructions = statements.map(
     (statement) => new Instruction(root, statement, true, true, false)
@@ -48,13 +48,11 @@ module.exports.process = function process(statements, prior) {
     } else if (statement instanceof EXPRESSION) {
       let scope = instruction.scope;
 
-      if (!graphOnly) {
-        const expression = statement.run(scope);
-        const value = state.run(scope, expression);
+      const expression = statement.run(scope);
+      const value = state.run(scope, expression);
 
-        if (instruction.scope === root) {
-          result = value;
-        }
+      if (instruction.scope === root) {
+        result = value;
       }
 
       let list = statement.next(scope);

@@ -13,7 +13,6 @@ if (fs.existsSync(PROCESS_PATH)) {
         let details = JSON.parse(line);
         const options = {
           declarative: !!details.c,
-          graphOnly: true,
           cacheOnly: true,
         };
         nucleoid.run(details.s, options);
