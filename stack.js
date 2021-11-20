@@ -9,13 +9,13 @@ const BREAK = require("./break");
 const EXPRESSION = require("./expression");
 const state = require("./state");
 const RETURN = require("./return");
+let Runtime;
 
-let _options = {};
+setImmediate(() => (Runtime = require("./runtime")));
 
-module.exports.process = function process(statements, options, prior) {
+module.exports.process = function process(statements, prior) {
   const root = new Scope(prior);
-  if (options) _options = options;
-  const { declarative, graphOnly } = _options;
+  const { declarative, graphOnly } = Runtime.options();
 
   let instructions = statements.map(
     (statement) => new Instruction(root, statement, true, true, false)
@@ -32,7 +32,7 @@ module.exports.process = function process(statements, options, prior) {
 
     if (statement instanceof RETURN) {
       let scope = instruction.scope;
-      return process(statement.statements, null, scope);
+      return process(statement.statements, scope);
     } else if (statement instanceof BREAK) {
       let inst = instructions[0];
 

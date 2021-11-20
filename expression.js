@@ -5,6 +5,11 @@ const Identifier = require("./identifier");
 const Node = require("./node");
 const Token = require("./token");
 const argv = require("yargs").argv;
+let Stack;
+let $CALL;
+
+setImmediate(() => (Stack = require("./stack")));
+setImmediate(() => ($CALL = require("./$call")));
 
 class EXPRESSION {
   constructor(tokens) {
@@ -45,9 +50,7 @@ class EXPRESSION {
         const token = this.tokens[i];
 
         if (token instanceof Token.CALL && graph[token.string]) {
-          const value = require("./stack").process([
-            require("./$call")(token.string, token.params),
-          ]);
+          const value = Stack.process([$CALL(token.string, token.params)]);
           this.tokens[i] = new Token(
             value === undefined
               ? "undefined"
