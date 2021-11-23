@@ -64,10 +64,20 @@ module.exports = class OBJECT extends Node {
       state.run(scope, `state.${name}.id="${name}"`);
 
       context = $EXP(this.name, 0);
-      list.push(context.statement);
+      list.push(
+        new Instruction(
+          scope,
+          context.statement,
+          true,
+          true,
+          false,
+          null,
+          false
+        )
+      );
     }
 
-    return list;
+    return { value: name, next: list };
   }
 
   graph() {

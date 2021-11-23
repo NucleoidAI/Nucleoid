@@ -15,7 +15,7 @@ module.exports = function ES6$FOR(string, offset) {
   context = Token.next(string, context.offset);
   context = Token.next(string, context.offset);
   context = Token.nextBlock(string, context.offset);
-  let statements = ES6.compile(context.block, 0);
+  const { statements } = ES6.compile(context.block);
 
   return { statement: $FOR(variable, array, statements) };
 };

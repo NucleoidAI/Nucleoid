@@ -16,7 +16,7 @@ module.exports = function ES6$IF(string, offset) {
 
     context = Token.next(string, context.offset);
     context = Token.nextBlock(string, context.offset);
-    let trueBlock = ES6.compile(context.block);
+    let trueBlock = ES6.compile(context.block).statements;
 
     let elsePoint = Token.next(string, context.offset);
     let falseBlock;
@@ -30,7 +30,7 @@ module.exports = function ES6$IF(string, offset) {
       } else {
         context = Token.next(string, elsePoint.offset);
         context = Token.nextBlock(string, context.offset);
-        let statements = ES6.compile(context.block);
+        const { statements } = ES6.compile(context.block);
         falseBlock = $BLOCK(statements);
       }
     }

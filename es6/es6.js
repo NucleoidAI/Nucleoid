@@ -12,11 +12,18 @@ const ES6$FUNCTION = require("./es6$function");
 const ES6$FOR = require("./es6$for");
 const ES6$RETURN = require("./es6$return");
 
-module.exports.compile = function compile(string) {
-  let list = [];
+module.exports.compile = function compile(string, offset) {
+  offset = offset || 0;
+  let statements = [];
 
-  for (let offset = 0; offset < string.length; ) {
+  while (offset < string.length) {
     let context = Token.next(string, offset);
+
+    if (!context || !context.token) {
+      offset++;
+      continue;
+    }
+
     let check = Token.next(string, context.offset);
 
     if (check && check.token === "=") {
@@ -25,7 +32,7 @@ module.exports.compile = function compile(string) {
       if (check && check.token !== "=") {
         context = ES6$ASSIGNMENT(string, offset);
         if (context.statement) {
-          list.push(context.statement);
+          statements.push(context.statement);
         }
 
         offset = context.offset;
@@ -48,11 +55,11 @@ module.exports.compile = function compile(string) {
     else context = $EXP(string, offset);
 
     if (context.statement) {
-      list.push(context.statement);
+      statements.push(context.statement);
     }
 
     offset = context.offset;
   }
 
-  return list;
+  return { statements, offset };
 };

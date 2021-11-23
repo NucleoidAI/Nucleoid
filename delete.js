@@ -15,7 +15,7 @@ module.exports = class DELETE {
       list.push(new Instruction(scope.root, graph[node], false, true, false));
     }
 
-    return list;
+    return { next: list };
   }
 
   beforeGraph() {}

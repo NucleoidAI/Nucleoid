@@ -11,11 +11,12 @@ module.exports = function (name, params) {
 
 class $CALL extends $ {
   run() {
-    const func = graph[this.name];
-    if (func) {
-      const block = func.block;
+    const fn = graph[this.name];
+
+    if (fn) {
+      const block = fn.block;
       const params = this.params;
-      const args = func.args;
+      const args = fn.args;
 
       const object = {};
 

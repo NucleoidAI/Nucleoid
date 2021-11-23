@@ -20,22 +20,26 @@ module.exports = class IF extends Node {
       condition = this.condition.run(scope);
 
       if (condition === "undefined") {
-        return new BREAK(scope.block);
+        return { next: new BREAK(scope.block) };
       }
     }
 
     if (state.run(scope, condition)) {
-      return [
-        new Instruction(s, this.true, true, false),
-        new Instruction(s, this.true, false, true),
-      ];
+      return {
+        next: [
+          new Instruction(s, this.true, true, false),
+          new Instruction(s, this.true, false, true),
+        ],
+      };
     } else if (this.false && this.false instanceof IF) {
-      return this.false.run(scope);
+      return { next: this.false.run(scope) };
     } else if (this.false) {
-      return [
-        new Instruction(s, this.false, true, false),
-        new Instruction(s, this.false, false, true),
-      ];
+      return {
+        next: [
+          new Instruction(s, this.false, true, false),
+          new Instruction(s, this.false, false, true),
+        ],
+      };
     }
   }
 

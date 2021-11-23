@@ -26,7 +26,7 @@ const CLASS = class CLASS extends Node {
     let instanceContext = $EXP("[]", 0);
     list.push($VAR(this.name + "s", instanceContext.statement));
 
-    return list;
+    return { next: list };
   }
 
   beforeGraph() {

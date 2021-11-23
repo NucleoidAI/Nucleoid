@@ -47,6 +47,8 @@ function start(id) {
 }
 
 function send(id, statement, request) {
+  statement = (statement || "").trim();
+
   let proc = processes[id];
 
   if (!proc || !proc.pid) {

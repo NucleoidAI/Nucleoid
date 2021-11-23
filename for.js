@@ -27,7 +27,7 @@ module.exports = class FOR {
       }
 
       list.push(new Instruction(scope, this, false, true, false));
-      return list;
+      return { next: list };
     }
   }
 };

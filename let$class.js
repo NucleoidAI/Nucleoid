@@ -13,7 +13,7 @@ class LET$CLASS {
       statement.instance = instance;
       statement.name = this.name;
       statement.declaration = this;
-      return statement;
+      return { next: statement };
     }
   }
 

@@ -7,9 +7,8 @@ function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;
 }
 
-describe("Nucleoid (Declarative)", function () {
-  const config = { details: true, declarative: true };
-  this.slow(1);
+describe("Nucleoid", function () {
+  const details = { details: true };
 
   beforeEach(function () {
     for (let property in state) delete state[property];
@@ -274,8 +273,8 @@ describe("Nucleoid (Declarative)", function () {
   });
 
   it("supports value function of standard built-in objects", function () {
-    let details = nucleoid.run("date1 = Date.now ( )", config);
-    nucleoid.run(details.string.replace("date1", "date2"));
+    const result = nucleoid.run("date1 = Date.now ( )", details);
+    nucleoid.run(result.string.replace("date1", "date2"));
     assert.equal(nucleoid.run("date1 == date2"), true);
 
     nucleoid.run("date3 = Date.parse ( '04 Dec 1995 00:12:00 GMT' )");
@@ -295,7 +294,7 @@ describe("Nucleoid (Declarative)", function () {
     );
     nucleoid.run("generateInt.value = true");
 
-    let details = nucleoid.run("number1 = generateInt ( )", config);
+    let details = nucleoid.run("number1 = generateInt ( )", details);
     nucleoid.run(details.string.replace("number1", "number2"));
     assert.equal(nucleoid.run("number1 == number2"), true);
 
@@ -304,7 +303,7 @@ describe("Nucleoid (Declarative)", function () {
     );
     nucleoid.run("generateString.value = true");
 
-    details = nucleoid.run("string1 = generateString ( )", config);
+    details = nucleoid.run("string1 = generateString ( )", details);
     nucleoid.run(details.string.replace("string1", "string2"));
     assert.equal(nucleoid.run("string1 == string2"), true);
   });
@@ -317,13 +316,34 @@ describe("Nucleoid (Declarative)", function () {
 
     let details = nucleoid.run(
       "number1 = generateInt ( ) ; number2 = generateInt ( )",
-      config
+      details
     );
     nucleoid.run(
       details.string.replace("number1", "number3").replace("number2", "number4")
     );
     assert.equal(nucleoid.run("number1 == number3"), true);
     assert.equal(nucleoid.run("number2 == number4"), true);
+  });
+
+  it("calls function with no return", () => {
+    nucleoid.run("a = 1");
+    nucleoid.run("function copy ( val ) { b = val }");
+    const result = nucleoid.run("copy ( a )");
+    assert.equal(result, undefined);
+  });
+
+  it("calls function with returning variable", () => {
+    nucleoid.run("a = 1");
+    nucleoid.run("function copy ( val ) { b = val; return b; }");
+    const result = nucleoid.run("copy ( a )");
+    assert.equal(result, 1);
+  });
+
+  it("calls function with returning value", () => {
+    nucleoid.run("a = 1");
+    nucleoid.run("function copy ( val ) { b = val; return val; }");
+    const result = nucleoid.run("copy ( a )");
+    assert.equal(result, 1);
   });
 
   it("supports function in expression", function () {
@@ -732,7 +752,7 @@ describe("Nucleoid (Declarative)", function () {
       "class Task { constructor ( ) { message ( '7c6bca38', 'CHECK' ) } }"
     );
 
-    let details1 = nucleoid.run("task1 = new Task ( )", config);
+    let details1 = nucleoid.run("task1 = new Task ( )", details);
     assert.equal(details1.messages[0].process, "7c6bca38");
     assert.equal(details1.messages[0].payload, '"CHECK"');
   });
@@ -780,6 +800,11 @@ describe("Nucleoid (Declarative)", function () {
     nucleoid.run("y = x + 2");
     nucleoid.run("x = 2");
     assert.equal(nucleoid.run("y == 4"), true);
+  });
+
+  it("return assigned value while variable assignment", function () {
+    const result = nucleoid.run("x = 1");
+    assert.equal(result, 1);
   });
 
   it("updates variable assignment", function () {
@@ -2089,27 +2114,70 @@ describe("Nucleoid (Declarative)", function () {
     assert.equal(nucleoid.run("Summarys[0].type"), "DAILY");
     assert.equal(nucleoid.run("Summarys[1].type"), "DAILY");
   });
-});
 
-describe("Nucleoid (Imperative)", function () {
-  this.slow(1);
-
-  const config = { details: true, declarative: false };
-
-  beforeEach(function () {
-    for (let property in state) delete state[property];
-    for (let property in graph) delete graph[property];
-
-    state["Classes"] = [];
-    graph["Classes"] = { name: "Classes" };
+  it("returns integer in variable assignment", () => {
+    nucleoid.run("function test ( a ) { return a = 2 }");
+    assert.equal(nucleoid.run("b = 1 ; test ( b )"), 2);
   });
 
-  it("calls function", () => {
-    nucleoid.run("a = 1", config);
-    nucleoid.run("function copy ( val ) { b = val }", config);
-    const { result, execs } = nucleoid.run("copy ( a ) + 'A'", config);
-    assert.equal(result, '"undefinedA"');
-    assert.equal(execs[0], "state.b=state.a");
-    assert.equal(nucleoid.run("b"), "1");
+  it("returns string in variable assignment", () => {
+    nucleoid.run("function test ( a ) { return a = 'abc' }");
+    assert.equal(nucleoid.run("b = 1 ; test ( b )"), "abc");
+  });
+
+  it("returns object in variable assignment", () => {
+    nucleoid.run("function test ( a ) { return a = new Object ( ) }");
+    assert.deepEqual(nucleoid.run("b = 1 ; test ( b )"), {});
+  });
+
+  it("returns undefined in class creation", () => {
+    assert.equal(nucleoid.run("class Test { }"), undefined);
+  });
+
+  it("returns object itself in object creation", () => {
+    nucleoid.run("class Test { constructor ( prop ) { this.prop = prop } }");
+    const object = nucleoid.run("new Test ( 123 )");
+    assert.notEqual(object.id, null);
+    assert.equal(object.prop, 123);
+  });
+
+  describe("Nucleoid (Imperative)", () => {
+    const imperative = { declarative: false };
+
+    beforeEach(function () {
+      for (let property in state) delete state[property];
+      for (let property in graph) delete graph[property];
+
+      state["Classes"] = [];
+      graph["Classes"] = { name: "Classes" };
+    });
+
+    it("creates variable assignment", () => {
+      nucleoid.run("x = 1", imperative);
+      nucleoid.run("y = x + 2", imperative);
+      nucleoid.run("x = 2", imperative);
+      assert.equal(nucleoid.run("y", imperative), 3);
+    });
+
+    it("creates if statement of variable", () => {
+      nucleoid.run("m = false", imperative);
+      nucleoid.run("n = false", imperative);
+      nucleoid.run("if ( m == true ) { n = m && true }", imperative);
+      assert.equal(nucleoid.run("n", imperative), false);
+
+      nucleoid.run("m = true", imperative);
+      assert.equal(nucleoid.run("n", imperative), false);
+    });
+
+    it("creates property assignment", () => {
+      nucleoid.run("class Order { }", imperative);
+      nucleoid.run("var order1 = new Order ( )", imperative);
+      nucleoid.run("order1.upc = '04061' + order1.barcode", imperative);
+      nucleoid.run("order1.barcode = '94067'", imperative);
+      assert.equal(nucleoid.run("order1.upc", imperative), undefined);
+
+      nucleoid.run("order1.upc = '04061' + order1.barcode", imperative);
+      assert.equal(nucleoid.run("order1.upc", imperative), "0406194067");
+    });
   });
 });
