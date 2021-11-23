@@ -26,7 +26,7 @@ module.exports.process = function process(statements, prior) {
   let dependents = [];
   let priorities = [];
 
-  while (instructions.length !== 0) {
+  while (instructions.length) {
     let instruction = instructions.shift();
     let statement = instruction.statement;
 
@@ -51,7 +51,7 @@ module.exports.process = function process(statements, prior) {
       const expression = statement.run(scope);
       const value = state.run(scope, expression);
 
-      if (instruction.scope === root) {
+      if (instruction.scope === root && !instruction.derivative) {
         result = value;
       }
 
@@ -84,14 +84,23 @@ module.exports.process = function process(statements, prior) {
 
       if (instruction.run) {
         let next = statement.run(instruction.scope);
-        let scope = instruction.scope;
         next = Array.isArray(next) ? next : [next];
 
-        next = next.map((statement) => {
-          return statement instanceof Instruction
-            ? statement
-            : new Instruction(scope, statement, true, true, true);
-        });
+        const scope = instruction.scope;
+        const { derivative } = instruction;
+
+        next = next
+          .map((statement) => {
+            return statement instanceof Instruction
+              ? statement
+              : new Instruction(scope, statement, true, true, true, null);
+          })
+          .map((instruction) => {
+            if (instruction.derivative === undefined) {
+              instruction.derivative = derivative;
+            }
+            return instruction;
+          });
 
         instructions = next.filter((i) => !i.root).concat(instructions);
         priorities = next.filter((i) => i.root).concat(priorities);
@@ -128,7 +137,9 @@ module.exports.process = function process(statements, prior) {
                 : new Instruction(scope, statement, true, true, true);
             })
             .map((statement) => {
-              statement.derivative = true;
+              if (statement.derivative === undefined) {
+                statement.derivative = true;
+              }
               return statement;
             });
 

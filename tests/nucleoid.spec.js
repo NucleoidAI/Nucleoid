@@ -2130,6 +2130,17 @@ describe("Nucleoid", function () {
     assert.deepEqual(nucleoid.run("b = 1 ; test ( b )"), {});
   });
 
+  it("returns undefined in class creation", () => {
+    assert.equal(nucleoid.run("class Test { }"), undefined);
+  });
+
+  it("returns object itself in object creation", () => {
+    nucleoid.run("class Test { constructor ( prop ) { this.prop = prop } }");
+    const object = nucleoid.run("new Test ( 123 )");
+    assert.notEqual(object.id, null);
+    assert.equal(object.prop, 123);
+  });
+
   describe("Nucleoid (Imperative)", () => {
     const imperative = { declarative: false };
 
