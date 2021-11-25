@@ -1,7 +1,8 @@
 {
-  "name": "nucleoid",
-  "version": "0.2.0",
+  "name": "nucleoidjs",
+  "version": "0.1.0",
   "description": "Nucleoid",
+  "homepage": "https://nucleoid.com",
   "author": "Can Mingir",
   "license": "Apache-2.0",
   "main": "index.js",
@@ -13,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://git.nucleoid.org"
+    "url": "https://github.com/NucleoidJS/Nucleoid.git"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
