@@ -1,8 +1,0 @@
-[Unit]
-Description=Nucleoid Runtime
-
-[Service]
-ExecStart=/usr/bin/npm start --prefix /usr/lib/nucleoid/
-
-[Install]
-WantedBy=multi-user.target
