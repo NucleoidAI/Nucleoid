@@ -1,11 +1,13 @@
 const assert = require("assert");
-const nucleoid = require("../nucleoid");
+const nucleoid = require("../../index");
 const state = require("../state").state;
 const graph = require("../graph");
 
 function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;
 }
+
+nucleoid.start({ cacheOnly: true });
 
 describe("Nucleoid", function () {
   const details = { details: true };

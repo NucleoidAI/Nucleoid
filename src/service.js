@@ -37,7 +37,7 @@ function start(id) {
     processes[id] = proc;
   }
 
-  proc.pid = fork("./process.js", [`--id=${id}`, `--path=${path}`]);
+  proc.pid = fork("./src/process.js", [`--id=${id}`]);
   proc.pid.on("message", (m) => receive(proc, m));
   proc.pid.on("exit", () => {
     delete proc.pid;

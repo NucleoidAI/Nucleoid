@@ -71,6 +71,10 @@ const next = function (string, offset) {
 };
 
 class Token {
+  constructor(string) {
+    this.string = string;
+  }
+
   static check(string, offset) {
     let context = next(string, offset);
     return context.token;
@@ -165,10 +169,6 @@ class Token {
     }
 
     return { args, offset: context.offset };
-  }
-
-  constructor(string) {
-    this.string = string;
   }
 
   concat(string) {

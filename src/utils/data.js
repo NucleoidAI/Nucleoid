@@ -1,7 +1,9 @@
 const { argv } = require("yargs");
 const fs = require("fs");
+const File = require("../file");
+const path = File.data;
 
-const PROCESS_PATH = `${argv.path}/${argv.id}`;
+const PROCESS_PATH = `${path}/${argv.id}`;
 
 module.exports.retrieve = () => {
   if (fs.existsSync(PROCESS_PATH)) {

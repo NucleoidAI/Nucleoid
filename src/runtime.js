@@ -6,8 +6,15 @@ const Message = require("./message");
 const Event = require("./event");
 const transaction = require("./transaction");
 const Macro = require("./macro");
+const File = require("./file");
+const path = File.data;
 
+let process;
 let _options = {};
+
+setImmediate(() => {
+  process = require("./process");
+});
 
 module.exports.process = function (statement, options) {
   {
@@ -17,7 +24,8 @@ module.exports.process = function (statement, options) {
     _options = options;
   }
 
-  const { details, cacheOnly, declarative } = _options;
+  const { cacheOnly } = process.options();
+  const { details, declarative } = _options;
 
   let before = Date.now();
   let statements, result, error, json, execs;
@@ -58,9 +66,9 @@ module.exports.process = function (statement, options) {
   let date = Date.now();
   let time = date - before;
 
-  if (argv.id !== undefined && argv.path !== undefined && !cacheOnly) {
+  if (!cacheOnly) {
     fs.appendFileSync(
-      `${argv.path}/${argv.id}`,
+      `${path}/${argv.id || "main"}`,
       JSON.stringify({
         s,
         c: declarative ? true : undefined,
