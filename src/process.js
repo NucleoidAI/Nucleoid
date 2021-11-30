@@ -1,0 +1,59 @@
+const fs = require("fs");
+const argv = require("yargs").argv;
+const nucleoid = require("../index");
+const state = require("./state");
+const File = require("./file");
+const path = File.data;
+
+let _options = {};
+
+setImmediate(() => {
+  const singleton = !argv.id;
+  const id = argv.id || "main";
+  const PROCESS_PATH = `${path}/${id}`;
+
+  if (fs.existsSync(PROCESS_PATH)) {
+    fs.readFileSync(PROCESS_PATH, "utf8")
+      .split(/\n/)
+      .forEach((line) => {
+        try {
+          let details = JSON.parse(line);
+
+          const options = {
+            declarative: !!details.c,
+            cacheOnly: true,
+          };
+          nucleoid.run(details.s, options);
+
+          if (details.x) {
+            details.x.map((exec) => state.run(null, exec));
+          }
+        } catch (error) {
+          return;
+        }
+      });
+  }
+
+  if (!singleton) {
+    process.on("message", (message) => {
+      const config = { details: true, declarative: false };
+      let details = nucleoid.run(message, config);
+      process.send(
+        JSON.stringify({
+          r: details.result,
+          t: details.time,
+          m: details.messages,
+          v: details.events,
+          e: details.error,
+        })
+      );
+    });
+  }
+});
+
+const options = (options) => {
+  if (options) _options = options || {};
+  else return _options;
+};
+
+module.exports = { options };
