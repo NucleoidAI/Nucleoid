@@ -3,7 +3,7 @@ const graph = require("../../graph");
 const OBJECT = require("../../object");
 const OBJECT$CLASS = require("../../object$class");
 const CLASS = require("../../class");
-const Local = require("../../local");
+const Local = require("../../utils/local");
 const $LET = require("./$let");
 
 module.exports = function (cls, name, object, args) {

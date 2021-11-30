@@ -1,4 +1,4 @@
-const Token = require("../../token");
+const Token = require("../../utils/token");
 const $RETURN = require("../$/$return");
 const JS = require("./js");
 

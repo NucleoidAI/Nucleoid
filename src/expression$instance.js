@@ -1,6 +1,6 @@
 const EXPRESSION = require("./expression");
-const Instance = require("./instance");
-const Identifier = require("./identifier");
+const Instance = require("./utils/instance");
+const Id = require("./utils/identifier");
 
 module.exports = class EXPRESSION$INSTANCE extends EXPRESSION {
   run(scope) {
@@ -9,8 +9,7 @@ module.exports = class EXPRESSION$INSTANCE extends EXPRESSION {
     if (instance !== undefined) {
       this.tokens = this.tokens.map((token) => {
         let parts = token.split(".");
-        if (parts[0] === this.class.name)
-          parts[0] = Identifier.serialize(instance);
+        if (parts[0] === this.class.name) parts[0] = Id.serialize(instance);
         return parts.join(".");
       });
     }

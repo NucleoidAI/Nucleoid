@@ -7,8 +7,8 @@ const OBJECT = require("../../object");
 const LET$OBJECT = require("../../let$object");
 const EXPRESSION = require("../../expression");
 const REFERENCE = require("../../reference");
-const Local = require("../../local");
-const Identifier = require("../../identifier");
+const Local = require("../../utils/local");
+const Id = require("../../utils/identifier");
 
 module.exports = function (name, value) {
   let statement = new $LET();
@@ -19,7 +19,7 @@ module.exports = function (name, value) {
 
 class $LET extends $ {
   run(scope) {
-    let parts = Identifier.splitLast(this.name);
+    let parts = Id.splitLast(this.name);
 
     if (parts[1] !== undefined && !Local.check(scope, parts[1])) {
       throw ReferenceError(`${parts[1]} is not defined`);

@@ -1,6 +1,6 @@
 const LET = require("./let");
 const EXPRESSION = require("./expression");
-const Identifier = require("./identifier");
+const Id = require("./utils/identifier");
 const BREAK = require("./break");
 const state = require("./state");
 
@@ -10,7 +10,7 @@ module.exports = class LET$INSTANCE extends LET {
       this.declaration.value.tokens.map((token) => {
         let parts = token.split(".");
         if (parts[0] === this.class.name)
-          parts[0] = Identifier.serialize(this.instance, true);
+          parts[0] = Id.serialize(this.instance, true);
         return parts.join(".");
       })
     );

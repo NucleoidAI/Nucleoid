@@ -1,5 +1,5 @@
 const runtime = require("./src/runtime");
-const Token = require("./src/token");
+const Token = require("./src/utils/token");
 
 const list = [];
 

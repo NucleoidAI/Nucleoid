@@ -1,8 +1,8 @@
-const Token = require("../../token");
+const Token = require("../../utils/token");
 const $INSTANCE = require("../$/$instance");
 const $ASSIGNMENT = require("../$/$assignment");
 const $EXP = require("../$/$expression");
-const Identifier = require("../../identifier");
+const Id = require("../../utils/identifier");
 
 module.exports = function JS$ASSIGNMENT(string, offset) {
   let context = Token.next(string, offset);
@@ -20,7 +20,7 @@ module.exports = function JS$ASSIGNMENT(string, offset) {
       break standard;
     }
 
-    let parts = Identifier.splitLast(left);
+    let parts = Id.splitLast(left);
     let instance;
 
     if (parts.length > 1) {

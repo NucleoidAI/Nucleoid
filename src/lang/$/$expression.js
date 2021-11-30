@@ -1,10 +1,10 @@
-const Token = require("../../token");
+const Token = require("../../utils/token");
 const EXPRESSION = require("../../expression");
 const $ = require("./$");
 const graph = require("../../graph");
 const REFERENCE = require("../../reference");
 const EXPRESSION$INSTANCE = require("../../expression$instance");
-const Local = require("../../local");
+const Local = require("../../utils/local");
 
 module.exports = function (string, offset) {
   let context = Token.each(string, offset, function (token) {

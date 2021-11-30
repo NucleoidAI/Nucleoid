@@ -1,6 +1,6 @@
 const IF = require("./if");
 const EXPRESSION = require("./expression");
-const Identifier = require("./identifier");
+const Id = require("./utils/identifier");
 
 module.exports = class IF$INSTANCE extends IF {
   before() {
@@ -8,7 +8,7 @@ module.exports = class IF$INSTANCE extends IF {
       this.declaration.condition.tokens.map((token) => {
         let parts = token.split(".");
         if (parts[0] === this.class.name)
-          parts[0] = Identifier.serialize(this.instance);
+          parts[0] = Id.serialize(this.instance);
         return parts.join(".");
       })
     );

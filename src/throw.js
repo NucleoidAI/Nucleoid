@@ -1,5 +1,5 @@
 const state = require("./state");
-const Identifier = require("./identifier");
+const Id = require("./utils/identifier");
 const graph = require("./graph");
 
 module.exports = class THROW {
@@ -9,7 +9,7 @@ module.exports = class THROW {
     let exception = graph[this.exception];
 
     if (exception) {
-      state.run(scope, "throw state." + Identifier.serialize(exception));
+      state.run(scope, "throw state." + Id.serialize(exception));
     }
 
     throw this.exception;

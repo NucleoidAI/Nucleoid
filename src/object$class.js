@@ -1,25 +1,22 @@
 const Node = require("./node");
-const Identifier = require("./identifier");
+const Id = require("./utils/identifier");
 const graph = require("./graph");
 const OBJECT$INSTANCE = require("./object$instance");
-const Instance = require("./instance");
+const Instance = require("./utils/instance");
 
 class OBJECT$CLASS extends Node {
   before() {
-    this.key = Identifier.serialize(this);
+    this.key = Id.serialize(this);
   }
 
   run(scope) {
     let instances;
     let statements = [];
 
-    let instance = Instance.retrieve(scope, Identifier.root(this).name);
+    let instance = Instance.retrieve(scope, Id.root(this).name);
 
     if (instance) instances = [instance];
-    else
-      instances = Object.keys(Identifier.root(this).instances).map(
-        (i) => graph[i]
-      );
+    else instances = Object.keys(Id.root(this).instances).map((i) => graph[i]);
 
     for (let instance of instances) {
       let statement = new OBJECT$INSTANCE();
@@ -33,7 +30,7 @@ class OBJECT$CLASS extends Node {
   }
 
   graph() {
-    Identifier.root(this).declarations[this.key] = this;
+    Id.root(this).declarations[this.key] = this;
   }
 }
 

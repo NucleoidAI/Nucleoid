@@ -1,5 +1,5 @@
 const $VAR = require("../$/$variable");
-const Token = require("../../token");
+const Token = require("../../utils/token");
 const $INSTANCE = require("../$/$instance");
 const $EXP = require("../$/$expression");
 

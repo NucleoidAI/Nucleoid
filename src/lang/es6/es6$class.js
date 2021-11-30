@@ -1,4 +1,4 @@
-const Token = require("../../token");
+const Token = require("../../utils/token");
 let $CLASS = require("../$/$class");
 let JS$BLOCK = require("../js/js$block");
 

@@ -1,18 +1,18 @@
-const Identifier = require("./identifier");
+const Id = require("./utils/identifier");
 const EXPRESSION = require("./expression");
 
 class REFERENCE extends EXPRESSION {
   before() {}
 
   run() {
-    let reference = "state." + Identifier.serialize(this.link);
+    let reference = "state." + Id.serialize(this.link);
     return reference;
   }
 
   next() {}
 
   graph() {
-    return [Identifier.serialize(this.link)];
+    return [Id.serialize(this.link)];
   }
 }
 

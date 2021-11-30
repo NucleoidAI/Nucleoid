@@ -1,4 +1,4 @@
-const Identifier = require("./identifier");
+const Id = require("./identifier");
 
 function isDelimiter(c) {
   return !(
@@ -263,7 +263,7 @@ module.exports.ARRAY = class ARRAY {
       let token = this[index];
 
       if (token instanceof CALL) {
-        let parts = Identifier.splitLast(token.string);
+        let parts = Id.splitLast(token.string);
 
         if (parts[1] !== undefined) {
           list.push(parts[1]);

@@ -1,9 +1,9 @@
 const state = require("./state");
 const graph = require("./graph");
-const Local = require("./local");
-const Identifier = require("./identifier");
+const Local = require("./utils/local");
+const Id = require("./utils/identifier");
 const Node = require("./node");
-const Token = require("./token");
+const Token = require("./utils/token");
 const argv = require("yargs").argv;
 let Stack;
 let $CALL;
@@ -20,7 +20,7 @@ class EXPRESSION {
     this.tokens = this.tokens
       .map((token) => (token === self ? token + ".value" : token))
       .map((token) => {
-        let parts = Identifier.splitLast(token);
+        let parts = Id.splitLast(token);
         if (parts[0] && parts[1] && parts[0] === "value") {
           if (Local.check(scope, parts[1])) {
             return parts[1];
@@ -70,7 +70,7 @@ class EXPRESSION {
             if (Local.check(scope, parts[0])) {
               return Local.retrieve(scope, token);
             } else if (graph[parts[0]]) {
-              let reference = "state." + Identifier.reference(token);
+              let reference = "state." + Id.reference(token);
               let value = state.run(scope, reference);
 
               if (value === undefined && !skip) throw 0;
@@ -98,7 +98,7 @@ class EXPRESSION {
 
     for (let token of this.tokens) {
       if (token instanceof Token.CALL) {
-        let parts = Identifier.splitLast(token.string);
+        let parts = Id.splitLast(token.string);
         if (parts[1] && graph[parts[1]]) {
           for (let node in graph[parts[1]].next)
             list.push(graph[parts[1]].next[node]);
@@ -113,7 +113,7 @@ class EXPRESSION {
     return this.tokens
       .list()
       .map((token) => Local.reference(scope, token))
-      .map((token) => Identifier.reference(token))
+      .map((token) => Id.reference(token))
       .filter((token) => {
         if (graph[token]) return true;
         else if (graph[token.split(".")[0]]) {
@@ -122,7 +122,7 @@ class EXPRESSION {
         }
       })
       .map((token) => {
-        let parts = Identifier.splitLast(token);
+        let parts = Id.splitLast(token);
         if (parts[0] && parts[1] && parts[0] === "length") return parts[1];
         else return token;
       })
@@ -136,7 +136,7 @@ class EXPRESSION {
         }
 
         if (typeof fn === "function") {
-          let parts = Identifier.splitLast(token);
+          let parts = Id.splitLast(token);
           return parts[1];
         } else {
           return token;

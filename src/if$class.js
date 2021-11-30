@@ -2,7 +2,7 @@ const IF$INSTANCE = require("./if$instance");
 const $BLOCK = require("./lang/$/$block");
 const Node = require("./node");
 const graph = require("./graph");
-const Instance = require("./instance");
+const Instance = require("./utils/instance");
 
 class IF$CLASS extends Node {
   before() {

@@ -6,7 +6,7 @@ const PROPERTY = require("../../property");
 const OBJECT$CLASS = require("../../object$class");
 const REFERENCE = require("../../reference");
 const PROPERTY$REFERENCE = require("../../property$reference");
-const Local = require("../../local");
+const Local = require("../../utils/local");
 const FUNCTION = require("../../function");
 
 module.exports = function (object, name, value) {

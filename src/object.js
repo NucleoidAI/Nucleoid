@@ -1,6 +1,6 @@
 const state = require("./state");
 const Node = require("./node");
-const Identifier = require("./identifier");
+const Id = require("./utils/identifier");
 const $EXP = require("./lang/$/$expression");
 const Instruction = require("./instruction");
 const LET = require("./let");
@@ -17,7 +17,7 @@ module.exports = class OBJECT extends Node {
       this.key = this.class.name.toLowerCase() + this.sequence;
       this.name = this.key;
     } else {
-      this.key = Identifier.serialize(this);
+      this.key = Id.serialize(this);
     }
   }
 

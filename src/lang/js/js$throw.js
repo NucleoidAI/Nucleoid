@@ -1,4 +1,4 @@
-const Token = require("../../token");
+const Token = require("../../utils/token");
 const $THROW = require("../$/$throw");
 
 module.exports = function JS$THROW(string, offset) {
