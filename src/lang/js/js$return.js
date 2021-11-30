@@ -1,12 +1,12 @@
 const Token = require("../../token");
 const $RETURN = require("../$/$return");
-const ES6 = require("./es6");
+const JS = require("./js");
 
-module.exports = function ES6$RETURN(string, offset) {
+module.exports = function JS$RETURN(string, offset) {
   let context = Token.next(string, offset);
 
   if (context.token === "return") {
-    context = ES6.compile(string, context.offset);
+    context = JS.compile(string, context.offset);
     return { statement: $RETURN(context.statements), offset: context.offset };
   } else {
     throw SyntaxError("Missing return keyword");

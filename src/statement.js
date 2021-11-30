@@ -1,5 +1,5 @@
-const ES6 = require("./lang/es6/es6");
+const JS = require("./lang/js/js");
 
 module.exports.compile = function (string) {
-  return ES6.compile(string).statements;
+  return JS.compile(string).statements;
 };

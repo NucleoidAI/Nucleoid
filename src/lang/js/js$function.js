@@ -1,8 +1,8 @@
 const Token = require("../../token");
 const $FUNCTION = require("../$/$function");
-let ES6$BLOCK = require("./es6$block");
+let JS$BLOCK = require("./js$block");
 
-module.exports = function ES6$FUNCTION(string, offset) {
+module.exports = function JS$FUNCTION(string, offset) {
   let context = Token.next(string, offset);
 
   context = Token.next(string, context.offset);
@@ -13,7 +13,7 @@ module.exports = function ES6$FUNCTION(string, offset) {
   context = Token.nextArgs(string, context.offset);
   let args = context.args;
 
-  context = ES6$BLOCK(string, context.offset);
+  context = JS$BLOCK(string, context.offset);
 
   return {
     statement: $FUNCTION(name, args, context.statement),

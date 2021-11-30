@@ -3,7 +3,7 @@ const Token = require("../../token");
 const $INSTANCE = require("../$/$instance");
 const $EXP = require("../$/$expression");
 
-module.exports = function ES6$VARIABLE(string, offset) {
+module.exports = function JS$VARIABLE(string, offset) {
   let context = Token.next(string, offset);
 
   if (context.token === "new") {

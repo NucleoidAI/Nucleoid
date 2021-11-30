@@ -2,9 +2,9 @@ const Token = require("../../token");
 const $EXP = require("../$/$expression");
 const $BLOCK = require("../$/$block");
 const $IF = require("../$/$if");
-const ES6 = require("./es6");
+const JS = require("./js");
 
-module.exports = function ES6$IF(string, offset) {
+module.exports = function JS$IF(string, offset) {
   let context = Token.next(string, offset);
 
   if (context && context.token === "if")
@@ -16,7 +16,7 @@ module.exports = function ES6$IF(string, offset) {
 
     context = Token.next(string, context.offset);
     context = Token.nextBlock(string, context.offset);
-    let trueBlock = ES6.compile(context.block).statements;
+    let trueBlock = JS.compile(context.block).statements;
 
     let elsePoint = Token.next(string, context.offset);
     let falseBlock;
@@ -25,12 +25,12 @@ module.exports = function ES6$IF(string, offset) {
       let check = Token.next(string, elsePoint.offset);
 
       if (check && check.token === "if") {
-        context = ES6$IF(string, elsePoint.offset);
+        context = JS$IF(string, elsePoint.offset);
         falseBlock = context.statement;
       } else {
         context = Token.next(string, elsePoint.offset);
         context = Token.nextBlock(string, context.offset);
-        const { statements } = ES6.compile(context.block);
+        const { statements } = JS.compile(context.block);
         falseBlock = $BLOCK(statements);
       }
     }

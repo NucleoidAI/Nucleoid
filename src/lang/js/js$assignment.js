@@ -4,7 +4,7 @@ const $ASSIGNMENT = require("../$/$assignment");
 const $EXP = require("../$/$expression");
 const Identifier = require("../../identifier");
 
-module.exports = function ES6$ASSIGNMENT(string, offset) {
+module.exports = function JS$ASSIGNMENT(string, offset) {
   let context = Token.next(string, offset);
   let left = context.token;
 

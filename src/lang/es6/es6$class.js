@@ -1,6 +1,6 @@
 const Token = require("../../token");
 let $CLASS = require("../$/$class");
-let ES6$BLOCK = require("./es6$block");
+let JS$BLOCK = require("../js/js$block");
 
 module.exports = function ES6$CLASS(string, offset) {
   let context = Token.next(string, offset);
@@ -28,7 +28,7 @@ module.exports = function ES6$CLASS(string, offset) {
       context = Token.nextArgs(block, context.offset);
       args = context.args;
 
-      context = ES6$BLOCK(block, context.offset);
+      context = JS$BLOCK(block, context.offset);
       construct = context.statement;
     } else {
       throw SyntaxError("Methods are not supported.");

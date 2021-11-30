@@ -1,8 +1,8 @@
 const Token = require("../../token");
-const ES6 = require("./es6");
+const JS = require("./js");
 const $FOR = require("../$/$for");
 
-module.exports = function ES6$FOR(string, offset) {
+module.exports = function JS$FOR(string, offset) {
   let context = Token.next(string, offset);
   context = Token.next(string, context.offset);
   context = Token.next(string, context.offset);
@@ -15,7 +15,7 @@ module.exports = function ES6$FOR(string, offset) {
   context = Token.next(string, context.offset);
   context = Token.next(string, context.offset);
   context = Token.nextBlock(string, context.offset);
-  const { statements } = ES6.compile(context.block);
+  const { statements } = JS.compile(context.block);
 
   return { statement: $FOR(variable, array, statements) };
 };
