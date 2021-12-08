@@ -8,6 +8,8 @@ const path = File.data;
 let _options = {};
 
 setImmediate(() => {
+  if (_options.test) return;
+
   const singleton = !argv.id;
   const id = argv.id || "main";
   const PROCESS_PATH = `${path}/${id}`;
@@ -52,8 +54,13 @@ setImmediate(() => {
 });
 
 const options = (options) => {
-  if (options) _options = options || {};
-  else return _options;
+  if (options) {
+    _options = options || {};
+
+    if (_options.test) {
+      _options.cacheOnly = true;
+    }
+  } else return _options;
 };
 
 module.exports = { options };

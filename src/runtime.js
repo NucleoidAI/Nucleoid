@@ -17,18 +17,16 @@ setImmediate(() => {
 });
 
 module.exports.process = function (statement, options) {
-  {
-    options = options || {};
-    let { declarative } = options;
-    options.declarative = declarative === undefined ? true : declarative;
-    _options = options;
-  }
+  options = options || {};
 
-  let { details, declarative, cacheOnly } = _options;
+  const { declarative } =
+    options.declarative === undefined ? process.options() : options;
+  const { details } =
+    options.details === undefined ? process.options() : options;
+  const { cacheOnly } =
+    options.cacheOnly === undefined ? process.options() : options;
 
-  if (cacheOnly === undefined) {
-    cacheOnly = process.options().cacheOnly;
-  }
+  _options = { declarative, details, cacheOnly };
 
   let before = Date.now();
   let statements, result, error, json, execs;

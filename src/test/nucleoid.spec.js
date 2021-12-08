@@ -7,10 +7,10 @@ function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;
 }
 
-nucleoid.start({ cacheOnly: true });
+nucleoid.start({ declarative: true, test: true });
 
 describe("Nucleoid", function () {
-  const details = { details: true };
+  const details = { declarative: true, details: true };
 
   beforeEach(function () {
     for (let property in state) delete state[property];
