@@ -1,6 +1,10 @@
 const state = require("./state");
 
 module.exports = class LET {
+  constructor(name, value) {
+    this.name = name;
+    this.value = value;
+  }
   before() {}
 
   run(scope) {

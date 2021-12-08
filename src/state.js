@@ -9,6 +9,7 @@ const event = require("./event").event; // eslint-disable-line no-unused-vars
 const OpenAPI = require("./openapi"); // eslint-disable-line no-unused-vars
 const NUC = require("./libs/nuc"); // eslint-disable-line no-unused-vars
 const Data = require("./libs/data"); // eslint-disable-line no-unused-vars
+const Id = require("./utils/identifier"); // eslint-disable-line no-unused-vars
 
 global.require = require;
 
@@ -47,12 +48,17 @@ function graph(id) {
   return object;
 }
 
+module.exports.throw = (scope, exception) => {
+  // eslint-disable-next-line no-eval
+  eval(`throw state.${exception}`);
+};
+
 module.exports.state = state;
 module.exports.assign = function (scope, variable, expression) {
-  _transaction.register(variable, expression, scope);
+  return _transaction.register(variable, expression, scope);
 };
 
 module.exports.run = function (scope, expression) {
   // eslint-disable-next-line no-eval
-  return eval(expression);
+  return eval(`(${expression})`);
 };

@@ -71,7 +71,7 @@ module.exports.process = function process(statements, prior) {
                 true,
                 false,
                 null,
-                true
+                declarative
               );
             }
           })

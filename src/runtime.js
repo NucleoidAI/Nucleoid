@@ -1,4 +1,4 @@
-const Stack = require("./stack");
+const stack = require("./stack");
 const Statement = require("./statement");
 const fs = require("fs");
 const argv = require("yargs").argv;
@@ -38,7 +38,7 @@ module.exports.process = function (statement, options) {
   try {
     statements = Statement.compile(s, _options);
     transaction.start();
-    result = Stack.process(statements);
+    result = stack.process(statements, null);
     execs = transaction
       .end()
       .filter((t) => t.exec)

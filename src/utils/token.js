@@ -67,7 +67,7 @@ const next = function (string, offset) {
     }
   }
 
-  return { token, offset };
+  return token !== "" ? { token, offset } : null;
 };
 
 class Token {

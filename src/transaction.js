@@ -1,4 +1,5 @@
 const state = require("./state").state; // eslint-disable-line no-unused-vars
+const REFERENCE = require("./reference");
 
 let list = [];
 
@@ -22,24 +23,39 @@ module.exports.register = function (p1, p2, p3) {
     let expression = p2;
     let scope = p3; // eslint-disable-line no-unused-vars
 
-    let exec;
+    if (expression instanceof REFERENCE) {
+      let exec;
+      exec = `state.${variable}=${expression.run()}`;
 
-    if (typeof expression === "string") {
-      exec = `state.${variable}=${expression}`;
+      // eslint-disable-next-line no-eval
+      list.push({ variable, before: eval(`state.${variable}`), exec });
+      // eslint-disable-next-line no-eval
+      return eval(exec);
     } else {
-      exec = `state.${variable}=expression`;
-    }
+      // eslint-disable-next-line no-eval
+      let transaction = { variable, before: eval(`state.${variable}`) };
 
-    // eslint-disable-next-line no-eval
-    list.push({ variable, value: eval(`state.${variable}`), exec });
-    // eslint-disable-next-line no-eval
-    eval(exec);
+      let value;
+
+      if (typeof expression === "string") {
+        // eslint-disable-next-line no-eval
+        value = eval(`state.${variable}=${expression}`);
+      } else {
+        // eslint-disable-next-line no-eval
+        value = eval(`state.${variable}=expression`);
+      }
+
+      transaction.exec = `state.${variable}=${JSON.stringify(value)}`;
+      state[variable] = value;
+      list.push(transaction);
+      return value;
+    }
   } else {
     let object = p1;
     let property = p2;
     let value = p3;
 
-    list.push({ object, property, value: object[property] });
+    list.push({ object, property, before: object[property] });
     object[property] = value;
   }
 };
@@ -50,16 +66,16 @@ module.exports.rollback = function () {
     let variable = transaction.variable;
     let object = transaction.object;
     let property = transaction.property;
-    let value = transaction.value;
+    let before = transaction.before;
 
     if (variable !== undefined) {
       // eslint-disable-next-line no-eval
-      eval(`state.${variable}=value`);
+      eval(`state.${variable}=before`);
     } else {
-      if (value === undefined) {
+      if (before === undefined) {
         delete object[property];
       } else {
-        object[property] = value;
+        object[property] = before;
       }
     }
   }

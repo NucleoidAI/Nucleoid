@@ -274,7 +274,7 @@ describe("Nucleoid", function () {
     assert.equal(nucleoid.run("date.getYear()"), 119);
   });
 
-  it("supports value function of standard built-in objects", function () {
+  it.skip("supports value function of standard built-in objects", function () {
     const result = nucleoid.run("date1 = Date.now ( )", details);
     nucleoid.run(result.string.replace("date1", "date2"));
     assert.equal(nucleoid.run("date1 == date2"), true);
@@ -2120,6 +2120,14 @@ describe("Nucleoid", function () {
   it("returns integer in variable assignment", () => {
     nucleoid.run("function test ( a ) { return a = 2 }");
     assert.equal(nucleoid.run("b = 1 ; test ( b )"), 2);
+  });
+
+  it("returns reference in variable assignment", () => {
+    nucleoid.run("a = new Object ( )");
+    nucleoid.run("c = 1");
+    nucleoid.run("function test ( b ) { return b = a }");
+    assert.deepEqual(nucleoid.run("test ( c )"), {});
+    assert.deepEqual(nucleoid.run("c"), 1);
   });
 
   it("returns string in variable assignment", () => {

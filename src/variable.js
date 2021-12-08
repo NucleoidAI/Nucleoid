@@ -1,5 +1,10 @@
 const state = require("./state");
 const Node = require("./node");
+let REFERENCE;
+
+setImmediate(() => {
+  REFERENCE = require("./reference");
+});
 
 module.exports = class VARIABLE extends Node {
   before(scope) {
@@ -8,8 +13,14 @@ module.exports = class VARIABLE extends Node {
   }
 
   run(scope) {
-    const value = this.value.run(scope);
-    state.assign(scope, this.name, value);
+    let value;
+    if (this.value instanceof REFERENCE) {
+      value = state.assign(scope, this.name, this.value);
+    } else {
+      const run = this.value.run(scope);
+      value = state.assign(scope, this.name, run);
+    }
+
     return { value };
   }
 
