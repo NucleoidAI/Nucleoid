@@ -1,6 +1,6 @@
 const fs = require("fs");
 const argv = require("yargs").argv;
-const nucleoid = require("../index");
+const runtime = require("./runtime");
 const state = require("./state");
 const File = require("./file");
 const path = File.data;
@@ -25,7 +25,7 @@ setImmediate(() => {
             declarative: !!details.c,
             cacheOnly: true,
           };
-          nucleoid.run(details.s, options);
+          runtime.process(details.s, options);
 
           if (details.x) {
             details.x.map((exec) => state.run(null, exec));
@@ -38,8 +38,8 @@ setImmediate(() => {
 
   if (!singleton) {
     process.on("message", (message) => {
-      const config = { details: true, declarative: false };
-      let details = nucleoid.run(message, config);
+      const config = { details: true };
+      let details = runtime.process(message, config);
       process.send(
         JSON.stringify({
           r: details.result,

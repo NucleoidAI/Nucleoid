@@ -29,7 +29,7 @@ const start = (nuc) => {
     const file = `${openapi}/${tmp}/${path}/${resource}.js`;
     fs.appendFileSync(
       file,
-      `const Service = require("${"../".repeat(
+      `const service = require("${"../".repeat(
         parts.length + 2
       )}service"); module.exports = function () {`
     );
@@ -74,7 +74,7 @@ const start = (nuc) => {
       fs.appendFileSync(
         file,
         `function ${method}(req, res) {` +
-          `Service.accept("` +
+          `service.accept("` +
           `let json=" + JSON.stringify(req.body) + ";` +
           `let query=" + JSON.stringify(req.query) + \`;` +
           `{${action}};\`` +

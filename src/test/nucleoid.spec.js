@@ -7,7 +7,7 @@ function validate(error, expectedError, expectedMessage) {
   return error instanceof expectedError && error.message === expectedMessage;
 }
 
-nucleoid.start({ declarative: true, test: true });
+nucleoid.start({ declarative: true, terminal: false });
 
 describe("Nucleoid", function () {
   const details = { declarative: true, details: true };

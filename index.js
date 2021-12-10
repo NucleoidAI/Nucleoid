@@ -1,19 +1,30 @@
 const runtime = require("./src/runtime");
 const Token = require("./src/utils/token");
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
-const list = [];
+const preset = [];
 
 const start = (options) => {
+  options = options || {};
+
   const process = require("./src/process");
   process.options(options);
 
+  const { terminal } = options;
+
   setImmediate(() => {
-    list.forEach(({ fn, options }) => run(fn.toString(), options));
+    preset.forEach(({ fn, options }) => run(fn.toString(), options));
   });
+
+  if (terminal === undefined || terminal === true) {
+    app.listen(8448);
+  }
 };
 
 const register = (fn, options) => {
-  list.push({ fn, options });
+  preset.push({ fn, options });
 };
 
 const run = (statement, p2, p3) => {
@@ -40,5 +51,15 @@ const run = (statement, p2, p3) => {
     return runtime.process(exec, options);
   }
 };
+
+const app = express();
+app.use(bodyParser.text({ type: "*/*" }));
+app.use(cors());
+
+app.post("/", (req, res) => res.send(runtime.process(req.body)));
+app.use((err, res) => {
+  res.type("txt");
+  res.status(500).send(err.stack);
+});
 
 module.exports = { start, register, run };
