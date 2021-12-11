@@ -1,6 +1,6 @@
 const express = require("express");
 const OpenAPI = require("express-openapi");
-const { openapi } = require("./file");
+const { openapi } = require("../file");
 const fs = require("fs");
 const swagger = require("swagger-ui-express");
 const uuid = require("uuid").v4;
@@ -29,9 +29,9 @@ const start = (nuc) => {
     const file = `${openapi}/${tmp}/${path}/${resource}.js`;
     fs.appendFileSync(
       file,
-      `const service = require("${"../".repeat(
+      `const runtime = require("${"../".repeat(
         parts.length + 2
-      )}service"); module.exports = function () {`
+      )}src/runtime"); module.exports = function () {`
     );
 
     Object.entries(value).forEach(([method, nucDoc]) => {
@@ -74,11 +74,10 @@ const start = (nuc) => {
       fs.appendFileSync(
         file,
         `function ${method}(req, res) {` +
-          `service.accept("` +
+          `const result = runtime.process("` +
           `let json=" + JSON.stringify(req.body) + ";` +
           `let query=" + JSON.stringify(req.query) + \`;` +
-          `{${action}};\`` +
-          `, req, res)}`
+          `{${action}};\`);res.send(result);}`
       );
       fs.appendFileSync(file, `${method}.apiDoc = ${JSON.stringify(apiDoc)};`);
     });

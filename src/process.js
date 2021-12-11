@@ -59,7 +59,9 @@ const options = (options) => {
 
     if (_options.test) {
       _options.cacheOnly = true;
+      _options.terminal = false;
     }
+    return _options;
   } else return _options;
 };
 

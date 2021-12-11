@@ -9,13 +9,14 @@ const BREAK = require("./break");
 const EXPRESSION = require("./expression");
 const state = require("./state");
 const RETURN = require("./return");
-let Runtime;
 
-setImmediate(() => (Runtime = require("./runtime")));
+let runtime;
+
+setImmediate(() => (runtime = require("./runtime")));
 
 module.exports.process = function process(statements, prior) {
   const root = new Scope(prior);
-  const { declarative } = Runtime.options();
+  const { declarative } = runtime.options();
 
   let instructions = statements.map(
     (statement) => new Instruction(root, statement, true, true, false)

@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const service = require("./src/service");
+const service = require("./service");
 
 const app = express();
 app.use(bodyParser.text({ type: "*/*" }));

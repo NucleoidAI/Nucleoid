@@ -1,5 +1,5 @@
 const glob = require("glob");
-const File = require("./file");
+const File = require("./src/file");
 
 const fork = require("child_process").fork;
 let processes = [];
