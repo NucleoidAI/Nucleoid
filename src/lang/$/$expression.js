@@ -9,7 +9,7 @@ const Local = require("../../utils/local");
 module.exports = function (string, offset) {
   offset = offset || 0;
 
-  let context = Token.each(string, offset, function (token) {
+  let context = Token.each(string, offset, (token) => {
     if (token === "let") {
       return "let ";
     }
