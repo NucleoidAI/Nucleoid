@@ -125,7 +125,7 @@ class Token {
     return { tokens: tokens, offset: offset };
   }
 
-  static nextBlock(string, offset) {
+  static nextBlock(string, offset, skip) {
     let block = "";
     let brackets = 0;
     let character;
@@ -141,13 +141,17 @@ class Token {
 
       if (brackets < 0) {
         offset++;
-        return { block: block, offset: offset };
+        return { block, offset };
       } else {
         block += character;
       }
     }
 
-    throw SyntaxError("Missing parenthesis");
+    if (!skip) {
+      throw SyntaxError("Missing parenthesis");
+    } else {
+      return { block, offset };
+    }
   }
 
   static nextArgs(string, offset) {

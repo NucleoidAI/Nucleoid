@@ -2158,6 +2158,25 @@ describe("Nucleoid", () => {
       notEqual(object.id, null);
       equal(object.prop, 123);
     });
+
+    it("accepts JS function", () => {
+      equal(
+        nucleoid.run(() => {
+          "ABC";
+        }),
+        null
+      );
+      equal(
+        nucleoid.run(() => {
+          return 123;
+        }),
+        123
+      );
+      equal(
+        nucleoid.run(() => true),
+        true
+      );
+    });
   });
 
   describe("in imperative mode", () => {
