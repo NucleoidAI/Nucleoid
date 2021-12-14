@@ -2177,6 +2177,14 @@ describe("Nucleoid", () => {
         true
       );
     });
+
+    it("accepts JS function with scope", () => {
+      const scope = { test: true };
+      equal(
+        nucleoid.run((scope) => scope.test, scope),
+        true
+      );
+    });
   });
 
   describe("in imperative mode", () => {
