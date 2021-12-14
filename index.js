@@ -1,7 +1,6 @@
 const runtime = require("./src/runtime");
 const Token = require("./src/utils/token");
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const preset = [];
@@ -66,8 +65,9 @@ const parseFn = (string) => {
 
   return { args, fn };
 };
+
 const app = express();
-app.use(bodyParser.text({ type: "*/*" }));
+app.use(express.text({ type: "*/*" }));
 app.use(cors());
 
 app.post("/", (req, res) => res.send(runtime.process(req.body)));

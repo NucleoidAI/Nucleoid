@@ -19,6 +19,11 @@ setImmediate(() => {
 module.exports.process = function (statement, options) {
   options = options || {};
 
+  if (!process) {
+    console.error("The runtime has not started");
+    require("process").exit(1);
+  }
+
   const { declarative } =
     options.declarative === undefined ? process.options() : options;
   const { details } =
