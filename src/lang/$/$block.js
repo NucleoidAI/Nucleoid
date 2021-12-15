@@ -20,7 +20,7 @@ module.exports = function (statements, skip, args) {
 
 class $BLOCK extends $ {
   run(scope) {
-    let test = new Scope();
+    let test = new Scope(scope);
     test.object = scope.object;
     let cls = null;
 

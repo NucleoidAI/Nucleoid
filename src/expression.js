@@ -48,10 +48,6 @@ class EXPRESSION {
 
   run(scope, skip) {
     try {
-      if (this.tokens[0].string === "{") {
-        return this.tokens.construct();
-      }
-
       for (let i = 0; i < this.tokens.length; i++) {
         const token = this.tokens[i];
 

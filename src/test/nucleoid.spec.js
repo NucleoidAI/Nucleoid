@@ -401,12 +401,20 @@ describe("Nucleoid", () => {
       );
     });
 
-    it("supports JSON", () => {
-      let payload = nucleoid.run('let payload = { "data" : "TEST" } ; payload');
+    it("creates let statement with JSON", () => {
+      let payload = nucleoid.run(
+        '{ let payload = { "data" : "TEST" , "nested" : { "data" : "NESTED_TEST" } } ; return payload }'
+      );
       equal(payload.data, "TEST");
+      equal(payload.nested.data, "NESTED_TEST");
 
       nucleoid.run('message = { "pid" : 1200 }');
       equal(nucleoid.run("message.pid"), 1200);
+
+      const i = nucleoid.run(
+        '{ let scope = { query : "test" } ; let i = { test : scope.query } ; return i ; }'
+      );
+      equal(i.test, "test");
     });
 
     it("assigns block in function as dependency", () => {
