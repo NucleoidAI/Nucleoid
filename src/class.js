@@ -9,6 +9,7 @@ const CLASS = class CLASS extends Node {
     super();
     this.instances = {};
     this.declarations = {};
+    this.sequence = 0;
   }
 
   before() {

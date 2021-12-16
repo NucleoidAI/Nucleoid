@@ -5,6 +5,7 @@ const $EXP = require("./lang/$/$expression");
 const Instruction = require("./instruction");
 const LET = require("./let");
 const Scope = require("./scope");
+const _ = require("lodash");
 
 module.exports = class OBJECT extends Node {
   constructor() {
@@ -14,7 +15,7 @@ module.exports = class OBJECT extends Node {
 
   before() {
     if (this.name === undefined && this.object === undefined) {
-      this.key = this.class.name.toLowerCase() + this.sequence;
+      this.key = _.camelCase(this.class.name) + this.class.sequence++;
       this.name = this.key;
     } else {
       this.key = Id.serialize(this);
