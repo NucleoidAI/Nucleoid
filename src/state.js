@@ -10,6 +10,7 @@ const OpenAPI = require("./libs/openapi"); // eslint-disable-line no-unused-vars
 const NUC = require("./libs/nuc"); // eslint-disable-line no-unused-vars
 const Data = require("./libs/data"); // eslint-disable-line no-unused-vars
 const Id = require("./utils/identifier"); // eslint-disable-line no-unused-vars
+const _ = require("lodash"); // eslint-disable-line no-unused-vars
 
 global.require = require;
 
