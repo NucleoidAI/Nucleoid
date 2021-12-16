@@ -45,7 +45,9 @@ module.exports.register = function (p1, p2, p3) {
         value = eval(`state.${variable}=expression`);
       }
 
-      transaction.exec = `state.${variable}=${JSON.stringify(value)}`;
+      transaction.exec = `state.${variable}=${
+        typeof value === "function" ? value : JSON.stringify(value)
+      }`;
       state[variable] = value;
       list.push(transaction);
       return value;

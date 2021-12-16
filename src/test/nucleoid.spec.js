@@ -20,6 +20,7 @@ describe("Nucleoid", () => {
 
   describe("in declarative mode", () => {
     const details = { declarative: true, details: true };
+
     it("runs statements in the state", () => {
       nucleoid.run("var i = 1 ;");
       equal(nucleoid.run("i == 1"), true);
@@ -116,9 +117,12 @@ describe("Nucleoid", () => {
     });
 
     it("creates class with constructor", () => {
-      nucleoid.run(
-        "class Device { constructor ( name ) { this.name = name } }"
+      const result = nucleoid.run(
+        "class Device { constructor ( name ) { this.name = name } }",
+        details
       );
+      equal(result.execs[0], "state.Device=class {}");
+
       nucleoid.run("Device.active = false");
       nucleoid.run("if ( Device.name ) { Device.active = true }");
 
@@ -769,9 +773,9 @@ describe("Nucleoid", () => {
         "class Task { constructor ( ) { message ( '7c6bca38', 'CHECK' ) } }"
       );
 
-      let details1 = nucleoid.run("task1 = new Task ( )", details);
-      equal(details1.messages[0].process, "7c6bca38");
-      equal(details1.messages[0].payload, '"CHECK"');
+      let result = nucleoid.run("task1 = new Task ( )", details);
+      equal(result.messages[0].process, "7c6bca38");
+      equal(result.messages[0].payload, '"CHECK"');
     });
 
     it("rollbacks variable if exception is thrown", () => {

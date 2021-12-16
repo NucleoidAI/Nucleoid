@@ -16,7 +16,7 @@ const CLASS = class CLASS extends Node {
   }
 
   run(scope) {
-    state.assign(scope, this.name, `class ${this.name}{}`);
+    state.assign(scope, this.name, `class {}`);
 
     let list = [];
 
