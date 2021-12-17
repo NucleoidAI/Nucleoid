@@ -13,10 +13,8 @@ module.exports.end = function () {
   return result;
 };
 
-module.exports.register = function (p1, p2, p3) {
-  if (!p1) {
-    return;
-  }
+module.exports.register = function (p1, p2, p3, adjust) {
+  if (!p1) return;
 
   if (typeof p1 === "string") {
     let variable = p1;
@@ -28,7 +26,7 @@ module.exports.register = function (p1, p2, p3) {
       exec = `state.${variable}=${expression.run()}`;
 
       // eslint-disable-next-line no-eval
-      list.push({ variable, before: eval(`state.${variable}`), exec });
+      list.push({ variable, before: eval(`state.${variable}`) });
       // eslint-disable-next-line no-eval
       return eval(exec);
     } else {
@@ -45,9 +43,9 @@ module.exports.register = function (p1, p2, p3) {
         value = eval(`state.${variable}=expression`);
       }
 
-      transaction.exec = `state.${variable}=${
-        typeof value === "function" ? value : JSON.stringify(value)
-      }`;
+      if (adjust)
+        transaction.exec = `state.${variable}=${JSON.stringify(value)}`;
+
       state[variable] = value;
       list.push(transaction);
       return value;

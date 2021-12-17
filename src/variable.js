@@ -18,7 +18,7 @@ module.exports = class VARIABLE extends Node {
       value = state.assign(scope, this.name, this.value);
     } else {
       const run = this.value.run(scope);
-      value = state.assign(scope, this.name, run);
+      value = state.assign(scope, this.name, run, true);
     }
 
     return { value };

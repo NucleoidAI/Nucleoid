@@ -117,12 +117,9 @@ describe("Nucleoid", () => {
     });
 
     it("creates class with constructor", () => {
-      const result = nucleoid.run(
-        "class Device { constructor ( name ) { this.name = name } }",
-        details
+      nucleoid.run(
+        "class Device { constructor ( name ) { this.name = name } }"
       );
-      equal(result.execs[0], "state.Device=class {}");
-
       nucleoid.run("Device.active = false");
       nucleoid.run("if ( Device.name ) { Device.active = true }");
 

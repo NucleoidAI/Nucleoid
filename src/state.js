@@ -55,8 +55,8 @@ module.exports.throw = (scope, exception) => {
 };
 
 module.exports.state = state;
-module.exports.assign = function (scope, variable, expression) {
-  return _transaction.register(variable, expression, scope);
+module.exports.assign = function (scope, variable, expression, adjust) {
+  return _transaction.register(variable, expression, scope, adjust);
 };
 
 module.exports.run = function (scope, expression) {
