@@ -21,11 +21,11 @@ const CLASS = class CLASS extends Node {
 
     let list = [];
 
-    let classContext = $EXP(`Classes.push(${this.name})`, 0);
+    let classContext = $EXP(`Classes.push(${this.name})`);
     list.push(classContext.statement);
 
-    let instanceContext = $EXP("[]", 0);
-    list.push($VAR(this.name + "s", instanceContext.statement));
+    let instanceContext = $EXP("[]");
+    list.push($VAR(this.name.substring(1), instanceContext.statement));
 
     return { next: list };
   }

@@ -8,7 +8,7 @@ const $LET = require("./$let");
 
 module.exports = function (cls, name, object, args) {
   let statement = new $INSTANCE();
-  statement.class = cls;
+  statement.class = `$${cls}`;
   statement.name = name;
   statement.object = object;
   statement.args = args;

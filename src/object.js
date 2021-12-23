@@ -35,11 +35,11 @@ module.exports = class OBJECT extends Node {
       local.name = this.class.args[i];
 
       if (this.args[i] !== undefined) {
-        let context = $EXP(this.args[i], 0);
+        let context = $EXP(this.args[i]);
         local.value = context.statement.run();
         list.push(local);
       } else {
-        let context = $EXP("undefined", 0);
+        let context = $EXP("undefined");
         local.value = context.statement.run();
         list.push(local);
       }
@@ -59,12 +59,12 @@ module.exports = class OBJECT extends Node {
     }
 
     if (this.object === undefined) {
-      let context = $EXP(this.class.name + "s.push ( " + this.name + " )", 0);
+      let context = $EXP(`${this.class.name.substring(1)}.push(${this.name})`);
       list.push(context.statement);
 
       state.run(scope, `state.${name}.id="${name}"`);
 
-      context = $EXP(this.name, 0);
+      context = $EXP(this.name);
       list.push(
         new Instruction(
           scope,

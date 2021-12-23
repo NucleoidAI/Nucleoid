@@ -19,7 +19,7 @@ module.exports = class FOR {
 
       if (id !== undefined && graph[id]) {
         let object = array[this.index++].id;
-        let context = $EXP(object, 0);
+        let context = $EXP(object);
         let statements = [$LET(this.variable, context.statement)];
         list.push($BLOCK(statements.concat(this.statements), true));
       } else {

@@ -31,7 +31,7 @@ const next = function (string, offset) {
     }
 
     if (character === 96) {
-      throw SyntaxError("Backtick is not supported.");
+      throw SyntaxError("Backtick is not supported");
     }
 
     if (singleOn) {

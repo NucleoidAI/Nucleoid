@@ -65,7 +65,7 @@ class $BLOCK extends $ {
 
       if (this.args) {
         statement.statements = Object.entries(this.args)
-          .map(([name, value]) => $LET(name, $EXP(value, 0).statement))
+          .map(([name, value]) => $LET(name, $EXP(value).statement))
           .concat(statement.statements);
       }
 

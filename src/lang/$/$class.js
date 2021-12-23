@@ -3,7 +3,7 @@ const $ = require("./$");
 
 module.exports = function (name, construct, args) {
   let statement = new $CLASS();
-  statement.name = name;
+  statement.name = `$${name}`;
   statement.construct = construct;
 
   if (args === undefined) {

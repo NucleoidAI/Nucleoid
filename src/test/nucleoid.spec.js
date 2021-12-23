@@ -84,14 +84,14 @@ describe("Nucleoid", () => {
             "class Ratio { constructor ( count ) { this.count = count } calculate ( ) }"
           );
         },
-        (error) => validate(error, SyntaxError, "Methods are not supported.")
+        (error) => validate(error, SyntaxError, "Methods are not supported")
       );
 
       throws(
         () => {
           nucleoid.run("class Ratio { calculate() }");
         },
-        (error) => validate(error, SyntaxError, "Methods are not supported.")
+        (error) => validate(error, SyntaxError, "Methods are not supported")
       );
 
       throws(
@@ -120,8 +120,8 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "class Device { constructor ( name ) { this.name = name } }"
       );
-      nucleoid.run("Device.active = false");
-      nucleoid.run("if ( Device.name ) { Device.active = true }");
+      nucleoid.run("$Device.active = false");
+      nucleoid.run("if ( $Device.name ) { $Device.active = true }");
 
       nucleoid.run("device1 = new Device ( 'Entrance' )");
       equal(nucleoid.run("device1.name"), "Entrance");
@@ -152,7 +152,7 @@ describe("Nucleoid", () => {
 
     it("updates class definition", () => {
       nucleoid.run("class Message { }");
-      nucleoid.run("Message.read = false");
+      nucleoid.run("$Message.read = false");
       nucleoid.run("message1 = new Message ( )");
       nucleoid.run(
         "class Message { constructor ( payload ) { this.payload = payload } }"
@@ -225,9 +225,9 @@ describe("Nucleoid", () => {
         (error) => validate(error, SyntaxError, "Missing parentheses")
       );
 
-      nucleoid.run("board1 instanceof Board");
+      equal(nucleoid.run("board1 instanceof $Board"), true);
       nucleoid.run("board1.card = new Card ( )");
-      nucleoid.run("board1.card instanceof Card");
+      equal(nucleoid.run("board1.card instanceof $Card"), true);
     });
 
     it("supports new line as replacing with space", () => {
@@ -263,7 +263,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("`New ${a} String`");
         },
-        (error) => validate(error, SyntaxError, "Backtick is not supported.")
+        (error) => validate(error, SyntaxError, "Backtick is not supported")
       );
     });
 
@@ -428,7 +428,7 @@ describe("Nucleoid", () => {
       nucleoid.run("student3.age = 9");
 
       nucleoid.run("age = 8");
-      nucleoid.run("student = Students.find ( s => s.age == age )");
+      nucleoid.run("student = Student.find ( s => s.age == age )");
       equal(nucleoid.run("student"), nucleoid.run("student2"));
 
       nucleoid.run("age = 9");
@@ -444,7 +444,7 @@ describe("Nucleoid", () => {
       nucleoid.run("upperThreshold = 18");
       nucleoid.run("lowerThreshold = 12");
       nucleoid.run(
-        "list = Results.filter ( r => r.score > lowerThreshold ) .filter ( r => r.score < upperThreshold )"
+        "list = Result.filter ( r => r.score > lowerThreshold ) .filter ( r => r.score < upperThreshold )"
       );
       let list = nucleoid.run("list");
       equal(list[0].score, 15);
@@ -520,7 +520,9 @@ describe("Nucleoid", () => {
     });
 
     it("runs dependent statements in the same transaction", () => {
-      nucleoid.run("class Vehicle { } ; Vehicle.tag = 'US-' + Vehicle.plate ");
+      nucleoid.run(
+        "class Vehicle { } ; $Vehicle.tag = 'US-' + $Vehicle.plate "
+      );
       nucleoid.run("vehicle1 = new Vehicle ( )");
       nucleoid.run("vehicle1.plate = 'XSJ422'");
       equal(nucleoid.run("vehicle1.tag"), "US-XSJ422");
@@ -597,13 +599,13 @@ describe("Nucleoid", () => {
       equal(
         nucleoid.run("device1"),
         nucleoid.run(
-          "let device = Devices.find ( d => d.code == 'A0' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
+          "let device = Device.find ( d => d.code == 'A0' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
         )
       );
 
       throws(() => {
         nucleoid.run(
-          "let device = Devices.find ( d => d.code == 'A1' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
+          "let device = Device.find ( d => d.code == 'A1' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
         );
       }, "INVALID_DEVICE");
     });
@@ -652,16 +654,16 @@ describe("Nucleoid", () => {
 
     it("places instance in the list of class when created", () => {
       nucleoid.run("class Student { }");
-      equal(nucleoid.run("Array.isArray ( Students )"), true);
+      equal(nucleoid.run("Array.isArray ( Student )"), true);
 
       nucleoid.run("student1 = new Student ( )");
-      equal(nucleoid.run("Students.length"), 1);
+      equal(nucleoid.run("Student.length"), 1);
     });
 
     it("assigns unique variable for instance without variable name defined", () => {
       nucleoid.run("class Vehicle { }");
       nucleoid.run("new Vehicle ( )");
-      equal(nucleoid.run("Vehicles.length"), 1);
+      equal(nucleoid.run("Vehicle.length"), 1);
     });
 
     it("throws error as a string", () => {
@@ -716,7 +718,7 @@ describe("Nucleoid", () => {
     it("supports regular expression literal", () => {
       nucleoid.run("class User { }");
       nucleoid.run(
-        "if ( ! /.{4,8}/.test ( User.password ) ) { throw 'INVALID_PASSWORD' }"
+        "if ( ! /.{4,8}/.test ( $User.password ) ) { throw 'INVALID_PASSWORD' }"
       );
       nucleoid.run("user1 = new User ( )");
       throws(() => {
@@ -732,7 +734,7 @@ describe("Nucleoid", () => {
       throws(
         () => {
           nucleoid.run(
-            "{ let weight = person1.weight ; let height = person1.height ; Person.bmi = weight / ( height * height ) }"
+            "{ let weight = person1.weight ; let height = person1.height ; $Person.bmi = weight / ( height * height ) }"
           );
         },
         (error) =>
@@ -787,7 +789,7 @@ describe("Nucleoid", () => {
 
     it("rollbacks property if exception is thrown", () => {
       nucleoid.run("class Item { }");
-      nucleoid.run("if ( Item.sku == 'A' ) { throw 'INVALID_SKU' }");
+      nucleoid.run("if ( $Item.sku == 'A' ) { throw 'INVALID_SKU' }");
       nucleoid.run("item1 = new Item ( )");
 
       throws(() => {
@@ -800,7 +802,7 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "class User { constructor ( first , last ) { this.first = first ; this.last = last } }"
       );
-      nucleoid.run("if ( User.first.length < 3 ) { throw 'INVALID_USER' }");
+      nucleoid.run("if ( $User.first.length < 3 ) { throw 'INVALID_USER' }");
 
       throws(() => {
         nucleoid.run("user1 = new User ( 'F' , 'L' )");
@@ -949,13 +951,13 @@ describe("Nucleoid", () => {
 
     it("creates and assigns instance to let variable inside block", () => {
       nucleoid.run("class Device { }");
-      nucleoid.run("Device.renew = Device.created + 604800000");
+      nucleoid.run("$Device.renew = $Device.created + 604800000");
 
       nucleoid.run(
         "{ let device = new Device ( ) ; device.created = Date.now ( ) }"
       );
 
-      let id = nucleoid.run("Devices[0].id");
+      let id = nucleoid.run("Device[0].id");
       equal(nucleoid.run(`${id}.renew - ${id}.created`), 604800000);
     });
 
@@ -963,9 +965,9 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "class Member { constructor ( first , last ) { this.first = first ; this.last = last } } "
       );
-      nucleoid.run("Member.display = Member.last + ', ' + Member.first");
+      nucleoid.run("$Member.display = $Member.last + ', ' + $Member.first");
       nucleoid.run("{ let member = new Member ( 'First', 'Last' ) }");
-      equal(nucleoid.run("Members[0].display"), "Last, First");
+      equal(nucleoid.run("Member[0].display"), "Last, First");
     });
 
     it("runs new instance of let statement of property", () => {
@@ -973,7 +975,7 @@ describe("Nucleoid", () => {
       nucleoid.run("class Meeting { }");
       nucleoid.run("room1 = new Room ( )");
       nucleoid.run(
-        "Meeting.time = Date.now ( ) + ' @ ' + Meeting.date.toDateString()"
+        "$Meeting.time = Date.now ( ) + ' @ ' + $Meeting.date.toDateString()"
       );
       nucleoid.run(
         "{ let meeting = new Meeting ( ) ; meeting.date = new Date ( '2020-1-1' ) ; room1.meeting = meeting }"
@@ -992,7 +994,7 @@ describe("Nucleoid", () => {
       nucleoid.run("class Timesheet { }");
       nucleoid.run("class Task { }");
       nucleoid.run("class Project { }");
-      nucleoid.run("Project.code = 'N-' + Project.number");
+      nucleoid.run("$Project.code = 'N-' + $Project.number");
       nucleoid.run("timesheet1 = new Timesheet ( )");
       nucleoid.run(
         "{ let task = new Task ( ) ; task.project = new Project ( ) ; task.project.number = 3668347 ; timesheet1.task = task }"
@@ -1004,7 +1006,7 @@ describe("Nucleoid", () => {
     it("creates new object of let statement of class as value before initialization", () => {
       nucleoid.run("class Member { }");
       nucleoid.run(
-        "{ let registration = new Object ( ) ; registration.date = new Date ( '2019-1-2' ) ; Member.registration = registration }"
+        "{ let registration = new Object ( ) ; registration.date = new Date ( '2019-1-2' ) ; $Member.registration = registration }"
       );
 
       nucleoid.run("member1 = new Member ( )");
@@ -1019,7 +1021,7 @@ describe("Nucleoid", () => {
       nucleoid.run("class Distance { }");
       nucleoid.run("distance1 = new Distance ( )");
       nucleoid.run(
-        "{ let location = new Object ( ) ; location.coordinates = '40.6976701,-74.2598779' ; Distance.startingPoint = location }"
+        "{ let location = new Object ( ) ; location.coordinates = '40.6976701,-74.2598779' ; $Distance.startingPoint = location }"
       );
       equal(
         nucleoid.run("distance1.startingPoint.coordinates"),
@@ -1032,9 +1034,9 @@ describe("Nucleoid", () => {
       nucleoid.run("class Account { }");
       nucleoid.run("class Balance { }");
       nucleoid.run("class Currency { }");
-      nucleoid.run("Currency.description = 'Code:' + Currency.code");
+      nucleoid.run("$Currency.description = 'Code:' + $Currency.code");
       nucleoid.run(
-        "{ let balance = new Object ( ) ; balance.currency = new Object ( ) ; balance.currency.code = 'USD' ; Account.balance = balance }"
+        "{ let balance = new Object ( ) ; balance.currency = new Object ( ) ; balance.currency.code = 'USD' ; $Account.balance = balance }"
       );
       nucleoid.run("account1 = new Account ( )");
       equal(nucleoid.run("account1.balance.currency.code "), "USD");
@@ -1045,7 +1047,7 @@ describe("Nucleoid", () => {
       nucleoid.run("class Warehouse { }");
       nucleoid.run("warehouse1 = new Warehouse ( )");
       nucleoid.run(
-        "{ let inventory = new Object ( ) ; inventory.item = new Object ( ) ; inventory.item.sku = '699546085767' ; Warehouse.inventory = inventory }"
+        "{ let inventory = new Object ( ) ; inventory.item = new Object ( ) ; inventory.item.sku = '699546085767' ; $Warehouse.inventory = inventory }"
       );
       equal(nucleoid.run("warehouse1.inventory.item.sku"), "699546085767");
       equal(nucleoid.run("warehouse1.inventory.item.description"), undefined);
@@ -1055,8 +1057,8 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "class Device { constructor ( name ) { this.name = name } }"
       );
-      nucleoid.run("Device.deleted = false");
-      nucleoid.run("Device.key = 'X-' + Device.name");
+      nucleoid.run("$Device.deleted = false");
+      nucleoid.run("$Device.key = 'X-' + $Device.name");
       nucleoid.run("{ let name = 'Hall' ; device1 = new Device ( name ) }");
 
       equal(nucleoid.run("device1.name"), "Hall");
@@ -1068,11 +1070,11 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "class Summary { constructor ( rate ) { this.rate = rate } }"
       );
-      nucleoid.run("Summary.score = Summary.rate * 100");
+      nucleoid.run("$Summary.score = $Summary.rate * 100");
       nucleoid.run("{ let rate = 4 ; new Summary ( rate ) }");
 
-      equal(nucleoid.run("Summarys[0].rate"), 4);
-      equal(nucleoid.run("Summarys[0].score"), 400);
+      equal(nucleoid.run("Summary[0].rate"), 4);
+      equal(nucleoid.run("Summary[0].score"), 400);
     });
 
     it("creates variable inside block", () => {
@@ -1096,7 +1098,7 @@ describe("Nucleoid", () => {
       nucleoid.run("trip1 = new Trip ( )");
       nucleoid.run("trip1.distance = 5540");
       nucleoid.run(
-        "{ let trip = Plane.trip ; Plane.time = trip.distance / Plane.speed }"
+        "{ let trip = $Plane.trip ; $Plane.time = trip.distance / $Plane.speed }"
       );
       nucleoid.run("plane1.trip = trip1");
       equal(nucleoid.run("plane1.time"), 6.135105204872647);
@@ -1111,7 +1113,7 @@ describe("Nucleoid", () => {
       nucleoid.run("comm1.rate = 0.05");
       nucleoid.run("seller1.commission = comm1");
       nucleoid.run(
-        "{ let commission = Seller.commission ; Seller.pay = Seller.sales * commission.rate }"
+        "{ let commission = $Seller.commission ; $Seller.pay = $Seller.sales * commission.rate }"
       );
       equal(nucleoid.run("seller1.pay"), 50000);
     });
@@ -1120,7 +1122,7 @@ describe("Nucleoid", () => {
       nucleoid.run("class Order { }");
       nucleoid.run("class Sale { }");
       nucleoid.run(
-        "{ let sale = Order.sale ; sale.amount = sale.percentage / Order.amount * 100 }"
+        "{ let sale = $Order.sale ; sale.amount = sale.percentage / $Order.amount * 100 }"
       );
       nucleoid.run("order1 = new Order ( )");
       nucleoid.run("order1.amount = 100");
@@ -1139,7 +1141,7 @@ describe("Nucleoid", () => {
       nucleoid.run("trade1.quantity = 1");
       nucleoid.run("stock1.trade = trade1");
       nucleoid.run(
-        "{ let trade = Stock.trade ; trade.worth = Stock.price * trade.quantity }"
+        "{ let trade = $Stock.trade ; trade.worth = $Stock.price * trade.quantity }"
       );
       equal(nucleoid.run("trade1.worth"), 100);
     });
@@ -1232,7 +1234,7 @@ describe("Nucleoid", () => {
 
     it("defines class in the state", () => {
       nucleoid.run("class Entity { }");
-      equal(nucleoid.run("typeof Entity"), "function");
+      equal(nucleoid.run("typeof $Entity"), "function");
     });
 
     it("rejects creating instance if the class does not exist", () => {
@@ -1240,7 +1242,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("chart1 = new Chart ( )");
         },
-        (error) => validate(error, ReferenceError, "Chart is not defined")
+        (error) => validate(error, ReferenceError, "$Chart is not defined")
       );
 
       nucleoid.run("class Chart { }");
@@ -1249,14 +1251,14 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("chart1.plot = new Plot ( )");
         },
-        (error) => validate(error, ReferenceError, "Plot is not defined")
+        (error) => validate(error, ReferenceError, "$Plot is not defined")
       );
 
       throws(
         () => {
-          nucleoid.run("Chart.plot = new Plot ( )");
+          nucleoid.run("$Chart.plot = new Plot ( )");
         },
-        (error) => validate(error, ReferenceError, "Plot is not defined")
+        (error) => validate(error, ReferenceError, "$Plot is not defined")
       );
     });
 
@@ -1317,7 +1319,7 @@ describe("Nucleoid", () => {
       nucleoid.run("class Agent { }");
       nucleoid.run("class Distance { }");
       nucleoid.run(
-        "Distance.total = Math.sqrt ( Distance.x * Distance.x + Distance.y * Distance.y )"
+        "$Distance.total = Math.sqrt ( $Distance.x * $Distance.x + $Distance.y * $Distance.y )"
       );
       nucleoid.run("agent1 = new Agent ( )");
       nucleoid.run("agent1.distance = new Distance ( )");
@@ -1333,7 +1335,7 @@ describe("Nucleoid", () => {
       nucleoid.run("product1.quality = new Quality ( )");
       nucleoid.run("product1.quality.score = 15");
       nucleoid.run(
-        "Quality.class = String.fromCharCode ( 65 + Math.floor ( Quality.score / 10 ) )"
+        "$Quality.class = String.fromCharCode ( 65 + Math.floor ( $Quality.score / 10 ) )"
       );
       equal(nucleoid.run("product1.quality.class"), "B");
     });
@@ -1435,7 +1437,7 @@ describe("Nucleoid", () => {
       nucleoid.run("count = 0");
       nucleoid.run("class Device { }");
       nucleoid.run("device1 = new Device ( )");
-      nucleoid.run("{ Device.code = 'A' + count.value ; count = count + 1 }");
+      nucleoid.run("{ $Device.code = 'A' + count.value ; count = count + 1 }");
       equal(nucleoid.run("device1.code"), "A0");
     });
 
@@ -1444,7 +1446,7 @@ describe("Nucleoid", () => {
         "class Summary { constructor ( question ) { this.question = question } }"
       );
       nucleoid.run("class Question { }");
-      nucleoid.run("Summary.count = Summary.question.count.value");
+      nucleoid.run("$Summary.count = $Summary.question.count.value");
       nucleoid.run("question1 = new Question ( )");
       nucleoid.run("question1.count = 10");
       nucleoid.run("summary1 = new Summary ( question1 )");
@@ -1653,7 +1655,7 @@ describe("Nucleoid", () => {
       nucleoid.run("person1 = new Person ( )");
       nucleoid.run("class Address { }");
       nucleoid.run("address1 = new Address ( )");
-      nucleoid.run("Address.print = Address.city + ', ' + Address.state");
+      nucleoid.run("$Address.print = $Address.city + ', ' + $Address.state");
       nucleoid.run("person1.address = new Address ( )");
       nucleoid.run("person1.address.city = 'Syracuse'");
       nucleoid.run("person1.address.state = 'NY'");
@@ -1707,8 +1709,8 @@ describe("Nucleoid", () => {
       nucleoid.run("vote1 = new Vote ( )");
       nucleoid.run("vote1.rate = 4");
       nucleoid.run("class Question { }");
-      nucleoid.run("Question.rate = 0");
-      nucleoid.run("Question.count = 0");
+      nucleoid.run("$Question.rate = 0");
+      nucleoid.run("$Question.count = 0");
       nucleoid.run("question1 = new Question ( )");
       nucleoid.run("vote1.question = question1");
       nucleoid.run(
@@ -1727,14 +1729,14 @@ describe("Nucleoid", () => {
       nucleoid.run("element1 = new Element ( )");
       nucleoid.run("element1.number = 3");
       nucleoid.run(
-        "{ let number = Element.number ; if ( number == 3 ) { alkalis.push ( Element ) } }"
+        "{ let number = $Element.number ; if ( number == 3 ) { alkalis.push ( $Element ) } }"
       );
       equal(nucleoid.run("alkalis.pop ( )"), nucleoid.run("element1"));
     });
 
     it("creates class assignment before initialization", () => {
       nucleoid.run("class Review { }");
-      nucleoid.run("Review.rate = Review.sum / 10");
+      nucleoid.run("$Review.rate = $Review.sum / 10");
       nucleoid.run("review1 = new Review ( )");
       nucleoid.run("review1.sum = 42");
       equal(nucleoid.run("review1.rate"), 4.2);
@@ -1746,7 +1748,7 @@ describe("Nucleoid", () => {
       nucleoid.run("s1.edge = 3");
       nucleoid.run("s2 = new Shape ( )");
       nucleoid.run("s2.edge = 3");
-      nucleoid.run("Shape.angle = ( Shape.edge - 2 ) * 180");
+      nucleoid.run("$Shape.angle = ( $Shape.edge - 2 ) * 180");
       nucleoid.run("s1.edge = 4");
       equal(nucleoid.run("s1.angle"), 360);
       equal(nucleoid.run("s2.angle"), 180);
@@ -1756,9 +1758,9 @@ describe("Nucleoid", () => {
       nucleoid.run("class Employee { }");
       nucleoid.run("employee = new Employee ( )");
       nucleoid.run("employee.id = 1");
-      nucleoid.run("Employee.username = 'E' + Employee.id");
+      nucleoid.run("$Employee.username = 'E' + $Employee.id");
       equal(nucleoid.run("employee.username"), "E1");
-      nucleoid.run("Employee.username = 'F' + Employee.id");
+      nucleoid.run("$Employee.username = 'F' + $Employee.id");
       nucleoid.run("employee.id = 2");
       equal(nucleoid.run("employee.username"), "F2");
     });
@@ -1766,7 +1768,7 @@ describe("Nucleoid", () => {
     it("creates if statement of class before initialization", () => {
       nucleoid.run("class Ticket { }");
       nucleoid.run(
-        "if ( Ticket.date > new Date ( '1993-1-1' ) ) { Ticket.status = 'EXPIRED' }"
+        "if ( $Ticket.date > new Date ( '1993-1-1' ) ) { $Ticket.status = 'EXPIRED' }"
       );
       nucleoid.run("ticket1 = new Ticket ( )");
 
@@ -1786,7 +1788,7 @@ describe("Nucleoid", () => {
       nucleoid.run("s2 = new Student ( )");
       nucleoid.run("s2.age = 2");
       nucleoid.run("s2.class = 'Daycare'");
-      nucleoid.run("if ( Student.age == 3 ) { Student.class = 'Preschool' }");
+      nucleoid.run("if ( $Student.age == 3 ) { $Student.class = 'Preschool' }");
       nucleoid.run("s1.age = 3");
       equal(nucleoid.run("s1.class"), "Preschool");
       equal(nucleoid.run("s2.class"), "Daycare");
@@ -1801,12 +1803,12 @@ describe("Nucleoid", () => {
       nucleoid.run("i2.quantity = 1000");
 
       nucleoid.run(
-        "if ( Inventory.quantity == 0 ) { Inventory.replenishment = true }"
+        "if ( $Inventory.quantity == 0 ) { $Inventory.replenishment = true }"
       );
       equal(nucleoid.run("i1.replenishment"), true);
       equal(nucleoid.run("i2.replenishment"), undefined);
       nucleoid.run(
-        "if ( Inventory.quantity == 0 ) { Inventory.replenishment = false }"
+        "if ( $Inventory.quantity == 0 ) { $Inventory.replenishment = false }"
       );
 
       equal(nucleoid.run("i1.replenishment"), false);
@@ -1816,7 +1818,7 @@ describe("Nucleoid", () => {
     it("creates else statement of class before initialization", () => {
       nucleoid.run("class Count { }");
       nucleoid.run(
-        "if ( Count.max > 1000 ) { Count.reset = urgent } else { Count.reset = regular }"
+        "if ( $Count.max > 1000 ) { $Count.reset = urgent } else { $Count.reset = regular }"
       );
       nucleoid.run("urgent = 'URGENT'");
       nucleoid.run("regular = 'REGULAR'");
@@ -1835,7 +1837,7 @@ describe("Nucleoid", () => {
       nucleoid.run("concentration1 = new Concentration ( )");
       nucleoid.run("concentration1.substances = 2");
       nucleoid.run(
-        "if ( Concentration.substances == 1 ) { Concentration.formula = directDilution } else { Concentration.formula = serialDilution }"
+        "if ( $Concentration.substances == 1 ) { $Concentration.formula = directDilution } else { $Concentration.formula = serialDilution }"
       );
       equal(nucleoid.run("concentration1.formula"), "(c1V1+c2V2)/(V1+V2)");
 
@@ -1850,7 +1852,7 @@ describe("Nucleoid", () => {
       nucleoid.run("class Storage { }");
       nucleoid.run("normal = 'NORMAL' ; low = 'LOW'");
       nucleoid.run(
-        "if ( Storage.capacity > 25 ) { Storage.status = normal } else { Storage.status = low }"
+        "if ( $Storage.capacity > 25 ) { $Storage.status = normal } else { $Storage.status = low }"
       );
       nucleoid.run("storage1 = new Storage ( )");
       nucleoid.run("storage1.capacity = 23");
@@ -1866,7 +1868,7 @@ describe("Nucleoid", () => {
       nucleoid.run("registration1 = new Registration ( )");
       nucleoid.run("registration1.available = 0");
       nucleoid.run(
-        "if ( Registration.available > 0 ) { Registration.accepted = yes } else { Registration.accepted = no }"
+        "if ( $Registration.available > 0 ) { $Registration.accepted = yes } else { $Registration.accepted = no }"
       );
       equal(nucleoid.run("registration1.accepted"), "NO");
 
@@ -1877,7 +1879,7 @@ describe("Nucleoid", () => {
     it("creates multiple else if statement of class before initialization", () => {
       nucleoid.run("class Capacity { }");
       nucleoid.run(
-        "if ( Capacity.spare / Capacity.available > 0.5 ) { Capacity.total = Capacity.available +  Capacity.spare } else if ( Capacity.spare / Capacity.available > 0.1 ) { Capacity.total = Capacity.available +  Capacity.spare * 2 } else { Capacity.total = Capacity.available + Capacity.spare * 3 }"
+        "if ( $Capacity.spare / $Capacity.available > 0.5 ) { $Capacity.total = $Capacity.available + $Capacity.spare } else if ( $Capacity.spare / $Capacity.available > 0.1 ) { $Capacity.total = $Capacity.available + $Capacity.spare * 2 } else { $Capacity.total = $Capacity.available + $Capacity.spare * 3 }"
       );
       nucleoid.run("capacity1 = new Capacity ( )");
       nucleoid.run("capacity1.available = 100");
@@ -1895,7 +1897,7 @@ describe("Nucleoid", () => {
       nucleoid.run("shape1.x = 5");
       nucleoid.run("shape1.y = 6");
       nucleoid.run(
-        "if ( Shape.type == 'SQUARE' ) { Shape.area = Math.pow( Shape.x, 2 ) } else if ( Shape.type == 'TRIANGLE' ) { Shape.area = Shape.x * Shape.y / 2 } else { Shape.area = Shape.x * Shape.y }"
+        "if ( $Shape.type == 'SQUARE' ) { $Shape.area = Math.pow( Shape.x, 2 ) } else if ( $Shape.type == 'TRIANGLE' ) { $Shape.area = $Shape.x * $Shape.y / 2 } else { $Shape.area = $Shape.x * $Shape.y }"
       );
       equal(nucleoid.run("shape1.area"), 30);
 
@@ -1906,7 +1908,7 @@ describe("Nucleoid", () => {
     it("runs block statement of class before initialization", () => {
       nucleoid.run("class Stock { }"); //Stock
       nucleoid.run(
-        "{ let change = Stock.before * 4 / 100 ; Stock.after = Stock.before + change }"
+        "{ let change = $Stock.before * 4 / 100 ; $Stock.after = $Stock.before + change }"
       );
       nucleoid.run("stock1 = new Stock ( )");
       nucleoid.run("stock1.before = 57.25");
@@ -1921,7 +1923,7 @@ describe("Nucleoid", () => {
       nucleoid.run("purchase = new Purchase ( )");
       nucleoid.run("purchase.price = 99");
       nucleoid.run(
-        "{ let retailPrice = Purchase.price * 1.15 ; Purchase.retailPrice = retailPrice }"
+        "{ let retailPrice = $Purchase.price * 1.15 ; $Purchase.retailPrice = retailPrice }"
       );
       equal(nucleoid.run("purchase.retailPrice"), 113.85);
 
@@ -1932,7 +1934,7 @@ describe("Nucleoid", () => {
     it("runs nested block statement of class before initialization", () => {
       nucleoid.run("class Compound { }");
       nucleoid.run(
-        "{ let mol = 69.94 / Compound.substance ; { Compound.sample = Math.floor ( mol * Compound.mol ) } }"
+        "{ let mol = 69.94 / $Compound.substance ; { $Compound.sample = Math.floor ( mol * $Compound.mol ) } }"
       );
       nucleoid.run("compound1 = new Compound ( )");
       nucleoid.run("compound1.substance = 55.85");
@@ -1946,7 +1948,7 @@ describe("Nucleoid", () => {
       nucleoid.run("bug1.initialScore = 1000");
       nucleoid.run("bug1.aging = 24");
       nucleoid.run(
-        "{ let score = Bug.aging * 10 ; { Bug.priorityScore = score + Bug.initialScore } }"
+        "{ let score = $Bug.aging * 10 ; { $Bug.priorityScore = score + $Bug.initialScore } }"
       );
       equal(nucleoid.run("bug1.priorityScore"), 1240);
     });
@@ -1954,7 +1956,7 @@ describe("Nucleoid", () => {
     it("runs nested if statement of class before initialization", () => {
       nucleoid.run("class Mortgage { }");
       nucleoid.run(
-        "{ let interest = Mortgage.annual / 12 ; if ( interest < 4 ) { Mortgage.rate = rate1 } }"
+        "{ let interest = $Mortgage.annual / 12 ; if ( interest < 4 ) { $Mortgage.rate = rate1 } }"
       );
       nucleoid.run("rate1 = 'EXCEPTIONAL'");
       nucleoid.run("mortgage1 = new Mortgage ( )");
@@ -1971,7 +1973,7 @@ describe("Nucleoid", () => {
       nucleoid.run("building1 = new Building ( )");
       nucleoid.run("building1.floors = 20");
       nucleoid.run(
-        "{ let height = Building.floors * 14 ; if ( height > 330 ) { Building.type = buildingType1 } }"
+        "{ let height = $Building.floors * 14 ; if ( height > 330 ) { $Building.type = buildingType1 } }"
       );
       equal(nucleoid.run("building1.type"), undefined);
 
@@ -1987,7 +1989,7 @@ describe("Nucleoid", () => {
       nucleoid.run("noAlert = 'NO_ALERT'");
       nucleoid.run("lowAlert = 'LOW_ALERT'");
       nucleoid.run(
-        "{ let balance = Account.balance ; if ( balance > 1000 ) { Account.alert = noAlert } else { Account.alert = lowAlert } }"
+        "{ let balance = $Account.balance ; if ( balance > 1000 ) { $Account.alert = noAlert } else { $Account.alert = lowAlert } }"
       );
       nucleoid.run("account1 = new Account ( )");
       nucleoid.run("account1.balance = 950");
@@ -2004,7 +2006,7 @@ describe("Nucleoid", () => {
       nucleoid.run("question1 = new Question ( )");
       nucleoid.run("question1.count = 1");
       nucleoid.run(
-        "{ let score = Question.count * 10 ; if ( score > 100 ) { Question.type = high } else { Question.type = low } }"
+        "{ let score = $Question.count * 10 ; if ( score > 100 ) { $Question.type = high } else { $Question.type = low } }"
       );
       equal(nucleoid.run("question1.type"), "LOW");
 
@@ -2014,9 +2016,9 @@ describe("Nucleoid", () => {
 
     it("creates class assignment with multiple properties before declaration", () => {
       nucleoid.run("class Room { }");
-      nucleoid.run("Room.level = Room.number / 10");
+      nucleoid.run("$Room.level = $Room.number / 10");
       nucleoid.run("class Guest { }");
-      nucleoid.run("Guest.room = new Room ( )");
+      nucleoid.run("$Guest.room = new Room ( )");
       nucleoid.run("guest1 = new Guest ( )");
       nucleoid.run("guest1.room.number = 30");
       equal(nucleoid.run("guest1.room.level"), 3);
@@ -2026,8 +2028,8 @@ describe("Nucleoid", () => {
       nucleoid.run("class Channel { }");
       nucleoid.run("class Frequency { }");
       nucleoid.run("channel1 = new Channel ( )");
-      nucleoid.run("Channel.frequency = new Frequency ( )");
-      nucleoid.run("Frequency.hertz = 1 / Frequency.period");
+      nucleoid.run("$Channel.frequency = new Frequency ( )");
+      nucleoid.run("$Frequency.hertz = 1 / $Frequency.period");
       nucleoid.run("channel1.frequency.period = 0.0025");
       equal(nucleoid.run("channel1.frequency.hertz"), 400);
     });
@@ -2035,8 +2037,8 @@ describe("Nucleoid", () => {
     it("creates class assignment as multiple properties as part of declaration before initialization", () => {
       nucleoid.run("class Hospital { }");
       nucleoid.run("class Clinic { }");
-      nucleoid.run("Hospital.clinic = new Clinic ( )");
-      nucleoid.run("Hospital.patients = Hospital.clinic.beds * 746");
+      nucleoid.run("$Hospital.clinic = new Clinic ( )");
+      nucleoid.run("$Hospital.patients = $Hospital.clinic.beds * 746");
       nucleoid.run("hospital1 = new Hospital ( )");
       nucleoid.run("hospital1.clinic.beds = 2678");
       equal(nucleoid.run("hospital1.patients"), 1997788);
@@ -2045,10 +2047,10 @@ describe("Nucleoid", () => {
     it("creates class assignment as multiple properties as part of declaration after initialization", () => {
       nucleoid.run("class Server { }");
       nucleoid.run("class OS { }");
-      nucleoid.run("Server.os = new OS ( )");
+      nucleoid.run("$Server.os = new OS ( )");
       nucleoid.run("server1 = new Server ( )");
       nucleoid.run("server1.os.version = 14");
-      nucleoid.run("Server.build = Server.os.version + '.526291'");
+      nucleoid.run("$Server.build = $Server.os.version + '.526291'");
       equal(nucleoid.run("server1.build"), "14.526291");
     });
 
@@ -2071,13 +2073,11 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "class Summary { constructor ( question ) { this.question = question } }"
       );
-      nucleoid.run("Summary.rate = Summary.question.rate.value");
+      nucleoid.run("$Summary.rate = $Summary.question.rate.value");
 
-      nucleoid.run(
-        "for ( question of Questions ) { new Summary ( question ) }"
-      );
-      equal(nucleoid.run("Summarys[0]").rate, 4);
-      equal(nucleoid.run("Summarys[1]").rate, 5);
+      nucleoid.run("for ( question of Question ) { new Summary ( question ) }");
+      equal(nucleoid.run("Summary[0]").rate, 4);
+      equal(nucleoid.run("Summary[1]").rate, 5);
     });
 
     it("creates block of for statement without dependencies", () => {
@@ -2086,7 +2086,7 @@ describe("Nucleoid", () => {
       nucleoid.run("item2 = new Item ( )");
       nucleoid.run("VALUE = 10");
       nucleoid.run(
-        "for ( item of Items ) { let i = 10 * VALUE ; item.score = i }"
+        "for ( item of Item ) { let i = 10 * VALUE ; item.score = i }"
       );
 
       nucleoid.run("VALUE = 20");
@@ -2094,7 +2094,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("item2.score"), 100);
 
       nucleoid.run(
-        "for ( item of Items ) { let i = 10 * VALUE ; item.score = i }"
+        "for ( item of Item ) { let i = 10 * VALUE ; item.score = i }"
       );
       equal(nucleoid.run("item1.score"), 200);
       equal(nucleoid.run("item2.score"), 200);
@@ -2122,16 +2122,16 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "class Summary { constructor ( question ) { this.question = question } }"
       );
-      nucleoid.run("Summary.type = 'DAILY'");
+      nucleoid.run("$Summary.type = 'DAILY'");
       nucleoid.run(
-        "for ( question of Questions ) { if ( ! question.archived ) { new Summary ( question ) } }"
+        "for ( question of Question ) { if ( ! question.archived ) { new Summary ( question ) } }"
       );
 
-      equal(nucleoid.run("Summarys.length"), 2);
-      equal(nucleoid.run("Summarys[0].question.id"), "question1");
-      equal(nucleoid.run("Summarys[1].question.id"), "question3");
-      equal(nucleoid.run("Summarys[0].type"), "DAILY");
-      equal(nucleoid.run("Summarys[1].type"), "DAILY");
+      equal(nucleoid.run("Summary.length"), 2);
+      equal(nucleoid.run("Summary[0].question.id"), "question1");
+      equal(nucleoid.run("Summary[1].question.id"), "question3");
+      equal(nucleoid.run("Summary[0].type"), "DAILY");
+      equal(nucleoid.run("Summary[1].type"), "DAILY");
     });
 
     it("returns integer in variable assignment", () => {

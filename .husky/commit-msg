@@ -4,16 +4,16 @@ const fs = require("fs");
 let message = fs.readFileSync(process.argv[2]).toString().trim();
 
 if (message.split(/\r\n|\r|\n/).length > 1) {
-  console.log("The commit message contains newline.");
+  console.log("The commit message contains newline");
   process.exit(1);
 }
 
 if (!/^.{0,80}$/.test(message)) {
-  console.log("The comment is too long.");
+  console.log("The comment is too long");
   process.exit(1);
 }
 
 if (!/^\S((?!.*  ).*\S)?$/.test(message)) {
-  console.log("There are multiple spaces in commit message.");
+  console.log("There are multiple spaces in commit message");
   process.exit(1);
 }
