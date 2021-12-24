@@ -14,8 +14,8 @@ describe("Nucleoid", () => {
     for (let property in state) delete state[property];
     for (let property in graph) delete graph[property];
 
-    state["Classes"] = [];
-    graph["Classes"] = { name: "Classes" };
+    state["classes"] = [];
+    graph["classes"] = { name: "classes" };
   });
 
   describe("in declarative mode", () => {
@@ -141,13 +141,13 @@ describe("Nucleoid", () => {
     });
 
     it("adds created class in class list", () => {
-      equal(nucleoid.run("Classes.length"), 0);
+      equal(nucleoid.run("classes.length"), 0);
 
       nucleoid.run("class Student { }");
-      equal(nucleoid.run("Classes.length"), 1);
+      equal(nucleoid.run("classes.length"), 1);
 
       nucleoid.run("class User { }");
-      equal(nucleoid.run("Classes.length"), 2);
+      equal(nucleoid.run("classes.length"), 2);
     });
 
     it("updates class definition", () => {
@@ -2203,8 +2203,8 @@ describe("Nucleoid", () => {
       for (let property in state) delete state[property];
       for (let property in graph) delete graph[property];
 
-      state["Classes"] = [];
-      graph["Classes"] = { name: "Classes" };
+      state["classes"] = [];
+      graph["classes"] = { name: "classes" };
     });
 
     it("creates variable assignment", () => {

@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 const state = {
-  Classes: [],
+  classes: [],
 };
 const _transaction = require("./transaction");
 const _graph = require("./graph");

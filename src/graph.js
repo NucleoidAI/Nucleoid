@@ -1,5 +1,5 @@
 module.exports = {
-  Classes: {
-    name: "Classes",
+  classes: {
+    name: "classes",
   },
 };
