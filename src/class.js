@@ -21,11 +21,15 @@ const CLASS = class CLASS extends Node {
 
     let list = [];
 
-    let context = $EXP(`classes.push("${this.name}")`);
-    list.push(context.statement);
+    if (!graph[this.name]) {
+      let context = $EXP(`classes.push("${this.name}")`);
+      list.push(context.statement);
 
-    context = $EXP("[]");
-    list.push($VAR(this.name.substring(1), context.statement));
+      context = $EXP("[]");
+      list.push($VAR(this.name.substring(1), context.statement));
+    } else {
+      this.sequence = graph[this.name].sequence;
+    }
 
     return { next: list };
   }

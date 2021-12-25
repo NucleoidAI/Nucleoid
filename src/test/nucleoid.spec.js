@@ -140,6 +140,18 @@ describe("Nucleoid", () => {
       equal(nucleoid.run(`${device4.id}.active`), false);
     });
 
+    it("prevents class and object lists when class is updated", () => {
+      nucleoid.run("class User { }");
+      nucleoid.run("new User ( )");
+      equal(nucleoid.run("classes.length"), 1);
+      equal(nucleoid.run("User.length"), 1);
+
+      nucleoid.run("class User { }");
+      nucleoid.run("new User ( )");
+      equal(nucleoid.run("classes.length"), 1);
+      equal(nucleoid.run("User.length"), 2);
+    });
+
     it("adds created class in class list", () => {
       equal(nucleoid.run("classes.length"), 0);
 
