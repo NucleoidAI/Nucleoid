@@ -83,7 +83,8 @@ app.use(cors());
 const accept = (req, res, fn) => {
   const scope = { params: req.params, query: req.query, body: req.body };
   const result = run(fn, scope);
-  res.send(result);
+  if (result === undefined) res.status(404).end();
+  else res.send(result);
 };
 
 module.exports = () => ({
