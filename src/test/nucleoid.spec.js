@@ -630,6 +630,15 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("shipment1.date.toDateString ( )"), "Thu Jan 03 2019");
     });
 
+    it("creates property of let statement in different scope", () => {
+      nucleoid.run("class User { }");
+      nucleoid.run("user0 = new User ( )");
+      nucleoid.run(
+        "let user = User['user0'] ; if ( user ) { user.name = 'TEST' }"
+      );
+      equal(nucleoid.run("user0.name"), "TEST");
+    });
+
     it("assigns undefined if any dependencies in expression is undefined", () => {
       nucleoid.run("class Person { }");
       nucleoid.run("person1 = new Person ( )");

@@ -1,4 +1,5 @@
 const state = require("./state");
+const Local = require("./utils/local");
 
 module.exports = class LET {
   constructor(name, value) {
@@ -9,7 +10,14 @@ module.exports = class LET {
 
   run(scope) {
     let value = this.value.run(scope);
-    let expression = `scope.local.${this.name}=${value}`;
+
+    let local = Local.retrieve(scope, this.name);
+
+    if (!local) {
+      local = `scope.local.${this.name}`;
+    }
+
+    let expression = `${local}=${value}`;
     state.run(scope, expression);
   }
 
