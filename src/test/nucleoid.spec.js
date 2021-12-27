@@ -140,6 +140,16 @@ describe("Nucleoid", () => {
       equal(nucleoid.run(`${device4.id}.active`), false);
     });
 
+    it("adds object in object list", () => {
+      nucleoid.run("class Student { }");
+      nucleoid.run("user0 = new Student ( )");
+      deepEqual(
+        nucleoid.run("Student.find ( student => student.id === 'user0')"),
+        { id: "user0" }
+      );
+      deepEqual(nucleoid.run("Student['user0']"), { id: "user0" });
+    });
+
     it("prevents class and object lists when class is updated", () => {
       nucleoid.run("class User { }");
       nucleoid.run("new User ( )");
