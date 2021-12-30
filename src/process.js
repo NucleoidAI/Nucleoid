@@ -43,10 +43,11 @@ setImmediate(() => {
       process.send(
         JSON.stringify({
           r: details.result,
+          d: details.date,
           t: details.time,
+          e: details.error,
           m: details.messages,
           v: details.events,
-          e: details.error,
         })
       );
     });

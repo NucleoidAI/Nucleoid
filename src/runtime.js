@@ -34,7 +34,7 @@ module.exports.process = function (statement, options) {
   _options = { declarative, details, cacheOnly };
 
   let before = Date.now();
-  let statements, result, error, json, execs;
+  let statements, result, error, execs;
 
   let s = Macro.apply(statement, _options);
 
@@ -52,17 +52,6 @@ module.exports.process = function (statement, options) {
     error = true;
   }
 
-  try {
-    if (result instanceof Error) {
-      json = JSON.stringify(`${result.constructor.name}: ${result.message}`);
-    } else {
-      json = JSON.stringify(result);
-    }
-  } catch (e) {
-    json = JSON.stringify(e.message);
-    error = true;
-  }
-
   let messages = Message.list();
   let events = Event.list();
 
@@ -73,13 +62,16 @@ module.exports.process = function (statement, options) {
   let time = date - before;
 
   if (!cacheOnly) {
+    if (result instanceof Error)
+      result = `${result.constructor.name}: ${result.message}`;
+
     fs.appendFileSync(
       `${path}/${argv.id || "main"}`,
       JSON.stringify({
         s,
         c: declarative ? true : undefined,
         t: time,
-        r: json,
+        r: result,
         d: date,
         e: error,
         m: messages,
@@ -92,16 +84,16 @@ module.exports.process = function (statement, options) {
   _options = {};
 
   if (details) {
+    if (result instanceof Error)
+      result = `${result.constructor.name}: ${result.message}`;
+
     return {
-      string: s,
-      result: json,
-      statements,
+      result,
       date,
       time,
       error,
       messages,
       events,
-      execs,
     };
   } else {
     if (error) {

@@ -66,22 +66,16 @@ function receive(proc, message) {
   let { request } = proc.requests.shift();
 
   if (request) {
-    request.res.type("application/json");
     let details = JSON.parse(message);
 
-    if (details.e) {
-      request.res.status(400);
-    }
-
-    if (details.t !== undefined) {
-      request.res.set("Server-Timing", `nucleoid;dur=${details.t}`);
-    }
-
-    if (details.r !== undefined) {
-      request.res.send(details.r);
-    } else {
-      request.res.end();
-    }
+    request.res.send({
+      result: details.r,
+      date: details.d,
+      time: details.t,
+      error: details.e,
+      messages: details.m,
+      events: details.v,
+    });
 
     if (details.m) {
       let messages = details.m;

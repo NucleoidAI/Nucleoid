@@ -9,11 +9,13 @@ const terminal = express();
 terminal.use(express.text({ type: "*/*" }));
 terminal.use(cors());
 
-terminal.post("/", (req, res) => res.send(runtime.process(req.body)));
-terminal.use((err, res) => {
-  res.type("txt");
-  res.status(500).send(err.stack);
+terminal.post("/", (req, res) => {
+  const details = runtime.process(req.body, { details: true });
+  res.send(details);
 });
+terminal.all("*", (req, res) => res.status(404).end());
+// eslint-disable-next-line no-unused-vars
+terminal.use((err, req, res, next) => res.status(500).send(err.stack));
 
 const start = (options) => {
   options = options || {};
@@ -34,16 +36,17 @@ const register = (fn, options) => {
   preset.push({ fn, options });
 };
 
-const run = (statement, p2) => {
+const run = (statement, p2, p3) => {
   if (typeof statement === "string") {
     const options = p2;
     return runtime.process(`${statement}`, options);
   } else {
     let scope = p2;
+    let options = p3;
     const { args, fn } = parseFn(statement.toString());
     scope =
       scope && args.length ? `let ${args[0]}=${JSON.stringify(scope)};` : "";
-    return runtime.process(`${scope}${fn}`);
+    return runtime.process(`${scope}${fn}`, options);
   }
 };
 
@@ -82,12 +85,13 @@ app.use(cors());
 
 const accept = (req, res, fn) => {
   const scope = { params: req.params, query: req.query, body: req.body };
-  const result = run(fn, scope);
+  const { result } = run(fn, scope, { details: true });
   if (result === undefined) res.status(404).end();
   else res.send(result);
 };
 
 module.exports = () => ({
+  express: () => app,
   use: (fn) => app.use(fn),
   get: (string, fn) => app.get(string, (req, res) => accept(req, res, fn)),
   post: (string, fn) => app.post(string, (req, res) => accept(req, res, fn)),
@@ -95,15 +99,9 @@ module.exports = () => ({
   delete: (string, fn) =>
     app.delete(string, (req, res) => accept(req, res, fn)),
   listen: (port, fn) => {
-    app.all("*", (req, res) => {
-      res.status(404).end();
-    });
-
-    app.use((err, req, res, next) => {
-      if (!err) next();
-      else if (!(err instanceof Error)) res.status(400).send({ error: err });
-      else res.status(500).send({ error: err.message });
-    });
+    app.all("*", (req, res) => res.status(404).end());
+    // eslint-disable-next-line no-unused-vars
+    app.use((err, req, res, next) => res.status(500).send(err.stack));
 
     start();
     app.listen(port, fn);

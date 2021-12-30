@@ -9,9 +9,8 @@ terminal.use(cors());
 service.start("main");
 
 terminal.post("/", (req, res) => service.accept(req.body, req, res));
-terminal.use((err, res) => {
-  res.type("txt");
-  res.status(500).send(err.stack);
-});
+terminal.all("*", (req, res) => res.status(404).end());
+// eslint-disable-next-line no-unused-vars
+terminal.use((err, req, res, next) => res.status(500).send(err.stack));
 
 terminal.listen(8448);
