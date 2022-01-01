@@ -118,11 +118,21 @@ class Token {
         break;
       }
 
-      tokens.push(callback(token));
+      if (callback) {
+        tokens.push(callback(token));
+      } else {
+        tokens.push(token);
+      }
+
       context = next(string, offset);
     }
 
-    return { tokens: tokens, offset: offset };
+    return { tokens, offset: offset };
+  }
+
+  static nextStatement(string, offset) {
+    const context = Token.each(string, offset);
+    return { statement: context.tokens.join(" "), offset: context.offset };
   }
 
   static nextBlock(string, offset, skip) {

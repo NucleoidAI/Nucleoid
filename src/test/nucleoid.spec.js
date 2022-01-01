@@ -2252,6 +2252,10 @@ describe("Nucleoid", () => {
       deepEqual(nucleoid.run("b = 1 ; test ( b )"), {});
     });
 
+    it("returns first return statement", () => {
+      equal(nucleoid.run("{ return 123 ; return 'abc' }"), 123);
+    });
+
     it("returns undefined in class creation", () => {
       equal(nucleoid.run("class Test { }"), undefined);
     });
