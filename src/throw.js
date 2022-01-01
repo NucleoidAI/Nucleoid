@@ -12,7 +12,7 @@ module.exports = class THROW {
       state.throw(scope, Id.serialize(exception));
     }
 
-    throw this.exception;
+    throw state.run(scope, this.exception);
   }
 
   graph() {}

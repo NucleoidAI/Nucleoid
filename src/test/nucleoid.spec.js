@@ -488,15 +488,21 @@ describe("Nucleoid", () => {
         "if ( ! /[A-Z]/.test ( name.charAt ( pointer ) ) ) { throw 'INVALID_FIRST_CHARACTER' }"
       );
 
-      throws(() => {
-        nucleoid.run("name = 'bbCDE'");
-      }, "INVALID_FIRST_CHARACTER");
+      throws(
+        () => {
+          nucleoid.run("name = 'bbCDE'");
+        },
+        (error) => error === "INVALID_FIRST_CHARACTER"
+      );
 
       nucleoid.run("name = 'CbCDE'");
 
-      throws(() => {
-        nucleoid.run("pointer = 1");
-      }, "INVALID_FIRST_CHARACTER");
+      throws(
+        () => {
+          nucleoid.run("pointer = 1");
+        },
+        (error) => error === "INVALID_FIRST_CHARACTER"
+      );
     });
 
     it("supports property of chained functions in expression", () => {
@@ -625,11 +631,14 @@ describe("Nucleoid", () => {
         )
       );
 
-      throws(() => {
-        nucleoid.run(
-          "let device = Device.find ( d => d.code == 'A1' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
-        );
-      }, "INVALID_DEVICE");
+      throws(
+        () => {
+          nucleoid.run(
+            "let device = Device.find ( d => d.code == 'A1' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
+          );
+        },
+        (error) => error === "INVALID_DEVICE"
+      );
     });
 
     it("creates standard built-in object of let statement as property", () => {
@@ -698,10 +707,47 @@ describe("Nucleoid", () => {
     });
 
     it("throws error as a string", () => {
+      throws(
+        () => {
+          nucleoid.run("throw 'INVALID'");
+        },
+        (error) => error === "INVALID"
+      );
+
+      throws(
+        () => {
+          nucleoid.run('throw "INVALID"');
+        },
+        (error) => error === "INVALID"
+      );
+    });
+
+    it("throws error as an integer", () => {
+      throws(
+        () => {
+          nucleoid.run("throw 123");
+        },
+        (error) => error === 123
+      );
+    });
+
+    it("throws reference error if invalid in throw", () => {
+      throws(
+        () => {
+          nucleoid.run("throw abc");
+        },
+        (error) => validate(error, ReferenceError, "abc is not defined")
+      );
+    });
+
+    it("throws error inside block", () => {
       nucleoid.run("k = 99");
-      throws(() => {
-        nucleoid.run("if ( k >= 99 ) { throw 'INVALID' }");
-      }, "INVALID");
+      throws(
+        () => {
+          nucleoid.run("if ( k >= 99 ) { throw 'INVALID' }");
+        },
+        (error) => error === "INVALID"
+      );
     });
 
     it("throws error as a variable", () => {
@@ -713,9 +759,12 @@ describe("Nucleoid", () => {
         (error) => error === 0.1
       );
 
-      throws(() => {
-        nucleoid.run("if ( length < 1.1 ) { throw 'length' }");
-      }, "length");
+      throws(
+        () => {
+          nucleoid.run("if ( length < 1.1 ) { throw 'length' }");
+        },
+        (error) => error === "length"
+      );
     });
 
     it("assigns function as dependency", () => {
@@ -752,9 +801,12 @@ describe("Nucleoid", () => {
         "if ( ! /.{4,8}/.test ( $User.password ) ) { throw 'INVALID_PASSWORD' }"
       );
       nucleoid.run("user1 = new User ( )");
-      throws(() => {
-        nucleoid.run("user1.password = 'PAS'");
-      }, "INVALID_PASSWORD");
+      throws(
+        () => {
+          nucleoid.run("user1.password = 'PAS'");
+        },
+        (error) => error === "INVALID_PASSWORD"
+      );
     });
 
     it("rejects defining class declaration in non-class declaration block", () => {
@@ -812,9 +864,12 @@ describe("Nucleoid", () => {
       nucleoid.run("a = 5");
       nucleoid.run("if ( a > 5 ) { throw 'INVALID_VALUE' }");
 
-      throws(() => {
-        nucleoid.run("a = 6");
-      }, "INVALID_VALUE");
+      throws(
+        () => {
+          nucleoid.run("a = 6");
+        },
+        (error) => error === "INVALID_VALUE"
+      );
       equal(nucleoid.run("a"), 5);
     });
 
@@ -823,9 +878,12 @@ describe("Nucleoid", () => {
       nucleoid.run("if ( $Item.sku == 'A' ) { throw 'INVALID_SKU' }");
       nucleoid.run("item1 = new Item ( )");
 
-      throws(() => {
-        nucleoid.run("item1.sku = 'A'");
-      }, "INVALID_SKU");
+      throws(
+        () => {
+          nucleoid.run("item1.sku = 'A'");
+        },
+        (error) => error === "INVALID_SKU"
+      );
       equal(nucleoid.run("item1.sku"), undefined);
     });
 
@@ -835,9 +893,12 @@ describe("Nucleoid", () => {
       );
       nucleoid.run("if ( $User.first.length < 3 ) { throw 'INVALID_USER' }");
 
-      throws(() => {
-        nucleoid.run("user1 = new User ( 'F' , 'L' )");
-      }, "INVALID_USER");
+      throws(
+        () => {
+          nucleoid.run("user1 = new User ( 'F' , 'L' )");
+        },
+        (error) => error === "INVALID_USER"
+      );
       throws(
         () => {
           nucleoid.run("user1");
@@ -1414,9 +1475,12 @@ describe("Nucleoid", () => {
       nucleoid.run(
         "if ( question1.text != question1.text.value ) { throw 'QUESTION_ARCHIVED' }"
       );
-      throws(() => {
-        nucleoid.run("question1.text = 'How would you rate us?'");
-      }, "QUESTION_ARCHIVED");
+      throws(
+        () => {
+          nucleoid.run("question1.text = 'How would you rate us?'");
+        },
+        (error) => error === "QUESTION_ARCHIVED"
+      );
     });
 
     it("rejects value of property if property is not defined", () => {
