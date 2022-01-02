@@ -19,7 +19,7 @@ module.exports = class DELETE$OBJECT extends DELETE {
       state[list].splice(index, 1);
     }
 
-    super.run();
+    return super.run();
   }
 
   graph() {

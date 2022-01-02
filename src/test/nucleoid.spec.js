@@ -1662,6 +1662,13 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("Item['item2']"), undefined);
     });
 
+    it("returns boolean when deleting object", () => {
+      nucleoid.run("class Location { }");
+      nucleoid.run("location1 = new Location ( )");
+      equal(nucleoid.run("delete location1"), true);
+      equal(nucleoid.run("delete location2"), false);
+    });
+
     it("rejects deleting instance if it has any properties", () => {
       nucleoid.run("class Channel { }");
       nucleoid.run("channel1 = new Channel ( )");

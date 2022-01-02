@@ -7,20 +7,26 @@ module.exports = class DELETE {
   before() {}
 
   run(scope) {
-    state.run(scope, "delete state." + this.key);
+    if (graph[this.key]) {
+      state.run(scope, "delete state." + this.key);
 
-    let list = [];
+      let list = [];
 
-    for (let node in graph[this.key].next) {
-      list.push(new Instruction(scope.root, graph[node], false, true, false));
+      for (let node in graph[this.key].next) {
+        list.push(new Instruction(scope.root, graph[node], false, true, false));
+      }
+
+      return { next: list, value: true };
+    } else {
+      return { value: false };
     }
-
-    return { next: list };
   }
 
   beforeGraph() {}
 
   graph() {
+    if (!graph[this.key]) return;
+
     for (let node in graph[this.key].previous)
       delete graph[node].next[this.key];
 

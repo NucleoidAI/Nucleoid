@@ -86,7 +86,8 @@ app.use(cors());
 const accept = (req, res, fn) => {
   const scope = { params: req.params, query: req.query, body: req.body };
   const { result } = run(fn, scope, { details: true });
-  if (result === undefined) res.status(404).end();
+  if (!result) res.status(404).end();
+  else if (result === true) res.end();
   else res.send(Number.isInteger(result) ? result.toString() : result);
 };
 
