@@ -6,6 +6,7 @@ const DELETE$VARIABLE = require("../../delete$variable");
 const DELETE$OBJECT = require("../../delete$object");
 const OBJECT = require("../../object");
 const state = require("../../state");
+const $EXP = require("./$expression");
 
 module.exports = function (key) {
   let statement = new $DELETE();
@@ -18,7 +19,9 @@ class $DELETE extends $ {
     let key;
 
     try {
-      key = state.run(scope, `state.${this.key}.id`) || this.key;
+      let context = $EXP(`${this.key}.id`);
+      let expression = context.statement.run();
+      key = state.run(scope, expression.run(scope)) || this.key;
     } catch (error) {
       key = this.key;
     }

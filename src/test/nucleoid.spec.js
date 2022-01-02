@@ -1650,11 +1650,16 @@ describe("Nucleoid", () => {
 
     it("deletes instance by reference", () => {
       nucleoid.run("class Item { }");
-      nucleoid.run("item = new Item ( )");
-      deepEqual(nucleoid.run("Item['item']"), { id: "item" });
+      nucleoid.run("item1 = new Item ( )");
+      nucleoid.run("item2 = new Item ( )");
+      deepEqual(nucleoid.run("Item['item1']"), { id: "item1" });
 
-      nucleoid.run("delete Item['item']");
-      equal(nucleoid.run("Item['item']"), undefined);
+      nucleoid.run("delete Item['item1']");
+      equal(nucleoid.run("Item['item1']"), undefined);
+
+      deepEqual(nucleoid.run("Item['item2']"), { id: "item2" });
+      nucleoid.run("let item = 'item2' ; delete Item[item]");
+      equal(nucleoid.run("Item['item2']"), undefined);
     });
 
     it("rejects deleting instance if it has any properties", () => {
