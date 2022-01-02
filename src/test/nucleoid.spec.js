@@ -1634,6 +1634,12 @@ describe("Nucleoid", () => {
       nucleoid.run("class Circle { }");
       nucleoid.run("circle1 = new Circle ( )");
       nucleoid.run("delete circle1");
+      equal(nucleoid.run("Circle['circle1']"), undefined);
+      equal(
+        nucleoid.run("Circle.find ( circle => circle.id === 'circle1' )"),
+        undefined
+      );
+
       throws(
         () => {
           nucleoid.run("circle1");
