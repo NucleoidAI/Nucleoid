@@ -5,6 +5,7 @@ const graph = require("../../graph");
 const DELETE$VARIABLE = require("../../delete$variable");
 const DELETE$OBJECT = require("../../delete$object");
 const OBJECT = require("../../object");
+const state = require("../../state");
 
 module.exports = function (key) {
   let statement = new $DELETE();
@@ -13,18 +14,26 @@ module.exports = function (key) {
 };
 
 class $DELETE extends $ {
-  run() {
-    if (graph[this.key] instanceof VARIABLE) {
+  run(scope) {
+    let key;
+
+    try {
+      key = state.run(scope, `state.${this.key}.id`) || this.key;
+    } catch (error) {
+      key = this.key;
+    }
+
+    if (graph[key] instanceof VARIABLE) {
       let statement = new DELETE$VARIABLE();
-      statement.key = this.key;
+      statement.key = key;
       return statement;
-    } else if (graph[this.key] instanceof OBJECT) {
+    } else if (graph[key] instanceof OBJECT) {
       let statement = new DELETE$OBJECT();
-      statement.key = this.key;
+      statement.key = key;
       return statement;
     } else {
       let statement = new DELETE();
-      statement.key = this.key;
+      statement.key = key;
       return statement;
     }
   }

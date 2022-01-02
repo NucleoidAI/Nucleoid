@@ -1648,6 +1648,15 @@ describe("Nucleoid", () => {
       );
     });
 
+    it("deletes instance by reference", () => {
+      nucleoid.run("class Item { }");
+      nucleoid.run("item = new Item ( )");
+      deepEqual(nucleoid.run("Item['item']"), { id: "item" });
+
+      nucleoid.run("delete Item['item']");
+      equal(nucleoid.run("Item['item']"), undefined);
+    });
+
     it("rejects deleting instance if it has any properties", () => {
       nucleoid.run("class Channel { }");
       nucleoid.run("channel1 = new Channel ( )");
