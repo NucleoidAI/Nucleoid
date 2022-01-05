@@ -1,39 +1,20 @@
-## Install
-
-```
-sudo apt-add-repository ppa:nucleoid/nucleoid
-sudo apt install nucleoid
-```
-
-## Docker
-
-```
-docker run -d -p 80:80 nucleoid/nucleoid
-```
-
-## Hello World
-
-Open the terminal on your browser
-
-```
-> a = 1
-> b = a * 2
-> b
-2
-> a = 2
-> b
-4
-```
+# Nucleoid ![NPM](https://img.shields.io/npm/l/nucleoidjs) ![npm](https://img.shields.io/npm/v/nucleoidjs) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/nucleoidjs/nucleoid/Test)
 
 ## What is Nucleoid?
 
-Nucleoid is an open source (Apache 2.0), a runtime environment for declarative programming in ES6/JavaScript syntax and
-runs as a datastore. Since statements are declarative, the runtime automatically provides logical integrity,
-multiprocessing, plasticity, persistency etc.
+Nucleoid is a state-based data storage with vanilla JavaScript. Nucleoid runtime is embedded inside Node.js and as
+writing just any other codes in Node.js, it rerenders the same JavaScript codes and makes the necessary adjustments
+in the state as well as stores on the disk, so that your application doesn't require external database.
 
-The runtime cumulatively stores each statement and builds in the state so that doesn't require external data storage
-like RDBMS. This design eliminates complexity of the architecture and gains high performance since no network
-communication required, especially, in locking situations.
+### ...but why?
+
+Even simple applications today require lots of coding, libraries, tuning etc., and majority of them are technical codes
+rather than business logic. Declarative runtimes like Nucleoid can organically reduce numbers of code lines needed.
+
+### Nucleoid in a nutshell
+
+![Look! Up in the sky!](https://drive.google.com/uc?export=view&id=1bNaHtwcxrKSTjlJw4RAVRw-ImkC86juX)
+
 
 ### Declarative Runtime Environment
 
