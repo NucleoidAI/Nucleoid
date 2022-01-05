@@ -9,6 +9,7 @@ const CLASS = class CLASS extends Node {
     super();
     this.instances = {};
     this.declarations = {};
+    this.sequence = 0;
   }
 
   before() {
@@ -16,15 +17,19 @@ const CLASS = class CLASS extends Node {
   }
 
   run(scope) {
-    state.assign(scope, this.name, `class ${this.name}{}`);
+    state.assign(scope, this.name, `class {}`);
 
     let list = [];
 
-    let classContext = $EXP(`Classes.push(${this.name})`, 0);
-    list.push(classContext.statement);
+    if (!graph[this.name]) {
+      let context = $EXP(`classes.push("${this.name}")`);
+      list.push(context.statement);
 
-    let instanceContext = $EXP("[]", 0);
-    list.push($VAR(this.name + "s", instanceContext.statement));
+      context = $EXP("[]");
+      list.push($VAR(this.name.substring(1), context.statement));
+    } else {
+      this.sequence = graph[this.name].sequence;
+    }
 
     return { next: list };
   }

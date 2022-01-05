@@ -1,39 +1,93 @@
-## Install
-
-```
-sudo apt-add-repository ppa:nucleoid/nucleoid
-sudo apt install nucleoid
-```
-
-## Docker
-
-```
-docker run -d -p 80:80 nucleoid/nucleoid
-```
-
-## Hello World
-
-Open the terminal on your browser
-
-```
-> a = 1
-> b = a * 2
-> b
-2
-> a = 2
-> b
-4
-```
+# Nucleoid ![NPM](https://img.shields.io/npm/l/nucleoidjs) ![npm](https://img.shields.io/npm/v/nucleoidjs) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/nucleoidjs/nucleoid/Test)
 
 ## What is Nucleoid?
 
-Nucleoid is an open source (Apache 2.0), a runtime environment for declarative programming in ES6/JavaScript syntax and
-runs as a datastore. Since statements are declarative, the runtime automatically provides logical integrity,
-multiprocessing, plasticity, persistency etc.
+Nucleoid is a state-based data storage with vanilla JavaScript. Nucleoid runtime is embedded inside Node.js and as
+writing just any other codes in Node.js, it rerenders the same JavaScript codes and makes the necessary adjustments
+in the state as well as stores on the disk, so that your application doesn't require external database.
 
-The runtime cumulatively stores each statement and builds in the state so that doesn't require external data storage
-like RDBMS. This design eliminates complexity of the architecture and gains high performance since no network
-communication required, especially, in locking situations.
+### ...but why?
+
+Even simple applications today require lots of coding, libraries, tuning etc., and majority of them are technical codes
+rather than business logic. Declarative runtimes like Nucleoid can organically reduce numbers of code lines needed.
+
+### Nucleoid in a nutshell
+
+![Look! Up in the sky!](https://drive.google.com/uc?export=view&id=1bNaHtwcxrKSTjlJw4RAVRw-ImkC86juX)
+
+## Hello World
+
+```javascript
+const nucleoid = require("nucleoidjs");
+const app = nucleoid();
+
+class User {}
+nucleoid.register(User);
+
+app.post("/users", () => new User());
+
+app.listen(3000);
+```
+
+It is pretty much it, you successfully persisted your first object with this :point_up_2:
+
+> Just the reminder, you don't need external database, `const app = nucleoid()` will do the magic.
+
+<br/>
+
+This passes HTTP information into the runtime
+
+```javascript
+class User {
+  constructor(name) {
+    this.name = name;
+  }
+}
+nucleoid.register(User);
+
+app.post("/users", (req) => new User(req.body.name));
+
+app.get("/users", (req) => User.filter((user) => user.name === req.query.name));
+```
+
+<br/>
+
+...and CRUD operations:
+
+```javascript
+app.post("/users", (req) => new User(req.body.name));
+
+app.get("/users/:id", (req) => User[req.params.id]);
+
+app.post("/users/:id", (req) => {
+  let user = User[req.params.id];
+
+  if (user) {
+    user.name = req.body.name;
+    return user;
+  }
+});
+
+app.delete("/users/:id", (req) => delete User[req.params.id]);
+```
+
+<br/>
+
+Nucleoid also opens terminal channel at `8448` port for queries like in SQL, so that you can write code snippet for data operations
+
+![Terminal](https://media.giphy.com/media/aGQyuZ4ggB4SaPRc1g/giphy.gif)
+
+In the meanwhile, you can still call underlying Express APIs for non-Nucleoidic functions
+
+```javascript
+const app = nucleoid();
+
+const express = app.express();
+
+express.get("/test", (req, res) => res.send("Hello!"));
+```
+
+---
 
 ### Declarative Runtime Environment
 

@@ -31,13 +31,13 @@ module.exports = function ES6$CLASS(string, offset) {
       context = JS$BLOCK(block, context.offset);
       construct = context.statement;
     } else {
-      throw SyntaxError("Methods are not supported.");
+      throw SyntaxError("Methods are not supported");
     }
 
     context = Token.next(block, context.offset);
 
     if (context !== null && context.token !== "}") {
-      throw SyntaxError("Methods are not supported.");
+      throw SyntaxError("Methods are not supported");
     }
   }
 

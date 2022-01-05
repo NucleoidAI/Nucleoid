@@ -10,8 +10,9 @@ module.exports = class PROPERTY extends Node {
 
   run(scope) {
     let object = Id.serialize(this.object, true);
-    let value = this.value.run(scope);
-    state.assign(scope, object + "." + this.name, value);
+    const run = this.value.run(scope);
+    const value = state.assign(scope, object + "." + this.name, run, true);
+    return { value };
   }
 
   graph(scope) {

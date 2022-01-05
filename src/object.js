@@ -5,6 +5,7 @@ const $EXP = require("./lang/$/$expression");
 const Instruction = require("./instruction");
 const LET = require("./let");
 const Scope = require("./scope");
+const _ = require("lodash");
 
 module.exports = class OBJECT extends Node {
   constructor() {
@@ -14,7 +15,7 @@ module.exports = class OBJECT extends Node {
 
   before() {
     if (this.name === undefined && this.object === undefined) {
-      this.key = this.class.name.toLowerCase() + this.sequence;
+      this.key = _.camelCase(this.class.name) + this.class.sequence++;
       this.name = this.key;
     } else {
       this.key = Id.serialize(this);
@@ -34,11 +35,11 @@ module.exports = class OBJECT extends Node {
       local.name = this.class.args[i];
 
       if (this.args[i] !== undefined) {
-        let context = $EXP(this.args[i], 0);
+        let context = $EXP(this.args[i]);
         local.value = context.statement.run();
         list.push(local);
       } else {
-        let context = $EXP("undefined", 0);
+        let context = $EXP("undefined");
         local.value = context.statement.run();
         list.push(local);
       }
@@ -58,12 +59,17 @@ module.exports = class OBJECT extends Node {
     }
 
     if (this.object === undefined) {
-      let context = $EXP(this.class.name + "s.push ( " + this.name + " )", 0);
+      let context = $EXP(`${this.class.name.substring(1)}.push(${this.name})`);
+      list.push(context.statement);
+
+      context = $EXP(
+        `${this.class.name.substring(1)}["${this.name}"]=${this.name}`
+      );
       list.push(context.statement);
 
       state.run(scope, `state.${name}.id="${name}"`);
 
-      context = $EXP(this.name, 0);
+      context = $EXP(this.name);
       list.push(
         new Instruction(
           scope,

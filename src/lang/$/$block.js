@@ -20,7 +20,7 @@ module.exports = function (statements, skip, args) {
 
 class $BLOCK extends $ {
   run(scope) {
-    let test = new Scope();
+    let test = new Scope(scope);
     test.object = scope.object;
     let cls = null;
 
@@ -65,7 +65,7 @@ class $BLOCK extends $ {
 
       if (this.args) {
         statement.statements = Object.entries(this.args)
-          .map(([name, value]) => $LET(name, $EXP(value, 0).statement))
+          .map(([name, value]) => $LET(name, $EXP(value).statement))
           .concat(statement.statements);
       }
 

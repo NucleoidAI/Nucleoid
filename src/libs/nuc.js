@@ -1,4 +1,4 @@
-const nucleoid = require("../../index");
+const runtime = require("../runtime");
 
 module.exports.load = (nuc) => {
   if (!nuc || !nuc.functions) {
@@ -8,7 +8,7 @@ module.exports.load = (nuc) => {
   const { functions } = nuc;
   Object.values(functions).forEach((fn) => {
     try {
-      nucleoid.run(fn.code, { declarative: false });
+      runtime.process(fn.code, { declarative: false });
     } catch (error) {
       console.info("Problem occurred while loading NUC file", error);
     }

@@ -31,7 +31,7 @@ const next = function (string, offset) {
     }
 
     if (character === 96) {
-      throw SyntaxError("Backtick is not supported.");
+      throw SyntaxError("Backtick is not supported");
     }
 
     if (singleOn) {
@@ -67,7 +67,7 @@ const next = function (string, offset) {
     }
   }
 
-  return { token, offset };
+  return token !== "" ? { token, offset } : null;
 };
 
 class Token {
@@ -118,14 +118,24 @@ class Token {
         break;
       }
 
-      tokens.push(callback(token));
+      if (callback) {
+        tokens.push(callback(token));
+      } else {
+        tokens.push(token);
+      }
+
       context = next(string, offset);
     }
 
-    return { tokens: tokens, offset: offset };
+    return { tokens, offset: offset };
   }
 
-  static nextBlock(string, offset) {
+  static nextStatement(string, offset) {
+    const context = Token.each(string, offset);
+    return { statement: context.tokens.join(" "), offset: context.offset };
+  }
+
+  static nextBlock(string, offset, skip) {
     let block = "";
     let brackets = 0;
     let character;
@@ -141,13 +151,17 @@ class Token {
 
       if (brackets < 0) {
         offset++;
-        return { block: block, offset: offset };
+        return { block, offset };
       } else {
         block += character;
       }
     }
 
-    throw SyntaxError("Missing parenthesis");
+    if (!skip) {
+      throw SyntaxError("Missing parenthesis");
+    } else {
+      return { block, offset };
+    }
   }
 
   static nextArgs(string, offset) {

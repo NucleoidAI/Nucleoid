@@ -7,7 +7,9 @@ const EXPRESSION$INSTANCE = require("../../expression$instance");
 const Local = require("../../utils/local");
 
 module.exports = function (string, offset) {
-  let context = Token.each(string, offset, function (token) {
+  offset = offset || 0;
+
+  let context = Token.each(string, offset, (token) => {
     if (token === "let") {
       return "let ";
     }

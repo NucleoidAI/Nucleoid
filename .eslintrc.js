@@ -15,5 +15,6 @@ module.exports = {
     "no-console": "off",
     "no-eval": "error",
     "no-var": "error",
+    "prefer-arrow-callback": "error",
   },
 };

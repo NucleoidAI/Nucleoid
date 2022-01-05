@@ -5,10 +5,9 @@
   "homepage": "https://nucleoid.com",
   "author": "Can Mingir",
   "license": "Apache-2.0",
-  "main": "index.js",
   "scripts": {
     "prepare": "husky install",
-    "test": "mocha src/test/nucleoid.spec.js --forbidOnly",
+    "test": "mocha src/**/*.spec.js --forbidOnly",
     "lint": "eslint --ext .js .",
     "format": "prettier --check {**/*,*}.{js,json}"
   },
@@ -17,11 +16,11 @@
     "url": "https://github.com/NucleoidJS/Nucleoid.git"
   },
   "dependencies": {
-    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-openapi": "^9.3.0",
     "glob": "^7.1.7",
+    "lodash": "^4.17.21",
     "moment": "^2.29.1",
     "swagger-ui-express": "^4.1.6",
     "uuid": "^8.3.2",

@@ -9,10 +9,10 @@ module.exports = class THROW {
     let exception = graph[this.exception];
 
     if (exception) {
-      state.run(scope, "throw state." + Id.serialize(exception));
+      state.throw(scope, Id.serialize(exception));
     }
 
-    throw this.exception;
+    throw state.run(scope, this.exception);
   }
 
   graph() {}

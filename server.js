@@ -1,18 +1,16 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
-const Service = require("./src/service");
+const service = require("./service");
 
-const app = express();
-app.use(bodyParser.text({ type: "*/*" }));
-app.use(cors());
+const terminal = express();
+terminal.use(express.text({ type: "*/*" }));
+terminal.use(cors());
 
-Service.start("main");
+service.start("main");
 
-app.post("/", (req, res) => Service.accept(req.body, req, res));
-app.use((err, res) => {
-  res.type("txt");
-  res.status(500).send(err.stack);
-});
+terminal.post("/", (req, res) => service.accept(req.body, req, res));
+terminal.all("*", (req, res) => res.status(404).end());
+// eslint-disable-next-line no-unused-vars
+terminal.use((err, req, res, next) => res.status(500).send(err.stack));
 
-app.listen(8448);
+terminal.listen(8448);

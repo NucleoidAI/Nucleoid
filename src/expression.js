@@ -2,14 +2,20 @@ const state = require("./state");
 const graph = require("./graph");
 const Local = require("./utils/local");
 const Id = require("./utils/identifier");
-const Node = require("./node");
 const Token = require("./utils/token");
 const argv = require("yargs").argv;
+
+let Node;
 let Stack;
 let $CALL;
+let LET;
 
-setImmediate(() => (Stack = require("./stack")));
-setImmediate(() => ($CALL = require("./lang/$/$call")));
+setImmediate(() => {
+  Node = require("./node");
+  Stack = require("./stack");
+  $CALL = require("./lang/$/$call");
+  LET = require("./let");
+});
 
 class EXPRESSION {
   constructor(tokens) {
@@ -42,22 +48,18 @@ class EXPRESSION {
 
   run(scope, skip) {
     try {
-      if (this.tokens[0].string === "{") {
-        return this.tokens.construct();
-      }
-
       for (let i = 0; i < this.tokens.length; i++) {
         const token = this.tokens[i];
 
         if (token instanceof Token.CALL && graph[token.string]) {
           const value = Stack.process([$CALL(token.string, token.params)]);
-          this.tokens[i] = new Token(
-            value === undefined
-              ? "undefined"
-              : value === null
-              ? "null"
-              : value.toString()
-          );
+
+          // TODO Replace manual adjustment
+          const call = "__$CALL__";
+          scope.local[call] = value;
+          scope.graph[call] = new LET(call);
+
+          this.tokens[i] = new Token(call);
         }
       }
 

@@ -1,14 +1,16 @@
 // eslint-disable-next-line no-unused-vars
 const state = {
-  Classes: [],
+  classes: [],
 };
 const _transaction = require("./transaction");
 const _graph = require("./graph");
 const message = require("./message").message; // eslint-disable-line no-unused-vars
 const event = require("./event").event; // eslint-disable-line no-unused-vars
-const OpenAPI = require("./openapi"); // eslint-disable-line no-unused-vars
+const OpenAPI = require("./libs/openapi"); // eslint-disable-line no-unused-vars
 const NUC = require("./libs/nuc"); // eslint-disable-line no-unused-vars
 const Data = require("./libs/data"); // eslint-disable-line no-unused-vars
+const Id = require("./utils/identifier"); // eslint-disable-line no-unused-vars
+const _ = require("lodash"); // eslint-disable-line no-unused-vars
 
 global.require = require;
 
@@ -47,12 +49,17 @@ function graph(id) {
   return object;
 }
 
+module.exports.throw = (scope, exception) => {
+  // eslint-disable-next-line no-eval
+  eval(`throw state.${exception}`);
+};
+
 module.exports.state = state;
-module.exports.assign = function (scope, variable, expression) {
-  _transaction.register(variable, expression, scope);
+module.exports.assign = function (scope, variable, expression, adjust) {
+  return _transaction.register(variable, expression, scope, adjust);
 };
 
 module.exports.run = function (scope, expression) {
   // eslint-disable-next-line no-eval
-  return eval(expression);
+  return eval(`(${expression})`);
 };
