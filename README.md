@@ -15,6 +15,79 @@ rather than business logic. Declarative runtimes like Nucleoid can organically r
 
 ![Look! Up in the sky!](https://drive.google.com/uc?export=view&id=1bNaHtwcxrKSTjlJw4RAVRw-ImkC86juX)
 
+## Hello World
+
+```javascript
+const nucleoid = require("nucleoidjs");
+const app = nucleoid();
+
+class User {}
+nucleoid.register(User);
+
+app.post("/users", () => new User());
+
+app.listen(3000);
+```
+
+It is pretty much it, you successfully persisted your first object with this :point_up_2:
+
+> Just the reminder, you don't need external database, `const app = nucleoid()` will do the magic.
+
+<br/>
+
+This passes HTTP information into the runtime
+
+```javascript
+class User {
+  constructor(name) {
+    this.name = name;
+  }
+}
+nucleoid.register(User);
+
+app.post("/users", (req) => new User(req.body.name));
+
+app.get("/users", (req) => User.filter((user) => user.name === req.query.name));
+```
+
+<br/>
+
+...and CRUD operations:
+
+```javascript
+app.post("/users", (req) => new User(req.body.name));
+
+app.get("/users/:id", (req) => User[req.params.id]);
+
+app.post("/users/:id", (req) => {
+  let user = User[req.params.id];
+
+  if (user) {
+    user.name = req.body.name;
+    return user;
+  }
+});
+
+app.delete("/users/:id", (req) => delete User[req.params.id]);
+```
+
+<br/>
+
+Nucleoid also opens terminal channel at `8448` port for queries like in SQL, so that you can write code snippet for data operations
+
+![Terminal](https://media.giphy.com/media/aGQyuZ4ggB4SaPRc1g/giphy.gif)
+
+In the meanwhile, you can still call underlying Express APIs for non-Nucleoidic functions
+
+```javascript
+const app = nucleoid();
+
+const express = app.express();
+
+express.get("/test", (req, res) => res.send("Hello!"));
+```
+
+---
 
 ### Declarative Runtime Environment
 
