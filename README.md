@@ -1,4 +1,4 @@
-# Nucleoid ![NPM](https://img.shields.io/npm/l/nucleoidjs) ![npm](https://img.shields.io/npm/v/nucleoidjs) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/nucleoidjs/nucleoid/Test)
+# Nucleoid [![NPM](https://img.shields.io/npm/l/nucleoidjs)](https://www.apache.org/licenses/LICENSE-2.0) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/nucleoidjs/nucleoid/Test)](https://github.com/NucleoidJS/Nucleoid/actions/workflows/test.yml) [![npm](https://img.shields.io/npm/v/nucleoidjs)](https://www.npmjs.com/package/nucleoidjs) [![Discord](https://img.shields.io/discord/848931276559482900)](https://discord.gg/b6THyxKd)
 
 ## What is Nucleoid?
 
