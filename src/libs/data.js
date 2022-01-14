@@ -5,7 +5,7 @@ const path = File.data;
 
 const PROCESS_PATH = `${path}/${argv.id}`;
 
-module.exports.retrieve = () => {
+const retrieve = () => {
   if (fs.existsSync(PROCESS_PATH)) {
     try {
       const data = fs.readFileSync(PROCESS_PATH, "utf8");
@@ -18,3 +18,9 @@ module.exports.retrieve = () => {
     return Buffer.from("").toString("base64");
   }
 };
+
+const clear = () => {
+  fs.rmdirSync(path, { recursive: true, force: true });
+};
+
+module.exports = { retrieve, clear };
