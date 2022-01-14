@@ -1,5 +1,6 @@
 const glob = require("glob");
 const File = require("./src/file");
+const { argv } = require("yargs");
 
 const fork = require("child_process").fork;
 let processes = [];
@@ -37,7 +38,10 @@ function start(id) {
     processes[id] = proc;
   }
 
-  proc.pid = fork("./src/process.js", [`--id=${id}`]);
+  const options = [`--id=${id}`];
+  if (argv.cacheOnly) options.push("--cache-only");
+
+  proc.pid = fork("./src/process.js", options);
   proc.pid.on("message", (m) => receive(proc, m));
   proc.pid.on("exit", () => {
     delete proc.pid;

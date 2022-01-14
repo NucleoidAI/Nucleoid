@@ -1,11 +1,13 @@
 const fs = require("fs");
-const argv = require("yargs").argv;
+const { argv } = require("yargs");
 const runtime = require("./runtime");
 const state = require("./state");
 const File = require("./file");
 const path = File.data;
 
-let _options = {};
+let _options = {
+  cacheOnly: argv.cacheOnly,
+};
 
 setImmediate(() => {
   if (_options.test) return;

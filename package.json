@@ -5,6 +5,11 @@
   "homepage": "https://nucleoid.com",
   "author": "Can Mingir",
   "license": "Apache-2.0",
+  "bin": {
+    "nucleoidjs": "bin.js",
+    "nucleoid": "bin.js",
+    "nuc": "bin.js"
+  },
   "scripts": {
     "prepare": "husky install",
     "test": "mocha src/**/*.spec.js --forbidOnly",
