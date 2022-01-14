@@ -31,5 +31,5 @@ require("yargs")
       console.log("Data is cleared");
     },
   })
-  .help()
+  .demandCommand()
   .argv.toString();
