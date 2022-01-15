@@ -10,10 +10,11 @@ const REFERENCE = require("../../reference");
 const Local = require("../../utils/local");
 const Id = require("../../utils/identifier");
 
-module.exports = function (name, value) {
+module.exports = function (name, value, constant) {
   let statement = new $LET();
   statement.name = name;
   statement.value = value;
+  statement.constant = constant;
   return statement;
 };
 
@@ -40,6 +41,7 @@ class $LET extends $ {
           statement.class = graph[prefix];
           statement.name = this.name;
           statement.value = value;
+          statement.constant = this.constant;
           return statement;
         }
       }
@@ -47,11 +49,13 @@ class $LET extends $ {
       let statement = new LET();
       statement.name = this.name;
       statement.value = value;
+      statement.constant = this.constant;
       return statement;
     } else if (value instanceof REFERENCE) {
       let statement = new LET();
       statement.name = this.name;
       statement.value = value;
+      statement.constant = this.constant;
       return statement;
     } else if (value instanceof OBJECT) {
       let object = new OBJECT();
@@ -61,6 +65,7 @@ class $LET extends $ {
       let statement = new LET$OBJECT();
       statement.name = this.name;
       statement.object = object;
+      statement.constant = this.constant;
 
       return [object, statement];
     }

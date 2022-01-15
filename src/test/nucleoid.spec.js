@@ -590,16 +590,18 @@ describe("Nucleoid", () => {
       nucleoid.run("pi = 3.14");
       nucleoid.run("number = pi");
 
-      nucleoid.run("{ let pi = 3.141 ; { number = null ; { number = pi } } }");
+      nucleoid.run("{ let pi = 3.141 ; { number = pi } }");
       equal(nucleoid.run("number"), 3.141);
 
-      nucleoid.run(
-        "{ let pi = 3.141 ; { let number = pi ; { let pi = 3.1415 ; number = pi } } }"
+      equal(
+        nucleoid.run(
+          "{ let pi = 3.1415 ; { let number = pi ; { let pi = 3.14159 ; number = pi ; return number } } }"
+        ),
+        3.14159
       );
-      equal(nucleoid.run("number"), 3.1415);
 
       nucleoid.run(
-        "{ let pi = 3.141 ; number = pi ; { let pi = 3.1415 ; let number = pi ; { let pi = 3.14159 ; number = pi } } }"
+        "{ let pi = 3.14159 ; number = pi ; { let pi = 3.141592 ; let number = pi ; { let pi = 3.1415926 ; number = pi } } }"
       );
       equal(nucleoid.run("number"), 3.14159);
     });
@@ -1039,6 +1041,19 @@ describe("Nucleoid", () => {
     it("runs let statement as standard built-in object", () => {
       nucleoid.run("{ let f = new Boolean ( false ) ; condition = f }");
       equal(nucleoid.run("condition"), false);
+    });
+
+    it("runs const statement as a variable", () => {
+      nucleoid.run("number = 3");
+      throws(
+        () => {
+          nucleoid.run(
+            "{ const percentage = number / 100 ; percentage = number / 1000 }"
+          );
+        },
+        (error) =>
+          validate(error, TypeError, "Assignment to constant variable.")
+      );
     });
 
     it("creates and assigns instance to let variable inside block", () => {

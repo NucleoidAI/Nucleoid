@@ -45,7 +45,8 @@ module.exports.compile = function compile(string, offset) {
     else if (context.token === "class") context = ES6$CLASS(string, offset);
     else if (context.token === "{") context = JS$BLOCK(string, offset);
     else if (context.token === "delete") context = JS$DELETE(string, offset);
-    else if (context.token === "let") context = ES6$LET(string, offset);
+    else if (context.token === "let") context = ES6$LET(string, offset, false);
+    else if (context.token === "const") context = ES6$LET(string, offset, true);
     else if (context.token === "new") context = JS$VARIABLE(string, offset);
     else if (context.token === "throw") context = JS$THROW(string, offset);
     else if (context.token === "function")

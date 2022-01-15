@@ -6,6 +6,7 @@ module.exports = class LET {
     this.name = name;
     this.value = value;
   }
+
   before() {}
 
   run(scope) {
@@ -18,7 +19,7 @@ module.exports = class LET {
     }
 
     let expression = `${local}=${value}`;
-    state.run(scope, expression);
+    return { value: state.run(scope, expression) };
   }
 
   beforeGraph(scope) {

@@ -5,18 +5,6 @@ const cors = require("cors");
 
 const preset = [];
 
-const terminal = express();
-terminal.use(express.text({ type: "*/*" }));
-terminal.use(cors());
-
-terminal.post("/", (req, res) => {
-  const details = runtime.process(req.body, { details: true });
-  res.send(details);
-});
-terminal.all("*", (req, res) => res.status(404).end());
-// eslint-disable-next-line no-unused-vars
-terminal.use((err, req, res, next) => res.status(500).send(err.stack));
-
 const start = (options) => {
   options = options || {};
 
@@ -28,6 +16,18 @@ const start = (options) => {
   });
 
   if (options.terminal === undefined || options.terminal === true) {
+    const terminal = express();
+    terminal.use(express.text({ type: "*/*" }));
+    terminal.use(cors());
+
+    terminal.post("/", (req, res) => {
+      const details = runtime.process(req.body, { details: true });
+      res.send(details);
+    });
+    terminal.all("*", (req, res) => res.status(404).end());
+
+    // eslint-disable-next-line no-unused-vars
+    terminal.use((err, req, res, next) => res.status(500).send(err.stack));
     terminal.listen(8448);
   }
 };

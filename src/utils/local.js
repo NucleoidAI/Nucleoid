@@ -3,9 +3,10 @@ module.exports.retrieve = function (scope, assignment) {
 
   let parts = assignment.split(".");
   let reference = "scope.";
+  const first = parts[0];
 
   while (index) {
-    if (index.local[parts[0]] !== undefined) {
+    if (index.local[first] !== undefined) {
       return reference + "local." + parts.join(".");
     }
 
@@ -20,11 +21,9 @@ module.exports.check = function (scope, assignment) {
   if (assignment === undefined) return false;
   try {
     while (index) {
-      if (index.graph[assignment] !== undefined) return true;
+      if (index.graph[assignment] !== undefined) return index.graph[assignment];
       index = index.prior;
     }
-
-    return false;
   } catch (error) {
     if (error instanceof TypeError) return false;
     throw error;
