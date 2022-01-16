@@ -1,8 +1,9 @@
 const glob = require("glob");
 const File = require("./src/file");
 const { argv } = require("yargs");
+const { existsSync } = require("fs");
 
-const fork = require("child_process").fork;
+const { fork, execSync } = require("child_process");
 let processes = [];
 
 const config = File.config;
@@ -41,7 +42,21 @@ function start(id) {
   const options = [`--id=${id}`];
   if (argv.cacheOnly) options.push("--cache-only");
 
-  proc.pid = fork("./src/process.js", options);
+  let module;
+  const local = ".";
+  const source = "src/process.js";
+  const global = execSync("npm root -g").toString().trim();
+
+  if (existsSync(`${local}/${source}`)) {
+    module = `${local}/${source}`;
+  } else if (existsSync(`${global}/nucleoidjs/${source}`)) {
+    module = `${global}/nucleoidjs/${source}`;
+  } else {
+    console.error("Nucleoid is not installed correctly");
+    process.exit(-1);
+  }
+
+  proc.pid = fork(module, options);
   proc.pid.on("message", (m) => receive(proc, m));
   proc.pid.on("exit", () => {
     delete proc.pid;
