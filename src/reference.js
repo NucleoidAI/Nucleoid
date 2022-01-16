@@ -1,12 +1,18 @@
 const Id = require("./utils/identifier");
 const EXPRESSION = require("./expression");
+const Local = require("./utils/local");
 
 class REFERENCE extends EXPRESSION {
   before() {}
 
-  run() {
-    let reference = "state." + Id.serialize(this.link);
-    return reference;
+  run(scope) {
+    if (this.link.name) {
+      let local = Local.retrieve(scope, this.link.name);
+
+      if (local) return local;
+    }
+
+    return "state." + Id.serialize(this.link);
   }
 
   next() {}

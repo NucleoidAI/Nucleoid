@@ -3,7 +3,7 @@ const $LET = require("../$/$let");
 const $EXP = require("../$/$expression");
 const $INSTANCE = require("../$/$instance");
 
-module.exports = function ES6$LET(string, offset) {
+module.exports = function ES6$LET(string, offset, constant) {
   let context = Token.next(string, offset);
 
   context = Token.next(string, context.offset);
@@ -24,10 +24,16 @@ module.exports = function ES6$LET(string, offset) {
     context = Token.next(string, context.offset);
     context = Token.nextArgs(string, context.offset);
     instance.args = context.args;
-    return { statement: $LET(name, instance), offset: context.offset };
+    return {
+      statement: $LET(name, instance, constant),
+      offset: context.offset,
+    };
   }
 
   context = $EXP(string, context.offset);
   let expression = context.statement;
-  return { statement: $LET(name, expression), offset: context.offset };
+  return {
+    statement: $LET(name, expression, constant),
+    offset: context.offset,
+  };
 };

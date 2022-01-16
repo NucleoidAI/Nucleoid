@@ -15,7 +15,14 @@ module.exports = function (left, right) {
 class $ASSIGNMENT extends $ {
   run(scope) {
     if (this.left.length === 1) {
-      return $VARIABLE(this.left[0], this.right);
+      const local = Local.check(scope, this.left[0]);
+      if (local) {
+        if (local.constant) {
+          throw TypeError("Assignment to constant variable.");
+        }
+
+        return $LET(this.left[0], this.right);
+      } else return $VARIABLE(this.left[0], this.right);
     } else {
       let parts = Id.splitLast(this.left.join("."));
 
