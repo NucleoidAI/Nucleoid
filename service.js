@@ -43,15 +43,23 @@ function start(id) {
   if (argv.cacheOnly) options.push("--cache-only");
 
   let module;
+
   const local = ".";
-  const npx = "./node_modules";
   const source = "src/process.js";
   const global = execSync("npm root -g").toString().trim();
 
+  let npx;
+
+  try {
+    npx = require.resolve("nucleoidjs").slice(0, -9);
+  } catch (error) {
+    npx = "./node_modules/nucleoidjs";
+  }
+
   if (existsSync(`${local}/${source}`)) {
     module = `${local}/${source}`;
-  } else if (existsSync(`${npx}/nucleoidjs/${source}`)) {
-    module = `${npx}/nucleoidjs/${source}`;
+  } else if (existsSync(`${npx}/${source}`)) {
+    module = `${npx}/${source}`;
   } else if (existsSync(`${global}/nucleoidjs/${source}`)) {
     module = `${global}/nucleoidjs/${source}`;
   } else {
