@@ -44,11 +44,14 @@ function start(id) {
 
   let module;
   const local = ".";
+  const npx = "./node_modules";
   const source = "src/process.js";
   const global = execSync("npm root -g").toString().trim();
 
   if (existsSync(`${local}/${source}`)) {
     module = `${local}/${source}`;
+  } else if (existsSync(`${npx}/nucleoidjs/${source}`)) {
+    module = `${npx}/nucleoidjs/${source}`;
   } else if (existsSync(`${global}/nucleoidjs/${source}`)) {
     module = `${global}/nucleoidjs/${source}`;
   } else {
