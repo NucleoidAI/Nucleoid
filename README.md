@@ -89,7 +89,9 @@ express.get("/test", (req, res) => res.send("Hello!"));
 
 ---
 
-### Declarative Runtime Environment
+---
+
+### Under the hood: Declarative Runtime Environment
 
 The declarative runtime environment isolates a behavior definition of a program from its technical instructions and
 executes declarative statements, which represent logical intention without carrying any technical details. In this
@@ -130,4 +132,4 @@ Nucleoid runtime cumulatively stores statements in order as received so that the
 database. This feature is enabled by declarative programming as a result of plasticity and lowers complexity of the
 system along with gaining better performance since there is no network communication required.
 
-Learn more at https://nucleoid.org/tutorial/
+Learn more about the declarative runtime at https://nucleoid.org/tutorial/
