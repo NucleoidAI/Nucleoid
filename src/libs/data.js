@@ -20,7 +20,7 @@ const retrieve = () => {
 };
 
 const clear = () => {
-  fs.rmdirSync(path, { recursive: true, force: true });
+  fs.rmSync(path, { recursive: true, force: true });
 };
 
 module.exports = { retrieve, clear };
