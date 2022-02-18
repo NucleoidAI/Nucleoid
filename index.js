@@ -82,6 +82,7 @@ const parseFn = (string) => {
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.static = express.static;
 
 const accept = (req, res, fn) => {
   const scope = { params: req.params, query: req.query, body: req.body };
@@ -93,7 +94,7 @@ const accept = (req, res, fn) => {
 
 module.exports = () => ({
   express: () => app,
-  use: (fn) => app.use(fn),
+  use: (...args) => app.use(...args),
   get: (string, fn) => app.get(string, (req, res) => accept(req, res, fn)),
   post: (string, fn) => app.post(string, (req, res) => accept(req, res, fn)),
   put: (string, fn) => app.put(string, (req, res) => accept(req, res, fn)),
