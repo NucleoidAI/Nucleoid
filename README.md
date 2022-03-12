@@ -2,9 +2,8 @@
 
 ## What is Nucleoid?
 
-Nucleoid is a low-code framework for JavaScript and embedded inside Node.js. As writing just like any other codes in
-Node.js, it rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores
-on the disk, so that your application doesn't require external database or anything else.
+Nucleoid is a low-code framework for Node.js. As writing just like any other codes in Node.js, it rerenders the very same JavaScript codes and makes
+the necessary adjustments in the state as well as stores on the disk, so that your application doesn't require external database or anything else.
 
 ### ..but why?
 
@@ -41,7 +40,7 @@ Learn more at [nucleoid.com](https://nucleoid.com)
 
 Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 
-- [X] Working [beta](https://www.npmjs.com/package/nucleoidjs) is out, but still testing
+- [X] [Beta](https://www.npmjs.com/package/nucleoidjs) is out (but still needs more testing)
 - [X] ES6 support
 - [ ] ES2018 support
 - [ ] IDE (WiP)
