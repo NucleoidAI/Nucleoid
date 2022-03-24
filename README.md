@@ -1,6 +1,6 @@
 # Nucleoid [![NPM](https://img.shields.io/npm/l/nucleoidjs)](https://www.apache.org/licenses/LICENSE-2.0) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/nucleoidjs/nucleoid/Test)](https://github.com/NucleoidJS/Nucleoid/actions/workflows/test.yml) [![npm](https://img.shields.io/npm/v/nucleoidjs)](https://www.npmjs.com/package/nucleoidjs) [![Discord](https://img.shields.io/badge/chat-Discord-brightgreen)](https://discord.gg/eWXFCCuU5y)
 
-![Banner](https://drive.google.com/uc?export=view&id=1b3E06HR2SPtwFn1hngcON13xXFCZl7NI)
+![Banner](.github/media/banner.png)
 
 ## What is Nucleoid?
 
@@ -36,7 +36,7 @@ Learn more at [nucleoid.com](https://nucleoid.com)
 
 ### Nucleoid in a nutshell
 
-![Look! Up in the sky!](https://drive.google.com/uc?export=view&id=1bNaHtwcxrKSTjlJw4RAVRw-ImkC86juX)
+![Look! Up in the sky!](.github/media/nucleoid-in-a-nutshell.jpg)
 
 # Status
 
@@ -45,7 +45,7 @@ Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 - [X] [Beta](https://www.npmjs.com/package/nucleoidjs) is out
 - [X] ES6 support
 - [ ] ES2018 support
-- [ ] IDE (WiP)
+- [ ] [IDE](https://github.com/NucleoidJS/IDE) (WiP)
 - [ ] Production-ready
 
-Please report an issue or ask a question at [Discussions](https://github.com/NucleoidJS/Nucleoid/discussions)
+Please report an [issue](https://github.com/NucleoidJS/Nucleoid/issues) or ask a question at [Discussions](https://github.com/NucleoidJS/Nucleoid/discussions)
