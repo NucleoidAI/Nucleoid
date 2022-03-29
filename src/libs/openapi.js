@@ -4,12 +4,24 @@ const { openapi } = require("../file");
 const fs = require("fs");
 const swagger = require("swagger-ui-express");
 const uuid = require("uuid").v4;
+const path = require("path");
 
 let server;
 let started = false;
 
 const start = (nuc) => {
   if (started) return;
+
+  let nucleoidPath = path.dirname(__dirname);
+
+  if (process.platform === "win32") {
+    nucleoidPath = nucleoidPath.split("\\");
+  } else {
+    nucleoidPath = nucleoidPath.split("/");
+  }
+
+  nucleoidPath.pop();
+  nucleoidPath = nucleoidPath.join("/") + "/index";
 
   const tmp = uuid();
 
@@ -29,9 +41,7 @@ const start = (nuc) => {
     const file = `${openapi}/${tmp}/${path}/${resource}.js`;
     fs.appendFileSync(
       file,
-      `const runtime = require("${"../".repeat(
-        parts.length + 2
-      )}src/runtime"); module.exports = function () {`
+      `const nucleoid = require("${nucleoidPath}"); module.exports = function () {`
     );
 
     Object.entries(value).forEach(([method, nucDoc]) => {
@@ -74,7 +84,7 @@ const start = (nuc) => {
       fs.appendFileSync(
         file,
         `function ${method}(req, res) {` +
-          `const result = runtime.process("` +
+          `const result = nucleoid.run("` +
           `let json=" + JSON.stringify(req.body) + ";` +
           `let query=" + JSON.stringify(req.query) + \`;` +
           `{${action}};\`);res.send(result);}`
