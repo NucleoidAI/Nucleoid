@@ -5,12 +5,28 @@ const fs = require("fs");
 const swagger = require("swagger-ui-express");
 const uuid = require("uuid").v4;
 const path = require("path");
+const runtime = require("../runtime");
 
 let server;
 let started = false;
 
 const start = (nuc) => {
-  if (started) return;
+  if (started) {
+    stop();
+  }
+
+  if (!nuc || !nuc.functions) {
+    throw Error("Invalid NUC file");
+  }
+
+  const { functions } = nuc;
+  Object.values(functions).forEach((fn) => {
+    try {
+      runtime.process(fn.code, { declarative: false });
+    } catch (error) {
+      console.info("Problem occurred while loading NUC file", error);
+    }
+  });
 
   let nucleoidPath = path.dirname(__dirname);
 
@@ -138,5 +154,8 @@ const stop = () => {
   started = false;
 };
 
+const status = () => ({ started });
+
 module.exports.start = start;
 module.exports.stop = stop;
+module.exports.status = status;

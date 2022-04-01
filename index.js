@@ -2,6 +2,9 @@ const runtime = require("./src/runtime");
 const Token = require("./src/utils/token");
 const express = require("express");
 const cors = require("cors");
+const openapi = require("./src/routes/openapi");
+const logs = require("./src/routes/logs");
+const metrics = require("./src/routes/metrics");
 
 const preset = [];
 
@@ -17,8 +20,13 @@ const start = (options) => {
 
   if (options.terminal === undefined || options.terminal === true) {
     const terminal = express();
+    terminal.use(express.json());
     terminal.use(express.text({ type: "*/*" }));
     terminal.use(cors());
+
+    terminal.use(openapi);
+    terminal.use(logs);
+    terminal.use(metrics);
 
     terminal.post("/", (req, res) => {
       const details = runtime.process(req.body, { details: true });
