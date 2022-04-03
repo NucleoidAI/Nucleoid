@@ -5,7 +5,11 @@ const fs = require("fs");
 const swagger = require("swagger-ui-express");
 const uuid = require("uuid").v4;
 const path = require("path");
-const runtime = require("../runtime");
+let nucleoid;
+
+setImmediate(() => {
+  nucleoid = require("../../index");
+});
 
 let server;
 let started = false;
@@ -22,7 +26,7 @@ const start = (nuc) => {
   const { functions } = nuc;
   Object.values(functions).forEach((fn) => {
     try {
-      runtime.process(fn.code, { declarative: false });
+      nucleoid.run(fn.code, { declarative: false });
     } catch (error) {
       console.info("Problem occurred while loading NUC file", error);
     }

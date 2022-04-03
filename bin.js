@@ -18,7 +18,8 @@ require("yargs")
         require("./src/libs/data").clear();
       }
 
-      require("./server");
+      const nucleoid = require("./index");
+      nucleoid.start();
       console.log("Nucleoid runtime started");
     },
   })
