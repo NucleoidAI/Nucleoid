@@ -3,6 +3,7 @@ const cors = require("cors");
 const service = require("./service");
 const logs = require("./src/routes/logs");
 const metrics = require("./src/routes/metrics");
+const editor = require("./src/routes/editor");
 
 const terminal = express();
 terminal.use(express.json());
@@ -13,6 +14,7 @@ service.start("main");
 
 terminal.use(logs);
 terminal.use(metrics);
+terminal.use(editor);
 
 terminal.post("/", (req, res) => service.accept(req.body, req, res));
 terminal.all("*", (req, res) => res.status(404).end());
