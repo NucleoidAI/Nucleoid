@@ -3,9 +3,9 @@ const router = express.Router();
 const Linter = require("eslint").Linter;
 const linter = new Linter();
 
-const options = require("./editorOptions");
+const options = require("./lintOptions");
 
-router.post("/editor", (req, res) => {
+router.post("/lint", (req, res) => {
   res.json(linter.verifyAndFix(req.body, options));
 });
 
