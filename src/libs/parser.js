@@ -6,15 +6,18 @@ const fn = (string) => {
 
   let context = Token.next(string, 0);
 
-  if (context.token === "(") {
+  if (context.token === "function") {
+    context = Token.next(string, context.offset);
     context = Token.nextArgs(string, context.offset);
     args = context.args;
+  } else if (context.token === "(") {
+    context = Token.nextArgs(string, context.offset);
+    args = context.args;
+    context = Token.next(string, context.offset);
+    context = Token.next(string, context.offset);
   } else {
     args = [context.token];
   }
-
-  context = Token.next(string, context.offset);
-  context = Token.next(string, context.offset);
 
   let check = Token.next(string, context.offset);
 
