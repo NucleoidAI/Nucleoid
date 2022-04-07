@@ -1,10 +1,10 @@
 const runtime = require("./src/runtime");
-const Token = require("./src/utils/token");
 const express = require("express");
 const cors = require("cors");
 const openapi = require("./src/routes/openapi");
 const logs = require("./src/routes/logs");
 const metrics = require("./src/routes/metrics");
+const parser = require("./src/libs/parser");
 
 const preset = [];
 
@@ -51,40 +51,11 @@ const run = (statement, p2, p3) => {
   } else {
     let scope = p2;
     let options = p3;
-    const { args, fn } = parseFn(statement.toString());
+    const { args, fn } = parser.fn(statement.toString());
     scope =
       scope && args.length ? `let ${args[0]}=${JSON.stringify(scope)};` : "";
     return runtime.process(`${scope}${fn}`, options);
   }
-};
-
-const parseFn = (string) => {
-  let args;
-  let fn;
-
-  let context = Token.next(string, 0);
-
-  if (context.token === "(") {
-    context = Token.nextArgs(string, context.offset);
-    args = context.args;
-  } else {
-    args = [context.token];
-  }
-
-  context = Token.next(string, context.offset);
-  context = Token.next(string, context.offset);
-
-  let check = Token.next(string, context.offset);
-
-  if (check && check.token === "{") {
-    context = Token.nextBlock(string, check.offset);
-    fn = `{${context.block.trim()}}`;
-  } else {
-    context = Token.nextBlock(string, context.offset, true);
-    fn = context.block.trim();
-  }
-
-  return { args, fn };
 };
 
 const app = express();
