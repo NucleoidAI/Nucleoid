@@ -10,13 +10,18 @@ const fn = (string) => {
     context = Token.next(string, context.offset);
     context = Token.nextArgs(string, context.offset);
     args = context.args;
+
+    const check = Token.next(string, context.offset);
+    if (check.token !== "{") {
+      throw SyntaxError(`Unexpected token '${check.token}'`);
+    }
   } else if (context.token === "(") {
     context = Token.nextArgs(string, context.offset);
     args = context.args;
     context = Token.next(string, context.offset);
     context = Token.next(string, context.offset);
   } else {
-    args = [context.token];
+    throw SyntaxError("Function expected");
   }
 
   let check = Token.next(string, context.offset);
@@ -26,7 +31,7 @@ const fn = (string) => {
     fn = `{${context.block.trim()}}`;
   } else {
     context = Token.nextBlock(string, context.offset, true);
-    fn = context.block.trim();
+    fn = `{return ${context.block.trim()}}`;
   }
 
   return { args, fn };
