@@ -3,16 +3,29 @@ const Token = require("../utils/token");
 const fn = (string) => {
   let args;
   let fn;
+  let name;
 
   let context = Token.next(string, 0);
 
   if (context.token === "function") {
+    const checkName = Token.next(string, context.offset);
+
+    if (checkName && checkName.token !== "(") {
+      context = checkName;
+      name = checkName.token;
+    }
+
     context = Token.next(string, context.offset);
+
+    if (context && context.token !== "(") {
+      throw SyntaxError(`Unexpected token '${context.token}'`);
+    }
+
     context = Token.nextArgs(string, context.offset);
     args = context.args;
 
     const check = Token.next(string, context.offset);
-    if (check.token !== "{") {
+    if (check && check.token !== "{") {
       throw SyntaxError(`Unexpected token '${check.token}'`);
     }
   } else if (context.token === "(") {
@@ -24,7 +37,7 @@ const fn = (string) => {
     throw SyntaxError("Function expected");
   }
 
-  let check = Token.next(string, context.offset);
+  const check = Token.next(string, context.offset);
 
   if (check && check.token === "{") {
     context = Token.nextBlock(string, check.offset);
@@ -34,7 +47,7 @@ const fn = (string) => {
     fn = `{return ${context.block.trim()}}`;
   }
 
-  return { args, fn };
+  return { name, args, fn };
 };
 
 module.exports.fn = fn;

@@ -3,15 +3,33 @@ const { equal, deepEqual, throws } = require("assert");
 
 describe("Parser", () => {
   it("parses function without name and argument", () => {
-    const { args, fn } = parser.fn("function ( req ) { User[req.query.user] }");
+    const { args, fn } = parser.fn(
+      "function ( req , res ) { User[req.query.user] }"
+    );
     equal(fn, "{User[req.query.user]}");
-    deepEqual(args, ["req"]);
+    deepEqual(args, ["req", "res"]);
+  });
+
+  it("parses function with name", () => {
+    const { name, args, fn } = parser.fn(
+      "function get ( req , res ) { User[req.query.user] }"
+    );
+    equal(name, "get");
+    equal(fn, "{User[req.query.user]}");
+    deepEqual(args, ["req", "res"]);
   });
 
   it("parses function without name", () => {
     const { args, fn } = parser.fn("function ( ) { User[req.query.user] }");
     equal(fn, "{User[req.query.user]}");
     deepEqual(args, []);
+  });
+
+  it("throws error if function is missing parentheses", () => {
+    throws(() => parser.fn("function { User[req.query.user] }", SyntaxError));
+    throws(() =>
+      parser.fn("function get { User[req.query.user] }", SyntaxError)
+    );
   });
 
   it("parses arrow function with block", () => {
@@ -29,14 +47,10 @@ describe("Parser", () => {
   });
 
   it("throws error if input is not function", () => {
-    throws(() => {
-      parser.fn("a = 1");
-    }, SyntaxError);
+    throws(() => parser.fn("a = 1"), SyntaxError);
   });
 
   it("throws error if function is incorrect", () => {
-    throws(() => {
-      parser.fn("function ( ) => { }");
-    }, SyntaxError);
+    throws(() => parser.fn("function ( ) => { }"), SyntaxError);
   });
 });
