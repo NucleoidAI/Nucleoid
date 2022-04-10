@@ -106,7 +106,7 @@ const start = (nuc) => {
         `function ${method}(req, res) {` +
           `const scope = { params: req.params, query: req.query, body: req.body };` +
           `const result = nucleoid.run(${action},scope);` +
-          `res.send(result);` +
+          `res.json(result);` +
           `}`
       );
       fs.appendFileSync(file, `${method}.apiDoc = ${JSON.stringify(apiDoc)};`);
