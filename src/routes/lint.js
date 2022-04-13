@@ -1,12 +1,14 @@
 const express = require("express");
+
 const router = express.Router();
-const Linter = require("eslint").Linter;
-const linter = new Linter();
 
 const options = require("./lintOptions");
 
-router.post("/lint", (req, res) => {
-  res.json(linter.verifyAndFix(req.body, options));
+const { ESLint } = require("eslint");
+const eslint = new ESLint({ baseConfig: options, fix: true });
+
+router.post("/lint", async (req, res) => {
+  res.send(await eslint.lintText(req.body));
 });
 
 module.exports = router;
