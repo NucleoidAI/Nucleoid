@@ -5,6 +5,7 @@ const openapi = require("./src/routes/openapi");
 const logs = require("./src/routes/logs");
 const metrics = require("./src/routes/metrics");
 const lint = require("./src/routes/lint");
+const parser = require("./src/libs/parser");
 
 const preset = [];
 
