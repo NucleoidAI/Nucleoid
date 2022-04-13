@@ -4,15 +4,25 @@ const router = express.Router();
 const { ESLint } = require("eslint");
 const eslint = new ESLint({
   baseConfig: {
-    extends: ["eslint:recommended", "plugin:prettier/recommended", "prettier"],
-    plugins: ["prettier"],
+    extends: ["eslint:recommended", "plugin:prettier/recommended"],
   },
-  overrideConfig: { rules: { "no-unused-vars": "off" } },
+  overrideConfig: {
+    rules: {
+      "no-unused-vars": [
+        "error",
+        {
+          varsIgnorePattern: "action",
+          args: "none",
+        },
+      ],
+    },
+  },
   fix: true,
 });
 
 router.post("/lint", async (req, res) => {
-  res.send(await eslint.lintText(req.body));
+  const [result] = await eslint.lintText(req.body);
+  res.json(result);
 });
 
 module.exports = router;
