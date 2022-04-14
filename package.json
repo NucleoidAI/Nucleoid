@@ -22,7 +22,7 @@
     "cors": "^2.8.5",
     "eslint": "^8.13.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-prettier": "^3.4.1",
     "express": "^4.17.1",
     "express-openapi": "^9.3.0",
     "glob": "^7.1.7",
