@@ -12,7 +12,7 @@
   },
   "scripts": {
     "test": "mocha src/**/*.spec.js --forbidOnly",
-    "lint": "eslint --ext .js ."
+    "lint": "eslint . --ext .js"
   },
   "repository": {
     "type": "git",
@@ -20,15 +20,15 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "eslint": "^8.13.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^3.4.1",
+    "eslint": "^7.21.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
     "express": "^4.17.1",
     "express-openapi": "^9.3.0",
     "glob": "^7.1.7",
     "lodash": "^4.17.21",
     "moment": "^2.29.1",
-    "prettier": "^2.6.2",
+    "prettier": "^2.2.1",
     "swagger-ui-express": "^4.1.6",
     "uuid": "^8.3.2",
     "yargs": "^17.0.1"
