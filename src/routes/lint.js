@@ -1,27 +1,25 @@
 const express = require("express");
 const router = express.Router();
 
-const { ESLint } = require("eslint");
-const eslint = new ESLint({
-  baseConfig: {
-    extends: ["eslint:recommended"],
+const { Linter } = require("eslint");
+const linter = new Linter();
+
+const rules = require("./rules");
+
+const options = {
+  env: {
+    es6: true,
+    node: true,
   },
-  overrideConfig: {
-    rules: {
-      "no-unused-vars": [
-        "error",
-        {
-          varsIgnorePattern: "action",
-          args: "none",
-        },
-      ],
-    },
+  parserOptions: {
+    ecmaVersion: 2018,
+    sourceType: "module",
   },
-  fix: true,
-});
+  rules,
+};
 
 router.post("/lint", async (req, res) => {
-  const [result] = await eslint.lintText(req.body);
+  const result = linter.verifyAndFix(req.body, options);
   res.json(result);
 });
 
