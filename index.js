@@ -4,6 +4,7 @@ const cors = require("cors");
 const openapi = require("./src/routes/openapi");
 const logs = require("./src/routes/logs");
 const metrics = require("./src/routes/metrics");
+const lint = require("./src/routes/lint");
 const parser = require("./src/libs/parser");
 
 const preset = [];
@@ -27,6 +28,7 @@ const start = (options) => {
     terminal.use(openapi);
     terminal.use(logs);
     terminal.use(metrics);
+    terminal.use(lint);
 
     terminal.post("/", (req, res) => {
       const details = runtime.process(req.body, { details: true });
