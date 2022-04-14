@@ -4,7 +4,7 @@ const router = express.Router();
 const { ESLint } = require("eslint");
 const eslint = new ESLint({
   baseConfig: {
-    extends: ["eslint:recommended", "plugin:prettier/recommended"],
+    extends: ["eslint:recommended"],
   },
   overrideConfig: {
     rules: {
