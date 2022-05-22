@@ -26,7 +26,7 @@ const next = function (string, offset) {
   for (; offset < string.length; offset++) {
     let character = string.charCodeAt(offset);
 
-    if (character === 10 || character === 13) {
+    if ([9, 10, 13].includes(character)) {
       continue;
     }
 
