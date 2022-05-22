@@ -1,23 +1,19 @@
 const runtime = require("./src/runtime");
 const express = require("express");
 const cors = require("cors");
-const openapi = require("./src/routes/openapi");
+const openapiRoute = require("./src/routes/openapi");
 const logs = require("./src/routes/logs");
 const metrics = require("./src/routes/metrics");
 const lint = require("./src/routes/lint");
 const parser = require("./src/libs/parser");
+const openapi = require("./src/libs/openapi");
+const fs = require("fs");
+const context = require("./src/libs/context");
 
-const preset = [];
-
-const start = (options) => {
-  options = options || {};
-
+const start = (options = {}) => {
   const process = require("./src/process");
   options = process.options(options);
-
-  setImmediate(() => {
-    preset.forEach(({ fn, options }) => run(fn.toString(), options));
-  });
+  setImmediate(() => context.run());
 
   if (options.terminal === undefined || options.terminal === true) {
     const terminal = express();
@@ -25,7 +21,7 @@ const start = (options) => {
     terminal.use(express.text({ type: "*/*" }));
     terminal.use(cors());
 
-    terminal.use(openapi);
+    terminal.use(openapiRoute);
     terminal.use(logs);
     terminal.use(metrics);
     terminal.use(lint);
@@ -43,7 +39,7 @@ const start = (options) => {
 };
 
 const register = (fn, options) => {
-  preset.push({ fn, options });
+  context.load({ definition: fn.toString(), options });
 };
 
 const run = (statement, p2, p3) => {
@@ -88,6 +84,19 @@ module.exports = () => ({
 
     start();
     app.listen(port, fn);
+  },
+  context: (path) => {
+    const file = fs.readFileSync(path, "utf8");
+    context.load(JSON.parse(file));
+  },
+  openapi: (path) => {
+    try {
+      const file = fs.readFileSync(path, "utf8");
+      openapi.initialize(app);
+      openapi.load(JSON.parse(file));
+    } catch (err) {
+      throw Error("Problem occurred while opening OpenAPI");
+    }
   },
 });
 

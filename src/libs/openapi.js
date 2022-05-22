@@ -5,32 +5,30 @@ const fs = require("fs");
 const swagger = require("swagger-ui-express");
 const uuid = require("uuid").v4;
 const path = require("path");
-let nucleoid;
-
-setImmediate(() => {
-  nucleoid = require("../../index");
-});
 
 let server;
 let started = false;
+let _app = null;
 
-const start = (nuc) => {
-  if (started) {
-    stop();
-  }
-
-  if (!nuc || !nuc.functions) {
-    throw Error("Invalid NUC file");
-  }
-
-  const { functions } = nuc;
-  Object.values(functions).forEach((fn) => {
-    try {
-      nucleoid.run(fn.code, { declarative: false });
-    } catch (error) {
-      console.info("Problem occurred while loading NUC file", error);
+const initialize = (app) => {
+  if (app) {
+    _app = app;
+  } else {
+    if (started) {
+      stop();
     }
-  });
+
+    _app = express();
+    _app.use(express.json());
+  }
+};
+
+const load = ({ api, types }) => {
+  const app = _app;
+
+  if (!app) {
+    throw Error("OpenAPI has not been initialized");
+  }
 
   let nucleoidPath = path.dirname(__dirname);
 
@@ -44,11 +42,6 @@ const start = (nuc) => {
   nucleoidPath = nucleoidPath.join("/") + "/index";
 
   const tmp = uuid();
-
-  const app = express();
-  app.use(express.json());
-
-  const { api } = nuc;
 
   Object.entries(api).forEach(([key, value]) => {
     const parts = key.substring(1).split("/");
@@ -124,7 +117,7 @@ const start = (nuc) => {
         version: "1.0.0",
       },
       components: {
-        schemas: nuc.types,
+        schemas: types,
       },
       paths: {},
       servers: [
@@ -146,8 +139,14 @@ const start = (nuc) => {
       },
     })
   );
+};
 
-  server = app.listen(3000);
+const start = (port = 3000) => {
+  if (started) {
+    return stop();
+  }
+
+  server = _app.listen(port);
   started = true;
 };
 
@@ -159,7 +158,4 @@ const stop = () => {
 };
 
 const status = () => ({ started });
-
-module.exports.start = start;
-module.exports.stop = stop;
-module.exports.status = status;
+module.exports = { start, stop, status, initialize, load };
