@@ -108,27 +108,32 @@ const load = ({ api, types }) => {
     fs.appendFileSync(file, `}`);
   });
 
-  OpenAPI.initialize({
-    app,
-    apiDoc: {
-      openapi: "3.0.1",
-      info: {
-        title: "Nucleoid",
-        version: "1.0.0",
-      },
-      components: {
-        schemas: types,
-      },
-      paths: {},
-      servers: [
-        {
-          url: "/api",
+  try {
+    OpenAPI.initialize({
+      app,
+      apiDoc: {
+        openapi: "3.0.1",
+        info: {
+          title: "Nucleoid",
+          version: "1.0.0",
         },
-      ],
-    },
-    paths: `${openapi}/${tmp}`,
-    docsPath: "/openapi.json",
-  });
+        components: {
+          schemas: types,
+        },
+        paths: {},
+        servers: [
+          {
+            url: "/api",
+          },
+        ],
+      },
+      paths: `${openapi}/${tmp}`,
+      docsPath: "/openapi.json",
+    });
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 
   app.use(
     "/",
