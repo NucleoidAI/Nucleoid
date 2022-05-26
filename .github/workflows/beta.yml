@@ -1,7 +1,7 @@
-name: Tag
+name: Beta
 on:
   push:
-    tags:
+    tags-ignore:
       - v[0-9]+.[0-9]+.[0-9]+
 jobs:
   publish:
@@ -14,12 +14,6 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm test
-    - run: npm publish
+    - run: npm publish --tag beta
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-    - uses: actions/create-release@latest
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
