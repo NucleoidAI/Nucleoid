@@ -69,7 +69,7 @@ const accept = (req, res, fn) => {
   else res.send(Number.isInteger(result) ? result.toString() : result);
 };
 
-module.exports = () => ({
+module.exports = (options) => ({
   express: () => app,
   use: (...args) => app.use(...args),
   get: (string, fn) => app.get(string, (req, res) => accept(req, res, fn)),
@@ -82,7 +82,7 @@ module.exports = () => ({
     // eslint-disable-next-line no-unused-vars
     app.use((err, req, res, next) => res.status(500).send(err.stack));
 
-    start();
+    start(options);
     app.listen(port, fn);
   },
   context: (path) => {
