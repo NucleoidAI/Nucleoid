@@ -682,9 +682,9 @@ describe("Nucleoid", () => {
       nucleoid.run("schedule1.expression = '0 */2 * * *'");
       nucleoid.run("schedule1.script = null");
       nucleoid.run(
-        "schedule1.run = schedule1.expression + '\t' + schedule1.script"
+        "schedule1.run = schedule1.expression + ' ' + schedule1.script"
       );
-      equal(nucleoid.run("schedule1.run"), "0 */2 * * *\tnull");
+      equal(nucleoid.run("schedule1.run"), "0 */2 * * * null");
     });
 
     it("assigns null if there is null pointer in expression", () => {
