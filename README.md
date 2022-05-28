@@ -45,6 +45,7 @@ Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 - [X] [Beta](https://www.npmjs.com/package/nucleoidjs) is out
 - [X] ES6 support
 - [ ] ES2018 support
+- [ ] TypeScript
 - [ ] [IDE](https://github.com/NucleoidJS/IDE) (WiP)
 - [ ] Production-ready
 

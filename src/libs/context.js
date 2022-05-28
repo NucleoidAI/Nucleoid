@@ -20,6 +20,8 @@ const run = (context = []) => {
       console.info("Problem occurred while loading functions", error);
     }
   });
+
+  _context = [];
 };
 
 module.exports = { load, run };

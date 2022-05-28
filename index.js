@@ -15,7 +15,7 @@ const start = (options = {}) => {
   options = process.options(options);
   setImmediate(() => context.run());
 
-  if (options.terminal === undefined || options.terminal === true) {
+  if (options.terminal !== false && options.test !== false) {
     const terminal = express();
     terminal.use(express.json());
     terminal.use(express.text({ type: "*/*" }));
@@ -61,6 +61,8 @@ app.use(express.json());
 app.use(cors());
 app.static = express.static;
 
+let listener;
+
 const accept = (req, res, fn) => {
   const scope = { params: req.params, query: req.query, body: req.body };
   const { result } = run(fn, scope, { details: true });
@@ -71,19 +73,20 @@ const accept = (req, res, fn) => {
 
 module.exports = (options) => ({
   express: () => app,
+  address: () => (listener ? listener.address() : null),
   use: (...args) => app.use(...args),
   get: (string, fn) => app.get(string, (req, res) => accept(req, res, fn)),
   post: (string, fn) => app.post(string, (req, res) => accept(req, res, fn)),
   put: (string, fn) => app.put(string, (req, res) => accept(req, res, fn)),
   delete: (string, fn) =>
     app.delete(string, (req, res) => accept(req, res, fn)),
-  listen: (port, fn) => {
+  listen: (port = 0, fn) => {
     app.all("*", (req, res) => res.status(404).end());
     // eslint-disable-next-line no-unused-vars
     app.use((err, req, res, next) => res.status(500).send(err.stack));
 
     start(options);
-    app.listen(port, fn);
+    return (listener = app.listen(port, fn));
   },
   context: (path) => {
     const file = fs.readFileSync(path, "utf8");
