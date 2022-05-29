@@ -47,6 +47,29 @@ describe("Nucleoid API", () => {
     deepEqual(res3.body, { id: "user0", name: "Daphne" });
   });
 
+  it("OpenAPI", async () => {
+    const app = nucleoid(options);
+
+    app.context(`${__dirname}/context.json`);
+    app.openapi(`${__dirname}/openapi.json`);
+
+    const res1 = await request(app)
+      .post("/api/items")
+      .send({ name: "ITEM-1", barcode: "BARCODE-1" });
+    deepEqual(res1.body, {
+      barcode: "BARCODE-1",
+      id: "item0",
+      name: "ITEM-1",
+    });
+
+    const res2 = await request(app).get("/api/items/item0").send();
+    deepEqual(res2.body, {
+      barcode: "BARCODE-1",
+      id: "item0",
+      name: "ITEM-1",
+    });
+  });
+
   it("Custom Scope", async () => {
     const app = nucleoid(options);
     const express = app.express();
