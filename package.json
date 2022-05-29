@@ -11,7 +11,7 @@
     "nuc": "bin.js"
   },
   "scripts": {
-    "test": "mocha src/**/*.spec.js --forbidOnly",
+    "test": "mocha 'src/**/*.spec.js' --forbidOnly",
     "lint": "eslint . --ext .js"
   },
   "repository": {
