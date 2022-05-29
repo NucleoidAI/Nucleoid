@@ -7,9 +7,9 @@ const validate = (error, expectedError, expectedMessage) => {
   return error instanceof expectedError && error.message === expectedMessage;
 };
 
-nucleoid.start({ declarative: true, test: true });
-
 describe("Nucleoid", () => {
+  before(() => nucleoid.start({ declarative: true, test: true }));
+
   beforeEach(() => {
     for (let property in state) delete state[property];
     for (let property in graph) delete graph[property];

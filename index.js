@@ -38,9 +38,11 @@ const start = (options = {}) => {
   }
 };
 
-const register = (fn, options) => {
-  context.load({ definition: fn.toString(), options });
-};
+const register = (fn) =>
+  context.load({
+    definition: fn.toString(),
+    options: { declarative: true },
+  });
 
 const run = (statement, p2, p3) => {
   if (typeof statement === "string") {

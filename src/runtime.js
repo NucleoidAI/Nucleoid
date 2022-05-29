@@ -16,9 +16,7 @@ setImmediate(() => {
   process = require("./process");
 });
 
-module.exports.process = function (statement, options) {
-  options = options || {};
-
+module.exports.process = function (statement, options = {}) {
   if (!process) {
     console.error("The runtime has not started");
     require("process").exit(1);
