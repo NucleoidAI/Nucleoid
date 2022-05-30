@@ -24,6 +24,7 @@ const tail = () => {
 
 const clear = () => {
   fs.rmSync(path, { recursive: true, force: true });
+  fs.mkdirSync(path, { recursive: true });
 };
 
 module.exports = { tail, clear };

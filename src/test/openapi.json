@@ -1,0 +1,64 @@
+{
+  "api": {
+    "/items": {
+      "post": {
+        "summary": "Add item",
+        "description": "Add item",
+        "request": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "barcode": {
+              "type": "string"
+            }
+          }
+        },
+        "response": {
+          "$ref": "#/components/schemas/Item"
+        },
+        "action": "function action(req){ const name=req.body.name;const barcode=req.body.barcode;return new Item(name,barcode); }"
+      }
+    },
+    "/items/{item}": {
+      "get": {
+        "summary": "Read item",
+        "description": "Read item by item id",
+        "params": [
+          {
+            "name": "id",
+            "in": "param",
+            "type": "string",
+            "required": true,
+            "description": "Item id"
+          }
+        ],
+        "request": {
+          "type": "object",
+          "properties": {}
+        },
+        "response": {
+          "$ref": "#/components/schemas/Item"
+        },
+        "action": "function action(req){ return Item[req.params.item]; }"
+      }
+    }
+  },
+  "types": {
+    "Item": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "barcode": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
