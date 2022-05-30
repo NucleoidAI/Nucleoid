@@ -1,14 +1,11 @@
 const runtime = require("./src/runtime");
 const express = require("express");
 const cors = require("cors");
-const openapiRoute = require("./src/routes/openapi");
-const logs = require("./src/routes/logs");
-const metrics = require("./src/routes/metrics");
-const lint = require("./src/routes/lint");
 const parser = require("./src/libs/parser");
 const openapi = require("./src/libs/openapi");
 const fs = require("fs");
 const context = require("./src/libs/context");
+const terminal = require("./src/terminal");
 
 const start = (options = {}) => {
   const process = require("./src/process");
@@ -16,24 +13,6 @@ const start = (options = {}) => {
   setImmediate(() => context.run());
 
   if (options.terminal !== false && options.test !== false) {
-    const terminal = express();
-    terminal.use(express.json());
-    terminal.use(express.text({ type: "*/*" }));
-    terminal.use(cors());
-
-    terminal.use(openapiRoute);
-    terminal.use(logs);
-    terminal.use(metrics);
-    terminal.use(lint);
-
-    terminal.post("/", (req, res) => {
-      const details = runtime.process(req.body, { details: true });
-      res.send(details);
-    });
-    terminal.all("*", (req, res) => res.status(404).end());
-
-    // eslint-disable-next-line no-unused-vars
-    terminal.use((err, req, res, next) => res.status(500).send(err.stack));
     terminal.listen(8448);
   }
 };

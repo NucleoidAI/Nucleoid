@@ -146,6 +146,8 @@ const load = ({ api, types }) => {
   );
 };
 
+const app = () => _app;
+
 const start = (port = 3000) => {
   if (started) {
     return stop();
@@ -163,4 +165,5 @@ const stop = () => {
 };
 
 const status = () => ({ started });
-module.exports = { start, stop, status, initialize, load };
+
+module.exports = { initialize, load, app, start, stop, status };

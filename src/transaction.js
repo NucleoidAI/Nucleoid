@@ -1,4 +1,4 @@
-const state = require("./state").state; // eslint-disable-line no-unused-vars
+const { state } = require("./state"); // eslint-disable-line no-unused-vars
 const REFERENCE = require("./reference");
 
 let list = [];

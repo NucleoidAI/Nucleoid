@@ -9,6 +9,7 @@ router.post("/openapi", (req, res) => {
 
   if (action === "start") {
     context.run(functions);
+
     openapi.initialize();
     openapi.load({ api, types });
     openapi.start();

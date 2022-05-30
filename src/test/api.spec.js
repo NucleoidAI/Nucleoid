@@ -3,23 +3,15 @@ data.clear();
 
 const request = require("supertest");
 const { deepEqual } = require("assert");
+const test = require("../libs/test");
 const nucleoid = require("../../index");
-const { state } = require("../state");
-const graph = require("../graph");
+const openapi = require("../libs/openapi");
 const _ = require("lodash");
 
 const options = { terminal: false };
 
 describe("Nucleoid API", () => {
-  beforeEach(() => {
-    for (let property in state) delete state[property];
-    for (let property in graph) delete graph[property];
-
-    state["classes"] = [];
-    graph["classes"] = { name: "classes" };
-
-    data.clear();
-  });
+  beforeEach(() => test.clear());
   after(() => data.clear());
 
   it("Hello World", async () => {
@@ -68,6 +60,8 @@ describe("Nucleoid API", () => {
       id: "item0",
       name: "ITEM-1",
     });
+
+    openapi.stop();
   });
 
   it("Custom Scope", async () => {
