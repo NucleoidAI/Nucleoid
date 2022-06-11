@@ -1,5 +1,5 @@
 const Token = require("../../utils/token");
-const $FUNCTION = require("../$/$function");
+const $FUNCTION = require("../$nuc/$function");
 let JS$BLOCK = require("./js$block");
 
 module.exports = function JS$FUNCTION(string, offset) {

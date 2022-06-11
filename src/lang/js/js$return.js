@@ -1,5 +1,5 @@
 const Token = require("../../utils/token");
-const $RETURN = require("../$/$return");
+const $RETURN = require("../$nuc/$return");
 const JS = require("./js");
 
 module.exports = function JS$RETURN(string, offset) {

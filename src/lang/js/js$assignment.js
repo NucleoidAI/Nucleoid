@@ -1,7 +1,7 @@
 const Token = require("../../utils/token");
-const $INSTANCE = require("../$/$instance");
-const $ASSIGNMENT = require("../$/$assignment");
-const $EXP = require("../$/$expression");
+const $INSTANCE = require("../$nuc/$instance");
+const $ASSIGNMENT = require("../$nuc/$assignment");
+const $EXP = require("../$nuc/$expression");
 const Id = require("../../utils/identifier");
 
 module.exports = function JS$ASSIGNMENT(string, offset) {

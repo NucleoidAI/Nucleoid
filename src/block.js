@@ -1,5 +1,5 @@
 const Node = require("./node");
-const $ = require("./lang/$/$");
+const $ = require("./lang/$nuc/$");
 
 module.exports = class BLOCK extends Node {
   constructor() {

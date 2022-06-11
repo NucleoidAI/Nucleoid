@@ -1,6 +1,6 @@
 const Token = require("../../utils/token");
 const JS = require("./js");
-const $FOR = require("../$/$for");
+const $FOR = require("../$nuc/$for");
 
 module.exports = function JS$FOR(string, offset) {
   let context = Token.next(string, offset);

@@ -1,5 +1,5 @@
 const Token = require("../../utils/token");
-const $DELETE = require("../$/$delete");
+const $DELETE = require("../$nuc/$delete");
 
 module.exports = function JS$DELETE(string, offset) {
   let context = Token.next(string, offset);

@@ -1,6 +1,6 @@
 const Token = require("../../utils/token");
 const JS = require("./js");
-const $BLOCK = require("../$/$block");
+const $BLOCK = require("../$nuc/$block");
 
 module.exports = function JS$BLOCK(string, offset) {
   let context = Token.next(string, offset);

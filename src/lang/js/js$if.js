@@ -1,7 +1,7 @@
 const Token = require("../../utils/token");
-const $EXP = require("../$/$expression");
-const $BLOCK = require("../$/$block");
-const $IF = require("../$/$if");
+const $EXP = require("../$nuc/$expression");
+const $BLOCK = require("../$nuc/$block");
+const $IF = require("../$nuc/$if");
 const JS = require("./js");
 
 module.exports = function JS$IF(string, offset) {

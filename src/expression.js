@@ -13,7 +13,7 @@ let LET;
 setImmediate(() => {
   Node = require("./node");
   Stack = require("./stack");
-  $CALL = require("./lang/$/$call");
+  $CALL = require("./lang/$nuc/$call");
   LET = require("./let");
 });
 

@@ -1,5 +1,5 @@
 const Token = require("../../utils/token");
-let $CLASS = require("../$/$class");
+let $CLASS = require("../$nuc/$class");
 let JS$BLOCK = require("../js/js$block");
 
 module.exports = function ES6$CLASS(string, offset) {

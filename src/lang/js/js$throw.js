@@ -1,5 +1,5 @@
 const Token = require("../../utils/token");
-const $THROW = require("../$/$throw");
+const $THROW = require("../$nuc/$throw");
 
 module.exports = function JS$THROW(string, offset) {
   let context = Token.next(string, offset);

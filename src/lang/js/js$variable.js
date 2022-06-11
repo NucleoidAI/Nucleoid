@@ -1,7 +1,7 @@
-const $VAR = require("../$/$variable");
+const $VAR = require("../$nuc/$variable");
 const Token = require("../../utils/token");
-const $INSTANCE = require("../$/$instance");
-const $EXP = require("../$/$expression");
+const $INSTANCE = require("../$nuc/$instance");
+const $EXP = require("../$nuc/$expression");
 
 module.exports = function JS$VARIABLE(string, offset) {
   let context = Token.next(string, offset);

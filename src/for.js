@@ -1,8 +1,8 @@
-const $BLOCK = require("./lang/$/$block");
+const $BLOCK = require("./lang/$nuc/$block");
 const Instruction = require("./instruction");
-const $LET = require("./lang/$/$let");
+const $LET = require("./lang/$nuc/$let");
 const state = require("./state");
-const $EXP = require("./lang/$/$expression");
+const $EXP = require("./lang/$nuc/$expression");
 const graph = require("./graph");
 
 module.exports = class FOR {

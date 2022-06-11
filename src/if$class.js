@@ -1,5 +1,5 @@
 const IF$INSTANCE = require("./if$instance");
-const $BLOCK = require("./lang/$/$block");
+const $BLOCK = require("./lang/$nuc/$block");
 const Node = require("./node");
 const graph = require("./graph");
 const Instance = require("./utils/instance");

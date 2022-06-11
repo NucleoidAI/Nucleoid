@@ -1,7 +1,7 @@
 const state = require("./state");
 const Node = require("./node");
-const $VAR = require("./lang/$/$variable");
-const $EXP = require("./lang/$/$expression");
+const $VAR = require("./lang/$nuc/$variable");
+const $EXP = require("./lang/$nuc/$expression");
 const graph = require("./graph");
 
 const CLASS = class CLASS extends Node {
