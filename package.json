@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "eslint": "^8.13.0",
     "express": "^4.17.1",
     "express-openapi": "^9.3.0",
     "glob": "^7.1.7",
@@ -31,6 +30,7 @@
     "yargs": "^17.0.1"
   },
   "devDependencies": {
+    "eslint": "^8.13.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "mocha": "^9.1.3",
