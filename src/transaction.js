@@ -1,7 +1,9 @@
-const { state } = require("./state"); // eslint-disable-line no-unused-vars
 const REFERENCE = require("./reference");
 
 let list = [];
+let state; // eslint-disable-line no-unused-vars
+
+setImmediate(() => (state = require("./state").state));
 
 module.exports.start = function () {
   list = [];

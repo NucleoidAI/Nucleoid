@@ -1,7 +1,7 @@
+const test = require("../../libs/test");
 const terminal = require("../../terminal");
 const request = require("supertest");
 const { equal, notEqual, deepEqual } = require("assert");
-const test = require("../../libs/test");
 const data = require("./data.json");
 const openapi = require("../../libs/openapi");
 

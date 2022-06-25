@@ -12,4 +12,6 @@ const clear = () => {
   data.clear();
 };
 
+clear();
+
 module.exports = { clear };

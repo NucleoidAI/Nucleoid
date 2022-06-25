@@ -1,3 +1,4 @@
+const test = require("../libs/test");
 const { equal, notEqual, deepEqual, throws } = require("assert");
 const nucleoid = require("../../index");
 const state = require("../state").state;
@@ -9,14 +10,7 @@ const validate = (error, expectedError, expectedMessage) => {
 
 describe("Nucleoid", () => {
   before(() => nucleoid.start({ declarative: true, test: true }));
-
-  beforeEach(() => {
-    for (let property in state) delete state[property];
-    for (let property in graph) delete graph[property];
-
-    state["classes"] = [];
-    graph["classes"] = { name: "classes" };
-  });
+  beforeEach(() => test.clear());
 
   describe("in declarative mode", () => {
     const details = { declarative: true, details: true };

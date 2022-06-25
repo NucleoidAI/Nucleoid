@@ -1,9 +1,6 @@
-const data = require("../libs/data");
-data.clear();
-
+const test = require("../libs/test");
 const request = require("supertest");
 const { deepEqual } = require("assert");
-const test = require("../libs/test");
 const nucleoid = require("../../index");
 const openapi = require("../libs/openapi");
 const _ = require("lodash");
@@ -12,7 +9,7 @@ const options = { terminal: false };
 
 describe("Nucleoid API", () => {
   beforeEach(() => test.clear());
-  after(() => data.clear());
+  after(() => test.clear());
 
   it("Hello World", async () => {
     const app = nucleoid(options);
