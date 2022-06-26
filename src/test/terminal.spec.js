@@ -1,12 +1,12 @@
 const test = require("../libs/test");
 const terminal = require("../terminal");
 const request = require("supertest");
-const { equal, notEqual, deepEqual } = require("assert");
+const { equal, notEqual } = require("assert");
 
 describe("Terminal", () => {
   beforeEach(() => test.clear());
 
-  it("runs command directly", async () => {
+  it("runs command", async () => {
     const res1 = await request(terminal).post("/").send("'Hello'");
     equal(res1.status, 200);
     equal(res1.body.result, "Hello");

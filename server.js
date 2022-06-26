@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const service = require("./service");
-const logs = require("./src/routes/logs");
-const metrics = require("./src/routes/metrics");
+const logs = require("./src/services/logs");
+const metrics = require("./src/services/metrics");
 
 const terminal = express();
 terminal.use(express.json());

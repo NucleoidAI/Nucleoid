@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const openapi = require("./routes/openapi");
-const logs = require("./routes/logs");
-const metrics = require("./routes/metrics");
+const openapi = require("./services/openapi");
+const logs = require("./services/logs");
+const metrics = require("./services/metrics");
 const runtime = require("./runtime");
 
 const terminal = express();
