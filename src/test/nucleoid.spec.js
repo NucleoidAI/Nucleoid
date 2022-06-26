@@ -434,6 +434,20 @@ describe("Nucleoid", () => {
       equal(i.test, "test");
     });
 
+    it("returns inline JSON", () => {
+      const json = nucleoid.run(
+        '{ return { "number" : 123 , "string" : "ABC" , "bool" : true } }'
+      );
+      deepEqual(json, { number: 123, string: "ABC", bool: true });
+    });
+
+    it("returns inline object", () => {
+      const object = nucleoid.run(
+        '{ return { number : 123 , string : "ABC" , bool : true } }'
+      );
+      deepEqual(object, { number: 123, string: "ABC", bool: true });
+    });
+
     it("assigns block in function as dependency", () => {
       nucleoid.run("class Student { }");
       nucleoid.run("student1 = new Student ( )");

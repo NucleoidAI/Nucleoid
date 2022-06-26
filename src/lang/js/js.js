@@ -43,8 +43,22 @@ module.exports.compile = function compile(string, offset) {
     if (context.token === "var") context = JS$VARIABLE(string, offset);
     else if (context.token === "if") context = JS$IF(string, offset);
     else if (context.token === "class") context = ES6$CLASS(string, offset);
-    else if (context.token === "{") context = JS$BLOCK(string, offset);
-    else if (context.token === "delete") context = JS$DELETE(string, offset);
+    else if (context.token === "{") {
+      const check = Token.next(string, context.offset);
+      let skip = false;
+      if (check) {
+        const colon = Token.next(string, check.offset);
+
+        if (colon?.token === ":") {
+          context = $EXP(string, offset);
+          skip = true;
+        }
+      }
+
+      if (!skip) {
+        context = JS$BLOCK(string, offset);
+      }
+    } else if (context.token === "delete") context = JS$DELETE(string, offset);
     else if (context.token === "let") context = ES6$LET(string, offset, false);
     else if (context.token === "const") context = ES6$LET(string, offset, true);
     else if (context.token === "new") context = JS$VARIABLE(string, offset);
