@@ -434,11 +434,18 @@ describe("Nucleoid", () => {
       equal(i.test, "test");
     });
 
-    it("returns inline JSON", () => {
+    it("returns inline JSON object", () => {
       const json = nucleoid.run(
         '{ return { "number" : 123 , "string" : "ABC" , "bool" : true } }'
       );
       deepEqual(json, { number: 123, string: "ABC", bool: true });
+    });
+
+    it("returns inline JSON array", () => {
+      const json = nucleoid.run(
+        '{ return [ { "number" : 123 , "string" : "ABC" , "bool" : true } ] }'
+      );
+      deepEqual(json, [{ number: 123, string: "ABC", bool: true }]);
     });
 
     it("returns inline object", () => {
