@@ -2,35 +2,41 @@
 
 ![Banner](.github/media/banner.png)
 
-## What is Nucleoid?
+Nucleoid is a low-code framework for Node.js that lets you build your APIs with the help of AI and built-in datastore.
 
-Nucleoid is a low-code framework for Node.js. As writing just like any other codes in Node.js, it rerenders the very same JavaScript codes and makes
-the necessary adjustments in the state as well as stores on the disk, so that your application doesn't require external database or anything else.
+As writing just like any other codes in Node.js, it rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk, so that your application doesn't require external database or anything else.
 
-### ..but why?
+## How it works
 
-Even simple applications today require lots of coding, libraries, tuning etc., and majority of them are technical
-requirements rather than business logic. Declarative runtimes like Nucleoid lets you immediately start writing business
-logic with less code lines.
+I. Write your business logic in JavaScript
+
+```javascript
+app.post("/users", () => {
+  new User("Daphne");
+});
+```
+
+II. Nucleoid renders your codes with AI
+
+III. Creates APIs with built-in datastore
 
 ## Hello World
 
 ```javascript
-const nucleoid = require("nucleoidjs");
 const app = nucleoid();
 
-class User {constructor(name){this.name = name}}
-nucleoid.register(User);
+class User { constructor(name) { this.name = name }}
 
 // 👇 This is it!
-app.post("/users", () => new User("Daphne"));
+app.post("/users", () => {
+  // This will store your object
+  new User("Daphne")
+});
 
 app.listen(3000);
 ```
 
-It is pretty much it, you successfully persisted your first object with this :point_up_2:
-
-> Just the reminder, you don't need external database, `const app = nucleoid()` will do the magic. :sunglasses:
+> It is pretty much it, you successfully persisted your first object with this :point_up_2: without external database
 
 Learn more at [nucleoid.com](https://nucleoid.com)
 
