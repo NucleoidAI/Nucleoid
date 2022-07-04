@@ -48,14 +48,6 @@ It is pretty much it, you successfully persisted your first object with this :po
 - All you need is JavaScript
 - Lighting fast
 
-## Join [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
-
-If you have an opinion, you are already a philosopher. We are working on new approach to data and logic. Come join us in discussions.
-
-| Pinned Discussions                                    |
-| ----------------------------------------------------- |
-| https://github.com/NucleoidJS/Nucleoid/discussions/11 |
-
 ## Nucleoid IDE
 
 Nucleoid IDE is a web interface that helps to run very same NPM package with OpenAPI.
@@ -65,13 +57,18 @@ Nucleoid IDE is a web interface that helps to run very same NPM package with Ope
 ![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-1.png)
 ![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-2.png)
 
-## Fight against Spaghetti Code!
 
-We are working on the new approach to data and logic that it organically lowers code lines and complexity.
 
-![Cape](https://cdn.nucleoid.com/media/cape.png)
+# Join [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
 
-Learn more at [nucleoid.com](https://nucleoid.com)
+
+If you have an opinion, you are already a philosopher. We are working on new approach to data and logic. Come join us in discussions.
+
+![Nobel](https://cdn.nucleoid.com/media/nobel.png)
+
+| Pinned Discussions                                    |
+| ----------------------------------------------------- |
+| https://github.com/NucleoidJS/Nucleoid/discussions/11 |
 
 ## Project Status
 
@@ -86,3 +83,5 @@ Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 - [ ] Production-ready
 
 Please report an [issue](https://github.com/NucleoidJS/Nucleoid/issues) or ask a question at [Discussions](https://github.com/NucleoidJS/Nucleoid/discussions)
+
+Learn more at [nucleoid.com](https://nucleoid.com)
