@@ -2,7 +2,7 @@
 
 ![Banner](.github/media/banner.png)
 
-Nucleoid is a low-code framework for Node.js that lets you build your APIs with the help of AI and built-in datastore.
+### Nucleoid is a low-code framework for Node.js that lets you build your APIs with the help of AI and built-in datastore.
 
 As writing just like any other codes in Node.js, it rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk, so that your application doesn't require external database or anything else.
 
@@ -22,7 +22,9 @@ III. Creates APIs with built-in datastore
 
 ## Hello World
 
-`> npm i nucleoidjs`
+```shell
+> npm i nucleoidjs
+```
 
 Once installed, you can simply run with Express.js
 
@@ -67,7 +69,7 @@ The declarative runtime environment isolates a behavior definition of a program 
 
 # Join [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
 
-If you have an opinion, you are already a philosopher. We are working on new approach to data and logic. Come join us in [discussions](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club).
+If you have an opinion, you are already a philosopher. We are working on brand-new approach to data and logic. Come join us in [discussions](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club).
 
 ![Nobel](https://cdn.nucleoid.com/media/nobel.png)
 
