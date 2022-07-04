@@ -1,8 +1,14 @@
-# Nucleoid [![NPM](https://img.shields.io/npm/l/nucleoidjs)](https://www.apache.org/licenses/LICENSE-2.0) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/nucleoidjs/nucleoid/Test)](https://github.com/NucleoidJS/Nucleoid/actions/workflows/test.yml) [![npm](https://img.shields.io/npm/v/nucleoidjs)](https://www.npmjs.com/package/nucleoidjs) [![Discord](https://img.shields.io/badge/chat-Discord-brightgreen)](https://discord.gg/eWXFCCuU5y)
+<h1 align="center">Nucleoid</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Apache-2.0-yellow?style=for-the-badge&logo=apache" alt="License"/>
+  <img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="npm"/>
+  <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord"/>
+</p>
 
 ![Banner](.github/media/banner.png)
 
-### Nucleoid is a low-code framework for Node.js that lets you build your APIs with the help of AI and built-in datastore.
+<h3 align="center">Build your APIs with the help of AI and built-in datastore</h3>
 
 As writing just like any other codes in Node.js, it rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk, so that your application doesn't require external database or anything else.
 
@@ -50,7 +56,7 @@ It is pretty much it, you successfully persisted your first object with this :po
 
 ## Nucleoid IDE
 
-Nucleoid IDE is a web interface that helps to run very same NPM package with OpenAPI.
+Nucleoid IDE is a web interface that helps to run very same npm package with OpenAPI.
 
 [Go to Nucleoid IDE](https://nucleoid.com/ide/)
 
