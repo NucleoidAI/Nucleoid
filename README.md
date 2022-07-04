@@ -1,10 +1,10 @@
-<h1 align="center">Nucleoid</h1>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Apache-2.0-yellow?style=for-the-badge&logo=apache" alt="License"/>
-  <img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="npm"/>
-  <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord"/>
-</p>
+<h1 align="center">
+  Nucleoid
+  <br />
+  <img src="https://img.shields.io/badge/Apache-2.0-yellow?style=for-the-badge&logo=apache" alt="License" />
+  <img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="npm" />
+  <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" />
+</h1>
 
 ![Banner](.github/media/banner.png)
 
@@ -45,7 +45,7 @@ app.post("/users", () => {
 app.listen(3000);
 ```
 
-It is pretty much it, you successfully persisted your first object with this :point_up_2: without external database
+**This is pretty much it, thanks to AI in the runtime, you successfully persisted your first object with this :point_up_2: without external database**
 
 ## Features
 
