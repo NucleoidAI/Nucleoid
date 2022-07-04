@@ -22,6 +22,10 @@ III. Creates APIs with built-in datastore
 
 ## Hello World
 
+`> npm i nucleoidjs`
+
+Once installed, you can simply run with Express.js
+
 ```javascript
 const app = nucleoid();
 
@@ -57,12 +61,13 @@ Nucleoid IDE is a web interface that helps to run very same NPM package with Ope
 ![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-1.png)
 ![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-2.png)
 
+### Under the hood: Declarative Runtime Environment
 
+The declarative runtime environment isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical details. In this paradigm, there is no segregation regarding what data is or not, instead approaches how data is related with others so that any type of data including business rules can be added without requiring any additional actions such as compiling, configuring, restarting as a result of plasticity.
 
 # Join [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
 
-
-If you have an opinion, you are already a philosopher. We are working on new approach to data and logic. Come join us in discussions.
+If you have an opinion, you are already a philosopher. We are working on new approach to data and logic. Come join us in [discussions](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club).
 
 ![Nobel](https://cdn.nucleoid.com/media/nobel.png)
 
