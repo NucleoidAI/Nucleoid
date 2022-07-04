@@ -10,12 +10,6 @@ As writing just like any other codes in Node.js, it rerenders the very same Java
 
 I. Write your business logic in JavaScript
 
-```javascript
-app.post("/users", () => {
-  new User("Daphne");
-});
-```
-
 II. Nucleoid renders your codes with AI
 
 III. Creates APIs with built-in datastore
