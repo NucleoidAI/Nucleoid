@@ -62,7 +62,8 @@ Nucleoid IDE is a web interface that helps to run very same NPM package with Ope
 
 [Go to Nucleoid IDE](https://nucleoid.com/ide/)
 
-![Nucleoid IDE](https://cdn.nucleoid.com/media/prompt-2.gif)
+![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-1.png)
+![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-2.png)
 
 ## Fight against Spaghetti Code!
 
