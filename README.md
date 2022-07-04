@@ -48,10 +48,6 @@ It is pretty much it, you successfully persisted your first object with this :po
 - All you need is JavaScript
 - Lighting fast
 
-### Nucleoid in a nutshell
-
-![Look! Up in the sky!](.github/media/nucleoid-in-a-nutshell.jpg)
-
 ## Join [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
 
 If you have an opinion, you are already a philosopher. We are working on new approach to data and logic. Come join us in discussions.
