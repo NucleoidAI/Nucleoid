@@ -25,32 +25,65 @@ III. Creates APIs with built-in datastore
 ```javascript
 const app = nucleoid();
 
-class User { constructor(name) { this.name = name }}
+class User {
+  constructor(name) {
+    this.name = name;
+  }
+}
 
 // 👇 This is it!
 app.post("/users", () => {
-  // This will store your object
-  new User("Daphne")
+  new User("Daphne");
 });
 
 app.listen(3000);
 ```
 
-> It is pretty much it, you successfully persisted your first object with this :point_up_2: without external database
+It is pretty much it, you successfully persisted your first object with this :point_up_2: without external database
 
-Learn more at [nucleoid.com](https://nucleoid.com)
+## Features
+
+- Immediately start writing business logic
+- Internal Data Management
+- All you need is JavaScript
+- Lighting fast
 
 ### Nucleoid in a nutshell
 
 ![Look! Up in the sky!](.github/media/nucleoid-in-a-nutshell.jpg)
 
-# Status
+## Join [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
+
+If you have an opinion, you are already a philosopher. We are working on new approach to data and logic. Come join us in discussions.
+
+| Pinned Discussions                                    |
+| ----------------------------------------------------- |
+| https://github.com/NucleoidJS/Nucleoid/discussions/11 |
+
+## Nucleoid IDE
+
+Nucleoid IDE is a web interface that helps to run very same NPM package with OpenAPI.
+
+[Go to Nucleoid IDE](https://nucleoid.com/ide/)
+
+![Nucleoid IDE](https://cdn.nucleoid.com/media/prompt-2.gif)
+
+## Fight against Spaghetti Code!
+
+We are working on the new approach to data and logic that it organically lowers code lines and complexity.
+
+![Cape](https://cdn.nucleoid.com/media/cape.png)
+
+Learn more at [nucleoid.com](https://nucleoid.com)
+
+## Project Status
 
 Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 
-- [X] [Beta](https://www.npmjs.com/package/nucleoidjs) is out
-- [X] ES6 support
+- [x] [Beta](https://www.npmjs.com/package/nucleoidjs) is out
+- [x] ES6 support
 - [ ] ES2018 support
+- [ ] ES2020 support
 - [ ] TypeScript
 - [ ] [IDE](https://github.com/NucleoidJS/IDE) (WiP)
 - [ ] Production-ready
