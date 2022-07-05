@@ -1,14 +1,16 @@
-<h1 align="center">
-  Nucleoid
-  <br />
+<h1 align="center">Nucleoid</h1>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Apache-2.0-yellow?style=for-the-badge&logo=apache" alt="License" />
   <img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="npm" />
   <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" />
-</h1>
+</p>
 
 ![Banner](.github/media/banner.png)
 
-<h3 align="center">Build your APIs with the help of AI and built-in datastore</h3>
+<p align="center">
+  <strong>Build your APIs with the help of AI and built-in datastore</strong>
+</p>
 
 As writing just like any other codes in Node.js, it rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk, so that your application doesn't require external database or anything else.
 
