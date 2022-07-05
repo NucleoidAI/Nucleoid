@@ -1,6 +1,9 @@
 <h1 align="center">Nucleoid</h1>
 
 <p align="center">
+  <strong>Low-code Framework for Node.js</strong>
+  <br />
+  <br />
   <img src="https://img.shields.io/badge/Apache-2.0-yellow?style=for-the-badge&logo=apache" alt="License" />
   <img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="npm" />
   <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" />
