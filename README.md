@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" />
 </p>
 
-![Banner](.github/media/banner.png)
+[![Banner](.github/media/banner.png)](http://nucleoid.com/)
 
 <p align="center">
   <strong>Build your APIs with the help of AI and built-in datastore</strong>
@@ -73,7 +73,7 @@ Nucleoid is a declarative runtime environment that applies declarative programmi
 
 If you have an opinion, you are already a philosopher. We are working on brand-new approach to data and logic. Come join us in [discussions](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club).
 
-![Nobel](https://cdn.nucleoid.com/media/nobel.png)
+[![Nobel](https://cdn.nucleoid.com/media/nobel.png)](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
 
 | Pinned Discussions |
 | ------------------ |
