@@ -12,7 +12,7 @@
   <strong>Build your APIs with the help of AI and built-in datastore</strong>
 </p>
 
-Nucleoid is a low-code framework for Node.js that as writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk, so that your application doesn't require external database or anything else.
+Nucleoid is a low-code framework for Node.js that as writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else.
 
 ## How it works
 
@@ -47,7 +47,7 @@ app.post("/users", () => {
 app.listen(3000);
 ```
 
-**This is pretty much it, thanks to AI in the runtime, you successfully persisted your first object with this :point_up_2: without external database**
+:bulb: **This is pretty much it, thanks to AI in the runtime, you successfully persisted your first object only with this :point_up_2: without external database**
 
 ## Features
 
@@ -67,9 +67,9 @@ Nucleoid IDE is a web interface that helps to run very same npm package with Ope
 
 ### Under the hood: Declarative Runtime Environment
 
-The declarative runtime environment isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical details. In this paradigm, there is no segregation regarding what data is or not, instead approaches how data is related with others so that any type of data including business rules can be added without requiring any additional actions such as compiling, configuring, restarting as a result of plasticity.
+Nucleoid is a declarative runtime environment that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
 
-# Join [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
+# Join our [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
 
 If you have an opinion, you are already a philosopher. We are working on brand-new approach to data and logic. Come join us in [discussions](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club).
 
