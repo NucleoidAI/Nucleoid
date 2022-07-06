@@ -47,7 +47,7 @@ app.post("/users", () => {
 app.listen(3000);
 ```
 
-> :bulb: **This is pretty much it, thanks to AI in the runtime, you successfully persisted your first object only with this :point_up_2: without external database**
+> :bulb: **This is pretty much it, thanks to AI in the runtime, only with this :point_up_2:, you successfully persisted your first object without external database.**
 
 ## Features
 
@@ -62,8 +62,8 @@ Nucleoid IDE is a web interface that helps to run very same npm package with Ope
 
 [Go to Nucleoid IDE](https://nucleoid.com/ide/)
 
-![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-1.png)
-![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-2.png)
+[![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-1.png)](https://nucleoid.com/ide/)
+[![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-2.png)](https://nucleoid.com/ide/)
 
 ### Under the hood: Declarative Runtime Environment
 
@@ -78,9 +78,9 @@ If you have an opinion, you are already a philosopher. We are working on brand-n
 | Pinned Discussions |
 | ------------------ |
 
-![Discussion 25](https://cdn.nucleoid.com/media/discussion-25.png)
-![Discussion 26](https://cdn.nucleoid.com/media/discussion-26.png)
-![Discussion 28](https://cdn.nucleoid.com/media/discussion-28.png)
+[![Discussion 25](https://cdn.nucleoid.com/media/discussion-25x500.png)](https://github.com/NucleoidJS/Nucleoid/discussions/25)
+[![Discussion 26](https://cdn.nucleoid.com/media/discussion-26x500.png)](https://github.com/NucleoidJS/Nucleoid/discussions/26)
+[![Discussion 28](https://cdn.nucleoid.com/media/discussion-28x500.png)](https://github.com/NucleoidJS/Nucleoid/discussions/28)
 
 ## Project Status
 
