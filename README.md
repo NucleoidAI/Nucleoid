@@ -47,7 +47,7 @@ app.post("/users", () => {
 app.listen(3000);
 ```
 
-:bulb: **This is pretty much it, thanks to AI in the runtime, you successfully persisted your first object only with this :point_up_2: without external database**
+> :bulb: **This is pretty much it, thanks to AI in the runtime, you successfully persisted your first object only with this :point_up_2: without external database**
 
 ## Features
 
@@ -75,9 +75,12 @@ If you have an opinion, you are already a philosopher. We are working on brand-n
 
 ![Nobel](https://cdn.nucleoid.com/media/nobel.png)
 
-| Pinned Discussions                                    |
-| ----------------------------------------------------- |
-| https://github.com/NucleoidJS/Nucleoid/discussions/11 |
+| Pinned Discussions |
+| ------------------ |
+
+![Discussion 25](https://cdn.nucleoid.com/media/discussion-25.png)
+![Discussion 26](https://cdn.nucleoid.com/media/discussion-26.png)
+![Discussion 28](https://cdn.nucleoid.com/media/discussion-28.png)
 
 ## Project Status
 
