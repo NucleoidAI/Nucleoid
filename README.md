@@ -18,7 +18,7 @@
   <strong>Build your APIs with the help of AI and built-in datastore</strong>
 </p>
 
-Nucleoid is a low-code framework for Node.js that as writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else.
+Nucleoid is low-code framework for Node.js that as writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else.
 
 ## How it works
 
@@ -68,12 +68,12 @@ Nucleoid IDE is a web interface that helps to run very same npm package with Ope
 
 [Go to Nucleoid IDE](https://nucleoid.com/ide/)
 
-[![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-1.png)](https://nucleoid.com/ide/)
+[![Nucleoid IDE 1](https://cdn.nucleoid.com/media/ide-1.png)](https://nucleoid.com/ide/)
 [![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-2.png)](https://nucleoid.com/ide/)
 
-### Under the hood: Declarative Runtime Environment
+### Under the hood: Declarative Runtime Engine
 
-Nucleoid is a declarative runtime environment that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
+Nucleoid is a declarative runtime engine that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
 
 # Join our [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
 

@@ -5,6 +5,11 @@
   "homepage": "https://nucleoid.com",
   "author": "Can Mingir",
   "license": "Apache-2.0",
+  "keywords": [
+    "low-code",
+    "ai",
+    "datastore"
+  ],
   "bin": {
     "nucleoidjs": "bin.js",
     "nucleoid": "bin.js",
