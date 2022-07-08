@@ -14,11 +14,9 @@
 
 [![Banner](.github/media/banner.png)](http://nucleoid.com/)
 
-<p align="center">
-  <strong>Build your APIs with the help of AI and built-in datastore</strong>
-</p>
+Nucleoid low-code framework lets you build your APIs with the help of AI and built-in datastore in declarative runtime engine.
 
-Nucleoid is low-code framework for Node.js that as writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else.
+As writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else.
 
 ## How it works
 
