@@ -98,8 +98,10 @@ const load = ({ api, types }) => {
         file,
         `function ${method}(req, res) {` +
           `const scope = { params: req.params, query: req.query, body: req.body };` +
-          `const result = nucleoid.run(${action},scope);` +
-          `res.json(result);` +
+          `const { result, error } = nucleoid.run(${action}, scope, { details: true });` +
+          `if (!result) res.status(404).end();` +
+          `else if (error) res.status(400).json(result);` +
+          `else res.status(200).json(result);` +
           `}`
       );
       fs.appendFileSync(file, `${method}.apiDoc = ${JSON.stringify(apiDoc)};`);

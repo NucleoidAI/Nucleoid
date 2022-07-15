@@ -32,9 +32,21 @@ describe("OpenAPI service", () => {
       name: "ITEM-1",
     });
 
-    const res4 = await request(terminal)
+    const res4 = await request(openapi.app())
+      .post("/api/items")
+      .send({ barcode: "BARCODE-1" });
+    equal(res4.status, 400);
+    equal(res4.body, "INVALID_NAME");
+
+    const res5 = await request(openapi.app())
+      .get("/api/items/invalid_item")
+      .send();
+    equal(res5.status, 404);
+    equal(res5.text, "");
+
+    const res6 = await request(terminal)
       .post("/openapi")
       .send({ action: "stop" });
-    equal(res4.status, 200);
+    equal(res6.status, 200);
   });
 });

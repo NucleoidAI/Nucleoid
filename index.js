@@ -39,10 +39,10 @@ const run = (statement, p2, p3) => {
 
 const accept = (req, res, fn) => {
   const scope = { params: req.params, query: req.query, body: req.body };
-  const { result } = run(fn, scope, { details: true });
+  const { result, error } = run(fn, scope, { details: true });
   if (!result) res.status(404).end();
-  else if (result === true) res.end();
-  else res.send(Number.isInteger(result) ? result.toString() : result);
+  else if (error) res.status(400).json(result);
+  else res.status(200).json(result);
 };
 
 module.exports = (options) => {

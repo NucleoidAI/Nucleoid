@@ -1,6 +1,6 @@
 const test = require("../libs/test");
 const request = require("supertest");
-const { deepEqual } = require("assert");
+const { equal, deepEqual } = require("assert");
 const nucleoid = require("../../index");
 const openapi = require("../libs/openapi");
 const _ = require("lodash");
@@ -103,5 +103,32 @@ describe("Nucleoid API", () => {
         name: "ITEM-1",
       },
     ]);
+  });
+
+  it("Exception Handling", async () => {
+    const app = nucleoid(options);
+    class User {
+      constructor(name) {
+        this.name = name;
+      }
+    }
+    nucleoid.register(User);
+
+    app.get("/users/:user", (req) => User[req.params.user]);
+    app.post("/users", (req) => {
+      const name = req.body.name;
+      if (!name) {
+        throw "INVALID_NAME";
+      }
+      new User(req.body.name);
+    });
+
+    const res1 = await request(app).post("/users").send();
+    equal(res1.status, 400);
+    equal(res1.body, "INVALID_NAME");
+
+    const res2 = await request(app).get("/users/invalid_user").send();
+    equal(res2.status, 404);
+    deepEqual(res2.text, "");
   });
 });
