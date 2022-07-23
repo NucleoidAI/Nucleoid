@@ -14,7 +14,7 @@
 
 [![Banner](.github/media/banner.png)](http://nucleoid.com/)
 
-Nucleoid low-code framework lets you build your APIs with the help of AI and built-in datastore in declarative runtime engine.
+Nucleoid low-code framework lets you build your APIs with the help of AI and built-in datastore in declarative runtime environment.
 
 As writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else.
 
@@ -60,31 +60,19 @@ app.listen(3000);
 - All you need is JavaScript
 - Lighting fast
 
-## Nucleoid IDE
+## OpenAPI Integration with Nucleoid IDE
 
 Nucleoid IDE is a web interface that helps to run very same npm package with OpenAPI.
 
 [Go to Nucleoid IDE](https://nucleoid.com/ide/)
 
-[![Nucleoid IDE 1](https://cdn.nucleoid.com/media/ide-1.png)](https://nucleoid.com/ide/)
-[![Nucleoid IDE 2](https://cdn.nucleoid.com/media/ide-2.png)](https://nucleoid.com/ide/)
+![Nucleoid IDE 1](https://cdn.nucleoid.com/media/screenshot-1.png)
 
-### Under the hood: Declarative Runtime Engine
+![Nucleoid IDE 2](https://cdn.nucleoid.com/media/screenshot-2.png)
 
-Nucleoid is a declarative runtime engine that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
+### Under the hood: Declarative Runtime Environment
 
-# Join our [Thinkers Club](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
-
-If you have an opinion, you are already a philosopher. We are working on brand-new approach to data and logic. Come join us in [discussions](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club).
-
-[![Nobel](https://cdn.nucleoid.com/media/nobel.png)](https://github.com/NucleoidJS/Nucleoid/discussions/categories/thinkers-club)
-
-| Pinned Discussions |
-| ------------------ |
-
-[![Discussion 25](https://cdn.nucleoid.com/media/discussion-25x500.png)](https://github.com/NucleoidJS/Nucleoid/discussions/25)
-[![Discussion 26](https://cdn.nucleoid.com/media/discussion-26x500.png)](https://github.com/NucleoidJS/Nucleoid/discussions/26)
-[![Discussion 28](https://cdn.nucleoid.com/media/discussion-28x500.png)](https://github.com/NucleoidJS/Nucleoid/discussions/28)
+Nucleoid is a declarative runtime environment that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
 
 ## Project Status
 
