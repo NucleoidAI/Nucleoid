@@ -18,7 +18,7 @@
         "response": {
           "$ref": "#/components/schemas/Item"
         },
-        "action": "function action(req){ const name=req.body.name;const barcode=req.body.barcode; if(!name) { throw 'INVALID_NAME' } return new Item(name, barcode); }"
+        "x-nuc-action": "function action(req){ const name=req.body.name;const barcode=req.body.barcode; if(!name) { throw 'INVALID_NAME' } return new Item(name, barcode); }"
       }
     },
     "/items/{item}": {
@@ -41,7 +41,7 @@
         "response": {
           "$ref": "#/components/schemas/Item"
         },
-        "action": "function action(req){ return Item[req.params.item]; }"
+        "x-nuc-action": "function action(req){ return Item[req.params.item]; }"
       }
     }
   },

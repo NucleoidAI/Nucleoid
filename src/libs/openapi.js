@@ -58,7 +58,7 @@ const load = ({ api, types }) => {
     );
 
     Object.entries(value).forEach(([method, nucDoc]) => {
-      const { action } = nucDoc;
+      const action = nucDoc["x-nuc-action"];
       const params = nucDoc.params || [];
 
       const apiDoc = {
