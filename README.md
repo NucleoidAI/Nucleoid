@@ -66,9 +66,9 @@ Nucleoid IDE is a web interface that helps to run very same npm package with Ope
 
 [Go to Nucleoid IDE](https://nucleoid.com/ide/)
 
-![Nucleoid IDE 1](https://cdn.nucleoid.com/media/screenshot-5.png)
+![Nucleoid IDE 1](https://cdn.nucleoid.com/media/screenshot-1.png)
 
-![Nucleoid IDE 2](https://cdn.nucleoid.com/media/screenshot-6.png)
+![Nucleoid IDE 2](https://cdn.nucleoid.com/media/screenshot-2.png)
 
 ### Under the hood: Declarative Runtime Environment
 
