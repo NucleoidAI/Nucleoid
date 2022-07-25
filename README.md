@@ -53,13 +53,6 @@ app.listen(3000);
 
 > :bulb: **This is pretty much it, thanks to AI in the runtime, only with this :point_up_2:, you successfully persisted your first object without external database.**
 
-## Features
-
-- Immediately start writing business logic
-- Internal Data Management
-- All you need is JavaScript
-- Lighting fast
-
 ## OpenAPI Integration with Nucleoid IDE
 
 Nucleoid IDE is a web interface that helps to run very same npm package with OpenAPI.
