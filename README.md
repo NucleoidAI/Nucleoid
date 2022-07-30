@@ -85,12 +85,14 @@ Please report an [issue](https://github.com/NucleoidJS/Nucleoid/issues) or ask a
 
 ---
 
-<br/>
-
 <p align="center">
   <b>⭐️ Star us on GitHub for the support</b>
 </p>
 
 Thanks to declarative programming, we have a brand-new approach to data and logic. As we are still discovering what we can do with this powerful programming model, please join us with any types of contribution!
 
-<br/>
+<p align="center">
+  <img src="https://cdn.nucleoid.com/media/nobel.png" alt="Nobel" />
+</p>
+
+---
