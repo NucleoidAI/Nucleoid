@@ -53,9 +53,13 @@ app.listen(3000);
 
 > :bulb: **This is pretty much it, thanks to AI in the runtime, only with this :point_up_2:, you successfully persisted your first object without external database.**
 
+<br/>
+
 ### Under the hood: Declarative Runtime Environment
 
 Nucleoid is a declarative runtime environment that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
+
+<br/>
 
 ## OpenAPI Integration with Nucleoid IDE
 
@@ -80,6 +84,8 @@ Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 - [ ] Production-ready
 
 Please report an [issue](https://github.com/NucleoidJS/Nucleoid/issues) or ask a question at [Discussions](https://github.com/NucleoidJS/Nucleoid/discussions)
+
+Learn more at [nucleoid.com](https://nucleoid.com)
 
 <br/>
 
