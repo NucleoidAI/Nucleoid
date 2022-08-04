@@ -18,6 +18,8 @@ Nucleoid low-code framework lets you build your APIs with the help of AI and bui
 
 As writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else.
 
+<br/>
+
 ## How it works
 
 I. Write your business logic in JavaScript
@@ -25,6 +27,8 @@ I. Write your business logic in JavaScript
 II. Nucleoid renders your codes with AI
 
 III. Creates APIs with built-in datastore
+
+<br/>
 
 ## Hello World
 
