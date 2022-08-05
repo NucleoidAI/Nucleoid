@@ -30,7 +30,7 @@ III. Creates APIs with built-in datastore
 
 <br/>
 
-## Hello World
+## Hello World :zap:
 
 ```shell
 > npm i nucleoidjs
@@ -63,6 +63,8 @@ app.listen(3000);
 
 Nucleoid is a declarative runtime environment that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
 
+In this paradigm, there is no segregation regarding what data is or not, instead approaches how data is related with others so that any type of data including business rules can be added without requiring any additional actions such as compiling, configuring, restarting as a result of plasticity. The runtime executes a statement based on its relationship with other statements without definite flow, and the runtime builds a control flow of program logically out of declarative statements.
+
 <br/>
 
 ## OpenAPI Integration with Nucleoid IDE
@@ -77,7 +79,7 @@ Nucleoid IDE is a web interface that helps to run very same npm package with Ope
 
 <br/>
 
-## Project Status
+## Project Status :avocado:
 
 Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 
