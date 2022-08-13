@@ -57,7 +57,7 @@ app.post("/users", () => {
 app.listen(3000);
 ```
 
-> :bulb: **This is pretty much it, thanks to AI ([ASG](https://en.wikipedia.org/wiki/Abstract_semantic_graph)) in the runtime, only with this :point_up_2:, you successfully persisted your first object without external database.**
+> :bulb: **This is pretty much it, thanks to [AI](https://nucleoid.com/docs/runtime/) in the runtime, only with this :point_up_2:, you successfully persisted your first object without external database.**
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
 
