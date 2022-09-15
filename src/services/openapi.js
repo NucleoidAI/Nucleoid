@@ -5,14 +5,14 @@ const context = require("../libs/context");
 
 router.get("/openapi", (req, res) => res.json(openapi.status()));
 router.post("/openapi", (req, res) => {
-  const { api, types, functions, action } = req.body;
+  const { api, types, functions, action, port } = req.body;
 
   if (action === "start") {
     context.run(functions);
 
     openapi.initialize();
     openapi.load({ api, types });
-    openapi.start();
+    openapi.start(port);
   } else if (action === "stop") {
     openapi.stop();
   }
