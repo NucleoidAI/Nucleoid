@@ -7,11 +7,17 @@ require("yargs")
     desc: "Start Nucleoid runtime",
     builder: (yargs) =>
       yargs
+        .option("id", {
+          describe: "Set id for the runtime",
+        })
         .option("clean", {
           describe: "Clear data before starting the runtime",
         })
         .option("cache-only", {
           describe: "Start runtime without persistence unit",
+        })
+        .option("port", {
+          describe: "Set port number",
         }),
     handler: (argv) => {
       if (argv.clear) {
