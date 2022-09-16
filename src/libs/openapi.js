@@ -125,7 +125,7 @@ const load = ({ api, types, prefix = "" }) => {
         paths: {},
         servers: [
           {
-            url: "/api",
+            url: `${prefix}/api`,
           },
         ],
       },
