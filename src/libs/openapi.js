@@ -138,11 +138,11 @@ const load = ({ api, types, prefix = "" }) => {
   }
 
   app.use(
-    "/",
+    `${prefix}/`,
     swagger.serve,
     swagger.setup(null, {
       swaggerOptions: {
-        url: "/api/openapi.json",
+        url: `${prefix}/api/openapi.json`,
       },
     })
   );
