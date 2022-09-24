@@ -13,7 +13,7 @@ const start = (options = {}) => {
   setImmediate(() => context.run());
 
   if (options.terminal !== false && options.test !== false) {
-    terminal.listen(8448);
+    terminal.listen(options.port);
   }
 };
 

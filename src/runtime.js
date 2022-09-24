@@ -22,14 +22,8 @@ module.exports.process = function (statement, options = {}) {
     require("process").exit(1);
   }
 
-  const { declarative } =
-    options.declarative === undefined ? process.options() : options;
-  const { details } =
-    options.details === undefined ? process.options() : options;
-  const { cacheOnly } =
-    options.cacheOnly === undefined ? process.options() : options;
-
-  _options = { declarative, details, cacheOnly };
+  _options = { ...process.options(), ...options };
+  const { declarative, cacheOnly, details } = _options;
 
   let before = Date.now();
   let statements, result, error, execs;

@@ -1,9 +1,9 @@
-const { argv } = require("yargs");
 const fs = require("fs");
 const File = require("../file");
 const path = File.data;
+const process = require("../process");
 
-const PROCESS_PATH = `${path}/${argv.id || "main"}`;
+const PROCESS_PATH = `${path}/${process.options().id}`;
 
 const tail = () => {
   if (fs.existsSync(PROCESS_PATH)) {

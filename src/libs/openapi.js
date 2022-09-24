@@ -23,7 +23,7 @@ const initialize = (app) => {
   }
 };
 
-const load = ({ api, types }) => {
+const load = ({ api, types, prefix = "" }) => {
   const app = _app;
 
   if (!app) {
@@ -125,7 +125,7 @@ const load = ({ api, types }) => {
         paths: {},
         servers: [
           {
-            url: "/api",
+            url: `${prefix}/api`,
           },
         ],
       },
@@ -138,11 +138,11 @@ const load = ({ api, types }) => {
   }
 
   app.use(
-    "/",
+    `${prefix}/`,
     swagger.serve,
     swagger.setup(null, {
       swaggerOptions: {
-        url: "/api/openapi.json",
+        url: `${prefix}/api/openapi.json`,
       },
     })
   );

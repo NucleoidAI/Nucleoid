@@ -6,7 +6,11 @@ const File = require("./file");
 const path = File.data;
 
 let _options = {
-  cacheOnly: argv.cacheOnly,
+  id: argv.id || "main",
+  declarative: false,
+  details: false,
+  cacheOnly: argv.cacheOnly || false,
+  port: argv.port || 8448,
 };
 
 setImmediate(() => {
@@ -58,12 +62,13 @@ setImmediate(() => {
 
 const options = (options) => {
   if (options) {
-    _options = options || {};
+    _options = { ..._options, ...options };
 
     if (_options.test) {
       _options.cacheOnly = true;
       _options.terminal = false;
     }
+
     return _options;
   } else return _options;
 };
