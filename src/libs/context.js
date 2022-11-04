@@ -13,13 +13,9 @@ const load = (context) => {
 const run = (context = []) => {
   load(context);
 
-  _context.forEach(({ definition, options }) => {
-    try {
-      nucleoid.run(definition, options);
-    } catch (error) {
-      console.info("Problem occurred while loading functions", error);
-    }
-  });
+  _context.forEach(({ definition, options }) =>
+    nucleoid.run(definition, options)
+  );
 
   _context = [];
 };
