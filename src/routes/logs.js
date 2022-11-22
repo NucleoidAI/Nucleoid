@@ -1,7 +1,7 @@
+const datastore = require("@nucleoidjs/datastore");
 const express = require("express");
 const router = express.Router();
-const data = require("../libs/data");
 
-router.get("/logs", (req, res) => res.json(data.tail()));
+router.get("/logs", (req, res) => res.json(datastore.tail()));
 
 module.exports = router;

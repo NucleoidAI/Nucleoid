@@ -1,46 +1,37 @@
-const fs = require("fs");
+const datastore = require("@nucleoidjs/datastore");
 const { argv } = require("yargs");
 const runtime = require("./runtime");
 const state = require("./state");
-const File = require("./file");
-const path = File.data;
+const config = require("./config");
+
+const id = argv.id || "main";
 
 let _options = {
-  id: argv.id || "main",
+  id,
   declarative: false,
   details: false,
   cacheOnly: argv.cacheOnly || false,
   port: argv.port || 8448,
 };
 
+datastore.init({ id, path: config.path.data });
+
 setImmediate(() => {
   if (_options.test) return;
 
   const singleton = !argv.id;
-  const id = argv.id || "main";
-  const PROCESS_PATH = `${path}/${id}`;
 
-  if (fs.existsSync(PROCESS_PATH)) {
-    fs.readFileSync(PROCESS_PATH, "utf8")
-      .split(/\n/)
-      .forEach((line) => {
-        try {
-          let details = JSON.parse(line);
+  datastore.read().forEach((details) => {
+    const options = {
+      declarative: !!details.c,
+      cacheOnly: true,
+    };
+    runtime.process(details.s, options);
 
-          const options = {
-            declarative: !!details.c,
-            cacheOnly: true,
-          };
-          runtime.process(details.s, options);
-
-          if (details.x) {
-            details.x.map((exec) => state.run(null, exec));
-          }
-        } catch (error) {
-          return;
-        }
-      });
-  }
+    if (details.x) {
+      details.x.map((exec) => state.run(null, exec));
+    }
+  });
 
   if (!singleton) {
     process.on("message", (message) => {

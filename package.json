@@ -24,6 +24,7 @@
     "url": "https://github.com/NucleoidJS/Nucleoid.git"
   },
   "dependencies": {
+    "@nucleoidjs/datastore": "^1.0.2",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-openapi": "^9.3.0",

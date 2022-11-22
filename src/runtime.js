@@ -1,13 +1,10 @@
+const datastore = require("@nucleoidjs/datastore");
 const stack = require("./stack");
 const Statement = require("./statement");
-const fs = require("fs");
-const argv = require("yargs").argv;
 const Message = require("./message");
 const Event = require("./event");
 const transaction = require("./transaction");
 const Macro = require("./macro");
-const File = require("./file");
-const path = File.data;
 
 let process;
 let _options = {};
@@ -57,20 +54,17 @@ module.exports.process = function (statement, options = {}) {
     if (result instanceof Error)
       result = `${result.constructor.name}: ${result.message}`;
 
-    fs.appendFileSync(
-      `${path}/${argv.id || "main"}`,
-      JSON.stringify({
-        s,
-        c: declarative ? true : undefined,
-        t: time,
-        r: result,
-        d: date,
-        e: error,
-        m: messages,
-        v: events,
-        x: execs && execs.length ? execs : undefined,
-      }) + "\n"
-    );
+    datastore.write({
+      s,
+      c: declarative ? true : undefined,
+      t: time,
+      r: result,
+      d: date,
+      e: error,
+      m: messages,
+      v: events,
+      x: execs && execs.length ? execs : undefined,
+    });
   }
 
   _options = {};

@@ -1,6 +1,6 @@
 const express = require("express");
 const OpenAPI = require("express-openapi");
-const { openapi } = require("../file");
+const config = require("../config");
 const fs = require("fs");
 const swagger = require("swagger-ui-express");
 const uuid = require("uuid").v4;
@@ -48,10 +48,12 @@ const load = ({ api, types, prefix = "" }) => {
     const resource = parts.pop() || "index";
     const path = parts.join("/");
 
-    if (!fs.existsSync(`${openapi}/${tmp}/${path}`))
-      fs.mkdirSync(`${openapi}/${tmp}/${path}`, { recursive: true });
+    if (!fs.existsSync(`${config.path.openapi}/${tmp}/${path}`))
+      fs.mkdirSync(`${config.path.openapi}/${tmp}/${path}`, {
+        recursive: true,
+      });
 
-    const file = `${openapi}/${tmp}/${path}/${resource}.js`;
+    const file = `${config.path.openapi}/${tmp}/${path}/${resource}.js`;
     fs.appendFileSync(
       file,
       `const nucleoid = require("${nucleoidPath}"); module.exports = function () {`
@@ -129,7 +131,7 @@ const load = ({ api, types, prefix = "" }) => {
           },
         ],
       },
-      paths: `${openapi}/${tmp}`,
+      paths: `${config.path.openapi}/${tmp}`,
       docsPath: "/openapi.json",
     });
   } catch (err) {

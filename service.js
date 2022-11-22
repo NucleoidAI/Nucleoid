@@ -1,13 +1,10 @@
 const glob = require("glob");
-const File = require("./src/file");
+const config = require("./src/config");
 const { argv } = require("yargs");
 const { existsSync } = require("fs");
 
 const { fork, execSync } = require("child_process");
 let processes = [];
-
-const config = File.config;
-const path = File.data;
 
 let event;
 
@@ -17,7 +14,7 @@ if (config.event) {
 
 const accept = (statement, req, res) => {
   let proc = req.get("Process") || "main";
-  let files = glob.sync(proc, { cwd: path });
+  let files = glob.sync(proc, { cwd: config.path.data });
 
   if (files.length <= 1) {
     send(proc, statement, req);

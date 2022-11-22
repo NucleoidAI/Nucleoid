@@ -1,6 +1,12 @@
+const datastore = require("@nucleoidjs/datastore");
 const { state } = require("../state");
 const graph = require("../graph");
-const data = require("../libs/data");
+const config = require("../config");
+
+datastore.init({
+  id: "test",
+  path: config.path.data,
+});
 
 const clear = () => {
   for (let property in state) delete state[property];
@@ -9,7 +15,7 @@ const clear = () => {
   state["classes"] = [];
   graph["classes"] = { name: "classes" };
 
-  data.clear();
+  datastore.clear();
 };
 
 clear();
