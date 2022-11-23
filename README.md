@@ -15,7 +15,7 @@
 [![Banner](.github/media/banner.png)](http://nucleoid.com/)
 
 <p align="center">
-  <i>Nucleoid low-code framework lets to build APIs with the help of AI and built-in datastore.</i>
+  Low-code Framework for Node.js: Building APIs with the help of AI and built-in datastore
 </p>
 
 <br/>
