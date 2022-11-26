@@ -47,6 +47,7 @@ module.exports.process = function (statement, options = {}) {
   Message.clear();
   Event.clear();
 
+  let hash;
   let date = Date.now();
   let time = date - before;
 
@@ -54,7 +55,7 @@ module.exports.process = function (statement, options = {}) {
     if (result instanceof Error)
       result = `${result.constructor.name}: ${result.message}`;
 
-    datastore.write({
+    hash = datastore.write({
       s,
       c: declarative ? true : undefined,
       t: time,
@@ -80,6 +81,7 @@ module.exports.process = function (statement, options = {}) {
       error,
       messages,
       events,
+      hash,
     };
   } else {
     if (error) {

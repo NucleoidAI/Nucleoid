@@ -6,13 +6,22 @@ const { existsSync } = require("fs");
 const { fork, execSync } = require("child_process");
 let processes = [];
 
-let event;
+let event, stream, storage;
 
-if (config.event) {
-  event = require(`/opt/nucleoid/${config.event}`);
-}
+try {
+  event = require(`${config.path.handlers}/event.js`);
+} catch (err) {} // eslint-disable-line no-empty
+
+try {
+  stream = require(`${config.path.handlers}/stream.js`);
+} catch (err) {} // eslint-disable-line no-empty
+
+try {
+  storage = require(`${config.path.handlers}/storage.js`);
+} catch (err) {} // eslint-disable-line no-empty
 
 const accept = (statement, req, res) => {
+  // TODO Deprecate main process
   let proc = req.get("Process") || "main";
   let files = glob.sync(proc, { cwd: config.path.data });
 
@@ -32,6 +41,10 @@ function start(id) {
   let proc = processes[id];
 
   if (!proc) {
+    if (storage) {
+      storage(id);
+    }
+
     proc = { id, requests: [] };
     processes[id] = proc;
   }
@@ -102,6 +115,7 @@ function receive(proc, message) {
       error: details.e,
       messages: details.m,
       events: details.v,
+      hash: details.h,
     });
 
     if (details.m) {
@@ -122,6 +136,10 @@ function receive(proc, message) {
           error;
         }
       }
+    }
+
+    if (details.h && stream) {
+      stream(details.h);
     }
   }
 

@@ -45,6 +45,7 @@ setImmediate(() => {
           e: details.error,
           m: details.messages,
           v: details.events,
+          h: details.hash,
         })
       );
     });
