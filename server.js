@@ -3,6 +3,7 @@ const cors = require("cors");
 const service = require("./service");
 const logs = require("./src/routes/logs");
 const metrics = require("./src/routes/metrics");
+const { argv } = require("yargs");
 
 const terminal = express();
 terminal.use(express.json());
@@ -19,4 +20,4 @@ terminal.all("*", (req, res) => res.status(404).end());
 // eslint-disable-next-line no-unused-vars
 terminal.use((err, req, res, next) => res.status(500).send(err.stack));
 
-terminal.listen(8448);
+terminal.listen(argv.port || 8448);
