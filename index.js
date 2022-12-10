@@ -7,7 +7,7 @@ const fs = require("fs");
 const context = require("./src/libs/context");
 const terminal = require("./src/terminal");
 
-const start = (options = {}) => {
+function start(options = {}) {
   const process = require("./src/process");
   options = process.options(options);
   setImmediate(() => context.run());
@@ -15,15 +15,16 @@ const start = (options = {}) => {
   if (options.terminal !== false && options.test !== false) {
     terminal.listen(options.port);
   }
-};
+}
 
-const register = (fn) =>
+function register(fn) {
   context.load({
     definition: fn.toString(),
     options: { declarative: true },
   });
+}
 
-const run = (statement, p2, p3) => {
+function run(statement, p2, p3) {
   if (typeof statement === "string") {
     const options = p2;
     return runtime.process(`${statement}`, options);
@@ -35,17 +36,17 @@ const run = (statement, p2, p3) => {
       scope && args.length ? `let ${args[0]}=${JSON.stringify(scope)};` : "";
     return runtime.process(`${scope}${fn}`, options);
   }
-};
+}
 
-const accept = (req, res, fn) => {
+function accept(req, res, fn) {
   const scope = { params: req.params, query: req.query, body: req.body };
   const { result, error } = run(fn, scope, { details: true });
   if (!result) res.status(404).end();
   else if (error) res.status(400).json(result);
   else res.status(200).json(result);
-};
+}
 
-module.exports = (options) => {
+function app(options) {
   const app = express();
   app.use(express.json());
   app.use(cors());
@@ -84,8 +85,9 @@ module.exports = (options) => {
       }
     },
   };
-};
+}
 
+module.exports = app;
 module.exports.start = start;
 module.exports.register = register;
 module.exports.run = run;

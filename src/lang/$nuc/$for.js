@@ -2,13 +2,13 @@ const $ = require("./$");
 const FOR = require("../../for");
 const Instruction = require("../../instruction");
 
-module.exports = function (variable, array, statements) {
+function construct(variable, array, statements) {
   let statement = new $FOR();
   statement.variable = variable;
   statement.array = array;
   statement.statements = statements;
   return statement;
-};
+}
 
 class $FOR extends $ {
   run(scope) {
@@ -20,3 +20,5 @@ class $FOR extends $ {
     return new Instruction(scope, statement, false, true, false);
   }
 }
+
+module.exports = construct;

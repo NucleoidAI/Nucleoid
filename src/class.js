@@ -4,7 +4,7 @@ const $VAR = require("./lang/$nuc/$variable");
 const $EXP = require("./lang/$nuc/$expression");
 const graph = require("./graph");
 
-const CLASS = class CLASS extends Node {
+class CLASS extends Node {
   constructor() {
     super();
     this.instances = {};
@@ -39,7 +39,7 @@ const CLASS = class CLASS extends Node {
       this.declarations = graph[this.key].declarations;
     }
   }
-};
+}
 
 CLASS.prototype.instanceof = "CLASS";
 module.exports = CLASS;

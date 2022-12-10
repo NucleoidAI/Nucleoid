@@ -1,7 +1,7 @@
 const test = require("../libs/test");
 const { equal, notEqual, deepEqual, throws } = require("assert");
 const nucleoid = require("../../index");
-const state = require("../state").state;
+const { state } = require("../state");
 const graph = require("../graph");
 
 const validate = (error, expectedError, expectedMessage) => {

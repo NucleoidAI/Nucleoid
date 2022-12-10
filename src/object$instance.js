@@ -2,7 +2,7 @@ const Id = require("./utils/identifier");
 const OBJECT = require("./object");
 const graph = require("./graph");
 
-module.exports = class OBJECT$INSTANCE extends OBJECT {
+class OBJECT$INSTANCE extends OBJECT {
   before() {
     let declaration = Id.serialize(this.declaration);
 
@@ -15,4 +15,6 @@ module.exports = class OBJECT$INSTANCE extends OBJECT {
     this.key = Id.serialize(this);
     this.class = this.declaration.class;
   }
-};
+}
+
+module.exports = OBJECT$INSTANCE;

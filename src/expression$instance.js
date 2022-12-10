@@ -2,7 +2,7 @@ const EXPRESSION = require("./expression");
 const Instance = require("./utils/instance");
 const Id = require("./utils/identifier");
 
-module.exports = class EXPRESSION$INSTANCE extends EXPRESSION {
+class EXPRESSION$INSTANCE extends EXPRESSION {
   run(scope) {
     let instance = Instance.retrieve(scope, this.class.name);
 
@@ -16,4 +16,6 @@ module.exports = class EXPRESSION$INSTANCE extends EXPRESSION {
 
     return super.run(scope);
   }
-};
+}
+
+module.exports = EXPRESSION$INSTANCE;

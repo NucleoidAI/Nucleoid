@@ -1,7 +1,7 @@
 const Node = require("./node");
 const $ = require("./lang/$nuc/$");
 
-module.exports = class BLOCK extends Node {
+class BLOCK extends Node {
   constructor() {
     super();
     this.statements = [];
@@ -38,4 +38,6 @@ module.exports = class BLOCK extends Node {
       this.statements.push(instruction.statement);
     }
   }
-};
+}
+
+module.exports = BLOCK;

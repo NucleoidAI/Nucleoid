@@ -1,4 +1,4 @@
-module.exports = class Scope {
+class Scope {
   constructor(prior, block) {
     this.prior = prior;
     this.block = block;
@@ -13,4 +13,6 @@ module.exports = class Scope {
     this.instances = {};
     this.graph = {};
   }
-};
+}
+
+module.exports = Scope;

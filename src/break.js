@@ -1,5 +1,7 @@
-module.exports = class BREAK {
+class BREAK {
   constructor(block) {
     this.block = block;
   }
-};
+}
+
+module.exports = BREAK;

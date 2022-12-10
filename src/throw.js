@@ -2,7 +2,7 @@ const state = require("./state");
 const Id = require("./utils/identifier");
 const graph = require("./graph");
 
-module.exports = class THROW {
+class THROW {
   before() {}
 
   run(scope) {
@@ -16,4 +16,6 @@ module.exports = class THROW {
   }
 
   graph() {}
-};
+}
+
+module.exports = THROW;

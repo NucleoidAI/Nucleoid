@@ -1,15 +1,19 @@
 let messages = [];
 
-module.exports.message = function (process, payload) {
+function message(process, payload) {
   messages.push({ process, payload: JSON.stringify(payload) });
-};
+}
 
-module.exports.list = function () {
+function list() {
   if (messages.length) {
     return messages;
   }
-};
+}
 
-module.exports.clear = function () {
+function clear() {
   messages = [];
-};
+}
+
+module.exports.message = message;
+module.exports.list = list;
+module.exports.clear = clear;

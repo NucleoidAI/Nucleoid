@@ -52,7 +52,7 @@ setImmediate(() => {
   }
 });
 
-const options = (options) => {
+function options(options) {
   if (options) {
     _options = { ..._options, ...options };
 
@@ -63,6 +63,6 @@ const options = (options) => {
 
     return _options;
   } else return _options;
-};
+}
 
-module.exports = { options };
+module.exports.options = options;

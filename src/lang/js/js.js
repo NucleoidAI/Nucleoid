@@ -12,7 +12,7 @@ const JS$RETURN = require("./js$return");
 const ES6$CLASS = require("../es6/es6$class");
 const ES6$LET = require("../es6/es6$let");
 
-module.exports.compile = function compile(string, offset) {
+function compile(string, offset) {
   offset = offset || 0;
   let statements = [];
 
@@ -77,4 +77,6 @@ module.exports.compile = function compile(string, offset) {
   }
 
   return { statements, offset };
-};
+}
+
+module.exports.compile = compile;

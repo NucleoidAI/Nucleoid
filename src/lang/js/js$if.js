@@ -4,7 +4,7 @@ const $BLOCK = require("../$nuc/$block");
 const $IF = require("../$nuc/$if");
 const JS = require("./js");
 
-module.exports = function JS$IF(string, offset) {
+function JS$IF(string, offset) {
   let context = Token.next(string, offset);
 
   if (context && context.token === "if")
@@ -40,4 +40,6 @@ module.exports = function JS$IF(string, offset) {
       offset: context.offset,
     };
   }
-};
+}
+
+module.exports = JS$IF;

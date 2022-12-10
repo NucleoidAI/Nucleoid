@@ -1,7 +1,7 @@
 const CLASS = require("../../class");
 const $ = require("./$");
 
-module.exports = function (name, construct, args) {
+function construct(name, construct, args) {
   let statement = new $CLASS();
   statement.name = `$${name}`;
   statement.construct = construct;
@@ -12,7 +12,7 @@ module.exports = function (name, construct, args) {
     statement.args = args;
   }
   return statement;
-};
+}
 
 class $CLASS extends $ {
   run() {
@@ -23,3 +23,5 @@ class $CLASS extends $ {
     return statement;
   }
 }
+
+module.exports = construct;

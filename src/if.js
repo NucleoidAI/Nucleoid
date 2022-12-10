@@ -4,7 +4,7 @@ const Scope = require("./scope");
 const BREAK = require("./break");
 const state = require("./state");
 
-module.exports = class IF extends Node {
+class IF extends Node {
   before(scope) {
     this.key = "if(" + this.condition.tokens.construct() + ")";
     this.condition.before(scope);
@@ -46,4 +46,6 @@ module.exports = class IF extends Node {
   graph(scope) {
     return this.condition.graph(scope);
   }
-};
+}
+
+module.exports = IF;

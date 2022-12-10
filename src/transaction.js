@@ -3,19 +3,19 @@ const REFERENCE = require("./reference");
 let list = [];
 let state; // eslint-disable-line no-unused-vars
 
-setImmediate(() => (state = require("./state").state));
+setImmediate(() => ({ state } = require("./state")));
 
-module.exports.start = function () {
+function start() {
   list = [];
-};
+}
 
-module.exports.end = function () {
+function end() {
   const result = list;
   list = [];
   return result;
-};
+}
 
-module.exports.register = function (p1, p2, p3, adjust) {
+function register(p1, p2, p3, adjust) {
   if (!p1) return;
 
   if (typeof p1 === "string") {
@@ -60,9 +60,9 @@ module.exports.register = function (p1, p2, p3, adjust) {
     list.push({ object, property, before: object[property] });
     object[property] = value;
   }
-};
+}
 
-module.exports.rollback = function () {
+function rollback() {
   while (list.length) {
     let transaction = list.pop();
     let variable = transaction.variable;
@@ -81,4 +81,9 @@ module.exports.rollback = function () {
       }
     }
   }
-};
+}
+
+module.exports.start = start;
+module.exports.end = end;
+module.exports.register = register;
+module.exports.rollback = rollback;

@@ -1,11 +1,11 @@
 const $ = require("./$");
 const THROW = require("../../throw");
 
-module.exports = function (exception) {
+function construct(exception) {
   let statement = new $THROW();
   statement.exception = exception;
   return statement;
-};
+}
 
 class $THROW extends $ {
   run() {
@@ -14,3 +14,5 @@ class $THROW extends $ {
     return statement;
   }
 }
+
+module.exports = construct;

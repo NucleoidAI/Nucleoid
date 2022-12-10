@@ -6,11 +6,11 @@ setImmediate(() => {
 
 let _context = [];
 
-const load = (context) => {
+function load(context) {
   _context = _context.concat(context);
-};
+}
 
-const run = (context = []) => {
+function run(context = []) {
   load(context);
 
   _context.forEach(({ definition, options }) =>
@@ -18,6 +18,7 @@ const run = (context = []) => {
   );
 
   _context = [];
-};
+}
 
-module.exports = { load, run };
+module.exports.load = load;
+module.exports.run = run;

@@ -7,7 +7,7 @@ const LET = require("./let");
 const Scope = require("./scope");
 const _ = require("lodash");
 
-module.exports = class OBJECT extends Node {
+class OBJECT extends Node {
   constructor() {
     super();
     this.properties = {};
@@ -90,4 +90,6 @@ module.exports = class OBJECT extends Node {
     if (this.object !== undefined) this.object.properties[this.name] = this;
     this.class.instances[this.key] = this;
   }
-};
+}
+
+module.exports = OBJECT;

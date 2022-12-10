@@ -5,12 +5,12 @@ const $LET = require("./$let");
 const $ = require("./$");
 const Id = require("../../utils/identifier");
 
-module.exports = function (left, right) {
+function construct(left, right) {
   let statement = new $ASSIGNMENT();
   statement.left = left.split(".");
   statement.right = right;
   return statement;
-};
+}
 
 class $ASSIGNMENT extends $ {
   run(scope) {
@@ -34,3 +34,5 @@ class $ASSIGNMENT extends $ {
     }
   }
 }
+
+module.exports = construct;

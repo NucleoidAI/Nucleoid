@@ -1,7 +1,7 @@
 const state = require("./state");
 const Local = require("./utils/local");
 
-module.exports = class LET {
+class LET {
   constructor(name, value) {
     this.name = name;
     this.value = value;
@@ -31,4 +31,6 @@ module.exports = class LET {
       return this.value.graph(scope);
     }
   }
-};
+}
+
+module.exports = LET;

@@ -3,7 +3,7 @@ const Token = require("../../utils/token");
 const $INSTANCE = require("../$nuc/$instance");
 const $EXP = require("../$nuc/$expression");
 
-module.exports = function JS$VARIABLE(string, offset) {
+function JS$VARIABLE(string, offset) {
   let context = Token.next(string, offset);
 
   if (context.token === "new") {
@@ -54,4 +54,6 @@ module.exports = function JS$VARIABLE(string, offset) {
   context = $EXP(string, context.offset);
   let expression = context.statement;
   return { statement: $VAR(name, expression), offset: context.offset };
-};
+}
+
+module.exports = JS$VARIABLE;

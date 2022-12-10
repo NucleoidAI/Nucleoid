@@ -4,7 +4,7 @@ const Id = require("./utils/identifier");
 const BREAK = require("./break");
 const state = require("./state");
 
-module.exports = class LET$INSTANCE extends LET {
+class LET$INSTANCE extends LET {
   before() {
     this.value = new EXPRESSION(
       this.declaration.value.tokens.map((token) => {
@@ -25,4 +25,6 @@ module.exports = class LET$INSTANCE extends LET {
       return { next: new BREAK(scope.block) };
     }
   }
-};
+}
+
+module.exports = LET$INSTANCE;

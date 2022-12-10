@@ -2,7 +2,7 @@ const Token = require("../../utils/token");
 let $CLASS = require("../$nuc/$class");
 let JS$BLOCK = require("../js/js$block");
 
-module.exports = function ES6$CLASS(string, offset) {
+function ES6$CLASS(string, offset) {
   let context = Token.next(string, offset);
   context = Token.next(string, context.offset);
   let name = context.token;
@@ -45,4 +45,6 @@ module.exports = function ES6$CLASS(string, offset) {
     statement: $CLASS(name, construct, args),
     offset: context.offset,
   };
-};
+}
+
+module.exports = ES6$CLASS;

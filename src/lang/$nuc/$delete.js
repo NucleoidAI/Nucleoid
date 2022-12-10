@@ -8,11 +8,11 @@ const OBJECT = require("../../object");
 const state = require("../../state");
 const $EXP = require("./$expression");
 
-module.exports = function (key) {
+function construct(key) {
   let statement = new $DELETE();
   statement.key = key;
   return statement;
-};
+}
 
 class $DELETE extends $ {
   run(scope) {
@@ -41,3 +41,5 @@ class $DELETE extends $ {
     }
   }
 }
+
+module.exports = construct;

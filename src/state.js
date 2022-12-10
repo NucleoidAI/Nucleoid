@@ -44,18 +44,17 @@ function graph(id) {
 
   return object;
 }
-
-module.exports.throw = (scope, exception) => {
-  // eslint-disable-next-line no-eval
-  eval(`throw state.${exception}`);
-};
-
-module.exports.state = state;
-module.exports.assign = function (scope, variable, expression, adjust) {
+function assign(scope, variable, expression, adjust) {
   return _transaction.register(variable, expression, scope, adjust);
-};
+}
 
-module.exports.run = function (scope, expression) {
+function run(scope, expression) {
   // eslint-disable-next-line no-eval
   return eval(`(${expression})`);
-};
+}
+
+module.exports.state = state;
+module.exports.assign = assign;
+module.exports.run = run;
+// eslint-disable-next-line no-eval
+module.exports.throw = (scope, exception) => eval(`throw state.${exception}`);

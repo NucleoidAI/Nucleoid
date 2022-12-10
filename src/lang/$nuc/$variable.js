@@ -2,12 +2,12 @@ const $ = require("./$");
 const VARIABLE = require("../../variable");
 const OBJECT = require("../../object");
 
-module.exports = function (name, value) {
+function construct(name, value) {
   let statement = new $VARIABLE();
   statement.name = name;
   statement.value = value;
   return statement;
-};
+}
 
 class $VARIABLE extends $ {
   run(scope) {
@@ -25,3 +25,5 @@ class $VARIABLE extends $ {
     }
   }
 }
+
+module.exports = construct;

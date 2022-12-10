@@ -1,7 +1,7 @@
 const state = require("./state");
 const LET = require("./let");
 
-module.exports = class LET$OBJECT extends LET {
+class LET$OBJECT extends LET {
   before() {}
 
   run(scope) {
@@ -9,4 +9,6 @@ module.exports = class LET$OBJECT extends LET {
   }
 
   graph() {}
-};
+}
+
+module.exports = LET$OBJECT;

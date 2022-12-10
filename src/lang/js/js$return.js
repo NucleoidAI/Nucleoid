@@ -2,7 +2,7 @@ const Token = require("../../utils/token");
 const $RETURN = require("../$nuc/$return");
 const JS = require("./js");
 
-module.exports = function JS$RETURN(string, offset) {
+function JS$RETURN(string, offset) {
   let context = Token.next(string, offset);
 
   if (context.token === "return") {
@@ -13,4 +13,6 @@ module.exports = function JS$RETURN(string, offset) {
   } else {
     throw SyntaxError("Missing return keyword");
   }
-};
+}
+
+module.exports = JS$RETURN;

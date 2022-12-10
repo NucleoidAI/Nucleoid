@@ -2,7 +2,7 @@ const state = require("./state");
 const Node = require("./node");
 const Id = require("./utils/identifier");
 
-module.exports = class PROPERTY extends Node {
+class PROPERTY extends Node {
   before(scope) {
     this.key = Id.serialize(this, true);
     this.value.before(scope, this.key);
@@ -19,4 +19,6 @@ module.exports = class PROPERTY extends Node {
     this.object.properties[this.name] = this;
     return this.value.graph(scope);
   }
-};
+}
+
+module.exports = PROPERTY;

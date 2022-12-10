@@ -1,4 +1,4 @@
-module.exports.retrieve = function (scope, assignment) {
+function retrieve(scope, assignment) {
   let index = scope;
 
   let parts = assignment.split(".");
@@ -13,9 +13,9 @@ module.exports.retrieve = function (scope, assignment) {
     reference += "prior.";
     index = index.prior;
   }
-};
+}
 
-module.exports.check = function (scope, assignment) {
+function check(scope, assignment) {
   let index = scope;
 
   if (assignment === undefined) return false;
@@ -28,9 +28,9 @@ module.exports.check = function (scope, assignment) {
     if (error instanceof TypeError) return false;
     throw error;
   }
-};
+}
 
-module.exports.reference = function (scope, name) {
+function reference(scope, name) {
   let parts = name.split(".");
 
   for (let i = 0; i < parts.length; i++) {
@@ -45,9 +45,9 @@ module.exports.reference = function (scope, name) {
   }
 
   return parts.join(".");
-};
+}
 
-module.exports.object = function (scope) {
+function object(scope) {
   let index = scope;
 
   while (index) {
@@ -57,4 +57,9 @@ module.exports.object = function (scope) {
 
     index = index.prior;
   }
-};
+}
+
+module.exports.retrieve = retrieve;
+module.exports.check = check;
+module.exports.reference = reference;
+module.exports.object = object;

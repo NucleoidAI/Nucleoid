@@ -1,13 +1,13 @@
 const $ = require("./$");
 const FUNCTION = require("../../function");
 
-module.exports = function (name, args, block) {
+function construct(name, args, block) {
   let statement = new $FUNCTION();
   statement.name = name;
   statement.args = args;
   statement.block = block;
   return statement;
-};
+}
 
 class $FUNCTION extends $ {
   run() {
@@ -18,3 +18,5 @@ class $FUNCTION extends $ {
     return statement;
   }
 }
+
+module.exports = construct;

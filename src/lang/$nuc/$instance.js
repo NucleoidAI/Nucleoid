@@ -6,14 +6,14 @@ const CLASS = require("../../class");
 const Local = require("../../utils/local");
 const $LET = require("./$let");
 
-module.exports = function (cls, name, object, args) {
+function construct(cls, name, object, args) {
   let statement = new $INSTANCE();
   statement.class = `$${cls}`;
   statement.name = name;
   statement.object = object;
   statement.args = args;
   return statement;
-};
+}
 
 class $INSTANCE extends $ {
   run(scope) {
@@ -54,3 +54,5 @@ class $INSTANCE extends $ {
     return statement;
   }
 }
+
+module.exports = construct;

@@ -1,6 +1,6 @@
 const graph = require("../graph");
 
-module.exports.splitLast = function (name) {
+function splitLast(name) {
   let parts = name.split(".");
   let instance = "";
 
@@ -13,9 +13,9 @@ module.exports.splitLast = function (name) {
   }
 
   return [parts[parts.length - 1], instance.slice(0, -1)];
-};
+}
 
-module.exports.serialize = function (node, reference) {
+function serialize(node, reference) {
   let string = "";
   let index = node;
 
@@ -29,9 +29,9 @@ module.exports.serialize = function (node, reference) {
   }
 
   return string.slice(0, -1);
-};
+}
 
-module.exports.reference = function (name) {
+function reference(name) {
   let parts = name.split(".");
 
   for (let i = 0; i < parts.length; i++) {
@@ -46,9 +46,9 @@ module.exports.reference = function (name) {
   }
 
   return parts.join(".");
-};
+}
 
-module.exports.root = function (node) {
+function root(node) {
   let index = node;
 
   while (index.object) {
@@ -56,4 +56,9 @@ module.exports.root = function (node) {
   }
 
   return index;
-};
+}
+
+module.exports.splitLast = splitLast;
+module.exports.serialize = serialize;
+module.exports.reference = reference;
+module.exports.root = root;

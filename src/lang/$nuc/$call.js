@@ -2,12 +2,12 @@ const $ = require("./$");
 const graph = require("../../graph");
 const $BLOCK = require("./$block");
 
-module.exports = function (name, params) {
+function construct(name, params) {
   const call = new $CALL();
   call.name = name;
   call.params = params;
   return call;
-};
+}
 
 class $CALL extends $ {
   run() {
@@ -28,3 +28,5 @@ class $CALL extends $ {
     }
   }
 }
+
+module.exports = construct;

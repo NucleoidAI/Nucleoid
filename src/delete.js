@@ -3,7 +3,7 @@ const graph = require("./graph");
 const Instruction = require("./instruction");
 const Node = require("./node");
 
-module.exports = class DELETE {
+class DELETE {
   before() {}
 
   run(scope) {
@@ -42,4 +42,6 @@ module.exports = class DELETE {
     delete graph[this.key];
     graph[this.key] = empty;
   }
-};
+}
+
+module.exports = DELETE;

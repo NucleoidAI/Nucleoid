@@ -6,7 +6,7 @@ const REFERENCE = require("../../reference");
 const EXPRESSION$INSTANCE = require("../../expression$instance");
 const Local = require("../../utils/local");
 
-module.exports = function (string, offset) {
+function construct(string, offset) {
   offset = offset || 0;
 
   let context = Token.each(string, offset, (token) => {
@@ -71,7 +71,7 @@ module.exports = function (string, offset) {
   statement.tokens = list;
 
   return { statement: statement, offset: context.offset };
-};
+}
 
 function parseCall(tokens, offset) {
   let call = new Token.CALL(tokens[offset]);
@@ -239,3 +239,5 @@ function untilBlock(tokens, offset) {
 
   return { block, offset };
 }
+
+module.exports = construct;

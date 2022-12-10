@@ -4,7 +4,7 @@ const $ASSIGNMENT = require("../$nuc/$assignment");
 const $EXP = require("../$nuc/$expression");
 const Id = require("../../utils/identifier");
 
-module.exports = function JS$ASSIGNMENT(string, offset) {
+function JS$ASSIGNMENT(string, offset) {
   let context = Token.next(string, offset);
   let left = context.token;
 
@@ -49,4 +49,6 @@ module.exports = function JS$ASSIGNMENT(string, offset) {
   context = $EXP(string, context.offset);
   let right = context.statement;
   return { statement: $ASSIGNMENT(left, right), offset: context.offset };
-};
+}
+
+module.exports = JS$ASSIGNMENT;

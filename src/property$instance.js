@@ -3,7 +3,7 @@ const EXPRESSION = require("./expression");
 const Id = require("./utils/identifier");
 const graph = require("./graph");
 
-module.exports = class PROPERTY$INSTANCE extends PROPERTY {
+class PROPERTY$INSTANCE extends PROPERTY {
   before(scope) {
     let declaration = Id.serialize(this.declaration);
 
@@ -24,4 +24,6 @@ module.exports = class PROPERTY$INSTANCE extends PROPERTY {
     );
     this.value.before(scope, this.key);
   }
-};
+}
+
+module.exports = PROPERTY$INSTANCE;

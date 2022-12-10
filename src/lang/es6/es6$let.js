@@ -3,7 +3,7 @@ const $LET = require("../$nuc/$let");
 const $EXP = require("../$nuc/$expression");
 const $INSTANCE = require("../$nuc/$instance");
 
-module.exports = function ES6$LET(string, offset, constant) {
+function ES6$LET(string, offset, constant) {
   let context = Token.next(string, offset);
 
   context = Token.next(string, context.offset);
@@ -36,4 +36,6 @@ module.exports = function ES6$LET(string, offset, constant) {
     statement: $LET(name, expression, constant),
     offset: context.offset,
   };
-};
+}
+
+module.exports = ES6$LET;

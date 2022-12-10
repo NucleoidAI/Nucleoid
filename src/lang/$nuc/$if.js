@@ -5,13 +5,13 @@ const CLASS = require("../../class");
 const IF$CLASS = require("../../if$class");
 const Instruction = require("../../instruction");
 
-module.exports = function (condition, trueB, p3) {
+function construct(condition, trueB, p3) {
   let statement = new $IF();
   statement.condition = condition;
   statement.true = trueB;
   statement.false = p3;
   return statement;
-};
+}
 
 class $IF extends $ {
   run(scope) {
@@ -43,3 +43,5 @@ class $IF extends $ {
     ];
   }
 }
+
+module.exports = construct;

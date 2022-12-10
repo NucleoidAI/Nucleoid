@@ -5,7 +5,7 @@ const state = require("./state");
 const $EXP = require("./lang/$nuc/$expression");
 const graph = require("./graph");
 
-module.exports = class FOR {
+class FOR {
   constructor() {
     this.index = 0;
   }
@@ -30,4 +30,6 @@ module.exports = class FOR {
       return { next: list };
     }
   }
-};
+}
+
+module.exports = FOR;

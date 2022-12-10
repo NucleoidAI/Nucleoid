@@ -14,7 +14,7 @@ let runtime;
 
 setImmediate(() => (runtime = require("./runtime")));
 
-module.exports.process = function process(statements, prior) {
+function process(statements, prior) {
   const root = new Scope(prior);
   const { declarative } = runtime.options();
 
@@ -233,4 +233,6 @@ module.exports.process = function process(statements, prior) {
   }
 
   return result;
-};
+}
+
+module.exports.process = process;

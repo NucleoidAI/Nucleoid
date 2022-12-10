@@ -2,7 +2,7 @@ const Token = require("../../utils/token");
 const $FUNCTION = require("../$nuc/$function");
 let JS$BLOCK = require("./js$block");
 
-module.exports = function JS$FUNCTION(string, offset) {
+function JS$FUNCTION(string, offset) {
   let context = Token.next(string, offset);
 
   context = Token.next(string, context.offset);
@@ -19,4 +19,6 @@ module.exports = function JS$FUNCTION(string, offset) {
     statement: $FUNCTION(name, args, context.statement),
     offset: context.offset,
   };
-};
+}
+
+module.exports = JS$FUNCTION;

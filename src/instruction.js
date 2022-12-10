@@ -1,4 +1,4 @@
-module.exports = class Instruction {
+class Instruction {
   constructor(scope, statement, before, run, graph, root, derivative) {
     this.scope = scope;
     this.statement = statement;
@@ -8,4 +8,6 @@ module.exports = class Instruction {
     this.root = root;
     this.derivative = derivative;
   }
-};
+}
+
+module.exports = Instruction;

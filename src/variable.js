@@ -6,7 +6,7 @@ setImmediate(() => {
   REFERENCE = require("./reference");
 });
 
-module.exports = class VARIABLE extends Node {
+class VARIABLE extends Node {
   before(scope) {
     this.key = this.name;
     this.value.before(scope, this.key);
@@ -27,4 +27,6 @@ module.exports = class VARIABLE extends Node {
   graph(scope) {
     return this.value.graph(scope);
   }
-};
+}
+
+module.exports = VARIABLE;

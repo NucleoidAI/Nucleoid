@@ -13,7 +13,7 @@ function isDelimiter(c) {
   );
 }
 
-const next = function (string, offset) {
+function next(string, offset) {
   if (offset >= string.length) {
     return null;
   }
@@ -68,7 +68,7 @@ const next = function (string, offset) {
   }
 
   return token !== "" ? { token, offset } : null;
-};
+}
 
 class Token {
   constructor(string) {

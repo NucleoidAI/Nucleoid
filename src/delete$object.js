@@ -2,7 +2,7 @@ const DELETE = require("./delete");
 const graph = require("./graph");
 const { state } = require("./state");
 
-module.exports = class DELETE$OBJECT extends DELETE {
+class DELETE$OBJECT extends DELETE {
   run() {
     let name = graph[this.key].name;
 
@@ -28,4 +28,6 @@ module.exports = class DELETE$OBJECT extends DELETE {
 
     delete graph[this.key];
   }
-};
+}
+
+module.exports = DELETE$OBJECT;

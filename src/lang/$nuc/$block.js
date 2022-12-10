@@ -10,13 +10,13 @@ const REFERENCE = require("../../reference");
 const $LET = require("./$let");
 const $EXP = require("./$expression");
 
-module.exports = function (statements, skip, args) {
+function construct(statements, skip, args) {
   let statement = new $BLOCK();
   statement.statements = statements;
   statement.skip = skip;
   statement.args = args;
   return statement;
-};
+}
 
 class $BLOCK extends $ {
   run(scope) {
@@ -76,3 +76,5 @@ class $BLOCK extends $ {
     }
   }
 }
+
+module.exports = construct;

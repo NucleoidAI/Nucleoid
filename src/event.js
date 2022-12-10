@@ -1,15 +1,19 @@
 let events = [];
 
-module.exports.event = function (name, payload) {
+function event(name, payload) {
   events.push({ name, payload: JSON.stringify(payload) });
-};
+}
 
-module.exports.list = function () {
+function list() {
   if (events.length) {
     return events;
   }
-};
+}
 
-module.exports.clear = function () {
+function clear() {
   events = [];
-};
+}
+
+module.exports.event = event;
+module.exports.list = list;
+module.exports.clear = clear;

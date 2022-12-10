@@ -11,7 +11,7 @@ let server;
 let started = false;
 let _app = null;
 
-const initialize = (app) => {
+function initialize(app) {
   if (app) {
     _app = app;
   } else {
@@ -22,9 +22,9 @@ const initialize = (app) => {
     _app = express();
     _app.use(express.json());
   }
-};
+}
 
-const load = ({ api, types, prefix = "" }) => {
+function load({ api, types, prefix = "" }) {
   const app = _app;
 
   if (!app) {
@@ -217,26 +217,35 @@ const load = ({ api, types, prefix = "" }) => {
       },
     })
   );
-};
+}
 
-const app = () => _app;
+function app() {
+  return _app;
+}
 
-const start = (port = 3000) => {
+function start(port = 3000) {
   if (started) {
     return stop();
   }
 
   server = _app.listen(port);
   started = true;
-};
+}
 
-const stop = () => {
+function stop() {
   if (!started) return;
 
   server.close();
   started = false;
-};
+}
 
-const status = () => ({ started });
+function status() {
+  return { started };
+}
 
-module.exports = { initialize, load, app, start, stop, status };
+module.exports.initialize = initialize;
+module.exports.load = load;
+module.exports.app = app;
+module.exports.start = start;
+module.exports.stop = stop;
+module.exports.status = status;

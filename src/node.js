@@ -4,7 +4,7 @@ const transaction = require("./transaction");
 
 let sequence = 0;
 
-module.exports = class Node {
+class Node {
   constructor() {
     this.next = {};
     this.previous = {};
@@ -40,4 +40,6 @@ module.exports = class Node {
     transaction.register(graph[sourceKey].next, targetKey, targetNode);
     transaction.register(targetNode.previous, sourceKey, graph[targetKey]);
   }
-};
+}
+
+module.exports = Node;

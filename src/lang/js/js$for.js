@@ -2,7 +2,7 @@ const Token = require("../../utils/token");
 const JS = require("./js");
 const $FOR = require("../$nuc/$for");
 
-module.exports = function JS$FOR(string, offset) {
+function JS$FOR(string, offset) {
   let context = Token.next(string, offset);
   context = Token.next(string, context.offset);
   context = Token.next(string, context.offset);
@@ -18,4 +18,6 @@ module.exports = function JS$FOR(string, offset) {
   const { statements } = JS.compile(context.block);
 
   return { statement: $FOR(variable, array, statements) };
-};
+}
+
+module.exports = JS$FOR;

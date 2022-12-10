@@ -10,13 +10,13 @@ const REFERENCE = require("../../reference");
 const Local = require("../../utils/local");
 const Id = require("../../utils/identifier");
 
-module.exports = function (name, value, constant) {
+function construct(name, value, constant) {
   let statement = new $LET();
   statement.name = name;
   statement.value = value;
   statement.constant = constant;
   return statement;
-};
+}
 
 class $LET extends $ {
   run(scope) {
@@ -71,3 +71,5 @@ class $LET extends $ {
     }
   }
 }
+
+module.exports = construct;

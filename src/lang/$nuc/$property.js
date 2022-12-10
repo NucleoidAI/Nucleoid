@@ -9,13 +9,13 @@ const PROPERTY$REFERENCE = require("../../property$reference");
 const Local = require("../../utils/local");
 const FUNCTION = require("../../function");
 
-module.exports = function (object, name, value) {
+function construct(object, name, value) {
   let statement = new $PROPERTY();
   statement.object = object;
   statement.name = name;
   statement.value = value;
   return statement;
-};
+}
 
 class $PROPERTY extends $ {
   run(scope) {
@@ -59,3 +59,5 @@ class $PROPERTY extends $ {
     return statement;
   }
 }
+
+module.exports = construct;

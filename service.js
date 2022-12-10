@@ -20,7 +20,7 @@ try {
   storage = require(`${config.path.handlers}/storage.js`);
 } catch (err) {} // eslint-disable-line no-empty
 
-const accept = (statement, req, res) => {
+function accept(statement, req, res) {
   // TODO Deprecate main process
   let proc = req.get("Process") || "main";
   let files = glob.sync(proc, { cwd: config.path.data });
@@ -35,7 +35,7 @@ const accept = (statement, req, res) => {
 
     res.status(202).send({ count: files.length });
   }
-};
+}
 
 function start(id) {
   let proc = processes[id];

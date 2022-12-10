@@ -1,4 +1,6 @@
-module.exports = class $ {
+class $ {
   before() {}
   run() {}
-};
+}
+
+module.exports = $;
