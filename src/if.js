@@ -1,7 +1,6 @@
 const Node = require("./node");
 const Instruction = require("./instruction");
 const Scope = require("./scope");
-const BREAK = require("./break");
 const state = require("./state");
 
 class IF extends Node {
@@ -18,10 +17,6 @@ class IF extends Node {
       condition = this.condition.run(scope, true);
     } else {
       condition = this.condition.run(scope);
-
-      if (condition === "undefined") {
-        return { next: new BREAK(scope.block) };
-      }
     }
 
     if (state.run(scope, condition)) {
