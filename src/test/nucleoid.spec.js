@@ -1422,6 +1422,16 @@ describe("Nucleoid", () => {
       );
     });
 
+    it("creates object with var statement", () => {
+      nucleoid.run("class Item { constructor ( name ) { this.name  = name } }");
+
+      nucleoid.run("var item1 = new Item ( 'NAME-1' )");
+      deepEqual(nucleoid.run("item1"), { id: "item1", name: "NAME-1" });
+
+      nucleoid.run("var item2 = new Item ( )");
+      deepEqual(nucleoid.run("item2"), { id: "item2", name: undefined });
+    });
+
     it("creates object assignment as property only if instance is defined", () => {
       nucleoid.run("class Worker { }");
       nucleoid.run("class Schedule { }");

@@ -35,18 +35,19 @@ function JS$VARIABLE(string, offset) {
 
     let instance = $INSTANCE(context.token);
     context = Token.next(string, context.offset);
+
     if (context === null || context.token === ";")
       throw SyntaxError("Missing parentheses");
 
     if (context.token !== "(")
       throw SyntaxError(`Unexpected token ${context.token}`);
 
-    context = Token.next(string, context.offset);
-    if (context === null || context.token === ";")
+    let checkArgs = Token.next(string, context.offset);
+    if (checkArgs === null || checkArgs.token === ";")
       throw SyntaxError("Missing parenthesis");
 
-    if (context.token !== ")")
-      throw SyntaxError(`Unexpected token ${context.token}`);
+    context = Token.nextArgs(string, context.offset);
+    instance.args = context.args;
 
     return { statement: $VAR(name, instance), offset: context.offset };
   }
