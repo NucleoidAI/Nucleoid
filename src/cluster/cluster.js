@@ -21,12 +21,14 @@ async function run(req, res, action) {
     });
   }
 
+  let process;
+
   if (cluster) {
-    await cluster(req, res, fn);
-    return;
+    process = cluster(req, fn);
+  } else {
+    process = req.headers["process"];
   }
 
-  const process = req.headers["process"];
   const scope = { process };
   const { ip, port } = nucleoid.run((scope) => Process[scope.process], scope);
 
