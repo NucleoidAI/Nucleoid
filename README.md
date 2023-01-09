@@ -59,7 +59,7 @@ app.post("/users", () => {
 app.listen(3000);
 ```
 
-> :bulb: **This is pretty much it, thanks to [AI](https://nucleoid.com/docs/runtime/) in the runtime, only with this :point_up_2:, you successfully persisted your first object without external database.**
+> :bulb: **This is pretty much it, thanks to [Nucleoid runtime](https://nucleoid.com/docs/runtime/), only with this :point_up_2:, you successfully persisted your first object without external database.**
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
 
@@ -102,6 +102,20 @@ Please report an [issue](https://github.com/NucleoidJS/Nucleoid/issues) or ask a
 Learn more at [nucleoid.com](https://nucleoid.com)
 
 <br/>
+
+## Benchmark
+
+This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
+
+https://nucleoid.com/ide/sample
+
+<img src="https://cdn.nucleoid.com/media/benchmark.png" alt="Benchmark" width="550" />
+
+> Performance benchmark happened in t2.micro of AWS EC2 instance and both databases had dedicated server with <u>no indexes and default configurations</u>.
+
+https://github.com/NucleoidJS/benchmark
+
+This does not necessary mean Nucleoid runtime is faster than MySQL or Postgres, instead databases require constant maintenance by DBA teams with indexing, caching, purging etc. however, Nucleoid tries to solve this problem with managing logic and data internally. As seen in the chart, for applications with average complexity, Nucleoid's performance is close to linear because of on-chain data store as well as in-memory computing model.
 
 ---
 
