@@ -20,15 +20,19 @@
 
 <br/>
 
-As writing just like any other codes in Node.js, AI inside the runtime rerenders the very same JavaScript codes and makes the necessary adjustments in the state as well as stores on the disk so that your application doesn't require external database or anything else. In short, the runtime translates your business logic to fully working application with the built-in datastore.
+Nucleoid uses deterministic AI in the runtime; as writing just like any other codes in Node.js, the runtime rerenders the very same JavaScript codes and builds the logical dependency graph. As a result, the runtime manages the JS state as well as stores in the on-chain data store, so that your application doesn't require external database or anything else. In short, the runtime translates your business logic to fully working application with the built-in datastore.
+
+<p align="center">
+  <img src=".github/media/graph.png" width="350"/>
+</p>
 
 ## How it works
 
 I. Write your business logic in JavaScript (TypeScript support coming soon)
 
-II. Nucleoid runtime renders your codes with AI
+II. Nucleoid runtime renders your codes with the AI engine
 
-III. Creates APIs with built-in datastore
+III. Creates APIs with built-in datastore (based on the logic graph)
 
 <br/>
 
@@ -91,7 +95,7 @@ This is the comparation our sample order app in Nucleoid IDE against MySQL and P
 
 https://nucleoid.com/ide/sample
 
-<img src="https://cdn.nucleoid.com/media/benchmark.png" alt="Benchmark" width="550" />
+<img src=".github/media/benchmark.png" alt="Benchmark" width="550"/>
 
 > Performance benchmark happened in t2.micro of AWS EC2 instance and both databases had dedicated server with <u>no indexes and default configurations</u>.
 
