@@ -9,7 +9,7 @@ class CLASS extends Node {
     super();
     this.instances = {};
     this.declarations = {};
-    this.sequence = 0;
+    this.sequence = 1;
   }
 
   before() {

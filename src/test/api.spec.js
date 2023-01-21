@@ -27,13 +27,13 @@ describe("Nucleoid API", () => {
     app.post("/users", (req) => new User(req.body.name));
 
     const res1 = await request(app).post("/users").send({ name: "Daphne" });
-    deepEqual(res1.body, { id: "user0", name: "Daphne" });
+    deepEqual(res1.body, { id: "user1", name: "Daphne" });
 
     const res2 = await request(app).get("/users?name=Daphne").send();
-    deepEqual(res2.body, [{ id: "user0", name: "Daphne" }]);
+    deepEqual(res2.body, [{ id: "user1", name: "Daphne" }]);
 
-    const res3 = await request(app).get("/users/user0").send();
-    deepEqual(res3.body, { id: "user0", name: "Daphne" });
+    const res3 = await request(app).get("/users/user1").send();
+    deepEqual(res3.body, { id: "user1", name: "Daphne" });
   });
 
   it("OpenAPI", async () => {
@@ -47,14 +47,14 @@ describe("Nucleoid API", () => {
       .send({ name: "ITEM-1", barcode: "BARCODE-1" });
     deepEqual(res1.body, {
       barcode: "BARCODE-1",
-      id: "item0",
+      id: "item1",
       name: "ITEM-1",
     });
 
-    const res2 = await request(app).get("/api/items/item0").send();
+    const res2 = await request(app).get("/api/items/item1").send();
     deepEqual(res2.body, {
       barcode: "BARCODE-1",
-      id: "item0",
+      id: "item1",
       name: "ITEM-1",
     });
 
@@ -92,14 +92,14 @@ describe("Nucleoid API", () => {
 
     const res2 = await request(app).post("/items").send({ name: "ITEM-1" });
     deepEqual(res2.body, {
-      id: "item0",
+      id: "item1",
       name: "ITEM-1",
     });
 
     const res3 = await request(app).get("/items?name=ITEM-1").send();
     deepEqual(res3.body, [
       {
-        id: "item0",
+        id: "item1",
         name: "ITEM-1",
       },
     ]);

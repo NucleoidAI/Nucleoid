@@ -20,15 +20,15 @@ describe("OpenAPI service", () => {
     equal(res2.status, 200);
     deepEqual(res2.body, {
       barcode: "BARCODE-1",
-      id: "item0",
+      id: "item1",
       name: "ITEM-1",
     });
 
-    const res3 = await request(openapi.app()).get("/api/items/item0").send();
+    const res3 = await request(openapi.app()).get("/api/items/item1").send();
     equal(res3.status, 200);
     deepEqual(res3.body, {
       barcode: "BARCODE-1",
-      id: "item0",
+      id: "item1",
       name: "ITEM-1",
     });
 
