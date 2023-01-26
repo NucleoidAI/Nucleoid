@@ -56,7 +56,7 @@ class Item {
 }
 nucleoid.register(Item);
 
-// :+1: Only needed a business logic and :heart:
+// 👍 Only needed a business logic and 💖
 // Create an item with given name and barcode,
 // but the barcode must be unique
 app.post("/items", (req) => {
