@@ -48,22 +48,33 @@ Once installed, you can simply run with Express.js
 const nucleoid = require("nucleoidjs");
 const app = nucleoid();
 
-class User {
-  constructor(name) {
+class Item {
+  constructor(name, barcode) {
     this.name = name;
+    this.barcode = barcode;
   }
 }
-nucleoid.register(User);
+nucleoid.register(Item);
 
-// 👇 This is it!
-app.post("/users", () => {
-  new User("Daphne");
+// :+1: Only needed a business logic and :heart:
+// Create an item with given name and barcode,
+// but the barcode must be unique
+app.post("/items", (req) => {
+  const barcode = req.body.barcode;
+
+  const check = Item.find((i) => i.barcode === barcode);
+
+  if (check) {
+    throw "DUPLICATE_BARCODE";
+  }
+
+  return new Item(name, barcode);
 });
 
 app.listen(3000);
 ```
 
-> :bulb: **This is pretty much it, thanks to [Nucleoid runtime](https://nucleoid.com/docs/runtime/), only with this :point_up_2:, you successfully persisted your first object without external database.**
+> :bulb: **This is pretty much it, thanks to [Nucleoid runtime](https://nucleoid.com/docs/runtime/), only with this :point_up_2:, you run your business logic and successfully persisted your object without external database.**
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
 
