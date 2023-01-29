@@ -96,9 +96,10 @@ Nucleoid IDE is a web interface that helps to run very same npm package with Ope
 
 [Go to Nucleoid IDE](https://nucleoid.com/ide/)
 
-![Nucleoid IDE 1](https://cdn.nucleoid.com/media/screenshot-1.png)
-
-![Nucleoid IDE 2](https://cdn.nucleoid.com/media/screenshot-2.png)
+<p align="center">
+  <img src="https://cdn.nucleoid.com/media/screenshot-1.png" alt="Nucleoid IDE Screenshot 1" width="650"/>
+  <img src="https://cdn.nucleoid.com/media/screenshot-2.png" alt="Nucleoid IDE Screenshot 2" width="650"/>
+</p>
 
 <br/>
 
