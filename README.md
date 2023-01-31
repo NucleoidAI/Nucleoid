@@ -20,7 +20,7 @@
 
 <br/>
 
-Nucleoid uses symbolic (logic) AI in the runtime that tracks given statements in JavaScript and creates relationships between variables, objects, and functions etc. in the graph. So, as writing just like any other codes in Node.js, the runtime translates your business logic to fully working application by managing the JS state as well as stores in the built-in data store, so that your application doesn't require external database or anything else.
+Nucleoid uses symbolic (logic-based) AI in the runtime that tracks given statements in JavaScript and creates relationships between variables, objects, and functions etc. in the graph. So, as writing just like any other codes in Node.js, the runtime translates your business logic to fully working application by managing the JS state as well as stores in the built-in data store, so that your application doesn't require external database or anything else.
 
 <p align="center">
   <img src=".github/media/graph.gif" width="450" alt="Graph Animation"/>
