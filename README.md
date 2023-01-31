@@ -30,7 +30,7 @@ Nucleoid uses symbolic (logic) AI in the runtime that tracks given statements in
 
 I. Write your business logic in JavaScript (TypeScript support coming soon)
 
-II. Nucleoid runtime renders your codes with the AI engine
+II. Nucleoid runtime renders your codes
 
 III. Creates APIs with the built-in datastore
 
@@ -109,7 +109,7 @@ This is the comparation our sample order app in Nucleoid IDE against MySQL and P
 
 https://nucleoid.com/ide/sample
 
-<img src=".github/media/benchmark.png" alt="Benchmark" width="550"/>
+<img src="https://cdn.nucleoid.com/media/benchmark.png" alt="Benchmark" width="550"/>
 
 > Performance benchmark happened in t2.micro of AWS EC2 instance and both databases had dedicated server with <u>no indexes and default configurations</u>.
 
