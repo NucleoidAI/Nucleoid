@@ -20,7 +20,7 @@
 
 <br/>
 
-Nucleoid uses symbolic (logic-based) AI in the runtime that tracks given statements in JavaScript and creates relationships between variables, objects, and functions etc. in the graph. So, as writing just like any other codes in Node.js, the runtime translates your business logic to fully working application by managing the JS state as well as stores in the built-in data store, so that your application doesn't require external database or anything else.
+Nucleoid uses symbolic (logic-based) AI in the runtime that tracks given statements in JavaScript and creates relationships between variables, objects, and functions etc. in the graph. So, as writing just like any other codes in Node.js, the runtime translates your business logic to fully working application by managing the JS state as well as storing in the built-in data store, so that your application doesn't require external database or anything else.
 
 <p align="center">
   <img src=".github/media/graph.gif" width="450" alt="Graph Animation"/>
@@ -111,11 +111,11 @@ https://nucleoid.com/ide/sample
 
 <img src="https://cdn.nucleoid.com/media/benchmark.png" alt="Benchmark" width="550"/>
 
-> Performance benchmark happened in t2.micro of AWS EC2 instance and both databases had dedicated server with <u>no indexes and default configurations</u>.
+> Performance benchmark happened in t2.micro of AWS EC2 instance and both databases had dedicated servers with <u>no indexes and default configurations</u>.
 
 https://github.com/NucleoidJS/benchmark
 
-This does not necessary mean Nucleoid runtime is faster than MySQL or Postgres, instead databases require constant maintenance by DBA teams with indexing, caching, purging etc. however, Nucleoid tries to solve this problem with managing logic and data internally. As seen in the chart, for applications with average complexity, Nucleoid's performance is close to linear because of on-chain data store as well as in-memory computing model.
+This does not necessary mean Nucleoid runtime is faster than MySQL or Postgres, instead databases require constant maintenance by DBA teams with indexing, caching, purging etc. however, Nucleoid tries to solve this problem with managing logic and data internally. As seen in the chart, for applications with average complexity, Nucleoid's performance is close to linear because of on-chain data store, in-memory computing model as well as limiting the IO process.
 
 <br/>
 
