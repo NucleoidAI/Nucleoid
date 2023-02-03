@@ -169,8 +169,9 @@ function process(statements, prior) {
             }
           }
 
+          let list = statement.graph(instruction.scope);
+
           if (declarative) {
-            let list = statement.graph(instruction.scope);
             if (list) {
               list.forEach((e) => {
                 if (graph[e].previous[statement.key] !== undefined) {
