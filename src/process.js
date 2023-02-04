@@ -26,7 +26,10 @@ setImmediate(() => {
       declarative: !!details.c,
       cacheOnly: true,
     };
-    runtime.process(details.s, options);
+
+    if (!details.e) {
+      runtime.process(details.s, options);
+    }
 
     if (details.x) {
       details.x.map((exec) => state.run(null, exec));

@@ -167,7 +167,7 @@ function load({ api, types, prefix = "" }) {
             `const scope = { params: req.params, query: req.query, body: req.body };` +
             `const { result, error } = nucleoid.run(${action}, scope, { details: true });` +
             `if (!result) res.status(404).end();` +
-            `else if (error) res.status(400).json(result);` +
+            `else if (error) res.status(400).json({ error: result });` +
             `else res.status(200).json(result);` +
             `}`
         );

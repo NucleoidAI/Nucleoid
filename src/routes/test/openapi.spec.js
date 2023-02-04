@@ -36,7 +36,7 @@ describe("OpenAPI service", () => {
       .post("/api/items")
       .send({ barcode: "BARCODE-1" });
     equal(res4.status, 400);
-    equal(res4.body, "INVALID_NAME");
+    deepEqual(res4.body, { error: "INVALID_NAME" });
 
     const res5 = await request(openapi.app())
       .get("/api/items/invalid_item")
