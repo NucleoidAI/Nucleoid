@@ -11,7 +11,10 @@ router.get("/graph", (req, res) => {
     if (node.id && node.key) {
       result[node.key] = node;
 
-      const tmp = { id: node.id };
+      const tmp = {
+        id: node.id,
+        type: node.constructor.name,
+      };
 
       for (const prop in node) {
         const object = node[prop];
