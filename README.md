@@ -60,6 +60,7 @@ nucleoid.register(Item);
 // "Create an item with given name and barcode,
 // but the barcode must be unique"
 app.post("/items", (req) => {
+  const name = req.body.name;
   const barcode = req.body.barcode;
 
   const check = Item.find((i) => i.barcode === barcode);
@@ -83,6 +84,10 @@ Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-star
 ### Under the hood: Declarative Runtime Environment
 
 Nucleoid is an implementation of symbolic AI for declarative (logic) programming at the runtime. As mentioned, the declarative runtime environment manages JavaScript state and stores each transaction in the built-in data store by declaratively rerendering JavaScript statements and building the knowledge graph (base) as well as an execution plan.
+
+<p align="center">
+  <img src="https://cdn.nucleoid.com/media/logical-diagram.png" alt="Logical Diagram"/>
+</p>
 
 The declarative runtime isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail. In this paradigm, there is no segregation regarding what data is or not, instead approaches how data (declarative statement) is related with others so that any type of data including business rules can be added without requiring any additional actions such as compiling, configuring, restarting as a result of plasticity. This approach also opens possibilities of storing data in the same box with the programming runtime.
 
