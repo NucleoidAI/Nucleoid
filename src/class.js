@@ -1,8 +1,8 @@
 const state = require("./state");
 const Node = require("./node");
-const $VAR = require("./lang/$nuc/$variable");
 const $EXP = require("./lang/$nuc/$expression");
 const graph = require("./graph");
+const $ALIAS = require("./lang/$nuc/$alias");
 
 class CLASS extends Node {
   constructor() {
@@ -26,7 +26,8 @@ class CLASS extends Node {
       list.push(context.statement);
 
       context = $EXP("[]");
-      list.push($VAR(this.name.substring(1), context.statement));
+      const alias = $ALIAS(this, this.name.substring(1), context.statement);
+      list.push(alias);
     } else {
       this.sequence = graph[this.name].sequence;
     }
