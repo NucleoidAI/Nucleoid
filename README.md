@@ -7,12 +7,12 @@
   <a href="https://www.npmjs.com/package/nucleoidjs">
     <img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="NPM" />
   </a>
-  <a href="https://discord.com/invite/eWXFCCuU5y">
+  <a href="https://discord.gg/wN49SNssUw">
     <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" />
   </a>
 </p>
 
-[![Banner](.github/media/banner.gif)](http://nucleoid.com/)
+![Banner](.github/media/banner.gif)
 
 <p align="center">
   AI-managed Low-code Framework for Node.js
