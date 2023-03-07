@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const OpenAPI = require("express-openapi");
 const config = require("../config");
 const fs = require("fs");
@@ -21,6 +22,7 @@ function initialize(app) {
 
     _app = express();
     _app.use(express.json());
+    _app.use(cors());
   }
 }
 
