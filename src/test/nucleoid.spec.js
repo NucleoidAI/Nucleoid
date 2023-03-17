@@ -2075,7 +2075,7 @@ describe("Nucleoid", () => {
     });
 
     it("runs block statement of class before initialization", () => {
-      nucleoid.run("class Stock { }"); //Stock
+      nucleoid.run("class Stock { }");
       nucleoid.run(
         "{ let change = $Stock.before * 4 / 100 ; $Stock.after = $Stock.before + change }"
       );
