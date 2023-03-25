@@ -15,6 +15,8 @@ function start(options = {}) {
   if (options.terminal !== false && options.test !== false) {
     terminal.listen(options.port);
   }
+
+  console.log("Nucleoid runtime started");
 }
 
 function register(fn) {

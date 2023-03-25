@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-
-const fs = require("fs");
 require("yargs")
   .scriptName("nucleoid")
   .command({
@@ -23,22 +21,7 @@ require("yargs")
         .option("port", {
           describe: "Set port number",
         }),
-    handler: (argv) => {
-      if (argv.clear) {
-        const path = `${require("os").homedir()}/.nuc/data`;
-        fs.rmSync(path, { recursive: true, force: true });
-        fs.mkdirSync(path, { recursive: true });
-      }
-
-      const nucleoid = require("./index");
-      nucleoid.start();
-      console.log("Nucleoid runtime started");
-
-      if (argv.cluster) {
-        const Process = require("./src/cluster/process");
-        nucleoid.register(Process);
-      }
-    },
+    handler: () => require("./server"),
   })
   .command({
     command: "clear",

@@ -4,7 +4,7 @@ const runtime = require("./runtime");
 const state = require("./state");
 const config = require("./config");
 
-const id = argv.id || "main";
+const id = argv.id || "default";
 
 let _options = {
   id,
@@ -18,8 +18,6 @@ datastore.init({ id, path: config.path.data });
 
 setImmediate(() => {
   if (_options.test) return;
-
-  const singleton = !argv.id;
 
   datastore.read().forEach((details) => {
     const options = {
@@ -35,24 +33,6 @@ setImmediate(() => {
       details.x.map((exec) => state.run(null, exec));
     }
   });
-
-  if (!singleton) {
-    process.on("message", (message) => {
-      const config = { details: true };
-      let details = runtime.process(message, config);
-      process.send(
-        JSON.stringify({
-          r: details.result,
-          d: details.date,
-          t: details.time,
-          e: details.error,
-          m: details.messages,
-          v: details.events,
-          h: details.hash,
-        })
-      );
-    });
-  }
 });
 
 function options(options) {

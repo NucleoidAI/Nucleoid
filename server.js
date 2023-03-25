@@ -1,23 +1,17 @@
-const express = require("express");
-const cors = require("cors");
-const service = require("./service");
-const logs = require("./src/routes/logs");
-const metrics = require("./src/routes/metrics");
+const fs = require("fs");
 const { argv } = require("yargs");
 
-const terminal = express();
-terminal.use(express.json());
-terminal.use(express.text({ type: "*/*" }));
-terminal.use(cors());
+if (argv.clear) {
+  const path = `${require("os").homedir()}/.nuc/data`;
+  fs.rmSync(path, { recursive: true, force: true });
+  fs.mkdirSync(path, { recursive: true });
+}
 
-service.start("main");
+const nucleoid = require("./index");
 
-terminal.use(logs);
-terminal.use(metrics);
+nucleoid.start();
 
-terminal.post("/", (req, res) => service.accept(req.body, req, res));
-terminal.all("*", (req, res) => res.status(404).end());
-// eslint-disable-next-line no-unused-vars
-terminal.use((err, req, res, next) => res.status(500).send(err.stack));
-
-terminal.listen(argv.port || 8448);
+if (argv.cluster) {
+  const process = require("./src/cluster/process");
+  nucleoid.register(process);
+}
