@@ -3,7 +3,7 @@ const cors = require("cors");
 const fs = require("fs");
 const context = require("./libs/context");
 const openapi = require("./libs/openapi");
-const nucleoid = require("../index");
+const nucleoid = require("./nucleoid");
 
 function app(options) {
   const app = express();

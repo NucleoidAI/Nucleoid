@@ -1,4 +1,4 @@
-const nucleoid = require("../../index");
+const nucleoid = require("../nucleoid");
 const Process = require("./process");
 const config = require("../config");
 const parser = require("../libs/parser");

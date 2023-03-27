@@ -1,7 +1,7 @@
 let nucleoid;
 
 setImmediate(() => {
-  nucleoid = require("../../index");
+  nucleoid = require("../nucleoid");
 });
 
 let _context = [];

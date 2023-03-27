@@ -1,6 +1,6 @@
 const test = require("../libs/test");
 const { equal, notEqual, deepEqual, throws } = require("assert");
-const nucleoid = require("../../index");
+const nucleoid = require("../nucleoid");
 const { state } = require("../state");
 const graph = require("../graph");
 

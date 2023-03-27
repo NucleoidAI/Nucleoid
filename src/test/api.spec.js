@@ -5,7 +5,7 @@ const nucleoid = require("../../index");
 const openapi = require("../libs/openapi");
 const _ = require("lodash");
 
-const options = { terminal: false };
+const options = { terminal: false, test: true };
 
 describe("Nucleoid API", () => {
   beforeEach(() => test.clear());

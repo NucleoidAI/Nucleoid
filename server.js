@@ -7,7 +7,7 @@ if (argv.clear) {
   fs.mkdirSync(path, { recursive: true });
 }
 
-const nucleoid = require("./index");
+const nucleoid = require("./src/nucleoid");
 
 nucleoid.start();
 
