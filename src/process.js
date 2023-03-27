@@ -3,8 +3,27 @@ const { argv } = require("yargs");
 const runtime = require("./runtime");
 const state = require("./state");
 const config = require("./config");
+const lockfile = require("lockfile");
+const fs = require("fs");
+const uuid = require("uuid").v4;
 
-const id = argv.id || "default";
+let id = argv.id;
+
+if (!id) {
+  try {
+    id = fs.readFileSync(`${config.path.root}/default`, "utf8").trim();
+  } catch (err) {
+    id = uuid();
+    fs.writeFileSync(`${config.path.root}/default`, id);
+  }
+}
+
+try {
+  lockfile.lockSync(`${config.path.root}/${id}.lock`);
+} catch (e) {
+  console.error("Another Nucleoid process is already running");
+  process.exit(1);
+}
 
 let _options = {
   id,

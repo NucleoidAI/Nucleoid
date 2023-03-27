@@ -1,13 +1,20 @@
 const fs = require("fs");
 const home = require("os").homedir();
 
+const root = `${home}/.nuc`;
+
 const config = {
   path: {
-    data: `${home}/.nuc/data`,
-    openapi: `${home}/.nuc/openapi`,
-    handlers: `${home}/.nuc/handlers`,
+    root,
+    data: `${root}/data`,
+    openapi: `${root}/openapi`,
+    handlers: `${root}/handlers`,
   },
 };
+
+if (!fs.existsSync(config.path.root)) {
+  fs.mkdirSync(config.path.root, { recursive: true });
+}
 
 if (!fs.existsSync(config.path.data)) {
   fs.mkdirSync(config.path.data, { recursive: true });
