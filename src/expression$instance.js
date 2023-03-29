@@ -1,6 +1,6 @@
 const EXPRESSION = require("./expression");
-const Instance = require("./utils/instance");
-const Id = require("./utils/identifier");
+const Instance = require("./lib/instance");
+const Id = require("./lib/identifier");
 
 class EXPRESSION$INSTANCE extends EXPRESSION {
   run(scope) {

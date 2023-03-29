@@ -1,8 +1,8 @@
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const $INSTANCE = require("../$nuc/$instance");
 const $ASSIGNMENT = require("../$nuc/$assignment");
 const $EXP = require("../$nuc/$expression");
-const Id = require("../../utils/identifier");
+const Id = require("../../lib/identifier");
 
 function JS$ASSIGNMENT(string, offset) {
   let context = Token.next(string, offset);

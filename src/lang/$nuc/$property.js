@@ -6,7 +6,7 @@ const PROPERTY = require("../../property");
 const OBJECT$CLASS = require("../../object$class");
 const REFERENCE = require("../../reference");
 const PROPERTY$REFERENCE = require("../../property$reference");
-const Local = require("../../utils/local");
+const Local = require("../../lib/local");
 const FUNCTION = require("../../function");
 
 function construct(object, name, value) {

@@ -1,5 +1,5 @@
 const state = require("./state");
-const Local = require("./utils/local");
+const Local = require("./lib/local");
 
 class LET {
   constructor(name, value) {

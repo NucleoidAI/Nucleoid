@@ -1,4 +1,4 @@
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const $THROW = require("../$nuc/$throw");
 
 function JS$THROW(string, offset) {

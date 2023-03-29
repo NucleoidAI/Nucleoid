@@ -1,6 +1,6 @@
 const state = require("./state");
 const Node = require("./node");
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 
 class PROPERTY extends Node {
   before(scope) {

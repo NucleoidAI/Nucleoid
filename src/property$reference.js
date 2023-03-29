@@ -1,5 +1,5 @@
 const PROPERTY = require("./property");
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 
 class PROPERTY$REFERENCE extends PROPERTY {
   constructor() {

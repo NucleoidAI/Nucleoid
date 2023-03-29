@@ -1,4 +1,4 @@
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const JS$VARIABLE = require("./js$variable");
 const JS$ASSIGNMENT = require("./js$assignment");
 const JS$BLOCK = require("./js$block");

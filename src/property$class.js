@@ -1,8 +1,8 @@
 const Node = require("./node");
 const PROPERTY$INSTANCE = require("./property$instance");
 const graph = require("./graph");
-const Id = require("./utils/identifier");
-const Instance = require("./utils/instance");
+const Id = require("./lib/identifier");
+const Instance = require("./lib/instance");
 
 class PROPERTY$CLASS extends Node {
   before() {

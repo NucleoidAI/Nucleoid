@@ -2,7 +2,7 @@ const Node = require("./node");
 const BLOCK$INSTANCE = require("./block$instance");
 const Instruction = require("./instruction");
 const graph = require("./graph");
-const Instance = require("./utils/instance");
+const Instance = require("./lib/instance");
 
 class BLOCK$CLASS extends Node {
   constructor() {

@@ -1,6 +1,6 @@
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 const EXPRESSION = require("./expression");
-const Local = require("./utils/local");
+const Local = require("./lib/local");
 
 class REFERENCE extends EXPRESSION {
   before() {}

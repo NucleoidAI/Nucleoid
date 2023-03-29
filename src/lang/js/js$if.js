@@ -1,4 +1,4 @@
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const $EXP = require("../$nuc/$expression");
 const $BLOCK = require("../$nuc/$block");
 const $IF = require("../$nuc/$if");

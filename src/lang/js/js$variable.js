@@ -1,5 +1,5 @@
 const $VAR = require("../$nuc/$variable");
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const $INSTANCE = require("../$nuc/$instance");
 const $EXP = require("../$nuc/$expression");
 

@@ -1,6 +1,6 @@
 const state = require("./state");
 const Node = require("./node");
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 const $EXP = require("./lang/$nuc/$expression");
 const Instruction = require("./instruction");
 const LET = require("./let");

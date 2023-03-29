@@ -3,7 +3,7 @@ const graph = require("../../graph");
 const OBJECT = require("../../object");
 const OBJECT$CLASS = require("../../object$class");
 const CLASS = require("../../class");
-const Local = require("../../utils/local");
+const Local = require("../../lib/local");
 const $LET = require("./$let");
 
 function construct(cls, name, object, args) {

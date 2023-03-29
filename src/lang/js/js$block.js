@@ -1,4 +1,4 @@
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const JS = require("./js");
 const $BLOCK = require("../$nuc/$block");
 

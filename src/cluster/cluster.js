@@ -1,7 +1,7 @@
 const nucleoid = require("../nucleoid");
 const Process = require("./process");
 const config = require("../config");
-const parser = require("../libs/parser");
+const parser = require("../lib/parser");
 const { post } = require("axios").default;
 
 let cluster;

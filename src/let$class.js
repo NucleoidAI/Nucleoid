@@ -1,5 +1,5 @@
 const LET$INSTANCE = require("./let$instance");
-const Instance = require("./utils/instance");
+const Instance = require("./lib/instance");
 
 class LET$CLASS {
   before() {}

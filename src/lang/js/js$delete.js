@@ -1,4 +1,4 @@
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const $DELETE = require("../$nuc/$delete");
 
 function JS$DELETE(string, offset) {

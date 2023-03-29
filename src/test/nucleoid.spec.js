@@ -1,4 +1,4 @@
-const test = require("../libs/test");
+const test = require("../lib/test");
 const { equal, notEqual, deepEqual, throws } = require("assert");
 const nucleoid = require("../nucleoid");
 const { state } = require("../state");

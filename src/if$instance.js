@@ -1,6 +1,6 @@
 const IF = require("./if");
 const EXPRESSION = require("./expression");
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 
 class IF$INSTANCE extends IF {
   before() {

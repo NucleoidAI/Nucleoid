@@ -1,4 +1,4 @@
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 const OBJECT = require("./object");
 const graph = require("./graph");
 

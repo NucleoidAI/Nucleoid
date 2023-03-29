@@ -1,8 +1,8 @@
 const Node = require("./node");
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 const graph = require("./graph");
 const OBJECT$INSTANCE = require("./object$instance");
-const Instance = require("./utils/instance");
+const Instance = require("./lib/instance");
 
 class OBJECT$CLASS extends Node {
   before() {

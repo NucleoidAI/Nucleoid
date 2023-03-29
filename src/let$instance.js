@@ -1,6 +1,6 @@
 const LET = require("./let");
 const EXPRESSION = require("./expression");
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 const BREAK = require("./break");
 const state = require("./state");
 

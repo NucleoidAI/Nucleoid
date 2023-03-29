@@ -1,4 +1,4 @@
-const test = require("../../libs/test");
+const test = require("../../lib/test");
 const terminal = require("../../terminal");
 const request = require("supertest");
 const { equal, notEqual } = require("assert");

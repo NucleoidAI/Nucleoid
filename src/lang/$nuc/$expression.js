@@ -1,10 +1,10 @@
-const Token = require("../../utils/token");
+const Token = require("../../lib/token");
 const EXPRESSION = require("../../expression");
 const $ = require("./$");
 const graph = require("../../graph");
 const REFERENCE = require("../../reference");
 const EXPRESSION$INSTANCE = require("../../expression$instance");
-const Local = require("../../utils/local");
+const Local = require("../../lib/local");
 
 function construct(string, offset) {
   offset = offset || 0;

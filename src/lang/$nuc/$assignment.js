@@ -1,9 +1,9 @@
 const $PROPERTY = require("./$property");
 const $VARIABLE = require("./$variable");
-const Local = require("../../utils/local");
+const Local = require("../../lib/local");
 const $LET = require("./$let");
 const $ = require("./$");
-const Id = require("../../utils/identifier");
+const Id = require("../../lib/identifier");
 
 function construct(left, right) {
   let statement = new $ASSIGNMENT();

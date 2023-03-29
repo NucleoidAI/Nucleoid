@@ -1,6 +1,6 @@
 const PROPERTY = require("./property");
 const EXPRESSION = require("./expression");
-const Id = require("./utils/identifier");
+const Id = require("./lib/identifier");
 const graph = require("./graph");
 
 class PROPERTY$INSTANCE extends PROPERTY {

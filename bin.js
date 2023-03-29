@@ -28,7 +28,7 @@ require("yargs")
     desc: "Clear data",
     builder: () => {},
     handler: () => {
-      require("./src/libs/data").clear();
+      require("./src/lib/data").clear();
       console.log("Data is cleared");
     },
   })

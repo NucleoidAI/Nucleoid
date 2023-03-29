@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const openapi = require("../libs/openapi");
-const context = require("../libs/context");
+const openapi = require("../lib/openapi");
+const context = require("../lib/context");
 
 router.get("/openapi", (req, res) => res.json(openapi.status()));
 router.post("/openapi", (req, res) => {

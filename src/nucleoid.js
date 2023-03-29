@@ -1,6 +1,6 @@
 const runtime = require("./runtime");
-const parser = require("./libs/parser");
-const context = require("./libs/context");
+const parser = require("./lib/parser");
+const context = require("./lib/context");
 const terminal = require("./terminal");
 const process = require("./process");
 

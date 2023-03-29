@@ -1,9 +1,9 @@
-const test = require("../../libs/test");
+const test = require("../../lib/test");
 const terminal = require("../../terminal");
 const request = require("supertest");
 const { equal, deepEqual } = require("assert");
 const data = require("./data.json");
-const openapi = require("../../libs/openapi");
+const openapi = require("../../lib/openapi");
 
 describe("OpenAPI service", () => {
   beforeEach(() => test.clear());

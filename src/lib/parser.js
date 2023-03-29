@@ -1,4 +1,4 @@
-const Token = require("../utils/token");
+const Token = require("./token");
 
 const fn = (string) => {
   let args;

@@ -1,8 +1,8 @@
 const state = require("./state");
 const graph = require("./graph");
-const Local = require("./utils/local");
-const Id = require("./utils/identifier");
-const Token = require("./utils/token");
+const Local = require("./lib/local");
+const Id = require("./lib/identifier");
+const Token = require("./lib/token");
 const argv = require("yargs").argv;
 
 let Node;

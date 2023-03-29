@@ -7,8 +7,8 @@ const OBJECT = require("../../object");
 const LET$OBJECT = require("../../let$object");
 const EXPRESSION = require("../../expression");
 const REFERENCE = require("../../reference");
-const Local = require("../../utils/local");
-const Id = require("../../utils/identifier");
+const Local = require("../../lib/local");
+const Id = require("../../lib/identifier");
 
 function construct(name, value, constant) {
   let statement = new $LET();

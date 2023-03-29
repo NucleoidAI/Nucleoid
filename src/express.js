@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
-const context = require("./libs/context");
-const openapi = require("./libs/openapi");
+const context = require("./lib/context");
+const openapi = require("./lib/openapi");
 const nucleoid = require("./nucleoid");
 
 function app(options) {
