@@ -3,7 +3,6 @@ const { argv } = require("yargs");
 const runtime = require("./runtime");
 const state = require("./state");
 const config = require("./config");
-const lockfile = require("lockfile");
 const fs = require("fs");
 const uuid = require("uuid").v4;
 
@@ -35,13 +34,6 @@ function init(options) {
       id = uuid();
       fs.writeFileSync(`${config.path.root}/default`, id);
     }
-  }
-
-  try {
-    lockfile.lockSync(`${config.path.root}/${id}.lock`);
-  } catch (e) {
-    console.error("Another Nucleoid process is already running");
-    process.exit(1);
   }
 
   datastore.init({ id, path: config.path.data });
