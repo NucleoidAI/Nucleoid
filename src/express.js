@@ -22,7 +22,7 @@ function app(options) {
     put: (string, fn) => app.put(string, (req, res) => accept(req, res, fn)),
     delete: (string, fn) =>
       app.delete(string, (req, res) => accept(req, res, fn)),
-    listen: (port = 0, fn) => {
+    listen: (port = 3000, fn) => {
       app.all("*", (req, res) => res.status(404).end());
       // eslint-disable-next-line no-unused-vars
       app.use((err, req, res, next) => res.status(500).send(err.stack));

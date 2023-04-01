@@ -3,13 +3,14 @@ const parser = require("./lib/parser");
 const context = require("./lib/context");
 const terminal = require("./terminal");
 const process = require("./process");
+const config = require("./config");
 
 function start(options = {}) {
   options = process.init(options);
   setImmediate(() => context.run());
 
   if (options.terminal !== false && options.test !== false) {
-    terminal.listen(options.port);
+    terminal.listen(options.port || config.port);
   }
 }
 

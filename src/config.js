@@ -1,4 +1,5 @@
 const fs = require("fs");
+const { argv } = require("yargs");
 const home = require("os").homedir();
 
 const root = `${home}/.nuc`;
@@ -8,7 +9,11 @@ const config = {
     root,
     data: `${root}/data`,
     openapi: `${root}/openapi`,
-    handlers: `${root}/handlers`,
+    extensions: `${root}/extensions`,
+  },
+  port: {
+    terminal: argv.port || 8448,
+    cluster: 4000,
   },
 };
 
@@ -24,8 +29,8 @@ if (!fs.existsSync(config.path.openapi)) {
   fs.mkdirSync(config.path.openapi, { recursive: true });
 }
 
-if (!fs.existsSync(config.path.handlers)) {
-  fs.mkdirSync(config.path.handlers, { recursive: true });
+if (!fs.existsSync(config.path.extensions)) {
+  fs.mkdirSync(config.path.extensions, { recursive: true });
 }
 
 module.exports = config;

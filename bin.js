@@ -13,7 +13,7 @@ require("yargs")
           describe: "Clear data before starting the runtime",
         })
         .option("cluster", {
-          describe: "Enable cluster configuration",
+          describe: "Enable cluster mode",
         })
         .option("cache-only", {
           describe: "Start runtime without persistence unit",

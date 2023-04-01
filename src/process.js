@@ -10,7 +10,6 @@ let _options = {
   declarative: false,
   details: false,
   cacheOnly: argv.cacheOnly || false,
-  port: argv.port || 8448,
 };
 
 function init(options) {
