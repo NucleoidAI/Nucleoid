@@ -4,7 +4,8 @@ const home = require("os").homedir();
 
 const root = `${home}/.nuc`;
 
-const config = {
+// `config` source sequence: options, arguments, config.json and defaults
+let config = {
   path: {
     root,
     data: `${root}/data`,
@@ -12,10 +13,23 @@ const config = {
     extensions: `${root}/extensions`,
   },
   port: {
-    terminal: argv.port || 8448,
+    terminal: 8448,
     cluster: 4000,
   },
 };
+
+try {
+  const json = require(`${config.path.root}/config.json`);
+  config = { ...config, ...json };
+} catch (err) {} // eslint-disable-line
+
+if (argv.terminalPort) {
+  config.port.terminal = argv.terminalPort;
+}
+
+if (argv.clusterPort) {
+  config.port.cluster = argv.clusterPort;
+}
 
 if (!fs.existsSync(config.path.root)) {
   fs.mkdirSync(config.path.root, { recursive: true });

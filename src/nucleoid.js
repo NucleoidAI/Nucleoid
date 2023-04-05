@@ -10,7 +10,7 @@ function start(options = {}) {
   setImmediate(() => context.run());
 
   if (options.terminal !== false && options.test !== false) {
-    terminal.listen(options.port || config.port);
+    terminal.listen(options.port || config.port.terminal);
   }
 }
 

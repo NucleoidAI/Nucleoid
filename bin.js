@@ -18,8 +18,11 @@ require("yargs")
         .option("cache-only", {
           describe: "Start runtime without persistence unit",
         })
-        .option("port", {
-          describe: "Set port number",
+        .option("terminal-port", {
+          describe: "Set terminal port number",
+        })
+        .option("cluster-port", {
+          describe: "Set cluster port number",
         }),
     handler: () => require("./server"),
   })
