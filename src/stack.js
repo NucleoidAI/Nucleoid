@@ -10,13 +10,9 @@ const EXPRESSION = require("./expression");
 const state = require("./state");
 const RETURN = require("./return");
 
-let runtime;
-
-setImmediate(() => (runtime = require("./runtime")));
-
-function process(statements, prior) {
+function process(statements, prior, options = {}) {
   const root = new Scope(prior);
-  const { declarative } = runtime.options();
+  const { declarative } = options;
 
   let instructions = statements.map(
     (statement) => new Instruction(root, statement, true, true, false)
@@ -33,7 +29,7 @@ function process(statements, prior) {
 
     if (statement instanceof RETURN) {
       let scope = instruction.scope;
-      return process(statement.statements, scope);
+      return process(statement.statements, scope, options);
     } else if (statement instanceof BREAK) {
       let inst = instructions[0];
 

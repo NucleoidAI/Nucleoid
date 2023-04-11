@@ -32,12 +32,15 @@ function app(options) {
     },
     context: (path) => {
       const file = fs.readFileSync(path, "utf8");
-      context.load(JSON.parse(file));
+      const arr = JSON.parse(file);
+      context.load(
+        arr.map((item) => ({ ...item, options: { declarative: true } }))
+      );
     },
     openapi: (path) => {
       try {
         const file = fs.readFileSync(path, "utf8");
-        openapi.initialize(app);
+        openapi.init(app);
         openapi.load(JSON.parse(file));
       } catch (err) {
         throw Error("Problem occurred while opening OpenAPI");

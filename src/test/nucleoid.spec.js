@@ -1,8 +1,6 @@
 const test = require("../lib/test");
 const { equal, notEqual, deepEqual, throws } = require("assert");
 const nucleoid = require("../nucleoid");
-const { state } = require("../state");
-const graph = require("../graph");
 
 const validate = (error, expectedError, expectedMessage) => {
   return error instanceof expectedError && error.message === expectedMessage;
@@ -13,7 +11,7 @@ describe("Nucleoid", () => {
   beforeEach(() => test.clear());
 
   describe("in declarative mode", () => {
-    const details = { declarative: true, details: true };
+    const details = { details: true };
 
     it("runs statements in the state", () => {
       nucleoid.run("var i = 1 ;");
@@ -2371,14 +2369,6 @@ describe("Nucleoid", () => {
 
   describe("in imperative mode", () => {
     const imperative = { declarative: false };
-
-    beforeEach(() => {
-      for (let property in state) delete state[property];
-      for (let property in graph) delete graph[property];
-
-      state["classes"] = [];
-      graph["classes"] = { name: "classes" };
-    });
 
     it("creates variable assignment", () => {
       nucleoid.run("x = 1", imperative);

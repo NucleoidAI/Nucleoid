@@ -4,8 +4,9 @@ const { equal, deepEqual } = require("assert");
 const nucleoid = require("../../index");
 const openapi = require("../lib/openapi");
 const _ = require("lodash");
+const { v4: uuid } = require("uuid");
 
-const options = { terminal: false, test: true };
+const options = { id: uuid(), test: true };
 
 describe("Nucleoid API", () => {
   beforeEach(() => test.clear());

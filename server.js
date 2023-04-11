@@ -1,15 +1,14 @@
-const fs = require("fs");
 const { argv } = require("yargs");
+const datastore = require("@nucleoidjs/datastore");
+const nucleoid = require("./src/nucleoid");
+const cluster = require("./src/cluster");
 
 if (argv.clear) {
-  const path = `${require("os").homedir()}/.nuc/data`;
-  fs.rmSync(path, { recursive: true, force: true });
+  datastore.clear();
 }
-
-const nucleoid = require("./src/nucleoid");
 
 nucleoid.start();
 
 if (argv.cluster) {
-  require("./src/cluster");
+  cluster.init();
 }

@@ -1,17 +1,17 @@
 const express = require("express");
 const cors = require("cors");
 const OpenAPI = require("express-openapi");
-const config = require("../config");
 const fs = require("fs");
 const swagger = require("swagger-ui-express");
 const uuid = require("uuid").v4;
 const path = require("path");
+const config = require("../config");
 
 let server;
 let started = false;
 let _app = null;
 
-function initialize(app) {
+function init(app) {
   if (app) {
     _app = app;
   } else {
@@ -27,6 +27,7 @@ function initialize(app) {
 
 function load({ api, types, prefix = "" }) {
   const app = _app;
+  const _config = config();
 
   if (!app) {
     throw Error("OpenAPI has not been initialized");
@@ -46,12 +47,12 @@ function load({ api, types, prefix = "" }) {
     const resource = parts.pop() || "index";
     const path = parts.join("/");
 
-    if (!fs.existsSync(`${config.path.openapi}/${tmp}/${path}`))
-      fs.mkdirSync(`${config.path.openapi}/${tmp}/${path}`, {
+    if (!fs.existsSync(`${_config.path}/openapi/${tmp}/${path}`))
+      fs.mkdirSync(`${_config.path}/openapi/${tmp}/${path}`, {
         recursive: true,
       });
 
-    const file = `${config.path.openapi}/${tmp}/${path}/${resource}.js`;
+    const file = `${_config.path}/openapi/${tmp}/${path}/${resource}.js`;
     fs.appendFileSync(
       file,
       `const nucleoid = require("${nucleoidPath}"); module.exports = function () {`
@@ -129,7 +130,7 @@ function load({ api, types, prefix = "" }) {
           },
         ],
       },
-      paths: `${config.path.openapi}/${tmp}`,
+      paths: `${_config.path}/openapi/${tmp}`,
       docsPath: "/openapi.json",
     });
   } catch (err) {
@@ -172,7 +173,7 @@ function status() {
   return { started };
 }
 
-module.exports.initialize = initialize;
+module.exports.init = init;
 module.exports.load = load;
 module.exports.app = app;
 module.exports.start = start;

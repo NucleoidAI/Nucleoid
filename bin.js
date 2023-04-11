@@ -31,7 +31,8 @@ require("yargs")
     desc: "Clear data",
     builder: () => {},
     handler: () => {
-      require("./src/lib/data").clear();
+      const datastore = require("@nucleoidjs/datastore");
+      datastore.clear();
       console.log("Data is cleared");
     },
   })

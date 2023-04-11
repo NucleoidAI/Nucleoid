@@ -5,32 +5,21 @@ const Message = require("./message");
 const Event = require("./event");
 const transaction = require("./transaction");
 const Macro = require("./macro");
-
-let process;
-let _options = {};
-
-setImmediate(() => {
-  process = require("./process");
-});
+const config = require("./config");
 
 module.exports.process = function (statement, options = {}) {
-  if (!process) {
-    console.error("The runtime has not started");
-    require("process").exit(1);
-  }
-
-  _options = { ...process.options(), ...options };
-  const { declarative, cacheOnly, details } = _options;
+  options = { ...config(), ...options };
+  const { declarative, details, cacheOnly } = options;
 
   let before = Date.now();
   let statements, result, error, execs;
 
-  let s = Macro.apply(statement, _options);
+  let s = Macro.apply(statement, options);
 
   try {
-    statements = Statement.compile(s, _options);
+    statements = Statement.compile(s, options);
     transaction.start();
-    result = stack.process(statements, null);
+    result = stack.process(statements, null, options);
     execs = transaction
       .end()
       .filter((t) => t.exec)
@@ -68,8 +57,6 @@ module.exports.process = function (statement, options = {}) {
     });
   }
 
-  _options = {};
-
   if (details) {
     if (result instanceof Error)
       result = `${result.constructor.name}: ${result.message}`;
@@ -91,5 +78,3 @@ module.exports.process = function (statement, options = {}) {
     return result;
   }
 };
-
-module.exports.options = () => _options;
