@@ -30,6 +30,9 @@ function init(config = {}) {
   if (!fs.existsSync(`${_config.path}/openapi`)) {
     fs.mkdirSync(`${_config.path}/openapi`, { recursive: true });
   }
+  if (!fs.existsSync(`${_config.path}/native`)) {
+    fs.mkdirSync(`${_config.path}/native`, { recursive: true });
+  }
 
   if (!fs.existsSync(`${_config.path}/extensions`)) {
     fs.mkdirSync(`${_config.path}/extensions`, { recursive: true });

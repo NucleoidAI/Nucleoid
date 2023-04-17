@@ -138,6 +138,24 @@ function load({ api, types, prefix = "" }) {
     throw err;
   }
 
+  const { native } = _config;
+
+  if (native) {
+    const nucleoid = require("../../");
+    fs.writeFileSync(
+      `${_config.path}/native/index.js`,
+      "let _nucleoid;" +
+        "module.exports = (nucleoid) => (_nucleoid = nucleoid);" +
+        "module.exports.nucleoid = _nucleoid;"
+    );
+    require(`${_config.path}/native/`)(nucleoid);
+
+    for (const route of native.routes) {
+      const native = require(`${_config.path}/native/${route}`);
+      app.use(prefix, native);
+    }
+  }
+
   app.use(
     `${prefix}/`,
     swagger.serve,
