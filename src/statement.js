@@ -1,4 +1,4 @@
-const JS = require("./lang/js/js");
+const JS = require("./lang/js/JS");
 
 function compile(string) {
   return JS.compile(string).statements;

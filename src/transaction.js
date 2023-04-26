@@ -1,4 +1,4 @@
-const REFERENCE = require("./reference");
+const REFERENCE = require("./nuc/REFERENCE");
 
 let list = [];
 let state; // eslint-disable-line no-unused-vars
