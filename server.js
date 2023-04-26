@@ -1,6 +1,6 @@
 const { argv } = require("yargs");
 const datastore = require("@nucleoidjs/datastore");
-const nucleoid = require("./src/nucleoid");
+const nucleoid = require("./");
 const cluster = require("./src/cluster");
 
 if (argv.clear) {

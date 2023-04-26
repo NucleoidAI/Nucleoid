@@ -1,7 +1,7 @@
 const test = require("../lib/test");
 const request = require("supertest");
 const { equal, deepEqual } = require("assert");
-const nucleoid = require("../../index");
+const nucleoid = require("../../");
 const openapi = require("../lib/openapi");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");

@@ -1,6 +1,6 @@
 const test = require("../lib/test");
 const { equal, notEqual, deepEqual, throws } = require("assert");
-const nucleoid = require("../nucleoid");
+const nucleoid = require("../../");
 
 const validate = (error, expectedError, expectedMessage) => {
   return error instanceof expectedError && error.message === expectedMessage;
