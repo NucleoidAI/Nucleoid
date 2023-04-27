@@ -9,10 +9,10 @@ const config = require("./config");
 
 module.exports.process = function (statement, options = {}) {
   options = { ...config(), ...options };
-  const { declarative, details, cacheOnly } = options;
+  const { declarative, details, cacheOnly, skipRead } = options;
 
   let before = Date.now();
-  let statements, result, error, execs;
+  let statements, result, error, adjusts, write;
 
   let s = Macro.apply(statement, options);
 
@@ -20,10 +20,9 @@ module.exports.process = function (statement, options = {}) {
     statements = Statement.compile(s, options);
     transaction.start();
     result = stack.process(statements, null, options);
-    execs = transaction
-      .end()
-      .filter((t) => t.exec)
-      .map((t) => t.exec);
+    const list = transaction.end();
+    adjusts = list.filter((t) => t.adjust).map((t) => t.adjust);
+    write = !!list.length;
   } catch (e) {
     transaction.rollback();
     result = e;
@@ -36,7 +35,6 @@ module.exports.process = function (statement, options = {}) {
   Message.clear();
   Event.clear();
 
-  let hash;
   let date = Date.now();
   let time = date - before;
 
@@ -44,17 +42,20 @@ module.exports.process = function (statement, options = {}) {
     if (result instanceof Error)
       result = `${result.constructor.name}: ${result.message}`;
 
-    hash = datastore.write({
-      s,
-      c: declarative ? true : undefined,
-      t: time,
-      r: result,
-      d: date,
-      e: error,
-      m: messages,
-      v: events,
-      x: execs && execs.length ? execs : undefined,
-    });
+    if (write || !skipRead) {
+      datastore.write({
+        s,
+        c: declarative ? true : undefined,
+        t: time,
+        r: result,
+        d: date,
+        e: error,
+        m: messages,
+        v: events,
+        j: adjusts && adjusts.length ? adjusts : undefined,
+        w: write ? write : undefined,
+      });
+    }
   }
 
   if (details) {
@@ -68,7 +69,6 @@ module.exports.process = function (statement, options = {}) {
       error,
       messages,
       events,
-      hash,
     };
   } else {
     if (error) {

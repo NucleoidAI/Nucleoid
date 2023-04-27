@@ -8,10 +8,15 @@ let defaultConfig = {
   port: {
     terminal: 8448,
     cluster: 4000,
+    openapi: 3000,
   },
   declarative: false,
   details: false,
   cacheOnly: false,
+  data: {
+    encryption: true,
+    skipRead: false,
+  },
 };
 
 let _config = { ...defaultConfig };

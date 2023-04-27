@@ -45,8 +45,9 @@ function register(p1, p2, p3, adjust) {
         value = eval(`state.${variable}=expression`);
       }
 
-      if (adjust)
-        transaction.exec = `state.${variable}=${JSON.stringify(value)}`;
+      if (adjust) {
+        transaction.adjust = `state.${variable}=${JSON.stringify(value)}`;
+      }
 
       state[variable] = value;
       list.push(transaction);
