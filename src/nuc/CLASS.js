@@ -1,6 +1,6 @@
 const state = require("../state");
 const Node = require("./Node");
-const $EXP = require("../lang/$nuc/$expression");
+const $EXP = require("../lang/$nuc/$EXPRESSION");
 const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
 

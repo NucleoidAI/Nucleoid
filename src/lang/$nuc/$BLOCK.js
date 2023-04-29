@@ -8,7 +8,7 @@ const LET = require("../../nuc/LET");
 const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const REFERENCE = require("../../nuc/REFERENCE");
 const $LET = require("./$LET");
-const $EXP = require("./$expression");
+const $EXP = require("./$EXPRESSION");
 
 function construct(statements, skip, args) {
   let statement = new $BLOCK();

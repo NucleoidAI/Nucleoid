@@ -1,7 +1,7 @@
 const Token = require("../../lib/token");
 const $INSTANCE = require("../$nuc/$INSTANCE");
 const $ASSIGNMENT = require("../$nuc/$ASSIGNMENT");
-const $EXP = require("../$nuc/$expression");
+const $EXP = require("../$nuc/$EXPRESSION");
 const Id = require("../../lib/identifier");
 
 function JS$ASSIGNMENT(string, offset) {

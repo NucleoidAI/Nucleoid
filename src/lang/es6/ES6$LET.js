@@ -1,6 +1,6 @@
 const Token = require("../../lib/token");
 const $LET = require("../$nuc/$LET");
-const $EXP = require("../$nuc/$expression");
+const $EXP = require("../$nuc/$EXPRESSION");
 const $INSTANCE = require("../$nuc/$INSTANCE");
 
 function ES6$LET(string, offset, constant) {

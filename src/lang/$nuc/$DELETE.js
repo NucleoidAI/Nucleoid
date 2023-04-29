@@ -6,7 +6,7 @@ const DELETE$VARIABLE = require("../../nuc/DELETE$VARIABLE");
 const DELETE$OBJECT = require("../../nuc/DELETE$OBJECT");
 const OBJECT = require("../../nuc/OBJECT");
 const state = require("../../state");
-const $EXP = require("./$expression");
+const $EXP = require("./$EXPRESSION");
 
 function construct(key) {
   let statement = new $DELETE();
