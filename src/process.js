@@ -25,6 +25,25 @@ function init() {
       }
     });
   });
+
+  try {
+    const {
+      api,
+      types,
+      prefix,
+      port,
+      functions,
+    } = require(`${_config.path}/openapi.json`);
+    context.run(functions);
+    openapi.init();
+    openapi.load({ api, types, prefix });
+    openapi.start(port || _config.port.openapi);
+  } catch (err) {
+    if (err.code !== "MODULE_NOT_FOUND") {
+      console.error("Error loading OpenAPI", err);
+      process.exit(1);
+    }
+  }
 }
 
 module.exports.init = init;
