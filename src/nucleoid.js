@@ -1,18 +1,13 @@
 const runtime = require("./runtime");
 const parser = require("./lib/parser");
 const context = require("./lib/context");
-const terminal = require("./terminal");
 const process = require("./process");
 const _config = require("./config");
 
 function start(config = {}) {
-  const { port, test } = _config.init(config);
+  _config.init(config);
   process.init();
   context.run();
-
-  if (!test) {
-    terminal.listen(port.terminal);
-  }
 }
 
 function register(fn) {

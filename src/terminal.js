@@ -21,8 +21,6 @@ terminal.post("/", (req, res) => {
   res.send(details);
 });
 
-terminal.all("*", (req, res) => res.status(404).end());
-
 // eslint-disable-next-line no-unused-vars
 terminal.use((err, req, res, next) => {
   if (typeof err === "string") {

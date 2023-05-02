@@ -98,7 +98,7 @@ function load({ api, types, prefix = "" }) {
       fs.appendFileSync(
         file,
         `function ${method}(req, res) {` +
-          `const scope = { params: req.params, query: req.query, body: req.body };` +
+          `const scope = { params: req.params, query: req.query, body: req.body, user: req.headers["x-nuc-user"] };` +
           `const { result, error } = nucleoid.run(${action}, scope, { details: true });` +
           `if (!result) res.status(404).end();` +
           `else if (error) res.status(400).json({ error: result });` +
@@ -136,24 +136,6 @@ function load({ api, types, prefix = "" }) {
   } catch (err) {
     console.error(err);
     throw err;
-  }
-
-  const { native } = _config;
-
-  if (native) {
-    const nucleoid = require("../../");
-    fs.writeFileSync(
-      `${_config.path}/native/index.js`,
-      "let _nucleoid;" +
-        "module.exports = (nucleoid) => (_nucleoid = nucleoid);" +
-        "module.exports.nucleoid = _nucleoid;"
-    );
-    require(`${_config.path}/native/`)(nucleoid);
-
-    for (const route of native.routes) {
-      const native = require(`${_config.path}/native/${route}`);
-      app.use(prefix, native);
-    }
   }
 
   app.use(

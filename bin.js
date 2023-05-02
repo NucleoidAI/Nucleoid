@@ -9,7 +9,7 @@ require("yargs")
         .option("id", {
           describe: "Set id for the runtime",
         })
-        .option("clean", {
+        .option("clear", {
           describe: "Clear data before starting the runtime",
         })
         .option("cluster", {

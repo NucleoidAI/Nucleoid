@@ -5,9 +5,10 @@ const axios = require("axios").default;
 
 function init() {
   let extension;
+  const _config = config();
 
   try {
-    extension = require(`${config.path.ext}/cluster.js`);
+    extension = require(`${_config.path}/extensions/cluster.js`);
   } catch (err) {
     console.error("Missing cluster extension");
     process.exit(1);
@@ -18,12 +19,24 @@ function init() {
   cluster.use(cors());
 
   cluster.all("*", async (req, res) => {
-    const { ip, port, path } = extension.apply(req);
+    const {
+      error = true,
+      https,
+      ip,
+      port,
+      path,
+      headers = {},
+    } = extension.apply(req);
+
+    if (error) {
+      return res.status(403).end();
+    }
 
     try {
       const response = await axios({
         method: req.method,
-        url: `http://${ip}:${port}${path}`,
+        url: `${https ? "https" : "http"}://${ip}:${port}${path}`,
+        headers,
         data: req.method !== "GET" ? req.body : undefined,
       });
 
@@ -33,7 +46,7 @@ function init() {
     }
   });
 
-  cluster.listen(config.port.cluster);
+  cluster.listen(_config.port.cluster);
 }
 
 module.exports = { init };

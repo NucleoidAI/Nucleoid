@@ -43,6 +43,11 @@ function init(config = {}) {
     fs.mkdirSync(`${_config.path}/extensions`, { recursive: true });
   }
 
+  fs.writeFileSync(
+    `${_config.path}/nucleoid.js`,
+    "/* eslint-disable */ let _nucleoid; module.exports = (nucleoid) => { if (nucleoid) { _nucleoid = nucleoid; } return _nucleoid; };"
+  );
+
   if (config.test) {
     _config.id = config.id || uuid();
     _config.cacheOnly = true;
