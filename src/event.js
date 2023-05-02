@@ -1,7 +1,7 @@
 let events = [];
 
-function event(name, payload) {
-  events.push({ name, payload: JSON.stringify(payload) });
+function event(name, data) {
+  events.push({ name, data: JSON.stringify(data) });
 }
 
 function list() {

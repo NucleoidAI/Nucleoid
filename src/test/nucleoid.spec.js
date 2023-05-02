@@ -872,14 +872,14 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("number"), 200);
     });
 
-    it("sends message to other Nucleoid instance", () => {
+    it("publishes event", () => {
       nucleoid.run(
-        "class Task { constructor ( ) { message ( '7c6bca38', 'CHECK' ) } }"
+        "class Task { constructor ( ) { event ( 'TASK_CREATED', 'TASK_DATA' ) } }"
       );
 
       let result = nucleoid.run("task1 = new Task ( )", details);
-      equal(result.messages[0].process, "7c6bca38");
-      equal(result.messages[0].payload, '"CHECK"');
+      equal(result.events[0].name, "TASK_CREATED");
+      equal(result.events[0].data, '"TASK_DATA"');
     });
 
     it("rollbacks variable if exception is thrown", () => {

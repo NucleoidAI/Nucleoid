@@ -4,7 +4,6 @@ const state = {
 };
 const _transaction = require("./transaction");
 const _graph = require("./graph");
-const message = require("./message").message; // eslint-disable-line no-unused-vars
 const event = require("./event").event; // eslint-disable-line no-unused-vars
 const _ = require("lodash"); // eslint-disable-line no-unused-vars
 
