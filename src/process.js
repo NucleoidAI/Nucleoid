@@ -29,6 +29,11 @@ function init() {
     const nucleoid = require("../");
     require(`${_config.path}/nucleoid.js`)(nucleoid);
 
+    try {
+      const event = require(`${_config.path}/extensions/event.js`);
+      event.init();
+    } catch (err) {} // eslint-disable-line no-empty
+
     const { native, port, test } = _config;
 
     if (native) {
@@ -50,6 +55,7 @@ function init() {
         prefix,
         port,
         functions,
+        events,
       } = require(`${_config.path}/openapi.json`);
 
       if (functions) {
@@ -57,7 +63,7 @@ function init() {
       }
 
       openapi.init();
-      openapi.load({ api, types, prefix });
+      openapi.load({ api, types, prefix, events });
       openapi.start(port || _config.port.openapi);
     } catch (err) {
       if (err.code !== "MODULE_NOT_FOUND") {

@@ -7,14 +7,14 @@ const config = require("../config");
 router.get("/openapi", (req, res) => res.json(openapi.status()));
 router.post("/openapi", (req, res) => {
   // TODO Change contract to OpenAPI
-  const { api, types, functions, action, port, prefix } = req.body;
+  const { api, types, functions, action, port, prefix, events = [] } = req.body;
   const _config = config();
 
   if (action === "start") {
     context.run(functions);
 
     openapi.init();
-    openapi.load({ api, types, prefix });
+    openapi.load({ api, types, prefix, events });
     openapi.start(port || _config.port.openapi);
   } else if (action === "stop") {
     openapi.stop();

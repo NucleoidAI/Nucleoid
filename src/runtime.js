@@ -5,6 +5,12 @@ const Event = require("./event");
 const transaction = require("./transaction");
 const Macro = require("./macro");
 const config = require("./config");
+let eventExtension;
+
+try {
+  const { path } = config();
+  eventExtension = require(`${path}/extensions/event.js`);
+} catch (err) {} // eslint-disable-line no-empty
 
 module.exports.process = function (statement, options = {}) {
   options = { ...config(), ...options };
@@ -29,8 +35,6 @@ module.exports.process = function (statement, options = {}) {
   }
 
   const events = Event.list();
-  Event.clear();
-
   const date = Date.now();
   const time = date - before;
 
@@ -52,6 +56,12 @@ module.exports.process = function (statement, options = {}) {
       });
     }
   }
+
+  if (eventExtension) {
+    // TODO Disable for restart
+    eventExtension.apply(events);
+  }
+  Event.clear();
 
   if (details) {
     if (result instanceof Error)

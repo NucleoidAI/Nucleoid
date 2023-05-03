@@ -25,7 +25,7 @@ function init(app) {
   }
 }
 
-function load({ api, types, prefix = "" }) {
+function load({ api, types, prefix = "", events = [] }) {
   const app = _app;
   const _config = config();
 
@@ -147,6 +147,13 @@ function load({ api, types, prefix = "" }) {
       },
     })
   );
+
+  try {
+    const eventExtension = require(`${_config.path}/extensions/event.js`);
+    eventExtension.listen(events);
+  } catch (err) {
+    console.error(err);
+  } // eslint-disable-line no-empty
 }
 
 function app() {
