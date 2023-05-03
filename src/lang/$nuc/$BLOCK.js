@@ -7,14 +7,11 @@ const Scope = require("../../scope");
 const LET = require("../../nuc/LET");
 const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const REFERENCE = require("../../nuc/REFERENCE");
-const $LET = require("./$LET");
-const $EXP = require("./$EXPRESSION");
 
-function construct(statements, skip, args) {
+function construct(statements, skip) {
   let statement = new $BLOCK();
   statement.statements = statements;
   statement.skip = skip;
-  statement.args = args;
   return statement;
 }
 
@@ -62,12 +59,6 @@ class $BLOCK extends $ {
       let statement = new BLOCK();
       statement.statements = this.statements;
       statement.skip = this.skip;
-
-      if (this.args) {
-        statement.statements = Object.entries(this.args)
-          .map(([name, value]) => $LET(name, $EXP(value).statement))
-          .concat(statement.statements);
-      }
 
       return [
         new Instruction(scope, statement, true, true, false),

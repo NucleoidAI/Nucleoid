@@ -52,7 +52,10 @@ class EXPRESSION {
         const token = this.tokens[i];
 
         if (token instanceof Token.CALL && graph[token.string]) {
-          const value = Stack.process([$CALL(token.string, token.params)]);
+          const value = Stack.process(
+            [$CALL(token.string, token.params)],
+            scope
+          );
 
           // TODO Replace manual adjustment
           const call = "__$CALL__";

@@ -1,6 +1,8 @@
 const $ = require("./$");
 const graph = require("../../graph");
 const $BLOCK = require("./$BLOCK");
+const $LET = require("./$LET");
+const $EXP = require("./$EXPRESSION");
 
 function construct(name, params) {
   const call = new $CALL();
@@ -18,13 +20,11 @@ class $CALL extends $ {
       const params = this.params;
       const args = fn.args;
 
-      const object = {};
-
-      for (let i = 0; i < args.length; i++) {
-        object[args[i]] = params[i];
+      for (let i = args.length - 1; i >= 0; i--) {
+        block.statements.unshift($LET(args[i], $EXP(params[i]).statement));
       }
 
-      return $BLOCK(block.statements, false, object);
+      return $BLOCK(block.statements, false);
     }
   }
 }

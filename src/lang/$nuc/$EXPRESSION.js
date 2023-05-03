@@ -14,6 +14,10 @@ function construct(string, offset) {
       return "let ";
     }
 
+    if (token === "const") {
+      return "const ";
+    }
+
     if (token === "new") {
       return "new ";
     }

@@ -2324,6 +2324,11 @@ describe("Nucleoid", () => {
       deepEqual(nucleoid.run("b = 1 ; test ( b )"), {});
     });
 
+    it("runs function with variable", () => {
+      nucleoid.run("function test ( a ) { return a + 23 }");
+      equal(nucleoid.run("let data = 'UUID-1' ; test ( data )"), "UUID-123");
+    });
+
     it("returns first return statement", () => {
       equal(nucleoid.run("{ return 123 ; return 'abc' }"), 123);
     });
