@@ -6,6 +6,8 @@ const _transaction = require("./transaction");
 const _graph = require("./graph");
 const event = require("./event").event; // eslint-disable-line no-unused-vars
 const _ = require("lodash"); // eslint-disable-line no-unused-vars
+const { v4: uuid } = require("uuid"); // eslint-disable-line no-unused-vars
+const random = require("./lib/random"); // eslint-disable-line no-unused-vars
 
 global.require = require;
 
