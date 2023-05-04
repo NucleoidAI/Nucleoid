@@ -22,8 +22,7 @@ let defaultConfig = {
 let _config = { ...defaultConfig };
 
 function init(config = {}) {
-  _config = { ...defaultConfig };
-  _config = { ..._config, ...config };
+  _config = { ...defaultConfig, ...config };
 
   if (!fs.existsSync(_config.path)) {
     fs.mkdirSync(_config.path, { recursive: true });

@@ -151,9 +151,7 @@ function load({ api, types, prefix = "", events = [] }) {
   try {
     const eventExtension = require(`${_config.path}/extensions/event.js`);
     eventExtension.listen(events);
-  } catch (err) {
-    console.error(err);
-  } // eslint-disable-line no-empty
+  } catch (err) {} // eslint-disable-line no-empty
 }
 
 function app() {

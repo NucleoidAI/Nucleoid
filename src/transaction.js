@@ -1,9 +1,6 @@
 const REFERENCE = require("./nuc/REFERENCE");
 
 let list = [];
-let state; // eslint-disable-line no-unused-vars
-
-setImmediate(() => ({ state } = require("./state")));
 
 function start() {
   list = [];
@@ -16,6 +13,8 @@ function end() {
 }
 
 function register(p1, p2, p3, adjust) {
+  const { state } = require("./state");
+
   if (!p1) return;
 
   if (typeof p1 === "string") {
@@ -64,6 +63,8 @@ function register(p1, p2, p3, adjust) {
 }
 
 function rollback() {
+  const { state } = require("./state"); // eslint-disable-line no-unused-vars
+
   while (list.length) {
     let transaction = list.pop();
     let variable = transaction.variable;

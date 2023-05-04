@@ -4,12 +4,6 @@ const fs = require("fs");
 const context = require("./lib/context");
 const openapi = require("./lib/openapi");
 
-let nucleoid;
-
-setImmediate(() => {
-  nucleoid = require("../");
-});
-
 function app(options) {
   const app = express();
   app.use(express.json());
@@ -28,6 +22,8 @@ function app(options) {
     delete: (string, fn) =>
       app.delete(string, (req, res) => accept(req, res, fn)),
     listen: (port = 3000, fn) => {
+      const nucleoid = require("../");
+
       app.all("*", (req, res) => res.status(404).end());
       // eslint-disable-next-line no-unused-vars
       app.use((err, req, res, next) => res.status(500).send(err.stack));
@@ -55,6 +51,8 @@ function app(options) {
 }
 
 function accept(req, res, fn) {
+  const nucleoid = require("../");
+
   const scope = { params: req.params, query: req.query, body: req.body };
   const { result, error } = nucleoid.run(fn, scope, { details: true });
   if (!result) res.status(404).end();

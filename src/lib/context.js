@@ -1,9 +1,3 @@
-let nucleoid;
-
-setImmediate(() => {
-  nucleoid = require("../../");
-});
-
 let _context = [];
 
 function load(context) {
@@ -11,6 +5,8 @@ function load(context) {
 }
 
 function run(context = []) {
+  const nucleoid = require("../../");
+
   load(context);
 
   _context.forEach(({ definition, options }) =>
