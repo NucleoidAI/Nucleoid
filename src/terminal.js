@@ -17,7 +17,9 @@ terminal.use(logs);
 terminal.use(metrics);
 
 terminal.post("/", (req, res) => {
-  const details = runtime.process(req.body, { details: true });
+  const mode = req.headers["x-nuc-mode"];
+  const declarative = mode?.toLowerCase() === "declarative";
+  const details = runtime.process(req.body, { declarative, details: true });
   res.send(details);
 });
 
