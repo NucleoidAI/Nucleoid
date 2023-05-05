@@ -2,6 +2,7 @@ const fs = require("fs");
 const { argv } = require("yargs");
 const { v4: uuid } = require("uuid");
 const home = require("os").homedir();
+const { deepMerge } = require("./lib/deep");
 
 let defaultConfig = {
   path: `${home}/.nuc`,
@@ -22,7 +23,7 @@ let defaultConfig = {
 let _config = { ...defaultConfig };
 
 function init(config = {}) {
-  _config = { ...defaultConfig, ...config };
+  _config = deepMerge(defaultConfig, config);
 
   if (!fs.existsSync(_config.path)) {
     fs.mkdirSync(_config.path, { recursive: true });
@@ -66,9 +67,9 @@ function init(config = {}) {
       id = uuid();
       fs.writeFileSync(`${_config.path}/default`, id);
     }
-
-    _config.id = id;
   }
+
+  _config.id = id;
 
   if (argv.terminalPort) {
     _config.port.terminal = argv.terminalPort;
