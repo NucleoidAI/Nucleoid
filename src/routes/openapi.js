@@ -18,6 +18,8 @@ router.post("/openapi", (req, res) => {
     openapi.start(port || _config.port.openapi);
   } else if (action === "stop") {
     openapi.stop();
+  } else {
+    res.status(400).send("Missing action");
   }
 
   res.end();

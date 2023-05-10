@@ -6,12 +6,13 @@ const CLASS = require("../../nuc/CLASS");
 const Local = require("../../lib/local");
 const $LET = require("./$LET");
 
-function construct(cls, name, object, args) {
+function construct(cls, name, object, args, bracket) {
   let statement = new $INSTANCE();
   statement.class = `$${cls}`;
   statement.name = name;
   statement.object = object;
   statement.args = args;
+  statement.bracket = bracket;
   return statement;
 }
 
@@ -20,8 +21,13 @@ class $INSTANCE extends $ {
     if (graph[this.class] === undefined)
       throw ReferenceError(`${this.class} is not defined`);
 
-    if (this.object !== undefined && this.name === "value") {
+    if (this.object && this.name === "value") {
       throw TypeError("Cannot use 'value' as a property");
+    }
+
+    if (this.bracket) {
+      const stack = require("../../stack");
+      this.name = stack.process([this.bracket], scope);
     }
 
     let local = this.object + "." + this.name;
@@ -31,8 +37,9 @@ class $INSTANCE extends $ {
       return $LET(local, instance);
     }
 
-    if (this.object !== undefined && graph[this.object] === undefined)
+    if (this.object && !graph[this.object]) {
       throw ReferenceError(`${this.object} is not defined`);
+    }
 
     if (
       this.object &&

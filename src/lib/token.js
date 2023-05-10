@@ -164,12 +164,38 @@ class Token {
     }
   }
 
+  static nextBracket(string, offset) {
+    let bracket = "";
+    let brackets = 0;
+    let character;
+
+    for (; offset < string.length; offset++) {
+      character = string.charAt(offset);
+
+      if (character === "[") {
+        brackets++;
+      } else if (character === "]") {
+        brackets--;
+      }
+
+      if (brackets < 0) {
+        offset++;
+        return { bracket, offset };
+      } else {
+        bracket += character;
+      }
+    }
+
+    throw SyntaxError("Missing bracket");
+  }
+
   static nextArgs(string, offset) {
     let args = [];
     let context = next(string, offset);
 
-    if (context.token === "}")
+    if (context.token === "}") {
       throw SyntaxError(`Unexpected token ${context.token}`);
+    }
 
     while (context.token !== ")") {
       args.push(context.token);

@@ -26,7 +26,7 @@ function compile(string, offset) {
 
     let check = Token.next(string, context.offset);
 
-    if (check && check.token === "=") {
+    if (check?.token === "=") {
       check = Token.next(string, check.offset);
 
       if (check && check.token !== "=") {
@@ -37,6 +37,24 @@ function compile(string, offset) {
 
         offset = context.offset;
         continue;
+      }
+    } else if (check?.token === "[") {
+      check = Token.nextBracket(string, check.offset);
+
+      check = Token.next(string, check.offset);
+
+      if (check && check.token === "=") {
+        check = Token.next(string, check.offset);
+
+        if (check && check.token !== "=") {
+          context = JS$ASSIGNMENT(string, offset);
+          if (context.statement) {
+            statements.push(context.statement);
+          }
+
+          offset = context.offset;
+          continue;
+        }
       }
     }
 

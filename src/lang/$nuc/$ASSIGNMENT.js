@@ -5,10 +5,11 @@ const $LET = require("./$LET");
 const $ = require("./$");
 const Id = require("../../lib/identifier");
 
-function construct(left, right) {
+function construct(left, right, bracket) {
   let statement = new $ASSIGNMENT();
   statement.left = left.split(".");
   statement.right = right;
+  statement.bracket = bracket;
   return statement;
 }
 
