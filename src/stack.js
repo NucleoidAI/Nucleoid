@@ -46,7 +46,7 @@ function process(statements, prior, options = {}) {
       let scope = instruction.scope;
 
       const expression = statement.run(scope);
-      const value = state.run(scope, expression);
+      const value = state.run(scope, expression, true);
 
       if (instruction.scope === root && !instruction.derivative) {
         result = value;
@@ -154,14 +154,10 @@ function process(statements, prior, options = {}) {
           statement.beforeGraph(instruction.scope);
 
           if (statement instanceof Node) {
-            if (statement.key && graph[statement.key]) {
-              Node.replace(statement.key, statement);
-            } else if (graph[statement.id]) {
-              Node.replace(statement.id, statement);
-            } else if (statement.key) {
-              Node.register(statement.key, statement);
+            if (graph[statement.key || statement.id]) {
+              Node.replace(statement.key || statement.id, statement);
             } else {
-              Node.register(statement.id, statement);
+              Node.register(statement.key || statement.id, statement);
             }
           }
 

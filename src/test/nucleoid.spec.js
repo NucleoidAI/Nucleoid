@@ -471,10 +471,10 @@ describe("Nucleoid", () => {
 
       nucleoid.run("age = 8");
       nucleoid.run("student = Student.find ( s => s.age == age )");
-      equal(nucleoid.run("student"), nucleoid.run("student2"));
+      deepEqual(nucleoid.run("student"), nucleoid.run("student2"));
 
       nucleoid.run("age = 9");
-      equal(nucleoid.run("student"), nucleoid.run("student3"));
+      deepEqual(nucleoid.run("student"), nucleoid.run("student3"));
     });
 
     it("supports chained functions with parameter in expression", () => {

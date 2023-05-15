@@ -45,13 +45,24 @@ function graph(id) {
 
   return object;
 }
-function assign(scope, variable, expression, adjust) {
-  return _transaction.register(variable, expression, scope, adjust);
+function assign(scope, variable, expression) {
+  return _transaction.register(variable, expression, scope);
 }
 
-function run(scope, expression) {
+function run(scope, expression, transaction = false) {
+  if (transaction) {
+    _transaction.push(`(${expression})`);
+  }
+
   // eslint-disable-next-line no-eval
   return eval(`(${expression})`);
+}
+
+function load(execs = []) {
+  execs.forEach((exec) => {
+    // eslint-disable-next-line no-eval
+    eval(exec);
+  });
 }
 
 module.exports.state = state;
@@ -59,3 +70,4 @@ module.exports.assign = assign;
 module.exports.run = run;
 // eslint-disable-next-line no-eval
 module.exports.throw = (scope, exception) => eval(`throw state.${exception}`);
+module.exports.load = load;

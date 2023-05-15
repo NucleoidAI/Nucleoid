@@ -1,4 +1,5 @@
 const REFERENCE = require("./nuc/REFERENCE");
+const serialize = require("./lib/serialize");
 
 let list = [];
 
@@ -12,7 +13,8 @@ function end() {
   return result;
 }
 
-function register(p1, p2, p3, adjust) {
+function register(p1, p2, p3) {
+  // eslint-disable-next-line no-unused-vars
   const { state } = require("./state");
 
   if (!p1) return;
@@ -22,36 +24,26 @@ function register(p1, p2, p3, adjust) {
     let expression = p2;
     let scope = p3; // eslint-disable-line no-unused-vars
 
+    let transaction;
+
     if (expression instanceof REFERENCE) {
-      let exec;
-      exec = `state.${variable}=${expression.run()}`;
+      // eslint-disable-next-line no-eval
+      const before = eval(`state.${variable}`);
+      const exec = `state.${variable}=${expression.run()}`;
 
-      // eslint-disable-next-line no-eval
-      list.push({ variable, before: eval(`state.${variable}`) });
-      // eslint-disable-next-line no-eval
-      return eval(exec);
+      transaction = { variable, exec, before };
     } else {
-      // eslint-disable-next-line no-eval
-      let transaction = { variable, before: eval(`state.${variable}`) };
+      const before = eval(`state.${variable}`); // eslint-disable-line no-eval
+      const result = eval(`(${expression})`); // eslint-disable-line no-eval
+      const value = serialize(result);
+      const exec = `state.${variable}=${value}`;
 
-      let value;
-
-      if (typeof expression === "string") {
-        // eslint-disable-next-line no-eval
-        value = eval(`state.${variable}=${expression}`);
-      } else {
-        // eslint-disable-next-line no-eval
-        value = eval(`state.${variable}=expression`);
-      }
-
-      if (adjust) {
-        transaction.adjust = `state.${variable}=${JSON.stringify(value)}`;
-      }
-
-      state[variable] = value;
-      list.push(transaction);
-      return value;
+      transaction = { variable, exec, before };
     }
+
+    list.push(transaction);
+    // eslint-disable-next-line no-eval
+    return eval(transaction.exec);
   } else {
     let object = p1;
     let property = p2;
@@ -60,6 +52,10 @@ function register(p1, p2, p3, adjust) {
     list.push({ object, property, before: object[property] });
     object[property] = value;
   }
+}
+
+function push(exec) {
+  list.push({ exec });
 }
 
 function rollback() {
@@ -71,6 +67,10 @@ function rollback() {
     let object = transaction.object;
     let property = transaction.property;
     let before = transaction.before;
+
+    if (!variable && !object && !property) {
+      continue;
+    }
 
     if (variable !== undefined) {
       // eslint-disable-next-line no-eval
@@ -87,5 +87,6 @@ function rollback() {
 
 module.exports.start = start;
 module.exports.end = end;
+module.exports.push = push;
 module.exports.register = register;
 module.exports.rollback = rollback;

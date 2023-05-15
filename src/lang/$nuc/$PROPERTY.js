@@ -42,7 +42,7 @@ class $PROPERTY extends $ {
       return statement;
     }
 
-    let value = this.value.run();
+    let value = this.value.run(scope);
 
     if (value instanceof REFERENCE) {
       let statement = new PROPERTY$REFERENCE();

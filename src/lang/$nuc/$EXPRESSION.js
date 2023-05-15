@@ -6,9 +6,7 @@ const REFERENCE = require("../../nuc/REFERENCE");
 const EXPRESSION$INSTANCE = require("../../nuc/EXPRESSION$INSTANCE");
 const Local = require("../../lib/local");
 
-function construct(string, offset) {
-  offset = offset || 0;
-
+function construct(string, offset = 0) {
   let context = Token.each(string, offset, (token) => {
     if (token === "let") {
       return "let ";

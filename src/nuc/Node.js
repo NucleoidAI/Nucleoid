@@ -6,6 +6,7 @@ let sequence = 0;
 
 class Node {
   constructor() {
+    this.instanceof = this.constructor.name;
     this.next = {};
     this.previous = {};
     this.id = uuid();

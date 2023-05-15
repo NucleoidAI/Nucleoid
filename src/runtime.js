@@ -14,10 +14,10 @@ try {
 
 module.exports.process = function (statement, options = {}) {
   options = { ...config(), ...options };
-  const { declarative, details, cacheOnly, skipRead } = options;
+  const { declarative, details, cacheOnly } = options;
 
   const before = Date.now();
-  let statements, result, error, adjusts, write;
+  let statements, result, error, execs;
 
   let s = Macro.apply(statement, options);
 
@@ -26,11 +26,10 @@ module.exports.process = function (statement, options = {}) {
     transaction.start();
     result = stack.process(statements, null, options);
     const list = transaction.end();
-    adjusts = list.filter((t) => t.adjust).map((t) => t.adjust);
-    write = !!list.length;
-  } catch (e) {
+    execs = list.filter((item) => item.exec).map((item) => item.exec);
+  } catch (err) {
     transaction.rollback();
-    result = e;
+    result = err;
     error = true;
   }
 
@@ -39,33 +38,33 @@ module.exports.process = function (statement, options = {}) {
   const time = date - before;
 
   if (!cacheOnly) {
-    if (result instanceof Error)
+    if (result instanceof Error) {
       result = `${result.constructor.name}: ${result.message}`;
-
-    if (write || !skipRead) {
-      datastore.write({
-        s,
-        c: declarative ? true : undefined,
-        t: time,
-        r: result,
-        d: date,
-        e: error,
-        v: events,
-        j: adjusts && adjusts.length ? adjusts : undefined,
-        w: write ? write : undefined,
-      });
     }
+
+    datastore.write({
+      s,
+      c: declarative ? true : undefined,
+      t: time,
+      r: result,
+      d: date,
+      e: error,
+      v: events,
+      x: execs,
+    });
   }
 
   if (eventExtension) {
     // TODO Disable for restart
     eventExtension.apply(events);
   }
+
   Event.clear();
 
   if (details) {
-    if (result instanceof Error)
+    if (result instanceof Error) {
       result = `${result.constructor.name}: ${result.message}`;
+    }
 
     return {
       result,

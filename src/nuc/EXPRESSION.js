@@ -19,6 +19,7 @@ setImmediate(() => {
 
 class EXPRESSION {
   constructor(tokens) {
+    this.instanceof = this.constructor.name;
     this.tokens = tokens;
   }
 
@@ -150,5 +151,4 @@ class EXPRESSION {
   }
 }
 
-EXPRESSION.prototype.instanceof = "EXPRESSION";
 module.exports = EXPRESSION;

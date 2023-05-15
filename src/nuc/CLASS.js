@@ -42,5 +42,4 @@ class CLASS extends Node {
   }
 }
 
-CLASS.prototype.instanceof = "CLASS";
 module.exports = CLASS;

@@ -16,7 +16,6 @@ let defaultConfig = {
   cacheOnly: false,
   data: {
     encryption: true,
-    skipRead: false,
   },
 };
 

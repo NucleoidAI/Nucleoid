@@ -58,6 +58,11 @@ class OBJECT extends Node {
       list.push(new Instruction(scope, declaration, true, true, true, true));
     }
 
+    const context = $EXP(
+      `Object.setPrototypeOf(${name}, ${this.class.name}.prototype)`
+    );
+    list.push(context.statement);
+
     if (this.object === undefined) {
       let context = $EXP(`${this.class.name.substring(1)}.push(${this.name})`);
       list.push(context.statement);

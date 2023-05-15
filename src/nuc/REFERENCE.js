@@ -22,5 +22,4 @@ class REFERENCE extends EXPRESSION {
   }
 }
 
-REFERENCE.prototype.instanceof = "REFERENCE";
 module.exports = REFERENCE;

@@ -17,12 +17,9 @@ function init() {
         cacheOnly: true,
       };
 
-      if (details.w && !details.e) {
+      if (!details.e) {
         runtime.process(details.s, options);
-
-        if (details.j) {
-          details.j.map((adjust) => state.run(null, adjust));
-        }
+        state.load(details.x);
       }
     });
 
