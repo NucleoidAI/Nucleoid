@@ -1,17 +1,17 @@
-// eslint-disable-next-line no-unused-vars
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-eval */
 const state = {
   classes: [],
 };
 const _transaction = require("./transaction");
 const _graph = require("./graph");
-const event = require("./event").event; // eslint-disable-line no-unused-vars
-const _ = require("lodash"); // eslint-disable-line no-unused-vars
-const { v4: uuid } = require("uuid"); // eslint-disable-line no-unused-vars
-const random = require("./lib/random"); // eslint-disable-line no-unused-vars
+const event = require("./event").event;
+const _ = require("lodash");
+const { v4: uuid } = require("uuid");
+const random = require("./lib/random");
 
 global.require = require;
 
-// eslint-disable-next-line no-unused-vars
 function graph(id) {
   let node = _graph[id];
 
@@ -46,7 +46,7 @@ function graph(id) {
   return object;
 }
 function assign(scope, variable, expression) {
-  return _transaction.register(variable, expression, scope);
+  return _transaction.assign(variable, expression, scope);
 }
 
 function run(scope, expression, transaction = false) {
@@ -54,13 +54,14 @@ function run(scope, expression, transaction = false) {
     _transaction.push(`(${expression})`);
   }
 
-  // eslint-disable-next-line no-eval
   return eval(`(${expression})`);
 }
 
 function load(execs = []) {
+  const Node = require("./nuc/Node");
+  const graph = require("./graph");
+
   execs.forEach((exec) => {
-    // eslint-disable-next-line no-eval
     eval(exec);
   });
 }
@@ -68,6 +69,5 @@ function load(execs = []) {
 module.exports.state = state;
 module.exports.assign = assign;
 module.exports.run = run;
-// eslint-disable-next-line no-eval
 module.exports.throw = (scope, exception) => eval(`throw state.${exception}`);
 module.exports.load = load;

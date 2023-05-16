@@ -157,7 +157,7 @@ function process(statements, prior, options = {}) {
             if (graph[statement.key || statement.id]) {
               Node.replace(statement.key || statement.id, statement);
             } else {
-              Node.register(statement.key || statement.id, statement);
+              Node.register(statement);
             }
           }
 
