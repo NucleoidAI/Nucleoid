@@ -9,7 +9,6 @@ class CLASS extends Node {
     super();
     this.instances = {};
     this.declarations = {};
-    this.sequence = 1;
   }
 
   before() {
@@ -28,8 +27,6 @@ class CLASS extends Node {
       context = $EXP("[]");
       const alias = $ALIAS(this, this.name.substring(1), context.statement);
       list.push(alias);
-    } else {
-      this.sequence = graph[this.name].sequence;
     }
 
     return { next: list };

@@ -5,7 +5,7 @@ const $EXP = require("../lang/$nuc/$EXPRESSION");
 const Instruction = require("../instruction");
 const LET = require("./LET");
 const Scope = require("../scope");
-const _ = require("lodash");
+const random = require("../lib/random");
 
 class OBJECT extends Node {
   constructor() {
@@ -15,7 +15,7 @@ class OBJECT extends Node {
 
   before() {
     if (this.name === undefined && this.object === undefined) {
-      this.key = _.camelCase(this.class.name) + this.class.sequence++;
+      this.key = random(16, true);
       this.name = this.key;
     } else {
       this.key = Id.serialize(this);
@@ -72,7 +72,7 @@ class OBJECT extends Node {
       );
       list.push(context.statement);
 
-      state.run(scope, `state.${name}.id="${name}"`);
+      state.run(scope, `state.${name}.id="${name}"`, true);
 
       context = $EXP(this.name);
       list.push(

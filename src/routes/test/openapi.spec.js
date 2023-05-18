@@ -18,19 +18,17 @@ describe("OpenAPI service", () => {
       .post("/api/items")
       .send({ name: "ITEM-1", barcode: "BARCODE-1" });
     equal(res2.status, 200);
-    deepEqual(res2.body, {
-      barcode: "BARCODE-1",
-      id: "item1",
-      name: "ITEM-1",
-    });
+    equal(res2.body.name, "ITEM-1");
+    equal(res2.body.barcode, "BARCODE-1");
 
-    const res3 = await request(openapi.app()).get("/api/items/item1").send();
+    const itemId = res2.body.id;
+
+    const res3 = await request(openapi.app())
+      .get(`/api/items/${itemId}`)
+      .send();
     equal(res3.status, 200);
-    deepEqual(res3.body, {
-      barcode: "BARCODE-1",
-      id: "item1",
-      name: "ITEM-1",
-    });
+    equal(res3.body.name, "ITEM-1");
+    equal(res3.body.barcode, "BARCODE-1");
 
     const res4 = await request(openapi.app())
       .post("/api/items")
