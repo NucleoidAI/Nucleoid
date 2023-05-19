@@ -71,6 +71,7 @@ module.exports.process = function (statement, options = {}) {
       date,
       time,
       error,
+      execs,
       events,
     };
   } else {
