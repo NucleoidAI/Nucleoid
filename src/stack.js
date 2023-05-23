@@ -151,7 +151,11 @@ function process(statements, prior, options = {}) {
         }
 
         if (instruction.graph) {
-          statement.beforeGraph(instruction.scope);
+          const { destroyed } = statement.beforeGraph(instruction.scope) || {};
+
+          if (destroyed) {
+            continue;
+          }
 
           if (statement instanceof Node) {
             if (graph[statement.key || statement.id]) {
