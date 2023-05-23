@@ -3,6 +3,7 @@ const Local = require("../lib/local");
 
 class LET {
   constructor(name, value) {
+    this.instanceof = this.constructor.name;
     this.name = name;
     this.value = value;
   }
@@ -11,6 +12,14 @@ class LET {
 
   run(scope) {
     let value = this.value.run(scope);
+
+    const parts = this.name.split(".");
+    const first = parts[0];
+
+    if (scope.graph[first]?.instanceof === "LET$OBJECT") {
+      parts[0] = scope.graph[first].object.key;
+      state.assign(scope, parts.join("."), value);
+    }
 
     let local = Local.retrieve(scope, this.name);
 
