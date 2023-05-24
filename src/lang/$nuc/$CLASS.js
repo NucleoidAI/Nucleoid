@@ -18,8 +18,8 @@ class $CLASS extends $ {
   run() {
     let statement = new CLASS();
     statement.name = this.name;
-    statement.construct = this.construct;
     statement.args = this.args;
+    statement.construct = this.construct;
     return statement;
   }
 }

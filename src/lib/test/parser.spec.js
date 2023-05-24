@@ -1,7 +1,7 @@
 const parser = require("../parser");
 const { equal, deepEqual, throws } = require("assert");
 
-describe("Parser", () => {
+describe("Parser lib", () => {
   it("parses function without name and argument", () => {
     const { args, fn } = parser.fn(
       "function ( req , res ) { User[req.query.user] }"

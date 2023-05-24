@@ -11,7 +11,7 @@ class PROPERTY extends Node {
   run(scope) {
     let object = Id.serialize(this.object, true);
     const run = this.value.run(scope);
-    const value = state.assign(scope, object + "." + this.name, run, true);
+    const value = state.assign(scope, object + "." + this.name, run);
     return { value };
   }
 

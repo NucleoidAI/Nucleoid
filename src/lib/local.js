@@ -37,7 +37,7 @@ function reference(scope, name) {
     let reference = parts.slice(0, i + 1).join(".");
     let node = scope.graph[reference];
 
-    if (node && node.value && node.value.instanceof === "REFERENCE") {
+    if (node?.value?.instanceof === "REFERENCE") {
       parts = parts.slice(i, parts.length);
       parts[0] = node.value.link.key;
       i = 0;

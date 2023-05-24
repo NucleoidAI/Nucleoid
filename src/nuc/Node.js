@@ -1,11 +1,14 @@
 const graph = require("../graph");
 const uuid = require("uuid").v4;
 const transaction = require("../transaction");
+const serialize = require("../lib/serialize");
+const revive = require("../lib/revive");
 
-let sequence = 0;
+let sequence = 1;
 
 class Node {
   constructor() {
+    this.instanceof = this.constructor.name;
     this.next = {};
     this.previous = {};
     this.id = uuid();
@@ -17,28 +20,75 @@ class Node {
   beforeGraph() {}
   graph() {}
 
-  static register(key, node) {
-    transaction.register(graph, key, node);
+  static register(node) {
+    if (node.constructor.name === "Object") {
+      revive(node);
+
+      if (node.sequence) {
+        sequence = node.sequence + 1;
+      }
+    } else {
+      const exec = serialize(node, "graph");
+      transaction.push({ exec: `Node.register(${exec})` });
+    }
+
+    const { key, id } = node;
+
+    if (key) {
+      transaction.assignGraph(graph, key, node);
+    }
+
+    transaction.assignGraph(graph, id, node);
   }
 
   static replace(sourceKey, targetNode) {
-    transaction.register(targetNode.block, graph[sourceKey].block);
+    if (targetNode.constructor.name === "Object") {
+      revive(targetNode);
+    } else {
+      const exec = serialize(targetNode, "graph");
+      transaction.push({ exec: `Node.replace('${sourceKey}',${exec})` });
+    }
+
+    const currentId = graph[sourceKey].id;
+
+    transaction.assignGraph(targetNode.block, graph[sourceKey].block);
 
     for (let node in graph[sourceKey].next) {
-      transaction.register(targetNode.next, node, graph[sourceKey].next[node]);
-      transaction.register(graph[sourceKey].next, node, undefined);
+      transaction.assignGraph(
+        targetNode.next,
+        node,
+        graph[sourceKey].next[node]
+      );
+
+      transaction.assignGraph(graph[sourceKey].next, node, undefined);
     }
 
     for (let node in graph[sourceKey].previous) {
-      transaction.register(graph[node].next, sourceKey, undefined);
+      transaction.assignGraph(graph[node].next, sourceKey, undefined);
     }
 
-    transaction.register(graph, sourceKey, targetNode);
+    const { key, id } = targetNode;
+
+    if (key) {
+      transaction.assignGraph(graph, key, targetNode);
+    }
+
+    transaction.assignGraph(graph, id, targetNode);
+    delete graph[currentId];
   }
 
   static direct(sourceKey, targetKey, targetNode) {
-    transaction.register(graph[sourceKey].next, targetKey, targetNode);
-    transaction.register(targetNode.previous, sourceKey, graph[targetKey]);
+    if (targetNode.constructor.name === "Object") {
+      revive(targetNode);
+    } else {
+      const exec = serialize(targetNode, "graph");
+      transaction.push({
+        exec: `Node.direct('${sourceKey}','${targetKey}',${exec})`,
+      });
+    }
+
+    transaction.assignGraph(graph[sourceKey].next, targetKey, targetNode);
+    transaction.assignGraph(targetNode.previous, sourceKey, graph[targetKey]);
   }
 }
 

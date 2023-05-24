@@ -8,7 +8,7 @@ class DELETE {
 
   run(scope) {
     if (graph[this.key]) {
-      state.run(scope, "delete state." + this.key);
+      state.run(scope, "delete state." + this.key, true);
 
       let list = [];
 

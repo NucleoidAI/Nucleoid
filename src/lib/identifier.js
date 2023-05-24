@@ -38,7 +38,7 @@ function reference(name) {
     let reference = parts.slice(0, i + 1).join(".");
     let node = graph[reference];
 
-    if (node && node.value && node.value.instanceof === "REFERENCE") {
+    if (node?.value?.instanceof === "REFERENCE") {
       parts = parts.slice(i, parts.length);
       parts[0] = graph[reference].value.link.key;
       i = 0;

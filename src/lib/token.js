@@ -72,6 +72,7 @@ function next(string, offset) {
 
 class Token {
   constructor(string) {
+    this.instanceof = this.constructor.name;
     this.string = string;
   }
 
@@ -198,6 +199,7 @@ module.exports = Token;
 module.exports.next = next;
 module.exports.ARRAY = class ARRAY {
   constructor() {
+    this.instanceof = this.constructor.name;
     this.length = 0;
   }
 

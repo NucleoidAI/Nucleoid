@@ -1,5 +1,4 @@
 const datastore = require("@nucleoidjs/datastore");
-const runtime = require("./runtime");
 const state = require("./state");
 const config = require("./config");
 const openapi = require("./lib/openapi");
@@ -12,17 +11,8 @@ function init() {
 
   setImmediate(() => {
     datastore.read().forEach((details) => {
-      const options = {
-        declarative: !!details.c,
-        cacheOnly: true,
-      };
-
-      if (details.w && !details.e) {
-        runtime.process(details.s, options);
-
-        if (details.j) {
-          details.j.map((adjust) => state.run(null, adjust));
-        }
+      if (!details.e) {
+        state.load(details.x);
       }
     });
 

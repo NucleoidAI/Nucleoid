@@ -12,6 +12,9 @@ require("yargs")
         .option("clear", {
           describe: "Clear data before starting the runtime",
         })
+        .option("debug", {
+          describe: "Enable debug mode",
+        })
         .option("cluster", {
           describe: "Enable cluster mode",
         })

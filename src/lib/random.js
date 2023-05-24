@@ -1,9 +1,19 @@
-function random(length = 16) {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
+const alphanumericChars =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const alphaChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-  for (let i = 0; i < length; i++) {
+function random(length = 16, alphanumeric = false) {
+  let result = alphaChars.charAt(Math.floor(Math.random() * alphaChars.length));
+
+  let chars;
+
+  if (alphanumeric) {
+    chars = alphanumericChars;
+  } else {
+    chars = alphaChars;
+  }
+
+  for (let i = 1; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * chars.length);
     result += chars.charAt(randomIndex);
   }

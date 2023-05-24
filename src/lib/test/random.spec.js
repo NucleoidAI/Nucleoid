@@ -1,7 +1,7 @@
 const random = require("../random");
 const { equal } = require("assert");
 
-describe("Random", () => {
+describe("Random lib", () => {
   it("returns random number with default length", () => {
     const string = random();
     equal(string.length, 16);
