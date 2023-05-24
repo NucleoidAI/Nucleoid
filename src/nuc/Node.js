@@ -49,6 +49,8 @@ class Node {
       transaction.push({ exec: `Node.replace('${sourceKey}',${exec})` });
     }
 
+    const currentId = graph[sourceKey].id;
+
     transaction.assignGraph(targetNode.block, graph[sourceKey].block);
 
     for (let node in graph[sourceKey].next) {
@@ -72,6 +74,7 @@ class Node {
     }
 
     transaction.assignGraph(graph, id, targetNode);
+    delete graph[currentId];
   }
 
   static direct(sourceKey, targetKey, targetNode) {
