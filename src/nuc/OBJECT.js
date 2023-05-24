@@ -67,11 +67,13 @@ class OBJECT extends Node {
       let context = $EXP(`${this.class.name.substring(1)}.push(${this.name})`);
       list.push(context.statement);
 
-      context = $EXP(
-        `${this.class.name.substring(1)}["${this.name}"]=${this.name}`
+      state.run(
+        scope,
+        `state.${this.class.name.substring(1)}["${this.name}"]=state.${
+          this.name
+        }`,
+        true
       );
-      list.push(context.statement);
-
       state.run(scope, `state.${name}.id="${name}"`, true);
 
       context = $EXP(this.name);

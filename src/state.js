@@ -54,7 +54,8 @@ function assign(scope, variable, expression) {
   if (expression instanceof REFERENCE) {
     // eslint-disable-next-line no-eval
     const before = eval(`state.${variable}`);
-    const exec = `state.${variable}=${expression.run()}`;
+    const run = expression.run();
+    const exec = `state.${variable}=${run.construct()}`;
 
     transaction = { variable, exec, before };
   } else {

@@ -6,34 +6,58 @@ const REFERENCE = require("../../nuc/REFERENCE");
 const EXPRESSION$INSTANCE = require("../../nuc/EXPRESSION$INSTANCE");
 const Local = require("../../lib/local");
 
+const operators = [
+  "+",
+  "-",
+  "*",
+  "/",
+  "%",
+  "++",
+  "--",
+  "=",
+  "+=",
+  "-=",
+  "*=",
+  "/=",
+  "%=",
+  "**=",
+  "<<=",
+  ">>=",
+  ">>>=",
+  "&=",
+  "^=",
+  "|=",
+  "==",
+  "!=",
+  "===",
+  "!==",
+  ">",
+  "<",
+  ">=",
+  "<=",
+  "&&",
+  "||",
+  "!",
+  "&",
+  "|",
+  "^",
+  "~",
+  "<<",
+  ">>",
+  ">>>",
+  "?",
+  ":",
+  "...",
+  "..?",
+  "void",
+  "typeof",
+  "instanceof",
+  "[",
+  "]",
+];
+
 function construct(string, offset = 0) {
-  let context = Token.each(string, offset, (token) => {
-    if (token === "let") {
-      return "let ";
-    }
-
-    if (token === "const") {
-      return "const ";
-    }
-
-    if (token === "new") {
-      return "new ";
-    }
-
-    if (token === "return") {
-      return "return ";
-    }
-
-    if (token === "typeof") {
-      return "typeof ";
-    }
-
-    if (token === "instanceof") {
-      return " instanceof ";
-    }
-
-    return token;
-  });
+  let context = Token.each(string, offset);
 
   let list = new Token.ARRAY();
   let tokens = context.tokens;
@@ -46,7 +70,7 @@ function construct(string, offset = 0) {
 
       let chained = tokens[i];
 
-      while (chained && chained.charAt(0) === ".") {
+      while (chained?.charAt(0) === ".") {
         if (tokens[i + 1] === "(") {
           let context = parseCall(tokens, i);
           list.push(context.call);
@@ -61,7 +85,19 @@ function construct(string, offset = 0) {
 
       i--;
     } else {
-      list.push(new Token(tokens[i]));
+      if (tokens[i] === "{") {
+        const context = parseBrackets(tokens, i);
+        i = context.offset;
+        const bracket = new Token.BRACKET();
+        context.tokens.forEach((token) => bracket.push(token));
+        list.push(bracket);
+      } else if (operators.includes(tokens[i].trim())) {
+        list.push(new Token(tokens[i]));
+      } else if (graph[tokens[i]]) {
+        list.push(new Token.VARIABLE(tokens[i]));
+      } else {
+        list.push(new Token.EXPRESSION(tokens[i]));
+      }
     }
   }
 
@@ -140,6 +176,27 @@ function parseCall(tokens, offset) {
   return { call, offset: ++offset };
 }
 
+function parseBrackets(tokens, offset = 0) {
+  let bracket = 0;
+  let arr = [];
+
+  for (let i = offset; i < tokens.length; i++) {
+    let token = tokens[i];
+
+    if (token === "{") {
+      bracket++;
+    } else if (token === "}") {
+      bracket--;
+    }
+
+    arr.push(token);
+
+    if (bracket === 0) {
+      return { tokens: arr, offset: i };
+    }
+  }
+}
+
 class $EXPRESSION extends $ {
   run(scope) {
     if (
@@ -154,7 +211,11 @@ class $EXPRESSION extends $ {
       return statement;
     } else {
       for (let token of this.tokens.list()) {
-        let prefix = token.split(".")[0];
+        if (token instanceof Token.BRACKET) {
+          continue;
+        }
+
+        let prefix = token.split(/\.|\[|\]/)[0];
 
         if (graph[prefix] && graph[prefix].instanceof === "CLASS") {
           let statement = new EXPRESSION$INSTANCE();

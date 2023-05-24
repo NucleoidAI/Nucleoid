@@ -7,7 +7,10 @@ const _config = require("./config");
 function start(config = {}) {
   _config.init(config);
   process.init();
-  context.run();
+
+  setImmediate(() => {
+    context.run();
+  });
 }
 
 function register(fn) {

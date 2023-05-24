@@ -9,11 +9,12 @@ const PROPERTY$REFERENCE = require("../../nuc/PROPERTY$REFERENCE");
 const Local = require("../../lib/local");
 const FUNCTION = require("../../nuc/FUNCTION");
 
-function construct(object, name, value) {
+function construct(object, name, value, bracket) {
   let statement = new $PROPERTY();
   statement.object = object;
   statement.name = name;
   statement.value = value;
+  statement.bracket = bracket;
   return statement;
 }
 

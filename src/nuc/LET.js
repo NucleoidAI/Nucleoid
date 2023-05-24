@@ -11,24 +11,32 @@ class LET {
   before() {}
 
   run(scope) {
-    let value = this.value.run(scope);
+    let value = this.value.run(scope, false, false);
 
     const parts = this.name.split(".");
     const first = parts[0];
 
     if (scope.graph[first]?.instanceof === "LET$OBJECT") {
       parts[0] = scope.graph[first].object.key;
-      state.assign(scope, parts.join("."), value);
+      state.assign(scope, parts.join("."), value.construct());
+      return { value };
+    } else {
+      let local = Local.retrieve(scope, this.name);
+
+      if (!local) {
+        local = `scope.local.${this.name}`;
+      }
+
+      let expression;
+
+      if (typeof value === "string") {
+        expression = `${local}=${value}`;
+      } else {
+        expression = `${local}=${value.construct()}`;
+      }
+
+      return { value: state.run(scope, expression) };
     }
-
-    let local = Local.retrieve(scope, this.name);
-
-    if (!local) {
-      local = `scope.local.${this.name}`;
-    }
-
-    let expression = `${local}=${value}`;
-    return { value: state.run(scope, expression) };
   }
 
   beforeGraph(scope) {

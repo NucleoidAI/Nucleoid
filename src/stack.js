@@ -9,6 +9,7 @@ const BREAK = require("./nuc/BREAK");
 const EXPRESSION = require("./nuc/EXPRESSION");
 const state = require("./state");
 const RETURN = require("./nuc/RETURN");
+const Token = require("./lib/token");
 
 function process(statements, prior, options = {}) {
   const root = new Scope(prior);
@@ -43,13 +44,32 @@ function process(statements, prior, options = {}) {
         statement.block.break = true;
       }
     } else if (statement instanceof EXPRESSION) {
+      const serialize = require("./lib/serialize");
       let scope = instruction.scope;
 
-      const expression = statement.run(scope);
-      const value = state.run(scope, expression, true);
+      const tokens = statement.run(scope, false, false);
+
+      let value = String();
+      let transaction = false;
+
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+
+        if (token instanceof Token.EXPRESSION) {
+          const tmp = state.run(scope, token.construct());
+          value += serialize(tmp, "state");
+        } else if (token instanceof Token.CALL) {
+          transaction = true;
+          value += token.construct();
+        } else {
+          value += token.construct();
+        }
+      }
+
+      const run = state.run(scope, value, transaction);
 
       if (instruction.scope === root && !instruction.derivative) {
-        result = value;
+        result = run;
       }
 
       let list = statement.next(scope);

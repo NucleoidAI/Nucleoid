@@ -37,6 +37,7 @@ class DELETE {
       delete graph[this.key].next[node];
     }
 
+    // TODO: Move to Node
     let name = graph[this.key].name;
     delete graph[this.key].object.properties[name];
     delete graph[this.key];

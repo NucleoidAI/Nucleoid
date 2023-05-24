@@ -5,10 +5,11 @@ const $LET = require("./$LET");
 const $ = require("./$");
 const Id = require("../../lib/identifier");
 
-function construct(left, right) {
+function construct(left, right, bracket) {
   let statement = new $ASSIGNMENT();
   statement.left = left.split(".");
   statement.right = right;
+  statement.bracket = bracket;
   return statement;
 }
 
@@ -29,7 +30,7 @@ class $ASSIGNMENT extends $ {
       if (Local.check(scope, parts[1])) {
         return $LET(this.left.join("."), this.right);
       } else {
-        return $PROPERTY(parts[1], parts[0], this.right);
+        return $PROPERTY(parts[1], parts[0], this.right, this.bracket);
       }
     }
   }

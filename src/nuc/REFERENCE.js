@@ -1,6 +1,7 @@
 const Id = require("../lib/identifier");
 const EXPRESSION = require("./EXPRESSION");
 const Local = require("../lib/local");
+const Token = require("../lib/token");
 
 class REFERENCE extends EXPRESSION {
   before() {}
@@ -12,7 +13,9 @@ class REFERENCE extends EXPRESSION {
       if (local) return local;
     }
 
-    return "state." + Id.serialize(this.link);
+    let arr = new Token.ARRAY();
+    arr.push(new Token("state." + Id.serialize(this.link)));
+    return arr;
   }
 
   next() {}

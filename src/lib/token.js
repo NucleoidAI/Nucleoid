@@ -9,6 +9,8 @@ function isDelimiter(c) {
     c === 36 ||
     c === 39 ||
     c === 46 ||
+    c === 91 ||
+    c === 93 ||
     c === 95
   );
 }
@@ -87,12 +89,20 @@ class Token {
     let parentheses = 0;
     let brackets = 0;
 
+    const keywords = ["new", "const", "let", "return", "typeof", "instanceof"];
+
     while (context) {
       offset = context.offset;
       let token = context.token;
 
       if (brackets <= 0 && token === ";") {
         return { tokens: tokens, offset: offset };
+      }
+
+      if (keywords.includes(token)) {
+        tokens.push(` ${token} `);
+        context = next(string, offset);
+        continue;
       }
 
       if (end && token === end) {
@@ -103,6 +113,14 @@ class Token {
         brackets++;
       } else if (token === "}") {
         brackets--;
+      }
+
+      if (token === "[") {
+        const nextBracket = Token.nextBracket(string, offset);
+        offset = nextBracket.offset;
+        tokens.push("[" + nextBracket.bracket + "]");
+        context = next(string, offset);
+        continue;
       }
 
       if (brackets < 0) {
@@ -119,12 +137,7 @@ class Token {
         break;
       }
 
-      if (callback) {
-        tokens.push(callback(token));
-      } else {
-        tokens.push(token);
-      }
-
+      tokens.push(token);
       context = next(string, offset);
     }
 
@@ -165,6 +178,31 @@ class Token {
     }
   }
 
+  static nextBracket(string, offset) {
+    let bracket = "";
+    let brackets = 0;
+    let character;
+
+    for (; offset < string.length; offset++) {
+      character = string.charAt(offset);
+
+      if (character === "[") {
+        brackets++;
+      } else if (character === "]") {
+        brackets--;
+      }
+
+      if (brackets < 0) {
+        offset++;
+        return { bracket, offset };
+      } else {
+        bracket += character;
+      }
+    }
+
+    throw SyntaxError("Missing bracket");
+  }
+
   static nextArgs(string, offset) {
     let args = [];
     let context = next(string, offset);
@@ -195,16 +233,14 @@ class Token {
   }
 }
 
-module.exports = Token;
-module.exports.next = next;
-module.exports.ARRAY = class ARRAY {
+class ARRAY {
   constructor() {
     this.instanceof = this.constructor.name;
     this.length = 0;
   }
 
   construct() {
-    let string = new String();
+    let string = String();
 
     for (let index = 0; index < this.length; index++) {
       string = string.concat(this[index].construct());
@@ -237,35 +273,50 @@ module.exports.ARRAY = class ARRAY {
 
     for (let index = 0; index < this.length; index++) {
       let token = this[index];
-      let string = fn(token.string);
 
-      if (token instanceof CALL) {
-        let params = [];
+      const arr = [];
 
-        for (let param of token.params) {
-          if (param instanceof FUNCTION) {
-            let f = new FUNCTION();
-            f.short = param.short;
-            f.params = param.params;
-            f.block = [];
-
-            for (let p of param.block) {
-              if (param.params.includes(p)) {
-                f.block.push(p);
-              } else {
-                f.block.push(fn(p));
-              }
-            }
-
-            params.push(f);
-          } else {
-            params.push(fn(param));
-          }
+      if (token instanceof BRACKET) {
+        for (let t = 0; t < token.length; t++) {
+          arr[t] = fn(token[t]);
         }
 
-        list.push(new CALL(string, params));
+        const bracket = new BRACKET();
+        arr.forEach((token) => bracket.push(token));
+        list.push(bracket);
       } else {
-        list.push(new Token(string));
+        let string = fn(token.string);
+
+        if (token instanceof CALL) {
+          let params = [];
+
+          for (let param of token.params) {
+            if (param instanceof FUNCTION) {
+              let f = new FUNCTION();
+              f.short = param.short;
+              f.params = param.params;
+              f.block = [];
+
+              for (let p of param.block) {
+                if (param.params.includes(p)) {
+                  f.block.push(p);
+                } else {
+                  f.block.push(fn(p));
+                }
+              }
+
+              params.push(f);
+            } else {
+              params.push(fn(param));
+            }
+          }
+
+          list.push(new CALL(string, params));
+        } else if (token instanceof EXPRESSION) {
+          list.push(new EXPRESSION(string));
+        } else {
+          list.push(new Token(string));
+        }
       }
     }
 
@@ -292,6 +343,8 @@ module.exports.ARRAY = class ARRAY {
             list.push(param);
           }
         }
+      } else if (token instanceof BRACKET) {
+        continue;
       } else {
         list.push(token.string);
       }
@@ -303,7 +356,7 @@ module.exports.ARRAY = class ARRAY {
   push(token) {
     this[this.length++] = token;
   }
-};
+}
 
 class CALL extends Token {
   constructor(string, params) {
@@ -321,11 +374,34 @@ class CALL extends Token {
               return param.construct();
             }
 
+            if (param === undefined) {
+              return "undefined";
+            }
+
+            if (param === null) {
+              return "null";
+            }
+
             return param;
           })
           .join("")
       )
       .concat(")");
+  }
+}
+
+class EXPRESSION extends Token {}
+class VARIABLE extends Token {}
+
+class BRACKET extends ARRAY {
+  construct() {
+    let string = String();
+
+    for (let index = 0; index < this.length; index++) {
+      string = string.concat(this[index]);
+    }
+
+    return string;
   }
 }
 
@@ -351,5 +427,12 @@ class FUNCTION extends Token {
   }
 }
 
+module.exports = Token;
+module.exports.next = next;
+module.exports.ARRAY = ARRAY;
+module.exports.BRACKET = BRACKET;
+module.exports.EXPRESSION = EXPRESSION;
+module.exports.VARIABLE = VARIABLE;
 module.exports.CALL = CALL;
 module.exports.FUNCTION = FUNCTION;
+module.exports.isDelimiter = isDelimiter;

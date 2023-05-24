@@ -7,6 +7,15 @@ const Id = require("../../lib/identifier");
 function JS$ASSIGNMENT(string, offset) {
   let context = Token.next(string, offset);
   let left = context.token;
+  let bracket;
+
+  let check = Token.next(string, context.offset);
+
+  if (check?.token === "[") {
+    context = Token.nextBracket(string, check.offset);
+    const { statement } = $EXP(context.bracket);
+    bracket = statement;
+  }
 
   let standard = (context = Token.next(string, context.offset));
   let point = Token.next(string, context.offset);
@@ -48,7 +57,10 @@ function JS$ASSIGNMENT(string, offset) {
 
   context = $EXP(string, context.offset);
   let right = context.statement;
-  return { statement: $ASSIGNMENT(left, right), offset: context.offset };
+  return {
+    statement: $ASSIGNMENT(left, right, bracket),
+    offset: context.offset,
+  };
 }
 
 module.exports = JS$ASSIGNMENT;

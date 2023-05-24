@@ -20,8 +20,9 @@ class $DELETE extends $ {
 
     try {
       let context = $EXP(`${this.key}.id`);
-      let expression = context.statement.run();
-      key = state.run(scope, expression.run(scope)) || this.key;
+      let expression = context.statement.run(scope);
+      const run = expression.run(scope);
+      key = state.run(scope, run) || this.key;
     } catch (error) {
       key = this.key;
     }

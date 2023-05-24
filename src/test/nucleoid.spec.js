@@ -2402,5 +2402,13 @@ describe("Nucleoid", () => {
       nucleoid.run("order1.upc = '04061' + order1.barcode", imperative);
       equal(nucleoid.run("order1.upc", imperative), "0406194067");
     });
+
+    it("retrieves object through let variable", () => {
+      nucleoid.run("class User { }");
+      nucleoid.run("user0 = new User ( )");
+      deepEqual(nucleoid.run("let user = 'user0' ; User[user]"), {
+        id: "user0",
+      });
+    });
   });
 });

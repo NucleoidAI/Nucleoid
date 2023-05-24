@@ -14,7 +14,7 @@ class EXPRESSION$INSTANCE extends EXPRESSION {
       });
     }
 
-    return super.run(scope);
+    return super.run(scope, false, false);
   }
 }
 

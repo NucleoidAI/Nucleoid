@@ -12,8 +12,7 @@ const JS$RETURN = require("./JS$RETURN");
 const ES6$CLASS = require("../es6/ES6$CLASS");
 const ES6$LET = require("../es6/ES6$LET");
 
-function compile(string, offset) {
-  offset = offset || 0;
+function compile(string, offset = 0) {
   let statements = [];
 
   while (offset < string.length) {
@@ -26,7 +25,7 @@ function compile(string, offset) {
 
     let check = Token.next(string, context.offset);
 
-    if (check && check.token === "=") {
+    if (check?.token === "=") {
       check = Token.next(string, check.offset);
 
       if (check && check.token !== "=") {
@@ -37,6 +36,24 @@ function compile(string, offset) {
 
         offset = context.offset;
         continue;
+      }
+    } else if (check?.token === "[") {
+      check = Token.nextBracket(string, check.offset);
+
+      check = Token.next(string, check.offset);
+
+      if (check && check.token === "=") {
+        check = Token.next(string, check.offset);
+
+        if (check && check.token !== "=") {
+          context = JS$ASSIGNMENT(string, offset);
+          if (context.statement) {
+            statements.push(context.statement);
+          }
+
+          offset = context.offset;
+          continue;
+        }
       }
     }
 

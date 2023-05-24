@@ -3,7 +3,6 @@ const graph = require("../graph");
 const Local = require("../lib/local");
 const Id = require("../lib/identifier");
 const Token = require("../lib/token");
-const { argv } = require("yargs");
 const Node = require("./Node");
 const LET = require("./LET");
 
@@ -45,7 +44,7 @@ class EXPRESSION {
       });
   }
 
-  run(scope, skip) {
+  run(scope, skip = false, construct = true) {
     try {
       for (let i = 0; i < this.tokens.length; i++) {
         const token = this.tokens[i];
@@ -68,13 +67,26 @@ class EXPRESSION {
       let tokens = this.tokens
         .map((token) => (token = Local.reference(scope, token)))
         .map((token) => {
-          let parts = token.split(".");
+          let parts = token.split(/\.|\[|\]/);
 
           try {
             if (Local.check(scope, parts[0])) {
               return Local.retrieve(scope, token);
             } else if (graph[parts[0]]) {
               let reference = "state." + Id.reference(token);
+
+              const match = reference.match(/\[(.*?)\]/);
+
+              if (match) {
+                const bracket = match[1];
+                let parts = bracket.split(/\.|\[|\]/);
+
+                if (Local.check(scope, parts[0])) {
+                  const local = Local.retrieve(scope, bracket);
+                  reference = reference.replace(/\[(.*?)\]/, `[${local}]`);
+                }
+              }
+
               let value = state.run(scope, reference);
 
               if (value === undefined && !skip) throw 0;
@@ -89,11 +101,17 @@ class EXPRESSION {
           }
         });
 
-      if (argv.log === true || argv.l === true) console.log(tokens.construct());
-      return tokens.construct();
+      return construct ? tokens.construct() : tokens;
     } catch (error) {
       if (error instanceof Error) throw error;
-      return "undefined";
+
+      if (construct) {
+        return "undefined";
+      } else {
+        const arr = new Token.ARRAY();
+        arr.push(new Token("undefined"));
+        return arr;
+      }
     }
   }
 
