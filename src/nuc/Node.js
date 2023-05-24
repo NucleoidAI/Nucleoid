@@ -4,7 +4,7 @@ const transaction = require("../transaction");
 const serialize = require("../lib/serialize");
 const revive = require("../lib/revive");
 
-let sequence = 0;
+let sequence = 1;
 
 class Node {
   constructor() {
@@ -23,6 +23,10 @@ class Node {
   static register(node) {
     if (node.constructor.name === "Object") {
       revive(node);
+
+      if (node.sequence) {
+        sequence = node.sequence + 1;
+      }
     } else {
       const exec = serialize(node, "graph");
       transaction.push({ exec: `Node.register(${exec})` });
