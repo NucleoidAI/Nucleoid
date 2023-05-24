@@ -21,10 +21,12 @@ class Node {
   graph() {}
 
   static register(node) {
-    const exec = serialize(node, "graph");
-    transaction.push(`Node.register(${exec})`);
-
-    revive(node);
+    if (node.constructor.name === "Object") {
+      revive(node);
+    } else {
+      const exec = serialize(node, "graph");
+      transaction.push({ exec: `Node.register(${exec})` });
+    }
 
     const { key, id } = node;
 
@@ -36,10 +38,12 @@ class Node {
   }
 
   static replace(sourceKey, targetNode) {
-    const exec = serialize(targetNode, "graph");
-    transaction.push(`Node.replace('${sourceKey}',${exec})`);
-
-    revive(targetNode);
+    if (targetNode.constructor.name === "Object") {
+      revive(targetNode);
+    } else {
+      const exec = serialize(targetNode, "graph");
+      transaction.push({ exec: `Node.replace('${sourceKey}',${exec})` });
+    }
 
     transaction.assignGraph(targetNode.block, graph[sourceKey].block);
 
@@ -67,10 +71,14 @@ class Node {
   }
 
   static direct(sourceKey, targetKey, targetNode) {
-    const exec = serialize(targetNode, "graph");
-    transaction.push(`Node.direct('${sourceKey}','${targetKey}',${exec})`);
-
-    revive(targetNode);
+    if (targetNode.constructor.name === "Object") {
+      revive(targetNode);
+    } else {
+      const exec = serialize(targetNode, "graph");
+      transaction.push({
+        exec: `Node.direct('${sourceKey}','${targetKey}',${exec})`,
+      });
+    }
 
     transaction.assignGraph(graph[sourceKey].next, targetKey, targetNode);
     transaction.assignGraph(targetNode.previous, sourceKey, graph[targetKey]);

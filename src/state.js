@@ -5,10 +5,11 @@ const state = {
 };
 const _transaction = require("./transaction");
 const _graph = require("./graph");
-const event = require("./event").event;
+const { event } = require("./event");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
-const random = require("./lib/random");
+const REFERENCE = require("./nuc/REFERENCE");
+const serialize = require("./lib/serialize");
 
 global.require = require;
 
@@ -46,12 +47,32 @@ function graph(id) {
   return object;
 }
 function assign(scope, variable, expression) {
-  return _transaction.assign(variable, expression, scope);
+  if (!variable) return;
+
+  let transaction;
+
+  if (expression instanceof REFERENCE) {
+    // eslint-disable-next-line no-eval
+    const before = eval(`state.${variable}`);
+    const exec = `state.${variable}=${expression.run()}`;
+
+    transaction = { variable, exec, before };
+  } else {
+    const before = eval(`state.${variable}`); // eslint-disable-line no-eval
+    const result = eval(`(${expression})`); // eslint-disable-line no-eval
+    const value = serialize(result, "state");
+    const exec = `state.${variable}=${value}`;
+
+    transaction = { variable, exec, before };
+  }
+
+  _transaction.push(transaction);
+  return eval(transaction.exec);
 }
 
 function run(scope, expression, transaction = false) {
   if (transaction) {
-    _transaction.push(`(${expression})`);
+    _transaction.push({ exec: `(${expression})` });
   }
 
   return eval(`(${expression})`);

@@ -3,18 +3,16 @@ const graph = require("../graph");
 const Local = require("../lib/local");
 const Id = require("../lib/identifier");
 const Token = require("../lib/token");
-const argv = require("yargs").argv;
+const { argv } = require("yargs");
+const Node = require("./Node");
+const LET = require("./LET");
 
-let Node;
 let Stack;
 let $CALL;
-let LET;
 
 setImmediate(() => {
-  Node = require("./Node");
   Stack = require("../stack");
   $CALL = require("../lang/$nuc/$CALL");
-  LET = require("./LET");
 });
 
 class EXPRESSION {
