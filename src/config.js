@@ -28,6 +28,8 @@ function init(config = {}) {
     fs.mkdirSync(_config.path, { recursive: true });
   }
 
+  require("dotenv").config({ path: `${_config.path}/.env` });
+
   if (!fs.existsSync(`${_config.path}/data`)) {
     fs.mkdirSync(`${_config.path}/data`, { recursive: true });
   }

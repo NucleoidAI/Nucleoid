@@ -98,7 +98,7 @@ function load({ api, types, prefix = "", events = [] }) {
       fs.appendFileSync(
         file,
         `function ${method}(req, res) {` +
-          `const scope = { params: req.params, query: req.query, body: req.body, info: { user: req.headers["x-nuc-user"] } };` +
+          `const scope = { params: req.params, query: req.query, body: req.body, user: req.headers["x-nuc-user"] };` +
           `const { result, error } = nucleoid.run(${action}, scope, { details: true });` +
           `if (!result) res.status(${method === "get" ? 404 : 200}).end();` +
           `else if (error) res.status(400).json({ error: result });` +
