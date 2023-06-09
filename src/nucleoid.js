@@ -8,8 +8,11 @@ function start(config = {}) {
   _config.init(config);
   process.init();
 
-  setImmediate(() => {
-    context.run();
+  return new Promise((resolve) => {
+    setImmediate(() => {
+      context.run();
+      resolve();
+    });
   });
 }
 

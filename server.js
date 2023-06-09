@@ -11,8 +11,8 @@ if (argv.clear) {
   datastore.clear();
 }
 
-nucleoid.start();
-
-if (argv.cluster) {
-  cluster.init();
-}
+nucleoid.start().then(() => {
+  if (argv.cluster) {
+    cluster.init();
+  }
+});
