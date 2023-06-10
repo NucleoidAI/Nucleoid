@@ -16,7 +16,7 @@
     "nuc": "bin.js"
   },
   "scripts": {
-    "test": "mocha 'src/**/*.spec.js' --forbidOnly",
+    "test": "mocha 'src/**/*.spec.js'",
     "lint": "eslint . --ext .js"
   },
   "repository": {
@@ -24,7 +24,7 @@
     "url": "https://github.com/NucleoidJS/Nucleoid.git"
   },
   "dependencies": {
-    "@nucleoidjs/datastore": "^1.1.6",
+    "@nucleoidjs/datastore": "^1.1.9",
     "axios": "^1.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.1.3",
