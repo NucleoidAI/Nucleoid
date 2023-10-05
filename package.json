@@ -16,6 +16,7 @@
     "nuc": "bin.js"
   },
   "scripts": {
+    "start": "node bin.js start",
     "test": "mocha 'src/**/*.spec.js'",
     "lint": "eslint . --ext .js"
   },
