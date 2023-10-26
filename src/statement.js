@@ -1,7 +1,7 @@
-const JS = require("./lang/js/JS");
+const acorn = require("./lang/estree/acorn");
 
-function compile(string) {
-  return JS.compile(string).statements;
+function parse(string) {
+  return acorn.parse(string);
 }
 
-module.exports.compile = compile;
+module.exports.parse = parse;

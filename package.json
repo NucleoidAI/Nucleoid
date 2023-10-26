@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@nucleoidjs/datastore": "^1.1.9",
+    "acorn": "^8.10.0",
     "axios": "^1.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.1.3",

@@ -1,9 +1,10 @@
 const state = require("../state");
 const Node = require("./Node");
-const $EXP = require("../lang/$nuc/$EXPRESSION");
 const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
+const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 const { deepEqual } = require("../lib/deep");
+const Evaluation = require("../lang/ast/Evaluation");
 
 class CLASS extends Node {
   constructor() {
@@ -27,16 +28,14 @@ class CLASS extends Node {
       }
     }
 
-    state.assign(scope, this.name, `class {}`);
+    state.assign(scope, this.name, new Evaluation(`class ${this.name}{}`));
 
     let list = [];
 
     if (!graph[this.name]) {
-      let context = $EXP(`classes.push("${this.name}")`);
-      list.push(context.statement);
+      state.call(scope, "classes.push", [`state.${this.name}`]);
 
-      context = $EXP("[]");
-      const alias = $ALIAS(this, this.name.substring(1), context.statement);
+      const alias = $ALIAS(this, this.list, $EXPRESSION("[]"));
       list.push(alias);
     }
 

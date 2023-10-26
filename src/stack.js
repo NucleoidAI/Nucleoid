@@ -10,6 +10,8 @@ const EXPRESSION = require("./nuc/EXPRESSION");
 const state = require("./state");
 const RETURN = require("./nuc/RETURN");
 const Token = require("./lib/token");
+const Evaluation = require("./lang/ast/Evaluation");
+const transaction = require("./transaction");
 
 function process(statements, prior, options = {}) {
   const root = new Scope(prior);
@@ -49,32 +51,13 @@ function process(statements, prior, options = {}) {
         break;
       }
       case statement instanceof EXPRESSION: {
-        const serialize = require("./lib/serialize");
         let scope = instruction.scope;
 
-        const tokens = statement.run(scope, false, false);
-
-        let value = String();
-        let transaction = false;
-
-        for (let i = 0; i < tokens.length; i++) {
-          const token = tokens[i];
-
-          if (token instanceof Token.EXPRESSION) {
-            const tmp = state.run(scope, token.construct());
-            value += serialize(tmp, "state");
-          } else if (token instanceof Token.CALL) {
-            transaction = true;
-            value += token.construct();
-          } else {
-            value += token.construct();
-          }
-        }
-
-        const run = state.run(scope, value, transaction);
+        const evaluation = statement.run(scope, false, false);
+        transaction.push(evaluation.transactions);
 
         if (instruction.scope === root && !instruction.derivative) {
-          result = run;
+          result = state.expression(scope, evaluation);
         }
 
         let list = statement.next(scope);
@@ -118,7 +101,7 @@ function process(statements, prior, options = {}) {
             .map((statement) => {
               return statement instanceof Instruction
                 ? statement
-                : new Instruction(scope, statement, true, true, true, null);
+                : new Instruction(scope, statement, true, true, true, null); // root = null?
             })
             .map((instruction) => {
               if (instruction.derivative === undefined) {
@@ -133,7 +116,7 @@ function process(statements, prior, options = {}) {
 
         break;
       }
-      default: {
+      case statement instanceof Node: {
         if (instruction.before) {
           statement.before(instruction.scope);
         }
@@ -252,6 +235,8 @@ function process(statements, prior, options = {}) {
             dependents = [];
             priorities = [];
           }
+
+          break;
         }
 
         if (instruction.scope.block) {

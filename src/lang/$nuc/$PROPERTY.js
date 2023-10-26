@@ -9,12 +9,11 @@ const PROPERTY$REFERENCE = require("../../nuc/PROPERTY$REFERENCE");
 const Local = require("../../lib/local");
 const FUNCTION = require("../../nuc/FUNCTION");
 
-function construct(object, name, value, bracket) {
+function build(object, name, value) {
   let statement = new $PROPERTY();
   statement.object = object;
   statement.name = name;
   statement.value = value;
-  statement.bracket = bracket;
   return statement;
 }
 
@@ -61,4 +60,4 @@ class $PROPERTY extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

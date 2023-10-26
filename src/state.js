@@ -46,37 +46,47 @@ function graph(id) {
 
   return object;
 }
-function assign(scope, variable, expression) {
-  if (!variable) return;
-
+function assign(scope, variable, evaluation, json = true) {
   let transaction;
 
-  if (expression instanceof REFERENCE) {
-    // eslint-disable-next-line no-eval
+  if (evaluation instanceof REFERENCE) {
     const before = eval(`state.${variable}`);
-    const run = expression.run();
+    const run = evaluation.run();
     const exec = `state.${variable}=${run.construct()}`;
 
     transaction = { variable, exec, before };
   } else {
-    const before = eval(`state.${variable}`); // eslint-disable-line no-eval
-    const result = eval(`(${expression})`); // eslint-disable-line no-eval
-    const value = serialize(result, "state");
-    const exec = `state.${variable}=${value}`;
+    const before = eval(`state.${variable}`);
 
-    transaction = { variable, exec, before };
+    if (json) {
+      const result = eval(`(${evaluation.value})`);
+      const value = serialize(result, "state");
+
+      const exec = `state.${variable}=${value}`;
+      transaction = { variable, exec, before };
+    } else {
+      const exec = `state.${variable}=${evaluation.value}`;
+      transaction = { variable, exec, before };
+    }
+  }
+
+  if (evaluation.transactions?.length) {
+    _transaction.push(...evaluation.transactions);
   }
 
   _transaction.push(transaction);
   return eval(transaction.exec);
 }
 
-function run(scope, expression, transaction = false) {
-  if (transaction) {
-    _transaction.push({ exec: `(${expression})` });
-  }
+function call(scope, fn, args = []) {
+  const exec = `state.${fn}(${args.join(",")})`;
+  _transaction.push({ exec });
+  return eval(exec);
+}
 
-  return eval(`(${expression})`);
+function expression(scope, evaluation) {
+  state;
+  return eval(`(${evaluation.value})`);
 }
 
 function load(execs = []) {
@@ -88,8 +98,10 @@ function load(execs = []) {
   });
 }
 
-module.exports.state = state;
-module.exports.assign = assign;
-module.exports.run = run;
 module.exports.throw = (scope, exception) => eval(`throw state.${exception}`);
+
+module.exports.state = state; // will be private
+module.exports.assign = assign;
+module.exports.call = call;
+module.exports.expression = expression;
 module.exports.load = load;

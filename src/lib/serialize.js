@@ -31,18 +31,10 @@ function serialize(input, source, acc = {}) {
       result = input.toString().replace(/\n/g, " ").replace(/ +/g, " ");
       break;
     case input instanceof Object:
-      if (
-        source === "state" &&
-        input.id !== undefined &&
-        state[input.id] !== undefined
-      ) {
+      if (source === "state" && state[input?.id] !== undefined) {
         result = `state.${input.id}`;
         break;
-      } else if (
-        source === "graph" &&
-        input.id !== undefined &&
-        graph[input.id] !== undefined
-      ) {
+      } else if (source === "graph" && graph[input?.id] !== undefined) {
         result = `graph['${input.id}']`;
         break;
       } else if (input.id !== undefined && acc[input.id] !== undefined) {

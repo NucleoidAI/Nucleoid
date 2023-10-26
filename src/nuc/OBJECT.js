@@ -1,11 +1,12 @@
 const state = require("../state");
 const Node = require("./Node");
 const Id = require("../lib/identifier");
-const $EXP = require("../lang/$nuc/$EXPRESSION");
+const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 const Instruction = require("../instruction");
 const LET = require("./LET");
 const Scope = require("../scope");
 const random = require("../lib/random");
+const Evaluation = require("../lang/ast/Evaluation");
 
 class OBJECT extends Node {
   constructor() {
@@ -25,30 +26,49 @@ class OBJECT extends Node {
   run(scope) {
     let name = this.key;
 
-    state.assign(scope, name, `new state.${this.class.name}()`);
+    state.assign(
+      scope,
+      name,
+      new Evaluation(`new state.${this.class.name}()`),
+      false
+    );
+    state.assign(scope, `${name}.id`, new Evaluation(`"${name}"`));
     scope.object = this;
 
     let list = [];
 
-    for (let i = 0; i < this.class.args.length; i++) {
-      let local = new LET();
-      local.name = this.class.args[i];
-
-      if (this.args[i] !== undefined) {
-        let context = $EXP(this.args[i]);
-        local.value = context.statement.run();
-        list.push(local);
-      } else {
-        let context = $EXP("undefined");
-        local.value = context.statement.run();
-        list.push(local);
-      }
+    if (!this.object) {
+      state.call(scope, `${this.class.list}.push`, [`state.${name}`]);
+      state.assign(
+        scope,
+        `${this.class.list}["${this.name}"]`,
+        new Evaluation(`state.${name}`)
+      );
     }
 
-    if (this.class.construct !== undefined) {
-      let construct = this.class.construct;
-      let instruction = new Instruction(scope, construct, false, true, false);
-      list.push(instruction);
+    if (
+      this.class.methods.find((method) => method.key.name === "constructor")
+    ) {
+      for (let i = 0; i < this.class.args.length; i++) {
+        let local = new LET();
+        local.name = this.class.args[i];
+
+        if (this.args[i] !== undefined) {
+          let context = $EXPRESSION(this.args[i]);
+          local.value = context.statement.run();
+          list.push(local);
+        } else {
+          let context = $EXPRESSION("undefined");
+          local.value = context.statement.run();
+          list.push(local);
+        }
+      }
+
+      if (this.class.construct !== undefined) {
+        let construct = this.class.construct;
+        let instruction = new Instruction(scope, construct, false, true, false);
+        list.push(instruction);
+      }
     }
 
     for (let node in this.class.declarations) {
@@ -56,38 +76,6 @@ class OBJECT extends Node {
       let scope = new Scope();
       scope.instances[this.class.name] = this;
       list.push(new Instruction(scope, declaration, true, true, true, true));
-    }
-
-    const context = $EXP(
-      `Object.setPrototypeOf(${name}, ${this.class.name}.prototype)`
-    );
-    list.push(context.statement);
-
-    if (this.object === undefined) {
-      let context = $EXP(`${this.class.name.substring(1)}.push(${this.name})`);
-      list.push(context.statement);
-
-      state.run(
-        scope,
-        `state.${this.class.name.substring(1)}["${this.name}"]=state.${
-          this.name
-        }`,
-        true
-      );
-      state.run(scope, `state.${name}.id="${name}"`, true);
-
-      context = $EXP(this.name);
-      list.push(
-        new Instruction(
-          scope,
-          context.statement,
-          true,
-          true,
-          false,
-          null,
-          false
-        )
-      );
     }
 
     return { value: name, next: list };

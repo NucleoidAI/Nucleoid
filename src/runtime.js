@@ -22,7 +22,7 @@ module.exports.process = function (statement, options = {}) {
   let s = Macro.apply(statement, options);
 
   try {
-    statements = Statement.compile(s, options);
+    statements = Statement.parse(s, options);
     transaction.start();
     result = stack.process(statements, null, options);
     const list = transaction.end();

@@ -5,9 +5,9 @@ const $LET = require("./$LET");
 const $ = require("./$");
 const Id = require("../../lib/identifier");
 
-function construct(left, right, bracket) {
+function build(left, right, bracket) {
   let statement = new $ASSIGNMENT();
-  statement.left = left.split(".");
+  statement.left = left;
   statement.right = right;
   statement.bracket = bracket;
   return statement;
@@ -25,15 +25,13 @@ class $ASSIGNMENT extends $ {
         return $LET(this.left[0], this.right);
       } else return $VARIABLE(this.left[0], this.right);
     } else {
-      let parts = Id.splitLast(this.left.join("."));
-
-      if (Local.check(scope, parts[1])) {
+      if (Local.check(scope, this.left.last)) {
         return $LET(this.left.join("."), this.right);
       } else {
-        return $PROPERTY(parts[1], parts[0], this.right, this.bracket);
+        return $PROPERTY(this.left.first, this.left.last, this.right);
       }
     }
   }
 }
 
-module.exports = construct;
+module.exports = build;

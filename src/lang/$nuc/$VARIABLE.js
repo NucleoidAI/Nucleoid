@@ -2,8 +2,8 @@ const $ = require("./$");
 const VARIABLE = require("../../nuc/VARIABLE");
 const OBJECT = require("../../nuc/OBJECT");
 
-function construct(name, value) {
-  let statement = new $VARIABLE();
+function build(name, value) {
+  const statement = new $VARIABLE();
   statement.name = name;
   statement.value = value;
   return statement;
@@ -11,19 +11,19 @@ function construct(name, value) {
 
 class $VARIABLE extends $ {
   run(scope) {
-    let value = this.value.run(scope);
+    const expression = this.value.run(scope);
 
-    if (value.instanceof === "EXPRESSION" || value.instanceof === "REFERENCE") {
-      let statement = new VARIABLE();
-      statement.name = this.name;
-      statement.value = value;
+    if (["EXPRESSION", "REFERENCE"].includes(expression.instanceof)) {
+      const statement = new VARIABLE();
+      statement.name = this.name.resolve();
+      statement.value = expression;
       return statement;
-    } else if (value instanceof OBJECT) {
-      let statement = value;
-      statement.name = this.name;
+    } else if (expression instanceof OBJECT) {
+      const statement = expression;
+      statement.name = this.name.resolve();
       return statement;
     }
   }
 }
 
-module.exports = construct;
+module.exports = build;

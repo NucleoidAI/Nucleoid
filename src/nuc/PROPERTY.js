@@ -9,9 +9,12 @@ class PROPERTY extends Node {
   }
 
   run(scope) {
-    let object = Id.serialize(this.object, true);
-    const run = this.value.run(scope);
-    const value = state.assign(scope, object + "." + this.name, run);
+    const evaluation = this.value.run(scope);
+    const value = state.assign(
+      scope,
+      this.object.name + "." + this.name,
+      evaluation
+    );
     return { value };
   }
 
