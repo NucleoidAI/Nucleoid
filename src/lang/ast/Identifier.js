@@ -3,7 +3,8 @@ class Identifier {
     this.node = node;
 
     if (node.type === "MemberExpression") {
-      this.first = new Identifier(root(node));
+      this.first = new Identifier(first(node));
+      this.object = new Identifier(node.object);
       this.last = new Identifier(node.property);
     }
   }
@@ -12,24 +13,24 @@ class Identifier {
     if (this.node.type === "Identifier") {
       return this.node.name;
     } else if (this.node.type === "MemberExpression") {
-      return traverse(this.node);
+      return resolveTraverse(this.node);
     }
   }
 }
 
-function root(node) {
-  let curr = node;
+function first(node) {
+  let current = node;
 
-  while (curr.object.type !== "Identifier") {
-    curr = curr.object;
+  while (current.object.type !== "Identifier") {
+    current = current.object;
   }
 
-  return curr.object;
+  return current.object;
 }
 
-function traverse(node) {
+function resolveTraverse(node) {
   if (node.type === "MemberExpression") {
-    return traverse(node.object) + "." + node.property.name;
+    return resolveTraverse(node.object) + "." + node.property.name;
   } else {
     return node.name;
   }

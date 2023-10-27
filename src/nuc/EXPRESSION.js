@@ -6,6 +6,7 @@ const Token = require("../lib/token");
 const Node = require("./Node");
 const LET = require("./LET");
 const Evaluation = require("../lang/ast/Evaluation");
+const Identifier = require("../lang/ast/Identifier");
 
 let Stack;
 let $CALL;
@@ -31,11 +32,11 @@ class EXPRESSION {
         case "Literal": {
           return node.raw;
         }
-        case "Identifier": {
-          return node.name;
-        }
+        case "Identifier":
         case "MemberExpression": {
-          return `state.${node.object.name}.${node.property.name}`;
+          const identifier = new Identifier(node);
+          const name = identifier.resolve();
+          return graph[name] ? `state.${name}` : name;
         }
         case "CallExpression": {
           return `${node.callee.object.name}.${node.callee.property.name}()`;

@@ -12,7 +12,7 @@ class PROPERTY extends Node {
     const evaluation = this.value.run(scope);
     const value = state.assign(
       scope,
-      this.object.name + "." + this.name,
+      this.object.resolve() + "." + this.name,
       evaluation
     );
     return { value };

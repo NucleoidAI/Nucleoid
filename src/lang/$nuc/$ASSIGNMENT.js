@@ -15,20 +15,22 @@ function build(left, right, bracket) {
 
 class $ASSIGNMENT extends $ {
   run(scope) {
-    if (this.left.length === 1) {
-      const local = Local.check(scope, this.left[0]);
+    if (!this.left.object) {
+      const local = Local.check(scope, this.left.resolve());
       if (local) {
         if (local.constant) {
           throw TypeError("Assignment to constant variable.");
         }
 
-        return $LET(this.left[0], this.right);
-      } else return $VARIABLE(this.left[0], this.right);
+        return $LET(this.left, this.right);
+      } else {
+        return $VARIABLE(this.left, this.right);
+      }
     } else {
-      if (Local.check(scope, this.left.last)) {
+      if (Local.check(scope, this.left.last.resolve())) {
         return $LET(this.left.join("."), this.right);
       } else {
-        return $PROPERTY(this.left.first, this.left.last, this.right);
+        return $PROPERTY(this.left.object, this.left.last, this.right);
       }
     }
   }

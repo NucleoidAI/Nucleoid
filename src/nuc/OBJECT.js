@@ -85,6 +85,18 @@ class OBJECT extends Node {
     if (this.object !== undefined) this.object.properties[this.name] = this;
     this.class.instances[this.key] = this;
   }
+
+  resolve() {
+    let current = this;
+    let name = this.name;
+
+    while (current.object) {
+      current = current.object;
+      name = current.name + "." + name;
+    }
+
+    return name;
+  }
 }
 
 module.exports = OBJECT;
