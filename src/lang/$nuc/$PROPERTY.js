@@ -19,25 +19,28 @@ function build(object, name, value) {
 
 class $PROPERTY extends $ {
   run(scope) {
-    if (this.object === "this") {
-      this.object = Local.object(scope);
+    let object = this.object.resolve();
+    const name = this.name.resolve();
+
+    if (object === "this") {
+      object = Local.object(scope);
     }
 
-    if (graph[this.object] === undefined) {
-      throw ReferenceError(`${this.object} is not defined`);
+    if (graph[object] === undefined) {
+      throw ReferenceError(`${object} is not defined`);
     }
 
-    if (this.name === "value" && !(graph[this.object] instanceof FUNCTION)) {
+    if (name === "value" && !(graph[object] instanceof FUNCTION)) {
       throw TypeError("Cannot use 'value' as a name");
     }
 
     if (
-      graph[this.object] instanceof CLASS ||
-      graph[this.object] instanceof OBJECT$CLASS
+      graph[object] instanceof CLASS ||
+      graph[object] instanceof OBJECT$CLASS
     ) {
       let statement = new PROPERTY$CLASS();
-      statement.object = graph[this.object];
-      statement.name = this.name;
+      statement.object = graph[object];
+      statement.name = name;
       statement.value = this.value.run();
       return statement;
     }
@@ -46,15 +49,15 @@ class $PROPERTY extends $ {
 
     if (value instanceof REFERENCE) {
       let statement = new PROPERTY$REFERENCE();
-      statement.object = graph[this.object];
-      statement.name = this.name;
+      statement.object = graph[object];
+      statement.name = name;
       statement.value = value;
       return statement;
     }
 
     let statement = new PROPERTY();
-    statement.object = graph[this.object];
-    statement.name = this.name;
+    statement.object = graph[object];
+    statement.name = name;
     statement.value = value;
     return statement;
   }

@@ -3,7 +3,7 @@ const $VARIABLE = require("../$nuc/$VARIABLE");
 const $EXPRESSION = require("../$nuc/$EXPRESSION");
 const $ASSIGNMENT = require("../$nuc/$ASSIGNMENT");
 const $CLASS = require("../$nuc/$CLASS");
-const $OBJECT = require("../$nuc/$OBJECT");
+const $INSTANCE = require("../$nuc/$INSTANCE");
 const Expression = require("../ast/Expression");
 const Identifier = require("../ast/Identifier");
 
@@ -19,7 +19,15 @@ function parseNode(node) {
       if (expression.type === "AssignmentExpression") {
         const { left, right } = expression;
         const name = new Identifier(left);
-        return $ASSIGNMENT(name, $EXPRESSION(new Expression(right)));
+
+        if (expression.right.type === "NewExpression") {
+          const cls = new Identifier(expression.right.callee);
+          const object = new Identifier(left.object);
+          const name = new Identifier(left.property);
+          return $INSTANCE(cls, object, name, expression.right.arguments);
+        } else {
+          return $ASSIGNMENT(name, $EXPRESSION(new Expression(right)));
+        }
       } else {
         return $EXPRESSION(new Expression(expression));
       }
@@ -33,7 +41,7 @@ function parseNode(node) {
       if (init.type === "NewExpression") {
         const cls = new Identifier(init.callee);
         const name = new Identifier(id);
-        return $OBJECT(cls, null, name, init.arguments);
+        return $INSTANCE(cls, null, name, init.arguments);
       } else {
         return $VARIABLE(new Identifier(id), $EXPRESSION(new Expression(init)));
       }

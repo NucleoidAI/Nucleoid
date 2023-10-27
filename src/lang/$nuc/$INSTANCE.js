@@ -7,7 +7,7 @@ const Local = require("../../lib/local");
 const $LET = require("./$LET");
 
 function build(cls, object, name, args) {
-  let statement = new $OBJECT();
+  let statement = new $INSTANCE();
   statement.class = cls;
   statement.name = name;
   statement.object = object;
@@ -15,7 +15,7 @@ function build(cls, object, name, args) {
   return statement;
 }
 
-class $OBJECT extends $ {
+class $INSTANCE extends $ {
   run(scope) {
     const cls = `$${this.class.resolve()}`;
     const name = this.name.resolve();
@@ -24,26 +24,27 @@ class $OBJECT extends $ {
       throw ReferenceError(`${cls} is not defined`);
     }
 
-    if (this.object !== undefined && this.name === "value") {
+    if (this.object !== undefined && name === "value") {
       throw TypeError("Cannot use 'value' as a property");
     }
 
     if (this.object) {
-      const local = this.object + "." + this.name;
-      if (Local.check(scope, this.object)) {
+      const object = this.object.resolve();
+      const local = object + "." + name;
+      if (Local.check(scope, object)) {
         let instance = new OBJECT();
         instance.class = this.class;
         return $LET(local, instance);
       }
 
-      if (this.object !== undefined && graph[this.object] === undefined) {
+      if (object !== undefined && graph[object] === undefined) {
         throw ReferenceError(`${this.object} is not defined`);
       }
 
       if (
-        this.object &&
-        (graph[this.object] instanceof CLASS ||
-          graph[this.object] instanceof OBJECT$CLASS)
+        object &&
+        (graph[object] instanceof CLASS ||
+          graph[object] instanceof OBJECT$CLASS)
       ) {
         let statement = new OBJECT$CLASS();
         statement.class = graph[this.class];
@@ -54,7 +55,7 @@ class $OBJECT extends $ {
         const statement = new OBJECT();
         statement.class = graph[cls];
         statement.name = name;
-        statement.object = graph[this.object];
+        statement.object = graph[object];
         statement.args = this.args;
         return statement;
       }
