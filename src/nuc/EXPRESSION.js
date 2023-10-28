@@ -1,20 +1,7 @@
-const state = require("../state");
 const graph = require("../graph");
-const Local = require("../lib/local");
-const Id = require("../lib/identifier");
-const Token = require("../lib/token");
-const Node = require("./Node");
-const LET = require("./LET");
 const Evaluation = require("../lang/ast/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
-
-let Stack;
-let $CALL;
-
-setImmediate(() => {
-  Stack = require("../stack");
-  $CALL = require("../lang/$nuc/$CALL");
-});
+const Call = require("../lang/ast/Call");
 
 class EXPRESSION {
   constructor(tokens) {
@@ -27,36 +14,13 @@ class EXPRESSION {
   run() {
     const tokens = this.tokens;
 
-    const expression = tokens.traverse((node) => {
-      switch (node.type) {
-        case "Literal": {
-          return node.raw;
-        }
-        case "Identifier":
-        case "MemberExpression": {
-          const identifier = new Identifier(node);
-          const name = identifier.resolve();
-          return graph[name] ? `state.${name}` : name;
-        }
-        case "CallExpression": {
-          return `${node.callee.object.name}.${node.callee.property.name}()`;
-        }
-        case "ArrayExpression": {
-          return `[${node.elements.map((element) => element.raw).join(",")}]`;
-        }
-        default: {
-          throw new Error(`ParserError: Unknown node type '${node.type}'`);
-        }
-      }
-    });
+    const expression = tokens.traverse((token) => token.resolve(true));
 
-    const transactions = tokens.filter((node) => {
-      switch (node.type) {
-        case "CallExpression": {
-          return {
-            exec: `${node.callee.object.name}.${node.callee.property.name}()`,
-          };
-        }
+    const transactions = tokens.map((token) => {
+      if (token instanceof Call) {
+        return {
+          exec: token.resolve(true),
+        };
       }
     });
 
@@ -65,7 +29,16 @@ class EXPRESSION {
 
   next() {}
 
-  graph() {}
+  graph() {
+    return this.tokens.map((token) => {
+      if (token instanceof Identifier) {
+        const name = token.resolve();
+        if (graph[name]) {
+          return name;
+        }
+      }
+    });
+  }
 }
 
 module.exports = EXPRESSION;

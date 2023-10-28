@@ -22,9 +22,16 @@ function parseNode(node) {
 
         if (expression.right.type === "NewExpression") {
           const cls = new Identifier(expression.right.callee);
-          const object = new Identifier(left.object);
-          const name = new Identifier(left.property);
-          return $INSTANCE(cls, object, name, expression.right.arguments);
+
+          if (left.type === "MemberExpression") {
+            const object = new Identifier(left.object);
+            const name = new Identifier(left.property);
+            return $INSTANCE(cls, object, name, expression.right.arguments);
+          } else if (left.type === "Identifier") {
+            return $INSTANCE(cls, null, name, expression.right.arguments);
+          } else {
+            throw new Error("Unknown identifier type");
+          }
         } else {
           return $ASSIGNMENT(name, $EXPRESSION(new Expression(right)));
         }

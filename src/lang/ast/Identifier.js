@@ -1,3 +1,5 @@
+const graph = require("../../graph");
+
 class Identifier {
   constructor(node) {
     this.node = node;
@@ -9,11 +11,21 @@ class Identifier {
     }
   }
 
-  resolve() {
+  resolve(path = false) {
+    let identifier;
     if (this.node.type === "Identifier") {
-      return this.node.name;
+      identifier = this.node.name;
     } else if (this.node.type === "MemberExpression") {
-      return resolveTraverse(this.node);
+      identifier = traverse(this.node);
+    } else {
+      throw new Error("Unknown identifier type");
+    }
+
+    if (path) {
+      const name = identifier;
+      return graph[name] ? `state.${name}` : name;
+    } else {
+      return identifier;
     }
   }
 }
@@ -28,9 +40,9 @@ function first(node) {
   return current.object;
 }
 
-function resolveTraverse(node) {
+function traverse(node) {
   if (node.type === "MemberExpression") {
-    return resolveTraverse(node.object) + "." + node.property.name;
+    return traverse(node.object) + "." + node.property.name;
   } else {
     return node.name;
   }

@@ -9,8 +9,6 @@ const BREAK = require("./nuc/BREAK");
 const EXPRESSION = require("./nuc/EXPRESSION");
 const state = require("./state");
 const RETURN = require("./nuc/RETURN");
-const Token = require("./lib/token");
-const Evaluation = require("./lang/ast/Evaluation");
 const transaction = require("./transaction");
 
 function process(statements, prior, options = {}) {
