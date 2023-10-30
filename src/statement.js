@@ -1,7 +1,7 @@
-const acorn = require("./lang/estree/acorn");
+const ESTree = require("./lang/estree/parser");
 
 function parse(string) {
-  return acorn.parse(string);
+  return ESTree.parse(string);
 }
 
 module.exports.parse = parse;

@@ -1,4 +1,5 @@
 const graph = require("../../graph");
+const { generate } = require("../estree/generator");
 
 class Identifier {
   constructor(node) {
@@ -12,20 +13,12 @@ class Identifier {
   }
 
   resolve(path = false) {
-    let identifier;
-    if (this.node.type === "Identifier") {
-      identifier = this.node.name;
-    } else if (this.node.type === "MemberExpression") {
-      identifier = traverse(this.node);
-    } else {
-      throw new Error("Unknown identifier type");
-    }
+    const name = generate(this.node);
 
     if (path) {
-      const name = identifier;
       return graph[name] ? `state.${name}` : name;
     } else {
-      return identifier;
+      return name;
     }
   }
 }
@@ -38,14 +31,6 @@ function first(node) {
   }
 
   return current.object;
-}
-
-function traverse(node) {
-  if (node.type === "MemberExpression") {
-    return traverse(node.object) + "." + node.property.name;
-  } else {
-    return node.name;
-  }
 }
 
 module.exports = Identifier;

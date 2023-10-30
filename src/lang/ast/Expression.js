@@ -4,35 +4,35 @@ const Call = require("./Call");
 const Array = require("./Array");
 
 class Expression {
-  constructor(tokens) {
-    this.tokens = tokens;
+  constructor(node) {
+    this.node = node;
   }
   map(fn) {
-    return mapReduce(this.tokens, fn);
+    return mapReduce(this.node, fn);
   }
 
   traverse(fn) {
-    return traverseReduce(this.tokens, fn);
+    return traverseReduce(this.node, fn);
   }
 }
 
-function convertToAST(token) {
-  switch (token.type) {
+function convertToAST(node) {
+  switch (node.type) {
     case "Literal": {
-      return new Literal(token);
+      return new Literal(node);
     }
     case "Identifier":
     case "MemberExpression": {
-      return new Identifier(token);
+      return new Identifier(node);
     }
     case "CallExpression": {
-      return new Call(token);
+      return new Call(node);
     }
     case "ArrayExpression": {
-      return new Array(token);
+      return new Array(node);
     }
     default: {
-      throw new Error(`ParserError: Unknown node type '${token.type}'`);
+      throw new Error(`ParserError: Unknown node type '${node.type}'`);
     }
   }
 }

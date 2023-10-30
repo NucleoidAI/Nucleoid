@@ -1,10 +1,10 @@
 class Literal {
-  constructor(token) {
-    this.token = token;
+  constructor(node) {
+    this.node = node;
   }
 
   resolve() {
-    return this.token.raw;
+    return this.node.raw;
   }
 }
 

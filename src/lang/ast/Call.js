@@ -1,20 +1,21 @@
 const Identifier = require("./Identifier");
+const ESTree = require("../estree/generator");
 const graph = require("../../graph");
 
 class Call {
-  constructor(token) {
-    this.token = token;
-    this.name = new Identifier(this.token.callee);
+  constructor(node) {
+    this.node = node;
+    this.name = new Identifier(this.node.callee);
   }
 
   resolve(path = false) {
     const name = this.name.object.resolve();
 
     if (path) {
-      const resolved = graph[name] ? `state.${name}` : name;
-      return `${resolved}.${this.name.last.resolve()}()`;
+      const generated = ESTree.generate(this.node);
+      return graph[name] ? `state.${generated}` : generated;
     } else {
-      return `${name}.${this.name.last.resolve()}()`;
+      return ESTree.generate(this.node);
     }
   }
 }

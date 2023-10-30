@@ -1,10 +1,10 @@
 class Array {
-  constructor(tokens) {
-    this.tokens = tokens;
+  constructor(node) {
+    this.node = node;
   }
 
   resolve() {
-    return `[${this.tokens.elements.map((el) => el.resolve()).join(", ")}]`;
+    return `[${this.node.elements.map((el) => el.resolve()).join(", ")}]`;
   }
 }
 
