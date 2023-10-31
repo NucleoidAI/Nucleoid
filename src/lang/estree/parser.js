@@ -4,6 +4,7 @@ const $EXPRESSION = require("../$nuc/$EXPRESSION");
 const $ASSIGNMENT = require("../$nuc/$ASSIGNMENT");
 const $CLASS = require("../$nuc/$CLASS");
 const $INSTANCE = require("../$nuc/$INSTANCE");
+const $BLOCK = require("../$nuc/$BLOCK");
 const Expression = require("../ast/Expression");
 const Identifier = require("../ast/Identifier");
 
@@ -17,24 +18,7 @@ function parseNode(node) {
       const { expression } = node;
 
       if (expression.type === "AssignmentExpression") {
-        const { left, right } = expression;
-        const name = new Identifier(left);
-
-        if (expression.right.type === "NewExpression") {
-          const cls = new Identifier(expression.right.callee);
-
-          if (left.type === "MemberExpression") {
-            const object = new Identifier(left.object);
-            const name = new Identifier(left.property);
-            return $INSTANCE(cls, object, name, expression.right.arguments);
-          } else if (left.type === "Identifier") {
-            return $INSTANCE(cls, null, name, expression.right.arguments);
-          } else {
-            throw new Error("Unknown identifier type");
-          }
-        } else {
-          return $ASSIGNMENT(name, $EXPRESSION(new Expression(right)));
-        }
+        return parseNode(expression);
       } else {
         return $EXPRESSION(new Expression(expression));
       }
@@ -61,6 +45,30 @@ function parseNode(node) {
 
       const name = new Identifier(id);
       return $CLASS(name, body);
+    }
+    case "AssignmentExpression": {
+      const { left, right } = node;
+      const name = new Identifier(left);
+
+      if (node.right.type === "NewExpression") {
+        const cls = new Identifier(node.right.callee);
+
+        if (left.type === "MemberExpression") {
+          const object = new Identifier(left.object);
+          const name = new Identifier(left.property);
+          return $INSTANCE(cls, object, name, node.right.arguments);
+        } else if (left.type === "Identifier") {
+          return $INSTANCE(cls, null, name, node.right.arguments);
+        } else {
+          throw new Error("Unknown identifier type");
+        }
+      } else {
+        return $ASSIGNMENT(name, $EXPRESSION(new Expression(right)));
+      }
+    }
+    case "BlockStatement": {
+      const statements = node.body.map(parseNode);
+      return $BLOCK(statements);
     }
   }
 }
