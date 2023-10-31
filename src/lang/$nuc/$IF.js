@@ -5,17 +5,18 @@ const CLASS = require("../../nuc/CLASS");
 const IF$CLASS = require("../../nuc/IF$CLASS");
 const Instruction = require("../../instruction");
 
-function construct(condition, trueB, p3) {
+function build(condition, trueB, p3) {
   let statement = new $IF();
   statement.condition = condition;
-  statement.true = trueB;
-  statement.false = p3;
+  statement.true = trueB; // truthy
+  statement.false = p3; // falsy
   return statement;
 }
 
 class $IF extends $ {
   run(scope) {
-    for (let token of this.condition.tokens.list()) {
+    /*
+    for (let token of this.condition.node.list()) {
       let prefix = token.split(".")[0];
 
       if (graph[prefix] && graph[prefix] instanceof CLASS) {
@@ -31,6 +32,7 @@ class $IF extends $ {
         ];
       }
     }
+    */
 
     let statement = new IF();
     statement.condition = this.condition.run();
@@ -44,4 +46,4 @@ class $IF extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

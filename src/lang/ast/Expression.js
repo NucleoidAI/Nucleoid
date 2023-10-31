@@ -2,6 +2,7 @@ const Identifier = require("./Identifier");
 const Literal = require("./Literal");
 const Call = require("./Call");
 const Array = require("./Array");
+const { generate } = require("../estree/generator");
 
 class Expression {
   constructor(node) {
@@ -13,6 +14,10 @@ class Expression {
 
   traverse(fn) {
     return traverseReduce(this.node, fn);
+  }
+
+  resolve() {
+    return generate(this.node);
   }
 }
 

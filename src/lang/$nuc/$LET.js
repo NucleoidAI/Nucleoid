@@ -10,7 +10,7 @@ const REFERENCE = require("../../nuc/REFERENCE");
 const Local = require("../../lib/local");
 const Id = require("../../lib/identifier");
 
-function construct(name, value, constant) {
+function build(name, value, constant) {
   let statement = new $LET();
   statement.name = name;
   statement.value = value;
@@ -33,7 +33,7 @@ class $LET extends $ {
     let value = this.value.run();
 
     if (value instanceof EXPRESSION) {
-      for (let token of value.tokens.list()) {
+      for (let token of value.node.list()) {
         let prefix = token.split(".")[0];
 
         if (graph[prefix] && graph[prefix] instanceof CLASS) {
@@ -72,4 +72,4 @@ class $LET extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

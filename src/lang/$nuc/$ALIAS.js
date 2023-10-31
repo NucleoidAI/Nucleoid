@@ -1,7 +1,7 @@
 const $ = require("./$");
 const ALIAS = require("../../nuc/ALIAS");
 
-function construct(alias, name, value) {
+function build(alias, name, value) {
   const statement = new $ALIAS();
   statement.alias = alias;
   statement.name = name;
@@ -21,4 +21,4 @@ class $ALIAS extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

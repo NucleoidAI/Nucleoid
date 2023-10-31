@@ -1,7 +1,7 @@
 const $ = require("./$");
 const THROW = require("../../nuc/THROW");
 
-function construct(exception) {
+function build(exception) {
   let statement = new $THROW();
   statement.exception = exception;
   return statement;
@@ -15,4 +15,4 @@ class $THROW extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

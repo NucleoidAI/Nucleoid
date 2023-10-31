@@ -5,8 +5,8 @@ const Id = require("../lib/identifier");
 class IF$INSTANCE extends IF {
   before() {
     this.condition = new EXPRESSION(
-      this.declaration.condition.tokens.map((token) => {
-        let parts = token.split(".");
+      this.declaration.condition.node.map((node) => {
+        let parts = node.split(".");
         if (parts[0] === this.class.name)
           parts[0] = Id.serialize(this.instance);
         return parts.join(".");

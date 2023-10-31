@@ -3,7 +3,6 @@ const $VARIABLE = require("./$VARIABLE");
 const Local = require("../../lib/local");
 const $LET = require("./$LET");
 const $ = require("./$");
-const Id = require("../../lib/identifier");
 
 function build(left, right, bracket) {
   let statement = new $ASSIGNMENT();

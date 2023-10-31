@@ -5,7 +5,7 @@ const state = require("../state");
 
 class IF extends Node {
   before(scope) {
-    this.key = "if(" + this.condition.tokens.construct() + ")";
+    this.key = "if(" + this.condition.node.resolve() + ")";
     this.condition.before(scope);
   }
 
@@ -19,7 +19,7 @@ class IF extends Node {
       condition = this.condition.run(scope);
     }
 
-    if (state.run(scope, condition)) {
+    if (state.expression(scope, condition)) {
       return {
         next: [
           new Instruction(s, this.true, true, false),

@@ -5,6 +5,7 @@ const $ASSIGNMENT = require("../$nuc/$ASSIGNMENT");
 const $CLASS = require("../$nuc/$CLASS");
 const $INSTANCE = require("../$nuc/$INSTANCE");
 const $BLOCK = require("../$nuc/$BLOCK");
+const $IF = require("../$nuc/$IF");
 const Expression = require("../ast/Expression");
 const Identifier = require("../ast/Identifier");
 
@@ -14,15 +15,6 @@ function parse(string) {
 
 function parseNode(node) {
   switch (node.type) {
-    case "ExpressionStatement": {
-      const { expression } = node;
-
-      if (expression.type === "AssignmentExpression") {
-        return parseNode(expression);
-      } else {
-        return $EXPRESSION(new Expression(expression));
-      }
-    }
     case "VariableDeclaration": {
       const {
         declarations: [declaration],
@@ -69,6 +61,25 @@ function parseNode(node) {
     case "BlockStatement": {
       const statements = node.body.map(parseNode);
       return $BLOCK(statements);
+    }
+    case "IfStatement": {
+      const condition = $EXPRESSION(new Expression(node.test));
+      const consequent = parseNode(node.consequent);
+      const alternate = node.alternate ? parseNode(node.alternate) : null;
+
+      return $IF(condition, consequent, alternate);
+    }
+    case "ExpressionStatement": {
+      const { expression } = node;
+
+      if (expression.type === "AssignmentExpression") {
+        return parseNode(expression);
+      } else {
+        return $EXPRESSION(new Expression(expression));
+      }
+    }
+    default: {
+      throw new Error(`ParserError: Unknown node type '${node.type}'`);
     }
   }
 }

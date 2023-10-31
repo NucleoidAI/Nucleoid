@@ -6,9 +6,9 @@ const DELETE$VARIABLE = require("../../nuc/DELETE$VARIABLE");
 const DELETE$OBJECT = require("../../nuc/DELETE$OBJECT");
 const OBJECT = require("../../nuc/OBJECT");
 const state = require("../../state");
-const $EXP = require("./$EXPRESSION");
+const $EXPRESSION = require("./$EXPRESSION");
 
-function construct(key) {
+function build(key) {
   let statement = new $DELETE();
   statement.key = key;
   return statement;
@@ -19,7 +19,7 @@ class $DELETE extends $ {
     let key;
 
     try {
-      let context = $EXP(`${this.key}.id`);
+      let context = $EXPRESSION(`${this.key}.id`);
       let expression = context.statement.run(scope);
       const run = expression.run(scope);
       key = state.run(scope, run) || this.key;
@@ -43,4 +43,4 @@ class $DELETE extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

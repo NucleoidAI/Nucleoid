@@ -3,21 +3,21 @@ const EXPRESSION = require("../../nuc/EXPRESSION");
 const acorn = require("acorn");
 const Expression = require("../ast/Expression");
 
-function build(tokens) {
-  if (typeof tokens === "string") {
-    const [{ expression }] = acorn.parse(tokens, { ecmaVersion: 2020 }).body;
-    tokens = new Expression(expression);
+function build(node) {
+  if (typeof node === "string") {
+    const [{ expression }] = acorn.parse(node, { ecmaVersion: 2020 }).body;
+    node = new Expression(expression);
   }
 
   const statement = new $EXPRESSION();
-  statement.tokens = tokens;
+  statement.node = node;
   return statement;
 }
 
 class $EXPRESSION extends $ {
   run() {
     let statement = new EXPRESSION();
-    statement.tokens = this.tokens;
+    statement.node = this.node;
     return statement;
   }
 }

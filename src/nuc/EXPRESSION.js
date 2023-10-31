@@ -4,22 +4,20 @@ const Identifier = require("../lang/ast/Identifier");
 const Call = require("../lang/ast/Call");
 
 class EXPRESSION {
-  constructor(tokens) {
+  constructor(node) {
     this.instanceof = this.constructor.name;
-    this.tokens = tokens;
+    this.node = node;
   }
 
   before() {}
 
   run() {
-    const tokens = this.tokens;
+    const expression = this.node.traverse((node) => node.resolve(true));
 
-    const expression = tokens.traverse((token) => token.resolve(true));
-
-    const transactions = tokens.map((token) => {
-      if (token instanceof Call) {
+    const transactions = this.node.map((node) => {
+      if (node instanceof Call) {
         return {
-          exec: token.resolve(true),
+          exec: node.resolve(true),
         };
       }
     });
@@ -30,9 +28,9 @@ class EXPRESSION {
   next() {}
 
   graph() {
-    return this.tokens.map((token) => {
-      if (token instanceof Identifier) {
-        const name = token.resolve();
+    return this.node.map((node) => {
+      if (node instanceof Identifier) {
+        const name = node.resolve();
         if (graph[name]) {
           return name;
         }

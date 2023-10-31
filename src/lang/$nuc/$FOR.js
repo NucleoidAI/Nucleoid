@@ -2,7 +2,7 @@ const $ = require("./$");
 const FOR = require("../../nuc/FOR");
 const Instruction = require("../../instruction");
 
-function construct(variable, array, statements) {
+function build(variable, array, statements) {
   let statement = new $FOR();
   statement.variable = variable;
   statement.array = array;
@@ -21,4 +21,4 @@ class $FOR extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

@@ -1,7 +1,7 @@
 const $ = require("./$");
 const RETURN = require("../../nuc/RETURN");
 
-function construct(statements) {
+function build(statements) {
   const statement = new $RETURN();
   statement.statements = statements;
   return statement;
@@ -13,4 +13,4 @@ class $RETURN extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

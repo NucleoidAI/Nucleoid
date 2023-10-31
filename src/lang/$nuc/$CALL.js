@@ -4,7 +4,7 @@ const $BLOCK = require("./$BLOCK");
 const $LET = require("./$LET");
 const $EXP = require("./$EXPRESSION");
 
-function construct(name, params) {
+function build(name, params) {
   const call = new $CALL();
   call.name = name;
   call.params = params;
@@ -29,4 +29,4 @@ class $CALL extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

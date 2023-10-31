@@ -7,7 +7,7 @@ class EXPRESSION$INSTANCE extends EXPRESSION {
     let instance = Instance.retrieve(scope, this.class.name);
 
     if (instance !== undefined) {
-      this.tokens = this.tokens.map((token) => {
+      this.node = this.node.map((token) => {
         let parts = token.split(".");
         if (parts[0] === this.class.name) parts[0] = Id.serialize(instance);
         return parts.join(".");

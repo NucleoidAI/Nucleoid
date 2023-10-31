@@ -1,7 +1,7 @@
 const $ = require("./$");
 const FUNCTION = require("../../nuc/FUNCTION");
 
-function construct(name, args, block) {
+function build(name, args, block) {
   let statement = new $FUNCTION();
   statement.name = name;
   statement.args = args;
@@ -19,4 +19,4 @@ class $FUNCTION extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

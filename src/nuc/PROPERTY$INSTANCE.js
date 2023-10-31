@@ -15,8 +15,8 @@ class PROPERTY$INSTANCE extends PROPERTY {
 
     this.key = Id.serialize(this);
     this.value = new EXPRESSION(
-      this.declaration.value.tokens.map((token) => {
-        let parts = token.split(".");
+      this.declaration.value.node.map((node) => {
+        let parts = node.split(".");
         if (parts[0] === Id.root(this.declaration).name)
           parts[0] = Id.serialize(this.instance);
         return parts.join(".");
