@@ -4,7 +4,7 @@ class Array {
   }
 
   resolve() {
-    return `[${this.node.elements.map((el) => el.resolve()).join(", ")}]`;
+    return `[${this.node.elements.map((el) => el.resolve()).join(",")}]`;
   }
 }
 

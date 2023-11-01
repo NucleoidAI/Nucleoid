@@ -1,15 +1,15 @@
 const $ = require("./$");
 const RETURN = require("../../nuc/RETURN");
 
-function build(statements) {
-  const statement = new $RETURN();
-  statement.statements = statements;
-  return statement;
+function build(statement) {
+  const returnStatement = new $RETURN();
+  returnStatement.statement = statement;
+  return returnStatement;
 }
 
 class $RETURN extends $ {
   run() {
-    return new RETURN(this.statements);
+    return new RETURN(this.statement);
   }
 }
 

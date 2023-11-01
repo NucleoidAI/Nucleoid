@@ -11,8 +11,8 @@ class EXPRESSION {
 
   before() {}
 
-  run() {
-    const expression = this.node.traverse((node) => node.resolve(true));
+  run(scope) {
+    const expression = this.node.traverse((node) => node.resolve(scope));
 
     const transactions = this.node.map((node) => {
       if (node instanceof Call) {

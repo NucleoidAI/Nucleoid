@@ -1,6 +1,6 @@
 class RETURN {
-  constructor(statements) {
-    this.statements = statements;
+  constructor(statement) {
+    this.statement = statement;
   }
 }
 module.exports = RETURN;

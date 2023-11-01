@@ -2,6 +2,7 @@ const Identifier = require("./Identifier");
 const Literal = require("./Literal");
 const Call = require("./Call");
 const Array = require("./Array");
+const Object = require("./Object");
 const { generate } = require("../estree/generator");
 
 class Expression {
@@ -35,6 +36,9 @@ function convertToAST(node) {
     }
     case "ArrayExpression": {
       return new Array(node);
+    }
+    case "ObjectExpression": {
+      return new Object(node);
     }
     default: {
       throw new Error(`ParserError: Unknown node type '${node.type}'`);

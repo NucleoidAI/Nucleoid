@@ -11,31 +11,19 @@ class LET {
   before() {}
 
   run(scope) {
-    let value = this.value.run(scope, false, false);
+    const object = this.object?.resolve();
+    const name = this.name.resolve();
+    const evaluation = this.value.run(scope, false, false);
 
-    const parts = this.name.split(".");
-    const first = parts[0];
-
-    if (scope.graph[first]?.instanceof === "LET$OBJECT") {
+    if (scope.graph[object]?.instanceof === "LET$OBJECT") {
+      /*
       parts[0] = scope.graph[first].object.key;
       state.assign(scope, parts.join("."), value.construct());
       return { value };
+      */
     } else {
-      let local = Local.retrieve(scope, this.name);
-
-      if (!local) {
-        local = `scope.local.${this.name}`;
-      }
-
-      let expression;
-
-      if (typeof value === "string") {
-        expression = `${local}=${value}`;
-      } else {
-        expression = `${local}=${value.construct()}`;
-      }
-
-      return { value: state.run(scope, expression) };
+      const value = scope.assign(name, evaluation);
+      return { value };
     }
   }
 

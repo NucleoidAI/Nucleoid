@@ -20,39 +20,38 @@ function build(name, value, constant) {
 
 class $LET extends $ {
   run(scope) {
-    let parts = Id.splitLast(this.name);
+    const object = this.object?.resolve();
+    const name = this.name.resolve();
 
-    if (parts[1] !== undefined && !Local.check(scope, parts[1])) {
-      throw ReferenceError(`${parts[1]} is not defined`);
+    if (object !== undefined && !Local.check(scope, object)) {
+      throw ReferenceError(`${name} is not defined`);
     }
 
-    parts = this.name.split(".");
-    if (parts.length > 1 && parts[parts.length - 1] === "value")
+    if (this.object?.last.resolve() === "value") {
       throw TypeError("Cannot use 'value' in local");
+    }
 
     let value = this.value.run();
 
     if (value instanceof EXPRESSION) {
-      for (let token of value.node.list()) {
-        let prefix = token.split(".")[0];
-
-        if (graph[prefix] && graph[prefix] instanceof CLASS) {
-          let statement = new LET$CLASS();
-          statement.class = graph[prefix];
-          statement.name = this.name;
-          statement.value = value;
-          statement.constant = this.constant;
-          return statement;
-        }
+      if (graph[name] && graph[name] instanceof CLASS) {
+        let statement = new LET$CLASS();
+        statement.class = graph[name];
+        statement.name = this.name;
+        statement.value = value;
+        statement.constant = this.constant;
+        return statement;
       }
 
       let statement = new LET();
+      statement.object = this.object;
       statement.name = this.name;
       statement.value = value;
       statement.constant = this.constant;
       return statement;
     } else if (value instanceof REFERENCE) {
       let statement = new LET();
+      statement.object = this.object;
       statement.name = this.name;
       statement.value = value;
       statement.constant = this.constant;

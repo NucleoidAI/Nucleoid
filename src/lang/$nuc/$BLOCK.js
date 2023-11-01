@@ -21,6 +21,7 @@ class $BLOCK extends $ {
     test.object = scope.object;
     let cls = null;
 
+    /*
     test: for (let statement of this.statements) {
       while (statement instanceof $) {
         statement = statement.run(test);
@@ -46,6 +47,7 @@ class $BLOCK extends $ {
         break test;
       }
     }
+    */
 
     if (cls) {
       let statement = new BLOCK$CLASS();

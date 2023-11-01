@@ -6,17 +6,26 @@ const $CLASS = require("../$nuc/$CLASS");
 const $INSTANCE = require("../$nuc/$INSTANCE");
 const $BLOCK = require("../$nuc/$BLOCK");
 const $IF = require("../$nuc/$IF");
+const $RETURN = require("../$nuc/$RETURN");
+const $LET = require("../$nuc/$LET");
 const Expression = require("../ast/Expression");
 const Identifier = require("../ast/Identifier");
 
 function parse(string) {
-  return acorn.parse(string, { ecmaVersion: 2020 }).body.map(parseNode);
+  return acorn
+    .parse(string, { ecmaVersion: 2020 })
+    .body[0].expression.callee.body.body.map(parseNode);
 }
 
 function parseNode(node) {
   switch (node.type) {
+    case "MemberExpression":
+    case "Identifier": {
+      return $EXPRESSION(new Expression(node));
+    }
     case "VariableDeclaration": {
       const {
+        kind,
         declarations: [declaration],
       } = node;
       const { id, init } = declaration;
@@ -26,7 +35,26 @@ function parseNode(node) {
         const name = new Identifier(id);
         return $INSTANCE(cls, null, name, init.arguments);
       } else {
-        return $VARIABLE(new Identifier(id), $EXPRESSION(new Expression(init)));
+        if (kind === "let") {
+          return $LET(
+            new Identifier(id),
+            $EXPRESSION(new Expression(init)),
+            false
+          );
+        } else if (kind === "const") {
+          return $LET(
+            new Identifier(id),
+            $EXPRESSION(new Expression(init)),
+            true
+          );
+        } else if (kind === "var") {
+          return $VARIABLE(
+            new Identifier(id),
+            $EXPRESSION(new Expression(init))
+          );
+        } else {
+          throw new Error("Unknown variable type");
+        }
       }
     }
     case "ClassDeclaration": {
@@ -77,6 +105,11 @@ function parseNode(node) {
       } else {
         return $EXPRESSION(new Expression(expression));
       }
+    }
+    case "ReturnStatement": {
+      const { argument } = node;
+      const statements = parseNode(argument);
+      return $RETURN(statements);
     }
     default: {
       throw new Error(`ParserError: Unknown node type '${node.type}'`);

@@ -31,7 +31,7 @@ function process(statements, prior, options = {}) {
     switch (true) {
       case statement instanceof RETURN: {
         let scope = instruction.scope;
-        return process(statement.statements, scope, options);
+        return process([statement.statement], scope, options);
       }
       case statement instanceof BREAK: {
         let inst = instructions[0];
@@ -114,7 +114,7 @@ function process(statements, prior, options = {}) {
 
         break;
       }
-      case statement instanceof Node: {
+      default: {
         if (instruction.before) {
           statement.before(instruction.scope);
         }

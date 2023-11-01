@@ -85,7 +85,6 @@ function call(scope, fn, args = []) {
 }
 
 function expression(scope, evaluation) {
-  state;
   return eval(`(${evaluation.value})`);
 }
 

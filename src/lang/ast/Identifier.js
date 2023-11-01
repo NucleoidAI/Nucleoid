@@ -12,11 +12,18 @@ class Identifier {
     }
   }
 
-  resolve(path = false) {
+  resolve(scope) {
     const name = generate(this.node);
+    const first = this.first?.resolve();
 
-    if (path) {
-      return graph[name] ? `state.${name}` : name;
+    if (scope) {
+      const scopedName = scope.retrieve(name);
+
+      if (scopedName) {
+        return scopedName;
+      }
+
+      return graph[first || name] ? `state.${name}` : name;
     } else {
       return name;
     }

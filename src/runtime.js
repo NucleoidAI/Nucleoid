@@ -19,10 +19,11 @@ module.exports.process = function (statement, options = {}) {
   const before = Date.now();
   let statements, result, error, execs;
 
-  let s = Macro.apply(statement, options);
+  statement = `(()=>{${statement}})()`;
+  const macro = Macro.apply(statement, options);
 
   try {
-    statements = Statement.parse(s, options);
+    statements = Statement.parse(macro, options);
     transaction.start();
     result = stack.process(statements, null, options);
     const list = transaction.end();
