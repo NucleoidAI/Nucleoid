@@ -1,5 +1,8 @@
 // eslint-disable-next-line no-unused-vars
 const state = require("./state").state;
+const { append } = require("./lang/estree/estree");
+const { generate } = require("./lang/estree/generator");
+const Identifier = require("./lang/ast/Identifier");
 
 class Scope {
   constructor(prior, block) {
@@ -18,34 +21,61 @@ class Scope {
   }
 
   assign(variable, evaluation) {
-    // eslint-disable-next-line no-unused-vars
-    const scope = this;
-
-    let local = scope.retrieve(variable);
+    let local = this.retrieve(variable);
 
     if (!local) {
-      local = `scope.local.${variable}`;
+      const prefix = {
+        type: "MemberExpression",
+        computed: false, // false because it uses dot notation
+        object: {
+          type: "Identifier",
+          name: "scope",
+        },
+        property: {
+          type: "Identifier",
+          name: "local",
+        },
+      };
+      local = append(prefix, variable.node);
     }
 
+    // eslint-disable-next-line no-unused-vars
+    const scope = this;
     // eslint-disable-next-line no-eval
-    eval(`${local}=${evaluation.value}`);
+    eval(`${generate(local)}=${evaluation}`);
   }
 
   retrieve(variable) {
     let index = this;
 
-    let parts = variable.split(".");
-    let reference = "scope.";
-    const first = parts[0];
+    let estree = {
+      type: "Identifier",
+      name: "scope",
+    };
+
+    const first = variable.first();
 
     while (index) {
-      if (index.local[first] !== undefined) {
-        return reference + "local." + parts.join(".");
+      if (index.local[first.generate()] !== undefined) {
+        const local = {
+          type: "Identifier",
+          name: "local",
+        };
+        estree = append(estree, local);
+        return new Identifier(append(estree, variable.node));
       }
 
-      reference += "prior.";
+      const prior = {
+        type: "Identifier",
+        name: "prior",
+      };
+
+      estree = append(estree, prior);
+
       index = index.prior;
     }
+
+    return null;
   }
 }
 

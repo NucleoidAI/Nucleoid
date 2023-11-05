@@ -11,8 +11,9 @@ class LET {
   before() {}
 
   run(scope) {
-    const object = this.object?.resolve();
-    const name = this.name.resolve();
+    const name = this.name;
+    const object = this.object;
+
     const evaluation = this.value.run(scope, false, false);
 
     if (scope.graph[object]?.instanceof === "LET$OBJECT") {

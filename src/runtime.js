@@ -17,7 +17,7 @@ module.exports.process = function (statement, options = {}) {
   const { declarative, details, cacheOnly } = options;
 
   const before = Date.now();
-  let statements, result, error, execs;
+  let statements, result, error;
 
   statement = `(()=>{${statement}})()`;
   const macro = Macro.apply(statement, options);
@@ -26,8 +26,6 @@ module.exports.process = function (statement, options = {}) {
     statements = Statement.parse(macro, options);
     transaction.start();
     result = stack.process(statements, null, options);
-    const list = transaction.end();
-    execs = list.filter((item) => item.exec).map((item) => item.exec);
   } catch (err) {
     transaction.rollback();
     result = err;
@@ -44,14 +42,13 @@ module.exports.process = function (statement, options = {}) {
     }
 
     datastore.write({
-      s,
+      s: statement,
       c: declarative ? true : undefined,
       t: time,
       r: result,
       d: date,
       e: error,
       v: events,
-      x: execs,
     });
   }
 
@@ -72,7 +69,6 @@ module.exports.process = function (statement, options = {}) {
       date,
       time,
       error,
-      execs,
       events,
     };
   } else {

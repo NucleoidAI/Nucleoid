@@ -6,7 +6,7 @@ const Instance = require("../lib/instance");
 
 class IF$CLASS extends Node {
   before() {
-    this.key = "if(" + this.condition.node.resolve() + ")";
+    this.key = "if(" + this.condition.node.generate() + ")";
   }
 
   run(scope) {

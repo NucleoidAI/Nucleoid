@@ -11,10 +11,12 @@ const $LET = require("../$nuc/$LET");
 const Expression = require("../ast/Expression");
 const Identifier = require("../ast/Identifier");
 
-function parse(string) {
-  return acorn
-    .parse(string, { ecmaVersion: 2020 })
-    .body[0].expression.callee.body.body.map(parseNode);
+function parse(string, map = true) {
+  const estree = acorn.parse(string, { ecmaVersion: 2020 });
+
+  return map
+    ? estree.body[0].expression.callee.body.body.map(parseNode)
+    : estree.body[0].expression;
 }
 
 function parseNode(node) {

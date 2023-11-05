@@ -14,8 +14,9 @@ function build(left, right, bracket) {
 
 class $ASSIGNMENT extends $ {
   run(scope) {
-    if (!this.left.object) {
+    if (this.left.node.type === "Identifier") {
       const local = Local.check(scope, this.left.resolve());
+
       if (local) {
         if (local.constant) {
           throw TypeError("Assignment to constant variable.");
@@ -26,10 +27,10 @@ class $ASSIGNMENT extends $ {
         return $VARIABLE(this.left, this.right);
       }
     } else {
-      if (Local.check(scope, this.left.last.resolve())) {
+      if (scope.retrieve(this.left)) {
         return $LET(this.left.join("."), this.right);
       } else {
-        return $PROPERTY(this.left.object, this.left.last, this.right);
+        return $PROPERTY(this.left.object(), this.left.last(), this.right);
       }
     }
   }

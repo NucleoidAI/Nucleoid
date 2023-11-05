@@ -3,8 +3,8 @@ const graph = require("../../graph");
 const OBJECT = require("../../nuc/OBJECT");
 const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const CLASS = require("../../nuc/CLASS");
-const Local = require("../../lib/local");
 const $LET = require("./$LET");
+const Identifier = require("../ast/Identifier");
 
 function build(cls, object, name, args) {
   let statement = new $INSTANCE();
@@ -17,27 +17,27 @@ function build(cls, object, name, args) {
 
 class $INSTANCE extends $ {
   run(scope) {
-    const cls = `$${this.class.resolve()}`;
-    const name = this.name.resolve();
+    const cls = new Identifier(`$${this.class}`);
+    const name = this.name;
 
-    if (graph[cls] === undefined) {
+    if (!graph.retrieve(this.class)) {
       throw ReferenceError(`${cls} is not defined`);
     }
 
-    if (this.object !== undefined && name === "value") {
+    if (this.object !== undefined && name.generate() === "value") {
       throw TypeError("Cannot use 'value' as a property");
     }
 
     if (this.object) {
-      const object = this.object.resolve();
-      const local = object + "." + name;
-      if (Local.check(scope, object)) {
+      if (scope.retrieve(this.object)) {
         let instance = new OBJECT();
         instance.class = this.class;
-        return $LET(local, instance);
+        return $LET(name, instance);
       }
 
-      if (object !== undefined && graph[object] === undefined) {
+      const object = graph.retrieve(this.object);
+
+      if (!object) {
         throw ReferenceError(`${this.object} is not defined`);
       }
 
@@ -48,21 +48,21 @@ class $INSTANCE extends $ {
       ) {
         let statement = new OBJECT$CLASS();
         statement.class = graph[this.class];
-        statement.name = this.name;
+        statement.name = name;
         statement.object = graph[this.object];
         return statement;
       } else {
         const statement = new OBJECT();
-        statement.class = graph[cls];
+        statement.class = graph.retrieve(cls);
         statement.name = name;
-        statement.object = graph[object];
+        statement.object = graph.retrieve(this.object);
         statement.args = this.args;
         return statement;
       }
     }
 
     let statement = new OBJECT();
-    statement.class = graph[cls];
+    statement.class = graph.retrieve(cls);
     statement.name = name;
     statement.args = this.args;
     return statement;

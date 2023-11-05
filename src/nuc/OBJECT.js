@@ -7,6 +7,9 @@ const LET = require("./LET");
 const Scope = require("../scope");
 const random = require("../lib/random");
 const Evaluation = require("../lang/ast/Evaluation");
+const Identifier = require("../lang/ast/Identifier");
+const { append } = require("../lang/estree/estree");
+const estree = require("../lang/estree/estree");
 
 class OBJECT extends Node {
   constructor() {
@@ -24,15 +27,30 @@ class OBJECT extends Node {
   }
 
   run(scope) {
-    let name = this.key;
+    const name = this.name;
+
+    let variable;
+
+    if (this.object) {
+      variable = new Identifier(
+        estree.append(this.object.resolve().node, this.name.node)
+      );
+    } else {
+      variable = this.name;
+    }
 
     state.assign(
       scope,
-      name,
+      variable,
       new Evaluation(`new state.${this.class.name}()`),
       false
     );
-    state.assign(scope, `${name}.id`, new Evaluation(`"${name}"`));
+
+    state.assign(
+      scope,
+      new Identifier(`${variable}.id`),
+      new Evaluation(`"${name}"`)
+    );
     scope.object = this;
 
     let list = [];
@@ -41,7 +59,7 @@ class OBJECT extends Node {
       state.call(scope, `${this.class.list}.push`, [`state.${name}`]);
       state.assign(
         scope,
-        `${this.class.list}["${this.name}"]`,
+        new Identifier(`${this.class.list}["${this.name}"]`),
         new Evaluation(`state.${name}`)
       );
     }
@@ -88,14 +106,16 @@ class OBJECT extends Node {
 
   resolve() {
     let current = this;
-    let name = this.name;
+    let resolved = this.name.node;
+
+    let list = [];
 
     while (current.object) {
       current = current.object;
-      name = current.name + "." + name;
+      resolved = append(current.name.node, resolved);
     }
 
-    return name;
+    return new Identifier(resolved);
   }
 }
 

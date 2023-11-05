@@ -25,6 +25,9 @@ function rollback() {
   // eslint-disable-next-line no-unused-vars
   const { state } = require("./state");
 
+  // TODO Temporary disable transaction rollback
+  return;
+
   while (list.length) {
     let transaction = list.pop();
     let variable = transaction.variable;

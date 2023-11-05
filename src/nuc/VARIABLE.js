@@ -3,7 +3,7 @@ const Node = require("./Node");
 
 class VARIABLE extends Node {
   before(scope) {
-    this.key = this.name;
+    this.key = this.name.toString();
     this.value.before(scope, this.key);
   }
 

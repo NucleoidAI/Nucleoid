@@ -1,43 +1,75 @@
 const graph = require("../../graph");
-const { generate } = require("../estree/generator");
+const { root } = require("../estree/estree");
+const _ = require("lodash");
+const AST = require("./AST");
 
-class Identifier {
-  constructor(node) {
-    this.node = node;
+class Identifier extends AST {
+  first() {
+    if (this.node.type === "Identifier") {
+      return new Identifier(this.node);
+    } else if (this.node.type === "MemberExpression") {
+      return new Identifier(root(this.node).object);
+    }
+  }
+  last() {
+    if (this.node.type === "Identifier") {
+      return new Identifier(this.node);
+    } else if (this.node.type === "MemberExpression") {
+      return new Identifier(this.node.property);
+    }
+  }
 
-    if (node.type === "MemberExpression") {
-      this.first = new Identifier(first(node));
-      this.object = new Identifier(node.object);
-      this.last = new Identifier(node.property);
+  object() {
+    if (this.node.type === "Identifier") {
+      return new Identifier(this.node);
+    } else if (this.node.type === "MemberExpression") {
+      return new Identifier(this.node.object);
     }
   }
 
   resolve(scope) {
-    const name = generate(this.node);
-    const first = this.first?.resolve();
-
     if (scope) {
-      const scopedName = scope.retrieve(name);
+      const first = this.first();
+      const scoped = scope.retrieve(first);
 
-      if (scopedName) {
-        return scopedName;
+      if (scoped) {
+        return scoped;
       }
 
-      return graph[first || name] ? `state.${name}` : name;
+      if (graph.retrieve(first)) {
+        const state = {
+          type: "MemberExpression",
+          computed: false,
+          optional: false,
+          object: {
+            type: "Identifier",
+            name: "state",
+          },
+        };
+
+        if (this.node.type === "Identifier") {
+          state.property = this.node;
+          return state;
+        } else if (this.node.type === "MemberExpression") {
+          const cloned = _.cloneDeep(this.node);
+
+          const firstNode = root(cloned);
+          state.property = firstNode.object;
+          firstNode.object = state;
+
+          return cloned;
+        }
+
+        state.property = this.node;
+
+        return state;
+      } else {
+        return this.node;
+      }
     } else {
-      return name;
+      return this.node;
     }
   }
-}
-
-function first(node) {
-  let current = node;
-
-  while (current.object.type !== "Identifier") {
-    current = current.object;
-  }
-
-  return current.object;
 }
 
 module.exports = Identifier;

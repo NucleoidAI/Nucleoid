@@ -1,6 +1,8 @@
 const state = require("../state");
 const Node = require("./Node");
 const Id = require("../lib/identifier");
+const estree = require("../lang/estree/estree");
+const Identifier = require("../lang/ast/Identifier");
 
 class PROPERTY extends Node {
   before(scope) {
@@ -10,11 +12,11 @@ class PROPERTY extends Node {
 
   run(scope) {
     const evaluation = this.value.run(scope);
-    const value = state.assign(
-      scope,
-      this.object.resolve() + "." + this.name,
-      evaluation
+    const variable = new Identifier(
+      estree.append(this.object.resolve().node, this.name.node)
     );
+
+    const value = state.assign(scope, variable, evaluation);
     return { value };
   }
 

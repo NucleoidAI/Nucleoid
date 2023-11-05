@@ -1,9 +1,7 @@
-class Literal {
-  constructor(node) {
-    this.node = node;
-  }
+const AST = require("./AST");
 
-  resolve() {
+class Literal extends AST {
+  generate() {
     return this.node.raw;
   }
 }

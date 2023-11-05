@@ -1,17 +1,18 @@
 const Identifier = require("./Identifier");
 const ESTree = require("../estree/generator");
 const graph = require("../../graph");
+const AST = require("./AST");
 
-class Call {
+class Call extends AST {
   constructor(node) {
-    this.node = node;
+    super(node);
     this.name = new Identifier(this.node.callee);
   }
 
-  resolve(path = false) {
-    const name = this.name.object.resolve();
+  generate(scope) {
+    const name = this.name.first().generate(scope);
 
-    if (path) {
+    if (scope) {
       const generated = ESTree.generate(this.node);
       return graph[name] ? `state.${generated}` : generated;
     } else {

@@ -3,12 +3,10 @@ const Literal = require("./Literal");
 const Call = require("./Call");
 const Array = require("./Array");
 const Object = require("./Object");
-const { generate } = require("../estree/generator");
+const ESTree = require("../estree/generator");
+const AST = require("./AST");
 
-class Expression {
-  constructor(node) {
-    this.node = node;
-  }
+class Expression extends AST {
   map(fn) {
     return mapReduce(this.node, fn);
   }
@@ -17,11 +15,10 @@ class Expression {
     return traverseReduce(this.node, fn);
   }
 
-  resolve() {
-    return generate(this.node);
+  generate() {
+    return ESTree.generate(this.node);
   }
 }
-
 function convertToAST(node) {
   switch (node.type) {
     case "Literal": {

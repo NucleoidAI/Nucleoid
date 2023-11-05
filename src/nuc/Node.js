@@ -1,4 +1,4 @@
-const graph = require("../graph");
+const { graph } = require("../graph");
 const uuid = require("uuid").v4;
 const transaction = require("../transaction");
 const serialize = require("../lib/serialize");

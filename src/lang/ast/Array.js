@@ -1,10 +1,8 @@
-class Array {
-  constructor(node) {
-    this.node = node;
-  }
+const AST = require("./AST");
 
-  resolve() {
-    return `[${this.node.elements.map((el) => el.resolve()).join(",")}]`;
+class Array extends AST {
+  generate(scope) {
+    return `[${this.node.elements.map((el) => el.generate(scope)).join(",")}]`;
   }
 }
 

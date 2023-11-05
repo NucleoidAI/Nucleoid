@@ -14,11 +14,11 @@ class CLASS extends Node {
   }
 
   before() {
-    this.key = this.name;
+    this.key = this.name.toString();
   }
 
   run(scope) {
-    if (graph[this.name]) {
+    if (graph.retrieve(this.name)) {
       if (
         deepEqual(this.args, graph[this.name].args) &&
         deepEqual(this.construct, graph[this.name].construct)

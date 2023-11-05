@@ -2,7 +2,7 @@ let state, graph;
 
 setImmediate(() => {
   state = require("../state").state;
-  graph = require("../graph");
+  graph = require("../graph").graph;
 });
 
 function serialize(input, source, acc = {}) {

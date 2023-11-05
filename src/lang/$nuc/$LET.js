@@ -8,7 +8,6 @@ const LET$OBJECT = require("../../nuc/LET$OBJECT");
 const EXPRESSION = require("../../nuc/EXPRESSION");
 const REFERENCE = require("../../nuc/REFERENCE");
 const Local = require("../../lib/local");
-const Id = require("../../lib/identifier");
 
 function build(name, value, constant) {
   let statement = new $LET();
@@ -20,14 +19,14 @@ function build(name, value, constant) {
 
 class $LET extends $ {
   run(scope) {
-    const object = this.object?.resolve();
-    const name = this.name.resolve();
+    const name = this.name;
+    const object = this.object;
 
     if (object !== undefined && !Local.check(scope, object)) {
       throw ReferenceError(`${name} is not defined`);
     }
 
-    if (this.object?.last.resolve() === "value") {
+    if (object?.last.toString() === "value") {
       throw TypeError("Cannot use 'value' in local");
     }
 
@@ -37,7 +36,7 @@ class $LET extends $ {
       if (graph[name] && graph[name] instanceof CLASS) {
         let statement = new LET$CLASS();
         statement.class = graph[name];
-        statement.name = this.name;
+        statement.name = name;
         statement.value = value;
         statement.constant = this.constant;
         return statement;
@@ -45,14 +44,14 @@ class $LET extends $ {
 
       let statement = new LET();
       statement.object = this.object;
-      statement.name = this.name;
+      statement.name = name;
       statement.value = value;
       statement.constant = this.constant;
       return statement;
     } else if (value instanceof REFERENCE) {
       let statement = new LET();
       statement.object = this.object;
-      statement.name = this.name;
+      statement.name = name;
       statement.value = value;
       statement.constant = this.constant;
       return statement;
@@ -62,7 +61,7 @@ class $LET extends $ {
       object.args = value.args;
 
       let statement = new LET$OBJECT();
-      statement.name = this.name;
+      statement.name = name;
       statement.object = object;
       statement.constant = this.constant;
 

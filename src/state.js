@@ -4,7 +4,7 @@ const state = {
   classes: [],
 };
 const _transaction = require("./transaction");
-const _graph = require("./graph");
+const { graph: _graph } = require("./graph");
 const { event } = require("./event");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
@@ -56,17 +56,18 @@ function assign(scope, variable, evaluation, json = true) {
 
     transaction = { variable, exec, before };
   } else {
-    const before = eval(`state.${variable}`);
+    const generatedVariable = variable.generate();
+    const before = eval(`state.${generatedVariable}`);
 
     if (json) {
-      const result = eval(`(${evaluation.value})`);
+      const result = eval(`(${evaluation})`);
       const value = serialize(result, "state");
 
-      const exec = `state.${variable}=${value}`;
-      transaction = { variable, exec, before };
+      const exec = `state.${generatedVariable}=${value}`;
+      transaction = { generatedVariable, exec, before };
     } else {
-      const exec = `state.${variable}=${evaluation.value}`;
-      transaction = { variable, exec, before };
+      const exec = `state.${variable}=${evaluation}`;
+      transaction = { generatedVariable, exec, before };
     }
   }
 
@@ -99,8 +100,17 @@ function load(execs = []) {
 
 module.exports.throw = (scope, exception) => eval(`throw state.${exception}`);
 
+function clear() {
+  for (let property in state) {
+    delete state[property];
+  }
+
+  state["classes"] = [];
+}
+
 module.exports.state = state; // will be private
 module.exports.assign = assign;
 module.exports.call = call;
 module.exports.expression = expression;
 module.exports.load = load;
+module.exports.clear = clear;

@@ -10,6 +10,7 @@ const EXPRESSION = require("./nuc/EXPRESSION");
 const state = require("./state");
 const RETURN = require("./nuc/RETURN");
 const transaction = require("./transaction");
+const Identifier = require("./lang/ast/Identifier");
 
 function process(statements, prior, options = {}) {
   const root = new Scope(prior);
@@ -171,7 +172,7 @@ function process(statements, prior, options = {}) {
             }
 
             if (statement instanceof Node) {
-              if (graph[statement.key || statement.id]) {
+              if (graph.retrieve(statement.key || statement.id)) {
                 Node.replace(statement.key || statement.id, statement);
               } else {
                 Node.register(statement);

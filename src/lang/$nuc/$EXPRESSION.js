@@ -1,12 +1,12 @@
 const $ = require("./$");
 const EXPRESSION = require("../../nuc/EXPRESSION");
-const acorn = require("acorn");
 const Expression = require("../ast/Expression");
 
 function build(node) {
   if (typeof node === "string") {
-    const [{ expression }] = acorn.parse(node, { ecmaVersion: 2020 }).body;
-    node = new Expression(expression);
+    const { parse } = require("../estree/parser");
+    const string = node;
+    node = new Expression(parse(string, false));
   }
 
   const statement = new $EXPRESSION();

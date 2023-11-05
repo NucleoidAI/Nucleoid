@@ -1,5 +1,6 @@
 const CLASS = require("../../nuc/CLASS");
 const $ = require("./$");
+const Identifier = require("../ast/Identifier");
 
 function build(name, methods = []) {
   const statement = new $CLASS();
@@ -11,8 +12,8 @@ function build(name, methods = []) {
 class $CLASS extends $ {
   run() {
     const statement = new CLASS();
-    const name = this.name.resolve();
-    statement.name = `$${name}`;
+    const name = this.name;
+    statement.name = new Identifier(`$${name}`);
     statement.list = name;
     statement.methods = this.methods;
     return statement;

@@ -15,12 +15,12 @@ class $VARIABLE extends $ {
 
     if (["EXPRESSION", "REFERENCE"].includes(expression.instanceof)) {
       const statement = new VARIABLE();
-      statement.name = this.name.resolve();
+      statement.name = this.name;
       statement.value = expression;
       return statement;
     } else if (expression instanceof OBJECT) {
       const statement = expression;
-      statement.name = this.name.resolve();
+      statement.name = this.name;
       return statement;
     }
   }

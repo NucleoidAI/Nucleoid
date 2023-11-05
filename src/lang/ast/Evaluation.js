@@ -3,6 +3,10 @@ class Evaluation {
     this.value = value;
     this.transactions = transactions;
   }
+
+  toString() {
+    return this.value;
+  }
 }
 
 module.exports = Evaluation;

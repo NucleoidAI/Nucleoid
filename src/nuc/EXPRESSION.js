@@ -12,17 +12,9 @@ class EXPRESSION {
   before() {}
 
   run(scope) {
-    const expression = this.node.traverse((node) => node.resolve(scope));
+    const expression = this.node.traverse((node) => node.generate(scope));
 
-    const transactions = this.node.map((node) => {
-      if (node instanceof Call) {
-        return {
-          exec: node.resolve(true),
-        };
-      }
-    });
-
-    return new Evaluation(expression.join(""), transactions);
+    return new Evaluation(expression.join(""));
   }
 
   next() {}
@@ -30,7 +22,7 @@ class EXPRESSION {
   graph() {
     return this.node.map((node) => {
       if (node instanceof Identifier) {
-        const name = node.resolve();
+        const name = node.generate();
         if (graph[name]) {
           return name;
         }
