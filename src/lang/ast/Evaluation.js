@@ -1,7 +1,6 @@
 class Evaluation {
-  constructor(value, transactions) {
+  constructor(value) {
     this.value = value;
-    this.transactions = transactions;
   }
 
   toString() {

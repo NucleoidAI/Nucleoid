@@ -47,41 +47,19 @@ function graph(id) {
   return object;
 }
 function assign(scope, variable, evaluation, json = true) {
-  let transaction;
+  let value;
 
-  if (evaluation instanceof REFERENCE) {
-    const before = eval(`state.${variable}`);
-    const run = evaluation.run();
-    const exec = `state.${variable}=${run.construct()}`;
-
-    transaction = { variable, exec, before };
+  if (json) {
+    value = serialize(eval(`(${evaluation})`), "state");
   } else {
-    const generatedVariable = variable.generate();
-    const before = eval(`state.${generatedVariable}`);
-
-    if (json) {
-      const result = eval(`(${evaluation})`);
-      const value = serialize(result, "state");
-
-      const exec = `state.${generatedVariable}=${value}`;
-      transaction = { generatedVariable, exec, before };
-    } else {
-      const exec = `state.${variable}=${evaluation}`;
-      transaction = { generatedVariable, exec, before };
-    }
+    value = evaluation.toString();
   }
 
-  if (evaluation.transactions?.length) {
-    _transaction.push(...evaluation.transactions);
-  }
-
-  _transaction.push(transaction);
-  return eval(transaction.exec);
+  return _transaction.register(`state.${variable}`, value);
 }
 
 function call(scope, fn, args = []) {
   const exec = `state.${fn}(${args.join(",")})`;
-  _transaction.push({ exec });
   return eval(exec);
 }
 

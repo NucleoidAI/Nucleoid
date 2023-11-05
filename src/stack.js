@@ -53,7 +53,6 @@ function process(statements, prior, options = {}) {
         let scope = instruction.scope;
 
         const evaluation = statement.run(scope, false, false);
-        transaction.push(evaluation.transactions);
 
         if (instruction.scope === root && !instruction.derivative) {
           result = state.expression(scope, evaluation);
@@ -172,10 +171,14 @@ function process(statements, prior, options = {}) {
             }
 
             if (statement instanceof Node) {
-              if (graph.retrieve(statement.key || statement.id)) {
-                Node.replace(statement.key || statement.id, statement);
+              if (statement.key && graph.retrieve(statement.key)) {
+                Node.replace(statement.key, statement);
+              } else if (graph.retrieve(statement.id)) {
+                Node.replace(statement.id, statement);
+              } else if (statement.key) {
+                Node.register(statement.key, statement);
               } else {
-                Node.register(statement);
+                Node.register(statement.id, statement);
               }
             }
 

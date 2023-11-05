@@ -10,23 +10,36 @@ function end() {
   return result;
 }
 
-function assignGraph(object, property, value) {
-  if (!object) return;
-
-  list.push({ object, property, before: object[property] });
-  object[property] = value;
-}
-
-function push(transaction) {
-  list.push(transaction);
-}
-
-function rollback() {
+function register(p1, p2, p3) {
   // eslint-disable-next-line no-unused-vars
   const { state } = require("./state");
 
-  // TODO Temporary disable transaction rollback
-  return;
+  if (!p1) return;
+
+  if (typeof p1 === "string") {
+    const variable = p1;
+    const value = p2;
+
+    // eslint-disable-next-line no-eval
+    const before = eval(`${variable}`);
+
+    // eslint-disable-next-line no-eval
+    const after = eval(`${variable}=${value}`);
+
+    list.push({ variable, before });
+    return after;
+  } else {
+    let object = p1;
+    let property = p2;
+    let value = p3;
+
+    list.push({ object, property, before: object[property] });
+    object[property] = value;
+  }
+}
+
+function rollback() {
+  const { state } = require("./state"); // eslint-disable-line no-unused-vars
 
   while (list.length) {
     let transaction = list.pop();
@@ -34,10 +47,6 @@ function rollback() {
     let object = transaction.object;
     let property = transaction.property;
     let before = transaction.before;
-
-    if (!variable && !object && !property) {
-      continue;
-    }
 
     if (variable !== undefined) {
       // eslint-disable-next-line no-eval
@@ -54,6 +63,5 @@ function rollback() {
 
 module.exports.start = start;
 module.exports.end = end;
-module.exports.push = push;
-module.exports.assignGraph = assignGraph;
+module.exports.register = register;
 module.exports.rollback = rollback;

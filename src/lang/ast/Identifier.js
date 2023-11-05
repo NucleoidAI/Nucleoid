@@ -2,6 +2,7 @@ const graph = require("../../graph");
 const { root } = require("../estree/estree");
 const _ = require("lodash");
 const AST = require("./AST");
+const { append } = require("../estree/estree");
 
 class Identifier extends AST {
   first() {
@@ -38,31 +39,11 @@ class Identifier extends AST {
 
       if (graph.retrieve(first)) {
         const state = {
-          type: "MemberExpression",
-          computed: false,
-          optional: false,
-          object: {
-            type: "Identifier",
-            name: "state",
-          },
+          type: "Identifier",
+          name: "state",
         };
 
-        if (this.node.type === "Identifier") {
-          state.property = this.node;
-          return state;
-        } else if (this.node.type === "MemberExpression") {
-          const cloned = _.cloneDeep(this.node);
-
-          const firstNode = root(cloned);
-          state.property = firstNode.object;
-          firstNode.object = state;
-
-          return cloned;
-        }
-
-        state.property = this.node;
-
-        return state;
+        return append(state, this.node);
       } else {
         return this.node;
       }
