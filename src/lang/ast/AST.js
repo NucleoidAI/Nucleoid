@@ -17,6 +17,7 @@ class AST {
 
   last() {}
 
+  // resolve() returns ESTree
   resolve() {
     return this.node;
   }

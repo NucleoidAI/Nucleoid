@@ -33,7 +33,7 @@ class $LET extends $ {
     let value = this.value.run();
 
     if (value instanceof EXPRESSION) {
-      if (graph[name] && graph[name] instanceof CLASS) {
+      if (graph.retrieve(name) instanceof CLASS) {
         let statement = new LET$CLASS();
         statement.class = graph[name];
         statement.name = name;

@@ -1,8 +1,7 @@
 const graph = require("../../graph");
-const { root } = require("../estree/estree");
-const _ = require("lodash");
+
+const { root, append } = require("../estree/estree");
 const AST = require("./AST");
-const { append } = require("../estree/estree");
 
 class Identifier extends AST {
   first() {
@@ -20,21 +19,14 @@ class Identifier extends AST {
     }
   }
 
-  object() {
-    if (this.node.type === "Identifier") {
-      return new Identifier(this.node);
-    } else if (this.node.type === "MemberExpression") {
-      return new Identifier(this.node.object);
-    }
-  }
-
   resolve(scope) {
     if (scope) {
       const first = this.first();
-      const scoped = scope.retrieve(first);
+
+      const scoped = scope.retrieve(this);
 
       if (scoped) {
-        return scoped;
+        return scoped.resolve();
       }
 
       if (graph.retrieve(first)) {
@@ -49,6 +41,14 @@ class Identifier extends AST {
       }
     } else {
       return this.node;
+    }
+  }
+
+  object() {
+    if (this.node.type === "Identifier") {
+      return new Identifier(this.node);
+    } else if (this.node.type === "MemberExpression") {
+      return new Identifier(this.node.object);
     }
   }
 }

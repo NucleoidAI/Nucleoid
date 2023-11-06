@@ -42,7 +42,7 @@ class Scope {
     // eslint-disable-next-line no-unused-vars
     const scope = this;
     // eslint-disable-next-line no-eval
-    eval(`${generate(local)}=${evaluation}`);
+    return eval(`${generate(local)}=${evaluation}`);
   }
 
   retrieve(variable) {
