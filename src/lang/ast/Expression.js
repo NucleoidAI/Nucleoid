@@ -44,10 +44,13 @@ function convertToAST(node) {
 }
 
 function traverseReduce(exp, fn, acc = []) {
-  if (exp.type === "BinaryExpression") {
+  if (["LogicalExpression", "BinaryExpression"].includes(exp.type)) {
     traverseReduce(exp.left, fn, acc);
     acc.push(exp.operator);
     traverseReduce(exp.right, fn, acc);
+  } else if (exp.type === "UnaryExpression") {
+    acc.push(exp.operator);
+    traverseReduce(exp.argument, fn, acc);
   } else {
     const ast = convertToAST(exp);
     const cur = fn(ast);
