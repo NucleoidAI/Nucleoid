@@ -1,23 +1,22 @@
 const Identifier = require("./Identifier");
-const ESTree = require("../estree/generator");
-const graph = require("../../graph");
 const AST = require("./AST");
 
 class Call extends AST {
-  constructor(node) {
-    super(node);
-    this.name = new Identifier(this.node.callee);
-  }
+  resolve(scope) {
+    const Expression = require("./Expression");
 
-  generate(scope) {
-    const name = this.name.first().generate(scope);
+    const name = new Identifier(this.node.callee);
+    const resolvedName = name.resolve(scope);
 
-    if (scope) {
-      const generated = ESTree.generate(this.node);
-      return graph[name] ? `state.${generated}` : generated;
-    } else {
-      return ESTree.generate(this.node);
-    }
+    const args = this.node.arguments
+      .map((arg) => new Expression(arg))
+      .map((arg) => arg.resolve(scope));
+
+    return {
+      type: "CallExpression",
+      callee: resolvedName,
+      arguments: args,
+    };
   }
 }
 

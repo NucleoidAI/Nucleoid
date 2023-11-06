@@ -3,22 +3,23 @@ const Literal = require("./Literal");
 const Call = require("./Call");
 const Array = require("./Array");
 const Object = require("./Object");
-const ESTree = require("../estree/generator");
 const AST = require("./AST");
+const Function = require("./Function");
 
 class Expression extends AST {
   map(fn) {
     return mapReduce(this.node, fn);
   }
 
+  resolve(scope) {
+    return convertToAST(this.node).resolve(scope);
+  }
+
   traverse(fn) {
     return traverseReduce(this.node, fn);
   }
-
-  generate() {
-    return ESTree.generate(this.node);
-  }
 }
+
 function convertToAST(node) {
   switch (node.type) {
     case "Literal": {
@@ -36,6 +37,9 @@ function convertToAST(node) {
     }
     case "ObjectExpression": {
       return new Object(node);
+    }
+    case "ArrowFunctionExpression": {
+      return new Function(node);
     }
     default: {
       throw new Error(`ParserError: Unknown node type '${node.type}'`);
