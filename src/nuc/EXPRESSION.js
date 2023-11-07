@@ -1,18 +1,17 @@
 const graph = require("../graph");
 const Evaluation = require("../lang/ast/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
-const Call = require("../lang/ast/Call");
 
 class EXPRESSION {
-  constructor(node) {
+  constructor(tokens) {
     this.instanceof = this.constructor.name;
-    this.node = node;
+    this.tokens = tokens;
   }
 
   before() {}
 
   run(scope) {
-    const expression = this.node.traverse((node) => node.generate(scope));
+    const expression = this.tokens.traverse((node) => node.generate(scope));
 
     return new Evaluation(expression.join(""));
   }
@@ -20,7 +19,7 @@ class EXPRESSION {
   next() {}
 
   graph() {
-    return this.node.map((node) => {
+    return this.tokens.map((node) => {
       if (node instanceof Identifier) {
         const name = node.generate();
         if (graph[name]) {

@@ -3,7 +3,6 @@ const stack = require("./stack");
 const Statement = require("./statement");
 const Event = require("./event");
 const transaction = require("./transaction");
-const Macro = require("./macro");
 const config = require("./config");
 let eventExtension;
 
@@ -12,42 +11,40 @@ try {
   eventExtension = require(`${path}/extensions/event.js`);
 } catch (err) {} // eslint-disable-line no-empty
 
-module.exports.process = function (statement, options = {}) {
+module.exports.process = function (string, options = {}) {
   options = { ...config(), ...options };
   const { declarative, details, cacheOnly } = options;
 
   const before = Date.now();
-  let statements, result, error;
-
-  statement = `(()=>{${statement}})()`;
-  const macro = Macro.apply(statement, options);
+  let result;
 
   try {
-    statements = Statement.parse(macro, options);
+    const statements = Statement.parse(string, options);
     transaction.start();
     result = stack.process(statements, null, options);
-  } catch (err) {
+    transaction.end();
+  } catch (error) {
     transaction.rollback();
-    result = err;
-    error = true;
+    result = { ...result, error };
   }
 
   const events = Event.list();
   const date = Date.now();
   const time = date - before;
 
-  if (!cacheOnly) {
-    if (result instanceof Error) {
-      result = `${result.constructor.name}: ${result.message}`;
-    }
+  if (result.error) {
+    result.value = `${result.error.constructor.name}: ${result.error.message}`;
+  }
 
+  if (!cacheOnly) {
     datastore.write({
-      s: statement,
+      s: string,
+      $: JSON.stringify(result.$nuc),
       c: declarative ? true : undefined,
       t: time,
-      r: result,
+      r: result.value,
       d: date,
-      e: error,
+      e: result.error,
       v: events,
     });
   }
@@ -60,22 +57,19 @@ module.exports.process = function (statement, options = {}) {
   Event.clear();
 
   if (details) {
-    if (result instanceof Error) {
-      result = `${result.constructor.name}: ${result.message}`;
-    }
-
     return {
-      result,
+      result: result.value,
+      $nuc: result.$nuc,
       date,
       time,
-      error,
+      error: result.error,
       events,
     };
   } else {
-    if (error) {
-      throw result;
+    if (result.error) {
+      throw result.error;
     }
 
-    return result;
+    return result.value;
   }
 };

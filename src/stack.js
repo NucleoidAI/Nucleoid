@@ -18,7 +18,7 @@ function process(statements, prior, options = {}) {
     (statement) => new Instruction(root, statement, true, true, false)
   );
 
-  let result;
+  let result = { value: undefined, $nuc: [] };
   let dependencies = [];
   let dependents = [];
   let priorities = [];
@@ -53,7 +53,7 @@ function process(statements, prior, options = {}) {
         const evaluation = statement.run(scope, false, false);
 
         if (instruction.scope === root && !instruction.derivative) {
-          result = state.expression(scope, evaluation);
+          result.value = state.expression(scope, evaluation);
         }
 
         let list = statement.next(scope);
@@ -85,6 +85,8 @@ function process(statements, prior, options = {}) {
         if (instruction.before) {
           statement.before(instruction.scope);
         }
+
+        result.$nuc.push(statement);
 
         if (instruction.run) {
           let next = statement.run(instruction.scope);
@@ -121,7 +123,7 @@ function process(statements, prior, options = {}) {
           let { value, next } = statement.run(instruction.scope) || {};
 
           if (instruction.scope === root && !instruction.derivative) {
-            result = value;
+            result.value = value;
           }
 
           if (next) {
