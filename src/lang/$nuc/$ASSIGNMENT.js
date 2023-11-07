@@ -30,7 +30,7 @@ class $ASSIGNMENT extends $ {
       if (scope.retrieve(this.left)) {
         return $LET(this.left.join("."), this.right);
       } else {
-        return $PROPERTY(this.left.object(), this.left.last(), this.right);
+        return $PROPERTY(this.left.object, this.left.last, this.right);
       }
     }
   }

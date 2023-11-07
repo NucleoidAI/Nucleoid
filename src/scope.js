@@ -53,7 +53,7 @@ class Scope {
       name: "scope",
     };
 
-    const first = variable.first();
+    const first = variable.first;
 
     while (index) {
       if (index.local[first.generate()] !== undefined) {

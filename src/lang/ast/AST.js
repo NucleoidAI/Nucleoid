@@ -1,3 +1,4 @@
+/* eslint-disable getter-return */
 const ESTree = require("../estree/generator");
 
 class AST {
@@ -11,11 +12,11 @@ class AST {
     }
   }
 
-  first() {}
+  get first() {}
 
-  object() {}
+  get object() {}
 
-  last() {}
+  get last() {}
 
   // resolve() returns ESTree
   resolve() {
