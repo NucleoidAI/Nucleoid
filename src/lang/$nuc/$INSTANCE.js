@@ -34,7 +34,7 @@ class $INSTANCE extends $ {
     const cls = new Identifier(`$${this.class}`);
     const name = this.name;
 
-    if (!graph.retrieve(this.class)) {
+    if (!graph.retrieve(cls)) {
       throw ReferenceError(`${cls} is not defined`);
     }
 

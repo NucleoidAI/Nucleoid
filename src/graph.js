@@ -4,11 +4,11 @@ const graph = {
   },
 };
 
-function retrieve(variable) {
-  if (typeof variable === "string") {
-    return graph[variable];
+function retrieve(identifier) {
+  if (typeof identifier === "string") {
+    return graph[identifier];
   } else {
-    return graph[variable.generate()];
+    return graph[identifier.generate()];
   }
 }
 

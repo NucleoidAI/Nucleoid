@@ -42,7 +42,8 @@ function convertToAST(node) {
       return new Call(node);
     }
     case "ArrayExpression": {
-      return new Array(node);
+      const elements = node.elements.map((el) => convertToAST(el));
+      return new Array(elements);
     }
     case "ObjectExpression": {
       return new Object(node);
