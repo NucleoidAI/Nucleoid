@@ -5,6 +5,7 @@ const Array = require("./Array");
 const Object = require("./Object");
 const AST = require("./AST");
 const Function = require("./Function");
+const Operator = require("./Operator");
 
 class Expression extends AST {
   map(fn) {
@@ -29,6 +30,10 @@ function convertToAST(node) {
     case "MemberExpression": {
       return new Identifier(node);
     }
+    case "BinaryExpression":
+    case "LogicalExpression": {
+      return new Operator(node);
+    }
     case "CallExpression": {
       return new Call(node);
     }
@@ -48,7 +53,7 @@ function convertToAST(node) {
 }
 
 function traverseReduce(exp, fn, acc = []) {
-  if (["LogicalExpression", "BinaryExpression"].includes(exp.type)) {
+  if (Operator.types.includes(exp.type)) {
     traverseReduce(exp.left, fn, acc);
     acc.push(exp.operator);
     traverseReduce(exp.right, fn, acc);
@@ -68,7 +73,7 @@ function traverseReduce(exp, fn, acc = []) {
 }
 
 function mapReduce(exp, fn, acc = []) {
-  if (exp.type === "BinaryExpression") {
+  if (Operator.types.includes(exp.type)) {
     mapReduce(exp.left, fn, acc);
     mapReduce(exp.right, fn, acc);
   } else {

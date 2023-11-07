@@ -5,7 +5,7 @@ const state = require("../state");
 
 class IF extends Node {
   before(scope) {
-    this.key = "if(" + this.condition.node.generate() + ")";
+    this.key = `if(${this.condition.node})`;
     this.condition.before(scope);
   }
 

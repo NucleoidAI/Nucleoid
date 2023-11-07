@@ -4,6 +4,11 @@ const { root, append } = require("../estree/estree");
 const AST = require("./AST");
 
 class Identifier extends AST {
+  static get types() {
+    return ["Identifier", "MemberExpression"];
+  }
+
+  // TODO Convert to getter
   first() {
     if (this.node.type === "Identifier") {
       return new Identifier(this.node);
@@ -11,6 +16,7 @@ class Identifier extends AST {
       return new Identifier(root(this.node).object);
     }
   }
+
   last() {
     if (this.node.type === "Identifier") {
       return new Identifier(this.node);

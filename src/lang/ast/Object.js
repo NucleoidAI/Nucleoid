@@ -10,7 +10,7 @@ class Object extends AST {
 
       walk.simple(cloned, {
         Property(node) {
-          if (["Identifier", "MemberExpression"].includes(node.value.type)) {
+          if (Identifier.types.includes(node.value.type)) {
             const identifier = new Identifier(node.value);
             node.value = identifier.resolve(scope);
           }
