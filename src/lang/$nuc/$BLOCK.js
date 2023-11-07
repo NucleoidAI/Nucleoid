@@ -7,6 +7,7 @@ const Scope = require("../../scope");
 const LET = require("../../nuc/LET");
 const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const REFERENCE = require("../../nuc/REFERENCE");
+const { v4: uuid } = require("uuid");
 
 function construct(statements, skip) {
   let statement = new $BLOCK();
@@ -16,6 +17,10 @@ function construct(statements, skip) {
 }
 
 class $BLOCK extends $ {
+  before() {
+    this.key = uuid();
+  }
+
   run(scope) {
     let test = new Scope(scope);
     test.object = scope.object;
@@ -58,7 +63,7 @@ class $BLOCK extends $ {
         new Instruction(scope, statement, false, false, true),
       ];
     } else {
-      let statement = new BLOCK();
+      let statement = new BLOCK(this.key);
       statement.statements = this.statements;
       statement.skip = this.skip;
 

@@ -18,11 +18,8 @@ class OBJECT extends Node {
   }
 
   before() {
-    if (this.name === undefined && this.object === undefined) {
-      this.key = random(16, true);
-      this.name = this.key;
-    } else {
-      this.key = Id.serialize(this);
+    if (!this.object) {
+      this.key = this.name.toString();
     }
   }
 

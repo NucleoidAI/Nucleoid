@@ -104,6 +104,9 @@ function parseNode(node) {
 
       if (expression.type === "AssignmentExpression") {
         return parseNode(expression);
+      } else if (expression.type === "NewExpression") {
+        const cls = new Identifier(expression.callee);
+        return $INSTANCE(cls, null, null, expression.arguments);
       } else {
         return $EXPRESSION(new Expression(expression));
       }

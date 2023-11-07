@@ -5,6 +5,7 @@ const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const CLASS = require("../../nuc/CLASS");
 const $LET = require("./$LET");
 const Identifier = require("../ast/Identifier");
+const random = require("../../lib/random");
 
 function build(cls, object, name, args) {
   let statement = new $INSTANCE();
@@ -16,6 +17,15 @@ function build(cls, object, name, args) {
 }
 
 class $INSTANCE extends $ {
+  before() {
+    if (!this.name) {
+      this.key = random(16, true);
+      this.name = new Identifier(this.key);
+    } else {
+      this.key = this.name.toString();
+    }
+  }
+
   run(scope) {
     const cls = new Identifier(`$${this.class}`);
     const name = this.name;

@@ -6,7 +6,7 @@ const Identifier = require("../lang/ast/Identifier");
 
 class PROPERTY extends Node {
   before(scope) {
-    this.key = Id.serialize(this, true);
+    this.key = `${this.object.resolve()}.${this.name.node.name}`;
     this.value.before(scope, this.key);
   }
 

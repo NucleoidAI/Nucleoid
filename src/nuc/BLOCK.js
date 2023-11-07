@@ -2,8 +2,8 @@ const Node = require("./Node");
 const $ = require("../lang/$nuc/$");
 
 class BLOCK extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
     this.statements = [];
   }
 

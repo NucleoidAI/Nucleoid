@@ -1,14 +1,13 @@
 const { graph } = require("../graph");
-const uuid = require("uuid").v4;
 const transaction = require("../transaction");
 
 let sequence = 0;
 
 class Node {
-  constructor() {
+  constructor(key) {
+    this.key = key;
     this.next = {};
     this.previous = {};
-    this.id = uuid();
     this.sequence = sequence++;
   }
 

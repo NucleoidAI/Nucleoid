@@ -9,8 +9,6 @@ const BREAK = require("./nuc/BREAK");
 const EXPRESSION = require("./nuc/EXPRESSION");
 const state = require("./state");
 const RETURN = require("./nuc/RETURN");
-const transaction = require("./transaction");
-const Identifier = require("./lang/ast/Identifier");
 
 function process(statements, prior, options = {}) {
   const root = new Scope(prior);
@@ -171,14 +169,10 @@ function process(statements, prior, options = {}) {
             }
 
             if (statement instanceof Node) {
-              if (statement.key && graph.retrieve(statement.key)) {
+              if (graph.retrieve(statement.key)) {
                 Node.replace(statement.key, statement);
-              } else if (graph.retrieve(statement.id)) {
-                Node.replace(statement.id, statement);
-              } else if (statement.key) {
-                Node.register(statement.key, statement);
               } else {
-                Node.register(statement.id, statement);
+                Node.register(statement.key, statement);
               }
             }
 
