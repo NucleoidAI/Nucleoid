@@ -1,9 +1,5 @@
 const AST = require("./AST");
 
-class Operator extends AST {
-  static get types() {
-    return ["BinaryExpression", "LogicalExpression"];
-  }
-}
+class Operator extends AST {}
 
 module.exports = Operator;

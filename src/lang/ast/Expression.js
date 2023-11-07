@@ -26,13 +26,17 @@ function convertToAST(node) {
     case "Literal": {
       return new Literal(node);
     }
+    case "BinaryExpression":
+    case "LogicalExpression":
+    case "UnaryExpression":
+    case "UpdateExpression":
+    case "RegExpLiteral":
+    case "ConditionalExpression": {
+      return new Operator(node);
+    }
     case "Identifier":
     case "MemberExpression": {
       return new Identifier(node);
-    }
-    case "BinaryExpression":
-    case "LogicalExpression": {
-      return new Operator(node);
     }
     case "CallExpression": {
       return new Call(node);
@@ -47,13 +51,13 @@ function convertToAST(node) {
       return new Function(node);
     }
     default: {
-      throw new Error(`ParserError: Unknown node type '${node.type}'`);
+      throw new Error(`ParserError: Unknown expression type '${node.type}'`);
     }
   }
 }
 
 function traverseReduce(exp, fn, acc = []) {
-  if (Operator.types.includes(exp.type)) {
+  if (["BinaryExpression", "LogicalExpression"].includes(exp.type)) {
     traverseReduce(exp.left, fn, acc);
     acc.push(exp.operator);
     traverseReduce(exp.right, fn, acc);
@@ -73,7 +77,7 @@ function traverseReduce(exp, fn, acc = []) {
 }
 
 function mapReduce(exp, fn, acc = []) {
-  if (Operator.types.includes(exp.type)) {
+  if (["BinaryExpression", "LogicalExpression"].includes(exp.type)) {
     mapReduce(exp.left, fn, acc);
     mapReduce(exp.right, fn, acc);
   } else {
