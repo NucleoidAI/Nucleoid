@@ -3,7 +3,7 @@ const transaction = require("../transaction");
 
 let sequence = 0;
 
-class Node {
+class NODE {
   constructor(key) {
     this.key = key;
     this.next = {};
@@ -41,4 +41,4 @@ class Node {
   }
 }
 
-module.exports = Node;
+module.exports = NODE;

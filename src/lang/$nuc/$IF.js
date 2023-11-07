@@ -14,6 +14,10 @@ function build(condition, trueB, p3) {
 }
 
 class $IF extends $ {
+  before() {
+    this.key = `if(${this.condition.node})`;
+  }
+
   run(scope) {
     /*
     for (let token of this.condition.node.list()) {
@@ -34,7 +38,7 @@ class $IF extends $ {
     }
     */
 
-    let statement = new IF();
+    let statement = new IF(this.key);
     statement.condition = this.condition.run();
     statement.true = this.true;
     statement.false = this.false;

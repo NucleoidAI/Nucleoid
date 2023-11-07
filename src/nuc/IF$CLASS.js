@@ -1,6 +1,6 @@
 const IF$INSTANCE = require("./IF$INSTANCE");
 const $BLOCK = require("../lang/$nuc/$BLOCK");
-const Node = require("./Node");
+const Node = require("./NODE");
 const graph = require("../graph");
 const Instance = require("../lib/instance");
 

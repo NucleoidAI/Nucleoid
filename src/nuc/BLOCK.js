@@ -1,4 +1,4 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const $ = require("../lang/$nuc/$");
 
 class BLOCK extends Node {

@@ -1,12 +1,11 @@
 const state = require("../state");
-const Node = require("./Node");
+const Node = require("./NODE");
 const Id = require("../lib/identifier");
 const estree = require("../lang/estree/estree");
 const Identifier = require("../lang/ast/Identifier");
 
 class PROPERTY extends Node {
   before(scope) {
-    this.key = `${this.object.resolve()}.${this.name.node.name}`;
     this.value.before(scope, this.key);
   }
 

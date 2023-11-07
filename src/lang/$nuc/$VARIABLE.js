@@ -10,11 +10,15 @@ function build(name, value) {
 }
 
 class $VARIABLE extends $ {
+  before() {
+    this.key = this.name.toString();
+  }
+
   run(scope) {
     const expression = this.value.run(scope);
 
     if (["EXPRESSION", "REFERENCE"].includes(expression.instanceof)) {
-      const statement = new VARIABLE();
+      const statement = new VARIABLE(this.key);
       statement.name = this.name;
       statement.value = expression;
       return statement;

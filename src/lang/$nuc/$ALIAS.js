@@ -10,10 +10,14 @@ function build(alias, name, value) {
 }
 
 class $ALIAS extends $ {
+  before() {
+    this.key = this.name.toString();
+  }
+
   run(scope) {
     const value = this.value.run(scope);
 
-    const statement = new ALIAS();
+    const statement = new ALIAS(this.key);
     statement.alias = this.alias;
     statement.name = this.name;
     statement.value = value;

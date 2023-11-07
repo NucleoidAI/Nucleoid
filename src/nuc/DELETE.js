@@ -1,7 +1,7 @@
 const state = require("../state");
 const graph = require("../graph");
 const Instruction = require("../instruction");
-const Node = require("./Node");
+const Node = require("./NODE");
 
 class DELETE {
   before() {}

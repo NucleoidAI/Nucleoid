@@ -18,11 +18,15 @@ function build(cls, object, name, args) {
 
 class $INSTANCE extends $ {
   before() {
-    if (!this.name) {
-      this.key = random(16, true);
-      this.name = new Identifier(this.key);
+    if (this.object) {
+      this.key = `${this.object}.${this.name}`;
     } else {
-      this.key = this.name.toString();
+      if (!this.name) {
+        this.key = random(16, true);
+        this.name = new Identifier(this.key);
+      } else {
+        this.key = this.name.toString();
+      }
     }
   }
 
@@ -62,7 +66,7 @@ class $INSTANCE extends $ {
         statement.object = graph[this.object];
         return statement;
       } else {
-        const statement = new OBJECT();
+        const statement = new OBJECT(this.key);
         statement.class = graph.retrieve(cls);
         statement.name = name;
         statement.object = graph.retrieve(this.object);
@@ -71,7 +75,7 @@ class $INSTANCE extends $ {
       }
     }
 
-    let statement = new OBJECT();
+    let statement = new OBJECT(this.key);
     statement.class = graph.retrieve(cls);
     statement.name = name;
     statement.args = this.args;

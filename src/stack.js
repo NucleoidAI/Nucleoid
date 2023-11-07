@@ -1,13 +1,13 @@
+const state = require("./state");
 const graph = require("./graph");
 const BLOCK = require("./nuc/BLOCK");
 const IF = require("./nuc/IF");
 const Instruction = require("./instruction");
 const Scope = require("./scope");
-const Node = require("./nuc/Node");
+const Node = require("./nuc/NODE");
 const $ = require("./lang/$nuc/$");
 const BREAK = require("./nuc/BREAK");
 const EXPRESSION = require("./nuc/EXPRESSION");
-const state = require("./state");
 const RETURN = require("./nuc/RETURN");
 
 function process(statements, prior, options = {}) {

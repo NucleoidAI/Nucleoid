@@ -18,6 +18,10 @@ function build(object, name, value) {
 }
 
 class $PROPERTY extends $ {
+  before() {
+    this.key = `${this.object}.${this.name}`;
+  }
+
   run(scope) {
     let object = this.object;
     const name = this.name;
@@ -55,7 +59,7 @@ class $PROPERTY extends $ {
       return statement;
     }
 
-    let statement = new PROPERTY();
+    let statement = new PROPERTY(this.key);
     statement.object = graph.retrieve(object);
     statement.name = name;
     statement.value = value;

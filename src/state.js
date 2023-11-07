@@ -68,7 +68,7 @@ function expression(scope, evaluation) {
 }
 
 function load(execs = []) {
-  const Node = require("./nuc/Node");
+  const Node = require("./nuc/NODE");
   const graph = require("./graph");
 
   execs.forEach((exec) => {

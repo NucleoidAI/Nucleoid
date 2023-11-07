@@ -1,4 +1,4 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 
 class FUNCTION extends Node {
   before() {

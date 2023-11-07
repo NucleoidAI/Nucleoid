@@ -1,5 +1,5 @@
 const state = require("../state");
-const Node = require("./Node");
+const Node = require("./NODE");
 const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
@@ -7,14 +7,10 @@ const { deepEqual } = require("../lib/deep");
 const Evaluation = require("../lang/ast/Evaluation");
 
 class CLASS extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
     this.instances = {};
     this.declarations = {};
-  }
-
-  before() {
-    this.key = this.name.toString();
   }
 
   run(scope) {

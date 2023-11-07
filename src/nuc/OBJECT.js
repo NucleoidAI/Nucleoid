@@ -1,5 +1,5 @@
 const state = require("../state");
-const Node = require("./Node");
+const Node = require("./NODE");
 const Id = require("../lib/identifier");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 const Instruction = require("../instruction");
@@ -12,15 +12,9 @@ const { append } = require("../lang/estree/estree");
 const estree = require("../lang/estree/estree");
 
 class OBJECT extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
     this.properties = {};
-  }
-
-  before() {
-    if (!this.object) {
-      this.key = this.name.toString();
-    }
   }
 
   run(scope) {

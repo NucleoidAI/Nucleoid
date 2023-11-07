@@ -1,4 +1,4 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const Id = require("../lib/identifier");
 const graph = require("../graph");
 const OBJECT$INSTANCE = require("./OBJECT$INSTANCE");

@@ -1,11 +1,10 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const Instruction = require("../instruction");
 const Scope = require("../scope");
 const state = require("../state");
 
 class IF extends Node {
   before(scope) {
-    this.key = `if(${this.condition.node})`;
     this.condition.before(scope);
   }
 

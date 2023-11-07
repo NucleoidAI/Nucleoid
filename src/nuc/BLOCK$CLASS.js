@@ -1,4 +1,4 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const BLOCK$INSTANCE = require("./BLOCK$INSTANCE");
 const Instruction = require("../instruction");
 const graph = require("../graph");
