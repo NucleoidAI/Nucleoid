@@ -4,18 +4,22 @@ const IF = require("../../nuc/IF");
 const CLASS = require("../../nuc/CLASS");
 const IF$CLASS = require("../../nuc/IF$CLASS");
 const Instruction = require("../../instruction");
+const Expression = require("../ast/Expression");
+const $EXPRESSION = require("./$EXPRESSION");
 
-function build(condition, trueB, p3) {
+function build(condition, trueStatement, falseStatement) {
   let statement = new $IF();
   statement.condition = condition;
-  statement.true = trueB; // truthy
-  statement.false = p3; // falsy
+  statement.true = trueStatement; // truthy
+  statement.false = falseStatement; // falsy
   return statement;
 }
 
 class $IF extends $ {
   before() {
-    this.key = `if(${this.condition.node})`;
+    const condition = new Expression(this.condition);
+    const expression = $EXPRESSION(condition);
+    this.condition = expression.run();
   }
 
   run(scope) {
@@ -38,8 +42,8 @@ class $IF extends $ {
     }
     */
 
-    let statement = new IF(this.key);
-    statement.condition = this.condition.run();
+    let statement = new IF(`if(${this.condition.tokens})`);
+    statement.condition = this.condition;
     statement.true = this.true;
     statement.false = this.false;
 

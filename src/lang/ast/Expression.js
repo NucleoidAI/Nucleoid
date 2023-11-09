@@ -6,6 +6,7 @@ const Object = require("./Object");
 const AST = require("./AST");
 const Function = require("./Function");
 const Operator = require("./Operator");
+const New = require("./New");
 
 class Expression extends AST {
   map(fn) {
@@ -50,6 +51,9 @@ function convertToAST(node) {
     }
     case "ArrowFunctionExpression": {
       return new Function(node);
+    }
+    case "NewExpression": {
+      return new New(node);
     }
     default: {
       throw new Error(`ParserError: Unknown expression type '${node.type}'`);

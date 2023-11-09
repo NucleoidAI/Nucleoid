@@ -5,7 +5,7 @@ let sequence = 0;
 
 class NODE {
   constructor(key) {
-    this.key = key;
+    this.key = key.toString();
     this.next = {};
     this.previous = {};
     this.sequence = sequence++;

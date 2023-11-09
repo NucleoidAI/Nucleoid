@@ -1,5 +1,7 @@
 const $ = require("./$");
 const ALIAS = require("../../nuc/ALIAS");
+const $EXPRESSION = require("./$EXPRESSION");
+const Identifier = require("../ast/Identifier");
 
 function build(alias, name, value) {
   const statement = new $ALIAS();
@@ -10,17 +12,18 @@ function build(alias, name, value) {
 }
 
 class $ALIAS extends $ {
-  before() {
-    this.key = this.name.toString();
+  before(scope) {
+    const expression = $EXPRESSION(this.value);
+    this.value = expression.run(scope);
   }
 
-  run(scope) {
-    const value = this.value.run(scope);
+  run() {
+    const name = new Identifier(this.name);
 
-    const statement = new ALIAS(this.key);
-    statement.alias = this.alias;
-    statement.name = this.name;
-    statement.value = value;
+    const statement = new ALIAS(name);
+    statement.alias = new Identifier(this.alias);
+    statement.name = name;
+    statement.value = this.value;
     return statement;
   }
 }

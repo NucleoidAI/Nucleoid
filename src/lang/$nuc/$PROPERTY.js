@@ -8,6 +8,8 @@ const REFERENCE = require("../../nuc/REFERENCE");
 const PROPERTY$REFERENCE = require("../../nuc/PROPERTY$REFERENCE");
 const Local = require("../../lib/local");
 const FUNCTION = require("../../nuc/FUNCTION");
+const Identifier = require("../ast/Identifier");
+const $EXPRESSION = require("./$EXPRESSION");
 
 function build(object, name, value) {
   let statement = new $PROPERTY();
@@ -18,19 +20,21 @@ function build(object, name, value) {
 }
 
 class $PROPERTY extends $ {
-  before() {
-    this.key = `${this.object}.${this.name}`;
+  before(scope) {
+    const expression = $EXPRESSION(this.value);
+    this.value = expression.run(scope);
   }
 
   run(scope) {
-    let object = this.object;
-    const name = this.name;
+    let object = new Identifier(this.object);
+    const name = new Identifier(this.name);
+    const key = `${object}.${name}`;
 
     if (object.toString() === "this") {
       object = Local.object(scope);
     }
 
-    if (!graph.retrieve(this.object)) {
+    if (!graph.retrieve(object)) {
       throw ReferenceError(`${object} is not defined`);
     }
 
@@ -49,20 +53,18 @@ class $PROPERTY extends $ {
       return statement;
     }
 
-    let value = this.value.run(scope);
-
-    if (value instanceof REFERENCE) {
+    if (this.value instanceof REFERENCE) {
       let statement = new PROPERTY$REFERENCE();
       statement.object = graph[object];
       statement.name = name;
-      statement.value = value;
+      statement.value = this.value;
       return statement;
     }
 
-    let statement = new PROPERTY(this.key);
+    let statement = new PROPERTY(key);
     statement.object = graph.retrieve(object);
     statement.name = name;
-    statement.value = value;
+    statement.value = this.value;
     return statement;
   }
 }

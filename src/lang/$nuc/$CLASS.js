@@ -10,13 +10,10 @@ function build(name, methods = []) {
 }
 
 class $CLASS extends $ {
-  before() {
-    this.key = `$${this.name}`;
-  }
-
   run() {
-    const statement = new CLASS(this.key);
-    const name = this.name;
+    const name = new Identifier(this.name);
+
+    const statement = new CLASS(`$${name}`);
     statement.name = new Identifier(`$${name}`);
     statement.list = name;
     statement.methods = this.methods;
