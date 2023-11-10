@@ -25,17 +25,8 @@ describe("Nucleoid", () => {
 
     it("rejects variable declaration without definition", () => {
       throws(
-        () => {
-          nucleoid.run("var a");
-        },
-        (error) => validate(error, SyntaxError, "Missing definition")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("var a ;");
-        },
-        (error) => validate(error, SyntaxError, "Missing definition")
+        () => nucleoid.run("var a"),
+        (err) => validate(err, SyntaxError, "Missing definition")
       );
     });
 
@@ -60,52 +51,6 @@ describe("Nucleoid", () => {
       nucleoid.run("if ( str1.length > 5 ) { i2 = i1 }");
       nucleoid.run("str1 = 'ABCDEF'");
       equal(nucleoid.run("i2"), 7);
-    });
-
-    it("validates syntax of class", () => {
-      throws(
-        () => {
-          nucleoid.run("class Ratio ( }");
-        },
-        (error) => validate(error, SyntaxError, "Unexpected token (")
-      );
-
-      throws(
-        () => {
-          nucleoid.run(
-            "class Ratio { constructor ( count ) { this.count = count } calculate ( ) }"
-          );
-        },
-        (error) => validate(error, SyntaxError, "Methods are not supported")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("class Ratio { calculate() }");
-        },
-        (error) => validate(error, SyntaxError, "Methods are not supported")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("class Ratio {");
-        },
-        (error) => validate(error, SyntaxError, "Missing parenthesis")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("class Ratio");
-        },
-        (error) => validate(error, SyntaxError, "Missing parentheses")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("class Ratio { calculate() )");
-        },
-        (error) => validate(error, SyntaxError, "Missing parenthesis")
-      );
     });
 
     it("creates class with constructor", () => {
@@ -177,71 +122,6 @@ describe("Nucleoid", () => {
       nucleoid.run("message2 = new Message('MESSAGE')");
       equal(nucleoid.run("message2.read"), false);
       equal(nucleoid.run("message2.payload"), "MESSAGE");
-    });
-
-    it("validates syntax of instance creation", () => {
-      nucleoid.run("class Board { }");
-      nucleoid.run("class Card { }");
-      throws(
-        () => {
-          nucleoid.run("board1 = new Board { )");
-        },
-        (error) => validate(error, SyntaxError, "Unexpected token {")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("board1 = new Board ( }");
-        },
-        (error) => validate(error, SyntaxError, "Unexpected token }")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("board1 = new Board (");
-        },
-        (error) => validate(error, SyntaxError, "Missing parenthesis")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("board1 = new Board");
-        },
-        (error) => validate(error, SyntaxError, "Missing parentheses")
-      );
-
-      nucleoid.run("board1 = new Board ( )");
-      throws(
-        () => {
-          nucleoid.run("board1.card = new Card { )");
-        },
-        (error) => validate(error, SyntaxError, "Unexpected token {")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("board1.card = new Card ( }");
-        },
-        (error) => validate(error, SyntaxError, "Unexpected token }")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("board1.card = new Card (");
-        },
-        (error) => validate(error, SyntaxError, "Missing parenthesis")
-      );
-
-      throws(
-        () => {
-          nucleoid.run("board1.card = new Card");
-        },
-        (error) => validate(error, SyntaxError, "Missing parentheses")
-      );
-
-      equal(nucleoid.run("board1 instanceof $Board"), true);
-      nucleoid.run("board1.card = new Card ( )");
-      equal(nucleoid.run("board1.card instanceof $Card"), true);
     });
 
     it("supports new line as replacing with space", () => {

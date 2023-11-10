@@ -34,6 +34,10 @@ class $ASSIGNMENT extends $ {
 
     let rightKind;
 
+    if (!this.right) {
+      throw SyntaxError("Missing definition");
+    }
+
     if (this.right.type === "NewExpression") {
       if (graph.retrieve(`$${this.right.callee.name}`)) {
         rightKind = "INSTANCE";
