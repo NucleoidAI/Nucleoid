@@ -6,7 +6,7 @@ const Identifier = require("../lang/ast/Identifier");
 
 class PROPERTY extends Node {
   before(scope) {
-    this.value.before(scope, this.key);
+    this.value.before(scope);
   }
 
   run(scope) {

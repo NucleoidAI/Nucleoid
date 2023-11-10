@@ -18,6 +18,16 @@ class Identifier extends AST {
     }
   }
 
+  set first(first) {
+    if (this.node.type === "Identifier") {
+      this.node = first.node;
+    } else if (this.node.type === "MemberExpression") {
+      this.node.object = first.node;
+    } else {
+      throw new Error(`Unknown identifier type ${this.node.type}`);
+    }
+  }
+
   get object() {
     if (this.node.type === "Identifier") {
       return new Identifier(this.node);
@@ -28,11 +38,31 @@ class Identifier extends AST {
     }
   }
 
+  set object(object) {
+    if (this.node.type === "Identifier") {
+      this.node = object.node;
+    } else if (this.node.type === "MemberExpression") {
+      this.node.object = object.node;
+    } else {
+      throw new Error(`Unknown identifier type ${this.node.type}`);
+    }
+  }
+
   get last() {
     if (this.node.type === "Identifier") {
       return new Identifier(this.node);
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(this.node.property);
+    } else {
+      throw new Error(`Unknown identifier type ${this.node.type}`);
+    }
+  }
+
+  set last(last) {
+    if (this.node.type === "Identifier") {
+      this.node = last.node;
+    } else if (this.node.type === "MemberExpression") {
+      this.node.property = last.node;
     } else {
       throw new Error(`Unknown identifier type ${this.node.type}`);
     }

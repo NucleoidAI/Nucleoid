@@ -42,20 +42,19 @@ class $PROPERTY extends $ {
       throw TypeError("Cannot use 'value' as a name");
     }
 
-    if (
-      graph[object] instanceof CLASS ||
-      graph[object] instanceof OBJECT$CLASS
-    ) {
-      let statement = new PROPERTY$CLASS();
-      statement.object = graph[object];
+    const cls = graph.retrieve(object);
+    if (cls instanceof CLASS || cls instanceof OBJECT$CLASS) {
+      let statement = new PROPERTY$CLASS(key);
+      statement.class = cls;
+      statement.object = object;
       statement.name = name;
-      statement.value = this.value.run();
+      statement.value = this.value;
       return statement;
     }
 
     if (this.value instanceof REFERENCE) {
       let statement = new PROPERTY$REFERENCE();
-      statement.object = graph[object];
+      statement.object = graph.retrieve(object);
       statement.name = name;
       statement.value = this.value;
       return statement;
