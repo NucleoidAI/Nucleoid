@@ -8,6 +8,7 @@ const Evaluation = require("../lang/ast/Evaluation");
 class CLASS extends Node {
   constructor(key) {
     super(key);
+    this.arguments = [];
     this.instances = {};
     this.declarations = {};
   }

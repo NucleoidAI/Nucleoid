@@ -1,11 +1,9 @@
 const state = require("../state");
 const Node = require("./NODE");
-const Id = require("../lib/identifier");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 const Instruction = require("../instruction");
 const LET = require("./LET");
 const Scope = require("../scope");
-const random = require("../lib/random");
 const Evaluation = require("../lang/ast/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
 const { append } = require("../lang/estree/estree");
@@ -58,7 +56,7 @@ class OBJECT extends Node {
     if (
       this.class.methods.find((method) => method.key.name === "constructor")
     ) {
-      for (let i = 0; i < this.class.args.length; i++) {
+      for (let i = 0; i < this.class.arguments.length; i++) {
         let local = new LET();
         local.name = this.class.args[i];
 

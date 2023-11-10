@@ -64,7 +64,7 @@ function parseNode(node) {
       }
     }
     case "NewExpression": {
-      return $INSTANCE(node);
+      return $INSTANCE(node.callee, null, null, node.arguments);
     }
     case "ReturnStatement": {
       const { argument } = node;
