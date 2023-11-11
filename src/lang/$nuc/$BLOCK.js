@@ -24,7 +24,7 @@ class $BLOCK extends $ {
   run(scope) {
     let test = new Scope(scope);
     test.object = scope.object;
-    let cls = null;
+    let cls = this.class;
 
     /*
     test: for (let statement of this.statements) {
@@ -55,7 +55,7 @@ class $BLOCK extends $ {
     */
 
     if (cls) {
-      let statement = new BLOCK$CLASS();
+      let statement = new BLOCK$CLASS(this.key);
       statement.statements = this.statements;
       statement.class = cls;
       return [

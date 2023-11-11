@@ -1,9 +1,5 @@
 const Node = require("./NODE");
 
-class FUNCTION extends Node {
-  before() {
-    this.key = this.name;
-  }
-}
+class FUNCTION extends Node {}
 
 module.exports = FUNCTION;

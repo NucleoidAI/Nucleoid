@@ -5,11 +5,11 @@ const AST = require("./AST");
 
 class Identifier extends AST {
   static get types() {
-    return ["Identifier", "MemberExpression"];
+    return ["Identifier", "MemberExpression", "ThisExpression"];
   }
 
   get first() {
-    if (this.node.type === "Identifier") {
+    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
       return new Identifier(this.node);
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(root(this.node).object);
@@ -19,7 +19,7 @@ class Identifier extends AST {
   }
 
   set first(first) {
-    if (this.node.type === "Identifier") {
+    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
       this.node = first.node;
     } else if (this.node.type === "MemberExpression") {
       this.node.object = first.node;
@@ -29,7 +29,7 @@ class Identifier extends AST {
   }
 
   get object() {
-    if (this.node.type === "Identifier") {
+    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
       return null;
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(this.node.object);
@@ -39,7 +39,7 @@ class Identifier extends AST {
   }
 
   set object(object) {
-    if (this.node.type === "Identifier") {
+    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
       this.node = object.node;
     } else if (this.node.type === "MemberExpression") {
       this.node.object = object.node;
@@ -49,7 +49,7 @@ class Identifier extends AST {
   }
 
   get last() {
-    if (this.node.type === "Identifier") {
+    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
       return new Identifier(this.node);
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(this.node.property);
@@ -59,7 +59,7 @@ class Identifier extends AST {
   }
 
   set last(last) {
-    if (this.node.type === "Identifier") {
+    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
       this.node = last.node;
     } else if (this.node.type === "MemberExpression") {
       this.node.property = last.node;

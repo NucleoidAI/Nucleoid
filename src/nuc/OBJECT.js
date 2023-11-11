@@ -1,13 +1,14 @@
 const state = require("../state");
 const Node = require("./NODE");
-const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 const Instruction = require("../instruction");
-const LET = require("./LET");
 const Scope = require("../scope");
 const Evaluation = require("../lang/ast/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
 const { append } = require("../lang/estree/estree");
 const estree = require("../lang/estree/estree");
+const _ = require("lodash");
+const $CALL = require("../lang/$nuc/$CALL");
+const graph = require("../graph");
 
 class OBJECT extends Node {
   constructor(key) {
@@ -16,6 +17,7 @@ class OBJECT extends Node {
   }
 
   run(scope) {
+    scope.object = this;
     const name = this.name;
 
     let variable;
@@ -40,7 +42,6 @@ class OBJECT extends Node {
       new Identifier(`${variable}.id`),
       new Evaluation(`"${name}"`)
     );
-    scope.object = this;
 
     let list = [];
 
@@ -53,29 +54,14 @@ class OBJECT extends Node {
       );
     }
 
-    if (
-      this.class.methods.find((method) => method.key.name === "constructor")
-    ) {
-      for (let i = 0; i < this.class.arguments.length; i++) {
-        let local = new LET();
-        local.name = this.class.args[i];
+    const constructor = graph.retrieve(`${this.class.name}.constructor`);
 
-        if (this.args[i] !== undefined) {
-          let context = $EXPRESSION(this.args[i]);
-          local.value = context.statement.run();
-          list.push(local);
-        } else {
-          let context = $EXPRESSION("undefined");
-          local.value = context.statement.run();
-          list.push(local);
-        }
-      }
-
-      if (this.class.construct !== undefined) {
-        let construct = this.class.construct;
-        let instruction = new Instruction(scope, construct, false, true, false);
-        list.push(instruction);
-      }
+    if (constructor) {
+      const call = $CALL(
+        constructor.name.node,
+        this.arguments.map((arg) => arg.node)
+      );
+      list.push(call);
     }
 
     for (let node in this.class.declarations) {

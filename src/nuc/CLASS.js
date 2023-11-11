@@ -8,7 +8,8 @@ const Evaluation = require("../lang/ast/Evaluation");
 class CLASS extends Node {
   constructor(key) {
     super(key);
-    this.arguments = [];
+    this.arguments = []; // TODO This will be removed
+    this.methods = [];
     this.instances = {};
     this.declarations = {};
   }
@@ -26,9 +27,9 @@ class CLASS extends Node {
 
     state.assign(scope, this.name, new Evaluation(`class ${this.name}{}`));
 
-    let list = [];
+    let list = [...this.methods];
 
-    if (!graph[this.name]) {
+    if (!graph.retrieve(this.name)) {
       state.call(scope, "classes.push", [`state.${this.name}`]);
 
       const empty = { type: "ArrayExpression", elements: [] };

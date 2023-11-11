@@ -5,8 +5,8 @@ const graph = require("../graph");
 const Instance = require("../lib/instance");
 
 class BLOCK$CLASS extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
     this.statements = [];
   }
 

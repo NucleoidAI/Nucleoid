@@ -8,9 +8,7 @@ class BLOCK extends Node {
   }
 
   run() {
-    let list = this.statements;
-    this.statements = [];
-    return { next: list };
+    return { next: this.statements };
   }
 
   stage(instruction) {

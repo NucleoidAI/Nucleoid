@@ -36,4 +36,13 @@ describe("Identifier", () => {
       "a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y"
     );
   });
+
+  it("serializes this expression", () => {
+    const identifier = new Identifier("this.b.c");
+
+    equal(identifier.toString(), "this.b.c");
+    equal(identifier.first.toString(), "this");
+    equal(identifier.last.toString(), "c");
+    equal(identifier.object.toString(), "this.b");
+  });
 });

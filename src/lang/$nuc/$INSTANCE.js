@@ -7,12 +7,12 @@ const $LET = require("./$LET");
 const Identifier = require("../ast/Identifier");
 const random = require("../../lib/random");
 
-function build(cls, object, name, args) {
+function build(cls, object, name, args = []) {
   let statement = new $INSTANCE();
   statement.class = cls;
   statement.object = object;
   statement.name = name;
-  statement.args = args;
+  statement.arguments = args;
   return statement;
 }
 
@@ -26,12 +26,13 @@ class $INSTANCE extends $ {
   run(scope) {
     const cls = new Identifier(`$${this.class.name}`);
     const name = new Identifier(this.name);
+    const args = this.arguments.map((arg) => new Identifier(arg));
 
     if (!graph.retrieve(cls)) {
       throw ReferenceError(`${cls} is not defined`);
     }
 
-    if (this.object !== undefined && name.generate() === "value") {
+    if (this.object !== undefined && name.toString() === "value") {
       throw TypeError("Cannot use 'value' as a property");
     }
 
@@ -63,7 +64,7 @@ class $INSTANCE extends $ {
         statement.class = graph.retrieve(cls);
         statement.name = name;
         statement.object = graph.retrieve(object);
-        statement.args = this.args;
+        statement.arguments = args;
         return statement;
       }
     }
@@ -71,7 +72,7 @@ class $INSTANCE extends $ {
     let statement = new OBJECT(name);
     statement.class = graph.retrieve(cls);
     statement.name = name;
-    statement.args = this.args;
+    statement.arguments = args;
     return statement;
   }
 }

@@ -8,6 +8,7 @@ const LET$OBJECT = require("../../nuc/LET$OBJECT");
 const EXPRESSION = require("../../nuc/EXPRESSION");
 const REFERENCE = require("../../nuc/REFERENCE");
 const Local = require("../../lib/local");
+const $EXPRESSION = require("./$EXPRESSION");
 
 function build(name, value, constant) {
   let statement = new $LET();
@@ -18,6 +19,11 @@ function build(name, value, constant) {
 }
 
 class $LET extends $ {
+  before(scope) {
+    const expression = $EXPRESSION(this.value);
+    this.value = expression.run(scope);
+  }
+
   run(scope) {
     const name = this.name;
     const object = this.object;
@@ -30,8 +36,7 @@ class $LET extends $ {
       throw TypeError("Cannot use 'value' in local");
     }
 
-    let value = this.value.run();
-
+    let value = this.value;
     if (value instanceof EXPRESSION) {
       if (graph.retrieve(name) instanceof CLASS) {
         let statement = new LET$CLASS();

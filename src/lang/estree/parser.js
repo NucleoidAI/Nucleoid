@@ -6,6 +6,8 @@ const $BLOCK = require("../$nuc/$BLOCK");
 const $IF = require("../$nuc/$IF");
 const $RETURN = require("../$nuc/$RETURN");
 const $INSTANCE = require("../$nuc/$INSTANCE");
+const $FUNCTION = require("../$nuc/$FUNCTION");
+const Identifier = require("../ast/Identifier");
 
 function parse(string, map = true) {
   const estree = acorn.parse(string, { ecmaVersion: 2020 });
@@ -37,7 +39,9 @@ function parseNode(node) {
         body: { body },
       } = node;
 
-      return $CLASS(id, body);
+      const methods = body.map((method) => parseNode(method));
+
+      return $CLASS(id, methods);
     }
     case "AssignmentExpression": {
       const { left, right } = node;
@@ -70,6 +74,11 @@ function parseNode(node) {
       const { argument } = node;
       const statements = parseNode(argument);
       return $RETURN(statements);
+    }
+    case "MethodDefinition": {
+      const { key, value } = node;
+
+      return $FUNCTION(key, value.params, parseNode(value.body));
     }
     default: {
       throw new Error(`ParserError: Unknown node type '${node.type}'`);

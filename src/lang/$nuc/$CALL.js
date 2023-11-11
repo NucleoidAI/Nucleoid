@@ -3,28 +3,36 @@ const graph = require("../../graph");
 const $BLOCK = require("./$BLOCK");
 const $LET = require("./$LET");
 const $EXP = require("./$EXPRESSION");
+const $FUNCTION = require("./$FUNCTION");
+const _ = require("lodash");
+const Identifier = require("../ast/Identifier");
 
-function build(name, params) {
+function build(name, args) {
   const call = new $CALL();
   call.name = name;
-  call.params = params;
+  call.arguments = args;
   return call;
 }
 
 class $CALL extends $ {
   run() {
-    const fn = graph[this.name];
+    const name = new Identifier(this.name);
+    const fn = graph.retrieve(name);
 
     if (fn) {
       const block = fn.block;
-      const params = this.params;
-      const args = fn.args;
+      const args = fn.arguments;
+      const values = this.arguments;
+
+      const statements = _.cloneDeep(block.statements);
 
       for (let i = args.length - 1; i >= 0; i--) {
-        block.statements.unshift($LET(args[i], $EXP(params[i]).statement));
+        statements.unshift($LET(args[i], values[i]));
       }
 
-      return $BLOCK(block.statements, false);
+      return $BLOCK(statements);
+    } else {
+      throw TypeError(`${this.name} is not a function`);
     }
   }
 }
