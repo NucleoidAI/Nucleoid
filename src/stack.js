@@ -182,11 +182,13 @@ function process(statements, prior, options = {}) {
 
             if (declarative) {
               if (list) {
+                /*
                 list.forEach((e) => {
                   if (graph[e].previous[statement.key] !== undefined) {
                     throw ReferenceError("Circular Dependency");
                   }
                 });
+                 */
 
                 dependencies = dependencies.concat(
                   list.filter((e) => !dependencies.includes(e))
@@ -221,8 +223,8 @@ function process(statements, prior, options = {}) {
           if (!instruction.scope.prior) {
             if (!instruction.statement.skip) {
               dependencies.forEach((source) => {
-                let targetKey = statement.key ? statement.key : statement.id;
-                Node.direct(source, targetKey, statement);
+                const targetKey = statement.key;
+                Node.direct(source.key, targetKey, statement);
               });
             }
 

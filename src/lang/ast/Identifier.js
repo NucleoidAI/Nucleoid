@@ -30,7 +30,7 @@ class Identifier extends AST {
 
   get object() {
     if (this.node.type === "Identifier") {
-      return new Identifier(this.node);
+      return null;
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(this.node.object);
     } else {

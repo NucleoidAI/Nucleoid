@@ -8,7 +8,7 @@ describe("Identifier", () => {
     equal(identifier.toString(), "a");
     equal(identifier.first.toString(), "a");
     equal(identifier.last.toString(), "a");
-    equal(identifier.object.toString(), "a");
+    equal(identifier.object, null);
   });
 
   it("serializes member expression", () => {

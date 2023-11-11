@@ -21,9 +21,16 @@ class EXPRESSION {
   graph() {
     return this.tokens.map((node) => {
       if (node instanceof Identifier) {
-        const name = node.generate();
-        if (graph[name]) {
-          return name;
+        let current = node;
+
+        while (current) {
+          const dependency = graph.retrieve(current);
+
+          if (dependency) {
+            return dependency;
+          }
+
+          current = current.object;
         }
       }
     });
