@@ -18,9 +18,10 @@ class PROPERTY$CLASS extends Node {
 
     for (let instance of instances) {
       let statement = new PROPERTY$INSTANCE(`${instance.name}.${this.name}`);
+      statement.class = this.class;
+      statement.instance = instance;
       statement.object = instance;
       statement.name = this.name;
-      statement.declaration = this;
       statement.value = _.cloneDeep(this.value);
       statements.push(statement);
     }

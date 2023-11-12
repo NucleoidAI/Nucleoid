@@ -2,7 +2,6 @@ const Node = require("./NODE");
 const Id = require("../lib/identifier");
 const graph = require("../graph");
 const OBJECT$INSTANCE = require("./OBJECT$INSTANCE");
-const Instance = require("../lib/instance");
 
 class OBJECT$CLASS extends Node {
   before() {
@@ -13,7 +12,7 @@ class OBJECT$CLASS extends Node {
     let instances;
     let statements = [];
 
-    let instance = Instance.retrieve(scope, Id.root(this).name);
+    let instance = scope.instance(Id.root(this).name);
 
     if (instance) instances = [instance];
     else instances = Object.keys(Id.root(this).instances).map((i) => graph[i]);

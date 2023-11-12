@@ -9,6 +9,7 @@ const estree = require("../lang/estree/estree");
 const _ = require("lodash");
 const $CALL = require("../lang/$nuc/$CALL");
 const graph = require("../graph");
+const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
 class OBJECT extends Node {
   constructor(key) {
@@ -58,6 +59,7 @@ class OBJECT extends Node {
 
     if (constructor) {
       const call = $CALL(
+        // TODO Accept function dynamically
         constructor.name.node,
         this.arguments.map((arg) => arg.node)
       );
@@ -71,7 +73,17 @@ class OBJECT extends Node {
       list.push(new Instruction(scope, declaration, true, true, true, true));
     }
 
-    return { value: name, next: list };
+    const expression = new Instruction(
+      scope,
+      $EXPRESSION(variable.node),
+      true,
+      true,
+      false
+    );
+    expression.derivative = false;
+    list.push(expression);
+
+    return { next: list };
   }
 
   graph() {
@@ -82,8 +94,6 @@ class OBJECT extends Node {
   resolve() {
     let current = this;
     let resolved = this.name.node;
-
-    let list = [];
 
     while (current.object) {
       current = current.object;

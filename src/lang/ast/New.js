@@ -1,5 +1,5 @@
-const AST = require("./AST");
+const Node = require("./Node");
 
-class New extends AST {}
+class New extends Node {}
 
 module.exports = New;

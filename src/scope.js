@@ -3,7 +3,6 @@ const state = require("./state").state;
 const { append } = require("./lang/estree/estree");
 const { generate } = require("./lang/estree/generator");
 const Identifier = require("./lang/ast/Identifier");
-const Instance = require("./lib/instance");
 
 class Scope {
   constructor(prior, block) {

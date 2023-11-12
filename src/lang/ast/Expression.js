@@ -3,14 +3,20 @@ const Literal = require("./Literal");
 const Call = require("./Call");
 const Array = require("./Array");
 const Object = require("./Object");
-const AST = require("./AST");
+const Node = require("./Node");
 const Function = require("./Function");
 const Operator = require("./Operator");
 const New = require("./New");
 
-class Expression extends AST {
+class Expression extends Node {
   map(fn) {
     return mapReduce(this.node, fn);
+  }
+
+  find(fn) {
+    // TODO Optimize this with own reduce
+    const [first] = mapReduce(this.node, fn);
+    return first;
   }
 
   resolve(scope) {

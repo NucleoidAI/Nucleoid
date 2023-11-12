@@ -1,9 +1,9 @@
 const graph = require("../../graph");
 
 const { root, append } = require("../estree/estree");
-const AST = require("./AST");
+const Node = require("./Node");
 
-class Identifier extends AST {
+class Identifier extends Node {
   static get types() {
     return ["Identifier", "MemberExpression", "ThisExpression"];
   }

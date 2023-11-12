@@ -2,24 +2,23 @@ const state = require("../state");
 const Node = require("./NODE");
 const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
-const { deepEqual } = require("../lib/deep");
 const Evaluation = require("../lang/ast/Evaluation");
+const _ = require("lodash");
 
 class CLASS extends Node {
   constructor(key) {
     super(key);
-    this.arguments = []; // TODO This will be removed
     this.methods = [];
     this.instances = {};
     this.declarations = {};
   }
 
   run(scope) {
-    if (graph.retrieve(this.name)) {
-      if (
-        deepEqual(this.args, graph[this.name].args) &&
-        deepEqual(this.construct, graph[this.name].construct)
-      ) {
+    const cls = graph.retrieve(this.name);
+
+    if (cls) {
+      // TODO https://github.com/acornjs/acorn/issues/1264
+      if (_.isEqual(this.methods, cls.methods)) {
         this.destroyed = true;
         return;
       }
@@ -29,7 +28,7 @@ class CLASS extends Node {
 
     let list = [...this.methods];
 
-    if (!graph.retrieve(this.name)) {
+    if (!cls) {
       state.call(scope, "classes.push", [`state.${this.name}`]);
 
       const empty = { type: "ArrayExpression", elements: [] };

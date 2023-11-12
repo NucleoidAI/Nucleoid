@@ -1,14 +1,23 @@
 /* eslint-disable getter-return */
 const ESTree = require("../estree/generator");
 
-class AST {
+class Node {
+  // Rename to Node
   constructor(node) {
     if (typeof node === "string") {
       const { parse } = require("../estree/parser");
       const name = node;
       this.node = parse(name, false);
     } else {
-      this.node = node;
+      if (node === undefined) {
+        this.node = {
+          type: "Literal",
+          value: null,
+          raw: "null",
+        };
+      } else {
+        this.node = node;
+      }
     }
   }
 
@@ -33,4 +42,4 @@ class AST {
   }
 }
 
-module.exports = AST;
+module.exports = Node;

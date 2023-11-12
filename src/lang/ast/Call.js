@@ -1,7 +1,7 @@
 const Identifier = require("./Identifier");
-const AST = require("./AST");
+const Node = require("./Node");
 
-class Call extends AST {
+class Call extends Node {
   resolve(scope) {
     const Expression = require("./Expression");
 

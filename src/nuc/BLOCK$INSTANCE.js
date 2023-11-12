@@ -1,20 +1,13 @@
 const BLOCK = require("./BLOCK");
 
 class BLOCK$INSTANCE extends BLOCK {
-  constructor() {
-    super();
-    this.statements = [];
-  }
+  before(scope) {
+    this.statements.forEach((statement) => {
+      statement.class = this.class;
+      statement.instance = this.instance;
+    });
 
-  run(scope) {
-    scope.instances[this.class.name] = this.instance;
-
-    if (this.break) {
-      this.statements = this.declaration.statements;
-      this.break = false;
-    }
-
-    return super.run(scope);
+    super.before(scope);
   }
 }
 

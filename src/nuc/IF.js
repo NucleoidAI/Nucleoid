@@ -9,7 +9,7 @@ class IF extends Node {
   }
 
   run(scope) {
-    let s = new Scope(scope);
+    let local = new Scope(scope);
     let condition;
 
     if (scope.block && scope.block.skip) {
@@ -21,8 +21,8 @@ class IF extends Node {
     if (state.expression(scope, condition)) {
       return {
         next: [
-          new Instruction(s, this.true, true, false),
-          new Instruction(s, this.true, false, true),
+          new Instruction(local, this.true, true, false),
+          new Instruction(local, this.true, false, true),
         ],
       };
     } else if (this.false && this.false instanceof IF) {
@@ -30,8 +30,8 @@ class IF extends Node {
     } else if (this.false) {
       return {
         next: [
-          new Instruction(s, this.false, true, false),
-          new Instruction(s, this.false, false, true),
+          new Instruction(local, this.false, true, false),
+          new Instruction(local, this.false, false, true),
         ],
       };
     }

@@ -1,9 +1,9 @@
 const walk = require("acorn-walk");
 const _ = require("lodash");
-const AST = require("./AST");
+const Node = require("./Node");
 const Identifier = require("./Identifier");
 
-class Object extends AST {
+class Object extends Node {
   resolve(scope) {
     if (scope) {
       const cloned = _.cloneDeep(this.node);

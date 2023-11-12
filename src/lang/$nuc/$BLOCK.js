@@ -1,15 +1,11 @@
 const BLOCK = require("../../nuc/BLOCK");
 const BLOCK$CLASS = require("../../nuc/BLOCK$CLASS");
-const PROPERTY$CLASS = require("../../nuc/PROPERTY$CLASS");
 const $ = require("./$");
 const Instruction = require("../../instruction");
 const Scope = require("../../scope");
-const LET = require("../../nuc/LET");
-const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
-const REFERENCE = require("../../nuc/REFERENCE");
 const { v4: uuid } = require("uuid");
 
-function construct(statements, skip) {
+function build(statements, skip) {
   let statement = new $BLOCK();
   statement.statements = statements;
   statement.skip = skip;
@@ -17,10 +13,6 @@ function construct(statements, skip) {
 }
 
 class $BLOCK extends $ {
-  before() {
-    this.key = uuid();
-  }
-
   run(scope) {
     let test = new Scope(scope);
     test.object = scope.object;
@@ -55,15 +47,15 @@ class $BLOCK extends $ {
     */
 
     if (cls) {
-      let statement = new BLOCK$CLASS(this.key);
-      statement.statements = this.statements;
+      let statement = new BLOCK$CLASS(uuid());
       statement.class = cls;
+      statement.statements = this.statements;
       return [
         new Instruction(scope, statement, true, true, false),
         new Instruction(scope, statement, false, false, true),
       ];
     } else {
-      let statement = new BLOCK(this.key);
+      let statement = new BLOCK(uuid());
       statement.statements = this.statements;
       statement.skip = this.skip;
 
@@ -75,4 +67,4 @@ class $BLOCK extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

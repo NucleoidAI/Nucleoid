@@ -24,33 +24,37 @@ class $IF extends $ {
   }
 
   run(scope) {
-    this.condition.tokens.traverse((node) => {
+    const declaration = this.condition.tokens.find((node) => {
       if (node instanceof Identifier) {
         const cls = graph.retrieve(node.first);
 
         if (cls instanceof CLASS) {
-          let statement = new IF$CLASS(`if(${this.condition.tokens})`);
-          statement.class = cls;
-          statement.condition = this.condition;
-          statement.false = this.false;
-
-          if (this.true) {
-            statement.true = this.true;
-            statement.true.class = cls;
-          }
-
-          if (this.false) {
-            statement.false = this.false;
-            statement.false.class = cls;
-          }
-
-          return [
-            new Instruction(scope, statement, true, true, false),
-            new Instruction(scope, statement, false, false, true),
-          ];
+          return cls;
         }
       }
     });
+
+    if (declaration) {
+      let statement = new IF$CLASS(`if(${this.condition.tokens})`);
+      statement.class = declaration;
+      statement.condition = this.condition;
+      statement.false = this.false;
+
+      if (this.true) {
+        statement.true = this.true;
+        statement.true.class = declaration;
+      }
+
+      if (this.false) {
+        statement.false = this.false;
+        statement.false.class = declaration;
+      }
+
+      return [
+        new Instruction(scope, statement, true, true, false),
+        new Instruction(scope, statement, false, false, true),
+      ];
+    }
 
     let statement = new IF(`if(${this.condition.tokens})`);
     statement.condition = this.condition;

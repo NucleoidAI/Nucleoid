@@ -1,10 +1,9 @@
 const EXPRESSION = require("./EXPRESSION");
-const Instance = require("../lib/instance");
 const Id = require("../lib/identifier");
 
 class EXPRESSION$INSTANCE extends EXPRESSION {
   run(scope) {
-    let instance = Instance.retrieve(scope, this.class.name);
+    let instance = scope.instance(this.class.name);
 
     if (instance !== undefined) {
       this.node = this.node.map((token) => {

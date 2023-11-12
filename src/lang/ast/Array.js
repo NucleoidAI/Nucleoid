@@ -1,6 +1,6 @@
-const AST = require("./AST");
+const Node = require("./Node");
 
-class Array extends AST {
+class Array extends Node {
   constructor(elements) {
     super();
     this.elements = elements;

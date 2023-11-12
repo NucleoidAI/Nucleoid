@@ -7,14 +7,14 @@ const $IF = require("../$nuc/$IF");
 const $RETURN = require("../$nuc/$RETURN");
 const $INSTANCE = require("../$nuc/$INSTANCE");
 const $FUNCTION = require("../$nuc/$FUNCTION");
-const Identifier = require("../ast/Identifier");
 
 function parse(string, map = true) {
-  const estree = acorn.parse(string, { ecmaVersion: 2020 });
+  const estree = acorn.parse(string, {
+    ecmaVersion: 2020,
+    allowReturnOutsideFunction: true,
+  });
 
-  return map
-    ? estree.body[0].expression.callee.body.body.map(parseNode)
-    : estree.body[0].expression;
+  return map ? estree.body.map(parseNode) : estree.body[0].expression;
 }
 
 function parseNode(node) {

@@ -1,11 +1,10 @@
 const LET$INSTANCE = require("./LET$INSTANCE");
-const Instance = require("../lib/instance");
 
 class LET$CLASS {
   before() {}
 
   run(scope) {
-    let instance = Instance.retrieve(scope, this.class.name);
+    let instance = scope.instance(this.class.name);
 
     if (instance) {
       let statement = new LET$INSTANCE();

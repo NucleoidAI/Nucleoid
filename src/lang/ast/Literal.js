@@ -1,6 +1,6 @@
-const AST = require("./AST");
+const Node = require("./Node");
 
-class Literal extends AST {
+class Literal extends Node {
   generate() {
     return this.node.raw;
   }

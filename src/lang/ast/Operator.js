@@ -1,5 +1,5 @@
-const AST = require("./AST");
+const Node = require("./Node");
 
-class Operator extends AST {}
+class Operator extends Node {}
 
 module.exports = Operator;
