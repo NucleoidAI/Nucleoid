@@ -1,6 +1,5 @@
 const Identifier = require("./Identifier");
 const Literal = require("./Literal");
-const Call = require("./Call");
 const Array = require("./Array");
 const Object = require("./Object");
 const Node = require("./Node");
@@ -45,21 +44,23 @@ function convertToAST(node) {
     case "MemberExpression": {
       return new Identifier(node);
     }
-    case "CallExpression": {
-      return new Call(node);
-    }
     case "ArrayExpression": {
       const elements = node.elements.map((el) => convertToAST(el));
       return new Array(elements);
     }
+    case "NewExpression": {
+      return new New(node);
+    }
     case "ObjectExpression": {
       return new Object(node);
     }
+    case "FunctionExpression":
     case "ArrowFunctionExpression": {
       return new Function(node);
     }
-    case "NewExpression": {
-      return new New(node);
+    case "CallExpression": {
+      const Call = require("./Call");
+      return new Call(node);
     }
     default: {
       throw new Error(`ParserError: Unknown expression type '${node.type}'`);
