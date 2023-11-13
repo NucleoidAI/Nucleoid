@@ -76,7 +76,7 @@ function load(execs = []) {
   });
 }
 
-module.exports.throw = (scope, exception) => eval(`throw state.${exception}`);
+module.exports.throw = (scope, exception) => eval(`throw ${exception}`);
 
 function clear() {
   for (let property in state) {

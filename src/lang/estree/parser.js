@@ -7,7 +7,7 @@ const $IF = require("../$nuc/$IF");
 const $RETURN = require("../$nuc/$RETURN");
 const $INSTANCE = require("../$nuc/$INSTANCE");
 const $FUNCTION = require("../$nuc/$FUNCTION");
-const $CALL = require("../$nuc/$CALL");
+const $THROW = require("../$nuc/$THROW");
 
 function parse(string, map = true) {
   const estree = acorn.parse(string, {
@@ -85,6 +85,11 @@ function parseNode(node) {
       const { id, params, body } = node;
 
       return $FUNCTION(id, params, parseNode(body));
+    }
+    case "ThrowStatement": {
+      const { argument } = node;
+
+      return $THROW(argument);
     }
     default: {
       throw new Error(`ParserError: Unknown node type '${node.type}'`);

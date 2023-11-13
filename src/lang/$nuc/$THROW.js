@@ -1,5 +1,6 @@
 const $ = require("./$");
 const THROW = require("../../nuc/THROW");
+const Expression = require("../ast/Expression");
 
 function build(exception) {
   let statement = new $THROW();
@@ -9,9 +10,8 @@ function build(exception) {
 
 class $THROW extends $ {
   run() {
-    let statement = new THROW();
-    statement.exception = this.exception;
-    return statement;
+    const exception = new Expression(this.exception);
+    return new THROW(exception);
   }
 }
 
