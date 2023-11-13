@@ -84,7 +84,7 @@ class $ASSIGNMENT extends $ {
 
     if (this.left.type === "Identifier") {
       if (scope.retrieve(name)) {
-        return $LET(name, this.right);
+        return $LET(this.left, this.right);
       } else {
         return $VARIABLE(this.left, this.right);
       }

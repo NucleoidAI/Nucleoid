@@ -12,7 +12,7 @@ class IF extends Node {
     let local = new Scope(scope);
     let condition;
 
-    if (scope.block && scope.block.skip) {
+    if (scope.block?.skip) {
       condition = this.condition.run(scope, true);
     } else {
       condition = this.condition.run(scope);

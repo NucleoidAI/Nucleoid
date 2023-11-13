@@ -2,8 +2,6 @@ const $ = require("./$");
 const graph = require("../../graph");
 const $BLOCK = require("./$BLOCK");
 const $LET = require("./$LET");
-const $EXP = require("./$EXPRESSION");
-const $FUNCTION = require("./$FUNCTION");
 const _ = require("lodash");
 const Identifier = require("../ast/Identifier");
 
@@ -27,7 +25,7 @@ class $CALL extends $ {
       const statements = _.cloneDeep(block.statements);
 
       for (let i = args.length - 1; i >= 0; i--) {
-        statements.unshift($LET(args[i], values[i]));
+        statements.unshift($LET(args[i]?.node, values[i]));
       }
 
       return $BLOCK(statements);

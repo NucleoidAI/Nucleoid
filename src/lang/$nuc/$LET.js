@@ -9,6 +9,7 @@ const EXPRESSION = require("../../nuc/EXPRESSION");
 const REFERENCE = require("../../nuc/REFERENCE");
 const Local = require("../../lib/local");
 const $EXPRESSION = require("./$EXPRESSION");
+const Identifier = require("../ast/Identifier");
 
 function build(name, value, constant) {
   let statement = new $LET();
@@ -25,8 +26,8 @@ class $LET extends $ {
   }
 
   run(scope) {
-    const name = this.name;
-    const object = this.object;
+    const name = new Identifier(this.name);
+    const object = this.object ? new Identifier(this.object) : undefined;
 
     if (object !== undefined && !Local.check(scope, object)) {
       throw ReferenceError(`${name} is not defined`);

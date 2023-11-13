@@ -1,6 +1,3 @@
-const state = require("../state");
-const Local = require("../lib/local");
-
 class LET {
   constructor(name, value) {
     this.instanceof = this.constructor.name;

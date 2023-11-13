@@ -24,6 +24,7 @@ module.exports.process = function (string, options = {}) {
     result = stack.process(statements, null, options);
     transaction.end();
   } catch (error) {
+    debugger; // eslint-disable-line no-debugger
     transaction.rollback();
     result = { ...result, error };
   }
