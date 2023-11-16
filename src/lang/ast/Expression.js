@@ -32,14 +32,6 @@ function convertToAST(node) {
     case "Literal": {
       return new Literal(node);
     }
-    case "BinaryExpression":
-    case "LogicalExpression":
-    case "UnaryExpression":
-    case "UpdateExpression":
-    case "RegExpLiteral":
-    case "ConditionalExpression": {
-      return new Operator(node);
-    }
     case "Identifier":
     case "MemberExpression": {
       return new Identifier(node);
@@ -63,7 +55,7 @@ function convertToAST(node) {
       return new Call(node);
     }
     default: {
-      throw new Error(`ParserError: Unknown expression type '${node.type}'`);
+      return new Operator(node);
     }
   }
 }

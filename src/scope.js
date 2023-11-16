@@ -36,13 +36,13 @@ class Scope {
           name: "local",
         },
       };
-      local = append(prefix, variable.node);
+      local = new Identifier(append(prefix, variable.node));
     }
 
     // eslint-disable-next-line no-unused-vars
     const scope = this;
     // eslint-disable-next-line no-eval
-    return eval(`${generate(local)}=${evaluation}`);
+    return eval(`${local}=${evaluation}`);
   }
 
   retrieve(variable) {

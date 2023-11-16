@@ -20,10 +20,6 @@ function parse(string, map = true) {
 
 function parseNode(node) {
   switch (node.type) {
-    case "MemberExpression":
-    case "Identifier": {
-      return $EXPRESSION(node);
-    }
     case "VariableDeclaration": {
       const {
         kind,
@@ -92,7 +88,7 @@ function parseNode(node) {
       return $THROW(argument);
     }
     default: {
-      throw new Error(`ParserError: Unknown node type '${node.type}'`);
+      return $EXPRESSION(node);
     }
   }
 }
