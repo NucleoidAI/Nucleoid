@@ -15,6 +15,8 @@ function parse(string, map = true) {
     allowReturnOutsideFunction: true,
   });
 
+  removeLocations(estree);
+
   return map ? estree.body.map(parseNode) : estree.body[0].expression;
 }
 
@@ -89,6 +91,19 @@ function parseNode(node) {
     }
     default: {
       return $EXPRESSION(node);
+    }
+  }
+}
+
+function removeLocations(estree) {
+  for (let key in estree) {
+    delete estree.start;
+    delete estree.end;
+
+    if (estree[key] !== null && typeof estree[key] === "object") {
+      removeLocations(estree[key]);
+    } else if (Array.isArray(estree[key])) {
+      estree[key].forEach((node) => removeLocations(node));
     }
   }
 }

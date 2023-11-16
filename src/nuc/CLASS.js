@@ -17,7 +17,6 @@ class CLASS extends Node {
     const cls = graph.retrieve(this.name);
 
     if (cls) {
-      // TODO https://github.com/acornjs/acorn/issues/1264
       if (_.isEqual(this.methods, cls.methods)) {
         this.destroyed = true;
         return;
