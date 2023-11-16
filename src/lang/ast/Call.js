@@ -3,6 +3,9 @@ const Node = require("./Node");
 const graph = require("../../graph");
 const $CALL = require("../$nuc/$CALL");
 const ESTree = require("../estree/generator");
+const stack = require("../../stack");
+const acorn = require("acorn");
+const Expression = require("./Expression");
 
 class Call extends Node {
   resolve(scope) {
@@ -10,11 +13,12 @@ class Call extends Node {
 
     if (graph.retrieve(name)) {
       const stack = require("../../stack");
-
-      return stack.process(
+      const { value } = stack.process(
         [$CALL(this.node.callee, this.node.arguments)],
         scope
       );
+      const expression = new Expression(value);
+      return expression.resolve(scope);
     } else {
       const Expression = require("./Expression");
       const resolvedName = name.resolve(scope);

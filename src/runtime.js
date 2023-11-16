@@ -19,7 +19,7 @@ module.exports.process = function (string, options = {}) {
   let result;
 
   try {
-    const statements = Statement.parse(string, options);
+    const statements = Statement.compile(string, options);
     transaction.start();
     result = stack.process(statements, null, options);
     transaction.end();

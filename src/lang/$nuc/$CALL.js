@@ -4,28 +4,35 @@ const $BLOCK = require("./$BLOCK");
 const $LET = require("./$LET");
 const _ = require("lodash");
 const Identifier = require("../ast/Identifier");
+const $FUNCTION = require("./$FUNCTION");
 
-function build(name, args) {
+function build(func, args) {
   const call = new $CALL();
-  call.name = name;
+  call.function = func;
   call.arguments = args;
   return call;
 }
 
 class $CALL extends $ {
   run() {
-    const name = new Identifier(this.name);
-    const fn = graph.retrieve(name);
+    let func;
 
-    if (fn) {
-      const block = fn.block;
-      const args = fn.arguments;
+    if (this.function.constructor.name === "$FUNCTION") {
+      func = this.function;
+    } else {
+      const name = new Identifier(this.function);
+      func = graph.retrieve(name);
+    }
+
+    if (func) {
+      const block = func.block;
+      const args = func.arguments;
       const values = this.arguments;
 
       const statements = _.cloneDeep(block.statements);
 
       for (let i = args.length - 1; i >= 0; i--) {
-        statements.unshift($LET(args[i]?.node, values[i]));
+        statements.unshift($LET(args[i], values[i]));
       }
 
       return $BLOCK(statements);

@@ -55,12 +55,11 @@ class OBJECT extends Node {
       );
     }
 
-    const constructor = graph.retrieve(`${this.class.name}.constructor`);
+    const constructor = this.class.methods["$constructor"];
 
     if (constructor) {
       const call = $CALL(
-        // TODO Accept function dynamically
-        constructor.name.node,
+        constructor,
         this.arguments.map((arg) => arg.node)
       );
       list.push(call);
@@ -87,7 +86,10 @@ class OBJECT extends Node {
   }
 
   graph() {
-    if (this.object !== undefined) this.object.properties[this.name] = this;
+    if (this.object !== undefined) {
+      this.object.properties[this.name] = this;
+    }
+
     this.class.instances[this.key] = this;
   }
 

@@ -4,20 +4,18 @@ const ESTree = require("../estree/generator");
 class Node {
   // Rename to Node
   constructor(node) {
-    if (typeof node === "string") {
+    if (node === undefined) {
+      this.node = {
+        type: "Literal",
+        value: null,
+        raw: "null",
+      };
+    } else if (node.type) {
+      this.node = node;
+    } else {
       const { parse } = require("../estree/parser");
       const name = node;
       this.node = parse(name, false);
-    } else {
-      if (node === undefined) {
-        this.node = {
-          type: "Literal",
-          value: null,
-          raw: "null",
-        };
-      } else {
-        this.node = node;
-      }
     }
   }
 

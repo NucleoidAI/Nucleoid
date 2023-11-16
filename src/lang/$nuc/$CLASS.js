@@ -1,7 +1,6 @@
 const CLASS = require("../../nuc/CLASS");
 const $ = require("./$");
 const Identifier = require("../ast/Identifier");
-const { append } = require("../estree/estree");
 
 function build(name, methods = []) {
   const statement = new $CLASS();
@@ -17,10 +16,17 @@ class $CLASS extends $ {
     const statement = new CLASS(`$${name}`);
     statement.name = new Identifier(`$${name}`);
     statement.list = name;
-    statement.methods = this.methods.map((method) => {
-      method.name = append(statement.name.node, method.name);
-      return method;
-    });
+    statement.methods = this.methods.reduce((acc, method) => {
+      const identifier = method.name;
+
+      if (identifier.name === "constructor") {
+        identifier.name = "$constructor";
+      }
+
+      acc[identifier.name] = method;
+      return acc;
+    }, {});
+
     return statement;
   }
 }

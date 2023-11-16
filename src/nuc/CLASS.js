@@ -26,7 +26,7 @@ class CLASS extends Node {
 
     state.assign(scope, this.name, new Evaluation(`class ${this.name}{}`));
 
-    let list = [...this.methods];
+    let list = [];
 
     if (!cls) {
       state.call(scope, "classes.push", [`state.${this.name}`]);

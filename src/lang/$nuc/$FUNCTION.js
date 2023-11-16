@@ -15,7 +15,7 @@ class $FUNCTION extends $ {
     const name = new Identifier(this.name);
     let statement = new FUNCTION(name);
     statement.name = name;
-    statement.arguments = this.arguments.map((arg) => new Identifier(arg));
+    statement.arguments = this.arguments;
     statement.block = this.block;
     return statement;
   }
