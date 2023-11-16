@@ -1,7 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 const state = require("./state").state;
 const { append } = require("./lang/estree/estree");
-const { generate } = require("./lang/estree/generator");
 const Identifier = require("./lang/ast/Identifier");
 
 class Scope {
@@ -56,7 +55,7 @@ class Scope {
     const first = variable.first;
 
     while (index) {
-      if (index.local[first.generate()] !== undefined) {
+      if (index.local[first] !== undefined) {
         const local = {
           type: "Identifier",
           name: "local",

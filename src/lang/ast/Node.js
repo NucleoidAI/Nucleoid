@@ -25,7 +25,6 @@ class Node {
 
   get last() {}
 
-  // resolve() returns ESTree
   resolve() {
     return this.node;
   }

@@ -39,11 +39,8 @@ class $IF extends $ {
       statement.class = declaration;
       statement.condition = this.condition;
       statement.false = this.false;
-
-      if (this.true) {
-        statement.true = this.true;
-        statement.true.class = declaration;
-      }
+      statement.true = this.true;
+      statement.true.class = declaration;
 
       if (this.false) {
         statement.false = this.false;
