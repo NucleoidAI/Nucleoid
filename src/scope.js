@@ -17,6 +17,7 @@ class Scope {
     this.local = {};
     this.instances = {};
     this.graph = {};
+    this.callback = [];
   }
 
   assign(variable, evaluation) {

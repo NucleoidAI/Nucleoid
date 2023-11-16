@@ -6,6 +6,10 @@ class Function extends Node {
   resolve(scope) {
     if (scope) {
       const cloned = _.cloneDeep(this.node);
+      cloned.params.forEach((param) =>
+        scope.callback.push(new Identifier(param))
+      );
+
       resolveNode(scope, cloned.body);
       return cloned;
     } else {
@@ -16,6 +20,12 @@ class Function extends Node {
 
 function resolveNode(scope, node) {
   switch (node.type) {
+    case "VariableDeclaration": {
+      node.declarations.forEach((declaration) => {
+        resolveNode(scope, declaration.init);
+      });
+      break;
+    }
     case "BlockStatement": {
       node.body.forEach((statement) => resolveNode(scope, statement));
       break;
