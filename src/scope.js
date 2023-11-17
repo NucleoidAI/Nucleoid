@@ -56,7 +56,7 @@ class Scope {
     const first = variable.first;
 
     while (index) {
-      if (index.local[first] !== undefined) {
+      if (index.graph[first] !== undefined) {
         const local = {
           type: "Identifier",
           name: "local",

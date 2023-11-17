@@ -2,7 +2,6 @@
 const ESTree = require("../estree/generator");
 
 class Node {
-  // Rename to Node
   constructor(node) {
     if (node === undefined) {
       this.node = {
@@ -19,11 +18,17 @@ class Node {
     }
   }
 
-  get first() {}
+  get first() {
+    return null;
+  }
 
-  get object() {}
+  get object() {
+    return null;
+  }
 
-  get last() {}
+  get last() {
+    return null;
+  }
 
   resolve() {
     return this.node;

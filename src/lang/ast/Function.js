@@ -6,11 +6,9 @@ class Function extends Node {
   resolve(scope) {
     if (scope) {
       const cloned = _.cloneDeep(this.node);
-      cloned.params.forEach((param) =>
-        scope.callback.push(new Identifier(param))
-      );
-
+      scope.callback = cloned.params.map((param) => new Identifier(param));
       resolveNode(scope, cloned.body);
+      scope.callback = [];
       return cloned;
     } else {
       return this.node;

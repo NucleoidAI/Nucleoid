@@ -72,7 +72,11 @@ class Identifier extends Node {
     if (scope) {
       const first = this.first;
 
-      if (scope.callback.map((c) => c.toString()).includes(this.toString())) {
+      if (
+        scope.callback
+          .map((arg) => arg.toString())
+          .includes(this.first.toString())
+      ) {
         return this;
       }
 
