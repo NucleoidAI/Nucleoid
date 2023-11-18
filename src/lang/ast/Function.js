@@ -14,6 +14,10 @@ class Function extends Node {
       return this.node;
     }
   }
+
+  graph(scope) {
+    return graphNode(scope, this.node.body);
+  }
 }
 
 function resolveNode(scope, node) {
@@ -50,15 +54,15 @@ function resolveNode(scope, node) {
       break;
     }
     default: {
-      traverse(scope, node);
+      resolveIdentifier(scope, node);
     }
   }
 }
 
-function traverse(scope, node) {
+function resolveIdentifier(scope, node) {
   if (["BinaryExpression", "LogicalExpression"].includes(node.type)) {
-    traverse(scope, node.left);
-    traverse(scope, node.right);
+    resolveIdentifier(scope, node.left);
+    resolveIdentifier(scope, node.right);
   } else {
     if (["Identifier", "MemberExpression"].includes(node.type)) {
       const identifier = new Identifier(node);
@@ -69,6 +73,59 @@ function traverse(scope, node) {
       }
     }
   }
+}
+
+function graphNode(scope, node) {
+  switch (node.type) {
+    case "VariableDeclaration": {
+      node.declarations.forEach((declaration) => {
+        graphNode(scope, declaration.init);
+      });
+      break;
+    }
+    case "BlockStatement": {
+      node.body.forEach((statement) => graphNode(scope, statement));
+      break;
+    }
+    case "ExpressionStatement": {
+      graphNode(scope, node.expression);
+      break;
+    }
+    case "AssignmentExpression": {
+      graphNode(scope, node.left);
+      graphNode(scope, node.right);
+      break;
+    }
+    case "IfStatement": {
+      graphNode(scope, node.test);
+      graphNode(scope, node.consequent);
+      if (node.alternate) {
+        graphNode(scope, node.alternate);
+      }
+      break;
+    }
+    case "ReturnStatement": {
+      graphNode(scope, node.argument);
+      break;
+    }
+    default: {
+      return graphIdentifier(scope, node);
+    }
+  }
+}
+
+function graphIdentifier(scope, node, acc = []) {
+  if (["BinaryExpression", "LogicalExpression"].includes(node.type)) {
+    graphIdentifier(scope, node.left, acc);
+    graphIdentifier(scope, node.right, acc);
+  } else {
+    if (["Identifier", "MemberExpression"].includes(node.type)) {
+      const identifier = new Identifier(node);
+      acc.push(identifier.graph(scope));
+    }
+  }
+
+  return acc;
 }
 
 module.exports = Function;

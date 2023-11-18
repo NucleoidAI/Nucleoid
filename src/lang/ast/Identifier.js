@@ -100,6 +100,7 @@ class Identifier extends Node {
     }
   }
 
+  // TODO Check scope callback
   graph() {
     const first = graph.retrieve(this.first);
 
