@@ -11,7 +11,7 @@ describe("Function", () => {
     equal(func.first, null);
     equal(func.object, null);
     equal(func.last, null);
-    equal(func.toString(), "user=>user.age===age");
+    equal(func, "user=>user.age===age");
     equal(func.generate(scope), "user=>user.age===scope.local.age");
   });
 
@@ -23,7 +23,7 @@ describe("Function", () => {
     equal(func.first, null);
     equal(func.object, null);
     equal(func.last, null);
-    equal(func.toString(), "user=>{user.age=age;return user.age}");
+    equal(func, "user=>{user.age=age;return user.age}");
     equal(
       func.generate(scope),
       "user=>{user.age=scope.local.age;return user.age}"
@@ -38,7 +38,7 @@ describe("Function", () => {
     equal(func.first, null);
     equal(func.object, null);
     equal(func.last, null);
-    equal(func.toString(), "user=>{if(age){return age}}");
+    equal(func, "user=>{if(age){return age}}");
     equal(
       func.generate(scope),
       "user=>{if(scope.local.age){return scope.local.age}}"

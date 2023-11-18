@@ -1,11 +1,4 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-const Array = require("./Array");
-const Object = require("./Object");
 const Node = require("./Node");
-const Function = require("./Function");
-const Operator = require("./Operator");
-const New = require("./New");
 
 class Expression extends Node {
   map(fn) {
@@ -19,44 +12,15 @@ class Expression extends Node {
   }
 
   resolve(scope) {
-    return convertToAST(this.node).resolve(scope);
+    return Node.convertToAST(this.node).resolve(scope);
   }
 
   traverse(fn) {
     return traverseReduce(this.node, fn);
   }
-}
 
-function convertToAST(node) {
-  switch (node.type) {
-    case "Literal": {
-      return new Literal(node);
-    }
-    case "Identifier":
-    case "MemberExpression": {
-      return new Identifier(node);
-    }
-    case "ArrayExpression": {
-      const elements = node.elements.map((el) => convertToAST(el));
-      return new Array(elements);
-    }
-    case "NewExpression": {
-      return new New(node);
-    }
-    case "ObjectExpression": {
-      return new Object(node);
-    }
-    case "FunctionExpression":
-    case "ArrowFunctionExpression": {
-      return new Function(node);
-    }
-    case "CallExpression": {
-      const Call = require("./Call");
-      return new Call(node);
-    }
-    default: {
-      return new Operator(node);
-    }
+  graph(fn) {
+    return graphReduce(this.node, fn);
   }
 }
 
@@ -69,11 +33,11 @@ function traverseReduce(exp, fn, acc = []) {
     acc.push(exp.operator);
     traverseReduce(exp.argument, fn, acc);
   } else {
-    const ast = convertToAST(exp);
-    const cur = fn(ast);
+    const ast = Node.convertToAST(exp);
+    const curr = fn(ast);
 
-    if (cur) {
-      acc.push(cur);
+    if (curr) {
+      acc.push(curr);
     }
   }
 
@@ -84,14 +48,40 @@ function mapReduce(exp, fn, acc = []) {
   if (["BinaryExpression", "LogicalExpression"].includes(exp.type)) {
     mapReduce(exp.left, fn, acc);
     mapReduce(exp.right, fn, acc);
+  } else if (exp.type === "UnaryExpression") {
+    mapReduce(exp.argument, fn, acc);
   } else {
-    const ast = convertToAST(exp);
-    const cur = fn(ast);
+    const ast = Node.convertToAST(exp);
+    const curr = fn(ast);
 
     // Filter out undefined values
-    if (cur !== undefined) {
-      acc.push(cur);
+    if (curr !== undefined) {
+      acc.push(curr);
     }
+  }
+
+  return acc;
+}
+
+function graphReduce(exp, fn, acc = []) {
+  if (["BinaryExpression", "LogicalExpression"].includes(exp.type)) {
+    graphReduce(exp.left, fn, acc);
+    graphReduce(exp.right, fn, acc);
+  } else if (exp.type === "UnaryExpression") {
+    graphReduce(exp.argument, fn, acc);
+  } else {
+    const ast = Node.convertToAST(exp);
+
+    const graphed = [ast.graph()];
+    graphed.flat(Infinity).forEach((item) => {
+      if (item) {
+        const curr = fn(item);
+
+        if (curr !== undefined) {
+          acc.push(curr);
+        }
+      }
+    });
   }
 
   return acc;

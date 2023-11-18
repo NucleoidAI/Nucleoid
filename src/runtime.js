@@ -33,6 +33,8 @@ module.exports.process = function (string, options = {}) {
   const date = Date.now();
   const time = date - before;
 
+  const $nuc = JSON.stringify(result.$nuc);
+
   if (result.error) {
     result.value = `${result.error.constructor.name}: ${result.error.message}`;
   }
@@ -40,7 +42,7 @@ module.exports.process = function (string, options = {}) {
   if (!cacheOnly) {
     datastore.write({
       s: string,
-      $: JSON.stringify(result.$nuc),
+      $: $nuc,
       c: declarative ? true : undefined,
       t: time,
       r: result.value,

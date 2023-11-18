@@ -1,6 +1,5 @@
 const state = require("../state");
 const Node = require("./NODE");
-const Id = require("../lib/identifier");
 const estree = require("../lang/estree/estree");
 const Identifier = require("../lang/ast/Identifier");
 

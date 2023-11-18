@@ -3,7 +3,9 @@ const _ = require("lodash");
 function root(node) {
   let current = node;
 
-  while (!["Identifier", "ThisExpression"].includes(current.object?.type)) {
+  while (
+    !["Identifier", "ThisExpression", "Literal"].includes(current.object?.type)
+  ) {
     current = current.object;
   }
 

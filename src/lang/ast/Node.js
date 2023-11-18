@@ -18,6 +18,10 @@ class Node {
     }
   }
 
+  get type() {
+    return this.node.type;
+  }
+
   get first() {
     return null;
   }
@@ -39,8 +43,53 @@ class Node {
     return ESTree.generate(resolved);
   }
 
+  graph() {
+    return null;
+  }
+
   toString() {
     return this.generate();
+  }
+
+  static convertToAST(node) {
+    const Literal = require("./Literal");
+    const Identifier = require("./Identifier");
+    const Array = require("./Array");
+    const New = require("./New");
+    const Object = require("./Object");
+    const Function = require("./Function");
+    const Operator = require("./Operator");
+    const Call = require("./Call");
+
+    switch (node.type) {
+      case "Literal": {
+        return new Literal(node);
+      }
+      case "Identifier":
+      case "MemberExpression": {
+        return new Identifier(node);
+      }
+      case "ArrayExpression": {
+        const elements = node.elements.map((el) => Node.convertToAST(el));
+        return new Array(elements);
+      }
+      case "NewExpression": {
+        return new New(node);
+      }
+      case "ObjectExpression": {
+        return new Object(node);
+      }
+      case "FunctionExpression":
+      case "ArrowFunctionExpression": {
+        return new Function(node);
+      }
+      case "CallExpression": {
+        return new Call(node);
+      }
+      default: {
+        return new Operator(node);
+      }
+    }
   }
 }
 

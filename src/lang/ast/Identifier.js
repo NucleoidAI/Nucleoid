@@ -2,6 +2,7 @@ const graph = require("../../graph");
 
 const { root, append } = require("../estree/estree");
 const Node = require("./Node");
+const _ = require("lodash");
 
 class Identifier extends Node {
   static get types() {
@@ -9,12 +10,12 @@ class Identifier extends Node {
   }
 
   get first() {
-    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
+    if (["Identifier", "ThisExpression", "Literal"].includes(this.node.type)) {
       return new Identifier(this.node);
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(root(this.node).object);
     } else {
-      throw new Error(`Unknown identifier type ${this.node.type}`);
+      return null;
     }
   }
 
@@ -23,18 +24,16 @@ class Identifier extends Node {
       this.node = first.node;
     } else if (this.node.type === "MemberExpression") {
       this.node.object = first.node;
-    } else {
-      throw new Error(`Unknown identifier type ${this.node.type}`);
     }
   }
 
   get object() {
-    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
+    if (["Identifier", "ThisExpression", "Literal"].includes(this.node.type)) {
       return null;
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(this.node.object);
     } else {
-      throw new Error(`Unknown identifier type ${this.node.type}`);
+      return null;
     }
   }
 
@@ -43,18 +42,16 @@ class Identifier extends Node {
       this.node = object.node;
     } else if (this.node.type === "MemberExpression") {
       this.node.object = object.node;
-    } else {
-      throw new Error(`Unknown identifier type ${this.node.type}`);
     }
   }
 
   get last() {
-    if (["Identifier", "ThisExpression"].includes(this.node.type)) {
+    if (["Identifier", "ThisExpression", "Literal"].includes(this.node.type)) {
       return new Identifier(this.node);
     } else if (this.node.type === "MemberExpression") {
       return new Identifier(this.node.property);
     } else {
-      throw new Error(`Unknown identifier type ${this.node.type}`);
+      return null;
     }
   }
 
@@ -63,14 +60,16 @@ class Identifier extends Node {
       this.node = last.node;
     } else if (this.node.type === "MemberExpression") {
       this.node.property = last.node;
-    } else {
-      throw new Error(`Unknown identifier type ${this.node.type}`);
     }
   }
 
   resolve(scope) {
     if (scope) {
       const first = this.first;
+
+      if (!first) {
+        return null;
+      }
 
       if (
         scope.callback
@@ -100,6 +99,27 @@ class Identifier extends Node {
       return this.node;
     }
   }
+
+  graph() {
+    const first = graph.retrieve(this.first);
+
+    if (first) {
+      return removeBuiltins(this);
+    }
+
+    return null;
+  }
+}
+
+function removeBuiltins(identifier) {
+  let current = _.cloneDeep(identifier.node);
+
+  // Skip `Identifier` type
+  while (current?.property?.name === "length") {
+    current = current.object;
+  }
+
+  return new Identifier(current);
 }
 
 module.exports = Identifier;

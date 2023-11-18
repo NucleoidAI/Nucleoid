@@ -1,6 +1,7 @@
 const graph = require("../graph");
 const Evaluation = require("../lang/ast/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
+const NODE = require("./NODE");
 
 class EXPRESSION {
   constructor(tokens) {
@@ -19,19 +20,16 @@ class EXPRESSION {
   next() {}
 
   graph() {
-    return this.tokens.map((node) => {
-      if (node instanceof Identifier) {
-        let current = node;
+    return this.tokens.graph((node) => {
+      const retrieved = graph.retrieve(node);
 
-        while (current) {
-          const dependency = graph.retrieve(current);
-
-          if (dependency) {
-            return dependency;
-          }
-
-          current = current.object;
-        }
+      if (retrieved) {
+        return retrieved;
+      } else {
+        const temporary = new NODE(node);
+        // TODO NODE Direct
+        graph.graph[graphed] = temporary;
+        return temporary;
       }
     });
   }

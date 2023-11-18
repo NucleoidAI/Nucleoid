@@ -9,20 +9,27 @@ const serialize = require("../../lib/serialize");
 
 class Call extends Node {
   get first() {
-    if (["Identifier", "ThisExpression"].includes(this.node.callee.type)) {
-      return new Identifier(this.node.callee);
-    } else if (this.node.callee.type === "MemberExpression") {
-      return new Identifier(root(this.node).object);
-    } else {
-      throw new Error(`Unknown call type ${this.node.callee.type}`);
-    }
+    const callee = rootCallee(this.node);
+    const identifier = new Identifier(callee);
+    return identifier.first;
+  }
+
+  get object() {
+    const callee = rootCallee(this.node);
+    const identifier = new Identifier(callee);
+    return identifier.object;
+  }
+
+  get last() {
+    const callee = rootCallee(this.node);
+    const identifier = new Identifier(callee);
+    return identifier.last;
   }
 
   resolve(scope) {
     if (scope) {
-      const cloned = _.cloneDeep(this.node);
-      const rootNode = root(cloned);
-      const first = new Identifier(rootNode?.object || rootNode?.callee);
+      const clone = _.cloneDeep(this);
+      const first = clone.first;
 
       if (graph.retrieve(first) instanceof FUNCTION) {
         const stack = require("../../stack");
@@ -34,21 +41,33 @@ class Call extends Node {
         const expression = new Expression(json);
         return expression.resolve(scope);
       } else {
-        const resolved = first.resolve(scope);
+        if (first.type !== "Literal") {
+          const resolved = first.resolve(scope);
+          const rootNode = root(clone.node);
 
-        if (rootNode.object) {
-          rootNode.object = resolved;
-        } else {
-          rootNode.callee = resolved;
+          if (resolved) {
+            if (rootNode.object) {
+              rootNode.object = resolved;
+            } else {
+              rootNode.callee = resolved;
+            }
+          }
         }
 
-        resolveArguments(scope, cloned);
+        resolveArguments(scope, clone.node);
 
-        return cloned;
+        return clone.node;
       }
     } else {
       return this.node;
     }
+  }
+
+  graph() {
+    return [
+      this.first.graph(),
+      this.node.arguments.map((arg) => Node.convertToAST(arg).graph()),
+    ];
   }
 }
 
@@ -56,7 +75,7 @@ function root(node) {
   let current = node;
 
   while (
-    !["Identifier", "ThisExpression"].includes(
+    ["MemberExpression", "CallExpression"].includes(
       current.object?.type || current.callee?.type
     )
   ) {
@@ -66,11 +85,30 @@ function root(node) {
   return current;
 }
 
+function rootCallee(node) {
+  let current = node;
+  let callee = node.callee;
+
+  while (
+    ["MemberExpression", "CallExpression"].includes(
+      current.object?.type || current.callee?.type
+    )
+  ) {
+    if (current.callee) {
+      callee = current.callee;
+    }
+
+    current = current.object || current.callee;
+  }
+
+  return callee;
+}
+
 function resolveArguments(scope, node) {
   let current = node;
 
   while (
-    !["Identifier", "ThisExpression"].includes(
+    ["MemberExpression", "CallExpression"].includes(
       current.object?.type || current.callee?.type
     )
   ) {
