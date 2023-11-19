@@ -1,7 +1,6 @@
 const IF$INSTANCE = require("./IF$INSTANCE");
 const $BLOCK = require("../lang/$nuc/$BLOCK");
 const Node = require("./NODE");
-const graph = require("../graph");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
 
@@ -19,7 +18,7 @@ class IF$CLASS extends Node {
     if (instance) {
       instances = [instance];
     } else {
-      instances = Object.keys(this.class.instances).map((i) => graph[i]);
+      instances = Object.values(this.class.instances);
     }
 
     for (let instance of instances) {

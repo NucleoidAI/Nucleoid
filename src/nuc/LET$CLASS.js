@@ -15,8 +15,6 @@ class LET$CLASS {
       return { next: statement };
     }
   }
-
-  graph() {}
 }
 
 LET$CLASS.prototype.type = "CLASS";

@@ -1,7 +1,6 @@
 const Node = require("./NODE");
 const BLOCK$INSTANCE = require("./BLOCK$INSTANCE");
 const Instruction = require("../instruction");
-const graph = require("../graph");
 const { v4: uuid } = require("uuid");
 
 class BLOCK$CLASS extends Node {
@@ -19,7 +18,7 @@ class BLOCK$CLASS extends Node {
     if (instance) {
       instances = [instance];
     } else {
-      instances = Object.keys(this.class.instances).map((i) => graph[i]);
+      instances = Object.values(this.class.instances);
     }
 
     for (let instance of instances) {

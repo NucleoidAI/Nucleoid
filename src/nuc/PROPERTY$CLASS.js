@@ -1,6 +1,5 @@
 const Node = require("./NODE");
 const PROPERTY$INSTANCE = require("./PROPERTY$INSTANCE");
-const graph = require("../graph");
 const _ = require("lodash");
 
 class PROPERTY$CLASS extends Node {
@@ -13,7 +12,7 @@ class PROPERTY$CLASS extends Node {
     if (instance) {
       instances = [instance];
     } else {
-      instances = Object.keys(this.class.instances).map((i) => graph[i]);
+      instances = Object.values(this.class.instances);
     }
 
     for (let instance of instances) {

@@ -1,6 +1,5 @@
 const Node = require("./NODE");
 const Id = require("../lib/identifier");
-const graph = require("../graph");
 const OBJECT$INSTANCE = require("./OBJECT$INSTANCE");
 
 class OBJECT$CLASS extends Node {
@@ -15,7 +14,7 @@ class OBJECT$CLASS extends Node {
     let instance = scope.instance(Id.root(this).name);
 
     if (instance) instances = [instance];
-    else instances = Object.keys(Id.root(this).instances).map((i) => graph[i]);
+    else instances = Object.values(Id.root(this).instances);
 
     for (let instance of instances) {
       let statement = new OBJECT$INSTANCE();
