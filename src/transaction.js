@@ -50,7 +50,7 @@ function rollback() {
 
     if (variable !== undefined) {
       // eslint-disable-next-line no-eval
-      eval(`state.${variable}=before`);
+      eval(`${variable}=before`);
     } else {
       if (before === undefined) {
         delete object[property];
