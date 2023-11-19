@@ -19,8 +19,8 @@ class Expression extends Node {
     return traverseReduce(this.node, fn);
   }
 
-  graph(fn) {
-    return graphReduce(this.node, fn);
+  graph(scope, fn) {
+    return graphReduce(scope, this.node, fn);
   }
 }
 
@@ -63,16 +63,16 @@ function mapReduce(exp, fn, acc = []) {
   return acc;
 }
 
-function graphReduce(exp, fn, acc = []) {
+function graphReduce(scope, exp, fn, acc = []) {
   if (["BinaryExpression", "LogicalExpression"].includes(exp.type)) {
-    graphReduce(exp.left, fn, acc);
-    graphReduce(exp.right, fn, acc);
+    graphReduce(scope, exp.left, fn, acc);
+    graphReduce(scope, exp.right, fn, acc);
   } else if (exp.type === "UnaryExpression") {
-    graphReduce(exp.argument, fn, acc);
+    graphReduce(scope, exp.argument, fn, acc);
   } else {
     const ast = Node.convertToAST(exp);
 
-    const graphed = [ast.graph()];
+    const graphed = [ast.graph(scope)];
     graphed.flat(Infinity).forEach((item) => {
       if (item) {
         const curr = fn(item);

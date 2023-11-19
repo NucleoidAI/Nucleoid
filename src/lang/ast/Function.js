@@ -16,7 +16,10 @@ class Function extends Node {
   }
 
   graph(scope) {
-    return graphNode(scope, this.node.body);
+    scope.callback = this.node.params.map((param) => new Identifier(param));
+    const list = graphNode(scope, this.node.body);
+    scope.callback = [];
+    return list;
   }
 }
 

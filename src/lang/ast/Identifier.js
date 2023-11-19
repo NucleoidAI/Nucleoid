@@ -100,8 +100,15 @@ class Identifier extends Node {
     }
   }
 
-  // TODO Check scope callback
-  graph() {
+  graph(scope) {
+    if (
+      scope.callback
+        .map((arg) => arg.toString())
+        .includes(this.first.toString())
+    ) {
+      return null;
+    }
+
     const first = graph.retrieve(this.first);
 
     if (first) {

@@ -63,10 +63,12 @@ class Call extends Node {
     }
   }
 
-  graph() {
+  graph(scope) {
     return [
-      this.first.graph(),
-      this.node.arguments.map((arg) => Node.convertToAST(arg).graph()),
+      this.first.graph(scope),
+      traverseCallee(this.node, (callee) =>
+        callee.arguments.map((arg) => Node.convertToAST(arg).graph(scope))
+      ),
     ];
   }
 }
@@ -102,6 +104,25 @@ function rootCallee(node) {
   }
 
   return callee;
+}
+
+function traverseCallee(node, func) {
+  let current = node;
+  const acc = [];
+
+  while (
+    ["MemberExpression", "CallExpression"].includes(
+      current.object?.type || current.callee?.type
+    )
+  ) {
+    if (current.callee) {
+      acc.push(func(current));
+    }
+
+    current = current.object || current.callee;
+  }
+
+  return acc;
 }
 
 function resolveArguments(scope, node) {

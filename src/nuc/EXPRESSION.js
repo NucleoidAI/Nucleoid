@@ -19,8 +19,8 @@ class EXPRESSION {
 
   next() {}
 
-  graph() {
-    return this.tokens.graph((node) => {
+  graph(scope) {
+    return this.tokens.graph(scope, (node) => {
       const retrieved = graph.retrieve(node);
 
       if (retrieved) {
@@ -28,7 +28,7 @@ class EXPRESSION {
       } else {
         const temporary = new NODE(node);
         // TODO NODE Direct
-        graph.graph[graphed] = temporary;
+        graph.graph[node] = temporary;
         return temporary;
       }
     });
