@@ -2,7 +2,7 @@ const Identifier = require("./Identifier");
 const Node = require("./Node");
 const graph = require("../../graph");
 const $CALL = require("../$nuc/$CALL");
-const Expression = require("./Expression");
+const Expression = require("../../Expression");
 const _ = require("lodash");
 const FUNCTION = require("../../nuc/FUNCTION");
 const serialize = require("../../lib/serialize");
@@ -67,7 +67,7 @@ class Call extends Node {
     return [
       this.first.graph(scope),
       traverseCallee(this.node, (callee) =>
-        callee.arguments.map((arg) => Node.convertToAST(arg).graph(scope))
+        callee.arguments.map((arg) => Node.convert(arg).graph(scope))
       ),
     ];
   }
@@ -76,7 +76,7 @@ class Call extends Node {
     return [
       this.first.walk(),
       traverseCallee(this.node, (callee) =>
-        callee.arguments.map((arg) => Node.convertToAST(arg).walk())
+        callee.arguments.map((arg) => Node.convert(arg).walk())
       ),
     ];
   }

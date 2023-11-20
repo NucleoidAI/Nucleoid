@@ -1,5 +1,5 @@
-const Scope = require("../scope");
-const Evaluation = require("../lang/ast/Evaluation");
+const Scope = require("../Scope");
+const Evaluation = require("../lang/Evaluation");
 const { equal } = require("assert");
 const Identifier = require("../lang/ast/Identifier");
 

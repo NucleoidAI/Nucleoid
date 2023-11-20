@@ -1,6 +1,6 @@
 const $ = require("./$");
 const THROW = require("../../nuc/THROW");
-const Expression = require("../ast/Expression");
+const Expression = require("../../Expression");
 
 function build(exception) {
   let statement = new $THROW();

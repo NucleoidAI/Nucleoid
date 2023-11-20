@@ -1,4 +1,4 @@
-const Node = require("./Node");
+const Node = require("./lang/ast/Node");
 
 // TODO Organize expression structure
 class Expression extends Node {
@@ -13,7 +13,7 @@ class Expression extends Node {
   }
 
   resolve(scope) {
-    return Node.convertToAST(this.node).resolve(scope);
+    return Node.convert(this.node).resolve(scope);
   }
 
   traverse(fn) {
@@ -35,7 +35,7 @@ function traverseReduce(exp, fn, acc = []) {
     acc.push(exp.operator);
     traverseReduce(exp.argument, fn, acc);
   } else {
-    const ast = Node.convertToAST(exp);
+    const ast = Node.convert(exp);
     const curr = fn(ast);
 
     if (curr) {
@@ -53,7 +53,7 @@ function mapReduce(exp, fn, acc = []) {
   } else if (exp.type === "UnaryExpression") {
     mapReduce(exp.argument, fn, acc);
   } else {
-    const ast = Node.convertToAST(exp);
+    const ast = Node.convert(exp);
     const curr = fn(ast);
 
     // Filter out undefined values
@@ -72,7 +72,7 @@ function graphReduce(scope, exp, fn, acc = []) {
   } else if (exp.type === "UnaryExpression") {
     graphReduce(scope, exp.argument, fn, acc);
   } else {
-    const ast = Node.convertToAST(exp);
+    const ast = Node.convert(exp);
 
     const graphed = [ast.graph(scope)];
     graphed.flat(Infinity).forEach((item) => {

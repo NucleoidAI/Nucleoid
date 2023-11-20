@@ -2,7 +2,7 @@ const state = require("../state");
 const Node = require("./NODE");
 const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
-const Evaluation = require("../lang/ast/Evaluation");
+const Evaluation = require("../lang/Evaluation");
 const _ = require("lodash");
 
 class CLASS extends Node {

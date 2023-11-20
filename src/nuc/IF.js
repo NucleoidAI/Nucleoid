@@ -1,6 +1,6 @@
 const Node = require("./NODE");
 const Instruction = require("../instruction");
-const Scope = require("../scope");
+const Scope = require("../Scope");
 const state = require("../state");
 
 class IF extends Node {

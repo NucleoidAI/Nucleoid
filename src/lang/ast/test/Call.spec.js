@@ -1,6 +1,6 @@
 const Call = require("../Call");
 const { equal } = require("assert");
-const Scope = require("../../../scope");
+const Scope = require("../../../Scope");
 
 describe("Call", () => {
   it("resolves single expression", () => {

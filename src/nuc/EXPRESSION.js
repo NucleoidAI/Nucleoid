@@ -1,6 +1,5 @@
 const graph = require("../graph");
-const Evaluation = require("../lang/ast/Evaluation");
-const Identifier = require("../lang/ast/Identifier");
+const Evaluation = require("../lang/Evaluation");
 const NODE = require("./NODE");
 
 class EXPRESSION {

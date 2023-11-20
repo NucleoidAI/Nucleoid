@@ -1,5 +1,5 @@
 const Function = require("../Function");
-const Scope = require("../../../scope");
+const Scope = require("../../../Scope");
 const { equal } = require("assert");
 
 describe("Function", () => {

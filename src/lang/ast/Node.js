@@ -55,8 +55,7 @@ class Node {
     return this.generate();
   }
 
-  // TODO Rename to `convert`
-  static convertToAST(node) {
+  static convert(node) {
     const Literal = require("./Literal");
     const Identifier = require("./Identifier");
     const Array = require("./Array");
@@ -75,7 +74,7 @@ class Node {
         return new Identifier(node);
       }
       case "ArrayExpression": {
-        const elements = node.elements.map((el) => Node.convertToAST(el));
+        const elements = node.elements.map((el) => Node.convert(el));
         return new Array(elements);
       }
       case "NewExpression": {

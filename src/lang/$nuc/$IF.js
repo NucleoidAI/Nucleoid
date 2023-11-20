@@ -4,7 +4,7 @@ const IF = require("../../nuc/IF");
 const CLASS = require("../../nuc/CLASS");
 const IF$CLASS = require("../../nuc/IF$CLASS");
 const Instruction = require("../../instruction");
-const Expression = require("../ast/Expression");
+const Expression = require("../../Expression");
 const $EXPRESSION = require("./$EXPRESSION");
 const Identifier = require("../ast/Identifier");
 

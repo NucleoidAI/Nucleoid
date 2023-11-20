@@ -2,7 +2,7 @@ const BLOCK = require("../../nuc/BLOCK");
 const BLOCK$CLASS = require("../../nuc/BLOCK$CLASS");
 const $ = require("./$");
 const Instruction = require("../../instruction");
-const Scope = require("../../scope");
+const Scope = require("../../Scope");
 const { v4: uuid } = require("uuid");
 
 function build(statements, skip) {

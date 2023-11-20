@@ -1,8 +1,8 @@
 const state = require("../state");
 const Node = require("./NODE");
 const Instruction = require("../instruction");
-const Scope = require("../scope");
-const Evaluation = require("../lang/ast/Evaluation");
+const Scope = require("../Scope");
+const Evaluation = require("../lang/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
 const { append } = require("../lang/estree/estree");
 const estree = require("../lang/estree/estree");

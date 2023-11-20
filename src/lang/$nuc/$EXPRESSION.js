@@ -1,6 +1,6 @@
 const $ = require("./$");
 const EXPRESSION = require("../../nuc/EXPRESSION");
-const Expression = require("../ast/Expression");
+const Expression = require("../../Expression");
 
 function build(tokens) {
   if (!(tokens instanceof Expression)) {
