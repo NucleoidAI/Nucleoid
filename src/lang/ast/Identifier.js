@@ -117,6 +117,10 @@ class Identifier extends Node {
 
     return null;
   }
+
+  walk() {
+    return [this];
+  }
 }
 
 function removeBuiltins(identifier) {

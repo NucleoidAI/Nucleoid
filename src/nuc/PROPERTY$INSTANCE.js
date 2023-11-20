@@ -1,12 +1,13 @@
 const PROPERTY = require("./PROPERTY");
-const Identifier = require("../lang/ast/Identifier");
 
 class PROPERTY$INSTANCE extends PROPERTY {
   before(scope) {
     this.value.tokens.traverse((node) => {
-      if (node instanceof Identifier) {
-        if (node.first.toString() === this.class.name.toString()) {
-          node.first = this.object.name; // TODO Go to object root
+      const identifiers = [node.walk()].flat(Infinity);
+
+      for (const identifier of identifiers) {
+        if (identifier.first.toString() === this.class.name.toString()) {
+          identifier.first.node.name = this.instance.name;
         }
       }
     });

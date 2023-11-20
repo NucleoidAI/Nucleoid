@@ -5,10 +5,6 @@ const _ = require("lodash");
 const { v4: uuid } = require("uuid");
 
 class IF$CLASS extends Node {
-  before() {
-    this.key = `if(${this.condition.tokens})`;
-  }
-
   run(scope) {
     let instances;
     let statements = [];

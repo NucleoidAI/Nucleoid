@@ -1,5 +1,6 @@
 const Node = require("./Node");
 
+// TODO Organize expression structure
 class Expression extends Node {
   map(fn) {
     return mapReduce(this.node, fn);
@@ -24,6 +25,7 @@ class Expression extends Node {
   }
 }
 
+// TODO Traverse with different types
 function traverseReduce(exp, fn, acc = []) {
   if (["BinaryExpression", "LogicalExpression"].includes(exp.type)) {
     traverseReduce(exp.left, fn, acc);

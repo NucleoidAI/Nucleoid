@@ -71,6 +71,15 @@ class Call extends Node {
       ),
     ];
   }
+
+  walk() {
+    return [
+      this.first.walk(),
+      traverseCallee(this.node, (callee) =>
+        callee.arguments.map((arg) => Node.convertToAST(arg).walk())
+      ),
+    ];
+  }
 }
 
 function root(node) {

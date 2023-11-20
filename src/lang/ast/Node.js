@@ -47,10 +47,15 @@ class Node {
     return null;
   }
 
+  walk() {
+    return [];
+  }
+
   toString() {
     return this.generate();
   }
 
+  // TODO Rename to `convert`
   static convertToAST(node) {
     const Literal = require("./Literal");
     const Identifier = require("./Identifier");

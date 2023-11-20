@@ -16,6 +16,7 @@ class NODE {
   beforeGraph() {}
   graph() {}
 
+  // TODO Move this to graph
   static register(key, node) {
     transaction.register(graph, key, node);
   }

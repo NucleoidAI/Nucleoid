@@ -24,33 +24,31 @@ class $IF extends $ {
   }
 
   run(scope) {
-    const declaration = this.condition.tokens.find((node) => {
-      if (node instanceof Identifier) {
-        const cls = graph.retrieve(node.first);
-
-        if (cls instanceof CLASS) {
-          return cls;
-        }
-      }
-    });
+    // Look up first expression for deciding class declaration
+    const [declaration] = this.condition.graph(scope);
 
     if (declaration) {
-      let statement = new IF$CLASS(`if(${this.condition.tokens})`);
-      statement.class = declaration;
-      statement.condition = this.condition;
-      statement.false = this.false;
-      statement.true = this.true;
-      statement.true.class = declaration;
+      const identifier = new Identifier(declaration.key);
+      const cls = graph.retrieve(identifier.first);
 
-      if (this.false) {
+      if (cls instanceof CLASS) {
+        let statement = new IF$CLASS(`if(${this.condition.tokens})`);
+        statement.class = cls;
+        statement.condition = this.condition;
         statement.false = this.false;
-        statement.false.class = declaration;
-      }
+        statement.true = this.true;
+        statement.true.class = declaration;
 
-      return [
-        new Instruction(scope, statement, true, true, false),
-        new Instruction(scope, statement, false, false, true),
-      ];
+        if (this.false) {
+          statement.false = this.false;
+          statement.false.class = declaration;
+        }
+
+        return [
+          new Instruction(scope, statement, true, true, false),
+          new Instruction(scope, statement, false, false, true),
+        ];
+      }
     }
 
     let statement = new IF(`if(${this.condition.tokens})`);
