@@ -86,7 +86,9 @@ function process(statements, prior, options = {}) {
           statement.before(instruction.scope);
         }
 
-        result.$nuc.push(statement);
+        if (!instruction.derivative) {
+          result.$nuc.push(statement);
+        }
 
         if (instruction.run) {
           let next = statement.run(instruction.scope);
