@@ -1,7 +1,6 @@
 const graph = require("../graph");
 const Evaluation = require("../lang/Evaluation");
 const NODE = require("./NODE");
-const Identifier = require("../lang/ast/Identifier");
 const state = require("../state");
 
 class EXPRESSION {
@@ -16,20 +15,21 @@ class EXPRESSION {
     const expression = this.tokens.traverse((node) => {
       const evaluation = node.generate(scope);
 
-      if (node instanceof Identifier) {
-        const test = state.expression(scope, { value: evaluation });
-
-        if (test === undefined) {
-          return "undefined";
+      if (node.type === "MemberExpression" && graph.retrieve(node.first)) {
+        try {
+          const test = state.expression(scope, { value: evaluation });
+          if (test === undefined) {
+            return "UNDEFINED";
+          }
+        } catch (error) {
+          return "UNDEFINED";
         }
       }
 
       return evaluation;
     });
 
-    if (expression.includes("undefined")) {
-      return new Evaluation();
-    } else {
+    if (!expression.includes("UNDEFINED")) {
       return new Evaluation(expression.join(""));
     }
   }

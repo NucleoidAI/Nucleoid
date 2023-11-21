@@ -11,6 +11,10 @@ class PROPERTY extends Node {
   run(scope) {
     const evaluation = this.value.run(scope);
 
+    if (!evaluation) {
+      return;
+    }
+
     const variable = new Identifier(
       estree.append(this.object.resolve().node, this.name.node)
     );

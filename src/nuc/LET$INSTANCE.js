@@ -18,8 +18,13 @@ class LET$INSTANCE extends LET {
 
   run(scope) {
     try {
-      let value = this.value.run(scope);
-      let expression = "scope.local." + this.name + `=${value}`;
+      let evaluation = this.value.run(scope);
+
+      if (!evaluation) {
+        return;
+      }
+
+      let expression = "scope.local." + this.name + `=${evaluation}`;
       state.run(scope, expression);
     } catch (error) {
       return { next: new BREAK(scope.block) };

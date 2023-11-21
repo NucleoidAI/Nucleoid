@@ -18,6 +18,10 @@ class IF extends Node {
       condition = this.condition.run(scope);
     }
 
+    if (!condition) {
+      return;
+    }
+
     if (state.expression(scope, condition)) {
       return {
         next: [

@@ -52,7 +52,11 @@ function process(statements, prior, options = {}) {
 
         const evaluation = statement.run(scope, false, false);
 
-        if (instruction.scope === root && !instruction.derivative) {
+        if (
+          evaluation &&
+          instruction.scope === root &&
+          !instruction.derivative
+        ) {
           result.value = state.expression(scope, evaluation);
         }
 

@@ -13,6 +13,10 @@ class LET {
 
     const evaluation = this.value.run(scope, false, false);
 
+    if (!evaluation) {
+      return;
+    }
+
     if (scope.graph[object]?.instanceof === "LET$OBJECT") {
       /*
       parts[0] = scope.graph[first].object.key;

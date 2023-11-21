@@ -15,6 +15,7 @@ class VARIABLE extends Node {
       value = state.assign(scope, this.name, this.value);
     } else {
       const evaluation = this.value.run(scope);
+
       value = state.assign(scope, this.name, evaluation);
     }
 
