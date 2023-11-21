@@ -5,6 +5,7 @@ const $LET = require("./$LET");
 const $INSTANCE = require("./$INSTANCE");
 const Identifier = require("../ast/Identifier");
 const graph = require("../../graph");
+const CLASS = require("../../nuc/CLASS");
 
 function build(kind, left, right) {
   let statement = new $ASSIGNMENT();
@@ -39,7 +40,7 @@ class $ASSIGNMENT extends $ {
     }
 
     if (this.right.type === "NewExpression") {
-      if (graph.retrieve(`$${this.right.callee.name}`)) {
+      if (graph.retrieve(`$${this.right.callee.name}`) instanceof CLASS) {
         rightKind = "INSTANCE";
       } else {
         rightKind = "EXPRESSION";
@@ -77,40 +78,8 @@ class $ASSIGNMENT extends $ {
           this.right.arguments
         );
       }
-      case ["LET", "CONST"].includes(leftKind) && rightKind === "EXPRESSION": {
-        return $LET(this.left, this.right);
-      }
-    }
-
-    if (this.left.type === "Identifier") {
-      if (scope.retrieve(name)) {
-        return $LET(this.left, this.right);
-      } else {
-        return $VARIABLE(this.left, this.right);
-      }
-    } else {
-      if (scope.retrieve(name)) {
-        return $LET(this.left, this.right);
-      } else {
-        if (this.right.type === "NewExpression") {
-          const cls = new Identifier(this.right.callee);
-
-          const identifier = new Identifier(this.left);
-
-          return $INSTANCE(
-            cls,
-            identifier.object.node,
-            identifier.last.node,
-            this.right.arguments
-          );
-        } else {
-          const identifier = new Identifier(this.left);
-          return $PROPERTY(
-            identifier.object.node,
-            identifier.last.node,
-            this.right
-          );
-        }
+      case ["LET", "CONST"].includes(leftKind): {
+        return $LET(this.left, this.right, leftKind === "CONST");
       }
     }
   }

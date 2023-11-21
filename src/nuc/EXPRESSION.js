@@ -1,6 +1,8 @@
 const graph = require("../graph");
 const Evaluation = require("../lang/Evaluation");
 const NODE = require("./NODE");
+const Identifier = require("../lang/ast/Identifier");
+const state = require("../state");
 
 class EXPRESSION {
   constructor(tokens) {
@@ -11,9 +13,25 @@ class EXPRESSION {
   before() {}
 
   run(scope) {
-    const expression = this.tokens.traverse((node) => node.generate(scope));
+    const expression = this.tokens.traverse((node) => {
+      const evaluation = node.generate(scope);
 
-    return new Evaluation(expression.join(""));
+      if (node instanceof Identifier) {
+        const test = state.expression(scope, { value: evaluation });
+
+        if (test === undefined) {
+          return "undefined";
+        }
+      }
+
+      return evaluation;
+    });
+
+    if (expression.includes("undefined")) {
+      return new Evaluation();
+    } else {
+      return new Evaluation(expression.join(""));
+    }
   }
 
   next() {}
