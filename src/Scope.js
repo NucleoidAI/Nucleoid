@@ -87,6 +87,20 @@ class Scope {
       index = index.prior;
     }
   }
+
+  retrieveGraph(instance) {
+    let index = this;
+
+    while (index) {
+      const value = index.graph[instance];
+
+      if (value) {
+        return value;
+      }
+
+      index = index.prior;
+    }
+  }
 }
 
 module.exports = Scope;

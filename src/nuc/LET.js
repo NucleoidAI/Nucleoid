@@ -11,6 +11,12 @@ class LET {
     const name = this.name;
     const object = this.object;
 
+    const instance = scope.retrieveGraph(this.name.first);
+
+    if (instance?.constant) {
+      throw TypeError("Assignment to constant variable.");
+    }
+
     const evaluation = this.value.run(scope, false, false);
 
     if (!evaluation) {
