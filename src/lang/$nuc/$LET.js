@@ -22,7 +22,10 @@ function build(name, value, constant) {
 
 class $LET extends $ {
   before(scope) {
-    if (this.value.type === "NewExpression") {
+    if (
+      this.value.type === "NewExpression" &&
+      graph.retrieve(`$${this.value.callee.name}`) instanceof CLASS
+    ) {
       this.value = $INSTANCE(
         this.value.callee,
         null,
