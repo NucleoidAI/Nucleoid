@@ -44,10 +44,7 @@ class $IF extends $ {
           statement.false.class = declaration;
         }
 
-        return [
-          new Instruction(scope, statement, true, true, false),
-          new Instruction(scope, statement, false, false, true),
-        ];
+        return [new Instruction(scope, statement, true, true, true)];
       }
     }
 
@@ -56,10 +53,7 @@ class $IF extends $ {
     statement.true = this.true;
     statement.false = this.false;
 
-    return [
-      new Instruction(scope, statement, true, true, false),
-      new Instruction(scope, statement, false, false, true),
-    ];
+    return [new Instruction(scope, statement, true, true, true)];
   }
 }
 

@@ -207,9 +207,6 @@ function process(statements, prior, options = {}) {
                   dependents.push(
                     new Instruction(scope, n, false, true, false, null, true)
                   );
-                  dependents.push(
-                    new Instruction(scope, n, false, false, true, null, true)
-                  );
                 } else {
                   dependents.push(
                     new Instruction(s, n, false, true, false, null, true)

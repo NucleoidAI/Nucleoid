@@ -38,7 +38,7 @@ class NODE {
 
   static direct(sourceKey, targetKey, targetNode) {
     transaction.register(graph[sourceKey].next, targetKey, targetNode);
-    transaction.register(targetNode.previous, sourceKey, graph[targetKey]);
+    transaction.register(targetNode.previous, sourceKey, graph[sourceKey]);
   }
 }
 
