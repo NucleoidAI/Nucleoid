@@ -9,7 +9,23 @@ class EXPRESSION {
     this.tokens = tokens;
   }
 
-  before() {}
+  before(scope) {
+    this.tokens.map((node) => {
+      if (
+        node.type === "MemberExpression" &&
+        graph.retrieve(node.first) &&
+        node.last.toString() === "value"
+      ) {
+        const value = state.expression(scope, {
+          value: node.object.generate(scope),
+        });
+
+        const { parse } = require("../lang/estree/parser");
+        const newValue = parse(value, false);
+        Object.assign(node.node, newValue);
+      }
+    });
+  }
 
   run(scope) {
     const expression = this.tokens.traverse((node) => {

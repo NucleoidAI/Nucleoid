@@ -70,10 +70,7 @@ function resolveIdentifier(scope, node) {
     if (["Identifier", "MemberExpression"].includes(node.type)) {
       const identifier = new Identifier(node);
       const resolved = identifier.resolve(scope);
-
-      for (const key in resolved) {
-        node[key] = resolved[key];
-      }
+      Object.assign(node, resolved);
     }
   }
 }
