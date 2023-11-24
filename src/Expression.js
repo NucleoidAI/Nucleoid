@@ -32,7 +32,7 @@ function traverseReduce(exp, fn, acc = []) {
     acc.push(exp.operator);
     traverseReduce(exp.right, fn, acc);
   } else if (exp.type === "UnaryExpression") {
-    acc.push(exp.operator);
+    acc.push(`${exp.operator} `);
     traverseReduce(exp.argument, fn, acc);
   } else {
     const ast = Node.convert(exp);
