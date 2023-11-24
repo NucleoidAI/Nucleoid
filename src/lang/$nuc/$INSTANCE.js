@@ -1,6 +1,6 @@
 const $ = require("./$");
 const graph = require("../../graph");
-const OBJECT = require("../../nuc/OBJECT");
+
 const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const CLASS = require("../../nuc/CLASS");
 const $LET = require("./$LET");
@@ -24,6 +24,8 @@ class $INSTANCE extends $ {
   }
 
   run(scope) {
+    const OBJECT = require("../../nuc/OBJECT");
+
     const cls = new Identifier(`$${this.class.name}`);
     const name = new Identifier(this.name);
     const args = this.arguments.map((arg) => new Identifier(arg));
@@ -49,12 +51,9 @@ class $INSTANCE extends $ {
         throw ReferenceError(`${this.object} is not defined`);
       }
 
-      if (
-        object &&
-        (graph[object] instanceof CLASS ||
-          graph[object] instanceof OBJECT$CLASS)
-      ) {
-        let statement = new OBJECT$CLASS();
+      // TODO Temporarily disabled
+      if (false) {
+        const statement = new OBJECT$CLASS();
         statement.class = graph[this.class];
         statement.name = name;
         statement.object = graph[this.object];

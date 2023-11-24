@@ -91,7 +91,7 @@ function process(statements, prior, options = {}) {
         }
 
         if (!instruction.derivative) {
-          result.$nuc.push(statement);
+          // result.$nuc.push(statement);
         }
 
         if (instruction.run) {
@@ -126,6 +126,7 @@ function process(statements, prior, options = {}) {
         }
 
         if (instruction.run) {
+          const { scope } = instruction;
           let { value, next } = statement.run(instruction.scope) || {};
 
           if (instruction.scope === root && !instruction.derivative) {
@@ -133,17 +134,7 @@ function process(statements, prior, options = {}) {
           }
 
           if (next) {
-            let scope = instruction.scope;
             next = Array.isArray(next) ? next : [next];
-
-            if (statement instanceof BLOCK) {
-              scope = new Scope(scope);
-              scope.block = statement;
-            }
-
-            if (statement instanceof IF) {
-              scope = new Scope(scope);
-            }
 
             next = next
               .map((statement) => {
@@ -152,9 +143,11 @@ function process(statements, prior, options = {}) {
                   : new Instruction(scope, statement, true, true, true);
               })
               .map((statement) => {
-                if (statement.derivative === undefined) {
-                  statement.derivative = true;
-                }
+                statement.before = statement.before ?? instruction.before;
+                statement.run = statement.run ?? instruction.run;
+                statement.graph = statement.graph ?? instruction.graph;
+                statement.derivative =
+                  statement.derivative ?? instruction.derivative;
                 return statement;
               });
 

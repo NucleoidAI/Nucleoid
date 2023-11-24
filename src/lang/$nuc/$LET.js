@@ -10,6 +10,7 @@ const REFERENCE = require("../../nuc/REFERENCE");
 const Local = require("../../lib/local");
 const $EXPRESSION = require("./$EXPRESSION");
 const Identifier = require("../ast/Identifier");
+const $INSTANCE = require("./$INSTANCE");
 
 function build(name, value, constant) {
   let statement = new $LET();
@@ -21,8 +22,18 @@ function build(name, value, constant) {
 
 class $LET extends $ {
   before(scope) {
-    const expression = $EXPRESSION(this.value);
-    this.value = expression.run(scope);
+    if (this.value.type === "NewExpression") {
+      this.value = $INSTANCE(
+        this.value.callee,
+        null,
+        null,
+        this.value.arguments
+      );
+      this.value.before(scope);
+    } else {
+      const expression = $EXPRESSION(this.value);
+      this.value = expression.run(scope);
+    }
   }
 
   run(scope) {
@@ -61,12 +72,10 @@ class $LET extends $ {
       statement.value = value;
       statement.constant = this.constant;
       return statement;
-    } else if (value instanceof OBJECT) {
-      let object = new OBJECT();
-      object.class = value.class;
-      object.args = value.args;
+    } else if (value.iof === "$INSTANCE") {
+      const object = this.value.run(scope);
 
-      let statement = new LET$OBJECT();
+      const statement = new LET$OBJECT();
       statement.name = name;
       statement.object = object;
       statement.constant = this.constant;

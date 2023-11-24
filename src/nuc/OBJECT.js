@@ -6,9 +6,7 @@ const Evaluation = require("../lang/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
 const { append } = require("../lang/estree/estree");
 const estree = require("../lang/estree/estree");
-const _ = require("lodash");
 const $CALL = require("../lang/$nuc/$CALL");
-const graph = require("../graph");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
 class OBJECT extends Node {

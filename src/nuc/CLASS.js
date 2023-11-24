@@ -43,8 +43,10 @@ class CLASS extends Node {
       return { destroyed: true };
     }
 
-    if (graph[this.key] && graph[this.key] instanceof CLASS) {
-      this.declarations = graph[this.key].declarations;
+    const cls = graph.retrieve(this.key);
+
+    if (cls instanceof CLASS) {
+      this.declarations = cls.declarations;
     }
   }
 }

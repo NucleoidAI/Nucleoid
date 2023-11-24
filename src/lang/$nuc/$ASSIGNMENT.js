@@ -6,6 +6,7 @@ const $INSTANCE = require("./$INSTANCE");
 const Identifier = require("../ast/Identifier");
 const graph = require("../../graph");
 const CLASS = require("../../nuc/CLASS");
+const Instruction = require("../../instruction");
 
 function build(kind, left, right) {
   let statement = new $ASSIGNMENT();
@@ -16,7 +17,7 @@ function build(kind, left, right) {
 }
 
 class $ASSIGNMENT extends $ {
-  run(scope) {
+  before(scope) {
     const name = new Identifier(this.left);
 
     let leftKind = this.kind;
@@ -51,37 +52,50 @@ class $ASSIGNMENT extends $ {
 
     switch (true) {
       case leftKind === "VAR" && rightKind === "EXPRESSION": {
-        return $VARIABLE(this.left, this.right);
+        this.assignment = $VARIABLE(this.left, this.right);
+        break;
       }
       case leftKind === "VAR" && rightKind === "INSTANCE": {
-        return $INSTANCE(
+        this.assignment = $INSTANCE(
           this.right.callee,
           null,
           this.left,
           this.right.arguments
         );
+        break;
       }
       case leftKind === "PROPERTY" && rightKind === "EXPRESSION": {
         const identifier = new Identifier(this.left);
-        return $PROPERTY(
+        this.assignment = $PROPERTY(
           identifier.object.node,
           identifier.last.node,
           this.right
         );
+        break;
       }
       case leftKind === "PROPERTY" && rightKind === "INSTANCE": {
         const identifier = new Identifier(this.left);
-        return $INSTANCE(
+        this.assignment = $INSTANCE(
           this.right.callee,
           identifier.object.node,
           identifier.last.node,
           this.right.arguments
         );
+        break;
       }
       case ["LET", "CONST"].includes(leftKind): {
-        return $LET(this.left, this.right, leftKind === "CONST");
+        this.assignment = $LET(this.left, this.right, leftKind === "CONST");
+        break;
       }
     }
+
+    this.assignment.before(scope);
+    delete this.left;
+    delete this.right;
+  }
+
+  run(scope) {
+    return new Instruction(scope, this.assignment, undefined, true);
   }
 }
 
