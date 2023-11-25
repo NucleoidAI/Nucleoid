@@ -1,3 +1,4 @@
+// TODO Rename this to `$`
 const graph = {
   classes: {
     name: "classes",

@@ -19,7 +19,7 @@ class PROPERTY$CLASS extends Node {
       let statement = new PROPERTY$INSTANCE(`${instance.name}.${this.name}`);
       statement.class = this.class;
       statement.instance = instance;
-      statement.object = instance;
+      statement.object = instance; // TODO Research if class property is nested
       statement.name = this.name;
       statement.value = _.cloneDeep(this.value);
       statements.push(statement);

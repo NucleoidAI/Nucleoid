@@ -7,7 +7,7 @@ class PROPERTY$INSTANCE extends PROPERTY {
 
       for (const identifier of identifiers) {
         if (identifier.first.toString() === this.class.name.toString()) {
-          identifier.first.node.name = this.instance.name;
+          identifier.first = this.object.resolve();
         }
       }
     });

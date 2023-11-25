@@ -143,9 +143,9 @@ function resolveArguments(scope, node) {
     )
   ) {
     if (current.callee) {
-      current.arguments = current.arguments
-        .map((arg) => new Expression(arg))
-        .map((arg) => arg.resolve(scope));
+      current.arguments = current.arguments.map((arg) =>
+        Node.convert(arg).resolve(scope)
+      );
     }
 
     current = current.object || current.callee;

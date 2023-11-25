@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-eval */
+// TODO Rename this to `$`
 const state = {
   classes: [],
 };
