@@ -28,7 +28,7 @@ function traverseWalk(node, acc = []) {
   if (["BinaryExpression", "LogicalExpression"].includes(node.type)) {
     traverseWalk(node.left, acc);
     traverseWalk(node.right, acc);
-  } else if (node.type === "UnaryExpression") {
+  } else if (["UnaryExpression", "UpdateExpression"].includes(node.type)) {
     traverseWalk(node.argument, acc);
   } else {
     acc.push(Node.convert(node).walk());
@@ -41,7 +41,7 @@ function traverseResolve(scope, node) {
   if (["BinaryExpression", "LogicalExpression"].includes(node.type)) {
     traverseResolve(scope, node.left);
     traverseResolve(scope, node.right);
-  } else if (node.type === "UnaryExpression") {
+  } else if (["UnaryExpression", "UpdateExpression"].includes(node.type)) {
     traverseResolve(scope, node.argument);
   } else {
     const ast = Node.convert(node);
@@ -59,7 +59,7 @@ function traverseGraph(scope, node, acc = []) {
   if (["BinaryExpression", "LogicalExpression"].includes(node.type)) {
     traverseGraph(scope, node.left, acc);
     traverseGraph(scope, node.right, acc);
-  } else if (node.type === "UnaryExpression") {
+  } else if (["UnaryExpression", "UpdateExpression"].includes(node.type)) {
     traverseGraph(scope, node.argument, acc);
   } else {
     acc.push(Node.convert(node).graph(scope));

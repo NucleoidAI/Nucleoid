@@ -2,6 +2,7 @@ const graph = require("../graph");
 const Evaluation = require("../lang/Evaluation");
 const NODE = require("./NODE");
 const state = require("../state");
+const serialize = require("../lib/serialize");
 
 class EXPRESSION {
   constructor(tokens) {
@@ -21,7 +22,7 @@ class EXPRESSION {
         });
 
         const { parse } = require("../lang/estree/parser");
-        const newValue = parse(value, false);
+        const newValue = parse(serialize(value, "state"), false);
         Object.assign(node.node, newValue);
       }
     });

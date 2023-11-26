@@ -8,6 +8,7 @@ const $RETURN = require("../$nuc/$RETURN");
 const $INSTANCE = require("../$nuc/$INSTANCE");
 const $FUNCTION = require("../$nuc/$FUNCTION");
 const $THROW = require("../$nuc/$THROW");
+const $FOR = require("../$nuc/$FOR");
 
 function parse(string, map = true) {
   const estree = acorn.parse(string, {
@@ -83,6 +84,11 @@ function parseNode(node) {
       const { id, params, body } = node;
 
       return $FUNCTION(id, params, parseNode(body));
+    }
+    case "ForOfStatement": {
+      const { left, right, body } = node;
+
+      return $FOR(left, right, body.body.map(parseNode));
     }
     case "ThrowStatement": {
       const { argument } = node;

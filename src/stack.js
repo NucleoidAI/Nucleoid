@@ -52,12 +52,18 @@ function process(statements, prior, options = {}) {
 
         const evaluation = statement.run(scope, false, false);
 
+        let value;
+
+        if (evaluation !== undefined) {
+          value = state.expression(scope, evaluation);
+        }
+
         if (
           evaluation &&
           instruction.scope === root &&
           !instruction.derivative
         ) {
-          result.value = state.expression(scope, evaluation);
+          result.value = value;
         }
 
         let list = statement.next(scope);
