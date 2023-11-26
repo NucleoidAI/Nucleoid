@@ -64,6 +64,7 @@ class Node {
     const Function = require("./Function");
     const Operator = require("./Operator");
     const Call = require("./Call");
+    const Template = require("./Template");
 
     switch (node.type) {
       case "Literal": {
@@ -89,6 +90,9 @@ class Node {
       }
       case "CallExpression": {
         return new Call(node);
+      }
+      case "TemplateLiteral": {
+        return new Template(node);
       }
       default: {
         return new Operator(node);
