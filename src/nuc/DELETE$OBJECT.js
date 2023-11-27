@@ -1,32 +1,38 @@
 const DELETE = require("./DELETE");
 const graph = require("../graph");
-const { state } = require("../state");
+const state = require("../state");
 
 class DELETE$OBJECT extends DELETE {
-  run() {
-    let name = graph[this.key].name;
+  run(scope) {
+    const node = graph.retrieve(this.variable.key);
+    let name = node.name;
 
-    if (Object.keys(graph[this.key].properties).length > 0)
-      throw ReferenceError(`Cannot delete object '${this.key}'`);
+    if (Object.keys(node.properties).length > 0)
+      throw ReferenceError(`Cannot delete object '${this.variable.key}'`);
 
-    if (graph[this.key].object) {
-      delete graph[this.key].object.properties[name];
+    if (node.object) {
+      delete node.object.properties[name];
     } else {
-      const list = graph[this.key].class.name.substring(1);
-      delete state[list][this.key];
+      const list = node.class.list.toString();
+      state.delete(scope, `${list}.${name}`);
 
-      const index = state[list].findIndex((object) => object.id === this.key);
-      state[list].splice(index, 1);
+      const index = state.state[list].findIndex(
+        (object) => object.id === node.key
+      );
+      state.state[list].splice(index, 1);
     }
 
     return super.run();
   }
 
   graph() {
-    for (let node in graph[this.key].previous)
-      delete graph[node].next[this.key];
+    const node = graph.retrieve(this.variable.key);
 
-    delete graph[this.key];
+    for (const key in node.previous) {
+      delete node.next[key];
+    }
+
+    delete graph.graph[node.key];
   }
 }
 

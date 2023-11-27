@@ -9,6 +9,7 @@ const $INSTANCE = require("../$nuc/$INSTANCE");
 const $FUNCTION = require("../$nuc/$FUNCTION");
 const $THROW = require("../$nuc/$THROW");
 const $FOR = require("../$nuc/$FOR");
+const $DELETE = require("../$nuc/$DELETE");
 
 function parse(string, map = true) {
   const estree = acorn.parse(string, {
@@ -63,6 +64,11 @@ function parseNode(node) {
 
       if (["AssignmentExpression", "NewExpression"].includes(expression.type)) {
         return parseNode(expression);
+      } else if (
+        expression.type === "UnaryExpression" &&
+        expression.operator === "delete"
+      ) {
+        return $DELETE(expression.argument);
       } else {
         return $EXPRESSION(expression);
       }

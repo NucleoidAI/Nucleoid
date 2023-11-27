@@ -68,6 +68,10 @@ function expression(scope, evaluation) {
   return eval(`(${evaluation.value})`);
 }
 
+function del(scope, variable) {
+  return eval(`delete state.${variable}`);
+}
+
 function load(execs = []) {
   const Node = require("./nuc/NODE");
   const graph = require("./graph");
@@ -93,3 +97,4 @@ module.exports.call = call;
 module.exports.expression = expression;
 module.exports.load = load;
 module.exports.clear = clear;
+module.exports.delete = del;
