@@ -2,6 +2,7 @@ const Node = require("./NODE");
 const Instruction = require("../instruction");
 const Scope = require("../Scope");
 const state = require("../state");
+const _ = require("lodash");
 
 class IF extends Node {
   before(scope) {
@@ -23,19 +24,19 @@ class IF extends Node {
     }
 
     if (state.expression(scope, condition)) {
+      const trueStatement = _.cloneDeep(this.true);
       return {
         next: [
-          new Instruction(local, this.true, true, true, false),
-          new Instruction(local, this.true, false, false, true),
+          new Instruction(local, trueStatement, true, true, false),
+          new Instruction(local, trueStatement, false, false, true),
         ],
       };
-    } else if (this.false && this.false instanceof IF) {
-      return { next: this.false.run(scope) };
     } else if (this.false) {
+      const falseStatement = _.cloneDeep(this.false);
       return {
         next: [
-          new Instruction(local, this.false, true, true, false),
-          new Instruction(local, this.false, false, false, true),
+          new Instruction(local, falseStatement, true, true, false),
+          new Instruction(local, falseStatement, false, false, true),
         ],
       };
     }

@@ -35,7 +35,6 @@ class $IF extends $ {
         let statement = new IF$CLASS(`if(${this.condition.tokens})`);
         statement.class = cls;
         statement.condition = this.condition;
-        statement.false = this.false;
         statement.true = this.true;
         statement.true.class = declaration;
 

@@ -26,7 +26,11 @@ class IF$CLASS extends Node {
       statement.true.class = this.class;
       statement.true.instance = statement.instance;
 
-      if (this.false) {
+      if (this.false?.iof === "$IF") {
+        statement.false = _.cloneDeep(this.false);
+        statement.false.class = this.class;
+        statement.false.instance = statement.instance;
+      } else if (this.false?.iof === "$BLOCK") {
         statement.false = $BLOCK(_.cloneDeep(this.false.statements));
         statement.false.class = this.class;
         statement.false.instance = statement.instance;

@@ -111,7 +111,7 @@ function process(statements, prior, options = {}) {
             .map((statement) => {
               return statement instanceof Instruction
                 ? statement
-                : new Instruction(scope, statement, true, true, true, null); // root = null?
+                : new Instruction(scope, statement, true, true, true, null); // TODO root = null?
             })
             .map((instruction) => {
               if (instruction.derivative === undefined) {
