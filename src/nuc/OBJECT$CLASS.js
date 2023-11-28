@@ -1,6 +1,7 @@
 const Node = require("./NODE");
 const Id = require("../lib/identifier");
 const OBJECT$INSTANCE = require("./OBJECT$INSTANCE");
+const graph = require("../graph");
 
 class OBJECT$CLASS extends Node {
   before() {
@@ -9,18 +10,21 @@ class OBJECT$CLASS extends Node {
 
   run(scope) {
     let instances;
-    let statements = [];
+    const statements = [];
 
-    let instance = scope.instance(Id.root(this).name);
+    const instance = scope.instance(this.object.name);
 
-    if (instance) instances = [instance];
-    else instances = Object.values(Id.root(this).instances);
+    if (instance) {
+      instances = [instance];
+    } else {
+      instances = Object.values(this.object.instances);
+    }
 
     for (let instance of instances) {
-      let statement = new OBJECT$INSTANCE();
-      statement.instance = instance;
+      const statement = new OBJECT$INSTANCE(`${instance.name}.${this.name}`);
+      statement.class = this.class;
+      statement.object = graph.retrieve(`${instance.name}`);
       statement.name = this.name;
-      statement.declaration = this;
       statements.push(statement);
     }
 
@@ -28,7 +32,7 @@ class OBJECT$CLASS extends Node {
   }
 
   graph() {
-    Id.root(this).declarations[this.key] = this;
+    this.object.declarations[this.key] = this;
   }
 }
 

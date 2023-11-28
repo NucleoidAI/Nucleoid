@@ -1,7 +1,5 @@
 const $ = require("./$");
 const graph = require("../../graph");
-
-const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const CLASS = require("../../nuc/CLASS");
 const $LET = require("./$LET");
 const Identifier = require("../ast/Identifier");
@@ -51,12 +49,13 @@ class $INSTANCE extends $ {
         throw ReferenceError(`${this.object} is not defined`);
       }
 
-      // TODO Temporarily disabled
-      if (false) {
-        const statement = new OBJECT$CLASS();
-        statement.class = graph[this.class];
+      if (graph.retrieve(object.first) instanceof CLASS) {
+        const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
+
+        const statement = new OBJECT$CLASS(`${object}.${name}`);
+        statement.class = graph.retrieve(cls);
         statement.name = name;
-        statement.object = graph[this.object];
+        statement.object = graph.retrieve(object);
         return statement;
       } else {
         const statement = new OBJECT(`${object}.${name}`);
