@@ -89,7 +89,6 @@ class $ASSIGNMENT extends $ {
       }
     }
 
-    this.assignment.before(scope);
     delete this.left;
     delete this.right;
   }

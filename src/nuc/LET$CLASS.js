@@ -1,4 +1,5 @@
 const LET$INSTANCE = require("./LET$INSTANCE");
+const _ = require("lodash");
 
 class LET$CLASS {
   before() {}
@@ -11,7 +12,7 @@ class LET$CLASS {
       statement.class = this.class;
       statement.instance = instance;
       statement.name = this.name;
-      statement.declaration = this;
+      statement.value = _.cloneDeep(this.value);
       return { next: statement };
     }
   }

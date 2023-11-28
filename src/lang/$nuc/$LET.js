@@ -53,9 +53,20 @@ class $LET extends $ {
 
     let value = this.value;
     if (value instanceof EXPRESSION) {
-      if (graph.retrieve(name) instanceof CLASS) {
+      const cls = this.value.tokens.find((node) => {
+        const identifiers = [node.walk()].flat(Infinity);
+
+        for (const identifier of identifiers) {
+          const cls = graph.retrieve(identifier.first);
+          if (cls instanceof CLASS) {
+            return cls;
+          }
+        }
+      });
+
+      if (cls) {
         let statement = new LET$CLASS();
-        statement.class = graph[name];
+        statement.class = cls;
         statement.name = name;
         statement.value = value;
         statement.constant = this.constant;

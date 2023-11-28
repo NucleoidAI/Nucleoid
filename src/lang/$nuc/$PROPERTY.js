@@ -46,7 +46,7 @@ class $PROPERTY extends $ {
     if (cls instanceof CLASS || cls instanceof OBJECT$CLASS) {
       let statement = new PROPERTY$CLASS(key);
       statement.class = cls;
-      statement.object = object;
+      statement.object = graph.retrieve(object);
       statement.name = name;
       statement.value = this.value;
       return statement;

@@ -105,19 +105,20 @@ function process(statements, prior, options = {}) {
           next = Array.isArray(next) ? next : [next];
 
           const scope = instruction.scope;
-          const { derivative } = instruction;
 
           next = next
             .map((statement) => {
               return statement instanceof Instruction
                 ? statement
-                : new Instruction(scope, statement, true, true, true, null); // TODO root = null?
+                : new Instruction(scope, statement, true, true, true); // TODO root = null?
             })
-            .map((instruction) => {
-              if (instruction.derivative === undefined) {
-                instruction.derivative = derivative;
-              }
-              return instruction;
+            .map((statement) => {
+              statement.before = statement.before ?? instruction.before;
+              statement.run = statement.run ?? instruction.run;
+              statement.graph = statement.graph ?? instruction.graph;
+              statement.derivative =
+                statement.derivative ?? instruction.derivative;
+              return statement;
             });
 
           instructions = next.filter((i) => !i.root).concat(instructions);

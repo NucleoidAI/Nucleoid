@@ -32,7 +32,10 @@ class EXPRESSION {
     const expression = this.tokens.traverse((node) => {
       const evaluation = node.generate(scope);
 
-      if (node.type === "MemberExpression" && graph.retrieve(node.first)) {
+      if (
+        scope.retrieve(node) ||
+        (node.type === "MemberExpression" && graph.retrieve(node.first))
+      ) {
         try {
           const test = state.expression(scope, { value: evaluation });
           if (test === undefined) {

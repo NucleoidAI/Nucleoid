@@ -4,6 +4,9 @@ const $ = require("./$");
 const Instruction = require("../../instruction");
 const Scope = require("../../Scope");
 const { v4: uuid } = require("uuid");
+const _ = require("lodash");
+const LET = require("../../nuc/LET");
+const REFERENCE = require("../../nuc/REFERENCE");
 
 function build(statements, skip) {
   let statement = new $BLOCK();
@@ -18,18 +21,26 @@ class $BLOCK extends $ {
     test.object = scope.object;
     let cls = this.class;
 
-    /*
-    test: for (let statement of this.statements) {
+    test: for (let statement of _.cloneDeep(this.statements)) {
       while (statement instanceof $) {
+        statement.before(test);
         statement = statement.run(test);
+
+        if (statement instanceof Instruction) {
+          statement = statement.statement;
+        }
       }
 
       if (statement instanceof LET && !(statement.value instanceof REFERENCE)) {
+        statement.before(test);
         statement.run(test);
         statement.beforeGraph(test);
         statement.graph(test);
         continue;
       } else if (statement.type === "CLASS") {
+        const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
+        const PROPERTY$CLASS = require("../../nuc/PROPERTY$CLASS");
+
         if (
           statement instanceof PROPERTY$CLASS ||
           statement instanceof OBJECT$CLASS
@@ -44,7 +55,6 @@ class $BLOCK extends $ {
         break test;
       }
     }
-    */
 
     if (cls) {
       let statement = new BLOCK$CLASS(uuid());

@@ -9,6 +9,17 @@ class BLOCK$INSTANCE extends BLOCK {
 
     super.before(scope);
   }
+
+  run(scope) {
+    scope.instances[this.class.name] = this.instance;
+
+    if (this.break) {
+      this.statements = this.declaration.statements;
+      this.break = false;
+    }
+
+    return super.run(scope);
+  }
 }
 
 BLOCK$INSTANCE.prototype.type = "INSTANCE";
