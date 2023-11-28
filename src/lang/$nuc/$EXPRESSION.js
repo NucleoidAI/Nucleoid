@@ -1,6 +1,9 @@
 const $ = require("./$");
 const EXPRESSION = require("../../nuc/EXPRESSION");
 const Expression = require("../../Expression");
+const Identifier = require("../ast/Identifier");
+const REFERENCE = require("../../nuc/REFERENCE");
+const graph = require("../../graph");
 
 function build(tokens) {
   if (!(tokens instanceof Expression)) {
@@ -20,9 +23,20 @@ function build(tokens) {
 
 class $EXPRESSION extends $ {
   run() {
-    let statement = new EXPRESSION();
-    statement.tokens = this.tokens;
-    return statement;
+    if (Identifier.types.includes(this.tokens.node.type)) {
+      const identifier = new Identifier(this.tokens.node);
+      const link = graph.retrieve(identifier);
+
+      if (link) {
+        const statement = new REFERENCE(this.tokens);
+        statement.link = link;
+        return statement;
+      } else {
+        return new EXPRESSION(this.tokens);
+      }
+    } else {
+      return new EXPRESSION(this.tokens);
+    }
   }
 }
 

@@ -16,6 +16,14 @@ function append(source, target) {
   const clonedSource = _.cloneDeep(source);
   const clonedTarget = _.cloneDeep(target);
 
+  if (!source) {
+    return clonedTarget;
+  }
+
+  if (!target) {
+    return clonedSource;
+  }
+
   const empty = {
     type: "MemberExpression",
     computed: false,

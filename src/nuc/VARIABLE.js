@@ -11,13 +11,8 @@ class VARIABLE extends Node {
 
     let value;
 
-    if (this.value instanceof REFERENCE) {
-      value = state.assign(scope, this.name, this.value);
-    } else {
-      const evaluation = this.value.run(scope);
-
-      value = state.assign(scope, this.name, evaluation);
-    }
+    const evaluation = this.value.run(scope);
+    value = state.assign(scope, this.name, evaluation);
 
     return { value };
   }

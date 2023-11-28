@@ -3,6 +3,8 @@ const Evaluation = require("../lang/Evaluation");
 const NODE = require("./NODE");
 const state = require("../state");
 const serialize = require("../lib/serialize");
+const { append } = require("../lang/estree/estree");
+const Identifier = require("../lang/ast/Identifier");
 
 class EXPRESSION {
   constructor(tokens) {
@@ -63,6 +65,19 @@ class EXPRESSION {
       if (retrieved) {
         return retrieved;
       } else {
+        const REFERENCE = require("./REFERENCE");
+
+        for (const { left, right } of node) {
+          const test = graph.retrieve(left);
+
+          if (test?.value && test.value instanceof REFERENCE) {
+            const link = new Identifier(
+              append(test.value.link.name.node, right.node)
+            );
+            return graph.retrieve(link);
+          }
+        }
+
         const temporary = new NODE(node);
         // TODO NODE Direct
         graph.graph[node] = temporary;

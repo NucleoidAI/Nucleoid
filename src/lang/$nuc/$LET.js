@@ -52,7 +52,7 @@ class $LET extends $ {
     }
 
     let value = this.value;
-    if (value instanceof EXPRESSION) {
+    if (value instanceof EXPRESSION || value instanceof REFERENCE) {
       const cls = this.value.tokens.find((node) => {
         const identifiers = [node.walk()].flat(Infinity);
 
@@ -73,13 +73,6 @@ class $LET extends $ {
         return statement;
       }
 
-      let statement = new LET();
-      statement.object = this.object;
-      statement.name = name;
-      statement.value = value;
-      statement.constant = this.constant;
-      return statement;
-    } else if (value instanceof REFERENCE) {
       let statement = new LET();
       statement.object = this.object;
       statement.name = name;

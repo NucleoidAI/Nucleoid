@@ -52,14 +52,6 @@ class $PROPERTY extends $ {
       return statement;
     }
 
-    if (this.value instanceof REFERENCE) {
-      let statement = new PROPERTY$REFERENCE();
-      statement.object = graph.retrieve(object);
-      statement.name = name;
-      statement.value = this.value;
-      return statement;
-    }
-
     let statement = new PROPERTY(key);
     statement.object = graph.retrieve(object);
     statement.name = name;

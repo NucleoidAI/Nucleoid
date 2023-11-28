@@ -121,6 +121,32 @@ class Identifier extends Node {
   walk() {
     return [this];
   }
+
+  [Symbol.iterator]() {
+    const list = [];
+
+    let left = this;
+    let right = null;
+
+    while (left.object) {
+      // list.push(left.object);
+      right = new Identifier(append(left.last.node, right?.node));
+      left = left.object;
+      list.push({ left, right });
+    }
+
+    let index = list.length - 1;
+
+    return {
+      next() {
+        if (index >= 0) {
+          return { done: false, value: list[index--] };
+        } else {
+          return { done: true };
+        }
+      },
+    };
+  }
 }
 
 function removeBuiltins(identifier) {
