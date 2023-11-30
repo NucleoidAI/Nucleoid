@@ -38,7 +38,7 @@ class Call extends Node {
           scope
         );
         const json = serialize(value, "state");
-        const expression = new Expression(json);
+        const expression = new Expression(`(${json})`);
         return expression.resolve(scope);
       } else {
         if (first.type !== "Literal") {
