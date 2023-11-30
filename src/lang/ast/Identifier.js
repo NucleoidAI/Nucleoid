@@ -21,7 +21,7 @@ class Identifier extends Node {
 
   set first(first) {
     if (["Identifier", "ThisExpression"].includes(this.node.type)) {
-      this.node = first.node;
+      Object.assign(this.node, first.node);
     } else if (this.node.type === "MemberExpression") {
       this.node.object = first.node;
     }
@@ -39,7 +39,7 @@ class Identifier extends Node {
 
   set object(object) {
     if (["Identifier", "ThisExpression"].includes(this.node.type)) {
-      this.node = object.node;
+      Object.assign(this.node, object.node);
     } else if (this.node.type === "MemberExpression") {
       this.node.object = object.node;
     }
@@ -57,7 +57,7 @@ class Identifier extends Node {
 
   set last(last) {
     if (["Identifier", "ThisExpression"].includes(this.node.type)) {
-      this.node = last.node;
+      Object.assign(this.node, last.node);
     } else if (this.node.type === "MemberExpression") {
       this.node.property = last.node;
     }
