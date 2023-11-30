@@ -30,7 +30,7 @@ class EXPRESSION {
     });
   }
 
-  run(scope) {
+  run(scope, force = false) {
     const expression = this.tokens.traverse((node) => {
       const evaluation = node.generate(scope);
 
@@ -41,17 +41,17 @@ class EXPRESSION {
         try {
           const test = state.expression(scope, { value: evaluation });
           if (test === undefined) {
-            return "UNDEFINED";
+            return "undefined";
           }
         } catch (error) {
-          return "UNDEFINED";
+          return "undefined";
         }
       }
 
       return evaluation;
     });
 
-    if (!expression.includes("UNDEFINED")) {
+    if (force || !expression.includes("undefined")) {
       return new Evaluation(expression.join(""));
     }
   }

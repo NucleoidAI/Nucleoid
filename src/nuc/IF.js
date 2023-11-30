@@ -16,11 +16,7 @@ class IF extends Node {
     if (scope.block?.skip) {
       condition = this.condition.run(scope, true);
     } else {
-      condition = this.condition.run(scope);
-    }
-
-    if (!condition) {
-      return;
+      condition = this.condition.run(scope, true);
     }
 
     if (state.expression(scope, condition)) {

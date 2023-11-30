@@ -4,6 +4,7 @@ const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
 const Evaluation = require("../lang/Evaluation");
 const _ = require("lodash");
+const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
 class CLASS extends Node {
   constructor(key) {
@@ -34,6 +35,14 @@ class CLASS extends Node {
       const alias = $ALIAS(this.name.node, this.list.node, empty);
       list.push(alias);
     }
+
+    list.push(
+      $EXPRESSION({
+        type: "Literal",
+        value: null,
+        raw: "null",
+      })
+    );
 
     return { next: list };
   }
