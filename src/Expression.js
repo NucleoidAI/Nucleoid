@@ -56,8 +56,7 @@ function mapReduce(exp, fn, acc = []) {
     const ast = Node.convert(exp);
     const curr = fn(ast);
 
-    // Filter out undefined values
-    if (curr !== undefined) {
+    if (curr) {
       acc.push(curr);
     }
   }
@@ -79,7 +78,7 @@ function graphReduce(scope, exp, fn, acc = []) {
       if (item) {
         const curr = fn(item);
 
-        if (curr !== undefined) {
+        if (curr) {
           acc.push(curr);
         }
       }

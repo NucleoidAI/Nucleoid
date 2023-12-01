@@ -23,7 +23,7 @@ class Identifier extends Node {
     if (["Identifier", "ThisExpression"].includes(this.node.type)) {
       Object.assign(this.node, first.node);
     } else if (this.node.type === "MemberExpression") {
-      this.node.object = first.node;
+      root(this.node).object = first.node;
     }
   }
 
