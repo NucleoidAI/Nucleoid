@@ -43,7 +43,7 @@ function traverseReduce(exp, fn, acc = []) {
     }
   }
 
-  return acc;
+  return acc.flat(Infinity);
 }
 
 function mapReduce(exp, fn, acc = []) {
@@ -61,7 +61,7 @@ function mapReduce(exp, fn, acc = []) {
     }
   }
 
-  return acc;
+  return acc.flat(Infinity);
 }
 
 function graphReduce(scope, exp, fn, acc = []) {
@@ -85,7 +85,7 @@ function graphReduce(scope, exp, fn, acc = []) {
     });
   }
 
-  return acc;
+  return acc.flat(Infinity);
 }
 
 module.exports = Expression;

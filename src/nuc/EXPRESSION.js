@@ -55,7 +55,23 @@ class EXPRESSION {
     }
   }
 
-  next() {}
+  next() {
+    const Call = require("../lang/ast/Call");
+
+    return this.tokens.map((ast) => {
+      if (ast instanceof Call) {
+        const object = ast.object;
+
+        if (object) {
+          const node = graph.retrieve(object);
+
+          if (node) {
+            return Object.values(node.next);
+          }
+        }
+      }
+    });
+  }
 
   graph(scope) {
     return this.tokens.graph(scope, (node) => {
