@@ -1,5 +1,6 @@
 const Identifier = require("../Identifier");
 const { equal } = require("assert");
+const Scope = require("../../../Scope");
 
 describe("Identifier", () => {
   it("serializes single expression", () => {
@@ -59,5 +60,29 @@ describe("Identifier", () => {
     equal(identifier.first, "/[A-Z]/");
     equal(identifier.last, "test");
     equal(identifier.object, "/[A-Z]/");
+  });
+
+  it("serializes single expression with bracket", () => {
+    const scope = new Scope();
+    scope.graph.test = {};
+    const identifier = new Identifier("User[test]");
+
+    equal(identifier, "User[test]");
+    equal(identifier.first, "User");
+    equal(identifier.last, "test");
+    equal(identifier.object, "User");
+    equal(identifier.generate(scope), "User[scope.local.test]");
+  });
+
+  it("serializes member expression with bracket", () => {
+    const scope = new Scope();
+    scope.graph.test = {};
+    const identifier = new Identifier("User.address[test]");
+
+    equal(identifier, "User.address[test]");
+    equal(identifier.first, "User");
+    equal(identifier.last, "test");
+    equal(identifier.object, "User.address");
+    equal(identifier.generate(scope), "User.address[scope.local.test]");
   });
 });

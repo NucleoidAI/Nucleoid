@@ -85,15 +85,28 @@ class Identifier extends Node {
         return scoped.resolve();
       }
 
+      let node = this.node;
+
+      // TODO Loop through all computed identifiers
+      if (this.node.computed) {
+        node = _.cloneDeep(this.node);
+        const property = new Identifier(node.property);
+        const resolved = property.resolve(scope);
+
+        if (resolved) {
+          Object.assign(node.property, resolved);
+        }
+      }
+
       if (graph.retrieve(first)) {
         const state = {
           type: "Identifier",
           name: "state",
         };
 
-        return append(state, this.node);
+        return append(state, node);
       } else {
-        return this.node;
+        return node;
       }
     } else {
       return this.node;
