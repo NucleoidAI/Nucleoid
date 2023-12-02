@@ -20,19 +20,28 @@ class Scope {
     this.callback = [];
   }
 
-  assign(variable, evaluation) {
-    const prefix = {
-      type: "MemberExpression",
-      computed: false, // false because it uses dot notation
-      object: {
-        type: "Identifier",
-        name: "scope",
-      },
-      property: {
-        type: "Identifier",
-        name: "local",
-      },
-    };
+  assign(variable, evaluation, reassign = false) {
+    let prefix;
+
+    if (reassign) {
+      prefix = this.retrieve(variable.first)?.object.node;
+    }
+
+    if (!prefix) {
+      prefix = {
+        type: "MemberExpression",
+        computed: false, // false because it uses dot notation
+        object: {
+          type: "Identifier",
+          name: "scope",
+        },
+        property: {
+          type: "Identifier",
+          name: "local",
+        },
+      };
+    }
+
     const local = new Identifier(append(prefix, variable.node));
 
     // eslint-disable-next-line no-unused-vars

@@ -12,11 +12,12 @@ const $EXPRESSION = require("./$EXPRESSION");
 const Identifier = require("../ast/Identifier");
 const $INSTANCE = require("./$INSTANCE");
 
-function build(name, value, constant) {
+function build(name, value, constant, reassign) {
   let statement = new $LET();
   statement.name = name;
   statement.value = value;
   statement.constant = constant;
+  statement.reassign = reassign;
   return statement;
 }
 
@@ -78,6 +79,7 @@ class $LET extends $ {
       statement.name = name;
       statement.value = value;
       statement.constant = this.constant;
+      statement.reassign = this.reassign;
       return statement;
     } else if (value.iof === "$INSTANCE") {
       const object = this.value.run(scope);

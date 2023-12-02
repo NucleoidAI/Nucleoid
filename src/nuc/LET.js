@@ -30,7 +30,7 @@ class LET {
       return { value };
       */
     } else {
-      const value = scope.assign(name, evaluation);
+      const value = scope.assign(name, evaluation, this.reassign);
       return { value };
     }
   }

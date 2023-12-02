@@ -21,6 +21,7 @@ class $ASSIGNMENT extends $ {
     const name = new Identifier(this.left);
 
     let leftKind = this.kind;
+    const reassign = !this.kind;
 
     if (!leftKind) {
       if (scope.retrieve(name)) {
@@ -84,7 +85,12 @@ class $ASSIGNMENT extends $ {
         break;
       }
       case ["LET", "CONST"].includes(leftKind): {
-        this.assignment = $LET(this.left, this.right, leftKind === "CONST");
+        this.assignment = $LET(
+          this.left,
+          this.right,
+          leftKind === "CONST",
+          reassign
+        );
         break;
       }
     }

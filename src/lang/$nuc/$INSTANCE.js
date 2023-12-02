@@ -32,7 +32,7 @@ class $INSTANCE extends $ {
       throw ReferenceError(`${cls} is not defined`);
     }
 
-    if (this.object !== undefined && name.toString() === "value") {
+    if (this.object && name.toString() === "value") {
       throw TypeError("Cannot use 'value' as a property");
     }
 
@@ -46,7 +46,7 @@ class $INSTANCE extends $ {
       }
 
       if (!graph.retrieve(object)) {
-        throw ReferenceError(`${this.object} is not defined`);
+        throw ReferenceError(`${new Identifier(this.object)} is not defined`);
       }
 
       if (graph.retrieve(object.first) instanceof CLASS) {
