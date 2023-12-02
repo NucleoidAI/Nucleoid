@@ -16,7 +16,6 @@ class EXPRESSION {
     this.tokens.map((node) => {
       if (
         node.type === "MemberExpression" &&
-        graph.retrieve(node.first) &&
         node.last.toString() === "value"
       ) {
         const value = state.expression(scope, {
