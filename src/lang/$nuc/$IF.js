@@ -17,10 +17,10 @@ function build(condition, trueStatement, falseStatement) {
 }
 
 class $IF extends $ {
-  before() {
+  before(scope) {
     const condition = new Expression(this.condition);
     const expression = $EXPRESSION(condition);
-    this.condition = expression.run();
+    this.condition = expression.run(scope);
   }
 
   run(scope) {

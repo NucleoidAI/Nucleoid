@@ -36,7 +36,9 @@ class LET {
   }
 
   beforeGraph(scope) {
-    scope.graph[this.name] = this;
+    if (!this.reassign) {
+      scope.graph[this.name] = this;
+    }
   }
 
   graph(scope) {

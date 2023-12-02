@@ -22,9 +22,14 @@ function build(tokens) {
 }
 
 class $EXPRESSION extends $ {
-  run() {
+  run(scope) {
     if (Identifier.types.includes(this.tokens.node.type)) {
       const identifier = new Identifier(this.tokens.node);
+
+      if (scope.retrieve(identifier)) {
+        return new EXPRESSION(this.tokens);
+      }
+
       const link = graph.retrieve(identifier);
 
       if (link) {
