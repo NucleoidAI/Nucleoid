@@ -121,7 +121,7 @@ function traverseCallee(node, func) {
 
   while (
     ["MemberExpression", "CallExpression"].includes(
-      current.object?.type || current.callee?.type
+      current.type || current.object?.type || current.callee?.type
     )
   ) {
     if (current.callee) {
@@ -139,7 +139,7 @@ function resolveArguments(scope, node) {
 
   while (
     ["MemberExpression", "CallExpression"].includes(
-      current.object?.type || current.callee?.type
+      current.object?.type || current?.type
     )
   ) {
     if (current.callee) {
