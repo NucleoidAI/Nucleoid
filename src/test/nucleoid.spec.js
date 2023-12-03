@@ -141,24 +141,10 @@ describe("Nucleoid", () => {
     it("supports string in expression", () => {
       equal(nucleoid.run("'New String'"), "New String");
       equal(nucleoid.run('"New String"'), "New String");
-      throws(
-        () => {
-          nucleoid.run(`'New String"`);
-        },
-        (error) => validate(error, SyntaxError, "Invalid or unexpected token")
-      );
-      throws(
-        () => {
-          nucleoid.run(`"New String'`);
-        },
-        (error) => validate(error, SyntaxError, "Invalid or unexpected token")
-      );
-      throws(
-        () => {
-          nucleoid.run("`New ${a} String`");
-        },
-        (error) => validate(error, SyntaxError, "Backtick is not supported")
-      );
+      equal(nucleoid.run("`New String`"), "New String");
+
+      nucleoid.run("a = 123");
+      equal(nucleoid.run("`New ${a} String`"), "New 123 String");
     });
 
     it("supports logical operators", () => {
@@ -529,14 +515,14 @@ describe("Nucleoid", () => {
       equal(
         nucleoid.run("device1"),
         nucleoid.run(
-          "let device = Device.find ( d => d.code == 'A0' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
+          "let device = Device.find ( d => d.code == 'A0' ) ; if ( ! device ) { throw 'INVALID_DEVICE' }  device"
         )
       );
 
       throws(
         () => {
           nucleoid.run(
-            "let device = Device.find ( d => d.code == 'A1' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } ; device"
+            "let device = Device.find ( d => d.code == 'A1' ) ; if ( ! device ) { throw 'INVALID_DEVICE' } device"
           );
         },
         (error) => error === "INVALID_DEVICE"
@@ -930,7 +916,7 @@ describe("Nucleoid", () => {
     it("runs let statement as a variable", () => {
       nucleoid.run("integer = 30");
       nucleoid.run(
-        "{ let division = integer / 10 ; equivalency = division * 10}"
+        "{ let division = integer / 10 ; equivalency = division * 10 }"
       );
       equal(nucleoid.run("equivalency"), 30);
 
