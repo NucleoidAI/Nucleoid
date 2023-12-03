@@ -27,7 +27,29 @@ class Expression extends Node {
 
 // TODO Traverse with different types
 function traverseReduce(exp, fn, acc = []) {
-  if (["BinaryExpression", "LogicalExpression"].includes(exp.type)) {
+  if (exp.type === "BinaryExpression") {
+    if (exp.left.type === "BinaryExpression") {
+      acc.push("(");
+    }
+
+    traverseReduce(exp.left, fn, acc);
+
+    if (exp.left.type === "BinaryExpression") {
+      acc.push(")");
+    }
+
+    acc.push(exp.operator);
+
+    if (exp.right.type === "BinaryExpression") {
+      acc.push("(");
+    }
+
+    traverseReduce(exp.right, fn, acc);
+
+    if (exp.right.type === "BinaryExpression") {
+      acc.push(")");
+    }
+  } else if (["LogicalExpression"].includes(exp.type)) {
     traverseReduce(exp.left, fn, acc);
     acc.push(exp.operator);
     traverseReduce(exp.right, fn, acc);
