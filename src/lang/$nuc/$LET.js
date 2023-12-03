@@ -51,7 +51,7 @@ class $LET extends $ {
       throw ReferenceError(`${name.object} is not defined`);
     }
 
-    if (name.last.toString() === "value") {
+    if (name.type === "MemberExpression" && name.last.toString() === "value") {
       throw TypeError("Cannot use 'value' in local");
     }
 
