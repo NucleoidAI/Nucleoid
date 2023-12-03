@@ -41,14 +41,17 @@ class $LET extends $ {
   }
 
   run(scope) {
+    // TODO Rename this to `identifier`?
     const name = new Identifier(this.name);
-    const object = this.object ? new Identifier(this.object) : undefined;
 
-    if (object !== undefined && !Local.check(scope, object)) {
-      throw ReferenceError(`${name} is not defined`);
+    if (
+      name.type === "MemberExpression" &&
+      !scope.retrieve(name.object, true)
+    ) {
+      throw ReferenceError(`${name.object} is not defined`);
     }
 
-    if (object?.last.toString() === "value") {
+    if (name.last.toString() === "value") {
       throw TypeError("Cannot use 'value' in local");
     }
 
@@ -75,7 +78,6 @@ class $LET extends $ {
       }
 
       let statement = new LET();
-      statement.object = this.object;
       statement.name = name;
       statement.value = value;
       statement.constant = this.constant;

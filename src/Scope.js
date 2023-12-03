@@ -50,7 +50,7 @@ class Scope {
     return eval(`${local}=${evaluation}`);
   }
 
-  retrieve(variable) {
+  retrieve(variable, exact = false) {
     let index = this;
 
     let estree = {
@@ -61,7 +61,11 @@ class Scope {
     const first = variable.first;
 
     while (index) {
-      if (index.graph[first] !== undefined) {
+      if (
+        index.graph[first] !== undefined &&
+        // eslint-disable-next-line no-eval
+        (!exact || eval(`index.local.${variable}`) !== undefined)
+      ) {
         const local = {
           type: "Identifier",
           name: "local",
