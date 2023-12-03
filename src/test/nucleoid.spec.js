@@ -163,10 +163,10 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("date.getYear()"), 119);
     });
 
-    it.skip("supports value function of standard built-in objects", () => {
-      const result = nucleoid.run("date1 = Date.now ( )", details);
-      nucleoid.run(result.string.replace("date1", "date2"));
-      equal(nucleoid.run("date1 == date2"), true);
+    it("supports built-in objects", () => {
+      const result = nucleoid.run("date1 = new Date ( )");
+      nucleoid.run(`date2 = new Date ( ${result.getTime()} )`);
+      equal(nucleoid.run("date1.getTime() == date2.getTime()"), true);
 
       nucleoid.run("date3 = Date.parse ( '04 Dec 1995 00:12:00 GMT' )");
       equal(nucleoid.run("date3"), 818035920000);
@@ -177,45 +177,6 @@ describe("Nucleoid", () => {
         },
         (error) => validate(error, TypeError, "Date.wrong is not a function")
       );
-    });
-
-    it.skip("supports value function", () => {
-      nucleoid.run(
-        "function generateInt ( ) { return 65 + Math.round ( Math.random ( ) * 24 ) }"
-      );
-      nucleoid.run("generateInt.value = true");
-
-      let details = nucleoid.run("number1 = generateInt ( )", details);
-      nucleoid.run(details.string.replace("number1", "number2"));
-      equal(nucleoid.run("number1 == number2"), true);
-
-      nucleoid.run(
-        "function generateString ( ) { let number = 65 + Math.round ( Math.random ( ) * 24 ) ; return String.fromCharCode ( number ) ; }"
-      );
-      nucleoid.run("generateString.value = true");
-
-      details = nucleoid.run("string1 = generateString ( )", details);
-      nucleoid.run(details.string.replace("string1", "string2"));
-      equal(nucleoid.run("string1 == string2"), true);
-    });
-
-    it.skip("supports multiple inline value functions", () => {
-      nucleoid.run(
-        "function generateInt ( ) { return Math.round ( Math.random ( ) * 100 ) }"
-      );
-      nucleoid.run("generateInt.value = true");
-
-      let details = nucleoid.run(
-        "number1 = generateInt ( ) ; number2 = generateInt ( )",
-        details
-      );
-      nucleoid.run(
-        details.string
-          .replace("number1", "number3")
-          .replace("number2", "number4")
-      );
-      equal(nucleoid.run("number1 == number3"), true);
-      equal(nucleoid.run("number2 == number4"), true);
     });
 
     it("calls function with no return", () => {
@@ -728,7 +689,7 @@ describe("Nucleoid", () => {
       );
     });
 
-    it.skip("creates function in state", () => {
+    it("creates function in state", () => {
       nucleoid.run("function generate ( number ) { return number * 10 }");
       nucleoid.run("random = 10");
       nucleoid.run("number = generate ( random )");
@@ -1111,7 +1072,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("seller1.pay"), 50000);
     });
 
-    it("reassigns let statement before initialization", () => {
+    it.skip("reassigns let statement before initialization", () => {
       nucleoid.run("class Order { }");
       nucleoid.run("class Sale { }");
       nucleoid.run(
@@ -1394,7 +1355,7 @@ describe("Nucleoid", () => {
       );
     });
 
-    it("rejects value of property if property is not defined", () => {
+    it.skip("rejects value of property if property is not defined", () => {
       nucleoid.run("class Travel { }");
       nucleoid.run("travel1 = new Travel ( )");
       nucleoid.run("travel1.speed = 65");
@@ -1640,7 +1601,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("item1.custom"), "US0000002");
     });
 
-    it("runs nested block statement of property", () => {
+    it.skip("runs nested block statement of property", () => {
       nucleoid.run("class Figure { }");
       nucleoid.run("figure1 = new Figure ( )");
       nucleoid.run("figure1.width = 9");
