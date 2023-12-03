@@ -1201,12 +1201,12 @@ describe("Nucleoid", () => {
       nucleoid.run("density = 0.899");
       nucleoid.run("substance = 'NH3'");
       nucleoid.run("molarConcentration = null");
-      nucleoid.run("default = 0");
+      nucleoid.run("def = 0");
       nucleoid.run(
-        "{ let concentration = percentage * density / 100 * 1000 ; if ( substance == 'NH3' ) { molarConcentration = concentration / 17.04 } else { molarConcentration = default } }"
+        "{ let concentration = percentage * density / 100 * 1000 ; if ( substance == 'NH3' ) { molarConcentration = concentration / 17.04 } else { molarConcentration = def } }"
       );
       nucleoid.run("substance = 'NH16'");
-      nucleoid.run("default = 1");
+      nucleoid.run("def = 1");
       equal(nucleoid.run("molarConcentration"), 1);
     });
 
@@ -1235,7 +1235,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("chart1 = new Chart ( )");
         },
-        (error) => validate(error, ReferenceError, "$Chart is not defined")
+        (error) => validate(error, ReferenceError, "Chart is not defined")
       );
 
       nucleoid.run("class Chart { }");
@@ -1244,14 +1244,14 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("chart1.plot = new Plot ( )");
         },
-        (error) => validate(error, ReferenceError, "$Plot is not defined")
+        (error) => validate(error, ReferenceError, "Plot is not defined")
       );
 
       throws(
         () => {
           nucleoid.run("$Chart.plot = new Plot ( )");
         },
-        (error) => validate(error, ReferenceError, "$Plot is not defined")
+        (error) => validate(error, ReferenceError, "Plot is not defined")
       );
     });
 
