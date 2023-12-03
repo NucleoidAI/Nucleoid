@@ -188,13 +188,11 @@ function process(statements, prior, options = {}) {
 
             if (declarative) {
               if (list) {
-                /*
-                list.forEach((e) => {
-                  if (graph[e].previous[statement.key] !== undefined) {
+                list.forEach((target) => {
+                  if (target.previous[statement.key] !== undefined) {
                     throw ReferenceError("Circular Dependency");
                   }
                 });
-                 */
 
                 dependencies = dependencies.concat(
                   list.filter((e) => !dependencies.includes(e))
