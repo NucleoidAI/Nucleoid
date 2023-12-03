@@ -19,7 +19,9 @@ function parse(string, map = true) {
 
   removeLocations(estree);
 
-  return map ? estree.body.map(parseNode) : estree.body[0].expression;
+  return map
+    ? estree.body.map(parseNode).filter((exp) => exp)
+    : estree.body[0].expression;
 }
 
 function parseNode(node) {
@@ -100,6 +102,9 @@ function parseNode(node) {
       const { argument } = node;
 
       return $THROW(argument);
+    }
+    case "EmptyStatement": {
+      return;
     }
     default: {
       return $EXPRESSION(node);
