@@ -81,15 +81,18 @@ describe("Call", () => {
   });
 
   it("resolves member expression with another call", () => {
-    const call = new Call("user.filter(name.charAt(first));");
+    const call = new Call("user.filter('ABC' + name.charAt(first));");
 
     const scope = new Scope();
     scope.graph.first = 1;
     equal(call.first, "user");
     equal(call.last, "filter");
     equal(call.object, "user");
-    equal(call, "user.filter(name.charAt(first))");
-    equal(call.generate(scope), "user.filter(name.charAt(scope.local.first))");
+    equal(call, "user.filter('ABC'+name.charAt(first))");
+    equal(
+      call.generate(scope),
+      "user.filter('ABC'+name.charAt(scope.local.first))"
+    );
   });
 
   it("resolves literal expression", () => {

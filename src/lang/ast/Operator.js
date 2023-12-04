@@ -1,6 +1,5 @@
 const Node = require("./Node");
 const _ = require("lodash");
-const Identifier = require("./Identifier");
 
 class Operator extends Node {
   resolve(scope) {
@@ -46,12 +45,8 @@ function traverseResolve(scope, node) {
   } else {
     const ast = Node.convert(node);
 
-    if (Identifier.types.includes(ast.type)) {
-      const resolved = ast.resolve(scope);
-      Object.assign(node, resolved);
-    } else {
-      ast.resolve(scope);
-    }
+    const resolved = ast.resolve(scope);
+    Object.assign(node, resolved);
   }
 }
 

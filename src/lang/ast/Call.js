@@ -139,7 +139,7 @@ function resolveArguments(scope, node) {
 
   while (
     ["MemberExpression", "CallExpression"].includes(
-      current.object?.type || current?.type
+      current?.type || current.object?.type
     )
   ) {
     if (current.callee) {
@@ -148,7 +148,7 @@ function resolveArguments(scope, node) {
       );
     }
 
-    current = current.object || current.callee;
+    current = current.callee || current.object;
   }
 }
 
