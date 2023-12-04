@@ -2,7 +2,6 @@ const $BLOCK = require("../lang/$nuc/$BLOCK");
 const Instruction = require("../instruction");
 const $LET = require("../lang/$nuc/$LET");
 const state = require("../state");
-const $EXP = require("../lang/$nuc/$EXPRESSION");
 const graph = require("../graph");
 const Evaluation = require("../lang/Evaluation");
 const _ = require("lodash");

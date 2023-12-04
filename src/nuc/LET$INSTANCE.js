@@ -1,8 +1,4 @@
 const LET = require("./LET");
-const EXPRESSION = require("./EXPRESSION");
-const Id = require("../lib/identifier");
-const BREAK = require("./BREAK");
-const state = require("../state");
 
 class LET$INSTANCE extends LET {
   before(scope) {

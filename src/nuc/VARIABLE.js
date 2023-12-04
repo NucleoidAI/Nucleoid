@@ -7,12 +7,8 @@ class VARIABLE extends Node {
   }
 
   run(scope) {
-    const REFERENCE = require("./REFERENCE");
-
-    let value;
-
     const evaluation = this.value.run(scope);
-    value = state.assign(scope, this.name, evaluation);
+    const value = state.assign(scope, this.name, evaluation);
 
     return { value };
   }

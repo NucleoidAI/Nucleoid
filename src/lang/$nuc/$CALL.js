@@ -4,7 +4,6 @@ const $BLOCK = require("./$BLOCK");
 const $LET = require("./$LET");
 const _ = require("lodash");
 const Identifier = require("../ast/Identifier");
-const $FUNCTION = require("./$FUNCTION");
 
 const NULL = {
   type: "Literal",

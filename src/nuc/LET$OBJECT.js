@@ -1,4 +1,3 @@
-const state = require("../state");
 const LET = require("./LET");
 const Evaluation = require("../lang/Evaluation");
 

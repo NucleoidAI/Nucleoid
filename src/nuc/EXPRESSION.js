@@ -5,7 +5,6 @@ const state = require("../state");
 const serialize = require("../lib/serialize");
 const { append } = require("../lang/estree/estree");
 const Identifier = require("../lang/ast/Identifier");
-const Id = require("../lib/identifier");
 
 class EXPRESSION {
   constructor(tokens) {

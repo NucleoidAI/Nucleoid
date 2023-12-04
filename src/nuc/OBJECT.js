@@ -6,7 +6,6 @@ const Evaluation = require("../lang/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
 const { append } = require("../lang/estree/estree");
 const estree = require("../lang/estree/estree");
-const $CALL = require("../lang/$nuc/$CALL");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
 class OBJECT extends Node {
@@ -56,6 +55,8 @@ class OBJECT extends Node {
     const constructor = this.class.methods["$constructor"];
 
     if (constructor) {
+      const $CALL = require("../lang/$nuc/$CALL");
+
       const call = $CALL(
         constructor,
         this.arguments.map((arg) => arg.node)

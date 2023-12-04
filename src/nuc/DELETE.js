@@ -2,7 +2,6 @@ const state = require("../state");
 const graph = require("../graph");
 const Instruction = require("../instruction");
 const Node = require("./NODE");
-const { v4: uuid } = require("uuid");
 
 class DELETE {
   before() {}
