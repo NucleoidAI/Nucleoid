@@ -25,7 +25,7 @@ module.exports.process = function (string, options = {}) {
     transaction.end();
   } catch (error) {
     transaction.rollback();
-    result = { ...result, error };
+    result = { ...result, error, value: error.toString() };
   }
 
   const events = Event.list();
@@ -33,10 +33,6 @@ module.exports.process = function (string, options = {}) {
   const time = date - before;
 
   const $nuc = JSON.stringify(result.$nuc);
-
-  if (result.error) {
-    result.value = `${result.error.constructor.name}: ${result.error.message}`;
-  }
 
   if (!cacheOnly) {
     datastore.write({
@@ -46,7 +42,7 @@ module.exports.process = function (string, options = {}) {
       t: time,
       r: result.value,
       d: date,
-      e: result.error,
+      e: result.error ? true : undefined,
       v: events,
     });
   }
@@ -64,7 +60,7 @@ module.exports.process = function (string, options = {}) {
       $nuc: result.$nuc,
       date,
       time,
-      error: result.error,
+      error: !!result.error,
       events,
     };
   } else {

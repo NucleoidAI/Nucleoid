@@ -22,10 +22,6 @@ terminal.post("/", (req, res) => {
   const declarative = mode?.toLowerCase() === "declarative";
   const details = runtime.process(req.body, { declarative, details: true });
 
-  if (!argv.debug) {
-    details.execs = undefined;
-  }
-
   res.send(details);
 });
 
