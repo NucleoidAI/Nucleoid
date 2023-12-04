@@ -5,6 +5,7 @@ const state = require("../state");
 const serialize = require("../lib/serialize");
 const { append } = require("../lang/estree/estree");
 const Identifier = require("../lang/ast/Identifier");
+const Id = require("../lib/identifier");
 
 class EXPRESSION {
   constructor(tokens) {
@@ -13,6 +14,24 @@ class EXPRESSION {
   }
 
   before(scope) {
+    const $class = scope.$class;
+
+    if ($class) {
+      const instance = scope.instance($class.name);
+
+      if (instance) {
+        this.tokens.traverse((node) => {
+          const identifiers = [node.walk()].flat(Infinity);
+
+          for (const identifier of identifiers) {
+            if (identifier.first.toString() === $class.name.toString()) {
+              identifier.first = instance.resolve();
+            }
+          }
+        });
+      }
+    }
+
     this.tokens.map((node) => {
       if (
         node.type === "MemberExpression" &&

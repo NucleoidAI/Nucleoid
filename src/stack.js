@@ -50,6 +50,7 @@ function process(statements, prior, options = {}) {
       case statement instanceof EXPRESSION: {
         let scope = instruction.scope;
 
+        statement.before(scope);
         const evaluation = statement.run(scope, false, false);
 
         let value;
