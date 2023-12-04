@@ -5,7 +5,6 @@ const openapi = require("./routes/openapi");
 const logs = require("./routes/logs");
 const metrics = require("./routes/metrics");
 const runtime = require("./runtime");
-const { argv } = require("yargs");
 
 const terminal = express();
 terminal.use(express.json());
