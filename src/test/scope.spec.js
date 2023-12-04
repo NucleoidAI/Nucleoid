@@ -1,5 +1,4 @@
 const Scope = require("../Scope");
-const Evaluation = require("../lang/Evaluation");
 const { equal } = require("assert");
 const Identifier = require("../lang/ast/Identifier");
 
@@ -9,7 +8,7 @@ describe("Scope", () => {
 
     const variable = new Identifier("a");
 
-    scope.assign(variable, new Evaluation("1"));
+    scope.graph.a = {};
     const identifier = scope.retrieve(variable);
     equal(identifier.toString(), "scope.local.a");
   });
@@ -21,7 +20,7 @@ describe("Scope", () => {
 
     const variable = new Identifier("a");
 
-    scope1.assign(variable, new Evaluation("1"));
+    scope1.graph.a = {};
     const identifier = scope3.retrieve(variable);
     equal(identifier.toString(), "scope.prior.prior.local.a");
   });
@@ -31,11 +30,9 @@ describe("Scope", () => {
     const scope2 = new Scope(scope1);
     const scope3 = new Scope(scope2);
 
-    const variable1 = new Identifier("a");
-    const variable2 = new Identifier("a.b.c");
-
-    scope1.assign(variable1, new Evaluation("{ b: { c: 1 } }"));
-    const identifier = scope3.retrieve(variable2);
+    scope1.graph.a = {};
+    const variable = new Identifier("a.b.c");
+    const identifier = scope3.retrieve(variable);
     equal(identifier.toString(), "scope.prior.prior.local.a.b.c");
   });
 });

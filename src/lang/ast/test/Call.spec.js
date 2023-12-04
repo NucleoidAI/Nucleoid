@@ -48,7 +48,7 @@ describe("Call", () => {
     );
 
     const scope = new Scope();
-    scope.graph.type = "TEST";
+    scope.graph.type = {};
     equal(call.first, "user");
     equal(call.last, "filter");
     equal(call.object, "user.accounts");
@@ -66,7 +66,7 @@ describe("Call", () => {
 
     const scope = new Scope();
     scope.graph.type = "TEST";
-    scope.graph.level = 10;
+    scope.graph.level = {};
     equal(call.first, "user");
     equal(call.object, "user.accounts");
     equal(call.last, "filter");
@@ -84,7 +84,7 @@ describe("Call", () => {
     const call = new Call("user.filter('ABC' + name.charAt(first));");
 
     const scope = new Scope();
-    scope.graph.first = 1;
+    scope.graph.first = {};
     equal(call.first, "user");
     equal(call.last, "filter");
     equal(call.object, "user");

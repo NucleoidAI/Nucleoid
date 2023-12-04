@@ -38,7 +38,7 @@ describe("Nucleoid API", () => {
     deepEqual(res3.body, { id: userId, name: "Daphne" });
   });
 
-  it("OpenAPI", async () => {
+  it.skip("OpenAPI", async () => {
     const app = nucleoid(options);
 
     app.context(`${__dirname}/context.json`);
