@@ -2,6 +2,7 @@ const state = require("../state");
 const Node = require("./NODE");
 const estree = require("../lang/estree/estree");
 const Identifier = require("../lang/ast/Identifier");
+const REFERENCE = require("./REFERENCE");
 
 class PROPERTY extends Node {
   before(scope) {
@@ -11,9 +12,14 @@ class PROPERTY extends Node {
   run(scope) {
     const evaluation = this.value.run(scope);
 
+    const object =
+      this.object.value instanceof REFERENCE
+        ? this.object.value.link
+        : this.object;
+
     // TODO Rename `variable`
     const variable = new Identifier(
-      estree.append(this.object.resolve().node, this.name.node)
+      estree.append(object.resolve().node, this.name.node)
     );
 
     if (!evaluation) {
@@ -26,7 +32,12 @@ class PROPERTY extends Node {
   }
 
   graph(scope) {
-    this.object.properties[this.name] = this;
+    const object =
+      this.object.value instanceof REFERENCE
+        ? this.object.value.link
+        : this.object;
+
+    object.properties[this.name] = this;
     return this.value.graph(scope);
   }
 }
