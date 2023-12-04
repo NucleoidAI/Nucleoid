@@ -6,6 +6,8 @@ const DELETE$VARIABLE = require("../../nuc/DELETE$VARIABLE");
 const DELETE$OBJECT = require("../../nuc/DELETE$OBJECT");
 const OBJECT = require("../../nuc/OBJECT");
 const Identifier = require("../ast/Identifier");
+const $EXPRESSION = require("./$EXPRESSION");
+const state = require("../../state");
 
 function build(key) {
   const statement = new $DELETE();
@@ -14,9 +16,19 @@ function build(key) {
 }
 
 class $DELETE extends $ {
-  run() {
+  run(scope) {
     const identifier = new Identifier(this.key);
-    const variable = graph.retrieve(identifier);
+    let variable = graph.retrieve(identifier);
+
+    if (!variable) {
+      try {
+        const $expression = $EXPRESSION(this.key);
+        const expression = $expression.run(scope);
+        const item = expression.run(scope);
+        const { id } = state.expression(scope, { value: item });
+        variable = graph.retrieve(id);
+      } catch (err) {} // eslint-disable-line no-empty
+    }
 
     if (variable instanceof VARIABLE) {
       const statement = new DELETE$VARIABLE();
