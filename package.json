@@ -34,11 +34,8 @@
     "escodegen": "^2.1.0",
     "express": "^4.17.1",
     "express-openapi": "^9.3.0",
-    "glob": "^7.1.7",
-    "install": "^0.13.0",
     "lodash": "^4.17.21",
     "moment": "2.29.4",
-    "npm": "^10.2.2",
     "swagger-ui-express": "^4.1.6",
     "uuid": "^8.3.2",
     "yargs": "^17.0.1"
