@@ -4,61 +4,58 @@ const CLASS = require("../../nuc/CLASS");
 const PROPERTY$CLASS = require("../../nuc/PROPERTY$CLASS");
 const PROPERTY = require("../../nuc/PROPERTY");
 const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
-const REFERENCE = require("../../nuc/REFERENCE");
-const PROPERTY$REFERENCE = require("../../nuc/PROPERTY$REFERENCE");
 const Local = require("../../lib/local");
 const FUNCTION = require("../../nuc/FUNCTION");
+const Identifier = require("../ast/Identifier");
+const $EXPRESSION = require("./$EXPRESSION");
 
-function construct(object, name, value, bracket) {
+function build(object, name, value) {
   let statement = new $PROPERTY();
   statement.object = object;
   statement.name = name;
   statement.value = value;
-  statement.bracket = bracket;
   return statement;
 }
 
 class $PROPERTY extends $ {
+  before(scope) {
+    const expression = $EXPRESSION(this.value);
+    this.value = expression.run(scope);
+  }
+
   run(scope) {
-    if (this.object === "this") {
-      this.object = Local.object(scope);
+    let object = new Identifier(this.object);
+    const name = new Identifier(this.name);
+    const key = `${object}.${name}`;
+
+    if (object.toString() === "this") {
+      object = Local.object(scope);
     }
 
-    if (graph[this.object] === undefined) {
-      throw ReferenceError(`${this.object} is not defined`);
+    if (!graph.retrieve(object)) {
+      throw ReferenceError(`${object} is not defined`);
     }
 
-    if (this.name === "value" && !(graph[this.object] instanceof FUNCTION)) {
+    if (name.toString() === "value" && !(graph[object] instanceof FUNCTION)) {
       throw TypeError("Cannot use 'value' as a name");
     }
 
-    if (
-      graph[this.object] instanceof CLASS ||
-      graph[this.object] instanceof OBJECT$CLASS
-    ) {
-      let statement = new PROPERTY$CLASS();
-      statement.object = graph[this.object];
-      statement.name = this.name;
-      statement.value = this.value.run();
+    const cls = graph.retrieve(object);
+    if (cls instanceof CLASS || cls instanceof OBJECT$CLASS) {
+      let statement = new PROPERTY$CLASS(key);
+      statement.class = cls;
+      statement.object = graph.retrieve(object);
+      statement.name = name;
+      statement.value = this.value;
       return statement;
     }
 
-    let value = this.value.run(scope);
-
-    if (value instanceof REFERENCE) {
-      let statement = new PROPERTY$REFERENCE();
-      statement.object = graph[this.object];
-      statement.name = this.name;
-      statement.value = value;
-      return statement;
-    }
-
-    let statement = new PROPERTY();
-    statement.object = graph[this.object];
-    statement.name = this.name;
-    statement.value = value;
+    let statement = new PROPERTY(key);
+    statement.object = graph.retrieve(object);
+    statement.name = name;
+    statement.value = this.value;
     return statement;
   }
 }
 
-module.exports = construct;
+module.exports = build;

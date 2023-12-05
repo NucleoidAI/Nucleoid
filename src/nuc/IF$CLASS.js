@@ -1,40 +1,37 @@
 const IF$INSTANCE = require("./IF$INSTANCE");
 const $BLOCK = require("../lang/$nuc/$BLOCK");
-const Node = require("./Node");
-const graph = require("../graph");
-const Instance = require("../lib/instance");
+const Node = require("./NODE");
+const _ = require("lodash");
+const { v4: uuid } = require("uuid");
 
 class IF$CLASS extends Node {
-  before() {
-    this.key = "if(" + this.condition.tokens.construct() + ")";
-  }
-
   run(scope) {
     let instances;
     let statements = [];
 
-    let instance = Instance.retrieve(scope, this.class.name);
+    let instance = scope.instance(this.class.name);
 
-    if (instance) instances = [instance];
-    else instances = Object.keys(this.class.instances).map((i) => graph[i]);
+    if (instance) {
+      instances = [instance];
+    } else {
+      instances = Object.values(this.class.instances);
+    }
 
     for (let instance of instances) {
-      let statement = new IF$INSTANCE();
+      const statement = new IF$INSTANCE(uuid());
       statement.class = this.class;
       statement.instance = instance;
-      statement.declaration = this;
-
-      statement.true = $BLOCK(this.true.statements);
+      statement.condition = _.cloneDeep(this.condition);
+      statement.true = $BLOCK(_.cloneDeep(this.true.statements));
       statement.true.class = this.class;
       statement.true.instance = statement.instance;
 
-      if (this.false !== undefined) {
-        if (this.false instanceof $BLOCK) {
-          statement.false = $BLOCK(this.false.statements);
-        } else {
-          statement.false = this.false;
-        }
-
+      if (this.false?.iof === "$IF") {
+        statement.false = _.cloneDeep(this.false);
+        statement.false.class = this.class;
+        statement.false.instance = statement.instance;
+      } else if (this.false?.iof === "$BLOCK") {
+        statement.false = $BLOCK(_.cloneDeep(this.false.statements));
         statement.false.class = this.class;
         statement.false.instance = statement.instance;
       }

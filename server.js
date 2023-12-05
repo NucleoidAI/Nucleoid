@@ -12,6 +12,8 @@ if (argv.clear) {
 }
 
 nucleoid.start().then(() => {
+  console.log("Nucleoid runtime is started");
+
   if (argv.cluster) {
     cluster.init();
   }

@@ -1,7 +1,7 @@
-const JS = require("./lang/js/JS");
+const ESTree = require("./lang/estree/parser");
 
 function compile(string) {
-  return JS.compile(string).statements;
+  return ESTree.parse(string);
 }
 
 module.exports.compile = compile;

@@ -1,19 +1,21 @@
 const state = require("../state");
 const graph = require("../graph");
 const Instruction = require("../instruction");
-const Node = require("./Node");
+const Node = require("./NODE");
 
 class DELETE {
   before() {}
 
   run(scope) {
-    if (graph[this.key]) {
-      state.run(scope, "delete state." + this.key, true);
+    if (this.variable) {
+      const key = this.variable.key;
+      state.delete(scope, key);
 
       let list = [];
 
-      for (let node in graph[this.key].next) {
-        list.push(new Instruction(scope.root, graph[node], false, true, false));
+      for (let node in graph.retrieve(key).next) {
+        const statement = graph.retrieve(node);
+        list.push(new Instruction(scope.root, statement, false, true, false));
       }
 
       return { next: list, value: true };
@@ -25,23 +27,27 @@ class DELETE {
   beforeGraph() {}
 
   graph() {
-    if (!graph[this.key]) return;
-
-    for (let node in graph[this.key].previous)
-      delete graph[node].next[this.key];
-
-    let empty = new Node();
-
-    for (let node in graph[this.key].next) {
-      empty.next[node] = graph[this.key].next[node];
-      delete graph[this.key].next[node];
+    if (!this.variable) {
+      return;
     }
 
-    // TODO: Move to Node
-    let name = graph[this.key].name;
-    delete graph[this.key].object.properties[name];
-    delete graph[this.key];
-    graph[this.key] = empty;
+    const node = graph.retrieve(this.variable.key);
+
+    for (const key in node.previous) {
+      delete node.next[key];
+    }
+
+    const empty = new Node(node.key);
+
+    for (const key in node.next) {
+      empty.next[key] = node.next[key];
+      delete node.next[key];
+    }
+
+    const name = node.name;
+    delete node.object.properties[name];
+    delete graph.graph[node.key];
+    graph.graph[node.key] = empty;
   }
 }
 

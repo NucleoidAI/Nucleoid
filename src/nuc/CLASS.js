@@ -1,44 +1,48 @@
 const state = require("../state");
-const Node = require("./Node");
-const $EXP = require("../lang/$nuc/$EXPRESSION");
+const Node = require("./NODE");
 const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
-const { deepEqual } = require("../lib/deep");
+const Evaluation = require("../lang/Evaluation");
+const _ = require("lodash");
+const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
 class CLASS extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
+    this.methods = [];
     this.instances = {};
     this.declarations = {};
   }
 
-  before() {
-    this.key = this.name;
-  }
-
   run(scope) {
-    if (graph[this.name]) {
-      if (
-        deepEqual(this.args, graph[this.name].args) &&
-        deepEqual(this.construct, graph[this.name].construct)
-      ) {
+    const cls = graph.retrieve(this.name);
+
+    if (cls) {
+      if (_.isEqual(this.methods, cls.methods)) {
         this.destroyed = true;
         return;
       }
     }
 
-    state.assign(scope, this.name, `class {}`);
+    state.assign(scope, this.name, new Evaluation(`class ${this.name}{}`));
 
     let list = [];
 
-    if (!graph[this.name]) {
-      let context = $EXP(`classes.push("${this.name}")`);
-      list.push(context.statement);
+    if (!cls) {
+      state.call(scope, "classes.push", [`state.${this.name}`]);
 
-      context = $EXP("[]");
-      const alias = $ALIAS(this, this.name.substring(1), context.statement);
+      const empty = { type: "ArrayExpression", elements: [] };
+      const alias = $ALIAS(this.name.node, this.list.node, empty);
       list.push(alias);
     }
+
+    list.push(
+      $EXPRESSION({
+        type: "Literal",
+        value: null,
+        raw: "null",
+      })
+    );
 
     return { next: list };
   }
@@ -48,8 +52,10 @@ class CLASS extends Node {
       return { destroyed: true };
     }
 
-    if (graph[this.key] && graph[this.key] instanceof CLASS) {
-      this.declarations = graph[this.key].declarations;
+    const cls = graph.retrieve(this.key);
+
+    if (cls instanceof CLASS) {
+      this.declarations = cls.declarations;
     }
   }
 }

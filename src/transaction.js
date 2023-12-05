@@ -10,20 +10,36 @@ function end() {
   return result;
 }
 
-function assignGraph(object, property, value) {
-  if (!object) return;
+function register(p1, p2, p3) {
+  // eslint-disable-next-line no-unused-vars
+  const { state } = require("./state");
 
-  list.push({ object, property, before: object[property] });
-  object[property] = value;
-}
+  if (!p1) return;
 
-function push(transaction) {
-  list.push(transaction);
+  if (typeof p1 === "string") {
+    const variable = p1;
+    const value = p2;
+
+    // eslint-disable-next-line no-eval
+    const before = eval(`${variable}`);
+
+    // eslint-disable-next-line no-eval
+    const after = eval(`${variable}=${value}`);
+
+    list.push({ variable, before });
+    return after;
+  } else {
+    let object = p1;
+    let property = p2;
+    let value = p3;
+
+    list.push({ object, property, before: object[property] });
+    object[property] = value;
+  }
 }
 
 function rollback() {
-  // eslint-disable-next-line no-unused-vars
-  const { state } = require("./state");
+  const { state } = require("./state"); // eslint-disable-line no-unused-vars
 
   while (list.length) {
     let transaction = list.pop();
@@ -32,13 +48,9 @@ function rollback() {
     let property = transaction.property;
     let before = transaction.before;
 
-    if (!variable && !object && !property) {
-      continue;
-    }
-
     if (variable !== undefined) {
       // eslint-disable-next-line no-eval
-      eval(`state.${variable}=before`);
+      eval(`${variable}=before`);
     } else {
       if (before === undefined) {
         delete object[property];
@@ -51,6 +63,5 @@ function rollback() {
 
 module.exports.start = start;
 module.exports.end = end;
-module.exports.push = push;
-module.exports.assignGraph = assignGraph;
+module.exports.register = register;
 module.exports.rollback = rollback;

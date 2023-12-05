@@ -1,58 +1,78 @@
 const $ = require("./$");
 const graph = require("../../graph");
-const OBJECT = require("../../nuc/OBJECT");
-const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
 const CLASS = require("../../nuc/CLASS");
-const Local = require("../../lib/local");
 const $LET = require("./$LET");
+const Identifier = require("../ast/Identifier");
+const random = require("../../lib/random");
 
-function construct(cls, name, object, args) {
+function build(cls, object, name, args = []) {
   let statement = new $INSTANCE();
-  statement.class = `$${cls}`;
-  statement.name = name;
+  statement.class = cls;
   statement.object = object;
-  statement.args = args;
+  statement.name = name;
+  statement.arguments = args;
   return statement;
 }
 
 class $INSTANCE extends $ {
-  run(scope) {
-    if (graph[this.class] === undefined)
-      throw ReferenceError(`${this.class} is not defined`);
+  before() {
+    if (!this.object && !this.name) {
+      this.name = random(16, true);
+    }
+  }
 
-    if (this.object !== undefined && this.name === "value") {
+  run(scope) {
+    const OBJECT = require("../../nuc/OBJECT");
+
+    const cls = new Identifier(`$${this.class.name}`);
+    const name = new Identifier(this.name);
+    const args = this.arguments.map((arg) => new Identifier(arg));
+
+    if (!graph.retrieve(cls)) {
+      throw ReferenceError(`${cls} is not defined`);
+    }
+
+    if (this.object && name.toString() === "value") {
       throw TypeError("Cannot use 'value' as a property");
     }
 
-    let local = this.object + "." + this.name;
-    if (Local.check(scope, this.object)) {
-      let instance = new $INSTANCE();
-      instance.class = this.class;
-      return $LET(local, instance);
+    if (this.object) {
+      const object = new Identifier(this.object);
+
+      if (scope.retrieve(object)) {
+        let instance = new OBJECT();
+        instance.class = this.class;
+        return $LET(name, instance);
+      }
+
+      if (!graph.retrieve(object)) {
+        throw ReferenceError(`${new Identifier(this.object)} is not defined`);
+      }
+
+      if (graph.retrieve(object.first) instanceof CLASS) {
+        const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
+
+        const statement = new OBJECT$CLASS(`${object}.${name}`);
+        statement.class = graph.retrieve(cls);
+        statement.name = name;
+        statement.object = graph.retrieve(object);
+        return statement;
+      } else {
+        const statement = new OBJECT(`${object}.${name}`);
+        statement.class = graph.retrieve(cls);
+        statement.name = name;
+        statement.object = graph.retrieve(object);
+        statement.arguments = args;
+        return statement;
+      }
     }
 
-    if (this.object !== undefined && graph[this.object] === undefined)
-      throw ReferenceError(`${this.object} is not defined`);
-
-    if (
-      this.object &&
-      (graph[this.object] instanceof CLASS ||
-        graph[this.object] instanceof OBJECT$CLASS)
-    ) {
-      let statement = new OBJECT$CLASS();
-      statement.class = graph[this.class];
-      statement.name = this.name;
-      statement.object = graph[this.object];
-      return statement;
-    }
-
-    let statement = new OBJECT();
-    statement.class = graph[this.class];
-    statement.name = this.name;
-    statement.object = graph[this.object];
-    statement.args = this.args;
+    let statement = new OBJECT(name);
+    statement.class = graph.retrieve(cls);
+    statement.name = name;
+    statement.arguments = args;
     return statement;
   }
 }
 
-module.exports = construct;
+module.exports = build;

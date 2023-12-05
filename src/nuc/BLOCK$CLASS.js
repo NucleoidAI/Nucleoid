@@ -1,12 +1,11 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const BLOCK$INSTANCE = require("./BLOCK$INSTANCE");
 const Instruction = require("../instruction");
-const graph = require("../graph");
-const Instance = require("../lib/instance");
+const { v4: uuid } = require("uuid");
 
 class BLOCK$CLASS extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
     this.statements = [];
   }
 
@@ -14,13 +13,17 @@ class BLOCK$CLASS extends Node {
     let instances;
     let statements = [];
 
-    let instance = Instance.retrieve(scope, this.class.name);
+    scope.$class = this.class;
+    let instance = scope.instance(this.class.name);
 
-    if (instance) instances = [instance];
-    else instances = Object.keys(this.class.instances).map((i) => graph[i]);
+    if (instance) {
+      instances = [instance];
+    } else {
+      instances = Object.values(this.class.instances);
+    }
 
     for (let instance of instances) {
-      let statement = new BLOCK$INSTANCE();
+      let statement = new BLOCK$INSTANCE(uuid());
       statement.class = this.class;
       statement.instance = instance;
       statement.statements = this.statements;

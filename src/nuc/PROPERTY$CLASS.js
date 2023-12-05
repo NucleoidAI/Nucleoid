@@ -1,28 +1,27 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const PROPERTY$INSTANCE = require("./PROPERTY$INSTANCE");
-const graph = require("../graph");
-const Id = require("../lib/identifier");
-const Instance = require("../lib/instance");
+const _ = require("lodash");
 
 class PROPERTY$CLASS extends Node {
-  before() {
-    this.key = Id.serialize(this);
-  }
-
   run(scope) {
     let instances;
     let statements = [];
 
-    let instance = Instance.retrieve(scope, Id.root(this).name);
+    const instance = scope.instance(this.class.name);
 
-    if (instance) instances = [instance];
-    else instances = Object.keys(Id.root(this).instances).map((i) => graph[i]);
+    if (instance) {
+      instances = [instance];
+    } else {
+      instances = Object.values(this.class.instances);
+    }
 
     for (let instance of instances) {
-      let statement = new PROPERTY$INSTANCE();
+      let statement = new PROPERTY$INSTANCE(`${instance.name}.${this.name}`);
+      statement.class = this.class;
       statement.instance = instance;
+      statement.object = instance; // TODO Research if class property is nested
       statement.name = this.name;
-      statement.declaration = this;
+      statement.value = _.cloneDeep(this.value);
       statements.push(statement);
     }
 
@@ -30,7 +29,7 @@ class PROPERTY$CLASS extends Node {
   }
 
   graph() {
-    Id.root(this).declarations[this.key] = this;
+    this.class.declarations[this.key] = this;
   }
 }
 

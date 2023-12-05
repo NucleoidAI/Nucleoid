@@ -1,23 +1,21 @@
 const LET$INSTANCE = require("./LET$INSTANCE");
-const Instance = require("../lib/instance");
+const _ = require("lodash");
 
 class LET$CLASS {
   before() {}
 
   run(scope) {
-    let instance = Instance.retrieve(scope, this.class.name);
+    let instance = scope.instance(this.class.name);
 
     if (instance) {
       let statement = new LET$INSTANCE();
       statement.class = this.class;
       statement.instance = instance;
       statement.name = this.name;
-      statement.declaration = this;
+      statement.value = _.cloneDeep(this.value);
       return { next: statement };
     }
   }
-
-  graph() {}
 }
 
 LET$CLASS.prototype.type = "CLASS";

@@ -1,54 +1,67 @@
 const state = require("../state");
-const Node = require("./Node");
-const Id = require("../lib/identifier");
-const $EXP = require("../lang/$nuc/$EXPRESSION");
+const Node = require("./NODE");
 const Instruction = require("../instruction");
-const LET = require("./LET");
-const Scope = require("../scope");
-const random = require("../lib/random");
+const Scope = require("../Scope");
+const Evaluation = require("../lang/Evaluation");
+const Identifier = require("../lang/ast/Identifier");
+const { append } = require("../lang/estree/estree");
+const estree = require("../lang/estree/estree");
+const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
 class OBJECT extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
     this.properties = {};
   }
 
-  before() {
-    if (this.name === undefined && this.object === undefined) {
-      this.key = random(16, true);
-      this.name = this.key;
-    } else {
-      this.key = Id.serialize(this);
-    }
-  }
-
   run(scope) {
-    let name = this.key;
-
-    state.assign(scope, name, `new state.${this.class.name}()`);
     scope.object = this;
+    const name = this.name;
+
+    let variable;
+
+    if (this.object) {
+      variable = new Identifier(
+        estree.append(this.object.resolve().node, this.name.node)
+      );
+    } else {
+      variable = this.name;
+    }
+
+    state.assign(
+      scope,
+      variable,
+      new Evaluation(`new state.${this.class.name}()`),
+      false
+    );
+
+    state.assign(
+      scope,
+      new Identifier(`${variable}.id`),
+      new Evaluation(`"${name}"`)
+    );
 
     let list = [];
 
-    for (let i = 0; i < this.class.args.length; i++) {
-      let local = new LET();
-      local.name = this.class.args[i];
-
-      if (this.args[i] !== undefined) {
-        let context = $EXP(this.args[i]);
-        local.value = context.statement.run();
-        list.push(local);
-      } else {
-        let context = $EXP("undefined");
-        local.value = context.statement.run();
-        list.push(local);
-      }
+    if (!this.object) {
+      state.call(scope, `${this.class.list}.push`, [`state.${name}`]);
+      state.assign(
+        scope,
+        new Identifier(`${this.class.list}["${this.name}"]`),
+        new Evaluation(`state.${name}`)
+      );
     }
 
-    if (this.class.construct !== undefined) {
-      let construct = this.class.construct;
-      let instruction = new Instruction(scope, construct, false, true, false);
-      list.push(instruction);
+    const constructor = this.class.methods["$constructor"];
+
+    if (constructor) {
+      const $CALL = require("../lang/$nuc/$CALL");
+
+      const call = $CALL(
+        constructor,
+        this.arguments.map((arg) => arg.node)
+      );
+      list.push(call);
     }
 
     for (let node in this.class.declarations) {
@@ -58,44 +71,37 @@ class OBJECT extends Node {
       list.push(new Instruction(scope, declaration, true, true, true, true));
     }
 
-    const context = $EXP(
-      `Object.setPrototypeOf(${name}, ${this.class.name}.prototype)`
+    const expression = new Instruction(
+      scope,
+      $EXPRESSION(variable.node),
+      true,
+      true,
+      false
     );
-    list.push(context.statement);
+    expression.derivative = false;
+    list.push(expression);
 
-    if (this.object === undefined) {
-      let context = $EXP(`${this.class.name.substring(1)}.push(${this.name})`);
-      list.push(context.statement);
-
-      state.run(
-        scope,
-        `state.${this.class.name.substring(1)}["${this.name}"]=state.${
-          this.name
-        }`,
-        true
-      );
-      state.run(scope, `state.${name}.id="${name}"`, true);
-
-      context = $EXP(this.name);
-      list.push(
-        new Instruction(
-          scope,
-          context.statement,
-          true,
-          true,
-          false,
-          null,
-          false
-        )
-      );
-    }
-
-    return { value: name, next: list };
+    return { next: list };
   }
 
   graph() {
-    if (this.object !== undefined) this.object.properties[this.name] = this;
+    if (this.object !== undefined) {
+      this.object.properties[this.name] = this;
+    }
+
     this.class.instances[this.key] = this;
+  }
+
+  resolve() {
+    let current = this;
+    let resolved = this.name.node;
+
+    while (current.object) {
+      current = current.object;
+      resolved = append(current.name.node, resolved);
+    }
+
+    return new Identifier(resolved);
   }
 }
 

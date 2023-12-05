@@ -1,39 +1,107 @@
+const $ = require("./$");
 const $PROPERTY = require("./$PROPERTY");
 const $VARIABLE = require("./$VARIABLE");
-const Local = require("../../lib/local");
 const $LET = require("./$LET");
-const $ = require("./$");
-const Id = require("../../lib/identifier");
+const $INSTANCE = require("./$INSTANCE");
+const Identifier = require("../ast/Identifier");
+const graph = require("../../graph");
+const CLASS = require("../../nuc/CLASS");
+const Instruction = require("../../instruction");
 
-function construct(left, right, bracket) {
+function build(kind, left, right) {
   let statement = new $ASSIGNMENT();
-  statement.left = left.split(".");
+  statement.kind = kind;
+  statement.left = left;
   statement.right = right;
-  statement.bracket = bracket;
   return statement;
 }
 
 class $ASSIGNMENT extends $ {
-  run(scope) {
-    if (this.left.length === 1) {
-      const local = Local.check(scope, this.left[0]);
-      if (local) {
-        if (local.constant) {
-          throw TypeError("Assignment to constant variable.");
-        }
+  before(scope) {
+    const name = new Identifier(this.left);
 
-        return $LET(this.left[0], this.right);
-      } else return $VARIABLE(this.left[0], this.right);
-    } else {
-      let parts = Id.splitLast(this.left.join("."));
+    let leftKind = this.kind;
+    const reassign = !this.kind;
 
-      if (Local.check(scope, parts[1])) {
-        return $LET(this.left.join("."), this.right);
+    if (!leftKind) {
+      if (scope.retrieve(name)) {
+        leftKind = "LET";
       } else {
-        return $PROPERTY(parts[1], parts[0], this.right, this.bracket);
+        if (this.left.type === "Identifier") {
+          leftKind = "VAR";
+        } else {
+          leftKind = "PROPERTY";
+        }
       }
     }
+
+    let rightKind;
+
+    if (!this.right) {
+      throw SyntaxError("Missing definition");
+    }
+
+    if (this.right.type === "NewExpression") {
+      if (graph.retrieve(`$${this.right.callee.name}`) instanceof CLASS) {
+        rightKind = "INSTANCE";
+      } else {
+        rightKind = "EXPRESSION";
+      }
+    } else {
+      rightKind = "EXPRESSION";
+    }
+
+    switch (true) {
+      case leftKind === "VAR" && rightKind === "EXPRESSION": {
+        this.assignment = $VARIABLE(this.left, this.right);
+        break;
+      }
+      case leftKind === "VAR" && rightKind === "INSTANCE": {
+        this.assignment = $INSTANCE(
+          this.right.callee,
+          null,
+          this.left,
+          this.right.arguments
+        );
+        break;
+      }
+      case leftKind === "PROPERTY" && rightKind === "EXPRESSION": {
+        const identifier = new Identifier(this.left);
+        this.assignment = $PROPERTY(
+          identifier.object.node,
+          identifier.last.node,
+          this.right
+        );
+        break;
+      }
+      case leftKind === "PROPERTY" && rightKind === "INSTANCE": {
+        const identifier = new Identifier(this.left);
+        this.assignment = $INSTANCE(
+          this.right.callee,
+          identifier.object.node,
+          identifier.last.node,
+          this.right.arguments
+        );
+        break;
+      }
+      case ["LET", "CONST"].includes(leftKind): {
+        this.assignment = $LET(
+          this.left,
+          this.right,
+          leftKind === "CONST",
+          reassign
+        );
+        break;
+      }
+    }
+
+    delete this.left;
+    delete this.right;
+  }
+
+  run(scope) {
+    return new Instruction(scope, this.assignment, undefined, true);
   }
 }
 
-module.exports = construct;
+module.exports = build;

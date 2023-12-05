@@ -1,38 +1,38 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const Instruction = require("../instruction");
-const Scope = require("../scope");
+const Scope = require("../Scope");
 const state = require("../state");
+const _ = require("lodash");
 
 class IF extends Node {
   before(scope) {
-    this.key = "if(" + this.condition.tokens.construct() + ")";
     this.condition.before(scope);
   }
 
   run(scope) {
-    let s = new Scope(scope);
+    let local = new Scope(scope);
     let condition;
 
-    if (scope.block && scope.block.skip) {
+    if (scope.block?.skip) {
       condition = this.condition.run(scope, true);
     } else {
-      condition = this.condition.run(scope);
+      condition = this.condition.run(scope, true);
     }
 
-    if (state.run(scope, condition)) {
+    if (state.expression(scope, condition)) {
+      const trueStatement = _.cloneDeep(this.true);
       return {
         next: [
-          new Instruction(s, this.true, true, false),
-          new Instruction(s, this.true, false, true),
+          new Instruction(local, trueStatement, true, true, false),
+          new Instruction(local, trueStatement, false, false, true),
         ],
       };
-    } else if (this.false && this.false instanceof IF) {
-      return { next: this.false.run(scope) };
     } else if (this.false) {
+      const falseStatement = _.cloneDeep(this.false);
       return {
         next: [
-          new Instruction(s, this.false, true, false),
-          new Instruction(s, this.false, false, true),
+          new Instruction(local, falseStatement, true, true, false),
+          new Instruction(local, falseStatement, false, false, true),
         ],
       };
     }

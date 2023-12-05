@@ -1,6 +1,3 @@
-const state = require("../state");
-const Local = require("../lib/local");
-
 class LET {
   constructor(name, value) {
     this.instanceof = this.constructor.name;
@@ -11,36 +8,37 @@ class LET {
   before() {}
 
   run(scope) {
-    let value = this.value.run(scope, false, false);
+    const name = this.name;
+    const object = this.object;
 
-    const parts = this.name.split(".");
-    const first = parts[0];
+    const instance = scope.retrieveGraph(this.name.first);
 
-    if (scope.graph[first]?.instanceof === "LET$OBJECT") {
+    if (instance?.constant) {
+      throw TypeError("Assignment to constant variable.");
+    }
+
+    const evaluation = this.value.run(scope, false, false);
+
+    if (!evaluation) {
+      return;
+    }
+
+    if (scope.graph[object]?.instanceof === "LET$OBJECT") {
+      /*
       parts[0] = scope.graph[first].object.key;
       state.assign(scope, parts.join("."), value.construct());
       return { value };
+      */
     } else {
-      let local = Local.retrieve(scope, this.name);
-
-      if (!local) {
-        local = `scope.local.${this.name}`;
-      }
-
-      let expression;
-
-      if (typeof value === "string") {
-        expression = `${local}=${value}`;
-      } else {
-        expression = `${local}=${value.construct()}`;
-      }
-
-      return { value: state.run(scope, expression) };
+      const value = scope.assign(name, evaluation, this.reassign);
+      return { value };
     }
   }
 
   beforeGraph(scope) {
-    scope.graph[this.name] = this;
+    if (!this.reassign) {
+      scope.graph[this.name] = this;
+    }
   }
 
   graph(scope) {

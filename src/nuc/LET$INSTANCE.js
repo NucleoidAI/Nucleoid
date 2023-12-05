@@ -1,29 +1,18 @@
 const LET = require("./LET");
-const EXPRESSION = require("./EXPRESSION");
-const Id = require("../lib/identifier");
-const BREAK = require("./BREAK");
-const state = require("../state");
 
 class LET$INSTANCE extends LET {
-  before() {
-    this.value = new EXPRESSION(
-      this.declaration.value.tokens.map((token) => {
-        let parts = token.split(".");
-        if (parts[0] === this.class.name)
-          parts[0] = Id.serialize(this.instance, true);
-        return parts.join(".");
-      })
-    );
-  }
+  before(scope) {
+    this.value.tokens.traverse((node) => {
+      const identifiers = [node.walk()].flat(Infinity);
 
-  run(scope) {
-    try {
-      let value = this.value.run(scope);
-      let expression = "scope.local." + this.name + `=${value}`;
-      state.run(scope, expression);
-    } catch (error) {
-      return { next: new BREAK(scope.block) };
-    }
+      for (const identifier of identifiers) {
+        if (identifier.first.toString() === this.class.name.toString()) {
+          identifier.first = this.instance.resolve();
+        }
+      }
+    });
+
+    super.before(scope);
   }
 }
 

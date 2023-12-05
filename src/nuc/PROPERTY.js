@@ -1,22 +1,43 @@
 const state = require("../state");
-const Node = require("./Node");
-const Id = require("../lib/identifier");
+const Node = require("./NODE");
+const estree = require("../lang/estree/estree");
+const Identifier = require("../lang/ast/Identifier");
+const REFERENCE = require("./REFERENCE");
 
 class PROPERTY extends Node {
   before(scope) {
-    this.key = Id.serialize(this, true);
-    this.value.before(scope, this.key);
+    this.value.before(scope);
   }
 
   run(scope) {
-    let object = Id.serialize(this.object, true);
-    const run = this.value.run(scope);
-    const value = state.assign(scope, object + "." + this.name, run);
+    const evaluation = this.value.run(scope);
+
+    const object =
+      this.object.value instanceof REFERENCE
+        ? this.object.value.link
+        : this.object;
+
+    // TODO Rename `variable`
+    const variable = new Identifier(
+      estree.append(object.resolve().node, this.name.node)
+    );
+
+    if (!evaluation) {
+      state.delete(scope, variable);
+      return;
+    }
+
+    const value = state.assign(scope, variable, evaluation);
     return { value };
   }
 
   graph(scope) {
-    this.object.properties[this.name] = this;
+    const object =
+      this.object.value instanceof REFERENCE
+        ? this.object.value.link
+        : this.object;
+
+    object.properties[this.name] = this;
     return this.value.graph(scope);
   }
 }

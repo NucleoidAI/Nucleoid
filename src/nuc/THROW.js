@@ -1,18 +1,14 @@
 const state = require("../state");
-const Id = require("../lib/identifier");
-const graph = require("../graph");
 
 class THROW {
+  constructor(exception) {
+    this.exception = exception;
+  }
+
   before() {}
 
   run(scope) {
-    let exception = graph[this.exception];
-
-    if (exception) {
-      state.throw(scope, Id.serialize(exception));
-    }
-
-    throw state.run(scope, this.exception);
+    state.throw(scope, this.exception.generate(scope));
   }
 
   graph() {}

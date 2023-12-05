@@ -1,17 +1,20 @@
 const IF = require("./IF");
-const EXPRESSION = require("./EXPRESSION");
-const Id = require("../lib/identifier");
 
 class IF$INSTANCE extends IF {
-  before() {
-    this.condition = new EXPRESSION(
-      this.declaration.condition.tokens.map((token) => {
-        let parts = token.split(".");
-        if (parts[0] === this.class.name)
-          parts[0] = Id.serialize(this.instance);
-        return parts.join(".");
-      })
-    );
+  before(scope) {
+    this.condition.tokens.traverse((node) => {
+      const identifiers = [node.walk()].flat(Infinity);
+
+      for (const identifier of identifiers) {
+        if (identifier.first.toString() === this.class.name.toString()) {
+          identifier.first.node.name = this.instance.name;
+        }
+      }
+    });
+
+    this.key = `if(${this.condition.tokens})`;
+
+    super.before(scope);
   }
 
   run(scope) {

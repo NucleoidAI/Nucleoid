@@ -1,22 +1,24 @@
 const $ = require("./$");
 const FUNCTION = require("../../nuc/FUNCTION");
+const Identifier = require("../ast/Identifier");
 
-function construct(name, args, block) {
+function build(name, args, block) {
   let statement = new $FUNCTION();
   statement.name = name;
-  statement.args = args;
+  statement.arguments = args;
   statement.block = block;
   return statement;
 }
 
 class $FUNCTION extends $ {
   run() {
-    let statement = new FUNCTION();
-    statement.name = this.name;
-    statement.args = this.args;
+    const name = new Identifier(this.name);
+    let statement = new FUNCTION(name);
+    statement.name = name;
+    statement.arguments = this.arguments;
     statement.block = this.block;
     return statement;
   }
 }
 
-module.exports = construct;
+module.exports = build;

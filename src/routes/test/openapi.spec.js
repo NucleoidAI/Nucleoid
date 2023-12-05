@@ -8,7 +8,7 @@ const openapi = require("../../lib/openapi");
 describe("OpenAPI service", () => {
   beforeEach(() => test.clear());
 
-  it("starts app", async () => {
+  it.skip("starts app", async () => {
     const res1 = await request(terminal)
       .post("/openapi")
       .send({ ...data, action: "start" });

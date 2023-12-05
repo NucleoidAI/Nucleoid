@@ -3,10 +3,13 @@ const graph = require("../graph");
 
 class DELETE$VARIABLE extends DELETE {
   graph() {
-    for (let node in graph[this.key].previous)
-      delete graph[node].next[this.key];
+    const node = graph.retrieve(this.variable.key);
 
-    delete graph[this.key];
+    for (const key in node.previous) {
+      delete node.next[key];
+    }
+
+    delete graph.graph[node.key];
   }
 }
 

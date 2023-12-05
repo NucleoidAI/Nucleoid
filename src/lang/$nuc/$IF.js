@@ -4,26 +4,44 @@ const IF = require("../../nuc/IF");
 const CLASS = require("../../nuc/CLASS");
 const IF$CLASS = require("../../nuc/IF$CLASS");
 const Instruction = require("../../instruction");
+const Expression = require("../../Expression");
+const $EXPRESSION = require("./$EXPRESSION");
+const Identifier = require("../ast/Identifier");
 
-function construct(condition, trueB, p3) {
+function build(condition, trueStatement, falseStatement) {
   let statement = new $IF();
   statement.condition = condition;
-  statement.true = trueB;
-  statement.false = p3;
+  statement.true = trueStatement; // truthy
+  statement.false = falseStatement; // falsy
   return statement;
 }
 
 class $IF extends $ {
-  run(scope) {
-    for (let token of this.condition.tokens.list()) {
-      let prefix = token.split(".")[0];
+  before(scope) {
+    const condition = new Expression(this.condition);
+    const expression = $EXPRESSION(condition);
+    this.condition = expression.run(scope);
+  }
 
-      if (graph[prefix] && graph[prefix] instanceof CLASS) {
-        let statement = new IF$CLASS();
-        statement.class = graph[prefix];
-        statement.condition = this.condition.run();
+  run(scope) {
+    // Look up first expression for deciding class declaration
+    const [declaration] = this.condition.graph(scope);
+
+    if (declaration) {
+      const identifier = new Identifier(declaration.key);
+      const cls = graph.retrieve(identifier.first);
+
+      if (cls instanceof CLASS) {
+        let statement = new IF$CLASS(`if(${this.condition.tokens})`);
+        statement.class = cls;
+        statement.condition = this.condition;
         statement.true = this.true;
-        statement.false = this.false;
+        statement.true.class = declaration;
+
+        if (this.false) {
+          statement.false = this.false;
+          statement.false.class = declaration;
+        }
 
         return [
           new Instruction(scope, statement, true, true, false),
@@ -32,8 +50,8 @@ class $IF extends $ {
       }
     }
 
-    let statement = new IF();
-    statement.condition = this.condition.run();
+    let statement = new IF(`if(${this.condition.tokens})`);
+    statement.condition = this.condition;
     statement.true = this.true;
     statement.false = this.false;
 
@@ -44,4 +62,4 @@ class $IF extends $ {
   }
 }
 
-module.exports = construct;
+module.exports = build;

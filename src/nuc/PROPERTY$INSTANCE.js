@@ -1,28 +1,18 @@
 const PROPERTY = require("./PROPERTY");
-const EXPRESSION = require("./EXPRESSION");
-const Id = require("../lib/identifier");
-const graph = require("../graph");
 
 class PROPERTY$INSTANCE extends PROPERTY {
   before(scope) {
-    let declaration = Id.serialize(this.declaration);
+    this.value.tokens.traverse((node) => {
+      const identifiers = [node.walk()].flat(Infinity);
 
-    let parts = declaration.split(".");
-    parts[0] = Id.serialize(this.instance);
+      for (const identifier of identifiers) {
+        if (identifier.first.toString() === this.class.name.toString()) {
+          identifier.first = this.object.resolve();
+        }
+      }
+    });
 
-    let p = Id.splitLast(parts.join("."));
-    this.object = graph[p[1]];
-
-    this.key = Id.serialize(this);
-    this.value = new EXPRESSION(
-      this.declaration.value.tokens.map((token) => {
-        let parts = token.split(".");
-        if (parts[0] === Id.root(this.declaration).name)
-          parts[0] = Id.serialize(this.instance);
-        return parts.join(".");
-      })
-    );
-    this.value.before(scope, this.key);
+    super.before(scope);
   }
 }
 

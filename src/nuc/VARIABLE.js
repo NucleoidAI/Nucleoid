@@ -1,23 +1,14 @@
 const state = require("../state");
-const Node = require("./Node");
+const Node = require("./NODE");
 
 class VARIABLE extends Node {
   before(scope) {
-    this.key = this.name;
-    this.value.before(scope, this.key);
+    this.value.before(scope);
   }
 
   run(scope) {
-    const REFERENCE = require("./REFERENCE");
-
-    let value;
-
-    if (this.value instanceof REFERENCE) {
-      value = state.assign(scope, this.name, this.value);
-    } else {
-      const run = this.value.run(scope);
-      value = state.assign(scope, this.name, run, true);
-    }
+    const evaluation = this.value.run(scope);
+    const value = state.assign(scope, this.name, evaluation);
 
     return { value };
   }

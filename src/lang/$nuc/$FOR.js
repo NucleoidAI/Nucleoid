@@ -1,8 +1,9 @@
 const $ = require("./$");
 const FOR = require("../../nuc/FOR");
 const Instruction = require("../../instruction");
+const Identifier = require("../ast/Identifier");
 
-function construct(variable, array, statements) {
+function build(variable, array, statements) {
   let statement = new $FOR();
   statement.variable = variable;
   statement.array = array;
@@ -13,12 +14,12 @@ function construct(variable, array, statements) {
 class $FOR extends $ {
   run(scope) {
     let statement = new FOR();
-    statement.variable = this.variable;
-    statement.array = this.array;
+    statement.variable = new Identifier(this.variable);
+    statement.array = new Identifier(this.array);
     statement.statements = this.statements;
 
     return new Instruction(scope, statement, false, true, false);
   }
 }
 
-module.exports = construct;
+module.exports = build;

@@ -1,10 +1,11 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-eval */
+// TODO Rename this to `$`
 const state = {
   classes: [],
 };
 const _transaction = require("./transaction");
-const _graph = require("./graph");
+const { graph: _graph } = require("./graph");
 const { event } = require("./event");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
@@ -46,41 +47,33 @@ function graph(id) {
 
   return object;
 }
-function assign(scope, variable, expression) {
-  if (!variable) return;
+function assign(scope, variable, evaluation, json = true) {
+  let value;
 
-  let transaction;
-
-  if (expression instanceof REFERENCE) {
-    // eslint-disable-next-line no-eval
-    const before = eval(`state.${variable}`);
-    const run = expression.run();
-    const exec = `state.${variable}=${run.construct()}`;
-
-    transaction = { variable, exec, before };
+  if (json) {
+    value = serialize(eval(`(${evaluation})`), "state");
   } else {
-    const before = eval(`state.${variable}`); // eslint-disable-line no-eval
-    const result = eval(`(${expression})`); // eslint-disable-line no-eval
-    const value = serialize(result, "state");
-    const exec = `state.${variable}=${value}`;
-
-    transaction = { variable, exec, before };
+    value = evaluation.toString();
   }
 
-  _transaction.push(transaction);
-  return eval(transaction.exec);
+  return _transaction.register(`state.${variable}`, value);
 }
 
-function run(scope, expression, transaction = false) {
-  if (transaction) {
-    _transaction.push({ exec: `(${expression})` });
-  }
+function call(scope, fn, args = []) {
+  const exec = `state.${fn}(${args.join(",")})`;
+  return eval(exec);
+}
 
-  return eval(`(${expression})`);
+function expression(scope, evaluation) {
+  return eval(`(${evaluation.value})`);
+}
+
+function del(scope, variable) {
+  return eval(`delete state.${variable}`);
 }
 
 function load(execs = []) {
-  const Node = require("./nuc/Node");
+  const Node = require("./nuc/NODE");
   const graph = require("./graph");
 
   execs.forEach((exec) => {
@@ -88,8 +81,20 @@ function load(execs = []) {
   });
 }
 
-module.exports.state = state;
+module.exports.throw = (scope, exception) => eval(`throw ${exception}`);
+
+function clear() {
+  for (let property in state) {
+    delete state[property];
+  }
+
+  state["classes"] = [];
+}
+
+module.exports.state = state; // will be private
 module.exports.assign = assign;
-module.exports.run = run;
-module.exports.throw = (scope, exception) => eval(`throw state.${exception}`);
+module.exports.call = call;
+module.exports.expression = expression;
 module.exports.load = load;
+module.exports.clear = clear;
+module.exports.delete = del;

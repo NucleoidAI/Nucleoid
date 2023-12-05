@@ -5,7 +5,6 @@ const openapi = require("./routes/openapi");
 const logs = require("./routes/logs");
 const metrics = require("./routes/metrics");
 const runtime = require("./runtime");
-const { argv } = require("yargs");
 
 const terminal = express();
 terminal.use(express.json());
@@ -21,10 +20,6 @@ terminal.post("/", (req, res) => {
   const mode = req.headers["x-nuc-mode"];
   const declarative = mode?.toLowerCase() === "declarative";
   const details = runtime.process(req.body, { declarative, details: true });
-
-  if (!argv.debug) {
-    details.execs = undefined;
-  }
 
   res.send(details);
 });

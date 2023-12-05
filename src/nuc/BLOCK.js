@@ -1,16 +1,22 @@
-const Node = require("./Node");
+const Node = require("./NODE");
 const $ = require("../lang/$nuc/$");
+const Instruction = require("../instruction");
+const Scope = require("../Scope");
 
 class BLOCK extends Node {
-  constructor() {
-    super();
+  constructor(key) {
+    super(key);
     this.statements = [];
   }
 
-  run() {
-    let list = this.statements;
-    this.statements = [];
-    return { next: list };
+  run(scope) {
+    const newScope = new Scope(scope);
+    newScope.block = this;
+    return {
+      next: this.statements.map(
+        (statement) => new Instruction(newScope, statement)
+      ),
+    };
   }
 
   stage(instruction) {

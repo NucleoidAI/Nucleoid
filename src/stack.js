@@ -1,15 +1,14 @@
+const state = require("./state");
 const graph = require("./graph");
 const BLOCK = require("./nuc/BLOCK");
 const IF = require("./nuc/IF");
 const Instruction = require("./instruction");
-const Scope = require("./scope");
-const Node = require("./nuc/Node");
+const Scope = require("./Scope");
+const Node = require("./nuc/NODE");
 const $ = require("./lang/$nuc/$");
 const BREAK = require("./nuc/BREAK");
 const EXPRESSION = require("./nuc/EXPRESSION");
-const state = require("./state");
 const RETURN = require("./nuc/RETURN");
-const Token = require("./lib/token");
 
 function process(statements, prior, options = {}) {
   const root = new Scope(prior);
@@ -19,7 +18,7 @@ function process(statements, prior, options = {}) {
     (statement) => new Instruction(root, statement, true, true, false)
   );
 
-  let result;
+  let result = { value: undefined, $nuc: [] };
   let dependencies = [];
   let dependents = [];
   let priorities = [];
@@ -31,7 +30,7 @@ function process(statements, prior, options = {}) {
     switch (true) {
       case statement instanceof RETURN: {
         let scope = instruction.scope;
-        return process(statement.statements, scope, options);
+        return process([statement.statement], scope, options);
       }
       case statement instanceof BREAK: {
         let inst = instructions[0];
@@ -49,32 +48,23 @@ function process(statements, prior, options = {}) {
         break;
       }
       case statement instanceof EXPRESSION: {
-        const serialize = require("./lib/serialize");
         let scope = instruction.scope;
 
-        const tokens = statement.run(scope, false, false);
+        statement.before(scope);
+        const evaluation = statement.run(scope, false, false);
 
-        let value = String();
-        let transaction = false;
+        let value;
 
-        for (let i = 0; i < tokens.length; i++) {
-          const token = tokens[i];
-
-          if (token instanceof Token.EXPRESSION) {
-            const tmp = state.run(scope, token.construct());
-            value += serialize(tmp, "state");
-          } else if (token instanceof Token.CALL) {
-            transaction = true;
-            value += token.construct();
-          } else {
-            value += token.construct();
-          }
+        if (evaluation !== undefined) {
+          value = state.expression(scope, evaluation);
         }
 
-        const run = state.run(scope, value, transaction);
-
-        if (instruction.scope === root && !instruction.derivative) {
-          result = run;
+        if (
+          evaluation &&
+          instruction.scope === root &&
+          !instruction.derivative
+        ) {
+          result.value = value;
         }
 
         let list = statement.next(scope);
@@ -107,24 +97,29 @@ function process(statements, prior, options = {}) {
           statement.before(instruction.scope);
         }
 
+        if (!instruction.derivative) {
+          // result.$nuc.push(statement);
+        }
+
         if (instruction.run) {
           let next = statement.run(instruction.scope);
           next = Array.isArray(next) ? next : [next];
 
           const scope = instruction.scope;
-          const { derivative } = instruction;
 
           next = next
             .map((statement) => {
               return statement instanceof Instruction
                 ? statement
-                : new Instruction(scope, statement, true, true, true, null);
+                : new Instruction(scope, statement, true, true, true); // TODO root = null?
             })
-            .map((instruction) => {
-              if (instruction.derivative === undefined) {
-                instruction.derivative = derivative;
-              }
-              return instruction;
+            .map((statement) => {
+              statement.before = statement.before ?? instruction.before;
+              statement.run = statement.run ?? instruction.run;
+              statement.graph = statement.graph ?? instruction.graph;
+              statement.derivative =
+                statement.derivative ?? instruction.derivative;
+              return statement;
             });
 
           instructions = next.filter((i) => !i.root).concat(instructions);
@@ -139,24 +134,15 @@ function process(statements, prior, options = {}) {
         }
 
         if (instruction.run) {
+          const { scope } = instruction;
           let { value, next } = statement.run(instruction.scope) || {};
 
           if (instruction.scope === root && !instruction.derivative) {
-            result = value;
+            result.value = value;
           }
 
           if (next) {
-            let scope = instruction.scope;
             next = Array.isArray(next) ? next : [next];
-
-            if (statement instanceof BLOCK) {
-              scope = new Scope(scope);
-              scope.block = statement;
-            }
-
-            if (statement instanceof IF) {
-              scope = new Scope(scope);
-            }
 
             next = next
               .map((statement) => {
@@ -165,9 +151,11 @@ function process(statements, prior, options = {}) {
                   : new Instruction(scope, statement, true, true, true);
               })
               .map((statement) => {
-                if (statement.derivative === undefined) {
-                  statement.derivative = true;
-                }
+                statement.before = statement.before ?? instruction.before;
+                statement.run = statement.run ?? instruction.run;
+                statement.graph = statement.graph ?? instruction.graph;
+                statement.derivative =
+                  statement.derivative ?? instruction.derivative;
                 return statement;
               });
 
@@ -190,10 +178,10 @@ function process(statements, prior, options = {}) {
             }
 
             if (statement instanceof Node) {
-              if (graph[statement.key || statement.id]) {
-                Node.replace(statement.key || statement.id, statement);
+              if (graph.retrieve(statement.key)) {
+                Node.replace(statement.key, statement);
               } else {
-                Node.register(statement);
+                Node.register(statement.key, statement);
               }
             }
 
@@ -201,8 +189,8 @@ function process(statements, prior, options = {}) {
 
             if (declarative) {
               if (list) {
-                list.forEach((e) => {
-                  if (graph[e].previous[statement.key] !== undefined) {
+                list.forEach((target) => {
+                  if (target.previous[statement.key] !== undefined) {
                     throw ReferenceError("Circular Dependency");
                   }
                 });
@@ -240,8 +228,8 @@ function process(statements, prior, options = {}) {
           if (!instruction.scope.prior) {
             if (!instruction.statement.skip) {
               dependencies.forEach((source) => {
-                let targetKey = statement.key ? statement.key : statement.id;
-                Node.direct(source, targetKey, statement);
+                const targetKey = statement.key;
+                Node.direct(source.key, targetKey, statement);
               });
             }
 
@@ -252,6 +240,8 @@ function process(statements, prior, options = {}) {
             dependents = [];
             priorities = [];
           }
+
+          break;
         }
 
         if (instruction.scope.block) {
