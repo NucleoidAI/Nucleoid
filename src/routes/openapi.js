@@ -1,23 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const openapi = require("../lib/openapi");
+const _openapi = require("../lib/openapi");
 const context = require("../lib/context");
 const config = require("../config");
 
-router.get("/openapi", (req, res) => res.json(openapi.status()));
+router.get("/openapi", (req, res) => res.json(_openapi.status()));
 router.post("/openapi", (req, res) => {
-  // TODO Change contract to OpenAPI
-  const { api, types, functions, action, port, prefix, events = [] } = req.body;
+  const { openapi, action, port, prefix, events = [] } = req.body;
   const _config = config();
 
   if (action === "start") {
-    context.run(functions);
+    context.run(openapi.functions);
+    delete openapi.functions;
 
-    openapi.init();
-    openapi.load({ api, types, prefix, events });
-    openapi.start(port || _config.port.openapi);
+    _openapi.init();
+    _openapi.load({ openapi, prefix, events });
+    _openapi.start(port || _config.port.openapi);
   } else if (action === "stop") {
-    openapi.stop();
+    _openapi.stop();
   }
 
   res.end();
