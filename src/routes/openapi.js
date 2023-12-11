@@ -6,17 +6,16 @@ const config = require("../config");
 
 router.get("/openapi", (req, res) => res.json(_openapi.status()));
 router.post("/openapi", (req, res) => {
-  const { openapi, action, port, prefix, events = [] } = req.body;
+  const openapi = req.body;
   const _config = config();
 
-  if (action === "start") {
-    context.run(openapi.functions);
-    delete openapi.functions;
+  if (openapi["x-nuc-action"] === "start") {
+    context.run(openapi["x-nuc-functions"]);
 
     _openapi.init();
-    _openapi.load({ openapi, prefix, events });
-    _openapi.start(port || _config.port.openapi);
-  } else if (action === "stop") {
+    _openapi.load(openapi);
+    _openapi.start(openapi["x-nuc-port"] || _config.port.openapi);
+  } else if (openapi["x-nuc-action"] === "stop") {
     _openapi.stop();
   }
 
