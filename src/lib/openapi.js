@@ -25,7 +25,10 @@ function init(app) {
   }
 }
 
-function load({ api, types, prefix = "", events = [] }) {
+function load(openapi) {
+  const prefix = openapi["x-nuc-prefix"];
+  const events = openapi["x-nuc-events"];
+
   const app = _app;
   const _config = config();
 
@@ -42,7 +45,7 @@ function load({ api, types, prefix = "", events = [] }) {
 
   const tmp = uuid();
 
-  Object.entries(api).forEach(([key, value]) => {
+  Object.entries(openapi?.paths).forEach(([key, value]) => {
     const parts = key.substring(1).split("/");
     const resource = parts.pop() || "index";
     const path = parts.join("/");
@@ -60,40 +63,6 @@ function load({ api, types, prefix = "", events = [] }) {
 
     Object.entries(value).forEach(([method, nucDoc]) => {
       const action = nucDoc["x-nuc-action"];
-      const params = nucDoc.params || [];
-
-      const apiDoc = {
-        ...nucDoc,
-        requestBody:
-          method !== "get"
-            ? {
-                content: {
-                  "application/json": {
-                    schema: nucDoc.request,
-                  },
-                },
-              }
-            : undefined,
-        responses: {
-          200: {
-            description: "Successful Operation",
-            content: {
-              "application/json": {
-                schema: nucDoc.response,
-              },
-            },
-          },
-        },
-        parameters: params.map((param) => ({
-          ...param,
-          schema: { type: param.type },
-          type: undefined,
-        })),
-        request: undefined,
-        response: undefined,
-        action: undefined,
-        params: undefined,
-      };
 
       fs.appendFileSync(
         file,
@@ -105,8 +74,12 @@ function load({ api, types, prefix = "", events = [] }) {
           `else res.status(200).json(result);` +
           `}`
       );
-      fs.appendFileSync(file, `${method}.apiDoc = ${JSON.stringify(apiDoc)};`);
+      fs.appendFileSync(
+        file,
+        `${method}.apiDoc = ${JSON.stringify(openapi.paths[key][method])};`
+      );
     });
+
     fs.appendFileSync(file, `return { ${Object.keys(value)} };`);
     fs.appendFileSync(file, `}`);
   });
@@ -120,9 +93,7 @@ function load({ api, types, prefix = "", events = [] }) {
           title: "Nucleoid",
           version: "1.0.0",
         },
-        components: {
-          schemas: types,
-        },
+        components: openapi.components,
         paths: {},
         servers: [
           {
