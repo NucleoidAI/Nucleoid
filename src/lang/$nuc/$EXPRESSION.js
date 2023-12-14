@@ -34,7 +34,7 @@ class $EXPRESSION extends $ {
 
       if (link) {
         const statement = new REFERENCE(this.tokens);
-        statement.link = link;
+        statement.link = identifier;
         return statement;
       } else {
         return new EXPRESSION(this.tokens);

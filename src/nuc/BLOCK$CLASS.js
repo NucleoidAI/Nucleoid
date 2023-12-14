@@ -13,7 +13,6 @@ class BLOCK$CLASS extends Node {
     let instances;
     let statements = [];
 
-    scope.$class = this.class;
     let instance = scope.instance(this.class.name);
 
     if (instance) {

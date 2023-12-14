@@ -21,7 +21,7 @@ function serialize(node, reference) {
 
   while (index) {
     if (reference && index.value && index.value.instanceof === "REFERENCE") {
-      index = index.value.link;
+      index = graph.retrieve(index.value.link);
     }
 
     string = index.name + "." + string;

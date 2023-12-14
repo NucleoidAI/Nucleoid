@@ -105,7 +105,7 @@ class EXPRESSION {
 
           if (test?.value && test.value instanceof REFERENCE) {
             const link = new Identifier(
-              append(test.value.link.name.node, right.node)
+              append(test.value.link.node, right.node)
             );
             return graph.retrieve(link);
           }
