@@ -43,9 +43,10 @@ function traverseResolve(scope, node) {
   } else if (["UnaryExpression", "UpdateExpression"].includes(node.type)) {
     traverseResolve(scope, node.argument);
   } else {
-    const ast = Node.convert(node);
-
+    const ast = Node.convert(_.cloneDeep(node));
     const resolved = ast.resolve(scope);
+
+    Object.keys(node).forEach((key) => delete node[key]);
     Object.assign(node, resolved);
   }
 }

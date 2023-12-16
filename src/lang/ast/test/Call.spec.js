@@ -11,6 +11,7 @@ describe("Call", () => {
     equal(call.first, "filter");
     equal(call.last, "filter");
     equal(call.object, null);
+    equal(call.function, "filter");
     equal(call, "filter(1,2)");
     equal(call.generate(scope), "scope.local.filter(1,2)");
   });
@@ -23,6 +24,7 @@ describe("Call", () => {
     equal(call.first, "user");
     equal(call.last, "filter");
     equal(call.object, "user.accounts");
+    equal(call.function, "user.accounts.filter");
     equal(call, "user.accounts.filter(1,2)");
     equal(call.generate(scope), "scope.local.user.accounts.filter(1,2)");
   });
@@ -35,6 +37,7 @@ describe("Call", () => {
     equal(call.first, "user");
     equal(call.last, "filter");
     equal(call.object, "user.accounts");
+    equal(call.function, "user.accounts.filter");
     equal(call, "user.accounts.filter(1,2).type.add(1,2)");
     equal(
       call.generate(scope),
@@ -52,6 +55,7 @@ describe("Call", () => {
     equal(call.first, "user");
     equal(call.last, "filter");
     equal(call.object, "user.accounts");
+    equal(call.function, "user.accounts.filter");
     equal(call, "user.accounts.filter(account=>account.type===type)");
     equal(
       call.generate(scope),
@@ -68,8 +72,9 @@ describe("Call", () => {
     scope.graph.type = "TEST";
     scope.graph.level = {};
     equal(call.first, "user");
-    equal(call.object, "user.accounts");
     equal(call.last, "filter");
+    equal(call.object, "user.accounts");
+    equal(call.function, "user.accounts.filter");
     equal(
       call,
       "user.accounts.filter(account=>account.type===type).type.find(type=>type.level>level)"
@@ -88,6 +93,7 @@ describe("Call", () => {
     equal(call.first, "user");
     equal(call.last, "filter");
     equal(call.object, "user");
+    equal(call.function, "user.filter");
     equal(call, "user.filter('ABC'+name.charAt(first))");
     equal(
       call.generate(scope),
@@ -103,6 +109,7 @@ describe("Call", () => {
     equal(call.first, "/[A-Z]/");
     equal(call.last, "test");
     equal(call.object, "/[A-Z]/");
+    equal(call.function, "/[A-Z]/.test");
     equal(call, "/[A-Z]/.test(user)");
     equal(call.generate(scope), "/[A-Z]/.test(scope.local.user)");
   });

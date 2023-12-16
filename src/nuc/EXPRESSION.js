@@ -42,12 +42,35 @@ class EXPRESSION {
 
         const { parse } = require("../lang/estree/parser");
         const newValue = parse(serialize(value, "state"), false);
+
+        Object.keys(node.node).forEach((key) => delete node.node[key]);
         Object.assign(node.node, newValue);
       }
     });
   }
 
   run(scope, force = false) {
+    this.tokens.map((node) => {
+      try {
+        if (node.type === "CallExpression") {
+          const func = state.expression(scope, {
+            value: node.function,
+          });
+
+          if (func?.value) {
+            const value = state.expression(scope, {
+              value: node.generate(scope),
+            });
+            const { parse } = require("../lang/estree/parser");
+            const newNode = parse(serialize(value, "state"), false);
+
+            Object.keys(node.node).forEach((key) => delete node.node[key]);
+            Object.assign(node.node, newNode);
+          }
+        }
+      } catch (err) {} // eslint-disable-line no-empty
+    });
+
     const expression = this.tokens.traverse((node) => {
       const evaluation = node.generate(scope);
 
