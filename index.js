@@ -3,6 +3,7 @@ const express = require("./src/express");
 const config = require("./src/config");
 const test = require("./src/lib/test");
 const openapi = require("./src/lib/openapi");
+const datastore = require("./src/datastore");
 
 module.exports = express;
 module.exports.start = nucleoid.start;
@@ -11,3 +12,4 @@ module.exports.run = nucleoid.run;
 module.exports.config = config;
 module.exports.openapi = openapi;
 module.exports.test = test;
+module.exports.datastore = datastore;

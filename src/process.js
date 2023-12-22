@@ -1,4 +1,4 @@
-const datastore = require("@nucleoidjs/datastore");
+const datastore = require("./datastore");
 const state = require("./state");
 const config = require("./config");
 const openapi = require("./lib/openapi");
