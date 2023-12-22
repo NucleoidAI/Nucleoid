@@ -2,6 +2,7 @@ const Node = require("./NODE");
 const BLOCK$INSTANCE = require("./BLOCK$INSTANCE");
 const Instruction = require("../instruction");
 const { v4: uuid } = require("uuid");
+const Scope = require("../Scope");
 
 class BLOCK$CLASS extends Node {
   constructor(key) {
@@ -13,7 +14,7 @@ class BLOCK$CLASS extends Node {
     let instances;
     let statements = [];
 
-    let instance = scope.instance(this.class.name);
+    let instance = scope.$instance;
 
     if (instance) {
       instances = [instance];
@@ -27,8 +28,16 @@ class BLOCK$CLASS extends Node {
       statement.instance = instance;
       statement.statements = this.statements;
       statement.declaration = this;
-      statements.push(new Instruction(scope, statement, true, true, false));
-      statements.push(new Instruction(scope, statement, false, false, true));
+
+      const instanceScope = new Scope();
+      instanceScope.$instance = this;
+
+      statements.push(
+        new Instruction(instanceScope, statement, true, true, false)
+      );
+      statements.push(
+        new Instruction(instanceScope, statement, false, false, true)
+      );
     }
 
     return { next: statements };

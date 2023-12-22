@@ -8,27 +8,24 @@ const Identifier = require("../lang/ast/Identifier");
 
 class EXPRESSION {
   constructor(tokens) {
-    this.instanceof = this.constructor.name;
+    this.iof = this.constructor.name;
     this.tokens = tokens;
   }
 
   before(scope) {
-    const $class = scope.$class;
+    // TODO Move to EXPRESSION$INSTANCE
+    const $instance = scope.$instance;
 
-    if ($class) {
-      const instance = scope.instance($class.name);
+    if ($instance) {
+      this.tokens.traverse((node) => {
+        const identifiers = [node.walk()].flat(Infinity);
 
-      if (instance) {
-        this.tokens.traverse((node) => {
-          const identifiers = [node.walk()].flat(Infinity);
-
-          for (const identifier of identifiers) {
-            if (identifier.first.toString() === $class.name.toString()) {
-              identifier.first = instance.resolve();
-            }
+        for (const identifier of identifiers) {
+          if ($instance.class.name.toString() === identifier.first.toString()) {
+            identifier.first = $instance.resolve();
           }
-        });
-      }
+        }
+      });
     }
 
     this.tokens.map((node) => {

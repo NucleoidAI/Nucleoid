@@ -6,7 +6,7 @@ class BLOCK$INSTANCE extends BLOCK {
   }
 
   run(scope) {
-    scope.instances[this.class.name] = this.instance;
+    scope.$instance = this.instance;
 
     if (this.break) {
       this.statements = this.declaration.statements;

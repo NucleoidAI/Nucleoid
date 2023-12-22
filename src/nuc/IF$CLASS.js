@@ -3,13 +3,15 @@ const $BLOCK = require("../lang/$nuc/$BLOCK");
 const Node = require("./NODE");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
+const Scope = require("../Scope");
+const Instruction = require("../instruction");
 
 class IF$CLASS extends Node {
   run(scope) {
     let instances;
     let statements = [];
 
-    let instance = scope.instance(this.class.name);
+    let instance = scope.$instance;
 
     if (instance) {
       instances = [instance];
@@ -19,8 +21,6 @@ class IF$CLASS extends Node {
 
     for (let instance of instances) {
       const statement = new IF$INSTANCE(uuid());
-      statement.class = this.class;
-      statement.instance = instance;
       statement.condition = _.cloneDeep(this.condition);
       statement.true = $BLOCK(_.cloneDeep(this.true.statements));
 
@@ -30,7 +30,12 @@ class IF$CLASS extends Node {
         statement.false = $BLOCK(_.cloneDeep(this.false.statements));
       }
 
-      statements.push(statement);
+      const instanceScope = new Scope(scope);
+      instanceScope.$instance = instance;
+
+      statements.push(
+        new Instruction(instanceScope, statement, true, true, true, null, true)
+      );
     }
 
     return { next: statements };

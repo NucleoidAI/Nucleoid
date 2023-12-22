@@ -65,10 +65,12 @@ class OBJECT extends Node {
     }
 
     for (let node in this.class.declarations) {
-      let declaration = this.class.declarations[node];
-      let scope = new Scope();
-      scope.instances[this.class.name] = this;
-      list.push(new Instruction(scope, declaration, true, true, true, true));
+      const declaration = this.class.declarations[node];
+      const scope = new Scope();
+      scope.$instance = this;
+
+      list.push(new Instruction(scope, declaration, true, true, false, true));
+      list.push(new Instruction(scope, declaration, false, false, true, true));
     }
 
     const expression = new Instruction(

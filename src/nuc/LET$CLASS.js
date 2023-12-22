@@ -5,7 +5,7 @@ class LET$CLASS {
   before() {}
 
   run(scope) {
-    let instance = scope.instance(this.class.name);
+    const instance = scope.$instance;
 
     if (instance) {
       let statement = new LET$INSTANCE();

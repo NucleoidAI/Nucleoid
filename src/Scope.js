@@ -15,21 +15,20 @@ class Scope {
     }
 
     this.local = {};
-
-    // TODO Rename this to $instances
+    this._instance = null;
     this.instances = {};
     this.graph = {};
     this.callback = [];
   }
 
-  get $class() {
+  get $instance() {
     let index = this;
 
     while (index) {
-      const $class = index.class;
+      const instance = index._instance;
 
-      if ($class) {
-        return $class;
+      if (instance) {
+        return instance;
       }
 
       index = index.prior;
@@ -38,8 +37,8 @@ class Scope {
     return null;
   }
 
-  set $class($class) {
-    this.class = $class;
+  set $instance(instance) {
+    this._instance = instance;
   }
 
   assign(variable, evaluation, reassign = false) {
