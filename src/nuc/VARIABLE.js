@@ -1,7 +1,7 @@
 const state = require("../state");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 
-class VARIABLE extends Node {
+class VARIABLE extends NODE {
   before(scope) {
     this.value.before(scope);
   }

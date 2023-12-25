@@ -1,11 +1,11 @@
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const Id = require("../lib/identifier");
 const OBJECT$INSTANCE = require("./OBJECT$INSTANCE");
 const graph = require("../graph");
 const Scope = require("../Scope");
 const Instruction = require("../instruction");
 
-class OBJECT$CLASS extends Node {
+class OBJECT$CLASS extends NODE {
   before() {
     this.key = Id.serialize(this);
   }

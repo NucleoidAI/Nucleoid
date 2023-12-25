@@ -1,12 +1,12 @@
 const state = require("../state");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const graph = require("../graph");
 const $ALIAS = require("../lang/$nuc/$ALIAS");
 const Evaluation = require("../lang/Evaluation");
 const _ = require("lodash");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
-class CLASS extends Node {
+class CLASS extends NODE {
   constructor(key) {
     super(key);
     this.methods = [];

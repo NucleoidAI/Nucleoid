@@ -1,5 +1,5 @@
 const state = require("../state");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const Instruction = require("../instruction");
 const Scope = require("../Scope");
 const Evaluation = require("../lang/Evaluation");
@@ -8,7 +8,7 @@ const { append } = require("../lang/estree/estree");
 const estree = require("../lang/estree/estree");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
-class OBJECT extends Node {
+class OBJECT extends NODE {
   constructor(key) {
     super(key);
     this.properties = {};

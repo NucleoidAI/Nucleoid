@@ -1,9 +1,9 @@
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const $ = require("../lang/$nuc/$");
 const Instruction = require("../instruction");
 const Scope = require("../Scope");
 
-class BLOCK extends Node {
+class BLOCK extends NODE {
   constructor(key) {
     super(key);
     this.statements = [];

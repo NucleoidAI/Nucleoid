@@ -1,10 +1,10 @@
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const PROPERTY$INSTANCE = require("./PROPERTY$INSTANCE");
 const _ = require("lodash");
 const Instruction = require("../instruction");
 const Scope = require("../Scope");
 
-class PROPERTY$CLASS extends Node {
+class PROPERTY$CLASS extends NODE {
   run(scope) {
     let instances;
     let statements = [];

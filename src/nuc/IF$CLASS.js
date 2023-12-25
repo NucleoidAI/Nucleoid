@@ -1,12 +1,12 @@
 const IF$INSTANCE = require("./IF$INSTANCE");
 const $BLOCK = require("../lang/$nuc/$BLOCK");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
 const Scope = require("../Scope");
 const Instruction = require("../instruction");
 
-class IF$CLASS extends Node {
+class IF$CLASS extends NODE {
   run(scope) {
     let instances;
     let statements = [];

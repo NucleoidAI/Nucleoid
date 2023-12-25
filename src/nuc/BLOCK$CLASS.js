@@ -1,10 +1,10 @@
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const BLOCK$INSTANCE = require("./BLOCK$INSTANCE");
 const Instruction = require("../instruction");
 const { v4: uuid } = require("uuid");
 const Scope = require("../Scope");
 
-class BLOCK$CLASS extends Node {
+class BLOCK$CLASS extends NODE {
   constructor(key) {
     super(key);
     this.statements = [];
