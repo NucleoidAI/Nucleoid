@@ -21,6 +21,10 @@ function build(name, value, constant, reassign) {
 
 class $LET extends $ {
   before(scope) {
+    if (this.prepared) {
+      return;
+    }
+
     if (
       this.value.type === "NewExpression" &&
       graph.retrieve(`$${this.value.callee.name}`) instanceof CLASS
@@ -36,6 +40,8 @@ class $LET extends $ {
       const expression = $EXPRESSION(this.value);
       this.value = expression.run(scope);
     }
+
+    this.prepared = true;
   }
 
   run(scope) {

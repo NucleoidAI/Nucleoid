@@ -12,6 +12,10 @@ function build(name, value) {
 
 class $VARIABLE extends $ {
   before(scope) {
+    if (this.prepared) {
+      return;
+    }
+
     const expression = $EXPRESSION(this.value);
     this.value = expression.run(scope);
   }

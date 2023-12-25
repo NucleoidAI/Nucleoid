@@ -9,8 +9,8 @@ const { v4: uuid } = require("uuid");
 const options = { id: uuid(), test: true };
 
 describe("Nucleoid API", () => {
+  before(() => nucleoid.start({ test: true }));
   beforeEach(() => test.clear());
-  after(() => test.clear());
 
   it("Hello World", async () => {
     const app = nucleoid(options);

@@ -1950,10 +1950,10 @@ describe("Nucleoid", () => {
 
     it("runs nested if statement of class before initialization", () => {
       nucleoid.run("class Mortgage { }");
+      nucleoid.run("rate1 = 'EXCEPTIONAL'");
       nucleoid.run(
         "{ let interest = $Mortgage.annual / 12 ; if ( interest < 4 ) { $Mortgage.rate = rate1 } }"
       );
-      nucleoid.run("rate1 = 'EXCEPTIONAL'");
       nucleoid.run("mortgage1 = new Mortgage ( )");
       nucleoid.run("mortgage1.annual = 46");
       equal(nucleoid.run("mortgage1.rate"), "EXCEPTIONAL");

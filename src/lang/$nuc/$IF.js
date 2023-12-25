@@ -18,9 +18,14 @@ function build(condition, trueStatement, falseStatement) {
 
 class $IF extends $ {
   before(scope) {
+    if (this.prepared) {
+      return;
+    }
+
     const condition = new Expression(this.condition);
     const expression = $EXPRESSION(condition);
     this.condition = expression.run(scope);
+    this.prepared = true;
   }
 
   run(scope) {
@@ -36,16 +41,14 @@ class $IF extends $ {
         statement.class = cls;
         statement.condition = this.condition;
         statement.true = this.true;
-        statement.true.class = declaration;
 
         if (this.false) {
           statement.false = this.false;
-          statement.false.class = declaration;
         }
 
         return [
-          new Instruction(scope, statement, true, true, false),
-          new Instruction(scope, statement, false, false, true),
+          new Instruction(scope, statement, true, true, false, null, true),
+          new Instruction(scope, statement, false, false, true, null, true),
         ];
       }
     }
@@ -56,8 +59,8 @@ class $IF extends $ {
     statement.false = this.false;
 
     return [
-      new Instruction(scope, statement, true, true, false),
-      new Instruction(scope, statement, false, false, true),
+      new Instruction(scope, statement, true, true, false, null, true),
+      new Instruction(scope, statement, false, false, true, null, true),
     ];
   }
 }

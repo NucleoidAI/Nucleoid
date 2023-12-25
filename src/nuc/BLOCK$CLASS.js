@@ -29,7 +29,7 @@ class BLOCK$CLASS extends Node {
       statement.statements = this.statements;
       statement.declaration = this;
 
-      const instanceScope = new Scope();
+      const instanceScope = new Scope(scope);
       instanceScope.$instance = this;
 
       statements.push(

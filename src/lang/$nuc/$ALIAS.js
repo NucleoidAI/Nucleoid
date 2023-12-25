@@ -13,8 +13,13 @@ function build(alias, name, value) {
 
 class $ALIAS extends $ {
   before(scope) {
+    if (this.prepared) {
+      return;
+    }
+
     const expression = $EXPRESSION(this.value);
     this.value = expression.run(scope);
+    this.prepared = true;
   }
 
   run() {

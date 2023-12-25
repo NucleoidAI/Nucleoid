@@ -4,6 +4,7 @@ const CLASS = require("../../nuc/CLASS");
 const $LET = require("./$LET");
 const Identifier = require("../ast/Identifier");
 const random = require("../../lib/random");
+const Instruction = require("../../instruction");
 
 function build(cls, object, name, args = []) {
   let statement = new $INSTANCE();
@@ -16,9 +17,15 @@ function build(cls, object, name, args = []) {
 
 class $INSTANCE extends $ {
   before() {
+    if (this.prepared) {
+      return;
+    }
+
     if (!this.object && !this.name) {
       this.name = random(16, true);
     }
+
+    this.prepared = true;
   }
 
   run(scope) {
@@ -56,7 +63,10 @@ class $INSTANCE extends $ {
         statement.class = graph.retrieve(cls);
         statement.name = name;
         statement.object = graph.retrieve(object);
-        return statement;
+        return [
+          new Instruction(scope, statement, true, true, false, null, true),
+          new Instruction(scope, statement, false, false, true, null, true),
+        ];
       } else {
         const statement = new OBJECT(`${object}.${name}`);
         statement.class = graph.retrieve(cls);
