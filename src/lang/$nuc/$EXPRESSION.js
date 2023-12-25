@@ -4,6 +4,7 @@ const Expression = require("../../Expression");
 const Identifier = require("../ast/Identifier");
 const REFERENCE = require("../../nuc/REFERENCE");
 const graph = require("../../graph");
+const EXPRESSION$INSTANCE = require("../../nuc/EXPRESSION$INSTANCE");
 
 function build(tokens) {
   if (!(tokens instanceof Expression)) {
@@ -40,7 +41,13 @@ class $EXPRESSION extends $ {
         return new EXPRESSION(this.tokens);
       }
     } else {
-      return new EXPRESSION(this.tokens);
+      const $instance = scope.$instance;
+
+      if ($instance) {
+        return new EXPRESSION$INSTANCE(this.tokens);
+      } else {
+        return new EXPRESSION(this.tokens);
+      }
     }
   }
 }

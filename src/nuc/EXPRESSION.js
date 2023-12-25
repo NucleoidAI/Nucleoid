@@ -13,21 +13,6 @@ class EXPRESSION {
   }
 
   before(scope) {
-    // TODO Move to EXPRESSION$INSTANCE
-    const $instance = scope.$instance;
-
-    if ($instance) {
-      this.tokens.traverse((node) => {
-        const identifiers = [node.walk()].flat(Infinity);
-
-        for (const identifier of identifiers) {
-          if ($instance.class.name.toString() === identifier.first.toString()) {
-            identifier.first = $instance.resolve();
-          }
-        }
-      });
-    }
-
     this.tokens.map((node) => {
       if (
         node.type === "MemberExpression" &&
