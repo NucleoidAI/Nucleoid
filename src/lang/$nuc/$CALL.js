@@ -13,28 +13,29 @@ const NULL = {
 
 function build(func, args) {
   const call = new $CALL();
-  call.function = func;
-  call.arguments = args;
+  call.func = func;
+  call.args = args;
   return call;
 }
 
 class $CALL extends $ {
   run() {
-    let func;
+    let block, args;
 
-    if (this.function.constructor.name === "$FUNCTION") {
-      func = this.function;
+    if (this.func.constructor.name === "$FUNCTION") {
+      block = this.func.blk;
+      args = this.func.args;
     } else {
-      const name = new Identifier(this.function);
-      func = graph.retrieve(name);
+      const name = new Identifier(this.func);
+      const func = graph.retrieve(name);
+      block = func.block;
+      args = func.arguments;
     }
 
-    if (func) {
-      const block = func.block;
-      const args = func.arguments;
-      const values = this.arguments;
+    if (block && args) {
+      const values = this.args;
 
-      const statements = _.cloneDeep(block.statements);
+      const statements = _.cloneDeep(block.stms);
 
       for (let i = args.length - 1; i >= 0; i--) {
         statements.unshift($LET(args[i], values[i] || NULL));

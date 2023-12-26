@@ -10,35 +10,35 @@ const Identifier = require("../ast/Identifier");
 
 function build(condition, trueStatement, falseStatement) {
   let statement = new $IF();
-  statement.condition = condition;
-  statement.true = trueStatement; // truthy
-  statement.false = falseStatement; // falsy
+  statement.con = condition;
+  statement.tru = trueStatement; // truthy
+  statement.fls = falseStatement; // falsy
   return statement;
 }
 
 class $IF extends $ {
   before(scope) {
-    const condition = new Expression(this.condition);
+    const condition = new Expression(this.con);
     const expression = $EXPRESSION(condition);
-    this.condition = expression.run(scope);
+    this.con = expression.run(scope);
   }
 
   run(scope) {
     // Look up first expression for deciding class declaration
-    const [declaration] = this.condition.graph(scope);
+    const [declaration] = this.con.graph(scope);
 
     if (declaration) {
       const identifier = new Identifier(declaration.key);
       const cls = graph.retrieve(identifier.first);
 
       if (cls instanceof CLASS) {
-        let statement = new IF$CLASS(`if(${this.condition.tokens})`);
+        let statement = new IF$CLASS(`if(${this.con.tokens})`);
         statement.class = cls;
-        statement.condition = this.condition;
-        statement.true = this.true;
+        statement.condition = this.con;
+        statement.true = this.tru;
 
-        if (this.false) {
-          statement.false = this.false;
+        if (this.fls) {
+          statement.false = this.fls;
         }
 
         return [
@@ -48,10 +48,10 @@ class $IF extends $ {
       }
     }
 
-    let statement = new IF(`if(${this.condition.tokens})`);
-    statement.condition = this.condition;
-    statement.true = this.true;
-    statement.false = this.false;
+    let statement = new IF(`if(${this.con.tokens})`);
+    statement.condition = this.con;
+    statement.true = this.tru;
+    statement.false = this.fls;
 
     return [
       new Instruction(scope, statement, true, true, false, null, true),

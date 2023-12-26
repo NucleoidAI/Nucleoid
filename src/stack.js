@@ -133,7 +133,7 @@ function process(statements, prior, options = {}) {
           // TODO Move this to after
           if (!instruction.derivative && !statement.asg) {
             if (statement.iof === "$EXPRESSION") {
-              if (statement.tokens.wrt) {
+              if (statement.tkns.wrt) {
                 result.$nuc.push(statement);
               }
             } else {

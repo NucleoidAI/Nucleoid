@@ -15,8 +15,8 @@ const $ = {
   $RETURN: require("./$RETURN"),
   $THROW: require("./$THROW"),
   $VARIABLE: require("./$VARIABLE"),
-  Expression: require("../../Expression"),
   EXPRESSION: require("../../nuc/EXPRESSION"),
+  Expression: require("../../Expression"),
 };
 
 function revive(statement) {

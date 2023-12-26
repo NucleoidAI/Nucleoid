@@ -8,46 +8,46 @@ const Instruction = require("../../instruction");
 
 function build(cls, object, name, args = []) {
   let statement = new $INSTANCE();
-  statement.class = cls;
-  statement.object = object;
-  statement.name = name;
-  statement.arguments = args;
+  statement.cls = cls;
+  statement.obj = object;
+  statement.nme = name;
+  statement.args = args;
   return statement;
 }
 
 class $INSTANCE extends $ {
   before() {
-    if (!this.object && !this.name) {
-      this.name = random(16, true);
+    if (!this.obj && !this.nme) {
+      this.nme = random(16, true);
     }
   }
 
   run(scope) {
     const OBJECT = require("../../nuc/OBJECT");
 
-    const cls = new Identifier(`$${this.class.name}`);
-    const name = new Identifier(this.name);
-    const args = this.arguments.map((arg) => new Identifier(arg));
+    const cls = new Identifier(`$${this.cls.name}`);
+    const name = new Identifier(this.nme);
+    const args = this.args.map((arg) => new Identifier(arg));
 
     if (!graph.retrieve(cls)) {
       throw ReferenceError(`${cls} is not defined`);
     }
 
-    if (this.object && name.toString() === "value") {
+    if (this.obj && name.toString() === "value") {
       throw TypeError("Cannot use 'value' as a property");
     }
 
-    if (this.object) {
-      const object = new Identifier(this.object);
+    if (this.obj) {
+      const object = new Identifier(this.obj);
 
       if (scope.retrieve(object)) {
         let instance = new OBJECT();
-        instance.class = this.class;
+        instance.class = this.cls;
         return $LET(name, instance);
       }
 
       if (!graph.retrieve(object)) {
-        throw ReferenceError(`${new Identifier(this.object)} is not defined`);
+        throw ReferenceError(`${new Identifier(this.obj)} is not defined`);
       }
 
       if (graph.retrieve(object.first) instanceof CLASS) {

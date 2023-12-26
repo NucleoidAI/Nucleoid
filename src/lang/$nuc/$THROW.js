@@ -4,13 +4,13 @@ const Expression = require("../../Expression");
 
 function build(exception) {
   let statement = new $THROW();
-  statement.exception = exception;
+  statement.exc = exception;
   return statement;
 }
 
 class $THROW extends $ {
   run() {
-    const exception = new Expression(this.exception);
+    const exception = new Expression(this.exc);
     return new THROW(exception);
   }
 }

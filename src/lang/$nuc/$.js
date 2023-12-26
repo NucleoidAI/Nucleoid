@@ -1,14 +1,21 @@
 class $ {
   constructor() {
     this.iof = this.constructor.name;
-    // TODO Rename to `pre`
-    this.prepared = false;
+    this.pre = false;
   }
 
   before() {}
   run() {}
   graph() {}
   after() {}
+
+  get prepared() {
+    return this.pre;
+  }
+
+  set prepared(prepared) {
+    this.pre = prepared;
+  }
 }
 
 module.exports = $;

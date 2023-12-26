@@ -22,12 +22,12 @@ class IF$CLASS extends NODE {
     for (let instance of instances) {
       const statement = new IF$INSTANCE(uuid());
       statement.condition = _.cloneDeep(this.condition);
-      statement.true = $BLOCK(_.cloneDeep(this.true.statements));
+      statement.true = $BLOCK(_.cloneDeep(this.true.stms));
 
       if (this.false?.iof === "$IF") {
         statement.false = _.cloneDeep(this.false);
       } else if (this.false?.iof === "$BLOCK") {
-        statement.false = $BLOCK(_.cloneDeep(this.false.statements));
+        statement.false = $BLOCK(_.cloneDeep(this.false.stms));
       }
 
       const instanceScope = new Scope(scope);

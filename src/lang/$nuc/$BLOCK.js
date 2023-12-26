@@ -7,12 +7,11 @@ const { v4: uuid } = require("uuid");
 const _ = require("lodash");
 const LET = require("../../nuc/LET");
 const REFERENCE = require("../../nuc/REFERENCE");
-const $ASSIGNMENT = require("./$ASSIGNMENT");
 
 function build(statements, skip) {
   let statement = new $BLOCK();
-  statement.statements = statements;
-  statement.skip = skip;
+  statement.stms = statements;
+  statement.skp = skip;
   return statement;
 }
 
@@ -23,7 +22,7 @@ class $BLOCK extends $ {
 
     let $class;
 
-    test: for (let statement of _.cloneDeep(this.statements)) {
+    test: for (let statement of _.cloneDeep(this.stms)) {
       while (statement instanceof $) {
         if (statement.iof === "$ASSIGNMENT") {
           if (!statement.prepared) {
@@ -76,15 +75,15 @@ class $BLOCK extends $ {
     if ($class) {
       let statement = new BLOCK$CLASS(uuid());
       statement.class = $class;
-      statement.statements = this.statements;
+      statement.statements = this.stms;
       return [
         new Instruction(scope, statement, true, true, false),
         new Instruction(scope, statement, false, false, true),
       ];
     } else {
       let statement = new BLOCK(uuid());
-      statement.statements = this.statements;
-      statement.skip = this.skip;
+      statement.statements = this.stms;
+      statement.skip = this.skp;
 
       return [
         new Instruction(scope, statement, true, true, false),

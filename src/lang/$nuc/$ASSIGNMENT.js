@@ -10,24 +10,24 @@ const Instruction = require("../../instruction");
 
 function build(kind, left, right) {
   let statement = new $ASSIGNMENT();
-  statement.kind = kind;
-  statement.left = left;
-  statement.right = right;
+  statement.knd = kind;
+  statement.lft = left;
+  statement.rgt = right;
   return statement;
 }
 
 class $ASSIGNMENT extends $ {
   before(scope) {
-    const name = new Identifier(this.left);
+    const name = new Identifier(this.lft);
 
-    let leftKind = this.kind;
-    const reassign = !this.kind;
+    let leftKind = this.knd;
+    const reassign = !this.knd;
 
     if (!leftKind) {
       if (scope.retrieve(name)) {
         leftKind = "LET";
       } else {
-        if (this.left.type === "Identifier") {
+        if (this.lft.type === "Identifier") {
           leftKind = "VAR";
         } else {
           leftKind = "PROPERTY";
@@ -37,12 +37,12 @@ class $ASSIGNMENT extends $ {
 
     let rightKind;
 
-    if (!this.right) {
+    if (!this.rgt) {
       throw SyntaxError("Missing definition");
     }
 
-    if (this.right.type === "NewExpression") {
-      if (graph.retrieve(`$${this.right.callee.name}`) instanceof CLASS) {
+    if (this.rgt.type === "NewExpression") {
+      if (graph.retrieve(`$${this.rgt.callee.name}`) instanceof CLASS) {
         rightKind = "INSTANCE";
       } else {
         rightKind = "EXPRESSION";
@@ -53,57 +53,47 @@ class $ASSIGNMENT extends $ {
 
     switch (true) {
       case leftKind === "VAR" && rightKind === "EXPRESSION": {
-        this.assignment = $VARIABLE(this.left, this.right);
+        this.$ = $VARIABLE(this.lft, this.rgt);
         break;
       }
       case leftKind === "VAR" && rightKind === "INSTANCE": {
-        this.assignment = $INSTANCE(
-          this.right.callee,
-          null,
-          this.left,
-          this.right.arguments
-        );
+        this.$ = $INSTANCE(this.rgt.callee, null, this.lft, this.rgt.arguments);
         break;
       }
       case leftKind === "PROPERTY" && rightKind === "EXPRESSION": {
-        const identifier = new Identifier(this.left);
-        this.assignment = $PROPERTY(
+        const identifier = new Identifier(this.lft);
+        this.$ = $PROPERTY(
           identifier.object.node,
           identifier.last.node,
-          this.right
+          this.rgt
         );
         break;
       }
       case leftKind === "PROPERTY" && rightKind === "INSTANCE": {
-        const identifier = new Identifier(this.left);
-        this.assignment = $INSTANCE(
-          this.right.callee,
+        const identifier = new Identifier(this.lft);
+        this.$ = $INSTANCE(
+          this.rgt.callee,
           identifier.object.node,
           identifier.last.node,
-          this.right.arguments
+          this.rgt.arguments
         );
         break;
       }
       case ["LET", "CONST"].includes(leftKind): {
-        this.assignment = $LET(
-          this.left,
-          this.right,
-          leftKind === "CONST",
-          reassign
-        );
+        this.$ = $LET(this.lft, this.rgt, leftKind === "CONST", reassign);
         break;
       }
     }
 
-    this.assignment.assigned = true;
-    delete this.left;
-    delete this.right;
+    this.$.asg = true; // assigned
+    delete this.lft;
+    delete this.rgt;
   }
 
   run(scope) {
     return new Instruction(
       scope,
-      this.assignment,
+      this.$,
       undefined,
       true,
       undefined,

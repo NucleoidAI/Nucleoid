@@ -18,35 +18,35 @@ function build(tokens) {
   }
 
   const statement = new $EXPRESSION();
-  statement.tokens = tokens;
+  statement.tkns = tokens;
   return statement;
 }
 
 class $EXPRESSION extends $ {
   run(scope) {
-    if (Identifier.types.includes(this.tokens.node.type)) {
-      const identifier = new Identifier(this.tokens.node);
+    if (Identifier.types.includes(this.tkns.node.type)) {
+      const identifier = new Identifier(this.tkns.node);
 
       if (scope.retrieve(identifier)) {
-        return new EXPRESSION(this.tokens);
+        return new EXPRESSION(this.tkns);
       }
 
       const link = graph.retrieve(identifier);
 
       if (link) {
-        const statement = new REFERENCE(this.tokens);
+        const statement = new REFERENCE(this.tkns);
         statement.link = identifier;
         return statement;
       } else {
-        return new EXPRESSION(this.tokens);
+        return new EXPRESSION(this.tkns);
       }
     } else {
       const $instance = scope.$instance;
 
       if ($instance) {
-        return new EXPRESSION$INSTANCE(this.tokens);
+        return new EXPRESSION$INSTANCE(this.tkns);
       } else {
-        return new EXPRESSION(this.tokens);
+        return new EXPRESSION(this.tkns);
       }
     }
   }
