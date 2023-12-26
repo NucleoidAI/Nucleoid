@@ -18,10 +18,6 @@ function build(kind, left, right) {
 
 class $ASSIGNMENT extends $ {
   before(scope) {
-    if (this.prepared) {
-      return;
-    }
-
     const name = new Identifier(this.left);
 
     let leftKind = this.kind;
@@ -100,7 +96,6 @@ class $ASSIGNMENT extends $ {
     }
 
     this.assignment.assigned = true;
-    this.prepared = true;
     delete this.left;
     delete this.right;
   }

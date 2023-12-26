@@ -36,7 +36,7 @@ class EXPRESSION {
       try {
         if (node.type === "CallExpression") {
           const func = state.expression(scope, {
-            value: node.function,
+            value: node.function.generate(scope),
           });
 
           if (func?.value) {
@@ -48,6 +48,10 @@ class EXPRESSION {
 
             Object.keys(node.node).forEach((key) => delete node.node[key]);
             Object.assign(node.node, newNode);
+          }
+
+          if (func?.write) {
+            this.tokens.wrt = true;
           }
         }
       } catch (err) {} // eslint-disable-line no-empty

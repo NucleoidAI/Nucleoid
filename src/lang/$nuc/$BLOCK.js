@@ -26,13 +26,19 @@ class $BLOCK extends $ {
     test: for (let statement of _.cloneDeep(this.statements)) {
       while (statement instanceof $) {
         if (statement.iof === "$ASSIGNMENT") {
-          statement.before(test);
+          if (!statement.prepared) {
+            statement.before(test);
+            statement.prepared = true;
+          }
           statement.graph(test);
           statement = statement.run(test);
           statement = statement.statement;
         }
 
-        statement.before(test);
+        if (!statement.prepared) {
+          statement.before(test);
+          statement.prepared = true;
+        }
         statement = statement.run(test);
       }
 

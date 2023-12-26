@@ -94,14 +94,15 @@ function process(statements, prior, options = {}) {
       }
       case statement instanceof $: {
         // TODO Move prepare check here
-        if (instruction.before) {
+        if (instruction.before && !statement.prepared) {
           statement.before(instruction.scope);
+          statement.prepared = true;
         }
 
         if (instruction.run) {
           let next = statement.run(instruction.scope);
           next = Array.isArray(next) ? next : [next];
-          next.unshift(
+          next.push(
             new Instruction(instruction.scope, statement, false, false, true)
           );
 
@@ -130,8 +131,14 @@ function process(statements, prior, options = {}) {
           statement.graph(instruction.scope);
 
           // TODO Move this to after
-          if (!instruction.derivative && !statement.assigned) {
-            result.$nuc.push(statement);
+          if (!instruction.derivative && !statement.asg) {
+            if (statement.iof === "$EXPRESSION") {
+              if (statement.tokens.wrt) {
+                result.$nuc.push(statement);
+              }
+            } else {
+              result.$nuc.push(statement);
+            }
           }
         }
 

@@ -1,13 +1,20 @@
 const test = require("../lib/test");
-const { deepEqual } = require("assert");
+const { equal, deepEqual } = require("assert");
 const nucleoid = require("../../");
 const stack = require("../stack");
 
 describe("Nucleoid", () => {
-  before(() => nucleoid.start({ declarative: false, test: true }));
+  before(() => nucleoid.start({ declarative: true, test: true }));
   beforeEach(() => test.clear());
 
   it("stores $nuc", () => {
+    nucleoid.run("a = 1");
+    nucleoid.run("b = a + 2");
+    nucleoid.run("a = 2");
+
+    nucleoid.run("arr  = [ 1, 2, 3 ]");
+    nucleoid.run("arr.push ( 4 )");
+
     nucleoid.run(
       "class User { constructor ( name, createdAt ) { this.name = name; this.createdAt = createdAt } }"
     );
@@ -15,7 +22,7 @@ describe("Nucleoid", () => {
     nucleoid.run("if ( $User.name === 'Test' ) { $User.mode = 'TEST' }");
     nucleoid.run("new User ( 'Test', Date.now() )");
 
-    const actualList = nucleoid.run("User");
+    const expectedUserList = nucleoid.run("User");
 
     const statements = [];
     nucleoid.datastore
@@ -26,9 +33,14 @@ describe("Nucleoid", () => {
 
     test.clear();
 
-    stack.process(statements, null, { load: true });
+    stack.process(statements, null, { declarative: true });
 
-    const expectedList = nucleoid.run("User");
-    deepEqual(actualList, expectedList);
+    equal(nucleoid.run("a"), 2);
+    equal(nucleoid.run("b"), 4);
+
+    deepEqual(nucleoid.run("arr"), [1, 2, 3, 4]);
+
+    const actualUserList = nucleoid.run("User");
+    deepEqual(actualUserList, expectedUserList);
   });
 });

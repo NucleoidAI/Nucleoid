@@ -9,8 +9,6 @@ const FUNCTION = require("../../nuc/FUNCTION");
 const Identifier = require("../ast/Identifier");
 const $EXPRESSION = require("./$EXPRESSION");
 const Instruction = require("../../instruction");
-const Scope = require("../../Scope");
-const { EXPRESSION } = require("../../lib/token");
 
 function build(object, name, value) {
   let statement = new $PROPERTY();
@@ -22,13 +20,8 @@ function build(object, name, value) {
 
 class $PROPERTY extends $ {
   before(scope) {
-    if (this.prepared) {
-      return;
-    }
-
     const expression = $EXPRESSION(this.value);
     this.value = expression.run(scope);
-    this.prepared = true;
   }
 
   run(scope) {

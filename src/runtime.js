@@ -34,7 +34,6 @@ module.exports.process = function (string, options = {}) {
   const time = date - before;
 
   datastore.write({
-    // TODO Adopt to 3 letter code
     s: string,
     $: result.$nuc,
     c: declarative ? true : undefined,

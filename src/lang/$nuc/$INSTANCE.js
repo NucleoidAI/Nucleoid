@@ -17,15 +17,9 @@ function build(cls, object, name, args = []) {
 
 class $INSTANCE extends $ {
   before() {
-    if (this.prepared) {
-      return;
-    }
-
     if (!this.object && !this.name) {
       this.name = random(16, true);
     }
-
-    this.prepared = true;
   }
 
   run(scope) {

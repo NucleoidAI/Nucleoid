@@ -18,14 +18,9 @@ function build(condition, trueStatement, falseStatement) {
 
 class $IF extends $ {
   before(scope) {
-    if (this.prepared) {
-      return;
-    }
-
     const condition = new Expression(this.condition);
     const expression = $EXPRESSION(condition);
     this.condition = expression.run(scope);
-    this.prepared = true;
   }
 
   run(scope) {
