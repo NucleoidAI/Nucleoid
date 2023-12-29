@@ -1,19 +1,22 @@
 const EXPRESSION = require("./EXPRESSION");
-const Id = require("../lib/identifier");
 
 class EXPRESSION$INSTANCE extends EXPRESSION {
-  run(scope) {
-    let instance = scope.instance(this.class.name);
+  before(scope) {
+    const $instance = scope.$instance;
 
-    if (instance !== undefined) {
-      this.node = this.node.map((token) => {
-        let parts = token.split(".");
-        if (parts[0] === this.class.name) parts[0] = Id.serialize(instance);
-        return parts.join(".");
+    if ($instance) {
+      this.tokens.traverse((node) => {
+        const identifiers = [node.walk()].flat(Infinity);
+
+        for (const identifier of identifiers) {
+          if (identifier.first.toString() === $instance.class.name.toString()) {
+            identifier.first = $instance.resolve();
+          }
+        }
       });
     }
 
-    return super.run(scope, false, false);
+    super.before(scope);
   }
 }
 

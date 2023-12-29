@@ -3,13 +3,13 @@ const RETURN = require("../../nuc/RETURN");
 
 function build(statement) {
   const returnStatement = new $RETURN();
-  returnStatement.statement = statement;
+  returnStatement.stm = statement;
   return returnStatement;
 }
 
 class $RETURN extends $ {
   run() {
-    return new RETURN(this.statement);
+    return new RETURN(this.stm);
   }
 }
 

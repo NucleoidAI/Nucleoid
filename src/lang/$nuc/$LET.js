@@ -12,35 +12,30 @@ const $INSTANCE = require("./$INSTANCE");
 
 function build(name, value, constant, reassign) {
   let statement = new $LET();
-  statement.name = name;
-  statement.value = value;
-  statement.constant = constant;
-  statement.reassign = reassign;
+  statement.nme = name;
+  statement.val = value;
+  statement.cst = constant;
+  statement.ras = reassign;
   return statement;
 }
 
 class $LET extends $ {
   before(scope) {
     if (
-      this.value.type === "NewExpression" &&
-      graph.retrieve(`$${this.value.callee.name}`) instanceof CLASS
+      this.val.type === "NewExpression" &&
+      graph.retrieve(`$${this.val.callee.name}`) instanceof CLASS
     ) {
-      this.value = $INSTANCE(
-        this.value.callee,
-        null,
-        null,
-        this.value.arguments
-      );
-      this.value.before(scope);
+      this.val = $INSTANCE(this.val.callee, null, null, this.val.arguments);
+      this.val.before(scope);
     } else {
-      const expression = $EXPRESSION(this.value);
-      this.value = expression.run(scope);
+      const expression = $EXPRESSION(this.val);
+      this.val = expression.run(scope);
     }
   }
 
   run(scope) {
     // TODO Rename this to `identifier`?
-    const name = new Identifier(this.name);
+    const name = new Identifier(this.nme);
 
     if (
       name.type === "MemberExpression" &&
@@ -53,9 +48,9 @@ class $LET extends $ {
       throw TypeError("Cannot use 'value' in local");
     }
 
-    let value = this.value;
+    let value = this.val;
     if (value instanceof EXPRESSION || value instanceof REFERENCE) {
-      const cls = this.value.tokens.find((node) => {
+      const cls = this.val.tokens.find((node) => {
         const identifiers = [node.walk()].flat(Infinity);
 
         for (const identifier of identifiers) {
@@ -71,23 +66,23 @@ class $LET extends $ {
         statement.class = cls;
         statement.name = name;
         statement.value = value;
-        statement.constant = this.constant;
+        statement.constant = this.cst;
         return statement;
       }
 
       let statement = new LET();
       statement.name = name;
       statement.value = value;
-      statement.constant = this.constant;
-      statement.reassign = this.reassign;
+      statement.constant = this.cst;
+      statement.reassign = this.ras;
       return statement;
     } else if (value.iof === "$INSTANCE") {
-      const object = this.value.run(scope);
+      const object = this.val.run(scope);
 
       const statement = new LET$OBJECT();
       statement.name = name;
       statement.object = object;
-      statement.constant = this.constant;
+      statement.constant = this.cst;
 
       return [object, statement];
     }

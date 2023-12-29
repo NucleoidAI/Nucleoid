@@ -21,6 +21,7 @@ class Identifier extends Node {
 
   set first(first) {
     if (["Identifier", "ThisExpression"].includes(this.node.type)) {
+      Object.keys(this.node).forEach((key) => delete this.node[key]);
       Object.assign(this.node, first.node);
     } else if (this.node.type === "MemberExpression") {
       root(this.node).object = first.node;
@@ -39,6 +40,7 @@ class Identifier extends Node {
 
   set object(object) {
     if (["Identifier", "ThisExpression"].includes(this.node.type)) {
+      Object.keys(this.node).forEach((key) => delete this.node[key]);
       Object.assign(this.node, object.node);
     } else if (this.node.type === "MemberExpression") {
       this.node.object = object.node;
@@ -57,6 +59,7 @@ class Identifier extends Node {
 
   set last(last) {
     if (["Identifier", "ThisExpression"].includes(this.node.type)) {
+      Object.keys(this.node).forEach((key) => delete this.node[key]);
       Object.assign(this.node, last.node);
     } else if (this.node.type === "MemberExpression") {
       this.node.property = last.node;
@@ -76,7 +79,7 @@ class Identifier extends Node {
           .map((arg) => arg.toString())
           .includes(this.first.toString())
       ) {
-        return this;
+        return this.node;
       }
 
       const scoped = scope.retrieve(this);
@@ -90,10 +93,13 @@ class Identifier extends Node {
       // TODO Loop through all computed identifiers
       if (this.node.computed) {
         node = _.cloneDeep(this.node);
-        const property = new Identifier(node.property);
+        const property = new Identifier(_.cloneDeep(node.property));
         const resolved = property.resolve(scope);
 
         if (resolved) {
+          Object.keys(node.property).forEach(
+            (key) => delete node.property[key]
+          );
           Object.assign(node.property, resolved);
         }
       }

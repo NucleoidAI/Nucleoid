@@ -1,15 +1,17 @@
 const IF$INSTANCE = require("./IF$INSTANCE");
 const $BLOCK = require("../lang/$nuc/$BLOCK");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
+const Scope = require("../Scope");
+const Instruction = require("../instruction");
 
-class IF$CLASS extends Node {
+class IF$CLASS extends NODE {
   run(scope) {
     let instances;
     let statements = [];
 
-    let instance = scope.instance(this.class.name);
+    let instance = scope.$instance;
 
     if (instance) {
       instances = [instance];
@@ -19,24 +21,21 @@ class IF$CLASS extends Node {
 
     for (let instance of instances) {
       const statement = new IF$INSTANCE(uuid());
-      statement.class = this.class;
-      statement.instance = instance;
       statement.condition = _.cloneDeep(this.condition);
-      statement.true = $BLOCK(_.cloneDeep(this.true.statements));
-      statement.true.class = this.class;
-      statement.true.instance = statement.instance;
+      statement.true = $BLOCK(_.cloneDeep(this.true.stms));
 
       if (this.false?.iof === "$IF") {
         statement.false = _.cloneDeep(this.false);
-        statement.false.class = this.class;
-        statement.false.instance = statement.instance;
       } else if (this.false?.iof === "$BLOCK") {
-        statement.false = $BLOCK(_.cloneDeep(this.false.statements));
-        statement.false.class = this.class;
-        statement.false.instance = statement.instance;
+        statement.false = $BLOCK(_.cloneDeep(this.false.stms));
       }
 
-      statements.push(statement);
+      const instanceScope = new Scope(scope);
+      instanceScope.$instance = instance;
+
+      statements.push(
+        new Instruction(instanceScope, statement, true, true, true, null, true)
+      );
     }
 
     return { next: statements };

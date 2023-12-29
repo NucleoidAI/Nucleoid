@@ -1,5 +1,5 @@
 const state = require("../state");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const Instruction = require("../instruction");
 const Scope = require("../Scope");
 const Evaluation = require("../lang/Evaluation");
@@ -8,7 +8,7 @@ const { append } = require("../lang/estree/estree");
 const estree = require("../lang/estree/estree");
 const $EXPRESSION = require("../lang/$nuc/$EXPRESSION");
 
-class OBJECT extends Node {
+class OBJECT extends NODE {
   constructor(key) {
     super(key);
     this.properties = {};
@@ -65,10 +65,12 @@ class OBJECT extends Node {
     }
 
     for (let node in this.class.declarations) {
-      let declaration = this.class.declarations[node];
-      let scope = new Scope();
-      scope.instances[this.class.name] = this;
-      list.push(new Instruction(scope, declaration, true, true, true, true));
+      const declaration = this.class.declarations[node];
+      const scope = new Scope();
+      scope.$instance = this;
+
+      list.push(new Instruction(scope, declaration, true, true, false, true));
+      list.push(new Instruction(scope, declaration, false, false, true, true));
     }
 
     const expression = new Instruction(

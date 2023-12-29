@@ -1601,7 +1601,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("item1.custom"), "US0000002");
     });
 
-    it.skip("runs nested block statement of property", () => {
+    it("runs nested block statement of property", () => {
       nucleoid.run("class Figure { }");
       nucleoid.run("figure1 = new Figure ( )");
       nucleoid.run("figure1.width = 9");
@@ -1925,8 +1925,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("purchase.retailPrice"), 228.85);
     });
 
-    // TODO It will be fixed with new writing strategy
-    it.skip("runs nested block statement of class before initialization", () => {
+    it("runs nested block statement of class before initialization", () => {
       nucleoid.run("class Compound { }");
       nucleoid.run(
         "{ let mol = 69.94 / $Compound.substance ; { $Compound.sample = Math.floor ( mol * $Compound.mol ) } }"
@@ -1950,10 +1949,10 @@ describe("Nucleoid", () => {
 
     it("runs nested if statement of class before initialization", () => {
       nucleoid.run("class Mortgage { }");
+      nucleoid.run("rate1 = 'EXCEPTIONAL'");
       nucleoid.run(
         "{ let interest = $Mortgage.annual / 12 ; if ( interest < 4 ) { $Mortgage.rate = rate1 } }"
       );
-      nucleoid.run("rate1 = 'EXCEPTIONAL'");
       nucleoid.run("mortgage1 = new Mortgage ( )");
       nucleoid.run("mortgage1.annual = 46");
       equal(nucleoid.run("mortgage1.rate"), "EXCEPTIONAL");

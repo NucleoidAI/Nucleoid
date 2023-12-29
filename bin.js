@@ -18,9 +18,6 @@ require("yargs")
         .option("cluster", {
           describe: "Enable cluster mode",
         })
-        .option("cache-only", {
-          describe: "Start runtime without persistence unit",
-        })
         .option("terminal-port", {
           describe: "Set terminal port number",
         })
@@ -34,7 +31,7 @@ require("yargs")
     desc: "Clear data",
     builder: () => {},
     handler: () => {
-      const datastore = require("@nucleoidjs/datastore");
+      const datastore = require("./src/datastore");
       datastore.clear();
       console.log("Data is cleared");
     },

@@ -1,13 +1,15 @@
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const PROPERTY$INSTANCE = require("./PROPERTY$INSTANCE");
 const _ = require("lodash");
+const Instruction = require("../instruction");
+const Scope = require("../Scope");
 
-class PROPERTY$CLASS extends Node {
+class PROPERTY$CLASS extends NODE {
   run(scope) {
     let instances;
     let statements = [];
 
-    const instance = scope.instance(this.class.name);
+    const instance = scope.$instance;
 
     if (instance) {
       instances = [instance];
@@ -17,12 +19,16 @@ class PROPERTY$CLASS extends Node {
 
     for (let instance of instances) {
       let statement = new PROPERTY$INSTANCE(`${instance.name}.${this.name}`);
-      statement.class = this.class;
-      statement.instance = instance;
-      statement.object = instance; // TODO Research if class property is nested
+      statement.object = instance;
       statement.name = this.name;
       statement.value = _.cloneDeep(this.value);
-      statements.push(statement);
+
+      const instanceScope = new Scope(scope);
+      instanceScope.$instance = instance;
+
+      statements.push(
+        new Instruction(instanceScope, statement, true, true, true, null, true)
+      );
     }
 
     return { next: statements };

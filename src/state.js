@@ -14,39 +14,6 @@ const serialize = require("./lib/serialize");
 
 global.require = require;
 
-function graph(id) {
-  let node = _graph[id];
-
-  if (_graph[id] === undefined) {
-    throw ReferenceError(`${id} is not defined`);
-  }
-
-  let object = {};
-
-  for (let prop in node) {
-    let n = node[prop];
-
-    if (typeof n === "object") {
-      object[prop] = {};
-
-      for (let nprop in n) {
-        if (typeof n[nprop] === "object") {
-          object[prop][nprop] = {
-            id: n[nprop].id,
-            key: n[nprop].key,
-            type: n[nprop].constructor.name,
-          };
-        } else {
-          object[prop][nprop] = n[nprop];
-        }
-      }
-    } else {
-      object[prop] = node[prop];
-    }
-  }
-
-  return object;
-}
 function assign(scope, variable, evaluation, json = true) {
   let value;
 
@@ -72,15 +39,6 @@ function del(scope, variable) {
   return eval(`delete state.${variable}`);
 }
 
-function load(execs = []) {
-  const Node = require("./nuc/NODE");
-  const graph = require("./graph");
-
-  execs.forEach((exec) => {
-    eval(exec);
-  });
-}
-
 module.exports.throw = (scope, exception) => eval(`throw ${exception}`);
 
 function clear() {
@@ -95,6 +53,5 @@ module.exports.state = state; // will be private
 module.exports.assign = assign;
 module.exports.call = call;
 module.exports.expression = expression;
-module.exports.load = load;
 module.exports.clear = clear;
 module.exports.delete = del;

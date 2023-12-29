@@ -1,5 +1,5 @@
-const Node = require("./NODE");
+const NODE = require("./NODE");
 
-class FUNCTION extends Node {}
+class FUNCTION extends NODE {}
 
 module.exports = FUNCTION;

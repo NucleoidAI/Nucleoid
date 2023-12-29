@@ -5,22 +5,22 @@ const Identifier = require("../ast/Identifier");
 
 function build(name, value) {
   const statement = new $VARIABLE();
-  statement.name = name;
-  statement.value = value;
+  statement.nme = name;
+  statement.val = value;
   return statement;
 }
 
 class $VARIABLE extends $ {
   before(scope) {
-    const expression = $EXPRESSION(this.value);
-    this.value = expression.run(scope);
+    const expression = $EXPRESSION(this.val);
+    this.val = expression.run(scope);
   }
 
   run() {
-    const name = new Identifier(this.name);
+    const name = new Identifier(this.nme);
     const statement = new VARIABLE(name);
     statement.name = name;
-    statement.value = this.value;
+    statement.value = this.val;
     return statement;
   }
 }

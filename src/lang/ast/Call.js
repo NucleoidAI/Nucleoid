@@ -21,9 +21,14 @@ class Call extends Node {
   }
 
   get last() {
-    const callee = rootCallee(this.node);
-    const identifier = new Identifier(callee);
+    const root = rootCallee(this.node);
+    const identifier = new Identifier(root);
     return identifier.last;
+  }
+
+  get function() {
+    const root = rootCallee(this.node);
+    return new Identifier(root);
   }
 
   resolve(scope) {

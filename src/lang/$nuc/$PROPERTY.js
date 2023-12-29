@@ -8,25 +8,25 @@ const Local = require("../../lib/local");
 const FUNCTION = require("../../nuc/FUNCTION");
 const Identifier = require("../ast/Identifier");
 const $EXPRESSION = require("./$EXPRESSION");
+const Instruction = require("../../instruction");
 
 function build(object, name, value) {
   let statement = new $PROPERTY();
-  statement.object = object;
-  statement.name = name;
-  statement.value = value;
+  statement.obj = object;
+  statement.nme = name;
+  statement.val = value;
   return statement;
 }
 
 class $PROPERTY extends $ {
   before(scope) {
-    const expression = $EXPRESSION(this.value);
-    this.value = expression.run(scope);
+    const expression = $EXPRESSION(this.val);
+    this.val = expression.run(scope);
   }
 
   run(scope) {
-    let object = new Identifier(this.object);
-    const name = new Identifier(this.name);
-    const key = `${object}.${name}`;
+    let object = new Identifier(this.obj);
+    const name = new Identifier(this.nme);
 
     if (object.toString() === "this") {
       object = Local.object(scope);
@@ -42,19 +42,22 @@ class $PROPERTY extends $ {
 
     const cls = graph.retrieve(object);
     if (cls instanceof CLASS || cls instanceof OBJECT$CLASS) {
-      let statement = new PROPERTY$CLASS(key);
+      let statement = new PROPERTY$CLASS(`${object}.${name}`);
       statement.class = cls;
       statement.object = graph.retrieve(object);
       statement.name = name;
-      statement.value = this.value;
-      return statement;
+      statement.value = this.val;
+      return [
+        new Instruction(scope, statement, true, true, false, null, true),
+        new Instruction(scope, statement, false, false, true, null, true),
+      ];
     }
 
-    let statement = new PROPERTY(key);
+    let statement = new PROPERTY(`${object}.${name}`);
     statement.object = graph.retrieve(object);
     statement.name = name;
-    statement.value = this.value;
-    return statement;
+    statement.value = this.val;
+    return new Instruction(scope, statement, true, true, true);
   }
 }
 

@@ -1,4 +1,4 @@
-const datastore = require("@nucleoidjs/datastore");
+const datastore = require("../datastore");
 const state = require("../state");
 const graph = require("../graph");
 
@@ -7,7 +7,5 @@ const clear = () => {
   graph.clear();
   datastore.clear();
 };
-
-clear();
 
 module.exports = { clear };

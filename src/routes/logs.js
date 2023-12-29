@@ -1,4 +1,4 @@
-const datastore = require("@nucleoidjs/datastore");
+const datastore = require("../datastore");
 const express = require("express");
 const router = express.Router();
 

@@ -5,25 +5,25 @@ const Identifier = require("../ast/Identifier");
 
 function build(alias, name, value) {
   const statement = new $ALIAS();
-  statement.alias = alias;
-  statement.name = name;
-  statement.value = value;
+  statement.als = alias;
+  statement.nme = name;
+  statement.val = value;
   return statement;
 }
 
 class $ALIAS extends $ {
   before(scope) {
-    const expression = $EXPRESSION(this.value);
-    this.value = expression.run(scope);
+    const expression = $EXPRESSION(this.val);
+    this.val = expression.run(scope);
   }
 
   run() {
-    const name = new Identifier(this.name);
+    const name = new Identifier(this.nme);
 
     const statement = new ALIAS(name);
-    statement.alias = new Identifier(this.alias);
+    statement.alias = new Identifier(this.als);
     statement.name = name;
-    statement.value = this.value;
+    statement.value = this.val;
     return statement;
   }
 }

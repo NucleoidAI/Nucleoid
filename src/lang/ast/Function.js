@@ -68,8 +68,10 @@ function resolveIdentifier(scope, node) {
     resolveIdentifier(scope, node.right);
   } else {
     if (["Identifier", "MemberExpression"].includes(node.type)) {
-      const identifier = new Identifier(node);
+      const identifier = new Identifier(_.cloneDeep(node));
       const resolved = identifier.resolve(scope);
+
+      Object.keys(node).forEach((key) => delete node[key]);
       Object.assign(node, resolved);
     }
   }

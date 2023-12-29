@@ -1,10 +1,11 @@
 const state = require("../state");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const estree = require("../lang/estree/estree");
 const Identifier = require("../lang/ast/Identifier");
 const REFERENCE = require("./REFERENCE");
+const graph = require("../graph");
 
-class PROPERTY extends Node {
+class PROPERTY extends NODE {
   before(scope) {
     this.value.before(scope);
   }
@@ -14,7 +15,7 @@ class PROPERTY extends Node {
 
     const object =
       this.object.value instanceof REFERENCE
-        ? this.object.value.link
+        ? graph.retrieve(this.object.value.link)
         : this.object;
 
     // TODO Rename `variable`
@@ -34,7 +35,7 @@ class PROPERTY extends Node {
   graph(scope) {
     const object =
       this.object.value instanceof REFERENCE
-        ? this.object.value.link
+        ? graph.retrieve(this.object.value.link)
         : this.object;
 
     object.properties[this.name] = this;

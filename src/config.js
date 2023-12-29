@@ -13,7 +13,7 @@ let defaultConfig = {
   },
   declarative: false,
   details: false,
-  cacheOnly: false,
+  cache: false,
   data: {
     encryption: true,
   },
@@ -53,7 +53,7 @@ function init(config = {}) {
 
   if (config.test) {
     _config.id = config.id || uuid();
-    _config.cacheOnly = true;
+    _config.cache = true;
   } else {
     try {
       const json = require(`${_config.path}/config.json`);

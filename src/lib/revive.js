@@ -8,7 +8,6 @@ let ALIAS,
   DELETE$OBJECT,
   DELETE$VARIABLE,
   DELETE,
-  EXPRESSION$INSTANCE,
   EXPRESSION,
   FOR,
   IF$CLASS,
@@ -38,7 +37,6 @@ setImmediate(() => {
   DELETE$OBJECT = require("../nuc/DELETE$OBJECT");
   DELETE$VARIABLE = require("../nuc/DELETE$VARIABLE");
   DELETE = require("../nuc/DELETE");
-  EXPRESSION$INSTANCE = require("../nuc/EXPRESSION$INSTANCE");
   EXPRESSION = require("../nuc/EXPRESSION");
   FOR = require("../nuc/FOR");
   // const FUNCTION = require("../nuc/FUNCTION");

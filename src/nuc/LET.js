@@ -1,6 +1,5 @@
 class LET {
   constructor(name, value) {
-    this.instanceof = this.constructor.name;
     this.name = name;
     this.value = value;
   }

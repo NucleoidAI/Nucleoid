@@ -2,12 +2,18 @@ const IF = require("./IF");
 
 class IF$INSTANCE extends IF {
   before(scope) {
+    const $instance = scope.$instance;
+
+    if (!$instance) {
+      throw "Declaration missing instance in scope";
+    }
+
     this.condition.tokens.traverse((node) => {
       const identifiers = [node.walk()].flat(Infinity);
 
       for (const identifier of identifiers) {
-        if (identifier.first.toString() === this.class.name.toString()) {
-          identifier.first.node.name = this.instance.name;
+        if ($instance.class.name.toString() === identifier.first.toString()) {
+          identifier.first = $instance.resolve();
         }
       }
     });
@@ -15,11 +21,6 @@ class IF$INSTANCE extends IF {
     this.key = `if(${this.condition.tokens})`;
 
     super.before(scope);
-  }
-
-  run(scope) {
-    scope.instances[this.class.name] = this.instance;
-    return super.run(scope);
   }
 }
 

@@ -1,9 +1,11 @@
-const Node = require("./NODE");
+const NODE = require("./NODE");
 const Id = require("../lib/identifier");
 const OBJECT$INSTANCE = require("./OBJECT$INSTANCE");
 const graph = require("../graph");
+const Scope = require("../Scope");
+const Instruction = require("../instruction");
 
-class OBJECT$CLASS extends Node {
+class OBJECT$CLASS extends NODE {
   before() {
     this.key = Id.serialize(this);
   }
@@ -12,7 +14,7 @@ class OBJECT$CLASS extends Node {
     let instances;
     const statements = [];
 
-    const instance = scope.instance(this.object.name);
+    const instance = scope.$instance;
 
     if (instance) {
       instances = [instance];
@@ -25,7 +27,13 @@ class OBJECT$CLASS extends Node {
       statement.class = this.class;
       statement.object = graph.retrieve(`${instance.name}`);
       statement.name = this.name;
-      statements.push(statement);
+
+      const instanceScope = new Scope(scope);
+      instanceScope.$instance = instance;
+
+      statements.push(
+        new Instruction(instanceScope, statement, true, true, true, null, true)
+      );
     }
 
     return { next: statements };

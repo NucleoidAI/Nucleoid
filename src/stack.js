@@ -93,17 +93,18 @@ function process(statements, prior, options = {}) {
         break;
       }
       case statement instanceof $: {
-        if (instruction.before) {
+        // TODO Move prepare check here
+        if (instruction.before && !statement.prepared) {
           statement.before(instruction.scope);
-        }
-
-        if (!instruction.derivative) {
-          // result.$nuc.push(statement);
+          statement.prepared = true;
         }
 
         if (instruction.run) {
           let next = statement.run(instruction.scope);
           next = Array.isArray(next) ? next : [next];
+          next.push(
+            new Instruction(instruction.scope, statement, false, false, true)
+          );
 
           const scope = instruction.scope;
 
@@ -124,6 +125,21 @@ function process(statements, prior, options = {}) {
 
           instructions = next.filter((i) => !i.root).concat(instructions);
           priorities = next.filter((i) => i.root).concat(priorities);
+        }
+
+        if (instruction.graph) {
+          statement.graph(instruction.scope);
+
+          // TODO Move this to after
+          if (!instruction.derivative && !statement.asg) {
+            if (statement.iof === "$EXPRESSION") {
+              if (statement.tkns.wrt) {
+                result.$nuc.push(statement);
+              }
+            } else {
+              result.$nuc.push(statement);
+            }
+          }
         }
 
         break;
@@ -148,7 +164,15 @@ function process(statements, prior, options = {}) {
               .map((statement) => {
                 return statement instanceof Instruction
                   ? statement
-                  : new Instruction(scope, statement, true, true, true);
+                  : new Instruction(
+                      scope,
+                      statement,
+                      true,
+                      true,
+                      true,
+                      null,
+                      true
+                    );
               })
               .map((statement) => {
                 statement.before = statement.before ?? instruction.before;
@@ -195,9 +219,7 @@ function process(statements, prior, options = {}) {
                   }
                 });
 
-                dependencies = dependencies.concat(
-                  list.filter((e) => !dependencies.includes(e))
-                );
+                dependencies = dependencies.concat(list);
               }
             }
           }

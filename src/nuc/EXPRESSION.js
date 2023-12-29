@@ -8,29 +8,11 @@ const Identifier = require("../lang/ast/Identifier");
 
 class EXPRESSION {
   constructor(tokens) {
-    this.instanceof = this.constructor.name;
+    this.iof = this.constructor.name;
     this.tokens = tokens;
   }
 
   before(scope) {
-    const $class = scope.$class;
-
-    if ($class) {
-      const instance = scope.instance($class.name);
-
-      if (instance) {
-        this.tokens.traverse((node) => {
-          const identifiers = [node.walk()].flat(Infinity);
-
-          for (const identifier of identifiers) {
-            if (identifier.first.toString() === $class.name.toString()) {
-              identifier.first = instance.resolve();
-            }
-          }
-        });
-      }
-    }
-
     this.tokens.map((node) => {
       if (
         node.type === "MemberExpression" &&
@@ -42,12 +24,39 @@ class EXPRESSION {
 
         const { parse } = require("../lang/estree/parser");
         const newValue = parse(serialize(value, "state"), false);
+
+        Object.keys(node.node).forEach((key) => delete node.node[key]);
         Object.assign(node.node, newValue);
       }
     });
   }
 
   run(scope, force = false) {
+    this.tokens.map((node) => {
+      try {
+        if (node.type === "CallExpression") {
+          const func = state.expression(scope, {
+            value: node.function.generate(scope),
+          });
+
+          if (func?.value) {
+            const value = state.expression(scope, {
+              value: node.generate(scope),
+            });
+            const { parse } = require("../lang/estree/parser");
+            const newNode = parse(serialize(value, "state"), false);
+
+            Object.keys(node.node).forEach((key) => delete node.node[key]);
+            Object.assign(node.node, newNode);
+          }
+
+          if (func?.write) {
+            this.tokens.wrt = true;
+          }
+        }
+      } catch (err) {} // eslint-disable-line no-empty
+    });
+
     const expression = this.tokens.traverse((node) => {
       const evaluation = node.generate(scope);
 
@@ -105,7 +114,7 @@ class EXPRESSION {
 
           if (test?.value && test.value instanceof REFERENCE) {
             const link = new Identifier(
-              append(test.value.link.name.node, right.node)
+              append(test.value.link.node, right.node)
             );
             return graph.retrieve(link);
           }

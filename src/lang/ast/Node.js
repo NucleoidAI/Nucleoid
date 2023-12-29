@@ -3,6 +3,8 @@ const ESTree = require("../estree/generator");
 
 class Node {
   constructor(node) {
+    this.iof = this.constructor.name;
+
     if (node === undefined) {
       this.node = {
         type: "Literal",

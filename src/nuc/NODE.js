@@ -15,6 +15,7 @@ class NODE {
   run() {}
   beforeGraph() {}
   graph() {}
+  after() {}
 
   // TODO Move this to graph
   static register(key, node) {

@@ -1,4 +1,5 @@
-const datastore = require("@nucleoidjs/datastore");
+require("./prototype");
+const datastore = require("./datastore");
 const stack = require("./stack");
 const Statement = require("./statement");
 const Event = require("./event");
@@ -13,7 +14,7 @@ try {
 
 module.exports.process = function (string, options = {}) {
   options = { ...config(), ...options };
-  const { declarative, details, cacheOnly } = options;
+  const { declarative, details } = options;
 
   const before = Date.now();
   let result;
@@ -32,23 +33,18 @@ module.exports.process = function (string, options = {}) {
   const date = Date.now();
   const time = date - before;
 
-  const $nuc = JSON.stringify(result.$nuc);
-
-  if (!cacheOnly) {
-    datastore.write({
-      s: string,
-      $: $nuc,
-      c: declarative ? true : undefined,
-      t: time,
-      r: result.value,
-      d: date,
-      e: result.error ? true : undefined,
-      v: events,
-    });
-  }
+  datastore.write({
+    s: string,
+    $: result.$nuc?.length ? result.$nuc : undefined,
+    c: declarative ? true : undefined,
+    t: time,
+    r: result.value,
+    d: date,
+    e: result.error ? true : undefined,
+    v: events,
+  });
 
   if (eventExtension) {
-    // TODO Disable for restart
     eventExtension.apply(events);
   }
 

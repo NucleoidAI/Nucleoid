@@ -10,8 +10,8 @@ const REFERENCE = require("../../nuc/REFERENCE");
 
 function build(statements, skip) {
   let statement = new $BLOCK();
-  statement.statements = statements;
-  statement.skip = skip;
+  statement.stms = statements;
+  statement.skp = skip;
   return statement;
 }
 
@@ -19,35 +19,51 @@ class $BLOCK extends $ {
   run(scope) {
     let test = new Scope(scope);
     test.object = scope.object;
-    let cls = this.class;
 
-    test: for (let statement of _.cloneDeep(this.statements)) {
+    let $class;
+
+    test: for (let statement of _.cloneDeep(this.stms)) {
       while (statement instanceof $) {
-        statement.before(test);
-        statement = statement.run(test);
-
-        if (statement instanceof Instruction) {
+        if (statement.iof === "$ASSIGNMENT") {
+          if (!statement.prepared) {
+            statement.before(test);
+            statement.prepared = true;
+          }
+          statement.graph(test);
+          statement = statement.run(test);
           statement = statement.statement;
         }
+
+        if (!statement.prepared) {
+          statement.before(test);
+          statement.prepared = true;
+        }
+        statement = statement.run(test);
       }
 
-      if (statement instanceof LET && !(statement.value instanceof REFERENCE)) {
-        statement.before(test);
-        statement.run(test);
+      const [result] = [statement]
+        .flat(Infinity)
+        .map((statement) =>
+          statement instanceof Instruction ? statement.statement : statement
+        );
+
+      if (result instanceof LET && !(result.value instanceof REFERENCE)) {
+        result.before(test);
+        result.run(test);
         statement.beforeGraph(test);
         statement.graph(test);
         continue;
-      } else if (statement.type === "CLASS") {
+      } else if (result.type === "CLASS") {
         const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
         const PROPERTY$CLASS = require("../../nuc/PROPERTY$CLASS");
 
         if (
-          statement instanceof PROPERTY$CLASS ||
+          result instanceof PROPERTY$CLASS ||
           statement instanceof OBJECT$CLASS
         ) {
-          cls = statement.object;
+          $class = result.object;
         } else {
-          cls = statement.class;
+          $class = result.class;
         }
 
         break test;
@@ -56,18 +72,18 @@ class $BLOCK extends $ {
       }
     }
 
-    if (cls) {
+    if ($class) {
       let statement = new BLOCK$CLASS(uuid());
-      statement.class = cls;
-      statement.statements = this.statements;
+      statement.class = $class;
+      statement.statements = this.stms;
       return [
         new Instruction(scope, statement, true, true, false),
         new Instruction(scope, statement, false, false, true),
       ];
     } else {
       let statement = new BLOCK(uuid());
-      statement.statements = this.statements;
-      statement.skip = this.skip;
+      statement.statements = this.stms;
+      statement.skip = this.skp;
 
       return [
         new Instruction(scope, statement, true, true, false),
