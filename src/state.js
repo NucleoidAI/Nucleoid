@@ -39,15 +39,6 @@ function del(scope, variable) {
   return eval(`delete state.${variable}`);
 }
 
-function load(execs = []) {
-  const Node = require("./nuc/NODE");
-  const graph = require("./graph");
-
-  execs.forEach((exec) => {
-    eval(exec);
-  });
-}
-
 module.exports.throw = (scope, exception) => eval(`throw ${exception}`);
 
 function clear() {
@@ -62,6 +53,5 @@ module.exports.state = state; // will be private
 module.exports.assign = assign;
 module.exports.call = call;
 module.exports.expression = expression;
-module.exports.load = load;
 module.exports.clear = clear;
 module.exports.delete = del;

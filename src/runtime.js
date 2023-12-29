@@ -35,7 +35,7 @@ module.exports.process = function (string, options = {}) {
 
   datastore.write({
     s: string,
-    $: result.$nuc,
+    $: result.$nuc?.length ? result.$nuc : undefined,
     c: declarative ? true : undefined,
     t: time,
     r: result.value,

@@ -24,12 +24,10 @@ describe("Nucleoid", () => {
 
     const expectedUserList = nucleoid.run("User");
 
-    const statements = [];
-    nucleoid.datastore
+    const statements = nucleoid.datastore
       .read()
-      .forEach((statement) =>
-        statement.$.forEach((item) => statements.push(item))
-      );
+      .flatMap((statement) => statement.$)
+      .filter((value) => value);
 
     test.clear();
 
@@ -37,6 +35,12 @@ describe("Nucleoid", () => {
 
     equal(nucleoid.run("a"), 2);
     equal(nucleoid.run("b"), 4);
+
+    nucleoid.run("c = b + 3");
+    nucleoid.run("a = 3");
+
+    equal(nucleoid.run("b"), 5);
+    equal(nucleoid.run("c"), 8);
 
     deepEqual(nucleoid.run("arr"), [1, 2, 3, 4]);
 

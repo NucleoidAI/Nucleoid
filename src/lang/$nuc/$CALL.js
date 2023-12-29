@@ -5,12 +5,6 @@ const $LET = require("./$LET");
 const _ = require("lodash");
 const Identifier = require("../ast/Identifier");
 
-const NULL = {
-  type: "Literal",
-  value: null,
-  raw: "null",
-};
-
 function build(func, args) {
   const call = new $CALL();
   call.func = func;
@@ -38,7 +32,16 @@ class $CALL extends $ {
       const statements = _.cloneDeep(block.stms);
 
       for (let i = args.length - 1; i >= 0; i--) {
-        statements.unshift($LET(args[i], values[i] || NULL));
+        statements.unshift(
+          $LET(
+            args[i],
+            values[i] || {
+              type: "Literal",
+              value: null,
+              raw: "null",
+            }
+          )
+        );
       }
 
       return $BLOCK(statements);

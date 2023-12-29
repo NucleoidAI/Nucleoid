@@ -1,3 +1,4 @@
+// TODO Rename to event store
 const revive = require("./lang/$nuc/revive");
 let datastore;
 
@@ -7,6 +8,8 @@ function init(config = { cache: true }) {
   } else {
     datastore = require("@nucleoidjs/datastore");
   }
+
+  datastore.init(config);
 }
 
 function clear() {

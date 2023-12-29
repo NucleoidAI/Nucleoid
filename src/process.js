@@ -4,15 +4,22 @@ const config = require("./config");
 const openapi = require("./lib/openapi");
 const context = require("./lib/context");
 const terminal = require("./terminal");
+const stack = require("./stack");
+
+let initialized = false;
 
 function init() {
+  if (initialized) {
+    return;
+  }
+
   const _config = config();
   datastore.init(_config);
 
   setImmediate(() => {
-    datastore.read().forEach((details) => {
-      if (!details.e) {
-        state.load(details.x);
+    datastore.read().forEach(({ $, c, e }) => {
+      if (!e && $) {
+        stack.process($, null, { declarative: c });
       }
     });
 
@@ -67,6 +74,8 @@ function init() {
       terminal.listen(port.terminal);
     }
   });
+
+  initialized = true;
 }
 
 module.exports.init = init;

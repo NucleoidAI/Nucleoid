@@ -1,5 +1,5 @@
 const { argv } = require("yargs");
-const datastore = require("./datastore");
+const datastore = require("./src/datastore");
 const nucleoid = require("./");
 const cluster = require("./src/cluster");
 
