@@ -4,7 +4,7 @@ const CLASS = require("../../nuc/CLASS");
 const $LET = require("./$LET");
 const Identifier = require("../ast/Identifier");
 const random = require("../../lib/random");
-const Instruction = require("../../instruction");
+const Instruction = require("../../Instruction");
 
 function build(cls, object, name, args = []) {
   let statement = new $INSTANCE();
@@ -58,8 +58,8 @@ class $INSTANCE extends $ {
         statement.name = name;
         statement.object = graph.retrieve(object);
         return [
-          new Instruction(scope, statement, true, true, false, null, true),
-          new Instruction(scope, statement, false, false, true, null, true),
+          new Instruction(scope, statement, true, true, false, false),
+          new Instruction(scope, statement, false, false, true, true),
         ];
       } else {
         const statement = new OBJECT(`${object}.${name}`);

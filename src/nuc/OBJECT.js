@@ -1,6 +1,6 @@
 const state = require("../state");
 const NODE = require("./NODE");
-const Instruction = require("../instruction");
+const Instruction = require("../Instruction");
 const Scope = require("../Scope");
 const Evaluation = require("../lang/Evaluation");
 const Identifier = require("../lang/ast/Identifier");
@@ -69,8 +69,30 @@ class OBJECT extends NODE {
       const scope = new Scope();
       scope.$instance = this;
 
-      list.push(new Instruction(scope, declaration, true, true, false, true));
-      list.push(new Instruction(scope, declaration, false, false, true, true));
+      list.push(
+        new Instruction(
+          scope,
+          declaration,
+          true,
+          true,
+          false,
+          false,
+          true,
+          true
+        )
+      );
+      list.push(
+        new Instruction(
+          scope,
+          declaration,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        )
+      );
     }
 
     const expression = new Instruction(
@@ -78,6 +100,7 @@ class OBJECT extends NODE {
       $EXPRESSION(variable.node),
       true,
       true,
+      false,
       false
     );
     expression.derivative = false;

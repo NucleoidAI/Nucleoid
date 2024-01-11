@@ -1,5 +1,5 @@
 const $BLOCK = require("../lang/$nuc/$BLOCK");
-const Instruction = require("../instruction");
+const Instruction = require("../Instruction");
 const $LET = require("../lang/$nuc/$LET");
 const state = require("../state");
 const graph = require("../graph");
@@ -35,7 +35,7 @@ class FOR {
         this.index++;
       }
 
-      list.push(new Instruction(scope, this, false, true, false));
+      list.push(new Instruction(scope, this, false, true, false, false));
       return { next: list };
     }
   }

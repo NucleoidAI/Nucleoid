@@ -3,7 +3,7 @@ const Id = require("../lib/identifier");
 const OBJECT$INSTANCE = require("./OBJECT$INSTANCE");
 const graph = require("../graph");
 const Scope = require("../Scope");
-const Instruction = require("../instruction");
+const Instruction = require("../Instruction");
 
 class OBJECT$CLASS extends NODE {
   before() {
@@ -32,7 +32,7 @@ class OBJECT$CLASS extends NODE {
       instanceScope.$instance = instance;
 
       statements.push(
-        new Instruction(instanceScope, statement, true, true, true, null, true)
+        new Instruction(instanceScope, statement, true, true, true, true)
       );
     }
 

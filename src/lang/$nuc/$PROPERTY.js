@@ -8,7 +8,7 @@ const Local = require("../../lib/local");
 const FUNCTION = require("../../nuc/FUNCTION");
 const Identifier = require("../ast/Identifier");
 const $EXPRESSION = require("./$EXPRESSION");
-const Instruction = require("../../instruction");
+const Instruction = require("../../Instruction");
 
 function build(object, name, value) {
   let statement = new $PROPERTY();
@@ -48,8 +48,8 @@ class $PROPERTY extends $ {
       statement.name = name;
       statement.value = this.val;
       return [
-        new Instruction(scope, statement, true, true, false, null, true),
-        new Instruction(scope, statement, false, false, true, null, true),
+        new Instruction(scope, statement, true, true, false, false),
+        new Instruction(scope, statement, false, false, true, true),
       ];
     }
 
@@ -57,7 +57,7 @@ class $PROPERTY extends $ {
     statement.object = graph.retrieve(object);
     statement.name = name;
     statement.value = this.val;
-    return new Instruction(scope, statement, true, true, true);
+    return new Instruction(scope, statement, true, true, true, true);
   }
 }
 

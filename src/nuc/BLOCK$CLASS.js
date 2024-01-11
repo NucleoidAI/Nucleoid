@@ -1,6 +1,6 @@
 const NODE = require("./NODE");
 const BLOCK$INSTANCE = require("./BLOCK$INSTANCE");
-const Instruction = require("../instruction");
+const Instruction = require("../Instruction");
 const { v4: uuid } = require("uuid");
 const Scope = require("../Scope");
 
@@ -33,10 +33,10 @@ class BLOCK$CLASS extends NODE {
       instanceScope.$instance = this;
 
       statements.push(
-        new Instruction(instanceScope, statement, true, true, false)
+        new Instruction(instanceScope, statement, true, true, false, false)
       );
       statements.push(
-        new Instruction(instanceScope, statement, false, false, true)
+        new Instruction(instanceScope, statement, false, false, true, true)
       );
     }
 

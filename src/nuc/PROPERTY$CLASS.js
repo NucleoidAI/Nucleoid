@@ -1,7 +1,7 @@
 const NODE = require("./NODE");
 const PROPERTY$INSTANCE = require("./PROPERTY$INSTANCE");
 const _ = require("lodash");
-const Instruction = require("../instruction");
+const Instruction = require("../Instruction");
 const Scope = require("../Scope");
 
 class PROPERTY$CLASS extends NODE {
@@ -27,7 +27,7 @@ class PROPERTY$CLASS extends NODE {
       instanceScope.$instance = instance;
 
       statements.push(
-        new Instruction(instanceScope, statement, true, true, true, null, true)
+        new Instruction(instanceScope, statement, true, true, true, true)
       );
     }
 

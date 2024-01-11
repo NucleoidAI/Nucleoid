@@ -1,12 +1,22 @@
 class Instruction {
-  constructor(scope, statement, before, run, graph, root, derivative) {
+  constructor(
+    scope,
+    statement,
+    before,
+    run,
+    graph,
+    after,
+    derivative = true,
+    priority = false
+  ) {
     this.scope = scope;
     this.statement = statement;
     this.before = before;
     this.run = run;
     this.graph = graph;
-    this.root = root;
+    this.after = after;
     this.derivative = derivative;
+    this.priority = priority;
   }
 }
 

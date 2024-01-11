@@ -4,7 +4,7 @@ const NODE = require("./NODE");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
 const Scope = require("../Scope");
-const Instruction = require("../instruction");
+const Instruction = require("../Instruction");
 
 class IF$CLASS extends NODE {
   run(scope) {
@@ -34,7 +34,7 @@ class IF$CLASS extends NODE {
       instanceScope.$instance = instance;
 
       statements.push(
-        new Instruction(instanceScope, statement, true, true, true, null, true)
+        new Instruction(instanceScope, statement, true, true, true, true)
       );
     }
 

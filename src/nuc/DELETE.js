@@ -1,6 +1,6 @@
 const state = require("../state");
 const graph = require("../graph");
-const Instruction = require("../instruction");
+const Instruction = require("../Instruction");
 const Node = require("./NODE");
 
 class DELETE {
@@ -15,7 +15,9 @@ class DELETE {
 
       for (let node in graph.retrieve(key).next) {
         const statement = graph.retrieve(node);
-        list.push(new Instruction(scope.root, statement, false, true, false));
+        list.push(
+          new Instruction(scope.root, statement, false, true, false, false)
+        );
       }
 
       return { next: list, value: true };

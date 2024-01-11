@@ -1,8 +1,9 @@
 const state = require("./state");
 const graph = require("./graph");
+const NODE = require("./nuc/NODE");
 const BLOCK = require("./nuc/BLOCK");
 const IF = require("./nuc/IF");
-const Instruction = require("./instruction");
+const Instruction = require("./Instruction");
 const Scope = require("./Scope");
 const Node = require("./nuc/NODE");
 const $ = require("./lang/$nuc/$");
@@ -15,7 +16,8 @@ function process(statements, prior, options = {}) {
   const { declarative } = options;
 
   let instructions = statements.map(
-    (statement) => new Instruction(root, statement, true, true, false)
+    (statement) =>
+      new Instruction(root, statement, true, true, false, false, false) // TODO Confirm graph is false
   );
 
   let result = { value: undefined, $nuc: [] };
@@ -82,8 +84,8 @@ function process(statements, prior, options = {}) {
                   false,
                   true,
                   false,
-                  null,
-                  declarative
+                  false,
+                  instruction.derivative
                 );
               }
             })
@@ -103,7 +105,15 @@ function process(statements, prior, options = {}) {
           let next = statement.run(instruction.scope);
           next = Array.isArray(next) ? next : [next];
           next.push(
-            new Instruction(instruction.scope, statement, false, false, true)
+            new Instruction(
+              instruction.scope,
+              statement,
+              false,
+              false,
+              true,
+              true,
+              null
+            )
           );
 
           const scope = instruction.scope;
@@ -112,25 +122,36 @@ function process(statements, prior, options = {}) {
             .map((statement) => {
               return statement instanceof Instruction
                 ? statement
-                : new Instruction(scope, statement, true, true, true); // TODO root = null?
+                : new Instruction(
+                    scope,
+                    statement,
+                    true,
+                    true,
+                    true,
+                    true,
+                    null
+                  );
             })
             .map((statement) => {
               statement.before = statement.before ?? instruction.before;
               statement.run = statement.run ?? instruction.run;
               statement.graph = statement.graph ?? instruction.graph;
+              statement.after = statement.after ?? instruction.after;
               statement.derivative =
                 statement.derivative ?? instruction.derivative;
               return statement;
             });
 
-          instructions = next.filter((i) => !i.root).concat(instructions);
-          priorities = next.filter((i) => i.root).concat(priorities);
+          instructions = next.concat(instructions);
         }
 
         if (instruction.graph) {
           statement.graph(instruction.scope);
+        }
 
-          // TODO Move this to after
+        if (instruction.after) {
+          statement.after(instruction.scope);
+
           if (!instruction.derivative && !statement.asg) {
             if (statement.iof === "$EXPRESSION") {
               if (statement.tkns.wrt) {
@@ -164,27 +185,17 @@ function process(statements, prior, options = {}) {
               .map((statement) => {
                 return statement instanceof Instruction
                   ? statement
-                  : new Instruction(
-                      scope,
-                      statement,
-                      true,
-                      true,
-                      true,
-                      null,
-                      true
-                    );
+                  : new Instruction(scope, statement, true, true, true, true);
               })
               .map((statement) => {
                 statement.before = statement.before ?? instruction.before;
                 statement.run = statement.run ?? instruction.run;
                 statement.graph = statement.graph ?? instruction.graph;
-                statement.derivative =
-                  statement.derivative ?? instruction.derivative;
                 return statement;
               });
 
-            instructions = next.filter((i) => !i.root).concat(instructions);
-            priorities = next.filter((i) => i.root).concat(priorities);
+            instructions = next.filter((i) => !i.priority).concat(instructions);
+            priorities = next.filter((i) => i.priority).concat(priorities);
           }
         }
 
@@ -201,7 +212,7 @@ function process(statements, prior, options = {}) {
               continue;
             }
 
-            if (statement instanceof Node) {
+            if (statement instanceof NODE) {
               if (graph.retrieve(statement.key)) {
                 Node.replace(statement.key, statement);
               } else {
@@ -233,14 +244,14 @@ function process(statements, prior, options = {}) {
                 if (n instanceof BLOCK || n instanceof IF) {
                   let scope = new Scope();
                   dependents.push(
-                    new Instruction(scope, n, false, true, false, null, true)
+                    new Instruction(scope, n, false, true, false, false)
                   );
                   dependents.push(
-                    new Instruction(scope, n, false, false, true, null, true)
+                    new Instruction(scope, n, false, false, true, true)
                   );
                 } else {
                   dependents.push(
-                    new Instruction(s, n, false, true, false, null, true)
+                    new Instruction(s, n, false, true, false, false)
                   );
                 }
               });
@@ -251,7 +262,7 @@ function process(statements, prior, options = {}) {
             if (!instruction.statement.skip) {
               dependencies.forEach((source) => {
                 const targetKey = statement.key;
-                Node.direct(source.key, targetKey, statement);
+                NODE.direct(source.key, targetKey, statement);
               });
             }
 

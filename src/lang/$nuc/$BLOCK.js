@@ -1,7 +1,7 @@
 const BLOCK = require("../../nuc/BLOCK");
 const BLOCK$CLASS = require("../../nuc/BLOCK$CLASS");
 const $ = require("./$");
-const Instruction = require("../../instruction");
+const Instruction = require("../../Instruction");
 const Scope = require("../../Scope");
 const { v4: uuid } = require("uuid");
 const _ = require("lodash");
@@ -77,8 +77,8 @@ class $BLOCK extends $ {
       statement.class = $class;
       statement.statements = this.stms;
       return [
-        new Instruction(scope, statement, true, true, false),
-        new Instruction(scope, statement, false, false, true),
+        new Instruction(scope, statement, true, true, false, false),
+        new Instruction(scope, statement, false, false, true, true),
       ];
     } else {
       let statement = new BLOCK(uuid());
@@ -86,8 +86,8 @@ class $BLOCK extends $ {
       statement.skip = this.skp;
 
       return [
-        new Instruction(scope, statement, true, true, false),
-        new Instruction(scope, statement, false, false, true),
+        new Instruction(scope, statement, true, true, false, false),
+        new Instruction(scope, statement, false, false, true, true),
       ];
     }
   }

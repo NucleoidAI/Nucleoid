@@ -1,6 +1,6 @@
 const $ = require("./$");
 const FOR = require("../../nuc/FOR");
-const Instruction = require("../../instruction");
+const Instruction = require("../../Instruction");
 const Identifier = require("../ast/Identifier");
 
 function build(variable, array, statements) {
@@ -18,7 +18,7 @@ class $FOR extends $ {
     statement.array = new Identifier(this.arr);
     statement.statements = this.stms;
 
-    return new Instruction(scope, statement, false, true, false);
+    return new Instruction(scope, statement, false, true, false, false);
   }
 }
 

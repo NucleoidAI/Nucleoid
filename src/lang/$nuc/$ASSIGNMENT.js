@@ -6,7 +6,7 @@ const $INSTANCE = require("./$INSTANCE");
 const Identifier = require("../ast/Identifier");
 const graph = require("../../graph");
 const CLASS = require("../../nuc/CLASS");
-const Instruction = require("../../instruction");
+const Instruction = require("../../Instruction");
 
 function build(kind, left, right) {
   let statement = new $ASSIGNMENT();
@@ -91,15 +91,7 @@ class $ASSIGNMENT extends $ {
   }
 
   run(scope) {
-    return new Instruction(
-      scope,
-      this.$,
-      undefined,
-      true,
-      undefined,
-      undefined,
-      undefined
-    );
+    return new Instruction(scope, this.$, null, true, null, null, null);
   }
 }
 

@@ -3,7 +3,7 @@ const graph = require("../../graph");
 const IF = require("../../nuc/IF");
 const CLASS = require("../../nuc/CLASS");
 const IF$CLASS = require("../../nuc/IF$CLASS");
-const Instruction = require("../../instruction");
+const Instruction = require("../../Instruction");
 const Expression = require("../../Expression");
 const $EXPRESSION = require("./$EXPRESSION");
 const Identifier = require("../ast/Identifier");
@@ -42,8 +42,8 @@ class $IF extends $ {
         }
 
         return [
-          new Instruction(scope, statement, true, true, false, null, true),
-          new Instruction(scope, statement, false, false, true, null, true),
+          new Instruction(scope, statement, true, true, false, false),
+          new Instruction(scope, statement, false, false, true, true),
         ];
       }
     }
@@ -54,8 +54,8 @@ class $IF extends $ {
     statement.false = this.fls;
 
     return [
-      new Instruction(scope, statement, true, true, false, null, true),
-      new Instruction(scope, statement, false, false, true, null, true),
+      new Instruction(scope, statement, true, true, false, false),
+      new Instruction(scope, statement, false, false, true, true),
     ];
   }
 }
