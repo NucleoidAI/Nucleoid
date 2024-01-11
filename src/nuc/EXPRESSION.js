@@ -122,7 +122,7 @@ class EXPRESSION {
 
         const temporary = new NODE(node);
         // TODO NODE Direct
-        graph.graph[node] = temporary;
+        graph.$[node] = temporary;
         return temporary;
       }
     });

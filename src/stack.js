@@ -95,7 +95,6 @@ function process(statements, prior, options = {}) {
         break;
       }
       case statement instanceof $: {
-        // TODO Move prepare check here
         if (instruction.before && !statement.prepared) {
           statement.before(instruction.scope);
           statement.prepared = true;
@@ -199,7 +198,7 @@ function process(statements, prior, options = {}) {
           }
         }
 
-        skip: if (!(statement instanceof $)) {
+        skip: {
           if (statement.type === "CLASS" && instruction.scope.prior) {
             break skip;
           }

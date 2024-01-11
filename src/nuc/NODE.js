@@ -1,4 +1,4 @@
-const { graph } = require("../graph");
+const graph = require("../graph");
 const transaction = require("../transaction");
 
 let sequence = 0;
@@ -19,27 +19,31 @@ class NODE {
 
   // TODO Move this to graph
   static register(key, node) {
-    transaction.register(graph, key, node);
+    transaction.register(graph.$, key, node);
   }
 
   static replace(sourceKey, targetNode) {
-    transaction.register(targetNode.block, graph[sourceKey].block);
+    transaction.register(targetNode.block, graph.$[sourceKey].block);
 
-    for (let node in graph[sourceKey].next) {
-      transaction.register(targetNode.next, node, graph[sourceKey].next[node]);
-      transaction.register(graph[sourceKey].next, node, undefined);
+    for (let node in graph.$[sourceKey].next) {
+      transaction.register(
+        targetNode.next,
+        node,
+        graph.$[sourceKey].next[node]
+      );
+      transaction.register(graph.$[sourceKey].next, node, undefined);
     }
 
-    for (let node in graph[sourceKey].previous) {
-      transaction.register(graph[node].next, sourceKey, undefined);
+    for (let node in graph.$[sourceKey].previous) {
+      transaction.register(graph.$[node].next, sourceKey, undefined);
     }
 
-    transaction.register(graph, sourceKey, targetNode);
+    transaction.register(graph.$, sourceKey, targetNode);
   }
 
   static direct(sourceKey, targetKey, targetNode) {
-    transaction.register(graph[sourceKey].next, targetKey, targetNode);
-    transaction.register(targetNode.previous, sourceKey, graph[sourceKey]);
+    transaction.register(graph.$[sourceKey].next, targetKey, targetNode);
+    transaction.register(targetNode.previous, sourceKey, graph.$[sourceKey]);
   }
 }
 

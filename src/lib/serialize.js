@@ -1,8 +1,8 @@
 let state, graph;
 
 setImmediate(() => {
-  state = require("../state").state;
-  graph = require("../graph").graph;
+  state = require("../state").$;
+  graph = require("../graph").$;
 });
 
 function serialize(input, source, acc = {}) {

@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-eval */
-// TODO Rename this to `$`
-const state = {
+const $ = {
   classes: [],
 };
+const state = $;
 const _transaction = require("./transaction");
-const { graph: _graph } = require("./graph");
+const { $: $graph } = require("./graph");
 const { event } = require("./event");
 const _ = require("lodash");
 const { v4: uuid } = require("uuid");
@@ -42,14 +42,14 @@ function del(scope, variable) {
 module.exports.throw = (scope, exception) => eval(`throw ${exception}`);
 
 function clear() {
-  for (let property in state) {
-    delete state[property];
+  for (let property in $) {
+    delete $[property];
   }
 
-  state["classes"] = [];
+  $["classes"] = [];
 }
 
-module.exports.state = state; // will be private
+module.exports.$ = $;
 module.exports.assign = assign;
 module.exports.call = call;
 module.exports.expression = expression;

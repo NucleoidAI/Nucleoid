@@ -48,8 +48,8 @@ class DELETE {
 
     const name = node.name;
     delete node.object.properties[name];
-    delete graph.graph[node.key];
-    graph.graph[node.key] = empty;
+    delete graph.$[node.key];
+    graph.$[node.key] = empty;
   }
 }
 

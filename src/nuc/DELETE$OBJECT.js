@@ -16,10 +16,8 @@ class DELETE$OBJECT extends DELETE {
       const list = node.class.list.toString();
       state.delete(scope, `${list}.${name}`);
 
-      const index = state.state[list].findIndex(
-        (object) => object.id === node.key
-      );
-      state.state[list].splice(index, 1);
+      const index = state.$[list].findIndex((object) => object.id === node.key);
+      state.$[list].splice(index, 1);
     }
 
     return super.run();
@@ -32,7 +30,7 @@ class DELETE$OBJECT extends DELETE {
       delete node.next[key];
     }
 
-    delete graph.graph[node.key];
+    delete graph.$[node.key];
   }
 }
 

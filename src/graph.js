@@ -1,5 +1,5 @@
 // TODO Rename this to `$`
-const graph = {
+const $ = {
   classes: {
     name: "classes",
   },
@@ -7,20 +7,20 @@ const graph = {
 
 function retrieve(identifier) {
   if (typeof identifier === "string") {
-    return graph[identifier];
+    return $[identifier];
   } else {
-    return graph[identifier.generate()];
+    return $[identifier.generate()];
   }
 }
 
 function clear() {
-  for (let property in graph) {
-    delete graph[property];
+  for (let property in $) {
+    delete $[property];
   }
 
-  graph["classes"] = { name: "classes" };
+  $["classes"] = { name: "classes" };
 }
 
-module.exports.graph = graph;
+module.exports.$ = $;
 module.exports.retrieve = retrieve;
 module.exports.clear = clear;

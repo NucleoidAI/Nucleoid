@@ -12,7 +12,7 @@ function end() {
 
 function register(p1, p2, p3) {
   // eslint-disable-next-line no-unused-vars
-  const { state } = require("./state");
+  const state = require("./state").$;
 
   if (!p1) return;
 
@@ -39,7 +39,7 @@ function register(p1, p2, p3) {
 }
 
 function rollback() {
-  const { state } = require("./state"); // eslint-disable-line no-unused-vars
+  const state = require("./state").$; // eslint-disable-line no-unused-vars
 
   while (list.length) {
     let transaction = list.pop();

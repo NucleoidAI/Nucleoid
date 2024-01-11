@@ -62,7 +62,7 @@ setImmediate(() => {
 let state, graph;
 
 setImmediate(() => {
-  state = require("../state").state;
+  state = require("../state");
   graph = require("../graph");
 });
 

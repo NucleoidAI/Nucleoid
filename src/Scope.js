@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const state = require("./state").state;
+const state = require("./state").$;
 const { append } = require("./lang/estree/estree");
 const Identifier = require("./lang/ast/Identifier");
 

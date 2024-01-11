@@ -9,7 +9,7 @@ class DELETE$VARIABLE extends DELETE {
       delete node.next[key];
     }
 
-    delete graph.graph[node.key];
+    delete graph.$[node.key];
   }
 }
 

@@ -25,7 +25,7 @@ class FOR {
       let list = [];
       let key = array[this.index].id;
 
-      if (key !== undefined && graph.graph[key]) {
+      if (key !== undefined && graph.$[key]) {
         let object = array[this.index++].id;
         let statements = [$LET(this.variable.node, object)];
         list.push(
