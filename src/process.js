@@ -1,7 +1,7 @@
 const datastore = require("./datastore");
 const config = require("./config");
 const openapi = require("./lib/openapi");
-const context = require("./lib/context");
+const context = require("./context");
 const terminal = require("./terminal");
 const stack = require("./stack");
 

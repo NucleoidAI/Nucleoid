@@ -1,4 +1,3 @@
-// TODO Rename to event store
 const revive = require("./lang/$nuc/revive");
 let datastore;
 

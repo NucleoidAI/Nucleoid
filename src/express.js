@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
-const context = require("./lib/context");
+const context = require("./context");
 const openapi = require("./lib/openapi");
 
 function app(options) {

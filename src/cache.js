@@ -1,3 +1,4 @@
+// TODO Move cache to @nucleoidjs/datastore
 let cache = [];
 
 function init() {}

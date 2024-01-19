@@ -5,7 +5,7 @@ function load(context) {
 }
 
 function run(context = []) {
-  const nucleoid = require("../../");
+  const nucleoid = require("../index");
 
   load(context);
 
