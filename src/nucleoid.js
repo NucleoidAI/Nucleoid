@@ -1,8 +1,9 @@
 const runtime = require("./runtime");
-const parser = require("./lib/parser");
-const context = require("./lib/context");
+const context = require("./context");
 const process = require("./process");
 const _config = require("./config");
+const { parseFunction } = require("./lang/estree/parser");
+const { generate } = require("./lang/estree/generator");
 
 function start(config = {}) {
   _config.init(config);
@@ -30,10 +31,12 @@ function run(statement, p2, p3) {
   } else {
     let scope = p2;
     let options = p3;
-    const { args, fn } = parser.fn(statement.toString());
+    const { params, body } = parseFunction(statement.toString());
     scope =
-      scope && args.length ? `let ${args[0]}=${JSON.stringify(scope)};` : "";
-    return runtime.process(`${scope}${fn}`, options);
+      scope && params.length
+        ? `let ${generate(params[0])}=${JSON.stringify(scope)};`
+        : "";
+    return runtime.process(`${scope}${generate(body)}`, options);
   }
 }
 

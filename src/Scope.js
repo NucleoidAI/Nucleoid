@@ -121,6 +121,20 @@ class Scope {
     }
   }
 
+  retrieveObject() {
+    let index = this;
+
+    while (index) {
+      if (index.object !== undefined) {
+        return index.object.name;
+      }
+
+      index = index.prior;
+    }
+
+    return null;
+  }
+
   retrieveGraph(instance) {
     let index = this;
 

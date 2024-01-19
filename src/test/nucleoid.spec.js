@@ -16,6 +16,23 @@ describe("Nucleoid", () => {
     it("runs statements in the state", () => {
       nucleoid.run("var i = 1 ;");
       equal(nucleoid.run("i == 1"), true);
+      equal(
+        nucleoid.run(() => i === 1, { a: 1 }), // eslint-disable-line no-undef
+        true
+      );
+      equal(
+        nucleoid.run(() => {
+          // eslint-disable-next-line no-undef
+          return i === 1;
+        }),
+        true
+      );
+      equal(
+        nucleoid.run(() => {
+          return i === 1; // eslint-disable-line no-undef
+        }),
+        true
+      );
     });
 
     it("runs expression statement", () => {

@@ -57,15 +57,11 @@ function process(statements, prior, options = {}) {
 
         let value;
 
-        if (evaluation !== undefined) {
+        if (evaluation) {
           value = state.expression(scope, evaluation);
         }
 
-        if (
-          evaluation &&
-          instruction.scope === root &&
-          !instruction.derivative
-        ) {
+        if (instruction.scope === root && !instruction.derivative) {
           result.value = value;
         }
 

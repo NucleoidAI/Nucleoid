@@ -4,7 +4,6 @@ const CLASS = require("../../nuc/CLASS");
 const PROPERTY$CLASS = require("../../nuc/PROPERTY$CLASS");
 const PROPERTY = require("../../nuc/PROPERTY");
 const OBJECT$CLASS = require("../../nuc/OBJECT$CLASS");
-const Local = require("../../lib/local");
 const FUNCTION = require("../../nuc/FUNCTION");
 const Identifier = require("../ast/Identifier");
 const $EXPRESSION = require("./$EXPRESSION");
@@ -29,7 +28,7 @@ class $PROPERTY extends $ {
     const name = new Identifier(this.nme);
 
     if (object.toString() === "this") {
-      object = Local.object(scope);
+      object = scope.retrieveObject();
     }
 
     if (!graph.retrieve(object)) {

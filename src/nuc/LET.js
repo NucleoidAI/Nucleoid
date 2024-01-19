@@ -8,7 +8,6 @@ class LET {
 
   run(scope) {
     const name = this.name;
-    const object = this.object;
 
     const instance = scope.retrieveGraph(this.name.first);
 
@@ -22,16 +21,8 @@ class LET {
       return;
     }
 
-    if (scope.graph[object]?.instanceof === "LET$OBJECT") {
-      /*
-      parts[0] = scope.graph[first].object.key;
-      state.assign(scope, parts.join("."), value.construct());
-      return { value };
-      */
-    } else {
-      const value = scope.assign(name, evaluation, this.reassign);
-      return { value };
-    }
+    const value = scope.assign(name, evaluation, this.reassign);
+    return { value };
   }
 
   beforeGraph(scope) {

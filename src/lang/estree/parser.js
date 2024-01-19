@@ -24,6 +24,17 @@ function parse(string, map = true) {
     : estree.body[0].expression;
 }
 
+function parseFunction(string) {
+  const estree = acorn.parse(string, {
+    ecmaVersion: 2020,
+    allowReturnOutsideFunction: true,
+  });
+
+  removeLocations(estree);
+
+  return estree.body[0].expression;
+}
+
 function parseNode(node) {
   switch (node.type) {
     case "VariableDeclaration": {
@@ -125,4 +136,4 @@ function removeLocations(estree) {
   }
 }
 
-module.exports.parse = parse;
+module.exports = { parse, parseFunction };
