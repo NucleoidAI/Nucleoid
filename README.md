@@ -1,4 +1,7 @@
 <h1 align="center">Nucleoid</h1>
+<p align="center">
+  Declarative (Logic) Runtime Environment
+</p>
 
 <p align="center">
   <a href="https://www.apache.org/licenses/LICENSE-2.0">
@@ -15,26 +18,40 @@
 ![Banner](.github/media/banner.gif)
 
 <p align="center">
-  AI-managed Low-code Framework for Node.js
+  Reasoning Engine for Neuro-Symbolic AI with Declarative Logic
 </p>
 
 <br/>
 
-Nucleoid uses symbolic (logic-based) AI in the runtime that tracks given statements in JavaScript and creates relationships between variables, objects, and functions etc. in the graph. So, as writing just like any other codes in Node.js, the runtime translates your business logic to fully working application by managing the JS state as well as storing in the built-in data store, so that your application doesn't require external database or anything else.
+D(L)RE is a type of Symbolic AI used for reasoning engine in Neuro-Symbolic AI. The runtime that tracks given statements in JavaScript syntax and creates relationships between variables, objects, and functions etc. in the graph. So, as writing just like any other codes in Node.js, the runtime translates your business logic to fully working application by managing the JS state as well as storing in the built-in data store, so that your application doesn't require external database or anything else.
 
 <p align="center">
   <img src=".github/media/graph.gif" width="450" alt="Graph Animation"/>
 </p>
 
-## How it works
+### Neural Networks: The Learning Component
 
-I. Write your business logic in JavaScript (TypeScript support coming soon)
+Neural networks in Neuro-Symbolic AI are adept at learning patterns, relationships, and features from large datasets. These networks excel in tasks that involve classification, prediction, and pattern recognition, making them invaluable for processing unstructured data, such as images, text, and audio. Neural networks, through their learning capabilities, can generalize from examples to understand complex data structures and nuances in the data.
 
-II. Nucleoid runtime renders your codes
+### Symbolic AI: The Reasoning Component
 
-III. Creates APIs with the built-in datastore
+The symbolic component of Neuro-Symbolic AI focuses on logic, rules, and symbolic representations of knowledge. Unlike neural networks that learn from data, symbolic AI uses predefined rules and knowledge bases to perform reasoning, make inferences, and understand relationships between entities. This aspect of AI is transparent, interpretable, and capable of explaining its decisions and reasoning processes in a way that humans can understand.
 
 <br/>
+
+<p align="center">
+  <img src=".github/media/neuro-symbolic.png" width="225" alt="Neuro-Symbolic Diagram"/>
+</p>
+
+<br/>
+
+#### Declarative Logic in Symbolic Reasoning
+
+Declarative logic is a subset of declarative programming, a style of building programs that expresses the logic of a computation without describing its control flow. In declarative logic, you state the facts and rules that define the problem domain. The runtime environment or the system itself figures out how to satisfy those conditions or how to apply those rules to reach a conclusion. This contrasts with imperative programming, where the developer writes code that describes the exact steps to achieve a goal.
+
+Symbolic reasoning refers to the process of using symbols to represent problems and applying logical rules to manipulate these symbols and derive conclusions or solutions. In AI and computer science, it involves using symbolic representations for entities and actions, enabling the system to perform logical inferences, decision making, and problem-solving based on the rules and knowledge encoded in the symbols.
+
+By integrating Nucleoid into Neuro-Symbolic AI, the system benefits from enhanced interpretability and reliability. The declarative logic and rules defined in Nucleoid provide clear explanations for the AI's decisions, making it easier for users to understand and trust the system's outputs. Furthermore, the explicit reasoning capabilities help ensure that decisions are made based on logical principles, adding a layer of reliability and consistency to the AI's behavior.
 
 ## Hello World :zap:
 
