@@ -4,15 +4,9 @@
 </p>
 
 <p align="center">
-  <a href="https://www.apache.org/licenses/LICENSE-2.0">
-    <img src="https://img.shields.io/badge/Apache-2.0-yellow?style=for-the-badge&logo=apache" alt="License" />
-  </a>
-  <a href="https://www.npmjs.com/package/nucleoidjs">
-    <img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="NPM" />
-  </a>
-  <a href="https://discord.gg/wN49SNssUw">
-    <img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" />
-  </a>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/Apache-2.0-yellow?style=for-the-badge&logo=apache" alt="License" /></a>
+  <a href="https://www.npmjs.com/package/nucleoidjs"><img src="https://img.shields.io/badge/NPM-red?style=for-the-badge&logo=npm" alt="NPM" /></a>
+  <a href="https://discord.gg/wN49SNssUw"><img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" /></a>
 </p>
 
 ![Banner](.github/media/banner.gif)
@@ -42,8 +36,6 @@ The symbolic component of Neuro-Symbolic AI focuses on logic, rules, and symboli
 <p align="center">
   <img src=".github/media/neuro-symbolic.png" width="225" alt="Neuro-Symbolic Diagram"/>
 </p>
-
-<br/>
 
 #### Declarative Logic in Symbolic Reasoning
 
