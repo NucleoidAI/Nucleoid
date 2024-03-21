@@ -28,6 +28,12 @@ terminal.post("/", (req, res) => {
 terminal.use((err, req, res, next) => {
   if (typeof err === "string") {
     res.status(400).json({ error: err });
+  } else if (
+    err instanceof SyntaxError &&
+    err.status === 400 &&
+    "body" in err
+  ) {
+    res.status(400).json({ error: "INVALID_JSON" });
   } else {
     res.status(500).send(err.stack);
   }
