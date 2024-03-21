@@ -2,7 +2,7 @@
   "name": "nucleoidai",
   "version": "0.7.0",
   "description": "Nucleoid",
-  "homepage": "https://nucleoid.com",
+  "homepage": "https://nucleoid.ai",
   "author": "Can Mingir",
   "license": "Apache-2.0",
   "keywords": [
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/NucleoidJS/Nucleoid.git"
+    "url": "https://github.com/NucleoidAI/Nucleoid.git"
   },
   "dependencies": {
     "@nucleoidjs/datastore": "^1.1.9",

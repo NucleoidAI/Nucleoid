@@ -4,7 +4,7 @@ const { v4: uuid } = require("uuid");
 const home = require("os").homedir();
 const { deepMerge } = require("./lib/deep");
 
-let defaultConfig = {
+const defaultConfig = {
   path: `${home}/.nuc`,
   port: {
     terminal: 8448,

@@ -26,7 +26,7 @@ function init(app) {
 }
 
 function load(openapi) {
-  const prefix = openapi["x-nuc-prefix"];
+  const prefix = openapi["x-nuc-prefix"] || "";
   const events = openapi["x-nuc-events"];
 
   const app = _app;
