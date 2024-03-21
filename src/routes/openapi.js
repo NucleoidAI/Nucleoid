@@ -17,6 +17,8 @@ router.post("/openapi", (req, res) => {
     _openapi.start(openapi["x-nuc-port"] || _config.port.openapi);
   } else if (openapi["x-nuc-action"] === "stop") {
     _openapi.stop();
+  } else {
+    res.status(400).json({ error: "INVALID_ACTION" });
   }
 
   res.end();
