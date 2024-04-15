@@ -20,13 +20,17 @@ try {
 module.exports.process = function (string, options = {}) {
   const { options: configOptions } = config();
   options = { ...defaultOptions, ...configOptions, ...options };
-  const { declarative, details } = options;
 
   const before = Date.now();
   let result;
 
   try {
-    const statements = Statement.compile(string, options);
+    const statements = Statement.compile(string);
+
+    if (!statements.length) {
+      return;
+    }
+
     transaction.start();
     result = stack.process(statements, null, options);
     transaction.end();
@@ -42,7 +46,7 @@ module.exports.process = function (string, options = {}) {
   datastore.write({
     s: string,
     $: result.$nuc?.length ? result.$nuc : undefined,
-    c: declarative ? true : undefined,
+    c: options.declarative ? true : undefined,
     t: time,
     r: result.value,
     d: date,
@@ -56,11 +60,11 @@ module.exports.process = function (string, options = {}) {
 
   Event.clear();
 
-  if (details) {
+  if (options.details) {
     return {
       result: result.value,
       $nuc: result.$nuc,
-      declarative,
+      declarative: options.declarative,
       date,
       time,
       error: !!result.error,

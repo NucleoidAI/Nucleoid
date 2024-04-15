@@ -7,22 +7,26 @@ const metrics = require("./metrics");
 const runtime = require("../runtime");
 
 const terminal = express();
-terminal.use(express.json());
-terminal.use(express.text({ type: "application/javascript" }));
 terminal.use(cors());
 
+terminal.post(
+  "/",
+  (req, res, next) =>
+    req.is("application/javascript") ? next() : res.status(415).end(),
+  express.text({ type: "application/javascript" }),
+  (req, res) => {
+    const details = runtime.process(req.body, { details: true });
+    res.send(details);
+  }
+);
+
+terminal.use(express.json(), (err, req, res, next) =>
+  err ? res.status(422).end() : next()
+);
 terminal.use(graph);
 terminal.use(openapi);
 terminal.use(logs);
 terminal.use(metrics);
-
-terminal.post("/", (req, res) => {
-  const mode = req.headers["x-nuc-mode"];
-  const declarative = mode?.toLowerCase() === "declarative";
-  const details = runtime.process(req.body, { declarative, details: true });
-
-  res.send(details);
-});
 
 // eslint-disable-next-line no-unused-vars
 terminal.use((err, req, res, next) => {

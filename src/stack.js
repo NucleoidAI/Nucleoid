@@ -13,7 +13,6 @@ const RETURN = require("./nuc/RETURN");
 
 function process(statements, prior, options = {}) {
   const root = new Scope(prior);
-  const { declarative } = options;
 
   let instructions = statements.map(
     (statement) =>
@@ -59,6 +58,14 @@ function process(statements, prior, options = {}) {
 
         if (evaluation) {
           value = state.expression(scope, evaluation);
+        }
+
+        if (value === "use declarative") {
+          options.declarative = true;
+        }
+
+        if (value === "use imperative") {
+          options.declarative = false;
         }
 
         if (instruction.scope === root && !instruction.derivative) {
@@ -217,7 +224,7 @@ function process(statements, prior, options = {}) {
 
             let list = statement.graph(instruction.scope);
 
-            if (declarative) {
+            if (options.declarative) {
               if (list) {
                 list.forEach((target) => {
                   if (target.previous[statement.key] !== undefined) {
