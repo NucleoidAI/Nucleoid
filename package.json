@@ -11,7 +11,7 @@
     "datastore"
   ],
   "bin": {
-    "nucleoidjs": "bin.js",
+    "nucleoidai": "bin.js",
     "nucleoid": "bin.js",
     "nuc": "bin.js"
   },
