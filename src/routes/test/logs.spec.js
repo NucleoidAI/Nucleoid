@@ -1,5 +1,5 @@
 const test = require("../../lib/test");
-const terminal = require("../../terminal");
+const terminal = require("../terminal");
 const request = require("supertest");
 const { equal, notEqual } = require("assert");
 const nucleoid = require("../../../index");
@@ -14,7 +14,10 @@ describe("Logs service", () => {
     equal(res1.status, 200);
     equal(logs1.length, 0);
 
-    await request(terminal).post("/").send("'Hello'");
+    await request(terminal)
+      .post("/")
+      .set("Content-Type", "application/javascript")
+      .send("'Hello'");
 
     const res2 = await request(terminal).get("/logs").send();
     const logs2 = res2.body;

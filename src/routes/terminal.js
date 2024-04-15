@@ -1,14 +1,14 @@
 const express = require("express");
 const cors = require("cors");
-const graph = require("./routes/graph");
-const openapi = require("./routes/openapi");
-const logs = require("./routes/logs");
-const metrics = require("./routes/metrics");
-const runtime = require("./runtime");
+const graph = require("./graph");
+const openapi = require("./openapi");
+const logs = require("./logs");
+const metrics = require("./metrics");
+const runtime = require("../runtime");
 
 const terminal = express();
 terminal.use(express.json());
-terminal.use(express.text({ type: "*/*" }));
+terminal.use(express.text({ type: "application/javascript" }));
 terminal.use(cors());
 
 terminal.use(graph);

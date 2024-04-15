@@ -11,8 +11,7 @@ const defaultConfig = {
     cluster: 4000,
     openapi: 3000,
   },
-  declarative: false,
-  details: false,
+  options: {},
   cache: false,
   data: {
     encryption: true,

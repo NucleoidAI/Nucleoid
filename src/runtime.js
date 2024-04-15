@@ -7,13 +7,19 @@ const transaction = require("./transaction");
 const config = require("./config");
 let eventExtension;
 
+const defaultOptions = {
+  declarative: false,
+  details: false,
+};
+
 try {
   const { path } = config();
   eventExtension = require(`${path}/extensions/event.js`);
 } catch (err) {} // eslint-disable-line no-empty
 
 module.exports.process = function (string, options = {}) {
-  options = { ...config(), ...options };
+  const { options: configOptions } = config();
+  options = { ...defaultOptions, ...configOptions, ...options };
   const { declarative, details } = options;
 
   const before = Date.now();
@@ -54,6 +60,7 @@ module.exports.process = function (string, options = {}) {
     return {
       result: result.value,
       $nuc: result.$nuc,
+      declarative,
       date,
       time,
       error: !!result.error,

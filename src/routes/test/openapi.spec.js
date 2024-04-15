@@ -1,5 +1,5 @@
 const test = require("../../lib/test");
-const terminal = require("../../terminal");
+const terminal = require("../terminal");
 const request = require("supertest");
 const { equal, deepEqual } = require("assert");
 const data = require("./data.json");

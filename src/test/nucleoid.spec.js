@@ -7,7 +7,7 @@ const validate = (error, expectedError, expectedMessage) => {
 };
 
 describe("Nucleoid", () => {
-  before(() => nucleoid.start({ declarative: true, test: true }));
+  before(() => nucleoid.start({ test: true, options: { declarative: true } }));
   beforeEach(() => test.clear());
 
   describe("in declarative mode", () => {

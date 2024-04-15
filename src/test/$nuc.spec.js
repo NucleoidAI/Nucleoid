@@ -4,7 +4,7 @@ const nucleoid = require("../../");
 const stack = require("../stack");
 
 describe("Nucleoid", () => {
-  before(() => nucleoid.start({ declarative: true, test: true }));
+  before(() => nucleoid.start({ test: true, options: { declarative: true } }));
   beforeEach(() => test.clear());
 
   it("stores $nuc", () => {
