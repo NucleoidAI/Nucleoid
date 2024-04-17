@@ -30,9 +30,11 @@ function parseFunction(string) {
     allowReturnOutsideFunction: true,
   });
 
-  removeLocations(estree);
-
-  return estree.body[0].expression;
+  if (estree.body[0].type === "ExpressionStatement") {
+    return estree.body[0].expression;
+  } else {
+    return estree.body[0];
+  }
 }
 
 function parseNode(node) {
