@@ -1,24 +1,37 @@
 const express = require("express");
 const router = express.Router();
-const _openapi = require("../lib/openapi");
+const openapi = require("../lib/openapi");
 const context = require("../context");
 const config = require("../config");
+const Joi = require("joi");
 
-router.get("/openapi", (req, res) => res.json(_openapi.status()));
+router.get("/openapi", (req, res) => res.json(openapi.status()));
 router.post("/openapi", (req, res) => {
-  const openapi = req.body;
-  const _config = config();
+  const {
+    "x-nuc-action": action,
+    "x-nuc-functions": functions = [],
+    "x-nuc-port": port,
+  } = Joi.attempt(
+    req.body,
+    Joi.object({
+      "x-nuc-action": Joi.string().required(),
+      "x-nuc-port": Joi.number().optional(),
+    })
+      .required()
+      .options({ stripUnknown: true })
+  );
 
-  if (openapi["x-nuc-action"] === "start") {
-    context.run(openapi["x-nuc-functions"]);
+  if (action === "start") {
+    context.run(functions);
 
-    _openapi.init();
-    _openapi.load(openapi);
-    _openapi.start(openapi["x-nuc-port"] || _config.port.openapi);
-  } else if (openapi["x-nuc-action"] === "stop") {
-    _openapi.stop();
-  } else {
-    res.status(400).json({ error: "INVALID_ACTION" });
+    openapi.init();
+    openapi.load(req.body);
+
+    openapi.start(port || config().port.openapi);
+  }
+
+  if (action === "stop") {
+    openapi.stop();
   }
 
   res.end();

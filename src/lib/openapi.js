@@ -25,9 +25,8 @@ function init(app) {
   }
 }
 
-function load(openapi) {
-  const prefix = openapi["x-nuc-prefix"] || "";
-  const events = openapi["x-nuc-events"];
+function load(spec) {
+  const { "x-nuc-prefix": prefix = "", "x-nuc-events": events = [] } = spec;
 
   const app = _app;
   const _config = config();
@@ -39,13 +38,12 @@ function load(openapi) {
   const root = path
     .dirname(__dirname)
     .split(process.platform === "win32" ? "\\" : "/")
-    .slice(0, -1);
-
-  const nucleoidPath = root.join("/") + "/index";
+    .slice(0, -1)
+    .join("/");
 
   const tmp = uuid();
 
-  Object.entries(openapi?.paths).forEach(([key, value]) => {
+  Object.entries(spec?.paths).forEach(([key, value]) => {
     const parts = key.substring(1).split("/");
     const resource = parts.pop() || "index";
     const path = parts.join("/");
@@ -58,7 +56,7 @@ function load(openapi) {
     const file = `${_config.path}/openapi/${tmp}/${path}/${resource}.js`;
     fs.appendFileSync(
       file,
-      `const nucleoid = require("${nucleoidPath}"); module.exports = function () {`
+      `const nucleoid = require("${root}"); module.exports = function () {`
     );
 
     Object.entries(value).forEach(([method, nucDoc]) => {
@@ -76,7 +74,7 @@ function load(openapi) {
       );
       fs.appendFileSync(
         file,
-        `${method}.apiDoc = ${JSON.stringify(openapi.paths[key][method])};`
+        `${method}.apiDoc = ${JSON.stringify(spec.paths[key][method])};`
       );
     });
 
@@ -93,7 +91,7 @@ function load(openapi) {
           title: "Nucleoid",
           version: "1.0.0",
         },
-        components: openapi.components,
+        components: spec.components,
         paths: {},
         servers: [
           {
@@ -102,7 +100,7 @@ function load(openapi) {
         ],
       },
       paths: `${_config.path}/openapi/${tmp}`,
-      docsPath: "/openapi.json",
+      docsPath: "/spec.json",
     });
   } catch (err) {
     console.error(err);

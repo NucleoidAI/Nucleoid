@@ -34,6 +34,7 @@
     "escodegen": "^2.1.0",
     "express": "^4.17.1",
     "express-openapi": "^9.3.0",
+    "joi": "^17.12.3",
     "lodash": "^4.17.21",
     "moment": "2.29.4",
     "swagger-ui-express": "^4.1.6",
