@@ -100,7 +100,7 @@ function load(spec) {
         ],
       },
       paths: `${_config.path}/openapi/${tmp}`,
-      docsPath: "/spec.json",
+      docsPath: "/openapi.json",
     });
   } catch (err) {
     console.error(err);

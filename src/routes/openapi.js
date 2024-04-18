@@ -15,6 +15,7 @@ router.post("/openapi", (req, res) => {
     req.body,
     Joi.object({
       "x-nuc-action": Joi.string().required(),
+      "x-nuc-functions": Joi.array().optional(),
       "x-nuc-port": Joi.number().optional(),
     })
       .required()
