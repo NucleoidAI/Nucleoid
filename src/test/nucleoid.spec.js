@@ -1117,6 +1117,25 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("trade1.worth"), 100);
     });
 
+    it("assigns let statement after const statement with the same name", () => {
+      const result = nucleoid.run(
+        `
+        const barcode = "barcode";
+        {
+          let barcode = "barcode";
+          {
+            barcode = "barcode2";
+            {
+              return barcode;
+            }
+          }
+        }
+        `
+      );
+
+      equal(result, "barcode2");
+    });
+
     it("holds result of function in let", () => {
       nucleoid.run("bugs = [ ]");
       nucleoid.run("ticket = 1");

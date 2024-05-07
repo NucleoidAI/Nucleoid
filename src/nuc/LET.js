@@ -9,10 +9,12 @@ class LET {
   run(scope) {
     const name = this.name;
 
-    const instance = scope.retrieveGraph(this.name.first);
+    if (this.reassign) {
+      const instance = scope.retrieveGraph(this.name.first);
 
-    if (instance?.constant) {
-      throw TypeError("Assignment to constant variable.");
+      if (instance?.constant) {
+        throw TypeError("Assignment to constant variable.");
+      }
     }
 
     const evaluation = this.value.run(scope, false, false);
