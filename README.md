@@ -9,7 +9,7 @@
   <a href="https://discord.gg/wN49SNssUw"><img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" /></a>
 </p>
 
-![Banner](.github/media/banner.gif)
+![Banner](.github/media/banner.png)
 
 <p align="center">
   Reasoning Engine for Neuro-Symbolic AI with Declarative Logic
@@ -19,9 +19,7 @@
 
 D(L)RE is a type of Symbolic AI used for reasoning engine in Neuro-Symbolic AI. The runtime that tracks given statements in JavaScript syntax and creates relationships between variables, objects, and functions etc. in the graph. So, as writing just like any other codes in Node.js, the runtime translates your business logic to fully working application by managing the JS state as well as storing in the built-in data store, so that your application doesn't require external database or anything else.
 
-<p align="center">
-  <img src=".github/media/graph.gif" width="450" alt="Graph Animation"/>
-</p>
+[Nucleoid Chat](https://github.com/NucleoidAI/Nucleoid/assets/54210920/28282d4f-9e87-40c4-8589-b646e301bfa4)
 
 ### Neural Networks: The Learning Component
 
@@ -44,6 +42,10 @@ Declarative logic is a subset of declarative programming, a style of building pr
 Symbolic reasoning refers to the process of using symbols to represent problems and applying logical rules to manipulate these symbols and derive conclusions or solutions. In AI and computer science, it involves using symbolic representations for entities and actions, enabling the system to perform logical inferences, decision making, and problem-solving based on the rules and knowledge encoded in the symbols.
 
 By integrating Nucleoid into Neuro-Symbolic AI, the system benefits from enhanced interpretability and reliability. The declarative logic and rules defined in Nucleoid provide clear explanations for the AI's decisions, making it easier for users to understand and trust the system's outputs. Furthermore, the explicit reasoning capabilities help ensure that decisions are made based on logical principles, adding a layer of reliability and consistency to the AI's behavior.
+
+<p align="center">
+  <img src=".github/media/graph.gif" width="450" alt="Graph Animation"/>
+</p>
 
 ## Hello World :zap:
 
