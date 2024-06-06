@@ -13,7 +13,9 @@ function init() {
   }
 
   const _config = config();
+
   datastore.init(_config);
+  console.log("[✓] Data Store is initiated");
 
   setImmediate(() => {
     datastore.read().forEach(({ $, c, e }) => {
@@ -21,6 +23,8 @@ function init() {
         stack.process($, null, { declarative: c });
       }
     });
+
+    console.log("[✓] Context is loaded");
 
     const nucleoid = require("../");
     require(`${_config.path}/nucleoid.js`)(nucleoid);
@@ -68,9 +72,12 @@ function init() {
       }
     }
 
+    console.log("[✓] Process is running");
+
     if (!test) {
       terminal.all("*", (req, res) => res.status(404).end());
       terminal.listen(port.terminal);
+      console.log("[✓] Terminal is ready");
     }
   });
 

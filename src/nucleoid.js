@@ -4,9 +4,14 @@ const process = require("./process");
 const _config = require("./config");
 const { parseFunction } = require("./lang/estree/parser");
 const { generate } = require("./lang/estree/generator");
+const chalk = require("chalk");
 
 function start(config = {}) {
   _config.init(config);
+
+  console.log("🌿 " + chalk.greenBright("Nucleoid") + " runtime is started");
+  console.log(chalk.blueBright("🌎 Inspired by Nature\n"));
+
   process.init();
 
   return new Promise((resolve) => {
