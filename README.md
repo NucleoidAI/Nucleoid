@@ -49,50 +49,82 @@ By integrating Nucleoid into Neuro-Symbolic AI, the system benefits from enhance
 
 ## Hello World :zap:
 
-```shell
-> npm i nucleoidjs
-```
-
-Once installed, you can simply run with Express.js
-
 ```javascript
-const nucleoid = require("nucleoidjs");
-const app = nucleoid();
+User:
+> 'Define human with name'
 
-class Item {
-  constructor(name, barcode) {
+Assistant:
+> 'The user requested to define a human with a name using a declarative class'
+
+---
+
+// Ubiquitous Code:
+'use declarative';
+
+class Human {
+  name: string;
+  constructor(name: string) {
     this.name = name;
-    this.barcode = barcode;
   }
 }
-nucleoid.register(Item);
-
-// 👍 Only needed a business logic and 💖
-// "Create an item with given name and barcode,
-// but the barcode must be unique"
-app.post("/items", (req) => {
-  const name = req.body.name;
-  const barcode = req.body.barcode;
-
-  const check = Item.find((i) => i.barcode === barcode);
-
-  if (check) {
-    throw "DUPLICATE_BARCODE";
-  }
-
-  return new Item(name, barcode);
-});
-
-app.listen(3000);
 ```
 
-> :bulb: **This is pretty much it, thanks to [Nucleoid runtime](https://nucleoid.com/docs/runtime/), only with this :point_up_2:, you run your business logic and successfully persisted your object without external database.**
+```javascript
+User:
+> 'All humans are mortal'
+
+Assistant: All humans are mortal
+> 'All humans were declared as mortal.'
+
+---
+
+// Ubiquitous Code:
+'use declarative';
+
+$Human.mortal = true;
+```
+
+```javascript
+User:
+> 'Create a human with name "Socrates"'
+
+Assistant:
+> 'A human named 'Socrates' was successfully created.'
+
+---
+
+// Ubiquitous Code:
+'use imperative';
+
+var human1 = new Human('Socrates');
+
+// Result: {"id":"human1","name":"Socrates","mortal":true}
+```
+
+```javascript
+User:
+> 'Is human with name 'Socrates' mortal?'
+
+Assistant:
+> 'The human named 'Socrates' was determined to be mortal.'
+
+---
+
+// Ubiquitous Code:
+`use imperative`;
+
+var human1 = new Human('Socrates');
+human1.mortal;
+// Result: true
+```
+
+> :bulb: **This executes the business logic and stores the state in the data store. `const app = nucleoid()` manages internal data store without requiring an external database.**
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
 
 <br/>
 
-### Under the hood: Declarative Runtime Environment
+### Under the hood: Declarative (Logic) Runtime Environment
 
 Nucleoid is an implementation of symbolic AI for declarative (logic) programming at the runtime. As mentioned, the declarative runtime environment manages JavaScript state and stores each transaction in the built-in data store by declaratively rerendering JavaScript statements and building the knowledge graph (base) as well as an execution plan.
 
@@ -116,21 +148,6 @@ The declarative runtime isolates a behavior definition of a program from its tec
 </div>
 
 In short, the main objective of the project is to manage both of data and logic under the same runtime. The declarative programming paradigm used by Nucleoid allows developers to focus on the business logic of the application, while the runtime manages the technical details.This allows for faster development and reduces the amount of code that needs to be written. Additionally, the sharding feature can help to distribute the load across multiple instances, which can further improve the performance of the system.
-
-<br/>
-
-## OpenAPI Integration with Nucleoid IDE
-
-Nucleoid IDE is a web interface that helps to run very same npm package with OpenAPI.
-
-[Go to Nucleoid IDE](https://nucleoid.com/ide/)
-
-<p align="center">
-  <img src="https://cdn.nucleoid.com/media/screenshot-1.png" alt="Nucleoid IDE Screenshot 1" width="650"/>
-  <img src="https://cdn.nucleoid.com/media/screenshot-2.png" alt="Nucleoid IDE Screenshot 2" width="650"/>
-</p>
-
-<br/>
 
 ## Benchmark
 
