@@ -10,12 +10,14 @@ router.post("/openapi", (req, res) => {
   const {
     "x-nuc-action": action,
     "x-nuc-functions": functions = [],
+    "x-nuc-declarations": declarations = [],
     "x-nuc-port": port,
   } = Joi.attempt(
     req.body,
     Joi.object({
       "x-nuc-action": Joi.string().required(),
       "x-nuc-functions": Joi.array().optional(),
+      "x-nuc-declarations": Joi.array().optional(),
       "x-nuc-port": Joi.number().optional(),
     })
       .required()
@@ -23,7 +25,17 @@ router.post("/openapi", (req, res) => {
   );
 
   if (action === "start") {
-    context.run(functions);
+    context.run(
+      functions.map(({ definition }) => ({
+        definition,
+      }))
+    );
+    context.run(
+      declarations.map(({ definition }) => ({
+        definition,
+        options: { declarative: true },
+      }))
+    );
 
     openapi.init();
     openapi.load(req.body);
