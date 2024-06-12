@@ -8,6 +8,14 @@ if (!argv.debug) {
   console.debug = () => {};
 }
 
+if (argv.silence) {
+  console.log = () => {};
+  console.info = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+  console.debug = () => {};
+}
+
 if (argv.clear) {
   datastore.clear();
 }

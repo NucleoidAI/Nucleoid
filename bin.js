@@ -12,6 +12,9 @@ require("yargs")
         .option("clear", {
           describe: "Clear data before starting the runtime",
         })
+        .option("silence", {
+          describe: "Silence the console",
+        })
         .option("debug", {
           describe: "Enable debug mode",
         })
