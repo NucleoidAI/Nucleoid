@@ -4,6 +4,8 @@ const nucleoid = require("./");
 const cluster = require("./src/cluster");
 const chalk = require("chalk");
 
+const log = console.log;
+
 if (!argv.debug) {
   console.debug = () => {};
 }
@@ -21,6 +23,10 @@ if (argv.clear) {
 }
 
 nucleoid.start().then(() => {
+  if (argv.silence) {
+    log("Nucleoid runtime is started");
+  }
+
   const { id, port } = require("./src/config")();
   console.log("");
   console.log("---");
