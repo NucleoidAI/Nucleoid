@@ -19,7 +19,7 @@
 
 D(L)RE is a type of Symbolic AI used for reasoning engine in Neuro-Symbolic AI. Nucleoid runtime that tracks given statements in JavaScript syntax and creates relationships between variables, objects, and functions etc. in the logic graph. In brief, the runtime translates your business logic to fully working application by managing the JavaScript state as well as storing in the built-in data store, so that your application doesn't require external database or anything else.
 
-[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/3f1962df-a068-45c2-8f29-743dca959730)
+[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
 ### Neural Networks: The Learning Component
 
