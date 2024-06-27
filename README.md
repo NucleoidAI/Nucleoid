@@ -9,7 +9,7 @@
   <a href="https://discord.gg/wN49SNssUw"><img src="https://img.shields.io/badge/Discord-lightgrey?style=for-the-badge&logo=discord" alt="Discord" /></a>
 </p>
 
-![Banner](.github/media/banner.png)
+![Banner](.github/media/banner.gif)
 
 <p align="center">
   Reasoning Engine for Neuro-Symbolic AI with Declarative Logic
