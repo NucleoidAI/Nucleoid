@@ -22,6 +22,8 @@ D(L)RE is a type of Symbolic AI used for reasoning engine in Neuro-Symbolic AI. 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
 <p align="center">
+  Chat for Logical Context
+  <br/>
   <a href="https://nucleoid.ai/chat">https://nucleoid.ai/chat</a>
 </p>
 
