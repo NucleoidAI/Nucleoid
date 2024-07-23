@@ -12,12 +12,18 @@
 ![Banner](.github/media/banner.gif)
 
 <p align="center">
-  Reasoning Engine for Neuro-Symbolic AI with Declarative Logic
+  Neuro-Symbolic AI with Logic Graph
 </p>
 
 <br/>
 
-D(L)RE is a type of Symbolic AI used for reasoning engine in Neuro-Symbolic AI. Nucleoid runtime that tracks given statements in JavaScript syntax and creates relationships between variables, objects, and functions etc. in the logic graph. In brief, the runtime translates your business logic to fully working application by managing the JavaScript state as well as storing in the built-in data store, so that your application doesn't require external database or anything else.
+Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI. Nucleoid runtime tracks given each statement in JavaScript syntax and dynamically creates relationships between logic and data in a *Logic Graph* as a knowledge base to used in decision-making and problem-solving process.
+
+- **Adaptive Reasoning:** Combines symbolic logic with contextual information to analyze relationships, draw conclusions and incorporating new information and adjusting its conclusions accordingly.
+- **Logic Graph:** A dynamic knowledge base representation structure that captures relationships between statements and data, facilitating complex deductions and adapting to new information.
+- **Explainability:** The Logic Graph provides a transparent representation of the reasoning process, making it easier to understand how decisions are reached and potential biases are identified.
+
+Echoing to the idea of “[thinking, fast and slow](https://kahneman.scholar.princeton.edu/publications)”, AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
