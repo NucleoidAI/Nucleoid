@@ -23,7 +23,7 @@ Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI
 - **Logic Graph:** A dynamic knowledge base representation structure that captures relationships between statements and data, facilitating complex deductions and adapting to new information.
 - **Explainability:** The Logic Graph provides a transparent representation of the reasoning process, making it easier to understand how decisions are reached and potential biases are identified.
 
-Echoing to the idea of “[thinking, fast and slow](https://kahneman.scholar.princeton.edu/publications)”, AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
+Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
@@ -32,6 +32,10 @@ Echoing to the idea of “[thinking, fast and slow](https://kahneman.scholar.pri
   <br/>
   <a href="https://nucleoid.ai/chat">https://nucleoid.ai/chat</a>
 </p>
+
+## What is Neuro-Symbolic AI?
+
+Neuro-Symbolic AI is an approach that integrates the strengths of both neural networks and symbolic AI to create systems that can learn from data and also reason logically. By combining these two components, Neuro-Symbolic AI aims to leverage the intuitive, pattern-recognition capabilities of neural networks along with the logical, rule-based reasoning of symbolic AI. This integration offers a more holistic AI system that is both adaptable and able to explain its decisions, making it suitable for complex decision-making tasks where both learning from data and logical reasoning are required. Here’s how it breaks down:
 
 ### Neural Networks: The Learning Component
 
@@ -58,6 +62,16 @@ By integrating Nucleoid into Neuro-Symbolic AI, the system benefits from enhance
 <p align="center">
   <img src=".github/media/graph.gif" width="450" alt="Graph Animation"/>
 </p>
+
+### Plasticity in Neuro-Symbolic AI
+
+In the realm of Neuro-Symbolic AI, *Plasticity* is an important element for the system's ability to modify and optimize its connections in response to new information. This concept is inspired by neuroplasticity in biological brains, where neurons can strengthen or weaken their connections based on activity, enabling learning and memory.
+
+1. **Dynamic Knowledge Base**: Neuro-Symbolic AI systems dynamically update their knowledge base as they encounter new scenarios or corrections to their previous knowledge. This continuous updating process allows the systems to remain relevant and accurate over time.
+2. **Adaptive Logic and Reasoning**: The AI system can modify its symbolic rules and reasoning strategies to better match observed data or outcomes, enhancing its decision-making and problem-solving abilities.
+3. **Generalization and Specialization**: Through plasticity, the system can generalize from learned experiences to new, unseen scenarios or specialize in certain domains by fine-tuning its parameters or rules based on specific data inputs.
+
+The idea of plasticity in AI, especially in logic-based systems like those in Neuro-Symbolic AI, enhances the capability of machines to not only perform tasks based on fixed rules but also to evolve those rules and adapt their reasoning over time, much like the cognitive flexibility of living things.
 
 ## Hello World :zap:
 
@@ -130,11 +144,9 @@ human1.mortal;
 // Result: true
 ```
 
-> :bulb: **This executes the business logic and stores the state in the data store. `const app = nucleoid()` manages internal data store without requiring an external database.**
-
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
 
-<br/>
+---
 
 ### Under the hood: Declarative (Logic) Runtime Environment
 
