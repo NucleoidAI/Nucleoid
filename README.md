@@ -1,6 +1,6 @@
 <h1 align="center">Nucleoid</h1>
 <p align="center">
-  Declarative (Logic) Runtime Environment
+  Neuro-Symbolic AI with Knowledge Graph
 </p>
 
 <p align="center">
@@ -12,15 +12,15 @@
 ![Banner](.github/media/banner.gif)
 
 <p align="center">
-  Neuro-Symbolic AI with Logic Graph
+  Declarative (Logic) Runtime Environment
 </p>
 
 <br/>
 
-Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI. Nucleoid runtime tracks given each statement in JavaScript syntax and dynamically creates relationships between logic and data in a *Logic Graph* as a knowledge base to used in decision-making and problem-solving process.
+Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI. Nucleoid runtime tracks each statement in [IPL-inspired](https://en.wikipedia.org/wiki/Information_Processing_Language) declarative JavaScript syntax and dynamically creates relationships between both logic and data statements in the knowledge graph to used in decision-making and problem-solving process.
 
 - **Adaptive Reasoning:** Combines symbolic logic with contextual information to analyze relationships, draw conclusions and incorporating new information and adjusting its conclusions accordingly.
-- **Logic Graph:** A dynamic knowledge base representation structure that captures relationships between statements and data, facilitating complex deductions and adapting to new information.
+- **Logic Graph:** Specialized knowledge graph that captures relationships between both logic and data statements based on formal logic, facilitating complex deductions and adapting to new information.
 - **Explainability:** The Logic Graph provides a transparent representation of the reasoning process, making it easier to understand how decisions are reached and potential biases are identified.
 
 Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
@@ -32,6 +32,8 @@ Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.prin
   <br/>
   <a href="https://nucleoid.ai/chat">https://nucleoid.ai/chat</a>
 </p>
+
+In Nucleoid's paradigm, there is no segregation between logic and data; instead, the paradigm approaches how both logic and data statements are related to each other. As the runtime receives new statements, it updates the knowledge graph and reevaluates both logic and data statements to reflect the new information. This adaptive process enables the system to respond to new situations and make deterministic selections as a result of plasticity.
 
 ## What is Neuro-Symbolic AI?
 
@@ -145,6 +147,8 @@ human1.mortal;
 ```
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
+
+> :bulb: Nucleoid runtime can also run on local machine with `npx @nucleoidai/ide start` and `npx @nucleoidai/expert start` including [Nucleoid Chat](https://nucleoid.com/ide/chat). These commands enable IDE and expert system components needed for Neuro-Symbolic AI.
 
 ---
 
