@@ -25,6 +25,24 @@ Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI
 
 Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
 
+<table>
+  <tr>
+    <td>
+      Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
+      <br/>
+      <br/>
+      Neuro-Symbolic AI is an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward. We use JavaScript, simply because JavaScript is the language of the internet so that every piece of code is inherently dynamic, making it an ideal candidate. Sadly, Python's interpreter structure makes its dynamic eval function extremely slow, but in good side, the future looks bright as it will harness the strengths of both languages, much like the fusion of neuro and symbolic AI leverages their respective strength.
+      <br/>
+      <br/>
+      <p align="right">
+        — Can Mingir
+        <br/>
+        <a href="https://github.com/canmingir">@canmingir</a>
+      </p>
+    </td>
+  </tr>
+</table>
+
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
 <p align="center">
