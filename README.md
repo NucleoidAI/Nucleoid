@@ -25,6 +25,18 @@ Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI
 
 Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
 
+[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
+
+<p align="center">
+  Chat for Logical Context
+  <br/>
+  <a href="https://nucleoid.ai/chat">https://nucleoid.ai/chat</a>
+</p>
+
+In Nucleoid's paradigm, there is no segregation between logic and data; instead, the paradigm approaches how both logic and data statements are related to each other. As the runtime receives new statements, it updates the knowledge graph and reevaluates both logic and data statements to reflect the new information. This adaptive process enables the system to respond to new situations and make deterministic selections as a result of plasticity.
+
+---
+
 <table>
   <tr>
     <td>
@@ -42,16 +54,6 @@ Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.prin
     </td>
   </tr>
 </table>
-
-[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
-
-<p align="center">
-  Chat for Logical Context
-  <br/>
-  <a href="https://nucleoid.ai/chat">https://nucleoid.ai/chat</a>
-</p>
-
-In Nucleoid's paradigm, there is no segregation between logic and data; instead, the paradigm approaches how both logic and data statements are related to each other. As the runtime receives new statements, it updates the knowledge graph and reevaluates both logic and data statements to reflect the new information. This adaptive process enables the system to respond to new situations and make deterministic selections as a result of plasticity.
 
 ## What is Neuro-Symbolic AI?
 
