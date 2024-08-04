@@ -90,7 +90,7 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
 
 ## What is Neuro-Symbolic AI?
 
-![ai-architecture](https://github.com/user-attachments/assets/3372a26a-9593-41af-8f9d-34deac0525aa)
+![AI Architecture](https://github.com/user-attachments/assets/135fd32d-3911-4e0d-8082-a70235850a29)
 
 Neuro-Symbolic AI is an approach that integrates the strengths of both neural networks and symbolic AI to create systems that can learn from data and also reason logically. By combining these two components, Neuro-Symbolic AI aims to leverage the intuitive, pattern-recognition capabilities of neural networks along with the logical, rule-based reasoning of symbolic AI. This integration offers a more holistic AI system that is both adaptable and able to explain its decisions, making it suitable for complex decision-making tasks where both learning from data and logical reasoning are required. Here’s how it breaks down:
 
