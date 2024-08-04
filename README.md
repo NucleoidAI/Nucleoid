@@ -54,15 +54,22 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
         <p align="center">
           <img src="https://github.com/user-attachments/assets/838c6f9e-8102-43db-b272-7a02c4d6c5e6" alt="Python" width="75" />
           <br/>
-          TypeScript
+          TypeScript (Beta)
         </p>
       </td>
       <td>
         <p align="center">
           <img src="https://github.com/user-attachments/assets/899dc0d0-8dc3-4f2f-a993-2bd409ff7045" alt="Python" width="75" />
           <br/>
-          Python
+          Python (WiP)
         </p>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        The declarative structure in the runtime makes it possible
+        <br/>
+        to provide multiple language support through JIT compiler.
       </td>
     </tr>
   </table>
