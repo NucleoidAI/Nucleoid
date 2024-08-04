@@ -35,6 +35,39 @@ Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.prin
 
 In Nucleoid's paradigm, there is no segregation between logic and data; instead, the paradigm approaches how both logic and data statements are related to each other. As the runtime receives new statements, it updates the knowledge graph and reevaluates both logic and data statements to reflect the new information. This adaptive process enables the system to respond to new situations and make deterministic selections as a result of plasticity.
 
+<div align="center">
+  <table>
+    <tr>
+      <th colspan="3">
+        Multi Lang Support
+      </th>
+    </tr>
+    <tr>
+      <td>
+        <p align="center">
+          <img src="https://github.com/user-attachments/assets/f67cac56-aad9-422e-a8d0-5320f26680e3" alt="JavaScript" width="75" />
+          <br/>
+          JavaScript
+        </p>
+      </td>
+      <td>
+        <p align="center">
+          <img src="https://github.com/user-attachments/assets/838c6f9e-8102-43db-b272-7a02c4d6c5e6" alt="Python" width="75" />
+          <br/>
+          TypeScript
+        </p>
+      </td>
+      <td>
+        <p align="center">
+          <img src="https://github.com/user-attachments/assets/899dc0d0-8dc3-4f2f-a993-2bd409ff7045" alt="Python" width="75" />
+          <br/>
+          Python
+        </p>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ---
 
 <table>
@@ -43,7 +76,7 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
       Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
       <br/>
       <br/>
-      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward. We use JavaScript, simply because JavaScript is the language of the internet so that every piece of code is inherently dynamic, making it an ideal candidate. Sadly, Python's interpreter structure makes its dynamic eval function extremely slow, but in good side, the future looks bright as it will harness the strengths of both languages, much like the fusion of neuro and symbolic AI leverages their respective strengths!
+      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward. We use JavaScript inside the runtime, simply because JavaScript is the language of the internet so that every piece of code is inherently dynamic, making it an ideal candidate. Sadly, Python's interpreter structure makes its dynamic eval function extremely slow, but in good side, the future looks bright as it will harness the strengths of both languages, much like the fusion of neuro and symbolic AI leverages their respective strengths!
       <br/>
       <br/>
       <p align="right">
