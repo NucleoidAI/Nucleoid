@@ -67,9 +67,7 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
     </tr>
     <tr>
       <td colspan="3">
-        The declarative structure in the runtime makes it possible
-        <br/>
-        to provide multiple language support through JIT compiler.
+        The declarative structure in the runtime makes it possible to provide multiple language support through JIT compiler.
       </td>
     </tr>
   </table>
