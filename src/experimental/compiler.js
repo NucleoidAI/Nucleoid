@@ -1,5 +1,4 @@
-// @ts-ignore
-import * as ts from "typescript";
+const ts = require("typescript");
 
 function compile(string) {
   const sourceFile = ts.createSourceFile(
@@ -14,4 +13,4 @@ function compile(string) {
   return sourceFile;
 }
 
-export default compile;
+module.exports.compile = compile;
