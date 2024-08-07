@@ -12,7 +12,7 @@
 ![Banner](.github/media/banner.gif)
 
 <p align="center">
-  Declarative (Logic) Runtime Environment
+  Declarative (Logic) Runtime Environment: Extensible Data and Logic Representation
 </p>
 
 <br/>
@@ -277,7 +277,7 @@ Learn more at [nucleoid.com](https://nucleoid.ai)
   <b>⭐️ Star us on GitHub for the support</b>
 </p>
 
-Thanks to declarative programming, we have a brand-new approach to data and logic. As we are still discovering what we can do with this powerful programming model, please join us with any types of contribution!
+Neuro-Symbolic AI is an emerging field and thanks to declarative logic programming, we have a brand-new approach to Neuro-Symbolic AI. Join us in shaping the future of AI!
 
 <p align="center">
   <img src="https://cdn.nucleoid.com/media/nobel.png" alt="Nobel" />
