@@ -19,7 +19,7 @@
 
 <br/>
 
-Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI. Nucleoid runtime tracks each statement in [IPL-inspired](https://en.wikipedia.org/wiki/Information_Processing_Language) declarative JavaScript syntax and dynamically creates relationships between both logic and data statements in the knowledge graph to used in decision-making and problem-solving process.
+Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI. Nucleoid runtime tracks each statement in [IPL-inspired](https://en.wikipedia.org/wiki/Information_Processing_Language) declarative syntax and dynamically creates relationships between both logic and data statements in the knowledge graph to used in decision-making and problem-solving process.
 
 - **Adaptive Reasoning:** Combines symbolic logic with contextual information to analyze relationships, draw conclusions and incorporating new information and adjusting its conclusions accordingly.
 - **Logic Graph:** Specialized knowledge graph that captures relationships between both logic and data statements based on formal logic, facilitating complex deductions and adapting to new information.
@@ -41,15 +41,15 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
   <table>
     <tr>
       <th colspan="3">
-        Multi Lang Support
+        Multi-Lang Support
       </th>
     </tr>
     <tr>
       <td>
         <p align="center">
-          <img src="https://github.com/user-attachments/assets/f67cac56-aad9-422e-a8d0-5320f26680e3" alt="JavaScript" width="75" />
+          <img src="https://github.com/user-attachments/assets/947ecf1d-b174-4c65-85ca-d2fafac6da80" alt="Node.js" width="80" />
           <br/>
-          JavaScript
+          Node.js
         </p>
       </td>
       <td>
@@ -68,7 +68,7 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
       </td>
     </tr>
     <tr>
-      <td colspan="3">
+      <td colspan="3" width="500">
         The declarative structure in the runtime makes it possible to provide multiple language support through JIT compiler.
       </td>
     </tr>
@@ -83,7 +83,7 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
       Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
       <br/>
       <br/>
-      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward. We use JavaScript inside the runtime, simply because JavaScript is the language of the internet so that every piece of code is inherently dynamic, making it an ideal candidate. Sadly, Python's interpreter structure makes its dynamic eval function extremely slow, but in good side, the future looks bright as it will harness the strengths of both languages, much like the fusion of neuro and symbolic AI leverages their respective strengths!
+      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward. We use a Node.js-based runtime, simply because JavaScript is the language of the internet so that every piece of code is inherently dynamic, making it an ideal candidate. Sadly, Python's interpreter structure makes its dynamic eval function extremely slow, but in good side, the future looks bright as it will harness the strengths of both languages, much like the fusion of neuro and symbolic AI leverages their respective strengths!
       <br/>
       <br/>
       <p align="right">
