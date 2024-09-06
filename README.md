@@ -97,7 +97,7 @@ In Nucleoid's paradigm, there is no segregation between logic and data; instead,
 
 ## What is Neuro-Symbolic AI?
 
-![AI Architecture](https://github.com/user-attachments/assets/135fd32d-3911-4e0d-8082-a70235850a29)
+![AI Architecture](https://github.com/user-attachments/assets/a021c084-7a03-415c-8bdd-a497b84a613b)
 
 Neuro-Symbolic AI is an approach that integrates the strengths of both neural networks and symbolic AI to create systems that can learn from data and also reason logically. By combining these two components, Neuro-Symbolic AI aims to leverage the intuitive, pattern-recognition capabilities of neural networks along with the logical, rule-based reasoning of symbolic AI. This integration offers a more holistic AI system that is both adaptable and able to explain its decisions, making it suitable for complex decision-making tasks where both learning from data and logical reasoning are required. Here’s how it breaks down:
 
@@ -114,6 +114,10 @@ The symbolic component of Neuro-Symbolic AI focuses on logic, rules, and symboli
 <p align="center">
   <img src=".github/media/neuro-symbolic.png" width="225" alt="Neuro-Symbolic Diagram"/>
 </p>
+
+### Declarative Language
+
+Declarative Language in Neuro-Symbolic AI acts as the ubiquitous language for specifying the desired outcomes of a program without detailing the procedural methods to achieve these outcomes. This type of language is essential for articulating logical rules, constraints, and relationships that underpin symbolic reasoning within these systems. It supports the formulation of structured knowledge bases and facilitates logical reasoning tasks, enabling systems to deduce, infer, and respond to queries based on established rules. Moreover, declarative languages are instrumental in integrating the outputs of neural networks into symbolic reasoning frameworks, marrying data-driven learning with rule-based logic. Their widespread use enhances the transparency, explainability, and modularity of AI systems, while also boosting their efficiency in domains heavily reliant on rule-based operations.
 
 #### Declarative Logic in Symbolic Reasoning
 
