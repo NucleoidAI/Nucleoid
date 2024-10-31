@@ -1,0 +1,216 @@
+{
+  "declarations": [
+    "'use declarative'; class Obj { constructor(vertex) { this.obj = 'label7544'; this.vertex = vertex } }",
+    "'use declarative'; if($Obj.vertex === 4) { $Obj.shape = 'label6840'; $Obj.rims = '8'; $Obj.direction = 'up'; }",
+    "'use declarative'; if($Obj.vertex === 9) { $Obj.shape = 'label9906'; $Obj.rims = '2'; $Obj.direction = 'down'; }"
+  ],
+  "dataset": [
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 4, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 4, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 8, 0, 8, 0],
+        [0, 0, 0, 4, 0, 0],
+        [8, 0, 8, 0, 0, 0],
+        [0, 4, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj3910",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 4, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 8, 0, 8, 0],
+            [0, 0, 0, 4, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj3910 = new Obj(4); obj3910;",
+          "output_value": {"id":"obj3910","shape":"label6840","vertex":4,"rims":8,"direction":"up"}
+        },
+        {
+          "instance_name": "obj7130",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 4, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [8, 0, 8, 0, 0, 0],
+            [0, 4, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj7130 = new Obj(4); obj7130;",
+          "output_value": {"id":"obj7130","shape":"label6840","vertex":4,"rims":8,"direction":"up"}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 4, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 9, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 8, 0, 8],
+        [0, 0, 0, 0, 4, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 9, 0, 0, 0, 0],
+        [2, 0, 2, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj2307",
+          "input_instance": [
+            [0, 0, 0, 8, 0, 8],
+            [0, 0, 0, 0, 4, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 4, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj2307 = new Obj(4)",
+          "output_value": {"id":"obj2307","shape":"label6840","vertex":4,"rims":8,"direction":"up"}
+        },
+        {
+          "instance_name": "obj7042",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 9, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 9, 0, 0, 0, 0],
+            [2, 0, 2, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj7042 = new Obj(9)",
+          "output_value": {"id":"obj2307","shape":"label9906","vertex":9,"rims":2,"direction":"down"}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 4, 0, 9, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 9, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 8, 0, 8, 0, 0],
+        [0, 0, 4, 0, 9, 0],
+        [0, 0, 0, 2, 0, 2],
+        [0, 0, 9, 0, 0, 0],
+        [0, 2, 0, 2, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj9118",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 4, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 8, 0, 8, 0, 0],
+            [0, 0, 4, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj9118 = new Obj(4)",
+          "output_value": {"id":"obj9118","shape":"label6840","vertex":4,"rims":8,"direction":"up"}
+        },
+        {
+          "instance_name": "obj9552",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 9, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 9, 0],
+            [0, 0, 0, 2, 0, 2],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj9552 = new Obj(9)",
+          "output_value": {"id":"obj9552","shape":"label9906","vertex":9,"rims":2,"direction":"down"}
+        },
+        {
+          "instance_name": "obj6814",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 9, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 9, 0, 0, 0],
+            [0, 2, 0, 2, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj6814 = new Obj(9)",
+          "output_value": {"id":"obj6814","shape":"label9906","vertex":9,"rims":2,"direction":"down"}
+        }
+      ]
+    }
+  ]
+}

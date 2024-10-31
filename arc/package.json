@@ -1,0 +1,27 @@
+{
+  "name": "nuc-arc",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Can Mingir",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "eslint": "^8.13.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.6.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.29.0",
+    "@google/generative-ai": "^0.21.0",
+    "@mistralai/mistralai": "^1.1.0",
+    "@nucleoidai/expert": "^1.0.3",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "openai": "^4.63.0",
+    "uuid": "^10.0.0"
+  }
+}

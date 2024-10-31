@@ -1,0 +1,258 @@
+{
+  "declarations": [
+    "'use declarative'; class Obj { constructor(orientation, initial_position) { this.shape = 'label8001'; this.orientation = orientation; this.initial_position = initial_position }}",
+    "'use declarative'; if($Obj.orientation === 'horizontal' && $Obj.initial_position === 'left') { $Obj.shape = 'label4102'; $Obj.extension = 'right' }",
+    "'use declarative'; if($Obj.orientation === 'horizontal' && $Obj.initial_position === 'right') { $Obj.shape = 'label4102'; $Obj.extension = 'left' }",
+    "'use declarative'; if($Obj.orientation === 'vertical' && $Obj.initial_position === 'up') { $Obj.shape = 'label6012'; $Obj.extension = 'down' }",
+    "'use declarative'; if($Obj.orientation === 'vertical' && $Obj.initial_position === 'down') { $Obj.shape = 'label6012'; $Obj.extension = 'up' }"
+  ],
+  "dataset": [
+    {
+      "input_matrix": [
+        [0, 0, 8, 6, 6, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 6, 6, 8, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 8, 6, 6, 6, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 6, 6, 6, 8, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj5262",
+          "input_instance": [
+            [0, 0, 8, 6, 6, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 8, 6, 6, 6, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj5262 = new Obj('horizontal', 'left')",
+          "output_value": {"id":"obj9959","shape":"label4102","orientation":"horizontal","initial_position":"left","extension":"right"}
+        },
+        {
+          "instance_name": "obj7957",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 6, 6, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 6, 6, 6, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj7957 = new Obj('horizontal', 'right')",
+          "output_value": {"id":"obj7957","shape":"label4102","orientation":"horizontal","initial_position":"right","extension":"left"}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [6, 0, 0, 0, 0, 0, 0, 0],
+        [6, 0, 0, 0, 0, 0, 0, 0],
+        [6, 0, 8, 6, 6, 6, 0, 0],
+        [8, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [6, 0, 0, 0, 0, 0, 0, 0],
+        [6, 0, 0, 0, 0, 0, 0, 0],
+        [6, 0, 0, 0, 0, 0, 0, 0],
+        [6, 0, 8, 6, 6, 6, 6, 0],
+        [8, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj8547",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [6, 0, 0, 0, 0, 0, 0, 0],
+            [6, 0, 0, 0, 0, 0, 0, 0],
+            [6, 0, 0, 0, 0, 0, 0, 0],
+            [8, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [6, 0, 0, 0, 0, 0, 0, 0],
+            [6, 0, 0, 0, 0, 0, 0, 0],
+            [6, 0, 0, 0, 0, 0, 0, 0],
+            [6, 0, 0, 0, 0, 0, 0, 0],
+            [8, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj8547 = new Obj('vertical', 'down')",
+          "output_value": {"id":"obj8547","shape":"label6012","orientation":"vertical","initial_position":"down","extension":"up"}
+        },
+        {
+          "instance_name": "obj5705",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 8, 6, 6, 6, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 8, 6, 6, 6, 6, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj5705 = new Obj('horizontal', 'left')",
+          "output_value": {"id":"obj5705","shape":"label4102","orientation":"horizontal","initial_position":"left","extension":"right"}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 6, 6, 6, 8, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 8, 0],
+        [0, 0, 0, 0, 0, 0, 6, 0],
+        [0, 6, 0, 0, 0, 0, 6, 0],
+        [0, 6, 0, 0, 0, 0, 6, 0],
+        [0, 6, 0, 0, 0, 0, 0, 0],
+        [0, 8, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 6, 6, 6, 6, 8, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 8, 0],
+        [0, 6, 0, 0, 0, 0, 6, 0],
+        [0, 6, 0, 0, 0, 0, 6, 0],
+        [0, 6, 0, 0, 0, 0, 6, 0],
+        [0, 6, 0, 0, 0, 0, 6, 0],
+        [0, 8, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj6898",
+          "input_instance": [
+            [0, 0, 0, 6, 6, 6, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 6, 6, 6, 6, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj6898 = new Obj('horizontal', 'right')",
+          "output_value": {"id":"obj6898","shape":"label4102","orientation":"horizontal","initial_position":"right","extension":"left"}
+        },
+        {
+          "instance_name": "obj6941",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 8, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 6, 0, 0, 0, 0, 0, 0],
+            [0, 8, 0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj6941 = new Obj('vertical', 'down')",
+          "output_value": {"id":"obj6941","shape":"label6012","orientation":"vertical","initial_position":"down","extension":"up"}
+        },
+        {
+          "instance_name": "obj8615",
+          "input_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 8, 0],
+            [0, 0, 0, 0, 0, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance": [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 8, 0],
+            [0, 0, 0, 0, 0, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0, 6, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+          ],
+          "input_code": "'use imperative'; var obj8615 = new Obj('vertical', 'up')",
+          "output_value": {"id":"obj8615","shape":"label6012","orientation":"vertical","initial_position":"up","extension":"down"}
+        }
+      ]
+    }
+  ]
+}
