@@ -1,7 +1,6 @@
-const arc = require("./arc.md");
 const nucleoid = require("./nucleoid.md");
 const Zoom = require("../lib/Zoom");
-const fs = require("fs");
+// const arc = require("./arc.md");
 
 const dataset = [
   require("./dataset.core.json"),
@@ -31,6 +30,7 @@ const dataset = [
   })),
 }));
 
+// const fs = require("fs");
 // fs.writeFileSync(
 //   "dataset.jsonl",
 //   JSON.stringify({
