@@ -1,13 +1,15 @@
-const test = require("../lib/test");
-const { equal, notEqual, deepEqual, throws } = require("assert");
-const nucleoid = require("../../");
+import nucleoid from "../../index";
+import { deepEqual, equal, notEqual, throws } from "assert";
+import test from "../lib/test";
 
-const validate = (error, expectedError, expectedMessage) => {
+const validate = (error: Error, expectedError: new (...args: any[]) => Error, expectedMessage: string) => {
   return error instanceof expectedError && error.message === expectedMessage;
 };
 
 describe("Nucleoid", () => {
-  before(() => nucleoid.start({ test: true, options: { declarative: true } }));
+  beforeAll(() =>
+    nucleoid.start({ test: true, options: { declarative: true } })
+  );
   beforeEach(() => test.clear());
 
   describe("in declarative mode", () => {
@@ -17,11 +19,13 @@ describe("Nucleoid", () => {
       nucleoid.run("var i = 1 ;");
       equal(nucleoid.run("i == 1"), true);
       equal(
+        // @ts-ignore
         nucleoid.run(() => i === 1, { a: 1 }), // eslint-disable-line no-undef
         true
       );
       equal(
         nucleoid.run(() => {
+          // @ts-ignore
           // eslint-disable-next-line no-undef
           return i === 1;
         }),
@@ -29,6 +33,7 @@ describe("Nucleoid", () => {
       );
       equal(
         nucleoid.run(() => {
+          // @ts-ignore
           return i === 1; // eslint-disable-line no-undef
         }),
         true
@@ -43,7 +48,7 @@ describe("Nucleoid", () => {
     it("rejects variable declaration without definition", () => {
       throws(
         () => nucleoid.run("var a"),
-        (err) => validate(err, SyntaxError, "Missing definition")
+        (err: Error) => validate(err, SyntaxError, "Missing definition")
       );
     });
 
@@ -192,7 +197,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("date4 = Date.wrong ( )");
         },
-        (error) => validate(error, TypeError, "Date.wrong is not a function")
+        (error: Error) => validate(error, TypeError, "Date.wrong is not a function")
       );
     });
 
@@ -402,7 +407,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("e == 2.71828");
         },
-        (error) => validate(error, ReferenceError, "e is not defined")
+        (error: Error) => validate(error, ReferenceError, "e is not defined")
       );
     });
 
@@ -440,7 +445,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("i");
         },
-        (error) => validate(error, ReferenceError, "i is not defined")
+        (error: Error) => validate(error, ReferenceError, "i is not defined")
       );
     });
 
@@ -478,7 +483,7 @@ describe("Nucleoid", () => {
             "{ let ticket = new Ticket ( ) ; ticket.event.group = 'ENTERTAINMENT' }"
           );
         },
-        (error) =>
+        (error: Error) =>
           validate(error, ReferenceError, "ticket.event is not defined")
       );
     });
@@ -602,7 +607,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("throw abc");
         },
-        (error) => validate(error, ReferenceError, "abc is not defined")
+        (error: Error) => validate(error, ReferenceError, "abc is not defined")
       );
     });
 
@@ -686,7 +691,7 @@ describe("Nucleoid", () => {
             "{ let weight = person1.weight ; let height = person1.height ; $Person.bmi = weight / ( height * height ) }"
           );
         },
-        (error) =>
+        (error: Error) =>
           validate(
             error,
             SyntaxError,
@@ -702,7 +707,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("number1 = number2 * 10");
         },
-        (error) => validate(error, ReferenceError, "Circular Dependency")
+        (error: Error) => validate(error, ReferenceError, "Circular Dependency")
       );
     });
 
@@ -769,7 +774,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("user1");
         },
-        (error) => validate(error, ReferenceError, "user1 is not defined")
+        (error: Error) => validate(error, ReferenceError, "user1 is not defined")
       );
     });
 
@@ -811,7 +816,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("q");
         },
-        (error) => validate(error, ReferenceError, "q is not defined")
+        (error: Error) => validate(error, ReferenceError, "q is not defined")
       );
     });
 
@@ -915,7 +920,7 @@ describe("Nucleoid", () => {
             "{ const percentage = number / 100 ; percentage = number / 1000 }"
           );
         },
-        (error) =>
+        (error: Error) =>
           validate(error, TypeError, "Assignment to constant variable.")
       );
     });
@@ -1232,7 +1237,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("chart1 = new Chart ( )");
         },
-        (error) => validate(error, ReferenceError, "Chart is not defined")
+        (error: Error) => validate(error, ReferenceError, "Chart is not defined")
       );
 
       nucleoid.run("class Chart { }");
@@ -1241,14 +1246,14 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("chart1.plot = new Plot ( )");
         },
-        (error) => validate(error, ReferenceError, "Plot is not defined")
+        (error: Error) => validate(error, ReferenceError, "Plot is not defined")
       );
 
       throws(
         () => {
           nucleoid.run("$Chart.plot = new Plot ( )");
         },
-        (error) => validate(error, ReferenceError, "Plot is not defined")
+        (error: Error) => validate(error, ReferenceError, "Plot is not defined")
       );
     });
 
@@ -1278,7 +1283,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("channel1.frequency.type = 'ANGULAR'");
         },
-        (error) =>
+        (error: Error) =>
           validate(error, ReferenceError, "channel1.frequency is not defined")
       );
     });
@@ -1302,7 +1307,7 @@ describe("Nucleoid", () => {
           nucleoid.run("worker1.duty.schedule = new Schedule ( )");
         },
 
-        (error) =>
+        (error: Error) =>
           validate(error, ReferenceError, "worker1.duty is not defined")
       );
     });
@@ -1348,7 +1353,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("value.value = new Place ( )");
         },
-        (error) =>
+        (error: Error) =>
           validate(error, TypeError, "Cannot use 'value' as a property")
       );
     });
@@ -1360,7 +1365,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("value.value = 2147483647");
         },
-        (error) => validate(error, TypeError, "Cannot use 'value' as a name")
+        (error: Error) => validate(error, TypeError, "Cannot use 'value' as a name")
       );
     });
 
@@ -1399,7 +1404,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("travel1.time = travel1.distance.value / travel1.speed");
         },
-        (error) =>
+        (error: Error) =>
           validate(error, ReferenceError, "travel1.distance is not defined")
       );
     });
@@ -1424,7 +1429,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("{ let value = new Alarm ( ) ; value.value = '22:00' }");
         },
-        (error) => validate(error, TypeError, "Cannot use 'value' in local")
+        (error: Error) => validate(error, TypeError, "Cannot use 'value' in local")
       );
     });
 
@@ -1552,7 +1557,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("circle1");
         },
-        (error) => validate(error, ReferenceError, "circle1 is not defined")
+        (error: Error) => validate(error, ReferenceError, "circle1 is not defined")
       );
     });
 
@@ -1585,7 +1590,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("delete channel1");
         },
-        (error) =>
+        (error : Error) =>
           validate(error, ReferenceError, "Cannot delete object 'channel1'")
       );
       equal(nucleoid.run("channel1.frequency "), 440);
@@ -1603,7 +1608,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("delete shape1");
         },
-        (error) =>
+        (error: Error) =>
           validate(error, ReferenceError, "Cannot delete object 'shape1'")
       );
 
@@ -2090,7 +2095,7 @@ describe("Nucleoid", () => {
         () => {
           nucleoid.run("Phone.line.wired = true");
         },
-        (error) => validate(error, ReferenceError, "Phone.line is not defined")
+        (error: Error) => validate(error, ReferenceError, "Phone.line is not defined")
       );
     });
 
