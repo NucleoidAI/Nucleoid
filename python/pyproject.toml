@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "nucleoid"
+version = "0.1.0"
+description = ""
+authors = ["NucTeam"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8.1"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^7.0"
+pytest = "^8.3.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+test = "pytest:main"

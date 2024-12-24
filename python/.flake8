@@ -1,0 +1,2 @@
+[flake8]
+exclude = venv,__pycache__,migrations
