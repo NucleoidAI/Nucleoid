@@ -1,11 +1,6 @@
-let state, graph;
-
-setImmediate(() => {
-  state = require("../state").$;
-  graph = require("../graph").$;
-});
-
 function serialize(input, source, acc = {}) {
+  const state = require("../state").$;
+  const graph = require("../graph").$;
   let result;
 
   switch (true) {

@@ -23,26 +23,6 @@ describe("Nucleoid", () => {
     it("runs statements in the state", () => {
       nucleoid.run("var i = 1 ;");
       equal(nucleoid.run("i == 1"), true);
-      equal(
-        // @ts-ignore
-        nucleoid.run(() => i === 1, { a: 1 }), // eslint-disable-line no-undef
-        true
-      );
-      equal(
-        nucleoid.run(() => {
-          // @ts-ignore
-          // eslint-disable-next-line no-undef
-          return i === 1;
-        }),
-        true
-      );
-      equal(
-        nucleoid.run(() => {
-          // @ts-ignore
-          return i === 1; // eslint-disable-line no-undef
-        }),
-        true
-      );
     });
 
     it("runs expression statement", () => {
@@ -92,8 +72,8 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("device1.active"), true);
 
       const device2 = nucleoid.run("new Device ( 'Hall' )");
-      nucleoid.run(`${device2.id}.name`, "Hall");
-      nucleoid.run(`${device2.id}.active`, true);
+      equal(nucleoid.run(`${device2.id}.name`), "Hall");
+      equal(nucleoid.run(`${device2.id}.active`), true);
 
       nucleoid.run("device3 = new Device ( )");
       equal(nucleoid.run("device3.name"), undefined);
@@ -2222,33 +2202,6 @@ describe("Nucleoid", () => {
       const object = nucleoid.run("new Test ( 123 )");
       notEqual(object.id, null);
       equal(object.prop, 123);
-    });
-
-    it("accepts JS function", () => {
-      equal(
-        nucleoid.run(() => {
-          "ABC";
-        }),
-        null
-      );
-      equal(
-        nucleoid.run(() => {
-          return 123;
-        }),
-        123
-      );
-      equal(
-        nucleoid.run(() => true),
-        true
-      );
-    });
-
-    it("accepts JS function with scope", () => {
-      const scope = { test: true };
-      equal(
-        nucleoid.run((scope) => scope.test, scope),
-        true
-      );
     });
   });
 

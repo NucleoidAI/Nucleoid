@@ -1,0 +1,165 @@
+import * as acorn from "acorn";
+import $EXPRESSION from "../$nuc/$EXPRESSION";
+import $ASSIGNMENT from "../$nuc/$ASSIGNMENT";
+import $CLASS from "../$nuc/$CLASS";
+import $BLOCK from "../$nuc/$BLOCK";
+import $IF from "../$nuc/$IF";
+import $RETURN from "../$nuc/$RETURN";
+import $INSTANCE from "../$nuc/$INSTANCE";
+import $FUNCTION from "../$nuc/$FUNCTION";
+import $THROW from "../$nuc/$THROW";
+import $FOR from "../$nuc/$FOR";
+import $DELETE from "../$nuc/$DELETE";
+import {
+  Node,
+  Program,
+  ExpressionStatement,
+  Expression,
+  VariableDeclaration,
+  ClassDeclaration,
+  AssignmentExpression,
+  BlockStatement,
+  IfStatement,
+  FunctionDeclaration,
+  MethodDefinition,
+  ReturnStatement,
+  NewExpression,
+  ThrowStatement,
+  ForOfStatement,
+} from "acorn";
+
+function parse(string: string): Node[] {
+  const estree: Program = acorn.parse(string, {
+    ecmaVersion: 2020,
+    allowReturnOutsideFunction: true,
+  });
+
+  removeLocations(estree);
+  return estree.body.map(parseNode).filter((node) => node !== null);
+}
+
+function parseFunction(string): Node {
+  const estree: Program = acorn.parse(string, {
+    ecmaVersion: 2020,
+    allowReturnOutsideFunction: true,
+  });
+
+  if (estree.body[0].type === "ExpressionStatement") {
+    return estree.body[0].expression;
+  } else {
+    return estree.body[0];
+  }
+}
+
+function parseNode(node: Node): Node | null {
+  switch (node.type) {
+    case "VariableDeclaration": {
+      const {
+        kind,
+        declarations: [declaration],
+      } = node as VariableDeclaration;
+
+      const { id, init } = declaration;
+
+      return $ASSIGNMENT(kind.toUpperCase(), id, init);
+    }
+    case "ClassDeclaration": {
+      const {
+        id,
+        body: { body },
+      } = node as ClassDeclaration;
+
+      const methods = body.map((method) => parseNode(method));
+
+      return $CLASS(id, methods);
+    }
+    case "AssignmentExpression": {
+      const { left, right } = node as AssignmentExpression;
+      return $ASSIGNMENT(null, left, right);
+    }
+    case "BlockStatement": {
+      const blockNode = node as BlockStatement;
+      const statements = blockNode.body.map(parseNode);
+      return $BLOCK(statements);
+    }
+    case "IfStatement": {
+      const ifNode = node as IfStatement;
+      const condition = ifNode.test;
+      const consequent = parseNode(ifNode.consequent);
+      const alternate = ifNode.alternate ? parseNode(ifNode.alternate) : null;
+
+      return $IF(condition, consequent, alternate);
+    }
+    case "ExpressionStatement": {
+      const { expression } = node as ExpressionStatement;
+
+      if (["AssignmentExpression", "NewExpression"].includes(expression.type)) {
+        return parseNode(expression);
+      } else if (
+        expression.type === "UnaryExpression" &&
+        expression.operator === "delete"
+      ) {
+        return $DELETE(expression.argument);
+      } else {
+        return $EXPRESSION(expression);
+      }
+    }
+    case "NewExpression": {
+      const { callee, arguments: args } = node as NewExpression;
+      return $INSTANCE(callee, null, null, args);
+    }
+    case "ReturnStatement": {
+      const { argument: arg } = node as ReturnStatement;
+      const statements = arg ? parseExpression(arg) : null;
+      return $RETURN(statements);
+    }
+    case "MethodDefinition": {
+      const { key, value } = node as MethodDefinition;
+
+      return $FUNCTION(key, value.params, parseNode(value.body));
+    }
+    case "FunctionDeclaration": {
+      const { id, params, body } = node as FunctionDeclaration;
+
+      return $FUNCTION(id, params, parseNode(body));
+    }
+    case "ForOfStatement": {
+      const { left, right, body } = node as ForOfStatement;
+
+      return $FOR(left, right, body);
+    }
+    case "ThrowStatement": {
+      const { argument } = node as ThrowStatement;
+
+      return $THROW(argument);
+    }
+    case "EmptyStatement": {
+      return null;
+    }
+    default: {
+      return $EXPRESSION(node);
+    }
+  }
+}
+
+function parseExpression(expression: Expression | null): Node | null {
+  if (expression === null) {
+    return null;
+  }
+  return $EXPRESSION(expression);
+}
+
+function removeLocations(estree) {
+  for (const key in estree) {
+    delete estree.start;
+    delete estree.end;
+
+    if (estree[key] !== null && typeof estree[key] === "object") {
+      removeLocations(estree[key]);
+    } else if (Array.isArray(estree[key])) {
+      estree[key].forEach((node) => removeLocations(node));
+    }
+  }
+}
+
+export default { parse, parseFunction };

@@ -3,6 +3,7 @@ const { argv } = require("yargs");
 const { v4: uuid } = require("uuid");
 const home = require("os").homedir();
 const { deepMerge } = require("./lib/deep");
+const { func } = require("joi");
 
 const defaultConfig = {
   path: `${home}/.nuc`,
@@ -84,5 +85,10 @@ function init(config = {}) {
   return _config;
 }
 
+function options() {
+  return _config.options;
+}
+
 module.exports = () => _config;
 module.exports.init = init;
+module.exports.options = options;
