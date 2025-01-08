@@ -1,5 +1,5 @@
 import pytest
-from nucleoid import Nucleoid  # Import the Nucleoid class from the nucleoid module
+from ..nucleoid.nucleoid import Nucleoid  # Import the Nucleoid class from the nucleoid module
 
 @pytest.fixture
 def setup():
