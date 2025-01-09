@@ -1,4 +1,4 @@
-import ast 
+import ast
 from ...nucleoid.state import variable_state
 
 def expression_handler(node):

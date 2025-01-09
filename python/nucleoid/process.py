@@ -1,4 +1,4 @@
-import ast 
+import ast
 from ..lang.handlers.assignment_handler import assignment_handler
 from ..lang.handlers.expression_handler import expression_handler
 
@@ -10,6 +10,6 @@ def process(parsed_tree):
     if isinstance(parsed_tree.body[0], ast.Expr):
         return expression_handler(parsed_tree.body[0].value)
 
-        
+
     if isinstance(parsed_tree.body[0], ast.Assign):
         assignment_handler(parsed_tree.body[0])

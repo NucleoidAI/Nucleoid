@@ -19,4 +19,3 @@ def assignment_handler(node):
         variable_state[var_name] = var_value
         # Add the variable as a node in the graph
         maingraph.add_node(var_name)
-
