@@ -12,6 +12,7 @@ function build(cls, object, name, args = []) {
   statement.obj = object;
   statement.nme = name;
   statement.args = args;
+
   return statement;
 }
 
