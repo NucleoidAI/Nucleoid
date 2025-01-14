@@ -1,7 +1,7 @@
 const state = require("../state");
 const graph = require("../graph");
 const Instruction = require("../Instruction");
-const Node = require("./NODE");
+const NODE = require("./NODE");
 
 class DELETE {
   before() {}
@@ -39,7 +39,7 @@ class DELETE {
       delete node.next[key];
     }
 
-    const empty = new Node(node.key);
+    const empty = new NODE(node.key);
 
     for (const key in node.next) {
       empty.next[key] = node.next[key];

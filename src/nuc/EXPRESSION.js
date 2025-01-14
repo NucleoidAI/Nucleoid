@@ -1,10 +1,15 @@
 const graph = require("../graph");
 const Evaluation = require("../lang/Evaluation");
 const NODE = require("./NODE");
-const state = require("../state");
 const serialize = require("../lib/serialize");
 const { append } = require("../lang/estree/estree");
 const Identifier = require("../lang/ast/Identifier");
+
+let state;
+
+setImmediate(() => {
+  state = require("../state");
+});
 
 class EXPRESSION {
   constructor(tokens) {
