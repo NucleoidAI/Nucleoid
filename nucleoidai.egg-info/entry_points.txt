@@ -1,0 +1,4 @@
+[console_scripts]
+nuc = nucleoid.cli:main
+nucleoid = nucleoid.cli:main
+nucleoidai = nucleoid.cli:main
