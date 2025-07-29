@@ -1,3 +1,0 @@
-"""
-python version of nucleoid
-"""
