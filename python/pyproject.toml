@@ -1,0 +1,125 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nucleoidai"
+version = "0.7.10"
+description = "Nucleoid - Neuro-Symbolic AI with declarative runtime environment for Python"
+readme = "README.md"
+authors = [{name = "Can Mingir", email = "can@nucleoid.ai"}]
+license = {text = "Apache-2.0"}
+keywords = ["low-code", "ai", "datastore", "neuro-symbolic", "declarative"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "click>=8.1.0",
+    "colorama>=0.4.6",
+    "uuid7>=0.1.0",
+    "moment>=0.12.1",
+    "deepdiff>=6.7.0",
+]
+dynamic = ["readme"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.9.0",
+    "flake8>=6.1.0",
+    "mypy>=1.6.0",
+    "isort>=5.12.0",
+    "pre-commit>=3.5.0",
+    "httpx>=0.25.0",
+]
+
+[project.urls]
+Homepage = "https://nucleoid.ai"
+Repository = "https://github.com/NucleoidAI/Nucleoid.git"
+Documentation = "https://docs.nucleoid.ai"
+"Bug Tracker" = "https://github.com/NucleoidAI/Nucleoid/issues"
+
+[project.scripts]
+nucleoidai = "nucleoidai.cli:main"
+nucleoid = "nucleoidai.cli:main"
+nuc = "nucleoidai.cli:main"
+
+[tool.setuptools]
+packages = ["nucleoidai"]
+
+[tool.setuptools.package-dir]
+nucleoidai = "src/nucleoidai"
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["nucleoidai"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=nucleoidai --cov-report=term-missing --cov-report=xml"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["src/nucleoidai"]
+omit = ["*/tests/*", "*/test_*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
