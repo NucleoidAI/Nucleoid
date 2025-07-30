@@ -33,8 +33,8 @@ def start(config: Optional[Dict[str, Any]] = None) -> None:
     _runtime_processor = RuntimeProcessor(_context_manager)
     
     # Print startup message
-    print(f"🌿 {Fore.GREEN}Nucleoid{Style.RESET_ALL} runtime is started")
-    print(f"{Fore.BLUE}🌎 Inspired by Nature{Style.RESET_ALL}\n")
+    print(f"{Fore.GREEN}Nucleoid{Style.RESET_ALL} runtime is started")
+    print(f"{Fore.BLUE}Inspired by Nature{Style.RESET_ALL}\n")
 
 
 def run(statement: str, options: Optional[Dict[str, Any]] = None) -> Any:

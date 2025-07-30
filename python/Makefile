@@ -31,16 +31,16 @@ test:
 
 # Run linting
 lint:
-	flake8 src/ tests/
+	flake8 nucleoidai/ tests/
 
 # Format code
 format:
-	black src/ tests/
-	isort src/ tests/
+	black nucleoidai/ tests/
+	isort nucleoidai/ tests/
 
 # Type checking
 type-check:
-	mypy src/nucleoidai
+	mypy nucleoidai
 
 # Clean build artifacts
 clean:

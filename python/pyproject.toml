@@ -61,9 +61,6 @@ nuc = "nucleoidai.cli:main"
 [tool.setuptools]
 packages = ["nucleoidai"]
 
-[tool.setuptools.package-dir]
-nucleoidai = "src/nucleoidai"
-
 [tool.black]
 line-length = 88
 target-version = ['py313']
@@ -112,7 +109,7 @@ addopts = "--cov=nucleoidai --cov-report=term-missing --cov-report=xml"
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-source = ["src/nucleoidai"]
+source = ["nucleoidai"]
 omit = ["*/tests/*", "*/test_*"]
 
 [tool.coverage.report]

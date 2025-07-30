@@ -35,10 +35,17 @@ class ConfigManager:
             config = {}
         
         # Deep merge default config with user config
-        merged_config = deep_merge(
-            self._default_config.__dict__, 
-            config
-        )
+        default_dict = {
+            "path": self._default_config.path,
+            "port": self._default_config.port.__dict__ if self._default_config.port else {},
+            "options": self._default_config.options.__dict__ if self._default_config.options else {},
+            "cache": self._default_config.cache,
+            "data": self._default_config.data.__dict__ if self._default_config.data else {},
+            "id": self._default_config.id,
+            "test": False
+        }
+        
+        merged_config = deep_merge(default_dict, config)
         
         # Convert to Config object
         self._config = Config(
