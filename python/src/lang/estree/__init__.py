@@ -1,0 +1,1 @@
+"""ESTree standard compatibility"""
