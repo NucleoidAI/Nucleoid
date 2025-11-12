@@ -1,2 +1,4 @@
 # Python dependencies for Nucleoid project
-# Add your project dependencies here
+fastapi>=0.104.0
+uvicorn>=0.24.0
+httpx>=0.25.0  # Required for TestClient
