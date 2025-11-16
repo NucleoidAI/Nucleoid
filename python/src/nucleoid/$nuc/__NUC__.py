@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 from abc import ABC
 
 
-class __(ABC):
+class __NUC__(ABC):
     """Base class for all statement types."""
 
     def __init__(self) -> None:
@@ -16,7 +16,7 @@ class __(ABC):
         """Called before the statement is executed."""
         pass
 
-    def run(self, scope: Any) -> Optional[Union["NODE", list["NODE"], "__"]]:
+    def run(self, scope: Any) -> Optional[Union["NODE", list["NODE"], "__NUC__"]]:
         """Execute the statement and return the result."""
         return None
 

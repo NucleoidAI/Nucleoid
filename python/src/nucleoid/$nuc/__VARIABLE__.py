@@ -1,5 +1,5 @@
 from typing import Any
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(name: Any, value: Any) -> "__VARIABLE__":
@@ -10,7 +10,7 @@ def build(name: Any, value: Any) -> "__VARIABLE__":
     return statement
 
 
-class __VARIABLE__(__):
+class __VARIABLE__(__NUC__):
     """Represents a variable declaration statement."""
 
     def __init__(self) -> None:

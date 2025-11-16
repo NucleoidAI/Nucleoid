@@ -1,5 +1,5 @@
 from typing import Any
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(key: Any) -> "__DELETE__":
@@ -9,7 +9,7 @@ def build(key: Any) -> "__DELETE__":
     return statement
 
 
-class __DELETE__(__):
+class __DELETE__(__NUC__):
     """Represents a delete statement."""
 
     def __init__(self) -> None:

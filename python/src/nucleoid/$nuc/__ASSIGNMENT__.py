@@ -1,5 +1,5 @@
 from typing import Any, Literal, Optional
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(
@@ -13,7 +13,7 @@ def build(
     return statement
 
 
-class __ASSIGNMENT__(__):
+class __ASSIGNMENT__(__NUC__):
     """Represents an assignment statement."""
 
     def __init__(self) -> None:
@@ -21,7 +21,7 @@ class __ASSIGNMENT__(__):
         self.knd: Optional[Literal["VAR", "LET", "CONST", "PROPERTY"]] = None
         self.lft: Any = None
         self.rgt: Any = None
-        self._stmt: Optional[__] = None
+        self._stmt: Optional[__NUC__] = None
 
     def before(self, scope: Any) -> None:
         """Prepare the assignment by determining the types and creating the appropriate statement."""

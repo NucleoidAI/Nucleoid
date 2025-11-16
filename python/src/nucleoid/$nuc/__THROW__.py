@@ -1,5 +1,5 @@
 from typing import Any
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(exception: Any) -> "__THROW__":
@@ -9,7 +9,7 @@ def build(exception: Any) -> "__THROW__":
     return statement
 
 
-class __THROW__(__):
+class __THROW__(__NUC__):
     """Represents a throw statement."""
 
     def __init__(self) -> None:

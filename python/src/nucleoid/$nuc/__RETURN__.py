@@ -1,5 +1,5 @@
 from typing import Any
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(statement: __) -> "__RETURN__":
@@ -9,7 +9,7 @@ def build(statement: __) -> "__RETURN__":
     return return_statement
 
 
-class __RETURN__(__):
+class __RETURN__(__NUC__):
     """Represents a return statement."""
 
     def __init__(self) -> None:

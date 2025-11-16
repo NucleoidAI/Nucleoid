@@ -1,13 +1,13 @@
 from typing import Any, TYPE_CHECKING
 import copy
-from .__ import __
+from .__NUC__ import __NUC__
 from uuid import uuid4
 
 if TYPE_CHECKING:
     from typing import Optional
 
 
-def build(statements: list[__], skip: bool = False) -> "__BLOCK__":
+def build(statements: list[__NUC__], skip: bool = False) -> "__BLOCK__":
     """Build a __BLOCK__ statement."""
     statement = __BLOCK__()
     statement.stms = statements
@@ -15,12 +15,12 @@ def build(statements: list[__], skip: bool = False) -> "__BLOCK__":
     return statement
 
 
-class __BLOCK__(__):
+class __BLOCK__(__NUC__):
     """Represents a block of statements."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.stms: list[__] = []
+        self.stms: list[__NUC__] = []
         self.skp: bool = False
 
     def run(self, scope: Any) -> Any:

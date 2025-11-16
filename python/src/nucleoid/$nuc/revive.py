@@ -1,5 +1,5 @@
 from typing import Any, Union
-from .__ import __
+from .__NUC__ import __NUC__
 from .__ALIAS__ import __ALIAS__
 from .__ASSIGNMENT__ import __ASSIGNMENT__
 from .__BLOCK__ import __BLOCK__
@@ -18,7 +18,7 @@ from .__THROW__ import __THROW__
 from .__VARIABLE__ import __VARIABLE__
 
 # Mapping of class names to their class objects
-__CLASSES__ = {
+__NUC_CLASSES__ = {
     "__ALIAS__": __ALIAS__,
     "__ASSIGNMENT__": __ASSIGNMENT__,
     "__BLOCK__": __BLOCK__,
@@ -38,7 +38,7 @@ __CLASSES__ = {
 }
 
 
-def revive(statements: Union[list[__], __, dict, Any]) -> Any:
+def revive(statements: Union[list[__NUC__], __NUC__, dict, Any]) -> Any:
     """
     Revive statements from serialized form by reconstructing the objects.
 
@@ -53,7 +53,7 @@ def revive(statements: Union[list[__], __, dict, Any]) -> Any:
         return [revive(statement) for statement in statements]
 
     # Handle dict/object
-    if isinstance(statements, dict) or (hasattr(statements, '__dict__') and not isinstance(statements, __)):
+    if isinstance(statements, dict) or (hasattr(statements, '__dict__') and not isinstance(statements, __NUC__)):
         # Get the class name from iof attribute if present
         iof = None
         if isinstance(statements, dict):
@@ -62,8 +62,8 @@ def revive(statements: Union[list[__], __, dict, Any]) -> Any:
             iof = getattr(statements, 'iof', None)
 
         # Create new instance of the appropriate class
-        if iof and iof in __CLASSES__:
-            obj = __CLASSES__[iof]()
+        if iof and iof in __NUC_CLASSES__:
+            obj = __NUC_CLASSES__[iof]()
         else:
             obj = {}
 

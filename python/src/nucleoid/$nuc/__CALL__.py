@@ -1,6 +1,6 @@
 from typing import Any, Optional, Union
 import copy
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(func: Any, args: list[Any]) -> "__CALL__":
@@ -11,7 +11,7 @@ def build(func: Any, args: list[Any]) -> "__CALL__":
     return call
 
 
-class __CALL__(__):
+class __CALL__(__NUC__):
     """Represents a function call statement."""
 
     def __init__(self) -> None:
@@ -20,7 +20,7 @@ class __CALL__(__):
         self.args: list[Any] = []
         self.result: Any = None
 
-    def run(self, scope: Any) -> Optional[Union[__, "NODE", list["NODE"]]]:
+    def run(self, scope: Any) -> Optional[Union[__NUC__, "NODE", list["NODE"]]]:
         """Execute the function call."""
         from .__FUNCTION__ import __FUNCTION__
         from ..ast.__identifier__ import __Identifier__

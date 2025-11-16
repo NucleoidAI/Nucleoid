@@ -1,5 +1,5 @@
 from typing import Any, Union
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(tokens: Union[str, Any, "__Expression__"]) -> "__EXPRESSION__":
@@ -19,7 +19,7 @@ def build(tokens: Union[str, Any, "__Expression__"]) -> "__EXPRESSION__":
     return statement
 
 
-class __EXPRESSION__(__):
+class __EXPRESSION__(__NUC__):
     """Represents an expression statement."""
 
     def __init__(self) -> None:

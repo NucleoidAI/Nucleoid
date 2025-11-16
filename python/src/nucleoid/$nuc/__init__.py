@@ -2,7 +2,7 @@
 $nuc module - Core statement types for Nucleoid language processing.
 """
 
-from .__ import __
+from .__NUC__ import __NUC__
 from .__ALIAS__ import __ALIAS__, build as __alias__
 from .__ASSIGNMENT__ import __ASSIGNMENT__, build as __assignment__
 from .__BLOCK__ import __BLOCK__, build as __block__
@@ -22,7 +22,7 @@ from .__VARIABLE__ import __VARIABLE__, build as __variable__
 from .revive import revive
 
 __all__ = [
-    "__",
+    "__NUC__",
     "__ALIAS__",
     "__ASSIGNMENT__",
     "__BLOCK__",

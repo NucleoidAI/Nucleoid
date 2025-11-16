@@ -1,5 +1,5 @@
 from typing import Any
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(object_: Any, name: Any, value: Any) -> "__PROPERTY__":
@@ -11,7 +11,7 @@ def build(object_: Any, name: Any, value: Any) -> "__PROPERTY__":
     return statement
 
 
-class __PROPERTY__(__):
+class __PROPERTY__(__NUC__):
     """Represents a property assignment statement."""
 
     def __init__(self) -> None:

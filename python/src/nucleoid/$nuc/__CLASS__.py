@@ -1,5 +1,5 @@
 from typing import Any
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(name: Any, methods: list["__FUNCTION__"] = None) -> "__CLASS__":
@@ -12,7 +12,7 @@ def build(name: Any, methods: list["__FUNCTION__"] = None) -> "__CLASS__":
     return statement
 
 
-class __CLASS__(__):
+class __CLASS__(__NUC__):
     """Represents a class declaration statement."""
 
     def __init__(self) -> None:

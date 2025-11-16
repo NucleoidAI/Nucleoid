@@ -1,6 +1,6 @@
 from typing import Any
 from .__EXPRESSION__ import __EXPRESSION__, __expression__
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(alias: Any, name: str, value: "__EXPRESSION__") -> "__ALIAS__":
@@ -12,7 +12,7 @@ def build(alias: Any, name: str, value: "__EXPRESSION__") -> "__ALIAS__":
     return statement
 
 
-class __ALIAS__(__):
+class __ALIAS__(__NUC__):
     """Represents an alias statement."""
 
     def __init__(self) -> None:

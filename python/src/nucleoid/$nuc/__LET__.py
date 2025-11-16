@@ -1,5 +1,5 @@
 from typing import Any, Union
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(
@@ -14,7 +14,7 @@ def build(
     return statement
 
 
-class __LET__(__):
+class __LET__(__NUC__):
     """Represents a let/const statement."""
 
     def __init__(self) -> None:

@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from .__ import __
+from .__NUC__ import __NUC__
 
 
 def build(
@@ -19,7 +19,7 @@ def build(
     return statement
 
 
-class __INSTANCE__(__):
+class __INSTANCE__(__NUC__):
     """Represents an instance creation statement."""
 
     def __init__(self) -> None:

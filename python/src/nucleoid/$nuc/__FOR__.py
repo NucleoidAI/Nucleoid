@@ -1,8 +1,8 @@
 from typing import Any
-from .__ import __
+from .__NUC__ import __NUC__
 
 
-def build(variable: Any, array: Any, statements: list[__]) -> "__FOR__":
+def build(variable: Any, array: Any, statements: list[__NUC__]) -> "__FOR__":
     """Build a __FOR__ statement."""
     statement = __FOR__()
     statement.var = variable
@@ -11,14 +11,14 @@ def build(variable: Any, array: Any, statements: list[__]) -> "__FOR__":
     return statement
 
 
-class __FOR__(__):
+class __FOR__(__NUC__):
     """Represents a for loop statement."""
 
     def __init__(self) -> None:
         super().__init__()
         self.var: Any = None
         self.arr: Any = None
-        self.stms: list[__] = []
+        self.stms: list[__NUC__] = []
 
     def run(self, scope: Any) -> Any:
         """Execute the for loop statement."""

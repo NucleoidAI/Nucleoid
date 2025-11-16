@@ -1,5 +1,5 @@
 from typing import Any, TYPE_CHECKING
-from .__ import __
+from .__NUC__ import __NUC__
 
 if TYPE_CHECKING:
     from typing import Optional
@@ -14,7 +14,7 @@ def build(name: Any, args: list[Any], block: "__BLOCK__") -> "__FUNCTION__":
     return statement
 
 
-class __FUNCTION__(__):
+class __FUNCTION__(__NUC__):
     """Represents a function declaration statement."""
 
     def __init__(self) -> None:
