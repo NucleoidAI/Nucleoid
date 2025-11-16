@@ -1,5 +1,5 @@
 """
-$nuc module - Core statement types for Nucleoid language processing.
+__nuc__ module - Core statement types for Nucleoid language processing.
 """
 
 from .__NUC__ import __NUC__
