@@ -1,38 +1,34 @@
 from typing import Any, TYPE_CHECKING
-from .dollar import Dollar
-# from ...nuc.function import FUNCTION
-# from ..ast.identifier import Identifier
-# from .dollar_block import DollarBLOCK
+from .__ import __
 
 if TYPE_CHECKING:
     from typing import Optional
 
 
-def build(name: Any, args: list[Any], block: "DollarBLOCK") -> "DollarFUNCTION":
-    """Build a DollarFUNCTION statement."""
-    statement = DollarFUNCTION()
+def build(name: Any, args: list[Any], block: "__BLOCK__") -> "__FUNCTION__":
+    """Build a __FUNCTION__ statement."""
+    statement = __FUNCTION__()
     statement.nme = name
     statement.args = args
     statement.blk = block
     return statement
 
 
-class DollarFUNCTION(Dollar):
+class __FUNCTION__(__):
     """Represents a function declaration statement."""
 
     def __init__(self) -> None:
         super().__init__()
         self.nme: Any = None
         self.args: list[Any] = []
-        self.blk: Optional["DollarBLOCK"] = None
+        self.blk: Optional["__BLOCK__"] = None
 
     def run(self, scope: Any = None) -> Any:
         """Execute the function declaration."""
-        # Imports moved here to avoid circular dependencies
-        from ..ast.identifier import Identifier
+        from ..ast.__identifier__ import __Identifier__
         from ...nuc.function import FUNCTION
 
-        name = Identifier(self.nme)
+        name = __Identifier__(self.nme)
         statement = FUNCTION(name)
         statement.name = name
         statement.arguments = self.args

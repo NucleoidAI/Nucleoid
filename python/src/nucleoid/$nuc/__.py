@@ -3,8 +3,8 @@ from typing import Any, Optional, Union
 from abc import ABC
 
 
-class Dollar(ABC):
-    """Base class for all dollar ($) statement types."""
+class __(ABC):
+    """Base class for all statement types."""
 
     def __init__(self) -> None:
         self.type: str = self.__class__.__name__
@@ -16,7 +16,7 @@ class Dollar(ABC):
         """Called before the statement is executed."""
         pass
 
-    def run(self, scope: Any) -> Optional[Union["NODE", list["NODE"], "Dollar"]]:
+    def run(self, scope: Any) -> Optional[Union["NODE", list["NODE"], "__"]]:
         """Execute the statement and return the result."""
         return None
 

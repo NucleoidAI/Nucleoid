@@ -1,21 +1,18 @@
 from typing import Any
-from .dollar import Dollar
-# from ...nuc.class_ import CLASS
-# from .dollar_function import DollarFUNCTION
-# from ..ast.identifier import Identifier as DollarIdentifier
+from .__ import __
 
 
-def build(name: Any, methods: list["DollarFUNCTION"] = None) -> "DollarCLASS":
-    """Build a DollarCLASS statement."""
+def build(name: Any, methods: list["__FUNCTION__"] = None) -> "__CLASS__":
+    """Build a __CLASS__ statement."""
     if methods is None:
         methods = []
-    statement = DollarCLASS()
+    statement = __CLASS__()
     statement.nme = name
     statement.mths = methods
     return statement
 
 
-class DollarCLASS(Dollar):
+class __CLASS__(__):
     """Represents a class declaration statement."""
 
     def __init__(self) -> None:
@@ -25,28 +22,21 @@ class DollarCLASS(Dollar):
 
     def run(self, scope: Any = None) -> Any:
         """Execute the class declaration."""
-        # Imports moved here to avoid circular dependencies
-        from ..ast.identifier import Identifier as DollarIdentifier
+        from ..ast.__identifier__ import __Identifier__
         from ...nuc.class_ import CLASS
 
-        name = DollarIdentifier(self.nme)
-
+        name = __Identifier__(self.nme)
         statement = CLASS(f"${name}")
-        statement.name = DollarIdentifier(f"${name}")
+        statement.name = __Identifier__(f"${name}")
         statement.list = name
 
-        # Build methods dictionary
         methods = {}
         for method in self.mths:
             identifier = method.nme
-
-            # Rename constructor to $constructor
             if hasattr(identifier, "name") and identifier.name == "constructor":
                 identifier.name = "$constructor"
-
             method_name = identifier.name if hasattr(identifier, "name") else str(identifier)
             methods[method_name] = method
 
         statement.methods = methods
-
         return statement

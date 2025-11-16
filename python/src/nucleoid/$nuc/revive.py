@@ -1,46 +1,44 @@
 from typing import Any, Union
-from .dollar import Dollar
-from .dollar_alias import DollarALIAS
-from .dollar_assignment import DollarASSIGNMENT
-from .dollar_block import DollarBLOCK
-from .dollar_call import DollarCALL
-from .dollar_class import DollarCLASS
-from .dollar_delete import DollarDELETE
-from .dollar_expression import DollarEXPRESSION
-from .dollar_for import DollarFOR
-from .dollar_function import DollarFUNCTION
-from .dollar_if import DollarIF
-from .dollar_instance import DollarINSTANCE
-from .dollar_let import DollarLET
-from .dollar_property import DollarPROPERTY
-from .dollar_return import DollarRETURN
-from .dollar_throw import DollarTHROW
-from .dollar_variable import DollarVARIABLE
-# from ...nuc.expression import EXPRESSION
-# from ...expression import Expression
+from .__ import __
+from .__ALIAS__ import __ALIAS__
+from .__ASSIGNMENT__ import __ASSIGNMENT__
+from .__BLOCK__ import __BLOCK__
+from .__CALL__ import __CALL__
+from .__CLASS__ import __CLASS__
+from .__DELETE__ import __DELETE__
+from .__EXPRESSION__ import __EXPRESSION__
+from .__FOR__ import __FOR__
+from .__FUNCTION__ import __FUNCTION__
+from .__IF__ import __IF__
+from .__INSTANCE__ import __INSTANCE__
+from .__LET__ import __LET__
+from .__PROPERTY__ import __PROPERTY__
+from .__RETURN__ import __RETURN__
+from .__THROW__ import __THROW__
+from .__VARIABLE__ import __VARIABLE__
 
 # Mapping of class names to their class objects
-DOLLAR_CLASSES = {
-    "DollarALIAS": DollarALIAS,
-    "DollarASSIGNMENT": DollarASSIGNMENT,
-    "DollarBLOCK": DollarBLOCK,
-    "DollarCALL": DollarCALL,
-    "DollarCLASS": DollarCLASS,
-    "DollarDELETE": DollarDELETE,
-    "DollarEXPRESSION": DollarEXPRESSION,
-    "DollarFOR": DollarFOR,
-    "DollarFUNCTION": DollarFUNCTION,
-    "DollarIF": DollarIF,
-    "DollarINSTANCE": DollarINSTANCE,
-    "DollarLET": DollarLET,
-    "DollarPROPERTY": DollarPROPERTY,
-    "DollarRETURN": DollarRETURN,
-    "DollarTHROW": DollarTHROW,
-    "DollarVARIABLE": DollarVARIABLE,
+__CLASSES__ = {
+    "__ALIAS__": __ALIAS__,
+    "__ASSIGNMENT__": __ASSIGNMENT__,
+    "__BLOCK__": __BLOCK__,
+    "__CALL__": __CALL__,
+    "__CLASS__": __CLASS__,
+    "__DELETE__": __DELETE__,
+    "__EXPRESSION__": __EXPRESSION__,
+    "__FOR__": __FOR__,
+    "__FUNCTION__": __FUNCTION__,
+    "__IF__": __IF__,
+    "__INSTANCE__": __INSTANCE__,
+    "__LET__": __LET__,
+    "__PROPERTY__": __PROPERTY__,
+    "__RETURN__": __RETURN__,
+    "__THROW__": __THROW__,
+    "__VARIABLE__": __VARIABLE__,
 }
 
 
-def revive(statements: Union[list[Dollar], Dollar, dict, Any]) -> Any:
+def revive(statements: Union[list[__], __, dict, Any]) -> Any:
     """
     Revive statements from serialized form by reconstructing the objects.
 
@@ -55,7 +53,7 @@ def revive(statements: Union[list[Dollar], Dollar, dict, Any]) -> Any:
         return [revive(statement) for statement in statements]
 
     # Handle dict/object
-    if isinstance(statements, dict) or (hasattr(statements, '__dict__') and not isinstance(statements, Dollar)):
+    if isinstance(statements, dict) or (hasattr(statements, '__dict__') and not isinstance(statements, __)):
         # Get the class name from iof attribute if present
         iof = None
         if isinstance(statements, dict):
@@ -64,8 +62,8 @@ def revive(statements: Union[list[Dollar], Dollar, dict, Any]) -> Any:
             iof = getattr(statements, 'iof', None)
 
         # Create new instance of the appropriate class
-        if iof and iof in DOLLAR_CLASSES:
-            obj = DOLLAR_CLASSES[iof]()
+        if iof and iof in __CLASSES__:
+            obj = __CLASSES__[iof]()
         else:
             obj = {}
 

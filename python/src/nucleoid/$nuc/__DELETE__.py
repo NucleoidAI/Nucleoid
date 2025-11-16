@@ -1,24 +1,15 @@
 from typing import Any
-from .dollar import Dollar
-# from ...nuc.delete import DELETE
-# from ...nuc.variable import VARIABLE
-# from ...graph import graph
-# from ...nuc.delete_variable import DELETE_VARIABLE
-# from ...nuc.delete_object import DELETE_OBJECT
-# from ...nuc.object import OBJECT
-# from ..ast.identifier import Identifier
-# from .dollar_expression import dollar_expression
-# from ...state import state
+from .__ import __
 
 
-def build(key: Any) -> "DollarDELETE":
-    """Build a DollarDELETE statement."""
-    statement = DollarDELETE()
+def build(key: Any) -> "__DELETE__":
+    """Build a __DELETE__ statement."""
+    statement = __DELETE__()
     statement.key = key
     return statement
 
 
-class DollarDELETE(Dollar):
+class __DELETE__(__):
     """Represents a delete statement."""
 
     def __init__(self) -> None:
@@ -27,23 +18,22 @@ class DollarDELETE(Dollar):
 
     def run(self, scope: Any) -> Any:
         """Execute the delete statement."""
-        # Imports moved here to avoid circular dependencies
-        from ..ast.identifier import Identifier
+        from ..ast.__identifier__ import __Identifier__
         from ...graph import graph
         from ...nuc.variable import VARIABLE
         from ...nuc.delete_variable import DELETE_VARIABLE
         from ...nuc.delete_object import DELETE_OBJECT
         from ...nuc.object import OBJECT
         from ...nuc.delete import DELETE
-        from .dollar_expression import dollar_expression
+        from .__EXPRESSION__ import __expression__
         from ...state import state
 
-        identifier = Identifier(self.key)
+        identifier = __Identifier__(self.key)
         variable = graph.retrieve(identifier)
 
         if not variable:
             try:
-                expression = dollar_expression(self.key)
+                expression = __expression__(self.key)
                 expr_result = expression.run(scope)
                 item = expr_result.run(scope)
                 result = state.expression(scope, {"value": item})
@@ -61,7 +51,6 @@ class DollarDELETE(Dollar):
             statement.variable = variable
             return statement
         else:
-            # TODO Rename this for property
             statement = DELETE()
             statement.variable = variable
             return statement

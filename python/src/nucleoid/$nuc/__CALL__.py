@@ -1,23 +1,17 @@
 from typing import Any, Optional, Union
 import copy
-from .dollar import Dollar
-# from .dollar_block import DollarBLOCK
-# from .dollar_function import DollarFUNCTION
-# from ..ast.identifier import Identifier as DollarIdentifier
-# from .dollar_let import dollar_let
-# from ...nuc.node import NODE
-# from ...graph import retrieve
+from .__ import __
 
 
-def build(func: Any, args: list[Any]) -> "DollarCALL":
-    """Build a DollarCALL statement."""
-    call = DollarCALL()
+def build(func: Any, args: list[Any]) -> "__CALL__":
+    """Build a __CALL__ statement."""
+    call = __CALL__()
     call.func = func
     call.args = args
     return call
 
 
-class DollarCALL(Dollar):
+class __CALL__(__):
     """Represents a function call statement."""
 
     def __init__(self) -> None:
@@ -26,44 +20,40 @@ class DollarCALL(Dollar):
         self.args: list[Any] = []
         self.result: Any = None
 
-    def run(self, scope: Any) -> Optional[Union[Dollar, "NODE", list["NODE"]]]:
+    def run(self, scope: Any) -> Optional[Union[__, "NODE", list["NODE"]]]:
         """Execute the function call."""
-        # Imports moved here to avoid circular dependencies
-        from .dollar_function import DollarFUNCTION
-        from ..ast.identifier import Identifier as DollarIdentifier
+        from .__FUNCTION__ import __FUNCTION__
+        from ..ast.__identifier__ import __Identifier__
         from ...graph import retrieve
-        from .dollar_let import dollar_let
-        from .dollar_block import dollar_block
+        from .__LET__ import __let__
+        from .__BLOCK__ import __block__
 
         block = None
         args = None
 
-        if self.func.__class__.__name__ == "DollarFUNCTION":
+        if self.func.__class__.__name__ == "__FUNCTION__":
             func = self.func
             block = func.blk
             args = func.args
         else:
-            name = DollarIdentifier(self.func)
+            name = __Identifier__(self.func)
             func = retrieve(name)
             block = func.block if hasattr(func, "block") else None
             args = func.arguments if hasattr(func, "arguments") else None
 
         if block and args:
             values = self.args
-
             statements = copy.deepcopy(block.stms)
 
-            # Insert parameter assignments at the beginning (in reverse order)
             for i in range(len(args) - 1, -1, -1):
-                # Create a literal null value if no argument provided
                 value = values[i] if i < len(values) else {
                     "type": "Literal",
                     "value": None,
                     "raw": "null",
                 }
-                statements.insert(0, dollar_let(args[i], value))
+                statements.insert(0, __let__(args[i], value))
 
-            block_instance = dollar_block(statements)
+            block_instance = __block__(statements)
             self.result = block_instance.run(scope)
             return self
         else:

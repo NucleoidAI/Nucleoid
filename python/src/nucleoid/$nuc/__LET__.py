@@ -1,23 +1,12 @@
 from typing import Any, Union
-from .dollar import Dollar
-# from ...graph import graph
-# from ...nuc.class_ import CLASS
-# from ...nuc.let import LET
-# from ...nuc.let_class import LET_CLASS
-# from ...nuc.let_object import LET_OBJECT
-# from ...nuc.expression import EXPRESSION
-# from ...nuc.reference import REFERENCE
-# from .dollar_expression import dollar_expression
-# from ..ast.identifier import Identifier as DollarIdentifier
-# from .dollar_instance import dollar_instance
-# from ...nuc.node import NODE
+from .__ import __
 
 
 def build(
     name: Any, value: Any, constant: bool = False, reassign: bool = False
-) -> "DollarLET":
-    """Build a DollarLET statement."""
-    statement = DollarLET()
+) -> "__LET__":
+    """Build a __LET__ statement."""
+    statement = __LET__()
     statement.nme = name
     statement.val = value
     statement.cst = constant
@@ -25,7 +14,7 @@ def build(
     return statement
 
 
-class DollarLET(Dollar):
+class __LET__(__):
     """Represents a let/const statement."""
 
     def __init__(self) -> None:
@@ -37,11 +26,10 @@ class DollarLET(Dollar):
 
     def before(self, scope: Any) -> None:
         """Prepare the let statement by evaluating the value."""
-        # Imports moved here to avoid circular dependencies
         from ...graph import graph
         from ...nuc.class_ import CLASS
-        from .dollar_instance import dollar_instance
-        from .dollar_expression import dollar_expression
+        from .__INSTANCE__ import __instance__
+        from .__EXPRESSION__ import __expression__
 
         if (
             hasattr(self.val, "type")
@@ -51,16 +39,15 @@ class DollarLET(Dollar):
             and isinstance(graph.retrieve(f"${self.val.callee.name}"), CLASS)
         ):
             args = self.val.arguments if hasattr(self.val, "arguments") else []
-            self.val = dollar_instance(self.val.callee, args)
+            self.val = __instance__(self.val.callee, args)
             self.val.before(scope)
         else:
-            expression = dollar_expression(self.val)
+            expression = __expression__(self.val)
             self.val = expression.run(scope)
 
     def run(self, scope: Any) -> Any:
         """Execute the let statement."""
-        # Imports moved here to avoid circular dependencies
-        from ..ast.identifier import Identifier as DollarIdentifier
+        from ..ast.__identifier__ import __Identifier__
         from ...nuc.expression import EXPRESSION
         from ...nuc.reference import REFERENCE
         from ...graph import graph
@@ -69,8 +56,7 @@ class DollarLET(Dollar):
         from ...nuc.let import LET
         from ...nuc.let_object import LET_OBJECT
 
-        # TODO Rename this to `identifier`?
-        name = DollarIdentifier(self.nme)
+        name = __Identifier__(self.nme)
 
         if name.type == "MemberExpression" and not scope.retrieve(name.object, True):
             raise ReferenceError(f"{name.object} is not defined")
@@ -87,14 +73,12 @@ class DollarLET(Dollar):
 
         if isinstance(value, (EXPRESSION, REFERENCE)):
             cls = None
-            # Find class in the expression tokens
             if hasattr(value, "tokens"):
                 for node in value.tokens:
                     if hasattr(node, "walk"):
                         identifiers = []
                         walked = node.walk()
                         if isinstance(walked, list):
-                            # Flatten nested lists
                             stack = [walked]
                             while stack:
                                 current = stack.pop()
@@ -128,16 +112,13 @@ class DollarLET(Dollar):
             statement.constant = self.cst
             statement.reassign = self.ras
             return statement
-        elif hasattr(value, "type") and value.type == "DollarINSTANCE":
+        elif hasattr(value, "type") and value.type == "__INSTANCE__":
             obj = value.run(scope)
-
             statement = LET_OBJECT()
             statement.name = name
             statement.object = obj
             statement.constant = self.cst
-
             return [obj, statement]
 
 
-# Export the function as dollar_let for consistency
-dollar_let = build
+__let__ = build

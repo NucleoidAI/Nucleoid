@@ -1,39 +1,30 @@
 from typing import Any, TYPE_CHECKING
 import copy
-from .dollar import Dollar
-# from ...nuc.block import BLOCK
-# from ...nuc.block_class import BLOCK_CLASS
-# from ...instruction import Instruction
-# from ...nuc.let import LET
-# from ...nuc.object_class import OBJECT_CLASS
-# from ...nuc.property_class import PROPERTY_CLASS
-# from ...nuc.reference import REFERENCE
-# from ...scope import Scope
+from .__ import __
 from uuid import uuid4
 
 if TYPE_CHECKING:
     from typing import Optional
 
 
-def build(statements: list[Dollar], skip: bool = False) -> "DollarBLOCK":
-    """Build a DollarBLOCK statement."""
-    statement = DollarBLOCK()
+def build(statements: list[__], skip: bool = False) -> "__BLOCK__":
+    """Build a __BLOCK__ statement."""
+    statement = __BLOCK__()
     statement.stms = statements
     statement.skp = skip
     return statement
 
 
-class DollarBLOCK(Dollar):
+class __BLOCK__(__):
     """Represents a block of statements."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.stms: list[Dollar] = []
+        self.stms: list[__] = []
         self.skp: bool = False
 
     def run(self, scope: Any) -> Any:
         """Execute the block of statements."""
-        # Imports moved here to avoid circular dependencies
         from ...scope import Scope
         from ...nuc.block import BLOCK
         from ...nuc.block_class import BLOCK_CLASS
@@ -44,14 +35,12 @@ class DollarBLOCK(Dollar):
 
         test = Scope(scope, {})
         test.object = scope.object
-
         class_obj: Any = None
-
         statements_copy = copy.deepcopy(self.stms)
 
         for statement in statements_copy:
-            while isinstance(statement, Dollar):
-                if statement.iof == "DollarASSIGNMENT":
+            while isinstance(statement, __):
+                if statement.iof == "__ASSIGNMENT__":
                     if not statement.prepared:
                         statement.before(test)
                         statement.prepared = True
@@ -64,7 +53,6 @@ class DollarBLOCK(Dollar):
                     statement.prepared = True
                 statement = statement.run(test)
 
-            # Flatten the result
             results = [statement]
             while any(isinstance(r, list) for r in results):
                 new_results = []
@@ -76,8 +64,6 @@ class DollarBLOCK(Dollar):
                 results = new_results
 
             result = results[0] if results else statement
-
-            # Extract statement from Instruction if needed
             from ...instruction import Instruction
 
             if isinstance(result, Instruction):

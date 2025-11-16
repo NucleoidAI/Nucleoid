@@ -1,27 +1,19 @@
 from typing import Any, Literal, Optional
-from .dollar import Dollar
-# from .dollar_property import dollar_property
-# from .dollar_variable import dollar_variable
-# from .dollar_let import dollar_let
-# from .dollar_instance import dollar_instance
-# from ..ast.identifier import Identifier as DollarIdentifier
-# from ...graph import graph
-# from ...nuc.class_ import CLASS
-# from ...instruction import Instruction
+from .__ import __
 
 
 def build(
     kind: Optional[Literal["VAR", "LET", "CONST"]], left: Any, right: Any
-) -> "DollarASSIGNMENT":
-    """Build a DollarASSIGNMENT statement."""
-    statement = DollarASSIGNMENT()
+) -> "__ASSIGNMENT__":
+    """Build a __ASSIGNMENT__ statement."""
+    statement = __ASSIGNMENT__()
     statement.knd = kind
     statement.lft = left
     statement.rgt = right
     return statement
 
 
-class DollarASSIGNMENT(Dollar):
+class __ASSIGNMENT__(__):
     """Represents an assignment statement."""
 
     def __init__(self) -> None:
@@ -29,21 +21,19 @@ class DollarASSIGNMENT(Dollar):
         self.knd: Optional[Literal["VAR", "LET", "CONST", "PROPERTY"]] = None
         self.lft: Any = None
         self.rgt: Any = None
-        self.dollar: Optional[Dollar] = None
+        self._stmt: Optional[__] = None
 
     def before(self, scope: Any) -> None:
         """Prepare the assignment by determining the types and creating the appropriate statement."""
-        # Imports moved here to avoid circular dependencies
-        from ..ast.identifier import Identifier as DollarIdentifier
+        from ..ast.__identifier__ import __Identifier__
         from ...graph import graph
         from ...nuc.class_ import CLASS
-        from .dollar_variable import dollar_variable
-        from .dollar_instance import dollar_instance
-        from .dollar_property import dollar_property
-        from .dollar_let import dollar_let
+        from .__VARIABLE__ import __variable__
+        from .__INSTANCE__ import __instance__
+        from .__PROPERTY__ import __property__
+        from .__LET__ import __let__
 
-        name = DollarIdentifier(self.lft)
-
+        name = __Identifier__(self.lft)
         left_kind = self.knd
         reassign = not self.knd
 
@@ -57,7 +47,6 @@ class DollarASSIGNMENT(Dollar):
                     left_kind = "PROPERTY"
 
         right_kind = None
-
         if not self.rgt:
             raise SyntaxError("Missing definition")
 
@@ -73,36 +62,34 @@ class DollarASSIGNMENT(Dollar):
         else:
             right_kind = "EXPRESSION"
 
-        # Match TypeScript switch-case logic
         if left_kind == "VAR" and right_kind == "EXPRESSION":
-            self.dollar = dollar_variable(self.lft, self.rgt)
+            self._stmt = __variable__(self.lft, self.rgt)
         elif left_kind == "VAR" and right_kind == "INSTANCE":
             rgt = self.rgt
-            self.dollar = dollar_instance(
+            self._stmt = __instance__(
                 rgt.callee, rgt.arguments if hasattr(rgt, "arguments") else [], None, self.lft
             )
         elif left_kind == "PROPERTY" and right_kind == "EXPRESSION":
-            identifier = DollarIdentifier(self.lft)
-            self.dollar = dollar_property(
+            identifier = __Identifier__(self.lft)
+            self._stmt = __property__(
                 identifier.object.node, identifier.last.node, self.rgt
             )
         elif left_kind == "PROPERTY" and right_kind == "INSTANCE":
-            identifier = DollarIdentifier(self.lft)
+            identifier = __Identifier__(self.lft)
             rgt = self.rgt
-            self.dollar = dollar_instance(
+            self._stmt = __instance__(
                 rgt.callee,
                 rgt.arguments if hasattr(rgt, "arguments") else [],
                 identifier.object.node,
                 identifier.last.node,
             )
         elif left_kind in ["LET", "CONST"]:
-            self.dollar = dollar_let(self.lft, self.rgt, left_kind == "CONST", reassign)
+            self._stmt = __let__(self.lft, self.rgt, left_kind == "CONST", reassign)
 
-        if self.dollar:
-            self.dollar.asg = True  # assigned
+        if self._stmt:
+            self._stmt.asg = True
 
     def run(self, scope: Any) -> Any:
         """Execute the assignment statement."""
         from ...instruction import Instruction
-
-        return Instruction(scope, self.dollar, None, True, None, None, None)
+        return Instruction(scope, self._stmt, None, True, None, None, None)
