@@ -4,3 +4,4 @@
 - Always place Python code in @python\src\nucleoid\
 - @typescript\src\lang\$nuc\ is mapped to @python\src\nucleoid\__nuc__\ and __FILENAME__ is used instead of $FILENAME
 - @typescript\src\lang\ast\ folder is mapped to @python\src\nucleoid\ast\ and __Filename__ like __Literal__ is used for $Filename like $Literal
+- Python project in @python\ is based on TypeScript project is in @typescript\
