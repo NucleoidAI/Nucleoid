@@ -24,8 +24,13 @@ def start(cfg: Optional[Dict[str, Any]] = None) -> None:
 
     config.init(cfg)
 
-    print("🌿 Nucleoid runtime is started")
-    print("🌎 Inspired by Nature\n")
+    try:
+        print("🌿 Nucleoid runtime is started")
+        print("🌎 Inspired by Nature\n")
+    except UnicodeEncodeError:
+        # Fallback if terminal doesn't support Unicode
+        print("Nucleoid runtime is started")
+        print("Inspired by Nature\n")
 
     # Note: process.init() is commented out in TypeScript version
     # from . import process

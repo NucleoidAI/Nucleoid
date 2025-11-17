@@ -63,10 +63,18 @@ class Data:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
+        # Handle exception serialization
+        result_value = self.result
+        if isinstance(self.result, Exception):
+            result_value = {
+                'error': type(self.result).__name__,
+                'message': str(self.result)
+            }
+
         return {
             'string': self.string,
             'declarative': self.declarative,
-            'result': self.result,
+            'result': result_value,
             'time': self.time,
             'date': self.date.isoformat() if isinstance(self.date, datetime) else self.date,
             'error': self.error,

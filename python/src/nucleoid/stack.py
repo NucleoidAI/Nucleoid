@@ -51,7 +51,7 @@ class Stack:
         from .Instruction import Instruction
         from . import graph
         from . import state
-        from .lang.__nuc__ import __NUC__
+        from .__nuc__ import __NUC__
         from .nuc.BLOCK import BLOCK
         from .nuc.BREAK import BREAK
         from .nuc.EXPRESSION import EXPRESSION
