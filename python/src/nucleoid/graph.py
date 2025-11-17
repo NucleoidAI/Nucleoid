@@ -1,46 +1,62 @@
 """
 Graph module for managing dependency graphs.
-This is a stub implementation that will be expanded later.
 """
-
-from typing import Any
+from typing import Any, Dict, Optional, Union
 
 
 class Graph:
-    """Manages dependency graph for Nucleoid"""
+    """Manages dependency graph for Nucleoid."""
 
     def __init__(self) -> None:
-        self._nodes: dict[str, Any] = {}
-        self._edges: list[tuple[str, str]] = []
+        """Initialize graph with classes node."""
+        self.dollar: Dict[str, Any] = {
+            'classes': {
+                'name': 'classes'
+            }
+        }
+
+    def retrieve(self, identifier: Union[str, Any]) -> Optional[Any]:
+        """
+        Retrieve a node from the graph.
+
+        Args:
+            identifier: String identifier or object with generate() method
+
+        Returns:
+            Node value or None
+        """
+        if isinstance(identifier, str):
+            return self.dollar.get(identifier)
+        else:
+            # Object with generate() method
+            if hasattr(identifier, 'generate'):
+                key = identifier.generate()
+                return self.dollar.get(key)
+            return None
 
     def clear(self) -> None:
-        """Clear the dependency graph"""
-        self._nodes.clear()
-        self._edges.clear()
-
-    def add_node(self, node_id: str, data: Any = None) -> None:
-        """Add a node to the graph"""
-        self._nodes[node_id] = data
-
-    def add_edge(self, from_node: str, to_node: str) -> None:
-        """Add an edge between two nodes"""
-        self._edges.append((from_node, to_node))
+        """Clear the dependency graph."""
+        self.dollar.clear()
+        self.dollar['classes'] = {'name': 'classes'}
 
 
-# Singleton instance
-_graph = Graph()
+# Create singleton instance
+graph_instance = Graph()
+
+
+def retrieve(identifier: Union[str, Any]) -> Optional[Any]:
+    """
+    Retrieve a node from the graph.
+
+    Args:
+        identifier: String identifier or object with generate() method
+
+    Returns:
+        Node value or None
+    """
+    return graph_instance.retrieve(identifier)
 
 
 def clear() -> None:
-    """Clear the graph"""
-    _graph.clear()
-
-
-def add_node(node_id: str, data: Any = None) -> None:
-    """Add a node to the graph"""
-    _graph.add_node(node_id, data)
-
-
-def add_edge(from_node: str, to_node: str) -> None:
-    """Add an edge between two nodes"""
-    _graph.add_edge(from_node, to_node)
+    """Clear the graph."""
+    graph_instance.clear()
