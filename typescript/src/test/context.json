@@ -1,8 +1,0 @@
-[
-  {
-    "path": "/classes/Item",
-    "params": [],
-    "type": "CLASS",
-    "definition": "class Item { constructor(name, barcode) { this.name = name; this.barcode = barcode; }}"
-  }
-]
