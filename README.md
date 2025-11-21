@@ -143,7 +143,7 @@ The idea of plasticity in AI, especially in logic-based systems like those in Ne
 
 ## Hello World :zap:
 
-```typescript
+```python
 User:
 > 'Define human with name'
 
@@ -152,18 +152,16 @@ Assistant:
 
 ---
 
-// Ubiquitous Code:
+# Ubiquitous Code:
 'use declarative';
 
 class Human {
-  name: string;
-  constructor(name: string) {
-    this.name = name;
-  }
+  def __init__(self, name: str):
+    self.name = name
 }
 ```
 
-```typescript
+```python
 User:
 > 'All humans are mortal'
 
@@ -172,13 +170,13 @@ Assistant: All humans are mortal
 
 ---
 
-// Ubiquitous Code:
+# Ubiquitous Code:
 'use declarative';
 
-$Human.mortal = true;
+$Human.mortal = True;
 ```
 
-```typescript
+```python
 User:
 > 'Create a human with name "Socrates"'
 
@@ -187,15 +185,15 @@ Assistant:
 
 ---
 
-// Ubiquitous Code:
+# Ubiquitous Code:
 'use imperative';
 
-var human1 = new Human('Socrates');
+human1 = new Human('Socrates');
 
-// Result: {"id":"human1","name":"Socrates","mortal":true}
+# Result: {"id":"human1","name":"Socrates","mortal":True}
 ```
 
-```typescript
+```python
 User:
 > 'Is human with name 'Socrates' mortal?'
 
@@ -204,12 +202,12 @@ Assistant:
 
 ---
 
-// Ubiquitous Code:
-`use imperative`;
+# Ubiquitous Code:
+'use imperative';
 
-var human1 = new Human('Socrates');
+human1 = new Human('Socrates');
 human1.mortal;
-// Result: true
+# Result: True
 ```
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
