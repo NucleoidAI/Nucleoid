@@ -37,63 +37,7 @@ Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.prin
 
 In Nucleoid's paradigm, there is no segregation between logic and data; instead, the paradigm approaches how both logic and data statements are related to each other. As the runtime receives new statements, it updates the knowledge graph and reevaluates both logic and data statements to reflect the new information. This adaptive process enables the system to respond to new situations and make deterministic selections as a result of plasticity.
 
-<div align="center">
-  <table>
-    <tr>
-      <th colspan="3">
-        Multi-Lang Support
-      </th>
-    </tr>
-    <tr>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/947ecf1d-b174-4c65-85ca-d2fafac6da80" alt="Node.js" width="80" />
-          <br/>
-          Node.js
-        </p>
-      </td>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/838c6f9e-8102-43db-b272-7a02c4d6c5e6" alt="Python" width="75" />
-          <br/>
-          TypeScript (Beta)
-        </p>
-      </td>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/899dc0d0-8dc3-4f2f-a993-2bd409ff7045" alt="Python" width="75" />
-          <br/>
-          Python (WiP)
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3" width="500">
-        The declarative structure in the runtime makes it possible to provide multiple language support through JIT compiler.
-      </td>
-    </tr>
-  </table>
-</div>
-
 ---
-
-<table>
-  <tr>
-    <td>
-      Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
-      <br/>
-      <br/>
-      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward!
-      <br/>
-      <br/>
-      <p align="right">
-        Can Mingir&nbsp;
-        <br/>
-        <a href="https://github.com/canmingir">@canmingir</a>
-      </p>
-    </td>
-  </tr>
-</table>
 
 ## What is Neuro-Symbolic AI?
 
@@ -214,6 +158,26 @@ Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-star
 > :bulb: Nucleoid runtime can also run on local machine with `npx @nucleoidai/ide start` and `npx @nucleoidai/expert start` including [Nucleoid Chat](https://nucleoid.com/ide/chat). These commands enable IDE and expert system components needed for Neuro-Symbolic AI.
 
 ---
+
+<table>
+  <tr>
+    <td>
+      Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
+      <br/>
+      <br/>
+      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward!
+      <br/>
+      <br/>
+      <p align="right">
+        Can Mingir&nbsp;
+        <br/>
+        <a href="https://github.com/canmingir">@canmingir</a>
+      </p>
+    </td>
+  </tr>
+</table>
+
+--- 
 
 ### Under the hood: Declarative (Logic) Runtime Environment
 
