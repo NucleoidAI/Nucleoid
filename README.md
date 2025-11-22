@@ -153,59 +153,58 @@ Assistant:
 ---
 
 # Ubiquitous Code:
-'use declarative';
+"use declarative";
 
-class Human {
+class Human
   def __init__(self, name: str):
     self.name = name
-}
 ```
 
 ```python
 User:
-> 'All humans are mortal'
+> "All humans are mortal"
 
 Assistant: All humans are mortal
-> 'All humans were declared as mortal.'
+> "All humans were declared as mortal."
 
 ---
 
 # Ubiquitous Code:
-'use declarative';
+"use declarative";
 
 $Human.mortal = True;
 ```
 
 ```python
 User:
-> 'Create a human with name "Socrates"'
+> "Create a human with name 'Socrates'"
 
 Assistant:
-> 'A human named 'Socrates' was successfully created.'
+> "A human named 'Socrates' was successfully created."
 
 ---
 
 # Ubiquitous Code:
-'use imperative';
+"use imperative";
 
-human1 = new Human('Socrates');
+human1 = Human("Socrates");
 
 # Result: {"id":"human1","name":"Socrates","mortal":True}
 ```
 
 ```python
 User:
-> 'Is human with name 'Socrates' mortal?'
+> "Is human with name 'Socrates' mortal?"
 
 Assistant:
-> 'The human named 'Socrates' was determined to be mortal.'
+> "The human named 'Socrates' was determined to be mortal."
 
 ---
 
 # Ubiquitous Code:
-'use imperative';
+"use imperative";
 
-human1 = new Human('Socrates');
+human1 = Human("Socrates");
 human1.mortal;
 # Result: True
 ```
@@ -265,7 +264,8 @@ Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
 - [x] ES6 support
 - [ ] ES2018 support
 - [ ] ES2020 support
-- [ ] TypeScript
+- [x] TypeScript
+- [ ] Python
 - [ ] [IDE](https://github.com/NucleoidAI/IDE) (WiP)
 - [ ] Production-ready
 
