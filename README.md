@@ -153,7 +153,7 @@ Assistant:
 ---
 
 # Ubiquitous Code:
-"use declarative";
+"use declarative"
 
 class Human
   def __init__(self, name: str):
@@ -170,9 +170,9 @@ Assistant: All humans are mortal
 ---
 
 # Ubiquitous Code:
-"use declarative";
+"use declarative"
 
-$Human.mortal = True;
+Human.mortal = True
 ```
 
 ```python
@@ -185,9 +185,9 @@ Assistant:
 ---
 
 # Ubiquitous Code:
-"use imperative";
+"use imperative"
 
-human1 = Human("Socrates");
+human1 = Human("Socrates")
 
 # Result: {"id":"human1","name":"Socrates","mortal":True}
 ```
@@ -202,10 +202,10 @@ Assistant:
 ---
 
 # Ubiquitous Code:
-"use imperative";
+"use imperative"
 
-human1 = Human("Socrates");
-human1.mortal;
+human1 = Human("Socrates")
+human1.mortal
 # Result: True
 ```
 
