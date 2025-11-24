@@ -170,30 +170,30 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run(
             "class Device { constructor ( name ) { this.name = name } }"
           );
-          nucleoid.run("$Device.active = false");
-          nucleoid.run("if ( $Device.name ) { $Device.active = true }");
+          nucleoid.run("Device.active = false");
+          nucleoid.run("if ( Device.name ) { Device.active = true }");
 
           nucleoid.run("device1 = new Device ( 'Entrance' )");
           equal(nucleoid.run("device1.name"), "Entrance");
           equal(nucleoid.run("device1.active"), true);
 
           const device2 = nucleoid.run("new Device ( 'Hall' )");
-          equal(nucleoid.run(`${device2.id}.name`), "Hall");
-          equal(nucleoid.run(`${device2.id}.active`), true);
+          equal(nucleoid.run(`{device2.id}.name`), "Hall");
+          equal(nucleoid.run(`{device2.id}.active`), true);
 
           nucleoid.run("device3 = new Device ( )");
           equal(nucleoid.run("device3.name"), undefined);
           equal(nucleoid.run("device3.active"), false);
 
           const device4 = nucleoid.run("new Device ( )");
-          equal(nucleoid.run(`${device4.id}.name`), undefined);
-          equal(nucleoid.run(`${device4.id}.active`), false);
+          equal(nucleoid.run(`{device4.id}.name`), undefined);
+          equal(nucleoid.run(`{device4.id}.active`), false);
         });
         ```
         """
         nucleoid.run("class Device { constructor(name) { this.name = name } }")
-        nucleoid.run("$Device.active = false")
-        nucleoid.run("if ($Device.name) { $Device.active = true }")
+        nucleoid.run("Device.active = false")
+        nucleoid.run("if (Device.name) { Device.active = true }")
 
         nucleoid.run("device1 = new Device('Entrance')")
         assert nucleoid.run("device1.name") == "Entrance"
@@ -307,7 +307,7 @@ class TestNucleoidDeclarativeMode:
         ```typescript
         it("updates class definition", () => {
           nucleoid.run("class Message { }");
-          nucleoid.run("$Message.read = false");
+          nucleoid.run("Message.read = false");
           nucleoid.run("message1 = new Message ( )");
           nucleoid.run(
             "class Message { constructor ( payload ) { this.payload = payload } }"
@@ -322,7 +322,7 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class Message {}")
-        nucleoid.run("$Message.read = false")
+        nucleoid.run("Message.read = false")
         nucleoid.run("message1 = new Message()")
         nucleoid.run("class Message { constructor(payload) { this.payload = payload } }")
         assert nucleoid.run("message1.read") is False
@@ -383,7 +383,7 @@ class TestNucleoidDeclarativeMode:
           equal(nucleoid.run("`New String`"), "New String");
 
           nucleoid.run("a = 123");
-          equal(nucleoid.run("`New ${a} String`"), "New 123 String");
+          equal(nucleoid.run("`New {a} String`"), "New 123 String");
         });
         ```
         """
@@ -392,7 +392,7 @@ class TestNucleoidDeclarativeMode:
         assert nucleoid.run("`New String`") == "New String"
 
         nucleoid.run("a = 123")
-        assert nucleoid.run("`New ${a} String`") == "New 123 String"
+        assert nucleoid.run("`New {a} String`") == "New 123 String"
 
     # ========================================================================
     # TEST 14 of 183: supports logical operators
@@ -461,7 +461,7 @@ class TestNucleoidDeclarativeMode:
         ```typescript
         it("supports built-in objects", () => {
           const result = nucleoid.run("date1 = new Date ( )");
-          nucleoid.run(`date2 = new Date ( ${result.getTime()} )`);
+          nucleoid.run(`date2 = new Date ( {result.getTime()} )`);
           equal(nucleoid.run("date1.getTime() == date2.getTime()"), true);
 
           nucleoid.run("date3 = Date.parse ( '04 Dec 1995 00:12:00 GMT' )");
@@ -1014,7 +1014,7 @@ class TestNucleoidDeclarativeMode:
         ```typescript
         it("runs dependent statements in the same transaction", () => {
           nucleoid.run(
-            "class Vehicle { } ; $Vehicle.tag = 'US-' + $Vehicle.plate "
+            "class Vehicle { } ; Vehicle.tag = 'US-' + Vehicle.plate "
           );
           nucleoid.run("vehicle1 = new Vehicle ( )");
           nucleoid.run("vehicle1.plate = 'XSJ422'");
@@ -1022,7 +1022,7 @@ class TestNucleoidDeclarativeMode:
         });
         ```
         """
-        nucleoid.run("class Vehicle {}; $Vehicle.tag = 'US-' + $Vehicle.plate")
+        nucleoid.run("class Vehicle {}; Vehicle.tag = 'US-' + Vehicle.plate")
         nucleoid.run("vehicle1 = new Vehicle()")
         nucleoid.run("vehicle1.plate = 'XSJ422'")
         assert nucleoid.run("vehicle1.tag") == "US-XSJ422"
@@ -1622,7 +1622,7 @@ class TestNucleoidDeclarativeMode:
         it("supports regular expression literal", () => {
           nucleoid.run("class User { }");
           nucleoid.run(
-            "if ( ! /.{4,8}/.test ( $User.password ) ) { throw 'INVALID_PASSWORD' }"
+            "if ( ! /.{4,8}/.test ( User.password ) ) { throw 'INVALID_PASSWORD' }"
           );
           nucleoid.run("user1 = new User ( )");
           throws(
@@ -1635,7 +1635,7 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class User {}")
-        nucleoid.run("if (!/.{4,8}/.test($User.password)) { throw 'INVALID_PASSWORD' }")
+        nucleoid.run("if (!/.{4,8}/.test(User.password)) { throw 'INVALID_PASSWORD' }")
         nucleoid.run("user1 = new User()")
         with pytest.raises(Exception, match="INVALID_PASSWORD"):
             nucleoid.run("user1.password = 'PAS'")
@@ -1657,7 +1657,7 @@ class TestNucleoidDeclarativeMode:
           throws(
             () => {
               nucleoid.run(
-                "{ let weight = person1.weight ; let height = person1.height ; $Person.bmi = weight / ( height * height ) }"
+                "{ let weight = person1.weight ; let height = person1.height ; Person.bmi = weight / ( height * height ) }"
               );
             },
             (error: Error) =>
@@ -1675,7 +1675,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("person1.weight = 90")
         nucleoid.run("person1.height = 1.8")
         with pytest.raises(SyntaxError, match="Cannot define class declaration in non-class block"):
-            nucleoid.run("{ let weight = person1.weight; let height = person1.height; $Person.bmi = weight / (height * height) }")
+            nucleoid.run("{ let weight = person1.weight; let height = person1.height; Person.bmi = weight / (height * height) }")
 
     # ========================================================================
     # TEST 60 of 183: detects circular dependency
@@ -1799,7 +1799,7 @@ class TestNucleoidDeclarativeMode:
         ```typescript
         it("rollbacks property if exception is thrown", () => {
           nucleoid.run("class Item { }");
-          nucleoid.run("if ( $Item.sku == 'A' ) { throw 'INVALID_SKU' }");
+          nucleoid.run("if ( Item.sku == 'A' ) { throw 'INVALID_SKU' }");
           nucleoid.run("item1 = new Item ( )");
 
           throws(
@@ -1813,7 +1813,7 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class Item {}")
-        nucleoid.run("if ($Item.sku == 'A') { throw 'INVALID_SKU' }")
+        nucleoid.run("if (Item.sku == 'A') { throw 'INVALID_SKU' }")
         nucleoid.run("item1 = new Item()")
 
         with pytest.raises(Exception, match="INVALID_SKU"):
@@ -1833,7 +1833,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run(
             "class User { constructor ( first , last ) { this.first = first ; this.last = last } }"
           );
-          nucleoid.run("if ( $User.first.length < 3 ) { throw 'INVALID_USER' }");
+          nucleoid.run("if ( User.first.length < 3 ) { throw 'INVALID_USER' }");
 
           throws(
             () => {
@@ -1852,7 +1852,7 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class User { constructor(first, last) { this.first = first; this.last = last } }")
-        nucleoid.run("if ($User.first.length < 3) { throw 'INVALID_USER' }")
+        nucleoid.run("if (User.first.length < 3) { throw 'INVALID_USER' }")
 
         with pytest.raises(Exception, match="INVALID_USER"):
             nucleoid.run("user1 = new User('F', 'L')")
@@ -1993,7 +1993,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Timesheet { }");
           nucleoid.run("class Task { }");
           nucleoid.run("class Project { }");
-          nucleoid.run("$Project.code = 'N-' + $Project.number");
+          nucleoid.run("Project.code = 'N-' + Project.number");
           nucleoid.run("timesheet1 = new Timesheet ( )");
           nucleoid.run(
             "{ let task = new Task ( ) ; task.project = new Project ( ) ; task.project.number = 3668347 ; timesheet1.task = task }"
@@ -2006,7 +2006,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Timesheet { }")
         nucleoid.run("class Task { }")
         nucleoid.run("class Project { }")
-        nucleoid.run("$Project.code = 'N-' + $Project.number")
+        nucleoid.run("Project.code = 'N-' + Project.number")
         nucleoid.run("timesheet1 = new Timesheet()")
         nucleoid.run(
             "{ let task = new Task() ; task.project = new Project() ; task.project.number = 3668347 ; timesheet1.task = task }"
@@ -2026,7 +2026,7 @@ class TestNucleoidDeclarativeMode:
         it("creates new object of let statement of class as value before initialization", () => {
           nucleoid.run("class Member { }");
           nucleoid.run(
-            "{ let registration = new Object ( ) ; registration.date = new Date ( '2019-1-2' ) ; $Member.registration = registration }"
+            "{ let registration = new Object ( ) ; registration.date = new Date ( '2019-1-2' ) ; Member.registration = registration }"
           );
 
           nucleoid.run("member1 = new Member ( )");
@@ -2040,7 +2040,7 @@ class TestNucleoidDeclarativeMode:
         """
         nucleoid.run("class Member { }")
         nucleoid.run(
-            "{ let registration = new Object() ; registration.date = new Date('2019-1-2') ; $Member.registration = registration }"
+            "{ let registration = new Object() ; registration.date = new Date('2019-1-2') ; Member.registration = registration }"
         )
         nucleoid.run("member1 = new Member()")
         assert nucleoid.run("member1.registration.date.toDateString()") == "Wed Jan 02 2019"
@@ -2059,7 +2059,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Distance { }");
           nucleoid.run("distance1 = new Distance ( )");
           nucleoid.run(
-            "{ let location = new Object ( ) ; location.coordinates = '40.6976701,-74.2598779' ; $Distance.startingPoint = location }"
+            "{ let location = new Object ( ) ; location.coordinates = '40.6976701,-74.2598779' ; Distance.startingPoint = location }"
           );
           equal(
             nucleoid.run("distance1.startingPoint.coordinates"),
@@ -2072,7 +2072,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Distance { }")
         nucleoid.run("distance1 = new Distance()")
         nucleoid.run(
-            "{ let location = new Object() ; location.coordinates = '40.6976701,-74.2598779' ; $Distance.startingPoint = location }"
+            "{ let location = new Object() ; location.coordinates = '40.6976701,-74.2598779' ; Distance.startingPoint = location }"
         )
         assert nucleoid.run("distance1.startingPoint.coordinates") == "40.6976701,-74.2598779"
         assert nucleoid.run("distance1.startingPoint.print") is None
@@ -2090,9 +2090,9 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Account { }");
           nucleoid.run("class Balance { }");
           nucleoid.run("class Currency { }");
-          nucleoid.run("$Currency.description = 'Code:' + $Currency.code");
+          nucleoid.run("Currency.description = 'Code:' + Currency.code");
           nucleoid.run(
-            "{ let balance = new Object ( ) ; balance.currency = new Object ( ) ; balance.currency.code = 'USD' ; $Account.balance = balance }"
+            "{ let balance = new Object ( ) ; balance.currency = new Object ( ) ; balance.currency.code = 'USD' ; Account.balance = balance }"
           );
           nucleoid.run("account1 = new Account ( )");
           equal(nucleoid.run("account1.balance.currency.code "), "USD");
@@ -2103,9 +2103,9 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Account { }")
         nucleoid.run("class Balance { }")
         nucleoid.run("class Currency { }")
-        nucleoid.run("$Currency.description = 'Code:' + $Currency.code")
+        nucleoid.run("Currency.description = 'Code:' + Currency.code")
         nucleoid.run(
-            "{ let balance = new Object() ; balance.currency = new Object() ; balance.currency.code = 'USD' ; $Account.balance = balance }"
+            "{ let balance = new Object() ; balance.currency = new Object() ; balance.currency.code = 'USD' ; Account.balance = balance }"
         )
         nucleoid.run("account1 = new Account()")
         assert nucleoid.run("account1.balance.currency.code") == "USD"
@@ -2124,7 +2124,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Warehouse { }");
           nucleoid.run("warehouse1 = new Warehouse ( )");
           nucleoid.run(
-            "{ let inventory = new Object ( ) ; inventory.item = new Object ( ) ; inventory.item.sku = '699546085767' ; $Warehouse.inventory = inventory }"
+            "{ let inventory = new Object ( ) ; inventory.item = new Object ( ) ; inventory.item.sku = '699546085767' ; Warehouse.inventory = inventory }"
           );
           equal(nucleoid.run("warehouse1.inventory.item.sku"), "699546085767");
           equal(nucleoid.run("warehouse1.inventory.item.description"), undefined);
@@ -2134,7 +2134,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Warehouse { }")
         nucleoid.run("warehouse1 = new Warehouse()")
         nucleoid.run(
-            "{ let inventory = new Object() ; inventory.item = new Object() ; inventory.item.sku = '699546085767' ; $Warehouse.inventory = inventory }"
+            "{ let inventory = new Object() ; inventory.item = new Object() ; inventory.item.sku = '699546085767' ; Warehouse.inventory = inventory }"
         )
         assert nucleoid.run("warehouse1.inventory.item.sku") == "699546085767"
         assert nucleoid.run("warehouse1.inventory.item.description") is None
@@ -2152,8 +2152,8 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run(
             "class Device { constructor ( name ) { this.name = name } }"
           );
-          nucleoid.run("$Device.deleted = false");
-          nucleoid.run("$Device.key = 'X-' + $Device.name");
+          nucleoid.run("Device.deleted = false");
+          nucleoid.run("Device.key = 'X-' + Device.name");
           nucleoid.run("{ let name = 'Hall' ; device1 = new Device ( name ) }");
 
           equal(nucleoid.run("device1.name"), "Hall");
@@ -2163,8 +2163,8 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class Device { constructor(name) { this.name = name } }")
-        nucleoid.run("$Device.deleted = False")
-        nucleoid.run("$Device.key = 'X-' + $Device.name")
+        nucleoid.run("Device.deleted = False")
+        nucleoid.run("Device.key = 'X-' + Device.name")
         nucleoid.run("{ let name = 'Hall' ; device1 = new Device(name) }")
         assert nucleoid.run("device1.name") == "Hall"
         assert nucleoid.run("device1.key") == "X-Hall"
@@ -2183,7 +2183,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run(
             "class Summary { constructor ( rate ) { this.rate = rate } }"
           );
-          nucleoid.run("$Summary.score = $Summary.rate * 100");
+          nucleoid.run("Summary.score = Summary.rate * 100");
           nucleoid.run("{ let rate = 4 ; new Summary ( rate ) }");
 
           equal(nucleoid.run("Summary[0].rate"), 4);
@@ -2192,7 +2192,7 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class Summary { constructor(rate) { this.rate = rate } }")
-        nucleoid.run("$Summary.score = $Summary.rate * 100")
+        nucleoid.run("Summary.score = Summary.rate * 100")
         nucleoid.run("{ let rate = 4 ; new Summary(rate) }")
         assert nucleoid.run("Summary[0].rate") == 4
         assert nucleoid.run("Summary[0].score") == 400
@@ -2248,7 +2248,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("trip1 = new Trip ( )");
           nucleoid.run("trip1.distance = 5540");
           nucleoid.run(
-            "{ let trip = $Plane.trip ; $Plane.time = trip.distance / $Plane.speed }"
+            "{ let trip = Plane.trip ; Plane.time = trip.distance / Plane.speed }"
           );
           nucleoid.run("plane1.trip = trip1");
           equal(nucleoid.run("plane1.time"), 6.135105204872647);
@@ -2262,7 +2262,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("trip1 = new Trip()")
         nucleoid.run("trip1.distance = 5540")
         nucleoid.run(
-            "{ let trip = $Plane.trip ; $Plane.time = trip.distance / $Plane.speed }"
+            "{ let trip = Plane.trip ; Plane.time = trip.distance / Plane.speed }"
         )
         nucleoid.run("plane1.trip = trip1")
         assert nucleoid.run("plane1.time") == 6.135105204872647
@@ -2285,7 +2285,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("comm1.rate = 0.05");
           nucleoid.run("seller1.commission = comm1");
           nucleoid.run(
-            "{ let commission = $Seller.commission ; $Seller.pay = $Seller.sales * commission.rate }"
+            "{ let commission = Seller.commission ; Seller.pay = Seller.sales * commission.rate }"
           );
           equal(nucleoid.run("seller1.pay"), 50000);
         });
@@ -2299,7 +2299,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("comm1.rate = 0.05")
         nucleoid.run("seller1.commission = comm1")
         nucleoid.run(
-            "{ let commission = $Seller.commission ; $Seller.pay = $Seller.sales * commission.rate }"
+            "{ let commission = Seller.commission ; Seller.pay = Seller.sales * commission.rate }"
         )
         assert nucleoid.run("seller1.pay") == 50000
 
@@ -2321,7 +2321,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("trade1.quantity = 1");
           nucleoid.run("stock1.trade = trade1");
           nucleoid.run(
-            "{ let trade = $Stock.trade ; trade.worth = $Stock.price * trade.quantity }"
+            "{ let trade = Stock.trade ; trade.worth = Stock.price * trade.quantity }"
           );
           equal(nucleoid.run("trade1.worth"), 100);
         });
@@ -2335,7 +2335,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("trade1.quantity = 1")
         nucleoid.run("stock1.trade = trade1")
         nucleoid.run(
-            "{ let trade = $Stock.trade ; trade.worth = $Stock.price * trade.quantity }"
+            "{ let trade = Stock.trade ; trade.worth = Stock.price * trade.quantity }"
         )
         assert nucleoid.run("trade1.worth") == 100
 
@@ -2629,12 +2629,12 @@ class TestNucleoidDeclarativeMode:
         ```typescript
         it("defines class in the state", () => {
           nucleoid.run("class Entity { }");
-          equal(nucleoid.run("typeof $Entity"), "function");
+          equal(nucleoid.run("typeof Entity"), "function");
         });
         ```
         """
         nucleoid.run("class Entity { }")
-        assert nucleoid.run("typeof $Entity") == "function"
+        assert nucleoid.run("typeof Entity") == "function"
 
     # ========================================================================
     # TEST 92 of 183: rejects creating instance if the class does not exist
@@ -2665,7 +2665,7 @@ class TestNucleoidDeclarativeMode:
 
           throws(
             () => {
-              nucleoid.run("$Chart.plot = new Plot ( )");
+              nucleoid.run("Chart.plot = new Plot ( )");
             },
             (error: Error) => validate(error, ReferenceError, "Plot is not defined")
           );
@@ -2682,7 +2682,7 @@ class TestNucleoidDeclarativeMode:
             nucleoid.run("chart1.plot = new Plot()")
 
         with pytest.raises(ReferenceError, match="Plot is not defined"):
-            nucleoid.run("$Chart.plot = new Plot()")
+            nucleoid.run("Chart.plot = new Plot()")
 
     # ========================================================================
     # TEST 93 of 183: creates property assignment before declaration
@@ -2860,7 +2860,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Agent { }");
           nucleoid.run("class Distance { }");
           nucleoid.run(
-            "$Distance.total = Math.sqrt ( $Distance.x * $Distance.x + $Distance.y * $Distance.y )"
+            "Distance.total = Math.sqrt ( Distance.x * Distance.x + Distance.y * Distance.y )"
           );
           nucleoid.run("agent1 = new Agent ( )");
           nucleoid.run("agent1.distance = new Distance ( )");
@@ -2873,7 +2873,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Agent { }")
         nucleoid.run("class Distance { }")
         nucleoid.run(
-            "$Distance.total = Math.sqrt($Distance.x * $Distance.x + $Distance.y * $Distance.y)"
+            "Distance.total = Math.sqrt(Distance.x * Distance.x + Distance.y * Distance.y)"
         )
         nucleoid.run("agent1 = new Agent()")
         nucleoid.run("agent1.distance = new Distance()")
@@ -2897,7 +2897,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("product1.quality = new Quality ( )");
           nucleoid.run("product1.quality.score = 15");
           nucleoid.run(
-            "$Quality.class = String.fromCharCode ( 65 + Math.floor ( $Quality.score / 10 ) )"
+            "Quality.class = String.fromCharCode ( 65 + Math.floor ( Quality.score / 10 ) )"
           );
           equal(nucleoid.run("product1.quality.class"), "B");
         });
@@ -2909,7 +2909,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("product1.quality = new Quality()")
         nucleoid.run("product1.quality.score = 15")
         nucleoid.run(
-            "$Quality.class = String.fromCharCode(65 + Math.floor($Quality.score / 10))"
+            "Quality.class = String.fromCharCode(65 + Math.floor(Quality.score / 10))"
         )
         assert nucleoid.run("product1.quality.class") == "B"
 
@@ -3133,7 +3133,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("count = 0");
           nucleoid.run("class Device { }");
           nucleoid.run("device1 = new Device ( )");
-          nucleoid.run("{ $Device.code = 'A' + count.value ; count = count + 1 }");
+          nucleoid.run("{ Device.code = 'A' + count.value ; count = count + 1 }");
           equal(nucleoid.run("device1.code"), "A0");
         });
         ```
@@ -3141,7 +3141,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("count = 0")
         nucleoid.run("class Device { }")
         nucleoid.run("device1 = new Device()")
-        nucleoid.run("{ $Device.code = 'A' + count.value ; count = count + 1 }")
+        nucleoid.run("{ Device.code = 'A' + count.value ; count = count + 1 }")
         assert nucleoid.run("device1.code") == "A0"
 
     # ========================================================================
@@ -3158,7 +3158,7 @@ class TestNucleoidDeclarativeMode:
             "class Summary { constructor ( question ) { this.question = question } }"
           );
           nucleoid.run("class Question { }");
-          nucleoid.run("$Summary.count = $Summary.question.count.value");
+          nucleoid.run("Summary.count = Summary.question.count.value");
           nucleoid.run("question1 = new Question ( )");
           nucleoid.run("question1.count = 10");
           nucleoid.run("summary1 = new Summary ( question1 )");
@@ -3173,7 +3173,7 @@ class TestNucleoidDeclarativeMode:
             "class Summary { constructor(question) { this.question = question } }"
         )
         nucleoid.run("class Question { }")
-        nucleoid.run("$Summary.count = $Summary.question.count.value")
+        nucleoid.run("Summary.count = Summary.question.count.value")
         nucleoid.run("question1 = new Question()")
         nucleoid.run("question1.count = 10")
         nucleoid.run("summary1 = new Summary(question1)")
@@ -3750,7 +3750,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("person1 = new Person ( )");
           nucleoid.run("class Address { }");
           nucleoid.run("address1 = new Address ( )");
-          nucleoid.run("$Address.print = $Address.city + ', ' + $Address.state");
+          nucleoid.run("Address.print = Address.city + ', ' + Address.state");
           nucleoid.run("person1.address = new Address ( )");
           nucleoid.run("person1.address.city = 'Syracuse'");
           nucleoid.run("person1.address.state = 'NY'");
@@ -3762,7 +3762,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("person1 = new Person()")
         nucleoid.run("class Address { }")
         nucleoid.run("address1 = new Address()")
-        nucleoid.run("$Address.print = $Address.city + ', ' + $Address.state")
+        nucleoid.run("Address.print = Address.city + ', ' + Address.state")
         nucleoid.run("person1.address = new Address()")
         nucleoid.run("person1.address.city = 'Syracuse'")
         nucleoid.run("person1.address.state = 'NY'")
@@ -3882,8 +3882,8 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("vote1 = new Vote ( )");
           nucleoid.run("vote1.rate = 4");
           nucleoid.run("class Question { }");
-          nucleoid.run("$Question.rate = 0");
-          nucleoid.run("$Question.count = 0");
+          nucleoid.run("Question.rate = 0");
+          nucleoid.run("Question.count = 0");
           nucleoid.run("question1 = new Question ( )");
           nucleoid.run("vote1.question = question1");
           nucleoid.run(
@@ -3901,8 +3901,8 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("vote1 = new Vote()")
         nucleoid.run("vote1.rate = 4")
         nucleoid.run("class Question { }")
-        nucleoid.run("$Question.rate = 0")
-        nucleoid.run("$Question.count = 0")
+        nucleoid.run("Question.rate = 0")
+        nucleoid.run("Question.count = 0")
         nucleoid.run("question1 = new Question()")
         nucleoid.run("vote1.question = question1")
         nucleoid.run(
@@ -3929,7 +3929,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("element1 = new Element ( )");
           nucleoid.run("element1.number = 3");
           nucleoid.run(
-            "{ let number = $Element.number ; if ( number == 3 ) { alkalis.push ( $Element ) } }"
+            "{ let number = Element.number ; if ( number == 3 ) { alkalis.push ( Element ) } }"
           );
           equal(nucleoid.run("alkalis.pop ( )"), nucleoid.run("element1"));
         });
@@ -3940,7 +3940,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("element1 = new Element()")
         nucleoid.run("element1.number = 3")
         nucleoid.run(
-            "{ let number = $Element.number ; if (number == 3) { alkalis.push($Element) } }"
+            "{ let number = Element.number ; if (number == 3) { alkalis.push(Element) } }"
         )
         assert nucleoid.run("alkalis.pop()") == nucleoid.run("element1")
 
@@ -3955,7 +3955,7 @@ class TestNucleoidDeclarativeMode:
         ```typescript
         it("creates class assignment before initialization", () => {
           nucleoid.run("class Review { }");
-          nucleoid.run("$Review.rate = $Review.sum / 10");
+          nucleoid.run("Review.rate = Review.sum / 10");
           nucleoid.run("review1 = new Review ( )");
           nucleoid.run("review1.sum = 42");
           equal(nucleoid.run("review1.rate"), 4.2);
@@ -3963,7 +3963,7 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class Review { }")
-        nucleoid.run("$Review.rate = $Review.sum / 10")
+        nucleoid.run("Review.rate = Review.sum / 10")
         nucleoid.run("review1 = new Review()")
         nucleoid.run("review1.sum = 42")
         assert nucleoid.run("review1.rate") == 4.2
@@ -3983,7 +3983,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("s1.edge = 3");
           nucleoid.run("s2 = new Shape ( )");
           nucleoid.run("s2.edge = 3");
-          nucleoid.run("$Shape.angle = ( $Shape.edge - 2 ) * 180");
+          nucleoid.run("Shape.angle = ( Shape.edge - 2 ) * 180");
           nucleoid.run("s1.edge = 4");
           equal(nucleoid.run("s1.angle"), 360);
           equal(nucleoid.run("s2.angle"), 180);
@@ -3995,7 +3995,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("s1.edge = 3")
         nucleoid.run("s2 = new Shape()")
         nucleoid.run("s2.edge = 3")
-        nucleoid.run("$Shape.angle = ($Shape.edge - 2) * 180")
+        nucleoid.run("Shape.angle = (Shape.edge - 2) * 180")
         nucleoid.run("s1.edge = 4")
         assert nucleoid.run("s1.angle") == 360
         assert nucleoid.run("s2.angle") == 180
@@ -4013,9 +4013,9 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Employee { }");
           nucleoid.run("employee = new Employee ( )");
           nucleoid.run("employee.id = 1");
-          nucleoid.run("$Employee.username = 'E' + $Employee.id");
+          nucleoid.run("Employee.username = 'E' + Employee.id");
           equal(nucleoid.run("employee.username"), "E1");
-          nucleoid.run("$Employee.username = 'F' + $Employee.id");
+          nucleoid.run("Employee.username = 'F' + Employee.id");
           nucleoid.run("employee.id = 2");
           equal(nucleoid.run("employee.username"), "F2");
         });
@@ -4024,9 +4024,9 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Employee { }")
         nucleoid.run("employee = new Employee()")
         nucleoid.run("employee.id = 1")
-        nucleoid.run("$Employee.username = 'E' + $Employee.id")
+        nucleoid.run("Employee.username = 'E' + Employee.id")
         assert nucleoid.run("employee.username") == "E1"
-        nucleoid.run("$Employee.username = 'F' + $Employee.id")
+        nucleoid.run("Employee.username = 'F' + Employee.id")
         nucleoid.run("employee.id = 2")
         assert nucleoid.run("employee.username") == "F2"
 
@@ -4042,7 +4042,7 @@ class TestNucleoidDeclarativeMode:
         it("creates if statement of class before initialization", () => {
           nucleoid.run("class Ticket { }");
           nucleoid.run(
-            "if ( $Ticket.date > new Date ( '1993-1-1' ) ) { $Ticket.status = 'EXPIRED' }"
+            "if ( Ticket.date > new Date ( '1993-1-1' ) ) { Ticket.status = 'EXPIRED' }"
           );
           nucleoid.run("ticket1 = new Ticket ( )");
 
@@ -4057,7 +4057,7 @@ class TestNucleoidDeclarativeMode:
         """
         nucleoid.run("class Ticket { }")
         nucleoid.run(
-            "if ($Ticket.date > new Date('1993-1-1')) { $Ticket.status = 'EXPIRED' }"
+            "if (Ticket.date > new Date('1993-1-1')) { Ticket.status = 'EXPIRED' }"
         )
         nucleoid.run("ticket1 = new Ticket()")
 
@@ -4085,7 +4085,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("s2 = new Student ( )");
           nucleoid.run("s2.age = 2");
           nucleoid.run("s2.class = 'Daycare'");
-          nucleoid.run("if ( $Student.age == 3 ) { $Student.class = 'Preschool' }");
+          nucleoid.run("if ( Student.age == 3 ) { Student.class = 'Preschool' }");
           nucleoid.run("s1.age = 3");
           equal(nucleoid.run("s1.class"), "Preschool");
           equal(nucleoid.run("s2.class"), "Daycare");
@@ -4099,7 +4099,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("s2 = new Student()")
         nucleoid.run("s2.age = 2")
         nucleoid.run("s2.class = 'Daycare'")
-        nucleoid.run("if ($Student.age == 3) { $Student.class = 'Preschool' }")
+        nucleoid.run("if (Student.age == 3) { Student.class = 'Preschool' }")
         nucleoid.run("s1.age = 3")
         assert nucleoid.run("s1.class") == "Preschool"
         assert nucleoid.run("s2.class") == "Daycare"
@@ -4122,12 +4122,12 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("i2.quantity = 1000");
 
           nucleoid.run(
-            "if ( $Inventory.quantity == 0 ) { $Inventory.replenishment = true }"
+            "if ( Inventory.quantity == 0 ) { Inventory.replenishment = true }"
           );
           equal(nucleoid.run("i1.replenishment"), true);
           equal(nucleoid.run("i2.replenishment"), undefined);
           nucleoid.run(
-            "if ( $Inventory.quantity == 0 ) { $Inventory.replenishment = false }"
+            "if ( Inventory.quantity == 0 ) { Inventory.replenishment = false }"
           );
 
           equal(nucleoid.run("i1.replenishment"), false);
@@ -4143,12 +4143,12 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("i2.quantity = 1000")
 
         nucleoid.run(
-            "if ($Inventory.quantity == 0) { $Inventory.replenishment = True }"
+            "if (Inventory.quantity == 0) { Inventory.replenishment = True }"
         )
         assert nucleoid.run("i1.replenishment") is True
         assert nucleoid.run("i2.replenishment") is None
         nucleoid.run(
-            "if ($Inventory.quantity == 0) { $Inventory.replenishment = False }"
+            "if (Inventory.quantity == 0) { Inventory.replenishment = False }"
         )
 
         assert nucleoid.run("i1.replenishment") is False
@@ -4166,7 +4166,7 @@ class TestNucleoidDeclarativeMode:
         it("creates else statement of class before initialization", () => {
           nucleoid.run("class Count { }");
           nucleoid.run(
-            "if ( $Count.max > 1000 ) { $Count.reset = urgent } else { $Count.reset = regular }"
+            "if ( Count.max > 1000 ) { Count.reset = urgent } else { Count.reset = regular }"
           );
           nucleoid.run("urgent = 'URGENT'");
           nucleoid.run("regular = 'REGULAR'");
@@ -4181,7 +4181,7 @@ class TestNucleoidDeclarativeMode:
         """
         nucleoid.run("class Count { }")
         nucleoid.run(
-            "if ($Count.max > 1000) { $Count.reset = urgent } else { $Count.reset = regular }"
+            "if (Count.max > 1000) { Count.reset = urgent } else { Count.reset = regular }"
         )
         nucleoid.run("urgent = 'URGENT'")
         nucleoid.run("regular = 'REGULAR'")
@@ -4208,7 +4208,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("concentration1 = new Concentration ( )");
           nucleoid.run("concentration1.substances = 2");
           nucleoid.run(
-            "if ( $Concentration.substances == 1 ) { $Concentration.formula = directDilution } else { $Concentration.formula = serialDilution }"
+            "if ( Concentration.substances == 1 ) { Concentration.formula = directDilution } else { Concentration.formula = serialDilution }"
           );
           equal(nucleoid.run("concentration1.formula"), "(c1V1+c2V2)/(V1+V2)");
 
@@ -4226,7 +4226,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("concentration1 = new Concentration()")
         nucleoid.run("concentration1.substances = 2")
         nucleoid.run(
-            "if ($Concentration.substances == 1) { $Concentration.formula = directDilution } else { $Concentration.formula = serialDilution }"
+            "if (Concentration.substances == 1) { Concentration.formula = directDilution } else { Concentration.formula = serialDilution }"
         )
         assert nucleoid.run("concentration1.formula") == "(c1V1+c2V2)/(V1+V2)"
 
@@ -4246,7 +4246,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Storage { }");
           nucleoid.run("normal = 'NORMAL' ; low = 'LOW'");
           nucleoid.run(
-            "if ( $Storage.capacity > 25 ) { $Storage.status = normal } else { $Storage.status = low }"
+            "if ( Storage.capacity > 25 ) { Storage.status = normal } else { Storage.status = low }"
           );
           nucleoid.run("storage1 = new Storage ( )");
           nucleoid.run("storage1.capacity = 23");
@@ -4260,7 +4260,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Storage { }")
         nucleoid.run("normal = 'NORMAL' ; low = 'LOW'")
         nucleoid.run(
-            "if ($Storage.capacity > 25) { $Storage.status = normal } else { $Storage.status = low }"
+            "if (Storage.capacity > 25) { Storage.status = normal } else { Storage.status = low }"
         )
         nucleoid.run("storage1 = new Storage()")
         nucleoid.run("storage1.capacity = 23")
@@ -4284,7 +4284,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("registration1 = new Registration ( )");
           nucleoid.run("registration1.available = 0");
           nucleoid.run(
-            "if ( $Registration.available > 0 ) { $Registration.accepted = yes } else { $Registration.accepted = no }"
+            "if ( Registration.available > 0 ) { Registration.accepted = yes } else { Registration.accepted = no }"
           );
           equal(nucleoid.run("registration1.accepted"), "NO");
 
@@ -4298,7 +4298,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("registration1 = new Registration()")
         nucleoid.run("registration1.available = 0")
         nucleoid.run(
-            "if ($Registration.available > 0) { $Registration.accepted = yes } else { $Registration.accepted = no }"
+            "if (Registration.available > 0) { Registration.accepted = yes } else { Registration.accepted = no }"
         )
         assert nucleoid.run("registration1.accepted") == "NO"
 
@@ -4317,7 +4317,7 @@ class TestNucleoidDeclarativeMode:
         it("creates multiple else if statement of class before initialization", () => {
           nucleoid.run("class Capacity { }");
           nucleoid.run(
-            "if ( $Capacity.spare / $Capacity.available > 0.5 ) { $Capacity.total = $Capacity.available + $Capacity.spare } else if ( $Capacity.spare / $Capacity.available > 0.1 ) { $Capacity.total = $Capacity.available + $Capacity.spare * 2 } else { $Capacity.total = $Capacity.available + $Capacity.spare * 3 }"
+            "if ( Capacity.spare / Capacity.available > 0.5 ) { Capacity.total = Capacity.available + Capacity.spare } else if ( Capacity.spare / Capacity.available > 0.1 ) { Capacity.total = Capacity.available + Capacity.spare * 2 } else { Capacity.total = Capacity.available + Capacity.spare * 3 }"
           );
           nucleoid.run("capacity1 = new Capacity ( )");
           nucleoid.run("capacity1.available = 100");
@@ -4331,7 +4331,7 @@ class TestNucleoidDeclarativeMode:
         """
         nucleoid.run("class Capacity { }")
         nucleoid.run(
-            "if ($Capacity.spare / $Capacity.available > 0.5) { $Capacity.total = $Capacity.available + $Capacity.spare } else if ($Capacity.spare / $Capacity.available > 0.1) { $Capacity.total = $Capacity.available + $Capacity.spare * 2 } else { $Capacity.total = $Capacity.available + $Capacity.spare * 3 }"
+            "if (Capacity.spare / Capacity.available > 0.5) { Capacity.total = Capacity.available + Capacity.spare } else if (Capacity.spare / Capacity.available > 0.1) { Capacity.total = Capacity.available + Capacity.spare * 2 } else { Capacity.total = Capacity.available + Capacity.spare * 3 }"
         )
         nucleoid.run("capacity1 = new Capacity()")
         nucleoid.run("capacity1.available = 100")
@@ -4357,7 +4357,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("shape1.x = 5");
           nucleoid.run("shape1.y = 6");
           nucleoid.run(
-            "if ( $Shape.type == 'SQUARE' ) { $Shape.area = Math.pow( Shape.x, 2 ) } else if ( $Shape.type == 'TRIANGLE' ) { $Shape.area = $Shape.x * $Shape.y / 2 } else { $Shape.area = $Shape.x * $Shape.y }"
+            "if ( Shape.type == 'SQUARE' ) { Shape.area = Math.pow( Shape.x, 2 ) } else if ( Shape.type == 'TRIANGLE' ) { Shape.area = Shape.x * Shape.y / 2 } else { Shape.area = Shape.x * Shape.y }"
           );
           equal(nucleoid.run("shape1.area"), 30);
 
@@ -4372,7 +4372,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("shape1.x = 5")
         nucleoid.run("shape1.y = 6")
         nucleoid.run(
-            "if ($Shape.type == 'SQUARE') { $Shape.area = Math.pow(Shape.x, 2) } else if ($Shape.type == 'TRIANGLE') { $Shape.area = $Shape.x * $Shape.y / 2 } else { $Shape.area = $Shape.x * $Shape.y }"
+            "if (Shape.type == 'SQUARE') { Shape.area = Math.pow(Shape.x, 2) } else if (Shape.type == 'TRIANGLE') { Shape.area = Shape.x * Shape.y / 2 } else { Shape.area = Shape.x * Shape.y }"
         )
         assert nucleoid.run("shape1.area") == 30
 
@@ -4391,7 +4391,7 @@ class TestNucleoidDeclarativeMode:
         it("runs block statement of class before initialization", () => {
           nucleoid.run("class Stock { }");
           nucleoid.run(
-            "{ let change = $Stock.before * 4 / 100 ; $Stock.after = $Stock.before + change }"
+            "{ let change = Stock.before * 4 / 100 ; Stock.after = Stock.before + change }"
           );
           nucleoid.run("stock1 = new Stock ( )");
           nucleoid.run("stock1.before = 57.25");
@@ -4404,7 +4404,7 @@ class TestNucleoidDeclarativeMode:
         """
         nucleoid.run("class Stock { }")
         nucleoid.run(
-            "{ let change = $Stock.before * 4 / 100 ; $Stock.after = $Stock.before + change }"
+            "{ let change = Stock.before * 4 / 100 ; Stock.after = Stock.before + change }"
         )
         nucleoid.run("stock1 = new Stock()")
         nucleoid.run("stock1.before = 57.25")
@@ -4427,7 +4427,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("purchase = new Purchase ( )");
           nucleoid.run("purchase.price = 99");
           nucleoid.run(
-            "{ let retailPrice = $Purchase.price * 1.15 ; $Purchase.retailPrice = retailPrice }"
+            "{ let retailPrice = Purchase.price * 1.15 ; Purchase.retailPrice = retailPrice }"
           );
           equal(nucleoid.run("purchase.retailPrice"), 113.85);
 
@@ -4440,7 +4440,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("purchase = new Purchase()")
         nucleoid.run("purchase.price = 99")
         nucleoid.run(
-            "{ let retailPrice = $Purchase.price * 1.15 ; $Purchase.retailPrice = retailPrice }"
+            "{ let retailPrice = Purchase.price * 1.15 ; Purchase.retailPrice = retailPrice }"
         )
         assert nucleoid.run("purchase.retailPrice") == 113.85
 
@@ -4459,7 +4459,7 @@ class TestNucleoidDeclarativeMode:
         it("runs nested block statement of class before initialization", () => {
           nucleoid.run("class Compound { }");
           nucleoid.run(
-            "{ let mol = 69.94 / $Compound.substance ; { $Compound.sample = Math.floor ( mol * $Compound.mol ) } }"
+            "{ let mol = 69.94 / Compound.substance ; { Compound.sample = Math.floor ( mol * Compound.mol ) } }"
           );
           nucleoid.run("compound1 = new Compound ( )");
           nucleoid.run("compound1.substance = 55.85");
@@ -4470,7 +4470,7 @@ class TestNucleoidDeclarativeMode:
         """
         nucleoid.run("class Compound { }")
         nucleoid.run(
-            "{ let mol = 69.94 / $Compound.substance ; { $Compound.sample = Math.floor(mol * $Compound.mol) } }"
+            "{ let mol = 69.94 / Compound.substance ; { Compound.sample = Math.floor(mol * Compound.mol) } }"
         )
         nucleoid.run("compound1 = new Compound()")
         nucleoid.run("compound1.substance = 55.85")
@@ -4492,7 +4492,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("bug1.initialScore = 1000");
           nucleoid.run("bug1.aging = 24");
           nucleoid.run(
-            "{ let score = $Bug.aging * 10 ; { $Bug.priorityScore = score + $Bug.initialScore } }"
+            "{ let score = Bug.aging * 10 ; { Bug.priorityScore = score + Bug.initialScore } }"
           );
           equal(nucleoid.run("bug1.priorityScore"), 1240);
         });
@@ -4503,7 +4503,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("bug1.initialScore = 1000")
         nucleoid.run("bug1.aging = 24")
         nucleoid.run(
-            "{ let score = $Bug.aging * 10 ; { $Bug.priorityScore = score + $Bug.initialScore } }"
+            "{ let score = Bug.aging * 10 ; { Bug.priorityScore = score + Bug.initialScore } }"
         )
         assert nucleoid.run("bug1.priorityScore") == 1240
 
@@ -4520,7 +4520,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Mortgage { }");
           nucleoid.run("rate1 = 'EXCEPTIONAL'");
           nucleoid.run(
-            "{ let interest = $Mortgage.annual / 12 ; if ( interest < 4 ) { $Mortgage.rate = rate1 } }"
+            "{ let interest = Mortgage.annual / 12 ; if ( interest < 4 ) { Mortgage.rate = rate1 } }"
           );
           nucleoid.run("mortgage1 = new Mortgage ( )");
           nucleoid.run("mortgage1.annual = 46");
@@ -4534,7 +4534,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Mortgage { }")
         nucleoid.run("rate1 = 'EXCEPTIONAL'")
         nucleoid.run(
-            "{ let interest = $Mortgage.annual / 12 ; if (interest < 4) { $Mortgage.rate = rate1 } }"
+            "{ let interest = Mortgage.annual / 12 ; if (interest < 4) { Mortgage.rate = rate1 } }"
         )
         nucleoid.run("mortgage1 = new Mortgage()")
         nucleoid.run("mortgage1.annual = 46")
@@ -4558,7 +4558,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("building1 = new Building ( )");
           nucleoid.run("building1.floors = 20");
           nucleoid.run(
-            "{ let height = $Building.floors * 14 ; if ( height > 330 ) { $Building.type = buildingType1 } }"
+            "{ let height = Building.floors * 14 ; if ( height > 330 ) { Building.type = buildingType1 } }"
           );
           equal(nucleoid.run("building1.type"), undefined);
 
@@ -4575,7 +4575,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("building1 = new Building()")
         nucleoid.run("building1.floors = 20")
         nucleoid.run(
-            "{ let height = $Building.floors * 14 ; if (height > 330) { $Building.type = buildingType1 } }"
+            "{ let height = Building.floors * 14 ; if (height > 330) { Building.type = buildingType1 } }"
         )
         assert nucleoid.run("building1.type") is None
 
@@ -4599,7 +4599,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("noAlert = 'NO_ALERT'");
           nucleoid.run("lowAlert = 'LOW_ALERT'");
           nucleoid.run(
-            "{ let balance = $Account.balance ; if ( balance > 1000 ) { $Account.alert = noAlert } else { $Account.alert = lowAlert } }"
+            "{ let balance = Account.balance ; if ( balance > 1000 ) { Account.alert = noAlert } else { Account.alert = lowAlert } }"
           );
           nucleoid.run("account1 = new Account ( )");
           nucleoid.run("account1.balance = 950");
@@ -4614,7 +4614,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("noAlert = 'NO_ALERT'")
         nucleoid.run("lowAlert = 'LOW_ALERT'")
         nucleoid.run(
-            "{ let balance = $Account.balance ; if (balance > 1000) { $Account.alert = noAlert } else { $Account.alert = lowAlert } }"
+            "{ let balance = Account.balance ; if (balance > 1000) { Account.alert = noAlert } else { Account.alert = lowAlert } }"
         )
         nucleoid.run("account1 = new Account()")
         nucleoid.run("account1.balance = 950")
@@ -4639,7 +4639,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("question1 = new Question ( )");
           nucleoid.run("question1.count = 1");
           nucleoid.run(
-            "{ let score = $Question.count * 10 ; if ( score > 100 ) { $Question.type = high } else { $Question.type = low } }"
+            "{ let score = Question.count * 10 ; if ( score > 100 ) { Question.type = high } else { Question.type = low } }"
           );
           equal(nucleoid.run("question1.type"), "LOW");
 
@@ -4654,7 +4654,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("question1 = new Question()")
         nucleoid.run("question1.count = 1")
         nucleoid.run(
-            "{ let score = $Question.count * 10 ; if (score > 100) { $Question.type = high } else { $Question.type = low } }"
+            "{ let score = Question.count * 10 ; if (score > 100) { Question.type = high } else { Question.type = low } }"
         )
         assert nucleoid.run("question1.type") == "LOW"
 
@@ -4672,9 +4672,9 @@ class TestNucleoidDeclarativeMode:
         ```typescript
         it("creates class assignment with multiple properties before declaration", () => {
           nucleoid.run("class Room { }");
-          nucleoid.run("$Room.level = $Room.number / 10");
+          nucleoid.run("Room.level = Room.number / 10");
           nucleoid.run("class Guest { }");
-          nucleoid.run("$Guest.room = new Room ( )");
+          nucleoid.run("Guest.room = new Room ( )");
           nucleoid.run("guest1 = new Guest ( )");
           nucleoid.run("guest1.room.number = 30");
           equal(nucleoid.run("guest1.room.level"), 3);
@@ -4682,9 +4682,9 @@ class TestNucleoidDeclarativeMode:
         ```
         """
         nucleoid.run("class Room { }")
-        nucleoid.run("$Room.level = $Room.number / 10")
+        nucleoid.run("Room.level = Room.number / 10")
         nucleoid.run("class Guest { }")
-        nucleoid.run("$Guest.room = new Room()")
+        nucleoid.run("Guest.room = new Room()")
         nucleoid.run("guest1 = new Guest()")
         nucleoid.run("guest1.room.number = 30")
         assert nucleoid.run("guest1.room.level") == 3
@@ -4702,8 +4702,8 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run("class Channel { }");
           nucleoid.run("class Frequency { }");
           nucleoid.run("channel1 = new Channel ( )");
-          nucleoid.run("$Channel.frequency = new Frequency ( )");
-          nucleoid.run("$Frequency.hertz = 1 / $Frequency.period");
+          nucleoid.run("Channel.frequency = new Frequency ( )");
+          nucleoid.run("Frequency.hertz = 1 / Frequency.period");
           nucleoid.run("channel1.frequency.period = 0.0025");
           equal(nucleoid.run("channel1.frequency.hertz"), 400);
         });
@@ -4712,8 +4712,8 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run("class Channel { }")
         nucleoid.run("class Frequency { }")
         nucleoid.run("channel1 = new Channel()")
-        nucleoid.run("$Channel.frequency = new Frequency()")
-        nucleoid.run("$Frequency.hertz = 1 / $Frequency.period")
+        nucleoid.run("Channel.frequency = new Frequency()")
+        nucleoid.run("Frequency.hertz = 1 / Frequency.period")
         nucleoid.run("channel1.frequency.period = 0.0025")
         assert nucleoid.run("channel1.frequency.hertz") == 400
 
@@ -4729,8 +4729,8 @@ class TestNucleoidDeclarativeMode:
         it("creates class assignment as multiple properties as part of declaration before initialization", () => {
           nucleoid.run("class Hospital { }");
           nucleoid.run("class Clinic { }");
-          nucleoid.run("$Hospital.clinic = new Clinic ( )");
-          nucleoid.run("$Hospital.patients = $Hospital.clinic.beds * 746");
+          nucleoid.run("Hospital.clinic = new Clinic ( )");
+          nucleoid.run("Hospital.patients = Hospital.clinic.beds * 746");
           nucleoid.run("hospital1 = new Hospital ( )");
           nucleoid.run("hospital1.clinic.beds = 2678");
           equal(nucleoid.run("hospital1.patients"), 1997788);
@@ -4739,8 +4739,8 @@ class TestNucleoidDeclarativeMode:
         """
         nucleoid.run("class Hospital { }")
         nucleoid.run("class Clinic { }")
-        nucleoid.run("$Hospital.clinic = new Clinic()")
-        nucleoid.run("$Hospital.patients = $Hospital.clinic.beds * 746")
+        nucleoid.run("Hospital.clinic = new Clinic()")
+        nucleoid.run("Hospital.patients = Hospital.clinic.beds * 746")
         nucleoid.run("hospital1 = new Hospital()")
         nucleoid.run("hospital1.clinic.beds = 2678")
         assert nucleoid.run("hospital1.patients") == 1997788
@@ -4757,20 +4757,20 @@ class TestNucleoidDeclarativeMode:
         it("creates class assignment as multiple properties as part of declaration after initialization", () => {
           nucleoid.run("class Server { }");
           nucleoid.run("class OS { }");
-          nucleoid.run("$Server.os = new OS ( )");
+          nucleoid.run("Server.os = new OS ( )");
           nucleoid.run("server1 = new Server ( )");
           nucleoid.run("server1.os.version = 14");
-          nucleoid.run("$Server.build = $Server.os.version + '.526291'");
+          nucleoid.run("Server.build = Server.os.version + '.526291'");
           equal(nucleoid.run("server1.build"), "14.526291");
         });
         ```
         """
         nucleoid.run("class Server { }")
         nucleoid.run("class OS { }")
-        nucleoid.run("$Server.os = new OS()")
+        nucleoid.run("Server.os = new OS()")
         nucleoid.run("server1 = new Server()")
         nucleoid.run("server1.os.version = 14")
-        nucleoid.run("$Server.build = $Server.os.version + '.526291'")
+        nucleoid.run("Server.build = Server.os.version + '.526291'")
         assert nucleoid.run("server1.build") == "14.526291"
 
     # ========================================================================
@@ -4816,7 +4816,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run(
             "class Summary { constructor ( question ) { this.question = question } }"
           );
-          nucleoid.run("$Summary.rate = $Summary.question.rate.value");
+          nucleoid.run("Summary.rate = Summary.question.rate.value");
 
           nucleoid.run("for ( question of Question ) { new Summary ( question ) }");
           equal(nucleoid.run("Summary[0]").rate, 4);
@@ -4832,7 +4832,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run(
             "class Summary { constructor(question) { this.question = question } }"
         )
-        nucleoid.run("$Summary.rate = $Summary.question.rate.value")
+        nucleoid.run("Summary.rate = Summary.question.rate.value")
 
         nucleoid.run("for (question of Question) { new Summary(question) }")
         assert nucleoid.run("Summary[0]").get("rate") == 4
@@ -4938,7 +4938,7 @@ class TestNucleoidDeclarativeMode:
           nucleoid.run(
             "class Summary { constructor ( question ) { this.question = question } }"
           );
-          nucleoid.run("$Summary.type = 'DAILY'");
+          nucleoid.run("Summary.type = 'DAILY'");
           nucleoid.run(
             "for ( question of Question ) { if ( ! question.archived ) { new Summary ( question ) } }"
           );
@@ -4959,7 +4959,7 @@ class TestNucleoidDeclarativeMode:
         nucleoid.run(
             "class Summary { constructor(question) { this.question = question } }"
         )
-        nucleoid.run("$Summary.type = 'DAILY'")
+        nucleoid.run("Summary.type = 'DAILY'")
         nucleoid.run(
             "for (question of Question) { if (!question.archived) { new Summary(question) } }"
         )
