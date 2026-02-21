@@ -25,6 +25,27 @@ Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI
 - **Logic Graph:** Specialized knowledge graph that captures relationships between both logic and data statements based on formal logic, facilitating complex deductions and adapting to new information.
 - **Explainability:** The Logic Graph provides a transparent representation of the reasoning process, making it easier to understand how decisions are reached and potential biases are identified.
 
+<div align="center">
+  <table>
+    <tr>
+      <th>
+        Lightning Reasoning
+      </th>
+    </tr>
+    <tr>
+      <td>
+        <p align="center">
+          <img src="https://github.com/user-attachments/assets/9e4e946c-4ad7-42bd-9310-bd80e04e0c2f" alt="Node.js" width="80" />
+          <br/>
+          Runs on Bun
+        </p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<br/>
+
 Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
@@ -36,44 +57,6 @@ Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.prin
 </p>
 
 In Nucleoid's paradigm, there is no segregation between logic and data; instead, the paradigm approaches how both logic and data statements are related to each other. As the runtime receives new statements, it updates the knowledge graph and reevaluates both logic and data statements to reflect the new information. This adaptive process enables the system to respond to new situations and make deterministic selections as a result of plasticity.
-
-<div align="center">
-  <table>
-    <tr>
-      <th colspan="3">
-        Multi-Lang Support
-      </th>
-    </tr>
-    <tr>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/947ecf1d-b174-4c65-85ca-d2fafac6da80" alt="Node.js" width="80" />
-          <br/>
-          Node.js
-        </p>
-      </td>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/838c6f9e-8102-43db-b272-7a02c4d6c5e6" alt="Python" width="75" />
-          <br/>
-          TypeScript (Beta)
-        </p>
-      </td>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/899dc0d0-8dc3-4f2f-a993-2bd409ff7045" alt="Python" width="75" />
-          <br/>
-          Python (WiP)
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3" width="500">
-        The declarative structure in the runtime makes it possible to provide multiple language support through JIT compiler.
-      </td>
-    </tr>
-  </table>
-</div>
 
 ---
 
