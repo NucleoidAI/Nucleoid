@@ -1,3 +1,0 @@
-"""
-Nucleoid Package
-"""
