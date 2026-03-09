@@ -1,8 +1,6 @@
 <h1 align="center">Nucleoid</h1>
 <p align="center">
-  Neuro-Symbolic AI with Knowledge Graph
-  <br/>
-  Reasoning Engine
+  AI Language
 </p>
 
 <p align="center">
