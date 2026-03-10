@@ -1,6 +1,6 @@
 <h1 align="center">Nucleoid</h1>
 <p align="center">
-  AI Language
+  Logic Language for LLM
 </p>
 
 <p align="center">
@@ -10,10 +10,6 @@
 </p>
 
 ![Banner](.github/media/banner.gif)
-
-<p align="center">
-  Declarative (Logic) Runtime Environment: Extensible Data and Logic Representation
-</p>
 
 <br/>
 
