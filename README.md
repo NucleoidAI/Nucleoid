@@ -1,6 +1,6 @@
 <h1 align="center">Nucleoid</h1>
 <p align="center">
-  Logic Language for LLM
+  Logic Language for LLMs
 </p>
 
 <p align="center">
