@@ -1,2 +1,4 @@
 /.idea
 /js/node_modules
+/bin
+*.exe
