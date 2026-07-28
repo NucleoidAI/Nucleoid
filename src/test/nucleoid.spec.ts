@@ -20,16 +20,19 @@ describe("Nucleoid", () => {
   describe("in declarative mode", () => {
     const details = { details: true };
 
+    // Done
     it("runs statements in the state", () => {
       nucleoid.run("var i = 1 ;");
       equal(nucleoid.run("i == 1"), true);
     });
 
+    // Done
     it("runs expression statement", () => {
       nucleoid.run("var j = 1 ;");
       equal(nucleoid.run("j + 2"), 3);
     });
 
+    // Skip
     it("rejects variable declaration without definition", () => {
       throws(
         () => nucleoid.run("var a"),
@@ -37,15 +40,18 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Won't do
     it("allows variable declaration without var keyword", () => {
       nucleoid.run("pi = 3.14 ;");
       equal(nucleoid.run("pi == 3.14"), true);
     });
 
+    // Won't do
     it("allows statements without semicolon at the end", () => {
       nucleoid.run("au = 149597870700");
       equal(nucleoid.run("au == 149597870700"), true);
     });
+
 
     it("creates dependency based on length of identifier", () => {
       nucleoid.run("str1 = 'ABC'");
@@ -60,6 +66,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("i2"), 7);
     });
 
+    // Done
     it("creates class with constructor", () => {
       nucleoid.run(
         "class Device { constructor ( name ) { this.name = name } }"
@@ -84,6 +91,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run(`${device4.id}.active`), false);
     });
 
+    // Done
     it("adds object in object list", () => {
       nucleoid.run("class Student { }");
       nucleoid.run("user0 = new Student ( )");
@@ -94,6 +102,7 @@ describe("Nucleoid", () => {
       deepEqual(nucleoid.run("Student['user0']"), { id: "user0" });
     });
 
+    // Won't do
     it("prevents class and object lists when class is updated", () => {
       nucleoid.run("class User { }");
       nucleoid.run("new User ( )");
@@ -106,6 +115,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("User.length"), 2);
     });
 
+    // Won't do
     it("adds created class in class list", () => {
       equal(nucleoid.run("classes.length"), 0);
 
@@ -116,6 +126,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("classes.length"), 2);
     });
 
+    // Skip
     it("updates class definition", () => {
       nucleoid.run("class Message { }");
       nucleoid.run("$Message.read = false");
@@ -131,6 +142,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("message2.payload"), "MESSAGE");
     });
 
+    // Won't do
     it("supports new line as replacing with space", () => {
       nucleoid.run("a = 1 ; \n b = 2");
       equal(nucleoid.run("a"), 1);
@@ -145,6 +157,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("b"), 6);
     });
 
+    // Won't do
     it("supports string in expression", () => {
       equal(nucleoid.run("'New String'"), "New String");
       equal(nucleoid.run('"New String"'), "New String");
@@ -154,22 +167,26 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("`New ${a} String`"), "New 123 String");
     });
 
+    // Won't do
     it("supports logical operators", () => {
       nucleoid.run("condition = false");
       equal(nucleoid.run("condition || true"), true);
       equal(nucleoid.run("!condition && true"), true);
     });
 
+    // Skip
     it("supports standard built-in functions", () => {
       nucleoid.run("max = Number.MAX_SAFE_INTEGER");
       nucleoid.run("now = Date.now ( )");
     });
 
+    // Skip
     it("supports creating standard built-in objects", () => {
       nucleoid.run("date = new Date ( '2019-7-24' )");
       equal(nucleoid.run("date.getYear()"), 119);
     });
 
+    // Skip
     it("supports built-in objects", () => {
       const result = nucleoid.run("date1 = new Date ( )");
       nucleoid.run(`date2 = new Date ( ${result.getTime()} )`);
@@ -187,6 +204,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Won't do
     it("calls function with no return", () => {
       nucleoid.run("a = 1");
       nucleoid.run("function copy ( val ) { b = val }");
@@ -194,6 +212,7 @@ describe("Nucleoid", () => {
       equal(result, undefined);
     });
 
+    // Done
     it("calls function with returning variable", () => {
       nucleoid.run("a = 1");
       nucleoid.run("function copy ( val ) { b = val; return b; }");
@@ -201,6 +220,7 @@ describe("Nucleoid", () => {
       equal(result, 1);
     });
 
+    // Won't do
     it("calls function with returning value", () => {
       nucleoid.run("a = 1");
       nucleoid.run("function copy ( val ) { b = val; return val; }");
@@ -208,6 +228,7 @@ describe("Nucleoid", () => {
       equal(result, 1);
     });
 
+    // Won't do
     it("supports function in expression", () => {
       nucleoid.run("list = [1, 2, 3]");
       equal(
@@ -226,6 +247,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("list.find ( element => ( element == 1 ) )"), 1);
     });
 
+    // Won't do
     it("supports function with parameter in expression", () => {
       nucleoid.run("samples = [ 38.2 , 39.1 , 38.8 , 39 ]");
       nucleoid.run("ratio = 2.1");
@@ -251,6 +273,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Skip
     it("creates let statement with JSON", () => {
       const payload = nucleoid.run(
         '{ let payload = { "data" : "TEST" , "nested" : { "data" : "NESTED_TEST" } } ; return payload }'
@@ -267,6 +290,7 @@ describe("Nucleoid", () => {
       equal(i.test, "test");
     });
 
+    // Won't do
     it("returns inline JSON object", () => {
       const json = nucleoid.run(
         '{ return { "number" : 123 , "string" : "ABC" , "bool" : true } }'
@@ -274,6 +298,7 @@ describe("Nucleoid", () => {
       deepEqual(json, { number: 123, string: "ABC", bool: true });
     });
 
+    // Won't do
     it("returns inline JSON array", () => {
       const json = nucleoid.run(
         '{ return [ { "number" : 123 , "string" : "ABC" , "bool" : true } ] }'
@@ -281,6 +306,7 @@ describe("Nucleoid", () => {
       deepEqual(json, [{ number: 123, string: "ABC", bool: true }]);
     });
 
+    // Won't do
     it("returns inline object", () => {
       const object = nucleoid.run(
         '{ return { number : 123 , string : "ABC" , bool : true } }'
@@ -288,6 +314,7 @@ describe("Nucleoid", () => {
       deepEqual(object, { number: 123, string: "ABC", bool: true });
     });
 
+    // Won't do
     it("returns inline array", () => {
       const object = nucleoid.run(
         '{ return [ { number : 123 , string : "ABC" , bool : true } ] }'
@@ -295,6 +322,7 @@ describe("Nucleoid", () => {
       deepEqual(object, [{ number: 123, string: "ABC", bool: true }]);
     });
 
+    // Done
     it("assigns block in function as dependency", () => {
       nucleoid.run("class Student { }");
       nucleoid.run("student1 = new Student ( )");
@@ -312,6 +340,7 @@ describe("Nucleoid", () => {
       deepEqual(nucleoid.run("student"), nucleoid.run("student3"));
     });
 
+    // Done
     it("supports chained functions with parameter in expression", () => {
       nucleoid.run(
         "class Result { constructor ( score ) { this.score = score } }"
@@ -402,6 +431,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("l == 3"), true);
     });
 
+    // Won't do
     it("runs dependent statements in the same transaction", () => {
       nucleoid.run(
         "class Vehicle { } ; $Vehicle.tag = 'US-' + $Vehicle.plate "
@@ -411,6 +441,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("vehicle1.tag"), "US-XSJ422");
     });
 
+    // Done
     it("runs dependencies in order as received", () => {
       nucleoid.run("any = 0");
       nucleoid.run("if ( any > 1 ) { result = 1 }");
@@ -441,6 +472,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("number"), 3);
     });
 
+    // Done
     it("uses local variable at lowest scope as priority", () => {
       nucleoid.run("pi = 3.14");
       nucleoid.run("number = pi");
@@ -515,6 +547,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("user0.name"), "TEST");
     });
 
+    // Done
     it("assigns undefined if any dependencies in expression is undefined", () => {
       nucleoid.run("class Person { }");
       nucleoid.run("person1 = new Person ( )");
@@ -542,6 +575,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("schedule1.run"), "0 */2 * * * null");
     });
 
+    // Done
     it("assigns null if there is null pointer in expression", () => {
       nucleoid.run("class Product { }");
       nucleoid.run("product1 = new Product ( )");
@@ -556,6 +590,7 @@ describe("Nucleoid", () => {
       nucleoid.run("student1 = new Student ( )");
       equal(nucleoid.run("Student.length"), 1);
     });
+
 
     it("assigns unique variable for instance without variable name defined", () => {
       nucleoid.run("class Vehicle { }");
@@ -597,6 +632,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("throws error inside block", () => {
       nucleoid.run("k = 99");
       throws(
@@ -624,6 +660,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("assigns function as dependency", () => {
       nucleoid.run("list = [ ]");
       nucleoid.run("count = list.filter ( n => n % 2 )");
@@ -640,6 +677,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("count.length"), 1);
     });
 
+    // Done
     it("assigns parameter in function as dependency", () => {
       nucleoid.run("str1 = 'ABC'");
       nucleoid.run("str2 = str1.toLowerCase ( ) + 'd'");
@@ -765,6 +803,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("creates variable assignment", () => {
       nucleoid.run("x = 1");
       nucleoid.run("y = x + 2");
@@ -807,6 +846,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("uses value property to indicate using only value of variable", () => {
       nucleoid.run("goldenRatio = 1.618");
       nucleoid.run("altitude = 10");
@@ -821,6 +861,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("width"), 161.8);
     });
 
+    // Done
     it("creates if statement of variable", () => {
       nucleoid.run("m = false");
       nucleoid.run("n = false");
@@ -831,6 +872,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("n == true"), true);
     });
 
+    // Done
     it("updates if block of variable", () => {
       nucleoid.run("p = 0.01");
       nucleoid.run("s = 0.02");
@@ -856,6 +898,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("pH"), "+7");
     });
 
+    // Done
     it("creates else if statement of variable", () => {
       nucleoid.run("g = 11");
       nucleoid.run("earth = 9.8");
@@ -871,6 +914,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("weight"), 37.2);
     });
 
+    // Done
     it("creates multiple else if statement of variable", () => {
       nucleoid.run("fraction = -0.1");
       nucleoid.run("point = 1");
@@ -883,6 +927,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("score"), -0.2);
     });
 
+    // Done
     it("runs let statement as a variable", () => {
       nucleoid.run("integer = 30");
       nucleoid.run(
@@ -894,11 +939,13 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("equivalency"), 40);
     });
 
+    // Skip
     it("runs let statement as standard built-in object", () => {
       nucleoid.run("{ let f = new Boolean ( false ) ; condition = f }");
       equal(nucleoid.run("condition"), false);
     });
 
+    // Won't make
     it("runs const statement as a variable", () => {
       nucleoid.run("number = 3");
       throws(
@@ -912,6 +959,8 @@ describe("Nucleoid", () => {
       );
     });
 
+
+    // Done
     it("creates and assigns instance to let variable inside block", () => {
       nucleoid.run("class Device { }");
       nucleoid.run("$Device.renew = $Device.created + 604800000");
@@ -924,6 +973,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run(`${id}.renew - ${id}.created`), 604800000);
     });
 
+    // Done
     it("creates and assigns instance with constructor to let variable inside block", () => {
       nucleoid.run(
         "class Member { constructor ( first , last ) { this.first = first ; this.last = last } } "
@@ -933,6 +983,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("Member[0].display"), "Last, First");
     });
 
+    // Done
     it("runs new instance of let statement of property", () => {
       nucleoid.run("class Room { }");
       nucleoid.run("class Meeting { }");
@@ -953,6 +1004,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("runs multiple instance of let statement of property", () => {
       nucleoid.run("class Timesheet { }");
       nucleoid.run("class Task { }");
@@ -966,6 +1018,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("timesheet1.task.project.code"), "N-3668347");
     });
 
+    // Done
     it("creates new object of let statement of class as value before initialization", () => {
       nucleoid.run("class Member { }");
       nucleoid.run(
@@ -980,6 +1033,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("member1.registration.age"), undefined);
     });
 
+    // Done
     it("creates new object of let statement of class as value after initialization", () => {
       nucleoid.run("class Distance { }");
       nucleoid.run("distance1 = new Distance ( )");
@@ -993,6 +1047,8 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("distance1.startingPoint.print"), undefined);
     });
 
+
+    // Done
     it("creates multiple object of let statement of class as value before initialization", () => {
       nucleoid.run("class Account { }");
       nucleoid.run("class Balance { }");
@@ -1006,6 +1062,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("account1.balance.currency.description "), undefined);
     });
 
+    // Done
     it("creates multiple object of let statement of class as value after initialization", () => {
       nucleoid.run("class Warehouse { }");
       nucleoid.run("warehouse1 = new Warehouse ( )");
@@ -1016,6 +1073,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("warehouse1.inventory.item.description"), undefined);
     });
 
+    // Done
     it("creates instance inside block", () => {
       nucleoid.run(
         "class Device { constructor ( name ) { this.name = name } }"
@@ -1029,6 +1087,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("device1.deleted"), false);
     });
 
+    // Done
     it("creates instance inside block without variable name defined", () => {
       nucleoid.run(
         "class Summary { constructor ( rate ) { this.rate = rate } }"
@@ -1040,6 +1099,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("Summary[0].score"), 400);
     });
 
+    // Done
     it("creates variable inside block", () => {
       nucleoid.run("a = 5 ; b = 10");
       nucleoid.run("if ( a > 9 ) { let c = a + b ; d = c * 10 }");
@@ -1053,6 +1113,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("d"), 350);
     });
 
+    // Done
     it("runs let statement as an object before declaration", () => {
       nucleoid.run("class Plane { }");
       nucleoid.run("class Trip { }");
@@ -1067,6 +1128,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("plane1.time"), 6.135105204872647);
     });
 
+    // Done
     it("runs let statement as an object after declaration", () => {
       nucleoid.run("class Seller { }");
       nucleoid.run("class Commission { }");
@@ -1081,6 +1143,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("seller1.pay"), 50000);
     });
 
+    // Done
     it.skip("reassigns let statement before initialization", () => {
       nucleoid.run("class Order { }");
       nucleoid.run("class Sale { }");
@@ -1095,6 +1158,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("sale1.amount"), 10);
     });
 
+    // Done
     it("reassigns let statement after initialization", () => {
       nucleoid.run("class Stock { }");
       nucleoid.run("class Trade { }");
@@ -1109,6 +1173,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("trade1.worth"), 100);
     });
 
+    // Done
     it("assigns let statement after const statement with the same name", () => {
       const result = nucleoid.run(
         `
@@ -1128,6 +1193,7 @@ describe("Nucleoid", () => {
       equal(result, "barcode2");
     });
 
+    // Done
     it("holds result of function in let", () => {
       nucleoid.run("bugs = [ ]");
       nucleoid.run("ticket = 1");
@@ -1150,10 +1216,12 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("bug2.selected"), true);
     });
 
+    // Won't do
     it("skips if block is empty", () => {
       nucleoid.run("{ }");
     });
 
+    // Done
     it("runs block statement of variable", () => {
       nucleoid.run("h = 1");
       nucleoid.run("{ let value = h * 2 ; j = value * 2 }");
@@ -1185,6 +1253,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("hit"), false);
     });
 
+    // Done
     it("runs nested else statement of variable", () => {
       nucleoid.run("percentage = 28");
       nucleoid.run("density = 0.899");
@@ -1199,6 +1268,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("molarConcentration"), 1);
     });
 
+    // Done
     it("assigns variable to reference", () => {
       nucleoid.run("a = 1");
       nucleoid.run("b = a");
@@ -1208,17 +1278,20 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("b"), 2);
     });
 
+    // Done
     it("assigns object to variable", () => {
       nucleoid.run("class Model { }");
       nucleoid.run("model1 = new Model ( )");
       equal(nucleoid.run("typeof model1"), "object");
     });
 
+    // Won't do
     it("defines class in the state", () => {
       nucleoid.run("class Entity { }");
       equal(nucleoid.run("typeof $Entity"), "function");
     });
 
+    // Done
     it("rejects creating instance if the class does not exist", () => {
       throws(
         () => {
@@ -1245,6 +1318,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("creates property assignment before declaration", () => {
       nucleoid.run("class Order { }");
       nucleoid.run("var order1 = new Order ( )");
@@ -1253,6 +1327,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("order1.upc"), "0406194067");
     });
 
+    // Done
     it("creates property assignment after declaration", () => {
       nucleoid.run("class User { }");
       nucleoid.run("user = new User ( )");
@@ -1276,6 +1351,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("creates object with var statement", () => {
       nucleoid.run("class Item { constructor ( name ) { this.name  = name } }");
 
@@ -1286,6 +1362,7 @@ describe("Nucleoid", () => {
       deepEqual(nucleoid.run("item2"), { id: "item2", name: undefined });
     });
 
+    // Done
     it("creates object assignment as property only if instance is defined", () => {
       nucleoid.run("class Worker { }");
       nucleoid.run("class Schedule { }");
@@ -1300,6 +1377,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("uses its value when self property used", () => {
       nucleoid.run("class Construction { }");
       nucleoid.run("construction1 = new Construction ( ) ");
@@ -1308,6 +1386,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("construction1.timeline"), 240);
     });
 
+    // Done
     it("assigns object to property before initialization", () => {
       nucleoid.run("class Agent { }");
       nucleoid.run("class Distance { }");
@@ -1333,6 +1412,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("product1.quality.class"), "B");
     });
 
+    // Done
     it("rejects if name of instance as property is value", () => {
       nucleoid.run("class Schedule { }");
       nucleoid.run("class Place { }");
@@ -1346,6 +1426,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("rejects if property name is value", () => {
       nucleoid.run("class Value { }");
       nucleoid.run("value = new Value ( )");
@@ -1358,6 +1439,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("uses value property to indicate using only value of property", () => {
       nucleoid.run("class Weight { }");
       nucleoid.run("weight1 = new Weight ( )");
@@ -1370,6 +1452,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("weight1.force"), 1352);
     });
 
+    // Done
     it("uses value property in if condition to indicate using only value of variable", () => {
       nucleoid.run("class Question { }");
       nucleoid.run("question1 = new Question ( )");
@@ -1385,6 +1468,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it.skip("rejects value of property if property is not defined", () => {
       nucleoid.run("class Travel { }");
       nucleoid.run("travel1 = new Travel ( )");
@@ -1398,6 +1482,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("keeps as null if value of property is null", () => {
       nucleoid.run("class Interest { }");
       nucleoid.run("interest1 = new Interest ( )");
@@ -1412,6 +1497,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("interest1.annual"), 0);
     });
 
+    // Done
     it("rejects if property of local name is value", () => {
       nucleoid.run("class Alarm { }");
       throws(
@@ -1423,6 +1509,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Won't do
     it("keeps same as its value when value property used for local", () => {
       nucleoid.run("speedOfLight = 299792");
       nucleoid.run(
@@ -1431,6 +1518,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("roundTrip"), 2.6574595675086314);
     });
 
+    // Done
     it("uses value property as part of class declaration", () => {
       nucleoid.run("count = 0");
       nucleoid.run("class Device { }");
@@ -1439,6 +1527,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("device1.code"), "A0");
     });
 
+    // Done
     it("uses value property of class declaration", () => {
       nucleoid.run(
         "class Summary { constructor ( question ) { this.question = question } }"
@@ -1454,6 +1543,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("summary1.count"), 10);
     });
 
+    // Done
     it("updates if block of property", () => {
       nucleoid.run("class Account { }");
       nucleoid.run("account = new Account ( )");
@@ -1465,6 +1555,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("account.status"), "LOW");
     });
 
+    // Done
     it("creates if statement of property", () => {
       nucleoid.run("class Toy { }");
       nucleoid.run("toy = new Toy ( )");
@@ -1474,6 +1565,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("toy.shape"), "CIRCLE");
     });
 
+    // Done
     it("creates else statement of property", () => {
       nucleoid.run("class Engine { }");
       nucleoid.run("engine1 = new Engine ( )");
@@ -1489,6 +1581,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("engine1.license"), "Berkeley Software Distribution");
     });
 
+    // Done
     it("creates else if statement of property", () => {
       nucleoid.run("class Contact { }");
       nucleoid.run("contact1 = new Contact ( )");
@@ -1504,6 +1597,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("contact1.full"), "F L");
     });
 
+    // Done
     it("creates multiple else if statement of property", () => {
       nucleoid.run("class Taxpayer { }");
       nucleoid.run("taxpayer1 = new Taxpayer ( )");
@@ -1519,6 +1613,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("taxpayer1.tax"), 13800);
     });
 
+    // Done
     it("updates property assignment", () => {
       nucleoid.run("class Matter { }");
       nucleoid.run("matter1 = new Matter ( )");
