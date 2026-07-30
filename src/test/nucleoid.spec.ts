@@ -365,6 +365,7 @@ describe("Nucleoid", () => {
       equal(list[0].score, 10);
     });
 
+    // Done
     it("supports nested functions as parameter in expression", () => {
       nucleoid.run("name = 'AbCDE'");
       nucleoid.run("pointer = 0");
@@ -389,6 +390,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("supports property of chained functions in expression", () => {
       nucleoid.run("class User { }");
       nucleoid.run("class Registration { }");

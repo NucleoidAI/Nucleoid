@@ -2595,6 +2595,110 @@ assert(message.pid, 1200)
 
 ---
 
+# Nucleoid supports nested functions as a parameter in an expression
+
+# name is "AbCDE"
+name = "AbCDE"
+
+# pointer is 0
+pointer = 0
+
+# if the character of name at pointer is not an uppercase letter,
+# then throw "INVALID_FIRST_CHARACTER"
+if not /[A-Z]/.test(name.charAt(pointer)):
+    raise "INVALID_FIRST_CHARACTER"
+
+try:
+    # name is "bbCDE"
+    name = "bbCDE"
+catch err:
+    assert(err, "INVALID_FIRST_CHARACTER")
+
+# name is "CbCDE"
+name = "CbCDE"
+
+try:
+    # pointer is 1
+    pointer = 1
+catch err:
+    assert(err, "INVALID_FIRST_CHARACTER")
+
+---
+
+# Nucleoid supports a property of chained functions in an expression
+
+# There is a User type
+class User:
+    pass
+
+# There is a Registration type
+class Registration:
+    pass
+
+# user1 is a User
+user1 = User()
+
+# registration1 is a Registration whose user is user1
+registration1 = Registration()
+registration1.user = user1
+
+# registration2 is a Registration whose user is user1
+registration2 = Registration()
+registration2.user = user1
+
+try:
+    # if the registrations whose user is any user number more than one,
+    # then throw "USER_ALREADY_REGISTERED"
+    if Registration.filter(r => r.user == $User).length > 1:
+        raise "USER_ALREADY_REGISTERED"
+catch err:
+    assert(err, "USER_ALREADY_REGISTERED")
+ 
+---
+
+# Nucleoid supports a property of chained functions in an expression
+
+# There is a User type
+class User:
+    pass
+
+# There is a Registration type
+class Registration:
+    pass
+
+# user1 is a User
+user1 = User()
+
+# registration1 is a Registration whose user is user1
+registration1 = Registration()
+registration1.user = user1
+
+# registration2 is a Registration whose user is user1
+registration2 = Registration()
+registration2.user = user1
+
+try:
+    # if the registrations whose user is any user number more than one,
+    # then throw "USER_ALREADY_REGISTERED"
+    if Registration.filter(r => r.user == $User).length > 1:
+        raise "USER_ALREADY_REGISTERED"
+catch err:
+    assert(err, "USER_ALREADY_REGISTERED")
+
+---
+
+# Nucleoid supports an array with brackets
+
+# states is a list of "NY", "GA", "CT" and "MI"
+states = ["NY", "GA", "CT", "MI"]
+
+# The value of states at index 2
+states[2]
+
+# return: "CT"
+
+---
+
 # Nucleoid creates a class assignment before initialization
 
 # There is a Review type
