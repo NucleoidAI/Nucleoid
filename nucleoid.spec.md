@@ -2304,6 +2304,297 @@ assert(alkalis.pop(), element1)
 
 ---
 
+# Nucleoid rejects a variable declaration without definition
+
+try:
+    # a is declared but not defined
+    a
+catch err:
+    assert(err, SyntaxError("Missing definition"))
+
+---
+
+# Nucleoid creates a dependency based on the length of an identifier
+
+# str1 is "ABC"
+str1 = "ABC"
+
+# i1 is str1's length plus 1
+i1 = str1.length + 1
+
+assert(i1, 4)
+
+# str1 is "ABCD"
+str1 = "ABCD"
+
+assert(i1, 5)
+
+# if str1's length is greater than 5, then i2 is i1
+if str1.length > 5:
+    i2 = i1
+
+# str1 is "ABCDEF"
+str1 = "ABCDEF"
+
+assert(i2, 7)
+
+---
+
+# Nucleoid adds a created class to the class list
+
+assert(Class.length, 0)
+
+# There is a Student type
+class Student:
+    pass
+
+assert(Class.length, 1)
+
+# There is a User type
+class User:
+    pass
+
+assert(Class.length, 2)
+
+---
+
+# Nucleoid updates a class definition
+
+# There is a Message type
+class Message:
+    pass
+
+# No message is read
+$Message.read = False
+
+# message1 is a Message
+message1 = Message()
+
+# There is a Message type,
+# which has a payload as a string
+class Message(payload: str):
+    self.payload = payload
+
+assert(message1.read, False)
+assert(message1.payload, None)
+
+# message2 is a Message whose payload is "MESSAGE"
+message2 = Message("MESSAGE")
+
+assert(message2.read, False)
+assert(message2.payload, "MESSAGE")
+
+---
+
+# Nucleoid supports a string in an expression
+
+assert('New String', "New String")
+assert("New String", "New String")
+assert(`New String`, "New String")
+
+# a is 123
+a = 123
+
+assert(`New ${a} String`, "New 123 String")
+
+---
+
+# Nucleoid supports logical operators
+
+# condition is false
+condition = False
+
+assert(condition or True, True)
+assert(condition || True, True)
+
+assert(not condition and True, True)
+assert(!condition && True, True)
+
+---
+
+# Nucleoid supports standard built-in objects
+
+# max is the maximum integer
+max = Number.MAX_INTEGER
+
+assert(max, 9007199254740991)
+
+# now is the current time
+now = Date.now()
+
+assert(now > 0, True)
+
+---
+
+# Nucleoid supports creating standard built-in objects
+
+# date is July 24, 2019
+date = Date("2019-7-24")
+
+assert(date.getYear(), 119)
+
+---
+
+# Nucleoid supports built-in objects
+
+# date1 is the current date
+date1 = Date()
+
+# date2 is a date whose time is date1's time
+date2 = Date(date1.getTime())
+
+assert(date1.getTime() == date2.getTime(), True)
+
+# date3 is the parsed date of "04 Dec 1995 00:12:00 GMT"
+date3 = Date.parse("04 Dec 1995 00:12:00 GMT")
+
+assert(date3, 818035920000)
+
+try:
+    # date4 is the wrong date
+    date4 = Date.wrong()
+catch err:
+    assert(err, TypeError("Date.wrong is not a function"))
+
+---
+
+# Nucleoid calls a function with no return
+
+# a is 1
+a = 1
+
+# copy assigns val to b
+def copy(val):
+    b = val
+
+# Call copy with a
+copy(a)
+
+# return: None
+
+---
+
+# Nucleoid calls a function with a return value
+
+# a is 1
+a = 1
+
+# copy assigns val to b and returns val
+def copy(val):
+    b = val
+    return val
+
+# Call copy with a
+copy(a)
+
+# return: 1
+
+---
+
+# Nucleoid supports a function in an expression
+
+# list is a list of 1, 2 and 3
+list = [1, 2, 3]
+
+assert(list.find(function(element) { return element == 3 }), 3)
+assert(list.find(element => { return element == 2 }), 2)
+assert(list.find(element => element == 1), 1)
+assert(list.find(element => (element == 1)), 1)
+
+---
+
+# Nucleoid supports a function with a parameter in an expression
+
+# samples is a list of 38.2, 39.1, 38.8 and 39
+samples = [38.2, 39.1, 38.8, 39]
+
+# ratio is 2.1
+ratio = 2.1
+
+# element is 38.5
+element = 38.5
+
+# The element parameter shadows the outer element in each function
+assert(samples.find(function(element) { result = element * ratio; return result == 81.48 }), 38.8)
+assert(samples.find(element => { result = element * ratio; return result == 81.48 }), 38.8)
+assert(samples.find(element => element == 38.8), 38.8)
+assert(samples.find(element => (element == 38.8)), 38.8)
+
+---
+
+# Nucleoid creates a variable statement with JSON
+
+# While in the block, payload is a local variable whose data is "TEST"
+# and whose nested data is "NESTED_TEST"
+{
+    payload = { "data": "TEST", "nested": { "data": "NESTED_TEST" } }
+    assert(payload.data, "TEST")
+    assert(payload.nested.data, "NESTED_TEST")
+}
+
+# message is an object whose pid is 1200
+message = { "pid": 1200 }
+
+assert(message.pid, 1200)
+
+# While in the block, scope is a local variable whose query is "test",
+# and i is a local variable whose test is scope's query
+{
+    scope = { "query": "test" }
+    i = { "test": scope.query }
+    assert(i.test, "test")
+}
+
+---
+
+# Nucleoid returns an inline JSON object
+
+# While in the block, return an object whose number is 123,
+# whose string is "ABC" and whose bool is true
+{
+    return { "number": 123, "string": "ABC", "bool": True }
+}
+
+# return: { "number": 123, "string": "ABC", "bool": True }
+
+---
+
+# Nucleoid returns an inline JSON array
+
+# While in the block, return a list of an object whose number is 123,
+# whose string is "ABC" and whose bool is true
+{
+    return [{ "number": 123, "string": "ABC", "bool": True }]
+}
+
+# return: [{ "number": 123, "string": "ABC", "bool": True }]
+
+---
+
+# Nucleoid returns an inline object
+
+# While in the block, return an object whose number is 123,
+# whose string is "ABC" and whose bool is true
+{
+    return { number: 123, string: "ABC", bool: True }
+}
+
+# return: { "number": 123, "string": "ABC", "bool": True }
+
+---
+
+# Nucleoid returns an inline array
+
+# While in the block, return a list of an object whose number is 123,
+# whose string is "ABC" and whose bool is true
+{
+    return [{ number: 123, string: "ABC", bool: True }]
+}
+
+# return: [{ "number": 123, "string": "ABC", "bool": True }]
+
+---
+
 # Nucleoid creates a class assignment before initialization
 
 # There is a Review type

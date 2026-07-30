@@ -32,7 +32,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("j + 2"), 3);
     });
 
-    // Skip
+    // Done
     it("rejects variable declaration without definition", () => {
       throws(
         () => nucleoid.run("var a"),
@@ -52,6 +52,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("au == 149597870700"), true);
     });
 
+    // Done
     it("creates dependency based on length of identifier", () => {
       nucleoid.run("str1 = 'ABC'");
       nucleoid.run("i1 = str1.length + 1");
@@ -114,7 +115,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("User.length"), 2);
     });
 
-    // Won't do
+    // Done
     it("adds created class in class list", () => {
       equal(nucleoid.run("classes.length"), 0);
 
@@ -125,7 +126,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("classes.length"), 2);
     });
 
-    // Skip
+    // Done
     it("updates class definition", () => {
       nucleoid.run("class Message { }");
       nucleoid.run("$Message.read = false");
@@ -156,7 +157,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("b"), 6);
     });
 
-    // Won't do
+    // Done
     it("supports string in expression", () => {
       equal(nucleoid.run("'New String'"), "New String");
       equal(nucleoid.run('"New String"'), "New String");
@@ -166,26 +167,26 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("`New ${a} String`"), "New 123 String");
     });
 
-    // Won't do
+    // Done
     it("supports logical operators", () => {
       nucleoid.run("condition = false");
       equal(nucleoid.run("condition || true"), true);
       equal(nucleoid.run("!condition && true"), true);
     });
 
-    // Skip
+    // Done
     it("supports standard built-in functions", () => {
       nucleoid.run("max = Number.MAX_SAFE_INTEGER");
       nucleoid.run("now = Date.now ( )");
     });
 
-    // Skip
+    // Done
     it("supports creating standard built-in objects", () => {
       nucleoid.run("date = new Date ( '2019-7-24' )");
       equal(nucleoid.run("date.getYear()"), 119);
     });
 
-    // Skip
+    // Done
     it("supports built-in objects", () => {
       const result = nucleoid.run("date1 = new Date ( )");
       nucleoid.run(`date2 = new Date ( ${result.getTime()} )`);
@@ -203,7 +204,7 @@ describe("Nucleoid", () => {
       );
     });
 
-    // Won't do
+    // Done
     it("calls function with no return", () => {
       nucleoid.run("a = 1");
       nucleoid.run("function copy ( val ) { b = val }");
@@ -219,7 +220,7 @@ describe("Nucleoid", () => {
       equal(result, 1);
     });
 
-    // Won't do
+    // Done
     it("calls function with returning value", () => {
       nucleoid.run("a = 1");
       nucleoid.run("function copy ( val ) { b = val; return val; }");
@@ -227,7 +228,7 @@ describe("Nucleoid", () => {
       equal(result, 1);
     });
 
-    // Won't do
+    // Done
     it("supports function in expression", () => {
       nucleoid.run("list = [1, 2, 3]");
       equal(
@@ -246,7 +247,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("list.find ( element => ( element == 1 ) )"), 1);
     });
 
-    // Won't do
+    // Done
     it("supports function with parameter in expression", () => {
       nucleoid.run("samples = [ 38.2 , 39.1 , 38.8 , 39 ]");
       nucleoid.run("ratio = 2.1");
@@ -272,8 +273,8 @@ describe("Nucleoid", () => {
       );
     });
 
-    // Skip
-    it("creates let statement with JSON", () => {
+    // Done
+    it("creates variable statement with JSON", () => {
       const payload = nucleoid.run(
         '{ let payload = { "data" : "TEST" , "nested" : { "data" : "NESTED_TEST" } } ; return payload }'
       );
@@ -289,7 +290,7 @@ describe("Nucleoid", () => {
       equal(i.test, "test");
     });
 
-    // Won't do
+    // Done
     it("returns inline JSON object", () => {
       const json = nucleoid.run(
         '{ return { "number" : 123 , "string" : "ABC" , "bool" : true } }'
@@ -297,7 +298,7 @@ describe("Nucleoid", () => {
       deepEqual(json, { number: 123, string: "ABC", bool: true });
     });
 
-    // Won't do
+    // Done
     it("returns inline JSON array", () => {
       const json = nucleoid.run(
         '{ return [ { "number" : 123 , "string" : "ABC" , "bool" : true } ] }'
@@ -305,7 +306,7 @@ describe("Nucleoid", () => {
       deepEqual(json, [{ number: 123, string: "ABC", bool: true }]);
     });
 
-    // Won't do
+    // Done
     it("returns inline object", () => {
       const object = nucleoid.run(
         '{ return { number : 123 , string : "ABC" , bool : true } }'
@@ -313,7 +314,7 @@ describe("Nucleoid", () => {
       deepEqual(object, { number: 123, string: "ABC", bool: true });
     });
 
-    // Won't do
+    // Done
     it("returns inline array", () => {
       const object = nucleoid.run(
         '{ return [ { number : 123 , string : "ABC" , bool : true } ] }'
