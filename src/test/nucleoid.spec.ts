@@ -52,7 +52,6 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("au == 149597870700"), true);
     });
 
-
     it("creates dependency based on length of identifier", () => {
       nucleoid.run("str1 = 'ABC'");
       nucleoid.run("i1 = str1.length + 1");
@@ -2299,11 +2298,13 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("Summary[1].type"), "DAILY");
     });
 
+    // Done
     it("returns integer in variable assignment", () => {
       nucleoid.run("function test ( a ) { return a = 2 }");
       equal(nucleoid.run("b = 1 ; test ( b )"), 2);
     });
 
+    // Done
     it("returns reference in variable assignment", () => {
       nucleoid.run("a = new Object ( )");
       nucleoid.run("c = 1");
@@ -2312,29 +2313,35 @@ describe("Nucleoid", () => {
       deepEqual(nucleoid.run("c"), 1);
     });
 
+    // Done
     it("returns string in variable assignment", () => {
       nucleoid.run("function test ( a ) { return a = 'abc' }");
       equal(nucleoid.run("b = 1 ; test ( b )"), "abc");
     });
 
+    // Done
     it("returns object in variable assignment", () => {
       nucleoid.run("function test ( a ) { return a = new Object ( ) }");
       deepEqual(nucleoid.run("b = 1 ; test ( b )"), {});
     });
 
+    // Done
     it("runs function with variable", () => {
       nucleoid.run("function test ( a ) { return a + 23 }");
       equal(nucleoid.run("let data = 'UUID-1' ; test ( data )"), "UUID-123");
     });
 
+    // Done
     it("returns first return statement", () => {
       equal(nucleoid.run("{ return 123 ; return 'abc' }"), 123);
     });
 
+    // Won't do
     it("returns undefined in class creation", () => {
       equal(nucleoid.run("class Test { }"), undefined);
     });
 
+    // Done
     it("returns object itself in object creation", () => {
       nucleoid.run("class Test { constructor ( prop ) { this.prop = prop } }");
       const object = nucleoid.run("new Test ( 123 )");

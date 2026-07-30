@@ -20,6 +20,17 @@ assert(j + 2, 3)
 
 ---
 
+# Nucleoid returns value of variable
+
+# k is 1
+k = 1
+
+k
+
+# return: 1
+
+---
+
 # Nucleoid throws an error if variable is not defined
 
 try:
@@ -3207,4 +3218,126 @@ $Summary.type = "WEEKLY"
 
 assert(Summary[0].type, "WEEKLY")
 assert(Summary[1].type, "WEEKLY")
+
+---
+
+# Nucleoid returns an integer in variable assignment
+
+# test assigns 2 to a and returns the value of the assignment
+def test(a):
+    return a = 2
+
+# b is 1
+b = 1
+
+# Call test with b
+test(b)
+
+# return: 2
+
+---
+
+# Nucleoid returns the reference of a function call
+
+# a is an Object
+a = Object()
+
+# c is 1
+c = 1
+
+# test assigns a to b and returns the value of the assignment
+def test(b):
+    return b = a
+
+assert(test(c), {})
+assert(c, 1)
+
+---
+
+# Nucleoid returns a string value of a function call
+
+# test assigns "abc" to a and returns the value of the assignment
+def test(a):
+    return a = "abc"
+
+# b is 1
+b = 1
+
+# Call test with b
+test(b)
+
+# return: "abc"
+
+---
+
+# Nucleoid returns an object value of a function call
+
+# test assigns an Object to a and returns the value of the assignment
+def test(a):
+    return a = Object()
+
+# b is 1
+b = 1
+
+# Call test with b
+test(b)
+
+# return: {}
+
+---
+
+# Nucleoid runs a function with a variable
+
+# test returns a plus 23
+def test(a):
+    return a + 23
+
+# data is "UUID-1"
+data = "UUID-1"
+
+# Call test with data
+test(data)
+
+# return: "UUID-123"
+
+---
+
+# Nucleoid returns the first return statement in a block
+
+# While in the block, return 123, and return "abc"
+{
+    return 123
+    return "abc"
+}
+
+# return: 123
+
+---
+
+# Nucleoid returns the instance itself in instance creation
+
+# There is a Test type,
+# which has a prop as a number
+class Test(prop: int):
+    self.prop = prop
+
+# There is a Test whose prop is 123
+Test(123)
+
+assert(Test[0].prop, 123)
+assert(Test[0].id != None, True)
+
+---
+
+# Nucleoid returns the instance itself in instance creation
+
+# There is a Test type,
+# which has a prop as a number
+class Test(prop: int):
+    self.prop = prop
+
+# There is a Test whose prop is 123
+Test(123)
+
+# return: { "id": ..., "prop": 123 }
 ```
