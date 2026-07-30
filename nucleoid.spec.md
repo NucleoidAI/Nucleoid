@@ -1809,4 +1809,1402 @@ assert(matter1.weight, 37)
 matter1.mass = 20
 
 assert(matter1.weight, 74)
+
+---
+
+# Nucleoid deletes an instance
+
+# There is a Circle type
+class Circle:
+    pass
+
+# circle1 is a Circle
+circle1 = Circle()
+
+# circle1 is deleted
+delete circle1
+
+assert(Circle["circle1"], None)
+assert(Circle.find(circle => circle.id == "circle1"), None)
+
+try:
+    # circle1
+    circle1
+catch err:
+    assert(err, ReferenceError("circle1 is not defined"))
+
+---
+
+# Nucleoid deletes an instance by reference
+
+# There is an Item type
+class Item:
+    pass
+
+# item1 is an Item
+item1 = Item()
+
+# item2 is an Item
+item2 = Item()
+
+assert(Item["item1"], { "id": "item1" })
+
+# The Item whose id is "item1" is deleted
+delete Item["item1"]
+
+assert(Item["item1"], None)
+assert(Item["item2"], { "id": "item2" })
+
+# While in the block, item is a local variable that is "item2",
+# and the Item whose id is item is deleted
+{
+    item = "item2"
+    delete Item[item]
+}
+
+assert(Item["item2"], None)
+
+---
+
+# Nucleoid returns a boolean when deleting an object
+
+# There is a Location type
+class Location:
+    pass
+
+# location1 is a Location
+location1 = Location()
+
+# Deleting location1 returns true
+assert(delete location1, True)
+
+# Deleting location2, which is not defined, returns false
+assert(delete location2, False)
+
+---
+
+# Nucleoid rejects deleting an instance if it has any properties
+
+# There is a Channel type
+class Channel:
+    pass
+
+# channel1 is a Channel
+channel1 = Channel()
+
+# channel1's frequency is 440
+channel1.frequency = 440
+
+try:
+    # channel1 is deleted
+    delete channel1
+catch err:
+    assert(err, ReferenceError("Cannot delete object 'channel1'"))
+
+assert(channel1.frequency, 440)
+
+# channel1's frequency is deleted
+delete channel1.frequency
+
+# channel1 is deleted
+delete channel1
+
+assert(Channel["channel1"], None)
+
+---
+
+# Nucleoid rejects deleting an instance if it has an object as a property
+
+# There is a Shape type
+class Shape:
+    pass
+
+# There is a Type type
+class Type:
+    pass
+
+# shape1 is a Shape
+shape1 = Shape()
+
+# shape1's type is a Type
+shape1.type = Type()
+
+try:
+    # shape1 is deleted
+    delete shape1
+catch err:
+    assert(err, ReferenceError("Cannot delete object 'shape1'"))
+
+# shape1's type is deleted
+delete shape1.type
+
+# shape1 is deleted
+delete shape1
+
+assert(Shape["shape1"], None)
+
+---
+
+# Nucleoid deletes a property assignment
+
+# There is an Agent type
+class Agent:
+    pass
+
+# agent is an Agent
+agent = Agent()
+
+# agent's time is 52926163455
+agent.time = 52926163455
+
+# agent's location is "CITY"
+agent.location = "CITY"
+
+# agent's report is agent's time plus "@" plus agent's location
+agent.report = agent.time + "@" + agent.location
+
+assert(agent.report, "52926163455@CITY")
+
+# agent's time is deleted
+delete agent.time
+
+assert(agent.report, None)
+
+# agent's report is deleted
+delete agent.report
+
+assert(agent.report, None)
+
+---
+
+# Nucleoid runs a block statement of property
+
+# There is an Item type
+class Item:
+    pass
+
+# item1 is an Item
+item1 = Item()
+
+# item1's sku is "0000001"
+item1.sku = "0000001"
+
+# while in the block, custom is a local variable that is "US" plus item1's sku,
+# and item1's custom is custom
+{
+    custom = "US" + item1.sku
+    item1.custom = custom
+}
+
+assert(item1.custom, "US0000001")
+
+# item1's sku is "0000002"
+item1.sku = "0000002"
+
+assert(item1.custom, "US0000002")
+
+# Nucleoid runs a nested block statement of property
+
+# There is a Figure type
+class Figure:
+    pass
+
+# figure1 is a Figure
+figure1 = Figure()
+
+# figure1's width is 9
+figure1.width = 9
+
+# figure1's height is 10
+figure1.height = 10
+
+# while in the block, base is a local variable that is figure1's width squared,
+# and in a nested block, figure1's volume is base times figure1's height
+{
+    base = Math.pow(figure1.width, 2)
+    {
+        figure1.volume = base * figure1.height
+    }
+}
+
+assert(figure1.volume, 810)
+
+# figure1's height is 9
+figure1.height = 9
+
+assert(figure1.volume, 729)
+
+---
+
+# Nucleoid runs a nested if statement of property
+
+# There is a Sale type
+class Sale:
+    pass
+
+# sale1 is a Sale
+sale1 = Sale()
+
+# sale1's price is 50
+sale1.price = 50
+
+# sale1's quantity is 2
+sale1.quantity = 2
+
+# while in the block, amount is a local variable that is sale1's price times sale1's quantity,
+# and if amount is greater than 100, then sale1's tax is amount times 10 divided by 100
+{
+    amount = sale1.price * sale1.quantity
+    if amount > 100:
+        sale1.tax = amount * 10 / 100
+}
+
+assert(sale1.tax, None)
+
+# sale1's quantity is 3
+sale1.quantity = 3
+
+assert(sale1.tax, 15)
+
+---
+
+# Nucleoid creates a nested else statement of property
+
+# There is a Chart type
+class Chart:
+    pass
+
+# chart1 is a Chart
+chart1 = Chart()
+
+# chart1's percentage is 1
+chart1.percentage = 1
+
+# invalid is "INVALID"
+invalid = "INVALID"
+
+# valid is "VALID"
+valid = "VALID"
+
+# while in the block, ratio is a local variable that is chart1's percentage divided by 100,
+# and if ratio is greater than 1, then chart1's status is invalid,
+# else chart1's status is valid
+{
+    ratio = chart1.percentage / 100
+    if ratio > 1:
+        chart1.status = invalid
+    else:
+        chart1.status = valid
+}
+
+assert(chart1.status, "VALID")
+
+# valid is "V"
+valid = "V"
+
+assert(chart1.status, "V")
+
+---
+
+# Nucleoid creates a property assignment with multiple properties
+
+# There is a Person type
+class Person:
+    pass
+
+# person1 is a Person
+person1 = Person()
+
+# There is an Address type
+class Address:
+    pass
+
+# address1 is an Address
+address1 = Address()
+
+# Any address's print is the address's city plus ", " plus the address's state
+$Address.print = $Address.city + ", " + $Address.state
+
+# person1's address is an Address
+person1.address = Address()
+
+# person1's address's city is "Syracuse"
+person1.address.city = "Syracuse"
+
+# person1's address's state is "NY"
+person1.address.state = "NY"
+
+assert(person1.address.print, "Syracuse, NY")
+
+---
+
+# Nucleoid creates a property assignment with multiple properties as part of a declaration
+
+# There is a Server type
+class Server:
+    pass
+
+# server1 is a Server
+server1 = Server()
+
+# server1's name is "HOST1"
+server1.name = "HOST1"
+
+# There is an IP type
+class IP:
+    pass
+
+# ip1 is an IP
+ip1 = IP()
+
+# server1's ip is ip1
+server1.ip = ip1
+
+# ip1's address is "10.0.0.1"
+ip1.address = "10.0.0.1"
+
+# server1's summary is server1's name plus "@" plus server1's ip's address
+server1.summary = server1.name + "@" + server1.ip.address
+
+assert(server1.summary, "HOST1@10.0.0.1")
+
+# ip1's address is "10.0.0.2"
+ip1.address = "10.0.0.2"
+
+assert(server1.summary, "HOST1@10.0.0.2")
+
+---
+
+# Nucleoid creates a dependency on behalf if a property has a reference
+
+# There is a Schedule type
+class Schedule:
+    pass
+
+# schedule1 is a Schedule
+schedule1 = Schedule()
+
+# There is a Template type
+class Template:
+    pass
+
+# template1 is a Template
+template1 = Template()
+
+# template1's type is "W"
+template1.type = "W"
+
+# schedule1's template is template1
+schedule1.template = template1
+
+# schedule1's template's name is schedule1's template's type plus "-0001"
+schedule1.template.name = schedule1.template.type + "-0001"
+
+assert(template1.name, "W-0001")
+assert(schedule1.template.name, "W-0001")
+
+# template1's type is "D"
+template1.type = "D"
+
+assert(template1.name, "D-0001")
+
+# template1's shape is template1's type plus "-Form"
+template1.shape = template1.type + "-Form"
+
+assert(template1.shape, "D-Form")
+assert(schedule1.template.shape, "D-Form")
+
+# template1's type is "C"
+template1.type = "C"
+
+assert(template1.shape, "C-Form")
+assert(schedule1.template.shape, "C-Form")
+
+---
+
+# Nucleoid creates a dependency on behalf if a local variable has a reference
+
+# There is a Vote type
+class Vote:
+    pass
+
+# vote1 is a Vote whose rate is 4
+vote1 = Vote()
+vote1.rate = 4
+
+# There is a Question type
+class Question:
+    pass
+
+# Any question's rate is 0
+$Question.rate = 0
+
+# Any question's count is 0
+$Question.count = 0
+
+# question1 is a Question
+question1 = Question()
+
+# vote1's question is question1
+vote1.question = question1
+
+# While in the block, question is vote1's question,
+# and question's rate is question's rate times question's count plus vote1's rate,
+# divided by question's count plus 1,
+# and question's count is question's count plus 1
+{
+    question = vote1.question
+    question.rate = (question.rate * question.count + vote1.rate) / (question.count + 1)
+    question.count = question.count + 1
+}
+
+assert(question1.rate, 4)
+assert(question1.count, 1)
+
+# vote1's rate is 5
+vote1.rate = 5
+
+assert(question1.rate, 4.5)
+
+---
+
+# Nucleoid runs an expression statement of class
+
+# There is an Element type
+class Element:
+    pass
+
+# alkalis is an empty list
+alkalis = []
+
+# element1 is an Element whose number is 3
+element1 = Element()
+element1.number = 3
+
+# While in the block, number is any element's number,
+# and if number is 3, then the element is added to alkalis
+{
+    number = $Element.number
+    if number == 3:
+        alkalis.push($Element)
+}
+
+assert(alkalis.pop(), element1)
+
+---
+
+# Nucleoid creates a class assignment before initialization
+
+# There is a Review type
+class Review:
+    pass
+
+# Any review's rate is the review's sum divided by 10
+$Review.rate = $Review.sum / 10
+
+# review1 is a Review
+review1 = Review()
+
+assert(review1.rate, None)
+
+# review1's sum is 42
+review1.sum = 42
+
+assert(review1.rate, 4.2)
+
+---
+
+# Nucleoid creates a class assignment after initialization
+
+# There is a Shape type
+class Shape:
+    pass
+
+# shape1 is a Shape whose edge is 3
+shape1 = Shape()
+shape1.edge = 3
+
+# shape2 is a Shape whose edge is 3
+shape2 = Shape()
+shape2.edge = 3
+
+# Any shape's angle is the shape's edge minus 2, times 180
+$Shape.angle = ($Shape.edge - 2) * 180
+
+assert(shape1.angle, 180)
+assert(shape2.angle, 180)
+
+# shape1's edge is 4
+shape1.edge = 4
+
+assert(shape1.angle, 360)
+assert(shape2.angle, 180)
+
+---
+
+# Nucleoid updates a class assignment
+
+# There is an Employee type
+class Employee:
+    pass
+
+# employee1 is an Employee whose id is 1
+employee1 = Employee()
+employee1.id = 1
+
+# Any employee's username is "E" plus the employee's id
+$Employee.username = "E" + $Employee.id
+
+assert(employee1.username, "E1")
+
+# Any employee's username is "F" plus the employee's id
+$Employee.username = "F" + $Employee.id
+
+assert(employee1.username, "F1")
+
+# employee1's id is 2
+employee1.id = 2
+
+assert(employee1.username, "F2")
+
+---
+
+# Nucleoid creates an if statement of class before initialization
+
+# There is a Ticket type
+class Ticket:
+    pass
+
+# Any ticket whose date is after January 1, 1993 is expired
+if $Ticket.date > Date("1993-1-1"):
+    $Ticket.status = "EXPIRED"
+
+# ticket1 is a Ticket
+ticket1 = Ticket()
+
+assert(ticket1.status, None)
+
+# ticket1's date is February 1, 1993
+ticket1.date = Date("1993-2-1")
+
+assert(ticket1.status, "EXPIRED")
+
+# ticket2 is a Ticket
+ticket2 = Ticket()
+
+assert(ticket2.status, None)
+
+---
+
+# Nucleoid creates an if statement of class after initialization
+
+# There is a Student type
+class Student:
+    pass
+
+# student1 is a Student whose age is 2 and whose class is "Daycare"
+student1 = Student()
+student1.age = 2
+student1.class = "Daycare"
+
+# student2 is a Student whose age is 2 and whose class is "Daycare"
+student2 = Student()
+student2.age = 2
+student2.class = "Daycare"
+
+# Any student whose age is 3 is in Preschool
+if $Student.age == 3:
+    $Student.class = "Preschool"
+
+assert(student1.class, "Daycare")
+assert(student2.class, "Daycare")
+
+# student1's age is 3
+student1.age = 3
+
+assert(student1.class, "Preschool")
+assert(student2.class, "Daycare")
+
+---
+
+# Nucleoid updates an if block of class
+
+# There is an Inventory type
+class Inventory:
+    pass
+
+# inventory1 is an Inventory whose quantity is 0
+inventory1 = Inventory()
+inventory1.quantity = 0
+
+# inventory2 is an Inventory whose quantity is 1000
+inventory2 = Inventory()
+inventory2.quantity = 1000
+
+# Any inventory whose quantity is 0 needs replenishment
+if $Inventory.quantity == 0:
+    $Inventory.replenishment = True
+
+assert(inventory1.replenishment, True)
+assert(inventory2.replenishment, None)
+
+# Any inventory whose quantity is 0 does not need replenishment
+if $Inventory.quantity == 0:
+    $Inventory.replenishment = False
+
+assert(inventory1.replenishment, False)
+assert(inventory2.replenishment, None)
+
+---
+
+# Nucleoid creates an else statement of class before initialization
+
+# There is a Count type
+class Count:
+    pass
+
+# If any count's max is greater than 1000, then the count's reset is urgent,
+# else the count's reset is regular
+if $Count.max > 1000:
+    $Count.reset = urgent
+else:
+    $Count.reset = regular
+
+# urgent is "URGENT"
+urgent = "URGENT"
+
+# regular is "REGULAR"
+regular = "REGULAR"
+
+# count1 is a Count
+count1 = Count()
+
+# count1's max is 850
+count1.max = 850
+
+assert(count1.reset, "REGULAR")
+
+# regular is "R"
+regular = "R"
+
+assert(count1.reset, "R")
+
+---
+
+# Nucleoid creates an else statement of class after initialization
+
+# There is a Concentration type
+class Concentration:
+    pass
+
+# serialDilution is "(c1V1+c2V2)/(V1+V2)"
+serialDilution = "(c1V1+c2V2)/(V1+V2)"
+
+# directDilution is "c1/V1"
+directDilution = "c1/V1"
+
+# concentration1 is a Concentration whose substances is 2
+concentration1 = Concentration()
+concentration1.substances = 2
+
+# If any concentration's substances is 1, then the concentration's formula is directDilution,
+# else the concentration's formula is serialDilution
+if $Concentration.substances == 1:
+    $Concentration.formula = directDilution
+else:
+    $Concentration.formula = serialDilution
+
+assert(concentration1.formula, "(c1V1+c2V2)/(V1+V2)")
+
+# serialDilution is "(c1V1+c2V2+c3V3)/(V1+V2+V3)"
+serialDilution = "(c1V1+c2V2+c3V3)/(V1+V2+V3)"
+
+assert(concentration1.formula, "(c1V1+c2V2+c3V3)/(V1+V2+V3)")
+
+---
+
+# Nucleoid creates an else if statement of class before initialization
+
+# There is a Storage type
+class Storage:
+    pass
+
+# normal is "NORMAL", and low is "LOW"
+normal = "NORMAL"; low = "LOW"
+
+# If any storage's capacity is greater than 25, then the storage's status is normal,
+# else the storage's status is low
+if $Storage.capacity > 25:
+    $Storage.status = normal
+else:
+    $Storage.status = low
+
+# storage1 is a Storage
+storage1 = Storage()
+
+# storage1's capacity is 23
+storage1.capacity = 23
+
+assert(storage1.status, "LOW")
+
+# low is "L"
+low = "L"
+
+assert(storage1.status, "L")
+
+---
+
+# Nucleoid creates an else if statement of class after initialization
+
+# There is a Registration type
+class Registration:
+    pass
+
+# yes is "YES", and no is "NO"
+yes = "YES"; no = "NO"
+
+# registration1 is a Registration whose available is 0
+registration1 = Registration()
+registration1.available = 0
+
+# If any registration's available is greater than 0, then the registration's accepted is yes,
+# else the registration's accepted is no
+if $Registration.available > 0:
+    $Registration.accepted = yes
+else:
+    $Registration.accepted = no
+
+assert(registration1.accepted, "NO")
+
+# yes is true, and no is false
+yes = True; no = False
+
+assert(registration1.accepted, False)
+
+---
+
+# Nucleoid creates multiple else if statement of class before initialization
+
+# There is a Capacity type
+class Capacity:
+    pass
+
+# If any capacity's spare divided by the capacity's available is greater than 0.5,
+# then the capacity's total is the capacity's available plus the capacity's spare,
+# else if any capacity's spare divided by the capacity's available is greater than 0.1,
+# then the capacity's total is the capacity's available plus the capacity's spare times 2,
+# else the capacity's total is the capacity's available plus the capacity's spare times 3
+if $Capacity.spare / $Capacity.available > 0.5:
+    $Capacity.total = $Capacity.available + $Capacity.spare
+elif $Capacity.spare / $Capacity.available > 0.1:
+    $Capacity.total = $Capacity.available + $Capacity.spare * 2
+else:
+    $Capacity.total = $Capacity.available + $Capacity.spare * 3
+
+# capacity1 is a Capacity
+capacity1 = Capacity()
+
+# capacity1's available is 100
+capacity1.available = 100
+
+# capacity1's spare is 5
+capacity1.spare = 5
+
+assert(capacity1.total, 115)
+
+# capacity1's spare is 1
+capacity1.spare = 1
+
+assert(capacity1.total, 103)
+
+---
+
+# Nucleoid creates multiple else if statement of class after initialization
+
+# There is a Shape type
+class Shape:
+    pass
+
+# shape1 is a Shape whose type is "RECTANGLE",
+# whose x is 5 and whose y is 6
+shape1 = Shape()
+shape1.type = "RECTANGLE"
+shape1.x = 5
+shape1.y = 6
+
+# If any shape's type is "SQUARE", then the shape's area is the shape's x squared,
+# else if any shape's type is "TRIANGLE", then the shape's area is the shape's x times the shape's y divided by 2,
+# else the shape's area is the shape's x times the shape's y
+if $Shape.type == "SQUARE":
+    $Shape.area = Math.pow($Shape.x, 2)
+elif $Shape.type == "TRIANGLE":
+    $Shape.area = $Shape.x * $Shape.y / 2
+else:
+    $Shape.area = $Shape.x * $Shape.y
+
+assert(shape1.area, 30)
+
+# shape1's x is 7
+shape1.x = 7
+
+assert(shape1.area, 42)
+
+---
+
+# Nucleoid runs a block statement of class before initialization
+
+# There is a Stock type
+class Stock:
+    pass
+
+# while in the block, change is a local variable that is any stock's before times 4 divided by 100,
+# and the stock's after is the stock's before plus change
+{
+    change = $Stock.before * 4 / 100
+    $Stock.after = $Stock.before + change
+}
+
+# stock1 is a Stock
+stock1 = Stock()
+
+assert(stock1.after, None)
+
+# stock1's before is 57.25
+stock1.before = 57.25
+
+assert(stock1.after, 59.54)
+
+# stock1's before is 59.5
+stock1.before = 59.5
+
+assert(stock1.after, 61.88)
+
+---
+
+# Nucleoid runs a block statement of class after initialization
+
+# There is a Purchase type
+class Purchase:
+    pass
+
+# purchase1 is a Purchase whose price is 99
+purchase1 = Purchase()
+purchase1.price = 99
+
+# while in the block, retail is a local variable that is any purchase's price times 1.15,
+# and the purchase's retail price is retail
+{
+    retail = $Purchase.price * 1.15
+    $Purchase.retailPrice = retail
+}
+
+assert(purchase1.retailPrice, 113.85)
+
+# purchase1's price is 199
+purchase1.price = 199
+
+assert(purchase1.retailPrice, 228.85)
+
+---
+
+# Nucleoid runs a nested block statement of class before initialization
+
+# There is a Compound type
+class Compound:
+    pass
+
+# while in the block, mol is a local variable that is 69.94 divided by any compound's substance,
+# and in a nested block, the compound's sample is the floor of mol times the compound's mol
+{
+    mol = 69.94 / $Compound.substance
+    {
+        $Compound.sample = Math.floor(mol * $Compound.mol)
+    }
+}
+
+# compound1 is a Compound
+compound1 = Compound()
+
+# compound1's substance is 55.85
+compound1.substance = 55.85
+
+# compound1's mol is 1000
+compound1.mol = 1000
+
+assert(compound1.sample, 1252)
+
+---
+
+# Nucleoid runs a nested block statement of class after initialization
+
+# There is a Bug type
+class Bug:
+    pass
+
+# bug1 is a Bug whose initial score is 1000
+# and whose aging is 24
+bug1 = Bug()
+bug1.initialScore = 1000
+bug1.aging = 24
+
+# while in the block, score is a local variable that is any bug's aging times 10,
+# and in a nested block, the bug's priority score is score plus the bug's initial score
+{
+    score = $Bug.aging * 10
+    {
+        $Bug.priorityScore = score + $Bug.initialScore
+    }
+}
+
+assert(bug1.priorityScore, 1240)
+
+---
+
+# Nucleoid runs a nested if statement of class before initialization
+
+# There is a Mortgage type
+class Mortgage:
+    pass
+
+# rate1 is "EXCEPTIONAL"
+rate1 = "EXCEPTIONAL"
+
+# while in the block, interest is a local variable that is any mortgage's annual divided by 12,
+# and if interest is less than 4, then the mortgage's rate is rate1
+{
+    interest = $Mortgage.annual / 12
+    if interest < 4:
+        $Mortgage.rate = rate1
+}
+
+# mortgage1 is a Mortgage
+mortgage1 = Mortgage()
+
+# mortgage1's annual is 46
+mortgage1.annual = 46
+
+assert(mortgage1.rate, "EXCEPTIONAL")
+
+# rate1 is "E"
+rate1 = "E"
+
+assert(mortgage1.rate, "E")
+
+---
+
+# Nucleoid runs a nested if statement of class after initialization
+
+# There is a Building type
+class Building:
+    pass
+
+# buildingType1 is "SKYSCRAPER"
+buildingType1 = "SKYSCRAPER"
+
+# building1 is a Building whose floors is 20
+building1 = Building()
+building1.floors = 20
+
+# while in the block, height is a local variable that is any building's floors times 14,
+# and if height is greater than 330, then the building's type is buildingType1
+{
+    height = $Building.floors * 14
+    if height > 330:
+        $Building.type = buildingType1
+}
+
+assert(building1.type, None)
+
+# building1's floors is 25
+building1.floors = 25
+
+assert(building1.type, "SKYSCRAPER")
+
+# buildingType1 is "S"
+buildingType1 = "S"
+
+assert(building1.type, "S")
+
+---
+
+# Nucleoid creates a nested else statement of class before initialization
+
+# There is an Account type
+class Account:
+    pass
+
+# noAlert is "NO_ALERT"
+noAlert = "NO_ALERT"
+
+# lowAlert is "LOW_ALERT"
+lowAlert = "LOW_ALERT"
+
+# while in the block, balance is a local variable that is any account's balance,
+# and if balance is greater than 1000, then the account's alert is noAlert,
+# else the account's alert is lowAlert
+{
+    balance = $Account.balance
+    if balance > 1000:
+        $Account.alert = noAlert
+    else:
+        $Account.alert = lowAlert
+}
+
+# account1 is an Account
+account1 = Account()
+
+# account1's balance is 950
+account1.balance = 950
+
+assert(account1.alert, "LOW_ALERT")
+
+# lowAlert is "L"
+lowAlert = "L"
+
+assert(account1.alert, "L")
+
+---
+
+# Nucleoid creates a nested else statement of class after initialization
+
+# There is a Question type
+class Question:
+    pass
+
+# high is "HIGH"
+high = "HIGH"
+
+# low is "LOW"
+low = "LOW"
+
+# question1 is a Question whose count is 1
+question1 = Question()
+question1.count = 1
+
+# while in the block, score is a local variable that is any question's count times 10,
+# and if score is greater than 100, then the question's type is high,
+# else the question's type is low
+{
+    score = $Question.count * 10
+    if score > 100:
+        $Question.type = high
+    else:
+        $Question.type = low
+}
+
+assert(question1.type, "LOW")
+
+# low is "L"
+low = "L"
+
+assert(question1.type, "L")
+
+# question1's count is 11
+question1.count = 11
+
+assert(question1.type, "HIGH")
+
+---
+
+# Nucleoid creates a class assignment with multiple properties before declaration
+
+# There is a Room type
+class Room:
+    pass
+
+# Any room's level is the room's number divided by 10
+$Room.level = $Room.number / 10
+
+# There is a Guest type
+class Guest:
+    pass
+
+# Any guest's room is a Room
+$Guest.room = Room()
+
+# guest1 is a Guest
+guest1 = Guest()
+
+# guest1's room's number is 30
+guest1.room.number = 30
+
+assert(guest1.room.level, 3)
+
+# guest2 is a Guest
+guest2 = Guest()
+
+assert(guest2.room.number, 30)
+assert(guest2.room.level, 3)
+
+---
+
+# Nucleoid creates a class assignment with multiple properties after declaration
+
+# There is a Channel type
+class Channel:
+    pass
+
+# There is a Frequency type
+class Frequency:
+    pass
+
+# channel1 is a Channel
+channel1 = Channel()
+
+# Any channel's frequency is a Frequency
+$Channel.frequency = Frequency()
+
+# Any frequency's hertz is 1 divided by the frequency's period
+$Frequency.hertz = 1 / $Frequency.period
+
+assert(channel1.frequency.hertz, None)
+
+# channel1's frequency's period is 0.0025
+channel1.frequency.period = 0.0025
+
+assert(channel1.frequency.hertz, 400)
+
+# channel2 is a Channel
+channel2 = Channel()
+
+assert(channel2.frequency.period, 0.0025)
+assert(channel2.frequency.hertz, 400)
+
+---
+
+# Nucleoid creates a class assignment as multiple properties as part of a declaration before initialization
+
+# There is a Hospital type
+class Hospital:
+    pass
+
+# There is a Clinic type
+class Clinic:
+    pass
+
+# Any hospital's clinic is a Clinic
+$Hospital.clinic = Clinic()
+
+# Any hospital's patients is the hospital's clinic's beds times 746
+$Hospital.patients = $Hospital.clinic.beds * 746
+
+# hospital1 is a Hospital
+hospital1 = Hospital()
+
+assert(hospital1.patients, None)
+
+# hospital1's clinic's beds is 2678
+hospital1.clinic.beds = 2678
+
+assert(hospital1.patients, 1997788)
+
+# hospital1's clinic's beds is 3000
+hospital1.clinic.beds = 3000
+
+assert(hospital1.patients, 2238000)
+
+---
+
+# Nucleoid creates a class assignment as multiple properties as part of a declaration after initialization
+
+# There is a Server type
+class Server:
+    pass
+
+# There is an OS type
+class OS:
+    pass
+
+# Any server's os is an OS
+$Server.os = OS()
+
+# server1 is a Server
+server1 = Server()
+
+# server1's os's version is 14
+server1.os.version = 14
+
+# Any server's build is the server's os's version plus ".526291"
+$Server.build = $Server.os.version + ".526291"
+
+assert(server1.build, "14.526291")
+
+# server1's os's version is 15
+server1.os.version = 15
+
+assert(server1.build, "15.526291")
+
+---
+
+# Nucleoid creates a class assignment only if the instance is defined
+
+# There is a Phone type
+class Phone:
+    pass
+
+try:
+    # any phone's line's wired is true
+    $Phone.line.wired = True
+catch err:
+    assert(err, ReferenceError("Phone.line is not defined"))
+
+---
+
+# Nucleoid creates a for of statement
+
+# There is a Question type,
+# which has a rate as a number
+class Question(rate: int):
+    self.rate = rate
+
+# question1 is a Question whose rate is 4
+question1 = Question(4)
+
+# question2 is a Question whose rate is 5
+question2 = Question(5)
+
+# There is a Summary type,
+# which has a question as a Question
+class Summary(question):
+    self.question = question
+
+# Any summary's rate is the value of the summary's question's rate
+$Summary.rate = $Summary.question.rate.value
+
+# For each question of Question, there is a Summary whose question is the question
+for question of Question:
+    Summary(question)
+
+assert(Summary[0].rate, 4)
+assert(Summary[1].rate, 5)
+
+---
+
+# Nucleoid creates a block of for statement without dependencies
+
+# There is an Item type
+class Item:
+    pass
+
+# item1 is an Item
+item1 = Item()
+
+# item2 is an Item
+item2 = Item()
+
+# VALUE is 10
+VALUE = 10
+
+# For each item of Item, while in the block, i is a local variable that is 10 times VALUE,
+# and the item's score is i
+for item of Item:
+    i = 10 * VALUE
+    item.score = i
+
+# VALUE is 20
+VALUE = 20
+
+assert(item1.score, 100)
+assert(item2.score, 100)
+
+# For each item of Item, while in the block, i is a local variable that is 10 times VALUE,
+# and the item's score is i
+for item of Item:
+    i = 10 * VALUE
+    item.score = i
+
+assert(item1.score, 200)
+assert(item2.score, 200)
+
+# item3 is an Item
+item3 = Item()
+
+assert(item3.score, None)
+
+---
+
+# Nucleoid loops through only defined objects in a for of statement
+
+# array is an empty list
+array = []
+
+# There is an Item type
+class Item:
+    pass
+
+# item1 is an Object, and item1 is added to array
+item1 = Object()
+array.push(item1)
+
+# item2 is an object whose id is "item3", and item2 is added to array
+item2 = { "id": "item3" }
+array.push(item2)
+
+# item4 is an Item, and item4 is added to array
+item4 = Item()
+array.push(item4)
+
+# item5 is an object whose id is "item4", and item5 is added to array
+item5 = { "id": "item4" }
+array.push(item5)
+
+# count is 0
+count = 0
+
+# items is an empty list
+items = []
+
+# For each item of array, count is count plus 1,
+# and the item is added to items
+for item of array:
+    count = count + 1
+    items.push(item)
+
+assert(count, 1)
+assert(items.length, 1)
+assert(items[0], item4)
+
+---
+
+# Nucleoid supports an if statement in a for of statement
+
+# There is a Question type
+class Question:
+    pass
+
+# question1 is a Question
+question1 = Question()
+
+# question2 is a Question, which is archived
+question2 = Question()
+question2.archived = True
+
+# question3 is a Question
+question3 = Question()
+
+# There is a Summary type,
+# which has a question as a Question
+class Summary(question):
+    self.question = question
+
+# Any summary's type is "DAILY"
+$Summary.type = "DAILY"
+
+# For each question of Question, if the question is not archived,
+# then there is a Summary whose question is the question
+for question of Question:
+    if not question.archived:
+        Summary(question)
+
+assert(Summary.length, 2)
+assert(Summary[0].question.id, "question1")
+assert(Summary[1].question.id, "question3")
+assert(Summary[0].type, "DAILY")
+assert(Summary[1].type, "DAILY")
+
+# Any summary's type is "WEEKLY"
+$Summary.type = "WEEKLY"
+
+assert(Summary[0].type, "WEEKLY")
+assert(Summary[1].type, "WEEKLY")
 ```
