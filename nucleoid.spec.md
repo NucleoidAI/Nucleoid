@@ -1,8 +1,9 @@
-```
-Nucleoid Language Reference
+# Nucleoid Language Reference
 
 Project: Nucleoid is a Logic Programming Language for LLMs
 Syntax: Minimum tokenized syntax with flexible grammar, which is a superset of Python, JavaScript/TypeScript, Kotlin, Go, Rust, Java, C# and C/C++.
+
+```
 
 # Nucleoid runs a statement in the state
 
@@ -85,7 +86,7 @@ catch error:
 class Shape(self, type: str):
     this.type = type
 
-# shape1 is a Person whose type is "Square"
+# shape1 is a Shape whose type is "Square"
 shape1 = Shape("Square")
 
 assert(shape1, { "id": "shape1", "type": "Square" })
@@ -99,7 +100,7 @@ assert(shape1, { "id": "shape1", "type": "Square" })
 class Shape:
     type: str
 
-    def init(self, type: str):
+    def init(type: str):
         this.type = type
 
 # shape1 is a Shape whose type is "Rectangle"
@@ -139,6 +140,9 @@ assert(User.length, 1)
 class User:
     pass
 
+assert(classes.length, 1)
+assert(User.length, 1)
+
 # There is a User
 User()
 
@@ -173,8 +177,8 @@ class Person(name: str):
 # which is a subtype of Person.
 # and has a school as a string
 class Student: Person
-    def init(self, name, school):
-		    super(name)
+    def init(name, school):
+        super(name)
         this.name = name
         this.school = school
 
@@ -311,7 +315,7 @@ assert(equivalency, 40)
 
 ---
 
-# Nucleoid runs a let statement as a standard built-in object
+# Nucleoid creates a standard built-in object as a local variable inside a block
 
 # while in the block, f is a local Boolean that is false,
 # and condition is f
@@ -510,22 +514,6 @@ states = ["NY", "GA", "CT", "MI"]
 states[2]
 
 # return: "CT"
-
----
-
-# Nucleoid searches a variable in the block scope before the state
-
-# e is 2.71828
-e = 2.71828
-
-# a local e shadows the outer e inside the block,
-# and number is the local e
-{
-    e = 3
-    number = e
-}
-
-assert(number, 3)
 
 ---
 
@@ -1523,8 +1511,6 @@ assert(barcode, "barcode")
 
 ---
 
----
-
 # Nucleoid holds the result of a function in a local variable
 
 # bugs is an empty list
@@ -1892,8 +1878,6 @@ agent1.distance.x = 3
 agent1.distance.y = 4
 
 assert(agent1.distance.total, 5)
-
----
 
 ---
 
@@ -4267,17 +4251,5 @@ Test(123)
 assert(Test[0].prop, 123)
 assert(Test[0].id != null, true)
 
----
-
-# Nucleoid returns the instance itself in instance creation
-
-# There is a Test type,
-# which has a prop as a number
-class Test(prop: int):
-    this.prop = prop
-
-# There is a Test whose prop is 123
-Test(123)
-
-# return: { "id": ..., "prop": 123 }
+# return: { "id": "[UUID]", "prop": 123 }
 ```
