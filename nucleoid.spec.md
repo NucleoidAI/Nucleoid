@@ -287,6 +287,19 @@ assert(equivalency, 40)
 
 ---
 
+# Nucleoid runs a let statement as a standard built-in object
+
+# while in the block, f is a local Boolean that is false,
+# and condition is f
+{
+    f = Boolean(false)
+    condition = f
+}
+
+assert(condition, false)
+
+---
+
 # Nucleoid creates and assigns an instance to a local variable inside a block
 
 # There is a Device type
@@ -832,6 +845,24 @@ person1.lastName = "Brown"
 person1.fullName = person1.firstName + " " + person1.lastName
 
 assert(person1.fullName, null)
+
+---
+
+# Nucleoid keeps as null if any dependencies in expression is null
+
+# There is a Schedule type
+class Schedule:
+    pass
+
+# schedule1 is a Schedule whose expression is "0 */2 * * *" and whose script is null
+schedule1 = Schedule()
+schedule1.expression = "0 */2 * * *"
+schedule1.script = null
+
+# schedule1's run is schedule1's expression plus " " plus schedule1's script
+schedule1.run = schedule1.expression + " " + schedule1.script
+
+assert(schedule1.run, "0 */2 * * * null")
 
 ---
 
@@ -1736,6 +1767,23 @@ try:
     channel1.frequency.type = "ANGULAR"
 catch error:
     assert(error, ReferenceError("channel1.frequency is not defined"))
+ 
+---
+
+# Nucleoid creates a property assignment only if the instance is defined
+
+# There is a Channel type
+class Channel:
+    pass
+
+# channel1 is a Channel
+channel1 = Channel()
+
+try:
+    # channel1's frequency's type is "ANGULAR"
+    channel1.frequency.type = "ANGULAR"
+catch error:
+    assert(error, ReferenceError("channel1.frequency is not defined"))
 
 ---
 
@@ -2111,6 +2159,38 @@ if account1.balance < 1500:
     account1.status = "LOW"
 
 assert(account1.status, "LOW")
+
+---
+
+# Nucleoid creates an else statement of variable
+
+# compound is 0.0001
+compound = 0.0001
+
+# acidic is 'ACIDIC'
+acidic = 'ACIDIC'
+
+# basic is 'BASIC'
+basic = 'BASIC'
+
+# if compound is greater than 0.0000001, then pH is acidic,
+# else pH is basic
+if compound > 0.0000001:
+    pH = acidic
+else:
+    pH = basic
+
+assert(pH, "ACIDIC")
+
+# compound is 0.000000001
+compound = 0.000000001
+
+assert(pH, "BASIC")
+
+# basic is '+7'
+basic = '+7'
+
+assert(pH, "+7")
 
 ---
 
