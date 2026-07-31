@@ -12,3 +12,5 @@ However, new syntax may be introduced where it is needed to achieve that goal. T
 
 - `nucleoid.spec.md` — runtime behaviours
 - `ref/` — technical reference (the archived JS implementation)
+
+`ref/` is **frozen**. Read it for reference, never modify it.

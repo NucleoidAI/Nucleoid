@@ -1,9 +1,5 @@
 # Nucleoid Language Reference - Synthesized Use Cases 02
 
-Project: Nucleoid is a Logic Programming Language for LLMs
-Syntax: Minimum tokenized syntax with flexible grammar, which is a superset of Python, JavaScript/TypeScript, Kotlin, Go, Rust, Java, C# and C/C++.
-Source: Synthesized from nucleoid.spec.md, covering behavior combinations not present in the base specification or in nucleoid.spec.synth.01.md.
-
 ```
 
 # Nucleoid deletes a class-level property assignment
@@ -144,7 +140,7 @@ assert(result, 720)
 def sign(n):
     if n > 0:
         return "POSITIVE"
-    elif n < 0:
+    else if n < 0:
         return "NEGATIVE"
     return "ZERO"
 

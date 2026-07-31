@@ -1,8 +1,5 @@
 # Nucleoid Language Reference
 
-Project: Nucleoid is a Logic Programming Language for LLMs
-Syntax: Minimum tokenized syntax with flexible grammar, which is a superset of Python, JavaScript/TypeScript, Kotlin, Go, Rust, Java, C# and C/C++.
-
 ```
 
 # Nucleoid runs a statement in the state
@@ -334,7 +331,7 @@ assert(condition, false)
 class Device:
     pass
 
-# Any device's renewal is the device's creation time plus 604800000
+# Any device's renew is the device's creation time plus 604800000
 $Device.renew = $Device.created + 604800000
 
 # device is a Device whose creation time is now
@@ -733,7 +730,7 @@ mass = 10
 # else if g is greater than 3, then weight is mars times mass
 if g > 9:
     weight = earth * mass
-elif g > 3:
+else if g > 3:
     weight = mars * mass
 
 # g is 5
@@ -761,7 +758,7 @@ point = 1
 # else score is fraction times point
 if fraction > 1:
     score = fraction * point * 3
-elif fraction > 0:
+else if fraction > 0:
     score = fraction * point * 2
 else:
     score = fraction * point
@@ -1266,10 +1263,6 @@ assert(depth, 161.8)
 class Account:
     pass
 
-# There is a Balance type
-class Balance:
-    pass
-
 # There is a Currency type
 class Currency:
     pass
@@ -1730,7 +1723,7 @@ try:
     $Chart.plot = Plot()
 catch error:
     assert(error, ReferenceError("Plot is not defined"))
-    
+
 ---
 
 # Nucleoid creates a property assignment before declaration
@@ -2310,7 +2303,7 @@ rate = 22
 # else taxpayer1's tax is taxpayer1's income times rate divided by 100
 if taxpayer1.member > 4:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 2000
-elif taxpayer1.member > 2:
+else if taxpayer1.member > 2:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 1000
 else:
     taxpayer1.tax = taxpayer1.income * rate / 100
@@ -2847,8 +2840,8 @@ assert(alkalis.pop(), element1)
 # Nucleoid rejects a variable declaration without definition
 
 try:
-    # a is declared but not defined
-    a
+    # a is declared as a number but not defined
+    a: int
 catch error:
     assert(error, ReferenceError("Missing definition"))
 
@@ -3468,15 +3461,18 @@ assert(concentration1.formula, "(c1V1+c2V2+c3V3)/(V1+V2+V3)")
 class Storage:
     pass
 
-# normal is "NORMAL", and low is "LOW"
-normal = "NORMAL"; low = "LOW"
+# normal is "NORMAL", low is "LOW", and empty is "EMPTY"
+normal = "NORMAL"; low = "LOW"; empty = "EMPTY"
 
 # If any storage's capacity is greater than 25, then the storage's status is normal,
-# else the storage's status is low
+# else if the storage's capacity is greater than 0, then the storage's status is low,
+# else the storage's status is empty
 if $Storage.capacity > 25:
     $Storage.status = normal
-else:
+else if $Storage.capacity > 0:
     $Storage.status = low
+else:
+    $Storage.status = empty
 
 # storage1 is a Storage
 storage1 = Storage()
@@ -3499,17 +3495,20 @@ assert(storage1.status, "L")
 class Registration:
     pass
 
-# yes is "YES", and no is "NO"
-yes = "YES"; no = "NO"
+# yes is "YES", pending is "PENDING", and no is "NO"
+yes = "YES"; pending = "PENDING"; no = "NO"
 
 # registration1 is a Registration whose available is 0
 registration1 = Registration()
 registration1.available = 0
 
-# If any registration's available is greater than 0, then the registration's accepted is yes,
+# If any registration's available is greater than 10, then the registration's accepted is yes,
+# else if the registration's available is greater than 0, then the registration's accepted is pending,
 # else the registration's accepted is no
-if $Registration.available > 0:
+if $Registration.available > 10:
     $Registration.accepted = yes
+else if $Registration.available > 0:
+    $Registration.accepted = pending
 else:
     $Registration.accepted = no
 
@@ -3535,7 +3534,7 @@ class Capacity:
 # else the capacity's total is the capacity's available plus the capacity's spare times 3
 if $Capacity.spare / $Capacity.available > 0.5:
     $Capacity.total = $Capacity.available + $Capacity.spare
-elif $Capacity.spare / $Capacity.available > 0.1:
+else if $Capacity.spare / $Capacity.available > 0.1:
     $Capacity.total = $Capacity.available + $Capacity.spare * 2
 else:
     $Capacity.total = $Capacity.available + $Capacity.spare * 3
@@ -3576,7 +3575,7 @@ shape1.y = 6
 # else the shape's area is the shape's x times the shape's y
 if $Shape.type == "SQUARE":
     $Shape.area = Math.pow($Shape.x, 2)
-elif $Shape.type == "TRIANGLE":
+else if $Shape.type == "TRIANGLE":
     $Shape.area = $Shape.x * $Shape.y / 2
 else:
     $Shape.area = $Shape.x * $Shape.y

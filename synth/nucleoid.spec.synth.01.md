@@ -1,9 +1,5 @@
 # Nucleoid Language Reference - Synthesized Use Cases 01
 
-Project: Nucleoid is a Logic Programming Language for LLMs
-Syntax: Minimum tokenized syntax with flexible grammar, which is a superset of Python, JavaScript/TypeScript, Kotlin, Go, Rust, Java, C# and C/C++.
-Source: Synthesized from nucleoid.spec.md, covering behavior combinations not present in the base specification.
-
 ```
 
 # Nucleoid updates a chain of dependent variables
@@ -589,7 +585,7 @@ grade3.score = 60
 # else the grade's letter is "C"
 if $Grade.score > 89:
     $Grade.letter = "A"
-elif $Grade.score > 79:
+else if $Grade.score > 79:
     $Grade.letter = "B"
 else:
     $Grade.letter = "C"
@@ -729,7 +725,7 @@ humidity = 80
 # else advice is "NORMAL"
 if temperature > 35:
     advice = "HEAT"
-elif humidity > 70:
+else if humidity > 70:
     advice = "HUMID"
 else:
     advice = "NORMAL"
@@ -1045,7 +1041,7 @@ package3 = Package(1)
 for package of Package:
     if package.weight > 20:
         package.tier = "HEAVY"
-    elif package.weight > 5:
+    else if package.weight > 5:
         package.tier = "MEDIUM"
     else:
         package.tier = "LIGHT"
