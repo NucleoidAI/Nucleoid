@@ -153,7 +153,7 @@ assert(User.length, 2)
 class Student:
     pass
 
-assert(isinstance(Student, list), true)
+assert(typeof Student, List)
 
 # student1 is a Student
 student1 = Student()
@@ -873,24 +873,6 @@ assert(number, 3.141)
 
 ---
 
-# Nucleoid creates a property assignment on a local variable only if the instance is defined
-
-# There is a Ticket type
-class Ticket:
-    pass
-
-try:
-    # while in the block, ticket is a local Ticket,
-    # and ticket's event's group is "ENTERTAINMENT"
-    {
-        ticket = Ticket()
-        ticket.event.group = "ENTERTAINMENT"
-    }
-catch error:
-    assert(error, ReferenceError("ticket.event is not defined"))
-
----
-
 # Nucleoid assigns undefined if any dependency in expression is undefined
 
 # There is a Person type
@@ -960,21 +942,6 @@ product1 = Product()
 score = product1.quality.score
 
 assert(score, null)
-
----
-
-# Nucleoid places an instance in the list of the class when created
-
-# There is a Student type
-class Student:
-    pass
-
-assert(isinstance(Student, list), true)
-
-# student1 is a Student
-student1 = Student()
-
-assert(Student.length, 1)
 
 ---
 
@@ -1106,27 +1073,6 @@ try:
     number1 = number2 * 10
 catch error:
     assert(error, ReferenceError("Circular Dependency"))
-
----
-
-# Nucleoid creates a function in state
-
-# generate returns number times 10
-def generate(number):
-    return number * 10
-
-# random is 10
-random = 10
-
-# number is the result of the generate function call with random
-number = generate(random)
-
-assert(number, 100)
-
-# random is 20
-random = 20
-
-assert(number, 200)
 
 ---
 
@@ -1756,7 +1702,7 @@ class Model:
 # model1 is a Model
 model1 = Model()
 
-assert(isinstance(model1, object), true)
+assert(typeof model1, Object)
 
 ---
 
@@ -1842,23 +1788,6 @@ user1.name = "samplex"
 
 assert(user1.email, "samplex@example.com")
 
----
-
-# Nucleoid creates a property assignment only if the instance is defined
-
-# There is a Channel type
-class Channel:
-    pass
-
-# channel1 is a Channel
-channel1 = Channel()
-
-try:
-    # channel1's frequency's type is "ANGULAR"
-    channel1.frequency.type = "ANGULAR"
-catch error:
-    assert(error, ReferenceError("channel1.frequency is not defined"))
- 
 ---
 
 # Nucleoid creates a property assignment only if the instance is defined
@@ -1991,29 +1920,6 @@ assert(product1.quality.class, null)
 $Quality.class = String.fromCharCode(65 + Math.floor($Quality.score / 10))
 
 assert(product1.quality.class, "B")
-
----
-
-# Nucleoid rejects value as a property name
-
-# There is a Schedule type
-class Schedule:
-    pass
-
-# There is a Place type
-class Place:
-    pass
-
-# value is a Schedule
-value = Schedule()
-
-assert(value, { "id": "value" })
-
-try:
-    # value's value is a Place
-    value.value = Place()
-catch error:
-    assert(error, TypeError("Cannot use 'value' as a property"))
 
 ---
 
@@ -3299,37 +3205,6 @@ try:
         throw "USER_ALREADY_REGISTERED"
 catch error:
     assert(error, "USER_ALREADY_REGISTERED")
- 
----
-
-# Nucleoid supports a property of chained functions in an expression
-
-# There is a User type
-class User:
-    pass
-
-# There is a Registration type
-class Registration:
-    pass
-
-# user1 is a User
-user1 = User()
-
-# registration1 is a Registration whose user is user1
-registration1 = Registration()
-registration1.user = user1
-
-# registration2 is a Registration whose user is user1
-registration2 = Registration()
-registration2.user = user1
-
-try:
-    # if the registrations whose user is any user number more than one,
-    # then throw "USER_ALREADY_REGISTERED"
-    if Registration.filter(r => r.user == $User).length > 1:
-        throw "USER_ALREADY_REGISTERED"
-catch error:
-    assert(error, "USER_ALREADY_REGISTERED")
 
 ---
 
@@ -3366,18 +3241,6 @@ try:
     throw abc
 catch error:
     assert(error, ReferenceError("abc is not defined"))
-
----
-
-# Nucleoid supports an array with brackets
-
-# states is a list of "NY", "GA", "CT" and "MI"
-states = ["NY", "GA", "CT", "MI"]
-
-# The value of states at index 2
-states[2]
-
-# return: "CT"
 
 ---
 
