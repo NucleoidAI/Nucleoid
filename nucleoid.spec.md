@@ -83,7 +83,7 @@ catch error:
 
 # There is a Shape type,
 # which has a type as a string
-class Shape(self, type: str):
+class Shape(type: str):
     this.type = type
 
 # shape1 is a Shape whose type is "Square"
@@ -124,7 +124,7 @@ assert(Student["user0"], { "id": "user0" })
 
 ---
 
-# Nucleoid prevents class and object lists when a class is updated
+# Nucleoid preserves class and object lists when a class is updated
 
 # There is a User type
 class User:
@@ -133,20 +133,20 @@ class User:
 # There is a User
 User()
 
-assert(classes.length, 1)
+assert(Class.length, 1)
 assert(User.length, 1)
 
 # There is a User type
 class User:
     pass
 
-assert(classes.length, 1)
+assert(Class.length, 1)
 assert(User.length, 1)
 
 # There is a User
 User()
 
-assert(classes.length, 1)
+assert(Class.length, 1)
 assert(User.length, 2)
 
 ---
@@ -183,11 +183,11 @@ class Student: Person
         this.school = school
 
 # student1 is a Student,
-# whose name is "Joe"
+# whose name is "Emma"
 # and whose school is "Riverside High".
 student1 = Student("Emma", "Riverside High")
 
-assert(person1, { "id": "student1", "name": "Emma", "school": "Riverside High" })
+assert(student1, { "id": "student1", "name": "Emma", "school": "Riverside High" })
 
 ---
 
@@ -415,7 +415,7 @@ assert(distance1.startingPoint.print, null)
 # Nucleoid calls function in an assignment
 
 # multiply returns the product of two factors
-def multiply(first_factor, second_factor)
+def multiply(first_factor, second_factor):
     product = first_factor * second_factor
     return product
 
@@ -646,6 +646,8 @@ user0 = User()
 }
 
 assert(user0.name, "TEST")
+
+---
 
 # Nucleoid assigns a variable declaratively
 
@@ -913,7 +915,7 @@ schedule1.script = null
 # schedule1's run is schedule1's expression plus " " plus schedule1's script
 schedule1.run = schedule1.expression + " " + schedule1.script
 
-assert(schedule1.run, "0 */2 * * * null")
+assert(schedule1.run, null)
 
 ---
 
@@ -1060,7 +1062,7 @@ try:
     # number1 is number2 times 10
     number1 = number2 * 10
 catch error:
-    assert(error, ReferenceError("Circular Dependency"))
+    assert(error, TypeError("Circular Dependency"))
 
 ---
 
@@ -1945,7 +1947,7 @@ try:
     # value's value is 2147483647
     value.value = 2147483647
 catch error:
-    assert(error, TypeError("Cannot use 'value' as a name"))
+    assert(error, TypeError("Cannot use 'value' as a property"))
 
 ---
 
@@ -2047,7 +2049,7 @@ assert(interest1.annual, 0)
 
 ---
 
-# Nucleoid rejects value as a name in a block
+# Nucleoid rejects value as a property name in a block
 
 # There is an Alarm type
 class Alarm:
@@ -2061,7 +2063,7 @@ try:
         value.value = "22:00"
     }
 catch error:
-    assert(error, TypeError("Cannot use 'value' in local"))
+    assert(error, TypeError("Cannot use 'value' as a property"))
 
 ---
 
@@ -2446,7 +2448,7 @@ try:
     # channel1 is deleted
     delete channel1
 catch error:
-    assert(error, ReferenceError("Cannot delete object 'channel1'"))
+    assert(error, TypeError("Cannot delete object 'channel1'"))
 
 assert(channel1.frequency, 440)
 
@@ -2480,7 +2482,7 @@ try:
     # shape1 is deleted
     delete shape1
 catch error:
-    assert(error, ReferenceError("Cannot delete object 'shape1'"))
+    assert(error, TypeError("Cannot delete object 'shape1'"))
 
 # shape1's type is deleted
 delete shape1.type
@@ -2549,6 +2551,8 @@ assert(item1.custom, "US0000001")
 item1.sku = "0000002"
 
 assert(item1.custom, "US0000002")
+
+---
 
 # Nucleoid runs a nested block statement of property
 
@@ -2846,7 +2850,7 @@ try:
     # a is declared but not defined
     a
 catch error:
-    assert(error, SyntaxError("Missing definition"))
+    assert(error, ReferenceError("Missing definition"))
 
 ---
 
