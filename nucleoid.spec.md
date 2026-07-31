@@ -123,6 +123,30 @@ assert(Student["user0"], { "id": "user0" })
 
 ---
 
+# Nucleoid prevents class and object lists when a class is updated
+
+# There is a User type
+class User:
+    pass
+
+# There is a User
+User()
+
+assert(classes.length, 1)
+assert(User.length, 1)
+
+# There is a User type
+class User:
+    pass
+
+# There is a User
+User()
+
+assert(classes.length, 1)
+assert(User.length, 2)
+
+---
+
 # Nucleoid places an instance in the list of the class when created
 
 # There is a Student type
@@ -761,6 +785,25 @@ assert(score, -0.2)
 
 ---
 
+# Nucleoid runs dependent statements in the same transaction
+
+# There is a Vehicle type,
+# and any vehicle's tag is "US-" plus the vehicle's plate
+class Vehicle:
+    pass
+
+$Vehicle.tag = "US-" + $Vehicle.plate
+
+# vehicle1 is a Vehicle
+vehicle1 = Vehicle()
+
+# vehicle1's plate is "XSJ422"
+vehicle1.plate = "XSJ422"
+
+assert(vehicle1.tag, "US-XSJ422")
+
+---
+
 # Nucleoid runs dependencies in order as received
 
 # any is 0
@@ -790,6 +833,25 @@ if any > 1:
 any = 4
 
 assert(result, 5)
+
+---
+
+# Nucleoid searches a variable in scope before the state
+
+# e is 2.71828
+e = 2.71828
+
+# number is null
+number = null
+
+# a local e shadows the outer e inside the block,
+# and number is the local e
+{
+    e = 3
+    number = e
+}
+
+assert(number, 3)
 
 ---
 
@@ -845,6 +907,25 @@ person1.lastName = "Brown"
 person1.fullName = person1.firstName + " " + person1.lastName
 
 assert(person1.fullName, null)
+
+---
+
+# Nucleoid keeps as null if any dependencies as in local is null
+
+# a is 1
+a = 1
+
+# c is null
+c = null
+
+# while in the block, b is a local variable that is null,
+# and c is b divided by a
+{
+    b = null
+    c = b / a
+}
+
+assert(c, null)
 
 ---
 
@@ -1679,6 +1760,16 @@ assert(isinstance(model1, object), true)
 
 ---
 
+# Nucleoid defines a class in the state
+
+# There is an Entity type
+class Entity:
+    pass
+
+assert(typeof $Entity, Class)
+
+---
+
 # Nucleoid rejects creating an instance if the class does not exist
 
 try:
@@ -2081,6 +2172,25 @@ try:
     }
 catch error:
     assert(error, TypeError("Cannot use 'value' in local"))
+
+---
+
+# Nucleoid keeps same as its value when the value property is used for a local
+
+# speedOfLight is 299792
+speedOfLight = 299792
+
+# roundTrip is null
+roundTrip = null
+
+# while in the block, time is a local variable that is speedOfLight divided by 225623,
+# and roundTrip is time's value times 2
+{
+    time = speedOfLight / 225623
+    roundTrip = time.value * 2
+}
+
+assert(roundTrip, 2.6574595675086314)
 
 ---
 

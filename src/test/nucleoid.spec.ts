@@ -102,7 +102,7 @@ describe("Nucleoid", () => {
       deepEqual(nucleoid.run("Student['user0']"), { id: "user0" });
     });
 
-    // Won't do
+    // Done
     it("prevents class and object lists when class is updated", () => {
       nucleoid.run("class User { }");
       nucleoid.run("new User ( )");
@@ -436,7 +436,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("l == 3"), true);
     });
 
-    // Won't do
+    // Done
     it("runs dependent statements in the same transaction", () => {
       nucleoid.run(
         "class Vehicle { } ; $Vehicle.tag = 'US-' + $Vehicle.plate "
@@ -472,7 +472,7 @@ describe("Nucleoid", () => {
       );
     });
 
-    // Won't do
+    // Done
     it("searches variable in scope before state", () => {
       nucleoid.run("e = 2.71828");
       nucleoid.run("{ let e = 3 ; number = e }");
@@ -1319,7 +1319,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("typeof model1"), "object");
     });
 
-    // Won't do
+    // Done
     it("defines class in the state", () => {
       nucleoid.run("class Entity { }");
       equal(nucleoid.run("typeof $Entity"), "function");
@@ -1545,7 +1545,7 @@ describe("Nucleoid", () => {
       );
     });
 
-    // Won't do
+    // Done
     it("keeps same as its value when value property used for local", () => {
       nucleoid.run("speedOfLight = 299792");
       nucleoid.run(
