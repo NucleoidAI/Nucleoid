@@ -181,7 +181,7 @@ try:
     # box1's width is box1's height divided by 2
     box1.width = box1.height / 2
 catch error:
-    assert(error, ReferenceError("Circular Dependency"))
+    assert(error, TypeError("Circular Dependency"))
 
 ---
 
@@ -398,7 +398,7 @@ class Vehicle(make: str):
 # which is a subtype of Vehicle
 # and has a payload as a number
 class Truck: Vehicle
-    def init(self, make, payload):
+    def init(make, payload):
         super(make)
         this.payload = payload
 
@@ -644,7 +644,7 @@ class Booking:
 # room1 is a Room
 room1 = Room()
 
-# Any room's booked is whether the bookings whose room is the room number more than zero
+# Any room's booked is whether the number of bookings whose room is the room is more than zero
 $Room.booked = Booking.filter(b => b.room == $Room).length > 0
 
 assert(room1.booked, false)
@@ -712,7 +712,7 @@ assert(flight1.status, "FULL")
 
 ---
 
-# Nucleoid runs a nested if statement inside an else statement
+# Nucleoid runs an else if statement with a different dependency in each condition
 
 # temperature is 30
 temperature = 30

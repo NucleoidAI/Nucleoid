@@ -3180,7 +3180,7 @@ registration2 = Registration()
 registration2.user = user1
 
 try:
-    # if the registrations whose user is any user number more than one,
+    # if the number of registrations whose user is any user is more than one,
     # then throw "USER_ALREADY_REGISTERED"
     if Registration.filter(r => r.user == $User).length > 1:
         throw "USER_ALREADY_REGISTERED"

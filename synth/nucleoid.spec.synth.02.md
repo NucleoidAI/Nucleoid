@@ -50,7 +50,7 @@ try:
     # first is third plus 1
     first = third + 1
 catch error:
-    assert(error, ReferenceError("Circular Dependency"))
+    assert(error, TypeError("Circular Dependency"))
 
 assert(first, 1)
 assert(third, 3)
@@ -70,7 +70,7 @@ try:
     # any box's width is the box's area divided by the box's height
     $Box.width = $Box.area / $Box.height
 catch error:
-    assert(error, ReferenceError("Circular Dependency"))
+    assert(error, TypeError("Circular Dependency"))
 
 # box1 is a Box whose width is 3 and whose height is 4
 box1 = Box()
@@ -602,7 +602,7 @@ $Animal.label = "A-" + $Animal.name
 # which is a subtype of Animal
 # and has a breed as a string
 class Dog: Animal
-    def init(self, name, breed):
+    def init(name, breed):
         super(name)
         this.breed = breed
 
