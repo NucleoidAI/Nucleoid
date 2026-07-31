@@ -1,1 +1,0 @@
-variable_state = {}
