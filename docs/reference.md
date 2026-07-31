@@ -36,6 +36,7 @@ specification disagree, the specification wins.
 - An assignment records a relationship, not just a result.
 - An expression statement returns its value.
 - Statements are applied in the order received; when two assign the same target, the last one holds.
+- One statement per line, or several on a line separated by `;`.
 - Every statement runs in a transaction.
 
 ```
@@ -177,10 +178,17 @@ assert((a + b) * c, 20)
 
 - A comparison may be assigned directly: `alarm = reading > threshold`.
 
-### Indexing and length
+### Indexing, slicing, and length
 
 - Lists and instance lists index with brackets; the index may be a variable.
+- A range is written `[start:end]`; either bound may be omitted, and a negative bound counts from the end.
 - `.length` is a dependency on the collection.
+
+```
+meeting.time[-17:]
+```
+
+- The last 17 characters.
 
 Full detail: [NUC 10](nuc-0010.md).
 
@@ -384,6 +392,20 @@ if toy1.color == "RED":
 
 - `null` until `toy1.color` is `"RED"`.
 
+### Truthiness
+
+- A condition need not be a comparison; a bare value is tested for presence.
+- `null`, an undefined property, and `0` are false; a non-empty value is true.
+- An instance is true, so a query result can be tested directly.
+- `not` inverts the test.
+
+```
+if $Device.profile:
+    $Device.active = true
+```
+
+- Only devices that have a profile become active.
+
 ### for ... of
 
 - `for <name> of <source>` iterates a class list or a list value.
@@ -532,6 +554,7 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ```
 name = expression                      variable assignment
+name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected
 name.property = expression             property assignment
 $Type.property = expression            class-level rule
@@ -574,6 +597,7 @@ return expression                      yield from a block or function
 
 name.value                             read without depending
 Name[0]  Name["id"]  Name.find(...)    address an instance
+value[start:end]  value[-n:]           slice, negative counts from the end
 ```
 
 ---

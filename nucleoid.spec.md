@@ -171,7 +171,7 @@ class Person(name: str):
     this.name = name
 
 # There is a Student type,
-# which is a subtype of Person.
+# which is a subtype of Person
 # and has a school as a string
 class Student: Person
     def init(name, school):
@@ -181,7 +181,7 @@ class Student: Person
 
 # student1 is a Student,
 # whose name is "Emma"
-# and whose school is "Riverside High".
+# and whose school is "Riverside High"
 student1 = Student("Emma", "Riverside High")
 
 assert(student1, { "id": "student1", "name": "Emma", "school": "Riverside High" })
@@ -227,7 +227,7 @@ assert(device2.active, true)
 
 ---
 
-# creates an instance in a block and assigns it to a property
+# Nucleoid creates an instance in a block and assigns it to a property
 
 # There is a Room type
 class Room:
@@ -256,7 +256,7 @@ assert(room1.meeting.time[-17:], "@ Wed Jan 01 2020")
 
 ---
 
-# creates nested instances in a block and assigns them to a property
+# Nucleoid creates nested instances in a block and assigns them to a property
 
 # There is a Timesheet type
 class Timesheet:
@@ -294,6 +294,8 @@ assert(timesheet1.task.project.code, "N-3668347")
 
 # integer is 30
 integer = 30
+
+# equivalency is null
 equivalency = null
 
 # while in the block, division is a local variable that is integer divided by 10,
@@ -1287,7 +1289,7 @@ assert(account1.balance.currency.description, null)
 
 ---
 
-# creates a nested object in a block and assigns it to a class-level property after instantiation
+# Nucleoid creates a nested object in a block and assigns it to a class-level property after instantiation
 
 # There is a Warehouse type
 class Warehouse:
@@ -1868,7 +1870,7 @@ agent1.distance = Distance()
 
 assert(agent1.distance.total, null)
 
-# agent1's distance's x is 3 and whose y is 4
+# agent1's distance's x is 3 and its y is 4
 agent1.distance.x = 3
 agent1.distance.y = 4
 
