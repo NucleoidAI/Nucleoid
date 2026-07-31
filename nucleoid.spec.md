@@ -57,12 +57,33 @@ catch error:
 
 ---
 
+# Nucleoid throws an error as a variable
+
+# length is 0.1
+length = 0.1
+
+try:
+    # if length is less than 1, then throw length
+    if length < 1:
+        throw length
+catch error:
+    assert(error, 0.1)
+
+try:
+    # if length is less than 1.1, then throw 'length'
+    if length < 1.1:
+        throw 'length'
+catch error:
+    assert(error, "length")
+
+---
+
 # Nucleoid creates a class with constructor
 
 # There is a Shape type,
 # which has a type as a string
 class Shape(self, type: str):
-    self.type = type
+    this.type = type
 
 # shape1 is a Person whose type is "Square"
 shape1 = Shape("Square")
@@ -79,7 +100,7 @@ class Shape:
     type: str
 
     def init(self, type: str):
-        self.type = type
+        this.type = type
 
 # shape1 is a Shape whose type is "Rectangle"
 shape1 = Shape("Rectangle")
@@ -122,7 +143,7 @@ assert(Student.length, 1)
 # There is a Person type,
 # which has a name as a string
 class Person(name: str):
-    self.name = name
+    this.name = name
 
 # There is a Student type,
 # which is a subtype of Person.
@@ -130,8 +151,8 @@ class Person(name: str):
 class Student: Person
     def init(self, name, school):
 		    super(name)
-        self.name = name
-        self.school = school
+        this.name = name
+        this.school = school
 
 # student1 is a Student,
 # whose name is "Joe"
@@ -147,7 +168,7 @@ assert(person1, { "id": "student1", "name": "Emma", "school": "Riverside High" }
 # There is a Human type,
 # which has a name as a string
 class Human(name: str):
-    self.name = name
+    this.name = name
 
 # All humans are mortal
 $Human.mortal = true
@@ -164,7 +185,7 @@ assert(human1.mortal, true)
 # There is a Device type,
 # which has a profile as a string
 class Device(profile: str):
-    self.profile = profile
+    this.profile = profile
 
 # Any device that has a profile is active
 if $Device.profile:
@@ -291,8 +312,8 @@ assert(Device[0].renew - Device[0].created, 604800000)
 # which has a first as a string
 # and a last as a string
 class Member(first: str, last: str):
-    self.first = first
-    self.last = last
+    this.first = first
+    this.last = last
 
 # Any member's display is the member's last plus ", " plus the member's first
 $Member.display = $Member.last + ", " + $Member.first
@@ -410,7 +431,7 @@ assert(student, { "id": "student3", "age": 9 })
 # There is a Result type,
 # which has a score as a number
 class Result(score: int):
-    self.score = score
+    this.score = score
 
 # There are Results whose scores are 10, 15 and 20
 Result(10); Result(15); Result(20)
@@ -515,7 +536,7 @@ catch error:
 # There is a Device type,
 # which has a code as a string
 class Device(code: str):
-    self.code = code
+    this.code = code
 
 # device1 is a Device whose code is "A0"
 device1 = Device("A0")
@@ -542,7 +563,7 @@ device2 = Device("B1")
 # There is a Device type,
 # which has a code as a string
 class Device(code: str):
-    self.code = code
+    this.code = code
 
 # device1 is a Device whose code is "A0"
 device1 = Device("A0")
@@ -910,6 +931,234 @@ assert(count.length, 1)
 
 ---
 
+# Nucleoid supports a regular expression literal
+
+# There is a User type
+class User:
+    pass
+
+# If any user's password does not match /.{4,8}/, then throw 'INVALID_PASSWORD'
+if not /.{4,8}/.test($User.password):
+    throw 'INVALID_PASSWORD'
+
+# user1 is a User
+user1 = User()
+
+assert(user1.password, null)
+
+try:
+    # user1's password is 'PAS'
+    user1.password = 'PAS'
+catch error:
+    assert(error, "INVALID_PASSWORD")
+
+---
+
+# Nucleoid rejects defining a class declaration in a non-class block
+
+# There is a Person type
+class Person:
+    pass
+
+# person1 is a Person whose weight is 90 and whose height is 1.8
+person1 = Person()
+person1.weight = 90
+person1.height = 1.8
+
+try:
+    # while in the block, weight is a local variable that is person1's weight,
+    # and height is a local variable that is person1's height,
+    # and any person's bmi is weight divided by height squared
+    {
+        weight = person1.weight
+        height = person1.height
+        $Person.bmi = weight / (height * height)
+    }
+catch error:
+    assert(error, SyntaxError("Cannot define class declaration in non-class block"))
+
+---
+
+# Nucleoid detects a circular dependency
+
+# number1 is 10
+number1 = 10
+
+# number2 is number1 times 10
+number2 = number1 * 10
+
+assert(number2, 100)
+
+try:
+    # number1 is number2 times 10
+    number1 = number2 * 10
+catch error:
+    assert(error, ReferenceError("Circular Dependency"))
+
+---
+
+# Nucleoid creates a function in state
+
+# generate returns number times 10
+def generate(number):
+    return number * 10
+
+# random is 10
+random = 10
+
+# number is the result of the generate function call with random
+number = generate(random)
+
+assert(number, 100)
+
+# random is 20
+random = 20
+
+assert(number, 200)
+
+---
+
+# Nucleoid rolls back a variable if an exception is thrown
+
+# a is 5
+a = 5
+
+# if a is greater than 5, then throw 'INVALID_VALUE'
+if a > 5:
+    throw 'INVALID_VALUE'
+
+try:
+    # a is 6
+    a = 6
+catch error:
+    assert(error, "INVALID_VALUE")
+
+assert(a, 5)
+
+---
+
+# Nucleoid rolls back a property if an exception is thrown
+
+# There is an Item type
+class Item:
+    pass
+
+# If any item's sku is 'A', then throw 'INVALID_SKU'
+if $Item.sku == 'A':
+    throw 'INVALID_SKU'
+
+# item1 is an Item
+item1 = Item()
+
+try:
+    # item1's sku is 'A'
+    item1.sku = 'A'
+catch error:
+    assert(error, "INVALID_SKU")
+
+assert(item1.sku, null)
+
+---
+
+# Nucleoid rolls back an instance if an exception is thrown
+
+# There is a User type,
+# which has a first as a string
+# and a last as a string
+class User(first: str, last: str):
+    this.first = first
+    this.last = last
+
+# If any user's first is shorter than 3 characters, then throw 'INVALID_USER'
+if $User.first.length < 3:
+    throw 'INVALID_USER'
+
+try:
+    # user1 is a User whose first is 'F' and whose last is 'L'
+    user1 = User('F', 'L')
+catch error:
+    assert(error, "INVALID_USER")
+
+assert(User.length, 0)
+
+try:
+    # user1
+    user1
+catch error:
+    assert(error, ReferenceError("user1 is not defined"))
+
+---
+
+# Nucleoid updates a variable assignment
+
+# a is 1
+a = 1
+
+# b is 2
+b = 2
+
+# c is a plus 3
+c = a + 3
+
+assert(c, 4)
+
+# c is b plus 3
+c = b + 3
+
+assert(c, 5)
+
+# b is 4
+b = 4
+
+assert(c, 7)
+
+---
+
+# Nucleoid uses only the value when a variable references itself
+
+# radius is 10
+radius = 10
+
+# radius is radius plus 10
+radius = radius + 10
+
+assert(radius, 20)
+
+---
+
+# Nucleoid deletes a variable assignment
+
+# t is 1
+t = 1
+
+# q is t plus 1
+q = t + 1
+
+assert(q, 2)
+
+# q is deleted
+delete q
+
+# t is 2
+t = 2
+
+try:
+    # q
+    q
+catch error:
+    assert(error, ReferenceError("q is not defined"))
+
+---
+
+# Nucleoid returns the assigned value in a variable assignment
+
+# x is 1
+x = 1
+
+# return: 1
+
+---
+
 # Nucleoid assigns a parameter in a function as a dependency
 
 # str1 is "ABC"
@@ -1025,7 +1274,7 @@ assert(warehouse1.inventory.item.description, null)
 # There is a Device type,
 # which has a name as a string
 class Device(name: str):
-    self.name = name
+    this.name = name
 
 # No device is deleted
 $Device.deleted = false
@@ -1051,7 +1300,7 @@ assert(device1.deleted, false)
 # There is a Summary type,
 # which has a rate as a number
 class Summary(rate: int):
-    self.rate = rate
+    this.rate = rate
 
 # Any summary's score is the summary's rate times 100
 $Summary.score = $Summary.rate * 100
@@ -1495,7 +1744,7 @@ catch error:
 # There is an Item type,
 # which has a name as a string
 class Item(name: str):
-    self.name = name
+    this.name = name
 
 # item1 is an Item whose name is "NAME-1"
 item1 = Item("NAME-1")
@@ -1815,7 +2064,7 @@ assert(device1.code, "A0")
 # There is a Summary type,
 # which has a question as a Question
 class Summary(question):
-    self.question = question
+    this.question = question
 
 # There is a Question type
 class Question:
@@ -2580,7 +2829,7 @@ message1 = Message()
 # There is a Message type,
 # which has a payload as a string
 class Message(payload: str):
-    self.payload = payload
+    this.payload = payload
 
 assert(message1.read, false)
 assert(message1.payload, null)
@@ -2907,6 +3156,26 @@ try:
     throw "INVALID"
 catch error:
     assert(error, "INVALID")
+
+---
+
+# Nucleoid throws an error as an integer
+
+try:
+    # throw 123
+    throw 123
+catch error:
+    assert(error, 123)
+
+---
+
+# Nucleoid throws a reference error if the thrown value is not defined
+
+try:
+    # throw abc
+    throw abc
+catch error:
+    assert(error, ReferenceError("abc is not defined"))
 
 ---
 
@@ -3684,7 +3953,7 @@ catch error:
 # There is a Question type,
 # which has a rate as a number
 class Question(rate: int):
-    self.rate = rate
+    this.rate = rate
 
 # question1 is a Question whose rate is 4
 question1 = Question(4)
@@ -3695,7 +3964,7 @@ question2 = Question(5)
 # There is a Summary type,
 # which has a question as a Question
 class Summary(question):
-    self.question = question
+    this.question = question
 
 # Any summary's rate is the value of the summary's question's rate
 $Summary.rate = $Summary.question.rate.value
@@ -3814,7 +4083,7 @@ question3 = Question()
 # There is a Summary type,
 # which has a question as a Question
 class Summary(question):
-    self.question = question
+    this.question = question
 
 # Any summary's type is "DAILY"
 $Summary.type = "DAILY"
@@ -3937,7 +4206,7 @@ test(data)
 # There is a Test type,
 # which has a prop as a number
 class Test(prop: int):
-    self.prop = prop
+    this.prop = prop
 
 # There is a Test whose prop is 123
 Test(123)
@@ -3952,7 +4221,7 @@ assert(Test[0].id != null, true)
 # There is a Test type,
 # which has a prop as a number
 class Test(prop: int):
-    self.prop = prop
+    this.prop = prop
 
 # There is a Test whose prop is 123
 Test(123)

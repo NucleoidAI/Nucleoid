@@ -628,6 +628,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("throws error as an integer", () => {
       throws(
         () => {
@@ -637,6 +638,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("throws reference error if invalid in throw", () => {
       throws(
         () => {
@@ -657,6 +659,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("throws error as a variable", () => {
       nucleoid.run("length = 0.1");
       throws(
@@ -704,6 +707,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("str3"), "aaadAAA");
     });
 
+    // Done
     it("supports regular expression literal", () => {
       nucleoid.run("class User { }");
       nucleoid.run(
@@ -718,6 +722,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("rejects defining class declaration in non-class declaration block", () => {
       nucleoid.run("class Person { }");
       nucleoid.run("person1 = new Person ( )");
@@ -738,6 +743,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("detects circular dependency", () => {
       nucleoid.run("number1 = 10");
       nucleoid.run("number2 = number1 * 10");
@@ -749,6 +755,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("creates function in state", () => {
       nucleoid.run("function generate ( number ) { return number * 10 }");
       nucleoid.run("random = 10");
@@ -759,6 +766,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("number"), 200);
     });
 
+    // Won't do
     it("publishes event", () => {
       nucleoid.run(
         "class Task { constructor ( ) { event ( 'TASK_CREATED', 'TASK_DATA' ) } }"
@@ -769,6 +777,7 @@ describe("Nucleoid", () => {
       equal(result.events[0].data, '"TASK_DATA"');
     });
 
+    // Done
     it("rollbacks variable if exception is thrown", () => {
       nucleoid.run("a = 5");
       nucleoid.run("if ( a > 5 ) { throw 'INVALID_VALUE' }");
@@ -782,6 +791,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("a"), 5);
     });
 
+    // Done
     it("rollbacks property if exception is thrown", () => {
       nucleoid.run("class Item { }");
       nucleoid.run("if ( $Item.sku == 'A' ) { throw 'INVALID_SKU' }");
@@ -796,6 +806,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("item1.sku"), undefined);
     });
 
+    // Done
     it("rollbacks instance if exception is thrown", () => {
       nucleoid.run(
         "class User { constructor ( first , last ) { this.first = first ; this.last = last } }"
@@ -825,11 +836,13 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("y == 4"), true);
     });
 
+    // Done
     it("return assigned value while variable assignment", () => {
       const result = nucleoid.run("x = 1");
       equal(result, 1);
     });
 
+    // Done
     it("updates variable assignment", () => {
       nucleoid.run("a = 1");
       nucleoid.run("b = 2");
@@ -841,12 +854,14 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("c"), 7);
     });
 
+    // Done
     it("uses its value when self variable used", () => {
       nucleoid.run("radius = 10");
       nucleoid.run("radius = radius + 10");
       equal(nucleoid.run("radius"), 20);
     });
 
+    // Done
     it("deletes variable assignment", () => {
       nucleoid.run("t = 1");
       nucleoid.run("q = t + 1");
