@@ -409,11 +409,13 @@ describe("Nucleoid", () => {
       }, "USER_ALREADY_REGISTERED");
     });
 
+    // Done
     it("supports array with brackets", () => {
       nucleoid.run("states = [ 'NY' , 'GA' , 'CT' , 'MI' ]");
       equal(nucleoid.run("states [ 2 ]"), "CT");
     });
 
+    // Done
     it("retrieves value by variable", () => {
       nucleoid.run("number = -1");
       equal(nucleoid.run("number"), -1);
@@ -428,6 +430,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Won't do
     it("runs multiple statements in the state", () => {
       nucleoid.run("k = 1 ; l = k + 1 ; k = 2");
       equal(nucleoid.run("l == 3"), true);
@@ -456,6 +459,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("result"), 5);
     });
 
+    // Won't do
     it("runs let at root scope", () => {
       nucleoid.run("number = 13");
       equal(nucleoid.run("let i = number + 4; i;"), 17);
@@ -508,6 +512,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("declares let statement with undefined", () => {
       nucleoid.run(
         "class Device { constructor ( code ) { this.code = code } }"
@@ -532,6 +537,7 @@ describe("Nucleoid", () => {
       );
     });
 
+    // Done
     it("creates standard built-in object of let statement as property", () => {
       nucleoid.run("class Shipment { }");
       nucleoid.run(
@@ -540,6 +546,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("shipment1.date.toDateString ( )"), "Thu Jan 03 2019");
     });
 
+    // Done
     it("creates property of let statement in different scope", () => {
       nucleoid.run("class User { }");
       nucleoid.run("user0 = new User ( )");
@@ -560,6 +567,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("person1.fullName") === undefined, true);
     });
 
+    // Won't do
     it("keeps as null if any dependencies as in local is null", () => {
       nucleoid.run("a = 1");
       nucleoid.run("{ let b = null ; c = b / a }");

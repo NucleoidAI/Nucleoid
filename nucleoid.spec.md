@@ -441,6 +441,164 @@ assert(list[0].score, 10)
 
 ---
 
+# Nucleoid supports an array with brackets
+
+# states is a list of "NY", "GA", "CT" and "MI"
+states = ["NY", "GA", "CT", "MI"]
+
+# The value of states at index 2
+states[2]
+
+# return: "CT"
+
+---
+
+# Nucleoid searches a variable in the block scope before the state
+
+# e is 2.71828
+e = 2.71828
+
+# a local e shadows the outer e inside the block,
+# and number is the local e
+{
+    e = 3
+    number = e
+}
+
+assert(number, 3)
+
+---
+
+# Nucleoid throws an error if a variable in an expression is not defined
+
+try:
+    # whether e is equal to 2.71828
+    e == 2.71828
+catch err:
+    assert(err, ReferenceError("e is not defined"))
+
+---
+
+# Nucleoid retrieves the value of a variable
+
+# number is -1
+number = -1
+
+number
+
+# return: -1
+
+---
+
+# Nucleoid creates a property assignment on a local variable only if the instance is defined
+
+# There is a Ticket type
+class Ticket:
+    pass
+
+try:
+    # while in the block, ticket is a local Ticket,
+    # and ticket's event's group is "ENTERTAINMENT"
+    {
+        ticket = Ticket()
+        ticket.event.group = "ENTERTAINMENT"
+    }
+catch err:
+    assert(err, ReferenceError("ticket.event is not defined"))
+
+---
+
+# Nucleoid declares a local variable as undefined
+
+# There is a Device type,
+# which has a code as a string
+class Device(code: str):
+    self.code = code
+
+# device1 is a Device whose code is "A0"
+device1 = Device("A0")
+
+# device2 is a Device whose code is "B1"
+device2 = Device("B1")
+
+# While in the block, device is a local variable that is the Device whose code is "A0",
+# and if there is no device, then throw "INVALID_DEVICE",
+# and return device
+{
+    device = Device.find(d => d.code == "A0")
+    if not device:
+        raise "INVALID_DEVICE"
+    return device
+}
+
+# return: { "id": "device1", "code": "A0" }
+
+---
+
+# Nucleoid rejects a local variable declared as undefined
+
+# There is a Device type,
+# which has a code as a string
+class Device(code: str):
+    self.code = code
+
+# device1 is a Device whose code is "A0"
+device1 = Device("A0")
+
+# device2 is a Device whose code is "B1"
+device2 = Device("B1")
+
+try:
+    # While in the block, device is a local variable that is the Device whose code is "A1",
+    # and if there is no device, then throw "INVALID_DEVICE"
+    {
+        device = Device.find(d => d.code == "A1")
+        if not device:
+            raise "INVALID_DEVICE"
+        return device
+    }
+catch err:
+    assert(err, "INVALID_DEVICE")
+
+---
+
+# Nucleoid creates a standard built-in object as a property of a local variable
+
+# There is a Shipment type
+class Shipment:
+    pass
+
+# While in the block, shipment is a local Shipment whose date is January 3, 2019,
+# and shipment1 is shipment
+{
+    shipment = Shipment()
+    shipment.date = Date("2019-1-3")
+    shipment1 = shipment
+}
+
+assert(shipment1.date.toDateString(), "Thu Jan 03 2019")
+
+---
+
+# Nucleoid creates a property of a local variable in a different scope
+
+# There is a User type
+class User:
+    pass
+
+# user0 is a User
+user0 = User()
+
+# While in the block, user is a local variable that is the User whose id is "user0",
+# and if there is a user, then the user's name is "TEST"
+{
+    user = User["user0"]
+    if user:
+        user.name = "TEST"
+}
+
+assert(user0.name, "TEST")
+
 # Nucleoid assigns a variable declaratively
 
 # a is 1
