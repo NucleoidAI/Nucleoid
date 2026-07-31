@@ -611,6 +611,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("Vehicle.length"), 1);
     });
 
+    // Done
     it("throws error as a string", () => {
       throws(
         () => {

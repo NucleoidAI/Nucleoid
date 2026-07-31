@@ -38,8 +38,8 @@ k
 try:
     # t is e plus 1
     t = e + 1
-catch err:
-    assert(err, ReferenceError("e is not defined"))
+catch error:
+    assert(error, ReferenceError("e is not defined"))
 
 ---
 
@@ -51,9 +51,9 @@ k = 99
 try:
     # if k is greater than or equal to 99, then throw "INVALID"
     if k >= 99:
-        raise "INVALID"
-catch err:
-    assert(err, "INVALID")
+        throw "INVALID"
+catch error:
+    assert(error, "INVALID")
 
 ---
 
@@ -476,8 +476,8 @@ assert(number, 3)
 try:
     # whether e is equal to 2.71828
     e == 2.71828
-catch err:
-    assert(err, ReferenceError("e is not defined"))
+catch error:
+    assert(error, ReferenceError("e is not defined"))
 
 ---
 
@@ -505,8 +505,8 @@ try:
         ticket = Ticket()
         ticket.event.group = "ENTERTAINMENT"
     }
-catch err:
-    assert(err, ReferenceError("ticket.event is not defined"))
+catch error:
+    assert(error, ReferenceError("ticket.event is not defined"))
 
 ---
 
@@ -529,7 +529,7 @@ device2 = Device("B1")
 {
     device = Device.find(d => d.code == "A0")
     if not device:
-        raise "INVALID_DEVICE"
+        throw "INVALID_DEVICE"
     return device
 }
 
@@ -556,11 +556,11 @@ try:
     {
         device = Device.find(d => d.code == "A1")
         if not device:
-            raise "INVALID_DEVICE"
+            throw "INVALID_DEVICE"
         return device
     }
-catch err:
-    assert(err, "INVALID_DEVICE")
+catch error:
+    assert(error, "INVALID_DEVICE")
 
 ---
 
@@ -790,8 +790,8 @@ try:
         ticket = Ticket()
         ticket.event.group = "ENTERTAINMENT"
     }
-catch err:
-    assert(err, ReferenceError("ticket.event is not defined"))
+catch error:
+    assert(error, ReferenceError("ticket.event is not defined"))
 
 ---
 
@@ -1404,8 +1404,8 @@ assert(isinstance(model1, object), true)
 try:
     # chart1 is a Chart
     chart1 = Chart()
-catch err:
-    assert(err, ReferenceError("Chart is not defined"))
+catch error:
+    assert(error, ReferenceError("Chart is not defined"))
 
 # There is a Chart type
 class Chart:
@@ -1417,14 +1417,14 @@ chart1 = Chart()
 try:
     # chart1's plot is a Plot
     chart1.plot = Plot()
-catch err:
-    assert(err, ReferenceError("Plot is not defined"))
+catch error:
+    assert(error, ReferenceError("Plot is not defined"))
 
 try:
     # any chart's plot is a Plot
     $Chart.plot = Plot()
-catch err:
-    assert(err, ReferenceError("Plot is not defined"))
+catch error:
+    assert(error, ReferenceError("Plot is not defined"))
     
 ---
 
@@ -1485,8 +1485,8 @@ channel1 = Channel()
 try:
     # channel1's frequency's type is "ANGULAR"
     channel1.frequency.type = "ANGULAR"
-catch err:
-    assert(err, ReferenceError("channel1.frequency is not defined"))
+catch error:
+    assert(error, ReferenceError("channel1.frequency is not defined"))
 
 ---
 
@@ -1525,8 +1525,8 @@ worker1 = Worker()
 try:
     # worker1's duty's schedule is a Schedule
     worker1.duty.schedule = Schedule()
-catch err:
-    assert(err, ReferenceError("worker1.duty is not defined"))
+catch error:
+    assert(error, ReferenceError("worker1.duty is not defined"))
 
 ---
 
@@ -1624,8 +1624,8 @@ assert(value, { "id": "value" })
 try:
     # value's value is a Place
     value.value = Place()
-catch err:
-    assert(err, TypeError("Cannot use 'value' as a property"))
+catch error:
+    assert(error, TypeError("Cannot use 'value' as a property"))
 
 ---
 
@@ -1647,8 +1647,8 @@ assert(value, { "id": "value" })
 try:
     # value's value is a Place
     value.value = Place()
-catch err:
-    assert(err, TypeError("Cannot use 'value' as a property"))
+catch error:
+    assert(error, TypeError("Cannot use 'value' as a property"))
 
 ---
 
@@ -1666,8 +1666,8 @@ assert(value, { "id": "value" })
 try:
     # value's value is 2147483647
     value.value = 2147483647
-catch err:
-    assert(err, TypeError("Cannot use 'value' as a name"))
+catch error:
+    assert(error, TypeError("Cannot use 'value' as a name"))
 
 ---
 
@@ -1711,15 +1711,15 @@ question1.text = "How was the service?"
 
 # if question1's text is not question1's text's value, then throw "QUESTION_ARCHIVED"
 if question1.text != question1.text.value:
-    raise "QUESTION_ARCHIVED"
+    throw "QUESTION_ARCHIVED"
 
 assert(question1.text, "How was the service?")
 
 try:
     # question1's text is "How would you rate us?"
     question1.text = "How would you rate us?"
-catch err:
-    assert(err, "QUESTION_ARCHIVED")
+catch error:
+    assert(error, "QUESTION_ARCHIVED")
 
 ---
 
@@ -1741,8 +1741,8 @@ assert(travel1.duration, null)
 try:
     # travel1's time is travel1's distance's value divided by travel1's speed
     travel1.time = travel1.distance.value / travel1.speed
-catch err:
-    assert(err, ReferenceError("travel1.distance is not defined"))
+catch error:
+    assert(error, ReferenceError("travel1.distance is not defined"))
 
 ---
 
@@ -1782,8 +1782,8 @@ try:
         value = Alarm()
         value.value = "22:00"
     }
-catch err:
-    assert(err, TypeError("Cannot use 'value' in local"))
+catch error:
+    assert(error, TypeError("Cannot use 'value' in local"))
 
 ---
 
@@ -2048,8 +2048,8 @@ assert(Circle.find(circle => circle.id == "circle1"), null)
 try:
     # circle1
     circle1
-catch err:
-    assert(err, ReferenceError("circle1 is not defined"))
+catch error:
+    assert(error, ReferenceError("circle1 is not defined"))
 
 ---
 
@@ -2116,8 +2116,8 @@ channel1.frequency = 440
 try:
     # channel1 is deleted
     delete channel1
-catch err:
-    assert(err, ReferenceError("Cannot delete object 'channel1'"))
+catch error:
+    assert(error, ReferenceError("Cannot delete object 'channel1'"))
 
 assert(channel1.frequency, 440)
 
@@ -2150,8 +2150,8 @@ shape1.type = Type()
 try:
     # shape1 is deleted
     delete shape1
-catch err:
-    assert(err, ReferenceError("Cannot delete object 'shape1'"))
+catch error:
+    assert(error, ReferenceError("Cannot delete object 'shape1'"))
 
 # shape1's type is deleted
 delete shape1.type
@@ -2516,8 +2516,8 @@ assert(alkalis.pop(), element1)
 try:
     # a is declared but not defined
     a
-catch err:
-    assert(err, SyntaxError("Missing definition"))
+catch error:
+    assert(error, SyntaxError("Missing definition"))
 
 ---
 
@@ -2660,8 +2660,8 @@ assert(date3, 818035920000)
 try:
     # date4 is the wrong date
     date4 = Date.wrong()
-catch err:
-    assert(err, TypeError("Date.wrong is not a function"))
+catch error:
+    assert(error, TypeError("Date.wrong is not a function"))
 
 ---
 
@@ -2813,13 +2813,13 @@ pointer = 0
 # if the character of name at pointer is not an uppercase letter,
 # then throw "INVALID_FIRST_CHARACTER"
 if not /[A-Z]/.test(name.charAt(pointer)):
-    raise "INVALID_FIRST_CHARACTER"
+    throw "INVALID_FIRST_CHARACTER"
 
 try:
     # name is "bbCDE"
     name = "bbCDE"
-catch err:
-    assert(err, "INVALID_FIRST_CHARACTER")
+catch error:
+    assert(error, "INVALID_FIRST_CHARACTER")
 
 # name is "CbCDE"
 name = "CbCDE"
@@ -2827,8 +2827,8 @@ name = "CbCDE"
 try:
     # pointer is 1
     pointer = 1
-catch err:
-    assert(err, "INVALID_FIRST_CHARACTER")
+catch error:
+    assert(error, "INVALID_FIRST_CHARACTER")
 
 ---
 
@@ -2857,9 +2857,9 @@ try:
     # if the registrations whose user is any user number more than one,
     # then throw "USER_ALREADY_REGISTERED"
     if Registration.filter(r => r.user == $User).length > 1:
-        raise "USER_ALREADY_REGISTERED"
-catch err:
-    assert(err, "USER_ALREADY_REGISTERED")
+        throw "USER_ALREADY_REGISTERED"
+catch error:
+    assert(error, "USER_ALREADY_REGISTERED")
  
 ---
 
@@ -2888,9 +2888,25 @@ try:
     # if the registrations whose user is any user number more than one,
     # then throw "USER_ALREADY_REGISTERED"
     if Registration.filter(r => r.user == $User).length > 1:
-        raise "USER_ALREADY_REGISTERED"
-catch err:
-    assert(err, "USER_ALREADY_REGISTERED")
+        throw "USER_ALREADY_REGISTERED"
+catch error:
+    assert(error, "USER_ALREADY_REGISTERED")
+
+---
+
+# Nucleoid throws an error as a string
+
+try:
+    # throw 'INVALID'
+    throw 'INVALID'
+catch error:
+    assert(error, "INVALID")
+
+try:
+    # throw "INVALID"
+    throw "INVALID"
+catch error:
+    assert(error, "INVALID")
 
 ---
 
@@ -3658,8 +3674,8 @@ class Phone:
 try:
     # any phone's line's wired is true
     $Phone.line.wired = true
-catch err:
-    assert(err, ReferenceError("Phone.line is not defined"))
+catch error:
+    assert(error, ReferenceError("Phone.line is not defined"))
 
 ---
 
