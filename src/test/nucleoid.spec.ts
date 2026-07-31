@@ -499,6 +499,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("number"), 3.14159);
     });
 
+    // Done
     it("creates let statement if its instance is defined", () => {
       nucleoid.run("class Ticket { }");
       throws(

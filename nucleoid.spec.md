@@ -1,4 +1,6 @@
 ```
+Nucleoid Language Reference
+
 Project: Nucleoid is a Logic Programming Language for LLMs
 Syntax: Minimum tokenized syntax with flexible grammar, which is a superset of Python, JavaScript/TypeScript, Kotlin, Go, Rust, Java, C# and C/C++.
 
@@ -174,7 +176,7 @@ device1 = Device()
 # device2 has profile "PROFILE-1"
 device2 = Device("PROFILE-1")
 
-assert(device1.active, None)
+assert(device1.active, null)
 assert(device2.active, True)
 
 ---
@@ -246,7 +248,7 @@ assert(timesheet1.task.project.code, "N-3668347")
 
 # integer is 30
 integer = 30
-equivalency = None
+equivalency = null
 
 # while in the block, division is a local variable that is integer divided by 10,
 # and equivalency is division times 10
@@ -322,7 +324,7 @@ class Member:
 member1 = Member()
 
 assert(member1.registration.date.toDateString(), "Wed Jan 02 2019")
-assert(member1.registration.age, None)
+assert(member1.registration.age, null)
 
 ---
 
@@ -344,7 +346,7 @@ distance1 = Distance()
 }
 
 assert(distance1.startingPoint.coordinates, "40.6976701,-74.2598779")
-assert(distance1.startingPoint.print, None)
+assert(distance1.startingPoint.print, null)
 
 ---
 
@@ -775,6 +777,24 @@ assert(number, 3.141)
 
 ---
 
+# Nucleoid creates a property assignment on a local variable only if the instance is defined
+
+# There is a Ticket type
+class Ticket:
+    pass
+
+try:
+    # while in the block, ticket is a local Ticket,
+    # and ticket's event's group is "ENTERTAINMENT"
+    {
+        ticket = Ticket()
+        ticket.event.group = "ENTERTAINMENT"
+    }
+catch err:
+    assert(err, ReferenceError("ticket.event is not defined"))
+
+---
+
 # Nucleoid assigns undefined if any dependency in expression is undefined
 
 # There is a Person type
@@ -790,7 +810,7 @@ person1.lastName = "Brown"
 # person1's full name is first and last name
 person1.fullName = person1.firstName + " " + person1.lastName
 
-assert(person1.fullName, None)
+assert(person1.fullName, null)
 
 ---
 
@@ -806,7 +826,7 @@ product1 = Product()
 # score is product1's quality score
 score = product1.quality.score
 
-assert(score, None)
+assert(score, null)
 
 ---
 
@@ -944,7 +964,7 @@ $Currency.description = "Code:" + $Currency.code
 account1 = Account()
 
 assert(account1.balance.currency.code, "USD")
-assert(account1.balance.currency.description, None)
+assert(account1.balance.currency.description, null)
 
 ---
 
@@ -967,7 +987,7 @@ warehouse1 = Warehouse()
 }
 
 assert(warehouse1.inventory.item.sku, "699546085767")
-assert(warehouse1.inventory.item.description, None)
+assert(warehouse1.inventory.item.description, null)
 
 ---
 
@@ -1203,7 +1223,7 @@ bugs.push(bug2)
 }
 
 assert(bug1.selected, True)
-assert(bug2.selected, None)
+assert(bug2.selected, null)
 
 # ticket is 2
 ticket = 2
@@ -1294,7 +1314,7 @@ density = 0.899
 substance = "NH3"
 
 # molarConcentration is null
-molarConcentration = None
+molarConcentration = null
 
 # fallback is 0
 fallback = 0
@@ -1391,7 +1411,7 @@ order1 = Order()
 # order1's upc is "04061" plus order1's barcode
 order1.upc = "04061" + order1.barcode
 
-assert(order1.upc, None)
+assert(order1.upc, null)
 
 # order1's barcode is "94067"
 order1.barcode = "94067"
@@ -1456,7 +1476,7 @@ assert(item1, { "id": "item1", "name": "NAME-1" })
 # item2 is an Item with no name
 item2 = Item()
 
-assert(item2, { "id": "item2", "name": None })
+assert(item2, { "id": "item2", "name": null })
 
 ---
 
@@ -1519,7 +1539,7 @@ agent1 = Agent()
 # agent1's distance is a Distance
 agent1.distance = Distance()
 
-assert(agent1.distance.total, None)
+assert(agent1.distance.total, null)
 
 # agent1's distance's x is 3 and whose y is 4
 agent1.distance.x = 3
@@ -1548,7 +1568,7 @@ class Quality:
 product1.quality = Quality()
 product1.quality.score = 15
 
-assert(product1.quality.class, None)
+assert(product1.quality.class, null)
 
 # Any quality's class is the character with the code 65 plus the floor of the quality's score divided by 10
 $Quality.class = String.fromCharCode(65 + Math.floor($Quality.score / 10))
@@ -1687,7 +1707,7 @@ travel1.speed = 65
 # travel1's duration is travel1's distance divided by travel1's speed
 travel1.duration = travel1.distance / travel1.speed
 
-assert(travel1.duration, None)
+assert(travel1.duration, null)
 
 try:
     # travel1's time is travel1's distance's value divided by travel1's speed
@@ -1706,7 +1726,7 @@ class Interest:
 # interest1 is an Interest whose rate is 3 and whose amount is null
 interest1 = Interest()
 interest1.rate = 3
-interest1.amount = None
+interest1.amount = null
 
 # interest1's annual is interest1's rate times interest1's amount's value divided by 100
 interest1.annual = interest1.rate * interest1.amount.value / 100
@@ -1830,7 +1850,7 @@ toy1.color = "BLUE"
 if toy1.color == "RED":
     toy1.shape = "CIRCLE"
 
-assert(toy1.shape, None)
+assert(toy1.shape, null)
 
 # toy1's color is "RED"
 toy1.color = "RED"
@@ -1993,8 +2013,8 @@ circle1 = Circle()
 # circle1 is deleted
 delete circle1
 
-assert(Circle["circle1"], None)
-assert(Circle.find(circle => circle.id == "circle1"), None)
+assert(Circle["circle1"], null)
+assert(Circle.find(circle => circle.id == "circle1"), null)
 
 try:
     # circle1
@@ -2021,7 +2041,7 @@ assert(Item["item1"], { "id": "item1" })
 # The Item whose id is "item1" is deleted
 delete Item["item1"]
 
-assert(Item["item1"], None)
+assert(Item["item1"], null)
 assert(Item["item2"], { "id": "item2" })
 
 # While in the block, item is a local variable that is "item2",
@@ -2031,7 +2051,7 @@ assert(Item["item2"], { "id": "item2" })
     delete Item[item]
 }
 
-assert(Item["item2"], None)
+assert(Item["item2"], null)
 
 ---
 
@@ -2078,7 +2098,7 @@ delete channel1.frequency
 # channel1 is deleted
 delete channel1
 
-assert(Channel["channel1"], None)
+assert(Channel["channel1"], null)
 
 ---
 
@@ -2110,7 +2130,7 @@ delete shape1.type
 # shape1 is deleted
 delete shape1
 
-assert(Shape["shape1"], None)
+assert(Shape["shape1"], null)
 
 ---
 
@@ -2137,12 +2157,12 @@ assert(agent.report, "52926163455@CITY")
 # agent's time is deleted
 delete agent.time
 
-assert(agent.report, None)
+assert(agent.report, null)
 
 # agent's report is deleted
 delete agent.report
 
-assert(agent.report, None)
+assert(agent.report, null)
 
 ---
 
@@ -2228,7 +2248,7 @@ sale1.quantity = 2
         sale1.tax = amount * 10 / 100
 }
 
-assert(sale1.tax, None)
+assert(sale1.tax, null)
 
 # sale1's quantity is 3
 sale1.quantity = 3
@@ -2534,7 +2554,7 @@ class Message(payload: str):
     self.payload = payload
 
 assert(message1.read, False)
-assert(message1.payload, None)
+assert(message1.payload, null)
 
 # message2 is a Message whose payload is "MESSAGE"
 message2 = Message("MESSAGE")
@@ -2628,7 +2648,7 @@ def copy(val):
 # Call copy with a
 copy(a)
 
-# return: None
+# return: null
 
 ---
 
@@ -2869,7 +2889,7 @@ $Review.rate = $Review.sum / 10
 # review1 is a Review
 review1 = Review()
 
-assert(review1.rate, None)
+assert(review1.rate, null)
 
 # review1's sum is 42
 review1.sum = 42
@@ -2946,7 +2966,7 @@ if $Ticket.date > Date("1993-1-1"):
 # ticket1 is a Ticket
 ticket1 = Ticket()
 
-assert(ticket1.status, None)
+assert(ticket1.status, null)
 
 # ticket1's date is February 1, 1993
 ticket1.date = Date("1993-2-1")
@@ -2956,7 +2976,7 @@ assert(ticket1.status, "EXPIRED")
 # ticket2 is a Ticket
 ticket2 = Ticket()
 
-assert(ticket2.status, None)
+assert(ticket2.status, null)
 
 ---
 
@@ -3010,14 +3030,14 @@ if $Inventory.quantity == 0:
     $Inventory.replenishment = True
 
 assert(inventory1.replenishment, True)
-assert(inventory2.replenishment, None)
+assert(inventory2.replenishment, null)
 
 # Any inventory whose quantity is 0 does not need replenishment
 if $Inventory.quantity == 0:
     $Inventory.replenishment = False
 
 assert(inventory1.replenishment, False)
-assert(inventory2.replenishment, None)
+assert(inventory2.replenishment, null)
 
 ---
 
@@ -3231,7 +3251,7 @@ class Stock:
 # stock1 is a Stock
 stock1 = Stock()
 
-assert(stock1.after, None)
+assert(stock1.after, null)
 
 # stock1's before is 57.25
 stock1.before = 57.25
@@ -3377,7 +3397,7 @@ building1.floors = 20
         $Building.type = buildingType1
 }
 
-assert(building1.type, None)
+assert(building1.type, null)
 
 # building1's floors is 25
 building1.floors = 25
@@ -3521,7 +3541,7 @@ $Channel.frequency = Frequency()
 # Any frequency's hertz is 1 divided by the frequency's period
 $Frequency.hertz = 1 / $Frequency.period
 
-assert(channel1.frequency.hertz, None)
+assert(channel1.frequency.hertz, null)
 
 # channel1's frequency's period is 0.0025
 channel1.frequency.period = 0.0025
@@ -3555,7 +3575,7 @@ $Hospital.patients = $Hospital.clinic.beds * 746
 # hospital1 is a Hospital
 hospital1 = Hospital()
 
-assert(hospital1.patients, None)
+assert(hospital1.patients, null)
 
 # hospital1's clinic's beds is 2678
 hospital1.clinic.beds = 2678
@@ -3683,7 +3703,7 @@ assert(item2.score, 200)
 # item3 is an Item
 item3 = Item()
 
-assert(item3.score, None)
+assert(item3.score, null)
 
 ---
 
@@ -3878,7 +3898,7 @@ class Test(prop: int):
 Test(123)
 
 assert(Test[0].prop, 123)
-assert(Test[0].id != None, True)
+assert(Test[0].id != null, True)
 
 ---
 
