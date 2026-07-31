@@ -9,7 +9,7 @@ Syntax: Minimum tokenized syntax with flexible grammar, which is a superset of P
 # i is 1
 i = 1
 
-assert(i == 1, True)
+assert(i == 1, true)
 
 ---
 
@@ -108,7 +108,7 @@ assert(Student["user0"], { "id": "user0" })
 class Student:
     pass
 
-assert(isinstance(Student, list), True)
+assert(isinstance(Student, list), true)
 
 # student1 is a Student
 student1 = Student()
@@ -150,12 +150,12 @@ class Human(name: str):
     self.name = name
 
 # All humans are mortal
-$Human.mortal = True
+$Human.mortal = true
 
 # human1 is a Human whose name is "Socrates"
 human1 = Human("Socrates")
 
-assert(human1.mortal, True)
+assert(human1.mortal, true)
 
 ---
 
@@ -168,7 +168,7 @@ class Device(profile: str):
 
 # Any device that has a profile is active
 if $Device.profile:
-    $Device.active = True
+    $Device.active = true
 
 # device1 has no profile
 device1 = Device()
@@ -177,7 +177,7 @@ device1 = Device()
 device2 = Device("PROFILE-1")
 
 assert(device1.active, null)
-assert(device2.active, True)
+assert(device2.active, true)
 
 ---
 
@@ -624,21 +624,21 @@ assert(c, 4)
 # Nucleoid creates if statement of variable
 
 # m is false
-m = False
+m = false
 
 # n is false
-n = False
+n = false
 
 # if m is true, then n is m and true
-if m == True:
-    n = m and True
+if m == true:
+    n = m and true
 
-assert(n, False)
+assert(n, false)
 
 # m is true
-m = True
+m = true
 
-assert(n, True)
+assert(n, true)
 
 ---
 
@@ -830,6 +830,35 @@ assert(score, null)
 
 ---
 
+# Nucleoid places an instance in the list of the class when created
+
+# There is a Student type
+class Student:
+    pass
+
+assert(isinstance(Student, list), true)
+
+# student1 is a Student
+student1 = Student()
+
+assert(Student.length, 1)
+
+---
+
+# Nucleoid assigns a unique variable for an instance without a variable name
+
+# There is a Vehicle type
+class Vehicle:
+    pass
+
+# There is a Vehicle
+Vehicle()
+
+assert(Vehicle.length, 1)
+assert(Vehicle[0].id != null, true)
+
+---
+
 # Nucleoid creates a function in state
 
 # generate returns number times 10
@@ -999,7 +1028,7 @@ class Device(name: str):
     self.name = name
 
 # No device is deleted
-$Device.deleted = False
+$Device.deleted = false
 
 # Any device's key is "X-" plus the device's name
 $Device.key = "X-" + $Device.name
@@ -1013,7 +1042,7 @@ $Device.key = "X-" + $Device.name
 
 assert(device1.name, "Hall")
 assert(device1.key, "X-Hall")
-assert(device1.deleted, False)
+assert(device1.deleted, false)
 
 ---
 
@@ -1219,16 +1248,16 @@ bugs.push(bug2)
 # and bug is selected
 {
     bug = bugs.find(b => b.ticket == ticket)
-    bug.selected = True
+    bug.selected = true
 }
 
-assert(bug1.selected, True)
+assert(bug1.selected, true)
 assert(bug2.selected, null)
 
 # ticket is 2
 ticket = 2
 
-assert(bug2.selected, True)
+assert(bug2.selected, true)
 
 ---
 
@@ -1283,7 +1312,7 @@ time = 10
 distance = 480
 
 # target is true
-target = True
+target = true
 
 # while in the block, dist is a local variable that is one half times gravity times time times time,
 # and if dist is greater than distance, then hit is target
@@ -1293,12 +1322,12 @@ target = True
         hit = target
 }
 
-assert(hit, True)
+assert(hit, true)
 
 # target is false
-target = False
+target = false
 
-assert(hit, False)
+assert(hit, false)
 
 ---
 
@@ -1366,7 +1395,7 @@ class Model:
 # model1 is a Model
 model1 = Model()
 
-assert(isinstance(model1, object), True)
+assert(isinstance(model1, object), true)
 
 ---
 
@@ -2065,10 +2094,10 @@ class Location:
 location1 = Location()
 
 # Deleting location1 returns true
-assert(delete location1, True)
+assert(delete location1, true)
 
 # Deleting location2, which is not defined, returns false
-assert(delete location2, False)
+assert(delete location2, false)
 
 ---
 
@@ -2543,7 +2572,7 @@ class Message:
     pass
 
 # No message is read
-$Message.read = False
+$Message.read = false
 
 # message1 is a Message
 message1 = Message()
@@ -2553,13 +2582,13 @@ message1 = Message()
 class Message(payload: str):
     self.payload = payload
 
-assert(message1.read, False)
+assert(message1.read, false)
 assert(message1.payload, null)
 
 # message2 is a Message whose payload is "MESSAGE"
 message2 = Message("MESSAGE")
 
-assert(message2.read, False)
+assert(message2.read, false)
 assert(message2.payload, "MESSAGE")
 
 ---
@@ -2580,13 +2609,13 @@ assert(`New ${a} String`, "New 123 String")
 # Nucleoid supports logical operators
 
 # condition is false
-condition = False
+condition = false
 
-assert(condition or True, True)
-assert(condition || True, True)
+assert(condition or true, true)
+assert(condition || true, true)
 
-assert(not condition and True, True)
-assert(!condition && True, True)
+assert(not condition and true, true)
+assert(!condition && true, true)
 
 ---
 
@@ -2600,7 +2629,7 @@ assert(max, 9007199254740991)
 # now is the current time
 now = Date.now()
 
-assert(now > 0, True)
+assert(now > 0, true)
 
 ---
 
@@ -2621,7 +2650,7 @@ date1 = Date()
 # date2 is a date whose time is date1's time
 date2 = Date(date1.getTime())
 
-assert(date1.getTime() == date2.getTime(), True)
+assert(date1.getTime() == date2.getTime(), true)
 
 # date3 is the parsed date of "04 Dec 1995 00:12:00 GMT"
 date3 = Date.parse("04 Dec 1995 00:12:00 GMT")
@@ -2730,10 +2759,10 @@ assert(message.pid, 1200)
 # While in the block, return an object whose number is 123,
 # whose string is "ABC" and whose bool is true
 {
-    return { "number": 123, "string": "ABC", "bool": True }
+    return { "number": 123, "string": "ABC", "bool": true }
 }
 
-# return: { "number": 123, "string": "ABC", "bool": True }
+# return: { "number": 123, "string": "ABC", "bool": true }
 
 ---
 
@@ -2742,10 +2771,10 @@ assert(message.pid, 1200)
 # While in the block, return a list of an object whose number is 123,
 # whose string is "ABC" and whose bool is true
 {
-    return [{ "number": 123, "string": "ABC", "bool": True }]
+    return [{ "number": 123, "string": "ABC", "bool": true }]
 }
 
-# return: [{ "number": 123, "string": "ABC", "bool": True }]
+# return: [{ "number": 123, "string": "ABC", "bool": true }]
 
 ---
 
@@ -2754,10 +2783,10 @@ assert(message.pid, 1200)
 # While in the block, return an object whose number is 123,
 # whose string is "ABC" and whose bool is true
 {
-    return { number: 123, string: "ABC", bool: True }
+    return { number: 123, string: "ABC", bool: true }
 }
 
-# return: { "number": 123, "string": "ABC", "bool": True }
+# return: { "number": 123, "string": "ABC", "bool": true }
 
 ---
 
@@ -2766,10 +2795,10 @@ assert(message.pid, 1200)
 # While in the block, return a list of an object whose number is 123,
 # whose string is "ABC" and whose bool is true
 {
-    return [{ number: 123, string: "ABC", bool: True }]
+    return [{ number: 123, string: "ABC", bool: true }]
 }
 
-# return: [{ "number": 123, "string": "ABC", "bool": True }]
+# return: [{ "number": 123, "string": "ABC", "bool": true }]
 
 ---
 
@@ -3027,16 +3056,16 @@ inventory2.quantity = 1000
 
 # Any inventory whose quantity is 0 needs replenishment
 if $Inventory.quantity == 0:
-    $Inventory.replenishment = True
+    $Inventory.replenishment = true
 
-assert(inventory1.replenishment, True)
+assert(inventory1.replenishment, true)
 assert(inventory2.replenishment, null)
 
 # Any inventory whose quantity is 0 does not need replenishment
 if $Inventory.quantity == 0:
-    $Inventory.replenishment = False
+    $Inventory.replenishment = false
 
-assert(inventory1.replenishment, False)
+assert(inventory1.replenishment, false)
 assert(inventory2.replenishment, null)
 
 ---
@@ -3161,9 +3190,9 @@ else:
 assert(registration1.accepted, "NO")
 
 # yes is true, and no is false
-yes = True; no = False
+yes = true; no = false
 
-assert(registration1.accepted, False)
+assert(registration1.accepted, false)
 
 ---
 
@@ -3628,7 +3657,7 @@ class Phone:
 
 try:
     # any phone's line's wired is true
-    $Phone.line.wired = True
+    $Phone.line.wired = true
 catch err:
     assert(err, ReferenceError("Phone.line is not defined"))
 
@@ -3761,7 +3790,7 @@ question1 = Question()
 
 # question2 is a Question, which is archived
 question2 = Question()
-question2.archived = True
+question2.archived = true
 
 # question3 is a Question
 question3 = Question()
@@ -3898,7 +3927,7 @@ class Test(prop: int):
 Test(123)
 
 assert(Test[0].prop, 123)
-assert(Test[0].id != null, True)
+assert(Test[0].id != null, true)
 
 ---
 

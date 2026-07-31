@@ -594,6 +594,7 @@ describe("Nucleoid", () => {
       equal(nucleoid.run("score"), null);
     });
 
+    // Done
     it("places instance in the list of class when created", () => {
       nucleoid.run("class Student { }");
       equal(nucleoid.run("Array.isArray ( Student )"), true);
@@ -603,6 +604,7 @@ describe("Nucleoid", () => {
     });
 
 
+    // Done
     it("assigns unique variable for instance without variable name defined", () => {
       nucleoid.run("class Vehicle { }");
       nucleoid.run("new Vehicle ( )");
