@@ -1,1 +1,17 @@
 * text=auto eol=lf
+
+# Hide Python
+*.py linguist-vendored
+
+# Hide JavaScript
+*.js linguist-vendored
+*.mjs linguist-vendored
+*.cjs linguist-vendored
+
+# Hide TypeScript
+*.ts linguist-vendored
+*.tsx linguist-vendored
+
+# Optional: hide web assets
+*.html linguist-vendored
+*.css linguist-vendored
