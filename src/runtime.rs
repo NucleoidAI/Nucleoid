@@ -1,9 +1,11 @@
 use indexmap::IndexSet;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 
 use crate::ast::{ClassDecl, Expr, FunctionBody, Stmt, TemplatePart};
 use crate::error::{Error, Result};
 use crate::graph::{Graph, GraphNode, NodeKey, NodeKind};
-use crate::parser::parse;
+use crate::parser::parse_program;
 use crate::scope::Scope;
 use crate::state::{ClassData, Declaration, State};
 use crate::transaction::Transaction;
@@ -22,10 +24,20 @@ pub(crate) enum Flow {
     Return(Value),
 }
 
-impl Flow {
-    pub(crate) fn value(self) -> Value {
-        match self {
-            Flow::Normal(value) | Flow::Return(value) => value,
+/// The parts of a class a constructor needs, lifted out so creating an instance
+/// does not copy the list of instances the class already has.
+struct ClassShape {
+    parent: Option<String>,
+    parameters: Vec<crate::ast::Parameter>,
+    constructor: Vec<Stmt>,
+}
+
+impl ClassShape {
+    fn of(class: &ClassData) -> Self {
+        ClassShape {
+            parent: class.parent.clone(),
+            parameters: class.parameters.clone(),
+            constructor: class.constructor.clone(),
         }
     }
 }
@@ -56,6 +68,7 @@ pub struct Runtime {
     pub graph: Graph,
     pub(crate) transaction: Transaction,
     pub(crate) assertions: Vec<AssertionFailure>,
+    pub(crate) assertions_run: usize,
     tracking: Vec<Tracking>,
     running: IndexSet<NodeKey>,
     pub(crate) depth: usize,
@@ -74,6 +87,13 @@ pub struct Runtime {
     /// is undefined rather than an error, so dependents settle to null instead
     /// of aborting the transaction.
     pub(crate) deleted: IndexSet<NodeKey>,
+    /// Statements waiting to be re-evaluated, ordered by when they were
+    /// declared, and the set of what is already waiting. Propagation is a queue
+    /// rather than recursion, so the length of a dependency chain is not limited
+    /// by the stack.
+    pending: BinaryHeap<Reverse<(u64, NodeKey)>>,
+    queued: IndexSet<NodeKey>,
+    draining: bool,
 }
 
 impl Default for Runtime {
@@ -87,6 +107,12 @@ impl Default for Runtime {
 /// is reported as an error rather than overflowing.
 pub(crate) const MAX_DEPTH: usize = 192;
 
+/// How many statements one change may re-evaluate before the runtime decides it
+/// is not settling. Cycles are refused when they are declared, so this is a
+/// backstop that should never be reached — it is set low enough to fail quickly
+/// rather than appear to hang.
+const MAX_PROPAGATION: usize = 100_000;
+
 impl Runtime {
     pub fn new() -> Self {
         Runtime {
@@ -94,6 +120,7 @@ impl Runtime {
             graph: Graph::new(),
             transaction: Transaction::new(),
             assertions: Vec::new(),
+            assertions_run: 0,
             tracking: Vec::new(),
             running: IndexSet::new(),
             depth: 0,
@@ -102,31 +129,75 @@ impl Runtime {
             undefined_read: false,
             instances: Vec::new(),
             deleted: IndexSet::new(),
+            pending: BinaryHeap::new(),
+            queued: IndexSet::new(),
+            draining: false,
         }
     }
 
     /// Runs a program. Everything it changes is one transaction: if a statement
     /// raises, the state is left exactly as it was.
     pub fn run(&mut self, source: &str) -> Result<Value> {
-        let statements = parse(source)?;
+        let program = parse_program(source)?;
         let mut scope = Scope::new();
 
         self.transaction.start();
+        self.deleted.clear();
 
-        match self.execute_all(&statements, &mut scope) {
-            Ok(flow) => {
-                self.transaction.commit();
-                Ok(flow.value())
+        let mut value = Value::Null;
+        let mut failure = None;
+
+        for (index, statement) in program.statements.iter().enumerate() {
+            let position = program.positions.get(index).copied();
+
+            match self.execute(statement, &mut scope) {
+                Ok(Flow::Return(returned)) => {
+                    value = returned;
+                    break;
+                }
+                Ok(Flow::Normal(produced)) => {
+                    if !is_assertion(statement) {
+                        value = produced;
+                    }
+                }
+                Err(error) => {
+                    // The statement that was running is where the reader has to
+                    // look, so an error without a place of its own gets this one.
+                    failure = Some(match position {
+                        Some(position) => error.or_at(position),
+                        None => error,
+                    });
+                    break;
+                }
             }
-            Err(error) => {
+        }
+
+        match failure {
+            None => {
+                self.transaction.commit();
+                Ok(value)
+            }
+            Some(error) => {
                 self.transaction.rollback(&mut self.state, &mut self.graph);
                 Err(error)
             }
         }
     }
 
+    /// Parses without running, reporting the first syntax error.
+    pub fn check(source: &str) -> Result<()> {
+        parse_program(source).map(|_| ())
+    }
+
     pub fn take_assertions(&mut self) -> Vec<AssertionFailure> {
         std::mem::take(&mut self.assertions)
+    }
+
+    /// How many `assert` calls actually ran. A case whose assertions sit on a
+    /// branch that was never taken proves nothing, and this is how the suites
+    /// notice.
+    pub fn assertions_run(&self) -> usize {
+        self.assertions_run
     }
 
     pub fn clear(&mut self) {
@@ -224,16 +295,15 @@ impl Runtime {
                 parameter,
                 catch,
             } => {
-                let snapshot = self.state.clone();
-                let graph = self.graph.clone();
+                let mark = self.transaction.mark();
 
                 match self.execute_all(body, scope) {
                     Ok(flow) => Ok(flow),
                     Err(error) => {
-                        // A caught exception still rolls back what the failing
-                        // branch changed.
-                        self.state = snapshot;
-                        self.graph = graph;
+                        // A caught exception still puts back what the failing
+                        // branch changed, and nothing else.
+                        self.transaction
+                            .rollback_to(mark, &mut self.state, &mut self.graph);
 
                         scope.push();
                         scope.declare(parameter.clone(), error_value(&error));
@@ -380,6 +450,14 @@ impl Runtime {
             }
 
             Target::ClassProperty { class, property } => {
+                if property == "value" {
+                    return Err(Error::type_error("Cannot use 'value' as a property"));
+                }
+
+                // A rule is checked where it is written, not when an instance
+                // finally arrives to run it.
+                self.check_rule_references(value, scope)?;
+
                 let statement = Stmt::Assign {
                     target: Expr::Member {
                         object: Box::new(Expr::ClassRef(class.clone())),
@@ -394,9 +472,38 @@ impl Runtime {
         }
     }
 
+    /// Freezes the `.value` reads inside a statement, leaving its shape alone.
+    fn freeze_statement(&mut self, statement: &Stmt, scope: &mut Scope) -> Result<Stmt> {
+        Ok(match statement {
+            Stmt::If {
+                condition,
+                consequent,
+                alternate,
+            } => Stmt::If {
+                condition: self.freeze(condition, scope)?,
+                consequent: consequent.clone(),
+                alternate: alternate.clone(),
+            },
+            other => other.clone(),
+        })
+    }
+
     /// Replaces every `x.value` read with the value it has right now, so the
     /// stored declaration keeps that value instead of following `x` later.
     fn freeze(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
+        self.depth += 1;
+
+        if self.depth > MAX_DEPTH {
+            self.depth -= 1;
+            return Err(Error::type_error("Maximum expression depth exceeded"));
+        }
+
+        let result = self.freeze_inner(expression, scope);
+        self.depth -= 1;
+        result
+    }
+
+    fn freeze_inner(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
         Ok(match expression {
             Expr::Member { object, property } if property == "value" => {
                 let value = self.evaluate(expression, scope)?;
@@ -540,6 +647,14 @@ impl Runtime {
             return Ok(Flow::Normal(Value::Null));
         }
 
+        // `.value` in a condition means the value it has now, so the stored
+        // rule keeps it rather than re-reading it on every run.
+        let statement = &self.freeze_statement(statement, scope)?;
+
+        let Stmt::If { condition, .. } = statement else {
+            unreachable!("freeze_statement keeps the statement kind")
+        };
+
         let key = match scope.instance() {
             Some(instance) => NodeKey::new(format!("if({condition})@{instance}")),
             None => NodeKey::new(format!("if({condition})")),
@@ -607,6 +722,14 @@ impl Runtime {
         scope: &mut Scope,
     ) -> Result<Flow> {
         if let Some(class) = self.class_reference(statement, scope) {
+            // A rule states something about every instance, so it cannot be
+            // built from the properties of one particular instance.
+            if declares_class_rule(statements) && self.reads_an_instance(statements, scope) {
+                return Err(Error::syntax(
+                    "Cannot define class declaration in non-class block",
+                ));
+            }
+
             let key = format!("block({})", render_statements(statements));
             self.declare_on_class(&class, key, statement.clone())?;
             return Ok(Flow::Normal(Value::Null));
@@ -700,6 +823,46 @@ impl Runtime {
     }
 
     // -- class declarations --------------------------------------------------
+
+    /// Reports a name a class-level rule reads that nothing has defined.
+    fn check_rule_references(&self, value: &Expr, scope: &Scope) -> Result<()> {
+        let mut roots = Vec::new();
+        collect_roots(value, &mut roots);
+
+        for root in roots {
+            let known = scope.has(&root)
+                || self.state.variables.contains_key(&root)
+                || self.state.classes.contains_key(&root)
+                || self.state.functions.contains_key(&root)
+                || crate::builtins::is_global(&root);
+
+            if !known {
+                return Err(Error::not_defined(root));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Whether a block reads a named instance from the state, rather than only
+    /// its own locals and the type it is stating a rule about.
+    fn reads_an_instance(&self, statements: &[Stmt], scope: &Scope) -> bool {
+        let mut assigned = Vec::new();
+        for statement in statements {
+            collect_assigned_names(statement, &mut assigned);
+        }
+
+        let mut roots = Vec::new();
+        for statement in statements {
+            collect_read_roots(statement, &mut roots);
+        }
+
+        roots.iter().any(|root| {
+            !assigned.contains(root)
+                && !scope.has(root)
+                && matches!(self.state.variables.get(root), Some(Value::Object(_)))
+        })
+    }
 
     /// The class a statement declares against, if it mentions `$Class` outside
     /// of an instance scope.
@@ -897,8 +1060,16 @@ impl Runtime {
         id: ObjectId,
         scope: &mut Scope,
     ) -> Result<Value> {
-        let Some(class) = self.state.class(class_name).cloned() else {
+        let Some(class) = self.state.class(class_name) else {
             return Err(Error::not_defined(class_name));
+        };
+
+        // Only the parts a constructor needs, so the class's instance list is
+        // not copied once per instance.
+        let shape = ClassShape {
+            parent: class.parent.clone(),
+            parameters: class.parameters.clone(),
+            constructor: class.constructor.clone(),
         };
 
         let mut values = Vec::new();
@@ -906,16 +1077,20 @@ impl Runtime {
             values.push(self.evaluate(argument, scope)?);
         }
 
-        self.transaction
-            .record_object(&id, self.state.object(&id).cloned());
+        if self.transaction.needs_object(&id) {
+            let before = self.state.object(&id).cloned();
+            self.transaction.record_object(&id, before);
+        }
 
         let mut data = ObjectData::new(Some(class_name.to_string()));
         data.properties
             .insert("id".to_string(), Value::String(id.to_string()));
         self.state.objects.insert(id.clone(), data);
 
-        self.transaction
-            .record_class(class_name, Some(class.clone()));
+        if self.transaction.needs_class(class_name) {
+            let before = self.state.class(class_name).cloned();
+            self.transaction.record_class(class_name, before);
+        }
 
         if let Some(data) = self.state.class_mut(class_name) {
             if !data.instances.contains(&id) {
@@ -926,7 +1101,7 @@ impl Runtime {
         let key = NodeKey::new(id.to_string());
         self.register(&key, NodeKind::Object, None, IndexSet::new(), None)?;
 
-        self.run_constructor(&class, &values, &id)?;
+        self.run_constructor(&shape, &values, &id)?;
 
         for declaration in self.declarations_for(class_name) {
             self.apply_declaration(&declaration.statement, &id)?;
@@ -960,13 +1135,13 @@ impl Runtime {
 
     fn run_constructor(
         &mut self,
-        class: &ClassData,
+        class: &ClassShape,
         arguments: &[Value],
         id: &ObjectId,
     ) -> Result<()> {
         if let Some(parent) = &class.parent {
             if class.constructor.is_empty() {
-                if let Some(parent) = self.state.class(parent).cloned() {
+                if let Some(parent) = self.state.class(parent).map(ClassShape::of) {
                     self.run_constructor(&parent, arguments, id)?;
                 }
             }
@@ -1003,14 +1178,32 @@ impl Runtime {
         dependencies: IndexSet<NodeKey>,
         instance: Option<ObjectId>,
     ) -> Result<()> {
+        let existing = self.graph.get(key).cloned();
+
         for dependency in &dependencies {
-            if dependency != key && self.graph.reaches(key, dependency) {
+            if dependency == key {
+                continue;
+            }
+
+            // An edge that is already there was checked when it was made, and
+            // re-checking costs a walk of everything downstream — which is the
+            // whole graph, on every re-evaluation.
+            let unchanged = existing
+                .as_ref()
+                .is_some_and(|node| node.dependencies.contains(dependency));
+
+            if unchanged {
+                continue;
+            }
+
+            if self.graph.reaches(key, dependency) {
                 return Err(Error::type_error("Circular Dependency"));
             }
         }
 
-        let existing = self.graph.get(key).cloned();
-        self.transaction.record_node(key, existing.clone());
+        if self.transaction.needs_node(key) {
+            self.transaction.record_node(key, existing.clone());
+        }
 
         let sequence = self.graph.next_sequence();
         let mut node = GraphNode::new(key.clone(), kind, sequence);
@@ -1024,11 +1217,13 @@ impl Runtime {
             // Drop edges from dependencies this declaration no longer has.
             for previous in &existing.dependencies {
                 if !dependencies.contains(previous) {
-                    if let Some(source) = self.graph.get(previous).cloned() {
-                        self.transaction.record_node(previous, Some(source));
-                    }
-                    if let Some(source) = self.graph.get_mut(previous) {
-                        source.dependents.shift_remove(key);
+                    let removed = self
+                        .graph
+                        .get_mut(previous)
+                        .is_some_and(|source| source.dependents.shift_remove(key));
+
+                    if removed {
+                        self.transaction.record_dependent_removed(previous, key);
                     }
                 }
             }
@@ -1046,25 +1241,82 @@ impl Runtime {
                 let pending = GraphNode::new(dependency.clone(), NodeKind::Pending, sequence);
                 self.transaction.record_node(dependency, None);
                 self.graph.insert(pending);
-            } else if let Some(source) = self.graph.get(dependency).cloned() {
-                self.transaction.record_node(dependency, Some(source));
             }
 
-            if let Some(source) = self.graph.get_mut(dependency) {
-                source.dependents.insert(key.clone());
+            let added = self
+                .graph
+                .get_mut(dependency)
+                .is_some_and(|source| source.dependents.insert(key.clone()));
+
+            if added {
+                self.transaction.record_dependent_added(dependency, key);
             }
         }
 
         Ok(())
     }
 
+    /// Notes that everything reading `key` is now out of date. The work is done
+    /// by whoever is draining the queue, which keeps propagation flat however
+    /// long the chain is.
     pub(crate) fn propagate(&mut self, key: &NodeKey) -> Result<()> {
-        if self.depth > MAX_DEPTH {
+        for dependent in self.graph.dependents_in_order(key) {
+            self.enqueue(dependent);
+        }
+
+        if self.draining {
             return Ok(());
         }
 
-        for dependent in self.graph.dependents_in_order(key) {
-            if self.running.contains(&dependent) {
+        self.draining = true;
+        let result = self.drain();
+        self.draining = false;
+
+        if result.is_err() {
+            self.pending.clear();
+            self.queued.clear();
+        }
+
+        result
+    }
+
+    fn enqueue(&mut self, key: NodeKey) {
+        // A statement does not re-run itself: what it writes while running is
+        // its own doing, not news to it.
+        if self.running.contains(&key) {
+            return;
+        }
+
+        let sequence = self
+            .graph
+            .get(&key)
+            .map(|node| node.sequence)
+            .unwrap_or(u64::MAX);
+
+        if self.queued.insert(key.clone()) {
+            self.pending.push(Reverse((sequence, key)));
+        }
+    }
+
+    /// Re-evaluates what is waiting, in the order it was declared, until nothing
+    /// is left. A statement re-run here may queue more work, which this same
+    /// loop picks up.
+    fn drain(&mut self) -> Result<()> {
+        // Once each. A statement that writes something it also reads would
+        // otherwise wake itself for as long as it kept changing.
+        let mut settled: IndexSet<NodeKey> = IndexSet::new();
+        let mut steps = 0usize;
+
+        while let Some(Reverse((_, dependent))) = self.pending.pop() {
+            self.queued.swap_remove(&dependent);
+
+            steps += 1;
+
+            if steps > MAX_PROPAGATION {
+                return Err(Error::type_error("Propagation did not settle"));
+            }
+
+            if !settled.insert(dependent.clone()) {
                 continue;
             }
 
@@ -1086,9 +1338,7 @@ impl Runtime {
                 self.instances.push(instance.clone());
             }
             self.push_tracking(true);
-            self.depth += 1;
             let result = self.execute(&statement, &mut scope);
-            self.depth -= 1;
             self.pop_tracking();
             if node.instance.is_some() {
                 self.instances.pop();
@@ -1350,11 +1600,13 @@ impl Runtime {
             self.transaction.record_node(key, Some(node.clone()));
 
             for dependency in &node.dependencies {
-                if let Some(source) = self.graph.get(dependency).cloned() {
-                    self.transaction.record_node(dependency, Some(source));
-                }
-                if let Some(source) = self.graph.get_mut(dependency) {
-                    source.dependents.shift_remove(key);
+                let removed = self
+                    .graph
+                    .get_mut(dependency)
+                    .is_some_and(|source| source.dependents.shift_remove(key));
+
+                if removed {
+                    self.transaction.record_dependent_removed(dependency, key);
                 }
             }
 
@@ -1370,8 +1622,15 @@ impl Runtime {
     /// dependents, so a whole chain clears.
     fn cascade_removal(&mut self, key: &NodeKey) -> Result<()> {
         self.deleted.insert(key.clone());
+        let outermost = !self.draining;
         let result = self.propagate(key);
-        self.deleted.shift_remove(key);
+
+        // Only the run that actually drained the queue is finished with it; a
+        // nested deletion leaves the name undefined until the outer drain ends.
+        if outermost {
+            self.deleted.shift_remove(key);
+        }
+
         result
     }
 }
@@ -1383,6 +1642,135 @@ fn is_assertion(statement: &Stmt) -> bool {
     };
 
     matches!(callee.as_ref(), Expr::Identifier(name) if name == "assert")
+}
+
+/// Whether any statement states a rule about a type, as `$Class.property = ...`.
+fn declares_class_rule(statements: &[Stmt]) -> bool {
+    statements.iter().any(|statement| match statement {
+        Stmt::Assign { target, .. } => matches!(
+            target,
+            Expr::Member { object, .. } if matches!(object.as_ref(), Expr::ClassRef(_))
+        ),
+        Stmt::Block(nested) => declares_class_rule(nested),
+        Stmt::If {
+            consequent,
+            alternate,
+            ..
+        } => {
+            declares_class_rule(consequent)
+                || alternate
+                    .as_ref()
+                    .is_some_and(|statement| declares_class_rule(std::slice::from_ref(statement)))
+        }
+        _ => false,
+    })
+}
+
+/// The bare names a statement assigns to.
+fn collect_assigned_names(statement: &Stmt, names: &mut Vec<String>) {
+    match statement {
+        Stmt::Assign {
+            target: Expr::Identifier(name),
+            ..
+        } => names.push(name.clone()),
+        Stmt::Block(nested) => {
+            for statement in nested {
+                collect_assigned_names(statement, names);
+            }
+        }
+        Stmt::If {
+            consequent,
+            alternate,
+            ..
+        } => {
+            for statement in consequent {
+                collect_assigned_names(statement, names);
+            }
+            if let Some(alternate) = alternate {
+                collect_assigned_names(alternate, names);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// The leftmost names a statement reads.
+fn collect_read_roots(statement: &Stmt, roots: &mut Vec<String>) {
+    match statement {
+        Stmt::Assign { target, value } => {
+            if let Expr::Member { object, .. } = target {
+                collect_roots(object, roots);
+            }
+            collect_roots(value, roots);
+        }
+        Stmt::Expression(expression) | Stmt::Throw(expression) | Stmt::Delete(expression) => {
+            collect_roots(expression, roots)
+        }
+        Stmt::Return(Some(expression)) => collect_roots(expression, roots),
+        Stmt::Block(nested) => {
+            for statement in nested {
+                collect_read_roots(statement, roots);
+            }
+        }
+        Stmt::If {
+            condition,
+            consequent,
+            alternate,
+        } => {
+            collect_roots(condition, roots);
+            for statement in consequent {
+                collect_read_roots(statement, roots);
+            }
+            if let Some(alternate) = alternate {
+                collect_read_roots(alternate, roots);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_roots(expression: &Expr, roots: &mut Vec<String>) {
+    match expression {
+        Expr::Identifier(name) => roots.push(name.clone()),
+        Expr::Member { object, .. } | Expr::Slice { object, .. } => collect_roots(object, roots),
+        Expr::Index { object, index } => {
+            collect_roots(object, roots);
+            collect_roots(index, roots);
+        }
+        Expr::Call { callee, arguments } => {
+            collect_roots(callee, roots);
+            for argument in arguments {
+                collect_roots(argument, roots);
+            }
+        }
+        Expr::Unary { operand, .. } => collect_roots(operand, roots),
+        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
+            collect_roots(left, roots);
+            collect_roots(right, roots);
+        }
+        Expr::List(items) => {
+            for item in items {
+                collect_roots(item, roots);
+            }
+        }
+        Expr::ObjectLiteral(entries) => {
+            for (_, value) in entries {
+                collect_roots(value, roots);
+            }
+        }
+        Expr::Template(parts) => {
+            for part in parts {
+                if let TemplatePart::Expression(expression) = part {
+                    collect_roots(expression, roots);
+                }
+            }
+        }
+        Expr::Assign { target, value } => {
+            collect_roots(target, roots);
+            collect_roots(value, roots);
+        }
+        _ => {}
+    }
 }
 
 /// The `$Class.property` names an expression reads.
@@ -1426,10 +1814,12 @@ fn literal(value: &Value) -> Option<Expr> {
     })
 }
 
+/// The value a `catch` binds. Positions are deliberately left out: this text is
+/// part of the language's behaviour and is compared against in programs.
 fn error_value(error: &Error) -> Value {
-    match error {
-        Error::Thrown(thrown) => thrown.0.clone(),
-        other => Value::String(format!("{}: {}", other.kind().as_str(), other.message())),
+    match error.thrown_value() {
+        Some(value) => value.clone(),
+        None => Value::String(format!("{}: {}", error.kind().as_str(), error.message())),
     }
 }
 

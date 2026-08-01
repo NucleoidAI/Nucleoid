@@ -1,6 +1,6 @@
 use logos::Logos;
 
-use crate::error::{Error, Result};
+use crate::error::{Error, Position, Result};
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(skip r"[ \t\f\r]+")]
@@ -113,6 +113,35 @@ pub enum Keyword {
 }
 
 impl Keyword {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Keyword::If => "if",
+            Keyword::Else => "else",
+            Keyword::For => "for",
+            Keyword::Of => "of",
+            Keyword::In => "in",
+            Keyword::Class => "class",
+            Keyword::Def => "def",
+            Keyword::Function => "function",
+            Keyword::Return => "return",
+            Keyword::Throw => "throw",
+            Keyword::Delete => "delete",
+            Keyword::Try => "try",
+            Keyword::Catch => "catch",
+            Keyword::Pass => "pass",
+            Keyword::Not => "not",
+            Keyword::And => "and",
+            Keyword::Or => "or",
+            Keyword::True => "true",
+            Keyword::False => "false",
+            Keyword::Null => "null",
+            Keyword::Super => "super",
+            Keyword::This => "this",
+            Keyword::TypeOf => "typeof",
+            Keyword::New => "new",
+        }
+    }
+
     fn from_word(word: &str) -> Option<Keyword> {
         Some(match word {
             "if" => Keyword::If,
@@ -191,6 +220,51 @@ pub enum Token {
 }
 
 impl Token {
+    /// How this token is named in an error message.
+    pub fn describe(&self) -> String {
+        match self {
+            Token::Identifier(name) => format!("identifier '{name}'"),
+            Token::ClassRef(name) => format!("'${name}'"),
+            Token::Number(number) => format!("number {}", crate::value::format_number(*number)),
+            Token::Str(_) => "a string".to_string(),
+            Token::Template(_) => "a template string".to_string(),
+            Token::Regex(_) => "a regular expression".to_string(),
+            Token::Keyword(keyword) => format!("keyword '{}'", keyword.as_str()),
+            Token::LeftParen => "'('".to_string(),
+            Token::RightParen => "')'".to_string(),
+            Token::LeftBracket => "'['".to_string(),
+            Token::RightBracket => "']'".to_string(),
+            Token::LeftBrace => "'{'".to_string(),
+            Token::RightBrace => "'}'".to_string(),
+            Token::Comma => "','".to_string(),
+            Token::Colon => "':'".to_string(),
+            Token::Semicolon => "';'".to_string(),
+            Token::Dot => "'.'".to_string(),
+            Token::Arrow => "'=>'".to_string(),
+            Token::Assign => "'='".to_string(),
+            Token::Equal => "'=='".to_string(),
+            Token::StrictEqual => "'==='".to_string(),
+            Token::NotEqual => "'!='".to_string(),
+            Token::StrictNotEqual => "'!=='".to_string(),
+            Token::Less => "'<'".to_string(),
+            Token::LessEqual => "'<='".to_string(),
+            Token::Greater => "'>'".to_string(),
+            Token::GreaterEqual => "'>='".to_string(),
+            Token::Plus => "'+'".to_string(),
+            Token::Minus => "'-'".to_string(),
+            Token::Star => "'*'".to_string(),
+            Token::Slash => "'/'".to_string(),
+            Token::Percent => "'%'".to_string(),
+            Token::Bang => "'!'".to_string(),
+            Token::AndAnd => "'&&'".to_string(),
+            Token::OrOr => "'||'".to_string(),
+            Token::Newline => "end of line".to_string(),
+            Token::Indent => "an indented block".to_string(),
+            Token::Dedent => "the end of a block".to_string(),
+            Token::Eof => "end of input".to_string(),
+        }
+    }
+
     /// Whether a `/` following this token starts a regular expression literal
     /// rather than a division.
     fn precedes_regex(&self) -> bool {
@@ -234,19 +308,65 @@ fn unescape(slice: &str) -> String {
     output
 }
 
-pub fn tokenize(source: &str) -> Result<Vec<Token>> {
-    let flat = scan(source)?;
-    Ok(layout(flat))
+/// A token and where it came from.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Spanned {
+    pub token: Token,
+    pub position: Position,
+}
+
+pub fn tokenize(source: &str) -> Result<Vec<Spanned>> {
+    let lines = Lines::new(source);
+    let flat = scan(source, &lines)?;
+    Ok(layout(flat, lines.end()))
+}
+
+/// Turns byte offsets into line and column numbers.
+struct Lines<'a> {
+    source: &'a str,
+    starts: Vec<usize>,
+}
+
+impl<'a> Lines<'a> {
+    fn new(source: &'a str) -> Self {
+        let mut starts = vec![0];
+
+        for (index, byte) in source.bytes().enumerate() {
+            if byte == b'\n' {
+                starts.push(index + 1);
+            }
+        }
+
+        Lines { source, starts }
+    }
+
+    fn position(&self, offset: usize) -> Position {
+        let offset = offset.min(self.source.len());
+
+        let line = match self.starts.binary_search(&offset) {
+            Ok(index) => index,
+            Err(index) => index.saturating_sub(1),
+        };
+
+        let start = self.starts[line];
+        let column = self.source[start..offset].chars().count() + 1;
+
+        Position::new(line + 1, column)
+    }
+
+    fn end(&self) -> Position {
+        self.position(self.source.len())
+    }
 }
 
 struct Scanned {
     token: Token,
-    start: usize,
+    position: Position,
     line_start: bool,
     indent: usize,
 }
 
-fn scan(source: &str) -> Result<Vec<Scanned>> {
+fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
     let mut lexer = Raw::lexer(source);
     let mut scanned: Vec<Scanned> = Vec::new();
     let mut previous: Option<Token> = None;
@@ -259,6 +379,7 @@ fn scan(source: &str) -> Result<Vec<Scanned>> {
                 "Unexpected character '{}'",
                 &source[span.start..span.end]
             ))
+            .at(lines.position(span.start))
         })?;
 
         let token = match raw {
@@ -319,7 +440,7 @@ fn scan(source: &str) -> Result<Vec<Scanned>> {
         previous = Some(token.clone());
         scanned.push(Scanned {
             token,
-            start: span.start,
+            position: lines.position(span.start),
             line_start,
             indent,
         });
@@ -390,11 +511,13 @@ fn line_position(source: &str, start: usize) -> (bool, usize) {
 /// Turns the flat token stream into a block-structured one by inserting
 /// `Indent`, `Dedent` and `Newline` tokens. Layout is suppressed inside `(` and
 /// `[`, where line breaks carry no meaning.
-fn layout(scanned: Vec<Scanned>) -> Vec<Token> {
-    let mut output: Vec<Token> = Vec::new();
+fn layout(scanned: Vec<Scanned>, end: Position) -> Vec<Spanned> {
+    let mut output: Vec<Spanned> = Vec::new();
     let mut indents: Vec<usize> = vec![0];
     let mut depth = 0usize;
     let mut pending_newline = false;
+    // An end-of-line belongs to the line it ends, not to the one that follows.
+    let mut previous = Position::new(1, 1);
 
     for item in scanned {
         if item.token == Token::Newline {
@@ -412,14 +535,23 @@ fn layout(scanned: Vec<Scanned>) -> Vec<Token> {
             _ => {}
         }
 
+        let position = item.position;
+
         if depth_before > 0 {
-            output.push(item.token);
+            previous = position;
+            output.push(Spanned {
+                token: item.token,
+                position,
+            });
             continue;
         }
 
         if item.line_start {
             if pending_newline && !output.is_empty() {
-                output.push(Token::Newline);
+                output.push(Spanned {
+                    token: Token::Newline,
+                    position: previous,
+                });
             }
             pending_newline = false;
 
@@ -427,31 +559,54 @@ fn layout(scanned: Vec<Scanned>) -> Vec<Token> {
 
             if item.indent > current {
                 indents.push(item.indent);
-                output.push(Token::Indent);
+                output.push(Spanned {
+                    token: Token::Indent,
+                    position,
+                });
             } else if item.indent < current {
                 while indents.len() > 1 && *indents.last().unwrap() > item.indent {
                     indents.pop();
-                    output.push(Token::Dedent);
+                    output.push(Spanned {
+                        token: Token::Dedent,
+                        position,
+                    });
                 }
             }
         } else if pending_newline {
-            output.push(Token::Newline);
+            output.push(Spanned {
+                token: Token::Newline,
+                position: previous,
+            });
             pending_newline = false;
         }
 
-        let _ = item.start;
-        output.push(item.token);
+        previous = position;
+
+        output.push(Spanned {
+            token: item.token,
+            position,
+        });
     }
 
     if pending_newline {
-        output.push(Token::Newline);
+        output.push(Spanned {
+            token: Token::Newline,
+            position: previous,
+        });
     }
 
     while indents.len() > 1 {
         indents.pop();
-        output.push(Token::Dedent);
+        output.push(Spanned {
+            token: Token::Dedent,
+            position: end,
+        });
     }
 
-    output.push(Token::Eof);
+    output.push(Spanned {
+        token: Token::Eof,
+        position: end,
+    });
+
     output
 }

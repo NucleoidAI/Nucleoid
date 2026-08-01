@@ -4,13 +4,24 @@ use crate::ast::{
     BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
     UnaryOp,
 };
-use crate::error::{Error, Result};
-use crate::lexer::{Keyword, Token, tokenize};
+use crate::error::{Error, Position, Result};
+use crate::lexer::{Keyword, Spanned, Token, tokenize};
 
-pub fn parse(source: &str) -> Result<Vec<Stmt>> {
+/// A parsed program: its statements, and where each top-level statement began.
+/// The positions are what places a runtime error in the source.
+pub struct Program {
+    pub statements: Vec<Stmt>,
+    pub positions: Vec<Position>,
+}
+
+pub fn parse_program(source: &str) -> Result<Program> {
     let tokens = tokenize(source)?;
     let mut parser = Parser::new(tokens);
-    parser.parse_program()
+    parser.program()
+}
+
+pub fn parse(source: &str) -> Result<Vec<Stmt>> {
+    Ok(parse_program(source)?.statements)
 }
 
 pub fn parse_expression(source: &str) -> Result<Expr> {
@@ -25,14 +36,19 @@ pub fn parse_expression(source: &str) -> Result<Expr> {
 /// stack, so the limit is what keeps a pathological source from overflowing it.
 const MAX_NESTING: usize = 64;
 
+/// How many operands one chain of operators may have. Chains are built
+/// iteratively so they escape `MAX_NESTING`, but they still produce a deep tree
+/// that later walks recurse over.
+const MAX_CHAIN: usize = 128;
+
 struct Parser {
-    tokens: Vec<Token>,
+    tokens: Vec<Spanned>,
     position: usize,
     depth: usize,
 }
 
 impl Parser {
-    fn new(tokens: Vec<Token>) -> Self {
+    fn new(tokens: Vec<Spanned>) -> Self {
         Parser {
             tokens,
             position: 0,
@@ -41,12 +57,16 @@ impl Parser {
     }
 
     fn peek(&self) -> &Token {
-        self.tokens.get(self.position).unwrap_or(&Token::Eof)
+        self.tokens
+            .get(self.position)
+            .map(|spanned| &spanned.token)
+            .unwrap_or(&Token::Eof)
     }
 
     fn peek_at(&self, offset: usize) -> &Token {
         self.tokens
             .get(self.position + offset)
+            .map(|spanned| &spanned.token)
             .unwrap_or(&Token::Eof)
     }
 
@@ -54,12 +74,28 @@ impl Parser {
         let token = self
             .tokens
             .get(self.position)
-            .cloned()
+            .map(|spanned| spanned.token.clone())
             .unwrap_or(Token::Eof);
+
         if self.position < self.tokens.len() {
             self.position += 1;
         }
+
         token
+    }
+
+    /// Where the parser is looking.
+    fn here(&self) -> Position {
+        self.tokens
+            .get(self.position)
+            .or_else(|| self.tokens.last())
+            .map(|spanned| spanned.position)
+            .unwrap_or_else(|| Position::new(1, 1))
+    }
+
+    /// A syntax error placed where the parser is looking.
+    fn error(&self, message: impl Into<String>) -> Error {
+        Error::syntax(message).at(self.here())
     }
 
     fn check(&self, token: &Token) -> bool {
@@ -79,9 +115,10 @@ impl Parser {
         if self.eat(token) {
             Ok(())
         } else {
-            Err(Error::syntax(format!(
-                "Expected {token:?} but found {:?}",
-                self.peek()
+            Err(self.error(format!(
+                "Expected {} but found {}",
+                token.describe(),
+                self.peek().describe()
             )))
         }
     }
@@ -110,8 +147,9 @@ impl Parser {
         }
     }
 
-    fn parse_program(&mut self) -> Result<Vec<Stmt>> {
+    fn program(&mut self) -> Result<Program> {
         let mut statements = Vec::new();
+        let mut positions = Vec::new();
 
         loop {
             self.skip_separators();
@@ -120,10 +158,14 @@ impl Parser {
                 break;
             }
 
+            positions.push(self.here());
             statements.push(self.statement()?);
         }
 
-        Ok(statements)
+        Ok(Program {
+            statements,
+            positions,
+        })
     }
 
     /// Parses the body introduced by a `:`, accepting both an indented block and
@@ -177,7 +219,7 @@ impl Parser {
             }
 
             if self.check(&Token::Eof) {
-                return Err(Error::syntax("Unterminated block"));
+                return Err(self.error("Unterminated block"));
             }
 
             statements.push(self.statement()?);
@@ -191,7 +233,7 @@ impl Parser {
 
         if self.depth > MAX_NESTING {
             self.depth -= 1;
-            return Err(Error::syntax("Statements are nested too deeply"));
+            return Err(self.error("Statements are nested too deeply"));
         }
 
         let result = self.statement_inner();
@@ -243,9 +285,9 @@ impl Parser {
                 let type_name = match self.advance() {
                     Token::Identifier(type_name) => type_name,
                     other => {
-                        return Err(Error::syntax(format!(
-                            "Expected a type but found {other:?}"
-                        )));
+                        return Err(
+                            self.error(format!("Expected a type but found {}", other.describe()))
+                        );
                     }
                 };
                 Ok(Stmt::Declaration { name, type_name })
@@ -305,14 +347,12 @@ impl Parser {
         let variable = match self.advance() {
             Token::Identifier(name) => name,
             other => {
-                return Err(Error::syntax(format!(
-                    "Expected a name but found {other:?}"
-                )));
+                return Err(self.error(format!("Expected a name but found {}", other.describe())));
             }
         };
 
         if !self.eat_keyword(Keyword::Of) && !self.eat_keyword(Keyword::In) {
-            return Err(Error::syntax("Expected 'of' in for statement"));
+            return Err(self.error("Expected 'of' in for statement"));
         }
 
         let iterable = self.expression()?;
@@ -331,7 +371,7 @@ impl Parser {
         self.skip_newlines();
 
         if !self.eat_keyword(Keyword::Catch) {
-            return Err(Error::syntax("Expected 'catch' after 'try'"));
+            return Err(self.error("Expected 'catch' after 'try'"));
         }
 
         let parameter = match self.peek().clone() {
@@ -344,9 +384,9 @@ impl Parser {
                 let name = match self.advance() {
                     Token::Identifier(name) => name,
                     other => {
-                        return Err(Error::syntax(format!(
-                            "Expected a name but found {other:?}"
-                        )));
+                        return Err(
+                            self.error(format!("Expected a name but found {}", other.describe()))
+                        );
                     }
                 };
                 self.expect(&Token::RightParen)?;
@@ -370,9 +410,7 @@ impl Parser {
         let name = match self.advance() {
             Token::Identifier(name) => name,
             other => {
-                return Err(Error::syntax(format!(
-                    "Expected a name but found {other:?}"
-                )));
+                return Err(self.error(format!("Expected a name but found {}", other.describe())));
             }
         };
 
@@ -395,8 +433,9 @@ impl Parser {
             let name = match self.advance() {
                 Token::Identifier(name) => name,
                 other => {
-                    return Err(Error::syntax(format!(
-                        "Expected a parameter but found {other:?}"
+                    return Err(self.error(format!(
+                        "Expected a parameter but found {}",
+                        other.describe()
                     )));
                 }
             };
@@ -405,9 +444,9 @@ impl Parser {
                 match self.advance() {
                     Token::Identifier(type_name) => Some(type_name),
                     other => {
-                        return Err(Error::syntax(format!(
-                            "Expected a type but found {other:?}"
-                        )));
+                        return Err(
+                            self.error(format!("Expected a type but found {}", other.describe()))
+                        );
                     }
                 }
             } else {
@@ -431,9 +470,7 @@ impl Parser {
         let name = match self.advance() {
             Token::Identifier(name) => name,
             other => {
-                return Err(Error::syntax(format!(
-                    "Expected a name but found {other:?}"
-                )));
+                return Err(self.error(format!("Expected a name but found {}", other.describe())));
             }
         };
 
@@ -487,8 +524,9 @@ impl Parser {
                         let type_name = match self.advance() {
                             Token::Identifier(type_name) => type_name,
                             other => {
-                                return Err(Error::syntax(format!(
-                                    "Expected a type but found {other:?}"
+                                return Err(self.error(format!(
+                                    "Expected a type but found {}",
+                                    other.describe()
                                 )));
                             }
                         };
@@ -521,7 +559,7 @@ impl Parser {
 
         if self.depth > MAX_NESTING {
             self.depth -= 1;
-            return Err(Error::syntax("Expressions are nested too deeply"));
+            return Err(self.error("Expressions are nested too deeply"));
         }
 
         let result = self.expression_inner();
@@ -547,8 +585,16 @@ impl Parser {
     fn logical_or(&mut self) -> Result<Expr> {
         let mut left = self.logical_and()?;
 
+        let mut chain = 0;
+
         while self.check(&Token::OrOr) || self.check(&Token::Keyword(Keyword::Or)) {
             self.advance();
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
             let right = self.logical_and()?;
             left = Expr::Logical {
                 operator: LogicalOp::Or,
@@ -563,8 +609,16 @@ impl Parser {
     fn logical_and(&mut self) -> Result<Expr> {
         let mut left = self.equality()?;
 
+        let mut chain = 0;
+
         while self.check(&Token::AndAnd) || self.check(&Token::Keyword(Keyword::And)) {
             self.advance();
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
             let right = self.equality()?;
             left = Expr::Logical {
                 operator: LogicalOp::And,
@@ -579,6 +633,8 @@ impl Parser {
     fn equality(&mut self) -> Result<Expr> {
         let mut left = self.relational()?;
 
+        let mut chain = 0;
+
         loop {
             let operator = match self.peek() {
                 Token::Equal => BinaryOp::Equal,
@@ -589,6 +645,12 @@ impl Parser {
             };
 
             self.advance();
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
             let right = self.relational()?;
             left = Expr::Binary {
                 operator,
@@ -603,6 +665,8 @@ impl Parser {
     fn relational(&mut self) -> Result<Expr> {
         let mut left = self.additive()?;
 
+        let mut chain = 0;
+
         loop {
             let operator = match self.peek() {
                 Token::Less => BinaryOp::Less,
@@ -613,6 +677,12 @@ impl Parser {
             };
 
             self.advance();
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
             let right = self.additive()?;
             left = Expr::Binary {
                 operator,
@@ -627,6 +697,8 @@ impl Parser {
     fn additive(&mut self) -> Result<Expr> {
         let mut left = self.multiplicative()?;
 
+        let mut chain = 0;
+
         loop {
             let operator = match self.peek() {
                 Token::Plus => BinaryOp::Add,
@@ -635,6 +707,12 @@ impl Parser {
             };
 
             self.advance();
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
             let right = self.multiplicative()?;
             left = Expr::Binary {
                 operator,
@@ -649,6 +727,8 @@ impl Parser {
     fn multiplicative(&mut self) -> Result<Expr> {
         let mut left = self.unary()?;
 
+        let mut chain = 0;
+
         loop {
             let operator = match self.peek() {
                 Token::Star => BinaryOp::Multiply,
@@ -658,6 +738,12 @@ impl Parser {
             };
 
             self.advance();
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
             let right = self.unary()?;
             left = Expr::Binary {
                 operator,
@@ -689,17 +775,25 @@ impl Parser {
 
     fn postfix(&mut self) -> Result<Expr> {
         let mut expression = self.primary()?;
+        let mut chain = 0;
 
         loop {
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many parts"));
+            }
+
             match self.peek() {
                 Token::Dot => {
                     self.advance();
                     let property = match self.advance() {
                         Token::Identifier(name) => name,
-                        Token::Keyword(keyword) => keyword_name(keyword),
+                        Token::Keyword(keyword) => keyword.as_str().to_string(),
                         other => {
-                            return Err(Error::syntax(format!(
-                                "Expected a property but found {other:?}"
+                            return Err(self.error(format!(
+                                "Expected a property but found {}",
+                                other.describe()
                             )));
                         }
                     };
@@ -851,7 +945,7 @@ impl Parser {
                 Ok(Expr::List(items))
             }
             Token::LeftBrace => self.object_literal(),
-            other => Err(Error::syntax(format!("Unexpected {other:?}"))),
+            other => Err(self.error(format!("Unexpected {}", other.describe()))),
         }
     }
 
@@ -869,7 +963,11 @@ impl Parser {
                 Token::Str(key) => key,
                 Token::Identifier(key) => key,
                 Token::Number(number) => crate::value::format_number(number),
-                other => return Err(Error::syntax(format!("Expected a key but found {other:?}"))),
+                other => {
+                    return Err(
+                        self.error(format!("Expected a key but found {}", other.describe()))
+                    );
+                }
             };
 
             self.expect(&Token::Colon)?;
@@ -966,7 +1064,7 @@ impl Parser {
             }
 
             let Some(end) = end else {
-                return Err(Error::syntax("Unterminated template expression"));
+                return Err(self.error("Unterminated template expression"));
             };
 
             if !literal.is_empty() {
@@ -992,34 +1090,4 @@ impl Parser {
 
         Ok(Expr::Template(parts))
     }
-}
-
-fn keyword_name(keyword: Keyword) -> String {
-    match keyword {
-        Keyword::Class => "class",
-        Keyword::If => "if",
-        Keyword::Else => "else",
-        Keyword::For => "for",
-        Keyword::Of => "of",
-        Keyword::In => "in",
-        Keyword::Def => "def",
-        Keyword::Function => "function",
-        Keyword::Return => "return",
-        Keyword::Throw => "throw",
-        Keyword::Delete => "delete",
-        Keyword::Try => "try",
-        Keyword::Catch => "catch",
-        Keyword::Pass => "pass",
-        Keyword::Not => "not",
-        Keyword::And => "and",
-        Keyword::Or => "or",
-        Keyword::True => "true",
-        Keyword::False => "false",
-        Keyword::Null => "null",
-        Keyword::Super => "super",
-        Keyword::This => "this",
-        Keyword::TypeOf => "typeof",
-        Keyword::New => "new",
-    }
-    .to_string()
 }

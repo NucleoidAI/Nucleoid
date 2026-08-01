@@ -3,6 +3,10 @@
 //! Each case is separated by `---`, titled by its first comment line, and may
 //! end with a `# return:` comment giving the value the program evaluates to.
 
+// Each integration test compiles this module on its own, so not every
+// binary uses every helper.
+#![allow(dead_code)]
+
 use nucleoid::value::{ObjectId, Value};
 use nucleoid::{Runtime, state::State};
 
@@ -13,7 +17,11 @@ pub struct Case {
 }
 
 pub fn cases(document: &str) -> Vec<Case> {
+    // Case files may arrive with either line ending.
+    let document = document.replace("\r\n", "\n");
+
     let body = document
+        .as_str()
         .split("```")
         .nth(1)
         .expect("cases live in one fenced block");
@@ -120,6 +128,21 @@ pub fn check(case: &Case) -> Result<(), String> {
         .run(&case.source)
         .map_err(|error| format!("{error}"))?;
 
+    let expected_assertions = case
+        .source
+        .lines()
+        .filter(|line| !line.trim_start().starts_with('#'))
+        .map(|line| line.matches("assert(").count())
+        .sum::<usize>();
+
+    if runtime.assertions_run() < expected_assertions {
+        return Err(format!(
+            "only {} of {} assertions ran; the rest are on a branch that was never taken",
+            runtime.assertions_run(),
+            expected_assertions
+        ));
+    }
+
     let failures = runtime.take_assertions();
 
     if !failures.is_empty() {
@@ -152,7 +175,13 @@ pub fn run(name: &str, document: &str) {
     let cases = cases(document);
     let mut failures = Vec::new();
 
+    let trace = std::env::var_os("NUCLEOID_TRACE").is_some();
+
     for case in &cases {
+        if trace {
+            println!("  running {}", case.title);
+        }
+
         if let Err(reason) = check(case) {
             failures.push((case.title.clone(), reason));
         }

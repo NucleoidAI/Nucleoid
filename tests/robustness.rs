@@ -91,6 +91,25 @@ fn a_rule_that_feeds_itself_terminates() {
     assert_eq!(runtime.run("counter1.count").unwrap().to_string(), "1");
 }
 
+/// Propagation used to recurse, so a chain longer than about forty links could
+/// not be updated at all — the depth limit stopped it. It is a queue now.
+#[test]
+fn a_long_dependency_chain_still_updates() {
+    let mut runtime = Runtime::new();
+    let length = 500;
+
+    let mut source = String::from("v0 = 1\n");
+    for index in 1..length {
+        source.push_str(&format!("v{index} = v{} + 1\n", index - 1));
+    }
+
+    runtime.run(&source).expect("the chain should build");
+    assert_eq!(runtime.run("v499").unwrap().to_string(), "500");
+
+    runtime.run("v0 = 2").expect("the head should reassign");
+    assert_eq!(runtime.run("v499").unwrap().to_string(), "501");
+}
+
 #[test]
 fn a_failed_run_leaves_the_state_untouched() {
     let mut runtime = Runtime::new();

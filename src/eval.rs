@@ -429,6 +429,7 @@ impl Runtime {
     fn call_named(&mut self, name: &str, arguments: &[Expr], scope: &mut Scope) -> Result<Value> {
         if name == "assert" {
             let values = self.evaluate_all(arguments, scope)?;
+            self.assertions_run += 1;
             let actual = values.first().cloned().unwrap_or(Value::Undefined);
             let expected = values.get(1).cloned().unwrap_or(Value::Undefined);
 

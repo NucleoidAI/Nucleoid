@@ -417,4 +417,290 @@ try:
     result = list.wrong()
 catch error:
     assert(error, TypeError("list.wrong is not a function"))
+
+---
+
+# Nucleoid discards the previous dependencies when a variable is reassigned
+
+# a is 1, b is 2
+a = 1
+b = 2
+
+# c is a plus 3
+c = a + 3
+
+assert(c, 4)
+
+# c is b plus 3
+c = b + 3
+
+assert(c, 5)
+
+# b is 4
+b = 4
+
+assert(c, 7)
+
+# a is 100, which c no longer reads
+a = 100
+
+assert(c, 7)
+
+---
+
+# Nucleoid clears only the dependents of a deleted property
+
+# There is a Report type
+class Report:
+    pass
+
+# report1 is a Report of April 2019
+report1 = Report()
+report1.year = 2019
+report1.month = 4
+
+# report1's period is its year and month, and its label is its year
+report1.period = report1.year + "-" + report1.month
+report1.label = "P" + report1.year
+
+assert(report1.period, "2019-4")
+assert(report1.label, "P2019")
+
+# report1's month is deleted
+assert(delete report1.month, true)
+
+assert(report1.period, null)
+assert(report1.label, "P2019")
+
+# Deleting it again removes nothing
+assert(delete report1.month, false)
+
+---
+
+# Nucleoid does not apply a class-level rule to a plain object
+
+# There is a Tag type
+class Tag:
+    pass
+
+# Any tag's kind is "TAG"
+$Tag.kind = "TAG"
+
+# tag1 is a Tag
+tag1 = Tag()
+
+# plain is an Object, which belongs to no type
+plain = Object()
+
+assert(tag1.kind, "TAG")
+assert(plain.kind, null)
+
+---
+
+# Nucleoid applies class-level rules in the order received
+
+# There is an Alert type
+class Alert:
+    pass
+
+# If any alert's level is greater than 1, then its tone is "LOW"
+if $Alert.level > 1:
+    $Alert.tone = "LOW"
+
+# If any alert's level is greater than 2, then its tone is "HIGH"
+if $Alert.level > 2:
+    $Alert.tone = "HIGH"
+
+# If any alert's level is greater than 1, then its tone is "FINAL"
+if $Alert.level > 1:
+    $Alert.tone = "FINAL"
+
+# alert1 is an Alert whose level is 5
+alert1 = Alert()
+alert1.level = 5
+
+assert(alert1.tone, "FINAL")
+
+# alert2 is an Alert whose level is 0
+alert2 = Alert()
+alert2.level = 0
+
+assert(alert2.tone, null)
+
+---
+
+# Nucleoid lets an instance assignment override the rule for that instance only
+
+# There is a Node type
+class Node:
+    pass
+
+# Any node's status is "IDLE"
+$Node.status = "IDLE"
+
+# node1 and node2 are Nodes
+node1 = Node()
+node2 = Node()
+
+assert(node1.status, "IDLE")
+assert(node2.status, "IDLE")
+
+# node1's status is "ACTIVE"
+node1.status = "ACTIVE"
+
+assert(node1.status, "ACTIVE")
+assert(node2.status, "IDLE")
+
+---
+
+# Nucleoid lets a subtype rule override the supertype rule
+
+# There is a Payment type
+class Payment:
+    pass
+
+# Any payment's method is "CARD"
+$Payment.method = "CARD"
+
+# There is a Wire type, which is a subtype of Payment
+class Wire: Payment
+    pass
+
+# Any wire's method is "TRANSFER"
+$Wire.method = "TRANSFER"
+
+# payment1 is a Payment and wire1 is a Wire
+payment1 = Payment()
+wire1 = Wire()
+
+assert(payment1.method, "CARD")
+assert(wire1.method, "TRANSFER")
+
+---
+
+# Nucleoid follows a class-level rule through a reference into another type
+
+# There is a Country type
+class Country:
+    pass
+
+# There is a City type
+class City:
+    pass
+
+# There is a Store type
+class Store:
+    pass
+
+# country1 is a Country whose code is "US"
+country1 = Country()
+country1.code = "US"
+
+# city1 is a City named "NY" in country1
+city1 = City()
+city1.name = "NY"
+city1.country = country1
+
+# Any store's label is its city's country code and its city's name
+$Store.label = $Store.city.country.code + "-" + $Store.city.name
+
+# store1 is a Store in city1
+store1 = Store()
+store1.city = city1
+
+assert(store1.label, "US-NY")
+
+# country1's code is "CA"
+country1.code = "CA"
+
+assert(store1.label, "CA-NY")
+
+---
+
+# Nucleoid reads zero as false in a condition
+
+# count is 0
+count = 0
+
+# flag is "NO"
+flag = "NO"
+
+# if there is a count, then flag is "YES"
+if count:
+    flag = "YES"
+
+assert(flag, "NO")
+
+# count is 3
+count = 3
+
+assert(flag, "YES")
+
+---
+
+# Nucleoid registers a subtype instance in the subtype list
+
+# There is a Vehicle type, which has a make as a string
+class Vehicle(make: str):
+    this.make = make
+
+# There is a Truck type, which is a subtype of Vehicle
+class Truck: Vehicle
+    def init(make, payload):
+        super(make)
+        this.payload = payload
+
+# truck1 is a Truck whose make is "Volvo" and whose payload is 12000
+truck1 = Truck("Volvo", 12000)
+
+assert(truck1, { "id": "truck1", "make": "Volvo", "payload": 12000 })
+assert(Truck.length, 1)
+
+---
+
+# Nucleoid provides the built-in members the reference lists
+
+# Math
+assert(Math.pow(2, 10), 1024)
+assert(Math.sqrt(144), 12)
+assert(Math.floor(2.9), 2)
+assert(Math.round(2.5), 3)
+assert(Math.max(1, 5, 3), 5)
+assert(Math.min(1, 5, 3), 1)
+
+# Number
+assert(Number.MAX_INTEGER, 9007199254740991)
+
+# String, as a namespace and on an instance
+assert(String.fromCharCode(65), "A")
+assert("ABC".lower(), "abc")
+assert("abc".charAt(1), "b")
+assert("abc".length, 3)
+assert("abc".replace("b", "x"), "axc")
+assert("a,b,c".split(",").length, 3)
+
+# Date
+assert(Date.parse("04 Dec 1995 00:12:00 GMT"), 818035920000)
+assert(Date("2019-7-24").getYear(), 119)
+assert(Date("2020-1-1").toDateString(), "Wed Jan 01 2020")
+assert(Date(818035920000).getTime(), 818035920000)
+
+# Boolean and Object
+assert(Boolean(0), false)
+assert(Object(), {})
+
+# List
+assert([1, 2, 3].length, 3)
+assert([3, 1, 2].sort()[0], 1)
+assert([1, 2, 3].slice(1).length, 2)
+assert([1, 2, 3].join("-"), "1-2-3")
+assert([1, 2, 3].map(n => n * 2)[2], 6)
+assert([1, 2, 3].filter(n => n > 1).length, 2)
+assert([1, 2, 3].find(n => n == 2), 2)
+assert([1, 2, 3].reduce((sum, n) => sum + n, 0), 6)
+assert([1, 2, 3].some(n => n > 2), true)
+assert([1, 2, 3].every(n => n > 0), true)
+
+# Class
+assert(Class.length, 0)
 ```

@@ -545,6 +545,23 @@ Messages are exact and are part of the observable behaviour of the language.
 | Condition | Message |
 | --- | --- |
 | Declaring a class-level rule in a non-class block | `Cannot define class declaration in non-class block` |
+| A character that begins no token | `Unexpected character '<character>'` |
+| A token other than the one required | `Expected <what> but found <what>` |
+| A block or template that is never closed | `Unterminated block`, `Unterminated template expression` |
+| Nesting or a chain past the runtime's limit | `Expressions are nested too deeply`, `Expression has too many operands` |
+
+### Where an error happened
+
+- Every error records a line and column: a syntax error at the token the parser
+  stopped at, a runtime error at the start of the top-level statement that was
+  running.
+- The position is part of how an error is reported, not part of what it is. What a
+  `catch` binds is `<Kind>: <message>` with no position, so a program can compare
+  against it wherever the statement is written.
+
+```
+ReferenceError: e is not defined (line 3, column 1)
+```
 
 Full detail: [NUC 9](nuc-0009.md).
 
