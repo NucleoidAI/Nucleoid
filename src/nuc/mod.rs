@@ -180,7 +180,7 @@ impl Nuc {
             Expr::Member { object, property } => {
                 if let Expr::ClassRef(class) = object.as_ref() {
                     if scope.instance().is_none() {
-                        if !runtime.state.classes.contains_key(class) {
+                        if !runtime.state.has_class(class) {
                             return Err(Error::not_defined(class));
                         }
                         return Ok(Nuc::Property(Property::new(

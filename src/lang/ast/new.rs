@@ -28,7 +28,7 @@ impl<'a> New<'a> {
             return None;
         };
 
-        if runtime.state.classes.contains_key(name) {
+        if runtime.state.has_class(name) {
             Some((name.clone(), arguments.clone()))
         } else {
             None

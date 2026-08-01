@@ -31,7 +31,6 @@ impl Class {
     pub fn run(&mut self, runtime: &mut Runtime, _scope: &mut Scope) -> Result<Outcome> {
         let name = &self.declaration.name;
         let existing = runtime.state.class(name).cloned();
-        runtime.transaction.record_class(name, existing.clone());
 
         let mut data = ClassData::new(name.clone());
         data.parent = self.declaration.parent.clone();
@@ -58,7 +57,7 @@ impl Class {
             data.adopt_initializer();
         }
 
-        runtime.state.classes.insert(name.clone(), data);
+        runtime.insert_class(&name.clone(), data);
 
         Ok(Outcome::null())
     }
@@ -89,9 +88,9 @@ impl Runtime {
     pub(crate) fn check_rule_references(&self, value: &Expr, scope: &Scope) -> Result<()> {
         for root in Expression::new(value).roots() {
             let known = scope.has(&root)
-                || self.state.variables.contains_key(&root)
-                || self.state.classes.contains_key(&root)
-                || self.state.functions.contains_key(&root)
+                || self.state.has_variable(&root)
+                || self.state.has_class(&root)
+                || self.state.has_function(&root)
                 || crate::builtins::is_global(&root);
 
             if !known {
@@ -112,7 +111,7 @@ impl Runtime {
         let mut found = None;
         find_class_reference_statement(statement, &mut found);
 
-        found.filter(|name| self.state.classes.contains_key(name))
+        found.filter(|name| self.state.has_class(name))
     }
 
     /// Keeps a statement on the class and hands it to every instance there
@@ -157,12 +156,9 @@ impl Runtime {
             return Err(Error::not_defined(class));
         };
 
-        let before = data.clone();
         let instances = data.instances.clone();
 
-        self.transaction.record_class(class, Some(before));
-
-        if let Some(data) = self.state.class_mut(class) {
+        self.update_class(class, |data| {
             data.declarations.shift_remove(&key);
             data.declarations.insert(
                 key.clone(),
@@ -172,7 +168,7 @@ impl Runtime {
                     sequence,
                 },
             );
-        }
+        });
 
         for instance in instances {
             self.apply_declaration(&statement, &instance)?;

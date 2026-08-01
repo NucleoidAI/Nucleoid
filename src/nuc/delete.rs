@@ -34,7 +34,7 @@ impl Runtime {
             Expr::Identifier(name) => {
                 let key = NodeKey::variable(name.clone());
 
-                let Some(value) = self.state.variables.get(name).cloned() else {
+                let Some(value) = self.state.variable(name).cloned() else {
                     return Ok(Value::Bool(false));
                 };
 
@@ -42,8 +42,7 @@ impl Runtime {
                     self.delete_object(id)?;
                 }
 
-                self.transaction.record_variable(name, Some(value));
-                self.state.variables.shift_remove(name);
+                self.remove_variable(name);
                 self.remove_node(&key);
                 self.cascade_removal(&key)?;
 
@@ -63,17 +62,11 @@ impl Runtime {
                     return Ok(Value::Bool(false));
                 };
 
-                let before = self.state.property(&id, property).cloned();
-
-                if before.is_none() {
+                if self.state.property(&id, property).is_none() {
                     return Ok(Value::Bool(false));
                 }
 
-                self.transaction.record_property(&id, property, before);
-
-                if let Some(data) = self.state.object_mut(&id) {
-                    data.properties.shift_remove(property);
-                }
+                self.remove_property(&id, property);
 
                 let key = NodeKey::property(&id, property);
                 self.remove_node(&key);
@@ -94,10 +87,8 @@ impl Runtime {
                 let key = NodeKey::object(&id);
                 self.remove_node(&key);
 
-                if self.state.variables.get(id.as_str()).is_some() {
-                    let before = self.state.variables.get(id.as_str()).cloned();
-                    self.transaction.record_variable(id.as_str(), before);
-                    self.state.variables.shift_remove(id.as_str());
+                if self.state.has_variable(id.as_str()) {
+                    self.remove_variable(id.as_str());
                 }
 
                 self.cascade_removal(&key)?;
@@ -121,11 +112,9 @@ impl Runtime {
             return Ok(Value::Bool(false));
         }
 
-        self.transaction.record_class(class, Some(data.clone()));
-
-        if let Some(data) = self.state.class_mut(class) {
+        self.update_class(class, |data| {
             data.declarations.shift_remove(&key);
-        }
+        });
 
         for instance in data.instances {
             let node = NodeKey::property(&instance, property);
@@ -158,17 +147,12 @@ impl Runtime {
         let data_class = data.class.clone();
 
         if let Some(class_name) = &data_class {
-            if let Some(class) = self.state.class(class_name).cloned() {
-                self.transaction.record_class(class_name, Some(class));
-            }
-
-            if let Some(class) = self.state.class_mut(class_name) {
+            self.update_class(class_name, |class| {
                 class.instances.retain(|instance| instance != id);
-            }
+            });
         }
 
-        self.transaction.record_object(id, Some(data));
-        self.state.objects.shift_remove(id);
+        self.remove_object(id);
 
         if let Some(class_name) = data_class {
             self.propagate(&NodeKey::class(&class_name))?;

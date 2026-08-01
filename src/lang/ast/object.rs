@@ -51,8 +51,7 @@ impl Runtime {
         let mut data = ObjectData::new(None);
         data.properties = properties;
 
-        self.transaction.record_object(&id, None);
-        self.state.objects.insert(id.clone(), data);
+        self.insert_object(id.clone(), data);
 
         Value::Object(id)
     }

@@ -99,13 +99,13 @@ impl Runtime {
             return self.invoke(&function, &values);
         }
 
-        if let Some(function) = self.state.functions.get(name).cloned() {
+        if let Some(function) = self.state.function(name).cloned() {
             self.track(NodeKey::function(name));
             let values = self.evaluate_all(arguments, scope)?;
             return self.invoke(&function, &values);
         }
 
-        if self.state.classes.contains_key(name) {
+        if self.state.has_class(name) {
             let id = ObjectId::anonymous();
             let object = Object::new(id, name.to_string(), arguments.to_vec());
             return object.run(self, scope);
@@ -142,7 +142,7 @@ impl Runtime {
             _ => {}
         }
 
-        if let Some(Value::Function(function)) = self.state.variables.get(name).cloned() {
+        if let Some(Value::Function(function)) = self.state.variable(name).cloned() {
             let values = self.evaluate_all(arguments, scope)?;
             return self.invoke(&function, &values);
         }
@@ -159,7 +159,7 @@ impl Runtime {
     ) -> Result<Value> {
         // Static calls on the built-in namespaces.
         if let Expr::Identifier(name) = object {
-            if !scope.has(name) && !self.state.variables.contains_key(name) {
+            if !scope.has(name) && !self.state.has_variable(name) {
                 if let Some(global) = Global::from_name(name) {
                     if let Some(value) = self.call_global(global, property, arguments, scope)? {
                         return Ok(value);

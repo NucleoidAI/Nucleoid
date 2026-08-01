@@ -28,12 +28,7 @@ impl Function {
 
     pub fn run(&mut self, runtime: &mut Runtime, _scope: &mut Scope) -> Result<Outcome> {
         if let Some(name) = &self.function.name {
-            let before = runtime.state.functions.get(name).cloned();
-            runtime.transaction.record_function(name, before);
-            runtime
-                .state
-                .functions
-                .insert(name.clone(), self.function.clone());
+            runtime.insert_function(name, self.function.clone());
         }
 
         Ok(Outcome::null())

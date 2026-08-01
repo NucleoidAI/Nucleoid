@@ -40,17 +40,17 @@ impl Runtime {
             return Ok(value);
         }
 
-        if let Some(value) = self.state.variables.get(name).cloned() {
+        if let Some(value) = self.state.variable(name).cloned() {
             self.track(NodeKey::variable(name));
             self.note_nullish(&value);
             return Ok(value);
         }
 
-        if self.state.classes.contains_key(name) {
+        if self.state.has_class(name) {
             return Ok(Value::Class(name.to_string()));
         }
 
-        if let Some(function) = self.state.functions.get(name).cloned() {
+        if let Some(function) = self.state.function(name).cloned() {
             return Ok(Value::Function(function));
         }
 
@@ -73,7 +73,7 @@ impl Runtime {
         match scope.instance() {
             Some(instance) => Ok(Value::Object(instance.clone())),
             None => {
-                if self.state.classes.contains_key(name) {
+                if self.state.has_class(name) {
                     Ok(Value::Class(name.to_string()))
                 } else {
                     Err(Error::not_defined(name))
@@ -154,7 +154,7 @@ impl Runtime {
     ) -> Result<Value> {
         match Global::from_name(name) {
             Some(Global::Class) if property == "length" => {
-                return Ok(Value::Number(self.state.classes.len() as f64));
+                return Ok(Value::Number(self.state.class_count() as f64));
             }
             Some(Global::Number) => {
                 if let Some(value) = builtins::number_constant(property) {

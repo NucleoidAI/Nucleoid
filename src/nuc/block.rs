@@ -96,7 +96,7 @@ impl Block {
         roots.iter().any(|root| {
             !assigned.contains(root)
                 && !scope.has(root)
-                && matches!(runtime.state.variables.get(root), Some(Value::Object(_)))
+                && matches!(runtime.state.variable(root), Some(Value::Object(_)))
         })
     }
 }

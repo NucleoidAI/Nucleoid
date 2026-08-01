@@ -65,26 +65,17 @@ impl Object {
             values.push(runtime.evaluate(argument, scope)?);
         }
 
-        if runtime.transaction.needs_object(&self.id) {
-            let before = runtime.state.object(&self.id).cloned();
-            runtime.transaction.record_object(&self.id, before);
-        }
-
         let mut data = ObjectData::new(Some(self.class.clone()));
         data.properties
             .insert("id".to_string(), Value::String(self.id.to_string()));
-        runtime.state.objects.insert(self.id.clone(), data);
+        runtime.insert_object(self.id.clone(), data);
 
-        if runtime.transaction.needs_class(&self.class) {
-            let before = runtime.state.class(&self.class).cloned();
-            runtime.transaction.record_class(&self.class, before);
-        }
-
-        if let Some(data) = runtime.state.class_mut(&self.class) {
-            if !data.instances.contains(&self.id) {
-                data.instances.push(self.id.clone());
+        let id = self.id.clone();
+        runtime.update_class(&self.class, |class| {
+            if !class.instances.contains(&id) {
+                class.instances.push(id);
             }
-        }
+        });
 
         self.graph(runtime)?;
 

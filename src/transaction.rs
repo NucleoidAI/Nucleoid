@@ -222,54 +222,15 @@ impl Transaction {
 
 fn apply(entry: Undo, state: &mut State, graph: &mut Graph) {
     match entry {
-        Undo::Variable { name, before } => match before {
-            Some(value) => {
-                state.variables.insert(name, value);
-            }
-            None => {
-                state.variables.shift_remove(&name);
-            }
-        },
+        Undo::Variable { name, before } => state.restore_variable(name, before),
         Undo::Property {
             object,
             property,
             before,
-        } => {
-            if let Some(data) = state.objects.get_mut(&object) {
-                match before {
-                    Some(value) => {
-                        data.properties.insert(property, value);
-                    }
-                    None => {
-                        data.properties.shift_remove(&property);
-                    }
-                }
-            }
-        }
-        Undo::Object { id, before } => match before {
-            Some(data) => {
-                state.objects.insert(id, data);
-            }
-            None => {
-                state.objects.shift_remove(&id);
-            }
-        },
-        Undo::Class { name, before } => match before {
-            Some(data) => {
-                state.classes.insert(name, data);
-            }
-            None => {
-                state.classes.shift_remove(&name);
-            }
-        },
-        Undo::Function { name, before } => match before {
-            Some(function) => {
-                state.functions.insert(name, function);
-            }
-            None => {
-                state.functions.shift_remove(&name);
-            }
-        },
+        } => state.restore_property(&object, property, before),
+        Undo::Object { id, before } => state.restore_object(id, before),
+        Undo::Class { name, before } => state.restore_class(name, before),
+        Undo::Function { name, before } => state.restore_function(name, before),
         Undo::Node { key, before } => match before {
             Some(node) => {
                 graph.insert(node);
