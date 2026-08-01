@@ -8,7 +8,9 @@
 ![Banner](.github/media/banner.gif)
 
 <p align="center">
-  Logic Language for LLMs
+  <b>Logic Language for LLMs</b>
+  <br/>
+  Neuro-Symbolic AI Architecture
 </p>
 
 <br/>
