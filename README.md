@@ -23,6 +23,21 @@ Nucleoid is designed with a minimally tokenized syntax for logic representation 
 - **Logic Graph:** Executable knowledge graph.
 - **Explainability:** Transparent, traceable decisions.
 
+```
+# There is a Human type with a name
+class Human(name: str):
+    this.name = name
+
+# Every human is mortal
+$Human.mortal = true
+
+# Socrates is a Human
+socrates = Human("Socrates")
+
+# Therefore, Socrates is mortal
+assert(socrates.mortal, true)
+```
+
 Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
