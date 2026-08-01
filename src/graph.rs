@@ -127,7 +127,9 @@ impl Graph {
         self.sequence
     }
 
-    pub fn get(&self, key: &NodeKey) -> Option<&GraphNode> {
+    /// The node filed under a key, if there is one. `graph.retrieve` in
+    /// `ref/src/graph.js`.
+    pub fn retrieve(&self, key: &NodeKey) -> Option<&GraphNode> {
         self.nodes.get(key)
     }
 
@@ -145,6 +147,12 @@ impl Graph {
 
     pub fn remove(&mut self, key: &NodeKey) -> Option<GraphNode> {
         self.nodes.shift_remove(key)
+    }
+
+    /// Empties the graph, keeping the sequence counter so that keys filed after
+    /// a clear still sort after the ones before it.
+    pub fn clear(&mut self) {
+        self.nodes.clear();
     }
 
     pub fn keys(&self) -> impl Iterator<Item = &NodeKey> {

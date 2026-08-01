@@ -13,7 +13,7 @@ use crate::nuc::Outcome;
 use crate::nuc::object::Object;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::value::{ObjectData, ObjectId, Value};
+use crate::value::ObjectId;
 
 /// What the property is being set on.
 pub enum Owner {
@@ -89,7 +89,7 @@ impl Property {
                 if runtime.is_imperative() && runtime.instantiation(&self.value).is_none() {
                     let (evaluated, _) =
                         runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-                    runtime.set_property(&object, &self.name, evaluated.clone());
+                    runtime.assign_property(&object, &self.name, evaluated.clone());
                     self.kind = None;
                     return Ok(Outcome::value(evaluated));
                 }
@@ -98,14 +98,14 @@ impl Property {
                     let id = ObjectId::from(format!("{object}.{}", self.name));
                     let instance = Object::new(id, class, arguments);
                     let created = instance.run(runtime, scope)?;
-                    runtime.set_property(&object, &self.name, created.clone());
+                    runtime.assign_property(&object, &self.name, created.clone());
                     self.kind = Some(NodeKind::Object);
                     return Ok(Outcome::value(created));
                 }
 
                 let (evaluated, dependencies) =
                     runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-                runtime.set_property(&object, &self.name, evaluated.clone());
+                runtime.assign_property(&object, &self.name, evaluated.clone());
                 self.kind = Some(NodeKind::Property);
 
                 Ok(Outcome {
@@ -129,7 +129,7 @@ impl Property {
             value: self.value.clone(),
         };
 
-        runtime.register(
+        runtime.file(
             &NodeKey::property(object, &self.name),
             kind,
             Some(statement),
@@ -142,25 +142,6 @@ impl Property {
         match self.key() {
             Some(key) => runtime.propagate(&key),
             None => Ok(()),
-        }
-    }
-}
-
-impl Runtime {
-    /// `state.assign` for a property.
-    pub(crate) fn set_property(&mut self, object: &ObjectId, property: &str, value: Value) {
-        if !self.state.objects.contains_key(object) {
-            self.transaction.record_object(object, None);
-            self.state
-                .objects
-                .insert(object.clone(), ObjectData::new(None));
-        }
-
-        let before = self.state.property(object, property).cloned();
-        self.transaction.record_property(object, property, before);
-
-        if let Some(data) = self.state.object_mut(object) {
-            data.properties.insert(property.to_string(), value);
         }
     }
 }

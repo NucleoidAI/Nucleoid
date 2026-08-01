@@ -44,7 +44,7 @@ impl Function {
             return Ok(());
         };
 
-        runtime.register(&key, NodeKind::Function, None, IndexSet::new(), None)
+        runtime.file(&key, NodeKind::Function, None, IndexSet::new(), None)
     }
 
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {

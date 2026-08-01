@@ -102,7 +102,7 @@ impl Object {
     /// `OBJECT.graph()` — files the instance so the class's own node can reach
     /// it.
     fn graph(&self, runtime: &mut Runtime) -> Result<()> {
-        runtime.register(&self.key(), NodeKind::Object, None, IndexSet::new(), None)
+        runtime.file(&self.key(), NodeKind::Object, None, IndexSet::new(), None)
     }
 
     /// Wakes everything that reads the class, since it now has one more

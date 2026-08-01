@@ -5,11 +5,9 @@
 use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
+use crate::expression::Expression;
 use crate::graph::{NodeKey, NodeKind};
-use crate::lang::ast::{
-    ClassDecl, Expr, FunctionBody, Stmt, collect_class_properties, collect_roots,
-    find_class_reference_statement,
-};
+use crate::lang::ast::{ClassDecl, Expr, FunctionBody, Stmt, find_class_reference_statement};
 use crate::nuc::Outcome;
 use crate::nuc::object::Object;
 use crate::runtime::Runtime;
@@ -66,7 +64,7 @@ impl Class {
     }
 
     pub fn graph(&self, runtime: &mut Runtime) -> Result<()> {
-        runtime.register(&self.key(), NodeKind::Class, None, IndexSet::new(), None)
+        runtime.file(&self.key(), NodeKind::Class, None, IndexSet::new(), None)
     }
 }
 
@@ -89,10 +87,7 @@ impl ClassData {
 impl Runtime {
     /// Reports a name a class-level rule reads that nothing has defined.
     pub(crate) fn check_rule_references(&self, value: &Expr, scope: &Scope) -> Result<()> {
-        let mut roots = Vec::new();
-        collect_roots(value, &mut roots);
-
-        for root in roots {
+        for root in Expression::new(value).roots() {
             let known = scope.has(&root)
                 || self.state.variables.contains_key(&root)
                 || self.state.classes.contains_key(&root)
@@ -205,8 +200,7 @@ impl Runtime {
             return Ok(());
         };
 
-        let mut pending = Vec::new();
-        collect_class_properties(value, class, &mut pending);
+        let mut pending = Expression::new(value).class_properties(class);
 
         let mut seen: Vec<String> = Vec::new();
 
@@ -223,7 +217,7 @@ impl Runtime {
 
             if let Some(declaration) = data.declarations.get(&format!("${class}.{current}")) {
                 if let Stmt::Assign { value, .. } = &declaration.statement {
-                    collect_class_properties(value, class, &mut pending);
+                    pending.extend(Expression::new(value).class_properties(class));
                 }
             }
         }

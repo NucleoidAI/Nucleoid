@@ -148,7 +148,7 @@ impl Runtime {
 
     pub fn clear(&mut self) {
         self.state.clear();
-        self.graph = Graph::new();
+        self.graph.clear();
         self.assertions.clear();
     }
 

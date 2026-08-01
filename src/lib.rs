@@ -26,6 +26,7 @@
 //! | [`lang::ast`], [`lang::ast::Ast`] | `src/lang/ast`, `Node.js` |
 //! | [`lang::evaluation`] | `src/lang/Evaluation.js` |
 //! | [`nuc`], [`nuc::Nuc`] | `src/nuc`, `NODE.js` |
+//! | [`expression`] | `src/Expression.js` |
 //! | [`graph`] | `src/graph.js` |
 //! | [`state`] | `src/state.js` |
 //! | [`scope`] | `src/Scope.js` |
@@ -49,6 +50,7 @@
 
 pub mod builtins;
 pub mod error;
+pub mod expression;
 pub mod graph;
 pub mod lang;
 pub mod nuc;

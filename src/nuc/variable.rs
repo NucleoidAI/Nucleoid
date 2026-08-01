@@ -11,7 +11,7 @@ use crate::nuc::Outcome;
 use crate::nuc::object::Object;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::value::{ObjectId, Value};
+use crate::value::ObjectId;
 
 pub struct Variable {
     pub name: String,
@@ -46,7 +46,7 @@ impl Variable {
 
         if runtime.is_imperative() {
             let (evaluated, _) = runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-            runtime.set_variable(&self.name, evaluated.clone());
+            runtime.assign(&self.name, evaluated.clone());
             self.kind = None;
             return Ok(Outcome::value(evaluated));
         }
@@ -55,13 +55,13 @@ impl Variable {
         if let Some((class, arguments)) = runtime.instantiation(&self.value) {
             let object = Object::new(ObjectId::from(self.name.clone()), class, arguments);
             let created = object.run(runtime, scope)?;
-            runtime.set_variable(&self.name, created.clone());
+            runtime.assign(&self.name, created.clone());
             self.kind = Some(NodeKind::Object);
             return Ok(Outcome::value(created));
         }
 
         let (evaluated, dependencies) = runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-        runtime.set_variable(&self.name, evaluated.clone());
+        runtime.assign(&self.name, evaluated.clone());
         self.kind = Some(NodeKind::Variable);
 
         Ok(Outcome {
@@ -80,19 +80,10 @@ impl Variable {
             value: self.value.clone(),
         };
 
-        runtime.register(&self.key(), kind, Some(statement), dependencies, None)
+        runtime.file(&self.key(), kind, Some(statement), dependencies, None)
     }
 
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
         runtime.propagate(&self.key())
-    }
-}
-
-impl Runtime {
-    /// `state.assign` for a top-level name.
-    pub(crate) fn set_variable(&mut self, name: &str, value: Value) {
-        let before = self.state.variables.get(name).cloned();
-        self.transaction.record_variable(name, before);
-        self.state.variables.insert(name.to_string(), value);
     }
 }

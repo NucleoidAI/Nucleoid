@@ -113,7 +113,7 @@ impl If {
             return Ok(());
         };
 
-        runtime.register(
+        runtime.file(
             key,
             NodeKind::If,
             Some(self.statement()),

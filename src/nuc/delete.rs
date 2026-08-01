@@ -131,7 +131,7 @@ impl Runtime {
             self.remove_node(&node);
 
             if self.state.property(&instance, property).is_some() {
-                self.set_property(&instance, property, Value::Null);
+                self.assign_property(&instance, property, Value::Null);
             }
         }
 

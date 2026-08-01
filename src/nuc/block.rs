@@ -75,7 +75,7 @@ impl Block {
             return Ok(());
         };
 
-        runtime.register(
+        runtime.file(
             key,
             NodeKind::Block,
             Some(Stmt::Block(self.statements.clone())),

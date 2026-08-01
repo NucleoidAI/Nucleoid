@@ -26,6 +26,7 @@ pub mod template;
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
+use crate::expression::Expression;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 use crate::value::Value;
@@ -401,14 +402,14 @@ pub(crate) fn collect_read_roots(statement: &Stmt, roots: &mut Vec<String>) {
     match statement {
         Stmt::Assign { target, value } => {
             if let Expr::Member { object, .. } = target {
-                collect_roots(object, roots);
+                roots.extend(Expression::new(object).roots());
             }
-            collect_roots(value, roots);
+            roots.extend(Expression::new(value).roots());
         }
         Stmt::Expression(expression) | Stmt::Throw(expression) | Stmt::Delete(expression) => {
-            collect_roots(expression, roots)
+            roots.extend(Expression::new(expression).roots())
         }
-        Stmt::Return(Some(expression)) => collect_roots(expression, roots),
+        Stmt::Return(Some(expression)) => roots.extend(Expression::new(expression).roots()),
         Stmt::Block(nested) => {
             for statement in nested {
                 collect_read_roots(statement, roots);
@@ -419,7 +420,7 @@ pub(crate) fn collect_read_roots(statement: &Stmt, roots: &mut Vec<String>) {
             consequent,
             alternate,
         } => {
-            collect_roots(condition, roots);
+            roots.extend(Expression::new(condition).roots());
             for statement in consequent {
                 collect_read_roots(statement, roots);
             }
@@ -431,79 +432,7 @@ pub(crate) fn collect_read_roots(statement: &Stmt, roots: &mut Vec<String>) {
     }
 }
 
-pub(crate) fn collect_roots(expression: &Expr, roots: &mut Vec<String>) {
-    match expression {
-        Expr::Identifier(name) => roots.push(name.clone()),
-        Expr::Member { object, .. } | Expr::Slice { object, .. } => collect_roots(object, roots),
-        Expr::Index { object, index } => {
-            collect_roots(object, roots);
-            collect_roots(index, roots);
-        }
-        Expr::Call { callee, arguments } => {
-            collect_roots(callee, roots);
-            for argument in arguments {
-                collect_roots(argument, roots);
-            }
-        }
-        Expr::Unary { operand, .. } => collect_roots(operand, roots),
-        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
-            collect_roots(left, roots);
-            collect_roots(right, roots);
-        }
-        Expr::List(items) => {
-            for item in items {
-                collect_roots(item, roots);
-            }
-        }
-        Expr::ObjectLiteral(entries) => {
-            for (_, value) in entries {
-                collect_roots(value, roots);
-            }
-        }
-        Expr::Template(parts) => {
-            for part in parts {
-                if let TemplatePart::Expression(expression) = part {
-                    collect_roots(expression, roots);
-                }
-            }
-        }
-        Expr::Assign { target, value } => {
-            collect_roots(target, roots);
-            collect_roots(value, roots);
-        }
-        _ => {}
-    }
-}
-
-/// The `$Class.property` names an expression reads.
-pub(crate) fn collect_class_properties(expression: &Expr, class: &str, found: &mut Vec<String>) {
-    match expression {
-        Expr::Member { object, property } => {
-            if matches!(object.as_ref(), Expr::ClassRef(name) if name == class) {
-                found.push(property.clone());
-            } else {
-                collect_class_properties(object, class, found);
-            }
-        }
-        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
-            collect_class_properties(left, class, found);
-            collect_class_properties(right, class, found);
-        }
-        Expr::Unary { operand, .. } => collect_class_properties(operand, class, found),
-        Expr::Call { callee, arguments } => {
-            collect_class_properties(callee, class, found);
-            for argument in arguments {
-                collect_class_properties(argument, class, found);
-            }
-        }
-        Expr::Index { object, index } => {
-            collect_class_properties(object, class, found);
-            collect_class_properties(index, class, found);
-        }
-        _ => {}
-    }
-}
-
+/// The first `$Class` a statement mentions, anywhere inside it.
 pub(crate) fn find_class_reference_statement(statement: &Stmt, found: &mut Option<String>) {
     if found.is_some() {
         return;
@@ -511,19 +440,19 @@ pub(crate) fn find_class_reference_statement(statement: &Stmt, found: &mut Optio
 
     match statement {
         Stmt::Assign { target, value } => {
-            find_class_reference(target, found);
-            find_class_reference(value, found);
+            take(found, target);
+            take(found, value);
         }
         Stmt::Expression(expression) | Stmt::Throw(expression) | Stmt::Delete(expression) => {
-            find_class_reference(expression, found)
+            take(found, expression)
         }
-        Stmt::Return(Some(expression)) => find_class_reference(expression, found),
+        Stmt::Return(Some(expression)) => take(found, expression),
         Stmt::If {
             condition,
             consequent,
             alternate,
         } => {
-            find_class_reference(condition, found);
+            take(found, condition);
             for statement in consequent {
                 find_class_reference_statement(statement, found);
             }
@@ -540,64 +469,8 @@ pub(crate) fn find_class_reference_statement(statement: &Stmt, found: &mut Optio
     }
 }
 
-pub(crate) fn find_class_reference(expression: &Expr, found: &mut Option<String>) {
-    if found.is_some() {
-        return;
-    }
-
-    match expression {
-        Expr::ClassRef(name) => *found = Some(name.clone()),
-        Expr::Member { object, .. } => find_class_reference(object, found),
-        Expr::Index { object, index } => {
-            find_class_reference(object, found);
-            find_class_reference(index, found);
-        }
-        Expr::Slice { object, start, end } => {
-            find_class_reference(object, found);
-            if let Some(start) = start {
-                find_class_reference(start, found);
-            }
-            if let Some(end) = end {
-                find_class_reference(end, found);
-            }
-        }
-        Expr::Call { callee, arguments } => {
-            find_class_reference(callee, found);
-            for argument in arguments {
-                find_class_reference(argument, found);
-            }
-        }
-        Expr::Unary { operand, .. } => find_class_reference(operand, found),
-        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
-            find_class_reference(left, found);
-            find_class_reference(right, found);
-        }
-        Expr::List(items) => {
-            for item in items {
-                find_class_reference(item, found);
-            }
-        }
-        Expr::ObjectLiteral(entries) => {
-            for (_, value) in entries {
-                find_class_reference(value, found);
-            }
-        }
-        Expr::Template(parts) => {
-            for part in parts {
-                if let TemplatePart::Expression(expression) = part {
-                    find_class_reference(expression, found);
-                }
-            }
-        }
-        Expr::Assign { target, value } => {
-            find_class_reference(target, found);
-            find_class_reference(value, found);
-        }
-        Expr::Function(function) => {
-            if let FunctionBody::Expression(body) = &function.body {
-                find_class_reference(body, found);
-            }
-        }
-        _ => {}
+fn take(found: &mut Option<String>, expression: &Expr) {
+    if found.is_none() {
+        *found = Expression::new(expression).class_reference();
     }
 }

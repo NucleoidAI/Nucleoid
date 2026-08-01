@@ -96,7 +96,7 @@ impl Runtime {
 
         let sequence = self
             .graph
-            .get(&key)
+            .retrieve(&key)
             .map(|node| node.sequence)
             .unwrap_or(u64::MAX);
 
@@ -123,7 +123,7 @@ impl Runtime {
                 continue;
             }
 
-            let Some(node) = self.graph.get(&dependent).cloned() else {
+            let Some(node) = self.graph.retrieve(&dependent).cloned() else {
                 continue;
             };
 

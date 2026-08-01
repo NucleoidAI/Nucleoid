@@ -94,7 +94,7 @@ impl Runtime {
             return Ok(Value::String(format!("{name}: {message}")));
         }
 
-        if let Some(Value::Function(function)) = scope.get(name).cloned() {
+        if let Some(Value::Function(function)) = scope.retrieve(name).cloned() {
             let values = self.evaluate_all(arguments, scope)?;
             return self.invoke(&function, &values);
         }

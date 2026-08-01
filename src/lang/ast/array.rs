@@ -396,7 +396,7 @@ impl Runtime {
                     return Ok(());
                 }
 
-                self.set_variable(name, value);
+                self.assign(name, value);
                 let key = NodeKey::new(name.clone());
                 self.propagate(&key)?;
                 Ok(())
@@ -406,7 +406,7 @@ impl Runtime {
                 let base = self.evaluate(object, scope)?;
 
                 if let Value::Object(id) = base {
-                    self.set_property(&id, property, value);
+                    self.assign_property(&id, property, value);
                     let key = NodeKey::property(&id, property);
                     self.propagate(&key)?;
                 }

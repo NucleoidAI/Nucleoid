@@ -53,7 +53,10 @@ impl Scope {
         self.frames.len() == 1
     }
 
-    pub fn get(&self, name: &str) -> Option<&Value> {
+    /// The innermost binding of a name, walking outwards. `Scope.retrieve` in
+    /// `ref/src/Scope.js`, which walks a chain of `prior` scopes for the same
+    /// reason this walks a stack of frames.
+    pub fn retrieve(&self, name: &str) -> Option<&Value> {
         self.frames
             .iter()
             .rev()
@@ -61,7 +64,7 @@ impl Scope {
     }
 
     pub fn has(&self, name: &str) -> bool {
-        self.get(name).is_some()
+        self.retrieve(name).is_some()
     }
 
     /// Declares a local in the innermost frame.

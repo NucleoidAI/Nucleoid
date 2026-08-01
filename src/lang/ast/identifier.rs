@@ -33,7 +33,7 @@ impl<'a> Identifier<'a> {
 
 impl Runtime {
     pub(crate) fn read_identifier(&mut self, name: &str, scope: &mut Scope) -> Result<Value> {
-        if let Some(value) = scope.get(name) {
+        if let Some(value) = scope.retrieve(name) {
             let value = value.clone();
             self.note_nullish(&value);
             return Ok(value);
@@ -220,7 +220,7 @@ impl Runtime {
                 let base = self.evaluate(object, scope)?;
 
                 if let Value::Object(id) = base {
-                    self.set_property(&id, property, evaluated.clone());
+                    self.assign_property(&id, property, evaluated.clone());
                     let key = NodeKey::property(&id, property);
                     self.propagate(&key)?;
                 }
