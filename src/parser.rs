@@ -21,9 +21,14 @@ pub fn parse_expression(source: &str) -> Result<Expr> {
     Ok(expression)
 }
 
+/// How deeply expressions and blocks may nest. Recursive descent uses the
+/// stack, so the limit is what keeps a pathological source from overflowing it.
+const MAX_NESTING: usize = 64;
+
 struct Parser {
     tokens: Vec<Token>,
     position: usize,
+    depth: usize,
 }
 
 impl Parser {
@@ -31,6 +36,7 @@ impl Parser {
         Parser {
             tokens,
             position: 0,
+            depth: 0,
         }
     }
 
@@ -181,6 +187,19 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt> {
+        self.depth += 1;
+
+        if self.depth > MAX_NESTING {
+            self.depth -= 1;
+            return Err(Error::syntax("Statements are nested too deeply"));
+        }
+
+        let result = self.statement_inner();
+        self.depth -= 1;
+        result
+    }
+
+    fn statement_inner(&mut self) -> Result<Stmt> {
         match self.peek().clone() {
             Token::Keyword(Keyword::If) => self.if_statement(),
             Token::Keyword(Keyword::For) => self.for_statement(),
@@ -498,6 +517,19 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr> {
+        self.depth += 1;
+
+        if self.depth > MAX_NESTING {
+            self.depth -= 1;
+            return Err(Error::syntax("Expressions are nested too deeply"));
+        }
+
+        let result = self.expression_inner();
+        self.depth -= 1;
+        result
+    }
+
+    fn expression_inner(&mut self) -> Result<Expr> {
         let left = self.logical_or()?;
 
         if self.check(&Token::Assign) {

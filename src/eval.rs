@@ -7,12 +7,25 @@ use crate::ast::{BinaryOp, Expr, Function, FunctionBody, LogicalOp, TemplatePart
 use crate::builtins;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
-use crate::runtime::{AssertionFailure, Flow, Runtime};
+use crate::runtime::{AssertionFailure, Flow, MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 use crate::value::{ObjectData, ObjectId, Value};
 
 impl Runtime {
     pub(crate) fn evaluate(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Value> {
+        self.depth += 1;
+
+        if self.depth > MAX_DEPTH {
+            self.depth -= 1;
+            return Err(Error::type_error("Maximum expression depth exceeded"));
+        }
+
+        let result = self.evaluate_inner(expression, scope);
+        self.depth -= 1;
+        result
+    }
+
+    fn evaluate_inner(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Value> {
         match expression {
             Expr::Null => Ok(Value::Null),
             Expr::Bool(bool) => Ok(Value::Bool(*bool)),
@@ -232,6 +245,14 @@ impl Runtime {
 
         if builtins::is_global(name) {
             return Ok(Value::Class(name.to_string()));
+        }
+
+        let key = NodeKey::new(name.to_string());
+
+        if self.deleted.contains(&key) {
+            self.track(key);
+            self.undefined_read = true;
+            return Ok(Value::Undefined);
         }
 
         Err(Error::not_defined(name))
@@ -1042,6 +1063,14 @@ impl Runtime {
     /// Deep equality, which is what `assert` compares with. Objects match on
     /// their contents, and `null` matches a property that was never set.
     pub(crate) fn deep_equal(&self, left: &Value, right: &Value) -> bool {
+        self.equal_within(left, right, 0)
+    }
+
+    fn equal_within(&self, left: &Value, right: &Value, depth: usize) -> bool {
+        if depth > 64 {
+            return false;
+        }
+
         match (left, right) {
             (Value::Undefined | Value::Null, Value::Undefined | Value::Null) => true,
 
@@ -1064,7 +1093,7 @@ impl Runtime {
 
                 left_keys.iter().all(|key| {
                     match (left.properties.get(*key), right.properties.get(*key)) {
-                        (Some(left), Some(right)) => self.deep_equal(left, right),
+                        (Some(left), Some(right)) => self.equal_within(left, right, depth + 1),
                         _ => false,
                     }
                 })
@@ -1075,7 +1104,7 @@ impl Runtime {
                     && left
                         .iter()
                         .zip(right.iter())
-                        .all(|(left, right)| self.deep_equal(left, right))
+                        .all(|(left, right)| self.equal_within(left, right, depth + 1))
             }
 
             (Value::Number(left), Value::Number(right)) => left == right,

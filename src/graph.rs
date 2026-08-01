@@ -62,6 +62,27 @@ pub enum NodeKind {
     Block,
 }
 
+impl NodeKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            NodeKind::Pending => "pending",
+            NodeKind::Variable => "variable",
+            NodeKind::Property => "property",
+            NodeKind::Object => "object",
+            NodeKind::Class => "class",
+            NodeKind::Function => "function",
+            NodeKind::If => "if",
+            NodeKind::Block => "block",
+        }
+    }
+}
+
+impl fmt::Display for NodeKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// A statement filed in the graph, together with the edges that decide when it
 /// is re-evaluated.
 #[derive(Debug, Clone)]
@@ -128,6 +149,21 @@ impl Graph {
 
     pub fn keys(&self) -> impl Iterator<Item = &NodeKey> {
         self.nodes.keys()
+    }
+
+    /// Every statement filed in the graph, in the order the keys were first
+    /// created. This is the logic graph: what the runtime knows, and what it
+    /// will re-evaluate when something changes.
+    pub fn nodes(&self) -> impl Iterator<Item = &GraphNode> {
+        self.nodes.values()
+    }
+
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
     }
 
     /// The dependents of a node, ordered by the sequence in which they were

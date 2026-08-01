@@ -4,6 +4,7 @@ on:
   push:
     branches: [rust]
   pull_request:
+    branches: [rust]
 
 jobs:
   check:

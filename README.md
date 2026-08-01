@@ -218,6 +218,68 @@ Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-star
 
 ---
 
+## Rust runtime :crab:
+
+The runtime is being rewritten in Rust as the `nucleoid` crate, against its own
+grammar. `nucleoid.spec.md` is the normative description of the language and is
+executed as the test suite; [`docs/`](docs) is the language reference.
+
+```
+class Sensor(name: str):
+    this.name = name
+
+# Every sensor labels itself
+$Sensor.label = "sensor:" + $Sensor.name
+
+threshold = 30
+
+kitchen = Sensor("kitchen")
+kitchen.reading = 42
+
+# A standing rule, not a one-off comparison
+kitchen.alarm = kitchen.reading > threshold
+```
+
+`kitchen.alarm` is `true`, and stays correct on its own: change `threshold` or
+`kitchen.reading` and it is re-evaluated, because the runtime kept the
+relationship rather than just the result.
+
+Embedded in Rust:
+
+```rust
+use nucleoid::Runtime;
+
+let mut runtime = Runtime::new();
+runtime.run("celsius = 100")?;
+runtime.run("fahrenheit = celsius * 9 / 5 + 32")?;
+runtime.run("celsius = 37")?;
+
+assert_eq!(runtime.run("fahrenheit")?.to_string(), "98.6");
+```
+
+From the terminal:
+
+```bash
+cargo run -- program.nuc          # run a file
+cargo run -- program.nuc --graph  # run it and print the logic graph
+cargo run                         # statements from the terminal
+```
+
+`--graph` prints what the runtime is holding — every tracked statement, what it
+reads, and what it updates:
+
+```
+logic graph (7 nodes)
+  threshold [variable]
+    updates  kitchen.alarm
+  kitchen.label [property]
+    reads    kitchen.name
+  kitchen.alarm [property]
+    reads    kitchen, kitchen.reading, threshold
+```
+
+---
+
 ### Under the hood: Declarative (Logic) Runtime Environment
 
 Nucleoid is an implementation of symbolic AI for declarative (logic) programming at the runtime. As mentioned, the declarative runtime environment manages JavaScript state and stores each transaction in the built-in data store by declaratively rerendering JavaScript statements and building the knowledge graph (base) as well as an execution plan.

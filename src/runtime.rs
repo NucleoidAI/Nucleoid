@@ -70,6 +70,10 @@ pub struct Runtime {
     /// The instances whose class-level rules are being applied, innermost last.
     /// Functions called from a rule see the same instance for `$Class`.
     pub(crate) instances: Vec<ObjectId>,
+    /// Names being removed. While a deletion propagates, reading one of these
+    /// is undefined rather than an error, so dependents settle to null instead
+    /// of aborting the transaction.
+    pub(crate) deleted: IndexSet<NodeKey>,
 }
 
 impl Default for Runtime {
@@ -78,7 +82,10 @@ impl Default for Runtime {
     }
 }
 
-const MAX_DEPTH: usize = 256;
+/// How deep statements, propagation and expression evaluation may nest before
+/// the runtime gives up. A library cannot rely on the caller's stack, so this
+/// is reported as an error rather than overflowing.
+pub(crate) const MAX_DEPTH: usize = 192;
 
 impl Runtime {
     pub fn new() -> Self {
@@ -94,6 +101,7 @@ impl Runtime {
             imperative: 0,
             undefined_read: false,
             instances: Vec::new(),
+            deleted: IndexSet::new(),
         }
     }
 
@@ -1205,7 +1213,7 @@ impl Runtime {
                 self.transaction.record_variable(name, Some(value));
                 self.state.variables.shift_remove(name);
                 self.remove_node(&key);
-                self.propagate_removed(&key)?;
+                self.cascade_removal(&key)?;
 
                 Ok(Value::Bool(true))
             }
@@ -1237,7 +1245,7 @@ impl Runtime {
 
                 let key = NodeKey::property(&id, property);
                 self.remove_node(&key);
-                self.propagate_removed(&key)?;
+                self.cascade_removal(&key)?;
 
                 Ok(Value::Bool(true))
             }
@@ -1259,6 +1267,8 @@ impl Runtime {
                     self.transaction.record_variable(id.as_str(), before);
                     self.state.variables.shift_remove(id.as_str());
                 }
+
+                self.cascade_removal(&key)?;
 
                 Ok(Value::Bool(true))
             }
@@ -1355,42 +1365,14 @@ impl Runtime {
         }
     }
 
-    /// After a deletion, dependents fall back to null.
-    fn propagate_removed(&mut self, key: &NodeKey) -> Result<()> {
-        let dependents: Vec<NodeKey> = self
-            .graph
-            .keys()
-            .filter(|candidate| {
-                self.graph
-                    .get(candidate)
-                    .map(|node| node.dependencies.contains(key))
-                    .unwrap_or(false)
-            })
-            .cloned()
-            .collect();
-
-        for dependent in dependents {
-            let Some(node) = self.graph.get(&dependent).cloned() else {
-                continue;
-            };
-
-            match node.kind {
-                NodeKind::Variable => {
-                    self.set_variable(dependent.as_str(), Value::Null);
-                }
-                NodeKind::Property => {
-                    if let Some((object, property)) = dependent.split_last() {
-                        let object = ObjectId::from(object);
-                        if self.state.objects.contains_key(&object) {
-                            self.set_property(&object, property, Value::Null);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        Ok(())
+    /// Re-runs everything that read what was just removed. Each dependent finds
+    /// the name undefined, settles to null, and passes that on to its own
+    /// dependents, so a whole chain clears.
+    fn cascade_removal(&mut self, key: &NodeKey) -> Result<()> {
+        self.deleted.insert(key.clone());
+        let result = self.propagate(key);
+        self.deleted.shift_remove(key);
+        result
     }
 }
 

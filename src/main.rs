@@ -4,6 +4,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use nucleoid::Runtime;
+use nucleoid::graph::NodeKey;
 
 #[derive(Parser)]
 #[command(
@@ -14,6 +15,10 @@ use nucleoid::Runtime;
 struct Cli {
     /// A source file to run. Without one, statements are read from the terminal.
     file: Option<PathBuf>,
+
+    /// Print the logic graph after running.
+    #[arg(long)]
+    graph: bool,
 }
 
 fn main() -> ExitCode {
@@ -33,6 +38,11 @@ fn main() -> ExitCode {
             match runtime.run(&source) {
                 Ok(value) => {
                     println!("{value}");
+
+                    if cli.graph {
+                        print_graph(&runtime);
+                    }
+
                     report(&mut runtime)
                 }
                 Err(error) => {
@@ -42,6 +52,27 @@ fn main() -> ExitCode {
             }
         }
         None => repl(&mut runtime),
+    }
+}
+
+/// Prints what the runtime is holding: every statement it tracks and what each
+/// one waits on.
+fn print_graph(runtime: &Runtime) {
+    let graph = &runtime.graph;
+    println!("\nlogic graph ({} nodes)", graph.len());
+
+    for node in graph.nodes() {
+        println!("  {} [{}]", node.key, node.kind);
+
+        if !node.dependencies.is_empty() {
+            let names: Vec<String> = node.dependencies.iter().map(NodeKey::to_string).collect();
+            println!("    reads    {}", names.join(", "));
+        }
+
+        if !node.dependents.is_empty() {
+            let names: Vec<String> = node.dependents.iter().map(NodeKey::to_string).collect();
+            println!("    updates  {}", names.join(", "));
+        }
     }
 }
 
