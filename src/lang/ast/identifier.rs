@@ -8,7 +8,28 @@ use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::value::Value;
+use crate::value::{ObjectId, Value};
+
+pub struct Identifier<'a> {
+    pub node: &'a Expr,
+}
+
+impl<'a> Identifier<'a> {
+    pub fn new(node: &'a Expr) -> Self {
+        Identifier { node }
+    }
+
+    pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        match self.node {
+            Expr::Identifier(name) => runtime.read_identifier(name, scope),
+            Expr::ClassRef(name) => runtime.read_class_ref(name, scope),
+            Expr::ObjectRef(id) => Ok(Value::Object(ObjectId::from(id.clone()))),
+            Expr::This => runtime.read_this(scope),
+            Expr::Member { object, property } => runtime.read_member(object, property, scope),
+            other => unreachable!("{other} is not an identifier"),
+        }
+    }
+}
 
 impl Runtime {
     pub(crate) fn read_identifier(&mut self, name: &str, scope: &mut Scope) -> Result<Value> {

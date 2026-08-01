@@ -1,81 +1,106 @@
-//! `{ ... }` — a run of statements filed as one declaration, re-evaluated
-//! whenever anything it read changes. Mirrors `ref/src/nuc/BLOCK.js`.
+//! `BLOCK` — `{ ... }`, a run of statements filed as one declaration and
+//! re-evaluated whenever anything it read changes. Mirrors
+//! `ref/src/nuc/BLOCK.js`, which likewise keeps its statements on the node and
+//! runs them in a scope of their own.
+
+use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt, collect_assigned_names, collect_read_roots};
 use crate::lang::estree::generator::generate_all;
-use crate::lang::evaluation::Flow;
+use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::value::Value;
+use crate::value::{ObjectId, Value};
 
-impl Runtime {
-    pub(crate) fn declare_block(
-        &mut self,
-        statement: &Stmt,
-        statements: &[Stmt],
-        scope: &mut Scope,
-    ) -> Result<Flow> {
-        if let Some(class) = self.class_reference(statement, scope) {
+pub struct Block {
+    pub statements: Vec<Stmt>,
+    /// Set while running: where the block is filed, and the instance whose
+    /// rules it belongs to. A block declared against a class is kept on the
+    /// class instead and files nothing of its own.
+    key: Option<NodeKey>,
+    instance: Option<ObjectId>,
+}
+
+impl Block {
+    pub fn new(statements: Vec<Stmt>) -> Self {
+        Block {
+            statements,
+            key: None,
+            instance: None,
+        }
+    }
+
+    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+        let statement = Stmt::Block(self.statements.clone());
+
+        if let Some(class) = runtime.class_reference(&statement, scope) {
             // A rule states something about every instance, so it cannot be
             // built from the properties of one particular instance.
-            if declares_class_rule(statements) && self.reads_an_instance(statements, scope) {
+            if declares_class_rule(&self.statements) && self.reads_an_instance(runtime, scope) {
                 return Err(Error::syntax(
                     "Cannot define class declaration in non-class block",
                 ));
             }
 
-            let key = format!("block({})", generate_all(statements));
-            self.declare_on_class(&class, key, statement.clone())?;
-            return Ok(Flow::Normal(Value::Null));
+            let key = format!("block({})", generate_all(&self.statements));
+            runtime.declare_on_class(&class, key, statement)?;
+            return Ok(Outcome::null());
         }
 
-        let rendered = generate_all(statements);
-        let key = match scope.instance() {
+        let rendered = generate_all(&self.statements);
+        self.instance = scope.instance().cloned();
+        self.key = Some(match &self.instance {
             Some(instance) => NodeKey::new(format!("block({rendered})@{instance}")),
             None => NodeKey::new(format!("block({rendered})")),
-        };
+        });
 
-        let instance = scope.instance().cloned();
-
-        self.push_tracking(false);
+        runtime.push_tracking(false);
         scope.push();
-        self.enter_imperative();
-        let outcome = self.execute_all(statements, scope);
-        self.leave_imperative();
+        runtime.enter_imperative();
+        let outcome = runtime.execute_all(&self.statements, scope);
+        runtime.leave_imperative();
         scope.pop();
-        let dependencies = self.pop_tracking();
-        let flow = outcome?;
+        let dependencies = runtime.pop_tracking();
 
-        self.register(
-            &key,
-            NodeKind::Block,
-            Some(statement.clone()),
+        Ok(Outcome {
+            flow: outcome?,
             dependencies,
-            instance,
-        )?;
-
-        Ok(flow)
+        })
     }
 
-    /// Whether a block reads a named instance from the state, rather than only
+    pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {
+        let Some(key) = &self.key else {
+            return Ok(());
+        };
+
+        runtime.register(
+            key,
+            NodeKind::Block,
+            Some(Stmt::Block(self.statements.clone())),
+            dependencies,
+            self.instance.clone(),
+        )
+    }
+
+    /// Whether the block reads a named instance from the state, rather than only
     /// its own locals and the type it is stating a rule about.
-    fn reads_an_instance(&self, statements: &[Stmt], scope: &Scope) -> bool {
+    fn reads_an_instance(&self, runtime: &Runtime, scope: &Scope) -> bool {
         let mut assigned = Vec::new();
-        for statement in statements {
+        for statement in &self.statements {
             collect_assigned_names(statement, &mut assigned);
         }
 
         let mut roots = Vec::new();
-        for statement in statements {
+        for statement in &self.statements {
             collect_read_roots(statement, &mut roots);
         }
 
         roots.iter().any(|root| {
             !assigned.contains(root)
                 && !scope.has(root)
-                && matches!(self.state.variables.get(root), Some(Value::Object(_)))
+                && matches!(runtime.state.variables.get(root), Some(Value::Object(_)))
         })
     }
 }

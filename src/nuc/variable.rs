@@ -1,93 +1,95 @@
-//! `a = 1` — a standing declaration filed under the variable's own name.
-//! Mirrors `ref/src/nuc/VARIABLE.js`.
+//! `VARIABLE` — `a = 1`, a standing declaration filed under the variable's own
+//! name. Mirrors `ref/src/nuc/VARIABLE.js`.
 
 use indexmap::IndexSet;
 
 use crate::error::Result;
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt};
+use crate::lang::evaluation::Flow;
+use crate::nuc::Outcome;
+use crate::nuc::object::Object;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
-impl Runtime {
-    pub(crate) fn assign_variable(
-        &mut self,
-        name: String,
-        value: &Expr,
-        scope: &mut Scope,
-    ) -> Result<Value> {
-        let key = NodeKey::new(name.clone());
-        let value = &self.freeze(value, scope)?;
-        let statement = Stmt::Assign {
-            target: Expr::Identifier(name.clone()),
-            value: value.clone(),
+pub struct Variable {
+    pub name: String,
+    pub value: Expr,
+    /// How the node should be filed, decided while running: `Object` when the
+    /// value turned out to be an instantiation, and nothing at all while
+    /// running imperatively, where a statement is carried out rather than
+    /// declared.
+    kind: Option<NodeKind>,
+}
+
+impl Variable {
+    pub fn new(name: String, value: Expr) -> Self {
+        Variable {
+            name,
+            value,
+            kind: None,
+        }
+    }
+
+    pub fn key(&self) -> NodeKey {
+        NodeKey::new(self.name.clone())
+    }
+
+    pub fn before(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<()> {
+        self.value = runtime.freeze(&self.value, scope)?;
+        Ok(())
+    }
+
+    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+        let key = self.key();
+
+        if runtime.is_imperative() {
+            let (evaluated, _) = runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
+            runtime.set_variable(&self.name, evaluated.clone());
+            self.kind = None;
+            return Ok(Outcome::value(evaluated));
+        }
+
+        // `a = Person(...)` names the new instance after what it is assigned to.
+        if let Some((class, arguments)) = runtime.instantiation(&self.value) {
+            let object = Object::new(ObjectId::from(self.name.clone()), class, arguments);
+            let created = object.run(runtime, scope)?;
+            runtime.set_variable(&self.name, created.clone());
+            self.kind = Some(NodeKind::Object);
+            return Ok(Outcome::value(created));
+        }
+
+        let (evaluated, dependencies) = runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
+        runtime.set_variable(&self.name, evaluated.clone());
+        self.kind = Some(NodeKind::Variable);
+
+        Ok(Outcome {
+            flow: Flow::Normal(evaluated),
+            dependencies,
+        })
+    }
+
+    pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {
+        let Some(kind) = self.kind else {
+            return Ok(());
         };
 
-        if self.is_imperative() {
-            let (evaluated, _) = self.evaluate_tracked(value, scope, Some(&key))?;
-            self.set_variable(&name, evaluated.clone());
-            self.propagate(&key)?;
-            return Ok(evaluated);
-        }
+        let statement = Stmt::Assign {
+            target: Expr::Identifier(self.name.clone()),
+            value: self.value.clone(),
+        };
 
-        if let Some((class, arguments)) = self.instantiation(value) {
-            let id = ObjectId::from(name.clone());
-            let created = self.create_instance(&class, &arguments, id, scope)?;
-            self.register(
-                &key,
-                NodeKind::Object,
-                Some(statement),
-                IndexSet::new(),
-                None,
-            )?;
-            self.set_variable(&name, created.clone());
-            self.propagate(&key)?;
-            return Ok(created);
-        }
-
-        let (evaluated, dependencies) = self.evaluate_tracked(value, scope, Some(&key))?;
-
-        self.register(
-            &key,
-            NodeKind::Variable,
-            Some(statement),
-            dependencies,
-            None,
-        )?;
-        self.set_variable(&name, evaluated.clone());
-        self.propagate(&key)?;
-
-        Ok(evaluated)
+        runtime.register(&self.key(), kind, Some(statement), dependencies, None)
     }
 
-    /// A name bound in an enclosing scope — a parameter or a loop variable —
-    /// which is written directly and never filed in the graph.
-    pub(crate) fn assign_local(
-        &mut self,
-        name: String,
-        value: &Expr,
-        scope: &mut Scope,
-    ) -> Result<Value> {
-        let saved = self.null_read;
-        self.null_read = false;
-        self.push_tracking(false);
-        let evaluated = self.evaluate(value, scope);
-        let dependencies = self.pop_tracking();
-        let evaluated = self.settle(evaluated?);
-        self.null_read = saved;
-
-        for dependency in dependencies {
-            self.track(dependency);
-        }
-
-        if !scope.assign(&name, evaluated.clone()) {
-            scope.declare(name, evaluated.clone());
-        }
-
-        Ok(evaluated)
+    pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
+        runtime.propagate(&self.key())
     }
+}
 
+impl Runtime {
+    /// `state.assign` for a top-level name.
     pub(crate) fn set_variable(&mut self, name: &str, value: Value) {
         let before = self.state.variables.get(name).cloned();
         self.transaction.record_variable(name, before);

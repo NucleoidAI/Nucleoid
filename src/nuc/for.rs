@@ -1,46 +1,56 @@
-//! `for x of ...` — carried out once over what is there now, rather than filed
-//! as a standing declaration. Mirrors `ref/src/nuc/FOR.js`.
+//! `FOR` — walked once over what is there now, rather than filed as a standing
+//! declaration. Mirrors `ref/src/nuc/FOR.js`, which likewise keeps the loop
+//! variable, the list and the body on the node and steps through the list.
 
 use crate::error::{Error, Result};
 use crate::lang::ast::{Expr, Stmt};
 use crate::lang::evaluation::Flow;
+use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
-impl Runtime {
-    pub(crate) fn run_for(
-        &mut self,
-        variable: &str,
-        iterable: &Expr,
-        body: &[Stmt],
-        scope: &mut Scope,
-    ) -> Result<Flow> {
-        let items = self.iterate(iterable, scope)?;
+pub struct For {
+    pub variable: String,
+    pub array: Expr,
+    pub statements: Vec<Stmt>,
+}
+
+impl For {
+    pub fn new(variable: String, array: Expr, statements: Vec<Stmt>) -> Self {
+        For {
+            variable,
+            array,
+            statements,
+        }
+    }
+
+    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+        let items = self.iterate(runtime, scope)?;
 
         for item in items {
             scope.push();
-            scope.declare(variable.to_string(), item);
-            self.enter_imperative();
-            let result = self.execute_all(body, scope);
-            self.leave_imperative();
+            scope.declare(self.variable.clone(), item);
+            runtime.enter_imperative();
+            let result = runtime.execute_all(&self.statements, scope);
+            runtime.leave_imperative();
             scope.pop();
 
             if let Flow::Return(value) = result? {
-                return Ok(Flow::Return(value));
+                return Ok(Outcome::flow(Flow::Return(value)));
             }
         }
 
-        Ok(Flow::Normal(Value::Null))
+        Ok(Outcome::null())
     }
 
-    /// The objects a `for ... of` walks: instances of a class, or the instances
-    /// found in a list. Plain values in a list are skipped.
-    fn iterate(&mut self, iterable: &Expr, scope: &mut Scope) -> Result<Vec<Value>> {
-        let value = self.evaluate(iterable, scope)?;
+    /// The objects the loop walks: instances of a class, or the instances found
+    /// in a list. Plain values in a list are skipped.
+    fn iterate(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Vec<Value>> {
+        let value = runtime.evaluate(&self.array, scope)?;
 
         Ok(match value {
-            Value::Class(name) => self
+            Value::Class(name) => runtime
                 .state
                 .class(&name)
                 .map(|class| class.instances.clone())
@@ -51,7 +61,7 @@ impl Runtime {
             Value::List(items) => items
                 .into_iter()
                 .filter(|item| match item {
-                    Value::Object(id) => self
+                    Value::Object(id) => runtime
                         .state
                         .object(id)
                         .and_then(|object| object.class.as_ref())
@@ -59,11 +69,8 @@ impl Runtime {
                     _ => false,
                 })
                 .collect(),
-            _other => {
-                return Err(Error::type_error(format!(
-                    "{other} is not iterable",
-                    other = iterable
-                )));
+            _ => {
+                return Err(Error::type_error(format!("{} is not iterable", self.array)));
             }
         })
     }

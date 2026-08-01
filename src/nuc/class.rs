@@ -1,7 +1,6 @@
-//! Classes and the rules stated about them: `class Person`, `$Person.mortal =
-//! true`. Mirrors `ref/src/nuc/CLASS.js` together with the `$CLASS` variants of
-//! `LET`, `OBJECT`, `PROPERTY` and `IF`, which are the same thing said about a
-//! type rather than one object.
+//! `CLASS` — a type, and the rules stated about it. Mirrors
+//! `ref/src/nuc/CLASS.js`, which likewise keeps the methods, the instances and
+//! the declarations on the node and hands each declaration to every instance.
 
 use indexmap::IndexSet;
 
@@ -11,25 +10,39 @@ use crate::lang::ast::{
     ClassDecl, Expr, FunctionBody, Stmt, collect_class_properties, collect_roots,
     find_class_reference_statement,
 };
+use crate::nuc::Outcome;
+use crate::nuc::object::Object;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::{ClassData, Declaration};
-use crate::value::{ObjectId, Value};
+use crate::value::ObjectId;
 
-impl Runtime {
-    pub(crate) fn define_class(&mut self, declaration: &ClassDecl) -> Result<()> {
-        let existing = self.state.class(&declaration.name).cloned();
-        self.transaction
-            .record_class(&declaration.name, existing.clone());
+pub struct Class {
+    pub declaration: ClassDecl,
+}
 
-        let mut data = ClassData::new(declaration.name.clone());
-        data.parent = declaration.parent.clone();
-        data.parameters = declaration.parameters.clone();
-        data.constructor = declaration.constructor.clone();
+impl Class {
+    pub fn new(declaration: ClassDecl) -> Self {
+        Class { declaration }
+    }
 
-        for method in &declaration.methods {
-            if let Some(name) = &method.name {
-                data.methods.insert(name.clone(), method.clone());
+    pub fn key(&self) -> NodeKey {
+        NodeKey::new(format!("${}", self.declaration.name))
+    }
+
+    pub fn run(&mut self, runtime: &mut Runtime, _scope: &mut Scope) -> Result<Outcome> {
+        let name = &self.declaration.name;
+        let existing = runtime.state.class(name).cloned();
+        runtime.transaction.record_class(name, existing.clone());
+
+        let mut data = ClassData::new(name.clone());
+        data.parent = self.declaration.parent.clone();
+        data.parameters = self.declaration.parameters.clone();
+        data.constructor = self.declaration.constructor.clone();
+
+        for method in &self.declaration.methods {
+            if let Some(method_name) = &method.name {
+                data.methods.insert(method_name.clone(), method.clone());
             }
         }
 
@@ -39,67 +52,43 @@ impl Runtime {
             data.declarations = existing.declarations;
 
             if data.parameters.is_empty() && data.constructor.is_empty() {
-                if let Some(initializer) = data.methods.get("init").cloned() {
-                    data.parameters = initializer.parameters.clone();
-
-                    if let FunctionBody::Block(body) = &initializer.body {
-                        data.constructor = body.clone();
-                    }
-                }
+                data.adopt_initializer();
             }
         }
 
         if data.constructor.is_empty() {
-            if let Some(initializer) = data.methods.get("init").cloned() {
-                data.parameters = initializer.parameters.clone();
-
-                if let FunctionBody::Block(body) = &initializer.body {
-                    data.constructor = body.clone();
-                }
-            }
+            data.adopt_initializer();
         }
 
-        self.state
-            .classes
-            .insert(declaration.name.clone(), data.clone());
+        runtime.state.classes.insert(name.clone(), data);
 
-        let key = NodeKey::new(format!("${}", declaration.name));
-        self.register(&key, NodeKind::Class, None, IndexSet::new(), None)?;
-
-        Ok(())
+        Ok(Outcome::null())
     }
 
-    /// `$Person.mortal = true` — a rule that holds for every instance, now and
-    /// later.
-    pub(crate) fn assign_class_property(
-        &mut self,
-        class: String,
-        property: String,
-        value: &Expr,
-        scope: &mut Scope,
-    ) -> Result<Value> {
-        if property == "value" {
-            return Err(Error::type_error("Cannot use 'value' as a property"));
-        }
+    pub fn graph(&self, runtime: &mut Runtime) -> Result<()> {
+        runtime.register(&self.key(), NodeKind::Class, None, IndexSet::new(), None)
+    }
+}
 
-        // A rule is checked where it is written, not when an instance finally
-        // arrives to run it.
-        self.check_rule_references(value, scope)?;
-
-        let statement = Stmt::Assign {
-            target: Expr::Member {
-                object: Box::new(Expr::ClassRef(class.clone())),
-                property: property.clone(),
-            },
-            value: value.clone(),
+impl ClassData {
+    /// A class written with an `init` method takes its parameters and its
+    /// constructor body from it.
+    fn adopt_initializer(&mut self) {
+        let Some(initializer) = self.methods.get("init").cloned() else {
+            return;
         };
 
-        self.declare_on_class(&class, format!("${class}.{property}"), statement)?;
-        Ok(Value::Null)
-    }
+        self.parameters = initializer.parameters.clone();
 
+        if let FunctionBody::Block(body) = &initializer.body {
+            self.constructor = body.clone();
+        }
+    }
+}
+
+impl Runtime {
     /// Reports a name a class-level rule reads that nothing has defined.
-    fn check_rule_references(&self, value: &Expr, scope: &Scope) -> Result<()> {
+    pub(crate) fn check_rule_references(&self, value: &Expr, scope: &Scope) -> Result<()> {
         let mut roots = Vec::new();
         collect_roots(value, &mut roots);
 
@@ -131,6 +120,8 @@ impl Runtime {
         found.filter(|name| self.state.classes.contains_key(name))
     }
 
+    /// Keeps a statement on the class and hands it to every instance there
+    /// already is.
     pub(crate) fn declare_on_class(
         &mut self,
         class: &str,
@@ -149,8 +140,9 @@ impl Runtime {
                     Some((instantiated, arguments)),
                 ) if matches!(object.as_ref(), Expr::ClassRef(_)) => {
                     let id = ObjectId::from(format!("${class}.{name}"));
+                    let object = Object::new(id.clone(), instantiated, arguments);
                     let mut scope = Scope::new();
-                    self.create_instance(&instantiated, &arguments, id.clone(), &mut scope)?;
+                    object.run(self, &mut scope)?;
 
                     Stmt::Assign {
                         target: target.clone(),

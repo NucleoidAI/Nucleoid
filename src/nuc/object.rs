@@ -1,5 +1,10 @@
-//! Creating an instance and running its constructor. Mirrors
-//! `ref/src/nuc/OBJECT.js`.
+//! `OBJECT` — an instance: created, given its constructor's properties, then
+//! handed every rule its class states. Mirrors `ref/src/nuc/OBJECT.js`.
+//!
+//! Like `ref`, this is never a statement of its own. It is what an assignment
+//! turns into when its value is an instantiation, which is the job
+//! `ref/src/lang/$nuc/$ASSIGNMENT.js` does there and [`crate::nuc::Nuc`] does
+//! here.
 
 use indexmap::IndexSet;
 
@@ -10,6 +15,12 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::ClassData;
 use crate::value::{ObjectData, ObjectId, Value};
+
+pub struct Object {
+    pub id: ObjectId,
+    pub class: String,
+    pub arguments: Vec<Expr>,
+}
 
 /// The parts of a class a constructor needs, lifted out so creating an instance
 /// does not copy the list of instances the class already has.
@@ -29,70 +40,87 @@ impl ClassShape {
     }
 }
 
-impl Runtime {
-    pub(crate) fn create_instance(
-        &mut self,
-        class_name: &str,
-        arguments: &[Expr],
-        id: ObjectId,
-        scope: &mut Scope,
-    ) -> Result<Value> {
-        let Some(class) = self.state.class(class_name) else {
-            return Err(Error::not_defined(class_name));
+impl Object {
+    pub fn new(id: ObjectId, class: String, arguments: Vec<Expr>) -> Self {
+        Object {
+            id,
+            class,
+            arguments,
+        }
+    }
+
+    pub fn key(&self) -> NodeKey {
+        NodeKey::new(self.id.to_string())
+    }
+
+    pub fn run(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        let Some(class) = runtime.state.class(&self.class) else {
+            return Err(Error::not_defined(&self.class));
         };
 
         let shape = ClassShape::of(class);
 
         let mut values = Vec::new();
-        for argument in arguments {
-            values.push(self.evaluate(argument, scope)?);
+        for argument in &self.arguments {
+            values.push(runtime.evaluate(argument, scope)?);
         }
 
-        if self.transaction.needs_object(&id) {
-            let before = self.state.object(&id).cloned();
-            self.transaction.record_object(&id, before);
+        if runtime.transaction.needs_object(&self.id) {
+            let before = runtime.state.object(&self.id).cloned();
+            runtime.transaction.record_object(&self.id, before);
         }
 
-        let mut data = ObjectData::new(Some(class_name.to_string()));
+        let mut data = ObjectData::new(Some(self.class.clone()));
         data.properties
-            .insert("id".to_string(), Value::String(id.to_string()));
-        self.state.objects.insert(id.clone(), data);
+            .insert("id".to_string(), Value::String(self.id.to_string()));
+        runtime.state.objects.insert(self.id.clone(), data);
 
-        if self.transaction.needs_class(class_name) {
-            let before = self.state.class(class_name).cloned();
-            self.transaction.record_class(class_name, before);
+        if runtime.transaction.needs_class(&self.class) {
+            let before = runtime.state.class(&self.class).cloned();
+            runtime.transaction.record_class(&self.class, before);
         }
 
-        if let Some(data) = self.state.class_mut(class_name) {
-            if !data.instances.contains(&id) {
-                data.instances.push(id.clone());
+        if let Some(data) = runtime.state.class_mut(&self.class) {
+            if !data.instances.contains(&self.id) {
+                data.instances.push(self.id.clone());
             }
         }
 
-        let key = NodeKey::new(id.to_string());
-        self.register(&key, NodeKind::Object, None, IndexSet::new(), None)?;
+        self.graph(runtime)?;
 
-        self.run_constructor(&shape, &values, &id)?;
+        self.constructor(runtime, &shape, &values)?;
 
-        for declaration in self.declarations_for(class_name) {
-            self.apply_declaration(&declaration.statement, &id)?;
+        for declaration in runtime.declarations_for(&self.class) {
+            runtime.apply_declaration(&declaration.statement, &self.id)?;
         }
 
-        self.propagate(&NodeKey::new(format!("${class_name}")))?;
+        self.after(runtime)?;
 
-        Ok(Value::Object(id))
+        Ok(Value::Object(self.id.clone()))
     }
 
-    fn run_constructor(
-        &mut self,
+    /// `OBJECT.graph()` — files the instance so the class's own node can reach
+    /// it.
+    fn graph(&self, runtime: &mut Runtime) -> Result<()> {
+        runtime.register(&self.key(), NodeKind::Object, None, IndexSet::new(), None)
+    }
+
+    /// Wakes everything that reads the class, since it now has one more
+    /// instance.
+    fn after(&self, runtime: &mut Runtime) -> Result<()> {
+        runtime.propagate(&NodeKey::new(format!("${}", self.class)))
+    }
+
+    fn constructor(
+        &self,
+        runtime: &mut Runtime,
         class: &ClassShape,
         arguments: &[Value],
-        id: &ObjectId,
     ) -> Result<()> {
         if let Some(parent) = &class.parent {
             if class.constructor.is_empty() {
-                if let Some(parent) = self.state.class(parent).map(ClassShape::of) {
-                    self.run_constructor(&parent, arguments, id)?;
+                if let Some(parent) = runtime.state.class(parent).map(ClassShape::of) {
+                    self.constructor(runtime, &parent, arguments)?;
                 }
             }
         }
@@ -102,7 +130,7 @@ impl Runtime {
         }
 
         let mut scope = Scope::new();
-        scope.set_this(Some(id.clone()));
+        scope.set_this(Some(self.id.clone()));
 
         for (index, parameter) in class.parameters.iter().enumerate() {
             let value = arguments.get(index).cloned().unwrap_or(Value::Null);
@@ -110,9 +138,9 @@ impl Runtime {
         }
 
         let statements = class.constructor.clone();
-        self.push_tracking(true);
-        let result = self.execute_all(&statements, &mut scope);
-        self.pop_tracking();
+        runtime.push_tracking(true);
+        let result = runtime.execute_all(&statements, &mut scope);
+        runtime.pop_tracking();
         result?;
 
         Ok(())

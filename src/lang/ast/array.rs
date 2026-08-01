@@ -9,6 +9,33 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+pub struct Array<'a> {
+    pub node: &'a Expr,
+}
+
+impl<'a> Array<'a> {
+    pub fn new(node: &'a Expr) -> Self {
+        Array { node }
+    }
+
+    pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        match self.node {
+            Expr::List(items) => runtime.evaluate_list(items, scope),
+            Expr::Index { object, index } => runtime.evaluate_index(object, index, scope),
+            Expr::Slice { object, start, end } => {
+                runtime.evaluate_slice(object, start.as_deref(), end.as_deref(), scope)
+            }
+            other => unreachable!("{other} is not a list"),
+        }
+    }
+
+    /// `Array.generate(scope)` — `ref` renders the elements rather than the
+    /// node, since a list is built from its parts.
+    pub fn generate(&self) -> String {
+        self.node.to_string()
+    }
+}
+
 impl Runtime {
     pub(crate) fn evaluate_list(&mut self, items: &[Expr], scope: &mut Scope) -> Result<Value> {
         let mut values = Vec::with_capacity(items.len());

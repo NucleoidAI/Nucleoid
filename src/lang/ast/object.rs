@@ -12,6 +12,24 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectData, ObjectId, Value};
 
+pub struct Object<'a> {
+    pub node: &'a Expr,
+}
+
+impl<'a> Object<'a> {
+    pub fn new(node: &'a Expr) -> Self {
+        Object { node }
+    }
+
+    pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        let Expr::ObjectLiteral(entries) = self.node else {
+            unreachable!("Object only wraps Expr::ObjectLiteral")
+        };
+
+        runtime.evaluate_object_literal(entries, scope)
+    }
+}
+
 impl Runtime {
     pub(crate) fn evaluate_object_literal(
         &mut self,

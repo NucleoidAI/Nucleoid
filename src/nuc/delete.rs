@@ -1,15 +1,33 @@
-//! `delete` — removing a variable, a property, an object or a class-level rule,
+//! `DELETE` — removing a variable, a property, an object or a class-level rule,
 //! and clearing whatever depended on it. Mirrors `ref/src/nuc/DELETE.js`
-//! together with `DELETE$VARIABLE.js` and `DELETE$OBJECT.js`.
+//! together with `DELETE$VARIABLE.js` and `DELETE$OBJECT.js`, which are the
+//! arms of the match in `Runtime::delete`.
 
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
+use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
+pub struct Delete {
+    pub target: Expr,
+}
+
+impl Delete {
+    pub fn new(target: Expr) -> Self {
+        Delete { target }
+    }
+
+    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+        let value = runtime.delete(&self.target, scope)?;
+        Ok(Outcome::value(value))
+    }
+}
+
 impl Runtime {
+    /// Shared by the statement above and by `delete` used as an expression.
     pub(crate) fn delete(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Value> {
         match expression {
             Expr::Identifier(name) => {

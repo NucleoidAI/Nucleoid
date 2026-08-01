@@ -1,29 +1,32 @@
-//! A statement that is only an expression, and the `.value` freezing every
-//! stored declaration goes through first. Mirrors `ref/src/nuc/EXPRESSION.js`,
-//! whose `before()` does the same rewrite.
+//! `EXPRESSION` — a statement that is only an expression, and the `.value`
+//! freezing every stored declaration goes through first. Mirrors
+//! `ref/src/nuc/EXPRESSION.js`, whose `before()` does the same rewrite; the
+//! kinds that file a declaration — [`variable`](crate::nuc::variable),
+//! [`property`](crate::nuc::property) and `if` — reach it through
+//! `Runtime::freeze`.
 
 use crate::error::{Error, Result};
 use crate::lang::ast::{Expr, Stmt, literal};
+use crate::nuc::Outcome;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 
-impl Runtime {
-    /// Freezes the `.value` reads inside a statement, leaving its shape alone.
-    pub(crate) fn freeze_statement(&mut self, statement: &Stmt, scope: &mut Scope) -> Result<Stmt> {
-        Ok(match statement {
-            Stmt::If {
-                condition,
-                consequent,
-                alternate,
-            } => Stmt::If {
-                condition: self.freeze(condition, scope)?,
-                consequent: consequent.clone(),
-                alternate: alternate.clone(),
-            },
-            other => other.clone(),
-        })
+pub struct Expression {
+    pub tokens: Expr,
+}
+
+impl Expression {
+    pub fn new(tokens: Expr) -> Self {
+        Expression { tokens }
     }
 
+    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+        let value = runtime.evaluate(&self.tokens, scope)?;
+        Ok(Outcome::value(value))
+    }
+}
+
+impl Runtime {
     /// Replaces every `x.value` read with the value it has right now, so the
     /// stored declaration keeps that value instead of following `x` later.
     pub(crate) fn freeze(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {

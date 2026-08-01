@@ -1,9 +1,17 @@
 //! The syntax tree, and how each kind of node is evaluated.
 //!
-//! `ref/src/lang/ast/Node.js` dispatches on `node.type` through `Node.convert`;
-//! here the node kinds are variants of [`Expr`] and [`Stmt`], and the dispatch
-//! is `Runtime::evaluate_inner`. The evaluation of each kind lives in the
-//! module named after it, matching `ref/src/lang/ast/`.
+//! [`Expr`] and [`Stmt`] are the tree the parser builds. [`Ast`] is
+//! `ref/src/lang/ast/Node.js`: the base class every node kind shares, as a
+//! closed enum, with [`Ast::convert`] standing in for `Node.convert` and one
+//! type per `ref/src/lang/ast/*.js` behind it.
+//!
+//! `ref` resolves a node into a rewritten ESTree and hands it to JavaScript's
+//! `eval`, so its `resolve` returns a tree and `generate` turns that tree into
+//! the string that gets evaluated. There is no `eval` here: [`Ast::resolve`]
+//! produces the value directly, and [`Ast::generate`] is only used to key a
+//! statement in the graph. `Node.graph(scope)`, which walks a node for the
+//! identifiers it reads, has no counterpart — reads are recorded as they
+//! happen, in [`crate::lang::evaluation`], rather than predicted statically.
 
 pub mod array;
 pub mod call;
@@ -20,7 +28,7 @@ use std::sync::Arc;
 use crate::error::{Error, Result};
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
-use crate::value::{ObjectId, Value};
+use crate::value::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -196,18 +204,129 @@ impl Expr {
         }
     }
 
-    /// The leftmost identifier of a path expression.
-    pub fn root(&self) -> Option<&str> {
+    /// The leftmost node of a path expression. `Node.first` in
+    /// `ref/src/lang/ast/Identifier.js`.
+    pub fn first(&self) -> Option<&Expr> {
         match self {
-            Expr::Identifier(name) => Some(name),
-            Expr::ClassRef(name) => Some(name),
-            Expr::ObjectRef(id) => Some(id),
-            Expr::Member { object, .. } => object.root(),
-            Expr::Index { object, .. } => object.root(),
-            Expr::Slice { object, .. } => object.root(),
-            Expr::Call { callee, .. } => callee.root(),
+            Expr::Identifier(_) | Expr::ClassRef(_) | Expr::ObjectRef(_) | Expr::This => Some(self),
+            Expr::Member { object, .. }
+            | Expr::Index { object, .. }
+            | Expr::Slice { object, .. } => object.first(),
+            Expr::Call { callee, .. } => callee.first(),
             _ => None,
         }
+    }
+
+    /// What this node is read from — the `a.b` of `a.b.c`. `Node.object`.
+    pub fn object(&self) -> Option<&Expr> {
+        match self {
+            Expr::Member { object, .. }
+            | Expr::Index { object, .. }
+            | Expr::Slice { object, .. } => Some(object),
+            _ => None,
+        }
+    }
+
+    /// The rightmost name of a path expression — the `c` of `a.b.c`.
+    /// `Node.last`.
+    pub fn last(&self) -> Option<&str> {
+        match self {
+            Expr::Identifier(name) | Expr::ClassRef(name) | Expr::ObjectRef(name) => Some(name),
+            Expr::Member { property, .. } => Some(property),
+            _ => None,
+        }
+    }
+}
+
+/// An expression, dispatched to the kind that knows how to evaluate it.
+///
+/// This is `Node.convert` in `ref/src/lang/ast/Node.js`: the same nine kinds,
+/// as a closed enum rather than a class hierarchy. `ref`'s `New` is missing a
+/// variant because Nucleoid has no `new` keyword — an instantiation is an
+/// ordinary call until the name turns out to be a class, which is what
+/// [`new::New`] decides.
+pub enum Ast<'a> {
+    Literal(literal::Literal<'a>),
+    Identifier(identifier::Identifier<'a>),
+    Array(array::Array<'a>),
+    Object(object::Object<'a>),
+    Function(function::Function<'a>),
+    Call(call::Call<'a>),
+    Template(template::Template<'a>),
+    Operator(operator::Operator<'a>),
+}
+
+impl<'a> Ast<'a> {
+    pub fn convert(node: &'a Expr) -> Ast<'a> {
+        match node {
+            Expr::Null | Expr::Bool(_) | Expr::Number(_) | Expr::String(_) | Expr::Regex(_) => {
+                Ast::Literal(literal::Literal::new(node))
+            }
+            Expr::Identifier(_)
+            | Expr::ClassRef(_)
+            | Expr::ObjectRef(_)
+            | Expr::This
+            | Expr::Member { .. } => Ast::Identifier(identifier::Identifier::new(node)),
+            Expr::List(_) | Expr::Index { .. } | Expr::Slice { .. } => {
+                Ast::Array(array::Array::new(node))
+            }
+            Expr::ObjectLiteral(_) => Ast::Object(object::Object::new(node)),
+            Expr::Function(_) => Ast::Function(function::Function::new(node)),
+            Expr::Call { .. } | Expr::Super(_) => Ast::Call(call::Call::new(node)),
+            Expr::Template(_) => Ast::Template(template::Template::new(node)),
+            Expr::Unary { .. }
+            | Expr::Binary { .. }
+            | Expr::Logical { .. }
+            | Expr::Assign { .. }
+            | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
+        }
+    }
+
+    /// `Node.resolve(scope)` — the value this node has in this scope.
+    ///
+    /// `ref` resolves a node into a rewritten tree and hands it to JavaScript's
+    /// `eval`; there is no such step here, so resolving *is* evaluating.
+    pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        match self {
+            Ast::Literal(node) => node.resolve(),
+            Ast::Identifier(node) => node.resolve(runtime, scope),
+            Ast::Array(node) => node.resolve(runtime, scope),
+            Ast::Object(node) => node.resolve(runtime, scope),
+            Ast::Function(node) => node.resolve(),
+            Ast::Call(node) => node.resolve(runtime, scope),
+            Ast::Template(node) => node.resolve(runtime, scope),
+            Ast::Operator(node) => node.resolve(runtime, scope),
+        }
+    }
+
+    pub fn node(&self) -> &'a Expr {
+        match self {
+            Ast::Literal(node) => node.node,
+            Ast::Identifier(node) => node.node,
+            Ast::Array(node) => node.node,
+            Ast::Object(node) => node.node,
+            Ast::Function(node) => node.node,
+            Ast::Call(node) => node.node,
+            Ast::Template(node) => node.node,
+            Ast::Operator(node) => node.node,
+        }
+    }
+
+    /// `Node.generate(scope)` — the node written back as source.
+    pub fn generate(&self) -> String {
+        self.node().to_string()
+    }
+
+    pub fn first(&self) -> Option<&'a Expr> {
+        self.node().first()
+    }
+
+    pub fn object(&self) -> Option<&'a Expr> {
+        self.node().object()
+    }
+
+    pub fn last(&self) -> Option<&'a str> {
+        self.node().last()
     }
 }
 
@@ -220,65 +339,9 @@ impl Runtime {
             return Err(Error::type_error("Maximum expression depth exceeded"));
         }
 
-        let result = self.evaluate_inner(expression, scope);
+        let result = Ast::convert(expression).resolve(self, scope);
         self.depth -= 1;
         result
-    }
-
-    /// Dispatches to the module named after the node kind, the way
-    /// `ref/src/lang/ast/Node.js` dispatches through `Node.convert`.
-    fn evaluate_inner(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Value> {
-        match expression {
-            Expr::Null | Expr::Bool(_) | Expr::Number(_) | Expr::String(_) | Expr::Regex(_) => {
-                literal::evaluate(expression)
-            }
-
-            Expr::Template(parts) => self.evaluate_template(parts, scope),
-
-            Expr::List(items) => self.evaluate_list(items, scope),
-
-            Expr::Slice { object, start, end } => {
-                self.evaluate_slice(object, start.as_deref(), end.as_deref(), scope)
-            }
-
-            Expr::Index { object, index } => self.evaluate_index(object, index, scope),
-
-            Expr::ObjectLiteral(entries) => self.evaluate_object_literal(entries, scope),
-
-            Expr::Function(function) => Ok(Value::Function(function.clone())),
-
-            Expr::Identifier(name) => self.read_identifier(name, scope),
-
-            Expr::ClassRef(name) => self.read_class_ref(name, scope),
-
-            Expr::ObjectRef(id) => Ok(Value::Object(ObjectId::from(id.clone()))),
-
-            Expr::This => self.read_this(scope),
-
-            Expr::Super(arguments) => self.call_super(arguments, scope),
-
-            Expr::Member { object, property } => self.read_member(object, property, scope),
-
-            Expr::Call { callee, arguments } => self.call(callee, arguments, scope),
-
-            Expr::Unary { operator, operand } => self.evaluate_unary(*operator, operand, scope),
-
-            Expr::Logical {
-                operator,
-                left,
-                right,
-            } => self.evaluate_logical(*operator, left, right, scope),
-
-            Expr::Binary {
-                operator,
-                left,
-                right,
-            } => self.evaluate_binary(*operator, left, right, scope),
-
-            Expr::Assign { target, value } => self.assign_expression(target, value, scope),
-
-            Expr::Delete(operand) => self.delete(operand, scope),
-        }
     }
 
     pub(crate) fn evaluate_all(

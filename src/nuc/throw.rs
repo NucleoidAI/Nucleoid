@@ -1,16 +1,24 @@
-//! `throw` — raises a value, which rolls the transaction back to wherever it is
+//! `THROW` — raises a value, which rolls the transaction back to wherever it is
 //! caught. Mirrors `ref/src/nuc/THROW.js`.
 
 use crate::error::{Error, Result};
 use crate::lang::ast::Expr;
-use crate::lang::evaluation::Flow;
+use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
-impl Runtime {
-    pub(crate) fn run_throw(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Flow> {
-        let value = self.evaluate(expression, scope)?;
+pub struct Throw {
+    pub exception: Expr,
+}
+
+impl Throw {
+    pub fn new(exception: Expr) -> Self {
+        Throw { exception }
+    }
+
+    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+        let value = runtime.evaluate(&self.exception, scope)?;
         Err(Error::thrown(value))
     }
 }

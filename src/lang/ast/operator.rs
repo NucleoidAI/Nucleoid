@@ -6,6 +6,58 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+pub struct Operator<'a> {
+    pub node: &'a Expr,
+}
+
+impl<'a> Operator<'a> {
+    pub fn new(node: &'a Expr) -> Self {
+        Operator { node }
+    }
+
+    pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        match self.node {
+            Expr::Unary { operator, operand } => runtime.evaluate_unary(*operator, operand, scope),
+            Expr::Logical {
+                operator,
+                left,
+                right,
+            } => runtime.evaluate_logical(*operator, left, right, scope),
+            Expr::Binary {
+                operator,
+                left,
+                right,
+            } => runtime.evaluate_binary(*operator, left, right, scope),
+            Expr::Assign { target, value } => runtime.assign_expression(target, value, scope),
+            Expr::Delete(operand) => runtime.delete(operand, scope),
+            other => unreachable!("{other} is not an operator"),
+        }
+    }
+
+    /// `Operator.walk()` — an operator has no name of its own, so walking one
+    /// is walking its operands.
+    pub fn walk(&self) -> Vec<&'a Expr> {
+        let mut roots = Vec::new();
+        walk_operands(self.node, &mut roots);
+        roots
+    }
+}
+
+fn walk_operands<'a>(node: &'a Expr, accumulator: &mut Vec<&'a Expr>) {
+    match node {
+        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
+            walk_operands(left, accumulator);
+            walk_operands(right, accumulator);
+        }
+        Expr::Unary { operand, .. } | Expr::Delete(operand) => walk_operands(operand, accumulator),
+        Expr::Assign { target, value } => {
+            walk_operands(target, accumulator);
+            walk_operands(value, accumulator);
+        }
+        other => accumulator.push(other),
+    }
+}
+
 impl BinaryOp {
     pub fn as_str(self) -> &'static str {
         match self {

@@ -4,17 +4,35 @@
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
-use crate::lang::ast::{Expr, Function, FunctionBody};
+use crate::lang::ast::{Expr, Function as FunctionDecl, FunctionBody};
 use crate::lang::evaluation::Flow;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::ClassData;
 use crate::value::{ObjectId, Value};
 
+pub struct Function<'a> {
+    pub node: &'a Expr,
+}
+
+impl<'a> Function<'a> {
+    pub fn new(node: &'a Expr) -> Self {
+        Function { node }
+    }
+
+    pub fn resolve(&self) -> Result<Value> {
+        let Expr::Function(function) = self.node else {
+            unreachable!("Function only wraps Expr::Function")
+        };
+
+        Ok(Value::Function(function.clone()))
+    }
+}
+
 impl Runtime {
     pub(crate) fn invoke(
         &mut self,
-        function: &Arc<Function>,
+        function: &Arc<FunctionDecl>,
         arguments: &[Value],
     ) -> Result<Value> {
         self.invoke_with_this(function, arguments, None)
@@ -22,7 +40,7 @@ impl Runtime {
 
     pub(crate) fn invoke_with_this(
         &mut self,
-        function: &Arc<Function>,
+        function: &Arc<FunctionDecl>,
         arguments: &[Value],
         this: Option<ObjectId>,
     ) -> Result<Value> {

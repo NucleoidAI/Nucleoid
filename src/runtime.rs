@@ -1,18 +1,16 @@
 //! The runtime: what holds the state and the graph, and drives one statement
-//! after another. Mirrors `ref/src/runtime.js`.
-//!
-//! Each statement kind is carried out by the module named after it in
-//! [`crate::nuc`]; each expression kind by the module named after it in
-//! [`crate::lang::ast`].
+//! after another. Mirrors `ref/src/runtime.js` together with the loop at the
+//! top of `ref/src/stack.js`, which is where a statement's four phases are
+//! actually called in order.
 
 use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
 use crate::graph::{Graph, NodeKey};
-use crate::lang::ast::{Expr, Stmt};
+use crate::lang::ast::Stmt;
 use crate::lang::evaluation::{Flow, Tracking};
+use crate::nuc::Nuc;
 use crate::nuc::expression::is_assertion;
-use crate::nuc::throw;
 use crate::scope::Scope;
 use crate::stack::Stack;
 use crate::state::State;
@@ -25,21 +23,6 @@ use crate::value::{ObjectId, Value};
 pub struct AssertionFailure {
     pub actual: Value,
     pub expected: Value,
-}
-
-/// Where an assignment writes to.
-enum Target {
-    Local(String),
-    Variable(String),
-    Property {
-        object: ObjectId,
-        property: String,
-    },
-    /// A class-level declaration such as `$Person.mortal`.
-    ClassProperty {
-        class: String,
-        property: String,
-    },
 }
 
 pub struct Runtime {
@@ -196,161 +179,24 @@ impl Runtime {
             return Err(Error::type_error("Maximum statement depth exceeded"));
         }
 
-        let result = self.execute_inner(statement, scope);
+        let result = Nuc::convert(self, scope, statement)
+            .and_then(|mut node| self.process(&mut node, scope));
         self.depth -= 1;
         result
     }
 
-    /// Dispatches to the module named after the statement kind, matching
-    /// `ref/src/nuc`.
-    fn execute_inner(&mut self, statement: &Stmt, scope: &mut Scope) -> Result<Flow> {
-        match statement {
-            Stmt::Pass => Ok(Flow::Normal(Value::Null)),
+    /// The four phases, in the order `ref/src/stack.js` calls them: prepare the
+    /// node's expressions, carry it out, file it with what it read, then wake
+    /// whatever was reading what it wrote.
+    pub(crate) fn process(&mut self, node: &mut Nuc, scope: &mut Scope) -> Result<Flow> {
+        node.before(self, scope)?;
 
-            Stmt::Declaration { .. } => Err(Error::reference("Missing definition")),
+        let outcome = node.run(self, scope)?;
 
-            Stmt::Expression(expression) => {
-                let value = self.evaluate(expression, scope)?;
-                Ok(Flow::Normal(value))
-            }
+        node.graph(self, outcome.dependencies)?;
+        node.after(self)?;
 
-            Stmt::Assign { target, value } => {
-                let assigned = self.assign(target, value, scope)?;
-                Ok(Flow::Normal(assigned))
-            }
-
-            Stmt::Throw(expression) => self.run_throw(expression, scope),
-
-            Stmt::Return(expression) => self.run_return(expression.as_ref(), scope),
-
-            Stmt::Delete(expression) => {
-                let value = self.delete(expression, scope)?;
-                Ok(Flow::Normal(value))
-            }
-
-            Stmt::Function(function) => {
-                self.declare_function(function)?;
-                Ok(Flow::Normal(Value::Null))
-            }
-
-            Stmt::Class(declaration) => {
-                self.define_class(declaration)?;
-                Ok(Flow::Normal(Value::Null))
-            }
-
-            Stmt::Try {
-                body,
-                parameter,
-                catch,
-            } => self.run_try(body, parameter, catch, scope),
-
-            Stmt::If { .. } => self.declare_if(statement, scope),
-
-            Stmt::Block(statements) => self.declare_block(statement, statements, scope),
-
-            Stmt::For {
-                variable,
-                iterable,
-                body,
-            } => self.run_for(variable, iterable, body, scope),
-        }
-    }
-
-    /// `try`/`catch`. `ref` has no node for this — it is the one statement kind
-    /// here that is run rather than filed, because a caught failure has to put
-    /// back exactly what the failing branch changed and nothing else.
-    fn run_try(
-        &mut self,
-        body: &[Stmt],
-        parameter: &str,
-        catch: &[Stmt],
-        scope: &mut Scope,
-    ) -> Result<Flow> {
-        let mark = self.transaction.mark();
-
-        match self.execute_all(body, scope) {
-            Ok(flow) => Ok(flow),
-            Err(error) => {
-                self.transaction
-                    .rollback_to(mark, &mut self.state, &mut self.graph);
-
-                scope.push();
-                scope.declare(parameter.to_string(), throw::caught(&error));
-                let result = self.execute_all(catch, scope);
-                scope.pop();
-                result
-            }
-        }
-    }
-
-    // -- assignment ----------------------------------------------------------
-
-    fn assign(&mut self, target: &Expr, value: &Expr, scope: &mut Scope) -> Result<Value> {
-        match self.resolve_target(target, scope)? {
-            Target::Local(name) => self.assign_local(name, value, scope),
-            Target::Variable(name) => self.assign_variable(name, value, scope),
-            Target::Property { object, property } => {
-                self.assign_property(object, property, value, scope)
-            }
-            Target::ClassProperty { class, property } => {
-                self.assign_class_property(class, property, value, scope)
-            }
-        }
-    }
-
-    fn resolve_target(&mut self, target: &Expr, scope: &mut Scope) -> Result<Target> {
-        match target {
-            Expr::Identifier(name) => {
-                // Only names already bound as locals — parameters, loop
-                // variables — stay local. Everything else is a state
-                // assignment, so a block can define what the statements after
-                // it depend on.
-                if scope.has(name) || scope.assigned_by_enclosing(name) {
-                    Ok(Target::Local(name.clone()))
-                } else {
-                    scope.record_assignment(name);
-                    Ok(Target::Variable(name.clone()))
-                }
-            }
-
-            Expr::Member { object, property } => {
-                if let Expr::ClassRef(class) = object.as_ref() {
-                    if scope.instance().is_none() {
-                        if !self.state.classes.contains_key(class) {
-                            return Err(Error::not_defined(class));
-                        }
-                        return Ok(Target::ClassProperty {
-                            class: class.clone(),
-                            property: property.clone(),
-                        });
-                    }
-                }
-
-                let base = self.evaluate(object, scope)?;
-
-                match base {
-                    Value::Object(id) => Ok(Target::Property {
-                        object: id,
-                        property: property.clone(),
-                    }),
-                    Value::Undefined | Value::Null => {
-                        Err(Error::not_defined(self.describe(object, scope)))
-                    }
-                    Value::Class(class) => Ok(Target::ClassProperty {
-                        class,
-                        property: property.clone(),
-                    }),
-                    _ => Err(Error::type_error(format!(
-                        "Cannot assign '{property}' on {}",
-                        base.type_name()
-                    ))),
-                }
-            }
-
-            Expr::This => Err(Error::type_error("Cannot assign to 'this'")),
-
-            other => Err(Error::syntax(format!("Cannot assign to {other}"))),
-        }
+        Ok(outcome.flow)
     }
 
     // -- imperative depth ----------------------------------------------------

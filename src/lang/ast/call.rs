@@ -7,9 +7,43 @@ use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
 use crate::lang::ast::object::next_id;
+use crate::nuc::object::Object;
 use crate::runtime::{AssertionFailure, Runtime};
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
+
+pub struct Call<'a> {
+    pub node: &'a Expr,
+}
+
+impl<'a> Call<'a> {
+    pub fn new(node: &'a Expr) -> Self {
+        Call { node }
+    }
+
+    /// The name being called — `Call.function` in `ref`.
+    pub fn function(&self) -> Option<&'a Expr> {
+        match self.node {
+            Expr::Call { callee, .. } => Some(callee),
+            _ => None,
+        }
+    }
+
+    pub fn arguments(&self) -> &'a [Expr] {
+        match self.node {
+            Expr::Call { arguments, .. } | Expr::Super(arguments) => arguments,
+            _ => &[],
+        }
+    }
+
+    pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        match self.node {
+            Expr::Call { callee, arguments } => runtime.call(callee, arguments, scope),
+            Expr::Super(arguments) => runtime.call_super(arguments, scope),
+            other => unreachable!("{other} is not a call"),
+        }
+    }
+}
 
 impl Runtime {
     pub(crate) fn call(
@@ -73,7 +107,8 @@ impl Runtime {
 
         if self.state.classes.contains_key(name) {
             let id = ObjectId::from(next_id());
-            return self.create_instance(name, arguments, id, scope);
+            let object = Object::new(id, name.to_string(), arguments.to_vec());
+            return object.run(self, scope);
         }
 
         match name {

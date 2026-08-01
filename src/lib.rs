@@ -17,15 +17,15 @@
 //!
 //! # Layout
 //!
-//! The modules follow `ref/`, the archived JavaScript implementation, so that
-//! the two can be read side by side:
+//! The modules follow `ref/`, the archived JavaScript implementation, file for
+//! file and class for class, so that the two can be read side by side:
 //!
 //! | this crate | `ref/` |
 //! | --- | --- |
 //! | [`lang::estree`] | `src/lang/estree` |
-//! | [`lang::ast`] | `src/lang/ast` |
+//! | [`lang::ast`], [`lang::ast::Ast`] | `src/lang/ast`, `Node.js` |
 //! | [`lang::evaluation`] | `src/lang/Evaluation.js` |
-//! | [`nuc`] | `src/nuc` |
+//! | [`nuc`], [`nuc::Nuc`] | `src/nuc`, `NODE.js` |
 //! | [`graph`] | `src/graph.js` |
 //! | [`state`] | `src/state.js` |
 //! | [`scope`] | `src/Scope.js` |
@@ -33,6 +33,14 @@
 //! | [`statement`] | `src/statement.js` |
 //! | [`transaction`] | `src/transaction.js` |
 //! | [`runtime`] | `src/runtime.js` |
+//!
+//! `ref` is untyped JavaScript, so its node kinds are classes reached by
+//! dynamic dispatch and its `$CLASS`/`$INSTANCE` variants are subclasses. The
+//! kinds are a closed set, so here they are the [`nuc::Nuc`] and
+//! [`lang::ast::Ast`] enums with one type per class behind them, and the
+//! context a node runs in is a field rather than a subclass. Statements carry
+//! `ref`'s four phases — `before`, `run`, `graph`, `after` — in the order
+//! `ref/src/stack.js` calls them.
 //!
 //! `ref`'s server infrastructure — `express.js`, `routes/`, `datastore.js`,
 //! `cluster.js`, `cache.js`, `config.js`, `event.js`, `process.js` — has no
