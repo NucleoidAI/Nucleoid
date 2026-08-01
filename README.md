@@ -23,6 +23,10 @@ Nucleoid is designed with a minimally tokenized syntax for logic representation 
 - **Logic Graph:** Executable knowledge graph.
 - **Explainability:** Transparent, traceable decisions.
 
+<br />
+
+### Hello World :zap:
+
 ```
 # There is a Human type with a name
 class Human(name: str):
@@ -38,75 +42,7 @@ socrates = Human("Socrates")
 assert(socrates.mortal, true)
 ```
 
-Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
-
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
-
-<p align="center">
-  Chat for Logical Context
-  <br/>
-  <a href="https://nucleoid.ai/chat">https://nucleoid.ai/chat</a>
-</p>
-
-In Nucleoid's paradigm, there is no segregation between logic and data; instead, the paradigm approaches how both logic and data statements are related to each other. As the runtime receives new statements, it updates the knowledge graph and reevaluates both logic and data statements to reflect the new information. This adaptive process enables the system to respond to new situations and make deterministic selections as a result of plasticity.
-
-<div align="center">
-  <table>
-    <tr>
-      <th colspan="3">
-        Multi-Lang Support
-      </th>
-    </tr>
-    <tr>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/947ecf1d-b174-4c65-85ca-d2fafac6da80" alt="Node.js" width="80" />
-          <br/>
-          Node.js
-        </p>
-      </td>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/838c6f9e-8102-43db-b272-7a02c4d6c5e6" alt="Python" width="75" />
-          <br/>
-          TypeScript (Beta)
-        </p>
-      </td>
-      <td>
-        <p align="center">
-          <img src="https://github.com/user-attachments/assets/899dc0d0-8dc3-4f2f-a993-2bd409ff7045" alt="Python" width="75" />
-          <br/>
-          Python (WiP)
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3" width="500">
-        The declarative structure in the runtime makes it possible to provide multiple language support through JIT compiler.
-      </td>
-    </tr>
-  </table>
-</div>
-
----
-
-<table>
-  <tr>
-    <td>
-      Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
-      <br/>
-      <br/>
-      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward. We use a Node.js-based runtime, simply because JavaScript is the language of the internet so that every piece of code is inherently dynamic, making it an ideal candidate. Sadly, Python's interpreter structure makes its dynamic eval function extremely slow, but in good side, the future looks bright as it will harness the strengths of both languages, much like the fusion of neuro and symbolic AI leverages their respective strengths!
-      <br/>
-      <br/>
-      <p align="right">
-        Can Mingir&nbsp;
-        <br/>
-        <a href="https://github.com/canmingir">@canmingir</a>
-      </p>
-    </td>
-  </tr>
-</table>
 
 ## What is Neuro-Symbolic AI?
 
@@ -154,80 +90,29 @@ In the realm of Neuro-Symbolic AI, *Plasticity* is an important element for the 
 
 The idea of plasticity in AI, especially in logic-based systems like those in Neuro-Symbolic AI, enhances the capability of machines to not only perform tasks based on fixed rules but also to evolve those rules and adapt their reasoning over time, much like the cognitive flexibility of living things.
 
-## Hello World :zap:
-
-```javascript
-User:
-> 'Define human with name'
-
-Assistant:
-> 'The user requested to define a human with a name using a declarative class'
-
----
-
-// Ubiquitous Code:
-'use declarative';
-
-class Human {
-  name: string;
-  constructor(name: string) {
-    this.name = name;
-  }
-}
-```
-
-```javascript
-User:
-> 'All humans are mortal'
-
-Assistant: All humans are mortal
-> 'All humans were declared as mortal.'
-
----
-
-// Ubiquitous Code:
-'use declarative';
-
-$Human.mortal = true;
-```
-
-```javascript
-User:
-> 'Create a human with name "Socrates"'
-
-Assistant:
-> 'A human named 'Socrates' was successfully created.'
-
----
-
-// Ubiquitous Code:
-'use imperative';
-
-var human1 = new Human('Socrates');
-
-// Result: {"id":"human1","name":"Socrates","mortal":true}
-```
-
-```javascript
-User:
-> 'Is human with name 'Socrates' mortal?'
-
-Assistant:
-> 'The human named 'Socrates' was determined to be mortal.'
-
----
-
-// Ubiquitous Code:
-`use imperative`;
-
-var human1 = new Human('Socrates');
-human1.mortal;
-// Result: true
-```
-
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
 
 > :bulb: Nucleoid runtime can also run on local machine with `npx @nucleoidai/ide start` and `npx @nucleoidai/expert start` including [Nucleoid Chat](https://nucleoid.com/ide/chat). These commands enable IDE and expert system components needed for Neuro-Symbolic AI.
+
+---
+
+<table>
+  <tr>
+    <td>
+      Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
+      <br/>
+      <br/>
+      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward. We use a Node.js-based runtime, simply because JavaScript is the language of the internet so that every piece of code is inherently dynamic, making it an ideal candidate. Sadly, Python's interpreter structure makes its dynamic eval function extremely slow, but in good side, the future looks bright as it will harness the strengths of both languages, much like the fusion of neuro and symbolic AI leverages their respective strengths!
+      <br/>
+      <br/>
+      <p align="right">
+        Can Mingir&nbsp;
+        <br/>
+        <a href="https://github.com/canmingir">@canmingir</a>
+      </p>
+    </td>
+  </tr>
+</table>
 
 ---
 
