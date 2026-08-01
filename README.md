@@ -15,7 +15,7 @@
 
 <br/>
 
-Nucleoid is a declarative, logic-based, contextual runtime for Neuro-Symbolic AI. Nucleoid runtime tracks each statement in [IPL-inspired](https://en.wikipedia.org/wiki/Information_Processing_Language) declarative syntax and dynamically creates relationships between both logic and data statements in the knowledge graph to used in decision-making and problem-solving process.
+Hallucinations are a major challenge in LLM reasoning because natural language is unstructured. By nature, LLMs are pattern engines that reason more effectively over structured entities and relationships, enabling more reliable, near-deterministic results.
 
 - **Adaptive Reasoning:** Combines symbolic logic with contextual information to analyze relationships, draw conclusions and incorporating new information and adjusting its conclusions accordingly.
 - **Logic Graph:** Specialized knowledge graph that captures relationships between both logic and data statements based on formal logic, facilitating complex deductions and adapting to new information.
