@@ -13,6 +13,7 @@ use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 
+#[derive(Debug, Clone)]
 pub struct Function {
     pub function: Arc<FunctionDecl>,
 }

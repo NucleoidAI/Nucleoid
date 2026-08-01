@@ -12,6 +12,7 @@ use crate::scope::Scope;
 use crate::state::DeclarationKey;
 use crate::value::{ObjectId, Value};
 
+#[derive(Debug, Clone)]
 pub struct Delete {
     pub target: Expr,
 }

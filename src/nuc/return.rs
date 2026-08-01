@@ -10,6 +10,7 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+#[derive(Debug, Clone)]
 pub struct Return {
     pub statement: Option<Expr>,
 }

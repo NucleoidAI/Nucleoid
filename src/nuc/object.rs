@@ -16,6 +16,7 @@ use crate::scope::Scope;
 use crate::state::ClassData;
 use crate::value::{ObjectData, ObjectId, Value};
 
+#[derive(Debug, Clone)]
 pub struct Object {
     pub id: ObjectId,
     pub class: String,

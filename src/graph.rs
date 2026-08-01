@@ -3,6 +3,7 @@ use std::fmt;
 
 use crate::lang::ast::{Expr, Stmt};
 use crate::lang::estree::generator::generate_all;
+use crate::nuc::Nuc;
 use crate::value::ObjectId;
 
 /// The name a statement is filed under in the dependency graph.
@@ -118,11 +119,16 @@ impl fmt::Display for NodeKind {
 
 /// A statement filed in the graph, together with the edges that decide when it
 /// is re-evaluated.
+///
+/// `node` is the statement in the form that can be run again, as
+/// `ref/src/graph.js` holds it — not the source it was written as. Keeping the
+/// source would mean rebuilding the node on every propagation, and the rebuilt
+/// node would have to keep agreeing with the one the first run used.
 #[derive(Debug, Clone)]
 pub struct GraphNode {
     pub key: NodeKey,
     pub kind: NodeKind,
-    pub statement: Option<Stmt>,
+    pub node: Option<Nuc>,
     /// The instance a class-level declaration was instantiated for.
     pub instance: Option<ObjectId>,
     pub dependencies: IndexSet<NodeKey>,
@@ -135,7 +141,7 @@ impl GraphNode {
         GraphNode {
             key,
             kind,
-            statement: None,
+            node: None,
             instance: None,
             dependencies: IndexSet::new(),
             dependents: IndexSet::new(),

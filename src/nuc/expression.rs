@@ -11,6 +11,7 @@ use crate::nuc::Outcome;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 
+#[derive(Debug, Clone)]
 pub struct Expression {
     pub tokens: Expr,
 }

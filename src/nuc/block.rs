@@ -8,12 +8,13 @@ use indexmap::IndexSet;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt, collect_assigned_names, collect_read_roots};
-use crate::nuc::Outcome;
+use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::DeclarationKey;
 use crate::value::{ObjectId, Value};
 
+#[derive(Debug, Clone)]
 pub struct Block {
     pub statements: Vec<Stmt>,
     /// Set while running: where the block is filed, and the instance whose
@@ -74,7 +75,7 @@ impl Block {
         runtime.file(
             key,
             NodeKind::Block,
-            Some(Stmt::Block(self.statements.clone())),
+            Some(Nuc::Block(self.clone())),
             dependencies,
             self.instance.clone(),
         )

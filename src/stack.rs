@@ -127,7 +127,7 @@ impl Runtime {
                 continue;
             };
 
-            let Some(statement) = node.statement.clone() else {
+            let Some(mut nuc) = node.node.clone() else {
                 continue;
             };
 
@@ -141,7 +141,7 @@ impl Runtime {
                 self.instances.push(instance.clone());
             }
             self.push_tracking(true);
-            let result = self.execute(&statement, &mut scope);
+            let result = self.rerun(&mut nuc, &mut scope);
             self.pop_tracking();
             if node.instance.is_some() {
                 self.instances.pop();

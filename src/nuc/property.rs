@@ -9,20 +9,22 @@ use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt};
 use crate::lang::evaluation::Flow;
-use crate::nuc::Outcome;
 use crate::nuc::object::Object;
+use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::DeclarationKey;
 use crate::value::ObjectId;
 
 /// What the property is being set on.
+#[derive(Debug, Clone)]
 pub enum Owner {
     Object(ObjectId),
     /// A type, so the assignment is a rule that holds for every instance.
     Class(String),
 }
 
+#[derive(Debug, Clone)]
 pub struct Property {
     pub owner: Owner,
     pub name: String,
@@ -122,18 +124,10 @@ impl Property {
             return Ok(());
         };
 
-        let statement = Stmt::Assign {
-            target: Expr::Member {
-                object: Box::new(Expr::ObjectRef(object.to_string())),
-                property: self.name.clone(),
-            },
-            value: self.value.clone(),
-        };
-
         runtime.file(
             &NodeKey::property(object, &self.name),
             kind,
-            Some(statement),
+            Some(Nuc::Property(self.clone())),
             dependencies,
             Some(object.clone()),
         )

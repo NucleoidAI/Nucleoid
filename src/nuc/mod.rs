@@ -98,6 +98,7 @@ impl Outcome {
 }
 
 /// A statement, in the form the graph holds it. `ref/src/nuc/NODE.js`.
+#[derive(Debug, Clone)]
 pub enum Nuc {
     Let(Let),
     Variable(Variable),
@@ -286,7 +287,7 @@ impl Runtime {
         &mut self,
         key: &NodeKey,
         kind: NodeKind,
-        statement: Option<Stmt>,
+        nuc: Option<Nuc>,
         dependencies: IndexSet<NodeKey>,
         instance: Option<ObjectId>,
     ) -> Result<()> {
@@ -315,7 +316,7 @@ impl Runtime {
 
         let sequence = self.graph.next_sequence();
         let mut node = GraphNode::new(key.clone(), kind, sequence);
-        node.statement = statement;
+        node.node = nuc;
         node.instance = instance;
         node.dependencies = dependencies.clone();
 

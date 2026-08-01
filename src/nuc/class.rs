@@ -15,6 +15,7 @@ use crate::scope::Scope;
 use crate::state::{ClassData, Declaration, DeclarationKey};
 use crate::value::ObjectId;
 
+#[derive(Debug, Clone)]
 pub struct Class {
     pub declaration: ClassDecl,
 }

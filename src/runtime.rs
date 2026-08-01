@@ -185,6 +185,24 @@ impl Runtime {
         result
     }
 
+    /// Runs a node the graph already holds, because something it reads changed.
+    ///
+    /// The node does not have to be built from source again — that is the point
+    /// of the graph holding the node rather than the statement it was written
+    /// as — but it is still the same four phases, and the same depth limit.
+    pub(crate) fn rerun(&mut self, node: &mut Nuc, scope: &mut Scope) -> Result<Flow> {
+        self.depth += 1;
+
+        if self.depth > MAX_DEPTH {
+            self.depth -= 1;
+            return Err(Error::type_error("Maximum statement depth exceeded"));
+        }
+
+        let result = self.process(node, scope);
+        self.depth -= 1;
+        result
+    }
+
     /// The four phases, in the order `ref/src/stack.js` calls them: prepare the
     /// node's expressions, carry it out, file it with what it read, then wake
     /// whatever was reading what it wrote.

@@ -5,14 +5,15 @@ use indexmap::IndexSet;
 
 use crate::error::Result;
 use crate::graph::{NodeKey, NodeKind};
-use crate::lang::ast::{Expr, Stmt};
+use crate::lang::ast::Expr;
 use crate::lang::evaluation::Flow;
-use crate::nuc::Outcome;
 use crate::nuc::object::Object;
+use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::ObjectId;
 
+#[derive(Debug, Clone)]
 pub struct Variable {
     pub name: String,
     pub value: Expr,
@@ -75,12 +76,13 @@ impl Variable {
             return Ok(());
         };
 
-        let statement = Stmt::Assign {
-            target: Expr::Identifier(self.name.clone()),
-            value: self.value.clone(),
-        };
-
-        runtime.file(&self.key(), kind, Some(statement), dependencies, None)
+        runtime.file(
+            &self.key(),
+            kind,
+            Some(Nuc::Variable(self.clone())),
+            dependencies,
+            None,
+        )
     }
 
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {

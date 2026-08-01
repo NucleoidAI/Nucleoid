@@ -10,6 +10,7 @@ use crate::nuc::{Outcome, throw};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 
+#[derive(Debug, Clone)]
 pub struct Try {
     pub body: Vec<Stmt>,
     pub parameter: String,

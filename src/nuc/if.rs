@@ -9,12 +9,13 @@ use crate::error::Result;
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt};
 use crate::lang::evaluation::Flow;
-use crate::nuc::Outcome;
+use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::DeclarationKey;
 use crate::value::{ObjectId, Value};
 
+#[derive(Debug, Clone)]
 pub struct If {
     pub condition: Expr,
     pub consequent: Vec<Stmt>,
@@ -117,7 +118,7 @@ impl If {
         runtime.file(
             key,
             NodeKind::If,
-            Some(self.statement()),
+            Some(Nuc::If(self.clone())),
             dependencies,
             self.instance.clone(),
         )

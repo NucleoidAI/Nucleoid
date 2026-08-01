@@ -10,6 +10,7 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+#[derive(Debug, Clone)]
 pub struct For {
     pub variable: String,
     pub array: Expr,
