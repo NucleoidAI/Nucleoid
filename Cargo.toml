@@ -2,5 +2,45 @@
 name = "nucleoid"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
+description = "Declarative logic runtime: statements are tracked in a dependency graph and re-evaluated when what they depend on changes"
+license = "Apache-2.0"
+repository = "https://github.com/NucleoidAI/Nucleoid"
+readme = "README.md"
+keywords = ["language", "interpreter", "declarative", "logic", "runtime"]
+categories = ["compilers", "development-tools"]
+
+[lib]
+name = "nucleoid"
+path = "src/lib.rs"
+
+[[bin]]
+name = "nucleoid"
+path = "src/main.rs"
 
 [dependencies]
+# Lexer generator: the mainstream Rust choice for token definitions.
+logos = "0.15"
+# Derive macro for the crate's error enum.
+thiserror = "2"
+# Insertion-ordered maps: object properties, class instance lists and graph
+# edges are all order-sensitive in the spec.
+indexmap = "2"
+# Regular expression literals.
+regex = "1"
+# Date built-in. Default features are off so the crate stays free of
+# platform time-zone bindings; the runtime works in UTC.
+chrono = { version = "0.4", default-features = false, features = ["std", "now", "alloc"] }
+# JSON literals and value rendering.
+serde_json = "1"
+# CLI argument parsing for the binary.
+clap = { version = "4", default-features = false, features = [
+    "std",
+    "derive",
+    "help",
+    "usage",
+    "error-context",
+] }
+
+[lints.rust]
+unsafe_code = "forbid"
