@@ -33,7 +33,7 @@ impl Variable {
     }
 
     pub fn key(&self) -> NodeKey {
-        NodeKey::new(self.name.clone())
+        NodeKey::variable(self.name.clone())
     }
 
     pub fn before(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<()> {
@@ -53,7 +53,7 @@ impl Variable {
 
         // `a = Person(...)` names the new instance after what it is assigned to.
         if let Some((class, arguments)) = runtime.instantiation(&self.value) {
-            let object = Object::new(ObjectId::from(self.name.clone()), class, arguments);
+            let object = Object::new(ObjectId::named(self.name.clone()), class, arguments);
             let created = object.run(runtime, scope)?;
             runtime.assign(&self.name, created.clone());
             self.kind = Some(NodeKind::Object);

@@ -3,10 +3,10 @@
 use indexmap::IndexMap;
 
 use crate::builtins;
+use crate::builtins::Global;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
-use crate::lang::ast::object::next_id;
 use crate::nuc::object::Object;
 use crate::runtime::{AssertionFailure, Runtime};
 use crate::scope::Scope;
@@ -100,42 +100,42 @@ impl Runtime {
         }
 
         if let Some(function) = self.state.functions.get(name).cloned() {
-            self.track(NodeKey::new(name.to_string()));
+            self.track(NodeKey::function(name));
             let values = self.evaluate_all(arguments, scope)?;
             return self.invoke(&function, &values);
         }
 
         if self.state.classes.contains_key(name) {
-            let id = ObjectId::from(next_id());
+            let id = ObjectId::anonymous();
             let object = Object::new(id, name.to_string(), arguments.to_vec());
             return object.run(self, scope);
         }
 
-        match name {
-            "Object" => {
+        match Global::from_callee(name) {
+            Some(Global::Object) => {
                 let properties = IndexMap::new();
                 return Ok(self.create_anonymous(properties));
             }
-            "Boolean" => {
+            Some(Global::Boolean) => {
                 let values = self.evaluate_all(arguments, scope)?;
                 let value = values.first().cloned().unwrap_or(Value::Undefined);
                 return Ok(Value::Bool(value.truthy()));
             }
-            "String" => {
+            Some(Global::String) => {
                 let values = self.evaluate_all(arguments, scope)?;
                 let value = values.first().cloned().unwrap_or(Value::Undefined);
                 return Ok(Value::String(value.to_string()));
             }
-            "Number" => {
+            Some(Global::Number) => {
                 let values = self.evaluate_all(arguments, scope)?;
                 let value = values.first().cloned().unwrap_or(Value::Undefined);
                 return Ok(Value::Number(value.to_number()));
             }
-            "Date" => {
+            Some(Global::Date) => {
                 let values = self.evaluate_all(arguments, scope)?;
                 return builtins::date::construct(&values);
             }
-            "List" | "Array" => {
+            Some(Global::List) => {
                 let values = self.evaluate_all(arguments, scope)?;
                 return Ok(Value::List(values));
             }
@@ -160,24 +160,10 @@ impl Runtime {
         // Static calls on the built-in namespaces.
         if let Expr::Identifier(name) = object {
             if !scope.has(name) && !self.state.variables.contains_key(name) {
-                match name.as_str() {
-                    "Math" => {
-                        let values = self.evaluate_all(arguments, scope)?;
-                        return builtins::math(property, &values);
+                if let Some(global) = Global::from_name(name) {
+                    if let Some(value) = self.call_global(global, property, arguments, scope)? {
+                        return Ok(value);
                     }
-                    "Number" => {
-                        let values = self.evaluate_all(arguments, scope)?;
-                        return builtins::number(property, &values);
-                    }
-                    "String" => {
-                        let values = self.evaluate_all(arguments, scope)?;
-                        return builtins::string(property, &values);
-                    }
-                    "Date" => {
-                        let values = self.evaluate_all(arguments, scope)?;
-                        return builtins::date::statics(property, &values);
-                    }
-                    _ => {}
                 }
             }
         }
@@ -273,24 +259,10 @@ impl Runtime {
         arguments: &[Expr],
         scope: &mut Scope,
     ) -> Result<Value> {
-        if name == "Date" {
-            let values = self.evaluate_all(arguments, scope)?;
-            return builtins::date::statics(property, &values);
-        }
-
-        if name == "Math" {
-            let values = self.evaluate_all(arguments, scope)?;
-            return builtins::math(property, &values);
-        }
-
-        if name == "Number" {
-            let values = self.evaluate_all(arguments, scope)?;
-            return builtins::number(property, &values);
-        }
-
-        if name == "String" {
-            let values = self.evaluate_all(arguments, scope)?;
-            return builtins::string(property, &values);
+        if let Some(global) = Global::from_name(name) {
+            if let Some(value) = self.call_global(global, property, arguments, scope)? {
+                return Ok(value);
+            }
         }
 
         let Some(class) = self.state.class(name).cloned() else {
@@ -298,9 +270,34 @@ impl Runtime {
         };
 
         let instances: Vec<Value> = class.instances.iter().cloned().map(Value::Object).collect();
-        self.track(NodeKey::new(format!("${name}")));
+        self.track(NodeKey::class(name));
 
         let values = self.evaluate_all(arguments, scope)?;
         self.list_query(instances, property, &values, name)
+    }
+
+    /// A static call on a built-in namespace: `Math.max(...)`, `Date.now()`.
+    /// `None` when the namespace has no statics, so the caller can carry on.
+    fn call_global(
+        &mut self,
+        global: Global,
+        property: &str,
+        arguments: &[Expr],
+        scope: &mut Scope,
+    ) -> Result<Option<Value>> {
+        let values = match global {
+            Global::Math | Global::Number | Global::String | Global::Date => {
+                self.evaluate_all(arguments, scope)?
+            }
+            _ => return Ok(None),
+        };
+
+        Ok(Some(match global {
+            Global::Math => builtins::math(property, &values)?,
+            Global::Number => builtins::number(property, &values)?,
+            Global::String => builtins::string(property, &values)?,
+            Global::Date => builtins::date::statics(property, &values)?,
+            _ => unreachable!("filtered above"),
+        }))
     }
 }

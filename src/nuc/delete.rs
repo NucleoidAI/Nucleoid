@@ -9,6 +9,7 @@ use crate::lang::ast::Expr;
 use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
+use crate::state::DeclarationKey;
 use crate::value::{ObjectId, Value};
 
 pub struct Delete {
@@ -31,7 +32,7 @@ impl Runtime {
     pub(crate) fn delete(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Value> {
         match expression {
             Expr::Identifier(name) => {
-                let key = NodeKey::new(name.clone());
+                let key = NodeKey::variable(name.clone());
 
                 let Some(value) = self.state.variables.get(name).cloned() else {
                     return Ok(Value::Bool(false));
@@ -90,7 +91,7 @@ impl Runtime {
 
                 self.delete_object(&id)?;
 
-                let key = NodeKey::new(id.to_string());
+                let key = NodeKey::object(&id);
                 self.remove_node(&key);
 
                 if self.state.variables.get(id.as_str()).is_some() {
@@ -110,7 +111,7 @@ impl Runtime {
 
     /// Removes a class-level rule and the values it produced.
     fn delete_declaration(&mut self, class: &str, property: &str) -> Result<Value> {
-        let key = format!("${class}.{property}");
+        let key = DeclarationKey::property(class, property);
 
         let Some(data) = self.state.class(class).cloned() else {
             return Err(Error::not_defined(class));
@@ -170,7 +171,7 @@ impl Runtime {
         self.state.objects.shift_remove(id);
 
         if let Some(class_name) = data_class {
-            self.propagate(&NodeKey::new(format!("${class_name}")))?;
+            self.propagate(&NodeKey::class(&class_name))?;
         }
 
         Ok(())

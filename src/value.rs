@@ -2,13 +2,44 @@ use indexmap::IndexMap;
 use regex::Regex;
 use std::fmt;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::lang::ast::Function;
 
+/// What an instance is called.
+///
+/// An instance is named after what it was assigned to, so that the same
+/// statement run twice reaches the same object rather than making a second one.
+/// The four ways a name can come about are the four constructors below, and —
+/// as with [`NodeKey`](crate::graph::NodeKey) — nothing else builds one by
+/// hand.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ObjectId(pub String);
 
 impl ObjectId {
+    /// `person1 = Person()` — named after the variable.
+    pub fn named(name: impl Into<String>) -> Self {
+        ObjectId(name.into())
+    }
+
+    /// `person1.address = Address()` — named after the path that reaches it.
+    pub fn nested(owner: &ObjectId, property: &str) -> Self {
+        ObjectId(format!("{owner}.{property}"))
+    }
+
+    /// `$Person.country = Country()` — one object the whole class shares,
+    /// rather than one per instance.
+    pub fn shared(class: &str, property: &str) -> Self {
+        ObjectId(format!("${class}.{property}"))
+    }
+
+    /// An object with nothing to be named after: an object literal, or a
+    /// `Person()` that is not assigned anywhere.
+    pub fn anonymous() -> Self {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        ObjectId(format!("obj:{}", COUNTER.fetch_add(1, Ordering::Relaxed)))
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }

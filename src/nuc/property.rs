@@ -13,6 +13,7 @@ use crate::nuc::Outcome;
 use crate::nuc::object::Object;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
+use crate::state::DeclarationKey;
 use crate::value::ObjectId;
 
 /// What the property is being set on.
@@ -76,7 +77,7 @@ impl Property {
                     value: self.value.clone(),
                 };
 
-                let key = format!("${class}.{}", self.name);
+                let key = DeclarationKey::property(&class, &self.name);
                 runtime.declare_on_class(&class, key, statement)?;
 
                 Ok(Outcome::null())
@@ -95,7 +96,7 @@ impl Property {
                 }
 
                 if let Some((class, arguments)) = runtime.instantiation(&self.value) {
-                    let id = ObjectId::from(format!("{object}.{}", self.name));
+                    let id = ObjectId::nested(&object, &self.name);
                     let instance = Object::new(id, class, arguments);
                     let created = instance.run(runtime, scope)?;
                     runtime.assign_property(&object, &self.name, created.clone());

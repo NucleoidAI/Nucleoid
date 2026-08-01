@@ -102,7 +102,7 @@ impl Runtime {
                 };
 
                 let instances = class.instances.clone();
-                self.track(NodeKey::new(format!("${name}")));
+                self.track(NodeKey::class(name));
 
                 let found = match key {
                     Value::Number(index) => instances.get(*index as usize).cloned(),
@@ -397,7 +397,7 @@ impl Runtime {
                 }
 
                 self.assign(name, value);
-                let key = NodeKey::new(name.clone());
+                let key = NodeKey::variable(name.clone());
                 self.propagate(&key)?;
                 Ok(())
             }

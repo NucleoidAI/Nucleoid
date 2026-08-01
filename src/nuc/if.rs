@@ -12,6 +12,7 @@ use crate::lang::evaluation::Flow;
 use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
+use crate::state::DeclarationKey;
 use crate::value::{ObjectId, Value};
 
 pub struct If {
@@ -58,16 +59,16 @@ impl If {
         let statement = self.statement();
 
         if let Some(class) = runtime.class_reference(&statement, scope) {
-            let key = format!("if({})", self.condition);
+            let key = DeclarationKey::conditional(&self.condition);
             runtime.declare_on_class(&class, key, statement)?;
             return Ok(Outcome::null());
         }
 
         self.instance = scope.instance().cloned();
-        self.key = Some(match &self.instance {
-            Some(instance) => NodeKey::new(format!("if({})@{instance}", self.condition)),
-            None => NodeKey::new(format!("if({})", self.condition)),
-        });
+        self.key = Some(NodeKey::conditional(
+            &self.condition,
+            self.instance.as_ref(),
+        ));
 
         runtime.push_tracking(false);
         runtime.enter_imperative();

@@ -23,7 +23,7 @@ impl Function {
     }
 
     pub fn key(&self) -> Option<NodeKey> {
-        self.function.name.clone().map(NodeKey::new)
+        self.function.name.clone().map(NodeKey::function)
     }
 
     pub fn run(&mut self, runtime: &mut Runtime, _scope: &mut Scope) -> Result<Outcome> {

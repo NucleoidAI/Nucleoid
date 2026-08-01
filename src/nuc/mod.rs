@@ -276,9 +276,13 @@ impl Nuc {
 }
 
 impl Runtime {
-    /// `NODE.register` and `NODE.direct` — files a node under `key` and wires
-    /// the edges both ways, refusing an edge that would close a cycle.
-    pub(crate) fn register(
+    /// Files a node under `key` and wires the edges to everything it read.
+    ///
+    /// This is the sequence `ref/src/stack.js` performs once a statement has
+    /// run: check the new edges, [`register`](Runtime::register) the node — or
+    /// [`replace`](Runtime::replace) the one already there — then
+    /// [`direct`](Runtime::direct) an edge from each dependency.
+    pub(crate) fn file(
         &mut self,
         key: &NodeKey,
         kind: NodeKind,
@@ -286,7 +290,7 @@ impl Runtime {
         dependencies: IndexSet<NodeKey>,
         instance: Option<ObjectId>,
     ) -> Result<()> {
-        let existing = self.graph.get(key).cloned();
+        let existing = self.graph.retrieve(key).cloned();
 
         for dependency in &dependencies {
             if dependency == key {
@@ -309,66 +313,90 @@ impl Runtime {
             }
         }
 
-        if self.transaction.needs_node(key) {
-            self.transaction.record_node(key, existing.clone());
-        }
-
         let sequence = self.graph.next_sequence();
         let mut node = GraphNode::new(key.clone(), kind, sequence);
         node.statement = statement;
         node.instance = instance;
         node.dependencies = dependencies.clone();
 
-        // `NODE.replace`: a redeclaration keeps the edges pointing at it.
-        if let Some(existing) = &existing {
-            node.dependents = existing.dependents.clone();
-
-            // Drop edges from dependencies this declaration no longer has.
-            for previous in &existing.dependencies {
-                if !dependencies.contains(previous) {
-                    let removed = self
-                        .graph
-                        .get_mut(previous)
-                        .is_some_and(|source| source.dependents.shift_remove(key));
-
-                    if removed {
-                        self.transaction.record_dependent_removed(previous, key);
-                    }
-                }
-            }
+        match &existing {
+            Some(existing) => self.replace(node, existing),
+            None => self.register(node),
         }
-
-        self.graph.insert(node);
 
         for dependency in &dependencies {
             if dependency == key {
                 continue;
             }
 
-            if !self.graph.contains(dependency) {
-                let sequence = self.graph.next_sequence();
-                let pending = GraphNode::new(dependency.clone(), NodeKind::Pending, sequence);
-                self.transaction.record_node(dependency, None);
-                self.graph.insert(pending);
-            }
-
-            let added = self
-                .graph
-                .get_mut(dependency)
-                .is_some_and(|source| source.dependents.insert(key.clone()));
-
-            if added {
-                self.transaction.record_dependent_added(dependency, key);
-            }
+            self.direct(dependency, key);
         }
 
         Ok(())
     }
 
-    /// Replaces a node with a placeholder, keeping its dependents so they are
-    /// still woken when the name is defined again.
+    /// `NODE.register` — puts a node in the graph under its own key.
+    pub(crate) fn register(&mut self, node: GraphNode) {
+        if self.transaction.needs_node(&node.key) {
+            self.transaction.record_node(&node.key, None);
+        }
+
+        self.graph.insert(node);
+    }
+
+    /// `NODE.replace` — puts a node where one already stood, so that a
+    /// redeclaration keeps the edges pointing at it.
+    pub(crate) fn replace(&mut self, mut node: GraphNode, existing: &GraphNode) {
+        let key = node.key.clone();
+
+        if self.transaction.needs_node(&key) {
+            self.transaction.record_node(&key, Some(existing.clone()));
+        }
+
+        node.dependents = existing.dependents.clone();
+
+        // Drop edges from dependencies this declaration no longer has.
+        for previous in &existing.dependencies {
+            if !node.dependencies.contains(previous) {
+                let removed = self
+                    .graph
+                    .get_mut(previous)
+                    .is_some_and(|source| source.dependents.shift_remove(&key));
+
+                if removed {
+                    self.transaction.record_dependent_removed(previous, &key);
+                }
+            }
+        }
+
+        self.graph.insert(node);
+    }
+
+    /// `NODE.direct` — wires one edge, from what was read to what read it. A
+    /// name that has not been defined yet still gets a node, so the edge is
+    /// there waiting when it is.
+    pub(crate) fn direct(&mut self, source: &NodeKey, target: &NodeKey) {
+        if !self.graph.contains(source) {
+            let sequence = self.graph.next_sequence();
+            let pending = GraphNode::new(source.clone(), NodeKind::Pending, sequence);
+            self.transaction.record_node(source, None);
+            self.graph.insert(pending);
+        }
+
+        let added = self
+            .graph
+            .get_mut(source)
+            .is_some_and(|node| node.dependents.insert(target.clone()));
+
+        if added {
+            self.transaction.record_dependent_added(source, target);
+        }
+    }
+
+    /// Puts a placeholder where a node stood, keeping its dependents so they
+    /// are still woken when the name is defined again.
     pub(crate) fn remove_node(&mut self, key: &NodeKey) {
-        if let Some(node) = self.graph.get(key).cloned() {
+        if let Some(node) = self.graph.retrieve(key).cloned() {
             self.transaction.record_node(key, Some(node.clone()));
 
             for dependency in &node.dependencies {

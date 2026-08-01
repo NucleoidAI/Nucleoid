@@ -1,14 +1,52 @@
 use indexmap::IndexMap;
+use std::fmt;
 use std::sync::Arc;
 
-use crate::lang::ast::{Function, Parameter, Stmt};
+use crate::lang::ast::{Expr, Function, Parameter, Stmt};
+use crate::lang::estree::generator::generate_all;
 use crate::runtime::Runtime;
 use crate::value::{ObjectData, ObjectId, Value};
+
+/// What a class-level statement is filed under on its class.
+///
+/// Deliberately not a [`NodeKey`](crate::graph::NodeKey): a declaration is the
+/// template, held once on the class, while a node is one instance's copy of it.
+/// `$Person.mortal` names the rule; `person1.mortal` names what the rule
+/// produced. Giving them separate types is what stops the two being mixed up.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct DeclarationKey(String);
+
+impl DeclarationKey {
+    /// `$Person.mortal`.
+    pub fn property(class: &str, property: &str) -> Self {
+        DeclarationKey(format!("${class}.{property}"))
+    }
+
+    /// `if(this.age>18)`.
+    pub fn conditional(condition: &Expr) -> Self {
+        DeclarationKey(format!("if({condition})"))
+    }
+
+    /// A block of statements, keyed by their source.
+    pub fn block(statements: &[Stmt]) -> Self {
+        DeclarationKey(format!("block({})", generate_all(statements)))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for DeclarationKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
 
 /// A class-level statement kept as a template and re-applied to every instance.
 #[derive(Debug, Clone)]
 pub struct Declaration {
-    pub key: String,
+    pub key: DeclarationKey,
     pub statement: Stmt,
     pub sequence: u64,
 }
@@ -21,7 +59,7 @@ pub struct ClassData {
     pub constructor: Vec<Stmt>,
     pub methods: IndexMap<String, Arc<Function>>,
     pub instances: Vec<ObjectId>,
-    pub declarations: IndexMap<String, Declaration>,
+    pub declarations: IndexMap<DeclarationKey, Declaration>,
 }
 
 impl ClassData {

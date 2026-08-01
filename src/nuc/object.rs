@@ -50,7 +50,7 @@ impl Object {
     }
 
     pub fn key(&self) -> NodeKey {
-        NodeKey::new(self.id.to_string())
+        NodeKey::object(&self.id)
     }
 
     pub fn run(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
@@ -108,7 +108,7 @@ impl Object {
     /// Wakes everything that reads the class, since it now has one more
     /// instance.
     fn after(&self, runtime: &mut Runtime) -> Result<()> {
-        runtime.propagate(&NodeKey::new(format!("${}", self.class)))
+        runtime.propagate(&NodeKey::class(&self.class))
     }
 
     fn constructor(

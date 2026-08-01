@@ -8,10 +8,10 @@ use indexmap::IndexSet;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt, collect_assigned_names, collect_read_roots};
-use crate::lang::estree::generator::generate_all;
 use crate::nuc::Outcome;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
+use crate::state::DeclarationKey;
 use crate::value::{ObjectId, Value};
 
 pub struct Block {
@@ -44,17 +44,13 @@ impl Block {
                 ));
             }
 
-            let key = format!("block({})", generate_all(&self.statements));
+            let key = DeclarationKey::block(&self.statements);
             runtime.declare_on_class(&class, key, statement)?;
             return Ok(Outcome::null());
         }
 
-        let rendered = generate_all(&self.statements);
         self.instance = scope.instance().cloned();
-        self.key = Some(match &self.instance {
-            Some(instance) => NodeKey::new(format!("block({rendered})@{instance}")),
-            None => NodeKey::new(format!("block({rendered})")),
-        });
+        self.key = Some(NodeKey::block(&self.statements, self.instance.as_ref()));
 
         runtime.push_tracking(false);
         scope.push();

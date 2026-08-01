@@ -1,51 +1,84 @@
 use indexmap::{IndexMap, IndexSet};
 use std::fmt;
 
-use crate::lang::ast::Stmt;
+use crate::lang::ast::{Expr, Stmt};
+use crate::lang::estree::generator::generate_all;
 use crate::value::ObjectId;
 
 /// The name a statement is filed under in the dependency graph.
 ///
-/// Variables use their own name, properties use `<object id>.<property>`, and
-/// control-flow statements use their rendered source so that redeclaring the
-/// same condition replaces the previous node.
+/// `ref/src/nuc/NODE.js` keys a node by `key.toString()` and each `$nuc`
+/// builder formats its own — so the scheme lives in a dozen places there. Here
+/// it lives only in the constructors below, and nothing else builds a key by
+/// hand: two spellings of the same thing have to collapse onto one node, and
+/// that only holds if one piece of code decides the spelling.
+///
+/// Variables and functions use their own name, properties use
+/// `<object id>.<property>`, a class uses `$<name>`, and control-flow
+/// statements use their rendered source, qualified by the instance whose rules
+/// they belong to.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct NodeKey(String);
 
 impl NodeKey {
-    pub fn new(key: impl Into<String>) -> Self {
-        NodeKey(key.into())
+    /// A top-level name: `a`.
+    pub fn variable(name: impl Into<String>) -> Self {
+        NodeKey(name.into())
     }
 
+    /// A named function: `f`. The same shape as a variable, deliberately — a
+    /// call depends on the name, however that name came to be defined.
+    pub fn function(name: impl Into<String>) -> Self {
+        NodeKey(name.into())
+    }
+
+    /// A property of one object: `person1.age`.
     pub fn property(object: &ObjectId, property: &str) -> Self {
         NodeKey(format!("{object}.{property}"))
+    }
+
+    /// A type: `$Person`. Reading the instances of a class depends on this, so
+    /// creating or deleting an instance wakes whatever counted them.
+    pub fn class(name: &str) -> Self {
+        NodeKey(format!("${name}"))
+    }
+
+    /// One instance, under its own id.
+    pub fn object(id: &ObjectId) -> Self {
+        NodeKey(id.to_string())
+    }
+
+    /// A standing condition: `if(a>1)`, or `if(a>1)@person1` for the copy that
+    /// belongs to one instance.
+    pub fn conditional(condition: &Expr, instance: Option<&ObjectId>) -> Self {
+        NodeKey(qualify(format!("if({condition})"), instance))
+    }
+
+    /// A standing block, keyed by the source of its statements.
+    pub fn block(statements: &[Stmt], instance: Option<&ObjectId>) -> Self {
+        NodeKey(qualify(
+            format!("block({})", generate_all(statements)),
+            instance,
+        ))
     }
 
     pub fn as_str(&self) -> &str {
         &self.0
     }
+}
 
-    /// Splits `a.b.c` into (`a.b`, `c`).
-    pub fn split_last(&self) -> Option<(&str, &str)> {
-        self.0.rsplit_once('.')
+/// A statement applied to every instance of a class needs one node per
+/// instance, or they would overwrite each other.
+fn qualify(key: String, instance: Option<&ObjectId>) -> String {
+    match instance {
+        Some(instance) => format!("{key}@{instance}"),
+        None => key,
     }
 }
 
 impl fmt::Display for NodeKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.0)
-    }
-}
-
-impl From<&str> for NodeKey {
-    fn from(value: &str) -> Self {
-        NodeKey(value.to_string())
-    }
-}
-
-impl From<String> for NodeKey {
-    fn from(value: String) -> Self {
-        NodeKey(value)
     }
 }
 

@@ -4,7 +4,6 @@
 //! the state to resolve object identities.
 
 use indexmap::IndexMap;
-use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::error::Result;
 use crate::lang::ast::Expr;
@@ -48,7 +47,7 @@ impl Runtime {
     /// Creates an object that belongs to no class, used for object literals and
     /// `Object()`. Such objects are skipped by `for ... of`.
     pub(crate) fn create_anonymous(&mut self, properties: IndexMap<String, Value>) -> Value {
-        let id = ObjectId::from(next_id());
+        let id = ObjectId::anonymous();
         let mut data = ObjectData::new(None);
         data.properties = properties;
 
@@ -127,10 +126,4 @@ fn defined_keys(object: &ObjectData) -> Vec<&String> {
         .filter(|(_, value)| !value.is_undefined())
         .map(|(name, _)| name)
         .collect()
-}
-
-/// A fresh identifier for an object created without a variable name.
-pub(crate) fn next_id() -> String {
-    static COUNTER: AtomicU64 = AtomicU64::new(0);
-    format!("obj:{}", COUNTER.fetch_add(1, Ordering::Relaxed))
 }

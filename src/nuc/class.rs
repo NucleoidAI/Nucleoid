@@ -12,7 +12,7 @@ use crate::nuc::Outcome;
 use crate::nuc::object::Object;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::state::{ClassData, Declaration};
+use crate::state::{ClassData, Declaration, DeclarationKey};
 use crate::value::ObjectId;
 
 pub struct Class {
@@ -25,7 +25,7 @@ impl Class {
     }
 
     pub fn key(&self) -> NodeKey {
-        NodeKey::new(format!("${}", self.declaration.name))
+        NodeKey::class(&self.declaration.name)
     }
 
     pub fn run(&mut self, runtime: &mut Runtime, _scope: &mut Scope) -> Result<Outcome> {
@@ -120,7 +120,7 @@ impl Runtime {
     pub(crate) fn declare_on_class(
         &mut self,
         class: &str,
-        key: String,
+        key: DeclarationKey,
         statement: Stmt,
     ) -> Result<()> {
         // `$Class.property = Other()` creates one object that every instance
@@ -134,7 +134,7 @@ impl Runtime {
                     },
                     Some((instantiated, arguments)),
                 ) if matches!(object.as_ref(), Expr::ClassRef(_)) => {
-                    let id = ObjectId::from(format!("${class}.{name}"));
+                    let id = ObjectId::shared(class, name);
                     let object = Object::new(id.clone(), instantiated, arguments);
                     let mut scope = Scope::new();
                     object.run(self, &mut scope)?;
@@ -215,7 +215,10 @@ impl Runtime {
 
             seen.push(current.clone());
 
-            if let Some(declaration) = data.declarations.get(&format!("${class}.{current}")) {
+            if let Some(declaration) = data
+                .declarations
+                .get(&DeclarationKey::property(class, &current))
+            {
                 if let Stmt::Assign { value, .. } = &declaration.statement {
                     pending.extend(Expression::new(value).class_properties(class));
                 }

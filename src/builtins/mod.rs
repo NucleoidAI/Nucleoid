@@ -3,14 +3,74 @@ pub mod date;
 use crate::error::{Error, Result};
 use crate::value::{Value, format_number};
 
-/// Names that resolve to a built-in rather than to state.
-pub const GLOBALS: &[&str] = &[
-    "Math", "Date", "Number", "String", "Boolean", "Object", "Class", "List", "Function", "JSON",
-    "RegExp",
-];
+/// A name that resolves to a built-in rather than to state.
+///
+/// A closed set, so an enum: `ref` compares strings at each use, which is why
+/// `Math` reaching one call site and not another is a bug it cannot see. Here
+/// the compiler checks that every site handles the same set.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Global {
+    Math,
+    Date,
+    Number,
+    String,
+    Boolean,
+    Object,
+    Class,
+    List,
+    Function,
+    Json,
+    Regex,
+}
+
+impl Global {
+    /// The built-in a bare name refers to, if any.
+    pub fn from_name(name: &str) -> Option<Global> {
+        Some(match name {
+            "Math" => Global::Math,
+            "Date" => Global::Date,
+            "Number" => Global::Number,
+            "String" => Global::String,
+            "Boolean" => Global::Boolean,
+            "Object" => Global::Object,
+            "Class" => Global::Class,
+            "List" => Global::List,
+            "Function" => Global::Function,
+            "JSON" => Global::Json,
+            "RegExp" => Global::Regex,
+            _ => return None,
+        })
+    }
+
+    /// The built-in a name in call position refers to. `Array` is callable as
+    /// another spelling of `List`, but is not a name that resolves on its own,
+    /// so it is not a [`Global::from_name`].
+    pub fn from_callee(name: &str) -> Option<Global> {
+        match name {
+            "Array" => Some(Global::List),
+            other => Global::from_name(other),
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Global::Math => "Math",
+            Global::Date => "Date",
+            Global::Number => "Number",
+            Global::String => "String",
+            Global::Boolean => "Boolean",
+            Global::Object => "Object",
+            Global::Class => "Class",
+            Global::List => "List",
+            Global::Function => "Function",
+            Global::Json => "JSON",
+            Global::Regex => "RegExp",
+        }
+    }
+}
 
 pub fn is_global(name: &str) -> bool {
-    GLOBALS.contains(&name)
+    Global::from_name(name).is_some()
 }
 
 /// `Math.<name>(...)`

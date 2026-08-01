@@ -3,6 +3,7 @@
 //! same kind of read at different depths.
 
 use crate::builtins;
+use crate::builtins::Global;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
@@ -40,7 +41,7 @@ impl Runtime {
         }
 
         if let Some(value) = self.state.variables.get(name).cloned() {
-            self.track(NodeKey::new(name.to_string()));
+            self.track(NodeKey::variable(name));
             self.note_nullish(&value);
             return Ok(value);
         }
@@ -57,7 +58,7 @@ impl Runtime {
             return Ok(Value::Class(name.to_string()));
         }
 
-        let key = NodeKey::new(name.to_string());
+        let key = NodeKey::variable(name);
 
         if self.deleted.contains(&key) {
             self.track(key);
@@ -151,26 +152,27 @@ impl Runtime {
         property: &str,
         _scope: &mut Scope,
     ) -> Result<Value> {
-        if name == "Class" && property == "length" {
-            return Ok(Value::Number(self.state.classes.len() as f64));
-        }
-
-        if name == "Number" {
-            if let Some(value) = builtins::number_constant(property) {
-                return Ok(value);
+        match Global::from_name(name) {
+            Some(Global::Class) if property == "length" => {
+                return Ok(Value::Number(self.state.classes.len() as f64));
             }
-        }
-
-        if name == "Math" {
-            if let Some(value) = builtins::math_constant(property) {
-                return Ok(value);
+            Some(Global::Number) => {
+                if let Some(value) = builtins::number_constant(property) {
+                    return Ok(value);
+                }
             }
+            Some(Global::Math) => {
+                if let Some(value) = builtins::math_constant(property) {
+                    return Ok(value);
+                }
+            }
+            _ => {}
         }
 
         if let Some(class) = self.state.class(name) {
             if property == "length" {
                 let length = class.instances.len();
-                self.track(NodeKey::new(format!("${name}")));
+                self.track(NodeKey::class(name));
                 return Ok(Value::Number(length as f64));
             }
         }
