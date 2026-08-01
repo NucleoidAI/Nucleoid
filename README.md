@@ -214,31 +214,138 @@ Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-star
 
 ## Rust runtime :crab:
 
-The runtime is being rewritten in Rust as the `nucleoid` crate, against its own
-grammar. `nucleoid.spec.md` is the normative description of the language and is
-executed as the test suite; [`docs/`](docs) is the language reference.
+The runtime is being rewritten in Rust as the `nucleoid` crate, with its own grammar.
+`nucleoid.spec.md` is the normative description of the language and runs as the test
+suite; [`docs/`](docs) is the language reference.
 
+Nucleoid keeps statements, not only their results. Every snippet below is taken from
+the specification and executed on every build.
+
+**An assignment is a relationship, not a calculation.**
+
+```nucleoid
+a = 1
+b = 2
+c = a + b
+
+assert(c, 3)
+
+a = 2
+
+assert(c, 4)
 ```
-class Sensor(name: str):
+
+Nobody recomputed `c`. The runtime knew what `c` was made of.
+
+**A rule is written over a type, and holds for instances that do not exist yet.**
+
+```nucleoid
+class Human(name: str):
     this.name = name
 
-# Every sensor labels itself
-$Sensor.label = "sensor:" + $Sensor.name
+# All humans are mortal
+$Human.mortal = true
 
-threshold = 30
+socrates = Human("Socrates")
 
-kitchen = Sensor("kitchen")
-kitchen.reading = 42
-
-# A standing rule, not a one-off comparison
-kitchen.alarm = kitchen.reading > threshold
+assert(socrates.mortal, true)
 ```
 
-`kitchen.alarm` is `true`, and stays correct on its own: change `threshold` or
-`kitchen.reading` and it is re-evaluated, because the runtime kept the
-relationship rather than just the result.
+**A condition is a standing rule, decided per instance.**
 
-Embedded in Rust:
+```nucleoid
+class Ticket:
+    pass
+
+# Any ticket dated after January 1, 1993 is expired
+if $Ticket.date > Date("1993-1-1"):
+    $Ticket.status = "EXPIRED"
+
+ticket1 = Ticket()
+
+assert(ticket1.status, null)
+
+ticket1.date = Date("1993-2-1")
+
+assert(ticket1.status, "EXPIRED")
+```
+
+The rule was written before the ticket existed, and applied the moment its date did.
+
+**A query is a dependency.**
+
+```nucleoid
+class Student:
+    pass
+
+student1 = Student(); student1.age = 7
+student2 = Student(); student2.age = 8
+student3 = Student(); student3.age = 9
+
+age = 8
+
+student = Student.find(s => s.age == age)
+
+assert(student.id, "student2")
+
+age = 9
+
+assert(student.id, "student3")
+```
+
+`student` is not the answer to a question that was asked once. It is the question,
+still standing.
+
+**A constraint is a statement too, and a broken one takes the whole change with it.**
+
+```nucleoid
+a = 5
+
+# a may not exceed 5
+if a > 5:
+    throw "INVALID_VALUE"
+
+try:
+    a = 6
+catch error:
+    assert(error, "INVALID_VALUE")
+
+assert(a, 5)
+```
+
+**A relationship that would close a loop is refused.**
+
+```nucleoid
+number1 = 10
+number2 = number1 * 10
+
+try:
+    number1 = number2 * 10
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+```
+
+### The logic graph
+
+Because the runtime keeps the relationships, it can show them. `--graph` prints every
+statement it is holding, what each one reads, and what each one updates — the query
+above, laid open:
+
+```text
+logic graph (7 nodes)
+  $Student [class]
+    updates  student
+  student1.age [property]
+    updates  student
+  student2.age [property]
+    updates  student
+  age [variable]
+    updates  student
+  student [variable]
+    reads    $Student, student1.age, age, student2.age
+```
+
+### Using it
 
 ```rust
 use nucleoid::Runtime;
@@ -251,25 +358,10 @@ runtime.run("celsius = 37")?;
 assert_eq!(runtime.run("fahrenheit")?.to_string(), "98.6");
 ```
 
-From the terminal:
-
 ```bash
 cargo run -- program.nuc          # run a file
 cargo run -- program.nuc --graph  # run it and print the logic graph
 cargo run                         # statements from the terminal
-```
-
-`--graph` prints what the runtime is holding — every tracked statement, what it
-reads, and what it updates:
-
-```
-logic graph (7 nodes)
-  threshold [variable]
-    updates  kitchen.alarm
-  kitchen.label [property]
-    reads    kitchen.name
-  kitchen.alarm [property]
-    reads    kitchen, kitchen.reading, threshold
 ```
 
 ---
