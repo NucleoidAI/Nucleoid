@@ -17,9 +17,11 @@
 
 Hallucinations are a major challenge in LLM reasoning because natural language is unstructured. By nature, LLMs are pattern engines that reason more effectively over structured entities and relationships, enabling more reliable, near-deterministic results.
 
-- **Adaptive Reasoning:** Combines symbolic logic with contextual information to analyze relationships, draw conclusions and incorporating new information and adjusting its conclusions accordingly.
-- **Logic Graph:** Specialized knowledge graph that captures relationships between both logic and data statements based on formal logic, facilitating complex deductions and adapting to new information.
-- **Explainability:** The Logic Graph provides a transparent representation of the reasoning process, making it easier to understand how decisions are reached and potential biases are identified.
+Nucleoid is designed with a minimally tokenized syntax for logic representation and a declarative execution model, eliminating the need for LLMs to manually manage control flow, state propagation, and other imperative constructs. In addition, Nucleoid is a next-generation logic programming language built on structured objects and their relationships, extending the traditional Knowledge Graph.
+
+- **Near-Deterministic:** Structured, reliable reasoning.
+- **Logic Graph:** Executable knowledge graph.
+- **Explainability:** Transparent, traceable decisions.
 
 Echoing to the idea of ["thinking, fast and slow"](https://kahneman.scholar.princeton.edu/publications), AI system should provide fast, “intuitive” ideas, and the other, more deliberate, rational decision-making. D(L)RE enables both intuitive decisions based on contextual information and deliberate, well-reasoned decisions based on logical deductions.
 
