@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use std::sync::Arc;
 
-use crate::ast::{Function, Parameter, Stmt};
+use crate::lang::ast::{Function, Parameter, Stmt};
 use crate::value::{ObjectData, ObjectId, Value};
 
 /// A class-level statement kept as a template and re-applied to every instance.

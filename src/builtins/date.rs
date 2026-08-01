@@ -1,5 +1,8 @@
 use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone, Timelike, Utc};
 
+use crate::error::{Error, Result};
+use crate::value::Value;
+
 /// Milliseconds since the Unix epoch, now.
 pub fn now() -> i64 {
     Utc::now().timestamp_millis()
@@ -100,4 +103,63 @@ pub fn get_minutes(millis: i64) -> i64 {
 
 pub fn get_seconds(millis: i64) -> i64 {
     datetime(millis).second() as i64
+}
+
+/// `Date(...)`.
+pub fn construct(arguments: &[Value]) -> Result<Value> {
+    match arguments.first() {
+        None => Ok(Value::Date(now())),
+        Some(Value::Number(millis)) => Ok(Value::Date(*millis as i64)),
+        Some(Value::Date(millis)) => Ok(Value::Date(*millis)),
+        Some(Value::String(text)) => match parse(text) {
+            Some(millis) => Ok(Value::Date(millis)),
+            None => Err(Error::type_error(format!("Invalid date '{text}'"))),
+        },
+        Some(other) => Err(Error::type_error(format!(
+            "Cannot create a date from {}",
+            other.type_name()
+        ))),
+    }
+}
+
+/// `Date.now()` and friends, called on the namespace rather than a date.
+pub fn statics(name: &str, arguments: &[Value]) -> Result<Value> {
+    match name {
+        "now" => Ok(Value::Number(now() as f64)),
+        "parse" => {
+            let text = arguments
+                .first()
+                .cloned()
+                .unwrap_or(Value::Undefined)
+                .to_string();
+
+            Ok(match parse(&text) {
+                Some(millis) => Value::Number(millis as f64),
+                None => Value::Number(f64::NAN),
+            })
+        }
+        "UTC" => Ok(Value::Number(now() as f64)),
+        _ => Err(Error::type_error(format!("Date.{name} is not a function"))),
+    }
+}
+
+/// A method called on a date value.
+pub fn method(millis: i64, name: &str, _arguments: &[Value]) -> Result<Value> {
+    Ok(match name {
+        "getTime" | "valueOf" => Value::Number(millis as f64),
+        "getYear" => Value::Number(get_year(millis) as f64),
+        "getFullYear" => Value::Number(get_full_year(millis) as f64),
+        "getMonth" => Value::Number(get_month(millis) as f64),
+        "getDate" => Value::Number(get_date(millis) as f64),
+        "getDay" => Value::Number(get_day(millis) as f64),
+        "getHours" => Value::Number(get_hours(millis) as f64),
+        "getMinutes" => Value::Number(get_minutes(millis) as f64),
+        "getSeconds" => Value::Number(get_seconds(millis) as f64),
+        "toDateString" => Value::String(to_date_string(millis)),
+        "toISOString" | "toJSON" => Value::String(to_iso_string(millis)),
+        "toString" => Value::String(to_string(millis)),
+        _ => {
+            return Err(Error::type_error(format!("Date.{name} is not a function")));
+        }
+    })
 }

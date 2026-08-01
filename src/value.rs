@@ -3,7 +3,7 @@ use regex::Regex;
 use std::fmt;
 use std::sync::Arc;
 
-use crate::ast::Function;
+use crate::lang::ast::Function;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ObjectId(pub String);

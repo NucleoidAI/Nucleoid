@@ -1,8 +1,8 @@
 use indexmap::IndexSet;
 use std::sync::Arc;
 
-use crate::ast::Function;
 use crate::graph::{Graph, GraphNode, NodeKey};
+use crate::lang::ast::Function;
 use crate::state::{ClassData, State};
 use crate::value::{ObjectData, ObjectId, Value};
 

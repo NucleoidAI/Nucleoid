@@ -1,7 +1,7 @@
 use indexmap::{IndexMap, IndexSet};
 use std::fmt;
 
-use crate::ast::Stmt;
+use crate::lang::ast::Stmt;
 use crate::value::ObjectId;
 
 /// The name a statement is filed under in the dependency graph.

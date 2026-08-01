@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use crate::ast::{
+use super::lexer::{Keyword, Spanned, Token, tokenize};
+use crate::error::{Error, Position, Result};
+use crate::lang::ast::{
     BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
     UnaryOp,
 };
-use crate::error::{Error, Position, Result};
-use crate::lexer::{Keyword, Spanned, Token, tokenize};
 
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
