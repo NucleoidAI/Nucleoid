@@ -44,14 +44,14 @@ makes it a supervised pair: prose in, logic out.
 | Field | Type | Description |
 | --- | --- | --- |
 | `id` | string | Stable identifier, prefixed by the document it was rendered from: `spec-0001`, `synth-01-0001` |
-| `title` | string | The behaviour the case demonstrates |
+| `description` | string | The behaviour the case demonstrates |
 | `code` | string | The Nucleoid program |
 | `return` | string or null | The value the program evaluates to, as the document writes it, when it declares one |
 
 ```json
 {
   "id": "spec-0001",
-  "title": "Nucleoid runs a statement in the state",
+  "description": "Nucleoid runs a statement in the state",
   "code": "# i is 1\ni = 1\n\nassert(i == 1, true)",
   "return": null
 }
@@ -79,8 +79,8 @@ the dataset cannot drift from the specification it publishes.
 
 Every `code` in this dataset is a program the language's own test suite runs:
 the assertions in it hold, and each one parses. The comment that titles a case
-in the source document is promoted to the `title` field rather than left in the
-program, so a model trained on this does not learn to write it back.
+in the source document becomes the `description` field rather than being left in
+the program, so a model trained on this does not learn to write it back.
 
 `nucleoid.spec.md` is normative. The `synth` split is derived from it and has no
 authority of its own; where the two disagree, the specification wins.

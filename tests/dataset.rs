@@ -22,7 +22,7 @@ use serde::Serialize;
 #[derive(Serialize)]
 struct Record {
     id: String,
-    title: String,
+    description: String,
     code: String,
     /// `return` is a Rust keyword, so the field is named for what it holds and
     /// renamed on the way out.
@@ -131,7 +131,7 @@ fn render(set: &Set) -> String {
     for (index, case) in common::cases(set.text).iter().enumerate() {
         let record = Record {
             id: format!("{}-{:04}", set.prefix, index + 1),
-            title: case.title.clone(),
+            description: case.title.clone(),
             code: code(case),
             returns: case.expected.clone(),
         };
@@ -143,9 +143,9 @@ fn render(set: &Set) -> String {
     out
 }
 
-/// The program as the suites run it, without the comment that titles it — the
-/// title is a field of its own, and a model trained on this should not learn to
-/// write it back.
+/// The program as the suites run it, without the comment that titles it — that
+/// comment becomes the `description` field, and a model trained on this should
+/// not learn to write it back.
 fn code(case: &common::Case) -> String {
     let mut lines: Vec<&str> = case.source.lines().collect();
 
