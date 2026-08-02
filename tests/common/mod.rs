@@ -170,41 +170,40 @@ pub fn check(case: &Case) -> Result<(), String> {
     Ok(())
 }
 
-/// Runs every case in a document, reporting how many pass.
-pub fn run(name: &str, document: &str) {
-    let cases = cases(document);
-    let mut failures = Vec::new();
+/// Runs the case with this title, for the generated per-behaviour tests.
+///
+/// The case is looked up by title rather than by position, so that `build.rs`
+/// and [`cases`] disagreeing about where one case ends and the next begins
+/// fails loudly here instead of quietly running the wrong source.
+pub fn run_case(documents: &[Vec<Case>], document: usize, title: &str) {
+    let cases = documents
+        .get(document)
+        .unwrap_or_else(|| panic!("no document {document}"));
 
-    let trace = std::env::var_os("NUCLEOID_TRACE").is_some();
+    let mut matching = cases.iter().filter(|case| case.title == title);
 
-    for case in &cases {
-        if trace {
-            println!("  running {}", case.title);
-        }
+    let case = matching
+        .next()
+        .unwrap_or_else(|| panic!("no case titled {title:?}"));
 
-        if let Err(reason) = check(case) {
-            failures.push((case.title.clone(), reason));
-        }
-    }
-
-    let passed = cases.len() - failures.len();
-    println!(
-        "
-{name}: {passed}/{} cases pass",
-        cases.len()
+    // `build.rs` refuses a document with repeated titles, so reaching here
+    // means the two disagree about where cases begin — in which case running
+    // the first match would silently test the wrong source.
+    assert!(
+        matching.next().is_none(),
+        "more than one case titled {title:?}"
     );
 
-    for (title, reason) in &failures {
-        println!(
-            "  FAIL {title}
-       {reason}"
+    if let Err(reason) = check(case) {
+        panic!(
+            "{title}
+  {reason}"
         );
     }
+}
 
-    assert!(
-        failures.is_empty(),
-        "{} of {} {name} cases fail",
-        failures.len(),
-        cases.len()
-    );
+/// How many cases the harness found, to compare with how many tests were
+/// generated for them.
+pub fn total(documents: &[Vec<Case>]) -> usize {
+    documents.iter().map(Vec::len).sum()
 }

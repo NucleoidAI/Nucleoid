@@ -35,6 +35,12 @@
 //! | [`transaction`] | `src/transaction.js` |
 //! | [`runtime`] | `src/runtime.js` |
 //!
+//! Three modules answer to nothing in `ref`, because they are what being typed
+//! costs: [`value`] is the runtime value as a closed enum where `ref` has
+//! whatever JavaScript handed it, [`error`] is the failure as a typed enum
+//! returned through [`Result`] where `ref` throws, and [`builtins`] gathers the
+//! standard objects that `ref` reaches by leaving them to its host.
+//!
 //! `ref` is untyped JavaScript, so its node kinds are classes reached by
 //! dynamic dispatch and its `$CLASS`/`$INSTANCE` variants are subclasses. The
 //! kinds are a closed set, so here they are the [`nuc::Nuc`] and
