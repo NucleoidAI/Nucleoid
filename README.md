@@ -27,7 +27,9 @@ Nucleoid is designed with a minimally tokenized syntax for logic representation 
 
 ### Hello World :zap:
 
-```
+**Socrates is mortal without being told so**
+
+```nuc
 # There is a Human type with a name
 class Human(name: str):
     this.name = name
@@ -43,6 +45,29 @@ assert(socrates.mortal, true)
 ```
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
+
+## Language Reference
+
+[**docs/reference.md**](docs/reference.md) is the language reference: statements and state, variables and dependencies, expressions, types and instances, properties, class-level rules, blocks and scope, control flow, functions, transactions, built-in objects, error messages, and a syntax summary.
+
+It is assembled from the NUC documents in [`docs/`](docs), indexed by [NUC 0](docs/nuc-0000.md) with the conventions in [NUC 1](docs/nuc-0001.md). `nucleoid.spec.md` is normative; where the two disagree, the specification wins.
+
+A Nucleoid program is a set of statements that remain true. An assignment is not an instruction that runs once and finishes, it is a relationship the runtime records and maintains.
+
+**An assignment states a relationship, not a result**
+
+```nuc
+a = 1
+b = a + 2
+
+a = 3
+
+assert(b, 5)
+```
+
+`b` is never stale. It is the sum of `a` and `2`, so changing `a` brings it up to date, and the same holds for properties, class-level rules and everything else the reference covers.
+
+Every example in the reference is executable: `tests/reference.md` is its executable form and runs under `cargo test`, as do the snippets on this page.
 
 ## What is Neuro-Symbolic AI?
 
