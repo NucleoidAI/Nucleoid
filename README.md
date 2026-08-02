@@ -46,25 +46,27 @@ assert(socrates.mortal, true)
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
+---
+
 <div align="center">
   <table>
     <tr>
       <th colspan="2">Nucleoid Runtime</th>
     </tr>
     <tr>
-      <th width="50%">Rust-based</th>
-      <th width="50%">LLM-based</th>
+      <th width="50%">🦀 Rust-based</th>
+      <th width="50%">⚡ LLM-based</th>
     </tr>
     <tr>
       <td>
-        The symbolic half. Statements are filed in a dependency graph and re-evaluated when what they depend on changes, so a program is a set of rules that stay true rather than steps that run once. Deterministic, explainable, and the same answer every time.
+        <b>Programming Language Runtime:</b> Implements the language specification.
       </td>
       <td>
-        The neural half. Nucleoid is the language the model writes and reasons in, so logic is generated from natural language instead of hand-written, and the runtime is what keeps it honest.
+        <b>Fine-Tuned LLM:</b> Fine-tuned on synthesized datasets derived from the language specification.
       </td>
     </tr>
     <tr>
-      <td align="center"><a href="https://github.com/NucleoidAI/Nucleoid">this repository</a></td>
+      <td align="center"><a href="https://github.com/NucleoidAI/Nucleoid">this repo</a></td>
       <td align="center"><a href="https://huggingface.co/nucleoid">huggingface.co/nucleoid</a></td>
     </tr>
   </table>
