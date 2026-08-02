@@ -31,7 +31,7 @@ Nucleoid is published as open source under Apache-2.0, so everything is public-f
 
 `nucleoid.spec.md`, `synth/`, `docs/` and the Rust crate (`Cargo.toml`, `src/`) must stay in sync. Every change to one must be propagated to the others as part of the same change.
 
-The crate executes them rather than restating them: `tests/spec.rs` runs `nucleoid.spec.md`, `tests/synth.rs` runs `synth/`, `tests/reference.rs` runs `tests/reference.md` (the executable form of `docs/reference.md`), and `tests/readme.rs` runs the ```nucleoid blocks in `README.md`. Adding a case to any of those documents adds a test, so `cargo test` is the check that the crate and the documents still agree.
+The crate executes them rather than restating them: `tests/spec.rs` runs `nucleoid.spec.md`, `tests/synth.rs` runs `synth/`, `tests/reference.rs` runs `tests/reference.md` (the executable form of `docs/reference.md`), `tests/readme.rs` runs the ```nuc blocks in `README.md`, and `tests/examples.rs` runs those in `docs/examples.md`. Adding a case to any of those documents adds a test, so `cargo test` is the check that the crate and the documents still agree.
 
 A case whose assertions sit on a branch that is never taken proves nothing, so the suites also compare `Runtime::assertions_run()` against the number of `assert` calls in the source and fail when fewer ran.
 

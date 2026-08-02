@@ -13,67 +13,10 @@ use std::sync::LazyLock;
 
 const README: &str = include_str!("../README.md");
 
-static DOCUMENTS: LazyLock<Vec<Vec<common::Case>>> = LazyLock::new(|| vec![snippets(README)]);
+static DOCUMENTS: LazyLock<Vec<Vec<common::Case>>> =
+    LazyLock::new(|| vec![common::snippets(README, "README.md")]);
 
 include!(concat!(env!("OUT_DIR"), "/readme.rs"));
-
-/// Every fenced `nucleoid` block, titled by the bold claim above it.
-///
-/// The same rule as `snippet_titles` in `build.rs`; the two are checked against
-/// each other by the title lookup and by [`every_snippet_is_covered`].
-fn snippets(document: &str) -> Vec<common::Case> {
-    let document = document.replace("\r\n", "\n");
-
-    let mut cases: Vec<common::Case> = Vec::new();
-    let mut claim = String::new();
-    let mut source: Option<String> = None;
-
-    for line in document.lines() {
-        let trimmed = line.trim();
-
-        if let Some(collected) = &mut source {
-            if trimmed.starts_with("```") {
-                let title = if claim.is_empty() {
-                    format!("snippet {}", cases.len() + 1)
-                } else {
-                    claim.clone()
-                };
-
-                cases.push(common::Case {
-                    title,
-                    source: std::mem::take(collected),
-                    expected: None,
-                });
-
-                source = None;
-            } else {
-                collected.push_str(line);
-                collected.push('\n');
-            }
-
-            continue;
-        }
-
-        if trimmed.len() > 4 && trimmed.starts_with("**") && trimmed.ends_with("**") {
-            claim = trimmed
-                .trim_matches('*')
-                .trim()
-                .trim_end_matches('.')
-                .to_string();
-        }
-
-        if trimmed.starts_with("```nucleoid") {
-            source = Some(String::new());
-        }
-    }
-
-    assert!(
-        source.is_none(),
-        "unterminated ```nucleoid block in README.md"
-    );
-
-    cases
-}
 
 /// Runs the snippet with this title. Called by each generated test.
 fn case(document: usize, title: &str) {

@@ -52,6 +52,8 @@ assert(socrates.mortal, true)
 
 It is assembled from the NUC documents in [`docs/`](docs), indexed by [NUC 0](docs/nuc-0000.md) with the conventions in [NUC 1](docs/nuc-0001.md). `nucleoid.spec.md` is normative; where the two disagree, the specification wins.
 
+[**docs/examples.md**](docs/examples.md) covers the same ground as complete programs, each one runnable as written.
+
 A Nucleoid program is a set of statements that remain true. An assignment is not an instruction that runs once and finishes, it is a relationship the runtime records and maintains.
 
 **An assignment states a relationship, not a result**

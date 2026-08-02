@@ -17,7 +17,7 @@ enum Format {
     /// A fenced block of cases split by `---`, each titled by its first comment
     /// line.
     Cases,
-    /// Prose with fenced `nucleoid` blocks in it, each titled by the bold claim
+    /// Prose with fenced `nuc` blocks in it, each titled by the bold claim
     /// it demonstrates.
     Snippets,
 }
@@ -53,6 +53,11 @@ const SUITES: &[Suite] = &[
         output: "readme.rs",
         format: Format::Snippets,
         documents: &[("readme", "README.md")],
+    },
+    Suite {
+        output: "examples.rs",
+        format: Format::Snippets,
+        documents: &[("examples", "docs/examples.md")],
     },
 ];
 
@@ -123,7 +128,7 @@ fn case_titles(document: &str) -> Vec<String> {
         .collect()
 }
 
-/// The title of every fenced `nucleoid` snippet in a prose document.
+/// The title of every fenced `nuc` snippet in a prose document.
 ///
 /// A snippet is titled by the claim it is there to demonstrate — the last bold
 /// line before it. The same rule as `snippets()` in `tests/readme.rs`.
@@ -144,7 +149,7 @@ fn snippet_titles(document: &str) -> Vec<String> {
                 .to_string();
         }
 
-        if line.starts_with("```nucleoid") {
+        if line.starts_with("```nuc") {
             titles.push(if claim.is_empty() {
                 format!("snippet {}", titles.len() + 1)
             } else {

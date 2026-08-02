@@ -19,8 +19,5 @@ fn main() {
         );
     }
 
-    println!(
-        "{}",
-        if failures.is_empty() { "ok" } else { "FAILED" }
-    );
+    println!("{}", if failures.is_empty() { "ok" } else { "FAILED" });
 }

@@ -58,6 +58,63 @@ pub fn cases(document: &str) -> Vec<Case> {
         .collect()
 }
 
+/// Every fenced `nuc` block in a prose document, titled by the bold claim
+/// above it.
+///
+/// Deliberately the same rule as `snippet_titles` in `build.rs`; the two are
+/// checked against each other by the title lookup and by each suite's coverage
+/// test. `name` is the document the blocks came from, for the failure message.
+pub fn snippets(document: &str, name: &str) -> Vec<Case> {
+    let document = document.replace("\r\n", "\n");
+
+    let mut cases: Vec<Case> = Vec::new();
+    let mut claim = String::new();
+    let mut source: Option<String> = None;
+
+    for line in document.lines() {
+        let trimmed = line.trim();
+
+        if let Some(collected) = &mut source {
+            if trimmed.starts_with("```") {
+                let title = if claim.is_empty() {
+                    format!("snippet {}", cases.len() + 1)
+                } else {
+                    claim.clone()
+                };
+
+                cases.push(Case {
+                    title,
+                    source: std::mem::take(collected),
+                    expected: None,
+                });
+
+                source = None;
+            } else {
+                collected.push_str(line);
+                collected.push('\n');
+            }
+
+            continue;
+        }
+
+        if trimmed.len() > 4 && trimmed.starts_with("**") && trimmed.ends_with("**") {
+            claim = trimmed
+                .trim_matches('*')
+                .trim()
+                .trim_end_matches('.')
+                .to_string();
+        }
+
+        if trimmed.starts_with("```nuc") {
+            source = Some(String::new());
+        }
+    }
+
+    assert!(source.is_none(), "unterminated ```nuc block in {name}");
+
+    cases
+}
+
 /// Projects a runtime value into JSON so it can be compared with the literal
 /// written in the spec.
 fn to_json(state: &State, value: &Value) -> serde_json::Value {
