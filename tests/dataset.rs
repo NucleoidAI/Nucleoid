@@ -22,9 +22,11 @@ use serde::Serialize;
 #[derive(Serialize)]
 struct Record {
     id: String,
-    source: String,
     title: String,
     code: String,
+    /// `return` is a Rust keyword, so the field is named for what it holds and
+    /// renamed on the way out.
+    #[serde(rename = "return")]
     returns: Option<String>,
 }
 
@@ -34,7 +36,7 @@ include!(concat!(env!("OUT_DIR"), "/synth_documents.rs"));
 struct Set {
     /// Prefix of the record ids, so an id says where it came from.
     prefix: String,
-    /// The document, as its path is quoted in the records.
+    /// The document the cases come from, for the failure message.
     document: String,
     output: String,
     text: &'static str,
@@ -129,7 +131,6 @@ fn render(set: &Set) -> String {
     for (index, case) in common::cases(set.text).iter().enumerate() {
         let record = Record {
             id: format!("{}-{:04}", set.prefix, index + 1),
-            source: set.document.clone(),
             title: case.title.clone(),
             code: code(case),
             returns: case.expected.clone(),

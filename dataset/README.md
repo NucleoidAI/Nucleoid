@@ -43,19 +43,17 @@ makes it a supervised pair: prose in, logic out.
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `id` | string | Stable identifier, prefixed by the document: `spec-0001`, `synth-01-0001` |
-| `source` | string | Path of the document the case was rendered from |
+| `id` | string | Stable identifier, prefixed by the document it was rendered from: `spec-0001`, `synth-01-0001` |
 | `title` | string | The behaviour the case demonstrates |
 | `code` | string | The Nucleoid program |
-| `returns` | string or null | The value the program evaluates to, as the document writes it, when it declares one |
+| `return` | string or null | The value the program evaluates to, as the document writes it, when it declares one |
 
 ```json
 {
   "id": "spec-0001",
-  "source": "nucleoid.spec.md",
   "title": "Nucleoid runs a statement in the state",
   "code": "# i is 1\ni = 1\n\nassert(i == 1, true)",
-  "returns": null
+  "return": null
 }
 ```
 
