@@ -9,7 +9,7 @@ tags:
   - neuro-symbolic
   - code
 size_categories:
-  - n<1K
+  - 1K<n<10K
 task_categories:
   - text-generation
 configs:
@@ -62,13 +62,15 @@ makes it a supervised pair: prose in, logic out.
 ```python
 from datasets import load_dataset
 
-dataset = load_dataset(
-    "json",
-    data_files={"spec": "spec.jsonl", "synth": "synth.*.jsonl"},
-)
+dataset = load_dataset("nucleoid/nucleoid")
 ```
 
-Once published to the Hub, load it by its repository id instead.
+The `spec` and `synth` splits load separately:
+
+```python
+spec = load_dataset("nucleoid/nucleoid", split="spec")
+synth = load_dataset("nucleoid/nucleoid", split="synth")
+```
 
 ## How it is built
 

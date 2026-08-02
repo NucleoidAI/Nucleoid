@@ -9,8 +9,6 @@
 
 <p align="center">
   <b>Logic Language for LLMs</b>
-  <br/>
-  Neuro-Symbolic AI Architecture
 </p>
 
 <br/>
