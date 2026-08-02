@@ -42,5 +42,10 @@ clap = { version = "4", default-features = false, features = [
     "error-context",
 ] }
 
+[dev-dependencies]
+# Field-ordered serialisation of the dataset records. Only the tooling that
+# renders `dataset/` needs it, so it stays out of the published dependencies.
+serde = { version = "1", features = ["derive"] }
+
 [lints.rust]
 unsafe_code = "forbid"
