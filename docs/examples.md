@@ -903,5 +903,7 @@ Full detail: [reference.md §12](reference.md#12-error-reference), [NUC 9](nuc-0
 
 ## Copyright
 
-This document is placed in the public domain or under the CC0-1.0-Universal
-license, whichever is more permissive.
+Copyright 2020 Nucleoid
+
+This document is licensed under the Apache License, Version 2.0. See
+[LICENSE](../LICENSE) for the full text.

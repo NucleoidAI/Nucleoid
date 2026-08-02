@@ -46,7 +46,11 @@ assert(socrates.mortal, true)
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
+<br/>
+
 ---
+
+<br/>
 
 <div align="center">
   <table>
