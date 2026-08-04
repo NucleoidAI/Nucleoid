@@ -97,6 +97,8 @@ assert(b, 5)
 
 Every example in the reference is executable: `tests/reference.md` is its executable form and runs under `cargo test`, as do the snippets on this page.
 
+---
+
 <table>
   <tr>
     <td>
@@ -114,6 +116,8 @@ Every example in the reference is executable: `tests/reference.md` is its execut
     </td>
   </tr>
 </table>
+
+---
 
 ## What is Neuro-Symbolic AI?
 
