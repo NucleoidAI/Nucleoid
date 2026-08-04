@@ -97,6 +97,24 @@ assert(b, 5)
 
 Every example in the reference is executable: `tests/reference.md` is its executable form and runs under `cargo test`, as do the snippets on this page.
 
+<table>
+  <tr>
+    <td>
+      Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
+      <br/>
+      <br/>
+      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward imao.
+      <br/>
+      <br/>
+      <p align="right">
+        Can Mingir&nbsp;
+        <br/>
+        <a href="https://github.com/canmingir">@canmingir</a>
+      </p>
+    </td>
+  </tr>
+</table>
+
 ## What is Neuro-Symbolic AI?
 
 ![AI Architecture](https://github.com/user-attachments/assets/fbda5532-d2ce-4f67-a121-b79d46fe049e)
@@ -144,30 +162,6 @@ In the realm of Neuro-Symbolic AI, *Plasticity* is an important element for the 
 The idea of plasticity in AI, especially in logic-based systems like those in Neuro-Symbolic AI, enhances the capability of machines to not only perform tasks based on fixed rules but also to evolve those rules and adapt their reasoning over time, much like the cognitive flexibility of living things.
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
-
-> :bulb: Nucleoid runtime can also run on local machine with `npx @nucleoidai/ide start` and `npx @nucleoidai/expert start` including [Nucleoid Chat](https://nucleoid.com/ide/chat). These commands enable IDE and expert system components needed for Neuro-Symbolic AI.
-
----
-
-<table>
-  <tr>
-    <td>
-      Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
-      <br/>
-      <br/>
-      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward imao.
-      <br/>
-      <br/>
-      <p align="right">
-        Can Mingir&nbsp;
-        <br/>
-        <a href="https://github.com/canmingir">@canmingir</a>
-      </p>
-    </td>
-  </tr>
-</table>
-
----
 
 ### Under the hood: Declarative (Logic) Runtime Environment
 
