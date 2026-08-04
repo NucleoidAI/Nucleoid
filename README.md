@@ -23,33 +23,6 @@ Nucleoid is designed with a minimally tokenized syntax for logic representation 
 
 <br />
 
-### Hello World :zap:
-
-**Socrates is mortal without being told so**
-
-```nuc
-# There is a Human type with a name
-class Human(name: str):
-    this.name = name
-
-# Every human is mortal
-$Human.mortal = true
-
-# Socrates is a Human
-socrates = Human("Socrates")
-
-# Therefore, Socrates is mortal
-assert(socrates.mortal, true)
-```
-
-[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
-
-<br/>
-
----
-
-<br/>
-
 <div align="center">
   <table>
     <tr>
@@ -73,6 +46,31 @@ assert(socrates.mortal, true)
     </tr>
   </table>
 </div>
+
+<br />
+
+### Hello World :zap:
+
+**Socrates is mortal without being told so**
+
+```nuc
+# There is a Human type with a name
+class Human(name: str):
+    this.name = name
+
+# Every human is mortal
+$Human.mortal = true
+
+# Socrates is a Human
+socrates = Human("Socrates")
+
+# Therefore, Socrates is mortal
+assert(socrates.mortal, true)
+```
+
+[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
+
+---
 
 ## Language Reference
 
