@@ -29,12 +29,12 @@ Nucleoid is designed with a minimally tokenized syntax for logic representation 
       <th colspan="2">Nucleoid Runtime</th>
     </tr>
     <tr>
-      <th width="250">🦀 Rust-based</th>
-      <th width="250">⚡ LLM-based</th>
+      <th width="300">🦀 Rust-based</th>
+      <th width="300">⚡ LLM-based</th>
     </tr>
     <tr>
       <td>
-        <b>Programming Language Runtime:</b> Implements the language specification.
+          <b>Programming Language Runtime:</b> Implements the language specification by executing declarative statements.
       </td>
       <td>
         <b>Fine-Tuned LLM:</b> Fine-tuned on synthesized datasets derived from the language specification.
