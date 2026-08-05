@@ -19,7 +19,7 @@ Nucleoid is designed with a minimally tokenized syntax for logic representation 
 
 - **Near-Deterministic:** Structured, reliable reasoning.
 - **Logic Graph:** Executable knowledge graph.
-- **Explainability:** Transparent, traceable decisions.
+- **Minimum-Token Syntax:** Token-efficient declarative syntax.
 
 <br />
 
