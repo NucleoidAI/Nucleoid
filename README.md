@@ -17,6 +17,9 @@ Hallucinations are a major challenge in LLM reasoning because natural language i
 
 Nucleoid is designed with a minimally tokenized syntax for logic representation and a declarative execution model, eliminating the need for LLMs to manually manage control flow, state propagation, and other imperative constructs. In addition, Nucleoid is a next-generation logic programming language built on structured objects and their relationships, extending the traditional Knowledge Graph.
 
+This is Neuro-Symbolic AI in practice, and what the two halves build together is a **World Model**. The LLM reads the unstructured world and proposes what is true, and the runtime holds it as an explicit model of entities, relationships and the rules that govern them, then keeps that model consistent as it grows.
+
+- **World Model:** Explicit state and rules, not implicit in weights.
 - **Near-Deterministic:** Structured, reliable reasoning.
 - **Logic Graph:** Executable knowledge graph.
 - **Minimum-Token Syntax:** Token-efficient declarative syntax.
@@ -119,9 +122,11 @@ Every example in the reference is executable: `tests/reference.md` is its execut
 
 ---
 
-## What is Neuro-Symbolic AI?
+## World Models: Neuro-Symbolic AI
 
 ![AI Architecture](https://github.com/user-attachments/assets/b970391b-5b96-457b-aeeb-2657c1f5795c)
+
+A world model is what a system knows about a domain: which entities exist, how they relate, which rules hold across all of them, and what follows once something changes. In an LLM that model is implicit, spread across the weights, and that is where hallucination begins, because a model that cannot be inspected cannot be corrected and cannot be held to its own rules. Neuro-Symbolic AI is how the model is made explicit, and it is why the two components below are complementary rather than competing.
 
 Neuro-Symbolic AI is an approach that integrates the strengths of both neural networks and symbolic AI to create systems that can learn from data and also reason logically. By combining these two components, Neuro-Symbolic AI aims to leverage the intuitive, pattern-recognition capabilities of neural networks along with the logical, rule-based reasoning of symbolic AI. This integration offers a more holistic AI system that is both adaptable and able to explain its decisions, making it suitable for complex decision-making tasks where both learning from data and logical reasoning are required. Here’s how it breaks down:
 
@@ -138,6 +143,14 @@ The symbolic component of Neuro-Symbolic AI focuses on logic, rules, and symboli
 <p align="center">
   <img src=".github/media/neuro-symbolic.png" width="225" alt="Neuro-Symbolic Diagram"/>
 </p>
+
+### World Model: The State Component
+
+Neural networks learn and symbolic AI reasons, but reasoning needs something to reason over, and that is the world model: the entities, relationships and rules a system currently holds to be true. In Nucleoid the model is not a passive knowledge base that is read from and written to, it is a logic graph that the runtime keeps true on its own. A rule stated over a type holds for every instance of it, including instances created long afterwards, and a change to any value propagates to everything derived from it, so the model is never left holding a fact together with its own stale consequence.
+
+Rules also decide which worlds are admissible. A statement and every rule it triggers form a single transaction, and if any rule rejects the change, the transaction is rolled back and the state is exactly as it was, so an update that would contradict the model is never partially applied. A world model built this way cannot drift into a state that violates its own laws.
+
+This is what makes the model usable by a language model. It is written incrementally, one statement at a time, in a syntax that costs few tokens, and it can be queried long after it was written, by another session or another model, because the meaning lives in the graph rather than in the context window.
 
 ### Declarative Language
 
@@ -232,7 +245,7 @@ Learn more at [nucleoid.com](https://nucleoid.ai)
   <b>⭐️ Star us on GitHub for the support</b>
 </p>
 
-Neuro-Symbolic AI is an emerging field and thanks to declarative logic programming, we have a brand-new approach to Neuro-Symbolic AI. Join us in shaping the future of AI!
+Neuro-Symbolic AI is an emerging field and thanks to declarative logic programming, we have a brand-new approach to building World Models. Join us in shaping the future of AI!
 
 <p align="center">
   <img src="https://cdn.nucleoid.com/media/nobel.png" alt="Nobel" />
