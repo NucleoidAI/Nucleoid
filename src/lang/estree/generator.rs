@@ -82,6 +82,8 @@ impl fmt::Display for Expr {
             },
             Expr::Assign { target, value } => write!(f, "{target}={value}"),
             Expr::Delete(operand) => write!(f, "delete {operand}"),
+            Expr::Reason { stage, source } => write!(f, "{source}|>{}", stage.as_str()),
+            Expr::Model => f.write_str("model"),
         }
     }
 }

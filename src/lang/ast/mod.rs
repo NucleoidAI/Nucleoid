@@ -21,12 +21,14 @@ pub mod literal;
 pub mod new;
 pub mod object;
 pub mod operator;
+pub mod reason;
 pub mod template;
 
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
 use crate::expression::Expression;
+use crate::reasoning::Stage;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 use crate::value::Value;
@@ -151,6 +153,11 @@ pub enum Expr {
         value: Box<Expr>,
     },
     Delete(Box<Expr>),
+    Reason {
+        stage: Stage,
+        source: Box<Expr>,
+    },
+    Model,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -228,6 +235,33 @@ impl Expr {
         }
     }
 
+    pub fn contains_reasoning(&self) -> bool {
+        match self {
+            Expr::Reason { .. } | Expr::Model => true,
+            Expr::Member { object, .. }
+            | Expr::Index { object, .. }
+            | Expr::Slice { object, .. } => object.contains_reasoning(),
+            Expr::Unary { operand, .. } | Expr::Delete(operand) => operand.contains_reasoning(),
+            Expr::Binary { left, right, .. }
+            | Expr::Logical { left, right, .. }
+            | Expr::Assign {
+                target: left,
+                value: right,
+            } => left.contains_reasoning() || right.contains_reasoning(),
+            Expr::Call { callee, arguments } => {
+                callee.contains_reasoning()
+                    || arguments
+                        .iter()
+                        .any(|argument| argument.contains_reasoning())
+            }
+            Expr::List(items) => items.iter().any(|item| item.contains_reasoning()),
+            Expr::ObjectLiteral(entries) => {
+                entries.iter().any(|(_, value)| value.contains_reasoning())
+            }
+            _ => false,
+        }
+    }
+
     /// The rightmost name of a path expression — the `c` of `a.b.c`.
     /// `Node.last`.
     pub fn last(&self) -> Option<&str> {
@@ -255,6 +289,7 @@ pub enum Ast<'a> {
     Call(call::Call<'a>),
     Template(template::Template<'a>),
     Operator(operator::Operator<'a>),
+    Reason(reason::Reason<'a>),
 }
 
 impl<'a> Ast<'a> {
@@ -280,6 +315,7 @@ impl<'a> Ast<'a> {
             | Expr::Logical { .. }
             | Expr::Assign { .. }
             | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
+            Expr::Reason { .. } | Expr::Model => Ast::Reason(reason::Reason::new(node)),
         }
     }
 
@@ -297,6 +333,7 @@ impl<'a> Ast<'a> {
             Ast::Call(node) => node.resolve(runtime, scope),
             Ast::Template(node) => node.resolve(runtime, scope),
             Ast::Operator(node) => node.resolve(runtime, scope),
+            Ast::Reason(node) => node.resolve(runtime, scope),
         }
     }
 
@@ -310,6 +347,7 @@ impl<'a> Ast<'a> {
             Ast::Call(node) => node.node,
             Ast::Template(node) => node.node,
             Ast::Operator(node) => node.node,
+            Ast::Reason(node) => node.node,
         }
     }
 

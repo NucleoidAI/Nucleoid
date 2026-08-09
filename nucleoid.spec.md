@@ -4257,4 +4257,161 @@ assert(Test[0].prop, 123)
 assert(Test[0].id != null, true)
 
 # return: { "id": "[UUID]", "prop": 123 }
+
+---
+
+# Nucleoid explains how a value was derived
+
+# a is 1
+a = 1
+
+# b is a plus 2
+b = a + 2
+
+# c is b times 2
+c = b * 2
+
+assert((why c).length, 3)
+assert((why c)[0].node, "c")
+assert((why c)[0].holds, 6)
+assert((why c)[0].rule, "c = b*2")
+assert((why c)[0].state, "derived")
+assert((why c)[0].from, ["b"])
+
+---
+
+# Nucleoid states a fact that follows from nothing else
+
+# a is 1
+a = 1
+
+# b is a plus 2
+b = a + 2
+
+assert((why b)[1].node, "a")
+assert((why b)[1].state, "stated")
+assert((why b)[1].from, [])
+
+---
+
+# Nucleoid names the class-level rule a property was derived from
+
+# There is a Human type,
+# which has a name as a string
+class Human(name: str):
+    this.name = name
+
+# Every human is mortal
+$Human.mortal = true
+
+# Socrates is a Human
+socrates = Human("Socrates")
+
+assert((why socrates.mortal).length, 1)
+assert((why socrates.mortal)[0].rule, "$Human.mortal = true")
+assert((why socrates.mortal)[0].state, "derived")
+
+---
+
+# Nucleoid reports what a value affects
+
+# a is 1
+a = 1
+
+# b is a plus 2
+b = a + 2
+
+# c is b times 2
+c = b * 2
+
+assert((affects a).length, 2)
+assert((affects a)[0].node, "b")
+assert((affects a)[1].node, "c")
+
+---
+
+# Nucleoid chains reasoning operations
+
+# a is 1
+a = 1
+
+# b is a plus 2
+b = a + 2
+
+# c is b times 2
+c = b * 2
+
+assert((c |> why).length, 3)
+assert((a |> affects |> why).length, 3)
+assert((why c).length, (c |> why).length)
+
+---
+
+# Nucleoid keeps an explanation up to date
+
+# a is 1
+a = 1
+
+# b is a plus 2
+b = a + 2
+
+# c is b times 2
+c = b * 2
+
+# trace is why c
+trace = why c
+
+assert(trace[0].holds, 6)
+
+# a is 5
+a = 5
+
+assert(trace[0].holds, 14)
+
+---
+
+# Nucleoid does not select a reasoning statement
+
+# a is 1
+a = 1
+
+# b is a plus 2
+b = a + 2
+
+# trace is why b
+trace = why b
+
+assert((affects a).length, 1)
+assert((affects a)[0].node, "b")
+
+---
+
+# Nucleoid selects the whole model
+
+# a is 1
+a = 1
+
+# b is a plus 2
+b = a + 2
+
+assert((model |> why).length, 2)
+
+---
+
+# Nucleoid throws an error when explaining something that is not defined
+
+try:
+    # explain nothing
+    why nothing
+catch error:
+    assert(error, ReferenceError("nothing is not defined"))
+
+---
+
+# Nucleoid treats a reasoning name as a variable when one is defined
+
+# why is 1
+why = 1
+
+assert(why, 1)
 ```

@@ -60,6 +60,7 @@ pub mod expression;
 pub mod graph;
 pub mod lang;
 pub mod nuc;
+pub mod reasoning;
 pub mod runtime;
 pub mod scope;
 pub mod stack;

@@ -119,8 +119,8 @@ fn every_record_is_nucleoid() {
 
     // Two empty datasets would agree with each other and prove nothing.
     assert_eq!(
-        records, 1185,
-        "the documents hold 1185 cases; update this count deliberately when one is added"
+        records, 1195,
+        "the documents hold 1195 cases; update this count deliberately when one is added"
     );
 }
 

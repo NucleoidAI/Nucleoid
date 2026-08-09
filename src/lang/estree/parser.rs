@@ -6,6 +6,7 @@ use crate::lang::ast::{
     BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
     UnaryOp,
 };
+use crate::reasoning::Stage;
 
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
@@ -568,7 +569,7 @@ impl Parser {
     }
 
     fn expression_inner(&mut self) -> Result<Expr> {
-        let left = self.logical_or()?;
+        let left = self.pipeline()?;
 
         if self.check(&Token::Assign) {
             self.advance();
@@ -580,6 +581,49 @@ impl Parser {
         }
 
         Ok(left)
+    }
+
+    fn pipeline(&mut self) -> Result<Expr> {
+        let mut left = self.logical_or()?;
+
+        let mut chain = 0;
+
+        while self.check(&Token::Pipe) {
+            self.advance();
+            chain += 1;
+
+            if chain > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
+            if let Expr::Identifier(name) = &left {
+                if name == "model" {
+                    left = Expr::Model;
+                }
+            }
+
+            let stage = self.stage()?;
+            left = Expr::Reason {
+                stage,
+                source: Box::new(left),
+            };
+        }
+
+        Ok(left)
+    }
+
+    fn stage(&mut self) -> Result<Stage> {
+        if let Token::Identifier(name) = self.peek() {
+            if let Some(stage) = Stage::from_name(name) {
+                self.advance();
+                return Ok(stage);
+            }
+
+            let name = name.clone();
+            return Err(Error::type_error(format!("{name} is not an operation")));
+        }
+
+        Err(self.error("Expected an operation"))
     }
 
     fn logical_or(&mut self) -> Result<Expr> {
@@ -756,6 +800,20 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<Expr> {
+        if let Token::Identifier(name) = self.peek() {
+            if let Some(stage) = Stage::from_name(name) {
+                if self.starts_operand(1) {
+                    self.advance();
+                    let operand = self.unary()?;
+
+                    return Ok(Expr::Reason {
+                        stage,
+                        source: Box::new(operand),
+                    });
+                }
+            }
+        }
+
         let operator = match self.peek() {
             Token::Bang | Token::Keyword(Keyword::Not) => UnaryOp::Not,
             Token::Minus => UnaryOp::Negate,
@@ -771,6 +829,13 @@ impl Parser {
             operator,
             operand: Box::new(operand),
         })
+    }
+
+    fn starts_operand(&self, offset: usize) -> bool {
+        matches!(
+            self.peek_at(offset),
+            Token::Identifier(_) | Token::ClassRef(_)
+        )
     }
 
     fn postfix(&mut self) -> Result<Expr> {

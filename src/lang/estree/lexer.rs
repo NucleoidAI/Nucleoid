@@ -82,6 +82,8 @@ enum Raw {
     AndAnd,
     #[token("||")]
     OrOr,
+    #[token("|>")]
+    Pipe,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -212,6 +214,7 @@ pub enum Token {
     Bang,
     AndAnd,
     OrOr,
+    Pipe,
 
     Newline,
     Indent,
@@ -258,6 +261,7 @@ impl Token {
             Token::Bang => "'!'".to_string(),
             Token::AndAnd => "'&&'".to_string(),
             Token::OrOr => "'||'".to_string(),
+            Token::Pipe => "'|>'".to_string(),
             Token::Newline => "end of line".to_string(),
             Token::Indent => "an indented block".to_string(),
             Token::Dedent => "the end of a block".to_string(),
@@ -419,6 +423,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::Bang => Token::Bang,
             Raw::AndAnd => Token::AndAnd,
             Raw::OrOr => Token::OrOr,
+            Raw::Pipe => Token::Pipe,
             Raw::Slash => {
                 let starts_regex = previous.as_ref().is_none_or(Token::precedes_regex);
 
