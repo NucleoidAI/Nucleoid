@@ -1,6 +1,6 @@
 # Nucleoid Language Reference - Documented Behaviours
 
-Executable form of the behaviours stated in `docs/reference.md`, in the same
+Executable form of the behaviours stated in `docs/README.md`, in the same
 case format as `nucleoid.spec.md`. Where this file and the specification
 disagree, the specification wins.
 

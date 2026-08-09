@@ -22,7 +22,7 @@ $ cargo run                   # or type statements at a prompt
 | `nucleoid.spec.md` | what the language does. Authoritative — when anything disagrees with it, it wins |
 | `synth/` | further cases, derived from the specification |
 | `docs/` | the language reference, as NUC documents in the style of a PEP |
-| `docs/reference.md` | prose reference; `tests/reference.md` is its executable form |
+| `docs/README.md` | prose reference; `tests/reference.md` is its executable form |
 | `src/` | the runtime |
 | `tests/` | the suites that run the documents above |
 | `ref/` | the archived JavaScript implementation — **frozen**, read it but never change it |

@@ -2,7 +2,7 @@
 
 Worked examples of the language, each one a complete program that runs as written.
 
-The sections follow [reference.md](reference.md) one for one, so an example can
+The sections follow [README.md](README.md) one for one, so an example can
 be read next to the behaviour it demonstrates. Every example is taken from
 `nucleoid.spec.md`, which is normative; where this document and the
 specification disagree, the specification wins. See [NUC 0](nuc-0000.md) for the
@@ -27,7 +27,7 @@ fails the build.
 11. [Built-in Objects](#11-built-in-objects)
 12. [Error Reference](#12-error-reference)
 
-[Syntax Summary](reference.md#13-syntax-summary) is a table of forms rather than
+[Syntax Summary](README.md#13-syntax-summary) is a table of forms rather than
 a behaviour, so it has no example of its own.
 
 ---
@@ -77,7 +77,7 @@ any = 4
 assert(result, 5)
 ```
 
-Full detail: [reference.md §1](reference.md#1-statements-and-state), [NUC 2](nuc-0002.md).
+Full detail: [README.md §1](README.md#1-statements-and-state), [NUC 2](nuc-0002.md).
 
 ---
 
@@ -161,7 +161,7 @@ catch error:
     assert(error, ReferenceError("q is not defined"))
 ```
 
-Full detail: [reference.md §2](reference.md#2-variables), [NUC 2](nuc-0002.md).
+Full detail: [README.md §2](README.md#2-variables), [NUC 2](nuc-0002.md).
 
 ---
 
@@ -226,7 +226,7 @@ str1 = "ABCDEF"
 assert(i2, 7)
 ```
 
-Full detail: [reference.md §3](reference.md#3-expressions), [NUC 10](nuc-0010.md).
+Full detail: [README.md §3](README.md#3-expressions), [NUC 10](nuc-0010.md).
 
 ---
 
@@ -292,7 +292,7 @@ assert(message2.read, false)
 assert(message2.payload, "MESSAGE")
 ```
 
-Full detail: [reference.md §4](reference.md#4-types-and-instances), [NUC 3](nuc-0003.md).
+Full detail: [README.md §4](README.md#4-types-and-instances), [NUC 3](nuc-0003.md).
 
 ---
 
@@ -364,7 +364,7 @@ assert(agent.report, null)
 assert(agent.location, "CITY")
 ```
 
-Full detail: [reference.md §5](reference.md#5-properties), [NUC 4](nuc-0004.md).
+Full detail: [README.md §5](README.md#5-properties), [NUC 4](nuc-0004.md).
 
 ---
 
@@ -468,7 +468,7 @@ catch error:
     assert(error, "USER_ALREADY_REGISTERED")
 ```
 
-Full detail: [reference.md §6](reference.md#6-class-level-rules), [NUC 5](nuc-0005.md).
+Full detail: [README.md §6](README.md#6-class-level-rules), [NUC 5](nuc-0005.md).
 
 ---
 
@@ -532,7 +532,7 @@ catch error:
     assert(error, "INVALID_DEVICE")
 ```
 
-Full detail: [reference.md §7](reference.md#7-blocks-and-scope), [NUC 6](nuc-0006.md).
+Full detail: [README.md §7](README.md#7-blocks-and-scope), [NUC 6](nuc-0006.md).
 
 ---
 
@@ -616,7 +616,7 @@ assert(Summary[0].type, "WEEKLY")
 assert(Summary[1].type, "WEEKLY")
 ```
 
-Full detail: [reference.md §8](reference.md#8-control-flow), [NUC 7](nuc-0007.md).
+Full detail: [README.md §8](README.md#8-control-flow), [NUC 7](nuc-0007.md).
 
 ---
 
@@ -678,7 +678,7 @@ assert(list.length, 1)
 assert(list[0].score, 10)
 ```
 
-Full detail: [reference.md §9](reference.md#9-functions), [NUC 8](nuc-0008.md).
+Full detail: [README.md §9](README.md#9-functions), [NUC 8](nuc-0008.md).
 
 ---
 
@@ -748,7 +748,7 @@ catch error:
     assert(error, "length")
 ```
 
-Full detail: [reference.md §10](reference.md#10-transactions), [NUC 9](nuc-0009.md).
+Full detail: [README.md §10](README.md#10-transactions), [NUC 9](nuc-0009.md).
 
 ---
 
@@ -823,7 +823,7 @@ catch error:
     assert(error, "INVALID_PASSWORD")
 ```
 
-Full detail: [reference.md §11](reference.md#11-built-in-objects), [NUC 10](nuc-0010.md).
+Full detail: [README.md §11](README.md#11-built-in-objects), [NUC 10](nuc-0010.md).
 
 ---
 
@@ -897,7 +897,7 @@ catch error:
     assert(error, SyntaxError("Cannot define class declaration in non-class block"))
 ```
 
-Full detail: [reference.md §12](reference.md#12-error-reference), [NUC 9](nuc-0009.md).
+Full detail: [README.md §12](README.md#12-error-reference), [NUC 9](nuc-0009.md).
 
 ---
 

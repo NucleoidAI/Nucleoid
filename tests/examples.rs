@@ -12,7 +12,7 @@ mod common;
 use std::sync::LazyLock;
 
 const EXAMPLES: &str = include_str!("../docs/examples.md");
-const REFERENCE: &str = include_str!("../docs/reference.md");
+const REFERENCE: &str = include_str!("../docs/README.md");
 
 /// Sections of the reference that no example answers to. A table of syntax
 /// forms is not a program, so there is nothing to run for it.
@@ -54,13 +54,13 @@ fn the_sections_follow_the_reference() {
     // Two empty lists would agree with each other and prove nothing.
     assert!(
         !documented.is_empty(),
-        "no numbered sections found in docs/reference.md"
+        "no numbered sections found in docs/README.md"
     );
 
     assert_eq!(
         sections(EXAMPLES),
         documented,
-        "docs/examples.md must follow the sections of docs/reference.md"
+        "docs/examples.md must follow the sections of docs/README.md"
     );
 }
 

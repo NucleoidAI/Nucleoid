@@ -89,7 +89,7 @@ fn columns_count_characters_not_bytes() {
     assert_eq!(at("greeting = \"héllo wörld\" ?\n"), (1, 26));
 }
 
-/// The examples in NUC 9 and `docs/reference.md` say exactly this.
+/// The examples in NUC 9 and `docs/README.md` say exactly this.
 #[test]
 fn the_documented_examples_report_what_the_reference_says() {
     let error = failure("a = 1\n\nt = e + 1\n");
