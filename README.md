@@ -8,7 +8,9 @@
 ![Banner](.github/media/banner.gif)
 
 <p align="center">
-  <b>Logic Language for LLMs</b>
+  <b>Logic Language for LLMs 🌱🐋</b>
+  <br/>
+  Build World Models 🌍
 </p>
 
 <br/>
@@ -19,7 +21,6 @@ Nucleoid is designed with a minimally tokenized syntax for logic representation 
 
 This is Neuro-Symbolic AI in practice, and what the two halves build together is a **World Model**. The LLM reads the unstructured world and proposes what is true, and the runtime holds it as an explicit model of entities, relationships and the rules that govern them, then keeps that model consistent as it grows.
 
-- **World Model:** Explicit state and rules, not implicit in weights.
 - **Near-Deterministic:** Structured, reliable reasoning.
 - **Logic Graph:** Executable knowledge graph.
 - **Minimum-Token Syntax:** Token-efficient declarative syntax.
