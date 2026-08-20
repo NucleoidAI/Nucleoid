@@ -19,8 +19,6 @@
 
 ⚡ Nucleoid is designed with a minimally tokenized syntax for logic representation and a declarative execution model, eliminating the need for LLMs to manually manage control flow, state propagation, and other imperative constructs. In addition, Nucleoid is a next-generation logic programming language built on structured objects and their relationships, extending the traditional Knowledge Graph.
 
-🌍 This is Neuro-Symbolic AI in practice, and what the two halves build together is a **World Model**. The LLM reads the unstructured world and proposes what is true, and the runtime holds it as an explicit model of entities, relationships and the rules that govern them, then keeps that model consistent as it grows.
-
 - **Near-Deterministic:** Structured, reliable reasoning.
 - **Logic Graph:** Executable knowledge graph.
 - **Minimum-Token Syntax:** Token-efficient declarative syntax.
@@ -72,9 +70,15 @@ socrates = Human("Socrates")
 assert(socrates.mortal, true)
 ```
 
-[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
-
 ---
+
+# Design Theory 📐
+
+<p align="center">
+  <img width="500" alt="World Models, Neuro-Symbolic AI and AI Language" src="https://github.com/user-attachments/assets/2fd0e902-e2f3-4b58-b0d5-9f8b68869389" />
+</p>
+
+
 
 ## Language Reference
 
@@ -122,6 +126,8 @@ Every example in the reference is executable: `tests/reference.md` is its execut
 </table>
 
 ---
+
+[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
 ## World Models: Neuro-Symbolic AI
 
