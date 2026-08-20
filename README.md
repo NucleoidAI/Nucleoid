@@ -129,7 +129,7 @@ Every example in the reference is executable: `tests/reference.md` is its execut
 
 [Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
-## World Models: Neuro-Symbolic AI
+## Neuro-Symbolic AI
 
 ![AI Architecture](https://github.com/user-attachments/assets/b970391b-5b96-457b-aeeb-2657c1f5795c)
 
@@ -159,11 +159,11 @@ Rules also decide which worlds are admissible. A statement and every rule it tri
 
 This is what makes the model usable by a language model. It is written incrementally, one statement at a time, in a syntax that costs few tokens, and it can be queried long after it was written, by another session or another model, because the meaning lives in the graph rather than in the context window.
 
-### Declarative Language
+## Declarative Language: 6GL Programming Language
 
 Declarative Language in Neuro-Symbolic AI acts as the ubiquitous language for specifying the desired outcomes of a program without detailing the procedural methods to achieve these outcomes. This type of language is essential for articulating logical rules, constraints, and relationships that underpin symbolic reasoning within these systems. It supports the formulation of structured knowledge bases and facilitates logical reasoning tasks, enabling systems to deduce, infer, and respond to queries based on established rules. Moreover, declarative languages are instrumental in integrating the outputs of neural networks into symbolic reasoning frameworks, marrying data-driven learning with rule-based logic. Their widespread use enhances the transparency, explainability, and modularity of AI systems, while also boosting their efficiency in domains heavily reliant on rule-based operations.
 
-#### Declarative Logic in Symbolic Reasoning
+### Declarative Logic in Symbolic Reasoning
 
 Declarative logic is a subset of declarative programming, a style of building programs that expresses the logic of a computation without describing its control flow. In declarative logic, you state the facts and rules that define the problem domain. The runtime environment or the system itself figures out how to satisfy those conditions or how to apply those rules to reach a conclusion. This contrasts with imperative programming, where the developer writes code that describes the exact steps to achieve a goal.
 
@@ -187,7 +187,7 @@ The idea of plasticity in AI, especially in logic-based systems like those in Ne
 
 Learn more at [nucleoid.com/docs/get-started](https://nucleoid.com/docs/get-started)
 
-### Under the hood: Declarative (Logic) Runtime Environment
+## Nucleoid's Taxonomy
 
 Nucleoid is an implementation of symbolic AI for declarative (logic) programming at the runtime. As mentioned, the declarative runtime environment manages JavaScript state and stores each transaction in the built-in data store by declaratively rerendering JavaScript statements and building the knowledge graph (base) as well as an execution plan.
 
@@ -225,24 +225,6 @@ https://nucleoid.com/ide/sample
 https://github.com/NucleoidAI/benchmark
 
 This does not necessary mean Nucleoid runtime is faster than MySQL or Postgres, instead databases require constant maintenance by DBA teams with indexing, caching, purging etc. however, Nucleoid tries to solve this problem with managing logic and data internally. As seen in the chart, for applications with average complexity, Nucleoid's performance is close to linear because of on-chain data store, in-memory computing model as well as limiting the IO process.
-
-<br/>
-
-## Project Status :avocado:
-
-Track at [Trello](https://trello.com/b/TZ73H1Fk/nucleoid)
-
-- [x] [Beta](https://www.npmjs.com/package/nucleoidai) is out
-- [x] ES6 support
-- [ ] ES2018 support
-- [ ] ES2020 support
-- [ ] TypeScript
-- [ ] [IDE](https://github.com/NucleoidAI/IDE) (WiP)
-- [ ] Production-ready
-
-Please report an [issue](https://github.com/NucleoidAI/Nucleoid/issues) or ask a question at [Discussions](https://github.com/NucleoidAI/Nucleoid/discussions)
-
-Learn more at [nucleoid.com](https://nucleoid.ai)
 
 <br/>
 
