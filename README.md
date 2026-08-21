@@ -111,7 +111,7 @@ Every example in the reference is executable: `tests/reference.md` is its execut
       Welcome! I’ve been expecting you—"Skynet was gone. And now one road has become many." 🌐
       <br/>
       <br/>
-      The future is building up! Neuro-Symbolic AI is now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward imao.
+      The future is building up! World Models are now an emerging field within AI communities and marks a crucial milestone on the journey to AGI. Unfortunately, existing symbolic AI and knowledge graphs lack advancement in today's AI landscape. Nucleoid is revolutionizing knowledge graphs with declarative, logic-based, contextual runtime, which can be integrated with ANNs to lay a robust foundation for the next leap forward imao.
       <br/>
       <br/>
       <p align="right">
@@ -230,7 +230,7 @@ As seen in the chart, for applications with average complexity, Nucleoid's perfo
   <b>⭐️ Star us on GitHub for the support</b>
 </p>
 
-Neuro-Symbolic AI is an emerging field and thanks to declarative logic programming, we have a brand-new approach to building World Models. Join us in shaping the future of AI!
+World Models are an emerging field and thanks to declarative logic programming, we have a brand-new approach to building World Models. Join us in shaping the future of AI!
 
 <p align="center">
   <img src="https://cdn.nucleoid.com/media/nobel.png" alt="Nobel" />
