@@ -75,10 +75,8 @@ assert(socrates.mortal, true)
 # Design Theory 📐
 
 <p align="center">
-  <img width="500" alt="World Models, Neuro-Symbolic AI and AI Language" src="https://github.com/user-attachments/assets/2fd0e902-e2f3-4b58-b0d5-9f8b68869389" />
+  <img alt="World Models, Neuro-Symbolic AI and AI Language" src="https://github.com/user-attachments/assets/4f3cef7c-0f71-4046-8d2e-011cc2dc4b8e" />
 </p>
-
-
 
 ## Language Reference
 
