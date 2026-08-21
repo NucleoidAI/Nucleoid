@@ -151,7 +151,7 @@ The symbolic component of Neuro-Symbolic AI focuses on logic, rules, and symboli
   <img src=".github/media/neuro-symbolic.png" width="225" alt="Neuro-Symbolic Diagram"/>
 </p>
 
-### World Model: The State Component
+### World Models: The State Component
 
 Neural networks learn and symbolic AI reasons, but reasoning needs something to reason over, and that is the world model: the entities, relationships and rules a system currently holds to be true. In Nucleoid the model is not a passive knowledge base that is read from and written to, it is a logic graph that the runtime keeps true on its own. A rule stated over a type holds for every instance of it, including instances created long afterwards, and a change to any value propagates to everything derived from it, so the model is never left holding a fact together with its own stale consequence.
 
@@ -216,15 +216,13 @@ In short, the main objective of the project is to manage both of data and logic 
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
 
-https://nucleoid.com/ide/sample
-
 <img src="https://cdn.nucleoid.com/media/benchmark.png" alt="Benchmark" width="550"/>
 
 > Performance benchmark happened in t2.micro of AWS EC2 instance and both databases had dedicated servers with <u>no indexes and default configurations</u>.
 
 https://github.com/NucleoidAI/benchmark
 
-This does not necessary mean Nucleoid runtime is faster than MySQL or Postgres, instead databases require constant maintenance by DBA teams with indexing, caching, purging etc. however, Nucleoid tries to solve this problem with managing logic and data internally. As seen in the chart, for applications with average complexity, Nucleoid's performance is close to linear because of on-chain data store, in-memory computing model as well as limiting the IO process.
+As seen in the chart, for applications with average complexity, Nucleoid's performance is close to linear because of on-chain data store, in-memory computing model as well as limiting the IO process.
 
 <br/>
 
