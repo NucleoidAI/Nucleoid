@@ -216,8 +216,8 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
                 writeln!(
                     generated,
                     "{indent}    assert_eq!(run({}), run({}));",
-                    raw_literal(actual),
-                    raw_literal(&expected)
+                    rust_literal(actual),
+                    rust_literal(&expected)
                 )
                 .unwrap();
             } else {
@@ -245,7 +245,7 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
                     .unwrap();
                 }
 
-                writeln!(generated, "{indent}    run({});", raw_literal(&statement)).unwrap();
+                writeln!(generated, "{indent}    run({});", rust_literal(&statement)).unwrap();
 
                 for assertion in assertions {
                     writeln!(
@@ -391,7 +391,11 @@ fn without_comments(statement: &str) -> String {
         .to_string()
 }
 
-fn raw_literal(value: &str) -> String {
+fn rust_literal(value: &str) -> String {
+    if !value.contains(['\n', '\r', '"', '\\']) {
+        return format!("{value:?}");
+    }
+
     for hashes in 1.. {
         let marker = format!("\"{}", "#".repeat(hashes));
 
