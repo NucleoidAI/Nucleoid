@@ -74,6 +74,16 @@ Save the program as `hello.nuc` and run it with JSON output:
 cargo run -- hello.nuc --json
 ```
 
+Start the interactive CLI by omitting the file:
+
+```console
+cargo run -- --json
+```
+
+The editor provides line editing, in-session history, Ctrl-C cancellation, and
+multiline indented blocks submitted with a blank line. Type `.help` for commands
+that toggle JSON and graph output, clear the runtime state, or exit.
+
 ---
 
 # Design Theory 📐

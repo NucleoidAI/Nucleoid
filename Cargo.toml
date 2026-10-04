@@ -41,6 +41,8 @@ clap = { version = "4", default-features = false, features = [
     "usage",
     "error-context",
 ] }
+# Interactive line editing and in-session command history.
+rustyline = "17"
 
 [dev-dependencies]
 # Field-ordered serialisation of the dataset records. Only the tooling that
