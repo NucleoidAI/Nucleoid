@@ -1,8 +1,8 @@
-//! A committed Rust copy of every behaviour in `nucleoid.spec.md`.
+//! A committed Rust export of every normative JSONL record.
 //!
-//! Each test embeds its Nucleoid source in `spec_cases/mod.rs`, like the individual
-//! cases in `ref/src/test/nucleoid.spec.js`. The final synchronization test
-//! keeps those committed cases identical to the authoritative document.
+//! Each test embeds its description, Nucleoid source and expected return. This
+//! gives failures BDD-style behavior names without Gherkin or runtime document
+//! parsing. The final test keeps the committed export equal to the JSONL.
 //!
 //! ```text
 //! cargo test --test spec                       # every behaviour
@@ -12,51 +12,31 @@
 
 mod common;
 
-struct SpecCase {
-    title: &'static str,
-    source: &'static str,
-    expected: Option<&'static str>,
-}
-
 include!("spec_cases/mod.rs");
 
-/// Runs one committed use case. Called by its individual Rust test.
-fn case(index: usize) {
-    let committed = &CASES[index];
+/// Runs one embedded dataset record. Called by its individual Rust test.
+fn case(id: &str, description: &str, code: &str, expected: Option<&str>) {
     let case = common::Case {
-        title: committed.title.to_string(),
-        source: committed.source.to_string(),
-        expected: committed.expected.map(str::to_string),
+        title: description.to_string(),
+        source: code.to_string(),
+        expected: expected.map(str::to_string),
     };
 
     if let Err(reason) = common::check(&case) {
         panic!(
-            "{}
-  {reason}",
-            committed.title
+            "{id}: {description}
+  {reason}"
         );
     }
 }
 
-/// The editable Rust cases must not drift from the authoritative specification.
+/// The committed tests must not drift from the JSONL that generated them.
 #[test]
-fn committed_cases_match_the_specification() {
-    let documented = common::cases(include_str!("../nucleoid.spec.md"));
-
-    assert_eq!(documented.len(), CASES.len(), "case count differs");
-
-    for (documented, committed) in documented.iter().zip(CASES) {
-        assert_eq!(documented.title, committed.title, "case title differs");
-        assert_eq!(
-            documented.source, committed.source,
-            "{} source differs",
-            committed.title
-        );
-        assert_eq!(
-            documented.expected.as_deref(),
-            committed.expected,
-            "{} expected return differs",
-            committed.title
-        );
-    }
+fn committed_tests_match_the_dataset() {
+    assert_eq!(
+        include_str!("spec_cases/mod.rs").replace("\r\n", "\n"),
+        include_str!(concat!(env!("OUT_DIR"), "/spec_cases.rs")),
+        "tests/spec_cases/mod.rs is stale; regenerate with \
+         UPDATE_SPEC_TESTS=1 cargo build"
+    );
 }

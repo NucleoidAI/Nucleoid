@@ -1,4 +1,5 @@
-//! Turns the language's executable documents into named Rust tests.
+//! Turns the language's executable documents and exported JSONL into named
+//! Rust tests.
 //!
 //! `ref/src/test/nucleoid.spec.js` writes one `it(...)` per behaviour, so a
 //! failure names the behaviour that broke. The cases here live in the documents
@@ -6,11 +7,11 @@
 //! also keeps the promise in `CLAUDE.md` that adding a case to a document adds
 //! a test, with nothing else to edit.
 //!
-//! The authoritative `nucleoid.spec.md` suite is the exception: its generated
-//! Rust tests are committed in `tests/spec_cases/mod.rs`, so each use case can be
-//! read and run without loading Markdown. `tests/spec.rs` separately checks
-//! that the committed copy remains identical to the document.
+//! Spec and synth records are exported as self-contained tests: each generated
+//! function embeds the code and expected return it runs. This gives readable
+//! BDD-style behavior names without Gherkin or runtime document parsing.
 
+use serde::Deserialize;
 use std::env;
 use std::fmt::Write as _;
 use std::fs;
@@ -32,38 +33,24 @@ enum Format {
 struct Suite {
     output: &'static str,
     format: Format,
-    source: Source,
-}
-
-/// Where a suite's documents come from.
-enum Source {
-    /// Named one by one, for the suites that have exactly one document.
-    Named(&'static [(&'static str, &'static str)]),
-    /// Every `.md` in a directory, in name order. The synth sets are added to
-    /// in batches, and a batch should not have to be wired in by hand.
-    Directory(&'static str),
+    documents: &'static [(&'static str, &'static str)],
 }
 
 const SUITES: &[Suite] = &[
     Suite {
-        output: "synth.rs",
-        format: Format::Cases,
-        source: Source::Directory("synth"),
-    },
-    Suite {
         output: "reference.rs",
         format: Format::Cases,
-        source: Source::Named(&[("reference", "tests/reference.md")]),
+        documents: &[("reference", "tests/reference.md")],
     },
     Suite {
         output: "readme.rs",
         format: Format::Snippets,
-        source: Source::Named(&[("readme", "README.md")]),
+        documents: &[("readme", "README.md")],
     },
     Suite {
         output: "examples.rs",
         format: Format::Snippets,
-        source: Source::Named(&[("examples", "docs/examples.md")]),
+        documents: &[("examples", "docs/examples.md")],
     },
 ];
 
@@ -71,11 +58,10 @@ fn main() {
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-env-changed=UPDATE_SPEC_TESTS");
 
-    if env::var_os("UPDATE_SPEC_TESTS").is_some() {
-        write_spec_tests();
-    }
-
     let out = env::var("OUT_DIR").expect("cargo sets OUT_DIR for build scripts");
+    let synth_documents = in_directory("synth");
+    write_document_list(&out, &synth_documents);
+    write_json_tests(&out);
 
     for suite in SUITES {
         let mut generated = String::new();
@@ -84,20 +70,11 @@ fn main() {
         let mut total = 0;
         let mut modules = String::new();
 
-        let documents = match suite.source {
-            Source::Named(documents) => documents
-                .iter()
-                .map(|(module, path)| ((*module).to_string(), (*path).to_string()))
-                .collect(),
-            Source::Directory(directory) => {
-                println!("cargo::rerun-if-changed={directory}");
-                in_directory(directory)
-            }
-        };
-
-        if let Source::Directory(_) = suite.source {
-            write_document_list(&out, &documents);
-        }
+        let documents: Vec<(String, String)> = suite
+            .documents
+            .iter()
+            .map(|(module, path)| ((*module).to_string(), (*path).to_string()))
+            .collect();
 
         for (index, (module, path)) in documents.iter().enumerate() {
             println!("cargo::rerun-if-changed={path}");
@@ -124,93 +101,119 @@ fn main() {
     }
 }
 
-struct Case {
-    title: String,
-    source: String,
-    expected: Option<String>,
+#[derive(Deserialize)]
+struct Record {
+    id: String,
+    description: String,
+    code: String,
+    #[serde(rename = "return")]
+    returns: Option<String>,
 }
 
-/// Materializes `nucleoid.spec.md` as editable, committed Rust tests.
-///
-/// Run with `UPDATE_SPEC_TESTS=1 cargo build`. The synchronization test in
-/// `tests/spec.rs` rejects a stale copy.
-fn write_spec_tests() {
-    let document = fs::read_to_string("nucleoid.spec.md")
-        .expect("nucleoid.spec.md states what the language does");
-    let cases = parse_cases(&document);
-    let mut generated = String::from(
-        "// @generated from nucleoid.spec.md by `UPDATE_SPEC_TESTS=1 cargo build`.\n\
-         // The cases are committed so they can be read and run without parsing Markdown.\n\n\
-         const CASES: &[SpecCase] = &[\n",
-    );
-    let mut tests = String::new();
-    let mut taken = Vec::new();
+/// Exports every JSONL record as one named Rust test with its data embedded.
+fn write_json_tests(out: &str) {
+    println!("cargo::rerun-if-changed=dataset");
+    let spec = render_json_tests("dataset/spec.jsonl", None);
 
-    for (index, case) in cases.iter().enumerate() {
-        writeln!(generated, "    SpecCase {{").unwrap();
-        writeln!(generated, "        title: {:?},", case.title).unwrap();
-        writeln!(generated, "        source: {},", raw_literal(&case.source)).unwrap();
+    fs::write(Path::new(out).join("spec_cases.rs"), &spec)
+        .expect("the generated spec tests must be writable");
 
-        match &case.expected {
-            Some(expected) => {
-                writeln!(generated, "        expected: Some({expected:?}),").unwrap();
-            }
-            None => generated.push_str("        expected: None,\n"),
-        }
-
-        generated.push_str("    },\n");
-
-        let name = unique(identifier(&case.title), &mut taken);
-        writeln!(tests, "/// {}", case.title).unwrap();
-        tests.push_str("#[test]\n");
-        writeln!(tests, "fn {name}() {{").unwrap();
-        writeln!(tests, "    case({index});").unwrap();
-        tests.push_str("}\n\n");
+    if env::var_os("UPDATE_SPEC_TESTS").is_some() {
+        fs::create_dir_all("tests/spec_cases").expect("tests/spec_cases must be writable");
+        fs::write("tests/spec_cases/mod.rs", spec)
+            .expect("tests/spec_cases/mod.rs must be writable");
     }
 
-    generated.push_str("];\n\n");
-    generated.push_str(&tests);
+    let mut paths: Vec<String> = fs::read_dir("dataset")
+        .expect("dataset holds exported tests")
+        .map(|entry| entry.expect("a dataset entry is readable").path())
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.starts_with("synth.") && name.ends_with(".jsonl"))
+        })
+        .map(|path| path.to_string_lossy().replace('\\', "/"))
+        .collect();
+    paths.sort();
 
-    fs::create_dir_all("tests/spec_cases").expect("tests/spec_cases must be writable");
-    fs::write("tests/spec_cases/mod.rs", generated)
-        .expect("tests/spec_cases/mod.rs must be writable");
+    let mut synth = String::from("// @generated from dataset JSONL by build.rs — do not edit.\n\n");
+    let mut total = 0;
+
+    for path in paths {
+        let number = Path::new(&path)
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .and_then(|stem| stem.rsplit('.').next())
+            .expect("a synth dataset has a number");
+        let records = records(&path);
+
+        total += records.len();
+        synth.push_str(&render_records(&records, Some(&format!("synth_{number}"))));
+    }
+
+    writeln!(synth, "pub const GENERATED: usize = {total};").unwrap();
+    fs::write(Path::new(out).join("synth.rs"), synth)
+        .expect("the generated synth tests must be writable");
 }
 
-fn parse_cases(document: &str) -> Vec<Case> {
-    let document = document.replace("\r\n", "\n");
-    let body = document
-        .split("```")
-        .nth(1)
-        .expect("cases live in one fenced block");
+fn render_json_tests(path: &str, module: Option<&str>) -> String {
+    let mut generated =
+        String::from("// @generated from dataset JSONL by build.rs — do not edit.\n\n");
+    generated.push_str(&render_records(&records(path), module));
+    generated
+}
 
-    body.split("\n---\n")
-        .filter(|block| !block.trim().is_empty())
-        .map(|block| {
-            let title = block
-                .lines()
-                .map(str::trim)
-                .find(|line| line.starts_with('#'))
-                .unwrap_or("untitled")
-                .trim_start_matches('#')
-                .trim()
-                .to_string();
-            let expected = block.lines().map(str::trim).find_map(|line| {
-                line.strip_prefix("# return:")
-                    .map(|rest| rest.trim().to_string())
-            });
-            let source = block
-                .lines()
-                .filter(|line| !line.trim().starts_with("# return:"))
-                .collect::<Vec<_>>()
-                .join("\n");
-
-            Case {
-                title,
-                source,
-                expected,
-            }
+fn records(path: &str) -> Vec<Record> {
+    println!("cargo::rerun-if-changed={path}");
+    fs::read_to_string(path)
+        .unwrap_or_else(|error| panic!("{path} holds exported tests: {error}"))
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| !line.trim().is_empty())
+        .map(|(index, line)| {
+            serde_json::from_str(line)
+                .unwrap_or_else(|error| panic!("{path}:{}: {error}", index + 1))
         })
         .collect()
+}
+
+fn render_records(records: &[Record], module: Option<&str>) -> String {
+    let mut generated = String::new();
+    let mut taken = Vec::new();
+
+    if let Some(module) = module {
+        writeln!(generated, "mod {module} {{").unwrap();
+    }
+
+    let indent = if module.is_some() { "    " } else { "" };
+
+    for record in records {
+        let name = unique(identifier(&record.description), &mut taken);
+
+        writeln!(generated, "{indent}/// {}", record.description).unwrap();
+        writeln!(generated, "{indent}#[test]").unwrap();
+        writeln!(generated, "{indent}fn {name}() {{").unwrap();
+        writeln!(generated, "{indent}    crate::case(").unwrap();
+        writeln!(generated, "{indent}        {:?},", record.id).unwrap();
+        writeln!(generated, "{indent}        {:?},", record.description).unwrap();
+        writeln!(generated, "{indent}        {},", raw_literal(&record.code)).unwrap();
+
+        match &record.returns {
+            Some(expected) => {
+                writeln!(generated, "{indent}        Some({expected:?}),").unwrap();
+            }
+            None => writeln!(generated, "{indent}        None,").unwrap(),
+        }
+
+        writeln!(generated, "{indent}    );").unwrap();
+        writeln!(generated, "{indent}}}\n").unwrap();
+    }
+
+    if module.is_some() {
+        generated.push_str("}\n\n");
+    }
+
+    generated
 }
 
 fn raw_literal(value: &str) -> String {

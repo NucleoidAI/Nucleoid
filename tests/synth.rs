@@ -1,36 +1,33 @@
-//! The synthesized use cases, which are derived from `nucleoid.spec.md`, run as
-//! one test per behaviour.
+//! The synthesized JSONL records run as one embedded test per behavior.
 //!
-//! Each document is its own module, so a failure says which synth set it came
-//! from. The documents are discovered by `build.rs` from `synth/`, so a new set
-//! is picked up by dropping the file in — see there for why.
+//! Each JSONL file is its own module, and every generated test contains its
+//! complete record: BDD-style names without Gherkin or Markdown parsing.
 
 mod common;
 
-use std::sync::LazyLock;
-
-include!(concat!(env!("OUT_DIR"), "/synth_documents.rs"));
-
-static DOCUMENTS: LazyLock<Vec<Vec<common::Case>>> = LazyLock::new(|| {
-    SYNTH_DOCUMENTS
-        .iter()
-        .map(|(_, _, text)| common::cases(text))
-        .collect()
-});
-
 include!(concat!(env!("OUT_DIR"), "/synth.rs"));
 
-/// Runs the case with this title. Called by each generated test.
-fn case(document: usize, title: &str) {
-    common::run_case(&DOCUMENTS, document, title);
+/// Runs one embedded dataset record. Called by its individual Rust test.
+fn case(id: &str, description: &str, code: &str, expected: Option<&str>) {
+    let case = common::Case {
+        title: description.to_string(),
+        source: code.to_string(),
+        expected: expected.map(str::to_string),
+    };
+
+    if let Err(reason) = common::check(&case) {
+        panic!(
+            "{id}: {description}
+  {reason}"
+        );
+    }
 }
 
-/// Every case in every synth document has a test of its own.
+/// The JSONL export contains the expected number of synthesized behaviors.
 #[test]
-fn every_case_is_covered() {
+fn every_record_is_exported() {
     assert_eq!(
-        common::total(&DOCUMENTS),
-        GENERATED,
-        "build.rs generated {GENERATED} tests for the cases in synth/"
+        GENERATED, 1007,
+        "the synth dataset changed; update this count deliberately"
     );
 }
