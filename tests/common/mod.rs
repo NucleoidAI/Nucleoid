@@ -143,7 +143,11 @@ fn matches(actual: &serde_json::Value, expected: &serde_json::Value) -> bool {
 
 pub fn check(case: &Case) -> Result<(), String> {
     let mut runtime = Runtime::new();
+    check_with(&mut runtime, case).map(|_| ())
+}
 
+fn check_with(runtime: &mut Runtime, case: &Case) -> Result<nucleoid::Value, String> {
+    let assertions_before = runtime.assertions_run();
     let value = runtime
         .run(&case.source)
         .map_err(|error| format!("{error}"))?;
@@ -155,11 +159,12 @@ pub fn check(case: &Case) -> Result<(), String> {
         .map(|line| line.matches("assert(").count())
         .sum::<usize>();
 
-    if runtime.assertions_run() < expected_assertions {
+    let assertions_run = runtime.assertions_run() - assertions_before;
+
+    if assertions_run < expected_assertions {
         return Err(format!(
             "only {} of {} assertions ran; the rest are on a branch that was never taken",
-            runtime.assertions_run(),
-            expected_assertions
+            assertions_run, expected_assertions
         ));
     }
 
@@ -193,7 +198,36 @@ pub fn check(case: &Case) -> Result<(), String> {
         }
     }
 
-    Ok(())
+    Ok(value)
+}
+
+/// Creates a stateful `run` function for one generated behavior test.
+pub fn runner() -> impl FnMut(&str) -> serde_json::Value {
+    let mut runtime = Runtime::new();
+
+    move |source| {
+        let expected = source.lines().map(str::trim).find_map(|line| {
+            line.strip_prefix("# return:")
+                .map(|rest| rest.trim().to_string())
+        });
+        let source = source
+            .lines()
+            .filter(|line| !line.trim().starts_with("# return:"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let case = Case {
+            title: "inline statement".to_string(),
+            source,
+            expected,
+        };
+
+        let value = check_with(&mut runtime, &case).unwrap_or_else(|reason| panic!("{reason}"));
+        let json = runtime
+            .serialize_json(&value)
+            .unwrap_or_else(|error| panic!("{error}"));
+
+        serde_json::from_str(&json).expect("the runtime serializes valid JSON")
+    }
 }
 
 /// Runs the case with this title, for the generated per-behaviour tests.

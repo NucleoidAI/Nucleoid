@@ -1,8 +1,8 @@
 //! A committed Rust export of every normative JSONL record.
 //!
-//! Each test embeds its description, Nucleoid source and expected return. This
-//! gives failures BDD-style behavior names without Gherkin or runtime document
-//! parsing. The final test keeps the committed export equal to the JSONL.
+//! Each test creates one stateful runner, then passes every top-level Nucleoid
+//! statement to a separate `run` call. This mirrors the reference suite while
+//! preserving blocks and the specification's `# return:` expectations.
 //!
 //! ```text
 //! cargo test --test spec                       # every behaviour
@@ -12,23 +12,9 @@
 
 mod common;
 
+use common::runner;
+
 include!("spec_cases/mod.rs");
-
-/// Runs one embedded dataset record. Called by its individual Rust test.
-fn case(id: &str, description: &str, code: &str, expected: Option<&str>) {
-    let case = common::Case {
-        title: description.to_string(),
-        source: code.to_string(),
-        expected: expected.map(str::to_string),
-    };
-
-    if let Err(reason) = common::check(&case) {
-        panic!(
-            "{id}: {description}
-  {reason}"
-        );
-    }
-}
 
 /// The committed tests must not drift from the JSONL that generated them.
 #[test]

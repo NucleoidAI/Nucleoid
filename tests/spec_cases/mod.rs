@@ -3,745 +3,470 @@
 /// Nucleoid runs a statement in the state
 #[test]
 fn runs_a_statement_in_the_state() {
-    crate::case(
-        "spec-0001",
-        "Nucleoid runs a statement in the state",
-        r#"# i is 1
-i = 1
-
-assert(i == 1, true)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"i = 1"#);
+    assert_eq!(run(r#"i == 1"#), run(r#"(true)"#));
 }
 
 /// Nucleoid runs a expression statement
 #[test]
 fn runs_a_expression_statement() {
-    crate::case(
-        "spec-0002",
-        "Nucleoid runs a expression statement",
-        r#"# j is 1
-j = 1
-
-assert(j + 2, 3)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"j = 1"#);
+    assert_eq!(run(r#"j + 2"#), run(r#"(3)"#));
 }
 
 /// Nucleoid returns value of variable
 #[test]
 fn returns_value_of_variable() {
-    crate::case(
-        "spec-0003",
-        "Nucleoid returns value of variable",
-        r#"# k is 1
-k = 1
+    let mut run = runner();
+    run(r#"k = 1"#);
+    run(r#"k
 
-k"#,
-        Some("1"),
-    );
+# return: 1"#);
 }
 
 /// Nucleoid throws an error if variable is not defined
 #[test]
 fn throws_an_error_if_variable_is_not_defined() {
-    crate::case(
-        "spec-0004",
-        "Nucleoid throws an error if variable is not defined",
-        r#"try:
-    # t is e plus 1
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     t = e + 1
 catch error:
-    assert(error, ReferenceError("e is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("e is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid throws an error inside a block
 #[test]
 fn throws_an_error_inside_a_block() {
-    crate::case(
-        "spec-0005",
-        "Nucleoid throws an error inside a block",
-        r#"# k is 99
-k = 99
-
-try:
-    # if k is greater than or equal to 99, then throw "INVALID"
+    let mut run = runner();
+    run(r#"k = 99"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     if k >= 99:
         throw "INVALID"
 catch error:
-    assert(error, "INVALID")"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid throws an error as a variable
 #[test]
 fn throws_an_error_as_a_variable() {
-    crate::case(
-        "spec-0006",
-        "Nucleoid throws an error as a variable",
-        r#"# length is 0.1
-length = 0.1
-
-try:
-    # if length is less than 1, then throw length
+    let mut run = runner();
+    run(r#"length = 0.1"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     if length < 1:
         throw length
 catch error:
-    assert(error, 0.1)
-
-try:
-    # if length is less than 1.1, then throw 'length'
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = 0.1
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    run("__nucleoid_test_assertion_1_actual = null");
+    run("__nucleoid_test_assertion_1_expected = null");
+    run("__nucleoid_test_assertion_1_ran = false");
+    run(r#"try:
     if length < 1.1:
         throw 'length'
 catch error:
-    assert(error, "length")"#,
-        None,
-    );
+    __nucleoid_test_assertion_1_actual = error
+    __nucleoid_test_assertion_1_expected = "length"
+    __nucleoid_test_assertion_1_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
 }
 
 /// Nucleoid creates a class with constructor
 #[test]
 fn creates_a_class_with_constructor() {
-    crate::case(
-        "spec-0007",
-        "Nucleoid creates a class with constructor",
-        r#"# There is a Shape type,
-# which has a type as a string
-class Shape(type: str):
-    this.type = type
-
-# shape1 is a Shape whose type is "Square"
-shape1 = Shape("Square")
-
-assert(shape1, { "id": "shape1", "type": "Square" })"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Shape(type: str):
+    this.type = type"#);
+    run(r#"shape1 = Shape("Square")"#);
+    assert_eq!(run(r#"shape1"#), run(r#"({ "id": "shape1", "type": "Square" })"#));
 }
 
 /// Nucleoid creates a class with a constructor and a typed attribute
 #[test]
 fn creates_a_class_with_a_constructor_and_a_typed_attribute() {
-    crate::case(
-        "spec-0008",
-        "Nucleoid creates a class with a constructor and a typed attribute",
-        r#"# There is a Shape type,
-# which has a type as a string
-class Shape:
+    let mut run = runner();
+    run(r#"class Shape:
     type: str
 
     def init(type: str):
-        this.type = type
-
-# shape1 is a Shape whose type is "Rectangle"
-shape1 = Shape("Rectangle")
-
-assert(shape1, { "id": "shape1", "type": "Rectangle" })"#,
-        None,
-    );
+        this.type = type"#);
+    run(r#"shape1 = Shape("Rectangle")"#);
+    assert_eq!(run(r#"shape1"#), run(r#"({ "id": "shape1", "type": "Rectangle" })"#));
 }
 
 /// Nucleoid adds an object to the class's object list
 #[test]
 fn adds_an_object_to_the_class_s_object_list() {
-    crate::case(
-        "spec-0009",
-        "Nucleoid adds an object to the class's object list",
-        r#"# There is a Student type
-class Student:
-    pass
-
-# user0 is a Student
-user0 = Student()
-
-assert(Student.find(student => student.id == "user0"), { "id": "user0" })
-assert(Student["user0"], { "id": "user0" })"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Student:
+    pass"#);
+    run(r#"user0 = Student()"#);
+    assert_eq!(run(r#"Student.find(student => student.id == "user0")"#), run(r#"({ "id": "user0" })"#));
+    assert_eq!(run(r#"Student["user0"]"#), run(r#"({ "id": "user0" })"#));
 }
 
 /// Nucleoid preserves class and object lists when a class is updated
 #[test]
 fn preserves_class_and_object_lists_when_a_class_is_updated() {
-    crate::case(
-        "spec-0010",
-        "Nucleoid preserves class and object lists when a class is updated",
-        r#"# There is a User type
-class User:
-    pass
-
-# There is a User
-User()
-
-assert(Class.length, 1)
-assert(User.length, 1)
-
-# There is a User type
-class User:
-    pass
-
-assert(Class.length, 1)
-assert(User.length, 1)
-
-# There is a User
-User()
-
-assert(Class.length, 1)
-assert(User.length, 2)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class User:
+    pass"#);
+    run(r#"User()"#);
+    assert_eq!(run(r#"Class.length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"User.length"#), run(r#"(1)"#));
+    run(r#"class User:
+    pass"#);
+    assert_eq!(run(r#"Class.length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"User.length"#), run(r#"(1)"#));
+    run(r#"User()"#);
+    assert_eq!(run(r#"Class.length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"User.length"#), run(r#"(2)"#));
 }
 
 /// Nucleoid places an instance in the list of the class when created
 #[test]
 fn places_an_instance_in_the_list_of_the_class_when_created() {
-    crate::case(
-        "spec-0011",
-        "Nucleoid places an instance in the list of the class when created",
-        r#"# There is a Student type
-class Student:
-    pass
-
-assert(typeof Student, List)
-
-# student1 is a Student
-student1 = Student()
-
-assert(Student.length, 1)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Student:
+    pass"#);
+    assert_eq!(run(r#"typeof Student"#), run(r#"(List)"#));
+    run(r#"student1 = Student()"#);
+    assert_eq!(run(r#"Student.length"#), run(r#"(1)"#));
 }
 
 /// Nucleoid creates a class and a subclass
 #[test]
 fn creates_a_class_and_a_subclass() {
-    crate::case(
-        "spec-0012",
-        "Nucleoid creates a class and a subclass",
-        r#"# There is a Person type,
-# which has a name as a string
-class Person(name: str):
-    this.name = name
-
-# There is a Student type,
-# which is a subtype of Person
-# and has a school as a string
-class Student: Person
+    let mut run = runner();
+    run(r#"class Person(name: str):
+    this.name = name"#);
+    run(r#"class Student: Person
     def init(name, school):
         super(name)
         this.name = name
-        this.school = school
-
-# student1 is a Student,
-# whose name is "Emma"
-# and whose school is "Riverside High"
-student1 = Student("Emma", "Riverside High")
-
-assert(student1, { "id": "student1", "name": "Emma", "school": "Riverside High" })"#,
-        None,
-    );
+        this.school = school"#);
+    run(r#"student1 = Student("Emma", "Riverside High")"#);
+    assert_eq!(run(r#"student1"#), run(r#"({ "id": "student1", "name": "Emma", "school": "Riverside High" })"#));
 }
 
 /// Nucleoid runs a class-level property assignment
 #[test]
 fn runs_a_class_level_property_assignment() {
-    crate::case(
-        "spec-0013",
-        "Nucleoid runs a class-level property assignment",
-        r#"# There is a Human type,
-# which has a name as a string
-class Human(name: str):
-    this.name = name
-
-# All humans are mortal
-$Human.mortal = true
-
-# human1 is a Human whose name is "Socrates"
-human1 = Human("Socrates")
-
-assert(human1.mortal, true)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Human(name: str):
+    this.name = name"#);
+    run(r#"$Human.mortal = true"#);
+    run(r#"human1 = Human("Socrates")"#);
+    assert_eq!(run(r#"human1.mortal"#), run(r#"(true)"#));
 }
 
 /// Nucleoid runs a class-level conditional
 #[test]
 fn runs_a_class_level_conditional() {
-    crate::case(
-        "spec-0014",
-        "Nucleoid runs a class-level conditional",
-        r#"# There is a Device type,
-# which has a profile as a string
-class Device(profile: str):
-    this.profile = profile
-
-# Any device that has a profile is active
-if $Device.profile:
-    $Device.active = true
-
-# device1 has no profile
-device1 = Device()
-
-# device2 has profile "PROFILE-1"
-device2 = Device("PROFILE-1")
-
-assert(device1.active, null)
-assert(device2.active, true)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Device(profile: str):
+    this.profile = profile"#);
+    run(r#"if $Device.profile:
+    $Device.active = true"#);
+    run(r#"device1 = Device()"#);
+    run(r#"device2 = Device("PROFILE-1")"#);
+    assert_eq!(run(r#"device1.active"#), run(r#"(null)"#));
+    assert_eq!(run(r#"device2.active"#), run(r#"(true)"#));
 }
 
 /// Nucleoid creates an instance in a block and assigns it to a property
 #[test]
 fn creates_an_instance_in_a_block_and_assigns_it_to_a_property() {
-    crate::case(
-        "spec-0015",
-        "Nucleoid creates an instance in a block and assigns it to a property",
-        r#"# There is a Room type
-class Room:
-    pass
-
-# There is a Meeting type
-class Meeting:
-    pass
-
-# room1 is a Room
-room1 = Room()
-
-# Any meeting's time is now plus " @ " plus the meeting's date as a date string
-$Meeting.time = Date.now() + " @ " + $Meeting.date.toDateString()
-
-# meeting is a Meeting whose date is January 1, 2020,
-# and room1's meeting is meeting
-{
+    let mut run = runner();
+    run(r#"class Room:
+    pass"#);
+    run(r#"class Meeting:
+    pass"#);
+    run(r#"room1 = Room()"#);
+    run(r#"$Meeting.time = Date.now() + " @ " + $Meeting.date.toDateString()"#);
+    run(r#"{
     meeting = Meeting()
     meeting.date = Date("2020-1-1")
     room1.meeting = meeting
-}
-
-assert(room1.meeting.date.toDateString(), "Wed Jan 01 2020")
-assert(room1.meeting.time[-17:], "@ Wed Jan 01 2020")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"room1.meeting.date.toDateString()"#), run(r#"("Wed Jan 01 2020")"#));
+    assert_eq!(run(r#"room1.meeting.time[-17:]"#), run(r#"("@ Wed Jan 01 2020")"#));
 }
 
 /// Nucleoid creates nested instances in a block and assigns them to a property
 #[test]
 fn creates_nested_instances_in_a_block_and_assigns_them_to_a_property() {
-    crate::case(
-        "spec-0016",
-        "Nucleoid creates nested instances in a block and assigns them to a property",
-        r#"# There is a Timesheet type
-class Timesheet:
-    pass
-
-# There is a Task type
-class Task:
-    pass
-
-# There is a Project type
-class Project:
-    pass
-
-# Any project's code is "N-" plus the project's number
-$Project.code = "N-" + $Project.number
-
-# timesheet1 is a Timesheet
-timesheet1 = Timesheet()
-
-# task is a Task whose project is a Project whose number is 3668347,
-# and timesheet1's task is task
-{
+    let mut run = runner();
+    run(r#"class Timesheet:
+    pass"#);
+    run(r#"class Task:
+    pass"#);
+    run(r#"class Project:
+    pass"#);
+    run(r#"$Project.code = "N-" + $Project.number"#);
+    run(r#"timesheet1 = Timesheet()"#);
+    run(r#"{
     task = Task()
     task.project = Project()
     task.project.number = 3668347
     timesheet1.task = task
-}
-
-assert(timesheet1.task.project.number, 3668347)
-assert(timesheet1.task.project.code, "N-3668347")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"timesheet1.task.project.number"#), run(r#"(3668347)"#));
+    assert_eq!(run(r#"timesheet1.task.project.code"#), run(r#"("N-3668347")"#));
 }
 
 /// Nucleoid creates a local variable in a block and uses in assignment
 #[test]
 fn creates_a_local_variable_in_a_block_and_uses_in_assignment() {
-    crate::case(
-        "spec-0017",
-        "Nucleoid creates a local variable in a block and uses in assignment",
-        r#"# integer is 30
-integer = 30
-
-# equivalency is null
-equivalency = null
-
-# while in the block, division is a local variable that is integer divided by 10,
-# and equivalency is division times 10
-{
+    let mut run = runner();
+    run(r#"integer = 30"#);
+    run(r#"equivalency = null"#);
+    run(r#"{
     division = integer / 10
     equivalency = division * 10
-}
-
-assert(equivalency, 30)
-
-# integer is 40
-integer = 40
-
-assert(equivalency, 40)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"equivalency"#), run(r#"(30)"#));
+    run(r#"integer = 40"#);
+    assert_eq!(run(r#"equivalency"#), run(r#"(40)"#));
 }
 
 /// Nucleoid creates a standard built-in object as a local variable inside a block
 #[test]
 fn creates_a_standard_built_in_object_as_a_local_variable_inside_a_block() {
-    crate::case(
-        "spec-0018",
-        "Nucleoid creates a standard built-in object as a local variable inside a block",
-        r#"# while in the block, f is a local Boolean that is false,
-# and condition is f
-{
+    let mut run = runner();
+    run(r#"{
     f = Boolean(false)
     condition = f
-}
-
-assert(condition, false)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"condition"#), run(r#"(false)"#));
 }
 
 /// Nucleoid creates and assigns an instance to a local variable inside a block
 #[test]
 fn creates_and_assigns_an_instance_to_a_local_variable_inside_a_block() {
-    crate::case(
-        "spec-0019",
-        "Nucleoid creates and assigns an instance to a local variable inside a block",
-        r#"# There is a Device type
-class Device:
-    pass
-
-# Any device's renew is the device's creation time plus 604800000
-$Device.renew = $Device.created + 604800000
-
-# device is a Device whose creation time is now
-{
+    let mut run = runner();
+    run(r#"class Device:
+    pass"#);
+    run(r#"$Device.renew = $Device.created + 604800000"#);
+    run(r#"{
     device = Device()
     device.created = Date.now()
-}
-
-assert(Device[0].renew - Device[0].created, 604800000)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"Device[0].renew - Device[0].created"#), run(r#"(604800000)"#));
 }
 
 /// Nucleoid creates and assigns an instance with a constructor to a local variable inside a block
 #[test]
 fn creates_and_assigns_an_instance_with_a_constructor_to_a_local_variable_inside_a_block() {
-    crate::case(
-        "spec-0020",
-        "Nucleoid creates and assigns an instance with a constructor to a local variable inside a block",
-        r#"# There is a Member type,
-# which has a first as a string
-# and a last as a string
-class Member(first: str, last: str):
+    let mut run = runner();
+    run(r#"class Member(first: str, last: str):
     this.first = first
-    this.last = last
-
-# Any member's display is the member's last plus ", " plus the member's first
-$Member.display = $Member.last + ", " + $Member.first
-
-# member is a Member whose first is "First" and whose last is "Last"
-{
+    this.last = last"#);
+    run(r#"$Member.display = $Member.last + ", " + $Member.first"#);
+    run(r#"{
     member = Member("First", "Last")
-}
-
-assert(Member[0].display, "Last, First")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"Member[0].display"#), run(r#"("Last, First")"#));
 }
 
 /// Nucleoid creates an object in a block and assigns it to a class-level property before instantiation
 #[test]
 fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_before_instantiation() {
-    crate::case(
-        "spec-0021",
-        "Nucleoid creates an object in a block and assigns it to a class-level property before instantiation",
-        r#"# There is a Member type
-class Member:
-    pass
-
-# registration is an Object whose date is January 2, 2019,
-# and any member's registration is registration
-{
+    let mut run = runner();
+    run(r#"class Member:
+    pass"#);
+    run(r#"{
     registration = Object()
     registration.date = Date("2019-1-2")
     $Member.registration = registration
-}
-
-# member1 is a Member
-member1 = Member()
-
-assert(member1.registration.date.toDateString(), "Wed Jan 02 2019")
-assert(member1.registration.age, null)"#,
-        None,
-    );
+}"#);
+    run(r#"member1 = Member()"#);
+    assert_eq!(run(r#"member1.registration.date.toDateString()"#), run(r#"("Wed Jan 02 2019")"#));
+    assert_eq!(run(r#"member1.registration.age"#), run(r#"(null)"#));
 }
 
 /// Nucleoid creates an object in a block and assigns it to a class-level property after instantiation
 #[test]
 fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_after_instantiation() {
-    crate::case(
-        "spec-0022",
-        "Nucleoid creates an object in a block and assigns it to a class-level property after instantiation",
-        r#"# There is a Distance type
-class Distance:
-    pass
-
-# distance1 is a Distance
-distance1 = Distance()
-
-# location is an Object whose coordinates is "40.6976701,-74.2598779",
-# and any distance's starting point is location
-{
+    let mut run = runner();
+    run(r#"class Distance:
+    pass"#);
+    run(r#"distance1 = Distance()"#);
+    run(r#"{
     location = Object()
     location.coordinates = "40.6976701,-74.2598779"
     $Distance.startingPoint = location
-}
-
-assert(distance1.startingPoint.coordinates, "40.6976701,-74.2598779")
-assert(distance1.startingPoint.print, null)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"distance1.startingPoint.coordinates"#), run(r#"("40.6976701,-74.2598779")"#));
+    assert_eq!(run(r#"distance1.startingPoint.print"#), run(r#"(null)"#));
 }
 
 /// Nucleoid calls function in an assignment
 #[test]
 fn calls_function_in_an_assignment() {
-    crate::case(
-        "spec-0023",
-        "Nucleoid calls function in an assignment",
-        r#"# multiply returns the product of two factors
-def multiply(first_factor, second_factor):
+    let mut run = runner();
+    run(r#"def multiply(first_factor, second_factor):
     product = first_factor * second_factor
-    return product
-
-# x is 1
-x = 1
-
-# y is 2
-y = 2
-
-# z is the result of the multiply function call with x and y, plus 1
-z = multiply(x, y) + 1
-
-assert(z, 3)"#,
-        None,
-    );
+    return product"#);
+    run(r#"x = 1"#);
+    run(r#"y = 2"#);
+    run(r#"z = multiply(x, y) + 1"#);
+    assert_eq!(run(r#"z"#), run(r#"(3)"#));
 }
 
 /// Nucleoid assigns a block in a function as a dependency
 #[test]
 fn assigns_a_block_in_a_function_as_a_dependency() {
-    crate::case(
-        "spec-0024",
-        "Nucleoid assigns a block in a function as a dependency",
-        r#"# There is a Student type
-class Student:
-    pass
-
-# student1 is a Student whose age is 7
-student1 = Student()
-student1.age = 7
-
-# student2 is a Student whose age is 8
-student2 = Student()
-student2.age = 8
-
-# student3 is a Student whose age is 9
-student3 = Student()
-student3.age = 9
-
-# age is 8
-age = 8
-
-# student is the Student whose age is age
-student = Student.find(s => s.age == age)
-
-assert(student, student2)
-assert(student, { "id": "student2", "age": 8 })
-
-# age is 9
-age = 9
-
-assert(student, student3)
-assert(student, { "id": "student3", "age": 9 })"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Student:
+    pass"#);
+    run(r#"student1 = Student()"#);
+    run(r#"student1.age = 7"#);
+    run(r#"student2 = Student()"#);
+    run(r#"student2.age = 8"#);
+    run(r#"student3 = Student()"#);
+    run(r#"student3.age = 9"#);
+    run(r#"age = 8"#);
+    run(r#"student = Student.find(s => s.age == age)"#);
+    assert_eq!(run(r#"student"#), run(r#"(student2)"#));
+    assert_eq!(run(r#"student"#), run(r#"({ "id": "student2", "age": 8 })"#));
+    run(r#"age = 9"#);
+    assert_eq!(run(r#"student"#), run(r#"(student3)"#));
+    assert_eq!(run(r#"student"#), run(r#"({ "id": "student3", "age": 9 })"#));
 }
 
 /// Nucleoid supports chained functions with a parameter in an expression
 #[test]
 fn supports_chained_functions_with_a_parameter_in_an_expression() {
-    crate::case(
-        "spec-0025",
-        "Nucleoid supports chained functions with a parameter in an expression",
-        r#"# There is a Result type,
-# which has a score as a number
-class Result(score: int):
-    this.score = score
-
-# There are Results whose scores are 10, 15 and 20
-Result(10); Result(15); Result(20)
-
-# upperThreshold is 18
-upperThreshold = 18
-
-# lowerThreshold is 12
-lowerThreshold = 12
-
-# list is Results whose score is greater than lowerThreshold,
-# filtered to those whose score is less than upperThreshold
-list = Result.filter(r => r.score > lowerThreshold).filter(r => r.score < upperThreshold)
-
-assert(list.length, 1)
-assert(list[0].score, 15)
-
-# lowerThreshold is 7
-lowerThreshold = 7
-
-assert(list.length, 2)
-assert(list[0].score, 10)
-assert(list[1].score, 15)
-
-# upperThreshold is 14
-upperThreshold = 14
-
-assert(list.length, 1)
-assert(list[0].score, 10)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Result(score: int):
+    this.score = score"#);
+    run(r#"Result(10); Result(15); Result(20)"#);
+    run(r#"upperThreshold = 18"#);
+    run(r#"lowerThreshold = 12"#);
+    run(r#"list = Result.filter(r => r.score > lowerThreshold).filter(r => r.score < upperThreshold)"#);
+    assert_eq!(run(r#"list.length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"list[0].score"#), run(r#"(15)"#));
+    run(r#"lowerThreshold = 7"#);
+    assert_eq!(run(r#"list.length"#), run(r#"(2)"#));
+    assert_eq!(run(r#"list[0].score"#), run(r#"(10)"#));
+    assert_eq!(run(r#"list[1].score"#), run(r#"(15)"#));
+    run(r#"upperThreshold = 14"#);
+    assert_eq!(run(r#"list.length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"list[0].score"#), run(r#"(10)"#));
 }
 
 /// Nucleoid supports an array with brackets
 #[test]
 fn supports_an_array_with_brackets() {
-    crate::case(
-        "spec-0026",
-        "Nucleoid supports an array with brackets",
-        r#"# states is a list of "NY", "GA", "CT" and "MI"
-states = ["NY", "GA", "CT", "MI"]
+    let mut run = runner();
+    run(r#"states = ["NY", "GA", "CT", "MI"]"#);
+    run(r#"states[2]
 
-# The value of states at index 2
-states[2]"#,
-        Some("\"CT\""),
-    );
+# return: "CT""#);
 }
 
 /// Nucleoid throws an error if a variable in an expression is not defined
 #[test]
 fn throws_an_error_if_a_variable_in_an_expression_is_not_defined() {
-    crate::case(
-        "spec-0027",
-        "Nucleoid throws an error if a variable in an expression is not defined",
-        r#"try:
-    # whether e is equal to 2.71828
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     e == 2.71828
 catch error:
-    assert(error, ReferenceError("e is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("e is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid retrieves the value of a variable
 #[test]
 fn retrieves_the_value_of_a_variable() {
-    crate::case(
-        "spec-0028",
-        "Nucleoid retrieves the value of a variable",
-        r#"# number is -1
-number = -1
+    let mut run = runner();
+    run(r#"number = -1"#);
+    run(r#"number
 
-number"#,
-        Some("-1"),
-    );
+# return: -1"#);
 }
 
 /// Nucleoid creates a property assignment on a local variable only if the instance is defined
 #[test]
 fn creates_a_property_assignment_on_a_local_variable_only_if_the_instance_is_defined() {
-    crate::case(
-        "spec-0029",
-        "Nucleoid creates a property assignment on a local variable only if the instance is defined",
-        r#"# There is a Ticket type
-class Ticket:
-    pass
-
-try:
-    # while in the block, ticket is a local Ticket,
-    # and ticket's event's group is "ENTERTAINMENT"
+    let mut run = runner();
+    run(r#"class Ticket:
+    pass"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     {
         ticket = Ticket()
         ticket.event.group = "ENTERTAINMENT"
     }
 catch error:
-    assert(error, ReferenceError("ticket.event is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("ticket.event is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid declares a local variable as undefined
 #[test]
 fn declares_a_local_variable_as_undefined() {
-    crate::case(
-        "spec-0030",
-        "Nucleoid declares a local variable as undefined",
-        r#"# There is a Device type,
-# which has a code as a string
-class Device(code: str):
-    this.code = code
-
-# device1 is a Device whose code is "A0"
-device1 = Device("A0")
-
-# device2 is a Device whose code is "B1"
-device2 = Device("B1")
-
-# While in the block, device is a local variable that is the Device whose code is "A0",
-# and if there is no device, then throw "INVALID_DEVICE",
-# and return device
-{
+    let mut run = runner();
+    run(r#"class Device(code: str):
+    this.code = code"#);
+    run(r#"device1 = Device("A0")"#);
+    run(r#"device2 = Device("B1")"#);
+    run(r#"{
     device = Device.find(d => d.code == "A0")
     if not device:
         throw "INVALID_DEVICE"
     return device
-}"#,
-        Some("{ \"id\": \"device1\", \"code\": \"A0\" }"),
-    );
+}
+
+# return: { "id": "device1", "code": "A0" }"#);
 }
 
 /// Nucleoid rejects a local variable declared as undefined
 #[test]
 fn rejects_a_local_variable_declared_as_undefined() {
-    crate::case(
-        "spec-0031",
-        "Nucleoid rejects a local variable declared as undefined",
-        r#"# There is a Device type,
-# which has a code as a string
-class Device(code: str):
-    this.code = code
-
-# device1 is a Device whose code is "A0"
-device1 = Device("A0")
-
-# device2 is a Device whose code is "B1"
-device2 = Device("B1")
-
-try:
-    # While in the block, device is a local variable that is the Device whose code is "A1",
-    # and if there is no device, then throw "INVALID_DEVICE"
+    let mut run = runner();
+    run(r#"class Device(code: str):
+    this.code = code"#);
+    run(r#"device1 = Device("A0")"#);
+    run(r#"device2 = Device("B1")"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     {
         device = Device.find(d => d.code == "A1")
         if not device:
@@ -749,4575 +474,2727 @@ try:
         return device
     }
 catch error:
-    assert(error, "INVALID_DEVICE")"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID_DEVICE"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid creates a standard built-in object as a property of a local variable
 #[test]
 fn creates_a_standard_built_in_object_as_a_property_of_a_local_variable() {
-    crate::case(
-        "spec-0032",
-        "Nucleoid creates a standard built-in object as a property of a local variable",
-        r#"# There is a Shipment type
-class Shipment:
-    pass
-
-# While in the block, shipment is a local Shipment whose date is January 3, 2019,
-# and shipment1 is shipment
-{
+    let mut run = runner();
+    run(r#"class Shipment:
+    pass"#);
+    run(r#"{
     shipment = Shipment()
     shipment.date = Date("2019-1-3")
     shipment1 = shipment
-}
-
-assert(shipment1.date.toDateString(), "Thu Jan 03 2019")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"shipment1.date.toDateString()"#), run(r#"("Thu Jan 03 2019")"#));
 }
 
 /// Nucleoid creates a property of a local variable in a different scope
 #[test]
 fn creates_a_property_of_a_local_variable_in_a_different_scope() {
-    crate::case(
-        "spec-0033",
-        "Nucleoid creates a property of a local variable in a different scope",
-        r#"# There is a User type
-class User:
-    pass
-
-# user0 is a User
-user0 = User()
-
-# While in the block, user is a local variable that is the User whose id is "user0",
-# and if there is a user, then the user's name is "TEST"
-{
+    let mut run = runner();
+    run(r#"class User:
+    pass"#);
+    run(r#"user0 = User()"#);
+    run(r#"{
     user = User["user0"]
     if user:
         user.name = "TEST"
-}
-
-assert(user0.name, "TEST")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"user0.name"#), run(r#"("TEST")"#));
 }
 
 /// Nucleoid assigns a variable declaratively
 #[test]
 fn assigns_a_variable_declaratively() {
-    crate::case(
-        "spec-0034",
-        "Nucleoid assigns a variable declaratively",
-        r#"# a is 1
-a = 1
-
-# b is 2
-b = 2
-
-# c is sum of a and b
-c = a + b
-
-assert(c, 3)
-
-# a is 2
-a = 2
-
-assert(c, 4)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = 2"#);
+    run(r#"c = a + b"#);
+    assert_eq!(run(r#"c"#), run(r#"(3)"#));
+    run(r#"a = 2"#);
+    assert_eq!(run(r#"c"#), run(r#"(4)"#));
 }
 
 /// Nucleoid creates if statement of variable
 #[test]
 fn creates_if_statement_of_variable() {
-    crate::case(
-        "spec-0035",
-        "Nucleoid creates if statement of variable",
-        r#"# m is false
-m = false
-
-# n is false
-n = false
-
-# if m is true, then n is m and true
-if m == true:
-    n = m and true
-
-assert(n, false)
-
-# m is true
-m = true
-
-assert(n, true)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"m = false"#);
+    run(r#"n = false"#);
+    run(r#"if m == true:
+    n = m and true"#);
+    assert_eq!(run(r#"n"#), run(r#"(false)"#));
+    run(r#"m = true"#);
+    assert_eq!(run(r#"n"#), run(r#"(true)"#));
 }
 
 /// Nucleoid updates if block of variable
 #[test]
 fn updates_if_block_of_variable() {
-    crate::case(
-        "spec-0036",
-        "Nucleoid updates if block of variable",
-        r#"# p is 0.01
-p = 0.01
-
-# s is 0.02
-s = 0.02
-
-# if p is less than 1, then r is p times 10
-if p < 1:
-    r = p * 10
-
-# if p is less than 1, then r is s times 10
-if p < 1:
-    r = s * 10
-
-assert(r, 0.2)
-
-# s is 0.03
-s = 0.03
-
-assert(r, 0.3)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"p = 0.01"#);
+    run(r#"s = 0.02"#);
+    run(r#"if p < 1:
+    r = p * 10"#);
+    run(r#"if p < 1:
+    r = s * 10"#);
+    assert_eq!(run(r#"r"#), run(r#"(0.2)"#));
+    run(r#"s = 0.03"#);
+    assert_eq!(run(r#"r"#), run(r#"(0.3)"#));
 }
 
 /// Nucleoid creates else if statement of variable
 #[test]
 fn creates_else_if_statement_of_variable() {
-    crate::case(
-        "spec-0037",
-        "Nucleoid creates else if statement of variable",
-        r#"# g is 11
-g = 11
-
-# earth is 9.8
-earth = 9.8
-
-# mars is 3.71
-mars = 3.71
-
-# mass is 10
-mass = 10
-
-# if g is greater than 9, then weight is earth times mass,
-# else if g is greater than 3, then weight is mars times mass
-if g > 9:
+    let mut run = runner();
+    run(r#"g = 11"#);
+    run(r#"earth = 9.8"#);
+    run(r#"mars = 3.71"#);
+    run(r#"mass = 10"#);
+    run(r#"if g > 9:
     weight = earth * mass
 else if g > 3:
-    weight = mars * mass
-
-# g is 5
-g = 5
-
-assert(weight, 37.1)
-
-# mars is 3.72
-mars = 3.72
-
-assert(weight, 37.2)"#,
-        None,
-    );
+    weight = mars * mass"#);
+    run(r#"g = 5"#);
+    assert_eq!(run(r#"weight"#), run(r#"(37.1)"#));
+    run(r#"mars = 3.72"#);
+    assert_eq!(run(r#"weight"#), run(r#"(37.2)"#));
 }
 
 /// Nucleoid creates multiple else if statement of variable
 #[test]
 fn creates_multiple_else_if_statement_of_variable() {
-    crate::case(
-        "spec-0038",
-        "Nucleoid creates multiple else if statement of variable",
-        r#"# fraction is -0.1
-fraction = -0.1
-
-# point is 1
-point = 1
-
-# if fraction is greater than 1, then score is fraction times point times 3,
-# else if fraction is greater than 0, then score is fraction times point times 2,
-# else score is fraction times point
-if fraction > 1:
+    let mut run = runner();
+    run(r#"fraction = -0.1"#);
+    run(r#"point = 1"#);
+    run(r#"if fraction > 1:
     score = fraction * point * 3
 else if fraction > 0:
     score = fraction * point * 2
 else:
-    score = fraction * point
-
-assert(score, -0.1)
-
-# point is 2
-point = 2
-
-assert(score, -0.2)"#,
-        None,
-    );
+    score = fraction * point"#);
+    assert_eq!(run(r#"score"#), run(r#"(-0.1)"#));
+    run(r#"point = 2"#);
+    assert_eq!(run(r#"score"#), run(r#"(-0.2)"#));
 }
 
 /// Nucleoid runs dependent statements in the same transaction
 #[test]
 fn runs_dependent_statements_in_the_same_transaction() {
-    crate::case(
-        "spec-0039",
-        "Nucleoid runs dependent statements in the same transaction",
-        r#"# There is a Vehicle type,
-# and any vehicle's tag is "US-" plus the vehicle's plate
-class Vehicle:
-    pass
-
-$Vehicle.tag = "US-" + $Vehicle.plate
-
-# vehicle1 is a Vehicle
-vehicle1 = Vehicle()
-
-# vehicle1's plate is "XSJ422"
-vehicle1.plate = "XSJ422"
-
-assert(vehicle1.tag, "US-XSJ422")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Vehicle:
+    pass"#);
+    run(r#"$Vehicle.tag = "US-" + $Vehicle.plate"#);
+    run(r#"vehicle1 = Vehicle()"#);
+    run(r#"vehicle1.plate = "XSJ422""#);
+    assert_eq!(run(r#"vehicle1.tag"#), run(r#"("US-XSJ422")"#));
 }
 
 /// Nucleoid runs dependencies in order as received
 #[test]
 fn runs_dependencies_in_order_as_received() {
-    crate::case(
-        "spec-0040",
-        "Nucleoid runs dependencies in order as received",
-        r#"# any is 0
-any = 0
-
-# if any is bigger than 1, then result is 1
-if any > 1:
-    result = 1
-
-# if any is bigger than 2, then result is 2
-if any > 2:
-    result = 2
-
-# if any is bigger than 3, then result is 3
-if any > 3:
-    result = 3
-
-# if any is bigger than 2, then result is 4
-if any > 2:
-    result = 4
-
-# if any is bigger than 1, then result is 5
-if any > 1:
-    result = 5
-
-# any is 4
-any = 4
-
-assert(result, 5)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"any = 0"#);
+    run(r#"if any > 1:
+    result = 1"#);
+    run(r#"if any > 2:
+    result = 2"#);
+    run(r#"if any > 3:
+    result = 3"#);
+    run(r#"if any > 2:
+    result = 4"#);
+    run(r#"if any > 1:
+    result = 5"#);
+    run(r#"any = 4"#);
+    assert_eq!(run(r#"result"#), run(r#"(5)"#));
 }
 
 /// Nucleoid searches a variable in scope before the state
 #[test]
 fn searches_a_variable_in_scope_before_the_state() {
-    crate::case(
-        "spec-0041",
-        "Nucleoid searches a variable in scope before the state",
-        r#"# e is 2.71828
-e = 2.71828
-
-# number is null
-number = null
-
-# a local e shadows the outer e inside the block,
-# and number is the local e
-{
+    let mut run = runner();
+    run(r#"e = 2.71828"#);
+    run(r#"number = null"#);
+    run(r#"{
     e = 3
     number = e
-}
-
-assert(number, 3)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"number"#), run(r#"(3)"#));
 }
 
 /// Nucleoid uses local variable at lowest scope as priority
 #[test]
 fn uses_local_variable_at_lowest_scope_as_priority() {
-    crate::case(
-        "spec-0042",
-        "Nucleoid uses local variable at lowest scope as priority",
-        r#"# pi is 3.14
-pi = 3.14
-
-# number is pi
-number = pi
-
-# a local pi shadows the outer pi inside the block
-{
+    let mut run = runner();
+    run(r#"pi = 3.14"#);
+    run(r#"number = pi"#);
+    run(r#"{
     pi = 3.141
     number = pi
-}
-
-assert(number, 3.141)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"number"#), run(r#"(3.141)"#));
 }
 
 /// Nucleoid assigns undefined if any dependency in expression is undefined
 #[test]
 fn assigns_undefined_if_any_dependency_in_expression_is_undefined() {
-    crate::case(
-        "spec-0043",
-        "Nucleoid assigns undefined if any dependency in expression is undefined",
-        r#"# There is a Person type
-class Person:
-    pass
-
-# person1 is a Person
-person1 = Person()
-
-# person1's last name is "Brown"
-person1.lastName = "Brown"
-
-# person1's full name is first and last name
-person1.fullName = person1.firstName + " " + person1.lastName
-
-assert(person1.fullName, null)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Person:
+    pass"#);
+    run(r#"person1 = Person()"#);
+    run(r#"person1.lastName = "Brown""#);
+    run(r#"person1.fullName = person1.firstName + " " + person1.lastName"#);
+    assert_eq!(run(r#"person1.fullName"#), run(r#"(null)"#));
 }
 
 /// Nucleoid keeps as null if any dependencies as in local is null
 #[test]
 fn keeps_as_null_if_any_dependencies_as_in_local_is_null() {
-    crate::case(
-        "spec-0044",
-        "Nucleoid keeps as null if any dependencies as in local is null",
-        r#"# a is 1
-a = 1
-
-# c is null
-c = null
-
-# while in the block, b is a local variable that is null,
-# and c is b divided by a
-{
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"c = null"#);
+    run(r#"{
     b = null
     c = b / a
-}
-
-assert(c, null)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"c"#), run(r#"(null)"#));
 }
 
 /// Nucleoid keeps as null if any dependencies in expression is null
 #[test]
 fn keeps_as_null_if_any_dependencies_in_expression_is_null() {
-    crate::case(
-        "spec-0045",
-        "Nucleoid keeps as null if any dependencies in expression is null",
-        r#"# There is a Schedule type
-class Schedule:
-    pass
-
-# schedule1 is a Schedule whose expression is "0 */2 * * *" and whose script is null
-schedule1 = Schedule()
-schedule1.expression = "0 */2 * * *"
-schedule1.script = null
-
-# schedule1's run is schedule1's expression plus " " plus schedule1's script
-schedule1.run = schedule1.expression + " " + schedule1.script
-
-assert(schedule1.run, null)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Schedule:
+    pass"#);
+    run(r#"schedule1 = Schedule()"#);
+    run(r#"schedule1.expression = "0 */2 * * *""#);
+    run(r#"schedule1.script = null"#);
+    run(r#"schedule1.run = schedule1.expression + " " + schedule1.script"#);
+    assert_eq!(run(r#"schedule1.run"#), run(r#"(null)"#));
 }
 
 /// Nucleoid assigns null if there is null pointer in expression
 #[test]
 fn assigns_null_if_there_is_null_pointer_in_expression() {
-    crate::case(
-        "spec-0046",
-        "Nucleoid assigns null if there is null pointer in expression",
-        r#"# There is a Product type
-class Product:
-    pass
-
-# product1 is a Product
-product1 = Product()
-
-# score is product1's quality score
-score = product1.quality.score
-
-assert(score, null)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Product:
+    pass"#);
+    run(r#"product1 = Product()"#);
+    run(r#"score = product1.quality.score"#);
+    assert_eq!(run(r#"score"#), run(r#"(null)"#));
 }
 
 /// Nucleoid assigns a unique variable for an instance without a variable name
 #[test]
 fn assigns_a_unique_variable_for_an_instance_without_a_variable_name() {
-    crate::case(
-        "spec-0047",
-        "Nucleoid assigns a unique variable for an instance without a variable name",
-        r#"# There is a Vehicle type
-class Vehicle:
-    pass
-
-# There is a Vehicle
-Vehicle()
-
-assert(Vehicle.length, 1)
-assert(Vehicle[0].id != null, true)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Vehicle:
+    pass"#);
+    run(r#"Vehicle()"#);
+    assert_eq!(run(r#"Vehicle.length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"Vehicle[0].id != null"#), run(r#"(true)"#));
 }
 
 /// Nucleoid creates a function in state
 #[test]
 fn creates_a_function_in_state() {
-    crate::case(
-        "spec-0048",
-        "Nucleoid creates a function in state",
-        r#"# generate returns number times 10
-def generate(number):
-    return number * 10
-
-# random is 10
-random = 10
-
-# number is the result of the generate function call with random
-number = generate(random)
-
-assert(number, 100)
-
-# random is 20
-random = 20
-
-assert(number, 200)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"def generate(number):
+    return number * 10"#);
+    run(r#"random = 10"#);
+    run(r#"number = generate(random)"#);
+    assert_eq!(run(r#"number"#), run(r#"(100)"#));
+    run(r#"random = 20"#);
+    assert_eq!(run(r#"number"#), run(r#"(200)"#));
 }
 
 /// Nucleoid assigns a function as a dependency
 #[test]
 fn assigns_a_function_as_a_dependency() {
-    crate::case(
-        "spec-0049",
-        "Nucleoid assigns a function as a dependency",
-        r#"# list is an empty list
-list = []
-
-# count is the list filtered to odd numbers
-count = list.filter(n => n % 2)
-
-# Add 1 to the list
-list.push(1)
-
-assert(count.length, 1)
-
-# Add 2 to the list
-list.push(2)
-
-assert(count.length, 1)
-
-# Add 3 to the list
-list.push(3)
-
-assert(count.length, 2)
-
-# Remove the last item from the list
-list.pop()
-
-assert(count.length, 1)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"list = []"#);
+    run(r#"count = list.filter(n => n % 2)"#);
+    run(r#"list.push(1)"#);
+    assert_eq!(run(r#"count.length"#), run(r#"(1)"#));
+    run(r#"list.push(2)"#);
+    assert_eq!(run(r#"count.length"#), run(r#"(1)"#));
+    run(r#"list.push(3)"#);
+    assert_eq!(run(r#"count.length"#), run(r#"(2)"#));
+    run(r#"list.pop()"#);
+    assert_eq!(run(r#"count.length"#), run(r#"(1)"#));
 }
 
 /// Nucleoid supports a regular expression literal
 #[test]
 fn supports_a_regular_expression_literal() {
-    crate::case(
-        "spec-0050",
-        "Nucleoid supports a regular expression literal",
-        r#"# There is a User type
-class User:
-    pass
-
-# If any user's password does not match /.{4,8}/, then throw 'INVALID_PASSWORD'
-if not /.{4,8}/.test($User.password):
-    throw 'INVALID_PASSWORD'
-
-# user1 is a User
-user1 = User()
-
-assert(user1.password, null)
-
-try:
-    # user1's password is 'PAS'
+    let mut run = runner();
+    run(r#"class User:
+    pass"#);
+    run(r#"if not /.{4,8}/.test($User.password):
+    throw 'INVALID_PASSWORD'"#);
+    run(r#"user1 = User()"#);
+    assert_eq!(run(r#"user1.password"#), run(r#"(null)"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     user1.password = 'PAS'
 catch error:
-    assert(error, "INVALID_PASSWORD")"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID_PASSWORD"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid rejects defining a class declaration in a non-class block
 #[test]
 fn rejects_defining_a_class_declaration_in_a_non_class_block() {
-    crate::case(
-        "spec-0051",
-        "Nucleoid rejects defining a class declaration in a non-class block",
-        r#"# There is a Person type
-class Person:
-    pass
-
-# person1 is a Person whose weight is 90 and whose height is 1.8
-person1 = Person()
-person1.weight = 90
-person1.height = 1.8
-
-try:
-    # while in the block, weight is a local variable that is person1's weight,
-    # and height is a local variable that is person1's height,
-    # and any person's bmi is weight divided by height squared
+    let mut run = runner();
+    run(r#"class Person:
+    pass"#);
+    run(r#"person1 = Person()"#);
+    run(r#"person1.weight = 90"#);
+    run(r#"person1.height = 1.8"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     {
         weight = person1.weight
         height = person1.height
         $Person.bmi = weight / (height * height)
     }
 catch error:
-    assert(error, SyntaxError("Cannot define class declaration in non-class block"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = SyntaxError("Cannot define class declaration in non-class block")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid detects a circular dependency
 #[test]
 fn detects_a_circular_dependency() {
-    crate::case(
-        "spec-0052",
-        "Nucleoid detects a circular dependency",
-        r#"# number1 is 10
-number1 = 10
-
-# number2 is number1 times 10
-number2 = number1 * 10
-
-assert(number2, 100)
-
-try:
-    # number1 is number2 times 10
+    let mut run = runner();
+    run(r#"number1 = 10"#);
+    run(r#"number2 = number1 * 10"#);
+    assert_eq!(run(r#"number2"#), run(r#"(100)"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     number1 = number2 * 10
 catch error:
-    assert(error, TypeError("Circular Dependency"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = TypeError("Circular Dependency")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid rolls back a variable if an exception is thrown
 #[test]
 fn rolls_back_a_variable_if_an_exception_is_thrown() {
-    crate::case(
-        "spec-0053",
-        "Nucleoid rolls back a variable if an exception is thrown",
-        r#"# a is 5
-a = 5
-
-# if a is greater than 5, then throw 'INVALID_VALUE'
-if a > 5:
-    throw 'INVALID_VALUE'
-
-try:
-    # a is 6
+    let mut run = runner();
+    run(r#"a = 5"#);
+    run(r#"if a > 5:
+    throw 'INVALID_VALUE'"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     a = 6
 catch error:
-    assert(error, "INVALID_VALUE")
-
-assert(a, 5)"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID_VALUE"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run(r#"a"#), run(r#"(5)"#));
 }
 
 /// Nucleoid rolls back a property if an exception is thrown
 #[test]
 fn rolls_back_a_property_if_an_exception_is_thrown() {
-    crate::case(
-        "spec-0054",
-        "Nucleoid rolls back a property if an exception is thrown",
-        r#"# There is an Item type
-class Item:
-    pass
-
-# If any item's sku is 'A', then throw 'INVALID_SKU'
-if $Item.sku == 'A':
-    throw 'INVALID_SKU'
-
-# item1 is an Item
-item1 = Item()
-
-try:
-    # item1's sku is 'A'
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run(r#"if $Item.sku == 'A':
+    throw 'INVALID_SKU'"#);
+    run(r#"item1 = Item()"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     item1.sku = 'A'
 catch error:
-    assert(error, "INVALID_SKU")
-
-assert(item1.sku, null)"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID_SKU"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run(r#"item1.sku"#), run(r#"(null)"#));
 }
 
 /// Nucleoid rolls back an instance if an exception is thrown
 #[test]
 fn rolls_back_an_instance_if_an_exception_is_thrown() {
-    crate::case(
-        "spec-0055",
-        "Nucleoid rolls back an instance if an exception is thrown",
-        r#"# There is a User type,
-# which has a first as a string
-# and a last as a string
-class User(first: str, last: str):
+    let mut run = runner();
+    run(r#"class User(first: str, last: str):
     this.first = first
-    this.last = last
-
-# If any user's first is shorter than 3 characters, then throw 'INVALID_USER'
-if $User.first.length < 3:
-    throw 'INVALID_USER'
-
-try:
-    # user1 is a User whose first is 'F' and whose last is 'L'
+    this.last = last"#);
+    run(r#"if $User.first.length < 3:
+    throw 'INVALID_USER'"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     user1 = User('F', 'L')
 catch error:
-    assert(error, "INVALID_USER")
-
-assert(User.length, 0)
-
-try:
-    # user1
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID_USER"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run(r#"User.length"#), run(r#"(0)"#));
+    run("__nucleoid_test_assertion_1_actual = null");
+    run("__nucleoid_test_assertion_1_expected = null");
+    run("__nucleoid_test_assertion_1_ran = false");
+    run(r#"try:
     user1
 catch error:
-    assert(error, ReferenceError("user1 is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_1_actual = error
+    __nucleoid_test_assertion_1_expected = ReferenceError("user1 is not defined")
+    __nucleoid_test_assertion_1_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
 }
 
 /// Nucleoid updates a variable assignment
 #[test]
 fn updates_a_variable_assignment() {
-    crate::case(
-        "spec-0056",
-        "Nucleoid updates a variable assignment",
-        r#"# a is 1
-a = 1
-
-# b is 2
-b = 2
-
-# c is a plus 3
-c = a + 3
-
-assert(c, 4)
-
-# c is b plus 3
-c = b + 3
-
-assert(c, 5)
-
-# b is 4
-b = 4
-
-assert(c, 7)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = 2"#);
+    run(r#"c = a + 3"#);
+    assert_eq!(run(r#"c"#), run(r#"(4)"#));
+    run(r#"c = b + 3"#);
+    assert_eq!(run(r#"c"#), run(r#"(5)"#));
+    run(r#"b = 4"#);
+    assert_eq!(run(r#"c"#), run(r#"(7)"#));
 }
 
 /// Nucleoid uses only the value when a variable references itself
 #[test]
 fn uses_only_the_value_when_a_variable_references_itself() {
-    crate::case(
-        "spec-0057",
-        "Nucleoid uses only the value when a variable references itself",
-        r#"# radius is 10
-radius = 10
-
-# radius is radius plus 10
-radius = radius + 10
-
-assert(radius, 20)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"radius = 10"#);
+    run(r#"radius = radius + 10"#);
+    assert_eq!(run(r#"radius"#), run(r#"(20)"#));
 }
 
 /// Nucleoid deletes a variable assignment
 #[test]
 fn deletes_a_variable_assignment() {
-    crate::case(
-        "spec-0058",
-        "Nucleoid deletes a variable assignment",
-        r#"# t is 1
-t = 1
-
-# q is t plus 1
-q = t + 1
-
-assert(q, 2)
-
-# q is deleted
-delete q
-
-# t is 2
-t = 2
-
-try:
-    # q
+    let mut run = runner();
+    run(r#"t = 1"#);
+    run(r#"q = t + 1"#);
+    assert_eq!(run(r#"q"#), run(r#"(2)"#));
+    run(r#"delete q"#);
+    run(r#"t = 2"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     q
 catch error:
-    assert(error, ReferenceError("q is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("q is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid returns the assigned value in a variable assignment
 #[test]
 fn returns_the_assigned_value_in_a_variable_assignment() {
-    crate::case(
-        "spec-0059",
-        "Nucleoid returns the assigned value in a variable assignment",
-        r#"# x is 1
-x = 1"#,
-        Some("1"),
-    );
+    let mut run = runner();
+    run(r#"x = 1
+
+# return: 1"#);
 }
 
 /// Nucleoid assigns a parameter in a function as a dependency
 #[test]
 fn assigns_a_parameter_in_a_function_as_a_dependency() {
-    crate::case(
-        "spec-0060",
-        "Nucleoid assigns a parameter in a function as a dependency",
-        r#"# str1 is "ABC"
-str1 = "ABC"
-
-# str2 is str1 lowercased plus "d"
-str2 = str1.lower() + "d"
-
-# str3 is str2 concatenated with str1
-str3 = str2 + str1
-
-assert(str2, "abcd")
-assert(str3, "abcdABC")
-
-# str1 is "AAA"
-str1 = "AAA"
-
-assert(str2, "aaad")
-assert(str3, "aaadAAA")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"str1 = "ABC""#);
+    run(r#"str2 = str1.lower() + "d""#);
+    run(r#"str3 = str2 + str1"#);
+    assert_eq!(run(r#"str2"#), run(r#"("abcd")"#));
+    assert_eq!(run(r#"str3"#), run(r#"("abcdABC")"#));
+    run(r#"str1 = "AAA""#);
+    assert_eq!(run(r#"str2"#), run(r#"("aaad")"#));
+    assert_eq!(run(r#"str3"#), run(r#"("aaadAAA")"#));
 }
 
 /// Nucleoid uses value property to indicate using only value of variable
 #[test]
 fn uses_value_property_to_indicate_using_only_value_of_variable() {
-    crate::case(
-        "spec-0061",
-        "Nucleoid uses value property to indicate using only value of variable",
-        r#"# goldenRatio is 1.618
-goldenRatio = 1.618
-
-# altitude is 10
-altitude = 10
-
-# width is goldenRatio's value times altitude
-width = goldenRatio.value * altitude
-
-# depth is goldenRatio's value times altitude
-depth = goldenRatio.value * altitude
-
-assert(width, 16.18)
-assert(depth, 16.18)
-
-# goldenRatio is 1.62
-goldenRatio = 1.62
-
-assert(width, 16.18)
-assert(depth, 16.18)
-
-# altitude is 100
-altitude = 100
-
-assert(width, 161.8)
-assert(depth, 161.8)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"goldenRatio = 1.618"#);
+    run(r#"altitude = 10"#);
+    run(r#"width = goldenRatio.value * altitude"#);
+    run(r#"depth = goldenRatio.value * altitude"#);
+    assert_eq!(run(r#"width"#), run(r#"(16.18)"#));
+    assert_eq!(run(r#"depth"#), run(r#"(16.18)"#));
+    run(r#"goldenRatio = 1.62"#);
+    assert_eq!(run(r#"width"#), run(r#"(16.18)"#));
+    assert_eq!(run(r#"depth"#), run(r#"(16.18)"#));
+    run(r#"altitude = 100"#);
+    assert_eq!(run(r#"width"#), run(r#"(161.8)"#));
+    assert_eq!(run(r#"depth"#), run(r#"(161.8)"#));
 }
 
 /// Nucleoid creates a nested object in a block and assigns it to a class-level property before instantiation
 #[test]
 fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_before_instantiation() {
-    crate::case(
-        "spec-0062",
-        "Nucleoid creates a nested object in a block and assigns it to a class-level property before instantiation",
-        r#"# There is an Account type
-class Account:
-    pass
-
-# There is a Currency type
-class Currency:
-    pass
-
-# Any currency's description is "Code:" plus the currency's code
-$Currency.description = "Code:" + $Currency.code
-
-# balance is an Object whose currency is an Object whose code is "USD",
-# and any account's balance is balance
-{
+    let mut run = runner();
+    run(r#"class Account:
+    pass"#);
+    run(r#"class Currency:
+    pass"#);
+    run(r#"$Currency.description = "Code:" + $Currency.code"#);
+    run(r#"{
     balance = Object()
     balance.currency = Object()
     balance.currency.code = "USD"
     $Account.balance = balance
-}
-
-# account1 is an Account
-account1 = Account()
-
-assert(account1.balance.currency.code, "USD")
-assert(account1.balance.currency.description, null)"#,
-        None,
-    );
+}"#);
+    run(r#"account1 = Account()"#);
+    assert_eq!(run(r#"account1.balance.currency.code"#), run(r#"("USD")"#));
+    assert_eq!(run(r#"account1.balance.currency.description"#), run(r#"(null)"#));
 }
 
 /// Nucleoid creates a nested object in a block and assigns it to a class-level property after instantiation
 #[test]
 fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_after_instantiation() {
-    crate::case(
-        "spec-0063",
-        "Nucleoid creates a nested object in a block and assigns it to a class-level property after instantiation",
-        r#"# There is a Warehouse type
-class Warehouse:
-    pass
-
-# warehouse1 is a Warehouse
-warehouse1 = Warehouse()
-
-# inventory is an Object whose item is an Object whose sku is "699546085767",
-# and any warehouse's inventory is inventory
-{
+    let mut run = runner();
+    run(r#"class Warehouse:
+    pass"#);
+    run(r#"warehouse1 = Warehouse()"#);
+    run(r#"{
     inventory = Object()
     inventory.item = Object()
     inventory.item.sku = "699546085767"
     $Warehouse.inventory = inventory
-}
-
-assert(warehouse1.inventory.item.sku, "699546085767")
-assert(warehouse1.inventory.item.description, null)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"warehouse1.inventory.item.sku"#), run(r#"("699546085767")"#));
+    assert_eq!(run(r#"warehouse1.inventory.item.description"#), run(r#"(null)"#));
 }
 
 /// Nucleoid creates an instance inside a block
 #[test]
 fn creates_an_instance_inside_a_block() {
-    crate::case(
-        "spec-0064",
-        "Nucleoid creates an instance inside a block",
-        r#"# There is a Device type,
-# which has a name as a string
-class Device(name: str):
-    this.name = name
-
-# No device is deleted
-$Device.deleted = false
-
-# Any device's key is "X-" plus the device's name
-$Device.key = "X-" + $Device.name
-
-# name is "Hall",
-# and device1 is a Device whose name is name
-{
+    let mut run = runner();
+    run(r#"class Device(name: str):
+    this.name = name"#);
+    run(r#"$Device.deleted = false"#);
+    run(r#"$Device.key = "X-" + $Device.name"#);
+    run(r#"{
     name = "Hall"
     device1 = Device(name)
-}
-
-assert(device1.name, "Hall")
-assert(device1.key, "X-Hall")
-assert(device1.deleted, false)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"device1.name"#), run(r#"("Hall")"#));
+    assert_eq!(run(r#"device1.key"#), run(r#"("X-Hall")"#));
+    assert_eq!(run(r#"device1.deleted"#), run(r#"(false)"#));
 }
 
 /// Nucleoid creates an instance inside a block without a variable name
 #[test]
 fn creates_an_instance_inside_a_block_without_a_variable_name() {
-    crate::case(
-        "spec-0065",
-        "Nucleoid creates an instance inside a block without a variable name",
-        r#"# There is a Summary type,
-# which has a rate as a number
-class Summary(rate: int):
-    this.rate = rate
-
-# Any summary's score is the summary's rate times 100
-$Summary.score = $Summary.rate * 100
-
-# rate is 4,
-# and there is a Summary whose rate is rate
-{
+    let mut run = runner();
+    run(r#"class Summary(rate: int):
+    this.rate = rate"#);
+    run(r#"$Summary.score = $Summary.rate * 100"#);
+    run(r#"{
     rate = 4
     Summary(rate)
-}
-
-assert(Summary[0].rate, 4)
-assert(Summary[0].score, 400)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"Summary[0].rate"#), run(r#"(4)"#));
+    assert_eq!(run(r#"Summary[0].score"#), run(r#"(400)"#));
 }
 
 /// Nucleoid creates a local variable inside a block
 #[test]
 fn creates_a_local_variable_inside_a_block() {
-    crate::case(
-        "spec-0066",
-        "Nucleoid creates a local variable inside a block",
-        r#"# a is 5
-a = 5
-
-# b is 10
-b = 10
-
-# if a is greater than 9, then while in the block, c is a plus b,
-# and d is c times 10
-if a > 9:
+    let mut run = runner();
+    run(r#"a = 5"#);
+    run(r#"b = 10"#);
+    run(r#"if a > 9:
     c = a + b
-    d = c * 10
-
-# a is 10
-a = 10
-
-assert(d, 200)
-
-# a is 15
-a = 15
-
-assert(d, 250)
-
-# b is 20
-b = 20
-
-assert(d, 350)"#,
-        None,
-    );
+    d = c * 10"#);
+    run(r#"a = 10"#);
+    assert_eq!(run(r#"d"#), run(r#"(200)"#));
+    run(r#"a = 15"#);
+    assert_eq!(run(r#"d"#), run(r#"(250)"#));
+    run(r#"b = 20"#);
+    assert_eq!(run(r#"d"#), run(r#"(350)"#));
 }
 
 /// Nucleoid runs a local variable as an object before declaration
 #[test]
 fn runs_a_local_variable_as_an_object_before_declaration() {
-    crate::case(
-        "spec-0067",
-        "Nucleoid runs a local variable as an object before declaration",
-        r#"# There is a Plane type
-class Plane:
-    pass
-
-# There is a Trip type
-class Trip:
-    pass
-
-# plane1 is a Plane whose speed is 903
-plane1 = Plane()
-plane1.speed = 903
-
-# trip1 is a Trip whose distance is 5540
-trip1 = Trip()
-trip1.distance = 5540
-
-# while in the block trip is any plane's trip,
-# and any plane's time is trip's distance divided by the plane's speed
-{
+    let mut run = runner();
+    run(r#"class Plane:
+    pass"#);
+    run(r#"class Trip:
+    pass"#);
+    run(r#"plane1 = Plane()"#);
+    run(r#"plane1.speed = 903"#);
+    run(r#"trip1 = Trip()"#);
+    run(r#"trip1.distance = 5540"#);
+    run(r#"{
     trip = $Plane.trip
     $Plane.time = trip.distance / $Plane.speed
-}
-
-# plane1's trip is trip1
-plane1.trip = trip1
-
-assert(plane1.time, 6.135105204872647)"#,
-        None,
-    );
+}"#);
+    run(r#"plane1.trip = trip1"#);
+    assert_eq!(run(r#"plane1.time"#), run(r#"(6.135105204872647)"#));
 }
 
 /// Nucleoid runs a local variable as an object after declaration
 #[test]
 fn runs_a_local_variable_as_an_object_after_declaration() {
-    crate::case(
-        "spec-0068",
-        "Nucleoid runs a local variable as an object after declaration",
-        r#"# There is a Seller type
-class Seller:
-    pass
-
-# There is a Commission type
-class Commission:
-    pass
-
-# seller1 is a Seller whose sales is 1000000
-seller1 = Seller()
-seller1.sales = 1000000
-
-# comm1 is a Commission whose rate is 0.05
-comm1 = Commission()
-comm1.rate = 0.05
-
-# seller1's commission is comm1
-seller1.commission = comm1
-
-# While in the block, commission is any seller's commission,
-# and any seller's pay is the seller's sales times commission's rate
-{
+    let mut run = runner();
+    run(r#"class Seller:
+    pass"#);
+    run(r#"class Commission:
+    pass"#);
+    run(r#"seller1 = Seller()"#);
+    run(r#"seller1.sales = 1000000"#);
+    run(r#"comm1 = Commission()"#);
+    run(r#"comm1.rate = 0.05"#);
+    run(r#"seller1.commission = comm1"#);
+    run(r#"{
     commission = $Seller.commission
     $Seller.pay = $Seller.sales * commission.rate
-}
-
-assert(seller1.pay, 50000)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"seller1.pay"#), run(r#"(50000)"#));
 }
 
 /// Nucleoid assigns a property on a local variable after initialization
 #[test]
 fn assigns_a_property_on_a_local_variable_after_initialization() {
-    crate::case(
-        "spec-0069",
-        "Nucleoid assigns a property on a local variable after initialization",
-        r#"# There is a Stock type
-class Stock:
-    pass
-
-# There is a Trade type
-class Trade:
-    pass
-
-# stock1 is a Stock whose price is 100
-stock1 = Stock()
-stock1.price = 100
-
-# trade1 is a Trade whose quantity is 1
-trade1 = Trade()
-trade1.quantity = 1
-
-# stock1's trade is trade1
-stock1.trade = trade1
-
-# While in the block, trade is any stock's trade,
-# and trade's worth is the stock's price times trade's quantity
-{
+    let mut run = runner();
+    run(r#"class Stock:
+    pass"#);
+    run(r#"class Trade:
+    pass"#);
+    run(r#"stock1 = Stock()"#);
+    run(r#"stock1.price = 100"#);
+    run(r#"trade1 = Trade()"#);
+    run(r#"trade1.quantity = 1"#);
+    run(r#"stock1.trade = trade1"#);
+    run(r#"{
     trade = $Stock.trade
     trade.worth = $Stock.price * trade.quantity
-}
-
-assert(trade1.worth, 100)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"trade1.worth"#), run(r#"(100)"#));
 }
 
 /// Nucleoid reassigns a shadowing local variable in a nested block
 #[test]
 fn reassigns_a_shadowing_local_variable_in_a_nested_block() {
-    crate::case(
-        "spec-0070",
-        "Nucleoid reassigns a shadowing local variable in a nested block",
-        r#"# barcode is "barcode"
-barcode = "barcode"
-
-# a local barcode shadows the outer barcode inside the block,
-# and a nested block reassigns the local barcode to "barcode2"
-{
+    let mut run = runner();
+    run(r#"barcode = "barcode""#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"{
     barcode = "barcode"
     {
         barcode = "barcode2"
         {
-            assert(barcode, "barcode2")
+            __nucleoid_test_assertion_0_actual = barcode
+            __nucleoid_test_assertion_0_expected = "barcode2"
+            __nucleoid_test_assertion_0_ran = true
         }
     }
-}
-
-assert(barcode, "barcode")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run(r#"barcode"#), run(r#"("barcode")"#));
 }
 
 /// Nucleoid holds the result of a function in a local variable
 #[test]
 fn holds_the_result_of_a_function_in_a_local_variable() {
-    crate::case(
-        "spec-0071",
-        "Nucleoid holds the result of a function in a local variable",
-        r#"# bugs is an empty list
-bugs = []
-
-# ticket is 1
-ticket = 1
-
-# There is a Bug type
-class Bug:
-    pass
-
-# bug1 is a Bug whose ticket is 1 and whose priority is "LOW",
-# and bug1 is added to bugs
-bug1 = Bug()
-bug1.ticket = 1
-bug1.priority = "LOW"
-bugs.push(bug1)
-
-# bug2 is a Bug whose ticket is 2 and whose priority is "MEDIUM",
-# and bug2 is added to bugs
-bug2 = Bug()
-bug2.ticket = 2
-bug2.priority = "MEDIUM"
-bugs.push(bug2)
-
-# While in the block, bug is the bug in bugs whose ticket is ticket,
-# and bug is selected
-{
+    let mut run = runner();
+    run(r#"bugs = []"#);
+    run(r#"ticket = 1"#);
+    run(r#"class Bug:
+    pass"#);
+    run(r#"bug1 = Bug()"#);
+    run(r#"bug1.ticket = 1"#);
+    run(r#"bug1.priority = "LOW""#);
+    run(r#"bugs.push(bug1)"#);
+    run(r#"bug2 = Bug()"#);
+    run(r#"bug2.ticket = 2"#);
+    run(r#"bug2.priority = "MEDIUM""#);
+    run(r#"bugs.push(bug2)"#);
+    run(r#"{
     bug = bugs.find(b => b.ticket == ticket)
     bug.selected = true
-}
-
-assert(bug1.selected, true)
-assert(bug2.selected, null)
-
-# ticket is 2
-ticket = 2
-
-assert(bug2.selected, true)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"bug1.selected"#), run(r#"(true)"#));
+    assert_eq!(run(r#"bug2.selected"#), run(r#"(null)"#));
+    run(r#"ticket = 2"#);
+    assert_eq!(run(r#"bug2.selected"#), run(r#"(true)"#));
 }
 
 /// Nucleoid runs a block statement of variable
 #[test]
 fn runs_a_block_statement_of_variable() {
-    crate::case(
-        "spec-0072",
-        "Nucleoid runs a block statement of variable",
-        r#"# h is 1
-h = 1
-
-# while in the block, value is a local variable that is h times 2,
-# and j is value times 2
-{
+    let mut run = runner();
+    run(r#"h = 1"#);
+    run(r#"{
     value = h * 2
     j = value * 2
-}
-
-assert(j, 4)
-
-# h is 2
-h = 2
-
-assert(j, 8)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"j"#), run(r#"(4)"#));
+    run(r#"h = 2"#);
+    assert_eq!(run(r#"j"#), run(r#"(8)"#));
 }
 
 /// Nucleoid runs a nested block statement of variable
 #[test]
 fn runs_a_nested_block_statement_of_variable() {
-    crate::case(
-        "spec-0073",
-        "Nucleoid runs a nested block statement of variable",
-        r#"# radius is 10
-radius = 10
-
-# while in the block, area is a local variable that is radius squared times 3.14,
-# and in a nested block, volume is area times 5
-{
+    let mut run = runner();
+    run(r#"radius = 10"#);
+    run(r#"{
     area = Math.pow(radius, 2) * 3.14
     {
         volume = area * 5
     }
-}
-
-assert(volume, 1570)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"volume"#), run(r#"(1570)"#));
 }
 
 /// Nucleoid runs a nested if statement of variable
 #[test]
 fn runs_a_nested_if_statement_of_variable() {
-    crate::case(
-        "spec-0074",
-        "Nucleoid runs a nested if statement of variable",
-        r#"# gravity is 9.8
-gravity = 9.8
-
-# time is 10
-time = 10
-
-# distance is 480
-distance = 480
-
-# target is true
-target = true
-
-# while in the block, dist is a local variable that is one half times gravity times time times time,
-# and if dist is greater than distance, then hit is target
-{
+    let mut run = runner();
+    run(r#"gravity = 9.8"#);
+    run(r#"time = 10"#);
+    run(r#"distance = 480"#);
+    run(r#"target = true"#);
+    run(r#"{
     dist = 1 / 2 * gravity * time * time
     if dist > distance:
         hit = target
-}
-
-assert(hit, true)
-
-# target is false
-target = false
-
-assert(hit, false)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"hit"#), run(r#"(true)"#));
+    run(r#"target = false"#);
+    assert_eq!(run(r#"hit"#), run(r#"(false)"#));
 }
 
 /// Nucleoid runs a nested else statement of variable
 #[test]
 fn runs_a_nested_else_statement_of_variable() {
-    crate::case(
-        "spec-0075",
-        "Nucleoid runs a nested else statement of variable",
-        r#"# percentage is 28
-percentage = 28
-
-# density is 0.899
-density = 0.899
-
-# substance is "NH3"
-substance = "NH3"
-
-# molarConcentration is null
-molarConcentration = null
-
-# fallback is 0
-fallback = 0
-
-# while in the block, concentration is a local variable that is percentage times density divided by 100 times 1000,
-# and if substance is "NH3", then molarConcentration is concentration divided by 17.04,
-# else molarConcentration is fallback
-{
+    let mut run = runner();
+    run(r#"percentage = 28"#);
+    run(r#"density = 0.899"#);
+    run(r#"substance = "NH3""#);
+    run(r#"molarConcentration = null"#);
+    run(r#"fallback = 0"#);
+    run(r#"{
     concentration = percentage * density / 100 * 1000
     if substance == "NH3":
         molarConcentration = concentration / 17.04
     else:
         molarConcentration = fallback
-}
-
-# substance is "NH16"
-substance = "NH16"
-
-# fallback is 1
-fallback = 1
-
-assert(molarConcentration, 1)"#,
-        None,
-    );
+}"#);
+    run(r#"substance = "NH16""#);
+    run(r#"fallback = 1"#);
+    assert_eq!(run(r#"molarConcentration"#), run(r#"(1)"#));
 }
 
 /// Nucleoid assigns a variable to a reference
 #[test]
 fn assigns_a_variable_to_a_reference() {
-    crate::case(
-        "spec-0076",
-        "Nucleoid assigns a variable to a reference",
-        r#"# a is 1
-a = 1
-
-# b is a
-b = a
-
-assert(b, 1)
-
-# a is 2
-a = 2
-
-assert(b, 2)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a"#);
+    assert_eq!(run(r#"b"#), run(r#"(1)"#));
+    run(r#"a = 2"#);
+    assert_eq!(run(r#"b"#), run(r#"(2)"#));
 }
 
 /// Nucleoid assigns an object to a variable
 #[test]
 fn assigns_an_object_to_a_variable() {
-    crate::case(
-        "spec-0077",
-        "Nucleoid assigns an object to a variable",
-        r#"# There is a Model type
-class Model:
-    pass
-
-# model1 is a Model
-model1 = Model()
-
-assert(typeof model1, Object)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Model:
+    pass"#);
+    run(r#"model1 = Model()"#);
+    assert_eq!(run(r#"typeof model1"#), run(r#"(Object)"#));
 }
 
 /// Nucleoid defines a class in the state
 #[test]
 fn defines_a_class_in_the_state() {
-    crate::case(
-        "spec-0078",
-        "Nucleoid defines a class in the state",
-        r#"# There is an Entity type
-class Entity:
-    pass
-
-assert(typeof $Entity, Class)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Entity:
+    pass"#);
+    assert_eq!(run(r#"typeof $Entity"#), run(r#"(Class)"#));
 }
 
 /// Nucleoid rejects creating an instance if the class does not exist
 #[test]
 fn rejects_creating_an_instance_if_the_class_does_not_exist() {
-    crate::case(
-        "spec-0079",
-        "Nucleoid rejects creating an instance if the class does not exist",
-        r#"try:
-    # chart1 is a Chart
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     chart1 = Chart()
 catch error:
-    assert(error, ReferenceError("Chart is not defined"))
-
-# There is a Chart type
-class Chart:
-    pass
-
-# chart1 is a Chart
-chart1 = Chart()
-
-try:
-    # chart1's plot is a Plot
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("Chart is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    run(r#"class Chart:
+    pass"#);
+    run(r#"chart1 = Chart()"#);
+    run("__nucleoid_test_assertion_1_actual = null");
+    run("__nucleoid_test_assertion_1_expected = null");
+    run("__nucleoid_test_assertion_1_ran = false");
+    run(r#"try:
     chart1.plot = Plot()
 catch error:
-    assert(error, ReferenceError("Plot is not defined"))
-
-try:
-    # any chart's plot is a Plot
+    __nucleoid_test_assertion_1_actual = error
+    __nucleoid_test_assertion_1_expected = ReferenceError("Plot is not defined")
+    __nucleoid_test_assertion_1_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    run("__nucleoid_test_assertion_2_actual = null");
+    run("__nucleoid_test_assertion_2_expected = null");
+    run("__nucleoid_test_assertion_2_ran = false");
+    run(r#"try:
     $Chart.plot = Plot()
 catch error:
-    assert(error, ReferenceError("Plot is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_2_actual = error
+    __nucleoid_test_assertion_2_expected = ReferenceError("Plot is not defined")
+    __nucleoid_test_assertion_2_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_2_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_2_actual"), run("(__nucleoid_test_assertion_2_expected)"));
 }
 
 /// Nucleoid creates a property assignment before declaration
 #[test]
 fn creates_a_property_assignment_before_declaration() {
-    crate::case(
-        "spec-0080",
-        "Nucleoid creates a property assignment before declaration",
-        r#"# There is an Order type
-class Order:
-    pass
-
-# order1 is an Order
-order1 = Order()
-
-# order1's upc is "04061" plus order1's barcode
-order1.upc = "04061" + order1.barcode
-
-assert(order1.upc, null)
-
-# order1's barcode is "94067"
-order1.barcode = "94067"
-
-assert(order1.upc, "0406194067")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Order:
+    pass"#);
+    run(r#"order1 = Order()"#);
+    run(r#"order1.upc = "04061" + order1.barcode"#);
+    assert_eq!(run(r#"order1.upc"#), run(r#"(null)"#));
+    run(r#"order1.barcode = "94067""#);
+    assert_eq!(run(r#"order1.upc"#), run(r#"("0406194067")"#));
 }
 
 /// Nucleoid creates a property assignment after declaration
 #[test]
 fn creates_a_property_assignment_after_declaration() {
-    crate::case(
-        "spec-0081",
-        "Nucleoid creates a property assignment after declaration",
-        r#"# There is a User type
-class User:
-    pass
-
-# user1 is a User
-user1 = User()
-
-# user1's name is "sample"
-user1.name = "sample"
-
-# user1's email is user1's name plus "@example.com"
-user1.email = user1.name + "@example.com"
-
-assert(user1.email, "sample@example.com")
-
-# user1's name is "samplex"
-user1.name = "samplex"
-
-assert(user1.email, "samplex@example.com")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class User:
+    pass"#);
+    run(r#"user1 = User()"#);
+    run(r#"user1.name = "sample""#);
+    run(r#"user1.email = user1.name + "@example.com""#);
+    assert_eq!(run(r#"user1.email"#), run(r#"("sample@example.com")"#));
+    run(r#"user1.name = "samplex""#);
+    assert_eq!(run(r#"user1.email"#), run(r#"("samplex@example.com")"#));
 }
 
 /// Nucleoid creates a property assignment only if the instance is defined
 #[test]
 fn creates_a_property_assignment_only_if_the_instance_is_defined() {
-    crate::case(
-        "spec-0082",
-        "Nucleoid creates a property assignment only if the instance is defined",
-        r#"# There is a Channel type
-class Channel:
-    pass
-
-# channel1 is a Channel
-channel1 = Channel()
-
-try:
-    # channel1's frequency's type is "ANGULAR"
+    let mut run = runner();
+    run(r#"class Channel:
+    pass"#);
+    run(r#"channel1 = Channel()"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     channel1.frequency.type = "ANGULAR"
 catch error:
-    assert(error, ReferenceError("channel1.frequency is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("channel1.frequency is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid creates an object and assigns it to a variable
 #[test]
 fn creates_an_object_and_assigns_it_to_a_variable() {
-    crate::case(
-        "spec-0083",
-        "Nucleoid creates an object and assigns it to a variable",
-        r#"# There is an Item type,
-# which has a name as a string
-class Item(name: str):
-    this.name = name
-
-# item1 is an Item whose name is "NAME-1"
-item1 = Item("NAME-1")
-
-assert(item1, { "id": "item1", "name": "NAME-1" })
-
-# item2 is an Item with no name
-item2 = Item()
-
-assert(item2, { "id": "item2", "name": null })"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Item(name: str):
+    this.name = name"#);
+    run(r#"item1 = Item("NAME-1")"#);
+    assert_eq!(run(r#"item1"#), run(r#"({ "id": "item1", "name": "NAME-1" })"#));
+    run(r#"item2 = Item()"#);
+    assert_eq!(run(r#"item2"#), run(r#"({ "id": "item2", "name": null })"#));
 }
 
 /// Nucleoid creates an object assignment as a property only if the instance is defined
 #[test]
 fn creates_an_object_assignment_as_a_property_only_if_the_instance_is_defined() {
-    crate::case(
-        "spec-0084",
-        "Nucleoid creates an object assignment as a property only if the instance is defined",
-        r#"# There is a Worker type
-class Worker:
-    pass
-
-# There is a Schedule type
-class Schedule:
-    pass
-
-# worker1 is a Worker
-worker1 = Worker()
-
-try:
-    # worker1's duty's schedule is a Schedule
+    let mut run = runner();
+    run(r#"class Worker:
+    pass"#);
+    run(r#"class Schedule:
+    pass"#);
+    run(r#"worker1 = Worker()"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     worker1.duty.schedule = Schedule()
 catch error:
-    assert(error, ReferenceError("worker1.duty is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("worker1.duty is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid uses only the value when a property references itself
 #[test]
 fn uses_only_the_value_when_a_property_references_itself() {
-    crate::case(
-        "spec-0085",
-        "Nucleoid uses only the value when a property references itself",
-        r#"# There is a Construction type
-class Construction:
-    pass
-
-# construction1 is a Construction
-construction1 = Construction()
-
-# construction1's timeline is 120
-construction1.timeline = 120
-
-# construction1's timeline is 2 times construction1's timeline
-construction1.timeline = 2 * construction1.timeline
-
-assert(construction1.timeline, 240)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Construction:
+    pass"#);
+    run(r#"construction1 = Construction()"#);
+    run(r#"construction1.timeline = 120"#);
+    run(r#"construction1.timeline = 2 * construction1.timeline"#);
+    assert_eq!(run(r#"construction1.timeline"#), run(r#"(240)"#));
 }
 
 /// Nucleoid assigns an object to a property before initialization
 #[test]
 fn assigns_an_object_to_a_property_before_initialization() {
-    crate::case(
-        "spec-0086",
-        "Nucleoid assigns an object to a property before initialization",
-        r#"# There is an Agent type
-class Agent:
-    pass
-
-# There is a Distance type
-class Distance:
-    pass
-
-# Any distance's total is the square root of the distance's x squared plus the distance's y squared
-$Distance.total = Math.sqrt($Distance.x * $Distance.x + $Distance.y * $Distance.y)
-
-# agent1 is an Agent
-agent1 = Agent()
-
-# agent1's distance is a Distance
-agent1.distance = Distance()
-
-assert(agent1.distance.total, null)
-
-# agent1's distance's x is 3 and its y is 4
-agent1.distance.x = 3
-agent1.distance.y = 4
-
-assert(agent1.distance.total, 5)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Agent:
+    pass"#);
+    run(r#"class Distance:
+    pass"#);
+    run(r#"$Distance.total = Math.sqrt($Distance.x * $Distance.x + $Distance.y * $Distance.y)"#);
+    run(r#"agent1 = Agent()"#);
+    run(r#"agent1.distance = Distance()"#);
+    assert_eq!(run(r#"agent1.distance.total"#), run(r#"(null)"#));
+    run(r#"agent1.distance.x = 3"#);
+    run(r#"agent1.distance.y = 4"#);
+    assert_eq!(run(r#"agent1.distance.total"#), run(r#"(5)"#));
 }
 
 /// Nucleoid assigns an object to a property after initialization
 #[test]
 fn assigns_an_object_to_a_property_after_initialization() {
-    crate::case(
-        "spec-0087",
-        "Nucleoid assigns an object to a property after initialization",
-        r#"# There is a Product type
-class Product:
-    pass
-
-# product1 is a Product
-product1 = Product()
-
-# There is a Quality type
-class Quality:
-    pass
-
-# product1's quality is a Quality whose score is 15
-product1.quality = Quality()
-product1.quality.score = 15
-
-assert(product1.quality.class, null)
-
-# Any quality's class is the character with the code 65 plus the floor of the quality's score divided by 10
-$Quality.class = String.fromCharCode(65 + Math.floor($Quality.score / 10))
-
-assert(product1.quality.class, "B")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Product:
+    pass"#);
+    run(r#"product1 = Product()"#);
+    run(r#"class Quality:
+    pass"#);
+    run(r#"product1.quality = Quality()"#);
+    run(r#"product1.quality.score = 15"#);
+    assert_eq!(run(r#"product1.quality.class"#), run(r#"(null)"#));
+    run(r#"$Quality.class = String.fromCharCode(65 + Math.floor($Quality.score / 10))"#);
+    assert_eq!(run(r#"product1.quality.class"#), run(r#"("B")"#));
 }
 
 /// Nucleoid rejects value as a property name
 #[test]
 fn rejects_value_as_a_property_name() {
-    crate::case(
-        "spec-0088",
-        "Nucleoid rejects value as a property name",
-        r#"# There is a Schedule type
-class Schedule:
-    pass
-
-# There is a Place type
-class Place:
-    pass
-
-# value is a Schedule
-value = Schedule()
-
-assert(value, { "id": "value" })
-
-try:
-    # value's value is a Place
+    let mut run = runner();
+    run(r#"class Schedule:
+    pass"#);
+    run(r#"class Place:
+    pass"#);
+    run(r#"value = Schedule()"#);
+    assert_eq!(run(r#"value"#), run(r#"({ "id": "value" })"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     value.value = Place()
 catch error:
-    assert(error, TypeError("Cannot use 'value' as a property"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid rejects value as a property name in a value assignment
 #[test]
 fn rejects_value_as_a_property_name_in_a_value_assignment() {
-    crate::case(
-        "spec-0089",
-        "Nucleoid rejects value as a property name in a value assignment",
-        r#"# There is a Value type
-class Value:
-    pass
-
-# value is a Value
-value = Value()
-
-assert(value, { "id": "value" })
-
-try:
-    # value's value is 2147483647
+    let mut run = runner();
+    run(r#"class Value:
+    pass"#);
+    run(r#"value = Value()"#);
+    assert_eq!(run(r#"value"#), run(r#"({ "id": "value" })"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     value.value = 2147483647
 catch error:
-    assert(error, TypeError("Cannot use 'value' as a property"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid uses value property to indicate using only value of property
 #[test]
 fn uses_value_property_to_indicate_using_only_value_of_property() {
-    crate::case(
-        "spec-0090",
-        "Nucleoid uses value property to indicate using only value of property",
-        r#"# There is a Weight type
-class Weight:
-    pass
-
-# weight1 is a Weight whose gravity is 1.352 and whose mass is 1000
-weight1 = Weight()
-weight1.gravity = 1.352
-weight1.mass = 1000
-
-# weight1's force is weight1's gravity times weight1's mass's value
-weight1.force = weight1.gravity * weight1.mass.value
-
-assert(weight1.force, 1352)
-
-# weight1's mass is 2000
-weight1.mass = 2000
-
-assert(weight1.force, 1352)
-
-# weight1's gravity is 2
-weight1.gravity = 2
-
-assert(weight1.force, 2000)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Weight:
+    pass"#);
+    run(r#"weight1 = Weight()"#);
+    run(r#"weight1.gravity = 1.352"#);
+    run(r#"weight1.mass = 1000"#);
+    run(r#"weight1.force = weight1.gravity * weight1.mass.value"#);
+    assert_eq!(run(r#"weight1.force"#), run(r#"(1352)"#));
+    run(r#"weight1.mass = 2000"#);
+    assert_eq!(run(r#"weight1.force"#), run(r#"(1352)"#));
+    run(r#"weight1.gravity = 2"#);
+    assert_eq!(run(r#"weight1.force"#), run(r#"(2000)"#));
 }
 
 /// Nucleoid uses value property in an if condition to indicate using only value of property
 #[test]
 fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_property() {
-    crate::case(
-        "spec-0091",
-        "Nucleoid uses value property in an if condition to indicate using only value of property",
-        r#"# There is a Question type
-class Question:
-    pass
-
-# question1 is a Question whose text is "How was the service?"
-question1 = Question()
-question1.text = "How was the service?"
-
-# if question1's text is not question1's text's value, then throw "QUESTION_ARCHIVED"
-if question1.text != question1.text.value:
-    throw "QUESTION_ARCHIVED"
-
-assert(question1.text, "How was the service?")
-
-try:
-    # question1's text is "How would you rate us?"
+    let mut run = runner();
+    run(r#"class Question:
+    pass"#);
+    run(r#"question1 = Question()"#);
+    run(r#"question1.text = "How was the service?""#);
+    run(r#"if question1.text != question1.text.value:
+    throw "QUESTION_ARCHIVED""#);
+    assert_eq!(run(r#"question1.text"#), run(r#"("How was the service?")"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     question1.text = "How would you rate us?"
 catch error:
-    assert(error, "QUESTION_ARCHIVED")"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "QUESTION_ARCHIVED"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid rejects value of a property if the property is not defined
 #[test]
 fn rejects_value_of_a_property_if_the_property_is_not_defined() {
-    crate::case(
-        "spec-0092",
-        "Nucleoid rejects value of a property if the property is not defined",
-        r#"# There is a Travel type
-class Travel:
-    pass
-
-# travel1 is a Travel whose speed is 65
-travel1 = Travel()
-travel1.speed = 65
-
-# travel1's duration is travel1's distance divided by travel1's speed
-travel1.duration = travel1.distance / travel1.speed
-
-assert(travel1.duration, null)
-
-try:
-    # travel1's time is travel1's distance's value divided by travel1's speed
+    let mut run = runner();
+    run(r#"class Travel:
+    pass"#);
+    run(r#"travel1 = Travel()"#);
+    run(r#"travel1.speed = 65"#);
+    run(r#"travel1.duration = travel1.distance / travel1.speed"#);
+    assert_eq!(run(r#"travel1.duration"#), run(r#"(null)"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     travel1.time = travel1.distance.value / travel1.speed
 catch error:
-    assert(error, ReferenceError("travel1.distance is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("travel1.distance is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid uses the value of a null property as zero
 #[test]
 fn uses_the_value_of_a_null_property_as_zero() {
-    crate::case(
-        "spec-0093",
-        "Nucleoid uses the value of a null property as zero",
-        r#"# There is an Interest type
-class Interest:
-    pass
-
-# interest1 is an Interest whose rate is 3 and whose amount is null
-interest1 = Interest()
-interest1.rate = 3
-interest1.amount = null
-
-# interest1's annual is interest1's rate times interest1's amount's value divided by 100
-interest1.annual = interest1.rate * interest1.amount.value / 100
-
-assert(interest1.annual, 0)
-
-# interest1's amount is 10000
-interest1.amount = 10000
-
-assert(interest1.annual, 0)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Interest:
+    pass"#);
+    run(r#"interest1 = Interest()"#);
+    run(r#"interest1.rate = 3"#);
+    run(r#"interest1.amount = null"#);
+    run(r#"interest1.annual = interest1.rate * interest1.amount.value / 100"#);
+    assert_eq!(run(r#"interest1.annual"#), run(r#"(0)"#));
+    run(r#"interest1.amount = 10000"#);
+    assert_eq!(run(r#"interest1.annual"#), run(r#"(0)"#));
 }
 
 /// Nucleoid rejects value as a property name in a block
 #[test]
 fn rejects_value_as_a_property_name_in_a_block() {
-    crate::case(
-        "spec-0094",
-        "Nucleoid rejects value as a property name in a block",
-        r#"# There is an Alarm type
-class Alarm:
-    pass
-
-try:
-    # while in the block, value is a local Alarm,
-    # and value's value is "22:00"
+    let mut run = runner();
+    run(r#"class Alarm:
+    pass"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     {
         value = Alarm()
         value.value = "22:00"
     }
 catch error:
-    assert(error, TypeError("Cannot use 'value' as a property"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid keeps same as its value when the value property is used for a local
 #[test]
 fn keeps_same_as_its_value_when_the_value_property_is_used_for_a_local() {
-    crate::case(
-        "spec-0095",
-        "Nucleoid keeps same as its value when the value property is used for a local",
-        r#"# speedOfLight is 299792
-speedOfLight = 299792
-
-# roundTrip is null
-roundTrip = null
-
-# while in the block, time is a local variable that is speedOfLight divided by 225623,
-# and roundTrip is time's value times 2
-{
+    let mut run = runner();
+    run(r#"speedOfLight = 299792"#);
+    run(r#"roundTrip = null"#);
+    run(r#"{
     time = speedOfLight / 225623
     roundTrip = time.value * 2
-}
-
-assert(roundTrip, 2.6574595675086314)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"roundTrip"#), run(r#"(2.6574595675086314)"#));
 }
 
 /// Nucleoid uses value property in a class-level assignment
 #[test]
 fn uses_value_property_in_a_class_level_assignment() {
-    crate::case(
-        "spec-0096",
-        "Nucleoid uses value property in a class-level assignment",
-        r#"# count is 0
-count = 0
-
-# There is a Device type
-class Device:
-    pass
-
-# device1 is a Device
-device1 = Device()
-
-# while in the block, any device's code is "A" plus count's value,
-# and count is count plus 1
-{
+    let mut run = runner();
+    run(r#"count = 0"#);
+    run(r#"class Device:
+    pass"#);
+    run(r#"device1 = Device()"#);
+    run(r#"{
     $Device.code = "A" + count.value
     count = count + 1
-}
-
-assert(device1.code, "A0")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"device1.code"#), run(r#"("A0")"#));
 }
 
 /// Nucleoid uses value property on a class-level property chain
 #[test]
 fn uses_value_property_on_a_class_level_property_chain() {
-    crate::case(
-        "spec-0097",
-        "Nucleoid uses value property on a class-level property chain",
-        r#"# There is a Summary type,
-# which has a question as a Question
-class Summary(question):
-    this.question = question
-
-# There is a Question type
-class Question:
-    pass
-
-# Any summary's count is the value of the summary's question's count
-$Summary.count = $Summary.question.count.value
-
-# question1 is a Question whose count is 10
-question1 = Question()
-question1.count = 10
-
-# summary1 is a Summary whose question is question1
-summary1 = Summary(question1)
-
-assert(summary1.count, 10)
-
-# question1's count is 11
-question1.count = 11
-
-assert(question1.count, 11)
-assert(summary1.count, 10)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Summary(question):
+    this.question = question"#);
+    run(r#"class Question:
+    pass"#);
+    run(r#"$Summary.count = $Summary.question.count.value"#);
+    run(r#"question1 = Question()"#);
+    run(r#"question1.count = 10"#);
+    run(r#"summary1 = Summary(question1)"#);
+    assert_eq!(run(r#"summary1.count"#), run(r#"(10)"#));
+    run(r#"question1.count = 11"#);
+    assert_eq!(run(r#"question1.count"#), run(r#"(11)"#));
+    assert_eq!(run(r#"summary1.count"#), run(r#"(10)"#));
 }
 
 /// Nucleoid updates if block of property
 #[test]
 fn updates_if_block_of_property() {
-    crate::case(
-        "spec-0098",
-        "Nucleoid updates if block of property",
-        r#"# There is an Account type
-class Account:
-    pass
-
-# account1 is an Account whose balance is 1000
-account1 = Account()
-account1.balance = 1000
-
-# if account1's balance is less than 1500, then account1's status is "OK"
-if account1.balance < 1500:
-    account1.status = "OK"
-
-assert(account1.status, "OK")
-
-# if account1's balance is less than 1500, then account1's status is "LOW"
-if account1.balance < 1500:
-    account1.status = "LOW"
-
-assert(account1.status, "LOW")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Account:
+    pass"#);
+    run(r#"account1 = Account()"#);
+    run(r#"account1.balance = 1000"#);
+    run(r#"if account1.balance < 1500:
+    account1.status = "OK""#);
+    assert_eq!(run(r#"account1.status"#), run(r#"("OK")"#));
+    run(r#"if account1.balance < 1500:
+    account1.status = "LOW""#);
+    assert_eq!(run(r#"account1.status"#), run(r#"("LOW")"#));
 }
 
 /// Nucleoid creates an else statement of variable
 #[test]
 fn creates_an_else_statement_of_variable() {
-    crate::case(
-        "spec-0099",
-        "Nucleoid creates an else statement of variable",
-        r#"# compound is 0.0001
-compound = 0.0001
-
-# acidic is 'ACIDIC'
-acidic = 'ACIDIC'
-
-# basic is 'BASIC'
-basic = 'BASIC'
-
-# if compound is greater than 0.0000001, then pH is acidic,
-# else pH is basic
-if compound > 0.0000001:
+    let mut run = runner();
+    run(r#"compound = 0.0001"#);
+    run(r#"acidic = 'ACIDIC'"#);
+    run(r#"basic = 'BASIC'"#);
+    run(r#"if compound > 0.0000001:
     pH = acidic
 else:
-    pH = basic
-
-assert(pH, "ACIDIC")
-
-# compound is 0.000000001
-compound = 0.000000001
-
-assert(pH, "BASIC")
-
-# basic is '+7'
-basic = '+7'
-
-assert(pH, "+7")"#,
-        None,
-    );
+    pH = basic"#);
+    assert_eq!(run(r#"pH"#), run(r#"("ACIDIC")"#));
+    run(r#"compound = 0.000000001"#);
+    assert_eq!(run(r#"pH"#), run(r#"("BASIC")"#));
+    run(r#"basic = '+7'"#);
+    assert_eq!(run(r#"pH"#), run(r#"("+7")"#));
 }
 
 /// Nucleoid creates if statement of property
 #[test]
 fn creates_if_statement_of_property() {
-    crate::case(
-        "spec-0100",
-        "Nucleoid creates if statement of property",
-        r#"# There is a Toy type
-class Toy:
-    pass
-
-# toy1 is a Toy whose color is "BLUE"
-toy1 = Toy()
-toy1.color = "BLUE"
-
-# if toy1's color is "RED", then toy1's shape is "CIRCLE"
-if toy1.color == "RED":
-    toy1.shape = "CIRCLE"
-
-assert(toy1.shape, null)
-
-# toy1's color is "RED"
-toy1.color = "RED"
-
-assert(toy1.shape, "CIRCLE")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Toy:
+    pass"#);
+    run(r#"toy1 = Toy()"#);
+    run(r#"toy1.color = "BLUE""#);
+    run(r#"if toy1.color == "RED":
+    toy1.shape = "CIRCLE""#);
+    assert_eq!(run(r#"toy1.shape"#), run(r#"(null)"#));
+    run(r#"toy1.color = "RED""#);
+    assert_eq!(run(r#"toy1.shape"#), run(r#"("CIRCLE")"#));
 }
 
 /// Nucleoid creates else statement of property
 #[test]
 fn creates_else_statement_of_property() {
-    crate::case(
-        "spec-0101",
-        "Nucleoid creates else statement of property",
-        r#"# There is an Engine type
-class Engine:
-    pass
-
-# engine1 is an Engine whose type is "V8"
-engine1 = Engine()
-engine1.type = "V8"
-
-# mpl is "MPL"
-mpl = "MPL"
-
-# bsd is "BSD"
-bsd = "BSD"
-
-# if engine1's type is "Gecko", then engine1's license is mpl,
-# else engine1's license is bsd
-if engine1.type == "Gecko":
+    let mut run = runner();
+    run(r#"class Engine:
+    pass"#);
+    run(r#"engine1 = Engine()"#);
+    run(r#"engine1.type = "V8""#);
+    run(r#"mpl = "MPL""#);
+    run(r#"bsd = "BSD""#);
+    run(r#"if engine1.type == "Gecko":
     engine1.license = mpl
 else:
-    engine1.license = bsd
-
-assert(engine1.license, "BSD")
-
-# bsd is "Berkeley Software Distribution"
-bsd = "Berkeley Software Distribution"
-
-assert(engine1.license, "Berkeley Software Distribution")
-
-# engine1's type is "Gecko"
-engine1.type = "Gecko"
-
-assert(engine1.license, "MPL")"#,
-        None,
-    );
+    engine1.license = bsd"#);
+    assert_eq!(run(r#"engine1.license"#), run(r#"("BSD")"#));
+    run(r#"bsd = "Berkeley Software Distribution""#);
+    assert_eq!(run(r#"engine1.license"#), run(r#"("Berkeley Software Distribution")"#));
+    run(r#"engine1.type = "Gecko""#);
+    assert_eq!(run(r#"engine1.license"#), run(r#"("MPL")"#));
 }
 
 /// Nucleoid creates else statement of property with property dependencies
 #[test]
 fn creates_else_statement_of_property_with_property_dependencies() {
-    crate::case(
-        "spec-0102",
-        "Nucleoid creates else statement of property with property dependencies",
-        r#"# There is a Contact type
-class Contact:
-    pass
-
-# contact1 is a Contact whose type is "PERSON",
-# whose first is "First" and whose last is "Last"
-contact1 = Contact()
-contact1.type = "PERSON"
-contact1.first = "First"
-contact1.last = "Last"
-
-# if contact1's type is "BUSINESS", then contact1's full is "B" plus contact1's first,
-# else contact1's full is contact1's first plus " " plus contact1's last
-if contact1.type == "BUSINESS":
+    let mut run = runner();
+    run(r#"class Contact:
+    pass"#);
+    run(r#"contact1 = Contact()"#);
+    run(r#"contact1.type = "PERSON""#);
+    run(r#"contact1.first = "First""#);
+    run(r#"contact1.last = "Last""#);
+    run(r#"if contact1.type == "BUSINESS":
     contact1.full = "B" + contact1.first
 else:
-    contact1.full = contact1.first + " " + contact1.last
-
-assert(contact1.full, "First Last")
-
-# contact1's first is "F" and contact1's last is "L"
-contact1.first = "F"
-contact1.last = "L"
-
-assert(contact1.full, "F L")
-
-# contact1's type is "BUSINESS"
-contact1.type = "BUSINESS"
-
-assert(contact1.full, "BF")"#,
-        None,
-    );
+    contact1.full = contact1.first + " " + contact1.last"#);
+    assert_eq!(run(r#"contact1.full"#), run(r#"("First Last")"#));
+    run(r#"contact1.first = "F""#);
+    run(r#"contact1.last = "L""#);
+    assert_eq!(run(r#"contact1.full"#), run(r#"("F L")"#));
+    run(r#"contact1.type = "BUSINESS""#);
+    assert_eq!(run(r#"contact1.full"#), run(r#"("BF")"#));
 }
 
 /// Nucleoid creates multiple else if statement of property
 #[test]
 fn creates_multiple_else_if_statement_of_property() {
-    crate::case(
-        "spec-0103",
-        "Nucleoid creates multiple else if statement of property",
-        r#"# There is a Taxpayer type
-class Taxpayer:
-    pass
-
-# taxpayer1 is a Taxpayer whose income is 60000 and whose member is 1
-taxpayer1 = Taxpayer()
-taxpayer1.income = 60000
-taxpayer1.member = 1
-
-# rate is 22
-rate = 22
-
-# if taxpayer1's member is greater than 4, then taxpayer1's tax is taxpayer1's income times rate divided by 100 minus 2000,
-# else if taxpayer1's member is greater than 2, then taxpayer1's tax is taxpayer1's income times rate divided by 100 minus 1000,
-# else taxpayer1's tax is taxpayer1's income times rate divided by 100
-if taxpayer1.member > 4:
+    let mut run = runner();
+    run(r#"class Taxpayer:
+    pass"#);
+    run(r#"taxpayer1 = Taxpayer()"#);
+    run(r#"taxpayer1.income = 60000"#);
+    run(r#"taxpayer1.member = 1"#);
+    run(r#"rate = 22"#);
+    run(r#"if taxpayer1.member > 4:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 2000
 else if taxpayer1.member > 2:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 1000
 else:
-    taxpayer1.tax = taxpayer1.income * rate / 100
-
-assert(taxpayer1.tax, 13200)
-
-# rate is 23
-rate = 23
-
-assert(taxpayer1.tax, 13800)
-
-# taxpayer1's member is 3
-taxpayer1.member = 3
-
-assert(taxpayer1.tax, 12800)
-
-# taxpayer1's member is 5
-taxpayer1.member = 5
-
-assert(taxpayer1.tax, 11800)"#,
-        None,
-    );
+    taxpayer1.tax = taxpayer1.income * rate / 100"#);
+    assert_eq!(run(r#"taxpayer1.tax"#), run(r#"(13200)"#));
+    run(r#"rate = 23"#);
+    assert_eq!(run(r#"taxpayer1.tax"#), run(r#"(13800)"#));
+    run(r#"taxpayer1.member = 3"#);
+    assert_eq!(run(r#"taxpayer1.tax"#), run(r#"(12800)"#));
+    run(r#"taxpayer1.member = 5"#);
+    assert_eq!(run(r#"taxpayer1.tax"#), run(r#"(11800)"#));
 }
 
 /// Nucleoid updates property assignment
 #[test]
 fn updates_property_assignment() {
-    crate::case(
-        "spec-0104",
-        "Nucleoid updates property assignment",
-        r#"# There is a Matter type
-class Matter:
-    pass
-
-# matter1 is a Matter whose mass is 10
-matter1 = Matter()
-matter1.mass = 10
-
-# matter1's weight is matter1's mass times 9.8
-matter1.weight = matter1.mass * 9.8
-
-assert(matter1.weight, 98)
-
-# matter1's weight is matter1's mass times 3.7
-matter1.weight = matter1.mass * 3.7
-
-assert(matter1.weight, 37)
-
-# matter1's mass is 20
-matter1.mass = 20
-
-assert(matter1.weight, 74)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Matter:
+    pass"#);
+    run(r#"matter1 = Matter()"#);
+    run(r#"matter1.mass = 10"#);
+    run(r#"matter1.weight = matter1.mass * 9.8"#);
+    assert_eq!(run(r#"matter1.weight"#), run(r#"(98)"#));
+    run(r#"matter1.weight = matter1.mass * 3.7"#);
+    assert_eq!(run(r#"matter1.weight"#), run(r#"(37)"#));
+    run(r#"matter1.mass = 20"#);
+    assert_eq!(run(r#"matter1.weight"#), run(r#"(74)"#));
 }
 
 /// Nucleoid deletes an instance
 #[test]
 fn deletes_an_instance() {
-    crate::case(
-        "spec-0105",
-        "Nucleoid deletes an instance",
-        r#"# There is a Circle type
-class Circle:
-    pass
-
-# circle1 is a Circle
-circle1 = Circle()
-
-# circle1 is deleted
-delete circle1
-
-assert(Circle["circle1"], null)
-assert(Circle.find(circle => circle.id == "circle1"), null)
-
-try:
-    # circle1
+    let mut run = runner();
+    run(r#"class Circle:
+    pass"#);
+    run(r#"circle1 = Circle()"#);
+    run(r#"delete circle1"#);
+    assert_eq!(run(r#"Circle["circle1"]"#), run(r#"(null)"#));
+    assert_eq!(run(r#"Circle.find(circle => circle.id == "circle1")"#), run(r#"(null)"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     circle1
 catch error:
-    assert(error, ReferenceError("circle1 is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("circle1 is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid deletes an instance by reference
 #[test]
 fn deletes_an_instance_by_reference() {
-    crate::case(
-        "spec-0106",
-        "Nucleoid deletes an instance by reference",
-        r#"# There is an Item type
-class Item:
-    pass
-
-# item1 is an Item
-item1 = Item()
-
-# item2 is an Item
-item2 = Item()
-
-assert(Item["item1"], { "id": "item1" })
-
-# The Item whose id is "item1" is deleted
-delete Item["item1"]
-
-assert(Item["item1"], null)
-assert(Item["item2"], { "id": "item2" })
-
-# While in the block, item is a local variable that is "item2",
-# and the Item whose id is item is deleted
-{
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run(r#"item1 = Item()"#);
+    run(r#"item2 = Item()"#);
+    assert_eq!(run(r#"Item["item1"]"#), run(r#"({ "id": "item1" })"#));
+    run(r#"delete Item["item1"]"#);
+    assert_eq!(run(r#"Item["item1"]"#), run(r#"(null)"#));
+    assert_eq!(run(r#"Item["item2"]"#), run(r#"({ "id": "item2" })"#));
+    run(r#"{
     item = "item2"
     delete Item[item]
-}
-
-assert(Item["item2"], null)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"Item["item2"]"#), run(r#"(null)"#));
 }
 
 /// Nucleoid returns a boolean when deleting an object
 #[test]
 fn returns_a_boolean_when_deleting_an_object() {
-    crate::case(
-        "spec-0107",
-        "Nucleoid returns a boolean when deleting an object",
-        r#"# There is a Location type
-class Location:
-    pass
-
-# location1 is a Location
-location1 = Location()
-
-# Deleting location1 returns true
-assert(delete location1, true)
-
-# Deleting location2, which is not defined, returns false
-assert(delete location2, false)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Location:
+    pass"#);
+    run(r#"location1 = Location()"#);
+    assert_eq!(run(r#"delete location1"#), run(r#"(true)"#));
+    assert_eq!(run(r#"delete location2"#), run(r#"(false)"#));
 }
 
 /// Nucleoid rejects deleting an instance if it has any properties
 #[test]
 fn rejects_deleting_an_instance_if_it_has_any_properties() {
-    crate::case(
-        "spec-0108",
-        "Nucleoid rejects deleting an instance if it has any properties",
-        r#"# There is a Channel type
-class Channel:
-    pass
-
-# channel1 is a Channel
-channel1 = Channel()
-
-# channel1's frequency is 440
-channel1.frequency = 440
-
-try:
-    # channel1 is deleted
+    let mut run = runner();
+    run(r#"class Channel:
+    pass"#);
+    run(r#"channel1 = Channel()"#);
+    run(r#"channel1.frequency = 440"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     delete channel1
 catch error:
-    assert(error, TypeError("Cannot delete object 'channel1'"))
-
-assert(channel1.frequency, 440)
-
-# channel1's frequency is deleted
-delete channel1.frequency
-
-# channel1 is deleted
-delete channel1
-
-assert(Channel["channel1"], null)"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = TypeError("Cannot delete object 'channel1'")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run(r#"channel1.frequency"#), run(r#"(440)"#));
+    run(r#"delete channel1.frequency"#);
+    run(r#"delete channel1"#);
+    assert_eq!(run(r#"Channel["channel1"]"#), run(r#"(null)"#));
 }
 
 /// Nucleoid rejects deleting an instance if it has an object as a property
 #[test]
 fn rejects_deleting_an_instance_if_it_has_an_object_as_a_property() {
-    crate::case(
-        "spec-0109",
-        "Nucleoid rejects deleting an instance if it has an object as a property",
-        r#"# There is a Shape type
-class Shape:
-    pass
-
-# There is a Type type
-class Type:
-    pass
-
-# shape1 is a Shape
-shape1 = Shape()
-
-# shape1's type is a Type
-shape1.type = Type()
-
-try:
-    # shape1 is deleted
+    let mut run = runner();
+    run(r#"class Shape:
+    pass"#);
+    run(r#"class Type:
+    pass"#);
+    run(r#"shape1 = Shape()"#);
+    run(r#"shape1.type = Type()"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     delete shape1
 catch error:
-    assert(error, TypeError("Cannot delete object 'shape1'"))
-
-# shape1's type is deleted
-delete shape1.type
-
-# shape1 is deleted
-delete shape1
-
-assert(Shape["shape1"], null)"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = TypeError("Cannot delete object 'shape1'")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    run(r#"delete shape1.type"#);
+    run(r#"delete shape1"#);
+    assert_eq!(run(r#"Shape["shape1"]"#), run(r#"(null)"#));
 }
 
 /// Nucleoid deletes a property assignment
 #[test]
 fn deletes_a_property_assignment() {
-    crate::case(
-        "spec-0110",
-        "Nucleoid deletes a property assignment",
-        r#"# There is an Agent type
-class Agent:
-    pass
-
-# agent is an Agent
-agent = Agent()
-
-# agent's time is 52926163455
-agent.time = 52926163455
-
-# agent's location is "CITY"
-agent.location = "CITY"
-
-# agent's report is agent's time plus "@" plus agent's location
-agent.report = agent.time + "@" + agent.location
-
-assert(agent.report, "52926163455@CITY")
-
-# agent's time is deleted
-delete agent.time
-
-assert(agent.report, null)
-
-# agent's report is deleted
-delete agent.report
-
-assert(agent.report, null)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Agent:
+    pass"#);
+    run(r#"agent = Agent()"#);
+    run(r#"agent.time = 52926163455"#);
+    run(r#"agent.location = "CITY""#);
+    run(r#"agent.report = agent.time + "@" + agent.location"#);
+    assert_eq!(run(r#"agent.report"#), run(r#"("52926163455@CITY")"#));
+    run(r#"delete agent.time"#);
+    assert_eq!(run(r#"agent.report"#), run(r#"(null)"#));
+    run(r#"delete agent.report"#);
+    assert_eq!(run(r#"agent.report"#), run(r#"(null)"#));
 }
 
 /// Nucleoid runs a block statement of property
 #[test]
 fn runs_a_block_statement_of_property() {
-    crate::case(
-        "spec-0111",
-        "Nucleoid runs a block statement of property",
-        r#"# There is an Item type
-class Item:
-    pass
-
-# item1 is an Item
-item1 = Item()
-
-# item1's sku is "0000001"
-item1.sku = "0000001"
-
-# while in the block, custom is a local variable that is "US" plus item1's sku,
-# and item1's custom is custom
-{
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run(r#"item1 = Item()"#);
+    run(r#"item1.sku = "0000001""#);
+    run(r#"{
     custom = "US" + item1.sku
     item1.custom = custom
-}
-
-assert(item1.custom, "US0000001")
-
-# item1's sku is "0000002"
-item1.sku = "0000002"
-
-assert(item1.custom, "US0000002")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"item1.custom"#), run(r#"("US0000001")"#));
+    run(r#"item1.sku = "0000002""#);
+    assert_eq!(run(r#"item1.custom"#), run(r#"("US0000002")"#));
 }
 
 /// Nucleoid runs a nested block statement of property
 #[test]
 fn runs_a_nested_block_statement_of_property() {
-    crate::case(
-        "spec-0112",
-        "Nucleoid runs a nested block statement of property",
-        r#"# There is a Figure type
-class Figure:
-    pass
-
-# figure1 is a Figure
-figure1 = Figure()
-
-# figure1's width is 9
-figure1.width = 9
-
-# figure1's height is 10
-figure1.height = 10
-
-# while in the block, base is a local variable that is figure1's width squared,
-# and in a nested block, figure1's volume is base times figure1's height
-{
+    let mut run = runner();
+    run(r#"class Figure:
+    pass"#);
+    run(r#"figure1 = Figure()"#);
+    run(r#"figure1.width = 9"#);
+    run(r#"figure1.height = 10"#);
+    run(r#"{
     base = Math.pow(figure1.width, 2)
     {
         figure1.volume = base * figure1.height
     }
-}
-
-assert(figure1.volume, 810)
-
-# figure1's height is 9
-figure1.height = 9
-
-assert(figure1.volume, 729)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"figure1.volume"#), run(r#"(810)"#));
+    run(r#"figure1.height = 9"#);
+    assert_eq!(run(r#"figure1.volume"#), run(r#"(729)"#));
 }
 
 /// Nucleoid runs a nested if statement of property
 #[test]
 fn runs_a_nested_if_statement_of_property() {
-    crate::case(
-        "spec-0113",
-        "Nucleoid runs a nested if statement of property",
-        r#"# There is a Sale type
-class Sale:
-    pass
-
-# sale1 is a Sale
-sale1 = Sale()
-
-# sale1's price is 50
-sale1.price = 50
-
-# sale1's quantity is 2
-sale1.quantity = 2
-
-# while in the block, amount is a local variable that is sale1's price times sale1's quantity,
-# and if amount is greater than 100, then sale1's tax is amount times 10 divided by 100
-{
+    let mut run = runner();
+    run(r#"class Sale:
+    pass"#);
+    run(r#"sale1 = Sale()"#);
+    run(r#"sale1.price = 50"#);
+    run(r#"sale1.quantity = 2"#);
+    run(r#"{
     amount = sale1.price * sale1.quantity
     if amount > 100:
         sale1.tax = amount * 10 / 100
-}
-
-assert(sale1.tax, null)
-
-# sale1's quantity is 3
-sale1.quantity = 3
-
-assert(sale1.tax, 15)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"sale1.tax"#), run(r#"(null)"#));
+    run(r#"sale1.quantity = 3"#);
+    assert_eq!(run(r#"sale1.tax"#), run(r#"(15)"#));
 }
 
 /// Nucleoid creates a nested else statement of property
 #[test]
 fn creates_a_nested_else_statement_of_property() {
-    crate::case(
-        "spec-0114",
-        "Nucleoid creates a nested else statement of property",
-        r#"# There is a Chart type
-class Chart:
-    pass
-
-# chart1 is a Chart
-chart1 = Chart()
-
-# chart1's percentage is 1
-chart1.percentage = 1
-
-# invalid is "INVALID"
-invalid = "INVALID"
-
-# valid is "VALID"
-valid = "VALID"
-
-# while in the block, ratio is a local variable that is chart1's percentage divided by 100,
-# and if ratio is greater than 1, then chart1's status is invalid,
-# else chart1's status is valid
-{
+    let mut run = runner();
+    run(r#"class Chart:
+    pass"#);
+    run(r#"chart1 = Chart()"#);
+    run(r#"chart1.percentage = 1"#);
+    run(r#"invalid = "INVALID""#);
+    run(r#"valid = "VALID""#);
+    run(r#"{
     ratio = chart1.percentage / 100
     if ratio > 1:
         chart1.status = invalid
     else:
         chart1.status = valid
-}
-
-assert(chart1.status, "VALID")
-
-# valid is "V"
-valid = "V"
-
-assert(chart1.status, "V")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"chart1.status"#), run(r#"("VALID")"#));
+    run(r#"valid = "V""#);
+    assert_eq!(run(r#"chart1.status"#), run(r#"("V")"#));
 }
 
 /// Nucleoid creates a property assignment with multiple properties
 #[test]
 fn creates_a_property_assignment_with_multiple_properties() {
-    crate::case(
-        "spec-0115",
-        "Nucleoid creates a property assignment with multiple properties",
-        r#"# There is a Person type
-class Person:
-    pass
-
-# person1 is a Person
-person1 = Person()
-
-# There is an Address type
-class Address:
-    pass
-
-# address1 is an Address
-address1 = Address()
-
-# Any address's print is the address's city plus ", " plus the address's state
-$Address.print = $Address.city + ", " + $Address.state
-
-# person1's address is an Address
-person1.address = Address()
-
-# person1's address's city is "Syracuse"
-person1.address.city = "Syracuse"
-
-# person1's address's state is "NY"
-person1.address.state = "NY"
-
-assert(person1.address.print, "Syracuse, NY")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Person:
+    pass"#);
+    run(r#"person1 = Person()"#);
+    run(r#"class Address:
+    pass"#);
+    run(r#"address1 = Address()"#);
+    run(r#"$Address.print = $Address.city + ", " + $Address.state"#);
+    run(r#"person1.address = Address()"#);
+    run(r#"person1.address.city = "Syracuse""#);
+    run(r#"person1.address.state = "NY""#);
+    assert_eq!(run(r#"person1.address.print"#), run(r#"("Syracuse, NY")"#));
 }
 
 /// Nucleoid creates a property assignment with multiple properties as part of a declaration
 #[test]
 fn creates_a_property_assignment_with_multiple_properties_as_part_of_a_declaration() {
-    crate::case(
-        "spec-0116",
-        "Nucleoid creates a property assignment with multiple properties as part of a declaration",
-        r#"# There is a Server type
-class Server:
-    pass
-
-# server1 is a Server
-server1 = Server()
-
-# server1's name is "HOST1"
-server1.name = "HOST1"
-
-# There is an IP type
-class IP:
-    pass
-
-# ip1 is an IP
-ip1 = IP()
-
-# server1's ip is ip1
-server1.ip = ip1
-
-# ip1's address is "10.0.0.1"
-ip1.address = "10.0.0.1"
-
-# server1's summary is server1's name plus "@" plus server1's ip's address
-server1.summary = server1.name + "@" + server1.ip.address
-
-assert(server1.summary, "HOST1@10.0.0.1")
-
-# ip1's address is "10.0.0.2"
-ip1.address = "10.0.0.2"
-
-assert(server1.summary, "HOST1@10.0.0.2")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Server:
+    pass"#);
+    run(r#"server1 = Server()"#);
+    run(r#"server1.name = "HOST1""#);
+    run(r#"class IP:
+    pass"#);
+    run(r#"ip1 = IP()"#);
+    run(r#"server1.ip = ip1"#);
+    run(r#"ip1.address = "10.0.0.1""#);
+    run(r#"server1.summary = server1.name + "@" + server1.ip.address"#);
+    assert_eq!(run(r#"server1.summary"#), run(r#"("HOST1@10.0.0.1")"#));
+    run(r#"ip1.address = "10.0.0.2""#);
+    assert_eq!(run(r#"server1.summary"#), run(r#"("HOST1@10.0.0.2")"#));
 }
 
 /// Nucleoid creates a dependency on behalf if a property has a reference
 #[test]
 fn creates_a_dependency_on_behalf_if_a_property_has_a_reference() {
-    crate::case(
-        "spec-0117",
-        "Nucleoid creates a dependency on behalf if a property has a reference",
-        r#"# There is a Schedule type
-class Schedule:
-    pass
-
-# schedule1 is a Schedule
-schedule1 = Schedule()
-
-# There is a Template type
-class Template:
-    pass
-
-# template1 is a Template
-template1 = Template()
-
-# template1's type is "W"
-template1.type = "W"
-
-# schedule1's template is template1
-schedule1.template = template1
-
-# schedule1's template's name is schedule1's template's type plus "-0001"
-schedule1.template.name = schedule1.template.type + "-0001"
-
-assert(template1.name, "W-0001")
-assert(schedule1.template.name, "W-0001")
-
-# template1's type is "D"
-template1.type = "D"
-
-assert(template1.name, "D-0001")
-
-# template1's shape is template1's type plus "-Form"
-template1.shape = template1.type + "-Form"
-
-assert(template1.shape, "D-Form")
-assert(schedule1.template.shape, "D-Form")
-
-# template1's type is "C"
-template1.type = "C"
-
-assert(template1.shape, "C-Form")
-assert(schedule1.template.shape, "C-Form")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Schedule:
+    pass"#);
+    run(r#"schedule1 = Schedule()"#);
+    run(r#"class Template:
+    pass"#);
+    run(r#"template1 = Template()"#);
+    run(r#"template1.type = "W""#);
+    run(r#"schedule1.template = template1"#);
+    run(r#"schedule1.template.name = schedule1.template.type + "-0001""#);
+    assert_eq!(run(r#"template1.name"#), run(r#"("W-0001")"#));
+    assert_eq!(run(r#"schedule1.template.name"#), run(r#"("W-0001")"#));
+    run(r#"template1.type = "D""#);
+    assert_eq!(run(r#"template1.name"#), run(r#"("D-0001")"#));
+    run(r#"template1.shape = template1.type + "-Form""#);
+    assert_eq!(run(r#"template1.shape"#), run(r#"("D-Form")"#));
+    assert_eq!(run(r#"schedule1.template.shape"#), run(r#"("D-Form")"#));
+    run(r#"template1.type = "C""#);
+    assert_eq!(run(r#"template1.shape"#), run(r#"("C-Form")"#));
+    assert_eq!(run(r#"schedule1.template.shape"#), run(r#"("C-Form")"#));
 }
 
 /// Nucleoid creates a dependency on behalf if a local variable has a reference
 #[test]
 fn creates_a_dependency_on_behalf_if_a_local_variable_has_a_reference() {
-    crate::case(
-        "spec-0118",
-        "Nucleoid creates a dependency on behalf if a local variable has a reference",
-        r#"# There is a Vote type
-class Vote:
-    pass
-
-# vote1 is a Vote whose rate is 4
-vote1 = Vote()
-vote1.rate = 4
-
-# There is a Question type
-class Question:
-    pass
-
-# Any question's rate is 0
-$Question.rate = 0
-
-# Any question's count is 0
-$Question.count = 0
-
-# question1 is a Question
-question1 = Question()
-
-# vote1's question is question1
-vote1.question = question1
-
-# While in the block, question is vote1's question,
-# and question's rate is question's rate times question's count plus vote1's rate,
-# divided by question's count plus 1,
-# and question's count is question's count plus 1
-{
+    let mut run = runner();
+    run(r#"class Vote:
+    pass"#);
+    run(r#"vote1 = Vote()"#);
+    run(r#"vote1.rate = 4"#);
+    run(r#"class Question:
+    pass"#);
+    run(r#"$Question.rate = 0"#);
+    run(r#"$Question.count = 0"#);
+    run(r#"question1 = Question()"#);
+    run(r#"vote1.question = question1"#);
+    run(r#"{
     question = vote1.question
     question.rate = (question.rate * question.count + vote1.rate) / (question.count + 1)
     question.count = question.count + 1
-}
-
-assert(question1.rate, 4)
-assert(question1.count, 1)
-
-# vote1's rate is 5
-vote1.rate = 5
-
-assert(question1.rate, 4.5)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"question1.rate"#), run(r#"(4)"#));
+    assert_eq!(run(r#"question1.count"#), run(r#"(1)"#));
+    run(r#"vote1.rate = 5"#);
+    assert_eq!(run(r#"question1.rate"#), run(r#"(4.5)"#));
 }
 
 /// Nucleoid runs an expression statement of class
 #[test]
 fn runs_an_expression_statement_of_class() {
-    crate::case(
-        "spec-0119",
-        "Nucleoid runs an expression statement of class",
-        r#"# There is an Element type
-class Element:
-    pass
-
-# alkalis is an empty list
-alkalis = []
-
-# element1 is an Element whose number is 3
-element1 = Element()
-element1.number = 3
-
-# While in the block, number is any element's number,
-# and if number is 3, then the element is added to alkalis
-{
+    let mut run = runner();
+    run(r#"class Element:
+    pass"#);
+    run(r#"alkalis = []"#);
+    run(r#"element1 = Element()"#);
+    run(r#"element1.number = 3"#);
+    run(r#"{
     number = $Element.number
     if number == 3:
         alkalis.push($Element)
-}
-
-assert(alkalis.pop(), element1)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"alkalis.pop()"#), run(r#"(element1)"#));
 }
 
 /// Nucleoid rejects a variable declaration without definition
 #[test]
 fn rejects_a_variable_declaration_without_definition() {
-    crate::case(
-        "spec-0120",
-        "Nucleoid rejects a variable declaration without definition",
-        r#"try:
-    # a is declared as a number but not defined
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     a: int
 catch error:
-    assert(error, ReferenceError("Missing definition"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("Missing definition")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid creates a dependency based on the length of an identifier
 #[test]
 fn creates_a_dependency_based_on_the_length_of_an_identifier() {
-    crate::case(
-        "spec-0121",
-        "Nucleoid creates a dependency based on the length of an identifier",
-        r#"# str1 is "ABC"
-str1 = "ABC"
-
-# i1 is str1's length plus 1
-i1 = str1.length + 1
-
-assert(i1, 4)
-
-# str1 is "ABCD"
-str1 = "ABCD"
-
-assert(i1, 5)
-
-# if str1's length is greater than 5, then i2 is i1
-if str1.length > 5:
-    i2 = i1
-
-# str1 is "ABCDEF"
-str1 = "ABCDEF"
-
-assert(i2, 7)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"str1 = "ABC""#);
+    run(r#"i1 = str1.length + 1"#);
+    assert_eq!(run(r#"i1"#), run(r#"(4)"#));
+    run(r#"str1 = "ABCD""#);
+    assert_eq!(run(r#"i1"#), run(r#"(5)"#));
+    run(r#"if str1.length > 5:
+    i2 = i1"#);
+    run(r#"str1 = "ABCDEF""#);
+    assert_eq!(run(r#"i2"#), run(r#"(7)"#));
 }
 
 /// Nucleoid adds a created class to the class list
 #[test]
 fn adds_a_created_class_to_the_class_list() {
-    crate::case(
-        "spec-0122",
-        "Nucleoid adds a created class to the class list",
-        r#"assert(Class.length, 0)
-
-# There is a Student type
-class Student:
-    pass
-
-assert(Class.length, 1)
-
-# There is a User type
-class User:
-    pass
-
-assert(Class.length, 2)"#,
-        None,
-    );
+    let mut run = runner();
+    assert_eq!(run(r#"Class.length"#), run(r#"(0)"#));
+    run(r#"class Student:
+    pass"#);
+    assert_eq!(run(r#"Class.length"#), run(r#"(1)"#));
+    run(r#"class User:
+    pass"#);
+    assert_eq!(run(r#"Class.length"#), run(r#"(2)"#));
 }
 
 /// Nucleoid updates a class definition
 #[test]
 fn updates_a_class_definition() {
-    crate::case(
-        "spec-0123",
-        "Nucleoid updates a class definition",
-        r#"# There is a Message type
-class Message:
-    pass
-
-# No message is read
-$Message.read = false
-
-# message1 is a Message
-message1 = Message()
-
-# There is a Message type,
-# which has a payload as a string
-class Message(payload: str):
-    this.payload = payload
-
-assert(message1.read, false)
-assert(message1.payload, null)
-
-# message2 is a Message whose payload is "MESSAGE"
-message2 = Message("MESSAGE")
-
-assert(message2.read, false)
-assert(message2.payload, "MESSAGE")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Message:
+    pass"#);
+    run(r#"$Message.read = false"#);
+    run(r#"message1 = Message()"#);
+    run(r#"class Message(payload: str):
+    this.payload = payload"#);
+    assert_eq!(run(r#"message1.read"#), run(r#"(false)"#));
+    assert_eq!(run(r#"message1.payload"#), run(r#"(null)"#));
+    run(r#"message2 = Message("MESSAGE")"#);
+    assert_eq!(run(r#"message2.read"#), run(r#"(false)"#));
+    assert_eq!(run(r#"message2.payload"#), run(r#"("MESSAGE")"#));
 }
 
 /// Nucleoid supports a string in an expression
 #[test]
 fn supports_a_string_in_an_expression() {
-    crate::case(
-        "spec-0124",
-        "Nucleoid supports a string in an expression",
-        r#"assert('New String', "New String")
-assert("New String", "New String")
-assert(`New String`, "New String")
-
-# a is 123
-a = 123
-
-assert(`New ${a} String`, "New 123 String")"#,
-        None,
-    );
+    let mut run = runner();
+    assert_eq!(run(r#"'New String'"#), run(r#"("New String")"#));
+    assert_eq!(run(r#""New String""#), run(r#"("New String")"#));
+    assert_eq!(run(r#"`New String`"#), run(r#"("New String")"#));
+    run(r#"a = 123"#);
+    assert_eq!(run(r#"`New ${a} String`"#), run(r#"("New 123 String")"#));
 }
 
 /// Nucleoid supports logical operators
 #[test]
 fn supports_logical_operators() {
-    crate::case(
-        "spec-0125",
-        "Nucleoid supports logical operators",
-        r#"# condition is false
-condition = false
-
-assert(condition or true, true)
-assert(condition || true, true)
-
-assert(not condition and true, true)
-assert(!condition && true, true)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"condition = false"#);
+    assert_eq!(run(r#"condition or true"#), run(r#"(true)"#));
+    assert_eq!(run(r#"condition || true"#), run(r#"(true)"#));
+    assert_eq!(run(r#"not condition and true"#), run(r#"(true)"#));
+    assert_eq!(run(r#"!condition && true"#), run(r#"(true)"#));
 }
 
 /// Nucleoid supports standard built-in objects
 #[test]
 fn supports_standard_built_in_objects() {
-    crate::case(
-        "spec-0126",
-        "Nucleoid supports standard built-in objects",
-        r#"# max is the maximum integer
-max = Number.MAX_INTEGER
-
-assert(max, 9007199254740991)
-
-# now is the current time
-now = Date.now()
-
-assert(now > 0, true)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"max = Number.MAX_INTEGER"#);
+    assert_eq!(run(r#"max"#), run(r#"(9007199254740991)"#));
+    run(r#"now = Date.now()"#);
+    assert_eq!(run(r#"now > 0"#), run(r#"(true)"#));
 }
 
 /// Nucleoid supports creating standard built-in objects
 #[test]
 fn supports_creating_standard_built_in_objects() {
-    crate::case(
-        "spec-0127",
-        "Nucleoid supports creating standard built-in objects",
-        r#"# date is July 24, 2019
-date = Date("2019-7-24")
-
-assert(date.getYear(), 119)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"date = Date("2019-7-24")"#);
+    assert_eq!(run(r#"date.getYear()"#), run(r#"(119)"#));
 }
 
 /// Nucleoid supports built-in objects
 #[test]
 fn supports_built_in_objects() {
-    crate::case(
-        "spec-0128",
-        "Nucleoid supports built-in objects",
-        r#"# date1 is the current date
-date1 = Date()
-
-# date2 is a date whose time is date1's time
-date2 = Date(date1.getTime())
-
-assert(date1.getTime() == date2.getTime(), true)
-
-# date3 is the parsed date of "04 Dec 1995 00:12:00 GMT"
-date3 = Date.parse("04 Dec 1995 00:12:00 GMT")
-
-assert(date3, 818035920000)
-
-try:
-    # date4 is the wrong date
+    let mut run = runner();
+    run(r#"date1 = Date()"#);
+    run(r#"date2 = Date(date1.getTime())"#);
+    assert_eq!(run(r#"date1.getTime() == date2.getTime()"#), run(r#"(true)"#));
+    run(r#"date3 = Date.parse("04 Dec 1995 00:12:00 GMT")"#);
+    assert_eq!(run(r#"date3"#), run(r#"(818035920000)"#));
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     date4 = Date.wrong()
 catch error:
-    assert(error, TypeError("Date.wrong is not a function"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = TypeError("Date.wrong is not a function")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid calls a function with no return
 #[test]
 fn calls_a_function_with_no_return() {
-    crate::case(
-        "spec-0129",
-        "Nucleoid calls a function with no return",
-        r#"# a is 1
-a = 1
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"def copy(val):
+    b = val"#);
+    run(r#"copy(a)
 
-# copy assigns val to b
-def copy(val):
-    b = val
-
-# Call copy with a
-copy(a)"#,
-        Some("null"),
-    );
+# return: null"#);
 }
 
 /// Nucleoid calls a function with a return value
 #[test]
 fn calls_a_function_with_a_return_value() {
-    crate::case(
-        "spec-0130",
-        "Nucleoid calls a function with a return value",
-        r#"# a is 1
-a = 1
-
-# copy assigns val to b and returns val
-def copy(val):
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"def copy(val):
     b = val
-    return val
+    return val"#);
+    run(r#"copy(a)
 
-# Call copy with a
-copy(a)"#,
-        Some("1"),
-    );
+# return: 1"#);
 }
 
 /// Nucleoid supports a function in an expression
 #[test]
 fn supports_a_function_in_an_expression() {
-    crate::case(
-        "spec-0131",
-        "Nucleoid supports a function in an expression",
-        r#"# list is a list of 1, 2 and 3
-list = [1, 2, 3]
-
-assert(list.find(function(element) { return element == 3 }), 3)
-assert(list.find(element => { return element == 2 }), 2)
-assert(list.find(element => element == 1), 1)
-assert(list.find(element => (element == 1)), 1)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"list = [1, 2, 3]"#);
+    assert_eq!(run(r#"list.find(function(element) { return element == 3 })"#), run(r#"(3)"#));
+    assert_eq!(run(r#"list.find(element => { return element == 2 })"#), run(r#"(2)"#));
+    assert_eq!(run(r#"list.find(element => element == 1)"#), run(r#"(1)"#));
+    assert_eq!(run(r#"list.find(element => (element == 1))"#), run(r#"(1)"#));
 }
 
 /// Nucleoid supports a function with a parameter in an expression
 #[test]
 fn supports_a_function_with_a_parameter_in_an_expression() {
-    crate::case(
-        "spec-0132",
-        "Nucleoid supports a function with a parameter in an expression",
-        r#"# samples is a list of 38.2, 39.1, 38.8 and 39
-samples = [38.2, 39.1, 38.8, 39]
-
-# ratio is 2.1
-ratio = 2.1
-
-# element is 38.5
-element = 38.5
-
-# The element parameter shadows the outer element in each function
-assert(samples.find(function(element) { result = element * ratio; return result == 81.48 }), 38.8)
-assert(samples.find(element => { result = element * ratio; return result == 81.48 }), 38.8)
-assert(samples.find(element => element == 38.8), 38.8)
-assert(samples.find(element => (element == 38.8)), 38.8)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"samples = [38.2, 39.1, 38.8, 39]"#);
+    run(r#"ratio = 2.1"#);
+    run(r#"element = 38.5"#);
+    assert_eq!(run(r#"samples.find(function(element) { result = element * ratio; return result == 81.48 })"#), run(r#"(38.8)"#));
+    assert_eq!(run(r#"samples.find(element => { result = element * ratio; return result == 81.48 })"#), run(r#"(38.8)"#));
+    assert_eq!(run(r#"samples.find(element => element == 38.8)"#), run(r#"(38.8)"#));
+    assert_eq!(run(r#"samples.find(element => (element == 38.8))"#), run(r#"(38.8)"#));
 }
 
 /// Nucleoid creates a variable statement with JSON
 #[test]
 fn creates_a_variable_statement_with_json() {
-    crate::case(
-        "spec-0133",
-        "Nucleoid creates a variable statement with JSON",
-        r#"# While in the block, payload is a local variable whose data is "TEST"
-# and whose nested data is "NESTED_TEST"
-{
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run("__nucleoid_test_assertion_1_actual = null");
+    run("__nucleoid_test_assertion_1_expected = null");
+    run("__nucleoid_test_assertion_1_ran = false");
+    run(r#"{
     payload = { "data": "TEST", "nested": { "data": "NESTED_TEST" } }
-    assert(payload.data, "TEST")
-    assert(payload.nested.data, "NESTED_TEST")
-}
-
-# message is an object whose pid is 1200
-message = { "pid": 1200 }
-
-assert(message.pid, 1200)
-
-# While in the block, scope is a local variable whose query is "test",
-# and i is a local variable whose test is scope's query
-{
+    __nucleoid_test_assertion_0_actual = payload.data
+    __nucleoid_test_assertion_0_expected = "TEST"
+    __nucleoid_test_assertion_0_ran = true
+    __nucleoid_test_assertion_1_actual = payload.nested.data
+    __nucleoid_test_assertion_1_expected = "NESTED_TEST"
+    __nucleoid_test_assertion_1_ran = true
+}"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    run(r#"message = { "pid": 1200 }"#);
+    assert_eq!(run(r#"message.pid"#), run(r#"(1200)"#));
+    run("__nucleoid_test_assertion_2_actual = null");
+    run("__nucleoid_test_assertion_2_expected = null");
+    run("__nucleoid_test_assertion_2_ran = false");
+    run(r#"{
     scope = { "query": "test" }
     i = { "test": scope.query }
-    assert(i.test, "test")
-}"#,
-        None,
-    );
+    __nucleoid_test_assertion_2_actual = i.test
+    __nucleoid_test_assertion_2_expected = "test"
+    __nucleoid_test_assertion_2_ran = true
+}"#);
+    assert_eq!(run("__nucleoid_test_assertion_2_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_2_actual"), run("(__nucleoid_test_assertion_2_expected)"));
 }
 
 /// Nucleoid returns an inline JSON object
 #[test]
 fn returns_an_inline_json_object() {
-    crate::case(
-        "spec-0134",
-        "Nucleoid returns an inline JSON object",
-        r#"# While in the block, return an object whose number is 123,
-# whose string is "ABC" and whose bool is true
-{
+    let mut run = runner();
+    run(r#"{
     return { "number": 123, "string": "ABC", "bool": true }
-}"#,
-        Some("{ \"number\": 123, \"string\": \"ABC\", \"bool\": true }"),
-    );
+}
+
+# return: { "number": 123, "string": "ABC", "bool": true }"#);
 }
 
 /// Nucleoid returns an inline JSON array
 #[test]
 fn returns_an_inline_json_array() {
-    crate::case(
-        "spec-0135",
-        "Nucleoid returns an inline JSON array",
-        r#"# While in the block, return a list of an object whose number is 123,
-# whose string is "ABC" and whose bool is true
-{
+    let mut run = runner();
+    run(r#"{
     return [{ "number": 123, "string": "ABC", "bool": true }]
-}"#,
-        Some("[{ \"number\": 123, \"string\": \"ABC\", \"bool\": true }]"),
-    );
+}
+
+# return: [{ "number": 123, "string": "ABC", "bool": true }]"#);
 }
 
 /// Nucleoid returns an inline object
 #[test]
 fn returns_an_inline_object() {
-    crate::case(
-        "spec-0136",
-        "Nucleoid returns an inline object",
-        r#"# While in the block, return an object whose number is 123,
-# whose string is "ABC" and whose bool is true
-{
+    let mut run = runner();
+    run(r#"{
     return { number: 123, string: "ABC", bool: true }
-}"#,
-        Some("{ \"number\": 123, \"string\": \"ABC\", \"bool\": true }"),
-    );
+}
+
+# return: { "number": 123, "string": "ABC", "bool": true }"#);
 }
 
 /// Nucleoid returns an inline array
 #[test]
 fn returns_an_inline_array() {
-    crate::case(
-        "spec-0137",
-        "Nucleoid returns an inline array",
-        r#"# While in the block, return a list of an object whose number is 123,
-# whose string is "ABC" and whose bool is true
-{
+    let mut run = runner();
+    run(r#"{
     return [{ number: 123, string: "ABC", bool: true }]
-}"#,
-        Some("[{ \"number\": 123, \"string\": \"ABC\", \"bool\": true }]"),
-    );
+}
+
+# return: [{ "number": 123, "string": "ABC", "bool": true }]"#);
 }
 
 /// Nucleoid supports nested functions as a parameter in an expression
 #[test]
 fn supports_nested_functions_as_a_parameter_in_an_expression() {
-    crate::case(
-        "spec-0138",
-        "Nucleoid supports nested functions as a parameter in an expression",
-        r#"# name is "AbCDE"
-name = "AbCDE"
-
-# pointer is 0
-pointer = 0
-
-# if the character of name at pointer is not an uppercase letter,
-# then throw "INVALID_FIRST_CHARACTER"
-if not /[A-Z]/.test(name.charAt(pointer)):
-    throw "INVALID_FIRST_CHARACTER"
-
-try:
-    # name is "bbCDE"
+    let mut run = runner();
+    run(r#"name = "AbCDE""#);
+    run(r#"pointer = 0"#);
+    run(r#"if not /[A-Z]/.test(name.charAt(pointer)):
+    throw "INVALID_FIRST_CHARACTER""#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     name = "bbCDE"
 catch error:
-    assert(error, "INVALID_FIRST_CHARACTER")
-
-# name is "CbCDE"
-name = "CbCDE"
-
-try:
-    # pointer is 1
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID_FIRST_CHARACTER"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    run(r#"name = "CbCDE""#);
+    run("__nucleoid_test_assertion_1_actual = null");
+    run("__nucleoid_test_assertion_1_expected = null");
+    run("__nucleoid_test_assertion_1_ran = false");
+    run(r#"try:
     pointer = 1
 catch error:
-    assert(error, "INVALID_FIRST_CHARACTER")"#,
-        None,
-    );
+    __nucleoid_test_assertion_1_actual = error
+    __nucleoid_test_assertion_1_expected = "INVALID_FIRST_CHARACTER"
+    __nucleoid_test_assertion_1_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
 }
 
 /// Nucleoid supports a property of chained functions in an expression
 #[test]
 fn supports_a_property_of_chained_functions_in_an_expression() {
-    crate::case(
-        "spec-0139",
-        "Nucleoid supports a property of chained functions in an expression",
-        r#"# There is a User type
-class User:
-    pass
-
-# There is a Registration type
-class Registration:
-    pass
-
-# user1 is a User
-user1 = User()
-
-# registration1 is a Registration whose user is user1
-registration1 = Registration()
-registration1.user = user1
-
-# registration2 is a Registration whose user is user1
-registration2 = Registration()
-registration2.user = user1
-
-try:
-    # if the number of registrations whose user is any user is more than one,
-    # then throw "USER_ALREADY_REGISTERED"
+    let mut run = runner();
+    run(r#"class User:
+    pass"#);
+    run(r#"class Registration:
+    pass"#);
+    run(r#"user1 = User()"#);
+    run(r#"registration1 = Registration()"#);
+    run(r#"registration1.user = user1"#);
+    run(r#"registration2 = Registration()"#);
+    run(r#"registration2.user = user1"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     if Registration.filter(r => r.user == $User).length > 1:
         throw "USER_ALREADY_REGISTERED"
 catch error:
-    assert(error, "USER_ALREADY_REGISTERED")"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "USER_ALREADY_REGISTERED"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid throws an error as a string
 #[test]
 fn throws_an_error_as_a_string() {
-    crate::case(
-        "spec-0140",
-        "Nucleoid throws an error as a string",
-        r#"try:
-    # throw 'INVALID'
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     throw 'INVALID'
 catch error:
-    assert(error, "INVALID")
-
-try:
-    # throw "INVALID"
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = "INVALID"
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    run("__nucleoid_test_assertion_1_actual = null");
+    run("__nucleoid_test_assertion_1_expected = null");
+    run("__nucleoid_test_assertion_1_ran = false");
+    run(r#"try:
     throw "INVALID"
 catch error:
-    assert(error, "INVALID")"#,
-        None,
-    );
+    __nucleoid_test_assertion_1_actual = error
+    __nucleoid_test_assertion_1_expected = "INVALID"
+    __nucleoid_test_assertion_1_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
 }
 
 /// Nucleoid throws an error as an integer
 #[test]
 fn throws_an_error_as_an_integer() {
-    crate::case(
-        "spec-0141",
-        "Nucleoid throws an error as an integer",
-        r#"try:
-    # throw 123
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     throw 123
 catch error:
-    assert(error, 123)"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = 123
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid throws a reference error if the thrown value is not defined
 #[test]
 fn throws_a_reference_error_if_the_thrown_value_is_not_defined() {
-    crate::case(
-        "spec-0142",
-        "Nucleoid throws a reference error if the thrown value is not defined",
-        r#"try:
-    # throw abc
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     throw abc
 catch error:
-    assert(error, ReferenceError("abc is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("abc is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid creates a class assignment before initialization
 #[test]
 fn creates_a_class_assignment_before_initialization() {
-    crate::case(
-        "spec-0143",
-        "Nucleoid creates a class assignment before initialization",
-        r#"# There is a Review type
-class Review:
-    pass
-
-# Any review's rate is the review's sum divided by 10
-$Review.rate = $Review.sum / 10
-
-# review1 is a Review
-review1 = Review()
-
-assert(review1.rate, null)
-
-# review1's sum is 42
-review1.sum = 42
-
-assert(review1.rate, 4.2)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Review:
+    pass"#);
+    run(r#"$Review.rate = $Review.sum / 10"#);
+    run(r#"review1 = Review()"#);
+    assert_eq!(run(r#"review1.rate"#), run(r#"(null)"#));
+    run(r#"review1.sum = 42"#);
+    assert_eq!(run(r#"review1.rate"#), run(r#"(4.2)"#));
 }
 
 /// Nucleoid creates a class assignment after initialization
 #[test]
 fn creates_a_class_assignment_after_initialization() {
-    crate::case(
-        "spec-0144",
-        "Nucleoid creates a class assignment after initialization",
-        r#"# There is a Shape type
-class Shape:
-    pass
-
-# shape1 is a Shape whose edge is 3
-shape1 = Shape()
-shape1.edge = 3
-
-# shape2 is a Shape whose edge is 3
-shape2 = Shape()
-shape2.edge = 3
-
-# Any shape's angle is the shape's edge minus 2, times 180
-$Shape.angle = ($Shape.edge - 2) * 180
-
-assert(shape1.angle, 180)
-assert(shape2.angle, 180)
-
-# shape1's edge is 4
-shape1.edge = 4
-
-assert(shape1.angle, 360)
-assert(shape2.angle, 180)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Shape:
+    pass"#);
+    run(r#"shape1 = Shape()"#);
+    run(r#"shape1.edge = 3"#);
+    run(r#"shape2 = Shape()"#);
+    run(r#"shape2.edge = 3"#);
+    run(r#"$Shape.angle = ($Shape.edge - 2) * 180"#);
+    assert_eq!(run(r#"shape1.angle"#), run(r#"(180)"#));
+    assert_eq!(run(r#"shape2.angle"#), run(r#"(180)"#));
+    run(r#"shape1.edge = 4"#);
+    assert_eq!(run(r#"shape1.angle"#), run(r#"(360)"#));
+    assert_eq!(run(r#"shape2.angle"#), run(r#"(180)"#));
 }
 
 /// Nucleoid updates a class assignment
 #[test]
 fn updates_a_class_assignment() {
-    crate::case(
-        "spec-0145",
-        "Nucleoid updates a class assignment",
-        r#"# There is an Employee type
-class Employee:
-    pass
-
-# employee1 is an Employee whose id is 1
-employee1 = Employee()
-employee1.id = 1
-
-# Any employee's username is "E" plus the employee's id
-$Employee.username = "E" + $Employee.id
-
-assert(employee1.username, "E1")
-
-# Any employee's username is "F" plus the employee's id
-$Employee.username = "F" + $Employee.id
-
-assert(employee1.username, "F1")
-
-# employee1's id is 2
-employee1.id = 2
-
-assert(employee1.username, "F2")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Employee:
+    pass"#);
+    run(r#"employee1 = Employee()"#);
+    run(r#"employee1.id = 1"#);
+    run(r#"$Employee.username = "E" + $Employee.id"#);
+    assert_eq!(run(r#"employee1.username"#), run(r#"("E1")"#));
+    run(r#"$Employee.username = "F" + $Employee.id"#);
+    assert_eq!(run(r#"employee1.username"#), run(r#"("F1")"#));
+    run(r#"employee1.id = 2"#);
+    assert_eq!(run(r#"employee1.username"#), run(r#"("F2")"#));
 }
 
 /// Nucleoid creates an if statement of class before initialization
 #[test]
 fn creates_an_if_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0146",
-        "Nucleoid creates an if statement of class before initialization",
-        r#"# There is a Ticket type
-class Ticket:
-    pass
-
-# Any ticket whose date is after January 1, 1993 is expired
-if $Ticket.date > Date("1993-1-1"):
-    $Ticket.status = "EXPIRED"
-
-# ticket1 is a Ticket
-ticket1 = Ticket()
-
-assert(ticket1.status, null)
-
-# ticket1's date is February 1, 1993
-ticket1.date = Date("1993-2-1")
-
-assert(ticket1.status, "EXPIRED")
-
-# ticket2 is a Ticket
-ticket2 = Ticket()
-
-assert(ticket2.status, null)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Ticket:
+    pass"#);
+    run(r#"if $Ticket.date > Date("1993-1-1"):
+    $Ticket.status = "EXPIRED""#);
+    run(r#"ticket1 = Ticket()"#);
+    assert_eq!(run(r#"ticket1.status"#), run(r#"(null)"#));
+    run(r#"ticket1.date = Date("1993-2-1")"#);
+    assert_eq!(run(r#"ticket1.status"#), run(r#"("EXPIRED")"#));
+    run(r#"ticket2 = Ticket()"#);
+    assert_eq!(run(r#"ticket2.status"#), run(r#"(null)"#));
 }
 
 /// Nucleoid creates an if statement of class after initialization
 #[test]
 fn creates_an_if_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0147",
-        "Nucleoid creates an if statement of class after initialization",
-        r#"# There is a Student type
-class Student:
-    pass
-
-# student1 is a Student whose age is 2 and whose class is "Daycare"
-student1 = Student()
-student1.age = 2
-student1.class = "Daycare"
-
-# student2 is a Student whose age is 2 and whose class is "Daycare"
-student2 = Student()
-student2.age = 2
-student2.class = "Daycare"
-
-# Any student whose age is 3 is in Preschool
-if $Student.age == 3:
-    $Student.class = "Preschool"
-
-assert(student1.class, "Daycare")
-assert(student2.class, "Daycare")
-
-# student1's age is 3
-student1.age = 3
-
-assert(student1.class, "Preschool")
-assert(student2.class, "Daycare")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Student:
+    pass"#);
+    run(r#"student1 = Student()"#);
+    run(r#"student1.age = 2"#);
+    run(r#"student1.class = "Daycare""#);
+    run(r#"student2 = Student()"#);
+    run(r#"student2.age = 2"#);
+    run(r#"student2.class = "Daycare""#);
+    run(r#"if $Student.age == 3:
+    $Student.class = "Preschool""#);
+    assert_eq!(run(r#"student1.class"#), run(r#"("Daycare")"#));
+    assert_eq!(run(r#"student2.class"#), run(r#"("Daycare")"#));
+    run(r#"student1.age = 3"#);
+    assert_eq!(run(r#"student1.class"#), run(r#"("Preschool")"#));
+    assert_eq!(run(r#"student2.class"#), run(r#"("Daycare")"#));
 }
 
 /// Nucleoid updates an if block of class
 #[test]
 fn updates_an_if_block_of_class() {
-    crate::case(
-        "spec-0148",
-        "Nucleoid updates an if block of class",
-        r#"# There is an Inventory type
-class Inventory:
-    pass
-
-# inventory1 is an Inventory whose quantity is 0
-inventory1 = Inventory()
-inventory1.quantity = 0
-
-# inventory2 is an Inventory whose quantity is 1000
-inventory2 = Inventory()
-inventory2.quantity = 1000
-
-# Any inventory whose quantity is 0 needs replenishment
-if $Inventory.quantity == 0:
-    $Inventory.replenishment = true
-
-assert(inventory1.replenishment, true)
-assert(inventory2.replenishment, null)
-
-# Any inventory whose quantity is 0 does not need replenishment
-if $Inventory.quantity == 0:
-    $Inventory.replenishment = false
-
-assert(inventory1.replenishment, false)
-assert(inventory2.replenishment, null)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Inventory:
+    pass"#);
+    run(r#"inventory1 = Inventory()"#);
+    run(r#"inventory1.quantity = 0"#);
+    run(r#"inventory2 = Inventory()"#);
+    run(r#"inventory2.quantity = 1000"#);
+    run(r#"if $Inventory.quantity == 0:
+    $Inventory.replenishment = true"#);
+    assert_eq!(run(r#"inventory1.replenishment"#), run(r#"(true)"#));
+    assert_eq!(run(r#"inventory2.replenishment"#), run(r#"(null)"#));
+    run(r#"if $Inventory.quantity == 0:
+    $Inventory.replenishment = false"#);
+    assert_eq!(run(r#"inventory1.replenishment"#), run(r#"(false)"#));
+    assert_eq!(run(r#"inventory2.replenishment"#), run(r#"(null)"#));
 }
 
 /// Nucleoid creates an else statement of class before initialization
 #[test]
 fn creates_an_else_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0149",
-        "Nucleoid creates an else statement of class before initialization",
-        r#"# There is a Count type
-class Count:
-    pass
-
-# If any count's max is greater than 1000, then the count's reset is urgent,
-# else the count's reset is regular
-if $Count.max > 1000:
+    let mut run = runner();
+    run(r#"class Count:
+    pass"#);
+    run(r#"if $Count.max > 1000:
     $Count.reset = urgent
 else:
-    $Count.reset = regular
-
-# urgent is "URGENT"
-urgent = "URGENT"
-
-# regular is "REGULAR"
-regular = "REGULAR"
-
-# count1 is a Count
-count1 = Count()
-
-# count1's max is 850
-count1.max = 850
-
-assert(count1.reset, "REGULAR")
-
-# regular is "R"
-regular = "R"
-
-assert(count1.reset, "R")"#,
-        None,
-    );
+    $Count.reset = regular"#);
+    run(r#"urgent = "URGENT""#);
+    run(r#"regular = "REGULAR""#);
+    run(r#"count1 = Count()"#);
+    run(r#"count1.max = 850"#);
+    assert_eq!(run(r#"count1.reset"#), run(r#"("REGULAR")"#));
+    run(r#"regular = "R""#);
+    assert_eq!(run(r#"count1.reset"#), run(r#"("R")"#));
 }
 
 /// Nucleoid creates an else statement of class after initialization
 #[test]
 fn creates_an_else_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0150",
-        "Nucleoid creates an else statement of class after initialization",
-        r#"# There is a Concentration type
-class Concentration:
-    pass
-
-# serialDilution is "(c1V1+c2V2)/(V1+V2)"
-serialDilution = "(c1V1+c2V2)/(V1+V2)"
-
-# directDilution is "c1/V1"
-directDilution = "c1/V1"
-
-# concentration1 is a Concentration whose substances is 2
-concentration1 = Concentration()
-concentration1.substances = 2
-
-# If any concentration's substances is 1, then the concentration's formula is directDilution,
-# else the concentration's formula is serialDilution
-if $Concentration.substances == 1:
+    let mut run = runner();
+    run(r#"class Concentration:
+    pass"#);
+    run(r#"serialDilution = "(c1V1+c2V2)/(V1+V2)""#);
+    run(r#"directDilution = "c1/V1""#);
+    run(r#"concentration1 = Concentration()"#);
+    run(r#"concentration1.substances = 2"#);
+    run(r#"if $Concentration.substances == 1:
     $Concentration.formula = directDilution
 else:
-    $Concentration.formula = serialDilution
-
-assert(concentration1.formula, "(c1V1+c2V2)/(V1+V2)")
-
-# serialDilution is "(c1V1+c2V2+c3V3)/(V1+V2+V3)"
-serialDilution = "(c1V1+c2V2+c3V3)/(V1+V2+V3)"
-
-assert(concentration1.formula, "(c1V1+c2V2+c3V3)/(V1+V2+V3)")"#,
-        None,
-    );
+    $Concentration.formula = serialDilution"#);
+    assert_eq!(run(r#"concentration1.formula"#), run(r#"("(c1V1+c2V2)/(V1+V2)")"#));
+    run(r#"serialDilution = "(c1V1+c2V2+c3V3)/(V1+V2+V3)""#);
+    assert_eq!(run(r#"concentration1.formula"#), run(r#"("(c1V1+c2V2+c3V3)/(V1+V2+V3)")"#));
 }
 
 /// Nucleoid creates an else if statement of class before initialization
 #[test]
 fn creates_an_else_if_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0151",
-        "Nucleoid creates an else if statement of class before initialization",
-        r#"# There is a Storage type
-class Storage:
-    pass
-
-# normal is "NORMAL", low is "LOW", and empty is "EMPTY"
-normal = "NORMAL"; low = "LOW"; empty = "EMPTY"
-
-# If any storage's capacity is greater than 25, then the storage's status is normal,
-# else if the storage's capacity is greater than 0, then the storage's status is low,
-# else the storage's status is empty
-if $Storage.capacity > 25:
+    let mut run = runner();
+    run(r#"class Storage:
+    pass"#);
+    run(r#"normal = "NORMAL"; low = "LOW"; empty = "EMPTY""#);
+    run(r#"if $Storage.capacity > 25:
     $Storage.status = normal
 else if $Storage.capacity > 0:
     $Storage.status = low
 else:
-    $Storage.status = empty
-
-# storage1 is a Storage
-storage1 = Storage()
-
-# storage1's capacity is 23
-storage1.capacity = 23
-
-assert(storage1.status, "LOW")
-
-# low is "L"
-low = "L"
-
-assert(storage1.status, "L")"#,
-        None,
-    );
+    $Storage.status = empty"#);
+    run(r#"storage1 = Storage()"#);
+    run(r#"storage1.capacity = 23"#);
+    assert_eq!(run(r#"storage1.status"#), run(r#"("LOW")"#));
+    run(r#"low = "L""#);
+    assert_eq!(run(r#"storage1.status"#), run(r#"("L")"#));
 }
 
 /// Nucleoid creates an else if statement of class after initialization
 #[test]
 fn creates_an_else_if_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0152",
-        "Nucleoid creates an else if statement of class after initialization",
-        r#"# There is a Registration type
-class Registration:
-    pass
-
-# yes is "YES", pending is "PENDING", and no is "NO"
-yes = "YES"; pending = "PENDING"; no = "NO"
-
-# registration1 is a Registration whose available is 0
-registration1 = Registration()
-registration1.available = 0
-
-# If any registration's available is greater than 10, then the registration's accepted is yes,
-# else if the registration's available is greater than 0, then the registration's accepted is pending,
-# else the registration's accepted is no
-if $Registration.available > 10:
+    let mut run = runner();
+    run(r#"class Registration:
+    pass"#);
+    run(r#"yes = "YES"; pending = "PENDING"; no = "NO""#);
+    run(r#"registration1 = Registration()"#);
+    run(r#"registration1.available = 0"#);
+    run(r#"if $Registration.available > 10:
     $Registration.accepted = yes
 else if $Registration.available > 0:
     $Registration.accepted = pending
 else:
-    $Registration.accepted = no
-
-assert(registration1.accepted, "NO")
-
-# yes is true, and no is false
-yes = true; no = false
-
-assert(registration1.accepted, false)"#,
-        None,
-    );
+    $Registration.accepted = no"#);
+    assert_eq!(run(r#"registration1.accepted"#), run(r#"("NO")"#));
+    run(r#"yes = true; no = false"#);
+    assert_eq!(run(r#"registration1.accepted"#), run(r#"(false)"#));
 }
 
 /// Nucleoid creates multiple else if statement of class before initialization
 #[test]
 fn creates_multiple_else_if_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0153",
-        "Nucleoid creates multiple else if statement of class before initialization",
-        r#"# There is a Capacity type
-class Capacity:
-    pass
-
-# If any capacity's spare divided by the capacity's available is greater than 0.5,
-# then the capacity's total is the capacity's available plus the capacity's spare,
-# else if any capacity's spare divided by the capacity's available is greater than 0.1,
-# then the capacity's total is the capacity's available plus the capacity's spare times 2,
-# else the capacity's total is the capacity's available plus the capacity's spare times 3
-if $Capacity.spare / $Capacity.available > 0.5:
+    let mut run = runner();
+    run(r#"class Capacity:
+    pass"#);
+    run(r#"if $Capacity.spare / $Capacity.available > 0.5:
     $Capacity.total = $Capacity.available + $Capacity.spare
 else if $Capacity.spare / $Capacity.available > 0.1:
     $Capacity.total = $Capacity.available + $Capacity.spare * 2
 else:
-    $Capacity.total = $Capacity.available + $Capacity.spare * 3
-
-# capacity1 is a Capacity
-capacity1 = Capacity()
-
-# capacity1's available is 100
-capacity1.available = 100
-
-# capacity1's spare is 5
-capacity1.spare = 5
-
-assert(capacity1.total, 115)
-
-# capacity1's spare is 1
-capacity1.spare = 1
-
-assert(capacity1.total, 103)"#,
-        None,
-    );
+    $Capacity.total = $Capacity.available + $Capacity.spare * 3"#);
+    run(r#"capacity1 = Capacity()"#);
+    run(r#"capacity1.available = 100"#);
+    run(r#"capacity1.spare = 5"#);
+    assert_eq!(run(r#"capacity1.total"#), run(r#"(115)"#));
+    run(r#"capacity1.spare = 1"#);
+    assert_eq!(run(r#"capacity1.total"#), run(r#"(103)"#));
 }
 
 /// Nucleoid creates multiple else if statement of class after initialization
 #[test]
 fn creates_multiple_else_if_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0154",
-        "Nucleoid creates multiple else if statement of class after initialization",
-        r#"# There is a Shape type
-class Shape:
-    pass
-
-# shape1 is a Shape whose type is "RECTANGLE",
-# whose x is 5 and whose y is 6
-shape1 = Shape()
-shape1.type = "RECTANGLE"
-shape1.x = 5
-shape1.y = 6
-
-# If any shape's type is "SQUARE", then the shape's area is the shape's x squared,
-# else if any shape's type is "TRIANGLE", then the shape's area is the shape's x times the shape's y divided by 2,
-# else the shape's area is the shape's x times the shape's y
-if $Shape.type == "SQUARE":
+    let mut run = runner();
+    run(r#"class Shape:
+    pass"#);
+    run(r#"shape1 = Shape()"#);
+    run(r#"shape1.type = "RECTANGLE""#);
+    run(r#"shape1.x = 5"#);
+    run(r#"shape1.y = 6"#);
+    run(r#"if $Shape.type == "SQUARE":
     $Shape.area = Math.pow($Shape.x, 2)
 else if $Shape.type == "TRIANGLE":
     $Shape.area = $Shape.x * $Shape.y / 2
 else:
-    $Shape.area = $Shape.x * $Shape.y
-
-assert(shape1.area, 30)
-
-# shape1's x is 7
-shape1.x = 7
-
-assert(shape1.area, 42)"#,
-        None,
-    );
+    $Shape.area = $Shape.x * $Shape.y"#);
+    assert_eq!(run(r#"shape1.area"#), run(r#"(30)"#));
+    run(r#"shape1.x = 7"#);
+    assert_eq!(run(r#"shape1.area"#), run(r#"(42)"#));
 }
 
 /// Nucleoid runs a block statement of class before initialization
 #[test]
 fn runs_a_block_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0155",
-        "Nucleoid runs a block statement of class before initialization",
-        r#"# There is a Stock type
-class Stock:
-    pass
-
-# while in the block, change is a local variable that is any stock's before times 4 divided by 100,
-# and the stock's after is the stock's before plus change
-{
+    let mut run = runner();
+    run(r#"class Stock:
+    pass"#);
+    run(r#"{
     change = $Stock.before * 4 / 100
     $Stock.after = $Stock.before + change
-}
-
-# stock1 is a Stock
-stock1 = Stock()
-
-assert(stock1.after, null)
-
-# stock1's before is 57.25
-stock1.before = 57.25
-
-assert(stock1.after, 59.54)
-
-# stock1's before is 59.5
-stock1.before = 59.5
-
-assert(stock1.after, 61.88)"#,
-        None,
-    );
+}"#);
+    run(r#"stock1 = Stock()"#);
+    assert_eq!(run(r#"stock1.after"#), run(r#"(null)"#));
+    run(r#"stock1.before = 57.25"#);
+    assert_eq!(run(r#"stock1.after"#), run(r#"(59.54)"#));
+    run(r#"stock1.before = 59.5"#);
+    assert_eq!(run(r#"stock1.after"#), run(r#"(61.88)"#));
 }
 
 /// Nucleoid runs a block statement of class after initialization
 #[test]
 fn runs_a_block_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0156",
-        "Nucleoid runs a block statement of class after initialization",
-        r#"# There is a Purchase type
-class Purchase:
-    pass
-
-# purchase1 is a Purchase whose price is 99
-purchase1 = Purchase()
-purchase1.price = 99
-
-# while in the block, retail is a local variable that is any purchase's price times 1.15,
-# and the purchase's retail price is retail
-{
+    let mut run = runner();
+    run(r#"class Purchase:
+    pass"#);
+    run(r#"purchase1 = Purchase()"#);
+    run(r#"purchase1.price = 99"#);
+    run(r#"{
     retail = $Purchase.price * 1.15
     $Purchase.retailPrice = retail
-}
-
-assert(purchase1.retailPrice, 113.85)
-
-# purchase1's price is 199
-purchase1.price = 199
-
-assert(purchase1.retailPrice, 228.85)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"purchase1.retailPrice"#), run(r#"(113.85)"#));
+    run(r#"purchase1.price = 199"#);
+    assert_eq!(run(r#"purchase1.retailPrice"#), run(r#"(228.85)"#));
 }
 
 /// Nucleoid runs a nested block statement of class before initialization
 #[test]
 fn runs_a_nested_block_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0157",
-        "Nucleoid runs a nested block statement of class before initialization",
-        r#"# There is a Compound type
-class Compound:
-    pass
-
-# while in the block, mol is a local variable that is 69.94 divided by any compound's substance,
-# and in a nested block, the compound's sample is the floor of mol times the compound's mol
-{
+    let mut run = runner();
+    run(r#"class Compound:
+    pass"#);
+    run(r#"{
     mol = 69.94 / $Compound.substance
     {
         $Compound.sample = Math.floor(mol * $Compound.mol)
     }
-}
-
-# compound1 is a Compound
-compound1 = Compound()
-
-# compound1's substance is 55.85
-compound1.substance = 55.85
-
-# compound1's mol is 1000
-compound1.mol = 1000
-
-assert(compound1.sample, 1252)"#,
-        None,
-    );
+}"#);
+    run(r#"compound1 = Compound()"#);
+    run(r#"compound1.substance = 55.85"#);
+    run(r#"compound1.mol = 1000"#);
+    assert_eq!(run(r#"compound1.sample"#), run(r#"(1252)"#));
 }
 
 /// Nucleoid runs a nested block statement of class after initialization
 #[test]
 fn runs_a_nested_block_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0158",
-        "Nucleoid runs a nested block statement of class after initialization",
-        r#"# There is a Bug type
-class Bug:
-    pass
-
-# bug1 is a Bug whose initial score is 1000
-# and whose aging is 24
-bug1 = Bug()
-bug1.initialScore = 1000
-bug1.aging = 24
-
-# while in the block, score is a local variable that is any bug's aging times 10,
-# and in a nested block, the bug's priority score is score plus the bug's initial score
-{
+    let mut run = runner();
+    run(r#"class Bug:
+    pass"#);
+    run(r#"bug1 = Bug()"#);
+    run(r#"bug1.initialScore = 1000"#);
+    run(r#"bug1.aging = 24"#);
+    run(r#"{
     score = $Bug.aging * 10
     {
         $Bug.priorityScore = score + $Bug.initialScore
     }
-}
-
-assert(bug1.priorityScore, 1240)"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"bug1.priorityScore"#), run(r#"(1240)"#));
 }
 
 /// Nucleoid runs a nested if statement of class before initialization
 #[test]
 fn runs_a_nested_if_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0159",
-        "Nucleoid runs a nested if statement of class before initialization",
-        r#"# There is a Mortgage type
-class Mortgage:
-    pass
-
-# rate1 is "EXCEPTIONAL"
-rate1 = "EXCEPTIONAL"
-
-# while in the block, interest is a local variable that is any mortgage's annual divided by 12,
-# and if interest is less than 4, then the mortgage's rate is rate1
-{
+    let mut run = runner();
+    run(r#"class Mortgage:
+    pass"#);
+    run(r#"rate1 = "EXCEPTIONAL""#);
+    run(r#"{
     interest = $Mortgage.annual / 12
     if interest < 4:
         $Mortgage.rate = rate1
-}
-
-# mortgage1 is a Mortgage
-mortgage1 = Mortgage()
-
-# mortgage1's annual is 46
-mortgage1.annual = 46
-
-assert(mortgage1.rate, "EXCEPTIONAL")
-
-# rate1 is "E"
-rate1 = "E"
-
-assert(mortgage1.rate, "E")"#,
-        None,
-    );
+}"#);
+    run(r#"mortgage1 = Mortgage()"#);
+    run(r#"mortgage1.annual = 46"#);
+    assert_eq!(run(r#"mortgage1.rate"#), run(r#"("EXCEPTIONAL")"#));
+    run(r#"rate1 = "E""#);
+    assert_eq!(run(r#"mortgage1.rate"#), run(r#"("E")"#));
 }
 
 /// Nucleoid runs a nested if statement of class after initialization
 #[test]
 fn runs_a_nested_if_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0160",
-        "Nucleoid runs a nested if statement of class after initialization",
-        r#"# There is a Building type
-class Building:
-    pass
-
-# buildingType1 is "SKYSCRAPER"
-buildingType1 = "SKYSCRAPER"
-
-# building1 is a Building whose floors is 20
-building1 = Building()
-building1.floors = 20
-
-# while in the block, height is a local variable that is any building's floors times 14,
-# and if height is greater than 330, then the building's type is buildingType1
-{
+    let mut run = runner();
+    run(r#"class Building:
+    pass"#);
+    run(r#"buildingType1 = "SKYSCRAPER""#);
+    run(r#"building1 = Building()"#);
+    run(r#"building1.floors = 20"#);
+    run(r#"{
     height = $Building.floors * 14
     if height > 330:
         $Building.type = buildingType1
-}
-
-assert(building1.type, null)
-
-# building1's floors is 25
-building1.floors = 25
-
-assert(building1.type, "SKYSCRAPER")
-
-# buildingType1 is "S"
-buildingType1 = "S"
-
-assert(building1.type, "S")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"building1.type"#), run(r#"(null)"#));
+    run(r#"building1.floors = 25"#);
+    assert_eq!(run(r#"building1.type"#), run(r#"("SKYSCRAPER")"#));
+    run(r#"buildingType1 = "S""#);
+    assert_eq!(run(r#"building1.type"#), run(r#"("S")"#));
 }
 
 /// Nucleoid creates a nested else statement of class before initialization
 #[test]
 fn creates_a_nested_else_statement_of_class_before_initialization() {
-    crate::case(
-        "spec-0161",
-        "Nucleoid creates a nested else statement of class before initialization",
-        r#"# There is an Account type
-class Account:
-    pass
-
-# noAlert is "NO_ALERT"
-noAlert = "NO_ALERT"
-
-# lowAlert is "LOW_ALERT"
-lowAlert = "LOW_ALERT"
-
-# while in the block, balance is a local variable that is any account's balance,
-# and if balance is greater than 1000, then the account's alert is noAlert,
-# else the account's alert is lowAlert
-{
+    let mut run = runner();
+    run(r#"class Account:
+    pass"#);
+    run(r#"noAlert = "NO_ALERT""#);
+    run(r#"lowAlert = "LOW_ALERT""#);
+    run(r#"{
     balance = $Account.balance
     if balance > 1000:
         $Account.alert = noAlert
     else:
         $Account.alert = lowAlert
-}
-
-# account1 is an Account
-account1 = Account()
-
-# account1's balance is 950
-account1.balance = 950
-
-assert(account1.alert, "LOW_ALERT")
-
-# lowAlert is "L"
-lowAlert = "L"
-
-assert(account1.alert, "L")"#,
-        None,
-    );
+}"#);
+    run(r#"account1 = Account()"#);
+    run(r#"account1.balance = 950"#);
+    assert_eq!(run(r#"account1.alert"#), run(r#"("LOW_ALERT")"#));
+    run(r#"lowAlert = "L""#);
+    assert_eq!(run(r#"account1.alert"#), run(r#"("L")"#));
 }
 
 /// Nucleoid creates a nested else statement of class after initialization
 #[test]
 fn creates_a_nested_else_statement_of_class_after_initialization() {
-    crate::case(
-        "spec-0162",
-        "Nucleoid creates a nested else statement of class after initialization",
-        r#"# There is a Question type
-class Question:
-    pass
-
-# high is "HIGH"
-high = "HIGH"
-
-# low is "LOW"
-low = "LOW"
-
-# question1 is a Question whose count is 1
-question1 = Question()
-question1.count = 1
-
-# while in the block, score is a local variable that is any question's count times 10,
-# and if score is greater than 100, then the question's type is high,
-# else the question's type is low
-{
+    let mut run = runner();
+    run(r#"class Question:
+    pass"#);
+    run(r#"high = "HIGH""#);
+    run(r#"low = "LOW""#);
+    run(r#"question1 = Question()"#);
+    run(r#"question1.count = 1"#);
+    run(r#"{
     score = $Question.count * 10
     if score > 100:
         $Question.type = high
     else:
         $Question.type = low
-}
-
-assert(question1.type, "LOW")
-
-# low is "L"
-low = "L"
-
-assert(question1.type, "L")
-
-# question1's count is 11
-question1.count = 11
-
-assert(question1.type, "HIGH")"#,
-        None,
-    );
+}"#);
+    assert_eq!(run(r#"question1.type"#), run(r#"("LOW")"#));
+    run(r#"low = "L""#);
+    assert_eq!(run(r#"question1.type"#), run(r#"("L")"#));
+    run(r#"question1.count = 11"#);
+    assert_eq!(run(r#"question1.type"#), run(r#"("HIGH")"#));
 }
 
 /// Nucleoid creates a class assignment with multiple properties before declaration
 #[test]
 fn creates_a_class_assignment_with_multiple_properties_before_declaration() {
-    crate::case(
-        "spec-0163",
-        "Nucleoid creates a class assignment with multiple properties before declaration",
-        r#"# There is a Room type
-class Room:
-    pass
-
-# Any room's level is the room's number divided by 10
-$Room.level = $Room.number / 10
-
-# There is a Guest type
-class Guest:
-    pass
-
-# Any guest's room is a Room
-$Guest.room = Room()
-
-# guest1 is a Guest
-guest1 = Guest()
-
-# guest1's room's number is 30
-guest1.room.number = 30
-
-assert(guest1.room.level, 3)
-
-# guest2 is a Guest
-guest2 = Guest()
-
-assert(guest2.room.number, 30)
-assert(guest2.room.level, 3)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Room:
+    pass"#);
+    run(r#"$Room.level = $Room.number / 10"#);
+    run(r#"class Guest:
+    pass"#);
+    run(r#"$Guest.room = Room()"#);
+    run(r#"guest1 = Guest()"#);
+    run(r#"guest1.room.number = 30"#);
+    assert_eq!(run(r#"guest1.room.level"#), run(r#"(3)"#));
+    run(r#"guest2 = Guest()"#);
+    assert_eq!(run(r#"guest2.room.number"#), run(r#"(30)"#));
+    assert_eq!(run(r#"guest2.room.level"#), run(r#"(3)"#));
 }
 
 /// Nucleoid creates a class assignment with multiple properties after declaration
 #[test]
 fn creates_a_class_assignment_with_multiple_properties_after_declaration() {
-    crate::case(
-        "spec-0164",
-        "Nucleoid creates a class assignment with multiple properties after declaration",
-        r#"# There is a Channel type
-class Channel:
-    pass
-
-# There is a Frequency type
-class Frequency:
-    pass
-
-# channel1 is a Channel
-channel1 = Channel()
-
-# Any channel's frequency is a Frequency
-$Channel.frequency = Frequency()
-
-# Any frequency's hertz is 1 divided by the frequency's period
-$Frequency.hertz = 1 / $Frequency.period
-
-assert(channel1.frequency.hertz, null)
-
-# channel1's frequency's period is 0.0025
-channel1.frequency.period = 0.0025
-
-assert(channel1.frequency.hertz, 400)
-
-# channel2 is a Channel
-channel2 = Channel()
-
-assert(channel2.frequency.period, 0.0025)
-assert(channel2.frequency.hertz, 400)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Channel:
+    pass"#);
+    run(r#"class Frequency:
+    pass"#);
+    run(r#"channel1 = Channel()"#);
+    run(r#"$Channel.frequency = Frequency()"#);
+    run(r#"$Frequency.hertz = 1 / $Frequency.period"#);
+    assert_eq!(run(r#"channel1.frequency.hertz"#), run(r#"(null)"#));
+    run(r#"channel1.frequency.period = 0.0025"#);
+    assert_eq!(run(r#"channel1.frequency.hertz"#), run(r#"(400)"#));
+    run(r#"channel2 = Channel()"#);
+    assert_eq!(run(r#"channel2.frequency.period"#), run(r#"(0.0025)"#));
+    assert_eq!(run(r#"channel2.frequency.hertz"#), run(r#"(400)"#));
 }
 
 /// Nucleoid creates a class assignment as multiple properties as part of a declaration before initialization
 #[test]
 fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_before_initialization() {
-    crate::case(
-        "spec-0165",
-        "Nucleoid creates a class assignment as multiple properties as part of a declaration before initialization",
-        r#"# There is a Hospital type
-class Hospital:
-    pass
-
-# There is a Clinic type
-class Clinic:
-    pass
-
-# Any hospital's clinic is a Clinic
-$Hospital.clinic = Clinic()
-
-# Any hospital's patients is the hospital's clinic's beds times 746
-$Hospital.patients = $Hospital.clinic.beds * 746
-
-# hospital1 is a Hospital
-hospital1 = Hospital()
-
-assert(hospital1.patients, null)
-
-# hospital1's clinic's beds is 2678
-hospital1.clinic.beds = 2678
-
-assert(hospital1.patients, 1997788)
-
-# hospital1's clinic's beds is 3000
-hospital1.clinic.beds = 3000
-
-assert(hospital1.patients, 2238000)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Hospital:
+    pass"#);
+    run(r#"class Clinic:
+    pass"#);
+    run(r#"$Hospital.clinic = Clinic()"#);
+    run(r#"$Hospital.patients = $Hospital.clinic.beds * 746"#);
+    run(r#"hospital1 = Hospital()"#);
+    assert_eq!(run(r#"hospital1.patients"#), run(r#"(null)"#));
+    run(r#"hospital1.clinic.beds = 2678"#);
+    assert_eq!(run(r#"hospital1.patients"#), run(r#"(1997788)"#));
+    run(r#"hospital1.clinic.beds = 3000"#);
+    assert_eq!(run(r#"hospital1.patients"#), run(r#"(2238000)"#));
 }
 
 /// Nucleoid creates a class assignment as multiple properties as part of a declaration after initialization
 #[test]
 fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_after_initialization() {
-    crate::case(
-        "spec-0166",
-        "Nucleoid creates a class assignment as multiple properties as part of a declaration after initialization",
-        r#"# There is a Server type
-class Server:
-    pass
-
-# There is an OS type
-class OS:
-    pass
-
-# Any server's os is an OS
-$Server.os = OS()
-
-# server1 is a Server
-server1 = Server()
-
-# server1's os's version is 14
-server1.os.version = 14
-
-# Any server's build is the server's os's version plus ".526291"
-$Server.build = $Server.os.version + ".526291"
-
-assert(server1.build, "14.526291")
-
-# server1's os's version is 15
-server1.os.version = 15
-
-assert(server1.build, "15.526291")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Server:
+    pass"#);
+    run(r#"class OS:
+    pass"#);
+    run(r#"$Server.os = OS()"#);
+    run(r#"server1 = Server()"#);
+    run(r#"server1.os.version = 14"#);
+    run(r#"$Server.build = $Server.os.version + ".526291""#);
+    assert_eq!(run(r#"server1.build"#), run(r#"("14.526291")"#));
+    run(r#"server1.os.version = 15"#);
+    assert_eq!(run(r#"server1.build"#), run(r#"("15.526291")"#));
 }
 
 /// Nucleoid creates a class assignment only if the instance is defined
 #[test]
 fn creates_a_class_assignment_only_if_the_instance_is_defined() {
-    crate::case(
-        "spec-0167",
-        "Nucleoid creates a class assignment only if the instance is defined",
-        r#"# There is a Phone type
-class Phone:
-    pass
-
-try:
-    # any phone's line's wired is true
+    let mut run = runner();
+    run(r#"class Phone:
+    pass"#);
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     $Phone.line.wired = true
 catch error:
-    assert(error, ReferenceError("Phone.line is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("Phone.line is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid creates a for of statement
 #[test]
 fn creates_a_for_of_statement() {
-    crate::case(
-        "spec-0168",
-        "Nucleoid creates a for of statement",
-        r#"# There is a Question type,
-# which has a rate as a number
-class Question(rate: int):
-    this.rate = rate
-
-# question1 is a Question whose rate is 4
-question1 = Question(4)
-
-# question2 is a Question whose rate is 5
-question2 = Question(5)
-
-# There is a Summary type,
-# which has a question as a Question
-class Summary(question):
-    this.question = question
-
-# Any summary's rate is the value of the summary's question's rate
-$Summary.rate = $Summary.question.rate.value
-
-# For each question of Question, there is a Summary whose question is the question
-for question of Question:
-    Summary(question)
-
-assert(Summary[0].rate, 4)
-assert(Summary[1].rate, 5)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Question(rate: int):
+    this.rate = rate"#);
+    run(r#"question1 = Question(4)"#);
+    run(r#"question2 = Question(5)"#);
+    run(r#"class Summary(question):
+    this.question = question"#);
+    run(r#"$Summary.rate = $Summary.question.rate.value"#);
+    run(r#"for question of Question:
+    Summary(question)"#);
+    assert_eq!(run(r#"Summary[0].rate"#), run(r#"(4)"#));
+    assert_eq!(run(r#"Summary[1].rate"#), run(r#"(5)"#));
 }
 
 /// Nucleoid creates a block of for statement without dependencies
 #[test]
 fn creates_a_block_of_for_statement_without_dependencies() {
-    crate::case(
-        "spec-0169",
-        "Nucleoid creates a block of for statement without dependencies",
-        r#"# There is an Item type
-class Item:
-    pass
-
-# item1 is an Item
-item1 = Item()
-
-# item2 is an Item
-item2 = Item()
-
-# VALUE is 10
-VALUE = 10
-
-# For each item of Item, while in the block, i is a local variable that is 10 times VALUE,
-# and the item's score is i
-for item of Item:
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run(r#"item1 = Item()"#);
+    run(r#"item2 = Item()"#);
+    run(r#"VALUE = 10"#);
+    run(r#"for item of Item:
     i = 10 * VALUE
-    item.score = i
-
-# VALUE is 20
-VALUE = 20
-
-assert(item1.score, 100)
-assert(item2.score, 100)
-
-# For each item of Item, while in the block, i is a local variable that is 10 times VALUE,
-# and the item's score is i
-for item of Item:
+    item.score = i"#);
+    run(r#"VALUE = 20"#);
+    assert_eq!(run(r#"item1.score"#), run(r#"(100)"#));
+    assert_eq!(run(r#"item2.score"#), run(r#"(100)"#));
+    run(r#"for item of Item:
     i = 10 * VALUE
-    item.score = i
-
-assert(item1.score, 200)
-assert(item2.score, 200)
-
-# item3 is an Item
-item3 = Item()
-
-assert(item3.score, null)"#,
-        None,
-    );
+    item.score = i"#);
+    assert_eq!(run(r#"item1.score"#), run(r#"(200)"#));
+    assert_eq!(run(r#"item2.score"#), run(r#"(200)"#));
+    run(r#"item3 = Item()"#);
+    assert_eq!(run(r#"item3.score"#), run(r#"(null)"#));
 }
 
 /// Nucleoid loops through only defined objects in a for of statement
 #[test]
 fn loops_through_only_defined_objects_in_a_for_of_statement() {
-    crate::case(
-        "spec-0170",
-        "Nucleoid loops through only defined objects in a for of statement",
-        r#"# array is an empty list
-array = []
-
-# There is an Item type
-class Item:
-    pass
-
-# item1 is an Object, and item1 is added to array
-item1 = Object()
-array.push(item1)
-
-# item2 is an object whose id is "item3", and item2 is added to array
-item2 = { "id": "item3" }
-array.push(item2)
-
-# item4 is an Item, and item4 is added to array
-item4 = Item()
-array.push(item4)
-
-# item5 is an object whose id is "item4", and item5 is added to array
-item5 = { "id": "item4" }
-array.push(item5)
-
-# count is 0
-count = 0
-
-# items is an empty list
-items = []
-
-# For each item of array, count is count plus 1,
-# and the item is added to items
-for item of array:
+    let mut run = runner();
+    run(r#"array = []"#);
+    run(r#"class Item:
+    pass"#);
+    run(r#"item1 = Object()"#);
+    run(r#"array.push(item1)"#);
+    run(r#"item2 = { "id": "item3" }"#);
+    run(r#"array.push(item2)"#);
+    run(r#"item4 = Item()"#);
+    run(r#"array.push(item4)"#);
+    run(r#"item5 = { "id": "item4" }"#);
+    run(r#"array.push(item5)"#);
+    run(r#"count = 0"#);
+    run(r#"items = []"#);
+    run(r#"for item of array:
     count = count + 1
-    items.push(item)
-
-assert(count, 1)
-assert(items.length, 1)
-assert(items[0], item4)"#,
-        None,
-    );
+    items.push(item)"#);
+    assert_eq!(run(r#"count"#), run(r#"(1)"#));
+    assert_eq!(run(r#"items.length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"items[0]"#), run(r#"(item4)"#));
 }
 
 /// Nucleoid supports an if statement in a for of statement
 #[test]
 fn supports_an_if_statement_in_a_for_of_statement() {
-    crate::case(
-        "spec-0171",
-        "Nucleoid supports an if statement in a for of statement",
-        r#"# There is a Question type
-class Question:
-    pass
-
-# question1 is a Question
-question1 = Question()
-
-# question2 is a Question, which is archived
-question2 = Question()
-question2.archived = true
-
-# question3 is a Question
-question3 = Question()
-
-# There is a Summary type,
-# which has a question as a Question
-class Summary(question):
-    this.question = question
-
-# Any summary's type is "DAILY"
-$Summary.type = "DAILY"
-
-# For each question of Question, if the question is not archived,
-# then there is a Summary whose question is the question
-for question of Question:
+    let mut run = runner();
+    run(r#"class Question:
+    pass"#);
+    run(r#"question1 = Question()"#);
+    run(r#"question2 = Question()"#);
+    run(r#"question2.archived = true"#);
+    run(r#"question3 = Question()"#);
+    run(r#"class Summary(question):
+    this.question = question"#);
+    run(r#"$Summary.type = "DAILY""#);
+    run(r#"for question of Question:
     if not question.archived:
-        Summary(question)
-
-assert(Summary.length, 2)
-assert(Summary[0].question.id, "question1")
-assert(Summary[1].question.id, "question3")
-assert(Summary[0].type, "DAILY")
-assert(Summary[1].type, "DAILY")
-
-# Any summary's type is "WEEKLY"
-$Summary.type = "WEEKLY"
-
-assert(Summary[0].type, "WEEKLY")
-assert(Summary[1].type, "WEEKLY")"#,
-        None,
-    );
+        Summary(question)"#);
+    assert_eq!(run(r#"Summary.length"#), run(r#"(2)"#));
+    assert_eq!(run(r#"Summary[0].question.id"#), run(r#"("question1")"#));
+    assert_eq!(run(r#"Summary[1].question.id"#), run(r#"("question3")"#));
+    assert_eq!(run(r#"Summary[0].type"#), run(r#"("DAILY")"#));
+    assert_eq!(run(r#"Summary[1].type"#), run(r#"("DAILY")"#));
+    run(r#"$Summary.type = "WEEKLY""#);
+    assert_eq!(run(r#"Summary[0].type"#), run(r#"("WEEKLY")"#));
+    assert_eq!(run(r#"Summary[1].type"#), run(r#"("WEEKLY")"#));
 }
 
 /// Nucleoid returns an integer in variable assignment
 #[test]
 fn returns_an_integer_in_variable_assignment() {
-    crate::case(
-        "spec-0172",
-        "Nucleoid returns an integer in variable assignment",
-        r#"# test assigns 2 to a and returns the value of the assignment
-def test(a):
-    return a = 2
+    let mut run = runner();
+    run(r#"def test(a):
+    return a = 2"#);
+    run(r#"b = 1"#);
+    run(r#"test(b)
 
-# b is 1
-b = 1
-
-# Call test with b
-test(b)"#,
-        Some("2"),
-    );
+# return: 2"#);
 }
 
 /// Nucleoid returns the reference of a function call
 #[test]
 fn returns_the_reference_of_a_function_call() {
-    crate::case(
-        "spec-0173",
-        "Nucleoid returns the reference of a function call",
-        r#"# a is an Object
-a = Object()
-
-# c is 1
-c = 1
-
-# test assigns a to b and returns the value of the assignment
-def test(b):
-    return b = a
-
-assert(test(c), {})
-assert(c, 1)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = Object()"#);
+    run(r#"c = 1"#);
+    run(r#"def test(b):
+    return b = a"#);
+    assert_eq!(run(r#"test(c)"#), run(r#"({})"#));
+    assert_eq!(run(r#"c"#), run(r#"(1)"#));
 }
 
 /// Nucleoid returns a string value of a function call
 #[test]
 fn returns_a_string_value_of_a_function_call() {
-    crate::case(
-        "spec-0174",
-        "Nucleoid returns a string value of a function call",
-        r#"# test assigns "abc" to a and returns the value of the assignment
-def test(a):
-    return a = "abc"
+    let mut run = runner();
+    run(r#"def test(a):
+    return a = "abc""#);
+    run(r#"b = 1"#);
+    run(r#"test(b)
 
-# b is 1
-b = 1
-
-# Call test with b
-test(b)"#,
-        Some("\"abc\""),
-    );
+# return: "abc""#);
 }
 
 /// Nucleoid returns an object value of a function call
 #[test]
 fn returns_an_object_value_of_a_function_call() {
-    crate::case(
-        "spec-0175",
-        "Nucleoid returns an object value of a function call",
-        r#"# test assigns an Object to a and returns the value of the assignment
-def test(a):
-    return a = Object()
+    let mut run = runner();
+    run(r#"def test(a):
+    return a = Object()"#);
+    run(r#"b = 1"#);
+    run(r#"test(b)
 
-# b is 1
-b = 1
-
-# Call test with b
-test(b)"#,
-        Some("{}"),
-    );
+# return: {}"#);
 }
 
 /// Nucleoid runs a function with a variable
 #[test]
 fn runs_a_function_with_a_variable() {
-    crate::case(
-        "spec-0176",
-        "Nucleoid runs a function with a variable",
-        r#"# test returns a plus 23
-def test(a):
-    return a + 23
+    let mut run = runner();
+    run(r#"def test(a):
+    return a + 23"#);
+    run(r#"data = "UUID-1""#);
+    run(r#"test(data)
 
-# data is "UUID-1"
-data = "UUID-1"
-
-# Call test with data
-test(data)"#,
-        Some("\"UUID-123\""),
-    );
+# return: "UUID-123""#);
 }
 
 /// Nucleoid returns the first return statement in a block
 #[test]
 fn returns_the_first_return_statement_in_a_block() {
-    crate::case(
-        "spec-0177",
-        "Nucleoid returns the first return statement in a block",
-        r#"# While in the block, return 123, and return "abc"
-{
+    let mut run = runner();
+    run(r#"{
     return 123
     return "abc"
-}"#,
-        Some("123"),
-    );
+}
+
+# return: 123"#);
 }
 
 /// Nucleoid returns the instance itself in instance creation
 #[test]
 fn returns_the_instance_itself_in_instance_creation() {
-    crate::case(
-        "spec-0178",
-        "Nucleoid returns the instance itself in instance creation",
-        r#"# There is a Test type,
-# which has a prop as a number
-class Test(prop: int):
-    this.prop = prop
+    let mut run = runner();
+    run(r#"class Test(prop: int):
+    this.prop = prop"#);
+    run(r#"Test(123)
 
-# There is a Test whose prop is 123
-Test(123)
-
-assert(Test[0].prop, 123)
-assert(Test[0].id != null, true)"#,
-        Some("{ \"id\": \"[UUID]\", \"prop\": 123 }"),
-    );
+# return: { "id": "[UUID]", "prop": 123 }"#);
+    assert_eq!(run(r#"Test[0].prop"#), run(r#"(123)"#));
+    assert_eq!(run(r#"Test[0].id != null"#), run(r#"(true)"#));
 }
 
 /// Nucleoid explains how a value was derived
 #[test]
 fn explains_how_a_value_was_derived() {
-    crate::case(
-        "spec-0179",
-        "Nucleoid explains how a value was derived",
-        r#"# a is 1
-a = 1
-
-# b is a plus 2
-b = a + 2
-
-# c is b times 2
-c = b * 2
-
-assert((why c).length, 3)
-assert((why c)[0].node, "c")
-assert((why c)[0].holds, 6)
-assert((why c)[0].rule, "c = b*2")
-assert((why c)[0].state, "derived")
-assert((why c)[0].from, ["b"])"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a + 2"#);
+    run(r#"c = b * 2"#);
+    assert_eq!(run(r#"(why c).length"#), run(r#"(3)"#));
+    assert_eq!(run(r#"(why c)[0].node"#), run(r#"("c")"#));
+    assert_eq!(run(r#"(why c)[0].holds"#), run(r#"(6)"#));
+    assert_eq!(run(r#"(why c)[0].rule"#), run(r#"("c = b*2")"#));
+    assert_eq!(run(r#"(why c)[0].state"#), run(r#"("derived")"#));
+    assert_eq!(run(r#"(why c)[0].from"#), run(r#"(["b"])"#));
 }
 
 /// Nucleoid states a fact that follows from nothing else
 #[test]
 fn states_a_fact_that_follows_from_nothing_else() {
-    crate::case(
-        "spec-0180",
-        "Nucleoid states a fact that follows from nothing else",
-        r#"# a is 1
-a = 1
-
-# b is a plus 2
-b = a + 2
-
-assert((why b)[1].node, "a")
-assert((why b)[1].state, "stated")
-assert((why b)[1].from, [])"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a + 2"#);
+    assert_eq!(run(r#"(why b)[1].node"#), run(r#"("a")"#));
+    assert_eq!(run(r#"(why b)[1].state"#), run(r#"("stated")"#));
+    assert_eq!(run(r#"(why b)[1].from"#), run(r#"([])"#));
 }
 
 /// Nucleoid names the class-level rule a property was derived from
 #[test]
 fn names_the_class_level_rule_a_property_was_derived_from() {
-    crate::case(
-        "spec-0181",
-        "Nucleoid names the class-level rule a property was derived from",
-        r#"# There is a Human type,
-# which has a name as a string
-class Human(name: str):
-    this.name = name
-
-# Every human is mortal
-$Human.mortal = true
-
-# Socrates is a Human
-socrates = Human("Socrates")
-
-assert((why socrates.mortal).length, 1)
-assert((why socrates.mortal)[0].rule, "$Human.mortal = true")
-assert((why socrates.mortal)[0].state, "derived")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"class Human(name: str):
+    this.name = name"#);
+    run(r#"$Human.mortal = true"#);
+    run(r#"socrates = Human("Socrates")"#);
+    assert_eq!(run(r#"(why socrates.mortal).length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"(why socrates.mortal)[0].rule"#), run(r#"("$Human.mortal = true")"#));
+    assert_eq!(run(r#"(why socrates.mortal)[0].state"#), run(r#"("derived")"#));
 }
 
 /// Nucleoid reports what a value affects
 #[test]
 fn reports_what_a_value_affects() {
-    crate::case(
-        "spec-0182",
-        "Nucleoid reports what a value affects",
-        r#"# a is 1
-a = 1
-
-# b is a plus 2
-b = a + 2
-
-# c is b times 2
-c = b * 2
-
-assert((affects a).length, 2)
-assert((affects a)[0].node, "b")
-assert((affects a)[1].node, "c")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a + 2"#);
+    run(r#"c = b * 2"#);
+    assert_eq!(run(r#"(affects a).length"#), run(r#"(2)"#));
+    assert_eq!(run(r#"(affects a)[0].node"#), run(r#"("b")"#));
+    assert_eq!(run(r#"(affects a)[1].node"#), run(r#"("c")"#));
 }
 
 /// Nucleoid chains reasoning operations
 #[test]
 fn chains_reasoning_operations() {
-    crate::case(
-        "spec-0183",
-        "Nucleoid chains reasoning operations",
-        r#"# a is 1
-a = 1
-
-# b is a plus 2
-b = a + 2
-
-# c is b times 2
-c = b * 2
-
-assert((c |> why).length, 3)
-assert((a |> affects |> why).length, 3)
-assert((why c).length, (c |> why).length)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a + 2"#);
+    run(r#"c = b * 2"#);
+    assert_eq!(run(r#"(c |> why).length"#), run(r#"(3)"#));
+    assert_eq!(run(r#"(a |> affects |> why).length"#), run(r#"(3)"#));
+    assert_eq!(run(r#"(why c).length"#), run(r#"((c |> why).length)"#));
 }
 
 /// Nucleoid keeps an explanation up to date
 #[test]
 fn keeps_an_explanation_up_to_date() {
-    crate::case(
-        "spec-0184",
-        "Nucleoid keeps an explanation up to date",
-        r#"# a is 1
-a = 1
-
-# b is a plus 2
-b = a + 2
-
-# c is b times 2
-c = b * 2
-
-# trace is why c
-trace = why c
-
-assert(trace[0].holds, 6)
-
-# a is 5
-a = 5
-
-assert(trace[0].holds, 14)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a + 2"#);
+    run(r#"c = b * 2"#);
+    run(r#"trace = why c"#);
+    assert_eq!(run(r#"trace[0].holds"#), run(r#"(6)"#));
+    run(r#"a = 5"#);
+    assert_eq!(run(r#"trace[0].holds"#), run(r#"(14)"#));
 }
 
 /// Nucleoid does not select a reasoning statement
 #[test]
 fn does_not_select_a_reasoning_statement() {
-    crate::case(
-        "spec-0185",
-        "Nucleoid does not select a reasoning statement",
-        r#"# a is 1
-a = 1
-
-# b is a plus 2
-b = a + 2
-
-# trace is why b
-trace = why b
-
-assert((affects a).length, 1)
-assert((affects a)[0].node, "b")"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a + 2"#);
+    run(r#"trace = why b"#);
+    assert_eq!(run(r#"(affects a).length"#), run(r#"(1)"#));
+    assert_eq!(run(r#"(affects a)[0].node"#), run(r#"("b")"#));
 }
 
 /// Nucleoid selects the whole model
 #[test]
 fn selects_the_whole_model() {
-    crate::case(
-        "spec-0186",
-        "Nucleoid selects the whole model",
-        r#"# a is 1
-a = 1
-
-# b is a plus 2
-b = a + 2
-
-assert((model |> why).length, 2)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"a = 1"#);
+    run(r#"b = a + 2"#);
+    assert_eq!(run(r#"(model |> why).length"#), run(r#"(2)"#));
 }
 
 /// Nucleoid throws an error when explaining something that is not defined
 #[test]
 fn throws_an_error_when_explaining_something_that_is_not_defined() {
-    crate::case(
-        "spec-0187",
-        "Nucleoid throws an error when explaining something that is not defined",
-        r#"try:
-    # explain nothing
+    let mut run = runner();
+    run("__nucleoid_test_assertion_0_actual = null");
+    run("__nucleoid_test_assertion_0_expected = null");
+    run("__nucleoid_test_assertion_0_ran = false");
+    run(r#"try:
     why nothing
 catch error:
-    assert(error, ReferenceError("nothing is not defined"))"#,
-        None,
-    );
+    __nucleoid_test_assertion_0_actual = error
+    __nucleoid_test_assertion_0_expected = ReferenceError("nothing is not defined")
+    __nucleoid_test_assertion_0_ran = true"#);
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
 }
 
 /// Nucleoid treats a reasoning name as a variable when one is defined
 #[test]
 fn treats_a_reasoning_name_as_a_variable_when_one_is_defined() {
-    crate::case(
-        "spec-0188",
-        "Nucleoid treats a reasoning name as a variable when one is defined",
-        r#"# why is 1
-why = 1
-
-assert(why, 1)"#,
-        None,
-    );
+    let mut run = runner();
+    run(r#"why = 1"#);
+    assert_eq!(run(r#"why"#), run(r#"(1)"#));
 }
 

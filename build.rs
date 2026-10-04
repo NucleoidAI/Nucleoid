@@ -103,7 +103,6 @@ fn main() {
 
 #[derive(Deserialize)]
 struct Record {
-    id: String,
     description: String,
     code: String,
     #[serde(rename = "return")]
@@ -183,6 +182,7 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
 
     if let Some(module) = module {
         writeln!(generated, "mod {module} {{").unwrap();
+        writeln!(generated, "    use crate::common::runner;\n").unwrap();
     }
 
     let indent = if module.is_some() { "    " } else { "" };
@@ -193,19 +193,78 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
         writeln!(generated, "{indent}/// {}", record.description).unwrap();
         writeln!(generated, "{indent}#[test]").unwrap();
         writeln!(generated, "{indent}fn {name}() {{").unwrap();
-        writeln!(generated, "{indent}    crate::case(").unwrap();
-        writeln!(generated, "{indent}        {:?},", record.id).unwrap();
-        writeln!(generated, "{indent}        {:?},", record.description).unwrap();
-        writeln!(generated, "{indent}        {},", raw_literal(&record.code)).unwrap();
+        writeln!(generated, "{indent}    let mut run = runner();").unwrap();
 
-        match &record.returns {
-            Some(expected) => {
-                writeln!(generated, "{indent}        Some({expected:?}),").unwrap();
-            }
-            None => writeln!(generated, "{indent}        None,").unwrap(),
+        let mut statements: Vec<String> = statements(&record.code)
+            .into_iter()
+            .map(|statement| without_comments(&statement))
+            .collect();
+
+        if let Some(expected) = &record.returns {
+            let last = statements
+                .iter_mut()
+                .rfind(|statement| !is_assertion(statement))
+                .expect("a return expectation belongs to a statement");
+            write!(last, "\n\n# return: {expected}").unwrap();
         }
 
-        writeln!(generated, "{indent}    );").unwrap();
+        let mut nested_assertion = 0;
+
+        for statement in statements {
+            if let Some((actual, expected)) = assertion(&statement) {
+                let expected = format!("({expected})");
+                writeln!(
+                    generated,
+                    "{indent}    assert_eq!(run({}), run({}));",
+                    raw_literal(actual),
+                    raw_literal(&expected)
+                )
+                .unwrap();
+            } else {
+                let (statement, assertions) =
+                    lift_nested_assertions(&statement, &mut nested_assertion);
+
+                for assertion in &assertions {
+                    writeln!(
+                        generated,
+                        "{indent}    run({:?});",
+                        format!("{}_actual = null", assertion)
+                    )
+                    .unwrap();
+                    writeln!(
+                        generated,
+                        "{indent}    run({:?});",
+                        format!("{}_expected = null", assertion)
+                    )
+                    .unwrap();
+                    writeln!(
+                        generated,
+                        "{indent}    run({:?});",
+                        format!("{}_ran = false", assertion)
+                    )
+                    .unwrap();
+                }
+
+                writeln!(generated, "{indent}    run({});", raw_literal(&statement)).unwrap();
+
+                for assertion in assertions {
+                    writeln!(
+                        generated,
+                        "{indent}    assert_eq!(run({:?}), run(\"(true)\"));",
+                        format!("{assertion}_ran")
+                    )
+                    .unwrap();
+                    writeln!(
+                        generated,
+                        "{indent}    assert_eq!(run({:?}), run({:?}));",
+                        format!("{assertion}_actual"),
+                        format!("({assertion}_expected)")
+                    )
+                    .unwrap();
+                }
+            }
+        }
+
         writeln!(generated, "{indent}}}\n").unwrap();
     }
 
@@ -214,6 +273,122 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
     }
 
     generated
+}
+
+/// Splits a case into top-level statements while retaining comments and blocks.
+fn statements(source: &str) -> Vec<String> {
+    let source = source.replace("\r\n", "\n");
+    let mut statements = Vec::new();
+    let mut current: Vec<&str> = Vec::new();
+    let mut pending: Vec<&str> = Vec::new();
+
+    for line in source.lines() {
+        let trimmed = line.trim();
+        let top_level = line.len() == line.trim_start().len();
+        let comment_or_blank = trimmed.is_empty() || trimmed.starts_with('#');
+        let continuation = trimmed.starts_with("else:")
+            || trimmed.starts_with("else if ")
+            || trimmed.starts_with("elif ")
+            || trimmed.starts_with("catch ")
+            || trimmed.starts_with("finally:")
+            || trimmed.starts_with([')', ']', '}']);
+
+        if comment_or_blank {
+            pending.push(line);
+        } else if top_level && !continuation {
+            if !current.is_empty() {
+                statements.push(current.join("\n").trim().to_string());
+                current.clear();
+            }
+
+            current.append(&mut pending);
+            current.push(line);
+        } else {
+            current.append(&mut pending);
+            current.push(line);
+        }
+    }
+
+    if !current.is_empty() {
+        statements.push(current.join("\n").trim().to_string());
+    }
+
+    assert!(!statements.is_empty(), "a dataset record has no statements");
+    statements
+}
+
+fn is_assertion(statement: &str) -> bool {
+    assertion(statement).is_some()
+}
+
+fn assertion(statement: &str) -> Option<(&str, &str)> {
+    let statement = statement.trim();
+    let arguments = statement.strip_prefix("assert(")?.strip_suffix(')')?;
+    let mut depth = 0;
+    let mut quote = None;
+    let mut escaped = false;
+
+    for (index, character) in arguments.char_indices() {
+        if let Some(delimiter) = quote {
+            if escaped {
+                escaped = false;
+            } else if character == '\\' {
+                escaped = true;
+            } else if character == delimiter {
+                quote = None;
+            }
+
+            continue;
+        }
+
+        match character {
+            '"' | '\'' | '`' => quote = Some(character),
+            '(' | '[' | '{' => depth += 1,
+            ')' | ']' | '}' => depth -= 1,
+            ',' if depth == 0 => {
+                let actual = arguments[..index].trim();
+                let expected = arguments[index + character.len_utf8()..].trim();
+                return Some((actual, expected));
+            }
+            _ => {}
+        }
+    }
+
+    None
+}
+
+fn lift_nested_assertions(statement: &str, index: &mut usize) -> (String, Vec<String>) {
+    let mut generated = Vec::new();
+    let mut assertions = Vec::new();
+
+    for line in statement.lines() {
+        let trimmed = line.trim();
+
+        if let Some((actual, expected)) = assertion(trimmed) {
+            let indentation = &line[..line.len() - line.trim_start().len()];
+            let name = format!("__nucleoid_test_assertion_{}", *index);
+            *index += 1;
+
+            generated.push(format!("{indentation}{name}_actual = {actual}"));
+            generated.push(format!("{indentation}{name}_expected = {expected}"));
+            generated.push(format!("{indentation}{name}_ran = true"));
+            assertions.push(name);
+        } else {
+            generated.push(line.to_string());
+        }
+    }
+
+    (generated.join("\n"), assertions)
+}
+
+fn without_comments(statement: &str) -> String {
+    statement
+        .lines()
+        .filter(|line| !line.trim().starts_with('#'))
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim()
+        .to_string()
 }
 
 fn raw_literal(value: &str) -> String {
