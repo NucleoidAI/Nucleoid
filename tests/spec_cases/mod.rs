@@ -29,84 +29,28 @@ fn returns_value_of_variable() {
 /// Nucleoid throws an error if variable is not defined
 #[test]
 fn throws_an_error_if_variable_is_not_defined() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    t = e + 1
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("e is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("t = e + 1"), "ReferenceError: e is not defined");
 }
 
 /// Nucleoid throws an error inside a block
 #[test]
 fn throws_an_error_inside_a_block() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run("k = 99");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    if k >= 99:
-        throw "INVALID"
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"if k >= 99:
+    throw "INVALID""#), "INVALID");
 }
 
 /// Nucleoid throws an error as a variable
 #[test]
 fn throws_an_error_as_a_variable() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run("length = 0.1");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    if length < 1:
-        throw length
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = 0.1
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
-    run("__nucleoid_test_assertion_1_actual = null");
-    run("__nucleoid_test_assertion_1_expected = null");
-    run("__nucleoid_test_assertion_1_ran = false");
-    run(r#"try:
-    if length < 1.1:
-        throw 'length'
-catch error:
-    __nucleoid_test_assertion_1_actual = error
-    __nucleoid_test_assertion_1_expected = "length"
-    __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_1_actual");
-        let expected = run("(__nucleoid_test_assertion_1_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"if length < 1:
+    throw length"#), 0.1);
+    assert_eq!(run_error(r#"if length < 1.1:
+    throw 'length'"#), "length");
 }
 
 /// Nucleoid creates a class with constructor
@@ -419,22 +363,8 @@ fn supports_an_array_with_brackets() {
 /// Nucleoid throws an error if a variable in an expression is not defined
 #[test]
 fn throws_an_error_if_a_variable_in_an_expression_is_not_defined() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    e == 2.71828
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("e is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("e == 2.71828"), "ReferenceError: e is not defined");
 }
 
 /// Nucleoid retrieves the value of a variable
@@ -450,27 +380,13 @@ fn retrieves_the_value_of_a_variable() {
 /// Nucleoid creates a property assignment on a local variable only if the instance is defined
 #[test]
 fn creates_a_property_assignment_on_a_local_variable_only_if_the_instance_is_defined() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Ticket:
     pass"#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    {
-        ticket = Ticket()
-        ticket.event.group = "ENTERTAINMENT"
-    }
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("ticket.event is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"{
+    ticket = Ticket()
+    ticket.event.group = "ENTERTAINMENT"
+}"#), "ReferenceError: ticket.event is not defined");
 }
 
 /// Nucleoid declares a local variable as undefined
@@ -494,31 +410,17 @@ fn declares_a_local_variable_as_undefined() {
 /// Nucleoid rejects a local variable declared as undefined
 #[test]
 fn rejects_a_local_variable_declared_as_undefined() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Device(code: str):
     this.code = code"#);
     run(r#"device1 = Device("A0")"#);
     run(r#"device2 = Device("B1")"#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    {
-        device = Device.find(d => d.code == "A1")
-        if not device:
-            throw "INVALID_DEVICE"
-        return device
-    }
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID_DEVICE"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"{
+    device = Device.find(d => d.code == "A1")
+    if not device:
+        throw "INVALID_DEVICE"
+    return device
+}"#), "INVALID_DEVICE");
 }
 
 /// Nucleoid creates a standard built-in object as a property of a local variable
@@ -774,176 +676,78 @@ fn assigns_a_function_as_a_dependency() {
 /// Nucleoid supports a regular expression literal
 #[test]
 fn supports_a_regular_expression_literal() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class User:
     pass"#);
     run(r#"if not /.{4,8}/.test($User.password):
     throw 'INVALID_PASSWORD'"#);
     run("user1 = User()");
     assert_eq!(run("user1.password"), serde_json::Value::Null);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    user1.password = 'PAS'
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID_PASSWORD"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("user1.password = 'PAS'"), "INVALID_PASSWORD");
 }
 
 /// Nucleoid rejects defining a class declaration in a non-class block
 #[test]
 fn rejects_defining_a_class_declaration_in_a_non_class_block() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Person:
     pass"#);
     run("person1 = Person()");
     run("person1.weight = 90");
     run("person1.height = 1.8");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    {
-        weight = person1.weight
-        height = person1.height
-        $Person.bmi = weight / (height * height)
-    }
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = SyntaxError("Cannot define class declaration in non-class block")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"{
+    weight = person1.weight
+    height = person1.height
+    $Person.bmi = weight / (height * height)
+}"#), "SyntaxError: Cannot define class declaration in non-class block");
 }
 
 /// Nucleoid detects a circular dependency
 #[test]
 fn detects_a_circular_dependency() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run("number1 = 10");
     run("number2 = number1 * 10");
     assert_eq!(run("number2"), 100);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    number1 = number2 * 10
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = TypeError("Circular Dependency")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("number1 = number2 * 10"), "TypeError: Circular Dependency");
 }
 
 /// Nucleoid rolls back a variable if an exception is thrown
 #[test]
 fn rolls_back_a_variable_if_an_exception_is_thrown() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run("a = 5");
     run(r#"if a > 5:
     throw 'INVALID_VALUE'"#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    a = 6
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID_VALUE"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("a = 6"), "INVALID_VALUE");
     assert_eq!(run("a"), 5);
 }
 
 /// Nucleoid rolls back a property if an exception is thrown
 #[test]
 fn rolls_back_a_property_if_an_exception_is_thrown() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Item:
     pass"#);
     run(r#"if $Item.sku == 'A':
     throw 'INVALID_SKU'"#);
     run("item1 = Item()");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    item1.sku = 'A'
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID_SKU"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("item1.sku = 'A'"), "INVALID_SKU");
     assert_eq!(run("item1.sku"), serde_json::Value::Null);
 }
 
 /// Nucleoid rolls back an instance if an exception is thrown
 #[test]
 fn rolls_back_an_instance_if_an_exception_is_thrown() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class User(first: str, last: str):
     this.first = first
     this.last = last"#);
     run(r#"if $User.first.length < 3:
     throw 'INVALID_USER'"#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    user1 = User('F', 'L')
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID_USER"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("user1 = User('F', 'L')"), "INVALID_USER");
     assert_eq!(run("User.length"), 0);
-    run("__nucleoid_test_assertion_1_actual = null");
-    run("__nucleoid_test_assertion_1_expected = null");
-    run("__nucleoid_test_assertion_1_ran = false");
-    run(r#"try:
-    user1
-catch error:
-    __nucleoid_test_assertion_1_actual = error
-    __nucleoid_test_assertion_1_expected = ReferenceError("user1 is not defined")
-    __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_1_actual");
-        let expected = run("(__nucleoid_test_assertion_1_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("user1"), "ReferenceError: user1 is not defined");
 }
 
 /// Nucleoid updates a variable assignment
@@ -972,27 +776,13 @@ fn uses_only_the_value_when_a_variable_references_itself() {
 /// Nucleoid deletes a variable assignment
 #[test]
 fn deletes_a_variable_assignment() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run("t = 1");
     run("q = t + 1");
     assert_eq!(run("q"), 2);
     run("delete q");
     run("t = 2");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    q
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("q is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("q"), "ReferenceError: q is not defined");
 }
 
 /// Nucleoid returns the assigned value in a variable assignment
@@ -1187,26 +977,15 @@ fn assigns_a_property_on_a_local_variable_after_initialization() {
 fn reassigns_a_shadowing_local_variable_in_a_nested_block() {
     let mut run = runner();
     run(r#"barcode = "barcode""#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"{
+    assert_eq!(run(r#"{
     barcode = "barcode"
     {
         barcode = "barcode2"
         {
-            __nucleoid_test_assertion_0_actual = barcode
-            __nucleoid_test_assertion_0_expected = "barcode2"
-            __nucleoid_test_assertion_0_ran = true
+            barcode
         }
     }
-}"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+}"#), "barcode2");
     assert_eq!(run("barcode"), "barcode");
 }
 
@@ -1344,55 +1123,13 @@ fn defines_a_class_in_the_state() {
 /// Nucleoid rejects creating an instance if the class does not exist
 #[test]
 fn rejects_creating_an_instance_if_the_class_does_not_exist() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    chart1 = Chart()
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("Chart is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (mut run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("chart1 = Chart()"), "ReferenceError: Chart is not defined");
     run(r#"class Chart:
     pass"#);
     run("chart1 = Chart()");
-    run("__nucleoid_test_assertion_1_actual = null");
-    run("__nucleoid_test_assertion_1_expected = null");
-    run("__nucleoid_test_assertion_1_ran = false");
-    run(r#"try:
-    chart1.plot = Plot()
-catch error:
-    __nucleoid_test_assertion_1_actual = error
-    __nucleoid_test_assertion_1_expected = ReferenceError("Plot is not defined")
-    __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_1_actual");
-        let expected = run("(__nucleoid_test_assertion_1_expected)");
-        assert_eq!(actual, expected);
-    }
-    run("__nucleoid_test_assertion_2_actual = null");
-    run("__nucleoid_test_assertion_2_expected = null");
-    run("__nucleoid_test_assertion_2_ran = false");
-    run(r#"try:
-    $Chart.plot = Plot()
-catch error:
-    __nucleoid_test_assertion_2_actual = error
-    __nucleoid_test_assertion_2_expected = ReferenceError("Plot is not defined")
-    __nucleoid_test_assertion_2_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_2_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_2_actual");
-        let expected = run("(__nucleoid_test_assertion_2_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("chart1.plot = Plot()"), "ReferenceError: Plot is not defined");
+    assert_eq!(run_error("$Chart.plot = Plot()"), "ReferenceError: Plot is not defined");
 }
 
 /// Nucleoid creates a property assignment before declaration
@@ -1425,25 +1162,11 @@ fn creates_a_property_assignment_after_declaration() {
 /// Nucleoid creates a property assignment only if the instance is defined
 #[test]
 fn creates_a_property_assignment_only_if_the_instance_is_defined() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Channel:
     pass"#);
     run("channel1 = Channel()");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    channel1.frequency.type = "ANGULAR"
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("channel1.frequency is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"channel1.frequency.type = "ANGULAR""#), "ReferenceError: channel1.frequency is not defined");
 }
 
 /// Nucleoid creates an object and assigns it to a variable
@@ -1461,27 +1184,13 @@ fn creates_an_object_and_assigns_it_to_a_variable() {
 /// Nucleoid creates an object assignment as a property only if the instance is defined
 #[test]
 fn creates_an_object_assignment_as_a_property_only_if_the_instance_is_defined() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Worker:
     pass"#);
     run(r#"class Schedule:
     pass"#);
     run("worker1 = Worker()");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    worker1.duty.schedule = Schedule()
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("worker1.duty is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("worker1.duty.schedule = Schedule()"), "ReferenceError: worker1.duty is not defined");
 }
 
 /// Nucleoid uses only the value when a property references itself
@@ -1532,53 +1241,25 @@ fn assigns_an_object_to_a_property_after_initialization() {
 /// Nucleoid rejects value as a property name
 #[test]
 fn rejects_value_as_a_property_name() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Schedule:
     pass"#);
     run(r#"class Place:
     pass"#);
     run("value = Schedule()");
     assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    value.value = Place()
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("value.value = Place()"), "TypeError: Cannot use 'value' as a property");
 }
 
 /// Nucleoid rejects value as a property name in a value assignment
 #[test]
 fn rejects_value_as_a_property_name_in_a_value_assignment() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Value:
     pass"#);
     run("value = Value()");
     assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    value.value = 2147483647
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("value.value = 2147483647"), "TypeError: Cannot use 'value' as a property");
 }
 
 /// Nucleoid uses value property to indicate using only value of property
@@ -1601,7 +1282,7 @@ fn uses_value_property_to_indicate_using_only_value_of_property() {
 /// Nucleoid uses value property in an if condition to indicate using only value of property
 #[test]
 fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_property() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Question:
     pass"#);
     run("question1 = Question()");
@@ -1609,48 +1290,20 @@ fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_proper
     run(r#"if question1.text != question1.text.value:
     throw "QUESTION_ARCHIVED""#);
     assert_eq!(run("question1.text"), "How was the service?");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    question1.text = "How would you rate us?"
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "QUESTION_ARCHIVED"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"question1.text = "How would you rate us?""#), "QUESTION_ARCHIVED");
 }
 
 /// Nucleoid rejects value of a property if the property is not defined
 #[test]
 fn rejects_value_of_a_property_if_the_property_is_not_defined() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Travel:
     pass"#);
     run("travel1 = Travel()");
     run("travel1.speed = 65");
     run("travel1.duration = travel1.distance / travel1.speed");
     assert_eq!(run("travel1.duration"), serde_json::Value::Null);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    travel1.time = travel1.distance.value / travel1.speed
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("travel1.distance is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("travel1.time = travel1.distance.value / travel1.speed"), "ReferenceError: travel1.distance is not defined");
 }
 
 /// Nucleoid uses the value of a null property as zero
@@ -1671,27 +1324,13 @@ fn uses_the_value_of_a_null_property_as_zero() {
 /// Nucleoid rejects value as a property name in a block
 #[test]
 fn rejects_value_as_a_property_name_in_a_block() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Alarm:
     pass"#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    {
-        value = Alarm()
-        value.value = "22:00"
-    }
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"{
+    value = Alarm()
+    value.value = "22:00"
+}"#), "TypeError: Cannot use 'value' as a property");
 }
 
 /// Nucleoid keeps same as its value when the value property is used for a local
@@ -1876,28 +1515,14 @@ fn updates_property_assignment() {
 /// Nucleoid deletes an instance
 #[test]
 fn deletes_an_instance() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Circle:
     pass"#);
     run("circle1 = Circle()");
     run("delete circle1");
     assert_eq!(run(r#"Circle["circle1"]"#), serde_json::Value::Null);
     assert_eq!(run(r#"Circle.find(circle => circle.id == "circle1")"#), serde_json::Value::Null);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    circle1
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("circle1 is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("circle1"), "ReferenceError: circle1 is not defined");
 }
 
 /// Nucleoid deletes an instance by reference
@@ -1933,26 +1558,12 @@ fn returns_a_boolean_when_deleting_an_object() {
 /// Nucleoid rejects deleting an instance if it has any properties
 #[test]
 fn rejects_deleting_an_instance_if_it_has_any_properties() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Channel:
     pass"#);
     run("channel1 = Channel()");
     run("channel1.frequency = 440");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    delete channel1
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = TypeError("Cannot delete object 'channel1'")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("delete channel1"), "TypeError: Cannot delete object 'channel1'");
     assert_eq!(run("channel1.frequency"), 440);
     run("delete channel1.frequency");
     run("delete channel1");
@@ -1962,28 +1573,14 @@ catch error:
 /// Nucleoid rejects deleting an instance if it has an object as a property
 #[test]
 fn rejects_deleting_an_instance_if_it_has_an_object_as_a_property() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Shape:
     pass"#);
     run(r#"class Type:
     pass"#);
     run("shape1 = Shape()");
     run("shape1.type = Type()");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    delete shape1
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = TypeError("Cannot delete object 'shape1'")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("delete shape1"), "TypeError: Cannot delete object 'shape1'");
     run("delete shape1.type");
     run("delete shape1");
     assert_eq!(run(r#"Shape["shape1"]"#), serde_json::Value::Null);
@@ -2194,22 +1791,8 @@ fn runs_an_expression_statement_of_class() {
 /// Nucleoid rejects a variable declaration without definition
 #[test]
 fn rejects_a_variable_declaration_without_definition() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    a: int
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("Missing definition")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("a: int"), "ReferenceError: Missing definition");
 }
 
 /// Nucleoid creates a dependency based on the length of an identifier
@@ -2300,27 +1883,13 @@ fn supports_creating_standard_built_in_objects() {
 /// Nucleoid supports built-in objects
 #[test]
 fn supports_built_in_objects() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run("date1 = Date()");
     run("date2 = Date(date1.getTime())");
     assert_eq!(run("date1.getTime() == date2.getTime()"), true);
     run(r#"date3 = Date.parse("04 Dec 1995 00:12:00 GMT")"#);
     assert_eq!(run("date3"), 818035920000.0);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    date4 = Date.wrong()
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = TypeError("Date.wrong is not a function")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("date4 = Date.wrong()"), "TypeError: Date.wrong is not a function");
 }
 
 /// Nucleoid calls a function with no return
@@ -2376,51 +1945,17 @@ fn supports_a_function_with_a_parameter_in_an_expression() {
 #[test]
 fn creates_a_variable_statement_with_json() {
     let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run("__nucleoid_test_assertion_1_actual = null");
-    run("__nucleoid_test_assertion_1_expected = null");
-    run("__nucleoid_test_assertion_1_ran = false");
-    run(r#"{
+    assert_eq!(run(r#"{
     payload = { "data": "TEST", "nested": { "data": "NESTED_TEST" } }
-    __nucleoid_test_assertion_0_actual = payload.data
-    __nucleoid_test_assertion_0_expected = "TEST"
-    __nucleoid_test_assertion_0_ran = true
-    __nucleoid_test_assertion_1_actual = payload.nested.data
-    __nucleoid_test_assertion_1_expected = "NESTED_TEST"
-    __nucleoid_test_assertion_1_ran = true
-}"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_1_actual");
-        let expected = run("(__nucleoid_test_assertion_1_expected)");
-        assert_eq!(actual, expected);
-    }
+    [payload.data, payload.nested.data]
+}"#), serde_json::json!(["TEST", "NESTED_TEST"]));
     run(r#"message = { "pid": 1200 }"#);
     assert_eq!(run("message.pid"), 1200);
-    run("__nucleoid_test_assertion_2_actual = null");
-    run("__nucleoid_test_assertion_2_expected = null");
-    run("__nucleoid_test_assertion_2_ran = false");
-    run(r#"{
+    assert_eq!(run(r#"{
     scope = { "query": "test" }
     i = { "test": scope.query }
-    __nucleoid_test_assertion_2_actual = i.test
-    __nucleoid_test_assertion_2_expected = "test"
-    __nucleoid_test_assertion_2_ran = true
-}"#);
-    assert_eq!(run("__nucleoid_test_assertion_2_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_2_actual");
-        let expected = run("(__nucleoid_test_assertion_2_expected)");
-        assert_eq!(actual, expected);
-    }
+    i.test
+}"#), "test");
 }
 
 /// Nucleoid returns an inline JSON object
@@ -2470,48 +2005,20 @@ fn returns_an_inline_array() {
 /// Nucleoid supports nested functions as a parameter in an expression
 #[test]
 fn supports_nested_functions_as_a_parameter_in_an_expression() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"name = "AbCDE""#);
     run("pointer = 0");
     run(r#"if not /[A-Z]/.test(name.charAt(pointer)):
     throw "INVALID_FIRST_CHARACTER""#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    name = "bbCDE"
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID_FIRST_CHARACTER"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"name = "bbCDE""#), "INVALID_FIRST_CHARACTER");
     run(r#"name = "CbCDE""#);
-    run("__nucleoid_test_assertion_1_actual = null");
-    run("__nucleoid_test_assertion_1_expected = null");
-    run("__nucleoid_test_assertion_1_ran = false");
-    run(r#"try:
-    pointer = 1
-catch error:
-    __nucleoid_test_assertion_1_actual = error
-    __nucleoid_test_assertion_1_expected = "INVALID_FIRST_CHARACTER"
-    __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_1_actual");
-        let expected = run("(__nucleoid_test_assertion_1_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("pointer = 1"), "INVALID_FIRST_CHARACTER");
 }
 
 /// Nucleoid supports a property of chained functions in an expression
 #[test]
 fn supports_a_property_of_chained_functions_in_an_expression() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class User:
     pass"#);
     run(r#"class Registration:
@@ -2521,100 +2028,30 @@ fn supports_a_property_of_chained_functions_in_an_expression() {
     run("registration1.user = user1");
     run("registration2 = Registration()");
     run("registration2.user = user1");
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    if Registration.filter(r => r.user == $User).length > 1:
-        throw "USER_ALREADY_REGISTERED"
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "USER_ALREADY_REGISTERED"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error(r#"if Registration.filter(r => r.user == $User).length > 1:
+    throw "USER_ALREADY_REGISTERED""#), "USER_ALREADY_REGISTERED");
 }
 
 /// Nucleoid throws an error as a string
 #[test]
 fn throws_an_error_as_a_string() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    throw 'INVALID'
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = "INVALID"
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
-    run("__nucleoid_test_assertion_1_actual = null");
-    run("__nucleoid_test_assertion_1_expected = null");
-    run("__nucleoid_test_assertion_1_ran = false");
-    run(r#"try:
-    throw "INVALID"
-catch error:
-    __nucleoid_test_assertion_1_actual = error
-    __nucleoid_test_assertion_1_expected = "INVALID"
-    __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_1_actual");
-        let expected = run("(__nucleoid_test_assertion_1_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("throw 'INVALID'"), "INVALID");
+    assert_eq!(run_error(r#"throw "INVALID""#), "INVALID");
 }
 
 /// Nucleoid throws an error as an integer
 #[test]
 fn throws_an_error_as_an_integer() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    throw 123
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = 123
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("throw 123"), 123);
 }
 
 /// Nucleoid throws a reference error if the thrown value is not defined
 #[test]
 fn throws_a_reference_error_if_the_thrown_value_is_not_defined() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    throw abc
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("abc is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("throw abc"), "ReferenceError: abc is not defined");
 }
 
 /// Nucleoid creates a class assignment before initialization
@@ -3072,24 +2509,10 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_af
 /// Nucleoid creates a class assignment only if the instance is defined
 #[test]
 fn creates_a_class_assignment_only_if_the_instance_is_defined() {
-    let mut run = runner();
+    let (mut run, mut run_error) = crate::common::runners();
     run(r#"class Phone:
     pass"#);
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    $Phone.line.wired = true
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("Phone.line is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    assert_eq!(run_error("$Phone.line.wired = true"), "ReferenceError: Phone.line is not defined");
 }
 
 /// Nucleoid creates a for of statement
@@ -3376,22 +2799,8 @@ fn selects_the_whole_model() {
 /// Nucleoid throws an error when explaining something that is not defined
 #[test]
 fn throws_an_error_when_explaining_something_that_is_not_defined() {
-    let mut run = runner();
-    run("__nucleoid_test_assertion_0_actual = null");
-    run("__nucleoid_test_assertion_0_expected = null");
-    run("__nucleoid_test_assertion_0_ran = false");
-    run(r#"try:
-    why nothing
-catch error:
-    __nucleoid_test_assertion_0_actual = error
-    __nucleoid_test_assertion_0_expected = ReferenceError("nothing is not defined")
-    __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
-    {
-        let actual = run("__nucleoid_test_assertion_0_actual");
-        let expected = run("(__nucleoid_test_assertion_0_expected)");
-        assert_eq!(actual, expected);
-    }
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("why nothing"), "ReferenceError: nothing is not defined");
 }
 
 /// Nucleoid treats a reasoning name as a variable when one is defined

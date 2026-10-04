@@ -8,6 +8,8 @@
 #![allow(dead_code)]
 
 use nucleoid::Runtime;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct Case {
     pub title: String,
@@ -256,34 +258,68 @@ fn check_with(runtime: &mut Runtime, case: &Case) -> Result<nucleoid::Value, Str
 pub fn runner() -> impl FnMut(&str) -> TestValue {
     let mut runtime = Runtime::new();
 
-    move |source| {
-        let expected = source.lines().map(str::trim).find_map(|line| {
-            line.strip_prefix("# return:")
-                .map(|rest| rest.trim().to_string())
-        });
-        let source = source
-            .lines()
-            .filter(|line| !line.trim().starts_with("# return:"))
-            .collect::<Vec<_>>()
-            .join("\n");
-        let case = Case {
-            title: "inline statement".to_string(),
-            source,
-            expected,
-        };
+    move |source| run_source(&mut runtime, source)
+}
 
-        let value = check_with(&mut runtime, &case).unwrap_or_else(|reason| panic!("{reason}"));
-        let json = runtime
-            .serialize_json(&value)
-            .unwrap_or_else(|error| panic!("{error}"));
+/// Creates stateful success and error runners that share one runtime.
+pub fn runners() -> (impl FnMut(&str) -> TestValue, impl FnMut(&str) -> TestValue) {
+    let runtime = Rc::new(RefCell::new(Runtime::new()));
+    let success_runtime = Rc::clone(&runtime);
 
-        TestValue {
-            json: serde_json::from_str(&json).expect("the runtime serializes valid JSON"),
-            number: match value {
-                nucleoid::Value::Number(number) => Some(number),
-                _ => None,
+    let success = move |source: &str| run_source(&mut success_runtime.borrow_mut(), source);
+    let failure = move |source: &str| {
+        let mut runtime = runtime.borrow_mut();
+
+        match runtime.run(source) {
+            Ok(value) => panic!("expected an error, got {}", value),
+            Err(error) => match error.thrown_value().cloned() {
+                Some(value) => test_value(&runtime, value),
+                None => TestValue {
+                    json: serde_json::Value::String(format!(
+                        "{}: {}",
+                        error.kind(),
+                        error.message()
+                    )),
+                    number: None,
+                },
             },
         }
+    };
+
+    (success, failure)
+}
+
+fn run_source(runtime: &mut Runtime, source: &str) -> TestValue {
+    let expected = source.lines().map(str::trim).find_map(|line| {
+        line.strip_prefix("# return:")
+            .map(|rest| rest.trim().to_string())
+    });
+    let source = source
+        .lines()
+        .filter(|line| !line.trim().starts_with("# return:"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let case = Case {
+        title: "inline statement".to_string(),
+        source,
+        expected,
+    };
+
+    let value = check_with(runtime, &case).unwrap_or_else(|reason| panic!("{reason}"));
+    test_value(runtime, value)
+}
+
+fn test_value(runtime: &Runtime, value: nucleoid::Value) -> TestValue {
+    let json = runtime
+        .serialize_json(&value)
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    TestValue {
+        json: serde_json::from_str(&json).expect("the runtime serializes valid JSON"),
+        number: match value {
+            nucleoid::Value::Number(number) => Some(number),
+            _ => None,
+        },
     }
 }
 

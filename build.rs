@@ -193,7 +193,6 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
         writeln!(generated, "{indent}/// {}", record.description).unwrap();
         writeln!(generated, "{indent}#[test]").unwrap();
         writeln!(generated, "{indent}fn {name}() {{").unwrap();
-        writeln!(generated, "{indent}    let mut run = runner();").unwrap();
 
         let mut statements: Vec<String> = statements(&record.code)
             .into_iter()
@@ -208,84 +207,62 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
             write!(last, "\n\n# return: {expected}").unwrap();
         }
 
-        let mut nested_assertion = 0;
+        let has_caught_assertion = statements
+            .iter()
+            .any(|statement| caught_assertion(statement).is_some());
+
+        if has_caught_assertion {
+            let run = if statements
+                .iter()
+                .any(|statement| caught_assertion(statement).is_none())
+            {
+                "mut run"
+            } else {
+                "_run"
+            };
+
+            writeln!(
+                generated,
+                "{indent}    let ({run}, mut run_error) = crate::common::runners();"
+            )
+            .unwrap();
+        } else {
+            writeln!(generated, "{indent}    let mut run = runner();").unwrap();
+        }
 
         for statement in statements {
             if let Some((actual, expected)) = assertion(&statement) {
-                if let Some(expected) = rust_expected(expected) {
-                    writeln!(
-                        generated,
-                        "{indent}    assert_eq!(run({}), {expected});",
-                        rust_literal(actual)
-                    )
-                    .unwrap();
+                write_assertion(
+                    &mut generated,
+                    indent,
+                    &format!("run({})", rust_literal(actual)),
+                    expected,
+                );
+            } else if let Some((source, expected)) = caught_assertion(&statement) {
+                let expected = rust_error_expected(expected)
+                    .unwrap_or_else(|| panic!("catch assertion has non-literal expected value"));
+                writeln!(
+                    generated,
+                    "{indent}    assert_eq!(run_error({}), {expected});",
+                    rust_literal(&source)
+                )
+                .unwrap();
+            } else if let Some((source, actuals, expected)) = scoped_assertions(&statement) {
+                let expected = if expected.len() == 1 {
+                    expected[0].clone()
                 } else {
-                    writeln!(generated, "{indent}    {{").unwrap();
-                    writeln!(
-                        generated,
-                        "{indent}        let actual = run({});",
-                        rust_literal(actual)
-                    )
-                    .unwrap();
-                    writeln!(
-                        generated,
-                        "{indent}        let expected = run({});",
-                        rust_literal(&format!("({expected})"))
-                    )
-                    .unwrap();
-                    writeln!(generated, "{indent}        assert_eq!(actual, expected);").unwrap();
-                    writeln!(generated, "{indent}    }}").unwrap();
-                }
+                    format!("[{}]", expected.join(", "))
+                };
+
+                debug_assert!(!actuals.is_empty());
+                write_assertion(
+                    &mut generated,
+                    indent,
+                    &format!("run({})", rust_literal(&source)),
+                    &expected,
+                );
             } else {
-                let (statement, assertions) =
-                    lift_nested_assertions(&statement, &mut nested_assertion);
-
-                for assertion in &assertions {
-                    writeln!(
-                        generated,
-                        "{indent}    run({:?});",
-                        format!("{}_actual = null", assertion)
-                    )
-                    .unwrap();
-                    writeln!(
-                        generated,
-                        "{indent}    run({:?});",
-                        format!("{}_expected = null", assertion)
-                    )
-                    .unwrap();
-                    writeln!(
-                        generated,
-                        "{indent}    run({:?});",
-                        format!("{}_ran = false", assertion)
-                    )
-                    .unwrap();
-                }
-
                 writeln!(generated, "{indent}    run({});", rust_literal(&statement)).unwrap();
-
-                for assertion in assertions {
-                    writeln!(
-                        generated,
-                        "{indent}    assert_eq!(run({:?}), true);",
-                        format!("{assertion}_ran")
-                    )
-                    .unwrap();
-                    writeln!(generated, "{indent}    {{").unwrap();
-                    writeln!(
-                        generated,
-                        "{indent}        let actual = run({:?});",
-                        format!("{assertion}_actual")
-                    )
-                    .unwrap();
-                    writeln!(
-                        generated,
-                        "{indent}        let expected = run({:?});",
-                        format!("({assertion}_expected)")
-                    )
-                    .unwrap();
-                    writeln!(generated, "{indent}        assert_eq!(actual, expected);").unwrap();
-                    writeln!(generated, "{indent}    }}").unwrap();
-                }
             }
         }
 
@@ -381,28 +358,93 @@ fn assertion(statement: &str) -> Option<(&str, &str)> {
     None
 }
 
-fn lift_nested_assertions(statement: &str, index: &mut usize) -> (String, Vec<String>) {
-    let mut generated = Vec::new();
-    let mut assertions = Vec::new();
+fn write_assertion(generated: &mut String, indent: &str, actual: &str, expected: &str) {
+    if let Some(expected) = rust_expected(expected) {
+        writeln!(generated, "{indent}    assert_eq!({actual}, {expected});").unwrap();
+    } else {
+        writeln!(generated, "{indent}    {{").unwrap();
+        writeln!(generated, "{indent}        let actual = {actual};").unwrap();
+        writeln!(
+            generated,
+            "{indent}        let expected = run({});",
+            rust_literal(&format!("({expected})"))
+        )
+        .unwrap();
+        writeln!(generated, "{indent}        assert_eq!(actual, expected);").unwrap();
+        writeln!(generated, "{indent}    }}").unwrap();
+    }
+}
 
-    for line in statement.lines() {
-        let trimmed = line.trim();
+fn caught_assertion(statement: &str) -> Option<(String, &str)> {
+    let lines: Vec<&str> = statement.lines().collect();
+    let catch = lines
+        .iter()
+        .position(|line| line.trim() == "catch error:")?;
 
-        if let Some((actual, expected)) = assertion(trimmed) {
+    if lines.first()?.trim() != "try:" {
+        return None;
+    }
+
+    let catch_body: Vec<&str> = lines[catch + 1..]
+        .iter()
+        .copied()
+        .filter(|line| !line.trim().is_empty())
+        .collect();
+
+    if catch_body.len() != 1 {
+        return None;
+    }
+
+    let (_, expected) = assertion(catch_body[0].trim())?;
+    let source = lines[1..catch]
+        .iter()
+        .map(|line| line.strip_prefix("    ").unwrap_or(line))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    Some((source, expected))
+}
+
+fn scoped_assertions(statement: &str) -> Option<(String, Vec<String>, Vec<String>)> {
+    let assertions: Vec<(usize, &str, &str)> = statement
+        .lines()
+        .enumerate()
+        .filter_map(|(index, line)| {
+            assertion(line.trim()).map(|(actual, expected)| (index, actual, expected))
+        })
+        .collect();
+
+    if assertions.is_empty() || caught_assertion(statement).is_some() {
+        return None;
+    }
+
+    let actuals: Vec<String> = assertions
+        .iter()
+        .map(|(_, actual, _)| (*actual).to_string())
+        .collect();
+    let expected: Vec<String> = assertions
+        .iter()
+        .map(|(_, _, expected)| (*expected).to_string())
+        .collect();
+    let replacement = if actuals.len() == 1 {
+        actuals[0].clone()
+    } else {
+        format!("[{}]", actuals.join(", "))
+    };
+    let first = assertions[0].0;
+    let assertion_lines: Vec<usize> = assertions.iter().map(|(index, _, _)| *index).collect();
+    let mut lines = Vec::new();
+
+    for (index, line) in statement.lines().enumerate() {
+        if index == first {
             let indentation = &line[..line.len() - line.trim_start().len()];
-            let name = format!("__nucleoid_test_assertion_{}", *index);
-            *index += 1;
-
-            generated.push(format!("{indentation}{name}_actual = {actual}"));
-            generated.push(format!("{indentation}{name}_expected = {expected}"));
-            generated.push(format!("{indentation}{name}_ran = true"));
-            assertions.push(name);
-        } else {
-            generated.push(line.to_string());
+            lines.push(format!("{indentation}{replacement}"));
+        } else if !assertion_lines.contains(&index) {
+            lines.push(line.to_string());
         }
     }
 
-    (generated.join("\n"), assertions)
+    Some((lines.join("\n"), actuals, expected))
 }
 
 fn rust_expected(expected: &str) -> Option<String> {
@@ -420,6 +462,21 @@ fn rust_expected(expected: &str) -> Option<String> {
             format!("serde_json::json!({expected})")
         }
     })
+}
+
+fn rust_error_expected(expected: &str) -> Option<String> {
+    for kind in ["ReferenceError", "TypeError", "SyntaxError"] {
+        if let Some(message) = expected
+            .strip_prefix(kind)
+            .and_then(|message| message.strip_prefix('('))
+            .and_then(|message| message.strip_suffix(')'))
+        {
+            let message: String = serde_json::from_str(message).ok()?;
+            return Some(format!("{:?}", format!("{kind}: {message}")));
+        }
+    }
+
+    rust_expected(expected)
 }
 
 fn without_comments(statement: &str) -> String {
