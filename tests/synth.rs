@@ -1,3 +1,5 @@
+#![allow(clippy::approx_constant)]
+
 //! The synthesized JSONL records run as one embedded test per behavior.
 //!
 //! Each JSONL file is its own module. Every generated test creates one stateful

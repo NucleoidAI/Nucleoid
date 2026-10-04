@@ -1,3 +1,5 @@
+#![allow(clippy::approx_constant)]
+
 //! A committed Rust export of every normative JSONL record.
 //!
 //! Each test creates one stateful runner, then passes every top-level Nucleoid

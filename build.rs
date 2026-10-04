@@ -212,14 +212,30 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
 
         for statement in statements {
             if let Some((actual, expected)) = assertion(&statement) {
-                let expected = format!("({expected})");
-                writeln!(
-                    generated,
-                    "{indent}    assert_eq!(run({}), run({}));",
-                    rust_literal(actual),
-                    rust_literal(&expected)
-                )
-                .unwrap();
+                if let Some(expected) = rust_expected(expected) {
+                    writeln!(
+                        generated,
+                        "{indent}    assert_eq!(run({}), {expected});",
+                        rust_literal(actual)
+                    )
+                    .unwrap();
+                } else {
+                    writeln!(generated, "{indent}    {{").unwrap();
+                    writeln!(
+                        generated,
+                        "{indent}        let actual = run({});",
+                        rust_literal(actual)
+                    )
+                    .unwrap();
+                    writeln!(
+                        generated,
+                        "{indent}        let expected = run({});",
+                        rust_literal(&format!("({expected})"))
+                    )
+                    .unwrap();
+                    writeln!(generated, "{indent}        assert_eq!(actual, expected);").unwrap();
+                    writeln!(generated, "{indent}    }}").unwrap();
+                }
             } else {
                 let (statement, assertions) =
                     lift_nested_assertions(&statement, &mut nested_assertion);
@@ -250,17 +266,25 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
                 for assertion in assertions {
                     writeln!(
                         generated,
-                        "{indent}    assert_eq!(run({:?}), run(\"(true)\"));",
+                        "{indent}    assert_eq!(run({:?}), true);",
                         format!("{assertion}_ran")
+                    )
+                    .unwrap();
+                    writeln!(generated, "{indent}    {{").unwrap();
+                    writeln!(
+                        generated,
+                        "{indent}        let actual = run({:?});",
+                        format!("{assertion}_actual")
                     )
                     .unwrap();
                     writeln!(
                         generated,
-                        "{indent}    assert_eq!(run({:?}), run({:?}));",
-                        format!("{assertion}_actual"),
+                        "{indent}        let expected = run({:?});",
                         format!("({assertion}_expected)")
                     )
                     .unwrap();
+                    writeln!(generated, "{indent}        assert_eq!(actual, expected);").unwrap();
+                    writeln!(generated, "{indent}    }}").unwrap();
                 }
             }
         }
@@ -379,6 +403,23 @@ fn lift_nested_assertions(statement: &str, index: &mut usize) -> (String, Vec<St
     }
 
     (generated.join("\n"), assertions)
+}
+
+fn rust_expected(expected: &str) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_str(expected).ok()?;
+
+    Some(match value {
+        serde_json::Value::Null => "serde_json::Value::Null".to_string(),
+        serde_json::Value::Bool(value) => value.to_string(),
+        serde_json::Value::Number(value) => match value.as_i64() {
+            Some(number) if i32::try_from(number).is_err() => format!("{expected}.0"),
+            _ => expected.to_string(),
+        },
+        serde_json::Value::String(value) => format!("{value:?}"),
+        serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
+            format!("serde_json::json!({expected})")
+        }
+    })
 }
 
 fn without_comments(statement: &str) -> String {

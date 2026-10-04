@@ -5,7 +5,7 @@
 fn runs_a_statement_in_the_state() {
     let mut run = runner();
     run("i = 1");
-    assert_eq!(run("i == 1"), run("(true)"));
+    assert_eq!(run("i == 1"), true);
 }
 
 /// Nucleoid runs a expression statement
@@ -13,7 +13,7 @@ fn runs_a_statement_in_the_state() {
 fn runs_a_expression_statement() {
     let mut run = runner();
     run("j = 1");
-    assert_eq!(run("j + 2"), run("(3)"));
+    assert_eq!(run("j + 2"), 3);
 }
 
 /// Nucleoid returns value of variable
@@ -39,8 +39,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("e is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid throws an error inside a block
@@ -58,8 +62,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid throws an error as a variable
@@ -77,8 +85,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = 0.1
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
     run("__nucleoid_test_assertion_1_actual = null");
     run("__nucleoid_test_assertion_1_expected = null");
     run("__nucleoid_test_assertion_1_ran = false");
@@ -89,8 +101,12 @@ catch error:
     __nucleoid_test_assertion_1_actual = error
     __nucleoid_test_assertion_1_expected = "length"
     __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_1_actual");
+        let expected = run("(__nucleoid_test_assertion_1_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid creates a class with constructor
@@ -100,7 +116,7 @@ fn creates_a_class_with_constructor() {
     run(r#"class Shape(type: str):
     this.type = type"#);
     run(r#"shape1 = Shape("Square")"#);
-    assert_eq!(run("shape1"), run(r#"({ "id": "shape1", "type": "Square" })"#));
+    assert_eq!(run("shape1"), serde_json::json!({ "id": "shape1", "type": "Square" }));
 }
 
 /// Nucleoid creates a class with a constructor and a typed attribute
@@ -113,7 +129,7 @@ fn creates_a_class_with_a_constructor_and_a_typed_attribute() {
     def init(type: str):
         this.type = type"#);
     run(r#"shape1 = Shape("Rectangle")"#);
-    assert_eq!(run("shape1"), run(r#"({ "id": "shape1", "type": "Rectangle" })"#));
+    assert_eq!(run("shape1"), serde_json::json!({ "id": "shape1", "type": "Rectangle" }));
 }
 
 /// Nucleoid adds an object to the class's object list
@@ -123,8 +139,8 @@ fn adds_an_object_to_the_class_s_object_list() {
     run(r#"class Student:
     pass"#);
     run("user0 = Student()");
-    assert_eq!(run(r#"Student.find(student => student.id == "user0")"#), run(r#"({ "id": "user0" })"#));
-    assert_eq!(run(r#"Student["user0"]"#), run(r#"({ "id": "user0" })"#));
+    assert_eq!(run(r#"Student.find(student => student.id == "user0")"#), serde_json::json!({ "id": "user0" }));
+    assert_eq!(run(r#"Student["user0"]"#), serde_json::json!({ "id": "user0" }));
 }
 
 /// Nucleoid preserves class and object lists when a class is updated
@@ -134,15 +150,15 @@ fn preserves_class_and_object_lists_when_a_class_is_updated() {
     run(r#"class User:
     pass"#);
     run("User()");
-    assert_eq!(run("Class.length"), run("(1)"));
-    assert_eq!(run("User.length"), run("(1)"));
+    assert_eq!(run("Class.length"), 1);
+    assert_eq!(run("User.length"), 1);
     run(r#"class User:
     pass"#);
-    assert_eq!(run("Class.length"), run("(1)"));
-    assert_eq!(run("User.length"), run("(1)"));
+    assert_eq!(run("Class.length"), 1);
+    assert_eq!(run("User.length"), 1);
     run("User()");
-    assert_eq!(run("Class.length"), run("(1)"));
-    assert_eq!(run("User.length"), run("(2)"));
+    assert_eq!(run("Class.length"), 1);
+    assert_eq!(run("User.length"), 2);
 }
 
 /// Nucleoid places an instance in the list of the class when created
@@ -151,9 +167,13 @@ fn places_an_instance_in_the_list_of_the_class_when_created() {
     let mut run = runner();
     run(r#"class Student:
     pass"#);
-    assert_eq!(run("typeof Student"), run("(List)"));
+    {
+        let actual = run("typeof Student");
+        let expected = run("(List)");
+        assert_eq!(actual, expected);
+    }
     run("student1 = Student()");
-    assert_eq!(run("Student.length"), run("(1)"));
+    assert_eq!(run("Student.length"), 1);
 }
 
 /// Nucleoid creates a class and a subclass
@@ -168,7 +188,7 @@ fn creates_a_class_and_a_subclass() {
         this.name = name
         this.school = school"#);
     run(r#"student1 = Student("Emma", "Riverside High")"#);
-    assert_eq!(run("student1"), run(r#"({ "id": "student1", "name": "Emma", "school": "Riverside High" })"#));
+    assert_eq!(run("student1"), serde_json::json!({ "id": "student1", "name": "Emma", "school": "Riverside High" }));
 }
 
 /// Nucleoid runs a class-level property assignment
@@ -179,7 +199,7 @@ fn runs_a_class_level_property_assignment() {
     this.name = name"#);
     run("$Human.mortal = true");
     run(r#"human1 = Human("Socrates")"#);
-    assert_eq!(run("human1.mortal"), run("(true)"));
+    assert_eq!(run("human1.mortal"), true);
 }
 
 /// Nucleoid runs a class-level conditional
@@ -192,8 +212,8 @@ fn runs_a_class_level_conditional() {
     $Device.active = true"#);
     run("device1 = Device()");
     run(r#"device2 = Device("PROFILE-1")"#);
-    assert_eq!(run("device1.active"), run("(null)"));
-    assert_eq!(run("device2.active"), run("(true)"));
+    assert_eq!(run("device1.active"), serde_json::Value::Null);
+    assert_eq!(run("device2.active"), true);
 }
 
 /// Nucleoid creates an instance in a block and assigns it to a property
@@ -211,8 +231,8 @@ fn creates_an_instance_in_a_block_and_assigns_it_to_a_property() {
     meeting.date = Date("2020-1-1")
     room1.meeting = meeting
 }"#);
-    assert_eq!(run("room1.meeting.date.toDateString()"), run(r#"("Wed Jan 01 2020")"#));
-    assert_eq!(run("room1.meeting.time[-17:]"), run(r#"("@ Wed Jan 01 2020")"#));
+    assert_eq!(run("room1.meeting.date.toDateString()"), "Wed Jan 01 2020");
+    assert_eq!(run("room1.meeting.time[-17:]"), "@ Wed Jan 01 2020");
 }
 
 /// Nucleoid creates nested instances in a block and assigns them to a property
@@ -233,8 +253,8 @@ fn creates_nested_instances_in_a_block_and_assigns_them_to_a_property() {
     task.project.number = 3668347
     timesheet1.task = task
 }"#);
-    assert_eq!(run("timesheet1.task.project.number"), run("(3668347)"));
-    assert_eq!(run("timesheet1.task.project.code"), run(r#"("N-3668347")"#));
+    assert_eq!(run("timesheet1.task.project.number"), 3668347);
+    assert_eq!(run("timesheet1.task.project.code"), "N-3668347");
 }
 
 /// Nucleoid creates a local variable in a block and uses in assignment
@@ -247,9 +267,9 @@ fn creates_a_local_variable_in_a_block_and_uses_in_assignment() {
     division = integer / 10
     equivalency = division * 10
 }"#);
-    assert_eq!(run("equivalency"), run("(30)"));
+    assert_eq!(run("equivalency"), 30);
     run("integer = 40");
-    assert_eq!(run("equivalency"), run("(40)"));
+    assert_eq!(run("equivalency"), 40);
 }
 
 /// Nucleoid creates a standard built-in object as a local variable inside a block
@@ -260,7 +280,7 @@ fn creates_a_standard_built_in_object_as_a_local_variable_inside_a_block() {
     f = Boolean(false)
     condition = f
 }"#);
-    assert_eq!(run("condition"), run("(false)"));
+    assert_eq!(run("condition"), false);
 }
 
 /// Nucleoid creates and assigns an instance to a local variable inside a block
@@ -274,7 +294,7 @@ fn creates_and_assigns_an_instance_to_a_local_variable_inside_a_block() {
     device = Device()
     device.created = Date.now()
 }"#);
-    assert_eq!(run("Device[0].renew - Device[0].created"), run("(604800000)"));
+    assert_eq!(run("Device[0].renew - Device[0].created"), 604800000);
 }
 
 /// Nucleoid creates and assigns an instance with a constructor to a local variable inside a block
@@ -288,7 +308,7 @@ fn creates_and_assigns_an_instance_with_a_constructor_to_a_local_variable_inside
     run(r#"{
     member = Member("First", "Last")
 }"#);
-    assert_eq!(run("Member[0].display"), run(r#"("Last, First")"#));
+    assert_eq!(run("Member[0].display"), "Last, First");
 }
 
 /// Nucleoid creates an object in a block and assigns it to a class-level property before instantiation
@@ -303,8 +323,8 @@ fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_before_
     $Member.registration = registration
 }"#);
     run("member1 = Member()");
-    assert_eq!(run("member1.registration.date.toDateString()"), run(r#"("Wed Jan 02 2019")"#));
-    assert_eq!(run("member1.registration.age"), run("(null)"));
+    assert_eq!(run("member1.registration.date.toDateString()"), "Wed Jan 02 2019");
+    assert_eq!(run("member1.registration.age"), serde_json::Value::Null);
 }
 
 /// Nucleoid creates an object in a block and assigns it to a class-level property after instantiation
@@ -319,8 +339,8 @@ fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_after_i
     location.coordinates = "40.6976701,-74.2598779"
     $Distance.startingPoint = location
 }"#);
-    assert_eq!(run("distance1.startingPoint.coordinates"), run(r#"("40.6976701,-74.2598779")"#));
-    assert_eq!(run("distance1.startingPoint.print"), run("(null)"));
+    assert_eq!(run("distance1.startingPoint.coordinates"), "40.6976701,-74.2598779");
+    assert_eq!(run("distance1.startingPoint.print"), serde_json::Value::Null);
 }
 
 /// Nucleoid calls function in an assignment
@@ -333,7 +353,7 @@ fn calls_function_in_an_assignment() {
     run("x = 1");
     run("y = 2");
     run("z = multiply(x, y) + 1");
-    assert_eq!(run("z"), run("(3)"));
+    assert_eq!(run("z"), 3);
 }
 
 /// Nucleoid assigns a block in a function as a dependency
@@ -350,11 +370,19 @@ fn assigns_a_block_in_a_function_as_a_dependency() {
     run("student3.age = 9");
     run("age = 8");
     run("student = Student.find(s => s.age == age)");
-    assert_eq!(run("student"), run("(student2)"));
-    assert_eq!(run("student"), run(r#"({ "id": "student2", "age": 8 })"#));
+    {
+        let actual = run("student");
+        let expected = run("(student2)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("student"), serde_json::json!({ "id": "student2", "age": 8 }));
     run("age = 9");
-    assert_eq!(run("student"), run("(student3)"));
-    assert_eq!(run("student"), run(r#"({ "id": "student3", "age": 9 })"#));
+    {
+        let actual = run("student");
+        let expected = run("(student3)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("student"), serde_json::json!({ "id": "student3", "age": 9 }));
 }
 
 /// Nucleoid supports chained functions with a parameter in an expression
@@ -367,15 +395,15 @@ fn supports_chained_functions_with_a_parameter_in_an_expression() {
     run("upperThreshold = 18");
     run("lowerThreshold = 12");
     run("list = Result.filter(r => r.score > lowerThreshold).filter(r => r.score < upperThreshold)");
-    assert_eq!(run("list.length"), run("(1)"));
-    assert_eq!(run("list[0].score"), run("(15)"));
+    assert_eq!(run("list.length"), 1);
+    assert_eq!(run("list[0].score"), 15);
     run("lowerThreshold = 7");
-    assert_eq!(run("list.length"), run("(2)"));
-    assert_eq!(run("list[0].score"), run("(10)"));
-    assert_eq!(run("list[1].score"), run("(15)"));
+    assert_eq!(run("list.length"), 2);
+    assert_eq!(run("list[0].score"), 10);
+    assert_eq!(run("list[1].score"), 15);
     run("upperThreshold = 14");
-    assert_eq!(run("list.length"), run("(1)"));
-    assert_eq!(run("list[0].score"), run("(10)"));
+    assert_eq!(run("list.length"), 1);
+    assert_eq!(run("list[0].score"), 10);
 }
 
 /// Nucleoid supports an array with brackets
@@ -401,8 +429,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("e is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid retrieves the value of a variable
@@ -433,8 +465,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("ticket.event is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid declares a local variable as undefined
@@ -477,8 +513,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID_DEVICE"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid creates a standard built-in object as a property of a local variable
@@ -492,7 +532,7 @@ fn creates_a_standard_built_in_object_as_a_property_of_a_local_variable() {
     shipment.date = Date("2019-1-3")
     shipment1 = shipment
 }"#);
-    assert_eq!(run("shipment1.date.toDateString()"), run(r#"("Thu Jan 03 2019")"#));
+    assert_eq!(run("shipment1.date.toDateString()"), "Thu Jan 03 2019");
 }
 
 /// Nucleoid creates a property of a local variable in a different scope
@@ -507,7 +547,7 @@ fn creates_a_property_of_a_local_variable_in_a_different_scope() {
     if user:
         user.name = "TEST"
 }"#);
-    assert_eq!(run("user0.name"), run(r#"("TEST")"#));
+    assert_eq!(run("user0.name"), "TEST");
 }
 
 /// Nucleoid assigns a variable declaratively
@@ -517,9 +557,9 @@ fn assigns_a_variable_declaratively() {
     run("a = 1");
     run("b = 2");
     run("c = a + b");
-    assert_eq!(run("c"), run("(3)"));
+    assert_eq!(run("c"), 3);
     run("a = 2");
-    assert_eq!(run("c"), run("(4)"));
+    assert_eq!(run("c"), 4);
 }
 
 /// Nucleoid creates if statement of variable
@@ -530,9 +570,9 @@ fn creates_if_statement_of_variable() {
     run("n = false");
     run(r#"if m == true:
     n = m and true"#);
-    assert_eq!(run("n"), run("(false)"));
+    assert_eq!(run("n"), false);
     run("m = true");
-    assert_eq!(run("n"), run("(true)"));
+    assert_eq!(run("n"), true);
 }
 
 /// Nucleoid updates if block of variable
@@ -545,9 +585,9 @@ fn updates_if_block_of_variable() {
     r = p * 10"#);
     run(r#"if p < 1:
     r = s * 10"#);
-    assert_eq!(run("r"), run("(0.2)"));
+    assert_eq!(run("r"), 0.2);
     run("s = 0.03");
-    assert_eq!(run("r"), run("(0.3)"));
+    assert_eq!(run("r"), 0.3);
 }
 
 /// Nucleoid creates else if statement of variable
@@ -563,9 +603,9 @@ fn creates_else_if_statement_of_variable() {
 else if g > 3:
     weight = mars * mass"#);
     run("g = 5");
-    assert_eq!(run("weight"), run("(37.1)"));
+    assert_eq!(run("weight"), 37.1);
     run("mars = 3.72");
-    assert_eq!(run("weight"), run("(37.2)"));
+    assert_eq!(run("weight"), 37.2);
 }
 
 /// Nucleoid creates multiple else if statement of variable
@@ -580,9 +620,9 @@ else if fraction > 0:
     score = fraction * point * 2
 else:
     score = fraction * point"#);
-    assert_eq!(run("score"), run("(-0.1)"));
+    assert_eq!(run("score"), -0.1);
     run("point = 2");
-    assert_eq!(run("score"), run("(-0.2)"));
+    assert_eq!(run("score"), -0.2);
 }
 
 /// Nucleoid runs dependent statements in the same transaction
@@ -594,7 +634,7 @@ fn runs_dependent_statements_in_the_same_transaction() {
     run(r#"$Vehicle.tag = "US-" + $Vehicle.plate"#);
     run("vehicle1 = Vehicle()");
     run(r#"vehicle1.plate = "XSJ422""#);
-    assert_eq!(run("vehicle1.tag"), run(r#"("US-XSJ422")"#));
+    assert_eq!(run("vehicle1.tag"), "US-XSJ422");
 }
 
 /// Nucleoid runs dependencies in order as received
@@ -613,7 +653,7 @@ fn runs_dependencies_in_order_as_received() {
     run(r#"if any > 1:
     result = 5"#);
     run("any = 4");
-    assert_eq!(run("result"), run("(5)"));
+    assert_eq!(run("result"), 5);
 }
 
 /// Nucleoid searches a variable in scope before the state
@@ -626,7 +666,7 @@ fn searches_a_variable_in_scope_before_the_state() {
     e = 3
     number = e
 }"#);
-    assert_eq!(run("number"), run("(3)"));
+    assert_eq!(run("number"), 3);
 }
 
 /// Nucleoid uses local variable at lowest scope as priority
@@ -639,7 +679,7 @@ fn uses_local_variable_at_lowest_scope_as_priority() {
     pi = 3.141
     number = pi
 }"#);
-    assert_eq!(run("number"), run("(3.141)"));
+    assert_eq!(run("number"), 3.141);
 }
 
 /// Nucleoid assigns undefined if any dependency in expression is undefined
@@ -651,7 +691,7 @@ fn assigns_undefined_if_any_dependency_in_expression_is_undefined() {
     run("person1 = Person()");
     run(r#"person1.lastName = "Brown""#);
     run(r#"person1.fullName = person1.firstName + " " + person1.lastName"#);
-    assert_eq!(run("person1.fullName"), run("(null)"));
+    assert_eq!(run("person1.fullName"), serde_json::Value::Null);
 }
 
 /// Nucleoid keeps as null if any dependencies as in local is null
@@ -664,7 +704,7 @@ fn keeps_as_null_if_any_dependencies_as_in_local_is_null() {
     b = null
     c = b / a
 }"#);
-    assert_eq!(run("c"), run("(null)"));
+    assert_eq!(run("c"), serde_json::Value::Null);
 }
 
 /// Nucleoid keeps as null if any dependencies in expression is null
@@ -677,7 +717,7 @@ fn keeps_as_null_if_any_dependencies_in_expression_is_null() {
     run(r#"schedule1.expression = "0 */2 * * *""#);
     run("schedule1.script = null");
     run(r#"schedule1.run = schedule1.expression + " " + schedule1.script"#);
-    assert_eq!(run("schedule1.run"), run("(null)"));
+    assert_eq!(run("schedule1.run"), serde_json::Value::Null);
 }
 
 /// Nucleoid assigns null if there is null pointer in expression
@@ -688,7 +728,7 @@ fn assigns_null_if_there_is_null_pointer_in_expression() {
     pass"#);
     run("product1 = Product()");
     run("score = product1.quality.score");
-    assert_eq!(run("score"), run("(null)"));
+    assert_eq!(run("score"), serde_json::Value::Null);
 }
 
 /// Nucleoid assigns a unique variable for an instance without a variable name
@@ -698,8 +738,8 @@ fn assigns_a_unique_variable_for_an_instance_without_a_variable_name() {
     run(r#"class Vehicle:
     pass"#);
     run("Vehicle()");
-    assert_eq!(run("Vehicle.length"), run("(1)"));
-    assert_eq!(run("Vehicle[0].id != null"), run("(true)"));
+    assert_eq!(run("Vehicle.length"), 1);
+    assert_eq!(run("Vehicle[0].id != null"), true);
 }
 
 /// Nucleoid creates a function in state
@@ -710,9 +750,9 @@ fn creates_a_function_in_state() {
     return number * 10"#);
     run("random = 10");
     run("number = generate(random)");
-    assert_eq!(run("number"), run("(100)"));
+    assert_eq!(run("number"), 100);
     run("random = 20");
-    assert_eq!(run("number"), run("(200)"));
+    assert_eq!(run("number"), 200);
 }
 
 /// Nucleoid assigns a function as a dependency
@@ -722,13 +762,13 @@ fn assigns_a_function_as_a_dependency() {
     run("list = []");
     run("count = list.filter(n => n % 2)");
     run("list.push(1)");
-    assert_eq!(run("count.length"), run("(1)"));
+    assert_eq!(run("count.length"), 1);
     run("list.push(2)");
-    assert_eq!(run("count.length"), run("(1)"));
+    assert_eq!(run("count.length"), 1);
     run("list.push(3)");
-    assert_eq!(run("count.length"), run("(2)"));
+    assert_eq!(run("count.length"), 2);
     run("list.pop()");
-    assert_eq!(run("count.length"), run("(1)"));
+    assert_eq!(run("count.length"), 1);
 }
 
 /// Nucleoid supports a regular expression literal
@@ -740,7 +780,7 @@ fn supports_a_regular_expression_literal() {
     run(r#"if not /.{4,8}/.test($User.password):
     throw 'INVALID_PASSWORD'"#);
     run("user1 = User()");
-    assert_eq!(run("user1.password"), run("(null)"));
+    assert_eq!(run("user1.password"), serde_json::Value::Null);
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -750,8 +790,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID_PASSWORD"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid rejects defining a class declaration in a non-class block
@@ -776,8 +820,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = SyntaxError("Cannot define class declaration in non-class block")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid detects a circular dependency
@@ -786,7 +834,7 @@ fn detects_a_circular_dependency() {
     let mut run = runner();
     run("number1 = 10");
     run("number2 = number1 * 10");
-    assert_eq!(run("number2"), run("(100)"));
+    assert_eq!(run("number2"), 100);
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -796,8 +844,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = TypeError("Circular Dependency")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid rolls back a variable if an exception is thrown
@@ -816,9 +868,13 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID_VALUE"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
-    assert_eq!(run("a"), run("(5)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("a"), 5);
 }
 
 /// Nucleoid rolls back a property if an exception is thrown
@@ -839,9 +895,13 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID_SKU"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
-    assert_eq!(run("item1.sku"), run("(null)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("item1.sku"), serde_json::Value::Null);
 }
 
 /// Nucleoid rolls back an instance if an exception is thrown
@@ -862,9 +922,13 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID_USER"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
-    assert_eq!(run("User.length"), run("(0)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("User.length"), 0);
     run("__nucleoid_test_assertion_1_actual = null");
     run("__nucleoid_test_assertion_1_expected = null");
     run("__nucleoid_test_assertion_1_ran = false");
@@ -874,8 +938,12 @@ catch error:
     __nucleoid_test_assertion_1_actual = error
     __nucleoid_test_assertion_1_expected = ReferenceError("user1 is not defined")
     __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_1_actual");
+        let expected = run("(__nucleoid_test_assertion_1_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid updates a variable assignment
@@ -885,11 +953,11 @@ fn updates_a_variable_assignment() {
     run("a = 1");
     run("b = 2");
     run("c = a + 3");
-    assert_eq!(run("c"), run("(4)"));
+    assert_eq!(run("c"), 4);
     run("c = b + 3");
-    assert_eq!(run("c"), run("(5)"));
+    assert_eq!(run("c"), 5);
     run("b = 4");
-    assert_eq!(run("c"), run("(7)"));
+    assert_eq!(run("c"), 7);
 }
 
 /// Nucleoid uses only the value when a variable references itself
@@ -898,7 +966,7 @@ fn uses_only_the_value_when_a_variable_references_itself() {
     let mut run = runner();
     run("radius = 10");
     run("radius = radius + 10");
-    assert_eq!(run("radius"), run("(20)"));
+    assert_eq!(run("radius"), 20);
 }
 
 /// Nucleoid deletes a variable assignment
@@ -907,7 +975,7 @@ fn deletes_a_variable_assignment() {
     let mut run = runner();
     run("t = 1");
     run("q = t + 1");
-    assert_eq!(run("q"), run("(2)"));
+    assert_eq!(run("q"), 2);
     run("delete q");
     run("t = 2");
     run("__nucleoid_test_assertion_0_actual = null");
@@ -919,8 +987,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("q is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid returns the assigned value in a variable assignment
@@ -939,11 +1011,11 @@ fn assigns_a_parameter_in_a_function_as_a_dependency() {
     run(r#"str1 = "ABC""#);
     run(r#"str2 = str1.lower() + "d""#);
     run("str3 = str2 + str1");
-    assert_eq!(run("str2"), run(r#"("abcd")"#));
-    assert_eq!(run("str3"), run(r#"("abcdABC")"#));
+    assert_eq!(run("str2"), "abcd");
+    assert_eq!(run("str3"), "abcdABC");
     run(r#"str1 = "AAA""#);
-    assert_eq!(run("str2"), run(r#"("aaad")"#));
-    assert_eq!(run("str3"), run(r#"("aaadAAA")"#));
+    assert_eq!(run("str2"), "aaad");
+    assert_eq!(run("str3"), "aaadAAA");
 }
 
 /// Nucleoid uses value property to indicate using only value of variable
@@ -954,14 +1026,14 @@ fn uses_value_property_to_indicate_using_only_value_of_variable() {
     run("altitude = 10");
     run("width = goldenRatio.value * altitude");
     run("depth = goldenRatio.value * altitude");
-    assert_eq!(run("width"), run("(16.18)"));
-    assert_eq!(run("depth"), run("(16.18)"));
+    assert_eq!(run("width"), 16.18);
+    assert_eq!(run("depth"), 16.18);
     run("goldenRatio = 1.62");
-    assert_eq!(run("width"), run("(16.18)"));
-    assert_eq!(run("depth"), run("(16.18)"));
+    assert_eq!(run("width"), 16.18);
+    assert_eq!(run("depth"), 16.18);
     run("altitude = 100");
-    assert_eq!(run("width"), run("(161.8)"));
-    assert_eq!(run("depth"), run("(161.8)"));
+    assert_eq!(run("width"), 161.8);
+    assert_eq!(run("depth"), 161.8);
 }
 
 /// Nucleoid creates a nested object in a block and assigns it to a class-level property before instantiation
@@ -980,8 +1052,8 @@ fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_b
     $Account.balance = balance
 }"#);
     run("account1 = Account()");
-    assert_eq!(run("account1.balance.currency.code"), run(r#"("USD")"#));
-    assert_eq!(run("account1.balance.currency.description"), run("(null)"));
+    assert_eq!(run("account1.balance.currency.code"), "USD");
+    assert_eq!(run("account1.balance.currency.description"), serde_json::Value::Null);
 }
 
 /// Nucleoid creates a nested object in a block and assigns it to a class-level property after instantiation
@@ -997,8 +1069,8 @@ fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_a
     inventory.item.sku = "699546085767"
     $Warehouse.inventory = inventory
 }"#);
-    assert_eq!(run("warehouse1.inventory.item.sku"), run(r#"("699546085767")"#));
-    assert_eq!(run("warehouse1.inventory.item.description"), run("(null)"));
+    assert_eq!(run("warehouse1.inventory.item.sku"), "699546085767");
+    assert_eq!(run("warehouse1.inventory.item.description"), serde_json::Value::Null);
 }
 
 /// Nucleoid creates an instance inside a block
@@ -1013,9 +1085,9 @@ fn creates_an_instance_inside_a_block() {
     name = "Hall"
     device1 = Device(name)
 }"#);
-    assert_eq!(run("device1.name"), run(r#"("Hall")"#));
-    assert_eq!(run("device1.key"), run(r#"("X-Hall")"#));
-    assert_eq!(run("device1.deleted"), run("(false)"));
+    assert_eq!(run("device1.name"), "Hall");
+    assert_eq!(run("device1.key"), "X-Hall");
+    assert_eq!(run("device1.deleted"), false);
 }
 
 /// Nucleoid creates an instance inside a block without a variable name
@@ -1029,8 +1101,8 @@ fn creates_an_instance_inside_a_block_without_a_variable_name() {
     rate = 4
     Summary(rate)
 }"#);
-    assert_eq!(run("Summary[0].rate"), run("(4)"));
-    assert_eq!(run("Summary[0].score"), run("(400)"));
+    assert_eq!(run("Summary[0].rate"), 4);
+    assert_eq!(run("Summary[0].score"), 400);
 }
 
 /// Nucleoid creates a local variable inside a block
@@ -1043,11 +1115,11 @@ fn creates_a_local_variable_inside_a_block() {
     c = a + b
     d = c * 10"#);
     run("a = 10");
-    assert_eq!(run("d"), run("(200)"));
+    assert_eq!(run("d"), 200);
     run("a = 15");
-    assert_eq!(run("d"), run("(250)"));
+    assert_eq!(run("d"), 250);
     run("b = 20");
-    assert_eq!(run("d"), run("(350)"));
+    assert_eq!(run("d"), 350);
 }
 
 /// Nucleoid runs a local variable as an object before declaration
@@ -1067,7 +1139,7 @@ fn runs_a_local_variable_as_an_object_before_declaration() {
     $Plane.time = trip.distance / $Plane.speed
 }"#);
     run("plane1.trip = trip1");
-    assert_eq!(run("plane1.time"), run("(6.135105204872647)"));
+    assert_eq!(run("plane1.time"), 6.135105204872647);
 }
 
 /// Nucleoid runs a local variable as an object after declaration
@@ -1087,7 +1159,7 @@ fn runs_a_local_variable_as_an_object_after_declaration() {
     commission = $Seller.commission
     $Seller.pay = $Seller.sales * commission.rate
 }"#);
-    assert_eq!(run("seller1.pay"), run("(50000)"));
+    assert_eq!(run("seller1.pay"), 50000);
 }
 
 /// Nucleoid assigns a property on a local variable after initialization
@@ -1107,7 +1179,7 @@ fn assigns_a_property_on_a_local_variable_after_initialization() {
     trade = $Stock.trade
     trade.worth = $Stock.price * trade.quantity
 }"#);
-    assert_eq!(run("trade1.worth"), run("(100)"));
+    assert_eq!(run("trade1.worth"), 100);
 }
 
 /// Nucleoid reassigns a shadowing local variable in a nested block
@@ -1129,9 +1201,13 @@ fn reassigns_a_shadowing_local_variable_in_a_nested_block() {
         }
     }
 }"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
-    assert_eq!(run("barcode"), run(r#"("barcode")"#));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("barcode"), "barcode");
 }
 
 /// Nucleoid holds the result of a function in a local variable
@@ -1154,10 +1230,10 @@ fn holds_the_result_of_a_function_in_a_local_variable() {
     bug = bugs.find(b => b.ticket == ticket)
     bug.selected = true
 }"#);
-    assert_eq!(run("bug1.selected"), run("(true)"));
-    assert_eq!(run("bug2.selected"), run("(null)"));
+    assert_eq!(run("bug1.selected"), true);
+    assert_eq!(run("bug2.selected"), serde_json::Value::Null);
     run("ticket = 2");
-    assert_eq!(run("bug2.selected"), run("(true)"));
+    assert_eq!(run("bug2.selected"), true);
 }
 
 /// Nucleoid runs a block statement of variable
@@ -1169,9 +1245,9 @@ fn runs_a_block_statement_of_variable() {
     value = h * 2
     j = value * 2
 }"#);
-    assert_eq!(run("j"), run("(4)"));
+    assert_eq!(run("j"), 4);
     run("h = 2");
-    assert_eq!(run("j"), run("(8)"));
+    assert_eq!(run("j"), 8);
 }
 
 /// Nucleoid runs a nested block statement of variable
@@ -1185,7 +1261,7 @@ fn runs_a_nested_block_statement_of_variable() {
         volume = area * 5
     }
 }"#);
-    assert_eq!(run("volume"), run("(1570)"));
+    assert_eq!(run("volume"), 1570);
 }
 
 /// Nucleoid runs a nested if statement of variable
@@ -1201,9 +1277,9 @@ fn runs_a_nested_if_statement_of_variable() {
     if dist > distance:
         hit = target
 }"#);
-    assert_eq!(run("hit"), run("(true)"));
+    assert_eq!(run("hit"), true);
     run("target = false");
-    assert_eq!(run("hit"), run("(false)"));
+    assert_eq!(run("hit"), false);
 }
 
 /// Nucleoid runs a nested else statement of variable
@@ -1224,7 +1300,7 @@ fn runs_a_nested_else_statement_of_variable() {
 }"#);
     run(r#"substance = "NH16""#);
     run("fallback = 1");
-    assert_eq!(run("molarConcentration"), run("(1)"));
+    assert_eq!(run("molarConcentration"), 1);
 }
 
 /// Nucleoid assigns a variable to a reference
@@ -1233,9 +1309,9 @@ fn assigns_a_variable_to_a_reference() {
     let mut run = runner();
     run("a = 1");
     run("b = a");
-    assert_eq!(run("b"), run("(1)"));
+    assert_eq!(run("b"), 1);
     run("a = 2");
-    assert_eq!(run("b"), run("(2)"));
+    assert_eq!(run("b"), 2);
 }
 
 /// Nucleoid assigns an object to a variable
@@ -1245,7 +1321,11 @@ fn assigns_an_object_to_a_variable() {
     run(r#"class Model:
     pass"#);
     run("model1 = Model()");
-    assert_eq!(run("typeof model1"), run("(Object)"));
+    {
+        let actual = run("typeof model1");
+        let expected = run("(Object)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid defines a class in the state
@@ -1254,7 +1334,11 @@ fn defines_a_class_in_the_state() {
     let mut run = runner();
     run(r#"class Entity:
     pass"#);
-    assert_eq!(run("typeof $Entity"), run("(Class)"));
+    {
+        let actual = run("typeof $Entity");
+        let expected = run("(Class)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid rejects creating an instance if the class does not exist
@@ -1270,8 +1354,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("Chart is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
     run(r#"class Chart:
     pass"#);
     run("chart1 = Chart()");
@@ -1284,8 +1372,12 @@ catch error:
     __nucleoid_test_assertion_1_actual = error
     __nucleoid_test_assertion_1_expected = ReferenceError("Plot is not defined")
     __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_1_actual");
+        let expected = run("(__nucleoid_test_assertion_1_expected)");
+        assert_eq!(actual, expected);
+    }
     run("__nucleoid_test_assertion_2_actual = null");
     run("__nucleoid_test_assertion_2_expected = null");
     run("__nucleoid_test_assertion_2_ran = false");
@@ -1295,8 +1387,12 @@ catch error:
     __nucleoid_test_assertion_2_actual = error
     __nucleoid_test_assertion_2_expected = ReferenceError("Plot is not defined")
     __nucleoid_test_assertion_2_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_2_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_2_actual"), run("(__nucleoid_test_assertion_2_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_2_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_2_actual");
+        let expected = run("(__nucleoid_test_assertion_2_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid creates a property assignment before declaration
@@ -1307,9 +1403,9 @@ fn creates_a_property_assignment_before_declaration() {
     pass"#);
     run("order1 = Order()");
     run(r#"order1.upc = "04061" + order1.barcode"#);
-    assert_eq!(run("order1.upc"), run("(null)"));
+    assert_eq!(run("order1.upc"), serde_json::Value::Null);
     run(r#"order1.barcode = "94067""#);
-    assert_eq!(run("order1.upc"), run(r#"("0406194067")"#));
+    assert_eq!(run("order1.upc"), "0406194067");
 }
 
 /// Nucleoid creates a property assignment after declaration
@@ -1321,9 +1417,9 @@ fn creates_a_property_assignment_after_declaration() {
     run("user1 = User()");
     run(r#"user1.name = "sample""#);
     run(r#"user1.email = user1.name + "@example.com""#);
-    assert_eq!(run("user1.email"), run(r#"("sample@example.com")"#));
+    assert_eq!(run("user1.email"), "sample@example.com");
     run(r#"user1.name = "samplex""#);
-    assert_eq!(run("user1.email"), run(r#"("samplex@example.com")"#));
+    assert_eq!(run("user1.email"), "samplex@example.com");
 }
 
 /// Nucleoid creates a property assignment only if the instance is defined
@@ -1342,8 +1438,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("channel1.frequency is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid creates an object and assigns it to a variable
@@ -1353,9 +1453,9 @@ fn creates_an_object_and_assigns_it_to_a_variable() {
     run(r#"class Item(name: str):
     this.name = name"#);
     run(r#"item1 = Item("NAME-1")"#);
-    assert_eq!(run("item1"), run(r#"({ "id": "item1", "name": "NAME-1" })"#));
+    assert_eq!(run("item1"), serde_json::json!({ "id": "item1", "name": "NAME-1" }));
     run("item2 = Item()");
-    assert_eq!(run("item2"), run(r#"({ "id": "item2", "name": null })"#));
+    assert_eq!(run("item2"), serde_json::json!({ "id": "item2", "name": null }));
 }
 
 /// Nucleoid creates an object assignment as a property only if the instance is defined
@@ -1376,8 +1476,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("worker1.duty is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid uses only the value when a property references itself
@@ -1389,7 +1493,7 @@ fn uses_only_the_value_when_a_property_references_itself() {
     run("construction1 = Construction()");
     run("construction1.timeline = 120");
     run("construction1.timeline = 2 * construction1.timeline");
-    assert_eq!(run("construction1.timeline"), run("(240)"));
+    assert_eq!(run("construction1.timeline"), 240);
 }
 
 /// Nucleoid assigns an object to a property before initialization
@@ -1403,10 +1507,10 @@ fn assigns_an_object_to_a_property_before_initialization() {
     run("$Distance.total = Math.sqrt($Distance.x * $Distance.x + $Distance.y * $Distance.y)");
     run("agent1 = Agent()");
     run("agent1.distance = Distance()");
-    assert_eq!(run("agent1.distance.total"), run("(null)"));
+    assert_eq!(run("agent1.distance.total"), serde_json::Value::Null);
     run("agent1.distance.x = 3");
     run("agent1.distance.y = 4");
-    assert_eq!(run("agent1.distance.total"), run("(5)"));
+    assert_eq!(run("agent1.distance.total"), 5);
 }
 
 /// Nucleoid assigns an object to a property after initialization
@@ -1420,9 +1524,9 @@ fn assigns_an_object_to_a_property_after_initialization() {
     pass"#);
     run("product1.quality = Quality()");
     run("product1.quality.score = 15");
-    assert_eq!(run("product1.quality.class"), run("(null)"));
+    assert_eq!(run("product1.quality.class"), serde_json::Value::Null);
     run("$Quality.class = String.fromCharCode(65 + Math.floor($Quality.score / 10))");
-    assert_eq!(run("product1.quality.class"), run(r#"("B")"#));
+    assert_eq!(run("product1.quality.class"), "B");
 }
 
 /// Nucleoid rejects value as a property name
@@ -1434,7 +1538,7 @@ fn rejects_value_as_a_property_name() {
     run(r#"class Place:
     pass"#);
     run("value = Schedule()");
-    assert_eq!(run("value"), run(r#"({ "id": "value" })"#));
+    assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -1444,8 +1548,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid rejects value as a property name in a value assignment
@@ -1455,7 +1563,7 @@ fn rejects_value_as_a_property_name_in_a_value_assignment() {
     run(r#"class Value:
     pass"#);
     run("value = Value()");
-    assert_eq!(run("value"), run(r#"({ "id": "value" })"#));
+    assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -1465,8 +1573,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid uses value property to indicate using only value of property
@@ -1479,11 +1591,11 @@ fn uses_value_property_to_indicate_using_only_value_of_property() {
     run("weight1.gravity = 1.352");
     run("weight1.mass = 1000");
     run("weight1.force = weight1.gravity * weight1.mass.value");
-    assert_eq!(run("weight1.force"), run("(1352)"));
+    assert_eq!(run("weight1.force"), 1352);
     run("weight1.mass = 2000");
-    assert_eq!(run("weight1.force"), run("(1352)"));
+    assert_eq!(run("weight1.force"), 1352);
     run("weight1.gravity = 2");
-    assert_eq!(run("weight1.force"), run("(2000)"));
+    assert_eq!(run("weight1.force"), 2000);
 }
 
 /// Nucleoid uses value property in an if condition to indicate using only value of property
@@ -1496,7 +1608,7 @@ fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_proper
     run(r#"question1.text = "How was the service?""#);
     run(r#"if question1.text != question1.text.value:
     throw "QUESTION_ARCHIVED""#);
-    assert_eq!(run("question1.text"), run(r#"("How was the service?")"#));
+    assert_eq!(run("question1.text"), "How was the service?");
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -1506,8 +1618,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "QUESTION_ARCHIVED"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid rejects value of a property if the property is not defined
@@ -1519,7 +1635,7 @@ fn rejects_value_of_a_property_if_the_property_is_not_defined() {
     run("travel1 = Travel()");
     run("travel1.speed = 65");
     run("travel1.duration = travel1.distance / travel1.speed");
-    assert_eq!(run("travel1.duration"), run("(null)"));
+    assert_eq!(run("travel1.duration"), serde_json::Value::Null);
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -1529,8 +1645,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("travel1.distance is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid uses the value of a null property as zero
@@ -1543,9 +1663,9 @@ fn uses_the_value_of_a_null_property_as_zero() {
     run("interest1.rate = 3");
     run("interest1.amount = null");
     run("interest1.annual = interest1.rate * interest1.amount.value / 100");
-    assert_eq!(run("interest1.annual"), run("(0)"));
+    assert_eq!(run("interest1.annual"), 0);
     run("interest1.amount = 10000");
-    assert_eq!(run("interest1.annual"), run("(0)"));
+    assert_eq!(run("interest1.annual"), 0);
 }
 
 /// Nucleoid rejects value as a property name in a block
@@ -1566,8 +1686,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = TypeError("Cannot use 'value' as a property")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid keeps same as its value when the value property is used for a local
@@ -1580,7 +1704,7 @@ fn keeps_same_as_its_value_when_the_value_property_is_used_for_a_local() {
     time = speedOfLight / 225623
     roundTrip = time.value * 2
 }"#);
-    assert_eq!(run("roundTrip"), run("(2.6574595675086314)"));
+    assert_eq!(run("roundTrip"), 2.6574595675086314);
 }
 
 /// Nucleoid uses value property in a class-level assignment
@@ -1595,7 +1719,7 @@ fn uses_value_property_in_a_class_level_assignment() {
     $Device.code = "A" + count.value
     count = count + 1
 }"#);
-    assert_eq!(run("device1.code"), run(r#"("A0")"#));
+    assert_eq!(run("device1.code"), "A0");
 }
 
 /// Nucleoid uses value property on a class-level property chain
@@ -1610,10 +1734,10 @@ fn uses_value_property_on_a_class_level_property_chain() {
     run("question1 = Question()");
     run("question1.count = 10");
     run("summary1 = Summary(question1)");
-    assert_eq!(run("summary1.count"), run("(10)"));
+    assert_eq!(run("summary1.count"), 10);
     run("question1.count = 11");
-    assert_eq!(run("question1.count"), run("(11)"));
-    assert_eq!(run("summary1.count"), run("(10)"));
+    assert_eq!(run("question1.count"), 11);
+    assert_eq!(run("summary1.count"), 10);
 }
 
 /// Nucleoid updates if block of property
@@ -1626,10 +1750,10 @@ fn updates_if_block_of_property() {
     run("account1.balance = 1000");
     run(r#"if account1.balance < 1500:
     account1.status = "OK""#);
-    assert_eq!(run("account1.status"), run(r#"("OK")"#));
+    assert_eq!(run("account1.status"), "OK");
     run(r#"if account1.balance < 1500:
     account1.status = "LOW""#);
-    assert_eq!(run("account1.status"), run(r#"("LOW")"#));
+    assert_eq!(run("account1.status"), "LOW");
 }
 
 /// Nucleoid creates an else statement of variable
@@ -1643,11 +1767,11 @@ fn creates_an_else_statement_of_variable() {
     pH = acidic
 else:
     pH = basic"#);
-    assert_eq!(run("pH"), run(r#"("ACIDIC")"#));
+    assert_eq!(run("pH"), "ACIDIC");
     run("compound = 0.000000001");
-    assert_eq!(run("pH"), run(r#"("BASIC")"#));
+    assert_eq!(run("pH"), "BASIC");
     run("basic = '+7'");
-    assert_eq!(run("pH"), run(r#"("+7")"#));
+    assert_eq!(run("pH"), "+7");
 }
 
 /// Nucleoid creates if statement of property
@@ -1660,9 +1784,9 @@ fn creates_if_statement_of_property() {
     run(r#"toy1.color = "BLUE""#);
     run(r#"if toy1.color == "RED":
     toy1.shape = "CIRCLE""#);
-    assert_eq!(run("toy1.shape"), run("(null)"));
+    assert_eq!(run("toy1.shape"), serde_json::Value::Null);
     run(r#"toy1.color = "RED""#);
-    assert_eq!(run("toy1.shape"), run(r#"("CIRCLE")"#));
+    assert_eq!(run("toy1.shape"), "CIRCLE");
 }
 
 /// Nucleoid creates else statement of property
@@ -1679,11 +1803,11 @@ fn creates_else_statement_of_property() {
     engine1.license = mpl
 else:
     engine1.license = bsd"#);
-    assert_eq!(run("engine1.license"), run(r#"("BSD")"#));
+    assert_eq!(run("engine1.license"), "BSD");
     run(r#"bsd = "Berkeley Software Distribution""#);
-    assert_eq!(run("engine1.license"), run(r#"("Berkeley Software Distribution")"#));
+    assert_eq!(run("engine1.license"), "Berkeley Software Distribution");
     run(r#"engine1.type = "Gecko""#);
-    assert_eq!(run("engine1.license"), run(r#"("MPL")"#));
+    assert_eq!(run("engine1.license"), "MPL");
 }
 
 /// Nucleoid creates else statement of property with property dependencies
@@ -1700,12 +1824,12 @@ fn creates_else_statement_of_property_with_property_dependencies() {
     contact1.full = "B" + contact1.first
 else:
     contact1.full = contact1.first + " " + contact1.last"#);
-    assert_eq!(run("contact1.full"), run(r#"("First Last")"#));
+    assert_eq!(run("contact1.full"), "First Last");
     run(r#"contact1.first = "F""#);
     run(r#"contact1.last = "L""#);
-    assert_eq!(run("contact1.full"), run(r#"("F L")"#));
+    assert_eq!(run("contact1.full"), "F L");
     run(r#"contact1.type = "BUSINESS""#);
-    assert_eq!(run("contact1.full"), run(r#"("BF")"#));
+    assert_eq!(run("contact1.full"), "BF");
 }
 
 /// Nucleoid creates multiple else if statement of property
@@ -1724,13 +1848,13 @@ else if taxpayer1.member > 2:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 1000
 else:
     taxpayer1.tax = taxpayer1.income * rate / 100"#);
-    assert_eq!(run("taxpayer1.tax"), run("(13200)"));
+    assert_eq!(run("taxpayer1.tax"), 13200);
     run("rate = 23");
-    assert_eq!(run("taxpayer1.tax"), run("(13800)"));
+    assert_eq!(run("taxpayer1.tax"), 13800);
     run("taxpayer1.member = 3");
-    assert_eq!(run("taxpayer1.tax"), run("(12800)"));
+    assert_eq!(run("taxpayer1.tax"), 12800);
     run("taxpayer1.member = 5");
-    assert_eq!(run("taxpayer1.tax"), run("(11800)"));
+    assert_eq!(run("taxpayer1.tax"), 11800);
 }
 
 /// Nucleoid updates property assignment
@@ -1742,11 +1866,11 @@ fn updates_property_assignment() {
     run("matter1 = Matter()");
     run("matter1.mass = 10");
     run("matter1.weight = matter1.mass * 9.8");
-    assert_eq!(run("matter1.weight"), run("(98)"));
+    assert_eq!(run("matter1.weight"), 98);
     run("matter1.weight = matter1.mass * 3.7");
-    assert_eq!(run("matter1.weight"), run("(37)"));
+    assert_eq!(run("matter1.weight"), 37);
     run("matter1.mass = 20");
-    assert_eq!(run("matter1.weight"), run("(74)"));
+    assert_eq!(run("matter1.weight"), 74);
 }
 
 /// Nucleoid deletes an instance
@@ -1757,8 +1881,8 @@ fn deletes_an_instance() {
     pass"#);
     run("circle1 = Circle()");
     run("delete circle1");
-    assert_eq!(run(r#"Circle["circle1"]"#), run("(null)"));
-    assert_eq!(run(r#"Circle.find(circle => circle.id == "circle1")"#), run("(null)"));
+    assert_eq!(run(r#"Circle["circle1"]"#), serde_json::Value::Null);
+    assert_eq!(run(r#"Circle.find(circle => circle.id == "circle1")"#), serde_json::Value::Null);
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -1768,8 +1892,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("circle1 is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid deletes an instance by reference
@@ -1780,15 +1908,15 @@ fn deletes_an_instance_by_reference() {
     pass"#);
     run("item1 = Item()");
     run("item2 = Item()");
-    assert_eq!(run(r#"Item["item1"]"#), run(r#"({ "id": "item1" })"#));
+    assert_eq!(run(r#"Item["item1"]"#), serde_json::json!({ "id": "item1" }));
     run(r#"delete Item["item1"]"#);
-    assert_eq!(run(r#"Item["item1"]"#), run("(null)"));
-    assert_eq!(run(r#"Item["item2"]"#), run(r#"({ "id": "item2" })"#));
+    assert_eq!(run(r#"Item["item1"]"#), serde_json::Value::Null);
+    assert_eq!(run(r#"Item["item2"]"#), serde_json::json!({ "id": "item2" }));
     run(r#"{
     item = "item2"
     delete Item[item]
 }"#);
-    assert_eq!(run(r#"Item["item2"]"#), run("(null)"));
+    assert_eq!(run(r#"Item["item2"]"#), serde_json::Value::Null);
 }
 
 /// Nucleoid returns a boolean when deleting an object
@@ -1798,8 +1926,8 @@ fn returns_a_boolean_when_deleting_an_object() {
     run(r#"class Location:
     pass"#);
     run("location1 = Location()");
-    assert_eq!(run("delete location1"), run("(true)"));
-    assert_eq!(run("delete location2"), run("(false)"));
+    assert_eq!(run("delete location1"), true);
+    assert_eq!(run("delete location2"), false);
 }
 
 /// Nucleoid rejects deleting an instance if it has any properties
@@ -1819,12 +1947,16 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = TypeError("Cannot delete object 'channel1'")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
-    assert_eq!(run("channel1.frequency"), run("(440)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("channel1.frequency"), 440);
     run("delete channel1.frequency");
     run("delete channel1");
-    assert_eq!(run(r#"Channel["channel1"]"#), run("(null)"));
+    assert_eq!(run(r#"Channel["channel1"]"#), serde_json::Value::Null);
 }
 
 /// Nucleoid rejects deleting an instance if it has an object as a property
@@ -1846,11 +1978,15 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = TypeError("Cannot delete object 'shape1'")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
     run("delete shape1.type");
     run("delete shape1");
-    assert_eq!(run(r#"Shape["shape1"]"#), run("(null)"));
+    assert_eq!(run(r#"Shape["shape1"]"#), serde_json::Value::Null);
 }
 
 /// Nucleoid deletes a property assignment
@@ -1863,11 +1999,11 @@ fn deletes_a_property_assignment() {
     run("agent.time = 52926163455");
     run(r#"agent.location = "CITY""#);
     run(r#"agent.report = agent.time + "@" + agent.location"#);
-    assert_eq!(run("agent.report"), run(r#"("52926163455@CITY")"#));
+    assert_eq!(run("agent.report"), "52926163455@CITY");
     run("delete agent.time");
-    assert_eq!(run("agent.report"), run("(null)"));
+    assert_eq!(run("agent.report"), serde_json::Value::Null);
     run("delete agent.report");
-    assert_eq!(run("agent.report"), run("(null)"));
+    assert_eq!(run("agent.report"), serde_json::Value::Null);
 }
 
 /// Nucleoid runs a block statement of property
@@ -1882,9 +2018,9 @@ fn runs_a_block_statement_of_property() {
     custom = "US" + item1.sku
     item1.custom = custom
 }"#);
-    assert_eq!(run("item1.custom"), run(r#"("US0000001")"#));
+    assert_eq!(run("item1.custom"), "US0000001");
     run(r#"item1.sku = "0000002""#);
-    assert_eq!(run("item1.custom"), run(r#"("US0000002")"#));
+    assert_eq!(run("item1.custom"), "US0000002");
 }
 
 /// Nucleoid runs a nested block statement of property
@@ -1902,9 +2038,9 @@ fn runs_a_nested_block_statement_of_property() {
         figure1.volume = base * figure1.height
     }
 }"#);
-    assert_eq!(run("figure1.volume"), run("(810)"));
+    assert_eq!(run("figure1.volume"), 810);
     run("figure1.height = 9");
-    assert_eq!(run("figure1.volume"), run("(729)"));
+    assert_eq!(run("figure1.volume"), 729);
 }
 
 /// Nucleoid runs a nested if statement of property
@@ -1921,9 +2057,9 @@ fn runs_a_nested_if_statement_of_property() {
     if amount > 100:
         sale1.tax = amount * 10 / 100
 }"#);
-    assert_eq!(run("sale1.tax"), run("(null)"));
+    assert_eq!(run("sale1.tax"), serde_json::Value::Null);
     run("sale1.quantity = 3");
-    assert_eq!(run("sale1.tax"), run("(15)"));
+    assert_eq!(run("sale1.tax"), 15);
 }
 
 /// Nucleoid creates a nested else statement of property
@@ -1943,9 +2079,9 @@ fn creates_a_nested_else_statement_of_property() {
     else:
         chart1.status = valid
 }"#);
-    assert_eq!(run("chart1.status"), run(r#"("VALID")"#));
+    assert_eq!(run("chart1.status"), "VALID");
     run(r#"valid = "V""#);
-    assert_eq!(run("chart1.status"), run(r#"("V")"#));
+    assert_eq!(run("chart1.status"), "V");
 }
 
 /// Nucleoid creates a property assignment with multiple properties
@@ -1962,7 +2098,7 @@ fn creates_a_property_assignment_with_multiple_properties() {
     run("person1.address = Address()");
     run(r#"person1.address.city = "Syracuse""#);
     run(r#"person1.address.state = "NY""#);
-    assert_eq!(run("person1.address.print"), run(r#"("Syracuse, NY")"#));
+    assert_eq!(run("person1.address.print"), "Syracuse, NY");
 }
 
 /// Nucleoid creates a property assignment with multiple properties as part of a declaration
@@ -1979,9 +2115,9 @@ fn creates_a_property_assignment_with_multiple_properties_as_part_of_a_declarati
     run("server1.ip = ip1");
     run(r#"ip1.address = "10.0.0.1""#);
     run(r#"server1.summary = server1.name + "@" + server1.ip.address"#);
-    assert_eq!(run("server1.summary"), run(r#"("HOST1@10.0.0.1")"#));
+    assert_eq!(run("server1.summary"), "HOST1@10.0.0.1");
     run(r#"ip1.address = "10.0.0.2""#);
-    assert_eq!(run("server1.summary"), run(r#"("HOST1@10.0.0.2")"#));
+    assert_eq!(run("server1.summary"), "HOST1@10.0.0.2");
 }
 
 /// Nucleoid creates a dependency on behalf if a property has a reference
@@ -1997,16 +2133,16 @@ fn creates_a_dependency_on_behalf_if_a_property_has_a_reference() {
     run(r#"template1.type = "W""#);
     run("schedule1.template = template1");
     run(r#"schedule1.template.name = schedule1.template.type + "-0001""#);
-    assert_eq!(run("template1.name"), run(r#"("W-0001")"#));
-    assert_eq!(run("schedule1.template.name"), run(r#"("W-0001")"#));
+    assert_eq!(run("template1.name"), "W-0001");
+    assert_eq!(run("schedule1.template.name"), "W-0001");
     run(r#"template1.type = "D""#);
-    assert_eq!(run("template1.name"), run(r#"("D-0001")"#));
+    assert_eq!(run("template1.name"), "D-0001");
     run(r#"template1.shape = template1.type + "-Form""#);
-    assert_eq!(run("template1.shape"), run(r#"("D-Form")"#));
-    assert_eq!(run("schedule1.template.shape"), run(r#"("D-Form")"#));
+    assert_eq!(run("template1.shape"), "D-Form");
+    assert_eq!(run("schedule1.template.shape"), "D-Form");
     run(r#"template1.type = "C""#);
-    assert_eq!(run("template1.shape"), run(r#"("C-Form")"#));
-    assert_eq!(run("schedule1.template.shape"), run(r#"("C-Form")"#));
+    assert_eq!(run("template1.shape"), "C-Form");
+    assert_eq!(run("schedule1.template.shape"), "C-Form");
 }
 
 /// Nucleoid creates a dependency on behalf if a local variable has a reference
@@ -2028,10 +2164,10 @@ fn creates_a_dependency_on_behalf_if_a_local_variable_has_a_reference() {
     question.rate = (question.rate * question.count + vote1.rate) / (question.count + 1)
     question.count = question.count + 1
 }"#);
-    assert_eq!(run("question1.rate"), run("(4)"));
-    assert_eq!(run("question1.count"), run("(1)"));
+    assert_eq!(run("question1.rate"), 4);
+    assert_eq!(run("question1.count"), 1);
     run("vote1.rate = 5");
-    assert_eq!(run("question1.rate"), run("(4.5)"));
+    assert_eq!(run("question1.rate"), 4.5);
 }
 
 /// Nucleoid runs an expression statement of class
@@ -2048,7 +2184,11 @@ fn runs_an_expression_statement_of_class() {
     if number == 3:
         alkalis.push($Element)
 }"#);
-    assert_eq!(run("alkalis.pop()"), run("(element1)"));
+    {
+        let actual = run("alkalis.pop()");
+        let expected = run("(element1)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid rejects a variable declaration without definition
@@ -2064,8 +2204,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("Missing definition")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid creates a dependency based on the length of an identifier
@@ -2074,26 +2218,26 @@ fn creates_a_dependency_based_on_the_length_of_an_identifier() {
     let mut run = runner();
     run(r#"str1 = "ABC""#);
     run("i1 = str1.length + 1");
-    assert_eq!(run("i1"), run("(4)"));
+    assert_eq!(run("i1"), 4);
     run(r#"str1 = "ABCD""#);
-    assert_eq!(run("i1"), run("(5)"));
+    assert_eq!(run("i1"), 5);
     run(r#"if str1.length > 5:
     i2 = i1"#);
     run(r#"str1 = "ABCDEF""#);
-    assert_eq!(run("i2"), run("(7)"));
+    assert_eq!(run("i2"), 7);
 }
 
 /// Nucleoid adds a created class to the class list
 #[test]
 fn adds_a_created_class_to_the_class_list() {
     let mut run = runner();
-    assert_eq!(run("Class.length"), run("(0)"));
+    assert_eq!(run("Class.length"), 0);
     run(r#"class Student:
     pass"#);
-    assert_eq!(run("Class.length"), run("(1)"));
+    assert_eq!(run("Class.length"), 1);
     run(r#"class User:
     pass"#);
-    assert_eq!(run("Class.length"), run("(2)"));
+    assert_eq!(run("Class.length"), 2);
 }
 
 /// Nucleoid updates a class definition
@@ -2106,22 +2250,22 @@ fn updates_a_class_definition() {
     run("message1 = Message()");
     run(r#"class Message(payload: str):
     this.payload = payload"#);
-    assert_eq!(run("message1.read"), run("(false)"));
-    assert_eq!(run("message1.payload"), run("(null)"));
+    assert_eq!(run("message1.read"), false);
+    assert_eq!(run("message1.payload"), serde_json::Value::Null);
     run(r#"message2 = Message("MESSAGE")"#);
-    assert_eq!(run("message2.read"), run("(false)"));
-    assert_eq!(run("message2.payload"), run(r#"("MESSAGE")"#));
+    assert_eq!(run("message2.read"), false);
+    assert_eq!(run("message2.payload"), "MESSAGE");
 }
 
 /// Nucleoid supports a string in an expression
 #[test]
 fn supports_a_string_in_an_expression() {
     let mut run = runner();
-    assert_eq!(run("'New String'"), run(r#"("New String")"#));
-    assert_eq!(run(r#""New String""#), run(r#"("New String")"#));
-    assert_eq!(run("`New String`"), run(r#"("New String")"#));
+    assert_eq!(run("'New String'"), "New String");
+    assert_eq!(run(r#""New String""#), "New String");
+    assert_eq!(run("`New String`"), "New String");
     run("a = 123");
-    assert_eq!(run("`New ${a} String`"), run(r#"("New 123 String")"#));
+    assert_eq!(run("`New ${a} String`"), "New 123 String");
 }
 
 /// Nucleoid supports logical operators
@@ -2129,10 +2273,10 @@ fn supports_a_string_in_an_expression() {
 fn supports_logical_operators() {
     let mut run = runner();
     run("condition = false");
-    assert_eq!(run("condition or true"), run("(true)"));
-    assert_eq!(run("condition || true"), run("(true)"));
-    assert_eq!(run("not condition and true"), run("(true)"));
-    assert_eq!(run("!condition && true"), run("(true)"));
+    assert_eq!(run("condition or true"), true);
+    assert_eq!(run("condition || true"), true);
+    assert_eq!(run("not condition and true"), true);
+    assert_eq!(run("!condition && true"), true);
 }
 
 /// Nucleoid supports standard built-in objects
@@ -2140,9 +2284,9 @@ fn supports_logical_operators() {
 fn supports_standard_built_in_objects() {
     let mut run = runner();
     run("max = Number.MAX_INTEGER");
-    assert_eq!(run("max"), run("(9007199254740991)"));
+    assert_eq!(run("max"), 9007199254740991.0);
     run("now = Date.now()");
-    assert_eq!(run("now > 0"), run("(true)"));
+    assert_eq!(run("now > 0"), true);
 }
 
 /// Nucleoid supports creating standard built-in objects
@@ -2150,7 +2294,7 @@ fn supports_standard_built_in_objects() {
 fn supports_creating_standard_built_in_objects() {
     let mut run = runner();
     run(r#"date = Date("2019-7-24")"#);
-    assert_eq!(run("date.getYear()"), run("(119)"));
+    assert_eq!(run("date.getYear()"), 119);
 }
 
 /// Nucleoid supports built-in objects
@@ -2159,9 +2303,9 @@ fn supports_built_in_objects() {
     let mut run = runner();
     run("date1 = Date()");
     run("date2 = Date(date1.getTime())");
-    assert_eq!(run("date1.getTime() == date2.getTime()"), run("(true)"));
+    assert_eq!(run("date1.getTime() == date2.getTime()"), true);
     run(r#"date3 = Date.parse("04 Dec 1995 00:12:00 GMT")"#);
-    assert_eq!(run("date3"), run("(818035920000)"));
+    assert_eq!(run("date3"), 818035920000.0);
     run("__nucleoid_test_assertion_0_actual = null");
     run("__nucleoid_test_assertion_0_expected = null");
     run("__nucleoid_test_assertion_0_ran = false");
@@ -2171,8 +2315,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = TypeError("Date.wrong is not a function")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid calls a function with no return
@@ -2205,10 +2353,10 @@ fn calls_a_function_with_a_return_value() {
 fn supports_a_function_in_an_expression() {
     let mut run = runner();
     run("list = [1, 2, 3]");
-    assert_eq!(run("list.find(function(element) { return element == 3 })"), run("(3)"));
-    assert_eq!(run("list.find(element => { return element == 2 })"), run("(2)"));
-    assert_eq!(run("list.find(element => element == 1)"), run("(1)"));
-    assert_eq!(run("list.find(element => (element == 1))"), run("(1)"));
+    assert_eq!(run("list.find(function(element) { return element == 3 })"), 3);
+    assert_eq!(run("list.find(element => { return element == 2 })"), 2);
+    assert_eq!(run("list.find(element => element == 1)"), 1);
+    assert_eq!(run("list.find(element => (element == 1))"), 1);
 }
 
 /// Nucleoid supports a function with a parameter in an expression
@@ -2218,10 +2366,10 @@ fn supports_a_function_with_a_parameter_in_an_expression() {
     run("samples = [38.2, 39.1, 38.8, 39]");
     run("ratio = 2.1");
     run("element = 38.5");
-    assert_eq!(run("samples.find(function(element) { result = element * ratio; return result == 81.48 })"), run("(38.8)"));
-    assert_eq!(run("samples.find(element => { result = element * ratio; return result == 81.48 })"), run("(38.8)"));
-    assert_eq!(run("samples.find(element => element == 38.8)"), run("(38.8)"));
-    assert_eq!(run("samples.find(element => (element == 38.8))"), run("(38.8)"));
+    assert_eq!(run("samples.find(function(element) { result = element * ratio; return result == 81.48 })"), 38.8);
+    assert_eq!(run("samples.find(element => { result = element * ratio; return result == 81.48 })"), 38.8);
+    assert_eq!(run("samples.find(element => element == 38.8)"), 38.8);
+    assert_eq!(run("samples.find(element => (element == 38.8))"), 38.8);
 }
 
 /// Nucleoid creates a variable statement with JSON
@@ -2243,12 +2391,20 @@ fn creates_a_variable_statement_with_json() {
     __nucleoid_test_assertion_1_expected = "NESTED_TEST"
     __nucleoid_test_assertion_1_ran = true
 }"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_1_actual");
+        let expected = run("(__nucleoid_test_assertion_1_expected)");
+        assert_eq!(actual, expected);
+    }
     run(r#"message = { "pid": 1200 }"#);
-    assert_eq!(run("message.pid"), run("(1200)"));
+    assert_eq!(run("message.pid"), 1200);
     run("__nucleoid_test_assertion_2_actual = null");
     run("__nucleoid_test_assertion_2_expected = null");
     run("__nucleoid_test_assertion_2_ran = false");
@@ -2259,8 +2415,12 @@ fn creates_a_variable_statement_with_json() {
     __nucleoid_test_assertion_2_expected = "test"
     __nucleoid_test_assertion_2_ran = true
 }"#);
-    assert_eq!(run("__nucleoid_test_assertion_2_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_2_actual"), run("(__nucleoid_test_assertion_2_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_2_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_2_actual");
+        let expected = run("(__nucleoid_test_assertion_2_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid returns an inline JSON object
@@ -2324,8 +2484,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID_FIRST_CHARACTER"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
     run(r#"name = "CbCDE""#);
     run("__nucleoid_test_assertion_1_actual = null");
     run("__nucleoid_test_assertion_1_expected = null");
@@ -2336,8 +2500,12 @@ catch error:
     __nucleoid_test_assertion_1_actual = error
     __nucleoid_test_assertion_1_expected = "INVALID_FIRST_CHARACTER"
     __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_1_actual");
+        let expected = run("(__nucleoid_test_assertion_1_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid supports a property of chained functions in an expression
@@ -2363,8 +2531,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "USER_ALREADY_REGISTERED"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid throws an error as a string
@@ -2380,8 +2552,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = "INVALID"
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
     run("__nucleoid_test_assertion_1_actual = null");
     run("__nucleoid_test_assertion_1_expected = null");
     run("__nucleoid_test_assertion_1_ran = false");
@@ -2391,8 +2567,12 @@ catch error:
     __nucleoid_test_assertion_1_actual = error
     __nucleoid_test_assertion_1_expected = "INVALID"
     __nucleoid_test_assertion_1_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_1_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_1_actual"), run("(__nucleoid_test_assertion_1_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_1_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_1_actual");
+        let expected = run("(__nucleoid_test_assertion_1_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid throws an error as an integer
@@ -2408,8 +2588,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = 123
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid throws a reference error if the thrown value is not defined
@@ -2425,8 +2609,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("abc is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid creates a class assignment before initialization
@@ -2437,9 +2625,9 @@ fn creates_a_class_assignment_before_initialization() {
     pass"#);
     run("$Review.rate = $Review.sum / 10");
     run("review1 = Review()");
-    assert_eq!(run("review1.rate"), run("(null)"));
+    assert_eq!(run("review1.rate"), serde_json::Value::Null);
     run("review1.sum = 42");
-    assert_eq!(run("review1.rate"), run("(4.2)"));
+    assert_eq!(run("review1.rate"), 4.2);
 }
 
 /// Nucleoid creates a class assignment after initialization
@@ -2453,11 +2641,11 @@ fn creates_a_class_assignment_after_initialization() {
     run("shape2 = Shape()");
     run("shape2.edge = 3");
     run("$Shape.angle = ($Shape.edge - 2) * 180");
-    assert_eq!(run("shape1.angle"), run("(180)"));
-    assert_eq!(run("shape2.angle"), run("(180)"));
+    assert_eq!(run("shape1.angle"), 180);
+    assert_eq!(run("shape2.angle"), 180);
     run("shape1.edge = 4");
-    assert_eq!(run("shape1.angle"), run("(360)"));
-    assert_eq!(run("shape2.angle"), run("(180)"));
+    assert_eq!(run("shape1.angle"), 360);
+    assert_eq!(run("shape2.angle"), 180);
 }
 
 /// Nucleoid updates a class assignment
@@ -2469,11 +2657,11 @@ fn updates_a_class_assignment() {
     run("employee1 = Employee()");
     run("employee1.id = 1");
     run(r#"$Employee.username = "E" + $Employee.id"#);
-    assert_eq!(run("employee1.username"), run(r#"("E1")"#));
+    assert_eq!(run("employee1.username"), "E1");
     run(r#"$Employee.username = "F" + $Employee.id"#);
-    assert_eq!(run("employee1.username"), run(r#"("F1")"#));
+    assert_eq!(run("employee1.username"), "F1");
     run("employee1.id = 2");
-    assert_eq!(run("employee1.username"), run(r#"("F2")"#));
+    assert_eq!(run("employee1.username"), "F2");
 }
 
 /// Nucleoid creates an if statement of class before initialization
@@ -2485,11 +2673,11 @@ fn creates_an_if_statement_of_class_before_initialization() {
     run(r#"if $Ticket.date > Date("1993-1-1"):
     $Ticket.status = "EXPIRED""#);
     run("ticket1 = Ticket()");
-    assert_eq!(run("ticket1.status"), run("(null)"));
+    assert_eq!(run("ticket1.status"), serde_json::Value::Null);
     run(r#"ticket1.date = Date("1993-2-1")"#);
-    assert_eq!(run("ticket1.status"), run(r#"("EXPIRED")"#));
+    assert_eq!(run("ticket1.status"), "EXPIRED");
     run("ticket2 = Ticket()");
-    assert_eq!(run("ticket2.status"), run("(null)"));
+    assert_eq!(run("ticket2.status"), serde_json::Value::Null);
 }
 
 /// Nucleoid creates an if statement of class after initialization
@@ -2506,11 +2694,11 @@ fn creates_an_if_statement_of_class_after_initialization() {
     run(r#"student2.class = "Daycare""#);
     run(r#"if $Student.age == 3:
     $Student.class = "Preschool""#);
-    assert_eq!(run("student1.class"), run(r#"("Daycare")"#));
-    assert_eq!(run("student2.class"), run(r#"("Daycare")"#));
+    assert_eq!(run("student1.class"), "Daycare");
+    assert_eq!(run("student2.class"), "Daycare");
     run("student1.age = 3");
-    assert_eq!(run("student1.class"), run(r#"("Preschool")"#));
-    assert_eq!(run("student2.class"), run(r#"("Daycare")"#));
+    assert_eq!(run("student1.class"), "Preschool");
+    assert_eq!(run("student2.class"), "Daycare");
 }
 
 /// Nucleoid updates an if block of class
@@ -2525,12 +2713,12 @@ fn updates_an_if_block_of_class() {
     run("inventory2.quantity = 1000");
     run(r#"if $Inventory.quantity == 0:
     $Inventory.replenishment = true"#);
-    assert_eq!(run("inventory1.replenishment"), run("(true)"));
-    assert_eq!(run("inventory2.replenishment"), run("(null)"));
+    assert_eq!(run("inventory1.replenishment"), true);
+    assert_eq!(run("inventory2.replenishment"), serde_json::Value::Null);
     run(r#"if $Inventory.quantity == 0:
     $Inventory.replenishment = false"#);
-    assert_eq!(run("inventory1.replenishment"), run("(false)"));
-    assert_eq!(run("inventory2.replenishment"), run("(null)"));
+    assert_eq!(run("inventory1.replenishment"), false);
+    assert_eq!(run("inventory2.replenishment"), serde_json::Value::Null);
 }
 
 /// Nucleoid creates an else statement of class before initialization
@@ -2547,9 +2735,9 @@ else:
     run(r#"regular = "REGULAR""#);
     run("count1 = Count()");
     run("count1.max = 850");
-    assert_eq!(run("count1.reset"), run(r#"("REGULAR")"#));
+    assert_eq!(run("count1.reset"), "REGULAR");
     run(r#"regular = "R""#);
-    assert_eq!(run("count1.reset"), run(r#"("R")"#));
+    assert_eq!(run("count1.reset"), "R");
 }
 
 /// Nucleoid creates an else statement of class after initialization
@@ -2566,9 +2754,9 @@ fn creates_an_else_statement_of_class_after_initialization() {
     $Concentration.formula = directDilution
 else:
     $Concentration.formula = serialDilution"#);
-    assert_eq!(run("concentration1.formula"), run(r#"("(c1V1+c2V2)/(V1+V2)")"#));
+    assert_eq!(run("concentration1.formula"), "(c1V1+c2V2)/(V1+V2)");
     run(r#"serialDilution = "(c1V1+c2V2+c3V3)/(V1+V2+V3)""#);
-    assert_eq!(run("concentration1.formula"), run(r#"("(c1V1+c2V2+c3V3)/(V1+V2+V3)")"#));
+    assert_eq!(run("concentration1.formula"), "(c1V1+c2V2+c3V3)/(V1+V2+V3)");
 }
 
 /// Nucleoid creates an else if statement of class before initialization
@@ -2586,9 +2774,9 @@ else:
     $Storage.status = empty"#);
     run("storage1 = Storage()");
     run("storage1.capacity = 23");
-    assert_eq!(run("storage1.status"), run(r#"("LOW")"#));
+    assert_eq!(run("storage1.status"), "LOW");
     run(r#"low = "L""#);
-    assert_eq!(run("storage1.status"), run(r#"("L")"#));
+    assert_eq!(run("storage1.status"), "L");
 }
 
 /// Nucleoid creates an else if statement of class after initialization
@@ -2606,9 +2794,9 @@ else if $Registration.available > 0:
     $Registration.accepted = pending
 else:
     $Registration.accepted = no"#);
-    assert_eq!(run("registration1.accepted"), run(r#"("NO")"#));
+    assert_eq!(run("registration1.accepted"), "NO");
     run("yes = true; no = false");
-    assert_eq!(run("registration1.accepted"), run("(false)"));
+    assert_eq!(run("registration1.accepted"), false);
 }
 
 /// Nucleoid creates multiple else if statement of class before initialization
@@ -2626,9 +2814,9 @@ else:
     run("capacity1 = Capacity()");
     run("capacity1.available = 100");
     run("capacity1.spare = 5");
-    assert_eq!(run("capacity1.total"), run("(115)"));
+    assert_eq!(run("capacity1.total"), 115);
     run("capacity1.spare = 1");
-    assert_eq!(run("capacity1.total"), run("(103)"));
+    assert_eq!(run("capacity1.total"), 103);
 }
 
 /// Nucleoid creates multiple else if statement of class after initialization
@@ -2647,9 +2835,9 @@ else if $Shape.type == "TRIANGLE":
     $Shape.area = $Shape.x * $Shape.y / 2
 else:
     $Shape.area = $Shape.x * $Shape.y"#);
-    assert_eq!(run("shape1.area"), run("(30)"));
+    assert_eq!(run("shape1.area"), 30);
     run("shape1.x = 7");
-    assert_eq!(run("shape1.area"), run("(42)"));
+    assert_eq!(run("shape1.area"), 42);
 }
 
 /// Nucleoid runs a block statement of class before initialization
@@ -2663,11 +2851,11 @@ fn runs_a_block_statement_of_class_before_initialization() {
     $Stock.after = $Stock.before + change
 }"#);
     run("stock1 = Stock()");
-    assert_eq!(run("stock1.after"), run("(null)"));
+    assert_eq!(run("stock1.after"), serde_json::Value::Null);
     run("stock1.before = 57.25");
-    assert_eq!(run("stock1.after"), run("(59.54)"));
+    assert_eq!(run("stock1.after"), 59.54);
     run("stock1.before = 59.5");
-    assert_eq!(run("stock1.after"), run("(61.88)"));
+    assert_eq!(run("stock1.after"), 61.88);
 }
 
 /// Nucleoid runs a block statement of class after initialization
@@ -2682,9 +2870,9 @@ fn runs_a_block_statement_of_class_after_initialization() {
     retail = $Purchase.price * 1.15
     $Purchase.retailPrice = retail
 }"#);
-    assert_eq!(run("purchase1.retailPrice"), run("(113.85)"));
+    assert_eq!(run("purchase1.retailPrice"), 113.85);
     run("purchase1.price = 199");
-    assert_eq!(run("purchase1.retailPrice"), run("(228.85)"));
+    assert_eq!(run("purchase1.retailPrice"), 228.85);
 }
 
 /// Nucleoid runs a nested block statement of class before initialization
@@ -2702,7 +2890,7 @@ fn runs_a_nested_block_statement_of_class_before_initialization() {
     run("compound1 = Compound()");
     run("compound1.substance = 55.85");
     run("compound1.mol = 1000");
-    assert_eq!(run("compound1.sample"), run("(1252)"));
+    assert_eq!(run("compound1.sample"), 1252);
 }
 
 /// Nucleoid runs a nested block statement of class after initialization
@@ -2720,7 +2908,7 @@ fn runs_a_nested_block_statement_of_class_after_initialization() {
         $Bug.priorityScore = score + $Bug.initialScore
     }
 }"#);
-    assert_eq!(run("bug1.priorityScore"), run("(1240)"));
+    assert_eq!(run("bug1.priorityScore"), 1240);
 }
 
 /// Nucleoid runs a nested if statement of class before initialization
@@ -2737,9 +2925,9 @@ fn runs_a_nested_if_statement_of_class_before_initialization() {
 }"#);
     run("mortgage1 = Mortgage()");
     run("mortgage1.annual = 46");
-    assert_eq!(run("mortgage1.rate"), run(r#"("EXCEPTIONAL")"#));
+    assert_eq!(run("mortgage1.rate"), "EXCEPTIONAL");
     run(r#"rate1 = "E""#);
-    assert_eq!(run("mortgage1.rate"), run(r#"("E")"#));
+    assert_eq!(run("mortgage1.rate"), "E");
 }
 
 /// Nucleoid runs a nested if statement of class after initialization
@@ -2756,11 +2944,11 @@ fn runs_a_nested_if_statement_of_class_after_initialization() {
     if height > 330:
         $Building.type = buildingType1
 }"#);
-    assert_eq!(run("building1.type"), run("(null)"));
+    assert_eq!(run("building1.type"), serde_json::Value::Null);
     run("building1.floors = 25");
-    assert_eq!(run("building1.type"), run(r#"("SKYSCRAPER")"#));
+    assert_eq!(run("building1.type"), "SKYSCRAPER");
     run(r#"buildingType1 = "S""#);
-    assert_eq!(run("building1.type"), run(r#"("S")"#));
+    assert_eq!(run("building1.type"), "S");
 }
 
 /// Nucleoid creates a nested else statement of class before initialization
@@ -2780,9 +2968,9 @@ fn creates_a_nested_else_statement_of_class_before_initialization() {
 }"#);
     run("account1 = Account()");
     run("account1.balance = 950");
-    assert_eq!(run("account1.alert"), run(r#"("LOW_ALERT")"#));
+    assert_eq!(run("account1.alert"), "LOW_ALERT");
     run(r#"lowAlert = "L""#);
-    assert_eq!(run("account1.alert"), run(r#"("L")"#));
+    assert_eq!(run("account1.alert"), "L");
 }
 
 /// Nucleoid creates a nested else statement of class after initialization
@@ -2802,11 +2990,11 @@ fn creates_a_nested_else_statement_of_class_after_initialization() {
     else:
         $Question.type = low
 }"#);
-    assert_eq!(run("question1.type"), run(r#"("LOW")"#));
+    assert_eq!(run("question1.type"), "LOW");
     run(r#"low = "L""#);
-    assert_eq!(run("question1.type"), run(r#"("L")"#));
+    assert_eq!(run("question1.type"), "L");
     run("question1.count = 11");
-    assert_eq!(run("question1.type"), run(r#"("HIGH")"#));
+    assert_eq!(run("question1.type"), "HIGH");
 }
 
 /// Nucleoid creates a class assignment with multiple properties before declaration
@@ -2821,10 +3009,10 @@ fn creates_a_class_assignment_with_multiple_properties_before_declaration() {
     run("$Guest.room = Room()");
     run("guest1 = Guest()");
     run("guest1.room.number = 30");
-    assert_eq!(run("guest1.room.level"), run("(3)"));
+    assert_eq!(run("guest1.room.level"), 3);
     run("guest2 = Guest()");
-    assert_eq!(run("guest2.room.number"), run("(30)"));
-    assert_eq!(run("guest2.room.level"), run("(3)"));
+    assert_eq!(run("guest2.room.number"), 30);
+    assert_eq!(run("guest2.room.level"), 3);
 }
 
 /// Nucleoid creates a class assignment with multiple properties after declaration
@@ -2838,12 +3026,12 @@ fn creates_a_class_assignment_with_multiple_properties_after_declaration() {
     run("channel1 = Channel()");
     run("$Channel.frequency = Frequency()");
     run("$Frequency.hertz = 1 / $Frequency.period");
-    assert_eq!(run("channel1.frequency.hertz"), run("(null)"));
+    assert_eq!(run("channel1.frequency.hertz"), serde_json::Value::Null);
     run("channel1.frequency.period = 0.0025");
-    assert_eq!(run("channel1.frequency.hertz"), run("(400)"));
+    assert_eq!(run("channel1.frequency.hertz"), 400);
     run("channel2 = Channel()");
-    assert_eq!(run("channel2.frequency.period"), run("(0.0025)"));
-    assert_eq!(run("channel2.frequency.hertz"), run("(400)"));
+    assert_eq!(run("channel2.frequency.period"), 0.0025);
+    assert_eq!(run("channel2.frequency.hertz"), 400);
 }
 
 /// Nucleoid creates a class assignment as multiple properties as part of a declaration before initialization
@@ -2857,11 +3045,11 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_be
     run("$Hospital.clinic = Clinic()");
     run("$Hospital.patients = $Hospital.clinic.beds * 746");
     run("hospital1 = Hospital()");
-    assert_eq!(run("hospital1.patients"), run("(null)"));
+    assert_eq!(run("hospital1.patients"), serde_json::Value::Null);
     run("hospital1.clinic.beds = 2678");
-    assert_eq!(run("hospital1.patients"), run("(1997788)"));
+    assert_eq!(run("hospital1.patients"), 1997788);
     run("hospital1.clinic.beds = 3000");
-    assert_eq!(run("hospital1.patients"), run("(2238000)"));
+    assert_eq!(run("hospital1.patients"), 2238000);
 }
 
 /// Nucleoid creates a class assignment as multiple properties as part of a declaration after initialization
@@ -2876,9 +3064,9 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_af
     run("server1 = Server()");
     run("server1.os.version = 14");
     run(r#"$Server.build = $Server.os.version + ".526291""#);
-    assert_eq!(run("server1.build"), run(r#"("14.526291")"#));
+    assert_eq!(run("server1.build"), "14.526291");
     run("server1.os.version = 15");
-    assert_eq!(run("server1.build"), run(r#"("15.526291")"#));
+    assert_eq!(run("server1.build"), "15.526291");
 }
 
 /// Nucleoid creates a class assignment only if the instance is defined
@@ -2896,8 +3084,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("Phone.line is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid creates a for of statement
@@ -2913,8 +3105,8 @@ fn creates_a_for_of_statement() {
     run("$Summary.rate = $Summary.question.rate.value");
     run(r#"for question of Question:
     Summary(question)"#);
-    assert_eq!(run("Summary[0].rate"), run("(4)"));
-    assert_eq!(run("Summary[1].rate"), run("(5)"));
+    assert_eq!(run("Summary[0].rate"), 4);
+    assert_eq!(run("Summary[1].rate"), 5);
 }
 
 /// Nucleoid creates a block of for statement without dependencies
@@ -2930,15 +3122,15 @@ fn creates_a_block_of_for_statement_without_dependencies() {
     i = 10 * VALUE
     item.score = i"#);
     run("VALUE = 20");
-    assert_eq!(run("item1.score"), run("(100)"));
-    assert_eq!(run("item2.score"), run("(100)"));
+    assert_eq!(run("item1.score"), 100);
+    assert_eq!(run("item2.score"), 100);
     run(r#"for item of Item:
     i = 10 * VALUE
     item.score = i"#);
-    assert_eq!(run("item1.score"), run("(200)"));
-    assert_eq!(run("item2.score"), run("(200)"));
+    assert_eq!(run("item1.score"), 200);
+    assert_eq!(run("item2.score"), 200);
     run("item3 = Item()");
-    assert_eq!(run("item3.score"), run("(null)"));
+    assert_eq!(run("item3.score"), serde_json::Value::Null);
 }
 
 /// Nucleoid loops through only defined objects in a for of statement
@@ -2961,9 +3153,13 @@ fn loops_through_only_defined_objects_in_a_for_of_statement() {
     run(r#"for item of array:
     count = count + 1
     items.push(item)"#);
-    assert_eq!(run("count"), run("(1)"));
-    assert_eq!(run("items.length"), run("(1)"));
-    assert_eq!(run("items[0]"), run("(item4)"));
+    assert_eq!(run("count"), 1);
+    assert_eq!(run("items.length"), 1);
+    {
+        let actual = run("items[0]");
+        let expected = run("(item4)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid supports an if statement in a for of statement
@@ -2982,14 +3178,14 @@ fn supports_an_if_statement_in_a_for_of_statement() {
     run(r#"for question of Question:
     if not question.archived:
         Summary(question)"#);
-    assert_eq!(run("Summary.length"), run("(2)"));
-    assert_eq!(run("Summary[0].question.id"), run(r#"("question1")"#));
-    assert_eq!(run("Summary[1].question.id"), run(r#"("question3")"#));
-    assert_eq!(run("Summary[0].type"), run(r#"("DAILY")"#));
-    assert_eq!(run("Summary[1].type"), run(r#"("DAILY")"#));
+    assert_eq!(run("Summary.length"), 2);
+    assert_eq!(run("Summary[0].question.id"), "question1");
+    assert_eq!(run("Summary[1].question.id"), "question3");
+    assert_eq!(run("Summary[0].type"), "DAILY");
+    assert_eq!(run("Summary[1].type"), "DAILY");
     run(r#"$Summary.type = "WEEKLY""#);
-    assert_eq!(run("Summary[0].type"), run(r#"("WEEKLY")"#));
-    assert_eq!(run("Summary[1].type"), run(r#"("WEEKLY")"#));
+    assert_eq!(run("Summary[0].type"), "WEEKLY");
+    assert_eq!(run("Summary[1].type"), "WEEKLY");
 }
 
 /// Nucleoid returns an integer in variable assignment
@@ -3012,8 +3208,8 @@ fn returns_the_reference_of_a_function_call() {
     run("c = 1");
     run(r#"def test(b):
     return b = a"#);
-    assert_eq!(run("test(c)"), run("({})"));
-    assert_eq!(run("c"), run("(1)"));
+    assert_eq!(run("test(c)"), serde_json::json!({}));
+    assert_eq!(run("c"), 1);
 }
 
 /// Nucleoid returns a string value of a function call
@@ -3073,8 +3269,8 @@ fn returns_the_instance_itself_in_instance_creation() {
     run(r#"Test(123)
 
 # return: { "id": "[UUID]", "prop": 123 }"#);
-    assert_eq!(run("Test[0].prop"), run("(123)"));
-    assert_eq!(run("Test[0].id != null"), run("(true)"));
+    assert_eq!(run("Test[0].prop"), 123);
+    assert_eq!(run("Test[0].id != null"), true);
 }
 
 /// Nucleoid explains how a value was derived
@@ -3084,12 +3280,12 @@ fn explains_how_a_value_was_derived() {
     run("a = 1");
     run("b = a + 2");
     run("c = b * 2");
-    assert_eq!(run("(why c).length"), run("(3)"));
-    assert_eq!(run("(why c)[0].node"), run(r#"("c")"#));
-    assert_eq!(run("(why c)[0].holds"), run("(6)"));
-    assert_eq!(run("(why c)[0].rule"), run(r#"("c = b*2")"#));
-    assert_eq!(run("(why c)[0].state"), run(r#"("derived")"#));
-    assert_eq!(run("(why c)[0].from"), run(r#"(["b"])"#));
+    assert_eq!(run("(why c).length"), 3);
+    assert_eq!(run("(why c)[0].node"), "c");
+    assert_eq!(run("(why c)[0].holds"), 6);
+    assert_eq!(run("(why c)[0].rule"), "c = b*2");
+    assert_eq!(run("(why c)[0].state"), "derived");
+    assert_eq!(run("(why c)[0].from"), serde_json::json!(["b"]));
 }
 
 /// Nucleoid states a fact that follows from nothing else
@@ -3098,9 +3294,9 @@ fn states_a_fact_that_follows_from_nothing_else() {
     let mut run = runner();
     run("a = 1");
     run("b = a + 2");
-    assert_eq!(run("(why b)[1].node"), run(r#"("a")"#));
-    assert_eq!(run("(why b)[1].state"), run(r#"("stated")"#));
-    assert_eq!(run("(why b)[1].from"), run("([])"));
+    assert_eq!(run("(why b)[1].node"), "a");
+    assert_eq!(run("(why b)[1].state"), "stated");
+    assert_eq!(run("(why b)[1].from"), serde_json::json!([]));
 }
 
 /// Nucleoid names the class-level rule a property was derived from
@@ -3111,9 +3307,9 @@ fn names_the_class_level_rule_a_property_was_derived_from() {
     this.name = name"#);
     run("$Human.mortal = true");
     run(r#"socrates = Human("Socrates")"#);
-    assert_eq!(run("(why socrates.mortal).length"), run("(1)"));
-    assert_eq!(run("(why socrates.mortal)[0].rule"), run(r#"("$Human.mortal = true")"#));
-    assert_eq!(run("(why socrates.mortal)[0].state"), run(r#"("derived")"#));
+    assert_eq!(run("(why socrates.mortal).length"), 1);
+    assert_eq!(run("(why socrates.mortal)[0].rule"), "$Human.mortal = true");
+    assert_eq!(run("(why socrates.mortal)[0].state"), "derived");
 }
 
 /// Nucleoid reports what a value affects
@@ -3123,9 +3319,9 @@ fn reports_what_a_value_affects() {
     run("a = 1");
     run("b = a + 2");
     run("c = b * 2");
-    assert_eq!(run("(affects a).length"), run("(2)"));
-    assert_eq!(run("(affects a)[0].node"), run(r#"("b")"#));
-    assert_eq!(run("(affects a)[1].node"), run(r#"("c")"#));
+    assert_eq!(run("(affects a).length"), 2);
+    assert_eq!(run("(affects a)[0].node"), "b");
+    assert_eq!(run("(affects a)[1].node"), "c");
 }
 
 /// Nucleoid chains reasoning operations
@@ -3135,9 +3331,13 @@ fn chains_reasoning_operations() {
     run("a = 1");
     run("b = a + 2");
     run("c = b * 2");
-    assert_eq!(run("(c |> why).length"), run("(3)"));
-    assert_eq!(run("(a |> affects |> why).length"), run("(3)"));
-    assert_eq!(run("(why c).length"), run("((c |> why).length)"));
+    assert_eq!(run("(c |> why).length"), 3);
+    assert_eq!(run("(a |> affects |> why).length"), 3);
+    {
+        let actual = run("(why c).length");
+        let expected = run("((c |> why).length)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid keeps an explanation up to date
@@ -3148,9 +3348,9 @@ fn keeps_an_explanation_up_to_date() {
     run("b = a + 2");
     run("c = b * 2");
     run("trace = why c");
-    assert_eq!(run("trace[0].holds"), run("(6)"));
+    assert_eq!(run("trace[0].holds"), 6);
     run("a = 5");
-    assert_eq!(run("trace[0].holds"), run("(14)"));
+    assert_eq!(run("trace[0].holds"), 14);
 }
 
 /// Nucleoid does not select a reasoning statement
@@ -3160,8 +3360,8 @@ fn does_not_select_a_reasoning_statement() {
     run("a = 1");
     run("b = a + 2");
     run("trace = why b");
-    assert_eq!(run("(affects a).length"), run("(1)"));
-    assert_eq!(run("(affects a)[0].node"), run(r#"("b")"#));
+    assert_eq!(run("(affects a).length"), 1);
+    assert_eq!(run("(affects a)[0].node"), "b");
 }
 
 /// Nucleoid selects the whole model
@@ -3170,7 +3370,7 @@ fn selects_the_whole_model() {
     let mut run = runner();
     run("a = 1");
     run("b = a + 2");
-    assert_eq!(run("(model |> why).length"), run("(2)"));
+    assert_eq!(run("(model |> why).length"), 2);
 }
 
 /// Nucleoid throws an error when explaining something that is not defined
@@ -3186,8 +3386,12 @@ catch error:
     __nucleoid_test_assertion_0_actual = error
     __nucleoid_test_assertion_0_expected = ReferenceError("nothing is not defined")
     __nucleoid_test_assertion_0_ran = true"#);
-    assert_eq!(run("__nucleoid_test_assertion_0_ran"), run("(true)"));
-    assert_eq!(run("__nucleoid_test_assertion_0_actual"), run("(__nucleoid_test_assertion_0_expected)"));
+    assert_eq!(run("__nucleoid_test_assertion_0_ran"), true);
+    {
+        let actual = run("__nucleoid_test_assertion_0_actual");
+        let expected = run("(__nucleoid_test_assertion_0_expected)");
+        assert_eq!(actual, expected);
+    }
 }
 
 /// Nucleoid treats a reasoning name as a variable when one is defined
@@ -3195,6 +3399,6 @@ catch error:
 fn treats_a_reasoning_name_as_a_variable_when_one_is_defined() {
     let mut run = runner();
     run("why = 1");
-    assert_eq!(run("why"), run("(1)"));
+    assert_eq!(run("why"), 1);
 }
 

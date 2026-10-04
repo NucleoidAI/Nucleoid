@@ -141,6 +141,57 @@ fn matches(actual: &serde_json::Value, expected: &serde_json::Value) -> bool {
     }
 }
 
+#[derive(Debug)]
+pub struct TestValue {
+    json: serde_json::Value,
+    number: Option<f64>,
+}
+
+impl PartialEq for TestValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self.number, other.number) {
+            (Some(actual), Some(expected)) => actual == expected,
+            _ => matches(&self.json, &other.json),
+        }
+    }
+}
+
+impl PartialEq<serde_json::Value> for TestValue {
+    fn eq(&self, other: &serde_json::Value) -> bool {
+        matches(&self.json, other)
+    }
+}
+
+impl PartialEq<bool> for TestValue {
+    fn eq(&self, other: &bool) -> bool {
+        matches(&self.json, &serde_json::Value::Bool(*other))
+    }
+}
+
+impl PartialEq<i32> for TestValue {
+    fn eq(&self, other: &i32) -> bool {
+        self.number == Some(f64::from(*other))
+    }
+}
+
+impl PartialEq<i64> for TestValue {
+    fn eq(&self, other: &i64) -> bool {
+        self.number == Some(*other as f64)
+    }
+}
+
+impl PartialEq<f64> for TestValue {
+    fn eq(&self, other: &f64) -> bool {
+        self.number == Some(*other)
+    }
+}
+
+impl PartialEq<&str> for TestValue {
+    fn eq(&self, other: &&str) -> bool {
+        matches(&self.json, &serde_json::Value::String((*other).to_string()))
+    }
+}
+
 pub fn check(case: &Case) -> Result<(), String> {
     let mut runtime = Runtime::new();
     check_with(&mut runtime, case).map(|_| ())
@@ -202,7 +253,7 @@ fn check_with(runtime: &mut Runtime, case: &Case) -> Result<nucleoid::Value, Str
 }
 
 /// Creates a stateful `run` function for one generated behavior test.
-pub fn runner() -> impl FnMut(&str) -> serde_json::Value {
+pub fn runner() -> impl FnMut(&str) -> TestValue {
     let mut runtime = Runtime::new();
 
     move |source| {
@@ -226,7 +277,13 @@ pub fn runner() -> impl FnMut(&str) -> serde_json::Value {
             .serialize_json(&value)
             .unwrap_or_else(|error| panic!("{error}"));
 
-        serde_json::from_str(&json).expect("the runtime serializes valid JSON")
+        TestValue {
+            json: serde_json::from_str(&json).expect("the runtime serializes valid JSON"),
+            number: match value {
+                nucleoid::Value::Number(number) => Some(number),
+                _ => None,
+            },
+        }
     }
 }
 
