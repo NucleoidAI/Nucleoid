@@ -4,6 +4,7 @@
 //! actually called in order.
 
 use indexmap::IndexSet;
+use std::collections::HashSet;
 
 use crate::error::{Error, Result};
 use crate::graph::{Graph, NodeKey};
@@ -144,6 +145,60 @@ impl Runtime {
     /// notice.
     pub fn assertions_run(&self) -> usize {
         self.assertions_run
+    }
+
+    /// Serializes a runtime value as JSON, resolving object references through
+    /// the current state.
+    pub fn serialize_json(&self, value: &Value) -> Result<String> {
+        let value = self.json_value(value, &mut HashSet::new())?;
+
+        serde_json::to_string(&value)
+            .map_err(|error| Error::type_error(format!("Cannot serialize value as JSON: {error}")))
+    }
+
+    fn json_value(
+        &self,
+        value: &Value,
+        ancestors: &mut HashSet<ObjectId>,
+    ) -> Result<serde_json::Value> {
+        let value = match value {
+            Value::Undefined | Value::Null => serde_json::Value::Null,
+            Value::Bool(value) => serde_json::Value::Bool(*value),
+            Value::Number(value) => serde_json::Number::from_f64(*value)
+                .map(serde_json::Value::Number)
+                .unwrap_or(serde_json::Value::Null),
+            Value::String(value) => serde_json::Value::String(value.clone()),
+            Value::List(values) => serde_json::Value::Array(
+                values
+                    .iter()
+                    .map(|value| self.json_value(value, ancestors))
+                    .collect::<Result<Vec<_>>>()?,
+            ),
+            Value::Object(id) => {
+                if !ancestors.insert(id.clone()) {
+                    return Err(Error::type_error("Converting circular structure to JSON"));
+                }
+
+                let mut properties = serde_json::Map::new();
+
+                if let Some(object) = self.state.object(id) {
+                    for (name, value) in &object.properties {
+                        if !value.is_undefined() {
+                            properties.insert(name.clone(), self.json_value(value, ancestors)?);
+                        }
+                    }
+                }
+
+                ancestors.remove(id);
+                serde_json::Value::Object(properties)
+            }
+            Value::Class(name) => serde_json::Value::String(name.clone()),
+            Value::Date(millis) => serde_json::Value::String(millis.to_string()),
+            Value::Regex(regex) => serde_json::Value::String(regex.as_str().to_string()),
+            Value::Function(_) => serde_json::Value::String("[function]".to_string()),
+        };
+
+        Ok(value)
     }
 
     pub fn clear(&mut self) {

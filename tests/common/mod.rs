@@ -7,8 +7,7 @@
 // binary uses every helper.
 #![allow(dead_code)]
 
-use nucleoid::value::{ObjectId, Value};
-use nucleoid::{Runtime, state::State};
+use nucleoid::Runtime;
 
 pub struct Case {
     pub title: String,
@@ -115,42 +114,6 @@ pub fn snippets(document: &str, name: &str) -> Vec<Case> {
     cases
 }
 
-/// Projects a runtime value into JSON so it can be compared with the literal
-/// written in the spec.
-fn to_json(state: &State, value: &Value) -> serde_json::Value {
-    match value {
-        Value::Undefined | Value::Null => serde_json::Value::Null,
-        Value::Bool(bool) => serde_json::Value::Bool(*bool),
-        Value::Number(number) => serde_json::Number::from_f64(*number)
-            .map(serde_json::Value::Number)
-            .unwrap_or(serde_json::Value::Null),
-        Value::String(string) => serde_json::Value::String(string.clone()),
-        Value::List(items) => {
-            serde_json::Value::Array(items.iter().map(|item| to_json(state, item)).collect())
-        }
-        Value::Object(id) => object_json(state, id),
-        Value::Class(name) => serde_json::Value::String(name.clone()),
-        Value::Date(millis) => serde_json::Value::String(millis.to_string()),
-        Value::Regex(regex) => serde_json::Value::String(regex.as_str().to_string()),
-        Value::Function(_) => serde_json::Value::String("[function]".to_string()),
-    }
-}
-
-fn object_json(state: &State, id: &ObjectId) -> serde_json::Value {
-    let mut map = serde_json::Map::new();
-
-    if let Some(object) = state.object(id) {
-        for (name, value) in &object.properties {
-            if value.is_undefined() {
-                continue;
-            }
-            map.insert(name.clone(), to_json(state, value));
-        }
-    }
-
-    serde_json::Value::Object(map)
-}
-
 /// Compares against the spec's expected value, treating `[UUID]` as a wildcard.
 fn matches(actual: &serde_json::Value, expected: &serde_json::Value) -> bool {
     match (actual, expected) {
@@ -217,7 +180,13 @@ pub fn check(case: &Case) -> Result<(), String> {
     if let Some(expected) = &case.expected {
         let expected: serde_json::Value = serde_json::from_str(expected)
             .map_err(|error| format!("spec return value is not JSON: {error}"))?;
-        let actual = to_json(&runtime.state, &value);
+        let actual = runtime
+            .serialize_json(&value)
+            .map_err(|error| error.to_string())
+            .and_then(|json| {
+                serde_json::from_str(&json)
+                    .map_err(|error| format!("runtime returned invalid JSON: {error}"))
+            })?;
 
         if !matches(&actual, &expected) {
             return Err(format!("returned {actual}, expected {expected}"));

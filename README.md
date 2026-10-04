@@ -68,6 +68,12 @@ socrates = Human("Socrates")
 assert(socrates.mortal, true)
 ```
 
+Save the program as `hello.nuc` and run it with JSON output:
+
+```console
+cargo run -- hello.nuc --json
+```
+
 ---
 
 # Design Theory 📐

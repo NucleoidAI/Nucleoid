@@ -19,6 +19,10 @@ struct Cli {
     /// Print the logic graph after running.
     #[arg(long)]
     graph: bool,
+
+    /// Serialize the program's result as JSON.
+    #[arg(long)]
+    json: bool,
 }
 
 fn main() -> ExitCode {
@@ -37,7 +41,19 @@ fn main() -> ExitCode {
 
             match runtime.run(&source) {
                 Ok(value) => {
-                    println!("{value}");
+                    let rendered = if cli.json {
+                        match runtime.serialize_json(&value) {
+                            Ok(json) => json,
+                            Err(error) => {
+                                eprintln!("{error}");
+                                return ExitCode::FAILURE;
+                            }
+                        }
+                    } else {
+                        value.to_string()
+                    };
+
+                    println!("{rendered}");
 
                     if cli.graph {
                         print_graph(&runtime);
