@@ -1,10 +1,15 @@
-//! Turns every case in the language's documents into a named Rust test.
+//! Turns the language's executable documents into named Rust tests.
 //!
 //! `ref/src/test/nucleoid.spec.js` writes one `it(...)` per behaviour, so a
 //! failure names the behaviour that broke. The cases here live in the documents
 //! rather than in the test files, so the `it`s are generated from them — which
 //! also keeps the promise in `CLAUDE.md` that adding a case to a document adds
 //! a test, with nothing else to edit.
+//!
+//! The authoritative `nucleoid.spec.md` suite is the exception: its generated
+//! Rust tests are committed in `tests/spec_cases/mod.rs`, so each use case can be
+//! read and run without loading Markdown. `tests/spec.rs` separately checks
+//! that the committed copy remains identical to the document.
 
 use std::env;
 use std::fmt::Write as _;
@@ -41,11 +46,6 @@ enum Source {
 
 const SUITES: &[Suite] = &[
     Suite {
-        output: "spec.rs",
-        format: Format::Cases,
-        source: Source::Named(&[("nucleoid", "nucleoid.spec.md")]),
-    },
-    Suite {
         output: "synth.rs",
         format: Format::Cases,
         source: Source::Directory("synth"),
@@ -69,6 +69,11 @@ const SUITES: &[Suite] = &[
 
 fn main() {
     println!("cargo::rerun-if-changed=build.rs");
+    println!("cargo::rerun-if-env-changed=UPDATE_SPEC_TESTS");
+
+    if env::var_os("UPDATE_SPEC_TESTS").is_some() {
+        write_spec_tests();
+    }
 
     let out = env::var("OUT_DIR").expect("cargo sets OUT_DIR for build scripts");
 
@@ -117,6 +122,108 @@ fn main() {
         fs::write(Path::new(&out).join(suite.output), generated)
             .expect("the generated tests must be writable");
     }
+}
+
+struct Case {
+    title: String,
+    source: String,
+    expected: Option<String>,
+}
+
+/// Materializes `nucleoid.spec.md` as editable, committed Rust tests.
+///
+/// Run with `UPDATE_SPEC_TESTS=1 cargo build`. The synchronization test in
+/// `tests/spec.rs` rejects a stale copy.
+fn write_spec_tests() {
+    let document = fs::read_to_string("nucleoid.spec.md")
+        .expect("nucleoid.spec.md states what the language does");
+    let cases = parse_cases(&document);
+    let mut generated = String::from(
+        "// @generated from nucleoid.spec.md by `UPDATE_SPEC_TESTS=1 cargo build`.\n\
+         // The cases are committed so they can be read and run without parsing Markdown.\n\n\
+         const CASES: &[SpecCase] = &[\n",
+    );
+    let mut tests = String::new();
+    let mut taken = Vec::new();
+
+    for (index, case) in cases.iter().enumerate() {
+        writeln!(generated, "    SpecCase {{").unwrap();
+        writeln!(generated, "        title: {:?},", case.title).unwrap();
+        writeln!(generated, "        source: {},", raw_literal(&case.source)).unwrap();
+
+        match &case.expected {
+            Some(expected) => {
+                writeln!(generated, "        expected: Some({expected:?}),").unwrap();
+            }
+            None => generated.push_str("        expected: None,\n"),
+        }
+
+        generated.push_str("    },\n");
+
+        let name = unique(identifier(&case.title), &mut taken);
+        writeln!(tests, "/// {}", case.title).unwrap();
+        tests.push_str("#[test]\n");
+        writeln!(tests, "fn {name}() {{").unwrap();
+        writeln!(tests, "    case({index});").unwrap();
+        tests.push_str("}\n\n");
+    }
+
+    generated.push_str("];\n\n");
+    generated.push_str(&tests);
+
+    fs::create_dir_all("tests/spec_cases").expect("tests/spec_cases must be writable");
+    fs::write("tests/spec_cases/mod.rs", generated)
+        .expect("tests/spec_cases/mod.rs must be writable");
+}
+
+fn parse_cases(document: &str) -> Vec<Case> {
+    let document = document.replace("\r\n", "\n");
+    let body = document
+        .split("```")
+        .nth(1)
+        .expect("cases live in one fenced block");
+
+    body.split("\n---\n")
+        .filter(|block| !block.trim().is_empty())
+        .map(|block| {
+            let title = block
+                .lines()
+                .map(str::trim)
+                .find(|line| line.starts_with('#'))
+                .unwrap_or("untitled")
+                .trim_start_matches('#')
+                .trim()
+                .to_string();
+            let expected = block.lines().map(str::trim).find_map(|line| {
+                line.strip_prefix("# return:")
+                    .map(|rest| rest.trim().to_string())
+            });
+            let source = block
+                .lines()
+                .filter(|line| !line.trim().starts_with("# return:"))
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            Case {
+                title,
+                source,
+                expected,
+            }
+        })
+        .collect()
+}
+
+fn raw_literal(value: &str) -> String {
+    for hashes in 1.. {
+        let marker = format!("\"{}", "#".repeat(hashes));
+
+        if !value.contains(&marker) {
+            let hashes = "#".repeat(hashes);
+            return format!("r{hashes}\"{value}\"{hashes}");
+        }
+    }
+
+    unreachable!("a raw string delimiter is always available")
 }
 
 /// Every `.md` in a directory, as `(module, path)` in name order.
