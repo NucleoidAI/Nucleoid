@@ -21,8 +21,20 @@ jobs:
       - name: Run tests
         run: cargo test --all-features --locked
 
-      - name: Publish to crates.io
+      - name: Publish nucleoid to crates.io
         run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Prepare nuc package
+        run: |
+          sed -i '0,/^name = "nucleoid"$/s//name = "nuc"/' Cargo.toml
+          sed -i '0,/^name = "nucleoid"$/s//name = "nuc"/' Cargo.lock
+          grep -q '^name = "nuc"$' Cargo.toml
+          cargo metadata --locked --no-deps > /dev/null
+
+      - name: Publish nuc to crates.io
+        run: cargo publish --locked --allow-dirty
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
