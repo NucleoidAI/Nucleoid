@@ -1,8 +1,8 @@
 use indexmap::{IndexMap, IndexSet};
 use std::fmt;
 
+use crate::lang::ast::generator::generate_all;
 use crate::lang::ast::{Expr, Stmt};
-use crate::lang::estree::generator::generate_all;
 use crate::nuc::Nuc;
 use crate::value::ObjectId;
 

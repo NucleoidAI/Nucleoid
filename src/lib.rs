@@ -22,7 +22,7 @@
 //!
 //! | this crate | `ref/` |
 //! | --- | --- |
-//! | [`lang::estree`] | `src/lang/estree` |
+//! | [`lang::ast::parser`], [`lang::ast::generator`] | `src/lang/estree` |
 //! | [`lang::ast`], [`lang::ast::Ast`] | `src/lang/ast`, `Node.js` |
 //! | [`lang::evaluation`] | `src/lang/Evaluation.js` |
 //! | [`nuc`], [`nuc::Nuc`] | `src/nuc`, `NODE.js` |

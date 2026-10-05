@@ -1,6 +1,8 @@
-//! The syntax tree, and how each kind of node is evaluated.
+//! Source text, the syntax tree it parses to, and how each node is evaluated.
 //!
-//! [`Expr`] and [`Stmt`] are the tree the parser builds. [`Ast`] is
+//! [`lexer`] and [`parser`] turn source into [`Expr`] and [`Stmt`], while
+//! [`generator`] renders that tree back to canonical source for graph keys.
+//! [`Ast`] is
 //! `ref/src/lang/ast/Node.js`: the base class every node kind shares, as a
 //! closed enum, with [`Ast::convert`] standing in for `Node.convert` and one
 //! type per `ref/src/lang/ast/*.js` behind it.
@@ -16,13 +18,18 @@
 pub mod array;
 pub mod call;
 pub mod function;
+pub mod generator;
 pub mod identifier;
+pub mod lexer;
 pub mod literal;
 pub mod new;
 pub mod object;
 pub mod operator;
+pub mod parser;
 pub mod reason;
 pub mod template;
+
+pub use parser::{Program, parse, parse_expression, parse_program};
 
 use std::sync::Arc;
 

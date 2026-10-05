@@ -5,5 +5,4 @@
 //! holds typed [`ast::Stmt`] values directly.
 
 pub mod ast;
-pub mod estree;
 pub mod evaluation;

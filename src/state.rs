@@ -2,8 +2,8 @@ use indexmap::IndexMap;
 use std::fmt;
 use std::sync::Arc;
 
+use crate::lang::ast::generator::generate_all;
 use crate::lang::ast::{Expr, Function, Parameter, Stmt};
-use crate::lang::estree::generator::generate_all;
 use crate::runtime::Runtime;
 use crate::value::{ObjectData, ObjectId, Value};
 

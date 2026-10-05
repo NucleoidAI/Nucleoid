@@ -2,7 +2,7 @@
 //! the one place the rest of the runtime reaches the parser through.
 
 use crate::error::Result;
-use crate::lang::estree::parser::{self, Program};
+use crate::lang::ast::{Program, parser};
 
 /// Compiles a program, reporting the first syntax error.
 pub fn compile(source: &str) -> Result<Program> {
