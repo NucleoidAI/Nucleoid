@@ -125,7 +125,9 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
     let mut source = String::new();
     let mut multiline = false;
 
-    println!("Nucleoid interactive CLI. Type .help for commands.");
+    println!("🌿 Nucleoid - Logic Language for World Models");
+    println!("🌎 Inspired by Nature");
+    println!("Type .help for available commands.");
 
     loop {
         let prompt = if source.is_empty() { "> " } else { "... " };
