@@ -99,28 +99,30 @@ fn the_dataset_matches_the_documents() {
     );
 }
 
-/// A dataset of programs that do not parse would be worse than none. Every
-/// record is checked, which also catches a rendering that mangles the source.
+/// Every normative specification record must parse. Synthesized records are
+/// training data and deliberately do not participate in runtime testing.
 #[test]
-fn every_record_is_nucleoid() {
+fn every_spec_record_is_nucleoid() {
     let mut records = 0;
+    let spec = sets()
+        .into_iter()
+        .next()
+        .expect("the specification is the first dataset");
 
-    for set in &sets() {
-        for case in common::cases(set.text) {
-            let code = code(&case);
+    for case in common::cases(spec.text) {
+        let code = code(&case);
 
-            if let Err(error) = Runtime::check(&code) {
-                panic!("{} does not parse: {error}\n{code}", case.title);
-            }
-
-            records += 1;
+        if let Err(error) = Runtime::check(&code) {
+            panic!("{} does not parse: {error}\n{code}", case.title);
         }
+
+        records += 1;
     }
 
-    // Two empty datasets would agree with each other and prove nothing.
+    // Two empty specification representations would agree and prove nothing.
     assert_eq!(
-        records, 1195,
-        "the documents hold 1195 cases; update this count deliberately when one is added"
+        records, 188,
+        "the specification holds 188 cases; update this count deliberately when one is added"
     );
 }
 

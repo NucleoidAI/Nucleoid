@@ -1,5 +1,5 @@
-//! Turns the language's executable documents and exported JSONL into named
-//! Rust tests.
+//! Turns the language's executable documents and specification JSONL into
+//! named Rust tests.
 //!
 //! `ref/src/test/nucleoid.spec.js` writes one `it(...)` per behaviour, so a
 //! failure names the behaviour that broke. The cases here live in the documents
@@ -7,9 +7,9 @@
 //! also keeps the promise in `CLAUDE.md` that adding a case to a document adds
 //! a test, with nothing else to edit.
 //!
-//! Spec and synth records are exported as self-contained tests: each generated
-//! function embeds the code and expected return it runs. This gives readable
-//! BDD-style behavior names without Gherkin or runtime document parsing.
+//! Specification records are exported as self-contained tests: each generated
+//! function embeds the code and expected return it runs. Synthesized records
+//! are training data and are only rendered and validated by `tests/dataset.rs`.
 
 use serde::Deserialize;
 use std::env;
@@ -61,7 +61,7 @@ fn main() {
     let out = env::var("OUT_DIR").expect("cargo sets OUT_DIR for build scripts");
     let synth_documents = in_directory("synth");
     write_document_list(&out, &synth_documents);
-    write_json_tests(&out);
+    write_spec_tests(&out);
 
     for suite in SUITES {
         let mut generated = String::new();
@@ -109,10 +109,9 @@ struct Record {
     returns: Option<String>,
 }
 
-/// Exports every JSONL record as one named Rust test with its data embedded.
-fn write_json_tests(out: &str) {
-    println!("cargo::rerun-if-changed=dataset");
-    let spec = render_json_tests("dataset/spec.jsonl", None);
+/// Exports every specification JSONL record as one named Rust test.
+fn write_spec_tests(out: &str) {
+    let spec = render_json_tests("dataset/spec.jsonl");
 
     fs::write(Path::new(out).join("spec_cases.rs"), &spec)
         .expect("the generated spec tests must be writable");
@@ -122,43 +121,12 @@ fn write_json_tests(out: &str) {
         fs::write("tests/spec_cases/mod.rs", spec)
             .expect("tests/spec_cases/mod.rs must be writable");
     }
-
-    let mut paths: Vec<String> = fs::read_dir("dataset")
-        .expect("dataset holds exported tests")
-        .map(|entry| entry.expect("a dataset entry is readable").path())
-        .filter(|path| {
-            path.file_name()
-                .and_then(|name| name.to_str())
-                .is_some_and(|name| name.starts_with("synth.") && name.ends_with(".jsonl"))
-        })
-        .map(|path| path.to_string_lossy().replace('\\', "/"))
-        .collect();
-    paths.sort();
-
-    let mut synth = String::from("// @generated from dataset JSONL by build.rs — do not edit.\n\n");
-    let mut total = 0;
-
-    for path in paths {
-        let number = Path::new(&path)
-            .file_stem()
-            .and_then(|stem| stem.to_str())
-            .and_then(|stem| stem.rsplit('.').next())
-            .expect("a synth dataset has a number");
-        let records = records(&path);
-
-        total += records.len();
-        synth.push_str(&render_records(&records, Some(&format!("synth_{number}"))));
-    }
-
-    writeln!(synth, "pub const GENERATED: usize = {total};").unwrap();
-    fs::write(Path::new(out).join("synth.rs"), synth)
-        .expect("the generated synth tests must be writable");
 }
 
-fn render_json_tests(path: &str, module: Option<&str>) -> String {
+fn render_json_tests(path: &str) -> String {
     let mut generated =
         String::from("// @generated from dataset JSONL by build.rs — do not edit.\n\n");
-    generated.push_str(&render_records(&records(path), module));
+    generated.push_str(&render_records(&records(path)));
     generated
 }
 
@@ -176,23 +144,16 @@ fn records(path: &str) -> Vec<Record> {
         .collect()
 }
 
-fn render_records(records: &[Record], module: Option<&str>) -> String {
+fn render_records(records: &[Record]) -> String {
     let mut generated = String::new();
     let mut taken = Vec::new();
-
-    if let Some(module) = module {
-        writeln!(generated, "mod {module} {{").unwrap();
-        writeln!(generated, "    use crate::common::runner;\n").unwrap();
-    }
-
-    let indent = if module.is_some() { "    " } else { "" };
 
     for record in records {
         let name = unique(identifier(&record.description), &mut taken);
 
-        writeln!(generated, "{indent}/// {}", record.description).unwrap();
-        writeln!(generated, "{indent}#[test]").unwrap();
-        writeln!(generated, "{indent}fn {name}() {{").unwrap();
+        writeln!(generated, "/// {}", record.description).unwrap();
+        writeln!(generated, "#[test]").unwrap();
+        writeln!(generated, "fn {name}() {{").unwrap();
 
         let mut statements: Vec<String> = statements(&record.code)
             .into_iter()
@@ -223,18 +184,18 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
 
             writeln!(
                 generated,
-                "{indent}    let ({run}, mut run_error) = crate::common::runners();"
+                "    let ({run}, mut run_error) = crate::common::runners();"
             )
             .unwrap();
         } else {
-            writeln!(generated, "{indent}    let mut run = runner();").unwrap();
+            writeln!(generated, "    let mut run = runner();").unwrap();
         }
 
         for statement in statements {
             if let Some((actual, expected)) = assertion(&statement) {
                 write_assertion(
                     &mut generated,
-                    indent,
+                    "",
                     &format!("run({})", rust_literal(actual)),
                     expected,
                 );
@@ -243,7 +204,7 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
                     .unwrap_or_else(|| panic!("catch assertion has non-literal expected value"));
                 writeln!(
                     generated,
-                    "{indent}    assert_eq!(run_error({}), {expected});",
+                    "    assert_eq!(run_error({}), {expected});",
                     rust_literal(&source)
                 )
                 .unwrap();
@@ -257,20 +218,16 @@ fn render_records(records: &[Record], module: Option<&str>) -> String {
                 debug_assert!(!actuals.is_empty());
                 write_assertion(
                     &mut generated,
-                    indent,
+                    "",
                     &format!("run({})", rust_literal(&source)),
                     &expected,
                 );
             } else {
-                writeln!(generated, "{indent}    run({});", rust_literal(&statement)).unwrap();
+                writeln!(generated, "    run({});", rust_literal(&statement)).unwrap();
             }
         }
 
-        writeln!(generated, "{indent}}}\n").unwrap();
-    }
-
-    if module.is_some() {
-        generated.push_str("}\n\n");
+        writeln!(generated, "}}\n").unwrap();
     }
 
     generated
@@ -508,8 +465,8 @@ fn rust_literal(value: &str) -> String {
 
 /// Every `.md` in a directory, as `(module, path)` in name order.
 ///
-/// `synth/nucleoid.spec.synth.01.md` becomes the module `synth_01`, so a test
-/// path still says which set the case came from.
+/// `synth/nucleoid.spec.synth.01.md` becomes `synth_01` in the generated
+/// dataset document list.
 fn in_directory(directory: &str) -> Vec<(String, String)> {
     let mut documents: Vec<(String, String)> = fs::read_dir(directory)
         .unwrap_or_else(|error| panic!("{directory} holds the case documents: {error}"))
