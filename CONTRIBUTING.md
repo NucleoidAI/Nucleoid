@@ -20,11 +20,11 @@ $ cargo run                   # or type statements at a prompt
 | path | what it is |
 | --- | --- |
 | `nucleoid.spec.md` | what the language does. Authoritative — when anything disagrees with it, it wins |
-| `synth/` | further cases, derived from the specification |
+| `synth/` | fine-tuning data derived from the specification; not runtime tests |
 | `docs/` | the language reference, as NUC documents in the style of a PEP |
 | `docs/README.md` | prose reference; `tests/reference.md` is its executable form |
 | `src/` | the runtime |
-| `tests/` | the suites that run the documents above |
+| `tests/` | executable specification, documentation, dataset, and runtime checks |
 | `ref/` | the archived JavaScript implementation — **frozen**, read it but never change it |
 
 ### Adding a behaviour
@@ -64,8 +64,9 @@ quietly:
 ### Keeping things in step
 
 `nucleoid.spec.md`, `synth/`, `docs/` and the crate describe the same language,
-and a change to one belongs in the same change as the others. `cargo test` is
-what checks they still agree.
+and a change to one belongs in the same change as the others. `cargo test`
+checks the normative documents and verifies that the fine-tuning dataset still
+matches its source documents; synthesized programs are not executed as tests.
 
 ## Declarative Runtime Environment
 
