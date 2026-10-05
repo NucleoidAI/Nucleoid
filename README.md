@@ -86,7 +86,7 @@ available commands.
 # Design Theory 📐
 
 <p align="center">
-  <img alt="World Models, Neuro-Symbolic AI and AI Language" src="https://github.com/user-attachments/assets/4f3cef7c-0f71-4046-8d2e-011cc2dc4b8e" />
+  <img alt="World Models, Neuro-Symbolic AI and AI Language" src="https://github.com/user-attachments/assets/6b010543-5abc-4c64-a535-37d8563274ce" />
 </p>
 
 ## Language Reference
