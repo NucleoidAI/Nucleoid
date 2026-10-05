@@ -49,40 +49,37 @@
 
 <br />
 
-### Hello World :zap:
+## Quick Start :zap:
 
-**Socrates is mortal without being told so**
-
-```nuc
-# There is a Human type with a name
-class Human(name: str):
-    this.name = name
-
-# Every human is mortal
-$Human.mortal = true
-
-# Socrates is a Human
-socrates = Human("Socrates")
-
-# Therefore, Socrates is mortal
-assert(socrates.mortal, true)
-```
-
-Save the program as `hello.nuc` and run it with JSON output:
+Install the CLI from crates.io:
 
 ```console
-cargo run -- hello.nuc --json
+cargo install nucleoid
 ```
 
-Start the interactive CLI by omitting the file:
+Start the interactive CLI from any directory and teach it that Socrates is
+mortal:
 
 ```console
-cargo run -- --json
+$ nucleoid
+🌿 Nucleoid - Logic Language for World Models
+🌎 Inspired by Nature
+Type .help for available commands.
+> class Human(name: str):
+...     this.name = name
+...
+null
+> $Human.mortal = true
+null
+> socrates = Human("Socrates")
+[object socrates]
+> socrates.mortal
+true
 ```
 
 The editor provides line editing, in-session history, Ctrl-C cancellation, and
-multiline indented blocks submitted with a blank line. Type `.help` for commands
-that toggle JSON and graph output, clear the runtime state, or exit.
+multiline indented blocks submitted with a blank line. Type `.help` for
+available commands.
 
 ---
 
