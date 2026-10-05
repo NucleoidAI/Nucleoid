@@ -1,6 +1,6 @@
 [package]
 name = "nucleoid"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Declarative logic runtime: statements are tracked in a dependency graph and re-evaluated when what they depend on changes"
