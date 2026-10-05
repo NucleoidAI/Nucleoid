@@ -18,6 +18,10 @@ path = "src/lib.rs"
 name = "nucleoid"
 path = "src/main.rs"
 
+[[test]]
+name = "nucleoid_spec"
+path = "tests/nucleoid.spec.rs"
+
 [dependencies]
 # Lexer generator: the mainstream Rust choice for token definitions.
 logos = "0.15"

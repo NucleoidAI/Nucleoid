@@ -105,20 +105,36 @@ struct Record {
 fn write_spec_tests(out: &str) {
     let spec = render_json_tests("dataset/spec.jsonl");
 
-    fs::write(Path::new(out).join("spec_cases.rs"), &spec)
+    fs::write(Path::new(out).join("nucleoid.spec.rs"), &spec)
         .expect("the generated spec tests must be writable");
 
     if env::var_os("UPDATE_SPEC_TESTS").is_some() {
-        fs::create_dir_all("tests/generated").expect("tests/generated must be writable");
-        fs::write("tests/generated/spec.rs", spec)
-            .expect("tests/generated/spec.rs must be writable");
+        fs::write("tests/nucleoid.spec.rs", spec).expect("tests/nucleoid.spec.rs must be writable");
     }
 }
 
 fn render_json_tests(path: &str) -> String {
-    let mut generated =
-        String::from("// @generated from dataset JSONL by build.rs — do not edit.\n\n");
+    let mut generated = String::from(
+        "// @generated from dataset JSONL by build.rs — do not edit.\n\n\
+         #![allow(clippy::approx_constant)]\n\n\
+         //! Individually named executable behaviors from `nucleoid.spec.md`.\n\n\
+         mod common;\n\n\
+         use common::runner;\n\n",
+    );
     generated.push_str(&render_records(&records(path)));
+    generated.push_str(
+        "/// The committed tests must not drift from their generated JSONL export.\n\
+         #[rustfmt::skip]\n\
+         #[test]\n\
+         fn committed_tests_match_the_dataset() {\n\
+         \x20   assert_eq!(\n\
+         \x20       include_str!(\"nucleoid.spec.rs\").replace(\"\\r\\n\", \"\\n\"),\n\
+         \x20       include_str!(concat!(env!(\"OUT_DIR\"), \"/nucleoid.spec.rs\")),\n\
+         \x20       \"tests/nucleoid.spec.rs is stale; regenerate with \\\n\
+         \x20        UPDATE_SPEC_TESTS=1 cargo build\"\n\
+         \x20   );\n\
+         }\n",
+    );
     generated
 }
 
@@ -144,6 +160,7 @@ fn render_records(records: &[Record]) -> String {
         let name = unique(identifier(&record.description), &mut taken);
 
         writeln!(generated, "/// {}", record.description).unwrap();
+        writeln!(generated, "#[rustfmt::skip]").unwrap();
         writeln!(generated, "#[test]").unwrap();
         writeln!(generated, "fn {name}() {{").unwrap();
 

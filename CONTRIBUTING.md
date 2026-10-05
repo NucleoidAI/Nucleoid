@@ -48,7 +48,7 @@ assert(total, 12)
 edit — `cargo test` will show it by name:
 
 ```console
-$ cargo test --test spec keeps_a_total
+$ cargo test --test nucleoid_spec keeps_a_total
 test nucleoid::keeps_a_total_in_step_with_what_it_is_made_of ... ok
 ```
 

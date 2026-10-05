@@ -1,6 +1,15 @@
 // @generated from dataset JSONL by build.rs — do not edit.
 
+#![allow(clippy::approx_constant)]
+
+//! Individually named executable behaviors from `nucleoid.spec.md`.
+
+mod common;
+
+use common::runner;
+
 /// Nucleoid runs a statement in the state
+#[rustfmt::skip]
 #[test]
 fn runs_a_statement_in_the_state() {
     let mut run = runner();
@@ -9,6 +18,7 @@ fn runs_a_statement_in_the_state() {
 }
 
 /// Nucleoid runs a expression statement
+#[rustfmt::skip]
 #[test]
 fn runs_a_expression_statement() {
     let mut run = runner();
@@ -17,6 +27,7 @@ fn runs_a_expression_statement() {
 }
 
 /// Nucleoid returns value of variable
+#[rustfmt::skip]
 #[test]
 fn returns_value_of_variable() {
     let mut run = runner();
@@ -27,6 +38,7 @@ fn returns_value_of_variable() {
 }
 
 /// Nucleoid throws an error if variable is not defined
+#[rustfmt::skip]
 #[test]
 fn throws_an_error_if_variable_is_not_defined() {
     let (_run, mut run_error) = crate::common::runners();
@@ -34,6 +46,7 @@ fn throws_an_error_if_variable_is_not_defined() {
 }
 
 /// Nucleoid throws an error inside a block
+#[rustfmt::skip]
 #[test]
 fn throws_an_error_inside_a_block() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -43,6 +56,7 @@ fn throws_an_error_inside_a_block() {
 }
 
 /// Nucleoid throws an error as a variable
+#[rustfmt::skip]
 #[test]
 fn throws_an_error_as_a_variable() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -54,6 +68,7 @@ fn throws_an_error_as_a_variable() {
 }
 
 /// Nucleoid creates a class with constructor
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_with_constructor() {
     let mut run = runner();
@@ -64,6 +79,7 @@ fn creates_a_class_with_constructor() {
 }
 
 /// Nucleoid creates a class with a constructor and a typed attribute
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_with_a_constructor_and_a_typed_attribute() {
     let mut run = runner();
@@ -77,6 +93,7 @@ fn creates_a_class_with_a_constructor_and_a_typed_attribute() {
 }
 
 /// Nucleoid adds an object to the class's object list
+#[rustfmt::skip]
 #[test]
 fn adds_an_object_to_the_class_s_object_list() {
     let mut run = runner();
@@ -88,6 +105,7 @@ fn adds_an_object_to_the_class_s_object_list() {
 }
 
 /// Nucleoid preserves class and object lists when a class is updated
+#[rustfmt::skip]
 #[test]
 fn preserves_class_and_object_lists_when_a_class_is_updated() {
     let mut run = runner();
@@ -106,6 +124,7 @@ fn preserves_class_and_object_lists_when_a_class_is_updated() {
 }
 
 /// Nucleoid places an instance in the list of the class when created
+#[rustfmt::skip]
 #[test]
 fn places_an_instance_in_the_list_of_the_class_when_created() {
     let mut run = runner();
@@ -121,6 +140,7 @@ fn places_an_instance_in_the_list_of_the_class_when_created() {
 }
 
 /// Nucleoid creates a class and a subclass
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_and_a_subclass() {
     let mut run = runner();
@@ -136,6 +156,7 @@ fn creates_a_class_and_a_subclass() {
 }
 
 /// Nucleoid runs a class-level property assignment
+#[rustfmt::skip]
 #[test]
 fn runs_a_class_level_property_assignment() {
     let mut run = runner();
@@ -147,6 +168,7 @@ fn runs_a_class_level_property_assignment() {
 }
 
 /// Nucleoid runs a class-level conditional
+#[rustfmt::skip]
 #[test]
 fn runs_a_class_level_conditional() {
     let mut run = runner();
@@ -161,6 +183,7 @@ fn runs_a_class_level_conditional() {
 }
 
 /// Nucleoid creates an instance in a block and assigns it to a property
+#[rustfmt::skip]
 #[test]
 fn creates_an_instance_in_a_block_and_assigns_it_to_a_property() {
     let mut run = runner();
@@ -180,6 +203,7 @@ fn creates_an_instance_in_a_block_and_assigns_it_to_a_property() {
 }
 
 /// Nucleoid creates nested instances in a block and assigns them to a property
+#[rustfmt::skip]
 #[test]
 fn creates_nested_instances_in_a_block_and_assigns_them_to_a_property() {
     let mut run = runner();
@@ -202,6 +226,7 @@ fn creates_nested_instances_in_a_block_and_assigns_them_to_a_property() {
 }
 
 /// Nucleoid creates a local variable in a block and uses in assignment
+#[rustfmt::skip]
 #[test]
 fn creates_a_local_variable_in_a_block_and_uses_in_assignment() {
     let mut run = runner();
@@ -217,6 +242,7 @@ fn creates_a_local_variable_in_a_block_and_uses_in_assignment() {
 }
 
 /// Nucleoid creates a standard built-in object as a local variable inside a block
+#[rustfmt::skip]
 #[test]
 fn creates_a_standard_built_in_object_as_a_local_variable_inside_a_block() {
     let mut run = runner();
@@ -228,6 +254,7 @@ fn creates_a_standard_built_in_object_as_a_local_variable_inside_a_block() {
 }
 
 /// Nucleoid creates and assigns an instance to a local variable inside a block
+#[rustfmt::skip]
 #[test]
 fn creates_and_assigns_an_instance_to_a_local_variable_inside_a_block() {
     let mut run = runner();
@@ -242,6 +269,7 @@ fn creates_and_assigns_an_instance_to_a_local_variable_inside_a_block() {
 }
 
 /// Nucleoid creates and assigns an instance with a constructor to a local variable inside a block
+#[rustfmt::skip]
 #[test]
 fn creates_and_assigns_an_instance_with_a_constructor_to_a_local_variable_inside_a_block() {
     let mut run = runner();
@@ -256,6 +284,7 @@ fn creates_and_assigns_an_instance_with_a_constructor_to_a_local_variable_inside
 }
 
 /// Nucleoid creates an object in a block and assigns it to a class-level property before instantiation
+#[rustfmt::skip]
 #[test]
 fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_before_instantiation() {
     let mut run = runner();
@@ -272,6 +301,7 @@ fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_before_
 }
 
 /// Nucleoid creates an object in a block and assigns it to a class-level property after instantiation
+#[rustfmt::skip]
 #[test]
 fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_after_instantiation() {
     let mut run = runner();
@@ -288,6 +318,7 @@ fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_after_i
 }
 
 /// Nucleoid calls function in an assignment
+#[rustfmt::skip]
 #[test]
 fn calls_function_in_an_assignment() {
     let mut run = runner();
@@ -301,6 +332,7 @@ fn calls_function_in_an_assignment() {
 }
 
 /// Nucleoid assigns a block in a function as a dependency
+#[rustfmt::skip]
 #[test]
 fn assigns_a_block_in_a_function_as_a_dependency() {
     let mut run = runner();
@@ -330,6 +362,7 @@ fn assigns_a_block_in_a_function_as_a_dependency() {
 }
 
 /// Nucleoid supports chained functions with a parameter in an expression
+#[rustfmt::skip]
 #[test]
 fn supports_chained_functions_with_a_parameter_in_an_expression() {
     let mut run = runner();
@@ -351,6 +384,7 @@ fn supports_chained_functions_with_a_parameter_in_an_expression() {
 }
 
 /// Nucleoid supports an array with brackets
+#[rustfmt::skip]
 #[test]
 fn supports_an_array_with_brackets() {
     let mut run = runner();
@@ -361,6 +395,7 @@ fn supports_an_array_with_brackets() {
 }
 
 /// Nucleoid throws an error if a variable in an expression is not defined
+#[rustfmt::skip]
 #[test]
 fn throws_an_error_if_a_variable_in_an_expression_is_not_defined() {
     let (_run, mut run_error) = crate::common::runners();
@@ -368,6 +403,7 @@ fn throws_an_error_if_a_variable_in_an_expression_is_not_defined() {
 }
 
 /// Nucleoid retrieves the value of a variable
+#[rustfmt::skip]
 #[test]
 fn retrieves_the_value_of_a_variable() {
     let mut run = runner();
@@ -378,6 +414,7 @@ fn retrieves_the_value_of_a_variable() {
 }
 
 /// Nucleoid creates a property assignment on a local variable only if the instance is defined
+#[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_on_a_local_variable_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -390,6 +427,7 @@ fn creates_a_property_assignment_on_a_local_variable_only_if_the_instance_is_def
 }
 
 /// Nucleoid declares a local variable as undefined
+#[rustfmt::skip]
 #[test]
 fn declares_a_local_variable_as_undefined() {
     let mut run = runner();
@@ -408,6 +446,7 @@ fn declares_a_local_variable_as_undefined() {
 }
 
 /// Nucleoid rejects a local variable declared as undefined
+#[rustfmt::skip]
 #[test]
 fn rejects_a_local_variable_declared_as_undefined() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -424,6 +463,7 @@ fn rejects_a_local_variable_declared_as_undefined() {
 }
 
 /// Nucleoid creates a standard built-in object as a property of a local variable
+#[rustfmt::skip]
 #[test]
 fn creates_a_standard_built_in_object_as_a_property_of_a_local_variable() {
     let mut run = runner();
@@ -438,6 +478,7 @@ fn creates_a_standard_built_in_object_as_a_property_of_a_local_variable() {
 }
 
 /// Nucleoid creates a property of a local variable in a different scope
+#[rustfmt::skip]
 #[test]
 fn creates_a_property_of_a_local_variable_in_a_different_scope() {
     let mut run = runner();
@@ -453,6 +494,7 @@ fn creates_a_property_of_a_local_variable_in_a_different_scope() {
 }
 
 /// Nucleoid assigns a variable declaratively
+#[rustfmt::skip]
 #[test]
 fn assigns_a_variable_declaratively() {
     let mut run = runner();
@@ -465,6 +507,7 @@ fn assigns_a_variable_declaratively() {
 }
 
 /// Nucleoid creates if statement of variable
+#[rustfmt::skip]
 #[test]
 fn creates_if_statement_of_variable() {
     let mut run = runner();
@@ -478,6 +521,7 @@ fn creates_if_statement_of_variable() {
 }
 
 /// Nucleoid updates if block of variable
+#[rustfmt::skip]
 #[test]
 fn updates_if_block_of_variable() {
     let mut run = runner();
@@ -493,6 +537,7 @@ fn updates_if_block_of_variable() {
 }
 
 /// Nucleoid creates else if statement of variable
+#[rustfmt::skip]
 #[test]
 fn creates_else_if_statement_of_variable() {
     let mut run = runner();
@@ -511,6 +556,7 @@ else if g > 3:
 }
 
 /// Nucleoid creates multiple else if statement of variable
+#[rustfmt::skip]
 #[test]
 fn creates_multiple_else_if_statement_of_variable() {
     let mut run = runner();
@@ -528,6 +574,7 @@ else:
 }
 
 /// Nucleoid runs dependent statements in the same transaction
+#[rustfmt::skip]
 #[test]
 fn runs_dependent_statements_in_the_same_transaction() {
     let mut run = runner();
@@ -540,6 +587,7 @@ fn runs_dependent_statements_in_the_same_transaction() {
 }
 
 /// Nucleoid runs dependencies in order as received
+#[rustfmt::skip]
 #[test]
 fn runs_dependencies_in_order_as_received() {
     let mut run = runner();
@@ -559,6 +607,7 @@ fn runs_dependencies_in_order_as_received() {
 }
 
 /// Nucleoid searches a variable in scope before the state
+#[rustfmt::skip]
 #[test]
 fn searches_a_variable_in_scope_before_the_state() {
     let mut run = runner();
@@ -572,6 +621,7 @@ fn searches_a_variable_in_scope_before_the_state() {
 }
 
 /// Nucleoid uses local variable at lowest scope as priority
+#[rustfmt::skip]
 #[test]
 fn uses_local_variable_at_lowest_scope_as_priority() {
     let mut run = runner();
@@ -585,6 +635,7 @@ fn uses_local_variable_at_lowest_scope_as_priority() {
 }
 
 /// Nucleoid assigns undefined if any dependency in expression is undefined
+#[rustfmt::skip]
 #[test]
 fn assigns_undefined_if_any_dependency_in_expression_is_undefined() {
     let mut run = runner();
@@ -597,6 +648,7 @@ fn assigns_undefined_if_any_dependency_in_expression_is_undefined() {
 }
 
 /// Nucleoid keeps as null if any dependencies as in local is null
+#[rustfmt::skip]
 #[test]
 fn keeps_as_null_if_any_dependencies_as_in_local_is_null() {
     let mut run = runner();
@@ -610,6 +662,7 @@ fn keeps_as_null_if_any_dependencies_as_in_local_is_null() {
 }
 
 /// Nucleoid keeps as null if any dependencies in expression is null
+#[rustfmt::skip]
 #[test]
 fn keeps_as_null_if_any_dependencies_in_expression_is_null() {
     let mut run = runner();
@@ -623,6 +676,7 @@ fn keeps_as_null_if_any_dependencies_in_expression_is_null() {
 }
 
 /// Nucleoid assigns null if there is null pointer in expression
+#[rustfmt::skip]
 #[test]
 fn assigns_null_if_there_is_null_pointer_in_expression() {
     let mut run = runner();
@@ -634,6 +688,7 @@ fn assigns_null_if_there_is_null_pointer_in_expression() {
 }
 
 /// Nucleoid assigns a unique variable for an instance without a variable name
+#[rustfmt::skip]
 #[test]
 fn assigns_a_unique_variable_for_an_instance_without_a_variable_name() {
     let mut run = runner();
@@ -645,6 +700,7 @@ fn assigns_a_unique_variable_for_an_instance_without_a_variable_name() {
 }
 
 /// Nucleoid creates a function in state
+#[rustfmt::skip]
 #[test]
 fn creates_a_function_in_state() {
     let mut run = runner();
@@ -658,6 +714,7 @@ fn creates_a_function_in_state() {
 }
 
 /// Nucleoid assigns a function as a dependency
+#[rustfmt::skip]
 #[test]
 fn assigns_a_function_as_a_dependency() {
     let mut run = runner();
@@ -674,6 +731,7 @@ fn assigns_a_function_as_a_dependency() {
 }
 
 /// Nucleoid supports a regular expression literal
+#[rustfmt::skip]
 #[test]
 fn supports_a_regular_expression_literal() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -687,6 +745,7 @@ fn supports_a_regular_expression_literal() {
 }
 
 /// Nucleoid rejects defining a class declaration in a non-class block
+#[rustfmt::skip]
 #[test]
 fn rejects_defining_a_class_declaration_in_a_non_class_block() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -703,6 +762,7 @@ fn rejects_defining_a_class_declaration_in_a_non_class_block() {
 }
 
 /// Nucleoid detects a circular dependency
+#[rustfmt::skip]
 #[test]
 fn detects_a_circular_dependency() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -713,6 +773,7 @@ fn detects_a_circular_dependency() {
 }
 
 /// Nucleoid rolls back a variable if an exception is thrown
+#[rustfmt::skip]
 #[test]
 fn rolls_back_a_variable_if_an_exception_is_thrown() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -724,6 +785,7 @@ fn rolls_back_a_variable_if_an_exception_is_thrown() {
 }
 
 /// Nucleoid rolls back a property if an exception is thrown
+#[rustfmt::skip]
 #[test]
 fn rolls_back_a_property_if_an_exception_is_thrown() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -737,6 +799,7 @@ fn rolls_back_a_property_if_an_exception_is_thrown() {
 }
 
 /// Nucleoid rolls back an instance if an exception is thrown
+#[rustfmt::skip]
 #[test]
 fn rolls_back_an_instance_if_an_exception_is_thrown() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -751,6 +814,7 @@ fn rolls_back_an_instance_if_an_exception_is_thrown() {
 }
 
 /// Nucleoid updates a variable assignment
+#[rustfmt::skip]
 #[test]
 fn updates_a_variable_assignment() {
     let mut run = runner();
@@ -765,6 +829,7 @@ fn updates_a_variable_assignment() {
 }
 
 /// Nucleoid uses only the value when a variable references itself
+#[rustfmt::skip]
 #[test]
 fn uses_only_the_value_when_a_variable_references_itself() {
     let mut run = runner();
@@ -774,6 +839,7 @@ fn uses_only_the_value_when_a_variable_references_itself() {
 }
 
 /// Nucleoid deletes a variable assignment
+#[rustfmt::skip]
 #[test]
 fn deletes_a_variable_assignment() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -786,6 +852,7 @@ fn deletes_a_variable_assignment() {
 }
 
 /// Nucleoid returns the assigned value in a variable assignment
+#[rustfmt::skip]
 #[test]
 fn returns_the_assigned_value_in_a_variable_assignment() {
     let mut run = runner();
@@ -795,6 +862,7 @@ fn returns_the_assigned_value_in_a_variable_assignment() {
 }
 
 /// Nucleoid assigns a parameter in a function as a dependency
+#[rustfmt::skip]
 #[test]
 fn assigns_a_parameter_in_a_function_as_a_dependency() {
     let mut run = runner();
@@ -809,6 +877,7 @@ fn assigns_a_parameter_in_a_function_as_a_dependency() {
 }
 
 /// Nucleoid uses value property to indicate using only value of variable
+#[rustfmt::skip]
 #[test]
 fn uses_value_property_to_indicate_using_only_value_of_variable() {
     let mut run = runner();
@@ -827,6 +896,7 @@ fn uses_value_property_to_indicate_using_only_value_of_variable() {
 }
 
 /// Nucleoid creates a nested object in a block and assigns it to a class-level property before instantiation
+#[rustfmt::skip]
 #[test]
 fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_before_instantiation() {
     let mut run = runner();
@@ -847,6 +917,7 @@ fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_b
 }
 
 /// Nucleoid creates a nested object in a block and assigns it to a class-level property after instantiation
+#[rustfmt::skip]
 #[test]
 fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_after_instantiation() {
     let mut run = runner();
@@ -864,6 +935,7 @@ fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_a
 }
 
 /// Nucleoid creates an instance inside a block
+#[rustfmt::skip]
 #[test]
 fn creates_an_instance_inside_a_block() {
     let mut run = runner();
@@ -881,6 +953,7 @@ fn creates_an_instance_inside_a_block() {
 }
 
 /// Nucleoid creates an instance inside a block without a variable name
+#[rustfmt::skip]
 #[test]
 fn creates_an_instance_inside_a_block_without_a_variable_name() {
     let mut run = runner();
@@ -896,6 +969,7 @@ fn creates_an_instance_inside_a_block_without_a_variable_name() {
 }
 
 /// Nucleoid creates a local variable inside a block
+#[rustfmt::skip]
 #[test]
 fn creates_a_local_variable_inside_a_block() {
     let mut run = runner();
@@ -913,6 +987,7 @@ fn creates_a_local_variable_inside_a_block() {
 }
 
 /// Nucleoid runs a local variable as an object before declaration
+#[rustfmt::skip]
 #[test]
 fn runs_a_local_variable_as_an_object_before_declaration() {
     let mut run = runner();
@@ -933,6 +1008,7 @@ fn runs_a_local_variable_as_an_object_before_declaration() {
 }
 
 /// Nucleoid runs a local variable as an object after declaration
+#[rustfmt::skip]
 #[test]
 fn runs_a_local_variable_as_an_object_after_declaration() {
     let mut run = runner();
@@ -953,6 +1029,7 @@ fn runs_a_local_variable_as_an_object_after_declaration() {
 }
 
 /// Nucleoid assigns a property on a local variable after initialization
+#[rustfmt::skip]
 #[test]
 fn assigns_a_property_on_a_local_variable_after_initialization() {
     let mut run = runner();
@@ -973,6 +1050,7 @@ fn assigns_a_property_on_a_local_variable_after_initialization() {
 }
 
 /// Nucleoid reassigns a shadowing local variable in a nested block
+#[rustfmt::skip]
 #[test]
 fn reassigns_a_shadowing_local_variable_in_a_nested_block() {
     let mut run = runner();
@@ -990,6 +1068,7 @@ fn reassigns_a_shadowing_local_variable_in_a_nested_block() {
 }
 
 /// Nucleoid holds the result of a function in a local variable
+#[rustfmt::skip]
 #[test]
 fn holds_the_result_of_a_function_in_a_local_variable() {
     let mut run = runner();
@@ -1016,6 +1095,7 @@ fn holds_the_result_of_a_function_in_a_local_variable() {
 }
 
 /// Nucleoid runs a block statement of variable
+#[rustfmt::skip]
 #[test]
 fn runs_a_block_statement_of_variable() {
     let mut run = runner();
@@ -1030,6 +1110,7 @@ fn runs_a_block_statement_of_variable() {
 }
 
 /// Nucleoid runs a nested block statement of variable
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_block_statement_of_variable() {
     let mut run = runner();
@@ -1044,6 +1125,7 @@ fn runs_a_nested_block_statement_of_variable() {
 }
 
 /// Nucleoid runs a nested if statement of variable
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_if_statement_of_variable() {
     let mut run = runner();
@@ -1062,6 +1144,7 @@ fn runs_a_nested_if_statement_of_variable() {
 }
 
 /// Nucleoid runs a nested else statement of variable
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_else_statement_of_variable() {
     let mut run = runner();
@@ -1083,6 +1166,7 @@ fn runs_a_nested_else_statement_of_variable() {
 }
 
 /// Nucleoid assigns a variable to a reference
+#[rustfmt::skip]
 #[test]
 fn assigns_a_variable_to_a_reference() {
     let mut run = runner();
@@ -1094,6 +1178,7 @@ fn assigns_a_variable_to_a_reference() {
 }
 
 /// Nucleoid assigns an object to a variable
+#[rustfmt::skip]
 #[test]
 fn assigns_an_object_to_a_variable() {
     let mut run = runner();
@@ -1108,6 +1193,7 @@ fn assigns_an_object_to_a_variable() {
 }
 
 /// Nucleoid defines a class in the state
+#[rustfmt::skip]
 #[test]
 fn defines_a_class_in_the_state() {
     let mut run = runner();
@@ -1121,6 +1207,7 @@ fn defines_a_class_in_the_state() {
 }
 
 /// Nucleoid rejects creating an instance if the class does not exist
+#[rustfmt::skip]
 #[test]
 fn rejects_creating_an_instance_if_the_class_does_not_exist() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1133,6 +1220,7 @@ fn rejects_creating_an_instance_if_the_class_does_not_exist() {
 }
 
 /// Nucleoid creates a property assignment before declaration
+#[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_before_declaration() {
     let mut run = runner();
@@ -1146,6 +1234,7 @@ fn creates_a_property_assignment_before_declaration() {
 }
 
 /// Nucleoid creates a property assignment after declaration
+#[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_after_declaration() {
     let mut run = runner();
@@ -1160,6 +1249,7 @@ fn creates_a_property_assignment_after_declaration() {
 }
 
 /// Nucleoid creates a property assignment only if the instance is defined
+#[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1170,6 +1260,7 @@ fn creates_a_property_assignment_only_if_the_instance_is_defined() {
 }
 
 /// Nucleoid creates an object and assigns it to a variable
+#[rustfmt::skip]
 #[test]
 fn creates_an_object_and_assigns_it_to_a_variable() {
     let mut run = runner();
@@ -1182,6 +1273,7 @@ fn creates_an_object_and_assigns_it_to_a_variable() {
 }
 
 /// Nucleoid creates an object assignment as a property only if the instance is defined
+#[rustfmt::skip]
 #[test]
 fn creates_an_object_assignment_as_a_property_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1194,6 +1286,7 @@ fn creates_an_object_assignment_as_a_property_only_if_the_instance_is_defined() 
 }
 
 /// Nucleoid uses only the value when a property references itself
+#[rustfmt::skip]
 #[test]
 fn uses_only_the_value_when_a_property_references_itself() {
     let mut run = runner();
@@ -1206,6 +1299,7 @@ fn uses_only_the_value_when_a_property_references_itself() {
 }
 
 /// Nucleoid assigns an object to a property before initialization
+#[rustfmt::skip]
 #[test]
 fn assigns_an_object_to_a_property_before_initialization() {
     let mut run = runner();
@@ -1223,6 +1317,7 @@ fn assigns_an_object_to_a_property_before_initialization() {
 }
 
 /// Nucleoid assigns an object to a property after initialization
+#[rustfmt::skip]
 #[test]
 fn assigns_an_object_to_a_property_after_initialization() {
     let mut run = runner();
@@ -1239,6 +1334,7 @@ fn assigns_an_object_to_a_property_after_initialization() {
 }
 
 /// Nucleoid rejects value as a property name
+#[rustfmt::skip]
 #[test]
 fn rejects_value_as_a_property_name() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1252,6 +1348,7 @@ fn rejects_value_as_a_property_name() {
 }
 
 /// Nucleoid rejects value as a property name in a value assignment
+#[rustfmt::skip]
 #[test]
 fn rejects_value_as_a_property_name_in_a_value_assignment() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1263,6 +1360,7 @@ fn rejects_value_as_a_property_name_in_a_value_assignment() {
 }
 
 /// Nucleoid uses value property to indicate using only value of property
+#[rustfmt::skip]
 #[test]
 fn uses_value_property_to_indicate_using_only_value_of_property() {
     let mut run = runner();
@@ -1280,6 +1378,7 @@ fn uses_value_property_to_indicate_using_only_value_of_property() {
 }
 
 /// Nucleoid uses value property in an if condition to indicate using only value of property
+#[rustfmt::skip]
 #[test]
 fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_property() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1294,6 +1393,7 @@ fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_proper
 }
 
 /// Nucleoid rejects value of a property if the property is not defined
+#[rustfmt::skip]
 #[test]
 fn rejects_value_of_a_property_if_the_property_is_not_defined() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1307,6 +1407,7 @@ fn rejects_value_of_a_property_if_the_property_is_not_defined() {
 }
 
 /// Nucleoid uses the value of a null property as zero
+#[rustfmt::skip]
 #[test]
 fn uses_the_value_of_a_null_property_as_zero() {
     let mut run = runner();
@@ -1322,6 +1423,7 @@ fn uses_the_value_of_a_null_property_as_zero() {
 }
 
 /// Nucleoid rejects value as a property name in a block
+#[rustfmt::skip]
 #[test]
 fn rejects_value_as_a_property_name_in_a_block() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1334,6 +1436,7 @@ fn rejects_value_as_a_property_name_in_a_block() {
 }
 
 /// Nucleoid keeps same as its value when the value property is used for a local
+#[rustfmt::skip]
 #[test]
 fn keeps_same_as_its_value_when_the_value_property_is_used_for_a_local() {
     let mut run = runner();
@@ -1347,6 +1450,7 @@ fn keeps_same_as_its_value_when_the_value_property_is_used_for_a_local() {
 }
 
 /// Nucleoid uses value property in a class-level assignment
+#[rustfmt::skip]
 #[test]
 fn uses_value_property_in_a_class_level_assignment() {
     let mut run = runner();
@@ -1362,6 +1466,7 @@ fn uses_value_property_in_a_class_level_assignment() {
 }
 
 /// Nucleoid uses value property on a class-level property chain
+#[rustfmt::skip]
 #[test]
 fn uses_value_property_on_a_class_level_property_chain() {
     let mut run = runner();
@@ -1380,6 +1485,7 @@ fn uses_value_property_on_a_class_level_property_chain() {
 }
 
 /// Nucleoid updates if block of property
+#[rustfmt::skip]
 #[test]
 fn updates_if_block_of_property() {
     let mut run = runner();
@@ -1396,6 +1502,7 @@ fn updates_if_block_of_property() {
 }
 
 /// Nucleoid creates an else statement of variable
+#[rustfmt::skip]
 #[test]
 fn creates_an_else_statement_of_variable() {
     let mut run = runner();
@@ -1414,6 +1521,7 @@ else:
 }
 
 /// Nucleoid creates if statement of property
+#[rustfmt::skip]
 #[test]
 fn creates_if_statement_of_property() {
     let mut run = runner();
@@ -1429,6 +1537,7 @@ fn creates_if_statement_of_property() {
 }
 
 /// Nucleoid creates else statement of property
+#[rustfmt::skip]
 #[test]
 fn creates_else_statement_of_property() {
     let mut run = runner();
@@ -1450,6 +1559,7 @@ else:
 }
 
 /// Nucleoid creates else statement of property with property dependencies
+#[rustfmt::skip]
 #[test]
 fn creates_else_statement_of_property_with_property_dependencies() {
     let mut run = runner();
@@ -1472,6 +1582,7 @@ else:
 }
 
 /// Nucleoid creates multiple else if statement of property
+#[rustfmt::skip]
 #[test]
 fn creates_multiple_else_if_statement_of_property() {
     let mut run = runner();
@@ -1497,6 +1608,7 @@ else:
 }
 
 /// Nucleoid updates property assignment
+#[rustfmt::skip]
 #[test]
 fn updates_property_assignment() {
     let mut run = runner();
@@ -1513,6 +1625,7 @@ fn updates_property_assignment() {
 }
 
 /// Nucleoid deletes an instance
+#[rustfmt::skip]
 #[test]
 fn deletes_an_instance() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1526,6 +1639,7 @@ fn deletes_an_instance() {
 }
 
 /// Nucleoid deletes an instance by reference
+#[rustfmt::skip]
 #[test]
 fn deletes_an_instance_by_reference() {
     let mut run = runner();
@@ -1545,6 +1659,7 @@ fn deletes_an_instance_by_reference() {
 }
 
 /// Nucleoid returns a boolean when deleting an object
+#[rustfmt::skip]
 #[test]
 fn returns_a_boolean_when_deleting_an_object() {
     let mut run = runner();
@@ -1556,6 +1671,7 @@ fn returns_a_boolean_when_deleting_an_object() {
 }
 
 /// Nucleoid rejects deleting an instance if it has any properties
+#[rustfmt::skip]
 #[test]
 fn rejects_deleting_an_instance_if_it_has_any_properties() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1571,6 +1687,7 @@ fn rejects_deleting_an_instance_if_it_has_any_properties() {
 }
 
 /// Nucleoid rejects deleting an instance if it has an object as a property
+#[rustfmt::skip]
 #[test]
 fn rejects_deleting_an_instance_if_it_has_an_object_as_a_property() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1587,6 +1704,7 @@ fn rejects_deleting_an_instance_if_it_has_an_object_as_a_property() {
 }
 
 /// Nucleoid deletes a property assignment
+#[rustfmt::skip]
 #[test]
 fn deletes_a_property_assignment() {
     let mut run = runner();
@@ -1604,6 +1722,7 @@ fn deletes_a_property_assignment() {
 }
 
 /// Nucleoid runs a block statement of property
+#[rustfmt::skip]
 #[test]
 fn runs_a_block_statement_of_property() {
     let mut run = runner();
@@ -1621,6 +1740,7 @@ fn runs_a_block_statement_of_property() {
 }
 
 /// Nucleoid runs a nested block statement of property
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_block_statement_of_property() {
     let mut run = runner();
@@ -1641,6 +1761,7 @@ fn runs_a_nested_block_statement_of_property() {
 }
 
 /// Nucleoid runs a nested if statement of property
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_if_statement_of_property() {
     let mut run = runner();
@@ -1660,6 +1781,7 @@ fn runs_a_nested_if_statement_of_property() {
 }
 
 /// Nucleoid creates a nested else statement of property
+#[rustfmt::skip]
 #[test]
 fn creates_a_nested_else_statement_of_property() {
     let mut run = runner();
@@ -1682,6 +1804,7 @@ fn creates_a_nested_else_statement_of_property() {
 }
 
 /// Nucleoid creates a property assignment with multiple properties
+#[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_with_multiple_properties() {
     let mut run = runner();
@@ -1699,6 +1822,7 @@ fn creates_a_property_assignment_with_multiple_properties() {
 }
 
 /// Nucleoid creates a property assignment with multiple properties as part of a declaration
+#[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_with_multiple_properties_as_part_of_a_declaration() {
     let mut run = runner();
@@ -1718,6 +1842,7 @@ fn creates_a_property_assignment_with_multiple_properties_as_part_of_a_declarati
 }
 
 /// Nucleoid creates a dependency on behalf if a property has a reference
+#[rustfmt::skip]
 #[test]
 fn creates_a_dependency_on_behalf_if_a_property_has_a_reference() {
     let mut run = runner();
@@ -1743,6 +1868,7 @@ fn creates_a_dependency_on_behalf_if_a_property_has_a_reference() {
 }
 
 /// Nucleoid creates a dependency on behalf if a local variable has a reference
+#[rustfmt::skip]
 #[test]
 fn creates_a_dependency_on_behalf_if_a_local_variable_has_a_reference() {
     let mut run = runner();
@@ -1768,6 +1894,7 @@ fn creates_a_dependency_on_behalf_if_a_local_variable_has_a_reference() {
 }
 
 /// Nucleoid runs an expression statement of class
+#[rustfmt::skip]
 #[test]
 fn runs_an_expression_statement_of_class() {
     let mut run = runner();
@@ -1789,6 +1916,7 @@ fn runs_an_expression_statement_of_class() {
 }
 
 /// Nucleoid rejects a variable declaration without definition
+#[rustfmt::skip]
 #[test]
 fn rejects_a_variable_declaration_without_definition() {
     let (_run, mut run_error) = crate::common::runners();
@@ -1796,6 +1924,7 @@ fn rejects_a_variable_declaration_without_definition() {
 }
 
 /// Nucleoid creates a dependency based on the length of an identifier
+#[rustfmt::skip]
 #[test]
 fn creates_a_dependency_based_on_the_length_of_an_identifier() {
     let mut run = runner();
@@ -1811,6 +1940,7 @@ fn creates_a_dependency_based_on_the_length_of_an_identifier() {
 }
 
 /// Nucleoid adds a created class to the class list
+#[rustfmt::skip]
 #[test]
 fn adds_a_created_class_to_the_class_list() {
     let mut run = runner();
@@ -1824,6 +1954,7 @@ fn adds_a_created_class_to_the_class_list() {
 }
 
 /// Nucleoid updates a class definition
+#[rustfmt::skip]
 #[test]
 fn updates_a_class_definition() {
     let mut run = runner();
@@ -1841,6 +1972,7 @@ fn updates_a_class_definition() {
 }
 
 /// Nucleoid supports a string in an expression
+#[rustfmt::skip]
 #[test]
 fn supports_a_string_in_an_expression() {
     let mut run = runner();
@@ -1852,6 +1984,7 @@ fn supports_a_string_in_an_expression() {
 }
 
 /// Nucleoid supports logical operators
+#[rustfmt::skip]
 #[test]
 fn supports_logical_operators() {
     let mut run = runner();
@@ -1863,6 +1996,7 @@ fn supports_logical_operators() {
 }
 
 /// Nucleoid supports standard built-in objects
+#[rustfmt::skip]
 #[test]
 fn supports_standard_built_in_objects() {
     let mut run = runner();
@@ -1873,6 +2007,7 @@ fn supports_standard_built_in_objects() {
 }
 
 /// Nucleoid supports creating standard built-in objects
+#[rustfmt::skip]
 #[test]
 fn supports_creating_standard_built_in_objects() {
     let mut run = runner();
@@ -1881,6 +2016,7 @@ fn supports_creating_standard_built_in_objects() {
 }
 
 /// Nucleoid supports built-in objects
+#[rustfmt::skip]
 #[test]
 fn supports_built_in_objects() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -1893,6 +2029,7 @@ fn supports_built_in_objects() {
 }
 
 /// Nucleoid calls a function with no return
+#[rustfmt::skip]
 #[test]
 fn calls_a_function_with_no_return() {
     let mut run = runner();
@@ -1905,6 +2042,7 @@ fn calls_a_function_with_no_return() {
 }
 
 /// Nucleoid calls a function with a return value
+#[rustfmt::skip]
 #[test]
 fn calls_a_function_with_a_return_value() {
     let mut run = runner();
@@ -1918,6 +2056,7 @@ fn calls_a_function_with_a_return_value() {
 }
 
 /// Nucleoid supports a function in an expression
+#[rustfmt::skip]
 #[test]
 fn supports_a_function_in_an_expression() {
     let mut run = runner();
@@ -1929,6 +2068,7 @@ fn supports_a_function_in_an_expression() {
 }
 
 /// Nucleoid supports a function with a parameter in an expression
+#[rustfmt::skip]
 #[test]
 fn supports_a_function_with_a_parameter_in_an_expression() {
     let mut run = runner();
@@ -1942,6 +2082,7 @@ fn supports_a_function_with_a_parameter_in_an_expression() {
 }
 
 /// Nucleoid creates a variable statement with JSON
+#[rustfmt::skip]
 #[test]
 fn creates_a_variable_statement_with_json() {
     let mut run = runner();
@@ -1959,6 +2100,7 @@ fn creates_a_variable_statement_with_json() {
 }
 
 /// Nucleoid returns an inline JSON object
+#[rustfmt::skip]
 #[test]
 fn returns_an_inline_json_object() {
     let mut run = runner();
@@ -1970,6 +2112,7 @@ fn returns_an_inline_json_object() {
 }
 
 /// Nucleoid returns an inline JSON array
+#[rustfmt::skip]
 #[test]
 fn returns_an_inline_json_array() {
     let mut run = runner();
@@ -1981,6 +2124,7 @@ fn returns_an_inline_json_array() {
 }
 
 /// Nucleoid returns an inline object
+#[rustfmt::skip]
 #[test]
 fn returns_an_inline_object() {
     let mut run = runner();
@@ -1992,6 +2136,7 @@ fn returns_an_inline_object() {
 }
 
 /// Nucleoid returns an inline array
+#[rustfmt::skip]
 #[test]
 fn returns_an_inline_array() {
     let mut run = runner();
@@ -2003,6 +2148,7 @@ fn returns_an_inline_array() {
 }
 
 /// Nucleoid supports nested functions as a parameter in an expression
+#[rustfmt::skip]
 #[test]
 fn supports_nested_functions_as_a_parameter_in_an_expression() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -2016,6 +2162,7 @@ fn supports_nested_functions_as_a_parameter_in_an_expression() {
 }
 
 /// Nucleoid supports a property of chained functions in an expression
+#[rustfmt::skip]
 #[test]
 fn supports_a_property_of_chained_functions_in_an_expression() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -2033,6 +2180,7 @@ fn supports_a_property_of_chained_functions_in_an_expression() {
 }
 
 /// Nucleoid throws an error as a string
+#[rustfmt::skip]
 #[test]
 fn throws_an_error_as_a_string() {
     let (_run, mut run_error) = crate::common::runners();
@@ -2041,6 +2189,7 @@ fn throws_an_error_as_a_string() {
 }
 
 /// Nucleoid throws an error as an integer
+#[rustfmt::skip]
 #[test]
 fn throws_an_error_as_an_integer() {
     let (_run, mut run_error) = crate::common::runners();
@@ -2048,6 +2197,7 @@ fn throws_an_error_as_an_integer() {
 }
 
 /// Nucleoid throws a reference error if the thrown value is not defined
+#[rustfmt::skip]
 #[test]
 fn throws_a_reference_error_if_the_thrown_value_is_not_defined() {
     let (_run, mut run_error) = crate::common::runners();
@@ -2055,6 +2205,7 @@ fn throws_a_reference_error_if_the_thrown_value_is_not_defined() {
 }
 
 /// Nucleoid creates a class assignment before initialization
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_before_initialization() {
     let mut run = runner();
@@ -2068,6 +2219,7 @@ fn creates_a_class_assignment_before_initialization() {
 }
 
 /// Nucleoid creates a class assignment after initialization
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_after_initialization() {
     let mut run = runner();
@@ -2086,6 +2238,7 @@ fn creates_a_class_assignment_after_initialization() {
 }
 
 /// Nucleoid updates a class assignment
+#[rustfmt::skip]
 #[test]
 fn updates_a_class_assignment() {
     let mut run = runner();
@@ -2102,6 +2255,7 @@ fn updates_a_class_assignment() {
 }
 
 /// Nucleoid creates an if statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn creates_an_if_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2118,6 +2272,7 @@ fn creates_an_if_statement_of_class_before_initialization() {
 }
 
 /// Nucleoid creates an if statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn creates_an_if_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2139,6 +2294,7 @@ fn creates_an_if_statement_of_class_after_initialization() {
 }
 
 /// Nucleoid updates an if block of class
+#[rustfmt::skip]
 #[test]
 fn updates_an_if_block_of_class() {
     let mut run = runner();
@@ -2159,6 +2315,7 @@ fn updates_an_if_block_of_class() {
 }
 
 /// Nucleoid creates an else statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn creates_an_else_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2178,6 +2335,7 @@ else:
 }
 
 /// Nucleoid creates an else statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn creates_an_else_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2197,6 +2355,7 @@ else:
 }
 
 /// Nucleoid creates an else if statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn creates_an_else_if_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2217,6 +2376,7 @@ else:
 }
 
 /// Nucleoid creates an else if statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn creates_an_else_if_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2237,6 +2397,7 @@ else:
 }
 
 /// Nucleoid creates multiple else if statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn creates_multiple_else_if_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2257,6 +2418,7 @@ else:
 }
 
 /// Nucleoid creates multiple else if statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn creates_multiple_else_if_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2278,6 +2440,7 @@ else:
 }
 
 /// Nucleoid runs a block statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn runs_a_block_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2296,6 +2459,7 @@ fn runs_a_block_statement_of_class_before_initialization() {
 }
 
 /// Nucleoid runs a block statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn runs_a_block_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2313,6 +2477,7 @@ fn runs_a_block_statement_of_class_after_initialization() {
 }
 
 /// Nucleoid runs a nested block statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_block_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2331,6 +2496,7 @@ fn runs_a_nested_block_statement_of_class_before_initialization() {
 }
 
 /// Nucleoid runs a nested block statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_block_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2349,6 +2515,7 @@ fn runs_a_nested_block_statement_of_class_after_initialization() {
 }
 
 /// Nucleoid runs a nested if statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_if_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2368,6 +2535,7 @@ fn runs_a_nested_if_statement_of_class_before_initialization() {
 }
 
 /// Nucleoid runs a nested if statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn runs_a_nested_if_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2389,6 +2557,7 @@ fn runs_a_nested_if_statement_of_class_after_initialization() {
 }
 
 /// Nucleoid creates a nested else statement of class before initialization
+#[rustfmt::skip]
 #[test]
 fn creates_a_nested_else_statement_of_class_before_initialization() {
     let mut run = runner();
@@ -2411,6 +2580,7 @@ fn creates_a_nested_else_statement_of_class_before_initialization() {
 }
 
 /// Nucleoid creates a nested else statement of class after initialization
+#[rustfmt::skip]
 #[test]
 fn creates_a_nested_else_statement_of_class_after_initialization() {
     let mut run = runner();
@@ -2435,6 +2605,7 @@ fn creates_a_nested_else_statement_of_class_after_initialization() {
 }
 
 /// Nucleoid creates a class assignment with multiple properties before declaration
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_with_multiple_properties_before_declaration() {
     let mut run = runner();
@@ -2453,6 +2624,7 @@ fn creates_a_class_assignment_with_multiple_properties_before_declaration() {
 }
 
 /// Nucleoid creates a class assignment with multiple properties after declaration
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_with_multiple_properties_after_declaration() {
     let mut run = runner();
@@ -2472,6 +2644,7 @@ fn creates_a_class_assignment_with_multiple_properties_after_declaration() {
 }
 
 /// Nucleoid creates a class assignment as multiple properties as part of a declaration before initialization
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_before_initialization() {
     let mut run = runner();
@@ -2490,6 +2663,7 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_be
 }
 
 /// Nucleoid creates a class assignment as multiple properties as part of a declaration after initialization
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_after_initialization() {
     let mut run = runner();
@@ -2507,6 +2681,7 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_af
 }
 
 /// Nucleoid creates a class assignment only if the instance is defined
+#[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
@@ -2516,6 +2691,7 @@ fn creates_a_class_assignment_only_if_the_instance_is_defined() {
 }
 
 /// Nucleoid creates a for of statement
+#[rustfmt::skip]
 #[test]
 fn creates_a_for_of_statement() {
     let mut run = runner();
@@ -2533,6 +2709,7 @@ fn creates_a_for_of_statement() {
 }
 
 /// Nucleoid creates a block of for statement without dependencies
+#[rustfmt::skip]
 #[test]
 fn creates_a_block_of_for_statement_without_dependencies() {
     let mut run = runner();
@@ -2557,6 +2734,7 @@ fn creates_a_block_of_for_statement_without_dependencies() {
 }
 
 /// Nucleoid loops through only defined objects in a for of statement
+#[rustfmt::skip]
 #[test]
 fn loops_through_only_defined_objects_in_a_for_of_statement() {
     let mut run = runner();
@@ -2586,6 +2764,7 @@ fn loops_through_only_defined_objects_in_a_for_of_statement() {
 }
 
 /// Nucleoid supports an if statement in a for of statement
+#[rustfmt::skip]
 #[test]
 fn supports_an_if_statement_in_a_for_of_statement() {
     let mut run = runner();
@@ -2612,6 +2791,7 @@ fn supports_an_if_statement_in_a_for_of_statement() {
 }
 
 /// Nucleoid returns an integer in variable assignment
+#[rustfmt::skip]
 #[test]
 fn returns_an_integer_in_variable_assignment() {
     let mut run = runner();
@@ -2624,6 +2804,7 @@ fn returns_an_integer_in_variable_assignment() {
 }
 
 /// Nucleoid returns the reference of a function call
+#[rustfmt::skip]
 #[test]
 fn returns_the_reference_of_a_function_call() {
     let mut run = runner();
@@ -2636,6 +2817,7 @@ fn returns_the_reference_of_a_function_call() {
 }
 
 /// Nucleoid returns a string value of a function call
+#[rustfmt::skip]
 #[test]
 fn returns_a_string_value_of_a_function_call() {
     let mut run = runner();
@@ -2648,6 +2830,7 @@ fn returns_a_string_value_of_a_function_call() {
 }
 
 /// Nucleoid returns an object value of a function call
+#[rustfmt::skip]
 #[test]
 fn returns_an_object_value_of_a_function_call() {
     let mut run = runner();
@@ -2660,6 +2843,7 @@ fn returns_an_object_value_of_a_function_call() {
 }
 
 /// Nucleoid runs a function with a variable
+#[rustfmt::skip]
 #[test]
 fn runs_a_function_with_a_variable() {
     let mut run = runner();
@@ -2672,6 +2856,7 @@ fn runs_a_function_with_a_variable() {
 }
 
 /// Nucleoid returns the first return statement in a block
+#[rustfmt::skip]
 #[test]
 fn returns_the_first_return_statement_in_a_block() {
     let mut run = runner();
@@ -2684,6 +2869,7 @@ fn returns_the_first_return_statement_in_a_block() {
 }
 
 /// Nucleoid returns the instance itself in instance creation
+#[rustfmt::skip]
 #[test]
 fn returns_the_instance_itself_in_instance_creation() {
     let mut run = runner();
@@ -2697,6 +2883,7 @@ fn returns_the_instance_itself_in_instance_creation() {
 }
 
 /// Nucleoid explains how a value was derived
+#[rustfmt::skip]
 #[test]
 fn explains_how_a_value_was_derived() {
     let mut run = runner();
@@ -2712,6 +2899,7 @@ fn explains_how_a_value_was_derived() {
 }
 
 /// Nucleoid states a fact that follows from nothing else
+#[rustfmt::skip]
 #[test]
 fn states_a_fact_that_follows_from_nothing_else() {
     let mut run = runner();
@@ -2723,6 +2911,7 @@ fn states_a_fact_that_follows_from_nothing_else() {
 }
 
 /// Nucleoid names the class-level rule a property was derived from
+#[rustfmt::skip]
 #[test]
 fn names_the_class_level_rule_a_property_was_derived_from() {
     let mut run = runner();
@@ -2736,6 +2925,7 @@ fn names_the_class_level_rule_a_property_was_derived_from() {
 }
 
 /// Nucleoid reports what a value affects
+#[rustfmt::skip]
 #[test]
 fn reports_what_a_value_affects() {
     let mut run = runner();
@@ -2748,6 +2938,7 @@ fn reports_what_a_value_affects() {
 }
 
 /// Nucleoid chains reasoning operations
+#[rustfmt::skip]
 #[test]
 fn chains_reasoning_operations() {
     let mut run = runner();
@@ -2764,6 +2955,7 @@ fn chains_reasoning_operations() {
 }
 
 /// Nucleoid keeps an explanation up to date
+#[rustfmt::skip]
 #[test]
 fn keeps_an_explanation_up_to_date() {
     let mut run = runner();
@@ -2777,6 +2969,7 @@ fn keeps_an_explanation_up_to_date() {
 }
 
 /// Nucleoid does not select a reasoning statement
+#[rustfmt::skip]
 #[test]
 fn does_not_select_a_reasoning_statement() {
     let mut run = runner();
@@ -2788,6 +2981,7 @@ fn does_not_select_a_reasoning_statement() {
 }
 
 /// Nucleoid selects the whole model
+#[rustfmt::skip]
 #[test]
 fn selects_the_whole_model() {
     let mut run = runner();
@@ -2797,6 +2991,7 @@ fn selects_the_whole_model() {
 }
 
 /// Nucleoid throws an error when explaining something that is not defined
+#[rustfmt::skip]
 #[test]
 fn throws_an_error_when_explaining_something_that_is_not_defined() {
     let (_run, mut run_error) = crate::common::runners();
@@ -2804,6 +2999,7 @@ fn throws_an_error_when_explaining_something_that_is_not_defined() {
 }
 
 /// Nucleoid treats a reasoning name as a variable when one is defined
+#[rustfmt::skip]
 #[test]
 fn treats_a_reasoning_name_as_a_variable_when_one_is_defined() {
     let mut run = runner();
@@ -2811,3 +3007,14 @@ fn treats_a_reasoning_name_as_a_variable_when_one_is_defined() {
     assert_eq!(run("why"), 1);
 }
 
+/// The committed tests must not drift from their generated JSONL export.
+#[rustfmt::skip]
+#[test]
+fn committed_tests_match_the_dataset() {
+    assert_eq!(
+        include_str!("nucleoid.spec.rs").replace("\r\n", "\n"),
+        include_str!(concat!(env!("OUT_DIR"), "/nucleoid.spec.rs")),
+        "tests/nucleoid.spec.rs is stale; regenerate with \
+         UPDATE_SPEC_TESTS=1 cargo build"
+    );
+}
