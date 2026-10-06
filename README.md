@@ -59,25 +59,14 @@ Start the interactive CLI from any directory and teach it that Socrates is
 mortal:
 
 ```console
-$ nucleoid
-🌿 Nucleoid - Logic Language for World Models
-🌎 Inspired by Nature
-Type .help for available commands.
 > class Human(name: str):
-...     this.name = name
+... this.name = name
 ...
-null
 > $Human.mortal = true
-null
 > socrates = Human("Socrates")
-[object socrates]
 > socrates.mortal
 true
 ```
-
-The editor provides line editing, in-session history, Ctrl-C cancellation, and
-multiline indented blocks submitted with a blank line. Type `.help` for
-available commands.
 
 ---
 
