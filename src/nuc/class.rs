@@ -1,6 +1,5 @@
-//! `CLASS` — a type, and the rules stated about it. Mirrors
-//! `ref/src/nuc/CLASS.js`, which likewise keeps the methods, the instances and
-//! the declarations on the node and hands each declaration to every instance.
+//! Classes and their methods, instances, and declarations. Class-level rules
+//! are applied to each instance they govern.
 
 use indexmap::IndexSet;
 

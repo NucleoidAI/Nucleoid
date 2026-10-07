@@ -1,10 +1,8 @@
-//! Instantiation. Mirrors `ref/src/lang/ast/New.js`.
+//! Recognizing class instantiation.
 //!
-//! Nucleoid has no `new` keyword, so there is no node kind for this and
-//! [`New`] is not something [`crate::lang::ast::Ast::convert`] ever produces:
-//! `Class(...)` is an ordinary [`call`](crate::lang::ast::call) until the name
-//! turns out to be a class. Deciding that is all this does. Creating the
-//! instance is [`crate::nuc::object`], matching `ref/src/nuc/OBJECT.js`.
+//! `Class(...)` is parsed as an ordinary [`call`](crate::lang::ast::call).
+//! [`New`] identifies calls to class names; [`crate::nuc::object`] creates the
+//! instances.
 
 use crate::lang::ast::Expr;
 use crate::runtime::Runtime;

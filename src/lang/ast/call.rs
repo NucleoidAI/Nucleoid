@@ -1,4 +1,4 @@
-//! Calls. Mirrors `ref/src/lang/ast/Call.js`.
+//! Function, method and constructor calls.
 
 use indexmap::IndexMap;
 
@@ -21,7 +21,7 @@ impl<'a> Call<'a> {
         Call { node }
     }
 
-    /// The name being called — `Call.function` in `ref`.
+    /// The callee expression.
     pub fn function(&self) -> Option<&'a Expr> {
         match self.node {
             Expr::Call { callee, .. } => Some(callee),

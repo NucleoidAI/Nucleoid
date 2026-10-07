@@ -1,4 +1,4 @@
-//! Unary, binary and logical operators. Mirrors `ref/src/lang/ast/Operator.js`.
+//! Unary, binary and logical operators.
 
 use crate::error::Result;
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, UnaryOp};
@@ -34,8 +34,7 @@ impl<'a> Operator<'a> {
         }
     }
 
-    /// `Operator.walk()` — an operator has no name of its own, so walking one
-    /// is walking its operands.
+    /// Finds operand roots by descending through operators.
     pub fn walk(&self) -> Vec<&'a Expr> {
         let mut roots = Vec::new();
         walk_operands(self.node, &mut roots);

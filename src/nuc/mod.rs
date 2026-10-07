@@ -1,12 +1,8 @@
-//! The statement kinds the runtime files in the dependency graph, one module
-//! and one type per class in `ref/src/nuc`.
+//! Executable statement kinds, each with its own module and type.
 //!
-//! This module is `ref/src/nuc/NODE.js`: the base every kind shares. In `ref`
-//! that is a class the others extend; here it is [`Nuc`], a closed enum over
-//! the kinds, because the set of statement kinds is fixed and `CLAUDE.md` asks
-//! for `ref`'s structure without its dynamism.
+//! [`Nuc`] is the closed enum that dispatches each statement's execution.
 //!
-//! Each kind carries the same four-phase lifecycle `ref/src/stack.js` drives:
+//! Each kind follows the same four-phase lifecycle:
 //!
 //! | phase | what it does |
 //! | --- | --- |
@@ -15,14 +11,8 @@
 //! | [`Nuc::graph`] | file the node and wire its edges |
 //! | [`Nuc::after`] | wake whatever read what the node just wrote |
 //!
-//! `ref` splits several kinds again by the context they run in — `IF.js`,
-//! `IF$CLASS.js`, `IF$INSTANCE.js` — because JavaScript dispatches on the
-//! constructed subclass. That is the dynamism, not the structure: here the
-//! context is a field on [`Scope`] and a [`NodeKind`], so those variants are
-//! branches inside the kind's own module. `ALIAS.js` (`extends VARIABLE`) and
-//! `REFERENCE.js` (`extends EXPRESSION`) add no behaviour at all in `ref` and
-//! have no counterpart, nor does `BREAK.js`, which `nucleoid.spec.md` has no
-//! statement for.
+//! [`Scope`] carries local and instance context, while [`NodeKind`] classifies
+//! statements filed in the dependency graph.
 
 pub mod block;
 pub mod class;
@@ -69,9 +59,7 @@ use r#try::Try;
 use variable::Variable;
 
 /// What [`Nuc::run`] produced: the value or `return` it ended with, and the
-/// keys it read on the way. `ref` returns `{ value, next }` from `run` and
-/// collects the reads separately in `graph(scope)`; the reads are recorded as
-/// the node runs here, so they come back together.
+/// dependency keys recorded during execution.
 pub struct Outcome {
     pub flow: Flow,
     pub dependencies: IndexSet<NodeKey>,
@@ -97,7 +85,7 @@ impl Outcome {
     }
 }
 
-/// A statement, in the form the graph holds it. `ref/src/nuc/NODE.js`.
+/// A statement in the executable form stored by the graph.
 #[derive(Debug, Clone)]
 pub enum Nuc {
     Let(Let),
@@ -119,10 +107,8 @@ pub enum Nuc {
 }
 
 impl Nuc {
-    /// Builds the node for a statement. Mirrors `Node.convert` in
-    /// `ref/src/lang/ast/Node.js`, together with `ref/src/lang/$nuc/$ASSIGNMENT.js`,
-    /// which is where `ref` likewise decides whether an assignment is a `LET`,
-    /// a `VARIABLE` or a `PROPERTY` — a question only the scope can answer.
+    /// Builds a statement node, using its scope to distinguish local,
+    /// variable and property assignments.
     pub fn convert(runtime: &mut Runtime, scope: &mut Scope, statement: &Stmt) -> Result<Nuc> {
         Ok(match statement {
             Stmt::Assign { target, value } => {
@@ -224,7 +210,7 @@ impl Nuc {
         })
     }
 
-    /// `NODE.before(scope)`.
+    /// Prepares expressions before execution.
     pub fn before(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<()> {
         match self {
             Nuc::Variable(node) => node.before(runtime, scope),
@@ -234,7 +220,7 @@ impl Nuc {
         }
     }
 
-    /// `NODE.run(scope)`.
+    /// Executes the statement and records its dependencies.
     pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
         match self {
             Nuc::Let(node) => node.run(runtime, scope),
@@ -255,8 +241,8 @@ impl Nuc {
         }
     }
 
-    /// `NODE.graph(scope)` — files the node and wires the edges to whatever it
-    /// read. Kinds that hold no standing declaration do nothing.
+    /// Files the node and wires edges to its dependencies. Kinds that hold no
+    /// standing declaration do nothing.
     pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {
         match self {
             Nuc::Variable(node) => node.graph(runtime, dependencies),
@@ -269,7 +255,7 @@ impl Nuc {
         }
     }
 
-    /// `NODE.after(scope)` — wakes everything that read what this node wrote.
+    /// Wakes everything that read what this node wrote.
     /// A kind whose key nothing can read has nothing to wake.
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
         match self {
@@ -285,10 +271,8 @@ impl Nuc {
 impl Runtime {
     /// Files a node under `key` and wires the edges to everything it read.
     ///
-    /// This is the sequence `ref/src/stack.js` performs once a statement has
-    /// run: check the new edges, [`register`](Runtime::register) the node — or
-    /// [`replace`](Runtime::replace) the one already there — then
-    /// [`direct`](Runtime::direct) an edge from each dependency.
+    /// Checks new edges before calling [`Runtime::register`] or
+    /// [`Runtime::replace`], then wires dependencies with [`Runtime::direct`].
     pub(crate) fn file(
         &mut self,
         key: &NodeKey,
@@ -342,7 +326,7 @@ impl Runtime {
         Ok(())
     }
 
-    /// `NODE.register` — puts a node in the graph under its own key.
+    /// Puts a node in the graph under its own key.
     pub(crate) fn register(&mut self, node: GraphNode) {
         if self.transaction.needs_node(&node.key) {
             self.transaction.record_node(&node.key, None);
@@ -351,7 +335,7 @@ impl Runtime {
         self.graph.insert(node);
     }
 
-    /// `NODE.replace` — puts a node where one already stood, so that a
+    /// Puts a node where one already stood, so that a
     /// redeclaration keeps the edges pointing at it.
     pub(crate) fn replace(&mut self, mut node: GraphNode, existing: &GraphNode) {
         let key = node.key.clone();
@@ -379,7 +363,7 @@ impl Runtime {
         self.graph.insert(node);
     }
 
-    /// `NODE.direct` — wires one edge, from what was read to what read it. A
+    /// Wires one edge, from what was read to what read it. A
     /// name that has not been defined yet still gets a node, so the edge is
     /// there waiting when it is.
     pub(crate) fn direct(&mut self, source: &NodeKey, target: &NodeKey) {

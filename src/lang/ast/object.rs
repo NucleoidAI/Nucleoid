@@ -1,7 +1,5 @@
 //! Object literals, and the structural comparison objects are matched by.
-//! Mirrors `ref/src/lang/ast/Object.js`; the comparison stands in for
-//! `ref/src/lib/deep.js`, which has no module of its own here because it needs
-//! the state to resolve object identities.
+//! Comparison uses the runtime state to resolve object identities.
 
 use indexmap::IndexMap;
 

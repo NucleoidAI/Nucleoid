@@ -4,8 +4,7 @@ Thanks to declarative programming, we have a brand-new approach to data and logi
 
 ## Working on the Rust runtime
 
-This repository holds the Rust implementation. The crate is at the root, and
-`ref/` is the archived JavaScript implementation kept for reference.
+The Rust crate is at the repository root.
 
 ```console
 $ cargo test                  # the whole suite
@@ -26,7 +25,6 @@ $ cargo run                   # or type statements at a prompt
 | `docs/README.md` | prose reference; `tests/reference.md` is its executable form |
 | `src/` | the runtime |
 | `tests/` | executable specification, documentation, dataset, and runtime checks |
-| `ref/` | the archived JavaScript implementation — **frozen**, read it but never change it |
 
 ### Adding a behaviour
 
@@ -80,7 +78,9 @@ $ UPDATE_SPEC_TESTS=1 cargo build
 
 ## Declarative Runtime Environment
 
-Nucleoid is a declarative runtime environment that applies declarative programming at the runtime as rerendering JavaScript statements and creating the graph, so as a result, the declarative runtime system isolates a behavior definition of a program from its technical instructions and executes declarative statements, which represent logical intention without carrying any technical detail.
+Nucleoid records declarative statements in a dependency graph and re-evaluates
+them when their inputs change. Programs describe relationships to maintain
+rather than the sequence of updates needed to maintain them.
 
 Learn more at [nucleoid.com/docs/runtime](https://nucleoid.com/docs/runtime/)
 

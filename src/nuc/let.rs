@@ -1,6 +1,5 @@
-//! `LET` — a name bound in the surrounding scope: a parameter, a loop variable,
-//! or a name an enclosing block already assigned. Written directly and never
-//! filed in the graph. Mirrors `ref/src/nuc/LET.js`.
+//! Local assignments to parameters, loop variables or names bound by an
+//! enclosing block. These are written directly and never filed in the graph.
 
 use crate::error::Result;
 use crate::lang::ast::Expr;

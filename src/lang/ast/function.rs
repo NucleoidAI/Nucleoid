@@ -1,5 +1,4 @@
-//! Function bodies and how they are entered. Mirrors
-//! `ref/src/lang/ast/Function.js`.
+//! Function bodies and how they are entered.
 
 use std::sync::Arc;
 

@@ -1,7 +1,6 @@
-//! `PROPERTY` — `person.age = 30`, filed under `<object id>.<property>`, and
-//! `$Person.mortal = true`, which states the same thing about every instance of
-//! a type. Mirrors `ref/src/nuc/PROPERTY.js`; `ref`'s `PROPERTY$CLASS.js` and
-//! `PROPERTY$INSTANCE.js` are the two arms of [`Owner`] here.
+//! Property assignments: `person.age = 30`, filed under `<object id>.<property>`,
+//! and `$Person.mortal = true`, which applies to every instance of a type.
+//! [`Owner`] distinguishes instance assignments from class-level rules.
 
 use indexmap::IndexSet;
 

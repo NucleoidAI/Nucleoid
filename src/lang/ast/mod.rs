@@ -2,18 +2,12 @@
 //!
 //! [`lexer`] and [`parser`] turn source into [`Expr`] and [`Stmt`], while
 //! [`generator`] renders that tree back to canonical source for graph keys.
-//! [`Ast`] is
-//! `ref/src/lang/ast/Node.js`: the base class every node kind shares, as a
-//! closed enum, with [`Ast::convert`] standing in for `Node.convert` and one
-//! type per `ref/src/lang/ast/*.js` behind it.
+//! [`Ast`] is a closed enum of expression evaluators, selected by
+//! [`Ast::convert`].
 //!
-//! `ref` resolves a node into a rewritten ESTree and hands it to JavaScript's
-//! `eval`, so its `resolve` returns a tree and `generate` turns that tree into
-//! the string that gets evaluated. There is no `eval` here: [`Ast::resolve`]
-//! produces the value directly, and [`Ast::generate`] is only used to key a
-//! statement in the graph. `Node.graph(scope)`, which walks a node for the
-//! identifiers it reads, has no counterpart — reads are recorded as they
-//! happen, in [`crate::lang::evaluation`], rather than predicted statically.
+//! [`Ast::resolve`] produces a value directly. [`Ast::generate`] renders source
+//! for graph keys, not for evaluation. Dependency reads are recorded as they
+//! happen in [`crate::lang::evaluation`].
 
 pub mod array;
 pub mod call;
@@ -219,8 +213,7 @@ impl Expr {
         }
     }
 
-    /// The leftmost node of a path expression. `Node.first` in
-    /// `ref/src/lang/ast/Identifier.js`.
+    /// The leftmost node of a path expression.
     pub fn first(&self) -> Option<&Expr> {
         match self {
             Expr::Identifier(_) | Expr::ClassRef(_) | Expr::ObjectRef(_) | Expr::This => Some(self),
@@ -232,7 +225,7 @@ impl Expr {
         }
     }
 
-    /// What this node is read from — the `a.b` of `a.b.c`. `Node.object`.
+    /// What this node is read from — the `a.b` of `a.b.c`.
     pub fn object(&self) -> Option<&Expr> {
         match self {
             Expr::Member { object, .. }
@@ -270,7 +263,6 @@ impl Expr {
     }
 
     /// The rightmost name of a path expression — the `c` of `a.b.c`.
-    /// `Node.last`.
     pub fn last(&self) -> Option<&str> {
         match self {
             Expr::Identifier(name) | Expr::ClassRef(name) | Expr::ObjectRef(name) => Some(name),
@@ -282,11 +274,8 @@ impl Expr {
 
 /// An expression, dispatched to the kind that knows how to evaluate it.
 ///
-/// This is `Node.convert` in `ref/src/lang/ast/Node.js`: the same nine kinds,
-/// as a closed enum rather than a class hierarchy. `ref`'s `New` is missing a
-/// variant because Nucleoid has no `new` keyword — an instantiation is an
-/// ordinary call until the name turns out to be a class, which is what
-/// [`new::New`] decides.
+/// Instantiation uses call syntax rather than a separate variant;
+/// [`new::New`] recognizes calls to class names.
 pub enum Ast<'a> {
     Literal(literal::Literal<'a>),
     Identifier(identifier::Identifier<'a>),
@@ -326,10 +315,7 @@ impl<'a> Ast<'a> {
         }
     }
 
-    /// `Node.resolve(scope)` — the value this node has in this scope.
-    ///
-    /// `ref` resolves a node into a rewritten tree and hands it to JavaScript's
-    /// `eval`; there is no such step here, so resolving *is* evaluating.
+    /// Evaluates this node in the given scope.
     pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
         match self {
             Ast::Literal(node) => node.resolve(),
@@ -358,7 +344,7 @@ impl<'a> Ast<'a> {
         }
     }
 
-    /// `Node.generate(scope)` — the node written back as source.
+    /// Renders this node as source.
     pub fn generate(&self) -> String {
         self.node().to_string()
     }
@@ -411,8 +397,6 @@ impl Runtime {
 }
 
 // -- walking -----------------------------------------------------------------
-//
-// `ref/src/lang/ast/Node.js` exposes these as `Node.walk()`.
 
 /// The bare names a statement assigns to.
 pub(crate) fn collect_assigned_names(statement: &Stmt, names: &mut Vec<String>) {

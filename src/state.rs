@@ -84,11 +84,9 @@ impl ClassData {
 
 /// Everything the runtime holds: top-level variables, objects and classes.
 ///
-/// `ref/src/state.js` exports its `$` for anything to reach into; the maps are
-/// private here so that the only way to change them is the recorded writes
-/// below, and the only way to change them *without* recording is
-/// [`Transaction::rollback`](crate::transaction::Transaction::rollback) putting
-/// a before-image back.
+/// Runtime writes record before-images through the methods below.
+/// [`Transaction::rollback`](crate::transaction::Transaction::rollback)
+/// restores those before-images without recording new writes.
 #[derive(Debug, Clone, Default)]
 pub struct State {
     variables: IndexMap<String, Value>,
@@ -214,20 +212,11 @@ impl State {
 
 /// Every write to the state.
 ///
-/// `state.assign` in `ref/src/state.js` records the before-image and performs
-/// the write in one step, through `transaction.register`. The same holds here,
-/// and it is the reason these are methods rather than field access: a write
-/// that forgot to record first would be invisible until some later `throw`
-/// rolled back to a state that had quietly lost it. Recording and writing are
-/// never two statements a caller has to remember to pair.
+/// Each operation records the before-image and performs the write together,
+/// so callers cannot forget the undo entry needed by a later rollback.
 ///
-/// `ref` needs only one `assign` because JavaScript works out from the path
-/// whether it names a variable or a property; they are separate here because
-/// the graph keys them differently.
-///
-/// `state.expression`, `state.call` and `state.throw` have no counterpart â€”
-/// they are `eval` wrappers, and nothing here evaluates by handing text to
-/// another language.
+/// Variables and properties use separate operations because their graph keys
+/// differ.
 impl Runtime {
     pub(crate) fn assign(&mut self, name: &str, value: Value) {
         let before = self.state.variables.get(name).cloned();

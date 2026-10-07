@@ -1,9 +1,6 @@
-//! `EXPRESSION` — a statement that is only an expression, and the `.value`
-//! freezing every stored declaration goes through first. Mirrors
-//! `ref/src/nuc/EXPRESSION.js`, whose `before()` does the same rewrite; the
-//! kinds that file a declaration — [`variable`](crate::nuc::variable),
-//! [`property`](crate::nuc::property) and `if` — reach it through
-//! `Runtime::freeze`.
+//! Expression statements and the `.value` freezing performed before storing
+//! declarations. Variable, property and conditional nodes use `Runtime::freeze`
+//! to preserve snapshots.
 
 use crate::error::{Error, Result};
 use crate::lang::ast::{Expr, Stmt, TemplatePart, literal};

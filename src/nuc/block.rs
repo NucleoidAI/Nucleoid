@@ -1,7 +1,6 @@
-//! `BLOCK` — `{ ... }`, a run of statements filed as one declaration and
-//! re-evaluated whenever anything it read changes. Mirrors
-//! `ref/src/nuc/BLOCK.js`, which likewise keeps its statements on the node and
-//! runs them in a scope of their own.
+//! Blocks: `{ ... }`, a run of statements filed as one declaration and
+//! re-evaluated whenever anything it read changes. Statements run in a scope
+//! of their own.
 
 use indexmap::IndexSet;
 

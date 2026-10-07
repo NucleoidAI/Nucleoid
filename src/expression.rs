@@ -1,14 +1,8 @@
 //! Questions asked of a whole expression tree, rather than of one node.
-//! Mirrors `ref/src/Expression.js`, which likewise sits above
-//! [`lang::ast`](crate::lang::ast) and walks a node for what is inside it.
 //!
-//! `ref` has one traversal — `map`, `find` and `traverse` all descend through
-//! operators and hand everything below to `Node.convert` — because whatever it
-//! does not understand is passed to `eval` anyway. Nothing is handed to another
-//! language here, so each query walks exactly as deep as its own question
-//! needs, and no deeper: [`Expression::roots`] stops at a function body on
-//! purpose, since a lambda's parameters are not names the surrounding
-//! declaration reads.
+//! Each query visits the children relevant to its question.
+//! [`Expression::roots`] stops at a function body because a lambda's parameters
+//! are not names the surrounding declaration reads.
 
 use crate::lang::ast::{Expr, FunctionBody, TemplatePart};
 

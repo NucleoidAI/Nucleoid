@@ -1,7 +1,5 @@
-//! `DELETE` — removing a variable, a property, an object or a class-level rule,
-//! and clearing whatever depended on it. Mirrors `ref/src/nuc/DELETE.js`
-//! together with `DELETE$VARIABLE.js` and `DELETE$OBJECT.js`, which are the
-//! arms of the match in `Runtime::delete`.
+//! Removing variables, properties, objects or class-level rules, and clearing
+//! whatever depended on them.
 
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;

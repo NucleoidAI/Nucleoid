@@ -1,6 +1,5 @@
-//! Names and paths. Mirrors `ref/src/lang/ast/Identifier.js`, which — as here —
-//! covers both a bare identifier and a member expression, since the two are the
-//! same kind of read at different depths.
+//! Names and paths: bare identifiers and member expressions are the same kind
+//! of read at different depths.
 
 use crate::builtins;
 use crate::builtins::Global;

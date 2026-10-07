@@ -1,5 +1,4 @@
-//! Lists: the literal, indexing, slicing and the list operations. Mirrors
-//! `ref/src/lang/ast/Array.js`.
+//! Lists: literals, indexing, slicing and list operations.
 
 use crate::builtins;
 use crate::error::{Error, Result};
@@ -29,8 +28,7 @@ impl<'a> Array<'a> {
         }
     }
 
-    /// `Array.generate(scope)` — `ref` renders the elements rather than the
-    /// node, since a list is built from its parts.
+    /// Renders the expression as source.
     pub fn generate(&self) -> String {
         self.node.to_string()
     }

@@ -1,7 +1,5 @@
-//! `IF` — a standing condition, re-evaluated whenever anything it tests
-//! changes. Mirrors `ref/src/nuc/IF.js`, which likewise keeps the condition and
-//! both branches on the node; `ref`'s `IF$CLASS.js` and `IF$INSTANCE.js` are
-//! the two arms at the top of [`If::run`].
+//! Standing conditionals, re-evaluated whenever their dependencies change.
+//! [`If::run`] handles class-level declarations and per-instance execution.
 
 use indexmap::IndexSet;
 

@@ -8,11 +8,8 @@ use crate::value::ObjectId;
 
 /// The name a statement is filed under in the dependency graph.
 ///
-/// `ref/src/nuc/NODE.js` keys a node by `key.toString()` and each `$nuc`
-/// builder formats its own — so the scheme lives in a dozen places there. Here
-/// it lives only in the constructors below, and nothing else builds a key by
-/// hand: two spellings of the same thing have to collapse onto one node, and
-/// that only holds if one piece of code decides the spelling.
+/// Key formatting lives in the constructors below so that two spellings of
+/// the same thing collapse onto one node.
 ///
 /// Variables and functions use their own name, properties use
 /// `<object id>.<property>`, a class uses `$<name>`, and control-flow
@@ -120,10 +117,8 @@ impl fmt::Display for NodeKind {
 /// A statement filed in the graph, together with the edges that decide when it
 /// is re-evaluated.
 ///
-/// `node` is the statement in the form that can be run again, as
-/// `ref/src/graph.js` holds it — not the source it was written as. Keeping the
-/// source would mean rebuilding the node on every propagation, and the rebuilt
-/// node would have to keep agreeing with the one the first run used.
+/// `node` holds the runnable statement rather than its source, avoiding
+/// recompilation on every propagation.
 #[derive(Debug, Clone)]
 pub struct GraphNode {
     pub key: NodeKey,
@@ -166,8 +161,7 @@ impl Graph {
         self.sequence
     }
 
-    /// The node filed under a key, if there is one. `graph.retrieve` in
-    /// `ref/src/graph.js`.
+    /// The node filed under a key, if there is one.
     pub fn retrieve(&self, key: &NodeKey) -> Option<&GraphNode> {
         self.nodes.get(key)
     }

@@ -5,9 +5,7 @@ use crate::value::{Value, format_number};
 
 /// A name that resolves to a built-in rather than to state.
 ///
-/// A closed set, so an enum: `ref` compares strings at each use, which is why
-/// `Math` reaching one call site and not another is a bug it cannot see. Here
-/// the compiler checks that every site handles the same set.
+/// A closed enum keeps name resolution and call dispatch consistent.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Global {
     Math,

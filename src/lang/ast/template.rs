@@ -1,4 +1,4 @@
-//! Template literals. Mirrors `ref/src/lang/ast/Template.js`.
+//! Template literals.
 
 use crate::error::Result;
 use crate::lang::ast::{Expr, TemplatePart};

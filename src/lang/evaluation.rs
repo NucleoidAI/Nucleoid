@@ -1,12 +1,9 @@
 //! What an evaluation produced, and what it read to get there.
 //!
-//! `ref/src/lang/Evaluation.js` is a bare wrapper around a produced value;
-//! [`Flow`] is the typed form of the same idea, and carries the one thing the
-//! JavaScript version signals out of band — that a `return` ended the block.
+//! [`Flow`] carries the produced value and distinguishes normal completion
+//! from a `return` that ends the block.
 //!
-//! The dependency tracking sits here too: recording what an expression read is
-//! part of evaluating it, and is what `ref` collects through
-//! `Expression.graph()`.
+//! Dependency tracking records each read as the expression is evaluated.
 
 use indexmap::IndexSet;
 

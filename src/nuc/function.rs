@@ -1,7 +1,5 @@
-//! `FUNCTION` — a named definition, filed in the graph so that redefining it
-//! re-evaluates everything that calls it. Mirrors `ref/src/nuc/FUNCTION.js`,
-//! which is likewise a `NODE` with nothing added: what matters is that the name
-//! has a node at all, so calls can depend on it.
+//! Named function definitions, filed in the graph so that redefining one
+//! re-evaluates everything that calls it.
 
 use indexmap::IndexSet;
 use std::sync::Arc;

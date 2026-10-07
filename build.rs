@@ -1,11 +1,8 @@
 //! Turns the language's executable documents and specification JSONL into
 //! named Rust tests.
 //!
-//! `ref/src/test/nucleoid.spec.js` writes one `it(...)` per behaviour, so a
-//! failure names the behaviour that broke. The cases here live in the documents
-//! rather than in the test files, so the `it`s are generated from them — which
-//! also keeps the promise in `CLAUDE.md` that adding a case to a document adds
-//! a test, with nothing else to edit.
+//! Each behaviour becomes a named test, so a failure identifies what broke.
+//! Cases live in documents and JSONL rather than being restated in test code.
 //!
 //! Specification records are exported as self-contained tests: each generated
 //! function embeds the code and expected return it runs. Synthesized records

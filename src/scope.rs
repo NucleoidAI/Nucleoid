@@ -54,9 +54,7 @@ impl Scope {
         self.frames.len() == 1
     }
 
-    /// The innermost binding of a name, walking outwards. `Scope.retrieve` in
-    /// `ref/src/Scope.js`, which walks a chain of `prior` scopes for the same
-    /// reason this walks a stack of frames.
+    /// The innermost binding of a name, walking outwards through the frames.
     pub fn retrieve(&self, name: &str) -> Option<&Value> {
         self.frames
             .iter()

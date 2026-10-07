@@ -1,5 +1,5 @@
 //! The propagation queue: what is waiting to be re-evaluated, and the loop that
-//! works through it. Mirrors `ref/src/stack.js`.
+//! works through it.
 //!
 //! Propagation is a queue rather than recursion, so the length of a dependency
 //! chain is not limited by the call stack.

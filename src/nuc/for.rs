@@ -1,6 +1,5 @@
-//! `FOR` — walked once over what is there now, rather than filed as a standing
-//! declaration. Mirrors `ref/src/nuc/FOR.js`, which likewise keeps the loop
-//! variable, the list and the body on the node and steps through the list.
+//! For loops execute once over the current list rather than being filed as
+//! standing declarations.
 
 use crate::error::{Error, Result};
 use crate::lang::ast::{Expr, Stmt};

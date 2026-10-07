@@ -1,4 +1,4 @@
-//! Literals. Mirrors `ref/src/lang/ast/Literal.js`.
+//! Literal values.
 
 use regex::Regex;
 use std::sync::Arc;
@@ -32,7 +32,7 @@ impl<'a> Literal<'a> {
         }
     }
 
-    /// `Literal.generate()` — `ref` returns the raw source of the literal.
+    /// Renders the literal as source.
     pub fn generate(&self) -> String {
         self.node.to_string()
     }

@@ -1,6 +1,4 @@
-//! `RETURN` — ends the enclosing block with a value. Mirrors
-//! `ref/src/nuc/RETURN.js`, which is likewise a node that only carries the
-//! statement it returns; the stack is what acts on it.
+//! Returning a value from the enclosing block.
 
 use crate::error::Result;
 use crate::lang::ast::Expr;

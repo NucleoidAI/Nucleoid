@@ -17,42 +17,26 @@
 //!
 //! # Layout
 //!
-//! The modules follow `ref/`, the archived JavaScript implementation, file for
-//! file and class for class, so that the two can be read side by side:
-//!
-//! | this crate | `ref/` |
+//! | module | responsibility |
 //! | --- | --- |
-//! | [`lang::ast::parser`], [`lang::ast::generator`] | `src/lang/estree` |
-//! | [`lang::ast`], [`lang::ast::Ast`] | `src/lang/ast`, `Node.js` |
-//! | [`lang::evaluation`] | `src/lang/Evaluation.js` |
-//! | [`nuc`], [`nuc::Nuc`] | `src/nuc`, `NODE.js` |
-//! | [`expression`] | `src/Expression.js` |
-//! | [`graph`] | `src/graph.js` |
-//! | [`state`] | `src/state.js` |
-//! | [`scope`] | `src/Scope.js` |
-//! | [`stack`] | `src/stack.js` |
-//! | [`statement`] | `src/statement.js` |
-//! | [`transaction`] | `src/transaction.js` |
-//! | [`runtime`] | `src/runtime.js` |
+//! | [`lang::ast::parser`], [`lang::ast::generator`] | Parse and render source |
+//! | [`lang::ast`], [`lang::ast::Ast`] | Typed syntax and expression evaluators |
+//! | [`lang::evaluation`] | Evaluation results and dependency tracking |
+//! | [`nuc`], [`nuc::Nuc`] | Executable statement kinds and their lifecycle |
+//! | [`expression`] | Expression-tree queries |
+//! | [`graph`] | Dependency nodes and edges |
+//! | [`state`] | Variables, objects, classes and functions |
+//! | [`scope`] | Local bindings and execution context |
+//! | [`stack`] | Dependency propagation queue |
+//! | [`statement`] | Source compilation |
+//! | [`transaction`] | Undo logs and rollback |
+//! | [`runtime`] | Statement execution and the public runtime API |
+//! | [`value`], [`error`] | Runtime values and typed errors through [`Result`] |
+//! | [`builtins`] | Standard objects and operations |
 //!
-//! Three modules answer to nothing in `ref`, because they are what being typed
-//! costs: [`value`] is the runtime value as a closed enum where `ref` has
-//! whatever JavaScript handed it, [`error`] is the failure as a typed enum
-//! returned through [`Result`] where `ref` throws, and [`builtins`] gathers the
-//! standard objects that `ref` reaches by leaving them to its host.
-//!
-//! `ref` is untyped JavaScript, so its node kinds are classes reached by
-//! dynamic dispatch and its `$CLASS`/`$INSTANCE` variants are subclasses. The
-//! kinds are a closed set, so here they are the [`nuc::Nuc`] and
-//! [`lang::ast::Ast`] enums with one type per class behind them, and the
-//! context a node runs in is a field rather than a subclass. Statements carry
-//! `ref`'s four phases — `before`, `run`, `graph`, `after` — in the order
-//! `ref/src/stack.js` calls them.
-//!
-//! `ref`'s server infrastructure — `express.js`, `routes/`, `datastore.js`,
-//! `cluster.js`, `cache.js`, `config.js`, `event.js`, `process.js` — has no
-//! counterpart: this crate is the language, not a service around it. Nor does
-//! `src/lang/$nuc`, which serialises statements for that datastore.
+//! [`nuc::Nuc`] and [`lang::ast::Ast`] are closed enums with dedicated types for
+//! their variants. Execution context is carried by scopes and graph nodes.
+//! Statements follow four phases: `before`, `run`, `graph`, and `after`.
 
 pub mod builtins;
 pub mod error;

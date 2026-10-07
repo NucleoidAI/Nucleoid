@@ -1,10 +1,7 @@
-//! `OBJECT` — an instance: created, given its constructor's properties, then
-//! handed every rule its class states. Mirrors `ref/src/nuc/OBJECT.js`.
+//! Instance creation, constructor execution and class-level rule application.
 //!
-//! Like `ref`, this is never a statement of its own. It is what an assignment
-//! turns into when its value is an instantiation, which is the job
-//! `ref/src/lang/$nuc/$ASSIGNMENT.js` does there and [`crate::nuc::Nuc`] does
-//! here.
+//! Class calls create instances through this module, whether used in an
+//! assignment or evaluated as expressions.
 
 use indexmap::IndexSet;
 
@@ -91,8 +88,7 @@ impl Object {
         Ok(Value::Object(self.id.clone()))
     }
 
-    /// `OBJECT.graph()` — files the instance so the class's own node can reach
-    /// it.
+    /// Files the instance so the class's own node can reach it.
     fn graph(&self, runtime: &mut Runtime) -> Result<()> {
         runtime.file(&self.key(), NodeKind::Object, None, IndexSet::new(), None)
     }

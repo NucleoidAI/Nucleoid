@@ -1,7 +1,5 @@
 //! The runtime: what holds the state and the graph, and drives one statement
-//! after another. Mirrors `ref/src/runtime.js` together with the loop at the
-//! top of `ref/src/stack.js`, which is where a statement's four phases are
-//! actually called in order.
+//! after another through its four execution phases.
 
 use indexmap::IndexSet;
 use std::collections::HashSet;
@@ -258,9 +256,8 @@ impl Runtime {
         result
     }
 
-    /// The four phases, in the order `ref/src/stack.js` calls them: prepare the
-    /// node's expressions, carry it out, file it with what it read, then wake
-    /// whatever was reading what it wrote.
+    /// Prepares the node's expressions, executes it, files its dependencies,
+    /// then wakes whatever was reading what it wrote.
     pub(crate) fn process(&mut self, node: &mut Nuc, scope: &mut Scope) -> Result<Flow> {
         node.before(self, scope)?;
 

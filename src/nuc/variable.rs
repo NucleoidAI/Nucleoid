@@ -1,5 +1,4 @@
-//! `VARIABLE` — `a = 1`, a standing declaration filed under the variable's own
-//! name. Mirrors `ref/src/nuc/VARIABLE.js`.
+//! Variable assignments: `a = 1`, a standing declaration filed under its name.
 
 use indexmap::IndexSet;
 

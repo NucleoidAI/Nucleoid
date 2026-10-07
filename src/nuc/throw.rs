@@ -1,5 +1,4 @@
-//! `THROW` — raises a value, which rolls the transaction back to wherever it is
-//! caught. Mirrors `ref/src/nuc/THROW.js`.
+//! Raising a value, which rolls the transaction back to where it is caught.
 
 use crate::error::{Error, Result};
 use crate::lang::ast::Expr;

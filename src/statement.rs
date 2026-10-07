@@ -1,5 +1,4 @@
-//! Source text to statements. Mirrors `ref/src/statement.js`, which is likewise
-//! the one place the rest of the runtime reaches the parser through.
+//! Source text to statements: the runtime's entry point to the parser.
 
 use crate::error::Result;
 use crate::lang::ast::{Program, parser};
