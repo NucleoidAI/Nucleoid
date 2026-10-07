@@ -59,7 +59,7 @@ fn main() {
     println!("cargo::rerun-if-env-changed=UPDATE_SPEC_TESTS");
 
     let out = env::var("OUT_DIR").expect("cargo sets OUT_DIR for build scripts");
-    let synth_documents = in_directory("synth");
+    let synth_documents = synthesized_documents("dataset");
     write_document_list(&out, &synth_documents);
     write_spec_tests(&out);
     write_docs_tests(&out);
@@ -103,7 +103,7 @@ struct Record {
 
 /// Exports every specification JSONL record as one named Rust test.
 fn write_spec_tests(out: &str) {
-    let spec = render_json_tests("dataset/spec.jsonl");
+    let spec = render_json_tests("dataset/nucleoid.spec.jsonl");
 
     fs::write(Path::new(out).join("nucleoid.spec.rs"), &spec)
         .expect("the generated spec tests must be writable");
@@ -472,15 +472,23 @@ fn rust_literal(value: &str) -> String {
     unreachable!("a raw string delimiter is always available")
 }
 
-/// Every `.md` in a directory, as `(module, path)` in name order.
+/// Synthesized case documents, as `(module, path)` in name order.
 ///
-/// `synth/nucleoid.spec.synth.01.md` becomes `synth_01` in the generated
+/// `dataset/nucleoid.spec.synth.01.md` becomes `synth_01` in the generated
 /// dataset document list.
-fn in_directory(directory: &str) -> Vec<(String, String)> {
+fn synthesized_documents(directory: &str) -> Vec<(String, String)> {
+    println!("cargo::rerun-if-changed={directory}");
+
     let mut documents: Vec<(String, String)> = fs::read_dir(directory)
         .unwrap_or_else(|error| panic!("{directory} holds the case documents: {error}"))
         .map(|entry| entry.expect("a directory entry is readable").path())
-        .filter(|path| path.extension().is_some_and(|extension| extension == "md"))
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| {
+                    name.starts_with("nucleoid.spec.synth.") && name.ends_with(".md")
+                })
+        })
         .map(|path| {
             let stem = path
                 .file_stem()
@@ -492,7 +500,7 @@ fn in_directory(directory: &str) -> Vec<(String, String)> {
             let number = stem.rsplit('.').next().unwrap_or(&stem).to_string();
 
             (
-                format!("{directory}_{number}"),
+                format!("synth_{number}"),
                 path.to_string_lossy().replace('\\', "/"),
             )
         })

@@ -1,14 +1,15 @@
 //! The JSONL dataset in `dataset/`, held equal to the documents it comes from.
 //!
 //! The dataset is published to Hugging Face, so it is not written by hand: it
-//! is rendered from `nucleoid.spec.md` and `synth/`, and this suite fails when
-//! the committed files are not what those documents render to. Regenerate with
+//! is rendered from `nucleoid.spec.md` and `dataset/nucleoid.spec.synth.*.md`,
+//! and this suite fails when the committed JSONL files are not what those
+//! documents render to. Regenerate with
 //!
 //! ```text
 //! UPDATE_DATASET=1 cargo test --test dataset
 //! ```
 //!
-//! which is the only supported way to change anything under `dataset/`.
+//! which is the only supported way to change the JSONL under `dataset/`.
 
 mod common;
 
@@ -42,12 +43,12 @@ struct Set {
     text: &'static str,
 }
 
-/// The spec, then every synth set `build.rs` found in `synth/`.
+/// The spec, then every synthesized case document `build.rs` found in `dataset/`.
 fn sets() -> Vec<Set> {
     let mut sets = vec![Set {
         prefix: "spec".to_string(),
         document: "nucleoid.spec.md".to_string(),
-        output: "dataset/spec.jsonl".to_string(),
+        output: "dataset/nucleoid.spec.jsonl".to_string(),
         text: include_str!("../nucleoid.spec.md"),
     }];
 
@@ -57,12 +58,35 @@ fn sets() -> Vec<Set> {
         sets.push(Set {
             prefix: format!("synth-{number}"),
             document: (*path).to_string(),
-            output: format!("dataset/synth.{number}.jsonl"),
+            output: format!("dataset/nucleoid.synth.{number}.jsonl"),
             text,
         });
     }
 
     sets
+}
+
+#[test]
+fn synthesized_documents_keep_their_identifiers() {
+    assert!(
+        !SYNTH_DOCUMENTS.is_empty(),
+        "dataset/ must contain synthesized case documents"
+    );
+
+    for (module, document, _) in SYNTH_DOCUMENTS {
+        let number = module
+            .strip_prefix("synth_")
+            .expect("synthesized identifiers must not depend on their directory");
+
+        assert!(
+            !number.is_empty() && number.bytes().all(|byte| byte.is_ascii_digit()),
+            "synthesized documents must have numbered identifiers: {module}"
+        );
+        assert_eq!(
+            *document,
+            format!("dataset/nucleoid.spec.synth.{number}.md")
+        );
+    }
 }
 
 /// The dataset is what the documents say, so it is rendered rather than

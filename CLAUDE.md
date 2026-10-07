@@ -13,7 +13,7 @@ Build a Rust implementation of Nucleoid. The crate is at the repository root (`C
 ## References
 
 - `nucleoid.spec.md` — the main reference for runtime behaviours
-- `synth/` — synthesized fine-tuning use cases derived from `nucleoid.spec.md`;
+- `dataset/nucleoid.spec.synth.*.md` — synthesized fine-tuning use cases derived from `nucleoid.spec.md`;
   they are dataset material, not executable tests
 - `docs/` — the Nucleoid Language Reference documentation, written as NUC documents in PEP style, in the spirit of https://docs.python.org
 - `ref/` — technical reference for the Rust implementation (the archived JS implementation)
@@ -28,13 +28,13 @@ Prefer popular, well-maintained crates over hand-rolled infrastructure — lexin
 
 Nucleoid is published as open source under Apache-2.0, so everything is public-facing and follows mainstream Rust community practice rather than local invention: default `cargo fmt`, `cargo clippy` clean with warnings denied in CI, library in `src/lib.rs` with a thin binary, integration tests in `tests/`, examples in `examples/`, complete `Cargo.toml` metadata (`description`, `license`, `repository`, `readme`, `keywords`, `categories`, `rust-version`) before publishing, and semantic versioning on the public API. When a convention exists, default to it and flag any deliberate divergence.
 
-`nucleoid.spec.md` is authoritative. Where `synth/`, `docs/` or `ref/` disagrees with it, the main reference wins.
+`nucleoid.spec.md` is authoritative. Where the synthesized sources, `docs/` or `ref/` disagrees with it, the main reference wins.
 
-`nucleoid.spec.md`, `synth/`, `docs/`, `dataset/` and the Rust crate (`Cargo.toml`, `src/`) must stay in sync. Every change to one must be propagated to the others as part of the same change.
+`nucleoid.spec.md`, the synthesized sources in `dataset/`, `docs/`, the generated JSONL and the Rust crate (`Cargo.toml`, `src/`) must stay in sync. Every change to one must be propagated to the others as part of the same change.
 
-`dataset/` is the Hugging Face publication of `nucleoid.spec.md` and `synth/` as JSONL. It is rendered, never hand-edited: change the documents and regenerate with `UPDATE_DATASET=1 cargo test --test dataset`.
+`dataset/` contains the synthesized Markdown sources and the Hugging Face JSONL publication of `nucleoid.spec.md` and those sources. The JSONL is rendered, never hand-edited: change the documents and regenerate with `UPDATE_DATASET=1 cargo test --test dataset`.
 
-The crate executes its normative documents rather than restating them: `tests/nucleoid.spec.rs` exports `dataset/spec.jsonl` as individually named tests that embed their own code and expected return, while `tests/docs.rs` runs `tests/reference.md` (the executable form of `docs/README.md`) and the ```nuc blocks in `README.md` and `docs/examples.md`. Synthesized use cases are not runtime tests. `tests/dataset.rs` only renders and validates the Hugging Face dataset from `nucleoid.spec.md` and `synth/`, failing when committed JSONL differs from its source documents. Adding a case to a normative executable document adds a test; adding a synthesized case only updates the fine-tuning dataset.
+The crate executes its normative documents rather than restating them: `tests/nucleoid.spec.rs` exports `dataset/nucleoid.spec.jsonl` as individually named tests that embed their own code and expected return, while `tests/docs.rs` runs `tests/reference.md` (the executable form of `docs/README.md`) and the ```nuc blocks in `README.md` and `docs/examples.md`. Synthesized use cases are not runtime tests. `tests/dataset.rs` only renders and validates the Hugging Face dataset from `nucleoid.spec.md` and `dataset/nucleoid.spec.synth.*.md`, failing when committed JSONL differs from its source documents. Adding a case to a normative executable document adds a test; adding a synthesized case only updates the fine-tuning dataset.
 
 A case whose assertions sit on a branch that is never taken proves nothing, so the suites also compare `Runtime::assertions_run()` against the number of `assert` calls in the source and fail when fewer ran.
 

@@ -20,7 +20,8 @@ $ cargo run                   # or type statements at a prompt
 | path | what it is |
 | --- | --- |
 | `nucleoid.spec.md` | what the language does. Authoritative — when anything disagrees with it, it wins |
-| `synth/` | fine-tuning data derived from the specification; not runtime tests |
+| `dataset/nucleoid.spec.synth.*.md` | fine-tuning sources derived from the specification; not runtime tests |
+| `dataset/*.jsonl` | rendered specification and fine-tuning data for publication |
 | `docs/` | the language reference, as NUC documents in the style of a PEP |
 | `docs/README.md` | prose reference; `tests/reference.md` is its executable form |
 | `src/` | the runtime |
@@ -63,10 +64,19 @@ quietly:
 
 ### Keeping things in step
 
-`nucleoid.spec.md`, `synth/`, `docs/` and the crate describe the same language,
-and a change to one belongs in the same change as the others. `cargo test`
-checks the normative documents and verifies that the fine-tuning dataset still
-matches its source documents; synthesized programs are not executed as tests.
+`nucleoid.spec.md`, the synthesized sources in `dataset/`, `docs/` and the crate
+describe the same language, and a change to one belongs in the same change as
+the others. `cargo test` checks the normative documents and verifies that the
+fine-tuning dataset still matches its source documents; synthesized programs
+are not executed as tests.
+
+Edit the Markdown sources, not the generated JSONL. Regenerate the dataset and,
+when the specification changes, its exported tests from the repository root:
+
+```console
+$ UPDATE_DATASET=1 cargo test --test dataset
+$ UPDATE_SPEC_TESTS=1 cargo build
+```
 
 ## Declarative Runtime Environment
 

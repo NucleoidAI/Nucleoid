@@ -16,9 +16,9 @@ configs:
   - config_name: default
     data_files:
       - split: spec
-        path: spec.jsonl
+        path: nucleoid.spec.jsonl
       - split: synth
-        path: synth.*.jsonl
+        path: nucleoid.synth.*.jsonl
 ---
 
 # Nucleoid
@@ -36,8 +36,8 @@ makes it a supervised pair: prose in, logic out.
 
 | Split | Records | Rendered from |
 | --- | --- | --- |
-| `spec` | 178 | `nucleoid.spec.md` — normative |
-| `synth` | 1007 | `synth/nucleoid.spec.synth.01.md` through `.21.md` — derived, no independent authority |
+| `spec` | 188 | `nucleoid.spec.md` — normative |
+| `synth` | 1007 | `dataset/nucleoid.spec.synth.01.md` through `.21.md` — derived, no independent authority |
 
 ## Fields
 
@@ -79,10 +79,12 @@ the [Nucleoid repository](https://github.com/NucleoidAI/Nucleoid), and the test
 suite fails when the committed JSONL is not what those documents render to, so
 the dataset cannot drift from the specification it publishes.
 
-Every `code` in this dataset is a program the language's own test suite runs:
-the assertions in it hold, and each one parses. The comment that titles a case
-in the source document becomes the `description` field rather than being left in
-the program, so a model trained on this does not learn to write it back.
+Every normative `spec` record is parsed and executed by the language's test
+suite. Synthesized records are training data: their JSONL is checked against the
+source documents, but they are not executed as runtime tests. The comment that
+titles a case in the source document becomes the `description` field rather
+than being left in the program, so a model trained on this does not learn to
+write it back.
 
 `nucleoid.spec.md` is normative. The `synth` split is derived from it and has no
 authority of its own; where the two disagree, the specification wins.
