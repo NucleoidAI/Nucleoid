@@ -1138,4 +1138,193 @@ try:
     record1.registration = 'CS'
 catch error:
     assert(error, "INVALID_REGISTRATION")
+
+---
+
+# Nucleoid keeps a quoted fare fixed inside lists and labels
+
+# fare and movements are independent inputs
+fare = 60
+movements = 5
+
+# The quote fixes the fare but follows the number of movements
+quote = [fare.value, movements]
+label = `${fare.value}-${movements}`
+carrier = "TAP"
+start = 1
+code = carrier[start.value:]
+
+fare = 80
+movements = 10
+start = 2
+carrier = "FLY"
+
+assert(quote, [60, 10])
+assert(label, "60-10")
+assert(code, "LY")
+
+---
+
+# Nucleoid refreshes inherited aircraft status without replacing subtype rules
+
+class Aircraft:
+    pass
+
+$Aircraft.clearance = "STANDARD"
+
+class CargoAircraft: Aircraft
+    pass
+
+class RestrictedCargo: CargoAircraft
+    pass
+
+$RestrictedCargo.clearance = "SPECIAL"
+cargo = CargoAircraft()
+restricted = RestrictedCargo()
+
+# A new fleet rule reaches existing cargo aircraft but not subtype overrides
+$Aircraft.clearance = "EXPRESS"
+
+assert(cargo.clearance, "EXPRESS")
+assert(restricted.clearance, "SPECIAL")
+assert(Aircraft.length, 0)
+assert(CargoAircraft.length, 1)
+
+---
+
+# Nucleoid calls each freight constructor through the correct supertype
+
+class Consignment(weight):
+    this.weight = weight
+
+class InsuredConsignment: Consignment
+    def init(weight):
+        super(weight + 10)
+
+class ExpressConsignment: InsuredConsignment
+    def init(weight):
+        super(weight * 2)
+
+# Express packaging doubles the weight before insurance adds ten
+shipment = ExpressConsignment(10)
+
+assert(shipment.weight, 30)
+
+---
+
+# Nucleoid rejects an aircraft inheritance loop
+
+class Aircraft:
+    pass
+
+class Freighter: Aircraft
+    pass
+
+try:
+    # Aircraft cannot inherit from its own subtype
+    class Aircraft: Freighter
+        pass
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+
+aircraft = Aircraft()
+
+assert(aircraft.id, "aircraft")
+assert(Class.length, 2)
+
+---
+
+# Nucleoid rejects a cyclic boarding group list
+
+class Boarding:
+    pass
+
+$Boarding.group = [$Boarding.code]
+
+try:
+    # A boarding code cannot depend on the group that already depends on it
+    $Boarding.code = $Boarding.group[0]
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Boarding.code = "A"
+boarding = Boarding()
+
+assert(boarding.group, ["A"])
+
+---
+
+# Nucleoid validates departure window bounds before there are flights
+
+class Departure:
+    pass
+
+try:
+    # The lower bound must exist when this rule is declared
+    $Departure.window = "ABCDEFG"[start:]
+catch error:
+    assert(error, ReferenceError("start is not defined"))
+
+start = 1
+end = 3
+$Departure.window = "ABCDEFG"[start:end]
+departure = Departure()
+
+assert(departure.window, "BC")
+
+end = 4
+
+assert(departure.window, "BCD")
+
+---
+
+# Nucleoid keeps indexed shipment weights null until supplied
+
+class Freight:
+    pass
+
+shipment = Freight()
+shipment.weight = null
+doubled = shipment["weight"] * 2
+
+assert(doubled, null)
+
+shipment.weight = 1200
+
+assert(doubled, 2400)
+
+delete shipment.weight
+
+assert(doubled, null)
+
+---
+
+# Nucleoid updates the count of declared logistics types
+
+kinds = Class.length
+
+class Route:
+    pass
+
+assert(kinds, 1)
+
+class Cargo: Route
+    pass
+
+assert(kinds, 2)
+
+class Route:
+    pass
+
+assert(kinds, 2)
+
+try:
+    class Temporary:
+        pass
+    throw "NO_IMPORT"
+catch error:
+    assert(error, "NO_IMPORT")
+
+assert(kinds, 2)
+assert(Class.length, 2)
 ```

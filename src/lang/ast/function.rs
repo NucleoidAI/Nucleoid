@@ -8,7 +8,6 @@ use crate::lang::ast::{Expr, Function as FunctionDecl, FunctionBody};
 use crate::lang::evaluation::Flow;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::state::ClassData;
 use crate::value::{ObjectId, Value};
 
 pub struct Function<'a> {
@@ -81,37 +80,23 @@ impl Runtime {
             return Err(Error::reference("super is not defined"));
         };
 
-        let parent = self
-            .state
-            .object(&this)
-            .and_then(|object| object.class.clone())
-            .and_then(|class| {
-                self.state
-                    .class(&class)
-                    .and_then(|data| data.parent.clone())
-            });
+        let class = scope.constructor_class().map(str::to_string).or_else(|| {
+            self.state
+                .object(&this)
+                .and_then(|object| object.class.clone())
+        });
+        let parent = class.and_then(|class| {
+            self.state
+                .class(&class)
+                .and_then(|data| data.parent.clone())
+        });
 
         if let Some(parent) = parent {
-            if let Some(class) = self.state.class(&parent).cloned() {
-                self.run_super(&class, &values, &this)?;
+            if self.state.has_class(&parent) {
+                self.run_constructor(&parent, &values, &this)?;
             }
         }
 
         Ok(Value::Null)
-    }
-
-    fn run_super(&mut self, class: &ClassData, arguments: &[Value], this: &ObjectId) -> Result<()> {
-        let mut scope = Scope::new();
-        scope.push();
-        scope.set_this(Some(this.clone()));
-
-        for (index, parameter) in class.parameters.iter().enumerate() {
-            let value = arguments.get(index).cloned().unwrap_or(Value::Null);
-            scope.declare(parameter.name.clone(), value);
-        }
-
-        let statements = class.constructor.clone();
-        self.execute_all(&statements, &mut scope)?;
-        Ok(())
     }
 }

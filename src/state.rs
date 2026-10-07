@@ -149,6 +149,10 @@ impl State {
         self.classes.get(name)
     }
 
+    pub(crate) fn classes(&self) -> impl Iterator<Item = &ClassData> {
+        self.classes.values()
+    }
+
     pub fn class_mut(&mut self, name: &str) -> Option<&mut ClassData> {
         self.classes.get_mut(name)
     }

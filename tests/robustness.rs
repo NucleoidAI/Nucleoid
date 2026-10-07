@@ -1,7 +1,7 @@
 //! The runtime is a library: bad input has to come back as an error rather
 //! than a panic, a hang, or a blown stack.
 
-use nucleoid::Runtime;
+use nucleoid::{ErrorKind, Runtime};
 
 fn rejects(source: &str) {
     let mut runtime = Runtime::new();
@@ -48,6 +48,43 @@ fn deeply_nested_expressions_do_not_blow_the_stack() {
 
     let chained: String = (0..500).map(|index| format!(" + {index}")).collect();
     survives(&format!("b = 0{chained}"));
+}
+
+#[test]
+fn long_prefix_chains_are_rejected_without_overflowing() {
+    for prefix in ["-", "!", "not ", "typeof ", "why ", "new ", "delete "] {
+        let source = format!("result = {}input", prefix.repeat(4096));
+        let error = Runtime::check(&source).expect_err("prefix chains must respect nesting limits");
+        assert_eq!(error.kind(), ErrorKind::Syntax);
+        assert_eq!(error.message(), "Expressions are nested too deeply");
+    }
+
+    assert!(Runtime::check(&format!("{}1", "-".repeat(62))).is_ok());
+    assert!(Runtime::check(&format!("{}1", "-".repeat(63))).is_err());
+
+    let mut runtime = Runtime::new();
+    assert_eq!(runtime.run("- - 3").unwrap().to_string(), "3");
+    assert_eq!(runtime.run("not not true").unwrap().to_string(), "true");
+}
+
+#[test]
+fn deep_implicit_inheritance_does_not_recurse_on_the_host_stack() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("class Base(amount):\n    this.amount = amount")
+        .unwrap();
+    let mut parent = String::from("Base");
+
+    for index in 0..500 {
+        let class = format!("Level{index}");
+        runtime
+            .run(&format!("class {class}: {parent}\n    pass"))
+            .unwrap();
+        parent = class;
+    }
+
+    runtime.run(&format!("last = {parent}(42)")).unwrap();
+    assert_eq!(runtime.run("last.amount").unwrap().to_string(), "42");
 }
 
 #[test]

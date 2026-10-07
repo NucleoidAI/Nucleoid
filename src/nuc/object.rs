@@ -26,6 +26,7 @@ pub struct Object {
 /// The parts of a class a constructor needs, lifted out so creating an instance
 /// does not copy the list of instances the class already has.
 struct ClassShape {
+    name: String,
     parent: Option<String>,
     parameters: Vec<Parameter>,
     constructor: Vec<Stmt>,
@@ -34,6 +35,7 @@ struct ClassShape {
 impl ClassShape {
     fn of(class: &ClassData) -> Self {
         ClassShape {
+            name: class.name.clone(),
             parent: class.parent.clone(),
             parameters: class.parameters.clone(),
             constructor: class.constructor.clone(),
@@ -55,11 +57,9 @@ impl Object {
     }
 
     pub fn run(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
-        let Some(class) = runtime.state.class(&self.class) else {
+        if !runtime.state.has_class(&self.class) {
             return Err(Error::not_defined(&self.class));
-        };
-
-        let shape = ClassShape::of(class);
+        }
 
         let mut values = Vec::new();
         for argument in &self.arguments {
@@ -80,7 +80,7 @@ impl Object {
 
         self.graph(runtime)?;
 
-        self.constructor(runtime, &shape, &values)?;
+        runtime.run_constructor(&self.class, &values, &self.id)?;
 
         for declaration in runtime.declarations_for(&self.class) {
             runtime.apply_declaration(&declaration.statement, &self.id)?;
@@ -102,19 +102,30 @@ impl Object {
     fn after(&self, runtime: &mut Runtime) -> Result<()> {
         runtime.propagate(&NodeKey::class(&self.class))
     }
+}
 
-    fn constructor(
-        &self,
-        runtime: &mut Runtime,
-        class: &ClassShape,
+impl Runtime {
+    pub(crate) fn run_constructor(
+        &mut self,
+        name: &str,
         arguments: &[Value],
+        this: &ObjectId,
     ) -> Result<()> {
-        if let Some(parent) = &class.parent {
-            if class.constructor.is_empty() {
-                if let Some(parent) = runtime.state.class(parent).map(ClassShape::of) {
-                    self.constructor(runtime, &parent, arguments)?;
-                }
-            }
+        let mut class = self
+            .state
+            .class(name)
+            .map(ClassShape::of)
+            .ok_or_else(|| Error::not_defined(name))?;
+
+        while class.constructor.is_empty() {
+            let Some(parent) = class
+                .parent
+                .as_ref()
+                .and_then(|name| self.state.class(name))
+            else {
+                break;
+            };
+            class = ClassShape::of(parent);
         }
 
         if class.constructor.is_empty() && class.parameters.is_empty() {
@@ -122,17 +133,17 @@ impl Object {
         }
 
         let mut scope = Scope::new();
-        scope.set_this(Some(self.id.clone()));
+        scope.set_this(Some(this.clone()));
+        scope.set_constructor_class(class.name);
 
         for (index, parameter) in class.parameters.iter().enumerate() {
             let value = arguments.get(index).cloned().unwrap_or(Value::Null);
             scope.declare(parameter.name.clone(), value);
         }
 
-        let statements = class.constructor.clone();
-        runtime.push_tracking(true);
-        let result = runtime.execute_all(&statements, &mut scope);
-        runtime.pop_tracking();
+        self.push_tracking(true);
+        let result = self.execute_all(&class.constructor, &mut scope);
+        self.pop_tracking();
         result?;
 
         Ok(())

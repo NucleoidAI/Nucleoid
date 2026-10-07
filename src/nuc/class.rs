@@ -31,6 +31,19 @@ impl Class {
 
     pub fn run(&mut self, runtime: &mut Runtime, _scope: &mut Scope) -> Result<Outcome> {
         let name = &self.declaration.name;
+        let mut ancestors = IndexSet::from([name.as_str()]);
+        let mut parent = self.declaration.parent.as_deref();
+
+        while let Some(name) = parent {
+            if !ancestors.insert(name) {
+                return Err(Error::type_error("Circular Inheritance"));
+            }
+            parent = runtime
+                .state
+                .class(name)
+                .and_then(|class| class.parent.as_deref());
+        }
+
         let existing = runtime.state.class(name).cloned();
 
         let mut data = ClassData::new(name.clone());
@@ -65,6 +78,10 @@ impl Class {
 
     pub fn graph(&self, runtime: &mut Runtime) -> Result<()> {
         runtime.file(&self.key(), NodeKind::Class, None, IndexSet::new(), None)
+    }
+
+    pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
+        runtime.propagate(&NodeKey::class("Class"))
     }
 }
 
@@ -153,11 +170,9 @@ impl Runtime {
 
         let sequence = self.graph.next_sequence();
 
-        let Some(data) = self.state.class(class) else {
+        if !self.state.has_class(class) {
             return Err(Error::not_defined(class));
-        };
-
-        let instances = data.instances.clone();
+        }
 
         self.update_class(class, |data| {
             data.declarations.shift_remove(&key);
@@ -171,11 +186,58 @@ impl Runtime {
             );
         });
 
+        let instances = self.instances_for_class(class);
+
         for instance in instances {
             self.apply_declaration(&statement, &instance)?;
         }
 
         Ok(())
+    }
+
+    pub(crate) fn instances_for_class(&self, class: &str) -> Vec<ObjectId> {
+        self.state
+            .classes()
+            .filter(|candidate| {
+                let mut current = Some(*candidate);
+
+                while let Some(data) = current {
+                    if data.name == class {
+                        return true;
+                    }
+                    current = data.parent.as_ref().and_then(|name| self.state.class(name));
+                }
+
+                false
+            })
+            .flat_map(|data| data.instances.iter().cloned())
+            .collect()
+    }
+
+    pub(crate) fn property_rule_is_overridden(
+        &self,
+        class: &str,
+        instance: &ObjectId,
+        property: &str,
+    ) -> bool {
+        let mut current = self
+            .state
+            .object(instance)
+            .and_then(|object| object.class.as_ref())
+            .and_then(|name| self.state.class(name));
+        let mut overridden = false;
+
+        while let Some(data) = current {
+            if data.name == class {
+                return overridden;
+            }
+            overridden |= data
+                .declarations
+                .contains_key(&DeclarationKey::property(&data.name, property));
+            current = data.parent.as_ref().and_then(|name| self.state.class(name));
+        }
+
+        false
     }
 
     /// Rejects a class-level rule that would make two properties of the same
@@ -266,7 +328,6 @@ impl Runtime {
             declarations.extend(class.declarations_in_order());
         }
 
-        declarations.sort_by_key(|declaration| declaration.sequence);
         declarations
     }
 }

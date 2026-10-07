@@ -154,6 +154,7 @@ impl Runtime {
     ) -> Result<Value> {
         match Global::from_name(name) {
             Some(Global::Class) if property == "length" => {
+                self.track(NodeKey::class("Class"));
                 return Ok(Value::Number(self.state.class_count() as f64));
             }
             Some(Global::Number) => {

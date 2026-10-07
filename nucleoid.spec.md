@@ -1,5 +1,10 @@
 # Nucleoid Language Reference
 
+Expression nesting is bounded, including consecutive unary operators and
+`new`/`delete` prefixes. Excessive nesting raises
+`SyntaxError("Expressions are nested too deeply")` rather than overflowing
+the host stack.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -4414,4 +4419,416 @@ catch error:
 why = 1
 
 assert(why, 1)
+
+---
+
+# Nucleoid freezes value reads inside compound expressions
+
+# seed and live are independent sources
+seed = 1
+live = 10
+
+# Snapshots remain fixed while live dependencies change
+values = [seed.value, live]
+record = { "frozen": seed.value, "live": live }
+label = `${seed.value}-${live}`
+text = "abcd"
+start = 1
+end = 3
+part = text[start.value:end]
+tail = text[start.value:]
+head = text[:end.value]
+
+seed = 2
+live = 20
+start = 2
+end = 4
+text = "wxyz"
+
+assert(values, [1, 20])
+assert(record, { "frozen": 1, "live": 20 })
+assert(label, "1-20")
+assert(part, "xyz")
+assert(tail, "xyz")
+assert(head, "wxy")
+
+---
+
+# Nucleoid updates inherited rules on existing subtype instances
+
+class Parent:
+    pass
+
+$Parent.flag = 1
+
+class Child: Parent
+    pass
+
+class Grandchild: Child
+    pass
+
+child = Child()
+grandchild = Grandchild()
+
+$Parent.flag = 2
+$Parent.note = "NEW"
+
+assert(child.flag, 2)
+assert(grandchild.flag, 2)
+assert(child.note, "NEW")
+assert(grandchild.note, "NEW")
+assert(Parent.length, 0)
+assert(Child.length, 1)
+
+if $Parent.flag == 2:
+    $Parent.active = true
+
+assert(child.active, true)
+assert(grandchild.active, true)
+
+delete $Parent.note
+
+assert(child.note, null)
+assert(grandchild.note, null)
+
+---
+
+# Nucleoid preserves subtype property rules when a parent rule changes
+
+class Parent:
+    pass
+
+class Child: Parent
+    pass
+
+$Child.flag = 7
+child = Child()
+
+$Parent.flag = 2
+
+assert(child.flag, 7)
+
+if $Parent.id != "":
+    $Parent.flag = 3
+
+{
+    $Parent.flag = 4
+}
+
+assert(child.flag, 7)
+
+another = Child()
+
+assert(another.flag, 7)
+
+delete $Parent.flag
+
+assert(child.flag, 7)
+assert(another.flag, 7)
+
+---
+
+# Nucleoid rolls back a parent rule that fails for a subtype instance
+
+class Parent:
+    pass
+
+class Child: Parent
+    pass
+
+parent = Parent()
+parent.score = 0
+child = Child()
+child.score = 2
+
+try:
+    if $Parent.score > 1:
+        throw "LIMIT"
+catch error:
+    assert(error, "LIMIT")
+
+child.score = 3
+parent.score = 3
+another = Child()
+another.score = 4
+
+assert(child.score, 3)
+assert(parent.score, 3)
+assert(another.score, 4)
+
+---
+
+# Nucleoid resolves super from the constructor currently executing
+
+class Base(amount):
+    this.amount = amount
+
+class Middle: Base
+    def init(amount):
+        super(amount + 1)
+        this.middle = true
+
+class Leaf: Middle
+    def init(amount):
+        super(amount * 2)
+        this.leaf = true
+
+leaf = Leaf(3)
+
+assert(leaf.amount, 7)
+assert(leaf.middle, true)
+assert(leaf.leaf, true)
+
+class Passive: Middle
+    pass
+
+passive = Passive(4)
+
+assert(passive.amount, 5)
+
+class Final: Passive
+    def init(amount):
+        super(amount + 2)
+
+final = Final(4)
+
+assert(final.amount, 7)
+
+---
+
+# Nucleoid rejects a class inheriting from itself
+
+try:
+    class Loop: Loop
+        pass
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+
+assert(Class.length, 0)
+
+class Loop:
+    pass
+
+loop = Loop()
+
+assert(loop.id, "loop")
+
+---
+
+# Nucleoid rejects an inheritance cycle introduced by redeclaration
+
+class Root:
+    pass
+
+$Root.flag = true
+
+class Child: Root
+    pass
+
+try:
+    class Root: Child
+        pass
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+
+child = Child()
+
+assert(child.flag, true)
+assert(Class.length, 2)
+
+---
+
+# Nucleoid rejects class dependency cycles inside compound expressions
+
+class Item:
+    pass
+
+$Item.list = [$Item.source]
+
+try:
+    $Item.source = $Item.list
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.record = { "source": $Item.source }
+
+try:
+    $Item.source = $Item.record
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.label = `${$Item.source}`
+
+try:
+    $Item.source = $Item.label
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.part = "abcd"[$Item.source:]
+
+try:
+    $Item.source = $Item.part.length
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.head = "abcd"[:$Item.source]
+
+try:
+    $Item.source = $Item.head.length
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.copy = $Item.list[:]
+
+try:
+    $Item.source = $Item.copy[0]
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.indexed = [$Item["source"]]
+
+try:
+    $Item.source = $Item.indexed
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.source = 1
+item = Item()
+
+assert(item.list, [1])
+assert(item.label, "1")
+assert(item.part, "bcd")
+
+$Item.snapshot = [$Item.source.value]
+$Item.source = $Item.snapshot[0] + 1
+
+assert(item.source, 2)
+assert(item.snapshot, [1])
+assert(item.list, [2])
+
+---
+
+# Nucleoid checks both slice bounds when declaring a class rule
+
+class Item:
+    pass
+
+try:
+    $Item.part = "abcd"[missing:]
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+try:
+    $Item.part = "abcd"[:missing]
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+start = 1
+end = 3
+$Item.part = "abcd"[start:end]
+item = Item()
+
+assert(item.part, "bc")
+
+end = 4
+
+assert(item.part, "bcd")
+
+---
+
+# Nucleoid propagates null through indexed object properties
+
+class Item:
+    pass
+
+item = Item()
+item.amount = null
+field = "amount"
+direct = item.amount + 1
+indexed = item[field] + 1
+
+assert(direct, null)
+assert(indexed, null)
+
+item.amount = 4
+
+assert(direct, 5)
+assert(indexed, 5)
+
+delete item.amount
+
+assert(direct, null)
+assert(indexed, null)
+
+---
+
+# Nucleoid defers a class conditional reading an undefined indexed property
+
+class Item:
+    pass
+
+if $Item["score"] == null:
+    $Item.active = true
+
+item = Item()
+
+assert(item.active, null)
+
+item.score = null
+
+assert(item.active, true)
+
+---
+
+# Nucleoid tracks the number of declared classes as a dependency
+
+count = Class.length
+doubled = count * 2
+
+class First:
+    pass
+
+assert(count, 1)
+assert(doubled, 2)
+
+class Second:
+    pass
+
+assert(count, 2)
+assert(doubled, 4)
+
+class First:
+    pass
+
+assert(count, 2)
+
+try:
+    class Temporary:
+        pass
+    throw "ABORT"
+catch error:
+    assert(error, "ABORT")
+
+assert(Class.length, 2)
+assert(count, 2)
+assert(doubled, 4)
+
+class Third:
+    pass
+
+assert(count, 3)
+assert(doubled, 6)
+
+if count > 3:
+    throw "TOO_MANY_TYPES"
+
+try:
+    class Fourth:
+        pass
+catch error:
+    assert(error, "TOO_MANY_TYPES")
+
+assert(Class.length, 3)
+assert(count, 3)
+assert(doubled, 6)
 ```

@@ -112,6 +112,7 @@ radius = radius + 10
 ### The value property
 
 - `.value` reads the current value and records no dependency.
+- Its snapshot remains fixed inside lists, object literals, templates, and slices when other dependencies update.
 - It breaks what would otherwise be a cycle.
 - The value of a `null` property is `0`.
 
@@ -185,7 +186,9 @@ assert((a + b) * c, 20)
 ### Indexing, slicing, and length
 
 - Lists and instance lists index with brackets; the index may be a variable.
+- Object bracket access has the same null, undefined, and dependency behavior as a dotted property read.
 - A range is written `[start:end]`; either bound may be omitted, and a negative bound counts from the end.
+- Both slice bounds are expressions whose references are checked when a class-level rule is declared.
 - `.length` is a dependency on the collection.
 
 ```
@@ -206,6 +209,7 @@ Full detail: [NUC 10](nuc-0010.md).
 - `$Name` is the type; `Name` is the list of its instances.
 - `typeof $Name` is `Class`; `typeof Name` is `List`.
 - Every declared type is added to the global `Class` list.
+- Assignments reading `Class.length` update when a type is declared; re-declaring a type does not increase the count.
 
 ```
 class Entity:
@@ -241,7 +245,9 @@ class Shape:
 ### Subtypes
 
 - A subtype names its supertype after the colon; `super(...)` invokes its constructor.
+- `super(...)` advances from the constructor currently executing; subtypes without constructors use the nearest ancestor constructor.
 - Class-level rules on the supertype apply to subtype instances.
+- Direct or indirect inheritance cycles are rejected when the type is declared or re-declared.
 
 ```
 class Truck: Vehicle
@@ -316,9 +322,11 @@ $Human.mortal = true
 
 - `if`, `else if`, and `else` may be written over `$Name`; each instance is evaluated independently.
 - Instances whose inputs are missing are left untouched.
-- Rules apply in the order received; when several assign the same property, the last matching one wins.
+- Rules on the same type apply in the order received; when several assign the same property, the last matching one wins.
 - Assigning the property on one instance overrides the rule for that instance only.
 - A rule on a subtype overrides the supertype's.
+- Parent rule changes also apply to existing subtype instances, while subtype property rules retain precedence over inherited assignments.
+- Rules validate references and dependency cycles before instances exist, including expressions nested inside collections, templates, and slices.
 
 ```
 if $Grade.score > 89:
@@ -540,6 +548,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Condition | Message |
 | --- | --- |
 | An assignment that would close a dependency cycle | `Circular Dependency` |
+| A type declaration that would close an inheritance cycle | `Circular Inheritance` |
 | Deleting an instance that still has properties | `Cannot delete object '<id>'` |
 | Using `value` as a property name | `Cannot use 'value' as a property` |
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |

@@ -556,6 +556,10 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr> {
+        self.nested_expression(Self::expression_inner)
+    }
+
+    fn nested_expression(&mut self, parse: fn(&mut Self) -> Result<Expr>) -> Result<Expr> {
         self.depth += 1;
 
         if self.depth > MAX_NESTING {
@@ -563,7 +567,7 @@ impl Parser {
             return Err(self.error("Expressions are nested too deeply"));
         }
 
-        let result = self.expression_inner();
+        let result = parse(self);
         self.depth -= 1;
         result
     }
@@ -804,7 +808,7 @@ impl Parser {
             if let Some(stage) = Stage::from_name(name) {
                 if self.starts_operand(1) {
                     self.advance();
-                    let operand = self.unary()?;
+                    let operand = self.nested_expression(Self::unary)?;
 
                     return Ok(Expr::Reason {
                         stage,
@@ -823,7 +827,7 @@ impl Parser {
         };
 
         self.advance();
-        let operand = self.unary()?;
+        let operand = self.nested_expression(Self::unary)?;
 
         Ok(Expr::Unary {
             operator,
@@ -971,9 +975,9 @@ impl Parser {
             Token::Keyword(Keyword::False) => Ok(Expr::Bool(false)),
             Token::Keyword(Keyword::Null) => Ok(Expr::Null),
             Token::Keyword(Keyword::This) => Ok(Expr::This),
-            Token::Keyword(Keyword::New) => self.primary(),
+            Token::Keyword(Keyword::New) => self.nested_expression(Self::primary),
             Token::Keyword(Keyword::Delete) => {
-                let operand = self.unary()?;
+                let operand = self.nested_expression(Self::unary)?;
                 Ok(Expr::Delete(Box::new(operand)))
             }
             Token::Keyword(Keyword::Super) => {

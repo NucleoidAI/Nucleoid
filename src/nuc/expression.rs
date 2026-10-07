@@ -6,7 +6,7 @@
 //! `Runtime::freeze`.
 
 use crate::error::{Error, Result};
-use crate::lang::ast::{Expr, Stmt, literal};
+use crate::lang::ast::{Expr, Stmt, TemplatePart, literal};
 use crate::nuc::Outcome;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
@@ -92,6 +92,40 @@ impl Runtime {
                 object: Box::new(self.freeze(object, scope)?),
                 index: Box::new(self.freeze(index, scope)?),
             },
+            Expr::Slice { object, start, end } => Expr::Slice {
+                object: Box::new(self.freeze(object, scope)?),
+                start: start
+                    .as_ref()
+                    .map(|start| self.freeze(start, scope).map(Box::new))
+                    .transpose()?,
+                end: end
+                    .as_ref()
+                    .map(|end| self.freeze(end, scope).map(Box::new))
+                    .transpose()?,
+            },
+            Expr::List(items) => Expr::List(
+                items
+                    .iter()
+                    .map(|item| self.freeze(item, scope))
+                    .collect::<Result<_>>()?,
+            ),
+            Expr::ObjectLiteral(entries) => Expr::ObjectLiteral(
+                entries
+                    .iter()
+                    .map(|(name, value)| Ok((name.clone(), self.freeze(value, scope)?)))
+                    .collect::<Result<_>>()?,
+            ),
+            Expr::Template(parts) => Expr::Template(
+                parts
+                    .iter()
+                    .map(|part| match part {
+                        TemplatePart::Literal(text) => Ok(TemplatePart::Literal(text.clone())),
+                        TemplatePart::Expression(value) => {
+                            Ok(TemplatePart::Expression(self.freeze(value, scope)?))
+                        }
+                    })
+                    .collect::<Result<_>>()?,
+            ),
             other => other.clone(),
         })
     }

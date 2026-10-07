@@ -703,4 +703,100 @@ assert([1, 2, 3].every(n => n > 0), true)
 
 # Class
 assert(Class.length, 0)
+
+count = Class.length
+
+class Entity:
+    pass
+
+assert(count, 1)
+
+---
+
+# Nucleoid keeps compound snapshots fixed in the reference
+
+seed = 1
+live = 10
+values = [seed.value, live]
+label = `${seed.value}-${live}`
+record = { "seed": seed.value, "live": live }
+start = 1
+end = 3
+part = "abcd"[start.value:end]
+
+seed = 2
+live = 20
+start = 2
+end = 4
+
+assert(values, [1, 20])
+assert(label, "1-20")
+assert(record, { "seed": 1, "live": 20 })
+assert(part, "bcd")
+
+---
+
+# Nucleoid updates inherited rules and respects subtype precedence in the reference
+
+class Parent(amount):
+    this.amount = amount
+
+class Child: Parent
+    def init(amount):
+        super(amount + 1)
+
+class Leaf: Child
+    def init(amount):
+        super(amount * 2)
+
+leaf = Leaf(3)
+
+assert(leaf.amount, 7)
+
+$Parent.flag = 1
+
+assert(leaf.flag, 1)
+
+$Leaf.flag = 7
+$Parent.flag = 2
+
+assert(leaf.flag, 7)
+
+---
+
+# Nucleoid validates inherited classes and indexed reads in the reference
+
+class Parent:
+    pass
+
+class Child: Parent
+    pass
+
+try:
+    class Parent: Child
+        pass
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+
+try:
+    $Child.part = "abcd"[:missing]
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+$Child.list = [$Child.amount]
+
+try:
+    $Child.amount = $Child.list[0]
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+child = Child()
+child.amount = null
+total = child["amount"] + 1
+
+assert(total, null)
+
+child.amount = 4
+
+assert(total, 5)
 ```

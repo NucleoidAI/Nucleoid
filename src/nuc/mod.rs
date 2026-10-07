@@ -180,6 +180,11 @@ impl Nuc {
 
             Expr::Member { object, property } => {
                 if let Expr::ClassRef(class) = object.as_ref() {
+                    if scope.instance().is_some_and(|instance| {
+                        runtime.property_rule_is_overridden(class, instance, property)
+                    }) {
+                        return Ok(Nuc::Pass);
+                    }
                     if scope.instance().is_none() {
                         if !runtime.state.has_class(class) {
                             return Err(Error::not_defined(class));
@@ -270,6 +275,7 @@ impl Nuc {
         match self {
             Nuc::Variable(node) => node.after(runtime),
             Nuc::Property(node) => node.after(runtime),
+            Nuc::Class(node) => node.after(runtime),
             Nuc::Function(node) => node.after(runtime),
             _ => Ok(()),
         }

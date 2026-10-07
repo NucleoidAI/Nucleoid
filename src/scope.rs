@@ -12,6 +12,7 @@ struct Frame {
     instance: Option<ObjectId>,
     /// The receiver of a constructor body.
     this: Option<ObjectId>,
+    constructor_class: Option<String>,
 }
 
 /// The chain of local scopes surrounding the statement being executed. Locals
@@ -130,6 +131,19 @@ impl Scope {
     pub fn set_this(&mut self, this: Option<ObjectId>) {
         if let Some(frame) = self.frames.last_mut() {
             frame.this = this;
+        }
+    }
+
+    pub(crate) fn constructor_class(&self) -> Option<&str> {
+        self.frames
+            .iter()
+            .rev()
+            .find_map(|frame| frame.constructor_class.as_deref())
+    }
+
+    pub(crate) fn set_constructor_class(&mut self, name: String) {
+        if let Some(frame) = self.frames.last_mut() {
+            frame.constructor_class = Some(name);
         }
     }
 }

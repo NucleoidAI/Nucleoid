@@ -49,44 +49,7 @@ impl<'a> Expression<'a> {
 fn roots(expression: &Expr, found: &mut Vec<String>) {
     match expression {
         Expr::Identifier(name) => found.push(name.clone()),
-        Expr::Member { object, .. } | Expr::Slice { object, .. } => roots(object, found),
-        Expr::Index { object, index } => {
-            roots(object, found);
-            roots(index, found);
-        }
-        Expr::Call { callee, arguments } => {
-            roots(callee, found);
-            for argument in arguments {
-                roots(argument, found);
-            }
-        }
-        Expr::Unary { operand, .. } => roots(operand, found),
-        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
-            roots(left, found);
-            roots(right, found);
-        }
-        Expr::List(items) => {
-            for item in items {
-                roots(item, found);
-            }
-        }
-        Expr::ObjectLiteral(entries) => {
-            for (_, value) in entries {
-                roots(value, found);
-            }
-        }
-        Expr::Template(parts) => {
-            for part in parts {
-                if let TemplatePart::Expression(expression) = part {
-                    roots(expression, found);
-                }
-            }
-        }
-        Expr::Assign { target, value } => {
-            roots(target, found);
-            roots(value, found);
-        }
-        _ => {}
+        _ => visit_children(expression, &mut |child| roots(child, found)),
     }
 }
 
@@ -97,52 +60,6 @@ fn class_reference(expression: &Expr, found: &mut Option<String>) {
 
     match expression {
         Expr::ClassRef(name) => *found = Some(name.clone()),
-        Expr::Member { object, .. } => class_reference(object, found),
-        Expr::Index { object, index } => {
-            class_reference(object, found);
-            class_reference(index, found);
-        }
-        Expr::Slice { object, start, end } => {
-            class_reference(object, found);
-            if let Some(start) = start {
-                class_reference(start, found);
-            }
-            if let Some(end) = end {
-                class_reference(end, found);
-            }
-        }
-        Expr::Call { callee, arguments } => {
-            class_reference(callee, found);
-            for argument in arguments {
-                class_reference(argument, found);
-            }
-        }
-        Expr::Unary { operand, .. } => class_reference(operand, found),
-        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
-            class_reference(left, found);
-            class_reference(right, found);
-        }
-        Expr::List(items) => {
-            for item in items {
-                class_reference(item, found);
-            }
-        }
-        Expr::ObjectLiteral(entries) => {
-            for (_, value) in entries {
-                class_reference(value, found);
-            }
-        }
-        Expr::Template(parts) => {
-            for part in parts {
-                if let TemplatePart::Expression(expression) = part {
-                    class_reference(expression, found);
-                }
-            }
-        }
-        Expr::Assign { target, value } => {
-            class_reference(target, found);
-            class_reference(value, found);
-        }
         // A rule written as a lambda still states something about the type, so
         // unlike `roots` this does look inside one.
         Expr::Function(function) => {
@@ -150,12 +67,13 @@ fn class_reference(expression: &Expr, found: &mut Option<String>) {
                 class_reference(body, found);
             }
         }
-        _ => {}
+        _ => visit_children(expression, &mut |child| class_reference(child, found)),
     }
 }
 
 fn class_properties(expression: &Expr, class: &str, found: &mut Vec<String>) {
     match expression {
+        Expr::Member { property, .. } if property == "value" => {}
         Expr::Member { object, property } => {
             if matches!(object.as_ref(), Expr::ClassRef(name) if name == class) {
                 found.push(property.clone());
@@ -163,21 +81,85 @@ fn class_properties(expression: &Expr, class: &str, found: &mut Vec<String>) {
                 class_properties(object, class, found);
             }
         }
-        Expr::Binary { left, right, .. } | Expr::Logical { left, right, .. } => {
-            class_properties(left, class, found);
-            class_properties(right, class, found);
+        Expr::Index { object, index } => {
+            if let (Expr::ClassRef(name), Expr::String(property)) =
+                (object.as_ref(), index.as_ref())
+            {
+                if name == class {
+                    found.push(property.clone());
+                }
+            }
+            visit_children(expression, &mut |child| {
+                class_properties(child, class, found)
+            });
         }
-        Expr::Unary { operand, .. } => class_properties(operand, class, found),
-        Expr::Call { callee, arguments } => {
-            class_properties(callee, class, found);
-            for argument in arguments {
-                class_properties(argument, class, found);
+        _ => visit_children(expression, &mut |child| {
+            class_properties(child, class, found)
+        }),
+    }
+}
+
+/// Visits immediate expression children without entering a function's scope.
+fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
+    match expression {
+        Expr::Member { object, .. } => visit(object),
+        Expr::Index { object, index } => {
+            visit(object);
+            visit(index);
+        }
+        Expr::Slice { object, start, end } => {
+            visit(object);
+            if let Some(start) = start {
+                visit(start);
+            }
+            if let Some(end) = end {
+                visit(end);
             }
         }
-        Expr::Index { object, index } => {
-            class_properties(object, class, found);
-            class_properties(index, class, found);
+        Expr::Call { callee, arguments } => {
+            visit(callee);
+            for argument in arguments {
+                visit(argument);
+            }
         }
-        _ => {}
+        Expr::Unary { operand, .. } | Expr::Delete(operand) => visit(operand),
+        Expr::Reason { source, .. } => visit(source),
+        Expr::Binary { left, right, .. }
+        | Expr::Logical { left, right, .. }
+        | Expr::Assign {
+            target: left,
+            value: right,
+        } => {
+            visit(left);
+            visit(right);
+        }
+        Expr::List(items) | Expr::Super(items) => {
+            for item in items {
+                visit(item);
+            }
+        }
+        Expr::ObjectLiteral(entries) => {
+            for (_, value) in entries {
+                visit(value);
+            }
+        }
+        Expr::Template(parts) => {
+            for part in parts {
+                if let TemplatePart::Expression(expression) = part {
+                    visit(expression);
+                }
+            }
+        }
+        Expr::Null
+        | Expr::Bool(_)
+        | Expr::Number(_)
+        | Expr::String(_)
+        | Expr::Regex(_)
+        | Expr::Identifier(_)
+        | Expr::ClassRef(_)
+        | Expr::ObjectRef(_)
+        | Expr::This
+        | Expr::Function(_)
+        | Expr::Model => {}
     }
 }

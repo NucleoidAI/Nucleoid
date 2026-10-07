@@ -113,17 +113,24 @@ impl Runtime {
             return Ok(Value::Bool(false));
         }
 
+        let instances: Vec<ObjectId> = self
+            .instances_for_class(class)
+            .into_iter()
+            .filter(|instance| !self.property_rule_is_overridden(class, instance, property))
+            .collect();
+
         self.update_class(class, |data| {
             data.declarations.shift_remove(&key);
         });
 
-        for instance in data.instances {
+        for instance in instances {
             let node = NodeKey::property(&instance, property);
             self.remove_node(&node);
 
             if self.state.property(&instance, property).is_some() {
                 self.assign_property(&instance, property, Value::Null);
             }
+            self.propagate(&node)?;
         }
 
         Ok(Value::Bool(true))

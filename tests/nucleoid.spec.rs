@@ -3007,6 +3007,302 @@ fn treats_a_reasoning_name_as_a_variable_when_one_is_defined() {
     assert_eq!(run("why"), 1);
 }
 
+/// Nucleoid freezes value reads inside compound expressions
+#[rustfmt::skip]
+#[test]
+fn freezes_value_reads_inside_compound_expressions() {
+    let mut run = runner();
+    run("seed = 1");
+    run("live = 10");
+    run("values = [seed.value, live]");
+    run(r#"record = { "frozen": seed.value, "live": live }"#);
+    run("label = `${seed.value}-${live}`");
+    run(r#"text = "abcd""#);
+    run("start = 1");
+    run("end = 3");
+    run("part = text[start.value:end]");
+    run("tail = text[start.value:]");
+    run("head = text[:end.value]");
+    run("seed = 2");
+    run("live = 20");
+    run("start = 2");
+    run("end = 4");
+    run(r#"text = "wxyz""#);
+    assert_eq!(run("values"), serde_json::json!([1, 20]));
+    assert_eq!(run("record"), serde_json::json!({ "frozen": 1, "live": 20 }));
+    assert_eq!(run("label"), "1-20");
+    assert_eq!(run("part"), "xyz");
+    assert_eq!(run("tail"), "xyz");
+    assert_eq!(run("head"), "wxy");
+}
+
+/// Nucleoid updates inherited rules on existing subtype instances
+#[rustfmt::skip]
+#[test]
+fn updates_inherited_rules_on_existing_subtype_instances() {
+    let mut run = runner();
+    run(r#"class Parent:
+    pass"#);
+    run("$Parent.flag = 1");
+    run(r#"class Child: Parent
+    pass"#);
+    run(r#"class Grandchild: Child
+    pass"#);
+    run("child = Child()");
+    run("grandchild = Grandchild()");
+    run("$Parent.flag = 2");
+    run(r#"$Parent.note = "NEW""#);
+    assert_eq!(run("child.flag"), 2);
+    assert_eq!(run("grandchild.flag"), 2);
+    assert_eq!(run("child.note"), "NEW");
+    assert_eq!(run("grandchild.note"), "NEW");
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 1);
+    run(r#"if $Parent.flag == 2:
+    $Parent.active = true"#);
+    assert_eq!(run("child.active"), true);
+    assert_eq!(run("grandchild.active"), true);
+    run("delete $Parent.note");
+    assert_eq!(run("child.note"), serde_json::Value::Null);
+    assert_eq!(run("grandchild.note"), serde_json::Value::Null);
+}
+
+/// Nucleoid preserves subtype property rules when a parent rule changes
+#[rustfmt::skip]
+#[test]
+fn preserves_subtype_property_rules_when_a_parent_rule_changes() {
+    let mut run = runner();
+    run(r#"class Parent:
+    pass"#);
+    run(r#"class Child: Parent
+    pass"#);
+    run("$Child.flag = 7");
+    run("child = Child()");
+    run("$Parent.flag = 2");
+    assert_eq!(run("child.flag"), 7);
+    run(r#"if $Parent.id != "":
+    $Parent.flag = 3"#);
+    run(r#"{
+    $Parent.flag = 4
+}"#);
+    assert_eq!(run("child.flag"), 7);
+    run("another = Child()");
+    assert_eq!(run("another.flag"), 7);
+    run("delete $Parent.flag");
+    assert_eq!(run("child.flag"), 7);
+    assert_eq!(run("another.flag"), 7);
+}
+
+/// Nucleoid rolls back a parent rule that fails for a subtype instance
+#[rustfmt::skip]
+#[test]
+fn rolls_back_a_parent_rule_that_fails_for_a_subtype_instance() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"class Parent:
+    pass"#);
+    run(r#"class Child: Parent
+    pass"#);
+    run("parent = Parent()");
+    run("parent.score = 0");
+    run("child = Child()");
+    run("child.score = 2");
+    assert_eq!(run_error(r#"if $Parent.score > 1:
+    throw "LIMIT""#), "LIMIT");
+    run("child.score = 3");
+    run("parent.score = 3");
+    run("another = Child()");
+    run("another.score = 4");
+    assert_eq!(run("child.score"), 3);
+    assert_eq!(run("parent.score"), 3);
+    assert_eq!(run("another.score"), 4);
+}
+
+/// Nucleoid resolves super from the constructor currently executing
+#[rustfmt::skip]
+#[test]
+fn resolves_super_from_the_constructor_currently_executing() {
+    let mut run = runner();
+    run(r#"class Base(amount):
+    this.amount = amount"#);
+    run(r#"class Middle: Base
+    def init(amount):
+        super(amount + 1)
+        this.middle = true"#);
+    run(r#"class Leaf: Middle
+    def init(amount):
+        super(amount * 2)
+        this.leaf = true"#);
+    run("leaf = Leaf(3)");
+    assert_eq!(run("leaf.amount"), 7);
+    assert_eq!(run("leaf.middle"), true);
+    assert_eq!(run("leaf.leaf"), true);
+    run(r#"class Passive: Middle
+    pass"#);
+    run("passive = Passive(4)");
+    assert_eq!(run("passive.amount"), 5);
+    run(r#"class Final: Passive
+    def init(amount):
+        super(amount + 2)"#);
+    run("final = Final(4)");
+    assert_eq!(run("final.amount"), 7);
+}
+
+/// Nucleoid rejects a class inheriting from itself
+#[rustfmt::skip]
+#[test]
+fn rejects_a_class_inheriting_from_itself() {
+    let (mut run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error(r#"class Loop: Loop
+    pass"#), "TypeError: Circular Inheritance");
+    assert_eq!(run("Class.length"), 0);
+    run(r#"class Loop:
+    pass"#);
+    run("loop = Loop()");
+    assert_eq!(run("loop.id"), "loop");
+}
+
+/// Nucleoid rejects an inheritance cycle introduced by redeclaration
+#[rustfmt::skip]
+#[test]
+fn rejects_an_inheritance_cycle_introduced_by_redeclaration() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"class Root:
+    pass"#);
+    run("$Root.flag = true");
+    run(r#"class Child: Root
+    pass"#);
+    assert_eq!(run_error(r#"class Root: Child
+    pass"#), "TypeError: Circular Inheritance");
+    run("child = Child()");
+    assert_eq!(run("child.flag"), true);
+    assert_eq!(run("Class.length"), 2);
+}
+
+/// Nucleoid rejects class dependency cycles inside compound expressions
+#[rustfmt::skip]
+#[test]
+fn rejects_class_dependency_cycles_inside_compound_expressions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"class Item:
+    pass"#);
+    run("$Item.list = [$Item.source]");
+    assert_eq!(run_error("$Item.source = $Item.list"), "TypeError: Circular Dependency");
+    run(r#"$Item.record = { "source": $Item.source }"#);
+    assert_eq!(run_error("$Item.source = $Item.record"), "TypeError: Circular Dependency");
+    run("$Item.label = `${$Item.source}`");
+    assert_eq!(run_error("$Item.source = $Item.label"), "TypeError: Circular Dependency");
+    run(r#"$Item.part = "abcd"[$Item.source:]"#);
+    assert_eq!(run_error("$Item.source = $Item.part.length"), "TypeError: Circular Dependency");
+    run(r#"$Item.head = "abcd"[:$Item.source]"#);
+    assert_eq!(run_error("$Item.source = $Item.head.length"), "TypeError: Circular Dependency");
+    run("$Item.copy = $Item.list[:]");
+    assert_eq!(run_error("$Item.source = $Item.copy[0]"), "TypeError: Circular Dependency");
+    run(r#"$Item.indexed = [$Item["source"]]"#);
+    assert_eq!(run_error("$Item.source = $Item.indexed"), "TypeError: Circular Dependency");
+    run("$Item.source = 1");
+    run("item = Item()");
+    assert_eq!(run("item.list"), serde_json::json!([1]));
+    assert_eq!(run("item.label"), "1");
+    assert_eq!(run("item.part"), "bcd");
+    run("$Item.snapshot = [$Item.source.value]");
+    run("$Item.source = $Item.snapshot[0] + 1");
+    assert_eq!(run("item.source"), 2);
+    assert_eq!(run("item.snapshot"), serde_json::json!([1]));
+    assert_eq!(run("item.list"), serde_json::json!([2]));
+}
+
+/// Nucleoid checks both slice bounds when declaring a class rule
+#[rustfmt::skip]
+#[test]
+fn checks_both_slice_bounds_when_declaring_a_class_rule() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"class Item:
+    pass"#);
+    assert_eq!(run_error(r#"$Item.part = "abcd"[missing:]"#), "ReferenceError: missing is not defined");
+    assert_eq!(run_error(r#"$Item.part = "abcd"[:missing]"#), "ReferenceError: missing is not defined");
+    run("start = 1");
+    run("end = 3");
+    run(r#"$Item.part = "abcd"[start:end]"#);
+    run("item = Item()");
+    assert_eq!(run("item.part"), "bc");
+    run("end = 4");
+    assert_eq!(run("item.part"), "bcd");
+}
+
+/// Nucleoid propagates null through indexed object properties
+#[rustfmt::skip]
+#[test]
+fn propagates_null_through_indexed_object_properties() {
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run("item = Item()");
+    run("item.amount = null");
+    run(r#"field = "amount""#);
+    run("direct = item.amount + 1");
+    run("indexed = item[field] + 1");
+    assert_eq!(run("direct"), serde_json::Value::Null);
+    assert_eq!(run("indexed"), serde_json::Value::Null);
+    run("item.amount = 4");
+    assert_eq!(run("direct"), 5);
+    assert_eq!(run("indexed"), 5);
+    run("delete item.amount");
+    assert_eq!(run("direct"), serde_json::Value::Null);
+    assert_eq!(run("indexed"), serde_json::Value::Null);
+}
+
+/// Nucleoid defers a class conditional reading an undefined indexed property
+#[rustfmt::skip]
+#[test]
+fn defers_a_class_conditional_reading_an_undefined_indexed_property() {
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run(r#"if $Item["score"] == null:
+    $Item.active = true"#);
+    run("item = Item()");
+    assert_eq!(run("item.active"), serde_json::Value::Null);
+    run("item.score = null");
+    assert_eq!(run("item.active"), true);
+}
+
+/// Nucleoid tracks the number of declared classes as a dependency
+#[rustfmt::skip]
+#[test]
+fn tracks_the_number_of_declared_classes_as_a_dependency() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("count = Class.length");
+    run("doubled = count * 2");
+    run(r#"class First:
+    pass"#);
+    assert_eq!(run("count"), 1);
+    assert_eq!(run("doubled"), 2);
+    run(r#"class Second:
+    pass"#);
+    assert_eq!(run("count"), 2);
+    assert_eq!(run("doubled"), 4);
+    run(r#"class First:
+    pass"#);
+    assert_eq!(run("count"), 2);
+    assert_eq!(run_error(r#"class Temporary:
+    pass
+throw "ABORT""#), "ABORT");
+    assert_eq!(run("Class.length"), 2);
+    assert_eq!(run("count"), 2);
+    assert_eq!(run("doubled"), 4);
+    run(r#"class Third:
+    pass"#);
+    assert_eq!(run("count"), 3);
+    assert_eq!(run("doubled"), 6);
+    run(r#"if count > 3:
+    throw "TOO_MANY_TYPES""#);
+    assert_eq!(run_error(r#"class Fourth:
+    pass"#), "TOO_MANY_TYPES");
+    assert_eq!(run("Class.length"), 3);
+    assert_eq!(run("count"), 3);
+    assert_eq!(run("doubled"), 6);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

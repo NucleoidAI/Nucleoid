@@ -76,10 +76,10 @@ impl Runtime {
     ) -> Result<Value> {
         let base = self.evaluate(object, scope)?;
         let key = self.evaluate(index, scope)?;
-        self.read_index(&base, &key)
+        self.read_index(&base, &key, scope)
     }
 
-    fn read_index(&mut self, base: &Value, key: &Value) -> Result<Value> {
+    fn read_index(&mut self, base: &Value, key: &Value, scope: &mut Scope) -> Result<Value> {
         match base {
             Value::List(items) => {
                 let index = key.to_number();
@@ -121,15 +121,7 @@ impl Runtime {
                 })
             }
 
-            Value::Object(id) => {
-                let property = key.to_string();
-                self.track(NodeKey::property(id, &property));
-                Ok(self
-                    .state
-                    .property(id, &property)
-                    .cloned()
-                    .unwrap_or(Value::Undefined))
-            }
+            Value::Object(_) => self.read_property(base, &key.to_string(), scope),
 
             _ => Ok(Value::Undefined),
         }
