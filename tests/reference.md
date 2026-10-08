@@ -667,6 +667,8 @@ assert(Math.floor(2.9), 2)
 assert(Math.round(2.5), 3)
 assert(Math.max(1, 5, 3), 5)
 assert(Math.min(1, 5, 3), 1)
+assert(String(Math.max(1, Number.NaN)), "NaN")
+assert(String(Math.min(1, "invalid")), "NaN")
 
 # Number
 assert(Number.MAX_INTEGER, 9007199254740991)

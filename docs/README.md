@@ -494,6 +494,7 @@ Full detail: [NUC 9](nuc-0009.md).
 
 - Built-in calls participate in the dependency graph like any other expression.
 - Mutating a list re-evaluates its dependents.
+- `Math.max` and `Math.min` propagate `NaN`, including when an argument cannot be coerced to a number.
 
 | Object | Members |
 | --- | --- |

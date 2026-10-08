@@ -3561,6 +3561,59 @@ fn repeats_strings_with_catchable_allocation_errors() {
     assert_eq!(run("repeated"), "ababab");
 }
 
+/// Nucleoid propagates NaN through Math minimum and maximum
+#[rustfmt::skip]
+#[test]
+fn propagates_nan_through_math_minimum_and_maximum() {
+    let mut run = runner();
+    assert_eq!(run("String(Math.max(Number.NaN))"), "NaN");
+    assert_eq!(run("String(Math.min(Number.NaN))"), "NaN");
+    assert_eq!(run("String(Math.max(Number.NaN, 1))"), "NaN");
+    assert_eq!(run("String(Math.min(Number.NaN, 1))"), "NaN");
+    assert_eq!(run("String(Math.max(1, Number.NaN))"), "NaN");
+    assert_eq!(run("String(Math.min(1, Number.NaN))"), "NaN");
+    assert_eq!(run("String(Math.max(1, Number.NaN, 2))"), "NaN");
+    assert_eq!(run("String(Math.min(1, Number.NaN, 2))"), "NaN");
+    assert_eq!(run("String(Math.max(Number.POSITIVE_INFINITY, Number.NaN))"), "NaN");
+    assert_eq!(run("String(Math.min(Number.NEGATIVE_INFINITY, Number.NaN))"), "NaN");
+    assert_eq!(run(r#"String(Math.max(1, "invalid"))"#), "NaN");
+    assert_eq!(run(r#"String(Math.min(1, "invalid"))"#), "NaN");
+    assert_eq!(run("String(Math.max(1, Math.sqrt(-1)))"), "NaN");
+    assert_eq!(run("String(Math.min(1, Math.sqrt(-1)))"), "NaN");
+    {
+        let actual = run("Math.max()");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("Math.min()");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#"Math.max("7", 5)"#), 7);
+    assert_eq!(run(r#"Math.min("7", 5)"#), 5);
+    assert_eq!(run("Math.max(Number.NEGATIVE_INFINITY, 5)"), 5);
+    assert_eq!(run("Math.min(Number.POSITIVE_INFINITY, 5)"), 5);
+    run("a = 5");
+    run("b = 9");
+    run("peak = Math.max(a, b)");
+    run("floor = Math.min(a, b)");
+    assert_eq!(run("peak"), 9);
+    assert_eq!(run("floor"), 5);
+    run("b = Number.NaN");
+    assert_eq!(run("String(peak)"), "NaN");
+    assert_eq!(run("String(floor)"), "NaN");
+    run("b = 3");
+    assert_eq!(run("peak"), 5);
+    assert_eq!(run("floor"), 3);
+    run("b = null");
+    assert_eq!(run("peak"), serde_json::Value::Null);
+    assert_eq!(run("floor"), serde_json::Value::Null);
+    run("b = 2");
+    assert_eq!(run("peak"), 5);
+    assert_eq!(run("floor"), 2);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -427,6 +427,18 @@ b = 3
 assert(peak, 5)
 assert(floor, 3)
 
+# An invalid numeric input propagates instead of being ignored
+b = Number.NaN
+
+assert(String(peak), "NaN")
+assert(String(floor), "NaN")
+
+# Both derived values recover when the input is numeric again
+b = 9
+
+assert(peak, 9)
+assert(floor, 5)
+
 ---
 
 # Nucleoid rounds a class-level derived property
