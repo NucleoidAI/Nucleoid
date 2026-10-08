@@ -21,7 +21,7 @@
 //! | --- | --- |
 //! | [`lang::ast::parser`], [`lang::ast::generator`] | Parse and render source |
 //! | [`lang::ast`], [`lang::ast::Ast`] | Typed syntax and expression evaluators |
-//! | [`lang::evaluation`] | Evaluation results and dependency tracking |
+//! | [`lang::evaluation`] | Scoped evaluation and dependency tracking |
 //! | [`nuc`], [`nuc::Nuc`] | Executable statement kinds and their lifecycle |
 //! | [`expression`] | Expression-tree queries |
 //! | [`graph`] | Dependency nodes and edges |

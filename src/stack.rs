@@ -10,6 +10,7 @@ use std::collections::BinaryHeap;
 
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
+use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 
@@ -140,9 +141,9 @@ impl Runtime {
             if let Some(instance) = &node.instance {
                 self.instances.push(instance.clone());
             }
-            self.push_tracking(true);
-            let result = self.rerun(&mut nuc, &mut scope);
-            self.pop_tracking();
+            let result = self.with_tracking(TrackingMode::Isolated, |runtime| {
+                runtime.rerun(&mut nuc, &mut scope)
+            });
             if node.instance.is_some() {
                 self.instances.pop();
             }

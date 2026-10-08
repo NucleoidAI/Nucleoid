@@ -4913,4 +4913,68 @@ index = 2
 
 assert(character, symbol)
 assert(part, symbol)
+
+---
+
+# Nucleoid restores enclosing null tracking after failed local assignments
+
+def fail():
+    throw "EXPECTED"
+
+def recover(local, value):
+    try:
+        local = value + fail()
+    catch error:
+        if error != "EXPECTED":
+            throw error
+    return local
+
+input = null
+result = input + recover(1, 0)
+
+assert(result, null)
+
+input = 2
+
+assert(result, 3)
+
+result = 5 + recover(1, null)
+
+assert(result, 6)
+
+---
+
+# Nucleoid restores enclosing null tracking after failed property assignments
+
+class Item:
+    pass
+
+item = Item()
+item.amount = 1
+
+def fail():
+    throw "EXPECTED"
+
+def recover(value):
+    try:
+        item.amount = value + fail()
+    catch error:
+        if error != "EXPECTED":
+            throw error
+    return item.amount
+
+input = null
+result = input + recover(0)
+
+assert(result, null)
+assert(item.amount, 1)
+
+input = 2
+
+assert(result, 3)
+
+result = 5 + recover(null)
+
+assert(result, 6)
+assert(item.amount, 1)
 ```

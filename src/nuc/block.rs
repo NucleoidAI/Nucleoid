@@ -7,6 +7,7 @@ use indexmap::IndexSet;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt, collect_assigned_names, collect_read_roots};
+use crate::lang::evaluation::TrackingMode;
 use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
@@ -52,18 +53,16 @@ impl Block {
         self.instance = scope.instance().cloned();
         self.key = Some(NodeKey::block(&self.statements, self.instance.as_ref()));
 
-        runtime.push_tracking(false);
-        scope.push();
-        runtime.enter_imperative();
-        let outcome = runtime.execute_all(&self.statements, scope);
-        runtime.leave_imperative();
-        scope.pop();
-        let dependencies = runtime.pop_tracking();
+        let (flow, dependencies) = runtime.with_tracking(TrackingMode::Inherited, |runtime| {
+            scope.push();
+            runtime.enter_imperative();
+            let outcome = runtime.execute_all(&self.statements, scope);
+            runtime.leave_imperative();
+            scope.pop();
+            outcome
+        })?;
 
-        Ok(Outcome {
-            flow: outcome?,
-            dependencies,
-        })
+        Ok(Outcome { flow, dependencies })
     }
 
     pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {

@@ -6,6 +6,7 @@ use crate::builtins::Global;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
+use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -184,12 +185,12 @@ impl Runtime {
     /// path must already be defined.
     fn read_value(&mut self, object: &Expr, scope: &mut Scope) -> Result<Value> {
         let saved = self.null_read;
-        self.push_tracking(true);
-        let value = self.evaluate(object, scope);
-        self.pop_tracking();
+        let value = self.with_tracking(TrackingMode::Isolated, |runtime| {
+            runtime.evaluate(object, scope)
+        });
         self.null_read = saved;
 
-        let value = value?;
+        let (value, _) = value?;
 
         if value.is_undefined() {
             return Err(Error::not_defined(

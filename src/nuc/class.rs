@@ -7,6 +7,7 @@ use crate::error::{Error, Result};
 use crate::expression::Expression;
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{ClassDecl, Expr, FunctionBody, Stmt, find_class_reference_statement};
+use crate::lang::evaluation::TrackingMode;
 use crate::nuc::Outcome;
 use crate::nuc::object::Object;
 use crate::runtime::Runtime;
@@ -299,9 +300,9 @@ impl Runtime {
         // that triggered it happened to be written.
         let nested = self.suspend_imperative();
         self.instances.push(instance.clone());
-        self.push_tracking(true);
-        let result = self.execute(statement, &mut scope);
-        self.pop_tracking();
+        let result = self.with_tracking(TrackingMode::Isolated, |runtime| {
+            runtime.execute(statement, &mut scope)
+        });
         self.instances.pop();
         self.restore_imperative(nested);
 

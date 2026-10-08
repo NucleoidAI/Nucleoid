@@ -8,6 +8,7 @@ use indexmap::IndexSet;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Parameter, Stmt};
+use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::ClassData;
@@ -137,10 +138,9 @@ impl Runtime {
             scope.declare(parameter.name.clone(), value);
         }
 
-        self.push_tracking(true);
-        let result = self.execute_all(&class.constructor, &mut scope);
-        self.pop_tracking();
-        result?;
+        self.with_tracking(TrackingMode::Isolated, |runtime| {
+            runtime.execute_all(&class.constructor, &mut scope)
+        })?;
 
         Ok(())
     }

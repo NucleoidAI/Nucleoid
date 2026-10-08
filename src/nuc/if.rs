@@ -6,7 +6,7 @@ use indexmap::IndexSet;
 use crate::error::Result;
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::{Expr, Stmt};
-use crate::lang::evaluation::Flow;
+use crate::lang::evaluation::{Flow, TrackingMode};
 use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
@@ -69,16 +69,14 @@ impl If {
             self.instance.as_ref(),
         ));
 
-        runtime.push_tracking(false);
-        runtime.enter_imperative();
-        let outcome = self.branch(runtime, scope);
-        runtime.leave_imperative();
-        let dependencies = runtime.pop_tracking();
+        let (flow, dependencies) = runtime.with_tracking(TrackingMode::Inherited, |runtime| {
+            runtime.enter_imperative();
+            let outcome = self.branch(runtime, scope);
+            runtime.leave_imperative();
+            outcome
+        })?;
 
-        Ok(Outcome {
-            flow: outcome?,
-            dependencies,
-        })
+        Ok(Outcome { flow, dependencies })
     }
 
     fn branch(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Flow> {

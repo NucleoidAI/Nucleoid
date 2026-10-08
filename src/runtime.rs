@@ -31,7 +31,7 @@ pub struct Runtime {
     pub(crate) stack: Stack,
     pub(crate) assertions: Vec<AssertionFailure>,
     pub(crate) assertions_run: usize,
-    pub(crate) tracking: Vec<Tracking>,
+    pub(crate) tracking: Tracking,
     pub(crate) depth: usize,
     /// Set when an expression reads something that is null, which makes the
     /// assignment it feeds store null rather than a coerced value.
@@ -70,7 +70,7 @@ impl Runtime {
             stack: Stack::new(),
             assertions: Vec::new(),
             assertions_run: 0,
-            tracking: Vec::new(),
+            tracking: Tracking::default(),
             depth: 0,
             null_read: false,
             imperative: 0,

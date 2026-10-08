@@ -1256,4 +1256,28 @@ assert(checked, 5)
 value = 8
 
 assert(checked, 8)
+
+---
+
+# Nucleoid preserves a missing measurement when a fallback catches an error
+
+def unavailable():
+    throw "OFFLINE"
+
+def fallback(current):
+    try:
+        current = unavailable()
+    catch error:
+        if error != "OFFLINE":
+            throw error
+    return current
+
+measurement = null
+adjusted = measurement + fallback(2)
+
+assert(adjusted, null)
+
+measurement = 10
+
+assert(adjusted, 12)
 ```

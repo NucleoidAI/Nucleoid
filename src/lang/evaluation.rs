@@ -4,6 +4,9 @@
 //! from a `return` that ends the block.
 //!
 //! Dependency tracking records each read as the expression is evaluated.
+//! Frames belong to scoped operations and are removed before returning either
+//! a value or an error. Local and graph assignments share the same evaluator,
+//! which also restores the enclosing null-tracking state on both paths.
 
 use indexmap::IndexSet;
 
@@ -22,32 +25,50 @@ pub enum Flow {
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Tracking {
+    frames: Vec<TrackingFrame>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum TrackingMode {
+    Inherited,
+    Isolated,
+}
+
+#[derive(Debug, Clone)]
+struct TrackingFrame {
     keys: IndexSet<NodeKey>,
-    barrier: bool,
+    mode: TrackingMode,
 }
 
 impl Runtime {
-    pub(crate) fn push_tracking(&mut self, barrier: bool) {
-        self.tracking.push(Tracking {
+    /// Records reads for one operation. Isolated frames keep their reads out
+    /// of enclosing declarations; inherited frames let those reads through.
+    pub(crate) fn with_tracking<T>(
+        &mut self,
+        mode: TrackingMode,
+        operation: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<(T, IndexSet<NodeKey>)> {
+        self.tracking.frames.push(TrackingFrame {
             keys: IndexSet::new(),
-            barrier,
+            mode,
         });
-    }
-
-    pub(crate) fn pop_tracking(&mut self) -> IndexSet<NodeKey> {
-        self.tracking
+        let result = operation(self);
+        let frame = self
+            .tracking
+            .frames
             .pop()
-            .map(|frame| frame.keys)
-            .unwrap_or_default()
+            .expect("a scoped tracking operation must retain its frame");
+
+        result.map(|value| (value, frame.keys))
     }
 
     /// Records a read. Reads reach every enclosing frame up to a barrier, so an
     /// enclosing block depends on whatever its statements read.
     pub(crate) fn track(&mut self, key: NodeKey) {
-        for frame in self.tracking.iter_mut().rev() {
+        for frame in self.tracking.frames.iter_mut().rev() {
             frame.keys.insert(key.clone());
 
-            if frame.barrier {
+            if frame.mode == TrackingMode::Isolated {
                 break;
             }
         }
@@ -59,13 +80,13 @@ impl Runtime {
         scope: &mut Scope,
         exclude: Option<&NodeKey>,
     ) -> Result<(Value, IndexSet<NodeKey>)> {
-        let saved = self.null_read;
-        self.null_read = false;
-        self.push_tracking(false);
-        let value = self.evaluate(expression, scope);
-        let mut dependencies = self.pop_tracking();
-        let value = self.settle(value?);
+        let saved = std::mem::take(&mut self.null_read);
+        let result = self.with_tracking(TrackingMode::Inherited, |runtime| {
+            let value = runtime.evaluate(expression, scope)?;
+            Ok(runtime.settle(value))
+        });
         self.null_read = saved;
+        let (value, mut dependencies) = result?;
 
         if let Some(exclude) = exclude {
             dependencies.shift_remove(exclude);

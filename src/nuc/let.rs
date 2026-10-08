@@ -19,19 +19,7 @@ impl Let {
     }
 
     pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
-        let saved = runtime.null_read;
-        runtime.null_read = false;
-        runtime.push_tracking(false);
-        let evaluated = runtime.evaluate(&self.value, scope);
-        let dependencies = runtime.pop_tracking();
-        let evaluated = runtime.settle(evaluated?);
-        runtime.null_read = saved;
-
-        // A local is not a graph node, but the declaration around it still
-        // depends on whatever the value read.
-        for dependency in dependencies {
-            runtime.track(dependency);
-        }
+        let (evaluated, _) = runtime.evaluate_tracked(&self.value, scope, None)?;
 
         if !scope.assign(&self.name, evaluated.clone()) {
             scope.declare(self.name.clone(), evaluated.clone());

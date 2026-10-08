@@ -3477,6 +3477,58 @@ fn indexes_and_slices_strings_by_unicode_scalar_values() {
     }
 }
 
+/// Nucleoid restores enclosing null tracking after failed local assignments
+#[rustfmt::skip]
+#[test]
+fn restores_enclosing_null_tracking_after_failed_local_assignments() {
+    let mut run = runner();
+    run(r#"def fail():
+    throw "EXPECTED""#);
+    run(r#"def recover(local, value):
+    try:
+        local = value + fail()
+    catch error:
+        if error != "EXPECTED":
+            throw error
+    return local"#);
+    run("input = null");
+    run("result = input + recover(1, 0)");
+    assert_eq!(run("result"), serde_json::Value::Null);
+    run("input = 2");
+    assert_eq!(run("result"), 3);
+    run("result = 5 + recover(1, null)");
+    assert_eq!(run("result"), 6);
+}
+
+/// Nucleoid restores enclosing null tracking after failed property assignments
+#[rustfmt::skip]
+#[test]
+fn restores_enclosing_null_tracking_after_failed_property_assignments() {
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run("item = Item()");
+    run("item.amount = 1");
+    run(r#"def fail():
+    throw "EXPECTED""#);
+    run(r#"def recover(value):
+    try:
+        item.amount = value + fail()
+    catch error:
+        if error != "EXPECTED":
+            throw error
+    return item.amount"#);
+    run("input = null");
+    run("result = input + recover(0)");
+    assert_eq!(run("result"), serde_json::Value::Null);
+    assert_eq!(run("item.amount"), 1);
+    run("input = 2");
+    assert_eq!(run("result"), 3);
+    run("result = 5 + recover(null)");
+    assert_eq!(run("result"), 6);
+    assert_eq!(run("item.amount"), 1);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
