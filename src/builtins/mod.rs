@@ -218,8 +218,7 @@ pub fn string(name: &str, arguments: &[Value]) -> Result<Value> {
 
 /// String instance methods.
 pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<Value> {
-    let characters: Vec<char> = receiver.chars().collect();
-    let first = arguments.first().cloned().unwrap_or(Value::Undefined);
+    let first = arguments.first().unwrap_or(&Value::Undefined);
 
     Ok(match name {
         "lower" | "toLowerCase" => Value::String(receiver.to_lowercase()),
@@ -228,16 +227,17 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
         "charAt" => {
             let index = first.to_number() as usize;
             Value::String(
-                characters
-                    .get(index)
+                receiver
+                    .chars()
+                    .nth(index)
                     .map(|c| c.to_string())
                     .unwrap_or_default(),
             )
         }
         "charCodeAt" => {
             let index = first.to_number() as usize;
-            match characters.get(index) {
-                Some(character) => Value::Number(*character as u32 as f64),
+            match receiver.chars().nth(index) {
+                Some(character) => Value::Number(character as u32 as f64),
                 None => Value::Number(f64::NAN),
             }
         }
@@ -268,23 +268,16 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
         }
         "replace" => {
             let from = first.to_string();
-            let to = arguments
-                .get(1)
-                .cloned()
-                .unwrap_or(Value::Undefined)
-                .to_string();
+            let to = arguments.get(1).unwrap_or(&Value::Undefined).to_string();
             Value::String(receiver.replacen(from.as_str(), to.as_str(), 1))
         }
         "repeat" => Value::String(receiver.repeat(first.to_number().max(0.0) as usize)),
         "substring" | "slice" | "substr" => {
-            let start = slice_index(first.to_number(), characters.len());
-            let end = match arguments.get(1) {
-                Some(value) if !value.is_nullish() => {
-                    slice_index(value.to_number(), characters.len())
-                }
-                _ => characters.len(),
-            };
-            Value::String(characters[start.min(end)..end].iter().collect())
+            let end = arguments
+                .get(1)
+                .filter(|value| !value.is_nullish())
+                .map(Value::to_number);
+            Value::String(string_slice(receiver, first.to_number(), end))
         }
         "toString" => Value::String(receiver.to_string()),
         _ => {
@@ -293,6 +286,19 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
             )));
         }
     })
+}
+
+/// Slices by Unicode scalar indices without allocating a character buffer.
+pub(crate) fn string_slice(receiver: &str, start: f64, end: Option<f64>) -> String {
+    let length = receiver.chars().count();
+    let start = slice_index(start, length);
+    let end = end.map(|end| slice_index(end, length)).unwrap_or(length);
+
+    receiver
+        .chars()
+        .skip(start)
+        .take(end.saturating_sub(start))
+        .collect()
 }
 
 /// Resolves a possibly negative index against a length, the way slicing does.

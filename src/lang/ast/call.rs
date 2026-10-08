@@ -182,9 +182,8 @@ impl Runtime {
             }
 
             Value::String(string) => {
-                let string = string.clone();
                 let values = self.evaluate_all(arguments, scope)?;
-                builtins::string_method(&string, property, &values)
+                builtins::string_method(string, property, &values)
             }
 
             Value::Date(millis) => {

@@ -3366,6 +3366,117 @@ fn rounds_numbers_without_losing_precision_at_integer_and_half_boundaries() {
     assert_eq!(run("rounded"), 0);
 }
 
+/// Nucleoid indexes and slices strings by Unicode scalar values
+#[rustfmt::skip]
+#[test]
+fn indexes_and_slices_strings_by_unicode_scalar_values() {
+    let mut run = runner();
+    run("accent = String.fromCharCode(233)");
+    run("symbol = String.fromCharCode(128512)");
+    run(r#"text = "A" + accent + symbol + "Z""#);
+    assert_eq!(run("text.length"), 4);
+    {
+        let actual = run("text[1]");
+        let expected = run("(accent)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text[2]");
+        let expected = run("(symbol)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("text[-1]"), "Z");
+    assert_eq!(run("text.charAt()"), "A");
+    {
+        let actual = run("text.charAt(1)");
+        let expected = run("(accent)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text.charAt(2)");
+        let expected = run("(symbol)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("text.charAt(4)"), "");
+    assert_eq!(run("text.charCodeAt(1)"), 233);
+    assert_eq!(run("text.charCodeAt(2)"), 128512);
+    assert_eq!(run("Number.isNaN(text.charCodeAt(4))"), true);
+    {
+        let actual = run("text[1:3]");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text[-3:-1]");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("text[3:1]"), "");
+    {
+        let actual = run("text[:]");
+        let expected = run("(text)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text.slice()");
+        let expected = run("(text)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text.slice(1, 3)");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text.substring(1, 3)");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text.substr(1, 3)");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text.slice(-3, -1)");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("text.slice(3, 1)"), "");
+    assert_eq!(run("text.slice(100)"), "");
+    {
+        let actual = run("text.slice(-100, 100)");
+        let expected = run("(text)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#""".slice()"#), "");
+    assert_eq!(run(r#""".charAt(0)"#), "");
+    run("index = 1");
+    run("character = text.charAt(index)");
+    run("part = text[index:3]");
+    {
+        let actual = run("character");
+        let expected = run("(accent)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("part");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+    run("index = 2");
+    {
+        let actual = run("character");
+        let expected = run("(symbol)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("part");
+        let expected = run("(symbol)");
+        assert_eq!(actual, expected);
+    }
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

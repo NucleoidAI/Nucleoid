@@ -86,10 +86,10 @@ impl Runtime {
             }
 
             Value::String(string) => {
-                let characters: Vec<char> = string.chars().collect();
-                let index = builtins::slice_index(key.to_number(), characters.len());
-                Ok(characters
-                    .get(index)
+                let index = builtins::slice_index(key.to_number(), string.chars().count());
+                Ok(string
+                    .chars()
+                    .nth(index)
                     .map(|character| Value::String(character.to_string()))
                     .unwrap_or(Value::Undefined))
             }
@@ -411,18 +411,11 @@ impl Runtime {
 
 pub fn slice(base: &Value, start: Option<&Value>, end: Option<&Value>) -> Value {
     match base {
-        Value::String(string) => {
-            let characters: Vec<char> = string.chars().collect();
-            let length = characters.len();
-            let from = start
-                .map(|value| builtins::slice_index(value.to_number(), length))
-                .unwrap_or(0);
-            let to = end
-                .map(|value| builtins::slice_index(value.to_number(), length))
-                .unwrap_or(length);
-
-            Value::String(characters[from.min(to)..to].iter().collect())
-        }
+        Value::String(string) => Value::String(builtins::string_slice(
+            string,
+            start.map(Value::to_number).unwrap_or(0.0),
+            end.map(Value::to_number),
+        )),
 
         Value::List(items) => {
             let length = items.len();

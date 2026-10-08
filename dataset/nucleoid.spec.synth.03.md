@@ -217,6 +217,16 @@ index = 4
 
 assert(initial, "E")
 
+# A non-ASCII character occupies one index
+label = String.fromCharCode(233) + "AB"
+index = 0
+
+assert(initial, String.fromCharCode(233))
+
+index = 1
+
+assert(initial, "A")
+
 ---
 
 # Nucleoid replaces part of a string as a dependency

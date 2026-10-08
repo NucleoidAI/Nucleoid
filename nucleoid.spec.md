@@ -4866,4 +4866,51 @@ assert(rounded, 4503599627370497)
 input = 0.49999999999999994
 
 assert(rounded, 0)
+
+---
+
+# Nucleoid indexes and slices strings by Unicode scalar values
+
+accent = String.fromCharCode(233)
+symbol = String.fromCharCode(128512)
+text = "A" + accent + symbol + "Z"
+
+assert(text.length, 4)
+assert(text[1], accent)
+assert(text[2], symbol)
+assert(text[-1], "Z")
+assert(text.charAt(), "A")
+assert(text.charAt(1), accent)
+assert(text.charAt(2), symbol)
+assert(text.charAt(4), "")
+assert(text.charCodeAt(1), 233)
+assert(text.charCodeAt(2), 128512)
+assert(Number.isNaN(text.charCodeAt(4)), true)
+
+assert(text[1:3], accent + symbol)
+assert(text[-3:-1], accent + symbol)
+assert(text[3:1], "")
+assert(text[:], text)
+assert(text.slice(), text)
+assert(text.slice(1, 3), accent + symbol)
+assert(text.substring(1, 3), accent + symbol)
+assert(text.substr(1, 3), accent + symbol)
+assert(text.slice(-3, -1), accent + symbol)
+assert(text.slice(3, 1), "")
+assert(text.slice(100), "")
+assert(text.slice(-100, 100), text)
+assert("".slice(), "")
+assert("".charAt(0), "")
+
+index = 1
+character = text.charAt(index)
+part = text[index:3]
+
+assert(character, accent)
+assert(part, accent + symbol)
+
+index = 2
+
+assert(character, symbol)
+assert(part, symbol)
 ```
