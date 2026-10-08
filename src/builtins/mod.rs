@@ -83,7 +83,14 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
         "abs" => first.abs(),
         "ceil" => first.ceil(),
         "floor" => first.floor(),
-        "round" => (first + 0.5).floor(),
+        "round" => {
+            // Rust rounds ties away from zero; Nucleoid rounds them toward +infinity.
+            if first.fract() == -0.5 {
+                first.ceil()
+            } else {
+                first.round()
+            }
+        }
         "trunc" => first.trunc(),
         "sqrt" => first.sqrt(),
         "cbrt" => first.cbrt(),

@@ -449,6 +449,16 @@ rating1.score = 95
 
 assert(rating1.stars, 5)
 
+# A negative half rounds toward positive infinity
+rating1.score = -30
+
+assert(rating1.stars, -1)
+
+# A score just below the half boundary must not round up
+rating1.score = 9.999999999999998
+
+assert(rating1.stars, 0)
+
 ---
 
 # Nucleoid creates instances in a nested for of statement
