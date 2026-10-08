@@ -501,7 +501,7 @@ Full detail: [NUC 9](nuc-0009.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min` |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `split` |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
 | `Class` | the global list of declared types; `Class.length` |
@@ -552,6 +552,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Deleting an instance that still has properties | `Cannot delete object '<id>'` |
 | Using `value` as a property name | `Cannot use 'value' as a property` |
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
+| Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 
 ### SyntaxError
 

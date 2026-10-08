@@ -821,4 +821,25 @@ assert(plan1.label, "Free tier")
 plan1.tier = "PRO"
 
 assert(plan1.label, "PAID")
+
+---
+
+# Nucleoid keeps a repeated label when a repetition request is rejected
+
+copies = 2
+divider = "--".repeat(copies)
+
+assert(divider, "----")
+
+try:
+    copies = Number.POSITIVE_INFINITY
+catch error:
+    assert(error, TypeError("Repeated string is too large"))
+
+assert(copies, 2)
+assert(divider, "----")
+
+copies = 3
+
+assert(divider, "------")
 ```

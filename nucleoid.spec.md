@@ -4977,4 +4977,48 @@ result = 5 + recover(null)
 
 assert(result, 6)
 assert(item.amount, 1)
+
+---
+
+# Nucleoid repeats strings with catchable allocation errors
+
+assert("ab".repeat(2), "abab")
+assert("ab".repeat(2.9), "abab")
+assert("ab".repeat(0), "")
+assert("ab".repeat(-1), "")
+assert("ab".repeat(), "")
+assert("ab".repeat(null), "")
+assert("ab".repeat(Number.NaN), "")
+assert("ab".repeat(Number.NEGATIVE_INFINITY), "")
+assert("".repeat(Number.MAX_VALUE), "")
+assert("".repeat(Number.POSITIVE_INFINITY), "")
+
+symbol = String.fromCharCode(128512)
+
+assert(symbol.repeat(3), symbol + symbol + symbol)
+
+try:
+    "ab".repeat(Number.MAX_VALUE)
+catch error:
+    assert(error, TypeError("Repeated string is too large"))
+
+try:
+    "a".repeat(Number.POSITIVE_INFINITY)
+catch error:
+    assert(error, TypeError("Repeated string is too large"))
+
+count = 2
+repeated = "ab".repeat(count)
+
+try:
+    count = Number.POSITIVE_INFINITY
+catch error:
+    assert(error, TypeError("Repeated string is too large"))
+
+assert(count, 2)
+assert(repeated, "abab")
+
+count = 3
+
+assert(repeated, "ababab")
 ```

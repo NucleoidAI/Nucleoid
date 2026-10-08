@@ -180,3 +180,33 @@ fn unicode_source_round_trips() {
     assert_eq!(runtime.run("greeting.length").unwrap().to_string(), "11");
     assert_eq!(runtime.run("greeting[1]").unwrap().to_string(), "é");
 }
+
+#[test]
+fn oversized_string_repetitions_are_errors_not_panics() {
+    let mut runtime = Runtime::new();
+    runtime.run("saved = 5").unwrap();
+
+    for receiver in [r#""a""#, r#""ab""#, "String.fromCharCode(233)"] {
+        for count in ["Number.POSITIVE_INFINITY", "Number.MAX_VALUE"] {
+            let source = format!("saved = 6\nresult = {receiver}.repeat({count})");
+            let error = runtime
+                .run(&source)
+                .expect_err("oversized repetitions must return an error");
+
+            assert_eq!(error.kind(), ErrorKind::Type);
+            assert_eq!(error.message(), "Repeated string is too large");
+            assert_eq!(
+                error
+                    .position()
+                    .map(|position| (position.line, position.column)),
+                Some((2, 1))
+            );
+            assert_eq!(runtime.run("saved").unwrap().to_string(), "5");
+            assert!(runtime.state.variable("result").is_none());
+            assert_eq!(
+                runtime.run(r#""ab".repeat(3)"#).unwrap().to_string(),
+                "ababab"
+            );
+        }
+    }
+}

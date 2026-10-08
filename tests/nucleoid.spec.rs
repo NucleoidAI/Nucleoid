@@ -3529,6 +3529,38 @@ fn restores_enclosing_null_tracking_after_failed_property_assignments() {
     assert_eq!(run("item.amount"), 1);
 }
 
+/// Nucleoid repeats strings with catchable allocation errors
+#[rustfmt::skip]
+#[test]
+fn repeats_strings_with_catchable_allocation_errors() {
+    let (mut run, mut run_error) = crate::common::runners();
+    assert_eq!(run(r#""ab".repeat(2)"#), "abab");
+    assert_eq!(run(r#""ab".repeat(2.9)"#), "abab");
+    assert_eq!(run(r#""ab".repeat(0)"#), "");
+    assert_eq!(run(r#""ab".repeat(-1)"#), "");
+    assert_eq!(run(r#""ab".repeat()"#), "");
+    assert_eq!(run(r#""ab".repeat(null)"#), "");
+    assert_eq!(run(r#""ab".repeat(Number.NaN)"#), "");
+    assert_eq!(run(r#""ab".repeat(Number.NEGATIVE_INFINITY)"#), "");
+    assert_eq!(run(r#""".repeat(Number.MAX_VALUE)"#), "");
+    assert_eq!(run(r#""".repeat(Number.POSITIVE_INFINITY)"#), "");
+    run("symbol = String.fromCharCode(128512)");
+    {
+        let actual = run("symbol.repeat(3)");
+        let expected = run("(symbol + symbol + symbol)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run_error(r#""ab".repeat(Number.MAX_VALUE)"#), "TypeError: Repeated string is too large");
+    assert_eq!(run_error(r#""a".repeat(Number.POSITIVE_INFINITY)"#), "TypeError: Repeated string is too large");
+    run("count = 2");
+    run(r#"repeated = "ab".repeat(count)"#);
+    assert_eq!(run_error("count = Number.POSITIVE_INFINITY"), "TypeError: Repeated string is too large");
+    assert_eq!(run("count"), 2);
+    assert_eq!(run("repeated"), "abab");
+    run("count = 3");
+    assert_eq!(run("repeated"), "ababab");
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

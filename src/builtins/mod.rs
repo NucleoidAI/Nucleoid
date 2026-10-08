@@ -271,7 +271,10 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
             let to = arguments.get(1).unwrap_or(&Value::Undefined).to_string();
             Value::String(receiver.replacen(from.as_str(), to.as_str(), 1))
         }
-        "repeat" => Value::String(receiver.repeat(first.to_number().max(0.0) as usize)),
+        "repeat" => Value::String(string_repeat(
+            receiver,
+            first.to_number().max(0.0) as usize,
+        )?),
         "substring" | "slice" | "substr" => {
             let end = arguments
                 .get(1)
@@ -286,6 +289,27 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
             )));
         }
     })
+}
+
+fn string_repeat(receiver: &str, count: usize) -> Result<String> {
+    if receiver.is_empty() || count == 0 {
+        return Ok(String::new());
+    }
+
+    let capacity = receiver
+        .len()
+        .checked_mul(count)
+        .ok_or_else(|| Error::type_error("Repeated string is too large"))?;
+    let mut output = String::new();
+    output
+        .try_reserve_exact(capacity)
+        .map_err(|_| Error::type_error("Repeated string is too large"))?;
+
+    for _ in 0..count {
+        output.push_str(receiver);
+    }
+
+    Ok(output)
 }
 
 /// Slices by Unicode scalar indices without allocating a character buffer.

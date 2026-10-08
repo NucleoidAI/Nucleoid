@@ -677,6 +677,7 @@ assert("ABC".lower(), "abc")
 assert("abc".charAt(1), "b")
 assert("abc".length, 3)
 assert("abc".replace("b", "x"), "axc")
+assert("ab".repeat(3), "ababab")
 assert("a,b,c".split(",").length, 3)
 
 # Date
