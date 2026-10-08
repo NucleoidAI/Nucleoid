@@ -2964,6 +2964,56 @@ now = Date.now()
 
 assert(now > 0, true)
 
+assert(String(Math.max(Number.NaN)), "NaN")
+assert(String(Math.min(Number.NaN)), "NaN")
+assert(String(Math.max(Number.NaN, 1)), "NaN")
+assert(String(Math.min(Number.NaN, 1)), "NaN")
+assert(String(Math.max(1, Number.NaN)), "NaN")
+assert(String(Math.min(1, Number.NaN)), "NaN")
+assert(String(Math.max(1, Number.NaN, 2)), "NaN")
+assert(String(Math.min(1, Number.NaN, 2)), "NaN")
+assert(String(Math.max(Number.POSITIVE_INFINITY, Number.NaN)), "NaN")
+assert(String(Math.min(Number.NEGATIVE_INFINITY, Number.NaN)), "NaN")
+assert(String(Math.max(1, "invalid")), "NaN")
+assert(String(Math.min(1, "invalid")), "NaN")
+assert(String(Math.max(1, Math.sqrt(-1))), "NaN")
+assert(String(Math.min(1, Math.sqrt(-1))), "NaN")
+
+assert(Math.max(), Number.NEGATIVE_INFINITY)
+assert(Math.min(), Number.POSITIVE_INFINITY)
+assert(Math.max("7", 5), 7)
+assert(Math.min("7", 5), 5)
+assert(Math.max(Number.NEGATIVE_INFINITY, 5), 5)
+assert(Math.min(Number.POSITIVE_INFINITY, 5), 5)
+
+a = 5
+b = 9
+peak = Math.max(a, b)
+floor = Math.min(a, b)
+
+assert(peak, 9)
+assert(floor, 5)
+
+b = Number.NaN
+
+assert(String(peak), "NaN")
+assert(String(floor), "NaN")
+
+b = 3
+
+assert(peak, 5)
+assert(floor, 3)
+
+b = null
+
+assert(peak, null)
+assert(floor, null)
+
+b = 2
+
+assert(peak, 5)
+assert(floor, 2)
+
 ---
 
 # Nucleoid supports creating standard built-in objects
@@ -5021,58 +5071,4 @@ assert(repeated, "abab")
 count = 3
 
 assert(repeated, "ababab")
-
----
-
-# Nucleoid propagates NaN through Math minimum and maximum
-
-assert(String(Math.max(Number.NaN)), "NaN")
-assert(String(Math.min(Number.NaN)), "NaN")
-assert(String(Math.max(Number.NaN, 1)), "NaN")
-assert(String(Math.min(Number.NaN, 1)), "NaN")
-assert(String(Math.max(1, Number.NaN)), "NaN")
-assert(String(Math.min(1, Number.NaN)), "NaN")
-assert(String(Math.max(1, Number.NaN, 2)), "NaN")
-assert(String(Math.min(1, Number.NaN, 2)), "NaN")
-assert(String(Math.max(Number.POSITIVE_INFINITY, Number.NaN)), "NaN")
-assert(String(Math.min(Number.NEGATIVE_INFINITY, Number.NaN)), "NaN")
-assert(String(Math.max(1, "invalid")), "NaN")
-assert(String(Math.min(1, "invalid")), "NaN")
-assert(String(Math.max(1, Math.sqrt(-1))), "NaN")
-assert(String(Math.min(1, Math.sqrt(-1))), "NaN")
-
-assert(Math.max(), Number.NEGATIVE_INFINITY)
-assert(Math.min(), Number.POSITIVE_INFINITY)
-assert(Math.max("7", 5), 7)
-assert(Math.min("7", 5), 5)
-assert(Math.max(Number.NEGATIVE_INFINITY, 5), 5)
-assert(Math.min(Number.POSITIVE_INFINITY, 5), 5)
-
-a = 5
-b = 9
-peak = Math.max(a, b)
-floor = Math.min(a, b)
-
-assert(peak, 9)
-assert(floor, 5)
-
-b = Number.NaN
-
-assert(String(peak), "NaN")
-assert(String(floor), "NaN")
-
-b = 3
-
-assert(peak, 5)
-assert(floor, 3)
-
-b = null
-
-assert(peak, null)
-assert(floor, null)
-
-b = 2
-
-assert(peak, 5)
-assert(floor, 2)
 ```

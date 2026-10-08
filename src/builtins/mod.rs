@@ -121,14 +121,27 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             let second = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
             first.atan2(second)
         }
-        "max" => arguments
-            .iter()
-            .map(Value::to_number)
-            .fold(f64::NEG_INFINITY, f64::max),
-        "min" => arguments
-            .iter()
-            .map(Value::to_number)
-            .fold(f64::INFINITY, f64::min),
+        "max" | "min" => {
+            let maximum = name == "max";
+            let initial = if maximum {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            };
+
+            arguments
+                .iter()
+                .map(Value::to_number)
+                .fold(initial, |extreme, number| {
+                    if extreme.is_nan() || number.is_nan() {
+                        f64::NAN
+                    } else if maximum {
+                        extreme.max(number)
+                    } else {
+                        extreme.min(number)
+                    }
+                })
+        }
         "random" => return Err(Error::type_error("Math.random is not supported")),
         "PI" => std::f64::consts::PI,
         "E" => std::f64::consts::E,
