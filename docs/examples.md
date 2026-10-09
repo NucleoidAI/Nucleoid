@@ -108,6 +108,25 @@ b = 4
 assert(c, 7)
 ```
 
+**Upstream dependencies settle first even when their declaration is newer**
+
+- `total` reads both the head and the tail of the chain.
+- Replacing `middle` does not let `total` combine a new head with an old tail.
+
+```nuc
+source = 1
+middle = source + 1
+last = middle + 1
+total = source + last
+
+middle = source + 2
+source = 2
+
+assert(middle, 4)
+assert(last, 5)
+assert(total, 7)
+```
+
 **A variable that reads itself reads only its value**
 
 - The occurrence on the right is the current value, not a dependency.
@@ -579,6 +598,83 @@ assert(r, 0.2)
 s = 0.03
 
 assert(r, 0.3)
+```
+
+**Re-evaluating a conditional preserves its declaration priority**
+
+- Updating `enabled` runs only the first rule, but does not make it the newest.
+- When `trigger` changes, the second matching rule still wins.
+
+```nuc
+trigger = 0
+enabled = false
+result = 0
+
+if enabled and trigger > 0:
+    result = 1
+
+if trigger > 0:
+    result = 2
+
+enabled = true
+trigger = 1
+
+assert(result, 2)
+```
+
+**A rule runs again when another input changes later in the same cascade**
+
+- Neither conditional is discarded after its first turn.
+- Derived values settle with the final inputs.
+
+```nuc
+first = 0
+second = 0
+total = first + second
+
+if first > 0 and first < 4:
+    second = first + 1
+
+if second > 0 and second < 4:
+    first = second + 1
+
+first = 1
+
+assert(first, 3)
+assert(second, 4)
+assert(total, 7)
+```
+
+**A conditional inside a loop is not a standing rule**
+
+- The first loop sees `limit` at zero and leaves the instance untouched.
+- Changing `limit` does not run that body again; another explicit loop does.
+
+```nuc
+class Item:
+    pass
+
+item = Item()
+item.amount = 0
+limit = 0
+
+for current of Item:
+    if limit > 0:
+        current.amount = limit
+
+limit = 2
+
+assert(item.amount, 0)
+
+for current of Item:
+    if limit > 0:
+        current.amount = limit
+
+assert(item.amount, 2)
+
+limit = 3
+
+assert(item.amount, 2)
 ```
 
 **A for of statement runs its body once, over what is there at the time**

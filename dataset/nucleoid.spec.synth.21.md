@@ -1327,4 +1327,195 @@ catch error:
 
 assert(kinds, 2)
 assert(Class.length, 2)
+
+---
+
+# Nucleoid keeps boarding policies in declaration order after selective updates
+
+gate = 0
+cleared = false
+priority = 0
+
+if cleared and gate > 0:
+    priority = 1
+
+if gate > 0:
+    priority = 2
+
+cleared = true
+gate = 1
+
+assert(priority, 2)
+
+if cleared and gate > 0:
+    priority = 3
+
+gate = 2
+
+assert(priority, 3)
+
+---
+
+# Nucleoid keeps a multi-stage flight budget current after redeclaration
+
+fuel = 100
+reserve = fuel + 20
+contingency = reserve / 10
+budget = fuel + contingency
+
+reserve = fuel + 30
+
+assert(budget, 113)
+
+fuel = 200
+
+assert(reserve, 230)
+assert(contingency, 23)
+assert(budget, 223)
+
+---
+
+# Nucleoid validates cargo capacity only after derived values settle
+
+class Cargo(weight):
+    this.weight = weight
+
+$Cargo.capacity = $Cargo.weight * 2
+$Cargo.spare = $Cargo.capacity - $Cargo.weight
+
+if $Cargo.spare < 0:
+    throw "INVALID_CAPACITY"
+
+shipment = Cargo(100)
+
+$Cargo.capacity = $Cargo.weight * 3
+
+shipment.weight = 500
+
+assert(shipment.capacity, 1500)
+assert(shipment.spare, 1000)
+
+---
+
+# Nucleoid settles interacting handover rules and rolls back a rejected handover
+
+tower = 0
+approach = 0
+total = tower + approach
+
+if tower > 0 and tower < 4:
+    approach = tower + 1
+
+if approach > 0 and approach < 4:
+    tower = approach + 1
+
+tower = 1
+
+assert(tower, 3)
+assert(approach, 4)
+assert(total, 7)
+
+if approach == 3:
+    throw "INVALID_HANDOVER"
+
+try:
+    tower = 2
+catch error:
+    assert(error, "INVALID_HANDOVER")
+
+assert(tower, 3)
+assert(approach, 4)
+assert(total, 7)
+
+if approach == 3:
+    pass
+
+tower = 2
+
+assert(tower, 4)
+assert(approach, 3)
+
+---
+
+# Nucleoid stops repeating unchanged clearance and sensor readings
+
+cleared = 0
+ready = 0
+
+if cleared > 0:
+    ready = 1
+
+if ready > 0:
+    cleared = 1
+
+cleared = 1
+
+assert(cleared, 1)
+assert(ready, 1)
+
+attempts = 0
+readings = [0]
+
+if attempts > 0 and attempts < 4:
+    readings = [Number.NaN]
+
+if Number.isNaN(readings[0]):
+    attempts = attempts + 1
+
+attempts = 1
+
+assert(attempts, 2)
+assert(Number.isNaN(readings[0]), true)
+
+---
+
+# Nucleoid propagates the sign of a zero flight correction
+
+descending = false
+correction = 0.0
+inverse = 1 / correction
+
+if descending:
+    correction = -0.0
+else:
+    correction = 0.0
+
+assert(inverse, Number.POSITIVE_INFINITY)
+
+descending = true
+
+assert(inverse, Number.NEGATIVE_INFINITY)
+
+descending = false
+
+assert(inverse, Number.POSITIVE_INFINITY)
+
+---
+
+# Nucleoid does not turn a conditional dispatch loop into a standing rule
+
+class Flight:
+    pass
+
+flight = Flight()
+flight.delay = 0
+threshold = 0
+
+for current of Flight:
+    if threshold > 0:
+        current.delay = threshold
+
+threshold = 10
+
+assert(flight.delay, 0)
+
+for current of Flight:
+    if threshold > 0:
+        current.delay = threshold
+
+assert(flight.delay, 10)
+
+threshold = 20
+
+assert(flight.delay, 10)
 ```

@@ -3659,6 +3659,181 @@ fn repeats_strings_with_catchable_allocation_errors() {
     assert_eq!(run("repeated"), "ababab");
 }
 
+/// Nucleoid preserves declaration order when standing rules are re-evaluated
+#[rustfmt::skip]
+#[test]
+fn preserves_declaration_order_when_standing_rules_are_re_evaluated() {
+    let mut run = runner();
+    run("trigger = 0");
+    run("enabled = false");
+    run("result = 0");
+    run(r#"if enabled and trigger > 0:
+    result = 1"#);
+    run(r#"if trigger > 0:
+    result = 2"#);
+    run("enabled = true");
+    run("trigger = 1");
+    assert_eq!(run("result"), 2);
+    run("trigger = 0");
+    run("enabled = false");
+    run("enabled = true");
+    run("trigger = 1");
+    assert_eq!(run("result"), 2);
+    run(r#"if enabled and trigger > 0:
+    result = 3"#);
+    run("trigger = 2");
+    assert_eq!(run("result"), 3);
+}
+
+/// Nucleoid settles queued upstream dependencies before their dependents
+#[rustfmt::skip]
+#[test]
+fn settles_queued_upstream_dependencies_before_their_dependents() {
+    let mut run = runner();
+    run("source = 1");
+    run("middle = source + 1");
+    run("last = middle + 1");
+    run("total = source + last");
+    assert_eq!(run("total"), 4);
+    run("middle = source + 2");
+    assert_eq!(run("total"), 5);
+    run("source = 2");
+    assert_eq!(run("middle"), 4);
+    assert_eq!(run("last"), 5);
+    assert_eq!(run("total"), 7);
+    run("source = 3");
+    assert_eq!(run("total"), 9);
+}
+
+/// Nucleoid settles class property dependencies before validation rules
+#[rustfmt::skip]
+#[test]
+fn settles_class_property_dependencies_before_validation_rules() {
+    let mut run = runner();
+    run(r#"class Reading(amount):
+    this.amount = amount"#);
+    run("$Reading.doubled = $Reading.amount * 2");
+    run("$Reading.margin = $Reading.doubled - $Reading.amount");
+    run(r#"if $Reading.margin < 0:
+    throw "NEGATIVE_MARGIN""#);
+    run("reading = Reading(1)");
+    assert_eq!(run("reading.margin"), 1);
+    run("$Reading.doubled = $Reading.amount * 3");
+    assert_eq!(run("reading.margin"), 2);
+    run("reading.amount = 10");
+    assert_eq!(run("reading.doubled"), 30);
+    assert_eq!(run("reading.margin"), 20);
+}
+
+/// Nucleoid revisits dependencies changed later in the same propagation
+#[rustfmt::skip]
+#[test]
+fn revisits_dependencies_changed_later_in_the_same_propagation() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("first = 0");
+    run("second = 0");
+    run("total = first + second");
+    run(r#"if first > 0 and first < 4:
+    second = first + 1"#);
+    run(r#"if second > 0 and second < 4:
+    first = second + 1"#);
+    run("first = 1");
+    assert_eq!(run("first"), 3);
+    assert_eq!(run("second"), 4);
+    assert_eq!(run("total"), 7);
+    run(r#"if second == 3:
+    throw "INVALID_SECOND""#);
+    assert_eq!(run_error("first = 2"), "INVALID_SECOND");
+    assert_eq!(run("first"), 3);
+    assert_eq!(run("second"), 4);
+    assert_eq!(run("total"), 7);
+    run(r#"if second == 3:
+    pass"#);
+    run("first = 2");
+    assert_eq!(run("first"), 4);
+    assert_eq!(run("second"), 3);
+    assert_eq!(run("total"), 7);
+}
+
+/// Nucleoid stops propagation feedback when assignments keep the same value
+#[rustfmt::skip]
+#[test]
+fn stops_propagation_feedback_when_assignments_keep_the_same_value() {
+    let mut run = runner();
+    run("first = 0");
+    run("second = 0");
+    run(r#"if first > 0:
+    second = 1"#);
+    run(r#"if second > 0:
+    first = 1"#);
+    run("first = 1");
+    assert_eq!(run("first"), 1);
+    assert_eq!(run("second"), 1);
+    run("count = 0");
+    run("values = [0]");
+    run(r#"if count > 0 and count < 4:
+    values = [Number.NaN]"#);
+    run(r#"if Number.isNaN(values[0]):
+    count = count + 1"#);
+    run("count = 1");
+    assert_eq!(run("count"), 2);
+    assert_eq!(run("Number.isNaN(values[0])"), true);
+}
+
+/// Nucleoid propagates changes between positive and negative zero
+#[rustfmt::skip]
+#[test]
+fn propagates_changes_between_positive_and_negative_zero() {
+    let mut run = runner();
+    run("negative = false");
+    run("zero = 0.0");
+    run("inverse = 1 / zero");
+    run(r#"if negative:
+    zero = -0.0
+else:
+    zero = 0.0"#);
+    {
+        let actual = run("inverse");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("negative = true");
+    {
+        let actual = run("inverse");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("negative = false");
+    {
+        let actual = run("inverse");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid keeps conditional loop bodies imperative
+#[rustfmt::skip]
+#[test]
+fn keeps_conditional_loop_bodies_imperative() {
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run("item = Item()");
+    run("item.amount = 0");
+    run("limit = 0");
+    run(r#"for current of Item:
+    if limit > 0:
+        current.amount = limit"#);
+    run("limit = 2");
+    assert_eq!(run("item.amount"), 0);
+    run(r#"for current of Item:
+    if limit > 0:
+        current.amount = limit"#);
+    assert_eq!(run("item.amount"), 2);
+    run("limit = 3");
+    assert_eq!(run("item.amount"), 2);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -304,7 +304,10 @@ impl Runtime {
             }
         }
 
-        let sequence = self.graph.next_sequence();
+        let sequence = match &existing {
+            Some(existing) if self.stack.is_running(key) => existing.sequence,
+            _ => self.graph.next_sequence(),
+        };
         let mut node = GraphNode::new(key.clone(), kind, sequence);
         node.node = nuc;
         node.instance = instance;

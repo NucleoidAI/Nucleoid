@@ -148,6 +148,44 @@ fn a_long_dependency_chain_still_updates() {
 }
 
 #[test]
+fn a_redeclared_chain_settles_before_a_dependent_reading_its_head_and_tail() {
+    let mut runtime = Runtime::new();
+    let length = 500;
+
+    let mut source = String::from("v0 = 1\n");
+    for index in 1..length {
+        source.push_str(&format!("v{index} = v{} + 1\n", index - 1));
+    }
+    source.push_str("total = v0 + v499\nv1 = v0 + 2\n");
+    runtime.run(&source).unwrap();
+
+    runtime.run("v0 = 2").unwrap();
+    assert_eq!(runtime.run("v499").unwrap().to_string(), "502");
+    assert_eq!(runtime.run("total").unwrap().to_string(), "504");
+}
+
+#[test]
+fn nonsettling_propagation_rolls_back_and_leaves_the_queue_usable() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run(
+            "first = 0\nsecond = 0\n\
+             if first > 0:\n    second = first + 1\n\
+             if second > 0:\n    first = second + 1",
+        )
+        .unwrap();
+
+    let error = runtime.run("first = 1").unwrap_err();
+    assert_eq!(error.kind(), ErrorKind::Type);
+    assert_eq!(error.message(), "Propagation did not settle");
+    assert_eq!(runtime.run("first").unwrap().to_string(), "0");
+    assert_eq!(runtime.run("second").unwrap().to_string(), "0");
+
+    runtime.run("if second > 0:\n    pass\nfirst = 1").unwrap();
+    assert_eq!(runtime.run("second").unwrap().to_string(), "2");
+}
+
+#[test]
 fn a_failed_run_leaves_the_state_untouched() {
     let mut runtime = Runtime::new();
 

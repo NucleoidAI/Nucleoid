@@ -218,23 +218,36 @@ impl State {
 /// Variables and properties use separate operations because their graph keys
 /// differ.
 impl Runtime {
-    pub(crate) fn assign(&mut self, name: &str, value: Value) {
+    pub(crate) fn assign(&mut self, name: &str, value: Value) -> bool {
         let before = self.state.variables.get(name).cloned();
+        let changed = before
+            .as_ref()
+            .is_none_or(|before| !before.same_value(&value));
         self.transaction.record_variable(name, before);
         self.state.variables.insert(name.to_string(), value);
+        changed
     }
 
-    pub(crate) fn assign_property(&mut self, object: &ObjectId, property: &str, value: Value) {
+    pub(crate) fn assign_property(
+        &mut self,
+        object: &ObjectId,
+        property: &str,
+        value: Value,
+    ) -> bool {
         if !self.state.objects.contains_key(object) {
             self.insert_object(object.clone(), ObjectData::new(None));
         }
 
         let before = self.state.property(object, property).cloned();
+        let changed = before
+            .as_ref()
+            .is_none_or(|before| !before.same_value(&value));
         self.transaction.record_property(object, property, before);
 
         if let Some(data) = self.state.object_mut(object) {
             data.properties.insert(property.to_string(), value);
         }
+        changed
     }
 
     /// `state.delete` for a top-level name, reporting what was there.

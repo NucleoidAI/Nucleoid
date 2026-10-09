@@ -77,6 +77,8 @@ a: int
 - Naming a variable on the right-hand side establishes a dependency.
 - Dependents re-evaluate when a dependency changes.
 - Dependencies are transitive.
+- Queued upstream dependencies settle before their dependents, even after an upstream declaration is replaced.
+- Re-evaluation preserves declaration priority; only an explicit re-declaration changes it.
 
 ```
 a = 1
@@ -396,6 +398,8 @@ Full detail: [NUC 6](nuc-0006.md).
 - A false condition leaves the target untouched rather than clearing it.
 - Re-declaring a conditional replaces it.
 - Conditionals apply in the order received; when several match, the last one holds.
+- Re-evaluating one conditional does not move it after the others.
+- A conditional can run again when an input changes later in the same cascade. An unchanged write does not restart feedback.
 
 ```
 if toy1.color == "RED":
@@ -422,6 +426,7 @@ if $Device.profile:
 
 - `for <name> of <source>` iterates a class list or a list value.
 - The body runs once, over the values present at the time; it does not re-run later.
+- Nested conditions and blocks are part of that one-shot body, not independent standing rules.
 - Only values that are instances defined in the state are visited.
 - Loops may nest, producing the cross product.
 
@@ -476,6 +481,7 @@ Full detail: [NUC 8](nuc-0008.md).
 - An instance rejected at creation is not registered and its name is not bound.
 - Instances created earlier in a failing loop are rolled back too.
 - A class-level rule that throws for any existing instance is not installed at all.
+- Propagation that does not settle raises `TypeError("Propagation did not settle")` and rolls back the transaction.
 
 ```
 a = 5

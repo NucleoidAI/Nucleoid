@@ -5,6 +5,12 @@ Expression nesting is bounded, including consecutive unary operators and
 `SyntaxError("Expressions are nested too deeply")` rather than overflowing
 the host stack.
 
+Propagation settles queued upstream dependencies before their dependents and
+preserves declaration order among ready rules. A rule may run again when another
+dependency changes later in the same cascade; storing the same value does not
+restart feedback. Nonsettling propagation raises
+`TypeError("Propagation did not settle")` and rolls back the transaction.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -5103,4 +5109,217 @@ assert(repeated, "abab")
 count = 3
 
 assert(repeated, "ababab")
+
+---
+
+# Nucleoid preserves declaration order when standing rules are re-evaluated
+
+trigger = 0
+enabled = false
+result = 0
+
+if enabled and trigger > 0:
+    result = 1
+
+if trigger > 0:
+    result = 2
+
+enabled = true
+trigger = 1
+
+assert(result, 2)
+
+trigger = 0
+enabled = false
+enabled = true
+trigger = 1
+
+assert(result, 2)
+
+# Explicitly declaring the first condition again gives it a new priority
+if enabled and trigger > 0:
+    result = 3
+
+trigger = 2
+
+assert(result, 3)
+
+---
+
+# Nucleoid settles queued upstream dependencies before their dependents
+
+source = 1
+middle = source + 1
+last = middle + 1
+total = source + last
+
+assert(total, 4)
+
+# The upstream declaration is now newer than its dependents
+middle = source + 2
+
+assert(total, 5)
+
+source = 2
+
+assert(middle, 4)
+assert(last, 5)
+assert(total, 7)
+
+source = 3
+
+assert(total, 9)
+
+---
+
+# Nucleoid settles class property dependencies before validation rules
+
+class Reading(amount):
+    this.amount = amount
+
+$Reading.doubled = $Reading.amount * 2
+$Reading.margin = $Reading.doubled - $Reading.amount
+
+if $Reading.margin < 0:
+    throw "NEGATIVE_MARGIN"
+
+reading = Reading(1)
+
+assert(reading.margin, 1)
+
+$Reading.doubled = $Reading.amount * 3
+
+assert(reading.margin, 2)
+
+# Validation must not see the old doubled value with the new amount
+reading.amount = 10
+
+assert(reading.doubled, 30)
+assert(reading.margin, 20)
+
+---
+
+# Nucleoid revisits dependencies changed later in the same propagation
+
+first = 0
+second = 0
+total = first + second
+
+if first > 0 and first < 4:
+    second = first + 1
+
+if second > 0 and second < 4:
+    first = second + 1
+
+first = 1
+
+assert(first, 3)
+assert(second, 4)
+assert(total, 7)
+
+if second == 3:
+    throw "INVALID_SECOND"
+
+try:
+    first = 2
+catch error:
+    assert(error, "INVALID_SECOND")
+
+assert(first, 3)
+assert(second, 4)
+assert(total, 7)
+
+# The failed propagation leaves the runtime ready for another update
+if second == 3:
+    pass
+
+first = 2
+
+assert(first, 4)
+assert(second, 3)
+assert(total, 7)
+
+---
+
+# Nucleoid stops propagation feedback when assignments keep the same value
+
+first = 0
+second = 0
+
+if first > 0:
+    second = 1
+
+if second > 0:
+    first = 1
+
+first = 1
+
+assert(first, 1)
+assert(second, 1)
+
+count = 0
+values = [0]
+
+if count > 0 and count < 4:
+    values = [Number.NaN]
+
+if Number.isNaN(values[0]):
+    count = count + 1
+
+count = 1
+
+assert(count, 2)
+assert(Number.isNaN(values[0]), true)
+
+---
+
+# Nucleoid propagates changes between positive and negative zero
+
+negative = false
+zero = 0.0
+inverse = 1 / zero
+
+if negative:
+    zero = -0.0
+else:
+    zero = 0.0
+
+assert(inverse, Number.POSITIVE_INFINITY)
+
+negative = true
+
+assert(inverse, Number.NEGATIVE_INFINITY)
+
+negative = false
+
+assert(inverse, Number.POSITIVE_INFINITY)
+
+---
+
+# Nucleoid keeps conditional loop bodies imperative
+
+class Item:
+    pass
+
+item = Item()
+item.amount = 0
+limit = 0
+
+for current of Item:
+    if limit > 0:
+        current.amount = limit
+
+limit = 2
+
+assert(item.amount, 0)
+
+for current of Item:
+    if limit > 0:
+        current.amount = limit
+
+assert(item.amount, 2)
+
+limit = 3
+
+assert(item.amount, 2)
 ```

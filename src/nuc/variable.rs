@@ -21,6 +21,7 @@ pub struct Variable {
     /// running imperatively, where a statement is carried out rather than
     /// declared.
     kind: Option<NodeKind>,
+    changed: bool,
 }
 
 impl Variable {
@@ -29,6 +30,7 @@ impl Variable {
             name,
             value,
             kind: None,
+            changed: false,
         }
     }
 
@@ -46,7 +48,7 @@ impl Variable {
 
         if runtime.is_imperative() {
             let (evaluated, _) = runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-            runtime.assign(&self.name, evaluated.clone());
+            self.changed = runtime.assign(&self.name, evaluated.clone());
             self.kind = None;
             return Ok(Outcome::value(evaluated));
         }
@@ -57,11 +59,12 @@ impl Variable {
             let created = object.run(runtime, scope)?;
             runtime.assign(&self.name, created.clone());
             self.kind = Some(NodeKind::Object);
+            self.changed = true;
             return Ok(Outcome::value(created));
         }
 
         let (evaluated, dependencies) = runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-        runtime.assign(&self.name, evaluated.clone());
+        self.changed = runtime.assign(&self.name, evaluated.clone());
         self.kind = Some(NodeKind::Variable);
 
         Ok(Outcome {
@@ -85,6 +88,6 @@ impl Variable {
     }
 
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
-        runtime.propagate(&self.key())
+        runtime.propagate_change(&self.key(), self.changed)
     }
 }

@@ -29,6 +29,7 @@ pub struct Property {
     pub name: String,
     pub value: Expr,
     kind: Option<NodeKind>,
+    changed: bool,
 }
 
 impl Property {
@@ -38,6 +39,7 @@ impl Property {
             name,
             value,
             kind: None,
+            changed: false,
         }
     }
 
@@ -91,7 +93,7 @@ impl Property {
                 if runtime.is_imperative() && runtime.instantiation(&self.value).is_none() {
                     let (evaluated, _) =
                         runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-                    runtime.assign_property(&object, &self.name, evaluated.clone());
+                    self.changed = runtime.assign_property(&object, &self.name, evaluated.clone());
                     self.kind = None;
                     return Ok(Outcome::value(evaluated));
                 }
@@ -102,12 +104,13 @@ impl Property {
                     let created = instance.run(runtime, scope)?;
                     runtime.assign_property(&object, &self.name, created.clone());
                     self.kind = Some(NodeKind::Object);
+                    self.changed = true;
                     return Ok(Outcome::value(created));
                 }
 
                 let (evaluated, dependencies) =
                     runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-                runtime.assign_property(&object, &self.name, evaluated.clone());
+                self.changed = runtime.assign_property(&object, &self.name, evaluated.clone());
                 self.kind = Some(NodeKind::Property);
 
                 Ok(Outcome {
@@ -134,7 +137,7 @@ impl Property {
 
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
         match self.key() {
-            Some(key) => runtime.propagate(&key),
+            Some(key) => runtime.propagate_change(&key, self.changed),
             None => Ok(()),
         }
     }

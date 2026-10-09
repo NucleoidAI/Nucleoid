@@ -89,6 +89,26 @@ fn synthesized_documents_keep_their_identifiers() {
     }
 }
 
+#[test]
+fn dataset_card_reports_current_split_sizes() {
+    let sets = sets();
+    let spec = common::cases(sets[0].text).len();
+    let synth: usize = sets
+        .iter()
+        .skip(1)
+        .map(|set| common::cases(set.text).len())
+        .sum();
+    let card = include_str!("../dataset/README.md");
+
+    for (split, count) in [("spec", spec), ("synth", synth)] {
+        let row = format!("| `{split}` | {count} |");
+        assert!(
+            card.lines().any(|line| line.starts_with(&row)),
+            "dataset/README.md must report {count} records in the {split} split"
+        );
+    }
+}
+
 /// The dataset is what the documents say, so it is rendered rather than
 /// edited. A file that differs from its document fails here.
 #[test]
@@ -145,8 +165,8 @@ fn every_spec_record_is_nucleoid() {
 
     // Two empty specification representations would agree and prove nothing.
     assert_eq!(
-        records, 205,
-        "the specification holds 205 cases; update this count deliberately when one is added"
+        records, 212,
+        "the specification holds 212 cases; update this count deliberately when one is added"
     );
 }
 

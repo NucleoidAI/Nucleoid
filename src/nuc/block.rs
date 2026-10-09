@@ -66,6 +66,10 @@ impl Block {
     }
 
     pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {
+        if runtime.is_imperative() {
+            return Ok(());
+        }
+
         let Some(key) = &self.key else {
             return Ok(());
         };

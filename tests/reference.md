@@ -811,4 +811,88 @@ assert(total, null)
 child.amount = 4
 
 assert(total, 5)
+
+---
+
+# Nucleoid settles the whole queued chain before its dependent in the reference
+
+source = 1
+middle = source + 1
+last = middle + 1
+total = source + last
+
+middle = source + 2
+source = 2
+
+assert(middle, 4)
+assert(last, 5)
+assert(total, 7)
+
+---
+
+# Nucleoid preserves conditional priority after selective updates in the reference
+
+trigger = 0
+enabled = false
+result = 0
+
+if enabled and trigger > 0:
+    result = 1
+
+if trigger > 0:
+    result = 2
+
+enabled = true
+trigger = 1
+
+assert(result, 2)
+
+---
+
+# Nucleoid revisits later changes during propagation in the reference
+
+first = 0
+second = 0
+total = first + second
+
+if first > 0 and first < 4:
+    second = first + 1
+
+if second > 0 and second < 4:
+    first = second + 1
+
+first = 1
+
+assert(first, 3)
+assert(second, 4)
+assert(total, 7)
+
+---
+
+# Nucleoid keeps conditional loop bodies one-shot in the reference
+
+class Item:
+    pass
+
+item = Item()
+item.amount = 0
+limit = 0
+
+for current of Item:
+    if limit > 0:
+        current.amount = limit
+
+limit = 2
+
+assert(item.amount, 0)
+
+for current of Item:
+    if limit > 0:
+        current.amount = limit
+
+assert(item.amount, 2)
+
+limit = 3
+
+assert(item.amount, 2)
 ```

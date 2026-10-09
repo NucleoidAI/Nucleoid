@@ -9,18 +9,18 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
 use crate::error::{Error, Result};
-use crate::graph::NodeKey;
+use crate::graph::{Graph, NodeKey};
 use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 
 /// How many statements one change may re-evaluate before the runtime decides it
-/// is not settling. Cycles are refused when they are declared, so this is a
-/// backstop that should never be reached — it is set low enough to fail quickly
-/// rather than appear to hang.
+/// is not settling. The dependency graph is acyclic, but imperative rule bodies
+/// can feed changes back into earlier inputs.
 const MAX_PROPAGATION: usize = 100_000;
 
-/// Statements waiting to be re-evaluated, ordered by when they were declared.
+/// Statements waiting to be re-evaluated. Upstream work runs first; otherwise
+/// declaration order decides which statement is next.
 #[derive(Debug, Clone, Default)]
 pub struct Stack {
     pending: BinaryHeap<Reverse<(u64, NodeKey)>>,
@@ -40,6 +40,10 @@ impl Stack {
         self.draining
     }
 
+    pub(crate) fn is_running(&self, key: &NodeKey) -> bool {
+        self.running.contains(key)
+    }
+
     pub fn len(&self) -> usize {
         self.pending.len()
     }
@@ -54,10 +58,35 @@ impl Stack {
         }
     }
 
-    fn pop(&mut self) -> Option<NodeKey> {
-        let Reverse((_, key)) = self.pending.pop()?;
-        self.queued.swap_remove(&key);
-        Some(key)
+    fn pop(&mut self, graph: &Graph) -> Result<Option<NodeKey>> {
+        let mut blocked = Vec::new();
+        let mut next = None;
+
+        while let Some(Reverse((sequence, key))) = self.pending.pop() {
+            if let Some(node) = graph.retrieve(&key) {
+                if node.sequence != sequence {
+                    self.pending.push(Reverse((node.sequence, key)));
+                    continue;
+                }
+            }
+
+            if self.queued.len() > 1 && graph.depends_on_any(&key, &self.queued) {
+                blocked.push(Reverse((sequence, key)));
+                continue;
+            }
+
+            self.queued.swap_remove(&key);
+            next = Some(key);
+            break;
+        }
+
+        self.pending.extend(blocked);
+
+        if next.is_none() && !self.pending.is_empty() {
+            return Err(Error::type_error("Circular Dependency"));
+        }
+
+        Ok(next)
     }
 
     fn clear(&mut self) {
@@ -67,6 +96,16 @@ impl Stack {
 }
 
 impl Runtime {
+    /// Explicit assignments still trigger their rules. Inside a cascade, an
+    /// unchanged value must not keep feedback rules waking each other.
+    pub(crate) fn propagate_change(&mut self, key: &NodeKey, changed: bool) -> Result<()> {
+        if changed || !self.stack.is_draining() {
+            self.propagate(key)
+        } else {
+            Ok(())
+        }
+    }
+
     /// Notes that everything reading `key` is now out of date. The work is done
     /// by whoever is draining the queue, which keeps propagation flat however
     /// long the chain is.
@@ -91,7 +130,7 @@ impl Runtime {
     }
 
     fn enqueue(&mut self, key: NodeKey) {
-        if self.stack.running.contains(&key) {
+        if self.stack.is_running(&key) {
             return;
         }
 
@@ -104,47 +143,41 @@ impl Runtime {
         self.stack.push(sequence, key);
     }
 
-    /// Re-evaluates what is waiting, in the order it was declared, until nothing
-    /// is left. A statement re-run here may queue more work, which this same
-    /// loop picks up.
+    /// Re-evaluates ready work in declaration order, waiting for queued upstream
+    /// changes. A statement re-run here may queue more work, which this same loop
+    /// picks up.
     fn drain(&mut self) -> Result<()> {
-        // Once each. A statement that writes something it also reads would
-        // otherwise wake itself for as long as it kept changing.
-        let mut settled: IndexSet<NodeKey> = IndexSet::new();
         let mut steps = 0usize;
 
-        while let Some(dependent) = self.stack.pop() {
+        while let Some(dependent) = self.stack.pop(&self.graph)? {
             steps += 1;
 
             if steps > MAX_PROPAGATION {
                 return Err(Error::type_error("Propagation did not settle"));
             }
 
-            if !settled.insert(dependent.clone()) {
-                continue;
-            }
-
-            let Some(node) = self.graph.retrieve(&dependent).cloned() else {
+            let Some(node) = self.graph.retrieve(&dependent) else {
                 continue;
             };
 
             let Some(mut nuc) = node.node.clone() else {
                 continue;
             };
+            let instance = node.instance.clone();
 
             self.stack.running.insert(dependent.clone());
 
             let mut scope = Scope::new();
-            scope.set_instance(node.instance.clone());
+            scope.set_instance(instance.clone());
 
             let nested = self.suspend_imperative();
-            if let Some(instance) = &node.instance {
+            if let Some(instance) = &instance {
                 self.instances.push(instance.clone());
             }
             let result = self.with_tracking(TrackingMode::Isolated, |runtime| {
                 runtime.rerun(&mut nuc, &mut scope)
             });
-            if node.instance.is_some() {
+            if instance.is_some() {
                 self.instances.pop();
             }
             self.restore_imperative(nested);

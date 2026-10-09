@@ -104,6 +104,24 @@ impl Value {
         matches!(self, Value::Null | Value::Undefined)
     }
 
+    /// Change detection differs from language equality: signed zeros differ,
+    /// while storing NaN again does not create another propagation event.
+    pub(crate) fn same_value(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Value::Number(left), Value::Number(right)) => {
+                left.to_bits() == right.to_bits() || (left.is_nan() && right.is_nan())
+            }
+            (Value::List(left), Value::List(right)) => {
+                left.len() == right.len()
+                    && left
+                        .iter()
+                        .zip(right)
+                        .all(|(left, right)| left.same_value(right))
+            }
+            _ => self == other,
+        }
+    }
+
     pub fn truthy(&self) -> bool {
         match self {
             Value::Undefined | Value::Null => false,

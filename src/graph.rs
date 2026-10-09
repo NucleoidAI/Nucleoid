@@ -228,6 +228,31 @@ impl Graph {
         dependents.into_iter().map(|(_, key)| key).collect()
     }
 
+    /// Whether any queued statement is upstream of this one, including through
+    /// a dependency that has not been queued yet.
+    pub(crate) fn depends_on_any(&self, key: &NodeKey, candidates: &IndexSet<NodeKey>) -> bool {
+        let mut seen = IndexSet::new();
+        let mut pending = Vec::new();
+
+        if let Some(node) = self.nodes.get(key) {
+            pending.extend(&node.dependencies);
+        }
+
+        while let Some(current) = pending.pop() {
+            if candidates.contains(current) {
+                return true;
+            }
+
+            if seen.insert(current) {
+                if let Some(node) = self.nodes.get(current) {
+                    pending.extend(&node.dependencies);
+                }
+            }
+        }
+
+        false
+    }
+
     /// Whether `from` can reach `to` by following dependent edges, which is what
     /// makes a new edge circular.
     pub fn reaches(&self, from: &NodeKey, to: &NodeKey) -> bool {
