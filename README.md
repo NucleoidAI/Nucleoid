@@ -21,29 +21,7 @@
 
 <br />
 
-<div align="center">
-  <table>
-    <tr>
-      <th colspan="2">Nucleoid Runtime</th>
-    </tr>
-    <tr>
-      <th width="300">🦀 Rust-based</th>
-      <th width="300">⚡ LLM-based</th>
-    </tr>
-    <tr>
-      <td>
-          <b>Programming Language Runtime:</b> Implements the language specification by executing declarative statements.
-      </td>
-      <td>
-        <b>Fine-Tuned LLM:</b> Fine-tuned on synthesized datasets derived from the language specification.
-      </td>
-    </tr>
-    <tr>
-      <td align="center"><a href="https://github.com/NucleoidAI/Nucleoid">this repo</a></td>
-      <td align="center"><a href="https://huggingface.co/nucleoid">huggingface.co/nucleoid</a></td>
-    </tr>
-  </table>
-</div>
+https://github.com/user-attachments/assets/3b5a5fa8-9309-473f-ae18-f55e0f63d4da
 
 <br />
 
@@ -122,8 +100,6 @@ Every example in the reference is executable: `tests/reference.md` is its execut
 </table>
 
 ---
-
-[Nucleoid Chat Video](https://github.com/NucleoidAI/Nucleoid/assets/54210920/813c14fe-43f3-445e-91d8-907433d513de)
 
 ## Neuro-Symbolic AI
 
