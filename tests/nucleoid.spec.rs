@@ -3360,8 +3360,14 @@ fn rounds_numbers_without_losing_precision_at_integer_and_half_boundaries() {
     assert_eq!(run("Math.round(-0.49999999999999994)"), 0);
     assert_eq!(run("Math.round(-0.5)"), 0);
     assert_eq!(run("Math.round(-0.5000000000000001)"), -1);
+    assert_eq!(run("Math.round(1.4999999999999998)"), 1);
     assert_eq!(run("Math.round(1.5)"), 2);
+    assert_eq!(run("Math.round(1.5000000000000002)"), 2);
+    assert_eq!(run("Math.round(-1.4999999999999998)"), -1);
     assert_eq!(run("Math.round(-1.5)"), -1);
+    assert_eq!(run("Math.round(-1.5000000000000002)"), -2);
+    assert_eq!(run("Math.round(4503599627370495.5)"), 4503599627370496.0);
+    assert_eq!(run("Math.round(-4503599627370495.5)"), -4503599627370495.0);
     assert_eq!(run("Math.round(4503599627370497)"), 4503599627370497.0);
     assert_eq!(run("Math.round(-4503599627370497)"), -4503599627370497.0);
     {
@@ -3372,6 +3378,21 @@ fn rounds_numbers_without_losing_precision_at_integer_and_half_boundaries() {
     {
         let actual = run("Math.round(Number.MIN_INTEGER)");
         let expected = run("(Number.MIN_INTEGER)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("Math.round(Number.MAX_VALUE)");
+        let expected = run("(Number.MAX_VALUE)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("Math.round(-Number.MAX_VALUE)");
+        let expected = run("(-Number.MAX_VALUE)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("1 / Math.round(-0.49999999999999994)");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
         assert_eq!(actual, expected);
     }
     {
@@ -3395,6 +3416,16 @@ fn rounds_numbers_without_losing_precision_at_integer_and_half_boundaries() {
         assert_eq!(actual, expected);
     }
     {
+        let actual = run("1 / Math.round(5e-324)");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("1 / Math.round(-5e-324)");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
         let actual = run("Math.round(Number.POSITIVE_INFINITY)");
         let expected = run("(Number.POSITIVE_INFINITY)");
         assert_eq!(actual, expected);
@@ -3410,6 +3441,27 @@ fn rounds_numbers_without_losing_precision_at_integer_and_half_boundaries() {
     assert_eq!(run("rounded"), 4503599627370497.0);
     run("input = 0.49999999999999994");
     assert_eq!(run("rounded"), 0);
+    run(r#"class Reading(amount):
+    this.amount = amount"#);
+    run("$Reading.rounded = Math.round($Reading.amount)");
+    run("$Reading.inverse = 1 / $Reading.rounded");
+    run("reading = Reading(-0.49999999999999994)");
+    assert_eq!(run("reading.rounded"), 0);
+    {
+        let actual = run("reading.inverse");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("reading.amount = 0.49999999999999994");
+    assert_eq!(run("reading.rounded"), 0);
+    {
+        let actual = run("reading.inverse");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("reading.amount = -0.5000000000000001");
+    assert_eq!(run("reading.rounded"), -1);
+    assert_eq!(run("reading.inverse"), -1);
 }
 
 /// Nucleoid indexes and slices strings by Unicode scalar values

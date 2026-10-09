@@ -84,11 +84,16 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
         "ceil" => first.ceil(),
         "floor" => first.floor(),
         "round" => {
-            // Rust rounds ties away from zero; Nucleoid rounds them toward +infinity.
-            if first.fract() == -0.5 {
-                first.ceil()
+            // Compare the fraction directly: host `round` can lose precision
+            // just below 0.5. Truncation also preserves negative zero.
+            let integer = first.trunc();
+            let fraction = first - integer;
+            if fraction >= 0.5 {
+                integer + 1.0
+            } else if fraction < -0.5 {
+                integer - 1.0
             } else {
-                first.round()
+                integer
             }
         }
         "trunc" => first.trunc(),

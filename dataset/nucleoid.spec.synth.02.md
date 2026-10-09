@@ -470,6 +470,18 @@ assert(rating1.stars, -1)
 rating1.score = 9.999999999999998
 
 assert(rating1.stars, 0)
+assert(1 / rating1.stars, Number.POSITIVE_INFINITY)
+
+# A negative score just above the negative half boundary keeps negative zero
+rating1.score = -9.999999999999998
+
+assert(rating1.stars, 0)
+assert(1 / rating1.stars, Number.NEGATIVE_INFINITY)
+
+# Crossing the negative half boundary rounds down to negative one
+rating1.score = -10.000000000000002
+
+assert(rating1.stars, -1)
 
 ---
 

@@ -4892,18 +4892,29 @@ assert(Math.round(0.5000000000000001), 1)
 assert(Math.round(-0.49999999999999994), 0)
 assert(Math.round(-0.5), 0)
 assert(Math.round(-0.5000000000000001), -1)
+assert(Math.round(1.4999999999999998), 1)
 assert(Math.round(1.5), 2)
+assert(Math.round(1.5000000000000002), 2)
+assert(Math.round(-1.4999999999999998), -1)
 assert(Math.round(-1.5), -1)
+assert(Math.round(-1.5000000000000002), -2)
 
+assert(Math.round(4503599627370495.5), 4503599627370496)
+assert(Math.round(-4503599627370495.5), -4503599627370495)
 assert(Math.round(4503599627370497), 4503599627370497)
 assert(Math.round(-4503599627370497), -4503599627370497)
 assert(Math.round(Number.MAX_INTEGER), Number.MAX_INTEGER)
 assert(Math.round(Number.MIN_INTEGER), Number.MIN_INTEGER)
+assert(Math.round(Number.MAX_VALUE), Number.MAX_VALUE)
+assert(Math.round(-Number.MAX_VALUE), -Number.MAX_VALUE)
 
+assert(1 / Math.round(-0.49999999999999994), Number.NEGATIVE_INFINITY)
 assert(1 / Math.round(-0.5), Number.NEGATIVE_INFINITY)
 assert(1 / Math.round(-0.1), Number.NEGATIVE_INFINITY)
 assert(1 / Math.round(-0.0), Number.NEGATIVE_INFINITY)
 assert(1 / Math.round(0.0), Number.POSITIVE_INFINITY)
+assert(1 / Math.round(5e-324), Number.POSITIVE_INFINITY)
+assert(1 / Math.round(-5e-324), Number.NEGATIVE_INFINITY)
 assert(Math.round(Number.POSITIVE_INFINITY), Number.POSITIVE_INFINITY)
 assert(Math.round(Number.NEGATIVE_INFINITY), Number.NEGATIVE_INFINITY)
 assert(String(Math.round(Number.NaN)), "NaN")
@@ -4916,6 +4927,27 @@ assert(rounded, 4503599627370497)
 input = 0.49999999999999994
 
 assert(rounded, 0)
+
+class Reading(amount):
+    this.amount = amount
+
+$Reading.rounded = Math.round($Reading.amount)
+$Reading.inverse = 1 / $Reading.rounded
+
+reading = Reading(-0.49999999999999994)
+
+assert(reading.rounded, 0)
+assert(reading.inverse, Number.NEGATIVE_INFINITY)
+
+reading.amount = 0.49999999999999994
+
+assert(reading.rounded, 0)
+assert(reading.inverse, Number.POSITIVE_INFINITY)
+
+reading.amount = -0.5000000000000001
+
+assert(reading.rounded, -1)
+assert(reading.inverse, -1)
 
 ---
 
