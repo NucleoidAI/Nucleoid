@@ -5322,4 +5322,117 @@ assert(item.amount, 2)
 limit = 3
 
 assert(item.amount, 2)
+
+---
+
+# Nucleoid cancels propagation queued by a caught failure
+
+trigger = 0
+source = 1
+observations = 0
+
+if source > 0:
+    observations = observations + 1
+
+if trigger > 0:
+    try:
+        source = 2
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error
+
+# This dependent is already queued when the failing body starts
+remaining = trigger + 10
+
+trigger = 1
+
+assert(source, 1)
+assert(observations, 1)
+assert(remaining, 11)
+
+source = 3
+
+assert(observations, 2)
+
+---
+
+# Nucleoid preserves earlier queued work across nested caught failures
+
+trigger = 0
+source = 0
+observations = 0
+
+if source > 0:
+    observations = observations + 1
+
+if trigger > 0:
+    source = 1
+    try:
+        source = 2
+        try:
+            source = 3
+            throw "INNER"
+        catch inner:
+            if inner != "INNER":
+                throw inner
+        throw "OUTER"
+    catch outer:
+        if outer != "OUTER":
+            throw outer
+
+trigger = 1
+
+assert(source, 1)
+assert(observations, 1)
+
+---
+
+# Nucleoid restores deletion tracking before entering a catch body
+
+trigger = 0
+missing = null
+
+if trigger > 0:
+    try:
+        temporary = 1
+        delete temporary
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error
+        try:
+            temporary
+        catch absent:
+            missing = absent
+
+trigger = 1
+
+assert(missing, ReferenceError("temporary is not defined"))
+
+---
+
+# Nucleoid ends temporary undefined reads when a deletion cascade finishes
+
+trigger = 0
+source = 1
+dependent = source + 1
+
+if trigger > 0:
+    delete source
+
+def read_after_update():
+    trigger = 1
+    try:
+        source
+    catch error:
+        return error
+    return "NO_ERROR"
+
+assert(read_after_update(), ReferenceError("source is not defined"))
+assert(dependent, null)
+
+source = 3
+
+assert(dependent, 4)
 ```

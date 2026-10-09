@@ -3834,6 +3834,115 @@ fn keeps_conditional_loop_bodies_imperative() {
     assert_eq!(run("item.amount"), 2);
 }
 
+/// Nucleoid cancels propagation queued by a caught failure
+#[rustfmt::skip]
+#[test]
+fn cancels_propagation_queued_by_a_caught_failure() {
+    let mut run = runner();
+    run("trigger = 0");
+    run("source = 1");
+    run("observations = 0");
+    run(r#"if source > 0:
+    observations = observations + 1"#);
+    run(r#"if trigger > 0:
+    try:
+        source = 2
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error"#);
+    run("remaining = trigger + 10");
+    run("trigger = 1");
+    assert_eq!(run("source"), 1);
+    assert_eq!(run("observations"), 1);
+    assert_eq!(run("remaining"), 11);
+    run("source = 3");
+    assert_eq!(run("observations"), 2);
+}
+
+/// Nucleoid preserves earlier queued work across nested caught failures
+#[rustfmt::skip]
+#[test]
+fn preserves_earlier_queued_work_across_nested_caught_failures() {
+    let mut run = runner();
+    run("trigger = 0");
+    run("source = 0");
+    run("observations = 0");
+    run(r#"if source > 0:
+    observations = observations + 1"#);
+    run(r#"if trigger > 0:
+    source = 1
+    try:
+        source = 2
+        try:
+            source = 3
+            throw "INNER"
+        catch inner:
+            if inner != "INNER":
+                throw inner
+        throw "OUTER"
+    catch outer:
+        if outer != "OUTER":
+            throw outer"#);
+    run("trigger = 1");
+    assert_eq!(run("source"), 1);
+    assert_eq!(run("observations"), 1);
+}
+
+/// Nucleoid restores deletion tracking before entering a catch body
+#[rustfmt::skip]
+#[test]
+fn restores_deletion_tracking_before_entering_a_catch_body() {
+    let mut run = runner();
+    run("trigger = 0");
+    run("missing = null");
+    run(r#"if trigger > 0:
+    try:
+        temporary = 1
+        delete temporary
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error
+        try:
+            temporary
+        catch absent:
+            missing = absent"#);
+    run("trigger = 1");
+    {
+        let actual = run("missing");
+        let expected = run(r#"(ReferenceError("temporary is not defined"))"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid ends temporary undefined reads when a deletion cascade finishes
+#[rustfmt::skip]
+#[test]
+fn ends_temporary_undefined_reads_when_a_deletion_cascade_finishes() {
+    let mut run = runner();
+    run("trigger = 0");
+    run("source = 1");
+    run("dependent = source + 1");
+    run(r#"if trigger > 0:
+    delete source"#);
+    run(r#"def read_after_update():
+    trigger = 1
+    try:
+        source
+    catch error:
+        return error
+    return "NO_ERROR""#);
+    {
+        let actual = run("read_after_update()");
+        let expected = run(r#"(ReferenceError("source is not defined"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("dependent"), serde_json::Value::Null);
+    run("source = 3");
+    assert_eq!(run("dependent"), 4);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

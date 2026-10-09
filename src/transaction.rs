@@ -3,8 +3,17 @@ use std::sync::Arc;
 
 use crate::graph::{Graph, GraphNode, NodeKey};
 use crate::lang::ast::Function;
+use crate::runtime::Runtime;
+use crate::stack::Stack;
 use crate::state::{ClassData, State};
 use crate::value::{ObjectData, ObjectId, Value};
+
+/// A caught failure must undo its queued effects as well as its writes.
+pub(crate) struct Savepoint {
+    mark: usize,
+    stack: Stack,
+    deleted: IndexSet<NodeKey>,
+}
 
 /// The previous contents of one slot, recorded before it was overwritten.
 #[derive(Debug, Clone)]
@@ -59,6 +68,9 @@ enum Slot {
 
 /// An undo log for one `run`. Everything a statement touches is recorded so an
 /// exception leaves the state exactly as it was before the run started.
+///
+/// State and graph writes are logged here. Runtime savepoints also preserve
+/// pending propagation and temporary deletion tracking.
 ///
 /// Only the first write to a slot is recorded: that is the value the run began
 /// with, which is what rolling back has to restore. Later writes to the same
@@ -217,6 +229,23 @@ impl Transaction {
 
         self.recorded.clear();
         self.active = false;
+    }
+}
+
+impl Runtime {
+    pub(crate) fn savepoint(&mut self) -> Savepoint {
+        Savepoint {
+            mark: self.transaction.mark(),
+            stack: self.stack.clone(),
+            deleted: self.deleted.clone(),
+        }
+    }
+
+    pub(crate) fn rollback_to(&mut self, savepoint: Savepoint) {
+        self.transaction
+            .rollback_to(savepoint.mark, &mut self.state, &mut self.graph);
+        self.stack = savepoint.stack;
+        self.deleted = savepoint.deleted;
     }
 }
 

@@ -895,4 +895,52 @@ assert(item.amount, 2)
 limit = 3
 
 assert(item.amount, 2)
+
+---
+
+# Nucleoid cancels only an aborted body's queued work in the reference
+
+trigger = 0
+source = 1
+observations = 0
+
+if source > 0:
+    observations = observations + 1
+
+if trigger > 0:
+    try:
+        source = 2
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error
+
+remaining = trigger + 10
+trigger = 1
+
+assert(source, 1)
+assert(observations, 1)
+assert(remaining, 11)
+
+---
+
+# Nucleoid finishes temporary deletion reads before continuing in the reference
+
+trigger = 0
+source = 1
+dependent = source + 1
+
+if trigger > 0:
+    delete source
+
+def read_after_update():
+    trigger = 1
+    try:
+        source
+    catch error:
+        return error
+    return "NO_ERROR"
+
+assert(read_after_update(), ReferenceError("source is not defined"))
+assert(dependent, null)
 ```

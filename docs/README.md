@@ -136,6 +136,7 @@ width = goldenRatio.value * altitude
 - `delete` removes a variable and returns whether anything was removed.
 - Dependents of a deleted variable become `null`.
 - Using a deleted variable raises a reference error.
+- Temporary undefined reads end when the deletion's propagation finishes, including deletions performed by a standing rule.
 
 ```
 base = 10
@@ -482,6 +483,7 @@ Full detail: [NUC 8](nuc-0008.md).
 - Instances created earlier in a failing loop are rolled back too.
 - A class-level rule that throws for any existing instance is not installed at all.
 - Propagation that does not settle raises `TypeError("Propagation did not settle")` and rolls back the transaction.
+- A caught failure restores the failing body's pending propagation and deletion tracking before the catch body runs. Work queued before the body is preserved, including across nested catches.
 
 ```
 a = 5

@@ -118,9 +118,11 @@ impl Runtime {
             return Ok(());
         }
 
+        let deleted = self.deleted.clone();
         self.stack.draining = true;
         let result = self.drain();
         self.stack.draining = false;
+        self.deleted = deleted;
 
         if result.is_err() {
             self.stack.clear();

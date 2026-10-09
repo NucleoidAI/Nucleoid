@@ -799,6 +799,60 @@ catch error:
 assert(a, 5)
 ```
 
+**A caught failure cancels only the propagation it queued**
+
+- The observer of `source` must not run for the aborted update.
+- The unrelated dependent of `trigger` was already queued and still runs.
+
+```nuc
+trigger = 0
+source = 1
+observations = 0
+
+if source > 0:
+    observations = observations + 1
+
+if trigger > 0:
+    try:
+        source = 2
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error
+
+remaining = trigger + 10
+trigger = 1
+
+assert(source, 1)
+assert(observations, 1)
+assert(remaining, 11)
+```
+
+**A deletion permits temporary undefined reads only during its cascade**
+
+- Dependents settle to `null` while the removed name propagates.
+- The direct read after the cascade is a reference error, not another undefined read.
+
+```nuc
+trigger = 0
+source = 1
+dependent = source + 1
+
+if trigger > 0:
+    delete source
+
+def read_after_update():
+    trigger = 1
+    try:
+        source
+    catch error:
+        return error
+    return "NO_ERROR"
+
+assert(read_after_update(), ReferenceError("source is not defined"))
+assert(dependent, null)
+```
+
 **An instance rejected at creation is not registered and its name is not bound**
 
 - The rule throws while the instance is being made, so nothing is left behind.

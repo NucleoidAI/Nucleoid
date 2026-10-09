@@ -1518,4 +1518,116 @@ assert(flight.delay, 10)
 threshold = 20
 
 assert(flight.delay, 10)
+
+---
+
+# Nucleoid cancels fuel inspections queued by an aborted dispatch
+
+dispatch = 0
+fuel = 100
+inspections = 0
+
+if fuel > 0:
+    inspections = inspections + 1
+
+if dispatch > 0:
+    try:
+        fuel = 200
+        throw "NO_DISPATCH"
+    catch error:
+        if error != "NO_DISPATCH":
+            throw error
+
+estimate = dispatch + 10
+
+dispatch = 1
+
+assert(fuel, 100)
+assert(inspections, 1)
+assert(estimate, 11)
+
+fuel = 150
+
+assert(inspections, 2)
+
+---
+
+# Nucleoid preserves an earlier pressure inspection across nested aborts
+
+stage = 0
+pressure = 0
+inspections = 0
+
+if pressure > 0:
+    inspections = inspections + 1
+
+if stage > 0:
+    pressure = 1
+    try:
+        pressure = 2
+        try:
+            pressure = 3
+            throw "INNER_ABORT"
+        catch inner:
+            if inner != "INNER_ABORT":
+                throw inner
+        throw "OUTER_ABORT"
+    catch outer:
+        if outer != "OUTER_ABORT":
+            throw outer
+
+stage = 1
+
+assert(pressure, 1)
+assert(inspections, 1)
+
+---
+
+# Nucleoid clears aborted cargo deletion markers before recovery
+
+dispatch = 0
+absence = null
+
+if dispatch > 0:
+    try:
+        temporaryCargo = 1
+        delete temporaryCargo
+        throw "NO_CARGO"
+    catch error:
+        if error != "NO_CARGO":
+            throw error
+        try:
+            temporaryCargo
+        catch missing:
+            absence = missing
+
+dispatch = 1
+
+assert(absence, ReferenceError("temporaryCargo is not defined"))
+
+---
+
+# Nucleoid rejects a removed seat count after its deletion has propagated
+
+departure = 0
+seats = 1
+total = seats + 1
+
+if departure > 0:
+    delete seats
+
+def inspect_after_departure():
+    departure = 1
+    try:
+        seats
+    catch error:
+        return error
+    return "NO_ERROR"
+
+assert(inspect_after_departure(), ReferenceError("seats is not defined"))
+assert(total, null)
+
+seats = 3
+
+assert(total, 4)
 ```

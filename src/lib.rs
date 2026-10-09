@@ -29,7 +29,7 @@
 //! | [`scope`] | Local bindings and execution context |
 //! | [`stack`] | Dependency propagation queue |
 //! | [`statement`] | Source compilation |
-//! | [`transaction`] | Undo logs and rollback |
+//! | [`transaction`] | Undo logs, savepoints and rollback |
 //! | [`runtime`] | Statement execution and the public runtime API |
 //! | [`value`], [`error`] | Runtime values and typed errors through [`Result`] |
 //! | [`builtins`] | Standard objects and operations |
