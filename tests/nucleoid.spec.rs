@@ -3943,6 +3943,410 @@ fn ends_temporary_undefined_reads_when_a_deletion_cascade_finishes() {
     assert_eq!(run("dependent"), 4);
 }
 
+/// Nucleoid tracks named functions forwarded as values
+#[rustfmt::skip]
+#[test]
+fn tracks_named_functions_forwarded_as_values() {
+    let mut run = runner();
+    run(r#"def transform(number):
+    return number * 2"#);
+    run(r#"def choose():
+    return transform"#);
+    run("callback = transform");
+    run("forwarded = callback");
+    run("returned = choose()");
+    run("direct = forwarded(3)");
+    run("indirect = returned(3)");
+    assert_eq!(run("direct"), 6);
+    assert_eq!(run("indirect"), 6);
+    run(r#"def transform(number):
+    return number * 3"#);
+    assert_eq!(run("direct"), 9);
+    assert_eq!(run("indirect"), 9);
+}
+
+/// Nucleoid tracks named callbacks over lists and class populations
+#[rustfmt::skip]
+#[test]
+fn tracks_named_callbacks_over_lists_and_class_populations() {
+    let mut run = runner();
+    run("numbers = [1, 2, 3]");
+    run(r#"def transform(number):
+    return number * 2"#);
+    run(r#"def matches(number):
+    return number > 0"#);
+    run(r#"def combine(total, number):
+    return total + number"#);
+    run("mapped = numbers.map(transform)");
+    run("filtered = numbers.filter(matches)");
+    run("found = numbers.find(matches)");
+    run("all = numbers.every(matches)");
+    run("any = numbers.some(matches)");
+    run("total = numbers.reduce(combine, 1)");
+    assert_eq!(run("mapped"), serde_json::json!([2, 4, 6]));
+    assert_eq!(run("filtered"), serde_json::json!([1, 2, 3]));
+    assert_eq!(run("found"), 1);
+    assert_eq!(run("all"), true);
+    assert_eq!(run("any"), true);
+    assert_eq!(run("total"), 7);
+    run(r#"def transform(number):
+    return number * 3"#);
+    run(r#"def matches(number):
+    return number > 3"#);
+    run(r#"def combine(total, number):
+    return total * number"#);
+    assert_eq!(run("mapped"), serde_json::json!([3, 6, 9]));
+    assert_eq!(run("filtered"), serde_json::json!([]));
+    assert_eq!(run("found"), serde_json::Value::Null);
+    assert_eq!(run("all"), false);
+    assert_eq!(run("any"), false);
+    assert_eq!(run("total"), 6);
+    run(r#"class Sample(amount):
+    this.amount = amount"#);
+    run(r#"def reading(sample):
+    return sample.amount * 2"#);
+    run("sample = Sample(2)");
+    run("readings = Sample.map(reading)");
+    assert_eq!(run("readings"), serde_json::json!([4]));
+    run(r#"def reading(sample):
+    return sample.amount * 3"#);
+    assert_eq!(run("readings"), serde_json::json!([6]));
+    run("sample.amount = 3");
+    run("Sample(4)");
+    assert_eq!(run("readings"), serde_json::json!([9, 12]));
+}
+
+/// Nucleoid tracks named functions passed to higher order calls
+#[rustfmt::skip]
+#[test]
+fn tracks_named_functions_passed_to_higher_order_calls() {
+    let mut run = runner();
+    run(r#"def transform(number):
+    return number * 2"#);
+    run(r#"def apply(operation, number):
+    return operation(number)"#);
+    run("input = 3");
+    run("result = apply(transform, input)");
+    assert_eq!(run("result"), 6);
+    run(r#"def transform(number):
+    return number * 3"#);
+    assert_eq!(run("result"), 9);
+    run("input = 4");
+    assert_eq!(run("result"), 12);
+}
+
+/// Nucleoid tracks calls through reassigned lambda variables
+#[rustfmt::skip]
+#[test]
+fn tracks_calls_through_reassigned_lambda_variables() {
+    let mut run = runner();
+    run("input = 3");
+    run("callback = number => number * 2");
+    run("result = callback(input)");
+    run("callbacks = [callback]");
+    run("indexed = callbacks[0](input)");
+    assert_eq!(run("result"), 6);
+    assert_eq!(run("indexed"), 6);
+    run("callback = number => number * 3");
+    assert_eq!(run("result"), 9);
+    assert_eq!(run("indexed"), 9);
+    run("input = 4");
+    assert_eq!(run("result"), 12);
+    assert_eq!(run("indexed"), 12);
+}
+
+/// Nucleoid tracks dotted and indexed callable properties consistently
+#[rustfmt::skip]
+#[test]
+fn tracks_dotted_and_indexed_callable_properties_consistently() {
+    let mut run = runner();
+    run(r#"class Handler:
+    pass"#);
+    run("handler = Handler()");
+    run("input = 2");
+    run("dotted = handler.operation(input)");
+    run(r#"indexed = handler["operation"](input)"#);
+    assert_eq!(run("dotted"), serde_json::Value::Null);
+    assert_eq!(run("indexed"), serde_json::Value::Null);
+    run("handler.operation = number => number + 1");
+    assert_eq!(run("dotted"), 3);
+    assert_eq!(run("indexed"), 3);
+    run("handler.operation = number => number + 2");
+    assert_eq!(run("dotted"), 4);
+    assert_eq!(run("indexed"), 4);
+    run("input = 3");
+    assert_eq!(run("dotted"), 5);
+    assert_eq!(run("indexed"), 5);
+}
+
+/// Nucleoid freezes a function definition without freezing its body dependencies
+#[rustfmt::skip]
+#[test]
+fn freezes_a_function_definition_without_freezing_its_body_dependencies() {
+    let mut run = runner();
+    run("factor = 2");
+    run(r#"def transform(number):
+    return number * factor"#);
+    run("snapshot = transform.value");
+    run("frozen = snapshot(3)");
+    run("live = transform(3)");
+    assert_eq!(run("frozen"), 6);
+    assert_eq!(run("live"), 6);
+    run(r#"def transform(number):
+    return number * factor * 10"#);
+    assert_eq!(run("frozen"), 6);
+    assert_eq!(run("live"), 60);
+    run("factor = 4");
+    assert_eq!(run("frozen"), 12);
+    assert_eq!(run("live"), 120);
+}
+
+/// Nucleoid defers null function aliases and restores callers after deletion
+#[rustfmt::skip]
+#[test]
+fn defers_null_function_aliases_and_restores_callers_after_deletion() {
+    let mut run = runner();
+    run("callback = null");
+    run("input = 3");
+    run("offset = 0");
+    run("result = callback(input) + offset");
+    assert_eq!(run("result"), serde_json::Value::Null);
+    run("callback = number => number * 2");
+    assert_eq!(run("result"), 6);
+    run("callback = null");
+    assert_eq!(run("result"), serde_json::Value::Null);
+    run("callback = number => number * 3");
+    assert_eq!(run("result"), 9);
+    run("delete callback");
+    assert_eq!(run("result"), serde_json::Value::Null);
+    run("offset = 1");
+    run("input = 4");
+    assert_eq!(run("result"), serde_json::Value::Null);
+    run("missing = null");
+    run(r#"try:
+    callback(3)
+catch error:
+    missing = error"#);
+    {
+        let actual = run("missing");
+        let expected = run(r#"(ReferenceError("callback is not defined"))"#);
+        assert_eq!(actual, expected);
+    }
+    run("trigger = 0");
+    run(r#"if trigger > 0:
+    callback(3)"#);
+    run(r#"try:
+    trigger = 1
+catch error:
+    missing = error"#);
+    {
+        let actual = run("missing");
+        let expected = run(r#"(ReferenceError("callback is not defined"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("trigger"), 0);
+    run("callback = number => number * 4");
+    assert_eq!(run("result"), 17);
+    run("input = 5");
+    assert_eq!(run("result"), 21);
+}
+
+/// Nucleoid restores nullable callable properties without changing frozen references
+#[rustfmt::skip]
+#[test]
+fn restores_nullable_callable_properties_without_changing_frozen_references() {
+    let mut run = runner();
+    run(r#"class Handler:
+    pass"#);
+    run("handler = Handler()");
+    run("handler.operation = number => number + 1");
+    run("snapshot = handler.operation.value");
+    run("frozen = snapshot(2)");
+    run("input = 2");
+    run("offset = 0");
+    run("dotted = handler.operation(input) + offset");
+    run(r#"indexed = handler["operation"](input) + offset"#);
+    run("handler.operation = null");
+    assert_eq!(run("dotted"), serde_json::Value::Null);
+    assert_eq!(run("indexed"), serde_json::Value::Null);
+    assert_eq!(run("frozen"), 3);
+    run("handler.operation = number => number + 2");
+    assert_eq!(run("dotted"), 4);
+    assert_eq!(run("indexed"), 4);
+    run("delete handler.operation");
+    assert_eq!(run("dotted"), serde_json::Value::Null);
+    assert_eq!(run("indexed"), serde_json::Value::Null);
+    assert_eq!(run("frozen"), 3);
+    run("offset = 1");
+    run("input = 3");
+    assert_eq!(run("dotted"), serde_json::Value::Null);
+    assert_eq!(run("indexed"), serde_json::Value::Null);
+    run("handler.operation = number => number + 3");
+    assert_eq!(run("dotted"), 7);
+    assert_eq!(run("indexed"), 7);
+    assert_eq!(run("frozen"), 3);
+}
+
+/// Nucleoid lets null and non callable parameters shadow outer functions
+#[rustfmt::skip]
+#[test]
+fn lets_null_and_non_callable_parameters_shadow_outer_functions() {
+    let mut run = runner();
+    run(r#"def operation(number):
+    return 99"#);
+    run(r#"def apply(operation, number):
+    return operation(number)"#);
+    run("callback = null");
+    run("result = apply(callback, 3)");
+    assert_eq!(run("result"), serde_json::Value::Null);
+    run("callback = number => number * 2");
+    assert_eq!(run("result"), 6);
+    run("callback = number => number * 3");
+    assert_eq!(run("result"), 9);
+    run("failure = null");
+    run(r#"try:
+    apply(7, 3)
+catch error:
+    failure = error"#);
+    {
+        let actual = run("failure");
+        let expected = run(r#"(TypeError("operation is not a function"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("operation(3)"), 99);
+}
+
+/// Nucleoid rolls back non callable replacements used by existing callers
+#[rustfmt::skip]
+#[test]
+fn rolls_back_non_callable_replacements_used_by_existing_callers() {
+    let mut run = runner();
+    run("callback = number => number * 2");
+    run("result = callback(3)");
+    run("failure = null");
+    run(r#"try:
+    callback = 7
+catch error:
+    failure = error"#);
+    {
+        let actual = run("failure");
+        let expected = run(r#"(TypeError("callback is not a function"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("result"), 6);
+    assert_eq!(run("callback(4)"), 8);
+    run(r#"class Handler:
+    pass"#);
+    run("handler = Handler()");
+    run("handler.operation = number => number + 1");
+    run("propertyResult = handler.operation(3)");
+    run(r#"try:
+    handler.operation = 7
+catch error:
+    failure = error"#);
+    {
+        let actual = run("failure");
+        let expected = run(r#"(TypeError("handler.operation is not a function"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("propertyResult"), 4);
+    assert_eq!(run("handler.operation(4)"), 5);
+    run("handler.operation = number => number + 2");
+    assert_eq!(run("propertyResult"), 5);
+}
+
+/// Nucleoid rolls back failed redefinitions of named callbacks
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_redefinitions_of_named_callbacks() {
+    let mut run = runner();
+    run(r#"def transform(number):
+    return number * 2"#);
+    run("numbers = [1, 2]");
+    run("mapped = numbers.map(transform)");
+    run("failure = null");
+    run(r#"try:
+    def transform(number):
+        if number == 2:
+            throw "REJECTED_CALLBACK"
+        return number * 3
+catch error:
+    failure = error"#);
+    assert_eq!(run("failure"), "REJECTED_CALLBACK");
+    assert_eq!(run("mapped"), serde_json::json!([2, 4]));
+    assert_eq!(run("transform(3)"), 6);
+    run(r#"def transform(number):
+    return number * 4"#);
+    assert_eq!(run("mapped"), serde_json::json!([4, 8]));
+}
+
+/// Nucleoid replaces functions and callable variables under the same name
+#[rustfmt::skip]
+#[test]
+fn replaces_functions_and_callable_variables_under_the_same_name() {
+    let mut run = runner();
+    run(r#"def callback(number):
+    return number * 2"#);
+    run("forwarded = callback");
+    run("direct = callback(3)");
+    run("indirect = forwarded(3)");
+    run("callback = number => number * 3");
+    assert_eq!(run("direct"), 9);
+    assert_eq!(run("indirect"), 9);
+    run("failure = null");
+    run(r#"try:
+    def callback(number):
+        throw "REJECTED_BINDING"
+catch error:
+    failure = error"#);
+    assert_eq!(run("failure"), "REJECTED_BINDING");
+    assert_eq!(run("direct"), 9);
+    assert_eq!(run("indirect"), 9);
+    assert_eq!(run("callback(4)"), 12);
+    run(r#"def callback(number):
+    return number * 4"#);
+    assert_eq!(run("direct"), 12);
+    assert_eq!(run("indirect"), 12);
+    run(r#"try:
+    callback = 7
+catch error:
+    failure = error"#);
+    {
+        let actual = run("failure");
+        let expected = run(r#"(TypeError("callback is not a function"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("direct"), 12);
+    assert_eq!(run("indirect"), 12);
+    assert_eq!(run("callback(4)"), 16);
+    run("callback = null");
+    assert_eq!(run("direct"), serde_json::Value::Null);
+    assert_eq!(run("indirect"), serde_json::Value::Null);
+    run(r#"def callback(number):
+    return number * 5"#);
+    assert_eq!(run("direct"), 15);
+    assert_eq!(run("indirect"), 15);
+    run("callback = number => number * 6");
+    assert_eq!(run("direct"), 18);
+    assert_eq!(run("indirect"), 18);
+    run("delete callback");
+    assert_eq!(run("direct"), serde_json::Value::Null);
+    assert_eq!(run("indirect"), serde_json::Value::Null);
+    run(r#"try:
+    callback(3)
+catch error:
+    failure = error"#);
+    {
+        let actual = run("failure");
+        let expected = run(r#"(ReferenceError("callback is not defined"))"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"def callback(number):
+    return number * 7"#);
+    assert_eq!(run("direct"), 21);
+    assert_eq!(run("indirect"), 21);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

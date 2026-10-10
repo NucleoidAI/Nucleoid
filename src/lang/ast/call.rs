@@ -62,12 +62,28 @@ impl Runtime {
 
         let value = self.evaluate(callee, scope)?;
 
-        if let Value::Function(function) = value {
-            let values = self.evaluate_all(arguments, scope)?;
-            return self.invoke(&function, &values);
-        }
+        self.call_value(callee, value, arguments, scope)
+    }
 
-        Err(Error::type_error(format!("{callee} is not a function")))
+    fn call_value(
+        &mut self,
+        callee: impl std::fmt::Display,
+        value: Value,
+        arguments: &[Expr],
+        scope: &mut Scope,
+    ) -> Result<Value> {
+        match value {
+            Value::Function(function) => {
+                let values = self.evaluate_all(arguments, scope)?;
+                self.invoke(&function, &values)
+            }
+            Value::Null | Value::Undefined => {
+                self.note_nullish(&value);
+                self.undefined_read |= value.is_undefined();
+                Ok(Value::Undefined)
+            }
+            _ => Err(Error::type_error(format!("{callee} is not a function"))),
+        }
     }
 
     fn call_named(&mut self, name: &str, arguments: &[Expr], scope: &mut Scope) -> Result<Value> {
@@ -94,9 +110,8 @@ impl Runtime {
             return Ok(Value::String(format!("{name}: {message}")));
         }
 
-        if let Some(Value::Function(function)) = scope.retrieve(name).cloned() {
-            let values = self.evaluate_all(arguments, scope)?;
-            return self.invoke(&function, &values);
+        if let Some(value) = scope.retrieve(name).cloned() {
+            return self.call_value(name, value, arguments, scope);
         }
 
         if let Some(function) = self.state.function(name).cloned() {
@@ -142,12 +157,13 @@ impl Runtime {
             _ => {}
         }
 
-        if let Some(Value::Function(function)) = self.state.variable(name).cloned() {
-            let values = self.evaluate_all(arguments, scope)?;
-            return self.invoke(&function, &values);
+        if let Some(value) = self.state.variable(name).cloned() {
+            self.track(NodeKey::variable(name));
+            return self.call_value(name, value, arguments, scope);
         }
 
-        Err(Error::not_defined(name))
+        let value = self.read_missing_identifier(name)?;
+        self.call_value(name, value, arguments, scope)
     }
 
     fn call_method(
@@ -205,8 +221,7 @@ impl Runtime {
 
             Value::Object(id) => {
                 let id = id.clone();
-                let values = self.evaluate_all(arguments, scope)?;
-                self.call_object_method(&id, property, &values)
+                self.call_object_method(&id, property, arguments, scope)
             }
 
             // A method on something not yet defined leaves the expression
@@ -225,7 +240,8 @@ impl Runtime {
         &mut self,
         id: &ObjectId,
         property: &str,
-        arguments: &[Value],
+        arguments: &[Expr],
+        scope: &mut Scope,
     ) -> Result<Value> {
         let method = self
             .state
@@ -235,20 +251,17 @@ impl Runtime {
             .and_then(|class| class.methods.get(property).cloned());
 
         if let Some(method) = method {
-            return self.invoke_with_this(&method, arguments, Some(id.clone()));
+            let values = self.evaluate_all(arguments, scope)?;
+            return self.invoke_with_this(&method, &values, Some(id.clone()));
         }
 
-        if let Some(Value::Function(function)) = self.state.property(id, property).cloned() {
-            return self.invoke(&function, arguments);
-        }
-
-        if property == "toString" {
+        if property == "toString" && self.state.property(id, property).is_none() {
+            self.evaluate_all(arguments, scope)?;
             return Ok(Value::String(id.to_string()));
         }
 
-        Err(Error::type_error(format!(
-            "{id}.{property} is not a function"
-        )))
+        let value = self.read_property(&Value::Object(id.clone()), property, scope)?;
+        self.call_value(format_args!("{id}.{property}"), value, arguments, scope)
     }
 
     fn call_class_method(

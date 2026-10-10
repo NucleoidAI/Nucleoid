@@ -445,6 +445,11 @@ Full detail: [NUC 7](nuc-0007.md).
 - `def` defines a function in the state; a function with no `return` yields `null`.
 - A call in an assignment depends on the function and its arguments.
 - Redefining a function updates existing dependents.
+- A named function and a variable binding under the same name replace one another; reads and calls both use the latest binding.
+- Named function references stay live when aliased, returned, or passed as callbacks.
+- Calls through variables, list items, and object properties depend on the callable's storage location.
+- A null callable, an unassigned callable property, or a callable deleted during propagation leaves its dependent result null until rebound. Other non-callable values raise `TypeError`.
+- `.value` freezes the function definition, not the state read when its body executes.
 - Functions may recurse and may have multiple `return` statements.
 
 ```
@@ -459,7 +464,7 @@ number = generate(random)
 
 ### Lambdas
 
-- Three equivalent forms; parameters shadow outer names.
+- Three equivalent forms; parameters shadow outer names, including outer functions when the parameter is null or non-callable.
 
 ```
 list.find(function(element) { return element == 3 })

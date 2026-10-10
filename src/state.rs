@@ -82,7 +82,11 @@ impl ClassData {
     }
 }
 
-/// Everything the runtime holds: top-level variables, objects and classes.
+/// Everything the runtime holds: top-level variables, objects, classes and
+/// named functions.
+///
+/// Variable and named-function bindings share a namespace; runtime writes keep
+/// their typed stores mutually exclusive.
 ///
 /// Runtime writes record before-images through the methods below.
 /// [`Transaction::rollback`](crate::transaction::Transaction::rollback)
@@ -219,6 +223,11 @@ impl State {
 /// differ.
 impl Runtime {
     pub(crate) fn assign(&mut self, name: &str, value: Value) -> bool {
+        if let Some(before) = self.state.functions.get(name).cloned() {
+            self.transaction.record_function(name, Some(before));
+            self.state.functions.shift_remove(name);
+        }
+
         let before = self.state.variables.get(name).cloned();
         let changed = before
             .as_ref()
@@ -309,6 +318,10 @@ impl Runtime {
     }
 
     pub(crate) fn insert_function(&mut self, name: &str, function: Arc<Function>) {
+        if self.state.has_variable(name) {
+            self.remove_variable(name);
+        }
+
         let before = self.state.functions.get(name).cloned();
         self.transaction.record_function(name, before);
         self.state.functions.insert(name.to_string(), function);

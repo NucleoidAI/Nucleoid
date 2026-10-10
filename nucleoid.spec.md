@@ -5435,4 +5435,483 @@ assert(dependent, null)
 source = 3
 
 assert(dependent, 4)
+
+---
+
+# Nucleoid tracks named functions forwarded as values
+
+def transform(number):
+    return number * 2
+
+def choose():
+    return transform
+
+callback = transform
+forwarded = callback
+returned = choose()
+direct = forwarded(3)
+indirect = returned(3)
+
+assert(direct, 6)
+assert(indirect, 6)
+
+def transform(number):
+    return number * 3
+
+assert(direct, 9)
+assert(indirect, 9)
+
+---
+
+# Nucleoid tracks named callbacks over lists and class populations
+
+numbers = [1, 2, 3]
+
+def transform(number):
+    return number * 2
+
+def matches(number):
+    return number > 0
+
+def combine(total, number):
+    return total + number
+
+mapped = numbers.map(transform)
+filtered = numbers.filter(matches)
+found = numbers.find(matches)
+all = numbers.every(matches)
+any = numbers.some(matches)
+total = numbers.reduce(combine, 1)
+
+assert(mapped, [2, 4, 6])
+assert(filtered, [1, 2, 3])
+assert(found, 1)
+assert(all, true)
+assert(any, true)
+assert(total, 7)
+
+def transform(number):
+    return number * 3
+
+def matches(number):
+    return number > 3
+
+def combine(total, number):
+    return total * number
+
+assert(mapped, [3, 6, 9])
+assert(filtered, [])
+assert(found, null)
+assert(all, false)
+assert(any, false)
+assert(total, 6)
+
+class Sample(amount):
+    this.amount = amount
+
+def reading(sample):
+    return sample.amount * 2
+
+sample = Sample(2)
+readings = Sample.map(reading)
+
+assert(readings, [4])
+
+def reading(sample):
+    return sample.amount * 3
+
+assert(readings, [6])
+
+sample.amount = 3
+Sample(4)
+
+assert(readings, [9, 12])
+
+---
+
+# Nucleoid tracks named functions passed to higher order calls
+
+def transform(number):
+    return number * 2
+
+def apply(operation, number):
+    return operation(number)
+
+input = 3
+result = apply(transform, input)
+
+assert(result, 6)
+
+def transform(number):
+    return number * 3
+
+assert(result, 9)
+
+input = 4
+
+assert(result, 12)
+
+---
+
+# Nucleoid tracks calls through reassigned lambda variables
+
+input = 3
+callback = number => number * 2
+result = callback(input)
+callbacks = [callback]
+indexed = callbacks[0](input)
+
+assert(result, 6)
+assert(indexed, 6)
+
+callback = number => number * 3
+
+assert(result, 9)
+assert(indexed, 9)
+
+input = 4
+
+assert(result, 12)
+assert(indexed, 12)
+
+---
+
+# Nucleoid tracks dotted and indexed callable properties consistently
+
+class Handler:
+    pass
+
+handler = Handler()
+input = 2
+dotted = handler.operation(input)
+indexed = handler["operation"](input)
+
+assert(dotted, null)
+assert(indexed, null)
+
+handler.operation = number => number + 1
+
+assert(dotted, 3)
+assert(indexed, 3)
+
+handler.operation = number => number + 2
+
+assert(dotted, 4)
+assert(indexed, 4)
+
+input = 3
+
+assert(dotted, 5)
+assert(indexed, 5)
+
+---
+
+# Nucleoid freezes a function definition without freezing its body dependencies
+
+factor = 2
+
+def transform(number):
+    return number * factor
+
+snapshot = transform.value
+frozen = snapshot(3)
+live = transform(3)
+
+assert(frozen, 6)
+assert(live, 6)
+
+def transform(number):
+    return number * factor * 10
+
+assert(frozen, 6)
+assert(live, 60)
+
+factor = 4
+
+assert(frozen, 12)
+assert(live, 120)
+
+---
+
+# Nucleoid defers null function aliases and restores callers after deletion
+
+callback = null
+input = 3
+offset = 0
+result = callback(input) + offset
+
+assert(result, null)
+
+callback = number => number * 2
+
+assert(result, 6)
+
+callback = null
+
+assert(result, null)
+
+callback = number => number * 3
+
+assert(result, 9)
+
+delete callback
+
+assert(result, null)
+
+offset = 1
+input = 4
+
+assert(result, null)
+
+missing = null
+
+try:
+    callback(3)
+catch error:
+    missing = error
+
+assert(missing, ReferenceError("callback is not defined"))
+
+trigger = 0
+
+if trigger > 0:
+    callback(3)
+
+try:
+    trigger = 1
+catch error:
+    missing = error
+
+assert(missing, ReferenceError("callback is not defined"))
+assert(trigger, 0)
+
+callback = number => number * 4
+
+assert(result, 17)
+
+input = 5
+
+assert(result, 21)
+
+---
+
+# Nucleoid restores nullable callable properties without changing frozen references
+
+class Handler:
+    pass
+
+handler = Handler()
+handler.operation = number => number + 1
+snapshot = handler.operation.value
+frozen = snapshot(2)
+input = 2
+offset = 0
+dotted = handler.operation(input) + offset
+indexed = handler["operation"](input) + offset
+
+handler.operation = null
+
+assert(dotted, null)
+assert(indexed, null)
+assert(frozen, 3)
+
+handler.operation = number => number + 2
+
+assert(dotted, 4)
+assert(indexed, 4)
+
+delete handler.operation
+
+assert(dotted, null)
+assert(indexed, null)
+assert(frozen, 3)
+
+offset = 1
+input = 3
+
+assert(dotted, null)
+assert(indexed, null)
+
+handler.operation = number => number + 3
+
+assert(dotted, 7)
+assert(indexed, 7)
+assert(frozen, 3)
+
+---
+
+# Nucleoid lets null and non callable parameters shadow outer functions
+
+def operation(number):
+    return 99
+
+def apply(operation, number):
+    return operation(number)
+
+callback = null
+result = apply(callback, 3)
+
+assert(result, null)
+
+callback = number => number * 2
+
+assert(result, 6)
+
+callback = number => number * 3
+
+assert(result, 9)
+
+failure = null
+
+try:
+    apply(7, 3)
+catch error:
+    failure = error
+
+assert(failure, TypeError("operation is not a function"))
+assert(operation(3), 99)
+
+---
+
+# Nucleoid rolls back non callable replacements used by existing callers
+
+callback = number => number * 2
+result = callback(3)
+failure = null
+
+try:
+    callback = 7
+catch error:
+    failure = error
+
+assert(failure, TypeError("callback is not a function"))
+assert(result, 6)
+assert(callback(4), 8)
+
+class Handler:
+    pass
+
+handler = Handler()
+handler.operation = number => number + 1
+propertyResult = handler.operation(3)
+
+try:
+    handler.operation = 7
+catch error:
+    failure = error
+
+assert(failure, TypeError("handler.operation is not a function"))
+assert(propertyResult, 4)
+assert(handler.operation(4), 5)
+
+handler.operation = number => number + 2
+
+assert(propertyResult, 5)
+
+---
+
+# Nucleoid rolls back failed redefinitions of named callbacks
+
+def transform(number):
+    return number * 2
+
+numbers = [1, 2]
+mapped = numbers.map(transform)
+failure = null
+
+try:
+    def transform(number):
+        if number == 2:
+            throw "REJECTED_CALLBACK"
+        return number * 3
+catch error:
+    failure = error
+
+assert(failure, "REJECTED_CALLBACK")
+assert(mapped, [2, 4])
+assert(transform(3), 6)
+
+def transform(number):
+    return number * 4
+
+assert(mapped, [4, 8])
+
+---
+
+# Nucleoid replaces functions and callable variables under the same name
+
+def callback(number):
+    return number * 2
+
+forwarded = callback
+direct = callback(3)
+indirect = forwarded(3)
+
+callback = number => number * 3
+
+assert(direct, 9)
+assert(indirect, 9)
+
+failure = null
+
+try:
+    def callback(number):
+        throw "REJECTED_BINDING"
+catch error:
+    failure = error
+
+assert(failure, "REJECTED_BINDING")
+assert(direct, 9)
+assert(indirect, 9)
+assert(callback(4), 12)
+
+def callback(number):
+    return number * 4
+
+assert(direct, 12)
+assert(indirect, 12)
+
+try:
+    callback = 7
+catch error:
+    failure = error
+
+assert(failure, TypeError("callback is not a function"))
+assert(direct, 12)
+assert(indirect, 12)
+assert(callback(4), 16)
+
+callback = null
+
+assert(direct, null)
+assert(indirect, null)
+
+def callback(number):
+    return number * 5
+
+assert(direct, 15)
+assert(indirect, 15)
+
+callback = number => number * 6
+
+assert(direct, 18)
+assert(indirect, 18)
+
+delete callback
+
+assert(direct, null)
+assert(indirect, null)
+
+try:
+    callback(3)
+catch error:
+    failure = error
+
+assert(failure, ReferenceError("callback is not defined"))
+
+def callback(number):
+    return number * 7
+
+assert(direct, 21)
+assert(indirect, 21)
 ```

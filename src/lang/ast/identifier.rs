@@ -4,7 +4,7 @@
 use crate::builtins;
 use crate::builtins::Global;
 use crate::error::{Error, Result};
-use crate::graph::NodeKey;
+use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::Expr;
 use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
@@ -51,6 +51,7 @@ impl Runtime {
         }
 
         if let Some(function) = self.state.function(name).cloned() {
+            self.track(NodeKey::function(name));
             return Ok(Value::Function(function));
         }
 
@@ -58,9 +59,23 @@ impl Runtime {
             return Ok(Value::Class(name.to_string()));
         }
 
-        let key = NodeKey::variable(name);
+        self.read_missing_identifier(name)
+    }
 
-        if self.deleted.contains(&key) {
+    pub(crate) fn read_missing_identifier(&mut self, name: &str) -> Result<Value> {
+        let key = NodeKey::variable(name);
+        // Only prior dependents may defer a deleted name in later cascades.
+        let deferred = self.deleted.contains(&key)
+            || self.stack.is_draining()
+                && self.graph.retrieve(&key).is_some_and(|node| {
+                    node.kind == NodeKind::Pending
+                        && node
+                            .dependents
+                            .iter()
+                            .any(|dependent| self.stack.is_running(dependent))
+                });
+
+        if deferred {
             self.track(key);
             self.undefined_read = true;
             return Ok(Value::Undefined);

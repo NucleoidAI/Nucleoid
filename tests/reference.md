@@ -150,6 +150,100 @@ assert(result, 120)
 
 ---
 
+# Nucleoid keeps named callbacks and aliases live while freezing function values
+
+def scale(number):
+    return number * 2
+
+callback = scale
+snapshot = scale.value
+result = callback(3)
+frozen = snapshot(3)
+mapped = [1, 2].map(scale)
+
+def scale(number):
+    return number * 3
+
+assert(result, 9)
+assert(frozen, 6)
+assert(mapped, [3, 6])
+
+scale = number => number * 4
+
+assert(result, 12)
+assert(frozen, 6)
+assert(mapped, [4, 8])
+
+def scale(number):
+    return number * 5
+
+assert(result, 15)
+assert(frozen, 6)
+assert(mapped, [5, 10])
+
+---
+
+# Nucleoid restores callable properties after null replacement and deletion
+
+class Handler:
+    pass
+
+handler = Handler()
+handler.operation = number => number + 1
+dotted = handler.operation(2)
+indexed = handler["operation"](2)
+
+handler.operation = null
+
+assert(dotted, null)
+assert(indexed, null)
+
+handler.operation = number => number + 2
+
+assert(dotted, 4)
+assert(indexed, 4)
+
+delete handler.operation
+
+assert(dotted, null)
+assert(indexed, null)
+
+handler.operation = number => number + 3
+
+assert(dotted, 5)
+assert(indexed, 5)
+
+---
+
+# Nucleoid shadows outer functions with null and non callable parameters
+
+def operation(number):
+    return 99
+
+def apply(operation, number):
+    return operation(number)
+
+callback = null
+result = apply(callback, 3)
+
+assert(result, null)
+
+callback = number => number * 2
+
+assert(result, 6)
+
+failure = null
+
+try:
+    apply(7, 3)
+catch error:
+    failure = error
+
+assert(failure, TypeError("operation is not a function"))
+assert(operation(3), 99)
+
+---
+
 # Nucleoid nests for of statements as a cross product
 
 # There is a Size type

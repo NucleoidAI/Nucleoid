@@ -1630,4 +1630,309 @@ assert(total, null)
 seats = 3
 
 assert(total, 4)
+
+---
+
+# Nucleoid forwards a live landing levy through a function reference
+
+# levy calculates a fee from the number of tonnes
+def levy(tonnes):
+    return tonnes * 5
+
+# select_levy returns the current levy function
+def select_levy():
+    return levy
+
+quoted = select_levy()
+charge = quoted(20)
+
+assert(charge, 100)
+
+# A revised levy updates the forwarded quote
+def levy(tonnes):
+    return tonnes * 6
+
+assert(charge, 120)
+
+---
+
+# Nucleoid updates named fuel callbacks over a list
+
+loads = [10, 20, 30]
+
+# reserve adds five units to each load
+def reserve(load):
+    return load + 5
+
+planned = loads.map(reserve)
+
+assert(planned, [15, 25, 35])
+
+# A revised reserve policy updates the whole plan
+def reserve(load):
+    return load + 10
+
+assert(planned, [20, 30, 40])
+
+---
+
+# Nucleoid tracks a pricing function passed to a fare calculator
+
+def levy(fare):
+    return fare * 2
+
+def quote(policy, fare):
+    return policy(fare)
+
+fare = 100
+total = quote(levy, fare)
+
+assert(total, 200)
+
+def levy(fare):
+    return fare * 3
+
+assert(total, 300)
+
+fare = 120
+
+assert(total, 360)
+
+---
+
+# Nucleoid updates a callable baggage allowance variable
+
+bags = 2
+allowance = count => count * 20
+kilograms = allowance(bags)
+
+assert(kilograms, 40)
+
+# The allowance is replaced by a different lambda
+allowance = count => count * 25
+
+assert(kilograms, 50)
+
+bags = 3
+
+assert(kilograms, 75)
+
+---
+
+# Nucleoid tracks dotted and indexed cargo tariff calls
+
+class Tariff:
+    pass
+
+tariff = Tariff()
+dotted = tariff.calculate(4)
+indexed = tariff["calculate"](4)
+
+assert(dotted, null)
+assert(indexed, null)
+
+tariff.calculate = tonnes => tonnes * 10
+
+assert(dotted, 40)
+assert(indexed, 40)
+
+tariff.calculate = tonnes => tonnes * 15
+
+assert(dotted, 60)
+assert(indexed, 60)
+
+---
+
+# Nucleoid freezes a fuel formula while keeping its price dependency live
+
+price = 2
+
+def cost(litres):
+    return litres * price
+
+formula = cost.value
+quoted = formula(100)
+current = cost(100)
+
+def cost(litres):
+    return litres * price + 50
+
+assert(quoted, 200)
+assert(current, 250)
+
+price = 3
+
+assert(quoted, 300)
+assert(current, 350)
+
+---
+
+# Nucleoid defers and restores a nullable boarding policy
+
+policy = null
+priority = 0
+group = policy(3) + priority
+
+assert(group, null)
+
+policy = seats => seats + 1
+
+assert(group, 4)
+
+delete policy
+
+assert(group, null)
+
+priority = 1
+
+assert(group, null)
+
+policy = seats => seats + 2
+
+assert(group, 6)
+
+---
+
+# Nucleoid preserves a frozen airport fee after deleting its callable property
+
+class Airport:
+    pass
+
+airport = Airport()
+airport.fee = movements => movements * 10
+quotedFee = airport.fee.value
+quoted = quotedFee(3)
+dotted = airport.fee(3)
+indexed = airport["fee"](3)
+
+airport.fee = null
+
+assert(dotted, null)
+assert(indexed, null)
+assert(quoted, 30)
+
+airport.fee = movements => movements * 20
+
+assert(dotted, 60)
+assert(indexed, 60)
+
+delete airport.fee
+
+assert(dotted, null)
+assert(indexed, null)
+
+airport.fee = movements => movements * 30
+
+assert(dotted, 90)
+assert(indexed, 90)
+assert(quoted, 30)
+
+---
+
+# Nucleoid lets an absent local fee policy shadow a fleet function
+
+def policy(weight):
+    return 999
+
+def estimate(policy, weight):
+    return policy(weight)
+
+localPolicy = null
+charge = estimate(localPolicy, 10)
+
+assert(charge, null)
+
+localPolicy = weight => weight * 5
+
+assert(charge, 50)
+
+failure = null
+
+try:
+    estimate(7, 10)
+catch error:
+    failure = error
+
+assert(failure, TypeError("policy is not a function"))
+assert(policy(10), 999)
+
+---
+
+# Nucleoid rolls back a non callable replacement of an active dispatch policy
+
+policy = delay => delay + 5
+departure = policy(10)
+failure = null
+
+try:
+    policy = 7
+catch error:
+    failure = error
+
+assert(failure, TypeError("policy is not a function"))
+assert(departure, 15)
+assert(policy(20), 25)
+
+---
+
+# Nucleoid restores a fuel callback rejected during redefinition
+
+def reserve(load):
+    return load + 10
+
+loads = [20, 30]
+planned = loads.map(reserve)
+failure = null
+
+try:
+    def reserve(load):
+        if load == 30:
+            throw "INVALID_RESERVE"
+        return load + 20
+catch error:
+    failure = error
+
+assert(failure, "INVALID_RESERVE")
+assert(planned, [30, 40])
+assert(reserve(40), 50)
+
+def reserve(load):
+    return load + 30
+
+assert(planned, [50, 60])
+
+---
+
+# Nucleoid replaces a named levy with a callable variable and back again
+
+def levy(tonnes):
+    return tonnes * 5
+
+policy = levy
+direct = levy(10)
+forwarded = policy(10)
+
+# A lambda assigned to the same name replaces the named definition
+levy = tonnes => tonnes * 6
+
+assert(direct, 60)
+assert(forwarded, 60)
+
+# A new named definition replaces the callable variable
+def levy(tonnes):
+    return tonnes * 7
+
+assert(direct, 70)
+assert(forwarded, 70)
+
+levy = null
+
+assert(direct, null)
+assert(forwarded, null)
+
+def levy(tonnes):
+    return tonnes * 8
+
+assert(direct, 80)
+assert(forwarded, 80)
 ```
