@@ -1,7 +1,7 @@
 use indexmap::{IndexMap, IndexSet};
 
 use crate::error::{Error, Result};
-use crate::graph::{NodeKey, NodeKind};
+use crate::graph::{NodeKey, NodeKind, ShapeKey};
 use crate::nuc::Nuc;
 use crate::nuc::property::Owner;
 use crate::runtime::Runtime;
@@ -70,7 +70,9 @@ impl Runtime {
         let mut steps = Vec::new();
 
         for key in keys {
-            if self.is_observer(&key) {
+            self.track_shape(ShapeKey::Node(key.clone()));
+
+            if self.graph.is_observer(&key) {
                 continue;
             }
 
@@ -83,7 +85,11 @@ impl Runtime {
     }
 
     pub(crate) fn model_keys(&self) -> Vec<NodeKey> {
-        self.graph.keys().cloned().collect()
+        self.graph
+            .nodes()
+            .filter(|node| node.kind != NodeKind::Pending && !self.graph.is_observer(&node.key))
+            .map(|node| node.key.clone())
+            .collect()
     }
 
     pub(crate) fn apply_stage(&mut self, stage: Stage, selection: &Selection) -> Selection {
@@ -98,6 +104,7 @@ impl Runtime {
         }
 
         while let Some(current) = pending.pop() {
+            self.track_shape(ShapeKey::Node(current.clone()));
             let Some(node) = self.graph.retrieve(&current) else {
                 continue;
             };
@@ -108,6 +115,10 @@ impl Runtime {
             };
 
             for key in next {
+                if self.graph.is_observer(&key) {
+                    continue;
+                }
+
                 if reached.insert(key.clone()) {
                     pending.push(key);
                 }
@@ -115,14 +126,6 @@ impl Runtime {
         }
 
         self.selection_of(reached.into_iter().collect())
-    }
-
-    fn is_observer(&self, key: &NodeKey) -> bool {
-        self.graph
-            .retrieve(key)
-            .and_then(|node| node.node.as_ref())
-            .map(is_reasoning)
-            .unwrap_or(false)
     }
 
     fn step(&mut self, key: &NodeKey) -> Option<Step> {

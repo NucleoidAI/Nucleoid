@@ -37,7 +37,7 @@ pub mod r#return;
 use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
-use crate::graph::{GraphNode, NodeKey, NodeKind};
+use crate::graph::{GraphNode, NodeKey, NodeKind, ShapeKey};
 use crate::lang::ast::{Expr, Stmt};
 use crate::lang::evaluation::Flow;
 use crate::runtime::Runtime;
@@ -244,12 +244,21 @@ impl Nuc {
     /// Files the node and wires edges to its dependencies. Kinds that hold no
     /// standing declaration do nothing.
     pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {
+        self.graph_observed(runtime, dependencies, IndexSet::new())
+    }
+
+    pub(crate) fn graph_observed(
+        &self,
+        runtime: &mut Runtime,
+        dependencies: IndexSet<NodeKey>,
+        shapes: IndexSet<ShapeKey>,
+    ) -> Result<()> {
         match self {
-            Nuc::Variable(node) => node.graph(runtime, dependencies),
-            Nuc::Property(node) => node.graph(runtime, dependencies),
+            Nuc::Variable(node) => node.graph_observed(runtime, dependencies, shapes),
+            Nuc::Property(node) => node.graph_observed(runtime, dependencies, shapes),
             Nuc::Class(node) => node.graph(runtime),
-            Nuc::Block(node) => node.graph(runtime, dependencies),
-            Nuc::If(node) => node.graph(runtime, dependencies),
+            Nuc::Block(node) => node.graph_observed(runtime, dependencies, shapes),
+            Nuc::If(node) => node.graph_observed(runtime, dependencies, shapes),
             Nuc::Function(node) => node.graph(runtime),
             _ => Ok(()),
         }
@@ -281,7 +290,22 @@ impl Runtime {
         dependencies: IndexSet<NodeKey>,
         instance: Option<ObjectId>,
     ) -> Result<()> {
+        self.file_observed(key, kind, nuc, dependencies, instance, IndexSet::new())
+    }
+
+    pub(crate) fn file_observed(
+        &mut self,
+        key: &NodeKey,
+        kind: NodeKind,
+        nuc: Option<Nuc>,
+        dependencies: IndexSet<NodeKey>,
+        instance: Option<ObjectId>,
+        shapes: IndexSet<ShapeKey>,
+    ) -> Result<()> {
         let existing = self.graph.retrieve(key).cloned();
+        let was_visible = existing
+            .as_ref()
+            .is_some_and(|node| node.kind != NodeKind::Pending && !self.graph.is_observer(key));
 
         for dependency in &dependencies {
             if dependency == key {
@@ -326,7 +350,55 @@ impl Runtime {
             self.direct(dependency, key);
         }
 
+        self.replace_shape_dependencies(key, shapes);
+
+        let is_visible = kind != NodeKind::Pending && !self.graph.is_observer(key);
+        let shape_changed = !self.stack.is_running(key)
+            || was_visible != is_visible
+            || existing.as_ref().is_none_or(|node| {
+                node.kind != kind || !node.dependencies.iter().eq(dependencies.iter())
+            });
+
+        if (was_visible || is_visible) && shape_changed {
+            self.queue_shape_change(&ShapeKey::Node(key.clone()));
+
+            let mut sources = IndexSet::new();
+            if was_visible {
+                if let Some(existing) = &existing {
+                    sources.extend(existing.dependencies.iter().cloned());
+                }
+            }
+            if is_visible {
+                sources.extend(dependencies);
+            }
+            for source in sources {
+                self.queue_shape_change(&ShapeKey::Node(source));
+            }
+
+            if was_visible != is_visible {
+                self.queue_shape_change(&ShapeKey::Model);
+            }
+        }
+
         Ok(())
+    }
+
+    fn replace_shape_dependencies(&mut self, key: &NodeKey, mut shapes: IndexSet<ShapeKey>) {
+        shapes.shift_remove(&ShapeKey::Node(key.clone()));
+        let previous: Vec<ShapeKey> = self.graph.shape_dependencies(key).cloned().collect();
+
+        for source in previous {
+            if !shapes.contains(&source) && self.graph.remove_shape_dependency(&source, key) {
+                self.transaction
+                    .record_shape_dependent_removed(&source, key);
+            }
+        }
+
+        for source in shapes {
+            if self.graph.add_shape_dependency(&source, key) {
+                self.transaction.record_shape_dependent_added(&source, key);
+            }
+        }
     }
 
     /// Puts a node in the graph under its own key.
@@ -391,6 +463,7 @@ impl Runtime {
     /// are still woken when the name is defined again.
     pub(crate) fn remove_node(&mut self, key: &NodeKey) {
         if let Some(node) = self.graph.retrieve(key).cloned() {
+            let was_visible = node.kind != NodeKind::Pending && !self.graph.is_observer(key);
             self.transaction.record_node(key, Some(node.clone()));
 
             for dependency in &node.dependencies {
@@ -408,6 +481,15 @@ impl Runtime {
             let mut placeholder = GraphNode::new(key.clone(), NodeKind::Pending, sequence);
             placeholder.dependents = node.dependents.clone();
             self.graph.insert(placeholder);
+            self.replace_shape_dependencies(key, IndexSet::new());
+
+            self.queue_shape_change(&ShapeKey::Node(key.clone()));
+            if was_visible {
+                for source in node.dependencies {
+                    self.queue_shape_change(&ShapeKey::Node(source));
+                }
+                self.queue_shape_change(&ShapeKey::Model);
+            }
         }
     }
 }

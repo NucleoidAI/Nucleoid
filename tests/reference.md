@@ -1037,4 +1037,245 @@ def read_after_update():
 
 assert(read_after_update(), ReferenceError("source is not defined"))
 assert(dependent, null)
+
+---
+
+# Nucleoid keeps live reasoning impact selections current
+
+a = 1
+exposure = affects a
+
+assert(exposure, [])
+
+b = a + 1
+c = b * 2
+
+assert(exposure.map(step => step.node), ["b", "c"])
+
+b = 0
+
+assert(exposure, [])
+
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b", "c"])
+
+---
+
+# Nucleoid keeps live reasoning current through equal valued reference changes
+
+class Plan(rate):
+    this.rate = rate
+
+class User:
+    pass
+
+basic = Plan(10)
+pro = Plan(10)
+user = User()
+user.plan = basic
+user.bill = user.plan.rate * 2
+trace = why user.bill
+
+user.plan = pro
+
+assert(trace[0].holds, 20)
+assert(trace[0].from, ["user", "user.plan", "pro.rate"])
+assert(trace.some(step => step.node == "pro.rate"), true)
+assert(trace.some(step => step.node == "basic.rate"), false)
+
+pro.rate = 15
+
+assert(trace[0].holds, 30)
+
+---
+
+# Nucleoid keeps live reasoning model selections current
+
+inventory = model |> why
+
+assert(inventory, [])
+
+a = 1
+b = a + 1
+
+assert(inventory.map(step => step.node), ["a", "b"])
+
+delete b
+
+assert(inventory.map(step => step.node), ["a"])
+
+b = a + 2
+trace = why b
+
+assert(inventory.map(step => step.node), ["a", "b"])
+assert(inventory[1].holds, 3)
+
+trace = a + 0
+
+assert(inventory.map(step => step.node), ["a", "b", "trace"])
+assert((affects a).map(step => step.node), ["b", "trace"])
+
+trace = why b
+
+assert(inventory.map(step => step.node), ["a", "b"])
+assert((affects a).map(step => step.node), ["b"])
+
+---
+
+# Nucleoid keeps live reasoning subscribed to an absent property
+
+class Item:
+    pass
+
+item = Item()
+trace = why item.amount
+
+assert(trace, [])
+
+item.amount = 3
+
+assert(trace[0].holds, 3)
+assert(trace[0].node, "item.amount")
+
+delete item.amount
+
+assert(trace, [])
+
+item.amount = 4
+
+assert(trace[0].holds, 4)
+
+---
+
+# Nucleoid keeps live reasoning observers outside impact walks
+
+a = 1
+b = a + 1
+trace = why b
+size = trace.length
+exposure = affects a
+
+assert(exposure.map(step => step.node), ["b"])
+
+secondTrace = why b
+secondSize = secondTrace.length
+
+assert(exposure.map(step => step.node), ["b"])
+
+---
+
+# Nucleoid keeps live reasoning snapshots fixed
+
+a = 1
+exposure = affects a
+frozen = exposure.value
+
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b"])
+assert(frozen, [])
+
+a = 2
+
+assert(exposure[0].holds, 3)
+assert(frozen, [])
+
+---
+
+# Nucleoid restores live reasoning subscriptions after a caught failure
+
+a = 1
+alternative = 1
+b = a + 1
+trace = why b
+exposure = affects a
+
+try:
+    b = alternative + 1
+    throw "REJECTED_REWRITE"
+catch error:
+    assert(error, "REJECTED_REWRITE")
+
+assert(trace[0].from, ["a"])
+assert(exposure.map(step => step.node), ["b"])
+
+alternative = 4
+
+assert(trace[0].holds, 2)
+
+a = 3
+
+assert(trace[0].holds, 4)
+
+b = alternative + 1
+
+assert(trace[0].from, ["alternative"])
+assert(exposure, [])
+
+---
+
+# Nucleoid keeps live reasoning current through function calls
+
+a = 1
+
+def explain():
+    return affects a
+
+exposure = explain()
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b"])
+assert((affects a).map(step => step.node), ["b"])
+
+b = 0
+
+assert(exposure, [])
+
+---
+
+# Nucleoid enforces live reasoning guards on structural changes
+
+source = 1
+limit = 1
+
+if (affects source).length > limit:
+    throw "TOO_MANY_DEPENDENTS"
+
+first = source + 1
+
+try:
+    second = source + 2
+catch error:
+    assert(error, "TOO_MANY_DEPENDENTS")
+
+assert((affects source).map(step => step.node), ["first"])
+
+limit = 2
+second = source + 2
+
+assert((affects source).map(step => step.node), ["first", "second"])
+
+---
+
+# Nucleoid preserves queued live reasoning across a caught structural failure
+
+trigger = 0
+inventory = model |> why
+
+if trigger > 0:
+    try:
+        class Temporary:
+            pass
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error
+
+remaining = trigger + 10
+trigger = 1
+
+assert(inventory.some(step => step.node == "$Temporary"), false)
+assert(inventory.find(step => step.node == "trigger").holds, 1)
+assert(inventory.find(step => step.node == "remaining").holds, 11)
 ```

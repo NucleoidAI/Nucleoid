@@ -24,7 +24,7 @@
 //! | [`lang::evaluation`] | Scoped evaluation and dependency tracking |
 //! | [`nuc`], [`nuc::Nuc`] | Executable statement kinds and their lifecycle |
 //! | [`expression`] | Expression-tree queries |
-//! | [`graph`] | Dependency nodes and edges |
+//! | [`graph`] | Dependency nodes, value edges and structural observations |
 //! | [`state`] | Variables, objects, classes and functions |
 //! | [`scope`] | Local bindings and execution context |
 //! | [`stack`] | Dependency propagation queue |

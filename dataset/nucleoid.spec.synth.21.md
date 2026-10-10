@@ -1935,4 +1935,113 @@ def levy(tonnes):
 
 assert(direct, 80)
 assert(forwarded, 80)
+
+---
+
+# Nucleoid keeps a delay impact report live as a flight plan changes
+
+# delay is a source with no scheduled consequences
+delay = 10
+schedule = affects delay
+
+assert(schedule, [])
+
+# Departure and arrival are new relationships to the unchanged delay
+departure = delay + 5
+arrival = departure + 20
+
+assert(schedule.map(step => step.node), ["departure", "arrival"])
+
+# A fixed departure withdraws the delay's support without changing its value
+departure = 15
+
+assert(schedule, [])
+
+departure = delay + 5
+
+assert(schedule.map(step => step.node), ["departure", "arrival"])
+
+---
+
+# Nucleoid refreshes a fuel explanation when an unchanged estimate gains an input
+
+distance = 100
+consumption = 2
+fuel = distance * consumption
+trace = why fuel
+reserve = 0
+
+# The additional reserve changes the derivation before it changes the fuel
+fuel = distance * consumption + reserve
+
+assert(trace[0].holds, 200)
+assert(trace[0].from, ["distance", "consumption", "reserve"])
+assert(trace.some(step => step.node == "reserve"), true)
+
+reserve = 50
+
+assert(trace[0].holds, 250)
+
+fuel = distance * consumption
+reserve = 100
+
+assert(trace[0].holds, 200)
+assert(trace.some(step => step.node == "reserve"), false)
+
+---
+
+# Nucleoid keeps an initially empty capacity model live
+
+fleet = model |> why
+
+assert(fleet, [])
+
+capacity = 100
+seats = capacity - 10
+
+assert(fleet.map(step => step.node), ["capacity", "seats"])
+
+delete seats
+
+assert(fleet.map(step => step.node), ["capacity"])
+
+seats = capacity - 20
+explanation = why seats
+
+assert(fleet.map(step => step.node), ["capacity", "seats"])
+assert(fleet[1].holds, 80)
+
+# Replacing an observer with a relationship changes model membership
+explanation = capacity - 20
+
+assert(fleet.map(step => step.node), ["capacity", "seats", "explanation"])
+
+explanation = why seats
+
+assert(fleet.map(step => step.node), ["capacity", "seats"])
+
+---
+
+# Nucleoid restores a staffing explanation after rejecting a crew rewrite
+
+crew = 1
+reserveCrew = 1
+staffing = crew + 1
+trace = why staffing
+
+try:
+    staffing = reserveCrew + 1
+    throw "REJECTED_CREW_PLAN"
+catch error:
+    assert(error, "REJECTED_CREW_PLAN")
+
+assert(trace[0].from, ["crew"])
+
+reserveCrew = 4
+
+assert(trace[0].holds, 2)
+
+crew = 2
+
+assert(trace[0].holds, 3)
 ```

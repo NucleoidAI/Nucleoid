@@ -4347,6 +4347,301 @@ catch error:
     assert_eq!(run("indirect"), 21);
 }
 
+/// Nucleoid keeps live reasoning impact selections current
+#[rustfmt::skip]
+#[test]
+fn keeps_live_reasoning_impact_selections_current() {
+    let mut run = runner();
+    run("a = 1");
+    run("exposure = affects a");
+    assert_eq!(run("exposure"), serde_json::json!([]));
+    run("b = a + 1");
+    run("c = b * 2");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b", "c"]));
+    run("b = 0");
+    assert_eq!(run("exposure"), serde_json::json!([]));
+    run("b = a + 1");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b", "c"]));
+}
+
+/// Nucleoid keeps live reasoning current through equal valued reference changes
+#[rustfmt::skip]
+#[test]
+fn keeps_live_reasoning_current_through_equal_valued_reference_changes() {
+    let mut run = runner();
+    run(r#"class Plan(rate):
+    this.rate = rate"#);
+    run(r#"class User:
+    pass"#);
+    run("basic = Plan(10)");
+    run("pro = Plan(10)");
+    run("user = User()");
+    run("user.plan = basic");
+    run("user.bill = user.plan.rate * 2");
+    run("trace = why user.bill");
+    run("user.plan = pro");
+    assert_eq!(run("trace[0].holds"), 20);
+    assert_eq!(run("trace[0].from"), serde_json::json!(["user", "user.plan", "pro.rate"]));
+    assert_eq!(run(r#"trace.some(step => step.node == "pro.rate")"#), true);
+    assert_eq!(run(r#"trace.some(step => step.node == "basic.rate")"#), false);
+    run("pro.rate = 15");
+    assert_eq!(run("trace[0].holds"), 30);
+}
+
+/// Nucleoid keeps live reasoning model selections current
+#[rustfmt::skip]
+#[test]
+fn keeps_live_reasoning_model_selections_current() {
+    let mut run = runner();
+    run("inventory = model |> why");
+    assert_eq!(run("inventory"), serde_json::json!([]));
+    run("a = 1");
+    run("b = a + 1");
+    assert_eq!(run("inventory.map(step => step.node)"), serde_json::json!(["a", "b"]));
+    run("delete b");
+    assert_eq!(run("inventory.map(step => step.node)"), serde_json::json!(["a"]));
+    run("b = a + 2");
+    run("trace = why b");
+    assert_eq!(run("inventory.map(step => step.node)"), serde_json::json!(["a", "b"]));
+    assert_eq!(run("inventory[1].holds"), 3);
+    run("trace = a + 0");
+    assert_eq!(run("inventory.map(step => step.node)"), serde_json::json!(["a", "b", "trace"]));
+    assert_eq!(run("(affects a).map(step => step.node)"), serde_json::json!(["b", "trace"]));
+    run("trace = why b");
+    assert_eq!(run("inventory.map(step => step.node)"), serde_json::json!(["a", "b"]));
+    assert_eq!(run("(affects a).map(step => step.node)"), serde_json::json!(["b"]));
+}
+
+/// Nucleoid keeps live reasoning subscribed to an absent property
+#[rustfmt::skip]
+#[test]
+fn keeps_live_reasoning_subscribed_to_an_absent_property() {
+    let mut run = runner();
+    run(r#"class Item:
+    pass"#);
+    run("item = Item()");
+    run("trace = why item.amount");
+    assert_eq!(run("trace"), serde_json::json!([]));
+    run("item.amount = 3");
+    assert_eq!(run("trace[0].holds"), 3);
+    assert_eq!(run("trace[0].node"), "item.amount");
+    run("delete item.amount");
+    assert_eq!(run("trace"), serde_json::json!([]));
+    run("item.amount = 4");
+    assert_eq!(run("trace[0].holds"), 4);
+}
+
+/// Nucleoid keeps live reasoning observers outside impact walks
+#[rustfmt::skip]
+#[test]
+fn keeps_live_reasoning_observers_outside_impact_walks() {
+    let mut run = runner();
+    run("a = 1");
+    run("b = a + 1");
+    run("trace = why b");
+    run("size = trace.length");
+    run("exposure = affects a");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b"]));
+    run("secondTrace = why b");
+    run("secondSize = secondTrace.length");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b"]));
+}
+
+/// Nucleoid keeps live reasoning snapshots fixed
+#[rustfmt::skip]
+#[test]
+fn keeps_live_reasoning_snapshots_fixed() {
+    let mut run = runner();
+    run("a = 1");
+    run("exposure = affects a");
+    run("frozen = exposure.value");
+    run("b = a + 1");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b"]));
+    assert_eq!(run("frozen"), serde_json::json!([]));
+    run("a = 2");
+    assert_eq!(run("exposure[0].holds"), 3);
+    assert_eq!(run("frozen"), serde_json::json!([]));
+}
+
+/// Nucleoid restores live reasoning subscriptions after a caught failure
+#[rustfmt::skip]
+#[test]
+fn restores_live_reasoning_subscriptions_after_a_caught_failure() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("a = 1");
+    run("alternative = 1");
+    run("b = a + 1");
+    run("trace = why b");
+    run("exposure = affects a");
+    assert_eq!(run_error(r#"b = alternative + 1
+throw "REJECTED_REWRITE""#), "REJECTED_REWRITE");
+    assert_eq!(run("trace[0].from"), serde_json::json!(["a"]));
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b"]));
+    run("alternative = 4");
+    assert_eq!(run("trace[0].holds"), 2);
+    run("a = 3");
+    assert_eq!(run("trace[0].holds"), 4);
+    run("b = alternative + 1");
+    assert_eq!(run("trace[0].from"), serde_json::json!(["alternative"]));
+    assert_eq!(run("exposure"), serde_json::json!([]));
+}
+
+/// Nucleoid refreshes live reasoning declaration metadata without a value change
+#[rustfmt::skip]
+#[test]
+fn refreshes_live_reasoning_declaration_metadata_without_a_value_change() {
+    let mut run = runner();
+    run("a = 1");
+    run("b = a + 2");
+    run("trace = why b");
+    run("b = a + 1 + 1");
+    assert_eq!(run("trace[0].holds"), 3);
+    assert_eq!(run("trace[0].rule"), "b = a+1+1");
+    assert_eq!(run("trace[0].from"), serde_json::json!(["a"]));
+    run("b = 3");
+    assert_eq!(run("trace[0].state"), "stated");
+    assert_eq!(run("trace.map(step => step.node)"), serde_json::json!(["b"]));
+    run("b = a + 2");
+    assert_eq!(run("trace[0].state"), "derived");
+    assert_eq!(run("trace.map(step => step.node)"), serde_json::json!(["b", "a"]));
+}
+
+/// Nucleoid replaces live reasoning ancestry and its subscriptions
+#[rustfmt::skip]
+#[test]
+fn replaces_live_reasoning_ancestry_and_its_subscriptions() {
+    let mut run = runner();
+    run("a = 1");
+    run("b = a + 2");
+    run("c = b * 2");
+    run("trace = why c");
+    run("d = 0");
+    run("b = a + d + 2");
+    assert_eq!(run("trace.length"), 4);
+    assert_eq!(run("trace[0].holds"), 6);
+    assert_eq!(run("trace[1].from"), serde_json::json!(["a", "d"]));
+    run("d = 5");
+    assert_eq!(run("trace[0].holds"), 16);
+    run("b = a + 2");
+    run("d = 10");
+    assert_eq!(run("trace.length"), 3);
+    assert_eq!(run("trace[0].holds"), 6);
+    assert_eq!(run(r#"trace.some(step => step.node == "d")"#), false);
+}
+
+/// Nucleoid preserves declaration order in live reasoning impact selections
+#[rustfmt::skip]
+#[test]
+fn preserves_declaration_order_in_live_reasoning_impact_selections() {
+    let mut run = runner();
+    run("source = 1");
+    run("left = source + 1");
+    run("right = source + 2");
+    run("exposure = affects source");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["left", "right"]));
+    run("left = source + 1");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["right", "left"]));
+    run("source = 2");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["right", "left"]));
+    assert_eq!(run("exposure[0].holds"), 4);
+    assert_eq!(run("exposure[1].holds"), 3);
+}
+
+/// Nucleoid keeps live reasoning current through function calls
+#[rustfmt::skip]
+#[test]
+fn keeps_live_reasoning_current_through_function_calls() {
+    let mut run = runner();
+    run("a = 1");
+    run(r#"def explain():
+    return affects a"#);
+    run("exposure = explain()");
+    run("b = a + 1");
+    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b"]));
+    assert_eq!(run("(affects a).map(step => step.node)"), serde_json::json!(["b"]));
+    run("b = 0");
+    assert_eq!(run("exposure"), serde_json::json!([]));
+}
+
+/// Nucleoid keeps class level reasoning properties live
+#[rustfmt::skip]
+#[test]
+fn keeps_class_level_reasoning_properties_live() {
+    let mut run = runner();
+    run(r#"class Reading(level):
+    this.level = level"#);
+    run(r#"class Audit(target):
+    this.target = target"#);
+    run("reading = Reading(1)");
+    run("audit = Audit(reading)");
+    run("$Audit.exposure = affects $Audit.target.level");
+    assert_eq!(run("audit.exposure"), serde_json::json!([]));
+    run("reading.double = reading.level * 2");
+    assert_eq!(run("audit.exposure.map(step => step.node)"), serde_json::json!(["reading.double"]));
+    assert_eq!(run("audit.exposure[0].holds"), 2);
+    run("reading.level = 3");
+    assert_eq!(run("audit.exposure[0].holds"), 6);
+    run("reading.double = 6");
+    assert_eq!(run("audit.exposure"), serde_json::json!([]));
+}
+
+/// Nucleoid enforces live reasoning guards on structural changes
+#[rustfmt::skip]
+#[test]
+fn enforces_live_reasoning_guards_on_structural_changes() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 1");
+    run("limit = 1");
+    run(r#"if (affects source).length > limit:
+    throw "TOO_MANY_DEPENDENTS""#);
+    run("first = source + 1");
+    assert_eq!(run_error("second = source + 2"), "TOO_MANY_DEPENDENTS");
+    assert_eq!(run("(affects source).map(step => step.node)"), serde_json::json!(["first"]));
+    run("limit = 2");
+    run("second = source + 2");
+    assert_eq!(run("(affects source).map(step => step.node)"), serde_json::json!(["first", "second"]));
+}
+
+/// Nucleoid clears and restores a live explanation when its source is deleted
+#[rustfmt::skip]
+#[test]
+fn clears_and_restores_a_live_explanation_when_its_source_is_deleted() {
+    let mut run = runner();
+    run("a = 1");
+    run("trace = why a");
+    run("delete a");
+    assert_eq!(run("trace"), serde_json::json!([]));
+    run("a = 2");
+    assert_eq!(run("trace[0].holds"), 2);
+    assert_eq!(run("trace[0].node"), "a");
+    run("trace = 99");
+    run("a = 3");
+    assert_eq!(run("trace"), 99);
+    assert_eq!(run("(affects a)"), serde_json::json!([]));
+}
+
+/// Nucleoid preserves queued live reasoning across a caught structural failure
+#[rustfmt::skip]
+#[test]
+fn preserves_queued_live_reasoning_across_a_caught_structural_failure() {
+    let mut run = runner();
+    run("trigger = 0");
+    run("inventory = model |> why");
+    run(r#"if trigger > 0:
+    try:
+        class Temporary:
+            pass
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error"#);
+    run("remaining = trigger + 10");
+    run("trigger = 1");
+    assert_eq!(run(r#"inventory.some(step => step.node == "$Temporary")"#), false);
+    assert_eq!(run(r#"inventory.find(step => step.node == "trigger").holds"#), 1);
+    assert_eq!(run(r#"inventory.find(step => step.node == "remaining").holds"#), 11);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -80,6 +80,24 @@ impl fmt::Display for NodeKey {
     }
 }
 
+/// Graph structure observed by a reasoning expression, separately from values.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ShapeKey {
+    /// A node's declaration, dependencies, dependents, or presence.
+    Node(NodeKey),
+    /// The membership of the model, excluding pending nodes and observers.
+    Model,
+}
+
+impl fmt::Display for ShapeKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ShapeKey::Node(key) => key.fmt(f),
+            ShapeKey::Model => f.write_str("model"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NodeKind {
     /// A placeholder for something referenced before it was defined.
@@ -148,6 +166,8 @@ impl GraphNode {
 #[derive(Debug, Clone, Default)]
 pub struct Graph {
     nodes: IndexMap<NodeKey, GraphNode>,
+    shape_dependencies: IndexMap<NodeKey, IndexSet<ShapeKey>>,
+    shape_dependents: IndexMap<ShapeKey, IndexSet<NodeKey>>,
     sequence: u64,
 }
 
@@ -179,6 +199,11 @@ impl Graph {
     }
 
     pub fn remove(&mut self, key: &NodeKey) -> Option<GraphNode> {
+        let sources: Vec<ShapeKey> = self.shape_dependencies(key).cloned().collect();
+        for source in sources {
+            self.remove_shape_dependency(&source, key);
+        }
+
         self.nodes.shift_remove(key)
     }
 
@@ -186,6 +211,8 @@ impl Graph {
     /// a clear still sort after the ones before it.
     pub fn clear(&mut self) {
         self.nodes.clear();
+        self.shape_dependencies.clear();
+        self.shape_dependents.clear();
     }
 
     pub fn keys(&self) -> impl Iterator<Item = &NodeKey> {
@@ -205,6 +232,67 @@ impl Graph {
 
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
+    }
+
+    /// Structural dependencies do not join the model's ordinary value edges.
+    pub fn shape_dependencies(&self, key: &NodeKey) -> impl Iterator<Item = &ShapeKey> {
+        self.shape_dependencies.get(key).into_iter().flatten()
+    }
+
+    pub(crate) fn shape_dependents(&self, source: &ShapeKey) -> impl Iterator<Item = &NodeKey> {
+        self.shape_dependents.get(source).into_iter().flatten()
+    }
+
+    pub(crate) fn add_shape_dependency(&mut self, source: &ShapeKey, target: &NodeKey) -> bool {
+        let added = self
+            .shape_dependents
+            .entry(source.clone())
+            .or_default()
+            .insert(target.clone());
+
+        if added {
+            self.shape_dependencies
+                .entry(target.clone())
+                .or_default()
+                .insert(source.clone());
+        }
+
+        added
+    }
+
+    pub(crate) fn remove_shape_dependency(&mut self, source: &ShapeKey, target: &NodeKey) -> bool {
+        let removed = self
+            .shape_dependents
+            .get_mut(source)
+            .is_some_and(|dependents| dependents.shift_remove(target));
+
+        if removed {
+            if self
+                .shape_dependents
+                .get(source)
+                .is_some_and(IndexSet::is_empty)
+            {
+                self.shape_dependents.shift_remove(source);
+            }
+
+            if let Some(dependencies) = self.shape_dependencies.get_mut(target) {
+                dependencies.shift_remove(source);
+                if dependencies.is_empty() {
+                    self.shape_dependencies.shift_remove(target);
+                }
+            }
+        }
+
+        removed
+    }
+
+    pub(crate) fn is_observer(&self, key: &NodeKey) -> bool {
+        self.shape_dependencies.contains_key(key)
+            || self
+                .nodes
+                .get(key)
+                .and_then(|node| node.node.as_ref())
+                .is_some_and(crate::reasoning::is_reasoning)
     }
 
     /// The dependents of a node, ordered by the sequence in which they were
@@ -234,9 +322,7 @@ impl Graph {
         let mut seen = IndexSet::new();
         let mut pending = Vec::new();
 
-        if let Some(node) = self.nodes.get(key) {
-            pending.extend(&node.dependencies);
-        }
+        self.dependencies_into(key, &mut pending);
 
         while let Some(current) = pending.pop() {
             if candidates.contains(current) {
@@ -244,13 +330,31 @@ impl Graph {
             }
 
             if seen.insert(current) {
-                if let Some(node) = self.nodes.get(current) {
-                    pending.extend(&node.dependencies);
-                }
+                self.dependencies_into(current, &mut pending);
             }
         }
 
         false
+    }
+
+    fn dependencies_into<'a>(&'a self, key: &NodeKey, pending: &mut Vec<&'a NodeKey>) {
+        if let Some(node) = self.nodes.get(key) {
+            pending.extend(&node.dependencies);
+        }
+
+        for source in self.shape_dependencies(key) {
+            match source {
+                ShapeKey::Node(key) => pending.push(key),
+                ShapeKey::Model => pending.extend(
+                    self.nodes
+                        .values()
+                        .filter(|node| {
+                            node.kind != NodeKind::Pending && !self.is_observer(&node.key)
+                        })
+                        .map(|node| &node.key),
+                ),
+            }
+        }
     }
 
     /// Whether `from` can reach `to` by following dependent edges, which is what

@@ -1,7 +1,9 @@
 //! The runtime is a library: bad input has to come back as an error rather
 //! than a panic, a hang, or a blown stack.
 
+use nucleoid::graph::{NodeKey, ShapeKey};
 use nucleoid::{ErrorKind, Runtime};
+use std::collections::HashSet;
 
 fn rejects(source: &str) {
     let mut runtime = Runtime::new();
@@ -247,4 +249,73 @@ fn oversized_string_repetitions_are_errors_not_panics() {
             );
         }
     }
+}
+
+#[test]
+fn failed_live_reasoning_rewrites_restore_subscriptions() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("a = 1\nalternative = 1\nb = a + 1\ntrace = why b")
+        .unwrap();
+    let trace = NodeKey::variable("trace");
+    let before: HashSet<ShapeKey> = runtime.graph.shape_dependencies(&trace).cloned().collect();
+
+    assert!(
+        runtime
+            .run("b = alternative + 1\nthrow 'REJECTED_REWRITE'")
+            .is_err()
+    );
+    assert_eq!(
+        runtime
+            .graph
+            .shape_dependencies(&trace)
+            .cloned()
+            .collect::<HashSet<_>>(),
+        before
+    );
+    assert_eq!(runtime.run("trace[0].from[0]").unwrap().to_string(), "a");
+
+    runtime.run("a = 3").unwrap();
+    assert_eq!(runtime.run("trace[0].holds").unwrap().to_string(), "4");
+
+    runtime.run("b = alternative + 1").unwrap();
+    assert!(
+        !runtime
+            .graph
+            .shape_dependencies(&trace)
+            .any(|source| source == &ShapeKey::Node(NodeKey::variable("a")))
+    );
+    runtime.run("alternative = 4").unwrap();
+    assert_eq!(runtime.run("trace[0].holds").unwrap().to_string(), "5");
+
+    runtime.run("trace = 99").unwrap();
+    assert!(runtime.graph.shape_dependencies(&trace).next().is_none());
+    runtime.run("alternative = 5").unwrap();
+    assert_eq!(runtime.run("trace").unwrap().to_string(), "99");
+}
+
+#[test]
+fn failed_live_model_updates_leave_the_runtime_reusable() {
+    let mut runtime = Runtime::new();
+    runtime.run("inventory = model |> why").unwrap();
+
+    assert!(runtime.run("discarded = 1\nthrow 'ABORT'").is_err());
+    assert!(!runtime.graph.contains(&NodeKey::variable("discarded")));
+    assert_eq!(runtime.run("inventory.length").unwrap().to_string(), "0");
+
+    runtime.run("next = 2").unwrap();
+    assert_eq!(runtime.run("inventory.length").unwrap().to_string(), "1");
+    assert_eq!(
+        runtime.run("inventory[0].node").unwrap().to_string(),
+        "next"
+    );
+    assert_eq!(runtime.run("inventory[0].holds").unwrap().to_string(), "2");
+
+    runtime.clear();
+    runtime.run("inventory = model |> why\nfresh = 3").unwrap();
+    assert_eq!(runtime.run("inventory.length").unwrap().to_string(), "1");
+    assert_eq!(
+        runtime.run("inventory[0].node").unwrap().to_string(),
+        "fresh"
+    );
 }

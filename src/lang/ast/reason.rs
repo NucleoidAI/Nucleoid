@@ -1,5 +1,5 @@
 use crate::error::{Error, Result};
-use crate::graph::NodeKey;
+use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::Expr;
 use crate::reasoning::Selection;
 use crate::runtime::Runtime;
@@ -29,6 +29,7 @@ impl Runtime {
                 Ok(self.apply_stage(*stage, &selection))
             }
             Expr::Model => {
+                self.track_shape(ShapeKey::Model);
                 let keys = self.model_keys();
                 Ok(self.selection_of(keys))
             }

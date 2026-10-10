@@ -4,7 +4,7 @@
 use indexmap::IndexSet;
 
 use crate::error::Result;
-use crate::graph::{NodeKey, NodeKind};
+use crate::graph::{NodeKey, NodeKind, ShapeKey};
 use crate::lang::ast::{Expr, Stmt};
 use crate::lang::evaluation::{Flow, TrackingMode};
 use crate::nuc::{Nuc, Outcome};
@@ -107,6 +107,15 @@ impl If {
     }
 
     pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {
+        self.graph_observed(runtime, dependencies, IndexSet::new())
+    }
+
+    pub(crate) fn graph_observed(
+        &self,
+        runtime: &mut Runtime,
+        dependencies: IndexSet<NodeKey>,
+        shapes: IndexSet<ShapeKey>,
+    ) -> Result<()> {
         if runtime.is_imperative() {
             return Ok(());
         }
@@ -115,12 +124,13 @@ impl If {
             return Ok(());
         };
 
-        runtime.file(
+        runtime.file_observed(
             key,
             NodeKind::If,
             Some(Nuc::If(self.clone())),
             dependencies,
             self.instance.clone(),
+            shapes,
         )
     }
 }

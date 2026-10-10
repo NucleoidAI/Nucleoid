@@ -11,7 +11,7 @@
 use indexmap::IndexSet;
 
 use crate::error::Result;
-use crate::graph::NodeKey;
+use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::Expr;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
@@ -37,6 +37,7 @@ pub(crate) enum TrackingMode {
 #[derive(Debug, Clone)]
 struct TrackingFrame {
     keys: IndexSet<NodeKey>,
+    shapes: IndexSet<ShapeKey>,
     mode: TrackingMode,
 }
 
@@ -48,8 +49,27 @@ impl Runtime {
         mode: TrackingMode,
         operation: impl FnOnce(&mut Self) -> Result<T>,
     ) -> Result<(T, IndexSet<NodeKey>)> {
+        self.tracked(mode, operation)
+            .map(|(value, frame)| (value, frame.keys))
+    }
+
+    pub(crate) fn with_shape_tracking<T>(
+        &mut self,
+        mode: TrackingMode,
+        operation: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<(T, IndexSet<ShapeKey>)> {
+        self.tracked(mode, operation)
+            .map(|(value, frame)| (value, frame.shapes))
+    }
+
+    fn tracked<T>(
+        &mut self,
+        mode: TrackingMode,
+        operation: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<(T, TrackingFrame)> {
         self.tracking.frames.push(TrackingFrame {
             keys: IndexSet::new(),
+            shapes: IndexSet::new(),
             mode,
         });
         let result = operation(self);
@@ -59,7 +79,7 @@ impl Runtime {
             .pop()
             .expect("a scoped tracking operation must retain its frame");
 
-        result.map(|value| (value, frame.keys))
+        result.map(|value| (value, frame))
     }
 
     /// Records a read. Reads reach every enclosing frame up to a barrier, so an
@@ -67,6 +87,16 @@ impl Runtime {
     pub(crate) fn track(&mut self, key: NodeKey) {
         for frame in self.tracking.frames.iter_mut().rev() {
             frame.keys.insert(key.clone());
+
+            if frame.mode == TrackingMode::Isolated {
+                break;
+            }
+        }
+    }
+
+    pub(crate) fn track_shape(&mut self, key: ShapeKey) {
+        for frame in self.tracking.frames.iter_mut().rev() {
+            frame.shapes.insert(key.clone());
 
             if frame.mode == TrackingMode::Isolated {
                 break;

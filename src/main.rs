@@ -90,6 +90,14 @@ fn print_graph(runtime: &Runtime) {
             println!("    reads    {}", names.join(", "));
         }
 
+        let observations: Vec<String> = graph
+            .shape_dependencies(&node.key)
+            .map(ToString::to_string)
+            .collect();
+        if !observations.is_empty() {
+            println!("    observes {}", observations.join(", "));
+        }
+
         if !node.dependents.is_empty() {
             let names: Vec<String> = node.dependents.iter().map(NodeKey::to_string).collect();
             println!("    updates  {}", names.join(", "));

@@ -9,7 +9,7 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
 use crate::error::{Error, Result};
-use crate::graph::{Graph, NodeKey};
+use crate::graph::{Graph, NodeKey, ShapeKey};
 use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
@@ -114,7 +114,18 @@ impl Runtime {
             self.enqueue(dependent);
         }
 
-        if self.stack.is_draining() {
+        self.drain_pending()
+    }
+
+    pub(crate) fn queue_shape_change(&mut self, source: &ShapeKey) {
+        let observers: Vec<NodeKey> = self.graph.shape_dependents(source).cloned().collect();
+        for observer in observers {
+            self.enqueue(observer);
+        }
+    }
+
+    pub(crate) fn drain_pending(&mut self) -> Result<()> {
+        if self.stack.is_draining() || self.stack.is_empty() {
             return Ok(());
         }
 

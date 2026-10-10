@@ -1,7 +1,7 @@
 use indexmap::IndexSet;
 use std::sync::Arc;
 
-use crate::graph::{Graph, GraphNode, NodeKey};
+use crate::graph::{Graph, GraphNode, NodeKey, ShapeKey};
 use crate::lang::ast::Function;
 use crate::runtime::Runtime;
 use crate::stack::Stack;
@@ -51,6 +51,14 @@ enum Undo {
     },
     DependentRemoved {
         source: NodeKey,
+        dependent: NodeKey,
+    },
+    ShapeDependentAdded {
+        source: ShapeKey,
+        dependent: NodeKey,
+    },
+    ShapeDependentRemoved {
+        source: ShapeKey,
         dependent: NodeKey,
     },
 }
@@ -222,6 +230,28 @@ impl Transaction {
         }
     }
 
+    pub(crate) fn record_shape_dependent_added(&mut self, source: &ShapeKey, dependent: &NodeKey) {
+        if self.active {
+            self.entries.push(Undo::ShapeDependentAdded {
+                source: source.clone(),
+                dependent: dependent.clone(),
+            });
+        }
+    }
+
+    pub(crate) fn record_shape_dependent_removed(
+        &mut self,
+        source: &ShapeKey,
+        dependent: &NodeKey,
+    ) {
+        if self.active {
+            self.entries.push(Undo::ShapeDependentRemoved {
+                source: source.clone(),
+                dependent: dependent.clone(),
+            });
+        }
+    }
+
     pub fn rollback(&mut self, state: &mut State, graph: &mut Graph) {
         while let Some(entry) = self.entries.pop() {
             apply(entry, state, graph);
@@ -277,6 +307,12 @@ fn apply(entry: Undo, state: &mut State, graph: &mut Graph) {
             if let Some(node) = graph.get_mut(&source) {
                 node.dependents.insert(dependent);
             }
+        }
+        Undo::ShapeDependentAdded { source, dependent } => {
+            graph.remove_shape_dependency(&source, &dependent);
+        }
+        Undo::ShapeDependentRemoved { source, dependent } => {
+            graph.add_shape_dependency(&source, &dependent);
         }
     }
 }

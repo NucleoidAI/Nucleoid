@@ -11,6 +11,12 @@ dependency changes later in the same cascade; storing the same value does not
 restart feedback. Nonsettling propagation raises
 `TypeError("Propagation did not settle")` and rolls back the transaction.
 
+Reasoning selections subscribe to both values and graph structure. Declaring,
+replacing, or deleting a model node refreshes affected selections even when its
+value is unchanged. Structural subscriptions are replaced on re-evaluation and
+rolled back with their transaction. Reasoning observers are neither selected nor
+traversed by graph walks, and are excluded from the membership of `model`.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -5914,4 +5920,376 @@ def callback(number):
 
 assert(direct, 21)
 assert(indirect, 21)
+
+---
+
+# Nucleoid keeps live reasoning impact selections current
+
+# a is a source with no dependents yet
+a = 1
+exposure = affects a
+
+assert(exposure, [])
+
+# New relationships change the impact without changing a
+b = a + 1
+c = b * 2
+
+assert(exposure.map(step => step.node), ["b", "c"])
+
+# Replacing a relationship removes and restores its downstream impact
+b = 0
+
+assert(exposure, [])
+
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b", "c"])
+
+---
+
+# Nucleoid keeps live reasoning current through equal valued reference changes
+
+class Plan(rate):
+    this.rate = rate
+
+class User:
+    pass
+
+basic = Plan(10)
+pro = Plan(10)
+user = User()
+user.plan = basic
+user.bill = user.plan.rate * 2
+trace = why user.bill
+
+# Repointing the reference changes the derivation but not the bill
+user.plan = pro
+
+assert(trace[0].holds, 20)
+assert(trace[0].from, ["user", "user.plan", "pro.rate"])
+assert(trace.some(step => step.node == "pro.rate"), true)
+assert(trace.some(step => step.node == "basic.rate"), false)
+
+pro.rate = 15
+
+assert(trace[0].holds, 30)
+
+---
+
+# Nucleoid keeps live reasoning model selections current
+
+# The empty model is still a live selection
+inventory = model |> why
+
+assert(inventory, [])
+
+a = 1
+b = a + 1
+
+assert(inventory.map(step => step.node), ["a", "b"])
+
+delete b
+
+assert(inventory.map(step => step.node), ["a"])
+
+b = a + 2
+trace = why b
+
+assert(inventory.map(step => step.node), ["a", "b"])
+assert(inventory[1].holds, 3)
+
+# An ordinary replacement joins the model; restoring reasoning removes it
+trace = a + 0
+
+assert(inventory.map(step => step.node), ["a", "b", "trace"])
+assert((affects a).map(step => step.node), ["b", "trace"])
+
+trace = why b
+
+assert(inventory.map(step => step.node), ["a", "b"])
+assert((affects a).map(step => step.node), ["b"])
+
+---
+
+# Nucleoid keeps live reasoning subscribed to an absent property
+
+class Item:
+    pass
+
+item = Item()
+trace = why item.amount
+
+assert(trace, [])
+
+item.amount = 3
+
+assert(trace[0].holds, 3)
+assert(trace[0].node, "item.amount")
+
+delete item.amount
+
+assert(trace, [])
+
+item.amount = 4
+
+assert(trace[0].holds, 4)
+
+---
+
+# Nucleoid keeps live reasoning observers outside impact walks
+
+a = 1
+b = a + 1
+trace = why b
+size = trace.length
+exposure = affects a
+
+assert(exposure.map(step => step.node), ["b"])
+
+secondTrace = why b
+secondSize = secondTrace.length
+
+assert(exposure.map(step => step.node), ["b"])
+
+---
+
+# Nucleoid keeps live reasoning snapshots fixed
+
+a = 1
+exposure = affects a
+frozen = exposure.value
+
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b"])
+assert(frozen, [])
+
+a = 2
+
+assert(exposure[0].holds, 3)
+assert(frozen, [])
+
+---
+
+# Nucleoid restores live reasoning subscriptions after a caught failure
+
+a = 1
+alternative = 1
+b = a + 1
+trace = why b
+exposure = affects a
+
+try:
+    b = alternative + 1
+    throw "REJECTED_REWRITE"
+catch error:
+    assert(error, "REJECTED_REWRITE")
+
+assert(trace[0].from, ["a"])
+assert(exposure.map(step => step.node), ["b"])
+
+alternative = 4
+
+assert(trace[0].holds, 2)
+
+a = 3
+
+assert(trace[0].holds, 4)
+
+b = alternative + 1
+
+assert(trace[0].from, ["alternative"])
+assert(exposure, [])
+
+---
+
+# Nucleoid refreshes live reasoning declaration metadata without a value change
+
+a = 1
+b = a + 2
+trace = why b
+
+b = a + 1 + 1
+
+assert(trace[0].holds, 3)
+assert(trace[0].rule, "b = a+1+1")
+assert(trace[0].from, ["a"])
+
+b = 3
+
+assert(trace[0].state, "stated")
+assert(trace.map(step => step.node), ["b"])
+
+b = a + 2
+
+assert(trace[0].state, "derived")
+assert(trace.map(step => step.node), ["b", "a"])
+
+---
+
+# Nucleoid replaces live reasoning ancestry and its subscriptions
+
+a = 1
+b = a + 2
+c = b * 2
+trace = why c
+d = 0
+
+b = a + d + 2
+
+assert(trace.length, 4)
+assert(trace[0].holds, 6)
+assert(trace[1].from, ["a", "d"])
+
+d = 5
+
+assert(trace[0].holds, 16)
+
+b = a + 2
+d = 10
+
+assert(trace.length, 3)
+assert(trace[0].holds, 6)
+assert(trace.some(step => step.node == "d"), false)
+
+---
+
+# Nucleoid preserves declaration order in live reasoning impact selections
+
+source = 1
+left = source + 1
+right = source + 2
+exposure = affects source
+
+assert(exposure.map(step => step.node), ["left", "right"])
+
+left = source + 1
+
+assert(exposure.map(step => step.node), ["right", "left"])
+
+source = 2
+
+assert(exposure.map(step => step.node), ["right", "left"])
+assert(exposure[0].holds, 4)
+assert(exposure[1].holds, 3)
+
+---
+
+# Nucleoid keeps live reasoning current through function calls
+
+a = 1
+
+def explain():
+    return affects a
+
+exposure = explain()
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b"])
+assert((affects a).map(step => step.node), ["b"])
+
+b = 0
+
+assert(exposure, [])
+
+---
+
+# Nucleoid keeps class level reasoning properties live
+
+class Reading(level):
+    this.level = level
+
+class Audit(target):
+    this.target = target
+
+reading = Reading(1)
+audit = Audit(reading)
+
+$Audit.exposure = affects $Audit.target.level
+
+assert(audit.exposure, [])
+
+reading.double = reading.level * 2
+
+assert(audit.exposure.map(step => step.node), ["reading.double"])
+assert(audit.exposure[0].holds, 2)
+
+reading.level = 3
+
+assert(audit.exposure[0].holds, 6)
+
+reading.double = 6
+
+assert(audit.exposure, [])
+
+---
+
+# Nucleoid enforces live reasoning guards on structural changes
+
+source = 1
+limit = 1
+
+if (affects source).length > limit:
+    throw "TOO_MANY_DEPENDENTS"
+
+first = source + 1
+
+try:
+    second = source + 2
+catch error:
+    assert(error, "TOO_MANY_DEPENDENTS")
+
+assert((affects source).map(step => step.node), ["first"])
+
+limit = 2
+second = source + 2
+
+assert((affects source).map(step => step.node), ["first", "second"])
+
+---
+
+# Nucleoid clears and restores a live explanation when its source is deleted
+
+a = 1
+trace = why a
+
+delete a
+
+assert(trace, [])
+
+a = 2
+
+assert(trace[0].holds, 2)
+assert(trace[0].node, "a")
+
+# An ordinary replacement stops observing the former source
+trace = 99
+a = 3
+
+assert(trace, 99)
+assert((affects a), [])
+
+---
+
+# Nucleoid preserves queued live reasoning across a caught structural failure
+
+trigger = 0
+inventory = model |> why
+
+if trigger > 0:
+    try:
+        class Temporary:
+            pass
+        throw "ABORT"
+    catch error:
+        if error != "ABORT":
+            throw error
+
+remaining = trigger + 10
+trigger = 1
+
+assert(inventory.some(step => step.node == "$Temporary"), false)
+assert(inventory.find(step => step.node == "trigger").holds, 1)
+assert(inventory.find(step => step.node == "remaining").holds, 11)
 ```

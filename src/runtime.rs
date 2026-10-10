@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use crate::error::{Error, Result};
 use crate::graph::{Graph, NodeKey};
 use crate::lang::ast::Stmt;
-use crate::lang::evaluation::{Flow, Tracking};
+use crate::lang::evaluation::{Flow, Tracking, TrackingMode};
 use crate::nuc::Nuc;
 use crate::nuc::expression::is_assertion;
 use crate::scope::Scope;
@@ -259,12 +259,14 @@ impl Runtime {
     /// Prepares the node's expressions, executes it, files its dependencies,
     /// then wakes whatever was reading what it wrote.
     pub(crate) fn process(&mut self, node: &mut Nuc, scope: &mut Scope) -> Result<Flow> {
-        node.before(self, scope)?;
+        let (outcome, shapes) = self.with_shape_tracking(TrackingMode::Inherited, |runtime| {
+            node.before(runtime, scope)?;
+            node.run(runtime, scope)
+        })?;
 
-        let outcome = node.run(self, scope)?;
-
-        node.graph(self, outcome.dependencies)?;
+        node.graph_observed(self, outcome.dependencies, shapes)?;
         node.after(self)?;
+        self.drain_pending()?;
 
         Ok(outcome.flow)
     }

@@ -5,7 +5,7 @@
 use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
-use crate::graph::{NodeKey, NodeKind};
+use crate::graph::{NodeKey, NodeKind, ShapeKey};
 use crate::lang::ast::{Expr, Stmt};
 use crate::lang::evaluation::Flow;
 use crate::nuc::object::Object;
@@ -122,16 +122,26 @@ impl Property {
     }
 
     pub fn graph(&self, runtime: &mut Runtime, dependencies: IndexSet<NodeKey>) -> Result<()> {
+        self.graph_observed(runtime, dependencies, IndexSet::new())
+    }
+
+    pub(crate) fn graph_observed(
+        &self,
+        runtime: &mut Runtime,
+        dependencies: IndexSet<NodeKey>,
+        shapes: IndexSet<ShapeKey>,
+    ) -> Result<()> {
         let (Some(kind), Owner::Object(object)) = (self.kind, &self.owner) else {
             return Ok(());
         };
 
-        runtime.file(
+        runtime.file_observed(
             &NodeKey::property(object, &self.name),
             kind,
             Some(Nuc::Property(self.clone())),
             dependencies,
             Some(object.clone()),
+            shapes,
         )
     }
 

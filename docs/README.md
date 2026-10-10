@@ -29,8 +29,9 @@ runnable as written.
 9. [Functions](#9-functions)
 10. [Transactions](#10-transactions)
 11. [Built-in Objects](#11-built-in-objects)
-12. [Error Reference](#12-error-reference)
-13. [Syntax Summary](#13-syntax-summary)
+12. [Reasoning Operations](#12-reasoning-operations)
+13. [Error Reference](#13-error-reference)
+14. [Syntax Summary](#14-syntax-summary)
 
 ---
 
@@ -540,7 +541,60 @@ Full detail: [NUC 10](nuc-0010.md).
 
 ---
 
-## 12. Error Reference
+## 12. Reasoning Operations
+
+- `why reference` selects the reference and its transitive dependencies.
+- `affects reference` selects its transitive dependents, not the reference itself.
+- `reference |> why` is equivalent to `why reference`; pipelines compose left to right.
+- `model |> why` selects the current model, excluding pending nodes and reasoning observers.
+- A selection is an ordered list of steps with `node`, `holds`, `rule`, `state`, and `from` fields.
+- `state` is `"stated"` for an independent fact or `"derived"` for a relationship or class-level rule.
+- List functions such as `map`, `find`, and `some` can inspect the steps.
+
+```
+a = 1
+b = a + 2
+c = b * 2
+trace = why c
+```
+
+- `trace[0]` names `c`, holds `6`, and derives from `["b"]`.
+
+### Live structure
+
+- A reasoning assignment follows both values and graph structure.
+- Declaring, replacing, or deleting a relationship refreshes its derivation and impact, even when its value stays the same.
+- Subscriptions are replaced on every evaluation, including reasoning evaluated through a function or a class-level property rule.
+- An empty impact selection still follows its source; an empty model selection still follows model membership.
+- Replacing an observer with an ordinary relationship adds it to the model; restoring the reasoning expression removes it again.
+- An explanation of an absent property is empty and fills in when the property is defined.
+- Deleting an explained source empties its selection; defining it again restores the explanation.
+- A name that was never defined raises `ReferenceError`, as an ordinary read does.
+
+```
+a = 1
+exposure = affects a
+b = a + 1
+c = b * 2
+```
+
+- `exposure` changes from `[]` to steps for `b` and `c` without changing `a`.
+- After `b = 0`, `exposure` is empty again.
+
+### Observation and rollback
+
+- Reasoning observers are neither selected nor traversed by graph walks; observing a model does not change its derivation or impact.
+- `.value` freezes a selection just as it freezes any other reading.
+- Structural refreshes use the propagation queue and wait for queued upstream changes to settle.
+- A failed transaction restores the selection, its subscriptions, and its pending work.
+- A caught failure discards only structural refreshes queued by its failing body, retaining work queued before it.
+- Only selections, pipelines, `model`, `why`, and `affects` are implemented; the other NUC 11 operations remain proposals.
+
+Full detail: [NUC 11](nuc-0011.md).
+
+---
+
+## 13. Error Reference
 
 Messages are exact and are part of the observable behaviour of the language.
 
@@ -595,7 +649,7 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ---
 
-## 13. Syntax Summary
+## 14. Syntax Summary
 
 ```
 name = expression                      variable assignment
@@ -643,6 +697,11 @@ return expression                      yield from a block or function
 name.value                             read without depending
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
+
+why reference                         derive a live explanation
+affects reference                     inspect live downstream impact
+reference |> why |> affects           compose reasoning stages
+model |> why                          inspect the current model
 ```
 
 ---

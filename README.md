@@ -56,7 +56,7 @@ true
 
 ## Language Reference
 
-[**docs/README.md**](docs/README.md) is the language reference: statements and state, variables and dependencies, expressions, types and instances, properties, class-level rules, blocks and scope, control flow, functions, transactions, built-in objects, error messages, and a syntax summary.
+[**docs/README.md**](docs/README.md) is the language reference: statements and state, variables and dependencies, expressions, types and instances, properties, class-level rules, blocks and scope, control flow, functions, transactions, built-in objects, live graph reasoning, error messages, and a syntax summary.
 
 It is assembled from the NUC documents in [`docs/`](docs), indexed by [NUC 0](docs/nuc-0000.md) with the conventions in [NUC 1](docs/nuc-0001.md). `nucleoid.spec.md` is normative; where the two disagree, the specification wins.
 
@@ -76,6 +76,12 @@ assert(b, 5)
 ```
 
 `b` is never stale. It is the sum of `a` and `2`, so changing `a` brings it up to date, and the same holds for properties, class-level rules and everything else the reference covers.
+
+Reasoning stays live too: `why b` explains its dependencies, and `affects a`
+reports its downstream impact. Both update when relationships are rewritten,
+added, or removed, even if their values stay the same. The implemented stages of
+[NUC 11](docs/nuc-0011.md) cover selections, pipelines, and structural subscriptions;
+its later stages remain proposals.
 
 Every example in the reference is executable: `tests/reference.md` is its executable form and runs under `cargo test`, as do the snippets on this page.
 

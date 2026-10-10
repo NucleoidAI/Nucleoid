@@ -8,7 +8,7 @@ be read next to the behaviour it demonstrates. Every example is taken from
 specification disagree, the specification wins. See [NUC 0](nuc-0000.md) for the
 index of NUC documents.
 
-The examples are executable. `cargo test --test examples` runs every block on
+The examples are executable. `cargo test --test docs` runs every block on
 this page and checks the assertions in it, so an example that stops being true
 fails the build.
 
@@ -25,9 +25,10 @@ fails the build.
 9. [Functions](#9-functions)
 10. [Transactions](#10-transactions)
 11. [Built-in Objects](#11-built-in-objects)
-12. [Error Reference](#12-error-reference)
+12. [Reasoning Operations](#12-reasoning-operations)
+13. [Error Reference](#13-error-reference)
 
-[Syntax Summary](README.md#13-syntax-summary) is a table of forms rather than
+[Syntax Summary](README.md#14-syntax-summary) is a table of forms rather than
 a behaviour, so it has no example of its own.
 
 ---
@@ -1071,7 +1072,187 @@ Full detail: [README.md §11](README.md#11-built-in-objects), [NUC 10](nuc-0010.
 
 ---
 
-## 12. Error Reference
+## 12. Reasoning Operations
+
+**A live explanation follows rewritten ancestry even when its value stays the same**
+
+- Adding `d` to the relationship changes the explanation before it changes `c`.
+- Later changes to `d` update the explanation's values too.
+
+```nuc
+a = 1
+b = a + 2
+c = b * 2
+trace = why c
+d = 0
+
+b = a + d + 2
+
+assert(trace.length, 4)
+assert(trace[0].holds, 6)
+assert(trace[1].from, ["a", "d"])
+
+d = 5
+
+assert(trace[0].holds, 16)
+```
+
+**An empty impact selection follows new relationships and their removal**
+
+- The source does not have to change for its impact to change.
+
+```nuc
+a = 1
+exposure = affects a
+
+assert(exposure, [])
+
+b = a + 1
+c = b * 2
+
+assert(exposure.map(step => step.node), ["b", "c"])
+
+b = 0
+
+assert(exposure, [])
+
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b", "c"])
+```
+
+**An empty model selection follows declarations and deletions but excludes observers**
+
+```nuc
+inventory = model |> why
+
+assert(inventory, [])
+
+a = 1
+b = a + 1
+
+assert(inventory.map(step => step.node), ["a", "b"])
+
+delete b
+
+assert(inventory.map(step => step.node), ["a"])
+
+b = a + 2
+trace = why b
+
+assert(inventory.map(step => step.node), ["a", "b"])
+assert(inventory[1].holds, 3)
+
+trace = a + 0
+
+assert(inventory.map(step => step.node), ["a", "b", "trace"])
+assert((affects a).map(step => step.node), ["b", "trace"])
+
+trace = why b
+
+assert(inventory.map(step => step.node), ["a", "b"])
+assert((affects a).map(step => step.node), ["b"])
+```
+
+**An explanation stays subscribed while its property is absent**
+
+```nuc
+class Item:
+    pass
+
+item = Item()
+trace = why item.amount
+
+assert(trace, [])
+
+item.amount = 3
+
+assert(trace[0].holds, 3)
+assert(trace[0].node, "item.amount")
+
+delete item.amount
+
+assert(trace, [])
+
+item.amount = 4
+
+assert(trace[0].holds, 4)
+```
+
+**An impact walk stops at reasoning observers**
+
+- A value computed from an explanation is not an indirect model consequence of the explained source.
+
+```nuc
+a = 1
+b = a + 1
+trace = why b
+size = trace.length
+exposure = affects a
+
+assert(exposure.map(step => step.node), ["b"])
+
+secondTrace = why b
+secondSize = secondTrace.length
+
+assert(exposure.map(step => step.node), ["b"])
+```
+
+**The value property freezes a selection against structural changes**
+
+```nuc
+a = 1
+exposure = affects a
+frozen = exposure.value
+
+b = a + 1
+
+assert(exposure.map(step => step.node), ["b"])
+assert(frozen, [])
+
+a = 2
+
+assert(exposure[0].holds, 3)
+assert(frozen, [])
+```
+
+**A rejected rewrite restores the explanation and its original subscriptions**
+
+```nuc
+a = 1
+alternative = 1
+b = a + 1
+trace = why b
+exposure = affects a
+
+try:
+    b = alternative + 1
+    throw "REJECTED_REWRITE"
+catch error:
+    assert(error, "REJECTED_REWRITE")
+
+assert(trace[0].from, ["a"])
+assert(exposure.map(step => step.node), ["b"])
+
+alternative = 4
+
+assert(trace[0].holds, 2)
+
+a = 3
+
+assert(trace[0].holds, 4)
+
+b = alternative + 1
+
+assert(trace[0].from, ["alternative"])
+assert(exposure, [])
+```
+
+Full detail: [README.md §12](README.md#12-reasoning-operations), [NUC 11](nuc-0011.md).
+
+---
+
+## 13. Error Reference
 
 **Reading something that was never defined is a reference error**
 
@@ -1141,7 +1322,7 @@ catch error:
     assert(error, SyntaxError("Cannot define class declaration in non-class block"))
 ```
 
-Full detail: [README.md §12](README.md#12-error-reference), [NUC 9](nuc-0009.md).
+Full detail: [README.md §13](README.md#13-error-reference), [NUC 9](nuc-0009.md).
 
 ---
 
