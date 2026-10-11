@@ -36,3 +36,9 @@ Nucleoid is published as open source under Apache-2.0, so everything is public-f
 The crate executes its normative documents rather than restating them: `tests/nucleoid.spec.rs` exports `dataset/nucleoid.spec.jsonl` as individually named tests that embed their own code and expected return, while `tests/docs.rs` runs `tests/reference.md` (the executable form of `docs/README.md`) and the ```nuc blocks in `README.md` and `docs/examples.md`. Synthesized use cases are not runtime tests. `tests/dataset.rs` only renders and validates the Hugging Face dataset from `nucleoid.spec.md` and `dataset/nucleoid.spec.synth.*.md`, failing when committed JSONL differs from its source documents. Adding a case to a normative executable document adds a test; adding a synthesized case only updates the fine-tuning dataset.
 
 A case whose assertions sit on a branch that is never taken proves nothing, so the suites also compare `Runtime::assertions_run()` against the number of `assert` calls in the source and fail when fewer ran.
+
+## Leave the world better than you found it
+
+When adding a feature, review the code you touch and apply current Rust best practices where needed. Adopt improved idioms and methods incrementally, including ownership and borrowing, concrete types, typed errors, and maintainable APIs, so the codebase improves continuously.
+
+Keep improvements focused on touched code and directly related helpers, proportional to the feature. Preserve intended behavior, respect public API semantic versioning, and cover affected behavior with appropriate tests. Avoid unrelated rewrites, and follow the existing `cargo fmt` and warning-denied `cargo clippy` conventions.
