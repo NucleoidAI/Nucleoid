@@ -8,7 +8,7 @@
 ![Banner](.github/media/banner.gif)
 
 <p align="center">
-  <b>Logic Language for World Models 🌱🐋🌍</b>
+  <b>Synthesized Logic Language for World Models 🌱🐋🌍</b>
 </p>
 
 <br/>
