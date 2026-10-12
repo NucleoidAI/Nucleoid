@@ -37,6 +37,12 @@ The crate executes its normative documents rather than restating them: `tests/nu
 
 A case whose assertions sit on a branch that is never taken proves nothing, so the suites also compare `Runtime::assertions_run()` against the number of `assert` calls in the source and fail when fewer ran.
 
+## Human-owned version numbers
+
+- No AI agent, including coordinating agents and delegated workers, may change the project's version number.
+- This prohibition covers `Cargo.toml`'s `package.version`, Nucleoid's own package entry in `Cargo.lock`, and any other project release/version metadata, including changes made indirectly by tools or generated outputs.
+- Version changes are human-owned. Report required semantic-versioning changes, including those for breaking public API changes, without editing or automatically bumping a version.
+
 ## Language proposals
 
 Every added or updated `docs/nuc-XXXX.md` requires a fresh `nuc-proposal`
