@@ -4642,6 +4642,64 @@ fn preserves_queued_live_reasoning_across_a_caught_structural_failure() {
     assert_eq!(run(r#"inventory.find(step => step.node == "remaining").holds"#), 11);
 }
 
+/// Nucleoid treats this and self as interchangeable instance keywords
+#[rustfmt::skip]
+#[test]
+fn treats_this_and_self_as_interchangeable_instance_keywords() {
+    let mut run = runner();
+    run(r#"class Counter(count: int):
+    self.count = count
+
+    def same_receiver():
+        return this == self
+
+    def set_this(count: int):
+        this.count = count
+        return self.count
+
+    def set_self(count: int):
+        self.count = count
+        return this.count"#);
+    run(r#"class SpecialCounter: Counter
+    def init(count: int):
+        super(count)
+        this.kind = "SPECIAL"
+        self.active = true"#);
+    run("$Counter.doubled = this.count + self.count");
+    run("counter = Counter(2)");
+    run("other = Counter(5)");
+    run("special = SpecialCounter(7)");
+    assert_eq!(run("counter.count"), 2);
+    assert_eq!(run("other.count"), 5);
+    assert_eq!(run("special.count"), 7);
+    assert_eq!(run("special.kind"), "SPECIAL");
+    assert_eq!(run("special.active"), true);
+    assert_eq!(run("counter.same_receiver()"), true);
+    assert_eq!(run("other.same_receiver()"), true);
+    assert_eq!(run("counter.doubled"), 4);
+    assert_eq!(run("other.doubled"), 10);
+    assert_eq!(run("special.doubled"), 14);
+    assert_eq!(run("counter.set_self(3)"), 3);
+    assert_eq!(run("counter.count"), 3);
+    assert_eq!(run("counter.doubled"), 6);
+    assert_eq!(run("other.count"), 5);
+    assert_eq!(run("other.set_this(7)"), 7);
+    assert_eq!(run("other.count"), 7);
+    assert_eq!(run("other.doubled"), 14);
+    assert_eq!(run("counter.count"), 3);
+}
+
+/// Nucleoid rejects this and self outside an instance or as assignment targets
+#[rustfmt::skip]
+#[test]
+fn rejects_this_and_self_outside_an_instance_or_as_assignment_targets() {
+    let (_run, mut run_error) = crate::common::runners();
+    assert_eq!(run_error("this"), "ReferenceError: this is not defined");
+    assert_eq!(run_error("self"), "ReferenceError: this is not defined");
+    assert_eq!(run_error("this = 1"), "TypeError: Cannot assign to 'this'");
+    assert_eq!(run_error("self = 1"), "TypeError: Cannot assign to 'this'");
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

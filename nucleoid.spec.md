@@ -1,5 +1,10 @@
 # Nucleoid Language Reference
 
+`this` and `self` are interchangeable keywords for the current instance in
+constructors, methods, and class-level rules. Both spellings share the same
+receiver, property access, and errors. Neither keyword may be rebound, and using
+either without a current instance raises `ReferenceError("this is not defined")`.
+
 Expression nesting is bounded, including consecutive unary operators and
 `new`/`delete` prefixes. Excessive nesting raises
 `SyntaxError("Expressions are nested too deeply")` rather than overflowing
@@ -6292,4 +6297,79 @@ trigger = 1
 assert(inventory.some(step => step.node == "$Temporary"), false)
 assert(inventory.find(step => step.node == "trigger").holds, 1)
 assert(inventory.find(step => step.node == "remaining").holds, 11)
+
+---
+
+# Nucleoid treats this and self as interchangeable instance keywords
+
+class Counter(count: int):
+    self.count = count
+
+    def same_receiver():
+        return this == self
+
+    def set_this(count: int):
+        this.count = count
+        return self.count
+
+    def set_self(count: int):
+        self.count = count
+        return this.count
+
+class SpecialCounter: Counter
+    def init(count: int):
+        super(count)
+        this.kind = "SPECIAL"
+        self.active = true
+
+$Counter.doubled = this.count + self.count
+
+counter = Counter(2)
+other = Counter(5)
+special = SpecialCounter(7)
+
+assert(counter.count, 2)
+assert(other.count, 5)
+assert(special.count, 7)
+assert(special.kind, "SPECIAL")
+assert(special.active, true)
+assert(counter.same_receiver(), true)
+assert(other.same_receiver(), true)
+assert(counter.doubled, 4)
+assert(other.doubled, 10)
+assert(special.doubled, 14)
+
+assert(counter.set_self(3), 3)
+assert(counter.count, 3)
+assert(counter.doubled, 6)
+assert(other.count, 5)
+
+assert(other.set_this(7), 7)
+assert(other.count, 7)
+assert(other.doubled, 14)
+assert(counter.count, 3)
+
+---
+
+# Nucleoid rejects this and self outside an instance or as assignment targets
+
+try:
+    this
+catch error:
+    assert(error, ReferenceError("this is not defined"))
+
+try:
+    self
+catch error:
+    assert(error, ReferenceError("this is not defined"))
+
+try:
+    this = 1
+catch error:
+    assert(error, TypeError("Cannot assign to 'this'"))
+
+try:
+    self = 1
+catch error:
+    assert(error, TypeError("Cannot assign to 'this'"))
 ```

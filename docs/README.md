@@ -239,6 +239,12 @@ class Shape:
         this.type = type
 ```
 
+### Instance keywords
+
+- `this` and `self` are interchangeable keywords for the current instance in constructors, methods, and class-level rules.
+- Either spelling reads and writes the same properties; both may be mixed in one body without declaring a receiver parameter.
+- Neither keyword may be rebound. Using either without a current instance raises `ReferenceError("this is not defined")`; rebinding either raises `TypeError("Cannot assign to 'this'")`.
+
 ### Instances
 
 - Creating an instance registers it in the type's list and returns it.

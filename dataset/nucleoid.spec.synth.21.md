@@ -2044,4 +2044,29 @@ assert(trace[0].holds, 2)
 crew = 2
 
 assert(trace[0].holds, 3)
+
+---
+
+# Nucleoid uses this and self interchangeably in a flight record
+
+# There is a Flight type whose number is stored through self
+class Flight(number: str):
+    self.number = number
+
+    # A number changed through this is returned through self
+    def change_number(number: str):
+        this.number = number
+        return self.number
+
+    # Both keywords name the same flight
+    def same_receiver():
+        return this == self
+
+# flight1 is a Flight whose number is "TP1234"
+flight1 = Flight("TP1234")
+
+assert(flight1.number, "TP1234")
+assert(flight1.same_receiver(), true)
+assert(flight1.change_number("TP1235"), "TP1235")
+assert(flight1.number, "TP1235")
 ```

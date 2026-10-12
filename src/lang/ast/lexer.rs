@@ -109,6 +109,7 @@ pub enum Keyword {
     False,
     Null,
     Super,
+    /// The current instance, written as either `this` or `self`.
     This,
     TypeOf,
     New,

@@ -1278,4 +1278,33 @@ trigger = 1
 assert(inventory.some(step => step.node == "$Temporary"), false)
 assert(inventory.find(step => step.node == "trigger").holds, 1)
 assert(inventory.find(step => step.node == "remaining").holds, 11)
+
+---
+
+# Nucleoid uses this and self for the same instance
+
+class Counter(count: int):
+    self.count = count
+
+    def same_receiver():
+        return this == self
+
+    def set_this(count: int):
+        this.count = count
+        return self.count
+
+    def set_self(count: int):
+        self.count = count
+        return this.count
+
+$Counter.doubled = this.count + self.count
+
+counter = Counter(2)
+
+assert(counter.same_receiver(), true)
+assert(counter.doubled, 4)
+assert(counter.set_self(3), 3)
+assert(counter.doubled, 6)
+assert(counter.set_this(5), 5)
+assert(counter.doubled, 10)
 ```
