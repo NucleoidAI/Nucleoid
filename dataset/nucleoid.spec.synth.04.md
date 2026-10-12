@@ -823,10 +823,9 @@ holder = Object()
 
 # index is 1
 index = 1
-
 # attach assigns holder to slot and returns the value of the assignment
-def attach(slot):
-    return slot = holder
+# attach assigns holder to slot and returns the value of the assignment
+def attach(slot) => slot = holder
 
 assert(attach(index), {})
 assert(index, 1)
@@ -834,10 +833,9 @@ assert(index, 1)
 ---
 
 # Nucleoid returns a string from a function call
-
 # rename assigns "renamed" to a name and returns the value of the assignment
-def rename(name):
-    return name = "renamed"
+# rename assigns "renamed" to a name and returns the value of the assignment
+def rename(name) => name = "renamed"
 
 # original is 1
 original = 1
@@ -850,10 +848,9 @@ rename(original)
 ---
 
 # Nucleoid concatenates a number onto a string in a function
-
 # suffix returns a plus 45
-def suffix(a):
-    return a + 45
+# suffix returns a plus 45
+def suffix(a) => a + 45
 
 # prefix is "REF-2"
 prefix = "REF-2"

@@ -824,10 +824,9 @@ assert(claim1.award, 700)
 ---
 
 # Nucleoid calls a burn function in an assignment
-
 # burn returns the fuel divided by the hours
-def burn(fuel, hours):
-    return fuel / hours
+# burn returns the fuel divided by the hours
+def burn(fuel, hours) => fuel / hours
 
 # uplift is 9000
 uplift = 9000
@@ -848,10 +847,9 @@ assert(hourly, 1500)
 ---
 
 # Nucleoid updates a levy when its function is redefined
-
 # levy returns the fare times 5 divided by 100
-def levy(fare):
-    return fare * 5 / 100
+# levy returns the fare times 5 divided by 100
+def levy(fare) => fare * 5 / 100
 
 # ticket is 400
 ticket = 400
@@ -860,10 +858,9 @@ ticket = 400
 duty = levy(ticket)
 
 assert(duty, 20)
-
 # levy returns the fare times 10 divided by 100
-def levy(fare):
-    return fare * 10 / 100
+# levy returns the fare times 10 divided by 100
+def levy(fare) => fare * 10 / 100
 
 assert(duty, 40)
 
@@ -872,12 +869,10 @@ assert(duty, 40)
 # Nucleoid nests a band lookup inside a charge function
 
 # band returns 6 times the grade
-def band(grade):
-    return grade * 6
+def band(grade) => grade * 6
 
 # charge returns the tonnes times the band of the grade
-def charge(tonnes, grade):
-    return tonnes * band(grade)
+def charge(tonnes, grade) => tonnes * band(grade)
 
 # mass is 5
 mass = 5
@@ -1636,21 +1631,18 @@ assert(total, 4)
 # Nucleoid forwards a live landing levy through a function reference
 
 # levy calculates a fee from the number of tonnes
-def levy(tonnes):
-    return tonnes * 5
+def levy(tonnes) => tonnes * 5
 
 # select_levy returns the current levy function
-def select_levy():
-    return levy
+def select_levy() => levy
 
 quoted = select_levy()
 charge = quoted(20)
 
 assert(charge, 100)
-
 # A revised levy updates the forwarded quote
-def levy(tonnes):
-    return tonnes * 6
+# A revised levy updates the forwarded quote
+def levy(tonnes) => tonnes * 6
 
 assert(charge, 120)
 
@@ -1659,18 +1651,16 @@ assert(charge, 120)
 # Nucleoid updates named fuel callbacks over a list
 
 loads = [10, 20, 30]
-
 # reserve adds five units to each load
-def reserve(load):
-    return load + 5
+# reserve adds five units to each load
+def reserve(load) => load + 5
 
 planned = loads.map(reserve)
 
 assert(planned, [15, 25, 35])
-
 # A revised reserve policy updates the whole plan
-def reserve(load):
-    return load + 10
+# A revised reserve policy updates the whole plan
+def reserve(load) => load + 10
 
 assert(planned, [20, 30, 40])
 
@@ -1678,19 +1668,16 @@ assert(planned, [20, 30, 40])
 
 # Nucleoid tracks a pricing function passed to a fare calculator
 
-def levy(fare):
-    return fare * 2
+def levy(fare) => fare * 2
 
-def quote(policy, fare):
-    return policy(fare)
+def quote(policy, fare) => policy(fare)
 
 fare = 100
 total = quote(levy, fare)
 
 assert(total, 200)
 
-def levy(fare):
-    return fare * 3
+def levy(fare) => fare * 3
 
 assert(total, 300)
 
@@ -1747,15 +1734,13 @@ assert(indexed, 60)
 
 price = 2
 
-def cost(litres):
-    return litres * price
+def cost(litres) => litres * price
 
 formula = cost.value
 quoted = formula(100)
 current = cost(100)
 
-def cost(litres):
-    return litres * price + 50
+def cost(litres) => litres * price + 50
 
 assert(quoted, 200)
 assert(current, 250)
@@ -1831,11 +1816,9 @@ assert(quoted, 30)
 
 # Nucleoid lets an absent local fee policy shadow a fleet function
 
-def policy(weight):
-    return 999
+def policy(weight) => 999
 
-def estimate(policy, weight):
-    return policy(weight)
+def estimate(policy, weight) => policy(weight)
 
 localPolicy = null
 charge = estimate(localPolicy, 10)
@@ -1877,8 +1860,7 @@ assert(policy(20), 25)
 
 # Nucleoid restores a fuel callback rejected during redefinition
 
-def reserve(load):
-    return load + 10
+def reserve(load) => load + 10
 
 loads = [20, 30]
 planned = loads.map(reserve)
@@ -1896,8 +1878,7 @@ assert(failure, "INVALID_RESERVE")
 assert(planned, [30, 40])
 assert(reserve(40), 50)
 
-def reserve(load):
-    return load + 30
+def reserve(load) => load + 30
 
 assert(planned, [50, 60])
 
@@ -1905,8 +1886,7 @@ assert(planned, [50, 60])
 
 # Nucleoid replaces a named levy with a callable variable and back again
 
-def levy(tonnes):
-    return tonnes * 5
+def levy(tonnes) => tonnes * 5
 
 policy = levy
 direct = levy(10)
@@ -1917,10 +1897,9 @@ levy = tonnes => tonnes * 6
 
 assert(direct, 60)
 assert(forwarded, 60)
-
 # A new named definition replaces the callable variable
-def levy(tonnes):
-    return tonnes * 7
+# A new named definition replaces the callable variable
+def levy(tonnes) => tonnes * 7
 
 assert(direct, 70)
 assert(forwarded, 70)
@@ -1930,8 +1909,7 @@ levy = null
 assert(direct, null)
 assert(forwarded, null)
 
-def levy(tonnes):
-    return tonnes * 8
+def levy(tonnes) => tonnes * 8
 
 assert(direct, 80)
 assert(forwarded, 80)
@@ -2057,10 +2035,9 @@ class Flight(number: str):
     def change_number(number: str):
         this.number = number
         return self.number
-
     # Both keywords name the same flight
-    def same_receiver():
-        return this == self
+    # Both keywords name the same flight
+    def same_receiver() => this == self
 
 # flight1 is a Flight whose number is "TP1234"
 flight1 = Flight("TP1234")
@@ -2069,4 +2046,30 @@ assert(flight1.number, "TP1234")
 assert(flight1.same_receiver(), true)
 assert(flight1.change_number("TP1235"), "TP1235")
 assert(flight1.number, "TP1235")
+
+---
+
+# Nucleoid keeps expression bodied flight charges reactive
+
+rate = 4
+
+def quote(tonnes: int) => tonnes * rate
+
+class Cargo:
+    def init(tonnes: int) => this.tonnes = tonnes
+    def charge() => quote(self.tonnes)
+
+cargo = Cargo(3)
+total = cargo.charge()
+
+assert(cargo.id, "cargo")
+assert(total, 12)
+
+rate = 5
+
+assert(total, 15)
+
+def quote(tonnes: int) => tonnes * rate + 2
+
+assert(total, 17)
 ```

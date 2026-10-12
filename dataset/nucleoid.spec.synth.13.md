@@ -824,10 +824,9 @@ assert(basket1.postage, 180)
 ---
 
 # Nucleoid calls a discount function in an assignment
-
 # discount returns the price times the percent divided by 100
-def discount(price, percent):
-    return price * percent / 100
+# discount returns the price times the percent divided by 100
+def discount(price, percent) => price * percent / 100
 
 # ticket is 200
 ticket = 200
@@ -848,10 +847,9 @@ assert(saving, 100)
 ---
 
 # Nucleoid updates a markup when its function is redefined
-
 # markup returns the cost times 30 divided by 100
-def markup(cost):
-    return cost * 30 / 100
+# markup returns the cost times 30 divided by 100
+def markup(cost) => cost * 30 / 100
 
 # wholesale is 100
 wholesale = 100
@@ -860,10 +858,9 @@ wholesale = 100
 uplift = markup(wholesale)
 
 assert(uplift, 30)
-
 # markup returns the cost times 60 divided by 100
-def markup(cost):
-    return cost * 60 / 100
+# markup returns the cost times 60 divided by 100
+def markup(cost) => cost * 60 / 100
 
 assert(uplift, 60)
 
@@ -872,12 +869,10 @@ assert(uplift, 60)
 # Nucleoid nests a band lookup inside a postage function
 
 # band returns 2 times the zone
-def band(zone):
-    return zone * 2
+def band(zone) => zone * 2
 
 # postage returns the weight times the band of the zone
-def postage(weight, zone):
-    return weight * band(zone)
+def postage(weight, zone) => weight * band(zone)
 
 # parcelWeight is 6
 parcelWeight = 6

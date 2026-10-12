@@ -848,10 +848,9 @@ message = "OK"
 ---
 
 # Nucleoid calls a function in a class-level assignment
-
 # discount returns price minus price times rate divided by 100
-def discount(price, rate):
-    return price - price * rate / 100
+# discount returns price minus price times rate divided by 100
+def discount(price, rate) => price - price * rate / 100
 
 # There is a Product type
 class Product:
@@ -879,12 +878,10 @@ assert(product1.sale, 150)
 # Nucleoid calls a function inside another function call
 
 # double returns number times 2
-def double(number):
-    return number * 2
+def double(number) => number * 2
 
 # increment returns number plus 1
-def increment(number):
-    return number + 1
+def increment(number) => number + 1
 
 # seed is 5
 seed = 5

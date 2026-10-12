@@ -82,10 +82,9 @@ assert(box1.area, 12)
 ---
 
 # Nucleoid updates dependents when a function is redefined
-
 # fee returns amount times 0.1
-def fee(amount):
-    return amount * 0.1
+# fee returns amount times 0.1
+def fee(amount) => amount * 0.1
 
 # base is 200
 base = 200
@@ -94,10 +93,9 @@ base = 200
 charge = fee(base)
 
 assert(charge, 20)
-
 # fee returns amount times 0.2
-def fee(amount):
-    return amount * 0.2
+# fee returns amount times 0.2
+def fee(amount) => amount * 0.2
 
 assert(charge, 40)
 
@@ -811,10 +809,9 @@ assert(player1.origin, "Boston")
 ---
 
 # Nucleoid uses value property as a function argument
-
 # tag returns prefix plus count
-def tag(prefix, count):
-    return prefix + count
+# tag returns prefix plus count
+def tag(prefix, count) => prefix + count
 
 # seed is 1
 seed = 1

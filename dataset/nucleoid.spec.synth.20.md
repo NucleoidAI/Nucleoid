@@ -824,10 +824,9 @@ assert(charge1.amount, 6800)
 ---
 
 # Nucleoid calls a speed function in an assignment
-
 # speed returns the miles divided by the hours
-def speed(miles, hours):
-    return miles / hours
+# speed returns the miles divided by the hours
+def speed(miles, hours) => miles / hours
 
 # passage is 480
 passage = 480
@@ -848,10 +847,9 @@ assert(knots, 10)
 ---
 
 # Nucleoid updates a levy when its function is redefined
-
 # levy returns the freight times 3 divided by 100
-def levy(freight):
-    return freight * 3 / 100
+# levy returns the freight times 3 divided by 100
+def levy(freight) => freight * 3 / 100
 
 # revenue is 20000
 revenue = 20000
@@ -860,10 +858,9 @@ revenue = 20000
 duty = levy(revenue)
 
 assert(duty, 600)
-
 # levy returns the freight times 6 divided by 100
-def levy(freight):
-    return freight * 6 / 100
+# levy returns the freight times 6 divided by 100
+def levy(freight) => freight * 6 / 100
 
 assert(duty, 1200)
 
@@ -872,12 +869,10 @@ assert(duty, 1200)
 # Nucleoid nests a band lookup inside a due function
 
 # band returns 4 times the grade
-def band(grade):
-    return grade * 4
+def band(grade) => grade * 4
 
 # due returns the tonnage times the band of the grade
-def due(tonnage, grade):
-    return tonnage * band(grade)
+def due(tonnage, grade) => tonnage * band(grade)
 
 # gross is 5
 gross = 5

@@ -416,7 +416,11 @@ impl Parser {
         };
 
         let parameters = self.parameters()?;
-        let body = self.suite()?;
+        let body = if self.eat(&Token::Arrow) {
+            vec![Stmt::Return(Some(self.expression()?))]
+        } else {
+            self.suite()?
+        };
 
         Ok(Stmt::Function(Arc::new(Function {
             name: Some(name),
@@ -1158,5 +1162,92 @@ impl Parser {
         }
 
         Ok(Expr::Template(parts))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lang::ast::generator::generate_all;
+
+    #[test]
+    fn named_expression_bodies_lower_to_single_return_blocks() {
+        for expression in [
+            "number + 1 * factor",
+            "number = factor",
+            "{value: number, scaled: number * factor}",
+            "value => value * 2",
+            "(value: int) => { return value * 2 }",
+            "why number",
+        ] {
+            let compact = parse(&format!(
+                "def calculate(number: int, factor) => {expression}"
+            ))
+            .unwrap();
+            let expanded = parse(&format!(
+                "def calculate(number: int, factor):\n    return {expression}"
+            ))
+            .unwrap();
+
+            assert_eq!(compact, expanded, "{expression}");
+            assert_eq!(generate_all(&compact), generate_all(&expanded));
+
+            let [Stmt::Function(function)] = compact.as_slice() else {
+                panic!("expected one named function");
+            };
+            let FunctionBody::Block(body) = &function.body else {
+                panic!("named expression bodies must use block execution");
+            };
+
+            assert!(matches!(body.as_slice(), [Stmt::Return(Some(_))]));
+            assert_eq!(
+                generate_all(body),
+                format!("return {}", parse_expression(expression).unwrap())
+            );
+        }
+    }
+
+    #[test]
+    fn named_expression_methods_share_block_lowering() {
+        let compact = parse(
+            r#"
+class Gauge:
+    def init(amount: int) => this.amount = amount
+    def reading() => self.amount
+"#,
+        )
+        .unwrap();
+        let expanded = parse(
+            r#"
+class Gauge:
+    def init(amount: int):
+        return this.amount = amount
+    def reading():
+        return self.amount
+"#,
+        )
+        .unwrap();
+
+        assert_eq!(compact, expanded);
+        assert_eq!(generate_all(&compact), generate_all(&expanded));
+
+        let [Stmt::Class(class)] = compact.as_slice() else {
+            panic!("expected one class");
+        };
+        assert_eq!(class.methods.len(), 2);
+        assert!(class.methods.iter().all(|method| matches!(
+            &method.body,
+            FunctionBody::Block(body) if matches!(body.as_slice(), [Stmt::Return(Some(_))])
+        )));
+    }
+
+    #[test]
+    fn named_expression_bodies_allow_parenthesized_continuations() {
+        let compact =
+            parse("def double(number: int) => (\n    number *\n    2\n)\nother = 3").unwrap();
+        let expanded = parse("def double(number: int):\n    return number * 2\nother = 3").unwrap();
+
+        assert_eq!(compact, expanded);
+        assert_eq!(generate_all(&compact), generate_all(&expanded));
     }
 }

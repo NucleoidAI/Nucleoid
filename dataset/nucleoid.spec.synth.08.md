@@ -824,10 +824,9 @@ assert(application1.award, 300)
 ---
 
 # Nucleoid calls an average function in an assignment
-
 # average returns the total divided by the count
-def average(total, count):
-    return total / count
+# average returns the total divided by the count
+def average(total, count) => total / count
 
 # marks is 240
 marks = 240
@@ -848,10 +847,9 @@ assert(mean, 40)
 ---
 
 # Nucleoid updates a weighting when its function is redefined
-
 # weight returns the mark times 2
-def weight(mark):
-    return mark * 2
+# weight returns the mark times 2
+def weight(mark) => mark * 2
 
 # raw is 30
 raw = 30
@@ -860,10 +858,9 @@ raw = 30
 weighted = weight(raw)
 
 assert(weighted, 60)
-
 # weight returns the mark times 3
-def weight(mark):
-    return mark * 3
+# weight returns the mark times 3
+def weight(mark) => mark * 3
 
 assert(weighted, 90)
 
@@ -872,12 +869,10 @@ assert(weighted, 90)
 # Nucleoid nests a scale lookup inside a total function
 
 # scale returns 4 times the level
-def scale(level):
-    return level * 4
+def scale(level) => level * 4
 
 # total returns the marks times the scale of the level
-def total(marks, level):
-    return marks * scale(level)
+def total(marks, level) => marks * scale(level)
 
 # rawMarks is 5
 rawMarks = 5

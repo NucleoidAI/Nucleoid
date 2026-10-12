@@ -807,10 +807,9 @@ assert(deal1.advance, 70000)
 ---
 
 # Nucleoid calls a rate function in an assignment
-
 # rate returns the fee divided by the words times 1000
-def rate(fee, words):
-    return fee / words * 1000
+# rate returns the fee divided by the words times 1000
+def rate(fee, words) => fee / words * 1000
 
 # payment is 600
 payment = 600
@@ -831,10 +830,9 @@ assert(perThousand, 400)
 ---
 
 # Nucleoid updates a commission when its function is redefined
-
 # commission returns the sale times 15 divided by 100
-def commission(sale):
-    return sale * 15 / 100
+# commission returns the sale times 15 divided by 100
+def commission(sale) => sale * 15 / 100
 
 # takings is 2000
 takings = 2000
@@ -843,10 +841,9 @@ takings = 2000
 agentFee = commission(takings)
 
 assert(agentFee, 300)
-
 # commission returns the sale times 20 divided by 100
-def commission(sale):
-    return sale * 20 / 100
+# commission returns the sale times 20 divided by 100
+def commission(sale) => sale * 20 / 100
 
 assert(agentFee, 400)
 
@@ -855,12 +852,10 @@ assert(agentFee, 400)
 # Nucleoid nests a tier lookup inside a fee function
 
 # tier returns 7 times the band
-def tier(band):
-    return band * 7
+def tier(band) => band * 7
 
 # fee returns the pages times the tier of the band
-def fee(pages, band):
-    return pages * tier(band)
+def fee(pages, band) => pages * tier(band)
 
 # extent is 5
 extent = 5

@@ -824,10 +824,9 @@ assert(tool1.charge, 12500)
 ---
 
 # Nucleoid calls an efficiency function in an assignment
-
 # efficiency returns the good divided by the total times 100
-def efficiency(good, total):
-    return good / total * 100
+# efficiency returns the good divided by the total times 100
+def efficiency(good, total) => good / total * 100
 
 # passed is 90
 passed = 90
@@ -848,10 +847,9 @@ assert(rate, 80)
 ---
 
 # Nucleoid updates a margin when its function is redefined
-
 # margin returns the cost times 20 divided by 100
-def margin(cost):
-    return cost * 20 / 100
+# margin returns the cost times 20 divided by 100
+def margin(cost) => cost * 20 / 100
 
 # unitCost is 50
 unitCost = 50
@@ -860,10 +858,9 @@ unitCost = 50
 uplift = margin(unitCost)
 
 assert(uplift, 10)
-
 # margin returns the cost times 40 divided by 100
-def margin(cost):
-    return cost * 40 / 100
+# margin returns the cost times 40 divided by 100
+def margin(cost) => cost * 40 / 100
 
 assert(uplift, 20)
 
@@ -872,12 +869,10 @@ assert(uplift, 20)
 # Nucleoid nests a grade lookup inside a cost function
 
 # grade returns 3 times the tier
-def grade(tier):
-    return tier * 3
+def grade(tier) => tier * 3
 
 # cost returns the mass times the grade of the tier
-def cost(mass, tier):
-    return mass * grade(tier)
+def cost(mass, tier) => mass * grade(tier)
 
 # billet is 5
 billet = 5

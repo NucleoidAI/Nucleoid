@@ -276,8 +276,7 @@ assert(Shape.length, 1)
 class Counter(count: int):
     self.count = count
 
-    def same_receiver():
-        return this == self
+    def same_receiver() => this == self
 
     def set_this(count: int):
         this.count = count
@@ -753,8 +752,7 @@ Full detail: [README.md §8](README.md#8-control-flow), [NUC 7](nuc-0007.md).
 **A function call in an assignment depends on the function and its arguments**
 
 ```nuc
-def generate(number):
-    return number * 10
+def generate(number) => number * 10
 
 random = 10
 number = generate(random)
@@ -769,8 +767,7 @@ assert(number, 200)
 **Named callbacks and aliases follow redefinition; value freezes the definition**
 
 ```nuc
-def scale(number):
-    return number * 2
+def scale(number) => number * 2
 
 callback = scale
 snapshot = scale.value
@@ -778,8 +775,7 @@ result = callback(3)
 frozen = snapshot(3)
 mapped = [1, 2].map(scale)
 
-def scale(number):
-    return number * 3
+def scale(number) => number * 3
 
 assert(result, 9)
 assert(frozen, 6)
@@ -791,8 +787,7 @@ assert(result, 12)
 assert(frozen, 6)
 assert(mapped, [4, 8])
 
-def scale(number):
-    return number * 5
+def scale(number) => number * 5
 
 assert(result, 15)
 assert(frozen, 6)
@@ -834,11 +829,9 @@ assert(indexed, 5)
 **A null or non-callable parameter shadows an outer function**
 
 ```nuc
-def operation(number):
-    return 99
+def operation(number) => 99
 
-def apply(operation, number):
-    return operation(number)
+def apply(operation, number) => operation(number)
 
 callback = null
 result = apply(callback, 3)

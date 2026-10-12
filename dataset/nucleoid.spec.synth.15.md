@@ -824,10 +824,9 @@ assert(contract1.prelims, 11000)
 ---
 
 # Nucleoid calls a coverage function in an assignment
-
 # coverage returns the area divided by the rate
-def coverage(area, rate):
-    return area / rate
+# coverage returns the area divided by the rate
+def coverage(area, rate) => area / rate
 
 # wall is 240
 wall = 240
@@ -848,10 +847,9 @@ assert(tins, 10)
 ---
 
 # Nucleoid updates an overhead when its function is redefined
-
 # overhead returns the cost times 15 divided by 100
-def overhead(cost):
-    return cost * 15 / 100
+# overhead returns the cost times 15 divided by 100
+def overhead(cost) => cost * 15 / 100
 
 # works is 20000
 works = 20000
@@ -860,10 +858,9 @@ works = 20000
 addition = overhead(works)
 
 assert(addition, 3000)
-
 # overhead returns the cost times 20 divided by 100
-def overhead(cost):
-    return cost * 20 / 100
+# overhead returns the cost times 20 divided by 100
+def overhead(cost) => cost * 20 / 100
 
 assert(addition, 4000)
 
@@ -872,12 +869,10 @@ assert(addition, 4000)
 # Nucleoid nests a grade lookup inside a cost function
 
 # grade returns 8 times the class
-def grade(band):
-    return band * 8
+def grade(band) => band * 8
 
 # cost returns the volume times the grade of the band
-def cost(volume, band):
-    return volume * grade(band)
+def cost(volume, band) => volume * grade(band)
 
 # pour is 5
 pour = 5

@@ -821,10 +821,9 @@ assert(referral1.breach, 300)
 ---
 
 # Nucleoid calls a body mass function in an assignment
-
 # mass returns the weight divided by the height squared
-def mass(weight, height):
-    return weight / (height * height)
+# mass returns the weight divided by the height squared
+def mass(weight, height) => weight / (height * height)
 
 # kilos is 80
 kilos = 80
@@ -845,10 +844,9 @@ assert(bmi, 25)
 ---
 
 # Nucleoid updates a rate when its function is redefined
-
 # rate returns the count times 60 divided by the minutes
-def rate(count, minutes):
-    return count * 60 / minutes
+# rate returns the count times 60 divided by the minutes
+def rate(count, minutes) => count * 60 / minutes
 
 # beats is 30
 beats = 30
@@ -860,10 +858,9 @@ span = 2
 perMinute = rate(beats, span)
 
 assert(perMinute, 900)
-
 # rate returns the count times 30 divided by the minutes
-def rate(count, minutes):
-    return count * 30 / minutes
+# rate returns the count times 30 divided by the minutes
+def rate(count, minutes) => count * 30 / minutes
 
 assert(perMinute, 450)
 
@@ -872,12 +869,10 @@ assert(perMinute, 450)
 # Nucleoid nests a factor lookup inside a dosage function
 
 # factor returns 5 times the band
-def factor(band):
-    return band * 5
+def factor(band) => band * 5
 
 # dosage returns the weight times the factor of the band
-def dosage(weight, band):
-    return weight * factor(band)
+def dosage(weight, band) => weight * factor(band)
 
 # bodyWeight is 4
 bodyWeight = 4

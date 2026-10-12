@@ -824,10 +824,9 @@ assert(fine1.amount, 190)
 ---
 
 # Nucleoid calls a throughput function in an assignment
-
 # throughput returns the items divided by the hours
-def throughput(items, hours):
-    return items / hours
+# throughput returns the items divided by the hours
+def throughput(items, hours) => items / hours
 
 # processed is 600
 processed = 600
@@ -848,10 +847,9 @@ assert(perHour, 50)
 ---
 
 # Nucleoid updates a levy when its function is redefined
-
 # levy returns the grant times 5 divided by 100
-def levy(grant):
-    return grant * 5 / 100
+# levy returns the grant times 5 divided by 100
+def levy(grant) => grant * 5 / 100
 
 # award is 20000
 award = 20000
@@ -860,10 +858,9 @@ award = 20000
 admin = levy(award)
 
 assert(admin, 1000)
-
 # levy returns the grant times 8 divided by 100
-def levy(grant):
-    return grant * 8 / 100
+# levy returns the grant times 8 divided by 100
+def levy(grant) => grant * 8 / 100
 
 assert(admin, 1600)
 
@@ -872,12 +869,10 @@ assert(admin, 1600)
 # Nucleoid nests a band lookup inside a cost function
 
 # band returns 5 times the grade
-def band(grade):
-    return grade * 5
+def band(grade) => grade * 5
 
 # cost returns the folios times the band of the grade
-def cost(folios, grade):
-    return folios * band(grade)
+def cost(folios, grade) => folios * band(grade)
 
 # extent is 6
 extent = 6

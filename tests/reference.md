@@ -152,8 +152,9 @@ assert(result, 120)
 
 # Nucleoid keeps named callbacks and aliases live while freezing function values
 
-def scale(number):
-    return number * 2
+# def name(params) => expression is a named block containing return expression
+# Named arrow braces are object literals; blocks without return still yield null
+def scale(number) => number * 2
 
 callback = scale
 snapshot = scale.value
@@ -161,8 +162,7 @@ result = callback(3)
 frozen = snapshot(3)
 mapped = [1, 2].map(scale)
 
-def scale(number):
-    return number * 3
+def scale(number) => number * 3
 
 assert(result, 9)
 assert(frozen, 6)
@@ -174,8 +174,7 @@ assert(result, 12)
 assert(frozen, 6)
 assert(mapped, [4, 8])
 
-def scale(number):
-    return number * 5
+def scale(number) => number * 5
 
 assert(result, 15)
 assert(frozen, 6)
@@ -217,11 +216,9 @@ assert(indexed, 5)
 
 # Nucleoid shadows outer functions with null and non callable parameters
 
-def operation(number):
-    return 99
+def operation(number) => 99
 
-def apply(operation, number):
-    return operation(number)
+def apply(operation, number) => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -1219,8 +1216,7 @@ assert(exposure, [])
 
 a = 1
 
-def explain():
-    return affects a
+def explain() => affects a
 
 exposure = explain()
 b = a + 1
@@ -1286,8 +1282,7 @@ assert(inventory.find(step => step.node == "remaining").holds, 11)
 class Counter(count: int):
     self.count = count
 
-    def same_receiver():
-        return this == self
+    def same_receiver() => this == self
 
     def set_this(count: int):
         this.count = count

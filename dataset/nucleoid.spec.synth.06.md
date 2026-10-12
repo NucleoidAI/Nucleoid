@@ -824,10 +824,9 @@ assert(haul1.fee, 650)
 ---
 
 # Nucleoid calls a volume function in an assignment
-
 # volume returns the product of three sides
-def volume(a, b, c):
-    return a * b * c
+# volume returns the product of three sides
+def volume(a, b, c) => a * b * c
 
 # width is 2
 width = 2
@@ -851,10 +850,9 @@ assert(capacity, 30)
 ---
 
 # Nucleoid updates a duty when its function is redefined
-
 # duty returns the amount times 10 divided by 100
-def duty(amount):
-    return amount * 10 / 100
+# duty returns the amount times 10 divided by 100
+def duty(amount) => amount * 10 / 100
 
 # goods is 500
 goods = 500
@@ -863,10 +861,9 @@ goods = 500
 payable = duty(goods)
 
 assert(payable, 50)
-
 # duty returns the amount times 20 divided by 100
-def duty(amount):
-    return amount * 20 / 100
+# duty returns the amount times 20 divided by 100
+def duty(amount) => amount * 20 / 100
 
 assert(payable, 100)
 
@@ -875,12 +872,10 @@ assert(payable, 100)
 # Nucleoid nests a rate lookup inside a total function
 
 # rate returns 3 times the zone
-def rate(zone):
-    return zone * 3
+def rate(zone) => zone * 3
 
 # total returns the weight times the rate of the zone
-def total(weight, zone):
-    return weight * rate(zone)
+def total(weight, zone) => weight * rate(zone)
 
 # parcelWeight is 4
 parcelWeight = 4

@@ -824,10 +824,9 @@ assert(claim1.award, 460)
 ---
 
 # Nucleoid calls a speed function in an assignment
-
 # speed returns the distance divided by the hours
-def speed(distance, hours):
-    return distance / hours
+# speed returns the distance divided by the hours
+def speed(distance, hours) => distance / hours
 
 # route is 300
 route = 300
@@ -848,10 +847,9 @@ assert(average, 50)
 ---
 
 # Nucleoid updates a surcharge when its function is redefined
-
 # surcharge returns the fare times 5 divided by 100
-def surcharge(fare):
-    return fare * 5 / 100
+# surcharge returns the fare times 5 divided by 100
+def surcharge(fare) => fare * 5 / 100
 
 # base is 200
 base = 200
@@ -860,10 +858,9 @@ base = 200
 extra = surcharge(base)
 
 assert(extra, 10)
-
 # surcharge returns the fare times 15 divided by 100
-def surcharge(fare):
-    return fare * 15 / 100
+# surcharge returns the fare times 15 divided by 100
+def surcharge(fare) => fare * 15 / 100
 
 assert(extra, 30)
 
@@ -872,12 +869,10 @@ assert(extra, 30)
 # Nucleoid nests a zone lookup inside a fare function
 
 # zone returns 3 times the ring
-def zone(ring):
-    return ring * 3
+def zone(ring) => ring * 3
 
 # fare returns the stops times the zone of the ring
-def fare(stops, ring):
-    return stops * zone(ring)
+def fare(stops, ring) => stops * zone(ring)
 
 # stopCount is 5
 stopCount = 5

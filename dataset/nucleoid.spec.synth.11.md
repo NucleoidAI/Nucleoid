@@ -824,10 +824,9 @@ assert(job1.charge, 1900)
 ---
 
 # Nucleoid calls a load factor function in an assignment
-
 # factor returns the used divided by the peak times 100
-def factor(used, peak):
-    return used / peak * 100
+# factor returns the used divided by the peak times 100
+def factor(used, peak) => used / peak * 100
 
 # consumed is 60
 consumed = 60
@@ -848,10 +847,9 @@ assert(loadFactor, 80)
 ---
 
 # Nucleoid updates a levy when its function is redefined
-
 # levy returns the units times 3 divided by 100
-def levy(units):
-    return units * 3 / 100
+# levy returns the units times 3 divided by 100
+def levy(units) => units * 3 / 100
 
 # consumption is 2000
 consumption = 2000
@@ -860,10 +858,9 @@ consumption = 2000
 green = levy(consumption)
 
 assert(green, 60)
-
 # levy returns the units times 6 divided by 100
-def levy(units):
-    return units * 6 / 100
+# levy returns the units times 6 divided by 100
+def levy(units) => units * 6 / 100
 
 assert(green, 120)
 
@@ -872,12 +869,10 @@ assert(green, 120)
 # Nucleoid nests a rate lookup inside a bill function
 
 # rate returns 6 times the band
-def rate(band):
-    return band * 6
+def rate(band) => band * 6
 
 # bill returns the units times the rate of the band
-def bill(units, band):
-    return units * rate(band)
+def bill(units, band) => units * rate(band)
 
 # consumed is 5
 consumed = 5

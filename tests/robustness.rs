@@ -34,6 +34,65 @@ fn malformed_source_is_rejected() {
 }
 
 #[test]
+fn named_expression_bodies_preserve_objects_lambdas_and_prior_blocks() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run(
+            r#"
+def double(number: int) => (
+    number *
+    2
+)
+
+def record(number) => {total: double(number)}
+def empty() => {}
+def mapper() => value => { return value * 3 }
+
+def no_return():
+    42
+
+def bare_return():
+    return
+
+def sequence(number):
+    changed = number + 1
+    return changed * 2
+
+assert(record(3).total, 6)
+assert(empty(), {})
+callback = mapper()
+assert(callback(4), 12)
+assert(no_return(), null)
+assert(bare_return(), null)
+assert(sequence(3), 8)
+"#,
+        )
+        .unwrap();
+
+    assert_eq!(runtime.assertions_run(), 6);
+    assert!(runtime.take_assertions().is_empty());
+}
+
+#[test]
+fn failed_named_expression_redefinitions_restore_the_previous_function() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("source = 2\ndef double(number: int) => number * 2\nresult = double(source)")
+        .unwrap();
+
+    let error = runtime
+        .run("def double(number: int) => number + missing")
+        .unwrap_err();
+    assert_eq!(error.kind(), ErrorKind::Reference);
+    assert_eq!(error.message(), "missing is not defined");
+    assert_eq!(runtime.run("result").unwrap().to_string(), "4");
+
+    runtime.run("source = 3").unwrap();
+    assert_eq!(runtime.run("result").unwrap().to_string(), "6");
+    assert_eq!(runtime.run("double(4)").unwrap().to_string(), "8");
+}
+
+#[test]
 fn undefined_names_are_reported_not_panicked() {
     rejects("a = missing + 1");
     rejects("missing()");

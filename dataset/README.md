@@ -36,8 +36,8 @@ makes it a supervised pair: prose in, logic out.
 
 | Split | Records | Rendered from |
 | --- | --- | --- |
-| `spec` | 245 | `nucleoid.spec.md` — normative |
-| `synth` | 1045 | `dataset/nucleoid.spec.synth.01.md` through `.21.md` — derived, no independent authority |
+| `spec` | 248 | `nucleoid.spec.md` — normative |
+| `synth` | 1046 | `dataset/nucleoid.spec.synth.01.md` through `.21.md` — derived, no independent authority |
 
 ## Fields
 

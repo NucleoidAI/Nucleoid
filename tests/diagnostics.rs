@@ -42,6 +42,32 @@ fn a_syntax_error_names_what_it_found() {
 }
 
 #[test]
+fn named_expression_body_errors_use_the_existing_expression_grammar() {
+    for (source, message) in [
+        ("def missing() =>", "Unexpected end of input"),
+        ("def missing() =>\n", "Unexpected end of line"),
+        (
+            "def invalid() => { return 1 }",
+            "Expected a key but found keyword 'return'",
+        ),
+        (
+            "def invalid() => { value = 1 }",
+            "Expected ':' but found '='",
+        ),
+        (
+            "def invalid(value:) => value",
+            "Expected a type but found ')'",
+        ),
+        ("def invalid() => (1 +)", "Unexpected ')'"),
+    ] {
+        let error = failure(source);
+        assert_eq!(error.kind(), nucleoid::ErrorKind::Syntax, "{source}");
+        assert_eq!(error.message(), message, "{source}");
+        assert!(error.position().is_some(), "{source}");
+    }
+}
+
+#[test]
 fn a_runtime_error_points_at_its_statement() {
     assert_eq!(at("total = 10\nrate = total * missing\n"), (2, 1));
 

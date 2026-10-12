@@ -456,6 +456,8 @@ Full detail: [NUC 7](nuc-0007.md).
 ## 9. Functions
 
 - `def` defines a function in the state; a function with no `return` yields `null`.
+- `def name(params) => expression` is exactly a named block containing `return expression`; methods and parameter annotations use the same form.
+- Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines.
 - A call in an assignment depends on the function and its arguments.
 - Redefining a function updates existing dependents.
 - A named function and a variable binding under the same name replace one another; reads and calls both use the latest binding.
@@ -466,8 +468,7 @@ Full detail: [NUC 7](nuc-0007.md).
 - Functions may recurse and may have multiple `return` statements.
 
 ```
-def generate(number):
-    return number * 10
+def generate(number) => number * 10
 
 random = 10
 number = generate(random)
@@ -698,8 +699,9 @@ else:
 for name of source:                    iteration
     statement
 
-def name(params):                      function
-    return expression
+def name(params) => expression         single-return function
+def name(params):                      block function
+    statement
 
 { statement; statement }               block
 

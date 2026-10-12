@@ -824,10 +824,9 @@ assert(cancellation1.fee, 224)
 ---
 
 # Nucleoid calls a rate function in an assignment
-
 # rate returns the total divided by the nights
-def rate(total, nights):
-    return total / nights
+# rate returns the total divided by the nights
+def rate(total, nights) => total / nights
 
 # spend is 600
 spend = 600
@@ -848,10 +847,9 @@ assert(nightly, 100)
 ---
 
 # Nucleoid updates a service charge when its function is redefined
-
 # service returns the bill times 10 divided by 100
-def service(bill):
-    return bill * 10 / 100
+# service returns the bill times 10 divided by 100
+def service(bill) => bill * 10 / 100
 
 # food is 200
 food = 200
@@ -860,10 +858,9 @@ food = 200
 added = service(food)
 
 assert(added, 20)
-
 # service returns the bill times 15 divided by 100
-def service(bill):
-    return bill * 15 / 100
+# service returns the bill times 15 divided by 100
+def service(bill) => bill * 15 / 100
 
 assert(added, 30)
 
@@ -872,12 +869,10 @@ assert(added, 30)
 # Nucleoid nests a season lookup inside a quote function
 
 # season returns 4 times the month
-def season(month):
-    return month * 4
+def season(month) => month * 4
 
 # quote returns the nights times the season of the month
-def quote(nights, month):
-    return nights * season(month)
+def quote(nights, month) => nights * season(month)
 
 # stayNights is 5
 stayNights = 5

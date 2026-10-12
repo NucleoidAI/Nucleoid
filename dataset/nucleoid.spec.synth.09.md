@@ -824,10 +824,9 @@ assert(trade1.fee, 2200)
 ---
 
 # Nucleoid calls an interest function in an assignment
-
 # interest returns the principal times the rate divided by 100
-def interest(principal, rate):
-    return principal * rate / 100
+# interest returns the principal times the rate divided by 100
+def interest(principal, rate) => principal * rate / 100
 
 # capital is 2000
 capital = 2000
@@ -848,10 +847,9 @@ assert(earned, 200)
 ---
 
 # Nucleoid updates a levy when its function is redefined
-
 # levy returns the amount times 2 divided by 100
-def levy(amount):
-    return amount * 2 / 100
+# levy returns the amount times 2 divided by 100
+def levy(amount) => amount * 2 / 100
 
 # transfer is 5000
 transfer = 5000
@@ -860,10 +858,9 @@ transfer = 5000
 duty = levy(transfer)
 
 assert(duty, 100)
-
 # levy returns the amount times 4 divided by 100
-def levy(amount):
-    return amount * 4 / 100
+# levy returns the amount times 4 divided by 100
+def levy(amount) => amount * 4 / 100
 
 assert(duty, 200)
 
@@ -872,12 +869,10 @@ assert(duty, 200)
 # Nucleoid nests a band lookup inside a charge function
 
 # band returns 5 times the tier
-def band(tier):
-    return tier * 5
+def band(tier) => tier * 5
 
 # charge returns the value times the band of the tier
-def charge(value, tier):
-    return value * band(tier)
+def charge(value, tier) => value * band(tier)
 
 # amount is 4
 amount = 4

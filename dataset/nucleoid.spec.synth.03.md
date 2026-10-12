@@ -593,10 +593,9 @@ catch error:
 ---
 
 # Nucleoid returns the value of an assignment from a function
-
 # reset assigns 0 to a counter and returns the value of the assignment
-def reset(counter):
-    return counter = 0
+# reset assigns 0 to a counter and returns the value of the assignment
+def reset(counter) => counter = 0
 
 # tally is 7
 tally = 7

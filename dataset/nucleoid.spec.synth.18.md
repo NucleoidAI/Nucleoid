@@ -824,10 +824,9 @@ assert(contract1.bonus, 90000)
 ---
 
 # Nucleoid calls a strike rate function in an assignment
-
 # strikeRate returns the goals divided by the games
-def strikeRate(goals, games):
-    return goals / games
+# strikeRate returns the goals divided by the games
+def strikeRate(goals, games) => goals / games
 
 # scored is 24
 scored = 24
@@ -848,10 +847,9 @@ assert(perGame, 1)
 ---
 
 # Nucleoid updates a levy when its function is redefined
-
 # levy returns the fee times 4 divided by 100
-def levy(fee):
-    return fee * 4 / 100
+# levy returns the fee times 4 divided by 100
+def levy(fee) => fee * 4 / 100
 
 # transfer is 500000
 transfer = 500000
@@ -860,10 +858,9 @@ transfer = 500000
 solidarity = levy(transfer)
 
 assert(solidarity, 20000)
-
 # levy returns the fee times 5 divided by 100
-def levy(fee):
-    return fee * 5 / 100
+# levy returns the fee times 5 divided by 100
+def levy(fee) => fee * 5 / 100
 
 assert(solidarity, 25000)
 
@@ -872,12 +869,10 @@ assert(solidarity, 25000)
 # Nucleoid nests a tier lookup inside a fee function
 
 # tier returns 6 times the level
-def tier(level):
-    return level * 6
+def tier(level) => level * 6
 
 # fee returns the caps times the tier of the level
-def fee(caps, level):
-    return caps * tier(level)
+def fee(caps, level) => caps * tier(level)
 
 # appearances is 5
 appearances = 5

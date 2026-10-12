@@ -976,10 +976,9 @@ assert(Vehicle[0].id != null, true)
 ---
 
 # Nucleoid creates a function in state
-
 # generate returns number times 10
-def generate(number):
-    return number * 10
+# generate returns number times 10
+def generate(number) => number * 10
 
 # random is 10
 random = 10
@@ -4228,10 +4227,9 @@ assert(Summary[1].type, "WEEKLY")
 ---
 
 # Nucleoid returns an integer in variable assignment
-
 # test assigns 2 to a and returns the value of the assignment
-def test(a):
-    return a = 2
+# test assigns 2 to a and returns the value of the assignment
+def test(a) => a = 2
 
 # b is 1
 b = 1
@@ -4250,10 +4248,9 @@ a = Object()
 
 # c is 1
 c = 1
-
 # test assigns a to b and returns the value of the assignment
-def test(b):
-    return b = a
+# test assigns a to b and returns the value of the assignment
+def test(b) => b = a
 
 assert(test(c), {})
 assert(c, 1)
@@ -4261,10 +4258,9 @@ assert(c, 1)
 ---
 
 # Nucleoid returns a string value of a function call
-
 # test assigns "abc" to a and returns the value of the assignment
-def test(a):
-    return a = "abc"
+# test assigns "abc" to a and returns the value of the assignment
+def test(a) => a = "abc"
 
 # b is 1
 b = 1
@@ -4277,10 +4273,9 @@ test(b)
 ---
 
 # Nucleoid returns an object value of a function call
-
 # test assigns an Object to a and returns the value of the assignment
-def test(a):
-    return a = Object()
+# test assigns an Object to a and returns the value of the assignment
+def test(a) => a = Object()
 
 # b is 1
 b = 1
@@ -4293,10 +4288,9 @@ test(b)
 ---
 
 # Nucleoid runs a function with a variable
-
 # test returns a plus 23
-def test(a):
-    return a + 23
+# test returns a plus 23
+def test(a) => a + 23
 
 # data is "UUID-1"
 data = "UUID-1"
@@ -5456,11 +5450,9 @@ assert(dependent, 4)
 
 # Nucleoid tracks named functions forwarded as values
 
-def transform(number):
-    return number * 2
+def transform(number) => number * 2
 
-def choose():
-    return transform
+def choose() => transform
 
 callback = transform
 forwarded = callback
@@ -5471,8 +5463,7 @@ indirect = returned(3)
 assert(direct, 6)
 assert(indirect, 6)
 
-def transform(number):
-    return number * 3
+def transform(number) => number * 3
 
 assert(direct, 9)
 assert(indirect, 9)
@@ -5483,14 +5474,11 @@ assert(indirect, 9)
 
 numbers = [1, 2, 3]
 
-def transform(number):
-    return number * 2
+def transform(number) => number * 2
 
-def matches(number):
-    return number > 0
+def matches(number) => number > 0
 
-def combine(total, number):
-    return total + number
+def combine(total, number) => total + number
 
 mapped = numbers.map(transform)
 filtered = numbers.filter(matches)
@@ -5506,14 +5494,11 @@ assert(all, true)
 assert(any, true)
 assert(total, 7)
 
-def transform(number):
-    return number * 3
+def transform(number) => number * 3
 
-def matches(number):
-    return number > 3
+def matches(number) => number > 3
 
-def combine(total, number):
-    return total * number
+def combine(total, number) => total * number
 
 assert(mapped, [3, 6, 9])
 assert(filtered, [])
@@ -5525,16 +5510,14 @@ assert(total, 6)
 class Sample(amount):
     this.amount = amount
 
-def reading(sample):
-    return sample.amount * 2
+def reading(sample) => sample.amount * 2
 
 sample = Sample(2)
 readings = Sample.map(reading)
 
 assert(readings, [4])
 
-def reading(sample):
-    return sample.amount * 3
+def reading(sample) => sample.amount * 3
 
 assert(readings, [6])
 
@@ -5547,19 +5530,16 @@ assert(readings, [9, 12])
 
 # Nucleoid tracks named functions passed to higher order calls
 
-def transform(number):
-    return number * 2
+def transform(number) => number * 2
 
-def apply(operation, number):
-    return operation(number)
+def apply(operation, number) => operation(number)
 
 input = 3
 result = apply(transform, input)
 
 assert(result, 6)
 
-def transform(number):
-    return number * 3
+def transform(number) => number * 3
 
 assert(result, 9)
 
@@ -5626,8 +5606,7 @@ assert(indexed, 5)
 
 factor = 2
 
-def transform(number):
-    return number * factor
+def transform(number) => number * factor
 
 snapshot = transform.value
 frozen = snapshot(3)
@@ -5636,8 +5615,7 @@ live = transform(3)
 assert(frozen, 6)
 assert(live, 6)
 
-def transform(number):
-    return number * factor * 10
+def transform(number) => number * factor * 10
 
 assert(frozen, 6)
 assert(live, 60)
@@ -5758,11 +5736,9 @@ assert(frozen, 3)
 
 # Nucleoid lets null and non callable parameters shadow outer functions
 
-def operation(number):
-    return 99
+def operation(number) => 99
 
-def apply(operation, number):
-    return operation(number)
+def apply(operation, number) => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -5828,8 +5804,7 @@ assert(propertyResult, 5)
 
 # Nucleoid rolls back failed redefinitions of named callbacks
 
-def transform(number):
-    return number * 2
+def transform(number) => number * 2
 
 numbers = [1, 2]
 mapped = numbers.map(transform)
@@ -5847,8 +5822,7 @@ assert(failure, "REJECTED_CALLBACK")
 assert(mapped, [2, 4])
 assert(transform(3), 6)
 
-def transform(number):
-    return number * 4
+def transform(number) => number * 4
 
 assert(mapped, [4, 8])
 
@@ -5856,8 +5830,7 @@ assert(mapped, [4, 8])
 
 # Nucleoid replaces functions and callable variables under the same name
 
-def callback(number):
-    return number * 2
+def callback(number) => number * 2
 
 forwarded = callback
 direct = callback(3)
@@ -5881,8 +5854,7 @@ assert(direct, 9)
 assert(indirect, 9)
 assert(callback(4), 12)
 
-def callback(number):
-    return number * 4
+def callback(number) => number * 4
 
 assert(direct, 12)
 assert(indirect, 12)
@@ -5902,8 +5874,7 @@ callback = null
 assert(direct, null)
 assert(indirect, null)
 
-def callback(number):
-    return number * 5
+def callback(number) => number * 5
 
 assert(direct, 15)
 assert(indirect, 15)
@@ -5925,8 +5896,7 @@ catch error:
 
 assert(failure, ReferenceError("callback is not defined"))
 
-def callback(number):
-    return number * 7
+def callback(number) => number * 7
 
 assert(direct, 21)
 assert(indirect, 21)
@@ -6190,8 +6160,7 @@ assert(exposure[1].holds, 3)
 
 a = 1
 
-def explain():
-    return affects a
+def explain() => affects a
 
 exposure = explain()
 b = a + 1
@@ -6310,8 +6279,7 @@ assert(inventory.find(step => step.node == "remaining").holds, 11)
 class Counter(count: int):
     self.count = count
 
-    def same_receiver():
-        return this == self
+    def same_receiver() => this == self
 
     def set_this(count: int):
         this.count = count
@@ -6377,4 +6345,72 @@ try:
     self = 1
 catch error:
     assert(error, TypeError("Cannot assign to 'this'"))
+
+---
+
+# Nucleoid keeps expression bodied named functions reactive
+
+source = 3
+
+def next(number: int) => number + 1
+
+def twice(number: int) => next(number) * 2
+
+result = twice(source)
+assert(result, 8)
+source = 5
+assert(result, 12)
+
+def next(number: int) => number + 2
+
+assert(result, 14)
+
+---
+
+# Nucleoid keeps expression bodied methods and initializers equivalent
+
+class Gauge:
+    def init(amount: int) => this.amount = amount
+
+    def reading() => self.amount
+
+    def set(amount: int) => this.amount = amount
+
+gauge = Gauge(4)
+observed = gauge.reading()
+assert(gauge.id, "gauge")
+assert(gauge.amount, 4)
+assert(observed, 4)
+assert(gauge.set(7), 7)
+assert(gauge.amount, 7)
+assert(observed, 7)
+
+---
+
+# Nucleoid preserves expression body returns and callable references
+
+def literal() => 42
+
+reference = literal
+frozen = literal.value
+assert(reference(), 42)
+
+def literal() => 43
+
+assert(reference(), 43)
+assert(frozen(), 42)
+
+def assigned(value) => value = 2
+
+assert(assigned(99), 2)
+
+def mapper() => value => value * 2
+
+callback = mapper()
+assert(callback(3), 6)
+
+def no_return():
+    42
+
+assert(no_return(), null)
 ```

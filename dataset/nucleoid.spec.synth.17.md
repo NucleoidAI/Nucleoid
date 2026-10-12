@@ -824,10 +824,9 @@ assert(bill1.excess, 1400)
 ---
 
 # Nucleoid calls a latency function in an assignment
-
 # latency returns the distance divided by the speed
-def latency(distance, speed):
-    return distance / speed
+# latency returns the distance divided by the speed
+def latency(distance, speed) => distance / speed
 
 # span is 600
 span = 600
@@ -848,10 +847,9 @@ assert(delay, 2)
 ---
 
 # Nucleoid updates a levy when its function is redefined
-
 # levy returns the rental times 5 divided by 100
-def levy(rental):
-    return rental * 5 / 100
+# levy returns the rental times 5 divided by 100
+def levy(rental) => rental * 5 / 100
 
 # monthly is 400
 monthly = 400
@@ -860,10 +858,9 @@ monthly = 400
 charge = levy(monthly)
 
 assert(charge, 20)
-
 # levy returns the rental times 10 divided by 100
-def levy(rental):
-    return rental * 10 / 100
+# levy returns the rental times 10 divided by 100
+def levy(rental) => rental * 10 / 100
 
 assert(charge, 40)
 
@@ -872,12 +869,10 @@ assert(charge, 40)
 # Nucleoid nests a class lookup inside a cost function
 
 # class returns 9 times the grade
-def band(grade):
-    return grade * 9
+def band(grade) => grade * 9
 
 # cost returns the circuits times the band of the grade
-def cost(circuits, grade):
-    return circuits * band(grade)
+def cost(circuits, grade) => circuits * band(grade)
 
 # count is 5
 count = 5
