@@ -80,10 +80,17 @@ $ UPDATE_SPEC_TESTS=1 cargo build
 
 Every added or updated `docs/nuc-XXXX.md` is a proposal revision, including
 process and documentation-only NUCs. During a Copilot session, the repository
-instructions require one fresh `nuc-proposal` agent per proposal revision.
-The agent rewrites applicable executable cases in an isolated candidate,
-preserving behavior, case identities, canonical assertions, return expectations,
-and executed assertion coverage. See [NUC 1](docs/nuc-0001.md#proposal-evaluation).
+instructions require a fresh `nuc-proposal` agent followed by an independent
+fresh `nuc-evaluate` agent per revision. The proposer drafts and prototypes in
+an isolated candidate, preserving behavior, case identities, canonical
+assertions, return expectations, and executed assertion coverage. It hands off
+the proposal's Git blob revision without deciding acceptance. The evaluator
+checks the frozen candidate and measures tokens without rewriting it.
+
+The procedures live in the [proposal skill](.github/skills/nuc-proposal/SKILL.md)
+and [evaluation skill](.github/skills/nuc-evaluate/SKILL.md), with separate
+profiles in `.github/agents/`. The caller starts both stages; neither agent
+delegates to the other. See [NUC 1](docs/nuc-0001.md#proposal-evaluation).
 
 The gate measures each case from the specification and executable reference,
 README, and examples. It uses Nucleoid lexer tokens, including `Newline`,
@@ -106,7 +113,8 @@ $env:NUC_PROPOSAL_BASELINE = Join-Path $env:TEMP 'nucleoid-nuc-baseline.json'
 cargo test --test proposals record_baseline -- --ignored --nocapture
 ```
 
-Then, from the candidate worktree, with the same baseline path:
+After the proposal handoff, the fresh evaluator runs from the frozen candidate
+worktree with the same baseline path:
 
 ```powershell
 $env:NUC_PROPOSAL = 'docs\nuc-0012.md'
@@ -120,6 +128,8 @@ session workspace. A nonzero exit means rejected or blocked, not accepted.
 The report records the proposal's Git blob revision and every paired case's
 `before`, `after`, and token change.
 Process-only proposals can pass with all cases unchanged.
+The evaluator does not fix failures or regenerate exports. A repaired,
+substantively revised, or rebased candidate needs a fresh agent pair and report.
 
 For new cases, prepare an additional baseline JSON array in the accepted
 syntax **before** candidate runtime edits. Each entry names the case's
@@ -144,8 +154,10 @@ candidate must contain matching cases and unchanged canonical assertions and
 return expectations. If the old language cannot express an equivalent case,
 the proposal is blocked rather than assigned an invented before-count.
 
-After acceptance, integrate the candidate and regenerate the dataset and
-exported tests as above. Leave rejected candidates out of the accepted runtime;
+The proposer regenerates affected exports before handoff; the evaluator checks
+their consistency without setting either update variable. After independent
+acceptance, the caller integrates the unchanged candidate. Leave rejected
+candidates out of the accepted runtime;
 do not discard someone else's edits. Outcome status/index updates are part of
 the evaluation, not triggers for recursively creating more agents. These
 instructions apply to Copilot sessions; there is no background file watcher
