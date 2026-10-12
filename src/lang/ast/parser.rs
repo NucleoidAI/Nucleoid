@@ -579,16 +579,53 @@ impl Parser {
     fn expression_inner(&mut self) -> Result<Expr> {
         let left = self.pipeline()?;
 
-        if self.check(&Token::Assign) {
-            self.advance();
-            let value = self.expression()?;
-            return Ok(Expr::Assign {
-                target: Box::new(left),
-                value: Box::new(value),
-            });
+        let operator = match self.peek() {
+            Token::Assign => None,
+            Token::PlusAssign => Some(BinaryOp::Add),
+            Token::MinusAssign => Some(BinaryOp::Subtract),
+            Token::StarAssign => Some(BinaryOp::Multiply),
+            Token::SlashAssign => Some(BinaryOp::Divide),
+            Token::PercentAssign => Some(BinaryOp::Modulo),
+            _ => return Ok(left),
+        };
+
+        if operator.is_some() {
+            self.check_compound_target(&left)?;
         }
 
-        Ok(left)
+        self.advance();
+        let value = self.expression()?;
+        let value = match operator {
+            Some(operator) => Expr::Binary {
+                operator,
+                left: Box::new(left.clone()),
+                right: Box::new(value),
+            },
+            None => value,
+        };
+        Ok(Expr::Assign {
+            target: Box::new(left),
+            value: Box::new(value),
+        })
+    }
+
+    /// Only clone bounded, plain paths. A computed target containing another
+    /// compound assignment could otherwise double its tree at each lowering.
+    fn check_compound_target(&self, mut target: &Expr) -> Result<()> {
+        let mut parts = 0;
+        while let Expr::Member { object, .. } = target {
+            parts += 1;
+            if parts > MAX_CHAIN {
+                return Err(self.error("Expression has too many parts"));
+            }
+            target = object;
+        }
+
+        match target {
+            Expr::Identifier(_) => Ok(()),
+            Expr::ClassRef(_) | Expr::This if parts > 0 => Ok(()),
+            _ => Err(self.error("Invalid compound assignment target")),
+        }
     }
 
     fn pipeline(&mut self) -> Result<Expr> {
@@ -1169,6 +1206,148 @@ impl Parser {
 mod tests {
     use super::*;
     use crate::lang::ast::generator::generate_all;
+
+    #[test]
+    fn compound_assignments_lower_to_identical_assignment_and_binary_asts() {
+        for operator in ["+", "-", "*", "/", "%"] {
+            for target in [
+                "amount",
+                "meter.reading",
+                "parent.meter.reading",
+                "$Scale.factor",
+                "this.reading",
+                "self.reading",
+                "(amount)",
+                "(this).reading",
+                "($Scale).factor",
+            ] {
+                for value in [
+                    "2",
+                    "-3",
+                    "+3",
+                    "1 + 2 * 3",
+                    "1 - 2 - 3",
+                    "step.value",
+                    "first = second",
+                    "first or second",
+                ] {
+                    let compact = format!("{target} {operator}= {value}");
+                    let expanded = format!("{target} = {target} {operator} ({value})");
+                    assert_eq!(
+                        parse_expression(&compact).unwrap(),
+                        parse_expression(&expanded).unwrap(),
+                        "{compact}"
+                    );
+                    let compact_ast = parse(&compact).unwrap();
+                    let expanded_ast = parse(&expanded).unwrap();
+                    assert_eq!(compact_ast, expanded_ast, "{compact}");
+                    assert_eq!(
+                        generate_all(&compact_ast),
+                        generate_all(&expanded_ast),
+                        "{compact}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn compound_assignments_keep_assignment_precedence_and_right_associativity() {
+        for (compact, expanded) in [
+            (
+                "first += second *= third -= 1",
+                "first = first + (second = second * (third = third - 1))",
+            ),
+            ("outer = inner += 1", "outer = (inner = inner + 1)"),
+            ("first += second > 2", "first = first + (second > 2)"),
+            (
+                "def combined(a, b) => a += b *= 2",
+                "def combined(a, b) => a = a + (b = b * 2)",
+            ),
+            (
+                "class Meter:\n    def adjust(delta) => self.reading += delta",
+                "class Meter:\n    def adjust(delta) => self.reading = self.reading + delta",
+            ),
+            (
+                "callback = number => number %= 3",
+                "callback = number => number = number % 3",
+            ),
+            (
+                "if active:\n    amount += step\nelse:\n    amount -= step",
+                "if active:\n    amount = amount + step\nelse:\n    amount = amount - step",
+            ),
+            (
+                "for item of items:\n    item.count += 1",
+                "for item of items:\n    item.count = item.count + 1",
+            ),
+            (
+                "assert((amount += 2), 4)",
+                "assert((amount = amount + 2), 4)",
+            ),
+            (
+                "text = `value: ${amount += 2}`",
+                "text = `value: ${amount = amount + 2}`",
+            ),
+        ] {
+            let compact_ast = parse(compact).unwrap();
+            let expanded_ast = parse(expanded).unwrap();
+            assert_eq!(compact_ast, expanded_ast, "{compact}");
+            assert_eq!(
+                generate_all(&compact_ast),
+                generate_all(&expanded_ast),
+                "{compact}"
+            );
+        }
+        assert_eq!(
+            generate_all(&parse("amount += step").unwrap()),
+            "amount=amount+step"
+        );
+    }
+
+    #[test]
+    fn compound_assignments_reject_non_path_targets_before_cloning() {
+        for target in [
+            "1",
+            "true",
+            "null",
+            "$Scale",
+            "this",
+            "self",
+            "first + second",
+            "first and second",
+            "items[0]",
+            "items[0].count",
+            "items[:]",
+            "get().count",
+            "(first = second)",
+            "(first += 1)",
+            "(first += 1).count",
+            "(first => first)",
+            "model |> why",
+        ] {
+            for operator in ["+=", "-=", "*=", "/=", "%="] {
+                let source = format!("{target} {operator} 2");
+                let error = parse(&source).unwrap_err();
+                assert_eq!(error.kind(), crate::ErrorKind::Syntax, "{source}");
+                assert_eq!(
+                    error.message(),
+                    "Invalid compound assignment target",
+                    "{source}"
+                );
+                assert!(error.position().is_some(), "{source}");
+            }
+        }
+    }
+
+    #[test]
+    fn compound_target_limits_include_parenthesized_member_chains() {
+        let allowed = format!("(root{}){} += 1", ".next".repeat(64), ".next".repeat(64));
+        assert!(parse(&allowed).is_ok());
+
+        let excessive = format!("(root{}){} += 1", ".next".repeat(64), ".next".repeat(65));
+        let error = parse(&excessive).unwrap_err();
+        assert_eq!(error.message(), "Expression has too many parts");
+    }
 
     #[test]
     fn named_expression_bodies_lower_to_single_return_blocks() {

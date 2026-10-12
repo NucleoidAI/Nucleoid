@@ -15,6 +15,29 @@ Expression nesting is bounded, including consecutive unary operators and
 `SyntaxError("Expressions are nested too deeply")` rather than overflowing
 the host stack.
 
+Compound arithmetic assignments `+=`, `-=`, `*=`, `/=`, and `%=` lower
+`target op= expression` to `target = target op (expression)` at the existing
+right-associative assignment precedence. They preserve standing relationships,
+self-reference, `.value` snapshots, locals, receivers, transactions, return
+values, and canonical AST rendering. A tracked right-hand dependency still
+re-evaluates the relationship; a class-level self-reference still raises
+`TypeError("Circular Dependency")` rather than becoming an imperative update.
+
+Compound targets are names or plain dotted paths rooted in a name, `$Class`,
+`this`, or `self`; a class or receiver root needs a property. Parentheses may
+group such a path. Computed targets, including indexing, slicing, calls, and
+assignments inside the target, raise
+`SyntaxError("Invalid compound assignment target")`. Validation precedes
+target cloning and permits at most 128 dotted links across grouped paths;
+exceeding that bound raises `SyntaxError("Expression has too many parts")`.
+Existing expression, statement, and operator-chain limits remain in force.
+Ordinary `=` syntax and its existing target handling remain unchanged.
+
+Each compound operator is one lexer token. Adjacent unary signs are separate
+tokens; `/=` is distinguished from division and from a regular expression
+such as `/=/` in an operand position. Diagnostics name the operator exactly
+as `'+='`, `'-='`, `'*='`, `'/='`, or `'%='`.
+
 Propagation settles queued upstream dependencies before their dependents and
 preserves declaration order among ready rules. A rule may run again when another
 dependency changes later in the same cascade; storing the same value does not
@@ -1193,7 +1216,7 @@ assert(c, 7)
 radius = 10
 
 # radius is radius plus 10
-radius = radius + 10
+radius += 10
 
 assert(radius, 20)
 
@@ -2123,7 +2146,7 @@ device1 = Device()
 # and count is count plus 1
 {
     $Device.code = "A" + count.value
-    count = count + 1
+    count += 1
 }
 
 assert(device1.code, "A0")
@@ -2827,7 +2850,7 @@ vote1.question = question1
 {
     question = vote1.question
     question.rate = (question.rate * question.count + vote1.rate) / (question.count + 1)
-    question.count = question.count + 1
+    question.count += 1
 }
 
 assert(question1.rate, 4)
@@ -4173,7 +4196,7 @@ items = []
 # For each item of array, count is count plus 1,
 # and the item is added to items
 for item of array:
-    count = count + 1
+    count += 1
     items.push(item)
 
 assert(count, 1)
@@ -5274,7 +5297,7 @@ if count > 0 and count < 4:
     values = [Number.NaN]
 
 if Number.isNaN(values[0]):
-    count = count + 1
+    count += 1
 
 count = 1
 
@@ -5342,7 +5365,7 @@ source = 1
 observations = 0
 
 if source > 0:
-    observations = observations + 1
+    observations += 1
 
 if trigger > 0:
     try:
@@ -5374,7 +5397,7 @@ source = 0
 observations = 0
 
 if source > 0:
-    observations = observations + 1
+    observations += 1
 
 if trigger > 0:
     source = 1
@@ -6413,4 +6436,115 @@ def no_return():
     42
 
 assert(no_return(), null)
+
+---
+
+# Nucleoid keeps compound arithmetic assignments equivalent
+value = 20
+value += 4
+assert(value, 24)
+value -= 6
+assert(value, 18)
+value *= 2 + 1
+assert(value, 54)
+value /= 3
+assert(value, 18)
+value %= 5
+assert(value, 3)
+text = "A"
+text += "B"
+assert(text, "AB")
+ratio = 2
+ratio *= -3
+assert(ratio, -6)
+empty = null
+empty += 1
+assert(empty, null)
+
+---
+
+# Nucleoid keeps compound assignments reactive
+amount = 10
+step = 2
+amount += step
+doubled = amount * 2
+assert(amount, 12)
+assert(doubled, 24)
+step = 3
+assert(amount, 15)
+assert(doubled, 30)
+amount += step.value
+assert(amount, 18)
+step = 5
+assert(amount, 18)
+assert(doubled, 36)
+
+---
+
+# Nucleoid keeps compound property and local assignments equivalent
+class Meter(reading: int):
+    this.reading = reading
+    def adjust(delta: int):
+        delta *= 2
+        this.reading += delta
+        return this.reading
+meter1 = Meter(10)
+meter1.reading += 2
+assert(meter1.reading, 12)
+assert(meter1.adjust(3), 18)
+assert(meter1.reading, 18)
+class Scale:
+    pass
+scale1 = Scale()
+$Scale.factor = 2
+try:
+    $Scale.factor *= 3
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(scale1.factor, 2)
+
+---
+
+# Nucleoid rolls back failed compound assignments
+balance = 10
+step = 2
+if balance > 15:
+    throw "LIMIT"
+try:
+    balance += step * 4
+catch error:
+    assert(error, "LIMIT")
+assert(balance, 10)
+step = 3
+assert(balance, 10)
+balance += step
+assert(balance, 13)
+first = 2
+second = first * 2
+try:
+    first += second
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(first, 2)
+assert(second, 4)
+try:
+    missing += 1
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+---
+
+# Nucleoid returns compound assignment expressions
+def add(current, delta) => current += delta
+def subtract(current, delta) => current -= delta
+def multiply(current, delta) => current *= delta
+def divide(current, delta) => current /= delta
+def remainder(current, delta) => current %= delta
+def combined(a, b) => a += b *= 2
+assert(add(5, 3), 8)
+assert(subtract(5, 3), 2)
+assert(multiply(5, 3), 15)
+assert(divide(6, 3), 2)
+assert(remainder(5, 3), 2)
+assert(combined(1, 3), 7)
 ```

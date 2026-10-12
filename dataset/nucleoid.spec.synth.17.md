@@ -55,7 +55,7 @@ assert(monthly, 30)
 channels = 64
 
 # channels is channels plus 64
-channels = channels + 64
+channels += 64
 
 assert(channels, 128)
 

@@ -55,7 +55,7 @@ assert(fee, 300)
 vessels = 18
 
 # vessels is vessels plus 6
-vessels = vessels + 6
+vessels += 6
 
 assert(vessels, 24)
 

@@ -55,7 +55,7 @@ assert(fare, 15)
 seats = 320
 
 # seats is seats plus 80
-seats = seats + 80
+seats += 80
 
 assert(seats, 400)
 

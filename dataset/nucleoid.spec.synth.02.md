@@ -844,7 +844,7 @@ slot1 = Slot(); slot2 = Slot()
 # and counter is counter plus 1
 for slot of Slot:
     slot.index = counter.value
-    counter = counter + 1
+    counter += 1
 
 assert(slot1.index, 0)
 assert(slot2.index, 1)

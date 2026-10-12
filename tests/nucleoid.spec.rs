@@ -833,7 +833,7 @@ fn updates_a_variable_assignment() {
 fn uses_only_the_value_when_a_variable_references_itself() {
     let mut run = runner();
     run("radius = 10");
-    run("radius = radius + 10");
+    run("radius += 10");
     assert_eq!(run("radius"), 20);
 }
 
@@ -1459,7 +1459,7 @@ fn uses_value_property_in_a_class_level_assignment() {
     run("device1 = Device()");
     run(r#"{
     $Device.code = "A" + count.value
-    count = count + 1
+    count += 1
 }"#);
     assert_eq!(run("device1.code"), "A0");
 }
@@ -1884,7 +1884,7 @@ fn creates_a_dependency_on_behalf_if_a_local_variable_has_a_reference() {
     run(r#"{
     question = vote1.question
     question.rate = (question.rate * question.count + vote1.rate) / (question.count + 1)
-    question.count = question.count + 1
+    question.count += 1
 }"#);
     assert_eq!(run("question1.rate"), 4);
     assert_eq!(run("question1.count"), 1);
@@ -2797,7 +2797,7 @@ fn loops_through_only_defined_objects_in_a_for_of_statement() {
     run("count = 0");
     run("items = []");
     run(r#"for item of array:
-    count = count + 1
+    count += 1
     items.push(item)"#);
     assert_eq!(run("count"), 1);
     assert_eq!(run("items.length"), 1);
@@ -3768,7 +3768,7 @@ fn stops_propagation_feedback_when_assignments_keep_the_same_value() {
     run(r#"if count > 0 and count < 4:
     values = [Number.NaN]"#);
     run(r#"if Number.isNaN(values[0]):
-    count = count + 1"#);
+    count += 1"#);
     run("count = 1");
     assert_eq!(run("count"), 2);
     assert_eq!(run("Number.isNaN(values[0])"), true);
@@ -3837,7 +3837,7 @@ fn cancels_propagation_queued_by_a_caught_failure() {
     run("source = 1");
     run("observations = 0");
     run(r#"if source > 0:
-    observations = observations + 1"#);
+    observations += 1"#);
     run(r#"if trigger > 0:
     try:
         source = 2
@@ -3863,7 +3863,7 @@ fn preserves_earlier_queued_work_across_nested_caught_failures() {
     run("source = 0");
     run("observations = 0");
     run(r#"if source > 0:
-    observations = observations + 1"#);
+    observations += 1"#);
     run(r#"if trigger > 0:
     source = 1
     try:
@@ -4725,6 +4725,120 @@ fn preserves_expression_body_returns_and_callable_references() {
     run(r#"def no_return():
     42"#);
     assert_eq!(run("no_return()"), serde_json::Value::Null);
+}
+
+/// Nucleoid keeps compound arithmetic assignments equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_compound_arithmetic_assignments_equivalent() {
+    let mut run = runner();
+    run("value = 20");
+    run("value += 4");
+    assert_eq!(run("value"), 24);
+    run("value -= 6");
+    assert_eq!(run("value"), 18);
+    run("value *= 2 + 1");
+    assert_eq!(run("value"), 54);
+    run("value /= 3");
+    assert_eq!(run("value"), 18);
+    run("value %= 5");
+    assert_eq!(run("value"), 3);
+    run(r#"text = "A""#);
+    run(r#"text += "B""#);
+    assert_eq!(run("text"), "AB");
+    run("ratio = 2");
+    run("ratio *= -3");
+    assert_eq!(run("ratio"), -6);
+    run("empty = null");
+    run("empty += 1");
+    assert_eq!(run("empty"), serde_json::Value::Null);
+}
+
+/// Nucleoid keeps compound assignments reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_compound_assignments_reactive() {
+    let mut run = runner();
+    run("amount = 10");
+    run("step = 2");
+    run("amount += step");
+    run("doubled = amount * 2");
+    assert_eq!(run("amount"), 12);
+    assert_eq!(run("doubled"), 24);
+    run("step = 3");
+    assert_eq!(run("amount"), 15);
+    assert_eq!(run("doubled"), 30);
+    run("amount += step.value");
+    assert_eq!(run("amount"), 18);
+    run("step = 5");
+    assert_eq!(run("amount"), 18);
+    assert_eq!(run("doubled"), 36);
+}
+
+/// Nucleoid keeps compound property and local assignments equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_compound_property_and_local_assignments_equivalent() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"class Meter(reading: int):
+    this.reading = reading
+    def adjust(delta: int):
+        delta *= 2
+        this.reading += delta
+        return this.reading"#);
+    run("meter1 = Meter(10)");
+    run("meter1.reading += 2");
+    assert_eq!(run("meter1.reading"), 12);
+    assert_eq!(run("meter1.adjust(3)"), 18);
+    assert_eq!(run("meter1.reading"), 18);
+    run(r#"class Scale:
+    pass"#);
+    run("scale1 = Scale()");
+    run("$Scale.factor = 2");
+    assert_eq!(run_error("$Scale.factor *= 3"), "TypeError: Circular Dependency");
+    assert_eq!(run("scale1.factor"), 2);
+}
+
+/// Nucleoid rolls back failed compound assignments
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_compound_assignments() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("balance = 10");
+    run("step = 2");
+    run(r#"if balance > 15:
+    throw "LIMIT""#);
+    assert_eq!(run_error("balance += step * 4"), "LIMIT");
+    assert_eq!(run("balance"), 10);
+    run("step = 3");
+    assert_eq!(run("balance"), 10);
+    run("balance += step");
+    assert_eq!(run("balance"), 13);
+    run("first = 2");
+    run("second = first * 2");
+    assert_eq!(run_error("first += second"), "TypeError: Circular Dependency");
+    assert_eq!(run("first"), 2);
+    assert_eq!(run("second"), 4);
+    assert_eq!(run_error("missing += 1"), "ReferenceError: missing is not defined");
+}
+
+/// Nucleoid returns compound assignment expressions
+#[rustfmt::skip]
+#[test]
+fn returns_compound_assignment_expressions() {
+    let mut run = runner();
+    run("def add(current, delta) => current += delta");
+    run("def subtract(current, delta) => current -= delta");
+    run("def multiply(current, delta) => current *= delta");
+    run("def divide(current, delta) => current /= delta");
+    run("def remainder(current, delta) => current %= delta");
+    run("def combined(a, b) => a += b *= 2");
+    assert_eq!(run("add(5, 3)"), 8);
+    assert_eq!(run("subtract(5, 3)"), 2);
+    assert_eq!(run("multiply(5, 3)"), 15);
+    assert_eq!(run("divide(6, 3)"), 2);
+    assert_eq!(run("remainder(5, 3)"), 2);
+    assert_eq!(run("combined(1, 3)"), 7);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

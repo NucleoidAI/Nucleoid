@@ -55,7 +55,7 @@ assert(dose, 150)
 beds = 120
 
 # beds is beds plus 30
-beds = beds + 30
+beds += 30
 
 assert(beds, 150)
 

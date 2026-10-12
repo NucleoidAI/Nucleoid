@@ -934,7 +934,7 @@ unit1 = Unit()
 # and serial is serial plus 1
 {
     $Unit.tag = "U" + serial.value
-    serial = serial + 1
+    serial += 1
 }
 
 assert(unit1.tag, "U0")
@@ -1061,7 +1061,7 @@ score1.round = round1
 {
     round = score1.round
     round.average = (round.average * round.entries + score1.points) / (round.entries + 1)
-    round.entries = round.entries + 1
+    round.entries += 1
 }
 
 assert(round1.average, 6)

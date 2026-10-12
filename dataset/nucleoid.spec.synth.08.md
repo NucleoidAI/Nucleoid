@@ -55,7 +55,7 @@ assert(roll, 34)
 credits = 90
 
 # credits is credits plus 30
-credits = credits + 30
+credits += 30
 
 assert(credits, 120)
 

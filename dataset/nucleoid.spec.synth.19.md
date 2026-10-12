@@ -55,7 +55,7 @@ assert(period, 42)
 holdings = 40000
 
 # holdings is holdings plus 5000
-holdings = holdings + 5000
+holdings += 5000
 
 assert(holdings, 45000)
 

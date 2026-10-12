@@ -34,6 +34,91 @@ fn malformed_source_is_rejected() {
 }
 
 #[test]
+fn compound_assignment_chains_respect_existing_resource_limits() {
+    for source in [
+        format!("{}1", "amount += ".repeat(4096)),
+        format!("amount += {}1{}", "(".repeat(4096), ")".repeat(4096)),
+        format!("amount *= {}1", "-".repeat(4096)),
+    ] {
+        let error = Runtime::check(&source).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Syntax);
+        assert_eq!(error.message(), "Expressions are nested too deeply");
+    }
+    assert!(Runtime::check(&format!("{}1", "amount += ".repeat(62))).is_ok());
+    assert!(Runtime::check(&format!("{}1", "amount += ".repeat(63))).is_err());
+
+    let error = Runtime::check(&format!("root{} += 1", ".next".repeat(4096))).unwrap_err();
+    assert_eq!(error.message(), "Expression has too many parts");
+
+    let operands = " + 1".repeat(4096);
+    let error = Runtime::check(&format!("amount += 1{operands}")).unwrap_err();
+    assert_eq!(error.message(), "Expression has too many operands");
+}
+
+#[test]
+fn nested_compound_targets_cannot_expand_exponentially() {
+    for suffix in [" += 1", ".count += 1", "[0].count += 1"] {
+        let mut source = "amount += 1".to_string();
+        for _ in 0..24 {
+            source = format!("({source}){suffix}");
+        }
+        let error = Runtime::check(&source).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Syntax);
+        assert_eq!(error.message(), "Invalid compound assignment target");
+    }
+}
+
+#[test]
+fn malformed_compound_targets_do_not_change_state() {
+    let mut runtime = Runtime::new();
+    runtime.run("saved = 7").unwrap();
+    for invalid in [
+        "1 += 2",
+        "saved[0] += 2",
+        "(saved += 1).count += 2",
+        "(saved = 0).count *= 2",
+        "this -= 2",
+    ] {
+        let error = runtime.run(&format!("saved += 3\n{invalid}")).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Syntax);
+        assert_eq!(error.message(), "Invalid compound assignment target");
+        assert_eq!(runtime.run("saved").unwrap().to_string(), "7");
+    }
+}
+
+#[test]
+fn compound_and_explicit_assignments_keep_identical_graph_keys_and_returns() {
+    let mut compact = Runtime::new();
+    let mut expanded = Runtime::new();
+    for (compact_source, expanded_source) in [
+        ("amount = 10\nstep = 2", "amount = 10\nstep = 2"),
+        (
+            "if step > 0:\n    amount += step",
+            "if step > 0:\n    amount = amount + step",
+        ),
+        ("doubled = amount * 2", "doubled = amount * 2"),
+        ("step = 3", "step = 3"),
+        ("why amount", "why amount"),
+        ("model |> why", "model |> why"),
+        ("amount += step.value", "amount = amount + step.value"),
+        ("step = 5", "step = 5"),
+        ("why amount", "why amount"),
+    ] {
+        let compact_value = compact.run(compact_source).unwrap();
+        let expanded_value = expanded.run(expanded_source).unwrap();
+        assert_eq!(
+            compact.serialize_json(&compact_value).unwrap(),
+            expanded.serialize_json(&expanded_value).unwrap(),
+            "{compact_source}"
+        );
+        assert!(
+            compact.graph.keys().eq(expanded.graph.keys()),
+            "{compact_source}"
+        );
+    }
+}
+
+#[test]
 fn named_expression_bodies_preserve_objects_lambdas_and_prior_blocks() {
     let mut runtime = Runtime::new();
     runtime

@@ -68,6 +68,100 @@ fn named_expression_body_errors_use_the_existing_expression_grammar() {
 }
 
 #[test]
+fn compound_assignment_diagnostics_name_exact_tokens_and_targets() {
+    for operator in ["+=", "-=", "*=", "/=", "%="] {
+        for (source, message) in [
+            (
+                format!("amount {operator}"),
+                "Unexpected end of input".to_string(),
+            ),
+            (
+                format!("amount {operator}\n"),
+                "Unexpected end of line".to_string(),
+            ),
+            (
+                format!("amount {operator} {operator} 1"),
+                format!("Unexpected '{operator}'"),
+            ),
+            (
+                format!("amount {operator} (1 +)"),
+                "Unexpected ')'".to_string(),
+            ),
+        ] {
+            let error = failure(&source);
+            assert_eq!(error.kind(), nucleoid::ErrorKind::Syntax, "{source}");
+            assert_eq!(error.message(), message, "{source}");
+            assert!(error.position().is_some(), "{source}");
+        }
+
+        let source = format!("saved = 2\n1 {operator} 3");
+        let error = failure(&source);
+        assert_eq!(error.kind(), nucleoid::ErrorKind::Syntax);
+        assert_eq!(error.message(), "Invalid compound assignment target");
+        assert_eq!(
+            error
+                .position()
+                .map(|position| (position.line, position.column)),
+            Some((2, 3))
+        );
+    }
+}
+
+#[test]
+fn compound_runtime_errors_follow_the_expanded_assignment() {
+    for (setup, compact, expanded, kind, message) in [
+        (
+            "",
+            "missing += 1",
+            "missing = missing + 1",
+            nucleoid::ErrorKind::Reference,
+            "missing is not defined",
+        ),
+        (
+            "amount = 10\n",
+            "amount += missing",
+            "amount = amount + missing",
+            nucleoid::ErrorKind::Reference,
+            "missing is not defined",
+        ),
+        (
+            "",
+            "this.reading += 1",
+            "this.reading = this.reading + 1",
+            nucleoid::ErrorKind::Reference,
+            "this is not defined",
+        ),
+        (
+            "number = 1\n",
+            "number.reading += 1",
+            "number.reading = number.reading + 1",
+            nucleoid::ErrorKind::Type,
+            "Cannot assign 'reading' on number",
+        ),
+        (
+            "class Item:\n    pass\nitem = Item()\n",
+            "item.value += 1",
+            "item.value = item.value + 1",
+            nucleoid::ErrorKind::Type,
+            "Cannot use 'value' as a property",
+        ),
+        (
+            "class Scale:\n    pass\nscale = Scale()\n$Scale.factor = 2\n",
+            "$Scale.factor *= 3",
+            "$Scale.factor = $Scale.factor * 3",
+            nucleoid::ErrorKind::Type,
+            "Circular Dependency",
+        ),
+    ] {
+        let compact_error = failure(&format!("{setup}{compact}"));
+        let expanded_error = failure(&format!("{setup}{expanded}"));
+        assert_eq!(compact_error, expanded_error, "{compact}");
+        assert_eq!(compact_error.kind(), kind, "{compact}");
+        assert_eq!(compact_error.message(), message, "{compact}");
+    }
+}
+
+#[test]
 fn a_runtime_error_points_at_its_statement() {
     assert_eq!(at("total = 10\nrate = total * missing\n"), (2, 1));
 

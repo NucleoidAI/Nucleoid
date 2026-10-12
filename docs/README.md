@@ -115,10 +115,32 @@ c = b + 3
 
 ```
 radius = 10
-radius = radius + 10
+radius += 10
 ```
 
 - `radius` is `20`.
+
+### Compound arithmetic assignment
+
+- Accepted [NUC 13](nuc-0013.md) defines `+=`, `-=`, `*=`, `/=`, and `%=`.
+- `target op= expression` lowers to `target = target op (expression)`.
+- Compound syntax has the existing assignment precedence and right associativity; it is not a new imperative update path.
+- A target is a name or a plain dotted path rooted in a name, `$Class`, `this`, or `self`; class and receiver roots require a property.
+- Parentheses may group a path, but calls, indexes, slices, and assignment expressions inside a target are unsupported.
+- Self-reference reads the current value while other right-hand references remain tracked; `.value` still takes a snapshot.
+- Local parameters, property receivers, expression return values, graph keys, and transaction rollback are unchanged.
+- Class-level self-reference remains `TypeError("Circular Dependency")`; compound syntax does not make it a one-time update.
+- These forms passed independent per-case evaluation; existing assignment syntax remains valid.
+
+```
+amount = 10
+step = 2
+amount += step
+```
+
+- `amount` is `12`; after `step = 3`, it is `15`.
+- `amount += step.value` makes it `18`; a later `step = 5` leaves it `18`.
+- The executable counterpart is `Nucleoid preserves compound assignment relationships` in `tests/reference.md`.
 
 ### The value property
 
@@ -183,6 +205,7 @@ url = `http://${host}:${port}`
 ### Operators
 
 - Arithmetic: `+`, `-`, `*`, `/`, `%`.
+- Compound assignment: `+=`, `-=`, `*=`, `/=`, `%=`; each operator is one token.
 - Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`.
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Parentheses override precedence.
@@ -644,8 +667,10 @@ Messages are exact and are part of the observable behaviour of the language.
 | Declaring a class-level rule in a non-class block | `Cannot define class declaration in non-class block` |
 | A character that begins no token | `Unexpected character '<character>'` |
 | A token other than the one required | `Expected <what> but found <what>` |
+| An unsupported compound target | `Invalid compound assignment target` |
 | A block or template that is never closed | `Unterminated block`, `Unterminated template expression` |
 | Nesting or a chain past the runtime's limit | `Expressions are nested too deeply`, `Expression has too many operands` |
+| A postfix chain or a compound path beyond its limit | `Expression has too many parts` |
 
 ### Where an error happened
 
@@ -668,6 +693,7 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ```
 name = expression                      variable assignment
+name += expression                     compound assignment; also -=, *=, /=, %=
 name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected
 name.property = expression             property assignment

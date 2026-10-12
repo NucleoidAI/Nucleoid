@@ -55,7 +55,7 @@ assert(payment, 60)
 balance = 1000
 
 # balance is balance plus 250
-balance = balance + 250
+balance += 250
 
 assert(balance, 1250)
 

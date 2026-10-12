@@ -55,7 +55,7 @@ assert(cycle, 45)
 target = 800
 
 # target is target plus 200
-target = target + 200
+target += 200
 
 assert(target, 1000)
 

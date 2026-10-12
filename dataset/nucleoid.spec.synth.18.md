@@ -55,7 +55,7 @@ assert(squad, 12)
 points = 48
 
 # points is points plus 3
-points = points + 3
+points += 3
 
 assert(points, 51)
 

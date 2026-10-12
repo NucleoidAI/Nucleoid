@@ -77,6 +77,24 @@ assert(b, 5)
 
 `b` is never stale. It is the sum of `a` and `2`, so changing `a` brings it up to date, and the same holds for properties, class-level rules and everything else the reference covers.
 
+**Compound assignments keep their reactive relationships**
+
+```nuc
+amount = 10
+step = 2
+amount += step
+assert(amount, 12)
+step = 3
+assert(amount, 15)
+```
+
+The compound operators `+=`, `-=`, `*=`, `/=`, and `%=` are short
+spellings of `target = target op (expression)`, not a new mutation mode.
+Plain names and dotted paths are supported; old assignment syntax remains
+valid. [NUC 13](docs/nuc-0013.md) passed independent per-case evaluation.
+The crate is now `2.0.0` because the new public lexer token variants affect
+downstream exhaustive Rust matches; existing Nucleoid programs remain valid.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

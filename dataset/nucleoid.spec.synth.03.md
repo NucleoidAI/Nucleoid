@@ -460,7 +460,7 @@ budget1 = Budget()
 budget1.amount = 500
 
 # budget1's amount is budget1's amount plus 250
-budget1.amount = budget1.amount + 250
+budget1.amount += 250
 
 assert(budget1.amount, 750)
 

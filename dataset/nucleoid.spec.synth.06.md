@@ -55,7 +55,7 @@ assert(postage, 43)
 pallets = 24
 
 # pallets is pallets plus 6
-pallets = pallets + 6
+pallets += 6
 
 assert(pallets, 30)
 

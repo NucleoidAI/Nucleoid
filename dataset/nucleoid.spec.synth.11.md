@@ -55,7 +55,7 @@ assert(unitPrice, 15)
 generated = 400
 
 # generated is generated plus 150
-generated = generated + 150
+generated += 150
 
 assert(generated, 550)
 

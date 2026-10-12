@@ -135,9 +135,25 @@ assert(total, 7)
 
 ```nuc
 radius = 10
-radius = radius + 10
+radius += 10
 
 assert(radius, 20)
+```
+
+**Compound assignments keep their reactive relationships**
+
+- `amount += step` states the same relationship as `amount = amount + step`.
+- Changing `step` re-evaluates that relationship against `amount`'s current value.
+- Other arithmetic operators use the same lowering; `.value` on the right still takes a snapshot.
+- These compact forms are specified by accepted [NUC 13](nuc-0013.md).
+
+```nuc
+amount = 10
+step = 2
+amount += step
+assert(amount, 12)
+step = 3
+assert(amount, 15)
 ```
 
 **The value property reads a variable without depending on it**
@@ -929,7 +945,7 @@ source = 1
 observations = 0
 
 if source > 0:
-    observations = observations + 1
+    observations += 1
 
 if trigger > 0:
     try:

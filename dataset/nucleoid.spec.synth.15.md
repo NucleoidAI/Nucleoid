@@ -55,7 +55,7 @@ assert(hourly, 20)
 storeys = 12
 
 # storeys is storeys plus 8
-storeys = storeys + 8
+storeys += 8
 
 assert(storeys, 20)
 

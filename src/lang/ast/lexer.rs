@@ -62,6 +62,16 @@ enum Raw {
     GreaterEqual,
     #[token("=")]
     Assign,
+    #[token("+=")]
+    PlusAssign,
+    #[token("-=")]
+    MinusAssign,
+    #[token("*=")]
+    StarAssign,
+    #[token("/=")]
+    SlashAssign,
+    #[token("%=")]
+    PercentAssign,
     #[token("<")]
     Less,
     #[token(">")]
@@ -199,6 +209,11 @@ pub enum Token {
     Arrow,
 
     Assign,
+    PlusAssign,
+    MinusAssign,
+    StarAssign,
+    SlashAssign,
+    PercentAssign,
     Equal,
     StrictEqual,
     NotEqual,
@@ -246,6 +261,11 @@ impl Token {
             Token::Dot => "'.'".to_string(),
             Token::Arrow => "'=>'".to_string(),
             Token::Assign => "'='".to_string(),
+            Token::PlusAssign => "'+='".to_string(),
+            Token::MinusAssign => "'-='".to_string(),
+            Token::StarAssign => "'*='".to_string(),
+            Token::SlashAssign => "'/='".to_string(),
+            Token::PercentAssign => "'%='".to_string(),
             Token::Equal => "'=='".to_string(),
             Token::StrictEqual => "'==='".to_string(),
             Token::NotEqual => "'!='".to_string(),
@@ -374,7 +394,6 @@ struct Scanned {
 fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
     let mut lexer = Raw::lexer(source);
     let mut scanned: Vec<Scanned> = Vec::new();
-    let mut previous: Option<Token> = None;
 
     while let Some(next) = lexer.next() {
         let span = lexer.span();
@@ -409,6 +428,10 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::Dot => Token::Dot,
             Raw::Arrow => Token::Arrow,
             Raw::Assign => Token::Assign,
+            Raw::PlusAssign => Token::PlusAssign,
+            Raw::MinusAssign => Token::MinusAssign,
+            Raw::StarAssign => Token::StarAssign,
+            Raw::PercentAssign => Token::PercentAssign,
             Raw::Equal => Token::Equal,
             Raw::StrictEqual => Token::StrictEqual,
             Raw::NotEqual => Token::NotEqual,
@@ -425,25 +448,33 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::AndAnd => Token::AndAnd,
             Raw::OrOr => Token::OrOr,
             Raw::Pipe => Token::Pipe,
-            Raw::Slash => {
-                let starts_regex = previous.as_ref().is_none_or(Token::precedes_regex);
-
-                if starts_regex {
-                    match read_regex(lexer.remainder()) {
-                        Some((pattern, consumed)) => {
-                            lexer.bump(consumed);
-                            Token::Regex(pattern)
-                        }
-                        None => Token::Slash,
-                    }
+            slash @ (Raw::Slash | Raw::SlashAssign) => {
+                let division = if matches!(slash, Raw::SlashAssign) {
+                    Token::SlashAssign
                 } else {
                     Token::Slash
+                };
+                let starts_regex = scanned
+                    .last()
+                    .is_none_or(|previous| previous.token.precedes_regex());
+
+                if starts_regex {
+                    // Logos may have consumed `/=`. In an operand position,
+                    // that `=` still belongs to an existing regex such as /=/.
+                    match read_regex(&source[span.start + 1..]) {
+                        Some((pattern, consumed)) => {
+                            lexer.bump(span.start + 1 + consumed - span.end);
+                            Token::Regex(pattern)
+                        }
+                        None => division,
+                    }
+                } else {
+                    division
                 }
             }
         };
 
         let (line_start, indent) = line_position(source, span.start);
-        previous = Some(token.clone());
         scanned.push(Scanned {
             token,
             position: lines.position(span.start),
@@ -615,4 +646,175 @@ fn layout(scanned: Vec<Scanned>, end: Position) -> Vec<Spanned> {
     });
 
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tokens(source: &str) -> Vec<Token> {
+        tokenize(source)
+            .unwrap()
+            .into_iter()
+            .map(|spanned| spanned.token)
+            .collect()
+    }
+
+    #[test]
+    fn compound_operators_are_single_tokens_with_exact_descriptions() {
+        for (symbol, operator) in [
+            ("+=", Token::PlusAssign),
+            ("-=", Token::MinusAssign),
+            ("*=", Token::StarAssign),
+            ("/=", Token::SlashAssign),
+            ("%=", Token::PercentAssign),
+        ] {
+            let source = format!("value{symbol}-2");
+            let spanned = tokenize(&source).unwrap();
+            assert_eq!(operator.describe(), format!("'{symbol}'"));
+            assert_eq!(spanned[1].position, Position::new(1, 6));
+            assert_eq!(
+                tokens(&source),
+                [
+                    Token::Identifier("value".into()),
+                    operator,
+                    Token::Minus,
+                    Token::Number(2.0),
+                    Token::Eof,
+                ],
+                "{source}"
+            );
+            assert_eq!(
+                spanned
+                    .iter()
+                    .filter(|spanned| spanned.token != Token::Eof)
+                    .count(),
+                4
+            );
+        }
+    }
+
+    #[test]
+    fn compound_longest_match_keeps_adjacent_signs_and_old_operators() {
+        assert_eq!(
+            tokens("a+=+1; b-=-2; c*=-3"),
+            [
+                Token::Identifier("a".into()),
+                Token::PlusAssign,
+                Token::Plus,
+                Token::Number(1.0),
+                Token::Semicolon,
+                Token::Identifier("b".into()),
+                Token::MinusAssign,
+                Token::Minus,
+                Token::Number(2.0),
+                Token::Semicolon,
+                Token::Identifier("c".into()),
+                Token::StarAssign,
+                Token::Minus,
+                Token::Number(3.0),
+                Token::Eof,
+            ]
+        );
+        assert_eq!(
+            tokens("a + = b"),
+            [
+                Token::Identifier("a".into()),
+                Token::Plus,
+                Token::Assign,
+                Token::Identifier("b".into()),
+                Token::Eof,
+            ]
+        );
+        assert_eq!(
+            tokens("a==b; a===b; a!=b; a!==b; x=>x"),
+            [
+                Token::Identifier("a".into()),
+                Token::Equal,
+                Token::Identifier("b".into()),
+                Token::Semicolon,
+                Token::Identifier("a".into()),
+                Token::StrictEqual,
+                Token::Identifier("b".into()),
+                Token::Semicolon,
+                Token::Identifier("a".into()),
+                Token::NotEqual,
+                Token::Identifier("b".into()),
+                Token::Semicolon,
+                Token::Identifier("a".into()),
+                Token::StrictNotEqual,
+                Token::Identifier("b".into()),
+                Token::Semicolon,
+                Token::Identifier("x".into()),
+                Token::Arrow,
+                Token::Identifier("x".into()),
+                Token::Eof,
+            ]
+        );
+    }
+
+    #[test]
+    fn slash_assign_preserves_division_and_regex_contexts() {
+        assert_eq!(
+            tokens("amount/=2/3"),
+            [
+                Token::Identifier("amount".into()),
+                Token::SlashAssign,
+                Token::Number(2.0),
+                Token::Slash,
+                Token::Number(3.0),
+                Token::Eof,
+            ]
+        );
+        assert_eq!(
+            tokens("(amount)/=2"),
+            [
+                Token::LeftParen,
+                Token::Identifier("amount".into()),
+                Token::RightParen,
+                Token::SlashAssign,
+                Token::Number(2.0),
+                Token::Eof,
+            ]
+        );
+        for (literal, pattern) in [
+            ("/=/", "="),
+            ("/==/i", "=="),
+            (r"/=\/x/", r"=\/x"),
+            ("/[=/]+/", "[=/]+"),
+            ("/abc/", "abc"),
+        ] {
+            for prefix in ["", "\n", "# preceding comment\n"] {
+                let source = format!("{prefix}{literal}");
+                assert_eq!(
+                    tokens(&source),
+                    [Token::Regex(pattern.into()), Token::Eof],
+                    "{source}"
+                );
+            }
+            let source = format!("{literal}/2");
+            assert_eq!(
+                tokens(&source),
+                [
+                    Token::Regex(pattern.into()),
+                    Token::Slash,
+                    Token::Number(2.0),
+                    Token::Eof,
+                ],
+                "{source}"
+            );
+            for assignment in ["=", "+=", "-=", "*=", "/=", "%="] {
+                let source = format!("pattern {assignment} {literal}");
+                let tokenized = tokens(&source);
+                assert_eq!(tokenized[2], Token::Regex(pattern.into()), "{source}");
+                assert_eq!(tokenized.len(), 4, "{source}");
+            }
+        }
+
+        let spanned = tokenize("pattern = /=/i\namount /= 2").unwrap();
+        assert_eq!(spanned[2].token, Token::Regex("=".into()));
+        assert_eq!(spanned[2].position, Position::new(1, 11));
+        assert_eq!(spanned[5].token, Token::SlashAssign);
+        assert_eq!(spanned[5].position, Position::new(2, 8));
+    }
 }

@@ -55,7 +55,7 @@ assert(price, 30)
 stock = 250
 
 # stock is stock plus 150
-stock = stock + 150
+stock += 150
 
 assert(stock, 400)
 

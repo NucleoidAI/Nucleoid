@@ -996,7 +996,7 @@ source = 1
 observations = 0
 
 if source > 0:
-    observations = observations + 1
+    observations += 1
 
 if trigger > 0:
     try:
@@ -1302,4 +1302,18 @@ assert(counter.set_self(3), 3)
 assert(counter.doubled, 6)
 assert(counter.set_this(5), 5)
 assert(counter.doubled, 10)
+
+---
+
+# Nucleoid preserves compound assignment relationships
+amount = 10
+step = 2
+amount += step
+assert(amount, 12)
+step = 3
+assert(amount, 15)
+amount += step.value
+assert(amount, 18)
+step = 5
+assert(amount, 18)
 ```

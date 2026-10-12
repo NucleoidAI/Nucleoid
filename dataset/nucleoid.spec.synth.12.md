@@ -55,7 +55,7 @@ assert(nightly, 80)
 rooms = 80
 
 # rooms is rooms plus 20
-rooms = rooms + 20
+rooms += 20
 
 assert(rooms, 100)
 

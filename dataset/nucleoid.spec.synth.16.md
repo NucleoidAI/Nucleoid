@@ -55,7 +55,7 @@ assert(royalty, 8)
 run = 3000
 
 # run is run plus 2000
-run = run + 2000
+run += 2000
 
 assert(run, 5000)
 

@@ -55,7 +55,7 @@ assert(price, 150)
 aircraft = 40
 
 # aircraft is aircraft plus 10
-aircraft = aircraft + 10
+aircraft += 10
 
 assert(aircraft, 50)
 
@@ -1455,7 +1455,7 @@ if attempts > 0 and attempts < 4:
     readings = [Number.NaN]
 
 if Number.isNaN(readings[0]):
-    attempts = attempts + 1
+    attempts += 1
 
 attempts = 1
 
@@ -1523,7 +1523,7 @@ fuel = 100
 inspections = 0
 
 if fuel > 0:
-    inspections = inspections + 1
+    inspections += 1
 
 if dispatch > 0:
     try:
@@ -1554,7 +1554,7 @@ pressure = 0
 inspections = 0
 
 if pressure > 0:
-    inspections = inspections + 1
+    inspections += 1
 
 if stage > 0:
     pressure = 1
@@ -2072,4 +2072,143 @@ assert(total, 15)
 def quote(tonnes: int) => tonnes * rate + 2
 
 assert(total, 17)
+
+---
+
+# Nucleoid applies compound arithmetic to a flight allocation
+
+# allocation starts at 20 and each compound keeps its expanded arithmetic meaning
+allocation = 20
+allocation += 4
+assert(allocation, 24)
+allocation -= 6
+assert(allocation, 18)
+allocation *= 2 + 1
+assert(allocation, 54)
+allocation /= 3
+assert(allocation, 18)
+allocation %= 5
+assert(allocation, 3)
+
+# A flight code can be extended with the same addition operator
+code = "TP"
+code += "1234"
+assert(code, "TP1234")
+
+# A negative multiplier and a null dependency keep the existing arithmetic rules
+ratio = 2
+ratio *= -3
+assert(ratio, -6)
+unknown = null
+unknown += 1
+assert(unknown, null)
+
+---
+
+# Nucleoid keeps compound fuel adjustments reactive
+
+# fuel follows adjustment while reading its own current value
+fuel = 10
+adjustment = 2
+fuel += adjustment
+consumption = fuel * 2
+assert(fuel, 12)
+assert(consumption, 24)
+
+# A new adjustment re-evaluates the same relationship
+adjustment = 3
+assert(fuel, 15)
+assert(consumption, 30)
+
+# The value property replaces the relationship with a fixed adjustment snapshot
+fuel += adjustment.value
+assert(fuel, 18)
+adjustment = 5
+assert(fuel, 18)
+assert(consumption, 36)
+
+---
+
+# Nucleoid keeps compound cargo and local adjustments equivalent
+
+# The parameter is local and self and this still refer to the same cargo
+class CargoLoad(tonnes: int):
+    this.tonnes = tonnes
+    def adjust(delta: int):
+        delta *= 2
+        self.tonnes += delta
+        return this.tonnes
+
+cargo1 = CargoLoad(10)
+cargo1.tonnes += 2
+assert(cargo1.tonnes, 12)
+assert(cargo1.adjust(3), 18)
+assert(cargo1.tonnes, 18)
+
+# A class-level self-reference remains a circular dependency, not a mutation
+class FleetScale:
+    pass
+scale1 = FleetScale()
+$FleetScale.factor = 2
+try:
+    $FleetScale.factor *= 3
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(scale1.factor, 2)
+
+---
+
+# Nucleoid rolls back compound allocations rejected by a flight limit
+
+# A standing limit rejects a large allocation and restores the old relationship
+reserve = 10
+surcharge = 2
+if reserve > 15:
+    throw "LIMIT"
+try:
+    reserve += surcharge * 4
+catch error:
+    assert(error, "LIMIT")
+assert(reserve, 10)
+surcharge = 3
+assert(reserve, 10)
+
+# A smaller allocation succeeds after the failed transaction
+reserve += surcharge
+assert(reserve, 13)
+
+# A dependency cycle also restores both prior values
+first = 2
+second = first * 2
+try:
+    first += second
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(first, 2)
+assert(second, 4)
+
+# An undefined compound target retains the existing reference error
+try:
+    missing += 1
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+---
+
+# Nucleoid returns compound flight calculation expressions
+
+# Each function returns the same value as its expanded parameter assignment
+def allocate(current, delta) => current += delta
+def release(current, delta) => current -= delta
+def scale(current, delta) => current *= delta
+def share(current, delta) => current /= delta
+def remaining(current, delta) => current %= delta
+def combined(a, b) => a += b *= 2
+
+assert(allocate(5, 3), 8)
+assert(release(5, 3), 2)
+assert(scale(5, 3), 15)
+assert(share(6, 3), 2)
+assert(remaining(5, 3), 2)
+assert(combined(1, 3), 7)
 ```
