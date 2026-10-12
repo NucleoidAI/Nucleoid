@@ -15,7 +15,7 @@ Build a Rust implementation of Nucleoid. The crate is at the repository root (`C
 - `nucleoid.spec.md` — the main reference for runtime behaviours
 - `dataset/nucleoid.spec.synth.*.md` — synthesized fine-tuning use cases derived from `nucleoid.spec.md`;
   they are dataset material, not executable tests
-- `docs/` — the Nucleoid Language Reference documentation, written as NUC documents in PEP style, in the spirit of https://docs.python.org
+- `docs/` — NUC language proposals in PEP style; accepted, implemented behavior forms the Nucleoid Language Reference, in the spirit of https://docs.python.org
 
 The runtime is built around a dependency graph, scope chain, propagation queue, transactions and statement nodes.
 
@@ -37,8 +37,73 @@ The crate executes its normative documents rather than restating them: `tests/nu
 
 A case whose assertions sit on a branch that is never taken proves nothing, so the suites also compare `Runtime::assertions_run()` against the number of `assert` calls in the source and fail when fewer ran.
 
+## Language proposals
+
+Every added or updated `docs/nuc-XXXX.md` requires a fresh `nuc-proposal`
+agent for that proposal revision, including process-only changes. Follow
+`.github/copilot-instructions.md`, `.github/agents/nuc-proposal.agent.md`,
+and the evaluation process in `docs/nuc-0001.md`.
+
+Record an immutable accepted-syntax baseline before rewriting the runtime or
+executable documents. Evaluate each proposal in its own candidate worktree;
+do not reuse agents or combine pending proposals. Preserve case identities,
+canonical assertions, expected results, and executed assertion coverage.
+New cases require behavior-equivalent accepted-syntax baselines.
+
+`tests/proposals.rs` counts tokens with the runtime lexer, including layout
+markers and excluding `Eof`. Accept only if every case uses the same or fewer
+tokens and behavior checks pass; reject if any case uses more. Savings in
+another case cannot offset an increase. Missing baselines block acceptance.
+Keep reports in the session workspace and do not apply rejected candidates.
+Evaluation outcome metadata does not recursively trigger another agent.
+
 ## Leave the world better than you found it
 
 When adding a feature, review the code you touch and apply current Rust best practices where needed. Adopt improved idioms and methods incrementally, including ownership and borrowing, concrete types, typed errors, and maintainable APIs, so the codebase improves continuously.
 
 Keep improvements focused on touched code and directly related helpers, proportional to the feature. Preserve intended behavior, respect public API semantic versioning, and cover affected behavior with appropriate tests. Avoid unrelated rewrites, and follow the existing `cargo fmt` and warning-denied `cargo clippy` conventions.
+
+## Detailed proposal workflow
+
+Follow the process in `docs/nuc-0001.md`.
+`nucleoid.spec.md` remains authoritative for accepted runtime behavior.
+
+Every added or updated `docs/nuc-XXXX.md` is a proposal revision. Before
+finishing a Copilot task that changes a NUC, launch a fresh `nuc-proposal`
+agent for each changed proposal. Do not reuse an agent for a different
+proposal or a later revision. This applies to process and documentation-only
+NUCs too; unchanged executable cases can demonstrate equal token usage.
+
+Pin the accepted Git revision and record its token baseline before editing
+runtime behavior or executable cases. Give each agent its proposal path,
+baseline revision and JSON artifact, candidate worktree, and a fresh report
+path. Use `.github/agents/nuc-proposal.agent.md`; if named custom agents are
+unavailable, pass that profile and these inputs to a fresh general-purpose
+subagent. A proposal agent must not delegate its evaluation again.
+
+Evaluate proposals separately. Agents that rewrite shared files need separate
+candidate worktrees; serialize integration of accepted changes and evaluate
+again after a substantive revision or rebase. Never discard another user's
+changes when rejecting a candidate.
+
+Rewrite the executable source documents, not generated Rust or JSONL. Preserve
+case identities, canonical assertions, expected returns, and assertion coverage.
+New cases need behavior-equivalent accepted-syntax baselines, executed before
+the candidate runtime is changed.
+
+Use `tests/proposals.rs`, not estimates or LLM token usage. It counts the
+trimmed case source using the runtime lexer, including `Newline`, `Indent`,
+and `Dedent`, excluding only `Eof`. Accept only when every paired case uses
+the same or fewer tokens and all behavior checks pass. Any case using more
+tokens rejects the proposal, even if other cases save tokens. Missing
+baselines block acceptance.
+
+Keep baseline and report artifacts in the session workspace, not the
+repository. Report the decision and per-case before/after counts. Apply
+candidate language changes only after acceptance, keeping the specification,
+runtime, reference, synthesized sources, and rendered exports synchronized.
+Outcome metadata, such as updating a status or index after evaluation, belongs
+to that evaluation and must not recursively launch another agent.
+
+This is a Copilot-session policy, not a filesystem watcher or GitHub Actions
+trigger. Do not claim that an edit outside a Copilot session launched an agent.

@@ -76,6 +76,81 @@ $ UPDATE_DATASET=1 cargo test --test dataset
 $ UPDATE_SPEC_TESTS=1 cargo build
 ```
 
+### Evaluating a language proposal
+
+Every added or updated `docs/nuc-XXXX.md` is a proposal revision, including
+process and documentation-only NUCs. During a Copilot session, the repository
+instructions require one fresh `nuc-proposal` agent per proposal revision.
+The agent rewrites applicable executable cases in an isolated candidate,
+preserving behavior, case identities, canonical assertions, return expectations,
+and executed assertion coverage. See [NUC 1](docs/nuc-0001.md#proposal-evaluation).
+
+The gate measures each case from the specification and executable reference,
+README, and examples. It uses Nucleoid lexer tokens, including `Newline`,
+`Indent`, and `Dedent`, excluding `Eof`; it does not measure LLM tokens,
+generated Rust, or synthesized training records. Each case must use the same
+or fewer tokens. Any increase rejects the proposal, regardless of savings in
+other cases. Missing baselines block acceptance.
+
+Record the accepted baseline before editing the runtime or executable corpus.
+The recorder reads documents from the pinned Git revision and refuses to use
+a runtime that differs from it. Use a separate baseline worktree if candidate
+runtime edits already exist. `HEAD` is suitable only when it is the accepted
+revision, not a commit containing an unevaluated proposal.
+
+Example PowerShell commands, using fresh artifact paths outside the repository:
+
+```powershell
+$env:NUC_PROPOSAL_BASE_REF = 'HEAD'
+$env:NUC_PROPOSAL_BASELINE = Join-Path $env:TEMP 'nucleoid-nuc-baseline.json'
+cargo test --test proposals record_baseline -- --ignored --nocapture
+```
+
+Then, from the candidate worktree, with the same baseline path:
+
+```powershell
+$env:NUC_PROPOSAL = 'docs\nuc-0012.md'
+$env:NUC_PROPOSAL_REPORT = Join-Path $env:TEMP 'nucleoid-nuc-0012-report.json'
+cargo test --test proposals evaluate_proposal -- --ignored --nocapture
+```
+
+Baseline and report files are created once and never overwritten. Use fresh
+paths for later revisions; keep actual evaluation artifacts in the Copilot
+session workspace. A nonzero exit means rejected or blocked, not accepted.
+The report records the proposal's Git blob revision and every paired case's
+`before`, `after`, and token change.
+Process-only proposals can pass with all cases unchanged.
+
+For new cases, prepare an additional baseline JSON array in the accepted
+syntax **before** candidate runtime edits. Each entry names the case's
+destination document (`spec`, `reference`, `readme`, or `examples`) and exact
+title, and contains its accepted-syntax source and optional expected return.
+Each new baseline must contain assertions or an expected return:
+
+```json
+[
+  {
+    "document": "spec",
+    "title": "Nucleoid keeps a proposed total",
+    "source": "total = (1 + 2)\nassert(total, 3)",
+    "expected": null
+  }
+]
+```
+
+Set `NUC_PROPOSAL_EXTRA_BASELINES` to this file before `record_baseline`.
+The accepted runtime executes these programs when recording them. The
+candidate must contain matching cases and unchanged canonical assertions and
+return expectations. If the old language cannot express an equivalent case,
+the proposal is blocked rather than assigned an invented before-count.
+
+After acceptance, integrate the candidate and regenerate the dataset and
+exported tests as above. Leave rejected candidates out of the accepted runtime;
+do not discard someone else's edits. Outcome status/index updates are part of
+the evaluation, not triggers for recursively creating more agents. These
+instructions apply to Copilot sessions; there is no background file watcher
+or GitHub Actions proposal trigger.
+
 ## Declarative Runtime Environment
 
 Nucleoid records declarative statements in a dependency graph and re-evaluates

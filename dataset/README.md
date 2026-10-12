@@ -89,6 +89,10 @@ write it back.
 `nucleoid.spec.md` is normative. The `synth` split is derived from it and has no
 authority of its own; where the two disagree, the specification wins.
 
+NUC documents propose language changes, but draft or rejected proposals do not
+change this dataset. Only accepted, synchronized specification and synthesized
+source changes are rendered into the publication.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

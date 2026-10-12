@@ -1,5 +1,10 @@
 # Nucleoid Language Reference
 
+NUCs in `docs/` propose language changes; draft or rejected proposals do not
+override this specification. Accepted rewrites preserve case behavior and must
+not increase any case's lexer token count under the process in
+`docs/nuc-0001.md`.
+
 `this` and `self` are interchangeable keywords for the current instance in
 constructors, methods, and class-level rules. Both spellings share the same
 receiver, property access, and errors. Neither keyword may be rebound, and using

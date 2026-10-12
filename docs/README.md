@@ -12,6 +12,12 @@ See [NUC 0](nuc-0000.md) for the index and [NUC 1](nuc-0001.md) for the
 conventions. `nucleoid.spec.md` is normative; where this document and the
 specification disagree, the specification wins.
 
+Each NUC is a language proposal. New or updated proposals get a fresh agent
+that rewrites equivalent executable cases and compares lexer tokens per case.
+The proposal is accepted only when every case uses the same or fewer tokens
+and behavior checks pass; any increase rejects it. Draft or rejected proposals
+do not change this implemented reference. See [NUC 1](nuc-0001.md#proposal-evaluation).
+
 The entries below are abbreviated to the behaviour they state.
 [examples.md](examples.md) covers the same ground as complete programs, each one
 runnable as written.

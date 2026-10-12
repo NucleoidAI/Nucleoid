@@ -199,18 +199,31 @@ pub fn check(case: &Case) -> Result<(), String> {
     check_with(&mut runtime, case).map(|_| ())
 }
 
-fn check_with(runtime: &mut Runtime, case: &Case) -> Result<nucleoid::Value, String> {
-    let assertions_before = runtime.assertions_run();
-    let value = runtime
-        .run(&case.source)
-        .map_err(|error| format!("{error}"))?;
+/// Runs a case against an assertion count obtained from its syntax tree.
+pub fn check_with_assertions(case: &Case, expected_assertions: usize) -> Result<(), String> {
+    check_with_count(&mut Runtime::new(), case, expected_assertions).map(|_| ())
+}
 
+fn check_with(runtime: &mut Runtime, case: &Case) -> Result<nucleoid::Value, String> {
     let expected_assertions = case
         .source
         .lines()
         .filter(|line| !line.trim_start().starts_with('#'))
         .map(|line| line.matches("assert(").count())
         .sum::<usize>();
+
+    check_with_count(runtime, case, expected_assertions)
+}
+
+fn check_with_count(
+    runtime: &mut Runtime,
+    case: &Case,
+    expected_assertions: usize,
+) -> Result<nucleoid::Value, String> {
+    let assertions_before = runtime.assertions_run();
+    let value = runtime
+        .run(&case.source)
+        .map_err(|error| format!("{error}"))?;
 
     let assertions_run = runtime.assertions_run() - assertions_before;
 
