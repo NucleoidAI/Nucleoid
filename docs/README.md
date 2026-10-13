@@ -300,6 +300,35 @@ class Truck: Vehicle
         this.payload = payload
 ```
 
+### Bare zero-argument super calls
+
+- Bare `super` is the primary expression `super()`; it always passes zero arguments and returns `null` on success.
+- The parent's constructor runs on the same receiver, without adding an instance to the parent's population.
+- In a constructor, resolution advances from the constructor currently executing; in a method, it falls back to the actual receiver's class.
+- A receiver with no parent makes the call a no-op returning `null`; missing parent parameters remain `null`.
+- Without an instance receiver, either spelling raises `ReferenceError("super is not defined")`.
+- An immediate `(` still introduces explicit arguments, including when whitespace precedes it; `super(arguments...)` is unchanged.
+- A logical newline or semicolon is not skipped to find arguments; `super` followed by `(7)` on the next logical line is a zero-argument call and then a separate expression.
+- Line breaks already suppressed inside `(` or `[` retain their existing meaning; `(super` followed by `(7))` inside the same parentheses is still the explicit call `super(7)`.
+- Existing postfix and operator grammar applies; bare `super` is also usable in assignments, returns, and expression bodies.
+- The existing adjacent-statement grammar is unchanged: `super amount` parses as a zero-argument call followed by the expression `amount`, not an argument-bearing call.
+
+```
+class Parent:
+    def init():
+        this.ready = true
+
+class Child: Parent
+    def init():
+        super
+        this.code = 7
+
+child = Child()
+
+assert(child.ready, true)
+assert(child.code, 7)
+```
+
 ### Redefining and deleting
 
 - Re-declaring a type preserves the class list and existing instances.
@@ -308,7 +337,7 @@ class Truck: Vehicle
 - Deletion is refused while the instance still has properties.
 - A variable name is reusable after its instance is deleted.
 
-Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md).
+Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md); candidate bare calls: [NUC 16](nuc-0016.md).
 
 ---
 
@@ -719,6 +748,9 @@ class Sub: Super                       subtype
     def init(a, b):
         super(a)
         this.b = b
+
+super                                  zero-argument super() expression
+super(arguments)                       explicit parent-constructor arguments
 
 if condition:                          conditional
     statement

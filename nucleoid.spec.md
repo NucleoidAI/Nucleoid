@@ -6511,4 +6511,139 @@ try:
     limited2
 catch error:
     assert(error, ReferenceError("limited2 is not defined"))
+
+---
+
+# Nucleoid invokes a parent constructor with bare super on the same instance
+
+class Parent:
+    def init():
+        this.amount = 4
+
+class Child: Parent
+    def init():
+        super
+        this.amount = this.amount + 1
+
+child = Child()
+
+assert(child.amount, 5)
+assert(child.id, "child")
+assert(Parent.length, 0)
+assert(Child.length, 1)
+
+---
+
+# Nucleoid resolves bare super through the executing constructor chain
+
+class Base:
+    def init():
+        this.trace = "A"
+
+class Middle: Base
+    def init():
+        super
+        this.trace = this.trace + "B"
+
+class Leaf: Middle
+    def init():
+        super
+        this.trace = this.trace + "C"
+
+class Passive: Leaf
+    pass
+
+leaf = Leaf()
+passive = Passive()
+
+assert(leaf.trace, "ABC")
+assert(passive.trace, "ABC")
+assert(Base.length, 0)
+assert(Middle.length, 0)
+assert(Leaf.length, 1)
+assert(Passive.length, 1)
+
+---
+
+# Nucleoid preserves omitted parent arguments with bare super
+
+class Parent:
+    def init(amount):
+        this.amount = amount
+
+class Child: Parent
+    def init():
+        super
+
+class Explicit: Parent
+    def init(amount):
+        super(amount)
+
+child = Child()
+explicit = Explicit(9)
+
+assert(child.amount, null)
+assert(explicit.amount, 9)
+
+---
+
+# Nucleoid preserves bare super expression and receiver behavior
+
+class Parent:
+    def init():
+        this.amount = 3
+
+class Child: Parent
+    def init() => super
+    def reset() => super
+
+child = Child()
+
+assert(child.amount, 3)
+child.amount = 9
+assert(child.reset(), null)
+assert(child.amount, 3)
+
+class Root:
+    def init():
+        this.result = super
+
+root = Root()
+
+assert(root.result, null)
+
+try:
+    super
+catch error:
+    assert(error, ReferenceError("super is not defined"))
+
+---
+
+# Nucleoid rolls back a failing parent constructor called with bare super
+
+kept = { amount: 5 }
+
+class Parent:
+    def init():
+        kept.amount = 9
+        this.amount = 7
+        throw "BLOCKED"
+
+class Child: Parent
+    def init():
+        super
+
+try:
+    failed = Child()
+catch error:
+    assert(error, "BLOCKED")
+
+assert(kept.amount, 5)
+assert(Parent.length, 0)
+assert(Child.length, 0)
+
+try:
+    failed
+catch error:
+    assert(error, ReferenceError("failed is not defined"))
 ```

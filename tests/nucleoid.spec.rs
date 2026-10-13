@@ -4816,6 +4816,118 @@ fn rolls_back_creation_of_bodyless_class_instances() {
     assert_eq!(run_error("limited2"), "ReferenceError: limited2 is not defined");
 }
 
+/// Nucleoid invokes a parent constructor with bare super on the same instance
+#[rustfmt::skip]
+#[test]
+fn invokes_a_parent_constructor_with_bare_super_on_the_same_instance() {
+    let mut run = runner();
+    run(r#"class Parent:
+    def init():
+        this.amount = 4"#);
+    run(r#"class Child: Parent
+    def init():
+        super
+        this.amount = this.amount + 1"#);
+    run("child = Child()");
+    assert_eq!(run("child.amount"), 5);
+    assert_eq!(run("child.id"), "child");
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 1);
+}
+
+/// Nucleoid resolves bare super through the executing constructor chain
+#[rustfmt::skip]
+#[test]
+fn resolves_bare_super_through_the_executing_constructor_chain() {
+    let mut run = runner();
+    run(r#"class Base:
+    def init():
+        this.trace = "A""#);
+    run(r#"class Middle: Base
+    def init():
+        super
+        this.trace = this.trace + "B""#);
+    run(r#"class Leaf: Middle
+    def init():
+        super
+        this.trace = this.trace + "C""#);
+    run(r#"class Passive: Leaf
+    pass"#);
+    run("leaf = Leaf()");
+    run("passive = Passive()");
+    assert_eq!(run("leaf.trace"), "ABC");
+    assert_eq!(run("passive.trace"), "ABC");
+    assert_eq!(run("Base.length"), 0);
+    assert_eq!(run("Middle.length"), 0);
+    assert_eq!(run("Leaf.length"), 1);
+    assert_eq!(run("Passive.length"), 1);
+}
+
+/// Nucleoid preserves omitted parent arguments with bare super
+#[rustfmt::skip]
+#[test]
+fn preserves_omitted_parent_arguments_with_bare_super() {
+    let mut run = runner();
+    run(r#"class Parent:
+    def init(amount):
+        this.amount = amount"#);
+    run(r#"class Child: Parent
+    def init():
+        super"#);
+    run(r#"class Explicit: Parent
+    def init(amount):
+        super(amount)"#);
+    run("child = Child()");
+    run("explicit = Explicit(9)");
+    assert_eq!(run("child.amount"), serde_json::Value::Null);
+    assert_eq!(run("explicit.amount"), 9);
+}
+
+/// Nucleoid preserves bare super expression and receiver behavior
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_super_expression_and_receiver_behavior() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"class Parent:
+    def init():
+        this.amount = 3"#);
+    run(r#"class Child: Parent
+    def init() => super
+    def reset() => super"#);
+    run("child = Child()");
+    assert_eq!(run("child.amount"), 3);
+    run("child.amount = 9");
+    assert_eq!(run("child.reset()"), serde_json::Value::Null);
+    assert_eq!(run("child.amount"), 3);
+    run(r#"class Root:
+    def init():
+        this.result = super"#);
+    run("root = Root()");
+    assert_eq!(run("root.result"), serde_json::Value::Null);
+    assert_eq!(run_error("super"), "ReferenceError: super is not defined");
+}
+
+/// Nucleoid rolls back a failing parent constructor called with bare super
+#[rustfmt::skip]
+#[test]
+fn rolls_back_a_failing_parent_constructor_called_with_bare_super() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("kept = { amount: 5 }");
+    run(r#"class Parent:
+    def init():
+        kept.amount = 9
+        this.amount = 7
+        throw "BLOCKED""#);
+    run(r#"class Child: Parent
+    def init():
+        super"#);
+    assert_eq!(run_error("failed = Child()"), "BLOCKED");
+    assert_eq!(run("kept.amount"), 5);
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 0);
+    assert_eq!(run_error("failed"), "ReferenceError: failed is not defined");
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

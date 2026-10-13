@@ -1302,4 +1302,22 @@ $Gate.ready = true
 assert(gate1.ready, true)
 assert(Class.length, 1)
 assert(Gate.length, 1)
+
+---
+
+# Bare zero argument super calls
+
+class Parent:
+    def init():
+        this.ready = true
+
+class Child: Parent
+    def init():
+        super
+        this.code = 7
+
+child = Child()
+
+assert(child.ready, true)
+assert(child.code, 7)
 ```

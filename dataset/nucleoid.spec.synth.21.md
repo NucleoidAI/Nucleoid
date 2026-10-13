@@ -2180,4 +2180,137 @@ assert(scale(5, 3), 15)
 assert(share(6, 3), 2)
 assert(remaining(5, 3), 2)
 assert(combined(1, 3), 7)
+
+---
+
+# Nucleoid prepares a scheduled flight with bare super on the same instance
+
+# The flight constructor runs on its scheduled subtype, not another flight
+seed = 4
+class Flight:
+    def init():
+        this.ready = true
+
+$Flight.amount = seed
+
+class ScheduledFlight: Flight
+    def init():
+        super
+        this.code = 7
+
+flight = ScheduledFlight()
+
+assert(flight.ready, true)
+assert(flight.code, 7)
+assert(flight.id, "flight")
+assert(Flight.length, 0)
+assert(ScheduledFlight.length, 1)
+assert(flight.amount, 4)
+
+# The inherited relationship still follows the shared source
+seed = 6
+assert(flight.amount, 6)
+
+---
+
+# Nucleoid advances bare super through inherited departure constructors
+
+class Departure:
+    def init():
+        this.trace = "D"
+
+class ClearedDeparture: Departure
+    def init():
+        super
+        this.trace = this.trace + "C"
+
+class ReadyDeparture: ClearedDeparture
+    def init():
+        super
+        this.trace = this.trace + "R"
+
+# A passive subtype begins with the nearest ancestor constructor
+class AutomaticDeparture: ReadyDeparture
+    pass
+
+ready = ReadyDeparture()
+automatic = AutomaticDeparture()
+
+assert(ready.trace, "DCR")
+assert(automatic.trace, "DCR")
+assert(Departure.length, 0)
+assert(ClearedDeparture.length, 0)
+assert(ReadyDeparture.length, 1)
+assert(AutomaticDeparture.length, 1)
+
+---
+
+# Nucleoid resets a parcel with bare super and omitted parent arguments
+
+class Parcel:
+    def init(weight):
+        this.weight = weight
+
+class DefaultParcel: Parcel
+    def init() => super
+    def reset() => super
+
+# Nonempty argument lists keep their explicit syntax
+class ExpressParcel: Parcel
+    def init(weight):
+        super(weight)
+
+parcel = DefaultParcel()
+express = ExpressParcel(9)
+
+assert(parcel.weight, null)
+assert(express.weight, 9)
+
+parcel.weight = 4
+assert(parcel.reset(), null)
+assert(parcel.weight, null)
+
+# A receiver with no parent gets null without an error
+class RootLabel:
+    def init():
+        this.result = super
+
+label = RootLabel()
+assert(label.result, null)
+
+# Without a receiver the existing reference error remains
+try:
+    super
+catch error:
+    assert(error, ReferenceError("super is not defined"))
+
+---
+
+# Nucleoid rolls back a denied booking after a bare super parent call
+
+gate = {ready: true}
+
+class Booking:
+    def init():
+        gate.ready = false
+        this.weight = 9
+        throw "DENIED"
+
+class PriorityBooking: Booking
+    def init():
+        super
+
+try:
+    booking = PriorityBooking()
+catch error:
+    assert(error, "DENIED")
+
+assert(gate.ready, true)
+assert(Booking.length, 0)
+assert(PriorityBooking.length, 0)
+
+try:
+    booking
+catch error:
+    assert(error, ReferenceError("booking is not defined"))
 ```

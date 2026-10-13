@@ -1,0 +1,48 @@
+seed = 4
+
+class Base:
+    def init():
+        this.trace = "A"
+
+$Base.amount = seed
+
+class Middle: Base
+    def init():
+        super
+        this.trace = this.trace + "B"
+
+class Leaf: Middle
+    def init() => super
+    def reset() => super
+
+class Root:
+    def init():
+        this.result = super
+
+class Parent(amount):
+    this.amount = amount
+
+class Explicit: Parent
+    def init(amount):
+        super(amount)
+
+leaf = Leaf()
+root = Root()
+explicit = Explicit(9)
+
+assert(leaf.trace, "AB")
+assert(leaf.id, "leaf")
+assert(leaf.amount, 4)
+assert(root.result, null)
+assert(explicit.amount, 9)
+assert(Base.length, 0)
+assert(Middle.length, 0)
+assert(Leaf.length, 1)
+
+seed = 6
+
+assert(leaf.amount, 6)
+assert(leaf.reset(), null)
+assert(leaf.trace, "AB")
+
+leaf.amount

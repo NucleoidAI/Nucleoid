@@ -112,6 +112,28 @@ automatically. Nonempty bodies and inheritance retain the colon syntax.
 [NUC 14](docs/nuc-0014.md) specifies the accepted syntax and its independent
 per-case evaluation.
 
+**Parent constructors omit empty call parentheses**
+
+```nuc
+class Counter:
+    def init():
+        this.total = 1
+
+class Counted: Counter
+    def init():
+        super
+        this.total = this.total + 1
+
+counted = Counted()
+
+assert(counted.total, 2)
+```
+
+Bare `super` is the zero-argument expression `super()`, running the parent
+constructor on the same instance and returning `null`. Calls with arguments
+still use `super(arguments...)`. [NUC 16](docs/nuc-0016.md) describes this
+candidate shorthand; its proposal status remains Draft.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

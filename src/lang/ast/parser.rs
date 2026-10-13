@@ -1046,8 +1046,12 @@ impl Parser {
                 Ok(Expr::Delete(Box::new(operand)))
             }
             Token::Keyword(Keyword::Super) => {
-                self.expect(&Token::LeftParen)?;
-                let arguments = self.arguments()?;
+                // Only an immediate `(` introduces arguments, not separators.
+                let arguments = if self.eat(&Token::LeftParen) {
+                    self.arguments()?
+                } else {
+                    Vec::new()
+                };
                 Ok(Expr::Super(arguments))
             }
             Token::Keyword(Keyword::Function) => {

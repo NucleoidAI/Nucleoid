@@ -347,6 +347,34 @@ student1 = Student("Emma", "Riverside High")
 assert(student1, { "id": "student1", "name": "Emma", "school": "Riverside High" })
 ```
 
+**Bare super preserves inherited reactive properties**
+
+- `super` runs the zero-argument parent constructor on the existing child.
+- Inherited class-level properties still update when their source changes.
+
+```nuc
+seed = 4
+
+class Parent:
+    def init():
+        this.ready = true
+
+$Parent.amount = seed
+
+class Child: Parent
+    def init():
+        super
+
+child = Child()
+
+assert(child.ready, true)
+assert(child.amount, 4)
+
+seed = 6
+
+assert(child.amount, 6)
+```
+
 **Re-declaring a type keeps its instances and its rules**
 
 - The instances made before the new declaration are still there, and the rule still holds for them.
@@ -371,7 +399,7 @@ assert(message2.read, false)
 assert(message2.payload, "MESSAGE")
 ```
 
-Full detail: [README.md §4](README.md#4-types-and-instances), [NUC 3](nuc-0003.md).
+Full detail: [README.md §4](README.md#4-types-and-instances), [NUC 3](nuc-0003.md); candidate bare calls: [NUC 16](nuc-0016.md).
 
 ---
 
