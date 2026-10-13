@@ -60,4 +60,17 @@ proposal), accepted baseline revision and path, candidate worktree, changed
 files, development checks, and explicit blockers. Freeze the candidate after
 handoff. The caller starts a fresh `nuc-evaluate` agent with this handoff and
 a fresh report path; do not launch it yourself. The caller owns integration
-and evaluation status/index updates. No commits, pushes, or merges.
+and evaluation status/index updates. The proposal agent must not commit, push,
+or merge.
+
+## Record rejected outcomes (caller only)
+
+After the independent evaluator returns `Rejected`, the coordinating caller
+must record and commit the rejected proposal documentation and its index/outcome
+metadata. Rejected proposals are not exempt from commits. Follow the
+[shared rejection workflow](../../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
+
+Commit only rejection documentation, never the rejected candidate's language
+changes or session baseline/report artifacts. Preserve existing accepted NUC
+text and unrelated work. Proposal and evaluation agents must not perform this
+caller-owned commit.

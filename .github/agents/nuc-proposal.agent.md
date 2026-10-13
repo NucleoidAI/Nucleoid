@@ -29,3 +29,9 @@ Declare the candidate ready for independent evaluation only when its inputs
 are complete, then stop editing it. The caller launches a fresh `nuc-evaluate`
 agent with this handoff and a fresh report path. The caller owns integration
 and evaluation status/index updates.
+
+After a `Rejected` verdict, the caller must still record and commit the
+rejected proposal documentation and index/outcome metadata under the
+[shared rejection workflow](../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
+Rejected candidate language changes remain isolated. Do not perform this
+caller-owned commit yourself.

@@ -83,5 +83,14 @@ runtime, reference, synthesized sources, and rendered exports synchronized.
 Outcome metadata, such as updating a status or index after evaluation, belongs
 to that evaluation and must not recursively launch another agent.
 
+## Record rejected outcomes (caller only)
+
+- After the independent evaluator's overall `Rejected` decision, the coordinating caller must record and commit the rejected proposal documentation and its index/outcome metadata.
+- For a new proposal, record `Status: Rejected`, the rejection reason and actual per-case before/after counts, and update its NUC index entries.
+- For a rejected revision of an already accepted or active NUC, preserve its accepted text and status; record only the rejected revision's outcome metadata rather than replacing it with the candidate.
+- Commit only rejection documentation and directly related index/status metadata. Never apply or commit rejected runtime, executable-document, reference, synthesized-data or generated-export changes. Baseline and report artifacts stay in the session workspace.
+- Preserve unrelated staged and unstaged changes. If the rejection documentation is already committed, verify and report that commit instead of creating an empty duplicate.
+- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the coordinating caller and does not authorize an automatic push.
+
 This is a Copilot-session policy, not a filesystem watcher or GitHub Actions
 trigger. Do not claim that an edit outside a Copilot session launched an agent.
