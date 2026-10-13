@@ -165,8 +165,7 @@ assert(double, 20)
 # Nucleoid detects a circular dependency between properties
 
 # There is a Box type
-class Box:
-    pass
+class Box
 
 # box1 is a Box whose width is 10
 box1 = Box()
@@ -188,8 +187,7 @@ catch error:
 # Nucleoid throws an error if a variable in a class-level expression is not defined
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 try:
     # any order's total is the order's price times taxRate
@@ -212,8 +210,7 @@ catch error:
 # Nucleoid throws a property as an error
 
 # There is a Limit type
-class Limit:
-    pass
+class Limit
 
 # limit1 is a Limit whose max is 5
 limit1 = Limit()
@@ -263,8 +260,7 @@ catch error:
 # Nucleoid rolls back related properties in the same transaction
 
 # There is a Battery type
-class Battery:
-    pass
+class Battery
 
 # Any battery's percentage is the battery's level times 100 divided by the battery's capacity
 $Battery.percentage = $Battery.level * 100 / $Battery.capacity
@@ -294,8 +290,7 @@ assert(battery1.percentage, 50)
 # Nucleoid propagates null when a property is deleted
 
 # There is a Report type
-class Report:
-    pass
+class Report
 
 # report1 is a Report whose year is 2019 and whose month is 4
 report1 = Report()
@@ -322,8 +317,7 @@ assert(report1.label, "P2019")
 # Nucleoid returns a boolean when deleting a property
 
 # There is a Setting type
-class Setting:
-    pass
+class Setting
 
 # setting1 is a Setting whose theme is "DARK"
 setting1 = Setting()
@@ -342,8 +336,7 @@ assert(setting1.theme, null)
 # Nucleoid reuses a variable name after an instance is deleted
 
 # There is a Session type
-class Session:
-    pass
+class Session
 
 # session1 is a Session
 session1 = Session()
@@ -480,8 +473,7 @@ assert(reading, 21)
 # Nucleoid chains class-level properties
 
 # There is a Rectangle type
-class Rectangle:
-    pass
+class Rectangle
 
 # Any rectangle's area is the rectangle's width times the rectangle's height
 $Rectangle.area = $Rectangle.width * $Rectangle.height
@@ -508,8 +500,7 @@ assert(rectangle1.ratio, 10)
 # Nucleoid updates every instance when a class-level dependency changes
 
 # There is an Invoice type
-class Invoice:
-    pass
+class Invoice
 
 # taxRate is 8
 taxRate = 8
@@ -539,8 +530,7 @@ assert(invoice2.total, 220)
 # Nucleoid overrides a class-level property on a single instance
 
 # There is a Node type
-class Node:
-    pass
+class Node
 
 # Any node's status is "IDLE"
 $Node.status = "IDLE"
@@ -565,8 +555,7 @@ assert(node2.status, "IDLE")
 # Nucleoid applies a class-level else if statement to every instance
 
 # There is a Grade type
-class Grade:
-    pass
+class Grade
 
 # grade1 is a Grade whose score is 95
 grade1 = Grade()
@@ -604,8 +593,7 @@ assert(grade3.letter, "A")
 # Nucleoid validates a class-level property with a regular expression
 
 # There is an Account type
-class Account:
-    pass
+class Account
 
 # If any account's code does not match /^[A-Z]{2}-[0-9]{4}$/, then throw 'INVALID_CODE'
 if not /^[A-Z]{2}-[0-9]{4}$/.test($Account.code):
@@ -634,12 +622,10 @@ assert(account1.code, "NY-1234")
 # Nucleoid uses a class list in a class-level condition
 
 # There is a Room type
-class Room:
-    pass
+class Room
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 # room1 is a Room
 room1 = Room()
@@ -660,12 +646,10 @@ assert(room1.booked, true)
 # Nucleoid updates a property through a reference to another instance
 
 # There is a Currency type
-class Currency:
-    pass
+class Currency
 
 # There is a Price type
-class Price:
-    pass
+class Price
 
 # usd is a Currency whose rate is 1
 usd = Currency()
@@ -691,8 +675,7 @@ assert(price1.converted, 75)
 # Nucleoid creates an if statement with multiple properties in a condition
 
 # There is a Flight type
-class Flight:
-    pass
+class Flight
 
 # flight1 is a Flight whose seats is 150 and whose booked is 100
 flight1 = Flight()
@@ -809,8 +792,7 @@ rate = 7
 # Nucleoid returns a property of a local variable from a block
 
 # There is a Job type
-class Job:
-    pass
+class Job
 
 # job1 is a Job whose state is "DONE"
 job1 = Job()
@@ -853,8 +835,7 @@ message = "OK"
 def discount(price, rate) => price - price * rate / 100
 
 # There is a Product type
-class Product:
-    pass
+class Product
 
 # percent is 10
 percent = 10
@@ -937,8 +918,7 @@ assert(end > start, true)
 # Nucleoid uses value property in a class-level condition
 
 # There is a Version type
-class Version:
-    pass
+class Version
 
 # baseline is 3
 baseline = 3
@@ -987,8 +967,7 @@ assert(b, 10)
 # Nucleoid skips values that are not instances in a for of statement
 
 # There is a Task type
-class Task:
-    pass
+class Task
 
 # entries is an empty list
 entries = []
@@ -1052,8 +1031,7 @@ assert(package3.tier, "LIGHT")
 # Nucleoid assigns unique ids to instances created in a for of statement
 
 # There is a Seat type
-class Seat:
-    pass
+class Seat
 
 # There is a Ticket type,
 # which has a seat as a Seat
@@ -1080,8 +1058,7 @@ assert(Ticket[0].id != Ticket[1].id, true)
 # Nucleoid applies a class-level property declared after a for of statement
 
 # There is a Course type
-class Course:
-    pass
+class Course
 
 # course1 is a Course whose credits is 3
 course1 = Course()

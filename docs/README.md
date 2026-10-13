@@ -240,20 +240,23 @@ Full detail: [NUC 10](nuc-0010.md).
 
 ### Declaring a type
 
-- `class` declares a type; an empty body is `pass`.
+- `class Entity` declares an empty type without a placeholder body.
+- The explicit `class Entity:` form with an indented `pass` remains valid.
+- A bare header ends at a statement boundary and does not adopt the next statement as a constructor.
+- An indented body still requires a colon; inheritance keeps its existing colon grammar.
 - `$Name` is the type; `Name` is the list of its instances.
 - `typeof $Name` is `Class`; `typeof Name` is `List`.
 - Every declared type is added to the global `Class` list.
 - Assignments reading `Class.length` update when a type is declared; re-declaring a type does not increase the count.
 
 ```
-class Entity:
-    pass
+class Entity
 ```
 
 ### Constructors
 
 - Parameters may be declared on the type, with optional annotations.
+- A bodyless header may keep the same parameter list, such as `class Shell(code: int)`; parameters alone do not create or assign properties.
 - An equivalent form declares attributes plus an `init` function.
 - A missing argument leaves the attribute `null`.
 
@@ -305,7 +308,7 @@ class Truck: Vehicle
 - Deletion is refused while the instance still has properties.
 - A variable name is reusable after its instance is deleted.
 
-Full detail: [NUC 3](nuc-0003.md).
+Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md).
 
 ---
 
@@ -700,8 +703,8 @@ name.property = expression             property assignment
 $Type.property = expression            class-level rule
 delete name                            remove a variable, property, or instance
 
-class Name:                            type declaration
-    pass
+class Name                             empty type declaration
+class Name(param: type)                 empty type with parameters; no implicit properties
 
 class Name(param: type):               type with a constructor
     this.param = param

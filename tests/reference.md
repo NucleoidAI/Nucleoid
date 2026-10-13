@@ -81,8 +81,7 @@ class Plan(rate: int):
     this.rate = rate
 
 # There is a User type
-class User:
-    pass
+class User
 
 # basic is a Plan whose rate is 10
 basic = Plan(10)
@@ -184,8 +183,7 @@ assert(mapped, [5, 10])
 
 # Nucleoid restores callable properties after null replacement and deletion
 
-class Handler:
-    pass
+class Handler
 
 handler = Handler()
 handler.operation = number => number + 1
@@ -244,12 +242,10 @@ assert(operation(3), 99)
 # Nucleoid nests for of statements as a cross product
 
 # There is a Size type
-class Size:
-    pass
+class Size
 
 # There is a Color type
-class Color:
-    pass
+class Color
 
 # There is a Variant type, which has a size and a color
 class Variant(size, color):
@@ -324,8 +320,7 @@ assert(Item.length, 0)
 # Nucleoid does not install a class-level rule that throws for an existing instance
 
 # There is a Reading type
-class Reading:
-    pass
+class Reading
 
 # reading1 is a Reading whose celsius is 200
 reading1 = Reading()
@@ -348,8 +343,7 @@ assert(reading1.celsius, 150)
 # Nucleoid reuses a variable name after its instance is deleted
 
 # There is a Node type
-class Node:
-    pass
+class Node
 
 # node1 is a Node
 node1 = Node()
@@ -401,8 +395,7 @@ assert(values.reduce((sum, v) => sum + v, 0), 6)
 # Nucleoid evaluates a class-level conditional chain per instance
 
 # There is a Grade type
-class Grade:
-    pass
+class Grade
 
 # grade1 is a Grade whose score is 95
 grade1 = Grade()
@@ -435,12 +428,10 @@ assert(grade2.letter, "C")
 # Nucleoid aggregates another type's list in a class-level rule
 
 # There is a Category type
-class Category:
-    pass
+class Category
 
 # There is a Product type
-class Product:
-    pass
+class Product
 
 # category1 is a Category
 category1 = Category()
@@ -469,8 +460,7 @@ assert(category1.revenue, 42)
 # Nucleoid keeps a false condition from clearing its target
 
 # There is a Toy type
-class Toy:
-    pass
+class Toy
 
 # toy1 is a Toy whose shape is "SQUARE"
 toy1 = Toy()
@@ -542,8 +532,7 @@ assert(c, 7)
 # Nucleoid clears only the dependents of a deleted property
 
 # There is a Report type
-class Report:
-    pass
+class Report
 
 # report1 is a Report of April 2019
 report1 = Report()
@@ -571,8 +560,7 @@ assert(delete report1.month, false)
 # Nucleoid does not apply a class-level rule to a plain object
 
 # There is a Tag type
-class Tag:
-    pass
+class Tag
 
 # Any tag's kind is "TAG"
 $Tag.kind = "TAG"
@@ -591,8 +579,7 @@ assert(plain.kind, null)
 # Nucleoid applies class-level rules in the order received
 
 # There is an Alert type
-class Alert:
-    pass
+class Alert
 
 # If any alert's level is greater than 1, then its tone is "LOW"
 if $Alert.level > 1:
@@ -623,8 +610,7 @@ assert(alert2.tone, null)
 # Nucleoid lets an instance assignment override the rule for that instance only
 
 # There is a Node type
-class Node:
-    pass
+class Node
 
 # Any node's status is "IDLE"
 $Node.status = "IDLE"
@@ -647,8 +633,7 @@ assert(node2.status, "IDLE")
 # Nucleoid lets a subtype rule override the supertype rule
 
 # There is a Payment type
-class Payment:
-    pass
+class Payment
 
 # Any payment's method is "CARD"
 $Payment.method = "CARD"
@@ -672,16 +657,13 @@ assert(wire1.method, "TRANSFER")
 # Nucleoid follows a class-level rule through a reference into another type
 
 # There is a Country type
-class Country:
-    pass
+class Country
 
 # There is a City type
-class City:
-    pass
+class City
 
 # There is a Store type
-class Store:
-    pass
+class Store
 
 # country1 is a Country whose code is "US"
 country1 = Country()
@@ -809,8 +791,7 @@ assert(Class.length, 0)
 
 count = Class.length
 
-class Entity:
-    pass
+class Entity
 
 assert(count, 1)
 
@@ -869,8 +850,7 @@ assert(leaf.flag, 7)
 
 # Nucleoid validates inherited classes and indexed reads in the reference
 
-class Parent:
-    pass
+class Parent
 
 class Child: Parent
     pass
@@ -962,8 +942,7 @@ assert(total, 7)
 
 # Nucleoid keeps conditional loop bodies one-shot in the reference
 
-class Item:
-    pass
+class Item
 
 item = Item()
 item.amount = 0
@@ -1064,8 +1043,7 @@ assert(exposure.map(step => step.node), ["b", "c"])
 class Plan(rate):
     this.rate = rate
 
-class User:
-    pass
+class User
 
 basic = Plan(10)
 pro = Plan(10)
@@ -1122,8 +1100,7 @@ assert((affects a).map(step => step.node), ["b"])
 
 # Nucleoid keeps live reasoning subscribed to an absent property
 
-class Item:
-    pass
+class Item
 
 item = Item()
 trace = why item.amount
@@ -1261,8 +1238,7 @@ inventory = model |> why
 
 if trigger > 0:
     try:
-        class Temporary:
-            pass
+        class Temporary
         throw "ABORT"
     catch error:
         if error != "ABORT":
@@ -1316,4 +1292,14 @@ amount += step.value
 assert(amount, 18)
 step = 5
 assert(amount, 18)
+
+---
+
+# Nucleoid keeps bodyless types in the reference
+class Gate
+gate1 = Gate()
+$Gate.ready = true
+assert(gate1.ready, true)
+assert(Class.length, 1)
+assert(Gate.length, 1)
 ```

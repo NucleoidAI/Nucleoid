@@ -381,6 +381,15 @@ fn scoped_assertions(statement: &str) -> Option<(String, Vec<String>, Vec<String
         return None;
     }
 
+    // An expected value may name a local in this block. Keep such assertions
+    // in Nucleoid rather than evaluating the expectation after its scope ends.
+    if assertions
+        .iter()
+        .any(|(_, _, expected)| rust_expected(expected).is_none())
+    {
+        return None;
+    }
+
     let actuals: Vec<String> = assertions
         .iter()
         .map(|(_, actual, _)| (*actual).to_string())

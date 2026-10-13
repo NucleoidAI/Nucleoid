@@ -72,7 +72,7 @@ fn fan_out(size: usize) -> Duration {
 }
 
 fn instances(size: usize) -> Duration {
-    let mut source = String::from("class Item:\n    pass\n\n");
+    let mut source = String::from("class Item\n\n");
 
     for index in 0..size {
         source.push_str(&format!("item{index} = Item()\n"));

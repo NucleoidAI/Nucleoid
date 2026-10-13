@@ -375,8 +375,7 @@ assert(module2.code, "MOD-2")
 # Nucleoid replaces a class-level rule on a classroom
 
 # There is a Classroom type
-class Classroom:
-    pass
+class Classroom
 
 # classroom1 is a Classroom whose number is 9
 classroom1 = Classroom()
@@ -402,8 +401,7 @@ assert(classroom1.sign, "ROOM-10")
 # Nucleoid marks a distinction with a class-level conditional
 
 # There is a Result type
-class Result:
-    pass
+class Result
 
 # Any result above 85 is a distinction
 if $Result.mark > 85:
@@ -425,8 +423,7 @@ assert(result1.distinction, true)
 # Nucleoid grades an assessment with a class-level chain
 
 # There is an Assessment type
-class Assessment:
-    pass
+class Assessment
 
 # top is "A", middle is "B", and lower is "C"
 top = "A"; middle = "B"; lower = "C"
@@ -462,12 +459,10 @@ assert(assessment1.grade, "A")
 # Nucleoid counts the pupils of a tutor with a class-level aggregate
 
 # There is a Tutor type
-class Tutor:
-    pass
+class Tutor
 
 # There is a Pupil type
-class Pupil:
-    pass
+class Pupil
 
 # tutor1 is a Tutor
 tutor1 = Tutor()
@@ -496,8 +491,7 @@ assert(tutor1.group, 3)
 # Nucleoid builds a certificate from a property that arrives later
 
 # There is a Certificate type
-class Certificate:
-    pass
+class Certificate
 
 # certificate1 is a Certificate
 certificate1 = Certificate()
@@ -517,12 +511,10 @@ assert(certificate1.full, "CERT5512")
 # Nucleoid reads a teacher through a lesson reference
 
 # There is a Lesson type
-class Lesson:
-    pass
+class Lesson
 
 # There is a Teacher type
-class Teacher:
-    pass
+class Teacher
 
 # lesson1 is a Lesson
 lesson1 = Lesson()
@@ -549,8 +541,7 @@ assert(lesson1.taken, "Taken by Ms Ade")
 # Nucleoid clears a transcript line when a mark is deleted
 
 # There is a Transcript type
-class Transcript:
-    pass
+class Transcript
 
 # transcript1 is a Transcript
 transcript1 = Transcript()
@@ -681,8 +672,7 @@ assert(support, "L")
 # Nucleoid computes a course fee in a class-level block
 
 # There is a Programme type
-class Programme:
-    pass
+class Programme
 
 # while in the block, levy is a local variable that is any programme's fee times 10 divided by 100,
 # and the programme's total is the programme's fee plus levy
@@ -706,8 +696,7 @@ assert(programme1.total, 990)
 # Nucleoid computes a timetable index in a nested class-level block
 
 # There is a Term type
-class Term:
-    pass
+class Term
 
 # while in the block, span is a local variable that is 100 divided by any term's weeks,
 # and in a nested block, the term's index is the floor of span times the term's lessons
@@ -734,8 +723,7 @@ assert(term1.index, 83)
 # Nucleoid flags a resit with an if statement on a property
 
 # There is a Paper type
-class Paper:
-    pass
+class Paper
 
 # paper1 is a Paper whose outcome is "PASS"
 paper1 = Paper()
@@ -757,8 +745,7 @@ assert(paper1.resit, true)
 # Nucleoid chooses a report line with an else statement on a property
 
 # There is a Pupil type
-class Pupil:
-    pass
+class Pupil
 
 # pupil1 is a Pupil whose gifted is false
 pupil1 = Pupil()
@@ -789,8 +776,7 @@ assert(pupil1.plan, "EXTENSION WORK")
 # Nucleoid bands a bursary with multiple else if statements on a property
 
 # There is an Application type
-class Application:
-    pass
+class Application
 
 # application1 is an Application whose income is 20
 application1 = Application()
@@ -969,8 +955,7 @@ assert(total, 100)
 # Nucleoid checks whether every pupil is registered
 
 # There is a Pupil type
-class Pupil:
-    pass
+class Pupil
 
 # pupil1 is a Pupil who is registered
 pupil1 = Pupil()
@@ -995,8 +980,7 @@ assert(complete, false)
 # Nucleoid checks whether any room is double booked
 
 # There is a Room type
-class Room:
-    pass
+class Room
 
 # room1 is a Room that is free
 room1 = Room()
@@ -1038,8 +1022,7 @@ assert(outline, "SETS, LOGIC, PROOF, GRAPHS")
 # Nucleoid creates an entry for every enrolled learner
 
 # There is a Learner type
-class Learner:
-    pass
+class Learner
 
 # learner1 is a Learner
 learner1 = Learner()
@@ -1075,8 +1058,7 @@ assert(Entry[0].kind, "EXAM")
 # Nucleoid rolls back an entry if a rule throws
 
 # There is an Entry type
-class Entry:
-    pass
+class Entry
 
 # If any entry's age is less than 16, then throw 'TOO_YOUNG'
 if $Entry.age < 16:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a candidate number with a regular expression
 
 # There is a Candidate type
-class Candidate:
-    pass
+class Candidate
 
 # If any candidate's number does not match /[0-9]{4}/, then throw 'INVALID_CANDIDATE'
 if not /[0-9]{4}/.test($Candidate.number):

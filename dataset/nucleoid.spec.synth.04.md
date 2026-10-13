@@ -47,8 +47,7 @@ catch error:
     assert(error, ReferenceError("Widget is not defined"))
 
 # There is a Widget type
-class Widget:
-    pass
+class Widget
 
 # widget1 is a Widget
 widget1 = Widget()
@@ -60,8 +59,7 @@ assert(Widget.length, 1)
 # Nucleoid assigns null when a property in an expression is undefined
 
 # There is a Contact type
-class Contact:
-    pass
+class Contact
 
 # contact1 is a Contact
 contact1 = Contact()
@@ -84,8 +82,7 @@ assert(contact1.display, "Ada Reed")
 # Nucleoid keeps a property null while a dependency is null
 
 # There is a Job type
-class Job:
-    pass
+class Job
 
 # job1 is a Job whose schedule is "0 9 * * *" and whose command is null
 job1 = Job()
@@ -102,8 +99,7 @@ assert(job1.entry, null)
 # Nucleoid assigns null when an expression reads through a null pointer
 
 # There is a Batch type
-class Batch:
-    pass
+class Batch
 
 # batch1 is a Batch
 batch1 = Batch()
@@ -166,8 +162,7 @@ assert(name3, "bob!BOB")
 # Nucleoid adds a duration to a class-level date property
 
 # There is a Licence type
-class Licence:
-    pass
+class Licence
 
 # Any licence's expiry is the licence's issued plus 2592000000
 $Licence.expiry = $Licence.issued + 2592000000
@@ -183,8 +178,7 @@ assert(licence1.expiry - licence1.issued, 2592000000)
 # Nucleoid builds a class-level property from a date string
 
 # There is an Event type
-class Event:
-    pass
+class Event
 
 # Any event's label is "on " plus the event's day as a date string
 $Event.label = "on " + $Event.day.toDateString()
@@ -201,16 +195,13 @@ assert(event1.label, "on Fri Mar 05 2021")
 # Nucleoid creates nested instances in a block and assigns them to a property
 
 # There is an Invoice type
-class Invoice:
-    pass
+class Invoice
 
 # There is a Line type
-class Line:
-    pass
+class Line
 
 # There is an Item type
-class Item:
-    pass
+class Item
 
 # Any item's label is "SKU-" plus the item's code
 $Item.label = "SKU-" + $Item.code
@@ -235,8 +226,7 @@ assert(invoice1.line.item.label, "SKU-4471")
 # Nucleoid creates an object in a block and assigns it to a class-level property before instantiation
 
 # There is a Subscriber type
-class Subscriber:
-    pass
+class Subscriber
 
 # terms is an Object whose signed is June 1, 2021,
 # and any subscriber's terms is terms
@@ -257,8 +247,7 @@ assert(subscriber1.terms.expiry, null)
 # Nucleoid creates an object in a block and assigns it to a class-level property after instantiation
 
 # There is a Depot type
-class Depot:
-    pass
+class Depot
 
 # depot1 is a Depot
 depot1 = Depot()
@@ -279,12 +268,10 @@ assert(depot1.region.name, null)
 # Nucleoid creates a nested object in a block and assigns it to a class-level property
 
 # There is a Wallet type
-class Wallet:
-    pass
+class Wallet
 
 # There is a Currency type
-class Currency:
-    pass
+class Currency
 
 # Any currency's symbol is "#" plus the currency's code
 $Currency.symbol = "#" + $Currency.code
@@ -309,15 +296,13 @@ assert(wallet1.holding.unit.symbol, null)
 # Nucleoid shares a class-level instance property with every instance
 
 # There is a Desk type
-class Desk:
-    pass
+class Desk
 
 # Any desk's level is the desk's number divided by 10
 $Desk.level = $Desk.number / 10
 
 # There is a Worker type
-class Worker:
-    pass
+class Worker
 
 # Any worker's desk is a Desk
 $Worker.desk = Desk()
@@ -341,12 +326,10 @@ assert(worker2.desk.level, 4)
 # Nucleoid reads a class-level property through an instance created by a class-level rule
 
 # There is a Campus type
-class Campus:
-    pass
+class Campus
 
 # There is a Hall type
-class Hall:
-    pass
+class Hall
 
 # Any campus's hall is a Hall
 $Campus.hall = Hall()
@@ -369,12 +352,10 @@ assert(campus1.seats, 288)
 # Nucleoid runs a local variable as an object before declaration
 
 # There is a Pump type
-class Pump:
-    pass
+class Pump
 
 # There is a Tank type
-class Tank:
-    pass
+class Tank
 
 # pump1 is a Pump whose rate is 25
 pump1 = Pump()
@@ -401,12 +382,10 @@ assert(pump1.minutes, 20)
 # Nucleoid runs a local variable as an object after declaration
 
 # There is a Loan type
-class Loan:
-    pass
+class Loan
 
 # There is a Rate type
-class Rate:
-    pass
+class Rate
 
 # loan1 is a Loan whose principal is 200000
 loan1 = Loan()
@@ -433,12 +412,10 @@ assert(loan1.interest, 10000)
 # Nucleoid assigns a property on a local variable after initialization
 
 # There is a Shelf type
-class Shelf:
-    pass
+class Shelf
 
 # There is a Slot type
-class Slot:
-    pass
+class Slot
 
 # shelf1 is a Shelf whose depth is 60
 shelf1 = Shelf()
@@ -471,8 +448,7 @@ tasks = []
 code = 1
 
 # There is a Task type
-class Task:
-    pass
+class Task
 
 # task1 is a Task whose code is 1,
 # and task1 is added to tasks
@@ -606,8 +582,7 @@ assert(layout, 1)
 # Nucleoid runs a class-level block statement before instantiation
 
 # There is a Quote type
-class Quote:
-    pass
+class Quote
 
 # while in the block, markup is a local variable that is any quote's cost times 20 divided by 100,
 # and the quote's price is the quote's cost plus markup
@@ -636,8 +611,7 @@ assert(quote1.price, 96)
 # Nucleoid runs a class-level block statement after instantiation
 
 # There is a Trip type
-class Trip:
-    pass
+class Trip
 
 # trip1 is a Trip whose distance is 120
 trip1 = Trip()
@@ -662,8 +636,7 @@ assert(trip1.litres, 10)
 # Nucleoid runs a nested class-level block statement
 
 # There is a Mixture type
-class Mixture:
-    pass
+class Mixture
 
 # while in the block, unit is a local variable that is 100 divided by any mixture's parts,
 # and in a nested block, the mixture's share is the floor of unit times the mixture's weight
@@ -690,8 +663,7 @@ assert(mixture1.share, 233)
 # Nucleoid runs a nested if statement in a class-level block
 
 # There is a Policy type
-class Policy:
-    pass
+class Policy
 
 # band1 is "PREFERRED"
 band1 = "PREFERRED"
@@ -722,8 +694,7 @@ assert(policy1.band, "P")
 # Nucleoid runs a nested else statement in a class-level block
 
 # There is a Meter type
-class Meter:
-    pass
+class Meter
 
 # steady is "STEADY"
 steady = "STEADY"
@@ -760,8 +731,7 @@ assert(meter1.state, "S")
 # Nucleoid runs a for of statement without dependencies
 
 # There is a Crate type
-class Crate:
-    pass
+class Crate
 
 # crate1 is a Crate
 crate1 = Crate()
@@ -865,8 +835,7 @@ suffix(prefix)
 # Nucleoid rejects value as a property name in a block
 
 # There is a Timer type
-class Timer:
-    pass
+class Timer
 
 try:
     # while in the block, value is a local Timer,
@@ -883,8 +852,7 @@ catch error:
 # Nucleoid rejects value as a property name in a value assignment
 
 # There is a Field type
-class Field:
-    pass
+class Field
 
 # value is a Field
 value = Field()
@@ -924,8 +892,7 @@ assert(doubled, 480)
 serial = 0
 
 # There is a Unit type
-class Unit:
-    pass
+class Unit
 
 # unit1 is a Unit
 unit1 = Unit()
@@ -944,8 +911,7 @@ assert(unit1.tag, "U0")
 # Nucleoid uses the value property in an if condition on a property
 
 # There is a Notice type
-class Notice:
-    pass
+class Notice
 
 # notice1 is a Notice whose body is "Please read"
 notice1 = Notice()
@@ -968,12 +934,10 @@ catch error:
 # Nucleoid reads a class-level property through a chain of instance properties
 
 # There is a Client type
-class Client:
-    pass
+class Client
 
 # There is a Site type
-class Site:
-    pass
+class Site
 
 # Any site's line is the site's city plus ", " plus the site's country
 $Site.line = $Site.city + ", " + $Site.country
@@ -997,12 +961,10 @@ assert(client1.site.line, "Porto, PT")
 # Nucleoid creates a dependency on behalf of a property with a reference
 
 # There is a Form type
-class Form:
-    pass
+class Form
 
 # There is a Layout type
-class Layout:
-    pass
+class Layout
 
 # form1 is a Form
 form1 = Form()
@@ -1031,16 +993,14 @@ assert(form1.layout.title, "B-FORM")
 # Nucleoid creates a dependency on behalf of a local variable with a reference
 
 # There is a Score type
-class Score:
-    pass
+class Score
 
 # score1 is a Score whose points is 6
 score1 = Score()
 score1.points = 6
 
 # There is a Round type
-class Round:
-    pass
+class Round
 
 # Any round's average is 0
 $Round.average = 0
@@ -1125,12 +1085,10 @@ assert(room1.locked, false)
 # Nucleoid creates an instance in a block and assigns it to a property
 
 # There is a Studio type
-class Studio:
-    pass
+class Studio
 
 # There is a Session type
-class Session:
-    pass
+class Session
 
 # Any session's slot is the session's day as a date string plus " " plus the session's hour
 $Session.slot = $Session.day.toDateString() + " " + $Session.hour
@@ -1155,8 +1113,7 @@ assert(studio1.session.slot, "Sun Feb 02 2020 09:00")
 # Nucleoid updates a property assignment on an instance
 
 # There is a Beam type
-class Beam:
-    pass
+class Beam
 
 # beam1 is a Beam whose span is 10
 beam1 = Beam()

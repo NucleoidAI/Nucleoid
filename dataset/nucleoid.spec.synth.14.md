@@ -375,8 +375,7 @@ assert(service2.headcode, "1A13")
 # Nucleoid replaces a class-level rule on a platform
 
 # There is a Platform type
-class Platform:
-    pass
+class Platform
 
 # platform1 is a Platform whose number is 4
 platform1 = Platform()
@@ -402,8 +401,7 @@ assert(platform1.sign, "PLATFORM-5")
 # Nucleoid marks a cancellation with a class-level conditional
 
 # There is a Train type
-class Train:
-    pass
+class Train
 
 # Any train more than 60 minutes late is cancelled
 if $Train.late > 60:
@@ -425,8 +423,7 @@ assert(train1.cancelled, true)
 # Nucleoid classifies a delay with a class-level chain
 
 # There is a Delay type
-class Delay:
-    pass
+class Delay
 
 # severe is "SEVERE", moderate is "MODERATE", and slight is "SLIGHT"
 severe = "SEVERE"; moderate = "MODERATE"; slight = "SLIGHT"
@@ -462,12 +459,10 @@ assert(delay1.grade, "SEVERE")
 # Nucleoid counts the calls of a route with a class-level aggregate
 
 # There is a Route type
-class Route:
-    pass
+class Route
 
 # There is a Call type
-class Call:
-    pass
+class Call
 
 # route1 is a Route
 route1 = Route()
@@ -496,8 +491,7 @@ assert(route1.calls, 3)
 # Nucleoid builds a ticket from a property that arrives later
 
 # There is a Ticket type
-class Ticket:
-    pass
+class Ticket
 
 # ticket1 is a Ticket
 ticket1 = Ticket()
@@ -517,12 +511,10 @@ assert(ticket1.full, "TK5590")
 # Nucleoid reads a driver through a service reference
 
 # There is a Service type
-class Service:
-    pass
+class Service
 
 # There is a Driver type
-class Driver:
-    pass
+class Driver
 
 # service1 is a Service
 service1 = Service()
@@ -549,8 +541,7 @@ assert(service1.crewed, "Driven by Rowan Hale")
 # Nucleoid clears a board entry when a time is deleted
 
 # There is a Board type
-class Board:
-    pass
+class Board
 
 # board1 is a Board
 board1 = Board()
@@ -681,8 +672,7 @@ assert(mode, "COACH")
 # Nucleoid computes a fare total in a class-level block
 
 # There is a Journey type
-class Journey:
-    pass
+class Journey
 
 # while in the block, levy is a local variable that is any journey's fare times 10 divided by 100,
 # and the journey's total is the journey's fare plus levy
@@ -706,8 +696,7 @@ assert(journey1.total, 66)
 # Nucleoid computes a path index in a nested class-level block
 
 # There is a Line type
-class Line:
-    pass
+class Line
 
 # while in the block, share is a local variable that is 600 divided by any line's tracks,
 # and in a nested block, the line's index is the floor of share times the line's signals
@@ -734,8 +723,7 @@ assert(line1.index, 342)
 # Nucleoid flags an evacuation with an if statement on a property
 
 # There is a Station type
-class Station:
-    pass
+class Station
 
 # station1 is a Station whose state is "OPEN"
 station1 = Station()
@@ -757,8 +745,7 @@ assert(station1.evacuate, true)
 # Nucleoid chooses a boarding note with an else statement on a property
 
 # There is a Coach type
-class Coach:
-    pass
+class Coach
 
 # coach1 is a Coach whose accessible is false
 coach1 = Coach()
@@ -789,8 +776,7 @@ assert(coach1.note, "ASSISTED BOARDING")
 # Nucleoid bands a compensation with multiple else if statements on a property
 
 # There is a Claim type
-class Claim:
-    pass
+class Claim
 
 # claim1 is a Claim whose minutes is 20
 claim1 = Claim()
@@ -969,8 +955,7 @@ assert(total, 200)
 # Nucleoid checks whether every coach is cleaned
 
 # There is a Coach type
-class Coach:
-    pass
+class Coach
 
 # coach1 is a Coach that is cleaned
 coach1 = Coach()
@@ -995,8 +980,7 @@ assert(ready, false)
 # Nucleoid checks whether any signal is failed
 
 # There is a Signal type
-class Signal:
-    pass
+class Signal
 
 # signal1 is a Signal that is working
 signal1 = Signal()
@@ -1038,8 +1022,7 @@ assert(pattern, "LDS - YRK - NCL - EDB")
 # Nucleoid creates a diagram for every running service
 
 # There is a Service type
-class Service:
-    pass
+class Service
 
 # service1 is a Service
 service1 = Service()
@@ -1075,8 +1058,7 @@ assert(Diagram[0].kind, "WEEKDAY")
 # Nucleoid rolls back a booking if a rule throws
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 # If any booking's seats is greater than 9, then throw 'GROUP_BOOKING_REQUIRED'
 if $Booking.seats > 9:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a headcode with a regular expression
 
 # There is a Working type
-class Working:
-    pass
+class Working
 
 # If any working's headcode does not match /[0-9][A-Z][0-9]{2}/, then throw 'INVALID_HEADCODE'
 if not /[0-9][A-Z][0-9]{2}/.test($Working.headcode):

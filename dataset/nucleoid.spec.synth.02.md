@@ -5,8 +5,7 @@
 # Nucleoid deletes a class-level property assignment
 
 # There is a Rate type
-class Rate:
-    pass
+class Rate
 
 # Any rate's percent is the rate's basis divided by 100
 $Rate.percent = $Rate.basis / 100
@@ -60,8 +59,7 @@ assert(third, 3)
 # Nucleoid detects a circular dependency between class-level properties
 
 # There is a Box type
-class Box:
-    pass
+class Box
 
 # Any box's area is the box's width times the box's height
 $Box.area = $Box.width * $Box.height
@@ -237,8 +235,7 @@ assert(total, 30)
 # Nucleoid aggregates a class list in a variable
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # order1 is an Order whose amount is 100
 order1 = Order()
@@ -269,8 +266,7 @@ assert(revenue, 450)
 # Nucleoid checks whether every instance satisfies a condition
 
 # There is a Check type
-class Check:
-    pass
+class Check
 
 # check1 is a Check which passed
 check1 = Check()
@@ -383,8 +379,7 @@ assert(states[1], "GA")
 # Nucleoid uses string functions in a class-level property
 
 # There is an Account type
-class Account:
-    pass
+class Account
 
 # Any account's slug is the account's name lowercased with spaces replaced by "-"
 $Account.slug = $Account.name.lower().replace(" ", "-")
@@ -442,8 +437,7 @@ assert(floor, 5)
 # Nucleoid rounds a class-level derived property
 
 # There is a Rating type
-class Rating:
-    pass
+class Rating
 
 # Any rating's stars is the round of the rating's score divided by 20
 $Rating.stars = Math.round($Rating.score / 20)
@@ -486,12 +480,10 @@ assert(rating1.stars, -1)
 # Nucleoid creates instances in a nested for of statement
 
 # There is a Row type
-class Row:
-    pass
+class Row
 
 # There is a Column type
-class Column:
-    pass
+class Column
 
 # There is a Cell type,
 # which has a row as a Row
@@ -556,8 +548,7 @@ assert(Label.length, 0)
 # Nucleoid rolls back a class-level assignment if an existing instance throws
 
 # There is a Reading type
-class Reading:
-    pass
+class Reading
 
 # reading1 is a Reading whose celsius is 200
 reading1 = Reading()
@@ -588,8 +579,7 @@ assert(reading1.fahrenheit, 212)
 # Nucleoid runs class-level statements in order as received
 
 # There is an Alert type
-class Alert:
-    pass
+class Alert
 
 # If any alert's level is greater than 1, then the alert's tone is "LOW"
 if $Alert.level > 1:
@@ -655,8 +645,7 @@ assert(dog1.label, "A-Max")
 # Nucleoid overrides a class-level property in a subclass
 
 # There is a Payment type
-class Payment:
-    pass
+class Payment
 
 # Any payment's method is "CARD"
 $Payment.method = "CARD"
@@ -683,8 +672,7 @@ assert(wire1.method, "TRANSFER")
 # Nucleoid creates a class-level condition with an and operator
 
 # There is a Loan type
-class Loan:
-    pass
+class Loan
 
 # If any loan's score is greater than 700 and the loan's income is greater than 50000,
 # then the loan is approved
@@ -708,8 +696,7 @@ assert(loan1.approved, true)
 # Nucleoid creates a class-level condition with an or operator
 
 # There is an Access type
-class Access:
-    pass
+class Access
 
 # If any access's role is "ADMIN" or the access is owner, then the access is granted
 if $Access.role == "ADMIN" or $Access.owner == true:
@@ -737,16 +724,13 @@ assert(access2.granted, true)
 # Nucleoid reads a class-level property through a chain of three classes
 
 # There is a Country type
-class Country:
-    pass
+class Country
 
 # There is a City type
-class City:
-    pass
+class City
 
 # There is a Store type
-class Store:
-    pass
+class Store
 
 # Any store's label is the store's city's country's code plus "-" plus the store's city's name
 $Store.label = $Store.city.country.code + "-" + $Store.city.name
@@ -776,12 +760,10 @@ assert(store1.label, "CA-NY")
 # Nucleoid assigns null when an intermediate reference is deleted
 
 # There is a Team type
-class Team:
-    pass
+class Team
 
 # There is a Player type
-class Player:
-    pass
+class Player
 
 # team1 is a Team whose city is "Boston"
 team1 = Team()
@@ -831,8 +813,7 @@ assert(label, "N1")
 # Nucleoid uses value property in a for of statement
 
 # There is a Slot type
-class Slot:
-    pass
+class Slot
 
 # counter is 0
 counter = 0
@@ -928,8 +909,7 @@ catch error:
 # Nucleoid rejects value as a class-level property name
 
 # There is a Meter type
-class Meter:
-    pass
+class Meter
 
 try:
     # any meter's value is 100
@@ -942,8 +922,7 @@ catch error:
 # Nucleoid updates a variable dependent on a filtered class list
 
 # There is a Task type
-class Task:
-    pass
+class Task
 
 # task1 is a Task which is done
 task1 = Task()
@@ -973,8 +952,7 @@ assert(open, 1)
 # Nucleoid updates a variable dependent on the length of a class list
 
 # There is a Guest type
-class Guest:
-    pass
+class Guest
 
 # capacity is 2
 capacity = 2
@@ -1007,8 +985,7 @@ assert(full, true)
 # Nucleoid runs a block statement that assigns both a variable and a property
 
 # There is a Cart type
-class Cart:
-    pass
+class Cart
 
 # cart1 is a Cart whose subtotal is 200
 cart1 = Cart()
@@ -1069,8 +1046,7 @@ assert(threshold, 90)
 # Nucleoid compares a class-level property with a date variable
 
 # There is a Task type
-class Task:
-    pass
+class Task
 
 # deadline is June 1, 2020
 deadline = Date("2020-6-1")
@@ -1096,12 +1072,10 @@ assert(task2.late, null)
 # Nucleoid updates a property when a referenced instance is replaced
 
 # There is a Plan type
-class Plan:
-    pass
+class Plan
 
 # There is a User type
-class User:
-    pass
+class User
 
 # basic is a Plan whose rate is 10
 basic = Plan()
@@ -1160,8 +1134,7 @@ assert(choice, "D")
 # Nucleoid creates a dependency on a list held as a property
 
 # There is a Playlist type
-class Playlist:
-    pass
+class Playlist
 
 # playlist1 is a Playlist whose tracks is an empty list
 playlist1 = Playlist()
@@ -1192,12 +1165,10 @@ assert(playlist1.count, 1)
 # Nucleoid aggregates another class list in a class-level property
 
 # There is a Category type
-class Category:
-    pass
+class Category
 
 # There is a Product type
-class Product:
-    pass
+class Product
 
 # Any category's revenue is the sum of the prices of the Products whose category is the category
 $Category.revenue = Product.filter(p => p.category == $Category).reduce((sum, p) => sum + p.price, 0)
@@ -1235,8 +1206,7 @@ catch error:
     assert(error, ReferenceError("Ghost is not defined"))
 
 # There is a Ghost type
-class Ghost:
-    pass
+class Ghost
 
 # Any ghost's name is "X"
 $Ghost.name = "X"

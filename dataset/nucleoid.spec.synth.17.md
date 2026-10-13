@@ -375,8 +375,7 @@ assert(ticket2.reference, "INC-56")
 # Nucleoid replaces a class-level rule on a rack
 
 # There is a Rack type
-class Rack:
-    pass
+class Rack
 
 # rack1 is a Rack whose number is 8
 rack1 = Rack()
@@ -402,8 +401,7 @@ assert(rack1.sign, "RACK-9")
 # Nucleoid marks a saturated link with a class-level conditional
 
 # There is a Link type
-class Link:
-    pass
+class Link
 
 # Any link above 90 percent is saturated
 if $Link.utilisation > 90:
@@ -425,8 +423,7 @@ assert(link1.saturated, true)
 # Nucleoid prioritises an incident with a class-level chain
 
 # There is an Incident type
-class Incident:
-    pass
+class Incident
 
 # p1 is "P1", p2 is "P2", and p3 is "P3"
 p1 = "P1"; p2 = "P2"; p3 = "P3"
@@ -462,12 +459,10 @@ assert(incident1.priority, "P1")
 # Nucleoid counts the ports of a switch with a class-level aggregate
 
 # There is a Switch type
-class Switch:
-    pass
+class Switch
 
 # There is a Port type
-class Port:
-    pass
+class Port
 
 # switch1 is a Switch
 switch1 = Switch()
@@ -496,8 +491,7 @@ assert(switch1.ports, 3)
 # Nucleoid builds an order from a property that arrives later
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # order1 is an Order
 order1 = Order()
@@ -517,12 +511,10 @@ assert(order1.full, "ORD7742")
 # Nucleoid reads an engineer through a job reference
 
 # There is a Job type
-class Job:
-    pass
+class Job
 
 # There is an Engineer type
-class Engineer:
-    pass
+class Engineer
 
 # job1 is a Job
 job1 = Job()
@@ -549,8 +541,7 @@ assert(job1.assigned, "Assigned to Lena Ferro")
 # Nucleoid clears an alarm line when a code is deleted
 
 # There is an Alarm type
-class Alarm:
-    pass
+class Alarm
 
 # alarm1 is an Alarm
 alarm1 = Alarm()
@@ -681,8 +672,7 @@ assert(routing, "FIXED")
 # Nucleoid computes a monthly charge in a class-level block
 
 # There is a Contract type
-class Contract:
-    pass
+class Contract
 
 # while in the block, tax is a local variable that is any contract's rental times 20 divided by 100,
 # and the contract's gross is the contract's rental plus tax
@@ -706,8 +696,7 @@ assert(contract1.gross, 60)
 # Nucleoid computes a capacity index in a nested class-level block
 
 # There is a Node type
-class Node:
-    pass
+class Node
 
 # while in the block, share is a local variable that is 1000 divided by any node's links,
 # and in a nested block, the node's index is the floor of share times the node's streams
@@ -734,8 +723,7 @@ assert(node1.index, 428)
 # Nucleoid flags a suspension with an if statement on a property
 
 # There is an Account type
-class Account:
-    pass
+class Account
 
 # account1 is an Account whose state is "ACTIVE"
 account1 = Account()
@@ -757,8 +745,7 @@ assert(account1.suspend, true)
 # Nucleoid chooses an install note with an else statement on a property
 
 # There is an Install type
-class Install:
-    pass
+class Install
 
 # install1 is an Install whose fibre is false
 install1 = Install()
@@ -789,8 +776,7 @@ assert(install1.method, "BLOWN FIBRE")
 # Nucleoid bands an excess charge with multiple else if statements on a property
 
 # There is a Bill type
-class Bill:
-    pass
+class Bill
 
 # bill1 is a Bill whose gigabytes is 20
 bill1 = Bill()
@@ -969,8 +955,7 @@ assert(total, 1000)
 # Nucleoid checks whether every node is reachable
 
 # There is a Node type
-class Node:
-    pass
+class Node
 
 # node1 is a Node that is reachable
 node1 = Node()
@@ -995,8 +980,7 @@ assert(healthy, false)
 # Nucleoid checks whether any circuit is down
 
 # There is a Circuit type
-class Circuit:
-    pass
+class Circuit
 
 # circuit1 is a Circuit that is up
 circuit1 = Circuit()
@@ -1038,8 +1022,7 @@ assert(path, "CPE::EDGE::CORE::PEER")
 # Nucleoid creates a task for every open incident
 
 # There is an Incident type
-class Incident:
-    pass
+class Incident
 
 # incident1 is an Incident
 incident1 = Incident()
@@ -1075,8 +1058,7 @@ assert(Task[0].kind, "DIAGNOSE")
 # Nucleoid rolls back a provision if a rule throws
 
 # There is a Provision type
-class Provision:
-    pass
+class Provision
 
 # If any provision's speed is greater than 1000, then throw 'SPEED_UNAVAILABLE'
 if $Provision.speed > 1000:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a circuit identifier with a regular expression
 
 # There is a Circuit type
-class Circuit:
-    pass
+class Circuit
 
 # If any circuit's identifier does not match /[A-Z]{2}[0-9]{4}/, then throw 'INVALID_CIRCUIT'
 if not /[A-Z]{2}[0-9]{4}/.test($Circuit.identifier):

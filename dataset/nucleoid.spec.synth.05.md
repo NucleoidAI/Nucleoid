@@ -174,8 +174,7 @@ assert(adjustment, -8)
 # Nucleoid creates an if statement on a property
 
 # There is a Lamp type
-class Lamp:
-    pass
+class Lamp
 
 # lamp1 is a Lamp whose colour is "AMBER"
 lamp1 = Lamp()
@@ -197,8 +196,7 @@ assert(lamp1.state, "GO")
 # Nucleoid updates an if block on a property
 
 # There is a Wallet type
-class Wallet:
-    pass
+class Wallet
 
 # wallet1 is a Wallet whose balance is 200
 wallet1 = Wallet()
@@ -221,8 +219,7 @@ assert(wallet1.tier, "STARTER")
 # Nucleoid creates an else statement on a property with property dependencies
 
 # There is an Entry type
-class Entry:
-    pass
+class Entry
 
 # entry1 is an Entry whose kind is "PERSON",
 # whose given is "Ada" and whose family is "Lovelace"
@@ -256,8 +253,7 @@ assert(entry1.title, "C A")
 # Nucleoid creates multiple else if statements on a property
 
 # There is a Shipment type
-class Shipment:
-    pass
+class Shipment
 
 # shipment1 is a Shipment whose weight is 400 and whose zone is 1
 shipment1 = Shipment()
@@ -301,8 +297,7 @@ assert(shipment1.cost, 40)
 # Nucleoid creates a class-level conditional before instantiation
 
 # There is a Permit type
-class Permit:
-    pass
+class Permit
 
 # Any permit issued after January 1, 2000 is current
 if $Permit.issued > Date("2000-1-1"):
@@ -328,8 +323,7 @@ assert(permit2.status, null)
 # Nucleoid creates a class-level conditional after instantiation
 
 # There is a Pupil type
-class Pupil:
-    pass
+class Pupil
 
 # pupil1 is a Pupil whose age is 6 and whose group is "Infants"
 pupil1 = Pupil()
@@ -359,8 +353,7 @@ assert(pupil2.group, "Infants")
 # Nucleoid updates a class-level if block
 
 # There is a Bin type
-class Bin:
-    pass
+class Bin
 
 # bin1 is a Bin whose count is 0
 bin1 = Bin()
@@ -389,8 +382,7 @@ assert(bin2.refill, null)
 # Nucleoid creates a class-level else statement before instantiation
 
 # There is a Queue type
-class Queue:
-    pass
+class Queue
 
 # If any queue's depth is greater than 100, then the queue's mode is busy,
 # else the queue's mode is calm
@@ -423,8 +415,7 @@ assert(queue1.mode, "C")
 # Nucleoid creates multiple class-level else if statements after instantiation
 
 # There is a Figure type
-class Figure:
-    pass
+class Figure
 
 # figure1 is a Figure whose kind is "RECTANGLE",
 # whose base is 5 and whose height is 6
@@ -461,8 +452,7 @@ assert(figure1.area, 21)
 # Nucleoid creates a class-level property before instantiation
 
 # There is a Poll type
-class Poll:
-    pass
+class Poll
 
 # Any poll's mean is the poll's total divided by 4
 $Poll.mean = $Poll.total / 4
@@ -482,8 +472,7 @@ assert(poll1.mean, 6.5)
 # Nucleoid runs a block statement on a property
 
 # There is a Parcel type
-class Parcel:
-    pass
+class Parcel
 
 # parcel1 is a Parcel
 parcel1 = Parcel()
@@ -510,8 +499,7 @@ assert(parcel1.marked, "UK0000002")
 # Nucleoid runs a nested block statement on a property
 
 # There is a Block type
-class Block:
-    pass
+class Block
 
 # block1 is a Block
 block1 = Block()
@@ -543,8 +531,7 @@ assert(block1.volume, 729)
 # Nucleoid runs a nested if statement on a property
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # order1 is an Order
 order1 = Order()
@@ -575,8 +562,7 @@ assert(order1.levy, 15)
 # Nucleoid creates a nested else statement on a property
 
 # There is a Gauge type
-class Gauge:
-    pass
+class Gauge
 
 # gauge1 is a Gauge
 gauge1 = Gauge()
@@ -614,8 +600,7 @@ assert(gauge1.state, "U")
 
 # There is a Fleet type,
 # and any fleet's code is "FL-" plus the fleet's number
-class Fleet:
-    pass
+class Fleet
 
 $Fleet.code = "FL-" + $Fleet.number
 
@@ -668,8 +653,7 @@ assert(mirror, 2)
 # Nucleoid creates a property assignment after a property is declared
 
 # There is an Account type
-class Account:
-    pass
+class Account
 
 # account1 is an Account
 account1 = Account()
@@ -692,12 +676,10 @@ assert(account1.address, "ada2@example.com")
 # Nucleoid assigns an instance to a property before its class rule exists
 
 # There is a Courier type
-class Courier:
-    pass
+class Courier
 
 # There is a Leg type
-class Leg:
-    pass
+class Leg
 
 # Any leg's length is the square root of the leg's x squared plus the leg's y squared
 $Leg.length = Math.sqrt($Leg.x * $Leg.x + $Leg.y * $Leg.y)
@@ -721,15 +703,13 @@ assert(courier1.leg.length, 10)
 # Nucleoid assigns an instance to a property after its class rule exists
 
 # There is a Crop type
-class Crop:
-    pass
+class Crop
 
 # crop1 is a Crop
 crop1 = Crop()
 
 # There is a Grade type
-class Grade:
-    pass
+class Grade
 
 # crop1's grade is a Grade whose score is 25
 crop1.grade = Grade()
@@ -748,12 +728,10 @@ assert(crop1.grade.band, "C")
 # Nucleoid creates a class-level property from a chain of two classes
 
 # There is a Host type
-class Host:
-    pass
+class Host
 
 # There is a Kernel type
-class Kernel:
-    pass
+class Kernel
 
 # Any host's kernel is a Kernel
 $Host.kernel = Kernel()
@@ -816,8 +794,7 @@ assert(locked, false)
 # Nucleoid creates a built-in object as a property of a local variable
 
 # There is a Delivery type
-class Delivery:
-    pass
+class Delivery
 
 # While in the block, delivery is a local Delivery whose date is April 4, 2019,
 # and delivery1 is delivery
@@ -834,8 +811,7 @@ assert(delivery1.date.toDateString(), "Thu Apr 04 2019")
 # Nucleoid creates a property of a local variable found by id
 
 # There is a Member type
-class Member:
-    pass
+class Member
 
 # member0 is a Member
 member0 = Member()
@@ -855,8 +831,7 @@ assert(member0.role, "ADMIN")
 # Nucleoid rejects a property assignment on an undefined property of a local
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 try:
     # while in the block, booking is a local Booking,
@@ -900,8 +875,7 @@ probe2 = Probe("P1")
 # Nucleoid updates a query when its parameter changes
 
 # There is a Runner type
-class Runner:
-    pass
+class Runner
 
 # runner1 is a Runner whose bib is 11
 runner1 = Runner()
@@ -990,8 +964,7 @@ assert(Coupon[0].id != null, true)
 # Nucleoid deletes an instance and clears its address
 
 # There is a Marker type
-class Marker:
-    pass
+class Marker
 
 # marker1 is a Marker
 marker1 = Marker()
@@ -1013,12 +986,10 @@ catch error:
 # Nucleoid rejects deleting an instance that holds an instance as a property
 
 # There is a Frame type
-class Frame:
-    pass
+class Frame
 
 # There is a Glass type
-class Glass:
-    pass
+class Glass
 
 # frame1 is a Frame
 frame1 = Frame()
@@ -1045,8 +1016,7 @@ assert(Frame["frame1"], null)
 # Nucleoid rolls back a property assignment if a class-level rule throws
 
 # There is a Part type
-class Part:
-    pass
+class Part
 
 # If any part's code is 'X', then throw 'INVALID_CODE'
 if $Part.code == 'X':

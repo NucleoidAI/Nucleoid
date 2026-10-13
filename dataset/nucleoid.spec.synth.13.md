@@ -375,8 +375,7 @@ assert(order2.reference, "OR-32")
 # Nucleoid replaces a class-level rule on an aisle
 
 # There is an Aisle type
-class Aisle:
-    pass
+class Aisle
 
 # aisle1 is an Aisle whose number is 5
 aisle1 = Aisle()
@@ -402,8 +401,7 @@ assert(aisle1.sign, "AISLE-6")
 # Nucleoid marks a bulk order with a class-level conditional
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # Any order over 100 items is bulk
 if $Order.items > 100:
@@ -425,8 +423,7 @@ assert(order1.bulk, true)
 # Nucleoid tiers a customer with a class-level chain
 
 # There is a Customer type
-class Customer:
-    pass
+class Customer
 
 # platinum is "PLATINUM", gold is "GOLD", and basic is "BASIC"
 platinum = "PLATINUM"; gold = "GOLD"; basic = "BASIC"
@@ -462,12 +459,10 @@ assert(customer1.tier, "PLATINUM")
 # Nucleoid counts the reviews of a product with a class-level aggregate
 
 # There is a Product type
-class Product:
-    pass
+class Product
 
 # There is a Review type
-class Review:
-    pass
+class Review
 
 # product1 is a Product
 product1 = Product()
@@ -496,8 +491,7 @@ assert(product1.reviews, 3)
 # Nucleoid builds a receipt from a property that arrives later
 
 # There is a Receipt type
-class Receipt:
-    pass
+class Receipt
 
 # receipt1 is a Receipt
 receipt1 = Receipt()
@@ -517,12 +511,10 @@ assert(receipt1.full, "RC2214")
 # Nucleoid reads a supplier through a product reference
 
 # There is a Product type
-class Product:
-    pass
+class Product
 
 # There is a Supplier type
-class Supplier:
-    pass
+class Supplier
 
 # product1 is a Product
 product1 = Product()
@@ -549,8 +541,7 @@ assert(product1.sourced, "From Bellrose")
 # Nucleoid clears a label when a price is deleted
 
 # There is a Label type
-class Label:
-    pass
+class Label
 
 # label1 is a Label
 label1 = Label()
@@ -681,8 +672,7 @@ assert(shipping, "PCL")
 # Nucleoid computes a retail price in a class-level block
 
 # There is a Line type
-class Line:
-    pass
+class Line
 
 # while in the block, uplift is a local variable that is any line's cost times 50 divided by 100,
 # and the line's retail is the line's cost plus uplift
@@ -706,8 +696,7 @@ assert(line1.retail, 60)
 # Nucleoid computes a shelf index in a nested class-level block
 
 # There is a Store type
-class Store:
-    pass
+class Store
 
 # while in the block, share is a local variable that is 400 divided by any store's bays,
 # and in a nested block, the store's index is the floor of share times the store's shelves
@@ -734,8 +723,7 @@ assert(store1.index, 933)
 # Nucleoid flags a return with an if statement on a property
 
 # There is a Parcel type
-class Parcel:
-    pass
+class Parcel
 
 # parcel1 is a Parcel whose state is "DELIVERED"
 parcel1 = Parcel()
@@ -757,8 +745,7 @@ assert(parcel1.returning, true)
 # Nucleoid chooses a packaging note with an else statement on a property
 
 # There is an Item type
-class Item:
-    pass
+class Item
 
 # item1 is an Item whose gift is false
 item1 = Item()
@@ -789,8 +776,7 @@ assert(item1.packing, "GIFT WRAPPED")
 # Nucleoid bands a delivery charge with multiple else if statements on a property
 
 # There is a Basket type
-class Basket:
-    pass
+class Basket
 
 # basket1 is a Basket whose total is 20
 basket1 = Basket()
@@ -969,8 +955,7 @@ assert(total, 150)
 # Nucleoid checks whether every item is in stock
 
 # There is an Item type
-class Item:
-    pass
+class Item
 
 # item1 is an Item that is in stock
 item1 = Item()
@@ -995,8 +980,7 @@ assert(fulfillable, false)
 # Nucleoid checks whether any order is late
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # order1 is an Order that is on time
 order1 = Order()
@@ -1038,8 +1022,7 @@ assert(breadcrumb, "HOME / SHOP / BOOKS / FICTION")
 # Nucleoid creates a pick list for every open order
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # order1 is an Order
 order1 = Order()
@@ -1075,8 +1058,7 @@ assert(Pick[0].kind, "WAVE")
 # Nucleoid rolls back a discount if a rule throws
 
 # There is a Discount type
-class Discount:
-    pass
+class Discount
 
 # If any discount's percent is greater than 75, then throw 'DISCOUNT_TOO_DEEP'
 if $Discount.percent > 75:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a postcode with a regular expression
 
 # There is a Delivery type
-class Delivery:
-    pass
+class Delivery
 
 # If any delivery's postcode does not match /[A-Z]{2}[0-9]/, then throw 'INVALID_POSTCODE'
 if not /[A-Z]{2}[0-9]/.test($Delivery.postcode):

@@ -485,6 +485,30 @@ impl Parser {
             Vec::new()
         };
 
+        if matches!(
+            self.peek(),
+            Token::Newline | Token::Semicolon | Token::Dedent | Token::RightBrace | Token::Eof
+        ) {
+            // Leave the terminator for the enclosing suite or block. An indent
+            // after separators still requires a colon; skip_separators would
+            // otherwise turn a misspelled class body into separate statements.
+            let following = self
+                .tokens
+                .iter()
+                .skip(self.position)
+                .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon));
+            if following.is_none_or(|spanned| spanned.token != Token::Indent) {
+                return Ok(Stmt::Class(ClassDecl {
+                    name,
+                    parent: None,
+                    parameters,
+                    fields: Vec::new(),
+                    constructor: Vec::new(),
+                    methods: Vec::new(),
+                }));
+            }
+        }
+
         self.expect(&Token::Colon)?;
 
         // `class Student: Person` names a parent on the same line.

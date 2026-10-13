@@ -95,6 +95,23 @@ valid. [NUC 13](docs/nuc-0013.md) passed independent per-case evaluation.
 The crate is now `2.0.0` because the new public lexer token variants affect
 downstream exhaustive Rust matches; existing Nucleoid programs remain valid.
 
+**Empty types need no placeholder body**
+
+```nuc
+class Entity
+entity1 = Entity()
+$Entity.enabled = true
+assert(typeof Entity, List)
+assert(entity1.enabled, true)
+assert(Entity.length, 1)
+```
+
+A bare class header is equivalent to an indented pass-only body. Optional
+parameters keep their existing binding behavior and do not create properties
+automatically. Nonempty bodies and inheritance retain the colon syntax.
+[NUC 14](docs/nuc-0014.md) specifies the accepted syntax and its independent
+per-case evaluation.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

@@ -358,8 +358,7 @@ assert(article2.slug, "ART-10")
 # Nucleoid replaces a class-level rule on a section
 
 # There is a Section type
-class Section:
-    pass
+class Section
 
 # section1 is a Section whose number is 4
 section1 = Section()
@@ -385,8 +384,7 @@ assert(section1.sign, "SECTION-5")
 # Nucleoid marks a long read with a class-level conditional
 
 # There is a Feature type
-class Feature:
-    pass
+class Feature
 
 # Any feature over 3000 words is a long read
 if $Feature.words > 3000:
@@ -408,8 +406,7 @@ assert(feature1.longRead, true)
 # Nucleoid rates a submission with a class-level chain
 
 # There is a Submission type
-class Submission:
-    pass
+class Submission
 
 # accept is "ACCEPT", revise is "REVISE", and decline is "DECLINE"
 accept = "ACCEPT"; revise = "REVISE"; decline = "DECLINE"
@@ -445,12 +442,10 @@ assert(submission1.outcome, "ACCEPT")
 # Nucleoid counts the articles of an issue with a class-level aggregate
 
 # There is an Issue type
-class Issue:
-    pass
+class Issue
 
 # There is an Article type
-class Article:
-    pass
+class Article
 
 # issue1 is an Issue
 issue1 = Issue()
@@ -479,8 +474,7 @@ assert(issue1.articles, 3)
 # Nucleoid builds an isbn from a property that arrives later
 
 # There is a Book type
-class Book:
-    pass
+class Book
 
 # book1 is a Book
 book1 = Book()
@@ -500,12 +494,10 @@ assert(book1.isbn, "9780306406")
 # Nucleoid reads an author through a title reference
 
 # There is a Title type
-class Title:
-    pass
+class Title
 
 # There is an Author type
-class Author:
-    pass
+class Author
 
 # title1 is a Title
 title1 = Title()
@@ -532,8 +524,7 @@ assert(title1.credit, "By Vera Lang")
 # Nucleoid clears a byline when a name is deleted
 
 # There is a Byline type
-class Byline:
-    pass
+class Byline
 
 # byline1 is a Byline
 byline1 = Byline()
@@ -664,8 +655,7 @@ assert(edit, "LINE")
 # Nucleoid computes a cover price in a class-level block
 
 # There is an Edition type
-class Edition:
-    pass
+class Edition
 
 # while in the block, margin is a local variable that is any edition's cost times 60 divided by 100,
 # and the edition's price is the edition's cost plus margin
@@ -689,8 +679,7 @@ assert(edition1.price, 8)
 # Nucleoid computes a column index in a nested class-level block
 
 # There is a Page type
-class Page:
-    pass
+class Page
 
 # while in the block, share is a local variable that is 900 divided by any page's columns,
 # and in a nested block, the page's index is the floor of share times the page's lines
@@ -717,8 +706,7 @@ assert(page1.index, 514)
 # Nucleoid flags a retraction with an if statement on a property
 
 # There is a Paper type
-class Paper:
-    pass
+class Paper
 
 # paper1 is a Paper whose state is "PUBLISHED"
 paper1 = Paper()
@@ -740,8 +728,7 @@ assert(paper1.retract, true)
 # Nucleoid chooses a binding note with an else statement on a property
 
 # There is a Volume type
-class Volume:
-    pass
+class Volume
 
 # volume1 is a Volume whose deluxe is false
 volume1 = Volume()
@@ -772,8 +759,7 @@ assert(volume1.binding, "CLOTH BOUND")
 # Nucleoid bands an advance with multiple else if statements on a property
 
 # There is a Deal type
-class Deal:
-    pass
+class Deal
 
 # deal1 is a Deal whose sales is 2000
 deal1 = Deal()
@@ -952,8 +938,7 @@ assert(total, 2000)
 # Nucleoid checks whether every article is proofed
 
 # There is an Article type
-class Article:
-    pass
+class Article
 
 # article1 is an Article that is proofed
 article1 = Article()
@@ -978,8 +963,7 @@ assert(ready, false)
 # Nucleoid checks whether any right is unsold
 
 # There is a Right type
-class Right:
-    pass
+class Right
 
 # right1 is a Right that is sold
 right1 = Right()
@@ -1021,8 +1005,7 @@ assert(order, "LEAD + FEATURE + REVIEW + LETTERS")
 # Nucleoid creates a proof for every live article
 
 # There is an Article type
-class Article:
-    pass
+class Article
 
 # article1 is an Article
 article1 = Article()
@@ -1058,8 +1041,7 @@ assert(Proof[0].kind, "FIRST")
 # Nucleoid rolls back a listing if a rule throws
 
 # There is a Listing type
-class Listing:
-    pass
+class Listing
 
 # If any listing's price is greater than 200, then throw 'PRICE_TOO_HIGH'
 if $Listing.price > 200:
@@ -1099,8 +1081,7 @@ catch error:
 # Nucleoid validates an issue code with a regular expression
 
 # There is an Issue type
-class Issue:
-    pass
+class Issue
 
 # If any issue's code does not match /[A-Z]{3}[0-9]{2}/, then throw 'INVALID_ISSUE'
 if not /[A-Z]{3}[0-9]{2}/.test($Issue.code):

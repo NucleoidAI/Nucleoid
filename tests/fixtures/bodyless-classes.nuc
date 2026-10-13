@@ -1,0 +1,7 @@
+class Entity
+entity1 = Entity()
+$Entity.enabled = true
+assert(typeof Entity, List)
+assert(entity1.enabled, true)
+assert(Entity.length, 1)
+Entity.length

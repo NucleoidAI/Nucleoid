@@ -375,8 +375,7 @@ assert(match2.reference, "MT-4")
 # Nucleoid replaces a class-level rule on a stand
 
 # There is a Stand type
-class Stand:
-    pass
+class Stand
 
 # stand1 is a Stand whose number is 2
 stand1 = Stand()
@@ -402,8 +401,7 @@ assert(stand1.sign, "STAND-3")
 # Nucleoid marks a suspension with a class-level conditional
 
 # There is a Player type
-class Player:
-    pass
+class Player
 
 # Any player with more than 4 cards is suspended
 if $Player.cards > 4:
@@ -425,8 +423,7 @@ assert(player1.suspended, true)
 # Nucleoid seeds an entrant with a class-level chain
 
 # There is an Entrant type
-class Entrant:
-    pass
+class Entrant
 
 # top is "SEEDED", middle is "QUALIFIER", and open is "WILDCARD"
 top = "SEEDED"; middle = "QUALIFIER"; open = "WILDCARD"
@@ -462,12 +459,10 @@ assert(entrant1.status, "SEEDED")
 # Nucleoid counts the players of a club with a class-level aggregate
 
 # There is a Club type
-class Club:
-    pass
+class Club
 
 # There is a Player type
-class Player:
-    pass
+class Player
 
 # club1 is a Club
 club1 = Club()
@@ -496,8 +491,7 @@ assert(club1.squad, 3)
 # Nucleoid builds a licence from a property that arrives later
 
 # There is a Licence type
-class Licence:
-    pass
+class Licence
 
 # licence1 is a Licence
 licence1 = Licence()
@@ -517,12 +511,10 @@ assert(licence1.full, "LC3320")
 # Nucleoid reads a captain through a team reference
 
 # There is a Team type
-class Team:
-    pass
+class Team
 
 # There is a Captain type
-class Captain:
-    pass
+class Captain
 
 # team1 is a Team
 team1 = Team()
@@ -549,8 +541,7 @@ assert(team1.led, "Led by Nuno Reis")
 # Nucleoid clears a result line when a score is deleted
 
 # There is a Result type
-class Result:
-    pass
+class Result
 
 # result1 is a Result
 result1 = Result()
@@ -681,8 +672,7 @@ assert(recovery, "EASY")
 # Nucleoid computes a gate receipt in a class-level block
 
 # There is a Fixture type
-class Fixture:
-    pass
+class Fixture
 
 # while in the block, levy is a local variable that is any fixture's gate times 10 divided by 100,
 # and the fixture's net is the fixture's gate minus levy
@@ -706,8 +696,7 @@ assert(fixture1.net, 45000)
 # Nucleoid computes a schedule index in a nested class-level block
 
 # There is a Season type
-class Season:
-    pass
+class Season
 
 # while in the block, share is a local variable that is 380 divided by any season's clubs,
 # and in a nested block, the season's index is the floor of share times the season's rounds
@@ -734,8 +723,7 @@ assert(season1.index, 162)
 # Nucleoid flags a review with an if statement on a property
 
 # There is a Decision type
-class Decision:
-    pass
+class Decision
 
 # decision1 is a Decision whose state is "GIVEN"
 decision1 = Decision()
@@ -757,8 +745,7 @@ assert(decision1.review, true)
 # Nucleoid chooses a kit note with an else statement on a property
 
 # There is a Fixture type
-class Fixture:
-    pass
+class Fixture
 
 # fixture1 is a Fixture whose clash is false
 fixture1 = Fixture()
@@ -789,8 +776,7 @@ assert(fixture1.kit, "AWAY KIT")
 # Nucleoid bands a bonus with multiple else if statements on a property
 
 # There is a Contract type
-class Contract:
-    pass
+class Contract
 
 # contract1 is a Contract whose goals is 5
 contract1 = Contract()
@@ -969,8 +955,7 @@ assert(total, 100)
 # Nucleoid checks whether every player is fit
 
 # There is a Player type
-class Player:
-    pass
+class Player
 
 # player1 is a Player who is fit
 player1 = Player()
@@ -995,8 +980,7 @@ assert(available, false)
 # Nucleoid checks whether any fixture is postponed
 
 # There is a Fixture type
-class Fixture:
-    pass
+class Fixture
 
 # fixture1 is a Fixture that is on
 fixture1 = Fixture()
@@ -1038,8 +1022,7 @@ assert(path, "GROUP > QUARTER > SEMI > FINAL")
 # Nucleoid creates a team sheet for every played fixture
 
 # There is a Fixture type
-class Fixture:
-    pass
+class Fixture
 
 # fixture1 is a Fixture
 fixture1 = Fixture()
@@ -1075,8 +1058,7 @@ assert(Sheet[0].kind, "LINEUP")
 # Nucleoid rolls back a registration if a rule throws
 
 # There is a Registration type
-class Registration:
-    pass
+class Registration
 
 # If any registration's age is less than 16, then throw 'UNDER_AGE'
 if $Registration.age < 16:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a licence number with a regular expression
 
 # There is a Licence type
-class Licence:
-    pass
+class Licence
 
 # If any licence's number does not match /[A-Z][0-9]{5}/, then throw 'INVALID_LICENCE'
 if not /[A-Z][0-9]{5}/.test($Licence.number):

@@ -375,8 +375,7 @@ assert(sector2.reference, "SEC-3")
 # Nucleoid replaces a class-level rule on a stand
 
 # There is a Stand type
-class Stand:
-    pass
+class Stand
 
 # stand1 is a Stand whose number is 11
 stand1 = Stand()
@@ -402,8 +401,7 @@ assert(stand1.sign, "STAND-12")
 # Nucleoid marks a long haul with a class-level conditional
 
 # There is a Flight type
-class Flight:
-    pass
+class Flight
 
 # Any flight longer than 6 hours is long haul
 if $Flight.hours > 6:
@@ -425,8 +423,7 @@ assert(flight1.longHaul, true)
 # Nucleoid classifies a delay with a class-level chain
 
 # There is a Delay type
-class Delay:
-    pass
+class Delay
 
 # major is "MAJOR", minor is "MINOR", and slight is "SLIGHT"
 major = "MAJOR"; minor = "MINOR"; slight = "SLIGHT"
@@ -462,12 +459,10 @@ assert(delay1.grade, "MAJOR")
 # Nucleoid counts the flights of an aircraft with a class-level aggregate
 
 # There is an Aircraft type
-class Aircraft:
-    pass
+class Aircraft
 
 # There is a Flight type
-class Flight:
-    pass
+class Flight
 
 # aircraft1 is an Aircraft
 aircraft1 = Aircraft()
@@ -496,8 +491,7 @@ assert(aircraft1.rotations, 3)
 # Nucleoid builds a booking from a property that arrives later
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 # booking1 is a Booking
 booking1 = Booking()
@@ -517,12 +511,10 @@ assert(booking1.full, "PNR8823")
 # Nucleoid reads a commander through a flight reference
 
 # There is a Flight type
-class Flight:
-    pass
+class Flight
 
 # There is a Pilot type
-class Pilot:
-    pass
+class Pilot
 
 # flight1 is a Flight
 flight1 = Flight()
@@ -549,8 +541,7 @@ assert(flight1.commanded, "Commander Costa Dias")
 # Nucleoid clears a board entry when a gate is deleted
 
 # There is a Board type
-class Board:
-    pass
+class Board
 
 # board1 is a Board
 board1 = Board()
@@ -681,8 +672,7 @@ assert(plan, "SPOT")
 # Nucleoid computes a ticket total in a class-level block
 
 # There is a Fare type
-class Fare:
-    pass
+class Fare
 
 # while in the block, tax is a local variable that is any fare's net times 20 divided by 100,
 # and the fare's gross is the fare's net plus tax
@@ -706,8 +696,7 @@ assert(fare1.gross, 300)
 # Nucleoid computes a stand index in a nested class-level block
 
 # There is a Pier type
-class Pier:
-    pass
+class Pier
 
 # while in the block, share is a local variable that is 600 divided by any pier's stands,
 # and in a nested block, the pier's index is the floor of share times the pier's gates
@@ -734,8 +723,7 @@ assert(pier1.index, 342)
 # Nucleoid flags a diversion with an if statement on a property
 
 # There is an Approach type
-class Approach:
-    pass
+class Approach
 
 # approach1 is an Approach whose state is "CLEAR"
 approach1 = Approach()
@@ -757,8 +745,7 @@ assert(approach1.divert, true)
 # Nucleoid chooses a boarding note with an else statement on a property
 
 # There is a Gate type
-class Gate:
-    pass
+class Gate
 
 # gate1 is a Gate whose remote is false
 gate1 = Gate()
@@ -789,8 +776,7 @@ assert(gate1.note, "BUS BOARDING")
 # Nucleoid bands a compensation with multiple else if statements on a property
 
 # There is a Claim type
-class Claim:
-    pass
+class Claim
 
 # claim1 is a Claim whose hours is 2
 claim1 = Claim()
@@ -969,8 +955,7 @@ assert(total, 2000)
 # Nucleoid checks whether every aircraft is airworthy
 
 # There is an Aircraft type
-class Aircraft:
-    pass
+class Aircraft
 
 # aircraft1 is an Aircraft that is airworthy
 aircraft1 = Aircraft()
@@ -995,8 +980,7 @@ assert(ready, false)
 # Nucleoid checks whether any flight is cancelled
 
 # There is a Flight type
-class Flight:
-    pass
+class Flight
 
 # flight1 is a Flight that is operating
 flight1 = Flight()
@@ -1038,8 +1022,7 @@ assert(routing, "LIS/MAD/CDG/AMS")
 # Nucleoid creates a load sheet for every operating flight
 
 # There is a Flight type
-class Flight:
-    pass
+class Flight
 
 # flight1 is a Flight
 flight1 = Flight()
@@ -1075,8 +1058,7 @@ assert(Sheet[0].kind, "LOAD")
 # Nucleoid rolls back a loading if a rule throws
 
 # There is a Loading type
-class Loading:
-    pass
+class Loading
 
 # If any loading's kilograms is greater than 20000, then throw 'OVER_PAYLOAD'
 if $Loading.kilograms > 20000:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a registration with a regular expression
 
 # There is a Record type
-class Record:
-    pass
+class Record
 
 # If any record's registration does not match /[A-Z]{2}-[A-Z]{3}/, then throw 'INVALID_REGISTRATION'
 if not /[A-Z]{2}-[A-Z]{3}/.test($Record.registration):
@@ -1162,8 +1143,7 @@ assert(code, "LY")
 
 # Nucleoid refreshes inherited aircraft status without replacing subtype rules
 
-class Aircraft:
-    pass
+class Aircraft
 
 $Aircraft.clearance = "STANDARD"
 
@@ -1209,8 +1189,7 @@ assert(shipment.weight, 30)
 
 # Nucleoid rejects an aircraft inheritance loop
 
-class Aircraft:
-    pass
+class Aircraft
 
 class Freighter: Aircraft
     pass
@@ -1231,8 +1210,7 @@ assert(Class.length, 2)
 
 # Nucleoid rejects a cyclic boarding group list
 
-class Boarding:
-    pass
+class Boarding
 
 $Boarding.group = [$Boarding.code]
 
@@ -1251,8 +1229,7 @@ assert(boarding.group, ["A"])
 
 # Nucleoid validates departure window bounds before there are flights
 
-class Departure:
-    pass
+class Departure
 
 try:
     # The lower bound must exist when this rule is declared
@@ -1275,8 +1252,7 @@ assert(departure.window, "BCD")
 
 # Nucleoid keeps indexed shipment weights null until supplied
 
-class Freight:
-    pass
+class Freight
 
 shipment = Freight()
 shipment.weight = null
@@ -1298,8 +1274,7 @@ assert(doubled, null)
 
 kinds = Class.length
 
-class Route:
-    pass
+class Route
 
 assert(kinds, 1)
 
@@ -1308,14 +1283,12 @@ class Cargo: Route
 
 assert(kinds, 2)
 
-class Route:
-    pass
+class Route
 
 assert(kinds, 2)
 
 try:
-    class Temporary:
-        pass
+    class Temporary
     throw "NO_IMPORT"
 catch error:
     assert(error, "NO_IMPORT")
@@ -1489,8 +1462,7 @@ assert(inverse, Number.POSITIVE_INFINITY)
 
 # Nucleoid does not turn a conditional dispatch loop into a standing rule
 
-class Flight:
-    pass
+class Flight
 
 flight = Flight()
 flight.delay = 0
@@ -1708,8 +1680,7 @@ assert(kilograms, 75)
 
 # Nucleoid tracks dotted and indexed cargo tariff calls
 
-class Tariff:
-    pass
+class Tariff
 
 tariff = Tariff()
 dotted = tariff.calculate(4)
@@ -1780,8 +1751,7 @@ assert(group, 6)
 
 # Nucleoid preserves a frozen airport fee after deleting its callable property
 
-class Airport:
-    pass
+class Airport
 
 airport = Airport()
 airport.fee = movements => movements * 10
@@ -2146,8 +2116,7 @@ assert(cargo1.adjust(3), 18)
 assert(cargo1.tonnes, 18)
 
 # A class-level self-reference remains a circular dependency, not a mutation
-class FleetScale:
-    pass
+class FleetScale
 scale1 = FleetScale()
 $FleetScale.factor = 2
 try:

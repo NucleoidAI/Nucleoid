@@ -369,8 +369,7 @@ assert(sample2.tag, "S-13")
 # Nucleoid replaces a class-level rule on a clinic
 
 # There is a Clinic type
-class Clinic:
-    pass
+class Clinic
 
 # clinic1 is a Clinic whose room is 5
 clinic1 = Clinic()
@@ -396,8 +395,7 @@ assert(clinic1.sign, "ROOM-6")
 # Nucleoid marks a reading as high with a class-level conditional
 
 # There is a Reading type
-class Reading:
-    pass
+class Reading
 
 # Any reading above 140 is high
 if $Reading.systolic > 140:
@@ -419,8 +417,7 @@ assert(reading1.high, true)
 # Nucleoid triages a case with a class-level chain
 
 # There is a Case type
-class Case:
-    pass
+class Case
 
 # urgent is "URGENT", soon is "SOON", and routine is "ROUTINE"
 urgent = "URGENT"; soon = "SOON"; routine = "ROUTINE"
@@ -456,12 +453,10 @@ assert(case1.priority, "URGENT")
 # Nucleoid counts the appointments of a doctor with a class-level aggregate
 
 # There is a Doctor type
-class Doctor:
-    pass
+class Doctor
 
 # There is an Appointment type
-class Appointment:
-    pass
+class Appointment
 
 # doctor1 is a Doctor
 doctor1 = Doctor()
@@ -490,8 +485,7 @@ assert(doctor1.booked, 3)
 # Nucleoid builds a prescription from a property that arrives later
 
 # There is a Prescription type
-class Prescription:
-    pass
+class Prescription
 
 # prescription1 is a Prescription
 prescription1 = Prescription()
@@ -511,12 +505,10 @@ assert(prescription1.full, "RX40021")
 # Nucleoid reads a consultant through a ward reference
 
 # There is a Ward type
-class Ward:
-    pass
+class Ward
 
 # There is a Consultant type
-class Consultant:
-    pass
+class Consultant
 
 # ward1 is a Ward
 ward1 = Ward()
@@ -543,8 +535,7 @@ assert(ward1.lead, "Lead: Dr Silva")
 # Nucleoid clears a diagnosis summary when a finding is deleted
 
 # There is a Diagnosis type
-class Diagnosis:
-    pass
+class Diagnosis
 
 # diagnosis1 is a Diagnosis
 diagnosis1 = Diagnosis()
@@ -675,8 +666,7 @@ assert(care, "STD")
 # Nucleoid computes a dosage in a class-level block
 
 # There is a Course type
-class Course:
-    pass
+class Course
 
 # while in the block, daily is a local variable that is any course's dose times 3,
 # and the course's total is daily times the course's days
@@ -703,8 +693,7 @@ assert(course1.total, 3000)
 # Nucleoid computes a bay allocation in a nested class-level block
 
 # There is a Unit type
-class Unit:
-    pass
+class Unit
 
 # while in the block, share is a local variable that is 60 divided by any unit's staff,
 # and in a nested block, the unit's minutes is the floor of share times the unit's patients
@@ -731,8 +720,7 @@ assert(unit1.minutes, 34)
 # Nucleoid flags an allergy with an if statement on a property
 
 # There is a Chart type
-class Chart:
-    pass
+class Chart
 
 # chart1 is a Chart whose allergy is "NONE"
 chart1 = Chart()
@@ -754,8 +742,7 @@ assert(chart1.warn, true)
 # Nucleoid chooses a discharge note with an else statement on a property
 
 # There is a Stay type
-class Stay:
-    pass
+class Stay
 
 # stay1 is a Stay whose complications is false
 stay1 = Stay()
@@ -786,8 +773,7 @@ assert(stay1.note, "REVIEW IN CLINIC")
 # Nucleoid bands a waiting time with multiple else if statements on a property
 
 # There is a Referral type
-class Referral:
-    pass
+class Referral
 
 # referral1 is a Referral whose weeks is 3
 referral1 = Referral()
@@ -969,8 +955,7 @@ assert(total, 60)
 # Nucleoid checks whether every screening is complete
 
 # There is a Screening type
-class Screening:
-    pass
+class Screening
 
 # screening1 is a Screening that is complete
 screening1 = Screening()
@@ -995,8 +980,7 @@ assert(cleared, false)
 # Nucleoid checks whether any bed is occupied
 
 # There is a Bed type
-class Bed:
-    pass
+class Bed
 
 # bed1 is a Bed that is free
 bed1 = Bed()
@@ -1038,8 +1022,7 @@ assert(pathway, "TRIAGE > REVIEW > DISCHARGE > FOLLOWUP")
 # Nucleoid creates a record for every active patient
 
 # There is a Patient type
-class Patient:
-    pass
+class Patient
 
 # patient1 is a Patient
 patient1 = Patient()
@@ -1075,8 +1058,7 @@ assert(Record[0].kind, "DAILY")
 # Nucleoid rolls back an observation if a rule throws
 
 # There is an Observation type
-class Observation:
-    pass
+class Observation
 
 # If any observation's oxygen is less than 80, then throw 'CRITICAL'
 if $Observation.oxygen < 80:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a patient number with a regular expression
 
 # There is a File type
-class File:
-    pass
+class File
 
 # If any file's number does not match /[0-9]{6}/, then throw 'INVALID_NUMBER'
 if not /[0-9]{6}/.test($File.number):

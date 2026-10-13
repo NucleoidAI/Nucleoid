@@ -268,6 +268,20 @@ Full detail: [README.md §3](README.md#3-expressions), [NUC 10](nuc-0010.md).
 
 ## 4. Types and Instances
 
+**Empty types need no placeholder body**
+
+- The header declares the same empty type as an indented pass-only body.
+- Instance registration and class-level rules keep their existing behavior.
+
+```nuc
+class Entity
+entity1 = Entity()
+$Entity.enabled = true
+assert(typeof Entity, List)
+assert(entity1.enabled, true)
+assert(Entity.length, 1)
+```
+
 **A type declares its constructor, and instances register themselves**
 
 - `Shape` is the list of instances; `$Shape` is the type.
@@ -339,8 +353,7 @@ assert(student1, { "id": "student1", "name": "Emma", "school": "Riverside High" 
 - An attribute the earlier instances never had is `null` on them.
 
 ```nuc
-class Message:
-    pass
+class Message
 
 $Message.read = false
 
@@ -369,8 +382,7 @@ Full detail: [README.md §4](README.md#4-types-and-instances), [NUC 3](nuc-0003.
 - Reading something undefined yields `null` and re-evaluates when it arrives.
 
 ```nuc
-class Order:
-    pass
+class Order
 
 order1 = Order()
 order1.upc = "04061" + order1.barcode
@@ -387,11 +399,9 @@ assert(order1.upc, "0406194067")
 - `server1.summary` reads `ip1` through `server1.ip`, so a change to `ip1` reaches it.
 
 ```nuc
-class Server:
-    pass
+class Server
 
-class IP:
-    pass
+class IP
 
 server1 = Server()
 server1.name = "HOST1"
@@ -414,8 +424,7 @@ assert(server1.summary, "HOST1@10.0.0.2")
 - The properties the deleted one did not feed are left untouched.
 
 ```nuc
-class Agent:
-    pass
+class Agent
 
 agent = Agent()
 agent.time = 52926163455
@@ -442,8 +451,7 @@ Full detail: [README.md §5](README.md#5-properties), [NUC 4](nuc-0004.md).
 - Stating the rule again replaces it, and the instances are brought up to date.
 
 ```nuc
-class Employee:
-    pass
+class Employee
 
 employee1 = Employee()
 employee1.id = 1
@@ -485,8 +493,7 @@ assert(device2.active, true)
 - `status` depends on the capacity that chooses the branch and on the value the branch assigns.
 
 ```nuc
-class Storage:
-    pass
+class Storage
 
 normal = "NORMAL"; low = "LOW"; empty = "EMPTY"
 
@@ -513,11 +520,9 @@ assert(storage1.status, "L")
 - Both registrations already point at `user1`, so declaring it throws.
 
 ```nuc
-class User:
-    pass
+class User
 
-class Registration:
-    pass
+class Registration
 
 user1 = User()
 
@@ -610,8 +615,7 @@ Full detail: [README.md §7](README.md#7-blocks-and-scope), [NUC 6](nuc-0006.md)
 - The rule is re-evaluated when the colour it reads changes.
 
 ```nuc
-class Toy:
-    pass
+class Toy
 
 toy1 = Toy()
 toy1.color = "BLUE"
@@ -698,8 +702,7 @@ assert(total, 7)
 - Changing `limit` does not run that body again; another explicit loop does.
 
 ```nuc
-class Item:
-    pass
+class Item
 
 item = Item()
 item.amount = 0
@@ -730,8 +733,7 @@ assert(item.amount, 2)
 - What it creates is declarative all the same, so the rule on `Summary` still reaches the instances it made.
 
 ```nuc
-class Question:
-    pass
+class Question
 
 question1 = Question()
 
@@ -813,8 +815,7 @@ assert(mapped, [5, 10])
 **Callable properties follow replacement and deletion through either spelling**
 
 ```nuc
-class Handler:
-    pass
+class Handler
 
 handler = Handler()
 handler.operation = number => number + 1
@@ -1069,13 +1070,11 @@ assert(count.length, 1)
 - `String.fromCharCode` and `Math.floor` are read by a rule, which then holds for the instance that already exists.
 
 ```nuc
-class Product:
-    pass
+class Product
 
 product1 = Product()
 
-class Quality:
-    pass
+class Quality
 
 product1.quality = Quality()
 product1.quality.score = 15
@@ -1092,8 +1091,7 @@ assert(product1.quality.class, "B")
 - The guard is a standing rule, so it is the assignment that fails, not a later check.
 
 ```nuc
-class User:
-    pass
+class User
 
 if not /.{4,8}/.test($User.password):
     throw 'INVALID_PASSWORD'
@@ -1197,8 +1195,7 @@ assert((affects a).map(step => step.node), ["b"])
 **An explanation stays subscribed while its property is absent**
 
 ```nuc
-class Item:
-    pass
+class Item
 
 item = Item()
 trace = why item.amount
@@ -1326,11 +1323,9 @@ catch error:
 - The name is reserved for reading a value without depending on it.
 
 ```nuc
-class Schedule:
-    pass
+class Schedule
 
-class Place:
-    pass
+class Place
 
 value = Schedule()
 
@@ -1345,8 +1340,7 @@ catch error:
 **A class-level rule may not be declared in a non-class block**
 
 ```nuc
-class Person:
-    pass
+class Person
 
 person1 = Person()
 person1.weight = 90

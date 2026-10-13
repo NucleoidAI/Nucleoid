@@ -97,8 +97,7 @@ fn creates_a_class_with_a_constructor_and_a_typed_attribute() {
 #[test]
 fn adds_an_object_to_the_class_s_object_list() {
     let mut run = runner();
-    run(r#"class Student:
-    pass"#);
+    run("class Student");
     run("user0 = Student()");
     assert_eq!(run(r#"Student.find(student => student.id == "user0")"#), serde_json::json!({ "id": "user0" }));
     assert_eq!(run(r#"Student["user0"]"#), serde_json::json!({ "id": "user0" }));
@@ -109,13 +108,11 @@ fn adds_an_object_to_the_class_s_object_list() {
 #[test]
 fn preserves_class_and_object_lists_when_a_class_is_updated() {
     let mut run = runner();
-    run(r#"class User:
-    pass"#);
+    run("class User");
     run("User()");
     assert_eq!(run("Class.length"), 1);
     assert_eq!(run("User.length"), 1);
-    run(r#"class User:
-    pass"#);
+    run("class User");
     assert_eq!(run("Class.length"), 1);
     assert_eq!(run("User.length"), 1);
     run("User()");
@@ -128,8 +125,7 @@ fn preserves_class_and_object_lists_when_a_class_is_updated() {
 #[test]
 fn places_an_instance_in_the_list_of_the_class_when_created() {
     let mut run = runner();
-    run(r#"class Student:
-    pass"#);
+    run("class Student");
     {
         let actual = run("typeof Student");
         let expected = run("(List)");
@@ -187,10 +183,8 @@ fn runs_a_class_level_conditional() {
 #[test]
 fn creates_an_instance_in_a_block_and_assigns_it_to_a_property() {
     let mut run = runner();
-    run(r#"class Room:
-    pass"#);
-    run(r#"class Meeting:
-    pass"#);
+    run("class Room");
+    run("class Meeting");
     run("room1 = Room()");
     run(r#"$Meeting.time = Date.now() + " @ " + $Meeting.date.toDateString()"#);
     run(r#"{
@@ -207,12 +201,9 @@ fn creates_an_instance_in_a_block_and_assigns_it_to_a_property() {
 #[test]
 fn creates_nested_instances_in_a_block_and_assigns_them_to_a_property() {
     let mut run = runner();
-    run(r#"class Timesheet:
-    pass"#);
-    run(r#"class Task:
-    pass"#);
-    run(r#"class Project:
-    pass"#);
+    run("class Timesheet");
+    run("class Task");
+    run("class Project");
     run(r#"$Project.code = "N-" + $Project.number"#);
     run("timesheet1 = Timesheet()");
     run(r#"{
@@ -258,8 +249,7 @@ fn creates_a_standard_built_in_object_as_a_local_variable_inside_a_block() {
 #[test]
 fn creates_and_assigns_an_instance_to_a_local_variable_inside_a_block() {
     let mut run = runner();
-    run(r#"class Device:
-    pass"#);
+    run("class Device");
     run("$Device.renew = $Device.created + 604800000");
     run(r#"{
     device = Device()
@@ -288,8 +278,7 @@ fn creates_and_assigns_an_instance_with_a_constructor_to_a_local_variable_inside
 #[test]
 fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_before_instantiation() {
     let mut run = runner();
-    run(r#"class Member:
-    pass"#);
+    run("class Member");
     run(r#"{
     registration = Object()
     registration.date = Date("2019-1-2")
@@ -305,8 +294,7 @@ fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_before_
 #[test]
 fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_after_instantiation() {
     let mut run = runner();
-    run(r#"class Distance:
-    pass"#);
+    run("class Distance");
     run("distance1 = Distance()");
     run(r#"{
     location = Object()
@@ -336,8 +324,7 @@ fn calls_function_in_an_assignment() {
 #[test]
 fn assigns_a_block_in_a_function_as_a_dependency() {
     let mut run = runner();
-    run(r#"class Student:
-    pass"#);
+    run("class Student");
     run("student1 = Student()");
     run("student1.age = 7");
     run("student2 = Student()");
@@ -418,8 +405,7 @@ fn retrieves_the_value_of_a_variable() {
 #[test]
 fn creates_a_property_assignment_on_a_local_variable_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Ticket:
-    pass"#);
+    run("class Ticket");
     assert_eq!(run_error(r#"{
     ticket = Ticket()
     ticket.event.group = "ENTERTAINMENT"
@@ -467,8 +453,7 @@ fn rejects_a_local_variable_declared_as_undefined() {
 #[test]
 fn creates_a_standard_built_in_object_as_a_property_of_a_local_variable() {
     let mut run = runner();
-    run(r#"class Shipment:
-    pass"#);
+    run("class Shipment");
     run(r#"{
     shipment = Shipment()
     shipment.date = Date("2019-1-3")
@@ -482,8 +467,7 @@ fn creates_a_standard_built_in_object_as_a_property_of_a_local_variable() {
 #[test]
 fn creates_a_property_of_a_local_variable_in_a_different_scope() {
     let mut run = runner();
-    run(r#"class User:
-    pass"#);
+    run("class User");
     run("user0 = User()");
     run(r#"{
     user = User["user0"]
@@ -578,8 +562,7 @@ else:
 #[test]
 fn runs_dependent_statements_in_the_same_transaction() {
     let mut run = runner();
-    run(r#"class Vehicle:
-    pass"#);
+    run("class Vehicle");
     run(r#"$Vehicle.tag = "US-" + $Vehicle.plate"#);
     run("vehicle1 = Vehicle()");
     run(r#"vehicle1.plate = "XSJ422""#);
@@ -639,8 +622,7 @@ fn uses_local_variable_at_lowest_scope_as_priority() {
 #[test]
 fn assigns_undefined_if_any_dependency_in_expression_is_undefined() {
     let mut run = runner();
-    run(r#"class Person:
-    pass"#);
+    run("class Person");
     run("person1 = Person()");
     run(r#"person1.lastName = "Brown""#);
     run(r#"person1.fullName = person1.firstName + " " + person1.lastName"#);
@@ -666,8 +648,7 @@ fn keeps_as_null_if_any_dependencies_as_in_local_is_null() {
 #[test]
 fn keeps_as_null_if_any_dependencies_in_expression_is_null() {
     let mut run = runner();
-    run(r#"class Schedule:
-    pass"#);
+    run("class Schedule");
     run("schedule1 = Schedule()");
     run(r#"schedule1.expression = "0 */2 * * *""#);
     run("schedule1.script = null");
@@ -680,8 +661,7 @@ fn keeps_as_null_if_any_dependencies_in_expression_is_null() {
 #[test]
 fn assigns_null_if_there_is_null_pointer_in_expression() {
     let mut run = runner();
-    run(r#"class Product:
-    pass"#);
+    run("class Product");
     run("product1 = Product()");
     run("score = product1.quality.score");
     assert_eq!(run("score"), serde_json::Value::Null);
@@ -692,8 +672,7 @@ fn assigns_null_if_there_is_null_pointer_in_expression() {
 #[test]
 fn assigns_a_unique_variable_for_an_instance_without_a_variable_name() {
     let mut run = runner();
-    run(r#"class Vehicle:
-    pass"#);
+    run("class Vehicle");
     run("Vehicle()");
     assert_eq!(run("Vehicle.length"), 1);
     assert_eq!(run("Vehicle[0].id != null"), true);
@@ -734,8 +713,7 @@ fn assigns_a_function_as_a_dependency() {
 #[test]
 fn supports_a_regular_expression_literal() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class User:
-    pass"#);
+    run("class User");
     run(r#"if not /.{4,8}/.test($User.password):
     throw 'INVALID_PASSWORD'"#);
     run("user1 = User()");
@@ -748,8 +726,7 @@ fn supports_a_regular_expression_literal() {
 #[test]
 fn rejects_defining_a_class_declaration_in_a_non_class_block() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Person:
-    pass"#);
+    run("class Person");
     run("person1 = Person()");
     run("person1.weight = 90");
     run("person1.height = 1.8");
@@ -788,8 +765,7 @@ fn rolls_back_a_variable_if_an_exception_is_thrown() {
 #[test]
 fn rolls_back_a_property_if_an_exception_is_thrown() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run(r#"if $Item.sku == 'A':
     throw 'INVALID_SKU'"#);
     run("item1 = Item()");
@@ -899,10 +875,8 @@ fn uses_value_property_to_indicate_using_only_value_of_variable() {
 #[test]
 fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_before_instantiation() {
     let mut run = runner();
-    run(r#"class Account:
-    pass"#);
-    run(r#"class Currency:
-    pass"#);
+    run("class Account");
+    run("class Currency");
     run(r#"$Currency.description = "Code:" + $Currency.code"#);
     run(r#"{
     balance = Object()
@@ -920,8 +894,7 @@ fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_b
 #[test]
 fn creates_a_nested_object_in_a_block_and_assigns_it_to_a_class_level_property_after_instantiation() {
     let mut run = runner();
-    run(r#"class Warehouse:
-    pass"#);
+    run("class Warehouse");
     run("warehouse1 = Warehouse()");
     run(r#"{
     inventory = Object()
@@ -990,10 +963,8 @@ fn creates_a_local_variable_inside_a_block() {
 #[test]
 fn runs_a_local_variable_as_an_object_before_declaration() {
     let mut run = runner();
-    run(r#"class Plane:
-    pass"#);
-    run(r#"class Trip:
-    pass"#);
+    run("class Plane");
+    run("class Trip");
     run("plane1 = Plane()");
     run("plane1.speed = 903");
     run("trip1 = Trip()");
@@ -1011,10 +982,8 @@ fn runs_a_local_variable_as_an_object_before_declaration() {
 #[test]
 fn runs_a_local_variable_as_an_object_after_declaration() {
     let mut run = runner();
-    run(r#"class Seller:
-    pass"#);
-    run(r#"class Commission:
-    pass"#);
+    run("class Seller");
+    run("class Commission");
     run("seller1 = Seller()");
     run("seller1.sales = 1000000");
     run("comm1 = Commission()");
@@ -1032,10 +1001,8 @@ fn runs_a_local_variable_as_an_object_after_declaration() {
 #[test]
 fn assigns_a_property_on_a_local_variable_after_initialization() {
     let mut run = runner();
-    run(r#"class Stock:
-    pass"#);
-    run(r#"class Trade:
-    pass"#);
+    run("class Stock");
+    run("class Trade");
     run("stock1 = Stock()");
     run("stock1.price = 100");
     run("trade1 = Trade()");
@@ -1073,8 +1040,7 @@ fn holds_the_result_of_a_function_in_a_local_variable() {
     let mut run = runner();
     run("bugs = []");
     run("ticket = 1");
-    run(r#"class Bug:
-    pass"#);
+    run("class Bug");
     run("bug1 = Bug()");
     run("bug1.ticket = 1");
     run(r#"bug1.priority = "LOW""#);
@@ -1181,8 +1147,7 @@ fn assigns_a_variable_to_a_reference() {
 #[test]
 fn assigns_an_object_to_a_variable() {
     let mut run = runner();
-    run(r#"class Model:
-    pass"#);
+    run("class Model");
     run("model1 = Model()");
     {
         let actual = run("typeof model1");
@@ -1196,8 +1161,7 @@ fn assigns_an_object_to_a_variable() {
 #[test]
 fn defines_a_class_in_the_state() {
     let mut run = runner();
-    run(r#"class Entity:
-    pass"#);
+    run("class Entity");
     {
         let actual = run("typeof $Entity");
         let expected = run("(Class)");
@@ -1211,8 +1175,7 @@ fn defines_a_class_in_the_state() {
 fn rejects_creating_an_instance_if_the_class_does_not_exist() {
     let (mut run, mut run_error) = crate::common::runners();
     assert_eq!(run_error("chart1 = Chart()"), "ReferenceError: Chart is not defined");
-    run(r#"class Chart:
-    pass"#);
+    run("class Chart");
     run("chart1 = Chart()");
     assert_eq!(run_error("chart1.plot = Plot()"), "ReferenceError: Plot is not defined");
     assert_eq!(run_error("$Chart.plot = Plot()"), "ReferenceError: Plot is not defined");
@@ -1223,8 +1186,7 @@ fn rejects_creating_an_instance_if_the_class_does_not_exist() {
 #[test]
 fn creates_a_property_assignment_before_declaration() {
     let mut run = runner();
-    run(r#"class Order:
-    pass"#);
+    run("class Order");
     run("order1 = Order()");
     run(r#"order1.upc = "04061" + order1.barcode"#);
     assert_eq!(run("order1.upc"), serde_json::Value::Null);
@@ -1237,8 +1199,7 @@ fn creates_a_property_assignment_before_declaration() {
 #[test]
 fn creates_a_property_assignment_after_declaration() {
     let mut run = runner();
-    run(r#"class User:
-    pass"#);
+    run("class User");
     run("user1 = User()");
     run(r#"user1.name = "sample""#);
     run(r#"user1.email = user1.name + "@example.com""#);
@@ -1252,8 +1213,7 @@ fn creates_a_property_assignment_after_declaration() {
 #[test]
 fn creates_a_property_assignment_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Channel:
-    pass"#);
+    run("class Channel");
     run("channel1 = Channel()");
     assert_eq!(run_error(r#"channel1.frequency.type = "ANGULAR""#), "ReferenceError: channel1.frequency is not defined");
 }
@@ -1276,10 +1236,8 @@ fn creates_an_object_and_assigns_it_to_a_variable() {
 #[test]
 fn creates_an_object_assignment_as_a_property_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Worker:
-    pass"#);
-    run(r#"class Schedule:
-    pass"#);
+    run("class Worker");
+    run("class Schedule");
     run("worker1 = Worker()");
     assert_eq!(run_error("worker1.duty.schedule = Schedule()"), "ReferenceError: worker1.duty is not defined");
 }
@@ -1289,8 +1247,7 @@ fn creates_an_object_assignment_as_a_property_only_if_the_instance_is_defined() 
 #[test]
 fn uses_only_the_value_when_a_property_references_itself() {
     let mut run = runner();
-    run(r#"class Construction:
-    pass"#);
+    run("class Construction");
     run("construction1 = Construction()");
     run("construction1.timeline = 120");
     run("construction1.timeline = 2 * construction1.timeline");
@@ -1302,10 +1259,8 @@ fn uses_only_the_value_when_a_property_references_itself() {
 #[test]
 fn assigns_an_object_to_a_property_before_initialization() {
     let mut run = runner();
-    run(r#"class Agent:
-    pass"#);
-    run(r#"class Distance:
-    pass"#);
+    run("class Agent");
+    run("class Distance");
     run("$Distance.total = Math.sqrt($Distance.x * $Distance.x + $Distance.y * $Distance.y)");
     run("agent1 = Agent()");
     run("agent1.distance = Distance()");
@@ -1320,11 +1275,9 @@ fn assigns_an_object_to_a_property_before_initialization() {
 #[test]
 fn assigns_an_object_to_a_property_after_initialization() {
     let mut run = runner();
-    run(r#"class Product:
-    pass"#);
+    run("class Product");
     run("product1 = Product()");
-    run(r#"class Quality:
-    pass"#);
+    run("class Quality");
     run("product1.quality = Quality()");
     run("product1.quality.score = 15");
     assert_eq!(run("product1.quality.class"), serde_json::Value::Null);
@@ -1337,10 +1290,8 @@ fn assigns_an_object_to_a_property_after_initialization() {
 #[test]
 fn rejects_value_as_a_property_name() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Schedule:
-    pass"#);
-    run(r#"class Place:
-    pass"#);
+    run("class Schedule");
+    run("class Place");
     run("value = Schedule()");
     assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
     assert_eq!(run_error("value.value = Place()"), "TypeError: Cannot use 'value' as a property");
@@ -1351,8 +1302,7 @@ fn rejects_value_as_a_property_name() {
 #[test]
 fn rejects_value_as_a_property_name_in_a_value_assignment() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Value:
-    pass"#);
+    run("class Value");
     run("value = Value()");
     assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
     assert_eq!(run_error("value.value = 2147483647"), "TypeError: Cannot use 'value' as a property");
@@ -1363,8 +1313,7 @@ fn rejects_value_as_a_property_name_in_a_value_assignment() {
 #[test]
 fn uses_value_property_to_indicate_using_only_value_of_property() {
     let mut run = runner();
-    run(r#"class Weight:
-    pass"#);
+    run("class Weight");
     run("weight1 = Weight()");
     run("weight1.gravity = 1.352");
     run("weight1.mass = 1000");
@@ -1381,8 +1330,7 @@ fn uses_value_property_to_indicate_using_only_value_of_property() {
 #[test]
 fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_property() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Question:
-    pass"#);
+    run("class Question");
     run("question1 = Question()");
     run(r#"question1.text = "How was the service?""#);
     run(r#"if question1.text != question1.text.value:
@@ -1396,8 +1344,7 @@ fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_proper
 #[test]
 fn rejects_value_of_a_property_if_the_property_is_not_defined() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Travel:
-    pass"#);
+    run("class Travel");
     run("travel1 = Travel()");
     run("travel1.speed = 65");
     run("travel1.duration = travel1.distance / travel1.speed");
@@ -1410,8 +1357,7 @@ fn rejects_value_of_a_property_if_the_property_is_not_defined() {
 #[test]
 fn uses_the_value_of_a_null_property_as_zero() {
     let mut run = runner();
-    run(r#"class Interest:
-    pass"#);
+    run("class Interest");
     run("interest1 = Interest()");
     run("interest1.rate = 3");
     run("interest1.amount = null");
@@ -1426,8 +1372,7 @@ fn uses_the_value_of_a_null_property_as_zero() {
 #[test]
 fn rejects_value_as_a_property_name_in_a_block() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Alarm:
-    pass"#);
+    run("class Alarm");
     assert_eq!(run_error(r#"{
     value = Alarm()
     value.value = "22:00"
@@ -1454,8 +1399,7 @@ fn keeps_same_as_its_value_when_the_value_property_is_used_for_a_local() {
 fn uses_value_property_in_a_class_level_assignment() {
     let mut run = runner();
     run("count = 0");
-    run(r#"class Device:
-    pass"#);
+    run("class Device");
     run("device1 = Device()");
     run(r#"{
     $Device.code = "A" + count.value
@@ -1471,8 +1415,7 @@ fn uses_value_property_on_a_class_level_property_chain() {
     let mut run = runner();
     run(r#"class Summary(question):
     this.question = question"#);
-    run(r#"class Question:
-    pass"#);
+    run("class Question");
     run("$Summary.count = $Summary.question.count.value");
     run("question1 = Question()");
     run("question1.count = 10");
@@ -1488,8 +1431,7 @@ fn uses_value_property_on_a_class_level_property_chain() {
 #[test]
 fn updates_if_block_of_property() {
     let mut run = runner();
-    run(r#"class Account:
-    pass"#);
+    run("class Account");
     run("account1 = Account()");
     run("account1.balance = 1000");
     run(r#"if account1.balance < 1500:
@@ -1524,8 +1466,7 @@ else:
 #[test]
 fn creates_if_statement_of_property() {
     let mut run = runner();
-    run(r#"class Toy:
-    pass"#);
+    run("class Toy");
     run("toy1 = Toy()");
     run(r#"toy1.color = "BLUE""#);
     run(r#"if toy1.color == "RED":
@@ -1540,8 +1481,7 @@ fn creates_if_statement_of_property() {
 #[test]
 fn creates_else_statement_of_property() {
     let mut run = runner();
-    run(r#"class Engine:
-    pass"#);
+    run("class Engine");
     run("engine1 = Engine()");
     run(r#"engine1.type = "V8""#);
     run(r#"mpl = "MPL""#);
@@ -1562,8 +1502,7 @@ else:
 #[test]
 fn creates_else_statement_of_property_with_property_dependencies() {
     let mut run = runner();
-    run(r#"class Contact:
-    pass"#);
+    run("class Contact");
     run("contact1 = Contact()");
     run(r#"contact1.type = "PERSON""#);
     run(r#"contact1.first = "First""#);
@@ -1585,8 +1524,7 @@ else:
 #[test]
 fn creates_multiple_else_if_statement_of_property() {
     let mut run = runner();
-    run(r#"class Taxpayer:
-    pass"#);
+    run("class Taxpayer");
     run("taxpayer1 = Taxpayer()");
     run("taxpayer1.income = 60000");
     run("taxpayer1.member = 1");
@@ -1611,8 +1549,7 @@ else:
 #[test]
 fn updates_property_assignment() {
     let mut run = runner();
-    run(r#"class Matter:
-    pass"#);
+    run("class Matter");
     run("matter1 = Matter()");
     run("matter1.mass = 10");
     run("matter1.weight = matter1.mass * 9.8");
@@ -1628,8 +1565,7 @@ fn updates_property_assignment() {
 #[test]
 fn deletes_an_instance() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Circle:
-    pass"#);
+    run("class Circle");
     run("circle1 = Circle()");
     run("delete circle1");
     assert_eq!(run(r#"Circle["circle1"]"#), serde_json::Value::Null);
@@ -1642,8 +1578,7 @@ fn deletes_an_instance() {
 #[test]
 fn deletes_an_instance_by_reference() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item1 = Item()");
     run("item2 = Item()");
     assert_eq!(run(r#"Item["item1"]"#), serde_json::json!({ "id": "item1" }));
@@ -1662,8 +1597,7 @@ fn deletes_an_instance_by_reference() {
 #[test]
 fn returns_a_boolean_when_deleting_an_object() {
     let mut run = runner();
-    run(r#"class Location:
-    pass"#);
+    run("class Location");
     run("location1 = Location()");
     assert_eq!(run("delete location1"), true);
     assert_eq!(run("delete location2"), false);
@@ -1674,8 +1608,7 @@ fn returns_a_boolean_when_deleting_an_object() {
 #[test]
 fn rejects_deleting_an_instance_if_it_has_any_properties() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Channel:
-    pass"#);
+    run("class Channel");
     run("channel1 = Channel()");
     run("channel1.frequency = 440");
     assert_eq!(run_error("delete channel1"), "TypeError: Cannot delete object 'channel1'");
@@ -1690,10 +1623,8 @@ fn rejects_deleting_an_instance_if_it_has_any_properties() {
 #[test]
 fn rejects_deleting_an_instance_if_it_has_an_object_as_a_property() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Shape:
-    pass"#);
-    run(r#"class Type:
-    pass"#);
+    run("class Shape");
+    run("class Type");
     run("shape1 = Shape()");
     run("shape1.type = Type()");
     assert_eq!(run_error("delete shape1"), "TypeError: Cannot delete object 'shape1'");
@@ -1707,8 +1638,7 @@ fn rejects_deleting_an_instance_if_it_has_an_object_as_a_property() {
 #[test]
 fn deletes_a_property_assignment() {
     let mut run = runner();
-    run(r#"class Agent:
-    pass"#);
+    run("class Agent");
     run("agent = Agent()");
     run("agent.time = 52926163455");
     run(r#"agent.location = "CITY""#);
@@ -1725,8 +1655,7 @@ fn deletes_a_property_assignment() {
 #[test]
 fn runs_a_block_statement_of_property() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item1 = Item()");
     run(r#"item1.sku = "0000001""#);
     run(r#"{
@@ -1743,8 +1672,7 @@ fn runs_a_block_statement_of_property() {
 #[test]
 fn runs_a_nested_block_statement_of_property() {
     let mut run = runner();
-    run(r#"class Figure:
-    pass"#);
+    run("class Figure");
     run("figure1 = Figure()");
     run("figure1.width = 9");
     run("figure1.height = 10");
@@ -1764,8 +1692,7 @@ fn runs_a_nested_block_statement_of_property() {
 #[test]
 fn runs_a_nested_if_statement_of_property() {
     let mut run = runner();
-    run(r#"class Sale:
-    pass"#);
+    run("class Sale");
     run("sale1 = Sale()");
     run("sale1.price = 50");
     run("sale1.quantity = 2");
@@ -1784,8 +1711,7 @@ fn runs_a_nested_if_statement_of_property() {
 #[test]
 fn creates_a_nested_else_statement_of_property() {
     let mut run = runner();
-    run(r#"class Chart:
-    pass"#);
+    run("class Chart");
     run("chart1 = Chart()");
     run("chart1.percentage = 1");
     run(r#"invalid = "INVALID""#);
@@ -1807,11 +1733,9 @@ fn creates_a_nested_else_statement_of_property() {
 #[test]
 fn creates_a_property_assignment_with_multiple_properties() {
     let mut run = runner();
-    run(r#"class Person:
-    pass"#);
+    run("class Person");
     run("person1 = Person()");
-    run(r#"class Address:
-    pass"#);
+    run("class Address");
     run("address1 = Address()");
     run(r#"$Address.print = $Address.city + ", " + $Address.state"#);
     run("person1.address = Address()");
@@ -1825,12 +1749,10 @@ fn creates_a_property_assignment_with_multiple_properties() {
 #[test]
 fn creates_a_property_assignment_with_multiple_properties_as_part_of_a_declaration() {
     let mut run = runner();
-    run(r#"class Server:
-    pass"#);
+    run("class Server");
     run("server1 = Server()");
     run(r#"server1.name = "HOST1""#);
-    run(r#"class IP:
-    pass"#);
+    run("class IP");
     run("ip1 = IP()");
     run("server1.ip = ip1");
     run(r#"ip1.address = "10.0.0.1""#);
@@ -1845,11 +1767,9 @@ fn creates_a_property_assignment_with_multiple_properties_as_part_of_a_declarati
 #[test]
 fn creates_a_dependency_on_behalf_if_a_property_has_a_reference() {
     let mut run = runner();
-    run(r#"class Schedule:
-    pass"#);
+    run("class Schedule");
     run("schedule1 = Schedule()");
-    run(r#"class Template:
-    pass"#);
+    run("class Template");
     run("template1 = Template()");
     run(r#"template1.type = "W""#);
     run("schedule1.template = template1");
@@ -1871,12 +1791,10 @@ fn creates_a_dependency_on_behalf_if_a_property_has_a_reference() {
 #[test]
 fn creates_a_dependency_on_behalf_if_a_local_variable_has_a_reference() {
     let mut run = runner();
-    run(r#"class Vote:
-    pass"#);
+    run("class Vote");
     run("vote1 = Vote()");
     run("vote1.rate = 4");
-    run(r#"class Question:
-    pass"#);
+    run("class Question");
     run("$Question.rate = 0");
     run("$Question.count = 0");
     run("question1 = Question()");
@@ -1897,8 +1815,7 @@ fn creates_a_dependency_on_behalf_if_a_local_variable_has_a_reference() {
 #[test]
 fn runs_an_expression_statement_of_class() {
     let mut run = runner();
-    run(r#"class Element:
-    pass"#);
+    run("class Element");
     run("alkalis = []");
     run("element1 = Element()");
     run("element1.number = 3");
@@ -1944,11 +1861,9 @@ fn creates_a_dependency_based_on_the_length_of_an_identifier() {
 fn adds_a_created_class_to_the_class_list() {
     let mut run = runner();
     assert_eq!(run("Class.length"), 0);
-    run(r#"class Student:
-    pass"#);
+    run("class Student");
     assert_eq!(run("Class.length"), 1);
-    run(r#"class User:
-    pass"#);
+    run("class User");
     assert_eq!(run("Class.length"), 2);
 }
 
@@ -1957,8 +1872,7 @@ fn adds_a_created_class_to_the_class_list() {
 #[test]
 fn updates_a_class_definition() {
     let mut run = runner();
-    run(r#"class Message:
-    pass"#);
+    run("class Message");
     run("$Message.read = false");
     run("message1 = Message()");
     run(r#"class Message(payload: str):
@@ -2211,10 +2125,8 @@ fn supports_nested_functions_as_a_parameter_in_an_expression() {
 #[test]
 fn supports_a_property_of_chained_functions_in_an_expression() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class User:
-    pass"#);
-    run(r#"class Registration:
-    pass"#);
+    run("class User");
+    run("class Registration");
     run("user1 = User()");
     run("registration1 = Registration()");
     run("registration1.user = user1");
@@ -2254,8 +2166,7 @@ fn throws_a_reference_error_if_the_thrown_value_is_not_defined() {
 #[test]
 fn creates_a_class_assignment_before_initialization() {
     let mut run = runner();
-    run(r#"class Review:
-    pass"#);
+    run("class Review");
     run("$Review.rate = $Review.sum / 10");
     run("review1 = Review()");
     assert_eq!(run("review1.rate"), serde_json::Value::Null);
@@ -2268,8 +2179,7 @@ fn creates_a_class_assignment_before_initialization() {
 #[test]
 fn creates_a_class_assignment_after_initialization() {
     let mut run = runner();
-    run(r#"class Shape:
-    pass"#);
+    run("class Shape");
     run("shape1 = Shape()");
     run("shape1.edge = 3");
     run("shape2 = Shape()");
@@ -2287,8 +2197,7 @@ fn creates_a_class_assignment_after_initialization() {
 #[test]
 fn updates_a_class_assignment() {
     let mut run = runner();
-    run(r#"class Employee:
-    pass"#);
+    run("class Employee");
     run("employee1 = Employee()");
     run("employee1.id = 1");
     run(r#"$Employee.username = "E" + $Employee.id"#);
@@ -2304,8 +2213,7 @@ fn updates_a_class_assignment() {
 #[test]
 fn creates_an_if_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Ticket:
-    pass"#);
+    run("class Ticket");
     run(r#"if $Ticket.date > Date("1993-1-1"):
     $Ticket.status = "EXPIRED""#);
     run("ticket1 = Ticket()");
@@ -2321,8 +2229,7 @@ fn creates_an_if_statement_of_class_before_initialization() {
 #[test]
 fn creates_an_if_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Student:
-    pass"#);
+    run("class Student");
     run("student1 = Student()");
     run("student1.age = 2");
     run(r#"student1.class = "Daycare""#);
@@ -2343,8 +2250,7 @@ fn creates_an_if_statement_of_class_after_initialization() {
 #[test]
 fn updates_an_if_block_of_class() {
     let mut run = runner();
-    run(r#"class Inventory:
-    pass"#);
+    run("class Inventory");
     run("inventory1 = Inventory()");
     run("inventory1.quantity = 0");
     run("inventory2 = Inventory()");
@@ -2364,8 +2270,7 @@ fn updates_an_if_block_of_class() {
 #[test]
 fn creates_an_else_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Count:
-    pass"#);
+    run("class Count");
     run(r#"if $Count.max > 1000:
     $Count.reset = urgent
 else:
@@ -2384,8 +2289,7 @@ else:
 #[test]
 fn creates_an_else_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Concentration:
-    pass"#);
+    run("class Concentration");
     run(r#"serialDilution = "(c1V1+c2V2)/(V1+V2)""#);
     run(r#"directDilution = "c1/V1""#);
     run("concentration1 = Concentration()");
@@ -2404,8 +2308,7 @@ else:
 #[test]
 fn creates_an_else_if_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Storage:
-    pass"#);
+    run("class Storage");
     run(r#"normal = "NORMAL"; low = "LOW"; empty = "EMPTY""#);
     run(r#"if $Storage.capacity > 25:
     $Storage.status = normal
@@ -2425,8 +2328,7 @@ else:
 #[test]
 fn creates_an_else_if_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Registration:
-    pass"#);
+    run("class Registration");
     run(r#"yes = "YES"; pending = "PENDING"; no = "NO""#);
     run("registration1 = Registration()");
     run("registration1.available = 0");
@@ -2446,8 +2348,7 @@ else:
 #[test]
 fn creates_multiple_else_if_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Capacity:
-    pass"#);
+    run("class Capacity");
     run(r#"if $Capacity.spare / $Capacity.available > 0.5:
     $Capacity.total = $Capacity.available + $Capacity.spare
 else if $Capacity.spare / $Capacity.available > 0.1:
@@ -2467,8 +2368,7 @@ else:
 #[test]
 fn creates_multiple_else_if_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Shape:
-    pass"#);
+    run("class Shape");
     run("shape1 = Shape()");
     run(r#"shape1.type = "RECTANGLE""#);
     run("shape1.x = 5");
@@ -2489,8 +2389,7 @@ else:
 #[test]
 fn runs_a_block_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Stock:
-    pass"#);
+    run("class Stock");
     run(r#"{
     change = $Stock.before * 4 / 100
     $Stock.after = $Stock.before + change
@@ -2508,8 +2407,7 @@ fn runs_a_block_statement_of_class_before_initialization() {
 #[test]
 fn runs_a_block_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Purchase:
-    pass"#);
+    run("class Purchase");
     run("purchase1 = Purchase()");
     run("purchase1.price = 99");
     run(r#"{
@@ -2526,8 +2424,7 @@ fn runs_a_block_statement_of_class_after_initialization() {
 #[test]
 fn runs_a_nested_block_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Compound:
-    pass"#);
+    run("class Compound");
     run(r#"{
     mol = 69.94 / $Compound.substance
     {
@@ -2545,8 +2442,7 @@ fn runs_a_nested_block_statement_of_class_before_initialization() {
 #[test]
 fn runs_a_nested_block_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Bug:
-    pass"#);
+    run("class Bug");
     run("bug1 = Bug()");
     run("bug1.initialScore = 1000");
     run("bug1.aging = 24");
@@ -2564,8 +2460,7 @@ fn runs_a_nested_block_statement_of_class_after_initialization() {
 #[test]
 fn runs_a_nested_if_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Mortgage:
-    pass"#);
+    run("class Mortgage");
     run(r#"rate1 = "EXCEPTIONAL""#);
     run(r#"{
     interest = $Mortgage.annual / 12
@@ -2584,8 +2479,7 @@ fn runs_a_nested_if_statement_of_class_before_initialization() {
 #[test]
 fn runs_a_nested_if_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Building:
-    pass"#);
+    run("class Building");
     run(r#"buildingType1 = "SKYSCRAPER""#);
     run("building1 = Building()");
     run("building1.floors = 20");
@@ -2606,8 +2500,7 @@ fn runs_a_nested_if_statement_of_class_after_initialization() {
 #[test]
 fn creates_a_nested_else_statement_of_class_before_initialization() {
     let mut run = runner();
-    run(r#"class Account:
-    pass"#);
+    run("class Account");
     run(r#"noAlert = "NO_ALERT""#);
     run(r#"lowAlert = "LOW_ALERT""#);
     run(r#"{
@@ -2629,8 +2522,7 @@ fn creates_a_nested_else_statement_of_class_before_initialization() {
 #[test]
 fn creates_a_nested_else_statement_of_class_after_initialization() {
     let mut run = runner();
-    run(r#"class Question:
-    pass"#);
+    run("class Question");
     run(r#"high = "HIGH""#);
     run(r#"low = "LOW""#);
     run("question1 = Question()");
@@ -2654,11 +2546,9 @@ fn creates_a_nested_else_statement_of_class_after_initialization() {
 #[test]
 fn creates_a_class_assignment_with_multiple_properties_before_declaration() {
     let mut run = runner();
-    run(r#"class Room:
-    pass"#);
+    run("class Room");
     run("$Room.level = $Room.number / 10");
-    run(r#"class Guest:
-    pass"#);
+    run("class Guest");
     run("$Guest.room = Room()");
     run("guest1 = Guest()");
     run("guest1.room.number = 30");
@@ -2673,10 +2563,8 @@ fn creates_a_class_assignment_with_multiple_properties_before_declaration() {
 #[test]
 fn creates_a_class_assignment_with_multiple_properties_after_declaration() {
     let mut run = runner();
-    run(r#"class Channel:
-    pass"#);
-    run(r#"class Frequency:
-    pass"#);
+    run("class Channel");
+    run("class Frequency");
     run("channel1 = Channel()");
     run("$Channel.frequency = Frequency()");
     run("$Frequency.hertz = 1 / $Frequency.period");
@@ -2693,10 +2581,8 @@ fn creates_a_class_assignment_with_multiple_properties_after_declaration() {
 #[test]
 fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_before_initialization() {
     let mut run = runner();
-    run(r#"class Hospital:
-    pass"#);
-    run(r#"class Clinic:
-    pass"#);
+    run("class Hospital");
+    run("class Clinic");
     run("$Hospital.clinic = Clinic()");
     run("$Hospital.patients = $Hospital.clinic.beds * 746");
     run("hospital1 = Hospital()");
@@ -2712,10 +2598,8 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_be
 #[test]
 fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_after_initialization() {
     let mut run = runner();
-    run(r#"class Server:
-    pass"#);
-    run(r#"class OS:
-    pass"#);
+    run("class Server");
+    run("class OS");
     run("$Server.os = OS()");
     run("server1 = Server()");
     run("server1.os.version = 14");
@@ -2730,8 +2614,7 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_af
 #[test]
 fn creates_a_class_assignment_only_if_the_instance_is_defined() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Phone:
-    pass"#);
+    run("class Phone");
     assert_eq!(run_error("$Phone.line.wired = true"), "ReferenceError: Phone.line is not defined");
 }
 
@@ -2758,8 +2641,7 @@ fn creates_a_for_of_statement() {
 #[test]
 fn creates_a_block_of_for_statement_without_dependencies() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item1 = Item()");
     run("item2 = Item()");
     run("VALUE = 10");
@@ -2784,8 +2666,7 @@ fn creates_a_block_of_for_statement_without_dependencies() {
 fn loops_through_only_defined_objects_in_a_for_of_statement() {
     let mut run = runner();
     run("array = []");
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item1 = Object()");
     run("array.push(item1)");
     run(r#"item2 = { "id": "item3" }"#);
@@ -2813,8 +2694,7 @@ fn loops_through_only_defined_objects_in_a_for_of_statement() {
 #[test]
 fn supports_an_if_statement_in_a_for_of_statement() {
     let mut run = runner();
-    run(r#"class Question:
-    pass"#);
+    run("class Question");
     run("question1 = Question()");
     run("question2 = Question()");
     run("question2.archived = true");
@@ -3081,8 +2961,7 @@ fn freezes_value_reads_inside_compound_expressions() {
 #[test]
 fn updates_inherited_rules_on_existing_subtype_instances() {
     let mut run = runner();
-    run(r#"class Parent:
-    pass"#);
+    run("class Parent");
     run("$Parent.flag = 1");
     run(r#"class Child: Parent
     pass"#);
@@ -3112,8 +2991,7 @@ fn updates_inherited_rules_on_existing_subtype_instances() {
 #[test]
 fn preserves_subtype_property_rules_when_a_parent_rule_changes() {
     let mut run = runner();
-    run(r#"class Parent:
-    pass"#);
+    run("class Parent");
     run(r#"class Child: Parent
     pass"#);
     run("$Child.flag = 7");
@@ -3138,8 +3016,7 @@ fn preserves_subtype_property_rules_when_a_parent_rule_changes() {
 #[test]
 fn rolls_back_a_parent_rule_that_fails_for_a_subtype_instance() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Parent:
-    pass"#);
+    run("class Parent");
     run(r#"class Child: Parent
     pass"#);
     run("parent = Parent()");
@@ -3195,8 +3072,7 @@ fn rejects_a_class_inheriting_from_itself() {
     assert_eq!(run_error(r#"class Loop: Loop
     pass"#), "TypeError: Circular Inheritance");
     assert_eq!(run("Class.length"), 0);
-    run(r#"class Loop:
-    pass"#);
+    run("class Loop");
     run("loop = Loop()");
     assert_eq!(run("loop.id"), "loop");
 }
@@ -3206,8 +3082,7 @@ fn rejects_a_class_inheriting_from_itself() {
 #[test]
 fn rejects_an_inheritance_cycle_introduced_by_redeclaration() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Root:
-    pass"#);
+    run("class Root");
     run("$Root.flag = true");
     run(r#"class Child: Root
     pass"#);
@@ -3223,8 +3098,7 @@ fn rejects_an_inheritance_cycle_introduced_by_redeclaration() {
 #[test]
 fn rejects_class_dependency_cycles_inside_compound_expressions() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("$Item.list = [$Item.source]");
     assert_eq!(run_error("$Item.source = $Item.list"), "TypeError: Circular Dependency");
     run(r#"$Item.record = { "source": $Item.source }"#);
@@ -3256,8 +3130,7 @@ fn rejects_class_dependency_cycles_inside_compound_expressions() {
 #[test]
 fn checks_both_slice_bounds_when_declaring_a_class_rule() {
     let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     assert_eq!(run_error(r#"$Item.part = "abcd"[missing:]"#), "ReferenceError: missing is not defined");
     assert_eq!(run_error(r#"$Item.part = "abcd"[:missing]"#), "ReferenceError: missing is not defined");
     run("start = 1");
@@ -3274,8 +3147,7 @@ fn checks_both_slice_bounds_when_declaring_a_class_rule() {
 #[test]
 fn propagates_null_through_indexed_object_properties() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item = Item()");
     run("item.amount = null");
     run(r#"field = "amount""#);
@@ -3296,8 +3168,7 @@ fn propagates_null_through_indexed_object_properties() {
 #[test]
 fn defers_a_class_conditional_reading_an_undefined_indexed_property() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run(r#"if $Item["score"] == null:
     $Item.active = true"#);
     run("item = Item()");
@@ -3313,31 +3184,25 @@ fn tracks_the_number_of_declared_classes_as_a_dependency() {
     let (mut run, mut run_error) = crate::common::runners();
     run("count = Class.length");
     run("doubled = count * 2");
-    run(r#"class First:
-    pass"#);
+    run("class First");
     assert_eq!(run("count"), 1);
     assert_eq!(run("doubled"), 2);
-    run(r#"class Second:
-    pass"#);
+    run("class Second");
     assert_eq!(run("count"), 2);
     assert_eq!(run("doubled"), 4);
-    run(r#"class First:
-    pass"#);
+    run("class First");
     assert_eq!(run("count"), 2);
-    assert_eq!(run_error(r#"class Temporary:
-    pass
+    assert_eq!(run_error(r#"class Temporary
 throw "ABORT""#), "ABORT");
     assert_eq!(run("Class.length"), 2);
     assert_eq!(run("count"), 2);
     assert_eq!(run("doubled"), 4);
-    run(r#"class Third:
-    pass"#);
+    run("class Third");
     assert_eq!(run("count"), 3);
     assert_eq!(run("doubled"), 6);
     run(r#"if count > 3:
     throw "TOO_MANY_TYPES""#);
-    assert_eq!(run_error(r#"class Fourth:
-    pass"#), "TOO_MANY_TYPES");
+    assert_eq!(run_error("class Fourth"), "TOO_MANY_TYPES");
     assert_eq!(run("Class.length"), 3);
     assert_eq!(run("count"), 3);
     assert_eq!(run("doubled"), 6);
@@ -3597,8 +3462,7 @@ fn restores_enclosing_null_tracking_after_failed_local_assignments() {
 #[test]
 fn restores_enclosing_null_tracking_after_failed_property_assignments() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item = Item()");
     run("item.amount = 1");
     run(r#"def fail():
@@ -3810,8 +3674,7 @@ else:
 #[test]
 fn keeps_conditional_loop_bodies_imperative() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item = Item()");
     run("item.amount = 0");
     run("limit = 0");
@@ -4040,8 +3903,7 @@ fn tracks_calls_through_reassigned_lambda_variables() {
 #[test]
 fn tracks_dotted_and_indexed_callable_properties_consistently() {
     let mut run = runner();
-    run(r#"class Handler:
-    pass"#);
+    run("class Handler");
     run("handler = Handler()");
     run("input = 2");
     run("dotted = handler.operation(input)");
@@ -4134,8 +3996,7 @@ catch error:
 #[test]
 fn restores_nullable_callable_properties_without_changing_frozen_references() {
     let mut run = runner();
-    run(r#"class Handler:
-    pass"#);
+    run("class Handler");
     run("handler = Handler()");
     run("handler.operation = number => number + 1");
     run("snapshot = handler.operation.value");
@@ -4211,8 +4072,7 @@ catch error:
     }
     assert_eq!(run("result"), 6);
     assert_eq!(run("callback(4)"), 8);
-    run(r#"class Handler:
-    pass"#);
+    run("class Handler");
     run("handler = Handler()");
     run("handler.operation = number => number + 1");
     run("propertyResult = handler.operation(3)");
@@ -4341,8 +4201,7 @@ fn keeps_live_reasoning_current_through_equal_valued_reference_changes() {
     let mut run = runner();
     run(r#"class Plan(rate):
     this.rate = rate"#);
-    run(r#"class User:
-    pass"#);
+    run("class User");
     run("basic = Plan(10)");
     run("pro = Plan(10)");
     run("user = User()");
@@ -4387,8 +4246,7 @@ fn keeps_live_reasoning_model_selections_current() {
 #[test]
 fn keeps_live_reasoning_subscribed_to_an_absent_property() {
     let mut run = runner();
-    run(r#"class Item:
-    pass"#);
+    run("class Item");
     run("item = Item()");
     run("trace = why item.amount");
     assert_eq!(run("trace"), serde_json::json!([]));
@@ -4598,8 +4456,7 @@ fn preserves_queued_live_reasoning_across_a_caught_structural_failure() {
     run("inventory = model |> why");
     run(r#"if trigger > 0:
     try:
-        class Temporary:
-            pass
+        class Temporary
         throw "ABORT"
     catch error:
         if error != "ABORT":
@@ -4791,8 +4648,7 @@ fn keeps_compound_property_and_local_assignments_equivalent() {
     assert_eq!(run("meter1.reading"), 12);
     assert_eq!(run("meter1.adjust(3)"), 18);
     assert_eq!(run("meter1.reading"), 18);
-    run(r#"class Scale:
-    pass"#);
+    run("class Scale");
     run("scale1 = Scale()");
     run("$Scale.factor = 2");
     assert_eq!(run_error("$Scale.factor *= 3"), "TypeError: Circular Dependency");
@@ -4839,6 +4695,125 @@ fn returns_compound_assignment_expressions() {
     assert_eq!(run("divide(6, 3)"), 2);
     assert_eq!(run("remainder(5, 3)"), 2);
     assert_eq!(run("combined(1, 3)"), 7);
+}
+
+/// Nucleoid keeps bodyless class declarations equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_bodyless_class_declarations_equivalent() {
+    let mut run = runner();
+    run("class Entity");
+    {
+        let actual = run("typeof $Entity");
+        let expected = run("(Class)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("typeof Entity");
+        let expected = run("(List)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Class.length"), 1);
+    assert_eq!(run("Entity.length"), 0);
+    run("entity1 = Entity()");
+    {
+        let actual = run("entity1");
+        let expected = run(r#"({id: "entity1"})"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Entity.length"), 1);
+}
+
+/// Nucleoid keeps rules reactive on bodyless classes
+#[rustfmt::skip]
+#[test]
+fn keeps_rules_reactive_on_bodyless_classes() {
+    let mut run = runner();
+    run("class Item");
+    run("rate = 2");
+    run("$Item.price = $Item.quantity * rate");
+    run("item1 = Item()");
+    assert_eq!(run("item1.price"), serde_json::Value::Null);
+    run("item1.quantity = 3");
+    assert_eq!(run("item1.price"), 6);
+    run("item2 = Item()");
+    run("item2.quantity = 4");
+    assert_eq!(run("item2.price"), 8);
+    run("rate = 3");
+    assert_eq!(run("item1.price"), 9);
+    assert_eq!(run("item2.price"), 12);
+    run("item1.quantity = 5");
+    assert_eq!(run("item1.price"), 15);
+    assert_eq!(run("item2.price"), 12);
+    assert_eq!(run("Item.length"), 2);
+}
+
+/// Nucleoid preserves parameters and scope in bodyless classes
+#[rustfmt::skip]
+#[test]
+fn preserves_parameters_and_scope_in_bodyless_classes() {
+    let mut run = runner();
+    run("class Shell(code: int)");
+    run("first = Shell(5)");
+    run("second = Shell()");
+    {
+        let actual = run("first");
+        let expected = run(r#"({id: "first"})"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("first.code"), serde_json::Value::Null);
+    assert_eq!(run("second.code"), serde_json::Value::Null);
+    assert_eq!(run("Shell.length"), 2);
+    run(r#"{
+    class Token
+    token1 = Token()
+    assert(Token[0], token1)
+}"#);
+    assert_eq!(run("Token.length"), 1);
+    assert_eq!(run("Class.length"), 2);
+}
+
+/// Nucleoid preserves bodyless class populations and inheritance
+#[rustfmt::skip]
+#[test]
+fn preserves_bodyless_class_populations_and_inheritance() {
+    let mut run = runner();
+    run("class Parent");
+    run("first = Parent()");
+    assert_eq!(run("Parent.length"), 1);
+    run("class Parent");
+    assert_eq!(run("Class.length"), 1);
+    assert_eq!(run("Parent.length"), 1);
+    run(r#"$Parent.label = "BASE""#);
+    run(r#"class Child: Parent
+    pass"#);
+    run("child1 = Child()");
+    assert_eq!(run("Class.length"), 2);
+    assert_eq!(run("Parent.length"), 1);
+    assert_eq!(run("Child.length"), 1);
+    assert_eq!(run("first.label"), "BASE");
+    assert_eq!(run("child1.label"), "BASE");
+}
+
+/// Nucleoid rolls back creation of bodyless class instances
+#[rustfmt::skip]
+#[test]
+fn rolls_back_creation_of_bodyless_class_instances() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Limited");
+    run("count = Limited.length");
+    run(r#"if count > 1:
+    throw "LIMIT""#);
+    run("limited1 = Limited()");
+    assert_eq!(run_error("limited2 = Limited()"), "LIMIT");
+    assert_eq!(run("Limited.length"), 1);
+    assert_eq!(run("count"), 1);
+    {
+        let actual = run("limited1");
+        let expected = run(r#"({id: "limited1"})"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run_error("limited2"), "ReferenceError: limited2 is not defined");
 }
 
 /// The committed tests must not drift from their generated JSONL export.

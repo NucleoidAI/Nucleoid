@@ -375,8 +375,7 @@ assert(unit2.stamp, "U-4")
 # Nucleoid replaces a class-level rule on a cell
 
 # There is a Cell type
-class Cell:
-    pass
+class Cell
 
 # cell1 is a Cell whose number is 2
 cell1 = Cell()
@@ -402,8 +401,7 @@ assert(cell1.sign, "CELL-3")
 # Nucleoid marks a reject with a class-level conditional
 
 # There is a Part type
-class Part:
-    pass
+class Part
 
 # Any part with more than 2 defects is rejected
 if $Part.defects > 2:
@@ -425,8 +423,7 @@ assert(part1.rejected, true)
 # Nucleoid classifies a downtime with a class-level chain
 
 # There is a Stoppage type
-class Stoppage:
-    pass
+class Stoppage
 
 # major is "MAJOR", minor is "MINOR", and brief is "BRIEF"
 major = "MAJOR"; minor = "MINOR"; brief = "BRIEF"
@@ -462,12 +459,10 @@ assert(stoppage1.kind, "MAJOR")
 # Nucleoid counts the jobs of a machine with a class-level aggregate
 
 # There is a Machine type
-class Machine:
-    pass
+class Machine
 
 # There is a Job type
-class Job:
-    pass
+class Job
 
 # machine1 is a Machine
 machine1 = Machine()
@@ -496,8 +491,7 @@ assert(machine1.queued, 3)
 # Nucleoid builds a work order from a property that arrives later
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # order1 is an Order
 order1 = Order()
@@ -517,12 +511,10 @@ assert(order1.full, "WO3312")
 # Nucleoid reads an operator through a shift reference
 
 # There is a Shift type
-class Shift:
-    pass
+class Shift
 
 # There is an Operator type
-class Operator:
-    pass
+class Operator
 
 # shift1 is a Shift
 shift1 = Shift()
@@ -549,8 +541,7 @@ assert(shift1.staffed, "Run by Mia")
 # Nucleoid clears an inspection line when a reading is deleted
 
 # There is an Inspection type
-class Inspection:
-    pass
+class Inspection
 
 # inspection1 is an Inspection
 inspection1 = Inspection()
@@ -681,8 +672,7 @@ assert(service, "STD")
 # Nucleoid computes a unit cost in a class-level block
 
 # There is a Product type
-class Product:
-    pass
+class Product
 
 # while in the block, overhead is a local variable that is any product's cost times 25 divided by 100,
 # and the product's price is the product's cost plus overhead
@@ -706,8 +696,7 @@ assert(product1.price, 100)
 # Nucleoid computes a load index in a nested class-level block
 
 # There is a Press type
-class Press:
-    pass
+class Press
 
 # while in the block, share is a local variable that is 500 divided by any press's tools,
 # and in a nested block, the press's index is the floor of share times the press's strokes
@@ -734,8 +723,7 @@ assert(press1.index, 1166)
 # Nucleoid flags a quarantine with an if statement on a property
 
 # There is a Lot type
-class Lot:
-    pass
+class Lot
 
 # lot1 is a Lot whose state is "RELEASED"
 lot1 = Lot()
@@ -757,8 +745,7 @@ assert(lot1.quarantine, true)
 # Nucleoid chooses a packing note with an else statement on a property
 
 # There is a Crate type
-class Crate:
-    pass
+class Crate
 
 # crate1 is a Crate whose export is false
 crate1 = Crate()
@@ -789,8 +776,7 @@ assert(crate1.note, "HEAT TREATED")
 # Nucleoid bands a tooling charge with multiple else if statements on a property
 
 # There is a Tool type
-class Tool:
-    pass
+class Tool
 
 # tool1 is a Tool whose strokes is 500
 tool1 = Tool()
@@ -969,8 +955,7 @@ assert(total, 1000)
 # Nucleoid checks whether every machine is calibrated
 
 # There is a Machine type
-class Machine:
-    pass
+class Machine
 
 # machine1 is a Machine that is calibrated
 machine1 = Machine()
@@ -995,8 +980,7 @@ assert(ready, false)
 # Nucleoid checks whether any line is stopped
 
 # There is a Line type
-class Line:
-    pass
+class Line
 
 # line1 is a Line that is running
 line1 = Line()
@@ -1038,8 +1022,7 @@ assert(routing, "CUT/BEND/WELD/PAINT")
 # Nucleoid creates a ticket for every open job
 
 # There is a Job type
-class Job:
-    pass
+class Job
 
 # job1 is a Job
 job1 = Job()
@@ -1075,8 +1058,7 @@ assert(Ticket[0].kind, "WORK")
 # Nucleoid rolls back a batch if a rule throws
 
 # There is a Batch type
-class Batch:
-    pass
+class Batch
 
 # If any batch's size is greater than 5000, then throw 'BATCH_TOO_LARGE'
 if $Batch.size > 5000:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a die code with a regular expression
 
 # There is a Die type
-class Die:
-    pass
+class Die
 
 # If any die's code does not match /[A-Z]{2}/, then throw 'INVALID_DIE'
 if not /[A-Z]{2}/.test($Die.code):

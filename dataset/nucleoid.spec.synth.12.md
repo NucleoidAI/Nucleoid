@@ -375,8 +375,7 @@ assert(booking2.reference, "BK-22")
 # Nucleoid replaces a class-level rule on a floor
 
 # There is a Floor type
-class Floor:
-    pass
+class Floor
 
 # floor1 is a Floor whose number is 3
 floor1 = Floor()
@@ -402,8 +401,7 @@ assert(floor1.sign, "FLOOR-4")
 # Nucleoid marks a long stay with a class-level conditional
 
 # There is a Stay type
-class Stay:
-    pass
+class Stay
 
 # Any stay longer than 14 nights is extended
 if $Stay.nights > 14:
@@ -425,8 +423,7 @@ assert(stay1.extended, true)
 # Nucleoid tiers a guest with a class-level chain
 
 # There is a Guest type
-class Guest:
-    pass
+class Guest
 
 # gold is "GOLD", silver is "SILVER", and bronze is "BRONZE"
 gold = "GOLD"; silver = "SILVER"; bronze = "BRONZE"
@@ -462,12 +459,10 @@ assert(guest1.tier, "GOLD")
 # Nucleoid counts the bookings of a room with a class-level aggregate
 
 # There is a Room type
-class Room:
-    pass
+class Room
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 # room1 is a Room
 room1 = Room()
@@ -496,8 +491,7 @@ assert(room1.bookings, 3)
 # Nucleoid builds an invoice from a property that arrives later
 
 # There is an Invoice type
-class Invoice:
-    pass
+class Invoice
 
 # invoice1 is an Invoice
 invoice1 = Invoice()
@@ -517,12 +511,10 @@ assert(invoice1.full, "INV6620")
 # Nucleoid reads a guest through a booking reference
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 # There is a Guest type
-class Guest:
-    pass
+class Guest
 
 # booking1 is a Booking
 booking1 = Booking()
@@ -549,8 +541,7 @@ assert(booking1.held, "Held for Tomas Silva")
 # Nucleoid clears a folio line when a charge is deleted
 
 # There is a Folio type
-class Folio:
-    pass
+class Folio
 
 # folio1 is a Folio
 folio1 = Folio()
@@ -681,8 +672,7 @@ assert(service, "STD")
 # Nucleoid computes a stay total in a class-level block
 
 # There is a Reservation type
-class Reservation:
-    pass
+class Reservation
 
 # while in the block, tax is a local variable that is any reservation's net times 20 divided by 100,
 # and the reservation's gross is the reservation's net plus tax
@@ -706,8 +696,7 @@ assert(reservation1.gross, 600)
 # Nucleoid computes a covers index in a nested class-level block
 
 # There is a Restaurant type
-class Restaurant:
-    pass
+class Restaurant
 
 # while in the block, share is a local variable that is 300 divided by any restaurant's tables,
 # and in a nested block, the restaurant's index is the floor of share times the restaurant's sittings
@@ -734,8 +723,7 @@ assert(restaurant1.index, 128)
 # Nucleoid flags a no show with an if statement on a property
 
 # There is an Arrival type
-class Arrival:
-    pass
+class Arrival
 
 # arrival1 is an Arrival whose state is "ARRIVED"
 arrival1 = Arrival()
@@ -757,8 +745,7 @@ assert(arrival1.noShow, true)
 # Nucleoid chooses a turndown note with an else statement on a property
 
 # There is a Room type
-class Room:
-    pass
+class Room
 
 # room1 is a Room whose vip is false
 room1 = Room()
@@ -789,8 +776,7 @@ assert(room1.note, "TURNDOWN AND FLOWERS")
 # Nucleoid bands a cancellation fee with multiple else if statements on a property
 
 # There is a Cancellation type
-class Cancellation:
-    pass
+class Cancellation
 
 # cancellation1 is a Cancellation whose hours is 100
 cancellation1 = Cancellation()
@@ -969,8 +955,7 @@ assert(total, 600)
 # Nucleoid checks whether every room is serviced
 
 # There is a Room type
-class Room:
-    pass
+class Room
 
 # room1 is a Room that is serviced
 room1 = Room()
@@ -995,8 +980,7 @@ assert(ready, false)
 # Nucleoid checks whether any booking is unpaid
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 # booking1 is a Booking that is paid
 booking1 = Booking()
@@ -1038,8 +1022,7 @@ assert(itinerary, "CHECKIN | DINNER | SPA | CHECKOUT")
 # Nucleoid creates a key card for every active booking
 
 # There is a Booking type
-class Booking:
-    pass
+class Booking
 
 # booking1 is a Booking
 booking1 = Booking()
@@ -1075,8 +1058,7 @@ assert(Card[0].kind, "ROOM")
 # Nucleoid rolls back a reservation if a rule throws
 
 # There is a Reservation type
-class Reservation:
-    pass
+class Reservation
 
 # If any reservation's guests is greater than 6, then throw 'PARTY_TOO_LARGE'
 if $Reservation.guests > 6:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a loyalty number with a regular expression
 
 # There is a Member type
-class Member:
-    pass
+class Member
 
 # If any member's number does not match /[0-9]{5}/, then throw 'INVALID_MEMBER'
 if not /[0-9]{5}/.test($Member.number):

@@ -375,8 +375,7 @@ assert(loan2.reference, "LN-9")
 # Nucleoid replaces a class-level rule on a store
 
 # There is a Store type
-class Store:
-    pass
+class Store
 
 # store1 is a Store whose number is 6
 store1 = Store()
@@ -402,8 +401,7 @@ assert(store1.sign, "STORE-7")
 # Nucleoid marks a fragile item with a class-level conditional
 
 # There is a Volume type
-class Volume:
-    pass
+class Volume
 
 # Any volume older than 200 years is fragile
 if $Volume.age > 200:
@@ -425,8 +423,7 @@ assert(volume1.fragile, true)
 # Nucleoid grades a condition with a class-level chain
 
 # There is a Record type
-class Record:
-    pass
+class Record
 
 # good is "GOOD", fair is "FAIR", and poor is "POOR"
 good = "GOOD"; fair = "FAIR"; poor = "POOR"
@@ -462,12 +459,10 @@ assert(record1.condition, "GOOD")
 # Nucleoid counts the items of a collection with a class-level aggregate
 
 # There is a Collection type
-class Collection:
-    pass
+class Collection
 
 # There is an Item type
-class Item:
-    pass
+class Item
 
 # collection1 is a Collection
 collection1 = Collection()
@@ -496,8 +491,7 @@ assert(collection1.holdings, 3)
 # Nucleoid builds a barcode from a property that arrives later
 
 # There is a Copy type
-class Copy:
-    pass
+class Copy
 
 # copy1 is a Copy
 copy1 = Copy()
@@ -517,12 +511,10 @@ assert(copy1.barcode, "LIB9911")
 # Nucleoid reads a donor through a collection reference
 
 # There is a Collection type
-class Collection:
-    pass
+class Collection
 
 # There is a Donor type
-class Donor:
-    pass
+class Donor
 
 # collection1 is a Collection
 collection1 = Collection()
@@ -549,8 +541,7 @@ assert(collection1.credit, "Gift of Hale Estate")
 # Nucleoid clears a label when a shelfmark is deleted
 
 # There is a Label type
-class Label:
-    pass
+class Label
 
 # label1 is a Label
 label1 = Label()
@@ -681,8 +672,7 @@ assert(storage, "OPEN")
 # Nucleoid computes a conservation quote in a class-level block
 
 # There is a Treatment type
-class Treatment:
-    pass
+class Treatment
 
 # while in the block, materials is a local variable that is any treatment's hours times 20 divided by 100,
 # and the treatment's quote is the treatment's hours plus materials
@@ -706,8 +696,7 @@ assert(treatment1.quote, 60)
 # Nucleoid computes a store index in a nested class-level block
 
 # There is a Repository type
-class Repository:
-    pass
+class Repository
 
 # while in the block, share is a local variable that is 900 divided by any repository's rooms,
 # and in a nested block, the repository's index is the floor of share times the repository's ranges
@@ -734,8 +723,7 @@ assert(repository1.index, 514)
 # Nucleoid flags a recall with an if statement on a property
 
 # There is a Loan type
-class Loan:
-    pass
+class Loan
 
 # loan1 is a Loan whose state is "CURRENT"
 loan1 = Loan()
@@ -757,8 +745,7 @@ assert(loan1.recall, true)
 # Nucleoid chooses a handling note with an else statement on a property
 
 # There is an Item type
-class Item:
-    pass
+class Item
 
 # item1 is an Item whose rare is false
 item1 = Item()
@@ -789,8 +776,7 @@ assert(item1.access, "SUPERVISED ACCESS")
 # Nucleoid bands a fine with multiple else if statements on a property
 
 # There is a Fine type
-class Fine:
-    pass
+class Fine
 
 # fine1 is a Fine whose days is 5
 fine1 = Fine()
@@ -969,8 +955,7 @@ assert(total, 1500)
 # Nucleoid checks whether every item is catalogued
 
 # There is an Item type
-class Item:
-    pass
+class Item
 
 # item1 is an Item that is catalogued
 item1 = Item()
@@ -995,8 +980,7 @@ assert(complete, false)
 # Nucleoid checks whether any copy is missing
 
 # There is a Copy type
-class Copy:
-    pass
+class Copy
 
 # copy1 is a Copy that is present
 copy1 = Copy()
@@ -1038,8 +1022,7 @@ assert(provenance, "HALE > REID > LIBRARY > ARCHIVE")
 # Nucleoid creates a record for every held item
 
 # There is an Item type
-class Item:
-    pass
+class Item
 
 # item1 is an Item
 item1 = Item()
@@ -1075,8 +1058,7 @@ assert(Record[0].kind, "MARC")
 # Nucleoid rolls back a request if a rule throws
 
 # There is a Request type
-class Request:
-    pass
+class Request
 
 # If any request's items is greater than 10, then throw 'TOO_MANY_ITEMS'
 if $Request.items > 10:

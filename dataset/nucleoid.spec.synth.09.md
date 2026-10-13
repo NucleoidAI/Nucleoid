@@ -375,8 +375,7 @@ assert(transaction2.reference, "TXN-8")
 # Nucleoid replaces a class-level rule on a branch
 
 # There is a Branch type
-class Branch:
-    pass
+class Branch
 
 # branch1 is a Branch whose number is 12
 branch1 = Branch()
@@ -402,8 +401,7 @@ assert(branch1.sign, "BRANCH-13")
 # Nucleoid marks a large payment with a class-level conditional
 
 # There is a Payment type
-class Payment:
-    pass
+class Payment
 
 # Any payment above 10000 is reportable
 if $Payment.amount > 10000:
@@ -425,8 +423,7 @@ assert(payment1.reportable, true)
 # Nucleoid rates a borrower with a class-level chain
 
 # There is a Borrower type
-class Borrower:
-    pass
+class Borrower
 
 # prime is "PRIME", fair is "FAIR", and poor is "POOR"
 prime = "PRIME"; fair = "FAIR"; poor = "POOR"
@@ -462,12 +459,10 @@ assert(borrower1.band, "PRIME")
 # Nucleoid counts the cards of an account with a class-level aggregate
 
 # There is an Account type
-class Account:
-    pass
+class Account
 
 # There is a Card type
-class Card:
-    pass
+class Card
 
 # account1 is an Account
 account1 = Account()
@@ -496,8 +491,7 @@ assert(account1.cards, 3)
 # Nucleoid builds a mandate from a property that arrives later
 
 # There is a Mandate type
-class Mandate:
-    pass
+class Mandate
 
 # mandate1 is a Mandate
 mandate1 = Mandate()
@@ -517,12 +511,10 @@ assert(mandate1.full, "DD9081")
 # Nucleoid reads a holder through an account reference
 
 # There is a Card type
-class Card:
-    pass
+class Card
 
 # There is a Holder type
-class Holder:
-    pass
+class Holder
 
 # card1 is a Card
 card1 = Card()
@@ -549,8 +541,7 @@ assert(card1.embossed, "Card of Ivan")
 # Nucleoid clears a posting line when an amount is deleted
 
 # There is a Posting type
-class Posting:
-    pass
+class Posting
 
 # posting1 is a Posting
 posting1 = Posting()
@@ -681,8 +672,7 @@ assert(review, "L")
 # Nucleoid computes a charge in a class-level block
 
 # There is a Facility type
-class Facility:
-    pass
+class Facility
 
 # while in the block, fee is a local variable that is any facility's drawn times 2 divided by 100,
 # and the facility's cost is the facility's drawn plus fee
@@ -706,8 +696,7 @@ assert(facility1.cost, 5100)
 # Nucleoid computes a risk index in a nested class-level block
 
 # There is a Portfolio type
-class Portfolio:
-    pass
+class Portfolio
 
 # while in the block, unit is a local variable that is 200 divided by any portfolio's holdings,
 # and in a nested block, the portfolio's index is the floor of unit times the portfolio's weight
@@ -734,8 +723,7 @@ assert(portfolio1.index, 466)
 # Nucleoid flags a dispute with an if statement on a property
 
 # There is a Charge type
-class Charge:
-    pass
+class Charge
 
 # charge1 is a Charge whose state is "SETTLED"
 charge1 = Charge()
@@ -757,8 +745,7 @@ assert(charge1.hold, true)
 # Nucleoid chooses a statement note with an else statement on a property
 
 # There is a Statement type
-class Statement:
-    pass
+class Statement
 
 # statement1 is a Statement whose paperless is false
 statement1 = Statement()
@@ -789,8 +776,7 @@ assert(statement1.delivery, "EMAIL ONLY")
 # Nucleoid bands a commission with multiple else if statements on a property
 
 # There is a Trade type
-class Trade:
-    pass
+class Trade
 
 # trade1 is a Trade whose volume is 50
 trade1 = Trade()
@@ -969,8 +955,7 @@ assert(total, 1000)
 # Nucleoid checks whether every account is verified
 
 # There is an Account type
-class Account:
-    pass
+class Account
 
 # account1 is an Account that is verified
 account1 = Account()
@@ -995,8 +980,7 @@ assert(compliant, false)
 # Nucleoid checks whether any payment is held
 
 # There is a Payment type
-class Payment:
-    pass
+class Payment
 
 # payment1 is a Payment that is released
 payment1 = Payment()
@@ -1038,8 +1022,7 @@ assert(chain, "GB>DE>FR>ES")
 # Nucleoid creates an advice for every settled trade
 
 # There is a Trade type
-class Trade:
-    pass
+class Trade
 
 # trade1 is a Trade
 trade1 = Trade()
@@ -1075,8 +1058,7 @@ assert(Advice[0].kind, "SETTLEMENT")
 # Nucleoid rolls back a withdrawal if a rule throws
 
 # There is a Withdrawal type
-class Withdrawal:
-    pass
+class Withdrawal
 
 # If any withdrawal's amount is greater than 500, then throw 'LIMIT_EXCEEDED'
 if $Withdrawal.amount > 500:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a sort code with a regular expression
 
 # There is a Mandate type
-class Mandate:
-    pass
+class Mandate
 
 # If any mandate's sortCode does not match /[0-9]{6}/, then throw 'INVALID_SORT_CODE'
 if not /[0-9]{6}/.test($Mandate.sortCode):

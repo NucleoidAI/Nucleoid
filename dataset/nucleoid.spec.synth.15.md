@@ -375,8 +375,7 @@ assert(task2.code, "TK-5")
 # Nucleoid replaces a class-level rule on a level
 
 # There is a Level type
-class Level:
-    pass
+class Level
 
 # level1 is a Level whose number is 2
 level1 = Level()
@@ -402,8 +401,7 @@ assert(level1.sign, "LEVEL-3")
 # Nucleoid marks a deep foundation with a class-level conditional
 
 # There is a Foundation type
-class Foundation:
-    pass
+class Foundation
 
 # Any foundation deeper than 3 metres is piled
 if $Foundation.depth > 3:
@@ -425,8 +423,7 @@ assert(foundation1.piled, true)
 # Nucleoid classifies a defect with a class-level chain
 
 # There is a Defect type
-class Defect:
-    pass
+class Defect
 
 # critical is "CRITICAL", major is "MAJOR", and minor is "MINOR"
 critical = "CRITICAL"; major = "MAJOR"; minor = "MINOR"
@@ -462,12 +459,10 @@ assert(defect1.grade, "CRITICAL")
 # Nucleoid counts the tasks of a contractor with a class-level aggregate
 
 # There is a Contractor type
-class Contractor:
-    pass
+class Contractor
 
 # There is a Task type
-class Task:
-    pass
+class Task
 
 # contractor1 is a Contractor
 contractor1 = Contractor()
@@ -496,8 +491,7 @@ assert(contractor1.workload, 3)
 # Nucleoid builds a certificate from a property that arrives later
 
 # There is a Certificate type
-class Certificate:
-    pass
+class Certificate
 
 # certificate1 is a Certificate
 certificate1 = Certificate()
@@ -517,12 +511,10 @@ assert(certificate1.full, "CC8814")
 # Nucleoid reads an engineer through a package reference
 
 # There is a Package type
-class Package:
-    pass
+class Package
 
 # There is an Engineer type
-class Engineer:
-    pass
+class Engineer
 
 # package1 is a Package
 package1 = Package()
@@ -549,8 +541,7 @@ assert(package1.signed, "Signed by Petra Novak")
 # Nucleoid clears a snag line when a location is deleted
 
 # There is a Snag type
-class Snag:
-    pass
+class Snag
 
 # snag1 is a Snag
 snag1 = Snag()
@@ -681,8 +672,7 @@ assert(method, "HAND")
 # Nucleoid computes a valuation in a class-level block
 
 # There is a Valuation type
-class Valuation:
-    pass
+class Valuation
 
 # while in the block, retention is a local variable that is any valuation's gross times 5 divided by 100,
 # and the valuation's net is the valuation's gross minus retention
@@ -706,8 +696,7 @@ assert(valuation1.net, 19000)
 # Nucleoid computes a crew index in a nested class-level block
 
 # There is a Site type
-class Site:
-    pass
+class Site
 
 # while in the block, share is a local variable that is 800 divided by any site's gangs,
 # and in a nested block, the site's index is the floor of share times the site's shifts
@@ -734,8 +723,7 @@ assert(site1.index, 342)
 # Nucleoid flags a stop notice with an if statement on a property
 
 # There is an Inspection type
-class Inspection:
-    pass
+class Inspection
 
 # inspection1 is an Inspection whose outcome is "PASS"
 inspection1 = Inspection()
@@ -757,8 +745,7 @@ assert(inspection1.stopNotice, true)
 # Nucleoid chooses a hoarding note with an else statement on a property
 
 # There is a Boundary type
-class Boundary:
-    pass
+class Boundary
 
 # boundary1 is a Boundary whose public is false
 boundary1 = Boundary()
@@ -789,8 +776,7 @@ assert(boundary1.note, "SOLID HOARDING")
 # Nucleoid bands a preliminaries charge with multiple else if statements on a property
 
 # There is a Contract type
-class Contract:
-    pass
+class Contract
 
 # contract1 is a Contract whose weeks is 10
 contract1 = Contract()
@@ -969,8 +955,7 @@ assert(total, 5000)
 # Nucleoid checks whether every plot is signed off
 
 # There is a Plot type
-class Plot:
-    pass
+class Plot
 
 # plot1 is a Plot that is signed off
 plot1 = Plot()
@@ -995,8 +980,7 @@ assert(handover, false)
 # Nucleoid checks whether any permit has lapsed
 
 # There is a Permit type
-class Permit:
-    pass
+class Permit
 
 # permit1 is a Permit that is current
 permit1 = Permit()
@@ -1038,8 +1022,7 @@ assert(sequence, "DIG then POUR then FRAME then ROOF")
 # Nucleoid creates a permit for every live task
 
 # There is a Task type
-class Task:
-    pass
+class Task
 
 # task1 is a Task
 task1 = Task()
@@ -1075,8 +1058,7 @@ assert(Permit[0].kind, "HOTWORK")
 # Nucleoid rolls back a lift if a rule throws
 
 # There is a Lift type
-class Lift:
-    pass
+class Lift
 
 # If any lift's mass is greater than 5000, then throw 'OVER_CAPACITY'
 if $Lift.mass > 5000:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a plot reference with a regular expression
 
 # There is a Record type
-class Record:
-    pass
+class Record
 
 # If any record's plot does not match /[A-Z][0-9]{2}/, then throw 'INVALID_PLOT'
 if not /[A-Z][0-9]{2}/.test($Record.plot):

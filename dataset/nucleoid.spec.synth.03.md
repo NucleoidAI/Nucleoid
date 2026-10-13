@@ -5,8 +5,7 @@
 # Nucleoid reports the type of a class, its list and an instance
 
 # There is a Sensor type
-class Sensor:
-    pass
+class Sensor
 
 assert(typeof $Sensor, Class)
 assert(typeof Sensor, List)
@@ -23,14 +22,12 @@ assert(typeof sensor1, Object)
 assert(Class.length, 0)
 
 # There is a Gauge type
-class Gauge:
-    pass
+class Gauge
 
 assert(Class.length, 1)
 
 # There is a Meter type
-class Meter:
-    pass
+class Meter
 
 assert(Class.length, 2)
 
@@ -49,8 +46,7 @@ catch error:
 # Nucleoid preserves instances when a class is redefined with a constructor
 
 # There is a Signal type
-class Signal:
-    pass
+class Signal
 
 # No signal is muted
 $Signal.muted = false
@@ -77,8 +73,7 @@ assert(signal2.band, "VHF")
 # Nucleoid deletes an instance addressed by its id
 
 # There is a Badge type
-class Badge:
-    pass
+class Badge
 
 # badge1 is a Badge
 badge1 = Badge()
@@ -99,8 +94,7 @@ assert(Badge["badge2"], { "id": "badge2" })
 # Nucleoid rejects deleting an instance that still has a property
 
 # There is a Valve type
-class Valve:
-    pass
+class Valve
 
 # valve1 is a Valve whose pressure is 30
 valve1 = Valve()
@@ -127,8 +121,7 @@ assert(Valve["valve1"], null)
 # Nucleoid returns a boolean when deleting an instance
 
 # There is a Beacon type
-class Beacon:
-    pass
+class Beacon
 
 # beacon1 is a Beacon
 beacon1 = Beacon()
@@ -144,8 +137,7 @@ assert(delete beacon2, false)
 # Nucleoid generates an id for an instance created without a variable name
 
 # There is a Packet type
-class Packet:
-    pass
+class Packet
 
 # There is a Packet
 Packet()
@@ -286,8 +278,7 @@ assert(cube, 64)
 # Nucleoid takes the square root in a class-level property
 
 # There is a Square type
-class Square:
-    pass
+class Square
 
 # Any square's side is the square root of the square's area
 $Square.side = Math.sqrt($Square.area)
@@ -452,8 +443,7 @@ assert(payload.item.sku, "A-1")
 # Nucleoid uses only the value when a property references itself
 
 # There is a Budget type
-class Budget:
-    pass
+class Budget
 
 # budget1 is a Budget whose amount is 500
 budget1 = Budget()
@@ -469,8 +459,7 @@ assert(budget1.amount, 750)
 # Nucleoid uses the value of a null property as zero
 
 # There is a Fee type
-class Fee:
-    pass
+class Fee
 
 # fee1 is a Fee whose rate is 5 and whose base is null
 fee1 = Fee()
@@ -492,8 +481,7 @@ assert(fee1.total, 0)
 # Nucleoid rejects the value of a property that is not defined
 
 # There is a Route type
-class Route:
-    pass
+class Route
 
 # route1 is a Route whose speed is 80
 route1 = Route()
@@ -520,8 +508,7 @@ class Report(survey):
     this.survey = survey
 
 # There is a Survey type
-class Survey:
-    pass
+class Survey
 
 # Any report's total is the value of the report's survey's total
 $Report.total = $Report.survey.total.value
@@ -546,8 +533,7 @@ assert(report1.total, 20)
 # Nucleoid iterates a list of instances in a for of statement
 
 # There is a Node type
-class Node:
-    pass
+class Node
 
 # node1 is a Node
 node1 = Node()
@@ -622,8 +608,7 @@ reset(tally)
 # Nucleoid adds an instance to a list from a class-level block
 
 # There is a Reading type
-class Reading:
-    pass
+class Reading
 
 # highs is an empty list
 highs = []
@@ -664,8 +649,7 @@ assert(size, 2)
 # Nucleoid rejects writing through an undefined property of an instance
 
 # There is a Printer type
-class Printer:
-    pass
+class Printer
 
 # printer1 is a Printer
 printer1 = Printer()
@@ -681,8 +665,7 @@ catch error:
 # Nucleoid rejects a class-level write through an undefined reference
 
 # There is a Camera type
-class Camera:
-    pass
+class Camera
 
 try:
     # any camera's lens's zoom is 3
@@ -715,8 +698,7 @@ catch error:
 # Nucleoid rejects defining a class-level rule inside a block
 
 # There is a Panel type
-class Panel:
-    pass
+class Panel
 
 # panel1 is a Panel whose width is 4 and whose height is 3
 panel1 = Panel()
@@ -763,8 +745,7 @@ assert(reading, "innermost")
 # Nucleoid applies a class-level rule to instances made before and after it
 
 # There is a Tile type
-class Tile:
-    pass
+class Tile
 
 # tile1 is a Tile whose edge is 3
 tile1 = Tile()
@@ -792,8 +773,7 @@ assert(tile2.area, 25)
 # Nucleoid updates a conditional property when the branch value changes
 
 # There is a Plan type
-class Plan:
-    pass
+class Plan
 
 # plan1 is a Plan whose tier is "FREE"
 plan1 = Plan()

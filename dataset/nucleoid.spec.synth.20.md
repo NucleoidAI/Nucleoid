@@ -375,8 +375,7 @@ assert(call2.reference, "PC-15")
 # Nucleoid replaces a class-level rule on a crane
 
 # There is a Crane type
-class Crane:
-    pass
+class Crane
 
 # crane1 is a Crane whose number is 3
 crane1 = Crane()
@@ -402,8 +401,7 @@ assert(crane1.sign, "CRANE-4")
 # Nucleoid marks a hazardous load with a class-level conditional
 
 # There is a Load type
-class Load:
-    pass
+class Load
 
 # Any load above class 3 is hazardous
 if $Load.class > 3:
@@ -425,8 +423,7 @@ assert(load1.hazardous, true)
 # Nucleoid rates a port state inspection with a class-level chain
 
 # There is an Inspection type
-class Inspection:
-    pass
+class Inspection
 
 # detain is "DETAIN", rectify is "RECTIFY", and clear is "CLEAR"
 detain = "DETAIN"; rectify = "RECTIFY"; clear = "CLEAR"
@@ -462,12 +459,10 @@ assert(inspection1.outcome, "DETAIN")
 # Nucleoid counts the calls of a port with a class-level aggregate
 
 # There is a Port type
-class Port:
-    pass
+class Port
 
 # There is a Call type
-class Call:
-    pass
+class Call
 
 # port1 is a Port
 port1 = Port()
@@ -496,8 +491,7 @@ assert(port1.calls, 3)
 # Nucleoid builds a bill of lading from a property that arrives later
 
 # There is a Bill type
-class Bill:
-    pass
+class Bill
 
 # bill1 is a Bill
 bill1 = Bill()
@@ -517,12 +511,10 @@ assert(bill1.full, "BL4410")
 # Nucleoid reads a master through a vessel reference
 
 # There is a Vessel type
-class Vessel:
-    pass
+class Vessel
 
 # There is a Master type
-class Master:
-    pass
+class Master
 
 # vessel1 is a Vessel
 vessel1 = Vessel()
@@ -549,8 +541,7 @@ assert(vessel1.commanded, "Master Sousa Pinto")
 # Nucleoid clears a schedule line when a time is deleted
 
 # There is a Schedule type
-class Schedule:
-    pass
+class Schedule
 
 # schedule1 is a Schedule
 schedule1 = Schedule()
@@ -681,8 +672,7 @@ assert(towage, "SOLO")
 # Nucleoid computes a port due in a class-level block
 
 # There is a Call type
-class Call:
-    pass
+class Call
 
 # while in the block, levy is a local variable that is any call's tonnage times 5 divided by 100,
 # and the call's due is the call's tonnage plus levy
@@ -706,8 +696,7 @@ assert(call1.due, 4200)
 # Nucleoid computes a berth index in a nested class-level block
 
 # There is a Terminal type
-class Terminal:
-    pass
+class Terminal
 
 # while in the block, share is a local variable that is 700 divided by any terminal's berths,
 # and in a nested block, the terminal's index is the floor of share times the terminal's cranes
@@ -734,8 +723,7 @@ assert(terminal1.index, 933)
 # Nucleoid flags a quarantine with an if statement on a property
 
 # There is an Arrival type
-class Arrival:
-    pass
+class Arrival
 
 # arrival1 is an Arrival whose state is "FREE"
 arrival1 = Arrival()
@@ -757,8 +745,7 @@ assert(arrival1.quarantine, true)
 # Nucleoid chooses a lashing note with an else statement on a property
 
 # There is a Deck type
-class Deck:
-    pass
+class Deck
 
 # deck1 is a Deck whose exposed is false
 deck1 = Deck()
@@ -789,8 +776,7 @@ assert(deck1.lashing, "HEAVY WEATHER LASHING")
 # Nucleoid bands a demurrage charge with multiple else if statements on a property
 
 # There is a Charge type
-class Charge:
-    pass
+class Charge
 
 # charge1 is a Charge whose hours is 10
 charge1 = Charge()
@@ -969,8 +955,7 @@ assert(total, 1500)
 # Nucleoid checks whether every container is sealed
 
 # There is a Container type
-class Container:
-    pass
+class Container
 
 # container1 is a Container that is sealed
 container1 = Container()
@@ -995,8 +980,7 @@ assert(ready, false)
 # Nucleoid checks whether any vessel is delayed
 
 # There is a Vessel type
-class Vessel:
-    pass
+class Vessel
 
 # vessel1 is a Vessel that is on time
 vessel1 = Vessel()
@@ -1038,8 +1022,7 @@ assert(plan, "LIS - CAS - DKR - ABJ")
 # Nucleoid creates a docket for every working call
 
 # There is a Call type
-class Call:
-    pass
+class Call
 
 # call1 is a Call
 call1 = Call()
@@ -1075,8 +1058,7 @@ assert(Docket[0].kind, "DISCHARGE")
 # Nucleoid rolls back a loading if a rule throws
 
 # There is a Loading type
-class Loading:
-    pass
+class Loading
 
 # If any loading's tonnes is greater than 50000, then throw 'OVER_DEADWEIGHT'
 if $Loading.tonnes > 50000:

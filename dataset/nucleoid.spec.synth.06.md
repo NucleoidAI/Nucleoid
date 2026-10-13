@@ -375,8 +375,7 @@ assert(consignment2.label, "CN-5")
 # Nucleoid replaces a class-level rule on a dock
 
 # There is a Dock type
-class Dock:
-    pass
+class Dock
 
 # dock1 is a Dock whose bay is 3
 dock1 = Dock()
@@ -402,8 +401,7 @@ assert(dock1.sign, "DOCK-4")
 # Nucleoid marks a pallet as heavy with a class-level conditional
 
 # There is a Pallet type
-class Pallet:
-    pass
+class Pallet
 
 # Any pallet heavier than 500 is heavy
 if $Pallet.mass > 500:
@@ -425,8 +423,7 @@ assert(pallet1.heavy, true)
 # Nucleoid grades a delivery window with a class-level chain
 
 # There is a Delivery type
-class Delivery:
-    pass
+class Delivery
 
 # fast is "FAST", normal is "NORMAL", and slow is "SLOW"
 fast = "FAST"; normal = "NORMAL"; slow = "SLOW"
@@ -462,12 +459,10 @@ assert(delivery1.speed, "SLOW")
 # Nucleoid counts the parcels of a depot with a class-level aggregate
 
 # There is a Depot type
-class Depot:
-    pass
+class Depot
 
 # There is a Parcel type
-class Parcel:
-    pass
+class Parcel
 
 # depot1 is a Depot
 depot1 = Depot()
@@ -496,8 +491,7 @@ assert(depot1.held, 3)
 # Nucleoid builds a waybill from a property that arrives later
 
 # There is a Waybill type
-class Waybill:
-    pass
+class Waybill
 
 # waybill1 is a Waybill
 waybill1 = Waybill()
@@ -517,12 +511,10 @@ assert(waybill1.full, "WB77120")
 # Nucleoid reads a driver through a vehicle reference
 
 # There is a Vehicle type
-class Vehicle:
-    pass
+class Vehicle
 
 # There is a Driver type
-class Driver:
-    pass
+class Driver
 
 # vehicle1 is a Vehicle
 vehicle1 = Vehicle()
@@ -549,8 +541,7 @@ assert(vehicle1.crew, "Driver: Alex")
 # Nucleoid clears a route summary when a leg is deleted
 
 # There is a Route type
-class Route:
-    pass
+class Route
 
 # route1 is a Route
 route1 = Route()
@@ -681,8 +672,7 @@ assert(handling, "STD")
 # Nucleoid prices a container in a class-level block
 
 # There is a Container type
-class Container:
-    pass
+class Container
 
 # while in the block, levy is a local variable that is any container's worth times 5 divided by 100,
 # and the container's total is the container's worth plus levy
@@ -706,8 +696,7 @@ assert(container1.total, 210)
 # Nucleoid computes a bay index in a nested class-level block
 
 # There is a Bay type
-class Bay:
-    pass
+class Bay
 
 # while in the block, span is a local variable that is 90 divided by any bay's rows,
 # and in a nested block, the bay's index is the floor of span times the bay's columns
@@ -734,8 +723,7 @@ assert(bay1.index, 157)
 # Nucleoid flags a damaged crate with an if statement on a property
 
 # There is a Crate type
-class Crate:
-    pass
+class Crate
 
 # crate1 is a Crate whose state is "SEALED"
 crate1 = Crate()
@@ -757,8 +745,7 @@ assert(crate1.inspect, true)
 # Nucleoid chooses a packing note with an else statement on a property
 
 # There is a Box type
-class Box:
-    pass
+class Box
 
 # box1 is a Box whose fragile is false
 box1 = Box()
@@ -789,8 +776,7 @@ assert(box1.note, "HANDLE WITH CARE")
 # Nucleoid bands a haulage charge with multiple else if statements on a property
 
 # There is a Haul type
-class Haul:
-    pass
+class Haul
 
 # haul1 is a Haul whose miles is 40
 haul1 = Haul()
@@ -972,8 +958,7 @@ assert(gross, 100)
 # Nucleoid checks whether every crate is sealed
 
 # There is a Crate type
-class Crate:
-    pass
+class Crate
 
 # crate1 is a Crate that is sealed
 crate1 = Crate()
@@ -998,8 +983,7 @@ assert(ready, false)
 # Nucleoid checks whether any depot is closed
 
 # There is a Depot type
-class Depot:
-    pass
+class Depot
 
 # depot1 is a Depot that is open
 depot1 = Depot()
@@ -1041,8 +1025,7 @@ assert(path, "LIS-MAD-PAR-LON")
 # Nucleoid creates a summary for every open order
 
 # There is an Order type
-class Order:
-    pass
+class Order
 
 # order1 is an Order
 order1 = Order()
@@ -1078,8 +1061,7 @@ assert(Docket[0].kind, "PICK")
 # Nucleoid rolls back a dispatch if a rule throws
 
 # There is a Dispatch type
-class Dispatch:
-    pass
+class Dispatch
 
 # If any dispatch's weight is greater than 1000, then throw 'OVERWEIGHT'
 if $Dispatch.weight > 1000:
@@ -1119,8 +1101,7 @@ catch error:
 # Nucleoid validates a postcode with a regular expression
 
 # There is an Address type
-class Address:
-    pass
+class Address
 
 # If any address's postcode does not match /[0-9]{4}/, then throw 'INVALID_POSTCODE'
 if not /[0-9]{4}/.test($Address.postcode):

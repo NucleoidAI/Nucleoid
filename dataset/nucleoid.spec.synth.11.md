@@ -375,8 +375,7 @@ assert(feeder2.label, "FD-6")
 # Nucleoid replaces a class-level rule on a substation
 
 # There is a Substation type
-class Substation:
-    pass
+class Substation
 
 # substation1 is a Substation whose number is 7
 substation1 = Substation()
@@ -402,8 +401,7 @@ assert(substation1.sign, "SUB-8")
 # Nucleoid marks an overload with a class-level conditional
 
 # There is a Circuit type
-class Circuit:
-    pass
+class Circuit
 
 # Any circuit above 100 amps is overloaded
 if $Circuit.amps > 100:
@@ -425,8 +423,7 @@ assert(circuit1.overloaded, true)
 # Nucleoid rates a property with a class-level chain
 
 # There is a Building type
-class Building:
-    pass
+class Building
 
 # good is "A", middling is "C", and poor is "E"
 good = "A"; middling = "C"; poor = "E"
@@ -462,12 +459,10 @@ assert(building1.band, "A")
 # Nucleoid counts the meters of a site with a class-level aggregate
 
 # There is a Site type
-class Site:
-    pass
+class Site
 
 # There is a Meter type
-class Meter:
-    pass
+class Meter
 
 # site1 is a Site
 site1 = Site()
@@ -496,8 +491,7 @@ assert(site1.meters, 3)
 # Nucleoid builds a connection from a property that arrives later
 
 # There is a Connection type
-class Connection:
-    pass
+class Connection
 
 # connection1 is a Connection
 connection1 = Connection()
@@ -517,12 +511,10 @@ assert(connection1.full, "CN7781")
 # Nucleoid reads a supplier through a contract reference
 
 # There is a Contract type
-class Contract:
-    pass
+class Contract
 
 # There is a Supplier type
-class Supplier:
-    pass
+class Supplier
 
 # contract1 is a Contract
 contract1 = Contract()
@@ -549,8 +541,7 @@ assert(contract1.held, "Supplied by Aurora")
 # Nucleoid clears a reading line when a value is deleted
 
 # There is a Reading type
-class Reading:
-    pass
+class Reading
 
 # reading1 is a Reading
 reading1 = Reading()
@@ -681,8 +672,7 @@ assert(inspection, "V")
 # Nucleoid computes a bill in a class-level block
 
 # There is an Account type
-class Account:
-    pass
+class Account
 
 # while in the block, levy is a local variable that is any account's usage times 5 divided by 100,
 # and the account's bill is the account's usage plus levy
@@ -706,8 +696,7 @@ assert(account1.bill, 420)
 # Nucleoid computes a capacity index in a nested class-level block
 
 # There is a Plant type
-class Plant:
-    pass
+class Plant
 
 # while in the block, share is a local variable that is 700 divided by any plant's turbines,
 # and in a nested block, the plant's index is the floor of share times the plant's hours
@@ -734,8 +723,7 @@ assert(plant1.index, 1166)
 # Nucleoid flags an outage with an if statement on a property
 
 # There is a Feeder type
-class Feeder:
-    pass
+class Feeder
 
 # feeder1 is a Feeder whose state is "LIVE"
 feeder1 = Feeder()
@@ -757,8 +745,7 @@ assert(feeder1.outage, true)
 # Nucleoid chooses a metering note with an else statement on a property
 
 # There is a Site type
-class Site:
-    pass
+class Site
 
 # site1 is a Site whose halfHourly is false
 site1 = Site()
@@ -789,8 +776,7 @@ assert(site1.metering, "HALF HOURLY")
 # Nucleoid bands a connection charge with multiple else if statements on a property
 
 # There is a Job type
-class Job:
-    pass
+class Job
 
 # job1 is a Job whose metres is 20
 job1 = Job()
@@ -969,8 +955,7 @@ assert(annual, 1500)
 # Nucleoid checks whether every meter is read
 
 # There is a Meter type
-class Meter:
-    pass
+class Meter
 
 # meter1 is a Meter that is read
 meter1 = Meter()
@@ -995,8 +980,7 @@ assert(complete, false)
 # Nucleoid checks whether any feeder is faulted
 
 # There is a Feeder type
-class Feeder:
-    pass
+class Feeder
 
 # feeder1 is a Feeder that is healthy
 feeder1 = Feeder()
@@ -1038,8 +1022,7 @@ assert(route, "GEN->SUB->LOAD->METER")
 # Nucleoid creates a visit for every live connection
 
 # There is a Connection type
-class Connection:
-    pass
+class Connection
 
 # connection1 is a Connection
 connection1 = Connection()
@@ -1075,8 +1058,7 @@ assert(Visit[0].kind, "SURVEY")
 # Nucleoid rolls back a switch if a rule throws
 
 # There is a Switch type
-class Switch:
-    pass
+class Switch
 
 # If any switch's amps is greater than 400, then throw 'RATING_EXCEEDED'
 if $Switch.amps > 400:
@@ -1116,8 +1098,7 @@ catch error:
 # Nucleoid validates a meter point with a regular expression
 
 # There is a Point type
-class Point:
-    pass
+class Point
 
 # If any point's mpan does not match /[0-9]{8}/, then throw 'INVALID_MPAN'
 if not /[0-9]{8}/.test($Point.mpan):
