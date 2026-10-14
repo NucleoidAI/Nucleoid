@@ -68,6 +68,33 @@ semicolon. Other unsupported tokens use `Expected ':' but found <token>` with
 the existing token descriptions. Existing name, parameter, nesting, and
 operator-chain diagnostics and source positions are preserved.
 
+## Bare single-parameter named arrows
+
+A named arrow definition or method may spell `def double(amount) => amount * 2`
+as `def double amount => amount * 2`. Only an ordinary identifier immediately
+followed by `=>` after the required definition name qualifies. It becomes one
+untyped parameter in the existing named function's block containing
+`return expression`; expression precedence, argument binding, receiver and
+initializer handling, reactive dependencies, callable snapshots, transactions,
+resource bounds, and canonical rendering are unchanged.
+
+No logical newline or semicolon is skipped in the header or before the body's
+first expression. An expression that starts with a parenthesis on that logical
+line can still continue over physical lines. Named arrow braces still denote
+object expressions; returned anonymous functions keep their own existing body
+grammar and do not gain closure capture.
+
+All other prefixes still require parameter parentheses. Bare block, typed,
+multiple, defaulted, destructured, and nullary parameters are not supported.
+For `def f amount:`, `def f amount: int => amount`,
+`def f amount, other => amount`, and headers separating `amount` from `=>` by
+a logical newline or semicolon, the error remains
+`SyntaxError("Expected '(' but found identifier 'amount'")` at line 1, column 7.
+`def f => 1` remains `SyntaxError("Expected '(' but found '=>'")` at line 1,
+column 7. Parenthesized typed, untyped, empty, multiple-parameter and block
+definitions remain valid. No call-site omission or ordinary-identifier
+automatic invocation is introduced.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -998,7 +1025,7 @@ assert(Vehicle[0].id != null, true)
 # Nucleoid creates a function in state
 # generate returns number times 10
 # generate returns number times 10
-def generate(number) => number * 10
+def generate number => number * 10
 
 # random is 10
 random = 10
@@ -4150,7 +4177,7 @@ assert(Summary[1].type, "WEEKLY")
 # Nucleoid returns an integer in variable assignment
 # test assigns 2 to a and returns the value of the assignment
 # test assigns 2 to a and returns the value of the assignment
-def test(a) => a = 2
+def test a => a = 2
 
 # b is 1
 b = 1
@@ -4171,7 +4198,7 @@ a = Object()
 c = 1
 # test assigns a to b and returns the value of the assignment
 # test assigns a to b and returns the value of the assignment
-def test(b) => b = a
+def test b => b = a
 
 assert(test(c), {})
 assert(c, 1)
@@ -4181,7 +4208,7 @@ assert(c, 1)
 # Nucleoid returns a string value of a function call
 # test assigns "abc" to a and returns the value of the assignment
 # test assigns "abc" to a and returns the value of the assignment
-def test(a) => a = "abc"
+def test a => a = "abc"
 
 # b is 1
 b = 1
@@ -4196,7 +4223,7 @@ test(b)
 # Nucleoid returns an object value of a function call
 # test assigns an Object to a and returns the value of the assignment
 # test assigns an Object to a and returns the value of the assignment
-def test(a) => a = Object()
+def test a => a = Object()
 
 # b is 1
 b = 1
@@ -4211,7 +4238,7 @@ test(b)
 # Nucleoid runs a function with a variable
 # test returns a plus 23
 # test returns a plus 23
-def test(a) => a + 23
+def test a => a + 23
 
 # data is "UUID-1"
 data = "UUID-1"
@@ -5354,7 +5381,7 @@ assert(dependent, 4)
 
 # Nucleoid tracks named functions forwarded as values
 
-def transform(number) => number * 2
+def transform number => number * 2
 
 def choose() => transform
 
@@ -5367,7 +5394,7 @@ indirect = returned(3)
 assert(direct, 6)
 assert(indirect, 6)
 
-def transform(number) => number * 3
+def transform number => number * 3
 
 assert(direct, 9)
 assert(indirect, 9)
@@ -5378,9 +5405,9 @@ assert(indirect, 9)
 
 numbers = [1, 2, 3]
 
-def transform(number) => number * 2
+def transform number => number * 2
 
-def matches(number) => number > 0
+def matches number => number > 0
 
 def combine(total, number) => total + number
 
@@ -5398,9 +5425,9 @@ assert(all, true)
 assert(any, true)
 assert(total, 7)
 
-def transform(number) => number * 3
+def transform number => number * 3
 
-def matches(number) => number > 3
+def matches number => number > 3
 
 def combine(total, number) => total * number
 
@@ -5414,14 +5441,14 @@ assert(total, 6)
 class Sample(amount):
     this.amount = amount
 
-def reading(sample) => sample.amount * 2
+def reading sample => sample.amount * 2
 
 sample = Sample(2)
 readings = Sample.map(reading)
 
 assert(readings, [4])
 
-def reading(sample) => sample.amount * 3
+def reading sample => sample.amount * 3
 
 assert(readings, [6])
 
@@ -5434,7 +5461,7 @@ assert(readings, [9, 12])
 
 # Nucleoid tracks named functions passed to higher order calls
 
-def transform(number) => number * 2
+def transform number => number * 2
 
 def apply(operation, number) => operation(number)
 
@@ -5443,7 +5470,7 @@ result = apply(transform, input)
 
 assert(result, 6)
 
-def transform(number) => number * 3
+def transform number => number * 3
 
 assert(result, 9)
 
@@ -5509,7 +5536,7 @@ assert(indexed, 5)
 
 factor = 2
 
-def transform(number) => number * factor
+def transform number => number * factor
 
 snapshot = transform.value
 frozen = snapshot(3)
@@ -5518,7 +5545,7 @@ live = transform(3)
 assert(frozen, 6)
 assert(live, 6)
 
-def transform(number) => number * factor * 10
+def transform number => number * factor * 10
 
 assert(frozen, 6)
 assert(live, 60)
@@ -5638,7 +5665,7 @@ assert(frozen, 3)
 
 # Nucleoid lets null and non callable parameters shadow outer functions
 
-def operation(number) => 99
+def operation number => 99
 
 def apply(operation, number) => operation(number)
 
@@ -5705,7 +5732,7 @@ assert(propertyResult, 5)
 
 # Nucleoid rolls back failed redefinitions of named callbacks
 
-def transform(number) => number * 2
+def transform number => number * 2
 
 numbers = [1, 2]
 mapped = numbers.map(transform)
@@ -5723,7 +5750,7 @@ assert(failure, "REJECTED_CALLBACK")
 assert(mapped, [2, 4])
 assert(transform(3), 6)
 
-def transform(number) => number * 4
+def transform number => number * 4
 
 assert(mapped, [4, 8])
 
@@ -5731,7 +5758,7 @@ assert(mapped, [4, 8])
 
 # Nucleoid replaces functions and callable variables under the same name
 
-def callback(number) => number * 2
+def callback number => number * 2
 
 forwarded = callback
 direct = callback(3)
@@ -5755,7 +5782,7 @@ assert(direct, 9)
 assert(indirect, 9)
 assert(callback(4), 12)
 
-def callback(number) => number * 4
+def callback number => number * 4
 
 assert(direct, 12)
 assert(indirect, 12)
@@ -5775,7 +5802,7 @@ callback = null
 assert(direct, null)
 assert(indirect, null)
 
-def callback(number) => number * 5
+def callback number => number * 5
 
 assert(direct, 15)
 assert(indirect, 15)
@@ -5797,7 +5824,7 @@ catch error:
 
 assert(failure, ReferenceError("callback is not defined"))
 
-def callback(number) => number * 7
+def callback number => number * 7
 
 assert(direct, 21)
 assert(indirect, 21)
@@ -6298,7 +6325,7 @@ def literal() => 43
 assert(reference(), 43)
 assert(frozen(), 42)
 
-def assigned(value) => value = 2
+def assigned value => value = 2
 
 assert(assigned(99), 2)
 
@@ -6692,7 +6719,7 @@ built = builder(7)
 
 assert(built.amount, 7)
 
-def wrap(amount) => { amount }
+def wrap amount => { amount }
 
 wrapped = wrap(5)
 
@@ -6793,4 +6820,102 @@ amount = 5
 
 assert(record.amount, 5)
 assert(derived, 10)
+
+---
+
+# Nucleoid keeps bare single parameter named arrows reactive
+
+base = 2
+
+def scaled amount => amount + base
+
+result = scaled(3)
+
+assert(result, 5)
+
+base = 4
+
+assert(result, 7)
+
+def scaled amount => amount * base
+
+assert(result, 12)
+
+---
+
+# Nucleoid preserves callable references for bare single parameter named arrows
+
+def change amount => amount + 1
+
+live = change
+snapshot = change.value
+
+assert(live(2), 3)
+assert(snapshot(2), 3)
+
+def change amount => amount * 3
+
+assert(live(2), 6)
+assert(snapshot(2), 3)
+
+---
+
+# Nucleoid preserves bare single parameter methods and initializers
+
+class Gauge:
+    def init amount => this.amount = amount
+    def reading offset => self.amount + offset
+
+gauge = Gauge(4)
+
+assert(gauge.amount, 4)
+assert(gauge.reading(3), 7)
+
+gauge.amount = 6
+
+assert(gauge.reading(3), 9)
+
+---
+
+# Nucleoid keeps bare single parameter binding and explicit alternatives equivalent
+
+amount = 10
+
+def identity amount => amount
+
+assert(identity(3), 3)
+assert(identity(), null)
+assert(identity(3, 4), 3)
+assert(amount, 10)
+
+def typed(amount: int) => amount + 1
+
+def block(amount):
+    return amount + 2
+
+assert(typed(4), 5)
+assert(block(4), 6)
+
+---
+
+# Nucleoid rolls back failed bare single parameter arrow redefinitions
+
+source = 3
+
+def reading amount => source + amount
+
+total = reading(2)
+
+assert(total, 5)
+
+try:
+    def reading amount => missing + amount
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+source = 4
+
+assert(total, 6)
 ```

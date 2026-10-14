@@ -683,7 +683,7 @@ fn assigns_a_unique_variable_for_an_instance_without_a_variable_name() {
 #[test]
 fn creates_a_function_in_state() {
     let mut run = runner();
-    run("def generate(number) => number * 10");
+    run("def generate number => number * 10");
     run("random = 10");
     run("number = generate(random)");
     assert_eq!(run("number"), 100);
@@ -2720,7 +2720,7 @@ fn supports_an_if_statement_in_a_for_of_statement() {
 #[test]
 fn returns_an_integer_in_variable_assignment() {
     let mut run = runner();
-    run("def test(a) => a = 2");
+    run("def test a => a = 2");
     run("b = 1");
     run(r#"test(b)
 
@@ -2734,7 +2734,7 @@ fn returns_the_reference_of_a_function_call() {
     let mut run = runner();
     run("a = Object()");
     run("c = 1");
-    run("def test(b) => b = a");
+    run("def test b => b = a");
     assert_eq!(run("test(c)"), serde_json::json!({}));
     assert_eq!(run("c"), 1);
 }
@@ -2744,7 +2744,7 @@ fn returns_the_reference_of_a_function_call() {
 #[test]
 fn returns_a_string_value_of_a_function_call() {
     let mut run = runner();
-    run(r#"def test(a) => a = "abc""#);
+    run(r#"def test a => a = "abc""#);
     run("b = 1");
     run(r#"test(b)
 
@@ -2756,7 +2756,7 @@ fn returns_a_string_value_of_a_function_call() {
 #[test]
 fn returns_an_object_value_of_a_function_call() {
     let mut run = runner();
-    run("def test(a) => a = Object()");
+    run("def test a => a = Object()");
     run("b = 1");
     run(r#"test(b)
 
@@ -2768,7 +2768,7 @@ fn returns_an_object_value_of_a_function_call() {
 #[test]
 fn runs_a_function_with_a_variable() {
     let mut run = runner();
-    run("def test(a) => a + 23");
+    run("def test a => a + 23");
     run(r#"data = "UUID-1""#);
     run(r#"test(data)
 
@@ -3805,7 +3805,7 @@ fn ends_temporary_undefined_reads_when_a_deletion_cascade_finishes() {
 #[test]
 fn tracks_named_functions_forwarded_as_values() {
     let mut run = runner();
-    run("def transform(number) => number * 2");
+    run("def transform number => number * 2");
     run("def choose() => transform");
     run("callback = transform");
     run("forwarded = callback");
@@ -3814,7 +3814,7 @@ fn tracks_named_functions_forwarded_as_values() {
     run("indirect = returned(3)");
     assert_eq!(run("direct"), 6);
     assert_eq!(run("indirect"), 6);
-    run("def transform(number) => number * 3");
+    run("def transform number => number * 3");
     assert_eq!(run("direct"), 9);
     assert_eq!(run("indirect"), 9);
 }
@@ -3825,8 +3825,8 @@ fn tracks_named_functions_forwarded_as_values() {
 fn tracks_named_callbacks_over_lists_and_class_populations() {
     let mut run = runner();
     run("numbers = [1, 2, 3]");
-    run("def transform(number) => number * 2");
-    run("def matches(number) => number > 0");
+    run("def transform number => number * 2");
+    run("def matches number => number > 0");
     run("def combine(total, number) => total + number");
     run("mapped = numbers.map(transform)");
     run("filtered = numbers.filter(matches)");
@@ -3840,8 +3840,8 @@ fn tracks_named_callbacks_over_lists_and_class_populations() {
     assert_eq!(run("all"), true);
     assert_eq!(run("any"), true);
     assert_eq!(run("total"), 7);
-    run("def transform(number) => number * 3");
-    run("def matches(number) => number > 3");
+    run("def transform number => number * 3");
+    run("def matches number => number > 3");
     run("def combine(total, number) => total * number");
     assert_eq!(run("mapped"), serde_json::json!([3, 6, 9]));
     assert_eq!(run("filtered"), serde_json::json!([]));
@@ -3851,11 +3851,11 @@ fn tracks_named_callbacks_over_lists_and_class_populations() {
     assert_eq!(run("total"), 6);
     run(r#"class Sample(amount):
     this.amount = amount"#);
-    run("def reading(sample) => sample.amount * 2");
+    run("def reading sample => sample.amount * 2");
     run("sample = Sample(2)");
     run("readings = Sample.map(reading)");
     assert_eq!(run("readings"), serde_json::json!([4]));
-    run("def reading(sample) => sample.amount * 3");
+    run("def reading sample => sample.amount * 3");
     assert_eq!(run("readings"), serde_json::json!([6]));
     run("sample.amount = 3");
     run("Sample(4)");
@@ -3867,12 +3867,12 @@ fn tracks_named_callbacks_over_lists_and_class_populations() {
 #[test]
 fn tracks_named_functions_passed_to_higher_order_calls() {
     let mut run = runner();
-    run("def transform(number) => number * 2");
+    run("def transform number => number * 2");
     run("def apply(operation, number) => operation(number)");
     run("input = 3");
     run("result = apply(transform, input)");
     assert_eq!(run("result"), 6);
-    run("def transform(number) => number * 3");
+    run("def transform number => number * 3");
     assert_eq!(run("result"), 9);
     run("input = 4");
     assert_eq!(run("result"), 12);
@@ -3927,13 +3927,13 @@ fn tracks_dotted_and_indexed_callable_properties_consistently() {
 fn freezes_a_function_definition_without_freezing_its_body_dependencies() {
     let mut run = runner();
     run("factor = 2");
-    run("def transform(number) => number * factor");
+    run("def transform number => number * factor");
     run("snapshot = transform.value");
     run("frozen = snapshot(3)");
     run("live = transform(3)");
     assert_eq!(run("frozen"), 6);
     assert_eq!(run("live"), 6);
-    run("def transform(number) => number * factor * 10");
+    run("def transform number => number * factor * 10");
     assert_eq!(run("frozen"), 6);
     assert_eq!(run("live"), 60);
     run("factor = 4");
@@ -4031,7 +4031,7 @@ fn restores_nullable_callable_properties_without_changing_frozen_references() {
 #[test]
 fn lets_null_and_non_callable_parameters_shadow_outer_functions() {
     let mut run = runner();
-    run("def operation(number) => 99");
+    run("def operation number => 99");
     run("def apply(operation, number) => operation(number)");
     run("callback = null");
     run("result = apply(callback, 3)");
@@ -4096,7 +4096,7 @@ catch error:
 #[test]
 fn rolls_back_failed_redefinitions_of_named_callbacks() {
     let mut run = runner();
-    run("def transform(number) => number * 2");
+    run("def transform number => number * 2");
     run("numbers = [1, 2]");
     run("mapped = numbers.map(transform)");
     run("failure = null");
@@ -4110,7 +4110,7 @@ catch error:
     assert_eq!(run("failure"), "REJECTED_CALLBACK");
     assert_eq!(run("mapped"), serde_json::json!([2, 4]));
     assert_eq!(run("transform(3)"), 6);
-    run("def transform(number) => number * 4");
+    run("def transform number => number * 4");
     assert_eq!(run("mapped"), serde_json::json!([4, 8]));
 }
 
@@ -4119,7 +4119,7 @@ catch error:
 #[test]
 fn replaces_functions_and_callable_variables_under_the_same_name() {
     let mut run = runner();
-    run("def callback(number) => number * 2");
+    run("def callback number => number * 2");
     run("forwarded = callback");
     run("direct = callback(3)");
     run("indirect = forwarded(3)");
@@ -4136,7 +4136,7 @@ catch error:
     assert_eq!(run("direct"), 9);
     assert_eq!(run("indirect"), 9);
     assert_eq!(run("callback(4)"), 12);
-    run("def callback(number) => number * 4");
+    run("def callback number => number * 4");
     assert_eq!(run("direct"), 12);
     assert_eq!(run("indirect"), 12);
     run(r#"try:
@@ -4154,7 +4154,7 @@ catch error:
     run("callback = null");
     assert_eq!(run("direct"), serde_json::Value::Null);
     assert_eq!(run("indirect"), serde_json::Value::Null);
-    run("def callback(number) => number * 5");
+    run("def callback number => number * 5");
     assert_eq!(run("direct"), 15);
     assert_eq!(run("indirect"), 15);
     run("callback = number => number * 6");
@@ -4172,7 +4172,7 @@ catch error:
         let expected = run(r#"(ReferenceError("callback is not defined"))"#);
         assert_eq!(actual, expected);
     }
-    run("def callback(number) => number * 7");
+    run("def callback number => number * 7");
     assert_eq!(run("direct"), 21);
     assert_eq!(run("indirect"), 21);
 }
@@ -4574,7 +4574,7 @@ fn preserves_expression_body_returns_and_callable_references() {
     run("def literal() => 43");
     assert_eq!(run("reference()"), 43);
     assert_eq!(run("frozen()"), 42);
-    run("def assigned(value) => value = 2");
+    run("def assigned value => value = 2");
     assert_eq!(run("assigned(99)"), 2);
     run("def mapper() => value => value * 2");
     run("callback = mapper()");
@@ -4963,7 +4963,7 @@ fn resolves_shorthand_object_fields_in_their_lexical_scope() {
     run("builder = amount => ({ amount })");
     run("built = builder(7)");
     assert_eq!(run("built.amount"), 7);
-    run("def wrap(amount) => { amount }");
+    run("def wrap amount => { amount }");
     run("wrapped = wrap(5)");
     assert_eq!(run("wrapped.amount"), 5);
     run(r#"class Parcel:
@@ -5040,6 +5040,84 @@ throw "ABORT""#), "ABORT");
     run("amount = 5");
     assert_eq!(run("record.amount"), 5);
     assert_eq!(run("derived"), 10);
+}
+
+/// Nucleoid keeps bare single parameter named arrows reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_single_parameter_named_arrows_reactive() {
+    let mut run = runner();
+    run("base = 2");
+    run("def scaled amount => amount + base");
+    run("result = scaled(3)");
+    assert_eq!(run("result"), 5);
+    run("base = 4");
+    assert_eq!(run("result"), 7);
+    run("def scaled amount => amount * base");
+    assert_eq!(run("result"), 12);
+}
+
+/// Nucleoid preserves callable references for bare single parameter named arrows
+#[rustfmt::skip]
+#[test]
+fn preserves_callable_references_for_bare_single_parameter_named_arrows() {
+    let mut run = runner();
+    run("def change amount => amount + 1");
+    run("live = change");
+    run("snapshot = change.value");
+    assert_eq!(run("live(2)"), 3);
+    assert_eq!(run("snapshot(2)"), 3);
+    run("def change amount => amount * 3");
+    assert_eq!(run("live(2)"), 6);
+    assert_eq!(run("snapshot(2)"), 3);
+}
+
+/// Nucleoid preserves bare single parameter methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_single_parameter_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Gauge:
+    def init amount => this.amount = amount
+    def reading offset => self.amount + offset"#);
+    run("gauge = Gauge(4)");
+    assert_eq!(run("gauge.amount"), 4);
+    assert_eq!(run("gauge.reading(3)"), 7);
+    run("gauge.amount = 6");
+    assert_eq!(run("gauge.reading(3)"), 9);
+}
+
+/// Nucleoid keeps bare single parameter binding and explicit alternatives equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_single_parameter_binding_and_explicit_alternatives_equivalent() {
+    let mut run = runner();
+    run("amount = 10");
+    run("def identity amount => amount");
+    assert_eq!(run("identity(3)"), 3);
+    assert_eq!(run("identity()"), serde_json::Value::Null);
+    assert_eq!(run("identity(3, 4)"), 3);
+    assert_eq!(run("amount"), 10);
+    run("def typed(amount: int) => amount + 1");
+    run(r#"def block(amount):
+    return amount + 2"#);
+    assert_eq!(run("typed(4)"), 5);
+    assert_eq!(run("block(4)"), 6);
+}
+
+/// Nucleoid rolls back failed bare single parameter arrow redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_bare_single_parameter_arrow_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run("def reading amount => source + amount");
+    run("total = reading(2)");
+    assert_eq!(run("total"), 5);
+    assert_eq!(run_error("def reading amount => missing + amount"), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 5);
+    run("source = 4");
+    assert_eq!(run("total"), 6);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

@@ -555,6 +555,8 @@ Full detail: [NUC 7](nuc-0007.md).
 
 - `def` defines a function in the state; a function with no `return` yields `null`.
 - `def name(params) => expression` is exactly a named block containing `return expression`; methods and parameter annotations use the same form.
+- [NUC 18](nuc-0018.md) specifies `def name amount => expression` as exactly `def name(amount) => expression` for one untyped ordinary identifier parameter, including methods and `init`.
+- The bare identifier must be immediately followed by `=>` in the token stream; no logical newline or semicolon is skipped. Typed, nullary, multiple-parameter and block definitions keep their parentheses, as do calls.
 - Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines.
 - A call in an assignment depends on the function and its arguments.
 - Redefining a function updates existing dependents.
@@ -566,13 +568,19 @@ Full detail: [NUC 7](nuc-0007.md).
 - Functions may recurse and may have multiple `return` statements.
 
 ```
-def generate(number) => number * 10
+def generate number => number * 10
 
 random = 10
 number = generate(random)
 ```
 
 - `100`; after `random = 20`, `200`.
+
+```
+def double amount => amount * 2
+```
+
+- `double(3)` is `6`; `double(5)` is `10`, with the same named return-block AST and canonical rendering as `def double(amount) => amount * 2`.
 
 ### Lambdas
 
@@ -804,6 +812,7 @@ for name of source:                    iteration
     statement
 
 def name(params) => expression         single-return function
+def name amount => expression         one untyped parameter (NUC 18)
 def name(params):                      block function
     statement
 

@@ -89,6 +89,10 @@ fn mixed_nested_and_trailing_fields_keep_their_full_ast_and_field_order() {
             "def wrap(amount) => { amount: amount }",
         ),
         (
+            "def wrap amount => { amount: amount }",
+            "def wrap(amount) => { amount: amount }",
+        ),
+        (
             "builder = amount => ({ amount })",
             "builder = amount => ({ amount: amount })",
         ),
@@ -299,7 +303,7 @@ fn invalid_key_tokens_and_missing_colons_keep_exact_accepted_diagnostics() {
             5,
         ),
         (
-            "def wrap amount => { amount: amount }",
+            "def wrap amount: int => { amount: amount }",
             "Expected '(' but found identifier 'amount'",
             1,
             10,

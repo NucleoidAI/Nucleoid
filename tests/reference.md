@@ -153,7 +153,7 @@ assert(result, 120)
 
 # def name(params) => expression is a named block containing return expression
 # Named arrow braces are object literals; blocks without return still yield null
-def scale(number) => number * 2
+def scale number => number * 2
 
 callback = scale
 snapshot = scale.value
@@ -161,7 +161,7 @@ result = callback(3)
 frozen = snapshot(3)
 mapped = [1, 2].map(scale)
 
-def scale(number) => number * 3
+def scale number => number * 3
 
 assert(result, 9)
 assert(frozen, 6)
@@ -173,7 +173,7 @@ assert(result, 12)
 assert(frozen, 6)
 assert(mapped, [4, 8])
 
-def scale(number) => number * 5
+def scale number => number * 5
 
 assert(result, 15)
 assert(frozen, 6)
@@ -214,7 +214,7 @@ assert(indexed, 5)
 
 # Nucleoid shadows outer functions with null and non callable parameters
 
-def operation(number) => 99
+def operation number => 99
 
 def apply(operation, number) => operation(number)
 
@@ -1335,4 +1335,13 @@ assert(reading.unit, "C")
 amount = 6
 
 assert(reading.amount, 6)
+
+---
+
+# Bare single parameter named arrows
+
+def double amount => amount * 2
+
+assert(double(3), 6)
+assert(double(5), 10)
 ```

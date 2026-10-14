@@ -1705,13 +1705,13 @@ assert(indexed, 60)
 
 price = 2
 
-def cost(litres) => litres * price
+def cost litres => litres * price
 
 formula = cost.value
 quoted = formula(100)
 current = cost(100)
 
-def cost(litres) => litres * price + 50
+def cost litres => litres * price + 50
 
 assert(quoted, 200)
 assert(current, 250)
@@ -2396,4 +2396,79 @@ assert(departure.gate, "A")
 assert(departure[1], 5)
 assert(departure.fixed, 3)
 assert(departure.details.delay, 5)
+
+---
+
+# Nucleoid keeps bare single parameter flight quotes and callable snapshots reactive
+
+rate = 2
+
+def quote tonnes => tonnes + rate
+
+live = quote
+snapshot = quote.value
+charge = live(3)
+frozen = snapshot(3)
+
+assert(charge, 5)
+assert(frozen, 5)
+
+rate = 4
+
+assert(charge, 7)
+assert(frozen, 7)
+
+def quote tonnes => tonnes * rate
+
+assert(charge, 12)
+assert(frozen, 7)
+
+---
+
+# Nucleoid binds bare single parameter cargo initializers and methods
+
+class Cargo:
+    def init tonnes => this.tonnes = tonnes
+    def charge rate => self.tonnes * rate
+
+cargo = Cargo(3)
+
+assert(cargo.id, "cargo")
+assert(cargo.tonnes, 3)
+assert(cargo.charge(4), 12)
+
+cargo.tonnes = 5
+
+assert(cargo.charge(4), 20)
+
+---
+
+# Nucleoid restores bare single parameter flight estimates after a failed redefinition
+
+reserve = 3
+
+def estimate fuel => fuel + reserve
+
+total = estimate(2)
+
+assert(total, 5)
+
+try:
+    def estimate fuel => missing + fuel
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+reserve = 4
+
+assert(total, 6)
+
+def typed(fuel: int) => fuel + 1
+
+def block(fuel):
+    return fuel + 2
+
+assert(typed(4), 5)
+assert(block(4), 6)
 ```

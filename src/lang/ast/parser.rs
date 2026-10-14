@@ -415,7 +415,20 @@ impl Parser {
             }
         };
 
-        let parameters = self.parameters()?;
+        let parameters =
+            if matches!(self.peek(), Token::Identifier(_)) && self.peek_at(1) == &Token::Arrow {
+                let Token::Identifier(name) = self.advance() else {
+                    unreachable!("lookahead checked the single parameter identifier")
+                };
+                vec![Parameter {
+                    name,
+                    type_name: None,
+                }]
+            } else {
+                // Do not skip separators or consume other prefixes: preserve the
+                // parenthesized parameter parser's diagnostics and positions.
+                self.parameters()?
+            };
         let body = if self.eat(&Token::Arrow) {
             vec![Stmt::Return(Some(self.expression()?))]
         } else {

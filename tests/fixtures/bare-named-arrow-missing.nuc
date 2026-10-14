@@ -1,0 +1,2 @@
+def reading amount => missing + amount
+reading(3)

@@ -824,7 +824,7 @@ Full detail: [README.md §8](README.md#8-control-flow), [NUC 7](nuc-0007.md).
 **A function call in an assignment depends on the function and its arguments**
 
 ```nuc
-def generate(number) => number * 10
+def generate number => number * 10
 
 random = 10
 number = generate(random)
@@ -836,10 +836,31 @@ random = 20
 assert(number, 200)
 ```
 
+**Single parameter named arrows preserve live inputs**
+
+```nuc
+fee = 2
+
+def total amount => amount + fee
+
+invoice = total(5)
+
+assert(invoice, 7)
+
+fee = 3
+
+assert(invoice, 8)
+```
+
+[NUC 18](nuc-0018.md) specifies parameter-parenthesis omission for a named
+arrow definition or method with exactly one untyped ordinary identifier
+parameter. Calls and other definition signatures retain their parentheses;
+the expression still follows [NUC 12](nuc-0012.md).
+
 **Named callbacks and aliases follow redefinition; value freezes the definition**
 
 ```nuc
-def scale(number) => number * 2
+def scale number => number * 2
 
 callback = scale
 snapshot = scale.value
@@ -847,7 +868,7 @@ result = callback(3)
 frozen = snapshot(3)
 mapped = [1, 2].map(scale)
 
-def scale(number) => number * 3
+def scale number => number * 3
 
 assert(result, 9)
 assert(frozen, 6)
@@ -859,7 +880,7 @@ assert(result, 12)
 assert(frozen, 6)
 assert(mapped, [4, 8])
 
-def scale(number) => number * 5
+def scale number => number * 5
 
 assert(result, 15)
 assert(frozen, 6)
@@ -900,7 +921,7 @@ assert(indexed, 5)
 **A null or non-callable parameter shadows an outer function**
 
 ```nuc
-def operation(number) => 99
+def operation number => 99
 
 def apply(operation, number) => operation(number)
 

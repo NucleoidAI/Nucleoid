@@ -156,6 +156,21 @@ a value. The existing AST, canonical expanded source, scope lookup, dependencies
 snapshots, and transactions are unchanged. This prototype does not change
 the accepted language until independent evaluation and caller integration.
 
+**Single input named arrows omit parameter parentheses**
+
+```nuc
+def square amount => amount * amount
+
+assert(square(3), 9)
+assert(square(4), 16)
+```
+
+[NUC 18](docs/nuc-0018.md) specifies parameter-parenthesis omission for named
+arrow definitions and methods with exactly one untyped ordinary identifier
+parameter. Typed, empty, multiple-parameter and block definitions still use
+parentheses, as do calls. The body, binding, reactivity, snapshots, receivers
+and initializer behavior remain those of [NUC 12](docs/nuc-0012.md).
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

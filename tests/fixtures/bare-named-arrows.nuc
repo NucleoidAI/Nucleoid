@@ -1,0 +1,24 @@
+base = 2
+def scaled amount => amount * base
+result = scaled(3)
+snapshot = scaled.value
+base = 4
+assert(result, 12)
+def scaled amount => amount + base
+assert(result, 7)
+assert(snapshot(3), 12)
+
+class Gauge:
+    def init amount => this.amount = amount
+    def reading offset => self.amount + offset
+
+gauge = Gauge(4)
+assert(gauge.reading(3), 7)
+
+{
+    def double amount => amount * 2
+    doubled = double(3)
+    assert(doubled, 6)
+}
+
+result
