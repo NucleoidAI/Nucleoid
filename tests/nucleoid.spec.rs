@@ -1993,7 +1993,7 @@ fn supports_built_in_objects() {
 fn calls_a_function_with_no_return() {
     let mut run = runner();
     run("a = 1");
-    run(r#"def copy(val):
+    run(r#"def copy val:
     b = val"#);
     run(r#"copy(a)
 
@@ -2006,7 +2006,7 @@ fn calls_a_function_with_no_return() {
 fn calls_a_function_with_a_return_value() {
     let mut run = runner();
     run("a = 1");
-    run(r#"def copy(val):
+    run(r#"def copy val:
     b = val
     return val"#);
     run(r#"copy(a)
@@ -3042,11 +3042,11 @@ fn resolves_super_from_the_constructor_currently_executing() {
     run(r#"class Base(amount):
     this.amount = amount"#);
     run(r#"class Middle: Base
-    def init(amount):
+    def init amount:
         super(amount + 1)
         this.middle = true"#);
     run(r#"class Leaf: Middle
-    def init(amount):
+    def init amount:
         super(amount * 2)
         this.leaf = true"#);
     run("leaf = Leaf(3)");
@@ -3058,7 +3058,7 @@ fn resolves_super_from_the_constructor_currently_executing() {
     run("passive = Passive(4)");
     assert_eq!(run("passive.amount"), 5);
     run(r#"class Final: Passive
-    def init(amount):
+    def init amount:
         super(amount + 2)"#);
     run("final = Final(4)");
     assert_eq!(run("final.amount"), 7);
@@ -3467,7 +3467,7 @@ fn restores_enclosing_null_tracking_after_failed_property_assignments() {
     run("item.amount = 1");
     run(r#"def fail():
     throw "EXPECTED""#);
-    run(r#"def recover(value):
+    run(r#"def recover value:
     try:
         item.amount = value + fail()
     catch error:
@@ -4101,7 +4101,7 @@ fn rolls_back_failed_redefinitions_of_named_callbacks() {
     run("mapped = numbers.map(transform)");
     run("failure = null");
     run(r#"try:
-    def transform(number):
+    def transform number:
         if number == 2:
             throw "REJECTED_CALLBACK"
         return number * 3
@@ -4128,7 +4128,7 @@ fn replaces_functions_and_callable_variables_under_the_same_name() {
     assert_eq!(run("indirect"), 9);
     run("failure = null");
     run(r#"try:
-    def callback(number):
+    def callback number:
         throw "REJECTED_BINDING"
 catch error:
     failure = error"#);
@@ -4869,13 +4869,13 @@ fn resolves_bare_super_through_the_executing_constructor_chain() {
 fn preserves_omitted_parent_arguments_with_bare_super() {
     let mut run = runner();
     run(r#"class Parent:
-    def init(amount):
+    def init amount:
         this.amount = amount"#);
     run(r#"class Child: Parent
     def init():
         super"#);
     run(r#"class Explicit: Parent
-    def init(amount):
+    def init amount:
         super(amount)"#);
     run("child = Child()");
     run("explicit = Explicit(9)");
@@ -4954,7 +4954,7 @@ fn keeps_shorthand_object_fields_reactive() {
 fn resolves_shorthand_object_fields_in_their_lexical_scope() {
     let mut run = runner();
     run(r#"label = "outer""#);
-    run(r#"def pack(label):
+    run(r#"def pack label:
     return { label }"#);
     run(r#"local = pack("inner")"#);
     assert_eq!(run("local.label"), "inner");
@@ -4967,7 +4967,7 @@ fn resolves_shorthand_object_fields_in_their_lexical_scope() {
     run("wrapped = wrap(5)");
     assert_eq!(run("wrapped.amount"), 5);
     run(r#"class Parcel:
-    def init(amount):
+    def init amount:
         this.payload = { amount }"#);
     run("parcel = Parcel(8)");
     assert_eq!(run("parcel.payload.amount"), 8);
@@ -5115,6 +5115,103 @@ fn rolls_back_failed_bare_single_parameter_arrow_redefinitions() {
     run("total = reading(2)");
     assert_eq!(run("total"), 5);
     assert_eq!(run_error("def reading amount => missing + amount"), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 5);
+    run("source = 4");
+    assert_eq!(run("total"), 6);
+}
+
+/// Nucleoid keeps bare single parameter block definitions reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_single_parameter_block_definitions_reactive() {
+    let mut run = runner();
+    run("base = 2");
+    run(r#"def scaled amount:
+    return amount + base"#);
+    run("result = scaled(3)");
+    assert_eq!(run("result"), 5);
+    run("base = 4");
+    assert_eq!(run("result"), 7);
+    run(r#"def scaled amount:
+    return amount * base"#);
+    assert_eq!(run("result"), 12);
+}
+
+/// Nucleoid preserves callable references for bare single parameter block definitions
+#[rustfmt::skip]
+#[test]
+fn preserves_callable_references_for_bare_single_parameter_block_definitions() {
+    let mut run = runner();
+    run(r#"def change amount:
+    return amount + 1"#);
+    run("live = change");
+    run("snapshot = change.value");
+    assert_eq!(run("live(2)"), 3);
+    assert_eq!(run("snapshot(2)"), 3);
+    run(r#"def change amount:
+    return amount * 3"#);
+    assert_eq!(run("live(2)"), 6);
+    assert_eq!(run("snapshot(2)"), 3);
+}
+
+/// Nucleoid preserves bare single parameter block methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_single_parameter_block_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Gauge:
+    def init amount:
+        this.amount = amount
+    def reading offset:
+        return self.amount + offset"#);
+    run("gauge = Gauge(4)");
+    assert_eq!(run("gauge.amount"), 4);
+    assert_eq!(run("gauge.reading(3)"), 7);
+    run("gauge.amount = 6");
+    assert_eq!(run("gauge.reading(3)"), 9);
+}
+
+/// Nucleoid keeps bare single parameter block binding and explicit alternatives equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_single_parameter_block_binding_and_explicit_alternatives_equivalent() {
+    let mut run = runner();
+    run("amount = 10");
+    run(r#"def identity amount:
+    return amount"#);
+    run(r#"def ignored amount:
+    amount + 100"#);
+    run(r#"def typed(amount: int):
+    return amount + 1"#);
+    run(r#"def pair(left, right):
+    return left + right"#);
+    run(r#"def unit():
+    return 42"#);
+    run("def arrow amount => amount + 3");
+    assert_eq!(run("identity(3)"), 3);
+    assert_eq!(run("identity()"), serde_json::Value::Null);
+    assert_eq!(run("identity(3, 4)"), 3);
+    assert_eq!(run("amount"), 10);
+    assert_eq!(run("ignored(5)"), serde_json::Value::Null);
+    assert_eq!(run("typed(4)"), 5);
+    assert_eq!(run("pair(2, 3)"), 5);
+    assert_eq!(run("unit()"), 42);
+    assert_eq!(run("arrow(4)"), 7);
+    assert_eq!(run("amount"), 10);
+}
+
+/// Nucleoid rolls back failed bare single parameter block redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_bare_single_parameter_block_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run(r#"def reading amount:
+    return source + amount"#);
+    run("total = reading(2)");
+    assert_eq!(run("total"), 5);
+    assert_eq!(run_error(r#"def reading amount:
+    return missing + amount"#), "ReferenceError: missing is not defined");
     assert_eq!(run("total"), 5);
     run("source = 4");
     assert_eq!(run("total"), 6);

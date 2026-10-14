@@ -2471,4 +2471,74 @@ def block(fuel):
 
 assert(typed(4), 5)
 assert(block(4), 6)
+
+---
+
+# Nucleoid keeps bare block cargo quotations and callable snapshots live
+
+rate = 2
+
+def quote tonnes:
+    return tonnes + rate
+
+live = quote
+snapshot = quote.value
+charge = live(3)
+frozen = snapshot(3)
+
+assert(charge, 5)
+assert(frozen, 5)
+
+def quote tonnes:
+    return tonnes * rate
+
+assert(charge, 6)
+assert(frozen, 5)
+
+rate = 4
+
+assert(charge, 12)
+assert(frozen, 7)
+
+---
+
+# Nucleoid evaluates both return paths of bare block flight charges
+
+fee = 2
+
+def charge passengers:
+    if passengers > 0:
+        return passengers + fee
+    return fee
+
+invoice = charge(5)
+
+assert(invoice, 7)
+assert(charge(0), 2)
+
+fee = 3
+
+assert(invoice, 8)
+assert(charge(0), 3)
+
+---
+
+# Nucleoid binds bare block cargo initializers and multistatement methods
+
+class Cargo:
+    def init tonnes:
+        this.tonnes = tonnes
+    def charge rate:
+        offset = 1
+        return self.tonnes * rate + offset
+
+cargo = Cargo(3)
+
+assert(cargo.id, "cargo")
+assert(cargo.tonnes, 3)
+assert(cargo.charge(4), 13)
+
+cargo.tonnes = 5
+
+assert(cargo.charge(4), 21)
 ```

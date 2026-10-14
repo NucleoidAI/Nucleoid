@@ -695,7 +695,7 @@ fn invalid_headers_do_not_execute_earlier_assignments_or_replace_functions() {
         .run("saved = 7\ndef identity amount => amount")
         .unwrap();
     for header in [
-        "def identity amount:\n    return amount",
+        "def identity amount: int:\n    return amount",
         "def identity amount: int => amount",
         "def identity amount, other => amount",
         "def identity amount\n=> amount",

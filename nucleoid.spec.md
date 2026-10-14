@@ -84,8 +84,9 @@ line can still continue over physical lines. Named arrow braces still denote
 object expressions; returned anonymous functions keep their own existing body
 grammar and do not gain closure capture.
 
-All other prefixes still require parameter parentheses. Bare block, typed,
-multiple, defaulted, destructured, and nullary parameters are not supported.
+Apart from the narrow indented-colon form below, other prefixes still require
+parameter parentheses. Bare typed, multiple, defaulted, destructured, and
+nullary parameters are not supported; bare inline and brace suites are not added.
 For `def f amount:`, `def f amount: int => amount`,
 `def f amount, other => amount`, and headers separating `amount` from `=>` by
 a logical newline or semicolon, the error remains
@@ -94,6 +95,49 @@ a logical newline or semicolon, the error remains
 column 7. Parenthesized typed, untyped, empty, multiple-parameter and block
 definitions remain valid. No call-site omission or ordinary-identifier
 automatic invocation is introduced.
+
+## Bare single-parameter indented block definitions
+
+NUC 19 specifies `def double amount:` followed by an indented suite as exactly
+`def double(amount):` followed by that same suite. Only one untyped ordinary
+identifier after the required definition name qualifies. Methods and `init`
+use the same function-statement parser and the same optional spelling.
+
+The identifier must be immediately followed by `Colon`. The token after that
+colon must be `Newline` or `Indent`, and the first token after any `Newline` or
+`Semicolon` layout from that body start must be `Indent`. The guard only looks
+ahead: it consumes no separators or body tokens. The existing colon-suite
+parser consumes the body unchanged, including blank/comment lines and its
+normal layout after the initial logical newline. No logical newline or
+semicolon may separate `def`, the required name, the bare parameter, and colon.
+
+All parenthesized signatures and indented, inline, or braced suites remain
+valid, including typed, empty, multiple-parameter, trailing-comma, and multiline
+parameter lists. NUC 18's bare named arrows remain unchanged. Bare typed,
+multiple, defaulted, destructured, nullary, anonymous-colon, inline, or braced
+definitions are not added. Return annotations, calls, ordinary-identifier
+invocation, expression precedence, and keyword meanings are unchanged.
+
+The result is the same `Parameter` with no type annotation and the same named
+`FunctionBody::Block`. A block without `return` still returns `null`. Argument
+binding and shadowing, receiver spellings, initializer adoption, explicit and
+bare `super`, reactive dependencies, live references, `.value` snapshots, named
+replacement, canonical graph/source rendering, transactions, and all existing
+resource bounds retain their accepted behavior; there is no new local capture.
+
+A header without a real indent, including `def f amount:` at end of input,
+still raises `SyntaxError("Expected '(' but found identifier 'amount'")` at
+line 1, column 7. The same error and position apply to `def f amount: int:`,
+`def f amount: return amount`, `def f amount: { return amount }`,
+`def f amount:;` even before a later indent, multiple/default/return-annotation
+prefixes, and a logical newline or semicolon between the parameter and colon.
+`def f:` followed by an indented body still raises
+`SyntaxError("Expected '(' but found ':'")` at line 1, column 6.
+The unchanged malformed parenthesized form `def f(amount:):` raises
+`SyntaxError("Expected a type but found ')'")` at line 1, column 15.
+After a qualifying bare header, `return amount +)` on the next indented line
+still raises `SyntaxError("Unexpected ')'")` at line 2, column 21; `return @`
+raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
 
 ```
 
@@ -3057,7 +3101,7 @@ catch error:
 a = 1
 
 # copy assigns val to b
-def copy(val):
+def copy val:
     b = val
 
 # Call copy with a
@@ -3073,7 +3117,7 @@ copy(a)
 a = 1
 
 # copy assigns val to b and returns val
-def copy(val):
+def copy val:
     b = val
     return val
 
@@ -4575,12 +4619,12 @@ class Base(amount):
     this.amount = amount
 
 class Middle: Base
-    def init(amount):
+    def init amount:
         super(amount + 1)
         this.middle = true
 
 class Leaf: Middle
-    def init(amount):
+    def init amount:
         super(amount * 2)
         this.leaf = true
 
@@ -4598,7 +4642,7 @@ passive = Passive(4)
 assert(passive.amount, 5)
 
 class Final: Passive
-    def init(amount):
+    def init amount:
         super(amount + 2)
 
 final = Final(4)
@@ -4985,7 +5029,7 @@ item.amount = 1
 def fail():
     throw "EXPECTED"
 
-def recover(value):
+def recover value:
     try:
         item.amount = value + fail()
     catch error:
@@ -5739,7 +5783,7 @@ mapped = numbers.map(transform)
 failure = null
 
 try:
-    def transform(number):
+    def transform number:
         if number == 2:
             throw "REJECTED_CALLBACK"
         return number * 3
@@ -5772,7 +5816,7 @@ assert(indirect, 9)
 failure = null
 
 try:
-    def callback(number):
+    def callback number:
         throw "REJECTED_BINDING"
 catch error:
     failure = error
@@ -6595,7 +6639,7 @@ assert(Passive.length, 1)
 # Nucleoid preserves omitted parent arguments with bare super
 
 class Parent:
-    def init(amount):
+    def init amount:
         this.amount = amount
 
 class Child: Parent
@@ -6603,7 +6647,7 @@ class Child: Parent
         super
 
 class Explicit: Parent
-    def init(amount):
+    def init amount:
         super(amount)
 
 child = Child()
@@ -6703,7 +6747,7 @@ assert(total, 10)
 
 label = "outer"
 
-def pack(label):
+def pack label:
     return { label }
 
 local = pack("inner")
@@ -6726,7 +6770,7 @@ wrapped = wrap(5)
 assert(wrapped.amount, 5)
 
 class Parcel:
-    def init(amount):
+    def init amount:
         this.payload = { amount }
 
 parcel = Parcel(8)
@@ -6910,6 +6954,125 @@ assert(total, 5)
 
 try:
     def reading amount => missing + amount
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+source = 4
+
+assert(total, 6)
+
+---
+
+# Nucleoid keeps bare single parameter block definitions reactive
+
+base = 2
+
+def scaled amount:
+    return amount + base
+
+result = scaled(3)
+
+assert(result, 5)
+
+base = 4
+
+assert(result, 7)
+
+def scaled amount:
+    return amount * base
+
+assert(result, 12)
+
+---
+
+# Nucleoid preserves callable references for bare single parameter block definitions
+
+def change amount:
+    return amount + 1
+
+live = change
+snapshot = change.value
+
+assert(live(2), 3)
+assert(snapshot(2), 3)
+
+def change amount:
+    return amount * 3
+
+assert(live(2), 6)
+assert(snapshot(2), 3)
+
+---
+
+# Nucleoid preserves bare single parameter block methods and initializers
+
+class Gauge:
+    def init amount:
+        this.amount = amount
+    def reading offset:
+        return self.amount + offset
+
+gauge = Gauge(4)
+
+assert(gauge.amount, 4)
+assert(gauge.reading(3), 7)
+
+gauge.amount = 6
+
+assert(gauge.reading(3), 9)
+
+---
+
+# Nucleoid keeps bare single parameter block binding and explicit alternatives equivalent
+
+amount = 10
+
+def identity amount:
+    return amount
+
+def ignored amount:
+    amount + 100
+
+def typed(amount: int):
+    return amount + 1
+
+def pair(left, right):
+    return left + right
+
+def unit():
+    return 42
+
+def arrow amount => amount + 3
+
+assert(identity(3), 3)
+assert(identity(), null)
+assert(identity(3, 4), 3)
+assert(amount, 10)
+assert(ignored(5), null)
+assert(typed(4), 5)
+assert(pair(2, 3), 5)
+assert(unit(), 42)
+assert(arrow(4), 7)
+assert(amount, 10)
+
+---
+
+# Nucleoid rolls back failed bare single parameter block redefinitions
+
+source = 3
+
+def reading amount:
+    return source + amount
+
+total = reading(2)
+
+assert(total, 5)
+
+try:
+    def reading amount:
+        return missing + amount
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 

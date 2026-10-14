@@ -826,11 +826,11 @@ class Parent(amount):
     this.amount = amount
 
 class Child: Parent
-    def init(amount):
+    def init amount:
         super(amount + 1)
 
 class Leaf: Child
-    def init(amount):
+    def init amount:
         super(amount * 2)
 
 leaf = Leaf(3)
@@ -1344,4 +1344,15 @@ def double amount => amount * 2
 
 assert(double(3), 6)
 assert(double(5), 10)
+
+---
+
+# Bare single parameter indented block definitions
+
+def double amount:
+    offset = 1
+    return amount * 2 + offset
+
+assert(double(3), 7)
+assert(double(5), 11)
 ```

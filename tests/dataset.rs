@@ -165,8 +165,8 @@ fn every_spec_record_is_nucleoid() {
 
     // Two empty specification representations would agree and prove nothing.
     assert_eq!(
-        records, 273,
-        "the specification holds 273 cases; update this count deliberately when one is added"
+        records, 278,
+        "the specification holds 278 cases; update this count deliberately when one is added"
     );
 }
 

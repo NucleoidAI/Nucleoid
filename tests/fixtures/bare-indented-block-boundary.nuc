@@ -1,0 +1,2 @@
+def f amount: int:
+    return amount

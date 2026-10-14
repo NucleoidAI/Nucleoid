@@ -855,7 +855,9 @@ assert(invoice, 8)
 [NUC 18](nuc-0018.md) specifies parameter-parenthesis omission for a named
 arrow definition or method with exactly one untyped ordinary identifier
 parameter. Calls and other definition signatures retain their parentheses;
-the expression still follows [NUC 12](nuc-0012.md).
+the expression still follows [NUC 12](nuc-0012.md). [NUC 19](nuc-0019.md)
+specifies the corresponding narrow indented-colon form, demonstrated in
+[single-parameter indented block definitions](#single-parameter-indented-block-definitions).
 
 **Named callbacks and aliases follow redefinition; value freezes the definition**
 
@@ -1432,6 +1434,37 @@ catch error:
 ```
 
 Full detail: [README.md §13](README.md#13-error-reference), [NUC 9](nuc-0009.md).
+
+---
+
+## Single-parameter indented block definitions
+
+**Single parameter block definitions preserve live inputs**
+
+```nuc
+fee = 2
+
+def total amount:
+    if amount > 0:
+        return amount + fee
+    return fee
+
+invoice = total(5)
+
+assert(invoice, 7)
+assert(total(0), 2)
+
+fee = 3
+
+assert(invoice, 8)
+assert(total(0), 3)
+```
+
+[NUC 19](nuc-0019.md) specifies this optional spelling for one untyped ordinary
+identifier and a real indented colon suite. The same body under
+`def total(amount):` remains valid, including both return paths and live
+external inputs. Calls and all other accepted signatures retain their syntax
+and behavior; inline and brace suites do not gain the bare parameter spelling.
 
 ---
 

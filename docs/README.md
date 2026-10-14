@@ -556,7 +556,10 @@ Full detail: [NUC 7](nuc-0007.md).
 - `def` defines a function in the state; a function with no `return` yields `null`.
 - `def name(params) => expression` is exactly a named block containing `return expression`; methods and parameter annotations use the same form.
 - [NUC 18](nuc-0018.md) specifies `def name amount => expression` as exactly `def name(amount) => expression` for one untyped ordinary identifier parameter, including methods and `init`.
-- The bare identifier must be immediately followed by `=>` in the token stream; no logical newline or semicolon is skipped. Typed, nullary, multiple-parameter and block definitions keep their parentheses, as do calls.
+- [NUC 19](nuc-0019.md) specifies `def name amount:` followed by an indented suite as exactly `def name(amount):` with that same suite.
+- A bare identifier must be immediately followed by `=>`, or by `:` whose body starts with a logical newline/indent and supplies a real `Indent` after normal newline/semicolon layout. The colon guard only looks ahead; the existing suite parser consumes the body.
+- No logical newline or semicolon is skipped within a bare header. Blank/comment lines before an indented body retain the existing layout rules.
+- All parenthesized definitions remain available. Typed, nullary, multiple-parameter, multiline-parameter, inline and brace-suite definitions keep their parentheses, as do calls; anonymous colon blocks and return annotations are not added.
 - Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines.
 - A call in an assignment depends on the function and its arguments.
 - Redefining a function updates existing dependents.
@@ -581,6 +584,19 @@ def double amount => amount * 2
 ```
 
 - `double(3)` is `6`; `double(5)` is `10`, with the same named return-block AST and canonical rendering as `def double(amount) => amount * 2`.
+
+```
+def double amount:
+    offset = 1
+    return amount * 2 + offset
+
+assert(double(3), 7)
+assert(double(5), 11)
+```
+
+- The same suite under `def double(amount):` remains valid; literal locals, multiple statements and explicit returns use the existing block behavior.
+- A body without `return` yields `null`, never an implicit last-expression return.
+- `def f amount:` without an indented body, a bare typed header such as `def f amount: int:`, and bare inline/brace suites retain `SyntaxError("Expected '(' but found identifier 'amount'")` at line 1, column 7.
 
 ### Lambdas
 
@@ -814,6 +830,8 @@ for name of source:                    iteration
 def name(params) => expression         single-return function
 def name amount => expression         one untyped parameter (NUC 18)
 def name(params):                      block function
+    statement
+def name amount:                       one untyped parameter, indented only (NUC 19)
     statement
 
 { statement; statement }               block

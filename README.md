@@ -167,9 +167,26 @@ assert(square(4), 16)
 
 [NUC 18](docs/nuc-0018.md) specifies parameter-parenthesis omission for named
 arrow definitions and methods with exactly one untyped ordinary identifier
-parameter. Typed, empty, multiple-parameter and block definitions still use
+parameter. Typed, empty and multiple-parameter definitions still use
 parentheses, as do calls. The body, binding, reactivity, snapshots, receivers
 and initializer behavior remain those of [NUC 12](docs/nuc-0012.md).
+
+**Single input block definitions omit parameter parentheses**
+
+```nuc
+def square amount:
+    return amount * amount
+
+assert(square(3), 9)
+assert(square(4), 16)
+```
+
+[NUC 19](docs/nuc-0019.md) specifies the same optional single-untyped-identifier
+spelling before an indented colon suite, including methods and `init`.
+`def square(amount):` with the same body remains valid. The colon must lead to
+a real indented body; inline/brace suites, typed, empty and multiple-parameter
+signatures retain their parentheses. Block returns, parameter binding, live
+dependencies and runtime behavior are unchanged.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,

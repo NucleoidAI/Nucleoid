@@ -215,7 +215,9 @@ fn check_with(runtime: &mut Runtime, case: &Case) -> Result<nucleoid::Value, Str
     check_with_count(runtime, case, expected_assertions)
 }
 
-fn check_with_count(
+/// Checks assertions and the expected return in the supplied runtime.
+/// Callers can inspect that same execution's state and assertion coverage.
+pub fn check_with_count(
     runtime: &mut Runtime,
     case: &Case,
     expected_assertions: usize,

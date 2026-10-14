@@ -1,0 +1,13 @@
+base = 2
+def scaled(amount):
+    return amount + base
+result = scaled(3)
+{
+    def double(amount):
+        return amount * 2
+    doubled = double(3)
+    assert(doubled, 6)
+}
+base = 4
+assert(result, 7)
+result

@@ -415,20 +415,34 @@ impl Parser {
             }
         };
 
-        let parameters =
-            if matches!(self.peek(), Token::Identifier(_)) && self.peek_at(1) == &Token::Arrow {
-                let Token::Identifier(name) = self.advance() else {
-                    unreachable!("lookahead checked the single parameter identifier")
-                };
-                vec![Parameter {
-                    name,
-                    type_name: None,
-                }]
-            } else {
-                // Do not skip separators or consume other prefixes: preserve the
-                // parenthesized parameter parser's diagnostics and positions.
-                self.parameters()?
+        let bare_parameter = matches!(self.peek(), Token::Identifier(_))
+            && match self.peek_at(1) {
+                Token::Arrow => true,
+                Token::Colon if matches!(self.peek_at(2), Token::Newline | Token::Indent) => {
+                    // Inspect only the layout that suite() already accepts.
+                    // Inline, typed and missing-indent prefixes keep their
+                    // parameter-parenthesis errors without consuming anything.
+                    self.tokens
+                        .iter()
+                        .skip(self.position + 2)
+                        .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
+                        .is_some_and(|spanned| spanned.token == Token::Indent)
+                }
+                _ => false,
             };
+        let parameters = if bare_parameter {
+            let Token::Identifier(name) = self.advance() else {
+                unreachable!("lookahead checked the single parameter identifier")
+            };
+            vec![Parameter {
+                name,
+                type_name: None,
+            }]
+        } else {
+            // Do not skip separators or consume other prefixes: preserve the
+            // parenthesized parameter parser's diagnostics and positions.
+            self.parameters()?
+        };
         let body = if self.eat(&Token::Arrow) {
             vec![Stmt::Return(Some(self.expression()?))]
         } else {
