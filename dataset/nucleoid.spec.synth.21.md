@@ -2681,4 +2681,67 @@ assert(sensor.displayed, null)
 sensor.reading = 4
 
 assert(sensor.displayed, 4)
+
+---
+
+# Nucleoid interpolates an animated position with live endpoints and progress
+
+origin = 0
+destination = 80
+progress = 0.25
+
+coordinate = Math.lerp(origin, destination, progress)
+
+assert(coordinate, 20)
+
+destination = 120
+
+assert(coordinate, 30)
+
+origin = 40
+
+assert(coordinate, 60)
+
+progress = 1.5
+
+assert(coordinate, 160)
+
+---
+
+# Nucleoid preserves interpolation coercion and ordered special values
+
+mixed = Math.lerp(" 2 ", "10", "0.25")
+dated = Math.lerp(Date(0), Date(10), 0.5)
+reversed = Math.lerp(10, 2, 0.25)
+zero_infinite = Math.lerp(0, Number.POSITIVE_INFINITY, 0)
+omitted = Math.lerp(2, 10)
+
+assert(mixed, 4)
+assert(dated, 5)
+assert(reversed, 8)
+assert(String(zero_infinite), "NaN")
+assert(String(omitted), "NaN")
+
+---
+
+# Nucleoid restores interpolated sensor rules after deferred property deletion
+
+class Sensor
+sensor = Sensor()
+
+$Sensor.position = Math.lerp($Sensor.start, 10, 0.5)
+
+assert(sensor.position, null)
+
+sensor.start = 2
+
+assert(sensor.position, 6)
+
+delete sensor.start
+
+assert(sensor.position, null)
+
+sensor.start = 4
+
+assert(sensor.position, 7)
 ```

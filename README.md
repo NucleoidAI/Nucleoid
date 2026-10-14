@@ -239,6 +239,36 @@ left to right and participate in the existing undefined gate. The proposal
 header records its status; no range-validation error or callable Math method
 reference is introduced.
 
+**Numeric interpolation blends live values**
+
+```nuc
+start = 0
+end = 10
+weight = 0.5
+
+mixed = Math.lerp(start, end, weight)
+
+assert(mixed, 5)
+
+end = 20
+
+assert(mixed, 10)
+
+weight = 0.25
+
+assert(mixed, 5)
+```
+
+[NUC 22](docs/nuc-0022.md) specifies static `Math.lerp(start, end, weight)`;
+its header records its status. After intrinsic numeric conversion, it computes
+`end - start`, multiplies by `weight`, then adds `start`, using ordinary ordered
+arithmetic without fused operations, endpoint shortcuts or weight clamping.
+Negative or greater-than-one weights extrapolate; special values and rounding
+follow that exact formula. Omissions supply numeric `NaN`; every supplied
+expression runs once left to right, including extras and the existing undefined
+gate. Live-null/deferred assignment contexts, shadowing and unsupported Math
+method-value reads remain unchanged.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

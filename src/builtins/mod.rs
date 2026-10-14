@@ -135,6 +135,15 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             let bounded = numeric_extremum([first, lower], true);
             numeric_extremum([bounded, upper], false)
         }
+        "lerp" => {
+            let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
+            let weight = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
+            // Preserve ordinary subtraction, multiplication, then addition.
+            // No endpoint shortcut, clamping, reordering or fused operation.
+            let delta = end - first;
+            let scaled = delta * weight;
+            first + scaled
+        }
         "random" => return Err(Error::type_error("Math.random is not supported")),
         "PI" => std::f64::consts::PI,
         "E" => std::f64::consts::E,
@@ -370,7 +379,8 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use crate::lang::ast::{Expr, Function, FunctionBody};
+    use crate::lang::ast::operator::binary;
+    use crate::lang::ast::{BinaryOp, Expr, Function, FunctionBody};
     use crate::{ErrorKind, ObjectId};
     use regex::Regex;
 
@@ -418,6 +428,113 @@ mod tests {
         if let (Value::Number(actual), Value::Number(expected)) = (actual, expected) {
             assert_eq!(actual.to_bits(), expected.to_bits());
         }
+    }
+
+    fn ordered_interpolation(start: &Value, end: &Value, weight: &Value) -> Value {
+        if [start, end, weight].into_iter().any(Value::is_undefined) {
+            return Value::Undefined;
+        }
+        let [start, end, weight] =
+            [start, end, weight].map(|value| Value::Number(value.to_number()));
+        let delta = binary(BinaryOp::Subtract, &end, &start).unwrap();
+        let scaled = binary(BinaryOp::Multiply, &delta, &weight).unwrap();
+        binary(BinaryOp::Add, &start, &scaled).unwrap()
+    }
+
+    #[test]
+    fn lerp_matches_ordered_binary_arithmetic_for_every_value_kind_without_panicking() {
+        let values = values();
+        for start in &values {
+            for end in &values {
+                for weight in &values {
+                    assert_same(
+                        &math("lerp", &[start.clone(), end.clone(), weight.clone()]).unwrap(),
+                        &ordered_interpolation(start, end, weight),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lerp_preserves_ordered_rounding_overflow_cancellation_nonfinite_and_zero_bits() {
+        let numbers = [
+            -f64::MAX,
+            -1e16,
+            -1.0,
+            -f64::MIN_POSITIVE,
+            -f64::from_bits(1),
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            f64::EPSILON,
+            1.0,
+            1.000_000_000_000_000_2,
+            1e16,
+            f64::MAX,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NAN,
+        ];
+        for start in numbers {
+            for end in numbers {
+                for weight in numbers {
+                    let arguments = [start, end, weight].map(Value::Number);
+                    assert_same(
+                        &math("lerp", &arguments).unwrap(),
+                        &ordered_interpolation(&arguments[0], &arguments[1], &arguments[2]),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lerp_keeps_finite_fractional_extrapolated_equal_and_reversed_results() {
+        for (arguments, expected) in [
+            ([0.0, 10.0, 0.25], 2.5),
+            ([2.0, 10.0, 0.25], 4.0),
+            ([2.0, 18.0, 0.5], 10.0),
+            ([2.0, 18.0, -0.5], -6.0),
+            ([2.0, 18.0, 1.5], 26.0),
+            ([4.0, 4.0, 2.0], 4.0),
+            ([10.0, 2.0, 0.25], 8.0),
+        ] {
+            assert_same(
+                &math("lerp", &arguments.map(Value::Number)).unwrap(),
+                &Value::Number(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn lerp_omissions_are_nan_and_all_supplied_extras_remain_in_the_undefined_gate() {
+        let arguments = [Value::number(2), Value::number(10), Value::number(0.5)];
+        for length in 0..3 {
+            assert_same(
+                &math("lerp", &arguments[..length]).unwrap(),
+                &Value::Number(f64::NAN),
+            );
+        }
+        for extra in values() {
+            let mut supplied = arguments.to_vec();
+            let expected = if extra.is_undefined() {
+                Value::Undefined
+            } else {
+                Value::number(6)
+            };
+            supplied.push(extra);
+            assert_same(&math("lerp", &supplied).unwrap(), &expected);
+            supplied.push(Value::number(99));
+            assert_same(&math("lerp", &supplied).unwrap(), &expected);
+        }
+        for position in 0..5 {
+            let mut supplied = vec![Value::number(2); 5];
+            supplied[position] = Value::Undefined;
+            assert_same(&math("lerp", &supplied).unwrap(), &Value::Undefined);
+        }
+        assert!(math_constant("lerp").is_none());
     }
 
     #[test]

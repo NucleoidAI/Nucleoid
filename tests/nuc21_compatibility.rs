@@ -49,6 +49,15 @@ impl Document {
             Self::Readme | Self::Examples => common::snippets(source, self.path()),
         }
     }
+
+    fn source(self) -> &'static str {
+        match self {
+            Self::Spec => include_str!("../nucleoid.spec.md"),
+            Self::Reference => include_str!("reference.md"),
+            Self::Readme => include_str!("../README.md"),
+            Self::Examples => include_str!("../docs/examples.md"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
@@ -403,9 +412,78 @@ fn compare_emulation_results(legacy: &Execution, candidate: &Execution) {
     }
 }
 
+/// Sealed additions append per document, so the declared historical prefix
+/// remains verifiable from shipped sources without Git or external artifacts.
+fn historical_case_ids(document: Document, source: &str) -> Vec<CaseId> {
+    let (_, count) = DOCUMENTS
+        .iter()
+        .find(|(registered, _)| *registered == document)
+        .expect("document has declared historical metadata");
+    let mut ids: Vec<_> = document
+        .cases(source)
+        .into_iter()
+        .map(|case| CaseId {
+            document,
+            title: case.title,
+        })
+        .collect();
+    let prefix = ids.get(..*count).unwrap_or_else(|| {
+        panic!("{document:?}: historical source is too short for {count} cases")
+    });
+    let unique: HashSet<_> = ids.iter().collect();
+    assert_eq!(unique.len(), ids.len(), "duplicate historical identity");
+    let additions: Vec<_> = ADDITIONS
+        .iter()
+        .filter(|registration| registration.document == document)
+        .map(Registration::id)
+        .collect();
+    let tail = prefix
+        .len()
+        .checked_sub(additions.len())
+        .expect("registered additions fit the historical prefix");
+    assert_eq!(
+        &prefix[tail..],
+        additions,
+        "registered historical tail identity/order changed"
+    );
+    ids.truncate(*count);
+    ids
+}
+
+/// Small metadata-only controls, not copied programs or measured cases.
+fn metadata_source(document: Document, ids: &[CaseId]) -> String {
+    assert!(ids.iter().all(|id| id.document == document));
+    match document {
+        Document::Spec | Document::Reference => {
+            let cases = ids
+                .iter()
+                .map(|id| format!("# {}\n\n42", id.title))
+                .collect::<Vec<_>>()
+                .join("\n\n---\n\n");
+            format!("```\n{cases}\n```\n")
+        }
+        Document::Readme | Document::Examples => ids
+            .iter()
+            .map(|id| format!("**{}**\n\n```nuc\n42\n```\n", id.title))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    }
+}
+
+fn assert_metadata_rejected(document: Document, ids: &[CaseId], reason: &str) {
+    let source = metadata_source(document, ids);
+    let failure = std::panic::catch_unwind(|| historical_case_ids(document, &source))
+        .expect_err("invalid historical metadata must fail");
+    let message = failure
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| failure.downcast_ref::<&str>().copied())
+        .expect("metadata assertion has a textual failure");
+    assert!(message.contains(reason), "{message}");
+}
+
 #[test]
 fn document_metadata_retains_closed_wire_names_paths_counts_and_order() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     for ((document, count), (wire_name, path, expected_count)) in DOCUMENTS.into_iter().zip([
         ("spec", "nucleoid.spec.md", 288),
         ("reference", "tests/reference.md", 58),
@@ -414,9 +492,14 @@ fn document_metadata_retains_closed_wire_names_paths_counts_and_order() {
     ]) {
         assert_eq!(document.path(), path);
         assert_eq!(count, expected_count);
-        let source = fs::read_to_string(root.join(document.path()))
-            .unwrap_or_else(|error| panic!("{}: {error}", document.path()));
-        assert_eq!(document.cases(&source).len(), count);
+        let ids = historical_case_ids(document, document.source());
+        assert_eq!(ids.len(), count);
+        let additions: Vec<_> = ADDITIONS
+            .iter()
+            .filter(|registration| registration.document == document)
+            .map(Registration::id)
+            .collect();
+        assert_eq!(&ids[ids.len() - additions.len()..], additions);
         let id: CaseId = serde_json::from_value(serde_json::json!({
             "document": wire_name, "title": "protected title",
         }))
@@ -437,6 +520,109 @@ fn document_metadata_retains_closed_wire_names_paths_counts_and_order() {
         assert_eq!(extra.source, "42");
         assert_eq!(extra.expected.as_deref(), Some("42"));
     }
+}
+
+#[test]
+fn historical_metadata_is_independent_of_forward_corpus_additions() {
+    for (document, count) in DOCUMENTS {
+        let current = document.source();
+        let snapshot = historical_case_ids(document, current);
+        let extended = match document {
+            Document::Spec | Document::Reference => {
+                let (body, closing) = current.rsplit_once("```").unwrap();
+                format!("{body}\n---\n\n# Future corpus addition\n\n42\n```{closing}")
+            }
+            Document::Readme | Document::Examples => {
+                format!("{current}\n**Future corpus addition**\n\n```nuc\n42\n```\n")
+            }
+        };
+        assert_eq!(
+            document.cases(&extended).len(),
+            document.cases(current).len() + 1
+        );
+        assert_eq!(historical_case_ids(document, &extended), snapshot);
+        assert_eq!(snapshot.len(), count);
+        assert!(
+            snapshot
+                .iter()
+                .all(|id| id.title != "Future corpus addition")
+        );
+    }
+}
+
+#[test]
+fn historical_metadata_rejects_short_duplicate_misordered_and_renamed_registrations() {
+    for (document, count) in DOCUMENTS {
+        let snapshot = historical_case_ids(document, document.source());
+        assert_eq!(snapshot.len(), count);
+        assert_eq!(
+            historical_case_ids(document, &metadata_source(document, &snapshot)),
+            snapshot
+        );
+        assert_metadata_rejected(
+            document,
+            &snapshot[..count - 1],
+            "historical source is too short",
+        );
+
+        let mut duplicate = snapshot.clone();
+        duplicate[1] = duplicate[0].clone();
+        assert_metadata_rejected(document, &duplicate, "duplicate historical identity");
+
+        let mut appended_duplicate = snapshot.clone();
+        appended_duplicate.push(snapshot[0].clone());
+        assert_metadata_rejected(
+            document,
+            &appended_duplicate,
+            "duplicate historical identity",
+        );
+
+        let mut misordered = snapshot.clone();
+        misordered.swap(count - 2, count - 1);
+        assert_metadata_rejected(
+            document,
+            &misordered,
+            "registered historical tail identity/order changed",
+        );
+
+        let mut renamed = snapshot;
+        renamed[count - 1].title.push_str(" renamed");
+        assert_metadata_rejected(
+            document,
+            &renamed,
+            "registered historical tail identity/order changed",
+        );
+    }
+}
+
+#[test]
+fn ordinary_metadata_is_hermetic_without_git_history() {
+    let executable = env::current_exe().unwrap();
+    let unavailable =
+        executable.with_file_name(format!("nuc21-metadata-no-git-{}", std::process::id()));
+    assert!(!unavailable.exists());
+    let output = Command::new(&executable)
+        .args([
+            "document_metadata_retains_closed_wire_names_paths_counts_and_order",
+            "--exact",
+            "--nocapture",
+        ])
+        .current_dir(executable.parent().unwrap())
+        .env("PATH", "")
+        .env("GIT_DIR", &unavailable)
+        .env("GIT_OBJECT_DIRECTORY", unavailable.join("objects"))
+        .env("GIT_COMMON_DIR", &unavailable)
+        .env("GIT_ALTERNATE_OBJECT_DIRECTORIES", "")
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "no-Git ordinary metadata subprocess failed:\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed; 0 failed"));
 }
 
 #[test]

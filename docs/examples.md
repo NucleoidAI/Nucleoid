@@ -1539,6 +1539,48 @@ and static/member-read limits.
 
 ---
 
+## Reactive numeric interpolation
+
+**Numeric interpolation keeps an animated position live**
+
+```nuc
+origin = 0
+destination = 100
+progress = 0.25
+
+coordinate = Math.lerp(origin, destination, progress)
+
+assert(coordinate, 25)
+
+progress = 0.5
+
+assert(coordinate, 50)
+
+destination = 80
+
+assert(coordinate, 40)
+
+origin = 20
+
+assert(coordinate, 50)
+
+progress = 1.5
+
+assert(coordinate, 110)
+```
+
+[NUC 22](nuc-0022.md) specifies this static runtime capability; its header
+records its status. Intrinsic numeric conversion precedes ordinary subtraction,
+multiplication and addition in that order. Weights are not clamped, so this
+position extrapolates past the destination. Equal/reversed endpoints, infinities,
+overflow, cancellation, numeric `NaN` and signed zeros follow the ordered formula,
+not endpoint shortcuts or a fused alternative. Every supplied expression,
+including extras, runs once left to right and keeps the existing undefined gate
+and live-null/deferred context. See [README.md §11](README.md#11-built-in-objects)
+for the reference example, arity and static/member-read limits.
+
+---
+
 ## Copyright
 
 Copyright 2020 Nucleoid

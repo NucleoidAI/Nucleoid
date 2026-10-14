@@ -682,13 +682,40 @@ Full detail: [NUC 9](nuc-0009.md).
   `Math.clamp` read as a value stays unsupported/undefined, not a callable reference.
 - This capability adds no bounds error, type enforcement or grammar change;
   other Math functions/constants and their exact errors are unchanged.
+- [NUC 22](nuc-0022.md) specifies static `Math.lerp(start, end, weight)`;
+  its proposal header records its status.
+- Interpolation intrinsically converts the first three values numerically, then
+  computes `delta = end - start`, `scaled = delta * weight`, `start + scaled`,
+  using exactly those ordinary `f64` operations in order. It does not call a
+  shadowable `Number()` function or concatenate strings.
+- Weights below zero or above one extrapolate: there is no weight clamping,
+  endpoint validation/reordering, midpoint/endpoint shortcut, fused operation,
+  higher precision or alternative weighted formula.
+- Equal/reversed endpoints, overflow, cancellation, infinities, numeric `NaN`
+  in any position and signed zeros follow that ordered arithmetic. In particular,
+  `0 + Infinity * 0` and `Infinity - Infinity` yield numeric `NaN`, not endpoints.
+- The existing numeric conversions above apply, including literal `null` as zero,
+  booleans, trimmed strings, empty/singleton lists and millisecond dates.
+  Nonnumeric conversion yields numeric `NaN`, not a new type error.
+- Every omitted first/second/third interpolation input supplies numeric `NaN`.
+  Extras are ignored numerically, but all supplied expressions run exactly once
+  left to right and all reads remain dependencies.
+- The unchanged any-`Undefined` Math gate includes extras. Live-null and
+  deferred-read assignment handling, class/property recovery, strict argument
+  errors and transactional rollback take precedence as before.
+- Static `Math` shadowing and ordinary `.Math` members retain their existing
+  resolution. `Math.lerp` read as a value is unsupported/undefined, not a
+  first-class callable or alias; no `Number` lookup dependency is introduced.
+- `Math.clamp`, `min`, `max`, `round`, other Math members, syntax and public
+  representations are unchanged. Unknown static methods and `Math.random()`
+  retain their exact inherited errors and existing pre-dispatch undefined gate.
 
 | Object | Members |
 | --- | --- |
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
@@ -737,6 +764,32 @@ assert(bounded, 8)
   behavior; [NUC 21](nuc-0021.md) explains the deliberately ordered contract.
 
 Full detail: [NUC 10](nuc-0010.md).
+
+### Numeric interpolation keeps endpoints and weights live
+
+```
+start = 0
+end = 20
+weight = 0.25
+
+position = Math.lerp(start, end, weight)
+
+assert(position, 5)
+
+end = 40
+
+assert(position, 10)
+
+weight = 0.5
+
+assert(position, 20)
+```
+
+- This is the sealed executable reference example in `tests/reference.md`.
+- The start, end and weight remain live through the ordinary builtin call path.
+- The `Reactive numeric interpolation` section and its five paired entries in
+  [`nucleoid.spec.md`](../nucleoid.spec.md#reactive-numeric-interpolation) define
+  the behavior; [NUC 22](nuc-0022.md) explains the deliberately ordered contract.
 
 ---
 

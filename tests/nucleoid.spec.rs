@@ -5421,6 +5421,139 @@ fn preserves_deferred_reads_and_rollback_for_numeric_clamping() {
     assert_eq!(run("observed"), 6);
 }
 
+/// Nucleoid keeps numeric interpolation reactive to all three inputs
+#[rustfmt::skip]
+#[test]
+fn keeps_numeric_interpolation_reactive_to_all_three_inputs() {
+    let mut run = runner();
+    run("start = 0");
+    run("end = 10");
+    run("weight = 0.25");
+    run("position = Math.lerp(start, end, weight)");
+    assert_eq!(run("position"), 2.5);
+    run("start = 2");
+    assert_eq!(run("position"), 4);
+    run("end = 18");
+    assert_eq!(run("position"), 6);
+    run("weight = 0.5");
+    assert_eq!(run("position"), 10);
+    run("weight = -0.5");
+    assert_eq!(run("position"), -6);
+    run("weight = 1.5");
+    assert_eq!(run("position"), 26);
+}
+
+/// Nucleoid preserves numeric coercion while interpolating values
+#[rustfmt::skip]
+#[test]
+fn preserves_numeric_coercion_while_interpolating_values() {
+    let mut run = runner();
+    run(r#"numeric = Math.lerp(" 2 ", "10", "0.25")"#);
+    run("boolean = Math.lerp(false, true, true)");
+    run("nil = Math.lerp(null, 4, 0.5)");
+    run("empty = Math.lerp([], 4, 0.5)");
+    run(r#"singleton = Math.lerp(["2"], ["10"], ["0.25"])"#);
+    run("date = Math.lerp(Date(0), Date(10), 0.5)");
+    run(r#"invalid = Math.lerp("invalid", 10, 0.5)"#);
+    assert_eq!(run("numeric"), 4);
+    assert_eq!(run("boolean"), 1);
+    assert_eq!(run("nil"), 2);
+    assert_eq!(run("empty"), 2);
+    assert_eq!(run("singleton"), 4);
+    assert_eq!(run("date"), 5);
+    assert_eq!(run("String(invalid)"), "NaN");
+}
+
+/// Nucleoid preserves ordered special values and omitted interpolation inputs
+#[rustfmt::skip]
+#[test]
+fn preserves_ordered_special_values_and_omitted_interpolation_inputs() {
+    let mut run = runner();
+    run("left = Math.lerp(2, 10, 0)");
+    run("right = Math.lerp(2, 10, 1)");
+    run("equal = Math.lerp(4, 4, 2)");
+    run("reversed = Math.lerp(10, 2, 0.25)");
+    run("extrapolated = Math.lerp(2, 10, 2)");
+    run("positive = Math.lerp(0, Number.POSITIVE_INFINITY, 0.5)");
+    run("negative = Math.lerp(0, Number.NEGATIVE_INFINITY, 0.5)");
+    run("zero_infinite = Math.lerp(0, Number.POSITIVE_INFINITY, 0)");
+    run("equal_infinite = Math.lerp(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, 0.5)");
+    run("nan_start = Math.lerp(Number.NaN, 10, 0.5)");
+    run("nan_end = Math.lerp(2, Number.NaN, 0.5)");
+    run("nan_weight = Math.lerp(2, 10, Number.NaN)");
+    run("missing_all = Math.lerp()");
+    run("missing_end = Math.lerp(2)");
+    run("missing_weight = Math.lerp(2, 10)");
+    run("extra = Math.lerp(2, 10, 0.5, 99)");
+    assert_eq!(run("left"), 2);
+    assert_eq!(run("right"), 10);
+    assert_eq!(run("equal"), 4);
+    assert_eq!(run("reversed"), 8);
+    assert_eq!(run("extrapolated"), 18);
+    {
+        let actual = run("positive");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("negative");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("String(zero_infinite)"), "NaN");
+    assert_eq!(run("String(equal_infinite)"), "NaN");
+    assert_eq!(run("String(nan_start)"), "NaN");
+    assert_eq!(run("String(nan_end)"), "NaN");
+    assert_eq!(run("String(nan_weight)"), "NaN");
+    assert_eq!(run("String(missing_all)"), "NaN");
+    assert_eq!(run("String(missing_end)"), "NaN");
+    assert_eq!(run("String(missing_weight)"), "NaN");
+    assert_eq!(run("extra"), 6);
+}
+
+/// Nucleoid applies numeric interpolation to live class rules
+#[rustfmt::skip]
+#[test]
+fn applies_numeric_interpolation_to_live_class_rules() {
+    let mut run = runner();
+    run(r#"class Blend(start, end, weight):
+    this.start = start
+    this.end = end
+    this.weight = weight"#);
+    run("$Blend.position = Math.lerp($Blend.start, $Blend.end, $Blend.weight)");
+    run("first = Blend(0, 10, 0.25)");
+    run("second = Blend(10, 0, 0.5)");
+    assert_eq!(run("first.position"), 2.5);
+    assert_eq!(run("second.position"), 5);
+    run("first.weight = 0.75");
+    assert_eq!(run("first.position"), 7.5);
+    run("second.end = 20");
+    assert_eq!(run("second.position"), 15);
+}
+
+/// Nucleoid preserves deferred reads and rollback for numeric interpolation
+#[rustfmt::skip]
+#[test]
+fn preserves_deferred_reads_and_rollback_for_numeric_interpolation() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Sensor");
+    run("sensor = Sensor()");
+    run("end = 10");
+    run("weight = 0.5");
+    run("position = Math.lerp(sensor.start, end, weight)");
+    assert_eq!(run("position"), serde_json::Value::Null);
+    run("sensor.start = 2");
+    assert_eq!(run("position"), 6);
+    run("delete sensor.start");
+    assert_eq!(run("position"), serde_json::Value::Null);
+    run("sensor.start = 4");
+    assert_eq!(run("position"), 7);
+    assert_eq!(run_error("position = Math.lerp(missing, end, weight)"), "ReferenceError: missing is not defined");
+    assert_eq!(run("position"), 7);
+    run("end = 20");
+    assert_eq!(run("position"), 12);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

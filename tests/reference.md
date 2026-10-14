@@ -1391,4 +1391,24 @@ assert(bounded, 10)
 ceiling = 8
 
 assert(bounded, 8)
+
+---
+
+# Numeric interpolation keeps endpoints and weights live
+
+start = 0
+end = 20
+weight = 0.25
+
+position = Math.lerp(start, end, weight)
+
+assert(position, 5)
+
+end = 40
+
+assert(position, 10)
+
+weight = 0.5
+
+assert(position, 20)
 ```

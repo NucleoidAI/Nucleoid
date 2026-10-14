@@ -239,6 +239,52 @@ statement positions; caught values and transaction recovery are unchanged.
   All accepted signatures and runtime programs remain available; no new
   closure capture or change to inherited resource/scope limitations is implied.
 
+## Reactive numeric interpolation
+
+- `Math.lerp(start, end, weight)` is one static numeric runtime operation.
+  Coerce the first three supplied values with the existing `Value::to_number`,
+  then perform exactly these ordinary `f64` operations in order:
+  `delta = end - start`, `scaled = delta * weight`, `result = start + scaled`.
+- The result is numeric even for string inputs: conversion is intrinsic, not
+  a call to a shadowable `Number()` namespace or string-concatenating `+`.
+  Numbers retain their values, literal `null` converts to zero, booleans to
+  zero/one, trimmed strings and empty/singleton lists use their existing numeric
+  conversion, and dates use milliseconds. Other nonnumeric values yield numeric
+  `NaN`, not a new type error.
+- Weights below zero or above one extrapolate. Do not clamp weights, validate
+  or reorder endpoints, use a weighted alternative formula, fuse operations,
+  raise precision, or special-case a midpoint, equal endpoints or weights zero/one.
+  Equal/reversed endpoints, overflow, cancellation, infinities, numeric `NaN`
+  in any position and signed zeros follow the same ordered ordinary arithmetic.
+- In particular, `0 + Infinity * 0` and `Infinity - Infinity` produce numeric
+  `NaN`, not an endpoint shortcut; finite endpoint subtraction can overflow
+  before scaling. Rounding is that of each individual accepted operation.
+- Each omitted first/second/third argument supplies numeric `NaN`.
+  Extra values are ignored numerically, not omitted from evaluation.
+- The unchanged call path evaluates every supplied argument expression exactly
+  once from left to right before dispatch and tracks every read, including extras.
+  The existing Math gate returns `Undefined` for any supplied `Undefined` value,
+  including an extra; a dependent assignment stores `null` and recovers when
+  its missing property is defined. An omitted numeric input is not such a read.
+- Literal-null numeric conversion does not override existing live-null or
+  deferred-read assignment handling. Class rules, ordinary property reads,
+  deletion/recovery, named wrappers, dependencies and transactions are unchanged.
+- Strict unknown identifiers still raise `ReferenceError("<name> is not defined")`
+  during argument evaluation, including extras or after an undefined property.
+  Failures keep their existing positions, caught values, rollback and recovery.
+- State and local bindings named `Math` still shadow the static namespace.
+  Ordinary `.Math` members retain their lookup behavior. `Math.lerp` read as
+  a value remains unsupported/`Undefined`, like other Math method references;
+  no first-class callable value or alias is introduced.
+- `Math.clamp`, `min`, `max`, `round`, all other Math functions/constants and
+  their errors are unchanged. Unknown methods keep
+  `TypeError("Math.<name> is not a function")`; `Math.random()` keeps
+  `TypeError("Math.random is not supported")`, after the same undefined gate.
+- No lexer, parser, generator, AST, public Global/Value/API, coercion, operator,
+  call/member resolution, class, scope, dependency or resource-limit change is
+  introduced. Existing signatures and inherited noncapturing scope limitations
+  remain; no new closure capture or extreme Windows debug stack claim is implied.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -7423,4 +7469,155 @@ assert(observed, 3)
 sensor.amount = 6
 
 assert(observed, 6)
+
+---
+
+# Nucleoid keeps numeric interpolation reactive to all three inputs
+
+start = 0
+end = 10
+weight = 0.25
+
+position = Math.lerp(start, end, weight)
+
+assert(position, 2.5)
+
+start = 2
+
+assert(position, 4)
+
+end = 18
+
+assert(position, 6)
+
+weight = 0.5
+
+assert(position, 10)
+
+weight = -0.5
+
+assert(position, -6)
+
+weight = 1.5
+
+assert(position, 26)
+
+---
+
+# Nucleoid preserves numeric coercion while interpolating values
+
+numeric = Math.lerp(" 2 ", "10", "0.25")
+boolean = Math.lerp(false, true, true)
+nil = Math.lerp(null, 4, 0.5)
+empty = Math.lerp([], 4, 0.5)
+singleton = Math.lerp(["2"], ["10"], ["0.25"])
+date = Math.lerp(Date(0), Date(10), 0.5)
+invalid = Math.lerp("invalid", 10, 0.5)
+
+assert(numeric, 4)
+assert(boolean, 1)
+assert(nil, 2)
+assert(empty, 2)
+assert(singleton, 4)
+assert(date, 5)
+assert(String(invalid), "NaN")
+
+---
+
+# Nucleoid preserves ordered special values and omitted interpolation inputs
+
+left = Math.lerp(2, 10, 0)
+right = Math.lerp(2, 10, 1)
+equal = Math.lerp(4, 4, 2)
+reversed = Math.lerp(10, 2, 0.25)
+extrapolated = Math.lerp(2, 10, 2)
+positive = Math.lerp(0, Number.POSITIVE_INFINITY, 0.5)
+negative = Math.lerp(0, Number.NEGATIVE_INFINITY, 0.5)
+zero_infinite = Math.lerp(0, Number.POSITIVE_INFINITY, 0)
+equal_infinite = Math.lerp(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, 0.5)
+nan_start = Math.lerp(Number.NaN, 10, 0.5)
+nan_end = Math.lerp(2, Number.NaN, 0.5)
+nan_weight = Math.lerp(2, 10, Number.NaN)
+missing_all = Math.lerp()
+missing_end = Math.lerp(2)
+missing_weight = Math.lerp(2, 10)
+extra = Math.lerp(2, 10, 0.5, 99)
+
+assert(left, 2)
+assert(right, 10)
+assert(equal, 4)
+assert(reversed, 8)
+assert(extrapolated, 18)
+assert(positive, Number.POSITIVE_INFINITY)
+assert(negative, Number.NEGATIVE_INFINITY)
+assert(String(zero_infinite), "NaN")
+assert(String(equal_infinite), "NaN")
+assert(String(nan_start), "NaN")
+assert(String(nan_end), "NaN")
+assert(String(nan_weight), "NaN")
+assert(String(missing_all), "NaN")
+assert(String(missing_end), "NaN")
+assert(String(missing_weight), "NaN")
+assert(extra, 6)
+
+---
+
+# Nucleoid applies numeric interpolation to live class rules
+
+class Blend(start, end, weight):
+    this.start = start
+    this.end = end
+    this.weight = weight
+
+$Blend.position = Math.lerp($Blend.start, $Blend.end, $Blend.weight)
+
+first = Blend(0, 10, 0.25)
+second = Blend(10, 0, 0.5)
+
+assert(first.position, 2.5)
+assert(second.position, 5)
+
+first.weight = 0.75
+
+assert(first.position, 7.5)
+
+second.end = 20
+
+assert(second.position, 15)
+
+---
+
+# Nucleoid preserves deferred reads and rollback for numeric interpolation
+
+class Sensor
+sensor = Sensor()
+end = 10
+weight = 0.5
+
+position = Math.lerp(sensor.start, end, weight)
+
+assert(position, null)
+
+sensor.start = 2
+
+assert(position, 6)
+
+delete sensor.start
+
+assert(position, null)
+
+sensor.start = 4
+
+assert(position, 7)
+
+try:
+    position = Math.lerp(missing, end, weight)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(position, 7)
+
+end = 20
+
+assert(position, 12)
 ```
