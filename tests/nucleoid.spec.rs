@@ -4531,13 +4531,13 @@ fn rejects_this_and_self_outside_an_instance_or_as_assignment_targets() {
 fn keeps_expression_bodied_named_functions_reactive() {
     let mut run = runner();
     run("source = 3");
-    run("def next(number: int) => number + 1");
-    run("def twice(number: int) => next(number) * 2");
+    run("def next number: int => number + 1");
+    run("def twice number: int => next(number) * 2");
     run("result = twice(source)");
     assert_eq!(run("result"), 8);
     run("source = 5");
     assert_eq!(run("result"), 12);
-    run("def next(number: int) => number + 2");
+    run("def next number: int => number + 2");
     assert_eq!(run("result"), 14);
 }
 
@@ -4547,11 +4547,11 @@ fn keeps_expression_bodied_named_functions_reactive() {
 fn keeps_expression_bodied_methods_and_initializers_equivalent() {
     let mut run = runner();
     run(r#"class Gauge:
-    def init(amount: int) => this.amount = amount
+    def init amount: int => this.amount = amount
 
     def reading() => self.amount
 
-    def set(amount: int) => this.amount = amount"#);
+    def set amount: int => this.amount = amount"#);
     run("gauge = Gauge(4)");
     run("observed = gauge.reading()");
     assert_eq!(run("gauge.id"), "gauge");
@@ -5215,6 +5215,93 @@ fn rolls_back_failed_bare_single_parameter_block_redefinitions() {
     assert_eq!(run("total"), 5);
     run("source = 4");
     assert_eq!(run("total"), 6);
+}
+
+/// Nucleoid keeps bare typed single parameter named arrows reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_typed_single_parameter_named_arrows_reactive() {
+    let mut run = runner();
+    run("base = 2");
+    run("def scaled amount: int => amount + base");
+    run("result = scaled(3)");
+    assert_eq!(run("result"), 5);
+    run("base = 4");
+    assert_eq!(run("result"), 7);
+    run("def scaled amount: int => amount * base");
+    assert_eq!(run("result"), 12);
+}
+
+/// Nucleoid preserves callable references for bare typed single parameter named arrows
+#[rustfmt::skip]
+#[test]
+fn preserves_callable_references_for_bare_typed_single_parameter_named_arrows() {
+    let mut run = runner();
+    run("def change amount: int => amount + 1");
+    run("live = change");
+    run("snapshot = change.value");
+    run("first = live(2)");
+    run("old = snapshot(2)");
+    assert_eq!(run("first"), 3);
+    assert_eq!(run("old"), 3);
+    run("def change amount: int => amount * 2");
+    assert_eq!(run("first"), 4);
+    assert_eq!(run("old"), 3);
+}
+
+/// Nucleoid preserves bare typed single parameter methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_typed_single_parameter_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Gauge:
+    def init amount: int => this.amount = amount
+    def reading offset: int => self.amount + offset"#);
+    run("gauge = Gauge(4)");
+    assert_eq!(run("gauge.amount"), 4);
+    assert_eq!(run("gauge.reading(3)"), 7);
+    run("gauge.amount = 6");
+    assert_eq!(run("gauge.reading(3)"), 9);
+}
+
+/// Nucleoid keeps bare typed single parameter binding and explicit alternatives equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_typed_single_parameter_binding_and_explicit_alternatives_equivalent() {
+    let mut run = runner();
+    run("amount = 10");
+    run("def identity amount: ArbitraryType => amount");
+    run("def text label: str => label");
+    run("def bare value => value + 1");
+    run(r#"def block(amount: int):
+    return amount + 2"#);
+    run("def pair(left: int, right: int) => left + right");
+    run("def unit() => 42");
+    assert_eq!(run("identity(3)"), 3);
+    assert_eq!(run("identity()"), serde_json::Value::Null);
+    assert_eq!(run("identity(3, 4)"), 3);
+    assert_eq!(run(r#"identity("text")"#), "text");
+    assert_eq!(run(r#"text("hello")"#), "hello");
+    assert_eq!(run("amount"), 10);
+    assert_eq!(run("bare(4)"), 5);
+    assert_eq!(run("block(4)"), 6);
+    assert_eq!(run("pair(2, 3)"), 5);
+    assert_eq!(run("unit()"), 42);
+}
+
+/// Nucleoid rolls back failed bare typed single parameter arrow redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_bare_typed_single_parameter_arrow_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run("def reading amount: int => source + amount");
+    run("total = reading(2)");
+    assert_eq!(run_error("def reading amount: int => missing + amount"), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 5);
+    run("source = 4");
+    assert_eq!(run("total"), 6);
+    assert_eq!(run("reading(3)"), 7);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

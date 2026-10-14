@@ -1,0 +1,20 @@
+def f amount: int => amount
+def identity amount: ArbitraryType => amount
+class Gauge:
+    def init amount: int => this.amount = amount
+    def reading amount: int => amount
+def wrap amount: int => { amount: amount }
+gauge = Gauge(4)
+assert(f(3), 3)
+assert(identity(), null)
+assert(identity("text"), "text")
+assert(gauge.reading(3), 3)
+assert(wrap(4).amount, 4)
+
+base = 2
+def scaled amount: int => amount + base
+result = scaled(3)
+assert(result, 5)
+base = 4
+assert(result, 7)
+result

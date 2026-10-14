@@ -167,8 +167,9 @@ assert(square(4), 16)
 
 [NUC 18](docs/nuc-0018.md) specifies parameter-parenthesis omission for named
 arrow definitions and methods with exactly one untyped ordinary identifier
-parameter. Typed, empty and multiple-parameter definitions still use
-parentheses, as do calls. The body, binding, reactivity, snapshots, receivers
+parameter. Empty and multiple-parameter definitions still use parentheses, as
+do calls; typed block signatures also retain parentheses. The body, binding,
+reactivity, snapshots, receivers
 and initializer behavior remain those of [NUC 12](docs/nuc-0012.md).
 
 **Single input block definitions omit parameter parentheses**
@@ -187,6 +188,29 @@ spelling before an indented colon suite, including methods and `init`.
 a real indented body; inline/brace suites, typed, empty and multiple-parameter
 signatures retain their parentheses. Block returns, parameter binding, live
 dependencies and runtime behavior are unchanged.
+
+**Typed single input named arrows omit parameter parentheses**
+
+```nuc
+source = 3
+
+def double amount: int => amount * 2
+
+result = double(source)
+
+assert(result, 6)
+
+source = 5
+
+assert(result, 10)
+```
+
+[NUC 20](docs/nuc-0020.md) specifies only the immediate
+single-identifier typed-arrow header. `def double(amount: int) => amount * 2`
+remains valid with identical parameter/type metadata and named return-block
+behavior. Annotations retain their existing handling, not new variable lookup
+or type enforcement. Typed bare blocks, logical header breaks and additional
+parameter/type forms are not added; calls and NUC18/19 spellings are unchanged.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,

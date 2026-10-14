@@ -2023,10 +2023,10 @@ assert(flight1.number, "TP1235")
 
 rate = 4
 
-def quote(tonnes: int) => tonnes * rate
+def quote tonnes: int => tonnes * rate
 
 class Cargo:
-    def init(tonnes: int) => this.tonnes = tonnes
+    def init tonnes: int => this.tonnes = tonnes
     def charge() => quote(self.tonnes)
 
 cargo = Cargo(3)
@@ -2039,7 +2039,7 @@ rate = 5
 
 assert(total, 15)
 
-def quote(tonnes: int) => tonnes * rate + 2
+def quote tonnes: int => tonnes * rate + 2
 
 assert(total, 17)
 
@@ -2541,4 +2541,81 @@ assert(cargo.charge(4), 13)
 cargo.tonnes = 5
 
 assert(cargo.charge(4), 21)
+
+---
+
+# Nucleoid keeps bare typed flight quotes and callable snapshots reactive
+
+rate = 2
+
+def quote tonnes: int => tonnes + rate
+
+live = quote
+snapshot = quote.value
+charge = live(3)
+frozen = snapshot(3)
+
+assert(charge, 5)
+assert(frozen, 5)
+
+rate = 4
+
+assert(charge, 7)
+assert(frozen, 7)
+
+def quote tonnes: int => tonnes * rate
+
+assert(charge, 12)
+assert(frozen, 7)
+
+---
+
+# Nucleoid binds bare typed cargo initializers and methods
+
+class Cargo:
+    def init tonnes: int => this.tonnes = tonnes
+    def charge rate: int => self.tonnes * rate
+
+cargo = Cargo(3)
+
+assert(cargo.id, "cargo")
+assert(cargo.tonnes, 3)
+assert(cargo.charge(4), 12)
+
+cargo.tonnes = 5
+
+assert(cargo.charge(4), 20)
+
+---
+
+# Nucleoid keeps bare typed flight bindings and failed redefinitions equivalent
+
+fuel = 10
+reserve = 3
+
+def identity fuel: ArbitraryType => fuel
+def estimate fuel: int => fuel + reserve
+def typed(fuel: int) => fuel + 1
+def block(fuel: int):
+    return fuel + 2
+
+assert(identity(), null)
+assert(identity(3, 4), 3)
+assert(identity("text"), "text")
+assert(fuel, 10)
+assert(typed(4), 5)
+assert(block(4), 6)
+
+total = estimate(2)
+
+try:
+    def estimate fuel: int => missing + fuel
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+reserve = 4
+
+assert(total, 6)
 ```

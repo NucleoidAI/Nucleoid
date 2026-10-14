@@ -7,6 +7,8 @@
 // binary uses every helper.
 #![allow(dead_code)]
 
+pub mod assertions;
+
 use nucleoid::Runtime;
 use std::cell::RefCell;
 use std::rc::Rc;

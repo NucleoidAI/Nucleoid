@@ -4,6 +4,12 @@ Executable form of the behaviours stated in `docs/README.md`, in the same
 case format as `nucleoid.spec.md`. Where this file and the specification
 disagree, the specification wins.
 
+Named arrows may optionally omit parentheses around one ordinary identifier
+and its existing single-identifier type annotation. Parenthesized alternatives,
+class/anonymous parameter lists and untyped bare arrows/indented blocks stay
+valid; typed bare blocks and other annotated bare signatures are not added.
+The annotation remains metadata with the existing binding and runtime behavior.
+
 ```
 
 # Nucleoid tracks dependencies through a template literal
@@ -1355,4 +1361,14 @@ def double amount:
 
 assert(double(3), 7)
 assert(double(5), 11)
+
+---
+
+# Bare typed single parameter named arrows
+
+def increment amount: int => amount + 1
+def text value: str => value
+
+assert(increment(4), 5)
+assert(text("ok"), "ok")
 ```

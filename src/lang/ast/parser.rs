@@ -415,12 +415,26 @@ impl Parser {
             }
         };
 
-        let bare_parameter = matches!(self.peek(), Token::Identifier(_))
+        let bare_arrow = matches!(
+            (
+                self.peek(),
+                self.peek_at(1),
+                self.peek_at(2),
+                self.peek_at(3)
+            ),
+            (Token::Identifier(_), Token::Arrow, _, _)
+                | (
+                    Token::Identifier(_),
+                    Token::Colon,
+                    Token::Identifier(_),
+                    Token::Arrow
+                )
+        );
+        let bare_block = matches!(self.peek(), Token::Identifier(_))
             && match self.peek_at(1) {
-                Token::Arrow => true,
                 Token::Colon if matches!(self.peek_at(2), Token::Newline | Token::Indent) => {
                     // Inspect only the layout that suite() already accepts.
-                    // Inline, typed and missing-indent prefixes keep their
+                    // Inline, typed-block and missing-indent prefixes keep their
                     // parameter-parenthesis errors without consuming anything.
                     self.tokens
                         .iter()
@@ -430,7 +444,9 @@ impl Parser {
                 }
                 _ => false,
             };
-        let parameters = if bare_parameter {
+        let parameters = if bare_arrow {
+            vec![self.parameter()?]
+        } else if bare_block {
             let Token::Identifier(name) = self.advance() else {
                 unreachable!("lookahead checked the single parameter identifier")
             };
@@ -456,36 +472,40 @@ impl Parser {
         })))
     }
 
+    fn parameter(&mut self) -> Result<Parameter> {
+        let name = match self.advance() {
+            Token::Identifier(name) => name,
+            other => {
+                return Err(self.error(format!(
+                    "Expected a parameter but found {}",
+                    other.describe()
+                )));
+            }
+        };
+
+        let type_name = if self.eat(&Token::Colon) {
+            match self.advance() {
+                Token::Identifier(type_name) => Some(type_name),
+                other => {
+                    return Err(
+                        self.error(format!("Expected a type but found {}", other.describe()))
+                    );
+                }
+            }
+        } else {
+            None
+        };
+
+        Ok(Parameter { name, type_name })
+    }
+
     fn parameters(&mut self) -> Result<Vec<Parameter>> {
         self.expect(&Token::LeftParen)?;
 
         let mut parameters = Vec::new();
 
         while !self.check(&Token::RightParen) {
-            let name = match self.advance() {
-                Token::Identifier(name) => name,
-                other => {
-                    return Err(self.error(format!(
-                        "Expected a parameter but found {}",
-                        other.describe()
-                    )));
-                }
-            };
-
-            let type_name = if self.eat(&Token::Colon) {
-                match self.advance() {
-                    Token::Identifier(type_name) => Some(type_name),
-                    other => {
-                        return Err(
-                            self.error(format!("Expected a type but found {}", other.describe()))
-                        );
-                    }
-                }
-            } else {
-                None
-            };
-
-            parameters.push(Parameter { name, type_name });
+            parameters.push(self.parameter()?);
 
             if !self.eat(&Token::Comma) {
                 break;

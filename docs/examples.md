@@ -1468,6 +1468,37 @@ and behavior; inline and brace suites do not gain the bare parameter spelling.
 
 ---
 
+## Typed single-parameter named arrows
+
+**Typed single parameter named arrows preserve live inputs**
+
+```nuc
+fee = 2
+
+def add_fee amount: int => amount + fee
+
+result = add_fee(5)
+
+assert(result, 7)
+
+fee = 4
+
+assert(result, 9)
+
+def add_fee amount: int => amount * fee
+
+assert(result, 20)
+```
+
+[NUC 20](nuc-0020.md) specifies this optional spelling, keeping the existing
+`def add_fee(amount: int) => ...` form valid and equivalent. Only immediate
+`Identifier`, `Colon`, `Identifier`, `Arrow` tokens after the required name gain
+the optional spelling; the annotation is unchanged metadata. Typed bare blocks,
+other parameter/type forms and logical header breaks remain unsupported.
+NUC18/19 spellings, expression bodies, calls and runtime behavior are unchanged.
+
+---
+
 ## Copyright
 
 Copyright 2020 Nucleoid

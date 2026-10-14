@@ -183,7 +183,7 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
             7,
         ),
         (
-            "def f amount: int => amount",
+            "def f amount: int, other => amount",
             "Expected '(' but found identifier 'amount'",
             1,
             7,
@@ -288,7 +288,7 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
             7,
         ),
         (
-            "class Gauge:\n    def reading amount: int => amount",
+            "class Gauge:\n    def reading amount: int, other => amount",
             "Expected '(' but found identifier 'amount'",
             2,
             17,
@@ -696,7 +696,7 @@ fn invalid_headers_do_not_execute_earlier_assignments_or_replace_functions() {
         .unwrap();
     for header in [
         "def identity amount: int:\n    return amount",
-        "def identity amount: int => amount",
+        "def identity amount: int, other => amount",
         "def identity amount, other => amount",
         "def identity amount\n=> amount",
         "def identity amount; => amount",
@@ -804,7 +804,7 @@ fn repl_recovers_from_guard_and_operand_errors_without_changing_arrow_entry() {
         .unwrap();
     let source = format!(
         ".json on\nbase = 2\ndef scaled amount => amount + base\nresult = scaled(3)\nbase = 4\nresult\n\
-         def scaled amount: int => amount\n\
+         def scaled amount: int, other => amount\n\
          def limited amount => amount{}\n\
          def scaled amount => amount * base\nassert(result, 12)\nresult\n.exit\n",
         " + 1".repeat(4096)
