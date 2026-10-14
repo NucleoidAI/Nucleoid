@@ -127,7 +127,7 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
         "def f amount:\n# no body",
         "def f amount:\nreturn amount",
         "def f amount:\n;\nreturn amount",
-        "def f amount: int:\n    return amount",
+        "def f amount: int, other:\n    return amount",
         "def f amount: int, other => amount",
         "def f amount: return amount",
         "def f amount: { return amount }",
@@ -225,7 +225,7 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
             9,
         ),
         (
-            "class Gauge:\n    def reading amount: int:\n        return amount",
+            "class Gauge:\n    def reading amount: int, other:\n        return amount",
             "Expected '(' but found identifier 'amount'",
             2,
             17,
@@ -435,7 +435,7 @@ fn failed_redefinitions_and_invalid_headers_roll_back_and_recover() {
         assert_eq!(runtime.run("total").unwrap(), Value::Number(5.0));
         assert!(!runtime.graph.contains(&NodeKey::variable("missing")));
         let error = runtime
-            .run("saved = 3\ndef reading amount: int:\n    return amount")
+            .run("saved = 3\ndef reading amount: int, other:\n    return amount")
             .unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Syntax);
         assert_eq!(
@@ -614,7 +614,7 @@ fn repl_collects_indented_bodies_and_recovers_without_changing_arrow_forms() {
         .unwrap();
     let source = format!(
         ".json on\nbase = 2\ndef scaled amount:\n    return amount + base\n\nresult = scaled(3)\nbase = 4\nresult\n\
-         def scaled amount: int:\n    return amount\n\n\
+         def scaled amount: int, other:\n    return amount\n\n\
          def limited amount:\n    return amount{}\n\n\
          def scaled amount => amount * base\nassert(result, 12)\nresult\n\
          def scaled(amount):\n    return amount + base\n\nassert(result, 7)\nresult\n.exit\n",

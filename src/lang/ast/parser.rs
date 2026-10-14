@@ -434,8 +434,8 @@ impl Parser {
             && match self.peek_at(1) {
                 Token::Colon if matches!(self.peek_at(2), Token::Newline | Token::Indent) => {
                     // Inspect only the layout that suite() already accepts.
-                    // Inline, typed-block and missing-indent prefixes keep their
-                    // parameter-parenthesis errors without consuming anything.
+                    // Leave inline, typed and missing-indent prefixes untouched
+                    // for the other guards or the parenthesized parameter parser.
                     self.tokens
                         .iter()
                         .skip(self.position + 2)
@@ -444,7 +444,27 @@ impl Parser {
                 }
                 _ => false,
             };
-        let parameters = if bare_arrow {
+        let bare_typed_block = matches!(
+            (
+                self.peek(),
+                self.peek_at(1),
+                self.peek_at(2),
+                self.peek_at(3)
+            ),
+            (
+                Token::Identifier(_),
+                Token::Colon,
+                Token::Identifier(_),
+                Token::Colon
+            )
+        ) && matches!(self.peek_at(4), Token::Newline | Token::Indent)
+            && self
+                .tokens
+                .iter()
+                .skip(self.position + 4)
+                .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
+                .is_some_and(|spanned| spanned.token == Token::Indent);
+        let parameters = if bare_arrow || bare_typed_block {
             vec![self.parameter()?]
         } else if bare_block {
             let Token::Identifier(name) = self.advance() else {

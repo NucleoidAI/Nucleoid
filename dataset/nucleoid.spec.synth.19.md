@@ -1092,4 +1092,84 @@ try:
     rate = fine * 7
 catch error:
     assert(error, TypeError("Circular Dependency"))
+
+---
+
+# Nucleoid keeps a typed borrowing charge live
+
+# fee is 2
+fee = 2
+
+# charge takes one amount annotated as int and returns the charge
+def charge amount: int:
+    if amount > 0:
+        return amount + fee
+    return fee
+
+# invoice is the charge for 5
+invoice = charge(5)
+
+assert(invoice, 7)
+assert(charge(0), 2)
+
+# fee is 3
+fee = 3
+
+assert(invoice, 8)
+assert(charge(0), 3)
+
+---
+
+# Nucleoid preserves a typed callable definition snapshot
+
+# rate is 2
+rate = 2
+
+# estimate takes days annotated with ordinary identifier metadata
+def estimate days: ArbitraryType:
+    return days * rate
+
+# live refers to the current estimate, while saved freezes its definition
+live = estimate
+saved = estimate.value
+current = live(3)
+original = saved(3)
+
+assert(current, 6)
+assert(original, 6)
+
+# estimate is redefined without changing its accepted parenthesized alternative
+def estimate days: int:
+    return days + rate
+
+assert(current, 5)
+assert(original, 6)
+
+# rate is 4; both bodies still read the live rate
+rate = 4
+
+assert(current, 7)
+assert(original, 12)
+
+---
+
+# Nucleoid uses typed block methods for library charges
+
+# A Loan records its days through a typed block initializer
+class Loan:
+    def init days: int:
+        this.days = days
+    def charge offset: int:
+        return self.days + offset
+
+# loan is a Loan for 4 days
+loan = Loan(4)
+
+assert(loan.days, 4)
+assert(loan.charge(3), 7)
+
+# loan's days is 6
+loan.days = 6
+
+assert(loan.charge(3), 9)
 ```

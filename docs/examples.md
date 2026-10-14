@@ -1493,7 +1493,7 @@ assert(result, 20)
 [NUC 20](nuc-0020.md) specifies this optional spelling, keeping the existing
 `def add_fee(amount: int) => ...` form valid and equivalent. Only immediate
 `Identifier`, `Colon`, `Identifier`, `Arrow` tokens after the required name gain
-the optional spelling; the annotation is unchanged metadata. Typed bare blocks,
+the optional spelling; the annotation is unchanged metadata. Typed bare inline/braced blocks,
 other parameter/type forms and logical header breaks remain unsupported.
 NUC18/19 spellings, expression bodies, calls and runtime behavior are unchanged.
 
@@ -1616,6 +1616,48 @@ assert(fade.opacity, 0)
 - Class-rule property syntax and ordinary lookup are unchanged.
 - See [README.md §11](README.md#11-built-in-objects) for the exact executable
   reference example.
+
+---
+
+## Bare typed single-parameter indented block definitions
+
+**Typed block definitions preserve both live return paths**
+
+```nuc
+# Typed block definitions preserve both live return paths
+
+fee = 2
+
+def total amount: int:
+    if amount > 0:
+        return amount + fee
+    return fee
+
+invoice = total(5)
+
+assert(invoice, 7)
+assert(total(0), 2)
+
+fee = 3
+
+assert(invoice, 8)
+assert(total(0), 3)
+```
+
+- [NUC 24](nuc-0024.md) describes the optional single typed parameter spelling.
+- `def total(amount: int):` with the same suite remains valid and equivalent;
+  both return paths are used, and external inputs remain live.
+- Require immediate parameter/colon/annotation/colon tokens followed by normal
+  body newline layout and a real indent. Blank/comment lines are allowed;
+  header-line logical breaks/semicolons, inline/braced bare suites and other
+  parameter/type forms are not added.
+- Annotations remain identifier metadata, not type constraints or dependencies.
+- Calls, NUC18/19/20 forms, all explicit signatures, no implicit block return,
+  receivers/init/super, scope limitations, snapshots, rollback and resource
+  bounds retain their existing behavior.
+- See [README.md §9](README.md#9-functions) for the exact executable reference
+  example and the normative
+  [typed-block section](../nucleoid.spec.md#bare-typed-single-parameter-indented-block-definitions).
 
 ---
 

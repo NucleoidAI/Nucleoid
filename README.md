@@ -168,7 +168,7 @@ assert(square(4), 16)
 [NUC 18](docs/nuc-0018.md) specifies parameter-parenthesis omission for named
 arrow definitions and methods with exactly one untyped ordinary identifier
 parameter. Empty and multiple-parameter definitions still use parentheses, as
-do calls; typed block signatures also retain parentheses. The body, binding,
+do calls; the optional typed indented-block form is described below. The body, binding,
 reactivity, snapshots, receivers
 and initializer behavior remain those of [NUC 12](docs/nuc-0012.md).
 
@@ -185,8 +185,9 @@ assert(square(4), 16)
 [NUC 19](docs/nuc-0019.md) specifies the same optional single-untyped-identifier
 spelling before an indented colon suite, including methods and `init`.
 `def square(amount):` with the same body remains valid. The colon must lead to
-a real indented body; inline/brace suites, typed, empty and multiple-parameter
-signatures retain their parentheses. Block returns, parameter binding, live
+a real indented body; inline/brace suites, empty and multiple-parameter
+signatures retain their parentheses. Typed single-parameter indented blocks
+have the separate optional spelling below. Block returns, parameter binding, live
 dependencies and runtime behavior are unchanged.
 
 **Typed single input named arrows omit parameter parentheses**
@@ -209,7 +210,7 @@ assert(result, 10)
 single-identifier typed-arrow header. `def double(amount: int) => amount * 2`
 remains valid with identical parameter/type metadata and named return-block
 behavior. Annotations retain their existing handling, not new variable lookup
-or type enforcement. Typed bare blocks, logical header breaks and additional
+or type enforcement. Typed bare inline/braced blocks, logical header breaks and additional
 parameter/type forms are not added; calls and NUC18/19 spellings are unchanged.
 
 **Numeric clamping keeps values within live bounds**
@@ -296,6 +297,37 @@ expressions still run once left to right and retain reads, effects and the
 existing undefined gate. Live-null/deferred handling, rollback, namespace
 shadowing and unsupported method-value reads remain unchanged. The normative
 contract is [Reactive unit-interval saturation](nucleoid.spec.md#reactive-unit-interval-saturation).
+
+**Typed block definitions preserve live bounded progress**
+
+```nuc
+# Typed block definitions preserve live bounded progress
+
+ratio = 0.3
+
+def normalize amount: ArbitraryType:
+    return Math.saturate(amount)
+
+progress = normalize(ratio)
+
+assert(progress, 0.3)
+
+ratio = 1.5
+
+assert(progress, 1)
+
+ratio = -0.5
+
+assert(progress, 0)
+```
+
+[NUC 24](docs/nuc-0024.md) describes the optional single typed parameter spelling
+before a real indented suite. `def normalize(amount: ArbitraryType):` with the
+same body remains valid. The immediate name/colon/annotation/colon prefix and
+real indent preserve the full parameter metadata and named block AST.
+Annotations introduce no lookup or runtime type constraint. Header-line breaks,
+inline/braced bare suites and other parameter/type forms are not added; calls,
+NUC18/19/20 spellings, block returns and live dependencies are unchanged.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,

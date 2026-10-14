@@ -84,10 +84,10 @@ line can still continue over physical lines. Named arrow braces still denote
 object expressions; returned anonymous functions keep their own existing body
 grammar and do not gain closure capture.
 
-Apart from the narrow typed-arrow and indented-colon forms below, other prefixes
-still require parameter parentheses. Bare typed blocks, multiple, defaulted,
-destructured, and nullary parameters are not supported; bare inline and brace
-suites are not added.
+Apart from the narrow typed-arrow and typed/untyped indented-colon forms below,
+other prefixes still require parameter parentheses. Multiple, defaulted,
+destructured, and nullary bare parameters are not supported; bare inline and
+brace suites are not added.
 For `def f amount:`, `def f amount: int, other => amount`,
 `def f amount, other => amount`, and headers separating `amount` from `=>` by
 a logical newline or semicolon, the error remains
@@ -114,9 +114,10 @@ semicolon may separate `def`, the required name, the bare parameter, and colon.
 
 All parenthesized signatures and indented, inline, or braced suites remain
 valid, including typed, empty, multiple-parameter, trailing-comma, and multiline
-parameter lists. NUC 18's bare named arrows remain unchanged. Bare typed blocks,
-multiple, defaulted, destructured, nullary, anonymous-colon, inline, or braced
-definitions are not added. Return annotations, calls, ordinary-identifier
+parameter lists. NUC 18's bare named arrows remain unchanged. The single typed
+indented spelling below is also optional; multiple, defaulted, destructured,
+nullary, anonymous-colon, inline, or braced bare definitions are not added.
+Return annotations, calls, ordinary-identifier
 invocation, expression precedence, and keyword meanings are unchanged.
 
 The result is the same `Parameter` with no type annotation and the same named
@@ -128,7 +129,8 @@ resource bounds retain their accepted behavior; there is no new local capture.
 
 A header without a real indent, including `def f amount:` at end of input,
 still raises `SyntaxError("Expected '(' but found identifier 'amount'")` at
-line 1, column 7. The same error and position apply to `def f amount: int:`,
+line 1, column 7. The same error and position apply to `def f amount: int:`
+at end of input without a body,
 `def f amount: return amount`, `def f amount: { return amount }`,
 `def f amount:;` even before a later indent, multiple/default/return-annotation
 prefixes, and a logical newline or semicolon between the parameter and colon.
@@ -172,13 +174,14 @@ lists, class parameter lists and anonymous functions remain valid. NUC 18's
 untyped bare arrows and NUC 19's exact untyped indented-colon guard are unchanged.
 Representative typed parenthesized alternatives remain executable below.
 
-Typed bare blocks, inline or braced suites, multiple/nullary/defaulted/destructured
+Typed bare inline or braced suites, multiple/nullary/defaulted/destructured
 parameters, dotted/union/generic/keyword annotation forms, return annotations,
-and logical breaks in the bare header are not added. Named-arrow leading braces
+and logical breaks in the bare header are not added. The typed indented-block
+spelling below does not change this arrow guard. Named-arrow leading braces
 remain object expressions; a returned anonymous arrow retains its own block
 grammar. No public token, AST, runtime, generator, API, or bound changes.
 
-Unsupported tokenizable prefixes such as `def f amount: int:`,
+Unsupported tokenizable prefixes such as `def f amount: int:` without a body,
 `def f amount: int, other => amount`, `def f amount: Int.Name => amount`,
 `def f amount: List[int] => amount`, `def f amount: this => amount`, and a logical
 break before the typed arrow still raise
@@ -199,6 +202,57 @@ position. An unparenthesized multiline object body with indentation retains
 `SyntaxError("Expected a key but found an indented block")` at line 2, column 5.
 Undefined body reads keep their existing `ReferenceError` messages and top-level
 statement positions; caught values and transaction recovery are unchanged.
+
+## Bare typed single-parameter indented block definitions
+
+- `def double amount: int:` followed by a real indented suite is exactly
+  `def double(amount: int):` followed by that same suite, including methods and
+  `init`. This optional spelling extends NUC19 and NUC20 without replacing them.
+- After `def` and the required ordinary definition name, require immediate
+  `Identifier(parameter)`, `Colon`, `Identifier(annotation)`, `Colon` tokens.
+  The next token must be `Newline` or `Indent`; looking past only `Newline` and
+  `Semicolon` tokens from that body start, the first other token must be `Indent`.
+- This guard consumes nothing and skips no logical newline, semicolon, or
+  comment-induced logical break within the header. The existing parameter
+  parser consumes the typed prefix and the unchanged suite parser consumes the
+  colon/body. Blank/comment lines and normal semicolon layout after the initial
+  body newline remain valid only with a real indent.
+- Preserve `Parameter { name, type_name: Some(annotation) }` and the complete
+  named `FunctionBody::Block`. An ordinary annotation such as `ArbitraryType`
+  remains metadata, not a variable lookup, dependency, or runtime type constraint.
+- Retain NUC19's exact untyped bare-block guard and `type_name: None`; its suite
+  colon is never consumed as an annotation. NUC18/20's immediate arrow guards
+  and all parenthesized typed/untyped, empty/multiple, trailing-comma/multiline,
+  inline/braced/indented, class and anonymous signatures remain unchanged.
+- Add only one ordinary parameter name and one ordinary annotation name.
+  Missing/dotted/union/generic/keyword/literal annotations, multiple/defaulted/
+  destructured/variadic/nullary bare parameters, return annotations, anonymous
+  colon functions, call-site omission and automatic invocation are not added.
+- Typed bare inline/braced suites, header-line semicolons, missing indentation
+  and comments-only bodies do not qualify. Nonqualifying tokenizable prefixes
+  retain `SyntaxError("Expected '(' but found identifier 'amount'")` at line 1,
+  column 7 for `def f amount: int:` without a real body. Lexical failures still
+  precede parsing; `def f amount: int | str:` raises
+  `SyntaxError("Unexpected character '|'")` at line 1, column 19.
+- A logical newline after `def f` still gives
+  `SyntaxError("Expected '(' but found end of line")` at line 1, column 5; a
+  semicolon there gives `SyntaxError("Expected '(' but found ';'")` at column 6.
+  The parenthesized `def f(amount:):` still gives
+  `SyntaxError("Expected a type but found ')'")` at line 1, column 15.
+- After a qualifying header, indented `return amount +)` still raises
+  `SyntaxError("Unexpected ')'")` at line 2, column 21, and `return @` gives
+  `SyntaxError("Unexpected character '@'")` at line 2, column 12.
+- Explicit and bare returns, no implicit return, literal locals, shadowing,
+  missing/null/extra/string argument binding, `this`/`self`, initializer adoption,
+  explicit/bare `super`, live callables, definition snapshots with external
+  dependencies, replacement, caught errors, rollback and recovery are unchanged.
+- Inherited parameter-dependent local/nested noncapturing failures remain
+  paired with the explicit syntax; no capture or propagation repair is added.
+  Precedence, resource limits, lexer/public AST/API, runtime, generator, numeric
+  conversion, built-ins, class/call/scope and dependency semantics are unchanged.
+- The five corresponding entries at the end of the executable specification
+  preserve reactive definitions, references/snapshots, methods/initializers,
+  binding/explicit alternatives and failed-redefinition rollback.
 
 ## Reactive numeric clamping
 
@@ -7808,4 +7862,146 @@ assert(bounded, 0.75)
 sensor.reading = 2
 
 assert(bounded, 1)
+
+---
+
+# Nucleoid keeps bare typed single parameter block definitions reactive
+
+base = 2
+
+def scaled amount: int:
+    return amount + base
+
+result = scaled(3)
+
+assert(result, 5)
+
+base = 4
+
+assert(result, 7)
+
+def scaled amount: int:
+    return amount * base
+
+assert(result, 12)
+
+---
+
+# Nucleoid preserves callable references for bare typed single parameter block definitions
+
+base = 1
+
+def change amount: ArbitraryType:
+    return amount + base
+
+live = change
+snapshot = change.value
+first = live(2)
+old = snapshot(2)
+
+assert(first, 3)
+assert(old, 3)
+
+base = 3
+
+assert(first, 5)
+assert(old, 5)
+
+def change amount: int:
+    return amount * base
+
+assert(first, 6)
+assert(old, 5)
+
+base = 4
+
+assert(first, 8)
+assert(old, 6)
+
+---
+
+# Nucleoid preserves bare typed single parameter block methods and initializers
+
+class Gauge:
+    def init amount: int:
+        this.amount = amount
+    def reading offset: int:
+        return self.amount + offset
+
+gauge = Gauge(4)
+
+assert(gauge.amount, 4)
+assert(gauge.reading(3), 7)
+
+gauge.amount = 6
+
+assert(gauge.reading(3), 9)
+
+---
+
+# Nucleoid keeps bare typed single parameter block binding and explicit alternatives equivalent
+
+amount = 10
+
+def identity amount: ArbitraryType:
+    return amount
+
+def text label: str:
+    return label
+
+def ignored amount: int:
+    amount + 100
+
+def bare value:
+    return value + 1
+
+def typed(amount: int):
+    return amount + 2
+
+def arrow value: int => value + 3
+
+def pair(left: int, right: int):
+    return left + right
+
+def unit():
+    return 42
+
+assert(identity(3), 3)
+assert(identity(), null)
+assert(identity(3, 4), 3)
+assert(identity("text"), "text")
+assert(text("hello"), "hello")
+assert(ignored(5), null)
+assert(bare(4), 5)
+assert(typed(4), 6)
+assert(arrow(4), 7)
+assert(pair(2, 3), 5)
+assert(unit(), 42)
+assert(amount, 10)
+
+---
+
+# Nucleoid rolls back failed bare typed single parameter block redefinitions
+
+source = 3
+
+def reading amount: int:
+    return source + amount
+
+total = reading(2)
+
+assert(total, 5)
+
+try:
+    def reading amount: int:
+        return missing + amount
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+source = 4
+
+assert(total, 6)
+assert(reading(3), 7)
 ```

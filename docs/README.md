@@ -558,11 +558,13 @@ Full detail: [NUC 7](nuc-0007.md).
 - [NUC 18](nuc-0018.md) specifies `def name amount => expression` as exactly `def name(amount) => expression` for one untyped ordinary identifier parameter, including methods and `init`.
 - [NUC 19](nuc-0019.md) specifies `def name amount:` followed by an indented suite as exactly `def name(amount):` with that same suite.
 - [NUC 20](nuc-0020.md) specifies `def name amount: int => expression` as exactly `def name(amount: int) => expression` for one ordinary identifier parameter and one existing ordinary-identifier annotation, including methods and `init`.
+- [NUC 24](nuc-0024.md) describes `def name amount: int:` followed by a real indented suite as exactly `def name(amount: int):` with that same suite, including methods and `init`.
 - The typed-arrow guard requires immediate `Identifier`, `Colon`, `Identifier`, `Arrow` tokens after the required definition name. The parameter name and `type_name: Some(annotation)` metadata are unchanged; the annotation is not a resolved variable or a new runtime type constraint.
+- The typed-block guard requires immediate `Identifier`, `Colon`, `Identifier`, `Colon` tokens. The next token is `Newline` or `Indent`, and the first other token after only newline/semicolon layout is `Indent`; the guard consumes nothing before the existing parameter and suite parsers.
 - For the untyped forms, a bare identifier must be immediately followed by `=>`, or by `:` whose body starts with a logical newline/indent and supplies a real `Indent` after normal newline/semicolon layout. The colon guard only looks ahead; the existing suite parser consumes the body.
 - No logical newline, semicolon or comment-induced logical break is skipped within a bare header. Blank/comment lines before an indented body retain the existing layout rules.
-- All parenthesized definitions remain available. Typed block, nullary, multiple-parameter, multiline-parameter, inline and brace-suite definitions keep their parentheses, as do calls.
-- Bare typed blocks, defaulted/destructured parameters, dotted/union/generic/keyword annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added; class and anonymous parameter lists keep their existing grammar.
+- All parenthesized definitions remain available. Nullary, multiple-parameter, multiline-parameter, inline and brace-suite definitions keep their parentheses, as do calls; typed single-parameter indented blocks have the optional spelling below.
+- Bare typed inline/braced or missing-indent blocks, defaulted/destructured/variadic parameters, dotted/union/generic/keyword/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added; class and anonymous parameter lists keep their existing grammar.
 - NUC18 untyped arrows and NUC19's exact untyped indented-colon guard are unchanged; named return-block lowering, parameter binding, runtime behavior and canonical rendering remain those of the parenthesized counterparts.
 - Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines.
 - A call in an assignment depends on the function and its arguments.
@@ -612,7 +614,24 @@ assert(double(5), 11)
 
 - The same suite under `def double(amount):` remains valid; literal locals, multiple statements and explicit returns use the existing block behavior.
 - A body without `return` yields `null`, never an implicit last-expression return.
-- `def f amount:` without an indented body, a bare typed block header such as `def f amount: int:`, and bare inline/brace suites retain `SyntaxError("Expected '(' but found identifier 'amount'")` at line 1, column 7.
+- `def f amount:` without an indented body, `def f amount: int:` at EOF without a body, and bare inline/brace suites retain `SyntaxError("Expected '(' but found identifier 'amount'")` at line 1, column 7.
+
+### Bare typed single parameter indented block definitions
+
+```
+def double amount: int:
+    offset = 1
+    return amount * 2 + offset
+
+assert(double(3), 7)
+assert(double(5), 11)
+```
+
+- This is the executable reference's exact paired example; the same suite under `def double(amount: int):` remains valid with the same complete AST and canonical rendering.
+- The ordinary annotation remains `Some("int")` metadata, not a lookup, dependency or new runtime type constraint; missing/null/extra/string arguments retain their existing binding.
+- Require the immediate header prefix and a real indent. Blank/comment lines and normal semicolons after the initial body newline are allowed; header-line breaks/semicolons, inline/braced bare suites and comments-only bodies do not qualify.
+- The NUC19 untyped suite colon still belongs to the suite, never to an annotation. NUC18/20 arrows, explicit typed alternatives, class/anonymous lists, receivers/init/super, no implicit return, live references/snapshots, transactions and resource limits are unchanged.
+- Inherited parameter-dependent local and nested noncapturing failures remain paired, not repaired by this spelling.
 
 ### Lambdas
 
@@ -626,7 +645,7 @@ list.find(element => element == 1)
 
 - Calls over class lists depend on the population and the properties they read.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), and [NUC 20](nuc-0020.md).
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), and [NUC 24](nuc-0024.md).
 
 ---
 
@@ -990,6 +1009,8 @@ def name amount: type => expression   one typed parameter (NUC 20)
 def name(params):                      block function
     statement
 def name amount:                       one untyped parameter, indented only (NUC 19)
+    statement
+def name amount: type:                 one typed parameter, indented only (NUC 24)
     statement
 
 { statement; statement }               block

@@ -5680,6 +5680,119 @@ fn preserves_deferred_reads_and_rollback_for_unit_saturation() {
     assert_eq!(run("bounded"), 1);
 }
 
+/// Nucleoid keeps bare typed single parameter block definitions reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_typed_single_parameter_block_definitions_reactive() {
+    let mut run = runner();
+    run("base = 2");
+    run(r#"def scaled amount: int:
+    return amount + base"#);
+    run("result = scaled(3)");
+    assert_eq!(run("result"), 5);
+    run("base = 4");
+    assert_eq!(run("result"), 7);
+    run(r#"def scaled amount: int:
+    return amount * base"#);
+    assert_eq!(run("result"), 12);
+}
+
+/// Nucleoid preserves callable references for bare typed single parameter block definitions
+#[rustfmt::skip]
+#[test]
+fn preserves_callable_references_for_bare_typed_single_parameter_block_definitions() {
+    let mut run = runner();
+    run("base = 1");
+    run(r#"def change amount: ArbitraryType:
+    return amount + base"#);
+    run("live = change");
+    run("snapshot = change.value");
+    run("first = live(2)");
+    run("old = snapshot(2)");
+    assert_eq!(run("first"), 3);
+    assert_eq!(run("old"), 3);
+    run("base = 3");
+    assert_eq!(run("first"), 5);
+    assert_eq!(run("old"), 5);
+    run(r#"def change amount: int:
+    return amount * base"#);
+    assert_eq!(run("first"), 6);
+    assert_eq!(run("old"), 5);
+    run("base = 4");
+    assert_eq!(run("first"), 8);
+    assert_eq!(run("old"), 6);
+}
+
+/// Nucleoid preserves bare typed single parameter block methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_typed_single_parameter_block_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Gauge:
+    def init amount: int:
+        this.amount = amount
+    def reading offset: int:
+        return self.amount + offset"#);
+    run("gauge = Gauge(4)");
+    assert_eq!(run("gauge.amount"), 4);
+    assert_eq!(run("gauge.reading(3)"), 7);
+    run("gauge.amount = 6");
+    assert_eq!(run("gauge.reading(3)"), 9);
+}
+
+/// Nucleoid keeps bare typed single parameter block binding and explicit alternatives equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_typed_single_parameter_block_binding_and_explicit_alternatives_equivalent() {
+    let mut run = runner();
+    run("amount = 10");
+    run(r#"def identity amount: ArbitraryType:
+    return amount"#);
+    run(r#"def text label: str:
+    return label"#);
+    run(r#"def ignored amount: int:
+    amount + 100"#);
+    run(r#"def bare value:
+    return value + 1"#);
+    run(r#"def typed(amount: int):
+    return amount + 2"#);
+    run("def arrow value: int => value + 3");
+    run(r#"def pair(left: int, right: int):
+    return left + right"#);
+    run(r#"def unit():
+    return 42"#);
+    assert_eq!(run("identity(3)"), 3);
+    assert_eq!(run("identity()"), serde_json::Value::Null);
+    assert_eq!(run("identity(3, 4)"), 3);
+    assert_eq!(run(r#"identity("text")"#), "text");
+    assert_eq!(run(r#"text("hello")"#), "hello");
+    assert_eq!(run("ignored(5)"), serde_json::Value::Null);
+    assert_eq!(run("bare(4)"), 5);
+    assert_eq!(run("typed(4)"), 6);
+    assert_eq!(run("arrow(4)"), 7);
+    assert_eq!(run("pair(2, 3)"), 5);
+    assert_eq!(run("unit()"), 42);
+    assert_eq!(run("amount"), 10);
+}
+
+/// Nucleoid rolls back failed bare typed single parameter block redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_bare_typed_single_parameter_block_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run(r#"def reading amount: int:
+    return source + amount"#);
+    run("total = reading(2)");
+    assert_eq!(run("total"), 5);
+    assert_eq!(run_error(r#"def reading amount: int:
+    return missing + amount"#), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 5);
+    run("source = 4");
+    assert_eq!(run("total"), 6);
+    assert_eq!(run("reading(3)"), 7);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

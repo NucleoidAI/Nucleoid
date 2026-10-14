@@ -1428,4 +1428,15 @@ assert(fraction, 0.6)
 reading = 1.4
 
 assert(fraction, 1)
+
+---
+
+# Bare typed single parameter indented block definitions
+
+def double amount: int:
+    offset = 1
+    return amount * 2 + offset
+
+assert(double(3), 7)
+assert(double(5), 11)
 ```
