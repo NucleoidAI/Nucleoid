@@ -1,6 +1,6 @@
 ---
 name: nuc-proposal
-description: Draft or revise a Nucleoid NUC and prototype behavior-preserving syntax. Use for proposal preparation, not acceptance evaluation.
+description: Draft or revise a Nucleoid NUC and prototype syntax improvements or runtime features. Use for proposal preparation, not acceptance evaluation.
 ---
 
 # Preparing a NUC proposal
@@ -12,6 +12,30 @@ agent. Inside that agent, execute the steps below; do not spawn another agent.
 
 Follow `.github/copilot-instructions.md` and `docs/nuc-0001.md`.
 Work on exactly one proposal revision in the caller's isolated candidate.
+
+## Select an unspecified enhancement
+
+When asked to choose a language enhancement without a specific feature or
+category, the coordinating caller makes one unbiased random draw:
+
+- **50% language syntax improvement:** simplify syntax or reduce lexer tokens
+  while preserving behavior.
+- **50% new language runtime feature:** add a runtime capability while
+  preserving existing behavior.
+
+Use a tool-backed draw, such as `Get-Random -Minimum 0 -Maximum 2`, with `0`
+selecting syntax improvement and `1` selecting a runtime feature. Choose one
+bounded enhancement in that category; do not redraw to favor a preferred
+category or substitute deterministic alternation for randomness.
+
+Select before recording baselines or delegating preparation. Supply the
+selected category and requested change to the proposal agent, which must not
+redraw; include the category in its handoff. Explicit feature/category requests
+take precedence, and process or documentation-only revisions are not randomized.
+
+Runtime features retain the same baseline and acceptance requirements. New
+measured cases still need pre-executed behavior-equivalent accepted-syntax
+programs; missing baselines block preparation rather than bypass the gate.
 
 ## Confirm the inputs
 
@@ -27,14 +51,34 @@ already have been executed by the accepted runtime and included through
 paired, return its required baseline to the caller before proceeding. Never
 overwrite a baseline or derive before-counts from the candidate lexer.
 
+## Preserve syntax compatibility
+
+Always preserve backward compatibility with previously accepted Nucleoid
+syntax, for both syntax improvements and runtime features. Existing supported
+forms must retain their parsing and runtime semantics. New syntax is additive
+and optional; shorter spellings never replace or disable the existing forms.
+Do not remove or reinterpret accepted syntax, or introduce keyword or grammar
+collisions that break existing programs.
+
+Keep representative legacy forms documented and covered by regression tests.
+Run unchanged accepted-syntax counterparts from the pinned Git revision and
+the supplied extra-baseline sources through the candidate parser and runtime.
+Verify their protected assertions, explicit expected returns and executed
+assertion coverage alongside the candidate forms.
+
+Include compatibility-check results in the handoff. Resolve any known syntax
+compatibility break before declaring the candidate ready for evaluation;
+token savings or new functionality never justify a breaking syntax change.
+
 ## Draft and prototype
 
 Draft or revise the NUC using its required format and sections. Trace implemented
 claims to `nucleoid.spec.md`; draft claims do not override the accepted language.
 Keep dependencies already accepted and do not combine pending proposals.
 
-Implement the candidate syntax where needed, then rewrite applicable cases in
-`nucleoid.spec.md`, `tests/reference.md`, and the `nuc` blocks in `README.md`
+Implement the candidate syntax improvement or runtime feature where needed,
+then rewrite applicable cases in `nucleoid.spec.md`, `tests/reference.md`, and
+the `nuc` blocks in `README.md`
 and `docs/examples.md`. Preserve case identities, assertion order and canonical
 assertions, expected returns, and executed assertion coverage. Do not remove
 cases, weaken assertions, replace them with tautologies, or bypass branches.
@@ -56,9 +100,10 @@ report, or mark the proposal Accepted or Rejected. Those belong to the
 independent evaluator.
 
 Return the proposal path and Git blob revision (`git hash-object` on the
-proposal), accepted baseline revision and path, candidate worktree, changed
-files, development checks, and explicit blockers. Freeze the candidate after
-handoff. The caller starts a fresh `nuc-evaluate` agent with this handoff and
+proposal), accepted baseline revision and path, selected enhancement category
+when applicable, candidate worktree, changed files, development checks, and
+explicit blockers. Freeze the candidate after handoff. The caller starts a
+fresh `nuc-evaluate` agent with this handoff and
 a fresh report path; do not launch it yourself. The caller owns integration
 and evaluation status/index updates. The proposal agent must not commit, push,
 or merge.

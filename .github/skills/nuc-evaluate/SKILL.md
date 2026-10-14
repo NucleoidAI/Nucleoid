@@ -36,6 +36,14 @@ Validate relevant dataset and exported-test consistency without regeneration.
 Ensure `UPDATE_DATASET` and `UPDATE_SPEC_TESTS` are unset for evaluation.
 Report failures explicitly rather than editing the candidate to make them pass.
 
+Independently verify backward compatibility with accepted language syntax.
+Run unchanged accepted-syntax counterparts from the pinned Git revision and
+supplied extra-baseline sources under the candidate parser and runtime; check
+their protected assertions, explicit expected returns and executed coverage.
+Existing supported forms must keep their parsing and runtime semantics, even
+when optional shorter forms or runtime features are added. A compatibility
+failure rejects the proposal regardless of token savings or a passing gate.
+
 The measured corpus is `nucleoid.spec.md`, `tests/reference.md`, and the
 `nuc` blocks in `README.md` and `docs/examples.md`. Generated Rust and
 synthesized training records are not scored.
@@ -60,9 +68,11 @@ count. The gate protects case identities, canonical assertions, expected
 returns, and executed assertion coverage.
 
 - **Accepted:** every paired case is `same` or `less`, all behavior and
-  independent checks pass, and no required case or baseline is missing.
+  independent checks pass, accepted syntax remains backward compatible, and
+  no required case or baseline is missing.
 - **Rejected:** any case is `more`, or the candidate changes protected
-  assertions/results/coverage or fails behavior or development checks.
+  assertions/results/coverage, breaks accepted syntax compatibility, or fails
+  behavior or development checks.
 - **Blocked:** a required baseline or other evaluation prerequisite is absent.
 
 Never offset an increase with savings in other cases or decide from an aggregate.
@@ -73,7 +83,8 @@ handoff. If no report was produced, state that and the actual error explicitly.
 ## Return the evidence
 
 Return the proposal and baseline revisions, decision, report path, independent
-checks, counts of `less`/`same`/`more`, and each increased, missing, unpaired,
-or invalid case with its before/after counts or reason. Keep the candidate and
-baseline unchanged. The caller owns integration and status/index updates;
+checks including syntax compatibility, counts of `less`/`same`/`more`, and each
+increased, missing, unpaired, invalid or syntax-incompatible case with its
+before/after counts or reason. Keep the candidate and baseline unchanged.
+The caller owns integration and status/index updates;
 outcome metadata does not trigger another pair. No commits, pushes, or merges.

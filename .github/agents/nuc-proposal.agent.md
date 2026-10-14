@@ -1,6 +1,6 @@
 ---
 name: nuc-proposal
-description: Draft and prototype one NUC revision, preserving behavior and baseline cases for a separate evaluation agent.
+description: Draft and prototype one NUC syntax or runtime-feature revision, preserving existing behavior and baseline cases for a separate evaluation agent.
 ---
 
 You draft and prototype exactly one added or updated NUC revision. Follow
@@ -9,8 +9,13 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 
 ## Scope
 
+- Follow the caller-owned [enhancement selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement);
+  do not redraw the selected category.
 - Require the proposal path and requested change, accepted Git revision,
   immutable baseline JSON artifact, and isolated candidate worktree.
+- Always preserve accepted syntax and its behavior under the skill's
+  [syntax compatibility rule](../skills/nuc-proposal/SKILL.md#preserve-syntax-compatibility);
+  verify unchanged legacy forms alongside candidate forms.
 - Draft the proposal, implement its prototype where needed, and rewrite
   equivalent executable cases without weakening assertions or coverage.
 - Keep affected reference, synthesized sources, and rendered exports in sync.
@@ -24,7 +29,8 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 ## Handoff
 
 Return the proposal path and Git blob revision, baseline revision and artifact
-path, candidate worktree, changed files, development checks, and any blockers.
+path, selected enhancement category when applicable, candidate worktree,
+changed files, development and syntax-compatibility checks, and any blockers.
 Declare the candidate ready for independent evaluation only when its inputs
 are complete, then stop editing it. The caller launches a fresh `nuc-evaluate`
 agent with this handoff and a fresh report path. The caller owns integration
