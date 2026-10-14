@@ -212,6 +212,33 @@ behavior. Annotations retain their existing handling, not new variable lookup
 or type enforcement. Typed bare blocks, logical header breaks and additional
 parameter/type forms are not added; calls and NUC18/19 spellings are unchanged.
 
+**Numeric clamping keeps values within live bounds**
+
+```nuc
+reading = 12
+upper = 10
+
+bounded = Math.clamp(reading, 0, upper)
+
+assert(bounded, 10)
+
+reading = 3
+
+assert(bounded, 3)
+
+upper = 2
+
+assert(bounded, 2)
+```
+
+[NUC 21](docs/nuc-0021.md) specifies static numeric clamping as the ordered
+composition `Math.min(Math.max(value, lower), upper)` with existing numeric
+coercion. Reversed bounds yield the upper bound, numeric `NaN` propagates,
+and omitted inputs supply numeric `NaN`. Extra argument expressions still run
+left to right and participate in the existing undefined gate. The proposal
+header records its status; no range-validation error or callable Math method
+reference is introduced.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

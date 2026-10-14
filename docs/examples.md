@@ -1499,6 +1499,46 @@ NUC18/19 spellings, expression bodies, calls and runtime behavior are unchanged.
 
 ---
 
+## Reactive numeric clamping
+
+**Numeric clamping bounds live inventory levels**
+
+```nuc
+stock = 12
+minimum = 0
+capacity = 10
+
+usable = Math.clamp(stock, minimum, capacity)
+
+assert(usable, 10)
+
+stock = -3
+
+assert(usable, 0)
+
+minimum = 2
+
+assert(usable, 2)
+
+stock = 7
+
+assert(usable, 7)
+
+capacity = 5
+
+assert(usable, 5)
+```
+
+[NUC 21](nuc-0021.md) specifies this static runtime capability; its proposal
+header records its status. The result follows ordered min/max coercion,
+including numeric `NaN`, equal/reversed bounds, infinities and signed zeros.
+Omitted inputs supply numeric `NaN`; extra argument expressions are still
+evaluated left to right and included in the existing undefined gate.
+See [README.md §11](README.md#11-built-in-objects) for the reference example
+and static/member-read limits.
+
+---
+
 ## Copyright
 
 Copyright 2020 Nucleoid

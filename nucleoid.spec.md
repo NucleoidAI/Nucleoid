@@ -200,6 +200,45 @@ position. An unparenthesized multiline object body with indentation retains
 Undefined body reads keep their existing `ReferenceError` messages and top-level
 statement positions; caught values and transaction recovery are unchanged.
 
+## Reactive numeric clamping
+
+- `Math.clamp(value, lower, upper)` is a static runtime operation, exactly the
+  ordered numeric composition `Math.min(Math.max(value, lower), upper)` using
+  the existing numeric coercion and both existing extremum folds.
+- Numbers retain their values; literal `null` coerces to zero, booleans to zero
+  or one, trimmed numeric strings and empty/singleton lists use their existing
+  conversion, and dates use their millisecond value. Other nonnumeric values
+  coerce to numeric `NaN`, not a new type error.
+- Numeric `NaN` in any of the first three positions propagates. Reversed numeric
+  bounds yield the upper bound; equal bounds, infinities and signed zeros
+  follow that same ordered composition. Bounds are not validated or reordered,
+  and these are defined results rather than swallowed errors.
+- Each omitted position among the first three supplies numeric `NaN`, as in
+  existing fixed-arity Math operations. Extra values are numerically ignored.
+- The existing call path evaluates every supplied argument expression from
+  left to right before builtin dispatch, including extras, and tracks its reads.
+  The unchanged Math gate returns `Undefined` if any supplied value is
+  `Undefined`, including an extra; a dependent assignment stores `null` and
+  recovers when its missing property is defined. Omission is not such a read.
+- Existing null/deferred-read assignment handling takes precedence over the
+  numeric result, just as for `Math.min` and `Math.max`; a live input containing
+  `null` is not the same assignment context as a literal `null` argument.
+- Strict unknown identifiers still raise `ReferenceError("<name> is not defined")`
+  during argument evaluation, even in extras or after an undefined property.
+  Failures retain top-level statement positions, caught values, transaction
+  rollback, graph dependencies and subsequent reactive recovery.
+- State variables and local bindings named `Math` retain their namespace shadowing.
+  Ordinary `.Math` properties and methods keep their existing lookup behavior.
+  `Math.clamp` read as a value is unsupported and returns `Undefined`, like
+  other Math method references; this adds no first-class callable or alias.
+- Other Math functions and constants are unchanged. Unknown static methods
+  retain `TypeError("Math.<name> is not a function")`; `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the same undefined gate.
+- This capability adds no grammar, token, parser/generator rule, public Rust
+  value/AST/API representation, dependency, type constraint or error kind.
+  All accepted signatures and runtime programs remain available; no new
+  closure capture or change to inherited resource/scope limitations is implied.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -7245,4 +7284,143 @@ source = 4
 
 assert(total, 6)
 assert(reading(3), 7)
+
+---
+
+# Nucleoid keeps numeric clamping reactive to all three inputs
+
+value = 12
+lower = 0
+upper = 10
+
+clipped = Math.clamp(value, lower, upper)
+
+assert(clipped, 10)
+
+value = 5
+
+assert(clipped, 5)
+
+lower = 7
+
+assert(clipped, 7)
+
+upper = 6
+
+assert(clipped, 6)
+
+lower = 0
+value = -3
+
+assert(clipped, 0)
+
+upper = 20
+value = 17
+
+assert(clipped, 17)
+
+---
+
+# Nucleoid preserves numeric coercion while clamping values
+
+numeric = Math.clamp("7", 0, 5)
+boolean = Math.clamp(true, 0, 2)
+nil = Math.clamp(null, -1, 1)
+empty = Math.clamp([], 1, 3)
+singleton = Math.clamp(["4"], 0, 3)
+invalid = Math.clamp("invalid", 0, 5)
+
+assert(numeric, 5)
+assert(boolean, 1)
+assert(nil, 0)
+assert(empty, 1)
+assert(singleton, 3)
+assert(String(invalid), "NaN")
+
+---
+
+# Nucleoid preserves nonfinite equal reversed and omitted clamp bounds
+
+positive = Math.clamp(Number.POSITIVE_INFINITY, -10, 10)
+negative = Math.clamp(Number.NEGATIVE_INFINITY, -10, 10)
+unbounded = Math.clamp(Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)
+equal = Math.clamp(3, 4, 4)
+reversed = Math.clamp(5, 10, 0)
+nan_input = Math.clamp(Number.NaN, 0, 10)
+nan_lower = Math.clamp(2, Number.NaN, 10)
+nan_upper = Math.clamp(2, 0, Number.NaN)
+missing_all = Math.clamp()
+missing_lower = Math.clamp(2)
+missing_upper = Math.clamp(2, 0)
+extra = Math.clamp(3, 0, 5, 99)
+
+assert(positive, 10)
+assert(negative, -10)
+assert(unbounded, Number.POSITIVE_INFINITY)
+assert(equal, 4)
+assert(reversed, 0)
+assert(String(nan_input), "NaN")
+assert(String(nan_lower), "NaN")
+assert(String(nan_upper), "NaN")
+assert(String(missing_all), "NaN")
+assert(String(missing_lower), "NaN")
+assert(String(missing_upper), "NaN")
+assert(extra, 3)
+
+---
+
+# Nucleoid applies numeric clamping to live class rules
+
+class Reading(amount):
+    this.amount = amount
+
+$Reading.bounded = Math.clamp($Reading.amount, 0, 10)
+
+first = Reading(12)
+second = Reading(-3)
+
+assert(first.bounded, 10)
+assert(second.bounded, 0)
+
+first.amount = 4
+
+assert(first.bounded, 4)
+
+second.amount = 8
+
+assert(second.bounded, 8)
+
+---
+
+# Nucleoid preserves deferred reads and rollback for numeric clamping
+
+class Sensor
+sensor = Sensor()
+
+observed = Math.clamp(sensor.amount, 0, 10)
+
+assert(observed, null)
+
+sensor.amount = 12
+
+assert(observed, 10)
+
+delete sensor.amount
+
+assert(observed, null)
+
+sensor.amount = 3
+
+assert(observed, 3)
+
+try:
+    observed = Math.clamp(missing, 0, 10)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(observed, 3)
+
+sensor.amount = 6
+
+assert(observed, 6)
 ```

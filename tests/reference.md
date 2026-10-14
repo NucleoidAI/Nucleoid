@@ -1371,4 +1371,24 @@ def text value: str => value
 
 assert(increment(4), 5)
 assert(text("ok"), "ok")
+
+---
+
+# Numeric clamping keeps bounds live
+
+reading = -3
+floor = 0
+ceiling = 10
+
+bounded = Math.clamp(reading, floor, ceiling)
+
+assert(bounded, 0)
+
+reading = 12
+
+assert(bounded, 10)
+
+ceiling = 8
+
+assert(bounded, 8)
 ```

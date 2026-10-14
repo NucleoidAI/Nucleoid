@@ -126,26 +126,14 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             let second = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
             first.atan2(second)
         }
-        "max" | "min" => {
-            let maximum = name == "max";
-            let initial = if maximum {
-                f64::NEG_INFINITY
-            } else {
-                f64::INFINITY
-            };
-
-            arguments
-                .iter()
-                .map(Value::to_number)
-                .fold(initial, |extreme, number| {
-                    if extreme.is_nan() || number.is_nan() {
-                        f64::NAN
-                    } else if maximum {
-                        extreme.max(number)
-                    } else {
-                        extreme.min(number)
-                    }
-                })
+        "max" | "min" => numeric_extremum(arguments.iter().map(Value::to_number), name == "max"),
+        "clamp" => {
+            let lower = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
+            let upper = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
+            // Ordered min(max(...), ...), not f64::clamp: NaN and reversed
+            // bounds have defined results, and signed zeros use the same folds.
+            let bounded = numeric_extremum([first, lower], true);
+            numeric_extremum([bounded, upper], false)
         }
         "random" => return Err(Error::type_error("Math.random is not supported")),
         "PI" => std::f64::consts::PI,
@@ -154,6 +142,25 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
     };
 
     Ok(Value::Number(result))
+}
+
+/// The existing Math min/max fold, shared without changing its NaN or zero rules.
+fn numeric_extremum(numbers: impl IntoIterator<Item = f64>, maximum: bool) -> f64 {
+    let initial = if maximum {
+        f64::NEG_INFINITY
+    } else {
+        f64::INFINITY
+    };
+
+    numbers.into_iter().fold(initial, |extreme, number| {
+        if extreme.is_nan() || number.is_nan() {
+            f64::NAN
+        } else if maximum {
+            extreme.max(number)
+        } else {
+            extreme.min(number)
+        }
+    })
 }
 
 /// `Math.<name>` read as a value rather than called.
@@ -356,4 +363,271 @@ pub fn slice_index(index: f64, length: usize) -> usize {
 /// Renders a number the way the runtime prints it.
 pub fn number_to_string(number: f64) -> String {
     format_number(number)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use super::*;
+    use crate::lang::ast::{Expr, Function, FunctionBody};
+    use crate::{ErrorKind, ObjectId};
+    use regex::Regex;
+
+    fn values() -> Vec<Value> {
+        vec![
+            Value::Undefined,
+            Value::Null,
+            Value::Bool(false),
+            Value::Bool(true),
+            Value::Number(-0.0),
+            Value::Number(0.0),
+            Value::Number(-3.5),
+            Value::Number(7.25),
+            Value::Number(f64::MIN_POSITIVE),
+            Value::Number(f64::MAX),
+            Value::Number(f64::NEG_INFINITY),
+            Value::Number(f64::INFINITY),
+            Value::Number(f64::NAN),
+            Value::String(String::new()),
+            Value::String("  4.25  ".to_string()),
+            Value::String("invalid".to_string()),
+            Value::List(vec![]),
+            Value::List(vec![Value::String("4".to_string())]),
+            Value::List(vec![Value::Undefined]),
+            Value::List(vec![Value::Number(1.0), Value::Number(2.0)]),
+            Value::Object(ObjectId::named("probe")),
+            Value::Class("Probe".to_string()),
+            Value::Date(12),
+            Value::Regex(Arc::new(Regex::new("probe").unwrap())),
+            Value::Function(Arc::new(Function {
+                name: None,
+                parameters: vec![],
+                body: FunctionBody::Expression(Box::new(Expr::Null)),
+            })),
+        ]
+    }
+
+    fn ordered_composition(value: &Value, lower: &Value, upper: &Value) -> Value {
+        let bounded = math("max", &[value.clone(), lower.clone()]).unwrap();
+        math("min", &[bounded, upper.clone()]).unwrap()
+    }
+
+    fn assert_same(actual: &Value, expected: &Value) {
+        assert!(actual.same_value(expected), "{actual:?} != {expected:?}");
+        if let (Value::Number(actual), Value::Number(expected)) = (actual, expected) {
+            assert_eq!(actual.to_bits(), expected.to_bits());
+        }
+    }
+
+    #[test]
+    fn clamp_matches_ordered_composition_for_every_value_kind_without_panicking() {
+        let values = values();
+        for value in &values {
+            for lower in &values {
+                for upper in &values {
+                    let actual =
+                        math("clamp", &[value.clone(), lower.clone(), upper.clone()]).unwrap();
+                    let expected = ordered_composition(value, lower, upper);
+                    assert_same(&actual, &expected);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn clamp_handles_finite_fractional_coerced_equal_and_reversed_inputs() {
+        for (arguments, expected) in [
+            (
+                [Value::number(12), Value::number(0), Value::number(10)],
+                10.0,
+            ),
+            (
+                [Value::number(-3), Value::number(0), Value::number(10)],
+                0.0,
+            ),
+            (
+                [
+                    Value::number(1.25),
+                    Value::number(-0.5),
+                    Value::number(0.75),
+                ],
+                0.75,
+            ),
+            ([Value::number(3), Value::number(4), Value::number(4)], 4.0),
+            ([Value::number(5), Value::number(10), Value::number(0)], 0.0),
+            (
+                [Value::string(" 7 "), Value::number(0), Value::number(5)],
+                5.0,
+            ),
+            (
+                [Value::number(3), Value::string(" 4 "), Value::number(5)],
+                4.0,
+            ),
+            (
+                [Value::number(7), Value::number(0), Value::string("5")],
+                5.0,
+            ),
+            ([Value::Null, Value::number(-1), Value::number(1)], 0.0),
+            (
+                [Value::Bool(true), Value::Bool(false), Value::number(2)],
+                1.0,
+            ),
+            (
+                [Value::List(vec![]), Value::number(1), Value::number(3)],
+                1.0,
+            ),
+            (
+                [
+                    Value::List(vec![Value::string("4")]),
+                    Value::number(0),
+                    Value::number(3),
+                ],
+                3.0,
+            ),
+            ([Value::Date(12), Value::number(0), Value::Date(10)], 10.0),
+        ] {
+            assert_same(
+                &math("clamp", &arguments).unwrap(),
+                &Value::number(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn clamp_signed_zero_bits_match_both_ordered_extremum_folds() {
+        let numbers = [-0.0, 0.0, -1.0, 1.0, f64::NEG_INFINITY, f64::INFINITY];
+        for value in numbers {
+            for lower in numbers {
+                for upper in numbers {
+                    let [value, lower, upper] = [value, lower, upper].map(Value::Number);
+                    let expected = ordered_composition(&value, &lower, &upper);
+                    assert_same(&math("clamp", &[value, lower, upper]).unwrap(), &expected);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn clamp_omissions_are_nan_and_extras_are_ignored_but_included_in_undefined_gate() {
+        let arguments = [Value::number(3), Value::number(0), Value::number(5)];
+        for length in 0..3 {
+            let actual = math("clamp", &arguments[..length]).unwrap();
+            assert_same(&actual, &Value::Number(f64::NAN));
+        }
+        for extra in values() {
+            let mut supplied = arguments.to_vec();
+            supplied.push(extra.clone());
+            let expected = if extra.is_undefined() {
+                Value::Undefined
+            } else {
+                Value::number(3)
+            };
+            assert_same(&math("clamp", &supplied).unwrap(), &expected);
+            supplied.push(Value::number(99));
+            assert_same(&math("clamp", &supplied).unwrap(), &expected);
+        }
+        for position in 0..5 {
+            let mut supplied = vec![Value::number(3); 5];
+            supplied[position] = Value::Undefined;
+            assert_same(&math("clamp", &supplied).unwrap(), &Value::Undefined);
+        }
+    }
+
+    #[test]
+    fn existing_extrema_keep_variadic_seeds_coercion_nan_and_zero_rules() {
+        let values = values();
+        for (name, initial) in [("max", f64::NEG_INFINITY), ("min", f64::INFINITY)] {
+            assert_same(&math(name, &[]).unwrap(), &Value::Number(initial));
+            for left in &values {
+                for right in &values {
+                    let left_number = left.to_number();
+                    let right_number = right.to_number();
+                    let expected = if left.is_undefined() || right.is_undefined() {
+                        Value::Undefined
+                    } else if left_number.is_nan() || right_number.is_nan() {
+                        Value::Number(f64::NAN)
+                    } else if name == "max" {
+                        Value::Number(left_number.max(right_number))
+                    } else {
+                        Value::Number(left_number.min(right_number))
+                    };
+                    assert_same(
+                        &math(name, &[left.clone(), right.clone()]).unwrap(),
+                        &expected,
+                    );
+                }
+            }
+            for position in 0..4 {
+                let mut arguments = vec![Value::number(1); 4];
+                arguments[position] = Value::Number(f64::NAN);
+                assert_same(&math(name, &arguments).unwrap(), &Value::Number(f64::NAN));
+            }
+        }
+    }
+
+    #[test]
+    fn existing_math_dispatch_rounding_constants_and_errors_are_unchanged() {
+        for (name, input, expected) in [
+            ("abs", -2.0, 2.0),
+            ("ceil", 1.25, 2.0),
+            ("floor", 1.25, 1.0),
+            ("round", 0.499_999_999_999_999_94, 0.0),
+            ("round", 0.5, 1.0),
+            ("round", -0.5, -0.0),
+            ("trunc", -0.25, -0.0),
+            ("sqrt", 4.0, 2.0),
+            ("cbrt", 8.0, 2.0),
+            ("sign", -0.0, -0.0),
+            ("exp", 0.0, 1.0),
+            ("log", 1.0, 0.0),
+            ("log2", 1.0, 0.0),
+            ("log10", 1.0, 0.0),
+            ("sin", 0.0, 0.0),
+            ("cos", 0.0, 1.0),
+            ("tan", 0.0, 0.0),
+            ("atan", 0.0, 0.0),
+            ("asin", 0.0, 0.0),
+            ("acos", 1.0, 0.0),
+        ] {
+            assert_same(
+                &math(name, &[Value::number(input)]).unwrap(),
+                &Value::number(expected),
+            );
+            assert_same(
+                &math(name, &[Value::number(input), Value::Number(f64::NAN)]).unwrap(),
+                &Value::number(expected),
+            );
+            assert_same(&math(name, &[]).unwrap(), &Value::Number(f64::NAN));
+        }
+        assert_same(
+            &math("pow", &[Value::number(2), Value::number(3)]).unwrap(),
+            &Value::number(8),
+        );
+        assert_same(
+            &math("atan2", &[Value::number(0), Value::number(1)]).unwrap(),
+            &Value::number(0),
+        );
+        for name in ["pow", "atan2"] {
+            assert_same(
+                &math(name, &[Value::number(2)]).unwrap(),
+                &Value::Number(f64::NAN),
+            );
+        }
+        for (name, expected) in [("PI", std::f64::consts::PI), ("E", std::f64::consts::E)] {
+            assert_same(&math(name, &[]).unwrap(), &Value::Number(expected));
+            assert_same(&math_constant(name).unwrap(), &Value::Number(expected));
+        }
+        assert!(math_constant("clamp").is_none());
+        assert!(math_constant("max").is_none());
+        for (name, message) in [
+            ("random", "Math.random is not supported"),
+            ("unknown", "Math.unknown is not a function"),
+        ] {
+            let error = math(name, &[]).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Type);
+            assert_eq!(error.message(), message);
+            assert_same(&math(name, &[Value::Undefined]).unwrap(), &Value::Undefined);
+        }
+    }
 }

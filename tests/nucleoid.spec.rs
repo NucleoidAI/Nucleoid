@@ -5304,6 +5304,123 @@ fn rolls_back_failed_bare_typed_single_parameter_arrow_redefinitions() {
     assert_eq!(run("reading(3)"), 7);
 }
 
+/// Nucleoid keeps numeric clamping reactive to all three inputs
+#[rustfmt::skip]
+#[test]
+fn keeps_numeric_clamping_reactive_to_all_three_inputs() {
+    let mut run = runner();
+    run("value = 12");
+    run("lower = 0");
+    run("upper = 10");
+    run("clipped = Math.clamp(value, lower, upper)");
+    assert_eq!(run("clipped"), 10);
+    run("value = 5");
+    assert_eq!(run("clipped"), 5);
+    run("lower = 7");
+    assert_eq!(run("clipped"), 7);
+    run("upper = 6");
+    assert_eq!(run("clipped"), 6);
+    run("lower = 0");
+    run("value = -3");
+    assert_eq!(run("clipped"), 0);
+    run("upper = 20");
+    run("value = 17");
+    assert_eq!(run("clipped"), 17);
+}
+
+/// Nucleoid preserves numeric coercion while clamping values
+#[rustfmt::skip]
+#[test]
+fn preserves_numeric_coercion_while_clamping_values() {
+    let mut run = runner();
+    run(r#"numeric = Math.clamp("7", 0, 5)"#);
+    run("boolean = Math.clamp(true, 0, 2)");
+    run("nil = Math.clamp(null, -1, 1)");
+    run("empty = Math.clamp([], 1, 3)");
+    run(r#"singleton = Math.clamp(["4"], 0, 3)"#);
+    run(r#"invalid = Math.clamp("invalid", 0, 5)"#);
+    assert_eq!(run("numeric"), 5);
+    assert_eq!(run("boolean"), 1);
+    assert_eq!(run("nil"), 0);
+    assert_eq!(run("empty"), 1);
+    assert_eq!(run("singleton"), 3);
+    assert_eq!(run("String(invalid)"), "NaN");
+}
+
+/// Nucleoid preserves nonfinite equal reversed and omitted clamp bounds
+#[rustfmt::skip]
+#[test]
+fn preserves_nonfinite_equal_reversed_and_omitted_clamp_bounds() {
+    let mut run = runner();
+    run("positive = Math.clamp(Number.POSITIVE_INFINITY, -10, 10)");
+    run("negative = Math.clamp(Number.NEGATIVE_INFINITY, -10, 10)");
+    run("unbounded = Math.clamp(Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)");
+    run("equal = Math.clamp(3, 4, 4)");
+    run("reversed = Math.clamp(5, 10, 0)");
+    run("nan_input = Math.clamp(Number.NaN, 0, 10)");
+    run("nan_lower = Math.clamp(2, Number.NaN, 10)");
+    run("nan_upper = Math.clamp(2, 0, Number.NaN)");
+    run("missing_all = Math.clamp()");
+    run("missing_lower = Math.clamp(2)");
+    run("missing_upper = Math.clamp(2, 0)");
+    run("extra = Math.clamp(3, 0, 5, 99)");
+    assert_eq!(run("positive"), 10);
+    assert_eq!(run("negative"), -10);
+    {
+        let actual = run("unbounded");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("equal"), 4);
+    assert_eq!(run("reversed"), 0);
+    assert_eq!(run("String(nan_input)"), "NaN");
+    assert_eq!(run("String(nan_lower)"), "NaN");
+    assert_eq!(run("String(nan_upper)"), "NaN");
+    assert_eq!(run("String(missing_all)"), "NaN");
+    assert_eq!(run("String(missing_lower)"), "NaN");
+    assert_eq!(run("String(missing_upper)"), "NaN");
+    assert_eq!(run("extra"), 3);
+}
+
+/// Nucleoid applies numeric clamping to live class rules
+#[rustfmt::skip]
+#[test]
+fn applies_numeric_clamping_to_live_class_rules() {
+    let mut run = runner();
+    run(r#"class Reading(amount):
+    this.amount = amount"#);
+    run("$Reading.bounded = Math.clamp($Reading.amount, 0, 10)");
+    run("first = Reading(12)");
+    run("second = Reading(-3)");
+    assert_eq!(run("first.bounded"), 10);
+    assert_eq!(run("second.bounded"), 0);
+    run("first.amount = 4");
+    assert_eq!(run("first.bounded"), 4);
+    run("second.amount = 8");
+    assert_eq!(run("second.bounded"), 8);
+}
+
+/// Nucleoid preserves deferred reads and rollback for numeric clamping
+#[rustfmt::skip]
+#[test]
+fn preserves_deferred_reads_and_rollback_for_numeric_clamping() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Sensor");
+    run("sensor = Sensor()");
+    run("observed = Math.clamp(sensor.amount, 0, 10)");
+    assert_eq!(run("observed"), serde_json::Value::Null);
+    run("sensor.amount = 12");
+    assert_eq!(run("observed"), 10);
+    run("delete sensor.amount");
+    assert_eq!(run("observed"), serde_json::Value::Null);
+    run("sensor.amount = 3");
+    assert_eq!(run("observed"), 3);
+    assert_eq!(run_error("observed = Math.clamp(missing, 0, 10)"), "ReferenceError: missing is not defined");
+    assert_eq!(run("observed"), 3);
+    run("sensor.amount = 6");
+    assert_eq!(run("observed"), 6);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

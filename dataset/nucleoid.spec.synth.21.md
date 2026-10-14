@@ -2618,4 +2618,67 @@ assert(total, 5)
 reserve = 4
 
 assert(total, 6)
+
+---
+
+# Nucleoid keeps a thermostat reading inside live numeric bounds
+
+temperature = 32
+minimum = 16
+maximum = 28
+
+displayed = Math.clamp(temperature, minimum, maximum)
+
+assert(displayed, 28)
+
+temperature = 12
+
+assert(displayed, 16)
+
+minimum = 14
+
+assert(displayed, 14)
+
+maximum = 13
+
+assert(displayed, 13)
+
+---
+
+# Nucleoid preserves numeric clamping coercion and ordered special bounds
+
+reading = Math.clamp(" 7 ", 0, 5)
+empty = Math.clamp([], 1, 3)
+reversed = Math.clamp(5, 10, 0)
+unbounded = Math.clamp(Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)
+omitted = Math.clamp(2, 0)
+
+assert(reading, 5)
+assert(empty, 1)
+assert(reversed, 0)
+assert(unbounded, Number.POSITIVE_INFINITY)
+assert(String(omitted), "NaN")
+
+---
+
+# Nucleoid restores clamped sensor rules after deferred property deletion
+
+class Sensor
+sensor = Sensor()
+
+$Sensor.displayed = Math.clamp($Sensor.reading, 0, 10)
+
+assert(sensor.displayed, null)
+
+sensor.reading = 12
+
+assert(sensor.displayed, 10)
+
+delete sensor.reading
+
+assert(sensor.displayed, null)
+
+sensor.reading = 4
+
+assert(sensor.displayed, 4)
 ```

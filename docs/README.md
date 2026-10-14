@@ -569,6 +569,8 @@ Full detail: [NUC 7](nuc-0007.md).
 - Redefining a function updates existing dependents.
 - A named function and a variable binding under the same name replace one another; reads and calls both use the latest binding.
 - Named function references stay live when aliased, returned, or passed as callbacks.
+- Static Math method reads are not callable references; `Math.clamp` retains
+  that limitation, as specified by [NUC 21](nuc-0021.md).
 - Calls through variables, list items, and object properties depend on the callable's storage location.
 - A null callable, an unassigned callable property, or a callable deleted during propagation leaves its dependent result null until rebound. Other non-callable values raise `TypeError`.
 - `.value` freezes the function definition, not the state read when its body executes.
@@ -658,13 +660,35 @@ Full detail: [NUC 9](nuc-0009.md).
 - Built-in calls participate in the dependency graph like any other expression.
 - Mutating a list re-evaluates its dependents.
 - `Math.max` and `Math.min` propagate `NaN`, including when an argument cannot be coerced to a number.
+- [NUC 21](nuc-0021.md) specifies static `Math.clamp(value, lower, upper)`;
+  its proposal header records its status.
+- Numeric clamping is exactly the ordered `Math.min(Math.max(value, lower), upper)`
+  after existing numeric coercion, not range validation: reversed bounds yield
+  the upper bound, equal bounds and infinities retain that composition's result,
+  and signed zeros follow the same ordered min/max folds.
+- Numbers, literal `null`, booleans, trimmed numeric strings, empty/singleton
+  lists and dates retain their existing conversions; nonnumeric conversions
+  and numeric `NaN` in any of the first three positions yield numeric `NaN`.
+- Each omitted first/second/third argument supplies numeric `NaN`. Extra values
+  are ignored numerically, but every argument expression is evaluated left to
+  right and its reads remain dependencies.
+- Any supplied `Undefined` value, including an extra, defers the Math call;
+  a dependent assignment stores `null` until the missing property is defined.
+  Existing live-null assignment handling is also unchanged; literal `null`
+  still coerces numerically to zero.
+- Strict unknown identifiers still throw `ReferenceError("<name> is not defined")`
+  before dispatch. Existing transaction rollback and recovery remain intact.
+- Static namespace shadowing and ordinary `.Math` members are unchanged;
+  `Math.clamp` read as a value stays unsupported/undefined, not a callable reference.
+- This capability adds no bounds error, type enforcement or grammar change;
+  other Math functions/constants and their exact errors are unchanged.
 
 | Object | Members |
 | --- | --- |
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min` |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
@@ -685,6 +709,32 @@ open = Task.filter(t => not t.done).length
 ```
 
 - Regular expressions support `.test(...)` and may be used in any condition.
+
+### Numeric clamping keeps bounds live
+
+```
+reading = -3
+floor = 0
+ceiling = 10
+
+bounded = Math.clamp(reading, floor, ceiling)
+
+assert(bounded, 0)
+
+reading = 12
+
+assert(bounded, 10)
+
+ceiling = 8
+
+assert(bounded, 8)
+```
+
+- This is the sealed executable reference example in `tests/reference.md`.
+- All three inputs remain live through the ordinary builtin call path.
+- The `Reactive numeric clamping` section and its five paired entries in
+  [`nucleoid.spec.md`](../nucleoid.spec.md#reactive-numeric-clamping) define the
+  behavior; [NUC 21](nuc-0021.md) explains the deliberately ordered contract.
 
 Full detail: [NUC 10](nuc-0010.md).
 
