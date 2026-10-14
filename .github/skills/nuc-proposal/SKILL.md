@@ -119,3 +119,37 @@ Commit only rejection documentation, never the rejected candidate's language
 changes or session baseline/report artifacts. Preserve existing accepted NUC
 text and unrelated work. Proposal and evaluation agents must not perform this
 caller-owned commit.
+
+## Continue with the next NUC (caller only)
+
+After a new NUC receives a final `Accepted` or `Rejected` decision, the
+coordinating caller must finish its outcome before starting the next cycle:
+
+- **Accepted:** integrate the unchanged accepted candidate, record status/index
+  metadata, and complete the authorized Git commit.
+- **Rejected:** record and commit only rejection documentation and index/outcome
+  metadata; leave rejected language changes isolated.
+
+Immediately start another fresh "purpose a NUC" cycle without waiting for a
+new user prompt. Repeat sequentially in the active Copilot session until the
+user stops, pauses or redirects the work, the session ends, or a resource limit
+is reached. A `Blocked` decision, failed outcome recording, or missing required
+input pauses continuation; report the blocker instead of bypassing it.
+
+Each cycle chooses a new NUC number and one bounded enhancement under the
+existing selection rule. Pin the current verified accepted-language revision,
+not a rejected candidate; create fresh immutable baselines, an isolated
+candidate and report paths. Launch fresh proposal and evaluation agents, and
+perform the required Rust improvement pass when applicable. Never reuse
+workers across cycles or combine pending proposals.
+
+Use actual independent token measurements and behavior/compatibility results
+as feedback for the next enhancement. Preserve earlier artifacts and all
+acceptance, compatibility and version-protection rules. This is iterative
+proposal/evaluation feedback, not model training or model-weight updates.
+
+Only the caller continues the loop; proposal and evaluation workers still stop
+at their single-proposal handoffs. Starting a distinct next NUC is not recursive
+reevaluation of status/index metadata. Instruction-file edits alone do not
+complete a NUC or start this loop, and no filesystem watcher or background
+service is implied.

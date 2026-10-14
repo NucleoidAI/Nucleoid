@@ -92,5 +92,16 @@ to that evaluation and must not recursively launch another agent.
 - Preserve unrelated staged and unstaged changes. If the rejection documentation is already committed, verify and report that commit instead of creating an empty duplicate.
 - Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the coordinating caller and does not authorize an automatic push.
 
+## Continuous proposal cycles (caller only)
+
+After finalizing and committing an `Accepted` or `Rejected` outcome for a new
+NUC, the coordinating caller immediately starts a distinct new proposal under
+the [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
+Run cycles sequentially with fresh agents, baselines, candidate worktrees and
+reports, preserving the selection, compatibility and acceptance requirements.
+Only the caller continues; workers stop at their handoffs. This does not
+recursively reevaluate the completed NUC's outcome metadata. Stop or pause
+under the conditions defined by the skill rather than bypassing a blocker.
+
 This is a Copilot-session policy, not a filesystem watcher or GitHub Actions
 trigger. Do not claim that an edit outside a Copilot session launched an agent.

@@ -41,3 +41,9 @@ rejected proposal documentation and index/outcome metadata under the
 [shared rejection workflow](../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
 Rejected candidate language changes remain isolated. Do not perform this
 caller-owned commit yourself.
+
+After the caller finalizes either an `Accepted` or `Rejected` outcome for a new
+NUC, it immediately starts the next proposal under the
+[continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
+This continuation is caller-owned; stop at your single-proposal handoff and
+never launch the next cycle yourself.
