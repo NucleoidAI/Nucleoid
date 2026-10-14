@@ -285,6 +285,49 @@ statement positions; caught values and transaction recovery are unchanged.
   introduced. Existing signatures and inherited noncapturing scope limitations
   remain; no new closure capture or extreme Windows debug stack claim is implied.
 
+## Reactive unit-interval saturation
+
+- `Math.saturate(value)` is a static numeric runtime operation, exactly the
+  accepted ordered `Math.clamp(value, 0, 1)`, or
+  `Math.min(Math.max(value, 0), 1)` through both existing extremum folds.
+- After the unchanged any-supplied-`Undefined` gate, convert the first supplied
+  value intrinsically with `Value::to_number`; omission supplies numeric `NaN`.
+  Do not resolve or depend on a shadowable `Number` or `Math.clamp` name.
+- Numbers retain their values, literal `null` converts to zero, booleans to
+  zero/one, trimmed strings and empty/singleton lists keep their existing numeric
+  conversion, and dates contribute milliseconds. Other nonnumeric conversions
+  yield numeric `NaN`, not a new type error.
+- Apply the existing maximum fold to the converted number and numeric zero,
+  then the existing minimum fold to that result and numeric one, in that order.
+  Numeric `NaN`, infinities, signed zeros, subnormal values and boundary values
+  retain exactly that ordered composition's results and bits.
+- Do not use host `f64::clamp`, validate inputs, shortcut endpoints, skip
+  conversion, reorder operations or change either accepted extremum fold.
+  The existing `Math.clamp(value, lower, upper)` form remains fully available.
+- Extra values are ignored numerically, but every supplied expression runs
+  exactly once from left to right through the unchanged call path, retaining
+  its effects and read dependencies.
+- Any supplied `Undefined`, including an extra, returns `Undefined` before
+  numeric dispatch; omission is not a supplied undefined read. Dependent
+  assignments store `null` and recover when a missing property becomes defined.
+- Literal-null conversion does not override existing live-null or deferred
+  assignment handling. Class rules, named wrappers, property deletion/recovery,
+  dependency edges and transactions keep their accepted behavior.
+- Strict unknown identifiers still raise `ReferenceError("<name> is not defined")`
+  during argument evaluation, including extras or after an undefined property.
+  Keep the existing positions, caught values, rollback and subsequent recovery.
+- State and local bindings named `Math` retain namespace shadowing; ordinary
+  `.Math` properties and methods retain member lookup. `Math.saturate` read as
+  a value stays unsupported/`Undefined`, like other Math method references;
+  no callable alias or first-class method value is added.
+- `Math.clamp`, `lerp`, `min`, `max`, `round`, all other Math members/constants
+  and their errors are unchanged. Unknown static methods retain
+  `TypeError("Math.<name> is not a function")`; `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the same undefined gate.
+- This adds no grammar, lexer, parser, generator, public Global/Value/AST/API,
+  coercion, operator, call/member, class, scope, dependency or resource-limit
+  change. All accepted syntax and inherited noncapturing limitations remain.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -7620,4 +7663,149 @@ assert(position, 7)
 end = 20
 
 assert(position, 12)
+
+---
+
+# Nucleoid keeps unit-interval saturation reactive to its input
+
+reading = -2
+bounded = Math.saturate(reading)
+
+assert(bounded, 0)
+
+reading = 0.25
+
+assert(bounded, 0.25)
+
+reading = 3
+
+assert(bounded, 1)
+
+reading = 0.5
+
+assert(bounded, 0.5)
+
+reading = 1
+
+assert(bounded, 1)
+
+reading = -1
+
+assert(bounded, 0)
+
+---
+
+# Nucleoid preserves numeric coercion while saturating values
+
+text = " 0.375 "
+from_text = Math.saturate(text)
+
+assert(from_text, 0.375)
+
+text = "-3"
+
+assert(from_text, 0)
+
+text = "2"
+
+assert(from_text, 1)
+
+empty = Math.saturate("")
+from_false = Math.saturate(false)
+from_true = Math.saturate(true)
+from_empty_list = Math.saturate([])
+from_list = Math.saturate([0.625])
+bad_list = Math.saturate([0, 1])
+bad_text = Math.saturate("not a number")
+literal_null = Math.saturate(null)
+from_date = Math.saturate(Date(1))
+
+assert(empty, 0)
+assert(from_false, 0)
+assert(from_true, 1)
+assert(from_empty_list, 0)
+assert(from_list, 0.625)
+assert(Number.isNaN(bad_list), true)
+assert(Number.isNaN(bad_text), true)
+assert(literal_null, 0)
+assert(from_date, 1)
+
+---
+
+# Nucleoid preserves special values and omitted unit saturation inputs
+
+positive = Math.saturate(1 / 0)
+negative = Math.saturate(-1 / 0)
+invalid = Math.saturate(0 / 0)
+positive_zero = Math.saturate(0)
+negative_zero = Math.saturate(-0)
+omitted = Math.saturate()
+extra = Math.saturate(0.5, 99)
+tiny = Math.saturate(Number.MIN_VALUE)
+
+assert(positive, 1)
+assert(negative, 0)
+assert(Number.isNaN(invalid), true)
+assert(1 / positive_zero, 1 / Math.min(Math.max(0, 0), 1))
+assert(1 / negative_zero, 1 / Math.min(Math.max(-0, 0), 1))
+assert(Number.isNaN(omitted), true)
+assert(extra, 0.5)
+assert(tiny, Number.MIN_VALUE)
+
+---
+
+# Nucleoid applies unit-interval saturation to live class rules
+
+class Level(reading):
+    this.reading = reading
+
+$Level.bounded = Math.saturate($Level.reading)
+
+first = Level(-2)
+second = Level(0.4)
+
+assert(first.bounded, 0)
+assert(second.bounded, 0.4)
+
+first.reading = 0.8
+
+assert(first.bounded, 0.8)
+
+second.reading = 2
+
+assert(second.bounded, 1)
+
+---
+
+# Nucleoid preserves deferred reads and rollback for unit saturation
+
+class Sensor
+sensor = Sensor()
+
+bounded = Math.saturate(sensor.reading)
+
+assert(bounded, null)
+
+sensor.reading = -2
+
+assert(bounded, 0)
+
+delete sensor.reading
+
+assert(bounded, null)
+
+sensor.reading = 0.75
+
+assert(bounded, 0.75)
+
+try:
+    bounded = Math.saturate(missing)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(bounded, 0.75)
+
+sensor.reading = 2
+
+assert(bounded, 1)
 ```

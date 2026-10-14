@@ -709,13 +709,29 @@ Full detail: [NUC 9](nuc-0009.md).
 - `Math.clamp`, `min`, `max`, `round`, other Math members, syntax and public
   representations are unchanged. Unknown static methods and `Math.random()`
   retain their exact inherited errors and existing pre-dispatch undefined gate.
+- [NUC 23](nuc-0023.md) specifies static `Math.saturate(value)` as exactly
+  ordered `Math.clamp(value, 0, 1)`,
+  through the existing maximum fold followed by the existing minimum fold.
+- Convert the first value intrinsically with `Value::to_number`, using numeric
+  `NaN` when omitted; do not call or track shadowable `Number` or `Math.clamp`.
+- The existing numeric conversions, numeric `NaN`, infinities, subnormal
+  values and signed-zero bits retain that composition's behavior, without
+  host `f64::clamp`, input validation or endpoint shortcuts.
+- Every supplied expression runs once left to right, including numerically
+  ignored extras; their reads, effects and the any-`Undefined` gate remain.
+- Literal-null conversion does not override live-null/deferred assignments.
+  Class rules, deletion/recovery, strict errors and rollback remain unchanged.
+- Static `Math` shadowing and ordinary `.Math` members retain their lookup.
+  `Math.saturate` read as a value remains unsupported/undefined, not callable.
+- All other Math members, accepted syntax and public representations stay
+  unchanged.
 
 | Object | Members |
 | --- | --- |
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
@@ -790,6 +806,30 @@ assert(position, 20)
 - The `Reactive numeric interpolation` section and its five paired entries in
   [`nucleoid.spec.md`](../nucleoid.spec.md#reactive-numeric-interpolation) define
   the behavior; [NUC 22](nuc-0022.md) explains the deliberately ordered contract.
+
+### Unit-interval saturation keeps live fractions bounded
+
+```
+reading = -0.2
+fraction = Math.saturate(reading)
+
+assert(fraction, 0)
+
+reading = 0.6
+
+assert(fraction, 0.6)
+
+reading = 1.4
+
+assert(fraction, 1)
+```
+
+- This is the sealed executable reference example in `tests/reference.md`,
+  omitting only its title comment.
+- The input stays live; the fixed numeric zero/one bounds are not dependencies.
+- The authoritative [saturation section](../nucleoid.spec.md#reactive-unit-interval-saturation)
+  and its five executable entries define the behavior.
+- [NUC 23](nuc-0023.md) explains the ordered unit-interval contract.
 
 ---
 

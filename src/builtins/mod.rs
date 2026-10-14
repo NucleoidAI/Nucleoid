@@ -130,11 +130,9 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
         "clamp" => {
             let lower = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
             let upper = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
-            // Ordered min(max(...), ...), not f64::clamp: NaN and reversed
-            // bounds have defined results, and signed zeros use the same folds.
-            let bounded = numeric_extremum([first, lower], true);
-            numeric_extremum([bounded, upper], false)
+            numeric_clamp(first, lower, upper)
         }
+        "saturate" => numeric_clamp(first, 0.0, 1.0),
         "lerp" => {
             let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
             let weight = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
@@ -151,6 +149,13 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
     };
 
     Ok(Value::Number(result))
+}
+
+/// Ordered min(max(...), ...), not f64::clamp: retain the accepted folds for
+/// NaN, reversed bounds and signed zeros, without allocating runtime values.
+fn numeric_clamp(value: f64, lower: f64, upper: f64) -> f64 {
+    let bounded = numeric_extremum([value, lower], true);
+    numeric_extremum([bounded, upper], false)
 }
 
 /// The existing Math min/max fold, shared without changing its NaN or zero rules.
@@ -649,6 +654,97 @@ mod tests {
             supplied[position] = Value::Undefined;
             assert_same(&math("clamp", &supplied).unwrap(), &Value::Undefined);
         }
+    }
+
+    #[test]
+    fn saturate_matches_unit_clamp_and_ordered_folds_for_every_value_kind() {
+        let lower = Value::number(0);
+        let upper = Value::number(1);
+        for value in values() {
+            let actual = math("saturate", std::slice::from_ref(&value)).unwrap();
+            let ordered = ordered_composition(&value, &lower, &upper);
+            let clamped = math("clamp", &[value, lower.clone(), upper.clone()]).unwrap();
+            assert_same(&actual, &ordered);
+            assert_same(&actual, &clamped);
+        }
+    }
+
+    #[test]
+    fn saturate_preserves_boundary_subnormal_nonfinite_and_zero_bits_from_accepted_folds() {
+        let one = 1.0_f64.to_bits();
+        for number in [
+            -f64::MAX,
+            -1.0,
+            -f64::MIN_POSITIVE,
+            -f64::from_bits(1),
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            0.375,
+            f64::from_bits(one - 1),
+            1.0,
+            f64::from_bits(one + 1),
+            f64::MAX,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NAN,
+            f64::from_bits(0x7ff8_0000_0000_0042),
+            f64::from_bits(0xfff8_0000_0000_0042),
+        ] {
+            let value = Value::Number(number);
+            let expected = ordered_composition(&value, &Value::number(0), &Value::number(1));
+            assert_same(
+                &math("saturate", std::slice::from_ref(&value)).unwrap(),
+                &expected,
+            );
+            assert_same(
+                &math("clamp", &[value, Value::number(0), Value::number(1)]).unwrap(),
+                &expected,
+            );
+        }
+    }
+
+    #[test]
+    fn saturate_omission_is_nan_and_every_supplied_extra_retains_the_undefined_gate() {
+        assert_same(
+            &math("saturate", &[]).unwrap(),
+            &math("clamp", &[]).unwrap(),
+        );
+        assert_same(&math("saturate", &[]).unwrap(), &Value::Number(f64::NAN));
+        let values = values();
+        for value in &values {
+            for extra in &values {
+                let expected = if value.is_undefined() || extra.is_undefined() {
+                    Value::Undefined
+                } else {
+                    ordered_composition(value, &Value::number(0), &Value::number(1))
+                };
+                let supplied = [value.clone(), extra.clone(), Value::number(99)];
+                assert_same(&math("saturate", &supplied[..2]).unwrap(), &expected);
+                assert_same(&math("saturate", &supplied).unwrap(), &expected);
+                assert_same(
+                    &math(
+                        "clamp",
+                        &[
+                            value.clone(),
+                            Value::number(0),
+                            Value::number(1),
+                            extra.clone(),
+                            Value::number(99),
+                        ],
+                    )
+                    .unwrap(),
+                    &expected,
+                );
+            }
+        }
+        for position in 0..5 {
+            let mut supplied = vec![Value::number(0.375); 5];
+            supplied[position] = Value::Undefined;
+            assert_same(&math("saturate", &supplied).unwrap(), &Value::Undefined);
+        }
+        assert!(math_constant("saturate").is_none());
     }
 
     #[test]

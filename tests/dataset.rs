@@ -33,6 +33,10 @@ struct Record {
 
 include!(concat!(env!("OUT_DIR"), "/synth_documents.rs"));
 
+const SPEC_RECORDS: usize = 298;
+const SYNTH_RECORDS: usize = 1_076;
+const SYNTH_21_RECORDS: usize = 116;
+
 /// A case document and the JSONL file rendered from it.
 struct Set {
     /// Prefix of the record ids, so an id says where it came from.
@@ -100,6 +104,14 @@ fn dataset_card_reports_current_split_sizes() {
         .sum();
     let card = include_str!("../dataset/README.md");
 
+    assert_eq!(spec, SPEC_RECORDS);
+    assert_eq!(synth, SYNTH_RECORDS);
+    let (_, _, source_21) = SYNTH_DOCUMENTS
+        .iter()
+        .find(|(module, _, _)| *module == "synth_21")
+        .expect("the current derived source is registered");
+    assert_eq!(common::cases(source_21).len(), SYNTH_21_RECORDS);
+
     for (split, count) in [("spec", spec), ("synth", synth)] {
         let row = format!("| `{split}` | {count} |");
         assert!(
@@ -165,8 +177,8 @@ fn every_spec_record_is_nucleoid() {
 
     // Two empty specification representations would agree and prove nothing.
     assert_eq!(
-        records, 293,
-        "the specification holds 293 cases; update this count deliberately when one is added"
+        records, SPEC_RECORDS,
+        "the specification holds 298 cases; update this count deliberately when one is added"
     );
 }
 

@@ -5554,6 +5554,132 @@ fn preserves_deferred_reads_and_rollback_for_numeric_interpolation() {
     assert_eq!(run("position"), 12);
 }
 
+/// Nucleoid keeps unit-interval saturation reactive to its input
+#[rustfmt::skip]
+#[test]
+fn keeps_unit_interval_saturation_reactive_to_its_input() {
+    let mut run = runner();
+    run("reading = -2");
+    run("bounded = Math.saturate(reading)");
+    assert_eq!(run("bounded"), 0);
+    run("reading = 0.25");
+    assert_eq!(run("bounded"), 0.25);
+    run("reading = 3");
+    assert_eq!(run("bounded"), 1);
+    run("reading = 0.5");
+    assert_eq!(run("bounded"), 0.5);
+    run("reading = 1");
+    assert_eq!(run("bounded"), 1);
+    run("reading = -1");
+    assert_eq!(run("bounded"), 0);
+}
+
+/// Nucleoid preserves numeric coercion while saturating values
+#[rustfmt::skip]
+#[test]
+fn preserves_numeric_coercion_while_saturating_values() {
+    let mut run = runner();
+    run(r#"text = " 0.375 ""#);
+    run("from_text = Math.saturate(text)");
+    assert_eq!(run("from_text"), 0.375);
+    run(r#"text = "-3""#);
+    assert_eq!(run("from_text"), 0);
+    run(r#"text = "2""#);
+    assert_eq!(run("from_text"), 1);
+    run(r#"empty = Math.saturate("")"#);
+    run("from_false = Math.saturate(false)");
+    run("from_true = Math.saturate(true)");
+    run("from_empty_list = Math.saturate([])");
+    run("from_list = Math.saturate([0.625])");
+    run("bad_list = Math.saturate([0, 1])");
+    run(r#"bad_text = Math.saturate("not a number")"#);
+    run("literal_null = Math.saturate(null)");
+    run("from_date = Math.saturate(Date(1))");
+    assert_eq!(run("empty"), 0);
+    assert_eq!(run("from_false"), 0);
+    assert_eq!(run("from_true"), 1);
+    assert_eq!(run("from_empty_list"), 0);
+    assert_eq!(run("from_list"), 0.625);
+    assert_eq!(run("Number.isNaN(bad_list)"), true);
+    assert_eq!(run("Number.isNaN(bad_text)"), true);
+    assert_eq!(run("literal_null"), 0);
+    assert_eq!(run("from_date"), 1);
+}
+
+/// Nucleoid preserves special values and omitted unit saturation inputs
+#[rustfmt::skip]
+#[test]
+fn preserves_special_values_and_omitted_unit_saturation_inputs() {
+    let mut run = runner();
+    run("positive = Math.saturate(1 / 0)");
+    run("negative = Math.saturate(-1 / 0)");
+    run("invalid = Math.saturate(0 / 0)");
+    run("positive_zero = Math.saturate(0)");
+    run("negative_zero = Math.saturate(-0)");
+    run("omitted = Math.saturate()");
+    run("extra = Math.saturate(0.5, 99)");
+    run("tiny = Math.saturate(Number.MIN_VALUE)");
+    assert_eq!(run("positive"), 1);
+    assert_eq!(run("negative"), 0);
+    assert_eq!(run("Number.isNaN(invalid)"), true);
+    {
+        let actual = run("1 / positive_zero");
+        let expected = run("(1 / Math.min(Math.max(0, 0), 1))");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("1 / negative_zero");
+        let expected = run("(1 / Math.min(Math.max(-0, 0), 1))");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Number.isNaN(omitted)"), true);
+    assert_eq!(run("extra"), 0.5);
+    {
+        let actual = run("tiny");
+        let expected = run("(Number.MIN_VALUE)");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid applies unit-interval saturation to live class rules
+#[rustfmt::skip]
+#[test]
+fn applies_unit_interval_saturation_to_live_class_rules() {
+    let mut run = runner();
+    run(r#"class Level(reading):
+    this.reading = reading"#);
+    run("$Level.bounded = Math.saturate($Level.reading)");
+    run("first = Level(-2)");
+    run("second = Level(0.4)");
+    assert_eq!(run("first.bounded"), 0);
+    assert_eq!(run("second.bounded"), 0.4);
+    run("first.reading = 0.8");
+    assert_eq!(run("first.bounded"), 0.8);
+    run("second.reading = 2");
+    assert_eq!(run("second.bounded"), 1);
+}
+
+/// Nucleoid preserves deferred reads and rollback for unit saturation
+#[rustfmt::skip]
+#[test]
+fn preserves_deferred_reads_and_rollback_for_unit_saturation() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Sensor");
+    run("sensor = Sensor()");
+    run("bounded = Math.saturate(sensor.reading)");
+    assert_eq!(run("bounded"), serde_json::Value::Null);
+    run("sensor.reading = -2");
+    assert_eq!(run("bounded"), 0);
+    run("delete sensor.reading");
+    assert_eq!(run("bounded"), serde_json::Value::Null);
+    run("sensor.reading = 0.75");
+    assert_eq!(run("bounded"), 0.75);
+    assert_eq!(run_error("bounded = Math.saturate(missing)"), "ReferenceError: missing is not defined");
+    assert_eq!(run("bounded"), 0.75);
+    run("sensor.reading = 2");
+    assert_eq!(run("bounded"), 1);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -269,6 +269,34 @@ expression runs once left to right, including extras and the existing undefined
 gate. Live-null/deferred assignment contexts, shadowing and unsupported Math
 method-value reads remain unchanged.
 
+**Unit-interval saturation normalizes live progress**
+
+```nuc
+# Unit-interval saturation normalizes live progress
+
+ratio = 0.3
+progress = Math.saturate(ratio)
+
+assert(progress, 0.3)
+
+ratio = 1.5
+
+assert(progress, 1)
+
+ratio = -0.5
+
+assert(progress, 0)
+```
+
+[NUC 23](docs/nuc-0023.md) specifies static `Math.saturate(value)` as exactly
+ordered `Math.clamp(value, 0, 1)` through
+the accepted min/max folds, with intrinsic numeric conversion, not host range
+validation or endpoint shortcuts. Omission produces numeric `NaN`; extra
+expressions still run once left to right and retain reads, effects and the
+existing undefined gate. Live-null/deferred handling, rollback, namespace
+shadowing and unsupported method-value reads remain unchanged. The normative
+contract is [Reactive unit-interval saturation](nucleoid.spec.md#reactive-unit-interval-saturation).
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

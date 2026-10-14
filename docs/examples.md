@@ -1581,6 +1581,44 @@ for the reference example, arity and static/member-read limits.
 
 ---
 
+## Reactive unit-interval saturation
+
+**Unit-interval saturation bounds live animation opacity**
+
+```nuc
+# Unit-interval saturation bounds live animation opacity
+
+class Fade(level):
+    this.level = level
+
+$Fade.opacity = Math.saturate($Fade.level)
+
+fade = Fade(0.4)
+
+assert(fade.opacity, 0.4)
+
+fade.level = 2
+
+assert(fade.opacity, 1)
+
+fade.level = -1
+
+assert(fade.opacity, 0)
+```
+
+- [NUC 23](nuc-0023.md) specifies static unit-interval saturation.
+- The normative [saturation section](../nucleoid.spec.md#reactive-unit-interval-saturation)
+  defines ordered `Math.clamp(value, 0, 1)` through the accepted extremum folds.
+- Intrinsic conversion, numeric `NaN`, infinities and signed zeros follow that
+  composition, not input validation, conversion skips or endpoint shortcuts.
+- Every expression, including ignored extras, runs once left to right with
+  existing dependencies, undefined/live-null gates and transaction recovery.
+- Class-rule property syntax and ordinary lookup are unchanged.
+- See [README.md §11](README.md#11-built-in-objects) for the exact executable
+  reference example.
+
+---
+
 ## Copyright
 
 Copyright 2020 Nucleoid

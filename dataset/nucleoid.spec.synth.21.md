@@ -2744,4 +2744,66 @@ assert(sensor.position, null)
 sensor.start = 4
 
 assert(sensor.position, 7)
+
+---
+
+# Nucleoid keeps completion progress saturated while totals and work change
+
+completed = 30
+total = 100
+ratio = completed / total
+progress = Math.saturate(ratio)
+
+assert(progress, 0.3)
+
+completed = 125
+
+assert(progress, 1)
+
+total = 250
+
+assert(progress, 0.5)
+
+---
+
+# Nucleoid saturates intrinsic numeric conversions and ordered special values
+
+text = Math.saturate(" 0.625 ")
+empty = Math.saturate([])
+dated = Math.saturate(Date(1))
+positive = Math.saturate(Number.POSITIVE_INFINITY)
+negative = Math.saturate(Number.NEGATIVE_INFINITY)
+invalid = Math.saturate("invalid")
+omitted = Math.saturate()
+
+assert(text, 0.625)
+assert(empty, 0)
+assert(dated, 1)
+assert(positive, 1)
+assert(negative, 0)
+assert(Number.isNaN(invalid), true)
+assert(Number.isNaN(omitted), true)
+
+---
+
+# Nucleoid restores saturated sensor rules after deferred property deletion
+
+class Sensor
+sensor = Sensor()
+
+$Sensor.fraction = Math.saturate($Sensor.reading)
+
+assert(sensor.fraction, null)
+
+sensor.reading = 2
+
+assert(sensor.fraction, 1)
+
+delete sensor.reading
+
+assert(sensor.fraction, null)
+
+sensor.reading = 0.4
+
+assert(sensor.fraction, 0.4)
 ```

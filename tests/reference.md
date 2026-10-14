@@ -1411,4 +1411,21 @@ assert(position, 10)
 weight = 0.5
 
 assert(position, 20)
+
+---
+
+# Unit-interval saturation keeps live fractions bounded
+
+reading = -0.2
+fraction = Math.saturate(reading)
+
+assert(fraction, 0)
+
+reading = 0.6
+
+assert(fraction, 0.6)
+
+reading = 1.4
+
+assert(fraction, 1)
 ```

@@ -36,8 +36,16 @@ makes it a supervised pair: prose in, logic out.
 
 | Split | Records | Rendered from |
 | --- | --- | --- |
-| `spec` | 293 | `nucleoid.spec.md` — normative |
-| `synth` | 1073 | `dataset/nucleoid.spec.synth.01.md` through `.21.md` — derived, no independent authority |
+| `spec` | 298 | `nucleoid.spec.md` — normative |
+| `synth` | 1076 | `dataset/nucleoid.spec.synth.01.md` through `.21.md` — derived, no independent authority |
+
+- Source `.21.md` contains 116 derived records, including three unit-interval
+  saturation examples synchronized with the specification's five new entries.
+- Those three examples cover live progress, intrinsic conversion/special values
+  and deferred class-rule deletion/recovery; they are unscored training records,
+  not additional normative runtime cases.
+- [NUC 23](../docs/nuc-0023.md) describes the static unit-interval saturation
+  operation used by these synchronized examples.
 
 ## Fields
 
