@@ -1,0 +1,13 @@
+amount = 4
+label = "meter"
+reading = { amount, label }
+{
+    nested = { reading, items: [{ amount }] }
+}
+assert(reading.amount, 4)
+assert(nested.reading.label, "meter")
+assert(nested.items[0].amount, 4)
+amount = 6
+assert(reading.amount, 6)
+assert(nested.items[0].amount, 6)
+reading.amount

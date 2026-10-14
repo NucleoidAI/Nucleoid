@@ -4417,7 +4417,7 @@ live = 10
 
 # Snapshots remain fixed while live dependencies change
 values = [seed.value, live]
-record = { "frozen": seed.value, "live": live }
+record = { "frozen": seed.value, live }
 label = `${seed.value}-${live}`
 text = "abcd"
 start = 1
@@ -6646,4 +6646,151 @@ try:
     failed
 catch error:
     assert(error, ReferenceError("failed is not defined"))
+
+---
+
+# Nucleoid keeps shorthand object fields reactive
+
+price = 4
+quantity = 3
+order = { price, quantity }
+total = order.price * order.quantity
+
+assert(order.price, 4)
+assert(order.quantity, 3)
+assert(total, 12)
+
+price = 5
+
+assert(order.price, 5)
+assert(total, 15)
+
+quantity = 2
+
+assert(order.quantity, 2)
+assert(total, 10)
+
+---
+
+# Nucleoid resolves shorthand object fields in their lexical scope
+
+label = "outer"
+
+def pack(label):
+    return { label }
+
+local = pack("inner")
+
+assert(local.label, "inner")
+
+label = "changed"
+
+assert(local.label, "inner")
+
+builder = amount => ({ amount })
+built = builder(7)
+
+assert(built.amount, 7)
+
+def wrap(amount) => { amount }
+
+wrapped = wrap(5)
+
+assert(wrapped.amount, 5)
+
+class Parcel:
+    def init(amount):
+        this.payload = { amount }
+
+parcel = Parcel(8)
+
+assert(parcel.payload.amount, 8)
+
+---
+
+# Nucleoid preserves snapshots and undefined reads in shorthand objects
+
+amount = 2
+live = { amount }
+frozen = { amount: amount.value }
+
+assert(live.amount, 2)
+assert(frozen.amount, 2)
+
+amount = 5
+
+assert(live.amount, 5)
+assert(frozen.amount, 2)
+
+try:
+    pending = { missing }
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+missing = 8
+pending = { missing }
+
+assert(pending.missing, 8)
+
+---
+
+# Nucleoid preserves mixed nested and duplicate shorthand object fields
+
+amount = 3
+label = "A"
+other = 7
+mixed = ({
+    amount,
+    label,
+    "quoted-key": label,
+    1: amount,
+    amount: other,
+})
+
+assert(mixed.amount, 7)
+assert(mixed.label, "A")
+assert(mixed["quoted-key"], "A")
+assert(mixed[1], 3)
+
+amount = 5
+
+assert(mixed.amount, 7)
+assert(mixed[1], 5)
+
+other = 9
+
+assert(mixed.amount, 9)
+
+nested = { mixed, items: [{ amount }] }
+
+assert(nested.mixed.amount, 9)
+assert(nested.items[0].amount, 5)
+
+---
+
+# Nucleoid restores shorthand object dependencies after a failed transaction
+
+amount = 3
+alternate = 7
+record = { amount }
+derived = record.amount * 2
+
+try:
+    record = { alternate }
+    assert(record.alternate, 7)
+    throw "ABORT"
+catch error:
+    assert(error, "ABORT")
+
+assert(record.amount, 3)
+assert(derived, 6)
+
+alternate = 9
+
+assert(record.amount, 3)
+
+amount = 5
+
+assert(record.amount, 5)
+assert(derived, 10)
 ```

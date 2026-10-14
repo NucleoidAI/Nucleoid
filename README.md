@@ -134,6 +134,28 @@ constructor on the same instance and returning `null`. Calls with arguments
 still use `super(arguments...)`. [NUC 16](docs/nuc-0016.md) describes this
 candidate shorthand; its proposal status remains Draft.
 
+**Object fields reuse their identifier names**
+
+```nuc
+amount = 4
+label = "meter"
+reading = { amount, label }
+
+assert(reading.amount, 4)
+assert(reading.label, "meter")
+
+amount = 6
+
+assert(reading.amount, 6)
+```
+
+In this isolated [Draft NUC 17](docs/nuc-0017.md) candidate, an ordinary
+identifier field in an object expression is shorthand for `name: name`.
+Explicit fields still mix with shorthand; quoted and numeric keys still need
+a value. The existing AST, canonical expanded source, scope lookup, dependencies,
+snapshots, and transactions are unchanged. This prototype does not change
+the accepted language until independent evaluation and caller integration.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

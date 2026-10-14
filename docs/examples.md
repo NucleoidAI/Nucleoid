@@ -262,6 +262,32 @@ str1 = "ABCDEF"
 assert(i2, 7)
 ```
 
+**Reusable readings keep named fields concise**
+
+- This isolated [Draft NUC 17](nuc-0017.md) candidate returns an object whose
+  ordinary identifier fields reuse their names.
+- The function still reads its parameters; changing the argument updates the
+  existing reactive call relationship.
+- Named arrows may return `{ reading, unit }` directly; anonymous arrows
+  returning an object still need `reading => ({ reading })`.
+
+```nuc
+reading = 7
+unit = "C"
+
+def pack(reading, unit):
+    return { reading, unit }
+
+report = pack(reading, unit)
+
+assert(report.reading, 7)
+assert(report.unit, "C")
+
+reading = 9
+
+assert(report.reading, 9)
+```
+
 Full detail: [README.md §3](README.md#3-expressions), [NUC 10](nuc-0010.md).
 
 ---

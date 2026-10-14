@@ -1097,10 +1097,10 @@ impl Parser {
                 break;
             }
 
-            let key = match self.advance() {
-                Token::Str(key) => key,
-                Token::Identifier(key) => key,
-                Token::Number(number) => crate::value::format_number(number),
+            let (key, is_identifier) = match self.advance() {
+                Token::Str(key) => (key, false),
+                Token::Identifier(key) => (key, true),
+                Token::Number(number) => (crate::value::format_number(number), false),
                 other => {
                     return Err(
                         self.error(format!("Expected a key but found {}", other.describe()))
@@ -1108,8 +1108,20 @@ impl Parser {
                 }
             };
 
-            self.expect(&Token::Colon)?;
-            let value = self.expression()?;
+            // Do not consume lookahead: malformed explicit fields must keep
+            // their original missing-colon diagnostics and positions.
+            let mut offset = 0;
+            while matches!(self.peek_at(offset), Token::Newline | Token::Semicolon) {
+                offset += 1;
+            }
+            let value = if is_identifier
+                && matches!(self.peek_at(offset), Token::Comma | Token::RightBrace)
+            {
+                Expr::Identifier(key.clone())
+            } else {
+                self.expect(&Token::Colon)?;
+                self.expression()?
+            };
             entries.push((key, value));
 
             self.skip_newlines();

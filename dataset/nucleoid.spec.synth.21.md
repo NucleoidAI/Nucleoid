@@ -2313,4 +2313,87 @@ try:
     booking
 catch error:
     assert(error, ReferenceError("booking is not defined"))
+
+---
+
+# Nucleoid keeps a shorthand flight fuel plan reactive
+
+# Fuel and reserve are ordinary named inputs to the plan
+fuel = 100
+reserve = 20
+plan = { fuel, reserve, total: fuel + reserve }
+
+assert(plan.fuel, 100)
+assert(plan.reserve, 20)
+assert(plan.total, 120)
+
+fuel = 150
+reserve = 30
+
+assert(plan.fuel, 150)
+assert(plan.reserve, 30)
+assert(plan.total, 180)
+
+---
+
+# Nucleoid returns shorthand sensor reports from explicit local parameters
+
+reading = 7
+unit = "C"
+
+# Named functions and parenthesized anonymous object returns keep their scope
+def pack(reading, unit) => { reading, unit }
+builder = (reading, unit) => ({ reading, unit })
+
+report = pack(reading, unit)
+backup = builder(4, "F")
+
+assert(report.reading, 7)
+assert(report.unit, "C")
+assert(backup.reading, 4)
+assert(backup.unit, "F")
+
+reading = 9
+
+assert(report.reading, 9)
+assert(backup.reading, 4)
+
+---
+
+# Nucleoid restores a mixed shorthand departure record after an aborted update
+
+delay = 3
+gate = "A"
+alternate = 7
+
+# Parentheses retain the existing multiline expression layout
+departure = ({
+    delay,
+    gate,
+    "quoted-key": gate,
+    1: delay,
+    fixed: delay.value,
+    details: { delay },
+})
+
+assert(departure.delay, 3)
+assert(departure["quoted-key"], "A")
+assert(departure[1], 3)
+assert(departure.fixed, 3)
+assert(departure.details.delay, 3)
+
+try:
+    departure = { alternate }
+    throw "NO_DISPATCH"
+catch error:
+    assert(error, "NO_DISPATCH")
+
+alternate = 9
+delay = 5
+
+assert(departure.delay, 5)
+assert(departure.gate, "A")
+assert(departure[1], 5)
+assert(departure.fixed, 3)
+assert(departure.details.delay, 5)
 ```

@@ -202,6 +202,47 @@ url = `http://${host}:${port}`
 
 - After `port = 9090`, `url` is `"http://localhost:9090"`.
 
+### Object-property shorthand (candidate)
+
+- In this isolated [Draft NUC 17](nuc-0017.md) candidate, an ordinary identifier
+  field `amount` in an object-literal expression means exactly `amount: amount`.
+- Explicit fields may mix with shorthand, nest in objects and lists, and keep
+  the existing comma, trailing-comma, newline, and semicolon rules.
+- The identifier must be followed by a comma or closing brace, looking through
+  only the existing newline/semicolon separators; fields still need commas.
+- Quoted and numeric keys need explicit values; keywords, `$Class`, dotted
+  paths, and computed keys do not become bare shorthand keys.
+- Canonical source remains quoted and expanded, such as `{"amount":amount}`.
+- Values use the same scope, parameter/receiver bindings, object aliases,
+  dependencies, duplicate-key replacement, snapshots, and rollback.
+- A missing value name inside an object raises
+  `ReferenceError("missing is not defined")`, not a silent `null` field.
+- `.value` snapshots still need explicit fields, such as `amount: amount.value`.
+- Statement-leading `{ amount }` stays a block; named `def wrap(amount) =>
+  { amount }` returns an object, while anonymous `amount => { amount }` stays
+  a block and needs `amount => ({ amount })` to return an object.
+- This does not add closure capture, indentation inside unparenthesized braces,
+  colon continuation, new key grammar, or destructuring.
+
+```
+amount = 4
+unit = "C"
+reading = { amount, unit }
+
+assert(reading.amount, 4)
+assert(reading.unit, "C")
+
+amount = 6
+
+assert(reading.amount, 6)
+```
+
+- The executable counterpart is `Object property shorthand` in
+  `tests/reference.md`; the five paired specification entries in NUC 17 cover
+  the runtime behavior.
+- These isolated prototype forms await independent evaluation and integration;
+  they are not a change to the accepted reference.
+
 ### Operators
 
 - Arithmetic: `+`, `-`, `*`, `/`, `%`.
@@ -767,6 +808,7 @@ def name(params):                      block function
     statement
 
 { statement; statement }               block
+record = { amount, label }             object shorthand (candidate NUC 17)
 
 throw value                            raise a value
 return expression                      yield from a block or function

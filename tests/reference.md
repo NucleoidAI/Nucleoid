@@ -803,7 +803,7 @@ seed = 1
 live = 10
 values = [seed.value, live]
 label = `${seed.value}-${live}`
-record = { "seed": seed.value, "live": live }
+record = { "seed": seed.value, live }
 start = 1
 end = 3
 part = "abcd"[start.value:end]
@@ -1320,4 +1320,19 @@ child = Child()
 
 assert(child.ready, true)
 assert(child.code, 7)
+
+---
+
+# Object property shorthand
+
+amount = 4
+unit = "C"
+reading = { amount, unit }
+
+assert(reading.amount, 4)
+assert(reading.unit, "C")
+
+amount = 6
+
+assert(reading.amount, 6)
 ```

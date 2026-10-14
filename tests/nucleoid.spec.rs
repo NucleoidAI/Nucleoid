@@ -2935,7 +2935,7 @@ fn freezes_value_reads_inside_compound_expressions() {
     run("seed = 1");
     run("live = 10");
     run("values = [seed.value, live]");
-    run(r#"record = { "frozen": seed.value, "live": live }"#);
+    run(r#"record = { "frozen": seed.value, live }"#);
     run("label = `${seed.value}-${live}`");
     run(r#"text = "abcd""#);
     run("start = 1");
@@ -4926,6 +4926,120 @@ fn rolls_back_a_failing_parent_constructor_called_with_bare_super() {
     assert_eq!(run("Parent.length"), 0);
     assert_eq!(run("Child.length"), 0);
     assert_eq!(run_error("failed"), "ReferenceError: failed is not defined");
+}
+
+/// Nucleoid keeps shorthand object fields reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_shorthand_object_fields_reactive() {
+    let mut run = runner();
+    run("price = 4");
+    run("quantity = 3");
+    run("order = { price, quantity }");
+    run("total = order.price * order.quantity");
+    assert_eq!(run("order.price"), 4);
+    assert_eq!(run("order.quantity"), 3);
+    assert_eq!(run("total"), 12);
+    run("price = 5");
+    assert_eq!(run("order.price"), 5);
+    assert_eq!(run("total"), 15);
+    run("quantity = 2");
+    assert_eq!(run("order.quantity"), 2);
+    assert_eq!(run("total"), 10);
+}
+
+/// Nucleoid resolves shorthand object fields in their lexical scope
+#[rustfmt::skip]
+#[test]
+fn resolves_shorthand_object_fields_in_their_lexical_scope() {
+    let mut run = runner();
+    run(r#"label = "outer""#);
+    run(r#"def pack(label):
+    return { label }"#);
+    run(r#"local = pack("inner")"#);
+    assert_eq!(run("local.label"), "inner");
+    run(r#"label = "changed""#);
+    assert_eq!(run("local.label"), "inner");
+    run("builder = amount => ({ amount })");
+    run("built = builder(7)");
+    assert_eq!(run("built.amount"), 7);
+    run("def wrap(amount) => { amount }");
+    run("wrapped = wrap(5)");
+    assert_eq!(run("wrapped.amount"), 5);
+    run(r#"class Parcel:
+    def init(amount):
+        this.payload = { amount }"#);
+    run("parcel = Parcel(8)");
+    assert_eq!(run("parcel.payload.amount"), 8);
+}
+
+/// Nucleoid preserves snapshots and undefined reads in shorthand objects
+#[rustfmt::skip]
+#[test]
+fn preserves_snapshots_and_undefined_reads_in_shorthand_objects() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("amount = 2");
+    run("live = { amount }");
+    run("frozen = { amount: amount.value }");
+    assert_eq!(run("live.amount"), 2);
+    assert_eq!(run("frozen.amount"), 2);
+    run("amount = 5");
+    assert_eq!(run("live.amount"), 5);
+    assert_eq!(run("frozen.amount"), 2);
+    assert_eq!(run_error("pending = { missing }"), "ReferenceError: missing is not defined");
+    run("missing = 8");
+    run("pending = { missing }");
+    assert_eq!(run("pending.missing"), 8);
+}
+
+/// Nucleoid preserves mixed nested and duplicate shorthand object fields
+#[rustfmt::skip]
+#[test]
+fn preserves_mixed_nested_and_duplicate_shorthand_object_fields() {
+    let mut run = runner();
+    run("amount = 3");
+    run(r#"label = "A""#);
+    run("other = 7");
+    run(r#"mixed = ({
+    amount,
+    label,
+    "quoted-key": label,
+    1: amount,
+    amount: other,
+})"#);
+    assert_eq!(run("mixed.amount"), 7);
+    assert_eq!(run("mixed.label"), "A");
+    assert_eq!(run(r#"mixed["quoted-key"]"#), "A");
+    assert_eq!(run("mixed[1]"), 3);
+    run("amount = 5");
+    assert_eq!(run("mixed.amount"), 7);
+    assert_eq!(run("mixed[1]"), 5);
+    run("other = 9");
+    assert_eq!(run("mixed.amount"), 9);
+    run("nested = { mixed, items: [{ amount }] }");
+    assert_eq!(run("nested.mixed.amount"), 9);
+    assert_eq!(run("nested.items[0].amount"), 5);
+}
+
+/// Nucleoid restores shorthand object dependencies after a failed transaction
+#[rustfmt::skip]
+#[test]
+fn restores_shorthand_object_dependencies_after_a_failed_transaction() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("amount = 3");
+    run("alternate = 7");
+    run("record = { amount }");
+    run("derived = record.amount * 2");
+    assert_eq!(run_error(r#"record = { alternate }
+assert(record.alternate, 7)
+throw "ABORT""#), "ABORT");
+    assert_eq!(run("record.amount"), 3);
+    assert_eq!(run("derived"), 6);
+    run("alternate = 9");
+    assert_eq!(run("record.amount"), 3);
+    run("amount = 5");
+    assert_eq!(run("record.amount"), 5);
+    assert_eq!(run("derived"), 10);
 }
 
 /// The committed tests must not drift from their generated JSONL export.
