@@ -1264,6 +1264,70 @@ assert(fraction, 0.125)
 
 ---
 
+## Reactive inverse interpolation
+
+### Unclamped inverse interpolation relationships stay live
+
+```
+start = 2
+end = 10
+sample = 4
+weight = Math.inverseLerp(start, end, sample)
+assert(weight, 0.25)
+sample = 6
+assert(weight, 0.5)
+start = 0
+assert(weight, 0.6)
+end = 12
+assert(weight, 0.5)
+sample = 18
+assert(weight, 1.5)
+```
+
+- This is the sealed `tests/reference.md` entry, omitting only its title comment.
+- Accepted [NUC 38](nuc-0038.md) adds only unshadowed static
+  `Math.inverseLerp(start, end, value)`. The authoritative
+  [inverse-interpolation section](../nucleoid.spec.md#reactive-inverse-interpolation)
+  and its five entries specify the accepted contract.
+- After Math's unchanged any-supplied-Undefined gate, including extras,
+  intrinsically convert start, end and value with `Value::to_number`.
+  The dispatcher already converts start; each omitted input is numeric NaN.
+- Compute separate ordinary `numerator = value - start`,
+  `denominator = end - start`, then `numerator / denominator`, in that order.
+  The accepted `(value - start) / (end - start)` remains available.
+- Do not clamp, smooth, validate or reorder ranges, factor, fuse, scale to
+  avoid overflow or shortcut endpoints or zero width. Descending ranges and
+  results below zero or above one are intentional.
+- Equal finite endpoints give ordinary NaN or signed infinity. Nonfinite
+  inputs, span overflow, cancellation, underflow, subnormals and signed zeros
+  retain exactly that composition. The overflow span from `-Number.MAX_VALUE`
+  to `Number.MAX_VALUE` with value zero yields zero, not `0.5`.
+- Expected NaNs compare by classification; every non-NaN result, including
+  zero, matches independent accepted binary subtraction/division controls
+  by bits. No portable NaN-payload or zero-sign promise is added.
+- Literal null converts to zero without overriding live assignment or
+  parameter-null deferral. All Value kinds retain their existing numeric
+  conversion; nonnumeric values yield numeric NaN, not new errors.
+- Every supplied expression runs once left to right, including expressions
+  after Undefined. Ignored extras are neither converted nor used, but retain
+  reads, effects, dependencies, strict failures, deferral and rollback.
+- Intrinsic conversion never resolves, invokes or tracks shadowable Number
+  or Math methods. State/local Math shadowing and ordinary `.Math` members
+  keep lookup; reading `Math.inverseLerp` as a value stays unsupported/
+  Undefined, not a callable reference.
+- Wrappers, frames, receivers, aliases, scopes, per-instance class rules,
+  property deletion/recovery and graph transactions remain unchanged.
+  Strict unknown arguments keep `ReferenceError("<name> is not defined")`;
+  unknown Math methods and `Math.random()` retain their exact inherited errors.
+- No sibling Math arm/helper/control, accepted syntax, parser, lexer, AST,
+  generator, CLI implementation, API/representation, namespace, dependency,
+  version, MSRV, edition or resource bound changes. Inherited limitations remain.
+- New intrinsic RHS ASTs and immediate dependency graphs may differ from
+  emulation; non-RHS source/ASTs, assertions, independent controls, values,
+  transitive reads/effects/errors, returns and executed coverage are protected.
+
+---
+
 ## 12. Reasoning Operations
 
 - `why reference` selects the reference and its transitive dependencies.

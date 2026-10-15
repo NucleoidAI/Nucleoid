@@ -1617,4 +1617,21 @@ scale = 2
 assert(result, 24)
 width = 5
 assert(result, 40)
+---
+
+# Nucleoid preserves inverse interpolation relationships
+
+start = 2
+end = 10
+sample = 4
+weight = Math.inverseLerp(start, end, sample)
+assert(weight, 0.25)
+sample = 6
+assert(weight, 0.5)
+start = 0
+assert(weight, 0.6)
+end = 12
+assert(weight, 0.5)
+sample = 18
+assert(weight, 1.5)
 ```

@@ -695,6 +695,31 @@ assert(scaled(2, 3, 4), 20)
   logical header line. The comma-bearing and parenthesized forms remain
   valid; typed/mixed lists and colon-suite headers still need their commas.
 
+**Inverse interpolation keeps live inputs unclamped**
+
+```nuc
+start = 0
+end = 8
+sample = 2
+weight = Math.inverseLerp(start, end, sample)
+assert(weight, 0.25)
+sample = 12
+assert(weight, 1.5)
+end = 16
+assert(weight, 0.75)
+```
+
+- Accepted [NUC 38](docs/nuc-0038.md) adds only static
+  `Math.inverseLerp(start, end, value)`, the unclamped ordered composition
+  `(value - start) / (end - start)` with intrinsic numeric conversion.
+- Descending ranges and results outside `[0, 1]` are intentional. Equal
+  endpoints, nonfinite values and span overflow follow separate subtraction,
+  subtraction and division, without endpoint shortcuts or scaling.
+- The accepted arithmetic spelling remains available. Ignored-extra reads,
+  effects, strict failures, live-null deferral and rollback remain unchanged;
+  the authoritative [contract](nucleoid.spec.md#reactive-inverse-interpolation)
+  defines the complete numeric and compatibility rules.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

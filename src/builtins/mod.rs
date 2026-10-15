@@ -177,6 +177,13 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             let scaled = delta * weight;
             first + scaled
         }
+        "inverseLerp" => {
+            let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
+            let value = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
+            let numerator = value - first;
+            let denominator = end - first;
+            numerator / denominator
+        }
         "random" => return Err(Error::type_error("Math.random is not supported")),
         "PI" => std::f64::consts::PI,
         "E" => std::f64::consts::E,
@@ -522,6 +529,140 @@ mod tests {
         let weighted = binary(BinaryOp::Multiply, &t, &offset).unwrap();
         let polynomial = binary(BinaryOp::Add, &weighted, &Value::number(10)).unwrap();
         binary(BinaryOp::Multiply, &cube, &polynomial).unwrap()
+    }
+
+    fn ordered_inverse_interpolation(start: &Value, end: &Value, value: &Value) -> Value {
+        let numerator = binary(BinaryOp::Subtract, value, start).unwrap();
+        let denominator = binary(BinaryOp::Subtract, end, start).unwrap();
+        binary(BinaryOp::Divide, &numerator, &denominator).unwrap()
+    }
+
+    #[test]
+    fn inverse_lerp_matches_independent_binary_controls_for_every_value_kind_and_position() {
+        let values = values();
+        for start in &values {
+            for end in &values {
+                for value in &values {
+                    assert_smoothing_same(
+                        &math("inverseLerp", &[start.clone(), end.clone(), value.clone()]).unwrap(),
+                        &ordered_inverse_interpolation(start, end, value),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn inverse_lerp_edge_grid_keeps_nonfinite_overflow_subnormal_and_zero_composition_bits() {
+        let one = 1.0_f64.to_bits();
+        let half = 0.5_f64.to_bits();
+        let numbers = [
+            -f64::MAX,
+            -1e16,
+            -1.0,
+            -f64::MIN_POSITIVE,
+            -f64::from_bits(1),
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            f64::EPSILON,
+            0.1,
+            0.125,
+            0.25,
+            f64::from_bits(half - 1),
+            0.5,
+            f64::from_bits(half + 1),
+            0.75,
+            f64::from_bits(one - 1),
+            1.0,
+            f64::from_bits(one + 1),
+            1e16,
+            f64::MAX,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NAN,
+            f64::from_bits(0x7ff8_0000_0000_0042),
+            f64::from_bits(0xfff8_0000_0000_0042),
+        ];
+        for start in numbers {
+            for end in numbers {
+                for value in numbers {
+                    let arguments = [start, end, value].map(Value::Number);
+                    assert_smoothing_same(
+                        &math("inverseLerp", &arguments).unwrap(),
+                        &ordered_inverse_interpolation(&arguments[0], &arguments[1], &arguments[2]),
+                    );
+                }
+            }
+        }
+        for (arguments, expected) in [
+            ([0.0, 8.0, 2.0], 0.25),
+            ([0.0, 8.0, -8.0], -1.0),
+            ([0.0, 8.0, 16.0], 2.0),
+            ([10.0, 2.0, 8.0], 0.25),
+            ([2.0, 2.0, 2.0], f64::NAN),
+            ([2.0, 2.0, 3.0], f64::INFINITY),
+            ([2.0, 2.0, 1.0], f64::NEG_INFINITY),
+            ([-f64::MAX, f64::MAX, 0.0], 0.0),
+            ([-f64::MAX, f64::MAX, f64::MAX], f64::NAN),
+            ([1e16, 1e16 + 2.0, 1e16], 0.0),
+        ] {
+            assert_smoothing_same(
+                &math("inverseLerp", &arguments.map(Value::Number)).unwrap(),
+                &Value::Number(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn inverse_lerp_full_bit_triples_match_ordered_subtraction_then_division() {
+        let mut bits = 0x38fa_1c70_8e25_d49b_u64;
+        for _ in 0..4_096 {
+            let arguments = std::array::from_fn::<_, 3, _>(|_| {
+                bits = bits
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                Value::Number(f64::from_bits(bits))
+            });
+            assert_smoothing_same(
+                &math("inverseLerp", &arguments).unwrap(),
+                &ordered_inverse_interpolation(&arguments[0], &arguments[1], &arguments[2]),
+            );
+        }
+    }
+
+    #[test]
+    fn inverse_lerp_missing_inputs_and_unconverted_extras_keep_the_supplied_undefined_gate() {
+        let arguments = [Value::number(0), Value::number(8), Value::number(2)];
+        for length in 0..3 {
+            assert_smoothing_same(
+                &math("inverseLerp", &arguments[..length]).unwrap(),
+                &Value::Number(f64::NAN),
+            );
+        }
+        for extra in values() {
+            let mut supplied = arguments.to_vec();
+            let expected = if extra.is_undefined() {
+                Value::Undefined
+            } else {
+                Value::number(0.25)
+            };
+            supplied.push(extra);
+            assert_smoothing_same(&math("inverseLerp", &supplied).unwrap(), &expected);
+            supplied.push(Value::number(99));
+            assert_smoothing_same(&math("inverseLerp", &supplied).unwrap(), &expected);
+        }
+        for position in 0..6 {
+            let mut supplied = vec![Value::number(0.5); 6];
+            supplied[position] = Value::Undefined;
+            assert_same(&math("inverseLerp", &supplied).unwrap(), &Value::Undefined);
+        }
+        assert_same(
+            &math("inverseLerp", &[Value::Undefined]).unwrap(),
+            &Value::Undefined,
+        );
+        assert!(math_constant("inverseLerp").is_none());
     }
 
     #[test]

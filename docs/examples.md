@@ -2012,6 +2012,36 @@ assert(result, 9)
   equivalent. Calls, anonymous arrows, body layout and live dependencies
   retain their existing grammar and behavior.
 
+## Reactive inverse interpolation
+
+**Inverse interpolation handles descending live ranges**
+
+```nuc
+start = 10
+end = 2
+sample = 8
+weight = Math.inverseLerp(start, end, sample)
+assert(weight, 0.25)
+sample = 4
+assert(weight, 0.75)
+sample = 14
+assert(weight, -0.5)
+start = 18
+assert(weight, 0.25)
+```
+
+- Accepted [NUC 38](nuc-0038.md) adds only unshadowed static
+  `Math.inverseLerp(start, end, value)`. The accepted arithmetic
+  `(value - start) / (end - start)` remains available and equivalent.
+- Convert intrinsically, then compute numerator subtraction, span subtraction
+  and division in exactly that order. Do not clamp, reorder ranges, shortcut
+  endpoints or scale to avoid overflow. Descending ranges are valid.
+- Nonfinite results, missing inputs, ignored-extra effects/reads, deferred
+  properties and transactional recovery retain the existing machinery.
+- The authoritative
+  [inverse-interpolation section](../nucleoid.spec.md#reactive-inverse-interpolation)
+  and the [reference](README.md#reactive-inverse-interpolation) give the full contract.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

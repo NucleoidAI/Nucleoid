@@ -7519,6 +7519,244 @@ fn rolls_back_comma_free_named_arrow_redefinitions() {
 # return: 21"#);
 }
 
+/// Nucleoid keeps inverse interpolation reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_inverse_interpolation_reactive() {
+    let mut run = runner();
+    run("start = 2");
+    run("end = 10");
+    run("sample = 4");
+    run("weight = Math.inverseLerp(start, end, sample)");
+    run("reconstructed = Math.lerp(start, end, weight)");
+    assert_eq!(run("weight"), 0.25);
+    assert_eq!(run("reconstructed"), 4);
+    run("sample = 6");
+    assert_eq!(run("weight"), 0.5);
+    assert_eq!(run("reconstructed"), 6);
+    run("sample = 14");
+    assert_eq!(run("weight"), 1.5);
+    assert_eq!(run("reconstructed"), 14);
+    run("sample = -2");
+    assert_eq!(run("weight"), -0.5);
+    assert_eq!(run("reconstructed"), -2);
+    run("start = 10");
+    run("end = 2");
+    run("sample = 8");
+    assert_eq!(run("weight"), 0.25);
+    assert_eq!(run("reconstructed"), 8);
+    run("sample = 12");
+    assert_eq!(run("weight"), -0.25);
+    assert_eq!(run("reconstructed"), 12);
+    run("sample = 6");
+    assert_eq!(run("weight"), 0.5);
+    assert_eq!(run("reconstructed"), 6);
+    run(r#"weight
+
+# return: 0.5"#);
+}
+
+/// Nucleoid preserves intrinsic conversion during inverse interpolation
+#[rustfmt::skip]
+#[test]
+fn preserves_intrinsic_conversion_during_inverse_interpolation() {
+    let mut run = runner();
+    run(r#"start = " 2 ""#);
+    run(r#"end = "10""#);
+    run(r#"sample = "4""#);
+    run("weight = Math.inverseLerp(start, end, sample)");
+    assert_eq!(run("weight"), 0.25);
+    assert_eq!(run("start"), " 2 ");
+    run("start = false");
+    run("end = true");
+    run("sample = false");
+    assert_eq!(run("weight"), 0);
+    run("sample = true");
+    assert_eq!(run("weight"), 1);
+    run("sample = [0.5]");
+    assert_eq!(run("weight"), 0.5);
+    run("sample = []");
+    assert_eq!(run("weight"), 0);
+    run(r#"sample = "not-a-number""#);
+    assert_eq!(run("Number.isNaN(weight)"), true);
+    run("sample = [1, 2]");
+    assert_eq!(run("Number.isNaN(weight)"), true);
+    run("start = Date(0)");
+    run("end = Date(8)");
+    run("sample = Date(2)");
+    assert_eq!(run("weight"), 0.25);
+    run("sample = Date(6)");
+    assert_eq!(run("weight"), 0.75);
+    run("start = []");
+    run(r#"end = ["8"]"#);
+    run(r#"sample = ["2"]"#);
+    assert_eq!(run("weight"), 0.25);
+    run("sample = false");
+    assert_eq!(run("weight"), 0);
+}
+
+/// Nucleoid preserves inverse interpolation endpoints nonfinite inputs and omissions
+#[rustfmt::skip]
+#[test]
+fn preserves_inverse_interpolation_endpoints_nonfinite_inputs_and_omissions() {
+    let mut run = runner();
+    run("start = 0");
+    run("end = 8");
+    run("sample = 2");
+    run("weight = Math.inverseLerp(start, end, sample)");
+    assert_eq!(run("weight"), 0.25);
+    run("sample = start");
+    assert_eq!(run("weight"), 0);
+    run("sample = end");
+    assert_eq!(run("weight"), 1);
+    run("sample = 16");
+    assert_eq!(run("weight"), 2);
+    run("sample = -8");
+    assert_eq!(run("weight"), -1);
+    run("start = 2");
+    run("end = 2");
+    run("sample = 2");
+    assert_eq!(run("Number.isNaN(weight)"), true);
+    run("sample = 3");
+    {
+        let actual = run("weight");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("sample = 1");
+    {
+        let actual = run("weight");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("start = 0");
+    run("end = Number.POSITIVE_INFINITY");
+    run("sample = 8");
+    assert_eq!(run("weight"), 0);
+    run("sample = Number.POSITIVE_INFINITY");
+    assert_eq!(run("Number.isNaN(weight)"), true);
+    run("end = 8");
+    run("sample = Number.NEGATIVE_INFINITY");
+    {
+        let actual = run("weight");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("start = Number.NEGATIVE_INFINITY");
+    run("end = Number.POSITIVE_INFINITY");
+    run("sample = 0");
+    assert_eq!(run("Number.isNaN(weight)"), true);
+    run("start = -Number.MAX_VALUE");
+    run("end = Number.MAX_VALUE");
+    run("sample = 0");
+    assert_eq!(run("weight"), 0);
+    run("start = 0");
+    run("end = 8");
+    run("sample = Number.NaN");
+    assert_eq!(run("Number.isNaN(weight)"), true);
+    run("empty = Math.inverseLerp()");
+    assert_eq!(run("Number.isNaN(empty)"), true);
+    run("one = Math.inverseLerp(0)");
+    assert_eq!(run("Number.isNaN(one)"), true);
+    run("two = Math.inverseLerp(0, 8)");
+    assert_eq!(run("Number.isNaN(two)"), true);
+    run("literal = Math.inverseLerp(false, true, null)");
+    assert_eq!(run("literal"), 0);
+    run("withExtra = Math.inverseLerp(0, 8, 2, 99)");
+    assert_eq!(run("withExtra"), 0.25);
+    run("ignored = Number.NaN");
+    run("withIgnored = Math.inverseLerp(0, 8, 2, ignored)");
+    assert_eq!(run("withIgnored"), 0.25);
+    run(r#"ignored = "not-a-number""#);
+    assert_eq!(run("withIgnored"), 0.25);
+    run("ignored = null");
+    assert_eq!(run("withIgnored"), serde_json::Value::Null);
+    run("ignored = []");
+    assert_eq!(run("withIgnored"), 0.25);
+}
+
+/// Nucleoid applies inverse interpolation to live class rules
+#[rustfmt::skip]
+#[test]
+fn applies_inverse_interpolation_to_live_class_rules() {
+    let mut run = runner();
+    run("class Gauge");
+    run("$Gauge.weight = Math.inverseLerp($Gauge.start, $Gauge.end, $Gauge.sample)");
+    run("first = Gauge()");
+    run("second = Gauge()");
+    run("first.start = 0");
+    run("first.end = 8");
+    run("first.sample = 2");
+    run("second.start = 10");
+    run("second.end = 2");
+    run("second.sample = 8");
+    assert_eq!(run("first.weight"), 0.25);
+    assert_eq!(run("second.weight"), 0.25);
+    run("first.sample = 12");
+    assert_eq!(run("first.weight"), 1.5);
+    assert_eq!(run("second.weight"), 0.25);
+    run("first.end = 16");
+    assert_eq!(run("first.weight"), 0.75);
+    run("third = Gauge()");
+    assert_eq!(run("third.weight"), serde_json::Value::Null);
+    run("third.start = 0");
+    run("third.end = 4");
+    run("third.sample = 1");
+    assert_eq!(run("third.weight"), 0.25);
+    run("delete first.sample");
+    assert_eq!(run("first.weight"), serde_json::Value::Null);
+    run("first.sample = -4");
+    assert_eq!(run("first.weight"), -0.25);
+    assert_eq!(run("Gauge.length"), 3);
+}
+
+/// Nucleoid preserves deferred inverse interpolation and rollback
+#[rustfmt::skip]
+#[test]
+fn preserves_deferred_inverse_interpolation_and_rollback() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Sensor");
+    run("sensor = Sensor()");
+    run("start = sensor.lower");
+    run("end = sensor.upper");
+    run("sample = sensor.reading");
+    run("weight = Math.inverseLerp(start, end, sample)");
+    run("withDeferredExtra = Math.inverseLerp(start, end, sample, sensor.optional)");
+    assert_eq!(run("weight"), serde_json::Value::Null);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("sensor.lower = 0");
+    run("sensor.upper = 8");
+    run("sensor.reading = 2");
+    assert_eq!(run("weight"), 0.25);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("sensor.optional = 99");
+    assert_eq!(run("withDeferredExtra"), 0.25);
+    run("delete sensor.reading");
+    assert_eq!(run("weight"), serde_json::Value::Null);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("sensor.reading = 6");
+    assert_eq!(run("weight"), 0.75);
+    assert_eq!(run("withDeferredExtra"), 0.75);
+    assert_eq!(run_error(r#"sensor.reading = 4
+throw "ROLLBACK""#), "ROLLBACK");
+    assert_eq!(run("sensor.reading"), 6);
+    assert_eq!(run("weight"), 0.75);
+    assert_eq!(run("withDeferredExtra"), 0.75);
+    assert_eq!(run_error("sensor.reading = missing"), "ReferenceError: missing is not defined");
+    assert_eq!(run("sensor.reading"), 6);
+    run("delete sensor.optional");
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    assert_eq!(run("weight"), 0.75);
+    run("sensor.optional = [1, 2]");
+    assert_eq!(run("withDeferredExtra"), 0.75);
+    run("sensor.reading = 2");
+    assert_eq!(run("weight"), 0.25);
+    assert_eq!(run("withDeferredExtra"), 0.25);
+    run(r#"weight
+
+# return: 0.25"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

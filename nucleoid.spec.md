@@ -1106,6 +1106,76 @@ statement positions; caught values and transaction recovery are unchanged.
   values, independent controls and transitive behavior must agree, without
   requiring identical whole-new-program ASTs or immediate graph shapes.
 
+## Reactive inverse interpolation
+
+- Accepted [NUC 38](docs/nuc-0038.md) adds only the unshadowed static
+  signature `Math.inverseLerp(start, end, value)`, an unclamped numeric
+  normalization. The existing `(value - start) / (end - start)` remains valid.
+- Reuse Math's unchanged any-supplied-`Undefined` gate, including extras,
+  before its existing first-input intrinsic conversion. That first value is
+  `start`; intrinsically convert positions one and two to `end` and `value`
+  with the unchanged `Value::to_number`. Each omission supplies numeric NaN,
+  not a supplied Undefined or a new arity error.
+- Compute exactly these separate ordinary `f64` operations in this order:
+  `numerator = value - start`, `denominator = end - start`,
+  `result = numerator / denominator`.
+- Do not clamp, smooth, validate or reorder ranges, factor the expression,
+  fuse operations, scale to avoid overflow, or shortcut endpoints or zero width.
+  Descending ranges are valid; results outside `[0, 1]` are intentional.
+- Equal finite endpoints give ordinary zero-over-zero NaN or nonzero-over-zero
+  signed infinity. Infinities, NaNs, span overflow, cancellation, subnormals,
+  underflow and signed zeros retain the exact ordered arithmetic composition.
+  In particular, `start = -Number.MAX_VALUE`, `end = Number.MAX_VALUE`,
+  `value = 0` gives zero, not a scaled midpoint of `0.5`.
+- Compare expected NaNs by classification, not payload. Every non-NaN
+  result, including zero, matches independent accepted binary subtraction
+  and division controls by bits, without a portable zero-sign promise.
+- Numbers retain their values, literal null converts to zero, booleans to
+  zero/one, trimmed strings and empty/singleton lists keep existing numeric
+  conversion, and dates contribute milliseconds. Other nonnumeric values
+  convert to numeric NaN, not a new type error.
+- Every supplied expression runs exactly once left to right, including
+  ignored extras and expressions after an Undefined. Extra resulting values
+  are neither numerically converted nor used; keep all reads, effects,
+  dependencies, strict failures, deferral and rollback.
+- Any supplied Undefined returns Undefined before conversion; dependent
+  assignments retain inherited live-null/deferred handling and recovery.
+  Intrinsic literal-null conversion does not override live assignment or
+  parameter-null deferral. Missing properties and deletion remain reactive.
+- Intrinsic conversion never resolves, invokes or tracks shadowable `Number`
+  or other Math methods, and never recursively calls public Math dispatch.
+- State/local `Math` bindings retain namespace shadowing; ordinary `.Math`
+  properties and methods retain lookup. Reading `Math.inverseLerp` as a
+  value is unsupported/Undefined, not a first-class callable reference.
+  Wrappers, frames, receivers, aliases and per-instance class rules are unchanged.
+- Strict arguments retain `ReferenceError("<name> is not defined")`, including
+  extras and expressions after an undefined property. Unknown static methods
+  retain `TypeError("Math.<name> is not a function")`; `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the existing Undefined gate.
+  Calling through numeric `Math = 7` retains ordinary member dispatch:
+  `TypeError("number.inverseLerp is not a function")`.
+- Error positions, caught values, graph subscriptions, transactions and
+  recovery remain unchanged. User throws, including `"ROLLBACK"`, still roll
+  back. No numeric, coercion, range-validation or arity errors are introduced.
+- All existing Math arms, helpers, constants, conversions and errors remain
+  unchanged, including `lerp`, `clamp`, `saturate`, `smoothstep`, `smootherstep`
+  and `fract`. All accepted syntax, including NUC37 forms, remains available.
+  No parser, lexer, AST, generator, CLI, API/representation, namespace,
+  dependency, version, MSRV, edition or resource-bound change is introduced.
+- The five entries titled `Nucleoid keeps inverse interpolation reactive`,
+  `Nucleoid preserves intrinsic conversion during inverse interpolation`,
+  `Nucleoid preserves inverse interpolation endpoints nonfinite inputs and
+  omissions`, `Nucleoid applies inverse interpolation to live class rules`,
+  and `Nucleoid preserves deferred inverse interpolation and rollback` trace
+  this contract, retaining independent Math.lerp reconstruction controls.
+- New intrinsic RHS ASTs and immediate dependency graphs may intentionally
+  differ from emulation. Protect non-RHS source/ASTs, canonical assertions,
+  independent controls, observable values, transitive reads/effects/errors,
+  explicit returns and actual assertion coverage, not whole-new-program AST
+  or immediate-graph identity. Historical programs and their ASTs are unchanged.
+- Inherited noncapture, parameter-dependent-local, Windows debug stack and
+  old whole-suite Gitless discovery limitations are not repaired or broadened.
+
 ## Implicit iterator indented loops
 
 - `for NAME:` with a genuine indented body is optionally exactly
@@ -10459,4 +10529,223 @@ assert(prefer(3, 9), 3)
 assert(combined(2, 5, 3), 21)
 combined(2, 5, 3)
 # return: 21
+---
+
+# Nucleoid keeps inverse interpolation reactive
+
+start = 2
+end = 10
+sample = 4
+weight = Math.inverseLerp(start, end, sample)
+reconstructed = Math.lerp(start, end, weight)
+assert(weight, 0.25)
+assert(reconstructed, 4)
+sample = 6
+assert(weight, 0.5)
+assert(reconstructed, 6)
+sample = 14
+assert(weight, 1.5)
+assert(reconstructed, 14)
+sample = -2
+assert(weight, -0.5)
+assert(reconstructed, -2)
+start = 10
+end = 2
+sample = 8
+assert(weight, 0.25)
+assert(reconstructed, 8)
+sample = 12
+assert(weight, -0.25)
+assert(reconstructed, 12)
+sample = 6
+assert(weight, 0.5)
+assert(reconstructed, 6)
+weight
+# return: 0.5
+
+---
+
+# Nucleoid preserves intrinsic conversion during inverse interpolation
+
+start = " 2 "
+end = "10"
+sample = "4"
+weight = Math.inverseLerp(start, end, sample)
+assert(weight, 0.25)
+assert(start, " 2 ")
+start = false
+end = true
+sample = false
+assert(weight, 0)
+sample = true
+assert(weight, 1)
+sample = [0.5]
+assert(weight, 0.5)
+sample = []
+assert(weight, 0)
+sample = "not-a-number"
+assert(Number.isNaN(weight), true)
+sample = [1, 2]
+assert(Number.isNaN(weight), true)
+start = Date(0)
+end = Date(8)
+sample = Date(2)
+assert(weight, 0.25)
+sample = Date(6)
+assert(weight, 0.75)
+start = []
+end = ["8"]
+sample = ["2"]
+assert(weight, 0.25)
+sample = false
+assert(weight, 0)
+
+---
+
+# Nucleoid preserves inverse interpolation endpoints nonfinite inputs and omissions
+
+start = 0
+end = 8
+sample = 2
+weight = Math.inverseLerp(start, end, sample)
+assert(weight, 0.25)
+sample = start
+assert(weight, 0)
+sample = end
+assert(weight, 1)
+sample = 16
+assert(weight, 2)
+sample = -8
+assert(weight, -1)
+start = 2
+end = 2
+sample = 2
+assert(Number.isNaN(weight), true)
+sample = 3
+assert(weight, Number.POSITIVE_INFINITY)
+sample = 1
+assert(weight, Number.NEGATIVE_INFINITY)
+start = 0
+end = Number.POSITIVE_INFINITY
+sample = 8
+assert(weight, 0)
+sample = Number.POSITIVE_INFINITY
+assert(Number.isNaN(weight), true)
+end = 8
+sample = Number.NEGATIVE_INFINITY
+assert(weight, Number.NEGATIVE_INFINITY)
+start = Number.NEGATIVE_INFINITY
+end = Number.POSITIVE_INFINITY
+sample = 0
+assert(Number.isNaN(weight), true)
+start = -Number.MAX_VALUE
+end = Number.MAX_VALUE
+sample = 0
+assert(weight, 0)
+start = 0
+end = 8
+sample = Number.NaN
+assert(Number.isNaN(weight), true)
+empty = Math.inverseLerp()
+assert(Number.isNaN(empty), true)
+one = Math.inverseLerp(0)
+assert(Number.isNaN(one), true)
+two = Math.inverseLerp(0, 8)
+assert(Number.isNaN(two), true)
+literal = Math.inverseLerp(false, true, null)
+assert(literal, 0)
+withExtra = Math.inverseLerp(0, 8, 2, 99)
+assert(withExtra, 0.25)
+ignored = Number.NaN
+withIgnored = Math.inverseLerp(0, 8, 2, ignored)
+assert(withIgnored, 0.25)
+ignored = "not-a-number"
+assert(withIgnored, 0.25)
+ignored = null
+assert(withIgnored, null)
+ignored = []
+assert(withIgnored, 0.25)
+
+---
+
+# Nucleoid applies inverse interpolation to live class rules
+
+class Gauge
+$Gauge.weight = Math.inverseLerp($Gauge.start, $Gauge.end, $Gauge.sample)
+first = Gauge()
+second = Gauge()
+first.start = 0
+first.end = 8
+first.sample = 2
+second.start = 10
+second.end = 2
+second.sample = 8
+assert(first.weight, 0.25)
+assert(second.weight, 0.25)
+first.sample = 12
+assert(first.weight, 1.5)
+assert(second.weight, 0.25)
+first.end = 16
+assert(first.weight, 0.75)
+third = Gauge()
+assert(third.weight, null)
+third.start = 0
+third.end = 4
+third.sample = 1
+assert(third.weight, 0.25)
+delete first.sample
+assert(first.weight, null)
+first.sample = -4
+assert(first.weight, -0.25)
+assert(Gauge.length, 3)
+
+---
+
+# Nucleoid preserves deferred inverse interpolation and rollback
+
+class Sensor
+sensor = Sensor()
+start = sensor.lower
+end = sensor.upper
+sample = sensor.reading
+weight = Math.inverseLerp(start, end, sample)
+withDeferredExtra = Math.inverseLerp(start, end, sample, sensor.optional)
+assert(weight, null)
+assert(withDeferredExtra, null)
+sensor.lower = 0
+sensor.upper = 8
+sensor.reading = 2
+assert(weight, 0.25)
+assert(withDeferredExtra, null)
+sensor.optional = 99
+assert(withDeferredExtra, 0.25)
+delete sensor.reading
+assert(weight, null)
+assert(withDeferredExtra, null)
+sensor.reading = 6
+assert(weight, 0.75)
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = 4
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 6)
+assert(weight, 0.75)
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(sensor.reading, 6)
+delete sensor.optional
+assert(withDeferredExtra, null)
+assert(weight, 0.75)
+sensor.optional = [1, 2]
+assert(withDeferredExtra, 0.75)
+sensor.reading = 2
+assert(weight, 0.25)
+assert(withDeferredExtra, 0.25)
+weight
+# return: 0.25
 ```
