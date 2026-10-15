@@ -857,8 +857,9 @@ arrow definition or method with exactly one untyped ordinary identifier
 parameter. `def total(amount) => amount + fee` remains valid; the optional
 untyped multiple-parameter arrow spelling is demonstrated in
 [bare multiple-parameter named arrows](#bare-multiple-parameter-named-arrows).
-Calls and typed/mixed multiple-parameter signatures retain their parentheses;
-the expression still follows [NUC 12](nuc-0012.md). [NUC 19](nuc-0019.md)
+Calls retain their parentheses; typed/mixed multiple-parameter arrows have the
+separate NUC29 spelling below. The expression still follows
+[NUC 12](nuc-0012.md). [NUC 19](nuc-0019.md)
 specifies the corresponding narrow indented-colon form, demonstrated in
 [single-parameter indented block definitions](#single-parameter-indented-block-definitions).
 
@@ -1714,8 +1715,9 @@ Under [accepted NUC 27](nuc-0027.md),
 equivalent. Only the complete comma-separated list of at least two untyped
 ordinary identifiers immediately followed by `=>` on the same logical line
 qualifies. No logical newline, semicolon or comment-induced break is skipped.
-Typed/mixed lists, bare inline/braced blocks, defaults, destructuring, rest
+Bare inline/braced blocks, defaults, destructuring, rest
 parameters, trailing bare commas and return annotations are not added.
+Typed/mixed arrow lists have the separate NUC29 spelling below.
 Calls and anonymous arrows are unchanged; parenthesized, single-parameter
 typed-arrow and typed/untyped single-parameter block alternatives remain valid.
 
@@ -1743,12 +1745,45 @@ assert(result, 9)
   The colon must immediately lead to `Newline` or `Indent`, and the first
   non-newline/non-semicolon token from that body break must be a real `Indent`.
   Blank/comment lines and normal suite layout remain valid; `:;` does not qualify.
-- Typed/mixed multiple bare headers, inline/braced bare suites, trailing bare
+- Typed/mixed multiple bare block headers, inline/braced bare suites, trailing bare
   commas, defaults, destructuring, rest and return annotations remain unsupported.
   Ordinary indented bodies may contain existing branches and inner blocks.
 - All parenthesized forms, NUC27 arrows and single typed/untyped guards remain
   valid. Binding, explicit/bare/no returns, noncapturing scope, receivers,
   snapshots, redefinition, graphs and rollback retain the existing block behavior.
+
+---
+
+## Bare typed multiple-parameter named arrows
+
+**Typed multiple parameter named arrows keep live inputs**
+
+```nuc
+bias = 1
+def total left: int, right => left + right + bias
+result = total(2, 3)
+assert(result, 6)
+bias = 4
+assert(result, 9)
+```
+
+- [NUC 29](nuc-0029.md) adds an optional spelling of
+  `def total(left: int, right) => left + right + bias`, without replacing any
+  accepted form.
+- Two or more ordinary identifier parameters may mix the existing ordinary
+  identifier annotations in any position; at least one annotation distinguishes
+  the new forms from NUC27's entirely untyped lists. Metadata and argument
+  binding are unchanged, with no runtime type enforcement.
+- Require the complete immediate comma-separated sequence followed by `=>`;
+  skip no logical newline, semicolon, indentation or comment-induced break.
+  Typed/mixed multiple bare block headers, trailing bare commas, new
+  parameter/type syntax and call-site omission are not added.
+- The named return block, body expressions, methods/init/receivers, external
+  dependencies, aliases, snapshots, redefinition and transactions retain their
+  parenthesized behavior. NUC28 untyped blocks and every single guard remain
+  unchanged; blocks gain no implicit return.
+- Full grammar, exact errors and positions are in the authoritative
+  [typed multiple-parameter arrow section](../nucleoid.spec.md#bare-typed-multiple-parameter-named-arrows).
 
 ---
 

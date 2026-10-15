@@ -1,1 +1,1 @@
-def f amount: int, other => amount
+def f amount: int, other, => amount

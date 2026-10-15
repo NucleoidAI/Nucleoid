@@ -126,6 +126,11 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
         "def f amount, other:\n    return amount",
         "def f(amount, other):\n    return amount",
     );
+    // NUC29 extends only arrows; typed/mixed multiple blocks stay unsupported.
+    equivalent(
+        "def f amount: int, other => amount",
+        "def f(amount: int, other) => amount",
+    );
     for source in [
         "def f amount:",
         "def f amount:\n",
@@ -133,7 +138,7 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
         "def f amount:\nreturn amount",
         "def f amount:\n;\nreturn amount",
         "def f amount: int, other:\n    return amount",
-        "def f amount: int, other => amount",
+        "def f amount: int, other, => amount",
         "def f amount: return amount",
         "def f amount: { return amount }",
         "def f amount:;\n    return amount",

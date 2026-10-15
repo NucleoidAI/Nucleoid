@@ -303,7 +303,7 @@ fn invalid_key_tokens_and_missing_colons_keep_exact_accepted_diagnostics() {
             5,
         ),
         (
-            "def wrap amount: int, other => { amount: amount }",
+            "def wrap amount: int, other, => { amount: amount }",
             "Expected '(' but found identifier 'amount'",
             1,
             10,

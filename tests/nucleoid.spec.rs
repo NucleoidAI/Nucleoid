@@ -5275,7 +5275,7 @@ fn keeps_bare_typed_single_parameter_binding_and_explicit_alternatives_equivalen
     run("def bare value => value + 1");
     run(r#"def block(amount: int):
     return amount + 2"#);
-    run("def pair(left: int, right: int) => left + right");
+    run("def pair left: int, right: int => left + right");
     run("def unit() => 42");
     assert_eq!(run("identity(3)"), 3);
     assert_eq!(run("identity()"), serde_json::Value::Null);
@@ -6134,6 +6134,110 @@ fn rolls_back_failed_bare_multiple_parameter_block_redefinitions() {
     assert_eq!(run("total"), 9);
     assert_eq!(run_error(r#"def reading left, right:
     return missing + left + right"#), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 9);
+    run("source = 4");
+    assert_eq!(run("total"), 10);
+    assert_eq!(run("reading(8, 9)"), 21);
+    run(r#"reading(8, 9)
+
+# return: 21"#);
+}
+
+/// Nucleoid defines bare typed multiple parameter named arrows
+#[rustfmt::skip]
+#[test]
+fn defines_bare_typed_multiple_parameter_named_arrows() {
+    let mut run = runner();
+    run("def add left: int, right: int => left + right");
+    run("def scaled left: number, right, factor: number => (left + right) * factor");
+    run("def typedLast left, right: number => left + right");
+    run("def typedFirst left: number, right => left + right");
+    assert_eq!(run("add(2, 3)"), 5);
+    assert_eq!(run("scaled(2, 3, 4)"), 20);
+    assert_eq!(run("typedLast(4, 5)"), 9);
+    assert_eq!(run("typedFirst(6, 7)"), 13);
+}
+
+/// Nucleoid keeps bare typed multiple parameter arrows reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_typed_multiple_parameter_arrows_reactive() {
+    let mut run = runner();
+    run("bias = 2");
+    run("def scaled left: int, right: int => left * right + bias");
+    run("live = scaled");
+    run("snapshot = scaled.value");
+    run("result = live(3, 4)");
+    run("frozen = snapshot(3, 4)");
+    assert_eq!(run("result"), 14);
+    assert_eq!(run("frozen"), 14);
+    run("def scaled left: int, right: int => left + right + bias");
+    assert_eq!(run("result"), 9);
+    assert_eq!(run("frozen"), 14);
+    run("bias = 4");
+    assert_eq!(run("result"), 11);
+    assert_eq!(run("frozen"), 16);
+}
+
+/// Nucleoid preserves bare typed multiple parameter methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_typed_multiple_parameter_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Parent:
+    def init left: int, right: int => this.amount = left + right
+    def reading offset: int, scale: int => self.amount * scale + offset"#);
+    run(r#"class Child: Parent
+    def init left: int, right => super(left, right)
+    def reading offset, scale: int => self.amount * scale + offset"#);
+    run("child = Child(2, 3)");
+    run("observed = child.reading(1, 2)");
+    assert_eq!(run("child.id"), "child");
+    assert_eq!(run("child.amount"), 5);
+    assert_eq!(run("observed"), 11);
+    run("child.amount = 8");
+    assert_eq!(run("observed"), 17);
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 1);
+}
+
+/// Nucleoid preserves bare typed multiple parameter arrow bindings and scopes
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_typed_multiple_parameter_arrow_bindings_and_scopes() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("left = 10");
+    run("right = 20");
+    run("def pair left: int, right: int => [left, right]");
+    run("def invoke operation: Callback, amount: int => operation(amount)");
+    run("def increment(amount: int) => amount + 1");
+    run("def operation(amount) => amount + 100");
+    run(r#"def outer(initial: int):
+    def combine left: int, right, scale: int => (left + right) * scale
+    return combine(initial, 2, 3)"#);
+    assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
+    assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
+    assert_eq!(run("pair()"), serde_json::json!([null, null]));
+    assert_eq!(run("pair(3, 4, 5)"), serde_json::json!([3, 4]));
+    assert_eq!(run(r#"pair("three", true)"#), serde_json::json!(["three", true]));
+    assert_eq!(run("invoke(increment, 4)"), 5);
+    assert_eq!(run("invoke(null, 3)"), serde_json::Value::Null);
+    assert_eq!(run_error("invoke(7, 3)"), "TypeError: operation is not a function");
+    assert_eq!(run("outer(4)"), 18);
+    assert_eq!(run("left"), 10);
+    assert_eq!(run("right"), 20);
+}
+
+/// Nucleoid rolls back failed bare typed multiple parameter arrow redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_bare_typed_multiple_parameter_arrow_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run("def reading left: int, right: int => source + left + right");
+    run("total = reading(2, 4)");
+    assert_eq!(run("total"), 9);
+    assert_eq!(run_error("def reading left: int, right: int => missing + left + right"), "ReferenceError: missing is not defined");
     assert_eq!(run("total"), 9);
     run("source = 4");
     assert_eq!(run("total"), 10);

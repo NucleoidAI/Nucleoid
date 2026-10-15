@@ -221,8 +221,8 @@ fn every_unsupported_typed_prefix_keeps_the_parameter_boundary_position() {
         "def f amount: int: return amount",
         "def f amount: int: { return amount }",
         "def f amount: int { return amount }",
-        "def f amount: int, other => amount",
-        "def f amount: int, other: str => amount",
+        "def f amount: int, other, => amount",
+        "def f amount: int, other: str, => amount",
         "def f amount: int = 1 => amount",
         "def f amount: int -> int => amount",
         "def f amount: Int.Name => amount",
@@ -270,7 +270,7 @@ fn every_unsupported_typed_prefix_keeps_the_parameter_boundary_position() {
             Position::new(1, 6),
         ),
         (
-            "class Gauge:\n    def reading amount: int, other => amount",
+            "class Gauge:\n    def reading amount: int, other, => amount",
             "Expected '(' but found identifier 'amount'",
             Position::new(2, 17),
         ),
@@ -548,7 +548,7 @@ fn typed_redefinition_failures_and_unsupported_headers_preserve_rollback() {
         assert_eq!(runtime.run("total").unwrap(), Value::Number(5.0));
         assert!(!runtime.graph.contains(&NodeKey::variable("missing")));
         for header in [
-            "def reading amount: int, other => amount",
+            "def reading amount: int, other, => amount",
             "def reading amount: int, other:\n    return amount",
             "def reading amount: int\n=> amount",
         ] {
@@ -659,7 +659,7 @@ fn typed_repl_recovers_from_unsupported_headers_and_bounded_operand_errors() {
         .unwrap();
     let source = format!(
         ".json on\nbase = 2\ndef scaled amount: int => amount + base\nresult = scaled(3)\nbase = 4\nresult\n\
-         def scaled amount: int, other => amount\n\
+         def scaled amount: int, other, => amount\n\
          def limited amount: int => amount{}\n\
          def scaled amount: int => amount * base\nassert(result, 12)\nresult\n.exit\n",
         " + 1".repeat(200)

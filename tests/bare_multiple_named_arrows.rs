@@ -168,9 +168,9 @@ fn incomplete_or_unsupported_lists_preserve_parenthesized_parser_errors_and_posi
         "left, => left",
         "left,, right => left",
         "left, right other => left",
-        "left: int, right => left",
-        "left, right: int => left",
-        "left: int, right: int => left",
+        "left: int, right, => left",
+        "left, right: int, => left",
+        "left: int, right: int, => left",
         "left = 1, right => left",
         "left, right = 1 => left",
         "left, [right] => left",
@@ -475,7 +475,7 @@ fn failed_redefinitions_and_invalid_headers_preserve_transactions_and_recovery()
         assert!(!runtime.graph.contains(&NodeKey::variable("missing")));
         for header in [
             "def reading left, right, => left",
-            "def reading left, right: int => left",
+            "def reading left, right: int, => left",
             "def reading left, right:\nreturn left",
             "def reading left,\nright => left",
         ] {

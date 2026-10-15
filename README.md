@@ -167,9 +167,9 @@ assert(square(4), 16)
 
 [NUC 18](docs/nuc-0018.md) specifies parameter-parenthesis omission for named
 arrow definitions and methods with exactly one untyped ordinary identifier
-parameter. Nullary and typed/mixed multiple-parameter definitions still use
-parentheses, as do calls; the optional untyped multiple-parameter arrow spelling
-is demonstrated below. `def square(amount) => amount * amount` remains valid.
+parameter. Nullary definitions and calls still use parentheses; the optional
+untyped and typed/mixed multiple-parameter arrow spellings are
+demonstrated below. `def square(amount) => amount * amount` remains valid.
 The body, binding, reactivity, snapshots, receivers and initializer behavior
 remain those of [NUC 12](docs/nuc-0012.md).
 
@@ -187,7 +187,7 @@ assert(square(4), 16)
 spelling before an indented colon suite, including methods and `init`.
 `def square(amount):` with the same body remains valid. The colon must lead to
 a real indented body; inline/brace suites, empty and typed/mixed multiple-parameter
-signatures retain their parentheses. The optional untyped multiple-parameter
+block signatures retain their parentheses. The optional untyped multiple-parameter
 indented spelling is demonstrated below. Typed single-parameter indented blocks
 have the separate optional spelling below. Block returns, parameter binding, live
 dependencies and runtime behavior are unchanged.
@@ -212,9 +212,9 @@ assert(result, 10)
 single-identifier typed-arrow header. `def double(amount: int) => amount * 2`
 remains valid with identical parameter/type metadata and named return-block
 behavior. Annotations retain their existing handling, not new variable lookup
-or type enforcement. Typed bare inline/braced blocks, logical header breaks and
-typed/mixed multiple-parameter forms are not added; calls and NUC18/19 spellings
-are unchanged.
+or type enforcement. Typed bare inline/braced blocks and logical header breaks
+are not added. The separate NUC29 extension below adds only typed/mixed
+multiple-parameter arrows; calls and NUC18/19 spellings are unchanged.
 
 **Numeric clamping keeps values within live bounds**
 
@@ -367,8 +367,9 @@ assert(scaled(2, 3, 4), 20)
 comma-separated list of two or more untyped ordinary identifiers immediately
 followed by `=>` on the same logical header line, including methods and `init`.
 `def add(left, right) => left + right` remains valid and exactly equivalent.
-Trailing bare commas, typed/mixed lists, bare inline/braced blocks, defaults,
+Trailing bare commas, bare inline/braced blocks, defaults,
 destructuring, rest parameters and return annotations are not added.
+Typed/mixed arrow lists have the separate NUC29 spelling below.
 No logical newline, semicolon or comment-induced break is skipped. Calls retain
 their parentheses and anonymous arrows retain their existing grammar; the
 single-parameter typed and block alternatives above remain unchanged.
@@ -388,11 +389,32 @@ identifiers on one logical header line. After the colon require an immediate
 newline or indent and a real indent after only normal newline/semicolon layout;
 a colon immediately followed by a semicolon does not qualify. Blank/comment
 lines before a genuine body keep their existing grammar.
-Typed/mixed multiple bare headers, inline/braced bare suites, trailing bare
+Typed/mixed multiple bare block headers, inline/braced bare suites, trailing bare
 commas and logical breaks within the header remain unsupported. Parenthesized
 forms, arrows, single-parameter guards and calls are unchanged. Block returns,
 scope, receivers, live relationships, snapshots and rollback retain the
 parenthesized behavior; there is no implicit last-expression return.
+
+**Typed multiple parameter named arrows can omit parentheses**
+
+```nuc
+def add left: int, right: int => left + right
+assert(add(2, 3), 5)
+```
+
+- [NUC 29](docs/nuc-0029.md) adds this optional arrow spelling;
+  `def add(left: int, right: int) => left + right` remains
+  valid and exactly equivalent, including methods and `init`.
+- Require at least two ordinary identifier parameters, with at least one
+  existing `: Identifier` annotation for the new typed/mixed forms. Untyped
+  multiple lists retain NUC27 behavior; annotations stay metadata, not runtime
+  type checks. Mixed lists may annotate any parameter.
+- The complete comma-separated header must immediately end in `=>`, without
+  logical breaks or skipped separators. Typed/mixed multiple bare blocks,
+  trailing bare commas, new parameter/type grammar and call-site omission
+  remain unsupported. Single guards and NUC28 untyped blocks are unchanged.
+- Binding, named return-block lowering, expression bodies, receivers,
+  reactivity, snapshots, graph dependencies and rollback remain unchanged.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,

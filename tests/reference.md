@@ -1484,4 +1484,15 @@ result = area(3, 4)
 assert(result, 24)
 scale = 3
 assert(result, 36)
+
+---
+
+# Nucleoid preserves bare typed multiple parameter arrow relationships
+
+scale = 2
+def area width: number, height: number => width * height * scale
+result = area(3, 4)
+assert(result, 24)
+scale = 3
+assert(result, 36)
 ```

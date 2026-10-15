@@ -412,23 +412,32 @@ impl Parser {
     }
 
     /// Offset of the delimiter after a complete bare list of at least two
-    /// ordinary identifiers. Inspect without consuming tokens or layout.
+    /// ordinary identifiers, with optional identifier annotations for arrows.
+    /// Only entirely untyped lists may end in a block colon. Inspect without
+    /// consuming tokens, allocating names or skipping layout.
     fn bare_multiple_parameter_end(&self) -> Option<usize> {
-        if !matches!(
-            (self.peek(), self.peek_at(1)),
-            (Token::Identifier(_), Token::Comma)
-        ) {
-            return None;
-        }
-
-        let mut offset = 2;
+        let mut offset = 0;
+        let mut multiple = false;
+        let mut annotated = false;
         loop {
             if !matches!(self.peek_at(offset), Token::Identifier(_)) {
                 return None;
             }
-            match self.peek_at(offset + 1) {
-                Token::Arrow | Token::Colon => return Some(offset + 1),
-                Token::Comma => offset += 2,
+            offset += 1;
+            if matches!(
+                (self.peek_at(offset), self.peek_at(offset + 1)),
+                (Token::Colon, Token::Identifier(_))
+            ) {
+                annotated = true;
+                offset += 2;
+            }
+            match self.peek_at(offset) {
+                Token::Arrow if multiple => return Some(offset),
+                Token::Colon if multiple && !annotated => return Some(offset),
+                Token::Comma => {
+                    multiple = true;
+                    offset += 1;
+                }
                 _ => return None,
             }
         }

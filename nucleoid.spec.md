@@ -103,13 +103,13 @@ line can still continue over physical lines. Named arrow braces still denote
 object expressions; returned anonymous functions keep their own existing body
 grammar and do not gain closure capture.
 
-Apart from NUC27's untyped multiple-parameter arrows, NUC28's untyped
-multiple-parameter indented blocks and the narrow typed-arrow and single-parameter
-indented-colon forms below, other prefixes still require
-parameter parentheses. Typed/mixed multiple, defaulted, destructured, and
-nullary bare parameters are not supported; bare inline suites and brace suites
-are not added.
-For `def f amount:`, `def f amount: int, other => amount`,
+Apart from NUC27's untyped and NUC29's typed/mixed multiple-parameter arrows,
+NUC28's untyped multiple-parameter indented blocks and the narrow typed-arrow
+and single-parameter indented-colon forms below, other prefixes still require
+parameter parentheses. Typed/mixed multiple bare blocks, defaulted, destructured,
+and nullary bare parameters are not supported; bare inline suites and brace
+suites are not added.
+For `def f amount:`, `def f amount: int, other, => amount`,
 `def f amount, other, => amount`, and headers separating `amount` from `=>`
 by a logical newline or semicolon, the error remains
 `SyntaxError("Expected '(' but found identifier 'amount'")` at line 1, column 7.
@@ -155,13 +155,14 @@ automatic invocation is introduced.
   parameter lists, keywords and ordinary-identifier references are unchanged.
 - This arrow extension does not itself add block headers; NUC28's separate
   untyped multiple-parameter indented-block guard is specified below.
-  Bare inline/braced blocks, typed/mixed multiple parameters, defaults,
+  NUC29 separately extends arrows to typed/mixed lists below; NUC27's own
+  identifier-only grammar remains unchanged. Bare inline/braced blocks, defaults,
   destructuring, rest parameters, trailing commas, return annotations and
   call-parenthesis omission are not added.
 - An incomplete or unsupported tokenizable prefix falls through without
   consuming any prefix token to the existing parenthesized parameter parser.
   For `def f left, right`, `def f left, right, => left`,
-  `def f left, right: int => left`, `def f left: int, right => left`,
+  `def f left, right: => left`, `def f left: int, right, => left`,
   `def f left, right:` without a real indented body, defaults/destructuring/rest
   or a logical break in the bare list, preserve
   `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
@@ -251,8 +252,10 @@ raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
   Looking past only `Newline` and `Semicolon` layout from that initial body
   break, the first non-layout token must be a real `Indent`. A colon immediately
   followed by a semicolon never qualifies, even if indentation appears later.
-- The allocation-free, linear lookahead shares NUC27's complete identifier/comma
-  scan. It consumes no parameters, separators or body tokens. Once qualified,
+- The allocation-free, linear lookahead shares the complete-list scan with
+  multiple-parameter arrows, but only entirely untyped lists may end in a block
+  colon; NUC29's annotations never qualify this block path. It consumes no
+  parameters, separators or body tokens. Once qualified,
   consume only the identifier/comma list as ordered
   `Parameter { name, type_name: None }` values, leaving its final colon for the
   existing `suite()` parser. Blank/comment lines and normal layout before a
@@ -273,7 +276,7 @@ raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
   inline/braced/indented alternative remains available. Calls, anonymous
   functions, class syntax, keywords, lexer/AST/runtime/generator/public API,
   expression nesting and chain bounds are unchanged; add no parameter-count cap.
-- Typed/mixed multiple bare headers, bare inline/braced suites, trailing bare
+- Typed/mixed multiple bare block headers, bare inline/braced suites, trailing bare
   commas, defaults, destructuring, rest parameters, return annotations and
   call-parenthesis omission are not added.
 - An incomplete or unsupported tokenizable prefix is left untouched for the
@@ -333,16 +336,17 @@ lists, class parameter lists and anonymous functions remain valid. NUC 18's
 untyped bare arrows and NUC 19's exact untyped indented-colon guard are unchanged.
 Representative typed parenthesized alternatives remain executable below.
 
-Typed bare inline or braced suites, typed/mixed multiple parameters,
+Typed bare inline or braced suites, typed/mixed multiple bare blocks,
 nullary/defaulted/destructured parameters, dotted/union/generic/keyword annotation
 forms, return annotations, and logical breaks in the bare header are not added.
-NUC27's untyped multiple-parameter arrows do not extend this typed guard. The
-typed indented-block spelling below does not change this arrow guard. Named-arrow
+NUC27's untyped and NUC29's typed/mixed multiple-parameter arrows have separate
+complete-list guards; neither changes this single-parameter guard. The typed
+indented-block spelling below does not change this arrow guard. Named-arrow
 leading braces remain object expressions; a returned anonymous arrow retains its
 own block grammar. No public token, AST, runtime, generator, API, or bound changes.
 
 Unsupported tokenizable prefixes such as `def f amount: int:` without a body,
-`def f amount: int, other => amount`, `def f amount: Int.Name => amount`,
+`def f amount: int, other, => amount`, `def f amount: Int.Name => amount`,
 `def f amount: List[int] => amount`, `def f amount: this => amount`, and a logical
 break before the typed arrow still raise
 `SyntaxError("Expected '(' but found identifier 'amount'")` at line 1, column 7.
@@ -362,6 +366,109 @@ position. An unparenthesized multiline object body with indentation retains
 `SyntaxError("Expected a key but found an indented block")` at line 2, column 5.
 Undefined body reads keep their existing `ReferenceError` messages and top-level
 statement positions; caught values and transaction recovery are unchanged.
+
+## Bare typed multiple-parameter named arrows
+
+- NUC29 optionally spells `def add(left: int, right: int) => left + right`
+  as `def add left: int, right: int => left + right`, and mixed signatures such
+  as `def scaled left: number, right, factor: number => (left + right) * factor`
+  as their exact parenthesized counterparts, including methods and `init`.
+- After `def` and the required ordinary definition name, recognize the complete
+  immediate token sequence
+  `Identifier (Colon Identifier)? (Comma Identifier (Colon Identifier)?)+ Arrow`.
+  Require at least two ordinary identifier parameters. At least one annotation
+  identifies this extension; entirely untyped multiple lists retain NUC27's
+  behavior. Every annotation is exactly the existing `Colon Identifier`
+  metadata syntax, not a keyword, dollar name, dotted, generic, nullable or
+  union type grammar.
+- Look ahead linearly without consuming tokens, cloning ASTs, allocating
+  parameter names or skipping logical `Newline`, `Semicolon`, `Indent`,
+  `Dedent` or comment-induced logical breaks. Every comma requires another
+  ordinary parameter identifier; the final arrow must immediately follow the
+  complete list. Unsupported prefixes are never partially consumed.
+- After successful lookahead, reuse `parameter()` to preserve each name and
+  `type_name: Some(annotation)` or `None` in exactly the original order.
+  Reuse the named-arrow expression path and named `FunctionBody::Block`
+  containing `Stmt::Return(Some(expression))`; the full AST and canonical
+  rendering are identical to the parenthesized form.
+- An annotation is not resolved as a variable, added as a dependency or checked
+  at runtime. Missing/null/extra/string arguments, local assignments and
+  shadowing retain their existing binding. A null callable parameter still
+  yields the existing deferred `null`; a non-callable `operation` raises
+  `TypeError("operation is not a function")`, even when an outer function
+  has that name.
+- Keep expression precedence, assignments, objects, lists, templates and
+  returned anonymous functions unchanged. Leading named-arrow braces remain
+  object expressions, not statement blocks; a returned anonymous function
+  retains its own body grammar and noncapturing scope. Skip no separator
+  before the first body expression. A parenthesis beginning on that logical
+  header line may continue over physical lines.
+- Receivers, `this`/`self`, initializer adoption, explicit/bare `super`, live
+  callable aliases, `.value` definition snapshots, redefinition, reactive
+  arguments and external inputs, graph keys/dependencies, reasoning,
+  transactions, caught error values, rollback and top-level statement
+  positions retain their parenthesized behavior.
+- Preserve every parenthesized typed/untyped/mixed, empty/multiple,
+  trailing-comma/multiline, arrow/indented/inline/braced alternative; for example,
+  `def add(left: int, right: int) => left + right` remains valid. NUC18/20's
+  single arrows, NUC19/24's exact single block guards and NUC27/28's untyped
+  multiple arrows/indented blocks retain their behavior. In particular,
+  `def f left, right:` with an indented `int => left` body remains an untyped
+  block with no implicit return, not an annotated header.
+- Typed/mixed multiple bare indented, inline and braced block headers remain
+  unsupported, even though the complete-list scanner is shared with NUC28.
+  Add no trailing bare commas, missing types/parameters, defaults, destructuring,
+  rest, return annotations, multiline/broken bare headers, anonymous or class
+  header shorthand, call-parenthesis omission, keyword or type grammar.
+- Add no parameter-count cap: flat all-typed/mixed lists through 1,024 parameters
+  retain the existing uncapped parameter grammar, not the 128-link expression
+  bound. Excessive body nesting, operator chains and postfix chains retain
+  `SyntaxError("Expressions are nested too deeply")`,
+  `SyntaxError("Expression has too many operands")` and
+  `SyntaxError("Expression has too many parts")` respectively. No lexer,
+  public AST, runtime, generator, API, resource-bound or inherited-error change.
+- Incomplete or unsupported tokenizable prefixes fall back untouched to the
+  existing parenthesized parameter parser. `def f left: int, right`,
+  `def f left: int, right, => left`, missing annotations such as
+  `def f left: int, right: => left`, unsupported type/parameter forms, logical
+  header breaks and typed/mixed multiple bare block headers retain
+  `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
+  `def f this: int, right => right` instead names `keyword 'this'` at that
+  position. A newline immediately after `def f` gives
+  `SyntaxError("Expected '(' but found end of line")` at line 1, column 5;
+  a semicolon there gives `SyntaxError("Expected '(' but found ';'")` at column 6.
+  Inside `class Gauge:` and a newline, four-space-indented
+  `def reading left: int, right, => left` keeps the parameter-boundary error
+  at line 2, column 17.
+- For the exact bytes `def f left: int, right =>`, preserve
+  `SyntaxError("Unexpected end of input")` at line 1, column 26.
+  A final newline gives `SyntaxError("Unexpected end of line")` at line 2,
+  column 1. A body ` (left +)` gives `SyntaxError("Unexpected ')'")` at line 1,
+  column 35; ` { return left }` gives
+  `SyntaxError("Expected a key but found keyword 'return'")` at column 36;
+  ` { left = 1 }` gives `SyntaxError("Expected ':' but found '='")` at column 34.
+  An unparenthesized multiline object body with indentation keeps
+  `SyntaxError("Expected a key but found an indented block")` at line 2, column 5.
+- Lexical failures precede parsing: `def f left: int, right => @` gives
+  `SyntaxError("Unexpected character '@'")` at line 1, column 27;
+  `def f left: int | str, right => left` gives
+  `SyntaxError("Unexpected character '|'")` at column 17;
+  `def f left: int?, right => left` gives
+  `SyntaxError("Unexpected character '?'")` at column 16.
+  The malformed parenthesized `def f(left: int, right:) => left` keeps
+  `SyntaxError("Expected a type but found ')'")` at line 1, column 26.
+- Undefined body/object reads retain `ReferenceError("missing is not defined")`.
+  A returned anonymous function reading uncaptured `left` retains
+  `ReferenceError("left is not defined")`; `this` or `self` without an instance
+  retains `ReferenceError("this is not defined")`. Existing parameter-dependent
+  local/nested noncapturing propagation failures are not repaired. Runtime
+  errors retain their existing top-level statement positions; caught values
+  omit positions as before.
+- The five appended `bare typed multiple parameter` entries cover all-typed
+  and mixed positions, reactivity, aliases/snapshots/redefinition, methods/init,
+  arity/shadowing/null/non-callables/nesting and failed-redefinition rollback.
+  The non-callable catch executes with `invoke(7, 3)`, not deferred `null`;
+  the rollback entry executes its catch and explicitly ends in `21`.
 
 ## Bare typed single-parameter indented block definitions
 
@@ -385,8 +492,8 @@ statement positions; caught values and transaction recovery are unchanged.
   and all parenthesized typed/untyped, empty/multiple, trailing-comma/multiline,
   inline/braced/indented, class and anonymous signatures remain unchanged.
 - Add only one ordinary parameter name and one ordinary annotation name.
-  Missing/dotted/union/generic/keyword/literal annotations, multiple/defaulted/
-  destructured/variadic/nullary bare parameters, return annotations, anonymous
+  Missing/dotted/union/generic/keyword/literal annotations, multiple bare block
+  parameters, defaulted/destructured/variadic/nullary bare parameters, return annotations, anonymous
   colon functions, call-site omission and automatic invocation are not added.
 - Typed bare inline/braced suites, header-line semicolons, missing indentation
   and comments-only bodies do not qualify. Nonqualifying tokenizable prefixes
@@ -7552,7 +7659,7 @@ def text label: str => label
 def bare value => value + 1
 def block(amount: int):
     return amount + 2
-def pair(left: int, right: int) => left + right
+def pair left: int, right: int => left + right
 def unit() => 42
 
 assert(identity(3), 3)
@@ -8478,6 +8585,106 @@ assert(total, 9)
 try:
     def reading left, right:
         return missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(total, 9)
+source = 4
+assert(total, 10)
+assert(reading(8, 9), 21)
+reading(8, 9)
+
+# return: 21
+
+---
+
+# Nucleoid defines bare typed multiple parameter named arrows
+
+def add left: int, right: int => left + right
+def scaled left: number, right, factor: number => (left + right) * factor
+def typedLast left, right: number => left + right
+def typedFirst left: number, right => left + right
+assert(add(2, 3), 5)
+assert(scaled(2, 3, 4), 20)
+assert(typedLast(4, 5), 9)
+assert(typedFirst(6, 7), 13)
+
+---
+
+# Nucleoid keeps bare typed multiple parameter arrows reactive
+
+bias = 2
+def scaled left: int, right: int => left * right + bias
+live = scaled
+snapshot = scaled.value
+result = live(3, 4)
+frozen = snapshot(3, 4)
+assert(result, 14)
+assert(frozen, 14)
+def scaled left: int, right: int => left + right + bias
+assert(result, 9)
+assert(frozen, 14)
+bias = 4
+assert(result, 11)
+assert(frozen, 16)
+
+---
+
+# Nucleoid preserves bare typed multiple parameter methods and initializers
+
+class Parent:
+    def init left: int, right: int => this.amount = left + right
+    def reading offset: int, scale: int => self.amount * scale + offset
+class Child: Parent
+    def init left: int, right => super(left, right)
+    def reading offset, scale: int => self.amount * scale + offset
+child = Child(2, 3)
+observed = child.reading(1, 2)
+assert(child.id, "child")
+assert(child.amount, 5)
+assert(observed, 11)
+child.amount = 8
+assert(observed, 17)
+assert(Parent.length, 0)
+assert(Child.length, 1)
+
+---
+
+# Nucleoid preserves bare typed multiple parameter arrow bindings and scopes
+
+left = 10
+right = 20
+def pair left: int, right: int => [left, right]
+def invoke operation: Callback, amount: int => operation(amount)
+def increment(amount: int) => amount + 1
+def operation(amount) => amount + 100
+def outer(initial: int):
+    def combine left: int, right, scale: int => (left + right) * scale
+    return combine(initial, 2, 3)
+assert(pair(3, 4), [3, 4])
+assert(pair(3), [3, null])
+assert(pair(), [null, null])
+assert(pair(3, 4, 5), [3, 4])
+assert(pair("three", true), ["three", true])
+assert(invoke(increment, 4), 5)
+assert(invoke(null, 3), null)
+try:
+    invoke(7, 3)
+catch error:
+    assert(error, TypeError("operation is not a function"))
+assert(outer(4), 18)
+assert(left, 10)
+assert(right, 20)
+
+---
+
+# Nucleoid rolls back failed bare typed multiple parameter arrow redefinitions
+
+source = 3
+def reading left: int, right: int => source + left + right
+total = reading(2, 4)
+assert(total, 9)
+try:
+    def reading left: int, right: int => missing + left + right
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 assert(total, 9)
