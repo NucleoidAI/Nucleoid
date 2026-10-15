@@ -19,8 +19,10 @@ $ cargo run                   # or type statements at a prompt
 | path | what it is |
 | --- | --- |
 | `nucleoid.spec.md` | what the language does. Authoritative — when anything disagrees with it, it wins |
-| `dataset/nucleoid.spec.synth.*.md` | fine-tuning sources derived from the specification; not runtime tests |
-| `dataset/*.jsonl` | rendered specification and fine-tuning data for publication |
+| `dataset/nucleoid.spec.jsonl` | generated specification export, rendered from `nucleoid.spec.md` |
+| `dataset/nucleoid.synth.*.jsonl` | canonical synthesized fine-tuning records; not normative runtime tests |
+| `dataset/arc.jsonl` | canonical ARC training records, including grids, programs, expected results, and object annotations |
+| `dataset/` | JSONL files only; no Markdown mirrors or local dataset card |
 | `docs/` | the language reference, as NUC documents in the style of a PEP |
 | `docs/README.md` | prose reference; `tests/reference.md` is its executable form |
 | `src/` | the runtime |
@@ -62,19 +64,29 @@ quietly:
 
 ### Keeping things in step
 
-`nucleoid.spec.md`, the synthesized sources in `dataset/`, `docs/` and the crate
-describe the same language, and a change to one belongs in the same change as
-the others. `cargo test` checks the normative documents and verifies that the
-fine-tuning dataset still matches its source documents; synthesized programs
-are not executed as tests.
+`nucleoid.spec.md`, the training records in `dataset/`, `docs/` and the crate
+describe the same language. Propagate affected behavior changes to the relevant
+records and references in the same change. `cargo test` executes normative
+documents, verifies the specification export, and validates standalone training
+records. Synthesized programs are not normative runtime tests.
 
-Edit the Markdown sources, not the generated JSONL. Regenerate the dataset and,
-when the specification changes, its exported tests from the repository root:
+Edit `nucleoid.spec.md`, not its generated JSONL export. Regenerate that export
+and its Rust tests from the repository root when the specification changes:
 
 ```console
 $ UPDATE_DATASET=1 cargo test --test dataset
 $ UPDATE_SPEC_TESTS=1 cargo build
 ```
+
+Maintain synthesized and ARC cases directly in their existing JSONL files,
+without Markdown source copies. `UPDATE_DATASET` updates only the normative
+specification export; it does not rewrite these training records. Each record
+has a stable `id`, a `description`, NUC `code`, and a nullable JSON-encoded
+`return`. ARC records also retain explicit grids, object annotations, provenance,
+and normalization notes.
+
+Keep `dataset/` JSONL-only. Do not recreate `docs/dataset/` or move duplicate
+Markdown datasets or dataset cards somewhere else.
 
 ### Evaluating a language proposal
 

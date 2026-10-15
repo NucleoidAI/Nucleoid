@@ -15,8 +15,10 @@ Build a Rust implementation of Nucleoid. The crate is at the repository root (`C
 ## References
 
 - `nucleoid.spec.md` — the main reference for runtime behaviours
-- `dataset/nucleoid.spec.synth.*.md` — synthesized fine-tuning use cases derived from `nucleoid.spec.md`;
+- `dataset/nucleoid.synth.*.jsonl` — canonical synthesized fine-tuning records derived from `nucleoid.spec.md`;
   they are dataset material, not executable tests
+- `dataset/arc.jsonl` — canonical, self-contained ARC training cases and annotations
+- `dataset/` — `.jsonl` files only, with no duplicate Markdown sources or dataset cards elsewhere; do not recreate `docs/dataset/`
 - `docs/` — NUC language proposals in PEP style; accepted, implemented behavior forms the Nucleoid Language Reference, in the spirit of https://docs.python.org
 
 ## Runtime architecture
