@@ -1634,4 +1634,24 @@ end = 12
 assert(weight, 0.5)
 sample = 18
 assert(weight, 1.5)
+
+---
+
+# Nucleoid preserves range remapping relationships
+
+start = 2
+end = 10
+targetStart = 10
+targetEnd = 30
+sample = 4
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+assert(mapped, 15)
+sample = 6
+assert(mapped, 20)
+targetStart = 0
+assert(mapped, 15)
+targetEnd = 40
+assert(mapped, 20)
+sample = 18
+assert(mapped, 80)
 ```

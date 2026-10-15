@@ -1030,7 +1030,7 @@ Full detail: [NUC 9](nuc-0009.md).
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
@@ -1328,6 +1328,79 @@ assert(weight, 1.5)
 
 ---
 
+## Reactive range remapping
+
+### Unclamped remapping relationships stay live
+
+```
+start = 2
+end = 10
+targetStart = 10
+targetEnd = 30
+sample = 4
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+assert(mapped, 15)
+sample = 6
+assert(mapped, 20)
+targetStart = 0
+assert(mapped, 15)
+targetEnd = 40
+assert(mapped, 20)
+sample = 18
+assert(mapped, 80)
+```
+
+- This is the sealed `tests/reference.md` entry, omitting only its title comment.
+- Accepted [NUC 39](nuc-0039.md) adds only unshadowed static
+  `Math.remap(start, end, targetStart, targetEnd, value)` as an accepted intrinsic.
+- The authoritative
+  [range-remapping section](../nucleoid.spec.md#reactive-range-remapping)
+  and its five executable entries specify the accepted contract.
+- Retain Math's any-supplied-Undefined gate, including extras, and its existing
+  first-input conversion for start. Convert end, targetStart, targetEnd and
+  value intrinsically in that order; each omission supplies numeric NaN.
+- Compute six separate ordinary operations: `numerator = value - start`,
+  `denominator = end - start`, `weight = numerator / denominator`,
+  `delta = targetEnd - targetStart`, `scaled = delta * weight`,
+  `result = targetStart + scaled`, in that order.
+- The accepted nested spelling
+  `Math.lerp(targetStart, targetEnd, Math.inverseLerp(start, end, value))`
+  remains available. It evaluates target arguments first; the new call uses
+  its listed five-argument order. The sealed counterparts use pure reads.
+- Do not clamp, smooth, validate, reorder, factor, fuse, raise precision,
+  rescale or shortcut endpoints, equal targets or zero source width.
+  Descending ranges and extrapolation are intentional.
+- NaNs, infinities, overflow, underflow, cancellation, subnormals and signed
+  zeros retain that exact numeric composition. An overflowing source span
+  can normalize to zero, not a midpoint. Equal targets with infinite weight
+  give NaN; overflowing target span at weight `0.25` can give positive infinity.
+- NaNs compare by classification; every other result, including zero, matches
+  independent accepted arithmetic by bits, with no portable zero-sign promise.
+- Intrinsic literal null converts to zero without overriding live assignment
+  or parameter-null deferral. All Value kinds keep existing conversion;
+  nonnumeric values yield numeric NaN, not new errors.
+- Every supplied expression runs once left to right, including expressions
+  after Undefined and extras. Extra values are not converted or used, but
+  retain effects, reads, dependencies, strict errors, deletion and recovery.
+- Intrinsic conversion never resolves, invokes or tracks shadowable Number
+  or Math methods. State/local Math shadowing and ordinary `.Math` members
+  keep lookup. Reading `Math.remap` remains unsupported/Undefined, not callable.
+- Wrappers, frames, receivers, aliases, scopes, per-instance class rules,
+  property deletion/recovery, error positions, transactions and rollback remain.
+- Strict missing arguments retain `ReferenceError("missing is not defined")`.
+  Numeric `Math = 7` retains `TypeError("number.remap is not a function")`.
+  Unknown Math methods and `Math.random()` retain their inherited errors.
+- Literal `Math.remap(` at EOF gives `SyntaxError("Unexpected end of input")`
+  at line 1, column 12; a final newline moves that EOF to line 2, column 1.
+- Existing Math arms/helpers/constants/conversions, accepted syntax, parser,
+  lexer, AST, generator, CLI implementation, public APIs, dependencies,
+  versions, MSRV, edition and resource bounds remain unchanged.
+- Protect historical source/full ASTs and new non-RHS source/typed metadata,
+  independent inverseLerp controls, ordered assertions, expected returns and
+  actual coverage, not intentional new-RHS/immediate-graph differences.
+
+---
+
 ## 12. Reasoning Operations
 
 - `why reference` selects the reference and its transitive dependencies.
@@ -1507,6 +1580,7 @@ throw value                            raise a value
 return expression                      yield from a block or function
 
 name.value                             read without depending
+Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping (Accepted NUC 39)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 

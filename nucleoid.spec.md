@@ -1176,6 +1176,79 @@ statement positions; caught values and transaction recovery are unchanged.
 - Inherited noncapture, parameter-dependent-local, Windows debug stack and
   old whole-suite Gitless discovery limitations are not repaired or broadened.
 
+## Reactive range remapping
+
+- Accepted [NUC 39](docs/nuc-0039.md) adds only the unshadowed static
+  signature `Math.remap(start, end, targetStart, targetEnd, value)`.
+  The accepted numeric composition
+  `Math.lerp(targetStart, targetEnd, Math.inverseLerp(start, end, value))`
+  remains valid; remapping is unclamped and both ranges may descend.
+- Retain Math's existing any-supplied-Undefined gate, including extras,
+  before its unchanged first-input intrinsic conversion for start.
+  Intrinsically convert positions one through four to end, targetStart,
+  targetEnd and value, in that order, with `Value::to_number`.
+  Each missing input supplies numeric NaN, not a new arity error.
+- Compute six separate ordinary `f64` operations in exactly this order:
+  `numerator = value - start`, `denominator = end - start`,
+  `weight = numerator / denominator`, `delta = targetEnd - targetStart`,
+  `scaled = delta * weight`, `result = targetStart + scaled`.
+- Do not clamp, smooth, validate, reorder ranges, factor, fuse, use higher
+  precision, rescale, shortcut endpoints, equal outputs or zero source width.
+  Extrapolation, NaNs, infinities, signed zeros, overflow, underflow,
+  subnormals and cancellation retain the exact ordered accepted composition.
+- Source `[-Number.MAX_VALUE, Number.MAX_VALUE]` with sample zero normalizes
+  to zero, not `0.5`. Equal target endpoints `4, 4` with infinite weight give
+  NaN, not four. Target `[-Number.MAX_VALUE, Number.MAX_VALUE]` at weight
+  `0.25` can overflow to positive infinity, not a rescaled finite result.
+- Compare NaNs by classification, and every non-NaN result, including zero,
+  by bits against independent accepted arithmetic. Introduce no portable
+  NaN-payload or zero-sign guarantee.
+- Numbers, literal null, booleans, trimmed strings, empty/singleton lists
+  and dates keep intrinsic numeric conversion; other nonnumeric values
+  yield numeric NaN. Conversion neither resolves, invokes nor tracks
+  shadowable Number or other Math bindings, nor calls public Math dispatch.
+- Evaluate every supplied expression once left to right in the new call's
+  five-input order, including extras and expressions after Undefined.
+  Extra values are not converted or used, but retain reads, effects,
+  dependencies, strict failures, deferral and rollback.
+- The accepted nested composition evaluates target arguments before its
+  inner source arguments. Do not claim effect-order equivalence for arbitrary
+  expressions; the paired measured programs use pure variable/literal reads.
+- Supplied Undefined preserves inherited deferred assignments, live-null
+  and parameter-null handling, missing properties, deletion and recovery.
+  Intrinsic literal-null conversion does not override those inherited rules.
+- Preserve namespace/local Math shadowing and ordinary `.Math` lookup.
+  Reading `Math.remap` as a value stays unsupported/Undefined, not a
+  first-class callable alias. Wrappers, frames, scopes, receivers, class
+  rules, call APIs, error positions, transactions and resource bounds remain.
+- Strict unknown arguments, including extras after Undefined, retain
+  `ReferenceError("<name> is not defined")`. Unsupported random calls retain
+  `TypeError("Math.random is not supported")`; unknown static calls retain
+  `TypeError("Math.<name> is not a function")`. Numeric `Math = 7` gives
+  `TypeError("number.remap is not a function")` through ordinary dispatch.
+- Literal EOF after `Math.remap(` gives
+  `SyntaxError("Unexpected end of input")` at line 1, column 12; with a final
+  newline it gives that same error at line 2, column 1. Numeric conversion,
+  omissions, nonfinite values and ranges introduce no new errors.
+- All existing Math arms, helpers, constants, conversions and errors remain
+  unchanged, including sign, lerp, inverseLerp, clamp, saturate, smoothstep,
+  smootherstep and fract. All accepted syntax remains available. Add no parser,
+  lexer, AST, generator, CLI implementation, public API/representation,
+  dependency, version, MSRV or edition change.
+- The five entries titled `Nucleoid keeps range remapping reactive`,
+  `Nucleoid preserves intrinsic conversion during range remapping`,
+  `Nucleoid preserves remapping endpoints nonfinite inputs and omissions`,
+  `Nucleoid applies range remapping to live class rules`, and
+  `Nucleoid preserves deferred range remapping and rollback` trace this
+  contract; keep the independent inverseLerp unit control unchanged.
+- New RHS ASTs and immediate graphs intentionally differ from the nested
+  composition. Preserve non-RHS source/AST metadata, canonical assertions,
+  expected returns, observable values, transitive behavior and actual coverage,
+  including both real catches, not whole-new-program immediate-graph identity.
+- Preserve every historical program, its boundary whitespace and full AST.
+  Inherited noncapture, parameter-dependent-local, Windows debug stack and
+  old whole-suite Gitless discovery limitations are not repaired.
+
 ## Implicit iterator indented loops
 
 - `for NAME:` with a genuine indented body is optionally exactly
@@ -10748,4 +10821,264 @@ assert(weight, 0.25)
 assert(withDeferredExtra, 0.25)
 weight
 # return: 0.25
+
+---
+
+# Nucleoid keeps range remapping reactive
+
+start = 2
+end = 10
+targetStart = 10
+targetEnd = 30
+sample = 4
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+unit = Math.inverseLerp(start, end, sample)
+assert(mapped, 15)
+assert(unit, 0.25)
+sample = 6
+assert(mapped, 20)
+assert(unit, 0.5)
+sample = 14
+assert(mapped, 40)
+assert(unit, 1.5)
+sample = -2
+assert(mapped, 0)
+assert(unit, -0.5)
+start = 10
+end = 2
+sample = 8
+assert(mapped, 15)
+assert(unit, 0.25)
+targetStart = 30
+targetEnd = 10
+assert(mapped, 25)
+assert(unit, 0.25)
+sample = 6
+assert(mapped, 20)
+assert(unit, 0.5)
+mapped
+# return: 20
+
+---
+
+# Nucleoid preserves intrinsic conversion during range remapping
+
+start = " 2 "
+end = "10"
+targetStart = "10"
+targetEnd = "30"
+sample = "4"
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+assert(mapped, 15)
+assert(start, " 2 ")
+start = false
+end = true
+targetStart = false
+targetEnd = true
+sample = false
+assert(mapped, 0)
+sample = true
+assert(mapped, 1)
+sample = [0.5]
+assert(mapped, 0.5)
+sample = []
+assert(mapped, 0)
+sample = "not-a-number"
+assert(Number.isNaN(mapped), true)
+sample = [1, 2]
+assert(Number.isNaN(mapped), true)
+start = Date(0)
+end = Date(8)
+targetStart = Date(10)
+targetEnd = Date(30)
+sample = Date(2)
+assert(mapped, 15)
+sample = Date(6)
+assert(mapped, 25)
+start = []
+end = ["8"]
+targetStart = []
+targetEnd = ["8"]
+sample = ["2"]
+assert(mapped, 2)
+sample = false
+assert(mapped, 0)
+
+---
+
+# Nucleoid preserves remapping endpoints nonfinite inputs and omissions
+
+start = 0
+end = 8
+targetStart = 10
+targetEnd = 30
+sample = 2
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+assert(mapped, 15)
+sample = start
+assert(mapped, 10)
+sample = end
+assert(mapped, 30)
+sample = 16
+assert(mapped, 50)
+sample = -8
+assert(mapped, -10)
+start = 2
+end = 2
+sample = 2
+assert(Number.isNaN(mapped), true)
+sample = 3
+assert(mapped, Number.POSITIVE_INFINITY)
+sample = 1
+assert(mapped, Number.NEGATIVE_INFINITY)
+start = 0
+end = Number.POSITIVE_INFINITY
+sample = 8
+assert(mapped, 10)
+sample = Number.POSITIVE_INFINITY
+assert(Number.isNaN(mapped), true)
+end = 8
+sample = Number.NEGATIVE_INFINITY
+assert(mapped, Number.NEGATIVE_INFINITY)
+start = Number.NEGATIVE_INFINITY
+end = Number.POSITIVE_INFINITY
+sample = 0
+assert(Number.isNaN(mapped), true)
+start = -Number.MAX_VALUE
+end = Number.MAX_VALUE
+sample = 0
+assert(mapped, 10)
+start = 0
+end = 8
+sample = Number.NaN
+assert(Number.isNaN(mapped), true)
+targetStart = 4
+targetEnd = 4
+sample = 2
+assert(mapped, 4)
+sample = Number.POSITIVE_INFINITY
+assert(Number.isNaN(mapped), true)
+targetStart = -Number.MAX_VALUE
+targetEnd = Number.MAX_VALUE
+sample = 2
+assert(mapped, Number.POSITIVE_INFINITY)
+targetStart = 0
+targetEnd = 1
+assert(mapped, 0.25)
+empty = Math.remap()
+assert(Number.isNaN(empty), true)
+one = Math.remap(0)
+assert(Number.isNaN(one), true)
+two = Math.remap(0, 8)
+assert(Number.isNaN(two), true)
+three = Math.remap(0, 8, 0)
+assert(Number.isNaN(three), true)
+four = Math.remap(0, 8, 0, 1)
+assert(Number.isNaN(four), true)
+literal = Math.remap(false, true, 0, 1, null)
+assert(literal, 0)
+withExtra = Math.remap(0, 8, 10, 30, 2, 99)
+assert(withExtra, 15)
+ignored = Number.NaN
+withIgnored = Math.remap(0, 8, 10, 30, 2, ignored)
+assert(withIgnored, 15)
+ignored = "not-a-number"
+assert(withIgnored, 15)
+ignored = null
+assert(withIgnored, null)
+ignored = []
+assert(withIgnored, 15)
+
+---
+
+# Nucleoid applies range remapping to live class rules
+
+class Gauge
+$Gauge.mapped = Math.remap($Gauge.start, $Gauge.end, $Gauge.targetStart, $Gauge.targetEnd, $Gauge.sample)
+first = Gauge()
+second = Gauge()
+first.start = 0
+first.end = 8
+first.targetStart = 10
+first.targetEnd = 30
+first.sample = 2
+second.start = 10
+second.end = 2
+second.targetStart = 30
+second.targetEnd = 10
+second.sample = 8
+assert(first.mapped, 15)
+assert(second.mapped, 25)
+first.sample = 12
+assert(first.mapped, 40)
+assert(second.mapped, 25)
+first.targetEnd = 50
+assert(first.mapped, 70)
+third = Gauge()
+assert(third.mapped, null)
+third.start = 0
+third.end = 4
+third.targetStart = 0
+third.targetEnd = 100
+third.sample = 1
+assert(third.mapped, 25)
+delete first.sample
+assert(first.mapped, null)
+first.sample = -4
+assert(first.mapped, -10)
+assert(Gauge.length, 3)
+
+---
+
+# Nucleoid preserves deferred range remapping and rollback
+
+class Sensor
+sensor = Sensor()
+start = sensor.lower
+end = sensor.upper
+targetStart = sensor.outputLower
+targetEnd = sensor.outputUpper
+sample = sensor.reading
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+withDeferredExtra = Math.remap(start, end, targetStart, targetEnd, sample, sensor.optional)
+assert(mapped, null)
+assert(withDeferredExtra, null)
+sensor.lower = 0
+sensor.upper = 8
+sensor.outputLower = 10
+sensor.outputUpper = 30
+sensor.reading = 2
+assert(mapped, 15)
+assert(withDeferredExtra, null)
+sensor.optional = 99
+assert(withDeferredExtra, 15)
+delete sensor.reading
+assert(mapped, null)
+assert(withDeferredExtra, null)
+sensor.reading = 6
+assert(mapped, 25)
+assert(withDeferredExtra, 25)
+try:
+    sensor.reading = 4
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 6)
+assert(mapped, 25)
+assert(withDeferredExtra, 25)
+try:
+    sensor.reading = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(sensor.reading, 6)
+delete sensor.optional
+assert(withDeferredExtra, null)
+assert(mapped, 25)
+sensor.optional = [1, 2]
+assert(withDeferredExtra, 25)
+sensor.reading = 2
+assert(mapped, 15)
+assert(withDeferredExtra, 15)
+mapped
+# return: 15
 ```

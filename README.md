@@ -720,6 +720,34 @@ assert(weight, 0.75)
   the authoritative [contract](nucleoid.spec.md#reactive-inverse-interpolation)
   defines the complete numeric and compatibility rules.
 
+**Range remapping keeps live values unclamped**
+
+```nuc
+start = 0
+end = 8
+targetStart = 0
+targetEnd = 100
+sample = 2
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+assert(mapped, 25)
+sample = 12
+assert(mapped, 150)
+end = 16
+assert(mapped, 75)
+```
+
+- Accepted [NUC 39](docs/nuc-0039.md) adds only static
+  `Math.remap(start, end, targetStart, targetEnd, value)`, the unclamped numeric
+  composition of accepted inverse interpolation and interpolation.
+- Keep six separate ordered operations, with no rescaling, range ordering,
+  endpoint shortcuts or fused arithmetic. Both ranges may descend.
+- The accepted nested spelling remains available. Its target arguments run
+  before inner source arguments; the new call instead evaluates its listed
+  five arguments left to right. Pure-read paired cases preserve behavior.
+- Ignored-extra effects/reads, live-null deferral and rollback use unchanged
+  machinery; the authoritative
+  [contract](nucleoid.spec.md#reactive-range-remapping) gives the full rules.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

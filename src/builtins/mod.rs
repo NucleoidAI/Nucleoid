@@ -184,6 +184,20 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             let denominator = end - first;
             numerator / denominator
         }
+        "remap" => {
+            let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
+            let target_start = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
+            let target_end = arguments.get(3).map(Value::to_number).unwrap_or(f64::NAN);
+            let value = arguments.get(4).map(Value::to_number).unwrap_or(f64::NAN);
+            // Keep inverse interpolation and interpolation's separate rounding.
+            // No clamping, rescaling, endpoint shortcuts or fused operation.
+            let numerator = value - first;
+            let denominator = end - first;
+            let weight = numerator / denominator;
+            let delta = target_end - target_start;
+            let scaled = delta * weight;
+            target_start + scaled
+        }
         "random" => return Err(Error::type_error("Math.random is not supported")),
         "PI" => std::f64::consts::PI,
         "E" => std::f64::consts::E,
@@ -535,6 +549,169 @@ mod tests {
         let numerator = binary(BinaryOp::Subtract, value, start).unwrap();
         let denominator = binary(BinaryOp::Subtract, end, start).unwrap();
         binary(BinaryOp::Divide, &numerator, &denominator).unwrap()
+    }
+
+    // Independent accepted binary operators, not Math.remap or its dispatch.
+    fn ordered_remapping(arguments: &[Value]) -> Value {
+        if arguments.iter().any(Value::is_undefined) {
+            return Value::Undefined;
+        }
+        let [start, end, target_start, target_end, value] = std::array::from_fn::<_, 5, _>(|i| {
+            Value::Number(arguments.get(i).map(Value::to_number).unwrap_or(f64::NAN))
+        });
+        let numerator = binary(BinaryOp::Subtract, &value, &start).unwrap();
+        let denominator = binary(BinaryOp::Subtract, &end, &start).unwrap();
+        let weight = binary(BinaryOp::Divide, &numerator, &denominator).unwrap();
+        let delta = binary(BinaryOp::Subtract, &target_end, &target_start).unwrap();
+        let scaled = binary(BinaryOp::Multiply, &delta, &weight).unwrap();
+        binary(BinaryOp::Add, &target_start, &scaled).unwrap()
+    }
+
+    #[test]
+    fn remap_all_twenty_five_values_in_each_slot_match_binary_controls_at_multiple_anchors() {
+        let values = values();
+        assert_eq!(values.len(), 25);
+        for anchor in [
+            [0.0, 8.0, 10.0, 30.0, 2.0],
+            [10.0, 2.0, 30.0, 10.0, 8.0],
+            [-1.0, 1.0, -2.0, 2.0, 0.25],
+        ] {
+            for position in 0..5 {
+                for value in &values {
+                    let mut arguments = anchor.map(Value::Number);
+                    arguments[position] = value.clone();
+                    assert_smoothing_same(
+                        &math("remap", &arguments).unwrap(),
+                        &ordered_remapping(&arguments),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn remap_bounded_seven_to_the_fifth_edge_grid_matches_ordered_binary_bits() {
+        let numbers = [
+            -f64::MAX,
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            1.0,
+            f64::INFINITY,
+            f64::NAN,
+        ];
+        let mut checked = 0;
+        for start in numbers {
+            for end in numbers {
+                for target_start in numbers {
+                    for target_end in numbers {
+                        for value in numbers {
+                            let arguments =
+                                [start, end, target_start, target_end, value].map(Value::Number);
+                            assert_smoothing_same(
+                                &math("remap", &arguments).unwrap(),
+                                &ordered_remapping(&arguments),
+                            );
+                            checked += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(checked, 16_807);
+    }
+
+    #[test]
+    fn remap_four_thousand_ninety_six_raw_bit_five_tuples_match_binary_controls() {
+        let mut bits = 0x39fa_1c70_8e25_d49b_u64;
+        for _ in 0..4_096 {
+            let arguments = std::array::from_fn::<_, 5, _>(|_| {
+                bits = bits
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                Value::Number(f64::from_bits(bits))
+            });
+            assert_smoothing_same(
+                &math("remap", &arguments).unwrap(),
+                &ordered_remapping(&arguments),
+            );
+        }
+    }
+
+    #[test]
+    fn remap_overflow_subnormal_cancellation_signed_zero_and_no_fuse_controls() {
+        for (arguments, expected) in [
+            ([0.0, 8.0, 10.0, 30.0, 2.0], 15.0),
+            ([0.0, 8.0, 10.0, 30.0, 16.0], 50.0),
+            ([0.0, 8.0, 10.0, 30.0, -8.0], -10.0),
+            ([10.0, 2.0, 30.0, 10.0, 8.0], 25.0),
+            ([2.0, 2.0, 10.0, 30.0, 2.0], f64::NAN),
+            ([2.0, 2.0, 10.0, 30.0, 3.0], f64::INFINITY),
+            ([2.0, 2.0, 10.0, 30.0, 1.0], f64::NEG_INFINITY),
+            ([-f64::MAX, f64::MAX, 10.0, 30.0, 0.0], 10.0),
+            ([0.0, 1.0, 4.0, 4.0, f64::INFINITY], f64::NAN),
+            ([0.0, 8.0, -f64::MAX, f64::MAX, 2.0], f64::INFINITY),
+            ([0.0, 8.0, -f64::MAX, f64::MAX, 0.0], f64::NAN),
+            ([0.0, 8.0, -f64::MAX, f64::MAX, 8.0], f64::INFINITY),
+            ([0.0, 1.0, 0.0, f64::from_bits(2), 0.5], f64::from_bits(1)),
+            ([0.0, f64::MAX, 0.0, 1.0, f64::from_bits(1)], 0.0),
+            ([0.0, 1.0, -0.0, -0.0, -0.0], -0.0),
+            ([0.0, 1.0, 0.0, -0.0, -0.0], 0.0),
+            ([1e16, 1e16 + 2.0, -1e16, 1e16, 1e16], -1e16),
+        ] {
+            let arguments = arguments.map(Value::Number);
+            let actual = math("remap", &arguments).unwrap();
+            assert_smoothing_same(&actual, &Value::Number(expected));
+            assert_smoothing_same(&actual, &ordered_remapping(&arguments));
+        }
+        // A fused multiply-add retains a nonzero residue; separate rounding
+        // must cancel to zero instead.
+        let target_start = -1.0;
+        let target_end = f64::EPSILON;
+        let weight = 1.0 - f64::EPSILON;
+        let delta = target_end - target_start;
+        let scaled = delta * weight;
+        let separate = target_start + scaled;
+        assert_ne!(
+            delta.mul_add(weight, target_start).to_bits(),
+            separate.to_bits()
+        );
+        let arguments = [0.0, 1.0, target_start, target_end, weight].map(Value::Number);
+        assert_smoothing_same(
+            &math("remap", &arguments).unwrap(),
+            &Value::Number(separate),
+        );
+    }
+
+    #[test]
+    fn remap_omissions_extras_and_undefined_in_every_position_preserve_the_shared_gate() {
+        let arguments = [0.0, 8.0, 10.0, 30.0, 2.0].map(Value::Number);
+        for length in 0..5 {
+            assert_smoothing_same(
+                &math("remap", &arguments[..length]).unwrap(),
+                &Value::Number(f64::NAN),
+            );
+        }
+        for extra in values() {
+            let mut supplied = arguments.to_vec();
+            supplied.push(extra);
+            supplied.push(Value::Null);
+            assert_smoothing_same(
+                &math("remap", &supplied).unwrap(),
+                &ordered_remapping(&supplied),
+            );
+        }
+        for position in 0..8 {
+            let mut supplied = arguments.to_vec();
+            supplied.extend([Value::number(99), Value::Null, Value::number(1)]);
+            supplied[position] = Value::Undefined;
+            assert_same(&math("remap", &supplied).unwrap(), &Value::Undefined);
+        }
+        assert_same(
+            &math("remap", &[Value::Undefined]).unwrap(),
+            &Value::Undefined,
+        );
+        assert!(math_constant("remap").is_none());
     }
 
     #[test]

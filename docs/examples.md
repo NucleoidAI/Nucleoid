@@ -2042,6 +2042,41 @@ assert(weight, 0.25)
   [inverse-interpolation section](../nucleoid.spec.md#reactive-inverse-interpolation)
   and the [reference](README.md#reactive-inverse-interpolation) give the full contract.
 
+## Reactive range remapping
+
+**Range remapping handles descending live source and target ranges**
+
+```nuc
+start = 10
+end = 2
+targetStart = 30
+targetEnd = 10
+sample = 8
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+assert(mapped, 25)
+sample = 4
+assert(mapped, 15)
+sample = 14
+assert(mapped, 40)
+start = 18
+assert(mapped, 25)
+```
+
+- Accepted [NUC 39](nuc-0039.md) adds only unshadowed static
+  `Math.remap(start, end, targetStart, targetEnd, value)`. The accepted
+  `Math.lerp(targetStart, targetEnd, Math.inverseLerp(start, end, value))`
+  remains available for the same numeric composition.
+- Convert intrinsically, then subtract, subtract, divide, subtract, multiply
+  and add, with separate rounding in exactly that order. Do not clamp, reorder
+  ranges, rescale or shortcut endpoints; descending ranges and extrapolation
+  are intentional.
+- New-call expressions run once in listed order, unlike the nested spelling's
+  target-first argument order. The sealed demonstrations use pure reads.
+- Deferred inputs, ignored-extra reads/effects, strict failures and rollback
+  retain the existing machinery. The authoritative
+  [remapping section](../nucleoid.spec.md#reactive-range-remapping) and
+  [reference](README.md#reactive-range-remapping) define the full contract.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

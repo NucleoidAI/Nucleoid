@@ -7757,6 +7757,288 @@ throw "ROLLBACK""#), "ROLLBACK");
 # return: 0.25"#);
 }
 
+/// Nucleoid keeps range remapping reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_range_remapping_reactive() {
+    let mut run = runner();
+    run("start = 2");
+    run("end = 10");
+    run("targetStart = 10");
+    run("targetEnd = 30");
+    run("sample = 4");
+    run("mapped = Math.remap(start, end, targetStart, targetEnd, sample)");
+    run("unit = Math.inverseLerp(start, end, sample)");
+    assert_eq!(run("mapped"), 15);
+    assert_eq!(run("unit"), 0.25);
+    run("sample = 6");
+    assert_eq!(run("mapped"), 20);
+    assert_eq!(run("unit"), 0.5);
+    run("sample = 14");
+    assert_eq!(run("mapped"), 40);
+    assert_eq!(run("unit"), 1.5);
+    run("sample = -2");
+    assert_eq!(run("mapped"), 0);
+    assert_eq!(run("unit"), -0.5);
+    run("start = 10");
+    run("end = 2");
+    run("sample = 8");
+    assert_eq!(run("mapped"), 15);
+    assert_eq!(run("unit"), 0.25);
+    run("targetStart = 30");
+    run("targetEnd = 10");
+    assert_eq!(run("mapped"), 25);
+    assert_eq!(run("unit"), 0.25);
+    run("sample = 6");
+    assert_eq!(run("mapped"), 20);
+    assert_eq!(run("unit"), 0.5);
+    run(r#"mapped
+
+# return: 20"#);
+}
+
+/// Nucleoid preserves intrinsic conversion during range remapping
+#[rustfmt::skip]
+#[test]
+fn preserves_intrinsic_conversion_during_range_remapping() {
+    let mut run = runner();
+    run(r#"start = " 2 ""#);
+    run(r#"end = "10""#);
+    run(r#"targetStart = "10""#);
+    run(r#"targetEnd = "30""#);
+    run(r#"sample = "4""#);
+    run("mapped = Math.remap(start, end, targetStart, targetEnd, sample)");
+    assert_eq!(run("mapped"), 15);
+    assert_eq!(run("start"), " 2 ");
+    run("start = false");
+    run("end = true");
+    run("targetStart = false");
+    run("targetEnd = true");
+    run("sample = false");
+    assert_eq!(run("mapped"), 0);
+    run("sample = true");
+    assert_eq!(run("mapped"), 1);
+    run("sample = [0.5]");
+    assert_eq!(run("mapped"), 0.5);
+    run("sample = []");
+    assert_eq!(run("mapped"), 0);
+    run(r#"sample = "not-a-number""#);
+    assert_eq!(run("Number.isNaN(mapped)"), true);
+    run("sample = [1, 2]");
+    assert_eq!(run("Number.isNaN(mapped)"), true);
+    run("start = Date(0)");
+    run("end = Date(8)");
+    run("targetStart = Date(10)");
+    run("targetEnd = Date(30)");
+    run("sample = Date(2)");
+    assert_eq!(run("mapped"), 15);
+    run("sample = Date(6)");
+    assert_eq!(run("mapped"), 25);
+    run("start = []");
+    run(r#"end = ["8"]"#);
+    run("targetStart = []");
+    run(r#"targetEnd = ["8"]"#);
+    run(r#"sample = ["2"]"#);
+    assert_eq!(run("mapped"), 2);
+    run("sample = false");
+    assert_eq!(run("mapped"), 0);
+}
+
+/// Nucleoid preserves remapping endpoints nonfinite inputs and omissions
+#[rustfmt::skip]
+#[test]
+fn preserves_remapping_endpoints_nonfinite_inputs_and_omissions() {
+    let mut run = runner();
+    run("start = 0");
+    run("end = 8");
+    run("targetStart = 10");
+    run("targetEnd = 30");
+    run("sample = 2");
+    run("mapped = Math.remap(start, end, targetStart, targetEnd, sample)");
+    assert_eq!(run("mapped"), 15);
+    run("sample = start");
+    assert_eq!(run("mapped"), 10);
+    run("sample = end");
+    assert_eq!(run("mapped"), 30);
+    run("sample = 16");
+    assert_eq!(run("mapped"), 50);
+    run("sample = -8");
+    assert_eq!(run("mapped"), -10);
+    run("start = 2");
+    run("end = 2");
+    run("sample = 2");
+    assert_eq!(run("Number.isNaN(mapped)"), true);
+    run("sample = 3");
+    {
+        let actual = run("mapped");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("sample = 1");
+    {
+        let actual = run("mapped");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("start = 0");
+    run("end = Number.POSITIVE_INFINITY");
+    run("sample = 8");
+    assert_eq!(run("mapped"), 10);
+    run("sample = Number.POSITIVE_INFINITY");
+    assert_eq!(run("Number.isNaN(mapped)"), true);
+    run("end = 8");
+    run("sample = Number.NEGATIVE_INFINITY");
+    {
+        let actual = run("mapped");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("start = Number.NEGATIVE_INFINITY");
+    run("end = Number.POSITIVE_INFINITY");
+    run("sample = 0");
+    assert_eq!(run("Number.isNaN(mapped)"), true);
+    run("start = -Number.MAX_VALUE");
+    run("end = Number.MAX_VALUE");
+    run("sample = 0");
+    assert_eq!(run("mapped"), 10);
+    run("start = 0");
+    run("end = 8");
+    run("sample = Number.NaN");
+    assert_eq!(run("Number.isNaN(mapped)"), true);
+    run("targetStart = 4");
+    run("targetEnd = 4");
+    run("sample = 2");
+    assert_eq!(run("mapped"), 4);
+    run("sample = Number.POSITIVE_INFINITY");
+    assert_eq!(run("Number.isNaN(mapped)"), true);
+    run("targetStart = -Number.MAX_VALUE");
+    run("targetEnd = Number.MAX_VALUE");
+    run("sample = 2");
+    {
+        let actual = run("mapped");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("targetStart = 0");
+    run("targetEnd = 1");
+    assert_eq!(run("mapped"), 0.25);
+    run("empty = Math.remap()");
+    assert_eq!(run("Number.isNaN(empty)"), true);
+    run("one = Math.remap(0)");
+    assert_eq!(run("Number.isNaN(one)"), true);
+    run("two = Math.remap(0, 8)");
+    assert_eq!(run("Number.isNaN(two)"), true);
+    run("three = Math.remap(0, 8, 0)");
+    assert_eq!(run("Number.isNaN(three)"), true);
+    run("four = Math.remap(0, 8, 0, 1)");
+    assert_eq!(run("Number.isNaN(four)"), true);
+    run("literal = Math.remap(false, true, 0, 1, null)");
+    assert_eq!(run("literal"), 0);
+    run("withExtra = Math.remap(0, 8, 10, 30, 2, 99)");
+    assert_eq!(run("withExtra"), 15);
+    run("ignored = Number.NaN");
+    run("withIgnored = Math.remap(0, 8, 10, 30, 2, ignored)");
+    assert_eq!(run("withIgnored"), 15);
+    run(r#"ignored = "not-a-number""#);
+    assert_eq!(run("withIgnored"), 15);
+    run("ignored = null");
+    assert_eq!(run("withIgnored"), serde_json::Value::Null);
+    run("ignored = []");
+    assert_eq!(run("withIgnored"), 15);
+}
+
+/// Nucleoid applies range remapping to live class rules
+#[rustfmt::skip]
+#[test]
+fn applies_range_remapping_to_live_class_rules() {
+    let mut run = runner();
+    run("class Gauge");
+    run("$Gauge.mapped = Math.remap($Gauge.start, $Gauge.end, $Gauge.targetStart, $Gauge.targetEnd, $Gauge.sample)");
+    run("first = Gauge()");
+    run("second = Gauge()");
+    run("first.start = 0");
+    run("first.end = 8");
+    run("first.targetStart = 10");
+    run("first.targetEnd = 30");
+    run("first.sample = 2");
+    run("second.start = 10");
+    run("second.end = 2");
+    run("second.targetStart = 30");
+    run("second.targetEnd = 10");
+    run("second.sample = 8");
+    assert_eq!(run("first.mapped"), 15);
+    assert_eq!(run("second.mapped"), 25);
+    run("first.sample = 12");
+    assert_eq!(run("first.mapped"), 40);
+    assert_eq!(run("second.mapped"), 25);
+    run("first.targetEnd = 50");
+    assert_eq!(run("first.mapped"), 70);
+    run("third = Gauge()");
+    assert_eq!(run("third.mapped"), serde_json::Value::Null);
+    run("third.start = 0");
+    run("third.end = 4");
+    run("third.targetStart = 0");
+    run("third.targetEnd = 100");
+    run("third.sample = 1");
+    assert_eq!(run("third.mapped"), 25);
+    run("delete first.sample");
+    assert_eq!(run("first.mapped"), serde_json::Value::Null);
+    run("first.sample = -4");
+    assert_eq!(run("first.mapped"), -10);
+    assert_eq!(run("Gauge.length"), 3);
+}
+
+/// Nucleoid preserves deferred range remapping and rollback
+#[rustfmt::skip]
+#[test]
+fn preserves_deferred_range_remapping_and_rollback() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Sensor");
+    run("sensor = Sensor()");
+    run("start = sensor.lower");
+    run("end = sensor.upper");
+    run("targetStart = sensor.outputLower");
+    run("targetEnd = sensor.outputUpper");
+    run("sample = sensor.reading");
+    run("mapped = Math.remap(start, end, targetStart, targetEnd, sample)");
+    run("withDeferredExtra = Math.remap(start, end, targetStart, targetEnd, sample, sensor.optional)");
+    assert_eq!(run("mapped"), serde_json::Value::Null);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("sensor.lower = 0");
+    run("sensor.upper = 8");
+    run("sensor.outputLower = 10");
+    run("sensor.outputUpper = 30");
+    run("sensor.reading = 2");
+    assert_eq!(run("mapped"), 15);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("sensor.optional = 99");
+    assert_eq!(run("withDeferredExtra"), 15);
+    run("delete sensor.reading");
+    assert_eq!(run("mapped"), serde_json::Value::Null);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("sensor.reading = 6");
+    assert_eq!(run("mapped"), 25);
+    assert_eq!(run("withDeferredExtra"), 25);
+    assert_eq!(run_error(r#"sensor.reading = 4
+throw "ROLLBACK""#), "ROLLBACK");
+    assert_eq!(run("sensor.reading"), 6);
+    assert_eq!(run("mapped"), 25);
+    assert_eq!(run("withDeferredExtra"), 25);
+    assert_eq!(run_error("sensor.reading = missing"), "ReferenceError: missing is not defined");
+    assert_eq!(run("sensor.reading"), 6);
+    run("delete sensor.optional");
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    assert_eq!(run("mapped"), 25);
+    run("sensor.optional = [1, 2]");
+    assert_eq!(run("withDeferredExtra"), 25);
+    run("sensor.reading = 2");
+    assert_eq!(run("mapped"), 15);
+    assert_eq!(run("withDeferredExtra"), 15);
+    run(r#"mapped
+
+# return: 15"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
