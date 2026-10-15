@@ -116,9 +116,11 @@ metadata. Rejected proposals are not exempt from commits. Follow the
 [shared rejection workflow](../../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
 
 Commit only rejection documentation, never the rejected candidate's language
-changes or session baseline/report artifacts. Preserve existing accepted NUC
-text and unrelated work. Proposal and evaluation agents must not perform this
-caller-owned commit.
+changes or session baseline/report artifacts. Keep implementation changes in
+the isolated candidate; stage explicit proposal/index paths, use a path-limited
+commit, and verify its file list. Preserve existing accepted NUC text and
+unrelated staged and unstaged work. Proposal and evaluation agents must not
+perform this caller-owned commit.
 
 ## Continue with the next NUC (caller only)
 
@@ -135,6 +137,13 @@ new user prompt. Repeat sequentially in the active Copilot session until the
 user stops, pauses or redirects the work, the session ends, or a resource limit
 is reached. A `Blocked` decision, failed outcome recording, or missing required
 input pauses continuation; report the blocker instead of bypassing it.
+
+Continuous cycles are non-interactive, including when coordinated through
+`/nuc-evaluate`. Neither the caller nor workers ask questions, present choice
+forms, or wait for confirmation before recording an outcome or continuing.
+Use the existing selection rules and verified inputs. If a required input
+cannot be obtained or another blocker occurs, report it and pause without a
+question; do not invent inputs or bypass checks or required tool approvals.
 
 Each cycle chooses a new NUC number and one bounded enhancement under the
 existing selection rule. Pin the current verified accepted-language revision,

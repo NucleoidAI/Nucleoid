@@ -22,6 +22,10 @@ You independently evaluate exactly one completed NUC revision. Follow
   cases, spawn agents, combine pending proposals, commit, push, or merge.
 - If the candidate changed after handoff or needs repair, return the evidence
   to the caller; a revised candidate requires a fresh proposal/evaluation pair.
+- During continuous cycles, do not ask questions or request confirmation.
+  Return missing prerequisites or other blockers explicitly without inventing
+  inputs; the caller owns outcome recording and non-interactive continuation
+  under the skill's [continuous-cycle handoff](../skills/nuc-evaluate/SKILL.md#continuous-cycle-handoff-caller-only).
 
 ## Result
 

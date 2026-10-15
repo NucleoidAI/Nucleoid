@@ -88,3 +88,25 @@ increased, missing, unpaired, invalid or syntax-incompatible case with its
 before/after counts or reason. Keep the candidate and baseline unchanged.
 The caller owns integration and status/index updates;
 outcome metadata does not trigger another pair. No commits, pushes, or merges.
+
+## Continuous-cycle handoff (caller only)
+
+The evaluation worker stops after returning its evidence. It never records
+outcome metadata, commits, integrates a candidate, or starts another cycle.
+
+When `/nuc-evaluate` coordinates an active continuous cycle, the caller follows
+the [shared rejection workflow](../../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
+For `Rejected`, commit only the NUC rejection documentation and directly
+related index/status metadata, using explicit paths and a path-limited commit.
+Verify the committed file list; never apply or commit the rejected candidate's
+runtime, executable-document, reference, dataset, or generated-export changes.
+Keep implementation changes isolated and preserve unrelated staged and
+unstaged work. Baselines and reports remain in the session workspace.
+
+After recording the outcome, follow the
+[continuous-cycle rule](../nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only)
+without asking questions or requesting confirmation. Neither caller nor
+workers prompt for choices during continuous cycles; use the existing rules
+and verified inputs. A missing prerequisite or other blocker pauses the
+cycle with an explicit report, not a question or invented measurement.
+Required tool approvals and user stop/pause instructions still apply.
