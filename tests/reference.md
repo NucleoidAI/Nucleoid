@@ -1533,4 +1533,20 @@ result = area(3, 4)
 assert(result, 24)
 scale = 3
 assert(result, 36)
+
+---
+
+# Nucleoid preserves cubic smoothstep relationships
+
+lower = 0
+upper = 8
+value = 2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smoothstep(lower, upper, value)
+assert(unit, 0.25)
+assert(eased, 0.15625)
+value = 6
+assert(eased, 0.84375)
+upper = 16
+assert(eased, 0.31640625)
 ```

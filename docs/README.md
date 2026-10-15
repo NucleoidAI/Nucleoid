@@ -643,6 +643,8 @@ and the unchanged explicit-loop entries in the root specification.
 - Named function references stay live when aliased, returned, or passed as callbacks.
 - Static Math method reads are not callable references; `Math.clamp` retains
   that limitation, as specified by [NUC 21](nuc-0021.md).
+- Accepted [NUC 33](nuc-0033.md) keeps `Math.smoothstep` subject to the same
+  unsupported method-read limitation.
 - Calls through variables, list items, and object properties depend on the callable's storage location.
 - A null callable, an unassigned callable property, or a callable deleted during propagation leaves its dependent result null until rebound. Other non-callable values raise `TypeError`.
 - `.value` freezes the function definition, not the state read when its body executes.
@@ -923,13 +925,42 @@ Full detail: [NUC 9](nuc-0009.md).
   `Math.saturate` read as a value remains unsupported/undefined, not callable.
 - All other Math members, accepted syntax and public representations stay
   unchanged.
+- Accepted [NUC 33](nuc-0033.md) defines only static
+  `Math.smoothstep(lower, upper, value)`. Bounds precede the value; this is
+  deliberately not `Math.clamp`'s value/lower/upper order.
+- After the existing any-supplied-`Undefined` gate, intrinsically convert lower,
+  upper and value, in order, with `Value::to_number`; each omission is numeric
+  `NaN`. Do not convert unused extras or invoke/track shadowable `Number` or
+  `Math.saturate`.
+- Compute `numerator = value - lower`, `denominator = upper - lower`,
+  `normalize = numerator / denominator`, then clamp with the existing maximum
+  fold followed by minimum against numeric zero and one.
+- With that `t`, compute separate `square = t * t`, `scaled = 2.0 * t`,
+  `falloff = 3.0 - scaled`, then `square * falloff`. Do not fuse, reorder,
+  shortcut endpoints, clamp the polynomial afterward or validate ranges.
+- Equal/reversed bounds, infinities, overflow, subnormals and signed zeros
+  follow the accepted normalization and cubic composition. Expected numeric
+  `NaN` uses classification; non-NaN bits, including zero bits, match the host
+  composition rather than a portable sign promise.
+- Literal `null` converts to zero intrinsically without overriding live-null
+  or parameter/deferred assignment handling. Other nonnumeric conversions
+  yield numeric `NaN`, not new type errors.
+- Every provided expression, including extras, runs exactly once left to right;
+  effects, reads and dependencies remain. A supplied `Undefined`, even an extra,
+  defers before conversion; strict later unknown identifiers still throw.
+- Namespace/local shadowing, ordinary `.Math` members, wrappers, methods,
+  initializers, class rules, property deletion/recovery and rollback are
+  unchanged. No first-class `Math.smoothstep` alias or new lookup is added.
+- The intrinsic reuses the private numeric clamp without calling public Math
+  methods. All other Math behavior, accepted syntax, APIs and inherited
+  scope/resource boundaries remain unchanged.
 
 | Object | Members |
 | --- | --- |
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
@@ -1028,6 +1059,30 @@ assert(fraction, 1)
 - The authoritative [saturation section](../nucleoid.spec.md#reactive-unit-interval-saturation)
   and its five executable entries define the behavior.
 - [NUC 23](nuc-0023.md) explains the ordered unit-interval contract.
+
+### Cubic smoothstep keeps all three inputs live
+
+```
+lower = 0
+upper = 8
+value = 2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smoothstep(lower, upper, value)
+assert(unit, 0.25)
+assert(eased, 0.15625)
+value = 6
+assert(eased, 0.84375)
+upper = 16
+assert(eased, 0.31640625)
+```
+
+- This is the sealed executable reference entry in `tests/reference.md`,
+  omitting only its title comment.
+- The `unit` normalization remains an independent asserted control.
+- The authoritative [smoothstep section](../nucleoid.spec.md#reactive-cubic-smoothstep)
+  and its five executable entries define this accepted behavior.
+- Accepted [NUC 33](nuc-0033.md) records the lower/upper/value order, exact
+  maximum-then-minimum normalization and separate ordered cubic operations.
 
 ---
 

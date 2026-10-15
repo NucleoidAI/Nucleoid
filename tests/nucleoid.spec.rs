@@ -6659,6 +6659,210 @@ fn rolls_back_failed_indented_named_arrow_redefinitions() {
 # return: 21"#);
 }
 
+/// Nucleoid keeps cubic smoothstep reactive to all three inputs
+#[rustfmt::skip]
+#[test]
+fn keeps_cubic_smoothstep_reactive_to_all_three_inputs() {
+    let mut run = runner();
+    run("lower = 0");
+    run("upper = 8");
+    run("value = 2");
+    run("unit = Math.saturate((value - lower) / (upper - lower))");
+    run("eased = Math.smoothstep(lower, upper, value)");
+    assert_eq!(run("unit"), 0.25);
+    assert_eq!(run("eased"), 0.15625);
+    run("value = 4");
+    assert_eq!(run("unit"), 0.5);
+    assert_eq!(run("eased"), 0.5);
+    run("upper = 16");
+    assert_eq!(run("unit"), 0.25);
+    assert_eq!(run("eased"), 0.15625);
+    run("lower = -8");
+    assert_eq!(run("unit"), 0.5);
+    assert_eq!(run("eased"), 0.5);
+    run("value = -16");
+    assert_eq!(run("unit"), 0);
+    assert_eq!(run("eased"), 0);
+    run("value = 24");
+    assert_eq!(run("unit"), 1);
+    assert_eq!(run("eased"), 1);
+    run("upper = -32");
+    assert_eq!(run("unit"), 0);
+    assert_eq!(run("eased"), 0);
+    run("value = -20");
+    assert_eq!(run("unit"), 0.5);
+    assert_eq!(run("eased"), 0.5);
+    run(r#"eased
+
+# return: 0.5"#);
+}
+
+/// Nucleoid preserves numeric coercion while smoothing values
+#[rustfmt::skip]
+#[test]
+fn preserves_numeric_coercion_while_smoothing_values() {
+    let mut run = runner();
+    run(r#"lower = " 0 ""#);
+    run(r#"upper = "8""#);
+    run(r#"value = "2""#);
+    run("unit = Math.saturate((value - lower) / (upper - lower))");
+    run("eased = Math.smoothstep(lower, upper, value)");
+    assert_eq!(run("unit"), 0.25);
+    assert_eq!(run("eased"), 0.15625);
+    run("lower = false");
+    run("upper = true");
+    run("value = true");
+    assert_eq!(run("unit"), 1);
+    assert_eq!(run("eased"), 1);
+    run("lower = []");
+    run(r#"upper = ["8"]"#);
+    run(r#"value = ["6"]"#);
+    assert_eq!(run("unit"), 0.75);
+    assert_eq!(run("eased"), 0.84375);
+    run("lower = Date(0)");
+    run("upper = Date(8)");
+    run("value = Date(4)");
+    assert_eq!(run("unit"), 0.5);
+    assert_eq!(run("eased"), 0.5);
+    run("value = [1, 2]");
+    assert_eq!(run("Number.isNaN(unit)"), true);
+    assert_eq!(run("Number.isNaN(eased)"), true);
+}
+
+/// Nucleoid preserves special values and omitted smoothstep inputs
+#[rustfmt::skip]
+#[test]
+fn preserves_special_values_and_omitted_smoothstep_inputs() {
+    let mut run = runner();
+    run("lower = 2");
+    run("upper = 2");
+    run("value = 2");
+    run("unit = Math.saturate((value - lower) / (upper - lower))");
+    run("eased = Math.smoothstep(lower, upper, value)");
+    assert_eq!(run("Number.isNaN(unit)"), true);
+    assert_eq!(run("Number.isNaN(eased)"), true);
+    run("value = 1");
+    assert_eq!(run("unit"), 0);
+    assert_eq!(run("eased"), 0);
+    run("value = 3");
+    assert_eq!(run("unit"), 1);
+    assert_eq!(run("eased"), 1);
+    run("upper = 0");
+    assert_eq!(run("unit"), 0);
+    assert_eq!(run("eased"), 0);
+    run("value = 1");
+    assert_eq!(run("unit"), 0.5);
+    assert_eq!(run("eased"), 0.5);
+    run("upper = Number.POSITIVE_INFINITY");
+    assert_eq!(run("unit"), 0);
+    assert_eq!(run("eased"), 0);
+    run("value = Number.POSITIVE_INFINITY");
+    assert_eq!(run("Number.isNaN(unit)"), true);
+    assert_eq!(run("Number.isNaN(eased)"), true);
+    run("nan = Number.NaN");
+    run("value = nan");
+    assert_eq!(run("Number.isNaN(unit)"), true);
+    assert_eq!(run("Number.isNaN(eased)"), true);
+    run("lower = Number.NEGATIVE_INFINITY");
+    run("upper = Number.POSITIVE_INFINITY");
+    run("value = 0");
+    assert_eq!(run("Number.isNaN(unit)"), true);
+    assert_eq!(run("Number.isNaN(eased)"), true);
+    run("empty = Math.smoothstep()");
+    run("one = Math.smoothstep(0)");
+    run("two = Math.smoothstep(0, 1)");
+    assert_eq!(run("Number.isNaN(empty)"), true);
+    assert_eq!(run("Number.isNaN(one)"), true);
+    assert_eq!(run("Number.isNaN(two)"), true);
+    run("half = Math.saturate(0.5)");
+    run("withExtra = Math.smoothstep(0, 1, 0.5, 99)");
+    run("ignored = Number.NaN");
+    run("withIgnored = Math.smoothstep(0, 1, 0.5, ignored)");
+    assert_eq!(run("half"), 0.5);
+    assert_eq!(run("withExtra"), 0.5);
+    assert_eq!(run("withIgnored"), 0.5);
+}
+
+/// Nucleoid applies cubic smoothstep to live class rules
+#[rustfmt::skip]
+#[test]
+fn applies_cubic_smoothstep_to_live_class_rules() {
+    let mut run = runner();
+    run("class Curve");
+    run("lower = 0");
+    run("upper = 8");
+    run("$Curve.unit = Math.saturate(($Curve.sample - lower) / (upper - lower))");
+    run("$Curve.eased = Math.smoothstep(lower, upper, $Curve.sample)");
+    run("first = Curve()");
+    run("second = Curve()");
+    run("first.sample = 2");
+    run("second.sample = 6");
+    assert_eq!(run("first.unit"), 0.25);
+    assert_eq!(run("first.eased"), 0.15625);
+    assert_eq!(run("second.unit"), 0.75);
+    assert_eq!(run("second.eased"), 0.84375);
+    run("upper = 16");
+    assert_eq!(run("first.unit"), 0.125);
+    assert_eq!(run("first.eased"), 0.04296875);
+    assert_eq!(run("second.unit"), 0.375);
+    assert_eq!(run("second.eased"), 0.31640625);
+    run("first.sample = 8");
+    assert_eq!(run("first.unit"), 0.5);
+    assert_eq!(run("first.eased"), 0.5);
+    run("third = Curve()");
+    assert_eq!(run("third.unit"), serde_json::Value::Null);
+    assert_eq!(run("third.eased"), serde_json::Value::Null);
+    run("third.sample = 4");
+    assert_eq!(run("third.unit"), 0.25);
+    assert_eq!(run("third.eased"), 0.15625);
+    run("delete first.sample");
+    assert_eq!(run("first.unit"), serde_json::Value::Null);
+    assert_eq!(run("first.eased"), serde_json::Value::Null);
+    run("first.sample = 16");
+    assert_eq!(run("first.unit"), 1);
+    assert_eq!(run("first.eased"), 1);
+    assert_eq!(run("Curve.length"), 3);
+}
+
+/// Nucleoid preserves deferred reads and rollback for cubic smoothstep
+#[rustfmt::skip]
+#[test]
+fn preserves_deferred_reads_and_rollback_for_cubic_smoothstep() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Sensor");
+    run("sensor = Sensor()");
+    run("lower = 0");
+    run("upper = 8");
+    run("value = sensor.reading");
+    run("unit = Math.saturate((value - lower) / (upper - lower))");
+    run("eased = Math.smoothstep(lower, upper, value)");
+    assert_eq!(run("value"), serde_json::Value::Null);
+    assert_eq!(run("unit"), serde_json::Value::Null);
+    assert_eq!(run("eased"), serde_json::Value::Null);
+    run("sensor.reading = 2");
+    assert_eq!(run("unit"), 0.25);
+    assert_eq!(run("eased"), 0.15625);
+    run("delete sensor.reading");
+    assert_eq!(run("value"), serde_json::Value::Null);
+    assert_eq!(run("eased"), serde_json::Value::Null);
+    run("sensor.reading = 4");
+    assert_eq!(run("unit"), 0.5);
+    assert_eq!(run("eased"), 0.5);
+    assert_eq!(run_error(r#"sensor.reading = 6
+throw "ROLLBACK""#), "ROLLBACK");
+    assert_eq!(run("sensor.reading"), 4);
+    assert_eq!(run("unit"), 0.5);
+    assert_eq!(run("eased"), 0.5);
+    assert_eq!(run_error("lower = missing"), "ReferenceError: missing is not defined");
+    assert_eq!(run("lower"), 0);
+    run("sensor.reading = 2");
+    assert_eq!(run("unit"), 0.25);
+    assert_eq!(run("eased"), 0.15625);
+    run(r#"eased
+
+# return: 0.15625"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

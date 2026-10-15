@@ -602,6 +602,24 @@ Earlier sole-return block examples above use this equivalent layout where
 applicable; existing colon suites, including multi-statement bodies, are
 unchanged alternatives.
 
+**Cubic smoothstep keeps input changes live**
+
+```nuc
+value = 0.25
+unit = Math.saturate(value)
+eased = Math.smoothstep(0, 1, value)
+assert(unit, 0.25)
+assert(eased, 0.15625)
+value = 0.75
+assert(eased, 0.84375)
+```
+
+- [Accepted NUC 33](docs/nuc-0033.md) defines static
+  `Math.smoothstep(lower, upper, value)`, with bounds before the value.
+- The independent `unit` control remains live; the intrinsic normalizes and
+  clamps before applying the ordered cubic, retaining existing special-value,
+  deferred-read and transactional behavior.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

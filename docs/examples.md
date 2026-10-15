@@ -1885,6 +1885,34 @@ bias = 4
 assert(result, 9)
 ```
 
+---
+
+**Smooth cubic transitions preserve clamped endpoints**
+
+```nuc
+lower = 0
+upper = 8
+value = -2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smoothstep(lower, upper, value)
+assert(unit, 0)
+assert(eased, 0)
+value = 2
+assert(unit, 0.25)
+assert(eased, 0.15625)
+value = 6
+assert(unit, 0.75)
+assert(eased, 0.84375)
+value = 10
+assert(unit, 1)
+assert(eased, 1)
+```
+
+- [Accepted NUC 33](nuc-0033.md) defines lower/upper/value argument order,
+  independent live normalization controls and the exact ordered cubic.
+- Equal or reversed bounds and nonfinite values follow accepted normalization
+  and maximum-then-minimum composition, without range validation or shortcuts.
+
 ## Copyright
 
 Copyright 2020 Nucleoid
