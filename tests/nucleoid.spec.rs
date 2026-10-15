@@ -550,7 +550,7 @@ fn creates_multiple_else_if_statement_of_variable() {
     score = fraction * point * 3
 else if fraction > 0:
     score = fraction * point * 2
-else:
+else
     score = fraction * point"#);
     assert_eq!(run("score"), -0.1);
     run("point = 2");
@@ -1122,7 +1122,7 @@ fn runs_a_nested_else_statement_of_variable() {
     concentration = percentage * density / 100 * 1000
     if substance == "NH3":
         molarConcentration = concentration / 17.04
-    else:
+    else
         molarConcentration = fallback
 }"#);
     run(r#"substance = "NH16""#);
@@ -1452,7 +1452,7 @@ fn creates_an_else_statement_of_variable() {
     run("basic = 'BASIC'");
     run(r#"if compound > 0.0000001:
     pH = acidic
-else:
+else
     pH = basic"#);
     assert_eq!(run("pH"), "ACIDIC");
     run("compound = 0.000000001");
@@ -1488,7 +1488,7 @@ fn creates_else_statement_of_property() {
     run(r#"bsd = "BSD""#);
     run(r#"if engine1.type == "Gecko":
     engine1.license = mpl
-else:
+else
     engine1.license = bsd"#);
     assert_eq!(run("engine1.license"), "BSD");
     run(r#"bsd = "Berkeley Software Distribution""#);
@@ -1509,7 +1509,7 @@ fn creates_else_statement_of_property_with_property_dependencies() {
     run(r#"contact1.last = "Last""#);
     run(r#"if contact1.type == "BUSINESS":
     contact1.full = "B" + contact1.first
-else:
+else
     contact1.full = contact1.first + " " + contact1.last"#);
     assert_eq!(run("contact1.full"), "First Last");
     run(r#"contact1.first = "F""#);
@@ -1533,7 +1533,7 @@ fn creates_multiple_else_if_statement_of_property() {
     taxpayer1.tax = taxpayer1.income * rate / 100 - 2000
 else if taxpayer1.member > 2:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 1000
-else:
+else
     taxpayer1.tax = taxpayer1.income * rate / 100"#);
     assert_eq!(run("taxpayer1.tax"), 13200);
     run("rate = 23");
@@ -1720,7 +1720,7 @@ fn creates_a_nested_else_statement_of_property() {
     ratio = chart1.percentage / 100
     if ratio > 1:
         chart1.status = invalid
-    else:
+    else
         chart1.status = valid
 }"#);
     assert_eq!(run("chart1.status"), "VALID");
@@ -2273,7 +2273,7 @@ fn creates_an_else_statement_of_class_before_initialization() {
     run("class Count");
     run(r#"if $Count.max > 1000:
     $Count.reset = urgent
-else:
+else
     $Count.reset = regular"#);
     run(r#"urgent = "URGENT""#);
     run(r#"regular = "REGULAR""#);
@@ -2296,7 +2296,7 @@ fn creates_an_else_statement_of_class_after_initialization() {
     run("concentration1.substances = 2");
     run(r#"if $Concentration.substances == 1:
     $Concentration.formula = directDilution
-else:
+else
     $Concentration.formula = serialDilution"#);
     assert_eq!(run("concentration1.formula"), "(c1V1+c2V2)/(V1+V2)");
     run(r#"serialDilution = "(c1V1+c2V2+c3V3)/(V1+V2+V3)""#);
@@ -2314,7 +2314,7 @@ fn creates_an_else_if_statement_of_class_before_initialization() {
     $Storage.status = normal
 else if $Storage.capacity > 0:
     $Storage.status = low
-else:
+else
     $Storage.status = empty"#);
     run("storage1 = Storage()");
     run("storage1.capacity = 23");
@@ -2336,7 +2336,7 @@ fn creates_an_else_if_statement_of_class_after_initialization() {
     $Registration.accepted = yes
 else if $Registration.available > 0:
     $Registration.accepted = pending
-else:
+else
     $Registration.accepted = no"#);
     assert_eq!(run("registration1.accepted"), "NO");
     run("yes = true; no = false");
@@ -2353,7 +2353,7 @@ fn creates_multiple_else_if_statement_of_class_before_initialization() {
     $Capacity.total = $Capacity.available + $Capacity.spare
 else if $Capacity.spare / $Capacity.available > 0.1:
     $Capacity.total = $Capacity.available + $Capacity.spare * 2
-else:
+else
     $Capacity.total = $Capacity.available + $Capacity.spare * 3"#);
     run("capacity1 = Capacity()");
     run("capacity1.available = 100");
@@ -2377,7 +2377,7 @@ fn creates_multiple_else_if_statement_of_class_after_initialization() {
     $Shape.area = Math.pow($Shape.x, 2)
 else if $Shape.type == "TRIANGLE":
     $Shape.area = $Shape.x * $Shape.y / 2
-else:
+else
     $Shape.area = $Shape.x * $Shape.y"#);
     assert_eq!(run("shape1.area"), 30);
     run("shape1.x = 7");
@@ -2507,7 +2507,7 @@ fn creates_a_nested_else_statement_of_class_before_initialization() {
     balance = $Account.balance
     if balance > 1000:
         $Account.alert = noAlert
-    else:
+    else
         $Account.alert = lowAlert
 }"#);
     run("account1 = Account()");
@@ -2531,7 +2531,7 @@ fn creates_a_nested_else_statement_of_class_after_initialization() {
     score = $Question.count * 10
     if score > 100:
         $Question.type = high
-    else:
+    else
         $Question.type = low
 }"#);
     assert_eq!(run("question1.type"), "LOW");
@@ -3648,7 +3648,7 @@ fn propagates_changes_between_positive_and_negative_zero() {
     run("inverse = 1 / zero");
     run(r#"if negative:
     zero = -0.0
-else:
+else
     zero = 0.0"#);
     {
         let actual = run("inverse");
@@ -6861,6 +6861,157 @@ throw "ROLLBACK""#), "ROLLBACK");
     run(r#"eased
 
 # return: 0.15625"#);
+}
+
+/// Nucleoid associates nested indented else suites with their conditions
+#[rustfmt::skip]
+#[test]
+fn associates_nested_indented_else_suites_with_their_conditions() {
+    let mut run = runner();
+    run("class Gauge");
+    run("gauge = Gauge()");
+    run("gauge.outer = false");
+    run("gauge.inner = false");
+    run("first = 3");
+    run("second = 5");
+    run("third = 7");
+    run(r#"if gauge.outer:
+    gauge.result = first
+else
+    if gauge.inner:
+        gauge.result = second
+    else
+        gauge.result = third"#);
+    assert_eq!(run("gauge.result"), 7);
+    run("gauge.inner = true");
+    assert_eq!(run("gauge.result"), 5);
+    run("gauge.outer = true");
+    assert_eq!(run("gauge.result"), 3);
+    run("first = 11");
+    assert_eq!(run("gauge.result"), 11);
+    run("gauge.outer = false");
+    assert_eq!(run("gauge.result"), 5);
+    run("second = 13");
+    assert_eq!(run("gauge.result"), 13);
+    run("gauge.inner = false");
+    assert_eq!(run("gauge.result"), 7);
+    run("third = 17");
+    assert_eq!(run("gauge.result"), 17);
+    run(r#"gauge.result
+
+# return: 17"#);
+}
+
+/// Nucleoid keeps indented else class rules independent per instance
+#[rustfmt::skip]
+#[test]
+fn keeps_indented_else_class_rules_independent_per_instance() {
+    let mut run = runner();
+    run("class Tier");
+    run("first = Tier()");
+    run("first.score = 1");
+    run("second = Tier()");
+    run("second.score = 9");
+    run("threshold = 5");
+    run(r#"low = "LOW""#);
+    run(r#"high = "HIGH""#);
+    run(r#"if $Tier.score >= threshold:
+    $Tier.label = high
+else
+    $Tier.label = low"#);
+    assert_eq!(run("first.label"), "LOW");
+    assert_eq!(run("second.label"), "HIGH");
+    run(r#"low = "L""#);
+    assert_eq!(run("first.label"), "L");
+    assert_eq!(run("second.label"), "HIGH");
+    run("first.score = 8");
+    assert_eq!(run("first.label"), "HIGH");
+    assert_eq!(run("second.label"), "HIGH");
+    run("threshold = 10");
+    assert_eq!(run("first.label"), "L");
+    assert_eq!(run("second.label"), "L");
+    run("second.score = 12");
+    assert_eq!(run("first.label"), "L");
+    assert_eq!(run("second.label"), "HIGH");
+}
+
+/// Nucleoid preserves returns from indented else function branches
+#[rustfmt::skip]
+#[test]
+fn preserves_returns_from_indented_else_function_branches() {
+    let mut run = runner();
+    run(r#"def choose(flag, value):
+    if flag:
+        return value
+    else
+        return value + 1"#);
+    run("enabled = false");
+    run("amount = 2");
+    run("chosen = choose(enabled, amount)");
+    assert_eq!(run("chosen"), 3);
+    run("enabled = true");
+    assert_eq!(run("chosen"), 2);
+    run("amount = 5");
+    assert_eq!(run("chosen"), 5);
+    run("enabled = false");
+    assert_eq!(run("chosen"), 6);
+    run(r#"chosen
+
+# return: 6"#);
+}
+
+/// Nucleoid rolls back throws from indented else suites
+#[rustfmt::skip]
+#[test]
+fn rolls_back_throws_from_indented_else_suites() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("marker = 7");
+    assert_eq!(run_error(r#"if false:
+    marker = 8
+else
+    marker = 9
+    throw "ABORT""#), "ABORT");
+    assert_eq!(run("marker"), 7);
+    run("gate = false");
+    run(r#"if gate:
+    result = 1
+else
+    result = 2"#);
+    assert_eq!(run("result"), 2);
+    run("gate = true");
+    assert_eq!(run("result"), 1);
+}
+
+/// Nucleoid preserves legacy suites beside indented else bodies
+#[rustfmt::skip]
+#[test]
+fn preserves_legacy_suites_beside_indented_else_bodies() {
+    let mut run = runner();
+    run("result = 0");
+    run(r#"if true: result = 1
+else: result = 2"#);
+    assert_eq!(run("result"), 1);
+    run(r#"if false:
+    result = 3
+else
+    result = 4"#);
+    assert_eq!(run("result"), 4);
+    run(r#"if true: { result = 5 }
+else: { result = 6 }"#);
+    assert_eq!(run("result"), 5);
+    run(r#"text = "else:""#);
+    assert_eq!(run("text"), "else:");
+    run("flag = false");
+    run("value = 2");
+    run(r#"if flag:
+    answer = value
+else # else: in a comment is not a delimiter
+    answer = value + 10"#);
+    assert_eq!(run("answer"), 12);
+    run("flag = true");
+    assert_eq!(run("answer"), 2);
+    run("value = 6");
+    assert_eq!(run("answer"), 6);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

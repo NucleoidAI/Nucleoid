@@ -1270,10 +1270,35 @@ fn all_synthesized_asts_fields_order_and_arc_annotations_remain_exact() {
             let before_code = before_code.as_str().unwrap();
             let after_code = after_code.as_str().unwrap();
             equivalent(after_code, before_code);
-            // Count this proposal's header rewrites, not a later optional
-            // sole-return body layout. The actual full AST and all metadata
+            // Count this proposal's header rewrites, not later optional
+            // sole-return or final-else layouts. The actual full AST and all metadata
             // above still compare directly with the pinned historical source.
-            let comparable = indented_arrow.replace_all(after_code, "$1:$2\n${3}return $4");
+            let mut comparable = indented_arrow
+                .replace_all(after_code, "$1:$2\n${3}return $4")
+                .into_owned();
+            let tokens = tokenize(&comparable).unwrap();
+            for (index, token) in tokens.iter().enumerate().rev() {
+                if token.token != Token::Keyword(Keyword::Else)
+                    || !matches!(tokens[index + 1].token, Token::Newline | Token::Indent)
+                    || !tokens[index + 1..]
+                        .iter()
+                        .find(|next| !matches!(next.token, Token::Newline | Token::Semicolon))
+                        .is_some_and(|next| next.token == Token::Indent)
+                {
+                    continue;
+                }
+                let line_start = comparable
+                    .split_inclusive('\n')
+                    .take(token.position.line - 1)
+                    .map(str::len)
+                    .sum::<usize>();
+                let column = comparable[line_start..]
+                    .char_indices()
+                    .nth(token.position.column + 3)
+                    .unwrap()
+                    .0;
+                comparable.insert(line_start + column, ':');
+            }
             rewritten += usize::from(before_code != comparable);
             records += 1;
         }

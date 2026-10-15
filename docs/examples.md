@@ -555,7 +555,7 @@ if $Storage.capacity > 25:
     $Storage.status = normal
 else if $Storage.capacity > 0:
     $Storage.status = low
-else:
+else
     $Storage.status = empty
 
 storage1 = Storage()
@@ -1912,6 +1912,34 @@ assert(eased, 1)
   independent live normalization controls and the exact ordered cubic.
 - Equal or reversed bounds and nonfinite values follow accepted normalization
   and maximum-then-minimum composition, without range validation or shortcuts.
+
+**Indented else suites preserve conditional chains**
+
+```nuc
+class Stock
+item = Stock()
+item.quantity = 0
+limit = 5
+if item.quantity > limit:
+    item.status = "HIGH"
+else if item.quantity > 0:
+    item.status = "LOW"
+else
+    item.status = "EMPTY"
+assert(item.status, "EMPTY")
+item.quantity = 2
+assert(item.status, "LOW")
+item.quantity = 8
+assert(item.status, "HIGH")
+limit = 10
+assert(item.status, "LOW")
+item.quantity = 0
+assert(item.status, "EMPTY")
+```
+
+- Accepted [NUC 34](nuc-0034.md) makes only a final real-indented `else` colon
+  optional; the same source with `else:` remains equivalent. Every condition
+  header retains its colon and existing branch order.
 
 ## Copyright
 

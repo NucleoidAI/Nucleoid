@@ -249,7 +249,11 @@ fn statements(source: &str) -> Vec<String> {
         let trimmed = line.trim();
         let top_level = line.len() == line.trim_start().len();
         let comment_or_blank = trimmed.is_empty() || trimmed.starts_with('#');
-        let continuation = trimmed.starts_with("else:")
+        let continuation = trimmed == "else"
+            || trimmed
+                .strip_prefix("else")
+                .is_some_and(|tail| tail.trim_start().starts_with('#'))
+            || trimmed.starts_with("else:")
             || trimmed.starts_with("else if ")
             || trimmed.starts_with("elif ")
             || trimmed.starts_with("catch ")

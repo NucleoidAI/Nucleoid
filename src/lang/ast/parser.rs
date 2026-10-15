@@ -179,7 +179,12 @@ impl Parser {
     /// a single statement written on the same line.
     fn suite(&mut self) -> Result<Vec<Stmt>> {
         self.expect(&Token::Colon)?;
+        self.suite_body()
+    }
 
+    /// Shares the existing body parser with a final `else` whose real
+    /// indentation has already qualified for colon omission.
+    fn suite_body(&mut self) -> Result<Vec<Stmt>> {
         if self.eat(&Token::Newline) || self.check(&Token::Indent) {
             self.skip_newlines();
             self.expect(&Token::Indent)?;
@@ -335,7 +340,12 @@ impl Parser {
             if self.check(&Token::Keyword(Keyword::If)) {
                 alternate = Some(Box::new(self.if_statement()?));
             } else {
-                alternate = Some(Box::new(Stmt::Block(self.suite()?)));
+                let body = if self.has_indented_body(0) {
+                    self.suite_body()?
+                } else {
+                    self.suite()?
+                };
+                alternate = Some(Box::new(Stmt::Block(body)));
             }
         } else {
             self.position = checkpoint;

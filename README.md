@@ -620,6 +620,29 @@ assert(eased, 0.84375)
   clamps before applying the ordered cubic, retaining existing special-value,
   deferred-read and transactional behavior.
 
+**Indented else suites keep live inputs concise**
+
+```nuc
+enabled = false
+raw = 2
+if enabled:
+    display = raw
+else
+    display = raw + 1
+assert(display, 3)
+enabled = true
+assert(display, 2)
+raw = 5
+assert(display, 5)
+```
+
+- Accepted [NUC 34](docs/nuc-0034.md) permits this optional final-`else` spelling
+  only before a real indented body. `else:` remains valid and equivalent.
+- `if` and `else if` keep their colons; inline, semicolon-separated and braced
+  alternatives still need `else:`. A same-line semicolon cannot enable omission.
+- Nested branch association, live inputs, scope, returns and rollback are
+  unchanged. Strings and comments containing `else:` are not rewritten.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

@@ -545,6 +545,16 @@ Full detail: [NUC 6](nuc-0006.md).
 - Conditionals apply in the order received; when several match, the last one holds.
 - Re-evaluating one conditional does not move it after the others.
 - A conditional can run again when an input changes later in the same cascade. An unchanged write does not restart feedback.
+- Accepted [NUC 34](nuc-0034.md) makes the colon after a final `else` optional
+  only before a genuine indented suite. The unchanged `else:` spelling is
+  equivalent; `if` and `else if` still require their existing colons.
+- Require immediate newline/indent after `else` and a real indent after only
+  normal newline/semicolon layout. Blank/comment lines create no indent;
+  same-line statements, semicolons and braces cannot qualify for omission.
+- Reuse the whole existing body and nested/dangling-else association. Inline,
+  semicolon-separated and braced alternatives retain their required colon.
+  All other headers, canonical rendering, live rules, scopes, returns, throws,
+  rollback and limits remain unchanged.
 
 ```
 if toy1.color == "RED":
@@ -552,6 +562,40 @@ if toy1.color == "RED":
 ```
 
 - `null` until `toy1.color` is `"RED"`.
+
+The executable reference's `Nucleoid preserves live property relationships in
+indented else suites` counterpart covers both branches and later input changes:
+
+```
+class Signal
+signal = Signal()
+signal.enabled = false
+base = 4
+if signal.enabled:
+    signal.output = base
+else
+    signal.output = -base
+assert(signal.output, -4)
+base = 6
+assert(signal.output, -6)
+signal.enabled = true
+assert(signal.output, 6)
+base = 8
+assert(signal.output, 8)
+```
+
+- `if false: pass\nelse` raises
+  `SyntaxError("Expected ':' but found end of input")` at line 2, column 5.
+  A final newline, comments-only body or unindented `pass` instead raises
+  `SyntaxError("Expected ':' but found end of line")` at line 2, column 1.
+- `if false: pass\nelse;\n    pass` raises
+  `SyntaxError("Expected ':' but found ';'")` at line 2, column 5.
+  Same-line `else pass` and `else { pass }` retain their missing-colon errors.
+- The authoritative [colon-free indented else suites](../nucleoid.spec.md#colon-free-indented-else-suites)
+  section records layout, exact inherited diagnostics and executable traces.
+- The CLI already buffers a conditional from its initial colon header.
+  Bare final `else` stays in that buffer until blank-line commit or EOF;
+  no new continuation heuristic or literal/comment delimiter is added.
 
 ### Truthiness
 

@@ -971,8 +971,47 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid creates a block of for statement without dependencies` and
   `Nucleoid loops through only defined objects in a for of statement`.
 
-```
+## Colon-free indented else suites
 
+- A final `else` may omit its colon only before a genuine indented suite.
+  The spelling is optional and has exactly the complete AST and behavior of
+  `else:` with that same body; the alternate remains a `Stmt::Block`.
+- After the existing `Else` token, require immediate `Newline` or `Indent`.
+  Look ahead across only `Newline`/`Semicolon` tokens; the first other token
+  must be `Indent`. Consume nothing on failed qualification, then use the
+  unchanged colon-required suite parser and its diagnostics.
+- Reuse the existing suite-body parser, including leading/trailing layout,
+  all statements, nested suites, optional final `Dedent`, and EOF handling.
+  Blank/comment lines create no indent; LF, CRLF and accepted tabs keep the
+  existing lexer rules. A semicolon on the header line never qualifies.
+- Every `if` and `else if` condition retains its required colon. Other `for`,
+  definition, class, try/catch and anonymous headers keep their accepted
+  grammars. Colon-bearing indented, inline, semicolon-separated and braced
+  alternatives remain valid, with unchanged dangling-else association.
+- Strings, regexes, templates and comments containing `else:` are not headers.
+  No token, keyword, public AST/API, evaluation, scope, frame, graph, return,
+  throw, rollback or resource-limit behavior changes. Canonical rendering
+  remains unchanged; colon omission is a source-only choice.
+- For exact `if false: pass\nelse`, failed qualification raises
+  `SyntaxError("Expected ':' but found end of input")` at line 2, column 5.
+  A trailing newline, comments-only body or unindented `pass` instead raises
+  `SyntaxError("Expected ':' but found end of line")` at line 2, column 1.
+- Exact `if false: pass\nelse;\n    pass` keeps
+  `SyntaxError("Expected ':' but found ';'")` at line 2, column 5.
+  Same-line `else pass` and `else { pass }` keep
+  `"Expected ':' but found keyword 'pass'"` and
+  `"Expected ':' but found '{'"`, respectively, at line 2, column 6.
+- Exact `if false: pass\nelse:\npass` retains
+  `SyntaxError("Expected an indented block but found keyword 'pass'")`
+  at line 3, column 1. After a qualifying bare `else`, four-space-indented
+  `value = (1 +)` raises `SyntaxError("Unexpected ')'")` at line 3, column 18;
+  `value = @` raises `SyntaxError("Unexpected character '@'")` at column 13.
+- The five appended entries cover nested live branches, per-instance class
+  rules, function returns, caught rollback, and legacy/literal controls.
+  They execute 33 assertions and preserve explicit returns `17` and `6`.
+  The reference, README and examples counterparts execute 12 more assertions.
+
+```
 # Nucleoid runs a statement in the state
 
 # i is 1
@@ -1717,7 +1756,7 @@ if fraction > 1:
     score = fraction * point * 3
 else if fraction > 0:
     score = fraction * point * 2
-else:
+else
     score = fraction * point
 
 assert(score, -0.1)
@@ -2581,7 +2620,7 @@ fallback = 0
     concentration = percentage * density / 100 * 1000
     if substance == "NH3":
         molarConcentration = concentration / 17.04
-    else:
+    else
         molarConcentration = fallback
 }
 
@@ -3086,7 +3125,7 @@ basic = 'BASIC'
 # else pH is basic
 if compound > 0.0000001:
     pH = acidic
-else:
+else
     pH = basic
 
 assert(pH, "ACIDIC")
@@ -3144,7 +3183,7 @@ bsd = "BSD"
 # else engine1's license is bsd
 if engine1.type == "Gecko":
     engine1.license = mpl
-else:
+else
     engine1.license = bsd
 
 assert(engine1.license, "BSD")
@@ -3177,7 +3216,7 @@ contact1.last = "Last"
 # else contact1's full is contact1's first plus " " plus contact1's last
 if contact1.type == "BUSINESS":
     contact1.full = "B" + contact1.first
-else:
+else
     contact1.full = contact1.first + " " + contact1.last
 
 assert(contact1.full, "First Last")
@@ -3215,7 +3254,7 @@ if taxpayer1.member > 4:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 2000
 else if taxpayer1.member > 2:
     taxpayer1.tax = taxpayer1.income * rate / 100 - 1000
-else:
+else
     taxpayer1.tax = taxpayer1.income * rate / 100
 
 assert(taxpayer1.tax, 13200)
@@ -3535,7 +3574,7 @@ valid = "VALID"
     ratio = chart1.percentage / 100
     if ratio > 1:
         chart1.status = invalid
-    else:
+    else
         chart1.status = valid
 }
 
@@ -4326,7 +4365,7 @@ class Count
 # else the count's reset is regular
 if $Count.max > 1000:
     $Count.reset = urgent
-else:
+else
     $Count.reset = regular
 
 # urgent is "URGENT"
@@ -4369,7 +4408,7 @@ concentration1.substances = 2
 # else the concentration's formula is serialDilution
 if $Concentration.substances == 1:
     $Concentration.formula = directDilution
-else:
+else
     $Concentration.formula = serialDilution
 
 assert(concentration1.formula, "(c1V1+c2V2)/(V1+V2)")
@@ -4396,7 +4435,7 @@ if $Storage.capacity > 25:
     $Storage.status = normal
 else if $Storage.capacity > 0:
     $Storage.status = low
-else:
+else
     $Storage.status = empty
 
 # storage1 is a Storage
@@ -4433,7 +4472,7 @@ if $Registration.available > 10:
     $Registration.accepted = yes
 else if $Registration.available > 0:
     $Registration.accepted = pending
-else:
+else
     $Registration.accepted = no
 
 assert(registration1.accepted, "NO")
@@ -4459,7 +4498,7 @@ if $Capacity.spare / $Capacity.available > 0.5:
     $Capacity.total = $Capacity.available + $Capacity.spare
 else if $Capacity.spare / $Capacity.available > 0.1:
     $Capacity.total = $Capacity.available + $Capacity.spare * 2
-else:
+else
     $Capacity.total = $Capacity.available + $Capacity.spare * 3
 
 # capacity1 is a Capacity
@@ -4499,7 +4538,7 @@ if $Shape.type == "SQUARE":
     $Shape.area = Math.pow($Shape.x, 2)
 else if $Shape.type == "TRIANGLE":
     $Shape.area = $Shape.x * $Shape.y / 2
-else:
+else
     $Shape.area = $Shape.x * $Shape.y
 
 assert(shape1.area, 30)
@@ -4699,7 +4738,7 @@ lowAlert = "LOW_ALERT"
     balance = $Account.balance
     if balance > 1000:
         $Account.alert = noAlert
-    else:
+    else
         $Account.alert = lowAlert
 }
 
@@ -4740,7 +4779,7 @@ question1.count = 1
     score = $Question.count * 10
     if score > 100:
         $Question.type = high
-    else:
+    else
         $Question.type = low
 }
 
@@ -6099,7 +6138,7 @@ inverse = 1 / zero
 
 if negative:
     zero = -0.0
-else:
+else
     zero = 0.0
 
 assert(inverse, Number.POSITIVE_INFINITY)
@@ -9608,4 +9647,146 @@ assert(unit, 0.25)
 assert(eased, 0.15625)
 eased
 # return: 0.15625
+
+---
+
+# Nucleoid associates nested indented else suites with their conditions
+
+class Gauge
+gauge = Gauge()
+gauge.outer = false
+gauge.inner = false
+first = 3
+second = 5
+third = 7
+if gauge.outer:
+    gauge.result = first
+else
+    if gauge.inner:
+        gauge.result = second
+    else
+        gauge.result = third
+assert(gauge.result, 7)
+gauge.inner = true
+assert(gauge.result, 5)
+gauge.outer = true
+assert(gauge.result, 3)
+first = 11
+assert(gauge.result, 11)
+gauge.outer = false
+assert(gauge.result, 5)
+second = 13
+assert(gauge.result, 13)
+gauge.inner = false
+assert(gauge.result, 7)
+third = 17
+assert(gauge.result, 17)
+gauge.result
+# return: 17
+
+---
+
+# Nucleoid keeps indented else class rules independent per instance
+
+class Tier
+first = Tier()
+first.score = 1
+second = Tier()
+second.score = 9
+threshold = 5
+low = "LOW"
+high = "HIGH"
+if $Tier.score >= threshold:
+    $Tier.label = high
+else
+    $Tier.label = low
+assert(first.label, "LOW")
+assert(second.label, "HIGH")
+low = "L"
+assert(first.label, "L")
+assert(second.label, "HIGH")
+first.score = 8
+assert(first.label, "HIGH")
+assert(second.label, "HIGH")
+threshold = 10
+assert(first.label, "L")
+assert(second.label, "L")
+second.score = 12
+assert(first.label, "L")
+assert(second.label, "HIGH")
+
+---
+
+# Nucleoid preserves returns from indented else function branches
+
+def choose(flag, value):
+    if flag:
+        return value
+    else
+        return value + 1
+enabled = false
+amount = 2
+chosen = choose(enabled, amount)
+assert(chosen, 3)
+enabled = true
+assert(chosen, 2)
+amount = 5
+assert(chosen, 5)
+enabled = false
+assert(chosen, 6)
+chosen
+# return: 6
+
+---
+
+# Nucleoid rolls back throws from indented else suites
+
+marker = 7
+try:
+    if false:
+        marker = 8
+    else
+        marker = 9
+        throw "ABORT"
+catch error:
+    assert(error, "ABORT")
+assert(marker, 7)
+gate = false
+if gate:
+    result = 1
+else
+    result = 2
+assert(result, 2)
+gate = true
+assert(result, 1)
+
+---
+
+# Nucleoid preserves legacy suites beside indented else bodies
+
+result = 0
+if true: result = 1
+else: result = 2
+assert(result, 1)
+if false:
+    result = 3
+else
+    result = 4
+assert(result, 4)
+if true: { result = 5 }
+else: { result = 6 }
+assert(result, 5)
+text = "else:"
+assert(text, "else:")
+flag = false
+value = 2
+if flag:
+    answer = value
+else # else: in a comment is not a delimiter
+    answer = value + 10
+assert(answer, 12)
+flag = true
+assert(answer, 2)
+value = 6
+assert(answer, 6)
 ```

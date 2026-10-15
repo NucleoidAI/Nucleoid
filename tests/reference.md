@@ -420,7 +420,7 @@ if $Grade.score > 89:
     $Grade.letter = "A"
 else if $Grade.score > 79:
     $Grade.letter = "B"
-else:
+else
     $Grade.letter = "C"
 
 assert(grade1.letter, "A")
@@ -1549,4 +1549,24 @@ value = 6
 assert(eased, 0.84375)
 upper = 16
 assert(eased, 0.31640625)
+
+---
+
+# Nucleoid preserves live property relationships in indented else suites
+
+class Signal
+signal = Signal()
+signal.enabled = false
+base = 4
+if signal.enabled:
+    signal.output = base
+else
+    signal.output = -base
+assert(signal.output, -4)
+base = 6
+assert(signal.output, -6)
+signal.enabled = true
+assert(signal.output, 6)
+base = 8
+assert(signal.output, 8)
 ```
