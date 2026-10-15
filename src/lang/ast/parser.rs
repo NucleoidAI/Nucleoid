@@ -480,6 +480,16 @@ impl Parser {
         }
     }
 
+    /// Qualify a whole comma-free, untyped arrow header before consuming names.
+    /// Layout, annotations and mixed separators must fall through unchanged.
+    fn comma_free_arrow_end(&self) -> Option<usize> {
+        let mut end = 0;
+        while matches!(self.peek_at(end), Token::Identifier(_)) {
+            end += 1;
+        }
+        (end >= 2 && matches!(self.peek_at(end), Token::Arrow)).then_some(end)
+    }
+
     fn function_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::Def))?;
 
@@ -523,7 +533,11 @@ impl Parser {
                 Token::Colon
             )
         ) && self.has_indented_suite(3);
-        let parameters = if let Some(end) = bare_multiple_end {
+        let parameters = if let Some(end) = self.comma_free_arrow_end() {
+            (0..end)
+                .map(|_| self.parameter())
+                .collect::<Result<Vec<_>>>()?
+        } else if let Some(end) = bare_multiple_end {
             let delimiter_position = self.position + end;
             let mut parameters = Vec::new();
             loop {
@@ -1422,6 +1436,36 @@ impl Parser {
 mod tests {
     use super::*;
     use crate::lang::ast::generator::generate_all;
+
+    #[test]
+    fn comma_free_arrow_lookahead_qualifies_the_whole_prefix_without_consuming() {
+        for (header, end) in [
+            ("left right => left", Some(2)),
+            ("left right factor => left", Some(3)),
+            ("left\tright=>left", Some(2)),
+            ("left => left", None),
+            ("left, right => left", None),
+            ("left: int, right => left", None),
+            ("left: int right => left", None),
+            ("left right: int => left", None),
+            ("left right, third => left", None),
+            ("left, right third => left", None),
+            ("left right:\n    return left", None),
+            ("left right\n=> left", None),
+            ("left # boundary\nright => left", None),
+            ("left right; => left", None),
+            ("left this => left", None),
+            ("left right", None),
+        ] {
+            let mut parser = Parser::new(tokenize(&format!("def f {header}")).unwrap());
+            parser.expect(&Token::Keyword(Keyword::Def)).unwrap();
+            assert_eq!(parser.advance(), Token::Identifier("f".to_string()));
+            let original = parser.position;
+            assert_eq!(parser.comma_free_arrow_end(), end, "{header}");
+            assert_eq!(parser.position, original, "{header}");
+            assert_eq!(parser.peek(), &Token::Identifier("left".to_string()));
+        }
+    }
 
     #[test]
     fn compound_assignments_lower_to_identical_assignment_and_binary_asts() {

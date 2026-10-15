@@ -225,7 +225,7 @@ assert(indexed, 5)
 
 def operation number => 99
 
-def apply operation, number => operation(number)
+def apply operation number => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -1463,7 +1463,7 @@ assert(allowed, false)
 # Nucleoid preserves bare multiple parameter arrow relationships
 
 scale = 1
-def area width, height => width * height * scale
+def area width height => width * height * scale
 width = 3
 height = 4
 result = area(width, height)
@@ -1478,7 +1478,7 @@ assert(result, 40)
 # Nucleoid preserves bare multiple parameter block relationships
 
 scale = 2
-def area width, height =>
+def area width height =>
     width * height * scale
 result = area(3, 4)
 assert(result, 24)
@@ -1602,4 +1602,19 @@ assert(whole, -2)
 assert(fraction, 0.5)
 signal.sample = 4.125
 assert(fraction, 0.125)
+
+---
+
+# Nucleoid preserves comma-free named arrow relationships
+
+scale = 1
+def area width height => width * height * scale
+width = 3
+height = 4
+result = area(width, height)
+assert(result, 12)
+scale = 2
+assert(result, 24)
+width = 5
+assert(result, 40)
 ```

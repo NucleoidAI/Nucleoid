@@ -2,6 +2,8 @@
 //! Every ordinary test is self-contained: no Git history or session artifacts.
 
 mod common;
+#[path = "support/named_arrow_headers.rs"]
+mod named_arrow_headers;
 
 use std::fs;
 use std::io::Write as _;
@@ -39,7 +41,18 @@ fn indent_returns(explicit: &str) -> String {
 fn explicit_returns(indented: &str) -> String {
     Regex::new(r"(?m)^([ \t]*def [^\n]+) =>([ \t]*(?:#[^\n]*)?)\n([ \t]+)([^\n]+)")
         .unwrap()
-        .replace_all(indented, "$1:$2\n${3}return $4")
+        .replace_all(indented, |captures: &regex::Captures<'_>| {
+            // Normalize only the header whose indented arrow is converted.
+            // Inline NUC37 headers elsewhere are not NUC32 body rewrites.
+            let header = named_arrow_headers::legacy_headers(&format!("{} =>", &captures[1]));
+            format!(
+                "{}:{}\n{}return {}",
+                header.strip_suffix(" =>").unwrap(),
+                &captures[2],
+                &captures[3],
+                &captures[4]
+            )
+        })
         .into_owned()
 }
 
@@ -341,6 +354,12 @@ fn nonqualifying_layout_and_unsupported_headers_keep_legacy_errors_and_positions
 #[test]
 fn valid_inline_arrows_following_statements_colon_suites_and_anonymous_forms_are_not_reinterpreted()
 {
+    let inline_comma_free = "def f left right => left + right";
+    assert_eq!(explicit_returns(inline_comma_free), inline_comma_free);
+    assert_eq!(
+        explicit_returns("def f left right =>\n    left + right"),
+        "def f left, right:\n    return left + right"
+    );
     let inline = parse("def f x => x\n    7\nnext = 3").unwrap();
     assert_eq!(inline, parse("def f x => x\n7\nnext = 3").unwrap());
     assert_eq!(inline.len(), 3);
@@ -825,7 +844,10 @@ fn eight_paired_document_identities_order_assertions_and_returns_are_protected()
         for (case, own) in selected.into_iter().zip(&fixtures) {
             assert_eq!(case.title, own.title, "{document}: relative order");
             assert_eq!(case.expected.as_deref(), own.expected);
-            assert_eq!(case.source.trim(), indent_returns(own.explicit).trim());
+            assert_eq!(
+                named_arrow_headers::legacy_headers(&case.source).trim(),
+                indent_returns(own.explicit).trim()
+            );
             let [actual, expected] =
                 check_pair(&case.source, own.explicit, own.assertions, own.expected);
             graphs_match(&actual, &expected);

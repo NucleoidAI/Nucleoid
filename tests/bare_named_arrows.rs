@@ -188,6 +188,11 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
         "class Gauge:\n    def reading amount: int, other => amount",
         "class Gauge:\n    def reading(amount: int, other) => amount",
     );
+    // NUC37 adds a complete comma-free list, not a mixed-separator prefix.
+    equivalent(
+        "def f amount other => amount",
+        "def f(amount, other) => amount",
+    );
     // Captured using the unchanged accepted runtime before the parser edit.
     for (source, message, line, column) in [
         (
@@ -221,7 +226,7 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
             7,
         ),
         (
-            "def f amount other => amount",
+            "def f amount other, third => amount",
             "Expected '(' but found identifier 'amount'",
             1,
             7,

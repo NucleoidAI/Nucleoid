@@ -1,6 +1,8 @@
 //! Bare multi-parameter indented headers preserve the complete named block.
 
 mod common;
+#[path = "support/named_arrow_headers.rs"]
+mod named_arrow_headers;
 
 use std::fs;
 use std::path::Path;
@@ -721,8 +723,9 @@ fn all_historical_measured_asts_and_the_eight_appended_counterparts_remain_exact
             historical += 1;
         }
         for case in &after[before.len()..before.len() + added] {
-            let explicit = header.replace_all(&case.source, "$1($2)$3");
-            assert_ne!(case.source, explicit, "{}", case.title);
+            let normalized = named_arrow_headers::legacy_headers(&case.source);
+            let explicit = header.replace_all(&normalized, "$1($2)$3");
+            assert_ne!(normalized, explicit, "{}", case.title);
             let statements = equivalent(&case.source, &explicit);
             let assertions = common::assertions::protected_assertions(&statements);
             common::check_with_assertions(case, assertions.len()).unwrap();

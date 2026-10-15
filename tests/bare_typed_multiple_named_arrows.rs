@@ -2,6 +2,8 @@
 //! Only the two explicitly ignored corpus audits need historical Git objects.
 
 mod common;
+#[path = "support/named_arrow_headers.rs"]
+mod named_arrow_headers;
 
 use std::fs;
 use std::io::Write as _;
@@ -998,8 +1000,9 @@ fn historical_measured_asts_and_the_eight_appended_counterparts_remain_exact() {
             historical += 1;
         }
         for case in own_additions {
-            let explicit = header.replace_all(&case.source, "$1($2) =>");
-            assert_ne!(case.source, explicit, "{}", case.title);
+            let normalized = named_arrow_headers::legacy_headers(&case.source);
+            let explicit = header.replace_all(&normalized, "$1($2) =>");
+            assert_ne!(normalized, explicit, "{}", case.title);
             let statements = equivalent(&case.source, &explicit);
             let count = common::assertions::protected_assertions(&statements).len();
             check_forms(&case.source, &explicit, count, case.expected.as_deref());

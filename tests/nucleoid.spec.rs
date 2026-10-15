@@ -3827,7 +3827,7 @@ fn tracks_named_callbacks_over_lists_and_class_populations() {
     run("numbers = [1, 2, 3]");
     run("def transform number => number * 2");
     run("def matches number => number > 0");
-    run("def combine total, number => total + number");
+    run("def combine total number => total + number");
     run("mapped = numbers.map(transform)");
     run("filtered = numbers.filter(matches)");
     run("found = numbers.find(matches)");
@@ -3842,7 +3842,7 @@ fn tracks_named_callbacks_over_lists_and_class_populations() {
     assert_eq!(run("total"), 7);
     run("def transform number => number * 3");
     run("def matches number => number > 3");
-    run("def combine total, number => total * number");
+    run("def combine total number => total * number");
     assert_eq!(run("mapped"), serde_json::json!([3, 6, 9]));
     assert_eq!(run("filtered"), serde_json::json!([]));
     assert_eq!(run("found"), serde_json::Value::Null);
@@ -3868,7 +3868,7 @@ fn tracks_named_callbacks_over_lists_and_class_populations() {
 fn tracks_named_functions_passed_to_higher_order_calls() {
     let mut run = runner();
     run("def transform number => number * 2");
-    run("def apply operation, number => operation(number)");
+    run("def apply operation number => operation(number)");
     run("input = 3");
     run("result = apply(transform, input)");
     assert_eq!(run("result"), 6);
@@ -4032,7 +4032,7 @@ fn restores_nullable_callable_properties_without_changing_frozen_references() {
 fn lets_null_and_non_callable_parameters_shadow_outer_functions() {
     let mut run = runner();
     run("def operation number => 99");
-    run("def apply operation, number => operation(number)");
+    run("def apply operation number => operation(number)");
     run("callback = null");
     run("result = apply(callback, 3)");
     assert_eq!(run("result"), serde_json::Value::Null);
@@ -4683,12 +4683,12 @@ fn rolls_back_failed_compound_assignments() {
 #[test]
 fn returns_compound_assignment_expressions() {
     let mut run = runner();
-    run("def add current, delta => current += delta");
-    run("def subtract current, delta => current -= delta");
-    run("def multiply current, delta => current *= delta");
-    run("def divide current, delta => current /= delta");
-    run("def remainder current, delta => current %= delta");
-    run("def combined a, b => a += b *= 2");
+    run("def add current delta => current += delta");
+    run("def subtract current delta => current -= delta");
+    run("def multiply current delta => current *= delta");
+    run("def divide current delta => current /= delta");
+    run("def remainder current delta => current %= delta");
+    run("def combined a b => a += b *= 2");
     assert_eq!(run("add(5, 3)"), 8);
     assert_eq!(run("subtract(5, 3)"), 2);
     assert_eq!(run("multiply(5, 3)"), 15);
@@ -5183,7 +5183,7 @@ fn keeps_bare_single_parameter_block_binding_and_explicit_alternatives_equivalen
     amount + 100"#);
     run(r#"def typed(amount: int) =>
     amount + 1"#);
-    run(r#"def pair left, right =>
+    run(r#"def pair left right =>
     left + right"#);
     run(r#"def unit() =>
     42"#);
@@ -5887,13 +5887,13 @@ fn preserves_logical_compound_property_and_local_assignments() {
     assert_eq!(run("gate.allow(true)"), true);
     assert_eq!(run("gate.require(false)"), false);
     assert_eq!(run("gate.enabled"), false);
-    run("def prefer value, fallback => value ||= fallback");
-    run("def requireBoth value, allowed => value &&= allowed");
+    run("def prefer value fallback => value ||= fallback");
+    run("def requireBoth value allowed => value &&= allowed");
     assert_eq!(run("prefer(0, 8)"), 8);
     assert_eq!(run("prefer(3, 8)"), 3);
     assert_eq!(run("requireBoth(2, 7)"), 7);
     assert_eq!(run("requireBoth(0, 7)"), 0);
-    run("def combined a, b => a ||= b &&= 9");
+    run("def combined a b => a ||= b &&= 9");
     assert_eq!(run("combined(false, 2)"), 9);
     assert_eq!(run("combined(true, 2)"), true);
     run(r#"combined(false, 2)
@@ -5933,10 +5933,10 @@ catch error:
 #[test]
 fn defines_bare_multiple_parameter_named_arrows() {
     let mut run = runner();
-    run("def add left, right => left + right");
-    run("def scaled left, right, factor => (left + right) * factor");
-    run("def pair left, right => [left, right]");
-    run("def coordinates x, y => {x, y}");
+    run("def add left right => left + right");
+    run("def scaled left right factor => (left + right) * factor");
+    run("def pair left right => [left, right]");
+    run("def coordinates x y => {x, y}");
     assert_eq!(run("add(2, 3)"), 5);
     assert_eq!(run("scaled(2, 3, 4)"), 20);
     assert_eq!(run(r#"pair("left", "right")"#), serde_json::json!(["left", "right"]));
@@ -5951,12 +5951,12 @@ fn defines_bare_multiple_parameter_named_arrows() {
 fn keeps_bare_multiple_parameter_arrows_reactive() {
     let mut run = runner();
     run("bias = 1");
-    run("def total left, right => left + right + bias");
+    run("def total left right => left + right + bias");
     run("tracked = total(2, 3)");
     assert_eq!(run("tracked"), 6);
     run("bias = 4");
     assert_eq!(run("tracked"), 9);
-    run("def projected first, second, third => first * second + third");
+    run("def projected first second third => first * second + third");
     run("left = 2");
     run("right = 3");
     run("offset = 4");
@@ -5974,8 +5974,8 @@ fn keeps_bare_multiple_parameter_arrows_reactive() {
 fn preserves_bare_multiple_parameter_methods() {
     let mut run = runner();
     run(r#"class Calculator:
-    def combine left, right => this.base + left + right
-    def product left, right, scale => self.base + left * right * scale"#);
+    def combine left right => this.base + left + right
+    def product left right scale => self.base + left * right * scale"#);
     run("calculator = Calculator()");
     run("calculator.base = 2");
     run("result = calculator.combine(3, 4)");
@@ -5991,7 +5991,7 @@ fn preserves_bare_multiple_parameter_methods() {
 fn preserves_nested_bare_multiple_parameter_arrows() {
     let mut run = runner();
     run(r#"def outer(initial):
-    def combine left, right, scale => (left + right) * scale
+    def combine left right scale => (left + right) * scale
     return combine(initial, 2, 3)"#);
     assert_eq!(run("outer(4)"), 18);
     run("def factory(ignored) => (left, right) => left + right");
@@ -6004,9 +6004,9 @@ fn preserves_nested_bare_multiple_parameter_arrows() {
 #[test]
 fn returns_bare_multiple_parameter_named_arrows() {
     let mut run = runner();
-    run("def prefer current, fallback => current ||= fallback");
-    run("def requireBoth current, condition => current &&= condition");
-    run("def combined first, second, scale => (first + second) * scale");
+    run("def prefer current fallback => current ||= fallback");
+    run("def requireBoth current condition => current &&= condition");
+    run("def combined first second scale => (first + second) * scale");
     assert_eq!(run("prefer(0, 9)"), 9);
     assert_eq!(run("prefer(3, 9)"), 3);
     assert_eq!(run("requireBoth(2, 7)"), 7);
@@ -6025,7 +6025,7 @@ fn defines_bare_multiple_parameter_indented_blocks() {
     run(r#"def add left, right:
     total = left + right
     return total"#);
-    run(r#"def scaled left, right, factor =>
+    run(r#"def scaled left right factor =>
     (left + right) * factor"#);
     run(r#"def largest left, right:
     if left > right:
@@ -6043,7 +6043,7 @@ fn defines_bare_multiple_parameter_indented_blocks() {
 fn keeps_bare_multiple_parameter_blocks_reactive() {
     let mut run = runner();
     run("bias = 2");
-    run(r#"def scaled left, right =>
+    run(r#"def scaled left right =>
     left * right + bias"#);
     run("live = scaled");
     run("snapshot = scaled.value");
@@ -6051,7 +6051,7 @@ fn keeps_bare_multiple_parameter_blocks_reactive() {
     run("frozen = snapshot(3, 4)");
     assert_eq!(run("result"), 14);
     assert_eq!(run("frozen"), 14);
-    run(r#"def scaled left, right =>
+    run(r#"def scaled left right =>
     left + right + bias"#);
     assert_eq!(run("result"), 9);
     assert_eq!(run("frozen"), 14);
@@ -6068,12 +6068,12 @@ fn preserves_bare_multiple_parameter_block_methods_and_initializers() {
     run(r#"class Parent:
     def init left, right:
         this.amount = left + right
-    def reading offset, scale =>
+    def reading offset scale =>
         self.amount * scale + offset"#);
     run(r#"class Child: Parent
     def init left, right:
         super(left, right)
-    def reading offset, scale =>
+    def reading offset scale =>
         self.amount * scale + offset
     def increase delta, extra:
         this.amount += delta + extra
@@ -6097,7 +6097,7 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
     let mut run = runner();
     run("left = 10");
     run("right = 20");
-    run(r#"def pair left, right =>
+    run(r#"def pair left right =>
     [left, right]"#);
     run(r#"def add left, right:
     left += right
@@ -6107,7 +6107,7 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
     run(r#"def bareReturn left, right:
     return"#);
     run(r#"def outer(initial):
-    def combine left, right, scale =>
+    def combine left right scale =>
         (left + right) * scale
     return combine(initial, 2, 3)"#);
     assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
@@ -6128,11 +6128,11 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
 fn rolls_back_failed_bare_multiple_parameter_block_redefinitions() {
     let (mut run, mut run_error) = crate::common::runners();
     run("source = 3");
-    run(r#"def reading left, right =>
+    run(r#"def reading left right =>
     source + left + right"#);
     run("total = reading(2, 4)");
     assert_eq!(run("total"), 9);
-    assert_eq!(run_error(r#"def reading left, right =>
+    assert_eq!(run_error(r#"def reading left right =>
     missing + left + right"#), "ReferenceError: missing is not defined");
     assert_eq!(run("total"), 9);
     run("source = 4");
@@ -6535,7 +6535,7 @@ fn defines_indented_named_arrow_expressions() {
     amount * 2"#);
     run(r#"def typed amount: int =>
     amount + 1"#);
-    run(r#"def add left, right =>
+    run(r#"def add left right =>
     left + right"#);
     run(r#"def scaled left: int, right, factor: number =>
     (left + right) * factor"#);
@@ -6587,7 +6587,7 @@ fn preserves_indented_named_arrow_methods_and_initializers() {
         super(value)
     def reading offset: int =>
         this.amount * 2 + offset
-    def change delta, extra =>
+    def change delta extra =>
         this.amount += delta + extra"#);
     run("child = Child(3)");
     run("observed = child.reading(1)");
@@ -6610,13 +6610,13 @@ fn preserves_indented_named_arrow_bindings_and_returned_values() {
     run("right = 20");
     run(r#"def pair left: int, right =>
     [left, right]"#);
-    run(r#"def point x, y =>
+    run(r#"def point x y =>
     {x, y}"#);
-    run(r#"def text left, right =>
+    run(r#"def text left right =>
     `${left},${right}`"#);
     run(r#"def factory ignored =>
     value => value + 1"#);
-    run(r#"def assign left, right =>
+    run(r#"def assign left right =>
     left += right"#);
     run(r#"def outer initial:
     def local amount =>
@@ -7420,6 +7420,103 @@ throw "ROLLBACK""#), "ROLLBACK");
     run(r#"fraction
 
 # return: 0.25"#);
+}
+
+/// Nucleoid defines comma-free bare named arrows
+#[rustfmt::skip]
+#[test]
+fn defines_comma_free_bare_named_arrows() {
+    let mut run = runner();
+    run("def add left right => left + right");
+    run("def scaled left right factor => (left + right) * factor");
+    run("def pair left right => [left, right]");
+    run("def coordinates x y => {x, y}");
+    run(r#"def indented left right =>
+    left + right"#);
+    assert_eq!(run("add(2, 3)"), 5);
+    assert_eq!(run("scaled(2, 3, 4)"), 20);
+    assert_eq!(run(r#"pair("left", "right")"#), serde_json::json!(["left", "right"]));
+    run("point = coordinates(2, 3)");
+    assert_eq!(run("point.x"), 2);
+    assert_eq!(run("point.y"), 3);
+    assert_eq!(run("indented(2, 3)"), 5);
+}
+
+/// Nucleoid keeps comma-free bare named arrows reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_comma_free_bare_named_arrows_reactive() {
+    let mut run = runner();
+    run("bias = 1");
+    run("def total left right => left + right + bias");
+    run("tracked = total(2, 3)");
+    assert_eq!(run("tracked"), 6);
+    run("bias = 4");
+    assert_eq!(run("tracked"), 9);
+    run("def projected first second third => first * second + third");
+    run("left = 2");
+    run("right = 3");
+    run("offset = 4");
+    run("result = projected(left, right, offset)");
+    assert_eq!(run("result"), 10);
+    run("left = 5");
+    assert_eq!(run("result"), 19);
+    run("right = 2");
+    assert_eq!(run("result"), 14);
+}
+
+/// Nucleoid preserves comma-free methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_comma_free_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Calculator:
+    def init base scale => this.base = base * scale
+    def combine left right => this.base + left + right
+    def product left right scale => self.base + left * right * scale"#);
+    run("calculator = Calculator(1, 2)");
+    run("result = calculator.combine(3, 4)");
+    assert_eq!(run("result"), 9);
+    run("calculator.base = 5");
+    assert_eq!(run("result"), 12);
+    assert_eq!(run("calculator.product(2, 3, 4)"), 29);
+}
+
+/// Nucleoid preserves nested comma-free bare named arrows
+#[rustfmt::skip]
+#[test]
+fn preserves_nested_comma_free_bare_named_arrows() {
+    let mut run = runner();
+    run(r#"def outer(initial):
+    def combine left right scale => (left + right) * scale
+    return combine(initial, 2, 3)"#);
+    assert_eq!(run("outer(4)"), 18);
+    run("def factory(ignored) => (left, right) => left + right");
+    run("custom = factory(10)");
+    assert_eq!(run("custom(2, 3)"), 5);
+}
+
+/// Nucleoid rolls back comma-free named arrow redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_comma_free_named_arrow_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run("def reading left right => source + left + right");
+    run("result = reading(2, 4)");
+    assert_eq!(run("result"), 9);
+    assert_eq!(run_error("def reading left right => missing + left + right"), "ReferenceError: missing is not defined");
+    assert_eq!(run("result"), 9);
+    run("source = 5");
+    assert_eq!(run("result"), 11);
+    run("def prefer current fallback => current ||= fallback");
+    run("def combined first second scale => (first + second) * scale");
+    assert_eq!(run("prefer(0, 9)"), 9);
+    assert_eq!(run("prefer(3, 9)"), 3);
+    assert_eq!(run("combined(2, 5, 3)"), 21);
+    run(r#"combined(2, 5, 3)
+
+# return: 21"#);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

@@ -105,7 +105,7 @@ physical lines. Named arrow braces still denote object expressions; returned
 anonymous functions keep their own existing body grammar and do not gain
 closure capture.
 
-Apart from NUC27's untyped and NUC29's typed/mixed multiple-parameter arrows,
+Apart from NUC27's untyped, NUC37's comma-free untyped and NUC29's typed/mixed multiple-parameter arrows,
 NUC28's untyped and NUC30's typed/mixed multiple-parameter indented blocks and
 the narrow typed-arrow and single-parameter indented-colon forms below, other
 prefixes still require parameter parentheses. Defaulted, destructured and nullary
@@ -193,6 +193,76 @@ automatic invocation is introduced.
 - The five `bare multiple parameter` entries below exercise forms, reactivity,
   methods, nested definitions and expression returns; the last explicitly
   returns `21`. They preserve their pre-executed accepted-syntax counterparts.
+
+## Comma-free bare named arrows
+
+- NUC37 adds an optional spelling of an already-bare, wholly untyped
+  named arrow: `def add left right => left + right` is exactly
+  `def add left, right => left + right`. Both remain exactly equivalent to
+  `def add(left, right) => left + right`.
+- This is an additional guard, not a replacement or relaxation of NUC27's
+  comma-separated grammar or the existing typed/mixed and suite-colon guards.
+  After unchanged `Def Identifier`, qualify the complete immediate prefix
+  `Identifier Identifier Identifier* Arrow` on one logical header line.
+- Require at least two ordinary identifiers, no annotation or comma anywhere
+  in this new prefix, and the arrow immediately after the last identifier.
+  Inspect tokens without consuming them, allocating parameter names, skipping
+  `Newline`, `Semicolon`, `Indent` or `Dedent`, backtracking or error recovery.
+  Whitespace and tabs separate names; comments cannot bridge a logical break.
+- Only after complete qualification, call the existing `parameter()` for
+  each identifier. Keep ordered `Parameter { name, type_name: None }` values,
+  the same function name and `FunctionBody::Block` containing exactly
+  `Return(Some(expression))`. No token insertion or new lexer/public AST,
+  runtime, generator, API, dependency or flat parameter-count bound is added.
+- Reuse the entire named-arrow expression parser, including NUC32's genuine
+  indented single expression, header-line opening parentheses continued over
+  physical lines, leading object expressions and returned anonymous functions.
+  All body bytes and punctuation, including object/anonymous/call commas, keep
+  their existing meaning; this is not a new statement suite or implicit return.
+- The same additional guard applies wherever named definitions already occur:
+  methods, `init`, nesting and redefinition. Binding, missing/null/extra inputs,
+  duplicate names, parameter locals and shadowing, `this`/`self`/`super`,
+  initializer adoption, live references and `.value` snapshots are unchanged.
+  Preserve noncapture, dependencies, graph keys and canonical source, reasoning,
+  statement positions, resource bounds, transactions and rollback.
+- Keep all comma-bearing, parenthesized, typed/mixed, single/nullary, block,
+  method and initializer forms. Mixed separators such as `left right, third`
+  or `left, right third`, comma-free typed lists, colon-suite headers,
+  parenthesized comma omission, anonymous parameter comma omission, class
+  lists, calls, defaults, rest/destructuring, return annotations and bare
+  nullary headers are not added. `add left right` outside `def` remains three
+  ordinary expression statements, not a call.
+- Unsupported complete prefixes fall through at their original position.
+  Exact `def f left right, third => left`, `def f left, right third => left`,
+  `def f left: int right => left`, `def f left right: int => left`,
+  `def f left right:` followed by an indented `return left`, and logical
+  header breaks all retain
+  `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
+  `def f this right => right` names `keyword 'this'` at that same position.
+- Exact `def f left right =>` gives `SyntaxError("Unexpected end of input")`
+  at line 1, column 20. A final newline or an unindented next expression gives
+  `SyntaxError("Unexpected end of line")` at line 2, column 1.
+  `def f left right =>;` gives `SyntaxError("Unexpected ';'")` at column 20.
+- With that header, body ` (left +)` gives `SyntaxError("Unexpected ')'")`
+  at line 1, column 29; ` { return left }` gives
+  `SyntaxError("Expected a key but found keyword 'return'")` at column 30;
+  ` { left = 1 }` gives `SyntaxError("Expected ':' but found '='")` at column 28;
+  ` @` gives `SyntaxError("Unexpected character '@'")` at column 21.
+  An unparenthesized multiline object still gives
+  `SyntaxError("Expected a key but found an indented block")` at line 2, column 5.
+- After a real newline, four-space-indented `left` followed by a second
+  four-space-indented `right` gives
+  `SyntaxError("Expected the end of a block but found identifier 'right'")`
+  at line 3, column 5. Four-space `return left` gives
+  `SyntaxError("Unexpected keyword 'return'")` at line 2, column 12.
+  CRLF, tab columns, EOF, lexical failures and all other body/resource/runtime
+  errors use the existing machinery, never a caught/retried parse.
+- The five appended `comma-free` specification entries trace basic forms,
+  live inputs, methods/init, nesting/returned anonymous functions and real
+  caught redefinition rollback. Their 23 assertions execute in order; the
+  rollback entry explicitly returns `21`. The paired reference, README and
+  examples entries supply seven more protected assertions. All eight preserve
+  the pre-executed accepted comma-bearing counterparts.
 
 ## Bare single-parameter indented block definitions
 
@@ -6455,7 +6525,7 @@ def transform number => number * 2
 
 def matches number => number > 0
 
-def combine total, number => total + number
+def combine total number => total + number
 
 mapped = numbers.map(transform)
 filtered = numbers.filter(matches)
@@ -6475,7 +6545,7 @@ def transform number => number * 3
 
 def matches number => number > 3
 
-def combine total, number => total * number
+def combine total number => total * number
 
 assert(mapped, [3, 6, 9])
 assert(filtered, [])
@@ -6509,7 +6579,7 @@ assert(readings, [9, 12])
 
 def transform number => number * 2
 
-def apply operation, number => operation(number)
+def apply operation number => operation(number)
 
 input = 3
 result = apply(transform, input)
@@ -6713,7 +6783,7 @@ assert(frozen, 3)
 
 def operation number => 99
 
-def apply operation, number => operation(number)
+def apply operation number => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -7482,12 +7552,12 @@ catch error:
 ---
 
 # Nucleoid returns compound assignment expressions
-def add current, delta => current += delta
-def subtract current, delta => current -= delta
-def multiply current, delta => current *= delta
-def divide current, delta => current /= delta
-def remainder current, delta => current %= delta
-def combined a, b => a += b *= 2
+def add current delta => current += delta
+def subtract current delta => current -= delta
+def multiply current delta => current *= delta
+def divide current delta => current /= delta
+def remainder current delta => current %= delta
+def combined a b => a += b *= 2
 assert(add(5, 3), 8)
 assert(subtract(5, 3), 2)
 assert(multiply(5, 3), 15)
@@ -8040,7 +8110,7 @@ def ignored amount:
 def typed(amount: int) =>
     amount + 1
 
-def pair left, right =>
+def pair left right =>
     left + right
 
 def unit() =>
@@ -8851,13 +8921,13 @@ gate.enabled = false
 assert(gate.allow(true), true)
 assert(gate.require(false), false)
 assert(gate.enabled, false)
-def prefer value, fallback => value ||= fallback
-def requireBoth value, allowed => value &&= allowed
+def prefer value fallback => value ||= fallback
+def requireBoth value allowed => value &&= allowed
 assert(prefer(0, 8), 8)
 assert(prefer(3, 8), 3)
 assert(requireBoth(2, 7), 7)
 assert(requireBoth(0, 7), 0)
-def combined a, b => a ||= b &&= 9
+def combined a b => a ||= b &&= 9
 assert(combined(false, 2), 9)
 assert(combined(true, 2), true)
 combined(false, 2)
@@ -8893,10 +8963,10 @@ assert(ready, true)
 
 # Nucleoid defines bare multiple parameter named arrows
 
-def add left, right => left + right
-def scaled left, right, factor => (left + right) * factor
-def pair left, right => [left, right]
-def coordinates x, y => {x, y}
+def add left right => left + right
+def scaled left right factor => (left + right) * factor
+def pair left right => [left, right]
+def coordinates x y => {x, y}
 assert(add(2, 3), 5)
 assert(scaled(2, 3, 4), 20)
 assert(pair("left", "right"), ["left", "right"])
@@ -8909,12 +8979,12 @@ assert(point.y, 3)
 # Nucleoid keeps bare multiple parameter arrows reactive
 
 bias = 1
-def total left, right => left + right + bias
+def total left right => left + right + bias
 tracked = total(2, 3)
 assert(tracked, 6)
 bias = 4
 assert(tracked, 9)
-def projected first, second, third => first * second + third
+def projected first second third => first * second + third
 left = 2
 right = 3
 offset = 4
@@ -8930,8 +9000,8 @@ assert(result, 14)
 # Nucleoid preserves bare multiple parameter methods
 
 class Calculator:
-    def combine left, right => this.base + left + right
-    def product left, right, scale => self.base + left * right * scale
+    def combine left right => this.base + left + right
+    def product left right scale => self.base + left * right * scale
 calculator = Calculator()
 calculator.base = 2
 result = calculator.combine(3, 4)
@@ -8945,7 +9015,7 @@ assert(calculator.product(2, 3, 4), 29)
 # Nucleoid preserves nested bare multiple parameter arrows
 
 def outer(initial):
-    def combine left, right, scale => (left + right) * scale
+    def combine left right scale => (left + right) * scale
     return combine(initial, 2, 3)
 assert(outer(4), 18)
 def factory(ignored) => (left, right) => left + right
@@ -8956,9 +9026,9 @@ assert(custom(2, 3), 5)
 
 # Nucleoid returns bare multiple parameter named arrows
 
-def prefer current, fallback => current ||= fallback
-def requireBoth current, condition => current &&= condition
-def combined first, second, scale => (first + second) * scale
+def prefer current fallback => current ||= fallback
+def requireBoth current condition => current &&= condition
+def combined first second scale => (first + second) * scale
 assert(prefer(0, 9), 9)
 assert(prefer(3, 9), 3)
 assert(requireBoth(2, 7), 7)
@@ -8975,7 +9045,7 @@ combined(2, 5, 3)
 def add left, right:
     total = left + right
     return total
-def scaled left, right, factor =>
+def scaled left right factor =>
     (left + right) * factor
 def largest left, right:
     if left > right:
@@ -8991,7 +9061,7 @@ assert(largest(2, 9), 9)
 # Nucleoid keeps bare multiple parameter blocks reactive
 
 bias = 2
-def scaled left, right =>
+def scaled left right =>
     left * right + bias
 live = scaled
 snapshot = scaled.value
@@ -8999,7 +9069,7 @@ result = live(3, 4)
 frozen = snapshot(3, 4)
 assert(result, 14)
 assert(frozen, 14)
-def scaled left, right =>
+def scaled left right =>
     left + right + bias
 assert(result, 9)
 assert(frozen, 14)
@@ -9014,12 +9084,12 @@ assert(frozen, 16)
 class Parent:
     def init left, right:
         this.amount = left + right
-    def reading offset, scale =>
+    def reading offset scale =>
         self.amount * scale + offset
 class Child: Parent
     def init left, right:
         super(left, right)
-    def reading offset, scale =>
+    def reading offset scale =>
         self.amount * scale + offset
     def increase delta, extra:
         this.amount += delta + extra
@@ -9041,7 +9111,7 @@ assert(Child.length, 1)
 
 left = 10
 right = 20
-def pair left, right =>
+def pair left right =>
     [left, right]
 def add left, right:
     left += right
@@ -9051,7 +9121,7 @@ def noReturn left, right:
 def bareReturn left, right:
     return
 def outer(initial):
-    def combine left, right, scale =>
+    def combine left right scale =>
         (left + right) * scale
     return combine(initial, 2, 3)
 assert(pair(3, 4), [3, 4])
@@ -9070,12 +9140,12 @@ assert(outer(4), 18)
 # Nucleoid rolls back failed bare multiple parameter block redefinitions
 
 source = 3
-def reading left, right =>
+def reading left right =>
     source + left + right
 total = reading(2, 4)
 assert(total, 9)
 try:
-    def reading left, right =>
+    def reading left right =>
         missing + left + right
 catch error:
     assert(error, ReferenceError("missing is not defined"))
@@ -9463,7 +9533,7 @@ def twice amount =>
     amount * 2
 def typed amount: int =>
     amount + 1
-def add left, right =>
+def add left right =>
     left + right
 def scaled left: int, right, factor: number =>
     (left + right) * factor
@@ -9511,7 +9581,7 @@ class Child: Parent
         super(value)
     def reading offset: int =>
         this.amount * 2 + offset
-    def change delta, extra =>
+    def change delta extra =>
         this.amount += delta + extra
 child = Child(3)
 observed = child.reading(1)
@@ -9532,13 +9602,13 @@ left = 10
 right = 20
 def pair left: int, right =>
     [left, right]
-def point x, y =>
+def point x y =>
     {x, y}
-def text left, right =>
+def text left right =>
     `${left},${right}`
 def factory ignored =>
     value => value + 1
-def assign left, right =>
+def assign left right =>
     left += right
 def outer initial:
     def local amount =>
@@ -10300,4 +10370,93 @@ assert(fraction, 0.25)
 assert(withDeferredExtra, 0.25)
 fraction
 # return: 0.25
+
+---
+
+# Nucleoid defines comma-free bare named arrows
+
+def add left right => left + right
+def scaled left right factor => (left + right) * factor
+def pair left right => [left, right]
+def coordinates x y => {x, y}
+def indented left right =>
+    left + right
+assert(add(2, 3), 5)
+assert(scaled(2, 3, 4), 20)
+assert(pair("left", "right"), ["left", "right"])
+point = coordinates(2, 3)
+assert(point.x, 2)
+assert(point.y, 3)
+assert(indented(2, 3), 5)
+
+---
+
+# Nucleoid keeps comma-free bare named arrows reactive
+
+bias = 1
+def total left right => left + right + bias
+tracked = total(2, 3)
+assert(tracked, 6)
+bias = 4
+assert(tracked, 9)
+def projected first second third => first * second + third
+left = 2
+right = 3
+offset = 4
+result = projected(left, right, offset)
+assert(result, 10)
+left = 5
+assert(result, 19)
+right = 2
+assert(result, 14)
+
+---
+
+# Nucleoid preserves comma-free methods and initializers
+
+class Calculator:
+    def init base scale => this.base = base * scale
+    def combine left right => this.base + left + right
+    def product left right scale => self.base + left * right * scale
+calculator = Calculator(1, 2)
+result = calculator.combine(3, 4)
+assert(result, 9)
+calculator.base = 5
+assert(result, 12)
+assert(calculator.product(2, 3, 4), 29)
+
+---
+
+# Nucleoid preserves nested comma-free bare named arrows
+
+def outer(initial):
+    def combine left right scale => (left + right) * scale
+    return combine(initial, 2, 3)
+assert(outer(4), 18)
+def factory(ignored) => (left, right) => left + right
+custom = factory(10)
+assert(custom(2, 3), 5)
+
+---
+
+# Nucleoid rolls back comma-free named arrow redefinitions
+
+source = 3
+def reading left right => source + left + right
+result = reading(2, 4)
+assert(result, 9)
+try:
+    def reading left right => missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(result, 9)
+source = 5
+assert(result, 11)
+def prefer current fallback => current ||= fallback
+def combined first second scale => (first + second) * scale
+assert(prefer(0, 9), 9)
+assert(prefer(3, 9), 3)
+assert(combined(2, 5, 3), 21)
+combined(2, 5, 3)
+# return: 21
 ```

@@ -275,7 +275,7 @@ assert(i2, 7)
 reading = 7
 unit = "C"
 
-def pack reading, unit =>
+def pack reading unit =>
     { reading, unit }
 
 report = pack(reading, unit)
@@ -929,7 +929,7 @@ assert(indexed, 5)
 ```nuc
 def operation number => 99
 
-def apply operation, number => operation(number)
+def apply operation number => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -1703,7 +1703,7 @@ assert(allowed, false)
 
 ```nuc
 bias = 1
-def total left, right => left + right + bias
+def total left right => left + right + bias
 result = total(2, 3)
 assert(result, 6)
 bias = 4
@@ -1729,7 +1729,7 @@ typed-arrow and typed/untyped single-parameter block alternatives remain valid.
 
 ```nuc
 bias = 1
-def total left, right =>
+def total left right =>
     left + right + bias
 result = total(2, 3)
 assert(result, 6)
@@ -1995,6 +1995,22 @@ assert(fraction, 1)
   `[0, 1)` guarantee is made. Independent floor controls remain unchanged.
 - Nonfinite values, coercion, omitted inputs, ignored-extra reads/effects,
   deferred properties, transactions and recovery retain the existing machinery.
+
+**Comma-free named arrows keep live inputs**
+
+```nuc
+bias = 1
+def total left right => left + right + bias
+result = total(2, 3)
+assert(result, 6)
+bias = 4
+assert(result, 9)
+```
+
+- [NUC 37](nuc-0037.md) adds an additional untyped named-arrow
+  header guard; the same program with `def total left, right =>` remains
+  equivalent. Calls, anonymous arrows, body layout and live dependencies
+  retain their existing grammar and behavior.
 
 ## Copyright
 

@@ -359,9 +359,9 @@ this revision changes no project version.
 **Named arrows can omit parentheses around multiple parameters**
 
 ```nuc
-def add left, right => left + right
+def add left right => left + right
 assert(add(2, 3), 5)
-def scaled left, right, factor => (left + right) * factor
+def scaled left right factor => (left + right) * factor
 assert(scaled(2, 3, 4), 20)
 ```
 
@@ -379,7 +379,7 @@ single-parameter typed and block alternatives above remain unchanged.
 **Indented blocks can omit parentheses around multiple parameters**
 
 ```nuc
-def add left, right =>
+def add left right =>
     left + right
 assert(add(2, 3), 5)
 ```
@@ -680,6 +680,20 @@ assert(fraction, 0.5)
 - Negative fractions subtract floor, not truncation. Tiny negative inputs can
   round to exactly one, so the result is not promised strictly in `[0, 1)`.
   Numeric coercion, ignored-extra effects/reads, deferral and rollback remain.
+
+**Named arrow parameters can omit every comma**
+
+```nuc
+def add left right => left + right
+assert(add(2, 3), 5)
+def scaled left right factor => (left + right) * factor
+assert(scaled(2, 3, 4), 20)
+```
+
+- [NUC 37](docs/nuc-0037.md) adds optional all-comma-free
+  bare named arrows with at least two untyped ordinary identifiers on one
+  logical header line. The comma-bearing and parenthesized forms remain
+  valid; typed/mixed lists and colon-suite headers still need their commas.
 
 ## Benchmark
 

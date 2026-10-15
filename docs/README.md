@@ -670,7 +670,8 @@ and the unchanged explicit-loop entries in the root specification.
 - [NUC 28](nuc-0028.md) adds optional `def name left, right:` with a real indented body, exactly equivalent to `def name(left, right):` with that same body, including methods and `init`.
 - [NUC 29](nuc-0029.md) adds optional typed/mixed multiple-parameter named arrows, for example `def name left: int, right: int => expression`, exactly equivalent to `def name(left: int, right: int) => expression`, including methods and `init`.
 - [NUC 30](nuc-0030.md) separately adds optional typed/mixed multiple-parameter indented blocks, for example `def name left: int, right:` with exactly the body of `def name(left: int, right):`, including methods and `init`.
-- The multiple-parameter arrow guard requires the complete immediate sequence `Identifier (Colon Identifier)? (Comma Identifier (Colon Identifier)?)+ Arrow` on the same logical header line. At least one annotation identifies NUC29's new typed/mixed forms; entirely untyped lists remain NUC27 behavior. The linear non-consuming guard allocates nothing and skips no separators, indentation or comment-induced logical breaks.
+- The legacy comma-bearing multiple-parameter arrow guard requires the complete immediate sequence `Identifier (Colon Identifier)? (Comma Identifier (Colon Identifier)?)+ Arrow` on the same logical header line. At least one annotation identifies NUC29's new typed/mixed forms; entirely untyped comma lists remain NUC27 behavior. The linear non-consuming guard allocates nothing and skips no separators, indentation or comment-induced logical breaks.
+- [NUC 37](nuc-0037.md) adds an additional, optional untyped bare-arrow guard: after unchanged `Def Identifier`, the entire prefix must be `Identifier Identifier Identifier* Arrow`. Require at least two ordinary names with no annotations or commas, consuming nothing, allocating no parameter names and skipping no logical layout. This does not replace or relax NUC27's comma grammar or any typed/mixed/block guard.
 - The multiple-parameter block guard shares the complete-list scan: NUC28's untyped lists and NUC30's separate typed/mixed lists may end in the suite `Colon`. Its complete immediate grammar is `Identifier (Colon Identifier)? (Comma Identifier (Colon Identifier)?)+ Colon`. Require immediate `Newline` or `Indent` and then a real `Indent` after only normal newline/semicolon layout; `:;` never qualifies. The final colon and all layout/body tokens are left for the existing suite parser.
 - A final untyped parameter's following colon belongs to the suite, not the parameter's annotation parser. A final typed parameter has a separate annotation colon/name and suite colon. Failed complete lookahead consumes nothing; existing malformed parenthesized annotations keep their diagnostics.
 - The single-parameter typed-arrow guard requires immediate `Identifier`, `Colon`, `Identifier`, `Arrow` tokens after the required definition name. The parameter name and `type_name: Some(annotation)` metadata are unchanged; the annotation is not a resolved variable or a new runtime type constraint.
@@ -715,7 +716,7 @@ def double amount => amount * 2
 
 ```
 scale = 1
-def area width, height => width * height * scale
+def area width height => width * height * scale
 width = 3
 height = 4
 result = area(width, height)
@@ -726,11 +727,34 @@ width = 5
 assert(result, 40)
 ```
 
-- This is the executable reference's exact paired `Nucleoid preserves bare multiple parameter arrow relationships` example; `def area(width, height) => width * height * scale` remains valid and behavior-equivalent.
+- This is the executable reference's exact paired `Nucleoid preserves bare multiple parameter arrow relationships` example using NUC37's optional comma-free header; `def area width, height => width * height * scale` and `def area(width, height) => width * height * scale` remain valid and behavior-equivalent.
 - Reuse the existing named return block and expression-body parser, with no new lexer/public AST/runtime types, capture, parameter-count bound or canonical spelling.
 - `def f left, right, => left`, missing types such as `def f left, right: => left`, multiple-parameter blocks without real indentation, bare inline/braced suites and logical header breaks retain `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7; unsupported prefixes are not consumed. NUC30 separately adds real-indented typed/mixed blocks without changing this arrow guard.
 - `def f left, right =>` gives `SyntaxError("Unexpected end of input")` at line 1, column 21; a final newline without a real body gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Named-arrow braces remain objects; the existing inline body beginning with `(` may span physical lines. NUC32 separately permits the real-indented body below.
 - Full grammar and error positions are in the authoritative [bare multiple-parameter named arrows](../nucleoid.spec.md#bare-multiple-parameter-named-arrows) section.
+
+### Comma-free bare named arrows
+
+```
+scale = 1
+def area width height => width * height * scale
+width = 3
+height = 4
+result = area(width, height)
+assert(result, 12)
+scale = 2
+assert(result, 24)
+width = 5
+assert(result, 40)
+```
+
+- This is the exact executable `Nucleoid preserves comma-free named arrow relationships` counterpart in `tests/reference.md`, paired with the unchanged accepted comma-bearing program.
+- Reuse `parameter()` and the entire named-arrow body path: ordered untyped parameters and the same named sole-return block, canonical source, graph and runtime. NUC32's indented expression, leading objects and header-line parentheses remain available.
+- Methods, `init`, nesting/redefinition, binding/arity, receivers/super/adoption, noncapture, locals, aliases/snapshots, reactive dependencies, transactions/rollback and resource limits are unchanged; no new parameter cap, lexer, public AST or API is added.
+- This optional all-comma-free form does not add mixed comma/whitespace separators, comma-free typed/mixed lists, colon-suite headers, parenthesized or anonymous comma omission, class/call changes, defaults/rest/destructuring, return annotations or bare nullary definitions. Existing comma/typed/parenthesized/block forms remain supported.
+- Unsupported prefixes such as `def f left right, third => left`, `def f left right: int => left` and `def f left right:` with an indented suite fall through at the original `left`, retaining `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
+- Exact `def f left right =>` gives `SyntaxError("Unexpected end of input")` at line 1, column 20; a final newline without a real body gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Body grammar and diagnostics remain inherited; only physical columns shortened by an omitted comma move.
+- Full grammar, exact errors and executable traces are in the authoritative [comma-free bare named arrows](../nucleoid.spec.md#comma-free-bare-named-arrows) section. The implementation was independently accepted with no per-case token increase.
 
 ### Bare typed single parameter named arrows
 
@@ -1397,6 +1421,7 @@ def name(params) => expression         single-return function
 def name(params) =>                    optional indented single expression (NUC 32)
     expression
 def name left, right => expression    untyped multiple-parameter named arrow
+def name left right => expression     optional comma-free untyped named arrow (NUC 37)
 def name left: int, right => expression typed/mixed multiple-parameter arrow (NUC 29)
 def name amount => expression         one untyped parameter (NUC 18)
 def name amount: type => expression   one typed parameter (NUC 20)
