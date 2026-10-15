@@ -6374,6 +6374,156 @@ fn rolls_back_failed_bare_typed_multiple_parameter_block_redefinitions() {
 # return: 21"#);
 }
 
+/// Nucleoid defines implicit iterator indented loops
+#[rustfmt::skip]
+#[test]
+fn defines_implicit_iterator_indented_loops() {
+    let mut run = runner();
+    run("class Entry");
+    run("first = Entry()");
+    run("first.amount = 2");
+    run("second = Entry()");
+    run("second.amount = 5");
+    run("values = [first, 99, second, null, { amount: 9 }]");
+    run("seen = []");
+    run("total = 0");
+    run(r#"for values:
+    seen.push(it.amount)
+    total += it.amount"#);
+    assert_eq!(run("seen"), serde_json::json!([2, 5]));
+    assert_eq!(run("total"), 7);
+    run("empty = []");
+    run(r#"for empty:
+    total += 100"#);
+    assert_eq!(run("total"), 7);
+}
+
+/// Nucleoid preserves implicit iterator loop scopes
+#[rustfmt::skip]
+#[test]
+fn preserves_implicit_iterator_loop_scopes() {
+    let mut run = runner();
+    run("class Entry");
+    run("first = Entry()");
+    run("first.amount = 2");
+    run("second = Entry()");
+    run("second.amount = 5");
+    run("outer = Entry()");
+    run("outer.amount = 100");
+    run("groups = [outer]");
+    run("values = [first, second]");
+    run("it = 50");
+    run("seen = []");
+    run(r#"for groups:
+    seen.push(it.amount)
+    for values:
+        seen.push(it.amount)
+    seen.push(it.amount)"#);
+    assert_eq!(run("seen"), serde_json::json!([100, 2, 5, 100]));
+    assert_eq!(run("it"), 50);
+    run("it = values");
+    run("nested = []");
+    run(r#"for it:
+    nested.push(it.amount)"#);
+    assert_eq!(run("nested"), serde_json::json!([2, 5]));
+    assert_eq!(run("it.length"), 2);
+}
+
+/// Nucleoid preserves implicit iterator loop population snapshots
+#[rustfmt::skip]
+#[test]
+fn preserves_implicit_iterator_loop_population_snapshots() {
+    let mut run = runner();
+    run("class Reading");
+    run("first = Reading()");
+    run("first.amount = 2");
+    run("second = Reading()");
+    run("second.amount = 5");
+    run("scale = 2");
+    run(r#"for Reading:
+    it.score = it.amount * scale"#);
+    assert_eq!(run("first.score"), 4);
+    assert_eq!(run("second.score"), 10);
+    run("scale = 3");
+    assert_eq!(run("first.score"), 4);
+    assert_eq!(run("second.score"), 10);
+    run("third = Reading()");
+    run("third.amount = 7");
+    assert_eq!(run("third.score"), serde_json::Value::Null);
+    run(r#"for Reading:
+    it.score = it.amount * scale"#);
+    assert_eq!(run("first.score"), 6);
+    assert_eq!(run("second.score"), 15);
+    assert_eq!(run("third.score"), 21);
+}
+
+/// Nucleoid preserves implicit iterator loop return flow
+#[rustfmt::skip]
+#[test]
+fn preserves_implicit_iterator_loop_return_flow() {
+    let mut run = runner();
+    run("class Entry");
+    run("first = Entry()");
+    run("first.amount = 2");
+    run("second = Entry()");
+    run("second.amount = 5");
+    run("values = [first, second]");
+    run(r#"def firstAmount(records):
+    for records:
+        return it.amount
+    return -1"#);
+    run(r#"def noResult(records):
+    for records:
+        pass"#);
+    run(r#"class Reader:
+    def first(records):
+        for records:
+            return it.amount
+        return -1"#);
+    run("reader = Reader()");
+    assert_eq!(run("firstAmount(values)"), 2);
+    assert_eq!(run("firstAmount([])"), -1);
+    assert_eq!(run("noResult(values)"), serde_json::Value::Null);
+    assert_eq!(run("reader.first(values)"), 2);
+    assert_eq!(run("reader.first([])"), -1);
+    run(r#"reader.first(values)
+
+# return: 2"#);
+}
+
+/// Nucleoid rolls back failed implicit iterator loops
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_implicit_iterator_loops() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Entry");
+    run("first = Entry()");
+    run("first.amount = 2");
+    run("second = Entry()");
+    run("second.amount = 5");
+    run("values = [first, second]");
+    run("saved = 7");
+    assert_eq!(run_error(r#"for values:
+    saved += it.amount
+    it.amount += 1
+    if it.amount > 5:
+        throw "stop""#), "stop");
+    assert_eq!(run("first.amount"), 2);
+    assert_eq!(run("second.amount"), 5);
+    assert_eq!(run("saved"), 7);
+    run("broken = null");
+    assert_eq!(run_error(r#"for broken:
+    first.amount = 99"#), "TypeError: broken is not iterable");
+    assert_eq!(run("first.amount"), 2);
+    run(r#"for values:
+    it.score = it.amount * 2"#);
+    assert_eq!(run("first.score"), 4);
+    assert_eq!(run("second.score"), 10);
+    run(r#"first.score + second.score
+
+# return: 14"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

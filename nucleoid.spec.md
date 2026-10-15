@@ -748,6 +748,72 @@ statement positions; caught values and transaction recovery are unchanged.
   coercion, operator, call/member, class, scope, dependency or resource-limit
   change. All accepted syntax and inherited noncapturing limitations remain.
 
+## Implicit iterator indented loops
+
+- `for NAME:` with a genuine indented body is optionally exactly
+  `for it of NAME:` with that same body. `NAME` is one ordinary identifier
+  denoting the source expression, not the iteration variable.
+- After `for`, recognize the complete immediate `Identifier Colon` prefix
+  without consuming tokens, allocating names, cloning an AST or skipping header
+  separators. Immediately after the colon require `Newline` or `Indent`, then
+  require a real `Indent` after only existing `Newline`/`Semicolon` layout.
+  A colon immediately followed by a semicolon (`:;`) never qualifies.
+- Leave the identifier for the ordinary expression parser and the colon,
+  layout and complete body for unchanged `suite()`. Lower directly to the
+  existing `Stmt::For { variable: "it", iterable: Identifier(NAME), body }`,
+  preserving the explicit form's full AST and canonical `for it of NAME`.
+- Blank/comment lines and normal body separators remain suite layout. No
+  omitted source, inline/braced/missing-indent shorthand, parenthesized source,
+  property/index/call/literal/class-reference source or other expression
+  shorthand is added. `for it:` uses the outer source named `it`.
+- Retain both explicit `for variable of expression` and
+  `for variable in expression`, their arbitrary source expressions,
+  inline/braced/indented suites and existing diagnostics. No new tokens,
+  keywords, public AST, runtime types or general iterable support are added.
+- A loop evaluates its source once and iterates a snapshot once, not a standing
+  declaration. A class value supplies its current ordered registered instances;
+  a list supplies only object references still registered with a class.
+  Primitives, null elements, unregistered references, plain `Object()` instances
+  and literal objects in lists are skipped, preserving order and duplicates.
+- Source and body mutations do not extend that snapshot. Later input updates
+  and newly created instances do not re-run the body; another loop is required.
+  Existing imperative writes, graph keys, dependency/shape tracking, class
+  populations, receiver lookup and transactions are unchanged.
+- Evaluate the source before introducing the iteration binding. Each iteration
+  pushes a scope, declares local `it` and enters imperative mode; completion,
+  return or error restores that mode and scope. Nested `it` shadows and restores
+  outer/global `it`; `this`/`self` still denote the enclosing receiver.
+- Conditions, nested loops, multiple statements, explicit/bare returns and
+  absent returns retain existing control flow. A return propagates out of the
+  loop; an empty or normally completed loop yields `null`. No implicit return,
+  closure capture or callable auto-invocation is introduced.
+- A nonqualifying tokenizable prefix follows the untouched explicit-loop path.
+  `for values:` at EOF, without a real indent, with only comments, with an
+  inline/braced body or with immediate `:;` retains
+  `SyntaxError("Expected 'of' in for statement")` at line 1, column 11.
+  `for values.items:` fails with that message at line 1, column 11.
+  `for values\n:` fails with it at line 1, column 5.
+- `for (values):` retains `SyntaxError("Expected a name but found '('")`
+  at line 1, column 6; `for :` retains
+  `SyntaxError("Expected a name but found ':'")` at line 1, column 6.
+  Lexical failures and errors inside a qualifying body keep their existing
+  diagnostics and positions.
+- Evaluating an undefined source retains
+  `ReferenceError("NAME is not defined")`. A noniterable named source, including
+  literal `null` stored in `broken`, retains
+  `TypeError("broken is not iterable")`; a callable source is not invoked.
+  Runtime errors use the existing enclosing top-level statement position.
+  Thrown values, caught errors, rollback and subsequent recovery are unchanged.
+- The shared private real-indented-suite predicate preserves the exact
+  single-untyped, single-typed and multiple bare-function block guards; it does
+  not relax parameter, arrow or suite grammar. Existing expression/statement
+  nesting, operand and postfix limits remain in force.
+- Executable traces are the five appended `Nucleoid ... implicit iterator ...`
+  entries below. Historical explicit loops remain unchanged, including
+  `Nucleoid creates a for of statement`,
+  `Nucleoid creates a block of for statement without dependencies` and
+  `Nucleoid loops through only defined objects in a for of statement`.
+
 ```
 
 # Nucleoid runs a statement in the state
@@ -8913,4 +8979,150 @@ assert(reading(8, 9), 21)
 reading(8, 9)
 
 # return: 21
+
+---
+
+# Nucleoid defines implicit iterator indented loops
+
+class Entry
+first = Entry()
+first.amount = 2
+second = Entry()
+second.amount = 5
+values = [first, 99, second, null, { amount: 9 }]
+seen = []
+total = 0
+for values:
+    seen.push(it.amount)
+    total += it.amount
+assert(seen, [2, 5])
+assert(total, 7)
+empty = []
+for empty:
+    total += 100
+assert(total, 7)
+
+---
+
+# Nucleoid preserves implicit iterator loop scopes
+
+class Entry
+first = Entry()
+first.amount = 2
+second = Entry()
+second.amount = 5
+outer = Entry()
+outer.amount = 100
+groups = [outer]
+values = [first, second]
+it = 50
+seen = []
+for groups:
+    seen.push(it.amount)
+    for values:
+        seen.push(it.amount)
+    seen.push(it.amount)
+assert(seen, [100, 2, 5, 100])
+assert(it, 50)
+it = values
+nested = []
+for it:
+    nested.push(it.amount)
+assert(nested, [2, 5])
+assert(it.length, 2)
+
+---
+
+# Nucleoid preserves implicit iterator loop population snapshots
+
+class Reading
+first = Reading()
+first.amount = 2
+second = Reading()
+second.amount = 5
+scale = 2
+for Reading:
+    it.score = it.amount * scale
+assert(first.score, 4)
+assert(second.score, 10)
+scale = 3
+assert(first.score, 4)
+assert(second.score, 10)
+third = Reading()
+third.amount = 7
+assert(third.score, null)
+for Reading:
+    it.score = it.amount * scale
+assert(first.score, 6)
+assert(second.score, 15)
+assert(third.score, 21)
+
+---
+
+# Nucleoid preserves implicit iterator loop return flow
+
+class Entry
+first = Entry()
+first.amount = 2
+second = Entry()
+second.amount = 5
+values = [first, second]
+def firstAmount(records):
+    for records:
+        return it.amount
+    return -1
+def noResult(records):
+    for records:
+        pass
+class Reader:
+    def first(records):
+        for records:
+            return it.amount
+        return -1
+reader = Reader()
+assert(firstAmount(values), 2)
+assert(firstAmount([]), -1)
+assert(noResult(values), null)
+assert(reader.first(values), 2)
+assert(reader.first([]), -1)
+reader.first(values)
+
+# return: 2
+
+---
+
+# Nucleoid rolls back failed implicit iterator loops
+
+class Entry
+first = Entry()
+first.amount = 2
+second = Entry()
+second.amount = 5
+values = [first, second]
+saved = 7
+try:
+    for values:
+        saved += it.amount
+        it.amount += 1
+        if it.amount > 5:
+            throw "stop"
+catch error:
+    assert(error, "stop")
+assert(first.amount, 2)
+assert(second.amount, 5)
+assert(saved, 7)
+broken = null
+try:
+    for broken:
+        first.amount = 99
+catch error:
+    assert(error, TypeError("broken is not iterable"))
+assert(first.amount, 2)
+for values:
+    it.score = it.amount * 2
+assert(first.score, 4)
+assert(second.score, 10)
+first.score + second.score
+
+# return: 14
 ```

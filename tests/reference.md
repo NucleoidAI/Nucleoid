@@ -1507,4 +1507,18 @@ result = area(3, 4)
 assert(result, 24)
 scale = 3
 assert(result, 36)
+
+---
+
+# Nucleoid preserves implicit iterator loop class populations
+
+class Task
+first = Task()
+first.done = false
+second = Task()
+second.done = false
+for Task:
+    it.done = true
+assert(first.done, true)
+assert(second.done, true)
 ```

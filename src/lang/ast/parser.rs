@@ -351,16 +351,27 @@ impl Parser {
     fn for_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::For))?;
 
-        let variable = match self.advance() {
-            Token::Identifier(name) => name,
-            other => {
-                return Err(self.error(format!("Expected a name but found {}", other.describe())));
-            }
-        };
+        let variable = if matches!(self.peek(), Token::Identifier(_)) && self.has_indented_suite(1)
+        {
+            // Leave the named source and its complete suite to the existing
+            // parsers. Nonqualifying prefixes retain the explicit-loop path.
+            "it".to_string()
+        } else {
+            let variable = match self.advance() {
+                Token::Identifier(name) => name,
+                other => {
+                    return Err(
+                        self.error(format!("Expected a name but found {}", other.describe()))
+                    );
+                }
+            };
 
-        if !self.eat_keyword(Keyword::Of) && !self.eat_keyword(Keyword::In) {
-            return Err(self.error("Expected 'of' in for statement"));
-        }
+            if !self.eat_keyword(Keyword::Of) && !self.eat_keyword(Keyword::In) {
+                return Err(self.error("Expected 'of' in for statement"));
+            }
+
+            variable
+        };
 
         let iterable = self.expression()?;
         let body = self.suite()?;
@@ -370,6 +381,22 @@ impl Parser {
             iterable,
             body,
         })
+    }
+
+    /// Recognizes only the real-indented colon path already accepted by
+    /// suite(), without consuming tokens or skipping header separators.
+    fn has_indented_suite(&self, colon_offset: usize) -> bool {
+        matches!(self.peek_at(colon_offset), Token::Colon)
+            && matches!(
+                self.peek_at(colon_offset + 1),
+                Token::Newline | Token::Indent
+            )
+            && self
+                .tokens
+                .iter()
+                .skip(self.position + colon_offset + 1)
+                .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
+                .is_some_and(|spanned| spanned.token == Token::Indent)
     }
 
     fn try_statement(&mut self) -> Result<Stmt> {
@@ -466,30 +493,9 @@ impl Parser {
                 )
         );
         let bare_multiple_end = self.bare_multiple_parameter_end().filter(|&end| {
-            matches!(self.peek_at(end), Token::Arrow)
-                || (matches!(self.peek_at(end), Token::Colon)
-                    && matches!(self.peek_at(end + 1), Token::Newline | Token::Indent)
-                    && self
-                        .tokens
-                        .iter()
-                        .skip(self.position + end + 1)
-                        .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
-                        .is_some_and(|spanned| spanned.token == Token::Indent))
+            matches!(self.peek_at(end), Token::Arrow) || self.has_indented_suite(end)
         });
-        let bare_block = matches!(self.peek(), Token::Identifier(_))
-            && match self.peek_at(1) {
-                Token::Colon if matches!(self.peek_at(2), Token::Newline | Token::Indent) => {
-                    // Inspect only the layout that suite() already accepts.
-                    // Leave inline, typed and missing-indent prefixes untouched
-                    // for the other guards or the parenthesized parameter parser.
-                    self.tokens
-                        .iter()
-                        .skip(self.position + 2)
-                        .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
-                        .is_some_and(|spanned| spanned.token == Token::Indent)
-                }
-                _ => false,
-            };
+        let bare_block = matches!(self.peek(), Token::Identifier(_)) && self.has_indented_suite(1);
         let bare_typed_block = matches!(
             (
                 self.peek(),
@@ -503,13 +509,7 @@ impl Parser {
                 Token::Identifier(_),
                 Token::Colon
             )
-        ) && matches!(self.peek_at(4), Token::Newline | Token::Indent)
-            && self
-                .tokens
-                .iter()
-                .skip(self.position + 4)
-                .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
-                .is_some_and(|spanned| spanned.token == Token::Indent);
+        ) && self.has_indented_suite(3);
         let parameters = if let Some(end) = bare_multiple_end {
             let delimiter_position = self.position + end;
             let mut parameters = Vec::new();

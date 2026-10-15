@@ -444,6 +444,32 @@ assert(add(2, 3), 5)
   definition snapshots, redefinition and rollback keep the parenthesized
   behavior, with no implicit final-expression return.
 
+**Named source loops can bind it implicitly**
+
+```nuc
+class Task
+task = Task()
+task.done = false
+for Task:
+    it.done = true
+assert(task.done, true)
+```
+
+- Accepted [NUC 31](docs/nuc-0031.md) specifies optional `for NAME:` with a
+  genuine indented body as exactly `for it of NAME:` with that same body.
+  `NAME` is one ordinary identifier; the body binds each visited instance to
+  local `it`, restoring any outer binding afterward.
+- The source is evaluated once: class populations and lists visit only current
+  registered typed instances in order. Primitives, null elements and plain
+  objects in lists are skipped; this is not general array iteration or a
+  standing rule. A named noniterable source raises the existing TypeError.
+- Require the immediate identifier/colon header, then a newline or indent and
+  a real indent after only normal newline/semicolon layout. No `:;`,
+  inline/braced/missing-indent or expression-source shorthand is added.
+- Explicit `for variable of expression` and `for variable in expression`
+  remain valid with their existing arbitrary expressions and suite forms.
+  Nested scopes, receivers, returns, snapshots, graphs and rollback are unchanged.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

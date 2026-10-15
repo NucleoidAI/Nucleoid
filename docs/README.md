@@ -567,20 +567,49 @@ if $Device.profile:
 
 - Only devices that have a profile become active.
 
-### for ... of
+### for ... of / in
 
-- `for <name> of <source>` iterates a class list or a list value.
+- `for <name> of <source>` and `for <name> in <source>` iterate a class
+  population or a list of registered typed instances.
 - The body runs once, over the values present at the time; it does not re-run later.
 - Nested conditions and blocks are part of that one-shot body, not independent standing rules.
-- Only values that are instances defined in the state are visited.
+- Primitive/null elements, unregistered objects, plain `Object()` instances and
+  literal objects in lists are skipped; order and duplicates are retained.
 - Loops may nest, producing the cross product.
+- Explicit sources keep arbitrary expressions and inline/braced/indented suites.
 
 ```
 for question of Question:
     Summary(question)
 ```
 
-Full detail: [NUC 7](nuc-0007.md).
+- Accepted [NUC 31](nuc-0031.md) specifies `for NAME:` with a genuine indented
+  body as exactly `for it of NAME:` with that same body; `NAME` is one ordinary
+  identifier source, not the iteration variable.
+- Require the immediate identifier and colon, an immediate newline or indent,
+  then a real indent after only existing newline/semicolon layout. Do not skip
+  header separators; `:;`, inline/braced/missing-indent shorthand and
+  property/index/call/literal/class-reference/parenthesized shorthand sources
+  are not added.
+- Source lookup precedes binding local `it`, so `for it:` reads the outer
+  source named `it`. Nested/global bindings and receivers are restored on
+  completion, return and error.
+- The snapshot, imperative body, return propagation, graph dependencies,
+  transactions and rollback are those of the explicit form. The body is
+  never re-run merely because an input or class population later changes.
+- A named noniterable source, including `broken = null`, raises
+  `TypeError("broken is not iterable")`; callable sources are not invoked.
+- Nonqualifying `for values:` headers retain
+  `SyntaxError("Expected 'of' in for statement")` at line 1, column 11;
+  existing explicit-loop and body diagnostics remain unchanged.
+
+```
+for Task:
+    it.done = true
+```
+
+Normative detail: [implicit iterator indented loops](../nucleoid.spec.md#implicit-iterator-indented-loops)
+and the unchanged explicit-loop entries in the root specification.
 
 ---
 
@@ -1126,6 +1155,8 @@ else:
     statement
 
 for name of source:                    iteration
+for name in source:                    equivalent explicit iteration
+for source:                            indented iteration with local it
     statement
 
 def name(params) => expression         single-return function

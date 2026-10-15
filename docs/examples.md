@@ -1827,6 +1827,48 @@ assert(result, 9)
 
 ---
 
+## Implicit iterator indented loops
+
+**Implicit iterator loops keep one shot updates**
+
+```nuc
+class Reading
+first = Reading()
+first.amount = 2
+second = Reading()
+second.amount = 5
+scale = 2
+for Reading:
+    it.scaled = it.amount * scale
+assert(first.scaled, 4)
+scale = 3
+assert(first.scaled, 4)
+for Reading:
+    it.scaled = it.amount * scale
+assert(first.scaled, 6)
+assert(second.scaled, 15)
+```
+
+- Accepted [NUC 31](nuc-0031.md) specifies `for Reading:` as exactly
+  `for it of Reading:` with that same genuinely indented body. Existing
+  explicit `of`/`in` loops and their arbitrary expressions remain valid.
+- The source is exactly one ordinary identifier and is evaluated before local
+  `it` is bound. Each loop walks its current snapshot once; later changes to
+  `scale` or the class population do not re-run a previous body.
+- Lists likewise visit only registered typed instances, preserving order and
+  duplicates while skipping primitives, null elements and plain objects.
+  Noniterable sources retain their existing errors, without auto-invocation.
+- Require the immediate colon followed by newline/indent and a real indent
+  after only normal newline/semicolon layout; `:;` never qualifies. No
+  inline/braced/missing-indent, parenthesized or expression-source shorthand
+  is added.
+- Nested `it` shadowing/restoration, receivers, return propagation, body
+  control flow, graph dependencies, rollback and resource limits are unchanged.
+- Full grammar and exact diagnostics are in the authoritative
+  [implicit iterator loop section](../nucleoid.spec.md#implicit-iterator-indented-loops).
+
+---
+
 ## Copyright
 
 Copyright 2020 Nucleoid
