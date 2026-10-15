@@ -329,6 +329,28 @@ Annotations introduce no lookup or runtime type constraint. Header-line breaks,
 inline/braced bare suites and other parameter/type forms are not added; calls,
 NUC18/19/20 spellings, block returns and live dependencies are unchanged.
 
+**Logical compound assignments preserve short-circuiting**
+
+```nuc
+def fail():
+    throw "UNREACHABLE"
+enabled = true
+enabled ||= fail()
+assert(enabled, true)
+disabled = false
+disabled &&= fail()
+assert(disabled, false)
+```
+
+[Accepted NUC 26](docs/nuc-0026.md) defines optional `&&=` and `||=`.
+They lower exactly to `target = target && (rhs)` and
+`target = target || (rhs)`, not JavaScript-style conditional writes.
+A standing assignment installs its relationship even when logical evaluation
+skips the right operand. Existing `=`, `&&`, `||`, `and`, `or`, and arithmetic
+compounds remain supported; snapshots, dependencies and rollback are unchanged.
+The public lexer enum additions require a human-owned API semver decision;
+this revision changes no project version.
+
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,
 added, or removed, even if their values stay the same. The implemented stages of

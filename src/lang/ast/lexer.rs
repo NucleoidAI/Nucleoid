@@ -72,6 +72,10 @@ enum Raw {
     SlashAssign,
     #[token("%=")]
     PercentAssign,
+    #[token("&&=")]
+    AndAndAssign,
+    #[token("||=")]
+    OrOrAssign,
     #[token("<")]
     Less,
     #[token(">")]
@@ -214,6 +218,8 @@ pub enum Token {
     StarAssign,
     SlashAssign,
     PercentAssign,
+    AndAndAssign,
+    OrOrAssign,
     Equal,
     StrictEqual,
     NotEqual,
@@ -266,6 +272,8 @@ impl Token {
             Token::StarAssign => "'*='".to_string(),
             Token::SlashAssign => "'/='".to_string(),
             Token::PercentAssign => "'%='".to_string(),
+            Token::AndAndAssign => "'&&='".to_string(),
+            Token::OrOrAssign => "'||='".to_string(),
             Token::Equal => "'=='".to_string(),
             Token::StrictEqual => "'==='".to_string(),
             Token::NotEqual => "'!='".to_string(),
@@ -432,6 +440,8 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::MinusAssign => Token::MinusAssign,
             Raw::StarAssign => Token::StarAssign,
             Raw::PercentAssign => Token::PercentAssign,
+            Raw::AndAndAssign => Token::AndAndAssign,
+            Raw::OrOrAssign => Token::OrOrAssign,
             Raw::Equal => Token::Equal,
             Raw::StrictEqual => Token::StrictEqual,
             Raw::NotEqual => Token::NotEqual,
@@ -668,6 +678,8 @@ mod tests {
             ("*=", Token::StarAssign),
             ("/=", Token::SlashAssign),
             ("%=", Token::PercentAssign),
+            ("&&=", Token::AndAndAssign),
+            ("||=", Token::OrOrAssign),
         ] {
             let source = format!("value{symbol}-2");
             let spanned = tokenize(&source).unwrap();
@@ -754,6 +766,61 @@ mod tests {
     }
 
     #[test]
+    fn logical_compounds_keep_symbol_word_and_separated_operators_distinct() {
+        assert_eq!(
+            tokens("a&&=!b; c||=+2; d&&=-3"),
+            [
+                Token::Identifier("a".into()),
+                Token::AndAndAssign,
+                Token::Bang,
+                Token::Identifier("b".into()),
+                Token::Semicolon,
+                Token::Identifier("c".into()),
+                Token::OrOrAssign,
+                Token::Plus,
+                Token::Number(2.0),
+                Token::Semicolon,
+                Token::Identifier("d".into()),
+                Token::AndAndAssign,
+                Token::Minus,
+                Token::Number(3.0),
+                Token::Eof,
+            ]
+        );
+        for (symbol, token) in [
+            ("&&", Token::AndAnd),
+            ("||", Token::OrOr),
+            ("and", Token::Keyword(Keyword::And)),
+            ("or", Token::Keyword(Keyword::Or)),
+        ] {
+            assert_eq!(
+                tokens(&format!("a {symbol} b")),
+                [
+                    Token::Identifier("a".into()),
+                    token.clone(),
+                    Token::Identifier("b".into()),
+                    Token::Eof,
+                ]
+            );
+            assert_eq!(
+                tokens(&format!("a {symbol} = b")),
+                [
+                    Token::Identifier("a".into()),
+                    token,
+                    Token::Assign,
+                    Token::Identifier("b".into()),
+                    Token::Eof,
+                ]
+            );
+        }
+        let spanned = tokenize("first &&= 1\nsecond ||= 2").unwrap();
+        assert_eq!(spanned[1].token, Token::AndAndAssign);
+        assert_eq!(spanned[1].position, Position::new(1, 7));
+        assert_eq!(spanned[5].token, Token::OrOrAssign);
+        assert_eq!(spanned[5].position, Position::new(2, 8));
+    }
+
+    #[test]
     fn slash_assign_preserves_division_and_regex_contexts() {
         assert_eq!(
             tokens("amount/=2/3"),
@@ -783,6 +850,8 @@ mod tests {
             (r"/=\/x/", r"=\/x"),
             ("/[=/]+/", "[=/]+"),
             ("/abc/", "abc"),
+            ("/&&=/", "&&="),
+            ("/[|&=]+/", "[|&=]+"),
         ] {
             for prefix in ["", "\n", "# preceding comment\n"] {
                 let source = format!("{prefix}{literal}");
@@ -803,7 +872,7 @@ mod tests {
                 ],
                 "{source}"
             );
-            for assignment in ["=", "+=", "-=", "*=", "/=", "%="] {
+            for assignment in ["=", "+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
                 let source = format!("pattern {assignment} {literal}");
                 let tokenized = tokens(&source);
                 assert_eq!(tokenized[2], Token::Regex(pattern.into()), "{source}");

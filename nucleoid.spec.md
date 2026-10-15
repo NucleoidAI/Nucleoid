@@ -23,6 +23,20 @@ values, and canonical AST rendering. A tracked right-hand dependency still
 re-evaluates the relationship; a class-level self-reference still raises
 `TypeError("Circular Dependency")` rather than becoming an imperative update.
 
+Logical compound assignments `&&=` and `||=` are optional single-token
+spellings of `target = target && (rhs)` and `target = target || (rhs)`.
+They lower to the existing `Expr::Logical` inside the existing assignment
+node, with the same full right operand, assignment precedence and right
+associativity as arithmetic compounds. A standing assignment always installs
+the expanded relationship, even when the logical right operand is skipped;
+these are not conditional writes. Logical evaluation preserves operand values
+and short-circuiting, not Boolean coercion. Existing null/deferred assignment
+handling and `.value` freezing before evaluation remain unchanged, including
+snapshot reads in a skipped logical operand. Names, properties, locals,
+receivers, dependencies, class-level cycle checks, expression returns,
+transactions, graph keys and canonical expanded rendering use the existing
+assignment behavior.
+
 Compound targets are names or plain dotted paths rooted in a name, `$Class`,
 `this`, or `self`; a class or receiver root needs a property. Parentheses may
 group such a path. Computed targets, including indexing, slicing, calls, and
@@ -32,11 +46,16 @@ target cloning and permits at most 128 dotted links across grouped paths;
 exceeding that bound raises `SyntaxError("Expression has too many parts")`.
 Existing expression, statement, and operator-chain limits remain in force.
 Ordinary `=` syntax and its existing target handling remain unchanged.
+The bound and validation apply equally to arithmetic and logical compounds.
 
 Each compound operator is one lexer token. Adjacent unary signs are separate
 tokens; `/=` is distinguished from division and from a regular expression
-such as `/=/` in an operand position. Diagnostics name the operator exactly
-as `'+='`, `'-='`, `'*='`, `'/='`, or `'%='`.
+such as `/=/` in an operand position, including after `&&=` and `||=`.
+Diagnostics name the operator exactly as `'+='`, `'-='`, `'*='`, `'/='`,
+`'%='`, `'&&='`, or `'||='`. The compound characters must be adjacent;
+`&& =`, `|| =`, `and=`, and `or=` are not compound operators. Existing `=`,
+`&&`, `||`, `and`, `or`, arithmetic compound operators, comparisons, arrow
+tokens, and regex operand disambiguation retain their syntax and behavior.
 
 Propagation settles queued upstream dependencies before their dependents and
 preserves declaration order among ready rules. A rule may run again when another
@@ -8004,4 +8023,129 @@ source = 4
 
 assert(total, 6)
 assert(reading(3), 7)
+
+---
+
+# Nucleoid keeps logical compound assignments equivalent
+
+value = 0
+value ||= 7
+assert(value, 7)
+value &&= 9
+assert(value, 9)
+label = ""
+label ||= "ready"
+assert(label, "ready")
+label &&= "done"
+assert(label, "done")
+off = false
+off &&= "unused"
+assert(off, false)
+on = true
+on ||= "unused"
+assert(on, true)
+grouped = false
+grouped ||= false && true
+assert(grouped, false)
+value &&= 0 || 3
+assert(value, 3)
+
+---
+
+# Nucleoid keeps logical compound assignments reactive
+
+enabled = false
+fallback = false
+enabled ||= fallback
+assert(enabled, false)
+fallback = true
+assert(enabled, true)
+fallback = false
+assert(enabled, true)
+ready = true
+limit = true
+ready &&= limit
+assert(ready, true)
+limit = false
+assert(ready, false)
+limit = true
+assert(ready, false)
+snapshot = false
+source = true
+snapshot ||= source.value
+assert(snapshot, true)
+source = false
+assert(snapshot, true)
+
+---
+
+# Nucleoid short circuits logical compound operands
+
+def fail():
+    throw "UNREACHABLE"
+retained = "ready"
+retained ||= fail()
+assert(retained, "ready")
+stopped = false
+stopped &&= fail()
+assert(stopped, false)
+chosen = false
+chosen ||= 12
+assert(chosen, 12)
+chosen &&= 4
+assert(chosen, 4)
+
+---
+
+# Nucleoid preserves logical compound property and local assignments
+
+class Gate:
+    def allow(fallback):
+        this.enabled ||= fallback
+        return this.enabled
+    def require(allowed):
+        self.enabled &&= allowed
+        return self.enabled
+gate = Gate()
+gate.enabled = false
+assert(gate.allow(true), true)
+assert(gate.require(false), false)
+assert(gate.enabled, false)
+def prefer(value, fallback) => value ||= fallback
+def requireBoth(value, allowed) => value &&= allowed
+assert(prefer(0, 8), 8)
+assert(prefer(3, 8), 3)
+assert(requireBoth(2, 7), 7)
+assert(requireBoth(0, 7), 0)
+def combined(a, b) => a ||= b &&= 9
+assert(combined(false, 2), 9)
+assert(combined(true, 2), true)
+combined(false, 2)
+
+# return: 9
+
+---
+
+# Nucleoid rolls back failed logical compound assignments
+
+enabled = false
+if enabled:
+    throw "BLOCKED"
+caught = null
+try:
+    enabled ||= true
+catch error:
+    caught = error
+assert(caught, "BLOCKED")
+assert(enabled, false)
+ready = true
+if !ready:
+    throw "REQUIRED"
+caught = null
+try:
+    ready &&= false
+catch error:
+    caught = error
+assert(caught, "REQUIRED")
+assert(ready, true)
 ```

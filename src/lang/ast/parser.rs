@@ -42,6 +42,12 @@ const MAX_NESTING: usize = 64;
 /// that later walks recurse over.
 const MAX_CHAIN: usize = 128;
 
+/// Compound syntax selects an existing operator, never a new runtime path.
+enum CompoundOp {
+    Arithmetic(BinaryOp),
+    Logical(LogicalOp),
+}
+
 struct Parser {
     tokens: Vec<Spanned>,
     position: usize,
@@ -672,11 +678,13 @@ impl Parser {
 
         let operator = match self.peek() {
             Token::Assign => None,
-            Token::PlusAssign => Some(BinaryOp::Add),
-            Token::MinusAssign => Some(BinaryOp::Subtract),
-            Token::StarAssign => Some(BinaryOp::Multiply),
-            Token::SlashAssign => Some(BinaryOp::Divide),
-            Token::PercentAssign => Some(BinaryOp::Modulo),
+            Token::PlusAssign => Some(CompoundOp::Arithmetic(BinaryOp::Add)),
+            Token::MinusAssign => Some(CompoundOp::Arithmetic(BinaryOp::Subtract)),
+            Token::StarAssign => Some(CompoundOp::Arithmetic(BinaryOp::Multiply)),
+            Token::SlashAssign => Some(CompoundOp::Arithmetic(BinaryOp::Divide)),
+            Token::PercentAssign => Some(CompoundOp::Arithmetic(BinaryOp::Modulo)),
+            Token::AndAndAssign => Some(CompoundOp::Logical(LogicalOp::And)),
+            Token::OrOrAssign => Some(CompoundOp::Logical(LogicalOp::Or)),
             _ => return Ok(left),
         };
 
@@ -687,11 +695,22 @@ impl Parser {
         self.advance();
         let value = self.expression()?;
         let value = match operator {
-            Some(operator) => Expr::Binary {
-                operator,
-                left: Box::new(left.clone()),
-                right: Box::new(value),
-            },
+            Some(operator) => {
+                let left = Box::new(left.clone());
+                let right = Box::new(value);
+                match operator {
+                    CompoundOp::Arithmetic(operator) => Expr::Binary {
+                        operator,
+                        left,
+                        right,
+                    },
+                    CompoundOp::Logical(operator) => Expr::Logical {
+                        operator,
+                        left,
+                        right,
+                    },
+                }
+            }
             None => value,
         };
         Ok(Expr::Assign {
@@ -1412,6 +1431,144 @@ mod tests {
     }
 
     #[test]
+    fn logical_compounds_lower_to_existing_logical_and_assignment_nodes() {
+        for (symbol, operator) in [("&&", LogicalOp::And), ("||", LogicalOp::Or)] {
+            assert_eq!(
+                parse_expression(&format!("target {symbol}= rhs")).unwrap(),
+                Expr::Assign {
+                    target: Box::new(Expr::Identifier("target".into())),
+                    value: Box::new(Expr::Logical {
+                        operator,
+                        left: Box::new(Expr::Identifier("target".into())),
+                        right: Box::new(Expr::Identifier("rhs".into())),
+                    }),
+                }
+            );
+            for target in [
+                "enabled",
+                "gate.enabled",
+                "parent.gate.enabled",
+                "$Gate.enabled",
+                "this.enabled",
+                "self.enabled",
+                "(enabled)",
+                "(this).enabled",
+                "($Gate).enabled",
+                "(parent.gate).enabled",
+            ] {
+                for rhs in [
+                    "false",
+                    "7",
+                    "-3",
+                    "+3",
+                    "!other",
+                    "first || second && third",
+                    "first or second and third",
+                    "first + second * 3 > 0",
+                    "source.value",
+                    "first = second",
+                    "first += 2",
+                    "model |> why",
+                    "/=/",
+                ] {
+                    let compact = format!("{target} {symbol}= {rhs}");
+                    let expanded = format!("{target} = {target} {symbol} ({rhs})");
+                    assert_eq!(
+                        parse_expression(&compact).unwrap(),
+                        parse_expression(&expanded).unwrap(),
+                        "{compact}"
+                    );
+                    let compact_ast = parse(&compact).unwrap();
+                    let expanded_ast = parse(&expanded).unwrap();
+                    assert_eq!(compact_ast, expanded_ast, "{compact}");
+                    assert_eq!(
+                        generate_all(&compact_ast),
+                        generate_all(&expanded_ast),
+                        "{compact}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn logical_compounds_preserve_grouping_right_associativity_and_contexts() {
+        for (compact, expanded) in [
+            ("a &&= b || c", "a = a && (b || c)"),
+            ("a ||= b && c", "a = a || (b && c)"),
+            ("a &&= b ||= c += 2", "a = a && (b = b || (c = c + 2))"),
+            (
+                "a ||= b *= c &&= false",
+                "a = a || (b = b * (c = c && false))",
+            ),
+            (
+                "outer = inner ||= fallback",
+                "outer = (inner = inner || fallback)",
+            ),
+            (
+                "def combined(a, b) => a ||= b &&= 9",
+                "def combined(a, b) => a = a || (b = b && 9)",
+            ),
+            (
+                "class Gate:\n    def allow(fallback) => self.enabled ||= fallback",
+                "class Gate:\n    def allow(fallback) => self.enabled = self.enabled || fallback",
+            ),
+            (
+                "callback = value => value &&= allowed",
+                "callback = value => value = value && allowed",
+            ),
+            (
+                "if active:\n    ready ||= fallback\nelse:\n    ready &&= allowed",
+                "if active:\n    ready = ready || fallback\nelse:\n    ready = ready && allowed",
+            ),
+            (
+                "for gate of gates:\n    gate.enabled ||= fallback",
+                "for gate of gates:\n    gate.enabled = gate.enabled || fallback",
+            ),
+            (
+                "assert((enabled ||= fallback), true)",
+                "assert((enabled = enabled || fallback), true)",
+            ),
+            (
+                "text = `ready: ${enabled &&= allowed}`",
+                "text = `ready: ${enabled = enabled && allowed}`",
+            ),
+            (
+                "enabled &&= first or second",
+                "enabled = enabled and (first or second)",
+            ),
+            (
+                "enabled ||= first and second",
+                "enabled = enabled or (first and second)",
+            ),
+        ] {
+            let compact_ast = parse(compact).unwrap();
+            let expanded_ast = parse(expanded).unwrap();
+            assert_eq!(compact_ast, expanded_ast, "{compact}");
+            assert_eq!(
+                generate_all(&compact_ast),
+                generate_all(&expanded_ast),
+                "{compact}"
+            );
+        }
+        assert_eq!(
+            generate_all(&parse("enabled ||= fallback").unwrap()),
+            "enabled=enabled||fallback"
+        );
+        assert_eq!(
+            generate_all(&parse("ready &&= allowed").unwrap()),
+            "ready=ready&&allowed"
+        );
+        for legacy in [
+            "get().enabled = true",
+            "(first = second).enabled = true",
+            "items[0].enabled = false",
+        ] {
+            assert!(parse(legacy).is_ok(), "{legacy}");
+        }
+    }
+
+    #[test]
     fn compound_assignments_reject_non_path_targets_before_cloning() {
         for target in [
             "1",
@@ -1429,10 +1586,12 @@ mod tests {
             "(first = second)",
             "(first += 1)",
             "(first += 1).count",
+            "(first ||= 1)",
+            "(first &&= 1).count",
             "(first => first)",
             "model |> why",
         ] {
-            for operator in ["+=", "-=", "*=", "/=", "%="] {
+            for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
                 let source = format!("{target} {operator} 2");
                 let error = parse(&source).unwrap_err();
                 assert_eq!(error.kind(), crate::ErrorKind::Syntax, "{source}");
@@ -1448,12 +1607,26 @@ mod tests {
 
     #[test]
     fn compound_target_limits_include_parenthesized_member_chains() {
-        let allowed = format!("(root{}){} += 1", ".next".repeat(64), ".next".repeat(64));
-        assert!(parse(&allowed).is_ok());
+        for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
+            let allowed = format!(
+                "(root{}){} {operator} 1",
+                ".next".repeat(64),
+                ".next".repeat(64)
+            );
+            assert!(parse(&allowed).is_ok(), "{operator}");
 
-        let excessive = format!("(root{}){} += 1", ".next".repeat(64), ".next".repeat(65));
-        let error = parse(&excessive).unwrap_err();
-        assert_eq!(error.message(), "Expression has too many parts");
+            let excessive = format!(
+                "(root{}){} {operator} 1",
+                ".next".repeat(64),
+                ".next".repeat(65)
+            );
+            let error = parse(&excessive).unwrap_err();
+            assert_eq!(
+                error.message(),
+                "Expression has too many parts",
+                "{operator}"
+            );
+        }
     }
 
     #[test]

@@ -34,21 +34,11 @@ struct Record {
 
 const SPEC_DOCUMENT: &str = include_str!("../nucleoid.spec.md");
 
-<<<<<<< Updated upstream
-const SPEC_RECORDS: usize = 303;
-const SYNTH_RECORDS: usize = 1_079;
+const SPEC_RECORDS: usize = 308;
+const SYNTH_RECORDS: usize = 1_081;
 const SYNTH_19_RECORDS: usize = 51;
-const SYNTH_21_RECORDS: usize = 116;
+const SYNTH_21_RECORDS: usize = 118;
 
-/// A case document and the JSONL file rendered from it.
-struct Set {
-    /// Prefix of the record ids, so an id says where it came from.
-    prefix: String,
-    /// The document the cases come from, for the failure message.
-    document: String,
-    output: String,
-    text: &'static str,
-=======
 type Grid = Vec<Vec<u8>>;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -64,7 +54,6 @@ enum ArcTask {
     Translate,
     Crop,
     Upscale,
->>>>>>> Stashed changes
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -141,7 +130,17 @@ fn synthesized_records_keep_their_identifiers_and_fields() {
         check_record_fields(records, &format!("synth-{number}"));
         total += records.len();
     }
-    assert_eq!(total, 1061, "update the training corpus size deliberately");
+    assert_eq!(
+        total, SYNTH_RECORDS,
+        "update the training corpus size deliberately"
+    );
+    for (number, expected) in [("19", SYNTH_19_RECORDS), ("21", SYNTH_21_RECORDS)] {
+        let (_, records) = sets
+            .iter()
+            .find(|(found, _)| found == number)
+            .expect("the protected synthesized split must remain present");
+        assert_eq!(records.len(), expected, "synth-{number}: stable split size");
+    }
 }
 
 /// Keep regeneration and validation together so parallel tests cannot read
@@ -178,38 +177,6 @@ fn check_record_fields(records: &[Record], prefix: &str) {
             format!("{prefix}-{:04}", index + 1),
             "{prefix}: stable record id"
         );
-<<<<<<< Updated upstream
-    }
-}
-
-#[test]
-fn dataset_card_reports_current_split_sizes() {
-    let sets = sets();
-    let spec = common::cases(sets[0].text).len();
-    let synth: usize = sets
-        .iter()
-        .skip(1)
-        .map(|set| common::cases(set.text).len())
-        .sum();
-    let card = include_str!("../dataset/README.md");
-
-    assert_eq!(spec, SPEC_RECORDS);
-    assert_eq!(synth, SYNTH_RECORDS);
-    let (_, _, source_19) = SYNTH_DOCUMENTS
-        .iter()
-        .find(|(module, _, _)| *module == "synth_19")
-        .expect("the typed-block derived source is registered");
-    assert_eq!(common::cases(source_19).len(), SYNTH_19_RECORDS);
-    let (_, _, source_21) = SYNTH_DOCUMENTS
-        .iter()
-        .find(|(module, _, _)| *module == "synth_21")
-        .expect("the current derived source is registered");
-    assert_eq!(common::cases(source_21).len(), SYNTH_21_RECORDS);
-
-    for (split, count) in [("spec", spec), ("synth", synth)] {
-        let row = format!("| `{split}` | {count} |");
-=======
->>>>>>> Stashed changes
         assert!(
             !record.description.trim().is_empty(),
             "{id}: description must not be empty"
@@ -503,7 +470,7 @@ fn every_spec_record_is_nucleoid() {
     // Two empty specification representations would agree and prove nothing.
     assert_eq!(
         records, SPEC_RECORDS,
-        "the specification holds 303 cases; update this count deliberately when one is added"
+        "update the specification case count deliberately when one is added"
     );
 }
 

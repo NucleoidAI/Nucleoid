@@ -69,7 +69,7 @@ fn named_expression_body_errors_use_the_existing_expression_grammar() {
 
 #[test]
 fn compound_assignment_diagnostics_name_exact_tokens_and_targets() {
-    for operator in ["+=", "-=", "*=", "/=", "%="] {
+    for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
         for (source, message) in [
             (
                 format!("amount {operator}"),
@@ -104,6 +104,78 @@ fn compound_assignment_diagnostics_name_exact_tokens_and_targets() {
                 .map(|position| (position.line, position.column)),
             Some((2, 3))
         );
+    }
+}
+
+#[test]
+fn logical_compound_runtime_errors_follow_the_expanded_assignment() {
+    for (operator, logical, evaluated_left) in [("&&=", "&&", "true"), ("||=", "||", "false")] {
+        for (setup, target, rhs, kind, message) in [
+            (
+                String::new(),
+                "missing",
+                "true",
+                nucleoid::ErrorKind::Reference,
+                "missing is not defined",
+            ),
+            (
+                format!("enabled = {evaluated_left}\n"),
+                "enabled",
+                "missing",
+                nucleoid::ErrorKind::Reference,
+                "missing is not defined",
+            ),
+            (
+                String::new(),
+                "this.enabled",
+                "true",
+                nucleoid::ErrorKind::Reference,
+                "this is not defined",
+            ),
+            (
+                "number = 1\n".to_string(),
+                "number.reading",
+                "true",
+                nucleoid::ErrorKind::Type,
+                "Cannot assign 'reading' on number",
+            ),
+            (
+                "class Item\nitem = Item()\n".to_string(),
+                "item.value",
+                "true",
+                nucleoid::ErrorKind::Type,
+                "Cannot use 'value' as a property",
+            ),
+            (
+                format!("class Gate\ngate = Gate()\n$Gate.enabled = {evaluated_left}\n"),
+                "$Gate.enabled",
+                "true",
+                nucleoid::ErrorKind::Type,
+                "Circular Dependency",
+            ),
+        ] {
+            let compact = format!("{setup}{target} {operator} {rhs}");
+            let expanded = format!("{setup}{target} = {target} {logical} ({rhs})");
+            let compact_error = failure(&compact);
+            assert_eq!(compact_error, failure(&expanded), "{compact}");
+            assert_eq!(compact_error.kind(), kind, "{compact}");
+            assert_eq!(compact_error.message(), message, "{compact}");
+        }
+    }
+}
+
+#[test]
+fn separated_logical_assignments_and_word_compounds_are_not_added() {
+    for source in [
+        "enabled && = true",
+        "enabled || = true",
+        "enabled and= true",
+        "enabled or= true",
+    ] {
+        let error = failure(source);
+        assert_eq!(error.kind(), nucleoid::ErrorKind::Syntax, "{source}");
+        assert_eq!(error.message(), "Unexpected '='", "{source}");
+        assert!(error.position().is_some(), "{source}");
     }
 }
 

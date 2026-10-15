@@ -142,6 +142,37 @@ amount += step
 - `amount += step.value` makes it `18`; a later `step = 5` leaves it `18`.
 - The executable counterpart is `Nucleoid preserves compound assignment relationships` in `tests/reference.md`.
 
+### Logical compound assignment
+
+- [Accepted NUC 26](nuc-0026.md) defines optional `&&=` and `||=` as one token
+  each; every paired case passed independent evaluation without an increase.
+- `target &&= rhs` lowers exactly to `target = target && (rhs)`;
+  `target ||= rhs` lowers exactly to `target = target || (rhs)`.
+- The full right operand keeps assignment precedence and right associativity;
+  `a ||= b &&= 9` means `a = a || (b = b && 9)`.
+- A standing assignment always installs the expanded relationship, even when
+  logical evaluation skips the right operand. It is not a JavaScript-style
+  conditional write.
+- Logical operators keep operand values and short-circuiting. Existing
+  null/deferred handling and pre-evaluation `.value` freezing are unchanged;
+  snapshot reads may still occur in a skipped logical operand.
+- The same plain-path validation permits at most 128 dotted links across
+  grouped paths, rejects computed targets before cloning, and shares the
+  existing expression/statement nesting budget.
+- Local parameters, `this`/`self`, property self-reference, class-level cycle
+  errors, expression returns, dependencies, rollback, graph keys and canonical
+  expanded rendering retain the existing assignment behavior.
+- All arithmetic compound forms remain valid. The expanded symbolic and word
+  forms also remain supported, for example `enabled = enabled || fallback`,
+  `enabled = enabled or fallback`, `ready = ready && allowed`, and
+  `ready = ready and allowed`.
+- The executable counterpart is
+  `Nucleoid preserves logical compound assignment relationships` in
+  `tests/reference.md`.
+- New variants in the exhaustive public Rust `Token` enum are source-breaking
+  for downstream exhaustive matches. A human must decide the API semver action;
+  no version or dependency change is part of this revision.
+
 ### The value property
 
 - `.value` reads the current value and records no dependency.
@@ -247,6 +278,8 @@ assert(reading.amount, 6)
 
 - Arithmetic: `+`, `-`, `*`, `/`, `%`.
 - Compound assignment: `+=`, `-=`, `*=`, `/=`, `%=`; each operator is one token.
+- Logical compound assignment: `&&=`, `||=`; adjacent characters form
+  one token. `&& =`, `|| =`, `and=`, and `or=` do not form compound operators.
 - Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`.
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Parentheses override precedence.

@@ -35,36 +35,45 @@ fn malformed_source_is_rejected() {
 
 #[test]
 fn compound_assignment_chains_respect_existing_resource_limits() {
-    for source in [
-        format!("{}1", "amount += ".repeat(4096)),
-        format!("amount += {}1{}", "(".repeat(4096), ")".repeat(4096)),
-        format!("amount *= {}1", "-".repeat(4096)),
-    ] {
-        let error = Runtime::check(&source).unwrap_err();
-        assert_eq!(error.kind(), ErrorKind::Syntax);
-        assert_eq!(error.message(), "Expressions are nested too deeply");
+    for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
+        for source in [
+            format!("{}1", format!("amount {operator} ").repeat(4096)),
+            format!(
+                "amount {operator} {}1{}",
+                "(".repeat(4096),
+                ")".repeat(4096)
+            ),
+            format!("amount {operator} {}1", "-".repeat(4096)),
+        ] {
+            let error = Runtime::check(&source).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Syntax);
+            assert_eq!(error.message(), "Expressions are nested too deeply");
+        }
+        assert!(Runtime::check(&format!("{}1", format!("amount {operator} ").repeat(62))).is_ok());
+        assert!(Runtime::check(&format!("{}1", format!("amount {operator} ").repeat(63))).is_err());
+
+        let error =
+            Runtime::check(&format!("root{} {operator} 1", ".next".repeat(4096))).unwrap_err();
+        assert_eq!(error.message(), "Expression has too many parts");
+
+        let operands = " + 1".repeat(4096);
+        let error = Runtime::check(&format!("amount {operator} 1{operands}")).unwrap_err();
+        assert_eq!(error.message(), "Expression has too many operands");
     }
-    assert!(Runtime::check(&format!("{}1", "amount += ".repeat(62))).is_ok());
-    assert!(Runtime::check(&format!("{}1", "amount += ".repeat(63))).is_err());
-
-    let error = Runtime::check(&format!("root{} += 1", ".next".repeat(4096))).unwrap_err();
-    assert_eq!(error.message(), "Expression has too many parts");
-
-    let operands = " + 1".repeat(4096);
-    let error = Runtime::check(&format!("amount += 1{operands}")).unwrap_err();
-    assert_eq!(error.message(), "Expression has too many operands");
 }
 
 #[test]
 fn nested_compound_targets_cannot_expand_exponentially() {
-    for suffix in [" += 1", ".count += 1", "[0].count += 1"] {
-        let mut source = "amount += 1".to_string();
-        for _ in 0..24 {
-            source = format!("({source}){suffix}");
+    for operator in ["+=", "&&=", "||="] {
+        for target_suffix in ["", ".count", "[0].count"] {
+            let mut source = format!("amount {operator} 1");
+            for _ in 0..24 {
+                source = format!("({source}){target_suffix} {operator} 1");
+            }
+            let error = Runtime::check(&source).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Syntax);
+            assert_eq!(error.message(), "Invalid compound assignment target");
         }
-        let error = Runtime::check(&source).unwrap_err();
-        assert_eq!(error.kind(), ErrorKind::Syntax);
-        assert_eq!(error.message(), "Invalid compound assignment target");
     }
 }
 
@@ -78,6 +87,12 @@ fn malformed_compound_targets_do_not_change_state() {
         "(saved += 1).count += 2",
         "(saved = 0).count *= 2",
         "this -= 2",
+        "1 ||= 2",
+        "saved[0] &&= 2",
+        "(saved ||= 1).count &&= 2",
+        "(saved = 0).count ||= 2",
+        "this &&= 2",
+        "self ||= 2",
     ] {
         let error = runtime.run(&format!("saved += 3\n{invalid}")).unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Syntax);

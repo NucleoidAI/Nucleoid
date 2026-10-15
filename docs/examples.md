@@ -1661,6 +1661,38 @@ assert(total(0), 3)
 
 ---
 
+## Logical compound assignments
+
+**Logical compound assignments keep their reactive relationships**
+
+```nuc
+available = false
+fallback = false
+available ||= fallback
+assert(available, false)
+fallback = true
+assert(available, true)
+allowed = true
+allowed &&= available
+assert(allowed, true)
+available = false
+assert(allowed, false)
+```
+
+- [Accepted NUC 26](nuc-0026.md) adds optional spellings of the existing expanded
+  logical assignments; every paired case passed independent evaluation.
+- `available ||= fallback` means `available = available || (fallback)`,
+  and `allowed &&= available` means `allowed = allowed && (available)`.
+- A standing relationship is always installed, even when its logical evaluation
+  skips the right operand. Later dependency updates use the target's current
+  value, with no new conditional-write or imperative-update mode.
+- Old `=`, `&&`, `||`, `and`, `or`, and arithmetic compounds remain valid.
+- The executable reference counterpart is
+  `Nucleoid preserves logical compound assignment relationships` in
+  `tests/reference.md`; see [README.md §2](README.md#2-variables).
+
+---
+
 ## Copyright
 
 Copyright 2020 Nucleoid

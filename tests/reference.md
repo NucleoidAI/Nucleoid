@@ -1439,4 +1439,19 @@ def double amount: int:
 
 assert(double(3), 7)
 assert(double(5), 11)
+
+---
+
+# Nucleoid preserves logical compound assignment relationships
+
+available = false
+fallback = false
+available ||= fallback
+fallback = true
+assert(available, true)
+allowed = true
+allowed &&= available
+assert(allowed, true)
+available = false
+assert(allowed, false)
 ```

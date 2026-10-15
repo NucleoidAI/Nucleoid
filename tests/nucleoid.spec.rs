@@ -5793,6 +5793,141 @@ fn rolls_back_failed_bare_typed_single_parameter_block_redefinitions() {
     assert_eq!(run("reading(3)"), 7);
 }
 
+/// Nucleoid keeps logical compound assignments equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_logical_compound_assignments_equivalent() {
+    let mut run = runner();
+    run("value = 0");
+    run("value ||= 7");
+    assert_eq!(run("value"), 7);
+    run("value &&= 9");
+    assert_eq!(run("value"), 9);
+    run(r#"label = """#);
+    run(r#"label ||= "ready""#);
+    assert_eq!(run("label"), "ready");
+    run(r#"label &&= "done""#);
+    assert_eq!(run("label"), "done");
+    run("off = false");
+    run(r#"off &&= "unused""#);
+    assert_eq!(run("off"), false);
+    run("on = true");
+    run(r#"on ||= "unused""#);
+    assert_eq!(run("on"), true);
+    run("grouped = false");
+    run("grouped ||= false && true");
+    assert_eq!(run("grouped"), false);
+    run("value &&= 0 || 3");
+    assert_eq!(run("value"), 3);
+}
+
+/// Nucleoid keeps logical compound assignments reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_logical_compound_assignments_reactive() {
+    let mut run = runner();
+    run("enabled = false");
+    run("fallback = false");
+    run("enabled ||= fallback");
+    assert_eq!(run("enabled"), false);
+    run("fallback = true");
+    assert_eq!(run("enabled"), true);
+    run("fallback = false");
+    assert_eq!(run("enabled"), true);
+    run("ready = true");
+    run("limit = true");
+    run("ready &&= limit");
+    assert_eq!(run("ready"), true);
+    run("limit = false");
+    assert_eq!(run("ready"), false);
+    run("limit = true");
+    assert_eq!(run("ready"), false);
+    run("snapshot = false");
+    run("source = true");
+    run("snapshot ||= source.value");
+    assert_eq!(run("snapshot"), true);
+    run("source = false");
+    assert_eq!(run("snapshot"), true);
+}
+
+/// Nucleoid short circuits logical compound operands
+#[rustfmt::skip]
+#[test]
+fn short_circuits_logical_compound_operands() {
+    let mut run = runner();
+    run(r#"def fail():
+    throw "UNREACHABLE""#);
+    run(r#"retained = "ready""#);
+    run("retained ||= fail()");
+    assert_eq!(run("retained"), "ready");
+    run("stopped = false");
+    run("stopped &&= fail()");
+    assert_eq!(run("stopped"), false);
+    run("chosen = false");
+    run("chosen ||= 12");
+    assert_eq!(run("chosen"), 12);
+    run("chosen &&= 4");
+    assert_eq!(run("chosen"), 4);
+}
+
+/// Nucleoid preserves logical compound property and local assignments
+#[rustfmt::skip]
+#[test]
+fn preserves_logical_compound_property_and_local_assignments() {
+    let mut run = runner();
+    run(r#"class Gate:
+    def allow(fallback):
+        this.enabled ||= fallback
+        return this.enabled
+    def require(allowed):
+        self.enabled &&= allowed
+        return self.enabled"#);
+    run("gate = Gate()");
+    run("gate.enabled = false");
+    assert_eq!(run("gate.allow(true)"), true);
+    assert_eq!(run("gate.require(false)"), false);
+    assert_eq!(run("gate.enabled"), false);
+    run("def prefer(value, fallback) => value ||= fallback");
+    run("def requireBoth(value, allowed) => value &&= allowed");
+    assert_eq!(run("prefer(0, 8)"), 8);
+    assert_eq!(run("prefer(3, 8)"), 3);
+    assert_eq!(run("requireBoth(2, 7)"), 7);
+    assert_eq!(run("requireBoth(0, 7)"), 0);
+    run("def combined(a, b) => a ||= b &&= 9");
+    assert_eq!(run("combined(false, 2)"), 9);
+    assert_eq!(run("combined(true, 2)"), true);
+    run(r#"combined(false, 2)
+
+# return: 9"#);
+}
+
+/// Nucleoid rolls back failed logical compound assignments
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_logical_compound_assignments() {
+    let mut run = runner();
+    run("enabled = false");
+    run(r#"if enabled:
+    throw "BLOCKED""#);
+    run("caught = null");
+    run(r#"try:
+    enabled ||= true
+catch error:
+    caught = error"#);
+    assert_eq!(run("caught"), "BLOCKED");
+    assert_eq!(run("enabled"), false);
+    run("ready = true");
+    run(r#"if !ready:
+    throw "REQUIRED""#);
+    run("caught = null");
+    run(r#"try:
+    ready &&= false
+catch error:
+    caught = error"#);
+    assert_eq!(run("caught"), "REQUIRED");
+    assert_eq!(run("ready"), true);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
