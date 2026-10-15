@@ -174,6 +174,11 @@ fn methods_initializers_and_statement_boundaries_keep_the_existing_ast() {
 
 #[test]
 fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
+    // NUC27 adds this formerly unsupported prefix, with the exact explicit AST.
+    equivalent(
+        "def f amount, other => amount",
+        "def f(amount, other) => amount",
+    );
     // Captured using the unchanged accepted runtime before the parser edit.
     for (source, message, line, column) in [
         (
@@ -184,12 +189,6 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
         ),
         (
             "def f amount: int, other => amount",
-            "Expected '(' but found identifier 'amount'",
-            1,
-            7,
-        ),
-        (
-            "def f amount, other => amount",
             "Expected '(' but found identifier 'amount'",
             1,
             7,
@@ -697,7 +696,7 @@ fn invalid_headers_do_not_execute_earlier_assignments_or_replace_functions() {
     for header in [
         "def identity amount: int, other:\n    return amount",
         "def identity amount: int, other => amount",
-        "def identity amount, other => amount",
+        "def identity amount, other, => amount",
         "def identity amount\n=> amount",
         "def identity amount; => amount",
         "def identity => 1",
@@ -707,6 +706,13 @@ fn invalid_headers_do_not_execute_earlier_assignments_or_replace_functions() {
         assert_eq!(runtime.run("saved").unwrap(), Value::Number(7.0));
         assert_eq!(runtime.run("identity(3)").unwrap(), Value::Number(3.0));
     }
+    equivalent(
+        "def identity amount, other => amount",
+        "def identity(amount, other) => amount",
+    );
+    runtime.run("def identity amount, other => amount").unwrap();
+    assert_eq!(runtime.run("identity(3, 4)").unwrap(), Value::Number(3.0));
+    assert_eq!(runtime.run("saved").unwrap(), Value::Number(7.0));
 }
 
 #[test]

@@ -4,11 +4,14 @@ Executable form of the behaviours stated in `docs/README.md`, in the same
 case format as `nucleoid.spec.md`. Where this file and the specification
 disagree, the specification wins.
 
-Named arrows may optionally omit parentheses around one ordinary identifier
-and its existing single-identifier type annotation. Parenthesized alternatives,
-class/anonymous parameter lists and untyped bare arrows/indented blocks stay
-valid; typed bare blocks and other annotated bare signatures are not added.
-The annotation remains metadata with the existing binding and runtime behavior.
+Named arrows may optionally omit parentheses around one untyped ordinary
+identifier, one ordinary identifier with its existing single-identifier
+annotation, or NUC27's complete comma-separated list of two or more untyped
+ordinary identifiers immediately followed by `=>` on the same logical line.
+Parenthesized alternatives, class/anonymous parameter lists and typed/untyped
+single-parameter indented blocks stay valid. Multiple-parameter bare blocks and
+typed/mixed multiple-parameter bare arrows are not added. Annotations remain
+metadata with the existing binding and runtime behavior.
 
 ```
 
@@ -222,7 +225,7 @@ assert(indexed, 5)
 
 def operation number => 99
 
-def apply(operation, number) => operation(number)
+def apply operation, number => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -1454,4 +1457,19 @@ allowed &&= available
 assert(allowed, true)
 available = false
 assert(allowed, false)
+
+---
+
+# Nucleoid preserves bare multiple parameter arrow relationships
+
+scale = 1
+def area width, height => width * height * scale
+width = 3
+height = 4
+result = area(width, height)
+assert(result, 12)
+scale = 2
+assert(result, 24)
+width = 5
+assert(result, 40)
 ```

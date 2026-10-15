@@ -167,10 +167,11 @@ assert(square(4), 16)
 
 [NUC 18](docs/nuc-0018.md) specifies parameter-parenthesis omission for named
 arrow definitions and methods with exactly one untyped ordinary identifier
-parameter. Empty and multiple-parameter definitions still use parentheses, as
-do calls; the optional typed indented-block form is described below. The body, binding,
-reactivity, snapshots, receivers
-and initializer behavior remain those of [NUC 12](docs/nuc-0012.md).
+parameter. Nullary and typed/mixed multiple-parameter definitions still use
+parentheses, as do calls; the optional untyped multiple-parameter arrow spelling
+is demonstrated below. `def square(amount) => amount * amount` remains valid.
+The body, binding, reactivity, snapshots, receivers and initializer behavior
+remain those of [NUC 12](docs/nuc-0012.md).
 
 **Single input block definitions omit parameter parentheses**
 
@@ -210,8 +211,9 @@ assert(result, 10)
 single-identifier typed-arrow header. `def double(amount: int) => amount * 2`
 remains valid with identical parameter/type metadata and named return-block
 behavior. Annotations retain their existing handling, not new variable lookup
-or type enforcement. Typed bare inline/braced blocks, logical header breaks and additional
-parameter/type forms are not added; calls and NUC18/19 spellings are unchanged.
+or type enforcement. Typed bare inline/braced blocks, logical header breaks and
+typed/mixed multiple-parameter forms are not added; calls and NUC18/19 spellings
+are unchanged.
 
 **Numeric clamping keeps values within live bounds**
 
@@ -350,6 +352,25 @@ skips the right operand. Existing `=`, `&&`, `||`, `and`, `or`, and arithmetic
 compounds remain supported; snapshots, dependencies and rollback are unchanged.
 The public lexer enum additions require a human-owned API semver decision;
 this revision changes no project version.
+
+**Named arrows can omit parentheses around multiple parameters**
+
+```nuc
+def add left, right => left + right
+assert(add(2, 3), 5)
+def scaled left, right, factor => (left + right) * factor
+assert(scaled(2, 3, 4), 20)
+```
+
+[Accepted NUC 27](docs/nuc-0027.md) adds only a complete
+comma-separated list of two or more untyped ordinary identifiers immediately
+followed by `=>` on the same logical header line, including methods and `init`.
+`def add(left, right) => left + right` remains valid and exactly equivalent.
+Trailing bare commas, typed/mixed lists, bare multiple-parameter blocks,
+defaults, destructuring, rest parameters and return annotations are not added.
+No logical newline, semicolon or comment-induced break is skipped. Calls retain
+their parentheses and anonymous arrows retain their existing grammar; the
+single-parameter typed and block alternatives above remain unchanged.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,

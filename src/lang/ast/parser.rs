@@ -436,6 +436,25 @@ impl Parser {
                     Token::Arrow
                 )
         );
+        let bare_multiple_arrow = matches!(
+            (self.peek(), self.peek_at(1)),
+            (Token::Identifier(_), Token::Comma)
+        ) && {
+            // Match the complete untyped list without consuming or
+            // skipping any layout. The initial comma requires at least
+            // two parameters; only an immediate arrow ends the header.
+            let mut offset = 2;
+            loop {
+                if !matches!(self.peek_at(offset), Token::Identifier(_)) {
+                    break false;
+                }
+                match self.peek_at(offset + 1) {
+                    Token::Arrow => break true,
+                    Token::Comma => offset += 2,
+                    _ => break false,
+                }
+            }
+        };
         let bare_block = matches!(self.peek(), Token::Identifier(_))
             && match self.peek_at(1) {
                 Token::Colon if matches!(self.peek_at(2), Token::Newline | Token::Indent) => {
@@ -470,7 +489,13 @@ impl Parser {
                 .skip(self.position + 4)
                 .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
                 .is_some_and(|spanned| spanned.token == Token::Indent);
-        let parameters = if bare_arrow || bare_typed_block {
+        let parameters = if bare_multiple_arrow {
+            let mut parameters = vec![self.parameter()?];
+            while self.eat(&Token::Comma) {
+                parameters.push(self.parameter()?);
+            }
+            parameters
+        } else if bare_arrow || bare_typed_block {
             vec![self.parameter()?]
         } else if bare_block {
             let Token::Identifier(name) = self.advance() else {

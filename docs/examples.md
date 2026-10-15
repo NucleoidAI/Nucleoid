@@ -854,7 +854,10 @@ assert(invoice, 8)
 
 [NUC 18](nuc-0018.md) specifies parameter-parenthesis omission for a named
 arrow definition or method with exactly one untyped ordinary identifier
-parameter. Calls and other definition signatures retain their parentheses;
+parameter. `def total(amount) => amount + fee` remains valid; the optional
+untyped multiple-parameter arrow spelling is demonstrated in
+[bare multiple-parameter named arrows](#bare-multiple-parameter-named-arrows).
+Calls and typed/mixed multiple-parameter signatures retain their parentheses;
 the expression still follows [NUC 12](nuc-0012.md). [NUC 19](nuc-0019.md)
 specifies the corresponding narrow indented-colon form, demonstrated in
 [single-parameter indented block definitions](#single-parameter-indented-block-definitions).
@@ -925,7 +928,7 @@ assert(indexed, 5)
 ```nuc
 def operation number => 99
 
-def apply(operation, number) => operation(number)
+def apply operation, number => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -1690,6 +1693,31 @@ assert(allowed, false)
 - The executable reference counterpart is
   `Nucleoid preserves logical compound assignment relationships` in
   `tests/reference.md`; see [README.md §2](README.md#2-variables).
+
+---
+
+## Bare multiple-parameter named arrows
+
+**Multiple parameter named arrows keep live inputs**
+
+```nuc
+bias = 1
+def total left, right => left + right + bias
+result = total(2, 3)
+assert(result, 6)
+bias = 4
+assert(result, 9)
+```
+
+Under [accepted NUC 27](nuc-0027.md),
+`def total(left, right) => left + right + bias` remains valid and exactly
+equivalent. Only the complete comma-separated list of at least two untyped
+ordinary identifiers immediately followed by `=>` on the same logical line
+qualifies. No logical newline, semicolon or comment-induced break is skipped.
+Typed/mixed lists, bare multiple-parameter blocks, defaults, destructuring,
+rest parameters, trailing bare commas and return annotations are not added.
+Calls and anonymous arrows are unchanged; parenthesized, single-parameter
+typed-arrow and typed/untyped single-parameter block alternatives remain valid.
 
 ---
 

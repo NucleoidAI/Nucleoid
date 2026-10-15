@@ -103,18 +103,88 @@ line can still continue over physical lines. Named arrow braces still denote
 object expressions; returned anonymous functions keep their own existing body
 grammar and do not gain closure capture.
 
-Apart from the narrow typed-arrow and typed/untyped indented-colon forms below,
-other prefixes still require parameter parentheses. Multiple, defaulted,
-destructured, and nullary bare parameters are not supported; bare inline and
-brace suites are not added.
+Apart from NUC27's untyped multiple-parameter arrows and the narrow typed-arrow
+and typed/untyped indented-colon forms below, other prefixes still require
+parameter parentheses. Typed/mixed multiple, defaulted, destructured, and
+nullary bare parameters are not supported; bare multiple-parameter blocks,
+inline suites and brace suites are not added.
 For `def f amount:`, `def f amount: int, other => amount`,
-`def f amount, other => amount`, and headers separating `amount` from `=>` by
-a logical newline or semicolon, the error remains
+`def f amount, other, => amount`, and headers separating `amount` from `=>`
+by a logical newline or semicolon, the error remains
 `SyntaxError("Expected '(' but found identifier 'amount'")` at line 1, column 7.
 `def f => 1` remains `SyntaxError("Expected '(' but found '=>'")` at line 1,
 column 7. Parenthesized typed, untyped, empty, multiple-parameter and block
 definitions remain valid. No call-site omission or ordinary-identifier
 automatic invocation is introduced.
+
+## Bare multiple-parameter named arrows
+
+- NUC27 optionally spells `def add(left, right) => left + right` as
+  `def add left, right => left + right`, including named methods and `init`.
+  Require at least two untyped ordinary identifier parameters on the same
+  logical header line, with the complete comma-separated sequence immediately
+  followed by `Arrow`.
+- After `def` and the required ordinary definition name, the additional token
+  grammar is `Identifier Comma Identifier (Comma Identifier)* Arrow expression`.
+  Whitespace may separate tokens; no logical newline, semicolon, indentation
+  token or comment-induced logical break is skipped anywhere in this guard.
+  A comma must always be followed by another ordinary identifier, never an arrow.
+- The lookahead consumes nothing, clones no AST and allocates no parameter names.
+  Once the complete sequence qualifies, the existing parameter parser consumes
+  each identifier in order as `Parameter { name, type_name: None }`; the existing
+  named-arrow expression path creates the same named `FunctionBody::Block`
+  containing `Stmt::Return(Some(expression))`.
+- Precedence, assignment-expression returns, objects, lists, templates and
+  returned anonymous functions retain their existing expression grammar.
+  Leading braces after the named arrow are object expressions, not statement
+  blocks. No separator is skipped before the first body expression; an opening
+  parenthesis on that logical line may continue over physical lines.
+- Binding, missing/null/extra arguments, local shadowing, receivers, initializer
+  adoption, `this`/`self`/`super`, live callable references, `.value` definition
+  snapshots, redefinition, reactive dependencies, transactions, graph keys and
+  canonical rendering are identical to the parenthesized counterpart.
+  Returned anonymous functions do not gain local capture.
+- No new parameter-count cap is introduced: the existing flat parameter parser
+  has no per-parameter operator-chain bound. Expression nesting and operator/
+  postfix-chain limits remain in force for the body.
+- All parenthesized forms remain valid, including
+  `def add(left, right) => left + right`, typed/mixed, trailing-comma and multiline
+  lists, nullary definitions and block suites. NUC18/19/20/24's single-parameter
+  arrows and indented blocks are unchanged. Calls, anonymous arrows, class
+  parameter lists, keywords and ordinary-identifier references are unchanged.
+- This extension does not add bare multiple-parameter indented/inline/braced
+  blocks, typed/mixed parameters, defaults, destructuring, rest parameters,
+  trailing commas, return annotations or call-parenthesis omission.
+- An incomplete or unsupported tokenizable prefix falls through without
+  consuming any prefix token to the existing parenthesized parameter parser.
+  For `def f left, right`, `def f left, right, => left`,
+  `def f left, right: int => left`, `def f left: int, right => left`,
+  `def f left, right:` with an indented body, defaults/destructuring/rest or a
+  logical break in the bare list, preserve
+  `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
+  `def f this, right => right` instead names `keyword 'this'` at that position.
+  A newline immediately after `def f` still gives
+  `SyntaxError("Expected '(' but found end of line")` at line 1, column 5;
+  a semicolon there gives `SyntaxError("Expected '(' but found ';'")` at column 6.
+- For the exact bytes `def f left, right =>`, preserve
+  `SyntaxError("Unexpected end of input")` at line 1, column 21.
+  A final newline gives `SyntaxError("Unexpected end of line")` at line 2,
+  column 1. A body ` (left +)` gives `SyntaxError("Unexpected ')'")` at line 1,
+  column 30; ` { return left }` gives
+  `SyntaxError("Expected a key but found keyword 'return'")` at column 31;
+  ` { left = 1 }` gives `SyntaxError("Expected ':' but found '='")` at column 29.
+  An unparenthesized multiline object body still gives
+  `SyntaxError("Expected a key but found an indented block")` at line 2, column 5.
+- Lexical failures still precede parsing:
+  `def f left, right => @` gives `SyntaxError("Unexpected character '@'")`
+  at line 1, column 22. The malformed parenthesized
+  `def f(left, right:) => left` keeps
+  `SyntaxError("Expected a type but found ')'")` at line 1, column 21.
+  Existing runtime errors, caught values and top-level statement positions
+  are unchanged.
+- The five `bare multiple parameter` entries below exercise forms, reactivity,
+  methods, nested definitions and expression returns; the last explicitly
+  returns `21`. They preserve their pre-executed accepted-syntax counterparts.
 
 ## Bare single-parameter indented block definitions
 
@@ -135,7 +205,7 @@ All parenthesized signatures and indented, inline, or braced suites remain
 valid, including typed, empty, multiple-parameter, trailing-comma, and multiline
 parameter lists. NUC 18's bare named arrows remain unchanged. The single typed
 indented spelling below is also optional; multiple, defaulted, destructured,
-nullary, anonymous-colon, inline, or braced bare definitions are not added.
+nullary, anonymous-colon, inline, or braced bare block definitions are not added.
 Return annotations, calls, ordinary-identifier
 invocation, expression precedence, and keyword meanings are unchanged.
 
@@ -193,12 +263,13 @@ lists, class parameter lists and anonymous functions remain valid. NUC 18's
 untyped bare arrows and NUC 19's exact untyped indented-colon guard are unchanged.
 Representative typed parenthesized alternatives remain executable below.
 
-Typed bare inline or braced suites, multiple/nullary/defaulted/destructured
-parameters, dotted/union/generic/keyword annotation forms, return annotations,
-and logical breaks in the bare header are not added. The typed indented-block
-spelling below does not change this arrow guard. Named-arrow leading braces
-remain object expressions; a returned anonymous arrow retains its own block
-grammar. No public token, AST, runtime, generator, API, or bound changes.
+Typed bare inline or braced suites, typed/mixed multiple parameters,
+nullary/defaulted/destructured parameters, dotted/union/generic/keyword annotation
+forms, return annotations, and logical breaks in the bare header are not added.
+NUC27's untyped multiple-parameter arrows do not extend this typed guard. The
+typed indented-block spelling below does not change this arrow guard. Named-arrow
+leading braces remain object expressions; a returned anonymous arrow retains its
+own block grammar. No public token, AST, runtime, generator, API, or bound changes.
 
 Unsupported tokenizable prefixes such as `def f amount: int:` without a body,
 `def f amount: int, other => amount`, `def f amount: Int.Name => amount`,
@@ -5715,7 +5786,7 @@ def transform number => number * 2
 
 def matches number => number > 0
 
-def combine(total, number) => total + number
+def combine total, number => total + number
 
 mapped = numbers.map(transform)
 filtered = numbers.filter(matches)
@@ -5735,7 +5806,7 @@ def transform number => number * 3
 
 def matches number => number > 3
 
-def combine(total, number) => total * number
+def combine total, number => total * number
 
 assert(mapped, [3, 6, 9])
 assert(filtered, [])
@@ -5769,7 +5840,7 @@ assert(readings, [9, 12])
 
 def transform number => number * 2
 
-def apply(operation, number) => operation(number)
+def apply operation, number => operation(number)
 
 input = 3
 result = apply(transform, input)
@@ -5973,7 +6044,7 @@ assert(frozen, 3)
 
 def operation number => 99
 
-def apply(operation, number) => operation(number)
+def apply operation, number => operation(number)
 
 callback = null
 result = apply(callback, 3)
@@ -6742,12 +6813,12 @@ catch error:
 ---
 
 # Nucleoid returns compound assignment expressions
-def add(current, delta) => current += delta
-def subtract(current, delta) => current -= delta
-def multiply(current, delta) => current *= delta
-def divide(current, delta) => current /= delta
-def remainder(current, delta) => current %= delta
-def combined(a, b) => a += b *= 2
+def add current, delta => current += delta
+def subtract current, delta => current -= delta
+def multiply current, delta => current *= delta
+def divide current, delta => current /= delta
+def remainder current, delta => current %= delta
+def combined a, b => a += b *= 2
 assert(add(5, 3), 8)
 assert(subtract(5, 3), 2)
 assert(multiply(5, 3), 15)
@@ -8111,13 +8182,13 @@ gate.enabled = false
 assert(gate.allow(true), true)
 assert(gate.require(false), false)
 assert(gate.enabled, false)
-def prefer(value, fallback) => value ||= fallback
-def requireBoth(value, allowed) => value &&= allowed
+def prefer value, fallback => value ||= fallback
+def requireBoth value, allowed => value &&= allowed
 assert(prefer(0, 8), 8)
 assert(prefer(3, 8), 3)
 assert(requireBoth(2, 7), 7)
 assert(requireBoth(0, 7), 0)
-def combined(a, b) => a ||= b &&= 9
+def combined a, b => a ||= b &&= 9
 assert(combined(false, 2), 9)
 assert(combined(true, 2), true)
 combined(false, 2)
@@ -8148,4 +8219,83 @@ catch error:
     caught = error
 assert(caught, "REQUIRED")
 assert(ready, true)
+
+---
+
+# Nucleoid defines bare multiple parameter named arrows
+
+def add left, right => left + right
+def scaled left, right, factor => (left + right) * factor
+def pair left, right => [left, right]
+def coordinates x, y => {x, y}
+assert(add(2, 3), 5)
+assert(scaled(2, 3, 4), 20)
+assert(pair("left", "right"), ["left", "right"])
+point = coordinates(2, 3)
+assert(point.x, 2)
+assert(point.y, 3)
+
+---
+
+# Nucleoid keeps bare multiple parameter arrows reactive
+
+bias = 1
+def total left, right => left + right + bias
+tracked = total(2, 3)
+assert(tracked, 6)
+bias = 4
+assert(tracked, 9)
+def projected first, second, third => first * second + third
+left = 2
+right = 3
+offset = 4
+result = projected(left, right, offset)
+assert(result, 10)
+left = 5
+assert(result, 19)
+right = 2
+assert(result, 14)
+
+---
+
+# Nucleoid preserves bare multiple parameter methods
+
+class Calculator:
+    def combine left, right => this.base + left + right
+    def product left, right, scale => self.base + left * right * scale
+calculator = Calculator()
+calculator.base = 2
+result = calculator.combine(3, 4)
+assert(result, 9)
+calculator.base = 5
+assert(result, 12)
+assert(calculator.product(2, 3, 4), 29)
+
+---
+
+# Nucleoid preserves nested bare multiple parameter arrows
+
+def outer(initial):
+    def combine left, right, scale => (left + right) * scale
+    return combine(initial, 2, 3)
+assert(outer(4), 18)
+def factory(ignored) => (left, right) => left + right
+custom = factory(10)
+assert(custom(2, 3), 5)
+
+---
+
+# Nucleoid returns bare multiple parameter named arrows
+
+def prefer current, fallback => current ||= fallback
+def requireBoth current, condition => current &&= condition
+def combined first, second, scale => (first + second) * scale
+assert(prefer(0, 9), 9)
+assert(prefer(3, 9), 3)
+assert(requireBoth(2, 7), 7)
+assert(requireBoth(0, 7), 0)
+assert(combined(2, 5, 3), 21)
+combined(2, 5, 3)
+
+# return: 21
 ```
