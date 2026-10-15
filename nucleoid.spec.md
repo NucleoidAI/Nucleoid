@@ -97,11 +97,13 @@ untyped parameter in the existing named function's block containing
 initializer handling, reactive dependencies, callable snapshots, transactions,
 resource bounds, and canonical rendering are unchanged.
 
-No logical newline or semicolon is skipped in the header or before the body's
-first expression. An expression that starts with a parenthesis on that logical
-line can still continue over physical lines. Named arrow braces still denote
-object expressions; returned anonymous functions keep their own existing body
-grammar and do not gain closure capture.
+No logical newline or semicolon is skipped in the header. The existing inline
+body skips no separator before its first expression; NUC32 separately permits
+the genuinely indented single-expression layout specified below. An expression
+that starts with a parenthesis on the header line can still continue over
+physical lines. Named arrow braces still denote object expressions; returned
+anonymous functions keep their own existing body grammar and do not gain
+closure capture.
 
 Apart from NUC27's untyped and NUC29's typed/mixed multiple-parameter arrows,
 NUC28's untyped and NUC30's typed/mixed multiple-parameter indented blocks and
@@ -137,8 +139,10 @@ automatic invocation is introduced.
 - Precedence, assignment-expression returns, objects, lists, templates and
   returned anonymous functions retain their existing expression grammar.
   Leading braces after the named arrow are object expressions, not statement
-  blocks. No separator is skipped before the first body expression; an opening
-  parenthesis on that logical line may continue over physical lines.
+  blocks. The existing inline path skips no separator before the first body
+  expression; an opening parenthesis on that logical line may continue over
+  physical lines. NUC32 separately permits a real-indented single expression
+  without changing this immediate parameter/header guard.
 - Binding, missing/null/extra arguments, local shadowing, receivers, initializer
   adoption, `this`/`self`/`super`, live callable references, `.value` definition
   snapshots, redefinition, reactive dependencies, transactions, graph keys and
@@ -330,8 +334,10 @@ does not repair those failures or change the paired scope/rollback behavior.
 
 This new guard skips no logical newline, semicolon, or comment-induced logical
 break anywhere between the required name, parameter, colon, annotation, and
-arrow. It does not change the existing first-body-expression rule: a parenthesis
-starting on the header line may continue over physical lines. Parenthesized
+arrow. The existing inline body still skips no initial separator, and a
+parenthesis starting on the header line may continue over physical lines.
+NUC32 separately adds the real-indented single-expression body below without
+changing this header guard. Parenthesized
 typed and untyped signatures, multiline/trailing-comma/empty/multiple parameter
 lists, class parameter lists and anonymous functions remain valid. NUC 18's
 untyped bare arrows and NUC 19's exact untyped indented-colon guard are unchanged.
@@ -402,9 +408,11 @@ statement positions; caught values and transaction recovery are unchanged.
 - Keep expression precedence, assignments, objects, lists, templates and
   returned anonymous functions unchanged. Leading named-arrow braces remain
   object expressions, not statement blocks; a returned anonymous function
-  retains its own body grammar and noncapturing scope. Skip no separator
-  before the first body expression. A parenthesis beginning on that logical
-  header line may continue over physical lines.
+  retains its own body grammar and noncapturing scope. The existing inline path
+  skips no separator before the first body expression. A parenthesis beginning
+  on that logical header line may continue over physical lines. NUC32 separately
+  adds the real-indented single-expression body without changing this header
+  guard.
 - Receivers, `this`/`self`, initializer adoption, explicit/bare `super`, live
   callable aliases, `.value` definition snapshots, redefinition, reactive
   arguments and external inputs, graph keys/dependencies, reasoning,
@@ -619,6 +627,87 @@ statement positions; caught values and transaction recovery are unchanged.
   arity/unchecked arguments/shadowing/returns/nesting and failed-redefinition
   catch/rollback. The rollback entry executes its catch and explicitly ends
   with `reading(8, 9)`, returning `21`.
+
+## Indented named arrow expressions
+
+- NUC32 optionally follows an existing named definition's `=>` with a genuinely
+  indented body containing exactly one expression. It is exactly the same named
+  definition with `:` and the sole statement `return expression`.
+- Reuse every existing parameter spelling: parenthesized nullary, single,
+  multiple, annotated, trailing-comma and multiline lists; bare untyped/typed
+  single parameters; bare untyped, mixed and fully typed multiple parameters.
+  Keep parameter metadata and order, all complete header guards, and methods,
+  nested definitions and `init`. `def f =>` and `def f:` remain invalid.
+- After consuming only the existing arrow, qualify layout without consuming it:
+  the immediate token must be `Newline` or `Indent`, and the first token after
+  only `Newline`/`Semicolon` layout must be a real `Indent`.
+  If either condition fails, use the unchanged inline expression path without
+  skipping any token. Unsupported headers retain their original parameter path.
+- On qualification, consume that newline/semicolon layout and the `Indent`,
+  skip normal leading newline/semicolon body layout, call unchanged
+  `expression()` exactly once, skip normal trailing newline/semicolon layout,
+  and require and consume the closing `Dedent`.
+- Produce exactly `FunctionBody::Block(vec![Stmt::Return(Some(expression))])`.
+  This is neither an arbitrary statement suite nor an implicit return of a
+  suite's last statement. Reject a second expression, statement or deeper
+  unexpected indent before the closing `Dedent`; never silently discard input.
+- An immediate semicolon after `=>` cannot qualify, even before a later indent.
+  After the initial logical newline, semicolon-only lines may precede the real
+  indent or the expression. Trailing semicolons are allowed, but `value; other`
+  inside the body is two expressions and is rejected.
+- Blank/comment lines do not create an indent. Existing CRLF, tab indentation,
+  expression precedence and parenthesized/bracketed multiline layout are
+  unchanged. An expression may start with `(` on the indented line and continue
+  across physical lines. Leading named-arrow braces remain object expressions.
+- Existing valid inline arrows and following statements are never reinterpreted.
+  Colon suites still permit multiple statements, absent/bare/explicit returns
+  and their existing inline/braced alternatives. Anonymous expression/block
+  `FunctionBody` variants retain their grammar; no anonymous indented-arrow
+  path, closure capture, token, keyword, public AST, runtime or API is added.
+- Binding, arity, unchecked annotations, null callable deferral, non-callable
+  errors, assignment returns, receivers, `this`/`self`, explicit/bare `super`,
+  initializer adoption/identity, live references, `.value` definition snapshots,
+  redefinition, graph dependencies/reasoning, state propagation and transactions/
+  rollback are unchanged. Existing statement/expression nesting, operator and
+  postfix bounds apply, with no flat-parameter cap added.
+- For exact `def f x =>`, retain `SyntaxError("Unexpected end of input")` at
+  line 1, column 11. A final newline, or exact `def f x =>\nx`, retains
+  `SyntaxError("Unexpected end of line")` at line 2, column 1.
+  Exact `def f x =>;\n    x` retains `SyntaxError("Unexpected ';'")` at
+  line 1, column 11. No real-indent failure consumes layout speculatively.
+- After exact `def f x =>` and a newline, four-space-indented `x` followed by
+  four-space-indented `x + 1` raises
+  `SyntaxError("Expected the end of a block but found identifier 'x'")` at
+  line 3, column 5. The sole line `x; x + 1` raises the same message at line 2,
+  column 8; `x 1` raises
+  `SyntaxError("Expected the end of a block but found number 1")` at line 2,
+  column 7. Unexpected further indentation reports
+  `SyntaxError("Expected the end of a block but found an indented block")`
+  at that physical indentation token.
+- With that same header and four-space body indentation, `return x` retains
+  the expression error `SyntaxError("Unexpected keyword 'return'")` at line 2,
+  column 12; `(x +)` gives `SyntaxError("Unexpected ')'")` at line 2, column 10;
+  `{ return x }` gives
+  `SyntaxError("Expected a key but found keyword 'return'")` at line 2, column 14;
+  `@` gives `SyntaxError("Unexpected character '@'")` at line 2, column 5.
+  Other inherited lexical/expression/resource/runtime errors keep their exact
+  messages and physical/top-level positions; no body error is caught or retried.
+- Exact `def f =>\n    1` retains
+  `SyntaxError("Expected '(' but found '=>'")` at line 1, column 7;
+  `def f:\n    1` retains `SyntaxError("Expected '(' but found ':'")` at
+  line 1, column 6. Malformed complete parameter lists remain untouched.
+- The native REPL additionally buffers a lexical named header whose only arrow
+  is the final significant token, including a comment after `=>`. The parser
+  validates the unchanged parameters and real indent on blank-line commit or
+  stdin EOF. Inline arrows, direct expressions, anonymous arrows and arrow text
+  in strings, regexes, templates or comments do not select this continuation.
+  Native source-file execution uses the same parser. Structured failures clear
+  the input buffer and permit later input without changing existing state.
+- The five `indented named arrow` entries below trace forms, binding/returned
+  values, methods/init, reactivity/aliases/snapshots and caught redefinition
+  rollback. Their 36 assertions execute, including the rollback catch, and their
+  explicit results are `20` and `21`. The paired reference, README and examples
+  entries supply the other five assertions, without adding unpaired cases.
 
 ## Reactive numeric clamping
 
@@ -7422,8 +7511,8 @@ assert(total, 10)
 
 label = "outer"
 
-def pack label:
-    return { label }
+def pack label =>
+    { label }
 
 local = pack("inner")
 
@@ -7609,8 +7698,8 @@ assert(amount, 10)
 
 def typed(amount: int) => amount + 1
 
-def block(amount):
-    return amount + 2
+def block(amount) =>
+    amount + 2
 
 assert(typed(4), 5)
 assert(block(4), 6)
@@ -7644,8 +7733,8 @@ assert(total, 6)
 
 base = 2
 
-def scaled amount:
-    return amount + base
+def scaled amount =>
+    amount + base
 
 result = scaled(3)
 
@@ -7655,8 +7744,8 @@ base = 4
 
 assert(result, 7)
 
-def scaled amount:
-    return amount * base
+def scaled amount =>
+    amount * base
 
 assert(result, 12)
 
@@ -7664,8 +7753,8 @@ assert(result, 12)
 
 # Nucleoid preserves callable references for bare single parameter block definitions
 
-def change amount:
-    return amount + 1
+def change amount =>
+    amount + 1
 
 live = change
 snapshot = change.value
@@ -7673,8 +7762,8 @@ snapshot = change.value
 assert(live(2), 3)
 assert(snapshot(2), 3)
 
-def change amount:
-    return amount * 3
+def change amount =>
+    amount * 3
 
 assert(live(2), 6)
 assert(snapshot(2), 3)
@@ -7686,8 +7775,8 @@ assert(snapshot(2), 3)
 class Gauge:
     def init amount:
         this.amount = amount
-    def reading offset:
-        return self.amount + offset
+    def reading offset =>
+        self.amount + offset
 
 gauge = Gauge(4)
 
@@ -7704,20 +7793,20 @@ assert(gauge.reading(3), 9)
 
 amount = 10
 
-def identity amount:
-    return amount
+def identity amount =>
+    amount
 
 def ignored amount:
     amount + 100
 
-def typed(amount: int):
-    return amount + 1
+def typed(amount: int) =>
+    amount + 1
 
-def pair left, right:
-    return left + right
+def pair left, right =>
+    left + right
 
-def unit():
-    return 42
+def unit() =>
+    42
 
 def arrow amount => amount + 3
 
@@ -7738,16 +7827,16 @@ assert(amount, 10)
 
 source = 3
 
-def reading amount:
-    return source + amount
+def reading amount =>
+    source + amount
 
 total = reading(2)
 
 assert(total, 5)
 
 try:
-    def reading amount:
-        return missing + amount
+    def reading amount =>
+        missing + amount
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 
@@ -7822,8 +7911,8 @@ amount = 10
 def identity amount: ArbitraryType => amount
 def text label: str => label
 def bare value => value + 1
-def block(amount: int):
-    return amount + 2
+def block(amount: int) =>
+    amount + 2
 def pair left: int, right: int => left + right
 def unit() => 42
 
@@ -8301,8 +8390,8 @@ assert(bounded, 1)
 
 base = 2
 
-def scaled amount: int:
-    return amount + base
+def scaled amount: int =>
+    amount + base
 
 result = scaled(3)
 
@@ -8312,8 +8401,8 @@ base = 4
 
 assert(result, 7)
 
-def scaled amount: int:
-    return amount * base
+def scaled amount: int =>
+    amount * base
 
 assert(result, 12)
 
@@ -8323,8 +8412,8 @@ assert(result, 12)
 
 base = 1
 
-def change amount: ArbitraryType:
-    return amount + base
+def change amount: ArbitraryType =>
+    amount + base
 
 live = change
 snapshot = change.value
@@ -8339,8 +8428,8 @@ base = 3
 assert(first, 5)
 assert(old, 5)
 
-def change amount: int:
-    return amount * base
+def change amount: int =>
+    amount * base
 
 assert(first, 6)
 assert(old, 5)
@@ -8357,8 +8446,8 @@ assert(old, 6)
 class Gauge:
     def init amount: int:
         this.amount = amount
-    def reading offset: int:
-        return self.amount + offset
+    def reading offset: int =>
+        self.amount + offset
 
 gauge = Gauge(4)
 
@@ -8375,28 +8464,28 @@ assert(gauge.reading(3), 9)
 
 amount = 10
 
-def identity amount: ArbitraryType:
-    return amount
+def identity amount: ArbitraryType =>
+    amount
 
-def text label: str:
-    return label
+def text label: str =>
+    label
 
 def ignored amount: int:
     amount + 100
 
-def bare value:
-    return value + 1
+def bare value =>
+    value + 1
 
-def typed(amount: int):
-    return amount + 2
+def typed(amount: int) =>
+    amount + 2
 
 def arrow value: int => value + 3
 
-def pair(left: int, right: int):
-    return left + right
+def pair(left: int, right: int) =>
+    left + right
 
-def unit():
-    return 42
+def unit() =>
+    42
 
 assert(identity(3), 3)
 assert(identity(), null)
@@ -8417,16 +8506,16 @@ assert(amount, 10)
 
 source = 3
 
-def reading amount: int:
-    return source + amount
+def reading amount: int =>
+    source + amount
 
 total = reading(2)
 
 assert(total, 5)
 
 try:
-    def reading amount: int:
-        return missing + amount
+    def reading amount: int =>
+        missing + amount
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 
@@ -8648,8 +8737,8 @@ combined(2, 5, 3)
 def add left, right:
     total = left + right
     return total
-def scaled left, right, factor:
-    return (left + right) * factor
+def scaled left, right, factor =>
+    (left + right) * factor
 def largest left, right:
     if left > right:
         return left
@@ -8664,16 +8753,16 @@ assert(largest(2, 9), 9)
 # Nucleoid keeps bare multiple parameter blocks reactive
 
 bias = 2
-def scaled left, right:
-    return left * right + bias
+def scaled left, right =>
+    left * right + bias
 live = scaled
 snapshot = scaled.value
 result = live(3, 4)
 frozen = snapshot(3, 4)
 assert(result, 14)
 assert(frozen, 14)
-def scaled left, right:
-    return left + right + bias
+def scaled left, right =>
+    left + right + bias
 assert(result, 9)
 assert(frozen, 14)
 bias = 4
@@ -8687,13 +8776,13 @@ assert(frozen, 16)
 class Parent:
     def init left, right:
         this.amount = left + right
-    def reading offset, scale:
-        return self.amount * scale + offset
+    def reading offset, scale =>
+        self.amount * scale + offset
 class Child: Parent
     def init left, right:
         super(left, right)
-    def reading offset, scale:
-        return self.amount * scale + offset
+    def reading offset, scale =>
+        self.amount * scale + offset
     def increase delta, extra:
         this.amount += delta + extra
         return this.amount
@@ -8714,8 +8803,8 @@ assert(Child.length, 1)
 
 left = 10
 right = 20
-def pair left, right:
-    return [left, right]
+def pair left, right =>
+    [left, right]
 def add left, right:
     left += right
     return left
@@ -8724,8 +8813,8 @@ def noReturn left, right:
 def bareReturn left, right:
     return
 def outer(initial):
-    def combine left, right, scale:
-        return (left + right) * scale
+    def combine left, right, scale =>
+        (left + right) * scale
     return combine(initial, 2, 3)
 assert(pair(3, 4), [3, 4])
 assert(pair(3), [3, null])
@@ -8743,13 +8832,13 @@ assert(outer(4), 18)
 # Nucleoid rolls back failed bare multiple parameter block redefinitions
 
 source = 3
-def reading left, right:
-    return source + left + right
+def reading left, right =>
+    source + left + right
 total = reading(2, 4)
 assert(total, 9)
 try:
-    def reading left, right:
-        return missing + left + right
+    def reading left, right =>
+        missing + left + right
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 assert(total, 9)
@@ -8867,8 +8956,8 @@ reading(8, 9)
 def add left: int, right: int:
     total = left + right
     return total
-def scaled left: number, right, factor: number:
-    return (left + right) * factor
+def scaled left: number, right, factor: number =>
+    (left + right) * factor
 def largest left, right: number:
     if left > right:
         return left
@@ -8883,16 +8972,16 @@ assert(largest(2, 9), 9)
 # Nucleoid keeps bare typed multiple parameter blocks reactive
 
 bias = 2
-def scaled left: int, right:
-    return left * right + bias
+def scaled left: int, right =>
+    left * right + bias
 live = scaled
 snapshot = scaled.value
 result = live(3, 4)
 frozen = snapshot(3, 4)
 assert(result, 14)
 assert(frozen, 14)
-def scaled left: int, right: int:
-    return left + right + bias
+def scaled left: int, right: int =>
+    left + right + bias
 assert(result, 9)
 assert(frozen, 14)
 bias = 4
@@ -8906,13 +8995,13 @@ assert(frozen, 16)
 class Parent:
     def init left: int, right: int:
         this.amount = left + right
-    def reading offset: int, scale:
-        return self.amount * scale + offset
+    def reading offset: int, scale =>
+        self.amount * scale + offset
 class Child: Parent
     def init left: int, right:
         super(left, right)
-    def reading offset, scale: int:
-        return self.amount * scale + offset
+    def reading offset, scale: int =>
+        self.amount * scale + offset
     def increase delta: int, extra:
         this.amount += delta + extra
         return this.amount
@@ -8933,8 +9022,8 @@ assert(Child.length, 1)
 
 left = 10
 right = 20
-def pair left: int, right: int:
-    return [left, right]
+def pair left: int, right: int =>
+    [left, right]
 def add left: int, right:
     left += right
     return left
@@ -8943,8 +9032,8 @@ def noReturn left: int, right: int:
 def bareReturn left, right: int:
     return
 def outer(initial: int):
-    def combine left: int, right, scale: int:
-        return (left + right) * scale
+    def combine left: int, right, scale: int =>
+        (left + right) * scale
     return combine(initial, 2, 3)
 assert(pair(3, 4), [3, 4])
 assert(pair(3), [3, null])
@@ -8963,13 +9052,13 @@ assert(outer(4), 18)
 # Nucleoid rolls back failed bare typed multiple parameter block redefinitions
 
 source = 3
-def reading left: int, right: int:
-    return source + left + right
+def reading left: int, right: int =>
+    source + left + right
 total = reading(2, 4)
 assert(total, 9)
 try:
-    def reading left: int, right:
-        return missing + left + right
+    def reading left: int, right =>
+        missing + left + right
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 assert(total, 9)
@@ -9125,4 +9214,132 @@ assert(second.score, 10)
 first.score + second.score
 
 # return: 14
+
+---
+
+# Nucleoid defines indented named arrow expressions
+
+def literal() =>
+    4
+def twice amount =>
+    amount * 2
+def typed amount: int =>
+    amount + 1
+def add left, right =>
+    left + right
+def scaled left: int, right, factor: number =>
+    (left + right) * factor
+assert(literal(), 4)
+assert(twice(3), 6)
+assert(typed(4), 5)
+assert(add(2, 3), 5)
+assert(scaled(2, 3, 4), 20)
+scaled(2, 3, 4)
+
+# return: 20
+
+---
+
+# Nucleoid keeps indented named arrows reactive
+
+offset = 2
+def adjusted number =>
+    number + offset
+live = adjusted
+snapshot = adjusted.value
+result = live(3)
+frozen = snapshot(3)
+assert(result, 5)
+assert(frozen, 5)
+def adjusted number =>
+    number * offset
+assert(result, 6)
+assert(frozen, 5)
+offset = 4
+assert(result, 12)
+assert(frozen, 7)
+
+---
+
+# Nucleoid preserves indented named arrow methods and initializers
+
+class Parent:
+    def init value =>
+        this.amount = value
+    def reading offset: int =>
+        self.amount + offset
+class Child: Parent
+    def init value =>
+        super(value)
+    def reading offset: int =>
+        this.amount * 2 + offset
+    def change delta, extra =>
+        this.amount += delta + extra
+child = Child(3)
+observed = child.reading(1)
+assert(child.id, "child")
+assert(child.amount, 3)
+assert(observed, 7)
+assert(child.change(2, 1), 6)
+assert(child.amount, 6)
+assert(observed, 13)
+assert(Parent.length, 0)
+assert(Child.length, 1)
+
+---
+
+# Nucleoid preserves indented named arrow bindings and returned values
+
+left = 10
+right = 20
+def pair left: int, right =>
+    [left, right]
+def point x, y =>
+    {x, y}
+def text left, right =>
+    `${left},${right}`
+def factory ignored =>
+    value => value + 1
+def assign left, right =>
+    left += right
+def outer initial:
+    def local amount =>
+        amount * 2
+    return local(initial)
+assert(pair(3, 4), [3, 4])
+assert(pair(3), [3, null])
+assert(pair(), [null, null])
+assert(pair("three", true), ["three", true])
+p = point(2, 3)
+assert(p.x, 2)
+assert(p.y, 3)
+assert(text(2, 3), "2,3")
+callback = factory(0)
+assert(callback(5), 6)
+assert(assign(3, 4), 7)
+assert(left, 10)
+assert(right, 20)
+assert(outer(4), 8)
+
+---
+
+# Nucleoid rolls back failed indented named arrow redefinitions
+
+source = 3
+def reading left: int, right: int =>
+    source + left + right
+total = reading(2, 4)
+assert(total, 9)
+try:
+    def reading left: int, right =>
+        missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(total, 9)
+source = 4
+assert(total, 10)
+assert(reading(8, 9), 21)
+reading(8, 9)
+
+# return: 21
 ```

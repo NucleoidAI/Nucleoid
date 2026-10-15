@@ -1478,8 +1478,8 @@ assert(result, 40)
 # Nucleoid preserves bare multiple parameter block relationships
 
 scale = 2
-def area width, height:
-    return width * height * scale
+def area width, height =>
+    width * height * scale
 result = area(3, 4)
 assert(result, 24)
 scale = 3
@@ -1501,8 +1501,8 @@ assert(result, 36)
 # Nucleoid preserves bare typed multiple parameter block relationships
 
 scale = 2
-def area width: number, height: number:
-    return width * height * scale
+def area width: number, height: number =>
+    width * height * scale
 result = area(3, 4)
 assert(result, 24)
 scale = 3
@@ -1521,4 +1521,16 @@ for Task:
     it.done = true
 assert(first.done, true)
 assert(second.done, true)
+
+---
+
+# Nucleoid preserves indented named arrow relationships
+
+scale = 2
+def area width: number, height: number =>
+    width * height * scale
+result = area(3, 4)
+assert(result, 24)
+scale = 3
+assert(result, 36)
 ```

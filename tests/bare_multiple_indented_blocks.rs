@@ -681,8 +681,11 @@ fn accepted_source(path: &str) -> String {
 #[test]
 #[ignore = "requires Git history at 49bc92a; run cargo test --test bare_multiple_indented_blocks -- --ignored"]
 fn all_historical_measured_asts_and_the_eight_appended_counterparts_remain_exact() {
+    // Later sole-return body layouts must not hide this header's omitted
+    // parentheses. Keep either delimiter and the complete actual body intact.
     let header =
-        Regex::new(r"(?m)^([ \t]*def [A-Za-z_]\w*) ([A-Za-z_]\w*(?:, [A-Za-z_]\w*)+):$").unwrap();
+        Regex::new(r"(?m)^([ \t]*def [A-Za-z_]\w*) ([A-Za-z_]\w*(?:, [A-Za-z_]\w*)+)(:| =>)$")
+            .unwrap();
     let mut historical = 0;
     let mut additions = 0;
     for (path, current, case_file, added) in [
@@ -718,7 +721,7 @@ fn all_historical_measured_asts_and_the_eight_appended_counterparts_remain_exact
             historical += 1;
         }
         for case in &after[before.len()..before.len() + added] {
-            let explicit = header.replace_all(&case.source, "$1($2):");
+            let explicit = header.replace_all(&case.source, "$1($2)$3");
             assert_ne!(case.source, explicit, "{}", case.title);
             let statements = equivalent(&case.source, &explicit);
             let assertions = common::assertions::protected_assertions(&statements);

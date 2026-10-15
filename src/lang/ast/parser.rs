@@ -387,14 +387,17 @@ impl Parser {
     /// suite(), without consuming tokens or skipping header separators.
     fn has_indented_suite(&self, colon_offset: usize) -> bool {
         matches!(self.peek_at(colon_offset), Token::Colon)
-            && matches!(
-                self.peek_at(colon_offset + 1),
-                Token::Newline | Token::Indent
-            )
+            && self.has_indented_body(colon_offset + 1)
+    }
+
+    /// Qualify the complete layout prefix before consuming any of it. A
+    /// same-line semicolon is not a newline, even if an indent follows later.
+    fn has_indented_body(&self, offset: usize) -> bool {
+        matches!(self.peek_at(offset), Token::Newline | Token::Indent)
             && self
                 .tokens
                 .iter()
-                .skip(self.position + colon_offset + 1)
+                .skip(self.position + offset)
                 .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
                 .is_some_and(|spanned| spanned.token == Token::Indent)
     }
@@ -552,7 +555,18 @@ impl Parser {
             self.parameters()?
         };
         let body = if self.eat(&Token::Arrow) {
-            vec![Stmt::Return(Some(self.expression()?))]
+            let indented = self.has_indented_body(0);
+            if indented {
+                self.skip_newlines();
+                self.expect(&Token::Indent)?;
+                self.skip_newlines();
+            }
+            let expression = self.expression()?;
+            if indented {
+                self.skip_newlines();
+                self.expect(&Token::Dedent)?;
+            }
+            vec![Stmt::Return(Some(expression))]
         } else {
             self.suite()?
         };

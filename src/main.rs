@@ -3,6 +3,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use nucleoid::graph::NodeKey;
+use nucleoid::lang::ast::lexer::{Keyword, Token, tokenize};
 use nucleoid::{Runtime, Value};
 use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
@@ -196,7 +197,7 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
             continue;
         }
 
-        multiline |= line.trim_end().ends_with(':');
+        multiline |= line.trim_end().ends_with(':') || indented_named_arrow_header(&line);
         source.push_str(&line);
         source.push('\n');
 
@@ -208,6 +209,25 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
             source.clear();
         }
     }
+}
+
+/// Buffer a lexical named-arrow header, not anonymous arrows or arrow text in
+/// literals/comments. The parser still owns parameter validation and the real
+/// indentation requirement when the input is committed.
+fn indented_named_arrow_header(line: &str) -> bool {
+    let Ok(tokens) = tokenize(line) else {
+        return false;
+    };
+    let mut tokens = tokens.iter().map(|spanned| &spanned.token).filter(|token| {
+        !matches!(
+            token,
+            Token::Newline | Token::Indent | Token::Dedent | Token::Eof
+        )
+    });
+    matches!(tokens.next(), Some(Token::Keyword(Keyword::Def)))
+        && matches!(tokens.next(), Some(Token::Identifier(_)))
+        && matches!(tokens.next_back(), Some(Token::Arrow))
+        && !tokens.any(|token| matches!(token, Token::Arrow))
 }
 
 fn run_interactive(runtime: &mut Runtime, source: &str, json: bool, graph: bool) {
@@ -272,7 +292,36 @@ Enter a blank line to run a multiline indented block."
 
 #[cfg(test)]
 mod tests {
-    use super::setting_value;
+    use super::{indented_named_arrow_header, setting_value};
+
+    #[test]
+    fn only_named_headers_with_a_bodyless_arrow_start_continuation() {
+        for line in [
+            "def f() =>",
+            "def f(value: int,) => # body",
+            "    def f value =>",
+            "\tdef f left: int, right, factor: number => # =>",
+        ] {
+            assert!(indented_named_arrow_header(line), "{line}");
+        }
+        for line in [
+            "value =>",
+            "(value: int) =>",
+            "callback = value =>",
+            "def f value => value",
+            "def f value => next =>",
+            "def f value => \"=>\"",
+            "def f value => /=>/",
+            "def f value => `=>`",
+            "def f value => value # =>",
+            "\"def f value =>\"",
+            "# def f value =>",
+            "1 # =>",
+            "def f value => @",
+        ] {
+            assert!(!indented_named_arrow_header(line), "{line}");
+        }
+    }
 
     #[test]
     fn repl_settings_toggle_or_accept_explicit_values() {

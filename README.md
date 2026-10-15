@@ -176,8 +176,8 @@ remain those of [NUC 12](docs/nuc-0012.md).
 **Single input block definitions omit parameter parentheses**
 
 ```nuc
-def square amount:
-    return amount * amount
+def square amount =>
+    amount * amount
 
 assert(square(3), 9)
 assert(square(4), 16)
@@ -185,7 +185,9 @@ assert(square(4), 16)
 
 [NUC 19](docs/nuc-0019.md) specifies the same optional single-untyped-identifier
 spelling before an indented colon suite, including methods and `init`.
-`def square(amount):` with the same body remains valid. The colon must lead to
+The sole-return example above uses NUC32's equivalent indented arrow;
+`def square amount:` or `def square(amount):` with explicit
+`return amount * amount` remains valid. The colon must lead to
 a real indented body; inline/brace suites, empty and typed/mixed multiple-parameter
 block signatures retain their parentheses. The optional untyped multiple-parameter
 indented spelling is demonstrated below. Typed single-parameter indented blocks
@@ -308,8 +310,8 @@ contract is [Reactive unit-interval saturation](nucleoid.spec.md#reactive-unit-i
 
 ratio = 0.3
 
-def normalize amount: ArbitraryType:
-    return Math.saturate(amount)
+def normalize amount: ArbitraryType =>
+    Math.saturate(amount)
 
 progress = normalize(ratio)
 
@@ -377,8 +379,8 @@ single-parameter typed and block alternatives above remain unchanged.
 **Indented blocks can omit parentheses around multiple parameters**
 
 ```nuc
-def add left, right:
-    return left + right
+def add left, right =>
+    left + right
 assert(add(2, 3), 5)
 ```
 
@@ -421,8 +423,8 @@ assert(add(2, 3), 5)
 **Typed multiple parameter blocks can omit parentheses**
 
 ```nuc
-def add left: int, right: int:
-    return left + right
+def add left: int, right: int =>
+    left + right
 assert(add(2, 3), 5)
 ```
 
@@ -582,6 +584,23 @@ The declarative runtime isolates a behavior definition of a program from its tec
 </div>
 
 In short, the main objective of the project is to manage both of data and logic under the same runtime. The declarative programming paradigm used by Nucleoid allows developers to focus on the business logic of the application, while the runtime manages the technical details.This allows for faster development and reduces the amount of code that needs to be written. Additionally, the sharding feature can help to distribute the load across multiple instances, which can further improve the performance of the system.
+
+**Named arrows can indent a single expression**
+
+```nuc
+def square value =>
+    value * value
+assert(square(4), 16)
+```
+
+[NUC 32](docs/nuc-0032.md) specifies an optional genuinely indented expression
+after the existing named `=>`. It is exactly the colon suite containing
+`return value * value`; existing inline arrows and colon suites remain valid.
+It does not add an arbitrary statement suite or an implicit final-statement
+return, and nullary definitions still require `()`.
+Earlier sole-return block examples above use this equivalent layout where
+applicable; existing colon suites, including multi-statement bodies, are
+unchanged alternatives.
 
 ## Benchmark
 

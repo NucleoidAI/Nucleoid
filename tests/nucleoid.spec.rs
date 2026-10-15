@@ -4954,8 +4954,8 @@ fn keeps_shorthand_object_fields_reactive() {
 fn resolves_shorthand_object_fields_in_their_lexical_scope() {
     let mut run = runner();
     run(r#"label = "outer""#);
-    run(r#"def pack label:
-    return { label }"#);
+    run(r#"def pack label =>
+    { label }"#);
     run(r#"local = pack("inner")"#);
     assert_eq!(run("local.label"), "inner");
     run(r#"label = "changed""#);
@@ -5099,8 +5099,8 @@ fn keeps_bare_single_parameter_binding_and_explicit_alternatives_equivalent() {
     assert_eq!(run("identity(3, 4)"), 3);
     assert_eq!(run("amount"), 10);
     run("def typed(amount: int) => amount + 1");
-    run(r#"def block(amount):
-    return amount + 2"#);
+    run(r#"def block(amount) =>
+    amount + 2"#);
     assert_eq!(run("typed(4)"), 5);
     assert_eq!(run("block(4)"), 6);
 }
@@ -5126,14 +5126,14 @@ fn rolls_back_failed_bare_single_parameter_arrow_redefinitions() {
 fn keeps_bare_single_parameter_block_definitions_reactive() {
     let mut run = runner();
     run("base = 2");
-    run(r#"def scaled amount:
-    return amount + base"#);
+    run(r#"def scaled amount =>
+    amount + base"#);
     run("result = scaled(3)");
     assert_eq!(run("result"), 5);
     run("base = 4");
     assert_eq!(run("result"), 7);
-    run(r#"def scaled amount:
-    return amount * base"#);
+    run(r#"def scaled amount =>
+    amount * base"#);
     assert_eq!(run("result"), 12);
 }
 
@@ -5142,14 +5142,14 @@ fn keeps_bare_single_parameter_block_definitions_reactive() {
 #[test]
 fn preserves_callable_references_for_bare_single_parameter_block_definitions() {
     let mut run = runner();
-    run(r#"def change amount:
-    return amount + 1"#);
+    run(r#"def change amount =>
+    amount + 1"#);
     run("live = change");
     run("snapshot = change.value");
     assert_eq!(run("live(2)"), 3);
     assert_eq!(run("snapshot(2)"), 3);
-    run(r#"def change amount:
-    return amount * 3"#);
+    run(r#"def change amount =>
+    amount * 3"#);
     assert_eq!(run("live(2)"), 6);
     assert_eq!(run("snapshot(2)"), 3);
 }
@@ -5162,8 +5162,8 @@ fn preserves_bare_single_parameter_block_methods_and_initializers() {
     run(r#"class Gauge:
     def init amount:
         this.amount = amount
-    def reading offset:
-        return self.amount + offset"#);
+    def reading offset =>
+        self.amount + offset"#);
     run("gauge = Gauge(4)");
     assert_eq!(run("gauge.amount"), 4);
     assert_eq!(run("gauge.reading(3)"), 7);
@@ -5177,16 +5177,16 @@ fn preserves_bare_single_parameter_block_methods_and_initializers() {
 fn keeps_bare_single_parameter_block_binding_and_explicit_alternatives_equivalent() {
     let mut run = runner();
     run("amount = 10");
-    run(r#"def identity amount:
-    return amount"#);
+    run(r#"def identity amount =>
+    amount"#);
     run(r#"def ignored amount:
     amount + 100"#);
-    run(r#"def typed(amount: int):
-    return amount + 1"#);
-    run(r#"def pair left, right:
-    return left + right"#);
-    run(r#"def unit():
-    return 42"#);
+    run(r#"def typed(amount: int) =>
+    amount + 1"#);
+    run(r#"def pair left, right =>
+    left + right"#);
+    run(r#"def unit() =>
+    42"#);
     run("def arrow amount => amount + 3");
     assert_eq!(run("identity(3)"), 3);
     assert_eq!(run("identity()"), serde_json::Value::Null);
@@ -5206,12 +5206,12 @@ fn keeps_bare_single_parameter_block_binding_and_explicit_alternatives_equivalen
 fn rolls_back_failed_bare_single_parameter_block_redefinitions() {
     let (mut run, mut run_error) = crate::common::runners();
     run("source = 3");
-    run(r#"def reading amount:
-    return source + amount"#);
+    run(r#"def reading amount =>
+    source + amount"#);
     run("total = reading(2)");
     assert_eq!(run("total"), 5);
-    assert_eq!(run_error(r#"def reading amount:
-    return missing + amount"#), "ReferenceError: missing is not defined");
+    assert_eq!(run_error(r#"def reading amount =>
+    missing + amount"#), "ReferenceError: missing is not defined");
     assert_eq!(run("total"), 5);
     run("source = 4");
     assert_eq!(run("total"), 6);
@@ -5273,8 +5273,8 @@ fn keeps_bare_typed_single_parameter_binding_and_explicit_alternatives_equivalen
     run("def identity amount: ArbitraryType => amount");
     run("def text label: str => label");
     run("def bare value => value + 1");
-    run(r#"def block(amount: int):
-    return amount + 2"#);
+    run(r#"def block(amount: int) =>
+    amount + 2"#);
     run("def pair left: int, right: int => left + right");
     run("def unit() => 42");
     assert_eq!(run("identity(3)"), 3);
@@ -5686,14 +5686,14 @@ fn preserves_deferred_reads_and_rollback_for_unit_saturation() {
 fn keeps_bare_typed_single_parameter_block_definitions_reactive() {
     let mut run = runner();
     run("base = 2");
-    run(r#"def scaled amount: int:
-    return amount + base"#);
+    run(r#"def scaled amount: int =>
+    amount + base"#);
     run("result = scaled(3)");
     assert_eq!(run("result"), 5);
     run("base = 4");
     assert_eq!(run("result"), 7);
-    run(r#"def scaled amount: int:
-    return amount * base"#);
+    run(r#"def scaled amount: int =>
+    amount * base"#);
     assert_eq!(run("result"), 12);
 }
 
@@ -5703,8 +5703,8 @@ fn keeps_bare_typed_single_parameter_block_definitions_reactive() {
 fn preserves_callable_references_for_bare_typed_single_parameter_block_definitions() {
     let mut run = runner();
     run("base = 1");
-    run(r#"def change amount: ArbitraryType:
-    return amount + base"#);
+    run(r#"def change amount: ArbitraryType =>
+    amount + base"#);
     run("live = change");
     run("snapshot = change.value");
     run("first = live(2)");
@@ -5714,8 +5714,8 @@ fn preserves_callable_references_for_bare_typed_single_parameter_block_definitio
     run("base = 3");
     assert_eq!(run("first"), 5);
     assert_eq!(run("old"), 5);
-    run(r#"def change amount: int:
-    return amount * base"#);
+    run(r#"def change amount: int =>
+    amount * base"#);
     assert_eq!(run("first"), 6);
     assert_eq!(run("old"), 5);
     run("base = 4");
@@ -5731,8 +5731,8 @@ fn preserves_bare_typed_single_parameter_block_methods_and_initializers() {
     run(r#"class Gauge:
     def init amount: int:
         this.amount = amount
-    def reading offset: int:
-        return self.amount + offset"#);
+    def reading offset: int =>
+        self.amount + offset"#);
     run("gauge = Gauge(4)");
     assert_eq!(run("gauge.amount"), 4);
     assert_eq!(run("gauge.reading(3)"), 7);
@@ -5746,21 +5746,21 @@ fn preserves_bare_typed_single_parameter_block_methods_and_initializers() {
 fn keeps_bare_typed_single_parameter_block_binding_and_explicit_alternatives_equivalent() {
     let mut run = runner();
     run("amount = 10");
-    run(r#"def identity amount: ArbitraryType:
-    return amount"#);
-    run(r#"def text label: str:
-    return label"#);
+    run(r#"def identity amount: ArbitraryType =>
+    amount"#);
+    run(r#"def text label: str =>
+    label"#);
     run(r#"def ignored amount: int:
     amount + 100"#);
-    run(r#"def bare value:
-    return value + 1"#);
-    run(r#"def typed(amount: int):
-    return amount + 2"#);
+    run(r#"def bare value =>
+    value + 1"#);
+    run(r#"def typed(amount: int) =>
+    amount + 2"#);
     run("def arrow value: int => value + 3");
-    run(r#"def pair(left: int, right: int):
-    return left + right"#);
-    run(r#"def unit():
-    return 42"#);
+    run(r#"def pair(left: int, right: int) =>
+    left + right"#);
+    run(r#"def unit() =>
+    42"#);
     assert_eq!(run("identity(3)"), 3);
     assert_eq!(run("identity()"), serde_json::Value::Null);
     assert_eq!(run("identity(3, 4)"), 3);
@@ -5781,12 +5781,12 @@ fn keeps_bare_typed_single_parameter_block_binding_and_explicit_alternatives_equ
 fn rolls_back_failed_bare_typed_single_parameter_block_redefinitions() {
     let (mut run, mut run_error) = crate::common::runners();
     run("source = 3");
-    run(r#"def reading amount: int:
-    return source + amount"#);
+    run(r#"def reading amount: int =>
+    source + amount"#);
     run("total = reading(2)");
     assert_eq!(run("total"), 5);
-    assert_eq!(run_error(r#"def reading amount: int:
-    return missing + amount"#), "ReferenceError: missing is not defined");
+    assert_eq!(run_error(r#"def reading amount: int =>
+    missing + amount"#), "ReferenceError: missing is not defined");
     assert_eq!(run("total"), 5);
     run("source = 4");
     assert_eq!(run("total"), 6);
@@ -6025,8 +6025,8 @@ fn defines_bare_multiple_parameter_indented_blocks() {
     run(r#"def add left, right:
     total = left + right
     return total"#);
-    run(r#"def scaled left, right, factor:
-    return (left + right) * factor"#);
+    run(r#"def scaled left, right, factor =>
+    (left + right) * factor"#);
     run(r#"def largest left, right:
     if left > right:
         return left
@@ -6043,16 +6043,16 @@ fn defines_bare_multiple_parameter_indented_blocks() {
 fn keeps_bare_multiple_parameter_blocks_reactive() {
     let mut run = runner();
     run("bias = 2");
-    run(r#"def scaled left, right:
-    return left * right + bias"#);
+    run(r#"def scaled left, right =>
+    left * right + bias"#);
     run("live = scaled");
     run("snapshot = scaled.value");
     run("result = live(3, 4)");
     run("frozen = snapshot(3, 4)");
     assert_eq!(run("result"), 14);
     assert_eq!(run("frozen"), 14);
-    run(r#"def scaled left, right:
-    return left + right + bias"#);
+    run(r#"def scaled left, right =>
+    left + right + bias"#);
     assert_eq!(run("result"), 9);
     assert_eq!(run("frozen"), 14);
     run("bias = 4");
@@ -6068,13 +6068,13 @@ fn preserves_bare_multiple_parameter_block_methods_and_initializers() {
     run(r#"class Parent:
     def init left, right:
         this.amount = left + right
-    def reading offset, scale:
-        return self.amount * scale + offset"#);
+    def reading offset, scale =>
+        self.amount * scale + offset"#);
     run(r#"class Child: Parent
     def init left, right:
         super(left, right)
-    def reading offset, scale:
-        return self.amount * scale + offset
+    def reading offset, scale =>
+        self.amount * scale + offset
     def increase delta, extra:
         this.amount += delta + extra
         return this.amount"#);
@@ -6097,8 +6097,8 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
     let mut run = runner();
     run("left = 10");
     run("right = 20");
-    run(r#"def pair left, right:
-    return [left, right]"#);
+    run(r#"def pair left, right =>
+    [left, right]"#);
     run(r#"def add left, right:
     left += right
     return left"#);
@@ -6107,8 +6107,8 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
     run(r#"def bareReturn left, right:
     return"#);
     run(r#"def outer(initial):
-    def combine left, right, scale:
-        return (left + right) * scale
+    def combine left, right, scale =>
+        (left + right) * scale
     return combine(initial, 2, 3)"#);
     assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
     assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
@@ -6128,12 +6128,12 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
 fn rolls_back_failed_bare_multiple_parameter_block_redefinitions() {
     let (mut run, mut run_error) = crate::common::runners();
     run("source = 3");
-    run(r#"def reading left, right:
-    return source + left + right"#);
+    run(r#"def reading left, right =>
+    source + left + right"#);
     run("total = reading(2, 4)");
     assert_eq!(run("total"), 9);
-    assert_eq!(run_error(r#"def reading left, right:
-    return missing + left + right"#), "ReferenceError: missing is not defined");
+    assert_eq!(run_error(r#"def reading left, right =>
+    missing + left + right"#), "ReferenceError: missing is not defined");
     assert_eq!(run("total"), 9);
     run("source = 4");
     assert_eq!(run("total"), 10);
@@ -6255,8 +6255,8 @@ fn defines_bare_typed_multiple_parameter_indented_blocks() {
     run(r#"def add left: int, right: int:
     total = left + right
     return total"#);
-    run(r#"def scaled left: number, right, factor: number:
-    return (left + right) * factor"#);
+    run(r#"def scaled left: number, right, factor: number =>
+    (left + right) * factor"#);
     run(r#"def largest left, right: number:
     if left > right:
         return left
@@ -6273,16 +6273,16 @@ fn defines_bare_typed_multiple_parameter_indented_blocks() {
 fn keeps_bare_typed_multiple_parameter_blocks_reactive() {
     let mut run = runner();
     run("bias = 2");
-    run(r#"def scaled left: int, right:
-    return left * right + bias"#);
+    run(r#"def scaled left: int, right =>
+    left * right + bias"#);
     run("live = scaled");
     run("snapshot = scaled.value");
     run("result = live(3, 4)");
     run("frozen = snapshot(3, 4)");
     assert_eq!(run("result"), 14);
     assert_eq!(run("frozen"), 14);
-    run(r#"def scaled left: int, right: int:
-    return left + right + bias"#);
+    run(r#"def scaled left: int, right: int =>
+    left + right + bias"#);
     assert_eq!(run("result"), 9);
     assert_eq!(run("frozen"), 14);
     run("bias = 4");
@@ -6298,13 +6298,13 @@ fn preserves_bare_typed_multiple_parameter_block_methods_and_initializers() {
     run(r#"class Parent:
     def init left: int, right: int:
         this.amount = left + right
-    def reading offset: int, scale:
-        return self.amount * scale + offset"#);
+    def reading offset: int, scale =>
+        self.amount * scale + offset"#);
     run(r#"class Child: Parent
     def init left: int, right:
         super(left, right)
-    def reading offset, scale: int:
-        return self.amount * scale + offset
+    def reading offset, scale: int =>
+        self.amount * scale + offset
     def increase delta: int, extra:
         this.amount += delta + extra
         return this.amount"#);
@@ -6327,8 +6327,8 @@ fn preserves_bare_typed_multiple_parameter_block_bindings_and_returns() {
     let mut run = runner();
     run("left = 10");
     run("right = 20");
-    run(r#"def pair left: int, right: int:
-    return [left, right]"#);
+    run(r#"def pair left: int, right: int =>
+    [left, right]"#);
     run(r#"def add left: int, right:
     left += right
     return left"#);
@@ -6337,8 +6337,8 @@ fn preserves_bare_typed_multiple_parameter_block_bindings_and_returns() {
     run(r#"def bareReturn left, right: int:
     return"#);
     run(r#"def outer(initial: int):
-    def combine left: int, right, scale: int:
-        return (left + right) * scale
+    def combine left: int, right, scale: int =>
+        (left + right) * scale
     return combine(initial, 2, 3)"#);
     assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
     assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
@@ -6359,12 +6359,12 @@ fn preserves_bare_typed_multiple_parameter_block_bindings_and_returns() {
 fn rolls_back_failed_bare_typed_multiple_parameter_block_redefinitions() {
     let (mut run, mut run_error) = crate::common::runners();
     run("source = 3");
-    run(r#"def reading left: int, right: int:
-    return source + left + right"#);
+    run(r#"def reading left: int, right: int =>
+    source + left + right"#);
     run("total = reading(2, 4)");
     assert_eq!(run("total"), 9);
-    assert_eq!(run_error(r#"def reading left: int, right:
-    return missing + left + right"#), "ReferenceError: missing is not defined");
+    assert_eq!(run_error(r#"def reading left: int, right =>
+    missing + left + right"#), "ReferenceError: missing is not defined");
     assert_eq!(run("total"), 9);
     run("source = 4");
     assert_eq!(run("total"), 10);
@@ -6522,6 +6522,141 @@ fn rolls_back_failed_implicit_iterator_loops() {
     run(r#"first.score + second.score
 
 # return: 14"#);
+}
+
+/// Nucleoid defines indented named arrow expressions
+#[rustfmt::skip]
+#[test]
+fn defines_indented_named_arrow_expressions() {
+    let mut run = runner();
+    run(r#"def literal() =>
+    4"#);
+    run(r#"def twice amount =>
+    amount * 2"#);
+    run(r#"def typed amount: int =>
+    amount + 1"#);
+    run(r#"def add left, right =>
+    left + right"#);
+    run(r#"def scaled left: int, right, factor: number =>
+    (left + right) * factor"#);
+    assert_eq!(run("literal()"), 4);
+    assert_eq!(run("twice(3)"), 6);
+    assert_eq!(run("typed(4)"), 5);
+    assert_eq!(run("add(2, 3)"), 5);
+    assert_eq!(run("scaled(2, 3, 4)"), 20);
+    run(r#"scaled(2, 3, 4)
+
+# return: 20"#);
+}
+
+/// Nucleoid keeps indented named arrows reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_indented_named_arrows_reactive() {
+    let mut run = runner();
+    run("offset = 2");
+    run(r#"def adjusted number =>
+    number + offset"#);
+    run("live = adjusted");
+    run("snapshot = adjusted.value");
+    run("result = live(3)");
+    run("frozen = snapshot(3)");
+    assert_eq!(run("result"), 5);
+    assert_eq!(run("frozen"), 5);
+    run(r#"def adjusted number =>
+    number * offset"#);
+    assert_eq!(run("result"), 6);
+    assert_eq!(run("frozen"), 5);
+    run("offset = 4");
+    assert_eq!(run("result"), 12);
+    assert_eq!(run("frozen"), 7);
+}
+
+/// Nucleoid preserves indented named arrow methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_indented_named_arrow_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Parent:
+    def init value =>
+        this.amount = value
+    def reading offset: int =>
+        self.amount + offset"#);
+    run(r#"class Child: Parent
+    def init value =>
+        super(value)
+    def reading offset: int =>
+        this.amount * 2 + offset
+    def change delta, extra =>
+        this.amount += delta + extra"#);
+    run("child = Child(3)");
+    run("observed = child.reading(1)");
+    assert_eq!(run("child.id"), "child");
+    assert_eq!(run("child.amount"), 3);
+    assert_eq!(run("observed"), 7);
+    assert_eq!(run("child.change(2, 1)"), 6);
+    assert_eq!(run("child.amount"), 6);
+    assert_eq!(run("observed"), 13);
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 1);
+}
+
+/// Nucleoid preserves indented named arrow bindings and returned values
+#[rustfmt::skip]
+#[test]
+fn preserves_indented_named_arrow_bindings_and_returned_values() {
+    let mut run = runner();
+    run("left = 10");
+    run("right = 20");
+    run(r#"def pair left: int, right =>
+    [left, right]"#);
+    run(r#"def point x, y =>
+    {x, y}"#);
+    run(r#"def text left, right =>
+    `${left},${right}`"#);
+    run(r#"def factory ignored =>
+    value => value + 1"#);
+    run(r#"def assign left, right =>
+    left += right"#);
+    run(r#"def outer initial:
+    def local amount =>
+        amount * 2
+    return local(initial)"#);
+    assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
+    assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
+    assert_eq!(run("pair()"), serde_json::json!([null, null]));
+    assert_eq!(run(r#"pair("three", true)"#), serde_json::json!(["three", true]));
+    run("p = point(2, 3)");
+    assert_eq!(run("p.x"), 2);
+    assert_eq!(run("p.y"), 3);
+    assert_eq!(run("text(2, 3)"), "2,3");
+    run("callback = factory(0)");
+    assert_eq!(run("callback(5)"), 6);
+    assert_eq!(run("assign(3, 4)"), 7);
+    assert_eq!(run("left"), 10);
+    assert_eq!(run("right"), 20);
+    assert_eq!(run("outer(4)"), 8);
+}
+
+/// Nucleoid rolls back failed indented named arrow redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_indented_named_arrow_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run(r#"def reading left: int, right: int =>
+    source + left + right"#);
+    run("total = reading(2, 4)");
+    assert_eq!(run("total"), 9);
+    assert_eq!(run_error(r#"def reading left: int, right =>
+    missing + left + right"#), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 9);
+    run("source = 4");
+    assert_eq!(run("total"), 10);
+    assert_eq!(run("reading(8, 9)"), 21);
+    run(r#"reading(8, 9)
+
+# return: 21"#);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

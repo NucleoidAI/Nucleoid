@@ -1165,8 +1165,10 @@ fn accepted_source(path: &str) -> String {
 #[test]
 #[ignore = "requires Git history at c007624; run cargo test --test bare_typed_multiple_indented_blocks -- --ignored"]
 fn historical_corpus_and_eight_appended_counterparts_keep_complete_asts_and_protected_assertions() {
+    // Preserve NUC32's equivalent sole-return layout while independently
+    // checking this proposal's parameter-parenthesis omission.
     let header = Regex::new(
-        r"(?m)^([ \t]*def [A-Za-z_]\w*) ([A-Za-z_]\w*(?:: [A-Za-z_]\w*)?(?:, [A-Za-z_]\w*(?:: [A-Za-z_]\w*)?)+):$",
+        r"(?m)^([ \t]*def [A-Za-z_]\w*) ([A-Za-z_]\w*(?:: [A-Za-z_]\w*)?(?:, [A-Za-z_]\w*(?:: [A-Za-z_]\w*)?)+)(:| =>)$",
     )
     .unwrap();
     let mut historical = 0;
@@ -1224,7 +1226,7 @@ fn historical_corpus_and_eight_appended_counterparts_keep_complete_asts_and_prot
             historical += 1;
         }
         for case in own_additions {
-            let explicit = header.replace_all(&case.source, "$1($2):");
+            let explicit = header.replace_all(&case.source, "$1($2)$3");
             assert_ne!(case.source, explicit, "{}", case.title);
             let statements = equivalent(&case.source, &explicit);
             let count = common::assertions::protected_assertions(&statements).len();
@@ -1241,6 +1243,8 @@ fn historical_corpus_and_eight_appended_counterparts_keep_complete_asts_and_prot
 #[test]
 #[ignore = "requires Git history at c007624; run cargo test --test bare_typed_multiple_indented_blocks -- --ignored"]
 fn all_synthesized_asts_fields_order_and_arc_annotations_remain_exact() {
+    let indented_arrow =
+        Regex::new(r"(?m)^([ \t]*def [^\n]+) =>([ \t]*(?:#[^\n]*)?)\n([ \t]+)([^\n]+)").unwrap();
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut records = 0;
     let mut sets = 0;
@@ -1266,7 +1270,11 @@ fn all_synthesized_asts_fields_order_and_arc_annotations_remain_exact() {
             let before_code = before_code.as_str().unwrap();
             let after_code = after_code.as_str().unwrap();
             equivalent(after_code, before_code);
-            rewritten += usize::from(before_code != after_code);
+            // Count this proposal's header rewrites, not a later optional
+            // sole-return body layout. The actual full AST and all metadata
+            // above still compare directly with the pinned historical source.
+            let comparable = indented_arrow.replace_all(after_code, "$1:$2\n${3}return $4");
+            rewritten += usize::from(before_code != comparable);
             records += 1;
         }
         sets += 1;

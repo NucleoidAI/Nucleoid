@@ -617,6 +617,7 @@ and the unchanged explicit-loop entries in the root specification.
 
 - `def` defines a function in the state; a function with no `return` yields `null`.
 - `def name(params) => expression` is exactly a named block containing `return expression`; methods and parameter annotations use the same form.
+- Accepted [NUC 32](nuc-0032.md) optionally places that expression in a genuinely indented body after `=>`; it preserves the same sole-return block and every accepted parameter spelling.
 - [NUC 18](nuc-0018.md) specifies `def name amount => expression` as exactly `def name(amount) => expression` for one untyped ordinary identifier parameter, including methods and `init`.
 - [NUC 19](nuc-0019.md) specifies `def name amount:` followed by an indented suite as exactly `def name(amount):` with that same suite.
 - [NUC 20](nuc-0020.md) specifies `def name amount: int => expression` as exactly `def name(amount: int) => expression` for one ordinary identifier parameter and one existing ordinary-identifier annotation, including methods and `init`.
@@ -635,7 +636,7 @@ and the unchanged explicit-loop entries in the root specification.
 - All parenthesized definitions remain available, including `def add(left, right) => left + right`, `def add(left: int, right: int) => left + right` and typed/untyped `def add(left, right):` alternatives with the same indented body. Nullary, multiline-parameter, inline and brace-suite definitions keep their parentheses, as do calls; typed single/multiple-parameter indented blocks have the optional spellings below.
 - Bare inline/braced or missing-indent blocks, trailing bare commas, defaulted/destructured/variadic parameters, dotted/union/generic/nullable/keyword/dollar/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added; class and anonymous parameter lists keep their existing grammar.
 - NUC18/20 single-parameter arrows and NUC19/24's exact untyped/typed indented-colon guards are unchanged; named return-block lowering, parameter metadata/order, argument binding, runtime behavior and canonical rendering remain those of the parenthesized counterparts.
-- Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines.
+- Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines, starting either on the header line or in the optional NUC32 real-indented body.
 - A call in an assignment depends on the function and its arguments.
 - Redefining a function updates existing dependents.
 - A named function and a variable binding under the same name replace one another; reads and calls both use the latest binding.
@@ -680,7 +681,7 @@ assert(result, 40)
 - This is the executable reference's exact paired `Nucleoid preserves bare multiple parameter arrow relationships` example; `def area(width, height) => width * height * scale` remains valid and behavior-equivalent.
 - Reuse the existing named return block and expression-body parser, with no new lexer/public AST/runtime types, capture, parameter-count bound or canonical spelling.
 - `def f left, right, => left`, missing types such as `def f left, right: => left`, multiple-parameter blocks without real indentation, bare inline/braced suites and logical header breaks retain `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7; unsupported prefixes are not consumed. NUC30 separately adds real-indented typed/mixed blocks without changing this arrow guard.
-- `def f left, right =>` gives `SyntaxError("Unexpected end of input")` at line 1, column 21; a final newline gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Named-arrow braces remain objects; a body beginning with `(` on the header line may span physical lines.
+- `def f left, right =>` gives `SyntaxError("Unexpected end of input")` at line 1, column 21; a final newline without a real body gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Named-arrow braces remain objects; the existing inline body beginning with `(` may span physical lines. NUC32 separately permits the real-indented body below.
 - Full grammar and error positions are in the authoritative [bare multiple-parameter named arrows](../nucleoid.spec.md#bare-multiple-parameter-named-arrows) section.
 
 ### Bare typed single parameter named arrows
@@ -710,9 +711,33 @@ assert(result, 36)
 - Any annotation positions may mix with untyped identifiers in a list of at least two parameters; `def scaled left: number, right, factor: number => (left + right) * factor` keeps each existing `Some(annotation)`/`None` in order. Only ordinary `Colon Identifier` annotations qualify.
 - The complete-list guard consumes nothing before the existing parameter parser and named return-block lowering. It adds no type checking, capture, parameter cap, public AST/runtime/generator/API or resource-bound change.
 - `def f left: int, right, => left`, missing annotations, logical breaks and bare inline/braced blocks retain `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7. NUC29 itself adds no blocks; NUC30 separately extends the shared scanner to typed/mixed blocks with real indentation. NUC28 untyped blocks and all single guards remain exact.
-- `def f left: int, right =>` gives `SyntaxError("Unexpected end of input")` at line 1, column 26; a final newline gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Leading named-arrow braces remain objects; a parenthesis beginning on the header line may continue over physical lines.
+- `def f left: int, right =>` gives `SyntaxError("Unexpected end of input")` at line 1, column 26; a final newline without a real body gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Leading named-arrow braces remain objects; a parenthesis beginning on the header line may continue over physical lines. NUC32 separately permits a real-indented expression without changing this header guard.
 - Arity/shadowing, null callable deferral, non-callable errors, receivers/init/super, reactivity, live aliases, `.value` snapshots, redefinition, graph dependencies, rollback and inherited noncapturing errors are unchanged.
 - Full grammar, exact errors and positions are in the authoritative [bare typed multiple-parameter named arrows](../nucleoid.spec.md#bare-typed-multiple-parameter-named-arrows) section.
+
+### Indented named arrow expressions
+
+```
+scale = 2
+def area width: number, height: number =>
+    width * height * scale
+result = area(3, 4)
+assert(result, 24)
+scale = 3
+assert(result, 36)
+```
+
+- This is the exact executable `Nucleoid preserves indented named arrow relationships` counterpart in `tests/reference.md`.
+- It is exactly the accepted colon spelling `def area width: number, height: number:` with the sole body statement `return width * height * scale`; both that form and inline `=> width * height * scale` remain valid.
+- Preserve parenthesized nullary/single/multiple/annotated lists and every accepted bare single/multiple spelling, including methods, nested definitions and `init`. Bare-nullary `def f =>` and `def f:` remain invalid.
+- Non-consumingly require immediate newline/indent and then a real indent after only newline/semicolon layout. A same-line semicolon after `=>` cannot qualify, even before a later indent. Failed qualification preserves the original inline error and position.
+- Skip normal body layout, parse one unchanged expression, skip trailing newline/semicolon layout and require its closing dedent. Semicolon-only layout lines and trailing semicolons are permitted; `value; other` or another body statement is rejected, not silently dropped.
+- This is not an arbitrary statement suite or an implicit last-statement return. Colon suites and anonymous arrow/function bodies retain all their existing grammar; anonymous arrows gain no indented-body path.
+- Blank/comment lines, CRLF/tabs and parenthesized multiline expressions use existing layout. Named braces remain object expressions; anonymous braced arrows remain statement blocks.
+- The native REPL buffers a lexical named header ending in its only actual arrow, including a trailing comment. Blank-line commit and stdin EOF execute the complete input; structured errors allow subsequent recovery. Arrow text in literals/comments, inline arrows and direct/anonymous expressions keep their old interaction.
+- Exact `def f x =>\nx` still gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Exact `def f x =>\n    x\n    x + 1` instead gives `SyntaxError("Expected the end of a block but found identifier 'x'")` at line 3, column 5.
+- Binding, annotations, receivers/init/super/adoption, null deferral, non-callable errors, noncapture, live references/snapshots, state propagation, graph/reasoning, transactions and resource bounds remain unchanged.
+- Full layout, exact errors, legacy alternatives and executable traces are in the authoritative [indented named arrow expressions](../nucleoid.spec.md#indented-named-arrow-expressions) section.
 
 ### Bare single parameter indented block definitions
 
@@ -758,7 +783,7 @@ scale = 3
 assert(result, 36)
 ```
 
-- This is the executable reference's exact paired `Nucleoid preserves bare multiple parameter block relationships` example; `def area(width, height):` with the same body remains valid and behavior-equivalent.
+- This legacy colon example remains equivalent to `def area(width, height):` with the same body. The executable `Nucleoid preserves bare multiple parameter block relationships` counterpart now uses NUC32's equivalent indented arrow for this sole return; the colon syntax is still supported.
 - Two or more untyped ordinary identifiers retain their order and `type_name: None`; the complete named block AST and canonical rendering are identical to the parenthesized form. There is no parameter-count cap.
 - The body uses the existing suite grammar, including multiple statements, nested definitions, branches and existing inner inline/braced statements. Explicit returns, bare returns and no return keep their existing semantics; the latter two return `null`.
 - `def f left, right:` without a real indent, malformed annotations, trailing bare commas, inline/braced bare suites, `:;` and logical header breaks keep `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7. NUC30 separately adds typed/mixed multiple indented headers, not inline/braced bare suites.
@@ -777,7 +802,7 @@ scale = 3
 assert(result, 36)
 ```
 
-- This is the executable reference's exact paired `Nucleoid preserves bare typed multiple parameter block relationships` example; `def area(width: number, height: number):` with the same body remains valid and exactly equivalent.
+- This legacy colon example remains exactly equivalent to `def area(width: number, height: number):` with the same body. The executable `Nucleoid preserves bare typed multiple parameter block relationships` counterpart now uses NUC32's equivalent indented arrow for this sole return; the colon syntax is still supported.
 - Two or more ordinary identifier parameters may annotate any position using only the existing `Colon Identifier` metadata. At least one annotation describes NUC30's new forms; entirely untyped lists retain NUC28 behavior. Arbitrary undeclared ordinary annotation names need no lookup, dependency or enforcement.
 - The complete non-consuming allocation-free scan skips no logical header breaks. The suite colon needs immediate `Newline` or `Indent`, then a real `Indent` after only normal newline/semicolon layout; `:;` never qualifies. Blank/comment lines remain normal suite layout.
 - Consume names and optional annotations in order, leaving the final suite colon and the entire body/layout for the unchanged suite parser. A final untyped parameter's colon is not an annotation; a final typed parameter needs both its annotation colon/name and suite colon.
@@ -799,7 +824,7 @@ list.find(element => element == 1)
 
 - Calls over class lists depend on the population and the properties they read.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), and [NUC 30](nuc-0030.md).
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), and [NUC 32](nuc-0032.md).
 
 ---
 
@@ -1160,6 +1185,8 @@ for source:                            indented iteration with local it
     statement
 
 def name(params) => expression         single-return function
+def name(params) =>                    optional indented single expression (NUC 32)
+    expression
 def name left, right => expression    untyped multiple-parameter named arrow
 def name left: int, right => expression typed/mixed multiple-parameter arrow (NUC 29)
 def name amount => expression         one untyped parameter (NUC 18)

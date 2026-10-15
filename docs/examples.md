@@ -275,8 +275,8 @@ assert(i2, 7)
 reading = 7
 unit = "C"
 
-def pack reading, unit:
-    return { reading, unit }
+def pack reading, unit =>
+    { reading, unit }
 
 report = pack(reading, unit)
 
@@ -1729,8 +1729,8 @@ typed-arrow and typed/untyped single-parameter block alternatives remain valid.
 
 ```nuc
 bias = 1
-def total left, right:
-    return left + right + bias
+def total left, right =>
+    left + right + bias
 result = total(2, 3)
 assert(result, 6)
 bias = 4
@@ -1795,8 +1795,8 @@ assert(result, 9)
 
 ```nuc
 bias = 1
-def total left: int, right:
-    return left + right + bias
+def total left: int, right =>
+    left + right + bias
 result = total(2, 3)
 assert(result, 6)
 bias = 4
@@ -1868,6 +1868,22 @@ assert(second.scaled, 15)
   [implicit iterator loop section](../nucleoid.spec.md#implicit-iterator-indented-loops).
 
 ---
+
+**Indented named arrows keep live inputs**
+
+- The optional NUC32 layout returns exactly one expression through the existing
+  named return block; the same colon suite with explicit `return` remains valid.
+- External inputs remain live; parameter annotations are unchanged metadata.
+
+```nuc
+bias = 1
+def total left: int, right =>
+    left + right + bias
+result = total(2, 3)
+assert(result, 6)
+bias = 4
+assert(result, 9)
+```
 
 ## Copyright
 
