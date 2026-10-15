@@ -643,6 +643,25 @@ assert(display, 5)
 - Nested branch association, live inputs, scope, returns and rollback are
   unchanged. Strings and comments containing `else:` are not rewritten.
 
+**Quintic smootherstep keeps input changes live**
+
+```nuc
+value = 0.25
+unit = Math.saturate(value)
+eased = Math.smootherstep(0, 1, value)
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+value = 0.75
+assert(eased, 0.896484375)
+```
+
+- Accepted [NUC 35](docs/nuc-0035.md) adds static
+  `Math.smootherstep(lower, upper, value)` beside unchanged cubic
+  `Math.smoothstep`. The independent `unit` control remains live.
+- Normalize and clamp before the exactly ordered quintic; do not clamp its
+  result, which can round beyond the unit interval. Existing numeric coercion,
+  special values, deferred reads, argument effects and rollback are preserved.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

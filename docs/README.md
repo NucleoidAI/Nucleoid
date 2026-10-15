@@ -689,6 +689,8 @@ and the unchanged explicit-loop entries in the root specification.
   that limitation, as specified by [NUC 21](nuc-0021.md).
 - Accepted [NUC 33](nuc-0033.md) keeps `Math.smoothstep` subject to the same
   unsupported method-read limitation.
+- Accepted [NUC 35](nuc-0035.md) keeps `Math.smootherstep` subject to that same
+  limitation; it adds only a static call, not a callable method value.
 - Calls through variables, list items, and object properties depend on the callable's storage location.
 - A null callable, an unassigned callable property, or a callable deleted during propagation leaves its dependent result null until rebound. Other non-callable values raise `TypeError`.
 - `.value` freezes the function definition, not the state read when its body executes.
@@ -1004,7 +1006,7 @@ Full detail: [NUC 9](nuc-0009.md).
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
@@ -1127,6 +1129,58 @@ assert(eased, 0.31640625)
   and its five executable entries define this accepted behavior.
 - Accepted [NUC 33](nuc-0033.md) records the lower/upper/value order, exact
   maximum-then-minimum normalization and separate ordered cubic operations.
+
+### Quintic smootherstep keeps all three inputs live
+
+```
+lower = 0
+upper = 8
+value = 2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+value = 6
+assert(eased, 0.896484375)
+upper = 16
+assert(eased, 0.27520751953125)
+```
+
+- This is the sealed executable reference entry in `tests/reference.md`,
+  omitting only its title comment; `unit` remains an independent live control.
+- Accepted [NUC 35](nuc-0035.md) adds only static
+  `Math.smootherstep(lower, upper, value)` beside unchanged cubic smoothstep.
+  The authoritative [quintic section](../nucleoid.spec.md#reactive-quintic-smootherstep)
+  and its five entries specify the accepted contract.
+- After the existing any-supplied-`Undefined` gate, convert lower, upper and
+  value intrinsically with `Value::to_number`, in order; each omission is
+  numeric NaN. Do not invoke or track shadowable `Number` or `Math.saturate`.
+- Compute separate `numerator = value - lower`, `denominator = upper - lower`,
+  `normalize = numerator / denominator`, then use the unchanged maximum-fold
+  followed by minimum-fold unit clamp to obtain `t`.
+- Compute separate `square = t * t`, `cube = square * t`, `scaled = 6.0 * t`,
+  `offset = scaled - 15.0`, `weighted = t * offset`,
+  `polynomial = weighted + 10.0`, then `cube * polynomial`, in that order.
+- Do not expand/reassociate the polynomial, fuse operations, use `powf` or
+  host clamp, validate/reorder bounds, shortcut endpoints or clamp the result.
+  Rounded polynomial results can overshoot `[0, 1]`.
+- Equal/reversed/infinite/overflow bounds, NaNs, subnormals and zero bits
+  follow the exact accepted composition. Compare expected NaNs by
+  classification and all other numeric bits, including zeros, against host
+  controls; no portable NaN-payload or zero-sign promise is added.
+- Literal null converts numerically to zero without overriding live-null
+  assignment or parameter deferral. Other values keep existing conversion;
+  nonnumeric conversions yield numeric NaN rather than new type errors.
+- Every supplied expression runs once left to right, including extras.
+  Extra values are unconverted but keep reads, effects, strict errors and the
+  supplied-Undefined gate, including deferred property deletion/recovery.
+- State/local Math shadowing, ordinary members, unsupported method reads,
+  typed wrappers, call frames, receivers, class rules and transactional
+  rollback remain unchanged. Immediate intrinsic dependencies differ from
+  the emulation's unit node, while controls and transitive behavior agree.
+- The mathematical quintic has smoother endpoint transitions than the cubic;
+  no exact floating-point derivative claim is made. All sibling Math methods,
+  accepted syntax, public APIs and inherited scope/resource limits remain.
 
 ---
 

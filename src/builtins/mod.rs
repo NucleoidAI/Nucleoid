@@ -147,6 +147,23 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             let falloff = 3.0 - scaled;
             square * falloff
         }
+        "smootherstep" => {
+            let upper = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
+            let value = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
+            // Match the accepted normalization and quintic expression's order,
+            // including its rounding; do not clamp the polynomial's result.
+            let numerator = value - first;
+            let denominator = upper - first;
+            let normalize = numerator / denominator;
+            let t = numeric_clamp(normalize, 0.0, 1.0);
+            let square = t * t;
+            let cube = square * t;
+            let scaled = 6.0 * t;
+            let offset = scaled - 15.0;
+            let weighted = t * offset;
+            let polynomial = weighted + 10.0;
+            cube * polynomial
+        }
         "lerp" => {
             let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
             let weight = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
@@ -482,6 +499,154 @@ mod tests {
         } else {
             assert_same(actual, expected);
         }
+    }
+
+    fn ordered_quintic_smoothing(lower: &Value, upper: &Value, value: &Value) -> Value {
+        if [lower, upper, value].into_iter().any(Value::is_undefined) {
+            return Value::Undefined;
+        }
+        let [lower, upper, value] =
+            [lower, upper, value].map(|value| Value::Number(value.to_number()));
+        let numerator = binary(BinaryOp::Subtract, &value, &lower).unwrap();
+        let denominator = binary(BinaryOp::Subtract, &upper, &lower).unwrap();
+        let normalize = binary(BinaryOp::Divide, &numerator, &denominator).unwrap();
+        let t = ordered_composition(&normalize, &Value::number(0), &Value::number(1));
+        let square = binary(BinaryOp::Multiply, &t, &t).unwrap();
+        let cube = binary(BinaryOp::Multiply, &square, &t).unwrap();
+        let scaled = binary(BinaryOp::Multiply, &Value::number(6), &t).unwrap();
+        let offset = binary(BinaryOp::Subtract, &scaled, &Value::number(15)).unwrap();
+        let weighted = binary(BinaryOp::Multiply, &t, &offset).unwrap();
+        let polynomial = binary(BinaryOp::Add, &weighted, &Value::number(10)).unwrap();
+        binary(BinaryOp::Multiply, &cube, &polynomial).unwrap()
+    }
+
+    #[test]
+    fn smootherstep_matches_independent_ordered_binary_controls_for_every_value_kind() {
+        let values = values();
+        for lower in &values {
+            for upper in &values {
+                for value in &values {
+                    assert_smoothing_same(
+                        &math(
+                            "smootherstep",
+                            &[lower.clone(), upper.clone(), value.clone()],
+                        )
+                        .unwrap(),
+                        &ordered_quintic_smoothing(lower, upper, value),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn smootherstep_keeps_nonfinite_overflow_subnormal_boundary_and_zero_composition_bits() {
+        let one = 1.0_f64.to_bits();
+        let half = 0.5_f64.to_bits();
+        let numbers = [
+            -f64::MAX,
+            -1e16,
+            -1.0,
+            -f64::MIN_POSITIVE,
+            -f64::from_bits(1),
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            f64::EPSILON,
+            0.1,
+            0.125,
+            0.25,
+            f64::from_bits(half - 1),
+            0.5,
+            f64::from_bits(half + 1),
+            0.75,
+            0.9,
+            f64::from_bits(one - 3),
+            f64::from_bits(one - 1),
+            1.0,
+            f64::from_bits(one + 1),
+            1e16,
+            f64::MAX,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NAN,
+            f64::from_bits(0x7ff8_0000_0000_0042),
+            f64::from_bits(0xfff8_0000_0000_0042),
+        ];
+        for lower in numbers {
+            for upper in numbers {
+                for value in numbers {
+                    let arguments = [lower, upper, value].map(Value::Number);
+                    assert_smoothing_same(
+                        &math("smootherstep", &arguments).unwrap(),
+                        &ordered_quintic_smoothing(&arguments[0], &arguments[1], &arguments[2]),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn smootherstep_retains_quintic_rounding_overshoot_and_unvalidated_bound_order() {
+        for (arguments, expected) in [
+            ([0.0, 8.0, 1.0], 0.01605224609375),
+            ([0.0, 8.0, 2.0], 0.103515625),
+            ([0.0, 8.0, 3.0], 0.27520751953125),
+            ([0.0, 8.0, 4.0], 0.5),
+            ([0.0, 8.0, 6.0], 0.896484375),
+            ([0.0, 8.0, -2.0], 0.0),
+            ([0.0, 8.0, 10.0], 1.0),
+            ([8.0, 0.0, 2.0], 0.896484375),
+            ([2.0, 2.0, 1.0], 0.0),
+            ([2.0, 2.0, 3.0], 1.0),
+            ([2.0, 2.0, 2.0], f64::NAN),
+            ([-f64::MAX, f64::MAX, 0.0], 0.0),
+            ([-f64::MAX, f64::MAX, f64::MAX], f64::NAN),
+            ([0.0, 1.0, 0.1], f64::from_bits(0x3f81_87e7_c06e_19bb)),
+            (
+                [0.0, 1.0, f64::from_bits(1.0_f64.to_bits() - 1)],
+                f64::from_bits(0x3ff0_0000_0000_0006),
+            ),
+        ] {
+            assert_smoothing_same(
+                &math("smootherstep", &arguments.map(Value::Number)).unwrap(),
+                &Value::Number(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn smootherstep_omissions_are_nan_and_unconverted_extras_keep_the_undefined_gate() {
+        let arguments = [Value::number(0), Value::number(8), Value::number(2)];
+        for length in 0..3 {
+            assert_smoothing_same(
+                &math("smootherstep", &arguments[..length]).unwrap(),
+                &Value::Number(f64::NAN),
+            );
+        }
+        for extra in values() {
+            let mut supplied = arguments.to_vec();
+            let expected = if extra.is_undefined() {
+                Value::Undefined
+            } else {
+                Value::number(0.103515625)
+            };
+            supplied.push(extra);
+            assert_smoothing_same(&math("smootherstep", &supplied).unwrap(), &expected);
+            supplied.push(Value::number(99));
+            assert_smoothing_same(&math("smootherstep", &supplied).unwrap(), &expected);
+        }
+        for position in 0..6 {
+            let mut supplied = vec![Value::number(0.5); 6];
+            supplied[position] = Value::Undefined;
+            assert_same(&math("smootherstep", &supplied).unwrap(), &Value::Undefined);
+        }
+        assert_same(
+            &math("smootherstep", &[Value::Undefined]).unwrap(),
+            &Value::Undefined,
+        );
+        assert!(math_constant("smootherstep").is_none());
     }
 
     #[test]

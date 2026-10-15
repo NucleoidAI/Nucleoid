@@ -1941,6 +1941,34 @@ assert(item.status, "EMPTY")
   optional; the same source with `else:` remains equivalent. Every condition
   header retains its colon and existing branch order.
 
+**Smooth quintic transitions preserve clamped endpoints**
+
+```nuc
+lower = 0
+upper = 8
+value = -2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(unit, 0)
+assert(eased, 0)
+value = 2
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+value = 6
+assert(unit, 0.75)
+assert(eased, 0.896484375)
+value = 10
+assert(unit, 1)
+assert(eased, 1)
+```
+
+- Accepted [NUC 35](nuc-0035.md) specifies lower/upper/value normalization and
+  the ordered quintic, retaining every independent unit-control assertion.
+- The clamped normalization supplies the displayed endpoint results; rounded
+  interior polynomial values are not promised to stay in `[0, 1]`.
+- Equal/reversed bounds, nonfinite values, coercion and deferred reads follow
+  the existing arithmetic composition without validation or shortcuts.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -905,6 +905,80 @@ statement positions; caught values and transaction recovery are unchanged.
   deferred reads and rollback for cubic smoothstep` pair this contract with
   independent accepted unit-normalization controls and unchanged assertions.
 
+## Reactive quintic smootherstep
+
+- Accepted [NUC 35](docs/nuc-0035.md) adds only static
+  `Math.smootherstep(lower, upper, value)`, the quintic counterpart to cubic
+  `Math.smoothstep`. Bounds precede the value, unlike `Math.clamp`.
+- After the unchanged any-supplied-`Undefined` gate, convert lower, upper and
+  value intrinsically with `Value::to_number`, in that order. The dispatcher
+  already converts the first input. Each omission supplies numeric `NaN`,
+  not a supplied `Undefined`.
+- Perform exactly these separate ordinary `f64` operations in order:
+  `numerator = value - lower`, `denominator = upper - lower`,
+  `normalize = numerator / denominator`,
+  `t = numeric_clamp(normalize, 0.0, 1.0)`, `square = t * t`,
+  `cube = square * t`, `scaled = 6.0 * t`, `offset = scaled - 15.0`,
+  `weighted = t * offset`, `polynomial = weighted + 10.0`,
+  `result = cube * polynomial`.
+- The unchanged private numeric clamp applies the accepted maximum fold to
+  `[normalize, 0]`, then the accepted minimum fold to `[bounded, 1]`.
+  Independent accepted controls use
+  `unit = Math.saturate((value - lower) / (upper - lower))` and
+  `unit * unit * unit * (unit * (6 * unit - 15) + 10)`.
+- Do not expand/reassociate the polynomial as `6t^5 - 15t^4 + 10t^3`, use
+  `powf`, `mul_add`, host `f64::clamp`, endpoint shortcuts, bound validation
+  or reordering, conversion skips, or a post-polynomial clamp.
+- Equal/reversed bounds, infinite subtraction, overflow, NaNs, subnormals and
+  signed zeros follow this exact composition. Equal finite bounds with the
+  same value yield numeric `NaN`; lower/higher values normalize to
+  negative/positive infinity before clamping. Overflow can produce NaN at an
+  endpoint. Reversed bounds are used in their supplied order.
+- Expected NaNs compare by classification; every non-NaN result, including
+  zero, retains the independent accepted host composition's bits.
+  No portable NaN-payload or zero-sign convention is introduced.
+- The rounded polynomial can overshoot the unit interval, even though `t` is
+  clamped. Do not promise that every numeric result lies in `[0, 1]`.
+  The mathematical quintic has a smoother endpoint transition than the cubic;
+  this is not a claim of exact floating-point derivatives.
+- Numbers retain their values, literal null converts to zero, booleans to
+  zero/one, trimmed strings and empty/singleton lists retain existing numeric
+  conversion, and dates contribute milliseconds. Other nonnumeric conversions
+  yield numeric `NaN`, not a new type error.
+- Every supplied expression runs once, left to right, including unused extras.
+  Extras are not converted numerically, but retain reads, effects, dependencies,
+  strict errors and the any-supplied-`Undefined` gate.
+- Any supplied `Undefined`, including an extra, returns `Undefined` before
+  conversion. Existing live-null/deferred assignments and parameters still
+  defer and recover; intrinsic literal-null conversion does not override them.
+- Strict unknown identifiers retain `ReferenceError("<name> is not defined")`,
+  including in extras or after an undefined property. Preserve positions,
+  caught values, transactional rollback and later recovery.
+- State/local `Math` bindings keep shadowing the namespace; ordinary `.Math`
+  members retain lookup. Reading `Math.smootherstep` as a value stays
+  unsupported/`Undefined`, not a first-class callable reference.
+- Intrinsic conversion neither invokes nor tracks shadowable `Number` or
+  `Math.saturate`, and does not recursively invoke public Math dispatch.
+  Wrappers, call frames, receivers, per-instance class rules, property deletion
+  and deferred reads use unchanged call, scope, graph and transaction machinery.
+- Cubic `Math.smoothstep`, `clamp`, `saturate`, `lerp`, all other Math members
+  and constants retain their behavior. Unknown methods still raise
+  `TypeError("Math.<name> is not a function")`; `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the existing undefined gate.
+- No grammar, parser, lexer, generator, CLI, public representation/API,
+  dependency, version, MSRV or resource-limit change is added. All accepted
+  syntax and inherited noncapture/parameter-local limitations remain unchanged;
+  this makes no broader Windows stack-safety claim.
+- The five entries titled `Nucleoid keeps quintic smootherstep reactive to all
+  three inputs`, `Nucleoid preserves numeric coercion while applying quintic
+  smootherstep`, `Nucleoid preserves special values and omitted smootherstep
+  inputs`, `Nucleoid applies quintic smootherstep to live class rules`, and
+  `Nucleoid preserves deferred reads and rollback for quintic smootherstep`
+  trace the contract with independent unit controls and protected assertions.
+- A direct intrinsic reads lower/upper/value, while its emulation reads the
+  unit-control node. Immediate graphs and whole RHS ASTs intentionally differ;
+  asserted controls, values and transitive behavior must agree.
+
 ## Implicit iterator indented loops
 
 - `for NAME:` with a genuine indented body is optionally exactly
@@ -9789,4 +9863,202 @@ flag = true
 assert(answer, 2)
 value = 6
 assert(answer, 6)
+
+---
+
+# Nucleoid keeps quintic smootherstep reactive to all three inputs
+
+lower = 0
+upper = 8
+value = 2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+value = 4
+assert(unit, 0.5)
+assert(eased, 0.5)
+upper = 16
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+lower = -8
+assert(unit, 0.5)
+assert(eased, 0.5)
+value = -16
+assert(unit, 0)
+assert(eased, 0)
+value = 24
+assert(unit, 1)
+assert(eased, 1)
+upper = -32
+assert(unit, 0)
+assert(eased, 0)
+value = -20
+assert(unit, 0.5)
+assert(eased, 0.5)
+eased
+# return: 0.5
+
+---
+
+# Nucleoid preserves numeric coercion while applying quintic smootherstep
+
+lower = " 0 "
+upper = "8"
+value = "2"
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+lower = false
+upper = true
+value = true
+assert(unit, 1)
+assert(eased, 1)
+lower = []
+upper = ["8"]
+value = ["6"]
+assert(unit, 0.75)
+assert(eased, 0.896484375)
+lower = Date(0)
+upper = Date(8)
+value = Date(4)
+assert(unit, 0.5)
+assert(eased, 0.5)
+value = [1, 2]
+assert(Number.isNaN(unit), true)
+assert(Number.isNaN(eased), true)
+
+---
+
+# Nucleoid preserves special values and omitted smootherstep inputs
+
+lower = 2
+upper = 2
+value = 2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(Number.isNaN(unit), true)
+assert(Number.isNaN(eased), true)
+value = 1
+assert(unit, 0)
+assert(eased, 0)
+value = 3
+assert(unit, 1)
+assert(eased, 1)
+upper = 0
+assert(unit, 0)
+assert(eased, 0)
+value = 1
+assert(unit, 0.5)
+assert(eased, 0.5)
+upper = Number.POSITIVE_INFINITY
+assert(unit, 0)
+assert(eased, 0)
+value = Number.POSITIVE_INFINITY
+assert(Number.isNaN(unit), true)
+assert(Number.isNaN(eased), true)
+nan = Number.NaN
+value = nan
+assert(Number.isNaN(unit), true)
+assert(Number.isNaN(eased), true)
+lower = Number.NEGATIVE_INFINITY
+upper = Number.POSITIVE_INFINITY
+value = 0
+assert(Number.isNaN(unit), true)
+assert(Number.isNaN(eased), true)
+empty = Math.smootherstep()
+one = Math.smootherstep(0)
+two = Math.smootherstep(0, 1)
+assert(Number.isNaN(empty), true)
+assert(Number.isNaN(one), true)
+assert(Number.isNaN(two), true)
+half = Math.saturate(0.5)
+withExtra = Math.smootherstep(0, 1, 0.5, 99)
+ignored = Number.NaN
+withIgnored = Math.smootherstep(0, 1, 0.5, ignored)
+assert(half, 0.5)
+assert(withExtra, 0.5)
+assert(withIgnored, 0.5)
+
+---
+
+# Nucleoid applies quintic smootherstep to live class rules
+
+class Curve
+lower = 0
+upper = 8
+$Curve.unit = Math.saturate(($Curve.sample - lower) / (upper - lower))
+$Curve.eased = Math.smootherstep(lower, upper, $Curve.sample)
+first = Curve()
+second = Curve()
+first.sample = 2
+second.sample = 6
+assert(first.unit, 0.25)
+assert(first.eased, 0.103515625)
+assert(second.unit, 0.75)
+assert(second.eased, 0.896484375)
+upper = 16
+assert(first.unit, 0.125)
+assert(first.eased, 0.01605224609375)
+assert(second.unit, 0.375)
+assert(second.eased, 0.27520751953125)
+first.sample = 8
+assert(first.unit, 0.5)
+assert(first.eased, 0.5)
+third = Curve()
+assert(third.unit, null)
+assert(third.eased, null)
+third.sample = 4
+assert(third.unit, 0.25)
+assert(third.eased, 0.103515625)
+delete first.sample
+assert(first.unit, null)
+assert(first.eased, null)
+first.sample = 16
+assert(first.unit, 1)
+assert(first.eased, 1)
+assert(Curve.length, 3)
+
+---
+
+# Nucleoid preserves deferred reads and rollback for quintic smootherstep
+
+class Sensor
+sensor = Sensor()
+lower = 0
+upper = 8
+value = sensor.reading
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(value, null)
+assert(unit, null)
+assert(eased, null)
+sensor.reading = 2
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+delete sensor.reading
+assert(value, null)
+assert(eased, null)
+sensor.reading = 4
+assert(unit, 0.5)
+assert(eased, 0.5)
+try:
+    sensor.reading = 6
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 4)
+assert(unit, 0.5)
+assert(eased, 0.5)
+try:
+    lower = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(lower, 0)
+sensor.reading = 2
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+eased
+# return: 0.103515625
 ```

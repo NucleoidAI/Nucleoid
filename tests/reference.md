@@ -1569,4 +1569,20 @@ signal.enabled = true
 assert(signal.output, 6)
 base = 8
 assert(signal.output, 8)
+
+---
+
+# Nucleoid preserves quintic smootherstep relationships
+
+lower = 0
+upper = 8
+value = 2
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+value = 6
+assert(eased, 0.896484375)
+upper = 16
+assert(eased, 0.27520751953125)
 ```
