@@ -145,9 +145,9 @@ fn incomplete_typed_inline_braced_and_separated_headers_keep_exact_errors() {
         "left,:\n    return left",
         "left,, right:\n    return left",
         "left, right other:\n    return left",
-        "left: int, right:\n    return left",
-        "left, right: int:\n    return left",
-        "left: int, right: int:\n    return left",
+        "left: int, right,:\n    return left",
+        "left, right: int,:\n    return left",
+        "left: int, right: int,:\n    return left",
         "left = 1, right:\n    return left",
         "left, right = 1:\n    return left",
         "left, [right]:\n    return left",
@@ -514,7 +514,7 @@ fn invalid_headers_and_failed_redefinitions_leave_state_and_edges_recoverable() 
         assert!(!runtime.graph.contains(&NodeKey::variable("missing")));
         for invalid in [
             "def reading left, right,:\n    return left",
-            "def reading left, right: int:\n    return left",
+            "def reading left, right: int,:\n    return left",
             "def reading left, right:\nreturn left",
             "def reading left, right:;\n    return left",
             "def reading left,\nright:\n    return left",

@@ -104,11 +104,10 @@ object expressions; returned anonymous functions keep their own existing body
 grammar and do not gain closure capture.
 
 Apart from NUC27's untyped and NUC29's typed/mixed multiple-parameter arrows,
-NUC28's untyped multiple-parameter indented blocks and the narrow typed-arrow
-and single-parameter indented-colon forms below, other prefixes still require
-parameter parentheses. Typed/mixed multiple bare blocks, defaulted, destructured,
-and nullary bare parameters are not supported; bare inline suites and brace
-suites are not added.
+NUC28's untyped and NUC30's typed/mixed multiple-parameter indented blocks and
+the narrow typed-arrow and single-parameter indented-colon forms below, other
+prefixes still require parameter parentheses. Defaulted, destructured and nullary
+bare parameters are not supported; bare inline suites and brace suites are not added.
 For `def f amount:`, `def f amount: int, other, => amount`,
 `def f amount, other, => amount`, and headers separating `amount` from `=>`
 by a logical newline or semicolon, the error remains
@@ -154,7 +153,8 @@ automatic invocation is introduced.
   arrows and indented blocks are unchanged. Calls, anonymous arrows, class
   parameter lists, keywords and ordinary-identifier references are unchanged.
 - This arrow extension does not itself add block headers; NUC28's separate
-  untyped multiple-parameter indented-block guard is specified below.
+  untyped and NUC30's typed/mixed multiple-parameter indented-block guards are
+  specified below.
   NUC29 separately extends arrows to typed/mixed lists below; NUC27's own
   identifier-only grammar remains unchanged. Bare inline/braced blocks, defaults,
   destructuring, rest parameters, trailing commas, return annotations and
@@ -209,9 +209,9 @@ semicolon may separate `def`, the required name, the bare parameter, and colon.
 All parenthesized signatures and indented, inline, or braced suites remain
 valid, including typed, empty, multiple-parameter, trailing-comma, and multiline
 parameter lists. NUC 18's bare named arrows remain unchanged. The single typed
-indented spelling below is also optional; typed/mixed multiple, defaulted,
-destructured, nullary, anonymous-colon, inline, or braced bare block definitions
-are not added.
+indented spelling below is also optional; NUC30 separately adds typed/mixed
+multiple-parameter indented blocks. Defaulted, destructured, nullary,
+anonymous-colon, inline or braced bare block definitions are not added.
 Return annotations, calls, ordinary-identifier
 invocation, expression precedence, and keyword meanings are unchanged.
 
@@ -227,7 +227,7 @@ still raises `SyntaxError("Expected '(' but found identifier 'amount'")` at
 line 1, column 7. The same error and position apply to `def f amount: int:`
 at end of input without a body,
 `def f amount: return amount`, `def f amount: { return amount }`,
-`def f amount:;` even before a later indent, typed/mixed multiple/default/return-annotation
+`def f amount:;` even before a later indent, malformed multiple/default/return-annotation
 prefixes, and a logical newline or semicolon between the parameter and colon.
 `def f:` followed by an indented body still raises
 `SyntaxError("Expected '(' but found ':'")` at line 1, column 6.
@@ -253,9 +253,9 @@ raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
   break, the first non-layout token must be a real `Indent`. A colon immediately
   followed by a semicolon never qualifies, even if indentation appears later.
 - The allocation-free, linear lookahead shares the complete-list scan with
-  multiple-parameter arrows, but only entirely untyped lists may end in a block
-  colon; NUC29's annotations never qualify this block path. It consumes no
-  parameters, separators or body tokens. Once qualified,
+  multiple-parameter arrows and NUC30's separate typed/mixed block extension.
+  NUC28's own identifier-only lists remain untyped. It consumes no parameters,
+  separators or body tokens. Once qualified,
   consume only the identifier/comma list as ordered
   `Parameter { name, type_name: None }` values, leaving its final colon for the
   existing `suite()` parser. Blank/comment lines and normal layout before a
@@ -276,14 +276,15 @@ raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
   inline/braced/indented alternative remains available. Calls, anonymous
   functions, class syntax, keywords, lexer/AST/runtime/generator/public API,
   expression nesting and chain bounds are unchanged; add no parameter-count cap.
-- Typed/mixed multiple bare block headers, bare inline/braced suites, trailing bare
-  commas, defaults, destructuring, rest parameters, return annotations and
-  call-parenthesis omission are not added.
+- NUC30 separately adds typed/mixed multiple-parameter indented block headers;
+  it does not change NUC28's identifier-only forms. Bare inline/braced suites,
+  trailing bare commas, defaults, destructuring, rest parameters, return
+  annotations and call-parenthesis omission are not added.
 - An incomplete or unsupported tokenizable prefix is left untouched for the
   existing parenthesized parameter parser. `def f left, right:` without a real
   indent, `def f left, right: return left`, `def f left, right: { return left }`,
   `def f left, right:;` even before a later indent,
-  `def f left, right,:` with an indented body, typed/mixed headers and logical
+  `def f left, right,:` with an indented body, malformed annotations and logical
   breaks within the header retain
   `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
 - `def f this, right:` with an indented body instead names `keyword 'this'` at
@@ -336,12 +337,13 @@ lists, class parameter lists and anonymous functions remain valid. NUC 18's
 untyped bare arrows and NUC 19's exact untyped indented-colon guard are unchanged.
 Representative typed parenthesized alternatives remain executable below.
 
-Typed bare inline or braced suites, typed/mixed multiple bare blocks,
-nullary/defaulted/destructured parameters, dotted/union/generic/keyword annotation
+Typed bare inline or braced suites, nullary/defaulted/destructured parameters,
+dotted/union/generic/keyword annotation
 forms, return annotations, and logical breaks in the bare header are not added.
 NUC27's untyped and NUC29's typed/mixed multiple-parameter arrows have separate
 complete-list guards; neither changes this single-parameter guard. The typed
-indented-block spelling below does not change this arrow guard. Named-arrow
+indented-block spelling and NUC30's separate typed/mixed multiple block spelling
+below do not change this arrow guard. Named-arrow
 leading braces remain object expressions; a returned anonymous arrow retains its
 own block grammar. No public token, AST, runtime, generator, API, or bound changes.
 
@@ -415,8 +417,9 @@ statement positions; caught values and transaction recovery are unchanged.
   multiple arrows/indented blocks retain their behavior. In particular,
   `def f left, right:` with an indented `int => left` body remains an untyped
   block with no implicit return, not an annotated header.
-- Typed/mixed multiple bare indented, inline and braced block headers remain
-  unsupported, even though the complete-list scanner is shared with NUC28.
+- NUC29 does not itself add block headers. NUC30 separately extends the shared
+  complete-list scanner to typed/mixed multiple indented blocks below; bare
+  inline and braced block headers remain unsupported.
   Add no trailing bare commas, missing types/parameters, defaults, destructuring,
   rest, return annotations, multiline/broken bare headers, anonymous or class
   header shorthand, call-parenthesis omission, keyword or type grammar.
@@ -431,7 +434,7 @@ statement positions; caught values and transaction recovery are unchanged.
   existing parenthesized parameter parser. `def f left: int, right`,
   `def f left: int, right, => left`, missing annotations such as
   `def f left: int, right: => left`, unsupported type/parameter forms, logical
-  header breaks and typed/mixed multiple bare block headers retain
+  header breaks and bare inline/braced block headers retain
   `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
   `def f this: int, right => right` instead names `keyword 'this'` at that
   position. A newline immediately after `def f` gives
@@ -491,9 +494,10 @@ statement positions; caught values and transaction recovery are unchanged.
   colon is never consumed as an annotation. NUC18/20's immediate arrow guards
   and all parenthesized typed/untyped, empty/multiple, trailing-comma/multiline,
   inline/braced/indented, class and anonymous signatures remain unchanged.
-- Add only one ordinary parameter name and one ordinary annotation name.
-  Missing/dotted/union/generic/keyword/literal annotations, multiple bare block
-  parameters, defaulted/destructured/variadic/nullary bare parameters, return annotations, anonymous
+- This single-parameter guard adds only one ordinary parameter name and one
+  ordinary annotation name; NUC30 separately extends multiple indented blocks.
+  Missing/dotted/union/generic/keyword/literal annotations,
+  defaulted/destructured/variadic/nullary bare parameters, return annotations, anonymous
   colon functions, call-site omission and automatic invocation are not added.
 - Typed bare inline/braced suites, header-line semicolons, missing indentation
   and comments-only bodies do not qualify. Nonqualifying tokenizable prefixes
@@ -520,6 +524,101 @@ statement positions; caught values and transaction recovery are unchanged.
 - The five corresponding entries at the end of the executable specification
   preserve reactive definitions, references/snapshots, methods/initializers,
   binding/explicit alternatives and failed-redefinition rollback.
+
+## Bare typed multiple-parameter indented block definitions
+
+- NUC30 optionally spells `def add(left: int, right: int):` with a real indented
+  body as `def add left: int, right: int:` with exactly the same body, including
+  named methods and `init`. Mixed lists such as `def add left: int, right:`
+  preserve every parameter name, annotation and position in the list.
+- After `def` and the required ordinary definition name, recognize the complete
+  immediate sequence
+  `Identifier (Colon Identifier)? (Comma Identifier (Colon Identifier)?)+ Colon`.
+  Require at least two ordinary identifier parameters; at least one annotation
+  describes NUC30's new forms. Entirely untyped lists remain NUC28 behavior.
+  Each comma needs another parameter, with no trailing bare comma.
+- Each annotation is only the existing `Colon Identifier` metadata syntax.
+  Arbitrary undeclared ordinary names such as `ArbitraryType` are legal without
+  lookup, graph dependencies or type enforcement. Add no keyword/dollar/dotted/
+  generic/nullable/union annotation grammar, defaults, destructuring or rest.
+- Extend the allocation-free, linear, non-consuming shared complete-list scan
+  while preserving every NUC29 arrow. Skip no logical `Newline`, `Semicolon`,
+  `Indent`, `Dedent` or comment-induced break anywhere within the header.
+  Incomplete or unsupported lookahead consumes nothing and falls back normally.
+- Immediately after the final suite colon require `Newline` or `Indent`.
+  After only normal `Newline`/`Semicolon` layout from that body start, require
+  a real `Indent`. A colon immediately followed by `Semicolon` never qualifies,
+  even if indentation appears later. Blank/comment lines and the existing
+  indented body's layout remain the unchanged `suite()` parser's responsibility.
+- Once qualified, consume names, optional annotations and commas in order using
+  the existing `parameter()` wherever applicable. The colon after a final
+  untyped parameter belongs to `suite()`, not annotation parsing. A final typed
+  parameter instead has its annotation `Colon Identifier` followed by a separate
+  suite `Colon`. Leave the suite colon and all body/layout tokens for `suite()`.
+  Do not relax `parameter()` or malformed parenthesized annotation diagnostics.
+- Preserve the complete named `FunctionBody::Block`, ordered
+  `Parameter { name, type_name: Some(annotation) | None }` values, AST and
+  canonical rendering of the parenthesized definition. There is no implicit
+  final-expression return; explicit, bare and absent returns keep their behavior,
+  with bare/absent returns yielding `null`.
+- Local assignments, multiple statements, branches, nested definitions and
+  ordinary inner inline/braced statements retain the existing suite grammar.
+  Missing/null/extra/string arguments, local shadowing, null callable deferral
+  and non-callable errors are unchanged. A null `operation` stays deferred;
+  a non-callable one still raises `TypeError("operation is not a function")`.
+- Preserve noncapturing scopes, methods, `init`, `this`/`self`, explicit and bare
+  `super`, initializer adoption and instance identity. Reactive arguments and
+  body inputs, live aliases, `.value` definition snapshots, redefinition,
+  graph IDs/dependencies, reasoning, transactions, caught values and rollback
+  retain the parenthesized behavior. Inherited parameter-dependent local/nested
+  propagation failures are not repaired by this syntax.
+- Preserve NUC24's exact single typed block guard, every other accepted single
+  guard, NUC28 untyped multiple blocks, NUC29 typed/mixed multiple arrows and all
+  parenthesized alternatives, including nullary, multiline, trailing-comma,
+  inline and braced definitions. Calls, anonymous/class grammar, lexer, public
+  AST, runtime, generator and API are unchanged.
+- Add no bare multiple inline/braced or missing-indent suites, return
+  annotations or call syntax. Flat typed/mixed lists remain uncapped through
+  1,024 parameters; body nesting/operator/postfix resource bounds are unchanged.
+- `def f left: int, right:` at EOF, without a real indent, with only comments,
+  with an inline/braced body or with immediate `:;` retains
+  `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
+  The same message/position covers trailing commas, missing names/types,
+  unsupported annotations/parameters and logical header breaks beginning
+  `def f left`. A final untyped parameter followed by the suite colon is valid,
+  not a missing annotation.
+- `def f this: int, right:` with an indented body instead names `keyword 'this'`
+  at that position. A newline immediately after `def f` keeps
+  `SyntaxError("Expected '(' but found end of line")` at line 1, column 5;
+  a semicolon there keeps `SyntaxError("Expected '(' but found ';'")` at column 6.
+  Four-space-indented `def reading left: int, right,:` after `class Gauge:`
+  keeps the parameter-boundary error at line 2, column 17.
+- Parenthesized `def f(left: int, right:):` keeps
+  `SyntaxError("Expected a type but found ')'")` at line 1, column 25;
+  `def f(a:):` keeps the same message at column 10.
+  Lexical errors still precede parsing: `def f left: int | str, right:`
+  gives `SyntaxError("Unexpected character '|'")` at line 1, column 17, and
+  `def f left: int?, right:` gives `SyntaxError("Unexpected character '?'")`
+  at column 16.
+- After a qualifying typed/mixed header and newline, four-space-indented
+  `return left +)` gives `SyntaxError("Unexpected ')'")` at line 2, column 19;
+  `return { left = 1 }` gives `SyntaxError("Expected ':' but found '='")`
+  at that same position. `return @` gives
+  `SyntaxError("Unexpected character '@'")` at line 2, column 12.
+- Undefined body/object reads keep `ReferenceError("missing is not defined")`;
+  uncaptured `left` keeps `ReferenceError("left is not defined")`, and unbound
+  `this`/`self` keeps `ReferenceError("this is not defined")`. Runtime errors keep
+  their existing top-level positions; caught values omit positions as before.
+  Excessive body nesting/operator/postfix chains retain
+  `SyntaxError("Expressions are nested too deeply")`,
+  `SyntaxError("Expression has too many operands")` and
+  `SyntaxError("Expression has too many parts")` at their existing positions.
+- The five appended `bare typed multiple parameter block` entries cover
+  fully typed/mixed annotation positions, multiple statements/branches,
+  aliases/snapshots/redefinition, methods/init/super/property mutation/identity,
+  arity/unchecked arguments/shadowing/returns/nesting and failed-redefinition
+  catch/rollback. The rollback entry executes its catch and explicitly ends
+  with `reading(8, 9)`, returning `21`.
 
 ## Reactive numeric clamping
 
@@ -8685,6 +8784,126 @@ total = reading(2, 4)
 assert(total, 9)
 try:
     def reading left: int, right: int => missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(total, 9)
+source = 4
+assert(total, 10)
+assert(reading(8, 9), 21)
+reading(8, 9)
+
+# return: 21
+
+---
+
+# Nucleoid defines bare typed multiple parameter indented blocks
+
+def add left: int, right: int:
+    total = left + right
+    return total
+def scaled left: number, right, factor: number:
+    return (left + right) * factor
+def largest left, right: number:
+    if left > right:
+        return left
+    return right
+assert(add(2, 3), 5)
+assert(scaled(2, 3, 4), 20)
+assert(largest(7, 3), 7)
+assert(largest(2, 9), 9)
+
+---
+
+# Nucleoid keeps bare typed multiple parameter blocks reactive
+
+bias = 2
+def scaled left: int, right:
+    return left * right + bias
+live = scaled
+snapshot = scaled.value
+result = live(3, 4)
+frozen = snapshot(3, 4)
+assert(result, 14)
+assert(frozen, 14)
+def scaled left: int, right: int:
+    return left + right + bias
+assert(result, 9)
+assert(frozen, 14)
+bias = 4
+assert(result, 11)
+assert(frozen, 16)
+
+---
+
+# Nucleoid preserves bare typed multiple parameter block methods and initializers
+
+class Parent:
+    def init left: int, right: int:
+        this.amount = left + right
+    def reading offset: int, scale:
+        return self.amount * scale + offset
+class Child: Parent
+    def init left: int, right:
+        super(left, right)
+    def reading offset, scale: int:
+        return self.amount * scale + offset
+    def increase delta: int, extra:
+        this.amount += delta + extra
+        return this.amount
+child = Child(2, 3)
+observed = child.reading(1, 2)
+assert(child.id, "child")
+assert(child.amount, 5)
+assert(observed, 11)
+assert(child.increase(2, 1), 8)
+assert(child.amount, 8)
+assert(observed, 17)
+assert(Parent.length, 0)
+assert(Child.length, 1)
+
+---
+
+# Nucleoid preserves bare typed multiple parameter block bindings and returns
+
+left = 10
+right = 20
+def pair left: int, right: int:
+    return [left, right]
+def add left: int, right:
+    left += right
+    return left
+def noReturn left: int, right: int:
+    left + right
+def bareReturn left, right: int:
+    return
+def outer(initial: int):
+    def combine left: int, right, scale: int:
+        return (left + right) * scale
+    return combine(initial, 2, 3)
+assert(pair(3, 4), [3, 4])
+assert(pair(3), [3, null])
+assert(pair(), [null, null])
+assert(pair(3, 4, 5), [3, 4])
+assert(pair("three", true), ["three", true])
+assert(add(3, 4), 7)
+assert(left, 10)
+assert(right, 20)
+assert(noReturn(2, 3), null)
+assert(bareReturn(2, 3), null)
+assert(outer(4), 18)
+
+---
+
+# Nucleoid rolls back failed bare typed multiple parameter block redefinitions
+
+source = 3
+def reading left: int, right: int:
+    return source + left + right
+total = reading(2, 4)
+assert(total, 9)
+try:
+    def reading left: int, right:
+        return missing + left + right
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 assert(total, 9)

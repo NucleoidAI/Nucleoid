@@ -211,8 +211,8 @@ fn unsupported_typed_headers_do_not_consume_prefixes_or_body_layout() {
         "def f amount: int: { return amount }",
         "def f amount: int { return amount }",
         "def f amount: int:;\n    return amount",
-        "def f amount: int, other:\n    return amount",
-        "def f amount: int, other: str:\n    return amount",
+        "def f amount: int, other,:\n    return amount",
+        "def f amount: int, other: str,:\n    return amount",
         "def f amount: int = 1:\n    return amount",
         "def f amount = 1: int:\n    return amount",
         "def f amount: int -> int:\n    return amount",
@@ -291,7 +291,7 @@ fn unsupported_typed_headers_do_not_consume_prefixes_or_body_layout() {
             Position::new(1, 19),
         ),
         (
-            "class Gauge:\n    def reading amount: int, other:\n        return amount",
+            "class Gauge:\n    def reading amount: int, other,:\n        return amount",
             "Expected '(' but found identifier 'amount'",
             Position::new(2, 17),
         ),
@@ -608,7 +608,7 @@ fn failed_redefinitions_caught_values_bad_headers_and_recovery_preserve_transact
         assert_eq!(runtime.run("total").unwrap(), Value::Number(5.0));
         assert!(!runtime.graph.contains(&NodeKey::variable("missing")));
         for header in [
-            "def reading amount: int, other:\n    return amount",
+            "def reading amount: int, other,:\n    return amount",
             "def reading amount: int:\nreturn amount",
             "def reading amount: int: return amount",
         ] {
@@ -901,7 +901,7 @@ fn repl_stdin_eof_runs_a_final_indented_body_in_both_forms() {
 fn repl_recovers_from_nonqualifying_headers_and_bounded_errors_before_stdin_eof() {
     let source = format!(
         ".json on\nbase = 2\ndef scaled amount: int:\n    return amount + base\n\nresult = scaled(3)\nbase = 4\nresult\n\
-         def scaled amount: int, other:\n    return amount\n\n\
+         def scaled amount: int, other,:\n    return amount\n\n\
          def limited amount: int:\n    return amount{}\n\n\
          def scaled amount: int:\n    return amount * base\n\nassert(result, 12)\nresult",
         " + 1".repeat(200)

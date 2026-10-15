@@ -412,13 +412,12 @@ impl Parser {
     }
 
     /// Offset of the delimiter after a complete bare list of at least two
-    /// ordinary identifiers, with optional identifier annotations for arrows.
-    /// Only entirely untyped lists may end in a block colon. Inspect without
-    /// consuming tokens, allocating names or skipping layout.
+    /// ordinary identifiers with optional identifier annotations, ending in an
+    /// arrow or suite colon. Inspect without consuming tokens, allocating names
+    /// or skipping layout; the caller checks a block's real indentation.
     fn bare_multiple_parameter_end(&self) -> Option<usize> {
         let mut offset = 0;
         let mut multiple = false;
-        let mut annotated = false;
         loop {
             if !matches!(self.peek_at(offset), Token::Identifier(_)) {
                 return None;
@@ -428,12 +427,10 @@ impl Parser {
                 (self.peek_at(offset), self.peek_at(offset + 1)),
                 (Token::Colon, Token::Identifier(_))
             ) {
-                annotated = true;
                 offset += 2;
             }
             match self.peek_at(offset) {
-                Token::Arrow if multiple => return Some(offset),
-                Token::Colon if multiple && !annotated => return Some(offset),
+                Token::Arrow | Token::Colon if multiple => return Some(offset),
                 Token::Comma => {
                     multiple = true;
                     offset += 1;
@@ -468,18 +465,16 @@ impl Parser {
                     Token::Arrow
                 )
         );
-        let bare_multiple_end = self.bare_multiple_parameter_end();
-        let bare_multiple_arrow =
-            bare_multiple_end.is_some_and(|end| matches!(self.peek_at(end), Token::Arrow));
-        let bare_multiple_block = bare_multiple_end.is_some_and(|end| {
-            matches!(self.peek_at(end), Token::Colon)
-                && matches!(self.peek_at(end + 1), Token::Newline | Token::Indent)
-                && self
-                    .tokens
-                    .iter()
-                    .skip(self.position + end + 1)
-                    .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
-                    .is_some_and(|spanned| spanned.token == Token::Indent)
+        let bare_multiple_end = self.bare_multiple_parameter_end().filter(|&end| {
+            matches!(self.peek_at(end), Token::Arrow)
+                || (matches!(self.peek_at(end), Token::Colon)
+                    && matches!(self.peek_at(end + 1), Token::Newline | Token::Indent)
+                    && self
+                        .tokens
+                        .iter()
+                        .skip(self.position + end + 1)
+                        .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
+                        .is_some_and(|spanned| spanned.token == Token::Indent))
         });
         let bare_block = matches!(self.peek(), Token::Identifier(_))
             && match self.peek_at(1) {
@@ -515,27 +510,31 @@ impl Parser {
                 .skip(self.position + 4)
                 .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
                 .is_some_and(|spanned| spanned.token == Token::Indent);
-        let parameters = if bare_multiple_arrow {
-            let mut parameters = vec![self.parameter()?];
-            while self.eat(&Token::Comma) {
-                parameters.push(self.parameter()?);
-            }
-            parameters
-        } else if bare_multiple_block {
+        let parameters = if let Some(end) = bare_multiple_end {
+            let delimiter_position = self.position + end;
             let mut parameters = Vec::new();
             loop {
-                let Token::Identifier(name) = self.advance() else {
-                    unreachable!("lookahead checked every bare parameter identifier")
+                let parameter = if self.position + 1 == delimiter_position
+                    && matches!(self.peek_at(1), Token::Colon)
+                {
+                    // A final untyped parameter's colon belongs to suite(),
+                    // not parameter()'s annotation parser.
+                    let Token::Identifier(name) = self.advance() else {
+                        unreachable!("lookahead checked the final bare parameter identifier")
+                    };
+                    Parameter {
+                        name,
+                        type_name: None,
+                    }
+                } else {
+                    self.parameter()?
                 };
-                parameters.push(Parameter {
-                    name,
-                    type_name: None,
-                });
+                parameters.push(parameter);
                 if !self.eat(&Token::Comma) {
                     break;
                 }
             }
-            // The final colon belongs to suite(), not a type annotation.
+            // Leave the complete list's arrow or suite colon for the body.
             parameters
         } else if bare_arrow || bare_typed_block {
             vec![self.parameter()?]

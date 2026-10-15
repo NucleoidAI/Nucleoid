@@ -389,7 +389,8 @@ identifiers on one logical header line. After the colon require an immediate
 newline or indent and a real indent after only normal newline/semicolon layout;
 a colon immediately followed by a semicolon does not qualify. Blank/comment
 lines before a genuine body keep their existing grammar.
-Typed/mixed multiple bare block headers, inline/braced bare suites, trailing bare
+NUC30 separately adds typed/mixed multiple indented headers below; NUC28's
+identifier-only forms remain unchanged. Inline/braced bare suites, trailing bare
 commas and logical breaks within the header remain unsupported. Parenthesized
 forms, arrows, single-parameter guards and calls are unchanged. Block returns,
 scope, receivers, live relationships, snapshots and rollback retain the
@@ -410,11 +411,38 @@ assert(add(2, 3), 5)
   multiple lists retain NUC27 behavior; annotations stay metadata, not runtime
   type checks. Mixed lists may annotate any parameter.
 - The complete comma-separated header must immediately end in `=>`, without
-  logical breaks or skipped separators. Typed/mixed multiple bare blocks,
-  trailing bare commas, new parameter/type grammar and call-site omission
+  logical breaks or skipped separators. NUC29 does not itself add blocks;
+  NUC30's separate typed/mixed indented spelling follows below. Bare inline/braced
+  suites, trailing bare commas, new parameter/type grammar and call-site omission
   remain unsupported. Single guards and NUC28 untyped blocks are unchanged.
 - Binding, named return-block lowering, expression bodies, receivers,
   reactivity, snapshots, graph dependencies and rollback remain unchanged.
+
+**Typed multiple parameter blocks can omit parentheses**
+
+```nuc
+def add left: int, right: int:
+    return left + right
+assert(add(2, 3), 5)
+```
+
+- [NUC 30](docs/nuc-0030.md) describes the optional spelling of
+  `def add(left: int, right: int):` with the same real indented body, including
+  methods and `init`. Mixed headers such as `def add left: int, right:` also
+  preserve the complete named block and ordered annotation metadata.
+- Require at least two ordinary identifier parameters, with at least one
+  existing `: Identifier` annotation for the new forms. Entirely untyped lists
+  remain NUC28 behavior; annotations introduce neither lookup nor type checking.
+- Scan the complete header without consuming tokens or skipping logical breaks.
+  The suite colon must immediately lead to a newline or indent and a real indent
+  after only normal newline/semicolon layout; `:;` never qualifies.
+  A final untyped parameter's colon belongs to the suite, not an annotation.
+- Parenthesized forms, NUC24 single typed blocks, NUC28 untyped blocks, NUC29
+  arrows and calls remain unchanged. Bare inline/braced suites, trailing commas,
+  new type/parameter grammar and return annotations are not added.
+- Block returns, local shadowing, receivers, reactive inputs, live aliases,
+  definition snapshots, redefinition and rollback keep the parenthesized
+  behavior, with no implicit final-expression return.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,

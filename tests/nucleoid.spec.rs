@@ -6247,6 +6247,133 @@ fn rolls_back_failed_bare_typed_multiple_parameter_arrow_redefinitions() {
 # return: 21"#);
 }
 
+/// Nucleoid defines bare typed multiple parameter indented blocks
+#[rustfmt::skip]
+#[test]
+fn defines_bare_typed_multiple_parameter_indented_blocks() {
+    let mut run = runner();
+    run(r#"def add left: int, right: int:
+    total = left + right
+    return total"#);
+    run(r#"def scaled left: number, right, factor: number:
+    return (left + right) * factor"#);
+    run(r#"def largest left, right: number:
+    if left > right:
+        return left
+    return right"#);
+    assert_eq!(run("add(2, 3)"), 5);
+    assert_eq!(run("scaled(2, 3, 4)"), 20);
+    assert_eq!(run("largest(7, 3)"), 7);
+    assert_eq!(run("largest(2, 9)"), 9);
+}
+
+/// Nucleoid keeps bare typed multiple parameter blocks reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_typed_multiple_parameter_blocks_reactive() {
+    let mut run = runner();
+    run("bias = 2");
+    run(r#"def scaled left: int, right:
+    return left * right + bias"#);
+    run("live = scaled");
+    run("snapshot = scaled.value");
+    run("result = live(3, 4)");
+    run("frozen = snapshot(3, 4)");
+    assert_eq!(run("result"), 14);
+    assert_eq!(run("frozen"), 14);
+    run(r#"def scaled left: int, right: int:
+    return left + right + bias"#);
+    assert_eq!(run("result"), 9);
+    assert_eq!(run("frozen"), 14);
+    run("bias = 4");
+    assert_eq!(run("result"), 11);
+    assert_eq!(run("frozen"), 16);
+}
+
+/// Nucleoid preserves bare typed multiple parameter block methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_typed_multiple_parameter_block_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Parent:
+    def init left: int, right: int:
+        this.amount = left + right
+    def reading offset: int, scale:
+        return self.amount * scale + offset"#);
+    run(r#"class Child: Parent
+    def init left: int, right:
+        super(left, right)
+    def reading offset, scale: int:
+        return self.amount * scale + offset
+    def increase delta: int, extra:
+        this.amount += delta + extra
+        return this.amount"#);
+    run("child = Child(2, 3)");
+    run("observed = child.reading(1, 2)");
+    assert_eq!(run("child.id"), "child");
+    assert_eq!(run("child.amount"), 5);
+    assert_eq!(run("observed"), 11);
+    assert_eq!(run("child.increase(2, 1)"), 8);
+    assert_eq!(run("child.amount"), 8);
+    assert_eq!(run("observed"), 17);
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 1);
+}
+
+/// Nucleoid preserves bare typed multiple parameter block bindings and returns
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_typed_multiple_parameter_block_bindings_and_returns() {
+    let mut run = runner();
+    run("left = 10");
+    run("right = 20");
+    run(r#"def pair left: int, right: int:
+    return [left, right]"#);
+    run(r#"def add left: int, right:
+    left += right
+    return left"#);
+    run(r#"def noReturn left: int, right: int:
+    left + right"#);
+    run(r#"def bareReturn left, right: int:
+    return"#);
+    run(r#"def outer(initial: int):
+    def combine left: int, right, scale: int:
+        return (left + right) * scale
+    return combine(initial, 2, 3)"#);
+    assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
+    assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
+    assert_eq!(run("pair()"), serde_json::json!([null, null]));
+    assert_eq!(run("pair(3, 4, 5)"), serde_json::json!([3, 4]));
+    assert_eq!(run(r#"pair("three", true)"#), serde_json::json!(["three", true]));
+    assert_eq!(run("add(3, 4)"), 7);
+    assert_eq!(run("left"), 10);
+    assert_eq!(run("right"), 20);
+    assert_eq!(run("noReturn(2, 3)"), serde_json::Value::Null);
+    assert_eq!(run("bareReturn(2, 3)"), serde_json::Value::Null);
+    assert_eq!(run("outer(4)"), 18);
+}
+
+/// Nucleoid rolls back failed bare typed multiple parameter block redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_bare_typed_multiple_parameter_block_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run(r#"def reading left: int, right: int:
+    return source + left + right"#);
+    run("total = reading(2, 4)");
+    assert_eq!(run("total"), 9);
+    assert_eq!(run_error(r#"def reading left: int, right:
+    return missing + left + right"#), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 9);
+    run("source = 4");
+    assert_eq!(run("total"), 10);
+    assert_eq!(run("reading(8, 9)"), 21);
+    run(r#"reading(8, 9)
+
+# return: 21"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

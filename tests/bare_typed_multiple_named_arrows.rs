@@ -309,7 +309,7 @@ fn unsupported_prefixes_preserve_exact_parameter_errors_without_partial_consumpt
 }
 
 #[test]
-fn typed_multiple_blocks_stay_excluded_and_all_single_and_untyped_guards_stay_exact() {
+fn typed_multiple_blocks_require_real_indent_and_all_earlier_guards_stay_exact() {
     for header in [
         "left: int, right",
         "left, right: int",
@@ -317,9 +317,14 @@ fn typed_multiple_blocks_stay_excluded_and_all_single_and_untyped_guards_stay_ex
         "left: int, right, factor: number",
         "left, right: int, factor",
     ] {
+        // NUC30 adds only these real-indented block counterparts.
+        for suffix in [":\n    return left", ":\n    # comment\n    return left"] {
+            equivalent(
+                &format!("def f {header}{suffix}"),
+                &format!("def f({header}){suffix}"),
+            );
+        }
         for suffix in [
-            ":\n    return left",
-            ":\n    # comment\n    return left",
             ": return left",
             ": { return left }",
             " { return left }",
@@ -657,8 +662,8 @@ fn invalid_prefixes_and_failed_redefinitions_are_atomic_and_allow_recovery() {
         assert!(!runtime.graph.contains(&NodeKey::variable("missing")));
         for invalid in [
             "def reading left: int, right, => left",
-            "def reading left, right: int:\n    return left",
-            "def reading left: int, right:\n    return left",
+            "def reading left, right: int,:\n    return left",
+            "def reading left: int, right,:\n    return left",
             "def reading left: int, right: return left",
             "def reading left: int, right: { return left }",
             "def reading left: int,\nright => left",
@@ -869,6 +874,54 @@ fn native_repl_keeps_canonical_graphs_and_recovers_from_invalid_typed_prefixes()
     );
 }
 
+/// Select only this proposal's protected prefix, never later appended cases.
+fn protected_corpus_slices(
+    cases: &[common::Case],
+    historical_count: usize,
+    added_count: usize,
+) -> Option<(&[common::Case], &[common::Case])> {
+    let prefix = cases.get(..historical_count + added_count)?;
+    Some(prefix.split_at(historical_count))
+}
+
+#[test]
+fn historical_corpus_selection_allows_later_tails_but_requires_all_protected_cases() {
+    let cases = [
+        "historical one",
+        "historical two",
+        "own addition one",
+        "own addition two",
+        "later one",
+        "later two",
+    ]
+    .map(|title| common::Case {
+        title: title.to_string(),
+        source: String::new(),
+        expected: None,
+    });
+    for length in 4..=cases.len() {
+        let (historical, additions) = protected_corpus_slices(&cases[..length], 2, 2).unwrap();
+        assert!(
+            historical
+                .iter()
+                .map(|case| case.title.as_str())
+                .eq(["historical one", "historical two"])
+        );
+        assert!(
+            additions
+                .iter()
+                .map(|case| case.title.as_str())
+                .eq(["own addition one", "own addition two"])
+        );
+    }
+    for length in 0..4 {
+        assert!(
+            protected_corpus_slices(&cases[..length], 2, 2).is_none(),
+            "must reject a protected prefix truncated to {length} cases"
+        );
+    }
+}
+
 const ACCEPTED_REVISION: &str = "c40b64bc6338b84ce3d76019c6e0ee1e13900da1";
 
 fn accepted_source(path: &str) -> String {
@@ -929,15 +982,22 @@ fn historical_measured_asts_and_the_eight_appended_counterparts_remain_exact() {
             )
         };
         assert_eq!(before.len(), old_count, "{path}");
-        assert_eq!(after.len(), old_count + added, "{path}");
-        for (before, after) in before.iter().zip(&after) {
+        let (current_historical, own_additions) = protected_corpus_slices(&after, old_count, added)
+            .unwrap_or_else(|| {
+                panic!(
+                    "{path}: expected at least {} protected cases, found {}",
+                    old_count + added,
+                    after.len()
+                )
+            });
+        for (before, after) in before.iter().zip(current_historical) {
             assert_eq!(before.title, after.title, "{path}");
             assert_eq!(before.expected, after.expected, "{}", before.title);
             let statements = equivalent(&after.source, &before.source);
             assertions += common::assertions::protected_assertions(&statements).len();
             historical += 1;
         }
-        for case in &after[old_count..] {
+        for case in own_additions {
             let explicit = header.replace_all(&case.source, "$1($2) =>");
             assert_ne!(case.source, explicit, "{}", case.title);
             let statements = equivalent(&case.source, &explicit);

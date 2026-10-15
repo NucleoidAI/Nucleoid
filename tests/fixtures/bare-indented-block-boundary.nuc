@@ -1,2 +1,2 @@
-def f amount: int, other:
+def f amount: int, other,:
     return amount

@@ -217,7 +217,7 @@ fn formerly_rejected_typed_arrow_inputs_now_have_positive_equivalent_coverage() 
 #[test]
 fn every_unsupported_typed_prefix_keeps_the_parameter_boundary_position() {
     for source in [
-        "def f amount: int, other:\n    return amount",
+        "def f amount: int, other,:\n    return amount",
         "def f amount: int: return amount",
         "def f amount: int: { return amount }",
         "def f amount: int { return amount }",
@@ -549,7 +549,7 @@ fn typed_redefinition_failures_and_unsupported_headers_preserve_rollback() {
         assert!(!runtime.graph.contains(&NodeKey::variable("missing")));
         for header in [
             "def reading amount: int, other, => amount",
-            "def reading amount: int, other:\n    return amount",
+            "def reading amount: int, other,:\n    return amount",
             "def reading amount: int\n=> amount",
         ] {
             let error = runtime.run(&format!("saved = 3\n{header}")).unwrap_err();

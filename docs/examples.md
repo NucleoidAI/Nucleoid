@@ -1745,7 +1745,8 @@ assert(result, 9)
   The colon must immediately lead to `Newline` or `Indent`, and the first
   non-newline/non-semicolon token from that body break must be a real `Indent`.
   Blank/comment lines and normal suite layout remain valid; `:;` does not qualify.
-- Typed/mixed multiple bare block headers, inline/braced bare suites, trailing bare
+- NUC30 separately adds typed/mixed multiple indented block headers below;
+  NUC28's untyped forms remain unchanged. Inline/braced bare suites, trailing bare
   commas, defaults, destructuring, rest and return annotations remain unsupported.
   Ordinary indented bodies may contain existing branches and inner blocks.
 - All parenthesized forms, NUC27 arrows and single typed/untyped guards remain
@@ -1776,7 +1777,8 @@ assert(result, 9)
   binding are unchanged, with no runtime type enforcement.
 - Require the complete immediate comma-separated sequence followed by `=>`;
   skip no logical newline, semicolon, indentation or comment-induced break.
-  Typed/mixed multiple bare block headers, trailing bare commas, new
+  NUC29 itself adds no blocks; NUC30's separate typed/mixed indented spelling
+  follows below. Bare inline/braced suites, trailing bare commas, new
   parameter/type syntax and call-site omission are not added.
 - The named return block, body expressions, methods/init/receivers, external
   dependencies, aliases, snapshots, redefinition and transactions retain their
@@ -1784,6 +1786,44 @@ assert(result, 9)
   unchanged; blocks gain no implicit return.
 - Full grammar, exact errors and positions are in the authoritative
   [typed multiple-parameter arrow section](../nucleoid.spec.md#bare-typed-multiple-parameter-named-arrows).
+
+---
+
+## Bare typed multiple-parameter indented blocks
+
+**Typed multiple parameter blocks keep live inputs**
+
+```nuc
+bias = 1
+def total left: int, right:
+    return left + right + bias
+result = total(2, 3)
+assert(result, 6)
+bias = 4
+assert(result, 9)
+```
+
+- [NUC 30](nuc-0030.md) describes the optional spelling of
+  `def total(left: int, right):` with exactly the same indented body, including
+  methods and `init`.
+- The complete immediate list has at least two ordinary identifiers and may
+  annotate any position with the existing `Colon Identifier` metadata. At least
+  one annotation distinguishes the new forms; all-untyped lists remain NUC28.
+  Annotations do not introduce lookups, dependencies or runtime type checks.
+- Skip no logical header breaks. Immediately after the suite colon require
+  `Newline` or `Indent`, then a real `Indent` after only normal newline/semicolon
+  layout; `:;` never qualifies. Blank/comment lines remain suite layout.
+- A final untyped parameter's following colon is the suite delimiter. A final
+  typed parameter has its annotation colon/name and a separate suite colon.
+  The unchanged suite parser owns that final colon and the entire body.
+- Keep every accepted parenthesized/single/multiple form, NUC24 typed blocks
+  and NUC29 arrows. Inline/braced bare suites, trailing commas, richer
+  parameter/type syntax, return annotations and call-site changes are not added.
+- Multiple statements, branches, nesting, explicit/bare/no returns, local
+  shadowing, noncapturing scope, receivers/init/super, aliases/snapshots, reactive
+  inputs, graph dependencies and rollback retain the parenthesized behavior.
+- Full grammar and exact diagnostics are in the authoritative
+  [typed multiple-parameter block section](../nucleoid.spec.md#bare-typed-multiple-parameter-indented-block-definitions).
 
 ---
 
