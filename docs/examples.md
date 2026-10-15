@@ -1969,6 +1969,33 @@ assert(eased, 1)
 - Equal/reversed bounds, nonfinite values, coercion and deferred reads follow
   the existing arithmetic composition without validation or shortcuts.
 
+**Floor fractional parts preserve negative and rounded endpoints**
+
+```nuc
+value = -2.75
+whole = Math.floor(value)
+fraction = Math.fract(value)
+assert(whole, -3)
+assert(fraction, 0.25)
+value = 0.5
+assert(whole, 0)
+assert(fraction, 0.5)
+value = 2
+assert(whole, 2)
+assert(fraction, 0)
+value = -0.00000000000000000001
+assert(whole, -1)
+assert(fraction, 1)
+```
+
+- Accepted [NUC 36](nuc-0036.md) adds only static `Math.fract(value)`;
+  the existing `value - Math.floor(value)` remains valid and equivalent.
+- Convert intrinsically, then compute floor and subtraction in that order.
+  The tiny negative endpoint rounds to exactly one without clamping; no strict
+  `[0, 1)` guarantee is made. Independent floor controls remain unchanged.
+- Nonfinite values, coercion, omitted inputs, ignored-extra reads/effects,
+  deferred properties, transactions and recovery retain the existing machinery.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

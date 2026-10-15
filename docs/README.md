@@ -1184,6 +1184,62 @@ assert(eased, 0.27520751953125)
 
 ---
 
+## Reactive fractional part
+
+### Floor fractional part relationships stay live
+
+```
+class Signal
+signal = Signal()
+signal.sample = 1.75
+whole = Math.floor(signal.sample)
+fraction = Math.fract(signal.sample)
+assert(whole, 1)
+assert(fraction, 0.75)
+signal.sample = -1.5
+assert(whole, -2)
+assert(fraction, 0.5)
+signal.sample = 4.125
+assert(fraction, 0.125)
+```
+
+- This is the sealed `tests/reference.md` entry, omitting only its title
+  comment; `whole = Math.floor(signal.sample)` stays independent.
+- Accepted [NUC 36](nuc-0036.md) adds only unshadowed static
+  `Math.fract(value)`. The authoritative
+  [fractional-part section](../nucleoid.spec.md#reactive-fractional-part)
+  and its five entries define the accepted contract.
+- After Math's unchanged any-supplied-`Undefined` gate, convert the first value
+  intrinsically with `Value::to_number`; omission supplies numeric NaN.
+- Compute separate ordinary `floor = first.floor()` and `first - floor`, in
+  that order. The accepted `value - Math.floor(value)` remains available.
+  Do not use host `f64::fract`, truncation, remainder, sign correction,
+  absolute value, conversion skips, normalization or result clamping.
+- Negative fractions subtract floor: `-1.25` yields `0.75`. Tiny negative
+  input `-0.00000000000000000001` can round to exactly one; the result has no
+  strict `[0, 1)` guarantee. Infinities yield numeric NaN by subtraction.
+- Expected NaNs use classification; every other result, including zero, matches
+  independent accepted arithmetic/floor controls by bits, without a portable
+  NaN-payload or zero-sign promise.
+- Literal null converts to zero without overriding live assignment or
+  parameter-null deferral. Numbers, booleans, strings, lists and dates retain
+  existing conversion; nonnumeric values produce numeric NaN, not new errors.
+- Every supplied expression runs once left to right, including ignored extras.
+  Extra values are not converted, but retain effects, reads, dependencies,
+  strict errors and the supplied-Undefined gate, deletion and recovery.
+- Intrinsic conversion and host floor never invoke or track shadowable
+  `Number` or `Math.floor`. State/local Math shadowing and ordinary `.Math`
+  members keep lookup; reading `Math.fract` as a value remains unsupported/
+  Undefined, not a first-class callable.
+- Wrappers, frames, receivers, scopes, class rules, property deletion,
+  graph transactions, rollback, error positions and recovery are unchanged.
+  Unknown methods and `Math.random()` retain their exact inherited errors.
+- No sibling Math arm/helper/control, accepted syntax, parser, lexer, AST,
+  generator, CLI implementation, API/representation, dependency, version,
+  MSRV or resource limit changes. Inherited scope limitations remain.
+
+---
+
 ## 12. Reasoning Operations
 
 - `why reference` selects the reference and its transitive dependencies.

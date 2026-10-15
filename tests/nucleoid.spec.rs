@@ -7218,6 +7218,210 @@ throw "ROLLBACK""#), "ROLLBACK");
 # return: 0.103515625"#);
 }
 
+/// Nucleoid keeps floor fractional parts reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_floor_fractional_parts_reactive() {
+    let mut run = runner();
+    run("value = 2.75");
+    run("whole = Math.floor(value)");
+    run("fraction = Math.fract(value)");
+    assert_eq!(run("whole"), 2);
+    assert_eq!(run("fraction"), 0.75);
+    run("value = -1.25");
+    assert_eq!(run("whole"), -2);
+    assert_eq!(run("fraction"), 0.75);
+    run("value = 4.125");
+    assert_eq!(run("whole"), 4);
+    assert_eq!(run("fraction"), 0.125);
+    run("value = -2");
+    assert_eq!(run("whole"), -2);
+    assert_eq!(run("fraction"), 0);
+    run("value = 0");
+    assert_eq!(run("whole"), 0);
+    assert_eq!(run("fraction"), 0);
+    run("value = -0");
+    assert_eq!(run("whole"), 0);
+    assert_eq!(run("fraction"), 0);
+    run("value = 1.5");
+    assert_eq!(run("whole"), 1);
+    assert_eq!(run("fraction"), 0.5);
+    run(r#"fraction
+
+# return: 0.5"#);
+}
+
+/// Nucleoid preserves numeric coercion while computing floor fractional parts
+#[rustfmt::skip]
+#[test]
+fn preserves_numeric_coercion_while_computing_floor_fractional_parts() {
+    let mut run = runner();
+    run(r#"value = " 2.75 ""#);
+    run("whole = Math.floor(value)");
+    run("fraction = Math.fract(value)");
+    assert_eq!(run("whole"), 2);
+    assert_eq!(run("fraction"), 0.75);
+    run("value = true");
+    assert_eq!(run("whole"), 1);
+    assert_eq!(run("fraction"), 0);
+    run("value = false");
+    assert_eq!(run("whole"), 0);
+    assert_eq!(run("fraction"), 0);
+    run("value = []");
+    assert_eq!(run("whole"), 0);
+    assert_eq!(run("fraction"), 0);
+    run(r#"value = ["3.125"]"#);
+    assert_eq!(run("whole"), 3);
+    assert_eq!(run("fraction"), 0.125);
+    run("value = Date(1234)");
+    assert_eq!(run("whole"), 1234);
+    assert_eq!(run("fraction"), 0);
+    run("value = [1, 2]");
+    assert_eq!(run("Number.isNaN(whole)"), true);
+    assert_eq!(run("Number.isNaN(fraction)"), true);
+    run(r#"value = "not-a-number""#);
+    assert_eq!(run("Number.isNaN(whole)"), true);
+    assert_eq!(run("Number.isNaN(fraction)"), true);
+}
+
+/// Nucleoid preserves nonfinite fractional parts omissions and rounded endpoints
+#[rustfmt::skip]
+#[test]
+fn preserves_nonfinite_fractional_parts_omissions_and_rounded_endpoints() {
+    let mut run = runner();
+    run("value = -0.00000000000000000001");
+    run("whole = Math.floor(value)");
+    run("fraction = Math.fract(value)");
+    assert_eq!(run("whole"), -1);
+    assert_eq!(run("fraction"), 1);
+    run("value = Number.POSITIVE_INFINITY");
+    {
+        let actual = run("whole");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Number.isNaN(fraction)"), true);
+    run("value = Number.NEGATIVE_INFINITY");
+    {
+        let actual = run("whole");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Number.isNaN(fraction)"), true);
+    run("value = Number.NaN");
+    assert_eq!(run("Number.isNaN(whole)"), true);
+    assert_eq!(run("Number.isNaN(fraction)"), true);
+    run("value = Number.MAX_VALUE");
+    {
+        let actual = run("whole");
+        let expected = run("(Number.MAX_VALUE)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("fraction"), 0);
+    run("value = -Number.MAX_VALUE");
+    {
+        let actual = run("whole");
+        let expected = run("(-Number.MAX_VALUE)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("fraction"), 0);
+    run("empty = Math.fract()");
+    assert_eq!(run("Number.isNaN(empty)"), true);
+    run("half = 0.5");
+    run("withExtra = Math.fract(half, 99)");
+    run("ignored = Number.NaN");
+    run("withIgnored = Math.fract(half, ignored)");
+    assert_eq!(run("half"), 0.5);
+    assert_eq!(run("withExtra"), 0.5);
+    assert_eq!(run("withIgnored"), 0.5);
+    run(r#"ignored = "not-a-number""#);
+    assert_eq!(run("withIgnored"), 0.5);
+}
+
+/// Nucleoid applies floor fractional parts to live class rules
+#[rustfmt::skip]
+#[test]
+fn applies_floor_fractional_parts_to_live_class_rules() {
+    let mut run = runner();
+    run("class Reading");
+    run("$Reading.whole = Math.floor($Reading.sample)");
+    run("$Reading.fraction = Math.fract($Reading.sample)");
+    run("first = Reading()");
+    run("second = Reading()");
+    run("first.sample = 2.25");
+    run("second.sample = -1.75");
+    assert_eq!(run("first.whole"), 2);
+    assert_eq!(run("first.fraction"), 0.25);
+    assert_eq!(run("second.whole"), -2);
+    assert_eq!(run("second.fraction"), 0.25);
+    run("first.sample = -1.25");
+    assert_eq!(run("first.whole"), -2);
+    assert_eq!(run("first.fraction"), 0.75);
+    assert_eq!(run("second.fraction"), 0.25);
+    run("third = Reading()");
+    assert_eq!(run("third.whole"), serde_json::Value::Null);
+    assert_eq!(run("third.fraction"), serde_json::Value::Null);
+    run("third.sample = 8.125");
+    assert_eq!(run("third.whole"), 8);
+    assert_eq!(run("third.fraction"), 0.125);
+    run("delete first.sample");
+    assert_eq!(run("first.whole"), serde_json::Value::Null);
+    assert_eq!(run("first.fraction"), serde_json::Value::Null);
+    run("first.sample = -3.5");
+    assert_eq!(run("first.whole"), -4);
+    assert_eq!(run("first.fraction"), 0.5);
+    assert_eq!(run("Reading.length"), 3);
+}
+
+/// Nucleoid preserves deferred fractional parts and rollback
+#[rustfmt::skip]
+#[test]
+fn preserves_deferred_fractional_parts_and_rollback() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("class Sensor");
+    run("sensor = Sensor()");
+    run("value = sensor.reading");
+    run("whole = Math.floor(value)");
+    run("fraction = Math.fract(value)");
+    run("withDeferredExtra = Math.fract(value, sensor.optional)");
+    assert_eq!(run("value"), serde_json::Value::Null);
+    assert_eq!(run("whole"), serde_json::Value::Null);
+    assert_eq!(run("fraction"), serde_json::Value::Null);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("sensor.reading = 2.25");
+    assert_eq!(run("whole"), 2);
+    assert_eq!(run("fraction"), 0.25);
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    run("delete sensor.reading");
+    assert_eq!(run("value"), serde_json::Value::Null);
+    assert_eq!(run("fraction"), serde_json::Value::Null);
+    run("sensor.reading = 3.75");
+    assert_eq!(run("whole"), 3);
+    assert_eq!(run("fraction"), 0.75);
+    run("sensor.optional = 99");
+    assert_eq!(run("withDeferredExtra"), 0.75);
+    assert_eq!(run_error(r#"sensor.reading = 5.5
+throw "ROLLBACK""#), "ROLLBACK");
+    assert_eq!(run("sensor.reading"), 3.75);
+    assert_eq!(run("whole"), 3);
+    assert_eq!(run("fraction"), 0.75);
+    assert_eq!(run("withDeferredExtra"), 0.75);
+    assert_eq!(run_error("sensor.reading = missing"), "ReferenceError: missing is not defined");
+    assert_eq!(run("sensor.reading"), 3.75);
+    run("delete sensor.optional");
+    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
+    assert_eq!(run("fraction"), 0.75);
+    run("sensor.optional = [1, 2]");
+    assert_eq!(run("withDeferredExtra"), 0.75);
+    run("sensor.reading = 2.25");
+    assert_eq!(run("whole"), 2);
+    assert_eq!(run("fraction"), 0.25);
+    assert_eq!(run("withDeferredExtra"), 0.25);
+    run(r#"fraction
+
+# return: 0.25"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

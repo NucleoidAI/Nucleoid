@@ -83,6 +83,10 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
         "abs" => first.abs(),
         "ceil" => first.ceil(),
         "floor" => first.floor(),
+        "fract" => {
+            let floor = first.floor();
+            first - floor
+        }
         "round" => {
             // Compare the fraction directly: host `round` can lose precision
             // just below 0.5. Truncation also preserves negative zero.
@@ -518,6 +522,110 @@ mod tests {
         let weighted = binary(BinaryOp::Multiply, &t, &offset).unwrap();
         let polynomial = binary(BinaryOp::Add, &weighted, &Value::number(10)).unwrap();
         binary(BinaryOp::Multiply, &cube, &polynomial).unwrap()
+    }
+
+    #[test]
+    fn fract_matches_independent_floor_subtraction_for_every_value_kind() {
+        for value in values() {
+            let floor = math("floor", std::slice::from_ref(&value)).unwrap();
+            let expected = binary(BinaryOp::Subtract, &value, &floor).unwrap();
+            assert_smoothing_same(
+                &math("fract", std::slice::from_ref(&value)).unwrap(),
+                &expected,
+            );
+        }
+    }
+
+    #[test]
+    fn fract_preserves_negative_rounding_subnormal_nonfinite_and_zero_bits() {
+        let one = 1.0_f64.to_bits();
+        let half = 0.5_f64.to_bits();
+        for number in [
+            -f64::MAX,
+            -9_007_199_254_740_991.0,
+            -4_503_599_627_370_495.5,
+            -3.0,
+            -2.75,
+            -1.25,
+            -1.0,
+            -f64::from_bits(one - 1),
+            -0.5,
+            -1e-20,
+            -f64::MIN_POSITIVE,
+            -f64::from_bits(1),
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            f64::EPSILON,
+            0.1,
+            f64::from_bits(half - 1),
+            0.5,
+            f64::from_bits(half + 1),
+            f64::from_bits(one - 1),
+            1.0,
+            f64::from_bits(one + 1),
+            1.25,
+            4_503_599_627_370_495.5,
+            9_007_199_254_740_991.0,
+            f64::MAX,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NAN,
+            f64::from_bits(0x7ff8_0000_0000_0042),
+            f64::from_bits(0xfff8_0000_0000_0042),
+        ] {
+            let value = Value::Number(number);
+            let floor = math("floor", std::slice::from_ref(&value)).unwrap();
+            let expected = binary(BinaryOp::Subtract, &value, &floor).unwrap();
+            assert_smoothing_same(&math("fract", &[value]).unwrap(), &expected);
+        }
+        for (input, expected) in [(-1.25, 0.75), (-1e-20, 1.0), (2.75, 0.75)] {
+            assert_same(
+                &math("fract", &[Value::Number(input)]).unwrap(),
+                &Value::Number(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn fract_full_bit_samples_match_the_accepted_arithmetic_control() {
+        let mut bits = 0x36fa_1c70_8e25_d49b_u64;
+        for _ in 0..4_096 {
+            bits = bits
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let value = Value::Number(f64::from_bits(bits));
+            let floor = math("floor", std::slice::from_ref(&value)).unwrap();
+            let expected = binary(BinaryOp::Subtract, &value, &floor).unwrap();
+            assert_smoothing_same(&math("fract", &[value]).unwrap(), &expected);
+        }
+    }
+
+    #[test]
+    fn fract_omission_and_all_extra_values_keep_the_existing_undefined_gate() {
+        assert_smoothing_same(&math("fract", &[]).unwrap(), &Value::Number(f64::NAN));
+        let values = values();
+        for value in &values {
+            let floor = math("floor", std::slice::from_ref(value)).unwrap();
+            let fraction = binary(BinaryOp::Subtract, value, &floor).unwrap();
+            for extra in &values {
+                let expected = if value.is_undefined() || extra.is_undefined() {
+                    &Value::Undefined
+                } else {
+                    &fraction
+                };
+                let supplied = [value.clone(), extra.clone(), Value::number(99)];
+                assert_smoothing_same(&math("fract", &supplied[..2]).unwrap(), expected);
+                assert_smoothing_same(&math("fract", &supplied).unwrap(), expected);
+            }
+        }
+        for position in 0..5 {
+            let mut supplied = vec![Value::number(0.375); 5];
+            supplied[position] = Value::Undefined;
+            assert_same(&math("fract", &supplied).unwrap(), &Value::Undefined);
+        }
+        assert!(math_constant("fract").is_none());
     }
 
     #[test]

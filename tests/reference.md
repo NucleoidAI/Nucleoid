@@ -1585,4 +1585,21 @@ value = 6
 assert(eased, 0.896484375)
 upper = 16
 assert(eased, 0.27520751953125)
+
+---
+
+# Nucleoid preserves floor fractional part relationships
+
+class Signal
+signal = Signal()
+signal.sample = 1.75
+whole = Math.floor(signal.sample)
+fraction = Math.fract(signal.sample)
+assert(whole, 1)
+assert(fraction, 0.75)
+signal.sample = -1.5
+assert(whole, -2)
+assert(fraction, 0.5)
+signal.sample = 4.125
+assert(fraction, 0.125)
 ```

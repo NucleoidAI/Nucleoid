@@ -979,6 +979,63 @@ statement positions; caught values and transaction recovery are unchanged.
   unit-control node. Immediate graphs and whole RHS ASTs intentionally differ;
   asserted controls, values and transitive behavior must agree.
 
+## Reactive fractional part
+
+- Accepted [NUC 36](docs/nuc-0036.md) adds only the unshadowed static
+  signature `Math.fract(value)`, the intrinsic numeric composition of
+  `value - Math.floor(value)`, not a truncation-based fractional part.
+- Reuse Math's existing any-supplied-`Undefined` gate, including extras, before
+  its existing first-input intrinsic `Value::to_number` conversion.
+  An omitted first argument is numeric `NaN`, not a supplied `Undefined`.
+- Compute `floor = first.floor()`, then `result = first - floor`, as separate
+  ordinary `f64` operations in exactly that order. Do not use host
+  `f64::fract`, truncation, remainder, absolute value, sign correction,
+  conversion skips, normalization or result clamping.
+- Negative finite fractions subtract floor: `-1.25` yields `0.75`.
+  Both infinities yield numeric `NaN` by subtraction; numeric NaNs remain NaN.
+  Integers, subnormals and signed zeros follow the exact accepted composition.
+- A tiny negative input such as `-0.00000000000000000001` can round to
+  exactly `1`; there is no strict `[0, 1)` result guarantee or endpoint clamp.
+  Compare expected NaNs by classification and every other numeric result,
+  including zeros, by bits against independent accepted arithmetic/floor
+  controls. No portable NaN-payload or zero-sign convention is introduced.
+- Numbers retain their values, literal null converts to zero, booleans to
+  zero/one, trimmed strings and empty/singleton lists retain existing numeric
+  conversion, and dates contribute milliseconds. Other nonnumeric conversions
+  produce numeric `NaN`, not a new type error.
+- Every supplied expression runs once, left to right, including ignored extras.
+  Extra values are not numerically converted, but their reads, effects,
+  dependencies, strict errors and the supplied-`Undefined` gate remain.
+- Supplied `Undefined` returns `Undefined` before conversion. Live assignment
+  and parameter-null deferral still take precedence over intrinsic literal-null
+  conversion; missing properties, deletion and later recovery remain reactive.
+- Strict unknown identifiers retain `ReferenceError("<name> is not defined")`,
+  including extras and expressions after an undefined property. Preserve
+  statement positions, caught values, graph transactions, rollback and recovery.
+- Do not resolve, invoke or track shadowable `Number` or `Math.floor` bindings.
+  Use intrinsic conversion and host floor, not public method dispatch.
+- State/local `Math` bindings keep shadowing the namespace. Ordinary `.Math`
+  members keep lookup; reading `Math.fract` as a value remains unsupported/
+  `Undefined`, not a callable reference. Wrappers, call frames, receivers,
+  per-instance class rules and scopes use unchanged machinery.
+- All existing Math arms, numeric helpers, constants and controls stay
+  unchanged. Unknown methods retain `TypeError("Math.<name> is not a function")`;
+  `Math.random()` retains `TypeError("Math.random is not supported")`, after
+  the same undefined gate. Numeric `Math = 7` retains the ordinary
+  `TypeError("number.fract is not a function")` when called through that value.
+- No parser, lexer, AST, generator, CLI implementation, public API/
+  representation, dependency, version, MSRV or resource-limit change is added.
+  Accepted syntax and inherited noncapture/parameter-local limitations remain.
+- The five entries titled `Nucleoid keeps floor fractional parts reactive`,
+  `Nucleoid preserves numeric coercion while computing floor fractional parts`,
+  `Nucleoid preserves nonfinite fractional parts omissions and rounded
+  endpoints`, `Nucleoid applies floor fractional parts to live class rules`,
+  and `Nucleoid preserves deferred fractional parts and rollback` trace this
+  contract with independent `whole = Math.floor(...)` controls.
+- New intrinsic RHS ASTs intentionally differ from arithmetic/floor controls;
+  values, independent controls and transitive behavior must agree, without
+  requiring identical whole-new-program ASTs or immediate graph shapes.
+
 ## Implicit iterator indented loops
 
 - `for NAME:` with a genuine indented body is optionally exactly
@@ -10061,4 +10118,186 @@ assert(unit, 0.25)
 assert(eased, 0.103515625)
 eased
 # return: 0.103515625
+
+---
+
+# Nucleoid keeps floor fractional parts reactive
+
+value = 2.75
+whole = Math.floor(value)
+fraction = Math.fract(value)
+assert(whole, 2)
+assert(fraction, 0.75)
+value = -1.25
+assert(whole, -2)
+assert(fraction, 0.75)
+value = 4.125
+assert(whole, 4)
+assert(fraction, 0.125)
+value = -2
+assert(whole, -2)
+assert(fraction, 0)
+value = 0
+assert(whole, 0)
+assert(fraction, 0)
+value = -0
+assert(whole, 0)
+assert(fraction, 0)
+value = 1.5
+assert(whole, 1)
+assert(fraction, 0.5)
+fraction
+# return: 0.5
+
+---
+
+# Nucleoid preserves numeric coercion while computing floor fractional parts
+
+value = " 2.75 "
+whole = Math.floor(value)
+fraction = Math.fract(value)
+assert(whole, 2)
+assert(fraction, 0.75)
+value = true
+assert(whole, 1)
+assert(fraction, 0)
+value = false
+assert(whole, 0)
+assert(fraction, 0)
+value = []
+assert(whole, 0)
+assert(fraction, 0)
+value = ["3.125"]
+assert(whole, 3)
+assert(fraction, 0.125)
+value = Date(1234)
+assert(whole, 1234)
+assert(fraction, 0)
+value = [1, 2]
+assert(Number.isNaN(whole), true)
+assert(Number.isNaN(fraction), true)
+value = "not-a-number"
+assert(Number.isNaN(whole), true)
+assert(Number.isNaN(fraction), true)
+
+---
+
+# Nucleoid preserves nonfinite fractional parts omissions and rounded endpoints
+
+value = -0.00000000000000000001
+whole = Math.floor(value)
+fraction = Math.fract(value)
+assert(whole, -1)
+assert(fraction, 1)
+value = Number.POSITIVE_INFINITY
+assert(whole, Number.POSITIVE_INFINITY)
+assert(Number.isNaN(fraction), true)
+value = Number.NEGATIVE_INFINITY
+assert(whole, Number.NEGATIVE_INFINITY)
+assert(Number.isNaN(fraction), true)
+value = Number.NaN
+assert(Number.isNaN(whole), true)
+assert(Number.isNaN(fraction), true)
+value = Number.MAX_VALUE
+assert(whole, Number.MAX_VALUE)
+assert(fraction, 0)
+value = -Number.MAX_VALUE
+assert(whole, -Number.MAX_VALUE)
+assert(fraction, 0)
+empty = Math.fract()
+assert(Number.isNaN(empty), true)
+half = 0.5
+withExtra = Math.fract(half, 99)
+ignored = Number.NaN
+withIgnored = Math.fract(half, ignored)
+assert(half, 0.5)
+assert(withExtra, 0.5)
+assert(withIgnored, 0.5)
+ignored = "not-a-number"
+assert(withIgnored, 0.5)
+
+---
+
+# Nucleoid applies floor fractional parts to live class rules
+
+class Reading
+$Reading.whole = Math.floor($Reading.sample)
+$Reading.fraction = Math.fract($Reading.sample)
+first = Reading()
+second = Reading()
+first.sample = 2.25
+second.sample = -1.75
+assert(first.whole, 2)
+assert(first.fraction, 0.25)
+assert(second.whole, -2)
+assert(second.fraction, 0.25)
+first.sample = -1.25
+assert(first.whole, -2)
+assert(first.fraction, 0.75)
+assert(second.fraction, 0.25)
+third = Reading()
+assert(third.whole, null)
+assert(third.fraction, null)
+third.sample = 8.125
+assert(third.whole, 8)
+assert(third.fraction, 0.125)
+delete first.sample
+assert(first.whole, null)
+assert(first.fraction, null)
+first.sample = -3.5
+assert(first.whole, -4)
+assert(first.fraction, 0.5)
+assert(Reading.length, 3)
+
+---
+
+# Nucleoid preserves deferred fractional parts and rollback
+
+class Sensor
+sensor = Sensor()
+value = sensor.reading
+whole = Math.floor(value)
+fraction = Math.fract(value)
+withDeferredExtra = Math.fract(value, sensor.optional)
+assert(value, null)
+assert(whole, null)
+assert(fraction, null)
+assert(withDeferredExtra, null)
+sensor.reading = 2.25
+assert(whole, 2)
+assert(fraction, 0.25)
+assert(withDeferredExtra, null)
+delete sensor.reading
+assert(value, null)
+assert(fraction, null)
+sensor.reading = 3.75
+assert(whole, 3)
+assert(fraction, 0.75)
+sensor.optional = 99
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = 5.5
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 3.75)
+assert(whole, 3)
+assert(fraction, 0.75)
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(sensor.reading, 3.75)
+delete sensor.optional
+assert(withDeferredExtra, null)
+assert(fraction, 0.75)
+sensor.optional = [1, 2]
+assert(withDeferredExtra, 0.75)
+sensor.reading = 2.25
+assert(whole, 2)
+assert(fraction, 0.25)
+assert(withDeferredExtra, 0.25)
+fraction
+# return: 0.25
 ```

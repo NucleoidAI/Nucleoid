@@ -662,6 +662,25 @@ assert(eased, 0.896484375)
   result, which can round beyond the unit interval. Existing numeric coercion,
   special values, deferred reads, argument effects and rollback are preserved.
 
+**Floor fractional parts keep negative inputs live**
+
+```nuc
+value = -1.25
+whole = Math.floor(value)
+fraction = Math.fract(value)
+assert(whole, -2)
+assert(fraction, 0.75)
+value = 3.5
+assert(fraction, 0.5)
+```
+
+- Accepted [NUC 36](docs/nuc-0036.md) adds static `Math.fract(value)` as
+  intrinsic numeric conversion followed by floor and subtraction, retaining
+  the independent `whole` control and accepted floor-subtraction spelling.
+- Negative fractions subtract floor, not truncation. Tiny negative inputs can
+  round to exactly one, so the result is not promised strictly in `[0, 1)`.
+  Numeric coercion, ignored-extra effects/reads, deferral and rollback remain.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
