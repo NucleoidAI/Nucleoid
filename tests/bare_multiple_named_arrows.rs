@@ -157,6 +157,11 @@ fn lookahead_uses_existing_tokens_and_preserves_body_and_statement_boundaries() 
 
 #[test]
 fn incomplete_or_unsupported_lists_preserve_parenthesized_parser_errors_and_positions() {
+    // NUC28 adds only the real-indented block counterpart, not inline suites.
+    equivalent(
+        "def f left, right:\n    return left",
+        "def f(left, right):\n    return left",
+    );
     for header in [
         "left, right",
         "left, right, => left",
@@ -176,7 +181,9 @@ fn incomplete_or_unsupported_lists_preserve_parenthesized_parser_errors_and_posi
         "left, $Right => left",
         "left, 1 => left",
         "left, \"right\" => left",
-        "left, right:\n    return left",
+        "left, right:\nreturn left",
+        "left, right:;\n    return left",
+        "left, right,:\n    return left",
         "left, right: return left",
         "left, right: { return left }",
         "left, right -> int => left",
@@ -443,6 +450,10 @@ assert(frozen, 16)
 
 #[test]
 fn failed_redefinitions_and_invalid_headers_preserve_transactions_and_recovery() {
+    equivalent(
+        "def reading left, right:\n    return left",
+        "def reading(left, right):\n    return left",
+    );
     let mut runtimes = [Runtime::new(), Runtime::new()];
     for (runtime, definition) in runtimes.iter_mut().zip([
         "def reading left, right => source + left + right",
@@ -465,7 +476,7 @@ fn failed_redefinitions_and_invalid_headers_preserve_transactions_and_recovery()
         for header in [
             "def reading left, right, => left",
             "def reading left, right: int => left",
-            "def reading left, right:\n    return left",
+            "def reading left, right:\nreturn left",
             "def reading left,\nright => left",
         ] {
             let error = runtime.run(&format!("source = 99\n{header}")).unwrap_err();

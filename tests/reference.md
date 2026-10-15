@@ -130,7 +130,7 @@ $Vehicle.registered = true
 
 # There is a Truck type, which is a subtype of Vehicle
 class Truck: Vehicle
-    def init(make, payload):
+    def init make, payload:
         super(make)
         this.payload = payload
 
@@ -728,7 +728,7 @@ class Vehicle(make: str):
 
 # There is a Truck type, which is a subtype of Vehicle
 class Truck: Vehicle
-    def init(make, payload):
+    def init make, payload:
         super(make)
         this.payload = payload
 
@@ -1472,4 +1472,16 @@ scale = 2
 assert(result, 24)
 width = 5
 assert(result, 40)
+
+---
+
+# Nucleoid preserves bare multiple parameter block relationships
+
+scale = 2
+def area width, height:
+    return width * height * scale
+result = area(3, 4)
+assert(result, 24)
+scale = 3
+assert(result, 36)
 ```

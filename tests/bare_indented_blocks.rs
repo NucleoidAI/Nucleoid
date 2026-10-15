@@ -121,6 +121,11 @@ fn identifier_colon_and_indentation_use_only_existing_tokens() {
 
 #[test]
 fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
+    // NUC28 adds this exact formerly unsupported indented header.
+    equivalent(
+        "def f amount, other:\n    return amount",
+        "def f(amount, other):\n    return amount",
+    );
     for source in [
         "def f amount:",
         "def f amount:\n",
@@ -133,7 +138,9 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
         "def f amount: { return amount }",
         "def f amount:;\n    return amount",
         "def f amount { return amount }",
-        "def f amount, other:\n    return amount",
+        "def f amount, other:\nreturn amount",
+        "def f amount, other:;\n    return amount",
+        "def f amount, other,:\n    return amount",
         "def f amount other:\n    return amount",
         "def f amount = 1:\n    return amount",
         "def f amount -> int:\n    return amount",

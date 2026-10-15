@@ -186,8 +186,9 @@ assert(square(4), 16)
 [NUC 19](docs/nuc-0019.md) specifies the same optional single-untyped-identifier
 spelling before an indented colon suite, including methods and `init`.
 `def square(amount):` with the same body remains valid. The colon must lead to
-a real indented body; inline/brace suites, empty and multiple-parameter
-signatures retain their parentheses. Typed single-parameter indented blocks
+a real indented body; inline/brace suites, empty and typed/mixed multiple-parameter
+signatures retain their parentheses. The optional untyped multiple-parameter
+indented spelling is demonstrated below. Typed single-parameter indented blocks
 have the separate optional spelling below. Block returns, parameter binding, live
 dependencies and runtime behavior are unchanged.
 
@@ -366,11 +367,32 @@ assert(scaled(2, 3, 4), 20)
 comma-separated list of two or more untyped ordinary identifiers immediately
 followed by `=>` on the same logical header line, including methods and `init`.
 `def add(left, right) => left + right` remains valid and exactly equivalent.
-Trailing bare commas, typed/mixed lists, bare multiple-parameter blocks,
-defaults, destructuring, rest parameters and return annotations are not added.
+Trailing bare commas, typed/mixed lists, bare inline/braced blocks, defaults,
+destructuring, rest parameters and return annotations are not added.
 No logical newline, semicolon or comment-induced break is skipped. Calls retain
 their parentheses and anonymous arrows retain their existing grammar; the
 single-parameter typed and block alternatives above remain unchanged.
+
+**Indented blocks can omit parentheses around multiple parameters**
+
+```nuc
+def add left, right:
+    return left + right
+assert(add(2, 3), 5)
+```
+
+[NUC 28](docs/nuc-0028.md) adds the optional spelling of
+`def add(left, right):` with the same indented body, including methods and `init`.
+The complete comma-separated list contains two or more untyped ordinary
+identifiers on one logical header line. After the colon require an immediate
+newline or indent and a real indent after only normal newline/semicolon layout;
+a colon immediately followed by a semicolon does not qualify. Blank/comment
+lines before a genuine body keep their existing grammar.
+Typed/mixed multiple bare headers, inline/braced bare suites, trailing bare
+commas and logical breaks within the header remain unsupported. Parenthesized
+forms, arrows, single-parameter guards and calls are unchanged. Block returns,
+scope, receivers, live relationships, snapshots and rollback retain the
+parenthesized behavior; there is no implicit last-expression return.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
 reports its downstream impact. Both update when relationships are rewritten,

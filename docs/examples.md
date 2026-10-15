@@ -275,7 +275,7 @@ assert(i2, 7)
 reading = 7
 unit = "C"
 
-def pack(reading, unit):
+def pack reading, unit:
     return { reading, unit }
 
 report = pack(reading, unit)
@@ -363,7 +363,7 @@ class Person(name: str):
     this.name = name
 
 class Student: Person
-    def init(name, school):
+    def init name, school:
         super(name)
         this.name = name
         this.school = school
@@ -1714,10 +1714,41 @@ Under [accepted NUC 27](nuc-0027.md),
 equivalent. Only the complete comma-separated list of at least two untyped
 ordinary identifiers immediately followed by `=>` on the same logical line
 qualifies. No logical newline, semicolon or comment-induced break is skipped.
-Typed/mixed lists, bare multiple-parameter blocks, defaults, destructuring,
-rest parameters, trailing bare commas and return annotations are not added.
+Typed/mixed lists, bare inline/braced blocks, defaults, destructuring, rest
+parameters, trailing bare commas and return annotations are not added.
 Calls and anonymous arrows are unchanged; parenthesized, single-parameter
 typed-arrow and typed/untyped single-parameter block alternatives remain valid.
+
+---
+
+## Bare multiple-parameter indented blocks
+
+**Multiple parameter blocks keep live inputs**
+
+```nuc
+bias = 1
+def total left, right:
+    return left + right + bias
+result = total(2, 3)
+assert(result, 6)
+bias = 4
+assert(result, 9)
+```
+
+- [NUC 28](nuc-0028.md) spells the same block as
+  `def total(left, right):` with exactly the same body; methods and `init` share
+  the same parser. Two or more untyped ordinary identifiers form the complete
+  comma-separated header immediately followed by its suite colon.
+- Skip no logical newline, semicolon or comment-induced break inside the header.
+  The colon must immediately lead to `Newline` or `Indent`, and the first
+  non-newline/non-semicolon token from that body break must be a real `Indent`.
+  Blank/comment lines and normal suite layout remain valid; `:;` does not qualify.
+- Typed/mixed multiple bare headers, inline/braced bare suites, trailing bare
+  commas, defaults, destructuring, rest and return annotations remain unsupported.
+  Ordinary indented bodies may contain existing branches and inner blocks.
+- All parenthesized forms, NUC27 arrows and single typed/untyped guards remain
+  valid. Binding, explicit/bare/no returns, noncapturing scope, receivers,
+  snapshots, redefinition, graphs and rollback retain the existing block behavior.
 
 ---
 

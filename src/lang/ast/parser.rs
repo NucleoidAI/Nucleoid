@@ -411,6 +411,29 @@ impl Parser {
         })
     }
 
+    /// Offset of the delimiter after a complete bare list of at least two
+    /// ordinary identifiers. Inspect without consuming tokens or layout.
+    fn bare_multiple_parameter_end(&self) -> Option<usize> {
+        if !matches!(
+            (self.peek(), self.peek_at(1)),
+            (Token::Identifier(_), Token::Comma)
+        ) {
+            return None;
+        }
+
+        let mut offset = 2;
+        loop {
+            if !matches!(self.peek_at(offset), Token::Identifier(_)) {
+                return None;
+            }
+            match self.peek_at(offset + 1) {
+                Token::Arrow | Token::Colon => return Some(offset + 1),
+                Token::Comma => offset += 2,
+                _ => return None,
+            }
+        }
+    }
+
     fn function_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::Def))?;
 
@@ -436,25 +459,19 @@ impl Parser {
                     Token::Arrow
                 )
         );
-        let bare_multiple_arrow = matches!(
-            (self.peek(), self.peek_at(1)),
-            (Token::Identifier(_), Token::Comma)
-        ) && {
-            // Match the complete untyped list without consuming or
-            // skipping any layout. The initial comma requires at least
-            // two parameters; only an immediate arrow ends the header.
-            let mut offset = 2;
-            loop {
-                if !matches!(self.peek_at(offset), Token::Identifier(_)) {
-                    break false;
-                }
-                match self.peek_at(offset + 1) {
-                    Token::Arrow => break true,
-                    Token::Comma => offset += 2,
-                    _ => break false,
-                }
-            }
-        };
+        let bare_multiple_end = self.bare_multiple_parameter_end();
+        let bare_multiple_arrow =
+            bare_multiple_end.is_some_and(|end| matches!(self.peek_at(end), Token::Arrow));
+        let bare_multiple_block = bare_multiple_end.is_some_and(|end| {
+            matches!(self.peek_at(end), Token::Colon)
+                && matches!(self.peek_at(end + 1), Token::Newline | Token::Indent)
+                && self
+                    .tokens
+                    .iter()
+                    .skip(self.position + end + 1)
+                    .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
+                    .is_some_and(|spanned| spanned.token == Token::Indent)
+        });
         let bare_block = matches!(self.peek(), Token::Identifier(_))
             && match self.peek_at(1) {
                 Token::Colon if matches!(self.peek_at(2), Token::Newline | Token::Indent) => {
@@ -494,6 +511,22 @@ impl Parser {
             while self.eat(&Token::Comma) {
                 parameters.push(self.parameter()?);
             }
+            parameters
+        } else if bare_multiple_block {
+            let mut parameters = Vec::new();
+            loop {
+                let Token::Identifier(name) = self.advance() else {
+                    unreachable!("lookahead checked every bare parameter identifier")
+                };
+                parameters.push(Parameter {
+                    name,
+                    type_name: None,
+                });
+                if !self.eat(&Token::Comma) {
+                    break;
+                }
+            }
+            // The final colon belongs to suite(), not a type annotation.
             parameters
         } else if bare_arrow || bare_typed_block {
             vec![self.parameter()?]

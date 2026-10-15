@@ -369,7 +369,7 @@ class Shape:
 
 ```
 class Truck: Vehicle
-    def init(make, payload):
+    def init make, payload:
         super(make)
         this.payload = payload
 ```
@@ -593,13 +593,15 @@ Full detail: [NUC 7](nuc-0007.md).
 - [NUC 20](nuc-0020.md) specifies `def name amount: int => expression` as exactly `def name(amount: int) => expression` for one ordinary identifier parameter and one existing ordinary-identifier annotation, including methods and `init`.
 - [NUC 24](nuc-0024.md) describes `def name amount: int:` followed by a real indented suite as exactly `def name(amount: int):` with that same suite, including methods and `init`.
 - [Accepted NUC 27](nuc-0027.md) adds optional `def name left, right => expression`, exactly equivalent to `def name(left, right) => expression`, including methods and `init`.
+- [NUC 28](nuc-0028.md) adds optional `def name left, right:` with a real indented body, exactly equivalent to `def name(left, right):` with that same body, including methods and `init`.
 - The multiple-parameter arrow guard requires the complete immediate sequence `Identifier Comma Identifier (Comma Identifier)* Arrow` on the same logical header line. Every parameter is untyped; the non-consuming guard skips no separators or comment-induced logical breaks.
+- The multiple-parameter block guard shares the complete identifier/comma scan, ending in `Colon` instead. Require immediate `Newline` or `Indent` and then a real `Indent` after only normal newline/semicolon layout; `:;` never qualifies. The final colon and all layout/body tokens are left for the existing suite parser.
 - The typed-arrow guard requires immediate `Identifier`, `Colon`, `Identifier`, `Arrow` tokens after the required definition name. The parameter name and `type_name: Some(annotation)` metadata are unchanged; the annotation is not a resolved variable or a new runtime type constraint.
 - The typed-block guard requires immediate `Identifier`, `Colon`, `Identifier`, `Colon` tokens. The next token is `Newline` or `Indent`, and the first other token after only newline/semicolon layout is `Indent`; the guard consumes nothing before the existing parameter and suite parsers.
 - For the single-parameter untyped forms, a bare identifier must be immediately followed by `=>`, or by `:` whose body starts with a logical newline/indent and supplies a real `Indent` after normal newline/semicolon layout. The colon guard only looks ahead; the existing suite parser consumes the body.
 - No logical newline, semicolon or comment-induced logical break is skipped within a bare header. Blank/comment lines before an indented body retain the existing layout rules.
-- All parenthesized definitions remain available, including `def add(left, right) => left + right`. Nullary, typed/mixed multiple-parameter, multiline-parameter, multiple-parameter block, inline and brace-suite definitions keep their parentheses, as do calls; typed single-parameter indented blocks have the optional spelling below.
-- Bare typed inline/braced or missing-indent blocks, typed/mixed multiple-parameter arrows, multiple-parameter bare blocks, trailing bare commas, defaulted/destructured/variadic parameters, dotted/union/generic/keyword/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added; class and anonymous parameter lists keep their existing grammar.
+- All parenthesized definitions remain available, including `def add(left, right) => left + right` and `def add(left, right):` with the same indented body. Nullary, typed/mixed multiple-parameter, multiline-parameter, inline and brace-suite definitions keep their parentheses, as do calls; typed single-parameter indented blocks have the optional spelling below.
+- Bare inline/braced or missing-indent blocks, typed/mixed multiple-parameter arrows/blocks, trailing bare commas, defaulted/destructured/variadic parameters, dotted/union/generic/keyword/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added; class and anonymous parameter lists keep their existing grammar.
 - NUC18/20 single-parameter arrows and NUC19/24's exact untyped/typed indented-colon guards are unchanged; named return-block lowering, parameter metadata/order, argument binding, runtime behavior and canonical rendering remain those of the parenthesized counterparts.
 - Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines.
 - A call in an assignment depends on the function and its arguments.
@@ -645,7 +647,7 @@ assert(result, 40)
 
 - This is the executable reference's exact paired `Nucleoid preserves bare multiple parameter arrow relationships` example; `def area(width, height) => width * height * scale` remains valid and behavior-equivalent.
 - Reuse the existing named return block and expression-body parser, with no new lexer/public AST/runtime types, capture, parameter-count bound or canonical spelling.
-- `def f left, right, => left`, typed/mixed bare lists, bare multiple-parameter blocks and logical header breaks retain `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7; unsupported prefixes are not consumed.
+- `def f left, right, => left`, typed/mixed bare lists, multiple-parameter blocks without real indentation, bare inline/braced suites and logical header breaks retain `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7; unsupported prefixes are not consumed.
 - `def f left, right =>` gives `SyntaxError("Unexpected end of input")` at line 1, column 21; a final newline gives `SyntaxError("Unexpected end of line")` at line 2, column 1. Named-arrow braces remain objects; a body beginning with `(` on the header line may span physical lines.
 - Full grammar and error positions are in the authoritative [bare multiple-parameter named arrows](../nucleoid.spec.md#bare-multiple-parameter-named-arrows) section.
 
@@ -693,6 +695,25 @@ assert(double(5), 11)
 - The NUC19 untyped suite colon still belongs to the suite, never to an annotation. NUC18/20 arrows, explicit typed alternatives, class/anonymous lists, receivers/init/super, no implicit return, live references/snapshots, transactions and resource limits are unchanged.
 - Inherited parameter-dependent local and nested noncapturing failures remain paired, not repaired by this spelling.
 
+### Bare multiple parameter indented blocks
+
+```
+scale = 2
+def area width, height:
+    return width * height * scale
+result = area(3, 4)
+assert(result, 24)
+scale = 3
+assert(result, 36)
+```
+
+- This is the executable reference's exact paired `Nucleoid preserves bare multiple parameter block relationships` example; `def area(width, height):` with the same body remains valid and behavior-equivalent.
+- Two or more untyped ordinary identifiers retain their order and `type_name: None`; the complete named block AST and canonical rendering are identical to the parenthesized form. There is no parameter-count cap.
+- The body uses the existing suite grammar, including multiple statements, nested definitions, branches and existing inner inline/braced statements. Explicit returns, bare returns and no return keep their existing semantics; the latter two return `null`.
+- `def f left, right:` without a real indent, typed/mixed multiple headers, trailing bare commas, inline/braced bare suites, `:;` and logical header breaks keep `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
+- After the qualifying header, four-space-indented `return left +)` keeps `SyntaxError("Unexpected ')'")` at line 2, column 19; `return @` keeps `SyntaxError("Unexpected character '@'")` at line 2, column 12.
+- Full grammar, exact errors and positions are in the authoritative [bare multiple-parameter indented block definitions](../nucleoid.spec.md#bare-multiple-parameter-indented-block-definitions) section. Receiver/init/super behavior, shadowing, arity, live references, definition snapshots, redefinition, dependencies, graph keys, transactions and resource limits are unchanged.
+
 ### Lambdas
 
 - Three equivalent forms; parameters shadow outer names, including outer functions when the parameter is null or non-callable.
@@ -705,7 +726,7 @@ list.find(element => element == 1)
 
 - Calls over class lists depend on the population and the properties they read.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), and [NUC 24](nuc-0024.md).
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), and [NUC 28](nuc-0028.md).
 
 ---
 

@@ -143,7 +143,7 @@ fn creates_a_class_and_a_subclass() {
     run(r#"class Person(name: str):
     this.name = name"#);
     run(r#"class Student: Person
-    def init(name, school):
+    def init name, school:
         super(name)
         this.name = name
         this.school = school"#);
@@ -310,7 +310,7 @@ fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_after_i
 #[test]
 fn calls_function_in_an_assignment() {
     let mut run = runner();
-    run(r#"def multiply(first_factor, second_factor):
+    run(r#"def multiply first_factor, second_factor:
     product = first_factor * second_factor
     return product"#);
     run("x = 1");
@@ -3441,7 +3441,7 @@ fn restores_enclosing_null_tracking_after_failed_local_assignments() {
     let mut run = runner();
     run(r#"def fail():
     throw "EXPECTED""#);
-    run(r#"def recover(local, value):
+    run(r#"def recover local, value:
     try:
         local = value + fail()
     catch error:
@@ -5183,7 +5183,7 @@ fn keeps_bare_single_parameter_block_binding_and_explicit_alternatives_equivalen
     amount + 100"#);
     run(r#"def typed(amount: int):
     return amount + 1"#);
-    run(r#"def pair(left, right):
+    run(r#"def pair left, right:
     return left + right"#);
     run(r#"def unit():
     return 42"#);
@@ -6013,6 +6013,132 @@ fn returns_bare_multiple_parameter_named_arrows() {
     assert_eq!(run("requireBoth(0, 7)"), 0);
     assert_eq!(run("combined(2, 5, 3)"), 21);
     run(r#"combined(2, 5, 3)
+
+# return: 21"#);
+}
+
+/// Nucleoid defines bare multiple parameter indented blocks
+#[rustfmt::skip]
+#[test]
+fn defines_bare_multiple_parameter_indented_blocks() {
+    let mut run = runner();
+    run(r#"def add left, right:
+    total = left + right
+    return total"#);
+    run(r#"def scaled left, right, factor:
+    return (left + right) * factor"#);
+    run(r#"def largest left, right:
+    if left > right:
+        return left
+    return right"#);
+    assert_eq!(run("add(2, 3)"), 5);
+    assert_eq!(run("scaled(2, 3, 4)"), 20);
+    assert_eq!(run("largest(7, 3)"), 7);
+    assert_eq!(run("largest(2, 9)"), 9);
+}
+
+/// Nucleoid keeps bare multiple parameter blocks reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_bare_multiple_parameter_blocks_reactive() {
+    let mut run = runner();
+    run("bias = 2");
+    run(r#"def scaled left, right:
+    return left * right + bias"#);
+    run("live = scaled");
+    run("snapshot = scaled.value");
+    run("result = live(3, 4)");
+    run("frozen = snapshot(3, 4)");
+    assert_eq!(run("result"), 14);
+    assert_eq!(run("frozen"), 14);
+    run(r#"def scaled left, right:
+    return left + right + bias"#);
+    assert_eq!(run("result"), 9);
+    assert_eq!(run("frozen"), 14);
+    run("bias = 4");
+    assert_eq!(run("result"), 11);
+    assert_eq!(run("frozen"), 16);
+}
+
+/// Nucleoid preserves bare multiple parameter block methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_multiple_parameter_block_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Parent:
+    def init left, right:
+        this.amount = left + right
+    def reading offset, scale:
+        return self.amount * scale + offset"#);
+    run(r#"class Child: Parent
+    def init left, right:
+        super(left, right)
+    def reading offset, scale:
+        return self.amount * scale + offset
+    def increase delta, extra:
+        this.amount += delta + extra
+        return this.amount"#);
+    run("child = Child(2, 3)");
+    run("observed = child.reading(1, 2)");
+    assert_eq!(run("child.id"), "child");
+    assert_eq!(run("child.amount"), 5);
+    assert_eq!(run("observed"), 11);
+    assert_eq!(run("child.increase(2, 1)"), 8);
+    assert_eq!(run("child.amount"), 8);
+    assert_eq!(run("observed"), 17);
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 1);
+}
+
+/// Nucleoid preserves bare multiple parameter block bindings and returns
+#[rustfmt::skip]
+#[test]
+fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
+    let mut run = runner();
+    run("left = 10");
+    run("right = 20");
+    run(r#"def pair left, right:
+    return [left, right]"#);
+    run(r#"def add left, right:
+    left += right
+    return left"#);
+    run(r#"def noReturn left, right:
+    left + right"#);
+    run(r#"def bareReturn left, right:
+    return"#);
+    run(r#"def outer(initial):
+    def combine left, right, scale:
+        return (left + right) * scale
+    return combine(initial, 2, 3)"#);
+    assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
+    assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
+    assert_eq!(run("pair()"), serde_json::json!([null, null]));
+    assert_eq!(run("pair(3, 4, 5)"), serde_json::json!([3, 4]));
+    assert_eq!(run("add(3, 4)"), 7);
+    assert_eq!(run("left"), 10);
+    assert_eq!(run("right"), 20);
+    assert_eq!(run("noReturn(2, 3)"), serde_json::Value::Null);
+    assert_eq!(run("bareReturn(2, 3)"), serde_json::Value::Null);
+    assert_eq!(run("outer(4)"), 18);
+}
+
+/// Nucleoid rolls back failed bare multiple parameter block redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_bare_multiple_parameter_block_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run(r#"def reading left, right:
+    return source + left + right"#);
+    run("total = reading(2, 4)");
+    assert_eq!(run("total"), 9);
+    assert_eq!(run_error(r#"def reading left, right:
+    return missing + left + right"#), "ReferenceError: missing is not defined");
+    assert_eq!(run("total"), 9);
+    run("source = 4");
+    assert_eq!(run("total"), 10);
+    assert_eq!(run("reading(8, 9)"), 21);
+    run(r#"reading(8, 9)
 
 # return: 21"#);
 }
