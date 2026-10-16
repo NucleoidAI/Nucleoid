@@ -240,7 +240,8 @@ url = `http://${host}:${port}`
 - Explicit fields may mix with shorthand, nest in objects and lists, and keep
   the existing comma, trailing-comma, newline, and semicolon rules.
 - The identifier must be followed by a comma or closing brace, looking through
-  only the existing newline/semicolon separators; fields still need commas.
+  only the existing newline/semicolon separators; this shorthand qualification
+  is unchanged by the NUC 44 explicit-property separator rule below.
 - Quoted and numeric keys need explicit values; keywords, `$Class`, dotted
   paths, and computed keys do not become bare shorthand keys.
 - Canonical source remains quoted and expanded, such as `{"amount":amount}`.
@@ -273,6 +274,60 @@ assert(reading.amount, 6)
   the runtime behavior.
 - These isolated prototype forms await independent evaluation and integration;
   they are not a change to the accepted reference.
+
+### Comma-free explicit properties
+
+- [NUC 44](nuc-0044.md) makes an explicit-property comma
+  optional only after parsing the preceding value's entire ordinary expression.
+  `{kind: kind lane: lane(urgent) active: true}` has the same complete ordered
+  AST as `{kind: kind, lane: lane(urgent), active: true}`.
+- Keep an existing comma first. Without one, after only the original
+  newline/semicolon skipping, inspect the next two unconsumed tokens:
+  an existing string, ordinary identifier or number key immediately followed
+  by `:` continues the same object. The guard consumes nothing and never
+  speculatively parses, stops early or reinterprets a value.
+- Operators, assignments, postfixes, function/arrow bodies and nested objects
+  retain priority. Lists, calls, parameters, statement blocks and key grammar
+  do not change. No new brace indentation or colon continuation is added.
+- Shorthand still needs its own comma-or-closing-brace lookahead.
+  `{amount, unit: "C" active: true}` is valid, but `{amount unit: "C"}` and
+  `{amount: 1 unit}` are not. Keep commas around shorthand where its original
+  rule needs them; trailing commas and mixed explicit separators remain valid.
+- Duplicate keys retain every ordered value evaluation before replacement.
+  Numeric keys use the same formatting; canonical source remains quoted and
+  comma-separated. Actual dependencies, aliases, scopes, receivers, `.value`
+  snapshots, whole caught errors, rollback and resource limits are unchanged.
+
+```
+def lane(urgent):
+    if urgent: return "fast"
+    return "normal"
+kind = "invoice"
+urgent = false
+summary = {kind: kind lane: lane(urgent) active: true}
+assert(summary.kind, "invoice")
+assert(summary.lane, "normal")
+urgent = true
+assert(summary.lane, "fast")
+kind = "alert"
+assert(summary.kind, "alert")
+```
+
+- This is the exact `Nucleoid builds compact routing records` executable
+  counterpart in `tests/reference.md`, paired with its accepted comma form.
+  The five appended [specification entries](../nucleoid.spec.md#comma-free-explicit-object-properties)
+  trace live construction, keys/replacement, nesting, snapshots and rollback.
+- A failed guard keeps the original closing-brace diagnostic.
+  Exact `record = { amount: 1 next }` retains
+  `SyntaxError("Expected '}' but found identifier 'next'")` at line 1, column 22.
+  `record = { amount other }` retains
+  `SyntaxError("Expected ':' but found identifier 'other'")` at line 1, column 19.
+- `record = { amount\n: amount }` still raises
+  `SyntaxError("Expected ':' but found end of line")` at line 1, column 12;
+  unparenthesized `record = {\n    amount: amount,\n}` still raises
+  `SyntaxError("Expected a key but found an indented block")` at line 2, column 5.
+  Existing computed-key writes, exporter splitting and receiver-frame limits
+  are not repaired.
 
 ### Operators
 
@@ -1714,6 +1769,7 @@ def name amount: type:                 one typed parameter, indented only (NUC 2
 
 { statement; statement }               block
 record = { amount, label }             object shorthand (candidate NUC 17)
+record = {amount: amount unit: "C"}    optional explicit-property comma (NUC 44)
 
 throw value                            raise a value
 return expression                      yield from a block or function

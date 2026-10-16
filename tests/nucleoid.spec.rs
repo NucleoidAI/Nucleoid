@@ -8585,6 +8585,107 @@ def route(status):
 # return: "skip""#);
 }
 
+/// Nucleoid constructs comma-free explicit records
+#[rustfmt::skip]
+#[test]
+fn constructs_comma_free_explicit_records() {
+    let mut run = runner();
+    run("amount = 4");
+    run(r#"unit = "C""#);
+    run("reading = {amount: amount unit: unit active: true}");
+    assert_eq!(run("reading.amount"), 4);
+    assert_eq!(run("reading.unit"), "C");
+    assert_eq!(run("reading.active"), true);
+    run("amount = 9");
+    assert_eq!(run("reading.amount"), 9);
+    run(r#"unit = "F""#);
+    assert_eq!(run("reading.unit"), "F");
+    run(r#"reading.unit
+
+# return: "F""#);
+}
+
+/// Nucleoid preserves comma-free record keys and replacement order
+#[rustfmt::skip]
+#[test]
+fn preserves_comma_free_record_keys_and_replacement_order() {
+    let mut run = runner();
+    run("seed = 3");
+    run(r#"record = {"state": "open" 1: "first" "1": "latest" copy: seed copy: seed + 1}"#);
+    assert_eq!(run("record.state"), "open");
+    assert_eq!(run(r#"record["1"]"#), "latest");
+    assert_eq!(run("record.copy"), 4);
+    run("seed = 8");
+    assert_eq!(run("record.copy"), 9);
+    run(r#"record.state = "closed""#);
+    assert_eq!(run("record.state"), "closed");
+}
+
+/// Nucleoid nests comma-free records without changing list or call separators
+#[rustfmt::skip]
+#[test]
+fn nests_comma_free_records_without_changing_list_or_call_separators() {
+    let mut run = runner();
+    run("def pair(left, right) => left + right");
+    run("first = 2");
+    run(r#"packet = {meta: {kind: "sample" ready: true} data: [{reading: first unit: "C"}, {reading: pair(first, 3) unit: "K"}] tag: "batch"}"#);
+    assert_eq!(run("packet.meta.kind"), "sample");
+    assert_eq!(run("packet.data[0].reading"), 2);
+    assert_eq!(run("packet.data[1].reading"), 5);
+    assert_eq!(run("packet.data[1].unit"), "K");
+    run("first = 7");
+    assert_eq!(run("packet.data[0].reading"), 7);
+    assert_eq!(run("packet.data[1].reading"), 10);
+}
+
+/// Nucleoid preserves scope and snapshots in comma-free records
+#[rustfmt::skip]
+#[test]
+fn preserves_scope_and_snapshots_in_comma_free_records() {
+    let mut run = runner();
+    run(r#"def package(amount):
+    return {reading: amount initial: amount.value label: "sample"}"#);
+    run("source = 3");
+    run("item = package(source)");
+    run("view = {current: source saved: source.value packed: item.reading}");
+    assert_eq!(run("item.reading"), 3);
+    assert_eq!(run("view.current"), 3);
+    assert_eq!(run("view.saved"), 3);
+    run("source = 6");
+    assert_eq!(run("item.reading"), 6);
+    assert_eq!(run("view.current"), 6);
+    assert_eq!(run("view.saved"), 3);
+    assert_eq!(run("view.packed"), 6);
+}
+
+/// Nucleoid rolls back failed comma-free record values
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_comma_free_record_values() {
+    let mut run = runner();
+    run("state = 1");
+    run(r#"record = {status: "old" marker: state}"#);
+    run(r#"message = """#);
+    run(r#"try:
+    state = 2
+    record = {status: "new" marker: missing status: "last"}
+catch error:
+    message = error"#);
+    {
+        let actual = run("message");
+        let expected = run(r#"(ReferenceError("missing is not defined"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("state"), 1);
+    assert_eq!(run("record.status"), "old");
+    assert_eq!(run("record.marker"), 1);
+    run("state = 3");
+    assert_eq!(run("record.marker"), 3);
+    run(r#"record.status
+
+# return: "old""#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

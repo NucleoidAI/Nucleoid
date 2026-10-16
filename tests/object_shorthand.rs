@@ -328,15 +328,43 @@ fn invalid_key_tokens_and_missing_colons_keep_exact_accepted_diagnostics() {
 }
 
 #[test]
+fn formerly_invalid_explicit_field_boundaries_match_comma_bearing_controls() {
+    for (compact, explicit) in [
+        (
+            "record = { amount: 1 label: 2 }",
+            "record = { amount: 1, label: 2 }",
+        ),
+        (
+            "record = { amount: 1; label: 2 }",
+            "record = { amount: 1;, label: 2 }",
+        ),
+    ] {
+        let checks = "\nassert(record.amount, 1)\nassert(record.label, 2)\nreturn record.amount + record.label";
+        let compact = format!("{compact}{checks}");
+        let explicit = format!("{explicit}{checks}");
+        equivalent(&compact, &explicit);
+        for source in [compact, explicit] {
+            let mut runtime = Runtime::new();
+            assert_eq!(
+                runtime.run(&source).unwrap(),
+                Value::Number(3.0),
+                "{source}"
+            );
+            assert_eq!(runtime.assertions_run(), 2, "{source}");
+            let failures = runtime.take_assertions();
+            assert!(failures.is_empty(), "{source}\n{failures:?}");
+            assert_eq!(runtime.run("record.amount").unwrap(), Value::Number(1.0));
+            assert_eq!(runtime.run("record.label").unwrap(), Value::Number(2.0));
+            assert_eq!(runtime.assertions_run(), 2, "{source}");
+            assert!(runtime.take_assertions().is_empty(), "{source}");
+        }
+    }
+}
+
+#[test]
 fn malformed_explicit_fields_keep_their_expression_errors_and_positions() {
     for (source, message, line, column) in [
         ("record = { amount: }", "Unexpected '}'", 1, 21),
-        (
-            "record = { amount: 1 label: 2 }",
-            "Expected '}' but found identifier 'label'",
-            1,
-            22,
-        ),
         (
             "record = { amount: 1",
             "Expected '}' but found end of input",
@@ -355,12 +383,6 @@ fn malformed_explicit_fields_keep_their_expression_errors_and_positions() {
             "Expected a key but found ','",
             1,
             24,
-        ),
-        (
-            "record = { amount: 1; label: 2 }",
-            "Expected '}' but found identifier 'label'",
-            1,
-            23,
         ),
     ] {
         let error = Runtime::check(source).unwrap_err();

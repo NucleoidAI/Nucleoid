@@ -1718,4 +1718,19 @@ urgent.state = "blocked"
 assert(urgent.lane, "hold")
 normal.force = true
 assert(normal.lane, "fast")
+---
+# Nucleoid builds compact routing records
+
+def lane(urgent):
+    if urgent: return "fast"
+    return "normal"
+kind = "invoice"
+urgent = false
+summary = {kind: kind lane: lane(urgent) active: true}
+assert(summary.kind, "invoice")
+assert(summary.lane, "normal")
+urgent = true
+assert(summary.lane, "fast")
+kind = "alert"
+assert(summary.kind, "alert")
 ```

@@ -1592,6 +1592,54 @@ statement positions; caught values and transaction recovery are unchanged.
   reference, README and examples cases execute 17 further assertions.
   All earlier executable cases remain unchanged explicit-syntax controls.
 
+## Comma-free explicit object properties
+
+- [NUC 44](docs/nuc-0044.md) optionally omits a comma
+  between explicit object properties, as in `{amount: amount unit: "C"}`.
+  Comma-bearing, mixed and trailing-comma forms remain supported.
+- Parse the entire ordinary explicit value expression first, then apply
+  the original newline/semicolon skipping and give an existing comma priority.
+  Without a comma, continue only when the next two unconsumed tokens are
+  `Str`, `Identifier` or `Number` immediately followed by `Colon`.
+  The non-consuming guard does not parse, rewind, reinterpret or stop a value.
+- Reuse the existing key formatting, colon and value parser. Preserve the
+  complete ordered object entries, including duplicates; canonical rendering
+  remains quoted and comma-separated, such as `{"amount":amount,"unit":"C"}`.
+- Shorthand qualification is unchanged: an identifier needs a following
+  comma or closing brace through only the existing newline/semicolon tokens.
+  `{amount unit: "C"}` and `{amount: 1 unit}` do not qualify. Keep the
+  commas around shorthand wherever its original rule requires them.
+- Ordinary operators, assignments, postfixes, calls, arrows, functions and
+  nested objects take their existing expression priority. No new key variants,
+  colon continuation, brace indentation, list/call/parameter separators or
+  statement-block syntax is introduced. A failed guard retains the original
+  closing-brace path, diagnostic and source position.
+- Scopes, class receivers, aliases, duplicate evaluation/replacement order,
+  actual reactive reads, `.value` snapshots, transactions, caught whole errors,
+  rollback and resource limits are unchanged. `value` remains the reserved
+  snapshot API, not an ordinary mutable property.
+- Exact `record = { amount other }` retains
+  `SyntaxError("Expected ':' but found identifier 'other'")` at line 1,
+  column 19. Exact `record = { amount: 1 next }` retains
+  `SyntaxError("Expected '}' but found identifier 'next'")` at line 1,
+  column 22. Exact `record = { amount: }` retains
+  `SyntaxError("Unexpected '}'")` at line 1, column 21.
+- Exact `record = { amount\n: amount }` retains
+  `SyntaxError("Expected ':' but found end of line")` at line 1, column 12.
+  Exact `record = {\n    amount: amount,\n}` retains
+  `SyntaxError("Expected a key but found an indented block")` at line 2,
+  column 5. The existing lexer, exporter and CLI layout limits are not repaired.
+- The five appended `comma-free record` entries below specify live explicit
+  fields; quoted/numeric duplicate keys and named state writes; nested records
+  with unchanged list/call commas; function scope and snapshots; and rollback
+  after an actually evaluated missing read. Their 28 assertions and returns
+  `"F"` and `"old"` retain the pre-executed accepted-syntax counterparts.
+  The appended reference, README and examples cases retain 12 more assertions.
+- All 587 earlier measured programs and 25 earlier canonical training files
+  remain unchanged. Independent evaluation accepted all 595 paired programs:
+  eight use fewer lexer tokens, 587 are unchanged, and none increased.
+  All 2,706 protected assertions executed and all 46 expected returns matched.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -11782,4 +11830,79 @@ source = "unknown"
 assert(live, "skip")
 live
 # return: "skip"
+---
+# Nucleoid constructs comma-free explicit records
+
+amount = 4
+unit = "C"
+reading = {amount: amount unit: unit active: true}
+assert(reading.amount, 4)
+assert(reading.unit, "C")
+assert(reading.active, true)
+amount = 9
+assert(reading.amount, 9)
+unit = "F"
+assert(reading.unit, "F")
+reading.unit
+# return: "F"
+---
+# Nucleoid preserves comma-free record keys and replacement order
+
+seed = 3
+record = {"state": "open" 1: "first" "1": "latest" copy: seed copy: seed + 1}
+assert(record.state, "open")
+assert(record["1"], "latest")
+assert(record.copy, 4)
+seed = 8
+assert(record.copy, 9)
+record.state = "closed"
+assert(record.state, "closed")
+---
+# Nucleoid nests comma-free records without changing list or call separators
+
+def pair(left, right) => left + right
+first = 2
+packet = {meta: {kind: "sample" ready: true} data: [{reading: first unit: "C"}, {reading: pair(first, 3) unit: "K"}] tag: "batch"}
+assert(packet.meta.kind, "sample")
+assert(packet.data[0].reading, 2)
+assert(packet.data[1].reading, 5)
+assert(packet.data[1].unit, "K")
+first = 7
+assert(packet.data[0].reading, 7)
+assert(packet.data[1].reading, 10)
+---
+# Nucleoid preserves scope and snapshots in comma-free records
+
+def package(amount):
+    return {reading: amount initial: amount.value label: "sample"}
+source = 3
+item = package(source)
+view = {current: source saved: source.value packed: item.reading}
+assert(item.reading, 3)
+assert(view.current, 3)
+assert(view.saved, 3)
+source = 6
+assert(item.reading, 6)
+assert(view.current, 6)
+assert(view.saved, 3)
+assert(view.packed, 6)
+---
+# Nucleoid rolls back failed comma-free record values
+
+state = 1
+record = {status: "old" marker: state}
+message = ""
+try:
+    state = 2
+    record = {status: "new" marker: missing status: "last"}
+catch error:
+    message = error
+assert(message, ReferenceError("missing is not defined"))
+assert(state, 1)
+assert(record.status, "old")
+assert(record.marker, 1)
+state = 3
+assert(record.marker, 3)
+record.status
+# return: "old"
 ```

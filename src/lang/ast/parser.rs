@@ -1372,6 +1372,15 @@ impl Parser {
 
             if !self.eat(&Token::Comma) {
                 self.skip_newlines();
+                // A complete ordinary value wins before considering the next
+                // explicit field. Keep shorthand and key parsing unchanged.
+                if matches!(
+                    self.peek(),
+                    Token::Str(_) | Token::Identifier(_) | Token::Number(_)
+                ) && self.peek_at(1) == &Token::Colon
+                {
+                    continue;
+                }
                 self.expect(&Token::RightBrace)?;
                 break;
             }

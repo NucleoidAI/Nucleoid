@@ -2223,6 +2223,36 @@ assert(usingFrozen, "hold")
   [root contract](../nucleoid.spec.md#direct-conditional-alternatives) and
   [reference](README.md#conditionals) for layout and exact errors.
 
+## Comma-free explicit object properties
+
+**Compact records keep class rules independent**
+
+```nuc
+# Compact records keep class rules independent
+
+class Ticket
+first = Ticket()
+second = Ticket()
+first.amount = 2
+second.amount = 5
+$Ticket.payload = {reading: $Ticket.amount category: "sample" ready: true}
+assert(first.payload.reading, 2)
+assert(second.payload.reading, 5)
+first.amount = 7
+assert(first.payload.reading, 7)
+assert(second.payload.reading, 5)
+assert(first.payload.ready, true)
+```
+
+- [NUC 44](nuc-0044.md) uses the same ordered explicit
+  properties and per-instance receiver reads as the comma-bearing spelling.
+- Only a key/colon pair after a fully parsed value can omit its comma.
+  Shorthand qualification, list/call commas, class rules, aliases, `.value`
+  snapshots and transaction failures remain unchanged.
+- The [root contract](../nucleoid.spec.md#comma-free-explicit-object-properties)
+  and [expression guidance](README.md#comma-free-explicit-properties)
+  specify the bounded syntax. Comma-bearing forms remain supported.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

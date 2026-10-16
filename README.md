@@ -856,6 +856,32 @@ assert(result, "wait")
   evaluation, live dependencies, scopes, returns and rollback unchanged.
   See the [root contract](nucleoid.spec.md#direct-conditional-alternatives).
 
+## Comma-free explicit object properties
+
+**Explicit object fields omit redundant commas**
+
+```nuc
+# Explicit object fields omit redundant commas
+
+name = "sensor"
+reading = 4
+record = {name: name reading: reading unit: "C"}
+assert(record.name, "sensor")
+assert(record.reading, 4)
+reading = 9
+assert(record.reading, 9)
+```
+
+- [NUC 44](docs/nuc-0044.md) permits the next explicit
+  string, identifier or numeric key followed immediately by `:` after the
+  preceding value has been fully parsed. Existing commas retain priority.
+- Comma-bearing forms remain valid; shorthand, lists, calls, parameters and
+  block syntax do not gain general comma omission. Canonical records still
+  render with quoted keys and commas.
+- Live dependencies, aliases, snapshots, class receivers and transaction
+  behavior remain unchanged. See the
+  [root contract](nucleoid.spec.md#comma-free-explicit-object-properties).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
