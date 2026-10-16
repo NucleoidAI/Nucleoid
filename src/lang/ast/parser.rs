@@ -329,6 +329,12 @@ impl Parser {
 
     fn if_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::If))?;
+        self.condition_clause()
+    }
+
+    /// Explicit `else if` and qualified direct alternatives share the entire
+    /// condition, suite and recursive alternate parser.
+    fn condition_clause(&mut self) -> Result<Stmt> {
         let condition = self.expression()?;
         let consequent = self.suite()?;
 
@@ -339,6 +345,8 @@ impl Parser {
         if self.eat_keyword(Keyword::Else) {
             if self.check(&Token::Keyword(Keyword::If)) {
                 alternate = Some(Box::new(self.if_statement()?));
+            } else if self.has_direct_condition_suite() {
+                alternate = Some(Box::new(self.condition_clause()?));
             } else {
                 let body = if self.has_indented_body(0) {
                     self.suite_body()?
@@ -356,6 +364,40 @@ impl Parser {
             consequent,
             alternate,
         })
+    }
+
+    /// Qualify a nonempty, balanced header without consuming tokens or parsing
+    /// an expression. Only its top-level colon may introduce the real suite;
+    /// colons in calls, slices and object literals still belong to the header.
+    fn has_direct_condition_suite(&self) -> bool {
+        let mut delimiters = Vec::new();
+        for (offset, spanned) in self.tokens.iter().skip(self.position).enumerate() {
+            match &spanned.token {
+                token @ (Token::LeftParen | Token::LeftBracket | Token::LeftBrace) => {
+                    delimiters.push(token);
+                }
+                token @ (Token::RightParen | Token::RightBracket | Token::RightBrace) => {
+                    if !matches!(
+                        (delimiters.pop(), token),
+                        (Some(Token::LeftParen), Token::RightParen)
+                            | (Some(Token::LeftBracket), Token::RightBracket)
+                            | (Some(Token::LeftBrace), Token::RightBrace)
+                    ) {
+                        return false;
+                    }
+                }
+                Token::Colon if delimiters.is_empty() => {
+                    return offset > 0 && self.has_indented_suite(offset);
+                }
+                Token::Newline | Token::Semicolon | Token::Indent | Token::Dedent | Token::Eof
+                    if delimiters.is_empty() =>
+                {
+                    return false;
+                }
+                _ => {}
+            }
+        }
+        false
     }
 
     fn for_statement(&mut self) -> Result<Stmt> {
@@ -1448,6 +1490,102 @@ impl Parser {
 mod tests {
     use super::*;
     use crate::lang::ast::generator::generate_all;
+
+    #[test]
+    fn direct_condition_lookahead_requires_balanced_header_and_real_suite_without_consuming() {
+        for (header, qualifies) in [
+            ("ready:\n    pass", true),
+            ("not ready and available:\n    pass", true),
+            ("items[1:3] == [2, 3]:\n    pass", true),
+            ("choose({ready: items[:]}, (x: int) => x):\n    pass", true),
+            ("({ready: {nested: true}}).ready:\n    pass", true),
+            ("(\n ready\n):\n    pass", true),
+            ("ready: # header\n\n# blank\n    # body\n    pass", true),
+            ("ready:\r\n\tpass", true),
+            ("ready:\n;\n    pass", true),
+            ("ready:\n    ;\n    pass", true),
+            // Qualification is not expression validation. Real parsing must
+            // report these malformed expressions rather than fall back.
+            ("ready +:\n    pass", true),
+            ("():\n    pass", true),
+            ("pass:\n    pass", true),
+            (":\n    pass", false),
+            ("\n    pass", false),
+            ("ready: pass", false),
+            ("ready: { pass }", false),
+            ("ready { pass }", false),
+            ("ready:;\n    pass", false),
+            ("ready:\npass", false),
+            ("ready:\n# no body", false),
+            ("ready:\n    # no body", false),
+            ("ready:", false),
+            ("ready", false),
+            ("ready\n:\n    pass", false),
+            ("ready; other:\n    pass", false),
+            ("ready # boundary\nother:\n    pass", false),
+            ("items[:]\nother:\n    pass", false),
+            ("(ready]:\n    pass", false),
+            ("[ready):\n    pass", false),
+            ("{ready: true]:\n    pass", false),
+            ("ready):\n    pass", false),
+            ("(ready:\n    pass", false),
+            ("{ready: true:\n    pass", false),
+        ] {
+            let mut parser = Parser::new(tokenize(&format!("else {header}")).unwrap());
+            parser.expect(&Token::Keyword(Keyword::Else)).unwrap();
+            let position = parser.position;
+            let tokens = parser.tokens.clone();
+            assert_eq!(parser.has_direct_condition_suite(), qualifies, "{header}");
+            assert_eq!(parser.position, position, "{header}");
+            assert_eq!(parser.depth, 0, "{header}");
+            assert_eq!(parser.tokens, tokens, "{header}");
+        }
+    }
+
+    #[test]
+    fn direct_condition_lookahead_reuses_immediate_indent_guard_and_stops_at_layout() {
+        let mut parser = Parser::new(tokenize("ready:\n    pass").unwrap());
+        assert!(parser.has_direct_condition_suite());
+        parser.tokens.remove(2);
+        assert_eq!(parser.peek_at(2), &Token::Indent);
+        assert!(parser.has_direct_condition_suite());
+        parser.tokens.insert(
+            2,
+            Spanned {
+                token: Token::Semicolon,
+                position: Position::new(1, 7),
+            },
+        );
+        assert!(!parser.has_direct_condition_suite());
+        assert_eq!(parser.position, 0);
+        for boundary in [
+            Token::Newline,
+            Token::Semicolon,
+            Token::Indent,
+            Token::Dedent,
+            Token::Eof,
+        ] {
+            parser.tokens = [
+                Token::Identifier("ready".into()),
+                boundary,
+                Token::Colon,
+                Token::Newline,
+                Token::Indent,
+                Token::Keyword(Keyword::Pass),
+                Token::Eof,
+            ]
+            .into_iter()
+            .map(|token| Spanned {
+                token,
+                position: Position::new(1, 1),
+            })
+            .collect();
+            let tokens = parser.tokens.clone();
+            assert!(!parser.has_direct_condition_suite());
+            assert_eq!(parser.position, 0);
+            assert_eq!(parser.tokens, tokens);
+        }
+    }
 
     #[test]
     fn comma_free_arrow_lookahead_qualifies_the_whole_prefix_without_consuming() {

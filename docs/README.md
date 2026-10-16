@@ -596,6 +596,32 @@ assert(signal.output, 8)
 - The CLI already buffers a conditional from its initial colon header.
   Bare final `else` stays in that buffer until blank-line commit or EOF;
   no new continuation heuristic or literal/comment delimiter is added.
+- [NUC 43](nuc-0043.md) also permits `else condition:` or
+  `elif condition:` in an existing chain, only with a complete balanced
+  colon-bearing header and a genuine indented suite. Both lower exactly to
+  the nested conditional of `else if condition:`.
+- `elif` is still the lexical alias for `else`. Explicit `elif if` works
+  just like `else if`; unconditional `elif:` and colon-free indented final
+  `elif` keep their accepted behavior. No new keyword or standalone
+  alternative statement is introduced.
+- Direct conditions cannot use inline/braced bodies, `:;`, a missing colon
+  or header separators. A non-consuming balanced token scan ignores nested
+  colons and checks the existing real-indent predicate. Failed qualification
+  leaves the final-else parser and original-source diagnostics untouched;
+  qualified conditions and bodies report ordinary parsing errors.
+- The document/JSONL exporter retains complete `else` and `elif` keywords
+  with their top-level chain for spaced, tabbed and lexer-supported compact
+  headers, including balanced multiline conditions and comments. Identifier
+  prefixes such as `elsewhere`, `else1` and `elif_name` remain independent
+  statements. The parser alone validates the grammar; canonical AST rendering
+  remains unchanged. Generated specification coverage includes a direct
+  top-level `else` class rule.
+- First-match order, short-circuit reads, reactive dependency replacement,
+  per-instance rules, scopes, returns, frozen functions and rollback remain
+  unchanged. Inherited queued-method receiver failures are not repaired.
+  The five new specification entries and
+  `Nucleoid routes records through direct alternatives` in the executable
+  reference cover the [normative contract](../nucleoid.spec.md#direct-conditional-alternatives).
 
 ### Truthiness
 
@@ -1648,7 +1674,17 @@ if condition:                          conditional
     statement
 else if condition:
     statement
+else condition:                        optional direct alternative, indented only (NUC 43)
+    statement
+elif condition:                        equivalent existing Else alias, indented only
+    statement
 else:
+    statement
+elif:                                  existing unconditional Else alias
+    statement
+else                                   existing colon-free final indented suite
+    statement
+elif                                   same unconditional alias without a colon
     statement
 
 for name of source:                    iteration

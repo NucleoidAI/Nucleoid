@@ -34,12 +34,13 @@ struct Record {
 
 const SPEC_DOCUMENT: &str = include_str!("../nucleoid.spec.md");
 
-const SPEC_RECORDS: usize = 388;
-const SYNTH_RECORDS: usize = 1_091;
+const SPEC_RECORDS: usize = 393;
+const SYNTH_RECORDS: usize = 1_095;
 const SYNTH_19_RECORDS: usize = 51;
 const SYNTH_21_RECORDS: usize = 118;
 const SYNTH_22_RECORDS: usize = 5;
 const SYNTH_23_RECORDS: usize = 5;
+const SYNTH_24_RECORDS: usize = 4;
 
 type Grid = Vec<Vec<u8>>;
 
@@ -141,6 +142,7 @@ fn synthesized_records_keep_their_identifiers_and_fields() {
         ("21", SYNTH_21_RECORDS),
         ("22", SYNTH_22_RECORDS),
         ("23", SYNTH_23_RECORDS),
+        ("24", SYNTH_24_RECORDS),
     ] {
         let (_, records) = sets
             .iter()

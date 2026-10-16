@@ -2170,6 +2170,59 @@ assert(snapshot, "archive/notes")
   and [reference](README.md#reactive-literal-string-replacement) for coercion,
   Unicode boundaries and inherited null/deferred behavior.
 
+## Direct conditional alternatives
+
+**Conditional alternatives keep frozen classifiers and live inputs separate**
+
+```nuc
+def classify(state, urgent):
+    if state == "blocked":
+        return "hold"
+    else urgent:
+        return "fast"
+    elif state == "ready":
+        return "send"
+    else:
+        return "wait"
+state = "ready"
+urgent = false
+live = classify(state, urgent)
+frozen = classify.value
+usingFrozen = frozen(state, urgent)
+snapshot = usingFrozen.value
+assert(live, "send")
+assert(usingFrozen, "send")
+urgent = true
+assert(live, "fast")
+assert(usingFrozen, "fast")
+def classify(state, urgent):
+    if state == "blocked":
+        return "pause"
+    else urgent:
+        return "rush"
+    elif state == "ready":
+        return "go"
+    else:
+        return "queue"
+assert(live, "rush")
+assert(usingFrozen, "fast")
+assert(snapshot, "send")
+state = "blocked"
+assert(live, "pause")
+assert(usingFrozen, "hold")
+```
+
+- [NUC 43](nuc-0043.md) adds only an optional spelling for genuine
+  indented conditional alternatives. `else condition:` and `elif condition:`
+  retain the complete AST and behavior of `else if condition:`.
+- Function definitions may be live or frozen without freezing their inputs.
+  Ordinary noncapture, explicit returns, receiver scopes and transaction
+  failures are unchanged; no receiver-frame repair is included.
+- Explicit `else if`, unconditional `else:`/`elif:` and their accepted
+  colon-free indented final forms remain supported. See the
+  [root contract](../nucleoid.spec.md#direct-conditional-alternatives) and
+  [reference](README.md#conditionals) for layout and exact errors.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

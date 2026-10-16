@@ -823,6 +823,39 @@ assert(source, "todo:three")
   transactional errors. Existing first-only `replace` and split/join recipes
   remain valid. See the [root contract](nucleoid.spec.md#reactive-literal-string-replacement).
 
+## Direct conditional alternatives
+
+**Conditional alternatives omit the second keyword**
+
+```nuc
+def label(state):
+    if state == "done":
+        return "archive"
+    else state == "ready":
+        return "send"
+    else:
+        return "wait"
+state = "ready"
+result = label(state)
+assert(result, "send")
+state = "done"
+assert(result, "archive")
+state = "queued"
+assert(result, "wait")
+```
+
+- [NUC 43](docs/nuc-0043.md) optionally omits the second `if` only
+  before a complete colon-bearing condition with a genuine indented body.
+  `elif condition:` is the same optional spelling through the existing
+  `elif` alias for `else`.
+- Explicit `else if` remains supported, including inline/braced bodies.
+  Final `else:`/`elif:` and genuine-indented colon-free final alternatives
+  retain their unconditional meaning. No standalone or inline direct
+  conditional alternative is added.
+- Parsing lowers to the same nested conditional, keeping first-match
+  evaluation, live dependencies, scopes, returns and rollback unchanged.
+  See the [root contract](nucleoid.spec.md#direct-conditional-alternatives).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

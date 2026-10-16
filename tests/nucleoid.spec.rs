@@ -8425,6 +8425,166 @@ fn rolls_back_literal_replacement_argument_failures() {
     assert_eq!(run("recovered"), "a/b");
 }
 
+/// Nucleoid selects direct conditional alternatives
+#[rustfmt::skip]
+#[test]
+fn selects_direct_conditional_alternatives() {
+    let mut run = runner();
+    run(r#"def classify(state, urgent):
+    if state == "blocked":
+        return "hold"
+    else urgent:
+        return "fast"
+    elif state == "ready":
+        return "send"
+    else:
+        return "wait""#);
+    run(r#"state = "ready""#);
+    run("urgent = false");
+    run("label = classify(state, urgent)");
+    assert_eq!(run("label"), "send");
+    run("urgent = true");
+    assert_eq!(run("label"), "fast");
+    run(r#"state = "blocked""#);
+    assert_eq!(run("label"), "hold");
+    run("urgent = false");
+    assert_eq!(run("label"), "hold");
+    run(r#"state = "queued""#);
+    assert_eq!(run("label"), "wait");
+    run(r#"label
+
+# return: "wait""#);
+}
+
+/// Nucleoid keeps direct conditional class alternatives reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_direct_conditional_class_alternatives_reactive() {
+    let mut run = runner();
+    run("class Ticket");
+    run("first = Ticket()");
+    run(r#"first.state = "new""#);
+    run(r#"first.priority = "normal""#);
+    run("second = Ticket()");
+    run(r#"second.state = "review""#);
+    run(r#"second.priority = "urgent""#);
+    run(r#"if $Ticket.state == "blocked":
+    $Ticket.queue = "hold"
+else $Ticket.priority == "urgent":
+    $Ticket.queue = "fast"
+elif $Ticket.state == "review":
+    $Ticket.queue = "review"
+else:
+    $Ticket.queue = "normal""#);
+    assert_eq!(run("first.queue"), "normal");
+    assert_eq!(run("second.queue"), "fast");
+    run(r#"first.state = "blocked""#);
+    assert_eq!(run("first.queue"), "hold");
+    run(r#"second.priority = "normal""#);
+    assert_eq!(run("second.queue"), "review");
+    run(r#"first.priority = "urgent""#);
+    assert_eq!(run("first.queue"), "hold");
+    run(r#"first.state = "new""#);
+    assert_eq!(run("first.queue"), "fast");
+    assert_eq!(run("second.queue"), "review");
+    run(r#"second.state = "done""#);
+    assert_eq!(run("second.queue"), "normal");
+}
+
+/// Nucleoid preserves direct alternative evaluation order
+#[rustfmt::skip]
+#[test]
+fn preserves_direct_alternative_evaluation_order() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"def decide(first, second, third):
+    if first:
+        return "first"
+    else second:
+        return "second"
+    elif third:
+        return "third"
+    else:
+        return "none""#);
+    assert_eq!(run("decide(true, true, true)"), "first");
+    assert_eq!(run("decide(false, true, true)"), "second");
+    assert_eq!(run("decide(false, false, true)"), "third");
+    assert_eq!(run("decide(false, false, false)"), "none");
+    run(r#"def guarded(value):
+    if value:
+        return "ready"
+    else missing:
+        return "bad"
+    else:
+        return "other""#);
+    assert_eq!(run("guarded(true)"), "ready");
+    assert_eq!(run_error("guarded(false)"), "ReferenceError: missing is not defined");
+}
+
+/// Nucleoid preserves direct alternative scope and return flow
+#[rustfmt::skip]
+#[test]
+fn preserves_direct_alternative_scope_and_return_flow() {
+    let mut run = runner();
+    run(r#"class Router:
+    def init(prefix):
+        this.prefix = prefix
+    def choose(status, fallback):
+        if status == "blocked":
+            return this.prefix + "hold"
+        else status == "ready":
+            return this.prefix + "send"
+        elif fallback:
+            return this.prefix + "later"
+        else:
+            return this.prefix + "skip""#);
+    run(r#"router = Router("a:")"#);
+    run(r#"status = "ready""#);
+    run("live = router.choose(status, false)");
+    run("snapshot = live.value");
+    assert_eq!(run("live"), "a:send");
+    assert_eq!(run("snapshot"), "a:send");
+    assert_eq!(run(r#"router.choose("unknown", false)"#), "a:skip");
+    assert_eq!(run(r#"router.choose("unknown", true)"#), "a:later");
+    assert_eq!(run(r#"router.choose("blocked", true)"#), "a:hold");
+    assert_eq!(run(r#"router.choose("ready", true)"#), "a:send");
+    assert_eq!(run("status"), "ready");
+    assert_eq!(run("router.prefix"), "a:");
+}
+
+/// Nucleoid rolls back failed direct alternatives
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_direct_alternatives() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"source = "ready""#);
+    run(r#"def route(status):
+    if status == "ready":
+        return "send"
+    else status == "hold":
+        return "wait"
+    else:
+        return "skip""#);
+    run("live = route(source)");
+    assert_eq!(run("live"), "send");
+    assert_eq!(run_error(r#"source = "hold"
+def route(status):
+    if status == "ready":
+        return "send"
+    elif status == "hold":
+        throw "blocked"
+    else:
+        return "skip""#), "blocked");
+    assert_eq!(run("source"), "ready");
+    assert_eq!(run("live"), "send");
+    run(r#"source = "hold""#);
+    assert_eq!(run("live"), "wait");
+    run(r#"source = "unknown""#);
+    assert_eq!(run("live"), "skip");
+    run(r#"live
+
+# return: "skip""#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

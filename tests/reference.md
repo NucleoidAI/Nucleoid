@@ -1692,4 +1692,30 @@ labels.push("display name")
 assert(normalized, ["first_name", "last_name", "first_name", "display_name"])
 labels = ["given name", "last name"]
 assert(normalized, ["given_name", "last_name"])
+---
+# Nucleoid routes records through direct alternatives
+
+class Job
+urgent = Job()
+urgent.state = "ready"
+urgent.force = true
+normal = Job()
+normal.state = "queued"
+normal.force = false
+if $Job.state == "blocked":
+    $Job.lane = "hold"
+else $Job.force:
+    $Job.lane = "fast"
+elif $Job.state == "ready":
+    $Job.lane = "send"
+else:
+    $Job.lane = "wait"
+assert(urgent.lane, "fast")
+assert(normal.lane, "wait")
+normal.state = "ready"
+assert(normal.lane, "send")
+urgent.state = "blocked"
+assert(urgent.lane, "hold")
+normal.force = true
+assert(normal.lane, "fast")
 ```

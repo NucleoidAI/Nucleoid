@@ -1524,6 +1524,74 @@ statement positions; caught values and transaction recovery are unchanged.
   They execute 33 assertions and preserve explicit returns `17` and `6`.
   The reference, README and examples counterparts execute 12 more assertions.
 
+## Direct conditional alternatives
+
+- Within an existing conditional chain, `else CONDITION:` and
+  `elif CONDITION:` optionally spell `else if CONDITION:` only when the
+  complete condition header ends at a balanced top-level colon followed by
+  a genuine indented suite. Both lower to the same complete nested `Stmt::If`,
+  not an unconditional block or a new runtime operation.
+- `elif` remains the existing lexical alias for `else`, not a new keyword.
+  Explicit `else if` and `elif if` keep priority and all their accepted bodies,
+  including inline, semicolon-separated and braced suites. Final `else:` and
+  `elif:` remain unconditional; final colon-free `else` and `elif` retain the
+  genuine-indentation rule above.
+- After `Else`, a private, non-consuming token scan qualifies only a nonempty
+  balanced header. Match parentheses, brackets and braces; ignore their nested
+  colons, including slices, object fields, calls and parameter annotations.
+  Stop on mismatched delimiters or top-level logical newline, semicolon,
+  indent, dedent or EOF. Do not skip header separators, parse a speculative
+  expression, catch/rewind an error or evaluate a condition during lookahead.
+- The suite colon requires immediate `Newline` or `Indent`, then a real
+  `Indent` after only the existing newline/semicolon layout. Blank/comment-only
+  lines do not create an indent. LF, CRLF, tabs and delimited multiline
+  expressions retain their existing lexer and suite behavior.
+- Qualification does not validate an expression. Once qualified, the ordinary
+  condition and whole-suite parsers report their real errors. If it fails,
+  consume nothing and use the original final-else parser and its original
+  source positions and diagnostics. New direct conditions have no inline,
+  braced or `:;` shortcut, and cannot omit their colon or stand alone.
+- Complete ASTs, canonical graph keys and top-level statement positions match
+  their explicit counterparts. Conditions still use existing truthiness,
+  first-match and short-circuit evaluation, actual reads and dependency
+  replacement. Class-level rules evaluate independently per instance.
+- Ordinary scopes, receiver frames, explicit returns, live and frozen
+  functions, noncapture, propagation ordering, transactions, rollback and
+  resource limits are unchanged. This syntax does not repair the inherited
+  queued-method receiver failure: a receiver-property change may re-run a
+  method body after its receiver frame and raise
+  `ReferenceError("this is not defined")`.
+- Exact `if false: pass\nelse ready: pass`, `else ready: { pass }`,
+  `else ready:;\n    pass`, `else ready:\npass` and
+  `else ready\n    pass` keep
+  `SyntaxError("Expected ':' but found identifier 'ready'")` at line 2,
+  column 6. The same `elif` prefixes retain the same diagnostics.
+- Exact `if false: pass\nelse true +:\n    pass` qualifies, then raises
+  `SyntaxError("Unexpected ':'")` at line 2, column 12.
+  Exact `if false: pass\nelse true:\n    value = (1 +)` raises
+  `SyntaxError("Unexpected ')'")` at line 3, column 18.
+  A real `missing` read in that suite retains
+  `ReferenceError("missing is not defined")` at the enclosing top-level
+  conditional's line 1, column 1.
+- Expression/statement nesting remains bounded at 64 and operator/postfix
+  chains at 128, with existing error messages and positions. Existing
+  recursive else-if-chain quirks are not changed. No lexer, public token,
+  AST, Rust API, canonical AST renderer, runtime, CLI or dependency change
+  is introduced.
+- The document/JSONL statement exporter keeps both complete `else` and `elif`
+  keywords with the conditional, including tab-separated and compact
+  delimiter-, string- and regex-started conditions accepted by the lexer.
+  Its keyword boundary follows `[A-Za-z0-9_]`, so `elsewhere`, `else1` and
+  `elif_name` remain independent statements. It does not validate conditions
+  or relax the parser's balanced-header and genuine-suite rules. The top-level
+  class-rule entry below exercises direct `else` through generated spec tests.
+- The five new entries at the end of the specification cover routing,
+  independent class rules, first-match/short-circuit reads, receiver-scope
+  returns and rollback. All 33 assertions execute, including both catches;
+  the two explicit string returns are `"wait"` and `"skip"`. The appended
+  reference, README and examples cases execute 17 further assertions.
+  All earlier executable cases remain unchanged explicit-syntax controls.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -11570,4 +11638,148 @@ catch error:
 assert(source, "a|b")
 recovered = source.replaceAll("|", "/")
 assert(recovered, "a/b")
+---
+# Nucleoid selects direct conditional alternatives
+
+def classify(state, urgent):
+    if state == "blocked":
+        return "hold"
+    else urgent:
+        return "fast"
+    elif state == "ready":
+        return "send"
+    else:
+        return "wait"
+state = "ready"
+urgent = false
+label = classify(state, urgent)
+assert(label, "send")
+urgent = true
+assert(label, "fast")
+state = "blocked"
+assert(label, "hold")
+urgent = false
+assert(label, "hold")
+state = "queued"
+assert(label, "wait")
+label
+# return: "wait"
+---
+# Nucleoid keeps direct conditional class alternatives reactive
+
+class Ticket
+first = Ticket()
+first.state = "new"
+first.priority = "normal"
+second = Ticket()
+second.state = "review"
+second.priority = "urgent"
+if $Ticket.state == "blocked":
+    $Ticket.queue = "hold"
+else $Ticket.priority == "urgent":
+    $Ticket.queue = "fast"
+elif $Ticket.state == "review":
+    $Ticket.queue = "review"
+else:
+    $Ticket.queue = "normal"
+assert(first.queue, "normal")
+assert(second.queue, "fast")
+first.state = "blocked"
+assert(first.queue, "hold")
+second.priority = "normal"
+assert(second.queue, "review")
+first.priority = "urgent"
+assert(first.queue, "hold")
+first.state = "new"
+assert(first.queue, "fast")
+assert(second.queue, "review")
+second.state = "done"
+assert(second.queue, "normal")
+---
+# Nucleoid preserves direct alternative evaluation order
+
+def decide(first, second, third):
+    if first:
+        return "first"
+    else second:
+        return "second"
+    elif third:
+        return "third"
+    else:
+        return "none"
+assert(decide(true, true, true), "first")
+assert(decide(false, true, true), "second")
+assert(decide(false, false, true), "third")
+assert(decide(false, false, false), "none")
+def guarded(value):
+    if value:
+        return "ready"
+    else missing:
+        return "bad"
+    else:
+        return "other"
+assert(guarded(true), "ready")
+try:
+    guarded(false)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+---
+# Nucleoid preserves direct alternative scope and return flow
+
+class Router:
+    def init(prefix):
+        this.prefix = prefix
+    def choose(status, fallback):
+        if status == "blocked":
+            return this.prefix + "hold"
+        else status == "ready":
+            return this.prefix + "send"
+        elif fallback:
+            return this.prefix + "later"
+        else:
+            return this.prefix + "skip"
+router = Router("a:")
+status = "ready"
+live = router.choose(status, false)
+snapshot = live.value
+assert(live, "a:send")
+assert(snapshot, "a:send")
+assert(router.choose("unknown", false), "a:skip")
+assert(router.choose("unknown", true), "a:later")
+assert(router.choose("blocked", true), "a:hold")
+assert(router.choose("ready", true), "a:send")
+assert(status, "ready")
+assert(router.prefix, "a:")
+---
+# Nucleoid rolls back failed direct alternatives
+
+source = "ready"
+def route(status):
+    if status == "ready":
+        return "send"
+    else status == "hold":
+        return "wait"
+    else:
+        return "skip"
+live = route(source)
+assert(live, "send")
+try:
+    source = "hold"
+    def route(status):
+        if status == "ready":
+            return "send"
+        elif status == "hold":
+            throw "blocked"
+        else:
+            return "skip"
+catch error:
+    assert(error, "blocked")
+assert(source, "ready")
+assert(live, "send")
+source = "hold"
+assert(live, "wait")
+source = "unknown"
+assert(live, "skip")
+live
+# return: "skip"
 ```

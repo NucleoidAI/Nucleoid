@@ -15,6 +15,9 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 
+mod build_statements;
+use build_statements::statements;
+
 /// How a document holds its cases.
 #[derive(Clone, Copy, PartialEq)]
 enum Format {
@@ -54,6 +57,7 @@ const DOCUMENTS: &[Document] = &[
 
 fn main() {
     println!("cargo::rerun-if-changed=build.rs");
+    println!("cargo::rerun-if-changed=build_statements.rs");
     println!("cargo::rerun-if-env-changed=UPDATE_SPEC_TESTS");
 
     let out = env::var("OUT_DIR").expect("cargo sets OUT_DIR for build scripts");
@@ -236,52 +240,6 @@ fn render_records(records: &[Record]) -> String {
     }
 
     generated
-}
-
-/// Splits a case into top-level statements while retaining comments and blocks.
-fn statements(source: &str) -> Vec<String> {
-    let source = source.replace("\r\n", "\n");
-    let mut statements = Vec::new();
-    let mut current: Vec<&str> = Vec::new();
-    let mut pending: Vec<&str> = Vec::new();
-
-    for line in source.lines() {
-        let trimmed = line.trim();
-        let top_level = line.len() == line.trim_start().len();
-        let comment_or_blank = trimmed.is_empty() || trimmed.starts_with('#');
-        let continuation = trimmed == "else"
-            || trimmed
-                .strip_prefix("else")
-                .is_some_and(|tail| tail.trim_start().starts_with('#'))
-            || trimmed.starts_with("else:")
-            || trimmed.starts_with("else if ")
-            || trimmed.starts_with("elif ")
-            || trimmed.starts_with("catch ")
-            || trimmed.starts_with("finally:")
-            || trimmed.starts_with([')', ']', '}']);
-
-        if comment_or_blank {
-            pending.push(line);
-        } else if top_level && !continuation {
-            if !current.is_empty() {
-                statements.push(current.join("\n").trim().to_string());
-                current.clear();
-            }
-
-            current.append(&mut pending);
-            current.push(line);
-        } else {
-            current.append(&mut pending);
-            current.push(line);
-        }
-    }
-
-    if !current.is_empty() {
-        statements.push(current.join("\n").trim().to_string());
-    }
-
-    assert!(!statements.is_empty(), "a dataset record has no statements");
-    statements
 }
 
 fn is_assertion(statement: &str) -> bool {
