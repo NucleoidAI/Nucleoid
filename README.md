@@ -802,6 +802,27 @@ assert(expanded, [2, 20, 3, 30, 4, 40])
   [authoritative contract](nucleoid.spec.md#reactive-flat-mapping) for snapshot
   timing and the distinction between returning null and actually reading it.
 
+## Reactive literal string replacement
+
+**Literal replacements normalize every occurrence**
+
+```nuc
+source = "todo:one|todo:two|todo:one"
+normalized = source.replaceAll("todo:", "")
+assert(normalized, "one|two|one")
+source = "todo:three"
+assert(normalized, "three")
+assert(source, "todo:three")
+```
+
+- Accepted [NUC 42](docs/nuc-0042.md) adds a read-only string-instance
+  `replaceAll(search, replacement)` for literal, non-overlapping matches.
+- Replacement text is literal too; empty search inserts at Unicode scalar
+  boundaries, including both ends (one boundary for an empty receiver).
+- Inputs retain ordinary reactive reads, snapshots, argument evaluation and
+  transactional errors. Existing first-only `replace` and split/join recipes
+  remain valid. See the [root contract](nucleoid.spec.md#reactive-literal-string-replacement).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

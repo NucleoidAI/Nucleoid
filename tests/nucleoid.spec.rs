@@ -8303,6 +8303,128 @@ fn rolls_back_flat_mapping_callback_failures() {
 # return: 21"#);
 }
 
+/// Nucleoid replaces every literal string match
+#[rustfmt::skip]
+#[test]
+fn replaces_every_literal_string_match() {
+    let mut run = runner();
+    run(r#"text = "one|two|one""#);
+    run(r#"joined = text.replaceAll("|", "/")"#);
+    run(r#"overlap = "aaaaa".replaceAll("aa", "X")"#);
+    run(r#"literal = "a.b.a".replaceAll(".", "$&")"#);
+    run(r#"noMatch = "abc".replaceAll("z", "")"#);
+    assert_eq!(run("joined"), "one/two/one");
+    assert_eq!(run("overlap"), "XXa");
+    assert_eq!(run("literal"), "a$&b$&a");
+    assert_eq!(run("noMatch"), "abc");
+    assert_eq!(run(r#""a.a.a".replace(".", "/")"#), "a/a.a");
+    assert_eq!(run("text"), "one|two|one");
+    run(r#"joined
+
+# return: "one/two/one""#);
+}
+
+/// Nucleoid replaces empty string matches at Unicode boundaries
+#[rustfmt::skip]
+#[test]
+fn replaces_empty_string_matches_at_unicode_boundaries() {
+    let mut run = runner();
+    run(r#"def replaceEvery(text, search, replacement):
+    if search == "":
+        if text == "":
+            return replacement
+        return replacement + text.split("").join(replacement) + replacement
+    return text.split(search).join(replacement)"#);
+    run("accent = String.fromCharCode(233)");
+    run("symbol = String.fromCharCode(128512)");
+    run("text = accent + symbol");
+    run(r#"empty = "".replaceAll("", "|")"#);
+    run(r#"inserted = text.replaceAll("", "|")"#);
+    run(r#"unchanged = text.replaceAll("", "")"#);
+    run(r#"legacy = replaceEvery(text, "", "|")"#);
+    assert_eq!(run("empty"), "|");
+    {
+        let actual = run("inserted");
+        let expected = run(r#"("|" + accent + "|" + symbol + "|")"#);
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("inserted");
+        let expected = run("(legacy)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("unchanged");
+        let expected = run("(text)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("text");
+        let expected = run("(accent + symbol)");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid keeps literal replacement reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_literal_replacement_reactive() {
+    let mut run = runner();
+    run(r#"text = "red|blue|red""#);
+    run(r#"search = "|""#);
+    run(r#"replacement = "/""#);
+    run("normalized = text.replaceAll(search, replacement)");
+    run("frozen = normalized.value");
+    assert_eq!(run("normalized"), "red/blue/red");
+    run(r#"replacement = "-""#);
+    assert_eq!(run("normalized"), "red-blue-red");
+    run(r#"text = "blue|green""#);
+    assert_eq!(run("normalized"), "blue-green");
+    run(r#"search = "blue""#);
+    assert_eq!(run("normalized"), "-|green");
+    run(r#"replacement = "cyan""#);
+    assert_eq!(run("normalized"), "cyan|green");
+    assert_eq!(run("frozen"), "red/blue/red");
+    assert_eq!(run("text"), "blue|green");
+}
+
+/// Nucleoid replaces literal strings in class rules
+#[rustfmt::skip]
+#[test]
+fn replaces_literal_strings_in_class_rules() {
+    let mut run = runner();
+    run(r#"class Page(title: str):
+    this.title = title"#);
+    run(r#"$Page.slug = $Page.title.replaceAll(" ", "-")"#);
+    run(r#"first = Page("One Two One")"#);
+    run(r#"second = Page("Three Four")"#);
+    run("slugs = Page.map(page => page.slug)");
+    assert_eq!(run("first.slug"), "One-Two-One");
+    assert_eq!(run("slugs"), serde_json::json!(["One-Two-One", "Three-Four"]));
+    run(r#"first.title = "Fresh Page""#);
+    assert_eq!(run("first.slug"), "Fresh-Page");
+    assert_eq!(run("slugs"), serde_json::json!(["Fresh-Page", "Three-Four"]));
+    run(r#"$Page.slug = $Page.title.lower().replaceAll(" ", "_")"#);
+    assert_eq!(run("first.slug"), "fresh_page");
+    assert_eq!(run("second.slug"), "three_four");
+    assert_eq!(run("slugs"), serde_json::json!(["fresh_page", "three_four"]));
+}
+
+/// Nucleoid rolls back literal replacement argument failures
+#[rustfmt::skip]
+#[test]
+fn rolls_back_literal_replacement_argument_failures() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"source = "a|b""#);
+    run(r#"def fail():
+    source = "changed|changed"
+    throw "stop""#);
+    assert_eq!(run_error(r#"source.replaceAll("|", fail())"#), "stop");
+    assert_eq!(run("source"), "a|b");
+    run(r#"recovered = source.replaceAll("|", "/")"#);
+    assert_eq!(run("recovered"), "a/b");
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

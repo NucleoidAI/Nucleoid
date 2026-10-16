@@ -366,6 +366,11 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
             let to = arguments.get(1).unwrap_or(&Value::Undefined).to_string();
             Value::String(receiver.replacen(from.as_str(), to.as_str(), 1))
         }
+        "replaceAll" => {
+            let from = first.to_string();
+            let to = arguments.get(1).unwrap_or(&Value::Undefined).to_string();
+            Value::String(string_replace_all(receiver, &from, &to)?)
+        }
         "repeat" => Value::String(string_repeat(
             receiver,
             first.to_number().max(0.0) as usize,
@@ -384,6 +389,45 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
             )));
         }
     })
+}
+
+fn string_replace_all(receiver: &str, search: &str, replacement: &str) -> Result<String> {
+    // str's literal matcher is non-overlapping; an empty pattern visits only
+    // Unicode scalar boundaries, including the start and end exactly once.
+    let matches = receiver.match_indices(search).count();
+    let mut output =
+        string_replacement_buffer(receiver.len(), search.len(), replacement.len(), matches)?;
+    let mut copied = 0;
+    for (index, matched) in receiver.match_indices(search) {
+        output.push_str(&receiver[copied..index]);
+        output.push_str(replacement);
+        copied = index + matched.len();
+    }
+    output.push_str(&receiver[copied..]);
+    Ok(output)
+}
+
+/// Check the complete byte size before writing, so pushes cannot reallocate.
+/// Keeping sizing and reservation together also permits safe boundary tests
+/// without constructing enormous input strings or requesting huge allocations.
+fn string_replacement_buffer(
+    receiver_len: usize,
+    search_len: usize,
+    replacement_len: usize,
+    matches: usize,
+) -> Result<String> {
+    let too_large = || Error::type_error("Replaced string is too large");
+    let removed = matches.checked_mul(search_len).ok_or_else(too_large)?;
+    let inserted = matches.checked_mul(replacement_len).ok_or_else(too_large)?;
+    let capacity = receiver_len
+        .checked_sub(removed)
+        .and_then(|remaining| remaining.checked_add(inserted))
+        .ok_or_else(too_large)?;
+    let mut output = String::new();
+    output
+        .try_reserve_exact(capacity)
+        .map_err(|_| too_large())?;
+    Ok(output)
 }
 
 fn string_repeat(receiver: &str, count: usize) -> Result<String> {
@@ -444,6 +488,54 @@ mod tests {
     use crate::lang::ast::{BinaryOp, Expr, Function, FunctionBody};
     use crate::{ErrorKind, ObjectId};
     use regex::Regex;
+
+    #[test]
+    fn replacement_size_arithmetic_fails_before_any_allocation() {
+        for (receiver, search, replacement, matches) in [
+            (0, usize::MAX, 0, 2),
+            (0, 0, usize::MAX, 2),
+            (usize::MAX, 0, 1, 1),
+            (0, 1, 0, 1),
+        ] {
+            let error =
+                string_replacement_buffer(receiver, search, replacement, matches).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Type);
+            assert_eq!(error.message(), "Replaced string is too large");
+            assert_eq!(error.position(), None);
+        }
+    }
+
+    #[test]
+    fn replacement_reservation_rejects_impossible_capacities_without_allocating() {
+        // Vec<u8> rejects capacities above isize::MAX before consulting the
+        // allocator; these exercise reservation errors, not dangerous OOMs.
+        for length in [isize::MAX as usize + 1, usize::MAX] {
+            let error = string_replacement_buffer(length, 0, 0, 0).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Type);
+            assert_eq!(error.message(), "Replaced string is too large");
+        }
+        assert!(
+            string_replacement_buffer(0, 0, 0, usize::MAX)
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn replacement_buffer_accounts_for_utf8_and_shrinking_matches_exactly() {
+        for (receiver, search, replacement, expected) in [
+            ("é😀", "", "|", "|é|😀|"),
+            ("é😀é", "é", "🦀", "🦀😀🦀"),
+            ("aaaaa", "aa", "", "a"),
+            ("a", "a", "aaaa", "aaaa"),
+            ("", "", "é", "é"),
+            ("abc", "z", "", "abc"),
+        ] {
+            let output = string_replace_all(receiver, search, replacement).unwrap();
+            assert_eq!(output, expected);
+            assert!(output.capacity() >= output.len());
+        }
+    }
 
     fn values() -> Vec<Value> {
         vec![

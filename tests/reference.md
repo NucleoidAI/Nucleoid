@@ -1682,4 +1682,14 @@ team1.tags = ["gold"]
 assert(tags, ["gold", "green"])
 team2.tags.push("silver")
 assert(tags, ["gold", "green", "silver"])
+---
+# Nucleoid normalizes live text records
+
+labels = ["first name", "last name", "first name"]
+normalized = labels.map(label => label.replaceAll(" ", "_"))
+assert(normalized, ["first_name", "last_name", "first_name"])
+labels.push("display name")
+assert(normalized, ["first_name", "last_name", "first_name", "display_name"])
+labels = ["given name", "last name"]
+assert(normalized, ["given_name", "last_name"])
 ```

@@ -87,6 +87,45 @@ semicolon. Other unsupported tokens use `Expected ':' but found <token>` with
 the existing token descriptions. Existing name, parameter, nesting, and
 operator-chain diagnostics and source positions are preserved.
 
+## Reactive literal string replacement
+
+- `receiver.replaceAll(search, replacement)` is a string-instance method that
+  returns a new string without mutating the receiver.
+- Match the search literally, non-overlapping and left to right. Insert the
+  replacement literally; regular expressions, callbacks, dollar expansion and
+  backslash expansion are not replacement modes.
+- Empty search inserts at the start, between Unicode scalar values and at the
+  end. The empty receiver has one boundary, not two. Scalar boundaries agree
+  with existing string indexing and empty-separator `split`, not UTF-16 units.
+- Snapshot the receiver before evaluating arguments. Every supplied argument
+  expression runs once, left to right, including unused extras, before string
+  conversion or replacement. Earlier failures stop later expressions; argument
+  effects and failures use existing transactions and source positions.
+- Convert only the first two argument values using the same `Value::to_string`
+  behavior as `replace`. Each omission supplies `Undefined`, whose ordinary
+  spelling is `"undefined"`. Lists, objects, classes, functions, dates, regexes,
+  numbers, booleans and literal null retain their existing string conversion.
+- Default/literal values do not manufacture binding reads. Actually reading a
+  null or undefined binding/member/parameter still has its inherited
+  null/deferred assignment behavior, including reads in unused extra arguments.
+  Null or undefined receivers still skip arguments and can recover when defined.
+- Actual receiver and argument reads remain reactive. Re-evaluation replaces
+  obsolete dependencies; global/property rules, class rules, ordinary scopes,
+  noncapture, live/frozen function definitions and `.value` remain unchanged.
+- The operation checks complete output-byte arithmetic and fallibly reserves
+  the output before writing. Arithmetic overflow or failed output reservation
+  raises `TypeError("Replaced string is too large")`; no arbitrary cap is added.
+  Existing conversion/allocation behavior outside this output buffer is unchanged.
+- Existing `replace` stays first-only; `split`, `join` and other methods keep
+  their behavior. Native method properties remain non-first-class. Ordinary
+  functions, callable object properties and instance methods named `replaceAll`
+  retain their old routing; static `String.replaceAll` remains unsupported and
+  raises `TypeError("String.replaceAll is not a function")` after arguments.
+- No alias, grammar, public Rust API type/signature, dependency or version
+  change is part of this addition. [Accepted NUC 42](docs/nuc-0042.md) explains
+  the design; the five appended literal-replacement entries specify executable
+  results, Unicode boundaries, live inputs, class rules and rollback/recovery.
+
 ## Bare single-parameter named arrows
 
 A named arrow definition or method may spell `def double(amount) => amount * 2`
@@ -11443,4 +11482,92 @@ numbers.push(3)
 assert(expanded, [1, 2, 2, 4, 3, 6])
 21
 # return: 21
+---
+# Nucleoid replaces every literal string match
+
+text = "one|two|one"
+joined = text.replaceAll("|", "/")
+overlap = "aaaaa".replaceAll("aa", "X")
+literal = "a.b.a".replaceAll(".", "$&")
+noMatch = "abc".replaceAll("z", "")
+assert(joined, "one/two/one")
+assert(overlap, "XXa")
+assert(literal, "a$&b$&a")
+assert(noMatch, "abc")
+assert("a.a.a".replace(".", "/"), "a/a.a")
+assert(text, "one|two|one")
+joined
+# return: "one/two/one"
+---
+# Nucleoid replaces empty string matches at Unicode boundaries
+
+def replaceEvery(text, search, replacement):
+    if search == "":
+        if text == "":
+            return replacement
+        return replacement + text.split("").join(replacement) + replacement
+    return text.split(search).join(replacement)
+accent = String.fromCharCode(233)
+symbol = String.fromCharCode(128512)
+text = accent + symbol
+empty = "".replaceAll("", "|")
+inserted = text.replaceAll("", "|")
+unchanged = text.replaceAll("", "")
+legacy = replaceEvery(text, "", "|")
+assert(empty, "|")
+assert(inserted, "|" + accent + "|" + symbol + "|")
+assert(inserted, legacy)
+assert(unchanged, text)
+assert(text, accent + symbol)
+---
+# Nucleoid keeps literal replacement reactive
+
+text = "red|blue|red"
+search = "|"
+replacement = "/"
+normalized = text.replaceAll(search, replacement)
+frozen = normalized.value
+assert(normalized, "red/blue/red")
+replacement = "-"
+assert(normalized, "red-blue-red")
+text = "blue|green"
+assert(normalized, "blue-green")
+search = "blue"
+assert(normalized, "-|green")
+replacement = "cyan"
+assert(normalized, "cyan|green")
+assert(frozen, "red/blue/red")
+assert(text, "blue|green")
+---
+# Nucleoid replaces literal strings in class rules
+
+class Page(title: str):
+    this.title = title
+$Page.slug = $Page.title.replaceAll(" ", "-")
+first = Page("One Two One")
+second = Page("Three Four")
+slugs = Page.map(page => page.slug)
+assert(first.slug, "One-Two-One")
+assert(slugs, ["One-Two-One", "Three-Four"])
+first.title = "Fresh Page"
+assert(first.slug, "Fresh-Page")
+assert(slugs, ["Fresh-Page", "Three-Four"])
+$Page.slug = $Page.title.lower().replaceAll(" ", "_")
+assert(first.slug, "fresh_page")
+assert(second.slug, "three_four")
+assert(slugs, ["fresh_page", "three_four"])
+---
+# Nucleoid rolls back literal replacement argument failures
+
+source = "a|b"
+def fail():
+    source = "changed|changed"
+    throw "stop"
+try:
+    source.replaceAll("|", fail())
+catch error:
+    assert(error, "stop")
+assert(source, "a|b")
+recovered = source.replaceAll("|", "/")
+assert(recovered, "a/b")
 ```

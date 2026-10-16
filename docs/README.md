@@ -1055,7 +1055,7 @@ Full detail: [NUC 9](nuc-0009.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
 | `Class` | the global list of declared types; `Class.length` |
@@ -1075,6 +1075,46 @@ open = Task.filter(t => not t.done).length
 ```
 
 - Regular expressions support `.test(...)` and may be used in any condition.
+
+### Reactive literal string replacement
+
+- Accepted [NUC 42](nuc-0042.md) adds the string-instance method
+  `replaceAll(search, replacement)`, without changing accepted syntax.
+- Replace literal, non-overlapping matches left to right; replacement strings
+  have no regex, dollar or backslash expansion. Return a new string.
+- Empty search visits Unicode scalar boundaries, including start/end; an empty
+  receiver has one boundary. Existing indexing and empty `split` use the same
+  scalar model, not UTF-16 units.
+- Snapshot the receiver before arguments; evaluate every supplied expression
+  once left to right, including extras. Then coerce the first two values as
+  `replace` does; omissions spell `"undefined"`.
+- Default/literal values do not imply binding reads. Actual null/undefined
+  reads keep inherited deferred assignment behavior, dependencies, skipped
+  arguments on nullish receivers and recovery. No simulated reads are added.
+- Global/property/class rules, ordinary scopes/noncapture, frozen/live functions,
+  `.value`, transactional rollback and source positions remain unchanged.
+- Checked output sizing or failed output reservation raises
+  `TypeError("Replaced string is too large")`, without an arbitrary cap.
+- Existing `replace` stays first-only; `split`, `join` and custom functions,
+  properties or instance methods named `replaceAll` retain their old behavior.
+  Native method properties are not first-class. Static `String.replaceAll`
+  still raises `TypeError("String.replaceAll is not a function")` after arguments.
+
+```
+labels = ["first name", "last name", "first name"]
+normalized = labels.map(label => label.replaceAll(" ", "_"))
+assert(normalized, ["first_name", "last_name", "first_name"])
+labels.push("display name")
+assert(normalized, ["first_name", "last_name", "first_name", "display_name"])
+labels = ["given name", "last name"]
+assert(normalized, ["given_name", "last_name"])
+```
+
+- This is the paired executable entry `Nucleoid normalizes live text records`
+  in `tests/reference.md`. The normative
+  [root section](../nucleoid.spec.md#reactive-literal-string-replacement) and
+  its five appended entries define results, Unicode, reactivity, class rules
+  and failure rollback; native regressions cover the call/coercion boundaries.
 
 ### Numeric clamping keeps bounds live
 

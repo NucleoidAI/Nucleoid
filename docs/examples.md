@@ -2142,6 +2142,34 @@ assert(batches.length, 3)
   [contract](../nucleoid.spec.md#reactive-flat-mapping) and the
   [reference](README.md#reactive-flat-mapping) for details.
 
+## Reactive literal string replacement
+
+**Literal replacement preserves frozen text normalizers**
+
+```nuc
+text = "archive::notes::today"
+def normalize(value) => value.replaceAll("::", "/")
+frozen = normalize.value
+live = normalize(text)
+snapshot = frozen(text)
+assert(live, "archive/notes/today")
+assert(snapshot, "archive/notes/today")
+def normalize(value) => value.replaceAll("::", "-")
+assert(live, "archive-notes-today")
+assert(snapshot, "archive/notes/today")
+text = "archive::notes"
+assert(live, "archive-notes")
+assert(snapshot, "archive/notes")
+```
+
+- Accepted [NUC 42](nuc-0042.md) adds literal all-occurrences string replacement.
+  The function definition may be live or frozen without freezing its inputs.
+- The method never mutates its receiver. Existing `replace` remains first-only;
+  supplied arguments, actual reads and transactions keep their existing rules.
+- See the [root contract](../nucleoid.spec.md#reactive-literal-string-replacement)
+  and [reference](README.md#reactive-literal-string-replacement) for coercion,
+  Unicode boundaries and inherited null/deferred behavior.
+
 ## Copyright
 
 Copyright 2020 Nucleoid
