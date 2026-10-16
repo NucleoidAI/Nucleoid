@@ -34,10 +34,11 @@ struct Record {
 
 const SPEC_DOCUMENT: &str = include_str!("../nucleoid.spec.md");
 
-const SPEC_RECORDS: usize = 378;
-const SYNTH_RECORDS: usize = 1_081;
+const SPEC_RECORDS: usize = 383;
+const SYNTH_RECORDS: usize = 1_086;
 const SYNTH_19_RECORDS: usize = 51;
 const SYNTH_21_RECORDS: usize = 118;
+const SYNTH_22_RECORDS: usize = 5;
 
 type Grid = Vec<Vec<u8>>;
 
@@ -134,7 +135,11 @@ fn synthesized_records_keep_their_identifiers_and_fields() {
         total, SYNTH_RECORDS,
         "update the training corpus size deliberately"
     );
-    for (number, expected) in [("19", SYNTH_19_RECORDS), ("21", SYNTH_21_RECORDS)] {
+    for (number, expected) in [
+        ("19", SYNTH_19_RECORDS),
+        ("21", SYNTH_21_RECORDS),
+        ("22", SYNTH_22_RECORDS),
+    ] {
         let (_, records) = sets
             .iter()
             .find(|(found, _)| found == number)

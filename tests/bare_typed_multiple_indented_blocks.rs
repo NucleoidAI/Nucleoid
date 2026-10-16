@@ -1254,15 +1254,12 @@ fn all_synthesized_asts_fields_order_and_arc_annotations_remain_exact() {
     let mut records = 0;
     let mut sets = 0;
     let mut rewritten = 0;
-    for entry in fs::read_dir(root.join("dataset")).unwrap() {
-        let entry = entry.unwrap();
-        let filename = entry.file_name();
-        let filename = filename.to_str().unwrap();
-        if !filename.starts_with("nucleoid.synth.") || !filename.ends_with(".jsonl") {
-            continue;
-        }
+    // Audit the 21 shards in this pinned revision, not later independent
+    // shards. Explicit enumeration also fails if a historical shard is deleted.
+    for split in 1..=21 {
+        let filename = format!("nucleoid.synth.{split:02}.jsonl");
         let accepted = accepted_source(&format!("dataset/{filename}"));
-        let current = fs::read_to_string(entry.path()).unwrap();
+        let current = fs::read_to_string(root.join("dataset").join(&filename)).unwrap();
         let before = accepted.lines().collect::<Vec<_>>();
         let after = current.lines().collect::<Vec<_>>();
         assert_eq!(before.len(), after.len(), "{filename}");

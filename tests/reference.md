@@ -1668,4 +1668,18 @@ scale = 2
 assert(result, 24)
 width = 5
 assert(result, 40)
+
+---
+# Nucleoid flat maps live related collections
+
+class Team(tags):
+    this.tags = tags
+team1 = Team(["red", "blue"])
+team2 = Team(["green"])
+tags = Team.flatMap(team => team.tags)
+assert(tags, ["red", "blue", "green"])
+team1.tags = ["gold"]
+assert(tags, ["gold", "green"])
+team2.tags.push("silver")
+assert(tags, ["gold", "green", "silver"])
 ```

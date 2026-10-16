@@ -8194,6 +8194,115 @@ fn rolls_back_comma_free_block_redefinitions() {
 # return: 21"#);
 }
 
+/// Nucleoid flat maps lists by one level
+#[rustfmt::skip]
+#[test]
+fn flat_maps_lists_by_one_level() {
+    let mut run = runner();
+    run("numbers = [1, 2, 3]");
+    run("def expand(value) => [value, value * 10]");
+    run("expanded = numbers.flatMap(expand)");
+    assert_eq!(run("expanded"), serde_json::json!([1, 10, 2, 20, 3, 30]));
+    assert_eq!(run("numbers"), serde_json::json!([1, 2, 3]));
+    run(r#"mixed = [[[1]], [2, 3], 4, "xy", []]"#);
+    run("flattened = mixed.flatMap(item => item)");
+    assert_eq!(run("flattened"), serde_json::json!([[1], 2, 3, 4, "xy"]));
+    assert_eq!(run("mixed[0]"), serde_json::json!([[1]]));
+    run("nullable = numbers.flatMap(item => [item, null])");
+    assert_eq!(run("nullable"), serde_json::json!([1, null, 2, null, 3, null]));
+    run("empty = [].flatMap(item => missing)");
+    assert_eq!(run("empty"), serde_json::json!([]));
+}
+
+/// Nucleoid keeps flat mapped lists reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_flat_mapped_lists_reactive() {
+    let mut run = runner();
+    run("numbers = [1, 2]");
+    run("factor = 2");
+    run("def expand(value) => [value, value * factor]");
+    run("expanded = numbers.flatMap(expand)");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 2, 4]));
+    run("factor = 3");
+    assert_eq!(run("expanded"), serde_json::json!([1, 3, 2, 6]));
+    run("numbers.push(4)");
+    assert_eq!(run("expanded"), serde_json::json!([1, 3, 2, 6, 4, 12]));
+    run("numbers.pop()");
+    assert_eq!(run("expanded"), serde_json::json!([1, 3, 2, 6]));
+    run("def expand(value) => [value + factor]");
+    assert_eq!(run("expanded"), serde_json::json!([4, 5]));
+    assert_eq!(run("numbers"), serde_json::json!([1, 2]));
+}
+
+/// Nucleoid flat maps class populations
+#[rustfmt::skip]
+#[test]
+fn flat_maps_class_populations() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run(r#"class Batch(items):
+    this.items = items"#);
+    run("batch1 = Batch([1, 2])");
+    run("batch2 = Batch([3])");
+    run("expanded = Batch.flatMap(batch => batch.items)");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 3]));
+    run("batch1.items.push(4)");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 3]));
+    run("batch3 = Batch([5])");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 3, 5]));
+    assert_eq!(run_error("delete batch2"), "TypeError: Cannot delete object 'batch2'");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 3, 5]));
+    run("batch2.items = []");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 5]));
+    assert_eq!(run("Batch.length"), 3);
+    assert_eq!(run("batch1.items"), serde_json::json!([1, 2, 4]));
+}
+
+/// Nucleoid preserves flat mapping callable snapshots
+#[rustfmt::skip]
+#[test]
+fn preserves_flat_mapping_callable_snapshots() {
+    let mut run = runner();
+    run("numbers = [1, 2]");
+    run("factor = 2");
+    run("def expand(value) => [value * factor]");
+    run("callback = expand");
+    run("frozen = expand.value");
+    run("live = numbers.flatMap(callback)");
+    run("saved = numbers.flatMap(frozen)");
+    run("snapshot = live.value");
+    assert_eq!(run("live"), serde_json::json!([2, 4]));
+    assert_eq!(run("saved"), serde_json::json!([2, 4]));
+    assert_eq!(run("snapshot"), serde_json::json!([2, 4]));
+    run("def expand(value) => [value + factor]");
+    assert_eq!(run("live"), serde_json::json!([3, 4]));
+    assert_eq!(run("saved"), serde_json::json!([2, 4]));
+    run("factor = 3");
+    assert_eq!(run("live"), serde_json::json!([4, 5]));
+    assert_eq!(run("saved"), serde_json::json!([3, 6]));
+    assert_eq!(run("snapshot"), serde_json::json!([2, 4]));
+}
+
+/// Nucleoid rolls back flat mapping callback failures
+#[rustfmt::skip]
+#[test]
+fn rolls_back_flat_mapping_callback_failures() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("numbers = [1, 2]");
+    run("def expand(value) => [value, value * 2]");
+    run("expanded = numbers.flatMap(expand)");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 2, 4]));
+    assert_eq!(run_error(r#"def expand(value):
+    throw "FLAT_MAPPING_ABORT""#), "FLAT_MAPPING_ABORT");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 2, 4]));
+    assert_eq!(run("numbers"), serde_json::json!([1, 2]));
+    run("numbers.push(3)");
+    assert_eq!(run("expanded"), serde_json::json!([1, 2, 2, 4, 3, 6]));
+    run(r#"21
+
+# return: 21"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

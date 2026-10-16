@@ -773,6 +773,35 @@ assert(total, 8)
 - The authoritative [contract](nucleoid.spec.md#comma-free-bare-indented-blocks)
   keeps all accepted syntax, body punctuation, live dependencies and rollback.
 
+## Reactive flat mapping
+
+**Flat mapping produces zero or many results per input**
+
+```nuc
+numbers = [1, 2, 3]
+def copies(value):
+    if value > 1:
+        return [value, value * 10]
+    return []
+expanded = numbers.flatMap(copies)
+assert(expanded, [2, 20, 3, 30])
+assert(numbers, [1, 2, 3])
+numbers.push(4)
+assert(expanded, [2, 20, 3, 30, 4, 40])
+```
+
+- Accepted [NUC 41](docs/nuc-0041.md) provides one read-only
+  `flatMap(callback)` query for lists and class populations.
+- Each snapshotted item invokes the callback once, in order, with one argument.
+  A returned list contributes one level of items; other values contribute
+  one item. Order, duplicates and live object/function identities remain.
+- Callback validation, eager supplied arguments (including extras), real
+  null/deferred reads, dependencies and transactional errors use existing
+  machinery. Functions and properties named `flatMap` remain ordinary names.
+- Existing `map`, `reduce` and `concat` stay supported. See the
+  [authoritative contract](nucleoid.spec.md#reactive-flat-mapping) for snapshot
+  timing and the distinction between returning null and actually reading it.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

@@ -227,6 +227,23 @@ impl Runtime {
                 Ok(Value::List(mapped))
             }
 
+            "flatMap" => {
+                let Some(Value::Function(function)) = predicate else {
+                    return Err(Error::type_error("flatMap expects a function"));
+                };
+
+                let mut mapped = Vec::new();
+
+                for item in items {
+                    match self.invoke(&function, &[item])? {
+                        Value::List(values) => mapped.extend(values),
+                        value => mapped.push(value),
+                    }
+                }
+
+                Ok(Value::List(mapped))
+            }
+
             "includes" | "contains" => {
                 let wanted = predicate.unwrap_or(Value::Undefined);
                 Ok(Value::Bool(

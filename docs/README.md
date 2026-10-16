@@ -1057,7 +1057,7 @@ Full detail: [NUC 9](nuc-0009.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -1425,6 +1425,43 @@ assert(mapped, 80)
 
 ---
 
+### Reactive flat mapping
+
+- Accepted [NUC 41](nuc-0041.md) specifies `list.flatMap(callback)` and
+  `ClassName.flatMap(callback)` as the same shared read-only list query.
+- Snapshot the receiver before arguments, evaluate every supplied expression
+  left to right (including unused extras), then validate the first value as
+  a function. A missing or non-function callback raises exactly
+  `TypeError("flatMap expects a function")`, including on empty inputs.
+- Invoke once per snapshotted item, in order, with only that item as the
+  argument, as for `map`. Missing callback parameters remain `null`;
+  no index, receiver argument, closure capture or automatic `this` is added.
+- Flatten a returned list exactly one level, preserving deeper lists,
+  duplicates and object/function identities; other values contribute one item,
+  and an empty returned list contributes none. The query itself never writes
+  its receiver, although callbacks retain their normal effects.
+- Returning null or undefined does not manufacture a read. Actual null reads
+  still affect enclosing assignment settlement; missing/deleted reads retain
+  their existing behavior. A null/undefined receiver keeps ordinary method
+  routing, including skipping argument evaluation.
+- Callback/member reads, population changes, redefinitions, `.value`
+  snapshots, obsolete dependency removal, errors, rollback and recovery use
+  the existing machinery. A frozen function keeps its definition, not a
+  frozen copy of state read from its body.
+- The executable reference entry `Nucleoid flat maps live related collections`
+  tracks team-tag updates. The root
+  [specification](../nucleoid.spec.md#reactive-flat-mapping) also covers ordered
+  projection, list mutation, population growth, snapshots and failed redefinition.
+- `map`, `reduce`, `concat` and custom object/instance/global bindings named
+  `flatMap` remain available unchanged. Native methods do not gain first-class
+  bound-property lookup, recursion, a depth option or a feature-specific cap.
+- The accepted map/reduce/concat composition can read a null intermediate
+  through its reducer; native flat mapping adds no artificial read to emulate
+  that effect. Intentional runtime-call RHS rewrites change AST and canonical
+  graph source; full-AST/graph-source equality is not promised.
+
+---
+
 ## 12. Reasoning Operations
 
 - `why reference` selects the reference and its transitive dependencies.
@@ -1504,6 +1541,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Deleting an instance that still has properties | `Cannot delete object '<id>'` |
 | Using `value` as a property name | `Cannot use 'value' as a property` |
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
+| Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 
 ### SyntaxError
@@ -1605,6 +1643,7 @@ throw value                            raise a value
 return expression                      yield from a block or function
 
 name.value                             read without depending
+items.flatMap(callback)                 ordered one-level projection (Accepted NUC 41)
 Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping (Accepted NUC 39)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end

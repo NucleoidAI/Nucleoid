@@ -1328,6 +1328,57 @@ statement positions; caught values and transaction recovery are unchanged.
   Inherited noncapture, parameter-dependent-local, Windows debug stack and
   old whole-suite Gitless discovery limitations are not repaired.
 
+## Reactive flat mapping
+
+- `list.flatMap(callback)` is a read-only ordered zero/one/many projection.
+  Class populations support the same query through the shared list-query
+  route. The query itself does not mutate its receiver; callbacks retain
+  their ordinary effects.
+- Snapshot the receiver before evaluating supplied arguments, exactly as for
+  `map`. Evaluate all supplied argument expressions once, left to right,
+  including extras, before validating or invoking the callback. A later
+  argument error therefore precedes callback validation. A null or undefined
+  receiver retains existing call routing and does not evaluate the arguments.
+- The first supplied value must be a function, even for an empty receiver;
+  a missing or non-function callback raises
+  `TypeError("flatMap expects a function")`.
+- Invoke the callback once for each snapshotted item in order, with exactly
+  one argument and the same invocation and receiver semantics as `map`.
+  Additional declared parameters are bound to `null`, not an index or receiver.
+  Anonymous callbacks do not gain closure capture.
+- A returned list contributes its immediate items. Any other returned value
+  contributes one item. Preserve order, duplicates, object and function
+  identities, and deeper lists without recursively flattening them. A returned
+  empty list contributes no items; strings are not split into characters.
+- Preserve returned `null` and `undefined` as values without manufacturing
+  reads. Reading a null binding, property or parameter still sets existing
+  null tracking and can make the enclosing assignment settle to `null`.
+  Missing-property and deleted-name reads retain their actual deferred
+  behavior; nested undefined values are not unconditionally converted or
+  used to defer the complete result.
+- Callback, receiver and argument reads use the existing dependency graph.
+  List mutations, class population changes, member updates and named-function
+  redefinitions refresh dependents; obsolete read dependencies are removed.
+  `.value` freezes its ordinary reading: a frozen function definition still
+  reads live state from its body.
+- Propagate callback and argument errors unchanged through existing
+  transactions, including rollback of effects, relationships and subscriptions,
+  and ordinary recovery afterward. Existing depth and propagation bounds apply;
+  no flat-mapping-specific cap, depth option or recursion is added.
+- Existing `map`, `reduce`, `concat` and all accepted syntax remain available.
+  Object/instance members and user functions or properties named `flatMap`
+  keep their ordinary dispatch; native query methods do not become first-class
+  bound properties. No parser, AST, keyword, public Rust type or dependency
+  changes are required.
+- The five executable flat-mapping entries below cover one-level projection,
+  live lists, class members/populations, callable snapshots and failed-callback
+  rollback. The accepted map/reduce/concat composition remains useful but is
+  not an unconditional whole-program equivalence: its reducer reads an
+  intermediate null item, while native flat mapping adds no such read.
+  Rewritten runtime-call right-hand sides intentionally have different AST
+  and canonical graph source; preserved assertions, returns and actual
+  dependencies are checked rather than claiming complete graph-source equality.
+
 ## Implicit iterator indented loops
 
 - `for NAME:` with a genuine indented body is optionally exactly
@@ -11296,5 +11347,100 @@ assert(prefer(0, 9), 9)
 assert(prefer(3, 9), 3)
 assert(combined(2, 5, 3), 21)
 combined(2, 5, 3)
+# return: 21
+
+---
+# Nucleoid flat maps lists by one level
+
+numbers = [1, 2, 3]
+def expand(value) => [value, value * 10]
+expanded = numbers.flatMap(expand)
+assert(expanded, [1, 10, 2, 20, 3, 30])
+assert(numbers, [1, 2, 3])
+mixed = [[[1]], [2, 3], 4, "xy", []]
+flattened = mixed.flatMap(item => item)
+assert(flattened, [[1], 2, 3, 4, "xy"])
+assert(mixed[0], [[1]])
+nullable = numbers.flatMap(item => [item, null])
+assert(nullable, [1, null, 2, null, 3, null])
+empty = [].flatMap(item => missing)
+assert(empty, [])
+---
+# Nucleoid keeps flat mapped lists reactive
+
+numbers = [1, 2]
+factor = 2
+def expand(value) => [value, value * factor]
+expanded = numbers.flatMap(expand)
+assert(expanded, [1, 2, 2, 4])
+factor = 3
+assert(expanded, [1, 3, 2, 6])
+numbers.push(4)
+assert(expanded, [1, 3, 2, 6, 4, 12])
+numbers.pop()
+assert(expanded, [1, 3, 2, 6])
+def expand(value) => [value + factor]
+assert(expanded, [4, 5])
+assert(numbers, [1, 2])
+---
+# Nucleoid flat maps class populations
+
+class Batch(items):
+    this.items = items
+batch1 = Batch([1, 2])
+batch2 = Batch([3])
+expanded = Batch.flatMap(batch => batch.items)
+assert(expanded, [1, 2, 3])
+batch1.items.push(4)
+assert(expanded, [1, 2, 4, 3])
+batch3 = Batch([5])
+assert(expanded, [1, 2, 4, 3, 5])
+try:
+    delete batch2
+catch error:
+    assert(error, TypeError("Cannot delete object 'batch2'"))
+assert(expanded, [1, 2, 4, 3, 5])
+batch2.items = []
+assert(expanded, [1, 2, 4, 5])
+assert(Batch.length, 3)
+assert(batch1.items, [1, 2, 4])
+---
+# Nucleoid preserves flat mapping callable snapshots
+
+numbers = [1, 2]
+factor = 2
+def expand(value) => [value * factor]
+callback = expand
+frozen = expand.value
+live = numbers.flatMap(callback)
+saved = numbers.flatMap(frozen)
+snapshot = live.value
+assert(live, [2, 4])
+assert(saved, [2, 4])
+assert(snapshot, [2, 4])
+def expand(value) => [value + factor]
+assert(live, [3, 4])
+assert(saved, [2, 4])
+factor = 3
+assert(live, [4, 5])
+assert(saved, [3, 6])
+assert(snapshot, [2, 4])
+---
+# Nucleoid rolls back flat mapping callback failures
+
+numbers = [1, 2]
+def expand(value) => [value, value * 2]
+expanded = numbers.flatMap(expand)
+assert(expanded, [1, 2, 2, 4])
+try:
+    def expand(value):
+        throw "FLAT_MAPPING_ABORT"
+catch error:
+    assert(error, "FLAT_MAPPING_ABORT")
+assert(expanded, [1, 2, 2, 4])
+assert(numbers, [1, 2])
+numbers.push(3)
+assert(expanded, [1, 2, 2, 4, 3, 6])
+21
 # return: 21
 ```

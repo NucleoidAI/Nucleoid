@@ -2106,6 +2106,42 @@ assert(reading, 12)
 - All other grammar, graph relationships and transactional behavior follow
   the [authoritative section](../nucleoid.spec.md#comma-free-bare-indented-blocks).
 
+## Reactive flat mapping
+
+**Flattened batches retain live object identities**
+
+```nuc
+class Task(label):
+    this.label = label
+task1 = Task("alpha")
+task2 = Task("beta")
+batches = [[task1], [task2, task1]]
+flattened = batches.flatMap(batch => batch)
+labels = flattened.map(task => task.label)
+assert(labels, ["alpha", "beta", "alpha"])
+task1.label = "gamma"
+assert(labels, ["gamma", "beta", "gamma"])
+first = flattened[0]
+first.label = "delta"
+assert(task1.label, "delta")
+assert(labels, ["delta", "beta", "delta"])
+task3 = Task("third")
+batches.push([task3])
+assert(labels, ["delta", "beta", "delta", "third"])
+assert(batches.length, 3)
+```
+
+- Accepted [NUC 41](nuc-0041.md) adds the same one-level query to lists and
+  class populations. It preserves duplicates, order and identities without
+  mutating the receiver or recursively flattening deeper lists.
+- The callback receives one snapshotted item, just as for `map`. Real reads,
+  member updates, supplied-argument effects and errors retain their existing
+  reactive and transactional behavior. Returning null alone does not imply
+  the null read made by an explicit intermediate reducer.
+- Existing map/reduce/concat programs remain valid. See the root
+  [contract](../nucleoid.spec.md#reactive-flat-mapping) and the
+  [reference](README.md#reactive-flat-mapping) for details.
+
 ## Copyright
 
 Copyright 2020 Nucleoid
