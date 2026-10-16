@@ -2284,6 +2284,37 @@ saved
 - Only lowercase `assert` followed by `:` in statement position qualifies;
   existing typed declarations win before this new spelling is considered.
 
+**Compact exception suites preserve independent class rules**
+
+```nuc
+# Compact exception suites preserve independent class rules
+
+class Task(state: str):
+    this.state = state
+first = Task("open")
+second = Task("open")
+$Task.closed = $Task.state == "closed"
+try
+    first.state = "closed"
+    throw "CANCEL"
+catch issue
+    assert(issue, "CANCEL")
+assert(first.closed, false)
+assert(second.closed, false)
+first.state = "closed"
+assert(first.closed, true)
+assert(second.closed, false)
+first.closed
+# return: true
+```
+
+- Accepted [NUC 46](nuc-0046.md) changes only the optional suite colons.
+  The same bodies with `try:` and `catch issue:` retain the complete AST,
+  actual checks, explicit return, rollback and independent reactive rules.
+- A real indent must qualify each omitted colon separately; inline/braced
+  forms keep their existing required colons. The native REPL buffers a complete
+  lexical bare `try` header through its catch until blank-line commit or EOF.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

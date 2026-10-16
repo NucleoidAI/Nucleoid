@@ -3,7 +3,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use nucleoid::graph::NodeKey;
-use nucleoid::lang::ast::lexer::{Keyword, Token, tokenize};
+use nucleoid::lang::ast::lexer::{Keyword, Spanned, Token, tokenize};
 use nucleoid::{Runtime, Value};
 use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
@@ -197,7 +197,9 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
             continue;
         }
 
-        multiline |= line.trim_end().ends_with(':') || indented_named_arrow_header(&line);
+        multiline |= line.trim_end().ends_with(':')
+            || indented_named_arrow_header(&line)
+            || indented_try_header(&line);
         source.push_str(&line);
         source.push('\n');
 
@@ -218,16 +220,31 @@ fn indented_named_arrow_header(line: &str) -> bool {
     let Ok(tokens) = tokenize(line) else {
         return false;
     };
-    let mut tokens = tokens.iter().map(|spanned| &spanned.token).filter(|token| {
-        !matches!(
-            token,
-            Token::Newline | Token::Indent | Token::Dedent | Token::Eof
-        )
-    });
+    let mut tokens = header_tokens(&tokens);
     matches!(tokens.next(), Some(Token::Keyword(Keyword::Def)))
         && matches!(tokens.next(), Some(Token::Identifier(_)))
         && matches!(tokens.next_back(), Some(Token::Arrow))
         && !tokens.any(|token| matches!(token, Token::Arrow))
+}
+
+/// A bare try starts the existing buffer; catch stays in that same submission.
+/// Lexing the whole line rejects malformed suffixes rather than hiding errors.
+/// The parser still validates both suites when blank-line commit or EOF runs it.
+fn indented_try_header(line: &str) -> bool {
+    let Ok(tokens) = tokenize(line) else {
+        return false;
+    };
+    let mut tokens = header_tokens(&tokens);
+    matches!(tokens.next(), Some(Token::Keyword(Keyword::Try))) && tokens.next().is_none()
+}
+
+fn header_tokens(tokens: &[Spanned]) -> impl DoubleEndedIterator<Item = &Token> {
+    tokens.iter().map(|spanned| &spanned.token).filter(|token| {
+        !matches!(
+            token,
+            Token::Newline | Token::Indent | Token::Dedent | Token::Eof
+        )
+    })
 }
 
 fn run_interactive(runtime: &mut Runtime, source: &str, json: bool, graph: bool) {
@@ -292,7 +309,58 @@ Enter a blank line to run a multiline indented block."
 
 #[cfg(test)]
 mod tests {
-    use super::{indented_named_arrow_header, setting_value};
+    use super::{indented_named_arrow_header, indented_try_header, setting_value};
+
+    #[test]
+    fn only_a_complete_lexical_bare_try_header_starts_exception_continuation() {
+        for line in [
+            "try",
+            "try ",
+            "\ttry\t",
+            "    try # catch: and => are only a comment",
+            "try\t# try",
+            "try \u{c}\r# accepted layout",
+        ] {
+            assert!(indented_try_header(line), "{line:?}");
+        }
+    }
+
+    #[test]
+    fn exception_continuation_rejects_text_prefixes_extra_tokens_and_lexical_errors() {
+        for line in [
+            "",
+            " \t",
+            "# try",
+            "\"try\"",
+            "'try'",
+            "`try`",
+            "/try/",
+            "tryout",
+            "try_",
+            "trying",
+            "value = \"try\"",
+            "value = try",
+            "try = 1",
+            "try:",
+            "try;",
+            "try pass",
+            "try {}",
+            "try()",
+            "try error",
+            "try =>",
+            "catch",
+            "catch error",
+            "catch(error)",
+            "def f() =>",
+            "try @",
+            "try \"unterminated",
+            "try\u{a0}",
+            "try\u{2003}",
+            "try\u{b}",
+        ] {
+            assert!(!indented_try_header(line), "{line:?}");
+        }
+    }
 
     #[test]
     fn only_named_headers_with_a_bodyless_arrow_start_continuation() {

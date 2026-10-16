@@ -1057,7 +1057,50 @@ if a > 5:
 
 - Assigning `a = 6` throws; afterwards `a` is `5`.
 
-Full detail: [NUC 9](nuc-0009.md).
+### Optional colons on indented exception suites (Accepted NUC 46)
+
+- Accepted [NUC 46](nuc-0046.md) allows `try` and a complete existing `catch`
+  header to omit the suite colon independently, only before a genuine indent.
+  Colon-bearing indented, inline, semicolon-separated and braced forms remain
+  valid. The whole `Stmt::Try`, default `error` binding and runtime are shared.
+- This is the paired executable reference entry
+  `Nucleoid preserves catch bindings and mixed exception suite forms`,
+  without its title comment. The inline pair keeps both colons; the two
+  indented pairs demonstrate omission in each direction.
+
+```
+try: throw "INLINE"
+catch issue: assert(issue, "INLINE")
+try
+    throw "PAREN"
+catch (problem):
+    assert(problem, "PAREN")
+try:
+    throw "DEFAULT"
+catch
+    assert(error, "DEFAULT")
+```
+
+- Complete parameter parsing precedes qualification. Default, ordinary-name
+  and parenthesized-name headers retain their accepted meanings; no filters,
+  catch expressions, multi-catch, `finally` or new scope/throw behavior.
+- Existing lexer layout and `has_indented_body` decide whether a real body
+  follows, before any layout is consumed. Blank/comment-only lines or a
+  header-line semicolon do not suffice. Other header grammars are unchanged.
+- The native REPL buffers a complete lexical bare `try` header, including a
+  trailing comment, through its catch until blank-line commit or EOF. A
+  standalone `catch`, literal/comment text, identifier prefix or malformed
+  header does not start that buffer; committed errors are still reported.
+- Savepoints restore failed-body state and pending work before recovery.
+  Dependencies, rules, receivers, returns and reasoning remain the accepted
+  behavior. Already implemented exceptions are baseline, not a pending NUC
+  dependency. Exact grammar and errors are in the
+  [root contract](../nucleoid.spec.md#colon-free-indented-exception-suites).
+- Independent evaluation accepted all 611 paired cases: eight use fewer lexer
+  tokens, 603 are unchanged, and none increased. All 2,763 protected assertions
+  executed and all 50 explicit expected returns matched.
+
+Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 
 ---
 

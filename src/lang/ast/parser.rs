@@ -182,8 +182,8 @@ impl Parser {
         self.suite_body()
     }
 
-    /// Shares the existing body parser with a final `else` whose real
-    /// indentation has already qualified for colon omission.
+    /// Shares the existing body parser with `else`, `try` and `catch` clauses
+    /// whose real indentation has already qualified for colon omission.
     fn suite_body(&mut self) -> Result<Vec<Stmt>> {
         if self.eat(&Token::Newline) || self.check(&Token::Indent) {
             self.skip_newlines();
@@ -477,7 +477,12 @@ impl Parser {
 
     fn try_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::Try))?;
-        let body = self.suite()?;
+        // Explicit colons keep the original suite path and diagnostics.
+        let body = if self.check(&Token::Colon) || !self.has_indented_body(0) {
+            self.suite()?
+        } else {
+            self.suite_body()?
+        };
         self.skip_newlines();
 
         if !self.eat_keyword(Keyword::Catch) {
@@ -505,7 +510,11 @@ impl Parser {
             _ => "error".to_string(),
         };
 
-        let catch = self.suite()?;
+        let catch = if self.check(&Token::Colon) || !self.has_indented_body(0) {
+            self.suite()?
+        } else {
+            self.suite_body()?
+        };
 
         Ok(Stmt::Try {
             body,

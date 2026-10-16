@@ -1691,6 +1691,78 @@ statement positions; caught values and transaction recovery are unchanged.
   increased. All 2,736 protected assertions executed and all 48 explicit
   expected returns matched.
 
+## Colon-free indented exception suites
+
+- `try` and a complete existing `catch` header may independently omit their
+  suite colons only before a genuine indented body. This is optional syntax
+  for the identical complete `Stmt::Try { body, parameter, catch }`.
+- Keep the default `error` binding, `catch name`, `catch(name)` and
+  `catch (name)`. Parse the existing complete parameter form first; do not
+  add expressions, filters, multiple catches or `finally`.
+- An explicit colon takes the original suite path first, including inline,
+  semicolon-separated, braced and indented bodies. Without it, require
+  immediate `Newline` or `Indent`, then a first non-`Newline`/`Semicolon`
+  token of `Indent`, using the existing `has_indented_body` predicate before
+  consuming any layout. Failed qualification uses the original colon-required
+  path with its exact errors and positions.
+- Share the existing `suite_body` parser, complete statement nesting budget,
+  separators, dedent and EOF handling. LF, CRLF, tabs, comments and blank
+  lines follow the existing lexer; comments alone do not create a body.
+  A header-line semicolon, inline statement or bare brace cannot qualify.
+- Other condition, loop, class and function headers retain their independently
+  specified grammar and qualification rules. No lexer, keyword, public AST,
+  canonical generator, runtime, dependency or version changes.
+  Canonical keys and all colon-bearing accepted source forms remain unchanged.
+- In the native REPL, a complete lexical bare `try` header, including accepted
+  layout and trailing comments, starts the existing multiline buffer through
+  its catch. A standalone `catch` does not start buffering. Blank-line commit
+  and EOF flush parse the original source and print actual diagnostics.
+  Literals, comment-only lines, identifier prefixes, assignments, extra tokens
+  and invalid lexemes do not qualify as bare `try` headers. Existing colon/arrow
+  buffering and command handling remain unchanged.
+- Keep the original savepoint, rollback, pending propagation/deletion tracking,
+  dependencies, class rules/instances, whole thrown values/errors, scope,
+  noncapture, receivers, snapshots, reasoning and return flow. This is not a
+  runtime repair or a dependency on an unimplemented transaction proposal.
+- Exact `try` keeps `SyntaxError("Expected ':' but found end of input")`
+  at line 1, column 4. Exact `try\n` keeps
+  `SyntaxError("Expected ':' but found end of line")` at line 1, column 1.
+  Exact `try;\n    pass\ncatch: pass` keeps
+  `SyntaxError("Expected ':' but found ';'")` at line 1, column 4.
+- Exact `try: pass\ncatch` keeps
+  `SyntaxError("Expected ':' but found end of input")` at line 2, column 6.
+  Exact `try: pass\ncatch issue pass` keeps
+  `SyntaxError("Expected ':' but found keyword 'pass'")` at line 2, column 13.
+  Malformed parenthesized bindings retain the original name/closing-parenthesis
+  diagnostics. After qualification, lexical/body errors retain their actual
+  physical positions; missing catches still require `catch`.
+  Exact `try: pass\ncatch\n    value = (1 +)` raises
+  `SyntaxError("Unexpected ')'")` at line 3, column 18; the colon-bearing
+  catch has the same error. In `try\n    value = (1 +)\ncatch: pass`, the
+  inherited next-newline position is line 2, column 17, also unchanged from
+  its colon-bearing try control. Source-column quirks are not repaired.
+- The five appended exception entries trace whole thrown values/default and
+  parenthesized bindings (four checks), dependency rollback (four checks,
+  return `12`), nested catch association (two checks), function returns
+  (two checks) and class-rule rollback (four checks).
+  The appended reference, README and examples entries retain another eleven
+  checks and return `true` in the examples entry: twenty-seven checks and
+  two explicit returns across exactly eight pre-executed counterparts.
+- Keep all 603 historical measured sources and all 27 earlier training files
+  unchanged. Four development-executed, self-contained recovery records in
+  `dataset/nucleoid.synth.27.jsonl` bring the training metadata to 408 spec
+  records and 1,107 synthesized records in 27 synthesized shards plus ARC.
+  Training records are not new measured baselines or normative test cases.
+- Independent evaluation accepted NUC 46 against
+  `4ed54c0994e1425d2345f2758b7431c9f36f7562`: all 611 cases passed, eight
+  use fewer lexer tokens, 603 are unchanged, and none increased. Total tokens
+  changed from 58,091 to 58,069 without offsetting any per-case increase.
+- All 2,763 protected assertions executed and all 50 explicit expected returns
+  matched. Accepted-syntax controls and candidate programs preserved complete
+  ordered ASTs, positions, canonical assertions and actual coverage, including
+  root-level native REPL recovery. Full per-case counts are in
+  [NUC 46](docs/nuc-0046.md#reference-implementation).
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -12014,4 +12086,79 @@ catch error:
     assert: error, ReferenceError("missing is not defined")
 assert: state, 1
 assert: message, ReferenceError("missing is not defined")
+---
+# Nucleoid catches thrown values with colon-free indented suites
+
+status = "ready"
+try
+    throw "STOP"
+catch problem
+    assert(problem, "STOP")
+assert(status, "ready")
+try
+    throw 7
+catch (issue)
+    assert(issue, 7)
+try
+    missing
+catch
+    assert(error, ReferenceError("missing is not defined"))
+---
+# Nucleoid restores dependencies through colon-free exception suites
+
+source = 2
+derived = source * 3
+try
+    source = 9
+    throw "ABORT"
+catch failure
+    assert(failure, "ABORT")
+assert(source, 2)
+assert(derived, 6)
+source = 4
+assert(derived, 12)
+derived
+# return: 12
+---
+# Nucleoid preserves nested catch association without suite colons
+
+state = "ready"
+try
+    try
+        throw "INNER"
+    catch inner
+        throw inner + "-OUTER"
+catch outer
+    assert(outer, "INNER-OUTER")
+assert(state, "ready")
+---
+# Nucleoid preserves function returns through compact exception suites
+
+def recover(flag):
+    try
+        if flag:
+            throw "FALLBACK"
+        return "OK"
+    catch issue
+        return issue
+first = recover(false)
+second = recover(true)
+assert(first, "OK")
+assert(second, "FALLBACK")
+---
+# Nucleoid rolls back class rules with colon-free catch suites
+
+class Parcel(state: str):
+    this.state = state
+parcel = Parcel("queued")
+$Parcel.label = $Parcel.state + "!"
+try
+    parcel.state = "broken"
+    throw "ABORT"
+catch reason
+    assert(reason, "ABORT")
+assert(parcel.state, "queued")
+assert(parcel.label, "queued!")
+parcel.state = "sent"
+assert(parcel.label, "sent!")
 ```

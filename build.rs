@@ -16,7 +16,7 @@ use std::fs;
 use std::path::Path;
 
 pub(crate) mod build_statements;
-use build_statements::{assertion, statements};
+use build_statements::{assertion, starts_keyword, statements};
 
 /// How a document holds its cases.
 #[derive(Clone, Copy, PartialEq)]
@@ -205,6 +205,28 @@ pub(crate) fn render_records(records: &[Record]) -> String {
                 write!(source, "\n# return: {expected}").unwrap();
             }
             writeln!(generated, "    runner()({source:?});").unwrap();
+        }
+
+        // Catch bindings, rollback and assertion coverage belong to the whole
+        // original program. Extraction can lose the actual being checked or
+        // turn an untaken catch into a passing literal. Select conservatively
+        // by complete lexical keywords; the shared runner owns all parsing,
+        // failures, AST coverage and explicit return validation.
+        if statements.iter().any(|statement| {
+            statement.lines().any(|line| {
+                ["try", "catch"]
+                    .iter()
+                    .any(|keyword| starts_keyword(line.trim_start(), keyword))
+            })
+        }) {
+            let mut source = record.code.clone();
+            if let Some(expected) = &record.returns {
+                write!(source, "\n# return: {expected}").unwrap();
+            }
+            writeln!(generated, "    let mut run = runner();").unwrap();
+            writeln!(generated, "    run({});", rust_literal(&source)).unwrap();
+            writeln!(generated, "}}\n").unwrap();
+            continue;
         }
 
         if let Some(expected) = &record.returns {

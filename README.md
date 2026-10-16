@@ -904,6 +904,35 @@ assert: record.status, "sent"
   counters, transactions and exclusion from program results and model nodes.
   See the [root contract](nucleoid.spec.md#colon-led-assertion-statements).
 
+## Colon-free indented exception suites (Accepted NUC 46)
+
+**Indented error recovery omits redundant colons**
+
+```nuc
+# Indented error recovery omits redundant colons
+
+quantity = 3
+total = quantity * 2
+try
+    quantity = 5
+    throw "CANCEL"
+catch error
+    assert(error, "CANCEL")
+assert(quantity, 3)
+assert(total, 6)
+```
+
+- Accepted [NUC 46](docs/nuc-0046.md) permits either exception-suite colon to
+  be omitted only when its complete existing header has a real indented body.
+  `try:` and `catch error:` with the same bodies remain valid and equivalent.
+- Default `catch`, named `catch issue` and parenthesized `catch(issue)`
+  keep the existing bindings. Inline/braced suites still require their colons.
+- The native REPL buffers a complete lexical bare `try` header through its
+  catch until blank-line commit or EOF, including trailing header comments.
+- Recovery uses the same transactional rollback and live dependency model,
+  not a new error API, scope or continuation rule. See the
+  [root contract](nucleoid.spec.md#colon-free-indented-exception-suites).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

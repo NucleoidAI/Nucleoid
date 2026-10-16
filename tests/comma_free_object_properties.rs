@@ -824,7 +824,7 @@ fn generated_spec_records_retain_full_asts_assertions_returns_and_exported_execu
         .lines()
         .map(|line| serde_json::from_str::<Record>(line).unwrap())
         .collect::<Vec<_>>();
-    assert_eq!(records.len(), 403);
+    assert_eq!(records.len(), 408);
     let fixtures: Vec<Counterpart> = serde_json::from_str(ACCEPTED).unwrap();
     for ((fixture, record), count) in fixtures[..5]
         .iter()

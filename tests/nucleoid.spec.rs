@@ -41,30 +41,51 @@ fn returns_value_of_variable() {
 #[rustfmt::skip]
 #[test]
 fn throws_an_error_if_variable_is_not_defined() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("t = e + 1"), "ReferenceError: e is not defined");
+    let mut run = runner();
+    run(r#"try:
+    # t is e plus 1
+    t = e + 1
+catch error:
+    assert(error, ReferenceError("e is not defined"))"#);
 }
 
 /// Nucleoid throws an error inside a block
 #[rustfmt::skip]
 #[test]
 fn throws_an_error_inside_a_block() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("k = 99");
-    assert_eq!(run_error(r#"if k >= 99:
-    throw "INVALID""#), "INVALID");
+    let mut run = runner();
+    run(r#"# k is 99
+k = 99
+
+try:
+    # if k is greater than or equal to 99, then throw "INVALID"
+    if k >= 99:
+        throw "INVALID"
+catch error:
+    assert(error, "INVALID")"#);
 }
 
 /// Nucleoid throws an error as a variable
 #[rustfmt::skip]
 #[test]
 fn throws_an_error_as_a_variable() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("length = 0.1");
-    assert_eq!(run_error(r#"if length < 1:
-    throw length"#), 0.1);
-    assert_eq!(run_error(r#"if length < 1.1:
-    throw 'length'"#), "length");
+    let mut run = runner();
+    run(r#"# length is 0.1
+length = 0.1
+
+try:
+    # if length is less than 1, then throw length
+    if length < 1:
+        throw length
+catch error:
+    assert(error, 0.1)
+
+try:
+    # if length is less than 1.1, then throw 'length'
+    if length < 1.1:
+        throw 'length'
+catch error:
+    assert(error, "length")"#);
 }
 
 /// Nucleoid creates a class with constructor
@@ -385,8 +406,12 @@ fn supports_an_array_with_brackets() {
 #[rustfmt::skip]
 #[test]
 fn throws_an_error_if_a_variable_in_an_expression_is_not_defined() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("e == 2.71828"), "ReferenceError: e is not defined");
+    let mut run = runner();
+    run(r#"try:
+    # whether e is equal to 2.71828
+    e == 2.71828
+catch error:
+    assert(error, ReferenceError("e is not defined"))"#);
 }
 
 /// Nucleoid retrieves the value of a variable
@@ -404,12 +429,19 @@ fn retrieves_the_value_of_a_variable() {
 #[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_on_a_local_variable_only_if_the_instance_is_defined() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Ticket");
-    assert_eq!(run_error(r#"{
-    ticket = Ticket()
-    ticket.event.group = "ENTERTAINMENT"
-}"#), "ReferenceError: ticket.event is not defined");
+    let mut run = runner();
+    run(r#"# There is a Ticket type
+class Ticket
+
+try:
+    # while in the block, ticket is a local Ticket,
+    # and ticket's event's group is "ENTERTAINMENT"
+    {
+        ticket = Ticket()
+        ticket.event.group = "ENTERTAINMENT"
+    }
+catch error:
+    assert(error, ReferenceError("ticket.event is not defined"))"#);
 }
 
 /// Nucleoid declares a local variable as undefined
@@ -435,17 +467,29 @@ fn declares_a_local_variable_as_undefined() {
 #[rustfmt::skip]
 #[test]
 fn rejects_a_local_variable_declared_as_undefined() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class Device(code: str):
-    this.code = code"#);
-    run(r#"device1 = Device("A0")"#);
-    run(r#"device2 = Device("B1")"#);
-    assert_eq!(run_error(r#"{
-    device = Device.find(d => d.code == "A1")
-    if not device:
-        throw "INVALID_DEVICE"
-    return device
-}"#), "INVALID_DEVICE");
+    let mut run = runner();
+    run(r#"# There is a Device type,
+# which has a code as a string
+class Device(code: str):
+    this.code = code
+
+# device1 is a Device whose code is "A0"
+device1 = Device("A0")
+
+# device2 is a Device whose code is "B1"
+device2 = Device("B1")
+
+try:
+    # While in the block, device is a local variable that is the Device whose code is "A1",
+    # and if there is no device, then throw "INVALID_DEVICE"
+    {
+        device = Device.find(d => d.code == "A1")
+        if not device:
+            throw "INVALID_DEVICE"
+        return device
+    }
+catch error:
+    assert(error, "INVALID_DEVICE")"#);
 }
 
 /// Nucleoid creates a standard built-in object as a property of a local variable
@@ -712,80 +756,146 @@ fn assigns_a_function_as_a_dependency() {
 #[rustfmt::skip]
 #[test]
 fn supports_a_regular_expression_literal() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class User");
-    run(r#"if not /.{4,8}/.test($User.password):
-    throw 'INVALID_PASSWORD'"#);
-    run("user1 = User()");
-    assert_eq!(run("user1.password"), serde_json::Value::Null);
-    assert_eq!(run_error("user1.password = 'PAS'"), "INVALID_PASSWORD");
+    let mut run = runner();
+    run(r#"# There is a User type
+class User
+
+# If any user's password does not match /.{4,8}/, then throw 'INVALID_PASSWORD'
+if not /.{4,8}/.test($User.password):
+    throw 'INVALID_PASSWORD'
+
+# user1 is a User
+user1 = User()
+
+assert(user1.password, null)
+
+try:
+    # user1's password is 'PAS'
+    user1.password = 'PAS'
+catch error:
+    assert(error, "INVALID_PASSWORD")"#);
 }
 
 /// Nucleoid rejects defining a class declaration in a non-class block
 #[rustfmt::skip]
 #[test]
 fn rejects_defining_a_class_declaration_in_a_non_class_block() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Person");
-    run("person1 = Person()");
-    run("person1.weight = 90");
-    run("person1.height = 1.8");
-    assert_eq!(run_error(r#"{
-    weight = person1.weight
-    height = person1.height
-    $Person.bmi = weight / (height * height)
-}"#), "SyntaxError: Cannot define class declaration in non-class block");
+    let mut run = runner();
+    run(r#"# There is a Person type
+class Person
+
+# person1 is a Person whose weight is 90 and whose height is 1.8
+person1 = Person()
+person1.weight = 90
+person1.height = 1.8
+
+try:
+    # while in the block, weight is a local variable that is person1's weight,
+    # and height is a local variable that is person1's height,
+    # and any person's bmi is weight divided by height squared
+    {
+        weight = person1.weight
+        height = person1.height
+        $Person.bmi = weight / (height * height)
+    }
+catch error:
+    assert(error, SyntaxError("Cannot define class declaration in non-class block"))"#);
 }
 
 /// Nucleoid detects a circular dependency
 #[rustfmt::skip]
 #[test]
 fn detects_a_circular_dependency() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("number1 = 10");
-    run("number2 = number1 * 10");
-    assert_eq!(run("number2"), 100);
-    assert_eq!(run_error("number1 = number2 * 10"), "TypeError: Circular Dependency");
+    let mut run = runner();
+    run(r#"# number1 is 10
+number1 = 10
+
+# number2 is number1 times 10
+number2 = number1 * 10
+
+assert(number2, 100)
+
+try:
+    # number1 is number2 times 10
+    number1 = number2 * 10
+catch error:
+    assert(error, TypeError("Circular Dependency"))"#);
 }
 
 /// Nucleoid rolls back a variable if an exception is thrown
 #[rustfmt::skip]
 #[test]
 fn rolls_back_a_variable_if_an_exception_is_thrown() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("a = 5");
-    run(r#"if a > 5:
-    throw 'INVALID_VALUE'"#);
-    assert_eq!(run_error("a = 6"), "INVALID_VALUE");
-    assert_eq!(run("a"), 5);
+    let mut run = runner();
+    run(r#"# a is 5
+a = 5
+
+# if a is greater than 5, then throw 'INVALID_VALUE'
+if a > 5:
+    throw 'INVALID_VALUE'
+
+try:
+    # a is 6
+    a = 6
+catch error:
+    assert(error, "INVALID_VALUE")
+
+assert(a, 5)"#);
 }
 
 /// Nucleoid rolls back a property if an exception is thrown
 #[rustfmt::skip]
 #[test]
 fn rolls_back_a_property_if_an_exception_is_thrown() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Item");
-    run(r#"if $Item.sku == 'A':
-    throw 'INVALID_SKU'"#);
-    run("item1 = Item()");
-    assert_eq!(run_error("item1.sku = 'A'"), "INVALID_SKU");
-    assert_eq!(run("item1.sku"), serde_json::Value::Null);
+    let mut run = runner();
+    run(r#"# There is an Item type
+class Item
+
+# If any item's sku is 'A', then throw 'INVALID_SKU'
+if $Item.sku == 'A':
+    throw 'INVALID_SKU'
+
+# item1 is an Item
+item1 = Item()
+
+try:
+    # item1's sku is 'A'
+    item1.sku = 'A'
+catch error:
+    assert(error, "INVALID_SKU")
+
+assert(item1.sku, null)"#);
 }
 
 /// Nucleoid rolls back an instance if an exception is thrown
 #[rustfmt::skip]
 #[test]
 fn rolls_back_an_instance_if_an_exception_is_thrown() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run(r#"class User(first: str, last: str):
+    let mut run = runner();
+    run(r#"# There is a User type,
+# which has a first as a string
+# and a last as a string
+class User(first: str, last: str):
     this.first = first
-    this.last = last"#);
-    run(r#"if $User.first.length < 3:
-    throw 'INVALID_USER'"#);
-    assert_eq!(run_error("user1 = User('F', 'L')"), "INVALID_USER");
-    assert_eq!(run("User.length"), 0);
-    assert_eq!(run_error("user1"), "ReferenceError: user1 is not defined");
+    this.last = last
+
+# If any user's first is shorter than 3 characters, then throw 'INVALID_USER'
+if $User.first.length < 3:
+    throw 'INVALID_USER'
+
+try:
+    # user1 is a User whose first is 'F' and whose last is 'L'
+    user1 = User('F', 'L')
+catch error:
+    assert(error, "INVALID_USER")
+
+assert(User.length, 0)
+
+try:
+    # user1
+    user1
+catch error:
+    assert(error, ReferenceError("user1 is not defined"))"#);
 }
 
 /// Nucleoid updates a variable assignment
@@ -817,13 +927,26 @@ fn uses_only_the_value_when_a_variable_references_itself() {
 #[rustfmt::skip]
 #[test]
 fn deletes_a_variable_assignment() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("t = 1");
-    run("q = t + 1");
-    assert_eq!(run("q"), 2);
-    run("delete q");
-    run("t = 2");
-    assert_eq!(run_error("q"), "ReferenceError: q is not defined");
+    let mut run = runner();
+    run(r#"# t is 1
+t = 1
+
+# q is t plus 1
+q = t + 1
+
+assert(q, 2)
+
+# q is deleted
+delete q
+
+# t is 2
+t = 2
+
+try:
+    # q
+    q
+catch error:
+    assert(error, ReferenceError("q is not defined"))"#);
 }
 
 /// Nucleoid returns the assigned value in a variable assignment
@@ -1173,12 +1296,30 @@ fn defines_a_class_in_the_state() {
 #[rustfmt::skip]
 #[test]
 fn rejects_creating_an_instance_if_the_class_does_not_exist() {
-    let (mut run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("chart1 = Chart()"), "ReferenceError: Chart is not defined");
-    run("class Chart");
-    run("chart1 = Chart()");
-    assert_eq!(run_error("chart1.plot = Plot()"), "ReferenceError: Plot is not defined");
-    assert_eq!(run_error("$Chart.plot = Plot()"), "ReferenceError: Plot is not defined");
+    let mut run = runner();
+    run(r#"try:
+    # chart1 is a Chart
+    chart1 = Chart()
+catch error:
+    assert(error, ReferenceError("Chart is not defined"))
+
+# There is a Chart type
+class Chart
+
+# chart1 is a Chart
+chart1 = Chart()
+
+try:
+    # chart1's plot is a Plot
+    chart1.plot = Plot()
+catch error:
+    assert(error, ReferenceError("Plot is not defined"))
+
+try:
+    # any chart's plot is a Plot
+    $Chart.plot = Plot()
+catch error:
+    assert(error, ReferenceError("Plot is not defined"))"#);
 }
 
 /// Nucleoid creates a property assignment before declaration
@@ -1212,10 +1353,18 @@ fn creates_a_property_assignment_after_declaration() {
 #[rustfmt::skip]
 #[test]
 fn creates_a_property_assignment_only_if_the_instance_is_defined() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Channel");
-    run("channel1 = Channel()");
-    assert_eq!(run_error(r#"channel1.frequency.type = "ANGULAR""#), "ReferenceError: channel1.frequency is not defined");
+    let mut run = runner();
+    run(r#"# There is a Channel type
+class Channel
+
+# channel1 is a Channel
+channel1 = Channel()
+
+try:
+    # channel1's frequency's type is "ANGULAR"
+    channel1.frequency.type = "ANGULAR"
+catch error:
+    assert(error, ReferenceError("channel1.frequency is not defined"))"#);
 }
 
 /// Nucleoid creates an object and assigns it to a variable
@@ -1235,11 +1384,21 @@ fn creates_an_object_and_assigns_it_to_a_variable() {
 #[rustfmt::skip]
 #[test]
 fn creates_an_object_assignment_as_a_property_only_if_the_instance_is_defined() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Worker");
-    run("class Schedule");
-    run("worker1 = Worker()");
-    assert_eq!(run_error("worker1.duty.schedule = Schedule()"), "ReferenceError: worker1.duty is not defined");
+    let mut run = runner();
+    run(r#"# There is a Worker type
+class Worker
+
+# There is a Schedule type
+class Schedule
+
+# worker1 is a Worker
+worker1 = Worker()
+
+try:
+    # worker1's duty's schedule is a Schedule
+    worker1.duty.schedule = Schedule()
+catch error:
+    assert(error, ReferenceError("worker1.duty is not defined"))"#);
 }
 
 /// Nucleoid uses only the value when a property references itself
@@ -1289,23 +1448,43 @@ fn assigns_an_object_to_a_property_after_initialization() {
 #[rustfmt::skip]
 #[test]
 fn rejects_value_as_a_property_name() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Schedule");
-    run("class Place");
-    run("value = Schedule()");
-    assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
-    assert_eq!(run_error("value.value = Place()"), "TypeError: Cannot use 'value' as a property");
+    let mut run = runner();
+    run(r#"# There is a Schedule type
+class Schedule
+
+# There is a Place type
+class Place
+
+# value is a Schedule
+value = Schedule()
+
+assert(value, { "id": "value" })
+
+try:
+    # value's value is a Place
+    value.value = Place()
+catch error:
+    assert(error, TypeError("Cannot use 'value' as a property"))"#);
 }
 
 /// Nucleoid rejects value as a property name in a value assignment
 #[rustfmt::skip]
 #[test]
 fn rejects_value_as_a_property_name_in_a_value_assignment() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Value");
-    run("value = Value()");
-    assert_eq!(run("value"), serde_json::json!({ "id": "value" }));
-    assert_eq!(run_error("value.value = 2147483647"), "TypeError: Cannot use 'value' as a property");
+    let mut run = runner();
+    run(r#"# There is a Value type
+class Value
+
+# value is a Value
+value = Value()
+
+assert(value, { "id": "value" })
+
+try:
+    # value's value is 2147483647
+    value.value = 2147483647
+catch error:
+    assert(error, TypeError("Cannot use 'value' as a property"))"#);
 }
 
 /// Nucleoid uses value property to indicate using only value of property
@@ -1329,27 +1508,49 @@ fn uses_value_property_to_indicate_using_only_value_of_property() {
 #[rustfmt::skip]
 #[test]
 fn uses_value_property_in_an_if_condition_to_indicate_using_only_value_of_property() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Question");
-    run("question1 = Question()");
-    run(r#"question1.text = "How was the service?""#);
-    run(r#"if question1.text != question1.text.value:
-    throw "QUESTION_ARCHIVED""#);
-    assert_eq!(run("question1.text"), "How was the service?");
-    assert_eq!(run_error(r#"question1.text = "How would you rate us?""#), "QUESTION_ARCHIVED");
+    let mut run = runner();
+    run(r#"# There is a Question type
+class Question
+
+# question1 is a Question whose text is "How was the service?"
+question1 = Question()
+question1.text = "How was the service?"
+
+# if question1's text is not question1's text's value, then throw "QUESTION_ARCHIVED"
+if question1.text != question1.text.value:
+    throw "QUESTION_ARCHIVED"
+
+assert(question1.text, "How was the service?")
+
+try:
+    # question1's text is "How would you rate us?"
+    question1.text = "How would you rate us?"
+catch error:
+    assert(error, "QUESTION_ARCHIVED")"#);
 }
 
 /// Nucleoid rejects value of a property if the property is not defined
 #[rustfmt::skip]
 #[test]
 fn rejects_value_of_a_property_if_the_property_is_not_defined() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Travel");
-    run("travel1 = Travel()");
-    run("travel1.speed = 65");
-    run("travel1.duration = travel1.distance / travel1.speed");
-    assert_eq!(run("travel1.duration"), serde_json::Value::Null);
-    assert_eq!(run_error("travel1.time = travel1.distance.value / travel1.speed"), "ReferenceError: travel1.distance is not defined");
+    let mut run = runner();
+    run(r#"# There is a Travel type
+class Travel
+
+# travel1 is a Travel whose speed is 65
+travel1 = Travel()
+travel1.speed = 65
+
+# travel1's duration is travel1's distance divided by travel1's speed
+travel1.duration = travel1.distance / travel1.speed
+
+assert(travel1.duration, null)
+
+try:
+    # travel1's time is travel1's distance's value divided by travel1's speed
+    travel1.time = travel1.distance.value / travel1.speed
+catch error:
+    assert(error, ReferenceError("travel1.distance is not defined"))"#);
 }
 
 /// Nucleoid uses the value of a null property as zero
@@ -1371,12 +1572,19 @@ fn uses_the_value_of_a_null_property_as_zero() {
 #[rustfmt::skip]
 #[test]
 fn rejects_value_as_a_property_name_in_a_block() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Alarm");
-    assert_eq!(run_error(r#"{
-    value = Alarm()
-    value.value = "22:00"
-}"#), "TypeError: Cannot use 'value' as a property");
+    let mut run = runner();
+    run(r#"# There is an Alarm type
+class Alarm
+
+try:
+    # while in the block, value is a local Alarm,
+    # and value's value is "22:00"
+    {
+        value = Alarm()
+        value.value = "22:00"
+    }
+catch error:
+    assert(error, TypeError("Cannot use 'value' as a property"))"#);
 }
 
 /// Nucleoid keeps same as its value when the value property is used for a local
@@ -1564,13 +1772,24 @@ fn updates_property_assignment() {
 #[rustfmt::skip]
 #[test]
 fn deletes_an_instance() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Circle");
-    run("circle1 = Circle()");
-    run("delete circle1");
-    assert_eq!(run(r#"Circle["circle1"]"#), serde_json::Value::Null);
-    assert_eq!(run(r#"Circle.find(circle => circle.id == "circle1")"#), serde_json::Value::Null);
-    assert_eq!(run_error("circle1"), "ReferenceError: circle1 is not defined");
+    let mut run = runner();
+    run(r#"# There is a Circle type
+class Circle
+
+# circle1 is a Circle
+circle1 = Circle()
+
+# circle1 is deleted
+delete circle1
+
+assert(Circle["circle1"], null)
+assert(Circle.find(circle => circle.id == "circle1"), null)
+
+try:
+    # circle1
+    circle1
+catch error:
+    assert(error, ReferenceError("circle1 is not defined"))"#);
 }
 
 /// Nucleoid deletes an instance by reference
@@ -1607,30 +1826,63 @@ fn returns_a_boolean_when_deleting_an_object() {
 #[rustfmt::skip]
 #[test]
 fn rejects_deleting_an_instance_if_it_has_any_properties() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Channel");
-    run("channel1 = Channel()");
-    run("channel1.frequency = 440");
-    assert_eq!(run_error("delete channel1"), "TypeError: Cannot delete object 'channel1'");
-    assert_eq!(run("channel1.frequency"), 440);
-    run("delete channel1.frequency");
-    run("delete channel1");
-    assert_eq!(run(r#"Channel["channel1"]"#), serde_json::Value::Null);
+    let mut run = runner();
+    run(r#"# There is a Channel type
+class Channel
+
+# channel1 is a Channel
+channel1 = Channel()
+
+# channel1's frequency is 440
+channel1.frequency = 440
+
+try:
+    # channel1 is deleted
+    delete channel1
+catch error:
+    assert(error, TypeError("Cannot delete object 'channel1'"))
+
+assert(channel1.frequency, 440)
+
+# channel1's frequency is deleted
+delete channel1.frequency
+
+# channel1 is deleted
+delete channel1
+
+assert(Channel["channel1"], null)"#);
 }
 
 /// Nucleoid rejects deleting an instance if it has an object as a property
 #[rustfmt::skip]
 #[test]
 fn rejects_deleting_an_instance_if_it_has_an_object_as_a_property() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Shape");
-    run("class Type");
-    run("shape1 = Shape()");
-    run("shape1.type = Type()");
-    assert_eq!(run_error("delete shape1"), "TypeError: Cannot delete object 'shape1'");
-    run("delete shape1.type");
-    run("delete shape1");
-    assert_eq!(run(r#"Shape["shape1"]"#), serde_json::Value::Null);
+    let mut run = runner();
+    run(r#"# There is a Shape type
+class Shape
+
+# There is a Type type
+class Type
+
+# shape1 is a Shape
+shape1 = Shape()
+
+# shape1's type is a Type
+shape1.type = Type()
+
+try:
+    # shape1 is deleted
+    delete shape1
+catch error:
+    assert(error, TypeError("Cannot delete object 'shape1'"))
+
+# shape1's type is deleted
+delete shape1.type
+
+# shape1 is deleted
+delete shape1
+
+assert(Shape["shape1"], null)"#);
 }
 
 /// Nucleoid deletes a property assignment
@@ -1835,8 +2087,12 @@ fn runs_an_expression_statement_of_class() {
 #[rustfmt::skip]
 #[test]
 fn rejects_a_variable_declaration_without_definition() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("a: int"), "ReferenceError: Missing definition");
+    let mut run = runner();
+    run(r#"try:
+    # a is declared as a number but not defined
+    a: int
+catch error:
+    assert(error, ReferenceError("Missing definition"))"#);
 }
 
 /// Nucleoid creates a dependency based on the length of an identifier
@@ -1978,13 +2234,25 @@ fn supports_creating_standard_built_in_objects() {
 #[rustfmt::skip]
 #[test]
 fn supports_built_in_objects() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("date1 = Date()");
-    run("date2 = Date(date1.getTime())");
-    assert_eq!(run("date1.getTime() == date2.getTime()"), true);
-    run(r#"date3 = Date.parse("04 Dec 1995 00:12:00 GMT")"#);
-    assert_eq!(run("date3"), 818035920000.0);
-    assert_eq!(run_error("date4 = Date.wrong()"), "TypeError: Date.wrong is not a function");
+    let mut run = runner();
+    run(r#"# date1 is the current date
+date1 = Date()
+
+# date2 is a date whose time is date1's time
+date2 = Date(date1.getTime())
+
+assert(date1.getTime() == date2.getTime(), true)
+
+# date3 is the parsed date of "04 Dec 1995 00:12:00 GMT"
+date3 = Date.parse("04 Dec 1995 00:12:00 GMT")
+
+assert(date3, 818035920000)
+
+try:
+    # date4 is the wrong date
+    date4 = Date.wrong()
+catch error:
+    assert(error, TypeError("Date.wrong is not a function"))"#);
 }
 
 /// Nucleoid calls a function with no return
@@ -2110,55 +2378,105 @@ fn returns_an_inline_array() {
 #[rustfmt::skip]
 #[test]
 fn supports_nested_functions_as_a_parameter_in_an_expression() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run(r#"name = "AbCDE""#);
-    run("pointer = 0");
-    run(r#"if not /[A-Z]/.test(name.charAt(pointer)):
-    throw "INVALID_FIRST_CHARACTER""#);
-    assert_eq!(run_error(r#"name = "bbCDE""#), "INVALID_FIRST_CHARACTER");
-    run(r#"name = "CbCDE""#);
-    assert_eq!(run_error("pointer = 1"), "INVALID_FIRST_CHARACTER");
+    let mut run = runner();
+    run(r#"# name is "AbCDE"
+name = "AbCDE"
+
+# pointer is 0
+pointer = 0
+
+# if the character of name at pointer is not an uppercase letter,
+# then throw "INVALID_FIRST_CHARACTER"
+if not /[A-Z]/.test(name.charAt(pointer)):
+    throw "INVALID_FIRST_CHARACTER"
+
+try:
+    # name is "bbCDE"
+    name = "bbCDE"
+catch error:
+    assert(error, "INVALID_FIRST_CHARACTER")
+
+# name is "CbCDE"
+name = "CbCDE"
+
+try:
+    # pointer is 1
+    pointer = 1
+catch error:
+    assert(error, "INVALID_FIRST_CHARACTER")"#);
 }
 
 /// Nucleoid supports a property of chained functions in an expression
 #[rustfmt::skip]
 #[test]
 fn supports_a_property_of_chained_functions_in_an_expression() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class User");
-    run("class Registration");
-    run("user1 = User()");
-    run("registration1 = Registration()");
-    run("registration1.user = user1");
-    run("registration2 = Registration()");
-    run("registration2.user = user1");
-    assert_eq!(run_error(r#"if Registration.filter(r => r.user == $User).length > 1:
-    throw "USER_ALREADY_REGISTERED""#), "USER_ALREADY_REGISTERED");
+    let mut run = runner();
+    run(r#"# There is a User type
+class User
+
+# There is a Registration type
+class Registration
+
+# user1 is a User
+user1 = User()
+
+# registration1 is a Registration whose user is user1
+registration1 = Registration()
+registration1.user = user1
+
+# registration2 is a Registration whose user is user1
+registration2 = Registration()
+registration2.user = user1
+
+try:
+    # if the number of registrations whose user is any user is more than one,
+    # then throw "USER_ALREADY_REGISTERED"
+    if Registration.filter(r => r.user == $User).length > 1:
+        throw "USER_ALREADY_REGISTERED"
+catch error:
+    assert(error, "USER_ALREADY_REGISTERED")"#);
 }
 
 /// Nucleoid throws an error as a string
 #[rustfmt::skip]
 #[test]
 fn throws_an_error_as_a_string() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("throw 'INVALID'"), "INVALID");
-    assert_eq!(run_error(r#"throw "INVALID""#), "INVALID");
+    let mut run = runner();
+    run(r#"try:
+    # throw 'INVALID'
+    throw 'INVALID'
+catch error:
+    assert(error, "INVALID")
+
+try:
+    # throw "INVALID"
+    throw "INVALID"
+catch error:
+    assert(error, "INVALID")"#);
 }
 
 /// Nucleoid throws an error as an integer
 #[rustfmt::skip]
 #[test]
 fn throws_an_error_as_an_integer() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("throw 123"), 123);
+    let mut run = runner();
+    run(r#"try:
+    # throw 123
+    throw 123
+catch error:
+    assert(error, 123)"#);
 }
 
 /// Nucleoid throws a reference error if the thrown value is not defined
 #[rustfmt::skip]
 #[test]
 fn throws_a_reference_error_if_the_thrown_value_is_not_defined() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("throw abc"), "ReferenceError: abc is not defined");
+    let mut run = runner();
+    run(r#"try:
+    # throw abc
+    throw abc
+catch error:
+    assert(error, ReferenceError("abc is not defined"))"#);
 }
 
 /// Nucleoid creates a class assignment before initialization
@@ -2613,9 +2931,15 @@ fn creates_a_class_assignment_as_multiple_properties_as_part_of_a_declaration_af
 #[rustfmt::skip]
 #[test]
 fn creates_a_class_assignment_only_if_the_instance_is_defined() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Phone");
-    assert_eq!(run_error("$Phone.line.wired = true"), "ReferenceError: Phone.line is not defined");
+    let mut run = runner();
+    run(r#"# There is a Phone type
+class Phone
+
+try:
+    # any phone's line's wired is true
+    $Phone.line.wired = true
+catch error:
+    assert(error, ReferenceError("Phone.line is not defined"))"#);
 }
 
 /// Nucleoid creates a for of statement
@@ -2914,8 +3238,12 @@ fn selects_the_whole_model() {
 #[rustfmt::skip]
 #[test]
 fn throws_an_error_when_explaining_something_that_is_not_defined() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("why nothing"), "ReferenceError: nothing is not defined");
+    let mut run = runner();
+    run(r#"try:
+    # explain nothing
+    why nothing
+catch error:
+    assert(error, ReferenceError("nothing is not defined"))"#);
 }
 
 /// Nucleoid treats a reasoning name as a variable when one is defined
@@ -3015,23 +3343,31 @@ fn preserves_subtype_property_rules_when_a_parent_rule_changes() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_a_parent_rule_that_fails_for_a_subtype_instance() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Parent");
-    run(r#"class Child: Parent
-    pass"#);
-    run("parent = Parent()");
-    run("parent.score = 0");
-    run("child = Child()");
-    run("child.score = 2");
-    assert_eq!(run_error(r#"if $Parent.score > 1:
-    throw "LIMIT""#), "LIMIT");
-    run("child.score = 3");
-    run("parent.score = 3");
-    run("another = Child()");
-    run("another.score = 4");
-    assert_eq!(run("child.score"), 3);
-    assert_eq!(run("parent.score"), 3);
-    assert_eq!(run("another.score"), 4);
+    let mut run = runner();
+    run(r#"class Parent
+
+class Child: Parent
+    pass
+
+parent = Parent()
+parent.score = 0
+child = Child()
+child.score = 2
+
+try:
+    if $Parent.score > 1:
+        throw "LIMIT"
+catch error:
+    assert(error, "LIMIT")
+
+child.score = 3
+parent.score = 3
+another = Child()
+another.score = 4
+
+assert(child.score, 3)
+assert(parent.score, 3)
+assert(another.score, 4)"#);
 }
 
 /// Nucleoid resolves super from the constructor currently executing
@@ -3068,78 +3404,144 @@ fn resolves_super_from_the_constructor_currently_executing() {
 #[rustfmt::skip]
 #[test]
 fn rejects_a_class_inheriting_from_itself() {
-    let (mut run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error(r#"class Loop: Loop
-    pass"#), "TypeError: Circular Inheritance");
-    assert_eq!(run("Class.length"), 0);
-    run("class Loop");
-    run("loop = Loop()");
-    assert_eq!(run("loop.id"), "loop");
+    let mut run = runner();
+    run(r#"try:
+    class Loop: Loop
+        pass
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+
+assert(Class.length, 0)
+
+class Loop
+
+loop = Loop()
+
+assert(loop.id, "loop")"#);
 }
 
 /// Nucleoid rejects an inheritance cycle introduced by redeclaration
 #[rustfmt::skip]
 #[test]
 fn rejects_an_inheritance_cycle_introduced_by_redeclaration() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Root");
-    run("$Root.flag = true");
-    run(r#"class Child: Root
-    pass"#);
-    assert_eq!(run_error(r#"class Root: Child
-    pass"#), "TypeError: Circular Inheritance");
-    run("child = Child()");
-    assert_eq!(run("child.flag"), true);
-    assert_eq!(run("Class.length"), 2);
+    let mut run = runner();
+    run(r#"class Root
+
+$Root.flag = true
+
+class Child: Root
+    pass
+
+try:
+    class Root: Child
+        pass
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+
+child = Child()
+
+assert(child.flag, true)
+assert(Class.length, 2)"#);
 }
 
 /// Nucleoid rejects class dependency cycles inside compound expressions
 #[rustfmt::skip]
 #[test]
 fn rejects_class_dependency_cycles_inside_compound_expressions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Item");
-    run("$Item.list = [$Item.source]");
-    assert_eq!(run_error("$Item.source = $Item.list"), "TypeError: Circular Dependency");
-    run(r#"$Item.record = { "source": $Item.source }"#);
-    assert_eq!(run_error("$Item.source = $Item.record"), "TypeError: Circular Dependency");
-    run("$Item.label = `${$Item.source}`");
-    assert_eq!(run_error("$Item.source = $Item.label"), "TypeError: Circular Dependency");
-    run(r#"$Item.part = "abcd"[$Item.source:]"#);
-    assert_eq!(run_error("$Item.source = $Item.part.length"), "TypeError: Circular Dependency");
-    run(r#"$Item.head = "abcd"[:$Item.source]"#);
-    assert_eq!(run_error("$Item.source = $Item.head.length"), "TypeError: Circular Dependency");
-    run("$Item.copy = $Item.list[:]");
-    assert_eq!(run_error("$Item.source = $Item.copy[0]"), "TypeError: Circular Dependency");
-    run(r#"$Item.indexed = [$Item["source"]]"#);
-    assert_eq!(run_error("$Item.source = $Item.indexed"), "TypeError: Circular Dependency");
-    run("$Item.source = 1");
-    run("item = Item()");
-    assert_eq!(run("item.list"), serde_json::json!([1]));
-    assert_eq!(run("item.label"), "1");
-    assert_eq!(run("item.part"), "bcd");
-    run("$Item.snapshot = [$Item.source.value]");
-    run("$Item.source = $Item.snapshot[0] + 1");
-    assert_eq!(run("item.source"), 2);
-    assert_eq!(run("item.snapshot"), serde_json::json!([1]));
-    assert_eq!(run("item.list"), serde_json::json!([2]));
+    let mut run = runner();
+    run(r#"class Item
+
+$Item.list = [$Item.source]
+
+try:
+    $Item.source = $Item.list
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.record = { "source": $Item.source }
+
+try:
+    $Item.source = $Item.record
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.label = `${$Item.source}`
+
+try:
+    $Item.source = $Item.label
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.part = "abcd"[$Item.source:]
+
+try:
+    $Item.source = $Item.part.length
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.head = "abcd"[:$Item.source]
+
+try:
+    $Item.source = $Item.head.length
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.copy = $Item.list[:]
+
+try:
+    $Item.source = $Item.copy[0]
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.indexed = [$Item["source"]]
+
+try:
+    $Item.source = $Item.indexed
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+
+$Item.source = 1
+item = Item()
+
+assert(item.list, [1])
+assert(item.label, "1")
+assert(item.part, "bcd")
+
+$Item.snapshot = [$Item.source.value]
+$Item.source = $Item.snapshot[0] + 1
+
+assert(item.source, 2)
+assert(item.snapshot, [1])
+assert(item.list, [2])"#);
 }
 
 /// Nucleoid checks both slice bounds when declaring a class rule
 #[rustfmt::skip]
 #[test]
 fn checks_both_slice_bounds_when_declaring_a_class_rule() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Item");
-    assert_eq!(run_error(r#"$Item.part = "abcd"[missing:]"#), "ReferenceError: missing is not defined");
-    assert_eq!(run_error(r#"$Item.part = "abcd"[:missing]"#), "ReferenceError: missing is not defined");
-    run("start = 1");
-    run("end = 3");
-    run(r#"$Item.part = "abcd"[start:end]"#);
-    run("item = Item()");
-    assert_eq!(run("item.part"), "bc");
-    run("end = 4");
-    assert_eq!(run("item.part"), "bcd");
+    let mut run = runner();
+    run(r#"class Item
+
+try:
+    $Item.part = "abcd"[missing:]
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+try:
+    $Item.part = "abcd"[:missing]
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+start = 1
+end = 3
+$Item.part = "abcd"[start:end]
+item = Item()
+
+assert(item.part, "bc")
+
+end = 4
+
+assert(item.part, "bcd")"#);
 }
 
 /// Nucleoid propagates null through indexed object properties
@@ -3181,31 +3583,50 @@ fn defers_a_class_conditional_reading_an_undefined_indexed_property() {
 #[rustfmt::skip]
 #[test]
 fn tracks_the_number_of_declared_classes_as_a_dependency() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("count = Class.length");
-    run("doubled = count * 2");
-    run("class First");
-    assert_eq!(run("count"), 1);
-    assert_eq!(run("doubled"), 2);
-    run("class Second");
-    assert_eq!(run("count"), 2);
-    assert_eq!(run("doubled"), 4);
-    run("class First");
-    assert_eq!(run("count"), 2);
-    assert_eq!(run_error(r#"class Temporary
-throw "ABORT""#), "ABORT");
-    assert_eq!(run("Class.length"), 2);
-    assert_eq!(run("count"), 2);
-    assert_eq!(run("doubled"), 4);
-    run("class Third");
-    assert_eq!(run("count"), 3);
-    assert_eq!(run("doubled"), 6);
-    run(r#"if count > 3:
-    throw "TOO_MANY_TYPES""#);
-    assert_eq!(run_error("class Fourth"), "TOO_MANY_TYPES");
-    assert_eq!(run("Class.length"), 3);
-    assert_eq!(run("count"), 3);
-    assert_eq!(run("doubled"), 6);
+    let mut run = runner();
+    run(r#"count = Class.length
+doubled = count * 2
+
+class First
+
+assert(count, 1)
+assert(doubled, 2)
+
+class Second
+
+assert(count, 2)
+assert(doubled, 4)
+
+class First
+
+assert(count, 2)
+
+try:
+    class Temporary
+    throw "ABORT"
+catch error:
+    assert(error, "ABORT")
+
+assert(Class.length, 2)
+assert(count, 2)
+assert(doubled, 4)
+
+class Third
+
+assert(count, 3)
+assert(doubled, 6)
+
+if count > 3:
+    throw "TOO_MANY_TYPES"
+
+try:
+    class Fourth
+catch error:
+    assert(error, "TOO_MANY_TYPES")
+
+assert(Class.length, 3)
+assert(count, 3)
+assert(doubled, 6)"#);
 }
 
 /// Nucleoid rounds numbers without losing precision at integer and half boundaries
@@ -3440,21 +3861,28 @@ fn indexes_and_slices_strings_by_unicode_scalar_values() {
 fn restores_enclosing_null_tracking_after_failed_local_assignments() {
     let mut run = runner();
     run(r#"def fail():
-    throw "EXPECTED""#);
-    run(r#"def recover local value:
+    throw "EXPECTED"
+
+def recover local value:
     try:
         local = value + fail()
     catch error:
         if error != "EXPECTED":
             throw error
-    return local"#);
-    run("input = null");
-    run("result = input + recover(1, 0)");
-    assert_eq!(run("result"), serde_json::Value::Null);
-    run("input = 2");
-    assert_eq!(run("result"), 3);
-    run("result = 5 + recover(1, null)");
-    assert_eq!(run("result"), 6);
+    return local
+
+input = null
+result = input + recover(1, 0)
+
+assert(result, null)
+
+input = 2
+
+assert(result, 3)
+
+result = 5 + recover(1, null)
+
+assert(result, 6)"#);
 }
 
 /// Nucleoid restores enclosing null tracking after failed property assignments
@@ -3462,59 +3890,82 @@ fn restores_enclosing_null_tracking_after_failed_local_assignments() {
 #[test]
 fn restores_enclosing_null_tracking_after_failed_property_assignments() {
     let mut run = runner();
-    run("class Item");
-    run("item = Item()");
-    run("item.amount = 1");
-    run(r#"def fail():
-    throw "EXPECTED""#);
-    run(r#"def recover value:
+    run(r#"class Item
+
+item = Item()
+item.amount = 1
+
+def fail():
+    throw "EXPECTED"
+
+def recover value:
     try:
         item.amount = value + fail()
     catch error:
         if error != "EXPECTED":
             throw error
-    return item.amount"#);
-    run("input = null");
-    run("result = input + recover(0)");
-    assert_eq!(run("result"), serde_json::Value::Null);
-    assert_eq!(run("item.amount"), 1);
-    run("input = 2");
-    assert_eq!(run("result"), 3);
-    run("result = 5 + recover(null)");
-    assert_eq!(run("result"), 6);
-    assert_eq!(run("item.amount"), 1);
+    return item.amount
+
+input = null
+result = input + recover(0)
+
+assert(result, null)
+assert(item.amount, 1)
+
+input = 2
+
+assert(result, 3)
+
+result = 5 + recover(null)
+
+assert(result, 6)
+assert(item.amount, 1)"#);
 }
 
 /// Nucleoid repeats strings with catchable allocation errors
 #[rustfmt::skip]
 #[test]
 fn repeats_strings_with_catchable_allocation_errors() {
-    let (mut run, mut run_error) = crate::common::runners();
-    assert_eq!(run(r#""ab".repeat(2)"#), "abab");
-    assert_eq!(run(r#""ab".repeat(2.9)"#), "abab");
-    assert_eq!(run(r#""ab".repeat(0)"#), "");
-    assert_eq!(run(r#""ab".repeat(-1)"#), "");
-    assert_eq!(run(r#""ab".repeat()"#), "");
-    assert_eq!(run(r#""ab".repeat(null)"#), "");
-    assert_eq!(run(r#""ab".repeat(Number.NaN)"#), "");
-    assert_eq!(run(r#""ab".repeat(Number.NEGATIVE_INFINITY)"#), "");
-    assert_eq!(run(r#""".repeat(Number.MAX_VALUE)"#), "");
-    assert_eq!(run(r#""".repeat(Number.POSITIVE_INFINITY)"#), "");
-    run("symbol = String.fromCharCode(128512)");
-    {
-        let actual = run("symbol.repeat(3)");
-        let expected = run("(symbol + symbol + symbol)");
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run_error(r#""ab".repeat(Number.MAX_VALUE)"#), "TypeError: Repeated string is too large");
-    assert_eq!(run_error(r#""a".repeat(Number.POSITIVE_INFINITY)"#), "TypeError: Repeated string is too large");
-    run("count = 2");
-    run(r#"repeated = "ab".repeat(count)"#);
-    assert_eq!(run_error("count = Number.POSITIVE_INFINITY"), "TypeError: Repeated string is too large");
-    assert_eq!(run("count"), 2);
-    assert_eq!(run("repeated"), "abab");
-    run("count = 3");
-    assert_eq!(run("repeated"), "ababab");
+    let mut run = runner();
+    run(r#"assert("ab".repeat(2), "abab")
+assert("ab".repeat(2.9), "abab")
+assert("ab".repeat(0), "")
+assert("ab".repeat(-1), "")
+assert("ab".repeat(), "")
+assert("ab".repeat(null), "")
+assert("ab".repeat(Number.NaN), "")
+assert("ab".repeat(Number.NEGATIVE_INFINITY), "")
+assert("".repeat(Number.MAX_VALUE), "")
+assert("".repeat(Number.POSITIVE_INFINITY), "")
+
+symbol = String.fromCharCode(128512)
+
+assert(symbol.repeat(3), symbol + symbol + symbol)
+
+try:
+    "ab".repeat(Number.MAX_VALUE)
+catch error:
+    assert(error, TypeError("Repeated string is too large"))
+
+try:
+    "a".repeat(Number.POSITIVE_INFINITY)
+catch error:
+    assert(error, TypeError("Repeated string is too large"))
+
+count = 2
+repeated = "ab".repeat(count)
+
+try:
+    count = Number.POSITIVE_INFINITY
+catch error:
+    assert(error, TypeError("Repeated string is too large"))
+
+assert(count, 2)
+assert(repeated, "abab")
+
+count = 3
+
+assert(repeated, "ababab")"#);
 }
 
 /// Nucleoid preserves declaration order when standing rules are re-evaluated
@@ -3587,30 +4038,44 @@ fn settles_class_property_dependencies_before_validation_rules() {
 #[rustfmt::skip]
 #[test]
 fn revisits_dependencies_changed_later_in_the_same_propagation() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("first = 0");
-    run("second = 0");
-    run("total = first + second");
-    run(r#"if first > 0 and first < 4:
-    second = first + 1"#);
-    run(r#"if second > 0 and second < 4:
-    first = second + 1"#);
-    run("first = 1");
-    assert_eq!(run("first"), 3);
-    assert_eq!(run("second"), 4);
-    assert_eq!(run("total"), 7);
-    run(r#"if second == 3:
-    throw "INVALID_SECOND""#);
-    assert_eq!(run_error("first = 2"), "INVALID_SECOND");
-    assert_eq!(run("first"), 3);
-    assert_eq!(run("second"), 4);
-    assert_eq!(run("total"), 7);
-    run(r#"if second == 3:
-    pass"#);
-    run("first = 2");
-    assert_eq!(run("first"), 4);
-    assert_eq!(run("second"), 3);
-    assert_eq!(run("total"), 7);
+    let mut run = runner();
+    run(r#"first = 0
+second = 0
+total = first + second
+
+if first > 0 and first < 4:
+    second = first + 1
+
+if second > 0 and second < 4:
+    first = second + 1
+
+first = 1
+
+assert(first, 3)
+assert(second, 4)
+assert(total, 7)
+
+if second == 3:
+    throw "INVALID_SECOND"
+
+try:
+    first = 2
+catch error:
+    assert(error, "INVALID_SECOND")
+
+assert(first, 3)
+assert(second, 4)
+assert(total, 7)
+
+# The failed propagation leaves the runtime ready for another update
+if second == 3:
+    pass
+
+first = 2
+
+assert(first, 4)
+assert(second, 3)
+assert(total, 7)"#);
 }
 
 /// Nucleoid stops propagation feedback when assignments keep the same value
@@ -3696,25 +4161,33 @@ fn keeps_conditional_loop_bodies_imperative() {
 #[test]
 fn cancels_propagation_queued_by_a_caught_failure() {
     let mut run = runner();
-    run("trigger = 0");
-    run("source = 1");
-    run("observations = 0");
-    run(r#"if source > 0:
-    observations += 1"#);
-    run(r#"if trigger > 0:
+    run(r#"trigger = 0
+source = 1
+observations = 0
+
+if source > 0:
+    observations += 1
+
+if trigger > 0:
     try:
         source = 2
         throw "ABORT"
     catch error:
         if error != "ABORT":
-            throw error"#);
-    run("remaining = trigger + 10");
-    run("trigger = 1");
-    assert_eq!(run("source"), 1);
-    assert_eq!(run("observations"), 1);
-    assert_eq!(run("remaining"), 11);
-    run("source = 3");
-    assert_eq!(run("observations"), 2);
+            throw error
+
+# This dependent is already queued when the failing body starts
+remaining = trigger + 10
+
+trigger = 1
+
+assert(source, 1)
+assert(observations, 1)
+assert(remaining, 11)
+
+source = 3
+
+assert(observations, 2)"#);
 }
 
 /// Nucleoid preserves earlier queued work across nested caught failures
@@ -3722,12 +4195,14 @@ fn cancels_propagation_queued_by_a_caught_failure() {
 #[test]
 fn preserves_earlier_queued_work_across_nested_caught_failures() {
     let mut run = runner();
-    run("trigger = 0");
-    run("source = 0");
-    run("observations = 0");
-    run(r#"if source > 0:
-    observations += 1"#);
-    run(r#"if trigger > 0:
+    run(r#"trigger = 0
+source = 0
+observations = 0
+
+if source > 0:
+    observations += 1
+
+if trigger > 0:
     source = 1
     try:
         source = 2
@@ -3740,10 +4215,12 @@ fn preserves_earlier_queued_work_across_nested_caught_failures() {
         throw "OUTER"
     catch outer:
         if outer != "OUTER":
-            throw outer"#);
-    run("trigger = 1");
-    assert_eq!(run("source"), 1);
-    assert_eq!(run("observations"), 1);
+            throw outer
+
+trigger = 1
+
+assert(source, 1)
+assert(observations, 1)"#);
 }
 
 /// Nucleoid restores deletion tracking before entering a catch body
@@ -3751,9 +4228,10 @@ fn preserves_earlier_queued_work_across_nested_caught_failures() {
 #[test]
 fn restores_deletion_tracking_before_entering_a_catch_body() {
     let mut run = runner();
-    run("trigger = 0");
-    run("missing = null");
-    run(r#"if trigger > 0:
+    run(r#"trigger = 0
+missing = null
+
+if trigger > 0:
     try:
         temporary = 1
         delete temporary
@@ -3764,13 +4242,11 @@ fn restores_deletion_tracking_before_entering_a_catch_body() {
         try:
             temporary
         catch absent:
-            missing = absent"#);
-    run("trigger = 1");
-    {
-        let actual = run("missing");
-        let expected = run(r#"(ReferenceError("temporary is not defined"))"#);
-        assert_eq!(actual, expected);
-    }
+            missing = absent
+
+trigger = 1
+
+assert(missing, ReferenceError("temporary is not defined"))"#);
 }
 
 /// Nucleoid ends temporary undefined reads when a deletion cascade finishes
@@ -3778,26 +4254,27 @@ fn restores_deletion_tracking_before_entering_a_catch_body() {
 #[test]
 fn ends_temporary_undefined_reads_when_a_deletion_cascade_finishes() {
     let mut run = runner();
-    run("trigger = 0");
-    run("source = 1");
-    run("dependent = source + 1");
-    run(r#"if trigger > 0:
-    delete source"#);
-    run(r#"def read_after_update():
+    run(r#"trigger = 0
+source = 1
+dependent = source + 1
+
+if trigger > 0:
+    delete source
+
+def read_after_update():
     trigger = 1
     try:
         source
     catch error:
         return error
-    return "NO_ERROR""#);
-    {
-        let actual = run("read_after_update()");
-        let expected = run(r#"(ReferenceError("source is not defined"))"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("dependent"), serde_json::Value::Null);
-    run("source = 3");
-    assert_eq!(run("dependent"), 4);
+    return "NO_ERROR"
+
+assert(read_after_update(), ReferenceError("source is not defined"))
+assert(dependent, null)
+
+source = 3
+
+assert(dependent, 4)"#);
 }
 
 /// Nucleoid tracks named functions forwarded as values
@@ -3946,49 +4423,63 @@ fn freezes_a_function_definition_without_freezing_its_body_dependencies() {
 #[test]
 fn defers_null_function_aliases_and_restores_callers_after_deletion() {
     let mut run = runner();
-    run("callback = null");
-    run("input = 3");
-    run("offset = 0");
-    run("result = callback(input) + offset");
-    assert_eq!(run("result"), serde_json::Value::Null);
-    run("callback = number => number * 2");
-    assert_eq!(run("result"), 6);
-    run("callback = null");
-    assert_eq!(run("result"), serde_json::Value::Null);
-    run("callback = number => number * 3");
-    assert_eq!(run("result"), 9);
-    run("delete callback");
-    assert_eq!(run("result"), serde_json::Value::Null);
-    run("offset = 1");
-    run("input = 4");
-    assert_eq!(run("result"), serde_json::Value::Null);
-    run("missing = null");
-    run(r#"try:
+    run(r#"callback = null
+input = 3
+offset = 0
+result = callback(input) + offset
+
+assert(result, null)
+
+callback = number => number * 2
+
+assert(result, 6)
+
+callback = null
+
+assert(result, null)
+
+callback = number => number * 3
+
+assert(result, 9)
+
+delete callback
+
+assert(result, null)
+
+offset = 1
+input = 4
+
+assert(result, null)
+
+missing = null
+
+try:
     callback(3)
 catch error:
-    missing = error"#);
-    {
-        let actual = run("missing");
-        let expected = run(r#"(ReferenceError("callback is not defined"))"#);
-        assert_eq!(actual, expected);
-    }
-    run("trigger = 0");
-    run(r#"if trigger > 0:
-    callback(3)"#);
-    run(r#"try:
+    missing = error
+
+assert(missing, ReferenceError("callback is not defined"))
+
+trigger = 0
+
+if trigger > 0:
+    callback(3)
+
+try:
     trigger = 1
 catch error:
-    missing = error"#);
-    {
-        let actual = run("missing");
-        let expected = run(r#"(ReferenceError("callback is not defined"))"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("trigger"), 0);
-    run("callback = number => number * 4");
-    assert_eq!(run("result"), 17);
-    run("input = 5");
-    assert_eq!(run("result"), 21);
+    missing = error
+
+assert(missing, ReferenceError("callback is not defined"))
+assert(trigger, 0)
+
+callback = number => number * 4
+
+assert(result, 17)
+
+input = 5
+
+assert(result, 21)"#);
 }
 
 /// Nucleoid restores nullable callable properties without changing frozen references
@@ -4031,26 +4522,32 @@ fn restores_nullable_callable_properties_without_changing_frozen_references() {
 #[test]
 fn lets_null_and_non_callable_parameters_shadow_outer_functions() {
     let mut run = runner();
-    run("def operation number => 99");
-    run("def apply operation number => operation(number)");
-    run("callback = null");
-    run("result = apply(callback, 3)");
-    assert_eq!(run("result"), serde_json::Value::Null);
-    run("callback = number => number * 2");
-    assert_eq!(run("result"), 6);
-    run("callback = number => number * 3");
-    assert_eq!(run("result"), 9);
-    run("failure = null");
-    run(r#"try:
+    run(r#"def operation number => 99
+
+def apply operation number => operation(number)
+
+callback = null
+result = apply(callback, 3)
+
+assert(result, null)
+
+callback = number => number * 2
+
+assert(result, 6)
+
+callback = number => number * 3
+
+assert(result, 9)
+
+failure = null
+
+try:
     apply(7, 3)
 catch error:
-    failure = error"#);
-    {
-        let actual = run("failure");
-        let expected = run(r#"(TypeError("operation is not a function"))"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("operation(3)"), 99);
+    failure = error
+
+assert(failure, TypeError("operation is not a function"))
+assert(operation(3), 99)"#);
 }
 
 /// Nucleoid rolls back non callable replacements used by existing callers
@@ -4058,37 +4555,37 @@ catch error:
 #[test]
 fn rolls_back_non_callable_replacements_used_by_existing_callers() {
     let mut run = runner();
-    run("callback = number => number * 2");
-    run("result = callback(3)");
-    run("failure = null");
-    run(r#"try:
+    run(r#"callback = number => number * 2
+result = callback(3)
+failure = null
+
+try:
     callback = 7
 catch error:
-    failure = error"#);
-    {
-        let actual = run("failure");
-        let expected = run(r#"(TypeError("callback is not a function"))"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("result"), 6);
-    assert_eq!(run("callback(4)"), 8);
-    run("class Handler");
-    run("handler = Handler()");
-    run("handler.operation = number => number + 1");
-    run("propertyResult = handler.operation(3)");
-    run(r#"try:
+    failure = error
+
+assert(failure, TypeError("callback is not a function"))
+assert(result, 6)
+assert(callback(4), 8)
+
+class Handler
+
+handler = Handler()
+handler.operation = number => number + 1
+propertyResult = handler.operation(3)
+
+try:
     handler.operation = 7
 catch error:
-    failure = error"#);
-    {
-        let actual = run("failure");
-        let expected = run(r#"(TypeError("handler.operation is not a function"))"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("propertyResult"), 4);
-    assert_eq!(run("handler.operation(4)"), 5);
-    run("handler.operation = number => number + 2");
-    assert_eq!(run("propertyResult"), 5);
+    failure = error
+
+assert(failure, TypeError("handler.operation is not a function"))
+assert(propertyResult, 4)
+assert(handler.operation(4), 5)
+
+handler.operation = number => number + 2
+
+assert(propertyResult, 5)"#);
 }
 
 /// Nucleoid rolls back failed redefinitions of named callbacks
@@ -4096,22 +4593,27 @@ catch error:
 #[test]
 fn rolls_back_failed_redefinitions_of_named_callbacks() {
     let mut run = runner();
-    run("def transform number => number * 2");
-    run("numbers = [1, 2]");
-    run("mapped = numbers.map(transform)");
-    run("failure = null");
-    run(r#"try:
+    run(r#"def transform number => number * 2
+
+numbers = [1, 2]
+mapped = numbers.map(transform)
+failure = null
+
+try:
     def transform number:
         if number == 2:
             throw "REJECTED_CALLBACK"
         return number * 3
 catch error:
-    failure = error"#);
-    assert_eq!(run("failure"), "REJECTED_CALLBACK");
-    assert_eq!(run("mapped"), serde_json::json!([2, 4]));
-    assert_eq!(run("transform(3)"), 6);
-    run("def transform number => number * 4");
-    assert_eq!(run("mapped"), serde_json::json!([4, 8]));
+    failure = error
+
+assert(failure, "REJECTED_CALLBACK")
+assert(mapped, [2, 4])
+assert(transform(3), 6)
+
+def transform number => number * 4
+
+assert(mapped, [4, 8])"#);
 }
 
 /// Nucleoid replaces functions and callable variables under the same name
@@ -4119,62 +4621,76 @@ catch error:
 #[test]
 fn replaces_functions_and_callable_variables_under_the_same_name() {
     let mut run = runner();
-    run("def callback number => number * 2");
-    run("forwarded = callback");
-    run("direct = callback(3)");
-    run("indirect = forwarded(3)");
-    run("callback = number => number * 3");
-    assert_eq!(run("direct"), 9);
-    assert_eq!(run("indirect"), 9);
-    run("failure = null");
-    run(r#"try:
+    run(r#"def callback number => number * 2
+
+forwarded = callback
+direct = callback(3)
+indirect = forwarded(3)
+
+callback = number => number * 3
+
+assert(direct, 9)
+assert(indirect, 9)
+
+failure = null
+
+try:
     def callback number:
         throw "REJECTED_BINDING"
 catch error:
-    failure = error"#);
-    assert_eq!(run("failure"), "REJECTED_BINDING");
-    assert_eq!(run("direct"), 9);
-    assert_eq!(run("indirect"), 9);
-    assert_eq!(run("callback(4)"), 12);
-    run("def callback number => number * 4");
-    assert_eq!(run("direct"), 12);
-    assert_eq!(run("indirect"), 12);
-    run(r#"try:
+    failure = error
+
+assert(failure, "REJECTED_BINDING")
+assert(direct, 9)
+assert(indirect, 9)
+assert(callback(4), 12)
+
+def callback number => number * 4
+
+assert(direct, 12)
+assert(indirect, 12)
+
+try:
     callback = 7
 catch error:
-    failure = error"#);
-    {
-        let actual = run("failure");
-        let expected = run(r#"(TypeError("callback is not a function"))"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("direct"), 12);
-    assert_eq!(run("indirect"), 12);
-    assert_eq!(run("callback(4)"), 16);
-    run("callback = null");
-    assert_eq!(run("direct"), serde_json::Value::Null);
-    assert_eq!(run("indirect"), serde_json::Value::Null);
-    run("def callback number => number * 5");
-    assert_eq!(run("direct"), 15);
-    assert_eq!(run("indirect"), 15);
-    run("callback = number => number * 6");
-    assert_eq!(run("direct"), 18);
-    assert_eq!(run("indirect"), 18);
-    run("delete callback");
-    assert_eq!(run("direct"), serde_json::Value::Null);
-    assert_eq!(run("indirect"), serde_json::Value::Null);
-    run(r#"try:
+    failure = error
+
+assert(failure, TypeError("callback is not a function"))
+assert(direct, 12)
+assert(indirect, 12)
+assert(callback(4), 16)
+
+callback = null
+
+assert(direct, null)
+assert(indirect, null)
+
+def callback number => number * 5
+
+assert(direct, 15)
+assert(indirect, 15)
+
+callback = number => number * 6
+
+assert(direct, 18)
+assert(indirect, 18)
+
+delete callback
+
+assert(direct, null)
+assert(indirect, null)
+
+try:
     callback(3)
 catch error:
-    failure = error"#);
-    {
-        let actual = run("failure");
-        let expected = run(r#"(ReferenceError("callback is not defined"))"#);
-        assert_eq!(actual, expected);
-    }
-    run("def callback number => number * 7");
-    assert_eq!(run("direct"), 21);
-    assert_eq!(run("indirect"), 21);
+    failure = error
+
+assert(failure, ReferenceError("callback is not defined"))
+
+def callback number => number * 7
+
+assert(direct, 21)
+assert(indirect, 21)"#);
 }
 
 /// Nucleoid keeps live reasoning impact selections current
@@ -4295,23 +4811,34 @@ fn keeps_live_reasoning_snapshots_fixed() {
 #[rustfmt::skip]
 #[test]
 fn restores_live_reasoning_subscriptions_after_a_caught_failure() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("a = 1");
-    run("alternative = 1");
-    run("b = a + 1");
-    run("trace = why b");
-    run("exposure = affects a");
-    assert_eq!(run_error(r#"b = alternative + 1
-throw "REJECTED_REWRITE""#), "REJECTED_REWRITE");
-    assert_eq!(run("trace[0].from"), serde_json::json!(["a"]));
-    assert_eq!(run("exposure.map(step => step.node)"), serde_json::json!(["b"]));
-    run("alternative = 4");
-    assert_eq!(run("trace[0].holds"), 2);
-    run("a = 3");
-    assert_eq!(run("trace[0].holds"), 4);
-    run("b = alternative + 1");
-    assert_eq!(run("trace[0].from"), serde_json::json!(["alternative"]));
-    assert_eq!(run("exposure"), serde_json::json!([]));
+    let mut run = runner();
+    run(r#"a = 1
+alternative = 1
+b = a + 1
+trace = why b
+exposure = affects a
+
+try:
+    b = alternative + 1
+    throw "REJECTED_REWRITE"
+catch error:
+    assert(error, "REJECTED_REWRITE")
+
+assert(trace[0].from, ["a"])
+assert(exposure.map(step => step.node), ["b"])
+
+alternative = 4
+
+assert(trace[0].holds, 2)
+
+a = 3
+
+assert(trace[0].holds, 4)
+
+b = alternative + 1
+
+assert(trace[0].from, ["alternative"])
+assert(exposure, [])"#);
 }
 
 /// Nucleoid refreshes live reasoning declaration metadata without a value change
@@ -4416,17 +4943,26 @@ fn keeps_class_level_reasoning_properties_live() {
 #[rustfmt::skip]
 #[test]
 fn enforces_live_reasoning_guards_on_structural_changes() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 1");
-    run("limit = 1");
-    run(r#"if (affects source).length > limit:
-    throw "TOO_MANY_DEPENDENTS""#);
-    run("first = source + 1");
-    assert_eq!(run_error("second = source + 2"), "TOO_MANY_DEPENDENTS");
-    assert_eq!(run("(affects source).map(step => step.node)"), serde_json::json!(["first"]));
-    run("limit = 2");
-    run("second = source + 2");
-    assert_eq!(run("(affects source).map(step => step.node)"), serde_json::json!(["first", "second"]));
+    let mut run = runner();
+    run(r#"source = 1
+limit = 1
+
+if (affects source).length > limit:
+    throw "TOO_MANY_DEPENDENTS"
+
+first = source + 1
+
+try:
+    second = source + 2
+catch error:
+    assert(error, "TOO_MANY_DEPENDENTS")
+
+assert((affects source).map(step => step.node), ["first"])
+
+limit = 2
+second = source + 2
+
+assert((affects source).map(step => step.node), ["first", "second"])"#);
 }
 
 /// Nucleoid clears and restores a live explanation when its source is deleted
@@ -4452,20 +4988,23 @@ fn clears_and_restores_a_live_explanation_when_its_source_is_deleted() {
 #[test]
 fn preserves_queued_live_reasoning_across_a_caught_structural_failure() {
     let mut run = runner();
-    run("trigger = 0");
-    run("inventory = model |> why");
-    run(r#"if trigger > 0:
+    run(r#"trigger = 0
+inventory = model |> why
+
+if trigger > 0:
     try:
         class Temporary
         throw "ABORT"
     catch error:
         if error != "ABORT":
-            throw error"#);
-    run("remaining = trigger + 10");
-    run("trigger = 1");
-    assert_eq!(run(r#"inventory.some(step => step.node == "$Temporary")"#), false);
-    assert_eq!(run(r#"inventory.find(step => step.node == "trigger").holds"#), 1);
-    assert_eq!(run(r#"inventory.find(step => step.node == "remaining").holds"#), 11);
+            throw error
+
+remaining = trigger + 10
+trigger = 1
+
+assert(inventory.some(step => step.node == "$Temporary"), false)
+assert(inventory.find(step => step.node == "trigger").holds, 1)
+assert(inventory.find(step => step.node == "remaining").holds, 11)"#);
 }
 
 /// Nucleoid treats this and self as interchangeable instance keywords
@@ -4518,11 +5057,26 @@ fn treats_this_and_self_as_interchangeable_instance_keywords() {
 #[rustfmt::skip]
 #[test]
 fn rejects_this_and_self_outside_an_instance_or_as_assignment_targets() {
-    let (_run, mut run_error) = crate::common::runners();
-    assert_eq!(run_error("this"), "ReferenceError: this is not defined");
-    assert_eq!(run_error("self"), "ReferenceError: this is not defined");
-    assert_eq!(run_error("this = 1"), "TypeError: Cannot assign to 'this'");
-    assert_eq!(run_error("self = 1"), "TypeError: Cannot assign to 'this'");
+    let mut run = runner();
+    run(r#"try:
+    this
+catch error:
+    assert(error, ReferenceError("this is not defined"))
+
+try:
+    self
+catch error:
+    assert(error, ReferenceError("this is not defined"))
+
+try:
+    this = 1
+catch error:
+    assert(error, TypeError("Cannot assign to 'this'"))
+
+try:
+    self = 1
+catch error:
+    assert(error, TypeError("Cannot assign to 'this'"))"#);
 }
 
 /// Nucleoid keeps expression bodied named functions reactive
@@ -4636,46 +5190,58 @@ fn keeps_compound_assignments_reactive() {
 #[rustfmt::skip]
 #[test]
 fn keeps_compound_property_and_local_assignments_equivalent() {
-    let (mut run, mut run_error) = crate::common::runners();
+    let mut run = runner();
     run(r#"class Meter(reading: int):
     this.reading = reading
     def adjust(delta: int):
         delta *= 2
         this.reading += delta
-        return this.reading"#);
-    run("meter1 = Meter(10)");
-    run("meter1.reading += 2");
-    assert_eq!(run("meter1.reading"), 12);
-    assert_eq!(run("meter1.adjust(3)"), 18);
-    assert_eq!(run("meter1.reading"), 18);
-    run("class Scale");
-    run("scale1 = Scale()");
-    run("$Scale.factor = 2");
-    assert_eq!(run_error("$Scale.factor *= 3"), "TypeError: Circular Dependency");
-    assert_eq!(run("scale1.factor"), 2);
+        return this.reading
+meter1 = Meter(10)
+meter1.reading += 2
+assert(meter1.reading, 12)
+assert(meter1.adjust(3), 18)
+assert(meter1.reading, 18)
+class Scale
+scale1 = Scale()
+$Scale.factor = 2
+try:
+    $Scale.factor *= 3
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(scale1.factor, 2)"#);
 }
 
 /// Nucleoid rolls back failed compound assignments
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_compound_assignments() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("balance = 10");
-    run("step = 2");
-    run(r#"if balance > 15:
-    throw "LIMIT""#);
-    assert_eq!(run_error("balance += step * 4"), "LIMIT");
-    assert_eq!(run("balance"), 10);
-    run("step = 3");
-    assert_eq!(run("balance"), 10);
-    run("balance += step");
-    assert_eq!(run("balance"), 13);
-    run("first = 2");
-    run("second = first * 2");
-    assert_eq!(run_error("first += second"), "TypeError: Circular Dependency");
-    assert_eq!(run("first"), 2);
-    assert_eq!(run("second"), 4);
-    assert_eq!(run_error("missing += 1"), "ReferenceError: missing is not defined");
+    let mut run = runner();
+    run(r#"balance = 10
+step = 2
+if balance > 15:
+    throw "LIMIT"
+try:
+    balance += step * 4
+catch error:
+    assert(error, "LIMIT")
+assert(balance, 10)
+step = 3
+assert(balance, 10)
+balance += step
+assert(balance, 13)
+first = 2
+second = first * 2
+try:
+    first += second
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(first, 2)
+assert(second, 4)
+try:
+    missing += 1
+catch error:
+    assert(error, ReferenceError("missing is not defined"))"#);
 }
 
 /// Nucleoid returns compound assignment expressions
@@ -4799,21 +5365,23 @@ fn preserves_bodyless_class_populations_and_inheritance() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_creation_of_bodyless_class_instances() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Limited");
-    run("count = Limited.length");
-    run(r#"if count > 1:
-    throw "LIMIT""#);
-    run("limited1 = Limited()");
-    assert_eq!(run_error("limited2 = Limited()"), "LIMIT");
-    assert_eq!(run("Limited.length"), 1);
-    assert_eq!(run("count"), 1);
-    {
-        let actual = run("limited1");
-        let expected = run(r#"({id: "limited1"})"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run_error("limited2"), "ReferenceError: limited2 is not defined");
+    let mut run = runner();
+    run(r#"class Limited
+count = Limited.length
+if count > 1:
+    throw "LIMIT"
+limited1 = Limited()
+try:
+    limited2 = Limited()
+catch error:
+    assert(error, "LIMIT")
+assert(Limited.length, 1)
+assert(count, 1)
+assert(limited1, {id: "limited1"})
+try:
+    limited2
+catch error:
+    assert(error, ReferenceError("limited2 is not defined"))"#);
 }
 
 /// Nucleoid invokes a parent constructor with bare super on the same instance
@@ -4887,45 +5455,66 @@ fn preserves_omitted_parent_arguments_with_bare_super() {
 #[rustfmt::skip]
 #[test]
 fn preserves_bare_super_expression_and_receiver_behavior() {
-    let (mut run, mut run_error) = crate::common::runners();
+    let mut run = runner();
     run(r#"class Parent:
     def init():
-        this.amount = 3"#);
-    run(r#"class Child: Parent
+        this.amount = 3
+
+class Child: Parent
     def init() => super
-    def reset() => super"#);
-    run("child = Child()");
-    assert_eq!(run("child.amount"), 3);
-    run("child.amount = 9");
-    assert_eq!(run("child.reset()"), serde_json::Value::Null);
-    assert_eq!(run("child.amount"), 3);
-    run(r#"class Root:
+    def reset() => super
+
+child = Child()
+
+assert(child.amount, 3)
+child.amount = 9
+assert(child.reset(), null)
+assert(child.amount, 3)
+
+class Root:
     def init():
-        this.result = super"#);
-    run("root = Root()");
-    assert_eq!(run("root.result"), serde_json::Value::Null);
-    assert_eq!(run_error("super"), "ReferenceError: super is not defined");
+        this.result = super
+
+root = Root()
+
+assert(root.result, null)
+
+try:
+    super
+catch error:
+    assert(error, ReferenceError("super is not defined"))"#);
 }
 
 /// Nucleoid rolls back a failing parent constructor called with bare super
 #[rustfmt::skip]
 #[test]
 fn rolls_back_a_failing_parent_constructor_called_with_bare_super() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("kept = { amount: 5 }");
-    run(r#"class Parent:
+    let mut run = runner();
+    run(r#"kept = { amount: 5 }
+
+class Parent:
     def init():
         kept.amount = 9
         this.amount = 7
-        throw "BLOCKED""#);
-    run(r#"class Child: Parent
+        throw "BLOCKED"
+
+class Child: Parent
     def init():
-        super"#);
-    assert_eq!(run_error("failed = Child()"), "BLOCKED");
-    assert_eq!(run("kept.amount"), 5);
-    assert_eq!(run("Parent.length"), 0);
-    assert_eq!(run("Child.length"), 0);
-    assert_eq!(run_error("failed"), "ReferenceError: failed is not defined");
+        super
+
+try:
+    failed = Child()
+catch error:
+    assert(error, "BLOCKED")
+
+assert(kept.amount, 5)
+assert(Parent.length, 0)
+assert(Child.length, 0)
+
+try:
+    failed
+catch error:
+    assert(error, ReferenceError("failed is not defined"))"#);
 }
 
 /// Nucleoid keeps shorthand object fields reactive
@@ -4977,19 +5566,28 @@ fn resolves_shorthand_object_fields_in_their_lexical_scope() {
 #[rustfmt::skip]
 #[test]
 fn preserves_snapshots_and_undefined_reads_in_shorthand_objects() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("amount = 2");
-    run("live = { amount }");
-    run("frozen = { amount: amount.value }");
-    assert_eq!(run("live.amount"), 2);
-    assert_eq!(run("frozen.amount"), 2);
-    run("amount = 5");
-    assert_eq!(run("live.amount"), 5);
-    assert_eq!(run("frozen.amount"), 2);
-    assert_eq!(run_error("pending = { missing }"), "ReferenceError: missing is not defined");
-    run("missing = 8");
-    run("pending = { missing }");
-    assert_eq!(run("pending.missing"), 8);
+    let mut run = runner();
+    run(r#"amount = 2
+live = { amount }
+frozen = { amount: amount.value }
+
+assert(live.amount, 2)
+assert(frozen.amount, 2)
+
+amount = 5
+
+assert(live.amount, 5)
+assert(frozen.amount, 2)
+
+try:
+    pending = { missing }
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+missing = 8
+pending = { missing }
+
+assert(pending.missing, 8)"#);
 }
 
 /// Nucleoid preserves mixed nested and duplicate shorthand object fields
@@ -5025,21 +5623,30 @@ fn preserves_mixed_nested_and_duplicate_shorthand_object_fields() {
 #[rustfmt::skip]
 #[test]
 fn restores_shorthand_object_dependencies_after_a_failed_transaction() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("amount = 3");
-    run("alternate = 7");
-    run("record = { amount }");
-    run("derived = record.amount * 2");
-    assert_eq!(run_error(r#"record = { alternate }
-assert(record.alternate, 7)
-throw "ABORT""#), "ABORT");
-    assert_eq!(run("record.amount"), 3);
-    assert_eq!(run("derived"), 6);
-    run("alternate = 9");
-    assert_eq!(run("record.amount"), 3);
-    run("amount = 5");
-    assert_eq!(run("record.amount"), 5);
-    assert_eq!(run("derived"), 10);
+    let mut run = runner();
+    run(r#"amount = 3
+alternate = 7
+record = { amount }
+derived = record.amount * 2
+
+try:
+    record = { alternate }
+    assert(record.alternate, 7)
+    throw "ABORT"
+catch error:
+    assert(error, "ABORT")
+
+assert(record.amount, 3)
+assert(derived, 6)
+
+alternate = 9
+
+assert(record.amount, 3)
+
+amount = 5
+
+assert(record.amount, 5)
+assert(derived, 10)"#);
 }
 
 /// Nucleoid keeps bare single parameter named arrows reactive
@@ -5109,15 +5716,25 @@ fn keeps_bare_single_parameter_binding_and_explicit_alternatives_equivalent() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_bare_single_parameter_arrow_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run("def reading amount => source + amount");
-    run("total = reading(2)");
-    assert_eq!(run("total"), 5);
-    assert_eq!(run_error("def reading amount => missing + amount"), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 5);
-    run("source = 4");
-    assert_eq!(run("total"), 6);
+    let mut run = runner();
+    run(r#"source = 3
+
+def reading amount => source + amount
+
+total = reading(2)
+
+assert(total, 5)
+
+try:
+    def reading amount => missing + amount
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+source = 4
+
+assert(total, 6)"#);
 }
 
 /// Nucleoid keeps bare single parameter block definitions reactive
@@ -5204,17 +5821,27 @@ fn keeps_bare_single_parameter_block_binding_and_explicit_alternatives_equivalen
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_bare_single_parameter_block_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run(r#"def reading amount =>
-    source + amount"#);
-    run("total = reading(2)");
-    assert_eq!(run("total"), 5);
-    assert_eq!(run_error(r#"def reading amount =>
-    missing + amount"#), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 5);
-    run("source = 4");
-    assert_eq!(run("total"), 6);
+    let mut run = runner();
+    run(r#"source = 3
+
+def reading amount =>
+    source + amount
+
+total = reading(2)
+
+assert(total, 5)
+
+try:
+    def reading amount =>
+        missing + amount
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+source = 4
+
+assert(total, 6)"#);
 }
 
 /// Nucleoid keeps bare typed single parameter named arrows reactive
@@ -5293,15 +5920,24 @@ fn keeps_bare_typed_single_parameter_binding_and_explicit_alternatives_equivalen
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_bare_typed_single_parameter_arrow_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run("def reading amount: int => source + amount");
-    run("total = reading(2)");
-    assert_eq!(run_error("def reading amount: int => missing + amount"), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 5);
-    run("source = 4");
-    assert_eq!(run("total"), 6);
-    assert_eq!(run("reading(3)"), 7);
+    let mut run = runner();
+    run(r#"source = 3
+
+def reading amount: int => source + amount
+
+total = reading(2)
+
+try:
+    def reading amount: int => missing + amount
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+source = 4
+
+assert(total, 6)
+assert(reading(3), 7)"#);
 }
 
 /// Nucleoid keeps numeric clamping reactive to all three inputs
@@ -5404,21 +6040,36 @@ fn applies_numeric_clamping_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_reads_and_rollback_for_numeric_clamping() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("observed = Math.clamp(sensor.amount, 0, 10)");
-    assert_eq!(run("observed"), serde_json::Value::Null);
-    run("sensor.amount = 12");
-    assert_eq!(run("observed"), 10);
-    run("delete sensor.amount");
-    assert_eq!(run("observed"), serde_json::Value::Null);
-    run("sensor.amount = 3");
-    assert_eq!(run("observed"), 3);
-    assert_eq!(run_error("observed = Math.clamp(missing, 0, 10)"), "ReferenceError: missing is not defined");
-    assert_eq!(run("observed"), 3);
-    run("sensor.amount = 6");
-    assert_eq!(run("observed"), 6);
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+
+observed = Math.clamp(sensor.amount, 0, 10)
+
+assert(observed, null)
+
+sensor.amount = 12
+
+assert(observed, 10)
+
+delete sensor.amount
+
+assert(observed, null)
+
+sensor.amount = 3
+
+assert(observed, 3)
+
+try:
+    observed = Math.clamp(missing, 0, 10)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(observed, 3)
+
+sensor.amount = 6
+
+assert(observed, 6)"#);
 }
 
 /// Nucleoid keeps numeric interpolation reactive to all three inputs
@@ -5535,23 +6186,38 @@ fn applies_numeric_interpolation_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_reads_and_rollback_for_numeric_interpolation() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("end = 10");
-    run("weight = 0.5");
-    run("position = Math.lerp(sensor.start, end, weight)");
-    assert_eq!(run("position"), serde_json::Value::Null);
-    run("sensor.start = 2");
-    assert_eq!(run("position"), 6);
-    run("delete sensor.start");
-    assert_eq!(run("position"), serde_json::Value::Null);
-    run("sensor.start = 4");
-    assert_eq!(run("position"), 7);
-    assert_eq!(run_error("position = Math.lerp(missing, end, weight)"), "ReferenceError: missing is not defined");
-    assert_eq!(run("position"), 7);
-    run("end = 20");
-    assert_eq!(run("position"), 12);
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+end = 10
+weight = 0.5
+
+position = Math.lerp(sensor.start, end, weight)
+
+assert(position, null)
+
+sensor.start = 2
+
+assert(position, 6)
+
+delete sensor.start
+
+assert(position, null)
+
+sensor.start = 4
+
+assert(position, 7)
+
+try:
+    position = Math.lerp(missing, end, weight)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(position, 7)
+
+end = 20
+
+assert(position, 12)"#);
 }
 
 /// Nucleoid keeps unit-interval saturation reactive to its input
@@ -5663,21 +6329,36 @@ fn applies_unit_interval_saturation_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_reads_and_rollback_for_unit_saturation() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("bounded = Math.saturate(sensor.reading)");
-    assert_eq!(run("bounded"), serde_json::Value::Null);
-    run("sensor.reading = -2");
-    assert_eq!(run("bounded"), 0);
-    run("delete sensor.reading");
-    assert_eq!(run("bounded"), serde_json::Value::Null);
-    run("sensor.reading = 0.75");
-    assert_eq!(run("bounded"), 0.75);
-    assert_eq!(run_error("bounded = Math.saturate(missing)"), "ReferenceError: missing is not defined");
-    assert_eq!(run("bounded"), 0.75);
-    run("sensor.reading = 2");
-    assert_eq!(run("bounded"), 1);
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+
+bounded = Math.saturate(sensor.reading)
+
+assert(bounded, null)
+
+sensor.reading = -2
+
+assert(bounded, 0)
+
+delete sensor.reading
+
+assert(bounded, null)
+
+sensor.reading = 0.75
+
+assert(bounded, 0.75)
+
+try:
+    bounded = Math.saturate(missing)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(bounded, 0.75)
+
+sensor.reading = 2
+
+assert(bounded, 1)"#);
 }
 
 /// Nucleoid keeps bare typed single parameter block definitions reactive
@@ -5779,18 +6460,28 @@ fn keeps_bare_typed_single_parameter_block_binding_and_explicit_alternatives_equ
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_bare_typed_single_parameter_block_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run(r#"def reading amount: int =>
-    source + amount"#);
-    run("total = reading(2)");
-    assert_eq!(run("total"), 5);
-    assert_eq!(run_error(r#"def reading amount: int =>
-    missing + amount"#), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 5);
-    run("source = 4");
-    assert_eq!(run("total"), 6);
-    assert_eq!(run("reading(3)"), 7);
+    let mut run = runner();
+    run(r#"source = 3
+
+def reading amount: int =>
+    source + amount
+
+total = reading(2)
+
+assert(total, 5)
+
+try:
+    def reading amount: int =>
+        missing + amount
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+assert(total, 5)
+
+source = 4
+
+assert(total, 6)
+assert(reading(3), 7)"#);
 }
 
 /// Nucleoid keeps logical compound assignments equivalent
@@ -5906,26 +6597,26 @@ fn preserves_logical_compound_property_and_local_assignments() {
 #[test]
 fn rolls_back_failed_logical_compound_assignments() {
     let mut run = runner();
-    run("enabled = false");
-    run(r#"if enabled:
-    throw "BLOCKED""#);
-    run("caught = null");
-    run(r#"try:
+    run(r#"enabled = false
+if enabled:
+    throw "BLOCKED"
+caught = null
+try:
     enabled ||= true
 catch error:
-    caught = error"#);
-    assert_eq!(run("caught"), "BLOCKED");
-    assert_eq!(run("enabled"), false);
-    run("ready = true");
-    run(r#"if !ready:
-    throw "REQUIRED""#);
-    run("caught = null");
-    run(r#"try:
+    caught = error
+assert(caught, "BLOCKED")
+assert(enabled, false)
+ready = true
+if !ready:
+    throw "REQUIRED"
+caught = null
+try:
     ready &&= false
 catch error:
-    caught = error"#);
-    assert_eq!(run("caught"), "REQUIRED");
-    assert_eq!(run("ready"), true);
+    caught = error
+assert(caught, "REQUIRED")
+assert(ready, true)"#);
 }
 
 /// Nucleoid defines bare multiple parameter named arrows
@@ -6126,20 +6817,22 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_bare_multiple_parameter_block_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run(r#"def reading left right =>
-    source + left + right"#);
-    run("total = reading(2, 4)");
-    assert_eq!(run("total"), 9);
-    assert_eq!(run_error(r#"def reading left right =>
-    missing + left + right"#), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 9);
-    run("source = 4");
-    assert_eq!(run("total"), 10);
-    assert_eq!(run("reading(8, 9)"), 21);
-    run(r#"reading(8, 9)
-
+    let mut run = runner();
+    run(r#"source = 3
+def reading left right =>
+    source + left + right
+total = reading(2, 4)
+assert(total, 9)
+try:
+    def reading left right =>
+        missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(total, 9)
+source = 4
+assert(total, 10)
+assert(reading(8, 9), 21)
+reading(8, 9)
 # return: 21"#);
 }
 
@@ -6205,45 +6898,50 @@ fn preserves_bare_typed_multiple_parameter_methods_and_initializers() {
 #[rustfmt::skip]
 #[test]
 fn preserves_bare_typed_multiple_parameter_arrow_bindings_and_scopes() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("left = 10");
-    run("right = 20");
-    run("def pair left: int, right: int => [left, right]");
-    run("def invoke operation: Callback, amount: int => operation(amount)");
-    run("def increment(amount: int) => amount + 1");
-    run("def operation(amount) => amount + 100");
-    run(r#"def outer(initial: int):
+    let mut run = runner();
+    run(r#"left = 10
+right = 20
+def pair left: int, right: int => [left, right]
+def invoke operation: Callback, amount: int => operation(amount)
+def increment(amount: int) => amount + 1
+def operation(amount) => amount + 100
+def outer(initial: int):
     def combine left: int, right, scale: int => (left + right) * scale
-    return combine(initial, 2, 3)"#);
-    assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
-    assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
-    assert_eq!(run("pair()"), serde_json::json!([null, null]));
-    assert_eq!(run("pair(3, 4, 5)"), serde_json::json!([3, 4]));
-    assert_eq!(run(r#"pair("three", true)"#), serde_json::json!(["three", true]));
-    assert_eq!(run("invoke(increment, 4)"), 5);
-    assert_eq!(run("invoke(null, 3)"), serde_json::Value::Null);
-    assert_eq!(run_error("invoke(7, 3)"), "TypeError: operation is not a function");
-    assert_eq!(run("outer(4)"), 18);
-    assert_eq!(run("left"), 10);
-    assert_eq!(run("right"), 20);
+    return combine(initial, 2, 3)
+assert(pair(3, 4), [3, 4])
+assert(pair(3), [3, null])
+assert(pair(), [null, null])
+assert(pair(3, 4, 5), [3, 4])
+assert(pair("three", true), ["three", true])
+assert(invoke(increment, 4), 5)
+assert(invoke(null, 3), null)
+try:
+    invoke(7, 3)
+catch error:
+    assert(error, TypeError("operation is not a function"))
+assert(outer(4), 18)
+assert(left, 10)
+assert(right, 20)"#);
 }
 
 /// Nucleoid rolls back failed bare typed multiple parameter arrow redefinitions
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_bare_typed_multiple_parameter_arrow_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run("def reading left: int, right: int => source + left + right");
-    run("total = reading(2, 4)");
-    assert_eq!(run("total"), 9);
-    assert_eq!(run_error("def reading left: int, right: int => missing + left + right"), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 9);
-    run("source = 4");
-    assert_eq!(run("total"), 10);
-    assert_eq!(run("reading(8, 9)"), 21);
-    run(r#"reading(8, 9)
-
+    let mut run = runner();
+    run(r#"source = 3
+def reading left: int, right: int => source + left + right
+total = reading(2, 4)
+assert(total, 9)
+try:
+    def reading left: int, right: int => missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(total, 9)
+source = 4
+assert(total, 10)
+assert(reading(8, 9), 21)
+reading(8, 9)
 # return: 21"#);
 }
 
@@ -6357,20 +7055,22 @@ fn preserves_bare_typed_multiple_parameter_block_bindings_and_returns() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_bare_typed_multiple_parameter_block_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run(r#"def reading left: int, right: int =>
-    source + left + right"#);
-    run("total = reading(2, 4)");
-    assert_eq!(run("total"), 9);
-    assert_eq!(run_error(r#"def reading left: int, right =>
-    missing + left + right"#), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 9);
-    run("source = 4");
-    assert_eq!(run("total"), 10);
-    assert_eq!(run("reading(8, 9)"), 21);
-    run(r#"reading(8, 9)
-
+    let mut run = runner();
+    run(r#"source = 3
+def reading left: int, right: int =>
+    source + left + right
+total = reading(2, 4)
+assert(total, 9)
+try:
+    def reading left: int, right =>
+        missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(total, 9)
+source = 4
+assert(total, 10)
+assert(reading(8, 9), 21)
+reading(8, 9)
 # return: 21"#);
 }
 
@@ -6495,32 +7195,37 @@ fn preserves_implicit_iterator_loop_return_flow() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_implicit_iterator_loops() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Entry");
-    run("first = Entry()");
-    run("first.amount = 2");
-    run("second = Entry()");
-    run("second.amount = 5");
-    run("values = [first, second]");
-    run("saved = 7");
-    assert_eq!(run_error(r#"for values:
-    saved += it.amount
-    it.amount += 1
-    if it.amount > 5:
-        throw "stop""#), "stop");
-    assert_eq!(run("first.amount"), 2);
-    assert_eq!(run("second.amount"), 5);
-    assert_eq!(run("saved"), 7);
-    run("broken = null");
-    assert_eq!(run_error(r#"for broken:
-    first.amount = 99"#), "TypeError: broken is not iterable");
-    assert_eq!(run("first.amount"), 2);
-    run(r#"for values:
-    it.score = it.amount * 2"#);
-    assert_eq!(run("first.score"), 4);
-    assert_eq!(run("second.score"), 10);
-    run(r#"first.score + second.score
-
+    let mut run = runner();
+    run(r#"class Entry
+first = Entry()
+first.amount = 2
+second = Entry()
+second.amount = 5
+values = [first, second]
+saved = 7
+try:
+    for values:
+        saved += it.amount
+        it.amount += 1
+        if it.amount > 5:
+            throw "stop"
+catch error:
+    assert(error, "stop")
+assert(first.amount, 2)
+assert(second.amount, 5)
+assert(saved, 7)
+broken = null
+try:
+    for broken:
+        first.amount = 99
+catch error:
+    assert(error, TypeError("broken is not iterable"))
+assert(first.amount, 2)
+for values:
+    it.score = it.amount * 2
+assert(first.score, 4)
+assert(second.score, 10)
+first.score + second.score
 # return: 14"#);
 }
 
@@ -6642,20 +7347,22 @@ fn preserves_indented_named_arrow_bindings_and_returned_values() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_indented_named_arrow_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run(r#"def reading left: int, right: int =>
-    source + left + right"#);
-    run("total = reading(2, 4)");
-    assert_eq!(run("total"), 9);
-    assert_eq!(run_error(r#"def reading left: int, right =>
-    missing + left + right"#), "ReferenceError: missing is not defined");
-    assert_eq!(run("total"), 9);
-    run("source = 4");
-    assert_eq!(run("total"), 10);
-    assert_eq!(run("reading(8, 9)"), 21);
-    run(r#"reading(8, 9)
-
+    let mut run = runner();
+    run(r#"source = 3
+def reading left: int, right: int =>
+    source + left + right
+total = reading(2, 4)
+assert(total, 9)
+try:
+    def reading left: int, right =>
+        missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(total, 9)
+source = 4
+assert(total, 10)
+assert(reading(8, 9), 21)
+reading(8, 9)
 # return: 21"#);
 }
 
@@ -6828,38 +7535,43 @@ fn applies_cubic_smoothstep_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_reads_and_rollback_for_cubic_smoothstep() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("lower = 0");
-    run("upper = 8");
-    run("value = sensor.reading");
-    run("unit = Math.saturate((value - lower) / (upper - lower))");
-    run("eased = Math.smoothstep(lower, upper, value)");
-    assert_eq!(run("value"), serde_json::Value::Null);
-    assert_eq!(run("unit"), serde_json::Value::Null);
-    assert_eq!(run("eased"), serde_json::Value::Null);
-    run("sensor.reading = 2");
-    assert_eq!(run("unit"), 0.25);
-    assert_eq!(run("eased"), 0.15625);
-    run("delete sensor.reading");
-    assert_eq!(run("value"), serde_json::Value::Null);
-    assert_eq!(run("eased"), serde_json::Value::Null);
-    run("sensor.reading = 4");
-    assert_eq!(run("unit"), 0.5);
-    assert_eq!(run("eased"), 0.5);
-    assert_eq!(run_error(r#"sensor.reading = 6
-throw "ROLLBACK""#), "ROLLBACK");
-    assert_eq!(run("sensor.reading"), 4);
-    assert_eq!(run("unit"), 0.5);
-    assert_eq!(run("eased"), 0.5);
-    assert_eq!(run_error("lower = missing"), "ReferenceError: missing is not defined");
-    assert_eq!(run("lower"), 0);
-    run("sensor.reading = 2");
-    assert_eq!(run("unit"), 0.25);
-    assert_eq!(run("eased"), 0.15625);
-    run(r#"eased
-
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+lower = 0
+upper = 8
+value = sensor.reading
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smoothstep(lower, upper, value)
+assert(value, null)
+assert(unit, null)
+assert(eased, null)
+sensor.reading = 2
+assert(unit, 0.25)
+assert(eased, 0.15625)
+delete sensor.reading
+assert(value, null)
+assert(eased, null)
+sensor.reading = 4
+assert(unit, 0.5)
+assert(eased, 0.5)
+try:
+    sensor.reading = 6
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 4)
+assert(unit, 0.5)
+assert(eased, 0.5)
+try:
+    lower = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(lower, 0)
+sensor.reading = 2
+assert(unit, 0.25)
+assert(eased, 0.15625)
+eased
 # return: 0.15625"#);
 }
 
@@ -6964,22 +7676,25 @@ fn preserves_returns_from_indented_else_function_branches() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_throws_from_indented_else_suites() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("marker = 7");
-    assert_eq!(run_error(r#"if false:
-    marker = 8
-else
-    marker = 9
-    throw "ABORT""#), "ABORT");
-    assert_eq!(run("marker"), 7);
-    run("gate = false");
-    run(r#"if gate:
+    let mut run = runner();
+    run(r#"marker = 7
+try:
+    if false:
+        marker = 8
+    else
+        marker = 9
+        throw "ABORT"
+catch error:
+    assert(error, "ABORT")
+assert(marker, 7)
+gate = false
+if gate:
     result = 1
 else
-    result = 2"#);
-    assert_eq!(run("result"), 2);
-    run("gate = true");
-    assert_eq!(run("result"), 1);
+    result = 2
+assert(result, 2)
+gate = true
+assert(result, 1)"#);
 }
 
 /// Nucleoid preserves legacy suites beside indented else bodies
@@ -7183,38 +7898,43 @@ fn applies_quintic_smootherstep_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_reads_and_rollback_for_quintic_smootherstep() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("lower = 0");
-    run("upper = 8");
-    run("value = sensor.reading");
-    run("unit = Math.saturate((value - lower) / (upper - lower))");
-    run("eased = Math.smootherstep(lower, upper, value)");
-    assert_eq!(run("value"), serde_json::Value::Null);
-    assert_eq!(run("unit"), serde_json::Value::Null);
-    assert_eq!(run("eased"), serde_json::Value::Null);
-    run("sensor.reading = 2");
-    assert_eq!(run("unit"), 0.25);
-    assert_eq!(run("eased"), 0.103515625);
-    run("delete sensor.reading");
-    assert_eq!(run("value"), serde_json::Value::Null);
-    assert_eq!(run("eased"), serde_json::Value::Null);
-    run("sensor.reading = 4");
-    assert_eq!(run("unit"), 0.5);
-    assert_eq!(run("eased"), 0.5);
-    assert_eq!(run_error(r#"sensor.reading = 6
-throw "ROLLBACK""#), "ROLLBACK");
-    assert_eq!(run("sensor.reading"), 4);
-    assert_eq!(run("unit"), 0.5);
-    assert_eq!(run("eased"), 0.5);
-    assert_eq!(run_error("lower = missing"), "ReferenceError: missing is not defined");
-    assert_eq!(run("lower"), 0);
-    run("sensor.reading = 2");
-    assert_eq!(run("unit"), 0.25);
-    assert_eq!(run("eased"), 0.103515625);
-    run(r#"eased
-
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+lower = 0
+upper = 8
+value = sensor.reading
+unit = Math.saturate((value - lower) / (upper - lower))
+eased = Math.smootherstep(lower, upper, value)
+assert(value, null)
+assert(unit, null)
+assert(eased, null)
+sensor.reading = 2
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+delete sensor.reading
+assert(value, null)
+assert(eased, null)
+sensor.reading = 4
+assert(unit, 0.5)
+assert(eased, 0.5)
+try:
+    sensor.reading = 6
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 4)
+assert(unit, 0.5)
+assert(eased, 0.5)
+try:
+    lower = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(lower, 0)
+sensor.reading = 2
+assert(unit, 0.25)
+assert(eased, 0.103515625)
+eased
 # return: 0.103515625"#);
 }
 
@@ -7377,48 +8097,53 @@ fn applies_floor_fractional_parts_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_fractional_parts_and_rollback() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("value = sensor.reading");
-    run("whole = Math.floor(value)");
-    run("fraction = Math.fract(value)");
-    run("withDeferredExtra = Math.fract(value, sensor.optional)");
-    assert_eq!(run("value"), serde_json::Value::Null);
-    assert_eq!(run("whole"), serde_json::Value::Null);
-    assert_eq!(run("fraction"), serde_json::Value::Null);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("sensor.reading = 2.25");
-    assert_eq!(run("whole"), 2);
-    assert_eq!(run("fraction"), 0.25);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("delete sensor.reading");
-    assert_eq!(run("value"), serde_json::Value::Null);
-    assert_eq!(run("fraction"), serde_json::Value::Null);
-    run("sensor.reading = 3.75");
-    assert_eq!(run("whole"), 3);
-    assert_eq!(run("fraction"), 0.75);
-    run("sensor.optional = 99");
-    assert_eq!(run("withDeferredExtra"), 0.75);
-    assert_eq!(run_error(r#"sensor.reading = 5.5
-throw "ROLLBACK""#), "ROLLBACK");
-    assert_eq!(run("sensor.reading"), 3.75);
-    assert_eq!(run("whole"), 3);
-    assert_eq!(run("fraction"), 0.75);
-    assert_eq!(run("withDeferredExtra"), 0.75);
-    assert_eq!(run_error("sensor.reading = missing"), "ReferenceError: missing is not defined");
-    assert_eq!(run("sensor.reading"), 3.75);
-    run("delete sensor.optional");
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    assert_eq!(run("fraction"), 0.75);
-    run("sensor.optional = [1, 2]");
-    assert_eq!(run("withDeferredExtra"), 0.75);
-    run("sensor.reading = 2.25");
-    assert_eq!(run("whole"), 2);
-    assert_eq!(run("fraction"), 0.25);
-    assert_eq!(run("withDeferredExtra"), 0.25);
-    run(r#"fraction
-
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+value = sensor.reading
+whole = Math.floor(value)
+fraction = Math.fract(value)
+withDeferredExtra = Math.fract(value, sensor.optional)
+assert(value, null)
+assert(whole, null)
+assert(fraction, null)
+assert(withDeferredExtra, null)
+sensor.reading = 2.25
+assert(whole, 2)
+assert(fraction, 0.25)
+assert(withDeferredExtra, null)
+delete sensor.reading
+assert(value, null)
+assert(fraction, null)
+sensor.reading = 3.75
+assert(whole, 3)
+assert(fraction, 0.75)
+sensor.optional = 99
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = 5.5
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 3.75)
+assert(whole, 3)
+assert(fraction, 0.75)
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(sensor.reading, 3.75)
+delete sensor.optional
+assert(withDeferredExtra, null)
+assert(fraction, 0.75)
+sensor.optional = [1, 2]
+assert(withDeferredExtra, 0.75)
+sensor.reading = 2.25
+assert(whole, 2)
+assert(fraction, 0.25)
+assert(withDeferredExtra, 0.25)
+fraction
 # return: 0.25"#);
 }
 
@@ -7500,22 +8225,24 @@ fn preserves_nested_comma_free_bare_named_arrows() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_comma_free_named_arrow_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run("def reading left right => source + left + right");
-    run("result = reading(2, 4)");
-    assert_eq!(run("result"), 9);
-    assert_eq!(run_error("def reading left right => missing + left + right"), "ReferenceError: missing is not defined");
-    assert_eq!(run("result"), 9);
-    run("source = 5");
-    assert_eq!(run("result"), 11);
-    run("def prefer current fallback => current ||= fallback");
-    run("def combined first second scale => (first + second) * scale");
-    assert_eq!(run("prefer(0, 9)"), 9);
-    assert_eq!(run("prefer(3, 9)"), 3);
-    assert_eq!(run("combined(2, 5, 3)"), 21);
-    run(r#"combined(2, 5, 3)
-
+    let mut run = runner();
+    run(r#"source = 3
+def reading left right => source + left + right
+result = reading(2, 4)
+assert(result, 9)
+try:
+    def reading left right => missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(result, 9)
+source = 5
+assert(result, 11)
+def prefer current fallback => current ||= fallback
+def combined first second scale => (first + second) * scale
+assert(prefer(0, 9), 9)
+assert(prefer(3, 9), 3)
+assert(combined(2, 5, 3), 21)
+combined(2, 5, 3)
 # return: 21"#);
 }
 
@@ -7714,46 +8441,51 @@ fn applies_inverse_interpolation_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_inverse_interpolation_and_rollback() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("start = sensor.lower");
-    run("end = sensor.upper");
-    run("sample = sensor.reading");
-    run("weight = Math.inverseLerp(start, end, sample)");
-    run("withDeferredExtra = Math.inverseLerp(start, end, sample, sensor.optional)");
-    assert_eq!(run("weight"), serde_json::Value::Null);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("sensor.lower = 0");
-    run("sensor.upper = 8");
-    run("sensor.reading = 2");
-    assert_eq!(run("weight"), 0.25);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("sensor.optional = 99");
-    assert_eq!(run("withDeferredExtra"), 0.25);
-    run("delete sensor.reading");
-    assert_eq!(run("weight"), serde_json::Value::Null);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("sensor.reading = 6");
-    assert_eq!(run("weight"), 0.75);
-    assert_eq!(run("withDeferredExtra"), 0.75);
-    assert_eq!(run_error(r#"sensor.reading = 4
-throw "ROLLBACK""#), "ROLLBACK");
-    assert_eq!(run("sensor.reading"), 6);
-    assert_eq!(run("weight"), 0.75);
-    assert_eq!(run("withDeferredExtra"), 0.75);
-    assert_eq!(run_error("sensor.reading = missing"), "ReferenceError: missing is not defined");
-    assert_eq!(run("sensor.reading"), 6);
-    run("delete sensor.optional");
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    assert_eq!(run("weight"), 0.75);
-    run("sensor.optional = [1, 2]");
-    assert_eq!(run("withDeferredExtra"), 0.75);
-    run("sensor.reading = 2");
-    assert_eq!(run("weight"), 0.25);
-    assert_eq!(run("withDeferredExtra"), 0.25);
-    run(r#"weight
-
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+start = sensor.lower
+end = sensor.upper
+sample = sensor.reading
+weight = Math.inverseLerp(start, end, sample)
+withDeferredExtra = Math.inverseLerp(start, end, sample, sensor.optional)
+assert(weight, null)
+assert(withDeferredExtra, null)
+sensor.lower = 0
+sensor.upper = 8
+sensor.reading = 2
+assert(weight, 0.25)
+assert(withDeferredExtra, null)
+sensor.optional = 99
+assert(withDeferredExtra, 0.25)
+delete sensor.reading
+assert(weight, null)
+assert(withDeferredExtra, null)
+sensor.reading = 6
+assert(weight, 0.75)
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = 4
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 6)
+assert(weight, 0.75)
+assert(withDeferredExtra, 0.75)
+try:
+    sensor.reading = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(sensor.reading, 6)
+delete sensor.optional
+assert(withDeferredExtra, null)
+assert(weight, 0.75)
+sensor.optional = [1, 2]
+assert(withDeferredExtra, 0.75)
+sensor.reading = 2
+assert(weight, 0.25)
+assert(withDeferredExtra, 0.25)
+weight
 # return: 0.25"#);
 }
 
@@ -7992,50 +8724,55 @@ fn applies_range_remapping_to_live_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn preserves_deferred_range_remapping_and_rollback() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("class Sensor");
-    run("sensor = Sensor()");
-    run("start = sensor.lower");
-    run("end = sensor.upper");
-    run("targetStart = sensor.outputLower");
-    run("targetEnd = sensor.outputUpper");
-    run("sample = sensor.reading");
-    run("mapped = Math.remap(start, end, targetStart, targetEnd, sample)");
-    run("withDeferredExtra = Math.remap(start, end, targetStart, targetEnd, sample, sensor.optional)");
-    assert_eq!(run("mapped"), serde_json::Value::Null);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("sensor.lower = 0");
-    run("sensor.upper = 8");
-    run("sensor.outputLower = 10");
-    run("sensor.outputUpper = 30");
-    run("sensor.reading = 2");
-    assert_eq!(run("mapped"), 15);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("sensor.optional = 99");
-    assert_eq!(run("withDeferredExtra"), 15);
-    run("delete sensor.reading");
-    assert_eq!(run("mapped"), serde_json::Value::Null);
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    run("sensor.reading = 6");
-    assert_eq!(run("mapped"), 25);
-    assert_eq!(run("withDeferredExtra"), 25);
-    assert_eq!(run_error(r#"sensor.reading = 4
-throw "ROLLBACK""#), "ROLLBACK");
-    assert_eq!(run("sensor.reading"), 6);
-    assert_eq!(run("mapped"), 25);
-    assert_eq!(run("withDeferredExtra"), 25);
-    assert_eq!(run_error("sensor.reading = missing"), "ReferenceError: missing is not defined");
-    assert_eq!(run("sensor.reading"), 6);
-    run("delete sensor.optional");
-    assert_eq!(run("withDeferredExtra"), serde_json::Value::Null);
-    assert_eq!(run("mapped"), 25);
-    run("sensor.optional = [1, 2]");
-    assert_eq!(run("withDeferredExtra"), 25);
-    run("sensor.reading = 2");
-    assert_eq!(run("mapped"), 15);
-    assert_eq!(run("withDeferredExtra"), 15);
-    run(r#"mapped
-
+    let mut run = runner();
+    run(r#"class Sensor
+sensor = Sensor()
+start = sensor.lower
+end = sensor.upper
+targetStart = sensor.outputLower
+targetEnd = sensor.outputUpper
+sample = sensor.reading
+mapped = Math.remap(start, end, targetStart, targetEnd, sample)
+withDeferredExtra = Math.remap(start, end, targetStart, targetEnd, sample, sensor.optional)
+assert(mapped, null)
+assert(withDeferredExtra, null)
+sensor.lower = 0
+sensor.upper = 8
+sensor.outputLower = 10
+sensor.outputUpper = 30
+sensor.reading = 2
+assert(mapped, 15)
+assert(withDeferredExtra, null)
+sensor.optional = 99
+assert(withDeferredExtra, 15)
+delete sensor.reading
+assert(mapped, null)
+assert(withDeferredExtra, null)
+sensor.reading = 6
+assert(mapped, 25)
+assert(withDeferredExtra, 25)
+try:
+    sensor.reading = 4
+    throw "ROLLBACK"
+catch error:
+    assert(error, "ROLLBACK")
+assert(sensor.reading, 6)
+assert(mapped, 25)
+assert(withDeferredExtra, 25)
+try:
+    sensor.reading = missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(sensor.reading, 6)
+delete sensor.optional
+assert(withDeferredExtra, null)
+assert(mapped, 25)
+sensor.optional = [1, 2]
+assert(withDeferredExtra, 25)
+sensor.reading = 2
+assert(mapped, 15)
+assert(withDeferredExtra, 15)
+mapped
 # return: 15"#);
 }
 
@@ -8170,27 +8907,29 @@ fn preserves_comma_free_block_bindings_and_explicit_returns() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_comma_free_block_redefinitions() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("source = 3");
-    run(r#"def reading left right:
-    return source + left + right"#);
-    run("result = reading(2, 4)");
-    assert_eq!(run("result"), 9);
-    assert_eq!(run_error(r#"def reading left right:
-    return missing + left + right"#), "ReferenceError: missing is not defined");
-    assert_eq!(run("result"), 9);
-    run("source = 5");
-    assert_eq!(run("result"), 11);
-    run(r#"def combined first second scale:
-    return (first + second) * scale"#);
-    run(r#"def prefer current fallback:
+    let mut run = runner();
+    run(r#"source = 3
+def reading left right:
+    return source + left + right
+result = reading(2, 4)
+assert(result, 9)
+try:
+    def reading left right:
+        return missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(result, 9)
+source = 5
+assert(result, 11)
+def combined first second scale:
+    return (first + second) * scale
+def prefer current fallback:
     current ||= fallback
-    return current"#);
-    assert_eq!(run("prefer(0, 9)"), 9);
-    assert_eq!(run("prefer(3, 9)"), 3);
-    assert_eq!(run("combined(2, 5, 3)"), 21);
-    run(r#"combined(2, 5, 3)
-
+    return current
+assert(prefer(0, 9), 9)
+assert(prefer(3, 9), 3)
+assert(combined(2, 5, 3), 21)
+combined(2, 5, 3)
 # return: 21"#);
 }
 
@@ -8239,23 +8978,26 @@ fn keeps_flat_mapped_lists_reactive() {
 #[rustfmt::skip]
 #[test]
 fn flat_maps_class_populations() {
-    let (mut run, mut run_error) = crate::common::runners();
+    let mut run = runner();
     run(r#"class Batch(items):
-    this.items = items"#);
-    run("batch1 = Batch([1, 2])");
-    run("batch2 = Batch([3])");
-    run("expanded = Batch.flatMap(batch => batch.items)");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 3]));
-    run("batch1.items.push(4)");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 3]));
-    run("batch3 = Batch([5])");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 3, 5]));
-    assert_eq!(run_error("delete batch2"), "TypeError: Cannot delete object 'batch2'");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 3, 5]));
-    run("batch2.items = []");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 4, 5]));
-    assert_eq!(run("Batch.length"), 3);
-    assert_eq!(run("batch1.items"), serde_json::json!([1, 2, 4]));
+    this.items = items
+batch1 = Batch([1, 2])
+batch2 = Batch([3])
+expanded = Batch.flatMap(batch => batch.items)
+assert(expanded, [1, 2, 3])
+batch1.items.push(4)
+assert(expanded, [1, 2, 4, 3])
+batch3 = Batch([5])
+assert(expanded, [1, 2, 4, 3, 5])
+try:
+    delete batch2
+catch error:
+    assert(error, TypeError("Cannot delete object 'batch2'"))
+assert(expanded, [1, 2, 4, 3, 5])
+batch2.items = []
+assert(expanded, [1, 2, 4, 5])
+assert(Batch.length, 3)
+assert(batch1.items, [1, 2, 4])"#);
 }
 
 /// Nucleoid preserves flat mapping callable snapshots
@@ -8287,19 +9029,21 @@ fn preserves_flat_mapping_callable_snapshots() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_flat_mapping_callback_failures() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run("numbers = [1, 2]");
-    run("def expand(value) => [value, value * 2]");
-    run("expanded = numbers.flatMap(expand)");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 2, 4]));
-    assert_eq!(run_error(r#"def expand(value):
-    throw "FLAT_MAPPING_ABORT""#), "FLAT_MAPPING_ABORT");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 2, 4]));
-    assert_eq!(run("numbers"), serde_json::json!([1, 2]));
-    run("numbers.push(3)");
-    assert_eq!(run("expanded"), serde_json::json!([1, 2, 2, 4, 3, 6]));
-    run(r#"21
-
+    let mut run = runner();
+    run(r#"numbers = [1, 2]
+def expand(value) => [value, value * 2]
+expanded = numbers.flatMap(expand)
+assert(expanded, [1, 2, 2, 4])
+try:
+    def expand(value):
+        throw "FLAT_MAPPING_ABORT"
+catch error:
+    assert(error, "FLAT_MAPPING_ABORT")
+assert(expanded, [1, 2, 2, 4])
+assert(numbers, [1, 2])
+numbers.push(3)
+assert(expanded, [1, 2, 2, 4, 3, 6])
+21
 # return: 21"#);
 }
 
@@ -8414,15 +9158,18 @@ fn replaces_literal_strings_in_class_rules() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_literal_replacement_argument_failures() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run(r#"source = "a|b""#);
-    run(r#"def fail():
+    let mut run = runner();
+    run(r#"source = "a|b"
+def fail():
     source = "changed|changed"
-    throw "stop""#);
-    assert_eq!(run_error(r#"source.replaceAll("|", fail())"#), "stop");
-    assert_eq!(run("source"), "a|b");
-    run(r#"recovered = source.replaceAll("|", "/")"#);
-    assert_eq!(run("recovered"), "a/b");
+    throw "stop"
+try:
+    source.replaceAll("|", fail())
+catch error:
+    assert(error, "stop")
+assert(source, "a|b")
+recovered = source.replaceAll("|", "/")
+assert(recovered, "a/b")"#);
 }
 
 /// Nucleoid selects direct conditional alternatives
@@ -8495,7 +9242,7 @@ else:
 #[rustfmt::skip]
 #[test]
 fn preserves_direct_alternative_evaluation_order() {
-    let (mut run, mut run_error) = crate::common::runners();
+    let mut run = runner();
     run(r#"def decide(first, second, third):
     if first:
         return "first"
@@ -8504,20 +9251,23 @@ fn preserves_direct_alternative_evaluation_order() {
     elif third:
         return "third"
     else:
-        return "none""#);
-    assert_eq!(run("decide(true, true, true)"), "first");
-    assert_eq!(run("decide(false, true, true)"), "second");
-    assert_eq!(run("decide(false, false, true)"), "third");
-    assert_eq!(run("decide(false, false, false)"), "none");
-    run(r#"def guarded(value):
+        return "none"
+assert(decide(true, true, true), "first")
+assert(decide(false, true, true), "second")
+assert(decide(false, false, true), "third")
+assert(decide(false, false, false), "none")
+def guarded(value):
     if value:
         return "ready"
     else missing:
         return "bad"
     else:
-        return "other""#);
-    assert_eq!(run("guarded(true)"), "ready");
-    assert_eq!(run_error("guarded(false)"), "ReferenceError: missing is not defined");
+        return "other"
+assert(guarded(true), "ready")
+try:
+    guarded(false)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))"#);
 }
 
 /// Nucleoid preserves direct alternative scope and return flow
@@ -8555,33 +9305,35 @@ fn preserves_direct_alternative_scope_and_return_flow() {
 #[rustfmt::skip]
 #[test]
 fn rolls_back_failed_direct_alternatives() {
-    let (mut run, mut run_error) = crate::common::runners();
-    run(r#"source = "ready""#);
-    run(r#"def route(status):
+    let mut run = runner();
+    run(r#"source = "ready"
+def route(status):
     if status == "ready":
         return "send"
     else status == "hold":
         return "wait"
     else:
-        return "skip""#);
-    run("live = route(source)");
-    assert_eq!(run("live"), "send");
-    assert_eq!(run_error(r#"source = "hold"
-def route(status):
-    if status == "ready":
-        return "send"
-    elif status == "hold":
-        throw "blocked"
-    else:
-        return "skip""#), "blocked");
-    assert_eq!(run("source"), "ready");
-    assert_eq!(run("live"), "send");
-    run(r#"source = "hold""#);
-    assert_eq!(run("live"), "wait");
-    run(r#"source = "unknown""#);
-    assert_eq!(run("live"), "skip");
-    run(r#"live
-
+        return "skip"
+live = route(source)
+assert(live, "send")
+try:
+    source = "hold"
+    def route(status):
+        if status == "ready":
+            return "send"
+        elif status == "hold":
+            throw "blocked"
+        else:
+            return "skip"
+catch error:
+    assert(error, "blocked")
+assert(source, "ready")
+assert(live, "send")
+source = "hold"
+assert(live, "wait")
+source = "unknown"
+assert(live, "skip")
+live
 # return: "skip""#);
 }
 
@@ -8663,26 +9415,21 @@ fn preserves_scope_and_snapshots_in_comma_free_records() {
 #[test]
 fn rolls_back_failed_comma_free_record_values() {
     let mut run = runner();
-    run("state = 1");
-    run(r#"record = {status: "old" marker: state}"#);
-    run(r#"message = """#);
-    run(r#"try:
+    run(r#"state = 1
+record = {status: "old" marker: state}
+message = ""
+try:
     state = 2
     record = {status: "new" marker: missing status: "last"}
 catch error:
-    message = error"#);
-    {
-        let actual = run("message");
-        let expected = run(r#"(ReferenceError("missing is not defined"))"#);
-        assert_eq!(actual, expected);
-    }
-    assert_eq!(run("state"), 1);
-    assert_eq!(run("record.status"), "old");
-    assert_eq!(run("record.marker"), 1);
-    run("state = 3");
-    assert_eq!(run("record.marker"), 3);
-    run(r#"record.status
-
+    message = error
+assert(message, ReferenceError("missing is not defined"))
+assert(state, 1)
+assert(record.status, "old")
+assert(record.marker, 1)
+state = 3
+assert(record.marker, 3)
+record.status
 # return: "old""#);
 }
 
@@ -8765,20 +9512,111 @@ fn preserves_colon_led_assertion_argument_evaluation_order() {
 fn checks_caught_errors_and_rollback_with_colon_led_assertions() {
     runner()("state = 1\nmessage = \"\"\ntry:\n    state = 2\n    failed = missing\ncatch error:\n    message = error\n    assert: error, ReferenceError(\"missing is not defined\")\nassert: state, 1\nassert: message, ReferenceError(\"missing is not defined\")");
     let mut run = runner();
-    run("state = 1");
-    run(r#"message = """#);
-    run(r#"try:
+    run(r#"state = 1
+message = ""
+try:
     state = 2
     failed = missing
 catch error:
     message = error
-    assert: error, ReferenceError("missing is not defined")"#);
-    assert_eq!(run("state"), 1);
-    {
-        let actual = run("message");
-        let expected = run(r#"(ReferenceError("missing is not defined"))"#);
-        assert_eq!(actual, expected);
-    }
+    assert: error, ReferenceError("missing is not defined")
+assert: state, 1
+assert: message, ReferenceError("missing is not defined")"#);
+}
+
+/// Nucleoid catches thrown values with colon-free indented suites
+#[rustfmt::skip]
+#[test]
+fn catches_thrown_values_with_colon_free_indented_suites() {
+    let mut run = runner();
+    run(r#"status = "ready"
+try
+    throw "STOP"
+catch problem
+    assert(problem, "STOP")
+assert(status, "ready")
+try
+    throw 7
+catch (issue)
+    assert(issue, 7)
+try
+    missing
+catch
+    assert(error, ReferenceError("missing is not defined"))"#);
+}
+
+/// Nucleoid restores dependencies through colon-free exception suites
+#[rustfmt::skip]
+#[test]
+fn restores_dependencies_through_colon_free_exception_suites() {
+    let mut run = runner();
+    run(r#"source = 2
+derived = source * 3
+try
+    source = 9
+    throw "ABORT"
+catch failure
+    assert(failure, "ABORT")
+assert(source, 2)
+assert(derived, 6)
+source = 4
+assert(derived, 12)
+derived
+# return: 12"#);
+}
+
+/// Nucleoid preserves nested catch association without suite colons
+#[rustfmt::skip]
+#[test]
+fn preserves_nested_catch_association_without_suite_colons() {
+    let mut run = runner();
+    run(r#"state = "ready"
+try
+    try
+        throw "INNER"
+    catch inner
+        throw inner + "-OUTER"
+catch outer
+    assert(outer, "INNER-OUTER")
+assert(state, "ready")"#);
+}
+
+/// Nucleoid preserves function returns through compact exception suites
+#[rustfmt::skip]
+#[test]
+fn preserves_function_returns_through_compact_exception_suites() {
+    let mut run = runner();
+    run(r#"def recover(flag):
+    try
+        if flag:
+            throw "FALLBACK"
+        return "OK"
+    catch issue
+        return issue
+first = recover(false)
+second = recover(true)
+assert(first, "OK")
+assert(second, "FALLBACK")"#);
+}
+
+/// Nucleoid rolls back class rules with colon-free catch suites
+#[rustfmt::skip]
+#[test]
+fn rolls_back_class_rules_with_colon_free_catch_suites() {
+    let mut run = runner();
+    run(r#"class Parcel(state: str):
+    this.state = state
+parcel = Parcel("queued")
+$Parcel.label = $Parcel.state + "!"
+try
+    parcel.state = "broken"
+    throw "ABORT"
+catch reason
+    assert(reason, "ABORT")
+assert(parcel.state, "queued")
+assert(parcel.label, "queued!")
+parcel.state = "sent"
+assert(parcel.label, "sent!")"#);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

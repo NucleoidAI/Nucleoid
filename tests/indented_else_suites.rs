@@ -279,16 +279,6 @@ fn all_other_headers_keep_their_accepted_colon_or_body_requirements() {
             Position::new(1, 7),
         ),
         (
-            "try\n    pass\ncatch error:\n    pass",
-            "Expected ':' but found end of line",
-            Position::new(1, 1),
-        ),
-        (
-            "try: pass\ncatch error\n    pass",
-            "Expected ':' but found end of line",
-            Position::new(2, 7),
-        ),
-        (
             "callback = value =>\n    value",
             "Unexpected end of line",
             Position::new(2, 5),
@@ -304,6 +294,35 @@ fn all_other_headers_keep_their_accepted_colon_or_body_requirements() {
         "try: pass\ncatch error: pass",
     ] {
         Runtime::check(source).unwrap();
+    }
+}
+
+#[test]
+fn newly_qualified_exception_rows_keep_their_complete_accepted_controls() {
+    // Exactly the two former negative rows authorized by NUC46's preflight.
+    for (actual, explicit) in [
+        (
+            "try\n    pass\ncatch error:\n    pass",
+            "try:\n    pass\ncatch error:\n    pass",
+        ),
+        (
+            "try: pass\ncatch error\n    pass",
+            "try: pass\ncatch error:\n    pass",
+        ),
+    ] {
+        assert_eq!(
+            equivalent(actual, explicit),
+            [Stmt::Try {
+                body: vec![Stmt::Pass],
+                parameter: "error".to_string(),
+                catch: vec![Stmt::Pass],
+            }]
+        );
+        assert_eq!(
+            parse_program(actual).unwrap().positions,
+            parse_program(explicit).unwrap().positions
+        );
+        check_pair(actual, explicit, 0, Some("null"));
     }
 }
 

@@ -1743,4 +1743,17 @@ record = {assert: "field", reading: 4}
 assert: result, 4
 assert: record.assert, "field"
 assert: record.reading, 4
+---
+# Nucleoid preserves catch bindings and mixed exception suite forms
+
+try: throw "INLINE"
+catch issue: assert(issue, "INLINE")
+try
+    throw "PAREN"
+catch (problem):
+    assert(problem, "PAREN")
+try:
+    throw "DEFAULT"
+catch
+    assert(error, "DEFAULT")
 ```

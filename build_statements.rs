@@ -44,6 +44,14 @@ pub(crate) fn assertion(statement: &str) -> Option<(&str, &str)> {
     None
 }
 
+/// Match a complete ASCII Word keyword, not an ordinary identifier prefix.
+/// This selects export boundaries; only the real parser validates the source.
+pub(crate) fn starts_keyword(source: &str, keyword: &str) -> bool {
+    source.strip_prefix(keyword).is_some_and(|tail| {
+        !tail.starts_with(|character: char| character.is_ascii_alphanumeric() || character == '_')
+    })
+}
+
 /// Splits a case into top-level statements while retaining comments and blocks.
 pub(crate) fn statements(source: &str) -> Vec<String> {
     let source = source.replace("\r\n", "\n");
@@ -56,15 +64,11 @@ pub(crate) fn statements(source: &str) -> Vec<String> {
         let top_level = line.len() == line.trim_start().len();
         let comment_or_blank = trimmed.is_empty() || trimmed.starts_with('#');
         // Raw::Word in the lexer is [A-Za-z_][A-Za-z0-9_]*. Keep either
-        // complete Else alias with its chain, not an identifier prefix.
+        // complete Else alias or Catch with its chain, not an identifier prefix.
         // Header validity remains the parser's job, not a second grammar here.
-        let continuation = ["else", "elif"].iter().any(|keyword| {
-            trimmed.strip_prefix(keyword).is_some_and(|tail| {
-                !tail.starts_with(|character: char| {
-                    character.is_ascii_alphanumeric() || character == '_'
-                })
-            })
-        }) || trimmed.starts_with("catch ")
+        let continuation = ["else", "elif", "catch"]
+            .iter()
+            .any(|keyword| starts_keyword(trimmed, keyword))
             || trimmed.starts_with("finally:")
             || trimmed.starts_with([')', ']', '}']);
 

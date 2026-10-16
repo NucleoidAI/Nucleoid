@@ -128,7 +128,7 @@ fn legacy_explicit_and_final_alias_forms_keep_their_bodies() {
 
 #[test]
 fn all_ascii_identifier_continuations_match_the_actual_lexer_boundary() {
-    for keyword in ["else", "elif"] {
+    for keyword in ["else", "elif", "catch"] {
         for suffix in b'A'..=b'Z' {
             let name = format!("{keyword}{}", char::from(suffix));
             check_independent_identifier(&name);
@@ -259,6 +259,144 @@ fn nonconditional_continuations_and_comment_ownership_are_unchanged() {
 }
 
 #[test]
+fn actual_splitter_keeps_every_complete_catch_header_with_its_try() {
+    for (header, binding) in [
+        ("catch", "error"),
+        ("catch issue", "issue"),
+        ("catch(issue)", "issue"),
+        ("catch (issue)", "issue"),
+        ("catch\tissue", "issue"),
+    ] {
+        for try_colon in ["", ":"] {
+            for catch_colon in ["", ":"] {
+                for newline in ["\n", "\r\n"] {
+                    let source = format!(
+                        "# leading\ntry{try_colon} # try: in comment\n    throw 7\n\
+                         # catch: in comment\n{header}{catch_colon} # catch header\n\
+                         \x20   assert({binding}, 7)\n# following\nresult = 12\nresult"
+                    )
+                    .replace('\n', newline);
+                    let parts = check_export(&source, 3, 1);
+                    assert!(parts[0].contains(&format!("\n{header}{catch_colon}")));
+                    assert!(parts[1].starts_with("# following\n"));
+                }
+            }
+        }
+    }
+    check_export(
+        "try\n    throw 7\ncatch# default\n    assert(error, 7)\n12",
+        2,
+        1,
+    );
+}
+
+#[test]
+fn actual_renderer_keeps_original_exception_program_checks_and_returns_in_one_run() {
+    for (header, binding) in [
+        ("catch", "error"),
+        ("catch problem", "problem"),
+        ("catch(problem)", "problem"),
+        ("catch (problem)", "problem"),
+    ] {
+        for try_colon in ["", ":"] {
+            for catch_colon in ["", ":"] {
+                let source = format!(
+                    "saved = 2\ntry{try_colon}\n    saved = 9\n    throw 7\n\
+                     {header}{catch_colon}\n    assert({binding}, 7)\n\
+                     assert(saved, 2)\n12"
+                );
+                let rendered = render_assertion_fixture(&source, Some("12"));
+                assert!(
+                    rendered.contains(&format!("{source}\n# return: 12")),
+                    "{rendered}"
+                );
+                assert_eq!(rendered.matches("    run(").count(), 1, "{rendered}");
+                assert!(!rendered.contains("run_error("), "{rendered}");
+                assert!(!rendered.contains("assert_eq!("), "{rendered}");
+                common::runner()(&format!("{source}\n# return: 12"));
+            }
+        }
+    }
+}
+
+#[test]
+fn exception_export_selection_is_not_a_second_header_grammar_or_success_fallback() {
+    for (source, expected, reason) in [
+        (
+            "try;\n    throw 7\ncatch\n    assert(error, 7)",
+            None,
+            "Expected ':'",
+        ),
+        (
+            "try\n    throw 7\ncatch(problem + 1)\n    assert(problem, 7)",
+            None,
+            "Expected ')'",
+        ),
+        (
+            "try\n    throw 7\ncatch problem extra\n    assert(problem, 7)",
+            None,
+            "Expected ':'",
+        ),
+        (
+            "try\n    throw 7\ncatch problem\n    assert(1, 7)",
+            None,
+            "expected 7, got 1",
+        ),
+        (
+            "try\n    throw 7\ncatch\n    assert(error, 8)",
+            None,
+            "expected 8, got 7",
+        ),
+        (
+            "try\n    pass\ncatch\n    assert(error, 7)",
+            None,
+            "only 0 of 1 assertions ran",
+        ),
+        (
+            "try\n    throw 7\ncatch problem\n    assert(problem, 7)\n12",
+            Some("13"),
+            "returned 12.0, expected 13",
+        ),
+    ] {
+        let rendered = render_assertion_fixture(source, expected);
+        assert!(rendered.contains(source), "{rendered}");
+        assert!(!rendered.contains("run_error("), "{rendered}");
+        assert_eq!(rendered.matches("    run(").count(), 1, "{rendered}");
+        let error = common::check(&common::Case {
+            title: "invalid original exception record".to_string(),
+            source: source.to_string(),
+            expected: expected.map(str::to_string),
+        })
+        .unwrap_err();
+        assert!(error.contains(reason), "{source}\n{error}");
+    }
+    let source = "# try catch: are comments\ntext = \"try catch:\"\n\
+                  pattern = /catch:/\ntemplate = `try:`\ncatcher = 7\nassert(catcher, 7)";
+    // Preserve the inherited return distinction: an assertion-only separate
+    // run yields null, whereas the whole program retains the assignment's 7.
+    let mut whole = Runtime::new();
+    assert_eq!(whole.run(source).unwrap(), Value::Number(7.0));
+    assert_eq!(whole.assertions_run(), 1);
+    assert!(whole.take_assertions().is_empty());
+    let mut split = Runtime::new();
+    let mut last = Value::Null;
+    for part in statements(source) {
+        last = split.run(&part).unwrap();
+    }
+    assert_eq!(last, Value::Null);
+    assert_eq!(split.assertions_run(), 1);
+    assert!(split.take_assertions().is_empty());
+    // Observe the value explicitly when comparing the two execution modes.
+    let parts = check_export(&format!("{source}\ncatcher"), 6, 1);
+    assert_eq!(parts[3], "catcher = 7");
+    let rendered = render_assertion_fixture(source, None);
+    assert!(
+        rendered.contains("assert_eq!(run(\"catcher\"), 7);"),
+        "{rendered}"
+    );
+}
+
+#[test]
 fn shared_actual_exporter_scanner_recognizes_both_assertion_spellings() {
     for (actual, expected) in [
         ("reading", "3"),
@@ -312,7 +450,7 @@ fn actual_renderer_shares_direct_caught_scoped_and_return_classification() {
             "try:\n    missing\ncatch error:\n    assert: error, ReferenceError(\"missing is not defined\")",
             "try:\n    missing\ncatch error:\n    assert(error, ReferenceError(\"missing is not defined\"))",
             None,
-            "run_error(\"missing\")",
+            "let mut run = runner();",
         ),
         (
             "if true:\n    reading = 3\n    assert: reading, 3",
@@ -338,7 +476,18 @@ fn actual_renderer_shares_direct_caught_scoped_and_return_classification() {
         assert!(new.contains(&validation), "{new}");
         // Keep the complete old/new extraction equality check as well as
         // checking the new, unmodified-source validation statement.
-        assert_eq!(new.replacen(&validation, "", 1), old, "{candidate}");
+        if candidate.starts_with("try:") {
+            // Exception records retain both original programs, rather than
+            // extracting just a thrown value and a literal expectation.
+            assert!(new.contains(candidate), "{new}");
+            assert!(old.contains(control), "{old}");
+            assert!(!new.contains("run_error("), "{new}");
+            assert!(!old.contains("run_error("), "{old}");
+            common::runner()(candidate);
+            common::runner()(control);
+        } else {
+            assert_eq!(new.replacen(&validation, "", 1), old, "{candidate}");
+        }
         assert!(new.contains(fragment), "{new}");
     }
 }
