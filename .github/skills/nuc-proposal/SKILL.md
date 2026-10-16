@@ -28,10 +28,26 @@ selecting syntax improvement and `1` selecting a runtime feature. Choose one
 bounded enhancement in that category; do not redraw to favor a preferred
 category or substitute deterministic alternation for randomness.
 
+Within the selected category, pursue all-around language development:
+
+- Review the current specification and recent NUCs to identify unmet needs and
+  avoid repeatedly extending the same narrow feature family.
+- Consider gaps across logic and reasoning, reactive dependencies, functions
+  and scope, control flow, collections and strings, data modeling, and
+  diagnostics. Prefer underrepresented areas when user value is comparable.
+- Weigh distinct user value, broader expressiveness, and API complexity.
+  Do not repeatedly choose math helpers or other closely related utility
+  variants merely for easy implementation, baselines, or token savings.
+- Keep math eligible when it fills a clear gap. Broaden coverage without a
+  math ban, fixed rotation, quota, or category redraw; preserve every
+  compatibility and acceptance requirement.
+
 Select before recording baselines or delegating preparation. Supply the
-selected category and requested change to the proposal agent, which must not
-redraw; include the category in its handoff. Explicit feature/category requests
-take precedence, and process or documentation-only revisions are not randomized.
+selected category, requested change, and a brief selection rationale explaining
+the unmet need and fit with recent coverage to the proposal agent, which must
+not redraw. Include the category and rationale in its handoff. Explicit
+feature/category requests take precedence, and process or documentation-only
+revisions are not randomized.
 
 Runtime features retain the same baseline and acceptance requirements. New
 measured cases still need pre-executed behavior-equivalent accepted-syntax
@@ -101,9 +117,9 @@ independent evaluator.
 
 Return the proposal path and Git blob revision (`git hash-object` on the
 proposal), accepted baseline revision and path, selected enhancement category
-when applicable, candidate worktree, changed files, development checks, and
-explicit blockers. Freeze the candidate after handoff. The caller starts a
-fresh `nuc-evaluate` agent with this handoff and
+and selection rationale when applicable, candidate worktree, changed files,
+development checks, and explicit blockers. Freeze the candidate after handoff.
+The caller starts a fresh `nuc-evaluate` agent with this handoff and
 a fresh report path; do not launch it yourself. The caller owns integration
 and evaluation status/index updates. The proposal agent must not commit, push,
 or merge.

@@ -29,8 +29,9 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 ## Handoff
 
 Return the proposal path and Git blob revision, baseline revision and artifact
-path, selected enhancement category when applicable, candidate worktree,
-changed files, development and syntax-compatibility checks, and any blockers.
+path, selected enhancement category and selection rationale when applicable,
+candidate worktree, changed files, development and syntax-compatibility checks,
+and any blockers.
 Declare the candidate ready for independent evaluation only when its inputs
 are complete, then stop editing it. The caller launches a fresh `nuc-evaluate`
 agent with this handoff and a fresh report path. The caller owns integration

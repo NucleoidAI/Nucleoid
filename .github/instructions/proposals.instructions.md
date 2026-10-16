@@ -27,6 +27,26 @@ another case cannot offset an increase. Missing baselines block acceptance.
 Keep reports in the session workspace and do not apply rejected candidates.
 Evaluation outcome metadata does not recursively trigger another agent.
 
+## All-around enhancement selection
+
+When choosing unspecified enhancements, develop the language as a whole rather
+than repeatedly extending one narrow niche. Review recent NUCs and unmet needs
+across logic and reasoning, reactive dependencies, functions and scope, control
+flow, collections and strings, data modeling, and diagnostics.
+
+Prioritize distinct user value and broader expressiveness while weighing API
+complexity.
+Do not repeatedly favor math helpers or closely related utility variants merely
+because they are easy to implement, baseline, or shorten in measured examples.
+Math remains eligible when it addresses a clear need; token savings alone do
+not establish feature priority. Record the selection rationale in the handoff.
+
+Follow the caller-owned
+[selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement).
+Breadth guides feature choice within the existing 50/50 syntax/runtime draw;
+it does not authorize redraws, fixed rotations, or weaker acceptance checks.
+Explicit feature/category requests still take precedence.
+
 ## Detailed proposal workflow
 
 Follow the process in `docs/nuc-0001.md`.
