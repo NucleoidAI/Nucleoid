@@ -85,10 +85,21 @@ pub fn snippets(document: &str, name: &str) -> Vec<Case> {
                     claim.clone()
                 };
 
+                let expected = collected.lines().map(str::trim).find_map(|line| {
+                    line.strip_prefix("# return:")
+                        .map(|rest| rest.trim().to_string())
+                });
+                let program = collected
+                    .lines()
+                    .filter(|line| !line.trim().starts_with("# return:"))
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                // Keep the historical snippet source's final newline.
+                let program = format!("{program}\n");
                 cases.push(Case {
                     title,
-                    source: std::mem::take(collected),
-                    expected: None,
+                    source: program,
+                    expected,
                 });
 
                 source = None;
@@ -207,12 +218,8 @@ pub fn check_with_assertions(case: &Case, expected_assertions: usize) -> Result<
 }
 
 fn check_with(runtime: &mut Runtime, case: &Case) -> Result<nucleoid::Value, String> {
-    let expected_assertions = case
-        .source
-        .lines()
-        .filter(|line| !line.trim_start().starts_with('#'))
-        .map(|line| line.matches("assert(").count())
-        .sum::<usize>();
+    let statements = nucleoid::lang::ast::parse(&case.source).map_err(|error| error.to_string())?;
+    let expected_assertions = assertions::protected_assertions(&statements).len();
 
     check_with_count(runtime, case, expected_assertions)
 }

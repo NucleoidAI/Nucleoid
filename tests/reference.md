@@ -1733,4 +1733,14 @@ urgent = true
 assert(summary.lane, "fast")
 kind = "alert"
 assert(summary.kind, "alert")
+---
+# Nucleoid preserves assert names and declarations beside compact checks
+
+assert = 12
+def identity(assert) => assert
+result = identity(4)
+record = {assert: "field", reading: 4}
+assert: result, 4
+assert: record.assert, "field"
+assert: record.reading, 4
 ```

@@ -2253,6 +2253,37 @@ assert(first.payload.ready, true)
   and [expression guidance](README.md#comma-free-explicit-properties)
   specify the bounded syntax. Comma-bearing forms remain supported.
 
+## Colon-led assertion statements (Accepted NUC 45)
+
+**Compact assertions verify class rules and snapshots**
+
+```nuc
+# Compact assertions verify class rules and snapshots
+
+class Sensor
+first = Sensor()
+second = Sensor()
+first.reading = 2
+second.reading = 8
+$Sensor.active = $Sensor.reading > 5
+saved = second.active.value
+assert: first.active, false
+assert: second.active, true
+second.reading = 1
+assert: second.active, false
+assert: saved, true
+saved
+# return: true
+```
+
+- Accepted [NUC 45](nuc-0045.md) lowers these statement-position checks
+  exactly to `assert(actual, expected)`, which remains supported.
+- Assertions do not install model rules or observers and do not replace the
+  preceding program result. Class rules, `.value` snapshots and ordinary
+  expression arguments retain their existing behavior.
+- Only lowercase `assert` followed by `:` in statement position qualifies;
+  existing typed declarations win before this new spelling is considered.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

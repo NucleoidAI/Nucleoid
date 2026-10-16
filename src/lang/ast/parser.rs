@@ -304,6 +304,14 @@ impl Parser {
                 };
                 Ok(Stmt::Declaration { name, type_name })
             }
+            Token::Identifier(name) if name == "assert" && self.peek_at(1) == &Token::Colon => {
+                self.advance();
+                self.advance();
+                // An ordinary call has an outer expression level in addition
+                // to each argument's level. Preserve that same nesting budget.
+                self.nested_expression(Self::assertion_expression)
+                    .map(Stmt::Expression)
+            }
             _ => {
                 let expression = self.expression()?;
 
@@ -316,6 +324,19 @@ impl Parser {
                 }
             }
         }
+    }
+
+    fn assertion_expression(&mut self) -> Result<Expr> {
+        let actual = self.expression()?;
+        self.expect(&Token::Comma)?;
+        let expected = self.expression()?;
+        if self.check(&Token::Comma) {
+            return Err(self.error("Assertion statements expect exactly two arguments"));
+        }
+        Ok(Expr::Call {
+            callee: Box::new(Expr::Identifier("assert".to_string())),
+            arguments: vec![actual, expected],
+        })
     }
 
     /// Distinguishes `a: int` (a declaration) from a labelled suite.

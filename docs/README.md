@@ -63,6 +63,37 @@ k
 
 - Returns `1`.
 
+### Colon-led assertion statements (Accepted NUC 45)
+
+- Accepted [NUC 45](nuc-0045.md) adds
+  `assert: actual, expected` as an optional statement spelling of the existing
+  two-argument `assert(actual, expected)` helper.
+- Both lower to the same call expression statement. Arguments run once,
+  left to right, with the same deep equality, failure collection, counters
+  and transaction behavior. A check is not a standing model rule, graph
+  observer, or replacement for the preceding program result.
+- Ordinary calls remain supported in every existing context and retain
+  their existing argument-count behavior. The colon-led form requires two
+  expressions and one separating comma, with no extra/trailing comma,
+  truthiness mode, generic bare call, new keyword, or layout continuation.
+- Typed declarations win first: `assert: int` remains a declaration with
+  `ReferenceError("Missing definition")`. Bindings, parameter annotations,
+  fields and keys named `assert` remain unchanged. Direct identifier calls
+  named `assert` invoke the helper even when the name is bound.
+- The accepted [specification contract](../nucleoid.spec.md#colon-led-assertion-statements)
+  and five appended entries cover values, reasoning exclusion, scopes,
+  returns, evaluation order, caught errors and rollback.
+  The executable reference counterpart is
+  `Nucleoid preserves assert names and declarations beside compact checks`.
+- Independent evaluation accepted all 603 paired cases: eight use fewer
+  lexer tokens, 595 are unchanged, and none increased. All 2,736 protected
+  assertions executed and all 48 explicit expected returns matched.
+
+```
+assert(record.amount, 3)
+assert: record.amount, 3
+```
+
 Full detail: [NUC 2](nuc-0002.md).
 
 ---
@@ -1773,6 +1804,8 @@ record = {amount: amount unit: "C"}    optional explicit-property comma (NUC 44)
 
 throw value                            raise a value
 return expression                      yield from a block or function
+assert(actual, expected)                existing equality-check helper
+assert: actual, expected                optional statement spelling (Accepted NUC 45)
 
 name.value                             read without depending
 items.flatMap(callback)                 ordered one-level projection (Accepted NUC 41)

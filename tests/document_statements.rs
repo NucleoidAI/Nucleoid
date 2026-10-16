@@ -1,9 +1,12 @@
 //! Exercise the actual build exporter, not a restated statement classifier.
 
-#[path = "../build_statements.rs"]
-mod build_statements;
+#[allow(dead_code)]
+#[path = "../build.rs"]
+mod build_exporter;
 
-use build_statements::statements;
+mod common;
+
+use build_exporter::build_statements::{assertion, statements};
 use nucleoid::lang::ast::generator::generate_all;
 use nucleoid::lang::ast::lexer::{Token, tokenize};
 use nucleoid::lang::ast::parse_program;
@@ -253,4 +256,335 @@ fn nonconditional_continuations_and_comment_ownership_are_unchanged() {
         5,
         2,
     );
+}
+
+#[test]
+fn shared_actual_exporter_scanner_recognizes_both_assertion_spellings() {
+    for (actual, expected) in [
+        ("reading", "3"),
+        ("[1, 2, {label: \"a,b\"}]", "[1, 2, {label: \"a,b\"}]"),
+        ("call(1, [2, 3])", "({ready: true, label: \"x,y\"})"),
+        ("`a,b${call(1, 2)}`", "\"a,b1\""),
+        ("\"quoted\\\",comma\"", "'quoted,comma'"),
+    ] {
+        for prefix in ["assert:", "assert :", "assert\t:"] {
+            let source = format!(" {prefix} {actual}, {expected} ");
+            assert_eq!(assertion(&source), Some((actual, expected)), "{source}");
+        }
+        let source = format!("assert({actual}, {expected})");
+        assert_eq!(assertion(&source), Some((actual, expected)), "{source}");
+    }
+    for source in [
+        "assert: int",
+        "assert: Custom",
+        "assertive: 1, 1",
+        "Assert: 1, 1",
+        "record.assert: 1, 1",
+        "\"assert: 1, 1\"",
+        "# assert: 1, 1",
+        "def check(assert: int):",
+        "record = {assert: 1}",
+    ] {
+        assert_eq!(assertion(source), None, "{source}");
+    }
+}
+
+fn render_assertion_fixture(code: &str, returns: Option<&str>) -> String {
+    let records: Vec<build_exporter::Record> = serde_json::from_value(serde_json::json!([{
+        "description": "Actual exporter fixture",
+        "code": code,
+        "return": returns,
+    }]))
+    .unwrap();
+    build_exporter::render_records(&records)
+}
+
+#[test]
+fn actual_renderer_shares_direct_caught_scoped_and_return_classification() {
+    for (candidate, control, returns, fragment) in [
+        (
+            "reading = 3\nassert: reading, 3",
+            "reading = 3\nassert(reading, 3)",
+            None,
+            "assert_eq!(run(\"reading\"), 3);",
+        ),
+        (
+            "try:\n    missing\ncatch error:\n    assert: error, ReferenceError(\"missing is not defined\")",
+            "try:\n    missing\ncatch error:\n    assert(error, ReferenceError(\"missing is not defined\"))",
+            None,
+            "run_error(\"missing\")",
+        ),
+        (
+            "if true:\n    reading = 3\n    assert: reading, 3",
+            "if true:\n    reading = 3\n    assert(reading, 3)",
+            None,
+            "assert_eq!(run(",
+        ),
+        (
+            "reading = 7\nreading\nassert: reading, 7",
+            "reading = 7\nreading\nassert(reading, 7)",
+            Some("7"),
+            "# return: 7",
+        ),
+    ] {
+        equivalent_export_ast(candidate, control);
+        let new = render_assertion_fixture(candidate, returns);
+        let old = render_assertion_fixture(control, returns);
+        let source = match returns {
+            Some(expected) => format!("{candidate}\n# return: {expected}"),
+            None => candidate.to_string(),
+        };
+        let validation = format!("    runner()({source:?});\n");
+        assert!(new.contains(&validation), "{new}");
+        // Keep the complete old/new extraction equality check as well as
+        // checking the new, unmodified-source validation statement.
+        assert_eq!(new.replacen(&validation, "", 1), old, "{candidate}");
+        assert!(new.contains(fragment), "{new}");
+    }
+}
+
+fn equivalent_export_ast(candidate: &str, control: &str) {
+    assert_eq!(
+        parse_program(candidate).unwrap().statements,
+        parse_program(control).unwrap().statements,
+    );
+}
+
+#[test]
+fn deferred_assertions_stay_with_their_invocation_in_the_actual_renderer() {
+    let source = "def check(reading):\n    assert: reading, 3\n    return reading\ncheck(3)";
+    let rendered = render_assertion_fixture(source, Some("3"));
+    assert!(rendered.contains(source), "{rendered}");
+    assert!(rendered.contains("# return: 3"), "{rendered}");
+    assert_eq!(rendered.matches("    run(").count(), 1, "{rendered}");
+    check_export(source, 2, 1);
+}
+
+#[test]
+fn actual_generated_colon_cases_keep_local_and_nested_assertions_executable() {
+    let dataset = include_str!("../dataset/nucleoid.spec.jsonl");
+    let mut records = 0;
+    let mut assertions = 0;
+    for line in dataset.lines() {
+        let record: serde_json::Value = serde_json::from_str(line).unwrap();
+        let title = record["description"].as_str().unwrap();
+        if !title.contains("colon-led assertion") {
+            continue;
+        }
+        let source = record["code"].as_str().unwrap();
+        let mut runtime = Runtime::new();
+        runtime.run(source).unwrap();
+        assert!(runtime.take_assertions().is_empty(), "{source}");
+        assertions += runtime.assertions_run();
+        records += 1;
+        let rendered = render_assertion_fixture(source, record["return"].as_str());
+        assert!(
+            rendered.contains("fn actual_exporter_fixture()"),
+            "{rendered}"
+        );
+        if title.contains("scope and return") {
+            assert!(rendered.contains("assert: saved, \"draft\""), "{rendered}");
+            // Separate run() calls do not retain the preceding call's
+            // result. Observe packet explicitly in both execution modes.
+            check_export(&format!("{source}\npacket"), 6, 4);
+        }
+    }
+    assert_eq!(records, 5);
+    assert_eq!(assertions, 21);
+    let committed = include_str!("nucleoid.spec.rs");
+    assert!(committed.contains("fn checks_values_with_colon_led_assertion_statements()"));
+    assert!(committed.contains("fn preserves_scope_and_return_flow_around_colon_led_assertions()"));
+}
+
+fn assert_original_is_validated(source: &str, returns: Option<&str>) -> String {
+    let rendered = render_assertion_fixture(source, returns);
+    let checked_source = match returns {
+        Some(expected) => format!("{source}\n# return: {expected}"),
+        None => source.to_string(),
+    };
+    assert!(
+        rendered.contains(&format!("    runner()({checked_source:?});")),
+        "{source:?}\n{rendered}"
+    );
+    rendered
+}
+
+#[test]
+fn actual_renderer_validates_the_four_reported_invalid_originals_before_extraction() {
+    for (source, message) in [
+        ("assert\n    : 1, 1", "Unexpected ':'"),
+        ("assert:\n    1, 1", "Unexpected end of line"),
+        ("assert: 1,\n    1", "Unexpected end of line"),
+        ("assert\u{00a0}: 1, 1", "Unexpected character '\u{00a0}'"),
+    ] {
+        let error = Runtime::check(source).unwrap_err();
+        assert_eq!(error.kind(), nucleoid::ErrorKind::Syntax, "{source:?}");
+        assert_eq!(error.message(), message, "{source:?}");
+        let rendered = assert_original_is_validated(source, None);
+        let validation = rendered.find("    runner()(").unwrap();
+        let extracted = rendered.find("    assert_eq!(run(\"1\"), 1);").unwrap();
+        assert!(validation < extracted, "{rendered}");
+        assert!(
+            std::panic::catch_unwind(|| common::runner()(source)).is_err(),
+            "{source:?}"
+        );
+    }
+}
+
+#[test]
+fn actual_renderer_preserves_supported_horizontal_whitespace_without_normalizing_the_original() {
+    for whitespace in ["", " ", "\t", "\u{000c}", "\r", " \t\u{000c}\r"] {
+        let source = format!("assert{whitespace}:{whitespace}1{whitespace},{whitespace}1");
+        let control = format!("assert{whitespace}({whitespace}1{whitespace},{whitespace}1)");
+        equivalent_export_ast(&source, &control);
+        Runtime::check(&source).unwrap();
+        Runtime::check(&control).unwrap();
+        common::runner()(&source);
+        common::runner()(&control);
+        let rendered = assert_original_is_validated(&source, None);
+        assert!(
+            rendered.contains("assert_eq!(run(\"1\"), 1);"),
+            "{rendered}"
+        );
+        let legacy = render_assertion_fixture(&control, None);
+        assert!(legacy.contains("assert_eq!(run(\"1\"), 1);"), "{legacy}");
+    }
+    let source = "    assert: 1, 1";
+    let control = "    assert(1, 1)";
+    equivalent_export_ast(source, control);
+    common::runner()(source);
+    common::runner()(control);
+    assert_original_is_validated(source, None);
+}
+
+#[test]
+fn actual_renderer_preserves_grouped_multiline_expression_controls_in_both_spellings() {
+    for (actual, expected) in [
+        ("(\n    1 + 2\n)", "3"),
+        ("3", "(\n    1 + 2\n)"),
+        ("[\n    1,\n    2\n]", "[1, 2]"),
+        ("({\n    ready: true\n})", "{ready: true}"),
+        ("(\n    (\n        3\n    )\n)", "(\n    3\n)"),
+    ] {
+        let source = format!("assert: {actual}, {expected}");
+        let control = format!("assert({actual}, {expected})");
+        equivalent_export_ast(&source, &control);
+        common::runner()(&source);
+        common::runner()(&control);
+        let rendered = assert_original_is_validated(&source, None);
+        assert!(rendered.contains("assert_eq!("), "{rendered}");
+        assert!(
+            render_assertion_fixture(&control, None).contains("assert_eq!("),
+            "{control}"
+        );
+    }
+    let control = "assert(\n    1,\n    1\n)";
+    common::runner()(control);
+    assert!(render_assertion_fixture(control, None).contains("assert_eq!(run(\"1\"), 1);"));
+}
+
+#[test]
+fn actual_renderer_validates_malformed_delimiters_layout_unicode_and_scoped_extractions() {
+    let mut sources = vec![
+        "assert: 1, 1,".to_string(),
+        "assert: 1, 1, 2".to_string(),
+        "assert: , 1".to_string(),
+        "assert: 1,, 1".to_string(),
+        "assert: (1], 1".to_string(),
+        "assert: 1;, 1".to_string(),
+        "if true:\n    assert\u{00a0}: 1, 1".to_string(),
+        "try:\n    missing\ncatch error:\n    assert\u{00a0}: 1, 1".to_string(),
+    ];
+    for newline in ["\n", "\r\n"] {
+        for (before, after) in [
+            ("assert", ": 1, 1"),
+            ("assert:", "1, 1"),
+            ("assert: 1", ", 1"),
+            ("assert: 1,", "1"),
+        ] {
+            sources.push(format!("{before}{newline}    {after}"));
+        }
+    }
+    for whitespace in [
+        '\u{000b}', '\u{0085}', '\u{00a0}', '\u{2003}', '\u{2028}', '\u{2029}', '\u{3000}',
+        '\u{feff}',
+    ] {
+        for (before, after) in [
+            ("", "assert: 1, 1"),
+            ("assert", ": 1, 1"),
+            ("assert:", "1, 1"),
+            ("assert: 1", ", 1"),
+            ("assert: 1,", "1"),
+            ("assert: 1, 1", ""),
+        ] {
+            sources.push(format!("{before}{whitespace}{after}"));
+        }
+    }
+    for source in sources {
+        assert_eq!(
+            Runtime::check(&source)
+                .expect_err(&format!("malformed source {source:?}"))
+                .kind(),
+            nucleoid::ErrorKind::Syntax,
+            "{source:?}"
+        );
+        let rendered = render_assertion_fixture(&source, None);
+        // A recognized extraction must validate the complete raw record.
+        // Otherwise the ordinary fallback must still execute invalid source.
+        if rendered.contains("assert_eq!(") {
+            assert_original_is_validated(&source, None);
+        }
+        assert!(
+            std::panic::catch_unwind(|| common::runner()(&source)).is_err(),
+            "{source:?}\n{rendered}"
+        );
+    }
+}
+
+#[test]
+fn actual_renderer_keeps_legacy_declarations_and_assert_name_contexts() {
+    use nucleoid::lang::ast::Stmt;
+
+    for source in ["assert: int", "assert: int\n", "assert: int;"] {
+        assert_eq!(
+            parse_program(source).unwrap().statements,
+            [Stmt::Declaration {
+                name: "assert".to_string(),
+                type_name: "int".to_string(),
+            }]
+        );
+        let error = Runtime::new().run(source).unwrap_err();
+        assert_eq!(error.kind(), nucleoid::ErrorKind::Reference);
+        assert_eq!(error.message(), "Missing definition");
+        let rendered = render_assertion_fixture(source, None);
+        assert!(!rendered.contains("assert_eq!("), "{rendered}");
+        assert!(!rendered.contains("    runner()("), "{rendered}");
+        assert!(rendered.contains("run(\"assert: int"), "{rendered}");
+    }
+    let source = "assert = 12\ndef identity(assert: int) => assert\n\
+                  record = {assert: identity(4)}\nassert: record.assert, 4";
+    common::runner()(source);
+    assert_original_is_validated(source, None);
+    assert!(Runtime::check("{ assert: int }").is_err());
+}
+
+#[test]
+fn actual_renderer_source_validation_keeps_real_failures_coverage_and_expected_returns() {
+    for (source, failure) in [
+        ("assert: 1, 2", "1 assertion(s): expected 2, got 1"),
+        ("if false:\n    assert: 1, 1", "only 0 of 1 assertions ran"),
+    ] {
+        assert_original_is_validated(source, None);
+        let error = common::check(&common::Case {
+            title: "actual renderer source validation".to_string(),
+            source: source.to_string(),
+            expected: None,
+        })
+        .unwrap_err();
+        assert!(error.contains(failure), "{error}");
+    }
+    let source = "7\nassert: 1, 1";
+    assert_original_is_validated(source, Some("7"));
+    let wrong_return = format!("{source}\n# return: 8");
+    assert!(std::panic::catch_unwind(|| common::runner()(&wrong_return)).is_err());
 }

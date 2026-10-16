@@ -15,8 +15,8 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 
-mod build_statements;
-use build_statements::statements;
+pub(crate) mod build_statements;
+use build_statements::{assertion, statements};
 
 /// How a document holds its cases.
 #[derive(Clone, Copy, PartialEq)]
@@ -94,7 +94,7 @@ fn write_docs_tests(out: &str) {
 }
 
 #[derive(Deserialize)]
-struct Record {
+pub(crate) struct Record {
     description: String,
     code: String,
     #[serde(rename = "return")]
@@ -152,7 +152,7 @@ fn records(path: &str) -> Vec<Record> {
         .collect()
 }
 
-fn render_records(records: &[Record]) -> String {
+pub(crate) fn render_records(records: &[Record]) -> String {
     let mut generated = String::new();
     let mut taken = Vec::new();
 
@@ -168,6 +168,44 @@ fn render_records(records: &[Record]) -> String {
             .into_iter()
             .map(|statement| without_comments(&statement))
             .collect();
+
+        // A function or method's assertions run when it is invoked, not when
+        // its definition is installed. Export that record as one program so
+        // the shared AST coverage check sees both definition and invocation.
+        // Do not extract its local actuals into top-level Rust expectations.
+        let deferred_assertions = statements.iter().any(|statement| {
+            (statement.starts_with("def ") || statement.starts_with("class "))
+                && statement
+                    .lines()
+                    .skip(1)
+                    .any(|line| assertion(line.trim()).is_some())
+        });
+        if deferred_assertions {
+            let mut source = record.code.clone();
+            if let Some(expected) = &record.returns {
+                write!(source, "\n# return: {expected}").unwrap();
+            }
+            writeln!(generated, "    let mut run = runner();").unwrap();
+            writeln!(generated, "    run({});", rust_literal(&source)).unwrap();
+            writeln!(generated, "}}\n").unwrap();
+            continue;
+        }
+
+        // The scanner selects an export shape; it does not validate syntax.
+        // Before extracting a colon-form check, run the original record with
+        // the real parser and AST coverage harness. In particular, trimming
+        // must not erase invalid layout or unsupported Unicode whitespace.
+        // Use a fresh runner so validation cannot duplicate operand effects
+        // in the stateful runner used by the extracted expectations below.
+        if statements.iter().any(|statement| {
+            extracts_colon_assertion(statement) || statement.lines().any(extracts_colon_assertion)
+        }) {
+            let mut source = record.code.clone();
+            if let Some(expected) = &record.returns {
+                write!(source, "\n# return: {expected}").unwrap();
+            }
+            writeln!(generated, "    runner()({source:?});").unwrap();
+        }
 
         if let Some(expected) = &record.returns {
             let last = statements
@@ -202,10 +240,17 @@ fn render_records(records: &[Record]) -> String {
 
         for statement in statements {
             if let Some((actual, expected)) = assertion(&statement) {
+                // A statement-leading brace is a block, not an object
+                // expression. Retain the argument's expression context.
+                let actual = if actual.starts_with('{') {
+                    format!("({actual})")
+                } else {
+                    actual.to_string()
+                };
                 write_assertion(
                     &mut generated,
                     "",
-                    &format!("run({})", rust_literal(actual)),
+                    &format!("run({})", rust_literal(&actual)),
                     expected,
                 );
             } else if let Some((source, expected)) = caught_assertion(&statement) {
@@ -246,40 +291,13 @@ fn is_assertion(statement: &str) -> bool {
     assertion(statement).is_some()
 }
 
-fn assertion(statement: &str) -> Option<(&str, &str)> {
-    let statement = statement.trim();
-    let arguments = statement.strip_prefix("assert(")?.strip_suffix(')')?;
-    let mut depth = 0;
-    let mut quote = None;
-    let mut escaped = false;
-
-    for (index, character) in arguments.char_indices() {
-        if let Some(delimiter) = quote {
-            if escaped {
-                escaped = false;
-            } else if character == '\\' {
-                escaped = true;
-            } else if character == delimiter {
-                quote = None;
-            }
-
-            continue;
-        }
-
-        match character {
-            '"' | '\'' | '`' => quote = Some(character),
-            '(' | '[' | '{' => depth += 1,
-            ')' | ']' | '}' => depth -= 1,
-            ',' if depth == 0 => {
-                let actual = arguments[..index].trim();
-                let expected = arguments[index + character.len_utf8()..].trim();
-                return Some((actual, expected));
-            }
-            _ => {}
-        }
-    }
-
-    None
+/// Identifies the scanner's colon extraction path, not valid language syntax.
+fn extracts_colon_assertion(statement: &str) -> bool {
+    assertion(statement).is_some()
+        && statement
+            .trim()
+            .strip_prefix("assert")
+            .is_some_and(|tail| tail.trim_start().starts_with(':'))
 }
 
 fn write_assertion(generated: &mut String, indent: &str, actual: &str, expected: &str) {

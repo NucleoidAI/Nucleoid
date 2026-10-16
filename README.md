@@ -882,6 +882,28 @@ assert(record.reading, 9)
   behavior remain unchanged. See the
   [root contract](nucleoid.spec.md#comma-free-explicit-object-properties).
 
+## Colon-led assertion statements (Accepted NUC 45)
+
+**Assertions have a compact statement spelling**
+
+```nuc
+# Assertions have a compact statement spelling
+
+status = "ready"
+record = {status: status}
+assert: record.status, "ready"
+status = "sent"
+assert: record.status, "sent"
+```
+
+- Accepted [NUC 45](docs/nuc-0045.md) adds an optional statement spelling
+  for the existing two-argument `assert(actual, expected)` helper.
+- The old call syntax remains supported, including expression uses.
+  This is an equality check, not a truthiness assertion or generic bare call.
+- Both forms use the same AST, evaluation order, failure collection,
+  counters, transactions and exclusion from program results and model nodes.
+  See the [root contract](nucleoid.spec.md#colon-led-assertion-statements).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

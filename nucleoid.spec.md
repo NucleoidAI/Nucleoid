@@ -1640,6 +1640,57 @@ statement positions; caught values and transaction recovery are unchanged.
   eight use fewer lexer tokens, 587 are unchanged, and none increased.
   All 2,706 protected assertions executed and all 46 expected returns matched.
 
+## Colon-led assertion statements
+
+- Accepted [NUC 45](docs/nuc-0045.md) adds the optional statement
+  `assert: actual, expected`, lowering exactly to
+  `Stmt::Expression(Expr::Call { callee: Identifier("assert"),
+  arguments: [actual, expected] })`. Canonical rendering remains
+  `assert(actual,expected)`, not the colon-led source spelling.
+- Recognize only the lowercase identifier `assert` immediately followed by
+  an existing colon token in statement position. Ordinary lexer whitespace
+  is permitted; do not skip new layout or introduce multiline continuation.
+  Parse exactly two whole ordinary expressions separated by the existing
+  comma. No extra argument or trailing comma is added to this spelling.
+- Existing typed declarations take priority with exactly their original
+  following-identifier and newline/semicolon/dedent/end-of-input boundaries.
+  `assert: int` still parses as a declaration and raises
+  `ReferenceError("Missing definition")`. No right-brace boundary is added.
+- Keep `assert(actual, expected)` and all its existing expression, argument
+  count and optional trailing-comma behavior. Bindings, parameters, type
+  annotations, class fields and object keys named `assert` are unchanged.
+  A direct call named `assert` is the existing helper even if that name is
+  bound; it does not use normal callable shadowing.
+- Evaluate both arguments once, left to right. Preserve deep equality,
+  collected failures, counters, null helper result, error propagation,
+  transactional rollback, scopes, receivers and `.value` snapshots.
+  Assertion expression statements do not replace the program's result or
+  install dependency nodes or reasoning observers. A check is not itself a
+  reactive rule; enclosing functions/rules retain existing re-execution.
+- Preserve statement depth, outer call-expression depth, argument-expression
+  depth and operator/postfix chain limits. The lexer, public AST, runtime,
+  canonical generator and CLI gain no new representation.
+- A missing comma uses `SyntaxError("Expected ',' but found <token>")`.
+  Missing operands use existing `Unexpected <token>` expression diagnostics.
+  A comma after the second expression raises
+  `SyntaxError("Assertion statements expect exactly two arguments")`.
+  `assert: 1,\n1` and `assert:\n    1, 1` raise
+  `SyntaxError("Unexpected end of line")`; no implicit continuation is added.
+  Resource errors remain `Expressions are nested too deeply`,
+  `Statements are nested too deeply`, `Expression has too many operands`
+  and `Expression has too many parts`, all `SyntaxError`.
+- The five appended colon-led entries specify values and structural equality;
+  graph exclusion and reasoning; local scope and returns; argument effects;
+  and whole caught errors with rollback. Together with the appended reference,
+  README and examples cases they preserve all eight pre-executed accepted
+  controls, 30 executed assertions and explicit returns `7` and `true`.
+- All 595 historical measured programs and 26 earlier training files (25
+  synthesized shards plus ARC) remain raw-exact. The new four-record shard is
+  `dataset/nucleoid.synth.26.jsonl`. Independent evaluation accepted all 603
+  paired cases: eight use fewer lexer tokens, 595 are unchanged, and none
+  increased. All 2,736 protected assertions executed and all 48 explicit
+  expected returns matched.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -11905,4 +11956,62 @@ state = 3
 assert(record.marker, 3)
 record.status
 # return: "old"
+---
+# Nucleoid checks values with colon-led assertion statements
+
+reading = {amount: 3, unit: "C", active: true, empty: null}
+label = "sensor"
+assert: reading.amount, 3
+assert: reading.unit, "C"
+assert: reading.active, true
+assert: reading.empty, null
+assert: [reading.amount, label], [3, "sensor"]
+assert: {kind: label, valid: reading.active}, {kind: "sensor", valid: true}
+---
+# Nucleoid keeps colon-led assertions out of reactive reasoning
+
+source = 2
+total = source + 1
+assert: total, 3
+assert: (affects source).length, 1
+assert: (why total)[1].node, "source"
+source = 6
+assert: total, 7
+assert: (why total)[1].holds, 6
+total
+# return: 7
+---
+# Nucleoid preserves scope and return flow around colon-led assertions
+
+def check_name(name):
+    saved = name.value
+    assert: saved, "draft"
+    return {name: name, initial: saved}
+packet = check_name("draft")
+assert: packet.name, "draft"
+assert: packet.initial, "draft"
+assert: packet.name == packet.initial, true
+---
+# Nucleoid preserves colon-led assertion argument evaluation order
+
+log = []
+def note(label):
+    log.push(label)
+    return 7
+assert: note("actual"), note("expected")
+assert: log, ["actual", "expected"]
+assert: log.length, 2
+---
+# Nucleoid checks caught errors and rollback with colon-led assertions
+
+state = 1
+message = ""
+try:
+    state = 2
+    failed = missing
+catch error:
+    message = error
+    assert: error, ReferenceError("missing is not defined")
+assert: state, 1
+assert: message, ReferenceError("missing is not defined")
 ```

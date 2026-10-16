@@ -8686,6 +8686,101 @@ catch error:
 # return: "old""#);
 }
 
+/// Nucleoid checks values with colon-led assertion statements
+#[rustfmt::skip]
+#[test]
+fn checks_values_with_colon_led_assertion_statements() {
+    runner()("reading = {amount: 3, unit: \"C\", active: true, empty: null}\nlabel = \"sensor\"\nassert: reading.amount, 3\nassert: reading.unit, \"C\"\nassert: reading.active, true\nassert: reading.empty, null\nassert: [reading.amount, label], [3, \"sensor\"]\nassert: {kind: label, valid: reading.active}, {kind: \"sensor\", valid: true}");
+    let mut run = runner();
+    run(r#"reading = {amount: 3, unit: "C", active: true, empty: null}"#);
+    run(r#"label = "sensor""#);
+    assert_eq!(run("reading.amount"), 3);
+    assert_eq!(run("reading.unit"), "C");
+    assert_eq!(run("reading.active"), true);
+    assert_eq!(run("reading.empty"), serde_json::Value::Null);
+    assert_eq!(run("[reading.amount, label]"), serde_json::json!([3, "sensor"]));
+    {
+        let actual = run("({kind: label, valid: reading.active})");
+        let expected = run(r#"({kind: "sensor", valid: true})"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid keeps colon-led assertions out of reactive reasoning
+#[rustfmt::skip]
+#[test]
+fn keeps_colon_led_assertions_out_of_reactive_reasoning() {
+    runner()("source = 2\ntotal = source + 1\nassert: total, 3\nassert: (affects source).length, 1\nassert: (why total)[1].node, \"source\"\nsource = 6\nassert: total, 7\nassert: (why total)[1].holds, 6\ntotal\n# return: 7");
+    let mut run = runner();
+    run("source = 2");
+    run("total = source + 1");
+    assert_eq!(run("total"), 3);
+    assert_eq!(run("(affects source).length"), 1);
+    assert_eq!(run("(why total)[1].node"), "source");
+    run("source = 6");
+    assert_eq!(run("total"), 7);
+    assert_eq!(run("(why total)[1].holds"), 6);
+    run(r#"total
+
+# return: 7"#);
+}
+
+/// Nucleoid preserves scope and return flow around colon-led assertions
+#[rustfmt::skip]
+#[test]
+fn preserves_scope_and_return_flow_around_colon_led_assertions() {
+    let mut run = runner();
+    run(r#"def check_name(name):
+    saved = name.value
+    assert: saved, "draft"
+    return {name: name, initial: saved}
+packet = check_name("draft")
+assert: packet.name, "draft"
+assert: packet.initial, "draft"
+assert: packet.name == packet.initial, true"#);
+}
+
+/// Nucleoid preserves colon-led assertion argument evaluation order
+#[rustfmt::skip]
+#[test]
+fn preserves_colon_led_assertion_argument_evaluation_order() {
+    runner()("log = []\ndef note(label):\n    log.push(label)\n    return 7\nassert: note(\"actual\"), note(\"expected\")\nassert: log, [\"actual\", \"expected\"]\nassert: log.length, 2");
+    let mut run = runner();
+    run("log = []");
+    run(r#"def note(label):
+    log.push(label)
+    return 7"#);
+    {
+        let actual = run(r#"note("actual")"#);
+        let expected = run(r#"(note("expected"))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("log"), serde_json::json!(["actual", "expected"]));
+    assert_eq!(run("log.length"), 2);
+}
+
+/// Nucleoid checks caught errors and rollback with colon-led assertions
+#[rustfmt::skip]
+#[test]
+fn checks_caught_errors_and_rollback_with_colon_led_assertions() {
+    runner()("state = 1\nmessage = \"\"\ntry:\n    state = 2\n    failed = missing\ncatch error:\n    message = error\n    assert: error, ReferenceError(\"missing is not defined\")\nassert: state, 1\nassert: message, ReferenceError(\"missing is not defined\")");
+    let mut run = runner();
+    run("state = 1");
+    run(r#"message = """#);
+    run(r#"try:
+    state = 2
+    failed = missing
+catch error:
+    message = error
+    assert: error, ReferenceError("missing is not defined")"#);
+    assert_eq!(run("state"), 1);
+    {
+        let actual = run("message");
+        let expected = run(r#"(ReferenceError("missing is not defined"))"#);
+        assert_eq!(actual, expected);
+    }
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
