@@ -131,6 +131,12 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
         "def f amount: int, other => amount",
         "def f(amount: int, other) => amount",
     );
+    // NUC40 turns only the complete real-indented comma-free form positive.
+    check_forms(
+        "def f amount other:\n    return amount\nassert(f(3, 4), 3)",
+        "def f amount, other:\n    return amount\nassert(f(3, 4), 3)",
+        1,
+    );
     for source in [
         "def f amount:",
         "def f amount:\n",
@@ -146,7 +152,7 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
         "def f amount, other:\nreturn amount",
         "def f amount, other:;\n    return amount",
         "def f amount, other,:\n    return amount",
-        "def f amount other:\n    return amount",
+        "def f amount other:\nreturn amount",
         "def f amount = 1:\n    return amount",
         "def f amount -> int:\n    return amount",
         "def f amount\n:\n    return amount",

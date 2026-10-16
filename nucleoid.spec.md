@@ -209,8 +209,8 @@ automatic invocation is introduced.
   Inspect tokens without consuming them, allocating parameter names, skipping
   `Newline`, `Semicolon`, `Indent` or `Dedent`, backtracking or error recovery.
   Whitespace and tabs separate names; comments cannot bridge a logical break.
-- Only after complete qualification, call the existing `parameter()` for
-  each identifier. Keep ordered `Parameter { name, type_name: None }` values,
+- Only after complete qualification, consume the checked untyped identifiers.
+  Keep ordered `Parameter { name, type_name: None }` values,
   the same function name and `FunctionBody::Block` containing exactly
   `Return(Some(expression))`. No token insertion or new lexer/public AST,
   runtime, generator, API, dependency or flat parameter-count bound is added.
@@ -227,15 +227,17 @@ automatic invocation is introduced.
   statement positions, resource bounds, transactions and rollback.
 - Keep all comma-bearing, parenthesized, typed/mixed, single/nullary, block,
   method and initializer forms. Mixed separators such as `left right, third`
-  or `left, right third`, comma-free typed lists, colon-suite headers,
+  or `left, right third`, comma-free typed lists,
   parenthesized comma omission, anonymous parameter comma omission, class
   lists, calls, defaults, rest/destructuring, return annotations and bare
-  nullary headers are not added. `add left right` outside `def` remains three
+  nullary headers are not added. NUC37 itself adds no colon suites; the separate
+  NUC40 guard below covers only wholly untyped real-indented blocks.
+  `add left right` outside `def` remains three
   ordinary expression statements, not a call.
 - Unsupported complete prefixes fall through at their original position.
   Exact `def f left right, third => left`, `def f left, right third => left`,
   `def f left: int right => left`, `def f left right: int => left`,
-  `def f left right:` followed by an indented `return left`, and logical
+  `def f left right: return left`, and logical
   header breaks all retain
   `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
   `def f this right => right` names `keyword 'this'` at that same position.
@@ -317,6 +319,8 @@ raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
   `def add left, right:` with exactly the same body, including methods and
   `init`. Require two or more untyped ordinary identifier parameters; three
   and larger flat lists use the same uncapped parameter grammar.
+- The separate NUC40 guard below optionally omits every comma in
+  these wholly untyped headers; the comma-bearing NUC28 guard stays unchanged.
 - After `def` and the required ordinary definition name, look ahead for the
   complete `Identifier Comma Identifier (Comma Identifier)* Colon` sequence.
   Every comma needs another ordinary identifier; the header has no trailing
@@ -378,6 +382,81 @@ raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
   parameters, multiple statements/branches, reactivity, references/snapshots,
   methods/initializers, arity/shadowing/returns, nested definitions and rollback.
   The rollback entry executes its catch assertion and explicitly ends in `21`.
+
+## Comma-free bare indented blocks
+
+- NUC40 adds the optional `def add left right:` spelling of
+  `def add left, right:` followed by exactly the same genuine indented
+  statement suite. The parenthesized `def add(left, right):` alternative
+  also remains supported and behavior-equivalent.
+- After unchanged `Def Identifier`, non-consumingly qualify the complete
+  immediate `Identifier Identifier Identifier* Colon` prefix. Require at
+  least two wholly untyped ordinary identifiers and no parameter comma
+  anywhere in this new prefix. Omit every comma or none; typed/mixed lists
+  retain their accepted commas.
+- Share the existing untyped identifier-run scan with the arrow guard,
+  but keep that guard arrow-only. Do not allocate parameter names, consume
+  tokens, skip logical header layout, backtrack or insert synthetic commas
+  while qualifying the prefix. Horizontal spaces and tabs may separate names;
+  comments never join a header across a logical newline.
+- Require the final colon and exactly the existing real-indentation guard:
+  immediately after it must be `Newline` or `Indent`; after only the already
+  accepted `Newline`/`Semicolon` separators the first other token must be an
+  actual `Indent`. Blank and comment lines retain their existing meaning.
+  A same-line `:;` cannot qualify, even if a later line is indented.
+- Once the whole header and layout qualify, consume only the checked names
+  as ordered `Parameter { name, type_name: None }` values. Leave the final
+  suite colon for unchanged `suite()`, never treating it as a type annotation.
+  Preserve the same function name, complete named `FunctionBody::Block`,
+  complete AST/metadata, canonical rendering and runtime path.
+- Apply the additional guard wherever named block definitions already occur:
+  module, nested bodies, methods, `init` and redefinition. Duplicate names
+  keep their accepted binding order; flat parameter lists remain uncapped.
+- Keep multi-statement and nested bodies, branches and existing inner inline
+  or braced statements. All body bytes, list/object/template/anonymous
+  punctuation and call commas are unchanged. Explicit `return`, bare `return`
+  and no return keep their existing behavior; the latter two yield `null`.
+- Preserve missing/null/extra inputs, unchecked arguments, parameter assignment,
+  variable/callable shadowing, noncapture, caller scopes/frames, callbacks,
+  live aliases, `.value` snapshots and redefinition. Receivers, `this`/`self`,
+  explicit/bare `super`, adoption, graph source/keys/read dependencies/order,
+  reasoning, errors/positions, transactions, rollback and recovery are unchanged.
+  This adds no inherited-method lookup or other runtime capability.
+- Preserve all accepted comma-bearing, typed/mixed, single/nullary,
+  parenthesized/trailing-comma/multiline forms and NUC37 comma-free arrows.
+  Do not add colon-free blocks, mixed comma omission, typed/mixed comma-free
+  lists, parenthesized/anonymous/call/class comma omission, inline/braced bare
+  suites, defaults/rest/destructuring, return annotations or bare nullary forms.
+  Lexer, public AST/API, generator, runtime representation and existing
+  expression/statement/postfix resource bounds do not change.
+- Failed complete prefixes consume nothing and use the unchanged fallback
+  diagnostics and positions. Exact `def f left right`, `def f left right:`
+  without real indentation, `def f left right: return left`,
+  `def f left right: { return left }`, `def f left right:;` before an indent,
+  mixed separators/types and logical header breaks retain
+  `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7.
+- Exact `def f this right:` before an indented body instead names
+  `keyword 'this'` at that position. `def f` followed immediately by a newline
+  keeps `SyntaxError("Expected '(' but found end of line")` at line 1, column 5;
+  a semicolon there keeps `SyntaxError("Expected '(' but found ';'")` at column 6.
+- After `def f left right:` and a newline, four-space `return left +)`
+  keeps `SyntaxError("Unexpected ')'")` at line 2, column 19;
+  `return { left = 1 }` keeps `SyntaxError("Expected ':' but found '='")`
+  at that position; `return @` keeps
+  `SyntaxError("Unexpected character '@'")` at line 2, column 12.
+  Body errors are not retried as another header. Native LF/CRLF/tab file
+  bytes, literal EOF, stdin/REPL pending/blank-line commit and recovery use
+  unchanged machinery.
+- The inherited REPL starts colon-suite buffering only when the physical
+  header line ends in `:`. A trailing header comment does not gain buffering
+  here; file parsing still accepts it. Preserve that framing limitation and
+  its exact errors rather than changing the CLI.
+- The five appended `comma-free block` entries cover forms, explicit/bare/no
+  returns, reactive aliases/snapshots/redefinition, explicit method/init
+  controls, binding/arity/nesting/anonymous bodies and an actually executed
+  rollback catch. The rollback entry explicitly returns `21`.
+  Their ordered assertion counts are `8, 8, 10, 10, 7`; the paired reference,
+  README and examples entries contribute `3, 2, 3`, respectively.
 
 ## Bare typed single-parameter named arrows
 
@@ -1524,7 +1603,7 @@ class Person(name: str):
 # which is a subtype of Person
 # and has a school as a string
 class Student: Person
-    def init name, school:
+    def init name school:
         super(name)
         this.name = name
         this.school = school
@@ -1756,7 +1835,7 @@ assert(distance1.startingPoint.print, null)
 # Nucleoid calls function in an assignment
 
 # multiply returns the product of two factors
-def multiply first_factor, second_factor:
+def multiply first_factor second_factor:
     product = first_factor * second_factor
     return product
 
@@ -6211,7 +6290,7 @@ assert(part, symbol)
 def fail():
     throw "EXPECTED"
 
-def recover local, value:
+def recover local value:
     try:
         local = value + fail()
     catch error:
@@ -9185,12 +9264,12 @@ combined(2, 5, 3)
 
 # Nucleoid defines bare multiple parameter indented blocks
 
-def add left, right:
+def add left right:
     total = left + right
     return total
 def scaled left right factor =>
     (left + right) * factor
-def largest left, right:
+def largest left right:
     if left > right:
         return left
     return right
@@ -9225,16 +9304,16 @@ assert(frozen, 16)
 # Nucleoid preserves bare multiple parameter block methods and initializers
 
 class Parent:
-    def init left, right:
+    def init left right:
         this.amount = left + right
     def reading offset scale =>
         self.amount * scale + offset
 class Child: Parent
-    def init left, right:
+    def init left right:
         super(left, right)
     def reading offset scale =>
         self.amount * scale + offset
-    def increase delta, extra:
+    def increase delta extra:
         this.amount += delta + extra
         return this.amount
 child = Child(2, 3)
@@ -9256,12 +9335,12 @@ left = 10
 right = 20
 def pair left right =>
     [left, right]
-def add left, right:
+def add left right:
     left += right
     return left
-def noReturn left, right:
+def noReturn left right:
     left + right
-def bareReturn left, right:
+def bareReturn left right:
     return
 def outer(initial):
     def combine left right scale =>
@@ -11081,4 +11160,141 @@ assert(mapped, 15)
 assert(withDeferredExtra, 15)
 mapped
 # return: 15
+---
+# Nucleoid defines comma-free bare indented blocks
+
+def add left right:
+    total = left + right
+    return total
+def scaled left right factor:
+    return (left + right) * factor
+def largest left right:
+    if left > right:
+        return left
+    return right
+def pair left right:
+    return [left, right]
+def coordinates x y:
+    return {x, y}
+def noReturn left right:
+    left + right
+assert(add(2, 3), 5)
+assert(scaled(2, 3, 4), 20)
+assert(largest(7, 3), 7)
+assert(largest(2, 9), 9)
+assert(pair("left", "right"), ["left", "right"])
+point = coordinates(2, 3)
+assert(point.x, 2)
+assert(point.y, 3)
+assert(noReturn(2, 3), null)
+---
+# Nucleoid keeps comma-free bare indented blocks reactive
+
+offset = 1
+def adjusted left right:
+    return left + right + offset
+alias = adjusted
+frozen = adjusted.value
+left = 2
+right = 3
+total = alias(left, right)
+snapshot = total.value
+assert(total, 6)
+assert(snapshot, 6)
+offset = 4
+assert(total, 9)
+left = 5
+assert(total, 12)
+def adjusted left right:
+    return left * right + offset
+assert(total, 19)
+assert(frozen(2, 3), 9)
+assert(snapshot, 6)
+right = 2
+assert(total, 14)
+---
+# Nucleoid preserves comma-free block methods and initializers
+
+class Parent:
+    def init left right:
+        this.left = left
+        this.right = right
+    def total left right:
+        return this.left + this.right + left + right
+class Child: Parent
+    def init left right:
+        super(left, right)
+        self.extra = 2
+    def total left right:
+        return this.left + this.right + left + right
+child = Child(2, 3)
+assert(child.left, 2)
+assert(child.right, 3)
+assert(child.extra, 2)
+observed = child.total(4, 5)
+assert(observed, 14)
+child.left = 7
+assert(observed, 19)
+result = child.total(1, 2)
+assert(result, 13)
+child.right = 4
+assert(observed, 20)
+assert(result, 14)
+assert(Parent.length, 0)
+assert(Child.length, 1)
+---
+# Nucleoid preserves comma-free block bindings and explicit returns
+
+left = 10
+right = 20
+def pair first second:
+    return [first, second]
+def add first second:
+    first += second
+    return first
+def outer initial extra:
+    def combine first second scale:
+        return (first + second) * scale
+    return combine(initial, extra, 3)
+def factory ignored other:
+    return (first, second) => first + second
+def bareReturn first second:
+    return
+assert(pair(3, 4), [3, 4])
+assert(pair(3), [3, null])
+assert(pair(), [null, null])
+assert(pair(3, 4, 99), [3, 4])
+assert(add(3, 4), 7)
+assert(left, 10)
+assert(right, 20)
+assert(outer(4, 2), 18)
+callback = factory(10, 20)
+assert(callback(2, 3), 5)
+assert(bareReturn(3, 4), null)
+---
+# Nucleoid rolls back comma-free block redefinitions
+
+source = 3
+def reading left right:
+    return source + left + right
+result = reading(2, 4)
+assert(result, 9)
+try:
+    def reading left right:
+        return missing + left + right
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(result, 9)
+source = 5
+assert(result, 11)
+def combined first second scale:
+    return (first + second) * scale
+def prefer current fallback:
+    current ||= fallback
+    return current
+assert(prefer(0, 9), 9)
+assert(prefer(3, 9), 3)
+assert(combined(2, 5, 3), 21)
+combined(2, 5, 3)
+# return: 21
 ```

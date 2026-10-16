@@ -1000,7 +1000,9 @@ fn historical_measured_asts_and_the_eight_appended_counterparts_remain_exact() {
             historical += 1;
         }
         for case in own_additions {
-            let normalized = named_arrow_headers::legacy_headers(&case.source);
+            let normalized = named_arrow_headers::legacy_block_headers(
+                &named_arrow_headers::legacy_headers(&case.source),
+            );
             let explicit = header.replace_all(&normalized, "$1($2) =>");
             assert_ne!(normalized, explicit, "{}", case.title);
             let statements = equivalent(&case.source, &explicit);

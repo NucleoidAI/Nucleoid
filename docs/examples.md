@@ -363,7 +363,7 @@ class Person(name: str):
     this.name = name
 
 class Student: Person
-    def init name, school:
+    def init name school:
         super(name)
         this.name = name
         this.school = school
@@ -2076,6 +2076,35 @@ assert(mapped, 25)
   retain the existing machinery. The authoritative
   [remapping section](../nucleoid.spec.md#reactive-range-remapping) and
   [reference](README.md#reactive-range-remapping) define the full contract.
+
+## Comma-free bare indented blocks
+
+**Comma-free blocks keep live input relationships**
+
+```nuc
+bias = 1
+def combined left right:
+    total = left + right
+    return total + bias
+left = 2
+right = 3
+reading = combined(left, right)
+assert(reading, 6)
+bias = 4
+assert(reading, 9)
+left = 5
+assert(reading, 12)
+```
+
+- [NUC 40](nuc-0040.md) adds an optional wholly untyped bare block
+  header with at least two names and no parameter commas. The final colon
+  and genuine indentation remain mandatory; this is a statement suite,
+  not an arrow expression or an implicit-return form.
+- `def combined left, right:` and `def combined(left, right):` with this
+  exact body remain valid. Body, call, list, object and anonymous-function
+  punctuation is unchanged; typed/mixed lists still keep their commas.
+- All other grammar, graph relationships and transactional behavior follow
+  the [authoritative section](../nucleoid.spec.md#comma-free-bare-indented-blocks).
 
 ## Copyright
 

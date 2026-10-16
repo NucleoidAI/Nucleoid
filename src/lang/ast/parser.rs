@@ -480,14 +480,37 @@ impl Parser {
         }
     }
 
-    /// Qualify a whole comma-free, untyped arrow header before consuming names.
-    /// Layout, annotations and mixed separators must fall through unchanged.
-    fn comma_free_arrow_end(&self) -> Option<usize> {
+    /// Scan a complete uninterrupted run without consuming or allocating names.
+    /// Each caller must still qualify its own delimiter and body layout.
+    fn comma_free_parameter_end(&self) -> Option<usize> {
         let mut end = 0;
         while matches!(self.peek_at(end), Token::Identifier(_)) {
             end += 1;
         }
-        (end >= 2 && matches!(self.peek_at(end), Token::Arrow)).then_some(end)
+        (end >= 2).then_some(end)
+    }
+
+    /// Keep the arrow guard arrow-only; blocks need a genuine indented suite.
+    fn comma_free_arrow_end(&self) -> Option<usize> {
+        self.comma_free_parameter_end()
+            .filter(|&end| matches!(self.peek_at(end), Token::Arrow))
+    }
+
+    fn comma_free_block_end(&self) -> Option<usize> {
+        self.comma_free_parameter_end()
+            .filter(|&end| self.has_indented_suite(end))
+    }
+
+    /// Only used after complete lookahead has qualified an untyped name.
+    /// In particular, leave a final suite colon for suite(), not parameter().
+    fn untyped_parameter(&mut self) -> Parameter {
+        let Token::Identifier(name) = self.advance() else {
+            unreachable!("lookahead checked the untyped parameter identifier")
+        };
+        Parameter {
+            name,
+            type_name: None,
+        }
     }
 
     fn function_statement(&mut self) -> Result<Stmt> {
@@ -533,10 +556,11 @@ impl Parser {
                 Token::Colon
             )
         ) && self.has_indented_suite(3);
-        let parameters = if let Some(end) = self.comma_free_arrow_end() {
-            (0..end)
-                .map(|_| self.parameter())
-                .collect::<Result<Vec<_>>>()?
+        let comma_free_end = self
+            .comma_free_arrow_end()
+            .or_else(|| self.comma_free_block_end());
+        let parameters = if let Some(end) = comma_free_end {
+            (0..end).map(|_| self.untyped_parameter()).collect()
         } else if let Some(end) = bare_multiple_end {
             let delimiter_position = self.position + end;
             let mut parameters = Vec::new();
@@ -546,13 +570,7 @@ impl Parser {
                 {
                     // A final untyped parameter's colon belongs to suite(),
                     // not parameter()'s annotation parser.
-                    let Token::Identifier(name) = self.advance() else {
-                        unreachable!("lookahead checked the final bare parameter identifier")
-                    };
-                    Parameter {
-                        name,
-                        type_name: None,
-                    }
+                    self.untyped_parameter()
                 } else {
                     self.parameter()?
                 };
@@ -566,13 +584,7 @@ impl Parser {
         } else if bare_arrow || bare_typed_block {
             vec![self.parameter()?]
         } else if bare_block {
-            let Token::Identifier(name) = self.advance() else {
-                unreachable!("lookahead checked the single parameter identifier")
-            };
-            vec![Parameter {
-                name,
-                type_name: None,
-            }]
+            vec![self.untyped_parameter()]
         } else {
             // Do not skip separators or consume other prefixes: preserve the
             // parenthesized parameter parser's diagnostics and positions.
@@ -1464,6 +1476,124 @@ mod tests {
             assert_eq!(parser.comma_free_arrow_end(), end, "{header}");
             assert_eq!(parser.position, original, "{header}");
             assert_eq!(parser.peek(), &Token::Identifier("left".to_string()));
+        }
+    }
+
+    #[test]
+    fn comma_free_block_lookahead_requires_the_whole_header_and_real_suite_without_consuming() {
+        for (header, end) in [
+            ("left right:\n    return left", Some(2)),
+            ("left right factor:\n    return left", Some(3)),
+            ("left\tright:\r\n\treturn left", Some(2)),
+            ("same same:\n    return same", Some(2)),
+            (
+                "type value _private A1 why affects model:\n    pass",
+                Some(7),
+            ),
+            (
+                "left right: # header\n\n# blank\n    # body\n    pass",
+                Some(2),
+            ),
+            ("left right:\n;\n    pass", Some(2)),
+            ("left right:\n    ;\n    pass", Some(2)),
+            ("left right:\n    int => left", Some(2)),
+            ("left:\n    pass", None),
+            ("left, right:\n    pass", None),
+            ("left: int, right:\n    pass", None),
+            ("left: int right:\n    pass", None),
+            ("left right: int:\n    pass", None),
+            ("left: int right: int:\n    pass", None),
+            ("left right, third:\n    pass", None),
+            ("left, right third:\n    pass", None),
+            ("left right,:\n    pass", None),
+            ("left right third, fourth:\n    pass", None),
+            ("left right => left", None),
+            ("left right", None),
+            ("left right:", None),
+            ("left right:\n", None),
+            ("left right:\n    # no body", None),
+            ("left right:\nreturn left", None),
+            ("left right:\n;\nreturn left", None),
+            ("left right:;\n    pass", None),
+            ("left right: return left", None),
+            ("left right: { return left }", None),
+            ("left right:\n{ return left }", None),
+            ("left right { return left }", None),
+            ("left right\n:\n    pass", None),
+            ("left\nright:\n    pass", None),
+            ("left right;:\n    pass", None),
+            ("left; right:\n    pass", None),
+            ("left right # boundary\n:\n    pass", None),
+            ("left # boundary\nright:\n    pass", None),
+            ("left this:\n    pass", None),
+            ("left self:\n    pass", None),
+            ("left null:\n    pass", None),
+            ("left $Right:\n    pass", None),
+            ("left 1:\n    pass", None),
+            ("left \"right\":\n    pass", None),
+            ("left = 1 right:\n    pass", None),
+            ("left right = 1:\n    pass", None),
+            ("left ...right:\n    pass", None),
+            ("left [right]:\n    pass", None),
+            ("left {right}:\n    pass", None),
+            ("left right -> int:\n    pass", None),
+            ("this right:\n    pass", None),
+            ("$Left right:\n    pass", None),
+            ("1 right:\n    pass", None),
+            ("(left right):\n    pass", None),
+            (":\n    pass", None),
+        ] {
+            let mut parser = Parser::new(tokenize(&format!("def f {header}")).unwrap());
+            parser.expect(&Token::Keyword(Keyword::Def)).unwrap();
+            assert_eq!(parser.advance(), Token::Identifier("f".to_string()));
+            let position = parser.position;
+            let tokens = parser.tokens.clone();
+            assert_eq!(parser.comma_free_block_end(), end, "{header}");
+            assert_eq!(parser.position, position, "{header}");
+            assert_eq!(parser.depth, 0, "{header}");
+            assert_eq!(parser.tokens, tokens, "{header}");
+        }
+    }
+
+    #[test]
+    fn comma_free_block_layout_uses_exactly_the_existing_suite_guard() {
+        let mut parser = Parser::new(tokenize("left right:\n    pass").unwrap());
+        assert_eq!(parser.comma_free_block_end(), Some(2));
+        // The existing suite parser also accepts an immediate genuine Indent.
+        parser.tokens.remove(3);
+        assert_eq!(parser.peek_at(3), &Token::Indent);
+        assert_eq!(parser.comma_free_block_end(), Some(2));
+        parser.tokens.insert(
+            3,
+            Spanned {
+                token: Token::Semicolon,
+                position: Position::new(1, 12),
+            },
+        );
+        assert_eq!(parser.comma_free_block_end(), None);
+        assert_eq!(parser.position, 0);
+    }
+
+    #[test]
+    fn comma_free_blocks_leave_the_final_colon_and_complete_named_block_unchanged() {
+        for count in [2, 3, 129, 1024] {
+            let names = (0..count).map(|i| format!("p{i}")).collect::<Vec<_>>();
+            let candidate = format!("def f {}:\n    int => p0\n    return p0", names.join(" "));
+            let accepted = format!("def f {}:\n    int => p0\n    return p0", names.join(", "));
+            let actual = parse(&candidate).unwrap();
+            let expected = parse(&accepted).unwrap();
+            assert_eq!(actual, expected);
+            assert_eq!(generate_all(&actual), generate_all(&expected));
+            let [Stmt::Function(function)] = actual.as_slice() else {
+                panic!("one complete named block required");
+            };
+            assert_eq!(function.name.as_deref(), Some("f"));
+            assert_eq!(function.parameters.len(), count);
+            for (parameter, name) in function.parameters.iter().zip(&names) {
+                assert_eq!(&parameter.name, name);
+                assert_eq!(parameter.type_name, None);
+            }
+            assert!(matches!(&function.body, FunctionBody::Block(body) if body.len() == 2));
         }
     }
 

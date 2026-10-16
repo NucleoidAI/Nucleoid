@@ -1228,7 +1228,9 @@ fn historical_corpus_and_eight_appended_counterparts_keep_complete_asts_and_prot
             historical += 1;
         }
         for case in own_additions {
-            let normalized = named_arrow_headers::legacy_headers(&case.source);
+            let normalized = named_arrow_headers::legacy_block_headers(
+                &named_arrow_headers::legacy_headers(&case.source),
+            );
             let explicit = header.replace_all(&normalized, "$1($2)$3");
             assert_ne!(normalized, explicit, "{}", case.title);
             let statements = equivalent(&case.source, &explicit);
@@ -1276,7 +1278,9 @@ fn all_synthesized_asts_fields_order_and_arc_annotations_remain_exact() {
             // Count this proposal's header rewrites, not later optional
             // sole-return or final-else layouts. The actual full AST and all metadata
             // above still compare directly with the pinned historical source.
-            let comma_headers = named_arrow_headers::legacy_headers(after_code);
+            let comma_headers = named_arrow_headers::legacy_block_headers(
+                &named_arrow_headers::legacy_headers(after_code),
+            );
             let mut comparable = indented_arrow
                 .replace_all(&comma_headers, "$1:$2\n${3}return $4")
                 .into_owned();

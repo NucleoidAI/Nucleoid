@@ -309,7 +309,7 @@ fn incomplete_mixed_typed_or_block_prefixes_fall_back_at_the_original_identifier
         "left $Right => left",
         "left 1 => left",
         "left \"right\" => left",
-        "left right:\n    return left",
+        "left right:\nreturn left",
         "left right: return left",
         "left right: { return left }",
         "left right:;\n    return left",
@@ -333,6 +333,16 @@ fn incomplete_mixed_typed_or_block_prefixes_fall_back_at_the_original_identifier
         assert_eq!(error.position(), Some(Position::new(1, 7)), "{source}");
         assert_eq!(legacy_headers(&source), source);
     }
+}
+
+#[test]
+fn later_comma_free_blocks_replace_the_old_negative_with_full_equivalence() {
+    let candidate = "def f left right:\n    return left\nassert(f(2, 3), 2)";
+    let accepted = "def f left, right:\n    return left\nassert(f(2, 3), 2)";
+    check_pair(candidate, accepted, 1, None);
+    // These exports must remain arrow-only even after the block extension.
+    assert_eq!(legacy_headers(candidate), candidate);
+    assert_eq!(comma_free_headers(accepted), accepted);
 }
 
 #[test]
@@ -798,7 +808,7 @@ fn uncaught_redefinitions_and_invalid_header_transactions_roll_back_and_recover(
         for invalid in [
             "def reading left right, extra => left",
             "def reading left right: int => left",
-            "def reading left right:\n    return left",
+            "def reading left right:\nreturn left",
             "def reading left\nright => left",
         ] {
             let error = runtime.run(&format!("source = 99\n{invalid}")).unwrap_err();

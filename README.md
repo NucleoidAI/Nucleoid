@@ -693,7 +693,8 @@ assert(scaled(2, 3, 4), 20)
 - [NUC 37](docs/nuc-0037.md) adds optional all-comma-free
   bare named arrows with at least two untyped ordinary identifiers on one
   logical header line. The comma-bearing and parenthesized forms remain
-  valid; typed/mixed lists and colon-suite headers still need their commas.
+  valid. Typed/mixed lists still need commas; the separate NUC40 below
+  adds the wholly untyped, genuinely indented colon-suite counterpart.
 
 **Inverse interpolation keeps live inputs unclamped**
 
@@ -747,6 +748,30 @@ assert(mapped, 75)
 - Ignored-extra effects/reads, live-null deferral and rollback use unchanged
   machinery; the authoritative
   [contract](nucleoid.spec.md#reactive-range-remapping) gives the full rules.
+
+**Indented blocks can omit every parameter comma**
+
+```nuc
+def add left right:
+    return left + right
+left = 2
+right = 3
+total = add(left, right)
+assert(total, 5)
+left = 5
+assert(total, 8)
+```
+
+- [NUC 40](docs/nuc-0040.md) adds only the optional complete
+  `def add left right:` header before a real indented statement suite.
+  `def add left, right:` and `def add(left, right):` with the same body
+  remain valid and equivalent.
+- Require at least two wholly untyped ordinary identifiers and omit all
+  parameter commas or none. The final colon and real indentation are required;
+  typed/mixed lists, inline/braced bare suites, calls and anonymous functions
+  do not gain comma omission. Explicit, bare and absent returns are unchanged.
+- The authoritative [contract](nucleoid.spec.md#comma-free-bare-indented-blocks)
+  keeps all accepted syntax, body punctuation, live dependencies and rollback.
 
 ## Benchmark
 

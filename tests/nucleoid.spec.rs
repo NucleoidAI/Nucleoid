@@ -143,7 +143,7 @@ fn creates_a_class_and_a_subclass() {
     run(r#"class Person(name: str):
     this.name = name"#);
     run(r#"class Student: Person
-    def init name, school:
+    def init name school:
         super(name)
         this.name = name
         this.school = school"#);
@@ -310,7 +310,7 @@ fn creates_an_object_in_a_block_and_assigns_it_to_a_class_level_property_after_i
 #[test]
 fn calls_function_in_an_assignment() {
     let mut run = runner();
-    run(r#"def multiply first_factor, second_factor:
+    run(r#"def multiply first_factor second_factor:
     product = first_factor * second_factor
     return product"#);
     run("x = 1");
@@ -3441,7 +3441,7 @@ fn restores_enclosing_null_tracking_after_failed_local_assignments() {
     let mut run = runner();
     run(r#"def fail():
     throw "EXPECTED""#);
-    run(r#"def recover local, value:
+    run(r#"def recover local value:
     try:
         local = value + fail()
     catch error:
@@ -6022,12 +6022,12 @@ fn returns_bare_multiple_parameter_named_arrows() {
 #[test]
 fn defines_bare_multiple_parameter_indented_blocks() {
     let mut run = runner();
-    run(r#"def add left, right:
+    run(r#"def add left right:
     total = left + right
     return total"#);
     run(r#"def scaled left right factor =>
     (left + right) * factor"#);
-    run(r#"def largest left, right:
+    run(r#"def largest left right:
     if left > right:
         return left
     return right"#);
@@ -6066,16 +6066,16 @@ fn keeps_bare_multiple_parameter_blocks_reactive() {
 fn preserves_bare_multiple_parameter_block_methods_and_initializers() {
     let mut run = runner();
     run(r#"class Parent:
-    def init left, right:
+    def init left right:
         this.amount = left + right
     def reading offset scale =>
         self.amount * scale + offset"#);
     run(r#"class Child: Parent
-    def init left, right:
+    def init left right:
         super(left, right)
     def reading offset scale =>
         self.amount * scale + offset
-    def increase delta, extra:
+    def increase delta extra:
         this.amount += delta + extra
         return this.amount"#);
     run("child = Child(2, 3)");
@@ -6099,12 +6099,12 @@ fn preserves_bare_multiple_parameter_block_bindings_and_returns() {
     run("right = 20");
     run(r#"def pair left right =>
     [left, right]"#);
-    run(r#"def add left, right:
+    run(r#"def add left right:
     left += right
     return left"#);
-    run(r#"def noReturn left, right:
+    run(r#"def noReturn left right:
     left + right"#);
-    run(r#"def bareReturn left, right:
+    run(r#"def bareReturn left right:
     return"#);
     run(r#"def outer(initial):
     def combine left right scale =>
@@ -8037,6 +8037,161 @@ throw "ROLLBACK""#), "ROLLBACK");
     run(r#"mapped
 
 # return: 15"#);
+}
+
+/// Nucleoid defines comma-free bare indented blocks
+#[rustfmt::skip]
+#[test]
+fn defines_comma_free_bare_indented_blocks() {
+    let mut run = runner();
+    run(r#"def add left right:
+    total = left + right
+    return total"#);
+    run(r#"def scaled left right factor:
+    return (left + right) * factor"#);
+    run(r#"def largest left right:
+    if left > right:
+        return left
+    return right"#);
+    run(r#"def pair left right:
+    return [left, right]"#);
+    run(r#"def coordinates x y:
+    return {x, y}"#);
+    run(r#"def noReturn left right:
+    left + right"#);
+    assert_eq!(run("add(2, 3)"), 5);
+    assert_eq!(run("scaled(2, 3, 4)"), 20);
+    assert_eq!(run("largest(7, 3)"), 7);
+    assert_eq!(run("largest(2, 9)"), 9);
+    assert_eq!(run(r#"pair("left", "right")"#), serde_json::json!(["left", "right"]));
+    run("point = coordinates(2, 3)");
+    assert_eq!(run("point.x"), 2);
+    assert_eq!(run("point.y"), 3);
+    assert_eq!(run("noReturn(2, 3)"), serde_json::Value::Null);
+}
+
+/// Nucleoid keeps comma-free bare indented blocks reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_comma_free_bare_indented_blocks_reactive() {
+    let mut run = runner();
+    run("offset = 1");
+    run(r#"def adjusted left right:
+    return left + right + offset"#);
+    run("alias = adjusted");
+    run("frozen = adjusted.value");
+    run("left = 2");
+    run("right = 3");
+    run("total = alias(left, right)");
+    run("snapshot = total.value");
+    assert_eq!(run("total"), 6);
+    assert_eq!(run("snapshot"), 6);
+    run("offset = 4");
+    assert_eq!(run("total"), 9);
+    run("left = 5");
+    assert_eq!(run("total"), 12);
+    run(r#"def adjusted left right:
+    return left * right + offset"#);
+    assert_eq!(run("total"), 19);
+    assert_eq!(run("frozen(2, 3)"), 9);
+    assert_eq!(run("snapshot"), 6);
+    run("right = 2");
+    assert_eq!(run("total"), 14);
+}
+
+/// Nucleoid preserves comma-free block methods and initializers
+#[rustfmt::skip]
+#[test]
+fn preserves_comma_free_block_methods_and_initializers() {
+    let mut run = runner();
+    run(r#"class Parent:
+    def init left right:
+        this.left = left
+        this.right = right
+    def total left right:
+        return this.left + this.right + left + right"#);
+    run(r#"class Child: Parent
+    def init left right:
+        super(left, right)
+        self.extra = 2
+    def total left right:
+        return this.left + this.right + left + right"#);
+    run("child = Child(2, 3)");
+    assert_eq!(run("child.left"), 2);
+    assert_eq!(run("child.right"), 3);
+    assert_eq!(run("child.extra"), 2);
+    run("observed = child.total(4, 5)");
+    assert_eq!(run("observed"), 14);
+    run("child.left = 7");
+    assert_eq!(run("observed"), 19);
+    run("result = child.total(1, 2)");
+    assert_eq!(run("result"), 13);
+    run("child.right = 4");
+    assert_eq!(run("observed"), 20);
+    assert_eq!(run("result"), 14);
+    assert_eq!(run("Parent.length"), 0);
+    assert_eq!(run("Child.length"), 1);
+}
+
+/// Nucleoid preserves comma-free block bindings and explicit returns
+#[rustfmt::skip]
+#[test]
+fn preserves_comma_free_block_bindings_and_explicit_returns() {
+    let mut run = runner();
+    run("left = 10");
+    run("right = 20");
+    run(r#"def pair first second:
+    return [first, second]"#);
+    run(r#"def add first second:
+    first += second
+    return first"#);
+    run(r#"def outer initial extra:
+    def combine first second scale:
+        return (first + second) * scale
+    return combine(initial, extra, 3)"#);
+    run(r#"def factory ignored other:
+    return (first, second) => first + second"#);
+    run(r#"def bareReturn first second:
+    return"#);
+    assert_eq!(run("pair(3, 4)"), serde_json::json!([3, 4]));
+    assert_eq!(run("pair(3)"), serde_json::json!([3, null]));
+    assert_eq!(run("pair()"), serde_json::json!([null, null]));
+    assert_eq!(run("pair(3, 4, 99)"), serde_json::json!([3, 4]));
+    assert_eq!(run("add(3, 4)"), 7);
+    assert_eq!(run("left"), 10);
+    assert_eq!(run("right"), 20);
+    assert_eq!(run("outer(4, 2)"), 18);
+    run("callback = factory(10, 20)");
+    assert_eq!(run("callback(2, 3)"), 5);
+    assert_eq!(run("bareReturn(3, 4)"), serde_json::Value::Null);
+}
+
+/// Nucleoid rolls back comma-free block redefinitions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_comma_free_block_redefinitions() {
+    let (mut run, mut run_error) = crate::common::runners();
+    run("source = 3");
+    run(r#"def reading left right:
+    return source + left + right"#);
+    run("result = reading(2, 4)");
+    assert_eq!(run("result"), 9);
+    assert_eq!(run_error(r#"def reading left right:
+    return missing + left + right"#), "ReferenceError: missing is not defined");
+    assert_eq!(run("result"), 9);
+    run("source = 5");
+    assert_eq!(run("result"), 11);
+    run(r#"def combined first second scale:
+    return (first + second) * scale"#);
+    run(r#"def prefer current fallback:
+    current ||= fallback
+    return current"#);
+    assert_eq!(run("prefer(0, 9)"), 9);
+    assert_eq!(run("prefer(3, 9)"), 3);
+    assert_eq!(run("combined(2, 5, 3)"), 21);
+    run(r#"combined(2, 5, 3)
+
+# return: 21"#);
 }
 
 /// The committed tests must not drift from their generated JSONL export.
