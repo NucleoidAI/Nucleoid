@@ -4,6 +4,13 @@ applyTo: "**"
 
 # Project and language goals
 
+## Environment-file access
+
+Never read `.env` files. This includes direct reads, file-content searches,
+bulk reads, and indirect access through commands, scripts, or tools. Exclude
+these files from content searches and use documented variable names or
+placeholders instead.
+
 ## Goals
 
 Design a new grammar with minimum tokenized syntax — a superset of Python, JavaScript/TypeScript, Kotlin, Go, Rust, Java, C# and C/C++.
