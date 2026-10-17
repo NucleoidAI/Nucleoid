@@ -23,7 +23,9 @@ allowed only as explicitly identified JSON code fields.
 
 - Inspect the existing pipeline, record the baseline, and implement the
   requested ARC change with typed objects, properties, relations, and rules.
-- Preserve test integrity: infer from training pairs and test inputs only;
+- Do not add or retain ARC-related automated tests, even outside `arc/`.
+  Use type checking, linting, builds, and manual/offline evaluation instead.
+- Preserve held-out evaluation integrity: infer from training pairs and test inputs only;
   reserve test outputs, including their dimensions, for scoring.
 - Validate every LLM response before executing code or composing grids.
 - Run applicable offline checks and report exact per-task results. Mocked

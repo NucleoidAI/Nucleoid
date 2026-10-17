@@ -105,19 +105,19 @@ substitute empty objects/grids, or return the input as a success fallback.
 
 ## Check the candidate and hand off
 
-Add focused offline tests for the affected behavior. Capture complete outgoing
-messages after wrapper/example injection and parse every content as JSON.
-Check structural request/response contracts, invalid-response rejection,
-object-to-grid round trips, applicable spatial rules, and train/test isolation.
-Use deliberately different expected-grid dimensions to detect answer-shape
-leakage when testing prediction independence. Preserve existing assertions and
-fixtures. Mocked model tests verify contracts, not live solving ability.
+Do not add or retain automated ARC tests, including in shared Rust suites
+outside `arc/`. Do not introduce replacement test files, test-only fixtures, or
+test runners. Use type checking, linting, builds, and manual/offline checks for
+the affected behavior. Inspect complete outgoing messages after wrapper/example
+injection and verify each content parses as JSON. Check structural
+request/response contracts, invalid-response rejection, object-to-grid round
+trips, applicable spatial rules, and training/held-out isolation without adding
+automated tests. Preserve puzzle data, expected outputs, instruction examples,
+and scoring. Manual or mocked checks do not establish live solving ability.
 
-From `arc`, run `bun run typecheck` and `bun run lint`. The current offline
-matrix tests run with `node --import tsx --test src\lib\Matrix.test.ts`; include
-new or affected test files in the same runner. Inspect the manifest before
-assuming a `test` script exists. Live-model evaluation requires the caller's
-authorization and budget; do not expose `.env` or credentials.
+From `arc`, run `bun run typecheck` and `bun run lint`. Live-model evaluation
+requires the caller's authorization and budget; do not expose `.env` or
+credentials.
 
 Measure each selected task separately against the unchanged scorer. Report
 training replay and held-out scoring separately, exact matches and shape

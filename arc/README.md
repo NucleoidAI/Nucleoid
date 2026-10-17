@@ -10,8 +10,11 @@ the committed lockfile:
 bun install
 bun run typecheck
 bun run lint
-bun run test
 ```
+
+Do not add or retain automated ARC tests, including outside this directory.
+Use type checking, linting, builds, and manual/offline evaluation instead.
+Keep puzzle datasets, instruction examples, and training/held-out scoring intact.
 
 OpenRouter is the only LLM provider. Set `OPENROUTER_API_KEY` in `.env`.
 Optionally set `OPENROUTER_MODEL` (default: `qwen/qwen3.8-27b`) to a model that
@@ -33,8 +36,7 @@ automatic prompt/KV caching. See OpenRouter's
 and [prompt caching](https://openrouter.ai/docs/guides/best-practices/prompt-caching)
 documentation for the distinction.
 
-Run the ARC example with `bun run start`. The tests mock OpenRouter and Nucleoid
-and do not require credentials or external services.
+Run the ARC example with `bun run start`.
 
 ## ARC proposal agent
 

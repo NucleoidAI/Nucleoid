@@ -27,7 +27,7 @@ Perform one bounded pass over the caller's completed code changes.
 - Respect `Cargo.toml`'s `rust-version`, intended behavior, and public API semantic versioning. Do not upgrade dependencies or the minimum Rust version just to use a newer idiom.
 - Reuse repository conventions and well-maintained crates rather than inventing infrastructure. Add dependencies only when the task requires them and document the choice.
 - Keep error reporting explicit. Do not hide failures, weaken assertions, suppress warnings, or replace errors with success-shaped defaults.
-- Add or update focused tests for affected behavior. Follow the repository's executable-document and assertion-coverage conventions.
+- Add or update focused tests for affected non-ARC behavior. Never add or retain ARC-related tests, including outside `arc/`. Follow the repository's executable-document and assertion-coverage conventions for non-ARC changes.
 - Keep the authoritative spec, related reference documents, synthesized sources, and generated artifacts synchronized when the improvement requires it. Never hand-edit generated JSONL or exported Rust specification tests.
 
 ## Validation and completion

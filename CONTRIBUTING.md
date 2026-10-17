@@ -28,6 +28,11 @@ $ cargo run                   # or type statements at a prompt
 | `src/` | the runtime |
 | `tests/` | executable specification, documentation, dataset, and runtime checks |
 
+The ARC project does not keep automated tests, including ARC-related cases in
+shared Rust suites. Follow the [ARC testing policy](.github/instructions/arc.instructions.md#no-automated-arc-tests):
+use type checking, linting, builds, and manual/offline evaluation instead.
+Preserve non-ARC tests, puzzle datasets, and instruction examples.
+
 ### Adding a behaviour
 
 Cases are written in Nucleoid, not in Rust. Add one to `nucleoid.spec.md` —

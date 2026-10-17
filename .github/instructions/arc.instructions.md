@@ -2,11 +2,22 @@
 applyTo: "**"
 ---
 
-# ARC solver proposals
+# ARC project and solver proposals
 
 These rules apply when working on `arc/`, its LLM exchanges, or its associated
 ARC records. Use the `arc-purposal` agent and matching skill when delegating an
 ARC proposal. Agent-configuration changes alone do not launch a solver run.
+
+## No automated ARC tests
+
+Do not add tests for the ARC project. Remove existing ARC-related automated
+tests wherever they live, including shared Rust suites outside `arc/`.
+Do not replace them with new test files, embedded automated cases, test-only
+fixtures, test runners, or test-framework configuration. Preserve non-ARC tests.
+
+Use type checking, linting, builds, and manual/offline inspection to verify ARC
+changes. Keep puzzle datasets, instruction examples, and training/held-out
+evaluation intact; these are solver data and benchmarking, not automated tests.
 
 ## JSON data in, JSON data out
 
@@ -41,9 +52,9 @@ symbolic execution. Avoid unstructured textual reasoning as the world model.
 Infer segmentation, background, object roles, and transformations from training
 pairs. Treat colors `0` through `9` as categorical values. Preserve positions
 and the current full-size, zero-padded instance matrices at existing boundaries.
-If a representation changes, supply explicit conversion and regression coverage
-instead of silently switching to cropped objects. Define output dimensions,
-overlap handling, and composition through the inferred model.
+If a representation changes, supply explicit conversion and verify it through
+manual/offline checks instead of silently switching to cropped objects. Define
+output dimensions, overlap handling, and composition through the inferred model.
 
 ## Honest evaluation and bounded changes
 
@@ -52,11 +63,12 @@ grids, choose candidates, or construct prompts. Access expected test grids only
 after predictions are frozen, for scoring. Do not hard-code puzzle IDs,
 expected grids, or task-specific answers into solver logic.
 
-Preserve fixtures, expected outputs, assertions, and scoring. Replay every
-selected training pair, then score held-out predictions by exact grid equality,
-including shape. Record actual per-task before/after differences; an unmeasured
-result is unknown, not zero. Distinguish mocked pipeline checks from live-model
-results and report failures or regressions without weakening tests.
+Preserve puzzle datasets, expected outputs, instruction examples, and scoring.
+Replay every selected training pair, then score held-out predictions by exact
+grid equality, including shape. Record actual per-task before/after differences;
+an unmeasured result is unknown, not zero. Distinguish manual/offline evaluation
+from live-model results and report failures or regressions without altering
+expected grids or scoring.
 
 Keep changes focused on the ARC project and synchronize affected documentation
 and canonical ARC records when their behavior changes. Follow the existing NUC
