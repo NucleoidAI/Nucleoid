@@ -289,14 +289,8 @@ fn frozen_history_keeps_boundary_whitespace_full_asts_returns_and_actual_prefix_
 }
 
 #[test]
-fn all_synthesized_and_arc_training_bytes_stay_frozen_without_session_fixtures() {
+fn all_synthesized_training_bytes_stay_frozen_without_session_fixtures() {
     let training: &[(&str, &[u8], usize, u64)] = &[
-        (
-            "arc",
-            include_bytes!("../dataset/arc.jsonl"),
-            377_621,
-            17_746_989_155_762_170_233,
-        ),
         (
             "01",
             include_bytes!("../dataset/nucleoid.synth.01.jsonl"),
@@ -424,7 +418,7 @@ fn all_synthesized_and_arc_training_bytes_stay_frozen_without_session_fixtures()
             1_345_645_721_628_158_366,
         ),
     ];
-    let mut records = (0, 0);
+    let mut records = 0;
     for &(name, bytes, length, expected) in training {
         // Only the explicit top-level code field is restored; non-code bytes
         // and all old expected lengths/FNV seals remain protected unchanged.
@@ -438,13 +432,9 @@ fn all_synthesized_and_arc_training_bytes_stay_frozen_without_session_fixtures()
             .split(|byte| *byte == b'\n')
             .filter(|line| !line.is_empty())
             .count();
-        if name == "arc" {
-            records.0 += count;
-        } else {
-            records.1 += count;
-        }
+        records += count;
     }
-    assert_eq!(records, (109, 1081));
+    assert_eq!(records, 1081);
 }
 
 fn rewrite_ast_rhs(statements: &mut [Stmt]) {

@@ -6,12 +6,11 @@
 //! UPDATE_DATASET=1 cargo test --test dataset
 //! ```
 //!
-//! Synthesized and ARC records are maintained directly as JSONL, without
+//! Synthesized records are maintained directly as JSONL, without
 //! duplicate Markdown sources. They are training data, not normative tests.
 
 mod common;
 
-use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -47,60 +46,17 @@ const SYNTH_27_RECORDS: usize = 4;
 
 type Grid = Vec<Vec<u8>>;
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum ArcTask {
-    Core,
-    Curve,
-    Line,
-    Recolor,
-    MirrorHorizontal,
-    MirrorVertical,
-    Rotate,
-    Translate,
-    Crop,
-    Upscale,
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum ArcOrigin {
-    Source,
-    Synthetic,
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct ArcSource {
-    file: String,
-    case: usize,
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
 struct ArcInstance {
-    instance_name: String,
+    instance_name: &'static str,
     input_instance: Grid,
     output_instance: Grid,
-    input_code: String,
-    output_value: serde_json::Map<String, serde_json::Value>,
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct ArcRecord {
-    id: String,
-    task: ArcTask,
-    origin: ArcOrigin,
-    source: Option<ArcSource>,
+struct ArcScene {
+    id: &'static str,
     input_matrix: Grid,
     output_matrix: Grid,
     instances: Vec<ArcInstance>,
-    normalizations: Vec<String>,
-    description: String,
-    code: String,
-    #[serde(rename = "return")]
-    returns: String,
 }
 
 #[test]
@@ -207,86 +163,6 @@ fn check_record_fields(records: &[Record], prefix: &str) {
     }
 }
 
-#[test]
-fn arc_records_preserve_their_grid_and_annotation_contract() {
-    let records = arc_records();
-    let mut ids = HashSet::new();
-    let mut sources = HashSet::new();
-    let mut source_instances = 0;
-    let mut synthetic = 0;
-
-    assert_eq!(records.len(), 109, "nine source scenes and 100 new cases");
-
-    for record in &records {
-        let id = &record.id;
-        assert!(id.starts_with("arc-") && ids.insert(id), "{id}");
-        assert!(!record.description.is_empty(), "{id}: missing description");
-        assert!(!record.code.contains("# arc:"), "{id}: metadata in code");
-        check_instance_masks(record);
-        assert_eq!(
-            serde_json::from_str::<Grid>(&record.returns)
-                .unwrap_or_else(|error| panic!("{id}: return must be a JSON grid: {error}")),
-            record.output_matrix,
-            "{id}: return must match output_matrix"
-        );
-        assert!(
-            record.code.contains(&format!(
-                "input_matrix = {}",
-                serde_json::to_string(&record.input_matrix).unwrap()
-            )),
-            "{id}: program must declare its input grid"
-        );
-        Runtime::check(&record.code).unwrap_or_else(|error| panic!("{id} does not parse: {error}"));
-
-        match record.origin {
-            ArcOrigin::Source => {
-                let source = record
-                    .source
-                    .as_ref()
-                    .unwrap_or_else(|| panic!("{id}: source scene must declare provenance"));
-                let expected_file = match record.task {
-                    ArcTask::Core => "dataset.core.json",
-                    ArcTask::Curve => "dataset.curve.json",
-                    ArcTask::Line => "dataset.line.json",
-                    _ => panic!("{id}: unexpected source task"),
-                };
-                assert_eq!(source.file, expected_file, "{id}");
-                assert!((1..=3).contains(&source.case), "{id}: source scene index");
-                assert!(sources.insert((&source.file, source.case)), "{id}");
-                source_instances += record.instances.len();
-            }
-            ArcOrigin::Synthetic => {
-                synthetic += 1;
-                assert!(record.source.is_none(), "{id}: synthetic provenance");
-            }
-        }
-
-        let mut instance_names = HashSet::new();
-        for instance in &record.instances {
-            assert!(
-                instance_names.insert(&instance.instance_name),
-                "{id}: duplicate instance name"
-            );
-            assert_eq!(
-                instance
-                    .output_value
-                    .get("id")
-                    .and_then(|value| value.as_str()),
-                Some(instance.instance_name.as_str()),
-                "{id}: instance id must match its name"
-            );
-            assert!(
-                record.code.contains(&instance.input_code),
-                "{id}: instance code must be part of the program"
-            );
-        }
-    }
-
-    assert_eq!(sources.len(), 9);
-    assert_eq!(source_instances, 23);
-    assert_eq!(synthetic, 100);
-}
-
 fn check_grid(grid: &[Vec<u8>], context: &str) {
     let height = grid.len();
     assert!(
@@ -337,12 +213,11 @@ fn check_instance_mask(mask: &[Vec<u8>], scene: &[Vec<u8>], context: &str) {
     }
 }
 
-fn check_instance_masks(record: &ArcRecord) {
+fn check_source_instance_masks(record: &ArcScene) {
     for (scene, input) in [(&record.input_matrix, true), (&record.output_matrix, false)] {
         let direction = if input { "input" } else { "output" };
         check_grid(scene, &format!("{}: {direction}_matrix", record.id));
-        let mut combined = (record.origin == ArcOrigin::Source)
-            .then(|| vec![vec![0; scene[0].len()]; scene.len()]);
+        let mut combined = vec![vec![0; scene[0].len()]; scene.len()];
 
         for instance in &record.instances {
             let mask = if input {
@@ -358,28 +233,24 @@ fn check_instance_masks(record: &ArcRecord) {
             // Validate dimensions before indexing the combined scene. Even an
             // all-zero mask must be rectangular and have the scene's size.
             check_instance_mask(mask, scene, &context);
-            if let Some(combined) = &mut combined {
-                for (row, values) in mask.iter().enumerate() {
-                    for (column, &color) in values.iter().enumerate() {
-                        if color != 0 {
-                            assert!(
-                                combined[row][column] == 0 || combined[row][column] == color,
-                                "{context}[{row}][{column}]: conflicting instance pixels"
-                            );
-                            combined[row][column] = color;
-                        }
+            for (row, values) in mask.iter().enumerate() {
+                for (column, &color) in values.iter().enumerate() {
+                    if color != 0 {
+                        assert!(
+                            combined[row][column] == 0 || combined[row][column] == color,
+                            "{context}[{row}][{column}]: conflicting instance pixels"
+                        );
+                        combined[row][column] = color;
                     }
                 }
             }
         }
 
-        if let Some(combined) = combined {
-            assert_eq!(
-                combined, *scene,
-                "{}: complete {direction} instance masks",
-                record.id
-            );
-        }
+        assert_eq!(
+            combined, *scene,
+            "{}: complete {direction} instance masks",
+            record.id
+        );
     }
 }
 
@@ -426,15 +297,28 @@ fn arc_grids_identify_invalid_pixels() {
 }
 
 #[test]
+fn arc_source_masks_cover_the_complete_scene_without_a_dataset() {
+    check_source_instance_masks(&arc_source_scene());
+}
+
+#[test]
+fn arc_source_masks_allow_matching_pixels_from_multiple_instances() {
+    let mut record = arc_source_scene();
+    record.instances[1].input_instance[1][6] = 9;
+    record.instances[1].output_instance[1][0] = 9;
+    check_source_instance_masks(&record);
+}
+
+#[test]
 #[should_panic(
     expected = "arc-core-source-0001: obj6068 input_instance: mask height must match scene"
 )]
 fn arc_source_masks_check_height_before_composition() {
-    let mut record = arc_records().remove(0);
+    let mut record = arc_source_scene();
     record.instances[0]
         .input_instance
         .push(vec![9; record.input_matrix[0].len()]);
-    check_instance_masks(&record);
+    check_source_instance_masks(&record);
 }
 
 #[test]
@@ -442,11 +326,11 @@ fn arc_source_masks_check_height_before_composition() {
     expected = "arc-core-source-0001: obj6068 output_instance: mask width must match scene"
 )]
 fn arc_source_masks_check_width_before_composition() {
-    let mut record = arc_records().remove(0);
+    let mut record = arc_source_scene();
     for row in &mut record.instances[0].output_instance {
         row.push(9);
     }
-    check_instance_masks(&record);
+    check_source_instance_masks(&record);
 }
 
 #[test]
@@ -454,17 +338,25 @@ fn arc_source_masks_check_width_before_composition() {
     expected = "arc-core-source-0001: obj6068 input_instance[0][0]: color 9 must be 0 or scene color 0"
 )]
 fn arc_source_masks_identify_pixels_that_disagree_with_the_scene() {
-    let mut record = arc_records().remove(0);
+    let mut record = arc_source_scene();
     record.instances[0].input_instance[0][0] = 9;
-    check_instance_masks(&record);
+    check_source_instance_masks(&record);
 }
 
 #[test]
 #[should_panic(expected = "arc-core-source-0001: complete input instance masks")]
 fn arc_source_masks_must_still_cover_the_complete_scene() {
-    let mut record = arc_records().remove(0);
+    let mut record = arc_source_scene();
     record.instances[0].input_instance[1][6] = 0;
-    check_instance_masks(&record);
+    check_source_instance_masks(&record);
+}
+
+#[test]
+#[should_panic(expected = "arc-core-source-0001: complete output instance masks")]
+fn arc_source_masks_must_cover_the_complete_output_scene() {
+    let mut record = arc_source_scene();
+    record.instances[1].output_instance[0][1] = 0;
+    check_source_instance_masks(&record);
 }
 
 /// Every normative specification record must parse. Synthesized records are
@@ -513,8 +405,24 @@ fn render_jsonl<T: Serialize>(records: impl IntoIterator<Item = T>) -> String {
     out
 }
 
-fn arc_records() -> Vec<ArcRecord> {
-    read_jsonl(&path("dataset/arc.jsonl"))
+fn arc_source_scene() -> ArcScene {
+    ArcScene {
+        id: "arc-core-source-0001",
+        input_matrix: vec![vec![0, 3, 0, 0, 0, 0, 0], vec![0, 0, 0, 0, 0, 0, 9]],
+        output_matrix: vec![vec![0, 3], vec![9, 0]],
+        instances: vec![
+            ArcInstance {
+                instance_name: "obj6068",
+                input_instance: vec![vec![0; 7], vec![0, 0, 0, 0, 0, 0, 9]],
+                output_instance: vec![vec![0, 0], vec![9, 0]],
+            },
+            ArcInstance {
+                instance_name: "other",
+                input_instance: vec![vec![0, 3, 0, 0, 0, 0, 0], vec![0; 7]],
+                output_instance: vec![vec![0, 3], vec![0, 0]],
+            },
+        ],
+    }
 }
 
 fn synthesized_sets() -> Vec<(String, Vec<Record>)> {

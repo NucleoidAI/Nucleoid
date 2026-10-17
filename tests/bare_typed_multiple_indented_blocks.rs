@@ -1247,7 +1247,7 @@ fn historical_corpus_and_eight_appended_counterparts_keep_complete_asts_and_prot
 
 #[test]
 #[ignore = "requires Git history at c007624; run cargo test --test bare_typed_multiple_indented_blocks -- --ignored"]
-fn all_synthesized_asts_fields_order_and_arc_annotations_remain_exact() {
+fn all_synthesized_asts_fields_and_order_remain_exact() {
     let indented_arrow =
         Regex::new(r"(?m)^([ \t]*def [^\n]+) =>([ \t]*(?:#[^\n]*)?)\n([ \t]+)([^\n]+)").unwrap();
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -1313,10 +1313,4 @@ fn all_synthesized_asts_fields_order_and_arc_annotations_remain_exact() {
     assert_eq!(records, 1081);
     // No existing synthesized record has an eligible typed multiple block.
     assert_eq!(rewritten, 0);
-    assert_eq!(
-        fs::read_to_string(root.join("dataset/arc.jsonl"))
-            .unwrap()
-            .replace("\r\n", "\n"),
-        accepted_source("dataset/arc.jsonl").replace("\r\n", "\n")
-    );
 }

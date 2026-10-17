@@ -1019,7 +1019,7 @@ fn historical_measured_asts_and_the_eight_appended_counterparts_remain_exact() {
 
 #[test]
 #[ignore = "requires Git history at c40b64b; run cargo test --test bare_typed_multiple_named_arrows -- --ignored"]
-fn all_synthesized_records_preserve_complete_asts_fields_order_and_arc_annotations() {
+fn all_synthesized_records_preserve_complete_asts_fields_and_order() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut records = 0;
     let mut sets = 0;
@@ -1045,10 +1045,4 @@ fn all_synthesized_records_preserve_complete_asts_fields_order_and_arc_annotatio
     }
     assert_eq!(sets, 21);
     assert_eq!(records, 1081);
-    assert_eq!(
-        fs::read_to_string(root.join("dataset/arc.jsonl"))
-            .unwrap()
-            .replace("\r\n", "\n"),
-        accepted_source("dataset/arc.jsonl").replace("\r\n", "\n")
-    );
 }

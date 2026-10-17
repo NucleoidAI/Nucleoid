@@ -21,7 +21,7 @@ $ cargo run                   # or type statements at a prompt
 | `nucleoid.spec.md` | what the language does. Authoritative — when anything disagrees with it, it wins |
 | `dataset/nucleoid.spec.jsonl` | generated specification export, rendered from `nucleoid.spec.md` |
 | `dataset/nucleoid.synth.*.jsonl` | canonical synthesized fine-tuning records; not normative runtime tests |
-| `dataset/arc.jsonl` | canonical ARC training records, including grids, programs, expected results, and object annotations |
+| `arc/src/instruct_dataset/` | ARC instruction examples, maintained within the ARC project |
 | `dataset/` | JSONL files only; no Markdown mirrors or local dataset card |
 | `docs/` | the language reference, as NUC documents in the style of a PEP |
 | `docs/README.md` | prose reference; `tests/reference.md` is its executable form |
