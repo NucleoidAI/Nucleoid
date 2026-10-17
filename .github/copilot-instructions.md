@@ -11,6 +11,7 @@ not a replacement for the policies it links to.
 | File | Policy |
 | --- | --- |
 | [project.instructions.md](instructions/project.instructions.md) | Language goals, reference documents, and runtime architecture |
+| [arc.instructions.md](instructions/arc.instructions.md) | Object-oriented ARC solver proposals and JSON-only LLM exchanges |
 | [rust.instructions.md](instructions/rust.instructions.md) | Concrete runtime types, dependencies, and Rust community conventions |
 | [documents.instructions.md](instructions/documents.instructions.md) | Authoritative specification, executable documents, and dataset synchronization |
 | [versions.instructions.md](instructions/versions.instructions.md) | Human-owned version numbers; no AI version changes |

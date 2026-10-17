@@ -36,6 +36,20 @@ documentation for the distinction.
 Run the ARC example with `bun run start`. The tests mock OpenRouter and Nucleoid
 and do not require credentials or external services.
 
+## ARC proposal agent
+
+Use [arc-purposal](../.github/agents/arc-purposal.agent.md) and its
+[skill](../.github/skills/arc-purposal/SKILL.md) to propose and prototype focused
+solver improvements. The [ARC instructions](../.github/instructions/arc.instructions.md)
+require an object-oriented Nucleoid world model, training-only rule inference,
+and exact-grid evaluation without test-answer leakage.
+
+The agent's contract is **JSON data in, JSON data out** for every ARC LLM
+message, including injected examples and retry feedback. Natural-language
+prompts and prose hidden in JSON values are forbidden; executable Nucleoid code
+travels in explicit JSON string fields. This defines the proposal policy, not
+a claim that existing runtime prompts have already been migrated.
+
 ## JSONL Review Tools
 
 Run `bun run tools` and open **http://127.0.0.1:3000**. This builds the browser
@@ -101,7 +115,8 @@ We've found that using an intermediate, ubiquitous language is highly effective 
 
 There are 2 sections in our approach: analysis and visualization. In analysis phase, the AI system aims generalize patterns and identifies instances in order to use in actual test, and in visualization, the extracted abstraction is applied to given test input.
 
-> :zap: All communications with the LLM are made thru `nuc` language instead of prompt engineering
+> :zap: Solver proposals must exchange JSON data with the LLM, carrying `nuc`
+> code in explicit string fields instead of natural-language prompts.
 
 ![ARC_Flow](https://github.com/user-attachments/assets/0b5132cb-8269-461d-b27b-2b84ec1dd640)
 
