@@ -1,0 +1,33 @@
+{
+  "name": "nuc-arc",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.ts",
+  "scripts": {
+    "start": "tsx server.ts",
+    "build:tools": "tsc --project tools/tsconfig.json",
+    "tools": "npm run build:tools && tsx tools/server.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts"
+  },
+  "author": "Can Mingir",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^8.13.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.6.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@nucleoidai/expert": "^1.0.3",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.20.0",
+    "uuid": "^10.0.0"
+  }
+}
