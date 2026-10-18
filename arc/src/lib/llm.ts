@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import * as instruct_dataset from "../instruct_dataset";
+import * as instruct_dataset from "../dataset";
 import * as openrouter from "./openrouter";
 import type { GenerateOptions } from "../types";
 

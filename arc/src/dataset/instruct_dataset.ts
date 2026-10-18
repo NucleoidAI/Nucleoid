@@ -27,5 +27,5 @@ export function document(): string {
     }
   });
 
-  return JSON.stringify({ instruct_dataset: datasets });
+  return JSON.stringify({ datasets });
 }

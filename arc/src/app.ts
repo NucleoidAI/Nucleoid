@@ -80,7 +80,7 @@ export async function start(): Promise<Grid> {
     for (const { input_instance_matrix, output_instance_matrix } of instances) {
       const instance_name = `obj${dataset.instances.length}`;
 
-      const { input_code, output_value } = await analyzer.value({
+      const { input_code, input_value, output_value } = await analyzer.value({
         instance_name,
         declarations,
         input_instance_matrix,
@@ -92,6 +92,7 @@ export async function start(): Promise<Grid> {
         input_instance_matrix,
         output_instance_matrix,
         input_code,
+        input_value,
         output_value,
       });
     }
@@ -106,13 +107,13 @@ export async function start(): Promise<Grid> {
 
   let test_index = 0;
 
-  let result_matrix: Grid = Array.from(
+  const result_matrix: Grid = Array.from(
     { length: test_output_matrix.length },
     () => Array<number>(test_output_matrix[0].length).fill(0)
   );
 
   for (const { input_instance_matrix } of instances) {
-    const { output_value } = await visualizer.value({
+    const { input_value, output_value } = await visualizer.value({
       instance_name: `obj${test_index++}`,
       train_dataset,
       input_instance_matrix,
@@ -123,6 +124,7 @@ export async function start(): Promise<Grid> {
       result_matrix,
       train_dataset,
       input_instance_matrix,
+      input_value,
       output_value,
     });
 

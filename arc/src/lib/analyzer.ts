@@ -89,7 +89,11 @@ export async function value({
   declarations: string[];
   input_instance_matrix: Grid;
   output_instance_matrix: Grid;
-}): Promise<{ input_code: string; output_value: unknown }> {
+}): Promise<{
+  input_code: string;
+  input_value: unknown;
+  output_value: unknown;
+}> {
   console.log("Calculating value...");
 
   const { input_code } = await llm.generate<{ input_code: string }>({
@@ -113,6 +117,9 @@ export async function value({
   });
 
   console.log("Creating instance in Nucleoid...");
+  const input_value = await nucleoid.run(
+    [declarations[0], input_code].join("\n\n")
+  );
   const output_value = await nucleoid.run(
     [...declarations, input_code].join("\n\n")
   );
@@ -122,5 +129,5 @@ export async function value({
   console.debug("output_value:");
   console.debug(output_value);
 
-  return { input_code, output_value };
+  return { input_code, input_value, output_value };
 }

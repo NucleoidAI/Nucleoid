@@ -8,6 +8,7 @@ export interface AnalyzedInstance {
 export interface TrainingInstance extends AnalyzedInstance {
   instance_name: string;
   input_code: string;
+  input_value: unknown;
   output_value: unknown;
 }
 

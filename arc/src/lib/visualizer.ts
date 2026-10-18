@@ -56,7 +56,7 @@ export async function value({
   instance_name: string;
   train_dataset: TrainingDataset;
   input_instance_matrix: Grid;
-}): Promise<{ output_value: unknown }> {
+}): Promise<{ input_value: unknown; output_value: unknown }> {
   console.log("Calculating test value...");
   const { input_code } = await llm.generate<{ input_code: string }>({
     messages: [
@@ -77,6 +77,9 @@ export async function value({
   });
 
   console.log("Creating test instance in Nucleoid...");
+  const input_value = await nucleoid.run(
+    [train_dataset.declarations[0], input_code].join("\n\n")
+  );
   const output_value = await nucleoid.run(
     [...train_dataset.declarations, input_code].join("\n\n")
   );
@@ -86,7 +89,7 @@ export async function value({
   console.debug("output_value:");
   console.debug(output_value);
 
-  return { output_value };
+  return { input_value, output_value };
 }
 
 export async function output_instance_matrix({
@@ -94,16 +97,20 @@ export async function output_instance_matrix({
   result_matrix,
   train_dataset,
   input_instance_matrix,
+  input_value,
   output_value,
 }: {
   test_input_matrix: Grid;
   result_matrix: Grid;
   train_dataset: TrainingDataset;
   input_instance_matrix: Grid;
+  input_value: unknown;
   output_value: unknown;
 }): Promise<{ output_instance_matrix: Grid }> {
   console.log("Extracting test output_instance_matrix...");
-  const { output_instance_matrix } = await llm.generate<{
+  const { output_x, output_y, output_instance_matrix } = await llm.generate<{
+    output_x: number;
+    output_y: number;
     output_instance_matrix: Grid;
   }>({
     messages: [
@@ -128,10 +135,14 @@ export async function output_instance_matrix({
           )}
           input_instance_matrix:
           ${JSON.stringify(input_instance_matrix)}
+          input_value:
+          ${JSON.stringify(input_value)}
           output_value:
           ${JSON.stringify(output_value)}
           json_format:
           {
+            "output_x": <OUTPUT_X>,
+            "output_y": <OUTPUT_Y>,
             "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
           }
         `,
@@ -141,6 +152,10 @@ export async function output_instance_matrix({
 
   console.debug("output_instance_matrix:");
   Matrix.toString(output_instance_matrix);
+  console.debug("output_x:");
+  console.debug(output_x);
+  console.debug("output_y:");
+  console.debug(output_y);
 
   return { output_instance_matrix };
 }
