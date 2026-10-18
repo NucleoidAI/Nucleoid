@@ -143,8 +143,8 @@ The LLM finds pattern for given training input and output data and creates decla
 ```json
 {
   "declarations": [
-    "class Obj(x: int, y: int, ori: int, p1: int, p2: int, p3: int):\n    this.x = x\n    this.y = y\n    this.ori = ori\n    this.tag = 'l6747'\n    this.p1 = p1\n    this.p2 = p2\n    this.p3 = p3\n    this.p4 = 0",
-    "if $Obj.p1 == 9 and $Obj.p2 == 9 and $Obj.p3 == 9:\n    $Obj.tag = 'l6624'\n    $Obj.p4 = 1"
+    "class Obj(x: int, y: int, ori: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.ori = ori\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color\n    this.marker_color = 0",
+    "if $Obj.vertex_color == 9 and $Obj.vertical_segment_color == 9 and $Obj.horizontal_segment_color == 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 1"
   ]
 }
 ```
@@ -162,7 +162,9 @@ internal zeros. The core, line, and curve instruction datasets use compact
 snapshots: `x` is the zero-based column and `y` is the zero-based row of the
 input bounding-box origin, `ori` is the numeric orientation, and `tag`
 replaces `shape` with shortened identifiers such as `l6747`.
-The instance's `orientation` metadata agrees with its snapshot's `ori`.
+Each instance also exposes `x`, `y`, and `ori` directly, matching
+`input_value`. These fields describe the input object, not the grown output
+crop; the compact `ori` field replaces the old `orientation` metadata.
 Matrices already follow the canvas axes; composition does not rotate them.
 
 Angles run clockwise from north: `N = 0`, `NE = 45`, `SE = 135`, `S = 180`,
@@ -170,35 +172,40 @@ Angles run clockwise from north: `N = 0`, `NE = 45`, `SE = 135`, `S = 180`,
 horizontal is 90 and vertical is 0; endpoint and extension directions remain
 separate properties.
 
-| Dataset | Compact property mapping |
+| Dataset | Descriptive properties |
 | --- | --- |
-| Core | `p1`: vertex, `p2`: vertical segment, `p3`: horizontal segment, `p4`: extension |
-| Line | `p1`: initial endpoint position, `p2`: extension direction |
-| Curve | `p1`: vertex color, `p2`: rim color, `p3`: rim direction |
+| Core | `vertex_color`, `vertical_segment_color`, `horizontal_segment_color`, `marker_color` |
+| Line | `endpoint_position` (side of the color-8 endpoint), `extension_direction` |
+| Curve | `vertex_color`, `rim_color`, `rim_direction` |
+
+Color properties are categorical grid colors, not segment lengths or coordinates.
 
 Every instance has `input_value` before the class rule and `output_value`
 after it. Obtain the input snapshot using only the class declaration; the
 complete declaration set immediately applies the rules to new instances.
-Line `p2` and curve `p2`/`p3` are created by those rules and are absent from
-their input snapshots rather than filled with artificial defaults.
+Line `extension_direction` and curve `rim_color`/`rim_direction` are created
+by those rules and are absent from their input snapshots rather than filled
+with artificial defaults.
 
 Both snapshots keep `x` and `y` anchored to the input bounding box.
-In `dataset.core.json`, adding the exterior marker grows the output to
+In `dataset.core.1.json`, adding the exterior marker grows the output to
 3 by 3: subtract one from the output crop's x origin for `ori` 225 or 315,
 and from its y origin for `ori` 45 or 315. The other origins are unchanged.
-For lines, subtract one from x when `p2` is `left`, or from y when it is
-`up`; extensions to the right or down keep the input origin.
+For lines, subtract one from x when `extension_direction` is `left`, or from
+y when it is `up`; extensions to the right or down keep the input origin.
 For curves, subtract one from x for either direction, and from y only when
-`p3` is `up`. These explicit conversions replace separate position fields
-without moving the original cells. The inner marker in `dataset.core.2.json`
-does not change the crop origin.
+`rim_direction` is `up`. These explicit conversions replace separate position
+fields without moving the original cells. The inner marker in
+`dataset.core.2.json` does not change the crop origin.
 
 ```json
 {
   "instances": [
     {
       "instance_name": "obj0",
-      "orientation": 135,
+      "x": 5,
+      "y": 1,
+      "ori": 135,
       "input_instance_matrix": [
         [0, 9],
         [9, 9]
@@ -222,7 +229,9 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
   "instances": [
     {
       "instance_name": "obj0",
-      "orientation": 135,
+      "x": 5,
+      "y": 1,
+      "ori": 135,
       "input_instance_matrix": [
         [0, 9],
         [9, 9]
@@ -239,10 +248,10 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "y": 1,
         "ori": 135,
         "tag": "l6747",
-        "p1": 9,
-        "p2": 9,
-        "p3": 9,
-        "p4": 0
+        "vertex_color": 9,
+        "vertical_segment_color": 9,
+        "horizontal_segment_color": 9,
+        "marker_color": 0
       },
       "output_value": {
         "id": "obj0",
@@ -250,10 +259,10 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "y": 1,
         "ori": 135,
         "tag": "l6624",
-        "p1": 9,
-        "p2": 9,
-        "p3": 9,
-        "p4": 1
+        "vertex_color": 9,
+        "vertical_segment_color": 9,
+        "horizontal_segment_color": 9,
+        "marker_color": 1
       }
     }
   ]
@@ -265,8 +274,8 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
 ##### 5. Extract instances from Test Input
 
 This step is slight different then from extracting instances in analysis because now the LLM has to use instances list from previous step as a reference.
-It returns cropped input objects with numeric `orientation` and
-`input_value` containing `x`, `y`, and `ori`,
+It returns cropped input objects with instance-level `x`, `y`, and numeric
+`ori`, matching the coordinates and orientation in `input_value`,
 plus `output_dimensions: { "width": ..., "height": ... }` inferred from
 training pairs and the supplied input only. Expected test grids and their
 dimensions are never part of prediction requests.
