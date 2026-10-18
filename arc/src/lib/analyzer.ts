@@ -59,9 +59,6 @@ export async function instances({
           json_format:
           {
             "instances": [{
-              "x": <INSTANCE_X>,
-              "y": <INSTANCE_Y>,
-              "ori": <INSTANCE_ORI>,
               "input_instance_matrix": <INPUT_INSTANCE_MATRIX>,
               "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
             }]

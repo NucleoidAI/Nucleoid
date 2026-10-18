@@ -195,8 +195,14 @@ For lines, subtract one from x when `extension_direction` is `left`, or from
 y when it is `up`; extensions to the right or down keep the input origin.
 For curves, subtract one from x for either direction, and from y only when
 `rim_direction` is `up`. These explicit conversions replace separate position
-fields without moving the original cells. The inner marker in
-`dataset.core.2.json` does not change the crop origin.
+fields without moving the original cells. The inner markers in
+`dataset.core.2.json`, `dataset.core.3.json`, and `dataset.core.4.json` do not
+change the crop origin.
+The third core dataset uses 4 by 4 color-2 corners with color-6 markers one
+cell diagonally inward from each vertex, across all four orientations.
+The fourth uses 3 by 3 color-2 corners with a color-7 marker one cell
+diagonally inward from each vertex. Input and output masks retain the same
+origin and dimensions; the layouts keep the resized objects separate.
 
 ```json
 {
