@@ -105,7 +105,7 @@ export async function start(): Promise<Grid> {
 
   let test_index = 0;
 
-  const result_matrix: Grid = Array.from(
+  let result_matrix: Grid = Array.from(
     { length: test_output_matrix.length },
     () => Array<number>(test_output_matrix[0].length).fill(0)
   );
