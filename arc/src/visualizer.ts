@@ -1,7 +1,7 @@
-import * as nucleoid from "./nucleoid";
-import * as Matrix from "./Matrix";
-import * as llm from "./llm";
-import type { Grid, TestInstance, TrainingDataset } from "../types";
+import * as nucleoid from "./lib/nucleoid";
+import * as Matrix from "./lib/Matrix";
+import * as llm from "./lib/llm";
+import type { Grid, TestInstance, TrainingDataset } from "./types";
 
 export async function instances({
   train_dataset,

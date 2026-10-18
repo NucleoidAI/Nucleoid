@@ -1,7 +1,7 @@
-import * as Matrix from "./Matrix";
-import * as nucleoid from "./nucleoid";
-import * as llm from "./llm";
-import type { AnalyzedInstance, Grid, TrainingInput } from "../types";
+import * as Matrix from "./lib/Matrix";
+import * as nucleoid from "./lib/nucleoid";
+import * as llm from "./lib/llm";
+import type { AnalyzedInstance, Grid, TrainingInput } from "./types";
 
 export async function declarations({
   train_dataset,
@@ -126,6 +126,8 @@ export async function value({
 
   console.debug("input_code:");
   console.debug(input_code);
+  console.debug("input_value:");
+  console.debug(input_value);
   console.debug("output_value:");
   console.debug(output_value);
 

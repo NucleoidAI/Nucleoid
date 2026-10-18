@@ -1,8 +1,6 @@
-import * as analyzer from "./lib/analyzer";
-import * as visualizer from "./lib/visualizer";
-import * as nucleoid from "./lib/nucleoid";
+import * as analyzer from "./analyzer";
+import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
-import { v4 as uuid } from "uuid";
 import puzzle from "./data/training/3aa6fb7a.json";
 import type { Grid, TrainingDataset, TrainingInput } from "./types";
 
