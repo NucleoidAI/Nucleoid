@@ -1,0 +1,224 @@
+{
+  "declarations": [
+    "class Obj(x: int, y: int, ori: int, p1: int, p2: int, p3: int):\n    this.x = x\n    this.y = y\n    this.ori = ori\n    this.tag = 'l6747'\n    this.p1 = p1\n    this.p2 = p2\n    this.p3 = p3\n    this.p4 = 0",
+    "if $Obj.p1 == 9 and $Obj.p2 == 9 and $Obj.p3 == 9:\n    $Obj.tag = 'l6624'\n    $Obj.p4 = 1"
+  ],
+  "dataset": [
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 9, 0, 0, 0, 0, 0],
+        [0, 0, 9, 9, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 9, 0, 0, 0, 0, 0],
+        [0, 0, 9, 9, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj6068",
+          "orientation": 135,
+          "input_instance_matrix": [
+            [0, 9],
+            [9, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 9, 0],
+            [9, 9, 0],
+            [0, 0, 1]
+          ],
+          "input_code": "obj6068 = Obj(5, 1, 135, 9, 9, 9)",
+          "input_value": {"id":"obj6068","x":5,"y":1,"ori":135,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj6068","x":5,"y":1,"ori":135,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        },
+        {
+          "instance_name": "obj6348",
+          "orientation": 225,
+          "input_instance_matrix": [
+            [9, 0],
+            [9, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 9, 0],
+            [0, 9, 9],
+            [1, 0, 0]
+          ],
+          "input_code": "obj6348 = Obj(2, 5, 225, 9, 9, 9)",
+          "input_value": {"id":"obj6348","x":2,"y":5,"ori":225,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj6348","x":2,"y":5,"ori":225,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 9, 0, 0, 0, 0],
+        [0, 0, 9, 9, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 9, 0, 0, 0, 0, 0, 0],
+        [0, 9, 9, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 9, 0, 0, 0, 1],
+        [0, 0, 9, 9, 0, 9, 9, 0],
+        [0, 0, 0, 0, 1, 0, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 9, 0, 0, 0, 0, 0, 0],
+        [0, 9, 9, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj4600",
+          "orientation": 135,
+          "input_instance_matrix": [
+            [0, 9],
+            [9, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 9, 0],
+            [9, 9, 0],
+            [0, 0, 1]
+          ],
+          "input_code": "obj4600 = Obj(2, 1, 135, 9, 9, 9)",
+          "input_value": {"id":"obj4600","x":2,"y":1,"ori":135,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj4600","x":2,"y":1,"ori":135,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        },
+        {
+          "instance_name": "obj8616",
+          "orientation": 45,
+          "input_instance_matrix": [
+            [9, 9],
+            [0, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 1],
+            [9, 9, 0],
+            [0, 9, 0]
+          ],
+          "input_code": "obj8616 = Obj(5, 2, 45, 9, 9, 9)",
+          "input_value": {"id":"obj8616","x":5,"y":2,"ori":45,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj8616","x":5,"y":2,"ori":45,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        },
+        {
+          "instance_name": "obj2669",
+          "orientation": 225,
+          "input_instance_matrix": [
+            [9, 0],
+            [9, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 9, 0],
+            [0, 9, 9],
+            [1, 0, 0]
+          ],
+          "input_code": "obj2669 = Obj(1, 5, 225, 9, 9, 9)",
+          "input_value": {"id":"obj2669","x":1,"y":5,"ori":225,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj2669","x":1,"y":5,"ori":225,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 9, 0, 0, 0, 0, 0, 0],
+        [0, 9, 9, 0, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 9, 9, 0, 0, 9, 9, 0],
+        [0, 9, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 9, 0, 0, 0, 0, 0, 1],
+        [0, 9, 9, 0, 0, 9, 9, 0],
+        [1, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0, 9, 0],
+        [0, 9, 9, 0, 0, 9, 9, 0],
+        [0, 9, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj5424",
+          "orientation": 225,
+          "input_instance_matrix": [
+            [9, 0],
+            [9, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 9, 0],
+            [0, 9, 9],
+            [1, 0, 0]
+          ],
+          "input_code": "obj5424 = Obj(1, 0, 225, 9, 9, 9)",
+          "input_value": {"id":"obj5424","x":1,"y":0,"ori":225,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj5424","x":1,"y":0,"ori":225,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        },
+        {
+          "instance_name": "obj2784",
+          "orientation": 45,
+          "input_instance_matrix": [
+            [9, 9],
+            [0, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 1],
+            [9, 9, 0],
+            [0, 9, 0]
+          ],
+          "input_code": "obj2784 = Obj(5, 1, 45, 9, 9, 9)",
+          "input_value": {"id":"obj2784","x":5,"y":1,"ori":45,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj2784","x":5,"y":1,"ori":45,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        },
+        {
+          "instance_name": "obj9936",
+          "orientation": 315,
+          "input_instance_matrix": [
+            [9, 9],
+            [9, 0]
+          ],
+          "output_instance_matrix": [
+            [1, 0, 0],
+            [0, 9, 9],
+            [0, 9, 0]
+          ],
+          "input_code": "obj9936 = Obj(1, 5, 315, 9, 9, 9)",
+          "input_value": {"id":"obj9936","x":1,"y":5,"ori":315,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj9936","x":1,"y":5,"ori":315,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        },
+        {
+          "instance_name": "obj4193",
+          "orientation": 135,
+          "input_instance_matrix": [
+            [0, 9],
+            [9, 9]
+          ],
+          "output_instance_matrix": [
+            [0, 9, 0],
+            [9, 9, 0],
+            [0, 0, 1]
+          ],
+          "input_code": "obj4193 = Obj(5, 4, 135, 9, 9, 9)",
+          "input_value": {"id":"obj4193","x":5,"y":4,"ori":135,"tag":"l6747","p1":9,"p2":9,"p3":9,"p4":0},
+          "output_value": {"id":"obj4193","x":5,"y":4,"ori":135,"tag":"l6624","p1":9,"p2":9,"p3":9,"p4":1}
+        }
+      ]
+    }
+  ]
+}

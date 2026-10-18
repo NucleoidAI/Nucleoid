@@ -1,12 +1,31 @@
-import core from "./dataset.core.json";
-import line from "./dataset.line.json";
-import curve from "./dataset.curve.json";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 export function document(): string {
-  return `
-    instruct_dataset:
-    ${JSON.stringify(core)}      
-    ${JSON.stringify(line)}      
-    ${JSON.stringify(curve)}      
-  `;
+  const files = readdirSync(__dirname, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && /\.json$/i.test(entry.name))
+    .map((entry) => entry.name)
+    .sort();
+
+  if (files.length === 0) {
+    throw new Error(`No JSON instruction datasets found in ${__dirname}`);
+  }
+
+  const datasets = files.map((file): unknown => {
+    const source = readFileSync(join(__dirname, file), "utf8");
+
+    try {
+      return JSON.parse(source);
+    } catch (error: unknown) {
+      if (error instanceof SyntaxError) {
+        throw new SyntaxError(
+          `Invalid JSON in instruction dataset ${file}: ${error.message}`,
+          { cause: error }
+        );
+      }
+      throw error;
+    }
+  });
+
+  return JSON.stringify({ instruct_dataset: datasets });
 }

@@ -36,7 +36,18 @@ automatic prompt/KV caching. See OpenRouter's
 and [prompt caching](https://openrouter.ai/docs/guides/best-practices/prompt-caching)
 documentation for the distinction.
 
-Run the ARC example with `bun run start`.
+Run the ARC example with `bun run start`. This makes live OpenRouter calls;
+type checking, linting, and offline inspection do not require model calls.
+
+## Instruction datasets
+
+The synchronous `document()` function reads every JSON file alongside
+`instruct_dataset.ts` on each call, independently of the working directory.
+Files are sorted by name and serialized as one
+`{"instruct_dataset": [...]}` document, with a separate array entry per file.
+New files, including `dataset.core.2.json`, need no additional imports.
+Non-JSON files and subdirectories are ignored. An empty dataset directory,
+unreadable files, or malformed JSON fail explicitly; JSON errors name the file.
 
 ## ARC proposal agent
 
@@ -49,8 +60,9 @@ and exact-grid evaluation without test-answer leakage.
 The agent's contract is **JSON data in, JSON data out** for every ARC LLM
 message, including injected examples and retry feedback. Natural-language
 prompts and prose hidden in JSON values are forbidden; executable Nucleoid code
-travels in explicit JSON string fields. This defines the proposal policy, not
-a claim that existing runtime prompts have already been migrated.
+travels in explicit JSON string fields. Analyzer and visualizer requests,
+injected instruction examples, and control IDs each serialize one complete
+JSON document. Responses are validated before symbolic execution or composition.
 
 ## JSONL Review Tools
 
@@ -128,12 +140,11 @@ There are 2 sections in our approach: analysis and visualization. In analysis ph
 
 The LLM finds pattern for given training input and output data and creates declarations in `nuc` lang.
 
-```
+```json
 {
   "declarations": [
-    "class Obj(vertex: int, vertical_line_segment: int, horizontal_line_segment: int):\n    this.shape = \"unspecified\"\n    this.vertex = vertex\n    this.vertical_line_segment = vertical_line_segment\n    this.horizontal_line_segment = horizontal_line_segment\n    this.extension = 0",
-    "if $Obj.vertex == 8 and $Obj.vertical_line_segment == 8 and $Obj.horizontal_line_segment == 8:\n    $Obj.shape = \"label1234\"\n    $Obj.extension = 1",
-    ...
+    "class Obj(x: int, y: int, ori: int, p1: int, p2: int, p3: int):\n    this.x = x\n    this.y = y\n    this.ori = ori\n    this.tag = 'l6747'\n    this.p1 = p1\n    this.p2 = p2\n    this.p3 = p3\n    this.p4 = 0",
+    "if $Obj.p1 == 9 and $Obj.p2 == 9 and $Obj.p3 == 9:\n    $Obj.tag = 'l6624'\n    $Obj.p4 = 1"
   ]
 }
 ```
@@ -145,36 +156,60 @@ Nucleoid session is initialized with the declarations in order to use for identi
 ##### 3. Extract instances
 
 Based on declarations in `nuc` lang, the LLM extracts instances.
-Every instance is a full-size matrix with the same dimensions as its parent
-input or output grid. Objects keep their original cell positions, and all
-other cells are padded with `0`; no cropped matrices or coordinate offsets
-are returned.
+`input_matrix` and `output_matrix` remain the complete world canvases.
+Each instance matrix is cropped to its own nonzero bounding box, retaining
+internal zeros. The core, line, and curve instruction datasets use compact
+snapshots: `x` is the zero-based column and `y` is the zero-based row of the
+input bounding-box origin, `ori` is the numeric orientation, and `tag`
+replaces `shape` with shortened identifiers such as `l6747`.
+The instance's `orientation` metadata agrees with its snapshot's `ori`.
+Matrices already follow the canvas axes; composition does not rotate them.
 
-```
+Angles run clockwise from north: `N = 0`, `NE = 45`, `SE = 135`, `S = 180`,
+`SW = 225`, and `NW = 315`. Line orientations describe axes:
+horizontal is 90 and vertical is 0; endpoint and extension directions remain
+separate properties.
+
+| Dataset | Compact property mapping |
+| --- | --- |
+| Core | `p1`: vertex, `p2`: vertical segment, `p3`: horizontal segment, `p4`: extension |
+| Line | `p1`: initial endpoint position, `p2`: extension direction |
+| Curve | `p1`: vertex color, `p2`: rim color, `p3`: rim direction |
+
+Every instance has `input_value` before the class rule and `output_value`
+after it. Obtain the input snapshot using only the class declaration; the
+complete declaration set immediately applies the rules to new instances.
+Line `p2` and curve `p2`/`p3` are created by those rules and are absent from
+their input snapshots rather than filled with artificial defaults.
+
+Both snapshots keep `x` and `y` anchored to the input bounding box.
+In `dataset.core.json`, adding the exterior marker grows the output to
+3 by 3: subtract one from the output crop's x origin for `ori` 225 or 315,
+and from its y origin for `ori` 45 or 315. The other origins are unchanged.
+For lines, subtract one from x when `p2` is `left`, or from y when it is
+`up`; extensions to the right or down keep the input origin.
+For curves, subtract one from x for either direction, and from y only when
+`p3` is `up`. These explicit conversions replace separate position fields
+without moving the original cells. The inner marker in `dataset.core.2.json`
+does not change the crop origin.
+
+```json
 {
   "instances": [
     {
+      "instance_name": "obj0",
+      "orientation": 135,
       "input_instance_matrix": [
-        [0, 0, 0, 0, 8, 8, 0],
-        [0, 0, 0, 0, 0, 8, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
+        [0, 9],
+        [9, 9]
       ],
       "output_instance_matrix": [
-        [0, 0, 0, 0, 8, 8, 0],
-        [0, 0, 0, 0, 1, 8, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
+        [0, 9, 0],
+        [9, 9, 0],
+        [0, 0, 1]
       ]
     }
   ]
-  ...
 }
 ```
 
@@ -182,40 +217,46 @@ are returned.
 
 The LLM also represents identified instances in `nuc` lang. This step is crucial because this completes **knowledge packet**, which contains visual as well as logical representation of the instances.
 
-```
+```json
 {
   "instances": [
     {
+      "instance_name": "obj0",
+      "orientation": 135,
       "input_instance_matrix": [
-        [0, 0, 0, 0, 8, 8, 0],
-        [0, 0, 0, 0, 0, 8, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
+        [0, 9],
+        [9, 9]
       ],
       "output_instance_matrix": [
-        [0, 0, 0, 0, 8, 8, 0],
-        [0, 0, 0, 0, 1, 8, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
+        [0, 9, 0],
+        [9, 9, 0],
+        [0, 0, 1]
       ],
-      "input_code": "obj0 = Obj(8, 8, 8)",
+      "input_code": "obj0 = Obj(5, 1, 135, 9, 9, 9)",
+      "input_value": {
+        "id": "obj0",
+        "x": 5,
+        "y": 1,
+        "ori": 135,
+        "tag": "l6747",
+        "p1": 9,
+        "p2": 9,
+        "p3": 9,
+        "p4": 0
+      },
       "output_value": {
         "id": "obj0",
-        "shape": "label1234",
-        "vertex": 8,
-        "vertical_line_segment": 8,
-        "horizontal_line_segment": 8,
-        "extension": 1
+        "x": 5,
+        "y": 1,
+        "ori": 135,
+        "tag": "l6624",
+        "p1": 9,
+        "p2": 9,
+        "p3": 9,
+        "p4": 1
       }
     }
   ]
-  ...
 }
 ```
 
@@ -224,6 +265,11 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
 ##### 5. Extract instances from Test Input
 
 This step is slight different then from extracting instances in analysis because now the LLM has to use instances list from previous step as a reference.
+It returns cropped input objects with numeric `orientation` and
+`input_value` containing `x`, `y`, and `ori`,
+plus `output_dimensions: { "width": ..., "height": ... }` inferred from
+training pairs and the supplied input only. Expected test grids and their
+dimensions are never part of prediction requests.
 
 ##### 6. Initialize Nucleoid session for test input
 
@@ -237,7 +283,23 @@ For identified instances, the LLM represents instances in `nuc` lang, this is pa
 
 For each input instance in test, the LLM generates output instance since it has all information needed from **knowledge packets**.
 
-Finally, all instances can be merged for test result.
+Finally, `Matrix.place` expands each cropped output at its output crop origin
+onto the inferred canvas before `Matrix.merge` combines the masks. Zero is
+transparent; later nonzero cells win on overlap, as before. Invalid colors,
+ragged or padded object matrices, missing coordinates, incomplete segmentation,
+and out-of-bounds placements are rejected explicitly. An erased output object
+uses `[[0]]` with an explicit output position.
+
+`Matrix.crop` is the explicit conversion from a legacy full-canvas object mask
+to a cropped matrix and its position; `Matrix.place` is the inverse. Core, line,
+and curve instruction examples all use this positioned-object representation.
+Their full input/output grids remain unchanged.
+
+The same prediction path replays every training pair before predicting the
+held-out input. A training mismatch stops the run. Held-out predictions are
+frozen before expected outputs are accessed for exact-grid scoring, including
+shape. Each object executes with the learned declarations in a fresh Nucleoid
+process, so no training instance state carries into prediction.
 
 The run prints `Difference: N` after the result and expected matrices. Each
 different, missing, or extra cell adds one to the score: `0` means an exact
