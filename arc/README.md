@@ -41,10 +41,10 @@ type checking, linting, and offline inspection do not require model calls.
 
 ## Instruction datasets
 
-The synchronous `document()` function reads every JSON file alongside
-`instruct_dataset.ts` on each call, independently of the working directory.
+The synchronous `document()` function reads every JSON file in `src\dataset`,
+alongside `instruct_dataset.ts`, on each call, independently of the working directory.
 Files are sorted by name and serialized as one
-`{"instruct_dataset": [...]}` document, with a separate array entry per file.
+`{"datasets": [...]}` document, with a separate array entry per file.
 New files, including `dataset.core.2.json`, need no additional imports.
 Non-JSON files and subdirectories are ignored. An empty dataset directory,
 unreadable files, or malformed JSON fail explicitly; JSON errors name the file.
@@ -143,7 +143,7 @@ The LLM finds pattern for given training input and output data and creates decla
 ```json
 {
   "declarations": [
-    "class Obj(x: int, y: int, ori: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.ori = ori\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color\n    this.marker_color = 0",
+    "class Obj(x: int, y: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color\n    this.marker_color = 0",
     "if $Obj.vertex_color == 9 and $Obj.vertical_segment_color == 9 and $Obj.horizontal_segment_color == 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 1"
   ]
 }
@@ -158,13 +158,14 @@ Nucleoid session is initialized with the declarations in order to use for identi
 Based on declarations in `nuc` lang, the LLM extracts instances.
 `input_matrix` and `output_matrix` remain the complete world canvases.
 Each instance matrix is cropped to its own nonzero bounding box, retaining
-internal zeros. The core, line, and curve instruction datasets use compact
-snapshots: `x` is the zero-based column and `y` is the zero-based row of the
-input bounding-box origin, `ori` is the numeric orientation, and `tag`
-replaces `shape` with shortened identifiers such as `l6747`.
-Each instance also exposes `x`, `y`, and `ori` directly, matching
-`input_value`. These fields describe the input object, not the grown output
-crop; the compact `ori` field replaces the old `orientation` metadata.
+internal zeros. The core, line, and curve instruction datasets expose
+`input_x`, `output_x`, `input_y`, `output_y`, `input_orientation`, and
+`output_orientation` on each instance. The x/y fields give the zero-based
+column/row of the corresponding crop's origin; the orientation fields give
+each state's numeric angle. The current transformations preserve orientation,
+so their input and output angles match.
+Native snapshots use `x`, `y`, and `orientation`; `tag` replaces `shape`
+with shortened identifiers such as `l6747`.
 Matrices already follow the canvas axes; composition does not rotate them.
 
 Angles run clockwise from north: `N = 0`, `NE = 45`, `SE = 135`, `S = 180`,
@@ -187,15 +188,18 @@ Line `extension_direction` and curve `rim_color`/`rim_direction` are created
 by those rules and are absent from their input snapshots rather than filled
 with artificial defaults.
 
-Both snapshots keep `x` and `y` anchored to the input bounding box.
+Both native snapshots keep `x` and `y` anchored to the input bounding box;
+`output_x` and `output_y` record the output crop's origin instead.
 In `dataset.core.1.json`, adding the exterior marker grows the output to
-3 by 3: subtract one from the output crop's x origin for `ori` 225 or 315,
-and from its y origin for `ori` 45 or 315. The other origins are unchanged.
+3 by 3: subtract one from the input crop's x origin for `input_orientation`
+225 or 315, and from its y origin for `input_orientation` 45 or 315.
+The other origins are unchanged.
 For lines, subtract one from x when `extension_direction` is `left`, or from
 y when it is `up`; extensions to the right or down keep the input origin.
 For curves, subtract one from x for either direction, and from y only when
-`rim_direction` is `up`. These explicit conversions replace separate position
-fields without moving the original cells. The inner markers in
+`rim_direction` is `up`. These offsets are already recorded in `output_x`
+and `output_y`; do not apply them a second time during placement.
+The inner markers in
 `dataset.core.2.json`, `dataset.core.3.json`, and `dataset.core.4.json` do not
 change the crop origin.
 The third core dataset uses 4 by 4 color-2 corners with color-6 markers one
@@ -209,9 +213,12 @@ origin and dimensions; the layouts keep the resized objects separate.
   "instances": [
     {
       "instance_name": "obj0",
-      "x": 5,
-      "y": 1,
-      "ori": 135,
+      "input_x": 5,
+      "output_x": 5,
+      "input_y": 1,
+      "output_y": 1,
+      "input_orientation": 135,
+      "output_orientation": 135,
       "input_instance_matrix": [
         [0, 9],
         [9, 9]
@@ -235,9 +242,12 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
   "instances": [
     {
       "instance_name": "obj0",
-      "x": 5,
-      "y": 1,
-      "ori": 135,
+      "input_x": 5,
+      "output_x": 5,
+      "input_y": 1,
+      "output_y": 1,
+      "input_orientation": 135,
+      "output_orientation": 135,
       "input_instance_matrix": [
         [0, 9],
         [9, 9]
@@ -252,7 +262,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "id": "obj0",
         "x": 5,
         "y": 1,
-        "ori": 135,
+        "orientation": 135,
         "tag": "l6747",
         "vertex_color": 9,
         "vertical_segment_color": 9,
@@ -263,7 +273,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "id": "obj0",
         "x": 5,
         "y": 1,
-        "ori": 135,
+        "orientation": 135,
         "tag": "l6624",
         "vertex_color": 9,
         "vertical_segment_color": 9,
@@ -280,8 +290,9 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
 ##### 5. Extract instances from Test Input
 
 This step is slight different then from extracting instances in analysis because now the LLM has to use instances list from previous step as a reference.
-It returns cropped input objects with instance-level `x`, `y`, and numeric
-`ori`, matching the coordinates and orientation in `input_value`,
+It returns cropped input objects with instance-level `input_x`, `input_y`,
+and numeric `input_orientation`, matching the coordinates and `orientation`
+in `input_value`,
 plus `output_dimensions: { "width": ..., "height": ... }` inferred from
 training pairs and the supplied input only. Expected test grids and their
 dimensions are never part of prediction requests.

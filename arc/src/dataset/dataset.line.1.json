@@ -1,10 +1,10 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, ori: int, endpoint_position: str):\n    this.x = x\n    this.y = y\n    this.ori = ori\n    this.tag = 'l8001'\n    this.endpoint_position = endpoint_position",
-    "if $Obj.ori == 90 and $Obj.endpoint_position == 'left':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'",
-    "if $Obj.ori == 90 and $Obj.endpoint_position == 'right':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'",
-    "if $Obj.ori == 0 and $Obj.endpoint_position == 'up':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'",
-    "if $Obj.ori == 0 and $Obj.endpoint_position == 'down':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'"
+    "class Obj(x: int, y: int, orientation: int, endpoint_position: str):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l8001'\n    this.endpoint_position = endpoint_position",
+    "if $Obj.orientation == 90 and $Obj.endpoint_position == 'left':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'",
+    "if $Obj.orientation == 90 and $Obj.endpoint_position == 'right':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'",
+    "if $Obj.orientation == 0 and $Obj.endpoint_position == 'up':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'",
+    "if $Obj.orientation == 0 and $Obj.endpoint_position == 'down':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'"
   ],
   "dataset": [
     {
@@ -31,9 +31,12 @@
       "instances": [
         {
           "instance_name": "obj5262",
-          "x": 2,
-          "y": 0,
-          "ori": 90,
+          "input_x": 2,
+          "output_x": 2,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 90,
+          "output_orientation": 90,
           "input_instance_matrix": [
             [8, 6, 6]
           ],
@@ -41,14 +44,17 @@
             [8, 6, 6, 6]
           ],
           "input_code": "obj5262 = Obj(2, 0, 90, 'left')",
-          "input_value": {"id":"obj5262","x":2,"y":0,"ori":90,"tag":"l8001","endpoint_position":"left"},
-          "output_value": {"id":"obj5262","x":2,"y":0,"ori":90,"tag":"l4102","endpoint_position":"left","extension_direction":"right"}
+          "input_value": {"id":"obj5262","x":2,"y":0,"orientation":90,"tag":"l8001","endpoint_position":"left"},
+          "output_value": {"id":"obj5262","x":2,"y":0,"orientation":90,"tag":"l4102","endpoint_position":"left","extension_direction":"right"}
         },
         {
           "instance_name": "obj7957",
-          "x": 4,
-          "y": 5,
-          "ori": 90,
+          "input_x": 4,
+          "output_x": 3,
+          "input_y": 5,
+          "output_y": 5,
+          "input_orientation": 90,
+          "output_orientation": 90,
           "input_instance_matrix": [
             [6, 6, 8]
           ],
@@ -56,8 +62,8 @@
             [6, 6, 6, 8]
           ],
           "input_code": "obj7957 = Obj(4, 5, 90, 'right')",
-          "input_value": {"id":"obj7957","x":4,"y":5,"ori":90,"tag":"l8001","endpoint_position":"right"},
-          "output_value": {"id":"obj7957","x":4,"y":5,"ori":90,"tag":"l4102","endpoint_position":"right","extension_direction":"left"}
+          "input_value": {"id":"obj7957","x":4,"y":5,"orientation":90,"tag":"l8001","endpoint_position":"right"},
+          "output_value": {"id":"obj7957","x":4,"y":5,"orientation":90,"tag":"l4102","endpoint_position":"right","extension_direction":"left"}
         }
       ]
     },
@@ -85,9 +91,12 @@
       "instances": [
         {
           "instance_name": "obj8547",
-          "x": 0,
-          "y": 3,
-          "ori": 0,
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 3,
+          "output_y": 2,
+          "input_orientation": 0,
+          "output_orientation": 0,
           "input_instance_matrix": [
             [6],
             [6],
@@ -102,14 +111,17 @@
             [8]
           ],
           "input_code": "obj8547 = Obj(0, 3, 0, 'down')",
-          "input_value": {"id":"obj8547","x":0,"y":3,"ori":0,"tag":"l8001","endpoint_position":"down"},
-          "output_value": {"id":"obj8547","x":0,"y":3,"ori":0,"tag":"l6012","endpoint_position":"down","extension_direction":"up"}
+          "input_value": {"id":"obj8547","x":0,"y":3,"orientation":0,"tag":"l8001","endpoint_position":"down"},
+          "output_value": {"id":"obj8547","x":0,"y":3,"orientation":0,"tag":"l6012","endpoint_position":"down","extension_direction":"up"}
         },
         {
           "instance_name": "obj5705",
-          "x": 2,
-          "y": 5,
-          "ori": 90,
+          "input_x": 2,
+          "output_x": 2,
+          "input_y": 5,
+          "output_y": 5,
+          "input_orientation": 90,
+          "output_orientation": 90,
           "input_instance_matrix": [
             [8, 6, 6, 6]
           ],
@@ -117,8 +129,8 @@
             [8, 6, 6, 6, 6]
           ],
           "input_code": "obj5705 = Obj(2, 5, 90, 'left')",
-          "input_value": {"id":"obj5705","x":2,"y":5,"ori":90,"tag":"l8001","endpoint_position":"left"},
-          "output_value": {"id":"obj5705","x":2,"y":5,"ori":90,"tag":"l4102","endpoint_position":"left","extension_direction":"right"}
+          "input_value": {"id":"obj5705","x":2,"y":5,"orientation":90,"tag":"l8001","endpoint_position":"left"},
+          "output_value": {"id":"obj5705","x":2,"y":5,"orientation":90,"tag":"l4102","endpoint_position":"left","extension_direction":"right"}
         }
       ]
     },
@@ -146,9 +158,12 @@
       "instances": [
         {
           "instance_name": "obj6898",
-          "x": 3,
-          "y": 0,
-          "ori": 90,
+          "input_x": 3,
+          "output_x": 2,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 90,
+          "output_orientation": 90,
           "input_instance_matrix": [
             [6, 6, 6, 8]
           ],
@@ -156,14 +171,17 @@
             [6, 6, 6, 6, 8]
           ],
           "input_code": "obj6898 = Obj(3, 0, 90, 'right')",
-          "input_value": {"id":"obj6898","x":3,"y":0,"ori":90,"tag":"l8001","endpoint_position":"right"},
-          "output_value": {"id":"obj6898","x":3,"y":0,"ori":90,"tag":"l4102","endpoint_position":"right","extension_direction":"left"}
+          "input_value": {"id":"obj6898","x":3,"y":0,"orientation":90,"tag":"l8001","endpoint_position":"right"},
+          "output_value": {"id":"obj6898","x":3,"y":0,"orientation":90,"tag":"l4102","endpoint_position":"right","extension_direction":"left"}
         },
         {
           "instance_name": "obj6941",
-          "x": 1,
-          "y": 4,
-          "ori": 0,
+          "input_x": 1,
+          "output_x": 1,
+          "input_y": 4,
+          "output_y": 3,
+          "input_orientation": 0,
+          "output_orientation": 0,
           "input_instance_matrix": [
             [6],
             [6],
@@ -178,14 +196,17 @@
             [8]
           ],
           "input_code": "obj6941 = Obj(1, 4, 0, 'down')",
-          "input_value": {"id":"obj6941","x":1,"y":4,"ori":0,"tag":"l8001","endpoint_position":"down"},
-          "output_value": {"id":"obj6941","x":1,"y":4,"ori":0,"tag":"l6012","endpoint_position":"down","extension_direction":"up"}
+          "input_value": {"id":"obj6941","x":1,"y":4,"orientation":0,"tag":"l8001","endpoint_position":"down"},
+          "output_value": {"id":"obj6941","x":1,"y":4,"orientation":0,"tag":"l6012","endpoint_position":"down","extension_direction":"up"}
         },
         {
           "instance_name": "obj8615",
-          "x": 6,
-          "y": 2,
-          "ori": 0,
+          "input_x": 6,
+          "output_x": 6,
+          "input_y": 2,
+          "output_y": 2,
+          "input_orientation": 0,
+          "output_orientation": 0,
           "input_instance_matrix": [
             [8],
             [6],
@@ -200,8 +221,8 @@
             [6]
           ],
           "input_code": "obj8615 = Obj(6, 2, 0, 'up')",
-          "input_value": {"id":"obj8615","x":6,"y":2,"ori":0,"tag":"l8001","endpoint_position":"up"},
-          "output_value": {"id":"obj8615","x":6,"y":2,"ori":0,"tag":"l6012","endpoint_position":"up","extension_direction":"down"}
+          "input_value": {"id":"obj8615","x":6,"y":2,"orientation":0,"tag":"l8001","endpoint_position":"up"},
+          "output_value": {"id":"obj8615","x":6,"y":2,"orientation":0,"tag":"l6012","endpoint_position":"up","extension_direction":"down"}
         }
       ]
     }
