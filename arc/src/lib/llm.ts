@@ -1,10 +1,11 @@
 import { v4 as uuid } from "uuid";
-import * as instruct_dataset from "../dataset";
+import * as dataset from "../dataset";
 import * as openrouter from "./openrouter";
 import type { GenerateOptions } from "../types";
 
 export async function generate<T = unknown>({
   messages = [],
+  document = true,
 }: GenerateOptions): Promise<T> {
   messages.unshift({
     role: "user",
@@ -13,10 +14,12 @@ export async function generate<T = unknown>({
       ${uuid()}
     `,
   });
-  messages.unshift({
-    role: "user",
-    content: instruct_dataset.document(),
-  });
+  if (document) {
+    messages.unshift({
+      role: "user",
+      content: dataset.document(),
+    });
+  }
 
   return openrouter.generate<T>({
     messages,

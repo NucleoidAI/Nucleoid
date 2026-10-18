@@ -105,7 +105,7 @@ export async function start(): Promise<Grid> {
 
   let test_index = 0;
 
-  let result_matrix: Grid = Array.from(
+  const result_matrix: Grid = Array.from(
     { length: test_output_matrix.length },
     () => Array<number>(test_output_matrix[0].length).fill(0)
   );
@@ -126,7 +126,7 @@ export async function start(): Promise<Grid> {
       output_value,
     });
 
-    result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
+    // result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
 
   console.debug("");

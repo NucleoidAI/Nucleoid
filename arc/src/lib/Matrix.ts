@@ -8,6 +8,39 @@ export function init(length: number): void {
   _cols = length;
 }
 
+export function crop(matrix: Grid): Grid {
+  if (!Array.isArray(matrix)) {
+    throw new Error("Matrix must be an array for cropping");
+  }
+  const rows = matrix.length;
+  const cols = matrix[0]?.length ?? 0;
+  let top = rows;
+  let bottom = -1;
+  let left = cols;
+  let right = -1;
+
+  for (let y = 0; y < rows; y++) {
+    const row = matrix[y];
+    if (!Array.isArray(row) || row.length !== cols) {
+      throw new Error("Matrix must be rectangular for cropping");
+    }
+    for (let x = 0; x < cols; x++) {
+      const value = row[x];
+      if (!Number.isFinite(value)) {
+        throw new Error("Matrix must contain finite numbers for cropping");
+      }
+      if (value === 0) continue;
+      top = Math.min(top, y);
+      bottom = y;
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+    }
+  }
+
+  if (bottom === -1) return [];
+  return matrix.slice(top, bottom + 1).map((row) => row.slice(left, right + 1));
+}
+
 export function merge(...matrices: Grid[]): Grid {
   const numRows = matrices[0].length;
   const numCols = matrices[0][0].length;

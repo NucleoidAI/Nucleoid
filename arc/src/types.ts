@@ -37,4 +37,5 @@ export interface Message {
 
 export interface GenerateOptions {
   messages?: Message[];
+  document?: boolean;
 }

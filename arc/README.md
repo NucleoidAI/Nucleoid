@@ -316,10 +316,13 @@ ragged or padded object matrices, missing coordinates, incomplete segmentation,
 and out-of-bounds placements are rejected explicitly. An erased output object
 uses `[[0]]` with an explicit output position.
 
-`Matrix.crop` is the explicit conversion from a legacy full-canvas object mask
-to a cropped matrix and its position; `Matrix.place` is the inverse. Core, line,
-and curve instruction examples all use this positioned-object representation.
-Their full input/output grids remain unchanged.
+`Matrix.crop(matrix)` returns a new matrix containing the smallest rectangle
+around all nonzero cells. Only outer zero-padding is removed; internal zeros
+and empty rows or columns between occupied cells are preserved. Empty and
+all-zero matrices return `[]`. The input is not modified. Ragged matrices and
+non-finite or nonnumeric cells are rejected explicitly.
+This standalone utility does not change the full-size instance masks or return
+position metadata; callers must retain the original position separately.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
