@@ -12,9 +12,18 @@ and follow the shared instruction index in `.github/copilot-instructions.md`.
 Implement justified improvements directly; do not stop at recommendations.
 Perform one bounded pass over the caller's completed code changes.
 
+## ARC-only skip
+
+If every task-owned changed path is under `arc/`, you may skip the pass and
+return a concise ARC-only skipped result without reviewing or editing code.
+This includes tasks that change handwritten ARC code. Determine eligibility
+from the caller's task-owned diff, not unrelated pre-existing worktree changes.
+Mixed-scope tasks follow the normal requirements. Skipping this pass does not
+skip the task's applicable formatting, type checking, linting, or other validation.
+
 ## Scope
 
-- Read `.github/copilot-instructions.md` and all instruction files it indexes, `Cargo.toml`, and the relevant specification and tests before editing.
+- For tasks requiring a pass, read `.github/copilot-instructions.md` and all instruction files it indexes, `Cargo.toml`, and the relevant specification and tests before editing.
 - Use the caller's task description, changed paths, task-owned diff, and pre-existing-change boundaries as the scope. Do not treat every staged, unstaged, or untracked change as yours.
 - Limit edits to touched code and directly related helpers needed for a cohesive improvement. Preserve other contributors' changes.
 - If the caller has not supplied enough context to identify the task-owned changes, report the missing scope to the caller and stop without editing.

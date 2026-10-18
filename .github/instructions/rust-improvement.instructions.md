@@ -10,7 +10,16 @@ Keep improvements focused on touched code and directly related helpers, proporti
 
 ## Required post-change agent
 
-After completing a code-changing task, the coordinating agent must delegate one synchronous pass to `rust-improver` before final validation and handoff. This applies to features, bug fixes, and refactors. Skip documentation-, generated-data-, and agent-configuration-only tasks when no handwritten code or Cargo manifest has changed.
+For code-changing tasks not covered by the skip rules below, the coordinating agent must delegate one synchronous pass to `rust-improver` before final validation and handoff. This applies to features, bug fixes, and refactors.
+
+Skip documentation-, generated-data-, and agent-configuration-only tasks when no handwritten code or Cargo manifest has changed.
+
+The coordinating agent may also omit the pass when every task-owned changed
+path is under `arc/`, including handwritten ARC code changes. Determine this
+from the task-owned diff, not unrelated pre-existing worktree changes.
+Mixed-scope tasks follow the normal requirements. This exception skips only
+the improvement agent, not applicable formatting, type checking, linting, or
+other validation.
 
 Use the Copilot CLI profile at `.github/agents/rust-improver.agent.md`.
 
