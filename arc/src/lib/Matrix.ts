@@ -1,13 +1,5 @@
 import type { Grid } from "../types";
 
-let _rows = 0;
-let _cols = 0;
-
-export function init(length: number): void {
-  _rows = length;
-  _cols = length;
-}
-
 export function crop(matrix: Grid): Grid {
   if (!Array.isArray(matrix)) {
     throw new Error("Matrix must be an array for cropping");
@@ -39,6 +31,46 @@ export function crop(matrix: Grid): Grid {
 
   if (bottom === -1) return [];
   return matrix.slice(top, bottom + 1).map((row) => row.slice(left, right + 1));
+}
+
+export function pad(matrix: Grid, rows: number, cols: number): Grid {
+  if (!Array.isArray(matrix)) {
+    throw new Error("Matrix must be an array for padding");
+  }
+  if (
+    !Number.isSafeInteger(rows) ||
+    !Number.isSafeInteger(cols) ||
+    rows < 0 ||
+    cols < 0
+  ) {
+    throw new Error("Padding dimensions must be non-negative safe integers");
+  }
+  const sourceRows = matrix.length;
+  const sourceCols = matrix[0]?.length ?? 0;
+  if (sourceRows > rows || sourceCols > cols) {
+    throw new Error("Padding dimensions must not be smaller than the matrix");
+  }
+  const top = Math.floor((rows - sourceRows) / 2);
+  const left = Math.floor((cols - sourceCols) / 2);
+  const result = Array.from({ length: rows }, () =>
+    Array<number>(cols).fill(0)
+  );
+
+  for (let y = 0; y < sourceRows; y++) {
+    const row = matrix[y];
+    if (!Array.isArray(row) || row.length !== sourceCols) {
+      throw new Error("Matrix must be rectangular for padding");
+    }
+    for (let x = 0; x < sourceCols; x++) {
+      const value = row[x];
+      if (!Number.isFinite(value)) {
+        throw new Error("Matrix must contain finite numbers for padding");
+      }
+      result[y + top][x + left] = value;
+    }
+  }
+
+  return result;
 }
 
 export function merge(...matrices: Grid[]): Grid {
@@ -88,74 +120,8 @@ export function difference(matrix1: Grid, matrix2: Grid): number {
   return mismatches;
 }
 
-export function subtract(matrix1: Grid, matrix2: Grid): Grid {
-  const rows = matrix1.length;
-  const cols = matrix1[0].length;
-
-  // Ensure both matrices have the same dimensions
-  if (matrix2.length !== rows || matrix2[0].length !== cols) {
-    throw new Error("Matrices must have the same dimensions for subtraction");
-  }
-
-  // Initialize a result matrix
-  const result = Array.from({ length: rows }, () =>
-    Array<number>(cols).fill(0)
-  );
-
-  // Perform element-wise subtraction
-  for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < cols; j++) {
-      const num = matrix1[i][j] - matrix2[i][j];
-      result[i][j] = num > 0 ? num : 0;
-    }
-  }
-
-  return result;
-}
-
-export function encode(matrix: Grid): Grid {
-  return matrix;
-}
-
-export function decode(matrix: Grid): Grid {
-  return matrix;
-}
-
-// Experimental encoding/decoding
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-function sparse_encode(matrix: Grid): string {
-  const result: string[] = [];
-
-  for (let i = 0; i < matrix.length; i++) {
-    for (let j = 0; j < matrix[i].length; j++) {
-      if (matrix[i][j] !== 0) {
-        result.push(`${matrix[i][j]}@${i},${j}`);
-      }
-    }
-  }
-
-  return result.join("-");
-}
-
-function sparse_decode(string: string): Grid {
-  const matrix = Array.from({ length: _rows }, () =>
-    Array<number>(_cols).fill(0)
-  );
-
-  const entries = string.split("-");
-
-  entries.forEach((entry) => {
-    const [value, position] = entry.split("@");
-    const [row, col] = position.split(",").map(Number);
-    matrix[row][col] = Number(value);
-  });
-
-  return matrix;
-}
-
 export function toString(matrix: Grid): void {
-  decode(matrix).forEach((row) => {
+  matrix.forEach((row) => {
     console.debug(`[${row.join(",")}]`);
   });
 }

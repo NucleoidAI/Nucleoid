@@ -135,7 +135,7 @@ export async function output_instance_matrix({
             }))
           )}
           input_instance_matrix:
-          ${JSON.stringify(input_instance_matrix)}
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           input_value:
           ${JSON.stringify(input_value)}
           output_value:
@@ -151,6 +151,13 @@ export async function output_instance_matrix({
 
   console.debug("output_instance_matrix:");
   Matrix.toString(output_instance_matrix);
+  console.debug("");
+  const output_instance_padded_matrix = Matrix.pad(
+    output_instance_matrix,
+    test_input_matrix.length,
+    test_input_matrix[0].length
+  );
+  Matrix.toString(output_instance_padded_matrix);
 
-  return { output_instance_matrix };
+  return { output_instance_matrix: output_instance_padded_matrix };
 }

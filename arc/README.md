@@ -317,12 +317,21 @@ and out-of-bounds placements are rejected explicitly. An erased output object
 uses `[[0]]` with an explicit output position.
 
 `Matrix.crop(matrix)` returns a new matrix containing the smallest rectangle
-around all nonzero cells. Only outer zero-padding is removed; internal zeros
-and empty rows or columns between occupied cells are preserved. Empty and
-all-zero matrices return `[]`. The input is not modified. Ragged matrices and
-non-finite or nonnumeric cells are rejected explicitly.
+around all nonzero cells. All-zero borders are removed from all four sides:
+top, bottom, left, and right. Internal zeros and empty rows or columns between
+occupied cells are preserved. Empty and all-zero matrices return `[]`. The input
+is not modified. Ragged matrices and non-finite or nonnumeric cells are rejected
+explicitly.
 This standalone utility does not change the full-size instance masks or return
 position metadata; callers must retain the original position separately.
+
+`Matrix.pad(matrix, rows, cols)` returns a new matrix of the requested dimensions,
+centering the input and filling the surrounding cells with zeros. Any extra odd
+row or column of padding goes on the bottom or right. The input is not modified.
+Empty matrices can be padded to an all-zero canvas. Invalid matrices, negative
+or non-integer dimensions, and dimensions smaller than the input are rejected.
+Centering does not restore the original position discarded by cropping or
+automatically change full-size instance masks.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
