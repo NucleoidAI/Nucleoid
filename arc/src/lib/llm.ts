@@ -18,7 +18,7 @@ export async function generate<T = unknown>({
     messages.unshift({
       role: "assistant",
       content: `
-        few_shot_dataset:
+        dataset:
         ${dataset.document()}
       `,
     });
