@@ -22,10 +22,17 @@ export async function instances({
   }>({
     messages: [
       {
-        role: "user",
+        role: "assistant",
         content: `
           train_dataset:
           ${JSON.stringify(train_dataset)}
+          input_matrix:
+          ${JSON.stringify(test_input_matrix)}
+        `,
+      },
+      {
+        role: "user",
+        content: `
           input_matrix:
           ${JSON.stringify(test_input_matrix)}
           json_format:
@@ -65,10 +72,8 @@ export async function value({
   const { input_code } = await llm.generate<{ input_code: string }>({
     messages: [
       {
-        role: "user",
+        role: "assistant",
         content: `
-          instance_name:
-          ${instance_name}
           train_instances:
           ${JSON.stringify(
             train_dataset.dataset.map(({ instances }) => ({
@@ -89,6 +94,11 @@ export async function value({
               ),
             }))
           )}
+        `,
+      },
+      {
+        role: "user",
+        content: `
           instance_name:
           ${instance_name}
           input_instances:
@@ -146,9 +156,9 @@ export async function output_instance_matrix({
   }>({
     messages: [
       {
-        role: "user",
+        role: "assistant",
         content: `
-          train_instances:
+          train_dataset:
           ${JSON.stringify(
             train_dataset.dataset.map(({ instances }) => ({
               instances: instances.map(
@@ -166,6 +176,11 @@ export async function output_instance_matrix({
               ),
             }))
           )}
+        `,
+      },
+      {
+        role: "user",
+        content: `
           input_instances:
           ${JSON.stringify(
             input_instances.map(
