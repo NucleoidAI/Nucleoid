@@ -73,11 +73,13 @@ export async function value({
             train_dataset.dataset.map(({ instances }) => ({
               instances: instances.map(
                 ({
+                  input_code,
                   input_value,
                   input_instance_matrix,
                   output_value,
                   output_instance_matrix,
                 }) => ({
+                  input_code,
                   input_value,
                   input_instance_matrix: Matrix.crop(input_instance_matrix),
                   output_value,
