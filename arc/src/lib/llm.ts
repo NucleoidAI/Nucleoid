@@ -8,7 +8,7 @@ export async function generate<T = unknown>({
   document = true,
 }: GenerateOptions): Promise<T> {
   messages.unshift({
-    role: "user",
+    role: "assistant",
     content: `
       control_id:
       ${uuid()}
@@ -16,8 +16,11 @@ export async function generate<T = unknown>({
   });
   if (document) {
     messages.unshift({
-      role: "user",
-      content: dataset.document(),
+      role: "assistant",
+      content: `
+        few_shot_dataset:
+        ${dataset.document()}
+      `,
     });
   }
 

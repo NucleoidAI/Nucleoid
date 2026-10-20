@@ -63,11 +63,12 @@ export async function value({
 
   console.log("Calculating test value...");
   const { input_code } = await llm.generate<{ input_code: string }>({
-    document: false,
     messages: [
       {
         role: "user",
         content: `
+          instance_name:
+          ${instance_name}
           train_instances:
           ${JSON.stringify(
             train_dataset.dataset.map(({ instances }) => ({
@@ -143,7 +144,6 @@ export async function output_instance_matrix({
   const { output_instance_matrix } = await llm.generate<{
     output_instance_matrix: Grid;
   }>({
-    document: false,
     messages: [
       {
         role: "user",
