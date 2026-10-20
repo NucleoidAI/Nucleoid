@@ -28,6 +28,10 @@ export interface TrainingDataset extends TrainingInput {
 
 export interface TestInstance {
   input_instance_matrix: Grid;
+  output_instance_matrix: Grid;
+  input_code: string;
+  input_value: unknown;
+  output_value: unknown;
 }
 
 export interface Message {

@@ -51,72 +51,24 @@ export async function instances({
 export async function value({
   instance_name,
   train_dataset,
+  input_instances,
   input_instance_matrix,
 }: {
   instance_name: string;
   train_dataset: TrainingDataset;
+  input_instances: TestInstance[];
   input_instance_matrix: Grid;
 }): Promise<{ input_value: unknown; output_value: unknown }> {
+  const { x, y } = Matrix.locate(input_instance_matrix);
+
   console.log("Calculating test value...");
   const { input_code } = await llm.generate<{ input_code: string }>({
-    messages: [
-      {
-        role: "user",
-        content: `
-          instance_name:
-          ${instance_name}
-          train_dataset:
-          ${JSON.stringify(train_dataset)}
-          input_instance_matrix:
-          ${JSON.stringify(input_instance_matrix)}
-          json_format:
-          { "input_code": <INPUT_CODE> }
-        `,
-      },
-    ],
-  });
-
-  console.log("Creating test instance in Nucleoid...");
-  const input_value = await nucleoid.run(
-    [train_dataset.declarations[0], input_code].join("\n\n")
-  );
-  const output_value = await nucleoid.run(
-    [...train_dataset.declarations, input_code].join("\n\n")
-  );
-
-  console.debug("input_code:");
-  console.debug(input_code);
-  console.debug("input_value:");
-  console.debug(input_value);
-  console.debug("output_value:");
-  console.debug(output_value);
-
-  return { input_value, output_value };
-}
-
-export async function output_instance_matrix({
-  test_input_matrix,
-  train_dataset,
-  input_instance_matrix,
-  input_value,
-  output_value,
-}: {
-  test_input_matrix: Grid;
-  train_dataset: TrainingDataset;
-  input_instance_matrix: Grid;
-  input_value: unknown;
-  output_value: unknown;
-}): Promise<{ output_instance_matrix: Grid }> {
-  console.log("Extracting test output_instance_matrix...");
-  const { output_instance_matrix } = await llm.generate<{
-    output_instance_matrix: Grid;
-  }>({
     document: false,
     messages: [
       {
         role: "user",
         content: `
-          instances:
+          train_instances:
           ${JSON.stringify(
             train_dataset.dataset.map(({ instances }) => ({
               instances: instances.map(
@@ -133,6 +85,100 @@ export async function output_instance_matrix({
                 })
               ),
             }))
+          )}
+          instance_name:
+          ${instance_name}
+          input_instances:
+          ${JSON.stringify(input_instances)}
+          input_instance_matrix:
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
+          input_instance_location:
+          { "x": ${x}, "y": ${y} }
+          json_format:
+          { "input_code": <INPUT_CODE> }
+        `,
+      },
+    ],
+  });
+
+  console.debug("input_code:");
+  console.debug(input_code);
+
+  console.log("Creating test instance in Nucleoid...");
+  const input_value = await nucleoid.run(
+    [train_dataset.declarations[0], input_code].join("\n\n")
+  );
+  const output_value = await nucleoid.run(
+    [...train_dataset.declarations, input_code].join("\n\n")
+  );
+
+  console.debug("input_value:");
+  console.debug(input_value);
+  console.debug("output_value:");
+  console.debug(output_value);
+
+  return { input_value, output_value };
+}
+
+export async function output_instance_matrix({
+  test_input_matrix,
+  train_dataset,
+  input_instances,
+  input_instance_matrix,
+  input_value,
+  output_value,
+}: {
+  test_input_matrix: Grid;
+  train_dataset: TrainingDataset;
+  input_instances: TestInstance[];
+  input_instance_matrix: Grid;
+  input_value: unknown;
+  output_value: unknown;
+}): Promise<{ output_instance_matrix: Grid }> {
+  const { x: left, y: top } = output_value as { x: number; y: number };
+
+  console.log("Extracting test output_instance_matrix...");
+  const { output_instance_matrix } = await llm.generate<{
+    output_instance_matrix: Grid;
+  }>({
+    document: false,
+    messages: [
+      {
+        role: "user",
+        content: `
+          train_instances:
+          ${JSON.stringify(
+            train_dataset.dataset.map(({ instances }) => ({
+              instances: instances.map(
+                ({
+                  input_value,
+                  input_instance_matrix,
+                  output_value,
+                  output_instance_matrix,
+                }) => ({
+                  input_value,
+                  input_instance_matrix: Matrix.crop(input_instance_matrix),
+                  output_value,
+                  output_instance_matrix: Matrix.crop(output_instance_matrix),
+                })
+              ),
+            }))
+          )}
+          input_instances:
+          ${JSON.stringify(
+            input_instances.map(
+              ({
+                input_value,
+                input_instance_matrix,
+                output_value,
+                output_instance_matrix,
+              }) => ({
+                input_value,
+                input_instance_matrix: Matrix.crop(input_instance_matrix),
+                output_value,
+                output_instance_matrix: Matrix.crop(output_instance_matrix),
+              })
+            )
           )}
           input_instance_matrix:
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
@@ -151,12 +197,16 @@ export async function output_instance_matrix({
 
   console.debug("output_instance_matrix:");
   Matrix.toString(output_instance_matrix);
-  console.debug("");
+
   const output_instance_padded_matrix = Matrix.pad(
     output_instance_matrix,
     test_input_matrix.length,
-    test_input_matrix[0].length
+    test_input_matrix[0].length,
+    left,
+    top
   );
+
+  console.debug("");
   Matrix.toString(output_instance_padded_matrix);
 
   return { output_instance_matrix: output_instance_padded_matrix };

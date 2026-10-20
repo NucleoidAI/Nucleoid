@@ -110,19 +110,30 @@ export async function start(): Promise<Grid> {
     () => Array<number>(test_output_matrix[0].length).fill(0)
   );
 
+  const input_instances = [];
+
   for (const { input_instance_matrix } of instances) {
     const { input_value, output_value } = await visualizer.value({
       instance_name: `obj${test_index++}`,
       train_dataset,
+      input_instances,
       input_instance_matrix,
     });
 
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
       test_input_matrix,
       train_dataset,
+      input_instances,
       input_instance_matrix,
       input_value,
       output_value,
+    });
+
+    input_instances.push({
+      input_value,
+      input_instance_matrix,
+      output_value,
+      output_instance_matrix,
     });
 
     result_matrix = Matrix.merge(result_matrix, output_instance_matrix);

@@ -1,6 +1,14 @@
 import type { Grid } from "../types";
 
 export function crop(matrix: Grid): Grid {
+  return locate(matrix).matrix;
+}
+
+export function locate(matrix: Grid): {
+  matrix: Grid;
+  x: number;
+  y: number;
+} {
   if (!Array.isArray(matrix)) {
     throw new Error("Matrix must be an array for cropping");
   }
@@ -29,11 +37,23 @@ export function crop(matrix: Grid): Grid {
     }
   }
 
-  if (bottom === -1) return [];
-  return matrix.slice(top, bottom + 1).map((row) => row.slice(left, right + 1));
+  if (bottom === -1) return { matrix: [], x: 0, y: 0 };
+  return {
+    matrix: matrix
+      .slice(top, bottom + 1)
+      .map((row) => row.slice(left, right + 1)),
+    x: left,
+    y: top,
+  };
 }
 
-export function pad(matrix: Grid, rows: number, cols: number): Grid {
+export function pad(
+  matrix: Grid,
+  rows: number,
+  cols: number,
+  left: number,
+  top: number
+): Grid {
   if (!Array.isArray(matrix)) {
     throw new Error("Matrix must be an array for padding");
   }
@@ -45,13 +65,22 @@ export function pad(matrix: Grid, rows: number, cols: number): Grid {
   ) {
     throw new Error("Padding dimensions must be non-negative safe integers");
   }
+  if (
+    !Number.isSafeInteger(left) ||
+    !Number.isSafeInteger(top) ||
+    left < 0 ||
+    top < 0
+  ) {
+    throw new Error("Padding offsets must be non-negative safe integers");
+  }
   const sourceRows = matrix.length;
   const sourceCols = matrix[0]?.length ?? 0;
   if (sourceRows > rows || sourceCols > cols) {
     throw new Error("Padding dimensions must not be smaller than the matrix");
   }
-  const top = Math.floor((rows - sourceRows) / 2);
-  const left = Math.floor((cols - sourceCols) / 2);
+  if (left > cols - sourceCols || top > rows - sourceRows) {
+    throw new Error("Matrix placement exceeds the padding dimensions");
+  }
   const result = Array.from({ length: rows }, () =>
     Array<number>(cols).fill(0)
   );

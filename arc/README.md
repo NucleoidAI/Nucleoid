@@ -323,15 +323,23 @@ occupied cells are preserved. Empty and all-zero matrices return `[]`. The input
 is not modified. Ragged matrices and non-finite or nonnumeric cells are rejected
 explicitly.
 This standalone utility does not change the full-size instance masks or return
-position metadata; callers must retain the original position separately.
+position metadata. Use `Matrix.locate` to retain the original position with
+the crop.
 
-`Matrix.pad(matrix, rows, cols)` returns a new matrix of the requested dimensions,
-centering the input and filling the surrounding cells with zeros. Any extra odd
-row or column of padding goes on the bottom or right. The input is not modified.
-Empty matrices can be padded to an all-zero canvas. Invalid matrices, negative
-or non-integer dimensions, and dimensions smaller than the input are rejected.
-Centering does not restore the original position discarded by cropping or
-automatically change full-size instance masks.
+`Matrix.locate(matrix)` returns `{ matrix, x, y }`, pairing the same tight crop
+with its zero-based top-left position in the original matrix: `x` is the column
+and `y` is the row. Empty and all-zero matrices return
+`{ matrix: [], x: 0, y: 0 }`. It uses the same validation as `Matrix.crop` and
+does not modify the input. For a located result,
+`Matrix.pad(result.matrix, rows, cols, result.x, result.y)` restores the crop
+to its original position on a canvas with the supplied dimensions.
+
+`Matrix.pad(matrix, rows, cols, left, top)` returns a new matrix of the requested
+dimensions, placing the input at the required zero-based column and row offsets
+and filling the remaining cells with zeros. It does not center or modify the
+input. Empty matrices can be padded to an all-zero canvas. Invalid matrices,
+dimensions or offsets that are not non-negative safe integers, and placements
+that do not fit inside the requested dimensions are rejected.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
