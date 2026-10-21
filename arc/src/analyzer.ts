@@ -13,7 +13,7 @@ export async function declarations({ train_dataset }) {
           train_dataset:
           ${JSON.stringify(train_dataset)}
           json_format:
-          { "declarations": <NUC_DECLARATIONS> }
+          { "declarations": <DECLARATIONS> }
         `,
       },
     ],
@@ -80,7 +80,7 @@ export async function value({
           instance_name:
           ${instance_name}
           declarations:
-          ${declarations.join("\n")}
+          ${JSON.stringify(declarations)}
           input_instance_matrix:
           ${JSON.stringify(input_instance_matrix)}
           output_instance_matrix:

@@ -46,7 +46,7 @@ export async function instances({
           json_format:
           {
             "instances": [{
-              "input_instance_matrix": <INSTANCE_MATRIX>
+              "input_instance_matrix": <INPUT_INSTANCE_MATRIX>
             }]
           }
         `,
@@ -112,7 +112,7 @@ export async function value({
           input_y: ${y}
           json_format:
           {
-            "orientation": <INPUT_ORIENTATION>,
+            "orientation": <ORIENTATION>,
             "input_code": <INPUT_CODE>
           }
         `,
@@ -147,7 +147,7 @@ export async function output_instance_matrix({
   input_value,
   output_value,
 }) {
-  const { x: left, y: top } = output_value;
+  const { x, y } = output_value;
 
   console.log("Extracting test output_instance_matrix...");
   const { output_instance_matrix } = await llm.generate({
@@ -194,10 +194,10 @@ export async function output_instance_matrix({
       {
         role: "user",
         content: `
-          input_instance_matrix:
-          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           input_value:
           ${JSON.stringify(input_value)}
+          input_instance_matrix:
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           output_value:
           ${JSON.stringify(output_value)}
           json_format:
@@ -216,8 +216,8 @@ export async function output_instance_matrix({
     output_instance_matrix,
     test_input_matrix.length,
     test_input_matrix[0].length,
-    left,
-    top
+    x,
+    y
   );
 
   console.debug("");
