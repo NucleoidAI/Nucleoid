@@ -11,7 +11,6 @@ export async function generate({ messages = [] }) {
     url: "https://openrouter.ai/api/v1/chat/completions",
     headers: {
       "Content-Type": "application/json",
-      "X-OpenRouter-Cache": "false",
       Authorization: `Bearer ${apiKey}`,
     },
     data: {
@@ -26,6 +25,10 @@ export async function generate({ messages = [] }) {
       presence_penalty: 0,
       reasoning: { enabled: false },
       response_format: { type: "json_object" },
+      provider: {
+        only: ["deepinfra/bf16"],
+        allow_fallbacks: false,
+      },
     },
   }).catch((error) => {
     if (!axios.isAxiosError(error)) {

@@ -99,6 +99,7 @@ export async function start() {
 
   const { instances } = await visualizer.instances({
     train_dataset,
+    declarations,
     test_input_matrix,
   });
 
@@ -112,8 +113,9 @@ export async function start() {
 
   for (const { input_instance_matrix } of instances) {
     const { input_value, output_value } = await visualizer.value({
-      instance_name: `obj${test_index++}`,
+      declarations,
       train_dataset,
+      instance_name: `obj${test_index++}`,
       input_instances,
       input_instance_matrix,
     });

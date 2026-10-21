@@ -27,5 +27,5 @@ export function document() {
     }
   });
 
-  return JSON.stringify({ datasets });
+  return [...datasets];
 }

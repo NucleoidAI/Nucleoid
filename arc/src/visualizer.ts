@@ -2,7 +2,11 @@ import * as nucleoid from "./lib/nucleoid";
 import * as Matrix from "./lib/Matrix";
 import * as llm from "./lib/llm";
 
-export async function instances({ train_dataset, test_input_matrix }) {
+export async function instances({
+  train_dataset,
+  declarations,
+  test_input_matrix,
+}) {
   console.log("Analyzing test_input_matrix...");
   console.log("");
 
@@ -15,10 +19,23 @@ export async function instances({ train_dataset, test_input_matrix }) {
       {
         role: "assistant",
         content: `
+          declarations:
+          ${JSON.stringify(declarations)}
           train_dataset:
-          ${JSON.stringify(train_dataset)}
-          input_matrix:
-          ${JSON.stringify(test_input_matrix)}
+          ${JSON.stringify(
+            train_dataset.dataset.map(
+              ({ input_matrix, output_matrix, instances }) => ({
+                input_matrix,
+                output_matrix,
+                instances: instances.map(
+                  ({ input_instance_matrix, output_instance_matrix }) => ({
+                    input_instance_matrix,
+                    output_instance_matrix,
+                  })
+                ),
+              })
+            )
+          )}
         `,
       },
       {
@@ -47,8 +64,9 @@ export async function instances({ train_dataset, test_input_matrix }) {
 }
 
 export async function value({
-  instance_name,
+  declarations,
   train_dataset,
+  instance_name,
   input_instances,
   input_instance_matrix,
 }) {
@@ -60,6 +78,8 @@ export async function value({
       {
         role: "assistant",
         content: `
+          declarations:
+          ${JSON.stringify(declarations)}
           train_instances:
           ${JSON.stringify(
             train_dataset.dataset.map(({ instances }) => ({
@@ -80,6 +100,8 @@ export async function value({
               ),
             }))
           )}
+          input_instances:
+          ${JSON.stringify(input_instances)}
         `,
       },
       {
@@ -87,14 +109,17 @@ export async function value({
         content: `
           instance_name:
           ${instance_name}
-          input_instances:
-          ${JSON.stringify(input_instances)}
           input_instance_matrix:
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           input_instance_location:
           { "x": ${x}, "y": ${y} }
           json_format:
-          { "input_code": <INPUT_CODE> }
+          {
+            "input_x": <INPUT_X>,
+            "input_y": <INPUT_Y>,
+            "input_orientation": <INPUT_ORIENTATION>,
+            "input_code": <INPUT_CODE>
+          }
         `,
       },
     ],
@@ -153,12 +178,7 @@ export async function output_instance_matrix({
               ),
             }))
           )}
-        `,
-      },
-      {
-        role: "user",
-        content: `
-          context:
+          input_instances:
           ${JSON.stringify(
             input_instances.map(
               ({
@@ -174,6 +194,11 @@ export async function output_instance_matrix({
               })
             )
           )}
+        `,
+      },
+      {
+        role: "user",
+        content: `
           input_instance_matrix:
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           input_value:

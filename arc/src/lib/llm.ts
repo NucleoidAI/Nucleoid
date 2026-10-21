@@ -3,6 +3,15 @@ import * as dataset from "../dataset";
 import * as openrouter from "./openrouter";
 
 export async function generate({ messages = [], document = true }) {
+  if (document) {
+    messages.unshift({
+      role: "assistant",
+      content: `
+        instruct_dataset:
+        ${JSON.stringify(dataset.document())}
+      `,
+    });
+  }
   messages.unshift({
     role: "assistant",
     content: `
@@ -10,15 +19,6 @@ export async function generate({ messages = [], document = true }) {
       ${uuid()}
     `,
   });
-  if (document) {
-    messages.unshift({
-      role: "assistant",
-      content: `
-        dataset:
-        ${dataset.document()}
-      `,
-    });
-  }
 
   return openrouter.generate({
     messages,
