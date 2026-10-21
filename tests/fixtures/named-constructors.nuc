@@ -1,0 +1,9 @@
+class Base(*, a: int, b):
+    this.a = a
+    this.b = b
+class Pair: Base
+    pass
+pair = new Pair(b=2, a=1)
+assert(pair.a, 1)
+assert(pair.b, 2)
+pair

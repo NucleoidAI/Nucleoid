@@ -16,7 +16,7 @@ use std::fs;
 use std::path::Path;
 
 pub(crate) mod build_statements;
-use build_statements::{assertion, starts_keyword, statements};
+use build_statements::{assertion, has_grouped_assignment, starts_keyword, statements};
 
 /// How a document holds its cases.
 #[derive(Clone, Copy, PartialEq)]
@@ -180,7 +180,13 @@ pub(crate) fn render_records(records: &[Record]) -> String {
                     .skip(1)
                     .any(|line| assertion(line.trim()).is_some())
         });
-        if deferred_assertions {
+        // Argument assignment expressions may write caller locals that later
+        // assertions read. Retain one original program and its AST assertion
+        // coverage instead of changing Runtime::run's accepted scope lifetime.
+        let shared_scope = statements
+            .iter()
+            .any(|statement| has_grouped_assignment(statement));
+        if deferred_assertions || shared_scope {
             let mut source = record.code.clone();
             if let Some(expected) = &record.returns {
                 write!(source, "\n# return: {expected}").unwrap();

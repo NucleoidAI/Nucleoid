@@ -3,8 +3,9 @@
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
-use crate::lang::ast::{Expr, Function as FunctionDecl, FunctionBody};
+use crate::lang::ast::{ConstructorBinding, Expr, Function as FunctionDecl, FunctionBody};
 use crate::lang::evaluation::Flow;
+use crate::nuc::object::ConstructorCall;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -70,15 +71,37 @@ impl Runtime {
 
     /// `super(...)`, which runs the parent constructor against the same object.
     pub(crate) fn call_super(&mut self, arguments: &[Expr], scope: &mut Scope) -> Result<Value> {
+        if let Ok((this, Some(parent))) = self.super_target(scope) {
+            if self.constructor_binding(&parent) == Some(ConstructorBinding::Named) {
+                let call = self.prepare_constructor(&parent, arguments, scope)?;
+                self.run_constructor(&parent, call, &this)?;
+                return Ok(Value::Null);
+            }
+        }
+
+        // Preserve argument evaluation before receiver/parent resolution for
+        // every legacy super call, including calls without a receiver/parent.
         let mut values = Vec::new();
         for argument in arguments {
             values.push(self.evaluate(argument, scope)?);
         }
 
-        let Some(this) = scope.this().cloned() else {
-            return Err(Error::reference("super is not defined"));
-        };
+        let (this, parent) = self.super_target(scope)?;
 
+        if let Some(parent) = parent {
+            if self.state.has_class(&parent) {
+                self.run_constructor(&parent, ConstructorCall::Positional(values), &this)?;
+            }
+        }
+
+        Ok(Value::Null)
+    }
+
+    pub(crate) fn super_target(&self, scope: &Scope) -> Result<(ObjectId, Option<String>)> {
+        let this = scope
+            .this()
+            .cloned()
+            .ok_or_else(|| Error::reference("super is not defined"))?;
         let class = scope.constructor_class().map(str::to_string).or_else(|| {
             self.state
                 .object(&this)
@@ -90,12 +113,6 @@ impl Runtime {
                 .and_then(|data| data.parent.clone())
         });
 
-        if let Some(parent) = parent {
-            if self.state.has_class(&parent) {
-                self.run_constructor(&parent, &values, &this)?;
-            }
-        }
-
-        Ok(Value::Null)
+        Ok((this, parent))
     }
 }

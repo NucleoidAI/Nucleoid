@@ -4,7 +4,9 @@
 //! [`Expression::roots`] stops at a function body because a lambda's parameters
 //! are not names the surrounding declaration reads.
 
-use crate::lang::ast::{Expr, FunctionBody, TemplatePart};
+use crate::lang::ast::{ConstructorBinding, Expr, FunctionBody, TemplatePart};
+use crate::runtime::Runtime;
+use crate::scope::Scope;
 
 pub struct Expression<'a> {
     pub node: &'a Expr,
@@ -19,9 +21,23 @@ impl<'a> Expression<'a> {
     ///
     /// A function body is not descended into: its parameters are bound by the
     /// function, so a rule that passes a lambda does not read them.
+    /// Without runtime class metadata, this syntactic query assumes positional
+    /// calls; runtime rule checks use context-aware collection for named labels.
     pub fn roots(&self) -> Vec<String> {
+        self.roots_with(ConstructorBinding::Positional, &|_| {
+            ConstructorBinding::Positional
+        })
+    }
+
+    /// Resolve call binding context without changing the shared call AST:
+    /// `name=value` is still an assignment expression for every legacy call.
+    pub(crate) fn roots_with(
+        &self,
+        binding: ConstructorBinding,
+        resolve: &impl Fn(&Expr) -> ConstructorBinding,
+    ) -> Vec<String> {
         let mut found = Vec::new();
-        roots(self.node, &mut found);
+        roots(self.node, binding, resolve, &mut found);
         found
     }
 
@@ -40,10 +56,53 @@ impl<'a> Expression<'a> {
     }
 }
 
-fn roots(expression: &Expr, found: &mut Vec<String>) {
+impl Runtime {
+    pub(crate) fn expression_roots(
+        &self,
+        expression: &Expr,
+        scope: &Scope,
+        assignment_instantiation: bool,
+    ) -> Vec<String> {
+        let resolve = |expression: &Expr| self.call_constructor_binding(expression, scope);
+        let binding = if assignment_instantiation
+            && self.instantiation_binding(expression) == ConstructorBinding::Named
+        {
+            ConstructorBinding::Named
+        } else {
+            resolve(expression)
+        };
+        Expression::new(expression).roots_with(binding, &resolve)
+    }
+}
+
+fn roots(
+    expression: &Expr,
+    binding: ConstructorBinding,
+    resolve: &impl Fn(&Expr) -> ConstructorBinding,
+    found: &mut Vec<String>,
+) {
     match expression {
         Expr::Identifier(name) => found.push(name.clone()),
-        _ => visit_children(expression, &mut |child| roots(child, found)),
+        Expr::Call { arguments, .. } | Expr::Super(arguments) => {
+            if let Expr::Call { callee, .. } = expression {
+                roots(callee, resolve(callee), resolve, found);
+            }
+            for argument in arguments {
+                let value = match argument {
+                    Expr::Assign { target, value }
+                        if binding == ConstructorBinding::Named
+                            && matches!(target.as_ref(), Expr::Identifier(_)) =>
+                    {
+                        value
+                    }
+                    other => other,
+                };
+                roots(value, resolve(value), resolve, found);
+            }
+        }
+        _ => visit_children(expression, &mut |child| {
+            roots(child, resolve(child), resolve, found)
+        }),
     }
 }
 

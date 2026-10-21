@@ -3,8 +3,8 @@ use std::sync::Arc;
 use super::lexer::{Keyword, Spanned, Token, tokenize};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
-    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
-    UnaryOp,
+    BinaryOp, ClassDecl, ConstructorBinding, Expr, Function, FunctionBody, LogicalOp, Parameter,
+    Stmt, TemplatePart, UnaryOp,
 };
 use crate::reasoning::Stage;
 
@@ -730,6 +730,49 @@ impl Parser {
         Ok(parameters)
     }
 
+    fn constructor_parameters(&mut self) -> Result<(ConstructorBinding, Vec<Parameter>)> {
+        // Only a class header with an immediate leading star takes the new
+        // path. Every unmarked header keeps parameters() and its diagnostics.
+        if self.peek_at(1) != &Token::Star {
+            return self
+                .parameters()
+                .map(|parameters| (ConstructorBinding::Positional, parameters));
+        }
+
+        self.expect(&Token::LeftParen)?;
+        self.expect(&Token::Star)?;
+        let mut parameters = Vec::new();
+        let mut names = indexmap::IndexSet::new();
+
+        if !self.check(&Token::RightParen) {
+            if !self.eat(&Token::Comma) {
+                return Err(self.error("Expected ',' or ')' after constructor '*'"));
+            }
+            while !self.check(&Token::RightParen) {
+                if self.check(&Token::Star) {
+                    return Err(
+                        self.error("Constructor '*' must appear once, before all parameters")
+                    );
+                }
+                let position = self.here();
+                let parameter = self.parameter()?;
+                if !names.insert(parameter.name.clone()) {
+                    return Err(Error::syntax(format!(
+                        "Duplicate named constructor parameter '{}'",
+                        parameter.name
+                    ))
+                    .at(position));
+                }
+                parameters.push(parameter);
+                if !self.eat(&Token::Comma) {
+                    break;
+                }
+            }
+        }
+        self.expect(&Token::RightParen)?;
+        Ok((ConstructorBinding::Named, parameters))
+    }
+
     fn class_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::Class))?;
 
@@ -740,10 +783,10 @@ impl Parser {
             }
         };
 
-        let parameters = if self.check(&Token::LeftParen) {
-            self.parameters()?
+        let (constructor_binding, parameters) = if self.check(&Token::LeftParen) {
+            self.constructor_parameters()?
         } else {
-            Vec::new()
+            (ConstructorBinding::Positional, Vec::new())
         };
 
         if matches!(
@@ -762,6 +805,7 @@ impl Parser {
                 return Ok(Stmt::Class(ClassDecl {
                     name,
                     parent: None,
+                    constructor_binding,
                     parameters,
                     fields: Vec::new(),
                     constructor: Vec::new(),
@@ -785,6 +829,7 @@ impl Parser {
         let mut fields = Vec::new();
         let mut constructor = Vec::new();
         let mut methods = Vec::new();
+        let mut initializer_position = None;
 
         self.skip_newlines();
 
@@ -801,9 +846,13 @@ impl Parser {
                         self.advance();
                     }
                     Token::Keyword(Keyword::Def) => {
+                        let position = self.here();
                         let Stmt::Function(function) = self.function_statement()? else {
                             unreachable!("function_statement always returns Stmt::Function")
                         };
+                        if function.name.as_deref() == Some("init") {
+                            initializer_position = Some(position);
+                        }
                         methods.push(function);
                     }
                     Token::Identifier(field)
@@ -834,9 +883,24 @@ impl Parser {
             constructor.push(self.statement()?);
         }
 
+        if constructor.is_empty() {
+            if let Some(initializer) = methods
+                .iter()
+                .rev()
+                .find(|method| method.name.as_deref() == Some("init"))
+            {
+                constructor_binding
+                    .validate_parameters(&initializer.parameters)
+                    .map_err(|error| {
+                        error.at(initializer_position.expect("an initializer has a position"))
+                    })?;
+            }
+        }
+
         Ok(Stmt::Class(ClassDecl {
             name,
             parent,
+            constructor_binding,
             parameters,
             fields,
             constructor,

@@ -2299,13 +2299,20 @@ fn supports_a_function_in_an_expression() {
 #[test]
 fn supports_a_function_with_a_parameter_in_an_expression() {
     let mut run = runner();
-    run("samples = [38.2, 39.1, 38.8, 39]");
-    run("ratio = 2.1");
-    run("element = 38.5");
-    assert_eq!(run("samples.find(function(element) { result = element * ratio; return result == 81.48 })"), 38.8);
-    assert_eq!(run("samples.find(element => { result = element * ratio; return result == 81.48 })"), 38.8);
-    assert_eq!(run("samples.find(element => element == 38.8)"), 38.8);
-    assert_eq!(run("samples.find(element => (element == 38.8))"), 38.8);
+    run(r#"# samples is a list of 38.2, 39.1, 38.8 and 39
+samples = [38.2, 39.1, 38.8, 39]
+
+# ratio is 2.1
+ratio = 2.1
+
+# element is 38.5
+element = 38.5
+
+# The element parameter shadows the outer element in each function
+assert(samples.find(function(element) { result = element * ratio; return result == 81.48 }), 38.8)
+assert(samples.find(element => { result = element * ratio; return result == 81.48 }), 38.8)
+assert(samples.find(element => element == 38.8), 38.8)
+assert(samples.find(element => (element == 38.8)), 38.8)"#);
 }
 
 /// Nucleoid creates a variable statement with JSON
@@ -9617,6 +9624,129 @@ assert(parcel.state, "queued")
 assert(parcel.label, "queued!")
 parcel.state = "sent"
 assert(parcel.label, "sent!")"#);
+}
+
+/// Nucleoid binds opted-in constructor arguments by name
+#[rustfmt::skip]
+#[test]
+fn binds_opted_in_constructor_arguments_by_name() {
+    let mut run = runner();
+    run(r#"a = 10
+b = 20
+class Pair(*, a, b):
+    this.a = a
+    this.b = b
+pair = Pair(b=2, a=1)
+assert(pair, {"id": "pair", "a": 1, "b": 2})
+assert(a, 10)
+assert(b, 20)"#);
+}
+
+/// Nucleoid evaluates named constructor values in source order
+#[rustfmt::skip]
+#[test]
+fn evaluates_named_constructor_values_in_source_order() {
+    let mut run = runner();
+    run(r#"'use imperative'
+class Pair(*, a, b):
+    this.a = a
+    this.b = b
+counter = 0
+pair = Pair(b=(counter = counter + 1), a=(counter = counter + 1))
+assert(pair.a, 2)
+assert(pair.b, 1)
+assert(counter, 2)"#);
+}
+
+/// Nucleoid inherits opted-in named constructors
+#[rustfmt::skip]
+#[test]
+fn inherits_opted_in_named_constructors() {
+    let mut run = runner();
+    run(r#"class Parent(*, a, b):
+    this.a = a
+    this.b = b
+class Child: Parent
+    pass
+child = Child(b=2, a=1)
+assert(child, {"id": "child", "a": 1, "b": 2})"#);
+}
+
+/// Nucleoid binds named parameters through opted-in initializers
+#[rustfmt::skip]
+#[test]
+fn binds_named_parameters_through_opted_in_initializers() {
+    let mut run = runner();
+    run(r#"class Pair(*):
+    def init(a, b):
+        this.a = a
+        this.b = b
+pair = Pair(b=2, a=1)
+assert(pair, {"id": "pair", "a": 1, "b": 2})"#);
+}
+
+/// Nucleoid keeps missing opted-in constructor parameters null
+#[rustfmt::skip]
+#[test]
+fn keeps_missing_opted_in_constructor_parameters_null() {
+    let mut run = runner();
+    run(r#"class Pair(*, a, b):
+    this.a = a
+    this.b = b
+pair = Pair(a=1)
+assert(pair.a, 1)
+assert(pair.b, null)"#);
+}
+
+/// Nucleoid snapshots named constructor argument values
+#[rustfmt::skip]
+#[test]
+fn snapshots_named_constructor_argument_values() {
+    let mut run = runner();
+    run(r#"left = 1
+right = 2
+class Pair(*, a, b):
+    this.a = a
+    this.b = b
+pair = Pair(b=right, a=left)
+assert(pair.a, 1)
+assert(pair.b, 2)
+left = 3
+assert(left, 3)
+assert(pair.a, 1)
+assert(pair.b, 2)"#);
+}
+
+/// Nucleoid preserves positional constructor assignment arguments
+#[rustfmt::skip]
+#[test]
+fn preserves_positional_constructor_assignment_arguments() {
+    let mut run = runner();
+    run(r#"'use imperative'
+class Legacy(a, b):
+    this.a = a
+    this.b = b
+a = 0
+b = 0
+legacy = Legacy(b = 2, a = 1)
+assert(legacy.a, 2)
+assert(legacy.b, 1)
+assert(a, 1)
+assert(b, 2)"#);
+}
+
+/// Nucleoid forwards named arguments to opted-in parent constructors
+#[rustfmt::skip]
+#[test]
+fn forwards_named_arguments_to_opted_in_parent_constructors() {
+    let mut run = runner();
+    run(r#"class Parent(*, a, b):
+    this.a = a
+    this.b = b
+class Child(first, second): Parent
+    super(b=second, a=first)
+child = Child(1, 2)
+assert(child, {"id": "child", "a": 1, "b": 2})"#);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

@@ -6,7 +6,7 @@ mod build_exporter;
 
 mod common;
 
-use build_exporter::build_statements::{assertion, statements};
+use build_exporter::build_statements::{assertion, has_grouped_assignment, statements};
 use nucleoid::lang::ast::generator::generate_all;
 use nucleoid::lang::ast::lexer::{Token, tokenize};
 use nucleoid::lang::ast::parse_program;
@@ -507,6 +507,52 @@ fn deferred_assertions_stay_with_their_invocation_in_the_actual_renderer() {
     assert!(rendered.contains("# return: 3"), "{rendered}");
     assert_eq!(rendered.matches("    run(").count(), 1, "{rendered}");
     check_export(source, 2, 1);
+}
+
+#[test]
+fn expression_assignment_export_selection_preserves_operators_and_quoted_text() {
+    for source in [
+        "pair = Pair(b=2, a=1)",
+        "pair = Pair(b=(counter=counter+1), a=counter)",
+        "items = [value=1]",
+        "record = {amount: (value += 1)}",
+        "assert((amount ||= 1), 1)",
+        "assert(`value=${amount=1}`, \"value=1\")",
+    ] {
+        assert!(has_grouped_assignment(source), "{source}");
+    }
+    for source in [
+        "amount = 1",
+        "class Pair(a, b):\n    this.a = a",
+        "{\n    local = 1\n    global = local\n}",
+        "assert(a == b, true)",
+        "assert(a === b, true)",
+        "assert(a != b, true)",
+        "assert(a <= b, true)",
+        "assert(a >= b, true)",
+        "list.map((item) => item + 1)",
+        "assert(\"a=(b=1)\", 'a=(b=1)')",
+    ] {
+        assert!(!has_grouped_assignment(source), "{source}");
+    }
+}
+
+#[test]
+fn actual_renderer_keeps_named_and_legacy_assignment_calls_in_one_scope() {
+    for source in [
+        "class Pair(*, a, b):\n    this.a = a\n    this.b = b\ncounter = 0\n\
+         pair = Pair(b=(counter=counter+1), a=(counter=counter+1))\n\
+         assert(pair.a, 2)\nassert(pair.b, 1)\nassert(counter, 2)",
+        "class Legacy(a, b):\n    this.a = a\n    this.b = b\na = 0\nb = 0\n\
+         legacy = Legacy(b=2, a=1)\nassert(legacy.a, 2)\nassert(legacy.b, 1)\n\
+         assert(a, 1)\nassert(b, 2)",
+    ] {
+        let rendered = render_assertion_fixture(source, None);
+        assert!(rendered.contains(source), "{rendered}");
+        assert_eq!(rendered.matches("    run(").count(), 1, "{rendered}");
+        assert!(!rendered.contains("assert_eq!(run("), "{rendered}");
+        common::runner()(source);
+    }
 }
 
 #[test]

@@ -1756,4 +1756,12 @@ try:
     throw "DEFAULT"
 catch
     assert(error, "DEFAULT")
+---
+# Nucleoid constructs an object with named parameters
+
+class Point(*, x, y):
+    this.x = x
+    this.y = y
+point = Point(y=4, x=3)
+assert(point, {"id": "point", "x": 3, "y": 4})
 ```

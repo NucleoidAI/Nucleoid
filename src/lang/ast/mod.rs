@@ -25,6 +25,7 @@ pub mod template;
 
 pub use parser::{Program, parse, parse_expression, parse_program};
 
+use std::fmt;
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
@@ -70,14 +71,62 @@ pub enum Stmt {
     Pass,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct ClassDecl {
     pub name: String,
     pub parent: Option<String>,
+    pub constructor_binding: ConstructorBinding,
     pub parameters: Vec<Parameter>,
     pub fields: Vec<Parameter>,
     pub constructor: Vec<Stmt>,
     pub methods: Vec<Arc<Function>>,
+}
+
+impl fmt::Debug for ClassDecl {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut class = f.debug_struct("ClassDecl");
+        class
+            .field("name", &self.name)
+            .field("parent", &self.parent);
+        // Keep the complete accepted Debug shape for unmarked ASTs: several
+        // historical regression seals intentionally include that rendering.
+        // Nondefault metadata remains explicit, and PartialEq always checks it.
+        if self.constructor_binding != ConstructorBinding::Positional {
+            class.field("constructor_binding", &self.constructor_binding);
+        }
+        class
+            .field("parameters", &self.parameters)
+            .field("fields", &self.fields)
+            .field("constructor", &self.constructor)
+            .field("methods", &self.methods)
+            .finish()
+    }
+}
+
+/// How a class's effective constructor binds its arguments. Functions and
+/// methods always retain positional, assignment-expression call semantics.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ConstructorBinding {
+    #[default]
+    Positional,
+    Named,
+}
+
+impl ConstructorBinding {
+    pub(crate) fn validate_parameters(self, parameters: &[Parameter]) -> Result<()> {
+        if self == Self::Named {
+            let mut names = indexmap::IndexSet::new();
+            for parameter in parameters {
+                if !names.insert(parameter.name.as_str()) {
+                    return Err(Error::syntax(format!(
+                        "Duplicate named constructor parameter '{}'",
+                        parameter.name
+                    )));
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -427,21 +476,32 @@ pub(crate) fn collect_assigned_names(statement: &Stmt, names: &mut Vec<String>) 
 }
 
 /// The leftmost names a statement reads.
-pub(crate) fn collect_read_roots(statement: &Stmt, roots: &mut Vec<String>) {
+pub(crate) fn collect_read_roots(
+    statement: &Stmt,
+    roots: &mut Vec<String>,
+    runtime: &Runtime,
+    scope: &Scope,
+) {
     match statement {
         Stmt::Assign { target, value } => {
             if let Expr::Member { object, .. } = target {
-                roots.extend(Expression::new(object).roots());
+                roots.extend(runtime.expression_roots(object, scope, false));
             }
-            roots.extend(Expression::new(value).roots());
+            roots.extend(runtime.expression_roots(
+                value,
+                scope,
+                matches!(target, Expr::Member { .. }),
+            ));
         }
         Stmt::Expression(expression) | Stmt::Throw(expression) | Stmt::Delete(expression) => {
-            roots.extend(Expression::new(expression).roots())
+            roots.extend(runtime.expression_roots(expression, scope, false))
         }
-        Stmt::Return(Some(expression)) => roots.extend(Expression::new(expression).roots()),
+        Stmt::Return(Some(expression)) => {
+            roots.extend(runtime.expression_roots(expression, scope, false))
+        }
         Stmt::Block(nested) => {
             for statement in nested {
-                collect_read_roots(statement, roots);
+                collect_read_roots(statement, roots, runtime, scope);
             }
         }
         Stmt::If {
@@ -449,12 +509,12 @@ pub(crate) fn collect_read_roots(statement: &Stmt, roots: &mut Vec<String>) {
             consequent,
             alternate,
         } => {
-            roots.extend(Expression::new(condition).roots());
+            roots.extend(runtime.expression_roots(condition, scope, false));
             for statement in consequent {
-                collect_read_roots(statement, roots);
+                collect_read_roots(statement, roots, runtime, scope);
             }
             if let Some(alternate) = alternate {
-                collect_read_roots(alternate, roots);
+                collect_read_roots(alternate, roots, runtime, scope);
             }
         }
         _ => {}

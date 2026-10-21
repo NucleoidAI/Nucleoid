@@ -1763,6 +1763,102 @@ statement positions; caught values and transaction recovery are unchanged.
   root-level native REPL recovery. Full per-case counts are in
   [NUC 46](docs/nuc-0046.md#reference-implementation).
 
+## Opt-in named constructors
+
+- `class Pair(*, a, b):` opts that class's constructor into named-only
+  binding; `class Pair(*, a: int, b):` keeps ordinary annotation metadata.
+  An unmarked header retains positional arguments and assignment-expression
+  effects, even for `Pair(b=2, a=1)`.
+- The leading `*` is only a class-header marker, not a parameter, variadic
+  argument, default, automatic property, function-signature extension or
+  keyword-binding change for functions, methods or built-ins.
+- `class Pair(*)` (also `class Pair(*,)`) permits zero declared parameters.
+  With an adopted `def init(a, b):` its effective parameters/body come from
+  that method, as before; the class retains its named construction mode.
+  Direct `pair.init(...)` calls remain ordinary positional method calls.
+- Both explicit constructor bodies and adopted initializers use the existing
+  scope and `this`/`self` receiver. Bodyless headers do not create properties.
+  If an empty body selects an ancestor constructor under the existing runtime
+  rules, that ancestor's parameters, body and binding mode are used together.
+- Named arguments are existing parsed assignment expressions with a simple
+  identifier target, such as `Pair(b=2, a=1)`. Grouping and existing assignment
+  lowering do not change that AST rule. The target is a label, never evaluated
+  as a caller read or write; an assignment nested in its RHS is still evaluated
+  normally. Other argument shapes, including member-target assignments, are
+  rejected.
+- Validate the complete binding plan before evaluating any RHS, including
+  `.value` expressions. Reject the first invalid argument in source order:
+  non-named shape, unknown label, or repeated known label.
+- Evaluate each supplied RHS exactly once, left to right in source order,
+  in the caller's scope; bind the resulting values in declaration order.
+  Omitted parameters remain `null`, as in positional construction.
+- A named invocation selects its effective signature/body before its RHS
+  expressions run, retaining that selection if an RHS re-declares the class.
+  Legacy positional invocations retain constructor selection after argument
+  evaluation. Re-declaring a class chooses the new declaration's binding mode
+  while preserving existing instances and class-level rules.
+- Constructor arguments remain snapshots, not new reactive relationships.
+  Existing surrounding expression dependencies are unchanged: a collection
+  expression containing a constructor may still be re-evaluated on its own
+  dependencies. `.value` keeps its existing no-dependency snapshot meaning.
+- Apply the mode to every existing direct class-construction route:
+  expression calls, assignment-named instances, nested property instances,
+  `new`, and shared class-rule instances. Do not make class aliases callable.
+  Existing differences between assignment instantiation and function/local
+  shadowing in ordinary calls are retained.
+- A named shared class-rule construction evaluates its arguments once in the
+  declaration caller's scope, including function parameters. Existing
+  positional shared construction retains its accepted global-only argument
+  scope; no legacy scope/diagnostic is repaired as a side effect.
+- `super(b=second, a=first)` uses the effective parent constructor's mode
+  on the same receiver, advancing from the currently executing constructor.
+  Zero-argument `super()` and bare `super` pass no values, leaving any omitted
+  parent parameters `null`. Positional parents, calls without a parent and
+  missing-receiver errors retain their accepted behavior and evaluation order.
+- Class-rule root checks and block instance-read checks ignore labels in
+  named constructor calls, but still validate actual RHS references. Runtime
+  dependency edges and reasoning selections never treat a label as a caller
+  variable; call source remains canonically `Pair(b=2,a=1)`.
+- A named class header's canonical statement rendering retains `(*,...)`
+  and annotations; the class node is still keyed by its name for redeclaration.
+  Unmarked headers and all existing call keys retain their previous rendering.
+- Separate `Runtime::run` invocations retain their accepted fresh caller-scope
+  lifetime. The normative Rust exporter executes scope-sensitive assignment
+  expressions as whole original programs, retaining their actual assertions,
+  expected returns and AST coverage rather than extracting scoped reads.
+- Binding errors occur before instance registration. RHS, body, parent and
+  rule failures retain existing transactions/savepoints: partial instances,
+  class populations, properties, binding metadata and graph writes roll back.
+  Existing rules for caller-local RHS assignment effects are not changed.
+- Header layout, inheritance punctuation, statement positions, annotation
+  handling and expression/statement/operator-chain limits remain unchanged.
+  Parameters have no new count limit.
+- After a leading `*`, a token other than `,` or `)` raises
+  `SyntaxError("Expected ',' or ')' after constructor '*'")` at that token.
+  Another star at a marked-list parameter position raises
+  `SyntaxError("Constructor '*' must appear once, before all parameters")`.
+  A nonleading star in an unmarked list retains
+  `SyntaxError("Expected a parameter but found '*'")`.
+- Duplicate formal names in a marked header raise
+  `SyntaxError("Duplicate named constructor parameter '<name>'")` at the
+  repeated identifier. The same error for an adopted initializer is placed
+  at its `def`; duplicate unmarked formals retain their previous behavior.
+  Other malformed headers keep existing parameter/suite errors and positions.
+- A non-named argument to an opted-in effective constructor raises
+  `TypeError("Constructor <class> requires named arguments")`.
+  An undeclared label raises
+  `TypeError("Unknown constructor argument '<name>' for <class>")`.
+  A repeated declared label raises
+  `TypeError("Duplicate constructor argument '<name>' for <class>")`.
+  `<class>` is the effective constructor's declaring class, including when
+  inherited or called through `super`; runtime errors keep existing source
+  placement and caught-value rendering.
+- The eight executable entries beginning with
+  `Nucleoid binds opted-in constructor arguments by name` below protect
+  isolation, evaluation order, inheritance, init adoption, omitted `null`,
+  snapshots, the unchanged legacy assignment call and named `super`.
+  Their accepted-syntax counterparts were executed before this revision.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -12161,4 +12257,95 @@ assert(parcel.state, "queued")
 assert(parcel.label, "queued!")
 parcel.state = "sent"
 assert(parcel.label, "sent!")
+---
+# Nucleoid binds opted-in constructor arguments by name
+
+a = 10
+b = 20
+class Pair(*, a, b):
+    this.a = a
+    this.b = b
+pair = Pair(b=2, a=1)
+assert(pair, {"id": "pair", "a": 1, "b": 2})
+assert(a, 10)
+assert(b, 20)
+---
+# Nucleoid evaluates named constructor values in source order
+
+'use imperative'
+class Pair(*, a, b):
+    this.a = a
+    this.b = b
+counter = 0
+pair = Pair(b=(counter = counter + 1), a=(counter = counter + 1))
+assert(pair.a, 2)
+assert(pair.b, 1)
+assert(counter, 2)
+---
+# Nucleoid inherits opted-in named constructors
+
+class Parent(*, a, b):
+    this.a = a
+    this.b = b
+class Child: Parent
+    pass
+child = Child(b=2, a=1)
+assert(child, {"id": "child", "a": 1, "b": 2})
+---
+# Nucleoid binds named parameters through opted-in initializers
+
+class Pair(*):
+    def init(a, b):
+        this.a = a
+        this.b = b
+pair = Pair(b=2, a=1)
+assert(pair, {"id": "pair", "a": 1, "b": 2})
+---
+# Nucleoid keeps missing opted-in constructor parameters null
+
+class Pair(*, a, b):
+    this.a = a
+    this.b = b
+pair = Pair(a=1)
+assert(pair.a, 1)
+assert(pair.b, null)
+---
+# Nucleoid snapshots named constructor argument values
+
+left = 1
+right = 2
+class Pair(*, a, b):
+    this.a = a
+    this.b = b
+pair = Pair(b=right, a=left)
+assert(pair.a, 1)
+assert(pair.b, 2)
+left = 3
+assert(left, 3)
+assert(pair.a, 1)
+assert(pair.b, 2)
+---
+# Nucleoid preserves positional constructor assignment arguments
+
+'use imperative'
+class Legacy(a, b):
+    this.a = a
+    this.b = b
+a = 0
+b = 0
+legacy = Legacy(b = 2, a = 1)
+assert(legacy.a, 2)
+assert(legacy.b, 1)
+assert(a, 1)
+assert(b, 2)
+---
+# Nucleoid forwards named arguments to opted-in parent constructors
+
+class Parent(*, a, b):
+    this.a = a
+    this.b = b
+class Child(first, second): Parent
+    super(b=second, a=first)
+child = Child(1, 2)
+assert(child, {"id": "child", "a": 1, "b": 2})
 ```

@@ -46,7 +46,7 @@ impl Block {
             }
 
             let key = DeclarationKey::block(&self.statements);
-            runtime.declare_on_class(&class, key, statement)?;
+            runtime.declare_on_class(&class, key, statement, scope)?;
             return Ok(Outcome::null());
         }
 
@@ -103,7 +103,7 @@ impl Block {
 
         let mut roots = Vec::new();
         for statement in &self.statements {
-            collect_read_roots(statement, &mut roots);
+            collect_read_roots(statement, &mut roots, runtime, scope);
         }
 
         roots.iter().any(|root| {

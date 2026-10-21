@@ -294,6 +294,10 @@ Full detail: [README.md §3](README.md#3-expressions), [NUC 10](nuc-0010.md).
 
 ## 4. Types and Instances
 
+The isolated [NUC 47 draft](nuc-0047.md) also demonstrates opt-in named-only
+construction in its [paired reference example](README.md#opt-in-named-constructors).
+The legacy positional programs below remain unchanged.
+
 **Empty types need no placeholder body**
 
 - The header declares the same empty type as an indented pass-only body.

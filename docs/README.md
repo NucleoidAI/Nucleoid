@@ -433,6 +433,43 @@ class Shape:
         this.type = type
 ```
 
+### Opt-in named constructors
+
+- A leading `*` in a class parameter list opts its effective constructor into
+  named-only binding. Typed and untyped parameters are both supported.
+- Labels do not read or assign caller variables. Values run once in source
+  order, then bind by declared name; omitted parameters remain `null`.
+- The values remain constructor snapshots, not new reactive relationships.
+  Binding validation precedes all RHS evaluation, including `.value` reads.
+- `class Point(*)` can adopt an ordinary `def init(x, y):` body and parameter
+  list. No automatic fields, defaults or function-signature stars are added.
+- Named shared class-rule construction also sees the declaration caller's
+  parameters; legacy positional shared construction keeps its existing scope.
+- Inherited constructors carry their own mode; an ordinary child can forward
+  names with `super(y=second, x=first)` to an opted-in parent.
+- Unmarked classes retain positional assignment-expression calls exactly.
+  `Legacy(b=2, a=1)` still passes `2, 1` positionally and performs the accepted
+  caller-scope assignments. Functions, methods, built-ins and direct `init`
+  calls gain no keyword binding. Class aliases gain no construction route.
+- Duplicate/unknown labels and positional arguments raise explicit
+  `TypeError`s before instance creation. Duplicate marked formals and
+  malformed markers raise `SyntaxError`s; existing transactions still undo
+  partial construction and restore graph/class state on failure.
+- This is the exact paired `Nucleoid constructs an object with named parameters`
+  example in `tests/reference.md`.
+
+```
+class Point(*, x, y):
+    this.x = x
+    this.y = y
+point = Point(y=4, x=3)
+assert(point, {"id": "point", "x": 3, "y": 4})
+```
+
+- Exact binding/error rules are in the authoritative
+  [opt-in named constructors](../nucleoid.spec.md#opt-in-named-constructors)
+  section; [NUC 47](nuc-0047.md) records this isolated Draft revision.
+
 ### Instance keywords
 
 - `this` and `self` are interchangeable keywords for the current instance in constructors, methods, and class-level rules.
@@ -1738,6 +1775,9 @@ Messages are exact and are part of the observable behaviour of the language.
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
+| A non-named argument to an opted-in constructor | `Constructor <class> requires named arguments` |
+| An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
+| A repeated declared constructor label | `Duplicate constructor argument '<name>' for <class>` |
 
 ### SyntaxError
 
@@ -1750,6 +1790,9 @@ Messages are exact and are part of the observable behaviour of the language.
 | A block or template that is never closed | `Unterminated block`, `Unterminated template expression` |
 | Nesting or a chain past the runtime's limit | `Expressions are nested too deeply`, `Expression has too many operands` |
 | A postfix chain or a compound path beyond its limit | `Expression has too many parts` |
+| A leading constructor star followed by neither comma nor right-parenthesis | `Expected ',' or ')' after constructor '*'` |
+| A repeated star in a marked constructor parameter list | `Constructor '*' must appear once, before all parameters` |
+| A repeated marked constructor formal, including an adopted initializer | `Duplicate named constructor parameter '<name>'` |
 
 ### Where an error happened
 
@@ -1784,6 +1827,11 @@ class Name(param: type)                 empty type with parameters; no implicit 
 
 class Name(param: type):               type with a constructor
     this.param = param
+
+class Name(*, param: type):            opt-in named-only constructor (Draft NUC 47)
+    this.param = param
+instance = Name(param=expression)      label binding without caller assignment
+class Name(*)                         marker-only opt-in; can adopt ordinary init
 
 class Name:                            type with a typed attribute
     attribute: type

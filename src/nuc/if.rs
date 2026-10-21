@@ -59,7 +59,7 @@ impl If {
 
         if let Some(class) = runtime.class_reference(&statement, scope) {
             let key = DeclarationKey::conditional(&self.condition);
-            runtime.declare_on_class(&class, key, statement)?;
+            runtime.declare_on_class(&class, key, statement, scope)?;
             return Ok(Outcome::null());
         }
 

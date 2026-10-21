@@ -4,7 +4,7 @@ use indexmap::IndexSet;
 
 use crate::error::Result;
 use crate::graph::{NodeKey, NodeKind, ShapeKey};
-use crate::lang::ast::Expr;
+use crate::lang::ast::{ConstructorBinding, Expr};
 use crate::lang::evaluation::Flow;
 use crate::nuc::object::Object;
 use crate::nuc::{Nuc, Outcome};
@@ -39,6 +39,11 @@ impl Variable {
     }
 
     pub fn before(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<()> {
+        if !runtime.is_imperative()
+            && runtime.instantiation_binding(&self.value) == ConstructorBinding::Named
+        {
+            return Ok(());
+        }
         self.value = runtime.freeze(&self.value, scope)?;
         Ok(())
     }

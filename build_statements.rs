@@ -52,6 +52,52 @@ pub(crate) fn starts_keyword(source: &str, keyword: &str) -> bool {
     })
 }
 
+/// Select whole-program execution when grouped expressions can assign a caller
+/// local. Separate Runtime::run calls intentionally do not share that scope.
+/// This is a conservative export selector, not a second language parser:
+/// comparisons/arrows/ordinary quoted text are excluded, while uncertain
+/// template or regex text may safely select whole-program validation too.
+/// Count parentheses and list delimiters, not braces around statement blocks.
+/// Calls and grouped assignments inside either kind of brace remain visible.
+#[allow(dead_code)] // Splitter-only integration tests also include this module.
+pub(crate) fn has_grouped_assignment(source: &str) -> bool {
+    let mut depth = 0usize;
+    let mut quote = None;
+    let mut escaped = false;
+    let mut previous = None;
+    let mut characters = source.chars().peekable();
+    while let Some(character) = characters.next() {
+        if let Some(delimiter) = quote {
+            if escaped {
+                escaped = false;
+            } else if character == '\\' {
+                escaped = true;
+            } else if character == delimiter {
+                quote = None;
+            } else if delimiter == '`' && character == '=' {
+                // Templates may contain executable interpolations; never
+                // extract their scope-sensitive operands into separate runs.
+                return true;
+            }
+        } else {
+            match character {
+                '"' | '\'' | '`' => quote = Some(character),
+                '(' | '[' => depth += 1,
+                ')' | ']' => depth = depth.saturating_sub(1),
+                '=' if depth > 0
+                    && !matches!(previous, Some('=' | '!' | '<' | '>'))
+                    && !matches!(characters.peek(), Some('=' | '>')) =>
+                {
+                    return true;
+                }
+                _ => {}
+            }
+        }
+        previous = Some(character);
+    }
+    false
+}
+
 /// Splits a case into top-level statements while retaining comments and blocks.
 pub(crate) fn statements(source: &str) -> Vec<String> {
     let source = source.replace("\r\n", "\n");
