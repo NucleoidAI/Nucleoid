@@ -80,28 +80,25 @@ export async function value({
         content: `
           declarations:
           ${JSON.stringify(declarations)}
-          train_instances:
+          train_dataset:
           ${JSON.stringify(
             train_dataset.dataset.map(({ instances }) => ({
               instances: instances.map(
-                ({
-                  input_code,
-                  input_value,
-                  input_instance_matrix,
-                  output_value,
-                  output_instance_matrix,
-                }) => ({
+                ({ input_code, input_value, input_instance_matrix }) => ({
                   input_code,
                   input_value,
                   input_instance_matrix: Matrix.crop(input_instance_matrix),
-                  output_value,
-                  output_instance_matrix: Matrix.crop(output_instance_matrix),
                 })
               ),
             }))
           )}
           input_instances:
-          ${JSON.stringify(input_instances)}
+          ${JSON.stringify(
+            input_instances.map(({ input_value, input_instance_matrix }) => ({
+              input_value,
+              input_instance_matrix: Matrix.crop(input_instance_matrix),
+            }))
+          )}
         `,
       },
       {
@@ -111,13 +108,11 @@ export async function value({
           ${instance_name}
           input_instance_matrix:
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
-          input_instance_location:
-          { "x": ${x}, "y": ${y} }
+          input_x: ${x}
+          input_y: ${y}
           json_format:
           {
-            "input_x": <INPUT_X>,
-            "input_y": <INPUT_Y>,
-            "input_orientation": <INPUT_ORIENTATION>,
+            "orientation": <INPUT_ORIENTATION>,
             "input_code": <INPUT_CODE>
           }
         `,
