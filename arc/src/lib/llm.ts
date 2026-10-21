@@ -1,12 +1,8 @@
 import { v4 as uuid } from "uuid";
 import * as dataset from "../dataset";
 import * as openrouter from "./openrouter";
-import type { GenerateOptions } from "../types";
 
-export async function generate<T = unknown>({
-  messages = [],
-  document = true,
-}: GenerateOptions): Promise<T> {
+export async function generate({ messages = [], document = true }) {
   messages.unshift({
     role: "assistant",
     content: `
@@ -24,7 +20,7 @@ export async function generate<T = unknown>({
     });
   }
 
-  return openrouter.generate<T>({
+  return openrouter.generate({
     messages,
   });
 }

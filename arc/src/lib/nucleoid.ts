@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-export async function run(source: string): Promise<unknown> {
+export async function run(source) {
   const directory = await mkdtemp(join(tmpdir(), "nuc-arc-"));
 
   try {
@@ -12,7 +12,7 @@ export async function run(source: string): Promise<unknown> {
     const executable =
       process.env.NUCLEOID_EXECUTABLE ??
       String.raw`C:\Users\canmi\dev\Nucleoid\target\debug\nucleoid.exe`;
-    const stdout = await new Promise<string>((resolve, reject) => {
+    const stdout = await new Promise((resolve, reject) => {
       execFile(
         executable,
         ["--json", file],
@@ -32,10 +32,14 @@ export async function run(source: string): Promise<unknown> {
       );
     });
 
+    if (typeof stdout !== "string") {
+      throw new Error("Nucleoid returned non-text output");
+    }
+
     try {
-      const result: unknown = JSON.parse(stdout);
+      const result = JSON.parse(stdout);
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error("Nucleoid returned invalid JSON", { cause: error });
     }
   } finally {

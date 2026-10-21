@@ -1,21 +1,12 @@
 import axios from "axios";
-import type { GenerateOptions } from "../types";
 
-interface OpenRouterResponse {
-  choices?: { message?: { content?: string | null } }[];
-  usage?: { prompt_tokens: number; completion_tokens: number };
-  error?: { message: string };
-}
-
-export async function generate<T = unknown>({
-  messages = [],
-}: GenerateOptions): Promise<T> {
+export async function generate({ messages = [] }) {
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is required");
   }
 
-  const { data } = await axios<OpenRouterResponse>({
+  const { data } = await axios({
     method: "POST",
     url: "https://openrouter.ai/api/v1/chat/completions",
     headers: {
@@ -36,8 +27,8 @@ export async function generate<T = unknown>({
       reasoning: { enabled: false },
       response_format: { type: "json_object" },
     },
-  }).catch((error: unknown) => {
-    if (!axios.isAxiosError<OpenRouterResponse>(error)) {
+  }).catch((error) => {
+    if (!axios.isAxiosError(error)) {
       throw error;
     }
     const status = error.response ? ` (${error.response.status})` : "";

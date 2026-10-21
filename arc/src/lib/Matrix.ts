@@ -1,14 +1,8 @@
-import type { Grid } from "../types";
-
-export function crop(matrix: Grid): Grid {
+export function crop(matrix) {
   return locate(matrix).matrix;
 }
 
-export function locate(matrix: Grid): {
-  matrix: Grid;
-  x: number;
-  y: number;
-} {
+export function locate(matrix) {
   if (!Array.isArray(matrix)) {
     throw new Error("Matrix must be an array for cropping");
   }
@@ -47,13 +41,7 @@ export function locate(matrix: Grid): {
   };
 }
 
-export function pad(
-  matrix: Grid,
-  rows: number,
-  cols: number,
-  left: number,
-  top: number
-): Grid {
+export function pad(matrix, rows, cols, left, top) {
   if (!Array.isArray(matrix)) {
     throw new Error("Matrix must be an array for padding");
   }
@@ -81,9 +69,7 @@ export function pad(
   if (left > cols - sourceCols || top > rows - sourceRows) {
     throw new Error("Matrix placement exceeds the padding dimensions");
   }
-  const result = Array.from({ length: rows }, () =>
-    Array<number>(cols).fill(0)
-  );
+  const result = Array.from({ length: rows }, () => Array(cols).fill(0));
 
   for (let y = 0; y < sourceRows; y++) {
     const row = matrix[y];
@@ -102,13 +88,11 @@ export function pad(
   return result;
 }
 
-export function merge(...matrices: Grid[]): Grid {
+export function merge(...matrices) {
   const numRows = matrices[0].length;
   const numCols = matrices[0][0].length;
 
-  const result = Array.from({ length: numRows }, () =>
-    Array<number>(numCols).fill(0)
-  );
+  const result = Array.from({ length: numRows }, () => Array(numCols).fill(0));
 
   for (const matrix of matrices) {
     for (let i = 0; i < numRows; i++) {
@@ -123,7 +107,7 @@ export function merge(...matrices: Grid[]): Grid {
   return result;
 }
 
-export function difference(matrix1: Grid, matrix2: Grid): number {
+export function difference(matrix1, matrix2) {
   let mismatches = 0;
   const rows = Math.max(matrix1.length, matrix2.length);
 
@@ -149,7 +133,7 @@ export function difference(matrix1: Grid, matrix2: Grid): number {
   return mismatches;
 }
 
-export function toString(matrix: Grid): void {
+export function toString(matrix) {
   matrix.forEach((row) => {
     console.debug(`[${row.join(",")}]`);
   });

@@ -1,16 +1,11 @@
 import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
-import type { AnalyzedInstance, Grid, TrainingInput } from "./types";
 
-export async function declarations({
-  train_dataset,
-}: {
-  train_dataset: TrainingInput;
-}): Promise<{ declarations: string[] }> {
+export async function declarations({ train_dataset }) {
   console.log("Analyzing declarations...");
 
-  const { declarations } = await llm.generate<{ declarations: string[] }>({
+  const { declarations } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -30,20 +25,10 @@ export async function declarations({
   return { declarations };
 }
 
-export async function instances({
-  declarations,
-  input_matrix,
-  output_matrix,
-}: {
-  declarations: string[];
-  input_matrix: Grid;
-  output_matrix: Grid;
-}): Promise<{ instances: AnalyzedInstance[] }> {
+export async function instances({ declarations, input_matrix, output_matrix }) {
   console.log("Extracting instances...");
 
-  const { instances } = await llm.generate<{
-    instances: AnalyzedInstance[];
-  }>({
+  const { instances } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -84,19 +69,10 @@ export async function value({
   declarations,
   input_instance_matrix,
   output_instance_matrix,
-}: {
-  instance_name: string;
-  declarations: string[];
-  input_instance_matrix: Grid;
-  output_instance_matrix: Grid;
-}): Promise<{
-  input_code: string;
-  input_value: unknown;
-  output_value: unknown;
-}> {
+}) {
   console.log("Calculating value...");
 
-  const { input_code } = await llm.generate<{ input_code: string }>({
+  const { input_code } = await llm.generate({
     messages: [
       {
         role: "user",

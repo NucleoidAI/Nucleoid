@@ -2,9 +2,10 @@
 
 ## Development
 
-The application is written in TypeScript and runs directly on Node.js using
-`tsx`, without generating JavaScript files. Use Bun to install dependencies from
-the committed lockfile:
+The application keeps `.ts` source files and runs directly on Node.js using
+`tsx`, without generating JavaScript files. Sources use JavaScript syntax without
+explicit TypeScript types; the TypeScript check uses non-strict inference.
+Use Bun to install dependencies from the committed lockfile:
 
 ```sh
 bun install
@@ -23,10 +24,10 @@ The legacy `LLM` selector is no longer needed.
 
 Sampling defaults to `temperature: 0`, `top_k: 1`, `top_p: 1`, and `seed: 42`,
 with frequency and presence penalties set to `0`. These settings favor greedy,
-repeatable output and can be overridden per request through `GenerateOptions`.
-Parameter support and reproducibility depend on the model and provider; a fixed
-seed does not guarantee identical responses. Repeatability also requires
-identical prompts: `llm.generate` currently prepends a random `control_id`.
+repeatable output. Parameter support and reproducibility depend on the model and
+provider; a fixed seed does not guarantee identical responses. Repeatability also
+requires identical prompts: `llm.generate` currently prepends a random
+`control_id`.
 See [OpenRouter's sampling parameters](https://openrouter.ai/docs/api/reference/parameters).
 
 Requests send `X-OpenRouter-Cache: false` to disable OpenRouter response caching,

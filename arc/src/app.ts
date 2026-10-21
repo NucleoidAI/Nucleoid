@@ -2,9 +2,8 @@ import * as analyzer from "./analyzer";
 import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
 import puzzle from "./data/training/3aa6fb7a.json";
-import type { Grid, TrainingDataset, TrainingInput } from "./types";
 
-console.info = (message?: unknown) => {
+console.info = (message) => {
   let string = message;
 
   if (typeof message !== "string") {
@@ -22,7 +21,7 @@ console.info = (message?: unknown) => {
   process.stdout.write(`\x1b[34m${string}\x1b[0m\n`);
 };
 
-console.debug = (message?: unknown) => {
+console.debug = (message) => {
   let string = message;
 
   if (typeof message !== "string") {
@@ -49,7 +48,7 @@ const {
   test: [{ input: test_input_matrix, output: test_output_matrix }],
 } = puzzle; // 0ca9ddb6.json
 
-const training_input: TrainingInput = {
+const training_input = {
   dataset: train.map(({ input, output }) => ({
     input_matrix: input,
     output_matrix: output,
@@ -57,11 +56,11 @@ const training_input: TrainingInput = {
   })),
 };
 
-export async function start(): Promise<Grid> {
+export async function start() {
   const { declarations } = await analyzer.declarations({
     train_dataset: training_input,
   });
-  const train_dataset: TrainingDataset = {
+  const train_dataset = {
     ...training_input,
     declarations,
   };
@@ -105,9 +104,8 @@ export async function start(): Promise<Grid> {
 
   let test_index = 0;
 
-  let result_matrix: Grid = Array.from(
-    { length: test_output_matrix.length },
-    () => Array<number>(test_output_matrix[0].length).fill(0)
+  let result_matrix = Array.from({ length: test_output_matrix.length }, () =>
+    Array(test_output_matrix[0].length).fill(0)
   );
 
   const input_instances = [];

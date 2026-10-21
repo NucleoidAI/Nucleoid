@@ -1,15 +1,8 @@
 import * as nucleoid from "./lib/nucleoid";
 import * as Matrix from "./lib/Matrix";
 import * as llm from "./lib/llm";
-import type { Grid, TestInstance, TrainingDataset } from "./types";
 
-export async function instances({
-  train_dataset,
-  test_input_matrix,
-}: {
-  train_dataset: TrainingDataset;
-  test_input_matrix: Grid;
-}): Promise<{ instances: TestInstance[] }> {
+export async function instances({ train_dataset, test_input_matrix }) {
   console.log("Analyzing test_input_matrix...");
   console.log("");
 
@@ -17,9 +10,7 @@ export async function instances({
   Matrix.toString(test_input_matrix);
   console.debug("");
 
-  const { instances } = await llm.generate<{
-    instances: TestInstance[];
-  }>({
+  const { instances } = await llm.generate({
     messages: [
       {
         role: "assistant",
@@ -60,16 +51,11 @@ export async function value({
   train_dataset,
   input_instances,
   input_instance_matrix,
-}: {
-  instance_name: string;
-  train_dataset: TrainingDataset;
-  input_instances: TestInstance[];
-  input_instance_matrix: Grid;
-}): Promise<{ input_value: unknown; output_value: unknown }> {
+}) {
   const { x, y } = Matrix.locate(input_instance_matrix);
 
   console.log("Calculating test value...");
-  const { input_code } = await llm.generate<{ input_code: string }>({
+  const { input_code } = await llm.generate({
     messages: [
       {
         role: "assistant",
@@ -140,20 +126,11 @@ export async function output_instance_matrix({
   input_instance_matrix,
   input_value,
   output_value,
-}: {
-  test_input_matrix: Grid;
-  train_dataset: TrainingDataset;
-  input_instances: TestInstance[];
-  input_instance_matrix: Grid;
-  input_value: unknown;
-  output_value: unknown;
-}): Promise<{ output_instance_matrix: Grid }> {
-  const { x: left, y: top } = output_value as { x: number; y: number };
+}) {
+  const { x: left, y: top } = output_value;
 
   console.log("Extracting test output_instance_matrix...");
-  const { output_instance_matrix } = await llm.generate<{
-    output_instance_matrix: Grid;
-  }>({
+  const { output_instance_matrix } = await llm.generate({
     messages: [
       {
         role: "assistant",
@@ -181,7 +158,7 @@ export async function output_instance_matrix({
       {
         role: "user",
         content: `
-          input_instances:
+          context:
           ${JSON.stringify(
             input_instances.map(
               ({

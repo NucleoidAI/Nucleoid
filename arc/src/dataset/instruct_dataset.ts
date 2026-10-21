@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-export function document(): string {
+export function document() {
   const files = readdirSync(__dirname, { withFileTypes: true })
     .filter((entry) => entry.isFile() && /\.json$/i.test(entry.name))
     .map((entry) => entry.name)
@@ -11,12 +11,12 @@ export function document(): string {
     throw new Error(`No JSON instruction datasets found in ${__dirname}`);
   }
 
-  const datasets = files.map((file): unknown => {
+  const datasets = files.map((file) => {
     const source = readFileSync(join(__dirname, file), "utf8");
 
     try {
       return JSON.parse(source);
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof SyntaxError) {
         throw new SyntaxError(
           `Invalid JSON in instruction dataset ${file}: ${error.message}`,

@@ -1,6 +1,4 @@
-import type { Grid, GridObject } from "../types";
-
-export function focus(matrix: Grid): GridObject {
+export function focus(matrix) {
   const rows = matrix.length;
   const cols = matrix[0].length;
 
@@ -36,12 +34,10 @@ export function focus(matrix: Grid): GridObject {
   };
 }
 
-export function enlarge(matrix: GridObject, rows: number, cols: number): Grid {
+export function enlarge(matrix, rows, cols) {
   const { x_position: xOffset, y_position: yOffset, object_matrix } = matrix;
 
-  const originalArray = Array.from({ length: rows }, () =>
-    Array<number>(cols).fill(0)
-  );
+  const originalArray = Array.from({ length: rows }, () => Array(cols).fill(0));
 
   for (let i = 0; i < object_matrix.length; i++) {
     for (let j = 0; j < object_matrix[i].length; j++) {
