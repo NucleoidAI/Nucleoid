@@ -5,7 +5,7 @@ mod common;
 
 use std::io::Write as _;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::{Command, Output, Stdio};
 
 use nucleoid::graph::NodeKey;
 use nucleoid::lang::ast::generator::generate_all;
@@ -20,6 +20,58 @@ fn checked(source: &str) -> Runtime {
     let failures = runtime.take_assertions();
     assert!(failures.is_empty(), "{source}\n{failures:?}");
     runtime
+}
+
+fn run_repl(source: &[u8]) -> Output {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_nucleoid"))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child.stdin.take().unwrap().write_all(source).unwrap();
+    child.wait_with_output().unwrap()
+}
+
+#[test]
+fn repl_preserves_literal_indentation_for_multi_property_class_input() {
+    for newline in ["\n", "\r\n"] {
+        for indent in ["    ", "\t"] {
+            for header in [
+                "class Student(name, age):",
+                "class Student(name, age): # properties",
+            ] {
+                let source = format!(
+                    ".json on\n{header}\n{indent}this.name = name\n{indent}this.age = age\n\nstudent = Student(age=20, name=\"Can\")\nstudent\n.exit\n"
+                )
+                .replace('\n', newline);
+                let output = run_repl(source.as_bytes());
+                assert!(output.status.success(), "{source}\n{output:?}");
+                assert!(output.stderr.is_empty(), "{source}\n{output:?}");
+                let stdout = String::from_utf8(output.stdout).unwrap();
+                let value: serde_json::Value =
+                    serde_json::from_str(stdout.lines().next_back().unwrap()).unwrap();
+                assert_eq!(
+                    value,
+                    serde_json::json!({"id": "student", "name": "Can", "age": 20.0}),
+                    "{source}\n{stdout}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn redirected_input_does_not_silently_indent_top_level_statements() {
+    let output =
+        run_repl(b"class Student(name, age):\nthis.name = name\nthis.age = age\n\n.help\n.exit\n");
+    assert!(output.status.success(), "{output:?}");
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap().trim_end(),
+        "ReferenceError: this is not defined (line 3, column 1)"
+    );
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains(".clear"), "{stdout}");
 }
 
 #[test]
@@ -1096,16 +1148,9 @@ fn actual_cli_reports_invalid_bindings_and_repl_handles_the_new_class_header() {
         "TypeError: Unknown constructor argument 'unknown' for Pair (line 2, column 1)"
     );
 
-    let mut child = Command::new(env!("CARGO_BIN_EXE_nucleoid"))
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
-    child.stdin.take().unwrap().write_all(
+    let output = run_repl(
         b"class Pair:\n    def init(a, b):\n        this.a = a\n        this.b = b\n\npair = Pair(b=2, a=1)\nassert(pair.a, 1)\nassert(pair.b, 2)\n.json on\npair.a + pair.b\n.exit\n",
-    ).unwrap();
-    let output = child.wait_with_output().unwrap();
+    );
     assert!(output.status.success(), "{output:?}");
     assert!(output.stderr.is_empty(), "{output:?}");
     let stdout = String::from_utf8(output.stdout).unwrap();

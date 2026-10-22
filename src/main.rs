@@ -133,6 +133,7 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
     };
     let mut source = String::new();
     let mut multiline = false;
+    let mut indentation = String::new();
 
     println!("🌿 Nucleoid - Logic Language for World Models");
     println!("🌎 Inspired by Nature");
@@ -140,11 +141,12 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
 
     loop {
         let prompt = if source.is_empty() { "> " } else { "... " };
-        let line = match editor.readline(prompt) {
+        let line = match editor.readline_with_initial(prompt, (&indentation, "")) {
             Ok(line) => line,
             Err(ReadlineError::Interrupted) => {
                 source.clear();
                 multiline = false;
+                indentation.clear();
                 println!("^C");
                 continue;
             }
@@ -193,23 +195,75 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
                 run_interactive(runtime, &source, json, graph);
                 source.clear();
                 multiline = false;
+                indentation.clear();
             }
             continue;
         }
 
-        multiline |= line.trim_end().ends_with(':')
-            || indented_named_arrow_header(&line)
-            || indented_try_header(&line);
+        let opens_body = indented_body_header(&line);
+        multiline |= line.trim_end().ends_with(':') || opens_body;
         source.push_str(&line);
         source.push('\n');
 
-        if !multiline {
+        if multiline {
+            indentation = next_indentation(&line, opens_body);
+        } else {
             if let Err(error) = editor.add_history_entry(source.trim_end()) {
                 eprintln!("nucleoid: cannot record history: {error}");
             }
             run_interactive(runtime, &source, json, graph);
             source.clear();
+            indentation.clear();
         }
+    }
+}
+
+fn indented_body_header(line: &str) -> bool {
+    if indented_named_arrow_header(line) || indented_try_header(line) {
+        return true;
+    }
+    let Ok(tokens) = tokenize(line) else {
+        return false;
+    };
+    let mut tokens = header_tokens(&tokens);
+    let first = tokens.next();
+    let last = tokens.next_back();
+    matches!(last, Some(Token::Colon))
+        || (matches!(first, Some(Token::Keyword(Keyword::Class)))
+            && matches!(last, Some(Token::Identifier(_)))
+            && matches!(tokens.next_back(), Some(Token::Colon)))
+}
+
+fn next_indentation(line: &str, opens_body: bool) -> String {
+    let line = line.lines().next_back().unwrap_or_default();
+    let mut indentation: String = line
+        .chars()
+        .take_while(|character| matches!(character, ' ' | '\t'))
+        .collect();
+    if opens_body || indented_alternative_header(line) {
+        indentation.push_str("    ");
+    }
+    indentation
+}
+
+fn indented_alternative_header(line: &str) -> bool {
+    let Ok(tokens) = tokenize(line) else {
+        return false;
+    };
+    let mut tokens = header_tokens(&tokens);
+    match tokens.next() {
+        Some(Token::Keyword(Keyword::Else)) => tokens.next().is_none(),
+        Some(Token::Keyword(Keyword::Catch)) => match tokens.next() {
+            None => true,
+            Some(Token::Identifier(_)) => tokens.next().is_none(),
+            Some(Token::LeftParen) => {
+                matches!(tokens.next(), Some(Token::Identifier(_)))
+                    && matches!(tokens.next(), Some(Token::RightParen))
+                    && tokens.next().is_none()
+            }
+            _ => false,
+        },
+        _ => false,
     }
 }
 
@@ -303,13 +357,136 @@ fn print_repl_help() {
 .exit, .quit     Exit the interactive CLI
 
 Use Up/Down for history and Ctrl-C to cancel the current input.
+Body indentation is filled in automatically. Use Backspace to dedent.
 Enter a blank line to run a multiline indented block."
     );
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{indented_named_arrow_header, indented_try_header, setting_value};
+    use super::{
+        indented_alternative_header, indented_body_header, indented_named_arrow_header,
+        indented_try_header, next_indentation, setting_value,
+    };
+    use nucleoid::{Runtime, Value};
+
+    #[test]
+    fn class_body_keystrokes_use_the_editors_visible_indentation() {
+        let mut source = String::new();
+        let mut indentation = String::new();
+        for input in [
+            "class Student(name, age):",
+            "this.name = name",
+            "this.age = age",
+        ] {
+            let line = format!("{indentation}{input}");
+            source.push_str(&line);
+            source.push('\n');
+            indentation = next_indentation(&line, indented_body_header(&line));
+        }
+        assert_eq!(
+            source,
+            "class Student(name, age):\n    this.name = name\n    this.age = age\n"
+        );
+        assert_eq!(indentation, "    ");
+        let mut runtime = Runtime::new();
+        runtime.run(&source).unwrap();
+        runtime
+            .run("student = Student(age=20, name=\"Can\")")
+            .unwrap();
+        assert_eq!(
+            runtime.run("student.name").unwrap(),
+            Value::String("Can".into())
+        );
+        assert_eq!(runtime.run("student.age").unwrap(), Value::Number(20.0));
+    }
+
+    #[test]
+    fn indentation_tracks_nested_bodies_tabs_and_explicit_dedents() {
+        for (line, expected) in [
+            ("class Student(name, age):", "    "),
+            ("    this.name = name", "    "),
+            ("    if age > 18:", "        "),
+            ("        this.adult = true", "        "),
+            ("    this.age = age", "    "),
+            ("\tif ready:", "\t    "),
+            ("\t\tvalue = 1", "\t\t"),
+            ("    def identity value => # body", "        "),
+            ("    try # body", "        "),
+            ("    # a comment ending in a colon:", "    "),
+            ("value = \"class Student:\"", ""),
+        ] {
+            assert_eq!(
+                next_indentation(line, indented_body_header(line)),
+                expected,
+                "{line:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lexical_block_headers_include_comments_and_parent_classes() {
+        for line in [
+            "class Student(name, age): # properties",
+            "class Student: Human",
+            "class Student(name, age): Human # parent",
+            "def compute(value): # body",
+            "if ready: # body",
+            "else: # body",
+            "try: # body",
+            "catch issue: # body",
+        ] {
+            assert!(indented_body_header(line), "{line:?}");
+        }
+        for line in [
+            "# class Student:",
+            "\"class Student:\"",
+            "message = \"if ready:\"",
+            "class Student(name, age)",
+            "class Student\n    this.name = name\n    this.age = age",
+            "catch",
+            "else",
+        ] {
+            assert!(!indented_body_header(line), "{line:?}");
+        }
+    }
+
+    #[test]
+    fn bare_alternatives_indent_only_their_existing_continuation_body() {
+        for line in [
+            "else",
+            "else # body",
+            "catch",
+            "catch issue",
+            "catch(issue)",
+            "catch (issue) # body",
+        ] {
+            assert!(indented_alternative_header(line), "{line:?}");
+            assert_eq!(next_indentation(line, false), "    ", "{line:?}");
+        }
+        for line in [
+            "# catch",
+            "\"else\"",
+            "else ready",
+            "catch issue extra",
+            "catch()",
+            "catch(issue, other)",
+            "catch(issue) extra",
+        ] {
+            assert!(!indented_alternative_header(line), "{line:?}");
+        }
+    }
+
+    #[test]
+    fn multiline_input_keeps_the_final_physical_lines_indentation() {
+        let source = "class Student(name, age):\n    this.name = name\n    this.age = age\n";
+        assert!(!indented_body_header(source));
+        assert_eq!(next_indentation(source, false), "    ");
+        assert_eq!(
+            next_indentation("    if ready:\n        value = 1", false),
+            "        "
+        );
+    }
 
     #[test]
     fn only_a_complete_lexical_bare_try_header_starts_exception_continuation() {
