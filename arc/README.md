@@ -50,8 +50,8 @@ New files, including `dataset.core.2.json`, need no additional imports.
 Non-JSON files and subdirectories are ignored. An empty dataset directory,
 unreadable files, or malformed JSON fail explicitly; JSON errors name the file.
 
-Instance `input_code` snippets use named constructor arguments whose names match
-the parameters in their class declarations.
+Instance `implementation` snippets use named constructor arguments whose names
+match the parameters in their class declarations.
 
 ## ARC proposal agent
 
@@ -81,7 +81,7 @@ the current dataset intact. Every imported record starts in **Unsupervised**.
 Search or page through the list and select a record to see its formatted,
 readable JSON. Ordinary arrays containing only primitive values stay on one
 line, so ARC matrices display one row per line. String values in `code`,
-`declarations`, `input_code`, and `output_code` appear as indented, multiline
+`declarations`, `implementation`, and `output_code` appear as indented, multiline
 code, including nested properties and arrays of snippets. Code arrays expand
 one entry per block in the readable view. Nucleoid's `'use declarative'` and
 `'use imperative'` directives also identify code strings in other properties.
@@ -261,7 +261,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         [9, 9, 0],
         [0, 0, 1]
       ],
-      "input_code": "obj0 = Obj(x=5, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+      "implementation": "obj0 = Obj(x=5, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
       "input_value": {
         "id": "obj0",
         "x": 5,

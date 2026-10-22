@@ -72,7 +72,7 @@ export async function value({
 }) {
   console.log("Calculating value...");
 
-  const { input_code } = await llm.generate({
+  const { implementation } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -86,7 +86,7 @@ export async function value({
           output_instance_matrix:
           ${JSON.stringify(output_instance_matrix)}
           json_format:
-          { "input_code": <INPUT_CODE> }
+          { "implementation": <IMPLEMENTATION> }
         `,
       },
     ],
@@ -94,18 +94,18 @@ export async function value({
 
   console.log("Creating instance in Nucleoid...");
   const input_value = await nucleoid.run(
-    [declarations[0], input_code].join("\n\n")
+    [declarations[0], implementation].join("\n\n")
   );
   const output_value = await nucleoid.run(
-    [...declarations, input_code].join("\n\n")
+    [...declarations, implementation].join("\n\n")
   );
 
-  console.debug("input_code:");
-  console.debug(input_code);
+  console.debug("implementation:");
+  console.debug(implementation);
   console.debug("input_value:");
   console.debug(input_value);
   console.debug("output_value:");
   console.debug(output_value);
 
-  return { input_code, input_value, output_value };
+  return { implementation, input_value, output_value };
 }

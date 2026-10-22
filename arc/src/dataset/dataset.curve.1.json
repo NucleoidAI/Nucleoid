@@ -47,7 +47,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj3910 = Obj(x=3, y=2, orientation=0, vertex_color=4)",
+          "implementation": "obj3910 = Obj(x=3, y=2, orientation=0, vertex_color=4)",
           "input_value": {"id":"obj3910","x":3,"y":2,"orientation":0,"tag":"l7544","vertex_color":4},
           "output_value": {"id":"obj3910","x":3,"y":2,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
         },
@@ -75,7 +75,7 @@
             [0, 4, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj7130 = Obj(x=1, y=4, orientation=0, vertex_color=4)",
+          "implementation": "obj7130 = Obj(x=1, y=4, orientation=0, vertex_color=4)",
           "input_value": {"id":"obj7130","x":1,"y":4,"orientation":0,"tag":"l7544","vertex_color":4},
           "output_value": {"id":"obj7130","x":1,"y":4,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
         }
@@ -123,7 +123,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj2307 = Obj(x=4, y=1, orientation=0, vertex_color=4)",
+          "implementation": "obj2307 = Obj(x=4, y=1, orientation=0, vertex_color=4)",
           "input_value": {"id":"obj2307","x":4,"y":1,"orientation":0,"tag":"l7544","vertex_color":4},
           "output_value": {"id":"obj2307","x":4,"y":1,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
         },
@@ -151,7 +151,7 @@
             [2, 0, 2, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj7042 = Obj(x=1, y=3, orientation=180, vertex_color=9)",
+          "implementation": "obj7042 = Obj(x=1, y=3, orientation=180, vertex_color=9)",
           "input_value": {"id":"obj7042","x":1,"y":3,"orientation":180,"tag":"l7544","vertex_color":9},
           "output_value": {"id":"obj7042","x":1,"y":3,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2,"rim_direction":"down"}
         }
@@ -199,7 +199,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj9118 = Obj(x=2, y=1, orientation=0, vertex_color=4)",
+          "implementation": "obj9118 = Obj(x=2, y=1, orientation=0, vertex_color=4)",
           "input_value": {"id":"obj9118","x":2,"y":1,"orientation":0,"tag":"l7544","vertex_color":4},
           "output_value": {"id":"obj9118","x":2,"y":1,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
         },
@@ -227,7 +227,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj9552 = Obj(x=4, y=1, orientation=180, vertex_color=9)",
+          "implementation": "obj9552 = Obj(x=4, y=1, orientation=180, vertex_color=9)",
           "input_value": {"id":"obj9552","x":4,"y":1,"orientation":180,"tag":"l7544","vertex_color":9},
           "output_value": {"id":"obj9552","x":4,"y":1,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2,"rim_direction":"down"}
         },
@@ -255,7 +255,7 @@
             [0, 2, 0, 2, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj6814 = Obj(x=2, y=3, orientation=180, vertex_color=9)",
+          "implementation": "obj6814 = Obj(x=2, y=3, orientation=180, vertex_color=9)",
           "input_value": {"id":"obj6814","x":2,"y":3,"orientation":180,"tag":"l7544","vertex_color":9},
           "output_value": {"id":"obj6814","x":2,"y":3,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2,"rim_direction":"down"}
         }

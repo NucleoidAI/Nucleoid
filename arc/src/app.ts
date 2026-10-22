@@ -77,18 +77,19 @@ export async function start() {
     for (const { input_instance_matrix, output_instance_matrix } of instances) {
       const instance_name = `obj${dataset.instances.length}`;
 
-      const { input_code, input_value, output_value } = await analyzer.value({
-        instance_name,
-        declarations,
-        input_instance_matrix,
-        output_instance_matrix,
-      });
+      const { implementation, input_value, output_value } =
+        await analyzer.value({
+          instance_name,
+          declarations,
+          input_instance_matrix,
+          output_instance_matrix,
+        });
 
       dataset.instances.push({
         instance_name,
         input_instance_matrix,
         output_instance_matrix,
-        input_code,
+        implementation,
         input_value,
         output_value,
       });

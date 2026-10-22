@@ -73,7 +73,7 @@ export async function value({
   const { x, y } = Matrix.locate(input_instance_matrix);
 
   console.log("Calculating test value...");
-  const { input_code } = await llm.generate({
+  const { implementation } = await llm.generate({
     messages: [
       {
         role: "assistant",
@@ -84,8 +84,8 @@ export async function value({
           ${JSON.stringify(
             train_dataset.dataset.map(({ instances }) => ({
               instances: instances.map(
-                ({ input_code, input_value, input_instance_matrix }) => ({
-                  input_code,
+                ({ implementation, input_value, input_instance_matrix }) => ({
+                  implementation,
                   input_value,
                   input_instance_matrix: Matrix.crop(input_instance_matrix),
                 })
@@ -113,22 +113,22 @@ export async function value({
           json_format:
           {
             "orientation": <ORIENTATION>,
-            "input_code": <INPUT_CODE>
+            "implementation": <IMPLEMENTATION>
           }
         `,
       },
     ],
   });
 
-  console.debug("input_code:");
-  console.debug(input_code);
+  console.debug("implementation:");
+  console.debug(implementation);
 
   console.log("Creating test instance in Nucleoid...");
   const input_value = await nucleoid.run(
-    [train_dataset.declarations[0], input_code].join("\n\n")
+    [train_dataset.declarations[0], implementation].join("\n\n")
   );
   const output_value = await nucleoid.run(
-    [...train_dataset.declarations, input_code].join("\n\n")
+    [...train_dataset.declarations, implementation].join("\n\n")
   );
 
   console.debug("input_value:");

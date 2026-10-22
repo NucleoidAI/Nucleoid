@@ -32,7 +32,7 @@ evaluation intact; these are solver data and benchmarking, not automated tests.
   structured data with identifiers and enum values. No natural-language
   instructions, explanations, chain-of-thought, or prose hidden in string
   values. JSON keys, identifiers, and executable Nucleoid code fields such as
-  `declarations` and `input_code` are permitted; prose comments in code are not.
+  `declarations` and `implementation` are permitted; prose comments in code are not.
 - Require exactly one JSON response matching the operation's schema. Validate
   its structure and values before code execution or grid composition.
   Reject surrounding prose, Markdown fences, malformed JSON, invalid grids,
