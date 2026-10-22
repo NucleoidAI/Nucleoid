@@ -1,47 +1,8 @@
 import * as analyzer from "./analyzer";
 import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
+import * as terminal from "./lib/terminal";
 import puzzle from "./data/training/3aa6fb7a.json";
-
-console.info = (message) => {
-  let string = message;
-
-  if (typeof message !== "string") {
-    string = JSON.stringify(message);
-  }
-
-  if (message === undefined) {
-    string = "undefined";
-  }
-
-  if (message === null) {
-    string = "null";
-  }
-
-  process.stdout.write(`\x1b[34m${string}\x1b[0m\n`);
-};
-
-console.debug = (message) => {
-  let string = message;
-
-  if (typeof message !== "string") {
-    string = JSON.stringify(message);
-  }
-  if (message === undefined) {
-    string = "undefined";
-  }
-
-  if (message === null) {
-    string = "null";
-  }
-
-  process.stdout.write(`\x1b[2m${string}\x1b[0m\n`);
-};
-
-console.log("🌿 \x1b[32mNucleoid\x1b[0m system is started");
-console.log("\x1b[34m🌎 Inspired by Nature\x1b[0m\n");
-
-// ---
 
 const {
   train,
@@ -57,6 +18,18 @@ const training_input = {
 };
 
 export async function start() {
+  const startedAt = performance.now();
+  terminal.header({
+    trainingPairs: train.length,
+    columns: test_input_matrix[0]?.length ?? 0,
+    rows: test_input_matrix.length,
+  });
+  terminal.section(
+    1,
+    "Analyze",
+    "Infer reusable objects and transformation rules"
+  );
+
   const { declarations } = await analyzer.declarations({
     train_dataset: training_input,
   });
@@ -65,8 +38,11 @@ export async function start() {
     declarations,
   };
 
-  for (const dataset of train_dataset.dataset) {
+  for (const [index, dataset] of train_dataset.dataset.entries()) {
     const { input_matrix, output_matrix } = dataset;
+    terminal.step(
+      `Training pair ${index + 1} / ${train_dataset.dataset.length}`
+    );
 
     const { instances } = await analyzer.instances({
       declarations,
@@ -96,7 +72,11 @@ export async function start() {
     }
   }
 
-  /* Visualizing */
+  terminal.section(
+    2,
+    "Visualize",
+    "Apply the learned world model to the test input"
+  );
 
   const { instances } = await visualizer.instances({
     train_dataset,
@@ -140,16 +120,12 @@ export async function start() {
     result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
 
-  console.debug("");
-  console.debug("Expected:");
-  Matrix.toString(test_output_matrix);
-  console.debug("");
-  console.debug("Result:");
-  Matrix.toString(result_matrix);
-  console.debug("");
-  console.log(
-    "Difference:",
-    Matrix.difference(result_matrix, test_output_matrix)
+  terminal.section(3, "Compare", "Expected and predicted canvases");
+  terminal.grid("Expected", test_output_matrix);
+  terminal.grid("Result", result_matrix);
+  terminal.summary(
+    Matrix.difference(result_matrix, test_output_matrix),
+    performance.now() - startedAt
   );
   return result_matrix;
 }

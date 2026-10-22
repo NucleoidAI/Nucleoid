@@ -1,4 +1,5 @@
 import axios from "axios";
+import * as terminal from "./terminal";
 
 export async function generate({ messages = [] }) {
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
@@ -54,7 +55,7 @@ export async function generate({ messages = [] }) {
 
   if (data.usage) {
     const { prompt_tokens, completion_tokens } = data.usage;
-    console.info({ prompt_tokens, completion_tokens });
+    terminal.usage({ prompt_tokens, completion_tokens });
   }
   return JSON.parse(content);
 }

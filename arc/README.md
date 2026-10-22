@@ -40,6 +40,21 @@ documentation for the distinction.
 Run the ARC example with `bun run start`. This makes live OpenRouter calls;
 type checking, linting, and offline inspection do not require model calls.
 
+## Terminal presentation
+
+The terminal uses a rounded Nucleoid ARC banner, numbered analysis/visualization
+stages, boxed declarations and object states, and color-coded ARC grids with
+row/column coordinates. Wide grids split into column panels rather than dropping
+cells. The final comparison keeps **Expected** before **Result**, followed by an
+exact-match/mismatch badge, the unchanged difference score, and elapsed time.
+Model token usage stays visible underneath the active step, and failures go to
+standard error with a boxed stack trace.
+
+Colors follow the terminal automatically. Set `NO_COLOR=1` for uncolored output;
+redirected output is uncolored unless `FORCE_COLOR=1` is set. Formatting uses
+Node.js's built-in utilities and does not change prompts, programs, matrices,
+provider settings, or scoring.
+
 ## Instruction datasets
 
 The synchronous `document()` function reads every JSON file in `src\dataset`,

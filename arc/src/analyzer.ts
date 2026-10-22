@@ -1,9 +1,10 @@
 import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
+import * as terminal from "./lib/terminal";
 
 export async function declarations({ train_dataset }) {
-  console.log("Analyzing declarations...");
+  terminal.step("Inferring declarations");
 
   const { declarations } = await llm.generate({
     messages: [
@@ -19,14 +20,13 @@ export async function declarations({ train_dataset }) {
     ],
   });
 
-  console.debug("declarations:");
-  console.debug(declarations);
+  terminal.code("Declarations", declarations);
 
   return { declarations };
 }
 
 export async function instances({ declarations, input_matrix, output_matrix }) {
-  console.log("Extracting instances...");
+  terminal.step("Segmenting training objects");
 
   const { instances } = await llm.generate({
     messages: [
@@ -53,13 +53,16 @@ export async function instances({ declarations, input_matrix, output_matrix }) {
     ],
   });
 
-  instances.forEach((instance) => {
-    Matrix.toString(instance.input_instance_matrix);
-    console.debug("");
-    Matrix.toString(instance.output_instance_matrix);
-    console.debug("--");
+  instances.forEach((instance, index) => {
+    terminal.grid(
+      `Object ${index + 1} · Input`,
+      instance.input_instance_matrix
+    );
+    terminal.grid(
+      `Object ${index + 1} · Output`,
+      instance.output_instance_matrix
+    );
   });
-  console.log("");
 
   return { instances };
 }
@@ -70,7 +73,7 @@ export async function value({
   input_instance_matrix,
   output_instance_matrix,
 }) {
-  console.log("Calculating value...");
+  terminal.step(`Constructing ${instance_name}`);
 
   const { implementation } = await llm.generate({
     messages: [
@@ -92,7 +95,7 @@ export async function value({
     ],
   });
 
-  console.log("Creating instance in Nucleoid...");
+  terminal.step("Evaluating declarative rules");
   const input_value = await nucleoid.run(
     [declarations[0], implementation].join("\n\n")
   );
@@ -100,15 +103,11 @@ export async function value({
     [...declarations, implementation].join("\n\n")
   );
 
-  Matrix.toString(Matrix.crop(input_instance_matrix));
-  console.debug("");
-  Matrix.toString(Matrix.crop(output_instance_matrix));
-  console.debug("implementation:");
-  console.debug(implementation);
-  console.debug("input_value:");
-  console.debug(input_value);
-  console.debug("output_value:");
-  console.debug(output_value);
+  terminal.grid("Input crop", Matrix.crop(input_instance_matrix));
+  terminal.grid("Output crop", Matrix.crop(output_instance_matrix));
+  terminal.code(`Implementation · ${instance_name}`, implementation);
+  terminal.value("Input state", input_value);
+  terminal.value("Output state", output_value);
 
   return { implementation, input_value, output_value };
 }
