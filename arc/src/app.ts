@@ -141,10 +141,12 @@ export async function start() {
   }
 
   console.debug("");
-  console.debug("Result:");
-  Matrix.toString(result_matrix);
   console.debug("Expected:");
   Matrix.toString(test_output_matrix);
+  console.debug("");
+  console.debug("Result:");
+  Matrix.toString(result_matrix);
+  console.debug("");
   console.log(
     "Difference:",
     Matrix.difference(result_matrix, test_output_matrix)
