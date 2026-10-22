@@ -20,7 +20,6 @@ const training_input = {
 export async function start() {
   const startedAt = performance.now();
   terminal.header({
-    trainingPairs: train.length,
     columns: test_input_matrix[0]?.length ?? 0,
     rows: test_input_matrix.length,
   });

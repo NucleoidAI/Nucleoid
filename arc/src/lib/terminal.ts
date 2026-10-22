@@ -92,58 +92,35 @@ function block(title, lines, write = console.log) {
   write(`  ${frame(`└${rule}┘`)}`);
 }
 
-export function header({ trainingPairs, columns, rows }) {
+export function header({ columns, rows }) {
   const available = width() - 4;
   const horizontal = available >= 32;
-  const limit = horizontal
-    ? Math.min(24, available - 19)
-    : Math.min(12, available - 4);
+  const limit = Math.min(12, available);
   const wordmark = wordmarks.find((art) =>
     art.every((line) => stringWidth(line) <= limit)
   ) ?? ["nuc"];
-  const wordmarkWidth = Math.max(...wordmark.map((line) => stringWidth(line)));
-  const logo =
-    wordmarkWidth + 4 <= available
-      ? [
-          frame(`┌${"─".repeat(wordmarkWidth + 2)}┐`),
-          ...wordmark.map(
-            (line) =>
-              frame("│") +
-              styleText(["bgGray", "white"], ` ${pad(line, wordmarkWidth)} `) +
-              frame("│")
-          ),
-          frame(`└${"─".repeat(wordmarkWidth + 2)}┘`),
-        ]
-      : wordmark.map((line) => styleText("white", line));
+  const logo = wordmark.map((line) => styleText("green", line));
   const logoWidth = Math.max(...logo.map((line) => stringWidth(line)));
   const textWidth = horizontal ? available - logoWidth - 3 : available;
   const text = [
-    ...wrap("NUCLEOID ARC", textWidth).map((line) =>
-      styleText(["bold", "white"], line)
+    ...wrap("Nucleoid - Logic Language for World Models 🌱🐋🌍", textWidth).map(
+      (line) => styleText(["bold", "white"], line)
     ),
-    "",
-    ...wrap("Inspired by Nature.", textWidth).map((line) =>
+    ...wrap("Inspired by Nature", textWidth).map((line) =>
       styleText("gray", line)
     ),
+    "",
     ...wrap("Analyze / Construct / Visualize", textWidth),
-    "",
-    ...wrap(`Training ${trainingPairs} pairs`, textWidth).map((line) =>
-      styleText("gray", line)
-    ),
     ...wrap(`Input ${columns} × ${rows}`, textWidth).map((line) =>
       styleText("gray", line)
     ),
   ];
   const height = Math.max(logo.length, text.length);
-  const logoOffset = Math.floor((height - logo.length) / 2);
-  const textOffset = Math.floor((height - text.length) / 2);
   const lines = horizontal
     ? Array.from(
         { length: height },
         (_, index) =>
-          pad(logo[index - logoOffset] ?? "", logoWidth) +
-          "   " +
-          (text[index - textOffset] ?? "")
+          pad(logo[index] ?? "", logoWidth) + "   " + (text[index] ?? "")
       )
     : [...logo, "", ...text];
   block("", ["", ...lines, ""]);
