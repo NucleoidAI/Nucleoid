@@ -100,6 +100,9 @@ export async function value({
     [...declarations, implementation].join("\n\n")
   );
 
+  Matrix.toString(Matrix.crop(input_instance_matrix));
+  console.debug("");
+  Matrix.toString(Matrix.crop(output_instance_matrix));
   console.debug("implementation:");
   console.debug(implementation);
   console.debug("input_value:");
