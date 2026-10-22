@@ -59,6 +59,12 @@ Declaration/implementation code and JSON/object-state content use bright white;
 panel frames, titles, and matrix colors retain their existing styling.
 Panels expand up to 120 terminal columns, shrinking to fit narrower windows.
 
+Immediately after the header, a puzzle preview shows the training input/output
+pairs side by side, with the test input below. Narrow windows wrap complete
+pairs onto additional rows; oversized pairs use the existing column-split matrix
+panels instead of dropping cells. The opening preview never receives or displays
+the expected test output. The final Expected/Result comparison remains unchanged.
+
 Numbered analysis/visualization stages, boxed declarations and object states,
 and color-coded ARC grids with row/column coordinates keep the run readable.
 Wide grids split into column panels rather than dropping cells. The final

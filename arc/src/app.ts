@@ -23,6 +23,7 @@ export async function start() {
     columns: test_input_matrix[0]?.length ?? 0,
     rows: test_input_matrix.length,
   });
+  terminal.puzzle({ train, testInput: test_input_matrix });
   terminal.section(
     1,
     "Analyze",

@@ -196,6 +196,29 @@ function cell(value, colored) {
   return `\x1b[48;2;${red};${green};${blue}m\x1b[${foreground}m${text}\x1b[0m`;
 }
 
+function matrixLines(matrix, start, end, colored) {
+  if (matrix.length === 0 || start === end) {
+    return [styleText("gray", "(empty)")];
+  }
+  const rowWidth = String(matrix.length - 1).length;
+  const axis =
+    " ".repeat(rowWidth + 2) +
+    Array.from({ length: end - start }, (_, index) =>
+      `${start + index}`.padStart(2).concat(" ")
+    ).join("");
+  return [
+    styleText("gray", axis),
+    ...matrix.map(
+      (row, index) =>
+        styleText("gray", `${String(index).padStart(rowWidth)}  `) +
+        row
+          .slice(start, end)
+          .map((value) => cell(value, colored))
+          .join("")
+    ),
+  ];
+}
+
 export function grid(title, matrix) {
   const rows = matrix.length;
   const columns = Math.max(0, ...matrix.map((row) => row.length));
@@ -210,26 +233,75 @@ export function grid(title, matrix) {
   const colored = colors();
   for (let start = 0; start < columns; start += chunk) {
     const end = Math.min(columns, start + chunk);
-    const axis =
-      " ".repeat(rowWidth + 2) +
-      Array.from({ length: end - start }, (_, index) =>
-        `${start + index}`.padStart(2).concat(" ")
-      ).join("");
     block(`${title} · ${dimensions}`, [
       ...(columns > chunk
         ? [styleText("gray", `Columns ${start}–${end - 1}`), ""]
         : []),
-      styleText("gray", axis),
-      ...matrix.map(
-        (row, index) =>
-          styleText("gray", `${String(index).padStart(rowWidth)}  `) +
-          row
-            .slice(start, end)
-            .map((value) => cell(value, colored))
-            .join("")
-      ),
+      ...matrixLines(matrix, start, end, colored),
     ]);
   }
+}
+
+function sideBySide(panels) {
+  const widths = panels.map((lines) =>
+    Math.max(...lines.map((line) => stringWidth(line)))
+  );
+  const height = Math.max(...panels.map((lines) => lines.length));
+  return Array.from({ length: height }, (_, row) =>
+    panels
+      .map((lines, index) => pad(lines[row] ?? "", widths[index]))
+      .join("  ")
+  );
+}
+
+function previewMatrix(title, matrix, colored) {
+  const columns = Math.max(0, ...matrix.map((row) => row.length));
+  return [
+    styleText("gray", `${title} · ${columns} × ${matrix.length}`),
+    ...matrixLines(matrix, 0, columns, colored),
+  ];
+}
+
+export function puzzle({ train, testInput }) {
+  const available = width() - 4;
+  const colored = colors();
+  let pairs = [];
+  let used = 0;
+  const renderRow = () => {
+    if (pairs.length === 0) {
+      return;
+    }
+    block("Training", sideBySide(pairs));
+    pairs = [];
+    used = 0;
+  };
+
+  if (train.length === 0) {
+    block("Training", [styleText("gray", "(empty)")]);
+  }
+  for (const [index, { input, output }] of train.entries()) {
+    const lines = [
+      styleText(["bold", "white"], `Train ${index + 1}`),
+      ...sideBySide([
+        previewMatrix("Input", input, colored),
+        previewMatrix("Output", output, colored),
+      ]),
+    ];
+    const pairWidth = Math.max(...lines.map((line) => stringWidth(line)));
+    if (pairWidth > available) {
+      renderRow();
+      grid(`Train ${index + 1} · Input`, input);
+      grid(`Train ${index + 1} · Output`, output);
+      continue;
+    }
+    if (pairs.length > 0 && used + 2 + pairWidth > available) {
+      renderRow();
+    }
+    used += (pairs.length > 0 ? 2 : 0) + pairWidth;
+    pairs.push(lines);
+  }
+  renderRow();
+  grid("Test input", testInput);
 }
 
 export function usage({ prompt_tokens, completion_tokens }) {
