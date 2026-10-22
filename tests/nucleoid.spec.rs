@@ -9633,7 +9633,7 @@ fn binds_opted_in_constructor_arguments_by_name() {
     let mut run = runner();
     run(r#"a = 10
 b = 20
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 pair = Pair(b=2, a=1)
@@ -9648,7 +9648,7 @@ assert(b, 20)"#);
 fn evaluates_named_constructor_values_in_source_order() {
     let mut run = runner();
     run(r#"'use imperative'
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 counter = 0
@@ -9663,7 +9663,7 @@ assert(counter, 2)"#);
 #[test]
 fn inherits_opted_in_named_constructors() {
     let mut run = runner();
-    run(r#"class Parent(*, a, b):
+    run(r#"class Parent(a, b):
     this.a = a
     this.b = b
 class Child: Parent
@@ -9677,7 +9677,7 @@ assert(child, {"id": "child", "a": 1, "b": 2})"#);
 #[test]
 fn binds_named_parameters_through_opted_in_initializers() {
     let mut run = runner();
-    run(r#"class Pair(*):
+    run(r#"class Pair:
     def init(a, b):
         this.a = a
         this.b = b
@@ -9690,7 +9690,7 @@ assert(pair, {"id": "pair", "a": 1, "b": 2})"#);
 #[test]
 fn keeps_missing_opted_in_constructor_parameters_null() {
     let mut run = runner();
-    run(r#"class Pair(*, a, b):
+    run(r#"class Pair(a, b):
     this.a = a
     this.b = b
 pair = Pair(a=1)
@@ -9705,7 +9705,7 @@ fn snapshots_named_constructor_argument_values() {
     let mut run = runner();
     run(r#"left = 1
 right = 2
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 pair = Pair(b=right, a=left)
@@ -9722,13 +9722,11 @@ assert(pair.b, 2)"#);
 #[test]
 fn preserves_positional_constructor_assignment_arguments() {
     let mut run = runner();
-    run(r#"'use imperative'
-class Legacy(a, b):
+    run(r#"class Legacy(a, b):
     this.a = a
     this.b = b
-a = 0
-b = 0
-legacy = Legacy(b = 2, a = 1)
+a = b = 0
+legacy = Legacy((b = 2), (a = 1))
 assert(legacy.a, 2)
 assert(legacy.b, 1)
 assert(a, 1)
@@ -9740,13 +9738,80 @@ assert(b, 2)"#);
 #[test]
 fn forwards_named_arguments_to_opted_in_parent_constructors() {
     let mut run = runner();
-    run(r#"class Parent(*, a, b):
+    run(r#"class Parent(a, b):
     this.a = a
     this.b = b
 class Child(first, second): Parent
     super(b=second, a=first)
 child = Child(1, 2)
 assert(child, {"id": "child", "a": 1, "b": 2})"#);
+}
+
+/// Nucleoid constructs students with positional and named arguments
+#[rustfmt::skip]
+#[test]
+fn constructs_students_with_positional_and_named_arguments() {
+    let mut run = runner();
+    run(r#"class Student(name):
+    this.name = name
+positional = Student("Can")
+named = Student(name="Can")
+assert(positional.name, "Can")
+assert(named.name, "Can")"#);
+}
+
+/// Nucleoid mixes positional and named constructor arguments
+#[rustfmt::skip]
+#[test]
+fn mixes_positional_and_named_constructor_arguments() {
+    let mut run = runner();
+    run(r#"class Student(name, age):
+    this.name = name
+    this.age = age
+ordered = Student(name="Can", age=20)
+reordered = Student(age=20, name="Can")
+mixed = Student("Can", age=20)
+assert(ordered, {"id": "ordered", "name": "Can", "age": 20})
+assert(reordered, {"id": "reordered", "name": "Can", "age": 20})
+assert(mixed, {"id": "mixed", "name": "Can", "age": 20})"#);
+}
+
+/// Nucleoid validates constructor names without caller assignments
+#[rustfmt::skip]
+#[test]
+fn validates_constructor_names_without_caller_assignments() {
+    let mut run = runner();
+    run(r#"class Student(name, age):
+    this.name = name
+    this.age = age
+name = "Before"
+student = Student(name="Can", age=20)
+assert(name, "Before")
+assert(student.name, "Can")
+try:
+    Student(nmae="Can", age=20)
+catch error:
+    assert(error, TypeError("Unknown constructor argument 'nmae' for Student"))
+try:
+    Student("Can", name="Other", age=20)
+catch error:
+    assert(error, TypeError("Duplicate constructor argument 'name' for Student"))"#);
+}
+
+/// Nucleoid preserves ordinary function argument assignments
+#[rustfmt::skip]
+#[test]
+fn preserves_ordinary_function_argument_assignments() {
+    let mut run = runner();
+    run(r#"'use imperative'
+def pair(a, b):
+    return [a, b]
+a = 0
+b = 0
+result = pair(b=2, a=1)
+assert(result, [2, 1])
+assert(a, 1)
+assert(b, 2)"#);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

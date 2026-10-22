@@ -25,7 +25,6 @@ pub mod template;
 
 pub use parser::{Program, parse, parse_expression, parse_program};
 
-use std::fmt;
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
@@ -71,62 +70,14 @@ pub enum Stmt {
     Pass,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ClassDecl {
     pub name: String,
     pub parent: Option<String>,
-    pub constructor_binding: ConstructorBinding,
     pub parameters: Vec<Parameter>,
     pub fields: Vec<Parameter>,
     pub constructor: Vec<Stmt>,
     pub methods: Vec<Arc<Function>>,
-}
-
-impl fmt::Debug for ClassDecl {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut class = f.debug_struct("ClassDecl");
-        class
-            .field("name", &self.name)
-            .field("parent", &self.parent);
-        // Keep the complete accepted Debug shape for unmarked ASTs: several
-        // historical regression seals intentionally include that rendering.
-        // Nondefault metadata remains explicit, and PartialEq always checks it.
-        if self.constructor_binding != ConstructorBinding::Positional {
-            class.field("constructor_binding", &self.constructor_binding);
-        }
-        class
-            .field("parameters", &self.parameters)
-            .field("fields", &self.fields)
-            .field("constructor", &self.constructor)
-            .field("methods", &self.methods)
-            .finish()
-    }
-}
-
-/// How a class's effective constructor binds its arguments. Functions and
-/// methods always retain positional, assignment-expression call semantics.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum ConstructorBinding {
-    #[default]
-    Positional,
-    Named,
-}
-
-impl ConstructorBinding {
-    pub(crate) fn validate_parameters(self, parameters: &[Parameter]) -> Result<()> {
-        if self == Self::Named {
-            let mut names = indexmap::IndexSet::new();
-            for parameter in parameters {
-                if !names.insert(parameter.name.as_str()) {
-                    return Err(Error::syntax(format!(
-                        "Duplicate named constructor parameter '{}'",
-                        parameter.name
-                    )));
-                }
-            }
-        }
-        Ok(())
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -222,6 +173,9 @@ pub enum UnaryOp {
     Negate,
     Plus,
     TypeOf,
+    /// Identity evaluation with explicit grouping in canonical source. Used
+    /// only for assignment-shaped call arguments that were not bare labels.
+    Positional,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -248,6 +202,26 @@ pub enum LogicalOp {
 }
 
 impl Expr {
+    /// A bare identifier assignment can be a label when the call resolves to a
+    /// constructor. Explicit positional assignments have their own boundary.
+    pub(crate) fn named_argument(&self) -> Option<(&str, &Expr)> {
+        if let Expr::Assign { target, value } = self {
+            if let Expr::Identifier(name) = target.as_ref() {
+                return Some((name, value));
+            }
+        }
+        None
+    }
+
+    pub(crate) fn has_named_arguments(&self) -> bool {
+        match self {
+            Expr::Call { arguments, .. } | Expr::Super(arguments) => arguments
+                .iter()
+                .any(|argument| argument.named_argument().is_some()),
+            _ => false,
+        }
+    }
+
     /// The dotted path this expression denotes, when it is a plain identifier
     /// chain such as `a`, `person1.name` or `$Person.mortal`.
     pub fn path(&self) -> Option<String> {

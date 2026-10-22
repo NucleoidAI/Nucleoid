@@ -84,6 +84,9 @@ impl Runtime {
         operand: &Expr,
         scope: &mut Scope,
     ) -> Result<Value> {
+        if operator == UnaryOp::Positional {
+            return self.evaluate(operand, scope);
+        }
         if operator == UnaryOp::TypeOf {
             // `$Person` is the class itself; `Person` is its instances.
             if let Expr::ClassRef(_) = operand {
@@ -100,7 +103,7 @@ impl Runtime {
             UnaryOp::Not => Value::Bool(!value.truthy()),
             UnaryOp::Negate => Value::Number(-value.to_number()),
             UnaryOp::Plus => Value::Number(value.to_number()),
-            UnaryOp::TypeOf => unreachable!("handled above"),
+            UnaryOp::TypeOf | UnaryOp::Positional => unreachable!("handled above"),
         })
     }
 

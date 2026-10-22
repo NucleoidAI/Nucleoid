@@ -6,9 +6,7 @@ use indexmap::IndexSet;
 use crate::error::{Error, Result};
 use crate::expression::Expression;
 use crate::graph::{NodeKey, NodeKind};
-use crate::lang::ast::{
-    ClassDecl, ConstructorBinding, Expr, FunctionBody, Stmt, find_class_reference_statement,
-};
+use crate::lang::ast::{ClassDecl, Expr, FunctionBody, Stmt, find_class_reference_statement};
 use crate::lang::evaluation::TrackingMode;
 use crate::nuc::Outcome;
 use crate::nuc::object::Object;
@@ -50,7 +48,6 @@ impl Class {
 
         let mut data = ClassData::new(name.clone());
         data.parent = self.declaration.parent.clone();
-        data.constructor_binding = self.declaration.constructor_binding;
         data.parameters = self.declaration.parameters.clone();
         data.constructor = self.declaration.constructor.clone();
 
@@ -74,8 +71,6 @@ impl Class {
             data.adopt_initializer();
         }
 
-        data.constructor_binding
-            .validate_parameters(&data.parameters)?;
         runtime.insert_class(&name.clone(), data);
 
         Ok(Outcome::null())
@@ -109,6 +104,9 @@ impl ClassData {
 impl Runtime {
     /// Reports a name a class-level rule reads that nothing has defined.
     pub(crate) fn check_rule_references(&self, value: &Expr, scope: &Scope) -> Result<()> {
+        self.check_constructor_bindings(value, scope, true)?;
+        Expression::new(value)
+            .check_calls(&|call| self.check_constructor_bindings(call, scope, false))?;
         for root in self.expression_roots(value, scope, true) {
             let known = scope.has(&root)
                 || self.state.has_variable(&root)
@@ -158,10 +156,11 @@ impl Runtime {
                     Some((instantiated, arguments)),
                 ) if matches!(object.as_ref(), Expr::ClassRef(_)) => {
                     let id = ObjectId::shared(class, name);
-                    let named =
-                        self.constructor_binding(&instantiated) == Some(ConstructorBinding::Named);
+                    let named = arguments
+                        .iter()
+                        .any(|argument| argument.named_argument().is_some());
                     let object = Object::new(id.clone(), instantiated, arguments);
-                    // New named invocations evaluate in their actual caller's
+                    // Named/mixed invocations evaluate in their actual caller's
                     // scope. Keep the accepted global-only shared-construction
                     // scope for every positional constructor.
                     let mut global_scope = Scope::new();

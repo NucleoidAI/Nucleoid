@@ -62,11 +62,12 @@ It is assembled from the NUC documents in [`docs/`](docs), indexed by [NUC 0](do
 
 [**docs/examples.md**](docs/examples.md) covers the same ground as complete programs, each one runnable as written.
 
-The isolated [NUC 47 draft](docs/nuc-0047.md) adds optional named-only
-construction: `class Point(*, x, y)` enables `Point(y=4, x=3)` without caller
-assignments. See the [paired reference example](docs/README.md#opt-in-named-constructors);
-unmarked classes and all ordinary function/method calls keep their existing
-positional behavior.
+The isolated [NUC 47 revision](docs/nuc-0047.md) uses ordinary class headers:
+`class Point(x, y)` accepts positional, named and positional-then-named calls.
+`Point(y=4, x=3)` binds labels without caller assignments; explicit grouped
+assignments retain positional effects. The former star header is removed.
+See the [paired reference example](docs/README.md#default-named-constructors).
+Ordinary function/method calls retain assignment-expression behavior.
 
 A Nucleoid program is a set of statements that remain true. An assignment is not an instruction that runs once and finishes, it is a relationship the runtime records and maintains.
 

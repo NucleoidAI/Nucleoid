@@ -540,11 +540,11 @@ fn expression_assignment_export_selection_preserves_operators_and_quoted_text() 
 #[test]
 fn actual_renderer_keeps_named_and_legacy_assignment_calls_in_one_scope() {
     for source in [
-        "class Pair(*, a, b):\n    this.a = a\n    this.b = b\ncounter = 0\n\
+        "class Pair(a, b):\n    this.a = a\n    this.b = b\ncounter = 0\n\
          pair = Pair(b=(counter=counter+1), a=(counter=counter+1))\n\
          assert(pair.a, 2)\nassert(pair.b, 1)\nassert(counter, 2)",
         "class Legacy(a, b):\n    this.a = a\n    this.b = b\na = 0\nb = 0\n\
-         legacy = Legacy(b=2, a=1)\nassert(legacy.a, 2)\nassert(legacy.b, 1)\n\
+         legacy = Legacy((b=2), (a=1))\nassert(legacy.a, 2)\nassert(legacy.b, 1)\n\
          assert(a, 1)\nassert(b, 2)",
     ] {
         let rendered = render_assertion_fixture(source, None);

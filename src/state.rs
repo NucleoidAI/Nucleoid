@@ -3,7 +3,7 @@ use std::fmt;
 use std::sync::Arc;
 
 use crate::lang::ast::generator::generate_all;
-use crate::lang::ast::{ConstructorBinding, Expr, Function, Parameter, Stmt};
+use crate::lang::ast::{Expr, Function, Parameter, Stmt};
 use crate::runtime::Runtime;
 use crate::value::{ObjectData, ObjectId, Value};
 
@@ -55,7 +55,6 @@ pub struct Declaration {
 pub struct ClassData {
     pub name: String,
     pub parent: Option<String>,
-    pub constructor_binding: ConstructorBinding,
     pub parameters: Vec<Parameter>,
     pub constructor: Vec<Stmt>,
     pub methods: IndexMap<String, Arc<Function>>,
@@ -68,7 +67,6 @@ impl ClassData {
         ClassData {
             name: name.into(),
             parent: None,
-            constructor_binding: ConstructorBinding::Positional,
             parameters: Vec::new(),
             constructor: Vec::new(),
             methods: IndexMap::new(),

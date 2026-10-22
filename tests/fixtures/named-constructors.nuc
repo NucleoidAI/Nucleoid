@@ -1,4 +1,4 @@
-class Base(*, a: int, b):
+class Base(a: int, b):
     this.a = a
     this.b = b
 class Pair: Base
@@ -6,4 +6,10 @@ class Pair: Base
 pair = new Pair(b=2, a=1)
 assert(pair.a, 1)
 assert(pair.b, 2)
+positional = Pair(3, 4)
+mixed = Pair(5, b=6)
+assert(positional.a, 3)
+assert(positional.b, 4)
+assert(mixed.a, 5)
+assert(mixed.b, 6)
 pair

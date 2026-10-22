@@ -294,9 +294,11 @@ Full detail: [README.md §3](README.md#3-expressions), [NUC 10](nuc-0010.md).
 
 ## 4. Types and Instances
 
-The isolated [NUC 47 draft](nuc-0047.md) also demonstrates opt-in named-only
-construction in its [paired reference example](README.md#opt-in-named-constructors).
-The legacy positional programs below remain unchanged.
+The isolated [NUC 47 revision](nuc-0047.md) supports positional, named and
+positional-then-named construction with ordinary headers and no star.
+See its [paired reference example](README.md#default-named-constructors).
+The positional programs below remain unchanged; explicit grouped assignments
+are the escape for caller-write arguments rather than bare constructor labels.
 
 **Empty types need no placeholder body**
 

@@ -6,7 +6,7 @@ use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind, ShapeKey};
-use crate::lang::ast::{ConstructorBinding, Expr, Stmt};
+use crate::lang::ast::{Expr, Stmt};
 use crate::lang::evaluation::Flow;
 use crate::nuc::object::Object;
 use crate::nuc::{Nuc, Outcome};
@@ -54,7 +54,7 @@ impl Property {
     /// every instance, so there is no one value to freeze it to.
     pub fn before(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<()> {
         if let Owner::Object(_) = self.owner {
-            if runtime.instantiation_binding(&self.value) != ConstructorBinding::Named {
+            if !self.value.has_named_arguments() || !runtime.is_instantiation(&self.value) {
                 self.value = runtime.freeze(&self.value, scope)?;
             }
         }

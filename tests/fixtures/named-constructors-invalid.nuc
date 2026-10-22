@@ -1,2 +1,2 @@
-class Pair(*, a)
-Pair(1)
+class Pair(a)
+Pair(unknown=1)

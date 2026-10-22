@@ -1,4 +1,4 @@
-//! Opt-in named binding is a constructor capability, not a new function-call
+//! Default named binding is a constructor capability, not a new function-call
 //! convention. Edge/error cases stay out of the measured document corpus.
 
 mod common;
@@ -9,7 +9,7 @@ use std::process::{Command, Stdio};
 
 use nucleoid::graph::NodeKey;
 use nucleoid::lang::ast::generator::generate_all;
-use nucleoid::lang::ast::{ConstructorBinding, Expr, Stmt, parse, parse_expression, parse_program};
+use nucleoid::lang::ast::{Expr, Stmt, UnaryOp, parse, parse_expression, parse_program};
 use nucleoid::{ErrorKind, ObjectId, Position, Runtime, Value};
 
 fn checked(source: &str) -> Runtime {
@@ -23,17 +23,16 @@ fn checked(source: &str) -> Runtime {
 }
 
 #[test]
-fn only_class_headers_opt_into_a_concrete_binding_mode() {
-    for header in ["class Pair(*)", "class Pair(*,)", "class Pair(\n    *,\n)"] {
+fn ordinary_class_headers_need_no_binding_mode_or_marker() {
+    for header in ["class Pair", "class Pair()", "class Pair(\n)"] {
         let statements = parse(header).unwrap();
         let [Stmt::Class(class)] = statements.as_slice() else {
             panic!("expected a class");
         };
-        assert_eq!(class.constructor_binding, ConstructorBinding::Named);
         assert!(class.parameters.is_empty());
-        assert_eq!(generate_all(&statements), "class Pair(*)");
+        assert_eq!(generate_all(&statements), "class Pair");
     }
-    let program = parse_program("class Pair(*, a: int, b)\nnext = 1").unwrap();
+    let program = parse_program("class Pair(a: int, b)\nnext = 1").unwrap();
     let Stmt::Class(class) = &program.statements[0] else {
         panic!("expected a class");
     };
@@ -41,11 +40,8 @@ fn only_class_headers_opt_into_a_concrete_binding_mode() {
     assert_eq!(class.parameters[0].type_name.as_deref(), Some("int"));
     assert_eq!(class.parameters[1].name, "b");
     assert_eq!(class.parameters[1].type_name, None);
-    assert!(format!("{class:?}").contains("constructor_binding: Named"));
-    assert_eq!(
-        generate_all(&program.statements),
-        "class Pair(*,a:int,b);next=1"
-    );
+    assert!(!format!("{class:?}").contains("constructor_binding"));
+    assert_eq!(generate_all(&program.statements), "class Pair;next=1");
     assert_eq!(
         program.positions,
         [Position::new(1, 1), Position::new(2, 1)]
@@ -56,14 +52,9 @@ fn only_class_headers_opt_into_a_concrete_binding_mode() {
         let Stmt::Class(class) = &statements[0] else {
             panic!("expected a class");
         };
-        assert_eq!(class.constructor_binding, ConstructorBinding::Positional);
         assert!(!format!("{class:?}").contains("constructor_binding"));
         assert_eq!(generate_all(&statements), "class Pair");
     }
-    assert_eq!(
-        nucleoid::state::ClassData::new("Pair").constructor_binding,
-        ConstructorBinding::Positional
-    );
 
     let call = parse_expression("Pair(b = 2, a = 1)").unwrap();
     let Expr::Call { arguments, .. } = &call else {
@@ -76,25 +67,34 @@ fn only_class_headers_opt_into_a_concrete_binding_mode() {
     );
     assert_eq!(call.to_string(), "Pair(b=2,a=1)");
     assert_eq!(call, parse_expression("new Pair(b=2, a=1)").unwrap());
+
+    let grouped = parse_expression("Pair(((b=2)), (a=1))").unwrap();
+    let Expr::Call { arguments, .. } = &grouped else {
+        panic!("expected a call");
+    };
+    assert!(arguments.iter().all(|argument| matches!(
+        argument,
+        Expr::Unary {
+            operator: UnaryOp::Positional,
+            ..
+        }
+    )));
+    assert_eq!(grouped.to_string(), "Pair((b=2),(a=1))");
+    assert_eq!(grouped, parse_expression(&grouped.to_string()).unwrap());
 }
 
 #[test]
-fn malformed_new_headers_have_precise_errors_and_locations() {
+fn star_headers_are_rejected_and_ordinary_parameter_errors_are_preserved() {
     for (source, message, position) in [
         (
-            "class Pair(* a)",
-            "Expected ',' or ')' after constructor '*'",
-            Position::new(1, 14),
+            "class Pair(*)",
+            "Expected a parameter but found '*'",
+            Position::new(1, 13),
         ),
         (
             "class Pair(*, *, a)",
-            "Constructor '*' must appear once, before all parameters",
-            Position::new(1, 15),
-        ),
-        (
-            "class Pair(*, a, a)",
-            "Duplicate named constructor parameter 'a'",
-            Position::new(1, 18),
+            "Expected a parameter but found '*'",
+            Position::new(1, 13),
         ),
         (
             "class Pair(a, *)",
@@ -102,14 +102,9 @@ fn malformed_new_headers_have_precise_errors_and_locations() {
             Position::new(1, 16),
         ),
         (
-            "class Pair(*, a = 1)",
+            "class Pair(a = 1)",
             "Expected ')' but found '='",
-            Position::new(1, 17),
-        ),
-        (
-            "class Pair(*):\n    def init(a, a):\n        this.a = a",
-            "Duplicate named constructor parameter 'a'",
-            Position::new(2, 5),
+            Position::new(1, 14),
         ),
     ] {
         let error = Runtime::check(source).unwrap_err();
@@ -118,6 +113,10 @@ fn malformed_new_headers_have_precise_errors_and_locations() {
         assert_eq!(error.position(), Some(position), "{source}");
     }
     for source in [
+        "class Pair(*,)",
+        "class Pair(\n    *,\n)",
+        "class Pair(*, a: int, b)",
+        "class Pair(*):\n    def init(a, b):\n        this.a = a",
         "def build(*, a): pass",
         "def build(*): pass",
         "callback = function(*, a) { return a }",
@@ -134,10 +133,10 @@ fn malformed_new_headers_have_precise_errors_and_locations() {
 fn typed_untyped_bodyless_and_missing_parameters_do_not_invent_properties() {
     checked(
         r#"
-class Pair(*, a: int, b):
+class Pair(a: int, b):
     this.a = a
     this.b = b
-class Shell(*, code: int)
+class Shell(code: int)
 pair = Pair(b=2, a=1)
 missing = Pair(a=3)
 empty = Pair()
@@ -156,10 +155,41 @@ assert(Shell.length, 1)
 }
 
 #[test]
+fn ordinary_student_headers_accept_positional_named_reordered_and_mixed_values() {
+    checked(
+        r#"
+class Student(name, age):
+    this.name = name
+    this.age = age
+name = "Caller"
+age = 99
+positional = Student("Can", 20)
+named = Student(name="Can", age=20)
+reordered = Student(age=20, name="Can")
+mixed = Student("Can", age=20)
+missing = Student("Can")
+assert(positional, {id: "positional", name: "Can", age: 20})
+assert(named, {id: "named", name: "Can", age: 20})
+assert(reordered, {id: "reordered", name: "Can", age: 20})
+assert(mixed, {id: "mixed", name: "Can", age: 20})
+assert(missing.name, "Can")
+assert(missing.age, null)
+assert(name, "Caller")
+assert(age, 99)
+try:
+    Student("Can", name="Other", age=20)
+catch error:
+    assert(error, TypeError("Duplicate constructor argument 'name' for Student"))
+assert(Student.length, 5)
+"#,
+    );
+}
+
+#[test]
 fn owned_constructor_values_preserve_composites_nulls_and_legacy_surplus() {
     checked(
         r#"
-class Pair(*, a, b, missing):
+class Pair(a, b, missing):
     this.a = a
     this.b = b
     this.missing = missing
@@ -189,7 +219,7 @@ assert(events.count, 3)
 fn assignment_expression_new_nested_property_and_collection_routes_bind_names() {
     checked(
         r#"
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 pair = new Pair(b=2, a=1)
@@ -216,7 +246,7 @@ fn every_binding_is_validated_before_any_value_even_value_snapshots() {
     let mut runtime = checked(
         r#"
 events = {count: 0}
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 "#,
@@ -232,19 +262,31 @@ class Pair(*, a, b):
         ),
         (
             "Pair(a=(events.count=9), missing.value)",
-            "Constructor Pair requires named arguments",
+            "Positional constructor argument after named arguments for Pair",
         ),
         (
             "Pair(1, a=(events.count=9))",
-            "Constructor Pair requires named arguments",
+            "Duplicate constructor argument 'a' for Pair",
         ),
         (
-            "Pair(events.count=9)",
-            "Constructor Pair requires named arguments",
+            "Pair(a=(events.count=9), events.count=9)",
+            "Positional constructor argument after named arguments for Pair",
         ),
         (
             "Pair(a=(events.count=9), b=1, unknown=missing)",
             "Unknown constructor argument 'unknown' for Pair",
+        ),
+        (
+            "Pair(missing.value, unknown=(events.count=9))",
+            "Unknown constructor argument 'unknown' for Pair",
+        ),
+        (
+            "Pair(missing.value, a=(events.count=9))",
+            "Duplicate constructor argument 'a' for Pair",
+        ),
+        (
+            "Pair(a=missing.value, b=(events.count=9), a=3)",
+            "Duplicate constructor argument 'a' for Pair",
         ),
     ] {
         let error = runtime.run(&format!("failed = {call}")).unwrap_err();
@@ -265,7 +307,7 @@ fn values_run_once_in_source_order_in_the_callers_scope() {
     checked(
         r#"
 'use imperative'
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 events = {count: 0, order: ""}
@@ -294,12 +336,96 @@ assert(local.b, 11)
 }
 
 #[test]
+fn mixed_values_run_in_source_order_and_snapshot_after_earlier_positional_effects() {
+    checked(
+        r#"
+'use imperative'
+class Triple(a, b, c):
+    this.a = a
+    this.b = b
+    this.c = c
+events = {count: 0, order: ""}
+def mark(label):
+    events.count = events.count + 1
+    events.order = events.order + label
+    return events.count
+triple = Triple(mark("A"), c=mark("C"), b=mark("B"))
+assert(triple.a, 1)
+assert(triple.b, 3)
+assert(triple.c, 2)
+assert(events.count, 3)
+assert(events.order, "ACB")
+def create(a, c):
+    return Triple(a, c=c.value, b=c+1)
+local = create(4, 5)
+assert(local.a, 4)
+assert(local.b, 6)
+assert(local.c, 5)
+"#,
+    );
+    checked(
+        r#"
+class Pair(a, b):
+    this.a = a
+    this.b = b
+events = {count: 0}
+snapshot = Pair(events.count=3, b=events.count.value)
+assert(snapshot.a, 3)
+assert(snapshot.b, 3)
+events.count = 9
+assert(snapshot.a, 3)
+assert(snapshot.b, 3)
+amount = 0
+grouped = Pair((amount=4), b=amount.value)
+assert(grouped.a, 4)
+assert(grouped.b, 4)
+assert(amount, 4)
+"#,
+    );
+}
+
+#[test]
+fn invalid_bindings_precede_effects_and_snapshot_reads_on_every_construction_route() {
+    let mut runtime = checked(
+        r#"
+events = {count: 0}
+class Pair(a, b):
+    this.a = a
+    this.b = b
+class Holder
+holder = Holder()
+"#,
+    );
+    for source in [
+        "Pair(missing.value, a=(events.count=9))",
+        "failed = new Pair(missing.value, a=(events.count=9))",
+        "holder.failed = Pair(missing.value, a=(events.count=9))",
+        "failed = [Pair(missing.value, a=(events.count=9))]",
+        "failed = {pair: Pair(missing.value, a=(events.count=9))}",
+        "if Pair(missing.value, a=(events.count=9)).a: pass",
+        "$Holder.failed = Pair(missing.value, a=(events.count=9))",
+    ] {
+        let error = runtime.run(source).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Type, "{source}: {error}");
+        assert_eq!(
+            error.message(),
+            "Duplicate constructor argument 'a' for Pair",
+            "{source}"
+        );
+        assert_eq!(runtime.run("events.count").unwrap(), Value::Number(0.0));
+        assert_eq!(runtime.run("Pair.length").unwrap(), Value::Number(0.0));
+        assert!(!runtime.state.has_object(&ObjectId::named("failed")));
+        assert!(!runtime.state.has_variable("failed"));
+    }
+}
+
+#[test]
 fn snapshot_instances_keep_legacy_dependency_and_reasoning_behavior() {
     let runtime = checked(
         r#"
 left = 1
 right = 2
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 pair = Pair(b=right, a=left)
@@ -330,7 +456,7 @@ assert(collection[0].b, 2)
 fn class_rules_ignore_labels_but_check_rhs_references_and_cycles() {
     checked(
         r#"
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 class Holder
@@ -369,7 +495,7 @@ assert(first.seed, 7)
 fn shared_named_construction_uses_caller_parameters_without_repairing_legacy_scope() {
     checked(
         r#"
-class Pair(*, a, b):
+class Pair(a, b):
     this.a = a
     this.b = b
 class Legacy(a):
@@ -399,11 +525,11 @@ assert(first.shared.a, 3)
 }
 
 #[test]
-fn init_adoption_keeps_class_binding_but_does_not_change_direct_method_calls() {
+fn init_adoption_provides_constructor_labels_but_direct_method_calls_stay_positional() {
     checked(
         r#"
 'use imperative'
-class Pair(*):
+class Pair:
     def init(a: int, b):
         this.a = a
         this.b = b
@@ -417,7 +543,7 @@ assert(pair.a, 4)
 assert(pair.b, 3)
 assert(a, 3)
 assert(b, 4)
-class Adopted(*, ignored):
+class Adopted(ignored):
     def init(actual):
         this.actual = actual
 adopted = Adopted(actual=9)
@@ -431,10 +557,10 @@ catch error:
 }
 
 #[test]
-fn inherited_effective_constructors_carry_their_own_binding_modes() {
+fn inherited_effective_constructors_use_the_nearest_nonempty_body_signature() {
     checked(
         r#"
-class Parent(*, a, b):
+class Parent(a, b):
     this.a = a
     this.b = b
 class Child: Parent
@@ -450,7 +576,7 @@ assert(bodyless.b, 4)
 class Legacy(a, b):
     this.a = a
     this.b = b
-class MarkedButEmpty(*, ignored): Legacy
+class MarkedButEmpty(ignored): Legacy
     pass
 legacy = MarkedButEmpty(6, 5)
 assert(legacy.a, 6)
@@ -465,7 +591,7 @@ assert(Child.length, 1)
 fn named_and_positional_super_forwarding_preserve_receiver_and_constructor_context() {
     checked(
         r#"
-class Base(*, a, b):
+class Base(a, b):
     this.a = a
     this.b = b
 class Middle(first, second): Base
@@ -485,14 +611,47 @@ assert(empty.result, null)
 class OldBase(a, b):
     this.a = a
     this.b = b
-class NamedChild(*, first, second): OldBase
+class NamedChild(first, second): OldBase
     super(b=second, a=first)
 named = NamedChild(second=4, first=3)
-assert(named.a, 4)
-assert(named.b, 3)
+assert(named.a, 3)
+assert(named.b, 4)
+class AssignmentChild(first, second): OldBase
+    super((b=second), (a=first))
+assignment = AssignmentChild(3, 4)
+assert(assignment.a, 4)
+assert(assignment.b, 3)
 assert(Base.length, 0)
 assert(Middle.length, 0)
 assert(Leaf.length, 1)
+"#,
+    );
+}
+
+#[test]
+fn mixed_super_forwarding_validates_before_values_and_preserves_the_receiver() {
+    checked(
+        r#"
+events = {count: 0}
+class Base(a, b, c):
+    this.a = a
+    this.b = b
+    this.c = c
+class Child(first, second, third): Base
+    super(first, c=third, b=second)
+    this.ready = true
+child = Child(1, 2, 3)
+assert(child, {id: "child", a: 1, b: 2, c: 3, ready: true})
+class Bad: Base
+    super(missing.value, a=(events.count=9))
+try:
+    failed = Bad()
+catch error:
+    assert(error, TypeError("Duplicate constructor argument 'a' for Base"))
+assert(events.count, 0)
+assert(Base.length, 0)
+assert(Child.length, 1)
+assert(Bad.length, 0)
 "#,
     );
 }
@@ -502,7 +661,7 @@ fn inherited_binding_errors_and_method_super_use_the_effective_parent() {
     checked(
         r#"
 events = {count: 0}
-class Parent(*, a, b):
+class Parent(a, b):
     this.a = a
     this.b = b
 class Child: Parent
@@ -533,25 +692,29 @@ assert(Child.length, 1)
 }
 
 #[test]
-fn grouping_and_existing_assignment_lowering_keep_the_documented_ast_interpretation() {
+fn grouped_and_compound_assignments_stay_positional_and_round_trip() {
     let lowered = parse_expression("One(amount += 2)").unwrap();
-    assert_eq!(lowered.to_string(), "One(amount=amount+2)");
+    assert_eq!(lowered.to_string(), "One((amount=amount+2))");
+    assert_eq!(lowered, parse_expression(&lowered.to_string()).unwrap());
     checked(
         r#"
-class One(*, amount):
+class One(amount):
     this.amount = amount
 class Legacy(amount):
     this.amount = amount
 amount = 10
-grouped = One((amount=3))
-assert(grouped.amount, 3)
+named = One(amount=3)
+assert(named.amount, 3)
 assert(amount, 10)
+grouped = One((amount=4))
+assert(grouped.amount, 4)
+assert(amount, 4)
 compound = One(amount += 2)
-assert(compound.amount, 12)
-assert(amount, 10)
+assert(compound.amount, 6)
+assert(amount, 6)
 legacy = Legacy(amount += 2)
-assert(legacy.amount, 12)
-assert(amount, 12)
+assert(legacy.amount, 8)
+assert(amount, 8)
 "#,
     );
 }
@@ -572,7 +735,7 @@ class Legacy(a, b):
     this.a = a
     this.b = b
     def combine(a, b) => a * 10 + b
-legacy = Legacy(b=4, a=3)
+legacy = Legacy((b=4), (a=3))
 assert(legacy.a, 4)
 assert(legacy.b, 3)
 assert(legacy.combine(b=6, a=5), 65)
@@ -595,10 +758,10 @@ assert(repeatedInit.a, 4)
 }
 
 #[test]
-fn opting_in_does_not_add_callable_class_aliases() {
+fn named_construction_does_not_add_callable_class_aliases() {
     let mut runtime = checked(
         r#"
-class Pair(*, a):
+class Pair(a):
     this.a = a
 alias = $Pair
 holder = {factory: $Pair}
@@ -630,7 +793,7 @@ holder = {factory: $Pair}
 fn class_and_function_name_collisions_keep_the_existing_distinct_call_routes() {
     checked(
         r#"
-class Factory(*, a):
+class Factory(a):
     this.a = a
 def Factory(a, b) => a * 10 + b
 a = 0
@@ -650,12 +813,34 @@ assert(call((a, b) => a * 10 + b), 65)
 }
 
 #[test]
-fn failed_constructors_restore_instances_properties_dependencies_and_binding_metadata() {
+fn helper_named_classes_keep_assignment_instantiation_and_explicit_assignment_escape() {
+    checked(
+        r#"
+class TypeError(a, b):
+    this.a = a
+    this.b = b
+a = b = 0
+assignment = TypeError((b=2), (a=1))
+named = TypeError(b=4, a=3)
+assert(assignment.a, 2)
+assert(assignment.b, 1)
+assert(named.a, 3)
+assert(named.b, 4)
+assert(a, 1)
+assert(b, 2)
+assert(TypeError("message"), "TypeError: message")
+assert(TypeError.length, 2)
+"#,
+    );
+}
+
+#[test]
+fn failed_constructors_restore_instances_properties_dependencies_and_class_metadata() {
     let mut runtime = checked(
         r#"
 saved = {amount: 5}
 derived = saved.amount * 2
-class Pair(*, a):
+class Pair(a):
     saved.amount = 9
     this.a = a
     throw "ABORT"
@@ -695,10 +880,10 @@ catch error:
         )
         .unwrap();
     assert!(runtime.take_assertions().is_empty());
-    assert_eq!(
-        runtime.state.class("Pair").unwrap().constructor_binding,
-        ConstructorBinding::Named
-    );
+    let class = runtime.state.class("Pair").unwrap();
+    assert_eq!(class.parameters.len(), 1);
+    assert_eq!(class.parameters[0].name, "a");
+    assert!(matches!(class.constructor.last(), Some(Stmt::Throw(_))));
     assert!(runtime.state.class("Pair").unwrap().instances.is_empty());
     runtime.run("saved.amount = 6").unwrap();
     assert_eq!(runtime.run("derived").unwrap(), Value::Number(12.0));
@@ -710,7 +895,7 @@ fn caught_parent_and_rhs_failures_leave_no_partial_objects_or_rules() {
         r#"
 events = {count: 0}
 doubled = events.count * 2
-class Parent(*, a):
+class Parent(a):
     this.a = a
     events.count = 9
     throw "PARENT"
@@ -724,7 +909,7 @@ assert(events.count, 0)
 assert(doubled, 0)
 assert(Parent.length, 0)
 assert(Child.length, 0)
-class Good(*, a, b):
+class Good(a, b):
     this.a = a
 try:
     failed = Good(a=(events.count=4), b=missing)
@@ -740,10 +925,10 @@ assert(doubled, 10)
 }
 
 #[test]
-fn redeclaration_resets_mode_without_rewriting_instances_or_class_rules() {
+fn redeclaration_updates_the_signature_without_rewriting_instances_or_class_rules() {
     checked(
         r#"
-class Pair(*, a):
+class Pair(a):
     this.a = a
 first = Pair(a=1)
 $Pair.ready = true
@@ -754,7 +939,7 @@ assert(first.a, 1)
 assert(second.a, 2)
 assert(first.ready, true)
 assert(second.ready, true)
-class Pair(*):
+class Pair:
     def init(a):
         this.a = a
 third = Pair(a=3)
@@ -769,7 +954,7 @@ assert(Pair.length, 3)
 fn named_calls_pin_the_validated_constructor_but_legacy_calls_still_select_after_rhs() {
     checked(
         r#"
-class Named(*, a):
+class Named(a):
     this.original = a
 def replaceNamed():
     class Named(a):
@@ -794,14 +979,61 @@ assert(legacy.replacement, 9)
 }
 
 #[test]
+fn super_parent_selection_is_delayed_only_for_purely_positional_calls() {
+    for (call, expected) in [
+        ("super(reparent(), 2)", "replacement"),
+        ("super((a=reparent()), (b=2))", "replacement"),
+        ("super(a=reparent(), b=2)", "original"),
+        ("super(reparent(), b=2)", "original"),
+    ] {
+        for (body, invocation) in [
+            (call.to_string(), "child = Child()"),
+            (
+                format!("def reset() => {call}"),
+                "child = Child()\nchild.reset()",
+            ),
+        ] {
+            checked(&format!(
+                r#"
+events = {{count: 0}}
+class Original(a, b):
+    this.source = "original"
+    this.a = a
+    this.b = b
+class Replacement(a, b):
+    this.source = "replacement"
+    this.a = a
+    this.b = b
+def reparent():
+    events.count = events.count + 1
+    class Child: Replacement
+        pass
+    return 1
+class Child: Original
+    {body}
+{invocation}
+assert(child.source, "{expected}")
+assert(child.a, 1)
+assert(child.b, 2)
+assert(events.count, 1)
+assert(Child.length, 1)
+assert(Original.length, 0)
+assert(Replacement.length, 0)
+"#
+            ));
+        }
+    }
+}
+
+#[test]
 fn existing_header_and_expression_resource_limits_remain_in_force() {
     let names: Vec<_> = (0..256).map(|index| format!("p{index}")).collect();
     checked(&format!(
-        "class Wide(*, {}):\n    this.last = p255\nwide = Wide(p255=7)\nassert(wide.last, 7)",
+        "class Wide({}):\n    this.last = p255\nwide = Wide(p255=7)\nassert(wide.last, 7)",
         names.join(", ")
     ));
     let source = format!(
-        "class Pair(*, a):\n    this.a = a\npair = Pair(a={}1{})",
+        "class Pair(a):\n    this.a = a\npair = Pair(a={}1{})",
         "(".repeat(80),
         ")".repeat(80)
     );
@@ -836,6 +1068,21 @@ fn actual_cli_serializes_named_instances_and_has_no_label_graph_nodes() {
 }
 
 #[test]
+fn actual_cli_rejects_removed_star_headers() {
+    let fixture =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/named-constructors-star.nuc");
+    let output = Command::new(env!("CARGO_BIN_EXE_nucleoid"))
+        .arg(fixture)
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(1), "{output:?}");
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap().trim(),
+        "SyntaxError: Expected a parameter but found '*' (line 1, column 13)"
+    );
+}
+
+#[test]
 fn actual_cli_reports_invalid_bindings_and_repl_handles_the_new_class_header() {
     let fixture =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/named-constructors-invalid.nuc");
@@ -846,7 +1093,7 @@ fn actual_cli_reports_invalid_bindings_and_repl_handles_the_new_class_header() {
     assert_eq!(output.status.code(), Some(1), "{output:?}");
     assert_eq!(
         String::from_utf8(output.stderr).unwrap().trim(),
-        "TypeError: Constructor Pair requires named arguments (line 2, column 1)"
+        "TypeError: Unknown constructor argument 'unknown' for Pair (line 2, column 1)"
     );
 
     let mut child = Command::new(env!("CARGO_BIN_EXE_nucleoid"))
@@ -856,7 +1103,7 @@ fn actual_cli_reports_invalid_bindings_and_repl_handles_the_new_class_header() {
         .spawn()
         .unwrap();
     child.stdin.take().unwrap().write_all(
-        b"class Pair(*):\n    def init(a, b):\n        this.a = a\n        this.b = b\n\npair = Pair(b=2, a=1)\nassert(pair.a, 1)\nassert(pair.b, 2)\n.json on\npair.a + pair.b\n.exit\n",
+        b"class Pair:\n    def init(a, b):\n        this.a = a\n        this.b = b\n\npair = Pair(b=2, a=1)\nassert(pair.a, 1)\nassert(pair.b, 2)\n.json on\npair.a + pair.b\n.exit\n",
     ).unwrap();
     let output = child.wait_with_output().unwrap();
     assert!(output.status.success(), "{output:?}");

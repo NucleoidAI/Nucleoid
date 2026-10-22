@@ -1759,7 +1759,7 @@ catch
 ---
 # Nucleoid constructs an object with named parameters
 
-class Point(*, x, y):
+class Point(x, y):
     this.x = x
     this.y = y
 point = Point(y=4, x=3)

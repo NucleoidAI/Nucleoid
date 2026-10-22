@@ -3,7 +3,7 @@
 //! to preserve snapshots.
 
 use crate::error::{Error, Result};
-use crate::lang::ast::{ConstructorBinding, Expr, Stmt, TemplatePart, literal};
+use crate::lang::ast::{Expr, Stmt, TemplatePart, literal};
 use crate::nuc::Outcome;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
@@ -75,9 +75,9 @@ impl Runtime {
                 operator: *operator,
                 operand: Box::new(self.freeze(operand, scope)?),
             },
-            Expr::Call { .. }
-                if self.call_constructor_binding(expression, scope)
-                    == ConstructorBinding::Named =>
+            Expr::Call { .. } | Expr::Super(_)
+                if expression.has_named_arguments()
+                    && self.is_constructor_call(expression, scope) =>
             {
                 // Validate the entire named binding plan before evaluating
                 // any RHS, including .value. Its values are already snapshots.

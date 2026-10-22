@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use crate::lang::ast::{ConstructorBinding, Expr, LogicalOp, Stmt, TemplatePart, UnaryOp};
+use crate::lang::ast::{Expr, LogicalOp, Stmt, TemplatePart, UnaryOp};
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -51,6 +51,7 @@ impl fmt::Display for Expr {
                 UnaryOp::Negate => write!(f, "-{operand}"),
                 UnaryOp::Plus => write!(f, "+{operand}"),
                 UnaryOp::TypeOf => write!(f, "typeof {operand}"),
+                UnaryOp::Positional => write!(f, "({operand})"),
             },
             Expr::Binary {
                 operator,
@@ -126,22 +127,7 @@ pub fn generate(statement: &Stmt) -> String {
         Stmt::Return(None) => "return".to_string(),
         Stmt::Throw(expression) => format!("throw {expression}"),
         Stmt::Delete(expression) => format!("delete {expression}"),
-        Stmt::Class(declaration) => {
-            let mut header = format!("class {}", declaration.name);
-            if declaration.constructor_binding == ConstructorBinding::Named {
-                header.push_str("(*");
-                for parameter in &declaration.parameters {
-                    header.push(',');
-                    header.push_str(&parameter.name);
-                    if let Some(type_name) = &parameter.type_name {
-                        header.push(':');
-                        header.push_str(type_name);
-                    }
-                }
-                header.push(')');
-            }
-            header
-        }
+        Stmt::Class(declaration) => format!("class {}", declaration.name),
         Stmt::Function(function) => match &function.name {
             Some(name) => format!("def {name}"),
             None => "def".to_string(),

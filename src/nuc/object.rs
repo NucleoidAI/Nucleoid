@@ -7,7 +7,7 @@ use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
-use crate::lang::ast::{ConstructorBinding, Expr, Parameter, Stmt};
+use crate::lang::ast::{Expr, Parameter, Stmt};
 use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
@@ -29,12 +29,11 @@ pub(crate) struct ClassShape {
     constructor: Vec<Stmt>,
 }
 
-/// Legacy calls select the constructor after evaluating their expressions,
-/// exactly as before. Named calls select and validate a signature first, and
-/// keep that same signature/body if an RHS re-declares the class.
+/// Purely positional calls retain delayed constructor selection. Calls with
+/// labels validate and pin one signature/body before evaluating any value.
 pub(crate) enum ConstructorCall {
     Positional(Vec<Value>),
-    Named {
+    Bound {
         constructor: ClassShape,
         values: Vec<Value>,
     },
@@ -48,6 +47,65 @@ impl ClassShape {
             constructor: class.constructor.clone(),
         }
     }
+}
+
+/// A validated source expression and the declared slot it fills. Surplus
+/// positional arguments have no slot but must still be evaluated.
+struct ArgumentBinding<'a> {
+    slot: Option<usize>,
+    expression: &'a Expr,
+}
+
+fn bind_arguments<'a>(
+    class: &ClassData,
+    arguments: &'a [Expr],
+) -> Result<Vec<ArgumentBinding<'a>>> {
+    let mut seen = IndexSet::new();
+    let mut bindings = Vec::with_capacity(arguments.len());
+    let mut positional = 0;
+    let mut named = false;
+    for argument in arguments {
+        if let Some((name, value)) = argument.named_argument() {
+            named = true;
+            let Some(index) = class
+                .parameters
+                .iter()
+                .position(|parameter| parameter.name == name)
+            else {
+                return Err(Error::type_error(format!(
+                    "Unknown constructor argument '{name}' for {}",
+                    class.name
+                )));
+            };
+            if !seen.insert(index) {
+                return Err(Error::type_error(format!(
+                    "Duplicate constructor argument '{name}' for {}",
+                    class.name
+                )));
+            }
+            bindings.push(ArgumentBinding {
+                slot: Some(index),
+                expression: value,
+            });
+        } else {
+            if named {
+                return Err(Error::type_error(format!(
+                    "Positional constructor argument after named arguments for {}",
+                    class.name
+                )));
+            }
+            let slot = (positional < class.parameters.len()).then_some(positional);
+            if let Some(slot) = slot {
+                seen.insert(slot);
+            }
+            bindings.push(ArgumentBinding {
+                slot,
+                expression: argument,
+            });
+            positional += 1;
+        }
+    }
+    Ok(bindings)
 }
 
 impl Object {
@@ -109,8 +167,8 @@ impl Object {
 
 impl Runtime {
     /// Follow precisely the existing nearest-nonempty-body rule, even for a
-    /// bodyless class that declares parameters. Binding mode travels with the
-    /// selected constructor, not with the originally called subclass.
+    /// bodyless class that declares parameters. Labels refer to the selected
+    /// constructor's signature, not the originally called subclass's header.
     fn effective_constructor(&self, name: &str) -> Result<&ClassData> {
         let mut class = self
             .state
@@ -129,28 +187,18 @@ impl Runtime {
         Ok(class)
     }
 
-    pub(crate) fn constructor_binding(&self, name: &str) -> Option<ConstructorBinding> {
-        self.effective_constructor(name)
-            .ok()
-            .map(|class| class.constructor_binding)
-    }
-
     /// Assignment instantiation deliberately retains its existing routing,
     /// which differs from ordinary calls when a function/local shadows a class.
-    pub(crate) fn instantiation_binding(&self, expression: &Expr) -> ConstructorBinding {
+    pub(crate) fn is_instantiation(&self, expression: &Expr) -> bool {
         if let Expr::Call { callee, .. } = expression {
             if let Expr::Identifier(name) = callee.as_ref() {
-                return self.constructor_binding(name).unwrap_or_default();
+                return self.state.has_class(name);
             }
         }
-        ConstructorBinding::Positional
+        false
     }
 
-    pub(crate) fn call_constructor_binding(
-        &self,
-        expression: &Expr,
-        scope: &Scope,
-    ) -> ConstructorBinding {
+    pub(crate) fn is_constructor_call(&self, expression: &Expr, scope: &Scope) -> bool {
         match expression {
             Expr::Call { callee, .. } => {
                 if let Expr::Identifier(name) = callee.as_ref() {
@@ -160,18 +208,48 @@ impl Runtime {
                     ) && !scope.has(name)
                         && !self.state.has_function(name)
                     {
-                        return self.constructor_binding(name).unwrap_or_default();
+                        return self.state.has_class(name);
                     }
                 }
             }
             Expr::Super(_) => {
                 if let Ok((_, Some(parent))) = self.super_target(scope) {
-                    return self.constructor_binding(&parent).unwrap_or_default();
+                    return self.state.has_class(&parent);
                 }
             }
             _ => {}
         }
-        ConstructorBinding::Positional
+        false
+    }
+
+    /// Static class-rule reference checks must not turn an invalid binding
+    /// into a missing-RHS-reference error before construction gets to validate.
+    pub(crate) fn check_constructor_bindings(
+        &self,
+        expression: &Expr,
+        scope: &Scope,
+        assignment_instantiation: bool,
+    ) -> Result<()> {
+        if !expression.has_named_arguments() {
+            return Ok(());
+        }
+        match expression {
+            Expr::Call { callee, arguments }
+                if (assignment_instantiation && self.is_instantiation(expression))
+                    || self.is_constructor_call(expression, scope) =>
+            {
+                if let Expr::Identifier(name) = callee.as_ref() {
+                    bind_arguments(self.effective_constructor(name)?, arguments)?;
+                }
+            }
+            Expr::Super(arguments) if self.is_constructor_call(expression, scope) => {
+                if let (_, Some(parent)) = self.super_target(scope)? {
+                    bind_arguments(self.effective_constructor(&parent)?, arguments)?;
+                }
+            }
+            _ => {}
+        }
+        Ok(())
     }
 
     pub(crate) fn prepare_constructor(
@@ -181,54 +259,28 @@ impl Runtime {
         scope: &mut Scope,
     ) -> Result<ConstructorCall> {
         let class = self.effective_constructor(name)?;
-        if class.constructor_binding == ConstructorBinding::Positional {
+        if !arguments
+            .iter()
+            .any(|argument| argument.named_argument().is_some())
+        {
             return self
                 .evaluate_all(arguments, scope)
                 .map(ConstructorCall::Positional);
         }
 
-        let mut seen = IndexSet::new();
-        let mut bindings = Vec::with_capacity(arguments.len());
-        for argument in arguments {
-            let Expr::Assign { target, value } = argument else {
-                return Err(Error::type_error(format!(
-                    "Constructor {} requires named arguments",
-                    class.name
-                )));
-            };
-            let Expr::Identifier(name) = target.as_ref() else {
-                return Err(Error::type_error(format!(
-                    "Constructor {} requires named arguments",
-                    class.name
-                )));
-            };
-            let Some(index) = class
-                .parameters
-                .iter()
-                .position(|parameter| parameter.name == *name)
-            else {
-                return Err(Error::type_error(format!(
-                    "Unknown constructor argument '{name}' for {}",
-                    class.name
-                )));
-            };
-            if !seen.insert(index) {
-                return Err(Error::type_error(format!(
-                    "Duplicate constructor argument '{name}' for {}",
-                    class.name
-                )));
-            }
-            bindings.push((index, value.as_ref()));
-        }
+        let bindings = bind_arguments(class, arguments)?;
 
         // Invalid bindings need no owned snapshot, but valid calls must pin
         // the selected signature/body before evaluating any RHS.
         let constructor = ClassShape::of(class);
         let mut values = vec![Value::Null; constructor.parameters.len()];
-        for (index, expression) in bindings {
-            values[index] = self.evaluate(expression, scope)?;
+        for binding in bindings {
+            let value = self.evaluate(binding.expression, scope)?;
+            if let Some(slot) = binding.slot {
+                values[slot] = value;
+            }
         }
-        Ok(ConstructorCall::Named {
+        Ok(ConstructorCall::Bound {
             constructor,
             values,
         })
@@ -244,7 +296,7 @@ impl Runtime {
             ConstructorCall::Positional(values) => {
                 (ClassShape::of(self.effective_constructor(name)?), values)
             }
-            ConstructorCall::Named {
+            ConstructorCall::Bound {
                 constructor,
                 values,
             } => (constructor, values),

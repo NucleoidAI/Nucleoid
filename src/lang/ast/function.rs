@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
-use crate::lang::ast::{ConstructorBinding, Expr, Function as FunctionDecl, FunctionBody};
+use crate::lang::ast::{Expr, Function as FunctionDecl, FunctionBody};
 use crate::lang::evaluation::Flow;
 use crate::nuc::object::ConstructorCall;
 use crate::runtime::Runtime;
@@ -71,16 +71,23 @@ impl Runtime {
 
     /// `super(...)`, which runs the parent constructor against the same object.
     pub(crate) fn call_super(&mut self, arguments: &[Expr], scope: &mut Scope) -> Result<Value> {
-        if let Ok((this, Some(parent))) = self.super_target(scope) {
-            if self.constructor_binding(&parent) == Some(ConstructorBinding::Named) {
-                let call = self.prepare_constructor(&parent, arguments, scope)?;
-                self.run_constructor(&parent, call, &this)?;
-                return Ok(Value::Null);
+        // Only labeled calls pin a parent before values run. Positional calls
+        // must resolve it after any argument-side class redeclaration.
+        if arguments
+            .iter()
+            .any(|argument| argument.named_argument().is_some())
+        {
+            if let Ok((this, Some(parent))) = self.super_target(scope) {
+                if self.state.has_class(&parent) {
+                    let call = self.prepare_constructor(&parent, arguments, scope)?;
+                    self.run_constructor(&parent, call, &this)?;
+                    return Ok(Value::Null);
+                }
             }
         }
 
         // Preserve argument evaluation before receiver/parent resolution for
-        // every legacy super call, including calls without a receiver/parent.
+        // positional calls and calls without a receiver or parent.
         let mut values = Vec::new();
         for argument in arguments {
             values.push(self.evaluate(argument, scope)?);

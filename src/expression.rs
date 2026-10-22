@@ -4,7 +4,8 @@
 //! [`Expression::roots`] stops at a function body because a lambda's parameters
 //! are not names the surrounding declaration reads.
 
-use crate::lang::ast::{ConstructorBinding, Expr, FunctionBody, TemplatePart};
+use crate::error::Result;
+use crate::lang::ast::{Expr, FunctionBody, TemplatePart};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 
@@ -21,23 +22,20 @@ impl<'a> Expression<'a> {
     ///
     /// A function body is not descended into: its parameters are bound by the
     /// function, so a rule that passes a lambda does not read them.
-    /// Without runtime class metadata, this syntactic query assumes positional
-    /// calls; runtime rule checks use context-aware collection for named labels.
+    /// Without runtime routing, this syntactic query assumes ordinary calls;
+    /// runtime rule checks use context-aware collection for constructor labels.
     pub fn roots(&self) -> Vec<String> {
-        self.roots_with(ConstructorBinding::Positional, &|_| {
-            ConstructorBinding::Positional
-        })
+        self.roots_with(false, &|_| false)
     }
 
-    /// Resolve call binding context without changing the shared call AST:
-    /// `name=value` is still an assignment expression for every legacy call.
+    /// Resolve constructor routing without reclassifying function assignments.
     pub(crate) fn roots_with(
         &self,
-        binding: ConstructorBinding,
-        resolve: &impl Fn(&Expr) -> ConstructorBinding,
+        constructor: bool,
+        resolve: &impl Fn(&Expr) -> bool,
     ) -> Vec<String> {
         let mut found = Vec::new();
-        roots(self.node, binding, resolve, &mut found);
+        roots(self.node, constructor, resolve, &mut found);
         found
     }
 
@@ -54,6 +52,25 @@ impl<'a> Expression<'a> {
         class_properties(self.node, class, &mut found);
         found
     }
+
+    /// Validate calls before a static reference check inspects their values.
+    /// Like roots, this does not enter deferred function bodies.
+    pub(crate) fn check_calls(&self, check: &impl Fn(&Expr) -> Result<()>) -> Result<()> {
+        check_calls(self.node, check)
+    }
+}
+
+fn check_calls(expression: &Expr, check: &impl Fn(&Expr) -> Result<()>) -> Result<()> {
+    if matches!(expression, Expr::Call { .. } | Expr::Super(_)) {
+        check(expression)?;
+    }
+    let mut result = Ok(());
+    visit_children(expression, &mut |child| {
+        if result.is_ok() {
+            result = check_calls(child, check);
+        }
+    });
+    result
 }
 
 impl Runtime {
@@ -63,22 +80,17 @@ impl Runtime {
         scope: &Scope,
         assignment_instantiation: bool,
     ) -> Vec<String> {
-        let resolve = |expression: &Expr| self.call_constructor_binding(expression, scope);
-        let binding = if assignment_instantiation
-            && self.instantiation_binding(expression) == ConstructorBinding::Named
-        {
-            ConstructorBinding::Named
-        } else {
-            resolve(expression)
-        };
-        Expression::new(expression).roots_with(binding, &resolve)
+        let resolve = |expression: &Expr| self.is_constructor_call(expression, scope);
+        let constructor =
+            (assignment_instantiation && self.is_instantiation(expression)) || resolve(expression);
+        Expression::new(expression).roots_with(constructor, &resolve)
     }
 }
 
 fn roots(
     expression: &Expr,
-    binding: ConstructorBinding,
-    resolve: &impl Fn(&Expr) -> ConstructorBinding,
+    constructor: bool,
+    resolve: &impl Fn(&Expr) -> bool,
     found: &mut Vec<String>,
 ) {
     match expression {
@@ -88,14 +100,12 @@ fn roots(
                 roots(callee, resolve(callee), resolve, found);
             }
             for argument in arguments {
-                let value = match argument {
-                    Expr::Assign { target, value }
-                        if binding == ConstructorBinding::Named
-                            && matches!(target.as_ref(), Expr::Identifier(_)) =>
-                    {
-                        value
-                    }
-                    other => other,
+                let value = if constructor {
+                    argument
+                        .named_argument()
+                        .map_or(argument, |(_, value)| value)
+                } else {
+                    argument
                 };
                 roots(value, resolve(value), resolve, found);
             }
