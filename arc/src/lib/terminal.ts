@@ -92,7 +92,7 @@ function block(title, lines, write = console.log) {
   write(`  ${frame(`└${rule}┘`)}`);
 }
 
-export function header({ columns, rows }) {
+export function header({ version }) {
   const available = width() - 4;
   const horizontal = available >= 32;
   const limit = Math.min(12, available);
@@ -111,7 +111,7 @@ export function header({ columns, rows }) {
     ),
     "",
     ...wrap("Analyze / Construct / Visualize", textWidth),
-    ...wrap(`Input ${columns} × ${rows}`, textWidth).map((line) =>
+    ...wrap(`Version ${version}`, textWidth).map((line) =>
       styleText("gray", line)
     ),
   ];
@@ -125,9 +125,9 @@ export function header({ columns, rows }) {
     : [...logo, "", ...text];
   const contentWidth = Math.max(...lines.map((line) => stringWidth(line)));
   const inset = " ".repeat(
-    Math.max(0, Math.floor((available - contentWidth) / 4))
+    Math.max(0, Math.floor((available - contentWidth) * 0.5))
   );
-  block("", ["", ...lines.map((line) => inset + line), ""]);
+  block("", ["", "", ...lines.map((line) => inset + line), "", ""]);
   console.log("");
 }
 
@@ -319,8 +319,8 @@ export function summary(difference, duration) {
       : `${Math.floor(seconds / 60)}m ${(seconds % 60).toFixed(1)}s`;
   const status =
     difference === 0
-      ? styleText(["bold", "white"], "✓ EXACT MATCH")
-      : styleText(["bold", "yellow"], "◇ MISMATCH");
+      ? styleText(["bold", "green"], "✓ EXACT MATCH")
+      : styleText(["bold", "red"], "◇ MISMATCH");
   block("Run complete", [
     status,
     "",

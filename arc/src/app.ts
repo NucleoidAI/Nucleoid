@@ -1,6 +1,7 @@
 import * as analyzer from "./analyzer";
 import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
+import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
 import puzzle from "./data/training/3aa6fb7a.json";
 
@@ -19,10 +20,7 @@ const training_input = {
 
 export async function start() {
   const startedAt = performance.now();
-  terminal.header({
-    columns: test_input_matrix[0]?.length ?? 0,
-    rows: test_input_matrix.length,
-  });
+  terminal.header({ version: await nucleoid.version() });
   terminal.puzzle({ train, testInput: test_input_matrix });
   terminal.section(
     1,

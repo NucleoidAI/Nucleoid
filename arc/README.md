@@ -45,10 +45,13 @@ type checking, linting, and offline inspection do not require model calls.
 The terminal uses light and dark grey styling with a small green `nuc` wordmark
 from [Nucleoid's avatar](https://avatars.githubusercontent.com/u/87045767?s=96&v=4).
 The header title is **Nucleoid - Logic Language for World Models 🌱🐋🌍**.
-The header content sits left of center as one group, with its left inset set to
-25% of the unused horizontal space. Its first two rows pair the unboxed
+It displays the runtime version reported by the Nucleoid executable's `--version`
+option, using the same `NUCLEOID_EXECUTABLE` selection as program execution.
+Two blank rows pad the header content above and below.
+The header content is centered as one group, with its left inset set to
+50% of the unused horizontal space. Its first two rows pair the unboxed
 wordmark on the left with the title and `Inspired by Nature` on the right.
-After a blank line, the workflow and input dimensions share the same text
+After a blank line, the workflow and runtime version share the same text
 column. Narrow terminals use smaller artwork and stack the header when both
 columns cannot fit. Artwork is embedded, with
 no image downloads during a run. Square corners, straight grey borders, light
@@ -69,7 +72,8 @@ Numbered analysis/visualization stages, boxed declarations and object states,
 and color-coded ARC grids with row/column coordinates keep the run readable.
 Wide grids split into column panels rather than dropping cells. The final
 comparison keeps **Expected** before **Result**, followed by an
-exact-match/mismatch badge, the unchanged difference score, and elapsed time.
+exact-match badge in green or a mismatch badge in red, the unchanged difference
+score, and elapsed time.
 Model token usage stays visible underneath the active step, and failures go to
 standard error with a boxed stack trace.
 
