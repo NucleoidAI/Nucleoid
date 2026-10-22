@@ -38,17 +38,18 @@ mortal:
 
 ```console
 > class Human(name: str):
-...     this.name = name
-...
+..    this.name = name
+..
 > $Human.mortal = true
 > socrates = Human("Socrates")
 > socrates.mortal
 true
 ```
 
-Interactive body lines are prefilled with indentation. Type each statement at the
-suggested position; use Backspace to dedent, and submit a blank line to run the
-complete block. Piped input is not reindented and must include its own whitespace.
+Interactive body lines are prefilled with indentation after the `..` prompt.
+Tab inserts four spaces; use Backspace to dedent and submit a blank line to run
+the complete block. Piped input is not reindented and must include its own
+whitespace.
 
 ---
 

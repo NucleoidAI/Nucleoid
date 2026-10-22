@@ -5,8 +5,11 @@ use clap::Parser;
 use nucleoid::graph::NodeKey;
 use nucleoid::lang::ast::lexer::{Keyword, Spanned, Token, tokenize};
 use nucleoid::{Runtime, Value};
-use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
+use rustyline::{Cmd, DefaultEditor, KeyCode, KeyEvent, Modifiers};
+
+const INDENT: &str = "    ";
+const CONTINUATION_PROMPT: &str = "..";
 
 #[derive(Parser)]
 #[command(
@@ -123,8 +126,17 @@ fn report(runtime: &mut Runtime) -> ExitCode {
     ExitCode::FAILURE
 }
 
+fn repl_editor() -> Result<DefaultEditor, ReadlineError> {
+    let mut editor = DefaultEditor::new()?;
+    let _ = editor.bind_sequence(
+        KeyEvent(KeyCode::Tab, Modifiers::NONE),
+        Cmd::Insert(1, INDENT.into()),
+    );
+    Ok(editor)
+}
+
 fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
-    let mut editor = match DefaultEditor::new() {
+    let mut editor = match repl_editor() {
         Ok(editor) => editor,
         Err(error) => {
             eprintln!("nucleoid: cannot start interactive editor: {error}");
@@ -140,7 +152,11 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
     println!("Type .help for available commands.");
 
     loop {
-        let prompt = if source.is_empty() { "> " } else { "... " };
+        let prompt = if source.is_empty() {
+            "> "
+        } else {
+            CONTINUATION_PROMPT
+        };
         let line = match editor.readline_with_initial(prompt, (&indentation, "")) {
             Ok(line) => line,
             Err(ReadlineError::Interrupted) => {
@@ -241,7 +257,7 @@ fn next_indentation(line: &str, opens_body: bool) -> String {
         .take_while(|character| matches!(character, ' ' | '\t'))
         .collect();
     if opens_body || indented_alternative_header(line) {
-        indentation.push_str("    ");
+        indentation.push_str(INDENT);
     }
     indentation
 }
@@ -357,7 +373,8 @@ fn print_repl_help() {
 .exit, .quit     Exit the interactive CLI
 
 Use Up/Down for history and Ctrl-C to cancel the current input.
-Body indentation is filled in automatically. Use Backspace to dedent.
+Body indentation is filled in automatically. Tab inserts four spaces.
+Use Backspace to dedent.
 Enter a blank line to run a multiline indented block."
     );
 }
@@ -365,10 +382,30 @@ Enter a blank line to run a multiline indented block."
 #[cfg(test)]
 mod tests {
     use super::{
-        indented_alternative_header, indented_body_header, indented_named_arrow_header,
-        indented_try_header, next_indentation, setting_value,
+        CONTINUATION_PROMPT, INDENT, indented_alternative_header, indented_body_header,
+        indented_named_arrow_header, indented_try_header, next_indentation, repl_editor,
+        setting_value,
     };
     use nucleoid::{Runtime, Value};
+    use rustyline::{Cmd, EventHandler, KeyCode, KeyEvent, Modifiers};
+
+    #[test]
+    fn continuation_prompt_has_no_extra_separator_before_body_indentation() {
+        let indentation = next_indentation("class Student(name, age):", true);
+        assert_eq!(format!("{CONTINUATION_PROMPT}{indentation}"), "..    ");
+    }
+
+    #[test]
+    fn tab_inserts_the_same_four_literal_spaces_as_body_indentation() {
+        let mut editor = repl_editor().unwrap();
+        let Some(EventHandler::Simple(Cmd::Insert(1, spaces))) =
+            editor.unbind_sequence(KeyEvent(KeyCode::Tab, Modifiers::NONE))
+        else {
+            panic!("Tab must insert literal spaces");
+        };
+        assert_eq!(spaces, INDENT);
+        assert_eq!(spaces, "    ");
+    }
 
     #[test]
     fn class_body_keystrokes_use_the_editors_visible_indentation() {
