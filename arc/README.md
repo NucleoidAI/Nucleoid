@@ -42,18 +42,30 @@ type checking, linting, and offline inspection do not require model calls.
 
 ## Terminal presentation
 
-The terminal uses a rounded Nucleoid ARC banner, numbered analysis/visualization
-stages, boxed declarations and object states, and color-coded ARC grids with
-row/column coordinates. Wide grids split into column panels rather than dropping
-cells. The final comparison keeps **Expected** before **Result**, followed by an
+The terminal uses light and dark grey styling with a compact `nuc` wordmark from
+[Nucleoid's avatar](https://avatars.githubusercontent.com/u/87045767?s=96&v=4).
+The header places the smaller wordmark in a grey box on the left, with the title
+and run details on the right. Narrow terminals use smaller artwork and stack
+the header when both columns cannot fit. Artwork is embedded, with no image
+downloads during a run. Square corners, straight grey borders, light grey
+headings, and dark grey secondary text carry the theme throughout the run.
+Warnings and errors retain their semantic colors, and ARC color IDs `0` through
+`9` keep their standard grid palette.
+
+Numbered analysis/visualization stages, boxed declarations and object states,
+and color-coded ARC grids with row/column coordinates keep the run readable.
+Wide grids split into column panels rather than dropping cells. The final
+comparison keeps **Expected** before **Result**, followed by an
 exact-match/mismatch badge, the unchanged difference score, and elapsed time.
 Model token usage stays visible underneath the active step, and failures go to
 standard error with a boxed stack trace.
 
 Colors follow the terminal automatically. Set `NO_COLOR=1` for uncolored output;
-redirected output is uncolored unless `FORCE_COLOR=1` is set. Formatting uses
-Node.js's built-in utilities and does not change prompts, programs, matrices,
-provider settings, or scoring.
+redirected output is uncolored unless `FORCE_COLOR=1` is set. Styling uses
+Node.js's built-in utilities. `string-width` measures terminal display cells,
+and `wrap-ansi` wraps long output without breaking colors, so both vertical
+borders stay aligned even with wide Unicode text. Formatting does not change
+prompts, programs, matrices, provider settings, or scoring.
 
 ## Instruction datasets
 

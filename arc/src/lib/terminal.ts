@@ -1,4 +1,6 @@
 import { inspect, stripVTControlCharacters, styleText } from "node:util";
+import stringWidth from "string-width";
+import wrapAnsi from "wrap-ansi";
 
 const palette = [
   [0, 0, 0],
@@ -13,6 +15,40 @@ const palette = [
   [135, 12, 37],
 ];
 
+const wordmarks = [
+  [
+    "⣿⣿⣿⣷⢀⣠⣴⣿⣿⣿⣿⣿⣿⣷⣦⡀      ⢰⣿⣿⣿⣿⡄        ⣾⣿⣿⣿⡆       ⢀⣤⣴⣿⣿⣿⣿⣿⣿⣿⣶⣤⡀",
+    "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆     ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇      ⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀",
+    "⣿⣿⣿⣿⣿⠟⠉    ⠉⠻⣿⣿⣿⣿⡄    ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇    ⢀⣾⣿⣿⣿⡿⠋     ⠙⢿⣿⣿⣿⣷⡀",
+    "⣿⣿⣿⣿⠃        ⣿⣿⣿⣿⡇    ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇    ⣾⣿⣿⣿⡿         ⣿⣿⣿⣿⡇",
+    "⣿⣿⣿⣿         ⣿⣿⣿⣿⡇    ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇   ⢰⣿⣿⣿⣿⠁         ⠈⠉⠉⠉",
+    "⣿⣿⣿⣿         ⣿⣿⣿⣿⡇    ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇   ⢸⣿⣿⣿⣿",
+    "⣿⣿⣿⣿         ⣿⣿⣿⣿⡇    ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇   ⢸⣿⣿⣿⣿",
+    "⣿⣿⣿⣿         ⣿⣿⣿⣿⡇    ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇   ⠈⣿⣿⣿⣿⣆         ⣠⣤⣤⣤⡀",
+    "⣿⣿⣿⣿         ⣿⣿⣿⣿⡇    ⠘⣿⣿⣿⣿⣇      ⢀⣼⣿⣿⣿⣿⡇    ⠘⣿⣿⣿⣿⣆       ⣠⣿⣿⣿⣿⠇",
+    "⣿⣿⣿⣿         ⣿⣿⣿⣿⡇     ⢹⣿⣿⣿⣿⣷⣦⣤⣤⣶⣶⣿⣿⣿⣿⣿⣿⡇     ⠙⢿⣿⣿⣿⣷⣶⣤⣤⣤⣶⣾⣿⣿⣿⡿⠋",
+    "⣿⣿⣿⣿         ⣿⣿⣿⣿⡇      ⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⣿⣿⣿⣿⡇       ⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠋",
+    "⠉⠉⠉⠉         ⠈⠉⠉⠉⠁        ⠈⠉⠉⠉⠉⠉⠉⠉  ⠈⠉⠉⠉          ⠈⠉⠉⠉⠉⠉⠉⠉⠁",
+  ],
+  [
+    "⣿⣿⣧⣴⣾⣿⣿⣿⣷⣦    ⣾⣿⣿     ⢸⣿⣿⡆   ⢀⣴⣶⣿⣿⣿⣿⣷⣦⡀",
+    "⣿⣿⣿⠟⠉⠉⠉⠛⣿⣿⣧   ⣿⣿⣿     ⢸⣿⣿⡇  ⢠⣾⣿⡿⠋⠉⠉⠙⢻⣿⣿⡆",
+    "⣿⣿⡇     ⣿⣿⣿   ⣿⣿⣿     ⢸⣿⣿⡇  ⣿⣿⡿      ⠻⠿⠛",
+    "⣿⣿⡇     ⣿⣿⣿   ⣿⣿⣿     ⢸⣿⣿⡇  ⣿⣿⡇",
+    "⣿⣿⡇     ⣿⣿⣿   ⣿⣿⣿     ⢸⣿⣿⡇  ⣿⣿⣧      ⣀⣀⣀",
+    "⣿⣿⡇     ⣿⣿⣿   ⢹⣿⣿⣆⣀⣀⣀⣠⣿⣿⣿⡇  ⠘⣿⣿⣧⣀⣀⢀⣀⣴⣿⣿⠏",
+    "⣿⣿⡇     ⣿⣿⣿    ⠻⢿⣿⣿⣿⣿⡿⢿⣿⣿⠇   ⠈⠻⢿⣿⣿⣿⣿⡿⠟⠁",
+  ],
+  [
+    "⣿⣷⡾⠿⢿⣷⡀ ⢸⣿   ⢸⣿  ⢠⣶⡿⠿⢿⣶⡄",
+    "⣿⡏   ⣿⡇ ⢸⣿   ⢸⣿ ⢀⣿⡏   ⠛⠛",
+    "⣿⡇   ⣿⡇ ⢸⣿   ⢸⣿ ⠸⣿⡇   ⢀⡀",
+    "⣿⡇   ⣿⡇ ⠘⣿⣧⣤⣤⣾⣿  ⠻⣿⣤⣤⣴⣿⠏",
+    "⠉⠁   ⠉⠁  ⠈⠉⠉⠉⠈⠉   ⠈⠉⠉⠉",
+  ],
+  ["⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷", "⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶"],
+];
+
 function width() {
   return Math.max(8, Math.min(88, (process.stdout.columns ?? 92) - 4));
 }
@@ -21,83 +57,111 @@ function colors() {
   return styleText("red", ".") !== ".";
 }
 
+function frame(text) {
+  return styleText("gray", text);
+}
+
 function wrap(text, columns) {
-  const lines = [""];
-  for (const word of text.split(/\s+/)) {
-    const index = lines.length - 1;
-    if (lines[index] && lines[index].length + word.length + 1 > columns) {
-      lines.push(word);
-    } else {
-      lines[index] += `${lines[index] ? " " : ""}${word}`;
-    }
-  }
-  return lines;
+  return wrapAnsi(String(text).replace(/\t/g, "    "), Math.max(1, columns), {
+    hard: true,
+    trim: false,
+  }).split("\n");
+}
+
+function pad(text, columns) {
+  return text + " ".repeat(Math.max(0, columns - stringWidth(text)));
 }
 
 function block(title, lines, write = console.log) {
-  const [label, ...continuation] = wrap(
-    stripVTControlCharacters(String(title)),
-    width() - 4
-  );
-  const rule = "─".repeat(Math.max(0, width() - Array.from(label).length - 4));
-  write(
-    `\n  ${styleText("gray", "╭─")} ${styleText("bold", label)} ${styleText(
-      "gray",
-      rule
-    )}`
-  );
-  for (const line of continuation) {
-    write(`  ${styleText("gray", "│")}  ${styleText("bold", line)}`);
+  const columns = width() - 4;
+  const rule = "─".repeat(columns + 2);
+  const row = (line) =>
+    write(`  ${frame("│")} ${pad(line, columns)} ${frame("│")}`);
+  write(`\n  ${frame(`┌${rule}┐`)}`);
+  if (title !== "") {
+    for (const line of wrap(stripVTControlCharacters(String(title)), columns)) {
+      row(styleText(["bold", "white"], line));
+    }
+    write(`  ${frame(`├${rule}┤`)}`);
   }
   for (const line of lines) {
-    write(`  ${styleText("gray", "│")}  ${line}`);
+    for (const wrapped of wrap(line, columns)) {
+      row(styleText("white", wrapped));
+    }
   }
-  write(`  ${styleText("gray", `╰${"─".repeat(width() - 1)}`)}`);
+  write(`  ${frame(`└${rule}┘`)}`);
 }
 
 export function header({ trainingPairs, columns, rows }) {
-  if (width() < 50) {
-    console.log(`\n  ${styleText(["bold", "yellow"], "✦ NUCLEOID ARC")}`);
-    console.log(`  Training  ${trainingPairs} pairs`);
-    console.log(`  Input     ${columns} x ${rows}\n`);
-    return;
-  }
-
-  const lines = [
+  const available = width() - 4;
+  const horizontal = available >= 32;
+  const limit = horizontal
+    ? Math.min(24, available - 19)
+    : Math.min(12, available - 4);
+  const wordmark = wordmarks.find((art) =>
+    art.every((line) => stringWidth(line) <= limit)
+  ) ?? ["nuc"];
+  const wordmarkWidth = Math.max(...wordmark.map((line) => stringWidth(line)));
+  const logo =
+    wordmarkWidth + 4 <= available
+      ? [
+          frame(`┌${"─".repeat(wordmarkWidth + 2)}┐`),
+          ...wordmark.map(
+            (line) =>
+              frame("│") +
+              styleText(["bgGray", "white"], ` ${pad(line, wordmarkWidth)} `) +
+              frame("│")
+          ),
+          frame(`└${"─".repeat(wordmarkWidth + 2)}┘`),
+        ]
+      : wordmark.map((line) => styleText("white", line));
+  const logoWidth = Math.max(...logo.map((line) => stringWidth(line)));
+  const textWidth = horizontal ? available - logoWidth - 3 : available;
+  const text = [
+    ...wrap("NUCLEOID ARC", textWidth).map((line) =>
+      styleText(["bold", "white"], line)
+    ),
     "",
-    styleText(["bold", "yellow"], "   ✦  NUCLEOID ARC"),
-    styleText("gray", "      Inspired by Nature."),
+    ...wrap("Inspired by Nature.", textWidth).map((line) =>
+      styleText("gray", line)
+    ),
+    ...wrap("Analyze / Construct / Visualize", textWidth),
     "",
-    "      Analyze  /  Construct  /  Visualize",
-    "",
-    `      Training  ${trainingPairs} pairs     Input  ${columns} x ${rows}`,
-    "",
+    ...wrap(`Training ${trainingPairs} pairs`, textWidth).map((line) =>
+      styleText("gray", line)
+    ),
+    ...wrap(`Input ${columns} × ${rows}`, textWidth).map((line) =>
+      styleText("gray", line)
+    ),
   ];
-  console.log(`\n  ${styleText("gray", `╭${"─".repeat(width() - 2)}╮`)}`);
-  for (const line of lines) {
-    const padding = Math.max(
-      0,
-      width() - 2 - Array.from(stripVTControlCharacters(line)).length
-    );
-    console.log(
-      `  ${styleText("gray", "│")}${line}${" ".repeat(padding)}${styleText(
-        "gray",
-        "│"
-      )}`
-    );
-  }
-  console.log(`  ${styleText("gray", `╰${"─".repeat(width() - 2)}╯`)}\n`);
+  const height = Math.max(logo.length, text.length);
+  const logoOffset = Math.floor((height - logo.length) / 2);
+  const textOffset = Math.floor((height - text.length) / 2);
+  const lines = horizontal
+    ? Array.from(
+        { length: height },
+        (_, index) =>
+          pad(logo[index - logoOffset] ?? "", logoWidth) +
+          "   " +
+          (text[index - textOffset] ?? "")
+      )
+    : [...logo, "", ...text];
+  block("", ["", ...lines, ""]);
+  console.log("");
 }
 
 export function section(index, title, detail) {
-  const label = `${String(index).padStart(2, "0")}  ${title.toUpperCase()}`;
-  const rule = "─".repeat(Math.max(0, width() - label.length - 4));
-  console.log(
-    `\n  ${styleText("yellow", "◆")} ${styleText("bold", label)} ${styleText(
-      "gray",
-      rule
-    )}`
+  const [label, ...continuation] = wrap(
+    `${String(index).padStart(2, "0")}  ${title.toUpperCase()}`,
+    width() - 4
   );
+  const rule = "─".repeat(Math.max(0, width() - stringWidth(label) - 3));
+  console.log(
+    `\n  ${frame("◆")} ${styleText(["bold", "white"], label)} ${frame(rule)}`
+  );
+  for (const line of continuation) {
+    console.log(`    ${styleText(["bold", "white"], line)}`);
+  }
   for (const line of wrap(detail, width() - 2)) {
     console.log(`    ${styleText("gray", line)}`);
   }
@@ -105,24 +169,26 @@ export function section(index, title, detail) {
 }
 
 export function step(message) {
-  console.log(`  ${styleText("yellow", "›")} ${message}`);
+  const [first, ...continuation] = wrap(
+    stripVTControlCharacters(String(message)),
+    width() - 2
+  );
+  console.log(`  ${frame("›")} ${styleText("white", first)}`);
+  for (const line of continuation) {
+    console.log(`    ${styleText("white", line)}`);
+  }
 }
 
 export function code(title, source) {
   const text = Array.isArray(source) ? source.join("\n\n") : String(source);
-  block(
-    title,
-    stripVTControlCharacters(text)
-      .split("\n")
-      .map((line) => styleText("cyan", line))
-  );
+  block(title, stripVTControlCharacters(text).split("\n"));
 }
 
 export function value(title, data) {
   block(
     title,
     inspect(data, {
-      colors: colors(),
+      colors: false,
       depth: null,
       compact: false,
       breakLength: Math.max(8, width() - 6),
@@ -179,12 +245,10 @@ export function grid(title, matrix) {
 }
 
 export function usage({ prompt_tokens, completion_tokens }) {
-  console.log(
-    styleText(
-      "gray",
-      `    ↳ Model usage  ${prompt_tokens} input / ${completion_tokens} output tokens`
-    )
-  );
+  const message = `↳ Model usage  ${prompt_tokens} input / ${completion_tokens} output tokens`;
+  for (const line of wrap(message, width() - 2)) {
+    console.log(`    ${styleText("gray", line)}`);
+  }
 }
 
 export function summary(difference, duration) {
@@ -195,7 +259,7 @@ export function summary(difference, duration) {
       : `${Math.floor(seconds / 60)}m ${(seconds % 60).toFixed(1)}s`;
   const status =
     difference === 0
-      ? styleText(["bold", "green"], "✓ EXACT MATCH")
+      ? styleText(["bold", "white"], "✓ EXACT MATCH")
       : styleText(["bold", "yellow"], "◇ MISMATCH");
   block("Run complete", [
     status,
