@@ -50,6 +50,9 @@ New files, including `dataset.core.2.json`, need no additional imports.
 Non-JSON files and subdirectories are ignored. An empty dataset directory,
 unreadable files, or malformed JSON fail explicitly; JSON errors name the file.
 
+Instance `input_code` snippets use named constructor arguments whose names match
+the parameters in their class declarations.
+
 ## ARC proposal agent
 
 Use [arc-purposal](../.github/agents/arc-purposal.agent.md) and its
@@ -258,7 +261,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         [9, 9, 0],
         [0, 0, 1]
       ],
-      "input_code": "obj0 = Obj(5, 1, 135, 9, 9, 9)",
+      "input_code": "obj0 = Obj(x=5, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
       "input_value": {
         "id": "obj0",
         "x": 5,

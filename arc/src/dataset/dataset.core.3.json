@@ -54,7 +54,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8101 = Obj(1, 1, 315, 2, 2, 2)",
+          "input_code": "obj8101 = Obj(x=1, y=1, orientation=315, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8101","x":1,"y":1,"orientation":315,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8101","x":1,"y":1,"orientation":315,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         },
@@ -86,7 +86,7 @@
             [0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8102 = Obj(7, 3, 135, 2, 2, 2)",
+          "input_code": "obj8102 = Obj(x=7, y=3, orientation=135, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8102","x":7,"y":3,"orientation":135,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8102","x":7,"y":3,"orientation":135,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         }
@@ -162,7 +162,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8201 = Obj(1, 0, 45, 2, 2, 2)",
+          "input_code": "obj8201 = Obj(x=1, y=0, orientation=45, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8201","x":1,"y":0,"orientation":45,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8201","x":1,"y":0,"orientation":45,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         },
@@ -204,7 +204,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8202 = Obj(6, 4, 225, 2, 2, 2)",
+          "input_code": "obj8202 = Obj(x=6, y=4, orientation=225, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8202","x":6,"y":4,"orientation":225,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8202","x":6,"y":4,"orientation":225,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         },
@@ -246,7 +246,7 @@
             [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [2, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8203 = Obj(0, 9, 315, 2, 2, 2)",
+          "input_code": "obj8203 = Obj(x=0, y=9, orientation=315, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8203","x":0,"y":9,"orientation":315,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8203","x":0,"y":9,"orientation":315,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         }
@@ -310,7 +310,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8301 = Obj(0, 0, 225, 2, 2, 2)",
+          "input_code": "obj8301 = Obj(x=0, y=0, orientation=225, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8301","x":0,"y":0,"orientation":225,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8301","x":0,"y":0,"orientation":225,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         },
@@ -346,7 +346,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8302 = Obj(10, 1, 45, 2, 2, 2)",
+          "input_code": "obj8302 = Obj(x=10, y=1, orientation=45, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8302","x":10,"y":1,"orientation":45,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8302","x":10,"y":1,"orientation":45,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         },
@@ -382,7 +382,7 @@
             [0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8303 = Obj(4, 6, 135, 2, 2, 2)",
+          "input_code": "obj8303 = Obj(x=4, y=6, orientation=135, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8303","x":4,"y":6,"orientation":135,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8303","x":4,"y":6,"orientation":135,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         },
@@ -418,7 +418,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0]
           ],
-          "input_code": "obj8304 = Obj(10, 6, 315, 2, 2, 2)",
+          "input_code": "obj8304 = Obj(x=10, y=6, orientation=315, vertex_color=2, vertical_segment_color=2, horizontal_segment_color=2)",
           "input_value": {"id":"obj8304","x":10,"y":6,"orientation":315,"tag":"l6747","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":0},
           "output_value": {"id":"obj8304","x":10,"y":6,"orientation":315,"tag":"l6624","vertex_color":2,"vertical_segment_color":2,"horizontal_segment_color":2,"marker_color":6}
         }

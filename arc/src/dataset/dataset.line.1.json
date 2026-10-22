@@ -57,7 +57,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj5262 = Obj(2, 0, 90, 'left')",
+          "input_code": "obj5262 = Obj(x=2, y=0, orientation=90, endpoint_position='left')",
           "input_value": {"id":"obj5262","x":2,"y":0,"orientation":90,"tag":"l8001","endpoint_position":"left"},
           "output_value": {"id":"obj5262","x":2,"y":0,"orientation":90,"tag":"l4102","endpoint_position":"left","extension_direction":"right"}
         },
@@ -89,7 +89,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj7957 = Obj(4, 5, 90, 'right')",
+          "input_code": "obj7957 = Obj(x=4, y=5, orientation=90, endpoint_position='right')",
           "input_value": {"id":"obj7957","x":4,"y":5,"orientation":90,"tag":"l8001","endpoint_position":"right"},
           "output_value": {"id":"obj7957","x":4,"y":5,"orientation":90,"tag":"l4102","endpoint_position":"right","extension_direction":"left"}
         }
@@ -145,7 +145,7 @@
             [8, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8547 = Obj(0, 3, 0, 'down')",
+          "input_code": "obj8547 = Obj(x=0, y=3, orientation=0, endpoint_position='down')",
           "input_value": {"id":"obj8547","x":0,"y":3,"orientation":0,"tag":"l8001","endpoint_position":"down"},
           "output_value": {"id":"obj8547","x":0,"y":3,"orientation":0,"tag":"l6012","endpoint_position":"down","extension_direction":"up"}
         },
@@ -177,7 +177,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj5705 = Obj(2, 5, 90, 'left')",
+          "input_code": "obj5705 = Obj(x=2, y=5, orientation=90, endpoint_position='left')",
           "input_value": {"id":"obj5705","x":2,"y":5,"orientation":90,"tag":"l8001","endpoint_position":"left"},
           "output_value": {"id":"obj5705","x":2,"y":5,"orientation":90,"tag":"l4102","endpoint_position":"left","extension_direction":"right"}
         }
@@ -233,7 +233,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj6898 = Obj(3, 0, 90, 'right')",
+          "input_code": "obj6898 = Obj(x=3, y=0, orientation=90, endpoint_position='right')",
           "input_value": {"id":"obj6898","x":3,"y":0,"orientation":90,"tag":"l8001","endpoint_position":"right"},
           "output_value": {"id":"obj6898","x":3,"y":0,"orientation":90,"tag":"l4102","endpoint_position":"right","extension_direction":"left"}
         },
@@ -265,7 +265,7 @@
             [0, 6, 0, 0, 0, 0, 0, 0],
             [0, 8, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj6941 = Obj(1, 4, 0, 'down')",
+          "input_code": "obj6941 = Obj(x=1, y=4, orientation=0, endpoint_position='down')",
           "input_value": {"id":"obj6941","x":1,"y":4,"orientation":0,"tag":"l8001","endpoint_position":"down"},
           "output_value": {"id":"obj6941","x":1,"y":4,"orientation":0,"tag":"l6012","endpoint_position":"down","extension_direction":"up"}
         },
@@ -297,7 +297,7 @@
             [0, 0, 0, 0, 0, 0, 6, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "input_code": "obj8615 = Obj(6, 2, 0, 'up')",
+          "input_code": "obj8615 = Obj(x=6, y=2, orientation=0, endpoint_position='up')",
           "input_value": {"id":"obj8615","x":6,"y":2,"orientation":0,"tag":"l8001","endpoint_position":"up"},
           "output_value": {"id":"obj8615","x":6,"y":2,"orientation":0,"tag":"l6012","endpoint_position":"up","extension_direction":"down"}
         }
