@@ -45,14 +45,19 @@ type checking, linting, and offline inspection do not require model calls.
 The terminal uses light and dark grey styling with a small green `nuc` wordmark
 from [Nucleoid's avatar](https://avatars.githubusercontent.com/u/87045767?s=96&v=4).
 The header title is **Nucleoid - Logic Language for World Models 🌱🐋🌍**.
-The first two rows pair the unboxed wordmark on the left with the title and
-`Inspired by Nature` on the right. After a blank line, the workflow and input
-dimensions share the same text column. Narrow terminals use smaller artwork
-and stack the header when both columns cannot fit. Artwork is embedded, with
+The header content sits left of center as one group, with its left inset set to
+25% of the unused horizontal space. Its first two rows pair the unboxed
+wordmark on the left with the title and `Inspired by Nature` on the right.
+After a blank line, the workflow and input dimensions share the same text
+column. Narrow terminals use smaller artwork and stack the header when both
+columns cannot fit. Artwork is embedded, with
 no image downloads during a run. Square corners, straight grey borders, light
 grey headings, and dark grey secondary text carry the theme throughout the run.
 Warnings and errors retain their semantic colors, and ARC color IDs `0` through
 `9` keep their standard grid palette.
+Declaration/implementation code and JSON/object-state content use bright white;
+panel frames, titles, and matrix colors retain their existing styling.
+Panels expand up to 120 terminal columns, shrinking to fit narrower windows.
 
 Numbered analysis/visualization stages, boxed declarations and object states,
 and color-coded ARC grids with row/column coordinates keep the run readable.

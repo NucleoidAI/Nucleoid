@@ -50,7 +50,7 @@ const wordmarks = [
 ];
 
 function width() {
-  return Math.max(8, Math.min(88, (process.stdout.columns ?? 92) - 4));
+  return Math.max(8, Math.min(120, (process.stdout.columns ?? 124) - 4));
 }
 
 function colors() {
@@ -123,7 +123,11 @@ export function header({ columns, rows }) {
           pad(logo[index] ?? "", logoWidth) + "   " + (text[index] ?? "")
       )
     : [...logo, "", ...text];
-  block("", ["", ...lines, ""]);
+  const contentWidth = Math.max(...lines.map((line) => stringWidth(line)));
+  const inset = " ".repeat(
+    Math.max(0, Math.floor((available - contentWidth) / 4))
+  );
+  block("", ["", ...lines.map((line) => inset + line), ""]);
   console.log("");
 }
 
@@ -158,7 +162,12 @@ export function step(message) {
 
 export function code(title, source) {
   const text = Array.isArray(source) ? source.join("\n\n") : String(source);
-  block(title, stripVTControlCharacters(text).split("\n"));
+  block(
+    title,
+    stripVTControlCharacters(text)
+      .split("\n")
+      .map((line) => styleText("whiteBright", line))
+  );
 }
 
 export function value(title, data) {
@@ -171,7 +180,9 @@ export function value(title, data) {
       breakLength: Math.max(8, width() - 6),
       maxArrayLength: null,
       maxStringLength: null,
-    }).split("\n")
+    })
+      .split("\n")
+      .map((line) => styleText("whiteBright", line))
   );
 }
 
