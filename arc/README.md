@@ -370,12 +370,12 @@ For identified instances, the LLM represents instances in `nuc` lang, this is pa
 
 For each input instance in test, the LLM generates output instance since it has all information needed from **knowledge packets**.
 
-Finally, `Matrix.place` expands each cropped output at its output crop origin
-onto the inferred canvas before `Matrix.merge` combines the masks. Zero is
-transparent; later nonzero cells win on overlap, as before. Invalid colors,
-ragged or padded object matrices, missing coordinates, incomplete segmentation,
-and out-of-bounds placements are rejected explicitly. An erased output object
-uses `[[0]]` with an explicit output position.
+Finally, `Matrix.pad` places each output matrix at its output position before
+`Matrix.merge` combines the masks. Padding expands the reference canvas when
+needed to retain the entire placed matrix, and merging preserves the largest
+height and width across its inputs. Zero is transparent; later nonzero cells
+win on overlap, as before. An erased output object uses `[[0]]` with an explicit
+output position.
 
 `Matrix.crop(matrix)` returns a new matrix containing the smallest rectangle
 around all nonzero cells. All-zero borders are removed from all four sides:
@@ -393,14 +393,16 @@ and `y` is the row. Empty and all-zero matrices return
 `{ matrix: [], x: 0, y: 0 }`. It uses the same validation as `Matrix.crop` and
 does not modify the input. For a located result,
 `Matrix.pad(result.matrix, rows, cols, result.x, result.y)` restores the crop
-to its original position on a canvas with the supplied dimensions.
+to its original position on a canvas at least as large as the supplied dimensions.
 
-`Matrix.pad(matrix, rows, cols, left, top)` returns a new matrix of the requested
-dimensions, placing the input at the required zero-based column and row offsets
-and filling the remaining cells with zeros. It does not center or modify the
-input. Empty matrices can be padded to an all-zero canvas. Invalid matrices,
-dimensions or offsets that are not non-negative safe integers, and placements
-that do not fit inside the requested dimensions are rejected.
+`Matrix.pad(matrix, rows, cols, left, top)` treats the requested dimensions as
+minimums, placing the input at the required zero-based column and row offsets
+and filling the remaining cells with zeros. Each dimension grows as needed to
+include the entire input and its placement offset instead of rejecting an
+undersized reference. It does not center or modify the input. Empty matrices
+can be padded to an all-zero canvas. Invalid matrices and dimensions or offsets
+that are not non-negative safe integers are still rejected, including unsafe
+expanded dimensions.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

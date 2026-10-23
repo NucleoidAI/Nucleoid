@@ -63,13 +63,14 @@ export function pad(matrix, rows, cols, left, top) {
   }
   const sourceRows = matrix.length;
   const sourceCols = matrix[0]?.length ?? 0;
-  if (sourceRows > rows || sourceCols > cols) {
-    throw new Error("Padding dimensions must not be smaller than the matrix");
+  const paddedRows = Math.max(rows, top + sourceRows);
+  const paddedCols = Math.max(cols, left + sourceCols);
+  if (!Number.isSafeInteger(paddedRows) || !Number.isSafeInteger(paddedCols)) {
+    throw new Error("Expanded padding dimensions must be safe integers");
   }
-  if (left > cols - sourceCols || top > rows - sourceRows) {
-    throw new Error("Matrix placement exceeds the padding dimensions");
-  }
-  const result = Array.from({ length: rows }, () => Array(cols).fill(0));
+  const result = Array.from({ length: paddedRows }, () =>
+    Array(paddedCols).fill(0)
+  );
 
   for (let y = 0; y < sourceRows; y++) {
     const row = matrix[y];
@@ -89,16 +90,20 @@ export function pad(matrix, rows, cols, left, top) {
 }
 
 export function merge(...matrices) {
-  const numRows = matrices[0].length;
-  const numCols = matrices[0][0].length;
+  if (matrices.length === 0) {
+    throw new Error("At least one matrix is required for merging");
+  }
+  const numRows = Math.max(...matrices.map((matrix) => matrix.length));
+  const numCols = Math.max(...matrices.map((matrix) => matrix[0]?.length ?? 0));
 
   const result = Array.from({ length: numRows }, () => Array(numCols).fill(0));
 
   for (const matrix of matrices) {
+    const padded = pad(matrix, numRows, numCols, 0, 0);
     for (let i = 0; i < numRows; i++) {
       for (let j = 0; j < numCols; j++) {
-        if (matrix[i][j] !== 0) {
-          result[i][j] = matrix[i][j];
+        if (padded[i][j] !== 0) {
+          result[i][j] = padded[i][j];
         }
       }
     }
