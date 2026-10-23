@@ -3,12 +3,14 @@ import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
-import puzzle from "./data/training/3aa6fb7a.json";
+import puzzle from "./data/training/0ca9ddb6.json";
+// Completed:
+// 3aa6fb7a
 
 const {
   train,
   test: [{ input: test_input_matrix, output: test_output_matrix }],
-} = puzzle; // 0ca9ddb6.json
+} = puzzle;
 
 const training_input = {
   dataset: train.map(({ input, output }) => ({
