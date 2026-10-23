@@ -27,7 +27,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj6068",
+          "instance_name": "obj7e96305711c2",
           "input_x": 5,
           "output_x": 5,
           "input_y": 1,
@@ -54,12 +54,12 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj6068 = Obj(x=5, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj6068","x":5,"y":1,"orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj6068","x":5,"y":1,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obj7e96305711c2 = Obj(x=5, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obj7e96305711c2","x":5,"y":1,"orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obj7e96305711c2","x":5,"y":1,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         },
         {
-          "instance_name": "obj6348",
+          "instance_name": "obj4a5e1d49d8a8",
           "input_x": 2,
           "output_x": 1,
           "input_y": 5,
@@ -86,9 +86,9 @@
             [0, 0, 9, 9, 0, 0, 0, 0],
             [0, 4, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj6348 = Obj(x=2, y=5, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj6348","x":2,"y":5,"orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj6348","x":2,"y":5,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obj4a5e1d49d8a8 = Obj(x=2, y=5, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obj4a5e1d49d8a8","x":2,"y":5,"orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obj4a5e1d49d8a8","x":2,"y":5,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         }
       ]
     },
@@ -115,7 +115,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj4600",
+          "instance_name": "obj4837a1872f63",
           "input_x": 2,
           "output_x": 2,
           "input_y": 1,
@@ -142,12 +142,12 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj4600 = Obj(x=2, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj4600","x":2,"y":1,"orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj4600","x":2,"y":1,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obj4837a1872f63 = Obj(x=2, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obj4837a1872f63","x":2,"y":1,"orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obj4837a1872f63","x":2,"y":1,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         },
         {
-          "instance_name": "obj8616",
+          "instance_name": "obj09c863f4a1f2",
           "input_x": 5,
           "output_x": 5,
           "input_y": 2,
@@ -174,12 +174,12 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj8616 = Obj(x=5, y=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj8616","x":5,"y":2,"orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj8616","x":5,"y":2,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obj09c863f4a1f2 = Obj(x=5, y=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obj09c863f4a1f2","x":5,"y":2,"orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obj09c863f4a1f2","x":5,"y":2,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         },
         {
-          "instance_name": "obj2669",
+          "instance_name": "obj2d9a28fe473f",
           "input_x": 1,
           "output_x": 0,
           "input_y": 5,
@@ -206,9 +206,9 @@
             [0, 9, 9, 0, 0, 0, 0, 0],
             [4, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj2669 = Obj(x=1, y=5, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj2669","x":1,"y":5,"orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj2669","x":1,"y":5,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obj2d9a28fe473f = Obj(x=1, y=5, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obj2d9a28fe473f","x":1,"y":5,"orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obj2d9a28fe473f","x":1,"y":5,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         }
       ]
     },
@@ -235,7 +235,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj5424",
+          "instance_name": "obje642e90734f5",
           "input_x": 1,
           "output_x": 0,
           "input_y": 0,
@@ -262,12 +262,12 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj5424 = Obj(x=1, y=0, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj5424","x":1,"y":0,"orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj5424","x":1,"y":0,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obje642e90734f5 = Obj(x=1, y=0, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obje642e90734f5","x":1,"y":0,"orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obje642e90734f5","x":1,"y":0,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         },
         {
-          "instance_name": "obj2784",
+          "instance_name": "obj2712ba28a6ea",
           "input_x": 5,
           "output_x": 5,
           "input_y": 1,
@@ -294,12 +294,12 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj2784 = Obj(x=5, y=1, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj2784","x":5,"y":1,"orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj2784","x":5,"y":1,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obj2712ba28a6ea = Obj(x=5, y=1, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obj2712ba28a6ea","x":5,"y":1,"orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obj2712ba28a6ea","x":5,"y":1,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         },
         {
-          "instance_name": "obj9936",
+          "instance_name": "objccce8d81e316",
           "input_x": 1,
           "output_x": 0,
           "input_y": 5,
@@ -326,12 +326,12 @@
             [0, 9, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj9936 = Obj(x=1, y=5, orientation=315, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj9936","x":1,"y":5,"orientation":315,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj9936","x":1,"y":5,"orientation":315,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "objccce8d81e316 = Obj(x=1, y=5, orientation=315, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"objccce8d81e316","x":1,"y":5,"orientation":315,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"objccce8d81e316","x":1,"y":5,"orientation":315,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         },
         {
-          "instance_name": "obj4193",
+          "instance_name": "obj328ea79cc351",
           "input_x": 5,
           "output_x": 5,
           "input_y": 4,
@@ -358,9 +358,9 @@
             [0, 0, 0, 0, 0, 0, 0, 4],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj4193 = Obj(x=5, y=4, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
-          "input_value": {"id":"obj4193","x":5,"y":4,"orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
-          "output_value": {"id":"obj4193","x":5,"y":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
+          "implementation": "obj328ea79cc351 = Obj(x=5, y=4, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"id":"obj328ea79cc351","x":5,"y":4,"orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":0},
+          "output_value": {"id":"obj328ea79cc351","x":5,"y":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         }
       ]
     }

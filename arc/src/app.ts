@@ -30,6 +30,8 @@ export async function start() {
     "Infer reusable objects and transformation rules"
   );
 
+  let instance_index = 0;
+
   const { declarations } = await analyzer.declarations({
     train_dataset: training_input,
   });
@@ -51,7 +53,7 @@ export async function start() {
     });
 
     for (const { input_instance_matrix, output_instance_matrix } of instances) {
-      const instance_name = `obj${dataset.instances.length}`;
+      const instance_name = `obj${String(instance_index++).padStart(12, "0")}`;
 
       const { implementation, input_value, output_value } =
         await analyzer.value({
@@ -96,7 +98,7 @@ export async function start() {
     const { input_value, output_value } = await visualizer.value({
       declarations,
       train_dataset,
-      instance_name: `obj${test_index++}`,
+      instance_name: `obj${String(test_index++).padStart(12, "0")}`,
       input_instances,
       input_instance_matrix,
     });
