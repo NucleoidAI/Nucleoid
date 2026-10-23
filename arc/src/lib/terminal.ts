@@ -99,7 +99,7 @@ export function header({ version }) {
   const wordmark = wordmarks.find((art) =>
     art.every((line) => stringWidth(line) <= limit)
   ) ?? ["nuc"];
-  const logo = wordmark.map((line) => styleText("green", line));
+  const logo = wordmark.map((line) => styleText("greenBright", line));
   const logoWidth = Math.max(...logo.map((line) => stringWidth(line)));
   const textWidth = horizontal ? available - logoWidth - 3 : available;
   const text = [

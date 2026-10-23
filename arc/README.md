@@ -42,7 +42,7 @@ type checking, linting, and offline inspection do not require model calls.
 
 ## Terminal presentation
 
-The terminal uses light and dark grey styling with a small green `nuc` wordmark
+The terminal uses light and dark grey styling with a small bright green `nuc` wordmark
 from [Nucleoid's avatar](https://avatars.githubusercontent.com/u/87045767?s=96&v=4).
 The header title is **Nucleoid - Logic Language for World Models 🌱🐋🌍**.
 It displays the runtime version reported by the Nucleoid executable's `--version`

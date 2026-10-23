@@ -18,7 +18,6 @@ export async function generate({ messages = [] }) {
       model: "qwen/qwen3.8-27b",
       messages,
       temperature: 0,
-      max_tokens: 2048,
       top_p: 1,
       top_k: 1,
       seed: 42,
@@ -48,6 +47,7 @@ export async function generate({ messages = [] }) {
   if (data.error) {
     throw new Error(`OpenRouter error: ${data.error.message}`);
   }
+
   const content = data.choices?.[0]?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
     throw new Error("OpenRouter returned no text content");
@@ -57,5 +57,14 @@ export async function generate({ messages = [] }) {
     const { prompt_tokens, completion_tokens } = data.usage;
     terminal.usage({ prompt_tokens, completion_tokens });
   }
-  return JSON.parse(content);
+
+  let jsonContent ;
+
+  try {
+    jsonContent = JSON.parse(content);
+  } catch (error) {
+    throw new Error(`Failed to parse OpenRouter response as JSON: ${error.message} \n\nResponse content: ${content}`);
+  }
+
+  return jsonContent;
 }
