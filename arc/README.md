@@ -97,6 +97,19 @@ unreadable files, or malformed JSON fail explicitly; JSON errors name the file.
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations.
 
+`dataset.cross.1.json` annotates only the three training pairs from
+`src\data\training\0ca9ddb6.json`, with ten point instances in total.
+Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
+diagonal neighbors. Color-6 and color-8 points remain unchanged.
+The declarative rules introduce `marker_color`, which is absent before the
+rules run. Tags identify the geometry: `l1707` is an orthogonal cross,
+`l2404` is a diagonal cross, and `l7544` remains a single point.
+Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
+records each mask's nonzero bounding-box origin; native snapshot coordinates
+remain anchored to the input point. Orientation is 0 in both states because
+the patterns are symmetric. Held-out inputs and outputs are not included.
+The dataset is discovered automatically by `document()`.
+
 ## ARC proposal agent
 
 Use [arc-purposal](../.github/agents/arc-purposal.agent.md) and its
