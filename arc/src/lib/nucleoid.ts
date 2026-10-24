@@ -3,15 +3,9 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import Ajv from "ajv";
+import { isObject } from "./json";
 
 const execFileAsync = promisify(execFile);
-const validateSnapshot = new Ajv({ allErrors: true }).compile<{
-  [property: string]: unknown;
-}>({
-  type: "object",
-  additionalProperties: true,
-});
 
 async function execute(args: string[]) {
   const executable: string =
@@ -66,11 +60,9 @@ export async function run(source: string) {
 export function snapshot(value: unknown): {
   [property: string]: unknown;
 } {
-  if (!validateSnapshot(value)) {
+  if (!isObject(value)) {
     throw new Error(
-      `Nucleoid returned invalid object state: ${JSON.stringify(
-        validateSnapshot.errors
-      )}`
+      "Nucleoid returned invalid object state: expected a JSON object"
     );
   }
   return value;

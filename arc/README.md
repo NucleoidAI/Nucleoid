@@ -70,8 +70,9 @@ the supplied canvas dimensions. Rendered output crops retain their existing
 placement behavior and ARC dimension limits.
 
 The shared wrapper forwards each format unchanged. The OpenRouter client uses
-Ajv, a shared JSON Schema validator, to validate parsed responses against that
-same schema before returning them for execution or composition. Code fields use
+dependency-free validation for the object, array, string, and numeric constraints
+emitted by `response_format.ts` before returning responses for execution or
+composition. Code fields use
 plain JSON strings in the provider schema, with nonblank-source checks applied
 locally after schema validation. Some grammar decoders treat `pattern` as a
 whole-string match or restrict JSON escapes in length-constrained strings;

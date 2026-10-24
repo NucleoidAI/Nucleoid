@@ -1,7 +1,6 @@
 import { v4 as uuid } from "uuid";
 import * as dataset from "../dataset";
 import * as openrouter from "./openrouter";
-import type { SchemaObject } from "ajv";
 
 export async function generate<
   Response extends {
@@ -30,7 +29,7 @@ export async function generate<
       strict: true;
       schema: {
         type: "object";
-        properties: { [property: string]: SchemaObject };
+        properties: { [property: string]: { [keyword: string]: unknown } };
         required: string[];
         additionalProperties: false;
       };

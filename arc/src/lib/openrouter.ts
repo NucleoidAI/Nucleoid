@@ -1,10 +1,23 @@
 import axios from "axios";
-import Ajv from "ajv";
+import { isObject } from "./json";
+import * as responseFormat from "./response_format";
 import * as terminal from "./terminal";
-import type { SchemaObject } from "ajv";
 
-const ajv = new Ajv({ allErrors: true });
-const validateEnvelope = ajv.compile<{
+function optionalString(value: unknown): value is string | null | undefined {
+  return value === undefined || value === null || typeof value === "string";
+}
+
+function optionalError(
+  value: unknown
+): value is { message: string } | null | undefined {
+  return (
+    value === undefined ||
+    value === null ||
+    (isObject(value) && typeof value.message === "string")
+  );
+}
+
+function validateEnvelope(value: unknown): value is {
   id?: string | null;
   model?: string | null;
   provider?: string | null;
@@ -18,52 +31,35 @@ const validateEnvelope = ajv.compile<{
       }[]
     | null;
   usage?: { prompt_tokens: number; completion_tokens: number } | null;
-}>({
-  type: "object",
-  properties: {
-    id: { type: ["string", "null"] },
-    model: { type: ["string", "null"] },
-    provider: { type: ["string", "null"] },
-    error: {
-      type: ["object", "null"],
-      properties: { message: { type: "string" } },
-      required: ["message"],
-      additionalProperties: true,
-    },
-    choices: {
-      type: ["array", "null"],
-      items: {
-        type: "object",
-        properties: {
-          finish_reason: { type: ["string", "null"] },
-          native_finish_reason: { type: ["string", "null"] },
-          error: {
-            type: ["object", "null"],
-            properties: { message: { type: "string" } },
-            required: ["message"],
-            additionalProperties: true,
-          },
-          message: {
-            type: ["object", "null"],
-            properties: { content: {}, refusal: {} },
-            additionalProperties: true,
-          },
-        },
-        additionalProperties: true,
-      },
-    },
-    usage: {
-      type: ["object", "null"],
-      properties: {
-        prompt_tokens: { type: "number" },
-        completion_tokens: { type: "number" },
-      },
-      required: ["prompt_tokens", "completion_tokens"],
-      additionalProperties: true,
-    },
-  },
-  additionalProperties: true,
-});
+} {
+  return (
+    isObject(value) &&
+    optionalString(value.id) &&
+    optionalString(value.model) &&
+    optionalString(value.provider) &&
+    optionalError(value.error) &&
+    (value.choices === undefined ||
+      value.choices === null ||
+      (Array.isArray(value.choices) &&
+        value.choices.every(
+          (choice: unknown) =>
+            isObject(choice) &&
+            optionalString(choice.finish_reason) &&
+            optionalString(choice.native_finish_reason) &&
+            optionalError(choice.error) &&
+            (choice.message === undefined ||
+              choice.message === null ||
+              isObject(choice.message))
+        ))) &&
+    (value.usage === undefined ||
+      value.usage === null ||
+      (isObject(value.usage) &&
+        typeof value.usage.prompt_tokens === "number" &&
+        Number.isFinite(value.usage.prompt_tokens) &&
+        typeof value.usage.completion_tokens === "number" &&
+        Number.isFinite(value.usage.completion_tokens)))
+  );
+}
 
 function requireCode(source: string, path: string, completion: string): void {
   if (!source.trim()) {
@@ -99,7 +95,7 @@ export async function generate<
       strict: true;
       schema: {
         type: "object";
-        properties: { [property: string]: SchemaObject };
+        properties: { [property: string]: { [keyword: string]: unknown } };
         required: string[];
         additionalProperties: false;
       };
@@ -108,7 +104,6 @@ export async function generate<
 }) {
   const name: string = response_format.json_schema.name;
   const schema = response_format.json_schema.schema;
-  const validate = ajv.compile<Response>(schema);
   const apiKey: string = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is required");
@@ -153,9 +148,7 @@ export async function generate<
 
   if (!validateEnvelope(data)) {
     throw new Error(
-      `OpenRouter returned an invalid completion envelope: ${JSON.stringify(
-        validateEnvelope.errors
-      )}`
+      `OpenRouter returned an invalid completion envelope for ${name}`
     );
   }
 
@@ -216,10 +209,11 @@ export async function generate<
     );
   }
 
-  if (!validate(jsonContent)) {
+  const errors: { path: string; message: string }[] = [];
+  if (!responseFormat.validate<Response>(jsonContent, schema, errors)) {
     throw new Error(
       `OpenRouter response does not match ${name}: ${JSON.stringify(
-        validate.errors
+        errors
       )}\n\nCompletion: ${completion}`
     );
   }
