@@ -5,11 +5,13 @@
 The application keeps `.ts` source files and runs directly on Node.js using
 `tsx`, without generating JavaScript files. Explicit types must be inline
 primitive annotations, such as `string`, `number`, and `boolean`, on scalar
-parameters and return values. Infer arrays, object shapes, callbacks, and async
-return types instead of declaring interfaces, type aliases, generic types, or
-separate type files. The TypeScript check uses non-strict inference.
-Avoid redundant primitive type checks inside typed helpers. Retain numeric
-constraints and validation of matrices and external data.
+parameters, local values, and return values. Infer arrays, object shapes,
+callbacks, and async return types instead of declaring interfaces, type aliases,
+generic types, or separate type files. The TypeScript check uses non-strict
+inference. Avoid redundant primitive type checks inside typed helpers. Matrix
+helpers trust array inputs but retain rectangularity, finite-value, and
+safe-integer dimension/offset checks. Validate external model responses before
+passing their grids to these helpers.
 Use Bun to install dependencies from the committed lockfile:
 
 ```sh
@@ -132,7 +134,7 @@ The synchronous `document()` function reads every JSON file in `src\dataset`,
 alongside `instruct_dataset.ts`, on each call, independently of the working directory.
 Files are sorted by name and returned as an array, with a separate entry per file.
 The LLM wrapper serializes that array as one
-`{"operation": "instruction_examples", "datasets": [...]}` message.
+`{"datasets": [...]}` message.
 New files, including `dataset.core.2.json`, need no additional imports.
 Non-JSON files and subdirectories are ignored. An empty dataset directory,
 unreadable files, or malformed JSON fail explicitly; JSON errors name the file.

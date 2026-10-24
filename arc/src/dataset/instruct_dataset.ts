@@ -11,8 +11,8 @@ export function document() {
     throw new Error(`No JSON instruction datasets found in ${__dirname}`);
   }
 
-  const datasets = files.map((file) => {
-    const source = readFileSync(join(__dirname, file), "utf8");
+  const datasets = files.map((file: string) => {
+    const source: string = readFileSync(join(__dirname, file), "utf8");
 
     try {
       return JSON.parse(source);

@@ -11,7 +11,6 @@ export async function generate({
     messages.unshift({
       role: "assistant",
       content: JSON.stringify({
-        operation: "instruction_examples",
         datasets: dataset.document(),
       }),
     });

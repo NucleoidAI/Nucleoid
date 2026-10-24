@@ -1,6 +1,6 @@
 export function focus(matrix) {
-  const rows = matrix.length;
-  const cols = matrix[0].length;
+  const rows: number = matrix.length;
+  const cols: number = matrix[0].length;
 
   let xOffset = -1,
     yOffset = -1,
