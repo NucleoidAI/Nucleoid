@@ -8,11 +8,31 @@ export async function instances({
   train_dataset,
   declarations,
   test_input_matrix,
+}: {
+  train_dataset: {
+    dataset: {
+      input_matrix: number[][];
+      output_matrix: number[][];
+      instances: {
+        instance_name: string;
+        input_instance_matrix: number[][];
+        output_instance_matrix: number[][];
+        implementation: string;
+        input_value: object;
+        output_value: object;
+      }[];
+    }[];
+    declarations: string[];
+  };
+  declarations: string[];
+  test_input_matrix: number[][];
 }) {
   terminal.step("Segmenting the test input");
   terminal.grid("Test input", test_input_matrix);
 
-  const { instances } = await llm.generate({
+  const { instances } = await llm.generate<{
+    instances: { input_instance_matrix: number[][] }[];
+  }>({
     messages: [
       {
         role: "assistant",
@@ -66,11 +86,37 @@ export async function value({
   instance_name,
   input_instances,
   input_instance_matrix,
+}: {
+  declarations: string[];
+  train_dataset: {
+    dataset: {
+      input_matrix: number[][];
+      output_matrix: number[][];
+      instances: {
+        instance_name: string;
+        input_instance_matrix: number[][];
+        output_instance_matrix: number[][];
+        implementation: string;
+        input_value: object;
+        output_value: object;
+      }[];
+    }[];
+    declarations: string[];
+  };
+  instance_name: string;
+  input_instances: {
+    input_value: object;
+    input_instance_matrix: number[][];
+  }[];
+  input_instance_matrix: number[][];
 }) {
   const { x, y } = Matrix.locate(input_instance_matrix);
 
   terminal.step(`Synthesizing ${instance_name}`);
-  const { implementation } = await llm.generate({
+  const { implementation } = await llm.generate<{
+    orientation: number;
+    implementation: string;
+  }>({
     messages: [
       {
         role: "assistant",
@@ -112,11 +158,15 @@ export async function value({
   terminal.code(`Implementation · ${instance_name}`, implementation);
 
   terminal.step("Executing the object transformation");
-  const input_value = await nucleoid.run(
-    [train_dataset.declarations[0], implementation].join("\n\n")
+  const input_value = nucleoid.snapshot(
+    await nucleoid.run(
+      [train_dataset.declarations[0], implementation].join("\n\n")
+    )
   );
-  const output_value = await nucleoid.run(
-    [...train_dataset.declarations, implementation].join("\n\n")
+  const output_value = nucleoid.snapshot(
+    await nucleoid.run(
+      [...train_dataset.declarations, implementation].join("\n\n")
+    )
   );
 
   terminal.value("Input state", input_value);
@@ -132,12 +182,40 @@ export async function output_instance_matrix({
   input_instance_matrix,
   input_value,
   output_value,
+}: {
+  test_input_matrix: number[][];
+  train_dataset: {
+    dataset: {
+      input_matrix: number[][];
+      output_matrix: number[][];
+      instances: {
+        instance_name: string;
+        input_instance_matrix: number[][];
+        output_instance_matrix: number[][];
+        implementation: string;
+        input_value: object;
+        output_value: object;
+      }[];
+    }[];
+    declarations: string[];
+  };
+  input_instances: {
+    input_instance_matrix: number[][];
+    output_instance_matrix: number[][];
+    input_value: object;
+    output_value: object;
+  }[];
+  input_instance_matrix: number[][];
+  input_value: object;
+  output_value: object;
 }) {
-  const x: number = output_value.x;
-  const y: number = output_value.y;
+  const { x, y } = output_value as { x: number; y: number };
 
   terminal.step("Composing the output object");
-  const { output_instance_matrix } = await llm.generate({
+
+  const { output_instance_matrix } = await llm.generate<{
+    output_instance_matrix: number[][];
+  }>({
     messages: [
       {
         role: "assistant",

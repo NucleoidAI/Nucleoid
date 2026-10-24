@@ -13,7 +13,20 @@ const {
   test: [{ input: test_input_matrix, output: test_output_matrix }],
 } = puzzle;
 
-const training_input = {
+const training_input: {
+  dataset: {
+    input_matrix: number[][];
+    output_matrix: number[][];
+    instances: {
+      instance_name: string;
+      input_instance_matrix: number[][];
+      output_instance_matrix: number[][];
+      implementation: string;
+      input_value: { [property: string]: unknown };
+      output_value: { [property: string]: unknown };
+    }[];
+  }[];
+} = {
   dataset: train.map(({ input, output }) => ({
     input_matrix: input,
     output_matrix: output,
@@ -92,11 +105,17 @@ export async function start() {
 
   let test_index: number = 0;
 
-  let result_matrix = Array.from({ length: test_output_matrix.length }, () =>
-    Array(test_output_matrix[0].length).fill(0)
+  let result_matrix: number[][] = Array.from(
+    { length: test_output_matrix.length },
+    () => Array<number>(test_output_matrix[0].length).fill(0)
   );
 
-  const input_instances = [];
+  const input_instances: {
+    input_value: { [property: string]: unknown };
+    input_instance_matrix: number[][];
+    output_value: { [property: string]: unknown };
+    output_instance_matrix: number[][];
+  }[] = [];
 
   for (const { input_instance_matrix } of instances) {
     const { input_value, output_value } = await visualizer.value({

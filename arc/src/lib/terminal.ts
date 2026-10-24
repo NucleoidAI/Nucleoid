@@ -2,7 +2,7 @@ import { inspect, stripVTControlCharacters, styleText } from "node:util";
 import stringWidth from "string-width";
 import wrapAnsi from "wrap-ansi";
 
-const palette = [
+const palette: number[][] = [
   [0, 0, 0],
   [0, 116, 217],
   [255, 65, 54],
@@ -15,7 +15,7 @@ const palette = [
   [135, 12, 37],
 ];
 
-const wordmarks = [
+const wordmarks: string[][] = [
   [
     "⣿⣿⣿⣷⢀⣠⣴⣿⣿⣿⣿⣿⣿⣷⣦⡀      ⢰⣿⣿⣿⣿⡄        ⣾⣿⣿⣿⡆       ⢀⣤⣴⣿⣿⣿⣿⣿⣿⣿⣶⣤⡀",
     "⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆     ⢸⣿⣿⣿⣿⡇        ⣿⣿⣿⣿⡇      ⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀",
@@ -61,7 +61,7 @@ function frame(text: string): string {
   return styleText("gray", text);
 }
 
-function wrap(text: string, columns: number) {
+function wrap(text: string, columns: number): string[] {
   return wrapAnsi(String(text).replace(/\t/g, "    "), Math.max(1, columns), {
     hard: true,
     trim: false,
@@ -72,10 +72,14 @@ function pad(text: string, columns: number): string {
   return text + " ".repeat(Math.max(0, columns - stringWidth(text)));
 }
 
-function block(title: string, lines, write = console.log) {
+function block(
+  title: string,
+  lines: string[],
+  write: (message: string) => void = console.log
+): void {
   const columns = width() - 4;
   const rule = "─".repeat(columns + 2);
-  const row = (line: string) =>
+  const row = (line: string): void =>
     write(`  ${frame("│")} ${pad(line, columns)} ${frame("│")}`);
   write(`\n  ${frame(`┌${rule}┐`)}`);
   if (title !== "") {
@@ -92,7 +96,7 @@ function block(title: string, lines, write = console.log) {
   write(`  ${frame(`└${rule}┘`)}`);
 }
 
-export function header({ version }) {
+export function header({ version }: { version: string }): void {
   const available = width() - 4;
   const horizontal = available >= 32;
   const limit = Math.min(12, available);
@@ -133,7 +137,7 @@ export function header({ version }) {
   console.log("");
 }
 
-export function section(index: number, title: string, detail: string) {
+export function section(index: number, title: string, detail: string): void {
   const [label, ...continuation] = wrap(
     `${String(index).padStart(2, "0")}  ${title.toUpperCase()}`,
     width() - 4
@@ -151,7 +155,7 @@ export function section(index: number, title: string, detail: string) {
   console.log("");
 }
 
-export function step(message: string) {
+export function step(message: string): void {
   const [first, ...continuation] = wrap(
     stripVTControlCharacters(String(message)),
     width() - 2
@@ -162,7 +166,7 @@ export function step(message: string) {
   }
 }
 
-export function code(title: string, source) {
+export function code(title: string, source: string | string[]): void {
   const text = Array.isArray(source) ? source.join("\n\n") : String(source);
   block(
     title,
@@ -172,7 +176,7 @@ export function code(title: string, source) {
   );
 }
 
-export function value(title: string, data) {
+export function value(title: string, data: unknown): void {
   block(
     title,
     inspect(data, {
@@ -198,7 +202,12 @@ function cell(value: number, colored: boolean): string {
   return `\x1b[48;2;${red};${green};${blue}m\x1b[${foreground}m${text}\x1b[0m`;
 }
 
-function matrixLines(matrix, start: number, end: number, colored: boolean) {
+function matrixLines(
+  matrix: number[][],
+  start: number,
+  end: number,
+  colored: boolean
+): string[] {
   if (matrix.length === 0 || start === end) {
     return [styleText("gray", "(empty)")];
   }
@@ -221,7 +230,7 @@ function matrixLines(matrix, start: number, end: number, colored: boolean) {
   ];
 }
 
-export function grid(title: string, matrix) {
+export function grid(title: string, matrix: number[][]): void {
   const rows: number = matrix.length;
   const columns = Math.max(0, ...matrix.map((row): number => row.length));
   const dimensions = `${columns} × ${rows}`;
@@ -244,7 +253,7 @@ export function grid(title: string, matrix) {
   }
 }
 
-function sideBySide(panels) {
+function sideBySide(panels: string[][]): string[] {
   const widths = panels.map((lines) =>
     Math.max(...lines.map((line: string) => stringWidth(line)))
   );
@@ -256,7 +265,11 @@ function sideBySide(panels) {
   );
 }
 
-function previewMatrix(title: string, matrix, colored: boolean) {
+function previewMatrix(
+  title: string,
+  matrix: number[][],
+  colored: boolean
+): string[] {
   const columns = Math.max(0, ...matrix.map((row): number => row.length));
   return [
     styleText("gray", `${title} · ${columns} × ${matrix.length}`),
@@ -264,12 +277,18 @@ function previewMatrix(title: string, matrix, colored: boolean) {
   ];
 }
 
-export function puzzle({ train, testInput }) {
+export function puzzle({
+  train,
+  testInput,
+}: {
+  train: { input: number[][]; output: number[][] }[];
+  testInput: number[][];
+}): void {
   const available = width() - 4;
   const colored = colors();
-  let pairs = [];
+  let pairs: string[][] = [];
   let used = 0;
-  const renderRow = () => {
+  const renderRow = (): void => {
     if (pairs.length === 0) {
       return;
     }
@@ -308,14 +327,20 @@ export function puzzle({ train, testInput }) {
   grid("Test input", testInput);
 }
 
-export function usage({ prompt_tokens, completion_tokens }) {
+export function usage({
+  prompt_tokens,
+  completion_tokens,
+}: {
+  prompt_tokens: number;
+  completion_tokens: number;
+}): void {
   const message = `↳ Model usage  ${prompt_tokens} input / ${completion_tokens} output tokens`;
   for (const line of wrap(message, width() - 2)) {
     console.log(`    ${styleText("gray", line)}`);
   }
 }
 
-export function summary(difference: number, duration: number) {
+export function summary(difference: number, duration: number): void {
   const seconds = duration / 1000;
   const elapsed =
     seconds < 60
@@ -334,7 +359,7 @@ export function summary(difference: number, duration: number) {
   console.log("");
 }
 
-export function failure(error) {
+export function failure(error: unknown): void {
   const text = inspect(error, {
     colors: false,
     depth: null,
