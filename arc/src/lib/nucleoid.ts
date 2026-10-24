@@ -2,34 +2,23 @@ import { execFile } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 async function execute(args) {
   const executable =
     process.env.NUCLEOID_EXECUTABLE ??
     String.raw`C:\Users\canmi\dev\Nucleoid\target\debug\nucleoid.exe`;
-  const stdout = await new Promise((resolve, reject) => {
-    execFile(
-      executable,
-      args,
-      { encoding: "utf8", windowsHide: true },
-      (error, stdout, stderr) => {
-        if (error) {
-          reject(
-            new Error(
-              `Nucleoid execution failed: ${stderr.trim() || error.message}`,
-              { cause: error }
-            )
-          );
-        } else {
-          resolve(stdout);
-        }
-      }
+  const { stdout } = await execFileAsync(executable, args, {
+    encoding: "utf8",
+    windowsHide: true,
+  }).catch((error) => {
+    throw new Error(
+      `Nucleoid execution failed: ${error.stderr?.trim() || error.message}`,
+      { cause: error }
     );
   });
-
-  if (typeof stdout !== "string") {
-    throw new Error("Nucleoid returned non-text output");
-  }
   return stdout;
 }
 
@@ -42,7 +31,7 @@ export async function version() {
   return match[1];
 }
 
-export async function run(source) {
+export async function run(source: string) {
   const directory = await mkdtemp(join(tmpdir(), "nuc-arc-"));
 
   try {

@@ -1,4 +1,4 @@
-export function json(markdown) {
+export function json(markdown: string) {
   const matches = [...markdown.matchAll(/```json([^`]+)```/g)];
 
   if (matches.length > 0) {

@@ -3,8 +3,13 @@
 ## Development
 
 The application keeps `.ts` source files and runs directly on Node.js using
-`tsx`, without generating JavaScript files. Sources use JavaScript syntax without
-explicit TypeScript types; the TypeScript check uses non-strict inference.
+`tsx`, without generating JavaScript files. Explicit types must be inline
+primitive annotations, such as `string`, `number`, and `boolean`, on scalar
+parameters and return values. Infer arrays, object shapes, callbacks, and async
+return types instead of declaring interfaces, type aliases, generic types, or
+separate type files. The TypeScript check uses non-strict inference.
+Avoid redundant primitive type checks inside typed helpers. Retain numeric
+constraints and validation of matrices and external data.
 Use Bun to install dependencies from the committed lockfile:
 
 ```sh
@@ -19,7 +24,8 @@ Keep puzzle datasets, instruction examples, and training/held-out scoring intact
 
 OpenRouter is the only LLM provider. Set `OPENROUTER_API_KEY` in `.env`.
 Optionally set `OPENROUTER_MODEL` (default: `qwen/qwen3.8-27b`) to a model that
-supports JSON output. A request's `model` argument overrides that setting.
+supports JSON Schema structured outputs. A request's `model` argument overrides
+that setting.
 The legacy `LLM` selector is no longer needed.
 
 Sampling defaults to `temperature: 0`, `top_k: 1`, `top_p: 1`, and `seed: 42`,
@@ -39,6 +45,42 @@ documentation for the distinction.
 
 Run the ARC example with `bun run start`. This makes live OpenRouter calls;
 type checking, linting, and offline inspection do not require model calls.
+
+## Structured responses
+
+Each analyzer and visualizer call supplies its own named `response_format`
+using `type: "json_schema"` and `strict: true`, rather than embedding
+pseudo-JSON format hints in message text. Every schema requires its declared
+fields and rejects unknown fields, including inside instance objects.
+Declarations and implementations must contain non-whitespace code. Instance
+grids contain integer colors from `0` through `9`; segmentation masks must match
+the supplied canvas dimensions. Rendered output crops retain their existing
+placement behavior and ARC dimension limits.
+
+The shared wrapper forwards each format unchanged. The OpenRouter client uses
+Ajv, a shared JSON Schema validator, to validate parsed responses against that
+same schema before returning them for execution or composition. Code fields use
+plain JSON strings in the provider schema, with nonblank-source checks applied
+locally after schema validation. Some grammar decoders treat `pattern` as a
+whole-string match or restrict JSON escapes in length-constrained strings;
+avoiding those constraints on the wire permits multiline Nucleoid programs,
+quotes, and backslashes. The client neither coerces invalid values nor repairs
+malformed JSON. All outgoing message content, including control IDs and
+instruction examples, is serialized as complete JSON.
+
+Responses must finish with `finish_reason: "stop"`. Truncated, filtered, refused,
+errored, and unfinished completions fail before parsing or execution, even when
+their content happens to be valid JSON. Response errors include the schema name,
+generation ID, model, provider, normalized and native finish reasons, and
+completion-token count. Invalid JSON also includes the raw reply for diagnosis.
+There is no automatic retry or response-healing fallback, so an operation keeps
+its existing one-request budget.
+
+The existing provider allow-list and sampling settings still apply.
+`provider.require_parameters: true` prevents routing to endpoints that do not
+support the requested parameters; unsupported structured-output requests fail
+explicitly instead of silently falling back to generic JSON mode. See
+[OpenRouter structured outputs](https://openrouter.ai/docs/guides/features/structured-outputs).
 
 ## Terminal presentation
 
@@ -88,8 +130,9 @@ prompts, programs, matrices, provider settings, or scoring.
 
 The synchronous `document()` function reads every JSON file in `src\dataset`,
 alongside `instruct_dataset.ts`, on each call, independently of the working directory.
-Files are sorted by name and serialized as one
-`{"datasets": [...]}` document, with a separate array entry per file.
+Files are sorted by name and returned as an array, with a separate entry per file.
+The LLM wrapper serializes that array as one
+`{"operation": "instruction_examples", "datasets": [...]}` message.
 New files, including `dataset.core.2.json`, need no additional imports.
 Non-JSON files and subdirectories are ignored. An empty dataset directory,
 unreadable files, or malformed JSON fail explicitly; JSON errors name the file.

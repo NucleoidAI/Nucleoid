@@ -2,6 +2,7 @@ import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
 import * as terminal from "./lib/terminal";
+import * as responseFormat from "./lib/response_format";
 
 export async function declarations({ train_dataset }) {
   terminal.step("Inferring declarations");
@@ -10,14 +11,19 @@ export async function declarations({ train_dataset }) {
     messages: [
       {
         role: "user",
-        content: `
-          train_dataset:
-          ${JSON.stringify(train_dataset)}
-          json_format:
-          { "declarations": <DECLARATIONS> }
-        `,
+        content: JSON.stringify({
+          operation: "infer_declarations",
+          train_dataset,
+        }),
       },
     ],
+    response_format: responseFormat.create("analyzer_declarations", {
+      declarations: {
+        type: "array",
+        minItems: 1,
+        items: responseFormat.code,
+      },
+    }),
   });
 
   terminal.code("Declarations", declarations);
@@ -32,28 +38,33 @@ export async function instances({ declarations, input_matrix, output_matrix }) {
     messages: [
       {
         role: "user",
-        content: `
-          declarations:
-          ${JSON.stringify(declarations)}
-          input_matrix:
-          ${JSON.stringify(input_matrix)}
-          output_matrix:
-          ${JSON.stringify(output_matrix)}
-          query:
-          Obj;
-          json_format:
-          {
-            "instances": [{
-              "input_instance_matrix": <INPUT_INSTANCE_MATRIX>,
-              "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
-            }]
-          }
-        `,
+        content: JSON.stringify({
+          operation: "segment_training_instances",
+          declarations,
+          input_matrix,
+          output_matrix,
+          query: { class: "Obj" },
+        }),
       },
     ],
+    response_format: responseFormat.create("analyzer_instances", {
+      instances: {
+        type: "array",
+        items: responseFormat.object({
+          input_instance_matrix: responseFormat.grid(
+            input_matrix.length,
+            input_matrix[0].length
+          ),
+          output_instance_matrix: responseFormat.grid(
+            output_matrix.length,
+            output_matrix[0].length
+          ),
+        }),
+      },
+    }),
   });
 
-  instances.forEach((instance, index) => {
+  instances.forEach((instance, index: number) => {
     terminal.grid(
       `Object ${index + 1} · Input`,
       instance.input_instance_matrix
@@ -79,20 +90,18 @@ export async function value({
     messages: [
       {
         role: "user",
-        content: `
-          instance_name:
-          ${instance_name}
-          declarations:
-          ${JSON.stringify(declarations)}
-          input_instance_matrix:
-          ${JSON.stringify(input_instance_matrix)}
-          output_instance_matrix:
-          ${JSON.stringify(output_instance_matrix)}
-          json_format:
-          { "implementation": <IMPLEMENTATION> }
-        `,
+        content: JSON.stringify({
+          operation: "construct_training_instance",
+          instance_name,
+          declarations,
+          input_instance_matrix,
+          output_instance_matrix,
+        }),
       },
     ],
+    response_format: responseFormat.create("analyzer_value", {
+      implementation: responseFormat.code,
+    }),
   });
 
   terminal.step("Evaluating declarative rules");

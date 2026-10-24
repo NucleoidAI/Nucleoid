@@ -49,33 +49,33 @@ const wordmarks = [
   ["⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷", "⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶"],
 ];
 
-function width() {
+function width(): number {
   return Math.max(8, Math.min(120, (process.stdout.columns ?? 124) - 4));
 }
 
-function colors() {
+function colors(): boolean {
   return styleText("red", ".") !== ".";
 }
 
-function frame(text) {
+function frame(text: string): string {
   return styleText("gray", text);
 }
 
-function wrap(text, columns) {
+function wrap(text: string, columns: number) {
   return wrapAnsi(String(text).replace(/\t/g, "    "), Math.max(1, columns), {
     hard: true,
     trim: false,
   }).split("\n");
 }
 
-function pad(text, columns) {
+function pad(text: string, columns: number): string {
   return text + " ".repeat(Math.max(0, columns - stringWidth(text)));
 }
 
-function block(title, lines, write = console.log) {
+function block(title: string, lines, write = console.log) {
   const columns = width() - 4;
   const rule = "─".repeat(columns + 2);
-  const row = (line) =>
+  const row = (line: string) =>
     write(`  ${frame("│")} ${pad(line, columns)} ${frame("│")}`);
   write(`\n  ${frame(`┌${rule}┐`)}`);
   if (title !== "") {
@@ -131,7 +131,7 @@ export function header({ version }) {
   console.log("");
 }
 
-export function section(index, title, detail) {
+export function section(index: number, title: string, detail: string) {
   const [label, ...continuation] = wrap(
     `${String(index).padStart(2, "0")}  ${title.toUpperCase()}`,
     width() - 4
@@ -149,7 +149,7 @@ export function section(index, title, detail) {
   console.log("");
 }
 
-export function step(message) {
+export function step(message: string) {
   const [first, ...continuation] = wrap(
     stripVTControlCharacters(String(message)),
     width() - 2
@@ -160,7 +160,7 @@ export function step(message) {
   }
 }
 
-export function code(title, source) {
+export function code(title: string, source) {
   const text = Array.isArray(source) ? source.join("\n\n") : String(source);
   block(
     title,
@@ -170,7 +170,7 @@ export function code(title, source) {
   );
 }
 
-export function value(title, data) {
+export function value(title: string, data) {
   block(
     title,
     inspect(data, {
@@ -186,7 +186,7 @@ export function value(title, data) {
   );
 }
 
-function cell(value, colored) {
+function cell(value, colored: boolean): string {
   const text = `${String(value).padStart(2)} `;
   if (!colored || !Number.isInteger(value) || value < 0 || value > 9) {
     return text;
@@ -196,7 +196,7 @@ function cell(value, colored) {
   return `\x1b[48;2;${red};${green};${blue}m\x1b[${foreground}m${text}\x1b[0m`;
 }
 
-function matrixLines(matrix, start, end, colored) {
+function matrixLines(matrix, start: number, end: number, colored: boolean) {
   if (matrix.length === 0 || start === end) {
     return [styleText("gray", "(empty)")];
   }
@@ -219,7 +219,7 @@ function matrixLines(matrix, start, end, colored) {
   ];
 }
 
-export function grid(title, matrix) {
+export function grid(title: string, matrix) {
   const rows = matrix.length;
   const columns = Math.max(0, ...matrix.map((row) => row.length));
   const dimensions = `${columns} × ${rows}`;
@@ -254,7 +254,7 @@ function sideBySide(panels) {
   );
 }
 
-function previewMatrix(title, matrix, colored) {
+function previewMatrix(title: string, matrix, colored: boolean) {
   const columns = Math.max(0, ...matrix.map((row) => row.length));
   return [
     styleText("gray", `${title} · ${columns} × ${matrix.length}`),
@@ -311,7 +311,7 @@ export function usage({ prompt_tokens, completion_tokens }) {
   }
 }
 
-export function summary(difference, duration) {
+export function summary(difference: number, duration: number) {
   const seconds = duration / 1000;
   const elapsed =
     seconds < 60
