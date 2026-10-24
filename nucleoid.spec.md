@@ -486,10 +486,9 @@ raises `SyntaxError("Unexpected character '@'")` at line 2, column 12.
   Body errors are not retried as another header. Native LF/CRLF/tab file
   bytes, literal EOF, stdin/REPL pending/blank-line commit and recovery use
   unchanged machinery.
-- The inherited REPL starts colon-suite buffering only when the physical
-  header line ends in `:`. A trailing header comment does not gain buffering
-  here; file parsing still accepts it. Preserve that framing limitation and
-  its exact errors rather than changing the CLI.
+- The REPL recognizes colon-suite headers with trailing comments and buffers
+  their bodies until blank-line commit or EOF. Comma-free and comma-separated
+  headers preserve matching results and graph output.
 - The five appended `comma-free block` entries cover forms, explicit/bare/no
   returns, reactive aliases/snapshots/redefinition, explicit method/init
   controls, binding/arity/nesting/anonymous bodies and an actually executed

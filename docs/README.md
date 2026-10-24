@@ -1037,6 +1037,7 @@ assert(result, 40)
 - Ordered untyped parameters, full named block AST/metadata/canonical source, explicit/bare/no returns, receiver/init/super/adoption behavior, argument binding/shadowing/noncapture, aliases/snapshots and all live graph/rollback behavior are unchanged. This does not change inherited method lookup.
 - Typed/mixed lists keep commas. Mixed omission, parenthesized/anonymous/call/class comma omission, defaults/rest/destructuring, return annotations and bare nullary headers are not added; all accepted forms, including NUC37 arrows, remain available.
 - `def f left right:` with no actual indented body, `def f left right: return left`, mixed separators/types and logical header breaks retain `SyntaxError("Expected '(' but found identifier 'left'")` at line 1, column 7. Body errors retain their physical positions.
+- The native REPL buffers colon-suite headers with trailing comments until blank-line commit or EOF, with matching results and graph output for comma-free and comma-separated headers.
 - Full grammar, exact errors and normative traces are in the authoritative [comma-free bare indented blocks](../nucleoid.spec.md#comma-free-bare-indented-blocks) section.
 
 ### Bare typed multiple parameter indented blocks

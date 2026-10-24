@@ -1162,24 +1162,18 @@ fn native_stdin_pending_blank_commit_literal_eof_crlf_tabs_and_methods_stay_pair
 }
 
 #[test]
-fn native_repl_commented_colon_header_keeps_inherited_framing_errors() {
-    // The existing REPL detects a colon only at the physical line end.
-    // Preserve this accepted limitation rather than changing CLI framing.
+fn native_repl_commented_colon_header_buffers_the_body_and_keeps_outputs_paired() {
     let candidate = ".json on\r\n.graph on\r\ndef add\tleft\tright: # header\r\n\treturn left + right\r\n\r\nadd(2, 3)";
     let accepted = headers::legacy_block_headers(candidate);
     let outputs = [repl(candidate.as_bytes()), repl(accepted.as_bytes())];
     same_outputs(&outputs);
-    assert_eq!(
-        String::from_utf8_lossy(&outputs[0].stderr)
-            .lines()
-            .collect::<Vec<_>>(),
-        [
-            "SyntaxError: Expected '(' but found identifier 'left' (line 1, column 9)",
-            "ReferenceError: left is not defined (line 1, column 2)",
-            "ReferenceError: add is not defined (line 1, column 1)",
-        ]
-    );
-    assert!(!String::from_utf8_lossy(&outputs[0].stdout).contains("add [function]"));
+    for output in &outputs {
+        assert!(output.status.success(), "{output:?}");
+        assert!(output.stderr.is_empty(), "{output:?}");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(stdout.lines().any(|line| line == "5.0"), "{output:?}");
+        assert!(stdout.contains("add [function]"), "{output:?}");
+    }
 }
 
 #[test]
