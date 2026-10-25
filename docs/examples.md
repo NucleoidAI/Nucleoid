@@ -1944,8 +1944,10 @@ assert(item.status, "EMPTY")
 ```
 
 - Accepted [NUC 34](nuc-0034.md) makes only a final real-indented `else` colon
-  optional; the same source with `else:` remains equivalent. Every condition
-  header retains its colon and existing branch order.
+  optional; the same source with `else:` remains equivalent.
+- This legacy control deliberately retains every condition colon.
+  [NUC 49](nuc-0049.md) also permits their omission before genuine indentation,
+  with unchanged branch order.
 
 **Smooth quintic transitions preserve clamped endpoints**
 
@@ -2182,11 +2184,11 @@ assert(snapshot, "archive/notes")
 
 ```nuc
 def classify(state, urgent):
-    if state == "blocked":
+    if state == "blocked"
         return "hold"
-    else urgent:
+    else urgent
         return "fast"
-    elif state == "ready":
+    elif state == "ready"
         return "send"
     else:
         return "wait"
@@ -2202,11 +2204,11 @@ urgent = true
 assert(live, "fast")
 assert(usingFrozen, "fast")
 def classify(state, urgent):
-    if state == "blocked":
+    if state == "blocked"
         return "pause"
-    else urgent:
+    else urgent
         return "rush"
-    elif state == "ready":
+    elif state == "ready"
         return "go"
     else:
         return "queue"
@@ -2221,12 +2223,16 @@ assert(usingFrozen, "hold")
 - [NUC 43](nuc-0043.md) adds only an optional spelling for genuine
   indented conditional alternatives. `else condition:` and `elif condition:`
   retain the complete AST and behavior of `else if condition:`.
+- [NUC 49](nuc-0049.md) permits the additional colon-free spellings shown
+  here, including initial and explicit else-if conditions, only at genuine
+  indentation. Colon-bearing, mixed and legacy inline/braced suites remain
+  valid wherever previously supported.
 - Function definitions may be live or frozen without freezing their inputs.
   Ordinary noncapture, explicit returns, receiver scopes and transaction
   failures are unchanged; no receiver-frame repair is included.
 - Explicit `else if`, unconditional `else:`/`elif:` and their accepted
   colon-free indented final forms remain supported. See the
-  [root contract](../nucleoid.spec.md#direct-conditional-alternatives) and
+  [root contract](../nucleoid.spec.md#colon-free-indented-conditional-suites) and
   [reference](README.md#conditionals) for layout and exact errors.
 
 ## Comma-free explicit object properties

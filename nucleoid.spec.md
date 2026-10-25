@@ -1496,10 +1496,10 @@ statement positions; caught values and transaction recovery are unchanged.
   all statements, nested suites, optional final `Dedent`, and EOF handling.
   Blank/comment lines create no indent; LF, CRLF and accepted tabs keep the
   existing lexer rules. A semicolon on the header line never qualifies.
-- Every `if` and `else if` condition retains its required colon. Other `for`,
-  definition, class, try/catch and anonymous headers keep their accepted
-  grammars. Colon-bearing indented, inline, semicolon-separated and braced
-  alternatives remain valid, with unchanged dangling-else association.
+- Conditional headers follow the optional-colon rule below; `for`, definition,
+  class, try/catch and anonymous headers keep their accepted grammars.
+  Colon-bearing indented, inline, semicolon-separated and braced alternatives
+  remain valid, with unchanged dangling-else association.
 - Strings, regexes, templates and comments containing `else:` are not headers.
   No token, keyword, public AST/API, evaluation, scope, frame, graph, return,
   throw, rollback or resource-limit behavior changes. Canonical rendering
@@ -1527,9 +1527,10 @@ statement positions; caught values and transaction recovery are unchanged.
 
 - Within an existing conditional chain, `else CONDITION:` and
   `elif CONDITION:` optionally spell `else if CONDITION:` only when the
-  complete condition header ends at a balanced top-level colon followed by
-  a genuine indented suite. Both lower to the same complete nested `Stmt::If`,
-  not an unconditional block or a new runtime operation.
+  complete balanced condition header precedes a genuine indented suite.
+  Their suite colon is optional under the conditional-header rule below.
+  Both lower to the same complete nested `Stmt::If`, not an unconditional
+  block or a new runtime operation.
 - `elif` remains the existing lexical alias for `else`, not a new keyword.
   Explicit `else if` and `elif if` keep priority and all their accepted bodies,
   including inline, semicolon-separated and braced suites. Final `else:` and
@@ -1538,18 +1539,20 @@ statement positions; caught values and transaction recovery are unchanged.
 - After `Else`, a private, non-consuming token scan qualifies only a nonempty
   balanced header. Match parentheses, brackets and braces; ignore their nested
   colons, including slices, object fields, calls and parameter annotations.
-  Stop on mismatched delimiters or top-level logical newline, semicolon,
-  indent, dedent or EOF. Do not skip header separators, parse a speculative
-  expression, catch/rewind an error or evaluate a condition during lookahead.
-- The suite colon requires immediate `Newline` or `Indent`, then a real
-  `Indent` after only the existing newline/semicolon layout. Blank/comment-only
-  lines do not create an indent. LF, CRLF, tabs and delimited multiline
-  expressions retain their existing lexer and suite behavior.
+  A top-level colon, newline or indent ends the scan and must qualify with the
+  existing real-indent predicate; mismatched delimiters, semicolons, dedents
+  and EOF fail. Do not skip header separators, parse a speculative expression,
+  catch/rewind an error or evaluate a condition during lookahead.
+- With a colon, require immediate `Newline` or `Indent` after it; without one,
+  require that same layout immediately after the balanced nonempty condition.
+  A real `Indent` must follow only the existing newline/semicolon layout.
+  Blank/comment-only lines do not create an indent. LF, CRLF, tabs and delimited
+  multiline expressions retain their existing lexer and suite behavior.
 - Qualification does not validate an expression. Once qualified, the ordinary
   condition and whole-suite parsers report their real errors. If it fails,
   consume nothing and use the original final-else parser and its original
   source positions and diagnostics. New direct conditions have no inline,
-  braced or `:;` shortcut, and cannot omit their colon or stand alone.
+  braced or `:;` shortcut and cannot stand alone.
 - Complete ASTs, canonical graph keys and top-level statement positions match
   their explicit counterparts. Conditions still use existing truthiness,
   first-match and short-circuit evaluation, actual reads and dependency
@@ -1562,7 +1565,7 @@ statement positions; caught values and transaction recovery are unchanged.
   `ReferenceError("this is not defined")`.
 - Exact `if false: pass\nelse ready: pass`, `else ready: { pass }`,
   `else ready:;\n    pass`, `else ready:\npass` and
-  `else ready\n    pass` keep
+  `else ready\n    # no body` keep
   `SyntaxError("Expected ':' but found identifier 'ready'")` at line 2,
   column 6. The same `elif` prefixes retain the same diagnostics.
 - Exact `if false: pass\nelse true +:\n    pass` qualifies, then raises
@@ -1575,8 +1578,8 @@ statement positions; caught values and transaction recovery are unchanged.
 - Expression/statement nesting remains bounded at 64 and operator/postfix
   chains at 128, with existing error messages and positions. Existing
   recursive else-if-chain quirks are not changed. No lexer, public token,
-  AST, Rust API, canonical AST renderer, runtime, CLI or dependency change
-  is introduced.
+  AST, Rust API, canonical AST renderer, runtime or dependency change is
+  introduced by the alternative spellings.
 - The document/JSONL statement exporter keeps both complete `else` and `elif`
   keywords with the conditional, including tab-separated and compact
   delimiter-, string- and regex-started conditions accepted by the lexer.
@@ -1584,12 +1587,76 @@ statement positions; caught values and transaction recovery are unchanged.
   `elif_name` remain independent statements. It does not validate conditions
   or relax the parser's balanced-header and genuine-suite rules. The top-level
   class-rule entry below exercises direct `else` through generated spec tests.
-- The five new entries at the end of the specification cover routing,
+- The five entries titled for direct alternatives cover routing,
   independent class rules, first-match/short-circuit reads, receiver-scope
   returns and rollback. All 33 assertions execute, including both catches;
   the two explicit string returns are `"wait"` and `"skip"`. The appended
   reference, README and examples cases execute 17 further assertions.
-  All earlier executable cases remain unchanged explicit-syntax controls.
+  The conditional-colon revision below changes only these same eight programs;
+  other historical cases remain unchanged accepted-syntax controls.
+
+## Colon-free indented conditional suites
+
+- An initial `if CONDITION`, explicit `else if CONDITION` or `elif if CONDITION`,
+  and accepted direct `else CONDITION` or `elif CONDITION` may omit the suite
+  colon only before a genuine indented body. The spelling is additive and
+  source-only; every accepted colon-bearing form remains valid.
+- Parse each condition with the unchanged expression parser. With an explicit
+  colon, retain `suite()` unchanged, including inline, semicolon-separated,
+  braced and indented bodies wherever that header already accepts them.
+  Otherwise, immediately require `Newline` or `Indent`, then a real `Indent`
+  after only `Newline`/`Semicolon` layout. Qualify without consuming anything;
+  only success selects the existing complete `suite_body()` parser.
+- Direct alternatives additionally require the complete nonempty balanced
+  header scan above, matching parentheses, brackets and braces. Nested calls,
+  slices, object fields, function expressions, annotations, strings, regexes,
+  templates and comments cannot manufacture a header delimiter. A mismatch or
+  unbalanced prefix retains the original final-else error, without speculative
+  parsing, error catching or rewinding.
+- A header-line semicolon, absent body, comment-only body or unindented body
+  does not qualify. Blank/comment lines create no indent; LF, CRLF, tabs,
+  comments and layout inside balanced expressions retain existing lexer rules.
+  A colon-free inline or braced body is not added.
+- Final bare `else` and `elif` remain unconditional blocks under their already
+  accepted indentation rule. Mixed old/new suites keep recursive branch
+  association and the full `Stmt::If` tree, canonical rendering, statement
+  positions, graph keys, metadata, ordered actual reads and dependencies.
+- Truthiness, first-match and short-circuit order, independent per-instance
+  class rules, live/frozen function behavior, caller/receiver scopes, explicit
+  returns, rollback and recovery are unchanged. Expression/statement nesting
+  and chain bounds, including inherited recursive-chain quirks, are unchanged.
+  No general optional-colon `suite()`, unrelated header grammar or receiver
+  repair is introduced.
+- Exact `if true` at physical EOF raises
+  `SyntaxError("Expected ':' but found end of input")` at line 1, column 8.
+  A trailing newline, comment-only body or unindented `pass` instead raises
+  `SyntaxError("Expected ':' but found end of line")` at line 1, column 4.
+  Exact `if true;\n    pass` retains
+  `SyntaxError("Expected ':' but found ';'")` at line 1, column 8.
+- Exact `if true pass` and `if true { pass }` retain
+  `SyntaxError("Expected ':' but found keyword 'pass'")` and
+  `SyntaxError("Expected ':' but found '{'")` at line 1, column 9.
+  Nonqualifying direct headers retain the final-else errors above.
+  A qualified `if true\n    value = (1 +)` reports
+  `SyntaxError("Unexpected ')'")` at line 2, column 18, and a real missing read
+  keeps the enclosing top-level statement's runtime position.
+- The native REPL lexically recognizes an initial colon-free conditional header
+  and buffers through blank-line commit or EOF, with automatic body indentation.
+  Explicit/direct alternatives only adjust indentation in that existing buffer.
+  Lexical comments and balanced expression delimiters are not suffix guesses;
+  the real parser still validates the entire submitted source, exposes errors
+  and preserves subsequent command/error recovery.
+- The existing production document/JSONL splitter already retains full
+  conditional chains, comments and indentation. It is unchanged; actual
+  per-statement export execution and generated spec tests cover the shorter
+  headers alongside legacy controls.
+- This revision rewrites only the five direct-alternative spec programs and
+  their existing reference, README and examples counterparts. Their identities,
+  order, 50 protected/executed assertions and two explicit returns are unchanged.
+  Only 29 qualified condition-bearing header-colon bytes are removed. The 11
+  unconditional final-alternative colons remain byte-exact accepted syntax.
+  All other 625 of the 633 measured programs remain byte-exact legacy controls;
+  no measured identity is added.
 
 ## Comma-free explicit object properties
 
@@ -11934,11 +12001,11 @@ assert(recovered, "a/b")
 # Nucleoid selects direct conditional alternatives
 
 def classify(state, urgent):
-    if state == "blocked":
+    if state == "blocked"
         return "hold"
-    else urgent:
+    else urgent
         return "fast"
-    elif state == "ready":
+    elif state == "ready"
         return "send"
     else:
         return "wait"
@@ -11966,11 +12033,11 @@ first.priority = "normal"
 second = Ticket()
 second.state = "review"
 second.priority = "urgent"
-if $Ticket.state == "blocked":
+if $Ticket.state == "blocked"
     $Ticket.queue = "hold"
-else $Ticket.priority == "urgent":
+else $Ticket.priority == "urgent"
     $Ticket.queue = "fast"
-elif $Ticket.state == "review":
+elif $Ticket.state == "review"
     $Ticket.queue = "review"
 else:
     $Ticket.queue = "normal"
@@ -11991,11 +12058,11 @@ assert(second.queue, "normal")
 # Nucleoid preserves direct alternative evaluation order
 
 def decide(first, second, third):
-    if first:
+    if first
         return "first"
-    else second:
+    else second
         return "second"
-    elif third:
+    elif third
         return "third"
     else:
         return "none"
@@ -12004,9 +12071,9 @@ assert(decide(false, true, true), "second")
 assert(decide(false, false, true), "third")
 assert(decide(false, false, false), "none")
 def guarded(value):
-    if value:
+    if value
         return "ready"
-    else missing:
+    else missing
         return "bad"
     else:
         return "other"
@@ -12022,11 +12089,11 @@ class Router:
     def init(prefix):
         this.prefix = prefix
     def choose(status, fallback):
-        if status == "blocked":
+        if status == "blocked"
             return this.prefix + "hold"
-        else status == "ready":
+        else status == "ready"
             return this.prefix + "send"
-        elif fallback:
+        elif fallback
             return this.prefix + "later"
         else:
             return this.prefix + "skip"
@@ -12047,9 +12114,9 @@ assert(router.prefix, "a:")
 
 source = "ready"
 def route(status):
-    if status == "ready":
+    if status == "ready"
         return "send"
-    else status == "hold":
+    else status == "hold"
         return "wait"
     else:
         return "skip"
@@ -12058,9 +12125,9 @@ assert(live, "send")
 try:
     source = "hold"
     def route(status):
-        if status == "ready":
+        if status == "ready"
             return "send"
-        elif status == "hold":
+        elif status == "hold"
             throw "blocked"
         else:
             return "skip"

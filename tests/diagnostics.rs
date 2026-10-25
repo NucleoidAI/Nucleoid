@@ -22,8 +22,8 @@ fn at(source: &str) -> (usize, usize) {
 
 #[test]
 fn a_syntax_error_points_at_the_line_it_is_on() {
-    // The `:` is missing at the end of line 4.
-    assert_eq!(at("a = 1\nb = 2\n\nif a > 1\n    c = 3\n").0, 4);
+    // Colon omission still requires a real indented body, not a comment.
+    assert_eq!(at("a = 1\nb = 2\n\nif a > 1\n    # no body\n"), (4, 8));
 
     // The list is never closed, so the report is at the end of the input.
     assert_eq!(at("x = 1\ny = [1, 2\n").0, 3);
@@ -31,7 +31,7 @@ fn a_syntax_error_points_at_the_line_it_is_on() {
 
 #[test]
 fn a_syntax_error_names_what_it_found() {
-    let error = failure("a = 1\nif a > 1\n    b = 2\n");
+    let error = failure("a = 1\nif a > 1\nb = 2\n");
 
     assert_eq!(error.kind(), nucleoid::ErrorKind::Syntax);
     assert_eq!(

@@ -9185,11 +9185,11 @@ assert(recovered, "a/b")"#);
 fn selects_direct_conditional_alternatives() {
     let mut run = runner();
     run(r#"def classify(state, urgent):
-    if state == "blocked":
+    if state == "blocked"
         return "hold"
-    else urgent:
+    else urgent
         return "fast"
-    elif state == "ready":
+    elif state == "ready"
         return "send"
     else:
         return "wait""#);
@@ -9222,11 +9222,11 @@ fn keeps_direct_conditional_class_alternatives_reactive() {
     run("second = Ticket()");
     run(r#"second.state = "review""#);
     run(r#"second.priority = "urgent""#);
-    run(r#"if $Ticket.state == "blocked":
+    run(r#"if $Ticket.state == "blocked"
     $Ticket.queue = "hold"
-else $Ticket.priority == "urgent":
+else $Ticket.priority == "urgent"
     $Ticket.queue = "fast"
-elif $Ticket.state == "review":
+elif $Ticket.state == "review"
     $Ticket.queue = "review"
 else:
     $Ticket.queue = "normal""#);
@@ -9251,11 +9251,11 @@ else:
 fn preserves_direct_alternative_evaluation_order() {
     let mut run = runner();
     run(r#"def decide(first, second, third):
-    if first:
+    if first
         return "first"
-    else second:
+    else second
         return "second"
-    elif third:
+    elif third
         return "third"
     else:
         return "none"
@@ -9264,9 +9264,9 @@ assert(decide(false, true, true), "second")
 assert(decide(false, false, true), "third")
 assert(decide(false, false, false), "none")
 def guarded(value):
-    if value:
+    if value
         return "ready"
-    else missing:
+    else missing
         return "bad"
     else:
         return "other"
@@ -9286,11 +9286,11 @@ fn preserves_direct_alternative_scope_and_return_flow() {
     def init(prefix):
         this.prefix = prefix
     def choose(status, fallback):
-        if status == "blocked":
+        if status == "blocked"
             return this.prefix + "hold"
-        else status == "ready":
+        else status == "ready"
             return this.prefix + "send"
-        elif fallback:
+        elif fallback
             return this.prefix + "later"
         else:
             return this.prefix + "skip""#);
@@ -9315,9 +9315,9 @@ fn rolls_back_failed_direct_alternatives() {
     let mut run = runner();
     run(r#"source = "ready"
 def route(status):
-    if status == "ready":
+    if status == "ready"
         return "send"
-    else status == "hold":
+    else status == "hold"
         return "wait"
     else:
         return "skip"
@@ -9326,9 +9326,9 @@ assert(live, "send")
 try:
     source = "hold"
     def route(status):
-        if status == "ready":
+        if status == "ready"
             return "send"
-        elif status == "hold":
+        elif status == "hold"
             throw "blocked"
         else:
             return "skip"

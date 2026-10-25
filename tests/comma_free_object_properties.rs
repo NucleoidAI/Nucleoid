@@ -2,6 +2,9 @@
 //! Ordinary behavior tests need neither Git nor proposal-session artifacts.
 
 mod common;
+#[allow(dead_code)]
+#[path = "support/conditional_headers.rs"]
+mod conditional_headers;
 
 #[path = "../build_statements.rs"]
 mod build_statements;
@@ -208,7 +211,8 @@ fn exact_eight_v3_pairs_remove_only_twenty_four_field_commas_and_run_forty_asser
 }
 
 #[test]
-fn all_587_historical_programs_keep_exact_sources_titles_order_and_returns() {
+fn all_587_historical_programs_keep_original_byte_seals_with_only_authorized_conditional_colons() {
+    let mut restored = 0;
     for ((name, cases), (count, expected)) in documents().into_iter().zip([
         (393, 0xf5a53a46a6f7ec80_u64),
         (79, 0x7926adbcd843199c),
@@ -218,9 +222,15 @@ fn all_587_historical_programs_keep_exact_sources_titles_order_and_returns() {
         assert!(cases.len() > count);
         let mut seal = 0xcbf29ce484222325_u64;
         for case in &cases[..count] {
+            // NUC49 changes only these exact eight older programs. Restore
+            // only their qualified header colons for the ORIGINAL byte seal,
+            // checking the exact edit counts, inverse, full AST and positions.
+            // Every other historical byte, title, order and return stays sealed.
+            let original = conditional_headers::historical_source(name, &case.title, &case.source);
+            restored += usize::from(original != case.source);
             for field in [
                 &case.title,
-                &case.source,
+                &original,
                 case.expected.as_deref().unwrap_or(""),
             ] {
                 for byte in field.bytes().chain([0xff]) {
@@ -230,6 +240,7 @@ fn all_587_historical_programs_keep_exact_sources_titles_order_and_returns() {
         }
         assert_eq!(seal, expected, "{name}: accepted historical program bytes");
     }
+    assert_eq!(restored, 8);
 }
 
 #[test]

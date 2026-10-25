@@ -650,8 +650,10 @@ assert(display, 5)
 
 - Accepted [NUC 34](docs/nuc-0034.md) permits this optional final-`else` spelling
   only before a real indented body. `else:` remains valid and equivalent.
-- `if` and `else if` keep their colons; inline, semicolon-separated and braced
-  alternatives still need `else:`. A same-line semicolon cannot enable omission.
+- This legacy control deliberately retains its condition colon.
+  [NUC 49](docs/nuc-0049.md) also permits omission for genuine-indented
+  `if`/`else if` suites; inline, semicolon-separated and braced alternatives
+  still require their accepted colons. A header-line semicolon cannot qualify.
 - Nested branch association, live inputs, scope, returns and rollback are
   unchanged. Strings and comments containing `else:` are not rewritten.
 
@@ -841,9 +843,9 @@ assert(source, "todo:three")
 
 ```nuc
 def label(state):
-    if state == "done":
+    if state == "done"
         return "archive"
-    else state == "ready":
+    else state == "ready"
         return "send"
     else:
         return "wait"
@@ -857,16 +859,20 @@ assert(result, "wait")
 ```
 
 - [NUC 43](docs/nuc-0043.md) optionally omits the second `if` only
-  before a complete colon-bearing condition with a genuine indented body.
+  before a complete condition with a genuine indented body.
   `elif condition:` is the same optional spelling through the existing
   `elif` alias for `else`.
+- [NUC 49](docs/nuc-0049.md) additionally makes the header colon optional
+  for initial `if`, explicit `else if`/`elif if`, and these direct alternatives,
+  only before a genuine indented suite. The CLI recognizes initial colon-free
+  headers and autoindents without treating literal/comment punctuation as syntax.
 - Explicit `else if` remains supported, including inline/braced bodies.
   Final `else:`/`elif:` and genuine-indented colon-free final alternatives
   retain their unconditional meaning. No standalone or inline direct
   conditional alternative is added.
 - Parsing lowers to the same nested conditional, keeping first-match
   evaluation, live dependencies, scopes, returns and rollback unchanged.
-  See the [root contract](nucleoid.spec.md#direct-conditional-alternatives).
+  See the [root contract](nucleoid.spec.md#colon-free-indented-conditional-suites).
 
 ## Comma-free explicit object properties
 

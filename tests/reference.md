@@ -1702,11 +1702,11 @@ urgent.force = true
 normal = Job()
 normal.state = "queued"
 normal.force = false
-if $Job.state == "blocked":
+if $Job.state == "blocked"
     $Job.lane = "hold"
-else $Job.force:
+else $Job.force
     $Job.lane = "fast"
-elif $Job.state == "ready":
+elif $Job.state == "ready"
     $Job.lane = "send"
 else:
     $Job.lane = "wait"

@@ -235,7 +235,10 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
 }
 
 fn indented_body_header(line: &str) -> bool {
-    if indented_named_arrow_header(line) || indented_try_header(line) {
+    if indented_named_arrow_header(line)
+        || indented_try_header(line)
+        || indented_condition_header(line, Keyword::If)
+    {
         return true;
     }
     let Ok(tokens) = tokenize(line) else {
@@ -251,18 +254,23 @@ fn indented_body_header(line: &str) -> bool {
 }
 
 fn next_indentation(line: &str, opens_body: bool) -> String {
+    // A pasted, balanced conditional header may span several physical lines.
+    let opens_condition = indented_condition_header(line, Keyword::Else);
     let line = line.lines().next_back().unwrap_or_default();
     let mut indentation: String = line
         .chars()
         .take_while(|character| matches!(character, ' ' | '\t'))
         .collect();
-    if opens_body || indented_alternative_header(line) {
+    if opens_body || opens_condition || indented_alternative_header(line) {
         indentation.push_str(INDENT);
     }
     indentation
 }
 
 fn indented_alternative_header(line: &str) -> bool {
+    if indented_condition_header(line, Keyword::Else) {
+        return true;
+    }
     let Ok(tokens) = tokenize(line) else {
         return false;
     };
@@ -281,6 +289,57 @@ fn indented_alternative_header(line: &str) -> bool {
         },
         _ => false,
     }
+}
+
+/// Buffer only a lexical, nonempty balanced condition without a suite delimiter.
+/// Alternatives only adjust indentation inside an existing submission; they do
+/// not start one. This is not expression validation: commit/EOF still runs the
+/// unchanged real parser, including its body requirements and resource bounds.
+fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
+    let Ok(tokens) = tokenize(line) else {
+        return false;
+    };
+    let mut tokens = tokens.iter().map(|spanned| &spanned.token).peekable();
+    while matches!(tokens.peek(), Some(Token::Indent)) {
+        tokens.next();
+    }
+    if tokens.next() != Some(&Token::Keyword(keyword)) {
+        return false;
+    }
+    if keyword == Keyword::Else && tokens.peek() == Some(&&Token::Keyword(Keyword::If)) {
+        tokens.next();
+    }
+    let mut nonempty = false;
+    let mut delimiters = Vec::new();
+    while let Some(token) = tokens.next() {
+        match token {
+            Token::Eof => return nonempty && delimiters.is_empty(),
+            Token::Newline | Token::Dedent if delimiters.is_empty() => {
+                return nonempty
+                    && tokens
+                        .all(|token| matches!(token, Token::Newline | Token::Dedent | Token::Eof));
+            }
+            Token::Colon | Token::Semicolon | Token::Indent if delimiters.is_empty() => {
+                return false;
+            }
+            Token::LeftParen | Token::LeftBracket | Token::LeftBrace => {
+                delimiters.push(token);
+            }
+            Token::RightParen | Token::RightBracket | Token::RightBrace
+                if !matches!(
+                    (delimiters.pop(), token),
+                    (Some(Token::LeftParen), Token::RightParen)
+                        | (Some(Token::LeftBracket), Token::RightBracket)
+                        | (Some(Token::LeftBrace), Token::RightBrace)
+                ) =>
+            {
+                return false;
+            }
+            _ => {}
+        }
+        nonempty = true;
+    }
+    false
 }
 
 /// Buffer a lexical named-arrow header, not anonymous arrows or arrow text in
@@ -383,9 +442,10 @@ Enter a blank line to run a multiline indented block."
 mod tests {
     use super::{
         CONTINUATION_PROMPT, INDENT, indented_alternative_header, indented_body_header,
-        indented_named_arrow_header, indented_try_header, next_indentation, repl_editor,
-        setting_value,
+        indented_condition_header, indented_named_arrow_header, indented_try_header,
+        next_indentation, repl_editor, setting_value,
     };
+    use nucleoid::lang::ast::lexer::Keyword;
     use nucleoid::{Runtime, Value};
     use rustyline::{Cmd, EventHandler, KeyCode, KeyEvent, Modifiers};
 
@@ -444,6 +504,8 @@ mod tests {
             ("class Student(name, age):", "    "),
             ("    this.name = name", "    "),
             ("    if age > 18:", "        "),
+            ("    if age > 18 # colon: in comment", "        "),
+            ("\telif if ready # comment", "\t    "),
             ("        this.adult = true", "        "),
             ("    this.age = age", "    "),
             ("\tif ready:", "\t    "),
@@ -493,6 +555,10 @@ mod tests {
         for line in [
             "else",
             "else # body",
+            "else ready",
+            "elif ready # body",
+            "else if ready",
+            "elif if ready",
             "catch",
             "catch issue",
             "catch(issue)",
@@ -504,7 +570,7 @@ mod tests {
         for line in [
             "# catch",
             "\"else\"",
-            "else ready",
+            "else ready;",
             "catch issue extra",
             "catch()",
             "catch(issue, other)",
@@ -512,6 +578,74 @@ mod tests {
         ] {
             assert!(!indented_alternative_header(line), "{line:?}");
         }
+    }
+
+    #[test]
+    fn colon_free_condition_continuation_uses_balanced_lexical_headers_not_suffixes() {
+        for condition in [
+            "ready",
+            "not ready and available",
+            "items[1:3] == [2, 3]",
+            "check({ready: items[:]}, (x: int) => x)",
+            "(x: int) => { return x }",
+            "({ready: true}).ready",
+            "(# unmatched-looking :[}\n ready)",
+            "\"else if :\" == \"else if :\"",
+            "/[:{}]/.test(\":\")",
+            "`else if ${value}:`",
+            "ready # : [} => are only a comment",
+        ] {
+            for prefix in ["if", "else if", "elif if", "else", "elif"] {
+                let line = format!("\t{prefix} {condition}");
+                let keyword = if prefix == "if" {
+                    Keyword::If
+                } else {
+                    Keyword::Else
+                };
+                assert!(indented_condition_header(&line, keyword), "{line:?}");
+                let last_indent = line
+                    .lines()
+                    .next_back()
+                    .unwrap()
+                    .chars()
+                    .take_while(|character| matches!(character, ' ' | '\t'))
+                    .collect::<String>();
+                assert_eq!(
+                    next_indentation(&line, indented_body_header(&line)),
+                    format!("{last_indent}{INDENT}")
+                );
+                assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+            }
+        }
+        for line in [
+            "",
+            "# if ready",
+            "\"if ready\"",
+            "/if ready/",
+            "`if ready`",
+            "iffy = 1",
+            "value = \"if ready\"",
+            "if",
+            "if # condition missing",
+            "if ready:",
+            "if ready: pass",
+            "if ready;\n    pass",
+            "if ready\n    pass",
+            "if (ready",
+            "if ready)",
+            "if [ready)",
+            "if {ready: true]",
+            "if ready @",
+            "if \"unterminated",
+            "if ready\u{a0}",
+        ] {
+            assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+        }
+        // Qualification never pretends that these are valid expressions.
+        // Real parsing must still report them on blank-line commit or EOF.
+        assert!(indented_condition_header("if ready +", Keyword::If));
+        assert!(!indented_body_header("else ready"));
+        assert!(!indented_body_header("elif if ready"));
     }
 
     #[test]

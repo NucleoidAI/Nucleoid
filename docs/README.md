@@ -674,13 +674,18 @@ Full detail: [NUC 6](nuc-0006.md).
 - A conditional can run again when an input changes later in the same cascade. An unchanged write does not restart feedback.
 - Accepted [NUC 34](nuc-0034.md) makes the colon after a final `else` optional
   only before a genuine indented suite. The unchanged `else:` spelling is
-  equivalent; `if` and `else if` still require their existing colons.
+  equivalent; final `else`/`elif` remains unconditional.
+- The [conditional-suite contract](../nucleoid.spec.md#colon-free-indented-conditional-suites)
+  also allows the colon to be omitted after an initial `if condition`, explicit
+  `else if condition`/`elif if condition`, or an accepted direct alternative.
+  Only a genuine indented body qualifies; every colon-bearing spelling remains
+  supported. [NUC 49](nuc-0049.md) describes this source-only addition.
 - Require immediate newline/indent after `else` and a real indent after only
   normal newline/semicolon layout. Blank/comment lines create no indent;
   same-line statements, semicolons and braces cannot qualify for omission.
 - Reuse the whole existing body and nested/dangling-else association. Inline,
   semicolon-separated and braced alternatives retain their required colon.
-  All other headers, canonical rendering, live rules, scopes, returns, throws,
+  Unrelated headers, canonical rendering, live rules, scopes, returns, throws,
   rollback and limits remain unchanged.
 
 ```
@@ -720,20 +725,22 @@ assert(signal.output, 8)
   Same-line `else pass` and `else { pass }` retain their missing-colon errors.
 - The authoritative [colon-free indented else suites](../nucleoid.spec.md#colon-free-indented-else-suites)
   section records layout, exact inherited diagnostics and executable traces.
-- The CLI already buffers a conditional from its initial colon header.
-  Bare final `else` stays in that buffer until blank-line commit or EOF;
-  no new continuation heuristic or literal/comment delimiter is added.
+- The CLI buffers initial colon-bearing and lexical colon-free `if` headers,
+  including lexical comments and balanced condition delimiters. Explicit and
+  direct alternatives autoindent only in that same submission; blank-line
+  commit/EOF still uses the real parser and exposes missing-body or other errors.
 - [NUC 43](nuc-0043.md) also permits `else condition:` or
   `elif condition:` in an existing chain, only with a complete balanced
-  colon-bearing header and a genuine indented suite. Both lower exactly to
+  condition header and a genuine indented suite. Both lower exactly to
   the nested conditional of `else if condition:`.
 - `elif` is still the lexical alias for `else`. Explicit `elif if` works
   just like `else if`; unconditional `elif:` and colon-free indented final
   `elif` keep their accepted behavior. No new keyword or standalone
   alternative statement is introduced.
-- Direct conditions cannot use inline/braced bodies, `:;`, a missing colon
-  or header separators. A non-consuming balanced token scan ignores nested
-  colons and checks the existing real-indent predicate. Failed qualification
+- Direct conditions cannot use inline/braced bodies, `:;` or header separators.
+  The colon is optional only at genuine indentation. A non-consuming balanced
+  token scan ignores nested colons and checks the existing real-indent predicate.
+  Failed qualification
   leaves the final-else parser and original-source diagnostics untouched;
   qualified conditions and bodies report ordinary parsing errors.
 - The document/JSONL exporter retains complete `else` and `elif` keywords
@@ -1906,11 +1913,19 @@ super(arguments)                       explicit parent-constructor arguments
 
 if condition:                          conditional
     statement
+if condition                           same conditional, genuine indentation only (NUC 49)
+    statement
 else if condition:
+    statement
+else if condition                      optional colon at genuine indentation
     statement
 else condition:                        optional direct alternative, indented only (NUC 43)
     statement
+else condition                         same direct alternative without its colon
+    statement
 elif condition:                        equivalent existing Else alias, indented only
+    statement
+elif condition                         same direct alternative without its colon
     statement
 else:
     statement

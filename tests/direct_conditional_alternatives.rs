@@ -2,6 +2,9 @@
 //! Ordinary tests depend on neither Git nor a proposal-session directory.
 
 mod common;
+#[allow(dead_code)]
+#[path = "support/conditional_headers.rs"]
+mod conditional_headers;
 
 use std::fs;
 use std::io::Write as _;
@@ -180,7 +183,7 @@ const ACCEPTED: &str = r###"[
 ]"###;
 
 #[test]
-fn exact_eight_v2_pairs_change_only_eighteen_keyword_sites_and_execute_fifty_assertions() {
+fn exact_eight_v2_pairs_preserve_eighteen_keyword_sites_and_execute_fifty_assertions() {
     let fixtures: Vec<Counterpart> = serde_json::from_str(ACCEPTED).unwrap();
     let documents = documents();
     let mut totals = (0, 0, 0, 0);
@@ -203,7 +206,12 @@ fn exact_eight_v2_pairs_change_only_eighteen_keyword_sites_and_execute_fifty_ass
         // The production exporter must retain it with the whole chain.
         let (rewritten, sites) = direct_counterpart(&fixture.source);
         assert_eq!(sites, [2, 2, 3, 2, 2, 2, 1, 4][index]);
-        assert_eq!(case.source.trim(), rewritten.trim(), "{}", fixture.title);
+        // NUC49 optionally removes only genuinely indented header colons at
+        // these same eight identities. Retain every original keyword-site,
+        // source, assertion, order, position and return protection.
+        let (colon_free, colons) = conditional_headers::omit(&rewritten);
+        assert_eq!(colons, [3, 3, 5, 3, 4, 3, 2, 6][index]);
+        assert_eq!(case.source.trim(), colon_free.trim(), "{}", fixture.title);
         let count = [5, 8, 6, 8, 6, 5, 3, 9][index];
         // Outer case-container whitespace is not an AST source position.
         // The complete actual executable program is otherwise unchanged.
@@ -351,7 +359,7 @@ fn nonqualifying_headers_keep_original_final_else_diagnostics_and_positions() {
             "ready:\n    # no body",
             "ready:\n",
             "ready:",
-            "ready\n    pass",
+            "ready\n    # no body",
             "ready;\n    pass",
             "ready\nother:\n    pass",
             "ready):\n    pass",
@@ -410,7 +418,7 @@ fn qualified_malformed_conditions_and_bodies_report_real_errors_without_fallback
     }
     for spelling in ["else if", "elif if"] {
         syntax(
-            &format!("if false: pass\n{spelling} true\n    pass"),
+            &format!("if false: pass\n{spelling} true\npass"),
             "Expected ':' but found end of line",
             2,
             9,

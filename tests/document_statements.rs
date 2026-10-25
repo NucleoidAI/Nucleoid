@@ -5,6 +5,9 @@
 mod build_exporter;
 
 mod common;
+#[allow(dead_code)]
+#[path = "support/conditional_headers.rs"]
+mod conditional_headers;
 
 use build_exporter::build_statements::{assertion, has_grouped_assignment, statements};
 use nucleoid::lang::ast::generator::generate_all;
@@ -98,6 +101,63 @@ fn balanced_multiline_headers_comments_and_real_indents_stay_attached() {
 }
 
 #[test]
+fn production_splitter_and_per_statement_execution_already_support_colon_free_conditionals() {
+    for keyword in ["else if", "elif if", "else", "elif"] {
+        for condition in [
+            "(true)",
+            "[1][0:1] == [1]",
+            "{ready: true}.ready",
+            "((value: int) => { return value })(true)",
+            "\"ready\" == \"ready\"",
+            "/[:{}]/.test(\":\")",
+            "`else:${1}:` == \"else:1:\"",
+            "(\n    true # : [} are only comment text\n)",
+            "({\n    ready: true\n}).ready",
+        ] {
+            for newline in ["\n", "\r\n"] {
+                let control = format!(
+                    "# leading\nif false: # initial:\n\tselected = 0\n\
+                     # between alternatives\n{keyword} {condition}: # suite:\n\
+                     \tselected = 2\nelse: # final:\n\tselected = 3\n\
+                     # following\nassert(selected, 2)\nselected"
+                )
+                .replace('\n', newline);
+                let (actual, sites) = conditional_headers::omit(&control);
+                assert_eq!(sites, 2);
+                let parts = check_export(&actual, 3, 1);
+                let explicit_parts = check_export(&control, 3, 1);
+                assert_eq!(
+                    parse_program(&parts[0]).unwrap().statements,
+                    parse_program(&explicit_parts[0]).unwrap().statements,
+                );
+                assert!(parts[0].contains(&format!("\n{keyword} {condition} # suite:")));
+                assert!(parts[1].starts_with("# following\n"));
+            }
+        }
+    }
+}
+
+#[test]
+fn actual_renderer_retains_shorter_conditional_chain_for_real_parser_execution() {
+    let control = "if false:\n    selected = 0\nelse if false: selected = 1\n\
+                   elif true:\n    selected = 2\nelse:\n    selected = 3\n\
+                   assert(selected, 2)\nselected";
+    let actual = conditional_headers::omit(control).0;
+    let parts = check_export(&actual, 3, 1);
+    let rendered = render_assertion_fixture(&actual, Some("2"));
+    // The actual renderer must retain the chain itself in the generated run,
+    // rather than infer a result or split alternatives into standalone runs.
+    assert!(rendered.contains(&parts[0]), "{rendered}");
+    assert!(
+        rendered.contains("assert_eq!(run(\"selected\"), 2);"),
+        "{rendered}"
+    );
+    assert!(rendered.contains("# return: 2"), "{rendered}");
+    assert_eq!(rendered.matches("run(").count(), 3, "{rendered}");
+    common::runner()(&format!("{actual}\n# return: 2"));
+}
+
+#[test]
 fn legacy_explicit_and_final_alias_forms_keep_their_bodies() {
     for explicit in ["else if", "elif if"] {
         for body in [
@@ -174,8 +234,10 @@ fn generated_top_level_class_case_uses_direct_else_and_executes_all_eight_assert
         })
         .unwrap();
     let source = record["code"].as_str().unwrap();
-    assert!(source.contains("\nelse $Ticket.priority == \"urgent\":"));
-    assert!(source.contains("\nelif $Ticket.state == \"review\":"));
+    assert!(source.contains("\nif $Ticket.state == \"blocked\"\n"));
+    assert!(source.contains("\nelse $Ticket.priority == \"urgent\"\n"));
+    assert!(source.contains("\nelif $Ticket.state == \"review\"\n"));
+    assert!(source.contains("\nelse:\n"));
     // Observe the same final value after both execution modes; standalone
     // assertion runs intentionally do not retain a preceding run's return.
     let parts = check_export(&format!("{source}\nsecond.queue"), 22, 8);
@@ -207,7 +269,7 @@ fn grouped_invalid_headers_keep_the_whole_programs_parser_error() {
             " ready: pass",
             " ready: { pass }",
             " ready:;\n    pass",
-            " ready\n    pass",
+            " ready\n    # no body",
             "(true]:\n    pass",
             " true +:\n    pass",
             " true:\npass",

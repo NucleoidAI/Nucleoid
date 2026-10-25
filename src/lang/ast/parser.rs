@@ -190,7 +190,7 @@ impl Parser {
         self.suite_body()
     }
 
-    /// Shares the existing body parser with `else`, `try` and `catch` clauses
+    /// Shares the existing body parser with conditional and exception clauses
     /// whose real indentation has already qualified for colon omission.
     fn suite_body(&mut self) -> Result<Vec<Stmt>> {
         if self.eat(&Token::Newline) || self.check(&Token::Indent) {
@@ -367,7 +367,13 @@ impl Parser {
     /// condition, suite and recursive alternate parser.
     fn condition_clause(&mut self) -> Result<Stmt> {
         let condition = self.expression()?;
-        let consequent = self.suite()?;
+        // Explicit colons retain every accepted suite and diagnostic. Only a
+        // real indented body can select the optional conditional spelling.
+        let consequent = if self.check(&Token::Colon) || !self.has_indented_body(0) {
+            self.suite()?
+        } else {
+            self.suite_body()?
+        };
 
         let mut alternate = None;
         let checkpoint = self.position;
@@ -398,7 +404,7 @@ impl Parser {
     }
 
     /// Qualify a nonempty, balanced header without consuming tokens or parsing
-    /// an expression. Only its top-level colon may introduce the real suite;
+    /// an expression. Only a top-level colon or real body layout may end it;
     /// colons in calls, slices and object literals still belong to the header.
     fn has_direct_condition_suite(&self) -> bool {
         let mut delimiters = Vec::new();
@@ -420,9 +426,10 @@ impl Parser {
                 Token::Colon if delimiters.is_empty() => {
                     return offset > 0 && self.has_indented_suite(offset);
                 }
-                Token::Newline | Token::Semicolon | Token::Indent | Token::Dedent | Token::Eof
-                    if delimiters.is_empty() =>
-                {
+                Token::Newline | Token::Indent if delimiters.is_empty() => {
+                    return offset > 0 && self.has_indented_body(offset);
+                }
+                Token::Semicolon | Token::Dedent | Token::Eof if delimiters.is_empty() => {
                     return false;
                 }
                 _ => {}
@@ -1597,11 +1604,18 @@ mod tests {
             ("ready:\r\n\tpass", true),
             ("ready:\n;\n    pass", true),
             ("ready:\n    ;\n    pass", true),
+            ("ready\n    pass", true),
+            ("items[1:3] == [2, 3]\n    pass", true),
+            ("choose({ready: items[:]}, (x: int) => x)\r\n\tpass", true),
+            ("ready # header\n\n# blank\n    # body\n    pass", true),
+            ("ready\n;\n    pass", true),
+            ("ready\n    ;\n    pass", true),
             // Qualification is not expression validation. Real parsing must
             // report these malformed expressions rather than fall back.
             ("ready +:\n    pass", true),
             ("():\n    pass", true),
             ("pass:\n    pass", true),
+            ("ready +\n    pass", true),
             (":\n    pass", false),
             ("\n    pass", false),
             ("ready: pass", false),
@@ -1613,6 +1627,11 @@ mod tests {
             ("ready:\n    # no body", false),
             ("ready:", false),
             ("ready", false),
+            ("ready;\n    pass", false),
+            ("ready\npass", false),
+            ("ready\n    # no body", false),
+            ("(ready]\n    pass", false),
+            ("{ready: true\n    pass", false),
             ("ready\n:\n    pass", false),
             ("ready; other:\n    pass", false),
             ("ready # boundary\nother:\n    pass", false),
@@ -1651,6 +1670,25 @@ mod tests {
         );
         assert!(!parser.has_direct_condition_suite());
         assert_eq!(parser.position, 0);
+        for layout in [
+            vec![Token::Newline, Token::Indent],
+            vec![Token::Indent],
+            vec![Token::Newline, Token::Semicolon, Token::Indent],
+        ] {
+            parser.tokens = std::iter::once(Token::Identifier("ready".into()))
+                .chain(layout)
+                .chain([Token::Keyword(Keyword::Pass), Token::Eof])
+                .map(|token| Spanned {
+                    token,
+                    position: Position::new(1, 1),
+                })
+                .collect();
+            let tokens = parser.tokens.clone();
+            assert!(parser.has_direct_condition_suite());
+            assert_eq!(parser.position, 0);
+            assert_eq!(parser.depth, 0);
+            assert_eq!(parser.tokens, tokens);
+        }
         for boundary in [
             Token::Newline,
             Token::Semicolon,
@@ -1658,6 +1696,7 @@ mod tests {
             Token::Dedent,
             Token::Eof,
         ] {
+            let qualifies = boundary == Token::Indent;
             parser.tokens = [
                 Token::Identifier("ready".into()),
                 boundary,
@@ -1674,7 +1713,7 @@ mod tests {
             })
             .collect();
             let tokens = parser.tokens.clone();
-            assert!(!parser.has_direct_condition_suite());
+            assert_eq!(parser.has_direct_condition_suite(), qualifies);
             assert_eq!(parser.position, 0);
             assert_eq!(parser.tokens, tokens);
         }

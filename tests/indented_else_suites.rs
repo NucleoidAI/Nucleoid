@@ -254,12 +254,12 @@ fn qualifying_bodies_keep_inherited_lexical_and_expression_error_positions() {
 fn all_other_headers_keep_their_accepted_colon_or_body_requirements() {
     for (source, message, position) in [
         (
-            "if true\n    pass",
+            "if true\n    # no body",
             "Expected ':' but found end of line",
             Position::new(1, 4),
         ),
         (
-            "if false: pass\nelse if true\n    pass",
+            "if false: pass\nelse if true\npass",
             "Expected ':' but found end of line",
             Position::new(2, 9),
         ),
