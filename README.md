@@ -951,6 +951,24 @@ assert(total, 6)
   not a new error API, scope or continuation rule. See the
   [root contract](nucleoid.spec.md#colon-free-indented-exception-suites).
 
+**Degree to radian conversion follows live inputs**
+
+```nuc
+degrees = 180
+radians = Math.toRadians(degrees)
+assert(radians, Math.PI)
+degrees = 90
+assert(radians, Math.PI / 2)
+```
+
+- The [NUC 50 candidate](docs/nuc-0050.md) adds only static
+  `Math.toRadians(value)`, retaining the accepted `value * (Math.PI / 180)`
+  arithmetic. Intrinsic conversion multiplies by the separately computed
+  `f64` factor `PI / 180.0`, not by PI before division.
+- Supplied expressions, including ignored extras, retain left-to-right
+  evaluation, reactive reads, errors and the existing supplied-Undefined gate.
+  See the [root contract](nucleoid.spec.md#reactive-degree-to-radian-conversion).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

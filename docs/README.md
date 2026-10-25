@@ -1158,6 +1158,11 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 - Built-in calls participate in the dependency graph like any other expression.
 - Mutating a list re-evaluates its dependents.
 - `Math.max` and `Math.min` propagate `NaN`, including when an argument cannot be coerced to a number.
+- The [NUC 50 candidate](nuc-0050.md) adds only static
+  `Math.toRadians(value)`: intrinsically convert the first input, compute
+  `factor = PI / 180.0`, then multiply by that factor, never multiply by PI
+  before division. The [degree-conversion contract](../nucleoid.spec.md#reactive-degree-to-radian-conversion)
+  defines numeric bits, omission, ignored extras and inherited call behavior.
 - [NUC 21](nuc-0021.md) specifies static `Math.clamp(value, lower, upper)`;
   its proposal header records its status.
 - Numeric clamping is exactly the ordered `Math.min(Math.max(value, lower), upper)`
@@ -1529,6 +1534,56 @@ assert(fraction, 0.125)
 - No sibling Math arm/helper/control, accepted syntax, parser, lexer, AST,
   generator, CLI implementation, API/representation, dependency, version,
   MSRV or resource limit changes. Inherited scope limitations remain.
+
+---
+
+## Reactive degree to radian conversion
+
+### Degree to radian conversion keeps angles live
+
+```
+degrees = 90
+radians = Math.toRadians(degrees)
+assert(radians, Math.PI / 2)
+degrees = 180
+assert(radians, Math.PI)
+degrees = -90
+assert(radians, -Math.PI / 2)
+```
+
+- This is the complete `tests/reference.md` entry without its title comment.
+  The [NUC 50 candidate](nuc-0050.md) and the authoritative
+  [root section](../nucleoid.spec.md#reactive-degree-to-radian-conversion)
+  specify only the unshadowed static signature `Math.toRadians(value)`.
+- After the existing any-supplied-Undefined gate, intrinsically convert the
+  first input with `Value::to_number`; omission supplies numeric NaN.
+  Compute the ordinary `f64` division `intrinsic PI / 180.0` before
+  multiplying the first value by that factor. The accepted
+  `value * (Math.PI / 180)` remains available.
+- Finite maxima avoid intermediate overflow; signed zeros, subnormal rounding,
+  infinities and every non-NaN result match independent accepted arithmetic
+  by bits. NaNs compare by classification, without a payload guarantee.
+  There is no range normalization, clamping or higher-precision calculation.
+- Literal null converts to zero without overriding live assignment or
+  parameter-null deferral. Numbers, booleans, strings, lists and dates keep
+  existing conversion; nonnumeric values yield numeric NaN, not new errors.
+- Every supplied expression evaluates once left to right per invocation.
+  Ignored extras are not converted, but retain reads, effects, dependencies,
+  errors and the supplied-Undefined gate, including deletion and recovery.
+- The factor and conversion never resolve or track shadowable `Math.PI` or
+  `Number`. State/local Math shadowing and ordinary `.Math` members retain
+  lookup. Reading `Math.toRadians` as a value remains unsupported/Undefined,
+  not a callable reference.
+- Wrappers, frames, receivers, scopes, independent class rules, error
+  positions, transactions and rollback use unchanged machinery. Strict
+  unknown arguments retain `ReferenceError("<name> is not defined")`, even
+  after Undefined; `Math.random()` retains
+  `TypeError("Math.random is not supported")`. Numeric `Math = 7` retains
+  `TypeError("number.toRadians is not a function")`.
+- Add no aliases, `Math.toDegrees`, syntax, public types/APIs, dependencies
+  or configurability. All sibling helpers and accepted syntax remain unchanged.
+  Inherited scope limitations remain; new call ASTs and graph rule-source
+  strings intentionally differ from their arithmetic counterparts.
 
 ---
 
@@ -1973,6 +2028,7 @@ assert: actual, expected                optional statement spelling (Accepted NU
 name.value                             read without depending
 items.flatMap(callback)                 ordered one-level projection (Accepted NUC 41)
 Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping (Accepted NUC 39)
+Math.toRadians(value)                   static division-first degree conversion (NUC 50 candidate)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 

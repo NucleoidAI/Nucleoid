@@ -2349,6 +2349,32 @@ assert(conclusions[0].holds, 42)
 - Prefix `stated total` filters only `total` itself; it does not include
   supporting ancestors unless a preceding `why` selects them.
 
+**Radian conversion keeps independent headings reactive**
+
+```nuc
+heading = 180
+target = 90
+radians = Math.toRadians(heading)
+targetRadians = Math.toRadians(target)
+assert(radians, Math.PI)
+assert(targetRadians, Math.PI / 2)
+heading = 360
+assert(radians, Math.PI * 2)
+assert(targetRadians, Math.PI / 2)
+target = -90
+assert(targetRadians, -Math.PI / 2)
+```
+
+- The [NUC 50 candidate](nuc-0050.md) intrinsically converts the first input
+  and multiplies it by `PI / 180.0`, with division performed first.
+  Finite maxima, signed zeros, subnormals and nonfinite inputs retain that
+  exact composition; NaNs are classified without a payload guarantee.
+- Omission supplies numeric NaN. Supplied Undefined, including an ignored
+  extra, retains existing deferral. All expression effects/errors and namespace
+  shadowing remain unchanged. The accepted arithmetic remains available;
+  the [root specification](../nucleoid.spec.md#reactive-degree-to-radian-conversion)
+  defines the complete contract.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

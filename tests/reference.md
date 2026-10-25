@@ -1776,4 +1776,15 @@ assert(conclusions.map(step => step.node), ["total"])
 price = 15
 assert(facts[0].holds, 15)
 assert(conclusions[0].holds, 30)
+
+---
+# Degree to radian conversion keeps angles live
+
+degrees = 90
+radians = Math.toRadians(degrees)
+assert(radians, Math.PI / 2)
+degrees = 180
+assert(radians, Math.PI)
+degrees = -90
+assert(radians, -Math.PI / 2)
 ```

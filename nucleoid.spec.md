@@ -1951,6 +1951,65 @@ statement positions; caught values and transaction recovery are unchanged.
   accepted `.filter(step => step.state == ...)` counterparts, including the
   individual-reference counterparts' `.slice(0, 1)`, assertions and returns.
 
+## Reactive degree to radian conversion
+
+- The [NUC 50 candidate](docs/nuc-0050.md) adds only unshadowed static
+  `Math.toRadians(value)`. The accepted arithmetic
+  `value * (Math.PI / 180)` remains supported.
+- Reuse Math's existing any-supplied-`Undefined` gate, including ignored
+  extras, before its existing first-input intrinsic `Value::to_number`
+  conversion. An omitted first input supplies numeric NaN, not Undefined.
+- Compute `factor = intrinsic f64 PI / 180.0`, then `result = first * factor`,
+  as separate ordinary `f64` operations in exactly that order. Do not compute
+  `(first * PI) / 180`, use higher precision, rescale, clamp, normalize or
+  shortcut inputs. In particular, finite `Number.MAX_VALUE` conversions
+  remain finite instead of overflowing in an intermediate multiplication.
+- Signed zeros and subnormal rounding follow the ordered composition exactly.
+  The positive factor preserves zero signs, including underflow to zero;
+  positive/negative infinities retain their signs. Compare expected NaNs by
+  classification, not payload, and every non-NaN result, including zero,
+  by bits against independent accepted division-then-multiplication controls.
+- Numbers retain their values, literal null converts to zero, booleans to
+  zero/one, trimmed strings and empty/singleton lists keep existing numeric
+  conversion, and dates contribute milliseconds. Other nonnumeric
+  conversions produce numeric NaN, not a new type error.
+- Every supplied expression evaluates exactly once left to right per call,
+  including ignored extras and expressions after an Undefined. Extra values
+  are neither converted nor used numerically; their reads, effects,
+  dependencies, strict errors and the supplied-Undefined gate remain.
+- Any supplied Undefined returns Undefined before conversion. Missing
+  properties, deletion and later definition retain deferral and recovery.
+  Intrinsic literal-null conversion does not override live assignment or
+  parameter-null deferral. Class rules remain independent per instance.
+- Intrinsic conversion and the factor never resolve, invoke or track
+  shadowable `Number` or `Math.PI` bindings. State/local Math bindings still
+  shadow the namespace; ordinary `.Math` members retain lookup. Reading
+  `Math.toRadians` as a value remains unsupported/Undefined, not a first-class
+  callable. Wrappers, call frames, receivers and scopes are unchanged.
+- Introduce no numeric, coercion, range or arity errors. Strict unknown
+  arguments, including extras or arguments after Undefined, retain
+  `ReferenceError("<name> is not defined")`. Preserve exact error positions,
+  caught values, graph subscriptions, transaction rollback and recovery.
+- Unknown static methods retain `TypeError("Math.<name> is not a function")`;
+  `Math.random()` retains `TypeError("Math.random is not supported")`, after
+  the unchanged supplied-Undefined gate. Calling through numeric `Math = 7`
+  retains `TypeError("number.toRadians is not a function")`.
+- All other Math arms, constants and helpers are unchanged. Add no alias,
+  `Math.toDegrees`, parser syntax, public API/type, runtime representation,
+  dependency, configurability or resource limit. Accepted syntax and
+  inherited noncapture/parameter-local limitations remain unchanged.
+- The six appended entries titled `Nucleoid keeps degree to radian conversion
+  reactive`, `Nucleoid preserves numeric coercion while converting degrees to
+  radians`, `Nucleoid preserves radian conversion extremes omissions and signed
+  zeros`, `Nucleoid applies radian conversion to independent class rules`,
+  `Nucleoid restores radian conversion relationships after failed transactions`,
+  and `Nucleoid preserves ignored radian conversion reads and missing extras`
+  trace this contract with unchanged numeric/assertion controls and returns.
+- New call RHS ASTs intentionally differ from arithmetic counterparts.
+  Preserve protected assertions, values, actual coverage and transitive
+  behavior without requiring identical rule-source strings or immediate
+  dependency graphs. Unchanged historical programs retain their complete ASTs.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -12597,6 +12656,130 @@ catch error:
 assert(facts.map(step => step.node), ["seed"])
 try:
     stated missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+
+---
+# Nucleoid keeps degree to radian conversion reactive
+
+degrees = 180
+converted = Math.toRadians(degrees)
+assert(converted, Math.PI)
+degrees = 90
+assert(converted, Math.PI / 2)
+degrees = -180
+assert(converted, -Math.PI)
+degrees = 360
+assert(converted, Math.PI * 2)
+degrees = 0
+assert(converted, 0)
+degrees = -0
+assert(converted, 0)
+assert(1 / converted, Number.NEGATIVE_INFINITY)
+degrees = 90
+converted
+# return: 1.5707963267948966
+---
+# Nucleoid preserves numeric coercion while converting degrees to radians
+
+value = " 180 "
+converted = Math.toRadians(value)
+assert(converted, Math.PI)
+value = true
+assert(converted, Math.PI / 180)
+value = false
+assert(converted, 0)
+value = []
+assert(converted, 0)
+value = ["90"]
+assert(converted, Math.PI / 2)
+value = Date(180)
+assert(converted, Math.PI)
+value = "not-a-number"
+assert(Number.isNaN(converted), true)
+literalNull = Math.toRadians(null)
+assert(literalNull, 0)
+---
+# Nucleoid preserves radian conversion extremes omissions and signed zeros
+
+finite = Math.toRadians(Number.MAX_VALUE)
+assert(Number.isFinite(finite), true)
+negativeFinite = Math.toRadians(-Number.MAX_VALUE)
+assert(Number.isFinite(negativeFinite), true)
+assert(negativeFinite < 0, true)
+positive = Math.toRadians(Number.POSITIVE_INFINITY)
+negative = Math.toRadians(Number.NEGATIVE_INFINITY)
+invalid = Math.toRadians(Number.NaN)
+omitted = Math.toRadians()
+zero = Math.toRadians(-0)
+subnormal = Math.toRadians(Number.MIN_VALUE)
+assert(positive, Number.POSITIVE_INFINITY)
+assert(negative, Number.NEGATIVE_INFINITY)
+assert(Number.isNaN(invalid), true)
+assert(Number.isNaN(omitted), true)
+assert(1 / zero, Number.NEGATIVE_INFINITY)
+assert(subnormal > 0, true)
+---
+# Nucleoid applies radian conversion to independent class rules
+
+class Angle(degrees):
+    this.degrees = degrees
+$Angle.radians = Math.toRadians($Angle.degrees)
+first = Angle(180)
+second = Angle(90)
+assert(first.radians, Math.PI)
+assert(second.radians, Math.PI / 2)
+first.degrees = -180
+assert(first.radians, -Math.PI)
+assert(second.radians, Math.PI / 2)
+delete first.degrees
+assert(first.radians, null)
+first.degrees = 360
+assert(first.radians, Math.PI * 2)
+second.degrees = 45
+assert(second.radians, Math.PI / 4)
+---
+# Nucleoid restores radian conversion relationships after failed transactions
+
+class Dial
+dial = Dial()
+dial.degrees = 180
+converted = Math.toRadians(dial.degrees)
+assert(converted, Math.PI)
+try:
+    dial.degrees = 90
+    throw "ANGLE_ROLLBACK"
+catch error:
+    assert(error, "ANGLE_ROLLBACK")
+assert(dial.degrees, 180)
+assert(converted, Math.PI)
+try:
+    converted = Math.toRadians(missing)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(converted, Math.PI)
+dial.degrees = 90
+assert(converted, Math.PI / 2)
+---
+# Nucleoid preserves ignored radian conversion reads and missing extras
+
+class Probe
+probe = Probe()
+angle = -180
+extra = 1
+converted = Math.toRadians(angle, extra)
+assert(converted, -Math.PI)
+extra = 2
+assert(converted, -Math.PI)
+withMissing = Math.toRadians(angle, probe.missing)
+assert(withMissing, null)
+probe.missing = 1
+assert(withMissing, -Math.PI)
+angle = 90
+assert(converted, Math.PI / 2)
+assert(withMissing, Math.PI / 2)
+try:
+    Math.toRadians(angle, missing)
 catch error:
     assert(error, ReferenceError("missing is not defined"))
 ```

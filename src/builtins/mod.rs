@@ -87,6 +87,10 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             let floor = first.floor();
             first - floor
         }
+        "toRadians" => {
+            let factor = std::f64::consts::PI / 180.0;
+            first * factor
+        }
         "round" => {
             // Compare the fraction directly: host `round` can lose precision
             // just below 0.5. Truncation also preserves negative zero.
@@ -1036,6 +1040,142 @@ mod tests {
             assert_same(&math("fract", &supplied).unwrap(), &Value::Undefined);
         }
         assert!(math_constant("fract").is_none());
+    }
+
+    // Independent accepted binary operations: divide PI before multiplying.
+    // In particular, multiplying MAX by PI first would overflow incorrectly.
+    fn ordered_radians(value: &Value) -> Value {
+        let factor = binary(
+            BinaryOp::Divide,
+            &Value::Number(std::f64::consts::PI),
+            &Value::number(180),
+        )
+        .unwrap();
+        binary(BinaryOp::Multiply, value, &factor).unwrap()
+    }
+
+    #[test]
+    fn to_radians_every_value_kind_matches_independent_divide_then_multiply() {
+        let values = values();
+        assert_eq!(values.len(), 25);
+        for value in values {
+            assert_smoothing_same(
+                &math("toRadians", std::slice::from_ref(&value)).unwrap(),
+                &ordered_radians(&value),
+            );
+        }
+    }
+
+    #[test]
+    fn to_radians_keeps_finite_max_subnormal_rounding_nonfinite_and_zero_bits() {
+        let one = 1.0_f64.to_bits();
+        for number in [
+            -f64::MAX,
+            -9_007_199_254_740_991.0,
+            -360.0,
+            -180.0,
+            -90.0,
+            -1.0,
+            -f64::MIN_POSITIVE,
+            -f64::from_bits(0x000f_ffff_ffff_ffff),
+            -f64::from_bits(58),
+            -f64::from_bits(29),
+            -f64::from_bits(28),
+            -f64::from_bits(1),
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::from_bits(28),
+            f64::from_bits(29),
+            f64::from_bits(57),
+            f64::from_bits(58),
+            f64::from_bits(0x000f_ffff_ffff_ffff),
+            f64::MIN_POSITIVE,
+            f64::EPSILON,
+            f64::from_bits(one - 1),
+            1.0,
+            f64::from_bits(one + 1),
+            45.0,
+            90.0,
+            180.0,
+            360.0,
+            9_007_199_254_740_991.0,
+            f64::MAX,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NAN,
+            f64::from_bits(0x7ff8_0000_0000_0042),
+            f64::from_bits(0xfff8_0000_0000_0042),
+            f64::from_bits(0x7ff0_0000_0000_0001),
+        ] {
+            let value = Value::Number(number);
+            assert_smoothing_same(
+                &math("toRadians", std::slice::from_ref(&value)).unwrap(),
+                &ordered_radians(&value),
+            );
+        }
+        for (input, expected) in [
+            (180.0, std::f64::consts::PI),
+            (-180.0, -std::f64::consts::PI),
+            (0.0, 0.0),
+            (-0.0, -0.0),
+            (f64::from_bits(28), 0.0),
+            (-f64::from_bits(28), -0.0),
+            (f64::from_bits(29), f64::from_bits(1)),
+            (-f64::from_bits(29), -f64::from_bits(1)),
+        ] {
+            assert_same(
+                &math("toRadians", &[Value::Number(input)]).unwrap(),
+                &Value::Number(expected),
+            );
+        }
+        for input in [-f64::MAX, f64::MAX] {
+            let Value::Number(result) = math("toRadians", &[Value::Number(input)]).unwrap() else {
+                panic!("numeric input must produce a number");
+            };
+            assert!(result.is_finite());
+            assert!(((input * std::f64::consts::PI) / 180.0).is_infinite());
+        }
+    }
+
+    #[test]
+    fn to_radians_deterministic_full_bit_samples_match_accepted_binary_controls() {
+        let mut bits = 0x50fa_1c70_8e25_d49b_u64;
+        for _ in 0..4_096 {
+            bits = bits
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let value = Value::Number(f64::from_bits(bits));
+            assert_smoothing_same(
+                &math("toRadians", std::slice::from_ref(&value)).unwrap(),
+                &ordered_radians(&value),
+            );
+        }
+    }
+
+    #[test]
+    fn to_radians_omission_and_all_extras_keep_the_supplied_undefined_gate() {
+        assert_smoothing_same(&math("toRadians", &[]).unwrap(), &Value::Number(f64::NAN));
+        let values = values();
+        for value in &values {
+            let radians = ordered_radians(value);
+            for extra in &values {
+                let expected = if value.is_undefined() || extra.is_undefined() {
+                    &Value::Undefined
+                } else {
+                    &radians
+                };
+                let supplied = [value.clone(), extra.clone(), Value::number(99)];
+                assert_smoothing_same(&math("toRadians", &supplied[..2]).unwrap(), expected);
+                assert_smoothing_same(&math("toRadians", &supplied).unwrap(), expected);
+            }
+        }
+        for position in 0..5 {
+            let mut supplied = vec![Value::number(180); 5];
+            supplied[position] = Value::Undefined;
+            assert_same(&math("toRadians", &supplied).unwrap(), &Value::Undefined);
+        }
+        assert!(math_constant("toRadians").is_none());
     }
 
     #[test]

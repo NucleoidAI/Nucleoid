@@ -9952,6 +9952,226 @@ catch error:
     assert(error, ReferenceError("missing is not defined"))"#);
 }
 
+/// Nucleoid keeps degree to radian conversion reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_degree_to_radian_conversion_reactive() {
+    let mut run = runner();
+    run("degrees = 180");
+    run("converted = Math.toRadians(degrees)");
+    {
+        let actual = run("converted");
+        let expected = run("(Math.PI)");
+        assert_eq!(actual, expected);
+    }
+    run("degrees = 90");
+    {
+        let actual = run("converted");
+        let expected = run("(Math.PI / 2)");
+        assert_eq!(actual, expected);
+    }
+    run("degrees = -180");
+    {
+        let actual = run("converted");
+        let expected = run("(-Math.PI)");
+        assert_eq!(actual, expected);
+    }
+    run("degrees = 360");
+    {
+        let actual = run("converted");
+        let expected = run("(Math.PI * 2)");
+        assert_eq!(actual, expected);
+    }
+    run("degrees = 0");
+    assert_eq!(run("converted"), 0);
+    run("degrees = -0");
+    assert_eq!(run("converted"), 0);
+    {
+        let actual = run("1 / converted");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("degrees = 90");
+    run(r#"converted
+
+# return: 1.5707963267948966"#);
+}
+
+/// Nucleoid preserves numeric coercion while converting degrees to radians
+#[rustfmt::skip]
+#[test]
+fn preserves_numeric_coercion_while_converting_degrees_to_radians() {
+    let mut run = runner();
+    run(r#"value = " 180 ""#);
+    run("converted = Math.toRadians(value)");
+    {
+        let actual = run("converted");
+        let expected = run("(Math.PI)");
+        assert_eq!(actual, expected);
+    }
+    run("value = true");
+    {
+        let actual = run("converted");
+        let expected = run("(Math.PI / 180)");
+        assert_eq!(actual, expected);
+    }
+    run("value = false");
+    assert_eq!(run("converted"), 0);
+    run("value = []");
+    assert_eq!(run("converted"), 0);
+    run(r#"value = ["90"]"#);
+    {
+        let actual = run("converted");
+        let expected = run("(Math.PI / 2)");
+        assert_eq!(actual, expected);
+    }
+    run("value = Date(180)");
+    {
+        let actual = run("converted");
+        let expected = run("(Math.PI)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"value = "not-a-number""#);
+    assert_eq!(run("Number.isNaN(converted)"), true);
+    run("literalNull = Math.toRadians(null)");
+    assert_eq!(run("literalNull"), 0);
+}
+
+/// Nucleoid preserves radian conversion extremes omissions and signed zeros
+#[rustfmt::skip]
+#[test]
+fn preserves_radian_conversion_extremes_omissions_and_signed_zeros() {
+    let mut run = runner();
+    run("finite = Math.toRadians(Number.MAX_VALUE)");
+    assert_eq!(run("Number.isFinite(finite)"), true);
+    run("negativeFinite = Math.toRadians(-Number.MAX_VALUE)");
+    assert_eq!(run("Number.isFinite(negativeFinite)"), true);
+    assert_eq!(run("negativeFinite < 0"), true);
+    run("positive = Math.toRadians(Number.POSITIVE_INFINITY)");
+    run("negative = Math.toRadians(Number.NEGATIVE_INFINITY)");
+    run("invalid = Math.toRadians(Number.NaN)");
+    run("omitted = Math.toRadians()");
+    run("zero = Math.toRadians(-0)");
+    run("subnormal = Math.toRadians(Number.MIN_VALUE)");
+    {
+        let actual = run("positive");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("negative");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Number.isNaN(invalid)"), true);
+    assert_eq!(run("Number.isNaN(omitted)"), true);
+    {
+        let actual = run("1 / zero");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("subnormal > 0"), true);
+}
+
+/// Nucleoid applies radian conversion to independent class rules
+#[rustfmt::skip]
+#[test]
+fn applies_radian_conversion_to_independent_class_rules() {
+    let mut run = runner();
+    run(r#"class Angle(degrees):
+    this.degrees = degrees"#);
+    run("$Angle.radians = Math.toRadians($Angle.degrees)");
+    run("first = Angle(180)");
+    run("second = Angle(90)");
+    {
+        let actual = run("first.radians");
+        let expected = run("(Math.PI)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("second.radians");
+        let expected = run("(Math.PI / 2)");
+        assert_eq!(actual, expected);
+    }
+    run("first.degrees = -180");
+    {
+        let actual = run("first.radians");
+        let expected = run("(-Math.PI)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("second.radians");
+        let expected = run("(Math.PI / 2)");
+        assert_eq!(actual, expected);
+    }
+    run("delete first.degrees");
+    assert_eq!(run("first.radians"), serde_json::Value::Null);
+    run("first.degrees = 360");
+    {
+        let actual = run("first.radians");
+        let expected = run("(Math.PI * 2)");
+        assert_eq!(actual, expected);
+    }
+    run("second.degrees = 45");
+    {
+        let actual = run("second.radians");
+        let expected = run("(Math.PI / 4)");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid restores radian conversion relationships after failed transactions
+#[rustfmt::skip]
+#[test]
+fn restores_radian_conversion_relationships_after_failed_transactions() {
+    let mut run = runner();
+    run(r#"class Dial
+dial = Dial()
+dial.degrees = 180
+converted = Math.toRadians(dial.degrees)
+assert(converted, Math.PI)
+try:
+    dial.degrees = 90
+    throw "ANGLE_ROLLBACK"
+catch error:
+    assert(error, "ANGLE_ROLLBACK")
+assert(dial.degrees, 180)
+assert(converted, Math.PI)
+try:
+    converted = Math.toRadians(missing)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(converted, Math.PI)
+dial.degrees = 90
+assert(converted, Math.PI / 2)"#);
+}
+
+/// Nucleoid preserves ignored radian conversion reads and missing extras
+#[rustfmt::skip]
+#[test]
+fn preserves_ignored_radian_conversion_reads_and_missing_extras() {
+    let mut run = runner();
+    run(r#"class Probe
+probe = Probe()
+angle = -180
+extra = 1
+converted = Math.toRadians(angle, extra)
+assert(converted, -Math.PI)
+extra = 2
+assert(converted, -Math.PI)
+withMissing = Math.toRadians(angle, probe.missing)
+assert(withMissing, null)
+probe.missing = 1
+assert(withMissing, -Math.PI)
+angle = 90
+assert(converted, Math.PI / 2)
+assert(withMissing, Math.PI / 2)
+try:
+    Math.toRadians(angle, missing)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
