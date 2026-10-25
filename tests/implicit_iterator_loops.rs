@@ -692,12 +692,26 @@ fn uncaught_body_errors_roll_back_the_whole_run_then_restore_imperative_tracking
 }
 
 #[test]
+fn named_strings_now_iterate_scalars_in_both_forms_without_leaking_it() {
+    let explicit = r#"
+broken = "text"
+it = "outer"
+seen = []
+for it of broken:
+    seen.push(it)
+assert(seen, ["t", "e", "x", "t"])
+assert(broken, "text")
+assert(it, "outer")
+"#;
+    check_forms(&implicit_loops(explicit), explicit, 3, None);
+}
+
+#[test]
 fn named_noniterables_undefined_sources_and_callables_keep_errors_without_auto_invocation() {
     for setup in [
         "broken = null",
         "broken = 7",
         "broken = true",
-        "broken = \"text\"",
         "broken = { amount: 2 }",
         "broken = Object()",
         "broken = Entry()",

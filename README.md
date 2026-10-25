@@ -471,12 +471,14 @@ assert(task.done, true)
 
 - Accepted [NUC 31](docs/nuc-0031.md) specifies optional `for NAME:` with a
   genuine indented body as exactly `for it of NAME:` with that same body.
-  `NAME` is one ordinary identifier; the body binds each visited instance to
+  `NAME` is one ordinary identifier; the body binds each visited value to
   local `it`, restoring any outer binding afterward.
 - The source is evaluated once: class populations and lists visit only current
   registered typed instances in order. Primitives, null elements and plain
   objects in lists are skipped; this is not general array iteration or a
   standing rule. A named noniterable source raises the existing TypeError.
+- The [NUC 51 candidate](docs/nuc-0051.md) additionally accepts String sources
+  as scalar snapshots, without changing that object-only List policy.
 - Require the immediate identifier/colon header, then a newline or indent and
   a real indent after only normal newline/semicolon layout. No `:;`,
   inline/braced/missing-indent or expression-source shorthand is added.
@@ -968,6 +970,28 @@ assert(radians, Math.PI / 2)
 - Supplied expressions, including ignored extras, retain left-to-right
   evaluation, reactive reads, errors and the existing supplied-Undefined gate.
   See the [root contract](nucleoid.spec.md#reactive-degree-to-radian-conversion).
+
+## String iteration
+
+**String iteration reads characters directly**
+
+```nuc
+word = "NUC"
+letters = []
+for character of word:
+    letters.push(character)
+assert(letters, ["N", "U", "C"])
+```
+
+- The [NUC 51 candidate](docs/nuc-0051.md) extends the existing `of`, `in`
+  and named-source implicit-`it` loops to Strings, without new syntax.
+- Evaluate the source once and snapshot one String per Unicode scalar in
+  source order; an empty String runs no body. Bodies remain one-shot and
+  imperative, with ordinary scopes, receivers, returns and rollback.
+- This is not byte, UTF-16 or grapheme traversal and does not normalize text.
+  Primitive lists still skip their entries; split/map expressions remain
+  available but return different intermediate values. See the
+  [root contract](nucleoid.spec.md#string-iteration).
 
 ## Benchmark
 

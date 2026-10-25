@@ -774,13 +774,26 @@ if $Device.profile:
 ### for ... of / in
 
 - `for <name> of <source>` and `for <name> in <source>` iterate a class
-  population or a list of registered typed instances.
+  population, a list of registered typed instances, or a String's Unicode
+  scalars under the [NUC 51 candidate](nuc-0051.md).
 - The body runs once, over the values present at the time; it does not re-run later.
 - Nested conditions and blocks are part of that one-shot body, not independent standing rules.
 - Primitive/null elements, unregistered objects, plain `Object()` instances and
   literal objects in lists are skipped; order and duplicates are retained.
 - Loops may nest, producing the cross product.
 - Explicit sources keep arbitrary expressions and inline/braced/indented suites.
+- A String is evaluated once and fully snapshotted before the first body:
+  each Unicode scalar becomes one String value, in source order. Empty
+  Strings execute no bodies. No byte/UTF-16/grapheme splitting, normalization,
+  trimming, coercion or automatic callable invocation is added.
+- String bodies use the same temporary binding, imperative mode, enclosing
+  `this`/`self`, early return and transactional rollback/recovery as other
+  For bodies. Source mutation cannot extend a snapshot; no implicit return
+  or standing loop declaration is introduced.
+- String entries in Lists are still skipped, like all other primitive
+  entries. Traversing `text.split("")` as a List is not direct String
+  iteration. Accepted split/map expressions remain supported but their map
+  results are not a For statement's normal `null` result.
 
 ```
 for question of Question:
@@ -813,7 +826,8 @@ for Task:
 ```
 
 Normative detail: [implicit iterator indented loops](../nucleoid.spec.md#implicit-iterator-indented-loops)
-and the unchanged explicit-loop entries in the root specification.
+and [string iteration](../nucleoid.spec.md#string-iteration), alongside the
+unchanged explicit-loop entries in the root specification.
 
 ---
 
@@ -1991,7 +2005,7 @@ else                                   existing colon-free final indented suite
 elif                                   same unconditional alias without a colon
     statement
 
-for name of source:                    iteration
+for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration
 for source:                            indented iteration with local it
     statement

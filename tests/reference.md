@@ -1787,4 +1787,14 @@ degrees = 180
 assert(radians, Math.PI)
 degrees = -90
 assert(radians, -Math.PI / 2)
+---
+# String iteration collects a snapshot of text
+
+text = "nuc"
+letters = []
+for letter in text:
+    letters.push(letter)
+assert(letters, ["n", "u", "c"])
+text = "new"
+assert(letters, ["n", "u", "c"])
 ```

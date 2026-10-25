@@ -1864,6 +1864,8 @@ assert(second.scaled, 15)
 - Lists likewise visit only registered typed instances, preserving order and
   duplicates while skipping primitives, null elements and plain objects.
   Noniterable sources retain their existing errors, without auto-invocation.
+- The [NUC 51 candidate](nuc-0051.md) also accepts String snapshots without
+  changing List filtering; see [string iteration](#string-iteration).
 - Require the immediate colon followed by newline/indent and a real indent
   after only normal newline/semicolon layout; `:;` never qualifies. No
   inline/braced/missing-indent, parenthesized or expression-source shorthand
@@ -2374,6 +2376,42 @@ assert(targetRadians, -Math.PI / 2)
   shadowing remain unchanged. The accepted arithmetic remains available;
   the [root specification](../nucleoid.spec.md#reactive-degree-to-radian-conversion)
   defines the complete contract.
+
+## String iteration
+
+**String iteration keeps independent receiver data separate**
+
+```nuc
+class Message(text):
+    this.text = text
+first = Message("ab")
+second = Message("CD")
+seen = []
+for character of first.text:
+    seen.push(character)
+for character of second.text:
+    seen.push(character)
+assert(seen, ["a", "b", "C", "D"])
+first.text = "xy"
+assert(seen, ["a", "b", "C", "D"])
+seen = []
+for character of first.text:
+    seen.push(character)
+assert(seen, ["x", "y"])
+assert(second.text, "CD")
+```
+
+- Each existing explicit `of`/`in` or implicit-`it` For statement evaluates
+  its source once and snapshots one String per Unicode scalar.
+- Later property updates do not replay the imperative body. Nested iteration
+  bindings, enclosing `this`/`self`, early returns and transactional failures
+  use the ordinary For machinery, not callbacks or a new iterator protocol.
+- Empty Strings run no body. Supplementary characters stay whole, while
+  combining marks and joiners remain separate scalars without normalization.
+  Class populations and object-only List traversal are unchanged.
+- Split/map remains available; its discarded map results are not a For
+  statement's return value. The [root specification](../nucleoid.spec.md#string-iteration)
+  defines the candidate contract and preserves legacy syntax.
 
 ## Copyright
 

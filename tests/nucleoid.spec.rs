@@ -10172,6 +10172,119 @@ catch error:
     assert(error, ReferenceError("missing is not defined"))"#);
 }
 
+/// Nucleoid iterates string characters in source order
+#[rustfmt::skip]
+#[test]
+fn iterates_string_characters_in_source_order() {
+    let mut run = runner();
+    run(r#"text = "cab""#);
+    run("seen = []");
+    run(r#"for character of text:
+    seen.push(character)"#);
+    assert_eq!(run("seen"), serde_json::json!(["c", "a", "b"]));
+    assert_eq!(run("text"), "cab");
+    run(r#"seen
+
+# return: ["c","a","b"]"#);
+}
+
+/// Nucleoid preserves Unicode scalars while iterating strings
+#[rustfmt::skip]
+#[test]
+fn preserves_unicode_scalars_while_iterating_strings() {
+    let mut run = runner();
+    run(r#"text = "Aé🙂é""#);
+    run("seen = []");
+    run(r#"for character of text:
+    seen.push(character)"#);
+    assert_eq!(run("seen"), serde_json::json!(["A", "é", "🙂", "e", "́"]));
+    assert_eq!(run("seen.length"), 5);
+    {
+        let actual = run(r#"seen.join("")"#);
+        let expected = run("(text)");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid snapshots string sources before loop bodies
+#[rustfmt::skip]
+#[test]
+fn snapshots_string_sources_before_loop_bodies() {
+    let mut run = runner();
+    run(r#"holder = {text: "ab"}"#);
+    run("seen = []");
+    run(r#"for character of holder.text:
+    seen.push(character)
+    holder.text = "z""#);
+    assert_eq!(run("seen"), serde_json::json!(["a", "b"]));
+    assert_eq!(run("holder.text"), "z");
+    run(r#"holder.text = "cd""#);
+    assert_eq!(run("seen"), serde_json::json!(["a", "b"]));
+    run(r#"for character of holder.text:
+    seen.push(character)"#);
+    assert_eq!(run("seen"), serde_json::json!(["a", "b", "c", "d"]));
+    assert_eq!(run("holder.text"), "cd");
+}
+
+/// Nucleoid keeps string iterator scopes and nested loops independent
+#[rustfmt::skip]
+#[test]
+fn keeps_string_iterator_scopes_and_nested_loops_independent() {
+    let mut run = runner();
+    run(r#"it = "outer""#);
+    run(r#"letters = "ab""#);
+    run(r#"digits = "12""#);
+    run("seen = []");
+    run(r#"for letters:
+    seen.push(it)
+    for digits:
+        seen.push(it)
+    seen.push(it)"#);
+    assert_eq!(run("seen"), serde_json::json!(["a", "1", "2", "a", "b", "1", "2", "b"]));
+    assert_eq!(run("it"), "outer");
+}
+
+/// Nucleoid skips empty strings without executing loop bodies
+#[rustfmt::skip]
+#[test]
+fn skips_empty_strings_without_executing_loop_bodies() {
+    let mut run = runner();
+    run(r#"empty = """#);
+    run("seen = []");
+    run(r#"for character in empty:
+    seen.push(character)"#);
+    assert_eq!(run("seen"), serde_json::json!([]));
+    run(r#"full = "ab""#);
+    run(r#"for character of full:
+    seen.push(character)"#);
+    assert_eq!(run("seen"), serde_json::json!(["a", "b"]));
+    run(r#"for character in empty:
+    seen.push(character)"#);
+    assert_eq!(run("seen"), serde_json::json!(["a", "b"]));
+}
+
+/// Nucleoid rolls back failed string iteration and restores caller scope
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_string_iteration_and_restores_caller_scope() {
+    let mut run = runner();
+    run(r#"it = "outer"
+seen = ["saved"]
+try:
+    for it of "abc":
+        seen.push(it)
+        if it == "b":
+            throw "STOP_STRING_ITERATION"
+catch error:
+    assert(error, "STOP_STRING_ITERATION")
+assert(seen, ["saved"])
+assert(it, "outer")
+for it of "c":
+    seen.push(it)
+assert(seen, ["saved", "c"])
+assert(it, "outer")"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

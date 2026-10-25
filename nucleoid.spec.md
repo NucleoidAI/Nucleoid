@@ -1444,6 +1444,8 @@ statement positions; caught values and transaction recovery are unchanged.
   a list supplies only object references still registered with a class.
   Primitives, null elements, unregistered references, plain `Object()` instances
   and literal objects in lists are skipped, preserving order and duplicates.
+  A String source supplies Unicode scalars as specified in
+  [string iteration](#string-iteration); this does not broaden list iteration.
 - Source and body mutations do not extend that snapshot. Later input updates
   and newly created instances do not re-run the body; another loop is required.
   Existing imperative writes, graph keys, dependency/shape tracking, class
@@ -1482,6 +1484,58 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid creates a for of statement`,
   `Nucleoid creates a block of for statement without dependencies` and
   `Nucleoid loops through only defined objects in a for of statement`.
+
+## String iteration
+
+- Existing `for variable of expression`, `for variable in expression` and
+  genuine-indented `for NAME:` forms also accept a String source, without new
+  grammar. Explicit sources keep arbitrary expressions and all existing suite
+  forms; the named-source shorthand still requires one ordinary identifier.
+- Evaluate the source exactly once, before introducing the iteration binding.
+  Fully snapshot one String value per Unicode scalar in source order before
+  any body executes, using the same scalar decomposition as `text.split("")`,
+  string indexing and string length. An empty String executes zero bodies.
+- Preserve each scalar exactly, including supplementary characters, combining
+  marks, zero-width joiners and embedded NUL. Do not split bytes, UTF-16 units
+  or grapheme clusters; do not normalize, trim or coerce the source.
+- Each iteration uses the existing temporary scope and imperative body.
+  Nested bindings shadow and restore outer/global `it`; source mutation cannot
+  extend or replace the current snapshot. Later source changes never re-run a
+  completed body; another For statement takes a fresh snapshot.
+- Enclosing `this`/`self`, explicit/bare returns, normal completion, thrown
+  values, statement positions, transactions and recovery use the unchanged
+  For route. Early return exits the loop; normal/empty completion is `null`,
+  not an implicit return of a body expression or collected list.
+- Keep the Class and List branches unchanged: classes supply their current
+  ordered instances; lists visit only registered class-object references,
+  retaining duplicates and skipping all primitive entries, including Strings.
+  `for character of text.split("")` therefore still skips those primitive
+  list items; it is not an accepted counterpart for direct String traversal.
+- A callable source is not invoked automatically. All other noniterable kinds
+  retain `TypeError("broken is not iterable")` for a source named `broken`;
+  an undefined source retains `ReferenceError("missing is not defined")`.
+  These use the enclosing top-level statement position, as before.
+- No general iterator protocol, callback, coercion, standing declaration or
+  new error is introduced. Existing split/map expressions remain supported;
+  their map results and callback ASTs are not equivalent to a For statement's
+  `null`. The paired examples discard those intermediate map results and
+  preserve their final controls, observations and explicit expected return.
+- The six appended entries trace source order and return
+  (`Nucleoid iterates string characters in source order`), exact scalar
+  decomposition (`Nucleoid preserves Unicode scalars while iterating strings`),
+  stable one-shot snapshots (`Nucleoid snapshots string sources before loop bodies`),
+  nested local restoration (`Nucleoid keeps string iterator scopes and nested loops independent`),
+  zero-body traversal (`Nucleoid skips empty strings without executing loop bodies`)
+  and caught throw/rollback/recovery
+  (`Nucleoid rolls back failed string iteration and restores caller scope`).
+- The existing `Nucleoid preserves implicit iterator loop scopes`,
+  `Nucleoid preserves implicit iterator loop return flow`,
+  `Nucleoid rolls back failed implicit iterator loops` and
+  `Nucleoid loops through only defined objects in a for of statement` entries
+  remain the shared scope, control-flow, error and List contracts.
+  `Nucleoid treats this and self as interchangeable instance keywords` and
+  `Nucleoid rejects this and self outside an instance or as assignment targets`
+  retain the enclosing receiver and exact missing-receiver error contracts.
 
 ## Colon-free indented else suites
 
@@ -12782,4 +12836,88 @@ try:
     Math.toRadians(angle, missing)
 catch error:
     assert(error, ReferenceError("missing is not defined"))
+---
+# Nucleoid iterates string characters in source order
+
+text = "cab"
+seen = []
+for character of text:
+    seen.push(character)
+assert(seen, ["c", "a", "b"])
+assert(text, "cab")
+seen
+# return: ["c","a","b"]
+---
+# Nucleoid preserves Unicode scalars while iterating strings
+
+text = "Aé🙂é"
+seen = []
+for character of text:
+    seen.push(character)
+assert(seen, ["A", "é", "🙂", "e", "́"])
+assert(seen.length, 5)
+assert(seen.join(""), text)
+---
+# Nucleoid snapshots string sources before loop bodies
+
+holder = {text: "ab"}
+seen = []
+for character of holder.text:
+    seen.push(character)
+    holder.text = "z"
+assert(seen, ["a", "b"])
+assert(holder.text, "z")
+holder.text = "cd"
+assert(seen, ["a", "b"])
+for character of holder.text:
+    seen.push(character)
+assert(seen, ["a", "b", "c", "d"])
+assert(holder.text, "cd")
+---
+# Nucleoid keeps string iterator scopes and nested loops independent
+
+it = "outer"
+letters = "ab"
+digits = "12"
+seen = []
+for letters:
+    seen.push(it)
+    for digits:
+        seen.push(it)
+    seen.push(it)
+assert(seen, ["a", "1", "2", "a", "b", "1", "2", "b"])
+assert(it, "outer")
+---
+# Nucleoid skips empty strings without executing loop bodies
+
+empty = ""
+seen = []
+for character in empty:
+    seen.push(character)
+assert(seen, [])
+full = "ab"
+for character of full:
+    seen.push(character)
+assert(seen, ["a", "b"])
+for character in empty:
+    seen.push(character)
+assert(seen, ["a", "b"])
+---
+# Nucleoid rolls back failed string iteration and restores caller scope
+
+it = "outer"
+seen = ["saved"]
+try:
+    for it of "abc":
+        seen.push(it)
+        if it == "b":
+            throw "STOP_STRING_ITERATION"
+catch error:
+    assert(error, "STOP_STRING_ITERATION")
+assert(seen, ["saved"])
+assert(it, "outer")
+for it of "c":
+    seen.push(it)
+assert(seen, ["saved", "c"])
+assert(it, "outer")
 ```

@@ -1,4 +1,4 @@
-//! For loops execute once over the current list rather than being filed as
+//! For loops execute once over a source snapshot rather than being filed as
 //! standing declarations.
 
 use crate::error::{Error, Result};
@@ -44,8 +44,8 @@ impl For {
         Ok(Outcome::null())
     }
 
-    /// The objects the loop walks: instances of a class, or the instances found
-    /// in a list. Plain values in a list are skipped.
+    /// Snapshot class instances, registered instances in a list, or a string's
+    /// Unicode scalars. Plain values in a list are still skipped.
     fn iterate(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Vec<Value>> {
         let value = runtime.evaluate(&self.array, scope)?;
 
@@ -68,6 +68,10 @@ impl For {
                         .is_some(),
                     _ => false,
                 })
+                .collect(),
+            Value::String(text) => text
+                .chars()
+                .map(|character| Value::String(character.to_string()))
                 .collect(),
             _ => {
                 return Err(Error::type_error(format!("{} is not iterable", self.array)));
