@@ -424,6 +424,24 @@ fn all_synthesized_training_bytes_stay_frozen_without_session_fixtures() {
         // and all old expected lengths/FNV seals remain protected unchanged.
         let restored = named_arrow_headers::legacy_block_training_bytes(bytes);
         let bytes = restored.as_slice();
+        let bytes = if name == "21" {
+            // NUC48 appends two records, without changing the sealed 118-record
+            // history. Protect the additions separately, not by refreshing it.
+            let (history, added) = bytes.split_at(length);
+            assert_eq!(added.len(), 1_147);
+            let mut signature = 0xcbf2_9ce4_8422_2325;
+            seal_field(&mut signature, added);
+            assert_eq!(signature, 9_354_023_724_161_009_362);
+            let count = added
+                .split(|byte| *byte == b'\n')
+                .filter(|line| !line.is_empty())
+                .count();
+            assert_eq!(count, 2);
+            records += count;
+            history
+        } else {
+            bytes
+        };
         assert_eq!(bytes.len(), length, "{name}");
         let mut signature = 0xcbf2_9ce4_8422_2325;
         seal_field(&mut signature, bytes);
@@ -434,7 +452,7 @@ fn all_synthesized_training_bytes_stay_frozen_without_session_fixtures() {
             .count();
         records += count;
     }
-    assert_eq!(records, 1081);
+    assert_eq!(records, 1083);
 }
 
 fn rewrite_ast_rhs(statements: &mut [Stmt]) {

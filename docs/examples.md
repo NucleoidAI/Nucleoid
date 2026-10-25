@@ -2321,6 +2321,28 @@ first.closed
   forms keep their existing required colons. The native REPL buffers a complete
   lexical bare `try` header through its catch until blank-line commit or EOF.
 
+**Reasoning state filters separate supporting facts from derived totals**
+
+```nuc
+quantity = 3
+subtotal = quantity * 10
+total = subtotal + 2
+facts = total |> why |> stated
+conclusions = total |> why |> derived
+assert(facts.map(step => step.node), ["quantity"])
+assert(conclusions.map(step => step.node), ["total", "subtotal"])
+quantity = 4
+assert(facts[0].holds, 4)
+assert(conclusions[0].holds, 42)
+```
+
+- The [NUC 48 candidate](nuc-0048.md) filters the explanation's existing
+  step states without changing their order or live subscriptions.
+- The accepted `.filter(step => step.state == "stated")` and
+  `.filter(step => step.state == "derived")` spellings remain supported.
+- Prefix `stated total` filters only `total` itself; it does not include
+  supporting ancestors unless a preceding `why` selects them.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

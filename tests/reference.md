@@ -1764,4 +1764,16 @@ class Point(x, y):
     this.y = y
 point = Point(y=4, x=3)
 assert(point, {"id": "point", "x": 3, "y": 4})
+---
+# Reasoning state filters distinguish facts from conclusions
+
+price = 10
+total = price * 2
+facts = total |> why |> stated
+conclusions = total |> why |> derived
+assert(facts.map(step => step.node), ["price"])
+assert(conclusions.map(step => step.node), ["total"])
+price = 15
+assert(facts[0].holds, 15)
+assert(conclusions[0].holds, 30)
 ```

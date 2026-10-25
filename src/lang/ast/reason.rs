@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::Expr;
-use crate::reasoning::Selection;
+use crate::reasoning::{Selection, Stage};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -25,6 +25,16 @@ impl Runtime {
     pub(crate) fn reason(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Selection> {
         match expression {
             Expr::Reason { stage, source } => {
+                let name = stage.as_str();
+                if matches!(stage, Stage::Stated | Stage::Derived)
+                    && (scope.has(name)
+                        || self.state.variable(name).is_some()
+                        || self.state.function(name).is_some()
+                        || self.state.has_class(name))
+                {
+                    return Err(Error::type_error(format!("{name} is not an operation")));
+                }
+
                 let selection = self.reason(source, scope)?;
                 Ok(self.apply_stage(*stage, &selection))
             }

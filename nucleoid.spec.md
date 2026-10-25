@@ -1843,6 +1843,47 @@ statement positions; caught values and transaction recovery are unchanged.
   and ordinary-function counterparts below protect all canonical assertions,
   expected returns, case identities and executed assertion coverage.
 
+## State-filtered reasoning selections
+
+- `selection |> stated` retains only steps whose existing typed state is
+  `StepState::Stated`; `selection |> derived` retains only `StepState::Derived`.
+  Neither stage infers state from the length of `from`, introduces provenance,
+  changes a step's fields, nor changes the relative order of retained steps.
+- `result |> why |> stated` selects the stated supporting facts in the
+  explanation; `result |> why |> derived` selects its derived steps.
+  Class-governed steps remain derived even when `from` is empty.
+- Prefix `stated seed` and `derived result` filter just that reference's
+  one-step selection. They do not implicitly traverse ancestors with `why`.
+  A filtered-out reference produces an empty selection.
+- `model |> stated` and `model |> derived` filter current model membership
+  directly, still excluding pending nodes and reasoning observers.
+  Nested pipelines compose as graph selections before existing materialization
+  into the ordered `node`, `holds`, `rule`, `state`, and `from` records.
+- Preserve every value and structural observation established by the source
+  selection, including steps a filter excludes. Empty results still observe
+  their sources and model membership. Equal-valued declaration/state changes,
+  ancestry replacement, deletion, functions, class rules, observer replacement,
+  `.value` snapshots, propagation ordering and rollback retain existing behavior.
+- `stated` and `derived` remain ordinary lexer identifiers. Only the existing
+  contextual stage positions recognize them; variables, parameters, keys,
+  properties, user functions and methods retain their accepted meanings.
+  `stated(seed)` and `derived(result)` remain ordinary calls, not added stage
+  spellings. Existing `why`, `affects`, and list `.filter` forms remain supported.
+- A new stage name shadowed by a local/parameter, state variable, function or
+  class is not an operation: `seed |> stated` and `seed |> derived` then retain
+  `TypeError("stated is not an operation")` and
+  `TypeError("derived is not an operation")`, respectively, before selecting
+  the source. Do not change the accepted `why`/`affects` shadowing behavior.
+  An identifier value before a comma-free explicit object field remains an
+  ordinary value, even when its name is `stated` or `derived`.
+- Invalid sources retain existing reference diagnostics:
+  `1 |> stated` raises `TypeError("Cannot explain 1")`, and `stated missing`
+  raises `ReferenceError("missing is not defined")`. Filtering adds no new
+  error type, diagnostic wording, parser precedence or resource bound.
+- The seven appended state-filter entries below preserve their pre-executed
+  accepted `.filter(step => step.state == ...)` counterparts, including the
+  individual-reference counterparts' `.slice(0, 1)`, assertions and returns.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -12381,4 +12422,114 @@ result = pair(b=2, a=1)
 assert(result, [2, 1])
 assert(a, 1)
 assert(b, 2)
+---
+# Nucleoid filters reasoning selections by stated and derived state
+
+seed = 2
+middle = seed + 3
+result = middle * 2
+facts = result |> why |> stated
+conclusions = result |> why |> derived
+assert(facts.map(step => step.node), ["seed"])
+assert(facts[0].holds, 2)
+assert(facts[0].from, [])
+assert(conclusions.map(step => step.node), ["result", "middle"])
+assert(conclusions[0].holds, 10)
+assert(conclusions[0].from, ["middle"])
+assert(conclusions[0].state, "derived")
+---
+# Nucleoid keeps reasoning state filters live through equal valued rewrites
+
+seed = 1
+value = seed + 1
+facts = value |> why |> stated
+conclusions = value |> why |> derived
+assert(facts.map(step => step.node), ["seed"])
+assert(conclusions.map(step => step.node), ["value"])
+value = 2
+assert(facts.map(step => step.node), ["value"])
+assert(conclusions, [])
+value = seed + 1
+seed = 3
+assert(facts.map(step => step.node), ["seed"])
+assert(facts[0].holds, 3)
+assert(conclusions.map(step => step.node), ["value"])
+assert(conclusions[0].holds, 4)
+---
+# Nucleoid observes empty state filtered model selections
+
+facts = model |> stated
+conclusions = model |> derived
+assert(facts, [])
+assert(conclusions, [])
+seed = 1
+value = seed + 1
+assert(facts.map(step => step.node), ["seed"])
+assert(conclusions.map(step => step.node), ["value"])
+delete value
+assert(conclusions, [])
+seed = 2
+assert(facts[0].holds, 2)
+---
+# Nucleoid retains derived class rules without input edges in state filters
+
+class Subject
+$Subject.active = true
+item = Subject()
+facts = item.active |> why |> stated
+conclusions = item.active |> why |> derived
+assert(facts, [])
+assert(conclusions.length, 1)
+assert(conclusions[0].node, "item.active")
+assert(conclusions[0].from, [])
+assert(conclusions[0].rule, "$Subject.active = true")
+assert(conclusions[0].holds, true)
+---
+# Nucleoid restores state filtered explanations and preserves snapshots
+
+seed = 1
+value = seed + 1
+facts = value |> why |> stated
+conclusions = value |> why |> derived
+frozen = facts.value
+try:
+    value = 2
+    throw "ABORT_STATE_FILTER"
+catch error:
+    assert(error, "ABORT_STATE_FILTER")
+assert(facts.map(step => step.node), ["seed"])
+assert(conclusions.map(step => step.node), ["value"])
+value = 2
+seed = 5
+assert(facts.map(step => step.node), ["value"])
+assert(facts[0].holds, 2)
+assert(conclusions, [])
+assert(frozen[0].node, "seed")
+assert(frozen[0].holds, 1)
+---
+# Nucleoid filters individual references without traversing their ancestors
+
+seed = 1
+value = seed + 1
+fact = stated seed
+notFact = stated value
+conclusion = derived value
+assert(fact.map(step => step.node), ["seed"])
+assert(notFact, [])
+assert(conclusion.map(step => step.node), ["value"])
+---
+# Nucleoid preserves reference errors while filtering reasoning states
+
+seed = 1
+value = seed + 1
+facts = value |> why |> stated
+try:
+    1 |> stated
+catch error:
+    assert(error, TypeError("Cannot explain 1"))
+assert(facts.map(step => step.node), ["seed"])
+try:
+    stated missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
 ```

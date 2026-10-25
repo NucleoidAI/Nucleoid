@@ -1718,6 +1718,58 @@ trace = why c
 
 - `trace[0]` names `c`, holds `6`, and derives from `["b"]`.
 
+### State-filtered selections (NUC 48 candidate)
+
+- `selection |> stated` and `selection |> derived` retain steps with the
+  corresponding existing `StepState`, in their original order, without
+  changing `node`, `holds`, `rule`, `state`, or `from`.
+- `result |> why |> stated` separates supporting facts from the derived
+  conclusions selected by `result |> why |> derived`. Class-governed steps
+  with empty `from` remain derived; an empty input-edge list is not a new
+  provenance test.
+- Prefix `stated seed` and `derived result` filter one reference only;
+  neither implicitly runs `why`. `model |> stated` and `model |> derived`
+  filter the model directly. Nested pipelines remain graph selections until
+  the existing final materialization.
+- Keep every source-stage value and structural observation, including
+  excluded steps. Empty results, equal-valued state/declaration rewrites,
+  ancestry replacement, deletion, functions, class rules, observer exclusion,
+  `.value` snapshots and transaction rollback retain their live behavior.
+- These are ordinary contextual identifiers, not lexer keywords.
+  Bindings, parameters, keys, properties, functions and methods named
+  `stated` or `derived` are unchanged; `stated(seed)` remains an ordinary call.
+  The accepted list `.filter` spelling is still available.
+- A local/parameter, state variable, function or class binding shadows either
+  new stage name: a pipeline then retains
+  `TypeError("stated is not an operation")` or
+  `TypeError("derived is not an operation")` before selecting its source.
+  Comma-free object fields still accept ordinary values with those names.
+  Existing `why`/`affects` binding behavior is unchanged.
+- Invalid sources retain `TypeError("Cannot explain 1")` for `1 |> stated`
+  and `ReferenceError("missing is not defined")` for `stated missing`.
+- Normative detail: [state-filtered reasoning selections](../nucleoid.spec.md#state-filtered-reasoning-selections)
+  and the seven appended entries. The executable reference counterpart is
+  `Reasoning state filters distinguish facts from conclusions`.
+
+```
+seed = 2
+middle = seed + 3
+result = middle * 2
+facts = result |> why |> stated
+conclusions = result |> why |> derived
+assert(facts.map(step => step.node), ["seed"])
+assert(facts[0].holds, 2)
+assert(facts[0].from, [])
+assert(conclusions.map(step => step.node), ["result", "middle"])
+assert(conclusions[0].holds, 10)
+assert(conclusions[0].from, ["middle"])
+assert(conclusions[0].state, "derived")
+```
+
+- The equivalent accepted computations remain
+  `facts = (why result).filter(step => step.state == "stated")` and
+  `conclusions = (why result).filter(step => step.state == "derived")`.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -1746,9 +1798,12 @@ c = b * 2
 - Structural refreshes use the propagation queue and wait for queued upstream changes to settle.
 - A failed transaction restores the selection, its subscriptions, and its pending work.
 - A caught failure discards only structural refreshes queued by its failing body, retaining work queued before it.
-- Only selections, pipelines, `model`, `why`, and `affects` are implemented; the other NUC 11 operations remain proposals.
+- The accepted specification already implements selections, pipelines,
+  `model`, `why`, and `affects`; the NUC 48 candidate adds only the two
+  state filters. Other NUC 11 operations remain proposals, not dependencies.
 
-Full detail: [NUC 11](nuc-0011.md).
+Implemented semantic basis: the [root specification](../nucleoid.spec.md).
+Proposal context: [NUC 11](nuc-0011.md) and [NUC 48](nuc-0048.md).
 
 ---
 
@@ -1910,6 +1965,12 @@ why reference                         derive a live explanation
 affects reference                     inspect live downstream impact
 reference |> why |> affects           compose reasoning stages
 model |> why                          inspect the current model
+reference |> why |> stated            select stated supporting facts (NUC 48 candidate)
+reference |> why |> derived           select derived explanation steps (NUC 48 candidate)
+stated reference                      filter one reference without traversing (NUC 48 candidate)
+derived reference                     filter one reference without traversing (NUC 48 candidate)
+model |> stated                       filter the current model by stated state (NUC 48 candidate)
+model |> derived                      filter the current model by derived state (NUC 48 candidate)
 ```
 
 ---

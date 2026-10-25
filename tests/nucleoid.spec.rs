@@ -9814,6 +9814,144 @@ assert(a, 1)
 assert(b, 2)"#);
 }
 
+/// Nucleoid filters reasoning selections by stated and derived state
+#[rustfmt::skip]
+#[test]
+fn filters_reasoning_selections_by_stated_and_derived_state() {
+    let mut run = runner();
+    run("seed = 2");
+    run("middle = seed + 3");
+    run("result = middle * 2");
+    run("facts = result |> why |> stated");
+    run("conclusions = result |> why |> derived");
+    assert_eq!(run("facts.map(step => step.node)"), serde_json::json!(["seed"]));
+    assert_eq!(run("facts[0].holds"), 2);
+    assert_eq!(run("facts[0].from"), serde_json::json!([]));
+    assert_eq!(run("conclusions.map(step => step.node)"), serde_json::json!(["result", "middle"]));
+    assert_eq!(run("conclusions[0].holds"), 10);
+    assert_eq!(run("conclusions[0].from"), serde_json::json!(["middle"]));
+    assert_eq!(run("conclusions[0].state"), "derived");
+}
+
+/// Nucleoid keeps reasoning state filters live through equal valued rewrites
+#[rustfmt::skip]
+#[test]
+fn keeps_reasoning_state_filters_live_through_equal_valued_rewrites() {
+    let mut run = runner();
+    run("seed = 1");
+    run("value = seed + 1");
+    run("facts = value |> why |> stated");
+    run("conclusions = value |> why |> derived");
+    assert_eq!(run("facts.map(step => step.node)"), serde_json::json!(["seed"]));
+    assert_eq!(run("conclusions.map(step => step.node)"), serde_json::json!(["value"]));
+    run("value = 2");
+    assert_eq!(run("facts.map(step => step.node)"), serde_json::json!(["value"]));
+    assert_eq!(run("conclusions"), serde_json::json!([]));
+    run("value = seed + 1");
+    run("seed = 3");
+    assert_eq!(run("facts.map(step => step.node)"), serde_json::json!(["seed"]));
+    assert_eq!(run("facts[0].holds"), 3);
+    assert_eq!(run("conclusions.map(step => step.node)"), serde_json::json!(["value"]));
+    assert_eq!(run("conclusions[0].holds"), 4);
+}
+
+/// Nucleoid observes empty state filtered model selections
+#[rustfmt::skip]
+#[test]
+fn observes_empty_state_filtered_model_selections() {
+    let mut run = runner();
+    run("facts = model |> stated");
+    run("conclusions = model |> derived");
+    assert_eq!(run("facts"), serde_json::json!([]));
+    assert_eq!(run("conclusions"), serde_json::json!([]));
+    run("seed = 1");
+    run("value = seed + 1");
+    assert_eq!(run("facts.map(step => step.node)"), serde_json::json!(["seed"]));
+    assert_eq!(run("conclusions.map(step => step.node)"), serde_json::json!(["value"]));
+    run("delete value");
+    assert_eq!(run("conclusions"), serde_json::json!([]));
+    run("seed = 2");
+    assert_eq!(run("facts[0].holds"), 2);
+}
+
+/// Nucleoid retains derived class rules without input edges in state filters
+#[rustfmt::skip]
+#[test]
+fn retains_derived_class_rules_without_input_edges_in_state_filters() {
+    let mut run = runner();
+    run("class Subject");
+    run("$Subject.active = true");
+    run("item = Subject()");
+    run("facts = item.active |> why |> stated");
+    run("conclusions = item.active |> why |> derived");
+    assert_eq!(run("facts"), serde_json::json!([]));
+    assert_eq!(run("conclusions.length"), 1);
+    assert_eq!(run("conclusions[0].node"), "item.active");
+    assert_eq!(run("conclusions[0].from"), serde_json::json!([]));
+    assert_eq!(run("conclusions[0].rule"), "$Subject.active = true");
+    assert_eq!(run("conclusions[0].holds"), true);
+}
+
+/// Nucleoid restores state filtered explanations and preserves snapshots
+#[rustfmt::skip]
+#[test]
+fn restores_state_filtered_explanations_and_preserves_snapshots() {
+    let mut run = runner();
+    run(r#"seed = 1
+value = seed + 1
+facts = value |> why |> stated
+conclusions = value |> why |> derived
+frozen = facts.value
+try:
+    value = 2
+    throw "ABORT_STATE_FILTER"
+catch error:
+    assert(error, "ABORT_STATE_FILTER")
+assert(facts.map(step => step.node), ["seed"])
+assert(conclusions.map(step => step.node), ["value"])
+value = 2
+seed = 5
+assert(facts.map(step => step.node), ["value"])
+assert(facts[0].holds, 2)
+assert(conclusions, [])
+assert(frozen[0].node, "seed")
+assert(frozen[0].holds, 1)"#);
+}
+
+/// Nucleoid filters individual references without traversing their ancestors
+#[rustfmt::skip]
+#[test]
+fn filters_individual_references_without_traversing_their_ancestors() {
+    let mut run = runner();
+    run("seed = 1");
+    run("value = seed + 1");
+    run("fact = stated seed");
+    run("notFact = stated value");
+    run("conclusion = derived value");
+    assert_eq!(run("fact.map(step => step.node)"), serde_json::json!(["seed"]));
+    assert_eq!(run("notFact"), serde_json::json!([]));
+    assert_eq!(run("conclusion.map(step => step.node)"), serde_json::json!(["value"]));
+}
+
+/// Nucleoid preserves reference errors while filtering reasoning states
+#[rustfmt::skip]
+#[test]
+fn preserves_reference_errors_while_filtering_reasoning_states() {
+    let mut run = runner();
+    run(r#"seed = 1
+value = seed + 1
+facts = value |> why |> stated
+try:
+    1 |> stated
+catch error:
+    assert(error, TypeError("Cannot explain 1"))
+assert(facts.map(step => step.node), ["seed"])
+try:
+    stated missing
+catch error:
+    assert(error, ReferenceError("missing is not defined"))"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -58,6 +58,7 @@ struct Parser {
     tokens: Vec<Spanned>,
     position: usize,
     depth: usize,
+    object_value: bool,
 }
 
 impl Parser {
@@ -66,6 +67,7 @@ impl Parser {
             tokens,
             position: 0,
             depth: 0,
+            object_value: false,
         }
     }
 
@@ -853,7 +855,14 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr> {
-        self.nested_expression(Self::expression_inner)
+        self.expression_in(false)
+    }
+
+    fn expression_in(&mut self, object_value: bool) -> Result<Expr> {
+        let outer = std::mem::replace(&mut self.object_value, object_value);
+        let expression = self.nested_expression(Self::expression_inner);
+        self.object_value = outer;
+        expression
     }
 
     fn nested_expression(&mut self, parse: fn(&mut Self) -> Result<Expr>) -> Result<Expr> {
@@ -889,7 +898,7 @@ impl Parser {
         }
 
         self.advance();
-        let value = self.expression()?;
+        let value = self.expression_in(self.object_value)?;
         let value = match operator {
             Some(operator) => {
                 let left = Box::new(left.clone());
@@ -1153,7 +1162,13 @@ impl Parser {
     fn unary(&mut self) -> Result<Expr> {
         if let Token::Identifier(name) = self.peek() {
             if let Some(stage) = Stage::from_name(name) {
-                if self.starts_operand(1) {
+                // An ordinary object value wins before the next explicit
+                // field, even on the right of an operator or an arrow.
+                let field_boundary = self.object_value
+                    && matches!(stage, Stage::Stated | Stage::Derived)
+                    && matches!(self.peek_at(1), Token::Identifier(_))
+                    && self.peek_at(2) == &Token::Colon;
+                if self.starts_operand(1) && !field_boundary {
                     self.advance();
                     let operand = self.nested_expression(Self::unary)?;
 
@@ -1433,7 +1448,7 @@ impl Parser {
                 Expr::Identifier(key.clone())
             } else {
                 self.expect(&Token::Colon)?;
-                self.expression()?
+                self.expression_in(true)?
             };
             entries.push((key, value));
 
@@ -1462,7 +1477,7 @@ impl Parser {
         let body = if self.check(&Token::LeftBrace) {
             FunctionBody::Block(self.braced()?)
         } else {
-            FunctionBody::Expression(Box::new(self.expression()?))
+            FunctionBody::Expression(Box::new(self.expression_in(self.object_value)?))
         };
 
         Ok(Expr::Function(Arc::new(Function {

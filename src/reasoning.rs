@@ -11,6 +11,8 @@ use crate::value::{ObjectId, Value};
 pub enum Stage {
     Why,
     Affects,
+    Stated,
+    Derived,
 }
 
 impl Stage {
@@ -18,6 +20,8 @@ impl Stage {
         match name {
             "why" => Some(Stage::Why),
             "affects" => Some(Stage::Affects),
+            "stated" => Some(Stage::Stated),
+            "derived" => Some(Stage::Derived),
             _ => None,
         }
     }
@@ -26,6 +30,8 @@ impl Stage {
         match self {
             Stage::Why => "why",
             Stage::Affects => "affects",
+            Stage::Stated => "stated",
+            Stage::Derived => "derived",
         }
     }
 }
@@ -93,6 +99,24 @@ impl Runtime {
     }
 
     pub(crate) fn apply_stage(&mut self, stage: Stage, selection: &Selection) -> Selection {
+        let state = match stage {
+            Stage::Stated => Some(StepState::Stated),
+            Stage::Derived => Some(StepState::Derived),
+            Stage::Why | Stage::Affects => None,
+        };
+
+        if let Some(state) = state {
+            // The source already observed every step, including excluded ones.
+            return Selection {
+                steps: selection
+                    .steps
+                    .iter()
+                    .filter(|step| step.state == state)
+                    .cloned()
+                    .collect(),
+            };
+        }
+
         let mut reached: IndexSet<NodeKey> = IndexSet::new();
         let mut pending: Vec<NodeKey> = Vec::new();
 
@@ -112,6 +136,7 @@ impl Runtime {
             let next: Vec<NodeKey> = match stage {
                 Stage::Why => node.dependencies.iter().cloned().collect(),
                 Stage::Affects => self.graph.dependents_in_order(&current),
+                Stage::Stated | Stage::Derived => unreachable!("state filters do not traverse"),
             };
 
             for key in next {
