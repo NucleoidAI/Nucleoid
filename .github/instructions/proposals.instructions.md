@@ -27,24 +27,29 @@ another case cannot offset an increase. Missing baselines block acceptance.
 Keep reports in the session workspace and do not apply rejected candidates.
 Evaluation outcome metadata does not recursively trigger another agent.
 
-## All-around enhancement selection
+## Enhancement selection
 
-When choosing unspecified enhancements, develop the language as a whole rather
-than repeatedly extending one narrow niche. Review recent NUCs and unmet needs
-across logic and reasoning, reactive dependencies, functions and scope, control
-flow, collections and strings, data modeling, and diagnostics.
+Every NUC, including existing and rejected proposals, has one `Category`
+header from the extensible
+[category registry](../../docs/nuc-0001.md#proposal-categories).
+Keep its category and index entries consistent without changing its `Type`
+or status. Only the user adds categories or resolves uncertainty. Whenever a
+category is added, selected, or updated, the caller must ask the user for
+confirmation before proceeding if its meaning, automatic-selection eligibility,
+or proposal assignments are unclear, including during continuous cycles.
 
-Prioritize distinct user value and broader expressiveness while weighing API
-complexity.
-Do not repeatedly favor math helpers or closely related utility variants merely
-because they are easy to implement, baseline, or shorten in measured examples.
-Math remains eligible when it addresses a clear need; token savings alone do
-not establish feature priority. Record the selection rationale in the handoff.
+Every category addition also triggers a review of all existing NUCs across
+every status. Reclassify proposals that fit the new category more accurately,
+ask about uncertain moves, and synchronize their headers and both NUC indexes.
+Preserve unaffected categories, types, statuses, and historical outcomes;
+the normal independent proposal/evaluation requirements still apply.
 
 Follow the caller-owned
 [selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement).
-Breadth guides feature choice within the existing 50/50 syntax/runtime draw;
-it does not authorize redraws, fixed rotations, or weaker acceptance checks.
+Unspecified enhancements use equal random selection across the registry's
+eligible categories, currently Syntax enhancement, Runtime features, Utility
+enhancement, and Reasoning enhancement. Documentation is classified but is
+not automatically selected for a language enhancement.
 Explicit feature/category requests still take precedence.
 
 ## Detailed proposal workflow
@@ -61,8 +66,8 @@ executable cases can demonstrate equal token usage.
 
 Pin the accepted Git revision and record its token baseline before editing
 runtime behavior or executable cases. Give the proposer its requested change,
-proposal path, baseline revision and immutable JSON artifact, and candidate
-worktree. Use `.github/agents/nuc-proposal.agent.md` and
+proposal path and confirmed category, baseline revision and immutable JSON
+artifact, and candidate worktree. Use `.github/agents/nuc-proposal.agent.md` and
 `.github/skills/nuc-proposal/SKILL.md` for drafting, prototyping, equivalent
 case rewrites, synchronization, and development checks. It must not run the
 acceptance gate or mark the proposal Accepted or Rejected.
@@ -125,13 +130,15 @@ Only the caller continues; workers stop at their handoffs. This does not
 recursively reevaluate the completed NUC's outcome metadata. Stop or pause
 under the conditions defined by the skill rather than bypassing a blocker.
 
-Continuous cycles, including those coordinated through `/nuc-evaluate`, are
-non-interactive. Neither the caller nor workers ask questions or request
-confirmation to record an outcome or start the next NUC. Use the existing
-selection rules and verified inputs; a rejection is not a reason to interrupt
-continuation. If a required input cannot be obtained or another blocking
-condition occurs, report it and pause without asking a question. Never invent
-baselines, bypass checks or required tool approvals, or ignore a user stop.
+Continuous cycles, including those coordinated through `/nuc-evaluate`, do not
+request confirmation to record an outcome or start the next NUC. An uncertain
+category addition, selection, or update is the exception: workers return it
+to the caller, who asks the user for confirmation before proceeding.
+Use the existing selection rules and verified inputs;
+a rejection is not a reason to interrupt continuation. For other missing
+prerequisites or blockers, report them and pause without asking a question.
+Never invent baselines, bypass checks or required tool approvals, or ignore
+a user stop.
 
 This is a Copilot-session policy, not a filesystem watcher or GitHub Actions
 trigger. Do not claim that an edit outside a Copilot session launched an agent.

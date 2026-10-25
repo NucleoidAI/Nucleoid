@@ -109,6 +109,16 @@ and [evaluation skill](.github/skills/nuc-evaluate/SKILL.md), with separate
 profiles in `.github/agents/`. The caller starts both stages; neither agent
 delegates to the other. See [NUC 1](docs/nuc-0001.md#proposal-evaluation).
 
+Every NUC has one `Category` header from the extensible
+[proposal category registry](docs/nuc-0001.md#proposal-categories), separate
+from its `Type` and `Status`. Whenever a category is added, selected, or updated,
+ask the user for confirmation before proceeding if its meaning, eligibility,
+or proposal assignments are uncertain. Every category addition requires
+reviewing all existing proposals and updating those that fit the new category
+more accurately, with synchronized category and numerical indexes. Unspecified
+enhancements use an equal random draw across the currently eligible categories;
+Documentation is not part of that draw.
+
 The gate measures each case from the specification and executable reference,
 README, and examples. It uses Nucleoid lexer tokens, including `Newline`,
 `Indent`, and `Dedent`, excluding `Eof`; it does not measure LLM tokens,

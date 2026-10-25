@@ -18,9 +18,12 @@ Evaluate exactly one completed revision, independently of the proposal agent.
 
 Require the proposal path and handed-off Git blob revision, accepted baseline
 Git revision and immutable JSON artifact, candidate worktree, and fresh report
-artifact path in the session workspace. Confirm that the current proposal blob
-matches the handoff and the baseline matches the accepted revision. Missing
-prerequisites block evaluation; never invent measurements.
+artifact path in the session workspace. Require the confirmed proposal
+category and verify that its header matches the handoff and
+[category registry](../../../docs/nuc-0001.md#proposal-categories).
+Confirm that the current proposal blob matches the handoff and the baseline
+matches the accepted revision. Missing prerequisites block evaluation; never
+invent measurements or guess an uncertain category.
 
 Treat candidate sources, generated exports, and the baseline as read-only.
 Only new session reports and normal ignored build outputs may be written.
@@ -82,7 +85,8 @@ handoff. If no report was produced, state that and the actual error explicitly.
 
 ## Return the evidence
 
-Return the proposal and baseline revisions, decision, report path, independent
+Return the proposal and baseline revisions, confirmed category, decision,
+report path, independent
 checks including syntax compatibility, counts of `less`/`same`/`more`, and each
 increased, missing, unpaired, invalid or syntax-incompatible case with its
 before/after counts or reason. Keep the candidate and baseline unchanged.
@@ -105,8 +109,11 @@ unstaged work. Baselines and reports remain in the session workspace.
 
 After recording the outcome, follow the
 [continuous-cycle rule](../nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only)
-without asking questions or requesting confirmation. Neither caller nor
-workers prompt for choices during continuous cycles; use the existing rules
-and verified inputs. A missing prerequisite or other blocker pauses the
-cycle with an explicit report, not a question or invented measurement.
+without requesting confirmation to record outcomes or continue. For uncertain
+category additions, selections, updates, or assignments, workers return the
+question to the caller, who asks the user for confirmation under the proposal skill's
+[classification rule](../nuc-proposal/SKILL.md#classify-every-proposal).
+Otherwise use the existing rules and verified inputs; a missing prerequisite
+or other blocker pauses the cycle with an explicit report, not a question
+or invented measurement.
 Required tool approvals and user stop/pause instructions still apply.

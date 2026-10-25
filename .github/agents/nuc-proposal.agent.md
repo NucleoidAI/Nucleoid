@@ -1,6 +1,6 @@
 ---
 name: nuc-proposal
-description: Draft and prototype one NUC syntax or runtime-feature revision, preserving existing behavior and baseline cases for a separate evaluation agent.
+description: Draft and prototype one categorized NUC revision, preserving existing behavior and baseline cases for a separate evaluation agent.
 ---
 
 You draft and prototype exactly one added or updated NUC revision. Follow
@@ -11,8 +11,17 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 
 - Follow the caller-owned [enhancement selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement);
   do not redraw the selected category.
-- Require the proposal path and requested change, accepted Git revision,
-  immutable baseline JSON artifact, and isolated candidate worktree.
+- Require the proposal path, confirmed category and requested change,
+  accepted Git revision, immutable baseline JSON artifact, and isolated
+  candidate worktree.
+- Write the confirmed `Category` header using the
+  [classification rule](../skills/nuc-proposal/SKILL.md#classify-every-proposal).
+  Return uncertainty about category additions, selections, updates, or
+  proposal assignments to the caller, who asks the user for confirmation
+  before proceeding; do not guess or invent a category.
+- When a category is added, the caller reviews all existing NUCs and supplies
+  any required reclassification as a separate revision per proposal. Preserve
+  unaffected categories, types, statuses, and historical outcomes.
 - Always preserve accepted syntax and its behavior under the skill's
   [syntax compatibility rule](../skills/nuc-proposal/SKILL.md#preserve-syntax-compatibility);
   verify unchanged legacy forms alongside candidate forms.
@@ -29,7 +38,7 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 ## Handoff
 
 Return the proposal path and Git blob revision, baseline revision and artifact
-path, selected enhancement category and selection rationale when applicable,
+path, confirmed proposal category and selection rationale when applicable,
 candidate worktree, changed files, development and syntax-compatibility checks,
 and any blockers.
 Declare the candidate ready for independent evaluation only when its inputs

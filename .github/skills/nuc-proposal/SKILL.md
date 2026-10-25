@@ -1,6 +1,6 @@
 ---
 name: nuc-proposal
-description: Draft or revise a Nucleoid NUC and prototype syntax improvements or runtime features. Use for proposal preparation, not acceptance evaluation.
+description: Draft or revise a Nucleoid NUC and prototype its changes. Use for proposal preparation, not acceptance evaluation.
 ---
 
 # Preparing a NUC proposal
@@ -13,52 +13,62 @@ agent. Inside that agent, execute the steps below; do not spawn another agent.
 Follow `.github/copilot-instructions.md` and `docs/nuc-0001.md`.
 Work on exactly one proposal revision in the caller's isolated candidate.
 
+## Classify every proposal
+
+Give every new and existing NUC exactly one `Category` header from the
+[proposal category registry](../../../docs/nuc-0001.md#proposal-categories),
+including Draft, Accepted, Rejected, Active, and Superseded documents.
+Category describes the proposal's purpose; it does not replace `Type` or
+change its status.
+
+Use the user's explicit classification when supplied. Whenever a category is
+added, selected, or updated, the coordinating caller must ask the user for
+confirmation if anything is uncertain, including its meaning, automatic-selection
+eligibility, or which proposals belong to it. Ask before proceeding, not after
+guessing. Workers return the question to the caller. This clarification also
+applies during continuous cycles.
+
+The user may add categories in the future. Every category addition requires
+reviewing all existing NUCs, across every status, and reclassifying proposals
+that fit the new category more accurately. Keep unaffected classifications,
+`Type`, `Status`, and historical outcomes unchanged. Synchronize the registry,
+affected proposal headers, and both category and numerical indexes through the
+normal proposal/evaluation process. Ask for confirmation on uncertain moves;
+do not invent categories or retain stale classifications without review.
+
 ## Select an unspecified enhancement
 
 When asked to choose a language enhancement without a specific feature or
-category, the coordinating caller makes one unbiased random draw:
+category, the coordinating caller makes one unbiased random draw with equal
+probability across the registry's automatically selectable enhancement
+categories. The current four enhancement categories each have a 25% chance;
+`Documentation` is not part of this automatic language-enhancement draw.
 
-- **50% language syntax improvement:** simplify syntax or reduce lexer tokens
-  while preserving behavior.
-- **50% new language runtime feature:** add a runtime capability while
-  preserving existing behavior.
-
-Use a tool-backed draw, such as `Get-Random -Minimum 0 -Maximum 2`, with `0`
-selecting syntax improvement and `1` selecting a runtime feature. Choose one
-bounded enhancement in that category; do not redraw to favor a preferred
-category or substitute deterministic alternation for randomness.
-
-Within the selected category, pursue all-around language development:
-
-- Review the current specification and recent NUCs to identify unmet needs and
-  avoid repeatedly extending the same narrow feature family.
-- Consider gaps across logic and reasoning, reactive dependencies, functions
-  and scope, control flow, collections and strings, data modeling, and
-  diagnostics. Prefer underrepresented areas when user value is comparable.
-- Weigh distinct user value, broader expressiveness, and API complexity.
-  Do not repeatedly choose math helpers or other closely related utility
-  variants merely for easy implementation, baselines, or token savings.
-- Keep math eligible when it fills a clear gap. Broaden coverage without a
-  math ban, fixed rotation, quota, or category redraw; preserve every
-  compatibility and acceptance requirement.
+Read the current registry before drawing; do not hard-code its size or retain
+the former 50/50 syntax/runtime split. For example, populate `$categories`
+from the eligible registry entries and use
+`Get-Random -Minimum 0 -Maximum $categories.Count` to select an index.
+Choose one bounded enhancement in that category; do not redraw to favor a
+preferred category or substitute deterministic alternation for randomness.
 
 Select before recording baselines or delegating preparation. Supply the
-selected category, requested change, and a brief selection rationale explaining
-the unmet need and fit with recent coverage to the proposal agent, which must
-not redraw. Include the category and rationale in its handoff. Explicit
+selected category, requested change, and a brief selection rationale to the
+proposal agent, which must not redraw. Include the category and rationale in
+its handoff and write the same category in the proposal header. Explicit
 feature/category requests take precedence, and process or documentation-only
 revisions are not randomized.
 
-Runtime features retain the same baseline and acceptance requirements. New
+Every category retains the same baseline and acceptance requirements. New
 measured cases still need pre-executed behavior-equivalent accepted-syntax
 programs; missing baselines block preparation rather than bypass the gate.
 
 ## Confirm the inputs
 
-Require the proposal path and requested change, accepted Git revision,
-immutable baseline JSON artifact, and candidate worktree. Confirm that the
-baseline belongs to that accepted revision before making runtime or executable
-document edits. Missing inputs stop preparation, not justify assumptions.
+Require the proposal path, confirmed category and requested change, accepted
+Git revision, immutable baseline JSON artifact, and candidate worktree.
+Confirm that the baseline belongs to that accepted revision before making
+runtime or executable document edits. Missing inputs stop preparation, not
+justify assumptions.
 
 New measured cases need behavior-equivalent accepted-syntax programs with the
 same document, title, canonical assertions, and expected return. They must
@@ -92,7 +102,7 @@ Draft or revise the NUC using its required format and sections. Trace implemente
 claims to `nucleoid.spec.md`; draft claims do not override the accepted language.
 Keep dependencies already accepted and do not combine pending proposals.
 
-Implement the candidate syntax improvement or runtime feature where needed,
+Implement the candidate change where needed,
 then rewrite applicable cases in `nucleoid.spec.md`, `tests/reference.md`, and
 the `nuc` blocks in `README.md`
 and `docs/examples.md`. Preserve case identities, assertion order and canonical
@@ -116,7 +126,7 @@ report, or mark the proposal Accepted or Rejected. Those belong to the
 independent evaluator.
 
 Return the proposal path and Git blob revision (`git hash-object` on the
-proposal), accepted baseline revision and path, selected enhancement category
+proposal), accepted baseline revision and path, confirmed proposal category
 and selection rationale when applicable, candidate worktree, changed files,
 development checks, and explicit blockers. Freeze the candidate after handoff.
 The caller starts a fresh `nuc-evaluate` agent with this handoff and
@@ -154,12 +164,14 @@ user stops, pauses or redirects the work, the session ends, or a resource limit
 is reached. A `Blocked` decision, failed outcome recording, or missing required
 input pauses continuation; report the blocker instead of bypassing it.
 
-Continuous cycles are non-interactive, including when coordinated through
-`/nuc-evaluate`. Neither the caller nor workers ask questions, present choice
-forms, or wait for confirmation before recording an outcome or continuing.
-Use the existing selection rules and verified inputs. If a required input
-cannot be obtained or another blocker occurs, report it and pause without a
-question; do not invent inputs or bypass checks or required tool approvals.
+Continuous cycles do not ask for confirmation before recording an outcome or
+continuing, including when coordinated through `/nuc-evaluate`. The exception
+is an uncertain proposal category: the caller asks the user under
+[the classification rule](#classify-every-proposal) before assigning it.
+Workers return that uncertainty to the caller. Use the existing selection
+rules and verified inputs. For other missing prerequisites or blockers,
+report them and pause without a question; do not invent inputs or bypass
+checks or required tool approvals.
 
 Each cycle chooses a new NUC number and one bounded enhancement under the
 existing selection rule. Pin the current verified accepted-language revision,

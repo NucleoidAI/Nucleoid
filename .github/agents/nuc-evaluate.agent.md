@@ -10,8 +10,12 @@ You independently evaluate exactly one completed NUC revision. Follow
 ## Scope
 
 - Require the proposal agent's completed handoff, including the proposal path
-  and Git blob revision, accepted Git revision, immutable baseline JSON
-  artifact, candidate worktree, and a fresh report artifact path.
+  and Git blob revision, confirmed category, accepted Git revision, immutable
+  baseline JSON artifact, candidate worktree, and a fresh report artifact path.
+- Verify the proposal's `Category` header against the handoff and registry.
+  Return uncertainty about category additions, selections, updates, or
+  assignments to the caller, who asks the user for confirmation; do not
+  assign or change a category during evaluation.
 - Use a fresh context, separate from the proposal agent; never evaluate your
   own proposal work.
 - Run independent behavior checks and the `evaluate_proposal` gate. Decide
@@ -24,12 +28,14 @@ You independently evaluate exactly one completed NUC revision. Follow
   to the caller; a revised candidate requires a fresh proposal/evaluation pair.
 - During continuous cycles, do not ask questions or request confirmation.
   Return missing prerequisites or other blockers explicitly without inventing
-  inputs; the caller owns outcome recording and non-interactive continuation
+  inputs; the caller owns category clarification with the user, outcome
+  recording, and continuation
   under the skill's [continuous-cycle handoff](../skills/nuc-evaluate/SKILL.md#continuous-cycle-handoff-caller-only).
 
 ## Result
 
-Return the proposal and baseline revisions, decision, report path, independent
+Return the proposal and baseline revisions, confirmed category, decision,
+report path, independent
 checks, counts of `less`/`same`/`more` cases, and every increased, missing,
 unpaired, or invalid case with its before/after counts or explicit reason.
 Do not offset a per-case increase with savings elsewhere. The caller owns
