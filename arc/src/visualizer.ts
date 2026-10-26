@@ -35,6 +35,7 @@ export async function instances({
       {
         role: "user",
         content: JSON.stringify({
+          operation: "segment_input_instances",
           input_matrix: test_input_matrix,
         }),
       },
@@ -96,6 +97,7 @@ export async function value({
       {
         role: "user",
         content: JSON.stringify({
+          operation: "construct_input_instance",
           instance_name,
           input_instance_matrix: Matrix.crop(input_instance_matrix),
           input_x: x,
@@ -133,8 +135,7 @@ export async function output_instance_matrix({
   input_value,
   output_value,
 }) {
-  const x: number = output_value.x;
-  const y: number = output_value.y;
+  const { x, y } = output_value;
 
   terminal.step("Composing the output object");
   const { output_instance_matrix } = await llm.generate({
@@ -175,6 +176,7 @@ export async function output_instance_matrix({
       {
         role: "user",
         content: JSON.stringify({
+          operation: "render_output_instance",
           input_value,
           input_instance_matrix: Matrix.crop(input_instance_matrix),
           output_value,

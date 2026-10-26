@@ -12,6 +12,7 @@ export async function declarations({ train_dataset }) {
       {
         role: "user",
         content: JSON.stringify({
+          operation: "infer_declarations",
           train_dataset,
         }),
       },
@@ -38,9 +39,11 @@ export async function instances({ declarations, input_matrix, output_matrix }) {
       {
         role: "user",
         content: JSON.stringify({
+          operation: "segment_training_instances",
           declarations,
           input_matrix,
           output_matrix,
+          query: { class: "Obj" },
         }),
       },
     ],
@@ -88,6 +91,7 @@ export async function value({
       {
         role: "user",
         content: JSON.stringify({
+          operation: "construct_training_instance",
           instance_name,
           declarations,
           input_instance_matrix,

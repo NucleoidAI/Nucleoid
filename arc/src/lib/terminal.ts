@@ -97,21 +97,21 @@ export function header({ version }) {
   const horizontal = available >= 32;
   const limit = Math.min(12, available);
   const wordmark = wordmarks.find((art) =>
-    art.every((line: string) => stringWidth(line) <= limit)
+    art.every((line) => stringWidth(line) <= limit)
   ) ?? ["nuc"];
-  const logo = wordmark.map((line: string) => styleText("greenBright", line));
-  const logoWidth = Math.max(...logo.map((line: string) => stringWidth(line)));
+  const logo = wordmark.map((line) => styleText("greenBright", line));
+  const logoWidth = Math.max(...logo.map((line) => stringWidth(line)));
   const textWidth = horizontal ? available - logoWidth - 3 : available;
   const text = [
     ...wrap("Nucleoid - Logic Language for World Models 🌱🐋🌍", textWidth).map(
-      (line: string) => styleText(["bold", "white"], line)
+      (line) => styleText(["bold", "white"], line)
     ),
-    ...wrap("Inspired by Nature", textWidth).map((line: string) =>
+    ...wrap("Inspired by Nature", textWidth).map((line) =>
       styleText("gray", line)
     ),
     "",
     ...wrap("Analyze / Construct / Visualize", textWidth),
-    ...wrap(`Version ${version}`, textWidth).map((line: string) =>
+    ...wrap(`Version ${version}`, textWidth).map((line) =>
       styleText("gray", line)
     ),
   ];
@@ -119,17 +119,15 @@ export function header({ version }) {
   const lines = horizontal
     ? Array.from(
         { length: height },
-        (_, index: number) =>
+        (_, index) =>
           pad(logo[index] ?? "", logoWidth) + "   " + (text[index] ?? "")
       )
     : [...logo, "", ...text];
-  const contentWidth = Math.max(
-    ...lines.map((line: string) => stringWidth(line))
-  );
+  const contentWidth = Math.max(...lines.map((line) => stringWidth(line)));
   const inset = " ".repeat(
     Math.max(0, Math.floor((available - contentWidth) * 0.5))
   );
-  block("", ["", "", ...lines.map((line: string) => inset + line), "", ""]);
+  block("", ["", "", ...lines.map((line) => inset + line), "", ""]);
   console.log("");
 }
 
@@ -168,7 +166,7 @@ export function code(title: string, source) {
     title,
     stripVTControlCharacters(text)
       .split("\n")
-      .map((line: string) => styleText("whiteBright", line))
+      .map((line) => styleText("whiteBright", line))
   );
 }
 
@@ -184,11 +182,11 @@ export function value(title: string, data) {
       maxStringLength: null,
     })
       .split("\n")
-      .map((line: string) => styleText("whiteBright", line))
+      .map((line) => styleText("whiteBright", line))
   );
 }
 
-function cell(value: number, colored: boolean): string {
+function cell(value, colored: boolean): string {
   const text = `${String(value).padStart(2)} `;
   if (!colored || !Number.isInteger(value) || value < 0 || value > 9) {
     return text;
@@ -205,25 +203,25 @@ function matrixLines(matrix, start: number, end: number, colored: boolean) {
   const rowWidth = String(matrix.length - 1).length;
   const axis =
     " ".repeat(rowWidth + 2) +
-    Array.from({ length: end - start }, (_, index: number) =>
+    Array.from({ length: end - start }, (_, index) =>
       `${start + index}`.padStart(2).concat(" ")
     ).join("");
   return [
     styleText("gray", axis),
     ...matrix.map(
-      (row, index: number) =>
+      (row, index) =>
         styleText("gray", `${String(index).padStart(rowWidth)}  `) +
         row
           .slice(start, end)
-          .map((value: number) => cell(value, colored))
+          .map((value) => cell(value, colored))
           .join("")
     ),
   ];
 }
 
 export function grid(title: string, matrix) {
-  const rows: number = matrix.length;
-  const columns = Math.max(0, ...matrix.map((row): number => row.length));
+  const rows = matrix.length;
+  const columns = Math.max(0, ...matrix.map((row) => row.length));
   const dimensions = `${columns} × ${rows}`;
   if (rows === 0 || columns === 0) {
     block(`${title} · ${dimensions}`, [styleText("gray", "(empty)")]);
@@ -246,18 +244,18 @@ export function grid(title: string, matrix) {
 
 function sideBySide(panels) {
   const widths = panels.map((lines) =>
-    Math.max(...lines.map((line: string) => stringWidth(line)))
+    Math.max(...lines.map((line) => stringWidth(line)))
   );
-  const height = Math.max(...panels.map((lines): number => lines.length));
-  return Array.from({ length: height }, (_, row: number) =>
+  const height = Math.max(...panels.map((lines) => lines.length));
+  return Array.from({ length: height }, (_, row) =>
     panels
-      .map((lines, index: number) => pad(lines[row] ?? "", widths[index]))
+      .map((lines, index) => pad(lines[row] ?? "", widths[index]))
       .join("  ")
   );
 }
 
 function previewMatrix(title: string, matrix, colored: boolean) {
-  const columns = Math.max(0, ...matrix.map((row): number => row.length));
+  const columns = Math.max(0, ...matrix.map((row) => row.length));
   return [
     styleText("gray", `${title} · ${columns} × ${matrix.length}`),
     ...matrixLines(matrix, 0, columns, colored),
@@ -289,9 +287,7 @@ export function puzzle({ train, testInput }) {
         previewMatrix("Output", output, colored),
       ]),
     ];
-    const pairWidth = Math.max(
-      ...lines.map((line: string) => stringWidth(line))
-    );
+    const pairWidth = Math.max(...lines.map((line) => stringWidth(line)));
     if (pairWidth > available) {
       renderRow();
       grid(`Train ${index + 1} · Input`, input);
@@ -345,7 +341,7 @@ export function failure(error) {
     "Run failed",
     stripVTControlCharacters(text)
       .split("\n")
-      .map((line: string) => styleText("red", line)),
+      .map((line) => styleText("red", line)),
     console.error
   );
 }

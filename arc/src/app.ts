@@ -22,7 +22,7 @@ const training_input = {
 };
 
 export async function start() {
-  const startedAt: number = performance.now();
+  const startedAt = performance.now();
   terminal.header({ version: await nucleoid.version() });
   terminal.puzzle({ train, testInput: test_input_matrix });
   terminal.section(
@@ -31,7 +31,7 @@ export async function start() {
     "Infer reusable objects and transformation rules"
   );
 
-  let instance_index: number = 0;
+  let instance_index = 0;
 
   const { declarations } = await analyzer.declarations({
     train_dataset: training_input,
@@ -54,10 +54,7 @@ export async function start() {
     });
 
     for (const { input_instance_matrix, output_instance_matrix } of instances) {
-      const instance_name: string = `obj${String(instance_index++).padStart(
-        12,
-        "0"
-      )}`;
+      const instance_name = `obj${String(instance_index++).padStart(12, "0")}`;
 
       const { implementation, input_value, output_value } =
         await analyzer.value({
@@ -90,7 +87,7 @@ export async function start() {
     test_input_matrix,
   });
 
-  let test_index: number = 0;
+  let test_index = 0;
 
   let result_matrix = Array.from({ length: test_output_matrix.length }, () =>
     Array(test_output_matrix[0].length).fill(0)

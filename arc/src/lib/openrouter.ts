@@ -13,10 +13,9 @@ function requireCode(source: string, path: string, completion: string) {
 }
 
 export async function generate({ messages = [], response_format }) {
-  const name: string = response_format.json_schema.name;
-  const schema = response_format.json_schema.schema;
+  const { name, schema } = response_format.json_schema;
   const validate = ajv.compile(schema);
-  const apiKey: string = process.env.OPENROUTER_API_KEY?.trim();
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is required");
   }
@@ -49,7 +48,7 @@ export async function generate({ messages = [], response_format }) {
     if (!axios.isAxiosError(error)) {
       throw error;
     }
-    const status: string = error.response ? ` (${error.response.status})` : "";
+    const status = error.response ? ` (${error.response.status})` : "";
     const message = error.response?.data?.error?.message;
     // Axios errors contain authentication headers, so do not attach the cause.
     throw new Error(
@@ -64,7 +63,7 @@ export async function generate({ messages = [], response_format }) {
   }
 
   const choice = data.choices?.[0];
-  const completion: string = JSON.stringify({
+  const completion = JSON.stringify({
     schema: name,
     id: data.id ?? null,
     model: data.model ?? null,
@@ -91,14 +90,14 @@ export async function generate({ messages = [], response_format }) {
     );
   }
   if (choice?.finish_reason !== "stop") {
-    const reason: string =
+    const reason =
       choice?.finish_reason === "length"
         ? "response was truncated"
         : "completion did not finish normally";
     throw new Error(`OpenRouter ${reason}\n\nCompletion: ${completion}`);
   }
 
-  const content: string = choice.message?.content;
+  const content = choice.message?.content;
   if (typeof content !== "string" || !content.trim()) {
     throw new Error(
       `OpenRouter returned no text content\n\nCompletion: ${completion}`
