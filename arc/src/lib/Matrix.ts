@@ -41,13 +41,7 @@ export function locate(matrix) {
   };
 }
 
-export function pad(
-  matrix,
-  rows: number,
-  cols: number,
-  left: number,
-  top: number
-) {
+export function pad(matrix, rows, cols, left, top) {
   if (!Array.isArray(matrix)) {
     throw new Error("Matrix must be an array for padding");
   }
@@ -118,7 +112,7 @@ export function merge(...matrices) {
   return result;
 }
 
-export function difference(matrix1, matrix2): number {
+export function difference(matrix1, matrix2) {
   let mismatches = 0;
   const rows = Math.max(matrix1.length, matrix2.length);
 

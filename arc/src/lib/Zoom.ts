@@ -34,7 +34,7 @@ export function focus(matrix) {
   };
 }
 
-export function enlarge(matrix, rows: number, cols: number) {
+export function enlarge(matrix, rows, cols) {
   const { x_position: xOffset, y_position: yOffset, object_matrix } = matrix;
 
   const originalArray = Array.from({ length: rows }, () => Array(cols).fill(0));

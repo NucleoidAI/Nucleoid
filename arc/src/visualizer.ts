@@ -2,7 +2,6 @@ import * as nucleoid from "./lib/nucleoid";
 import * as Matrix from "./lib/Matrix";
 import * as llm from "./lib/llm";
 import * as terminal from "./lib/terminal";
-import * as responseFormat from "./lib/response_format";
 
 export async function instances({
   train_dataset,
@@ -16,45 +15,44 @@ export async function instances({
     messages: [
       {
         role: "assistant",
-        content: JSON.stringify({
-          declarations,
-          train_dataset: train_dataset.dataset.map(
-            ({ input_matrix, output_matrix, instances }) => ({
-              input_matrix,
-              output_matrix,
-              instances: instances.map(
-                ({ input_instance_matrix, output_instance_matrix }) => ({
-                  input_instance_matrix,
-                  output_instance_matrix,
-                })
-              ),
-            })
-          ),
-        }),
+        content: `
+          declarations:
+          ${JSON.stringify(declarations)}
+          train_dataset:
+          ${JSON.stringify(
+            train_dataset.dataset.map(
+              ({ input_matrix, output_matrix, instances }) => ({
+                input_matrix,
+                output_matrix,
+                instances: instances.map(
+                  ({ input_instance_matrix, output_instance_matrix }) => ({
+                    input_instance_matrix,
+                    output_instance_matrix,
+                  })
+                ),
+              })
+            )
+          )}
+        `,
       },
       {
         role: "user",
-        content: JSON.stringify({
-          operation: "segment_input_instances",
-          input_matrix: test_input_matrix,
-        }),
+        content: `
+          input_matrix:
+          ${JSON.stringify(test_input_matrix)}
+          json_format:
+          {
+            "instances": [{
+              "input_instance_matrix": <INPUT_INSTANCE_MATRIX>
+            }]
+          }
+        `,
       },
     ],
-    response_format: responseFormat.create("visualizer_instances", {
-      instances: {
-        type: "array",
-        items: responseFormat.object({
-          input_instance_matrix: responseFormat.grid(
-            test_input_matrix.length,
-            test_input_matrix[0].length
-          ),
-        }),
-      },
-    }),
   });
 
   terminal.step(`${instances.length} objects identified`);
-  instances.forEach(({ input_instance_matrix }, index: number) => {
+  instances.forEach(({ input_instance_matrix }, index) => {
     terminal.grid(`Test object ${index + 1}`, input_instance_matrix);
   });
 
@@ -75,40 +73,47 @@ export async function value({
     messages: [
       {
         role: "assistant",
-        content: JSON.stringify({
-          declarations,
-          train_dataset: train_dataset.dataset.map(({ instances }) => ({
-            instances: instances.map(
-              ({ implementation, input_value, input_instance_matrix }) => ({
-                implementation,
-                input_value,
-                input_instance_matrix: Matrix.crop(input_instance_matrix),
-              })
-            ),
-          })),
-          input_instances: input_instances.map(
-            ({ input_value, input_instance_matrix }) => ({
+        content: `
+          declarations:
+          ${JSON.stringify(declarations)}
+          train_dataset:
+          ${JSON.stringify(
+            train_dataset.dataset.map(({ instances }) => ({
+              instances: instances.map(
+                ({ implementation, input_value, input_instance_matrix }) => ({
+                  implementation,
+                  input_value,
+                  input_instance_matrix: Matrix.crop(input_instance_matrix),
+                })
+              ),
+            }))
+          )}
+          input_instances:
+          ${JSON.stringify(
+            input_instances.map(({ input_value, input_instance_matrix }) => ({
               input_value,
               input_instance_matrix: Matrix.crop(input_instance_matrix),
-            })
-          ),
-        }),
+            }))
+          )}
+        `,
       },
       {
         role: "user",
-        content: JSON.stringify({
-          operation: "construct_input_instance",
-          instance_name,
-          input_instance_matrix: Matrix.crop(input_instance_matrix),
-          input_x: x,
-          input_y: y,
-        }),
+        content: `
+          instance_name:
+          ${instance_name}
+          input_instance_matrix:
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
+          input_x: ${x}
+          input_y: ${y}
+          json_format:
+          {
+            "orientation": <ORIENTATION>,
+            "implementation": <IMPLEMENTATION>
+          }
+        `,
       },
     ],
-    response_format: responseFormat.create("visualizer_value", {
-      orientation: { type: "number" },
-      implementation: responseFormat.code,
-    }),
   });
 
   terminal.code(`Implementation · ${instance_name}`, implementation);
@@ -142,9 +147,28 @@ export async function output_instance_matrix({
     messages: [
       {
         role: "assistant",
-        content: JSON.stringify({
-          train_dataset: train_dataset.dataset.map(({ instances }) => ({
-            instances: instances.map(
+        content: `
+          train_dataset:
+          ${JSON.stringify(
+            train_dataset.dataset.map(({ instances }) => ({
+              instances: instances.map(
+                ({
+                  input_value,
+                  input_instance_matrix,
+                  output_value,
+                  output_instance_matrix,
+                }) => ({
+                  input_value,
+                  input_instance_matrix: Matrix.crop(input_instance_matrix),
+                  output_value,
+                  output_instance_matrix: Matrix.crop(output_instance_matrix),
+                })
+              ),
+            }))
+          )}
+          input_instances:
+          ${JSON.stringify(
+            input_instances.map(
               ({
                 input_value,
                 input_instance_matrix,
@@ -156,39 +180,26 @@ export async function output_instance_matrix({
                 output_value,
                 output_instance_matrix: Matrix.crop(output_instance_matrix),
               })
-            ),
-          })),
-          input_instances: input_instances.map(
-            ({
-              input_value,
-              input_instance_matrix,
-              output_value,
-              output_instance_matrix,
-            }) => ({
-              input_value,
-              input_instance_matrix: Matrix.crop(input_instance_matrix),
-              output_value,
-              output_instance_matrix: Matrix.crop(output_instance_matrix),
-            })
-          ),
-        }),
+            )
+          )}
+        `,
       },
       {
         role: "user",
-        content: JSON.stringify({
-          operation: "render_output_instance",
-          input_value,
-          input_instance_matrix: Matrix.crop(input_instance_matrix),
-          output_value,
-        }),
+        content: `
+          input_value:
+          ${JSON.stringify(input_value)}
+          input_instance_matrix:
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
+          output_value:
+          ${JSON.stringify(output_value)}
+          json_format:
+          {
+            "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
+          }
+        `,
       },
     ],
-    response_format: responseFormat.create(
-      "visualizer_output_instance_matrix",
-      {
-        output_instance_matrix: responseFormat.grid(),
-      }
-    ),
   });
 
   terminal.grid("Output crop", output_instance_matrix);
