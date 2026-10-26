@@ -2064,6 +2064,61 @@ statement positions; caught values and transaction recovery are unchanged.
   behavior without requiring identical rule-source strings or immediate
   dependency graphs. Unchanged historical programs retain their complete ASTs.
 
+## Read-only state versions
+
+- A postfix `reference@0`, `@1`, ... reads a non-negative, oldest-first
+  version of a variable or actual object property. `@first` means zero,
+  `@last` means the newest entry, and `@previous` means the entry before it.
+  Decimal digit literals must fit the host's `usize`; signs, decimal points,
+  exponent spellings, expressions and unknown selector words are not selectors.
+  The three words remain ordinary identifiers everywhere except after `@`.
+- Versioning is automatic. Record the initial stored value at zero and append
+  only on actual `Value::same_value` changes, including reactive propagation,
+  constructors, initial object-property maps and mutable-list write-backs.
+  NaNs compare unchanged, signed zeros differ, lists compare by contents and
+  objects by identity. Reads and equal writes never append a source version.
+- Histories belong to underlying variable slots and object identity/property
+  slots, not textual aliases. A selected object variable switching identities
+  selects the new owner's property history. Computed object-property reads
+  evaluate their receiver and key exactly once. No list-element slots,
+  arbitrary temporary histories, synthetic fallback entries, hidden object
+  properties, wrappers or altered JSON/value representations are introduced.
+- Global/state histories persist across `Runtime::run` calls, independently of
+  the committed transaction log. Retain all entries until slot deletion,
+  object removal or `State::clear`/`Runtime::clear`; redefining a deleted slot
+  starts again at zero. Local/parameter/loop/catch bindings use the same
+  innermost scope and frame lifetime as ordinary reads and writes.
+- Successful state writes are immediately readable. Failed runs and caught
+  savepoints undo state history appends, deletions and delete/recreate resets
+  atomically with their corresponding state writes. Restoration adds nothing.
+  Locals retain the existing Scope execution semantics rather than becoming
+  standing or transactional state declarations.
+- A selected version is an ordinary Value. Lists are ordinary value copies;
+  historical object references retain identity and can reflect later property
+  mutations. Real properties of a returned object are ordinary writable
+  storage, not deep-frozen snapshots. Normal member, index, slice, call and
+  `.value` snapshot composition remains available.
+- Direct assignment, compound assignment, deletion, or mutable-list write-back
+  into a selected version raises `TypeError("State versions are read-only")`.
+  Copy a historical list into an ordinary binding before mutating the copy.
+  A non-slot or namespace reference raises
+  `TypeError("State versions require a variable or object property")`.
+- A missing slot, out-of-range index, or `@previous` with fewer than two
+  entries reads Undefined and settles to deferred Null in assignments.
+  Retain the source dependencies for later creation/recovery. A valid old
+  value remains readable even while the current source is Null or Undefined;
+  only the selected result contributes its nullishness.
+- Malformed selectors raise
+  `SyntaxError("Expected a non-negative integer, 'first', 'last', or 'previous' after '@'")`.
+  Existing diagnostics and chain/depth limits still apply. Ordinary dot fields
+  `first`, `last` and `previous`, `.value`, negative list indexing and slicing,
+  builtin/class/function namespaces, calls, one-shot execution, graph
+  propagation and cycle behavior are unchanged.
+- The six appended entries beginning `Nucleoid reads zero based and named
+  versions of instance properties` through `Nucleoid restores version histories
+  on rollback and resets deleted bindings` specify the measured runtime
+  examples.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -12920,4 +12975,144 @@ for it of "c":
     seen.push(it)
 assert(seen, ["saved", "c"])
 assert(it, "outer")
+---
+# Nucleoid reads zero based and named versions of instance properties
+
+class Student
+student1 = Student()
+student1.name = "Can"
+student1.name = "Daphne"
+student1.name = "Merve"
+version0 = student1.name@0
+version1 = student1.name@1
+version2 = student1.name@2
+firstName = student1.name@first
+lastName = student1.name@last
+previousName = student1.name@previous
+assert(version0, "Can")
+assert(version1, "Daphne")
+assert(version2, "Merve")
+assert(firstName, "Can")
+assert(lastName, "Merve")
+assert(previousName, "Daphne")
+assert(student1.name, "Merve")
+[version0, version1, version2, firstName, lastName, previousName]
+# return: ["Can","Daphne","Merve","Can","Merve","Daphne"]
+---
+# Nucleoid tracks reactive variable versions without duplicate states
+
+input = 1
+amount = input * 2
+firstAmount = amount@first
+lastAmount = amount@last
+previousAmount = amount@previous
+assert(firstAmount, 2)
+assert(lastAmount, 2)
+assert(previousAmount, null)
+input = 2
+assert(amount, 4)
+assert(lastAmount, 4)
+assert(previousAmount, 2)
+input = 2
+assert(firstAmount, 2)
+assert(lastAmount, 4)
+assert(previousAmount, 2)
+input = 3
+assert(lastAmount, 6)
+assert(previousAmount, 4)
+assert(firstAmount, 2)
+version0 = amount@0
+version1 = amount@1
+version2 = amount@2
+version3 = amount@3
+assert(version0, 2)
+assert(version1, 4)
+assert(version2, 6)
+assert(version3, null)
+---
+# Nucleoid reads versions through nulls and deferred indices
+
+value = "ready"
+oldest = value@first
+future = value@2
+latest = value@last
+previous = value@previous
+assert(oldest, "ready")
+assert(future, null)
+assert(previous, null)
+value = null
+assert(oldest, "ready")
+assert(latest, null)
+assert(previous, "ready")
+assert(future, null)
+value = "back"
+assert(oldest, "ready")
+assert(latest, "back")
+assert(previous, null)
+assert(future, "back")
+---
+# Nucleoid isolates local and parameter version histories between calls
+
+value = 99
+def capture(value) => [value@first, value = value + 1, value@previous]
+one = capture(2)
+two = capture(10)
+assert(one, [2, 3, 2])
+assert(two, [10, 11, 10])
+globalFirst = value.value
+assert(globalFirst, 99)
+---
+# Nucleoid preserves list values object identity and ordinary fields in versions
+
+items = [1]
+items.push(2)
+earlierList = items@first
+latestList = items@last
+previousList = items@previous
+assert(earlierList, [1])
+assert(latestList, [1, 2])
+assert(previousList, [1])
+class Record
+first = Record()
+first.first = "given"
+first.last = "family"
+first.previous = "ordinary"
+second = Record()
+selected = first
+selected = second
+earlierObject = selected@first
+latestObject = selected@last
+previousObject = selected@previous
+first.label = "updated"
+assert(earlierObject.label, "updated")
+assert(latestObject, second)
+assert(previousObject, first)
+assert(first.first, "given")
+assert(first.last, "family")
+assert(first.previous, "ordinary")
+---
+# Nucleoid restores version histories on rollback and resets deleted bindings
+
+value = "A"
+try:
+    value = "discarded"
+    throw "ABORT_VERSIONS"
+catch error:
+    assert(error, "ABORT_VERSIONS")
+value = "B"
+firstValue = value@first
+lastValue = value@last
+previousValue = value@previous
+assert(firstValue, "A")
+assert(lastValue, "B")
+assert(previousValue, "A")
+delete value
+value = "C"
+resetFirst = value@first
+resetPrevious = value@previous
+assert(resetFirst, "C")
+assert(resetPrevious, null)
+assert(firstValue, "C")
+assert(lastValue, "C")
+assert(previousValue, null)
 ```

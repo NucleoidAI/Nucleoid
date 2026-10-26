@@ -184,32 +184,31 @@ impl Runtime {
             }
         }
 
-        let receiver = self.evaluate(object, scope)?;
+        let (receiver, version_target) = if object.version_view() {
+            let (value, target) = self.version_list_receiver(object, scope)?;
+            (value, Some(target))
+        } else {
+            (self.evaluate(object, scope)?, None)
+        };
 
-        match &receiver {
-            Value::Class(name) => {
-                let name = name.clone();
-                self.call_class_method(&name, property, arguments, scope)
-            }
+        match receiver {
+            Value::Class(name) => self.call_class_method(&name, property, arguments, scope),
 
             Value::List(items) => {
-                let items = items.clone();
-                self.call_list_method(object, items, property, arguments, scope)
+                self.call_list_method(object, items, property, arguments, scope, version_target)
             }
 
             Value::String(string) => {
                 let values = self.evaluate_all(arguments, scope)?;
-                builtins::string_method(string, property, &values)
+                builtins::string_method(&string, property, &values)
             }
 
             Value::Date(millis) => {
-                let millis = *millis;
                 let values = self.evaluate_all(arguments, scope)?;
                 builtins::date::method(millis, property, &values)
             }
 
             Value::Regex(regex) => {
-                let regex = regex.clone();
                 let values = self.evaluate_all(arguments, scope)?;
                 let subject = values.first().cloned().unwrap_or(Value::Undefined);
 
@@ -219,10 +218,7 @@ impl Runtime {
                 }
             }
 
-            Value::Object(id) => {
-                let id = id.clone();
-                self.call_object_method(&id, property, arguments, scope)
-            }
+            Value::Object(id) => self.call_object_method(&id, property, arguments, scope),
 
             // A method on something not yet defined leaves the expression
             // undefined, so the assignment it feeds stores null and re-runs

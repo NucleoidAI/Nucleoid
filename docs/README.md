@@ -151,6 +151,34 @@ radius += 10
 
 - `radius` is `20`.
 
+### Read-only state versions
+
+- [NUC 53](nuc-0053.md) defines automatic, read-only variable/property history.
+  The [root specification](../nucleoid.spec.md#read-only-state-versions)
+  provides postfix `@0`,
+  `@1`, ... and contextual aliases `@first`, `@last`, `@previous`.
+- Zero is oldest and indexes remain stable for a slot's full lifetime.
+  Record only actual changes, including reactive updates; equal writes and
+  reads add nothing. Retain all entries across runs until deletion/clear.
+  Transactions restore histories with their state writes.
+- Resolve the innermost local or underlying object identity/property slot,
+  not a textual alias. Local histories end with their existing scope frame.
+  Missing/out-of-range entries defer to Null and remain reactive.
+- Results are ordinary Values: list values are copies, objects retain identity
+  and can expose later mutations. A real property of a returned object remains
+  writable. Direct selected-slot writes/deletes and historical-list write-backs
+  raise `TypeError("State versions are read-only")`.
+- No negative selectors, dot-history aliases, globally reserved selector words,
+  deep snapshots, wrappers, hidden fields or JSON changes are added.
+  Ordinary `.first`, `.last`, `.previous`, `.value`, negative list indexing
+  and manual history-emulation syntax remain supported.
+- The executable reference entry is `State versions expose zero based variable
+  history`; six specification cases and the README/examples entries retain
+  their supplied accepted counterparts and all 69 assertions.
+- Four self-contained training records in `dataset/nucleoid.synth.33.jsonl`
+  bring the canonical synthesized corpus from 1,125 to 1,129 records, preserving
+  every historical record and leaving pending split 32 excluded.
+
 ### Compound arithmetic assignment
 
 - Accepted [NUC 13](nuc-0013.md) defines `+=`, `-=`, `*=`, `/=`, and `%=`.

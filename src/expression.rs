@@ -35,7 +35,19 @@ impl<'a> Expression<'a> {
         resolve: &impl Fn(&Expr) -> bool,
     ) -> Vec<String> {
         let mut found = Vec::new();
-        roots(self.node, constructor, resolve, &mut found);
+        roots(self.node, constructor, resolve, false, &mut found);
+        found
+    }
+
+    /// Static reference validation must not reject a deliberately deferred
+    /// bare-slot version. Its receivers and computed keys are still strict.
+    pub(crate) fn required_roots_with(
+        &self,
+        constructor: bool,
+        resolve: &impl Fn(&Expr) -> bool,
+    ) -> Vec<String> {
+        let mut found = Vec::new();
+        roots(self.node, constructor, resolve, true, &mut found);
         found
     }
 
@@ -85,19 +97,32 @@ impl Runtime {
             (assignment_instantiation && self.is_instantiation(expression)) || resolve(expression);
         Expression::new(expression).roots_with(constructor, &resolve)
     }
+
+    pub(crate) fn required_expression_roots(
+        &self,
+        expression: &Expr,
+        scope: &Scope,
+    ) -> Vec<String> {
+        let resolve = |expression: &Expr| self.is_constructor_call(expression, scope);
+        let constructor = self.is_instantiation(expression) || resolve(expression);
+        Expression::new(expression).required_roots_with(constructor, &resolve)
+    }
 }
 
 fn roots(
     expression: &Expr,
     constructor: bool,
     resolve: &impl Fn(&Expr) -> bool,
+    required: bool,
     found: &mut Vec<String>,
 ) {
     match expression {
+        Expr::Version { reference, .. }
+            if required && matches!(reference.as_ref(), Expr::Identifier(_)) => {}
         Expr::Identifier(name) => found.push(name.clone()),
         Expr::Call { arguments, .. } | Expr::Super(arguments) => {
             if let Expr::Call { callee, .. } = expression {
-                roots(callee, resolve(callee), resolve, found);
+                roots(callee, resolve(callee), resolve, required, found);
             }
             for argument in arguments {
                 let value = if constructor {
@@ -107,11 +132,11 @@ fn roots(
                 } else {
                     argument
                 };
-                roots(value, resolve(value), resolve, found);
+                roots(value, resolve(value), resolve, required, found);
             }
         }
         _ => visit_children(expression, &mut |child| {
-            roots(child, resolve(child), resolve, found)
+            roots(child, resolve(child), resolve, required, found)
         }),
     }
 }
@@ -166,6 +191,7 @@ fn class_properties(expression: &Expr, class: &str, found: &mut Vec<String>) {
 fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
     match expression {
         Expr::Member { object, .. } => visit(object),
+        Expr::Version { reference, .. } => visit(reference),
         Expr::Index { object, index } => {
             visit(object);
             visit(index);

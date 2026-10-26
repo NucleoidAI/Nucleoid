@@ -1,10 +1,33 @@
 use indexmap::IndexMap;
 
+use crate::history::History;
+use crate::lang::ast::VersionSelector;
 use crate::value::{ObjectId, Value};
+
+#[derive(Debug, Clone)]
+struct Binding {
+    value: Value,
+    history: History,
+}
+
+impl Binding {
+    fn new(value: Value) -> Self {
+        let mut history = History::default();
+        history.push(value.clone());
+        Self { value, history }
+    }
+
+    fn assign(&mut self, value: Value) {
+        if !self.value.same_value(&value) {
+            self.history.push(value.clone());
+        }
+        self.value = value;
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 struct Frame {
-    locals: IndexMap<String, Value>,
+    locals: IndexMap<String, Binding>,
     /// State names this block assigned, so a nested block writing the same name
     /// shadows it instead of writing through.
     assigned: Vec<String>,
@@ -59,7 +82,16 @@ impl Scope {
         self.frames
             .iter()
             .rev()
-            .find_map(|frame| frame.locals.get(name))
+            .find_map(|frame| frame.locals.get(name).map(|binding| &binding.value))
+    }
+
+    pub(crate) fn version(&self, name: &str, selector: VersionSelector) -> Option<&Value> {
+        self.frames
+            .iter()
+            .rev()
+            .find_map(|frame| frame.locals.get(name))?
+            .history
+            .get(selector)
     }
 
     pub fn has(&self, name: &str) -> bool {
@@ -69,7 +101,12 @@ impl Scope {
     /// Declares a local in the innermost frame.
     pub fn declare(&mut self, name: impl Into<String>, value: Value) {
         if let Some(frame) = self.frames.last_mut() {
-            frame.locals.insert(name.into(), value);
+            let name = name.into();
+            if let Some(binding) = frame.locals.get_mut(&name) {
+                binding.assign(value);
+            } else {
+                frame.locals.insert(name, Binding::new(value));
+            }
         }
     }
 
@@ -77,8 +114,8 @@ impl Scope {
     /// whether such a frame existed.
     pub fn assign(&mut self, name: &str, value: Value) -> bool {
         for frame in self.frames.iter_mut().rev() {
-            if frame.locals.contains_key(name) {
-                frame.locals.insert(name.to_string(), value);
+            if let Some(binding) = frame.locals.get_mut(name) {
+                binding.assign(value);
                 return true;
             }
         }

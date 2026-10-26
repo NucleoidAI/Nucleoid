@@ -46,6 +46,8 @@ enum Raw {
     Semicolon,
     #[token(".")]
     Dot,
+    #[token("@")]
+    At,
     #[token("=>")]
     Arrow,
     #[token("===")]
@@ -195,6 +197,8 @@ pub enum Token {
     Identifier(String),
     ClassRef(String),
     Number(f64),
+    /// Exact decimal digits following `@`; never round a slot index via f64.
+    VersionIndex(usize),
     Str(String),
     Template(String),
     Regex(String),
@@ -210,6 +214,7 @@ pub enum Token {
     Colon,
     Semicolon,
     Dot,
+    At,
     Arrow,
 
     Assign,
@@ -251,6 +256,7 @@ impl Token {
             Token::Identifier(name) => format!("identifier '{name}'"),
             Token::ClassRef(name) => format!("'${name}'"),
             Token::Number(number) => format!("number {}", crate::value::format_number(*number)),
+            Token::VersionIndex(index) => format!("version {index}"),
             Token::Str(_) => "a string".to_string(),
             Token::Template(_) => "a template string".to_string(),
             Token::Regex(_) => "a regular expression".to_string(),
@@ -265,6 +271,7 @@ impl Token {
             Token::Colon => "':'".to_string(),
             Token::Semicolon => "';'".to_string(),
             Token::Dot => "'.'".to_string(),
+            Token::At => "'@'".to_string(),
             Token::Arrow => "'=>'".to_string(),
             Token::Assign => "'='".to_string(),
             Token::PlusAssign => "'+='".to_string(),
@@ -306,6 +313,7 @@ impl Token {
             Token::Identifier(_)
                 | Token::ClassRef(_)
                 | Token::Number(_)
+                | Token::VersionIndex(_)
                 | Token::Str(_)
                 | Token::Template(_)
                 | Token::Regex(_)
@@ -421,7 +429,31 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
                 None => Token::Identifier(word),
             },
             Raw::ClassRef(name) => Token::ClassRef(name),
-            Raw::Number(number) => Token::Number(number),
+            Raw::Number(number) => {
+                if scanned
+                    .last()
+                    .is_some_and(|previous| previous.token == Token::At)
+                {
+                    let digits = &source[span.clone()];
+                    let index = digits
+                        .bytes()
+                        .all(|byte| byte.is_ascii_digit())
+                        .then(|| digits.parse::<usize>().ok())
+                        .flatten();
+                    let malformed_suffix =
+                        source[span.end..].chars().next().is_some_and(|character| {
+                            character.is_ascii_alphanumeric() || character == '_'
+                        });
+                    match index {
+                        Some(index) if !malformed_suffix => Token::VersionIndex(index),
+                        _ => return Err(Error::syntax(
+                            "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'"
+                        ).at(lines.position(span.start))),
+                    }
+                } else {
+                    Token::Number(number)
+                }
+            }
             Raw::Str(string) => Token::Str(string),
             Raw::Template(template) => Token::Template(template),
             Raw::LeftParen => Token::LeftParen,
@@ -434,6 +466,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::Colon => Token::Colon,
             Raw::Semicolon => Token::Semicolon,
             Raw::Dot => Token::Dot,
+            Raw::At => Token::At,
             Raw::Arrow => Token::Arrow,
             Raw::Assign => Token::Assign,
             Raw::PlusAssign => Token::PlusAssign,

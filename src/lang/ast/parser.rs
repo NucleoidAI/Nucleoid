@@ -4,7 +4,7 @@ use super::lexer::{Keyword, Spanned, Token, tokenize};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
     BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
-    UnaryOp,
+    UnaryOp, VersionSelector,
 };
 use crate::reasoning::Stage;
 
@@ -935,7 +935,11 @@ impl Parser {
     /// compound assignment could otherwise double its tree at each lowering.
     fn check_compound_target(&self, mut target: &Expr) -> Result<()> {
         let mut parts = 0;
-        while let Expr::Member { object, .. } = target {
+        while let Expr::Member { object, .. }
+        | Expr::Version {
+            reference: object, ..
+        } = target
+        {
             parts += 1;
             if parts > MAX_CHAIN {
                 return Err(self.error("Expression has too many parts"));
@@ -1223,6 +1227,23 @@ impl Parser {
             }
 
             match self.peek() {
+                Token::At => {
+                    self.advance();
+                    let selector = match self.peek() {
+                        Token::VersionIndex(index) => VersionSelector::Index(*index),
+                        Token::Identifier(name) if name == "first" => VersionSelector::First,
+                        Token::Identifier(name) if name == "last" => VersionSelector::Last,
+                        Token::Identifier(name) if name == "previous" => VersionSelector::Previous,
+                        _ => return Err(self.error(
+                            "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'"
+                        )),
+                    };
+                    self.advance();
+                    expression = Expr::Version {
+                        reference: Box::new(expression),
+                        selector,
+                    };
+                }
                 Token::Dot => {
                     self.advance();
                     let property = match self.advance() {
@@ -1345,6 +1366,11 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr> {
+        // `@` is only additive postfix syntax. At an operand boundary retain
+        // the accepted diagnostic and its original character position.
+        if self.check(&Token::At) {
+            return Err(self.error("Unexpected character '@'"));
+        }
         // `name => ...`
         if let Token::Identifier(name) = self.peek().clone() {
             if self.peek_at(1) == &Token::Arrow {

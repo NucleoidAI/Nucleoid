@@ -30,6 +30,7 @@ impl Runtime {
     /// Shared by the statement above and by `delete` used as an expression.
     pub(crate) fn delete(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Value> {
         match expression {
+            Expr::Version { .. } => Err(Error::type_error("State versions are read-only")),
             Expr::Identifier(name) => {
                 let key = NodeKey::variable(name.clone());
 

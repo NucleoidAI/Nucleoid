@@ -2,6 +2,7 @@ use indexmap::IndexSet;
 use std::sync::Arc;
 
 use crate::graph::{Graph, GraphNode, NodeKey, ShapeKey};
+use crate::history::{History, HistoryKey};
 use crate::lang::ast::Function;
 use crate::runtime::Runtime;
 use crate::stack::Stack;
@@ -18,6 +19,17 @@ pub(crate) struct Savepoint {
 /// The previous contents of one slot, recorded before it was overwritten.
 #[derive(Debug, Clone)]
 enum Undo {
+    /// An append needs only a length, not a copy of all retained values.
+    HistoryLength {
+        key: HistoryKey,
+        length: usize,
+    },
+    /// Move deleted histories into the log, so delete/recreate and nested
+    /// savepoints restore the original lifetime without copying its values.
+    HistoryRemoved {
+        key: HistoryKey,
+        history: History,
+    },
     Variable {
         name: String,
         before: Option<Value>,
@@ -155,6 +167,21 @@ impl Transaction {
         self.active
     }
 
+    pub(crate) fn record_history_append(&mut self, key: &HistoryKey, length: usize) {
+        if self.active {
+            self.entries.push(Undo::HistoryLength {
+                key: key.clone(),
+                length,
+            });
+        }
+    }
+
+    pub(crate) fn record_history_removal(&mut self, key: HistoryKey, history: History) {
+        if self.active {
+            self.entries.push(Undo::HistoryRemoved { key, history });
+        }
+    }
+
     pub fn record_variable(&mut self, name: &str, before: Option<Value>) {
         if self.first_write(Slot::Variable(name.to_string())) {
             self.entries.push(Undo::Variable {
@@ -281,6 +308,8 @@ impl Runtime {
 
 fn apply(entry: Undo, state: &mut State, graph: &mut Graph) {
     match entry {
+        Undo::HistoryLength { key, length } => state.truncate_history(&key, length),
+        Undo::HistoryRemoved { key, history } => state.restore_history(key, history),
         Undo::Variable { name, before } => state.restore_variable(name, before),
         Undo::Property {
             object,

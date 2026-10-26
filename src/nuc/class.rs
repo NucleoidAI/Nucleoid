@@ -107,7 +107,7 @@ impl Runtime {
         self.check_constructor_bindings(value, scope, true)?;
         Expression::new(value)
             .check_calls(&|call| self.check_constructor_bindings(call, scope, false))?;
-        for root in self.expression_roots(value, scope, true) {
+        for root in self.required_expression_roots(value, scope) {
             let known = scope.has(&root)
                 || self.state.has_variable(&root)
                 || self.state.has_class(&root)

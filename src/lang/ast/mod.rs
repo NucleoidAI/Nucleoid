@@ -22,6 +22,7 @@ pub mod operator;
 pub mod parser;
 pub mod reason;
 pub mod template;
+pub mod version;
 
 pub use parser::{Program, parse, parse_expression, parse_program};
 
@@ -99,6 +100,15 @@ pub enum FunctionBody {
     Block(Vec<Stmt>),
 }
 
+/// Literal, oldest-first selectors for an actual storage slot's history.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VersionSelector {
+    Index(usize),
+    First,
+    Last,
+    Previous,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Null,
@@ -118,6 +128,10 @@ pub enum Expr {
     Member {
         object: Box<Expr>,
         property: String,
+    },
+    Version {
+        reference: Box<Expr>,
+        selector: VersionSelector,
     },
     Index {
         object: Box<Expr>,
@@ -243,6 +257,7 @@ impl Expr {
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
             | Expr::Slice { object, .. } => object.first(),
+            Expr::Version { reference, .. } => reference.first(),
             Expr::Call { callee, .. } => callee.first(),
             _ => None,
         }
@@ -254,6 +269,7 @@ impl Expr {
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
             | Expr::Slice { object, .. } => Some(object),
+            Expr::Version { reference, .. } => Some(reference),
             _ => None,
         }
     }
@@ -264,6 +280,7 @@ impl Expr {
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
             | Expr::Slice { object, .. } => object.contains_reasoning(),
+            Expr::Version { reference, .. } => reference.contains_reasoning(),
             Expr::Unary { operand, .. } | Expr::Delete(operand) => operand.contains_reasoning(),
             Expr::Binary { left, right, .. }
             | Expr::Logical { left, right, .. }
@@ -281,6 +298,18 @@ impl Expr {
             Expr::ObjectLiteral(entries) => {
                 entries.iter().any(|(_, value)| value.contains_reasoning())
             }
+            _ => false,
+        }
+    }
+
+    /// Whether a list expression is derived from a version read. Real object
+    /// properties are still writable; callers resolve their owner first.
+    pub(crate) fn version_view(&self) -> bool {
+        match self {
+            Expr::Version { .. } => true,
+            Expr::Member { object, .. }
+            | Expr::Index { object, .. }
+            | Expr::Slice { object, .. } => object.version_view(),
             _ => false,
         }
     }
@@ -309,6 +338,7 @@ pub enum Ast<'a> {
     Template(template::Template<'a>),
     Operator(operator::Operator<'a>),
     Reason(reason::Reason<'a>),
+    Version(version::Version<'a>),
 }
 
 impl<'a> Ast<'a> {
@@ -335,6 +365,7 @@ impl<'a> Ast<'a> {
             | Expr::Assign { .. }
             | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
             Expr::Reason { .. } | Expr::Model => Ast::Reason(reason::Reason::new(node)),
+            Expr::Version { .. } => Ast::Version(version::Version::new(node)),
         }
     }
 
@@ -350,6 +381,7 @@ impl<'a> Ast<'a> {
             Ast::Template(node) => node.resolve(runtime, scope),
             Ast::Operator(node) => node.resolve(runtime, scope),
             Ast::Reason(node) => node.resolve(runtime, scope),
+            Ast::Version(node) => node.resolve(runtime, scope),
         }
     }
 
@@ -364,6 +396,7 @@ impl<'a> Ast<'a> {
             Ast::Template(node) => node.node,
             Ast::Operator(node) => node.node,
             Ast::Reason(node) => node.node,
+            Ast::Version(node) => node.node,
         }
     }
 

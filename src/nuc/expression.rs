@@ -53,6 +53,13 @@ impl Runtime {
                 object: Box::new(self.freeze(object, scope)?),
                 property: property.clone(),
             },
+            Expr::Version {
+                reference,
+                selector,
+            } => Expr::Version {
+                reference: Box::new(self.freeze(reference, scope)?),
+                selector: *selector,
+            },
             Expr::Binary {
                 operator,
                 left,

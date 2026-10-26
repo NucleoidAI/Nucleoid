@@ -993,6 +993,31 @@ assert(letters, ["N", "U", "C"])
   available but return different intermediate values. See the
   [root contract](nucleoid.spec.md#string-iteration).
 
+## Read-only state versions
+
+**Named state versions read earlier variable values**
+
+```nuc
+name = "Can"
+name = "Daphne"
+firstName = name@first
+lastName = name@last
+previousName = name@previous
+assert(firstName, "Can")
+assert(lastName, "Daphne")
+assert(previousName, "Can")
+```
+
+- [NUC 53](docs/nuc-0053.md) defines automatic retention of actual
+  changes to variable and object-property storage, including reactive updates.
+  `@0` is the first version; `@first`, `@last` and `@previous` select literal
+  positions without mirror lists. Equal writes add nothing.
+- Selectors are read-only, oldest-first and never negative. Histories persist
+  until deletion/clear and roll back with state. Returned objects keep normal
+  identity semantics, not deep snapshots. Ordinary fields named `first`,
+  `last` and `previous`, negative list indexes and `.value` remain unchanged.
+  See the [root contract](nucleoid.spec.md#read-only-state-versions).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

@@ -1797,4 +1797,20 @@ for letter in text:
 assert(letters, ["n", "u", "c"])
 text = "new"
 assert(letters, ["n", "u", "c"])
+---
+# State versions expose zero based variable history
+
+score = 10
+score = 20
+firstScore = score@first
+lastScore = score@last
+previousScore = score@previous
+assert(firstScore, 10)
+assert(lastScore, 20)
+assert(previousScore, 10)
+score = 20
+version1 = score@1
+version2 = score@2
+assert(version1, 20)
+assert(version2, null)
 ```

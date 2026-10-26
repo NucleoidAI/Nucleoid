@@ -2,6 +2,8 @@ use indexmap::IndexMap;
 use std::fmt;
 use std::sync::Arc;
 
+use crate::history::{History, HistoryKey};
+use crate::lang::ast::VersionSelector;
 use crate::lang::ast::generator::generate_all;
 use crate::lang::ast::{Expr, Function, Parameter, Stmt};
 use crate::runtime::Runtime;
@@ -97,6 +99,7 @@ pub struct State {
     objects: IndexMap<ObjectId, ObjectData>,
     classes: IndexMap<String, ClassData>,
     functions: IndexMap<String, Arc<Function>>,
+    histories: IndexMap<HistoryKey, History>,
 }
 
 impl State {
@@ -110,6 +113,22 @@ impl State {
 
     pub fn has_variable(&self, name: &str) -> bool {
         self.variables.contains_key(name)
+    }
+
+    pub(crate) fn version(&self, key: &HistoryKey, selector: VersionSelector) -> Option<&Value> {
+        self.histories.get(key)?.get(selector)
+    }
+
+    pub(crate) fn truncate_history(&mut self, key: &HistoryKey, length: usize) {
+        if length == 0 {
+            self.histories.shift_remove(key);
+        } else if let Some(history) = self.histories.get_mut(key) {
+            history.truncate(length);
+        }
+    }
+
+    pub(crate) fn restore_history(&mut self, key: HistoryKey, history: History) {
+        self.histories.insert(key, history);
     }
 
     pub fn has_object(&self, id: &ObjectId) -> bool {
@@ -211,6 +230,7 @@ impl State {
         self.objects.clear();
         self.classes.clear();
         self.functions.clear();
+        self.histories.clear();
     }
 }
 
@@ -222,6 +242,18 @@ impl State {
 /// Variables and properties use separate operations because their graph keys
 /// differ.
 impl Runtime {
+    fn append_history(&mut self, key: HistoryKey, value: &Value) {
+        let history = self.state.histories.entry(key.clone()).or_default();
+        self.transaction.record_history_append(&key, history.len());
+        history.push(value.clone());
+    }
+
+    fn remove_history(&mut self, key: HistoryKey) {
+        if let Some(history) = self.state.histories.shift_remove(&key) {
+            self.transaction.record_history_removal(key, history);
+        }
+    }
+
     pub(crate) fn assign(&mut self, name: &str, value: Value) -> bool {
         if let Some(before) = self.state.functions.get(name).cloned() {
             self.transaction.record_function(name, Some(before));
@@ -233,6 +265,9 @@ impl Runtime {
             .as_ref()
             .is_none_or(|before| !before.same_value(&value));
         self.transaction.record_variable(name, before);
+        if changed {
+            self.append_history(HistoryKey::Variable(name.to_string()), &value);
+        }
         self.state.variables.insert(name.to_string(), value);
         changed
     }
@@ -252,6 +287,12 @@ impl Runtime {
             .as_ref()
             .is_none_or(|before| !before.same_value(&value));
         self.transaction.record_property(object, property, before);
+        if changed {
+            self.append_history(
+                HistoryKey::Property(object.clone(), property.to_string()),
+                &value,
+            );
+        }
 
         if let Some(data) = self.state.object_mut(object) {
             data.properties.insert(property.to_string(), value);
@@ -264,6 +305,7 @@ impl Runtime {
         let before = self.state.variables.get(name).cloned();
         self.transaction.record_variable(name, before.clone());
         self.state.variables.shift_remove(name);
+        self.remove_history(HistoryKey::Variable(name.to_string()));
         before
     }
 
@@ -276,6 +318,7 @@ impl Runtime {
         if let Some(data) = self.state.object_mut(object) {
             data.properties.shift_remove(property);
         }
+        self.remove_history(HistoryKey::Property(object.clone(), property.to_string()));
 
         before
     }
@@ -286,6 +329,29 @@ impl Runtime {
             self.transaction.record_object(&id, before);
         }
 
+        // Initial property maps (object literals and instance IDs) are writes
+        // too. Reusing a named identity preserves surviving slots and removes
+        // histories only for properties that actually cease to exist.
+        let removed: Vec<String> = self.state.object(&id).map_or_else(Vec::new, |before| {
+            before
+                .properties
+                .keys()
+                .filter(|property| !data.properties.contains_key(*property))
+                .cloned()
+                .collect()
+        });
+        for property in removed {
+            self.remove_history(HistoryKey::Property(id.clone(), property));
+        }
+        for (property, value) in &data.properties {
+            if self
+                .state
+                .property(&id, property)
+                .is_none_or(|before| !before.same_value(value))
+            {
+                self.append_history(HistoryKey::Property(id.clone(), property.clone()), value);
+            }
+        }
         self.state.objects.insert(id, data);
     }
 
@@ -293,6 +359,11 @@ impl Runtime {
         let before = self.state.objects.get(id).cloned();
         self.transaction.record_object(id, before.clone());
         self.state.objects.shift_remove(id);
+        if let Some(data) = &before {
+            for property in data.properties.keys() {
+                self.remove_history(HistoryKey::Property(id.clone(), property.clone()));
+            }
+        }
         before
     }
 

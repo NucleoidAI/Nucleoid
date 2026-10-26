@@ -85,6 +85,7 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
             }
         }
         Expr::Member { object, .. } => expression_assertions(object, assertions),
+        Expr::Version { reference, .. } => expression_assertions(reference, assertions),
         Expr::Index { object, index } => {
             expression_assertions(object, assertions);
             expression_assertions(index, assertions);

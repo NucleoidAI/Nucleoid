@@ -10285,6 +10285,179 @@ assert(seen, ["saved", "c"])
 assert(it, "outer")"#);
 }
 
+/// Nucleoid reads zero based and named versions of instance properties
+#[rustfmt::skip]
+#[test]
+fn reads_zero_based_and_named_versions_of_instance_properties() {
+    let mut run = runner();
+    run("class Student");
+    run("student1 = Student()");
+    run(r#"student1.name = "Can""#);
+    run(r#"student1.name = "Daphne""#);
+    run(r#"student1.name = "Merve""#);
+    run("version0 = student1.name@0");
+    run("version1 = student1.name@1");
+    run("version2 = student1.name@2");
+    run("firstName = student1.name@first");
+    run("lastName = student1.name@last");
+    run("previousName = student1.name@previous");
+    assert_eq!(run("version0"), "Can");
+    assert_eq!(run("version1"), "Daphne");
+    assert_eq!(run("version2"), "Merve");
+    assert_eq!(run("firstName"), "Can");
+    assert_eq!(run("lastName"), "Merve");
+    assert_eq!(run("previousName"), "Daphne");
+    assert_eq!(run("student1.name"), "Merve");
+    run(r#"[version0, version1, version2, firstName, lastName, previousName]
+
+# return: ["Can","Daphne","Merve","Can","Merve","Daphne"]"#);
+}
+
+/// Nucleoid tracks reactive variable versions without duplicate states
+#[rustfmt::skip]
+#[test]
+fn tracks_reactive_variable_versions_without_duplicate_states() {
+    let mut run = runner();
+    run("input = 1");
+    run("amount = input * 2");
+    run("firstAmount = amount@first");
+    run("lastAmount = amount@last");
+    run("previousAmount = amount@previous");
+    assert_eq!(run("firstAmount"), 2);
+    assert_eq!(run("lastAmount"), 2);
+    assert_eq!(run("previousAmount"), serde_json::Value::Null);
+    run("input = 2");
+    assert_eq!(run("amount"), 4);
+    assert_eq!(run("lastAmount"), 4);
+    assert_eq!(run("previousAmount"), 2);
+    run("input = 2");
+    assert_eq!(run("firstAmount"), 2);
+    assert_eq!(run("lastAmount"), 4);
+    assert_eq!(run("previousAmount"), 2);
+    run("input = 3");
+    assert_eq!(run("lastAmount"), 6);
+    assert_eq!(run("previousAmount"), 4);
+    assert_eq!(run("firstAmount"), 2);
+    run("version0 = amount@0");
+    run("version1 = amount@1");
+    run("version2 = amount@2");
+    run("version3 = amount@3");
+    assert_eq!(run("version0"), 2);
+    assert_eq!(run("version1"), 4);
+    assert_eq!(run("version2"), 6);
+    assert_eq!(run("version3"), serde_json::Value::Null);
+}
+
+/// Nucleoid reads versions through nulls and deferred indices
+#[rustfmt::skip]
+#[test]
+fn reads_versions_through_nulls_and_deferred_indices() {
+    let mut run = runner();
+    run(r#"value = "ready""#);
+    run("oldest = value@first");
+    run("future = value@2");
+    run("latest = value@last");
+    run("previous = value@previous");
+    assert_eq!(run("oldest"), "ready");
+    assert_eq!(run("future"), serde_json::Value::Null);
+    assert_eq!(run("previous"), serde_json::Value::Null);
+    run("value = null");
+    assert_eq!(run("oldest"), "ready");
+    assert_eq!(run("latest"), serde_json::Value::Null);
+    assert_eq!(run("previous"), "ready");
+    assert_eq!(run("future"), serde_json::Value::Null);
+    run(r#"value = "back""#);
+    assert_eq!(run("oldest"), "ready");
+    assert_eq!(run("latest"), "back");
+    assert_eq!(run("previous"), serde_json::Value::Null);
+    assert_eq!(run("future"), "back");
+}
+
+/// Nucleoid isolates local and parameter version histories between calls
+#[rustfmt::skip]
+#[test]
+fn isolates_local_and_parameter_version_histories_between_calls() {
+    let mut run = runner();
+    run(r#"value = 99
+def capture(value) => [value@first, value = value + 1, value@previous]
+one = capture(2)
+two = capture(10)
+assert(one, [2, 3, 2])
+assert(two, [10, 11, 10])
+globalFirst = value.value
+assert(globalFirst, 99)"#);
+}
+
+/// Nucleoid preserves list values object identity and ordinary fields in versions
+#[rustfmt::skip]
+#[test]
+fn preserves_list_values_object_identity_and_ordinary_fields_in_versions() {
+    let mut run = runner();
+    run("items = [1]");
+    run("items.push(2)");
+    run("earlierList = items@first");
+    run("latestList = items@last");
+    run("previousList = items@previous");
+    assert_eq!(run("earlierList"), serde_json::json!([1]));
+    assert_eq!(run("latestList"), serde_json::json!([1, 2]));
+    assert_eq!(run("previousList"), serde_json::json!([1]));
+    run("class Record");
+    run("first = Record()");
+    run(r#"first.first = "given""#);
+    run(r#"first.last = "family""#);
+    run(r#"first.previous = "ordinary""#);
+    run("second = Record()");
+    run("selected = first");
+    run("selected = second");
+    run("earlierObject = selected@first");
+    run("latestObject = selected@last");
+    run("previousObject = selected@previous");
+    run(r#"first.label = "updated""#);
+    assert_eq!(run("earlierObject.label"), "updated");
+    {
+        let actual = run("latestObject");
+        let expected = run("(second)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("previousObject");
+        let expected = run("(first)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("first.first"), "given");
+    assert_eq!(run("first.last"), "family");
+    assert_eq!(run("first.previous"), "ordinary");
+}
+
+/// Nucleoid restores version histories on rollback and resets deleted bindings
+#[rustfmt::skip]
+#[test]
+fn restores_version_histories_on_rollback_and_resets_deleted_bindings() {
+    let mut run = runner();
+    run(r#"value = "A"
+try:
+    value = "discarded"
+    throw "ABORT_VERSIONS"
+catch error:
+    assert(error, "ABORT_VERSIONS")
+value = "B"
+firstValue = value@first
+lastValue = value@last
+previousValue = value@previous
+assert(firstValue, "A")
+assert(lastValue, "B")
+assert(previousValue, "A")
+delete value
+value = "C"
+resetFirst = value@first
+resetPrevious = value@previous
+assert(resetFirst, "C")
+assert(resetPrevious, null)
+assert(firstValue, "C")
+assert(lastValue, "C")
+assert(previousValue, null)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

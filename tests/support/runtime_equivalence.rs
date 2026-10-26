@@ -99,7 +99,19 @@ fn snapshot(runtime: &Runtime, value: Option<&Value>) -> serde_json::Value {
             }
         }
     }
-    let state = ids.typed(&format!("{state:?}"));
+    let mut state = format!("{state:?}");
+    for object in ids.objects.clone() {
+        // Automatic history also retains the initial generated self-ID.
+        // Normalize only that exact typed owner's scalar ID metadata, not
+        // arbitrary strings, mismatched IDs, or other history contents.
+        let prefix =
+            format!("Property(ObjectId(\"{object}\"), \"id\"): History {{ values: [String(\"");
+        state = state.replace(
+            &format!("{prefix}{object}\")"),
+            &format!("{prefix}{}\")", ids.key(object.as_str())),
+        );
+    }
+    let state = ids.typed(&state);
     let graph = runtime
         .graph
         .nodes()

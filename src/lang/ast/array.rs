@@ -6,7 +6,14 @@ use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::value::Value;
+use crate::value::{ObjectId, Value};
+
+/// A version-derived list receiver is resolved once, including side-effecting
+/// owners/keys. Only a real property of a returned object is writable.
+pub(crate) enum VersionListTarget {
+    Property(ObjectId, String),
+    ReadOnly,
+}
 
 pub struct Array<'a> {
     pub node: &'a Expr,
@@ -77,7 +84,12 @@ impl Runtime {
         self.read_index(&base, &key, scope)
     }
 
-    fn read_index(&mut self, base: &Value, key: &Value, scope: &mut Scope) -> Result<Value> {
+    pub(crate) fn read_index(
+        &mut self,
+        base: &Value,
+        key: &Value,
+        scope: &mut Scope,
+    ) -> Result<Value> {
         match base {
             Value::List(items) => {
                 let index = key.to_number();
@@ -132,19 +144,20 @@ impl Runtime {
         property: &str,
         arguments: &[Expr],
         scope: &mut Scope,
+        version_target: Option<VersionListTarget>,
     ) -> Result<Value> {
         match property {
             "push" | "append" => {
                 let values = self.evaluate_all(arguments, scope)?;
                 items.extend(values);
                 let length = items.len();
-                self.write_back(object, Value::List(items), scope)?;
+                self.write_list(object, Value::List(items), scope, version_target)?;
                 Ok(Value::Number(length as f64))
             }
 
             "pop" => {
                 let popped = items.pop().unwrap_or(Value::Undefined);
-                self.write_back(object, Value::List(items), scope)?;
+                self.write_list(object, Value::List(items), scope, version_target)?;
                 Ok(popped)
             }
 
@@ -154,7 +167,7 @@ impl Runtime {
                 } else {
                     items.remove(0)
                 };
-                self.write_back(object, Value::List(items), scope)?;
+                self.write_list(object, Value::List(items), scope, version_target)?;
                 Ok(removed)
             }
 
@@ -163,6 +176,57 @@ impl Runtime {
                 let receiver = object.path().unwrap_or_else(|| object.to_string());
                 self.list_query(items, property, &values, &receiver)
             }
+        }
+    }
+
+    pub(crate) fn version_list_receiver(
+        &mut self,
+        expression: &Expr,
+        scope: &mut Scope,
+    ) -> Result<(Value, VersionListTarget)> {
+        match expression {
+            Expr::Member { object, property } if property != "value" => {
+                let base = self.evaluate(object, scope)?;
+                let value = self.read_property(&base, property, scope)?;
+                let target = match base {
+                    Value::Object(id) => VersionListTarget::Property(id, property.clone()),
+                    _ => VersionListTarget::ReadOnly,
+                };
+                Ok((value, target))
+            }
+            Expr::Index { object, index } => {
+                let base = self.evaluate(object, scope)?;
+                let key = self.evaluate(index, scope)?;
+                let value = self.read_index(&base, &key, scope)?;
+                let target = match base {
+                    Value::Object(id) => VersionListTarget::Property(id, key.to_string()),
+                    _ => VersionListTarget::ReadOnly,
+                };
+                Ok((value, target))
+            }
+            _ => Ok((
+                self.evaluate(expression, scope)?,
+                VersionListTarget::ReadOnly,
+            )),
+        }
+    }
+
+    fn write_list(
+        &mut self,
+        target: &Expr,
+        value: Value,
+        scope: &mut Scope,
+        version_target: Option<VersionListTarget>,
+    ) -> Result<()> {
+        match version_target {
+            Some(VersionListTarget::ReadOnly) => {
+                Err(Error::type_error("State versions are read-only"))
+            }
+            Some(VersionListTarget::Property(id, property)) => {
+                let changed = self.assign_property(&id, &property, value);
+                self.propagate_change(&NodeKey::property(&id, &property), changed)
+            }
+            None => self.write_back(target, value, scope),
         }
     }
 
@@ -416,11 +480,14 @@ impl Runtime {
                     let changed = self.assign_property(&id, property, value);
                     let key = NodeKey::property(&id, property);
                     self.propagate_change(&key, changed)?;
+                } else if target.version_view() {
+                    return Err(Error::type_error("State versions are read-only"));
                 }
 
                 Ok(())
             }
 
+            other if other.version_view() => Err(Error::type_error("State versions are read-only")),
             _ => Ok(()),
         }
     }

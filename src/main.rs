@@ -313,6 +313,12 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
     let mut delimiters = Vec::new();
     while let Some(token) = tokens.next() {
         match token {
+            Token::At => match tokens.next() {
+                Some(Token::VersionIndex(_)) => {}
+                Some(Token::Identifier(name))
+                    if matches!(name.as_str(), "first" | "last" | "previous") => {}
+                _ => return false,
+            },
             Token::Eof => return nonempty && delimiters.is_empty(),
             Token::Newline | Token::Dedent if delimiters.is_empty() => {
                 return nonempty
@@ -584,6 +590,8 @@ mod tests {
     fn colon_free_condition_continuation_uses_balanced_lexical_headers_not_suffixes() {
         for condition in [
             "ready",
+            "ready@first",
+            "items@0[1:3] == [2, 3]",
             "not ready and available",
             "items[1:3] == [2, 3]",
             "check({ready: items[:]}, (x: int) => x)",
@@ -636,6 +644,8 @@ mod tests {
             "if [ready)",
             "if {ready: true]",
             "if ready @",
+            "if ready@unknown",
+            "if ready@-1",
             "if \"unterminated",
             "if ready\u{a0}",
         ] {

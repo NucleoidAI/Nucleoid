@@ -5,7 +5,18 @@
 
 use std::fmt;
 
-use crate::lang::ast::{Expr, LogicalOp, Stmt, TemplatePart, UnaryOp};
+use crate::lang::ast::{Expr, LogicalOp, Stmt, TemplatePart, UnaryOp, VersionSelector};
+
+impl fmt::Display for VersionSelector {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Index(index) => write!(f, "{index}"),
+            Self::First => f.write_str("first"),
+            Self::Last => f.write_str("last"),
+            Self::Previous => f.write_str("previous"),
+        }
+    }
+}
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -33,6 +44,10 @@ impl fmt::Display for Expr {
                 write!(f, "super({})", join(arguments))
             }
             Expr::Member { object, property } => write!(f, "{object}.{property}"),
+            Expr::Version {
+                reference,
+                selector,
+            } => write!(f, "{reference}@{selector}"),
             Expr::Index { object, index } => write!(f, "{object}[{index}]"),
             Expr::Slice { object, start, end } => {
                 write!(f, "{object}[")?;

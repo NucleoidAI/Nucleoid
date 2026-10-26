@@ -42,6 +42,7 @@ pub mod builtins;
 pub mod error;
 pub mod expression;
 pub mod graph;
+mod history;
 pub mod lang;
 pub mod nuc;
 pub mod reasoning;

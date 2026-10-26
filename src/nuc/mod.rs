@@ -155,6 +155,7 @@ impl Nuc {
         value: Expr,
     ) -> Result<Nuc> {
         Ok(match target {
+            Expr::Version { .. } => return Err(Error::type_error("State versions are read-only")),
             Expr::Identifier(name) => {
                 if scope.has(name) || scope.assigned_by_enclosing(name) {
                     Nuc::Let(Let::new(name.clone(), value))

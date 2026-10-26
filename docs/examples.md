@@ -2413,6 +2413,39 @@ assert(second.text, "CD")
   statement's return value. The [root specification](../nucleoid.spec.md#string-iteration)
   defines the candidate contract and preserves legacy syntax.
 
+## Read-only state versions
+
+**Reactive property versions remain independent between instances**
+
+```nuc
+class Meter(seed):
+    this.seed = seed
+$Meter.total = $Meter.seed * 2
+first = Meter(2)
+second = Meter(3)
+first.seed = 4
+firstOriginal = first.total@first
+firstLatest = first.total@last
+firstPrevious = first.total@previous
+secondOriginal = second.total@first
+secondLatest = second.total@last
+secondPrevious = second.total@previous
+assert(firstOriginal, 4)
+assert(firstLatest, 8)
+assert(firstPrevious, 4)
+assert(secondOriginal, 6)
+assert(secondLatest, 6)
+assert(secondPrevious, null)
+```
+
+- Each actual property slot retains its initial value and subsequent changes.
+  Selection tracks the real owner identity; a constructor or class rule does
+  not share one textual history between instances.
+- A missing previous version defers to Null and stays live for recovery.
+  No manual push, mirror property, wrapper, negative selector or deep object
+  snapshot is needed. See [NUC 53](nuc-0053.md) and the
+  [root contract](../nucleoid.spec.md#read-only-state-versions).
+
 ## Copyright
 
 Copyright 2020 Nucleoid
