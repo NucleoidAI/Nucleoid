@@ -23,9 +23,30 @@ stop; do not select or start another proposal unless the user explicitly
 requests continuation.
 
 Preserve this mode through evaluation, including coordination through
-`/nuc-evaluate`. Do not run reinforcement-learning policy checks for a
-single-proposal request. Immutable baselines, syntax compatibility, per-case
-token acceptance, and required development checks still apply in both modes.
+`/nuc-evaluate`, and pass `NUC_PROPOSAL_MODE=single` explicitly for one-shot
+requests. An omitted evaluator mode remains `continuous` for existing
+open-ended invocations.
+
+The **token non-regression gate** requires each compared case to use the same
+or fewer lexer tokens than its accepted baseline. Single-proposal
+requests always skip token comparison. All modes retain valid immutable
+accepted-corpus inputs, behavior/integrity, syntax compatibility, development
+checks, independent evaluation, and outcome recording.
+
+Only continuous cycles apply the
+[NUC 1 token policy](../../../docs/nuc-0001.md#proposal-evaluation):
+
+- Syntax enhancement, Utility enhancement, and Reasoning enhancement: run.
+- Runtime features: run for an existing comparable feature; do not run at all
+  for a brand-new feature; explicitly skip a genuinely uncomparable existing
+  feature with a reason and supporting evidence.
+- Documentation: do not run.
+
+Supply explicit runtime applicability for Runtime features even in single mode.
+The independent evaluator verifies any uncomparable rationale and evidence;
+missing comparison artifacts are not evidence of impossibility. No skip may
+hide invalid inputs/baselines, behavior or syntax failures, or a required token
+increase.
 
 ## Classify every proposal
 
@@ -72,24 +93,30 @@ its handoff and write the same category in the proposal header. Explicit
 feature/category requests take precedence, and process or documentation-only
 revisions are not randomized.
 
-Every category retains the same baseline and acceptance requirements. New
-measured cases still need pre-executed behavior-equivalent accepted-syntax
-programs; missing baselines block preparation rather than bypass the gate.
+Selection does not bypass shared behavior, integrity, compatibility, or
+development safeguards. Token requirements follow execution mode and the
+confirmed category/applicability policy, not a new random draw.
 
 ## Confirm the inputs
 
-Require the proposal path, confirmed category and requested change, accepted
-Git revision, immutable baseline JSON artifact, and candidate worktree.
+Require the proposal path, confirmed category and requested change, execution
+mode and runtime applicability with supporting rationale when applicable,
+accepted Git revision, immutable baseline JSON artifact, and candidate worktree.
 Confirm that the baseline belongs to that accepted revision before making
 runtime or executable document edits. Missing inputs stop preparation, not
 justify assumptions.
 
-New measured cases need behavior-equivalent accepted-syntax programs with the
-same document, title, canonical assertions, and expected return. They must
+When token comparison is required, new measured cases need behavior-equivalent
+accepted-syntax programs with the same document, title, canonical assertions,
+and expected return. They must
 already have been executed by the accepted runtime and included through
 `NUC_PROPOSAL_EXTRA_BASELINES` when recording the baseline. If a case is not
-paired, return its required baseline to the caller before proceeding. Never
-overwrite a baseline or derive before-counts from the candidate lexer.
+paired, return its required baseline to the caller before proceeding.
+For legitimate skipped comparisons, genuinely new cases need no accepted-syntax
+counterpart; execute their assertions or explicit expected returns and verify
+coverage. Protect every pre-existing case, and supply the original extra-baseline
+sources for legacy replay in every mode. Never overwrite a baseline, invent a
+counterpart, or derive before-counts from the candidate lexer.
 
 ## Preserve syntax compatibility
 
@@ -135,14 +162,22 @@ Run the affected development tests, `cargo fmt --check`, and
 `cargo clippy --all-targets -- -D warnings`. Fix feature-coupled problems in
 the candidate, without changing the baseline or caller work.
 
+The caller completes the required Rust improvement pass before the final
+frozen handoff. If that pass is pending, return a preparation checkpoint and
+await the caller's same-revision follow-up to recheck and finalize; a checkpoint
+is not a ready-for-evaluation handoff.
+
 Do not run the ignored `evaluate_proposal` entry point, produce an acceptance
 report, or mark the proposal Accepted or Rejected. Those belong to the
 independent evaluator.
 
 Return the proposal path and Git blob revision (`git hash-object` on the
-proposal), accepted baseline revision and path, confirmed proposal category
-and selection rationale when applicable, candidate worktree, changed files,
-development checks, and explicit blockers. Freeze the candidate after handoff.
+proposal), accepted baseline revision and path, execution mode, confirmed
+proposal category and selection rationale when applicable, runtime applicability
+and supporting rationale, candidate worktree, changed files, development and
+syntax-compatibility checks, and explicit blockers. State the expected token
+policy, without claiming an unevaluated gate passed. Freeze the candidate after
+handoff.
 The caller starts a fresh `nuc-evaluate` agent with this handoff and
 a fresh report path; do not launch it yourself. The caller owns integration
 and evaluation status/index updates. The proposal agent must not commit, push,
@@ -197,10 +232,12 @@ candidate and report paths. Launch fresh proposal and evaluation agents, and
 perform the required Rust improvement pass when applicable. Never reuse
 workers across cycles or combine pending proposals.
 
-Use actual independent token measurements and behavior/compatibility results
-as feedback for the next enhancement. Preserve earlier artifacts and all
+Use actual independent behavior/compatibility results and token measurements
+when comparison ran as feedback for the next enhancement; report legitimate
+skips rather than inventing counts. Preserve earlier artifacts and all
 acceptance, compatibility and version-protection rules. This is iterative
-proposal/evaluation feedback, not model training or model-weight updates.
+proposal/evaluation feedback, not separate model training or model-weight
+updates.
 
 Only the caller continues the loop; proposal and evaluation workers still stop
 at their single-proposal handoffs. Starting a distinct next NUC is not recursive

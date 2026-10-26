@@ -102,7 +102,8 @@ fresh `nuc-evaluate` agent per revision. The proposer drafts and prototypes in
 an isolated candidate, preserving behavior, case identities, canonical
 assertions, return expectations, and executed assertion coverage. It hands off
 the proposal's Git blob revision without deciding acceptance. The evaluator
-checks the frozen candidate and measures tokens without rewriting it.
+checks the frozen candidate without rewriting it, measuring tokens only when
+the execution-mode policy requires comparison.
 
 The procedures live in the [proposal skill](.github/skills/nuc-proposal/SKILL.md)
 and [evaluation skill](.github/skills/nuc-evaluate/SKILL.md), with separate
@@ -119,12 +120,36 @@ more accurately, with synchronized category and numerical indexes. Unspecified
 enhancements use an equal random draw across the currently eligible categories;
 Documentation is not part of that draw.
 
-The gate measures each case from the specification and executable reference,
-README, and examples. It uses Nucleoid lexer tokens, including `Newline`,
-`Indent`, and `Dedent`, excluding `Eof`; it does not measure LLM tokens,
-generated Rust, or synthesized training records. Each case must use the same
-or fewer tokens. Any increase rejects the proposal, regardless of savings in
-other cases. Missing baselines block acceptance.
+The **token non-regression gate** requires each compared case to use the same
+or fewer lexer tokens than its accepted baseline. `/nuc-proposal`
+defaults to continuous mode for open-ended requests. A request for one specific
+NUC, concrete feature, or particular revision uses single-proposal mode: skip
+token comparison, independently evaluate behavior/compatibility/development,
+record the outcome, then stop without starting another proposal.
+
+Only continuous cycles use this matrix:
+
+| Category | Token comparison |
+| --- | --- |
+| Syntax enhancement | Required |
+| Runtime features | Required for existing comparable features; skipped for brand-new features or genuinely uncomparable existing features with explicit reason and evidence |
+| Utility enhancement | Required |
+| Reasoning enhancement | Required |
+| Documentation | Skipped |
+
+All modes retain immutable accepted-corpus baselines, pre-existing case
+integrity, assertion execution/coverage, explicit return checks, backward
+syntax compatibility, development checks, and independent evaluation.
+An invalid baseline, bad input, or behavior/compatibility failure never becomes
+a successful skip. Missing comparisons still block a required token gate;
+missing artifacts do not establish that a feature is uncomparable.
+
+When required, the gate measures each case from the specification and executable
+reference, README, and examples. It uses Nucleoid lexer tokens, including
+`Newline`, `Indent`, and `Dedent`, excluding `Eof`; it does not measure LLM
+tokens, generated Rust, or synthesized training records. Each paired case must
+use the same or fewer tokens. Any increase rejects the proposal, regardless of
+savings in other cases.
 
 Record the accepted baseline before editing the runtime or executable corpus.
 The recorder reads documents from the pinned Git revision and refuses to use
@@ -144,22 +169,42 @@ After the proposal handoff, the fresh evaluator runs from the frozen candidate
 worktree with the same baseline path:
 
 ```powershell
-$env:NUC_PROPOSAL = 'docs\nuc-0012.md'
-$env:NUC_PROPOSAL_REPORT = Join-Path $env:TEMP 'nucleoid-nuc-0012-report.json'
+$env:NUC_PROPOSAL = 'docs\nuc-0001.md'
+$env:NUC_PROPOSAL_MODE = 'single'
+$env:NUC_PROPOSAL_REPORT = Join-Path $env:TEMP 'nucleoid-nuc-0001-report.json'
 cargo test --test proposals evaluate_proposal -- --ignored --nocapture
 ```
+
+`NUC_PROPOSAL_MODE` accepts only `continuous` or `single`; omitted means
+`continuous` for existing open-ended invocations. Pass `single` explicitly for
+one-shot requests and preserve the caller's mode throughout evaluation.
+The evaluator reads the actual fenced `Category` header and checks it against
+NUC 1's registry; there is no category override or unchecked ignore-failures flag.
+
+For a Runtime features proposal, also set `NUC_PROPOSAL_RUNTIME` to exactly one
+of `new_feature`, `existing_comparable`, or `existing_uncomparable`, even in
+single mode. The last requires both `NUC_PROPOSAL_RUNTIME_REASON` and
+`NUC_PROPOSAL_RUNTIME_EVIDENCE`: nonblank explanations and supporting evidence
+for why the existing feature genuinely cannot be compared in accepted syntax.
+The independent evaluator verifies that classification and evidence.
+Runtime inputs are invalid for other categories; reason/evidence are invalid
+for the other runtime branches. Unset inapplicable variables rather than
+leaving stale skip inputs.
 
 Baseline and report files are created once and never overwritten. Use fresh
 paths for later revisions; keep actual evaluation artifacts in the Copilot
 session workspace. A nonzero exit means rejected or blocked, not accepted.
-The report records the proposal's Git blob revision and every paired case's
-`before`, `after`, and token change.
-Process-only proposals can pass with all cases unchanged.
+The report records the proposal's Git blob revision, actual mode/category/runtime
+applicability and rationale, behavior checks, and `token_check.status`.
+For `ran`, it includes the metric and each paired case's `before`, `after`,
+and token change. For `skipped`, it includes the skip reason, not measured cases
+or zero placeholder counts; this is not a passing token gate.
 The evaluator does not fix failures or regenerate exports. A repaired,
 substantively revised, or rebased candidate needs a fresh agent pair and report.
 
-For new cases, prepare an additional baseline JSON array in the accepted
-syntax **before** candidate runtime edits. Each entry names the case's
+When token comparison is required, prepare an additional baseline JSON array
+for new cases in accepted syntax **before** candidate runtime edits.
+Each entry names the case's
 destination document (`spec`, `reference`, `readme`, or `examples`) and exact
 title, and contains its accepted-syntax source and optional expected return.
 Each new baseline must contain assertions or an expected return:
@@ -178,8 +223,17 @@ Each new baseline must contain assertions or an expected return:
 Set `NUC_PROPOSAL_EXTRA_BASELINES` to this file before `record_baseline`.
 The accepted runtime executes these programs when recording them. The
 candidate must contain matching cases and unchanged canonical assertions and
-return expectations. If the old language cannot express an equivalent case,
-the proposal is blocked rather than assigned an invented before-count.
+return expectations. Supply the original extra-baseline sources through the
+same variable during evaluation, so unchanged legacy programs can be replayed.
+Missing required comparisons block acceptance rather than receiving invented
+before-counts.
+
+When comparison is legitimately skipped, genuinely new cases need no
+accepted-syntax counterpart, but must execute their assertions or explicit
+expected returns with full assertion coverage. Every pre-existing case remains
+protected, and every pinned accepted program and supplied extra-baseline program
+is replayed under the candidate. Baseline JSON must be valid and match its
+pinned corpus; skipping tokens never excuses missing accepted-corpus inputs.
 
 The proposer regenerates affected exports before handoff; the evaluator checks
 their consistency without setting either update variable. After independent

@@ -1,6 +1,6 @@
 ---
 name: nuc-evaluate
-description: Independently evaluate a completed Nucleoid NUC candidate against its accepted baseline. Use for per-case token acceptance, not drafting or repairs.
+description: Independently evaluate a completed Nucleoid NUC candidate with mandatory behavior/integrity checks and the applicable lexer-token policy, not drafting or repairs.
 ---
 
 # Evaluating a NUC proposal
@@ -21,6 +21,11 @@ Git revision and immutable JSON artifact, candidate worktree, and fresh report
 artifact path in the session workspace. Require the confirmed proposal
 category and verify that its header matches the handoff and
 [category registry](../../../docs/nuc-0001.md#proposal-categories).
+Require the preserved execution mode and runtime applicability, including
+reason and evidence for a genuinely uncomparable existing runtime feature.
+Independently verify applicability and that evidence; missing comparison
+artifacts do not prove impossibility. A Runtime features proposal needs an
+explicit branch even in single mode.
 Confirm that the current proposal blob matches the handoff and the baseline
 matches the accepted revision. Missing prerequisites block evaluation; never
 invent measurements or guess an uncertain category.
@@ -47,47 +52,85 @@ Existing supported forms must keep their parsing and runtime semantics, even
 when optional shorter forms or runtime features are added. A compatibility
 failure rejects the proposal regardless of token savings or a passing gate.
 
-The measured corpus is `nucleoid.spec.md`, `tests/reference.md`, and the
+The checked corpus is `nucleoid.spec.md`, `tests/reference.md`, and the
 `nuc` blocks in `README.md` and `docs/examples.md`. Generated Rust and
 synthesized training records are not scored.
 
 ## Measure and decide
+
+The **token non-regression gate** requires each compared case to use the same
+or fewer lexer tokens than its accepted baseline.
+Single-proposal requests always skip token comparison, regardless of category.
+Only continuous cycles apply the
+[NUC 1 matrix](../../../docs/nuc-0001.md#proposal-evaluation):
+
+- Syntax enhancement, Utility enhancement, and Reasoning enhancement: required.
+- Runtime features: required for an existing comparable feature; skipped
+  entirely for a brand-new feature; skipped for a genuinely uncomparable existing
+  feature with explicit reason and evidence.
+- Documentation: skipped.
+
+Every mode still requires valid immutable accepted-corpus inputs, behavior,
+case integrity, syntax compatibility, development checks, and outcome recording.
+When tokens are skipped, genuinely new behavior cases may lack accepted-syntax
+counterparts, but must execute assertions or explicit expected returns with
+full assertion coverage. Pre-existing identities, canonical assertions, returns,
+coverage, and legacy forms remain protected; never invent before-counts.
 
 From the supplied candidate worktree, set:
 
 - `NUC_PROPOSAL_BASELINE` to the supplied immutable baseline.
 - `NUC_PROPOSAL` to the repository-relative `docs/nuc-XXXX.md` path.
 - `NUC_PROPOSAL_REPORT` to the fresh session report path.
+- `NUC_PROPOSAL_MODE` to the caller's `single` or `continuous` mode; explicitly
+  use `single` for a one-shot request. Omitted mode defaults to `continuous`
+  for existing open-ended invocations, not for explicit single requests.
+- For Runtime features, `NUC_PROPOSAL_RUNTIME` to `new_feature`,
+  `existing_comparable`, or `existing_uncomparable`; the last also requires
+  nonblank `NUC_PROPOSAL_RUNTIME_REASON` and `NUC_PROPOSAL_RUNTIME_EVIDENCE`.
+  Unset runtime inputs for other categories and reason/evidence for other
+  runtime branches; inconsistent or unknown inputs are errors, not skips.
+- `NUC_PROPOSAL_EXTRA_BASELINES` to the original extra-baseline source file
+  when the artifact includes additional accepted-syntax cases.
 
-Run the deterministic gate:
+Run the deterministic evaluator in every mode; only its token portion is
+optional:
 
 ```console
 cargo test --quiet --test proposals evaluate_proposal -- --ignored --nocapture
 ```
 
-The metric is `tokenize(case.source.trim())` from the runtime lexer, including
-`Newline`, `Indent`, and `Dedent`, excluding only `Eof`. It is not an LLM token
+When comparison is required, the metric is `tokenize(case.source.trim())`
+from the runtime lexer, including `Newline`, `Indent`, and `Dedent`, excluding
+only `Eof`. It is not an LLM token
 count. The gate protects case identities, canonical assertions, expected
 returns, and executed assertion coverage.
 
-- **Accepted:** every paired case is `same` or `less`, all behavior and
-  independent checks pass, accepted syntax remains backward compatible, and
-  no required case or baseline is missing.
-- **Rejected:** any case is `more`, or the candidate changes protected
-  assertions/results/coverage, breaks accepted syntax compatibility, or fails
-  behavior or development checks.
+- **Accepted:** all behavior/integrity and independent checks pass, accepted
+  syntax remains backward compatible, no required case or baseline is missing,
+  and either the required comparison has every paired case `same`/`less` or
+  token checking was legitimately skipped under the policy.
+- **Rejected:** any case is `more` when token comparison is required, or the
+  candidate changes protected assertions/results/coverage, breaks accepted
+  syntax compatibility, or fails behavior or development checks.
 - **Blocked:** a required baseline or other evaluation prerequisite is absent.
 
-Never offset an increase with savings in other cases or decide from an aggregate.
-Process and documentation-only proposals may pass with all cases unchanged.
+Never offset a required-gate increase with savings elsewhere or decide from an
+aggregate. Invalid/corrupt baseline artifacts and bad policy inputs are errors,
+never successful skips; no behavior or compatibility failure may be suppressed.
+The report records actual mode/category/runtime applicability and rationale,
+behavior checks, and `token_check.status`: `ran` includes metric and measured
+cases, while `skipped` includes the reason and no measured-case list. A skipped
+comparison is not zero measured cases or a passing token gate.
 Read the saved report and verify that its proposal revision still matches the
 handoff. If no report was produced, state that and the actual error explicitly.
 
 ## Return the evidence
 
-Return the proposal and baseline revisions, confirmed category, decision,
-report path, independent
-checks including syntax compatibility, counts of `less`/`same`/`more`, and each
+Return the proposal and baseline revisions, execution mode, confirmed category,
+runtime applicability and rationale, decision, report path, independent
+checks including syntax compatibility, and actual ran/skipped status with
+reason. When tokens ran, include counts of `less`/`same`/`more`; include each
 increased, missing, unpaired, invalid or syntax-incompatible case with its
 before/after counts or reason. Keep the candidate and baseline unchanged.
 The caller owns integration and status/index updates;
@@ -102,7 +145,8 @@ The caller preserves the proposal request's
 [execution mode](../nuc-proposal/SKILL.md#choose-execution-mode-caller-only).
 A single-proposal request does not enter a continuous cycle: finish its normal
 evaluation and outcome recording, then stop without starting another proposal
-or running reinforcement-learning policy checks. All required per-proposal
+or running the token non-regression gate (token comparison). Independent
+behavior/integrity, accepted-corpus baseline, compatibility, and development
 checks still apply.
 
 When `/nuc-evaluate` coordinates an active continuous cycle, the caller follows

@@ -12,8 +12,9 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 - Follow the caller-owned [enhancement selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement);
   do not redraw the selected category.
 - Require the proposal path, confirmed category and requested change,
-  accepted Git revision, immutable baseline JSON artifact, and isolated
-  candidate worktree.
+  execution mode, runtime applicability and supporting rationale when applicable,
+  accepted Git revision, immutable baseline JSON artifact, and isolated candidate
+  worktree.
 - Write the confirmed `Category` header using the
   [classification rule](../skills/nuc-proposal/SKILL.md#classify-every-proposal).
   Return uncertainty about category additions, selections, updates, or
@@ -27,6 +28,15 @@ You draft and prototype exactly one added or updated NUC revision. Follow
   verify unchanged legacy forms alongside candidate forms.
 - Draft the proposal, implement its prototype where needed, and rewrite
   equivalent executable cases without weakening assertions or coverage.
+- Follow the [mode/category token policy](../skills/nuc-proposal/SKILL.md#choose-execution-mode-caller-only).
+  The token non-regression gate requires each compared case to use the same
+  or fewer lexer tokens than its accepted baseline. Single requests always skip
+  token comparison; continuous cycles use the confirmed category/runtime
+  applicability matrix. Skips never waive valid
+  accepted-corpus baselines, behavior/integrity, compatibility, or development
+  checks. Only required comparisons need counterparts for genuinely new cases;
+  unpaired new behavior still needs executed assertions/expected returns and
+  coverage. Never invent before-counts.
 - Keep affected reference, synthesized sources, and rendered exports in sync.
 - Run the relevant development checks, but do not run `evaluate_proposal`,
   write an acceptance report, or decide Accepted or Rejected.
@@ -38,9 +48,14 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 ## Handoff
 
 Return the proposal path and Git blob revision, baseline revision and artifact
-path, confirmed proposal category and selection rationale when applicable,
+path, execution mode, confirmed proposal category and selection rationale when
+applicable,
+runtime applicability and supporting rationale, expected token ran/skipped policy,
 candidate worktree, changed files, development and syntax-compatibility checks,
 and any blockers.
+If the caller-owned Rust improvement pass is pending, return only a preparation
+checkpoint and await a same-revision follow-up to recheck/finalize; do not
+freeze or declare readiness before that pass and final validation.
 Declare the candidate ready for independent evaluation only when its inputs
 are complete, then stop editing it. The caller launches a fresh `nuc-evaluate`
 agent with this handoff and a fresh report path. The caller owns integration
@@ -58,6 +73,8 @@ In continuous mode, after finalizing an `Accepted` or `Rejected` outcome for a
 new NUC, it immediately starts the next proposal under the
 [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
 In single-proposal mode, it finishes the requested outcome and stops without
-starting another proposal or running reinforcement-learning policy checks.
+starting another proposal or running token comparison (the token non-regression
+gate); independent behavior/compatibility/development evaluation and outcome
+recording remain required.
 This continuation is caller-owned; stop at your single-proposal handoff and
 never launch the next cycle yourself.

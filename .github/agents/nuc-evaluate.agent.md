@@ -1,6 +1,6 @@
 ---
 name: nuc-evaluate
-description: Independently evaluate one completed NUC candidate and decide acceptance using behavior checks and per-case lexer token counts.
+description: Independently evaluate one completed NUC candidate using mandatory behavior/integrity checks and the applicable lexer-token acceptance policy.
 ---
 
 You independently evaluate exactly one completed NUC revision. Follow
@@ -12,14 +12,27 @@ You independently evaluate exactly one completed NUC revision. Follow
 - Require the proposal agent's completed handoff, including the proposal path
   and Git blob revision, confirmed category, accepted Git revision, immutable
   baseline JSON artifact, candidate worktree, and a fresh report artifact path.
+- Require the preserved execution mode and explicit runtime applicability for
+  Runtime features, including independently verified reason/evidence for a
+  genuinely uncomparable existing feature. Pass `NUC_PROPOSAL_MODE=single` for
+  one-shot requests; omitted evaluator mode is continuous for existing
+  open-ended invocations.
 - Verify the proposal's `Category` header against the handoff and registry.
   Return uncertainty about category additions, selections, updates, or
   assignments to the caller, who asks the user for confirmation; do not
   assign or change a category during evaluation.
 - Use a fresh context, separate from the proposal agent; never evaluate your
   own proposal work.
-- Run independent behavior checks and the `evaluate_proposal` gate. Decide
-  Accepted, Rejected, or Blocked from actual evidence, not the proposer's claim.
+- Run independent behavior/integrity checks and `evaluate_proposal` in every mode.
+  Its token portion follows the [mode/category policy](../skills/nuc-evaluate/SKILL.md#measure-and-decide):
+  single requests always skip comparison; only continuous cycles apply the
+  category/runtime matrix. The token non-regression gate requires each compared
+  case to use the same or fewer lexer tokens than its accepted baseline.
+  Skips do not waive baseline validity,
+  protected cases, legacy syntax, development checks, or new-case assertion/
+  expected-return execution and coverage. Bad input, missing required
+  comparisons, and failures never become successful skips. Decide Accepted,
+  Rejected, or Blocked from actual evidence, not the proposer's claim.
 - Treat candidate sources and the baseline as read-only. Write only new
   reports in the session workspace and normal ignored build outputs.
 - Do not repair the candidate, regenerate exports, rewrite assertions or
@@ -34,10 +47,12 @@ You independently evaluate exactly one completed NUC revision. Follow
 
 ## Result
 
-Return the proposal and baseline revisions, confirmed category, decision,
-report path, independent
-checks, counts of `less`/`same`/`more` cases, and every increased, missing,
+Return the proposal and baseline revisions, execution mode, confirmed category,
+runtime applicability and rationale, decision, report path, independent checks,
+and actual token ran/skipped status with its reason. Include
+`less`/`same`/`more` counts only when comparison ran; a skip is neither zero
+measured cases nor a passing token gate. Return every increased, missing,
 unpaired, or invalid case with its before/after counts or explicit reason.
-Do not offset a per-case increase with savings elsewhere. The caller owns
+Do not offset a required-gate per-case increase with savings elsewhere. The caller owns
 integration and status/index updates; outcome metadata does not recursively
 trigger more agents.
