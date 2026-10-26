@@ -2446,6 +2446,32 @@ assert(secondPrevious, null)
   snapshot is needed. See [NUC 53](nuc-0053.md) and the
   [root contract](../nucleoid.spec.md#read-only-state-versions).
 
+## Literal parameter defaults
+
+**Defaulted calibration remains reactive to supplied arguments**
+
+```nuc
+def calibrate(raw, offset = 2) => raw + offset
+sensor = 5
+one = calibrate(sensor)
+two = calibrate(7)
+three = calibrate(9)
+untouched = calibrate(2, 0)
+assert(one, 7)
+assert(two, 9)
+assert(three, 11)
+assert(untouched, 2)
+sensor = 6
+assert(one, 8)
+```
+
+- An omitted slot uses its scalar default; the supplied zero above remains
+  zero. Reactive dependencies on supplied arguments still update callers.
+- Parenthesized functions, methods and constructors use fresh effective
+  parameter values before initializing their local history. No expression
+  defaults, capture or bare-default syntax is introduced. See the
+  [root contract](../nucleoid.spec.md#literal-parameter-defaults).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -618,6 +618,39 @@ fn actual_renderer_keeps_named_and_legacy_assignment_calls_in_one_scope() {
 }
 
 #[test]
+fn actual_renderer_keeps_all_six_literal_default_programs_and_their_fifty_assertions_whole() {
+    let titles = [
+        "Nucleoid fills omitted literal default parameters",
+        "Nucleoid preserves supplied falsy arguments when defaults exist",
+        "Nucleoid applies literal defaults to typed functions and parenthesized arrows",
+        "Nucleoid starts defaulted parameter histories at their effective values",
+        "Nucleoid binds independent literal constructor and method defaults",
+        "Nucleoid restores defaulted function callers after failed redefinitions",
+    ];
+    let mut total = (0, 0);
+    for line in include_str!("../dataset/nucleoid.spec.jsonl").lines() {
+        let record: serde_json::Value = serde_json::from_str(line).unwrap();
+        if !titles.contains(&record["description"].as_str().unwrap()) {
+            continue;
+        }
+        let source = record["code"].as_str().unwrap();
+        let rendered = render_assertion_fixture(source, record["return"].as_str());
+        assert!(rendered.contains(source), "{rendered}");
+        assert_eq!(rendered.matches("    run(").count(), 1, "{rendered}");
+        let mut runtime = Runtime::new();
+        runtime.run(source).unwrap();
+        let expected =
+            common::assertions::protected_assertions(&parse_program(source).unwrap().statements)
+                .len();
+        assert_eq!(runtime.assertions_run(), expected);
+        assert!(runtime.take_assertions().is_empty());
+        total.0 += 1;
+        total.1 += runtime.assertions_run();
+    }
+    assert_eq!(total, (6, 50));
+}
+
+#[test]
 fn actual_generated_colon_cases_keep_local_and_nested_assertions_executable() {
     let dataset = include_str!("../dataset/nucleoid.spec.jsonl");
     let mut records = 0;

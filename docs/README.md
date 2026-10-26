@@ -467,11 +467,13 @@ class Shape:
   names in any order, and positional arguments followed by names. There is no
   star marker or named-only class mode.
 - Labels do not read or assign caller variables. Values run once in source
-  order, then bind by declared name; omitted parameters remain `null`.
+  order, then bind by declared name; omitted parameters without literal
+  defaults remain `null`.
 - The values remain constructor snapshots, not new reactive relationships.
   Binding validation precedes all RHS evaluation, including `.value` reads.
 - `class Point` can adopt an ordinary `def init(x, y):` body and parameter
-  list. No automatic fields, defaults or function-signature changes are added.
+  list. Named binding adds no automatic fields or defaults; scalar defaults
+  have their own [bounded contract](#literal-parameter-defaults).
 - Named shared class-rule construction also sees the declaration caller's
   parameters; legacy positional shared construction keeps its existing scope.
 - Inheritance uses the nearest nonempty constructor body's signature; a child
@@ -881,7 +883,7 @@ unchanged explicit-loop entries in the root specification.
 - For the single-parameter untyped forms, a bare identifier must be immediately followed by `=>`, or by `:` whose body starts with a logical newline/indent and supplies a real `Indent` after normal newline/semicolon layout. The colon guard only looks ahead; the existing suite parser consumes the body.
 - No logical newline, semicolon or comment-induced logical break is skipped within a bare header. Blank/comment lines before an indented body retain the existing layout rules.
 - All parenthesized definitions remain available, including `def add(left, right) => left + right`, `def add(left: int, right: int) => left + right` and typed/untyped `def add(left, right):` alternatives with the same indented body. Nullary, multiline-parameter, inline and brace-suite definitions keep their parentheses, as do calls; typed single/multiple-parameter indented blocks have the optional spellings below.
-- Bare inline/braced or missing-indent blocks, trailing bare commas, defaulted/destructured/variadic parameters, dotted/union/generic/nullable/keyword/dollar/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added; class and anonymous parameter lists keep their existing grammar.
+- Bare inline/braced or missing-indent blocks, trailing bare commas, bare defaults, destructured/variadic parameters, dotted/union/generic/nullable/keyword/dollar/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added. Parenthesized scalar defaults are specified separately below.
 - NUC18/20 single-parameter arrows and NUC19/24's exact untyped/typed indented-colon guards are unchanged; named return-block lowering, parameter metadata/order, argument binding, runtime behavior and canonical rendering remain those of the parenthesized counterparts.
 - Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines, starting either on the header line or in the optional NUC32 real-indented body.
 - A call in an assignment depends on the function and its arguments.
@@ -898,6 +900,43 @@ unchanged explicit-loop entries in the root specification.
 - A null callable, an unassigned callable property, or a callable deleted during propagation leaves its dependent result null until rebound. Other non-callable values raise `TypeError`.
 - `.value` freezes the function definition, not the state read when its body executes.
 - Functions may recurse and may have multiple `return` statements.
+
+### Literal parameter defaults
+
+- Explicitly parenthesized user formals allow `name = literal` and
+  `name: Type = literal` in named block/arrow functions, function expressions,
+  parenthesized arrows, methods, class headers and adopted `init` methods.
+- Only absent positions/constructor keys use defaults. Explicit Null,
+  Undefined, false, zero, empty Strings and other supplied values retain their
+  existing evaluation/value semantics; missing nondefaulted slots still bind
+  Null. Required slots may follow defaults, annotations remain non-enforcing,
+  and extra arguments keep their ordinary behavior.
+- Allowed data are finite numeric literals with one optional sign (including
+  exact `-0`), quoted Strings, Booleans and null with its existing aliases.
+  Arrays, objects, regexes, templates, references, calls, grouped/compound
+  expressions and nonfinite numeric defaults are rejected, not evaluated.
+- An unsupported/missing literal raises
+  `SyntaxError("Expected a scalar literal parameter default")`; a nonfinite
+  numeric token raises `SyntaxError("Parameter default must be a finite number")`.
+  A scalar followed by anything other than `,` or `)` raises
+  `SyntaxError("Expected ',' or ')' after parameter default")`.
+- The effective literal initializes the fresh Scope slot at version zero.
+  Functions, aliases, callbacks, methods and function Values share binding;
+  positional/named/mixed/inherited constructors and `super` use the selected
+  signature without changing strict labels, evaluation order, single
+  evaluation, receiver capture or parent/class-resolution timing.
+- Live redefinition and rollback retain their existing State/graph boundary.
+  Frozen/historical function Values retain their own definition/defaults.
+  Locals remain nontransactional and noncapturing; constructor/invocation
+  frame isolation, snapshots, namespace-history restrictions and serializers
+  are unchanged.
+- Bare/comma-free signatures gain no default syntax. Function argument
+  assignments are still positional expressions, not named arguments.
+  Automatic named constructors without formal slots and native built-ins
+  are unchanged. See the authoritative
+  [literal parameter defaults](../nucleoid.spec.md#literal-parameter-defaults)
+  contract and `Literal parameter defaults preserve supplied names` in
+  `tests/reference.md`.
 
 ```
 def generate number => number * 10

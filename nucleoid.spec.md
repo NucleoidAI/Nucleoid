@@ -1912,8 +1912,9 @@ statement positions; caught values and transaction recovery are unchanged.
   repeated binding (including positional plus named), or positional argument
   following a named argument, in source order.
 - Evaluate supplied values exactly once in source order in the caller's
-  scope, then bind them in declaration order. Omitted parameters retain
-  `null`; no defaults or automatic property assignments are introduced.
+  scope, then bind them in declaration order. Omitted parameters without
+  literal defaults retain `null`; named binding itself adds no defaults or
+  automatic property assignments. Literal defaults are specified separately.
   Surplus positional values are still evaluated and ignored. Existing
   duplicate formal names and purely positional binding are not redesigned.
 - Use the nearest nonempty constructor body's signature, including adopted
@@ -1941,7 +1942,7 @@ statement positions; caught values and transaction recovery are unchanged.
   assignment targets and real RHS references using actual call routing.
   Label names never become dependency/root variables. Canonical call source
   remains `Pair(b=2,a=1)`; explicit assignment source remains
-  `Pair((b=2),(a=1))`. Class statement keys remain `class Pair`.
+  `Pair((b=2),(a=1))`. Default-free class statement keys remain `class Pair`.
 - Binding failures precede object registration. Existing transactions and
   catch savepoints still restore partial instances, populations, properties,
   class metadata and graph writes after RHS/body/parent/rule failures.
@@ -2118,6 +2119,53 @@ statement positions; caught values and transaction recovery are unchanged.
   versions of instance properties` through `Nucleoid restores version histories
   on rollback and resets deleted bindings` specify the measured runtime
   examples.
+
+## Literal parameter defaults
+
+- Only explicitly parenthesized user-defined formal lists accept
+  `name = literal` or `name: Type = literal`. This covers named block/arrow
+  functions, function expressions, parenthesized arrows, user methods,
+  explicit class parameters and adopted `init` parameters.
+- A default is a finite numeric literal with at most one optional `+` or `-`,
+  a quoted String, a Boolean literal or null (including existing null literal
+  aliases). Numeric sign bits, including `-0`, are retained. Defaults are
+  immutable scalar data, never evaluated expressions or captured names.
+- Arrays, objects, regexes, templates, identifier references, calls, grouped
+  or compound expressions and nonfinite numbers are not defaults. An
+  unsupported or missing literal raises
+  `SyntaxError("Expected a scalar literal parameter default")`. A nonfinite
+  numeric token raises `SyntaxError("Parameter default must be a finite number")`.
+  Tokens after a scalar other than `,` or `)` raise
+  `SyntaxError("Expected ',' or ')' after parameter default")`.
+- Only an absent positional argument or absent constructor key uses the
+  default. A supplied Null, Undefined, false, zero, empty String or any other
+  value retains its existing evaluation and value semantics, including
+  deferred/null propagation and `.value` snapshot boundaries. There is no
+  nullish/falsy substitution. Missing arguments without defaults still bind
+  Null; extra arguments and non-enforcing annotations keep their behavior.
+- Defaults may occupy any formal slot, including one before a required slot.
+  The effective scalar is chosen before declaring the fresh Scope binding:
+  version zero is that value, not a synthetic Null followed by another write.
+  Invocation and constructor frame lifetimes, local shadowing/noncapture,
+  nontransactional locals and transactional State boundaries are unchanged.
+- Ordinary, aliased, callback, method and function-value calls share existing
+  invocation binding. Constructor positional/named/mixed calls, inherited
+  constructors and `super` use the selected signature's defaults. Strict
+  label validation, source order/single evaluation, receiver capture, and
+  delayed positional versus pinned named constructor selection stay unchanged.
+- Function argument assignments remain ordinary positional expressions, not
+  named function arguments. Bare/comma-free signatures gain no default syntax.
+  Automatic named constructors without formal slots, native built-ins, old
+  grouped assignments and all previously accepted signatures remain unchanged.
+- Live function callers observe redefinitions normally; frozen and historical
+  function Values retain the captured definition and its defaults under
+  existing identity semantics. Failed redefinitions restore function/class
+  metadata, State and graph atomically through ordinary rollback.
+- Defaults do not change state-version namespace restrictions, negative
+  selector rejection, ordinary dot fields, snapshots or serializers. The six
+  appended entries beginning `Nucleoid fills omitted literal default parameters`
+  through `Nucleoid restores defaulted function callers after failed
+  redefinitions` specify the measured behavior.
 
 ```
 # Nucleoid runs a statement in the state
@@ -13115,4 +13163,130 @@ assert(resetPrevious, null)
 assert(firstValue, "C")
 assert(lastValue, "C")
 assert(previousValue, null)
+---
+# Nucleoid fills omitted literal default parameters
+
+def price(quantity, unit = 10) => quantity * unit
+one = price(1)
+two = price(2)
+three = price(3)
+custom = price(2, 7)
+assert(one, 10)
+assert(two, 20)
+assert(three, 30)
+assert(custom, 14)
+---
+# Nucleoid preserves supplied falsy arguments when defaults exist
+
+def pick(tag, fallback = 12) => [tag, fallback]
+one = pick("a")
+two = pick("b")
+three = pick("c")
+suppliedZero = pick("z", 0)
+suppliedFalse = pick("f", false)
+suppliedEmpty = pick("e", "")
+suppliedNull = pick("n", null).value
+assert(one, ["a", 12])
+assert(two, ["b", 12])
+assert(three, ["c", 12])
+assert(suppliedZero, ["z", 0])
+assert(suppliedFalse, ["f", false])
+assert(suppliedEmpty, ["e", ""])
+assert(suppliedNull, ["n", null])
+def flag(tag, enabled = false) => [tag, enabled]
+flagA = flag("a")
+flagB = flag("b")
+flagC = flag("c")
+assert(flagA, ["a", false])
+assert(flagB, ["b", false])
+assert(flagC, ["c", false])
+def absent(tag, missing = null) => [tag, missing]
+nullA = absent("a").value
+nullB = absent("b").value
+nullC = absent("c").value
+assert(nullA, ["a", null])
+assert(nullB, ["b", null])
+assert(nullC, ["c", null])
+---
+# Nucleoid applies literal defaults to typed functions and parenthesized arrows
+
+def scale(value: Number, factor: Number = 0.5) => value * factor
+adjust = (value, offset = -2) => value + offset
+one = scale(2)
+two = scale(4)
+three = scale(6)
+four = adjust(1)
+five = adjust(3)
+six = adjust(5)
+assert(one, 1)
+assert(two, 2)
+assert(three, 3)
+assert(four, -1)
+assert(five, 1)
+assert(six, 3)
+---
+# Nucleoid starts defaulted parameter histories at their effective values
+
+step = 100
+def sample(seed, step = 4) => [seed, step = step + 1, step@first, step@last]
+one = sample(1)
+two = sample(2)
+three = sample(3)
+provided = sample(4, 9)
+assert(one, [1, 5, 4, 5])
+assert(two, [2, 5, 4, 5])
+assert(three, [3, 5, 4, 5])
+assert(provided, [4, 10, 9, 10])
+assert(step, 100)
+---
+# Nucleoid binds independent literal constructor and method defaults
+
+class Counter(seed = 1):
+    this.count = seed
+    def advance(delta = 2):
+        this.count += delta
+        return this.count
+first = Counter()
+second = Counter()
+third = Counter()
+one = first.advance().value
+two = second.advance().value
+three = third.advance().value
+again = first.advance().value
+supplied = Counter(5)
+custom = supplied.advance(4).value
+assert(first.count, 5)
+assert(second.count, 3)
+assert(third.count, 3)
+assert(supplied.count, 9)
+assert(one, 3)
+assert(two, 3)
+assert(three, 3)
+assert(again, 5)
+assert(custom, 9)
+---
+# Nucleoid restores defaulted function callers after failed redefinitions
+
+def price(quantity, unit = 10) => quantity * unit
+one = price(1)
+two = price(2)
+three = price(3)
+four = price(4)
+assert(one, 10)
+assert(two, 20)
+assert(three, 30)
+assert(four, 40)
+try:
+    def price(quantity, unit = 10) => quantity * unit + 1
+    assert(one, 11)
+    assert(two, 21)
+    assert(three, 31)
+    assert(four, 41)
+    throw "RESTORE_LITERAL_DEFAULT"
+catch error:
+    assert(error, "RESTORE_LITERAL_DEFAULT")
+assert(one, 10)
+assert(two, 20)
+assert(three, 30)
+assert(four, 40)
 ```

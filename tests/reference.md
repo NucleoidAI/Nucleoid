@@ -1813,4 +1813,16 @@ version1 = score@1
 version2 = score@2
 assert(version1, 20)
 assert(version2, null)
+---
+# Literal parameter defaults preserve supplied names
+
+def describe(name, suffix = "!") => name + suffix
+one = describe("Can")
+two = describe("Daphne")
+three = describe("Merve")
+assert(one, "Can!")
+assert(two, "Daphne!")
+assert(three, "Merve!")
+[one, two, three]
+# return: ["Can!","Daphne!","Merve!"]
 ```

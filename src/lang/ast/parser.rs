@@ -3,8 +3,8 @@ use std::sync::Arc;
 use super::lexer::{Keyword, Spanned, Token, tokenize};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
-    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
-    UnaryOp, VersionSelector,
+    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, ParameterDefault,
+    Stmt, TemplatePart, UnaryOp, VersionSelector,
 };
 use crate::reasoning::Stage;
 
@@ -599,6 +599,7 @@ impl Parser {
         Parameter {
             name,
             type_name: None,
+            default: None,
         }
     }
 
@@ -727,7 +728,55 @@ impl Parser {
             None
         };
 
-        Ok(Parameter { name, type_name })
+        Ok(Parameter {
+            name,
+            type_name,
+            default: None,
+        })
+    }
+
+    /// Only parameters() calls this: bare signature parsing is unchanged.
+    fn parameter_default(&mut self) -> Result<ParameterDefault> {
+        let negative = if self.eat(&Token::Minus) {
+            Some(true)
+        } else if self.eat(&Token::Plus) {
+            Some(false)
+        } else {
+            None
+        };
+        let default = match self.peek().clone() {
+            Token::Number(number) => {
+                if !number.is_finite() {
+                    return Err(self.error("Parameter default must be a finite number"));
+                }
+                self.advance();
+                ParameterDefault::Number(if negative == Some(true) {
+                    -number
+                } else {
+                    number
+                })
+            }
+            Token::Str(value) if negative.is_none() => {
+                self.advance();
+                ParameterDefault::String(value)
+            }
+            Token::Keyword(Keyword::True | Keyword::False) if negative.is_none() => {
+                let value = self.eat_keyword(Keyword::True);
+                if !value {
+                    self.advance();
+                }
+                ParameterDefault::Bool(value)
+            }
+            Token::Keyword(Keyword::Null) if negative.is_none() => {
+                self.advance();
+                ParameterDefault::Null
+            }
+            _ => return Err(self.error("Expected a scalar literal parameter default")),
+        };
+        if !matches!(self.peek(), Token::Comma | Token::RightParen) {
+            return Err(self.error("Expected ',' or ')' after parameter default"));
+        }
+        Ok(default)
     }
 
     fn parameters(&mut self) -> Result<Vec<Parameter>> {
@@ -736,7 +785,11 @@ impl Parser {
         let mut parameters = Vec::new();
 
         while !self.check(&Token::RightParen) {
-            parameters.push(self.parameter()?);
+            let mut parameter = self.parameter()?;
+            if self.eat(&Token::Assign) {
+                parameter.default = Some(self.parameter_default()?);
+            }
+            parameters.push(parameter);
 
             if !self.eat(&Token::Comma) {
                 break;
@@ -840,6 +893,7 @@ impl Parser {
                         fields.push(Parameter {
                             name: field,
                             type_name: Some(type_name),
+                            default: None,
                         });
                     }
                     _ => constructor.push(self.statement()?),
@@ -1379,6 +1433,7 @@ impl Parser {
                 return self.arrow_body(vec![Parameter {
                     name,
                     type_name: None,
+                    default: None,
                 }]);
             }
         }

@@ -108,7 +108,8 @@ fn complete_two_three_duplicate_and_1024_name_lists_preserve_metadata_and_bindin
                 .iter()
                 .map(|name| Parameter {
                     name: (*name).to_string(),
-                    type_name: None
+                    type_name: None,
+                    default: None,
                 })
                 .collect::<Vec<_>>()
         );

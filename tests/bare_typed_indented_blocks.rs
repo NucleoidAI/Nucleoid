@@ -88,6 +88,7 @@ fn typed_parameter_complete_block_ast_and_generator_match_the_explicit_form() {
             [Parameter {
                 name: name.to_string(),
                 type_name: Some(annotation.to_string()),
+                default: None,
             }]
         );
         assert_eq!(
@@ -435,9 +436,9 @@ fn parenthesized_signatures_class_lists_and_anonymous_forms_keep_their_metadata(
             15,
         ),
         (
-            "def f(amount = 1): return amount",
-            "Expected ')' but found '='",
-            14,
+            "def f(amount = []): return amount",
+            "Expected a scalar literal parameter default",
+            16,
         ),
         ("def f() -> int: return 1", "Expected ':' but found '-'", 9),
         ("class Gauge(amount:)", "Expected a type but found ')'", 21),

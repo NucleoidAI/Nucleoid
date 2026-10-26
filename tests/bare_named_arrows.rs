@@ -59,6 +59,7 @@ fn bare_parameters_lower_to_the_same_named_return_block_and_canonical_source() {
             [Parameter {
                 name: name.to_string(),
                 type_name: None,
+                default: None,
             }]
         );
         assert_eq!(
@@ -313,10 +314,10 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
             16,
         ),
         (
-            "def f(amount = 1) => amount",
-            "Expected ')' but found '='",
+            "def f(amount = []) => amount",
+            "Expected a scalar literal parameter default",
             1,
-            14,
+            16,
         ),
         (
             "def f(amount, other:) => amount",

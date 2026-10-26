@@ -10458,6 +10458,156 @@ assert(lastValue, "C")
 assert(previousValue, null)"#);
 }
 
+/// Nucleoid fills omitted literal default parameters
+#[rustfmt::skip]
+#[test]
+fn fills_omitted_literal_default_parameters() {
+    let mut run = runner();
+    run(r#"def price(quantity, unit = 10) => quantity * unit
+one = price(1)
+two = price(2)
+three = price(3)
+custom = price(2, 7)
+assert(one, 10)
+assert(two, 20)
+assert(three, 30)
+assert(custom, 14)"#);
+}
+
+/// Nucleoid preserves supplied falsy arguments when defaults exist
+#[rustfmt::skip]
+#[test]
+fn preserves_supplied_falsy_arguments_when_defaults_exist() {
+    let mut run = runner();
+    run(r#"def pick(tag, fallback = 12) => [tag, fallback]
+one = pick("a")
+two = pick("b")
+three = pick("c")
+suppliedZero = pick("z", 0)
+suppliedFalse = pick("f", false)
+suppliedEmpty = pick("e", "")
+suppliedNull = pick("n", null).value
+assert(one, ["a", 12])
+assert(two, ["b", 12])
+assert(three, ["c", 12])
+assert(suppliedZero, ["z", 0])
+assert(suppliedFalse, ["f", false])
+assert(suppliedEmpty, ["e", ""])
+assert(suppliedNull, ["n", null])
+def flag(tag, enabled = false) => [tag, enabled]
+flagA = flag("a")
+flagB = flag("b")
+flagC = flag("c")
+assert(flagA, ["a", false])
+assert(flagB, ["b", false])
+assert(flagC, ["c", false])
+def absent(tag, missing = null) => [tag, missing]
+nullA = absent("a").value
+nullB = absent("b").value
+nullC = absent("c").value
+assert(nullA, ["a", null])
+assert(nullB, ["b", null])
+assert(nullC, ["c", null])"#);
+}
+
+/// Nucleoid applies literal defaults to typed functions and parenthesized arrows
+#[rustfmt::skip]
+#[test]
+fn applies_literal_defaults_to_typed_functions_and_parenthesized_arrows() {
+    let mut run = runner();
+    run(r#"def scale(value: Number, factor: Number = 0.5) => value * factor
+adjust = (value, offset = -2) => value + offset
+one = scale(2)
+two = scale(4)
+three = scale(6)
+four = adjust(1)
+five = adjust(3)
+six = adjust(5)
+assert(one, 1)
+assert(two, 2)
+assert(three, 3)
+assert(four, -1)
+assert(five, 1)
+assert(six, 3)"#);
+}
+
+/// Nucleoid starts defaulted parameter histories at their effective values
+#[rustfmt::skip]
+#[test]
+fn starts_defaulted_parameter_histories_at_their_effective_values() {
+    let mut run = runner();
+    run(r#"step = 100
+def sample(seed, step = 4) => [seed, step = step + 1, step@first, step@last]
+one = sample(1)
+two = sample(2)
+three = sample(3)
+provided = sample(4, 9)
+assert(one, [1, 5, 4, 5])
+assert(two, [2, 5, 4, 5])
+assert(three, [3, 5, 4, 5])
+assert(provided, [4, 10, 9, 10])
+assert(step, 100)"#);
+}
+
+/// Nucleoid binds independent literal constructor and method defaults
+#[rustfmt::skip]
+#[test]
+fn binds_independent_literal_constructor_and_method_defaults() {
+    let mut run = runner();
+    run(r#"class Counter(seed = 1):
+    this.count = seed
+    def advance(delta = 2):
+        this.count += delta
+        return this.count
+first = Counter()
+second = Counter()
+third = Counter()
+one = first.advance().value
+two = second.advance().value
+three = third.advance().value
+again = first.advance().value
+supplied = Counter(5)
+custom = supplied.advance(4).value
+assert(first.count, 5)
+assert(second.count, 3)
+assert(third.count, 3)
+assert(supplied.count, 9)
+assert(one, 3)
+assert(two, 3)
+assert(three, 3)
+assert(again, 5)
+assert(custom, 9)"#);
+}
+
+/// Nucleoid restores defaulted function callers after failed redefinitions
+#[rustfmt::skip]
+#[test]
+fn restores_defaulted_function_callers_after_failed_redefinitions() {
+    let mut run = runner();
+    run(r#"def price(quantity, unit = 10) => quantity * unit
+one = price(1)
+two = price(2)
+three = price(3)
+four = price(4)
+assert(one, 10)
+assert(two, 20)
+assert(three, 30)
+assert(four, 40)
+try:
+    def price(quantity, unit = 10) => quantity * unit + 1
+    assert(one, 11)
+    assert(two, 21)
+    assert(three, 31)
+    assert(four, 41)
+    throw "RESTORE_LITERAL_DEFAULT"
+catch error:
+    assert(error, "RESTORE_LITERAL_DEFAULT")
+assert(one, 10)
+assert(two, 20)
+assert(three, 30)
+assert(four, 40)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

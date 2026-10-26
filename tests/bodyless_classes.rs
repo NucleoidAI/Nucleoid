@@ -129,7 +129,10 @@ fn malformed_headers_keep_exact_existing_syntax_diagnostics() {
         ("class Entity(code:)", "Expected a type but found ')'"),
         ("class Entity(1)", "Expected a parameter but found number 1"),
         ("class Entity(code", "Expected ')' but found end of input"),
-        ("class Entity(code = 1)", "Expected ')' but found '='"),
+        (
+            "class Entity(code = [])",
+            "Expected a scalar literal parameter default",
+        ),
         (
             "class Entity\n    this.code = 1",
             "Expected ':' but found end of line",

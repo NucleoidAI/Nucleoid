@@ -52,7 +52,7 @@ impl Runtime {
         scope.set_instance(self.instances.last().cloned());
 
         for (index, parameter) in function.parameters.iter().enumerate() {
-            let value = arguments.get(index).cloned().unwrap_or(Value::Null);
+            let value = parameter.effective_value(arguments.get(index).cloned());
             scope.declare(parameter.name.clone(), value);
         }
 

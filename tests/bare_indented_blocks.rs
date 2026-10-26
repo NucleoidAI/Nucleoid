@@ -61,7 +61,8 @@ fn bare_parameter_keeps_function_metadata_body_and_canonical_source() {
             function.parameters,
             [Parameter {
                 name: name.to_string(),
-                type_name: None
+                type_name: None,
+                default: None,
             }]
         );
         assert_eq!(
@@ -231,10 +232,10 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
             15,
         ),
         (
-            "def f(amount = 1):\n    return amount",
-            "Expected ')' but found '='",
+            "def f(amount = []):\n    return amount",
+            "Expected a scalar literal parameter default",
             1,
-            14,
+            16,
         ),
         (
             "def f() -> int:\n    return 1",

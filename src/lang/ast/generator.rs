@@ -5,7 +5,24 @@
 
 use std::fmt;
 
-use crate::lang::ast::{Expr, LogicalOp, Stmt, TemplatePart, UnaryOp, VersionSelector};
+use crate::lang::ast::{
+    ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart, UnaryOp,
+    VersionSelector,
+};
+
+fn has_defaults(parameters: &[Parameter]) -> bool {
+    parameters
+        .iter()
+        .any(|parameter| parameter.default.is_some())
+}
+
+fn signature(parameters: &[Parameter]) -> String {
+    parameters
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(",")
+}
 
 impl fmt::Display for VersionSelector {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -92,6 +109,19 @@ impl fmt::Display for Expr {
                     .collect();
                 write!(f, "{{{}}}", rendered.join(","))
             }
+            Expr::Function(function) if has_defaults(&function.parameters) => {
+                let parameters = signature(&function.parameters);
+                match &function.body {
+                    FunctionBody::Expression(body) => write!(f, "({parameters})=>{body}"),
+                    FunctionBody::Block(body) => {
+                        write!(
+                            f,
+                            "function({parameters}){{\n{}\n}}",
+                            indent(&source_all(body))
+                        )
+                    }
+                }
+            }
             Expr::Function(function) => match &function.name {
                 Some(name) => write!(f, "{name}()"),
                 None => f.write_str("function()"),
@@ -142,7 +172,17 @@ pub fn generate(statement: &Stmt) -> String {
         Stmt::Return(None) => "return".to_string(),
         Stmt::Throw(expression) => format!("throw {expression}"),
         Stmt::Delete(expression) => format!("delete {expression}"),
+        Stmt::Class(declaration)
+            if has_defaults(&declaration.parameters)
+                || declaration
+                    .methods
+                    .iter()
+                    .any(|method| has_defaults(&method.parameters)) =>
+        {
+            class_source(declaration)
+        }
         Stmt::Class(declaration) => format!("class {}", declaration.name),
+        Stmt::Function(function) if has_defaults(&function.parameters) => function_source(function),
         Stmt::Function(function) => match &function.name {
             Some(name) => format!("def {name}"),
             None => "def".to_string(),
@@ -153,5 +193,102 @@ pub fn generate(statement: &Stmt) -> String {
         Stmt::Try { .. } => "try".to_string(),
         Stmt::Declaration { name, type_name } => format!("{name}:{type_name}"),
         Stmt::Pass => "pass".to_string(),
+    }
+}
+
+// Default-bearing declarations must not discard signature metadata. Keep the
+// established compact labels for every default-free declaration; render the
+// new declarations' bodies with real suite syntax, including init/method data.
+fn indent(source: &str) -> String {
+    source
+        .lines()
+        .map(|line| format!("    {line}"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn source_all(statements: &[Stmt]) -> String {
+    if statements.is_empty() {
+        return "pass".to_string();
+    }
+    statements.iter().map(source).collect::<Vec<_>>().join("\n")
+}
+
+fn function_source(function: &Function) -> String {
+    let name = function.name.as_deref().unwrap_or_default();
+    let header = format!("def {name}({})", signature(&function.parameters));
+    match &function.body {
+        FunctionBody::Expression(body) => format!("{header}=>{body}"),
+        FunctionBody::Block(body) => format!("{header}:\n{}", indent(&source_all(body))),
+    }
+}
+
+fn class_source(class: &ClassDecl) -> String {
+    let mut header = format!("class {}({})", class.name, signature(&class.parameters));
+    let mut body = class
+        .fields
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>();
+    body.extend(class.constructor.iter().map(source));
+    body.extend(class.methods.iter().map(|method| function_source(method)));
+    if class.parent.is_none() && body.is_empty() {
+        return header;
+    }
+    header.push(':');
+    if let Some(parent) = &class.parent {
+        header.push(' ');
+        header.push_str(parent);
+    }
+    let body = if body.is_empty() {
+        "pass".to_string()
+    } else {
+        body.join("\n")
+    };
+    format!("{header}\n{}", indent(&body))
+}
+
+/// Suite-aware rendering inside a new default-bearing declaration. The
+/// public graph-label generator deliberately abbreviates legacy declarations.
+fn source(statement: &Stmt) -> String {
+    match statement {
+        Stmt::Function(function) => function_source(function),
+        Stmt::Class(class) => class_source(class),
+        Stmt::If {
+            condition,
+            consequent,
+            alternate,
+        } => {
+            let mut rendered = format!("if {condition}:\n{}", indent(&source_all(consequent)));
+            if let Some(alternate) = alternate {
+                let body = match alternate.as_ref() {
+                    Stmt::Block(body) => source_all(body),
+                    statement => source(statement),
+                };
+                rendered.push_str(&format!("\nelse:\n{}", indent(&body)));
+            }
+            rendered
+        }
+        Stmt::For {
+            variable,
+            iterable,
+            body,
+        } => {
+            format!(
+                "for {variable} of {iterable}:\n{}",
+                indent(&source_all(body))
+            )
+        }
+        Stmt::Try {
+            body,
+            parameter,
+            catch,
+        } => format!(
+            "try:\n{}\ncatch {parameter}:\n{}",
+            indent(&source_all(body)),
+            indent(&source_all(catch))
+        ),
+        Stmt::Block(body) => format!("{{\n{}\n}}", source_all(body)),
+        statement => generate(statement),
     }
 }

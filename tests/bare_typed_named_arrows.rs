@@ -78,6 +78,7 @@ fn typed_metadata_and_named_return_block_are_exactly_the_parenthesized_form() {
             [Parameter {
                 name: name.to_string(),
                 type_name: Some(annotation.to_string()),
+                default: None,
             }]
         );
         assert_eq!(
@@ -333,9 +334,9 @@ fn the_shared_parameter_parser_preserves_legacy_forms_and_exact_diagnostics() {
             16,
         ),
         (
-            "def f(amount = 1) => amount",
-            "Expected ')' but found '='",
-            14,
+            "def f(amount = []) => amount",
+            "Expected a scalar literal parameter default",
+            16,
         ),
         (
             "def f(amount, other:) => amount",

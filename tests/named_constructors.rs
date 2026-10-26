@@ -154,9 +154,9 @@ fn star_headers_are_rejected_and_ordinary_parameter_errors_are_preserved() {
             Position::new(1, 16),
         ),
         (
-            "class Pair(a = 1)",
-            "Expected ')' but found '='",
-            Position::new(1, 14),
+            "class Pair(a = [])",
+            "Expected a scalar literal parameter default",
+            Position::new(1, 16),
         ),
     ] {
         let error = Runtime::check(source).unwrap_err();

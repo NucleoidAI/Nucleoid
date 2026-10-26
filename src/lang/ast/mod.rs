@@ -19,11 +19,13 @@ pub mod literal;
 pub mod new;
 pub mod object;
 pub mod operator;
+pub mod parameter;
 pub mod parser;
 pub mod reason;
 pub mod template;
 pub mod version;
 
+pub use parameter::ParameterDefault;
 pub use parser::{Program, parse, parse_expression, parse_program};
 
 use std::sync::Arc;
@@ -81,10 +83,12 @@ pub struct ClassDecl {
     pub methods: Vec<Arc<Function>>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Parameter {
     pub name: String,
     pub type_name: Option<String>,
+    /// A scalar literal used only when the argument position/key is absent.
+    pub default: Option<ParameterDefault>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

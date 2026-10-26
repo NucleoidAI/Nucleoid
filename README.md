@@ -1018,6 +1018,27 @@ assert(previousName, "Can")
   `last` and `previous`, negative list indexes and `.value` remain unchanged.
   See the [root contract](nucleoid.spec.md#read-only-state-versions).
 
+## Literal parameter defaults
+
+**Literal defaults fill omitted trailing arguments**
+
+```nuc
+def total(quantity, unit = 5) => quantity * unit
+one = total(1)
+two = total(2)
+three = total(3)
+assert(one, 5)
+assert(two, 10)
+assert(three, 15)
+```
+
+- Parenthesized user-defined signatures may supply immutable scalar literals
+  for absent arguments. Explicit null/falsy arguments are not replaced;
+  annotations and bare signatures keep their existing behavior.
+- Defaults are finite signed numbers, quoted Strings, Booleans or null, not
+  expressions or shared mutable values. See the
+  [root contract](nucleoid.spec.md#literal-parameter-defaults).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

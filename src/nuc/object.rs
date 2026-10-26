@@ -35,7 +35,7 @@ pub(crate) enum ConstructorCall {
     Positional(Vec<Value>),
     Bound {
         constructor: ClassShape,
-        values: Vec<Value>,
+        values: Vec<Option<Value>>,
     },
 }
 
@@ -273,11 +273,12 @@ impl Runtime {
         // Invalid bindings need no owned snapshot, but valid calls must pin
         // the selected signature/body before evaluating any RHS.
         let constructor = ClassShape::of(class);
-        let mut values = vec![Value::Null; constructor.parameters.len()];
+        // None is an absent key, not a supplied Null or Undefined value.
+        let mut values = vec![None; constructor.parameters.len()];
         for binding in bindings {
             let value = self.evaluate(binding.expression, scope)?;
             if let Some(slot) = binding.slot {
-                values[slot] = value;
+                values[slot] = Some(value);
             }
         }
         Ok(ConstructorCall::Bound {
@@ -293,9 +294,10 @@ impl Runtime {
         this: &ObjectId,
     ) -> Result<()> {
         let (class, arguments) = match call {
-            ConstructorCall::Positional(values) => {
-                (ClassShape::of(self.effective_constructor(name)?), values)
-            }
+            ConstructorCall::Positional(values) => (
+                ClassShape::of(self.effective_constructor(name)?),
+                values.into_iter().map(Some).collect(),
+            ),
             ConstructorCall::Bound {
                 constructor,
                 values,
@@ -312,7 +314,7 @@ impl Runtime {
 
         let mut arguments = arguments.into_iter();
         for parameter in class.parameters {
-            let value = arguments.next().unwrap_or(Value::Null);
+            let value = parameter.effective_value(arguments.next().flatten());
             scope.declare(parameter.name, value);
         }
 
