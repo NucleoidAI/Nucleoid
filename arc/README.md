@@ -13,15 +13,15 @@ type aliases, or separate type files.
 The TypeScript check uses non-strict inference. Avoid redundant type checks
 inside typed helpers. Matrix helpers trust array inputs but retain
 rectangularity, finite-value, and safe-integer dimension/offset checks.
-OpenRouter completion envelopes are checked before use. Per-call response shapes
-rely on provider-side JSON Schema enforcement, without local schema validation.
-Native `input_value` and `output_value`
+External JSON remains `unknown` until validated: OpenRouter envelopes and
+per-call responses are checked before use. Native `input_value` and `output_value`
 use inline `{ [property: string]: unknown }` maps without predefined properties.
 Snapshots accept arbitrary JSON objects and preserve all fields; primitives,
 arrays, and null are rejected. Output placement requires numeric `x` and `y`
 only at the composition boundary, with dimension/offset constraints retained
 in the matrix helpers. The generic native JSON bridge still supports primitive
-results.
+results. Validate external model responses before passing their grids to
+matrix helpers.
 Use Bun to install dependencies from the committed lockfile:
 
 ```sh
@@ -61,22 +61,25 @@ type checking, linting, and offline inspection do not require model calls.
 ## Structured responses
 
 Each analyzer and visualizer call supplies its own named `response_format`
-using `type: "json_schema"` and `strict: true`. Every schema requires its declared
+using `type: "json_schema"` and `strict: true`, rather than embedding
+pseudo-JSON format hints in message text. Every schema requires its declared
 fields and rejects unknown fields, including inside instance objects.
-Declarations and implementations carry Nucleoid source as JSON strings. Instance
+Declarations and implementations must contain non-whitespace code. Instance
 grids contain integer colors from `0` through `9`; segmentation masks must match
 the supplied canvas dimensions. Rendered output crops retain their existing
 placement behavior and ARC dimension limits.
 
-The shared wrapper forwards each format unchanged. The OpenRouter client also
-includes the schema in a JSON-only system message under `json_format`, so the
-model receives the expected response structure alongside its input data.
-The provider is responsible for schema enforcement; the client parses JSON but
-does not repeat schema or code-content validation locally. Code fields use plain
-JSON strings without pattern or length constraints, including for multiline
-Nucleoid programs, quotes, and backslashes. The client neither coerces values nor
-repairs malformed JSON. All outgoing message content, including format schemas,
-control IDs, and instruction examples, is serialized as complete JSON.
+The shared wrapper forwards each format unchanged. The OpenRouter client uses
+dependency-free validation for the object, array, string, and numeric constraints
+emitted by `response_format.ts` before returning responses for execution or
+composition. Code fields use
+plain JSON strings in the provider schema, with nonblank-source checks applied
+locally after schema validation. Some grammar decoders treat `pattern` as a
+whole-string match or restrict JSON escapes in length-constrained strings;
+avoiding those constraints on the wire permits multiline Nucleoid programs,
+quotes, and backslashes. The client neither coerces invalid values nor repairs
+malformed JSON. All outgoing message content, including control IDs and
+instruction examples, is serialized as complete JSON.
 
 Responses must finish with `finish_reason: "stop"`. Truncated, filtered, refused,
 errored, and unfinished completions fail before parsing or execution, even when
@@ -176,8 +179,7 @@ message, including injected examples and retry feedback. Natural-language
 prompts and prose hidden in JSON values are forbidden; executable Nucleoid code
 travels in explicit JSON string fields. Analyzer and visualizer requests,
 injected instruction examples, and control IDs each serialize one complete
-JSON document. The provider is responsible for enforcing response schemas before
-symbolic execution or composition.
+JSON document. Responses are validated before symbolic execution or composition.
 
 ## JSONL Review Tools
 

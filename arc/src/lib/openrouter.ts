@@ -1,5 +1,6 @@
 import axios from "axios";
 import { isObject } from "./json";
+import * as responseFormat from "./response_format";
 import * as terminal from "./terminal";
 
 function optionalString(value: unknown): value is string | null | undefined {
@@ -60,6 +61,14 @@ function validateEnvelope(value: unknown): value is {
   );
 }
 
+function requireCode(source: string, path: string, completion: string): void {
+  if (!source.trim()) {
+    throw new Error(
+      `OpenRouter returned blank Nucleoid code at ${path}\n\nCompletion: ${completion}`
+    );
+  }
+}
+
 export async function generate<
   Response extends {
     declarations?: string[];
@@ -109,13 +118,7 @@ export async function generate<
     },
     data: {
       model: "qwen/qwen3.8-27b",
-      messages: [
-        {
-          role: "system",
-          content: JSON.stringify({ json_format: schema }),
-        },
-        ...messages,
-      ],
+      messages,
       temperature: 0,
       top_p: 1,
       top_k: 1,
@@ -195,7 +198,7 @@ export async function generate<
     );
   }
 
-  let jsonContent: Response;
+  let jsonContent: unknown;
 
   try {
     jsonContent = JSON.parse(content);
@@ -204,6 +207,22 @@ export async function generate<
     throw new Error(
       `Failed to parse OpenRouter response as JSON: ${message}\n\nCompletion: ${completion}\n\nResponse content: ${content}`
     );
+  }
+
+  const errors: { path: string; message: string }[] = [];
+  if (!responseFormat.validate<Response>(jsonContent, schema, errors)) {
+    throw new Error(
+      `OpenRouter response does not match ${name}: ${JSON.stringify(
+        errors
+      )}\n\nCompletion: ${completion}`
+    );
+  }
+
+  jsonContent.declarations?.forEach((source: string, index: number) =>
+    requireCode(source, `/declarations/${index}`, completion)
+  );
+  if (Object.hasOwn(jsonContent, "implementation")) {
+    requireCode(jsonContent.implementation, "/implementation", completion);
   }
 
   return jsonContent;
