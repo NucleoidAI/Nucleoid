@@ -1,8 +1,4 @@
-export function focus(matrix: number[][]): {
-  x_position: number;
-  y_position: number;
-  object_matrix: number[][];
-} {
+export function focus(matrix) {
   const rows: number = matrix.length;
   const cols: number = matrix[0].length;
 
@@ -38,20 +34,10 @@ export function focus(matrix: number[][]): {
   };
 }
 
-export function enlarge(
-  matrix: {
-    x_position: number;
-    y_position: number;
-    object_matrix: number[][];
-  },
-  rows: number,
-  cols: number
-): number[][] {
+export function enlarge(matrix, rows: number, cols: number) {
   const { x_position: xOffset, y_position: yOffset, object_matrix } = matrix;
 
-  const originalArray = Array.from({ length: rows }, () =>
-    Array<number>(cols).fill(0)
-  );
+  const originalArray = Array.from({ length: rows }, () => Array(cols).fill(0));
 
   for (let i = 0; i < object_matrix.length; i++) {
     for (let j = 0; j < object_matrix[i].length; j++) {

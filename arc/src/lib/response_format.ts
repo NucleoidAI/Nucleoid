@@ -1,11 +1,4 @@
-import type { SchemaObject } from "ajv";
-
-export function object(properties: { [property: string]: SchemaObject }): {
-  type: "object";
-  properties: { [property: string]: SchemaObject };
-  required: string[];
-  additionalProperties: false;
-} {
+export function object(properties) {
   return {
     type: "object",
     properties,
@@ -14,25 +7,12 @@ export function object(properties: { [property: string]: SchemaObject }): {
   };
 }
 
-export const code: { type: "string"; minLength: number } = {
+export const code = {
   type: "string",
   minLength: 1,
 };
 
-export function grid(
-  rows?: number,
-  cols?: number
-): {
-  type: "array";
-  minItems: number;
-  maxItems: number;
-  items: {
-    type: "array";
-    minItems: number;
-    maxItems: number;
-    items: { type: "integer"; minimum: number; maximum: number };
-  };
-} {
+export function grid(rows?: number, cols?: number) {
   return {
     type: "array",
     minItems: rows ?? 1,
@@ -46,22 +26,7 @@ export function grid(
   };
 }
 
-export function create(
-  name: string,
-  properties: { [property: string]: SchemaObject }
-): {
-  type: "json_schema";
-  json_schema: {
-    name: string;
-    strict: true;
-    schema: {
-      type: "object";
-      properties: { [property: string]: SchemaObject };
-      required: string[];
-      additionalProperties: false;
-    };
-  };
-} {
+export function create(name: string, properties) {
   return {
     type: "json_schema",
     json_schema: {

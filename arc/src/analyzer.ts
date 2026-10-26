@@ -4,27 +4,10 @@ import * as llm from "./lib/llm";
 import * as terminal from "./lib/terminal";
 import * as responseFormat from "./lib/response_format";
 
-export async function declarations({
-  train_dataset,
-}: {
-  train_dataset: {
-    dataset: {
-      input_matrix: number[][];
-      output_matrix: number[][];
-      instances: {
-        instance_name: string;
-        input_instance_matrix: number[][];
-        output_instance_matrix: number[][];
-        implementation: string;
-        input_value: object;
-        output_value: object;
-      }[];
-    }[];
-  };
-}) {
+export async function declarations({ train_dataset }) {
   terminal.step("Inferring declarations");
 
-  const { declarations } = await llm.generate<{ declarations: string[] }>({
+  const { declarations } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -47,23 +30,10 @@ export async function declarations({
   return { declarations };
 }
 
-export async function instances({
-  declarations,
-  input_matrix,
-  output_matrix,
-}: {
-  declarations: string[];
-  input_matrix: number[][];
-  output_matrix: number[][];
-}) {
+export async function instances({ declarations, input_matrix, output_matrix }) {
   terminal.step("Segmenting training objects");
 
-  const { instances } = await llm.generate<{
-    instances: {
-      input_instance_matrix: number[][];
-      output_instance_matrix: number[][];
-    }[];
-  }>({
+  const { instances } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -110,15 +80,10 @@ export async function value({
   declarations,
   input_instance_matrix,
   output_instance_matrix,
-}: {
-  instance_name: string;
-  declarations: string[];
-  input_instance_matrix: number[][];
-  output_instance_matrix: number[][];
 }) {
   terminal.step(`Constructing ${instance_name}`);
 
-  const { implementation } = await llm.generate<{ implementation: string }>({
+  const { implementation } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -136,11 +101,11 @@ export async function value({
   });
 
   terminal.step("Evaluating declarative rules");
-  const input_value = nucleoid.snapshot(
-    await nucleoid.run([declarations[0], implementation].join("\n\n"))
+  const input_value = await nucleoid.run(
+    [declarations[0], implementation].join("\n\n")
   );
-  const output_value = nucleoid.snapshot(
-    await nucleoid.run([...declarations, implementation].join("\n\n"))
+  const output_value = await nucleoid.run(
+    [...declarations, implementation].join("\n\n")
   );
 
   terminal.grid("Input crop", Matrix.crop(input_instance_matrix));

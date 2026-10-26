@@ -3,25 +3,15 @@
 ## Development
 
 The application keeps `.ts` source files and runs directly on Node.js using
-`tsx`, without generating JavaScript files. Keep data types literal and inline,
-including primitives, object shapes, arrays, callback signatures, and synchronous
-return values. Spell out object fields instead of deriving contracts with
-`Parameters`, `ReturnType`, `Awaited`, `Omit`, or other utility types. Let
-TypeScript infer async return types instead of writing `Promise` annotations;
-async functions still return promises. Do not introduce model interfaces,
-type aliases, or separate type files.
-The TypeScript check uses non-strict inference. Avoid redundant type checks
-inside typed helpers. Matrix helpers trust array inputs but retain
-rectangularity, finite-value, and safe-integer dimension/offset checks.
-External JSON remains `unknown` until validated: OpenRouter envelopes and
-per-call responses are checked before use. Native `input_value` and `output_value`
-use inline `{ [property: string]: unknown }` maps without predefined properties.
-Snapshots accept arbitrary JSON objects and preserve all fields; primitives,
-arrays, and null are rejected. Output placement requires numeric `x` and `y`
-only at the composition boundary, with dimension/offset constraints retained
-in the matrix helpers. The generic native JSON bridge still supports primitive
-results. Validate external model responses before passing their grids to
-matrix helpers.
+`tsx`, without generating JavaScript files. Explicit types must be inline
+primitive annotations, such as `string`, `number`, and `boolean`, on scalar
+parameters, local values, and return values. Infer arrays, object shapes,
+callbacks, and async return types instead of declaring interfaces, type aliases,
+generic types, or separate type files. The TypeScript check uses non-strict
+inference. Avoid redundant primitive type checks inside typed helpers. Matrix
+helpers trust array inputs but retain rectangularity, finite-value, and
+safe-integer dimension/offset checks. Validate external model responses before
+passing their grids to these helpers.
 Use Bun to install dependencies from the committed lockfile:
 
 ```sh

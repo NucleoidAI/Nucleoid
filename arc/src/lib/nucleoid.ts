@@ -3,34 +3,21 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import Ajv from "ajv";
 
 const execFileAsync = promisify(execFile);
-const validateSnapshot = new Ajv({ allErrors: true }).compile<{
-  [property: string]: unknown;
-}>({
-  type: "object",
-  additionalProperties: true,
-});
 
-async function execute(args: string[]) {
+async function execute(args) {
   const executable: string =
     process.env.NUCLEOID_EXECUTABLE ??
     String.raw`C:\Users\canmi\dev\Nucleoid\target\debug\nucleoid.exe`;
   const { stdout } = await execFileAsync(executable, args, {
     encoding: "utf8",
     windowsHide: true,
-  }).catch((error: unknown) => {
-    const stderr =
-      error instanceof Error &&
-      "stderr" in error &&
-      typeof error.stderr === "string"
-        ? error.stderr.trim()
-        : "";
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Nucleoid execution failed: ${stderr || message}`, {
-      cause: error,
-    });
+  }).catch((error) => {
+    throw new Error(
+      `Nucleoid execution failed: ${error.stderr?.trim() || error.message}`,
+      { cause: error }
+    );
   });
   return stdout;
 }
@@ -53,7 +40,7 @@ export async function run(source: string) {
     const stdout: string = await execute(["--json", file]);
 
     try {
-      const result: unknown = JSON.parse(stdout);
+      const result = JSON.parse(stdout);
       return result;
     } catch (error) {
       throw new Error("Nucleoid returned invalid JSON", { cause: error });
@@ -61,17 +48,4 @@ export async function run(source: string) {
   } finally {
     await rm(directory, { recursive: true });
   }
-}
-
-export function snapshot(value: unknown): {
-  [property: string]: unknown;
-} {
-  if (!validateSnapshot(value)) {
-    throw new Error(
-      `Nucleoid returned invalid object state: ${JSON.stringify(
-        validateSnapshot.errors
-      )}`
-    );
-  }
-  return value;
 }

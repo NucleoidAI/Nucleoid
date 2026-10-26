@@ -1,12 +1,8 @@
-export function crop(matrix: number[][]): number[][] {
+export function crop(matrix) {
   return locate(matrix).matrix;
 }
 
-export function locate(matrix: number[][]): {
-  matrix: number[][];
-  x: number;
-  y: number;
-} {
+export function locate(matrix) {
   const rows: number = matrix.length;
   const cols: number = matrix[0]?.length ?? 0;
   let top = rows;
@@ -43,12 +39,12 @@ export function locate(matrix: number[][]): {
 }
 
 export function pad(
-  matrix: number[][],
+  matrix,
   rows: number,
   cols: number,
   left: number,
   top: number
-): number[][] {
+) {
   if (
     !Number.isSafeInteger(rows) ||
     !Number.isSafeInteger(cols) ||
@@ -93,7 +89,7 @@ export function pad(
   return result;
 }
 
-export function merge(...matrices: number[][][]): number[][] {
+export function merge(...matrices) {
   if (matrices.length === 0) {
     throw new Error("At least one matrix is required for merging");
   }
@@ -120,7 +116,7 @@ export function merge(...matrices: number[][][]): number[][] {
   return result;
 }
 
-export function difference(matrix1: number[][], matrix2: number[][]): number {
+export function difference(matrix1, matrix2): number {
   let mismatches = 0;
   const rows = Math.max(matrix1.length, matrix2.length);
 
@@ -146,7 +142,7 @@ export function difference(matrix1: number[][], matrix2: number[][]): number {
   return mismatches;
 }
 
-export function toString(matrix: number[][]): void {
+export function toString(matrix) {
   matrix.forEach((row) => {
     console.debug(`[${row.join(",")}]`);
   });
