@@ -3,7 +3,7 @@ import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
-import puzzle from "./data/training/0ca9ddb6.json";
+import puzzle from "./data/training/3aa6fb7a.json";
 // Completed:
 // 3aa6fb7a
 

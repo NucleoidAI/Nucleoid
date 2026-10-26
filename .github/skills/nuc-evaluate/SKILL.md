@@ -98,6 +98,13 @@ outcome metadata does not trigger another pair. No commits, pushes, or merges.
 The evaluation worker stops after returning its evidence. It never records
 outcome metadata, commits, integrates a candidate, or starts another cycle.
 
+The caller preserves the proposal request's
+[execution mode](../nuc-proposal/SKILL.md#choose-execution-mode-caller-only).
+A single-proposal request does not enter a continuous cycle: finish its normal
+evaluation and outcome recording, then stop without starting another proposal
+or running reinforcement-learning policy checks. All required per-proposal
+checks still apply.
+
 When `/nuc-evaluate` coordinates an active continuous cycle, the caller follows
 the [shared rejection workflow](../../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
 For `Rejected`, commit only the NUC rejection documentation and directly

@@ -121,8 +121,17 @@ to that evaluation and must not recursively launch another agent.
 
 ## Continuous proposal cycles (caller only)
 
-After finalizing and committing an `Accepted` or `Rejected` outcome for a new
-NUC, the coordinating caller immediately starts a distinct new proposal under
+`/nuc-proposal` defaults to continuous mode for open-ended requests. A request
+for one specific NUC, concrete feature, or particular revision uses
+single-proposal mode: finish its preparation, independent evaluation, and
+outcome recording, then stop unless the user explicitly requests continuation.
+Follow the [execution-mode rule](../skills/nuc-proposal/SKILL.md#choose-execution-mode-caller-only),
+including through `/nuc-evaluate`. Do not run reinforcement-learning policy
+checks for a single-proposal request; normal baseline, compatibility, token
+acceptance, and development checks remain required.
+
+In continuous mode, after finalizing and committing an `Accepted` or `Rejected`
+outcome for a new NUC, the caller immediately starts a distinct new proposal under
 the [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
 Run cycles sequentially with fresh agents, baselines, candidate worktrees and
 reports, preserving the selection, compatibility and acceptance requirements.

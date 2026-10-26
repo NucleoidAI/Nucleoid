@@ -13,6 +13,20 @@ agent. Inside that agent, execute the steps below; do not spawn another agent.
 Follow `.github/copilot-instructions.md` and `docs/nuc-0001.md`.
 Work on exactly one proposal revision in the caller's isolated candidate.
 
+## Choose execution mode (caller only)
+
+`/nuc-proposal` defaults to continuous mode for open-ended proposal requests.
+If the user requests one specific NUC by number or path, one concrete feature,
+or a particular revision, use single-proposal mode instead. Complete that
+proposal's preparation, independent evaluation, and outcome recording, then
+stop; do not select or start another proposal unless the user explicitly
+requests continuation.
+
+Preserve this mode through evaluation, including coordination through
+`/nuc-evaluate`. Do not run reinforcement-learning policy checks for a
+single-proposal request. Immutable baselines, syntax compatibility, per-case
+token acceptance, and required development checks still apply in both modes.
+
 ## Classify every proposal
 
 Give every new and existing NUC exactly one `Category` header from the
@@ -149,6 +163,9 @@ unrelated staged and unstaged work. Proposal and evaluation agents must not
 perform this caller-owned commit.
 
 ## Continue with the next NUC (caller only)
+
+This section applies only in continuous mode. A single-proposal request stops
+after its outcome under the [execution-mode rule](#choose-execution-mode-caller-only).
 
 After a new NUC receives a final `Accepted` or `Rejected` decision, the
 coordinating caller must finish its outcome before starting the next cycle:

@@ -52,8 +52,12 @@ rejected proposal documentation and index/outcome metadata under the
 Rejected candidate language changes remain isolated. Do not perform this
 caller-owned commit yourself.
 
-After the caller finalizes either an `Accepted` or `Rejected` outcome for a new
-NUC, it immediately starts the next proposal under the
+The caller follows the skill's
+[execution-mode rule](../skills/nuc-proposal/SKILL.md#choose-execution-mode-caller-only).
+In continuous mode, after finalizing an `Accepted` or `Rejected` outcome for a
+new NUC, it immediately starts the next proposal under the
 [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
+In single-proposal mode, it finishes the requested outcome and stops without
+starting another proposal or running reinforcement-learning policy checks.
 This continuation is caller-owned; stop at your single-proposal handoff and
 never launch the next cycle yourself.
