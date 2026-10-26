@@ -1825,4 +1825,32 @@ assert(two, "Daphne!")
 assert(three, "Merve!")
 [one, two, three]
 # return: ["Can!","Daphne!","Merve!"]
+---
+# Class state anchors preserve independent first recorded values
+
+class Counter(seed):
+    this.x = seed
+step = 1
+first = Counter(10)
+$Counter.x = $Counter.x@first - step
+second = Counter(30)
+assert([first.x, second.x], [9, 29])
+step = 2
+assert([first.x, second.x], [8, 28])
+assert([first.x@0, second.x@first], [10, 30])
+class Moving(seed):
+    this.x = seed
+    this.enabled = false
+if $Moving.enabled:
+    $Moving.x = $Moving.x@last - 1
+item = Moving(10)
+item.enabled = true
+assert(item.x, 9)
+item.enabled = false
+item.enabled = true
+assert(item.x, 8)
+assert(item.x@first, 10)
+assert(item.x@previous, 9)
+[first.x, second.x]
+# return: [8,28]
 ```

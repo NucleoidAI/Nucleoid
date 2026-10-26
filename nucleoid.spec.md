@@ -2167,6 +2167,59 @@ statement positions; caught values and transaction recovery are unchanged.
   through `Nucleoid restores defaulted function callers after failed
   redefinitions` specify the measured behavior.
 
+## Class-level state version anchors
+
+- Extend NUC53 property histories inside per-instance class rules, without new
+  syntax or a class-wide history. `$Obj.x@first` and `$Obj.x@0` select that
+  concrete instance/property slot's first recorded value, not its value when
+  a rule was declared or first activated. Constructor parameters do not
+  implicitly create fields: store `this.orientation = orientation` explicitly.
+- An ordinary class property rule may read its own fixed historical position
+  with `@first` or any numeric `@n`. Only that fixed self-reference is exempt
+  from static class self-cycle validation. Other live reads, non-self history
+  reads and transitive class cycles retain their existing dependency checks.
+  A live self-read alongside an anchor still raises
+  `TypeError("Circular Dependency")`.
+- Class conditionals may tag an orientation-180 receiver and assign its `x`
+  and `y` from their own first values minus one. Each receiver, including
+  inherited receivers and instances created after declaration, owns independent
+  histories. Later guard/input changes recompute from the selected fixed value;
+  re-evaluation never changes the meaning of `@first` or cumulatively subtracts.
+- A fixed self-anchor whose slot/index has no recorded entry defers that
+  assignment: return Null, retain any existing destination value, and do not
+  write a placeholder or seed its own history. Other branch statements still
+  follow ordinary execution. An actual stored Null is an available entry and
+  keeps normal null propagation; it is not an absent history.
+- History reads still track the actual property slot and receiver/key reads.
+  Conditionals and non-self readers therefore recover after external writes,
+  missing guards, slot deletion and recreation. A recreated slot begins again
+  at zero. Ordinary instance-property overrides/deletion still replace/remove
+  that instance's property rule; this feature does not silently reinstall it.
+- `@last` and `@previous` move when history grows. Direct class property rules
+  using moving self-history still raise `TypeError("Circular Dependency")`
+  before instances exist. Imperative conditional bodies retain accepted
+  same-slot moving reads, including helpers and computed receivers: later
+  activations use the then-selected value and preserve actual history order.
+  Unavailable moving entries keep ordinary deferred-Null assignment behavior,
+  not fixed-anchor deferral. Non-self moving readers remain reactive, genuine
+  graph cycles remain errors, and ordinary non-class variable/object
+  self-assignments retain their accepted behavior.
+- `.value` remains an explicit per-instance snapshot: its isolated reads are
+  frozen before storing a rule, not turned into live self-feedback.
+  A missing `$Empty.x@first.value` keeps
+  `ReferenceError("$Empty.x@first is not defined")`.
+  Selected destinations remain read-only:
+  `TypeError("State versions are read-only")`. Non-slot selections keep
+  `TypeError("State versions require a variable or object property")`;
+  malformed selectors keep
+  `SyntaxError("Expected a non-negative integer, 'first', 'last', or 'previous' after '@'")`.
+- Preserve NUC53 recording, slot lifetimes, object identity/list-value semantics,
+  rollback of histories with State/graph/class declarations, successful-run
+  retention, ordinary class order/overrides, parser/generator forms and limits.
+  The eight appended entries beginning `Nucleoid anchors class conditionals to
+  each instances first property values` through `Nucleoid preserves moving
+  class conditionals beside fixed first anchors` specify this extension.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -13289,4 +13342,274 @@ assert(one, 10)
 assert(two, 20)
 assert(three, 30)
 assert(four, 40)
+---
+# Nucleoid anchors class conditionals to each instances first property values
+
+class Obj(x: int, y: int, orientation: int):
+    this.x = x
+    this.y = y
+    this.orientation = orientation
+first = Obj(10, 20, 180)
+first.x = 70
+first.y = 80
+if $Obj.orientation == 180:
+    $Obj.tag = "l4214"
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+second = Obj(30, 40, 180)
+waiting = Obj(50, 60, 0)
+assert([first.x, first.y, first.tag], [9, 19, "l4214"])
+assert([second.x, second.y, second.tag], [29, 39, "l4214"])
+assert([waiting.x, waiting.y, waiting.tag], [50, 60, null])
+waiting.x = 90
+waiting.orientation = 180
+assert([waiting.x, waiting.y, waiting.tag], [49, 59, "l4214"])
+first.orientation = 0
+first.orientation = 180
+second.orientation = 180
+assert([first.x, first.y, second.x, second.y], [9, 19, 29, 39])
+assert(first.x@first, 10)
+assert(first.x@0, 10)
+assert(second.x@first, 30)
+assert(second.x@2, null)
+[first.x, first.y, second.x, second.y]
+# return: [9,19,29,39]
+---
+# Nucleoid anchors ordinary class rules with fixed numeric and first selectors
+
+class Counter(seed):
+    this.x = seed
+    this.x = seed + 10
+    this.y = seed * 2
+before = Counter(10)
+step = 1
+$Counter.x = $Counter.x@first - step
+$Counter.y = $Counter["y"]@0 - step
+$Counter.latest = $Counter.x@last
+$Counter.prior = $Counter.x@previous
+assert([before.x, before.y, before.latest, before.prior], [9, 19, 9, 20])
+step = 2
+assert([before.x, before.y, before.latest, before.prior], [8, 18, 8, 9])
+$Counter.x = $Counter.x@1 - step
+after = Counter(30)
+assert([before.x, after.x, after.y], [18, 38, 58])
+assert([after.x@first, after.x@0, after.x@1], [30, 30, 40])
+step = 3
+assert([before.x, after.x, before.y, after.y], [17, 37, 17, 57])
+assert([before.latest, after.latest, before.prior, after.prior], [17, 37, 18, 38])
+[before.x, after.x, before.y, after.y]
+# return: [17,37,17,57]
+---
+# Nucleoid defers missing self anchors and recovers recreated property slots
+
+class Pending(orientation):
+    this.orientation = orientation
+if $Pending.orientation == 180:
+    $Pending.tag = "l4214"
+    $Pending.x = $Pending.x@first - 1
+item = Pending(180)
+original = item.x@first
+assert(item.tag, "l4214")
+assert(item.x, null)
+assert(original, null)
+item.x = 10
+assert(item.x, 9)
+assert(item.x@first, 10)
+assert(item.x@previous, 10)
+assert(original, 10)
+delete item.x
+assert(item.x, null)
+assert(item.x@first, null)
+assert(original, null)
+item.x = 40
+assert(item.x, 39)
+assert(item.x@first, 40)
+assert(item.x@0, 40)
+assert(original, 40)
+item.orientation = 180
+assert(item.x, 39)
+assert(item.x@2, null)
+[item.x, item.x@first, original]
+# return: [39,40,40]
+---
+# Nucleoid waits for actual history entries before using numeric self anchors
+
+class Sample(seed):
+    this.x = seed
+    this.enabled = true
+if $Sample.enabled:
+    $Sample.x = $Sample.x@1 - 1
+item = Sample(10)
+assert(item.x, 10)
+assert(item.x@first, 10)
+assert(item.x@1, null)
+item.enabled = true
+assert(item.x, 10)
+assert(item.x@1, null)
+item.x = 20
+assert(item.x, 19)
+assert(item.x@first, 10)
+assert(item.x@1, 20)
+item.enabled = false
+item.enabled = true
+assert(item.x, 19)
+assert(item.x@3, null)
+---
+# Nucleoid anchors inherited class receivers independently
+
+class Base(seed):
+    this.x = seed
+    this.orientation = 180
+class Child: Base
+    def init(seed):
+        super(seed)
+step = 1
+$Base.x = $Base.x@0 - step
+if $Base.orientation == 180:
+    $Base.tag = "l4214"
+    $Base.x = $Base.x@first - step
+parent = Base(10)
+child = Child(30)
+assert([parent.x, child.x], [9, 29])
+assert([parent.tag, child.tag], ["l4214", "l4214"])
+assert([parent.x@first, child.x@first], [10, 30])
+step = 2
+assert([parent.x, child.x], [8, 28])
+child.orientation = 0
+child.orientation = 180
+assert(child.x, 28)
+assert(child.x@3, null)
+---
+# Nucleoid restores class anchors histories and declarations on caught rollback
+
+class Sample(seed):
+    this.x = seed
+    this.enabled = true
+if $Sample.enabled:
+    $Sample.x = $Sample.x@first - 1
+item = Sample(10)
+original = item.x@first
+try:
+    delete item.x
+    item.x = 50
+    $Sample.extra = $Sample.x@first
+    throw "RESTORE_ANCHOR"
+catch error:
+    assert(error, "RESTORE_ANCHOR")
+assert(item.x, 9)
+assert(item.x@first, 10)
+assert(item.x@previous, 10)
+assert(item.x@2, null)
+assert(item.extra, null)
+assert(original, 10)
+item.enabled = true
+assert(item.x, 9)
+delete item.x
+item.x = 30
+assert(item.x, 29)
+assert(item.x@first, 30)
+assert(original, 30)
+[item.x, original]
+# return: [29,30]
+---
+# Nucleoid protects direct class history cycles and read only destinations
+
+class Sample:
+    this.x = 10
+    this.items = [1, 2]
+    this.enabled = true
+item = Sample()
+try:
+    $Sample.x = $Sample.x@last - 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.x@previous - 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.x@first + $Sample.x
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x@first = 4
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+try:
+    delete $Sample.x@first
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+try:
+    if $Sample.enabled:
+        $Sample.items@first.push(3)
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+try:
+    $Sample.bad = Math.PI@first
+catch error:
+    assert(error, TypeError("State versions require a variable or object property"))
+class Empty
+$Empty.x = $Empty.x@first.value
+try:
+    absent = Empty()
+catch error:
+    assert(error, ReferenceError("$Empty.x@first is not defined"))
+assert(item.x, 10)
+assert(item.x@first, 10)
+assert(item.x@1, null)
+assert(item.items, [1, 2])
+assert(item.items@1, null)
+---
+# Nucleoid preserves moving class conditionals beside fixed first anchors
+
+class Counter(seed):
+    this.x = seed
+    this.enabled = false
+if $Counter.enabled:
+    $Counter.x = $Counter.x@last - 1
+item = Counter(10)
+item.enabled = true
+assert(item.x, 9)
+item.enabled = false
+item.enabled = true
+assert(item.x, 8)
+assert(item.x@first, 10)
+assert(item.x@previous, 9)
+class Anchor(seed):
+    this.x = seed
+    this.y = seed
+    this.enabled = false
+if $Anchor.enabled:
+    $Anchor.x = $Anchor.x@first - 1
+    $Anchor.y = $Anchor.y@0 - 1
+anchored = Anchor(10)
+anchored.enabled = true
+assert([anchored.x, anchored.y], [9, 9])
+anchored.enabled = false
+anchored.enabled = true
+assert([anchored.x, anchored.y], [9, 9])
+assert([anchored.x@first, anchored.y@first], [10, 10])
+assert([anchored.x@2, anchored.y@2], [null, null])
+class Previous(seed):
+    this.x = seed
+    this.x = seed + 10
+    this.enabled = false
+if $Previous.enabled:
+    $Previous.x = $Previous.x@previous - 1
+previous = Previous(10)
+assert(previous.x@previous, 10)
+previous.enabled = true
+assert(previous.x, 9)
+assert(previous.x@previous, 20)
+previous.enabled = false
+previous.enabled = true
+assert(previous.x, 19)
+assert(previous.x@first, 10)
+assert(previous.x@1, 20)
+assert(previous.x@2, 9)
+assert(previous.x@previous, 9)
+assert(previous.x@3, 19)
+assert(previous.x@4, null)
+[item.x, anchored.x, anchored.y, previous.x, previous.x@previous]
+# return: [8,9,9,19,9]
 ```

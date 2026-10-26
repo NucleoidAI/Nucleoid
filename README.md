@@ -1039,6 +1039,39 @@ assert(three, 15)
   expressions or shared mutable values. See the
   [root contract](nucleoid.spec.md#literal-parameter-defaults).
 
+## Class-level state version anchors
+
+**Class conditionals shift each instance from its first recorded coordinates**
+
+```nuc
+class Obj(x: int, y: int, orientation: int):
+    this.x = x
+    this.y = y
+    this.orientation = orientation
+if $Obj.orientation == 180:
+    $Obj.tag = "l4214"
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+first = Obj(10, 20, 180)
+second = Obj(30, 40, 180)
+assert([first.x, first.y, first.tag], [9, 19, "l4214"])
+assert([second.x, second.y, second.tag], [29, 39, "l4214"])
+first.orientation = 0
+first.orientation = 180
+assert([first.x, first.y], [9, 19])
+assert([first.x@0, second.x@first], [10, 30])
+```
+
+- Draft NUC 55 extends accepted NUC53 histories to stable class self-anchors:
+  `@first` means the instance/property slot's first recorded value, not the
+  value when its rule activates. `@0` is the same anchor.
+- Ordinary class property rules can use fixed self-history too. Missing
+  fixed self-entries wait for actual input. Moving `@last`/`@previous` reads
+  retain accepted imperative conditional effects; direct moving self-rules
+  still raise Circular Dependency. Histories stay read-only, slot-owned and
+  transactional. See the root
+  `nucleoid.spec.md` **Class-level state version anchors** contract.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

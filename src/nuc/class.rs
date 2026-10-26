@@ -274,7 +274,7 @@ impl Runtime {
             return Ok(());
         };
 
-        let mut pending = Expression::new(value).class_properties(class);
+        let mut pending = Expression::new(value).class_rule_properties(class, property);
 
         let mut seen: Vec<String> = Vec::new();
 
@@ -294,7 +294,7 @@ impl Runtime {
                 .get(&DeclarationKey::property(class, &current))
             {
                 if let Stmt::Assign { value, .. } = &declaration.statement {
-                    pending.extend(Expression::new(value).class_properties(class));
+                    pending.extend(Expression::new(value).class_rule_properties(class, &current));
                 }
             }
         }

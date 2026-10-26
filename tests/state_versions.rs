@@ -1159,7 +1159,9 @@ assert(second.saved, 7)
     );
     error(
         &mut runtime,
-        "$Meter.loop = $Meter.loop@first",
+        // Fixed self anchors are additive NUC55 behavior; a moving DIRECT
+        // class rule remains the cycle control, unlike an imperative branch.
+        "$Meter.loop = $Meter.loop@last",
         ErrorKind::Type,
         "Circular Dependency",
     );

@@ -651,6 +651,46 @@ $Category.revenue = Product.filter(p => p.category == $Category).reduce((sum, p)
 
 Full detail: [NUC 5](nuc-0005.md).
 
+### Fixed per-instance state anchors
+
+- Draft NUC 55 extends NUC53 histories to class self-anchors. In the isolated
+  prototype, `$Counter.x = $Counter.x@first - step` uses each receiver's first
+  recorded `x`, even when its current value changed before declaration.
+  `@0` is identical to `@first`; numeric positions are also fixed anchors.
+- Re-evaluation recomputes from that same entry, not from the last result.
+  Missing fixed self-entries defer the assignment without writing a placeholder.
+  A real recorded Null retains normal Null semantics.
+- Conditional anchors observe their property slots through deletion/recreation;
+  non-self numeric/newest/previous history readers remain live. Ordinary
+  instance overrides and class order/subtype behavior are unchanged.
+- Moving `@last`/`@previous` self-reads in an imperative conditional body keep
+  their accepted effects and history order; guard reactivation can therefore
+  change the result again. Unlike fixed anchors, missing moving entries retain
+  ordinary deferred-Null assignment behavior. Direct moving self-rules still
+  raise `TypeError("Circular Dependency")`, as do genuine graph cycles.
+- `.value` keeps its explicit snapshot meaning. Version destinations remain
+  read-only, and histories/rules/observers roll back together.
+- The executable reference case is `Class state anchors preserve independent
+  first recorded values`. The root contract is **Class-level state version
+  anchors** in `nucleoid.spec.md`; the complete orientation example includes
+  `this.orientation = orientation`.
+- Four new self-contained `dataset\nucleoid.synth.35.jsonl` records illustrate
+  the appended normative contract, bringing the synthesized corpus from 1,133 to
+  1,137 records without changing historical records.
+
+```
+class Counter(seed):
+    this.x = seed
+step = 1
+first = Counter(10)
+$Counter.x = $Counter.x@first - step
+second = Counter(30)
+assert([first.x, second.x], [9, 29])
+step = 2
+assert([first.x, second.x], [8, 28])
+assert([first.x@0, second.x@first], [10, 30])
+```
+
 ---
 
 ## 7. Blocks and Scope

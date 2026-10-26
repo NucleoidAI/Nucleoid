@@ -12,10 +12,10 @@ use indexmap::IndexSet;
 
 use crate::error::Result;
 use crate::graph::{NodeKey, ShapeKey};
-use crate::lang::ast::Expr;
+use crate::lang::ast::{Expr, VersionSelector};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::value::Value;
+use crate::value::{ObjectId, Value};
 
 /// How a statement finished: normally, or by returning out of its block.
 pub enum Flow {
@@ -39,6 +39,15 @@ struct TrackingFrame {
     keys: IndexSet<NodeKey>,
     shapes: IndexSet<ShapeKey>,
     mode: TrackingMode,
+    anchor_target: Option<NodeKey>,
+    pending_anchor: bool,
+}
+
+pub(crate) struct PropertyEvaluation {
+    pub value: Value,
+    pub dependencies: IndexSet<NodeKey>,
+    /// A self-history must not manufacture the version it is waiting for.
+    pub pending_anchor: bool,
 }
 
 impl Runtime {
@@ -67,10 +76,21 @@ impl Runtime {
         mode: TrackingMode,
         operation: impl FnOnce(&mut Self) -> Result<T>,
     ) -> Result<(T, TrackingFrame)> {
+        self.tracked_assignment(mode, None, operation)
+    }
+
+    fn tracked_assignment<T>(
+        &mut self,
+        mode: TrackingMode,
+        anchor_target: Option<NodeKey>,
+        operation: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<(T, TrackingFrame)> {
         self.tracking.frames.push(TrackingFrame {
             keys: IndexSet::new(),
             shapes: IndexSet::new(),
             mode,
+            anchor_target,
+            pending_anchor: false,
         });
         let result = operation(self);
         let frame = self
@@ -94,6 +114,29 @@ impl Runtime {
         }
     }
 
+    /// History still observes its real slot. Only an unavailable fixed
+    /// self-anchor defers an assignment on the active class receiver.
+    pub(crate) fn track_property_version(
+        &mut self,
+        key: NodeKey,
+        selector: VersionSelector,
+        available: bool,
+    ) {
+        self.track(key.clone());
+        if available || !selector.is_fixed() {
+            return;
+        }
+
+        for frame in self.tracking.frames.iter_mut().rev() {
+            if frame.anchor_target.as_ref() == Some(&key) {
+                frame.pending_anchor = true;
+            }
+            if frame.mode == TrackingMode::Isolated {
+                break;
+            }
+        }
+    }
+
     pub(crate) fn track_shape(&mut self, key: ShapeKey) {
         for frame in self.tracking.frames.iter_mut().rev() {
             frame.shapes.insert(key.clone());
@@ -110,13 +153,37 @@ impl Runtime {
         scope: &mut Scope,
         exclude: Option<&NodeKey>,
     ) -> Result<(Value, IndexSet<NodeKey>)> {
+        let evaluated = self.evaluate_assignment(expression, scope, exclude, None)?;
+        Ok((evaluated.value, evaluated.dependencies))
+    }
+
+    pub(crate) fn evaluate_property_tracked(
+        &mut self,
+        expression: &Expr,
+        scope: &mut Scope,
+        object: &ObjectId,
+        property: &str,
+    ) -> Result<PropertyEvaluation> {
+        let key = NodeKey::property(object, property);
+        let anchor_target = (scope.instance() == Some(object)).then(|| key.clone());
+        self.evaluate_assignment(expression, scope, Some(&key), anchor_target)
+    }
+
+    fn evaluate_assignment(
+        &mut self,
+        expression: &Expr,
+        scope: &mut Scope,
+        exclude: Option<&NodeKey>,
+        anchor_target: Option<NodeKey>,
+    ) -> Result<PropertyEvaluation> {
         let saved = std::mem::take(&mut self.null_read);
-        let result = self.with_tracking(TrackingMode::Inherited, |runtime| {
+        let result = self.tracked_assignment(TrackingMode::Inherited, anchor_target, |runtime| {
             let value = runtime.evaluate(expression, scope)?;
             Ok(runtime.settle(value))
         });
         self.null_read = saved;
-        let (value, mut dependencies) = result?;
+        let (value, frame) = result?;
+        let mut dependencies = frame.keys;
 
         if let Some(exclude) = exclude {
             dependencies.shift_remove(exclude);
@@ -127,7 +194,15 @@ impl Runtime {
             self.track(dependency.clone());
         }
 
-        Ok((value, dependencies))
+        Ok(PropertyEvaluation {
+            value: if frame.pending_anchor {
+                Value::Null
+            } else {
+                value
+            },
+            dependencies,
+            pending_anchor: frame.pending_anchor,
+        })
     }
 
     pub(crate) fn note_nullish(&mut self, value: &Value) {

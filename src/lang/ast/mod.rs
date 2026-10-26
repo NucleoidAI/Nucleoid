@@ -113,6 +113,12 @@ pub enum VersionSelector {
     Previous,
 }
 
+impl VersionSelector {
+    pub(crate) fn is_fixed(self) -> bool {
+        matches!(self, Self::Index(_) | Self::First)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Null,

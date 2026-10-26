@@ -2472,6 +2472,45 @@ assert(one, 8)
   defaults, capture or bare-default syntax is introduced. See the
   [root contract](../nucleoid.spec.md#literal-parameter-defaults).
 
+## Class-level state version anchors
+
+**Inherited class receivers keep independent fixed history anchors**
+
+```nuc
+class Base(seed):
+    this.x = seed
+    this.orientation = 180
+class Child: Base
+    def init(seed):
+        super(seed)
+step = 1
+$Base.x = $Base.x@0 - step
+if $Base.orientation == 180:
+    $Base.tag = "l4214"
+    $Base.x = $Base.x@first - step
+parent = Base(10)
+child = Child(30)
+assert([parent.x, child.x], [9, 29])
+assert([parent.tag, child.tag], ["l4214", "l4214"])
+assert([parent.x@first, child.x@first], [10, 30])
+step = 2
+assert([parent.x, child.x], [8, 28])
+child.orientation = 0
+child.orientation = 180
+assert(child.x, 28)
+assert(child.x@3, null)
+```
+
+- This is the appended inherited-anchor specification example. Each concrete
+  property retains its first value even when a parent rule applies to a child.
+  A guard re-evaluation repeats the anchored result, not another decrement.
+- Non-self histories still observe real slots, including reset/recreation.
+  Missing fixed self-entries do not seed themselves. Moving `@last`/`@previous`
+  conditionals retain accepted imperative effects, while direct moving
+  self-rules still raise `TypeError("Circular Dependency")`. See Draft NUC 55
+  and the root **Class-level state version anchors** contract in
+  `nucleoid.spec.md`.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

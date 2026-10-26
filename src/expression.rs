@@ -61,7 +61,15 @@ impl<'a> Expression<'a> {
     /// The `$Class.property` names this expression reads, for the given class.
     pub fn class_properties(&self, class: &str) -> Vec<String> {
         let mut found = Vec::new();
-        class_properties(self.node, class, &mut found);
+        class_properties(self.node, class, None, &mut found);
+        found
+    }
+
+    /// Only a fixed history of the rule's own destination is a self-anchor.
+    /// Other property reads keep the accepted class-cycle checks.
+    pub(crate) fn class_rule_properties(&self, class: &str, destination: &str) -> Vec<String> {
+        let mut found = Vec::new();
+        class_properties(self.node, class, Some(destination), &mut found);
         found
     }
 
@@ -159,14 +167,24 @@ fn class_reference(expression: &Expr, found: &mut Option<String>) {
     }
 }
 
-fn class_properties(expression: &Expr, class: &str, found: &mut Vec<String>) {
+fn class_properties(
+    expression: &Expr,
+    class: &str,
+    destination: Option<&str>,
+    found: &mut Vec<String>,
+) {
     match expression {
+        Expr::Version {
+            reference,
+            selector,
+        } if selector.is_fixed()
+            && destination.is_some_and(|property| class_property(reference, class, property)) => {}
         Expr::Member { property, .. } if property == "value" => {}
         Expr::Member { object, property } => {
             if matches!(object.as_ref(), Expr::ClassRef(name) if name == class) {
                 found.push(property.clone());
             } else {
-                class_properties(object, class, found);
+                class_properties(object, class, destination, found);
             }
         }
         Expr::Index { object, index } => {
@@ -178,12 +196,26 @@ fn class_properties(expression: &Expr, class: &str, found: &mut Vec<String>) {
                 }
             }
             visit_children(expression, &mut |child| {
-                class_properties(child, class, found)
+                class_properties(child, class, destination, found)
             });
         }
         _ => visit_children(expression, &mut |child| {
-            class_properties(child, class, found)
+            class_properties(child, class, destination, found)
         }),
+    }
+}
+
+fn class_property(expression: &Expr, class: &str, property: &str) -> bool {
+    match expression {
+        Expr::Member {
+            object,
+            property: name,
+        } => matches!(object.as_ref(), Expr::ClassRef(name) if name == class) && name == property,
+        Expr::Index { object, index } => {
+            matches!(object.as_ref(), Expr::ClassRef(name) if name == class)
+                && matches!(index.as_ref(), Expr::String(name) if name == property)
+        }
+        _ => false,
     }
 }
 

@@ -89,35 +89,32 @@ impl Property {
             }
 
             Owner::Object(object) => {
-                let object = object.clone();
-                let key = NodeKey::property(&object, &self.name);
-
-                if runtime.is_imperative() && runtime.instantiation(&self.value).is_none() {
-                    let (evaluated, _) =
-                        runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-                    self.changed = runtime.assign_property(&object, &self.name, evaluated.clone());
-                    self.kind = None;
-                    return Ok(Outcome::value(evaluated));
-                }
-
                 if let Some((class, arguments)) = runtime.instantiation(&self.value) {
-                    let id = ObjectId::nested(&object, &self.name);
+                    let id = ObjectId::nested(object, &self.name);
                     let instance = Object::new(id, class, arguments);
                     let created = instance.run(runtime, scope)?;
-                    runtime.assign_property(&object, &self.name, created.clone());
+                    runtime.assign_property(object, &self.name, created.clone());
                     self.kind = Some(NodeKind::Object);
                     self.changed = true;
                     return Ok(Outcome::value(created));
                 }
 
-                let (evaluated, dependencies) =
-                    runtime.evaluate_tracked(&self.value, scope, Some(&key))?;
-                self.changed = runtime.assign_property(&object, &self.name, evaluated.clone());
+                let imperative = runtime.is_imperative();
+                let evaluated =
+                    runtime.evaluate_property_tracked(&self.value, scope, object, &self.name)?;
+                self.changed = !evaluated.pending_anchor
+                    && runtime.assign_property(object, &self.name, evaluated.value.clone());
+
+                if imperative {
+                    self.kind = None;
+                    return Ok(Outcome::value(evaluated.value));
+                }
+
                 self.kind = Some(NodeKind::Property);
 
                 Ok(Outcome {
-                    flow: Flow::Normal(evaluated),
-                    dependencies,
+                    flow: Flow::Normal(evaluated.value),
+                    dependencies: evaluated.dependencies,
                 })
             }
         }

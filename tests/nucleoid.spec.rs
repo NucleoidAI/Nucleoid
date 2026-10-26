@@ -10608,6 +10608,312 @@ assert(three, 30)
 assert(four, 40)"#);
 }
 
+/// Nucleoid anchors class conditionals to each instances first property values
+#[rustfmt::skip]
+#[test]
+fn anchors_class_conditionals_to_each_instances_first_property_values() {
+    let mut run = runner();
+    run(r#"class Obj(x: int, y: int, orientation: int):
+    this.x = x
+    this.y = y
+    this.orientation = orientation"#);
+    run("first = Obj(10, 20, 180)");
+    run("first.x = 70");
+    run("first.y = 80");
+    run(r#"if $Obj.orientation == 180:
+    $Obj.tag = "l4214"
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1"#);
+    run("second = Obj(30, 40, 180)");
+    run("waiting = Obj(50, 60, 0)");
+    assert_eq!(run("[first.x, first.y, first.tag]"), serde_json::json!([9, 19, "l4214"]));
+    assert_eq!(run("[second.x, second.y, second.tag]"), serde_json::json!([29, 39, "l4214"]));
+    assert_eq!(run("[waiting.x, waiting.y, waiting.tag]"), serde_json::json!([50, 60, null]));
+    run("waiting.x = 90");
+    run("waiting.orientation = 180");
+    assert_eq!(run("[waiting.x, waiting.y, waiting.tag]"), serde_json::json!([49, 59, "l4214"]));
+    run("first.orientation = 0");
+    run("first.orientation = 180");
+    run("second.orientation = 180");
+    assert_eq!(run("[first.x, first.y, second.x, second.y]"), serde_json::json!([9, 19, 29, 39]));
+    assert_eq!(run("first.x@first"), 10);
+    assert_eq!(run("first.x@0"), 10);
+    assert_eq!(run("second.x@first"), 30);
+    assert_eq!(run("second.x@2"), serde_json::Value::Null);
+    run(r#"[first.x, first.y, second.x, second.y]
+
+# return: [9,19,29,39]"#);
+}
+
+/// Nucleoid anchors ordinary class rules with fixed numeric and first selectors
+#[rustfmt::skip]
+#[test]
+fn anchors_ordinary_class_rules_with_fixed_numeric_and_first_selectors() {
+    let mut run = runner();
+    run(r#"class Counter(seed):
+    this.x = seed
+    this.x = seed + 10
+    this.y = seed * 2"#);
+    run("before = Counter(10)");
+    run("step = 1");
+    run("$Counter.x = $Counter.x@first - step");
+    run(r#"$Counter.y = $Counter["y"]@0 - step"#);
+    run("$Counter.latest = $Counter.x@last");
+    run("$Counter.prior = $Counter.x@previous");
+    assert_eq!(run("[before.x, before.y, before.latest, before.prior]"), serde_json::json!([9, 19, 9, 20]));
+    run("step = 2");
+    assert_eq!(run("[before.x, before.y, before.latest, before.prior]"), serde_json::json!([8, 18, 8, 9]));
+    run("$Counter.x = $Counter.x@1 - step");
+    run("after = Counter(30)");
+    assert_eq!(run("[before.x, after.x, after.y]"), serde_json::json!([18, 38, 58]));
+    assert_eq!(run("[after.x@first, after.x@0, after.x@1]"), serde_json::json!([30, 30, 40]));
+    run("step = 3");
+    assert_eq!(run("[before.x, after.x, before.y, after.y]"), serde_json::json!([17, 37, 17, 57]));
+    assert_eq!(run("[before.latest, after.latest, before.prior, after.prior]"), serde_json::json!([17, 37, 18, 38]));
+    run(r#"[before.x, after.x, before.y, after.y]
+
+# return: [17,37,17,57]"#);
+}
+
+/// Nucleoid defers missing self anchors and recovers recreated property slots
+#[rustfmt::skip]
+#[test]
+fn defers_missing_self_anchors_and_recovers_recreated_property_slots() {
+    let mut run = runner();
+    run(r#"class Pending(orientation):
+    this.orientation = orientation"#);
+    run(r#"if $Pending.orientation == 180:
+    $Pending.tag = "l4214"
+    $Pending.x = $Pending.x@first - 1"#);
+    run("item = Pending(180)");
+    run("original = item.x@first");
+    assert_eq!(run("item.tag"), "l4214");
+    assert_eq!(run("item.x"), serde_json::Value::Null);
+    assert_eq!(run("original"), serde_json::Value::Null);
+    run("item.x = 10");
+    assert_eq!(run("item.x"), 9);
+    assert_eq!(run("item.x@first"), 10);
+    assert_eq!(run("item.x@previous"), 10);
+    assert_eq!(run("original"), 10);
+    run("delete item.x");
+    assert_eq!(run("item.x"), serde_json::Value::Null);
+    assert_eq!(run("item.x@first"), serde_json::Value::Null);
+    assert_eq!(run("original"), serde_json::Value::Null);
+    run("item.x = 40");
+    assert_eq!(run("item.x"), 39);
+    assert_eq!(run("item.x@first"), 40);
+    assert_eq!(run("item.x@0"), 40);
+    assert_eq!(run("original"), 40);
+    run("item.orientation = 180");
+    assert_eq!(run("item.x"), 39);
+    assert_eq!(run("item.x@2"), serde_json::Value::Null);
+    run(r#"[item.x, item.x@first, original]
+
+# return: [39,40,40]"#);
+}
+
+/// Nucleoid waits for actual history entries before using numeric self anchors
+#[rustfmt::skip]
+#[test]
+fn waits_for_actual_history_entries_before_using_numeric_self_anchors() {
+    let mut run = runner();
+    run(r#"class Sample(seed):
+    this.x = seed
+    this.enabled = true"#);
+    run(r#"if $Sample.enabled:
+    $Sample.x = $Sample.x@1 - 1"#);
+    run("item = Sample(10)");
+    assert_eq!(run("item.x"), 10);
+    assert_eq!(run("item.x@first"), 10);
+    assert_eq!(run("item.x@1"), serde_json::Value::Null);
+    run("item.enabled = true");
+    assert_eq!(run("item.x"), 10);
+    assert_eq!(run("item.x@1"), serde_json::Value::Null);
+    run("item.x = 20");
+    assert_eq!(run("item.x"), 19);
+    assert_eq!(run("item.x@first"), 10);
+    assert_eq!(run("item.x@1"), 20);
+    run("item.enabled = false");
+    run("item.enabled = true");
+    assert_eq!(run("item.x"), 19);
+    assert_eq!(run("item.x@3"), serde_json::Value::Null);
+}
+
+/// Nucleoid anchors inherited class receivers independently
+#[rustfmt::skip]
+#[test]
+fn anchors_inherited_class_receivers_independently() {
+    let mut run = runner();
+    run(r#"class Base(seed):
+    this.x = seed
+    this.orientation = 180"#);
+    run(r#"class Child: Base
+    def init(seed):
+        super(seed)"#);
+    run("step = 1");
+    run("$Base.x = $Base.x@0 - step");
+    run(r#"if $Base.orientation == 180:
+    $Base.tag = "l4214"
+    $Base.x = $Base.x@first - step"#);
+    run("parent = Base(10)");
+    run("child = Child(30)");
+    assert_eq!(run("[parent.x, child.x]"), serde_json::json!([9, 29]));
+    assert_eq!(run("[parent.tag, child.tag]"), serde_json::json!(["l4214", "l4214"]));
+    assert_eq!(run("[parent.x@first, child.x@first]"), serde_json::json!([10, 30]));
+    run("step = 2");
+    assert_eq!(run("[parent.x, child.x]"), serde_json::json!([8, 28]));
+    run("child.orientation = 0");
+    run("child.orientation = 180");
+    assert_eq!(run("child.x"), 28);
+    assert_eq!(run("child.x@3"), serde_json::Value::Null);
+}
+
+/// Nucleoid restores class anchors histories and declarations on caught rollback
+#[rustfmt::skip]
+#[test]
+fn restores_class_anchors_histories_and_declarations_on_caught_rollback() {
+    let mut run = runner();
+    run(r#"class Sample(seed):
+    this.x = seed
+    this.enabled = true
+if $Sample.enabled:
+    $Sample.x = $Sample.x@first - 1
+item = Sample(10)
+original = item.x@first
+try:
+    delete item.x
+    item.x = 50
+    $Sample.extra = $Sample.x@first
+    throw "RESTORE_ANCHOR"
+catch error:
+    assert(error, "RESTORE_ANCHOR")
+assert(item.x, 9)
+assert(item.x@first, 10)
+assert(item.x@previous, 10)
+assert(item.x@2, null)
+assert(item.extra, null)
+assert(original, 10)
+item.enabled = true
+assert(item.x, 9)
+delete item.x
+item.x = 30
+assert(item.x, 29)
+assert(item.x@first, 30)
+assert(original, 30)
+[item.x, original]
+# return: [29,30]"#);
+}
+
+/// Nucleoid protects direct class history cycles and read only destinations
+#[rustfmt::skip]
+#[test]
+fn protects_direct_class_history_cycles_and_read_only_destinations() {
+    let mut run = runner();
+    run(r#"class Sample:
+    this.x = 10
+    this.items = [1, 2]
+    this.enabled = true
+item = Sample()
+try:
+    $Sample.x = $Sample.x@last - 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.x@previous - 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.x@first + $Sample.x
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x@first = 4
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+try:
+    delete $Sample.x@first
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+try:
+    if $Sample.enabled:
+        $Sample.items@first.push(3)
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+try:
+    $Sample.bad = Math.PI@first
+catch error:
+    assert(error, TypeError("State versions require a variable or object property"))
+class Empty
+$Empty.x = $Empty.x@first.value
+try:
+    absent = Empty()
+catch error:
+    assert(error, ReferenceError("$Empty.x@first is not defined"))
+assert(item.x, 10)
+assert(item.x@first, 10)
+assert(item.x@1, null)
+assert(item.items, [1, 2])
+assert(item.items@1, null)"#);
+}
+
+/// Nucleoid preserves moving class conditionals beside fixed first anchors
+#[rustfmt::skip]
+#[test]
+fn preserves_moving_class_conditionals_beside_fixed_first_anchors() {
+    let mut run = runner();
+    run(r#"class Counter(seed):
+    this.x = seed
+    this.enabled = false"#);
+    run(r#"if $Counter.enabled:
+    $Counter.x = $Counter.x@last - 1"#);
+    run("item = Counter(10)");
+    run("item.enabled = true");
+    assert_eq!(run("item.x"), 9);
+    run("item.enabled = false");
+    run("item.enabled = true");
+    assert_eq!(run("item.x"), 8);
+    assert_eq!(run("item.x@first"), 10);
+    assert_eq!(run("item.x@previous"), 9);
+    run(r#"class Anchor(seed):
+    this.x = seed
+    this.y = seed
+    this.enabled = false"#);
+    run(r#"if $Anchor.enabled:
+    $Anchor.x = $Anchor.x@first - 1
+    $Anchor.y = $Anchor.y@0 - 1"#);
+    run("anchored = Anchor(10)");
+    run("anchored.enabled = true");
+    assert_eq!(run("[anchored.x, anchored.y]"), serde_json::json!([9, 9]));
+    run("anchored.enabled = false");
+    run("anchored.enabled = true");
+    assert_eq!(run("[anchored.x, anchored.y]"), serde_json::json!([9, 9]));
+    assert_eq!(run("[anchored.x@first, anchored.y@first]"), serde_json::json!([10, 10]));
+    assert_eq!(run("[anchored.x@2, anchored.y@2]"), serde_json::json!([null, null]));
+    run(r#"class Previous(seed):
+    this.x = seed
+    this.x = seed + 10
+    this.enabled = false"#);
+    run(r#"if $Previous.enabled:
+    $Previous.x = $Previous.x@previous - 1"#);
+    run("previous = Previous(10)");
+    assert_eq!(run("previous.x@previous"), 10);
+    run("previous.enabled = true");
+    assert_eq!(run("previous.x"), 9);
+    assert_eq!(run("previous.x@previous"), 20);
+    run("previous.enabled = false");
+    run("previous.enabled = true");
+    assert_eq!(run("previous.x"), 19);
+    assert_eq!(run("previous.x@first"), 10);
+    assert_eq!(run("previous.x@1"), 20);
+    assert_eq!(run("previous.x@2"), 9);
+    assert_eq!(run("previous.x@previous"), 9);
+    assert_eq!(run("previous.x@3"), 19);
+    assert_eq!(run("previous.x@4"), serde_json::Value::Null);
+    run(r#"[item.x, anchored.x, anchored.y, previous.x, previous.x@previous]
+
+# return: [8,9,9,19,9]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

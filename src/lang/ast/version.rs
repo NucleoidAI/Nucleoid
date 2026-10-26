@@ -114,12 +114,13 @@ impl Runtime {
     ) -> Result<Value> {
         match base {
             Value::Object(id) => {
-                self.track(NodeKey::property(&id, property));
-                Ok(self
+                let key = NodeKey::property(&id, property);
+                let value = self
                     .state
                     .version(&HistoryKey::Property(id, property.to_string()), selector)
-                    .cloned()
-                    .unwrap_or(Value::Undefined))
+                    .cloned();
+                self.track_property_version(key, selector, value.is_some());
+                Ok(value.unwrap_or(Value::Undefined))
             }
             Value::Null | Value::Undefined => Ok(Value::Undefined),
             _ => Err(version_reference_error()),
