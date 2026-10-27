@@ -113,8 +113,56 @@ Require the supplied rubric/pin when scoring is requested; preserve its
 criterion, proposal path, and accepted-baseline binding through the handoff.
 Do not alter the rubric or assess your own usefulness/independent checks.
 Missing optional usefulness evidence is legitimately unscored, not zero;
-acceptance checks and token policy are unchanged. This is experience reporting,
-not an implemented learner or adaptive selection/training policy.
+acceptance checks and token policy are unchanged. Scoring alone reports
+experience; optional category-conditioned UCB1 learning consumes verified
+rewards under the separate protocol below, never trains LLM weights.
+
+## Select and consume a proposal strategy
+
+Follow [NUC 1's strategy policy](../../../docs/nuc-0001.md#reward-driven-proposal-strategies)
+and the [callable commands and schemas](../../../CONTRIBUTING.md#reward-driven-proposal-strategies).
+Category selection is still caller-owned and uniformly random when unspecified;
+explicit requested categories/features and the single-proposal stop rule are
+unchanged. A strategy selects an approach within that category, not another
+feature or category.
+
+For configured learning, the **caller must actually run**
+`cargo test --test proposals select_proposal_strategy -- --ignored --exact --nocapture`
+**before drafting or dispatching the proposer**. Use the latest verified
+single-owner checkpoint (or an explicit frozen empty-history genesis), not an
+older head or fabricated history. Fix `NUC_PROPOSAL`, accepted
+`NUC_PROPOSAL_BASELINE`, preserved `NUC_PROPOSAL_MODE`/runtime inputs,
+`NUC_STRATEGY_CATEGORY`, unique `NUC_STRATEGY_TRIAL_ID`, pinned
+`NUC_STRATEGY_POLICY`/`NUC_STRATEGY_POLICY_REVISION` and fresh
+`NUC_STRATEGY_SELECTION`; unset any old selection pin/checkpoint output.
+After success, freeze `NUC_STRATEGY_SELECTION_REVISION` using
+`git hash-object --no-filters` before drafting. Do not select again in the
+worker, backfill attribution, or silently reset missing/invalid state.
+
+Inside the proposal agent, require both policy/receipt paths and raw full blob
+pins when learning is configured. Verify them and their algorithm, parent,
+trial ID, proposal path, accepted baseline, confirmed category and mode against
+the caller's inputs. Partial, stale, changed, or mismatched inputs stop work;
+return the blocker instead of dropping learning. With no learning configuration,
+record `not_configured`/unattributed and proceed with the ordinary safeguards.
+Use no invented reward or self-assessed benefit.
+
+**Execute the selected approach**, in stable registry order:
+
+- `reuse_first`: start from accepted primitives/helpers and implement the
+  requested feature with a minimal additive extension.
+- `evidence_first`: start from a concrete unsupported/failing use case or
+  counterexample for the requested feature, then make the minimal preserving
+  fix/extension.
+
+Both preserve all baseline, behavior/integrity, compatibility, development,
+independent-evaluation and applicable token requirements. Neither changes the
+feature scope, category, rewards or acceptance criteria. Include concrete
+preparation actions showing strategy consumption in the handoff; merely logging
+a label is insufficient. Never run `learn_proposal_strategy` on your own trial,
+write its real assessment/report/checkpoint, or populate an independent score.
+Both single and continuous genuinely attributed trials may later learn, but
+only the independent evaluator may update from this revision's saved report.
 
 When token comparison is required, new measured cases need behavior-equivalent
 accepted-syntax programs with the same document, title, canonical assertions,
@@ -196,6 +244,15 @@ a fresh report path; do not launch it yourself. The caller owns integration
 and evaluation status/index updates. The proposal agent must not commit, push,
 or merge.
 
+For configured learning, also hand off the unchanged policy and selection
+paths/raw pins, algorithm/scope, trial identity, selected strategy and how it
+was followed. Preserve all four `NUC_STRATEGY_POLICY`,
+`NUC_STRATEGY_POLICY_REVISION`, `NUC_STRATEGY_SELECTION` and
+`NUC_STRATEGY_SELECTION_REVISION` inputs into evaluation. Unconfigured trials
+are explicitly unattributed; do not retrofit old reports. Only new external
+session checkpoints may be written after independent evaluation, never old
+policy or candidate sources.
+
 ## Record rejected outcomes (caller only)
 
 After the independent evaluator returns `Rejected`, the coordinating caller
@@ -247,10 +304,15 @@ workers across cycles or combine pending proposals.
 
 Use actual independent behavior/compatibility results and token measurements
 when comparison ran as feedback for the next enhancement; report legitimate
-skips rather than inventing counts. Preserve earlier artifacts and all
-acceptance, compatibility and version-protection rules. This is iterative
-proposal/evaluation feedback, not separate model training or model-weight
-updates.
+skips rather than inventing counts. With configured strategy learning, retain
+the independent evaluator's new verified checkpoint as the next head (or retain
+the old head when learning legitimately skipped). Actually invoke
+`select_proposal_strategy` from that head before dispatching the next proposer;
+use fresh trial/receipt paths and never carry a stale selection pin. Preserve
+earlier artifacts and all acceptance, compatibility and version-protection
+rules. This is bandit strategy learning plus iterative feedback, not LLM-weight
+training or full multi-step RL. Sparse/noisy rewards do not establish improved
+proposal quality.
 
 Only the caller continues the loop; proposal and evaluation workers still stop
 at their single-proposal handoffs. Starting a distinct next NUC is not recursive

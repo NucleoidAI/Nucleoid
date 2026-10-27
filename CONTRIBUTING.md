@@ -247,10 +247,11 @@ or GitHub Actions proposal trigger.
 #### Advisory usefulness/cost scoring
 
 The existing Rust `evaluate_proposal` entry point also reports advisory
-experience scores. It does not implement a learner, adaptive proposal/category
-selection, model training, paid calls, or a language/runtime feature. Scores
-never change deterministic verdicts, independent acceptance requirements, or
-the single/continuous token policy.
+experience scores. The separate opt-in UCB1 strategy learner below consumes
+verified rewards; the scorer's formula and decisions are unchanged. Neither
+mechanism trains LLM weights, reweights categories, makes paid calls, or changes
+the language/runtime. Scores and learning never change independent acceptance
+requirements or the single/continuous token policy.
 
 Before drafting, the **caller**, not the proposer, may create and freeze a
 usefulness rubric outside the repository. Its exact JSON schema is:
@@ -379,6 +380,185 @@ cargo test --test proposals evaluate_proposal -- --ignored --nocapture
   require Rejected, and unresolved prerequisites still require Blocked under the
   existing process, irrespective of an advisory score. Return both evidence and
   scoring limitations honestly.
+
+#### Reward-driven proposal strategies
+
+The ignored `select_proposal_strategy` and `learn_proposal_strategy` entry
+points in `tests/proposals.rs` use `tests/proposals/strategy.rs`. This is a
+persisted reward-driven bandit, not just advice logging. It learns an approach
+within a caller-confirmed category; it cannot change the requested feature,
+uniform category draw, acceptance checks, token policy, or continuation mode.
+It uses no new dependencies, runtime features, LLM-weight training or paid calls.
+
+The fixed typed arm registry is ordered:
+
+1. `reuse_first`: prioritize accepted primitives/helpers, then a minimal
+   additive implementation of the requested feature.
+2. `evidence_first`: start from a concrete unsupported/failing use case or
+   counterexample for that feature, then the minimal preserving fix/extension.
+
+Both require the same mandatory baselines and checks. The proposer must
+describe how it followed the selected approach in its handoff; a logged but
+unused label is not strategy consumption.
+
+**State and receipts.** Before drafting, the caller freezes an external
+create-once JSON policy. The exact supported genesis schema is:
+
+```json
+{
+  "algorithm": "nuc-category-strategy-ucb1-v1",
+  "reward_metric": "nuc-advisory-usefulness-evaluator-time-v1",
+  "learning_scope": "all_attributed_trials",
+  "history": []
+}
+```
+
+Both single and continuous attributed trials can learn, including explicit
+Documentation requests; a single trial never authorizes continuation.
+There is no automatic genesis/reset or import of older unassigned reports.
+Retain the latest verified checkpoint and all ancestors, receipts, reports,
+rubrics and assessments outside the repository.
+
+`select_proposal_strategy` writes this receipt schema before drafting (angle
+brackets describe values, not actual observations):
+
+```json
+{
+  "algorithm": "nuc-category-strategy-ucb1-v1",
+  "policy_revision": "<raw full parent policy Git blob ID>",
+  "trial_id": "<unique caller-owned trial ID>",
+  "proposal_path": "docs\\nuc-0001.md",
+  "baseline_revision": "<full accepted commit ID>",
+  "category": "Documentation",
+  "mode": "single",
+  "strategy": "reuse_first"
+}
+```
+
+All five registered categories and both modes are typed; strategy order is
+stable. Each category first explores unobserved arms in that order. Thereafter
+it maximizes `mean + sqrt(2 * ln(category_trials) / arm_trials)` with
+registry-order ties. Raw `r` in `[-1, 1]` is normalized to `(r + 1) / 2`.
+Neutral `0` is observed as `0.5`; missing evidence is never a zero observation.
+Counts/means are derived from history, not trusted serialized counters.
+Counts must remain exactly representable (`<= 2^53 - 1`); all rewards/UCB
+values must be finite. Cold start needs no special case or Infinity sentinel.
+
+A nonempty policy keeps the same four top-level fields. Each `history` item
+is a strict typed object with:
+
+| Field | Value |
+| --- | --- |
+| `parent` | `{ "path": <absolute JSON path>, "revision": <raw blob pin> }` of the preceding policy |
+| `selection` | `{ "path": <absolute JSON path>, "revision": <raw blob pin>, "input": <complete receipt above> }` |
+| `evaluation` | `{ "path": <absolute JSON path>, "revision": <raw blob pin> }` of the already-saved evaluator report |
+| `proposal_revision` | Actual final proposal blob from that report |
+| `raw_reward` | Verified existing advisory final reward, before bandit normalization |
+
+The full chronological history and exact parent-prefix bindings are validated
+on reload. Deduplicate **both** trial ID and actual evaluated proposal blob,
+not merely report bytes; a rerun's elapsed time cannot earn a second update.
+Unknown algorithm/metric/scope/strategy/category, nonfinite/out-of-range reward,
+bad counters, changed artifacts, stale receipts, invalid evidence and mismatched
+provenance are explicit errors, never a silent reset or disabled learner.
+
+**Selection command (caller, before drafting).** Start with a genuine
+accepted-corpus baseline and a frozen genesis/latest checkpoint. These are
+example external paths, not instructions to replace existing artifacts:
+
+```powershell
+$env:NUC_PROPOSAL_BASELINE = 'C:\session\accepted-baseline.json'
+$env:NUC_PROPOSAL = 'docs\nuc-0001.md'
+$env:NUC_PROPOSAL_MODE = 'single'
+$env:NUC_STRATEGY_POLICY = 'C:\session\strategy-policy-before.json'
+$env:NUC_STRATEGY_POLICY_REVISION = (git --no-pager hash-object --no-filters -- $env:NUC_STRATEGY_POLICY).Trim()
+$env:NUC_STRATEGY_TRIAL_ID = 'caller-unique-trial'
+$env:NUC_STRATEGY_CATEGORY = 'Documentation'
+$env:NUC_STRATEGY_SELECTION = 'C:\session\strategy-selection.json'
+Remove-Item Env:NUC_STRATEGY_SELECTION_REVISION,Env:NUC_STRATEGY_CHECKPOINT -ErrorAction SilentlyContinue
+cargo test --test proposals select_proposal_strategy -- --ignored --exact --nocapture
+$env:NUC_STRATEGY_SELECTION_REVISION = (git --no-pager hash-object --no-filters -- $env:NUC_STRATEGY_SELECTION).Trim()
+```
+
+Check command success before pinning/dispatching. A new proposal file need not
+exist yet; its repository-relative path, accepted baseline, category and mode
+must already be fixed. Preserve the mode/runtime inputs from the normal
+evaluation contract; runtime applicability is required for Runtime features.
+The command prints the selected arm **and actionable instructions**. Freeze
+both pins, give the receipt and approach to the proposer, and require it to
+consume them; never select after seeing the candidate.
+
+**Evaluation (independent evaluator).** Preserve these four optional
+attribution variables together:
+
+- `NUC_STRATEGY_POLICY`, `NUC_STRATEGY_POLICY_REVISION`
+- `NUC_STRATEGY_SELECTION`, `NUC_STRATEGY_SELECTION_REVISION`
+
+They must be all present or all absent. Supplied trial/category hints must
+match the receipt; stray selection/update variables without complete
+attribution are errors. All artifact inputs are absolute external `.json`
+paths, raw pins use `git hash-object --no-filters`, and absent optional
+variables are unset rather than empty.
+
+Run the normal `evaluate_proposal` **only after** independent checks and any
+assessment. It embeds `strategy_learning.status = "attributed"` and
+`inputs.policy` (path/pin), `inputs.selection` (path/pin/receipt), alongside the
+actual proposal revision and unchanged advisory score. Legacy invocations
+explicitly emit `strategy_learning.status = "not_configured"` and still
+evaluate normally. Old reports without this field are unattributed, never
+eligible for post-hoc strategy assignment.
+
+**Update (independent evaluator, after reading the saved report).** Verify
+the report's final proposal/attribution, existing score, and overall independent
+evidence first. A known core or external failure remains Rejected; unresolved
+checks remain Blocked irrespective of reward. Then use the same frozen inputs,
+mode and baseline and a fresh checkpoint path:
+
+```powershell
+$env:NUC_PROPOSAL_REPORT_REVISION = (git --no-pager hash-object --no-filters -- $env:NUC_PROPOSAL_REPORT).Trim()
+$env:NUC_STRATEGY_CHECKPOINT = 'C:\session\strategy-policy-after.json'
+cargo test --test proposals learn_proposal_strategy -- --ignored --exact --nocapture
+```
+
+This command reads the pinned already-existing report; it does not rerun
+`evaluate_proposal`, accept self-reported reward, or create a circular
+report/checkpoint hash. It revalidates receipt/parent, actual final proposal,
+report policy/verdict consistency, scoring artifacts/evidence, and the existing
+score formula/metric/scope. Only positive floating calculations allow a bounded
+two-`f64::EPSILON` absolute decimal JSON round-trip tolerance; neutral/rejection
+and metadata are exact. It creates **one new policy checkpoint** for a genuinely
+scored attributed outcome, never overwrites an old file, and prints its path/pin.
+
+Blocked/unscored outcomes print `Unscored(reason)` with **no output checkpoint**
+and no trial increment. Unattributed legacy reports with no configured inputs
+print `Unattributed`; supplying attribution for one is an error. Positive/neutral
+rewards need all independent checks passed. Genuine core rejection or known
+external failure uses the existing -1; unknown usefulness cannot hide a known
+failure. Learning never changes that score or the core/overall decisions.
+
+**Future selection (caller, only for a separately authorized next trial).**
+After a successful update, retain its printed path/pin as the next head:
+
+```powershell
+$env:NUC_STRATEGY_POLICY = $env:NUC_STRATEGY_CHECKPOINT
+$env:NUC_STRATEGY_POLICY_REVISION = (git --no-pager hash-object --no-filters -- $env:NUC_STRATEGY_POLICY).Trim()
+Remove-Item Env:NUC_STRATEGY_SELECTION_REVISION,Env:NUC_STRATEGY_CHECKPOINT -ErrorAction SilentlyContinue
+```
+
+Then fix the next trial's fresh baseline/path/mode/category/ID, use a **new**
+selection output path, and run the selection command before drafting. If
+learning skipped, retain the previous head instead of inventing an update.
+Single-proposal mode stops; this example does not authorize another proposal.
+
+This is an immutable **single-owner** session chain, not a global/concurrent
+head lock: a caller must not fork old state or race writers. Hashes detect
+changes, not evaluator authentication or wall-clock pre-draft timing. Do not
+claim protection against forged evaluator identities or an owner deliberately
+forking history. Cold start, sparse category samples, noisy partial timing and
+rubric/reward proxies limit conclusions. Controlled regressions demonstrate
+exploration, reward-dependent choice, persistence and provenance; they do not
+measure live-learning success or improved proposal quality. This bandit does
+not implement LLM-weight training or full multi-step reinforcement learning.
 
 ## Declarative Runtime Environment
 

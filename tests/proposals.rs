@@ -5,6 +5,8 @@
 //! process environment.
 
 mod common;
+#[path = "proposals/strategy.rs"]
+mod strategy;
 
 use std::collections::HashSet;
 use std::env;
@@ -27,14 +29,14 @@ const TIMING_SCOPE: &str = "elapsed deterministic evaluator work: input validati
     legacy/candidate checks, and blob stability verification; excludes compilation, external \
     suites/Clippy, proposal/model time, score calculation, and report writing";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum ExecutionMode {
     Continuous,
     Single,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 enum Category {
     #[serde(rename = "Syntax enhancement")]
     Syntax,
@@ -62,8 +64,8 @@ impl Category {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum RuntimeApplicability {
     NotApplicable,
     NewFeature,
@@ -79,7 +81,8 @@ struct PolicyInputs<'a> {
     evidence: Option<&'a str>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct EvaluationPolicy {
     mode: ExecutionMode,
     category: Category,
@@ -164,7 +167,7 @@ fn required_rationale(variable: &str, value: Option<&str>) -> Result<String, Gat
         .ok_or_else(|| GateError::Input(format!("{variable} needs a nonblank rationale")))
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum TokenSkipReason {
     SingleProposal,
@@ -272,7 +275,7 @@ struct Baseline {
     cases: Vec<MeasuredCase>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum Decision {
     Accepted,
@@ -280,7 +283,7 @@ enum Decision {
     Blocked,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum TokenChange {
     Less,
@@ -288,7 +291,8 @@ enum TokenChange {
     More,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Comparison {
     id: CaseId,
     before: usize,
@@ -296,8 +300,8 @@ struct Comparison {
     change: TokenChange,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum Issue {
     MissingCase { id: CaseId },
     UnpairedCase { id: CaseId },
@@ -309,8 +313,8 @@ enum Issue {
     MoreTokens { id: CaseId },
 }
 
-#[derive(Debug, Serialize)]
-#[serde(tag = "status", rename_all = "snake_case")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
 enum TokenCheck {
     Ran {
         metric: String,
@@ -321,13 +325,15 @@ enum TokenCheck {
     },
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct BehaviorChecks {
     legacy_cases_passed: usize,
     candidate_cases_passed: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Proposal {
     path: String,
     revision: String,
@@ -437,14 +443,16 @@ struct UsefulnessAssessment {
     usefulness: UsefulnessJudgment,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ScoringArtifact<T> {
     path: PathBuf,
     revision: String,
     input: T,
 }
 
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ScoringEvidence {
     rubric: Option<ScoringArtifact<UsefulnessRubric>>,
     assessment: Option<ScoringArtifact<UsefulnessAssessment>>,
@@ -457,7 +465,7 @@ struct ScoringPaths<'a> {
     assessment: Option<&'a Path>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum IndependentEligibility {
     NotAssessed,
@@ -466,7 +474,7 @@ enum IndependentEligibility {
     Unresolved,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum RewardBasis {
     GateRejected,
@@ -475,7 +483,7 @@ enum RewardBasis {
     NoDemonstratedBenefit,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum UnscoredReason {
     Blocked,
@@ -485,8 +493,8 @@ enum UnscoredReason {
     UnknownUsefulness,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(tag = "status", rename_all = "snake_case")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
 enum AdvisoryReward {
     Scored {
         basis: RewardBasis,
@@ -499,24 +507,26 @@ enum AdvisoryReward {
     },
 }
 
-#[derive(Debug, Serialize)]
-#[serde(tag = "status", rename_all = "snake_case")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
 enum ReportUsefulness {
     Demonstrated,
     NoDemonstratedBenefit,
     Unscored { reason: UnscoredReason },
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct EvaluationTime {
     elapsed_seconds: f64,
-    scope: &'static str,
+    scope: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct AdvisoryScore {
-    metric: &'static str,
-    formula: &'static str,
+    metric: String,
+    formula: String,
     evaluation_time: EvaluationTime,
     independent_check_eligibility: IndependentEligibility,
     usefulness: ReportUsefulness,
@@ -524,11 +534,13 @@ struct AdvisoryScore {
     reward: AdvisoryReward,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(from = "strategy::SavedEvaluation")]
 struct EvaluationReport {
     #[serde(flatten)]
     gate: Report,
     advisory_score: AdvisoryScore,
+    strategy_learning: strategy::Attribution,
 }
 
 #[derive(Debug, Error)]
@@ -552,6 +564,8 @@ enum GateError {
     Input(String),
     #[error("invalid advisory scoring input: {0}")]
     Scoring(String),
+    #[error("invalid proposal strategy input: {0}")]
+    Strategy(String),
     #[error("set {0} before running the proposal gate")]
     MissingEnvironment(&'static str),
     #[error("{variable}: {source}")]
@@ -1172,6 +1186,14 @@ fn read_scoring_evidence(
 }
 
 fn advisory_score(report: &Report, evidence: ScoringEvidence, elapsed: Duration) -> AdvisoryScore {
+    advisory_score_at_seconds(report, evidence, elapsed.as_secs_f64())
+}
+
+fn advisory_score_at_seconds(
+    report: &Report,
+    evidence: ScoringEvidence,
+    seconds: f64,
+) -> AdvisoryScore {
     let assessment = evidence.assessment.as_ref().map(|artifact| &artifact.input);
     let eligibility = assessment.map_or(IndependentEligibility::NotAssessed, |assessment| {
         assessment.checks.eligibility()
@@ -1215,7 +1237,6 @@ fn advisory_score(report: &Report, evidence: ScoringEvidence, elapsed: Duration)
             },
         },
     };
-    let seconds = elapsed.as_secs_f64();
     let reward = match result {
         Ok((basis, base_reward)) => {
             let applied_cost_adjustment = if base_reward == 1 {
@@ -1233,11 +1254,11 @@ fn advisory_score(report: &Report, evidence: ScoringEvidence, elapsed: Duration)
         Err(reason) => AdvisoryReward::Unscored { reason },
     };
     AdvisoryScore {
-        metric: SCORE_METRIC,
-        formula: SCORE_FORMULA,
+        metric: SCORE_METRIC.to_string(),
+        formula: SCORE_FORMULA.to_string(),
         evaluation_time: EvaluationTime {
             elapsed_seconds: seconds,
-            scope: TIMING_SCOPE,
+            scope: TIMING_SCOPE.to_string(),
         },
         independent_check_eligibility: eligibility,
         usefulness,
@@ -1247,15 +1268,17 @@ fn advisory_score(report: &Report, evidence: ScoringEvidence, elapsed: Duration)
 }
 
 fn time_evaluation(
-    work: impl FnOnce() -> Result<(Report, ScoringEvidence), GateError>,
+    work: impl FnOnce() -> Result<(Report, ScoringEvidence, strategy::Attribution), GateError>,
 ) -> Result<EvaluationReport, GateError> {
     let started = Instant::now();
-    let (gate, evidence) = work()?;
+    let (gate, evidence, strategy_learning) = work()?;
     evidence.validate(&gate.baseline_revision, &gate.proposal, &gate.issues)?;
+    strategy_learning.validate_binding(&gate)?;
     let elapsed = started.elapsed();
     Ok(EvaluationReport {
         advisory_score: advisory_score(&gate, evidence, elapsed),
         gate,
+        strategy_learning,
     })
 }
 
@@ -1462,6 +1485,8 @@ fn evaluate_proposal() -> Result<(), GateError> {
         let proposal = read_proposal(root, proposal_path)?;
         let policy = read_policy(proposal.category)?;
         let scoring = read_scoring_evidence(root, &baseline.revision, &proposal)?;
+        let strategy_learning =
+            strategy::read_attribution(root, &baseline.revision, &proposal, &policy)?;
         let mut legacy_sources = sources_at_revision(root, &baseline.revision)?;
         legacy_sources.extend(extra_baselines()?.into_iter().map(SourceCase::from));
         let mut sources = Vec::new();
@@ -1476,7 +1501,8 @@ fn evaluate_proposal() -> Result<(), GateError> {
             ));
         }
         scoring.verify_stable(root)?;
-        Ok((report, scoring))
+        strategy_learning.verify_stable(root)?;
+        Ok((report, scoring, strategy_learning))
     })?;
     let report = &evaluation.gate;
     let path = artifact("NUC_PROPOSAL_REPORT")?;
@@ -1517,6 +1543,18 @@ fn evaluate_proposal() -> Result<(), GateError> {
         });
     }
     Ok(())
+}
+
+#[test]
+#[ignore = "caller only: select and pin a strategy receipt BEFORE drafting"]
+fn select_proposal_strategy() -> Result<(), GateError> {
+    strategy::select_command()
+}
+
+#[test]
+#[ignore = "independent evaluator only: learn from an existing pinned attributed report"]
+fn learn_proposal_strategy() -> Result<(), GateError> {
+    strategy::learn_command()
 }
 
 fn fixture(title: &str, source: &str) -> SourceCase {
@@ -2562,9 +2600,11 @@ fn advisory_scores_preserve_the_complete_verdict_and_token_policy_matrix() {
         let evaluation = EvaluationReport {
             gate,
             advisory_score: score,
+            strategy_learning: strategy::Attribution::NotConfigured,
         };
         let mut json = serde_json::to_value(evaluation).unwrap();
         json.as_object_mut().unwrap().remove("advisory_score");
+        json.as_object_mut().unwrap().remove("strategy_learning");
         assert_eq!(json, original);
     }
 }
@@ -2798,8 +2838,14 @@ fn scoring_paths_require_a_frozen_pin_and_never_silently_drop_supplied_inputs() 
 #[test]
 fn actual_timing_wrapper_reports_integrated_results_without_timing_input_or_error_fallback() {
     let outside = Instant::now();
-    let evaluation =
-        time_evaluation(|| Ok((fixture_scored_report(), fixture_scoring_evidence()))).unwrap();
+    let evaluation = time_evaluation(|| {
+        Ok((
+            fixture_scored_report(),
+            fixture_scoring_evidence(),
+            strategy::Attribution::NotConfigured,
+        ))
+    })
+    .unwrap();
     let measured = evaluation.advisory_score.evaluation_time.elapsed_seconds;
     assert!(measured >= 0.0 && measured <= outside.elapsed().as_secs_f64());
     let json = serde_json::to_value(evaluation).unwrap();
@@ -2861,7 +2907,7 @@ fn scoring_artifacts_are_external_pinned_stable_and_create_once() -> Result<(), 
             &gate.proposal,
         )?;
         evidence.verify_stable(root)?;
-        Ok((gate, evidence))
+        Ok((gate, evidence, strategy::Attribution::NotConfigured))
     })?;
     assert_eq!(scored_values(&evaluation.advisory_score).1, 1);
     let report_path = directory.join("regression-report.json");

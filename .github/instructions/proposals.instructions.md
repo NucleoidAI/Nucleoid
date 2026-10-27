@@ -56,8 +56,61 @@ exclude compilation, external checks, proposal/model time and report writing.
 Return its raw seconds/scope, usefulness basis, eligibility, formula and
 base/adjusted reward or unscored reason. Scoring never changes deterministic
 gate results, token applicability or the independent overall decision; preserve
-all mode/category/compatibility safeguards. This is advisory experience
-reporting, not a learned proposal-selection or training mechanism.
+all mode/category/compatibility safeguards. Scoring alone reports experience;
+the separate opt-in category-conditioned UCB1 strategy learner below uses the
+verified reward without training LLM weights or changing this score formula.
+
+## Reward-driven strategy learning
+
+Follow [NUC 1](../../docs/nuc-0001.md#reward-driven-proposal-strategies) and
+the [callable command/schema contract](../../CONTRIBUTING.md#reward-driven-proposal-strategies).
+The fixed ordered strategies are `reuse_first` (accepted primitives/helpers
+and a minimal additive implementation) and `evidence_first` (a concrete
+unsupported/failing case or counterexample, then a minimal preserving
+fix/extension). Both keep the requested feature/category and all mandatory
+baselines/checks. The learner never reweights categories: unspecified category
+selection stays uniform, while explicit requests and mode/stop rules prevail.
+
+When configured, the caller actually runs `select_proposal_strategy` before
+drafting/dispatch, using its latest retained immutable policy head or explicit
+empty-history genesis. Freeze policy and receipt raw full blob pins, unique
+trial ID, proposal path, accepted baseline, category, mode and chosen strategy.
+The fresh proposer verifies and executes the selected approach and hands off
+concrete consumption evidence and unchanged attribution. Never backfill old
+reports, reselect after seeing a candidate, or silently reset invalid state.
+
+The independent evaluator preserves the pinned policy/receipt into the actual
+`evaluate_proposal` report. After checking that saved report and the complete
+independent outcome, it pins the report and actually invokes the separate
+`learn_proposal_strategy` command with a fresh external checkpoint path.
+Reports precede checkpoints, avoiding circular hashes or multi-output pretend
+success. The existing reward is validated against score/evidence and report
+provenance; it is not supplied as a self-reported number.
+
+Only genuinely scored attributed outcomes count: useful with the unchanged
+time discount, assessed neutral 0, or known core/external rejection -1.
+Blocked/unresolved/unscored/unknown/missing evidence and unattributed outcomes
+never increment trials. `all_attributed_trials` includes both modes, even
+explicit single Documentation trials; it never authorizes continuation.
+Absent learning config is explicitly `not_configured`; partial, malformed,
+stale, duplicate or mismatched supplied inputs are errors, never fallbacks.
+Deduplicate trial IDs and actual evaluated proposal blobs, not just report
+bytes/timing. Preserve all acceptance, token, compatibility and version rules.
+
+The evaluator may write only new external session reports/checkpoints, never
+candidate sources or prior artifacts. Return the new checkpoint path/raw pin
+or explicit skip/error; the caller retains one head and all ancestors,
+receipts, reports and scoring evidence for subsequent validation/selection.
+Use that updated head for the next authorized proposal, or keep the old head
+on a legitimate skip. A learner error pauses the caller as a process blocker
+without changing the already-recorded gate/independent decision.
+
+This is a single-owner immutable checkpoint chain, not concurrent/global-head
+protection or cryptographic evaluator authentication/proof of pre-draft timing.
+The category-conditioned two-arm bandit is real reward-driven strategy
+learning, not LLM-weight training or full multi-step RL. Cold starts, small
+samples, rubric/reward proxies and noisy partial timing limit conclusions;
+do not claim improved proposal quality from fixtures or one trial.
 
 ## Execution mode and token policy
 
@@ -129,7 +182,9 @@ Pin the accepted Git revision and record its token baseline before editing
 runtime behavior or executable cases. Give the proposer its requested change,
 proposal path and confirmed category, execution mode and runtime applicability
 with supporting rationale, baseline revision and immutable JSON artifact,
-and candidate worktree. Use `.github/agents/nuc-proposal.agent.md` and
+and candidate worktree. When configured, also supply the pre-draft strategy
+receipt and policy paths/raw pins, trial identity and actionable approach.
+Use `.github/agents/nuc-proposal.agent.md` and
 `.github/skills/nuc-proposal/SKILL.md` for drafting, prototyping, equivalent
 case rewrites, synchronization, and development checks. It must not run the
 acceptance gate or mark the proposal Accepted or Rejected.

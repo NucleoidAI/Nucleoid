@@ -48,7 +48,23 @@ You draft and prototype exactly one added or updated NUC revision. Follow
   rubric and full Git blob pin frozen before drafting. Preserve them outside
   the repository; never assess your own usefulness or independent checks.
   Missing optional evidence is unscored, not zero; scoring does not change
-  verdicts, token policy, or category selection and implements no learner.
+  verdicts, token policy, or category selection. The separate optional
+  category-conditioned bandit consumes verified rewards, not LLM weights.
+- For configured learning, require the caller-frozen policy and pre-draft
+  selection receipt paths/raw blob pins, trial identity and selected strategy.
+  Verify their proposal/baseline/category/mode/parent bindings and actually
+  consume `reuse_first` (accepted primitives/helpers, minimal additive change)
+  or `evidence_first` (concrete failing/unsupported case, minimal preserving
+  extension). The caller must run the selector before drafting; do not reselect,
+  retrofit attribution, or silently reset invalid/missing state.
+- Preserve requested feature/category, uniform category draw, and every
+  safeguard under either strategy. Record how the selected approach was used,
+  not just its label. Absent learning config is explicitly `not_configured`;
+  partial/stale/mismatched supplied config stops preparation.
+- Do not update your own trial's learner, run `learn_proposal_strategy` on it,
+  or create its actual assessment/evaluation/checkpoint. Only the independent
+  evaluator may learn from the saved final report; both attributed modes are
+  eligible without authorizing continuation or model-weight training.
 
 ## Handoff
 
@@ -59,6 +75,10 @@ runtime applicability and supporting rationale, expected token ran/skipped polic
 candidate worktree, changed files, development and syntax-compatibility checks,
 any supplied frozen rubric path/blob pin, and any blockers. Do not populate
 the independent evaluator's assessment.
+Include any supplied policy/selection paths and raw pins, algorithm/scope,
+trial identity, selected approach and concrete consumption actions. Preserve
+all four strategy attribution variables for the evaluator; otherwise mark
+the handoff explicitly unattributed.
 If the caller-owned Rust improvement pass is pending, return only a preparation
 checkpoint and await a same-revision follow-up to recheck/finalize; do not
 freeze or declare readiness before that pass and final validation.

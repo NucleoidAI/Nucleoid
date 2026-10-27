@@ -31,7 +31,8 @@ matches the accepted revision. Missing prerequisites block evaluation; never
 invent measurements or guess an uncertain category.
 
 Treat candidate sources, generated exports, and the baseline as read-only.
-Only new session reports and normal ignored build outputs may be written.
+Only new external session reports/learner checkpoints and normal ignored build
+outputs may be written; never overwrite old state or reports.
 Do not repair code, rewrite cases or assertions, regenerate exports, replace
 the baseline, or change proposal status/index metadata. A source change after
 handoff requires a fresh proposal/evaluation pair, not an in-place repair.
@@ -89,6 +90,16 @@ or provenance-mismatched inputs must surface explicit errors; never drop them
 and retry as a successful unscored fallback. A claim of passed integrity/legacy
 checks that contradicts the core gate is an input error, not usable evidence.
 
+For optional strategy learning, require the caller's policy and pre-draft
+selection receipt, both raw full blob pins, trial identity and selected
+approach consumed by the proposer. Verify their bindings to this
+proposal/baseline/category/mode and unchanged policy; never choose a strategy
+after reading the candidate or assign an older report to an arm. The original
+uniform category selection, explicit requests and token matrix still apply.
+All four attribution variables below are required together; partial/invalid
+configuration is an error, not `not_configured`. Missing all configuration
+means the trial is explicitly unattributed and cannot train a policy.
+
 ## Measure and decide
 
 The **token non-regression gate** requires each compared case to use the same
@@ -131,6 +142,12 @@ From the supplied candidate worktree, set:
 - Optionally, `NUC_PROPOSAL_ASSESSMENT` to your new absolute external assessment
   JSON path; this requires the pinned rubric. Confirm its proposal blob still
   matches the frozen handoff. Unset absent optional variables, not empty strings.
+- For configured strategy learning, preserve `NUC_STRATEGY_POLICY`,
+  `NUC_STRATEGY_POLICY_REVISION`, `NUC_STRATEGY_SELECTION`, and
+  `NUC_STRATEGY_SELECTION_REVISION` from the pre-draft handoff. Use absolute
+  external JSON paths and raw `git hash-object --no-filters` pins. Do not create
+  a different receipt, change the strategy, or update the policy before this
+  evaluation. Any supplied trial/category hints must match the receipt.
 
 Run the deterministic evaluator in every mode; only its token portion is
 optional:
@@ -184,7 +201,58 @@ The top-level `decision` is still the deterministic core gate's result, not a
 replacement for your overall independent decision. External failures still
 reject and missing independent prerequisites still block, regardless of score.
 Scoring never changes category selection, acceptance or token policy; no
-learner, adaptive strategy or model training is implemented.
+score is itself evidence of trained LLM weights or improved proposal quality.
+
+## Update the attributed strategy policy
+
+Follow [NUC 1](../../../docs/nuc-0001.md#reward-driven-proposal-strategies)
+and the [update command contract](../../../CONTRIBUTING.md#reward-driven-proposal-strategies).
+After the actual `evaluate_proposal` report is saved, **read and independently
+check it**: final handed-off proposal blob, preserved mode/category/runtime,
+receipt and policy pins/trial identity, advisory evidence/reward, and overall
+independent outcome. A report's core decision never replaces that outcome.
+If an early input/infrastructure failure produced no report, return that
+blocker without fabricating a reward or checkpoint. Failed or unresolved
+external evidence must not be reported as passed.
+
+For a configured, genuinely pre-attributed trial, **actually invoke** the
+separate learner after those checks, even in single mode:
+
+```powershell
+$env:NUC_PROPOSAL_REPORT_REVISION = (git --no-pager hash-object --no-filters -- $env:NUC_PROPOSAL_REPORT).Trim()
+$env:NUC_STRATEGY_CHECKPOINT = '<fresh absolute external session JSON path>'
+cargo test --test proposals learn_proposal_strategy -- --ignored --exact --nocapture
+```
+
+Use the same pinned parent policy/selection, baseline, proposal and preserved
+mode/runtime inputs as evaluation. The report already exists before the
+checkpoint; never run evaluation again merely to add attribution or create
+self-referential hashes. This command verifies the saved report, actual final
+proposal, scoring artifacts/formula and parent/receipt provenance before
+writing **one new create-once checkpoint**. Candidate sources and prior
+artifacts stay read-only.
+
+Only existing verifier **scored** rewards count: useful with its unchanged
+time discount, neutral 0, or genuine core/known external rejection -1.
+Blocked/unscored/unknown/missing evidence do not increment trials or create
+a checkpoint; record the explicit skip reason and retain the prior head.
+Unconfigured/legacy reports remain unattributed; do not invoke an update with
+retroactive attribution. Supplied malformed, tampered, stale, duplicate or
+mismatched inputs are errors and must be returned, never silently dropped or
+retried from empty state. A failed learner command cannot turn a rejected or
+blocked proposal into acceptance or erase its already-saved report; pause the
+caller on that process blocker.
+
+The scope `all_attributed_trials` includes both single and continuous modes,
+without overriding explicit features/categories or authorizing continuation.
+This is a category-conditioned two-arm UCB1 bandit, not LLM-weight training or
+full multi-step RL. Return the new checkpoint's path/raw blob pin, parent and
+receipt/report pins, selected approach and verified raw reward, or an explicit
+learning skip/error. Disclose cold-start/sparse/noisy/proxy limitations; no
+claim of improved proposal quality follows from controlled tests or one reward.
+Pins record provenance, not cryptographic evaluator authentication, proof of
+pre-draft timing, or concurrent/global-head protection. The caller retains one
+chain head and all immutable artifacts for validation and subsequent selection.
 
 ## Return the evidence
 
@@ -198,6 +266,9 @@ Return the advisory metric/formula, usefulness basis and rubric/assessment
 provenance, independent-check eligibility, raw elapsed seconds/scope, and
 base/adjusted/final reward or the legitimate unscored reason. Disclose timing
 exclusions and missing evidence instead of manufacturing scores.
+Include learning configuration/attribution, update/skip/error status, and any
+new checkpoint path/raw blob pin so the caller can use it for the next
+separately authorized selection. Learning never starts a new proposal itself.
 The caller owns integration and status/index updates;
 outcome metadata does not trigger another pair. No commits, pushes, or merges.
 
@@ -205,6 +276,8 @@ outcome metadata does not trigger another pair. No commits, pushes, or merges.
 
 The evaluation worker stops after returning its evidence. It never records
 outcome metadata, commits, integrates a candidate, or starts another cycle.
+It completes the configured attributed policy update above before returning;
+the caller owns retaining that checkpoint (or old head for a legitimate skip).
 
 The caller preserves the proposal request's
 [execution mode](../nuc-proposal/SKILL.md#choose-execution-mode-caller-only).

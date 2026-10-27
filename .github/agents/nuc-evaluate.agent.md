@@ -34,7 +34,8 @@ You independently evaluate exactly one completed NUC revision. Follow
   comparisons, and failures never become successful skips. Decide Accepted,
   Rejected, or Blocked from actual evidence, not the proposer's claim.
 - Treat candidate sources and the baseline as read-only. Write only new
-  reports in the session workspace and normal ignored build outputs.
+  reports/learner checkpoints in the external session workspace and normal
+  ignored build outputs; never overwrite old state or reports.
 - For optional advisory scoring, verify the caller's rubric/blob pin frozen
   before drafting. After independent checks, create only a new external session
   assessment bound to that criterion/rubric, baseline, proposal path and
@@ -45,8 +46,22 @@ You independently evaluate exactly one completed NUC revision. Follow
   are errors, never successful unscored fallbacks.
 - Use the Rust evaluator's actual measured elapsed seconds and scope, not
   self-reported time or model/API estimates. Scores are advisory experience
-  reporting, not a learner; they never override gate/independent failures or
-  change category selection and token applicability.
+  reporting; the separate optional UCB1 strategy learner consumes verified
+  rewards without overriding gate/independent failures, uniform category
+  selection, explicit requests, or token applicability.
+- For configured learning, verify the caller's pinned policy and genuinely
+  pre-draft selection/trial bindings, and preserve all four attribution
+  variables into `evaluate_proposal` so its saved report binds the arm.
+  Absent configuration is explicitly unattributed; partial/stale/malformed
+  supplied configuration is an error, never a fallback or reset.
+- After checking the actual saved report and overall independent evidence,
+  pin the report and actually invoke `learn_proposal_strategy` under the
+  skill's update contract. Write one fresh external checkpoint only for
+  genuinely scored attributed rewards; blocked/unscored/unattributed outcomes
+  do not increment trials. Return its path/pin or explicit skip/error.
+  Both single and continuous trials may learn, never retroactive old reports.
+  Do not claim evaluator authentication, concurrent/global-head protection,
+  LLM-weight training, or measured proposal-quality improvement.
 - Do not repair the candidate, regenerate exports, rewrite assertions or
   cases, spawn agents, combine pending proposals, commit, push, or merge.
 - If the candidate changed after handoff or needs repair, return the evidence
@@ -71,6 +86,10 @@ or explicit unscored reason. Timing excludes compilation, external checks,
 proposal/model time and report writing; it is not language runtime performance
 or total proposal cost. The core report's decision does not replace your
 overall decision from all independent checks.
+Return policy/selection/trial attribution, report pin, selected approach and
+learning update/skip/error with new checkpoint path/raw blob pin when created.
+The caller retains the single-owner chain head for future pre-draft selection;
+learning itself never starts another proposal.
 Do not offset a required-gate per-case increase with savings elsewhere. The caller owns
 integration and status/index updates; outcome metadata does not recursively
 trigger more agents.
