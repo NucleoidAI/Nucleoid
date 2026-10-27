@@ -125,17 +125,23 @@ remain anchored to the input point. Orientation is 0 in both states because
 the patterns are symmetric. Held-out inputs and outputs are not included.
 The dataset is discovered automatically by `document()`.
 
-`dataset.28bf18c6.json` annotates only the three training pairs from
-`src\data\training\28bf18c6.json`, with one shape instance per pair.
-Each output places two copies of the shape's crop side by side on a new
-3 by 6 canvas. Unconditional class-level rules hold for every instance,
-whatever its `color`: they introduce `repeat_count` (2, the total number of
-copies) and `repeat_direction` (`right`), which are absent before the rules
-run, and move `x` and `y` to the output origin 0. Tags identify the geometry:
-`l9100` is a single shape and `l4305` is the shape repeated side by side.
-Input masks retain the 8 by 8 input canvas and output masks the 3 by 6 output
-canvas. Orientation is 0 in both states because the shapes are not rotated.
-Held-out inputs and outputs are not included.
+`dataset.28bf18c6.json` follows the rule of `src\data\training\28bf18c6.json`
+with three synthesized pairs instead of copies of its grids, one shape instance
+per pair. A seeded generator sampled their canvas sizes (7 by 10, 6 by 5, and
+11 by 11, rows by columns), shape sizes (2 by 4, 4 by 2, and 2 by 3), colors,
+and positions, all different from the puzzle's 8 by 8 canvases and 3 by 3
+shapes, and no matrix equals a grid in `src\data`. Each shape is left-right
+asymmetric, so the pairs still distinguish repeating from mirroring.
+Each output places two copies of the shape's crop side by side on a new canvas
+twice as wide as the crop: 2 by 8, 4 by 4, and 2 by 6. Unconditional
+class-level rules hold for every instance, whatever its `color`: they introduce
+`repeat_count` (2, the total number of copies) and `repeat_direction`
+(`right`), which are absent before the rules run, and move `x` and `y` to the
+output origin 0. Tags identify the geometry: `l9100` is a single shape and
+`l4305` is the shape repeated side by side. Input masks retain each pair's
+input canvas and output masks its output canvas. Orientation is 0 in both
+states because the shapes are not rotated. Held-out inputs and outputs are not
+included.
 
 ## ARC proposal agent
 
@@ -415,8 +421,7 @@ input's dimensions, and `FIT` crops it to its nonzero bounding box with
 around all nonzero cells. All-zero borders are removed from all four sides:
 top, bottom, left, and right. Internal zeros and empty rows or columns between
 occupied cells are preserved. Empty and all-zero matrices return `[]`. The input
-is not modified. Ragged matrices and non-finite or nonnumeric cells are rejected
-explicitly.
+is not modified. Ragged matrices are rejected explicitly.
 This standalone utility does not change the full-size instance masks or return
 position metadata. Use `Matrix.locate` to retain the original position with
 the crop.
@@ -434,9 +439,8 @@ minimums, placing the input at the required zero-based column and row offsets
 and filling the remaining cells with zeros. Each dimension grows as needed to
 include the entire input and its placement offset instead of rejecting an
 undersized reference. It does not center or modify the input. Empty matrices
-can be padded to an all-zero canvas. Invalid matrices and dimensions or offsets
-that are not non-negative safe integers are still rejected, including unsafe
-expanded dimensions.
+can be padded to an all-zero canvas. Ragged matrices and negative dimensions or
+offsets are still rejected.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

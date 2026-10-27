@@ -7,7 +7,7 @@ import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "3aa6fb7a") {
+export async function start(puzzle_id: string = "0ca9ddb6") {
   if (!/^[0-9a-f]{8}$/.test(puzzle_id)) {
     throw new Error("Puzzle ID must be eight lowercase hexadecimal characters");
   }
