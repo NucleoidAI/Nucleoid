@@ -112,6 +112,18 @@ remain anchored to the input point. Orientation is 0 in both states because
 the patterns are symmetric. Held-out inputs and outputs are not included.
 The dataset is discovered automatically by `document()`.
 
+`dataset.28bf18c6.json` annotates only the three training pairs from
+`src\data\training\28bf18c6.json`, with one shape instance per pair.
+Each output places two copies of the shape's crop side by side on a new
+3 by 6 canvas. Unconditional class-level rules hold for every instance,
+whatever its `color`: they introduce `repeat_count` (2, the total number of
+copies) and `repeat_direction` (`right`), which are absent before the rules
+run, and move `x` and `y` to the output origin 0. Tags identify the geometry:
+`l9100` is a single shape and `l4305` is the shape repeated side by side.
+Input masks retain the 8 by 8 input canvas and output masks the 3 by 6 output
+canvas. Orientation is 0 in both states because the shapes are not rotated.
+Held-out inputs and outputs are not included.
+
 ## ARC proposal agent
 
 Use [arc-purposal](../.github/agents/arc-purposal.agent.md) and its
