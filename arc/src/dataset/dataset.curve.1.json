@@ -1,8 +1,8 @@
 {
   "declarations": [
     "class Obj(x: int, y: int, orientation: int, vertex_color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l7544'\n    this.vertex_color = vertex_color",
-    "if $Obj.vertex_color == 4:\n    $Obj.tag = 'l6840'\n    $Obj.rim_color = 8\n    $Obj.rim_direction = 'up'\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1",
-    "if $Obj.vertex_color == 9:\n    $Obj.tag = 'l9906'\n    $Obj.rim_color = 2\n    $Obj.rim_direction = 'down'\n    $Obj.x = $Obj.x@first - 1"
+    "if $Obj.vertex_color == 4:\n    $Obj.tag = 'l6840'\n    $Obj.rim_color = 8\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1",
+    "if $Obj.vertex_color == 9:\n    $Obj.tag = 'l9906'\n    $Obj.rim_color = 2\n    $Obj.x = $Obj.x@first - 1"
   ],
   "dataset": [
     {
@@ -49,7 +49,7 @@
           ],
           "implementation": "objf742ec5620c9 = Obj(x=3, y=2, orientation=0, vertex_color=4)",
           "input_value": {"id":"objf742ec5620c9","x":3,"y":2,"orientation":0,"tag":"l7544","vertex_color":4},
-          "output_value": {"id":"objf742ec5620c9","x":2,"y":1,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
+          "output_value": {"id":"objf742ec5620c9","x":2,"y":1,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8}
         },
         {
           "instance_name": "obj866f45cb5433",
@@ -77,7 +77,7 @@
           ],
           "implementation": "obj866f45cb5433 = Obj(x=1, y=4, orientation=0, vertex_color=4)",
           "input_value": {"id":"obj866f45cb5433","x":1,"y":4,"orientation":0,"tag":"l7544","vertex_color":4},
-          "output_value": {"id":"obj866f45cb5433","x":0,"y":3,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
+          "output_value": {"id":"obj866f45cb5433","x":0,"y":3,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8}
         }
       ]
     },
@@ -125,7 +125,7 @@
           ],
           "implementation": "objaf6df8ed9e79 = Obj(x=4, y=1, orientation=0, vertex_color=4)",
           "input_value": {"id":"objaf6df8ed9e79","x":4,"y":1,"orientation":0,"tag":"l7544","vertex_color":4},
-          "output_value": {"id":"objaf6df8ed9e79","x":3,"y":0,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
+          "output_value": {"id":"objaf6df8ed9e79","x":3,"y":0,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8}
         },
         {
           "instance_name": "obj1394309b01df",
@@ -153,7 +153,7 @@
           ],
           "implementation": "obj1394309b01df = Obj(x=1, y=3, orientation=180, vertex_color=9)",
           "input_value": {"id":"obj1394309b01df","x":1,"y":3,"orientation":180,"tag":"l7544","vertex_color":9},
-          "output_value": {"id":"obj1394309b01df","x":0,"y":3,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2,"rim_direction":"down"}
+          "output_value": {"id":"obj1394309b01df","x":0,"y":3,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2}
         }
       ]
     },
@@ -201,7 +201,7 @@
           ],
           "implementation": "obj55882ea787c6 = Obj(x=2, y=1, orientation=0, vertex_color=4)",
           "input_value": {"id":"obj55882ea787c6","x":2,"y":1,"orientation":0,"tag":"l7544","vertex_color":4},
-          "output_value": {"id":"obj55882ea787c6","x":1,"y":0,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8,"rim_direction":"up"}
+          "output_value": {"id":"obj55882ea787c6","x":1,"y":0,"orientation":0,"tag":"l6840","vertex_color":4,"rim_color":8}
         },
         {
           "instance_name": "obj98ba2cb040e8",
@@ -229,7 +229,7 @@
           ],
           "implementation": "obj98ba2cb040e8 = Obj(x=4, y=1, orientation=180, vertex_color=9)",
           "input_value": {"id":"obj98ba2cb040e8","x":4,"y":1,"orientation":180,"tag":"l7544","vertex_color":9},
-          "output_value": {"id":"obj98ba2cb040e8","x":3,"y":1,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2,"rim_direction":"down"}
+          "output_value": {"id":"obj98ba2cb040e8","x":3,"y":1,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2}
         },
         {
           "instance_name": "obj1c4ff1a88360",
@@ -257,7 +257,7 @@
           ],
           "implementation": "obj1c4ff1a88360 = Obj(x=2, y=3, orientation=180, vertex_color=9)",
           "input_value": {"id":"obj1c4ff1a88360","x":2,"y":3,"orientation":180,"tag":"l7544","vertex_color":9},
-          "output_value": {"id":"obj1c4ff1a88360","x":1,"y":3,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2,"rim_direction":"down"}
+          "output_value": {"id":"obj1c4ff1a88360","x":1,"y":3,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2}
         }
       ]
     }

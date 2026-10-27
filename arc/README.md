@@ -232,20 +232,21 @@ Matrices already follow the canvas axes; composition does not rotate them.
 Angles run clockwise from north: `N = 0`, `NE = 45`, `SE = 135`, `S = 180`,
 `SW = 225`, and `NW = 315`. Line orientations describe axes:
 horizontal is 90 and vertical is 0; endpoint and extension directions remain
-separate properties.
+separate properties. Curve orientation gives the rim direction: 0 is up and
+180 is down.
 
 | Dataset | Descriptive properties |
 | --- | --- |
 | Core | `vertex_color`, `vertical_segment_color`, `horizontal_segment_color`, `marker_color` |
 | Line | `endpoint_position` (side of the color-8 endpoint), `extension_direction` |
-| Curve | `vertex_color`, `rim_color`, `rim_direction` |
+| Curve | `vertex_color`, `rim_color` |
 
 Color properties are categorical grid colors, not segment lengths or coordinates.
 
 Every instance has `input_value` before the class rule and `output_value`
 after it. Obtain the input snapshot using only the class declaration; the
 complete declaration set immediately applies the rules to new instances.
-Line `extension_direction` and curve `rim_color`/`rim_direction` are created
+Line `extension_direction` and curve `rim_color` are created
 by those rules and are absent from their input snapshots rather than filled
 with artificial defaults.
 
@@ -257,8 +258,8 @@ In `dataset.core.1.json`, adding the exterior marker grows the output to
 The other origins are unchanged.
 For lines, subtract one from x when `extension_direction` is `left`, or from
 y when it is `up`; extensions to the right or down keep the input origin.
-For curves, subtract one from x for either direction, and from y only when
-`rim_direction` is `up`. These offsets are already recorded in `output_x`
+For curves, subtract one from x for either orientation, and from y only when
+`orientation` is 0. These offsets are already recorded in `output_x`
 and `output_y`; do not apply them a second time during placement.
 The inner markers in
 `dataset.core.2.json`, `dataset.core.3.json`, and `dataset.core.4.json` do not
