@@ -56,6 +56,39 @@ The checked corpus is `nucleoid.spec.md`, `tests/reference.md`, and the
 `nuc` blocks in `README.md` and `docs/examples.md`. Generated Rust and
 synthesized training records are not scored.
 
+## Assess advisory usefulness (optional)
+
+Follow [NUC 1's scoring policy](../../../docs/nuc-0001.md#advisory-usefulness-and-evaluation-cost)
+and the [JSON schemas](../../../CONTRIBUTING.md#advisory-usefulnesscost-scoring).
+When supplied, require the caller-owned rubric and its full Git blob pin frozen
+before drafting. Verify its criterion ID, proposal path, accepted baseline and
+original pin; do not replace the criterion after seeing the candidate.
+
+After the independent checks above, you may create a **new session assessment**
+outside the repository. This is permitted report writing, not candidate repair.
+Bind it to the rubric blob/criterion ID, accepted baseline revision, proposal
+path and exact handed-off proposal blob; identify your independent evaluator
+session. Record all six check groups (behavior/integrity, syntax compatibility,
+development suites, formatting, Clippy, export consistency) as `passed` or
+`failed` with actual commands/results, or `unresolved` with a nonblank reason.
+The core gate does not run Clippy or external checks. Missing evidence is not
+passed; a known failure must be recorded even when usefulness is unknown.
+
+Independently assess the frozen criterion as `demonstrated` or
+`no_demonstrated_benefit` with real nonblank observations, or `unknown` with a
+reason. Acceptance, changed-line/case/assertion counts, token skipping and
+proposer claims are not demonstrated usefulness. Do not copy a proposer's
+self-assessment into an independent result. The role/session declaration
+records provenance, not cryptographic proof of independence; you remain
+responsible for genuine checks and evidence.
+
+Leave optional scoring variables unset when evidence is unavailable; legacy
+evaluation remains valid and reports unscored usefulness, not zero. A pinned
+rubric alone is also valid and unscored. Supplied malformed, stale, contradictory
+or provenance-mismatched inputs must surface explicit errors; never drop them
+and retry as a successful unscored fallback. A claim of passed integrity/legacy
+checks that contradicts the core gate is an input error, not usable evidence.
+
 ## Measure and decide
 
 The **token non-regression gate** requires each compared case to use the same
@@ -92,6 +125,12 @@ From the supplied candidate worktree, set:
   runtime branches; inconsistent or unknown inputs are errors, not skips.
 - `NUC_PROPOSAL_EXTRA_BASELINES` to the original extra-baseline source file
   when the artifact includes additional accepted-syntax cases.
+- Optionally, `NUC_PROPOSAL_RUBRIC` to the absolute external session JSON path
+  and `NUC_PROPOSAL_RUBRIC_REVISION` to its caller-frozen full Git blob ID
+  (`git hash-object --no-filters`). They must be supplied together.
+- Optionally, `NUC_PROPOSAL_ASSESSMENT` to your new absolute external assessment
+  JSON path; this requires the pinned rubric. Confirm its proposal blob still
+  matches the frozen handoff. Unset absent optional variables, not empty strings.
 
 Run the deterministic evaluator in every mode; only its token portion is
 optional:
@@ -125,6 +164,28 @@ comparison is not zero measured cases or a passing token gate.
 Read the saved report and verify that its proposal revision still matches the
 handoff. If no report was produced, state that and the actual error explicitly.
 
+The report's `advisory_score` separately records usefulness status/basis,
+input blobs, independent-check eligibility, raw elapsed evaluator seconds and
+scope, formula/metric, and reward or explicit unscored reason. A genuine core
+rejection scores -1 regardless of usefulness; a blocked core result is unscored.
+With a passed core, independent failure scores -1, unresolved checks remain
+unscored, and only independently valid demonstrated usefulness earns
+`1 - 0.1 * t / (t + 1)` in `[0.9, 1]`; assessed no benefit is neutral 0.
+Missing/unknown usefulness is unscored, not zero. There is no token-savings
+bonus or token-skip cost credit.
+
+`t` is measured by `Instant` around actual deterministic evaluator work:
+input validation, source loading, legacy/candidate checks and blob stability.
+It excludes compilation, external suites/Clippy, proposal/model time, score
+calculation and report writing. Do not describe this nondeterministic time as
+language runtime performance, total proposal cost or model/API spending.
+Early infrastructure/input failures produce no fabricated measured report.
+The top-level `decision` is still the deterministic core gate's result, not a
+replacement for your overall independent decision. External failures still
+reject and missing independent prerequisites still block, regardless of score.
+Scoring never changes category selection, acceptance or token policy; no
+learner, adaptive strategy or model training is implemented.
+
 ## Return the evidence
 
 Return the proposal and baseline revisions, execution mode, confirmed category,
@@ -133,6 +194,10 @@ checks including syntax compatibility, and actual ran/skipped status with
 reason. When tokens ran, include counts of `less`/`same`/`more`; include each
 increased, missing, unpaired, invalid or syntax-incompatible case with its
 before/after counts or reason. Keep the candidate and baseline unchanged.
+Return the advisory metric/formula, usefulness basis and rubric/assessment
+provenance, independent-check eligibility, raw elapsed seconds/scope, and
+base/adjusted/final reward or the legitimate unscored reason. Disclose timing
+exclusions and missing evidence instead of manufacturing scores.
 The caller owns integration and status/index updates;
 outcome metadata does not trigger another pair. No commits, pushes, or merges.
 

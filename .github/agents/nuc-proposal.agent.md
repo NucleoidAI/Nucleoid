@@ -44,6 +44,11 @@ You draft and prototype exactly one added or updated NUC revision. Follow
   commit, push, or merge. Work only in the supplied candidate.
 - Report missing prerequisites explicitly; never edit the baseline or invent
   before-counts.
+- When advisory scoring is requested, require the caller-owned usefulness
+  rubric and full Git blob pin frozen before drafting. Preserve them outside
+  the repository; never assess your own usefulness or independent checks.
+  Missing optional evidence is unscored, not zero; scoring does not change
+  verdicts, token policy, or category selection and implements no learner.
 
 ## Handoff
 
@@ -52,7 +57,8 @@ path, execution mode, confirmed proposal category and selection rationale when
 applicable,
 runtime applicability and supporting rationale, expected token ran/skipped policy,
 candidate worktree, changed files, development and syntax-compatibility checks,
-and any blockers.
+any supplied frozen rubric path/blob pin, and any blockers. Do not populate
+the independent evaluator's assessment.
 If the caller-owned Rust improvement pass is pending, return only a preparation
 checkpoint and await a same-revision follow-up to recheck/finalize; do not
 freeze or declare readiness before that pass and final validation.

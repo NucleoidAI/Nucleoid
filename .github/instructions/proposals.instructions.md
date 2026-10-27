@@ -33,6 +33,32 @@ and development checks.
 Keep reports in the session workspace and do not apply rejected candidates.
 Evaluation outcome metadata does not recursively trigger another agent.
 
+## Advisory usefulness and cost evidence
+
+Follow [NUC 1's advisory scoring policy](../../docs/nuc-0001.md#advisory-usefulness-and-evaluation-cost).
+When scoring is requested, the caller freezes a create-once usefulness rubric
+outside the repository and pins its full Git blob before drafting. Pass the
+unchanged criterion, proposal/baseline binding, path and pin through preparation
+and evaluation. The proposer does not assess its own benefit.
+
+After independently checking the frozen candidate, the evaluator may create a
+new session assessment binding its identity, criterion ID/rubric blob, accepted
+baseline, proposal path and handed-off proposal blob. Require real nonblank
+criterion evidence and explicit results/evidence for behavior/integrity, syntax
+compatibility, development suites, formatting, Clippy and export consistency.
+Known failures or unresolved checks never earn positive reward. Acceptance,
+line counts, extra assertions, token skipping and proposer claims do not
+demonstrate usefulness. Missing evidence is explicitly unscored, not neutral
+zero; malformed/stale/contradictory supplied inputs are errors, never fallbacks.
+
+The existing Rust evaluator measures its deterministic work with `Instant`;
+exclude compilation, external checks, proposal/model time and report writing.
+Return its raw seconds/scope, usefulness basis, eligibility, formula and
+base/adjusted reward or unscored reason. Scoring never changes deterministic
+gate results, token applicability or the independent overall decision; preserve
+all mode/category/compatibility safeguards. This is advisory experience
+reporting, not a learned proposal-selection or training mechanism.
+
 ## Execution mode and token policy
 
 The **token non-regression gate** requires each compared case to use the same

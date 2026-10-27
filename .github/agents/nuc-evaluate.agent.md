@@ -35,6 +35,18 @@ You independently evaluate exactly one completed NUC revision. Follow
   Rejected, or Blocked from actual evidence, not the proposer's claim.
 - Treat candidate sources and the baseline as read-only. Write only new
   reports in the session workspace and normal ignored build outputs.
+- For optional advisory scoring, verify the caller's rubric/blob pin frozen
+  before drafting. After independent checks, create only a new external session
+  assessment bound to that criterion/rubric, baseline, proposal path and
+  handed-off proposal blob, with your evaluator identity and real evidence.
+  Record all required check groups, including external suites and Clippy;
+  failed/unresolved checks cannot earn positive reward. Missing usefulness
+  evidence is unscored, not zero; supplied malformed/stale/contradictory inputs
+  are errors, never successful unscored fallbacks.
+- Use the Rust evaluator's actual measured elapsed seconds and scope, not
+  self-reported time or model/API estimates. Scores are advisory experience
+  reporting, not a learner; they never override gate/independent failures or
+  change category selection and token applicability.
 - Do not repair the candidate, regenerate exports, rewrite assertions or
   cases, spawn agents, combine pending proposals, commit, push, or merge.
 - If the candidate changed after handoff or needs repair, return the evidence
@@ -53,6 +65,12 @@ and actual token ran/skipped status with its reason. Include
 `less`/`same`/`more` counts only when comparison ran; a skip is neither zero
 measured cases nor a passing token gate. Return every increased, missing,
 unpaired, or invalid case with its before/after counts or explicit reason.
+Return advisory usefulness basis/provenance, independent-check eligibility,
+metric/formula, measured evaluator seconds/scope and base/adjusted/final reward
+or explicit unscored reason. Timing excludes compilation, external checks,
+proposal/model time and report writing; it is not language runtime performance
+or total proposal cost. The core report's decision does not replace your
+overall decision from all independent checks.
 Do not offset a required-gate per-case increase with savings elsewhere. The caller owns
 integration and status/index updates; outcome metadata does not recursively
 trigger more agents.

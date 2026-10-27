@@ -106,6 +106,16 @@ Confirm that the baseline belongs to that accepted revision before making
 runtime or executable document edits. Missing inputs stop preparation, not
 justify assumptions.
 
+For advisory usefulness scoring, the caller freezes a create-once session
+rubric and its full Git blob pin **before drafting** under
+[NUC 1](../../../docs/nuc-0001.md#advisory-usefulness-and-evaluation-cost).
+Require the supplied rubric/pin when scoring is requested; preserve its
+criterion, proposal path, and accepted-baseline binding through the handoff.
+Do not alter the rubric or assess your own usefulness/independent checks.
+Missing optional usefulness evidence is legitimately unscored, not zero;
+acceptance checks and token policy are unchanged. This is experience reporting,
+not an implemented learner or adaptive selection/training policy.
+
 When token comparison is required, new measured cases need behavior-equivalent
 accepted-syntax programs with the same document, title, canonical assertions,
 and expected return. They must
@@ -178,6 +188,9 @@ and supporting rationale, candidate worktree, changed files, development and
 syntax-compatibility checks, and explicit blockers. State the expected token
 policy, without claiming an unevaluated gate passed. Freeze the candidate after
 handoff.
+Include the caller-frozen rubric path and Git blob pin when supplied, without
+claiming a usefulness score; only the independent evaluator may create the
+assessment after its checks. Keep scoring artifacts outside the repository.
 The caller starts a fresh `nuc-evaluate` agent with this handoff and
 a fresh report path; do not launch it yourself. The caller owns integration
 and evaluation status/index updates. The proposal agent must not commit, push,

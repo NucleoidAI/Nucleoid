@@ -244,6 +244,142 @@ the evaluation, not triggers for recursively creating more agents. These
 instructions apply to Copilot sessions; there is no background file watcher
 or GitHub Actions proposal trigger.
 
+#### Advisory usefulness/cost scoring
+
+The existing Rust `evaluate_proposal` entry point also reports advisory
+experience scores. It does not implement a learner, adaptive proposal/category
+selection, model training, paid calls, or a language/runtime feature. Scores
+never change deterministic verdicts, independent acceptance requirements, or
+the single/continuous token policy.
+
+Before drafting, the **caller**, not the proposer, may create and freeze a
+usefulness rubric outside the repository. Its exact JSON schema is:
+
+```json
+{
+  "criterion_id": "caller-defined-observable-benefit",
+  "proposal_path": "docs\\nuc-0001.md",
+  "baseline_revision": "<full accepted commit ID>",
+  "criterion": "<independently testable benefit requested before drafting>"
+}
+```
+
+Pin the raw rubric's full Git blob before drafting, preserve it in both
+handoffs, and keep the original criterion immutable. For example:
+
+```powershell
+$env:NUC_PROPOSAL_RUBRIC = 'C:\session\nuc-rubric.json'
+$env:NUC_PROPOSAL_RUBRIC_REVISION = (git --no-pager hash-object --no-filters -- $env:NUC_PROPOSAL_RUBRIC).Trim()
+```
+
+After independently checking the frozen candidate, the **evaluator** may
+create a new session assessment, never edit the candidate or use the proposer's
+self-assessment. This template describes the schema, not actual evidence;
+replace placeholders only with independently verified inputs/results:
+
+```json
+{
+  "criterion_id": "caller-defined-observable-benefit",
+  "rubric_revision": "<caller-frozen full rubric Git blob ID>",
+  "proposal_path": "docs\\nuc-0001.md",
+  "baseline_revision": "<full accepted commit ID>",
+  "proposal_revision": "<exact handed-off proposal Git blob ID>",
+  "assessor": {
+    "role": "independent_evaluator",
+    "id": "<independent evaluator/session identity>"
+  },
+  "checks": {
+    "behavior_integrity": {
+      "status": "unresolved",
+      "reason": "<missing independent behavior/integrity result>"
+    },
+    "syntax_compatibility": {
+      "status": "unresolved",
+      "reason": "<missing pinned-source and extra-baseline replay result>"
+    },
+    "development_suites": {
+      "status": "unresolved",
+      "reason": "<missing affected-suite commands and results>"
+    },
+    "formatting": {
+      "status": "unresolved",
+      "reason": "<missing cargo fmt --check result>"
+    },
+    "clippy": {
+      "status": "unresolved",
+      "reason": "<missing warning-denied Clippy result>"
+    },
+    "export_consistency": {
+      "status": "unresolved",
+      "reason": "<missing no-regeneration export/dataset consistency result>"
+    }
+  },
+  "usefulness": {
+    "status": "unknown",
+    "reason": "<criterion not yet independently assessed>"
+  }
+}
+```
+
+- Every check group is required: `passed` and `failed` each require a nonblank
+  `evidence` field instead of `reason`; `unresolved` requires a nonblank `reason`.
+  Record actual commands/results, not a missing or assumed check. The core
+  gate does not run external development suites, formatting or Clippy.
+- Usefulness is `demonstrated` or `no_demonstrated_benefit` with nonblank
+  `evidence`, or `unknown` with a nonblank `reason`. Judge the frozen criterion
+  through independent observations; acceptance, changed lines, extra
+  assertions/cases, token skipping and proposer claims do not demonstrate benefit.
+- Only `independent_evaluator` is a valid assessor role. Its nonblank ID and
+  evidence record provenance, not authentication; the evaluation agent remains
+  responsible for genuine independence and truthful evidence.
+- The rubric pin, criterion ID, accepted baseline, proposal path and actual
+  handed-off proposal blob must match. Either path separator is accepted in
+  proposal identities. Input blobs are checked for stability during evaluation.
+  Unknown/missing fields, invalid statuses, contradictory status/fields, blank
+  evidence, stale bindings and integrity/legacy success claims contradicted by
+  gate failures are explicit errors, never successful unscored fallbacks.
+- Both inputs must be absolute external `.json` paths. Add the independently
+  created assessment to the normal evaluation command's environment:
+
+```powershell
+$env:NUC_PROPOSAL_ASSESSMENT = 'C:\session\nuc-assessment.json'
+cargo test --test proposals evaluate_proposal -- --ignored --nocapture
+```
+
+- The rubric path and original pin are required together; an assessment also
+  requires that pinned rubric. Keep all scoring artifacts create-once in the
+  session workspace, never overwrite them or put them in the repository.
+- Leave all three optional variables unset for legacy evaluation without
+  scoring evidence; empty/stale variables are not absence. The gate runs
+  normally and explicitly reports unscored usefulness, not zero. A pinned rubric
+  without an assessment is also valid and unscored.
+- `advisory_score.metric` is `nuc-advisory-usefulness-evaluator-time-v1`.
+  `usefulness` reports demonstrated/no-benefit/unscored separately from reward;
+  `usefulness_basis` preserves rubric/assessment paths, blobs, criterion,
+  assessor and check evidence, while `independent_check_eligibility` is explicit.
+- A blocked core result is unscored. A genuine core rejection has base/final
+  reward -1 regardless of usefulness; with a passed core, a known independent
+  failure likewise earns -1, while unresolved checks remain unscored.
+- With a passed core and **all** independent checks passed, demonstrated
+  usefulness earns base +1, adjustment `-0.1 * t / (t + 1)` and final reward
+  `1 - 0.1 * t / (t + 1)` in `[0.9, 1]`. An independently assessed valid
+  no-benefit change stays neutral 0 without a cost adjustment. Missing/unknown
+  usefulness stays unscored, with a reason and no fabricated numeric reward.
+- `t` is the actual `Instant`-measured `evaluation_time.elapsed_seconds`:
+  deterministic evaluator input validation, source loading, legacy/candidate
+  checks, and blob stability verification. The report names this scope and
+  formula and records the raw seconds even for reported neutral/rejected/
+  blocked/unknown states. No report/duration is fabricated on an early error.
+- This nondeterministic measurement excludes compilation, external suites/
+  Clippy, proposal/model time, score calculation and report writing. It is not
+  language runtime performance, total end-to-end proposal cost or API/model
+  spending; there is no token-savings bonus or token-skip cost credit.
+- The existing top-level `decision` remains the deterministic core gate's
+  verdict, **not** the complete independent decision. External failures still
+  require Rejected, and unresolved prerequisites still require Blocked under the
+  existing process, irrespective of an advisory score. Return both evidence and
+  scoring limitations honestly.
+
 ## Declarative Runtime Environment
 
 Nucleoid records declarative statements in a dependency graph and re-evaluates

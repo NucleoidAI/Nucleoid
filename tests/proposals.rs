@@ -1,4 +1,4 @@
-//! Deterministic behavior, integrity, and optional token checks for NUCs.
+//! Deterministic NUC checks with optional, independently evidenced advisory scores.
 //!
 //! The ignored entry points record an immutable baseline and compare a rewritten
 //! corpus. Ordinary tests supply policy inputs directly, without mutating the
@@ -12,14 +12,20 @@ use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::{Duration, Instant};
 
 use indexmap::IndexMap;
 use nucleoid::lang::ast::lexer::{Token, tokenize};
 use nucleoid::lang::ast::parse;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 const METRIC: &str = "nucleoid-lexer-with-layout-v1";
+const SCORE_METRIC: &str = "nuc-advisory-usefulness-evaluator-time-v1";
+const SCORE_FORMULA: &str = "useful: 1 - 0.1 * t / (t + 1), t in seconds; neutral: 0; rejected: -1";
+const TIMING_SCOPE: &str = "elapsed deterministic evaluator work: input validation, source loading, \
+    legacy/candidate checks, and blob stability verification; excludes compilation, external \
+    suites/Clippy, proposal/model time, score calculation, and report writing";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -339,6 +345,192 @@ struct Report {
     issues: Vec<Issue>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct UsefulnessRubric {
+    criterion_id: String,
+    proposal_path: String,
+    baseline_revision: String,
+    criterion: String,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum AssessorRole {
+    IndependentEvaluator,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Assessor {
+    role: AssessorRole,
+    id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
+enum IndependentCheck {
+    Passed { evidence: String },
+    Failed { evidence: String },
+    Unresolved { reason: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct IndependentChecks {
+    behavior_integrity: IndependentCheck,
+    syntax_compatibility: IndependentCheck,
+    development_suites: IndependentCheck,
+    formatting: IndependentCheck,
+    clippy: IndependentCheck,
+    export_consistency: IndependentCheck,
+}
+
+impl IndependentChecks {
+    fn entries(&self) -> [(&'static str, &IndependentCheck); 6] {
+        [
+            ("behavior_integrity", &self.behavior_integrity),
+            ("syntax_compatibility", &self.syntax_compatibility),
+            ("development_suites", &self.development_suites),
+            ("formatting", &self.formatting),
+            ("clippy", &self.clippy),
+            ("export_consistency", &self.export_consistency),
+        ]
+    }
+
+    fn eligibility(&self) -> IndependentEligibility {
+        let checks = self.entries();
+        if checks
+            .iter()
+            .any(|(_, check)| matches!(check, IndependentCheck::Failed { .. }))
+        {
+            IndependentEligibility::Failed
+        } else if checks
+            .iter()
+            .any(|(_, check)| matches!(check, IndependentCheck::Unresolved { .. }))
+        {
+            IndependentEligibility::Unresolved
+        } else {
+            IndependentEligibility::Passed
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
+enum UsefulnessJudgment {
+    Demonstrated { evidence: String },
+    NoDemonstratedBenefit { evidence: String },
+    Unknown { reason: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct UsefulnessAssessment {
+    criterion_id: String,
+    rubric_revision: String,
+    proposal_path: String,
+    baseline_revision: String,
+    proposal_revision: String,
+    assessor: Assessor,
+    checks: IndependentChecks,
+    usefulness: UsefulnessJudgment,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ScoringArtifact<T> {
+    path: PathBuf,
+    revision: String,
+    input: T,
+}
+
+#[derive(Debug, Default, Clone, Serialize)]
+struct ScoringEvidence {
+    rubric: Option<ScoringArtifact<UsefulnessRubric>>,
+    assessment: Option<ScoringArtifact<UsefulnessAssessment>>,
+}
+
+#[derive(Default)]
+struct ScoringPaths<'a> {
+    rubric: Option<&'a Path>,
+    rubric_revision: Option<&'a str>,
+    assessment: Option<&'a Path>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum IndependentEligibility {
+    NotAssessed,
+    Passed,
+    Failed,
+    Unresolved,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum RewardBasis {
+    GateRejected,
+    IndependentChecksFailed,
+    DemonstratedUsefulness,
+    NoDemonstratedBenefit,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum UnscoredReason {
+    Blocked,
+    MissingRubric,
+    MissingAssessment,
+    IndependentChecksUnresolved,
+    UnknownUsefulness,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+enum AdvisoryReward {
+    Scored {
+        basis: RewardBasis,
+        base_reward: i8,
+        applied_cost_adjustment: f64,
+        final_reward: f64,
+    },
+    Unscored {
+        reason: UnscoredReason,
+    },
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+enum ReportUsefulness {
+    Demonstrated,
+    NoDemonstratedBenefit,
+    Unscored { reason: UnscoredReason },
+}
+
+#[derive(Debug, Serialize)]
+struct EvaluationTime {
+    elapsed_seconds: f64,
+    scope: &'static str,
+}
+
+#[derive(Debug, Serialize)]
+struct AdvisoryScore {
+    metric: &'static str,
+    formula: &'static str,
+    evaluation_time: EvaluationTime,
+    independent_check_eligibility: IndependentEligibility,
+    usefulness: ReportUsefulness,
+    usefulness_basis: ScoringEvidence,
+    reward: AdvisoryReward,
+}
+
+#[derive(Debug, Serialize)]
+struct EvaluationReport {
+    #[serde(flatten)]
+    gate: Report,
+    advisory_score: AdvisoryScore,
+}
+
 #[derive(Debug, Error)]
 enum GateError {
     #[error("{path}: {source}")]
@@ -358,6 +550,8 @@ enum GateError {
     Proposal(String),
     #[error("invalid evaluation input: {0}")]
     Input(String),
+    #[error("invalid advisory scoring input: {0}")]
+    Scoring(String),
     #[error("set {0} before running the proposal gate")]
     MissingEnvironment(&'static str),
     #[error("{variable}: {source}")]
@@ -710,6 +904,361 @@ fn read_policy(category: Category) -> Result<EvaluationPolicy, GateError> {
     )
 }
 
+fn full_git_revision(value: &str) -> bool {
+    matches!(value.len(), 40 | 64) && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn scoring_text(field: &str, value: &str) -> Result<(), GateError> {
+    if value.trim().is_empty() {
+        return Err(GateError::Scoring(format!("{field} must be nonblank")));
+    }
+    Ok(())
+}
+
+fn scoring_binding(field: &str, actual: &str, expected: &str) -> Result<(), GateError> {
+    if actual != expected {
+        return Err(GateError::Scoring(format!(
+            "{field} mismatch: expected {expected:?}, found {actual:?}"
+        )));
+    }
+    Ok(())
+}
+
+fn scoring_blob(root: &Path, path: &Path) -> Result<String, GateError> {
+    let path = path.to_str().ok_or_else(|| {
+        GateError::Scoring("scoring artifact paths must be valid Unicode".to_string())
+    })?;
+    // Rust canonicalizes Windows paths to verbatim paths, which Git cannot open.
+    let git_path = match path.strip_prefix(r"\\?\UNC\") {
+        Some(unc) => format!(r"\\{unc}"),
+        None => path.strip_prefix(r"\\?\").unwrap_or(path).to_string(),
+    };
+    Ok(
+        git(root, &["hash-object", "--no-filters", "--", &git_path])?
+            .trim()
+            .to_string(),
+    )
+}
+
+impl<T> ScoringArtifact<T> {
+    fn verify_stable(&self, root: &Path) -> Result<(), GateError> {
+        scoring_binding(
+            "scoring artifact blob (input changed during evaluation)",
+            &scoring_blob(root, &self.path)?,
+            &self.revision,
+        )
+    }
+}
+
+fn read_scoring_artifact<T: DeserializeOwned>(
+    root: &Path,
+    path: &Path,
+) -> Result<ScoringArtifact<T>, GateError> {
+    if !path.is_absolute() || path.extension().is_none_or(|extension| extension != "json") {
+        return Err(GateError::Scoring(
+            "use an absolute session path to a JSON scoring artifact".to_string(),
+        ));
+    }
+    let canonical = fs::canonicalize(path).map_err(|source| GateError::Io {
+        path: path.to_path_buf(),
+        source,
+    })?;
+    let canonical_root = fs::canonicalize(root).map_err(|source| GateError::Io {
+        path: root.to_path_buf(),
+        source,
+    })?;
+    if canonical.starts_with(canonical_root) {
+        return Err(GateError::Scoring(
+            "scoring inputs belong outside the candidate repository".to_string(),
+        ));
+    }
+    if canonical
+        .extension()
+        .is_none_or(|extension| extension != "json")
+    {
+        return Err(GateError::Scoring(
+            "the resolved scoring artifact must also be a JSON path".to_string(),
+        ));
+    }
+    let revision = scoring_blob(root, &canonical)?;
+    let artifact = ScoringArtifact {
+        input: serde_json::from_str(&read(&canonical)?)?,
+        path: canonical,
+        revision,
+    };
+    artifact.verify_stable(root)?;
+    Ok(artifact)
+}
+
+impl ScoringEvidence {
+    fn load(
+        root: &Path,
+        paths: ScoringPaths<'_>,
+        baseline_revision: &str,
+        proposal: &Proposal,
+    ) -> Result<Self, GateError> {
+        let (rubric_path, rubric_revision) = match (paths.rubric, paths.rubric_revision) {
+            (None, None) if paths.assessment.is_none() => return Ok(Self::default()),
+            (Some(path), Some(revision)) if full_git_revision(revision) => (path, revision),
+            _ => {
+                return Err(GateError::Scoring(
+                    "scoring requires NUC_PROPOSAL_RUBRIC and its caller-frozen full Git blob \
+                     NUC_PROPOSAL_RUBRIC_REVISION; an assessment cannot stand alone"
+                        .to_string(),
+                ));
+            }
+        };
+        let rubric = read_scoring_artifact(root, rubric_path)?;
+        scoring_binding(
+            "caller-frozen rubric revision",
+            &rubric.revision,
+            rubric_revision,
+        )?;
+        let evidence = Self {
+            rubric: Some(rubric),
+            assessment: paths
+                .assessment
+                .map(|path| read_scoring_artifact(root, path))
+                .transpose()?,
+        };
+        evidence.validate(baseline_revision, proposal, &[])?;
+        Ok(evidence)
+    }
+
+    fn validate(
+        &self,
+        baseline_revision: &str,
+        proposal: &Proposal,
+        issues: &[Issue],
+    ) -> Result<(), GateError> {
+        let Some(rubric) = &self.rubric else {
+            if self.assessment.is_some() {
+                return Err(GateError::Scoring(
+                    "an assessment requires a caller-frozen rubric".to_string(),
+                ));
+            }
+            return Ok(());
+        };
+        if !full_git_revision(&rubric.revision) {
+            return Err(GateError::Scoring(
+                "rubric revision must be a full Git blob ID".to_string(),
+            ));
+        }
+        let criterion = &rubric.input;
+        scoring_text("rubric.criterion_id", &criterion.criterion_id)?;
+        scoring_text("rubric.criterion", &criterion.criterion)?;
+        scoring_binding(
+            "rubric.baseline_revision",
+            &criterion.baseline_revision,
+            baseline_revision,
+        )?;
+        scoring_binding(
+            "rubric.proposal_path",
+            &criterion.proposal_path.replace('\\', "/"),
+            &proposal.path.replace('\\', "/"),
+        )?;
+        let Some(artifact) = &self.assessment else {
+            return Ok(());
+        };
+        let assessment = &artifact.input;
+        scoring_binding(
+            "assessment.criterion_id",
+            &assessment.criterion_id,
+            &criterion.criterion_id,
+        )?;
+        scoring_binding(
+            "assessment.rubric_revision",
+            &assessment.rubric_revision,
+            &rubric.revision,
+        )?;
+        scoring_binding(
+            "assessment.baseline_revision",
+            &assessment.baseline_revision,
+            baseline_revision,
+        )?;
+        scoring_binding(
+            "assessment.proposal_path",
+            &assessment.proposal_path.replace('\\', "/"),
+            &proposal.path.replace('\\', "/"),
+        )?;
+        if !full_git_revision(&assessment.proposal_revision) {
+            return Err(GateError::Scoring(
+                "assessment.proposal_revision must be the full handed-off Git blob ID".to_string(),
+            ));
+        }
+        scoring_binding(
+            "assessment.proposal_revision",
+            &assessment.proposal_revision,
+            &proposal.revision,
+        )?;
+        scoring_text("assessment.assessor.id", &assessment.assessor.id)?;
+        for (name, check) in assessment.checks.entries() {
+            let value = match check {
+                IndependentCheck::Passed { evidence } | IndependentCheck::Failed { evidence } => {
+                    evidence
+                }
+                IndependentCheck::Unresolved { reason } => reason,
+            };
+            scoring_text(&format!("assessment.checks.{name} evidence/reason"), value)?;
+        }
+        let value = match &assessment.usefulness {
+            UsefulnessJudgment::Demonstrated { evidence }
+            | UsefulnessJudgment::NoDemonstratedBenefit { evidence } => evidence,
+            UsefulnessJudgment::Unknown { reason } => reason,
+        };
+        scoring_text("assessment.usefulness evidence/reason", value)?;
+        for issue in issues {
+            let (name, check) = match issue {
+                Issue::MissingCase { .. }
+                | Issue::ChangedAssertions { .. }
+                | Issue::ChangedReturn { .. }
+                | Issue::InvalidCase { .. } => {
+                    ("behavior_integrity", &assessment.checks.behavior_integrity)
+                }
+                Issue::InvalidLegacyCase { .. } | Issue::ChangedLegacyAssertions { .. } => (
+                    "syntax_compatibility",
+                    &assessment.checks.syntax_compatibility,
+                ),
+                Issue::MoreTokens { .. } | Issue::UnpairedCase { .. } => continue,
+            };
+            if matches!(check, IndependentCheck::Passed { .. }) {
+                return Err(GateError::Scoring(format!(
+                    "assessment.checks.{name} claims passed but contradicts gate issue {issue:?}"
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    fn verify_stable(&self, root: &Path) -> Result<(), GateError> {
+        if let Some(rubric) = &self.rubric {
+            rubric.verify_stable(root)?;
+        }
+        if let Some(assessment) = &self.assessment {
+            assessment.verify_stable(root)?;
+        }
+        Ok(())
+    }
+}
+
+fn optional_scoring_path(variable: &'static str) -> Result<Option<PathBuf>, GateError> {
+    match env::var_os(variable) {
+        None => Ok(None),
+        Some(value) if !value.is_empty() => Ok(Some(PathBuf::from(value))),
+        Some(_) => Err(GateError::Scoring(format!(
+            "{variable} was supplied but is empty; unset absent inputs"
+        ))),
+    }
+}
+
+fn read_scoring_evidence(
+    root: &Path,
+    baseline_revision: &str,
+    proposal: &Proposal,
+) -> Result<ScoringEvidence, GateError> {
+    let rubric = optional_scoring_path("NUC_PROPOSAL_RUBRIC")?;
+    let rubric_revision = optional_environment("NUC_PROPOSAL_RUBRIC_REVISION")?;
+    let assessment = optional_scoring_path("NUC_PROPOSAL_ASSESSMENT")?;
+    ScoringEvidence::load(
+        root,
+        ScoringPaths {
+            rubric: rubric.as_deref(),
+            rubric_revision: rubric_revision.as_deref(),
+            assessment: assessment.as_deref(),
+        },
+        baseline_revision,
+        proposal,
+    )
+}
+
+fn advisory_score(report: &Report, evidence: ScoringEvidence, elapsed: Duration) -> AdvisoryScore {
+    let assessment = evidence.assessment.as_ref().map(|artifact| &artifact.input);
+    let eligibility = assessment.map_or(IndependentEligibility::NotAssessed, |assessment| {
+        assessment.checks.eligibility()
+    });
+    let usefulness = match assessment {
+        Some(assessment) => match assessment.usefulness {
+            UsefulnessJudgment::Demonstrated { .. } => ReportUsefulness::Demonstrated,
+            UsefulnessJudgment::NoDemonstratedBenefit { .. } => {
+                ReportUsefulness::NoDemonstratedBenefit
+            }
+            UsefulnessJudgment::Unknown { .. } => ReportUsefulness::Unscored {
+                reason: UnscoredReason::UnknownUsefulness,
+            },
+        },
+        None => ReportUsefulness::Unscored {
+            reason: if evidence.rubric.is_some() {
+                UnscoredReason::MissingAssessment
+            } else {
+                UnscoredReason::MissingRubric
+            },
+        },
+    };
+    let result = match report.decision {
+        Decision::Blocked => Err(UnscoredReason::Blocked),
+        Decision::Rejected => Ok((RewardBasis::GateRejected, -1)),
+        Decision::Accepted => match (eligibility, assessment) {
+            (IndependentEligibility::Failed, _) => Ok((RewardBasis::IndependentChecksFailed, -1)),
+            (IndependentEligibility::Unresolved, _) => {
+                Err(UnscoredReason::IndependentChecksUnresolved)
+            }
+            (_, None) if evidence.rubric.is_none() => Err(UnscoredReason::MissingRubric),
+            (_, None) => Err(UnscoredReason::MissingAssessment),
+            (_, Some(assessment)) => match assessment.usefulness {
+                UsefulnessJudgment::Demonstrated { .. } => {
+                    Ok((RewardBasis::DemonstratedUsefulness, 1))
+                }
+                UsefulnessJudgment::NoDemonstratedBenefit { .. } => {
+                    Ok((RewardBasis::NoDemonstratedBenefit, 0))
+                }
+                UsefulnessJudgment::Unknown { .. } => Err(UnscoredReason::UnknownUsefulness),
+            },
+        },
+    };
+    let seconds = elapsed.as_secs_f64();
+    let reward = match result {
+        Ok((basis, base_reward)) => {
+            let applied_cost_adjustment = if base_reward == 1 {
+                -0.1 * (seconds / (seconds + 1.0))
+            } else {
+                0.0
+            };
+            AdvisoryReward::Scored {
+                basis,
+                base_reward,
+                applied_cost_adjustment,
+                final_reward: f64::from(base_reward) + applied_cost_adjustment,
+            }
+        }
+        Err(reason) => AdvisoryReward::Unscored { reason },
+    };
+    AdvisoryScore {
+        metric: SCORE_METRIC,
+        formula: SCORE_FORMULA,
+        evaluation_time: EvaluationTime {
+            elapsed_seconds: seconds,
+            scope: TIMING_SCOPE,
+        },
+        independent_check_eligibility: eligibility,
+        usefulness,
+        usefulness_basis: evidence,
+        reward,
+    }
+}
+
+fn time_evaluation(
+    work: impl FnOnce() -> Result<(Report, ScoringEvidence), GateError>,
+) -> Result<EvaluationReport, GateError> {
+    let started = Instant::now();
+    let (gate, evidence) = work()?;
+    evidence.validate(&gate.baseline_revision, &gate.proposal, &gate.issues)?;
+    let elapsed = started.elapsed();
+    Ok(EvaluationReport {
+        advisory_score: advisory_score(&gate, evidence, elapsed),
+        gate,
+    })
+}
+
 fn write_new<T: Serialize>(path: &Path, value: &T) -> Result<(), GateError> {
     let output = OpenOptions::new()
         .write(true)
@@ -900,33 +1449,43 @@ fn record_baseline() -> Result<(), GateError> {
 #[ignore = "set NUC_PROPOSAL_BASELINE, NUC_PROPOSAL, and NUC_PROPOSAL_REPORT"]
 fn evaluate_proposal() -> Result<(), GateError> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let baseline: Baseline = serde_json::from_str(&read(&artifact("NUC_PROPOSAL_BASELINE")?)?)?;
-    baseline_cases(&baseline)?;
-    let proposal_path = env::var("NUC_PROPOSAL").map_err(|source| GateError::Environment {
-        variable: "NUC_PROPOSAL",
-        source,
+    let evaluation = time_evaluation(|| {
+        let baseline: Baseline = serde_json::from_str(&read(&artifact("NUC_PROPOSAL_BASELINE")?)?)?;
+        baseline_cases(&baseline)?;
+        let proposal_path = env::var("NUC_PROPOSAL").map_err(|source| GateError::Environment {
+            variable: "NUC_PROPOSAL",
+            source,
+        })?;
+        if proposal_path.is_empty() {
+            return Err(GateError::MissingEnvironment("NUC_PROPOSAL"));
+        }
+        let proposal = read_proposal(root, proposal_path)?;
+        let policy = read_policy(proposal.category)?;
+        let scoring = read_scoring_evidence(root, &baseline.revision, &proposal)?;
+        let mut legacy_sources = sources_at_revision(root, &baseline.revision)?;
+        legacy_sources.extend(extra_baselines()?.into_iter().map(SourceCase::from));
+        let mut sources = Vec::new();
+        for document in Document::ALL {
+            sources.extend(document.cases(&read(&root.join(document.path()))?));
+        }
+        let report = compare(&baseline, proposal, policy, &legacy_sources, &sources)?;
+        let current = read_proposal(root, report.proposal.path.clone())?;
+        if current.revision != report.proposal.revision {
+            return Err(GateError::Proposal(
+                "the proposal changed during evaluation; evaluate the new revision".to_string(),
+            ));
+        }
+        scoring.verify_stable(root)?;
+        Ok((report, scoring))
     })?;
-    if proposal_path.is_empty() {
-        return Err(GateError::MissingEnvironment("NUC_PROPOSAL"));
-    }
-    let proposal = read_proposal(root, proposal_path)?;
-    let policy = read_policy(proposal.category)?;
-    let mut legacy_sources = sources_at_revision(root, &baseline.revision)?;
-    legacy_sources.extend(extra_baselines()?.into_iter().map(SourceCase::from));
-    let mut sources = Vec::new();
-    for document in Document::ALL {
-        sources.extend(document.cases(&read(&root.join(document.path()))?));
-    }
-    let report = compare(&baseline, proposal, policy, &legacy_sources, &sources)?;
-    let current = read_proposal(root, report.proposal.path.clone())?;
-    if current.revision != report.proposal.revision {
-        return Err(GateError::Proposal(
-            "the proposal changed during evaluation; evaluate the new revision".to_string(),
-        ));
-    }
+    let report = &evaluation.gate;
     let path = artifact("NUC_PROPOSAL_REPORT")?;
-    write_new(&path, &report)?;
+    write_new(&path, &evaluation)?;
     println!("Policy: {}", serde_json::to_string(&report.policy)?);
+    println!(
+        "Advisory score: {}",
+        serde_json::to_string(&evaluation.advisory_score)?
+    );
     match &report.token_check {
         TokenCheck::Ran { cases, .. } => println!(
             "Token check ran: {} less, {} same, {} more",
@@ -979,6 +1538,8 @@ fn verdict(before: &[SourceCase], after: &[SourceCase]) -> Report {
 }
 
 const FIXTURE_REVISION: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const FIXTURE_PROPOSAL_REVISION: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+const FIXTURE_RUBRIC_REVISION: &str = "cccccccccccccccccccccccccccccccccccccccc";
 
 fn required_policy() -> EvaluationPolicy {
     EvaluationPolicy::from_inputs(Category::Syntax, PolicyInputs::default()).unwrap()
@@ -1005,7 +1566,7 @@ fn comparisons(report: &Report) -> &[Comparison] {
 fn fixture_proposal() -> Proposal {
     Proposal {
         path: "docs/nuc-9999.md".to_string(),
-        revision: "proposal-revision".to_string(),
+        revision: FIXTURE_PROPOSAL_REVISION.to_string(),
         category: Category::Syntax,
     }
 }
@@ -1731,4 +2292,620 @@ fn skipped_comparison_still_requires_every_accepted_case_and_extra_source() {
             .is_err()
         );
     }
+}
+
+fn fixture_scoring_evidence() -> ScoringEvidence {
+    let passed = || IndependentCheck::Passed {
+        evidence: "independent regression fixture command and passing result".to_string(),
+    };
+    ScoringEvidence {
+        rubric: Some(ScoringArtifact {
+            path: env::temp_dir().join("regression-rubric.json"),
+            revision: FIXTURE_RUBRIC_REVISION.to_string(),
+            input: UsefulnessRubric {
+                criterion_id: "observable-benefit".to_string(),
+                proposal_path: "docs\\nuc-9999.md".to_string(),
+                baseline_revision: FIXTURE_REVISION.to_string(),
+                criterion: "demonstrate the caller's specified observable benefit".to_string(),
+            },
+        }),
+        assessment: Some(ScoringArtifact {
+            path: env::temp_dir().join("regression-assessment.json"),
+            revision: FIXTURE_PROPOSAL_REVISION.to_string(),
+            input: UsefulnessAssessment {
+                criterion_id: "observable-benefit".to_string(),
+                rubric_revision: FIXTURE_RUBRIC_REVISION.to_string(),
+                proposal_path: "docs/nuc-9999.md".to_string(),
+                baseline_revision: FIXTURE_REVISION.to_string(),
+                proposal_revision: FIXTURE_PROPOSAL_REVISION.to_string(),
+                assessor: Assessor {
+                    role: AssessorRole::IndependentEvaluator,
+                    id: "independent-regression-assessor".to_string(),
+                },
+                checks: IndependentChecks {
+                    behavior_integrity: passed(),
+                    syntax_compatibility: passed(),
+                    development_suites: passed(),
+                    formatting: passed(),
+                    clippy: passed(),
+                    export_consistency: passed(),
+                },
+                usefulness: UsefulnessJudgment::Demonstrated {
+                    evidence: "independent regression fixture observation against the criterion"
+                        .to_string(),
+                },
+            },
+        }),
+    }
+}
+
+fn fixture_scored_report() -> Report {
+    let cases = [fixture("same", "a = 1\nassert(a, 1)")];
+    verdict(&cases, &cases)
+}
+
+fn fixture_score(report: &Report, evidence: ScoringEvidence, elapsed: Duration) -> AdvisoryScore {
+    evidence
+        .validate(&report.baseline_revision, &report.proposal, &report.issues)
+        .unwrap();
+    advisory_score(report, evidence, elapsed)
+}
+
+fn scored_values(score: &AdvisoryScore) -> (RewardBasis, i8, f64, f64) {
+    match score.reward {
+        AdvisoryReward::Scored {
+            basis,
+            base_reward,
+            applied_cost_adjustment,
+            final_reward,
+        } => (basis, base_reward, applied_cost_adjustment, final_reward),
+        AdvisoryReward::Unscored { reason } => panic!("expected a scored reward, not {reason:?}"),
+    }
+}
+
+fn check_slots(checks: &mut IndependentChecks) -> [&mut IndependentCheck; 6] {
+    [
+        &mut checks.behavior_integrity,
+        &mut checks.syntax_compatibility,
+        &mut checks.development_suites,
+        &mut checks.formatting,
+        &mut checks.clippy,
+        &mut checks.export_consistency,
+    ]
+}
+
+#[test]
+fn independently_demonstrated_usefulness_and_no_benefit_are_distinct() {
+    let report = fixture_scored_report();
+    let useful = fixture_score(&report, fixture_scoring_evidence(), Duration::from_secs(1));
+    assert_eq!(
+        scored_values(&useful),
+        (RewardBasis::DemonstratedUsefulness, 1, -0.05, 0.95)
+    );
+    assert_eq!(
+        useful.independent_check_eligibility,
+        IndependentEligibility::Passed
+    );
+    let mut neutral = fixture_scoring_evidence();
+    neutral.assessment.as_mut().unwrap().input.usefulness =
+        UsefulnessJudgment::NoDemonstratedBenefit {
+            evidence: "independent fixture comparison found no demonstrated benefit".to_string(),
+        };
+    assert_eq!(
+        scored_values(&fixture_score(&report, neutral, Duration::MAX)),
+        (RewardBasis::NoDemonstratedBenefit, 0, 0.0, 0.0)
+    );
+    assert_eq!(report.decision, Decision::Accepted);
+}
+
+#[test]
+fn missing_and_unknown_usefulness_are_explicitly_unscored_not_zero() {
+    let report = fixture_scored_report();
+    let mut rubric_only = fixture_scoring_evidence();
+    rubric_only.assessment = None;
+    let mut unknown = fixture_scoring_evidence();
+    unknown.assessment.as_mut().unwrap().input.usefulness = UsefulnessJudgment::Unknown {
+        reason: "independent fixture observation could not establish usefulness".to_string(),
+    };
+    for (evidence, expected) in [
+        (ScoringEvidence::default(), UnscoredReason::MissingRubric),
+        (rubric_only, UnscoredReason::MissingAssessment),
+        (unknown, UnscoredReason::UnknownUsefulness),
+    ] {
+        let score = fixture_score(&report, evidence, Duration::from_secs(2));
+        assert!(matches!(score.reward, AdvisoryReward::Unscored { reason } if reason == expected));
+        let json = serde_json::to_value(score).unwrap();
+        assert_eq!(json["reward"]["status"], "unscored");
+        assert_eq!(json["usefulness"]["status"], "unscored");
+        for field in ["base_reward", "applied_cost_adjustment", "final_reward"] {
+            assert!(json["reward"].get(field).is_none());
+        }
+        assert_eq!(json["evaluation_time"]["elapsed_seconds"], 2.0);
+    }
+}
+
+#[test]
+fn genuine_rejection_wins_over_claimed_usefulness_and_blocked_stays_unscored() {
+    let rejected = verdict(
+        &[fixture("more", "a = 1\nassert(a, 1)")],
+        &[fixture("more", "a = (1)\nassert(a, 1)")],
+    );
+    assert_eq!(rejected.decision, Decision::Rejected);
+    for evidence in [fixture_scoring_evidence(), ScoringEvidence::default()] {
+        assert_eq!(
+            scored_values(&fixture_score(&rejected, evidence, Duration::from_secs(1))),
+            (RewardBasis::GateRejected, -1, 0.0, -1.0)
+        );
+    }
+    let without_evidence = fixture_score(&rejected, ScoringEvidence::default(), Duration::ZERO);
+    assert!(matches!(
+        without_evidence.usefulness,
+        ReportUsefulness::Unscored {
+            reason: UnscoredReason::MissingRubric
+        }
+    ));
+    let blocked = verdict(
+        &[fixture("original", "assert(1, 1)")],
+        &[
+            fixture("original", "assert(1, 1)"),
+            fixture("new", "assert(2, 2)"),
+        ],
+    );
+    assert_eq!(blocked.decision, Decision::Blocked);
+    let score = fixture_score(&blocked, fixture_scoring_evidence(), Duration::from_secs(1));
+    assert!(matches!(
+        score.reward,
+        AdvisoryReward::Unscored {
+            reason: UnscoredReason::Blocked
+        }
+    ));
+    assert_eq!(score.evaluation_time.elapsed_seconds, 1.0);
+}
+
+#[test]
+fn every_independent_check_requires_evidenced_success_before_positive_reward() {
+    let report = fixture_scored_report();
+    for slot in 0..6 {
+        for failed in [false, true] {
+            let mut evidence = fixture_scoring_evidence();
+            let checks = &mut evidence.assessment.as_mut().unwrap().input.checks;
+            *check_slots(checks).into_iter().nth(slot).unwrap() = if failed {
+                IndependentCheck::Failed {
+                    evidence: "independent fixture command failed with an observed diagnostic"
+                        .to_string(),
+                }
+            } else {
+                IndependentCheck::Unresolved {
+                    reason: "independent fixture command has not completed".to_string(),
+                }
+            };
+            let score = fixture_score(&report, evidence, Duration::ZERO);
+            if failed {
+                assert_eq!(
+                    scored_values(&score),
+                    (RewardBasis::IndependentChecksFailed, -1, 0.0, -1.0)
+                );
+                assert_eq!(
+                    score.independent_check_eligibility,
+                    IndependentEligibility::Failed
+                );
+            } else {
+                assert!(matches!(
+                    score.reward,
+                    AdvisoryReward::Unscored {
+                        reason: UnscoredReason::IndependentChecksUnresolved
+                    }
+                ));
+            }
+            assert_eq!(report.decision, Decision::Accepted);
+        }
+    }
+    let mut evidence = fixture_scoring_evidence();
+    let assessment = &mut evidence.assessment.as_mut().unwrap().input;
+    assessment.checks.clippy = IndependentCheck::Failed {
+        evidence: "independent fixture Clippy failed".to_string(),
+    };
+    assessment.checks.development_suites = IndependentCheck::Unresolved {
+        reason: "independent fixture suite remains unresolved".to_string(),
+    };
+    assessment.usefulness = UsefulnessJudgment::Unknown {
+        reason: "usefulness is unknown; a known failure must remain visible".to_string(),
+    };
+    assert_eq!(
+        scored_values(&fixture_score(&report, evidence, Duration::ZERO)).0,
+        RewardBasis::IndependentChecksFailed
+    );
+}
+
+#[test]
+fn usefulness_cost_discount_is_bounded_and_only_applied_to_positive_reward() {
+    let report = fixture_scored_report();
+    let mut last_reward = 1.0;
+    for elapsed in [
+        Duration::ZERO,
+        Duration::from_nanos(1),
+        Duration::from_millis(500),
+        Duration::from_secs(1),
+        Duration::from_secs(100),
+        Duration::MAX,
+    ] {
+        let score = fixture_score(&report, fixture_scoring_evidence(), elapsed);
+        let (_, base, adjustment, reward) = scored_values(&score);
+        assert_eq!(base, 1);
+        assert!(reward.is_finite() && (0.9..=1.0).contains(&reward));
+        assert!((-0.1..=0.0).contains(&adjustment));
+        assert!(reward <= last_reward);
+        assert_eq!(reward, 1.0 + adjustment);
+        assert_eq!(score.evaluation_time.elapsed_seconds, elapsed.as_secs_f64());
+        last_reward = reward;
+    }
+    assert_eq!(
+        scored_values(&fixture_score(
+            &report,
+            fixture_scoring_evidence(),
+            Duration::ZERO
+        ))
+        .3,
+        1.0
+    );
+}
+
+#[test]
+fn advisory_scores_preserve_the_complete_verdict_and_token_policy_matrix() {
+    let before = [fixture("paired", "a = 1\nassert(a, 1)")];
+    let after = [fixture("paired", "a = (1)\nassert(a, 1)")];
+    for (policy, skip) in policy_matrix() {
+        let gate = verdict_with_policy(&before, &after, policy);
+        let original = serde_json::to_value(&gate).unwrap();
+        let score = fixture_score(&gate, fixture_scoring_evidence(), Duration::ZERO);
+        assert_eq!(scored_values(&score).1, if skip.is_some() { 1 } else { -1 });
+        let evaluation = EvaluationReport {
+            gate,
+            advisory_score: score,
+        };
+        let mut json = serde_json::to_value(evaluation).unwrap();
+        json.as_object_mut().unwrap().remove("advisory_score");
+        assert_eq!(json, original);
+    }
+}
+
+#[test]
+fn scoring_provenance_mismatches_and_blank_judgments_are_errors() {
+    let report = fixture_scored_report();
+    let corruptions: &[fn(&mut ScoringEvidence)] = &[
+        |e| e.rubric.as_mut().unwrap().input.criterion_id = " \n ".to_string(),
+        |e| e.rubric.as_mut().unwrap().input.criterion.clear(),
+        |e| e.rubric.as_mut().unwrap().revision = "not-a-blob".to_string(),
+        |e| e.rubric.as_mut().unwrap().input.proposal_path = "docs/nuc-0001.md".to_string(),
+        |e| {
+            e.rubric.as_mut().unwrap().input.baseline_revision =
+                FIXTURE_PROPOSAL_REVISION.to_string()
+        },
+        |e| e.assessment.as_mut().unwrap().input.criterion_id = "another-criterion".to_string(),
+        |e| e.assessment.as_mut().unwrap().input.rubric_revision = FIXTURE_REVISION.to_string(),
+        |e| {
+            e.assessment.as_mut().unwrap().input.baseline_revision =
+                FIXTURE_RUBRIC_REVISION.to_string()
+        },
+        |e| e.assessment.as_mut().unwrap().input.proposal_path = "docs/nuc-0001.md".to_string(),
+        |e| {
+            e.assessment.as_mut().unwrap().input.proposal_revision =
+                FIXTURE_RUBRIC_REVISION.to_string()
+        },
+        |e| e.assessment.as_mut().unwrap().input.proposal_revision = "short".to_string(),
+        |e| e.assessment.as_mut().unwrap().input.assessor.id = " \t ".to_string(),
+        |e| {
+            e.assessment.as_mut().unwrap().input.usefulness = UsefulnessJudgment::Demonstrated {
+                evidence: " ".to_string(),
+            };
+        },
+        |e| {
+            e.assessment.as_mut().unwrap().input.usefulness =
+                UsefulnessJudgment::NoDemonstratedBenefit {
+                    evidence: String::new(),
+                };
+        },
+        |e| {
+            e.assessment.as_mut().unwrap().input.usefulness = UsefulnessJudgment::Unknown {
+                reason: " ".to_string(),
+            };
+        },
+        |e| e.rubric = None,
+    ];
+    for corrupt in corruptions {
+        let mut evidence = fixture_scoring_evidence();
+        corrupt(&mut evidence);
+        assert!(matches!(
+            evidence.validate(&report.baseline_revision, &report.proposal, &report.issues),
+            Err(GateError::Scoring(_))
+        ));
+    }
+    for slot in 0..6 {
+        for check in [
+            IndependentCheck::Passed {
+                evidence: " ".to_string(),
+            },
+            IndependentCheck::Failed {
+                evidence: String::new(),
+            },
+            IndependentCheck::Unresolved {
+                reason: "\n".to_string(),
+            },
+        ] {
+            let mut evidence = fixture_scoring_evidence();
+            *check_slots(&mut evidence.assessment.as_mut().unwrap().input.checks)
+                .into_iter()
+                .nth(slot)
+                .unwrap() = check;
+            assert!(matches!(
+                evidence.validate(&report.baseline_revision, &report.proposal, &[]),
+                Err(GateError::Scoring(_))
+            ));
+        }
+    }
+}
+
+#[test]
+fn scoring_json_rejects_malformed_unknown_and_contradictory_fields() {
+    let evidence = fixture_scoring_evidence();
+    let rubric = serde_json::to_value(&evidence.rubric.unwrap().input).unwrap();
+    for field in [
+        "criterion_id",
+        "criterion",
+        "baseline_revision",
+        "proposal_path",
+    ] {
+        let mut missing = rubric.clone();
+        missing.as_object_mut().unwrap().remove(field);
+        assert!(serde_json::from_value::<UsefulnessRubric>(missing).is_err());
+    }
+    let mut extra = rubric;
+    extra["reward"] = 1.into();
+    assert!(serde_json::from_value::<UsefulnessRubric>(extra).is_err());
+    assert!(serde_json::from_str::<UsefulnessRubric>("{").is_err());
+    assert!(
+        serde_json::from_str::<UsefulnessRubric>(
+            r#"{"criterion_id":"a","criterion_id":"b","criterion":"x","proposal_path":"x","baseline_revision":"x"}"#
+        )
+        .is_err()
+    );
+    let assessment = serde_json::to_value(&evidence.assessment.unwrap().input).unwrap();
+    let corruptions: &[fn(&mut serde_json::Value)] = &[
+        |a| a["assessor"]["role"] = "proposer".into(),
+        |a| a["assessor"]["trusted"] = true.into(),
+        |a| a["checks"]["clippy"]["status"] = "waived".into(),
+        |a| a["checks"]["clippy"]["reason"] = "contradicts passed evidence".into(),
+        |a| {
+            a["checks"]["clippy"]
+                .as_object_mut()
+                .unwrap()
+                .remove("evidence");
+        },
+        |a| {
+            a["checks"]
+                .as_object_mut()
+                .unwrap()
+                .remove("syntax_compatibility");
+        },
+        |a| a["usefulness"]["status"] = "accepted".into(),
+        |a| a["usefulness"]["reason"] = "contradicts a demonstrated judgment".into(),
+        |a| {
+            a["usefulness"].as_object_mut().unwrap().remove("evidence");
+        },
+        |a| a["elapsed_seconds"] = 0.into(),
+        |a| {
+            a.as_object_mut().unwrap().remove("proposal_revision");
+        },
+        |a| a["rubric_revision"] = serde_json::Value::Null,
+    ];
+    for corrupt in corruptions {
+        let mut input = assessment.clone();
+        corrupt(&mut input);
+        assert!(serde_json::from_value::<UsefulnessAssessment>(input).is_err());
+    }
+}
+
+#[test]
+fn a_passed_assessment_cannot_contradict_known_gate_integrity_or_legacy_failure() {
+    let before = [fixture("paired", "a = 1\nassert(a, 1)")];
+    let baseline = capture(FIXTURE_REVISION.to_string(), &before).unwrap();
+    let integrity = verdict(&before, &[fixture("paired", "a = 1\nassert(1, 1)")]);
+    let legacy = compare(
+        &baseline,
+        fixture_proposal(),
+        required_policy(),
+        &[fixture("paired", "assert(")],
+        &before,
+    )
+    .unwrap();
+    for (gate, legacy_failure) in [(integrity, false), (legacy, true)] {
+        assert_eq!(gate.decision, Decision::Rejected);
+        let mut evidence = fixture_scoring_evidence();
+        assert!(matches!(
+            evidence.validate(&gate.baseline_revision, &gate.proposal, &gate.issues),
+            Err(GateError::Scoring(_))
+        ));
+        let checks = &mut evidence.assessment.as_mut().unwrap().input.checks;
+        let check = if legacy_failure {
+            &mut checks.syntax_compatibility
+        } else {
+            &mut checks.behavior_integrity
+        };
+        *check = IndependentCheck::Failed {
+            evidence: "independent fixture reproduced the gate failure".to_string(),
+        };
+        assert_eq!(
+            scored_values(&fixture_score(&gate, evidence, Duration::ZERO)).1,
+            -1
+        );
+    }
+}
+
+#[test]
+fn scoring_paths_require_a_frozen_pin_and_never_silently_drop_supplied_inputs() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = Path::new("not-created-scoring-input.json");
+    for paths in [
+        ScoringPaths {
+            rubric: Some(path),
+            ..ScoringPaths::default()
+        },
+        ScoringPaths {
+            rubric_revision: Some(FIXTURE_RUBRIC_REVISION),
+            ..ScoringPaths::default()
+        },
+        ScoringPaths {
+            assessment: Some(path),
+            ..ScoringPaths::default()
+        },
+        ScoringPaths {
+            rubric: Some(path),
+            rubric_revision: Some(""),
+            assessment: None,
+        },
+    ] {
+        assert!(matches!(
+            ScoringEvidence::load(root, paths, FIXTURE_REVISION, &fixture_proposal()),
+            Err(GateError::Scoring(_))
+        ));
+    }
+    assert!(matches!(
+        ScoringEvidence::load(
+            root,
+            ScoringPaths {
+                rubric: Some(path),
+                rubric_revision: Some(FIXTURE_RUBRIC_REVISION),
+                assessment: None,
+            },
+            FIXTURE_REVISION,
+            &fixture_proposal(),
+        ),
+        Err(GateError::Scoring(_))
+    ));
+    assert!(
+        ScoringEvidence::load(
+            root,
+            ScoringPaths::default(),
+            FIXTURE_REVISION,
+            &fixture_proposal()
+        )
+        .unwrap()
+        .rubric
+        .is_none()
+    );
+}
+
+#[test]
+fn actual_timing_wrapper_reports_integrated_results_without_timing_input_or_error_fallback() {
+    let outside = Instant::now();
+    let evaluation =
+        time_evaluation(|| Ok((fixture_scored_report(), fixture_scoring_evidence()))).unwrap();
+    let measured = evaluation.advisory_score.evaluation_time.elapsed_seconds;
+    assert!(measured >= 0.0 && measured <= outside.elapsed().as_secs_f64());
+    let json = serde_json::to_value(evaluation).unwrap();
+    assert_eq!(json["decision"], "accepted");
+    assert_eq!(json["advisory_score"]["metric"], SCORE_METRIC);
+    assert_eq!(json["advisory_score"]["formula"], SCORE_FORMULA);
+    assert_eq!(
+        json["advisory_score"]["evaluation_time"]["scope"],
+        TIMING_SCOPE
+    );
+    assert_eq!(json["advisory_score"]["reward"]["base_reward"], 1);
+    assert!(matches!(
+        time_evaluation(|| Err(GateError::Input(
+            "early infrastructure/input failure".to_string()
+        ))),
+        Err(GateError::Input(_))
+    ));
+}
+
+#[test]
+fn scoring_artifacts_are_external_pinned_stable_and_create_once() -> Result<(), GateError> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let directory =
+        env::temp_dir().join(format!("nucleoid-score-regression-{}", std::process::id()));
+    fs::create_dir(&directory).map_err(|source| GateError::Io {
+        path: directory.clone(),
+        source,
+    })?;
+    let rubric_path = directory.join("rubric.json");
+    let assessment_path = directory.join("assessment.json");
+    assert!(matches!(
+        read_scoring_artifact::<UsefulnessRubric>(root, &rubric_path),
+        Err(GateError::Io { .. })
+    ));
+    assert!(matches!(
+        read_scoring_artifact::<UsefulnessRubric>(root, &root.join("Cargo.toml")),
+        Err(GateError::Scoring(_))
+    ));
+    let template = fixture_scoring_evidence();
+    write_new(&rubric_path, &template.rubric.unwrap().input)?;
+    let pin = scoring_blob(root, &rubric_path)?;
+    let mut assessment = template.assessment.unwrap().input;
+    assessment.rubric_revision = pin.clone();
+    write_new(&assessment_path, &assessment)?;
+    assert!(matches!(
+        write_new(&assessment_path, &assessment),
+        Err(GateError::Io { .. })
+    ));
+    let evaluation = time_evaluation(|| {
+        let gate = fixture_scored_report();
+        let evidence = ScoringEvidence::load(
+            root,
+            ScoringPaths {
+                rubric: Some(&rubric_path),
+                rubric_revision: Some(&pin),
+                assessment: Some(&assessment_path),
+            },
+            &gate.baseline_revision,
+            &gate.proposal,
+        )?;
+        evidence.verify_stable(root)?;
+        Ok((gate, evidence))
+    })?;
+    assert_eq!(scored_values(&evaluation.advisory_score).1, 1);
+    let report_path = directory.join("regression-report.json");
+    write_new(&report_path, &evaluation)?;
+    let saved: serde_json::Value = serde_json::from_str(&read(&report_path)?)?;
+    assert_eq!(
+        saved["advisory_score"]["usefulness_basis"]["rubric"]["revision"],
+        pin
+    );
+    assert_eq!(
+        saved["advisory_score"]["usefulness_basis"]["assessment"]["input"]["proposal_revision"],
+        FIXTURE_PROPOSAL_REVISION
+    );
+    assert!(matches!(
+        write_new(&report_path, &evaluation),
+        Err(GateError::Io { .. })
+    ));
+    fs::write(&rubric_path, "{}").map_err(|source| GateError::Io {
+        path: rubric_path.clone(),
+        source,
+    })?;
+    assert!(matches!(
+        evaluation
+            .advisory_score
+            .usefulness_basis
+            .verify_stable(root),
+        Err(GateError::Scoring(_))
+    ));
+    assert!(
+        ScoringEvidence::load(
+            root,
+            ScoringPaths {
+                rubric: Some(&rubric_path),
+                rubric_revision: Some(&pin),
+                assessment: Some(&assessment_path),
+            },
+            FIXTURE_REVISION,
+            &fixture_proposal(),
+        )
+        .is_err()
+    );
+    fs::remove_dir_all(&directory).map_err(|source| GateError::Io {
+        path: directory,
+        source,
+    })?;
+    Ok(())
 }
