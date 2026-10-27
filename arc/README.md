@@ -98,8 +98,9 @@ prompts, programs, matrices, provider settings, or scoring.
 
 The synchronous `document()` function reads every JSON file in `src\dataset`,
 alongside `instruct_dataset.ts`, on each call, independently of the working directory.
-Files are sorted by name and serialized as one
-`{"datasets": [...]}` document, with a separate array entry per file.
+Files are sorted by name, validated, and minified by removing the whitespace
+between JSON tokens; string contents, numbers, and key order stay exactly as
+written. They are returned as one JSON array, with a separate entry per file.
 New files, including `dataset.core.2.json`, need no additional imports.
 Non-JSON files and subdirectories are ignored. An empty dataset directory,
 unreadable files, or malformed JSON fail explicitly; JSON errors name the file.

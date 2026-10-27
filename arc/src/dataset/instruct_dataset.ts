@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-export function document() {
+export function document(): string {
   const files = readdirSync(__dirname, { withFileTypes: true })
     .filter((entry) => entry.isFile() && /\.json$/i.test(entry.name))
     .map((entry) => entry.name)
@@ -15,7 +15,7 @@ export function document() {
     const source: string = readFileSync(join(__dirname, file), "utf8");
 
     try {
-      return JSON.parse(source);
+      JSON.parse(source);
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new SyntaxError(
@@ -25,7 +25,9 @@ export function document() {
       }
       throw error;
     }
+
+    return source.replace(/("(?:[^"\\]|\\.)*")|\s+/g, "$1");
   });
 
-  return [...datasets];
+  return `[${datasets.join(",")}]`;
 }

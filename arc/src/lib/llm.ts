@@ -8,7 +8,7 @@ export async function generate({ messages = [], document = true }) {
       role: "assistant",
       content: `
         instruct_dataset:
-        ${JSON.stringify(dataset.document())}
+        ${dataset.document()}
       `,
     });
   }
