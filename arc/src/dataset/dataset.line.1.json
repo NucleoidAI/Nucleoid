@@ -6,6 +6,7 @@
     "if $Obj.orientation == 0 and $Obj.endpoint_position == 'up':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'",
     "if $Obj.orientation == 0 and $Obj.endpoint_position == 'down':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'\n    $Obj.y = $Obj.y@first - 1"
   ],
+  "output_canvas": "EXACT",
   "dataset": [
     {
       "input_matrix": [

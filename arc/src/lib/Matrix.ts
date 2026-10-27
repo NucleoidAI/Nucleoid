@@ -112,6 +112,17 @@ export function merge(...matrices) {
   return result;
 }
 
+export function canvas(matrix, type) {
+  switch (type) {
+    case "EXACT":
+      return matrix;
+    case "FIT":
+      return crop(matrix);
+    default:
+      throw new Error(`Unknown output canvas ${JSON.stringify(type)}`);
+  }
+}
+
 export function difference(matrix1, matrix2) {
   let mismatches = 0;
   const rows = Math.max(matrix1.length, matrix2.length);

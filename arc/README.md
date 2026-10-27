@@ -99,6 +99,11 @@ unreadable files, or malformed JSON fail explicitly; JSON errors name the file.
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations.
 
+Each dataset also sets `output_canvas`, how its output matrices are framed.
+`EXACT` outputs keep the input matrix's dimensions, while `FIT` outputs are
+cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`
+is `FIT`; the other datasets are `EXACT`.
+
 `dataset.cross.1.json` annotates only the three training pairs from
 `src\data\training\0ca9ddb6.json`, with ten point instances in total.
 Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
@@ -214,13 +219,15 @@ There are 2 sections in our approach: analysis and visualization. In analysis ph
 ##### 1. Find patterns and Represent in `nuc` lang
 
 The LLM finds pattern for given training input and output data and creates declarations in `nuc` lang.
+It also infers the `output_canvas` from the training pairs.
 
 ```json
 {
   "declarations": [
     "class Obj(x: int, y: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color\n    this.marker_color = 0",
     "if $Obj.vertex_color == 9 and $Obj.vertical_segment_color == 9 and $Obj.horizontal_segment_color == 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 1"
-  ]
+  ],
+  "output_canvas": "EXACT"
 }
 ```
 
@@ -391,6 +398,10 @@ needed to retain the entire placed matrix, and merging preserves the largest
 height and width across its inputs. Zero is transparent; later nonzero cells
 win on overlap, as before. An erased output object uses `[[0]]` with an explicit
 output position.
+`Matrix.canvas` then frames the merged result with the inferred
+`output_canvas`: `EXACT` keeps the composed canvas, which starts at the test
+input's dimensions, and `FIT` crops it to its nonzero bounding box with
+`Matrix.crop`. Any other value fails explicitly.
 
 `Matrix.crop(matrix)` returns a new matrix containing the smallest rectangle
 around all nonzero cells. All-zero borders are removed from all four sides:

@@ -7,6 +7,7 @@
     "$Obj.x = 0",
     "$Obj.y = 0"
   ],
+  "output_canvas": "FIT",
   "dataset": [
     {
       "input_matrix": [

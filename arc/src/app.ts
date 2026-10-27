@@ -6,7 +6,7 @@ import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
 
-export async function start(puzzle_id = "3aa6fb7a") {
+export async function start(puzzle_id = "28bf18c6") {
   if (!/^[0-9a-f]{8}$/.test(puzzle_id)) {
     throw new Error("Puzzle ID must be eight lowercase hexadecimal characters");
   }
@@ -40,12 +40,13 @@ export async function start(puzzle_id = "3aa6fb7a") {
 
   let instance_index = 0;
 
-  const { declarations } = await analyzer.declarations({
+  const { declarations, output_canvas } = await analyzer.declarations({
     train_dataset: training_input,
   });
   const train_dataset = {
     ...training_input,
     declarations,
+    output_canvas,
   };
 
   for (const [index, dataset] of train_dataset.dataset.entries()) {
@@ -129,6 +130,8 @@ export async function start(puzzle_id = "3aa6fb7a") {
 
     result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
+
+  result_matrix = Matrix.canvas(result_matrix, output_canvas);
 
   const test_output_matrix = puzzle.test[0].output;
   terminal.section(3, "Compare", "Expected and predicted canvases");

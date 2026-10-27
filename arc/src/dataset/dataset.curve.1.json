@@ -4,6 +4,7 @@
     "if $Obj.vertex_color == 4:\n    $Obj.tag = 'l6840'\n    $Obj.rim_color = 8\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1",
     "if $Obj.vertex_color == 9:\n    $Obj.tag = 'l9906'\n    $Obj.rim_color = 2\n    $Obj.x = $Obj.x@first - 1"
   ],
+  "output_canvas": "EXACT",
   "dataset": [
     {
       "input_matrix": [

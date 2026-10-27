@@ -6,7 +6,7 @@ import * as terminal from "./lib/terminal";
 export async function declarations({ train_dataset }) {
   terminal.step("Inferring declarations");
 
-  const { declarations } = await llm.generate({
+  const { declarations, output_canvas } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -14,15 +14,16 @@ export async function declarations({ train_dataset }) {
           train_dataset:
           ${JSON.stringify(train_dataset)}
           json_format:
-          { "declarations": <DECLARATIONS> }
+          { "declarations": <DECLARATIONS>, "output_canvas": <OUTPUT_CANVAS> }
         `,
       },
     ],
   });
 
   terminal.code("Declarations", declarations);
+  terminal.step(`Output canvas ${output_canvas}`);
 
-  return { declarations };
+  return { declarations, output_canvas };
 }
 
 export async function instances({ declarations, input_matrix, output_matrix }) {
