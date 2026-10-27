@@ -37,7 +37,9 @@ automatic prompt/KV caching. See OpenRouter's
 and [prompt caching](https://openrouter.ai/docs/guides/best-practices/prompt-caching)
 documentation for the distinction.
 
-Run the ARC example with `bun run start`. This makes live OpenRouter calls;
+Run the ARC example with `bun run start`, which defaults to puzzle `3aa6fb7a`.
+Pass a puzzle ID as the first argument, for example `bun run start 0d3d703e`,
+to load `src\data\training\0d3d703e.json`. This makes live OpenRouter calls;
 type checking, linting, and offline inspection do not require model calls.
 
 ## Terminal presentation

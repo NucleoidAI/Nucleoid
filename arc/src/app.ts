@@ -1,26 +1,34 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import * as analyzer from "./analyzer";
 import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
-import puzzle from "./data/training/0ca9ddb6.json";
-// Completed:
-// 3aa6fb7a
 
-const {
-  train,
-  test: [{ input: test_input_matrix, output: test_output_matrix }],
-} = puzzle;
+export async function start(puzzle_id = "3aa6fb7a") {
+  if (!/^[0-9a-f]{8}$/.test(puzzle_id)) {
+    throw new Error("Puzzle ID must be eight lowercase hexadecimal characters");
+  }
 
-const training_input = {
-  dataset: train.map(({ input, output }) => ({
-    input_matrix: input,
-    output_matrix: output,
-    instances: [],
-  })),
-};
+  const puzzle = JSON.parse(
+    await readFile(
+      join(__dirname, "data", "training", `${puzzle_id}.json`),
+      "utf8"
+    )
+  );
+  const {
+    train,
+    test: [{ input: test_input_matrix }],
+  } = puzzle;
+  const training_input = {
+    dataset: train.map(({ input, output }) => ({
+      input_matrix: input,
+      output_matrix: output,
+      instances: [],
+    })),
+  };
 
-export async function start() {
   const startedAt = performance.now();
   terminal.header({ version: await nucleoid.version() });
   terminal.puzzle({ train, testInput: test_input_matrix });
@@ -88,8 +96,8 @@ export async function start() {
 
   let test_index = 0;
 
-  let result_matrix = Array.from({ length: test_output_matrix.length }, () =>
-    Array(test_output_matrix[0].length).fill(0)
+  let result_matrix = Array.from({ length: test_input_matrix.length }, () =>
+    Array(test_input_matrix[0].length).fill(0)
   );
 
   const input_instances = [];
@@ -122,6 +130,7 @@ export async function start() {
     result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
 
+  const test_output_matrix = puzzle.test[0].output;
   terminal.section(3, "Compare", "Expected and predicted canvases");
   terminal.grid("Expected", test_output_matrix);
   terminal.grid("Result", result_matrix);
