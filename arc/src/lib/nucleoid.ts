@@ -4,15 +4,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 async function execute(args) {
-  const executable =
+  const executable: string =
     process.env.NUCLEOID_EXECUTABLE ??
     String.raw`C:\Users\canmi\dev\Nucleoid\target\debug\nucleoid.exe`;
-  const stdout = await new Promise((resolve, reject) => {
+  const stdout: string = await new Promise((resolve, reject) => {
     execFile(
       executable,
       args,
       { encoding: "utf8", windowsHide: true },
-      (error, stdout, stderr) => {
+      (error, stdout: string, stderr: string) => {
         if (error) {
           reject(
             new Error(
@@ -27,14 +27,11 @@ async function execute(args) {
     );
   });
 
-  if (typeof stdout !== "string") {
-    throw new Error("Nucleoid returned non-text output");
-  }
   return stdout;
 }
 
 export async function version() {
-  const stdout = await execute(["--version"]);
+  const stdout: string = await execute(["--version"]);
   const match = /^nucleoid\s+(\S+)\s*$/.exec(stdout);
   if (!match) {
     throw new Error("Nucleoid returned invalid version output");
@@ -42,13 +39,13 @@ export async function version() {
   return match[1];
 }
 
-export async function run(source) {
-  const directory = await mkdtemp(join(tmpdir(), "nuc-arc-"));
+export async function run(source: string) {
+  const directory: string = await mkdtemp(join(tmpdir(), "nuc-arc-"));
 
   try {
-    const file = join(directory, "program.nuc");
+    const file: string = join(directory, "program.nuc");
     await writeFile(file, source, "utf8");
-    const stdout = await execute(["--json", file]);
+    const stdout: string = await execute(["--json", file]);
 
     try {
       const result = JSON.parse(stdout);

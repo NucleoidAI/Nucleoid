@@ -52,7 +52,7 @@ export async function instances({
   });
 
   terminal.step(`${instances.length} objects identified`);
-  instances.forEach(({ input_instance_matrix }, index) => {
+  instances.forEach(({ input_instance_matrix }, index: number) => {
     terminal.grid(`Test object ${index + 1}`, input_instance_matrix);
   });
 

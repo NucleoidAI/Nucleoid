@@ -2,7 +2,7 @@ import axios from "axios";
 import * as terminal from "./terminal";
 
 export async function generate({ messages = [] }) {
-  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+  const apiKey: string = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is required");
   }
@@ -34,7 +34,7 @@ export async function generate({ messages = [] }) {
     if (!axios.isAxiosError(error)) {
       throw error;
     }
-    const status = error.response ? ` (${error.response.status})` : "";
+    const status: string = error.response ? ` (${error.response.status})` : "";
     const message = error.response?.data?.error?.message;
     // Axios errors contain authentication headers, so do not attach the cause.
     throw new Error(
@@ -48,8 +48,8 @@ export async function generate({ messages = [] }) {
     throw new Error(`OpenRouter error: ${data.error.message}`);
   }
 
-  const content = data.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || !content.trim()) {
+  const content: string = data.choices?.[0]?.message?.content;
+  if (!content?.trim()) {
     throw new Error("OpenRouter returned no text content");
   }
 
@@ -58,12 +58,14 @@ export async function generate({ messages = [] }) {
     terminal.usage({ prompt_tokens, completion_tokens });
   }
 
-  let jsonContent ;
+  let jsonContent;
 
   try {
     jsonContent = JSON.parse(content);
   } catch (error) {
-    throw new Error(`Failed to parse OpenRouter response as JSON: ${error.message} \n\nResponse content: ${content}`);
+    throw new Error(
+      `Failed to parse OpenRouter response as JSON: ${error.message} \n\nResponse content: ${content}`
+    );
   }
 
   return jsonContent;

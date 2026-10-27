@@ -3,26 +3,20 @@ export function crop(matrix) {
 }
 
 export function locate(matrix) {
-  if (!Array.isArray(matrix)) {
-    throw new Error("Matrix must be an array for cropping");
-  }
-  const rows = matrix.length;
-  const cols = matrix[0]?.length ?? 0;
-  let top = rows;
-  let bottom = -1;
-  let left = cols;
-  let right = -1;
+  const rows: number = matrix.length;
+  const cols: number = matrix[0]?.length ?? 0;
+  let top: number = rows;
+  let bottom: number = -1;
+  let left: number = cols;
+  let right: number = -1;
 
-  for (let y = 0; y < rows; y++) {
+  for (let y: number = 0; y < rows; y++) {
     const row = matrix[y];
-    if (!Array.isArray(row) || row.length !== cols) {
+    if (row.length !== cols) {
       throw new Error("Matrix must be rectangular for cropping");
     }
-    for (let x = 0; x < cols; x++) {
-      const value = row[x];
-      if (!Number.isFinite(value)) {
-        throw new Error("Matrix must contain finite numbers for cropping");
-      }
+    for (let x: number = 0; x < cols; x++) {
+      const value: number = row[x];
       if (value === 0) continue;
       top = Math.min(top, y);
       bottom = y;
@@ -41,48 +35,34 @@ export function locate(matrix) {
   };
 }
 
-export function pad(matrix, rows, cols, left, top) {
-  if (!Array.isArray(matrix)) {
-    throw new Error("Matrix must be an array for padding");
+export function pad(
+  matrix,
+  rows: number,
+  cols: number,
+  left: number,
+  top: number
+) {
+  if (rows < 0 || cols < 0) {
+    throw new Error("Padding dimensions must be non-negative");
   }
-  if (
-    !Number.isSafeInteger(rows) ||
-    !Number.isSafeInteger(cols) ||
-    rows < 0 ||
-    cols < 0
-  ) {
-    throw new Error("Padding dimensions must be non-negative safe integers");
+  if (left < 0 || top < 0) {
+    throw new Error("Padding offsets must be non-negative");
   }
-  if (
-    !Number.isSafeInteger(left) ||
-    !Number.isSafeInteger(top) ||
-    left < 0 ||
-    top < 0
-  ) {
-    throw new Error("Padding offsets must be non-negative safe integers");
-  }
-  const sourceRows = matrix.length;
-  const sourceCols = matrix[0]?.length ?? 0;
-  const paddedRows = Math.max(rows, top + sourceRows);
-  const paddedCols = Math.max(cols, left + sourceCols);
-  if (!Number.isSafeInteger(paddedRows) || !Number.isSafeInteger(paddedCols)) {
-    throw new Error("Expanded padding dimensions must be safe integers");
-  }
+  const sourceRows: number = matrix.length;
+  const sourceCols: number = matrix[0]?.length ?? 0;
+  const paddedRows: number = Math.max(rows, top + sourceRows);
+  const paddedCols: number = Math.max(cols, left + sourceCols);
   const result = Array.from({ length: paddedRows }, () =>
     Array(paddedCols).fill(0)
   );
 
-  for (let y = 0; y < sourceRows; y++) {
+  for (let y: number = 0; y < sourceRows; y++) {
     const row = matrix[y];
-    if (!Array.isArray(row) || row.length !== sourceCols) {
+    if (row.length !== sourceCols) {
       throw new Error("Matrix must be rectangular for padding");
     }
-    for (let x = 0; x < sourceCols; x++) {
-      const value = row[x];
-      if (!Number.isFinite(value)) {
-        throw new Error("Matrix must contain finite numbers for padding");
-      }
-      result[y + top][x + left] = value;
+    for (let x: number = 0; x < sourceCols; x++) {
+      result[y + top][x + left] = row[x];
     }
   }
 
@@ -93,15 +73,17 @@ export function merge(...matrices) {
   if (matrices.length === 0) {
     throw new Error("At least one matrix is required for merging");
   }
-  const numRows = Math.max(...matrices.map((matrix) => matrix.length));
-  const numCols = Math.max(...matrices.map((matrix) => matrix[0]?.length ?? 0));
+  const numRows: number = Math.max(...matrices.map((matrix) => matrix.length));
+  const numCols: number = Math.max(
+    ...matrices.map((matrix) => matrix[0]?.length ?? 0)
+  );
 
   const result = Array.from({ length: numRows }, () => Array(numCols).fill(0));
 
   for (const matrix of matrices) {
     const padded = pad(matrix, numRows, numCols, 0, 0);
-    for (let i = 0; i < numRows; i++) {
-      for (let j = 0; j < numCols; j++) {
+    for (let i: number = 0; i < numRows; i++) {
+      for (let j: number = 0; j < numCols; j++) {
         if (padded[i][j] !== 0) {
           result[i][j] = padded[i][j];
         }
@@ -112,7 +94,7 @@ export function merge(...matrices) {
   return result;
 }
 
-export function canvas(matrix, type) {
+export function canvas(matrix, type: string) {
   switch (type) {
     case "EXACT":
       return matrix;
@@ -123,11 +105,11 @@ export function canvas(matrix, type) {
   }
 }
 
-export function difference(matrix1, matrix2) {
-  let mismatches = 0;
-  const rows = Math.max(matrix1.length, matrix2.length);
+export function difference(matrix1, matrix2): number {
+  let mismatches: number = 0;
+  const rows: number = Math.max(matrix1.length, matrix2.length);
 
-  for (let i = 0; i < rows; i++) {
+  for (let i: number = 0; i < rows; i++) {
     const row1 = matrix1[i];
     const row2 = matrix2[i];
 
@@ -137,9 +119,9 @@ export function difference(matrix1, matrix2) {
       continue;
     }
 
-    const cols = Math.max(row1.length, row2.length);
+    const cols: number = Math.max(row1.length, row2.length);
 
-    for (let j = 0; j < cols; j++) {
+    for (let j: number = 0; j < cols; j++) {
       if (row1[j] !== row2[j]) {
         mismatches++;
       }

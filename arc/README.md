@@ -3,8 +3,16 @@
 ## Development
 
 The application keeps `.ts` source files and runs directly on Node.js using
-`tsx`, without generating JavaScript files. Sources use JavaScript syntax without
-explicit TypeScript types; the TypeScript check uses non-strict inference.
+`tsx`, without generating JavaScript files. Primitive values carry inline
+`string`, `number`, or `boolean` annotations on parameters, including callback
+parameters, on local variables and loop counters, and on the return types of
+synchronous functions. Everything else stays inferred: arrays, objects,
+destructured bindings, callback results, async return types, and payload
+fields whose type is checked at runtime. Runtime guards check values and
+shapes, such as non-negative offsets and rectangular rows, without repeating
+type checks like `typeof`, `Array.isArray`, or `Number.isSafeInteger`. Sources
+declare no interfaces, type aliases, or generics, and the TypeScript check uses
+non-strict inference.
 Use Bun to install dependencies from the committed lockfile:
 
 ```sh

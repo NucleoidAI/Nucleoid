@@ -7,7 +7,7 @@ import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id = "28bf18c6") {
+export async function start(puzzle_id: string = "3aa6fb7a") {
   if (!/^[0-9a-f]{8}$/.test(puzzle_id)) {
     throw new Error("Puzzle ID must be eight lowercase hexadecimal characters");
   }
@@ -30,7 +30,7 @@ export async function start(puzzle_id = "28bf18c6") {
     })),
   };
 
-  const startedAt = performance.now();
+  const startedAt: number = performance.now();
   terminal.header({ version: await nucleoid.version() });
   terminal.puzzle({ train, testInput: test_input_matrix });
   terminal.section(
@@ -39,7 +39,7 @@ export async function start(puzzle_id = "28bf18c6") {
     "Infer reusable objects and transformation rules"
   );
 
-  let instance_index = 0;
+  let instance_index: number = 0;
 
   const { declarations, output_canvas } = await analyzer.declarations({
     train_dataset: training_input,
@@ -63,7 +63,10 @@ export async function start(puzzle_id = "28bf18c6") {
     });
 
     for (const { input_instance_matrix, output_instance_matrix } of instances) {
-      const instance_name = `obj${String(instance_index++).padStart(12, "0")}`;
+      const instance_name: string = `obj${String(instance_index++).padStart(
+        12,
+        "0"
+      )}`;
 
       const { implementation, input_value, output_value } =
         await analyzer.value({
@@ -96,7 +99,7 @@ export async function start(puzzle_id = "28bf18c6") {
     test_input_matrix,
   });
 
-  let test_index = 0;
+  let test_index: number = 0;
 
   let result_matrix = Array.from({ length: test_input_matrix.length }, () =>
     Array(test_input_matrix[0].length).fill(0)

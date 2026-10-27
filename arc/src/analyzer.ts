@@ -54,7 +54,7 @@ export async function instances({ declarations, input_matrix, output_matrix }) {
     ],
   });
 
-  instances.forEach((instance, index) => {
+  instances.forEach((instance, index: number) => {
     terminal.grid(
       `Object ${index + 1} · Input`,
       instance.input_instance_matrix

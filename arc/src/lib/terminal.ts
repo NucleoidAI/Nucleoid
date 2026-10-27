@@ -49,33 +49,33 @@ const wordmarks = [
   ["⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷", "⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶"],
 ];
 
-function width() {
+function width(): number {
   return Math.max(8, Math.min(120, (process.stdout.columns ?? 124) - 4));
 }
 
-function colors() {
+function colors(): boolean {
   return styleText("red", ".") !== ".";
 }
 
-function frame(text) {
+function frame(text: string): string {
   return styleText("gray", text);
 }
 
-function wrap(text, columns) {
+function wrap(text: string, columns: number) {
   return wrapAnsi(String(text).replace(/\t/g, "    "), Math.max(1, columns), {
     hard: true,
     trim: false,
   }).split("\n");
 }
 
-function pad(text, columns) {
+function pad(text: string, columns: number): string {
   return text + " ".repeat(Math.max(0, columns - stringWidth(text)));
 }
 
-function block(title, lines, write = console.log) {
-  const columns = width() - 4;
-  const rule = "─".repeat(columns + 2);
-  const row = (line) =>
+function block(title: string, lines, write = console.log) {
+  const columns: number = width() - 4;
+  const rule: string = "─".repeat(columns + 2);
+  const row = (line: string) =>
     write(`  ${frame("│")} ${pad(line, columns)} ${frame("│")}`);
   write(`\n  ${frame(`┌${rule}┐`)}`);
   if (title !== "") {
@@ -93,50 +93,56 @@ function block(title, lines, write = console.log) {
 }
 
 export function header({ version }) {
-  const available = width() - 4;
-  const horizontal = available >= 32;
-  const limit = Math.min(12, available);
+  const available: number = width() - 4;
+  const horizontal: boolean = available >= 32;
+  const limit: number = Math.min(12, available);
   const wordmark = wordmarks.find((art) =>
-    art.every((line) => stringWidth(line) <= limit)
+    art.every((line: string) => stringWidth(line) <= limit)
   ) ?? ["nuc"];
-  const logo = wordmark.map((line) => styleText("greenBright", line));
-  const logoWidth = Math.max(...logo.map((line) => stringWidth(line)));
-  const textWidth = horizontal ? available - logoWidth - 3 : available;
+  const logo = wordmark.map((line: string) => styleText("greenBright", line));
+  const logoWidth: number = Math.max(
+    ...logo.map((line: string) => stringWidth(line))
+  );
+  const textWidth: number = horizontal ? available - logoWidth - 3 : available;
   const text = [
     ...wrap("Nucleoid - Logic Language for World Models 🌱🐋🌍", textWidth).map(
-      (line) => styleText(["bold", "white"], line)
+      (line: string) => styleText(["bold", "white"], line)
     ),
-    ...wrap("Inspired by Nature", textWidth).map((line) =>
+    ...wrap("Inspired by Nature", textWidth).map((line: string) =>
       styleText("gray", line)
     ),
     "",
     ...wrap("Analyze / Construct / Visualize", textWidth),
-    ...wrap(`Version ${version}`, textWidth).map((line) =>
+    ...wrap(`Version ${version}`, textWidth).map((line: string) =>
       styleText("gray", line)
     ),
   ];
-  const height = Math.max(logo.length, text.length);
+  const height: number = Math.max(logo.length, text.length);
   const lines = horizontal
     ? Array.from(
         { length: height },
-        (_, index) =>
+        (_, index: number) =>
           pad(logo[index] ?? "", logoWidth) + "   " + (text[index] ?? "")
       )
     : [...logo, "", ...text];
-  const contentWidth = Math.max(...lines.map((line) => stringWidth(line)));
-  const inset = " ".repeat(
+  const contentWidth: number = Math.max(
+    ...lines.map((line: string) => stringWidth(line))
+  );
+  const inset: string = " ".repeat(
     Math.max(0, Math.floor((available - contentWidth) * 0.5))
   );
-  block("", ["", "", ...lines.map((line) => inset + line), "", ""]);
+  block("", ["", "", ...lines.map((line: string) => inset + line), "", ""]);
   console.log("");
 }
 
-export function section(index, title, detail) {
+export function section(index: number, title: string, detail: string) {
   const [label, ...continuation] = wrap(
     `${String(index).padStart(2, "0")}  ${title.toUpperCase()}`,
     width() - 4
   );
-  const rule = "─".repeat(Math.max(0, width() - stringWidth(label) - 3));
+  const rule: string = "─".repeat(
+    Math.max(0, width() - stringWidth(label) - 3)
+  );
   console.log(
     `\n  ${frame("◆")} ${styleText(["bold", "white"], label)} ${frame(rule)}`
   );
@@ -149,7 +155,7 @@ export function section(index, title, detail) {
   console.log("");
 }
 
-export function step(message) {
+export function step(message: string) {
   const [first, ...continuation] = wrap(
     stripVTControlCharacters(String(message)),
     width() - 2
@@ -160,17 +166,19 @@ export function step(message) {
   }
 }
 
-export function code(title, source) {
-  const text = Array.isArray(source) ? source.join("\n\n") : String(source);
+export function code(title: string, source) {
+  const text: string = Array.isArray(source)
+    ? source.join("\n\n")
+    : String(source);
   block(
     title,
     stripVTControlCharacters(text)
       .split("\n")
-      .map((line) => styleText("whiteBright", line))
+      .map((line: string) => styleText("whiteBright", line))
   );
 }
 
-export function value(title, data) {
+export function value(title: string, data) {
   block(
     title,
     inspect(data, {
@@ -182,57 +190,58 @@ export function value(title, data) {
       maxStringLength: null,
     })
       .split("\n")
-      .map((line) => styleText("whiteBright", line))
+      .map((line: string) => styleText("whiteBright", line))
   );
 }
 
-function cell(value, colored) {
-  const text = `${String(value).padStart(2)} `;
-  if (!colored || !Number.isInteger(value) || value < 0 || value > 9) {
+function cell(value: number, colored: boolean): string {
+  const text: string = `${String(value).padStart(2)} `;
+  if (!colored || !palette[value]) {
     return text;
   }
   const [red, green, blue] = palette[value];
-  const foreground = red * 0.299 + green * 0.587 + blue * 0.114 > 160 ? 30 : 97;
+  const foreground: number =
+    red * 0.299 + green * 0.587 + blue * 0.114 > 160 ? 30 : 97;
   return `\x1b[48;2;${red};${green};${blue}m\x1b[${foreground}m${text}\x1b[0m`;
 }
 
-function matrixLines(matrix, start, end, colored) {
+function matrixLines(matrix, start: number, end: number, colored: boolean) {
   if (matrix.length === 0 || start === end) {
     return [styleText("gray", "(empty)")];
   }
-  const rowWidth = String(matrix.length - 1).length;
-  const axis =
+  const rowWidth: number = String(matrix.length - 1).length;
+  const axis: string =
     " ".repeat(rowWidth + 2) +
-    Array.from({ length: end - start }, (_, index) =>
+    Array.from({ length: end - start }, (_, index: number) =>
       `${start + index}`.padStart(2).concat(" ")
     ).join("");
   return [
     styleText("gray", axis),
     ...matrix.map(
-      (row, index) =>
+      (row, index: number) =>
         styleText("gray", `${String(index).padStart(rowWidth)}  `) +
         row
           .slice(start, end)
-          .map((value) => cell(value, colored))
+          .map((value: number) => cell(value, colored))
           .join("")
     ),
   ];
 }
 
-export function grid(title, matrix) {
-  const rows = matrix.length;
-  const columns = Math.max(0, ...matrix.map((row) => row.length));
-  const dimensions = `${columns} × ${rows}`;
+export function grid(title: string, matrix) {
+  const rows: number = matrix.length;
+  const columns: number = Math.max(0, ...matrix.map((row) => row.length));
+  const dimensions: string = `${columns} × ${rows}`;
   if (rows === 0 || columns === 0) {
     block(`${title} · ${dimensions}`, [styleText("gray", "(empty)")]);
     return;
   }
 
-  const rowWidth = String(rows - 1).length;
-  const chunk = Math.max(1, Math.floor((width() - rowWidth - 6) / 3));
-  const colored = colors();
-  for (let start = 0; start < columns; start += chunk) {
-    const end = Math.min(columns, start + chunk);
+  const rowWidth: number = String(rows - 1).length;
+  const chunk: number = Math.max(1, Math.floor((width() - rowWidth - 6) / 3));
+  const colored: boolean = colors();
+  for (let start: number = 0; start < columns; start += chunk) {
+    const end: number = Math.min(columns, start + chunk);
     block(`${title} · ${dimensions}`, [
       ...(columns > chunk
         ? [styleText("gray", `Columns ${start}–${end - 1}`), ""]
@@ -244,18 +253,18 @@ export function grid(title, matrix) {
 
 function sideBySide(panels) {
   const widths = panels.map((lines) =>
-    Math.max(...lines.map((line) => stringWidth(line)))
+    Math.max(...lines.map((line: string) => stringWidth(line)))
   );
-  const height = Math.max(...panels.map((lines) => lines.length));
-  return Array.from({ length: height }, (_, row) =>
+  const height: number = Math.max(...panels.map((lines) => lines.length));
+  return Array.from({ length: height }, (_, row: number) =>
     panels
-      .map((lines, index) => pad(lines[row] ?? "", widths[index]))
+      .map((lines, index: number) => pad(lines[row] ?? "", widths[index]))
       .join("  ")
   );
 }
 
-function previewMatrix(title, matrix, colored) {
-  const columns = Math.max(0, ...matrix.map((row) => row.length));
+function previewMatrix(title: string, matrix, colored: boolean) {
+  const columns: number = Math.max(0, ...matrix.map((row) => row.length));
   return [
     styleText("gray", `${title} · ${columns} × ${matrix.length}`),
     ...matrixLines(matrix, 0, columns, colored),
@@ -263,10 +272,10 @@ function previewMatrix(title, matrix, colored) {
 }
 
 export function puzzle({ train, testInput }) {
-  const available = width() - 4;
-  const colored = colors();
+  const available: number = width() - 4;
+  const colored: boolean = colors();
   let pairs = [];
-  let used = 0;
+  let used: number = 0;
   const renderRow = () => {
     if (pairs.length === 0) {
       return;
@@ -287,7 +296,9 @@ export function puzzle({ train, testInput }) {
         previewMatrix("Output", output, colored),
       ]),
     ];
-    const pairWidth = Math.max(...lines.map((line) => stringWidth(line)));
+    const pairWidth: number = Math.max(
+      ...lines.map((line: string) => stringWidth(line))
+    );
     if (pairWidth > available) {
       renderRow();
       grid(`Train ${index + 1} · Input`, input);
@@ -305,19 +316,19 @@ export function puzzle({ train, testInput }) {
 }
 
 export function usage({ prompt_tokens, completion_tokens }) {
-  const message = `↳ Model usage  ${prompt_tokens} input / ${completion_tokens} output tokens`;
+  const message: string = `↳ Model usage  ${prompt_tokens} input / ${completion_tokens} output tokens`;
   for (const line of wrap(message, width() - 2)) {
     console.log(`    ${styleText("gray", line)}`);
   }
 }
 
-export function summary(difference, duration) {
-  const seconds = duration / 1000;
-  const elapsed =
+export function summary(difference: number, duration: number) {
+  const seconds: number = duration / 1000;
+  const elapsed: string =
     seconds < 60
       ? `${seconds.toFixed(1)}s`
       : `${Math.floor(seconds / 60)}m ${(seconds % 60).toFixed(1)}s`;
-  const status =
+  const status: string =
     difference === 0
       ? styleText(["bold", "green"], "✓ EXACT MATCH")
       : styleText(["bold", "red"], "◇ MISMATCH");
@@ -331,7 +342,7 @@ export function summary(difference, duration) {
 }
 
 export function failure(error) {
-  const text = inspect(error, {
+  const text: string = inspect(error, {
     colors: false,
     depth: null,
     maxArrayLength: null,
@@ -341,7 +352,7 @@ export function failure(error) {
     "Run failed",
     stripVTControlCharacters(text)
       .split("\n")
-      .map((line) => styleText("red", line)),
+      .map((line: string) => styleText("red", line)),
     console.error
   );
 }
