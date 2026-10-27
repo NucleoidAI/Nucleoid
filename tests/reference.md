@@ -1853,4 +1853,17 @@ assert(item.x@first, 10)
 assert(item.x@previous, 9)
 [first.x, second.x]
 # return: [8,28]
+---
+# Nucleoid names reactive base two powers
+
+def scale power => Math.exp2(power)
+power = 3
+ratio = scale(power)
+assert(ratio, 8)
+power = -2
+assert(ratio, 0.25)
+power = 0
+assert(ratio, 1)
+ratio
+# return: 1
 ```

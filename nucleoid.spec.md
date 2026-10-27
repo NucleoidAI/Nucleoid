@@ -2065,6 +2065,61 @@ statement positions; caught values and transaction recovery are unchanged.
   behavior without requiring identical rule-source strings or immediate
   dependency graphs. Unchanged historical programs retain their complete ASTs.
 
+## Reactive base two exponentiation
+
+- Accepted [NUC 56](docs/nuc-0056.md) adds only unshadowed static
+  `Math.exp2(value)`. The accepted `Math.pow(2, value)` remains supported
+  unchanged; this names that operation rather than changing its numerics.
+- Reuse Math's existing any-supplied-`Undefined` gate before its intrinsic
+  first-argument `Value::to_number` conversion. Omission supplies numeric NaN,
+  not Undefined. Only the first supplied value is numerically converted.
+- Compute exactly `2.0_f64.powf(first)`, the same host operation used by
+  accepted `Math.pow(2, value)`. Do not substitute native `f64::exp2`,
+  exponent/log algebra, integer shortcuts, fused/rescaled math or higher
+  precision. Every non-NaN result agrees by bits; NaNs agree by classification,
+  without a payload guarantee. No accuracy or speed improvement is specified.
+- Positive and negative zero exponents both yield one. Finite exponents,
+  overflow, subnormal rounding and positive-zero underflow match accepted
+  powf. Positive infinity yields positive infinity, negative infinity yields
+  positive zero, and numeric NaN yields numeric NaN.
+- Literal null converts to zero, booleans to zero/one, strings and
+  empty/singleton lists keep intrinsic conversion, and dates contribute
+  milliseconds. Other nonnumeric conversions produce numeric NaN, not new
+  type errors. Literal-null conversion does not override inherited live
+  assignment or parameter-null deferral.
+- Evaluate all supplied argument expressions exactly once left to right per
+  call, including ignored extras and expressions after Undefined. Extra values
+  are not numerically converted, but retain reads, dependencies, effects,
+  strict errors and the any-supplied-Undefined gate.
+- Missing properties, deletion and later definition retain deferral and
+  recovery. Independent class rules, functions, scopes, call frames,
+  receiver lookup, graph subscriptions, transactions and rollback use the
+  existing machinery unchanged.
+- Intrinsic conversion and the fixed base never resolve or track shadowable
+  `Number` or Math constants. State/local Math bindings and ordinary `.Math`
+  members keep their lookup. Reading `Math.exp2` as a value remains
+  unsupported/Undefined, like sibling static helpers, not a first-class method.
+- Introduce no arity, conversion, numeric or range error. Strict unknown
+  arguments, including extras and expressions after Undefined, retain
+  `ReferenceError("<name> is not defined")`. Unknown static methods retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after their unchanged gate.
+  Calling through numeric `Math = 7` retains the ordinary receiver error
+  `TypeError("number.exp2 is not a function")`. Preserve error positions,
+  caught values and transactional recovery.
+- All sibling Math helpers, accepted syntax and inherited scope limitations
+  remain unchanged. Add no alias, first-class method, parser/lexer change,
+  public Rust API/type, dependency, version change or resource limit.
+- The six appended entries titled `Nucleoid keeps base two exponentiation
+  reactive`, `Nucleoid preserves base two exponential coercion and omissions`,
+  `Nucleoid preserves base two exponential extremes and underflow`,
+  `Nucleoid applies base two exponentiation to independent class rules`,
+  `Nucleoid restores base two exponential relationships after failed
+  transactions`, and `Nucleoid preserves ignored exponential reads and missing
+  extras` preserve the caller's executed accepted-pow counterparts, ordered
+  assertions and expected return. New RHS call ASTs intentionally differ;
+  unchanged historical sources and their complete ASTs remain protected.
+
 ## Read-only state versions
 
 - A postfix `reference@0`, `@1`, ... reads a non-negative, oldest-first
@@ -13612,4 +13667,127 @@ assert(previous.x@3, 19)
 assert(previous.x@4, null)
 [item.x, anchored.x, anchored.y, previous.x, previous.x@previous]
 # return: [8,9,9,19,9]
+---
+# Nucleoid keeps base two exponentiation reactive
+
+power = 2
+converted = Math.exp2(power)
+assert(converted, 4)
+power = 3
+assert(converted, 8)
+power = -2
+assert(converted, 0.25)
+power = 0
+assert(converted, 1)
+power = -0
+assert(converted, 1)
+power = 4
+assert(converted, 16)
+converted
+# return: 16
+---
+# Nucleoid preserves base two exponential coercion and omissions
+
+text = " 3 "
+converted = Math.exp2(text)
+assert(converted, 8)
+text = true
+assert(converted, 2)
+text = false
+assert(converted, 1)
+text = []
+assert(converted, 1)
+text = ["-1"]
+assert(converted, 0.5)
+text = Date(2)
+assert(converted, 4)
+text = [1, 2]
+assert(Number.isNaN(converted), true)
+text = "invalid"
+assert(Number.isNaN(converted), true)
+literal = Math.exp2(null)
+assert(literal, 1)
+omitted = Math.exp2()
+assert(Number.isNaN(omitted), true)
+---
+# Nucleoid preserves base two exponential extremes and underflow
+
+power = 1023
+converted = Math.exp2(power)
+assert(Number.isFinite(converted), true)
+power = 1024
+assert(converted, Number.POSITIVE_INFINITY)
+power = -1074
+assert(converted, 5e-324)
+power = -1075
+assert(converted, 0)
+assert(1 / converted, Number.POSITIVE_INFINITY)
+power = Number.POSITIVE_INFINITY
+assert(converted, Number.POSITIVE_INFINITY)
+power = Number.NEGATIVE_INFINITY
+assert(converted, 0)
+power = Number.NaN
+assert(Number.isNaN(converted), true)
+---
+# Nucleoid applies base two exponentiation to independent class rules
+
+class Exponent(power):
+    this.power = power
+$Exponent.converted = Math.exp2($Exponent.power)
+first = Exponent(2)
+second = Exponent(-1)
+assert(first.converted, 4)
+assert(second.converted, 0.5)
+first.power = 3
+assert(first.converted, 8)
+assert(second.converted, 0.5)
+delete first.power
+assert(first.converted, null)
+first.power = -2
+assert(first.converted, 0.25)
+second.power = 4
+assert(second.converted, 16)
+---
+# Nucleoid restores base two exponential relationships after failed transactions
+
+class Dial
+dial = Dial()
+dial.power = 2
+converted = Math.exp2(dial.power)
+failure = ""
+try:
+    dial.power = 3
+    throw "EXP2_ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "EXP2_ROLLBACK")
+assert(dial.power, 2)
+assert(converted, 4)
+dial.power = -1
+assert(converted, 0.5)
+---
+# Nucleoid preserves ignored exponential reads and missing extras
+
+class Probe
+probe = Probe()
+probe.power = 2
+extra = 9
+converted = Math.exp2(probe.power, extra)
+withMissing = Math.exp2(probe.power, probe.missing)
+assert(converted, 4)
+assert(withMissing, null)
+probe.missing = 7
+assert(withMissing, 4)
+extra = "ignored"
+assert(converted, 4)
+delete probe.power
+assert(converted, null)
+assert(withMissing, null)
+probe.power = -1
+assert(converted, 0.5)
+assert(withMissing, 0.5)
+delete probe.missing
+assert(withMissing, null)
+probe.missing = 2
+assert(withMissing, 0.5)
 ```

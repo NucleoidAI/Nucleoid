@@ -10914,6 +10914,166 @@ fn preserves_moving_class_conditionals_beside_fixed_first_anchors() {
 # return: [8,9,9,19,9]"#);
 }
 
+/// Nucleoid keeps base two exponentiation reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_base_two_exponentiation_reactive() {
+    let mut run = runner();
+    run("power = 2");
+    run("converted = Math.exp2(power)");
+    assert_eq!(run("converted"), 4);
+    run("power = 3");
+    assert_eq!(run("converted"), 8);
+    run("power = -2");
+    assert_eq!(run("converted"), 0.25);
+    run("power = 0");
+    assert_eq!(run("converted"), 1);
+    run("power = -0");
+    assert_eq!(run("converted"), 1);
+    run("power = 4");
+    assert_eq!(run("converted"), 16);
+    run(r#"converted
+
+# return: 16"#);
+}
+
+/// Nucleoid preserves base two exponential coercion and omissions
+#[rustfmt::skip]
+#[test]
+fn preserves_base_two_exponential_coercion_and_omissions() {
+    let mut run = runner();
+    run(r#"text = " 3 ""#);
+    run("converted = Math.exp2(text)");
+    assert_eq!(run("converted"), 8);
+    run("text = true");
+    assert_eq!(run("converted"), 2);
+    run("text = false");
+    assert_eq!(run("converted"), 1);
+    run("text = []");
+    assert_eq!(run("converted"), 1);
+    run(r#"text = ["-1"]"#);
+    assert_eq!(run("converted"), 0.5);
+    run("text = Date(2)");
+    assert_eq!(run("converted"), 4);
+    run("text = [1, 2]");
+    assert_eq!(run("Number.isNaN(converted)"), true);
+    run(r#"text = "invalid""#);
+    assert_eq!(run("Number.isNaN(converted)"), true);
+    run("literal = Math.exp2(null)");
+    assert_eq!(run("literal"), 1);
+    run("omitted = Math.exp2()");
+    assert_eq!(run("Number.isNaN(omitted)"), true);
+}
+
+/// Nucleoid preserves base two exponential extremes and underflow
+#[rustfmt::skip]
+#[test]
+fn preserves_base_two_exponential_extremes_and_underflow() {
+    let mut run = runner();
+    run("power = 1023");
+    run("converted = Math.exp2(power)");
+    assert_eq!(run("Number.isFinite(converted)"), true);
+    run("power = 1024");
+    {
+        let actual = run("converted");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("power = -1074");
+    assert_eq!(run("converted"), 5e-324);
+    run("power = -1075");
+    assert_eq!(run("converted"), 0);
+    {
+        let actual = run("1 / converted");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("power = Number.POSITIVE_INFINITY");
+    {
+        let actual = run("converted");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("power = Number.NEGATIVE_INFINITY");
+    assert_eq!(run("converted"), 0);
+    run("power = Number.NaN");
+    assert_eq!(run("Number.isNaN(converted)"), true);
+}
+
+/// Nucleoid applies base two exponentiation to independent class rules
+#[rustfmt::skip]
+#[test]
+fn applies_base_two_exponentiation_to_independent_class_rules() {
+    let mut run = runner();
+    run(r#"class Exponent(power):
+    this.power = power"#);
+    run("$Exponent.converted = Math.exp2($Exponent.power)");
+    run("first = Exponent(2)");
+    run("second = Exponent(-1)");
+    assert_eq!(run("first.converted"), 4);
+    assert_eq!(run("second.converted"), 0.5);
+    run("first.power = 3");
+    assert_eq!(run("first.converted"), 8);
+    assert_eq!(run("second.converted"), 0.5);
+    run("delete first.power");
+    assert_eq!(run("first.converted"), serde_json::Value::Null);
+    run("first.power = -2");
+    assert_eq!(run("first.converted"), 0.25);
+    run("second.power = 4");
+    assert_eq!(run("second.converted"), 16);
+}
+
+/// Nucleoid restores base two exponential relationships after failed transactions
+#[rustfmt::skip]
+#[test]
+fn restores_base_two_exponential_relationships_after_failed_transactions() {
+    let mut run = runner();
+    run(r#"class Dial
+dial = Dial()
+dial.power = 2
+converted = Math.exp2(dial.power)
+failure = ""
+try:
+    dial.power = 3
+    throw "EXP2_ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "EXP2_ROLLBACK")
+assert(dial.power, 2)
+assert(converted, 4)
+dial.power = -1
+assert(converted, 0.5)"#);
+}
+
+/// Nucleoid preserves ignored exponential reads and missing extras
+#[rustfmt::skip]
+#[test]
+fn preserves_ignored_exponential_reads_and_missing_extras() {
+    let mut run = runner();
+    run("class Probe");
+    run("probe = Probe()");
+    run("probe.power = 2");
+    run("extra = 9");
+    run("converted = Math.exp2(probe.power, extra)");
+    run("withMissing = Math.exp2(probe.power, probe.missing)");
+    assert_eq!(run("converted"), 4);
+    assert_eq!(run("withMissing"), serde_json::Value::Null);
+    run("probe.missing = 7");
+    assert_eq!(run("withMissing"), 4);
+    run(r#"extra = "ignored""#);
+    assert_eq!(run("converted"), 4);
+    run("delete probe.power");
+    assert_eq!(run("converted"), serde_json::Value::Null);
+    assert_eq!(run("withMissing"), serde_json::Value::Null);
+    run("probe.power = -1");
+    assert_eq!(run("converted"), 0.5);
+    assert_eq!(run("withMissing"), 0.5);
+    run("delete probe.missing");
+    assert_eq!(run("withMissing"), serde_json::Value::Null);
+    run("probe.missing = 2");
+    assert_eq!(run("withMissing"), 0.5);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

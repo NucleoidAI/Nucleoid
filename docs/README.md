@@ -1279,6 +1279,11 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 - Built-in calls participate in the dependency graph like any other expression.
 - Mutating a list re-evaluates its dependents.
 - `Math.max` and `Math.min` propagate `NaN`, including when an argument cannot be coerced to a number.
+- Accepted [NUC 56](nuc-0056.md) adds only static `Math.exp2(value)`, computing
+  exactly the accepted `Math.pow(2, value)` host powf operation after intrinsic
+  first-input conversion and the existing supplied-Undefined gate. The
+  [base-two contract](../nucleoid.spec.md#reactive-base-two-exponentiation)
+  defines numeric equivalence, ignored extras and inherited reactive behavior.
 - The [NUC 50 candidate](nuc-0050.md) adds only static
   `Math.toRadians(value)`: intrinsically convert the first input, compute
   `factor = PI / 180.0`, then multiply by that factor, never multiply by PI
@@ -1705,6 +1710,55 @@ assert(radians, -Math.PI / 2)
   or configurability. All sibling helpers and accepted syntax remain unchanged.
   Inherited scope limitations remain; new call ASTs and graph rule-source
   strings intentionally differ from their arithmetic counterparts.
+
+---
+
+## Reactive base two exponentiation
+
+### Nucleoid names reactive base two powers
+
+```
+def scale power => Math.exp2(power)
+power = 3
+ratio = scale(power)
+assert(ratio, 8)
+power = -2
+assert(ratio, 0.25)
+power = 0
+assert(ratio, 1)
+ratio
+```
+
+- This is the complete new `tests/reference.md` program, without its title
+  and expected-return metadata; it returns `1`. Accepted [NUC 56](nuc-0056.md)
+  and the [root contract](../nucleoid.spec.md#reactive-base-two-exponentiation)
+  specify only unshadowed static `Math.exp2(value)`.
+- After Math's existing any-supplied-Undefined gate, intrinsically convert the
+  first argument with `Value::to_number` and compute `2.0_f64.powf(first)`.
+  Omission supplies numeric NaN. Ordinary `Math.pow(2, value)` stays supported.
+- Match every non-NaN result by bits and NaNs by classification against the
+  accepted pow operation, including fractional and extreme exponents,
+  infinities, subnormals and positive-zero underflow. Both zero exponents
+  yield one. Do not substitute native `f64::exp2`, exponent/log algebra,
+  shortcuts or rescaled/fused math; no accuracy or speed claim is made.
+- Literal null converts to zero without changing live assignment or
+  parameter-null deferral. Numbers, booleans, strings, lists, dates and
+  nonnumeric values retain their intrinsic conversions and NaN results.
+- Every supplied expression evaluates once left to right. Ignored extras
+  are not numerically converted, but retain dependencies, effects, strict
+  errors and the supplied-Undefined gate, including deletion and recovery.
+- Conversion and the fixed base do not consult shadowable Number or Math
+  constants. State/local Math bindings and ordinary `.Math` members retain
+  lookup; `Math.exp2` value reads remain unsupported/Undefined, not methods
+  that can be stored and called indirectly.
+- Independent class rules, functions, receivers, scopes, frames, graph
+  subscriptions and transaction rollback are inherited unchanged. There are
+  no new arity, numeric, type or range errors. Strict unknown arguments keep
+  `ReferenceError("<name> is not defined")`, even after Undefined; numeric
+  `Math = 7` keeps `TypeError("number.exp2 is not a function")`.
+- Sibling helpers, unknown/random static errors and accepted syntax remain
+  unchanged. No aliases, parser/lexer changes, public Rust APIs/types,
+  dependencies, versions or resource limits are introduced.
 
 ---
 
@@ -2150,6 +2204,7 @@ name.value                             read without depending
 items.flatMap(callback)                 ordered one-level projection (Accepted NUC 41)
 Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping (Accepted NUC 39)
 Math.toRadians(value)                   static division-first degree conversion (NUC 50 candidate)
+Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 

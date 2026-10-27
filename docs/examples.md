@@ -2511,6 +2511,31 @@ assert(child.x@3, null)
   and the root **Class-level state version anchors** contract in
   `nucleoid.spec.md`.
 
+## Reactive base two exponentiation
+
+**Reactive power of two scaling**
+
+```nuc
+power = -1
+amount = 80
+factor = Math.exp2(power)
+scaled = amount * factor
+assert(scaled, 40)
+amount = 20
+assert(scaled, 10)
+power = -2
+assert(scaled, 5)
+power = 2
+assert(scaled, 80)
+scaled
+# return: 80
+```
+
+- Accepted [NUC 56](nuc-0056.md) provides the named base-two helper without
+  changing accepted `Math.pow(2, power)`. The factor and scaled amount remain
+  live; see the [root contract](../nucleoid.spec.md#reactive-base-two-exponentiation)
+  for intrinsic conversion, ignored extras, deferral and numeric edge cases.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -1072,6 +1072,20 @@ assert([first.x@0, second.x@first], [10, 30])
   transactional. See the root
   `nucleoid.spec.md` **Class-level state version anchors** contract.
 
+**Reactive base two powers**
+
+```nuc
+level = 2
+multiplier = Math.exp2(level)
+assert(multiplier, 4)
+level = 5
+assert(multiplier, 32)
+```
+
+- Accepted [NUC 56](docs/nuc-0056.md) names `Math.exp2(value)` while retaining
+  the exact accepted `Math.pow(2, value)` numeric operation and reactive call
+  behavior. Ordinary `Math.pow` remains supported.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

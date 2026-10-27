@@ -117,6 +117,7 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
             }
         }
         "exp" => first.exp(),
+        "exp2" => 2.0_f64.powf(first),
         "log" => first.ln(),
         "log2" => first.log2(),
         "log10" => first.log10(),
@@ -1040,6 +1041,101 @@ mod tests {
             assert_same(&math("fract", &supplied).unwrap(), &Value::Undefined);
         }
         assert!(math_constant("fract").is_none());
+    }
+
+    #[test]
+    fn exp2_numeric_bits_match_accepted_pow_including_extremes_and_underflow() {
+        let exponents = [
+            -f64::MAX,
+            f64::NEG_INFINITY,
+            -1075.5,
+            -1075.0,
+            -1074.5,
+            -1074.0,
+            -1022.0,
+            -3.5,
+            -1.0,
+            -f64::MIN_POSITIVE,
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            f64::EPSILON,
+            0.5,
+            1.0,
+            7.25,
+            1023.0,
+            f64::from_bits(1024.0_f64.to_bits() - 1),
+            1024.0,
+            f64::MAX,
+            f64::INFINITY,
+            f64::NAN,
+            f64::from_bits(0xfff8_0000_0000_0042),
+            f64::from_bits(0x7ff0_0000_0000_0001),
+        ];
+        let mut bits = 0x56e2_3471_6fca_903d_u64;
+        let samples = (0..4096).flat_map(|_| {
+            bits = bits
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            // Full-bit inputs plus fractional exponents around the finite range.
+            [
+                f64::from_bits(bits),
+                (bits as i64 as f64) / (i64::MAX as f64) * 1076.0,
+            ]
+        });
+        for exponent in exponents.into_iter().chain(samples) {
+            let input = Value::Number(exponent);
+            assert_smoothing_same(
+                &math("exp2", std::slice::from_ref(&input)).unwrap(),
+                &math("pow", &[Value::number(2), input]).unwrap(),
+            );
+        }
+        for (input, expected) in [
+            (-2.0, 0.25),
+            (-0.0, 1.0),
+            (0.0, 1.0),
+            (4.0, 16.0),
+            (-1074.0, f64::from_bits(1)),
+            (-1075.0, 0.0),
+            (f64::NEG_INFINITY, 0.0),
+            (f64::INFINITY, f64::INFINITY),
+            (1024.0, f64::INFINITY),
+        ] {
+            assert_same(
+                &math("exp2", &[Value::Number(input)]).unwrap(),
+                &Value::Number(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn exp2_value_coercions_omission_and_extras_keep_the_accepted_pow_gate() {
+        assert_smoothing_same(
+            &math("exp2", &[]).unwrap(),
+            &math("pow", &[Value::number(2)]).unwrap(),
+        );
+        let values = values();
+        for input in &values {
+            assert_smoothing_same(
+                &math("exp2", std::slice::from_ref(input)).unwrap(),
+                &math("pow", &[Value::number(2), input.clone()]).unwrap(),
+            );
+            for extra in &values {
+                let arguments = [input.clone(), extra.clone(), Value::Null];
+                let accepted = [Value::number(2), input.clone(), extra.clone(), Value::Null];
+                assert_smoothing_same(
+                    &math("exp2", &arguments).unwrap(),
+                    &math("pow", &accepted).unwrap(),
+                );
+            }
+        }
+        for position in 0..4 {
+            let mut arguments = [Value::number(2), Value::Null, Value::Null, Value::Null];
+            arguments[position] = Value::Undefined;
+            assert_same(&math("exp2", &arguments).unwrap(), &Value::Undefined);
+        }
+        assert!(math_constant("exp2").is_none());
     }
 
     // Independent accepted binary operations: divide PI before multiplying.
