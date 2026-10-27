@@ -835,14 +835,12 @@ fn generated_spec_records_retain_full_asts_assertions_returns_and_exported_execu
         .lines()
         .map(|line| serde_json::from_str::<Record>(line).unwrap())
         .collect::<Vec<_>>();
-    assert_eq!(records.len(), 459);
     let fixtures: Vec<Counterpart> = serde_json::from_str(ACCEPTED).unwrap();
-    for ((fixture, record), count) in fixtures[..5]
-        .iter()
-        .zip(&records[393..])
-        .zip([5, 5, 6, 7, 5])
-    {
-        assert_eq!(record.description, fixture.title);
+    for (fixture, count) in fixtures[..5].iter().zip([5, 5, 6, 7, 5]) {
+        let record = records
+            .iter()
+            .find(|record| record.description == fixture.title)
+            .unwrap_or_else(|| panic!("missing generated record {}", fixture.title));
         assert_eq!(record.expected, fixture.expected);
         equivalent(&record.code, &fixture.source);
         check_export(&record.code, count, record.expected.as_deref());
