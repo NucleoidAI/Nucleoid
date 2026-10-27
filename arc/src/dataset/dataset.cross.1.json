@@ -1,8 +1,8 @@
 {
   "declarations": [
     "class Obj(x: int, y: int, orientation: int, vertex_color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l7544'\n    this.vertex_color = vertex_color",
-    "if $Obj.vertex_color == 1:\n    $Obj.tag = 'l1707'\n    $Obj.marker_color = 7",
-    "if $Obj.vertex_color == 2:\n    $Obj.tag = 'l2404'\n    $Obj.marker_color = 4"
+    "if $Obj.vertex_color == 1:\n    $Obj.tag = 'l1707'\n    $Obj.marker_color = 7\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1",
+    "if $Obj.vertex_color == 2:\n    $Obj.tag = 'l2404'\n    $Obj.marker_color = 4\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1"
   ],
   "dataset": [
     {
@@ -61,7 +61,7 @@
           ],
           "implementation": "obj08c8feaa60ea = Obj(x=2, y=3, orientation=0, vertex_color=2)",
           "input_value": {"id":"obj08c8feaa60ea","x":2,"y":3,"orientation":0,"tag":"l7544","vertex_color":2},
-          "output_value": {"id":"obj08c8feaa60ea","x":2,"y":3,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
+          "output_value": {"id":"obj08c8feaa60ea","x":1,"y":2,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
         },
         {
           "instance_name": "objfa5219213773",
@@ -95,7 +95,7 @@
           ],
           "implementation": "objfa5219213773 = Obj(x=6, y=6, orientation=0, vertex_color=1)",
           "input_value": {"id":"objfa5219213773","x":6,"y":6,"orientation":0,"tag":"l7544","vertex_color":1},
-          "output_value": {"id":"objfa5219213773","x":6,"y":6,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
+          "output_value": {"id":"objfa5219213773","x":5,"y":5,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
         }
       ]
     },
@@ -189,7 +189,7 @@
           ],
           "implementation": "obj21a7f426034a = Obj(x=6, y=2, orientation=0, vertex_color=2)",
           "input_value": {"id":"obj21a7f426034a","x":6,"y":2,"orientation":0,"tag":"l7544","vertex_color":2},
-          "output_value": {"id":"obj21a7f426034a","x":6,"y":2,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
+          "output_value": {"id":"obj21a7f426034a","x":5,"y":1,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
         },
         {
           "instance_name": "objcde3bc7c38d0",
@@ -223,7 +223,7 @@
           ],
           "implementation": "objcde3bc7c38d0 = Obj(x=2, y=3, orientation=0, vertex_color=1)",
           "input_value": {"id":"objcde3bc7c38d0","x":2,"y":3,"orientation":0,"tag":"l7544","vertex_color":1},
-          "output_value": {"id":"objcde3bc7c38d0","x":2,"y":3,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
+          "output_value": {"id":"objcde3bc7c38d0","x":1,"y":2,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
         },
         {
           "instance_name": "obj29bc97757305",
@@ -257,7 +257,7 @@
           ],
           "implementation": "obj29bc97757305 = Obj(x=6, y=6, orientation=0, vertex_color=1)",
           "input_value": {"id":"obj29bc97757305","x":6,"y":6,"orientation":0,"tag":"l7544","vertex_color":1},
-          "output_value": {"id":"obj29bc97757305","x":6,"y":6,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
+          "output_value": {"id":"obj29bc97757305","x":5,"y":5,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
         },
         {
           "instance_name": "obj0665d91891db",
@@ -291,7 +291,7 @@
           ],
           "implementation": "obj0665d91891db = Obj(x=1, y=7, orientation=0, vertex_color=2)",
           "input_value": {"id":"obj0665d91891db","x":1,"y":7,"orientation":0,"tag":"l7544","vertex_color":2},
-          "output_value": {"id":"obj0665d91891db","x":1,"y":7,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
+          "output_value": {"id":"obj0665d91891db","x":0,"y":6,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
         }
       ]
     },
@@ -351,7 +351,7 @@
           ],
           "implementation": "objd17b9a54c68f = Obj(x=2, y=2, orientation=0, vertex_color=2)",
           "input_value": {"id":"objd17b9a54c68f","x":2,"y":2,"orientation":0,"tag":"l7544","vertex_color":2},
-          "output_value": {"id":"objd17b9a54c68f","x":2,"y":2,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
+          "output_value": {"id":"objd17b9a54c68f","x":1,"y":1,"orientation":0,"tag":"l2404","vertex_color":2,"marker_color":4}
         },
         {
           "instance_name": "objd10bd2a040e8",
@@ -419,7 +419,7 @@
           ],
           "implementation": "obje5d0a226a83e = Obj(x=3, y=7, orientation=0, vertex_color=1)",
           "input_value": {"id":"obje5d0a226a83e","x":3,"y":7,"orientation":0,"tag":"l7544","vertex_color":1},
-          "output_value": {"id":"obje5d0a226a83e","x":3,"y":7,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
+          "output_value": {"id":"obje5d0a226a83e","x":2,"y":6,"orientation":0,"tag":"l1707","vertex_color":1,"marker_color":7}
         }
       ]
     }
