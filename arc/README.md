@@ -181,9 +181,11 @@ Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
 [skill](../.claude/skills/arc-purposal/SKILL.md):
 
 1. The [arc-dataset](../.claude/agents/arc-dataset.agent.md) agent writes the
-   puzzle's instruction dataset. If accepted Nucleoid cannot express the rules
-   the training pairs need, it writes nothing and requests one Nucleoid
-   enhancement instead.
+   puzzle's instruction dataset, using any dataset in `src\dataset` as a
+   reference. If accepted Nucleoid cannot express the rules the training pairs
+   need, it writes nothing and requests one Nucleoid enhancement instead,
+   whose idea may come from the [language reference](../docs/README.md) or
+   the documentation it links to.
 2. A requested enhancement goes through the usual NUC proposal and independent
    evaluation stages as a single-proposal request. The dataset is then written
    with the frozen candidate's runtime.

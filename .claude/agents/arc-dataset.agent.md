@@ -60,7 +60,10 @@ output. Synthesize as many pairs as the puzzle has training pairs:
 
 Before writing, read `arc/src/dataset/dataset.28bf18c6.json`, at least one
 other dataset, and the "Instruction datasets" and "Analysis" sections of
-`arc/README.md`. Match their structure, key order, and formatting exactly:
+`arc/README.md`. Every dataset in `arc/src/dataset/` may serve as a reference
+for world-model idioms, properties, rules, and tags, although the solver sends
+only the puzzle's own dataset. Match their structure, key order, and
+formatting exactly:
 
 - Top level: `declarations`, `output_canvas` (`EXACT` or `FIT`, inferred from
   the pairs), then `dataset` with one entry per pair.
@@ -105,6 +108,11 @@ in the inferred transformation:
 - First look for an accepted formulation in `nucleoid.spec.md`, which is
   authoritative, and `docs/README.md`. Use one that works, however long; a
   shorter spelling alone is no reason to request an enhancement.
+- You may take the request's idea from `docs/README.md` or the documentation
+  it links to, such as `docs/examples.md` and the NUCs indexed in
+  `docs/nuc-0000.md`, whatever their status. Only accepted behavior is
+  available to the dataset, so an idea from an unaccepted NUC is still a
+  request.
 - Reduce the gap to minimal programs and run them with the accepted
   executable. Keep the programs and their actual output or error in your
   temporary directory.
@@ -122,7 +130,7 @@ Return status `nucleoid_enhancement_required` with a NUC request:
   `new_feature`, `existing_comparable`, or `existing_uncomparable` with a reason
   and evidence.
 - `evidence`: each program's path, the command, its actual output or error,
-  and the result the rules need.
+  the result the rules need, and the documentation a borrowed idea comes from.
 - `declarations`: the intended rule set, written with the requested feature.
 
 Include the synthesizer's path and seed. The caller decides whether to propose

@@ -25,6 +25,17 @@ If you cannot launch agents, stop and report `agent_launch_unavailable`.
   preserve pre-existing changes.
 - Use training pairs only. Never print or read the puzzle's `test` entries.
 
+## References
+
+The workflow and its workers may use every dataset in `arc/src/dataset/` as a
+reference for structure, world-model idioms, properties, rules, and tags,
+although the solver sends only the puzzle's own dataset. A requested
+enhancement may take its idea from `docs/README.md` or the documentation it
+links to, such as `docs/examples.md` and the NUCs indexed in
+`docs/nuc-0000.md`, whatever their status. `nucleoid.spec.md` stays
+authoritative: a dataset uses only accepted features or the frozen
+candidate's, so an idea from an unaccepted NUC is still a request.
+
 ## Write the dataset
 
 Run `/arc-dataset <puzzle-id>`, which runs the
