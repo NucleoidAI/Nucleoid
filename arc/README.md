@@ -96,14 +96,18 @@ prompts, programs, matrices, provider settings, or scoring.
 
 ## Instruction datasets
 
-The synchronous `document()` function reads every JSON file in `src\dataset`,
-alongside `instruct_dataset.ts`, on each call, independently of the working directory.
-Files are sorted by name, validated, and minified by removing the whitespace
-between JSON tokens; string contents, numbers, and key order stay exactly as
-written. They are returned as one JSON array, with a separate entry per file.
-New files, including `dataset.core.2.json`, need no additional imports.
-Non-JSON files and subdirectories are ignored. An empty dataset directory,
-unreadable files, or malformed JSON fail explicitly; JSON errors name the file.
+The synchronous `document(puzzle_id)` function reads only the puzzle's own
+instruction datasets from `src\dataset`, alongside `instruct_dataset.ts`, on
+each call, independently of the working directory. Every LLM call in a run
+passes the run's puzzle ID. A puzzle uses its `dataset.<puzzle_id>.json`; the
+genesis puzzle `3aa6fb7a` instead uses `dataset.core.1.json`,
+`dataset.core.2.json`, `dataset.curve.1.json`, and `dataset.line.1.json`, in
+that order. Other datasets in the directory are not sent. Each file is
+validated and minified by removing the whitespace between JSON tokens; string
+contents, numbers, and key order stay exactly as written. They are returned as
+one JSON array, with a separate entry per file. A puzzle's new dataset needs no
+additional imports, only its file name. A missing or unreadable dataset, or
+malformed JSON, fails explicitly; JSON errors name the file.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations.
@@ -113,7 +117,7 @@ Each dataset also sets `output_canvas`, how its output matrices are framed.
 cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`
 and `dataset.9af7a82c.json` are `FIT`; the other datasets are `EXACT`.
 
-`dataset.cross.1.json` annotates only the three training pairs from
+`dataset.0ca9ddb6.json` annotates only the three training pairs from
 `data\training\0ca9ddb6.json`, with ten point instances in total.
 Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
 diagonal neighbors. Color-6 and color-8 points remain unchanged.
@@ -124,7 +128,7 @@ Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
 records each mask's nonzero bounding-box origin; native snapshot coordinates
 remain anchored to the input point. Orientation is 0 in both states because
 the patterns are symmetric. Held-out inputs and outputs are not included.
-The dataset is discovered automatically by `document()`.
+`document()` sends it only when the run solves `0ca9ddb6`.
 
 `dataset.28bf18c6.json` follows the rule of `data\training\28bf18c6.json`
 with three synthesized pairs instead of copies of its grids, one shape instance

@@ -4,6 +4,7 @@ import * as llm from "./lib/llm";
 import * as terminal from "./lib/terminal";
 
 export async function instances({
+  puzzle_id,
   train_dataset,
   declarations,
   test_input_matrix,
@@ -12,6 +13,7 @@ export async function instances({
   terminal.grid("Test input", test_input_matrix);
 
   const { instances } = await llm.generate({
+    puzzle_id,
     messages: [
       {
         role: "assistant",
@@ -60,6 +62,7 @@ export async function instances({
 }
 
 export async function value({
+  puzzle_id,
   declarations,
   train_dataset,
   instance_name,
@@ -70,6 +73,7 @@ export async function value({
 
   terminal.step(`Synthesizing ${instance_name}`);
   const { implementation } = await llm.generate({
+    puzzle_id,
     messages: [
       {
         role: "assistant",
@@ -133,6 +137,7 @@ export async function value({
 }
 
 export async function output_instance_matrix({
+  puzzle_id,
   test_input_matrix,
   train_dataset,
   input_instances,
@@ -144,6 +149,7 @@ export async function output_instance_matrix({
 
   terminal.step("Composing the output object");
   const { output_instance_matrix } = await llm.generate({
+    puzzle_id,
     messages: [
       {
         role: "assistant",

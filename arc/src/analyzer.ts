@@ -3,10 +3,11 @@ import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
 import * as terminal from "./lib/terminal";
 
-export async function declarations({ train_dataset }) {
+export async function declarations({ puzzle_id, train_dataset }) {
   terminal.step("Inferring declarations");
 
   const { declarations, output_canvas } = await llm.generate({
+    puzzle_id,
     messages: [
       {
         role: "user",
@@ -26,10 +27,16 @@ export async function declarations({ train_dataset }) {
   return { declarations, output_canvas };
 }
 
-export async function instances({ declarations, input_matrix, output_matrix }) {
+export async function instances({
+  puzzle_id,
+  declarations,
+  input_matrix,
+  output_matrix,
+}) {
   terminal.step("Segmenting training objects");
 
   const { instances } = await llm.generate({
+    puzzle_id,
     messages: [
       {
         role: "user",
@@ -69,6 +76,7 @@ export async function instances({ declarations, input_matrix, output_matrix }) {
 }
 
 export async function value({
+  puzzle_id,
   instance_name,
   declarations,
   input_instance_matrix,
@@ -77,6 +85,7 @@ export async function value({
   terminal.step(`Constructing ${instance_name}`);
 
   const { implementation } = await llm.generate({
+    puzzle_id,
     messages: [
       {
         role: "user",

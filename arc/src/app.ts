@@ -7,7 +7,7 @@ import * as nucleoid from "./lib/nucleoid";
 import * as terminal from "./lib/terminal";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "0ca9ddb6") {
+export async function start(puzzle_id: string = "9af7a82c") {
   if (!/^[0-9a-f]{8}$/.test(puzzle_id)) {
     throw new Error("Puzzle ID must be eight lowercase hexadecimal characters");
   }
@@ -42,6 +42,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
   let instance_index: number = 0;
 
   const { declarations, output_canvas } = await analyzer.declarations({
+    puzzle_id,
     train_dataset: training_input,
   });
   const train_dataset = {
@@ -57,6 +58,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
     );
 
     const { instances } = await analyzer.instances({
+      puzzle_id,
       declarations,
       input_matrix,
       output_matrix,
@@ -70,6 +72,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
 
       const { implementation, input_value, output_value } =
         await analyzer.value({
+          puzzle_id,
           instance_name,
           declarations,
           input_instance_matrix,
@@ -94,6 +97,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
   );
 
   const { instances } = await visualizer.instances({
+    puzzle_id,
     train_dataset,
     declarations,
     test_input_matrix,
@@ -107,6 +111,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
 
   for (const { input_instance_matrix } of instances) {
     const { input_value, output_value } = await visualizer.value({
+      puzzle_id,
       declarations,
       train_dataset,
       instance_name: `obj${String(instance_index++).padStart(12, "0")}`,
@@ -115,6 +120,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
     });
 
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
+      puzzle_id,
       test_input_matrix,
       train_dataset,
       input_instances,

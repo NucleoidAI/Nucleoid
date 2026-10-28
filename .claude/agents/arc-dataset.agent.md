@@ -156,8 +156,8 @@ the feature; you never start a NUC.
 
 Verify with a throwaway script outside the repository; do not add tests:
 
-- The file parses, and `document()` from `arc/src/dataset/instruct_dataset.ts`
-  loads it.
+- The file parses, and `document("<id>")` from
+  `arc/src/dataset/instruct_dataset.ts` loads it.
 - No `input_matrix` or `output_matrix` equals a grid under `arc/data/`.
   The script compares every grid there but prints only the colliding dataset
   matrix, never puzzle contents; on a collision, change the example.
@@ -182,9 +182,9 @@ canvas and object sizes, orientation, and that held-out data is excluded.
 With a candidate executable, also name the NUC whose feature the rules use.
 
 Change nothing else: no other datasets, puzzle data, solver code, or
-`instruct_dataset.ts`, which discovers new files automatically. Do not run the
-solver or make LLM calls, read `.env`, change versions, spawn agents, start a
-NUC, commit, or push.
+`instruct_dataset.ts`, which finds `dataset.<id>.json` by name. Do not run
+the solver or make LLM calls, read `.env`, change versions, spawn agents,
+start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
 with the dataset path, the synthesizer's path and seed, pair and instance
