@@ -1,12 +1,12 @@
 ---
 name: arc-dataset
-description: Write the ARC instruction dataset for a given training puzzle as synthesized example pairs that follow the rule of arc/src/data/training/<id>.json's train pairs with freshly sampled grid sizes, shapes, colors, and positions, never copies of grids in arc/src/data, annotated with a Nucleoid world model in arc/src/dataset/dataset.<id>.json.
+description: Write the ARC instruction dataset for a given training puzzle as synthesized example pairs that follow the rule of arc/data/training/<id>.json's train pairs with freshly sampled grid sizes, shapes, colors, and positions, never copies of grids in arc/data, annotated with a Nucleoid world model in arc/src/dataset/dataset.<id>.json.
 tools: Read, Write, Edit, Glob, Grep, Bash, PowerShell
 include-custom-instructions: true
 ---
 
 You write one ARC instruction dataset. Given a puzzle ID, infer the
-transformation from the training pairs of `arc/src/data/training/<id>.json`,
+transformation from the training pairs of `arc/data/training/<id>.json`,
 synthesize new example pairs that follow it, annotate them with an object-oriented
 Nucleoid world model, and save them as `arc/src/dataset/dataset.<id>.json`.
 Read and follow the [ARC instructions](../rules/arc.instructions.md).
@@ -14,7 +14,7 @@ Read and follow the [ARC instructions](../rules/arc.instructions.md).
 ## Inputs
 
 - Require an eight-character lowercase hexadecimal puzzle ID with a file in
-  `arc/src/data/training/`. Report a missing or unknown ID instead of guessing.
+  `arc/data/training/`. Report a missing or unknown ID instead of guessing.
 - If `arc/src/dataset/dataset.<id>.json` already exists, stop and report it;
   overwrite it only when the caller explicitly asks.
 
@@ -23,7 +23,7 @@ Read and follow the [ARC instructions](../rules/arc.instructions.md).
 Never print or use the puzzle's `test` entries, including their dimensions.
 Do not read the whole puzzle file; print only its `train` pairs:
 
-    node -e "console.log(JSON.stringify(require('./arc/src/data/training/<id>.json').train))"
+    node -e "console.log(JSON.stringify(require('./arc/data/training/<id>.json').train))"
 
 Use them only to infer the transformation. Only the collision check below
 reads other puzzle data, and it prints no puzzle contents.
@@ -43,7 +43,7 @@ output. Synthesize as many pairs as the puzzle has training pairs:
 - Where shapes are free, draw new ones instead of reusing, recoloring, or
   moving the puzzle's.
 - No `input_matrix` or `output_matrix` may equal any grid under
-  `arc/src/data/`: training or evaluation, input or output, train or test.
+  `arc/data/`: training or evaluation, input or output, train or test.
 - Keep the pairs as informative as the puzzle's: if its pairs rule out an
   alternative rule, such as mirroring instead of repeating, so must yours.
 - Hand off the synthesizer's path and seed so the pairs can be reviewed and
@@ -119,7 +119,7 @@ Verify with a throwaway script outside the repository; do not add tests:
 
 - The file parses, and `document()` from `arc/src/dataset/instruct_dataset.ts`
   loads it.
-- No `input_matrix` or `output_matrix` equals a grid under `arc/src/data/`.
+- No `input_matrix` or `output_matrix` equals a grid under `arc/data/`.
   The script compares every grid there but prints only the colliding dataset
   matrix, never puzzle contents; on a collision, change the example.
 - The synthesizer's transformation reproduces the output of every training

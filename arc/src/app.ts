@@ -14,7 +14,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
 
   const puzzle = JSON.parse(
     await readFile(
-      join(__dirname, "data", "training", `${puzzle_id}.json`),
+      join(__dirname, "..", "data", "training", `${puzzle_id}.json`),
       "utf8"
     )
   );

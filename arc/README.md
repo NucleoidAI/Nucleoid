@@ -47,7 +47,7 @@ documentation for the distinction.
 
 Run the ARC example with `bun run start`, which defaults to puzzle `3aa6fb7a`.
 Pass a puzzle ID as the first argument, for example `bun run start 0d3d703e`,
-to load `src\data\training\0d3d703e.json`. This makes live OpenRouter calls;
+to load `data\training\0d3d703e.json`. This makes live OpenRouter calls;
 type checking, linting, and offline inspection do not require model calls.
 
 ## Terminal presentation
@@ -114,7 +114,7 @@ cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`
 is `FIT`; the other datasets are `EXACT`.
 
 `dataset.cross.1.json` annotates only the three training pairs from
-`src\data\training\0ca9ddb6.json`, with ten point instances in total.
+`data\training\0ca9ddb6.json`, with ten point instances in total.
 Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
 diagonal neighbors. Color-6 and color-8 points remain unchanged.
 The declarative rules introduce `marker_color`, which is absent before the
@@ -126,12 +126,12 @@ remain anchored to the input point. Orientation is 0 in both states because
 the patterns are symmetric. Held-out inputs and outputs are not included.
 The dataset is discovered automatically by `document()`.
 
-`dataset.28bf18c6.json` follows the rule of `src\data\training\28bf18c6.json`
+`dataset.28bf18c6.json` follows the rule of `data\training\28bf18c6.json`
 with three synthesized pairs instead of copies of its grids, one shape instance
 per pair. A seeded generator sampled their canvas sizes (7 by 10, 6 by 5, and
 11 by 11, rows by columns), shape sizes (2 by 4, 4 by 2, and 2 by 3), colors,
 and positions, all different from the puzzle's 8 by 8 canvases and 3 by 3
-shapes, and no matrix equals a grid in `src\data`. Each shape is left-right
+shapes, and no matrix equals a grid in `data`. Each shape is left-right
 asymmetric, so the pairs still distinguish repeating from mirroring.
 Each output places two copies of the shape's crop side by side on a new canvas
 twice as wide as the crop: 2 by 8, 4 by 4, and 2 by 6. Unconditional
