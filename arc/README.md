@@ -454,6 +454,11 @@ different, missing, or extra cell adds one to the score: `0` means an exact
 match, and higher scores are worse. An extra empty row counts as one shape
 mismatch.
 
+`bun run start` exits with the same score, so a caller can check the exit
+status: `0` means an exact match. Exit statuses keep only eight bits, so scores
+above 255 exit with `255` instead of wrapping around to `0`. A failed run
+prints its error to standard error and exits with `1`.
+
 ## Benchmark
 
 ![Benchmark](https://github.com/user-attachments/assets/e9d30330-6d4f-461b-9b9e-c8d1b9eccaf5)

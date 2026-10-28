@@ -141,9 +141,12 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
   terminal.section(3, "Compare", "Expected and predicted canvases");
   terminal.grid("Expected", test_output_matrix);
   terminal.grid("Result", result_matrix);
-  terminal.summary(
-    Matrix.difference(result_matrix, test_output_matrix),
-    performance.now() - startedAt
+
+  const difference: number = Matrix.difference(
+    result_matrix,
+    test_output_matrix
   );
-  return result_matrix;
+  terminal.summary(difference, performance.now() - startedAt);
+
+  return difference;
 }
