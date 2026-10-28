@@ -24,6 +24,9 @@ the [ARC instructions](../rules/arc.instructions.md), and the
   give the run's output, which shows the expected test grid, to another agent.
 - Run `bun start <puzzle-id>` once, after the dataset and any NUC candidate are
   frozen. Exit status `0` is an exact match; any other status is not.
+- Allow the run up to 10 minutes and wait for it inside the invocation; never
+  end, return, or report while it runs. At 10 minutes, kill its process tree:
+  a timeout is not a pass.
 - Never rerun for a pass, or change the provider, model, sampling, prompts,
   solver code, dataset, or candidate around the run. Never read `.env` or
   credentials.

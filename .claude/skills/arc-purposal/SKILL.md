@@ -63,24 +63,47 @@ Handle at most one NUC request per invocation, as a single-proposal request.
 ## Run the puzzle
 
 The invocation authorizes exactly one live solver run, which makes paid
-OpenRouter calls. From `arc/`, with dependencies installed from the committed
-lockfile, run:
+OpenRouter calls. With dependencies installed from the committed lockfile, run
+`bun start <puzzle-id>` from `arc/` under a 10-minute limit. In PowerShell 7.4
+or later:
 
-    bun start <puzzle-id>
+    "runner $PID"
+    $options = @{
+      FilePath = 'bun'
+      ArgumentList = 'start', '<puzzle-id>'
+      NoNewWindow = $true
+      PassThru = $true
+      RedirectStandardOutput = '<workspace>\run.log'
+      RedirectStandardError = '<workspace>\run.err.log'
+      Environment = @{ NUCLEOID_EXECUTABLE = $null }
+    }
+    $run = Start-Process @options
+    $null = $run.Handle
+    if ($run.WaitForExit(600000)) { "exit $($run.ExitCode)" } else { taskkill /PID $run.Id /T /F; $run.WaitForExit(); 'timed out' }
 
-With a NUC candidate, set `NUCLEOID_EXECUTABLE` to its copied executable for
-that process only. Capture the output in the session workspace and record the
-process's own exit status, not a pipeline's:
+With a NUC candidate, replace `$null` with its copied executable, which sets
+`NUCLEOID_EXECUTABLE` for that process only; without one, `$null` keeps an
+inherited value out of the run. Both logs stay in the session workspace, and
+the status is the process's own, not a pipeline's.
 
-- `0`: exact match; the test passed.
-- Any other status: not passed. The status is the difference score, capped at
-  255. `1` can also mean a failed run, so report the log's difference or error.
+Wait for the run inside this invocation. Never end, return, or report while it
+runs. If one tool call cannot block for 10 minutes, start the lines above in
+the background and wait on the printed runner ID with further calls, such as
+`Wait-Process -Id <runner> -Timeout 590`, until it exits; never end the
+invocation to await a notification. At the limit, the command kills the whole
+process tree.
 
-Run once. Never rerun for a pass, or change the provider, model, sampling,
-prompts, solver code, dataset, or candidate around the run. The output shows
-the expected test grid: keep it in the session workspace, never give it or
-anything taken from it to an agent, and never use it to revise the dataset or
-candidate.
+- `exit 0`: exact match; the test passed.
+- Any other exit status: not passed. The status is the difference score, capped
+  at 255. `1` can also mean a failed run, so report the log's difference or
+  error.
+- `timed out`: not passed, with no difference score. Report the timeout.
+
+Run once. Never rerun for a pass, including after a timeout, or change the
+provider, model, sampling, prompts, solver code, dataset, or candidate around
+the run. The output shows the expected test grid: keep it in the session
+workspace, never give it or anything taken from it to an agent, and never use
+it to revise the dataset or candidate.
 
 ## Decide the outcome
 
@@ -118,7 +141,7 @@ change project versions.
 Save one JSON result record in the session workspace with the puzzle ID and
 starting revision; the dataset status and path; the NUC path, blob, category,
 evaluator decision, and report path; the run's command, executable, exit
-status, difference or error, and log path; the outcome and its basis; and any
-blockers. Use `null` for anything not measured, including the difference before
-this dataset. Report a short summary with the record's path, then stop without
-starting another puzzle or NUC.
+status or timeout, difference or error, and log paths; the outcome and its
+basis; and any blockers. Use `null` for anything not measured, including the
+difference before this dataset. Report a short summary with the record's path,
+then stop without starting another puzzle or NUC.

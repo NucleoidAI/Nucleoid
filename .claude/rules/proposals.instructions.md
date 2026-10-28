@@ -256,8 +256,9 @@ against the frozen candidate, as the
 
 - `bun start <puzzle-id>` exits with `0`, an exact match: Accepted, regardless
   of the evaluator's decision.
-- Any other exit status, or no run: the evaluator's overall decision stands,
-  and only its `Accepted` accepts the NUC.
+- Any other exit status, a timeout at the skill's 10-minute limit, or no run:
+  the evaluator's overall decision stands, and only its `Accepted` accepts the
+  NUC.
 
 This exception covers only the NUC that the same invocation requested, frozen
 before its run and integrated unchanged. For that NUC it overrides the

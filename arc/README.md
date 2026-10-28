@@ -111,7 +111,7 @@ match the parameters in their class declarations.
 Each dataset also sets `output_canvas`, how its output matrices are framed.
 `EXACT` outputs keep the input matrix's dimensions, while `FIT` outputs are
 cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`
-is `FIT`; the other datasets are `EXACT`.
+and `dataset.9af7a82c.json` are `FIT`; the other datasets are `EXACT`.
 
 `dataset.cross.1.json` annotates only the three training pairs from
 `data\training\0ca9ddb6.json`, with ten point instances in total.
@@ -144,6 +144,32 @@ input canvas and output masks its output canvas. Orientation is 0 in both
 states because the shapes are not rotated. Held-out inputs and outputs are not
 included.
 
+`dataset.9af7a82c.json` follows the rule of `data\training\9af7a82c.json`
+with four synthesized pairs instead of copies of its grids, nineteen region
+instances in total (3, 4, 6, and 6 per pair). A seeded generator partitioned
+fully colored canvases (2 by 8, 6 by 3, 5 by 8, and 8 by 4, rows by columns,
+unlike the puzzle's 3 by 3, 3 by 4, and 4 by 3 inputs) into three to six
+4-connected regions, one per color, with freshly drawn shapes, cell counts
+from 1 to 17, colors, and positions; no matrix equals a grid in `data`.
+Cell counts are distinct within each pair. In every pair the count order
+differs from color order and from first-appearance order, and some pairs
+contradict ordering by bounding-box width, height, or area. Each output is a
+histogram: the region with the r-th largest cell count becomes a vertical bar
+of its color in column r, starting at the top row and as tall as the region's
+cell count, giving 11 by 3, 8 by 4, 17 by 6, and 15 by 6 outputs. The class
+takes `color`, `cell_count`, and `size_rank`, the region's zero-based position
+when its pair's regions are ordered by cell count, largest first; each pair
+lists its instances in that order. Every object executes in its own Nucleoid
+process, so the rank is a constructor property rather than a comparison across
+instances. Unconditional class-level rules introduce `bar_height` (the cell
+count), which is absent before the rules run, and move `x` to `size_rank` and
+`y` to the output origin 0. Tags identify the geometry: `l9100` is a single
+shape, as in `dataset.28bf18c6.json`, and `l6953` is a vertical bar. Input
+masks retain each pair's input canvas and output masks its output canvas;
+`output_canvas` is `FIT` because each histogram fills its nonzero bounding
+box. Orientation is 0 in both states because the regions are not rotated and
+the bars are vertical. Held-out inputs and outputs are not included.
+
 ## ARC proposal agent
 
 Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
@@ -158,7 +184,8 @@ Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
    evaluation stages as a single-proposal request. The dataset is then written
    with the frozen candidate's runtime.
 3. `bun start <puzzle-id>` runs once, with that candidate's runtime when there
-   is one. Exit status `0` is an exact match.
+   is one, while the workflow waits up to 10 minutes for it. Exit status `0` is
+   an exact match; a run still going at 10 minutes is killed and does not pass.
 4. An exact match accepts the requested NUC whatever the evaluator decided.
    Otherwise the NUC is accepted only if the evaluator accepted it.
 
