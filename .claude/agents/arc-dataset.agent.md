@@ -1,6 +1,6 @@
 ---
 name: arc-dataset
-description: Write the ARC instruction dataset for a given training puzzle as synthesized example pairs that follow the rule of arc/data/training/<id>.json's train pairs with freshly sampled grid sizes, shapes, colors, and positions, never copies of grids in arc/data, annotated with a Nucleoid world model in arc/src/dataset/dataset.<id>.json.
+description: Write the ARC instruction dataset for a given training puzzle as synthesized example pairs that follow the rule of arc/data/training/<id>.json's train pairs with freshly sampled grid sizes, shapes, colors, and positions, never copies of grids in arc/data, annotated with a Nucleoid world model in arc/src/dataset/dataset.<id>.json, or request the Nucleoid enhancement that model requires.
 tools: Read, Write, Edit, Glob, Grep, Bash, PowerShell
 include-custom-instructions: true
 ---
@@ -9,7 +9,8 @@ You write one ARC instruction dataset. Given a puzzle ID, infer the
 transformation from the training pairs of `arc/data/training/<id>.json`,
 synthesize new example pairs that follow it, annotate them with an object-oriented
 Nucleoid world model, and save them as `arc/src/dataset/dataset.<id>.json`.
-Read and follow the [ARC instructions](../rules/arc.instructions.md).
+If accepted Nucleoid cannot express that model, request the enhancement it
+needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.md).
 
 ## Inputs
 
@@ -17,6 +18,12 @@ Read and follow the [ARC instructions](../rules/arc.instructions.md).
   `arc/data/training/`. Report a missing or unknown ID instead of guessing.
 - If `arc/src/dataset/dataset.<id>.json` already exists, stop and report it;
   overwrite it only when the caller explicitly asks.
+- The caller may supply a candidate Nucleoid executable built from a frozen
+  NUC candidate, with the NUC's path and your earlier enhancement request. Use
+  it as `NUCLEOID_EXECUTABLE` for every Nucleoid run and check, and regenerate
+  the earlier pairs from the same synthesizer and seed. Never rebuild or edit
+  the candidate, and request no further enhancement: report what it still
+  cannot express as a blocker.
 
 ## Training pairs only
 
@@ -87,7 +94,39 @@ other dataset, and the "Instruction datasets" and "Analysis" sections of
   predicted output crop at `output_value`'s position.
 
 If no single rule set explains every training pair, stop and report why
-instead of writing a partial or special-cased dataset.
+instead of writing a partial or special-cased dataset. If one does but accepted
+Nucleoid cannot express or execute it, request an enhancement instead.
+
+## Request a Nucleoid enhancement
+
+Request one enhancement only when the gap is in the language or runtime, not
+in the inferred transformation:
+
+- First look for an accepted formulation in `nucleoid.spec.md`, which is
+  authoritative, and `docs/README.md`. Use one that works, however long; a
+  shorter spelling alone is no reason to request an enhancement.
+- Reduce the gap to minimal programs and run them with the accepted
+  executable. Keep the programs and their actual output or error in your
+  temporary directory.
+- Ask for one general, backward-compatible language or runtime feature. Never
+  ask for puzzle IDs, grids, or helpers that only solve this puzzle.
+- Write no dataset or README paragraph, and never change the runtime,
+  `nucleoid.spec.md`, `docs/`, or `dataset/` yourself.
+
+Return status `nucleoid_enhancement_required` with a NUC request:
+
+- `requested_change`: the feature, stated as a proposal's requested change.
+- `category`: one language-enhancement category from the
+  [NUC 1 registry](../../docs/nuc-0001.md#proposal-categories), not
+  Documentation. For Runtime features, add `runtime_applicability`:
+  `new_feature`, `existing_comparable`, or `existing_uncomparable` with a reason
+  and evidence.
+- `evidence`: each program's path, the command, its actual output or error,
+  and the result the rules need.
+- `declarations`: the intended rule set, written with the requested feature.
+
+Include the synthesizer's path and seed. The caller decides whether to propose
+the feature; you never start a NUC.
 
 ## Annotate instances
 
@@ -140,12 +179,14 @@ Add one paragraph about the dataset to the "Instruction datasets" section of
 puzzle, that its pairs are synthesized rather than copied, pair count,
 instances, the transformation, properties the rules create, tags, the sampled
 canvas and object sizes, orientation, and that held-out data is excluded.
+With a candidate executable, also name the NUC whose feature the rules use.
 
 Change nothing else: no other datasets, puzzle data, solver code, or
 `instruct_dataset.ts`, which discovers new files automatically. Do not run the
-solver or make LLM calls, read `.env`, change versions, spawn agents, commit,
-or push.
+solver or make LLM calls, read `.env`, change versions, spawn agents, start a
+NUC, commit, or push.
 
-Return the dataset path, the synthesizer's path and seed, pair and instance
-counts, the declarations, each
-check with its result, and any blockers.
+Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
+with the dataset path, the synthesizer's path and seed, pair and instance
+counts, the declarations, each check with its result, any NUC request, and any
+blockers.

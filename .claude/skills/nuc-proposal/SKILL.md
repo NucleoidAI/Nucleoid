@@ -27,6 +27,11 @@ Preserve this mode through evaluation, including coordination through
 requests. An omitted evaluator mode remains `continuous` for existing
 open-ended invocations.
 
+A NUC that `/arc-purposal` requests is a single-proposal request whose outcome
+waits for the puzzle's solver run; an exact match accepts it regardless of the
+evaluator's decision. Follow the
+[ARC-requested proposal rule](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only).
+
 The **token non-regression gate** requires each compared case to use the same
 or fewer lexer tokens than its accepted baseline. Single-proposal
 requests always skip token comparison. All modes retain valid immutable
@@ -255,9 +260,10 @@ policy or candidate sources.
 
 ## Record rejected outcomes (caller only)
 
-After the independent evaluator returns `Rejected`, the coordinating caller
-must record and commit the rejected proposal documentation and its index/outcome
-metadata. Rejected proposals are not exempt from commits. Follow the
+After the independent evaluator returns `Rejected`, unless an exact ARC match
+accepts an ARC-requested proposal, the coordinating caller must record and
+commit the rejected proposal documentation and its index/outcome metadata.
+Rejected proposals are not exempt from commits. Follow the
 [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 
 Commit only rejection documentation, never the rejected candidate's language

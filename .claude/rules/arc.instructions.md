@@ -5,8 +5,11 @@ applyTo: "**"
 # ARC project and solver proposals
 
 These rules apply when working on `arc/`, its LLM exchanges, or its associated
-ARC records. Use the `arc-purposal` agent and matching skill when delegating an
-ARC proposal. Agent-configuration changes alone do not launch a solver run.
+ARC records. Run an ARC proposal with `/arc-purposal <puzzle-id>` (the
+`arc-purposal` skill and agent). The `arc-dataset` agent writes the puzzle's
+instruction dataset, any Nucleoid enhancement that dataset requires goes
+through the NUC stages, and one solver run decides that enhancement's outcome.
+Agent-configuration changes alone do not launch a solver run.
 
 ## No automated ARC tests
 
@@ -61,7 +64,11 @@ output dimensions, overlap handling, and composition through the inferred model.
 Never use test outputs or their dimensions to infer rules, initialize result
 grids, choose candidates, or construct prompts. Access expected test grids only
 after predictions are frozen, for scoring. Do not hard-code puzzle IDs,
-expected grids, or task-specific answers into solver logic.
+expected grids, or task-specific answers into solver logic or language features.
+The solver's output shows the expected grid, so never feed it back into
+datasets, NUC candidates, or prompts. Deciding an `/arc-purposal` NUC from its
+one scored run is scoring, not candidate selection: never rerun it or compare
+alternatives against the expected grid.
 
 Preserve puzzle datasets, expected outputs, instruction examples, and scoring.
 Replay every selected training pair, then score held-out predictions by exact
@@ -72,6 +79,11 @@ expected grids or scoring.
 
 Keep changes focused on the ARC project and synchronize affected documentation
 and canonical ARC records when their behavior changes. Follow the existing NUC
-workflow for language changes and the human-owned version policy. Do not read
-or expose credentials, make paid LLM calls without authorization, or alter
-provider/model settings merely to manufacture a passing result.
+workflow for language changes and the human-owned version policy. A NUC that
+`/arc-purposal` requests is accepted on an exact match regardless of its
+evaluation, under the
+[ARC-requested proposal rule](proposals.instructions.md#arc-requested-proposals-caller-only).
+Do not read or expose credentials, make paid LLM calls without authorization,
+or alter provider/model settings merely to manufacture a passing result. An
+`/arc-purposal` invocation authorizes its one `bun start <puzzle-id>` run and
+nothing more.

@@ -197,7 +197,9 @@ baseline, worktree, and a fresh report path. Use
 `.claude/skills/nuc-evaluate/SKILL.md`. The evaluator independently runs
 checks and `evaluate_proposal`, whose token portion follows the mode/category
 policy; it cannot repair sources, regenerate exports,
-or change the baseline. Only it returns the acceptance decision.
+or change the baseline. Only it returns the acceptance decision; an exact ARC
+match can also accept an
+[ARC-requested proposal](#arc-requested-proposals-caller-only).
 
 If named custom agents are unavailable, give the corresponding profile,
 skill, and inputs to separate fresh general-purpose agents. Neither role
@@ -233,7 +235,7 @@ to that evaluation and must not recursively launch another agent.
 
 ## Record rejected outcomes (caller only)
 
-- After the independent evaluator's overall `Rejected` decision, the coordinating caller must record and commit the rejected proposal documentation and its index/outcome metadata.
+- After the independent evaluator's overall `Rejected` decision, unless an exact ARC match accepts an [ARC-requested proposal](#arc-requested-proposals-caller-only), the coordinating caller must record and commit the rejected proposal documentation and its index/outcome metadata.
 - For a new proposal, record `Status: Rejected`, the rejection reason, actual token-check ran/skipped status (per-case before/after counts only when run), and update its NUC index entries.
 - For a rejected revision of an already accepted or active NUC, preserve its accepted text and status; record only the rejected revision's outcome metadata rather than replacing it with the candidate.
 - Commit only rejection documentation and directly related index/status metadata. Never apply or commit rejected runtime, executable-document, reference, synthesized-data or generated-export changes. Baseline and report artifacts stay in the session workspace.
@@ -241,6 +243,29 @@ to that evaluation and must not recursively launch another agent.
 - Stage explicit proposal/index paths and use a path-limited commit. Verify the resulting commit contains only the rejection documentation and directly related metadata. Never use repository-wide staging or `git commit -a`, or include unrelated files already staged.
 - Preserve unrelated staged and unstaged changes. If the rejection documentation is already committed, verify and report that commit instead of creating an empty duplicate.
 - Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the coordinating caller and does not authorize an automatic push.
+
+## ARC-requested proposals (caller only)
+
+`/arc-purposal <puzzle-id>` may request one NUC when the puzzle's
+`arc-dataset` handoff requires a Nucleoid enhancement. Prepare and evaluate it
+as a single-proposal request: fresh proposal and evaluation agents, a pinned
+baseline, an isolated candidate, the Rust improvement pass when required, and
+no token comparison. Hold its outcome until the puzzle's one solver run
+against the frozen candidate, as the
+[arc-purposal skill](../skills/arc-purposal/SKILL.md) describes, then decide:
+
+- `bun start <puzzle-id>` exits with `0`, an exact match: Accepted, regardless
+  of the evaluator's decision.
+- Any other exit status, or no run: the evaluator's overall decision stands,
+  and only its `Accepted` accepts the NUC.
+
+This exception covers only the NUC that the same invocation requested, frozen
+before its run and integrated unchanged. For that NUC it overrides the
+evaluator-only acceptance in NUC 1; every other NUC keeps the ordinary rule.
+Record the basis, the evaluator's decision and report, and the run's evidence
+with the outcome, and never hide the evaluator's failures. The run is scored
+once: never rerun it, or revise the dataset or candidate from its output, to
+reach a pass.
 
 ## Continuous proposal cycles (caller only)
 

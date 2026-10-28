@@ -105,7 +105,10 @@ an isolated candidate, preserving behavior, case identities, canonical
 assertions, return expectations, and executed assertion coverage. It hands off
 the proposal's Git blob revision without deciding acceptance. The evaluator
 checks the frozen candidate without rewriting it, measuring tokens only when
-the execution-mode policy requires comparison.
+the execution-mode policy requires comparison. A NUC that `/arc-purposal`
+requests for an ARC puzzle is also accepted when the puzzle's solver run is an
+exact match; see the
+[ARC-requested proposal rule](.claude/rules/proposals.instructions.md#arc-requested-proposals-caller-only).
 
 The procedures live in the [proposal skill](.claude/skills/nuc-proposal/SKILL.md)
 and [evaluation skill](.claude/skills/nuc-evaluate/SKILL.md), with separate

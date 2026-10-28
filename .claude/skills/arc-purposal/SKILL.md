@@ -1,142 +1,124 @@
 ---
 name: arc-purposal
-description: Propose and prototype improvements to the ARC project through an object-oriented world model, JSON-only LLM exchanges, and honest exact-grid evaluation.
+description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run that decides the enhancement's outcome.
+argument-hint: <puzzle-id>
 ---
 
-# Preparing an ARC solver proposal
+# Running an ARC puzzle proposal
 
-Use this skill for ARC solver proposals, object-oriented world modeling, and
-JSON-only ARC prompt changes. Follow `.claude/CLAUDE.md`, the
+`/arc-purposal <puzzle-id>` takes one training puzzle through its instruction
+dataset, any Nucleoid enhancement that dataset requires, one solver run, and
+the outcome. Follow `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
 [agent profile](../../agents/arc-purposal.agent.md).
 
-When delegated as `arc-purposal`, perform the work below directly. Do not spawn
-another agent. Work on one bounded change and stop at its JSON handoff.
+You are the caller. Run this skill where you can launch agents, such as the
+main conversation, not in a forked subagent. Launch each worker the steps
+name, and never do a worker's dataset, proposal, or evaluation work yourself.
+If you cannot launch agents, stop and report `agent_launch_unavailable`.
 
-## Establish scope and baseline
+## Check the puzzle
 
-Read the caller's requested change, allowed paths, target task IDs or fixtures,
-and any live-model call budget. Inspect the working-tree status and preserve
-pre-existing changes. If target tasks are unspecified, use the existing example
-task and affected offline fixtures; report that limited scope explicitly.
-Missing fixtures or required execution inputs block their evaluation, rather
-than justify invented scores. Default to no paid or network LLM calls.
+- Require an eight-character lowercase hexadecimal ID with a file in
+  `arc/data/training/`. Report a missing or unknown ID instead of guessing.
+- Record the revision and working-tree status in the session workspace, and
+  preserve pre-existing changes.
+- Use training pairs only. Never print or read the puzzle's `test` entries.
 
-Read `arc/README.md`, `arc/package.json`, and the relevant pipeline:
+## Write the dataset
 
-- `arc/src/app.ts` and `arc/src/types.ts` for orchestration and data contracts.
-- `arc/src/lib/analyzer.ts` and `arc/src/lib/visualizer.ts` for inference.
-- `arc/src/lib/llm.ts`, `arc/src/lib/openrouter.ts`, and
-  `arc/src/instruct_dataset/` for every model-facing message source.
-- `arc/src/lib/nucleoid.ts` and `arc/src/lib/Matrix.ts` for symbolic execution
-  and grid composition/scoring.
+Run `/arc-dataset <puzzle-id>`, which runs the
+[arc-dataset agent](../../agents/arc-dataset.agent.md) with the accepted
+runtime. Pass along an explicit user request to overwrite an existing dataset.
+Continue by the handoff's status:
 
-Record the revision, task IDs, execution mode, and actual baseline results in
-the session workspace. Keep training and evaluation splits identifiable.
-Never inspect or feed held-out outputs into model selection; expose them to
-the scorer only after freezing predictions. Unknown results remain `null`.
+- `written`: run the puzzle.
+- `nucleoid_enhancement_required`: prepare the requested enhancement.
+- `blocked`, including an existing dataset: stop and report it, without a run.
 
-## Build an object-oriented solution
+## Prepare the requested enhancement
 
-Choose one concrete failure or missing capability supported by the inspected
-code and training examples. Model the world with:
+Handle at most one NUC request per invocation, as a single-proposal request.
 
-- Grid dimensions, categorical colors, background, and coordinate conventions.
-- Object classes and stable per-world instance identities.
-- Properties such as occupied cells, position, shape, color, and orientation.
-- Relations such as containment, adjacency, alignment, symmetry, and ordering.
-- Executable transformation rules and deterministic output composition.
+1. Follow the caller steps of the [nuc-proposal skill](../nuc-proposal/SKILL.md),
+   using the request's `requested_change` as the requested change. Choose the
+   next NUC number, confirm the category and runtime applicability (ask the user
+   when either is uncertain), pin the accepted revision and record its immutable
+   baseline, create a candidate worktree, and launch a fresh `nuc-proposal`
+   agent with the request and its evidence. Complete the Rust improvement pass
+   when required and freeze the handoff. If preparation is blocked, stop and
+   report it.
+2. Launch a fresh `nuc-evaluate` agent on the frozen handoff under the
+   [nuc-evaluate skill](../nuc-evaluate/SKILL.md), with
+   `NUC_PROPOSAL_MODE=single` and a fresh report path. Keep its decision and
+   report. Do not record the outcome yet; the run decides it.
+3. Confirm the candidate still matches the handoff, build it with
+   `cargo build --locked` in its worktree, and copy its `target/debug/nucleoid`
+   executable (`nucleoid.exe` on Windows) into the session workspace.
+4. Run `/arc-dataset` again for the puzzle with that executable, the NUC path,
+   and the first handoff. Continue only on `written`. Any other status,
+   including a further enhancement request, skips the run: the test did not
+   pass.
 
-Use only properties and relations needed for the change. Infer them from
-training data rather than puzzle filenames or expected test answers. Preserve
-full-size instance masks at current interfaces, and make any internal coordinate
-conversion explicit. Derive output shape from the learned transformation and
-test input, never the expected test grid.
+## Run the puzzle
 
-Use Nucleoid's accepted class/instance and declarative semantics to evaluate
-symbolic rules. Replay a hypothesis against all selected training pairs before
-applying it to test inputs, without carrying training instance state into a
-test world. Keep TypeScript types concrete and validate external JSON at runtime;
-a generic type argument or cast is not validation.
+The invocation authorizes exactly one live solver run, which makes paid
+OpenRouter calls. From `arc/`, with dependencies installed from the committed
+lockfile, run:
 
-## Enforce JSON-only model exchanges
+    bun start <puzzle-id>
 
-**Never use natural language in an ARC LLM prompt: JSON data in, JSON data out.**
-This includes shared wrappers and example injection, not just the immediate
-analyzer or visualizer call. Keep every role's message content independently
-valid JSON. Serialize objects rather than assembling mixed text templates.
+With a NUC candidate, set `NUCLEOID_EXECUTABLE` to its copied executable for
+that process only. Capture the output in the session workspace and record the
+process's own exit status, not a pipeline's:
 
-Represent the operation, input data, and required response shape structurally.
-For example, this is a valid request payload, not a new mandatory wire schema:
+- `0`: exact match; the test passed.
+- Any other status: not passed. The status is the difference score, capped at
+  255. `1` can also mean a failed run, so report the log's difference or error.
 
-```json
-{
-  "operation": "infer_world_model",
-  "data": {
-    "train": [
-      { "input": [[8]], "output": [[8]] }
-    ]
-  },
-  "response_schema": {
-    "type": "object",
-    "required": ["declarations"],
-    "properties": {
-      "declarations": {
-        "type": "array",
-        "items": { "type": "string" }
-      }
-    },
-    "additionalProperties": false
-  }
-}
-```
+Run once. Never rerun for a pass, or change the provider, model, sampling,
+prompts, solver code, dataset, or candidate around the run. The output shows
+the expected test grid: keep it in the session workspace, never give it or
+anything taken from it to an agent, and never use it to revise the dataset or
+candidate.
 
-Use symbolic operation names, enum constraints, real JSON schemas, and
-data/code examples. No prose-valued `instructions`, `description`, `reasoning`,
-or similar escape hatches. Carry executable Nucleoid source only inside
-explicit code fields; do not add natural-language comments or wrap code in
-Markdown. Encode control IDs and validation feedback as JSON data too.
+## Decide the outcome
 
-Validate responses before use: required fields, permitted operations, object
-references, rectangular grids, integer colors in `0..9`, and dimensions
-consistent with the model. Surface malformed data or runtime errors explicitly.
-Do not execute invalid responses, scrape JSON from surrounding text, silently
-substitute empty objects/grids, or return the input as a success fallback.
+Without a NUC, report the run's result; there is no proposal outcome. With the
+requested NUC, decide under the
+[ARC-requested proposal rule](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only):
 
-## Check the candidate and hand off
+| Run | Evaluator decision | Outcome |
+| --- | --- | --- |
+| Exit status `0` | Any | Accepted, on the exact match |
+| Not passed or not run | Accepted | Accepted, on the evaluation |
+| Not passed or not run | Rejected | Rejected |
+| Not passed or not run | Blocked | Blocked; the NUC stays Draft |
 
-Do not add or retain automated ARC tests, including in shared Rust suites
-outside `arc/`. Do not introduce replacement test files, test-only fixtures, or
-test runners. Use type checking, linting, builds, and manual/offline checks for
-the affected behavior. Inspect complete outgoing messages after wrapper/example
-injection and verify each content parses as JSON. Check structural
-request/response contracts, invalid-response rejection, object-to-grid round
-trips, applicable spatial rules, and training/held-out isolation without adding
-automated tests. Preserve puzzle data, expected outputs, instruction examples,
-and scoring. Manual or mocked checks do not establish live solving ability.
+Record it with the nuc-proposal skill's caller steps:
 
-From `arc`, run `bun run typecheck` and `bun run lint`. Live-model evaluation
-requires the caller's authorization and budget; do not expose `.env` or
-credentials.
+- **Accepted:** integrate the unchanged frozen candidate, record its
+  status/index metadata, and commit that integration with explicit paths. In
+  the NUC's Evaluation section, record the basis, the evaluator's decision and
+  findings, and the run's puzzle ID, command, and exit status. Rebuild the
+  primary runtime with `cargo build`, run the development checks, and report
+  every failure, including any the evaluator found.
+- **Rejected:** record and commit only the rejection documentation and index
+  metadata under the
+  [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
+- **Rejected or Blocked:** the dataset depends on an unaccepted feature, so
+  move it and its README paragraph from the primary checkout into the session
+  workspace. Keep the candidate isolated.
 
-Measure each selected task separately against the unchanged scorer. Report
-training replay and held-out scoring separately, exact matches and shape
-mismatches, and any regressions. Claim a task solved only for a measured exact
-match; do not promise arbitrary ARC generalization or call a mocked answer a
-live pass. Update affected ARC documentation and canonical JSONL records only
-when the change requires it, preserving stable IDs and annotations.
+Leave the dataset and README changes uncommitted for review. Never push or
+change project versions.
 
-Return exactly one JSON object, without fences or surrounding prose:
+## Report
 
-- `status`: `ready_for_review` or `blocked`; never an invented acceptance verdict.
-- `changed_paths`: repository-relative paths for this task's changes.
-- `world_model`: structured class, property, relation, and operation identifiers.
-- `checks`: command, exit code, and execution mode for each completed check.
-- `cases`: task ID, split, execution mode, before/after difference, and exact-match
-  booleans; use `null` for unmeasured values.
-- `blockers`: structured error codes and affected paths or task IDs.
-
-Keep supporting baseline/result artifacts in the session workspace and include
-their paths in the JSON when present. Do not commit, push, merge, change project
-versions, start a NUC, or launch another proposal. The caller owns integration,
-any required NUC workflow, and post-change improvement agents.
+Save one JSON result record in the session workspace with the puzzle ID and
+starting revision; the dataset status and path; the NUC path, blob, category,
+evaluator decision, and report path; the run's command, executable, exit
+status, difference or error, and log path; the outcome and its basis; and any
+blockers. Use `null` for anything not measured, including the difference before
+this dataset. Report a short summary with the record's path, then stop without
+starting another puzzle or NUC.

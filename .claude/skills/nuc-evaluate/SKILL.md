@@ -171,6 +171,11 @@ returns, and executed assertion coverage.
   syntax compatibility, or fails behavior or development checks.
 - **Blocked:** a required baseline or other evaluation prerequisite is absent.
 
+For an [ARC-requested proposal](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only),
+the caller may still accept the candidate on an exact ARC match, whatever you
+decide. Decide from your own checks as usual; do not request, read, or weigh
+ARC results.
+
 Never offset a required-gate increase with savings elsewhere or decide from an
 aggregate. Invalid/corrupt baseline artifacts and bad policy inputs are errors,
 never successful skips; no behavior or compatibility failure may be suppressed.

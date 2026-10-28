@@ -11,11 +11,11 @@ not a replacement for the policies it links to.
 | File | Policy |
 | --- | --- |
 | [project.instructions.md](rules/project.instructions.md) | Language goals, reference documents, and runtime architecture |
-| [arc.instructions.md](rules/arc.instructions.md) | ARC solver proposals, JSON-only LLM exchanges, and no automated ARC tests |
+| [arc.instructions.md](rules/arc.instructions.md) | ARC puzzle proposals, JSON-only LLM exchanges, and no automated ARC tests |
 | [rust.instructions.md](rules/rust.instructions.md) | Concrete runtime types, dependencies, and Rust community conventions |
 | [documents.instructions.md](rules/documents.instructions.md) | Authoritative specification, executable documents, and dataset synchronization |
 | [versions.instructions.md](rules/versions.instructions.md) | Human-owned version numbers; no AI version changes |
-| [proposals.instructions.md](rules/proposals.instructions.md) | Independent NUC proposal preparation, evaluation, and token acceptance |
+| [proposals.instructions.md](rules/proposals.instructions.md) | Independent NUC proposal preparation, evaluation, token acceptance, and ARC-requested acceptance |
 | [rust-improvement.instructions.md](rules/rust-improvement.instructions.md) | Focused Rust improvements and the required post-change agent |
 
 All instruction files use `applyTo: "**"` to preserve their repository-wide scope.

@@ -146,14 +146,31 @@ included.
 
 ## ARC proposal agent
 
-Use [arc-purposal](../.claude/agents/arc-purposal.agent.md) and its
-[skill](../.claude/skills/arc-purposal/SKILL.md) to propose and prototype focused
-solver improvements. The [ARC instructions](../.claude/rules/arc.instructions.md)
-require an object-oriented Nucleoid world model, training-only rule inference,
-and exact-grid evaluation without test-answer leakage.
+Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
+[arc-purposal](../.claude/agents/arc-purposal.agent.md) workflow in its
+[skill](../.claude/skills/arc-purposal/SKILL.md):
 
-The agent's contract is **JSON data in, JSON data out** for every ARC LLM
-message, including injected examples and retry feedback. Natural-language
+1. The [arc-dataset](../.claude/agents/arc-dataset.agent.md) agent writes the
+   puzzle's instruction dataset. If accepted Nucleoid cannot express the rules
+   the training pairs need, it writes nothing and requests one Nucleoid
+   enhancement instead.
+2. A requested enhancement goes through the usual NUC proposal and independent
+   evaluation stages as a single-proposal request. The dataset is then written
+   with the frozen candidate's runtime.
+3. `bun start <puzzle-id>` runs once, with that candidate's runtime when there
+   is one. Exit status `0` is an exact match.
+4. An exact match accepts the requested NUC whatever the evaluator decided.
+   Otherwise the NUC is accepted only if the evaluator accepted it.
+
+The run makes paid OpenRouter calls and shows the expected test grid, so it
+runs once, is never repeated to obtain a pass, and its output never feeds back
+into the dataset or the candidate. The
+[ARC instructions](../.claude/rules/arc.instructions.md) require an
+object-oriented Nucleoid world model, training-only rule inference, and
+exact-grid evaluation without test-answer leakage.
+
+ARC LLM exchanges follow **JSON data in, JSON data out** for every message,
+including injected examples and retry feedback. Natural-language
 prompts and prose hidden in JSON values are forbidden; executable Nucleoid code
 travels in explicit JSON string fields. Analyzer and visualizer requests,
 injected instruction examples, and control IDs each serialize one complete
