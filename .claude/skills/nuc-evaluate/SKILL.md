@@ -11,7 +11,7 @@ handoff, then launch a fresh `nuc-evaluate` agent using
 custom agents are unavailable, give both documents to a fresh general-purpose
 agent. Inside that agent, execute the steps below; do not spawn another agent.
 
-Follow `.github/copilot-instructions.md` and `docs/nuc-0001.md`.
+Follow `.claude/CLAUDE.md` and `docs/nuc-0001.md`.
 Evaluate exactly one completed revision, independently of the proposal agent.
 
 ## Verify the handoff
@@ -288,7 +288,7 @@ behavior/integrity, accepted-corpus baseline, compatibility, and development
 checks still apply.
 
 When `/nuc-evaluate` coordinates an active continuous cycle, the caller follows
-the [shared rejection workflow](../../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
+the [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 For `Rejected`, commit only the NUC rejection documentation and directly
 related index/status metadata, using explicit paths and a path-limited commit.
 Verify the committed file list; never apply or commit the rejected candidate's

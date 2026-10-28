@@ -146,9 +146,9 @@ included.
 
 ## ARC proposal agent
 
-Use [arc-purposal](../.github/agents/arc-purposal.agent.md) and its
-[skill](../.github/skills/arc-purposal/SKILL.md) to propose and prototype focused
-solver improvements. The [ARC instructions](../.github/instructions/arc.instructions.md)
+Use [arc-purposal](../.claude/agents/arc-purposal.agent.md) and its
+[skill](../.claude/skills/arc-purposal/SKILL.md) to propose and prototype focused
+solver improvements. The [ARC instructions](../.claude/rules/arc.instructions.md)
 require an object-oriented Nucleoid world model, training-only rule inference,
 and exact-grid evaluation without test-answer leakage.
 

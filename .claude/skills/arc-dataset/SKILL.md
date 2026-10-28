@@ -6,4 +6,6 @@ context: fork
 agent: arc-dataset
 ---
 
-Write the ARC instruction dataset for puzzle $ARGUMENTS.
+Write the ARC instruction dataset for puzzle $ARGUMENTS. Follow the
+[arc-dataset agent profile](../../agents/arc-dataset.agent.md); if it is not
+already your system prompt, delegate this request to the `arc-dataset` agent.

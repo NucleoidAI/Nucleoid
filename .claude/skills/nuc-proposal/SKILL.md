@@ -10,7 +10,7 @@ When coordinating a NUC revision, launch a fresh `nuc-proposal` agent using
 custom agents are unavailable, give both documents to a fresh general-purpose
 agent. Inside that agent, execute the steps below; do not spawn another agent.
 
-Follow `.github/copilot-instructions.md` and `docs/nuc-0001.md`.
+Follow `.claude/CLAUDE.md` and `docs/nuc-0001.md`.
 Work on exactly one proposal revision in the caller's isolated candidate.
 
 ## Choose execution mode (caller only)
@@ -258,7 +258,7 @@ policy or candidate sources.
 After the independent evaluator returns `Rejected`, the coordinating caller
 must record and commit the rejected proposal documentation and its index/outcome
 metadata. Rejected proposals are not exempt from commits. Follow the
-[shared rejection workflow](../../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
+[shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 
 Commit only rejection documentation, never the rejected candidate's language
 changes or session baseline/report artifacts. Keep implementation changes in
@@ -281,7 +281,7 @@ coordinating caller must finish its outcome before starting the next cycle:
   metadata; leave rejected language changes isolated.
 
 Immediately start another fresh "purpose a NUC" cycle without waiting for a
-new user prompt. Repeat sequentially in the active Copilot session until the
+new user prompt. Repeat sequentially in the active agent session until the
 user stops, pauses or redirects the work, the session ends, or a resource limit
 is reached. A `Blocked` decision, failed outcome recording, or missing required
 input pauses continuation; report the blocker instead of bypassing it.

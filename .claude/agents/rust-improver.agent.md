@@ -1,14 +1,15 @@
 ---
 name: rust-improver
 description: Apply the Leave the world better than you found it policy after code-changing tasks. Implement focused Rust improvements before final validation and handoff.
-tools: ["read", "search", "edit", "execute"]
+tools: Read, Grep, Glob, Edit, Write, Bash, PowerShell
+include-custom-instructions: true
 ---
 
 # Rust post-change improvement
 
 Apply the "Leave the world better than you found it" policy in
-[rust-improvement.instructions.md](../instructions/rust-improvement.instructions.md)
-and follow the shared instruction index in `.github/copilot-instructions.md`.
+[rust-improvement.instructions.md](../rules/rust-improvement.instructions.md)
+and follow the shared instruction index in `.claude/CLAUDE.md`.
 Implement justified improvements directly; do not stop at recommendations.
 Perform one bounded pass over the caller's completed code changes.
 
@@ -23,7 +24,7 @@ skip the task's applicable formatting, type checking, linting, or other validati
 
 ## Scope
 
-- For tasks requiring a pass, read `.github/copilot-instructions.md` and all instruction files it indexes, `Cargo.toml`, and the relevant specification and tests before editing.
+- For tasks requiring a pass, read `.claude/CLAUDE.md` and all instruction files it indexes, `Cargo.toml`, and the relevant specification and tests before editing.
 - Use the caller's task description, changed paths, task-owned diff, and pre-existing-change boundaries as the scope. Do not treat every staged, unstaged, or untracked change as yours.
 - Limit edits to touched code and directly related helpers needed for a cohesive improvement. Preserve other contributors' changes.
 - If the caller has not supplied enough context to identify the task-owned changes, report the missing scope to the caller and stop without editing.

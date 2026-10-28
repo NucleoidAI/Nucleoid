@@ -27,9 +27,11 @@ $ cargo run                   # or type statements at a prompt
 | `docs/README.md` | prose reference; `tests/reference.md` is its executable form |
 | `src/` | the runtime |
 | `tests/` | executable specification, documentation, dataset, and runtime checks |
+| `.claude/` | agent instruction index (`CLAUDE.md`), instruction files (`rules/`), custom agents (`agents/`), and skills (`skills/`) shared by Claude Code and GitHub Copilot |
+| `.github/copilot-instructions.md` | imports `.claude/CLAUDE.md` for GitHub Copilot |
 
 The ARC project does not keep automated tests, including ARC-related cases in
-shared Rust suites. Follow the [ARC testing policy](.github/instructions/arc.instructions.md#no-automated-arc-tests):
+shared Rust suites. Follow the [ARC testing policy](.claude/rules/arc.instructions.md#no-automated-arc-tests):
 use type checking, linting, builds, and manual/offline evaluation instead.
 Preserve non-ARC tests, puzzle datasets, and instruction examples.
 
@@ -96,7 +98,7 @@ Markdown datasets or dataset cards somewhere else.
 ### Evaluating a language proposal
 
 Every added or updated `docs/nuc-XXXX.md` is a proposal revision, including
-process and documentation-only NUCs. During a Copilot session, the repository
+process and documentation-only NUCs. During an agent session, the repository
 instructions require a fresh `nuc-proposal` agent followed by an independent
 fresh `nuc-evaluate` agent per revision. The proposer drafts and prototypes in
 an isolated candidate, preserving behavior, case identities, canonical
@@ -105,9 +107,9 @@ the proposal's Git blob revision without deciding acceptance. The evaluator
 checks the frozen candidate without rewriting it, measuring tokens only when
 the execution-mode policy requires comparison.
 
-The procedures live in the [proposal skill](.github/skills/nuc-proposal/SKILL.md)
-and [evaluation skill](.github/skills/nuc-evaluate/SKILL.md), with separate
-profiles in `.github/agents/`. The caller starts both stages; neither agent
+The procedures live in the [proposal skill](.claude/skills/nuc-proposal/SKILL.md)
+and [evaluation skill](.claude/skills/nuc-evaluate/SKILL.md), with separate
+profiles in `.claude/agents/`. The caller starts both stages; neither agent
 delegates to the other. See [NUC 1](docs/nuc-0001.md#proposal-evaluation).
 
 Every NUC has one `Category` header from the extensible
@@ -192,7 +194,7 @@ for the other runtime branches. Unset inapplicable variables rather than
 leaving stale skip inputs.
 
 Baseline and report files are created once and never overwritten. Use fresh
-paths for later revisions; keep actual evaluation artifacts in the Copilot
+paths for later revisions; keep actual evaluation artifacts in the agent
 session workspace. A nonzero exit means rejected or blocked, not accepted.
 The report records the proposal's Git blob revision, actual mode/category/runtime
 applicability and rationale, behavior checks, and `token_check.status`.
@@ -241,7 +243,7 @@ acceptance, the caller integrates the unchanged candidate. Leave rejected
 candidates out of the accepted runtime;
 do not discard someone else's edits. Outcome status/index updates are part of
 the evaluation, not triggers for recursively creating more agents. These
-instructions apply to Copilot sessions; there is no background file watcher
+instructions apply to agent sessions; there is no background file watcher
 or GitHub Actions proposal trigger.
 
 #### Advisory usefulness/cost scoring

@@ -1,10 +1,11 @@
 ---
 name: nuc-evaluate
 description: Independently evaluate one completed NUC candidate using mandatory behavior/integrity checks and the applicable lexer-token acceptance policy.
+include-custom-instructions: true
 ---
 
 You independently evaluate exactly one completed NUC revision. Follow
-`.github/copilot-instructions.md`, `docs/nuc-0001.md`, and the
+`.claude/CLAUDE.md`, `docs/nuc-0001.md`, and the
 [nuc-evaluate skill](../skills/nuc-evaluate/SKILL.md).
 
 ## Scope

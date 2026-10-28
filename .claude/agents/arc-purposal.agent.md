@@ -1,14 +1,15 @@
 ---
 name: arc-purposal
 description: Propose and prototype ARC solver improvements using an object-oriented Nucleoid world model and JSON-only LLM input and output.
+include-custom-instructions: true
 ---
 
 You propose and prototype one bounded improvement to the `arc/` project.
 Use an object-oriented world model to infer reusable transformations from
 training examples and solve unseen test inputs, rather than hard-coding answers.
 
-Follow `.github/copilot-instructions.md`, the
-[ARC instructions](../instructions/arc.instructions.md), and the
+Follow `.claude/CLAUDE.md`, the
+[ARC instructions](../rules/arc.instructions.md), and the
 [arc-purposal skill](../skills/arc-purposal/SKILL.md).
 
 ## Mandatory LLM contract

@@ -6,8 +6,8 @@ applyTo: "**"
 
 Every added or updated `docs/nuc-XXXX.md` requires a fresh `nuc-proposal`
 agent followed by a separate fresh `nuc-evaluate` agent for that revision,
-including process-only changes. Follow their profiles in `.github/agents/`,
-their respective `SKILL.md` files in `.github/skills/`, and the process in
+including process-only changes. Follow their profiles in `.claude/agents/`,
+their respective `SKILL.md` files in `.claude/skills/`, and the process in
 `docs/nuc-0001.md`.
 
 The proposal agent drafts and prototypes; it cannot decide acceptance. The
@@ -172,7 +172,7 @@ Follow the process in `docs/nuc-0001.md`.
 `nucleoid.spec.md` remains authoritative for accepted runtime behavior.
 
 Every added or updated `docs/nuc-XXXX.md` is a proposal revision. Before
-finishing a Copilot task that changes a NUC, launch a fresh `nuc-proposal`
+finishing an agent task that changes a NUC, launch a fresh `nuc-proposal`
 agent and then an independent fresh `nuc-evaluate` agent for each changed
 proposal. Do not reuse either agent for another role, proposal, or later
 revision. This applies to process and documentation-only NUCs too; they still
@@ -184,8 +184,8 @@ proposal path and confirmed category, execution mode and runtime applicability
 with supporting rationale, baseline revision and immutable JSON artifact,
 and candidate worktree. When configured, also supply the pre-draft strategy
 receipt and policy paths/raw pins, trial identity and actionable approach.
-Use `.github/agents/nuc-proposal.agent.md` and
-`.github/skills/nuc-proposal/SKILL.md` for drafting, prototyping, equivalent
+Use `.claude/agents/nuc-proposal.agent.md` and
+`.claude/skills/nuc-proposal/SKILL.md` for drafting, prototyping, equivalent
 case rewrites, synchronization, and development checks. It must not run the
 acceptance gate or mark the proposal Accepted or Rejected.
 
@@ -193,8 +193,8 @@ Complete the caller-owned Rust improvement pass, when required, before the
 final frozen handoff. After the proposer returns the proposal's Git blob
 revision and completed handoff, freeze the candidate and launch the evaluator with that handoff,
 baseline, worktree, and a fresh report path. Use
-`.github/agents/nuc-evaluate.agent.md` and
-`.github/skills/nuc-evaluate/SKILL.md`. The evaluator independently runs
+`.claude/agents/nuc-evaluate.agent.md` and
+`.claude/skills/nuc-evaluate/SKILL.md`. The evaluator independently runs
 checks and `evaluate_proposal`, whose token portion follows the mode/category
 policy; it cannot repair sources, regenerate exports,
 or change the baseline. Only it returns the acceptance decision.
@@ -273,5 +273,6 @@ prerequisites or blockers, report them and pause without asking a question.
 Never invent baselines, bypass checks or required tool approvals, or ignore
 a user stop.
 
-This is a Copilot-session policy, not a filesystem watcher or GitHub Actions
-trigger. Do not claim that an edit outside a Copilot session launched an agent.
+This is an agent-session policy for Claude Code and Copilot, not a filesystem
+watcher or GitHub Actions trigger. Do not claim that an edit outside an agent
+session launched an agent.

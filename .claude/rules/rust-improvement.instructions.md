@@ -21,7 +21,7 @@ Mixed-scope tasks follow the normal requirements. This exception skips only
 the improvement agent, not applicable formatting, type checking, linting, or
 other validation.
 
-Use the Copilot CLI profile at `.github/agents/rust-improver.agent.md`.
+Use the `rust-improver` profile at `.claude/agents/rust-improver.agent.md`, which Claude Code and Copilot both load as a custom agent.
 
 Provide the requested behavior, changed paths, task-owned diff, boundaries of pre-existing changes, and validation already performed. The agent must apply justified Rust improvements directly, not merely suggest them. Await its completion, inspect its changes, and ensure final validation covers the resulting code before handing the task back.
 

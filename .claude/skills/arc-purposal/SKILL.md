@@ -6,8 +6,8 @@ description: Propose and prototype improvements to the ARC project through an ob
 # Preparing an ARC solver proposal
 
 Use this skill for ARC solver proposals, object-oriented world modeling, and
-JSON-only ARC prompt changes. Follow `.github/copilot-instructions.md`, the
-[ARC instructions](../../instructions/arc.instructions.md), and the
+JSON-only ARC prompt changes. Follow `.claude/CLAUDE.md`, the
+[ARC instructions](../../rules/arc.instructions.md), and the
 [agent profile](../../agents/arc-purposal.agent.md).
 
 When delegated as `arc-purposal`, perform the work below directly. Do not spawn

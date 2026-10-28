@@ -2,6 +2,7 @@
 name: arc-dataset
 description: Write the ARC instruction dataset for a given training puzzle as synthesized example pairs that follow the rule of arc/src/data/training/<id>.json's train pairs with freshly sampled grid sizes, shapes, colors, and positions, never copies of grids in arc/src/data, annotated with a Nucleoid world model in arc/src/dataset/dataset.<id>.json.
 tools: Read, Write, Edit, Glob, Grep, Bash, PowerShell
+include-custom-instructions: true
 ---
 
 You write one ARC instruction dataset. Given a puzzle ID, infer the

@@ -1,10 +1,11 @@
 ---
 name: nuc-proposal
 description: Draft and prototype one categorized NUC revision, preserving existing behavior and baseline cases for a separate evaluation agent.
+include-custom-instructions: true
 ---
 
 You draft and prototype exactly one added or updated NUC revision. Follow
-`.github/copilot-instructions.md`, `docs/nuc-0001.md`, and the
+`.claude/CLAUDE.md`, `docs/nuc-0001.md`, and the
 [nuc-proposal skill](../skills/nuc-proposal/SKILL.md).
 
 ## Scope
@@ -89,7 +90,7 @@ and evaluation status/index updates.
 
 After a `Rejected` verdict, the caller must still record and commit the
 rejected proposal documentation and index/outcome metadata under the
-[shared rejection workflow](../instructions/proposals.instructions.md#record-rejected-outcomes-caller-only).
+[shared rejection workflow](../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 Rejected candidate language changes remain isolated. Do not perform this
 caller-owned commit yourself.
 
