@@ -99,8 +99,6 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
     test_input_matrix,
   });
 
-  let test_index: number = 0;
-
   let result_matrix = Array.from({ length: test_input_matrix.length }, () =>
     Array(test_input_matrix[0].length).fill(0)
   );
@@ -111,7 +109,7 @@ export async function start(puzzle_id: string = "0ca9ddb6") {
     const { input_value, output_value } = await visualizer.value({
       declarations,
       train_dataset,
-      instance_name: `obj${String(test_index++).padStart(12, "0")}`,
+      instance_name: `obj${String(instance_index++).padStart(12, "0")}`,
       input_instances,
       input_instance_matrix,
     });
