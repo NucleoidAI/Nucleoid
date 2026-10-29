@@ -15,7 +15,7 @@ not a replacement for the policies it links to.
 | [rust.instructions.md](rules/rust.instructions.md) | Concrete runtime types, dependencies, and Rust community conventions |
 | [documents.instructions.md](rules/documents.instructions.md) | Authoritative specification, executable documents, and dataset synchronization |
 | [versions.instructions.md](rules/versions.instructions.md) | Human-owned version numbers; no AI version changes |
-| [proposals.instructions.md](rules/proposals.instructions.md) | Independent NUC proposal preparation, evaluation, token acceptance, and ARC- and user-requested acceptance |
+| [proposals.instructions.md](rules/proposals.instructions.md) | Independent NUC proposal preparation, evaluation, token acceptance, ARC- and user-requested acceptance, and `NUC <number> <Title>` outcome commit messages |
 | [rust-improvement.instructions.md](rules/rust-improvement.instructions.md) | Focused Rust improvements and the required post-change agent |
 
 All instruction files use `applyTo: "**"` to preserve their repository-wide scope.

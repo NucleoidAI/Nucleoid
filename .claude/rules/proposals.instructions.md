@@ -234,6 +234,17 @@ runtime, reference, synthesized sources, and rendered exports synchronized.
 Outcome metadata, such as updating a status or index after evaluation, belongs
 to that evaluation and must not recursively launch another agent.
 
+## Outcome commit messages (caller only)
+
+- Every commit that records a NUC outcome, accepted or rejected, has the
+  subject line `NUC <number> <Title>`, using the proposal's `Title` header
+  verbatim, for example `NUC 57 Thin Arrows and Python-Style Lambdas`.
+- This applies to single and continuous `/nuc-proposal` outcomes, including
+  cycles coordinated through `/nuc-evaluate` and NUCs that `/arc-purposal`
+  requests.
+- State the outcome in the body: `Accepted` or `Rejected`, its basis, and for
+  a rejection the reason that the rejection rules below require.
+
 ## Record rejected outcomes (caller only)
 
 - After the independent evaluator's overall `Rejected` decision, unless an exact ARC match accepts an [ARC-requested proposal](#arc-requested-proposals-caller-only) or passing tests accept a [user-requested proposal](#user-requested-proposals-caller-only), the coordinating caller must record and commit the rejected proposal documentation and its index/outcome metadata.

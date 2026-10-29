@@ -263,6 +263,14 @@ are explicitly unattributed; do not retrofit old reports. Only new external
 session checkpoints may be written after independent evaluation, never old
 policy or candidate sources.
 
+## Name outcome commits (caller only)
+
+Give every commit that records a NUC outcome, accepted or rejected, the
+subject line `NUC <number> <Title>`, using the proposal's `Title` header
+verbatim, as in `NUC 57 Thin Arrows and Python-Style Lambdas`. State the
+outcome and its basis in the body. Follow the
+[outcome commit message rule](../../rules/proposals.instructions.md#outcome-commit-messages-caller-only).
+
 ## Record rejected outcomes (caller only)
 
 After the independent evaluator returns `Rejected`, unless an exact ARC match
