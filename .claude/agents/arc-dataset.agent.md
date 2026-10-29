@@ -77,21 +77,27 @@ formatting exactly:
 
 ## Model the world
 
-- `declarations[0]` is the class `Obj(x: int, y: int, orientation: int, ...)`.
-  Its body assigns every parameter to `this` and sets an initial
-  `this.tag = 'lNNNN'`. Add only the descriptive properties the
-  transformation needs, such as categorical colors.
-- The remaining declarations are declarative `$Obj` rules, using `if` for
-  conditions and `$Obj.x@first` for a property's value before the rules ran.
-  One rule set must explain the training pairs and every new pair: no per-pair
-  or per-instance cases, puzzle IDs, or hard-coded grids. Properties created by rules stay
-  absent from input states rather than receiving artificial defaults.
+- `declarations[0]` holds every class declaration of the world model, because
+  the solver runs it alone to build input states. Existing datasets declare
+  one class, `Obj(x: int, y: int, orientation: int, ...)`; add another class
+  only for a distinct kind of object the transformation needs. Each class
+  whose instances are annotated objects takes `x: int, y: int,
+  orientation: int` first, and its body assigns every parameter to `this` and
+  sets an initial `this.tag = 'lNNNN'`. Add only the descriptive properties
+  the transformation needs, such as categorical colors.
+- The remaining declarations are declarative class-level rules, written with
+  the class reference `$Class` (for example `$Obj`), using `if` for
+  conditions and `$Class.x@first` for a property's value before the rules
+  ran. One rule set must explain the training pairs and every new pair: no
+  per-pair or per-instance cases, puzzle IDs, or hard-coded grids. Properties
+  created by rules stay absent from input states rather than receiving
+  artificial defaults.
 - Always prefer declarative, higher-order logic. State each relationship once
-  over every `Obj`, derive properties from other rules or from relations
-  between objects, and use higher-order operations such as `Obj.filter`,
-  `map`, `reduce`, `some`, `every`, `find`, and reasoning selections where
-  they express the rule. Avoid `for` loops, imperative steps, and manual
-  bookkeeping.
+  over every instance of a class, derive properties from other rules or from
+  relations between objects, and use higher-order operations on class
+  populations, such as `Obj.filter`, `map`, `reduce`, `some`, `every`,
+  `find`, and reasoning selections, where they express the rule. Avoid `for`
+  loops, imperative steps, and manual bookkeeping.
 - A tag is `l` followed by four digits and names a geometry. Reuse the tag an
   existing dataset uses for the same geometry; otherwise mint one unused
   elsewhere.
@@ -156,9 +162,9 @@ the feature; you never start a NUC.
 - `instance_name` is `obj` plus 12 random lowercase hexadecimal characters,
   unique across all datasets
   (`node -e "console.log(require('crypto').randomBytes(6).toString('hex'))"`).
-- `implementation` is `<instance_name> = Obj(x=<input_x>, y=<input_y>,
-  orientation=<input_orientation>, ...)`, with named arguments matching the
-  class parameters.
+- `implementation` is `<instance_name> = <Class>(x=<input_x>, y=<input_y>,
+  orientation=<input_orientation>, ...)`, constructing the instance's class
+  (`Obj` in existing datasets) with named arguments matching its parameters.
 - Never hand-write `input_value` or `output_value`. As `arc/src/analyzer.ts`
   does, run the Nucleoid executable (`NUCLEOID_EXECUTABLE`, else the debug
   build in `target/debug/`; build it with `cargo build` if missing) as
