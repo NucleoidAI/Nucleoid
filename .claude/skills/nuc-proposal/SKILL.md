@@ -266,6 +266,16 @@ commit the rejected proposal documentation and its index/outcome metadata.
 Rejected proposals are not exempt from commits. Follow the
 [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 
+Always include the rejection reason wherever the rejection is recorded: one
+short statement of the evaluator's decisive finding, such as the failed check
+with its minimal reproducing program, or each increased case with its
+before/after token counts. For a new proposal, state it in the Abstract's
+rejection bullet, in both NUC index entries as `Rejected: <reason>`, and in the
+rejection commit message; keep the full evidence in the proposal's evaluation
+outcome. For a rejected revision of an accepted or active NUC, keep its status
+and index entries, and give the reason in its outcome metadata and the commit
+message. Report the same reason to the user.
+
 Commit only rejection documentation, never the rejected candidate's language
 changes or session baseline/report artifacts. Keep implementation changes in
 the isolated candidate; stage explicit proposal/index paths, use a path-limited
