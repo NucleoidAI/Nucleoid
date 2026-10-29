@@ -176,6 +176,12 @@ the caller may still accept the candidate on an exact ARC match, whatever you
 decide. Decide from your own checks as usual; do not request, read, or weigh
 ARC results.
 
+For a [user-requested proposal](../../rules/proposals.instructions.md#user-requested-proposals-caller-only),
+also run the full `cargo test` suite and report whether the candidate compiles
+and which existing and new tests pass or fail, including any existing test the
+candidate removed or weakened. The caller may accept the candidate on that
+evidence, whatever you decide. Decide from your own checks as usual.
+
 Never offset a required-gate increase with savings elsewhere or decide from an
 aggregate. Invalid/corrupt baseline artifacts and bad policy inputs are errors,
 never successful skips; no behavior or compatibility failure may be suppressed.

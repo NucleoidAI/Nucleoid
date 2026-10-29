@@ -32,6 +32,11 @@ waits for the puzzle's solver run; an exact match accepts it regardless of the
 evaluator's decision. Follow the
 [ARC-requested proposal rule](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only).
 
+A NUC the user requests directly is accepted when its frozen candidate compiles
+and passes every existing and new test, whatever the evaluator decides;
+otherwise the evaluator's decision stands. Follow the
+[user-requested proposal rule](../../rules/proposals.instructions.md#user-requested-proposals-caller-only).
+
 The **token non-regression gate** requires each compared case to use the same
 or fewer lexer tokens than its accepted baseline. Single-proposal
 requests always skip token comparison. All modes retain valid immutable
@@ -261,8 +266,9 @@ policy or candidate sources.
 ## Record rejected outcomes (caller only)
 
 After the independent evaluator returns `Rejected`, unless an exact ARC match
-accepts an ARC-requested proposal, the coordinating caller must record and
-commit the rejected proposal documentation and its index/outcome metadata.
+accepts an ARC-requested proposal or passing tests accept a user-requested
+one, the coordinating caller must record and commit the rejected proposal
+documentation and its index/outcome metadata.
 Rejected proposals are not exempt from commits. Follow the
 [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 

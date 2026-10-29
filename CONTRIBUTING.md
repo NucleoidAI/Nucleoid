@@ -109,6 +109,9 @@ the execution-mode policy requires comparison. A NUC that `/arc-purposal`
 requests for an ARC puzzle is also accepted when the puzzle's solver run is an
 exact match; see the
 [ARC-requested proposal rule](.claude/rules/proposals.instructions.md#arc-requested-proposals-caller-only).
+A NUC the user requests directly is also accepted when its frozen candidate
+compiles and passes every existing and new test; see the
+[user-requested proposal rule](.claude/rules/proposals.instructions.md#user-requested-proposals-caller-only).
 
 The procedures live in the [proposal skill](.claude/skills/nuc-proposal/SKILL.md)
 and [evaluation skill](.claude/skills/nuc-evaluate/SKILL.md), with separate

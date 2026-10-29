@@ -199,7 +199,8 @@ checks and `evaluate_proposal`, whose token portion follows the mode/category
 policy; it cannot repair sources, regenerate exports,
 or change the baseline. Only it returns the acceptance decision; an exact ARC
 match can also accept an
-[ARC-requested proposal](#arc-requested-proposals-caller-only).
+[ARC-requested proposal](#arc-requested-proposals-caller-only), and passing
+tests a [user-requested proposal](#user-requested-proposals-caller-only).
 
 If named custom agents are unavailable, give the corresponding profile,
 skill, and inputs to separate fresh general-purpose agents. Neither role
@@ -235,7 +236,7 @@ to that evaluation and must not recursively launch another agent.
 
 ## Record rejected outcomes (caller only)
 
-- After the independent evaluator's overall `Rejected` decision, unless an exact ARC match accepts an [ARC-requested proposal](#arc-requested-proposals-caller-only), the coordinating caller must record and commit the rejected proposal documentation and its index/outcome metadata.
+- After the independent evaluator's overall `Rejected` decision, unless an exact ARC match accepts an [ARC-requested proposal](#arc-requested-proposals-caller-only) or passing tests accept a [user-requested proposal](#user-requested-proposals-caller-only), the coordinating caller must record and commit the rejected proposal documentation and its index/outcome metadata.
 - For a new proposal, record `Status: Rejected`, the rejection reason, actual token-check ran/skipped status (per-case before/after counts only when run), and update its NUC index entries.
 - For a rejected revision of an already accepted or active NUC, preserve its accepted text and status; record only the rejected revision's outcome metadata rather than replacing it with the candidate.
 - Commit only rejection documentation and directly related index/status metadata. Never apply or commit rejected runtime, executable-document, reference, synthesized-data or generated-export changes. Baseline and report artifacts stay in the session workspace.
@@ -267,6 +268,36 @@ Record the basis, the evaluator's decision and report, and the run's evidence
 with the outcome, and never hide the evaluator's failures. The run is scored
 once: never rerun it, or revise the dataset or candidate from its output, to
 reach a pass.
+
+## User-requested proposals (caller only)
+
+A NUC the user introduces manually, by requesting that specific NUC by number
+or path, one concrete feature, or a particular revision, is a single-proposal
+request. Prepare and evaluate it as usual: fresh proposal and evaluation
+agents, a pinned baseline, an isolated candidate, the Rust improvement pass
+when required, and no token comparison. The evaluator also runs the full
+`cargo test` suite against the frozen candidate. Then decide:
+
+- The candidate compiles without error, and every existing test and every new
+  test passes: Accepted, regardless of the evaluator's decision.
+- A compile error, a failing or unrun test, or no evaluation result: the
+  regular flow applies, so the evaluator's overall decision stands and only
+  its `Accepted` accepts the NUC.
+
+Existing tests are the accepted baseline's suites and executable cases,
+including the core gate's replay of pinned accepted sources. They have not
+passed when the core gate reports a protected-case issue or the evaluator
+finds an existing test removed or weakened. New tests are the cases and
+suites the candidate adds.
+
+This exception covers only NUCs the user requested directly, not those that
+continuous cycles select or `/arc-purposal` requests. For such a NUC it
+overrides the evaluator-only acceptance in NUC 1; every other NUC keeps the
+ordinary rule. Integrate the frozen candidate unchanged. Record the basis, the
+evaluator's decision, findings and report, and the test results with the
+outcome, and never hide the evaluator's failures. Never repair a failing
+candidate in place to reach a pass; a revision needs a fresh
+proposal/evaluation pair.
 
 ## Continuous proposal cycles (caller only)
 
