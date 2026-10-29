@@ -187,7 +187,7 @@ fn incomplete_or_unsupported_lists_preserve_parenthesized_parser_errors_and_posi
         "left, right,:\n    return left",
         "left, right: return left",
         "left, right: { return left }",
-        "left, right -> int => left",
+        "left, right - > int => left",
         "left, right\n=> left",
         "left,\nright => left",
         "left\n, right => left",

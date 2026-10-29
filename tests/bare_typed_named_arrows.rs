@@ -225,7 +225,7 @@ fn every_unsupported_typed_prefix_keeps_the_parameter_boundary_position() {
         "def f amount: int, other, => amount",
         "def f amount: int, other: str, => amount",
         "def f amount: int = 1 => amount",
-        "def f amount: int -> int => amount",
+        "def f amount: int - > int => amount",
         "def f amount: Int.Name => amount",
         "def f amount: List[int] => amount",
         "def f amount: List<int> => amount",
@@ -349,7 +349,7 @@ fn the_shared_parameter_parser_preserves_legacy_forms_and_exact_diagnostics() {
             "Expected a parameter but found number 1",
             8,
         ),
-        ("def f() -> int => 1", "Expected ':' but found '-'", 9),
+        ("def f() - > int => 1", "Expected ':' but found '-'", 9),
         ("class Gauge(amount:)", "Expected a type but found ')'", 21),
     ] {
         let error = Runtime::check(source).unwrap_err();

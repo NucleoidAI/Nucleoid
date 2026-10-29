@@ -1866,4 +1866,19 @@ power = 0
 assert(ratio, 1)
 ratio
 # return: 1
+---
+# Nucleoid accepts thin arrows and lambdas as arrow spellings
+
+factor = 2
+items = [1, 2, 3]
+fat = items.map(item => item * factor)
+thin = items.map(item -> item * factor)
+python = items.map(lambda item: item * factor)
+assert(thin, fat)
+assert(python, fat)
+factor = 10
+assert(thin, [10, 20, 30])
+assert(python, [10, 20, 30])
+python
+# return: [10,20,30]
 ```

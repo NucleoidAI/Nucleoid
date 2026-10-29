@@ -161,7 +161,7 @@ fn incomplete_typed_inline_braced_and_separated_headers_keep_exact_errors() {
         "left, $Right:\n    return left",
         "left, 1:\n    return left",
         "left, \"right\":\n    return left",
-        "left, right -> int:\n    return left",
+        "left, right - > int:\n    return left",
         "left, right\n:\n    return left",
         "left,\nright:\n    return left",
         "left\n, right:\n    return left",

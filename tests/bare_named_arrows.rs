@@ -239,7 +239,7 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
             7,
         ),
         (
-            "def f amount -> int => amount",
+            "def f amount - > int => amount",
             "Expected '(' but found identifier 'amount'",
             1,
             7,
@@ -337,7 +337,7 @@ fn unguarded_headers_keep_exact_accepted_parameter_errors_and_positions() {
             1,
             8,
         ),
-        ("def f() -> int => 1", "Expected ':' but found '-'", 1, 9),
+        ("def f() - > int => 1", "Expected ':' but found '-'", 1, 9),
     ] {
         let error = Runtime::check(source).unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Syntax, "{source}");

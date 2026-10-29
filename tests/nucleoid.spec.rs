@@ -11074,6 +11074,140 @@ fn preserves_ignored_exponential_reads_and_missing_extras() {
     assert_eq!(run("withMissing"), 0.5);
 }
 
+/// Nucleoid accepts thin arrows wherever fat arrows are accepted
+#[rustfmt::skip]
+#[test]
+fn accepts_thin_arrows_wherever_fat_arrows_are_accepted() {
+    let mut run = runner();
+    run("offset = 1");
+    run("items = [1, 2, 3]");
+    run("doubled = items.map(item -> item * 2)");
+    run("large = items.filter((item: int) -> item > offset)");
+    run("found = items.find(item -> { return item == 2 })");
+    run("def shift(value) -> value + offset");
+    run("def double amount -> amount * 2");
+    run("def increment amount: int -> amount + 1");
+    run("def area width, height -> width * height");
+    run("def mixed left: int, right -> left - right");
+    run("def scaled left right factor -> (left + right) * factor");
+    run(r#"def tripled value ->
+    value * 3"#);
+    assert_eq!(run("doubled"), serde_json::json!([2, 4, 6]));
+    assert_eq!(run("large"), serde_json::json!([2, 3]));
+    assert_eq!(run("found"), 2);
+    assert_eq!(run("shift(2)"), 3);
+    assert_eq!(run("double(4)"), 8);
+    assert_eq!(run("increment(4)"), 5);
+    assert_eq!(run("area(3, 4)"), 12);
+    assert_eq!(run("mixed(5, 2)"), 3);
+    assert_eq!(run("scaled(1, 2, 3)"), 9);
+    assert_eq!(run("tripled(2)"), 6);
+    run("offset = 2");
+    assert_eq!(run("large"), serde_json::json!([3]));
+    assert_eq!(run("shift(2)"), 4);
+}
+
+/// Nucleoid keeps thin arrow methods and class queries reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_thin_arrow_methods_and_class_queries_reactive() {
+    let mut run = runner();
+    run(r#"class Gauge:
+    def init amount -> this.amount = amount
+    def reading() -> self.amount
+    def scaled factor -> self.amount * factor"#);
+    run("gauge = Gauge(4)");
+    assert_eq!(run("gauge.reading()"), 4);
+    assert_eq!(run("gauge.scaled(3)"), 12);
+    run(r#"class Reading(level: int):
+    this.level = level"#);
+    run("Reading(4); Reading(9); Reading(15)");
+    run("threshold = 5");
+    run("high = Reading.filter(reading -> reading.level > threshold)");
+    assert_eq!(run("high.length"), 2);
+    run("threshold = 10");
+    assert_eq!(run("high.length"), 1);
+    run("Reading(20)");
+    assert_eq!(run("high.length"), 2);
+}
+
+/// Nucleoid defines Python style lambdas
+#[rustfmt::skip]
+#[test]
+fn defines_python_style_lambdas() {
+    let mut run = runner();
+    run("scale = 3");
+    run("items = [1, 2, 3]");
+    run("tripled = items.map(lambda item: item * scale)");
+    run("total = items.reduce(lambda sum, item: sum + item, 0)");
+    run("zero = lambda: 0");
+    run("add = lambda left, right: left + right");
+    run("pair = lambda left, right: {left: left, right: right}");
+    assert_eq!(run("tripled"), serde_json::json!([3, 6, 9]));
+    assert_eq!(run("total"), 6);
+    assert_eq!(run("zero()"), 0);
+    assert_eq!(run("add(2, 3)"), 5);
+    assert_eq!(run("pair(1, 2).right"), 2);
+    assert_eq!(run("(lambda value: value * 2)(4)"), 8);
+    run("scale = 2");
+    assert_eq!(run("tripled"), serde_json::json!([2, 4, 6]));
+    run("items.push(4)");
+    assert_eq!(run("tripled"), serde_json::json!([2, 4, 6, 8]));
+    assert_eq!(run("total"), 10);
+}
+
+/// Nucleoid keeps lambda an ordinary name where accepted syntax owns the colon
+#[rustfmt::skip]
+#[test]
+fn keeps_lambda_an_ordinary_name_where_accepted_syntax_owns_the_colon() {
+    let mut run = runner();
+    run("lambda = 1");
+    run("values = [10, 20, 30]");
+    assert_eq!(run("values[lambda:]"), serde_json::json!([20, 30]));
+    run("record = { first: lambda next: 2 }");
+    assert_eq!(run("record.first"), 1);
+    assert_eq!(run("record.next"), 2);
+    run("keyed = { lambda: 5 }");
+    assert_eq!(run("keyed.lambda"), 5);
+    run("short = { lambda }");
+    assert_eq!(run("short.lambda"), 1);
+    run(r#"if lambda:
+    state = "on""#);
+    assert_eq!(run("state"), "on");
+    run("alias = lambda assert: alias, 1");
+    run("double = lambda -> lambda * 2");
+    assert_eq!(run("double(4)"), 8);
+    run("lambda = 2");
+    assert_eq!(run("values[lambda:]"), serde_json::json!([30]));
+    assert_eq!(run("record.first"), 2);
+    assert_eq!(run("alias"), 2);
+}
+
+/// Nucleoid rolls back failed lambda and thin arrow updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_lambda_and_thin_arrow_updates() {
+    let mut run = runner();
+    run(r#"rate = 2
+items = [1, 2]
+scaled = items.map(lambda item: item * rate)
+def fee amount -> amount * rate
+charge = fee(10)
+failure = ""
+try:
+    rate = 3
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(rate, 2)
+assert(scaled, [2, 4])
+assert(charge, 20)
+rate = 5
+assert(scaled, [5, 10])
+assert(charge, 50)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

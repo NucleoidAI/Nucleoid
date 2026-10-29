@@ -349,8 +349,9 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
 }
 
 /// Buffer a lexical named-arrow header, not anonymous arrows or arrow text in
-/// literals/comments. The parser still owns parameter validation and the real
-/// indentation requirement when the input is committed.
+/// literals/comments. Either spelling, `=>` or `->`, ends the header. The
+/// parser still owns parameter validation and the real indentation
+/// requirement when the input is committed.
 fn indented_named_arrow_header(line: &str) -> bool {
     let Ok(tokens) = tokenize(line) else {
         return false;
@@ -358,8 +359,8 @@ fn indented_named_arrow_header(line: &str) -> bool {
     let mut tokens = header_tokens(&tokens);
     matches!(tokens.next(), Some(Token::Keyword(Keyword::Def)))
         && matches!(tokens.next(), Some(Token::Identifier(_)))
-        && matches!(tokens.next_back(), Some(Token::Arrow))
-        && !tokens.any(|token| matches!(token, Token::Arrow))
+        && tokens.next_back().is_some_and(Token::is_arrow)
+        && !tokens.any(Token::is_arrow)
 }
 
 /// A bare try starts the existing buffer; catch stays in that same submission.
@@ -744,6 +745,44 @@ mod tests {
             "# def f value =>",
             "1 # =>",
             "def f value => @",
+        ] {
+            assert!(!indented_named_arrow_header(line), "{line}");
+        }
+    }
+
+    #[test]
+    fn thin_named_arrow_headers_buffer_exactly_like_fat_ones() {
+        for line in [
+            "def f() ->",
+            "def f(value: int,) -> # body",
+            "    def f value ->",
+            "\tdef f left: int, right, factor: number -> # ->",
+            "def f left right ->",
+        ] {
+            assert!(indented_named_arrow_header(line), "{line}");
+            assert!(indented_body_header(line), "{line}");
+            assert!(
+                indented_named_arrow_header(&line.replace("->", "=>")),
+                "{line}"
+            );
+        }
+        for line in [
+            "value ->",
+            "(value: int) ->",
+            "callback = value ->",
+            "def f value -> value",
+            "def f value -> next ->",
+            "def f value => next ->",
+            "def f value -> next =>",
+            "def f value -> \"->\"",
+            "def f value -> /->/",
+            "def f value -> `->`",
+            "def f value -> value # ->",
+            "\"def f value ->\"",
+            "# def f value ->",
+            "def f value - >",
+            "def f value -> @",
+            "f = lambda:",
         ] {
             assert!(!indented_named_arrow_header(line), "{line}");
         }

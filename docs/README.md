@@ -905,6 +905,7 @@ unchanged explicit-loop entries in the root specification.
 
 - `def` defines a function in the state; a function with no `return` yields `null`.
 - `def name(params) => expression` is exactly a named block containing `return expression`; methods and parameter annotations use the same form.
+- [NUC 57](nuc-0057.md) accepts `->` in place of `=>` in every named and anonymous arrow, and Python-style `lambda` expressions; see [Thin arrows and Python-style lambdas](#thin-arrows-and-python-style-lambdas).
 - Accepted [NUC 32](nuc-0032.md) optionally places that expression in a genuinely indented body after `=>`; it preserves the same sole-return block and every accepted parameter spelling.
 - [NUC 18](nuc-0018.md) specifies `def name amount => expression` as exactly `def name(amount) => expression` for one untyped ordinary identifier parameter, including methods and `init`.
 - [NUC 19](nuc-0019.md) specifies `def name amount:` followed by an indented suite as exactly `def name(amount):` with that same suite.
@@ -1202,7 +1203,31 @@ list.find(element => element == 1)
 
 - Calls over class lists depend on the population and the properties they read.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), and [NUC 32](nuc-0032.md).
+### Thin arrows and Python-style lambdas
+
+```
+factor = 2
+items = [1, 2, 3]
+fat = items.map(item => item * factor)
+thin = items.map(item -> item * factor)
+python = items.map(lambda item: item * factor)
+assert(thin, fat)
+assert(python, fat)
+factor = 10
+assert(thin, [10, 20, 30])
+assert(python, [10, 20, 30])
+python
+```
+
+- This is the complete `Nucleoid accepts thin arrows and lambdas as arrow spellings` program in `tests/reference.md`, without its title and expected-return metadata; it returns `[10,20,30]`.
+- [NUC 57](nuc-0057.md) makes adjacent `->` an exact alternative to `=>` wherever an arrow is accepted: anonymous single and parenthesized parameters, typed and literal-default parameters, braced statement bodies, and every named header (parenthesized, bare single/typed/multiple/typed-mixed/comma-free, NUC32's indented body, methods and `init`). Both spellings build the same AST and canonical source; `=>` stays canonical.
+- `- >` with whitespace stays two tokens, and arrow text in strings, template text outside interpolations, regular expressions and comments is unchanged; an interpolation is an expression and accepts either arrow. Diagnostics name the arrow as written, for example `SyntaxError("Expected '(' but found '->'")` for `def f -> 1`.
+- Return-annotation lookalikes are ordinary arrows: `def f() -> int` returns the value of `int`, and `def f() -> int:` with a body still fails at its colon with `SyntaxError("Unexpected ':'")`. Return annotations are not added.
+- `lambda: expression`, `lambda name: expression` and `lambda first, second: expression` are exactly `() => (expression)`, `(name) => (expression)` and `(first, second) => (expression)`. Parameters are plain names; the body is one expression, where a leading brace is an object literal. Use a parenthesized arrow for annotations, defaults or statement bodies.
+- `lambda` is not reserved. It stays an ordinary name at the top level of `if`/`else`/`elif`/`for` headers, subscript starts (the index or slice start inside `[...]`) and template interpolations; as a single parameter inside an object-literal value (NUC44's `{first: lambda next: 2}`); and as a single parameter whose colon starts a statement, because statement loops accept one directly after an expression: `name: Type` before a statement boundary remains a typed declaration, and `x = lambda assert: x, 1` remains an assignment followed by NUC45's `assert:` statement. Parenthesize the lambda or pass it as an argument there; a single parameter named `assert` never forms a lambda.
+- Full grammar, exclusions and errors are in the authoritative [thin arrows and Python-style lambdas](../nucleoid.spec.md#thin-arrows-and-python-style-lambdas) section.
+
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), and [NUC 57](nuc-0057.md).
 
 ---
 
@@ -2171,6 +2196,10 @@ for name in source:                    equivalent explicit iteration
 for source:                            indented iteration with local it
     statement
 
+value => expression                    anonymous arrow; also (a, b) => expression
+value => { statement }                 anonymous arrow with a statement body
+value -> expression                    optional spelling wherever => is accepted (NUC 57)
+lambda a, b: expression                optional lambda, exactly (a, b) => (expression) (NUC 57)
 def name(params) => expression         single-return function
 def name(params) =>                    optional indented single expression (NUC 32)
     expression

@@ -2275,6 +2275,61 @@ statement positions; caught values and transaction recovery are unchanged.
   each instances first property values` through `Nucleoid preserves moving
   class conditionals beside fixed first anchors` specify this extension.
 
+## Thin arrows and Python-style lambdas
+
+- [NUC 57](docs/nuc-0057.md) adds two optional spellings of the existing
+  anonymous and named arrow functions. `=>` stays canonical; every accepted
+  form keeps its parsing, AST, canonical rendering and behavior.
+- Adjacent `->` is one lexer token and an exact alternative to `=>` wherever
+  an arrow is accepted: `value -> expression`, `(left, right) -> expression`,
+  typed and literal-default parenthesized parameters, braced statement bodies,
+  and every named header, including `def name(params) ->`, bare single,
+  typed, multiple, typed/mixed and comma-free parameters, NUC32's indented
+  expression body, methods and `init`. Both spellings build the identical
+  AST. The native REPL buffers a named header ending in its only arrow of
+  either spelling.
+- `-` and `>` separated by whitespace remain two tokens. Arrow text inside
+  strings, template text outside interpolations, regular expressions and
+  comments is unchanged; an interpolation is an expression and accepts either
+  arrow. A `/` after `->` starts a regular expression exactly as after `=>`.
+- Return-annotation lookalikes are ordinary arrows: `def f() -> int` returns
+  the value of `int`, `def f() -> int => 1` returns a function, and
+  `def f() -> int:` followed by a body still fails at its colon.
+- `lambda: expression`, `lambda name: expression` and
+  `lambda first, second: expression` lower to exactly `() => (expression)`,
+  `(name) => (expression)` and `(first, second) => (expression)`: untyped
+  parameters and an expression body extended exactly like an anonymous
+  arrow's. A leading brace in the body is an object literal. Annotations,
+  defaults, trailing commas, parenthesized or starred parameters and statement
+  bodies are not part of this spelling; the parenthesized arrow has them.
+- `lambda` is not reserved. It forms a lambda only at an operand position,
+  when a complete non-consuming scan finds nothing or comma-separated
+  ordinary names and then a colon. It remains an ordinary identifier,
+  keeping its accepted reading, at the top level of `if`, `else`, `elif` and
+  `for` headers, subscript starts (the index or slice start inside `[...]`)
+  and template interpolations; as a single
+  parameter in an object-literal value, where `{first: lambda next: 2}` keeps
+  NUC44's two comma-free properties; and as a single parameter whose colon
+  starts a statement. Statement loops accept a statement directly after the
+  expression that `lambda` ends, and exactly two statements begin with a name
+  and a colon: a typed declaration, whose colon is followed by one name and
+  a newline, semicolon, dedent or end of input, and NUC45's `assert:`
+  statement. So `f = lambda x: int` stays an assignment followed by a typed
+  declaration, and `x = lambda assert: x, 1` stays an assignment followed by
+  an assertion statement. A statement-leading `lambda: Type` remains a
+  declaration. Parentheses or call arguments select the lambda in each of
+  these places, except that a single `assert` parameter never qualifies;
+  `lambda assert, other: other` is still a lambda.
+- Variables, object keys, shorthand, members, labels, parameters, annotations,
+  catch and loop names, and arrow parameters named `lambda`, such as
+  `lambda -> lambda * 2`, are unchanged.
+- No new error type, message format, public AST node or runtime path is
+  added. Diagnostics name the arrow as written, such as
+  `SyntaxError("Expected '(' but found '->'")` for `def f -> 1`. The five
+  appended entries beginning `Nucleoid accepts thin arrows wherever fat arrows
+  are accepted` through `Nucleoid rolls back failed lambda and thin arrow
+  updates` specify the executable behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -13790,4 +13845,118 @@ delete probe.missing
 assert(withMissing, null)
 probe.missing = 2
 assert(withMissing, 0.5)
+---
+# Nucleoid accepts thin arrows wherever fat arrows are accepted
+
+offset = 1
+items = [1, 2, 3]
+doubled = items.map(item -> item * 2)
+large = items.filter((item: int) -> item > offset)
+found = items.find(item -> { return item == 2 })
+def shift(value) -> value + offset
+def double amount -> amount * 2
+def increment amount: int -> amount + 1
+def area width, height -> width * height
+def mixed left: int, right -> left - right
+def scaled left right factor -> (left + right) * factor
+def tripled value ->
+    value * 3
+assert(doubled, [2, 4, 6])
+assert(large, [2, 3])
+assert(found, 2)
+assert(shift(2), 3)
+assert(double(4), 8)
+assert(increment(4), 5)
+assert(area(3, 4), 12)
+assert(mixed(5, 2), 3)
+assert(scaled(1, 2, 3), 9)
+assert(tripled(2), 6)
+offset = 2
+assert(large, [3])
+assert(shift(2), 4)
+---
+# Nucleoid keeps thin arrow methods and class queries reactive
+
+class Gauge:
+    def init amount -> this.amount = amount
+    def reading() -> self.amount
+    def scaled factor -> self.amount * factor
+gauge = Gauge(4)
+assert(gauge.reading(), 4)
+assert(gauge.scaled(3), 12)
+class Reading(level: int):
+    this.level = level
+Reading(4); Reading(9); Reading(15)
+threshold = 5
+high = Reading.filter(reading -> reading.level > threshold)
+assert(high.length, 2)
+threshold = 10
+assert(high.length, 1)
+Reading(20)
+assert(high.length, 2)
+---
+# Nucleoid defines Python style lambdas
+
+scale = 3
+items = [1, 2, 3]
+tripled = items.map(lambda item: item * scale)
+total = items.reduce(lambda sum, item: sum + item, 0)
+zero = lambda: 0
+add = lambda left, right: left + right
+pair = lambda left, right: {left: left, right: right}
+assert(tripled, [3, 6, 9])
+assert(total, 6)
+assert(zero(), 0)
+assert(add(2, 3), 5)
+assert(pair(1, 2).right, 2)
+assert((lambda value: value * 2)(4), 8)
+scale = 2
+assert(tripled, [2, 4, 6])
+items.push(4)
+assert(tripled, [2, 4, 6, 8])
+assert(total, 10)
+---
+# Nucleoid keeps lambda an ordinary name where accepted syntax owns the colon
+
+lambda = 1
+values = [10, 20, 30]
+assert(values[lambda:], [20, 30])
+record = { first: lambda next: 2 }
+assert(record.first, 1)
+assert(record.next, 2)
+keyed = { lambda: 5 }
+assert(keyed.lambda, 5)
+short = { lambda }
+assert(short.lambda, 1)
+if lambda:
+    state = "on"
+assert(state, "on")
+alias = lambda assert: alias, 1
+double = lambda -> lambda * 2
+assert(double(4), 8)
+lambda = 2
+assert(values[lambda:], [30])
+assert(record.first, 2)
+assert(alias, 2)
+---
+# Nucleoid rolls back failed lambda and thin arrow updates
+
+rate = 2
+items = [1, 2]
+scaled = items.map(lambda item: item * rate)
+def fee amount -> amount * rate
+charge = fee(10)
+failure = ""
+try:
+    rate = 3
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(rate, 2)
+assert(scaled, [2, 4])
+assert(charge, 20)
+rate = 5
+assert(scaled, [5, 10])
+assert(charge, 50)
 ```

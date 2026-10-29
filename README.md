@@ -1086,6 +1086,25 @@ assert(multiplier, 32)
   the exact accepted `Math.pow(2, value)` numeric operation and reactive call
   behavior. Ordinary `Math.pow` remains supported.
 
+**Thin arrows and lambdas spell the same callbacks**
+
+```nuc
+limit = 2
+items = [1, 2, 3]
+over = items.filter(item -> item > limit)
+under = items.filter(lambda item: item <= limit)
+assert(over, [3])
+assert(under, [1, 2])
+limit = 1
+assert(over, [2, 3])
+assert(under, [1])
+```
+
+- [NUC 57](docs/nuc-0057.md) accepts `->` wherever `=>` is accepted, including
+  named `def` headers, and Python-style `lambda first, second: expression` as
+  exactly `(first, second) => (expression)`. `=>` stays canonical, and
+  `lambda` is still an ordinary name wherever accepted syntax owns its colon.
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

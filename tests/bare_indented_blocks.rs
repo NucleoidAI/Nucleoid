@@ -155,7 +155,7 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
         "def f amount, other,:\n    return amount",
         "def f amount other:\nreturn amount",
         "def f amount = 1:\n    return amount",
-        "def f amount -> int:\n    return amount",
+        "def f amount - > int:\n    return amount",
         "def f amount\n:\n    return amount",
         "def f amount # header\n:\n    return amount",
         "def f amount;:\n    return amount",
@@ -238,7 +238,7 @@ fn unsupported_headers_keep_parameter_errors_and_exact_positions() {
             16,
         ),
         (
-            "def f() -> int:\n    return 1",
+            "def f() - > int:\n    return 1",
             "Expected ':' but found '-'",
             1,
             9,

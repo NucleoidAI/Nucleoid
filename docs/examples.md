@@ -2536,6 +2536,29 @@ scaled
   live; see the [root contract](../nucleoid.spec.md#reactive-base-two-exponentiation)
   for intrinsic conversion, ignored extras, deferral and numeric edge cases.
 
+## Thin arrows and Python-style lambdas
+
+**Thin arrows and lambdas chain live callbacks**
+
+```nuc
+threshold = 10
+readings = [4, 12, 18]
+alerts = readings.filter(reading -> reading > threshold)
+labels = alerts.map(lambda reading: `R${reading}`)
+assert(labels, ["R12", "R18"])
+threshold = 15
+assert(labels, ["R18"])
+labels
+# return: ["R18"]
+```
+
+- [NUC 57](nuc-0057.md) spells the same anonymous functions as
+  `reading => reading > threshold` and a parenthesized `(reading) =>` arrow
+  around the template body; the callbacks, their dependencies and the
+  canonical `=>` arrow are unchanged.
+  See the [root contract](../nucleoid.spec.md#thin-arrows-and-python-style-lambdas)
+  for every accepted position and the places where `lambda` stays a name.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

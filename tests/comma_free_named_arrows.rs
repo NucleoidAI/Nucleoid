@@ -297,7 +297,7 @@ fn incomplete_mixed_typed_or_block_prefixes_fall_back_at_the_original_identifier
         "left right: => left",
         "left right: Type.Member => left",
         "left right: List[int] => left",
-        "left right -> int => left",
+        "left right - > int => left",
         "left = 1 right => left",
         "left right = 1 => left",
         "left [right] => left",

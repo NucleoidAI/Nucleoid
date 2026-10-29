@@ -228,7 +228,7 @@ fn all_failed_prefixes_keep_the_original_fallback_messages_positions_and_bytes()
         "left: int right: int:\n    return left",
         "left right: Type.Member:\n    pass",
         "left right: List[int]:\n    pass",
-        "left right -> int:\n    pass",
+        "left right - > int:\n    pass",
         "left = 1 right:\n    pass",
         "left right = 1:\n    pass",
         "left [right]:\n    pass",

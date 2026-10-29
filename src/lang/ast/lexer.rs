@@ -50,6 +50,8 @@ enum Raw {
     At,
     #[token("=>")]
     Arrow,
+    #[token("->")]
+    ThinArrow,
     #[token("===")]
     StrictEqual,
     #[token("!==")]
@@ -216,6 +218,9 @@ pub enum Token {
     Dot,
     At,
     Arrow,
+    /// `->`, an optional spelling of [`Token::Arrow`] (NUC 57). It stays a
+    /// separate token so that diagnostics name the arrow the source wrote.
+    ThinArrow,
 
     Assign,
     PlusAssign,
@@ -273,6 +278,7 @@ impl Token {
             Token::Dot => "'.'".to_string(),
             Token::At => "'@'".to_string(),
             Token::Arrow => "'=>'".to_string(),
+            Token::ThinArrow => "'->'".to_string(),
             Token::Assign => "'='".to_string(),
             Token::PlusAssign => "'+='".to_string(),
             Token::MinusAssign => "'-='".to_string(),
@@ -303,6 +309,12 @@ impl Token {
             Token::Dedent => "the end of a block".to_string(),
             Token::Eof => "end of input".to_string(),
         }
+    }
+
+    /// Whether this token is an arrow: canonical `=>` or its `->` spelling.
+    /// Both spellings introduce exactly the same parameters and bodies.
+    pub fn is_arrow(&self) -> bool {
+        matches!(self, Token::Arrow | Token::ThinArrow)
     }
 
     /// Whether a `/` following this token starts a regular expression literal
@@ -468,6 +480,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::Dot => Token::Dot,
             Raw::At => Token::At,
             Raw::Arrow => Token::Arrow,
+            Raw::ThinArrow => Token::ThinArrow,
             Raw::Assign => Token::Assign,
             Raw::PlusAssign => Token::PlusAssign,
             Raw::MinusAssign => Token::MinusAssign,
@@ -918,5 +931,87 @@ mod tests {
         assert_eq!(spanned[2].position, Position::new(1, 11));
         assert_eq!(spanned[5].token, Token::SlashAssign);
         assert_eq!(spanned[5].position, Position::new(2, 8));
+    }
+
+    #[test]
+    fn thin_arrows_are_single_adjacent_tokens_named_as_written() {
+        let identifier = |name: &str| Token::Identifier(name.into());
+        assert_eq!(Token::ThinArrow.describe(), "'->'");
+        assert_eq!(Token::Arrow.describe(), "'=>'");
+        assert!(Token::ThinArrow.is_arrow() && Token::Arrow.is_arrow());
+        assert!(!Token::Minus.is_arrow() && !Token::Greater.is_arrow());
+        for (source, mut expected) in [
+            (
+                "x->x",
+                vec![identifier("x"), Token::ThinArrow, identifier("x")],
+            ),
+            (
+                "x - > y",
+                vec![
+                    identifier("x"),
+                    Token::Minus,
+                    Token::Greater,
+                    identifier("y"),
+                ],
+            ),
+            (
+                "x-->y",
+                vec![
+                    identifier("x"),
+                    Token::Minus,
+                    Token::ThinArrow,
+                    identifier("y"),
+                ],
+            ),
+            (
+                "a-=>b",
+                vec![
+                    identifier("a"),
+                    Token::MinusAssign,
+                    Token::Greater,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a->=b",
+                vec![
+                    identifier("a"),
+                    Token::ThinArrow,
+                    Token::Assign,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a>-1",
+                vec![
+                    identifier("a"),
+                    Token::Greater,
+                    Token::Minus,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x => y",
+                vec![identifier("x"), Token::Arrow, identifier("y")],
+            ),
+            (
+                "x -> /a->b/",
+                vec![
+                    identifier("x"),
+                    Token::ThinArrow,
+                    Token::Regex("a->b".into()),
+                ],
+            ),
+            ("\"a->b\"", vec![Token::Str("a->b".into())]),
+            ("'a->b'", vec![Token::Str("a->b".into())]),
+            ("`a->${b}`", vec![Token::Template("a->${b}".into())]),
+            ("x # a->b", vec![identifier("x")]),
+        ] {
+            expected.push(Token::Eof);
+            assert_eq!(tokens(source), expected, "{source}");
+        }
+        let spanned = tokenize("f = value ->\n    value").unwrap();
+        assert_eq!(spanned[3].token, Token::ThinArrow);
+        assert_eq!(spanned[3].position, Position::new(1, 11));
     }
 }

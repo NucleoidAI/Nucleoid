@@ -26,11 +26,14 @@ pub fn parse(source: &str) -> Result<Vec<Stmt>> {
 }
 
 pub fn parse_expression(source: &str) -> Result<Expr> {
+    parse_expression_in(source, ExpressionContext::Ordinary)
+}
+
+fn parse_expression_in(source: &str, context: ExpressionContext) -> Result<Expr> {
     let tokens = tokenize(source)?;
     let mut parser = Parser::new(tokens);
     parser.skip_separators();
-    let expression = parser.expression()?;
-    Ok(expression)
+    parser.expression_in(context)
 }
 
 /// How deeply expressions and blocks may nest. Recursive descent uses the
@@ -54,11 +57,28 @@ enum ArgumentContext {
     Ordinary,
 }
 
+/// What may legally follow the expression being parsed. Contextual spellings
+/// consult it so that a following `:` keeps its accepted owner. Operands,
+/// assignment values and arrow or lambda bodies inherit it; an expression
+/// nested in brackets, braces or call arguments selects its own.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ExpressionContext {
+    /// Statements, grouping, list items, call arguments and slice ends.
+    Ordinary,
+    /// An object-literal value, where a following `name:` starts the next
+    /// comma-free property (NUC 44).
+    ObjectValue,
+    /// An `if`, `else` or `for` header or a subscript start (an index or slice
+    /// start), whose top-level `:` belongs to that construct, or a template
+    /// interpolation, whose trailing tokens are ignored.
+    Clause,
+}
+
 struct Parser {
     tokens: Vec<Spanned>,
     position: usize,
     depth: usize,
-    object_value: bool,
+    context: ExpressionContext,
 }
 
 impl Parser {
@@ -67,7 +87,7 @@ impl Parser {
             tokens,
             position: 0,
             depth: 0,
-            object_value: false,
+            context: ExpressionContext::Ordinary,
         }
     }
 
@@ -135,6 +155,25 @@ impl Parser {
                 token.describe(),
                 self.peek().describe()
             )))
+        }
+    }
+
+    /// Consumes either arrow spelling, `=>` or `->`.
+    fn eat_arrow(&mut self) -> bool {
+        if self.peek().is_arrow() {
+            self.position += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Requires either arrow spelling, naming the canonical one when absent.
+    fn expect_arrow(&mut self) -> Result<()> {
+        if self.eat_arrow() {
+            Ok(())
+        } else {
+            self.expect(&Token::Arrow)
         }
     }
 
@@ -297,9 +336,7 @@ impl Parser {
                 Ok(Stmt::Delete(self.expression()?))
             }
             Token::LeftBrace => Ok(Stmt::Block(self.braced()?)),
-            Token::Identifier(name)
-                if self.peek_at(1) == &Token::Colon && self.is_type_declaration() =>
-            {
+            Token::Identifier(name) if self.is_type_declaration() => {
                 self.advance();
                 self.advance();
                 let type_name = match self.advance() {
@@ -312,7 +349,7 @@ impl Parser {
                 };
                 Ok(Stmt::Declaration { name, type_name })
             }
-            Token::Identifier(name) if name == "assert" && self.peek_at(1) == &Token::Colon => {
+            Token::Identifier(_) if self.is_assertion_statement_at(0) => {
                 self.advance();
                 self.advance();
                 // An ordinary call has an outer expression level in addition
@@ -351,11 +388,36 @@ impl Parser {
 
     /// Distinguishes `a: int` (a declaration) from a labelled suite.
     fn is_type_declaration(&self) -> bool {
-        matches!(self.peek_at(2), Token::Identifier(_))
+        self.is_type_declaration_at(0)
+    }
+
+    /// Whether a complete `name: Type` declaration, which is also a class
+    /// field, starts at `offset`: a name, its colon and one type name before
+    /// a statement boundary.
+    fn is_type_declaration_at(&self, offset: usize) -> bool {
+        matches!(self.peek_at(offset), Token::Identifier(_))
+            && self.peek_at(offset + 1) == &Token::Colon
+            && matches!(self.peek_at(offset + 2), Token::Identifier(_))
             && matches!(
-                self.peek_at(3),
+                self.peek_at(offset + 3),
                 Token::Newline | Token::Semicolon | Token::Dedent | Token::Eof
             )
+    }
+
+    /// Whether NUC 45's `assert: actual, expected` statement starts at
+    /// `offset`.
+    fn is_assertion_statement_at(&self, offset: usize) -> bool {
+        matches!(self.peek_at(offset), Token::Identifier(name) if name == "assert")
+            && self.peek_at(offset + 1) == &Token::Colon
+    }
+
+    /// Whether a statement led by a name and its colon starts at `offset`:
+    /// exactly the declaration or assertion guard that the statement parser
+    /// itself uses. These are the only statements a name and a colon begin,
+    /// and statement loops accept them directly after an expression
+    /// statement.
+    fn starts_colon_statement_at(&self, offset: usize) -> bool {
+        self.is_type_declaration_at(offset) || self.is_assertion_statement_at(offset)
     }
 
     fn if_statement(&mut self) -> Result<Stmt> {
@@ -366,7 +428,7 @@ impl Parser {
     /// Explicit `else if` and qualified direct alternatives share the entire
     /// condition, suite and recursive alternate parser.
     fn condition_clause(&mut self) -> Result<Stmt> {
-        let condition = self.expression()?;
+        let condition = self.clause_expression()?;
         // Explicit colons retain every accepted suite and diagnostic. Only a
         // real indented body can select the optional conditional spelling.
         let consequent = if self.check(&Token::Colon) || !self.has_indented_body(0) {
@@ -463,7 +525,7 @@ impl Parser {
             variable
         };
 
-        let iterable = self.expression()?;
+        let iterable = self.clause_expression()?;
         let body = self.suite()?;
 
         Ok(Stmt::For {
@@ -559,7 +621,9 @@ impl Parser {
                 offset += 2;
             }
             match self.peek_at(offset) {
-                Token::Arrow | Token::Colon if multiple => return Some(offset),
+                delimiter if multiple && (delimiter.is_arrow() || delimiter == &Token::Colon) => {
+                    return Some(offset);
+                }
                 Token::Comma => {
                     multiple = true;
                     offset += 1;
@@ -582,7 +646,7 @@ impl Parser {
     /// Keep the arrow guard arrow-only; blocks need a genuine indented suite.
     fn comma_free_arrow_end(&self) -> Option<usize> {
         self.comma_free_parameter_end()
-            .filter(|&end| matches!(self.peek_at(end), Token::Arrow))
+            .filter(|&end| self.peek_at(end).is_arrow())
     }
 
     fn comma_free_block_end(&self) -> Option<usize> {
@@ -613,24 +677,15 @@ impl Parser {
             }
         };
 
-        let bare_arrow = matches!(
-            (
-                self.peek(),
-                self.peek_at(1),
-                self.peek_at(2),
-                self.peek_at(3)
-            ),
-            (Token::Identifier(_), Token::Arrow, _, _)
-                | (
-                    Token::Identifier(_),
-                    Token::Colon,
-                    Token::Identifier(_),
-                    Token::Arrow
-                )
-        );
-        let bare_multiple_end = self.bare_multiple_parameter_end().filter(|&end| {
-            matches!(self.peek_at(end), Token::Arrow) || self.has_indented_suite(end)
-        });
+        // Either arrow spelling, `=>` or `->`, ends a bare arrow header.
+        let bare_arrow = matches!(self.peek(), Token::Identifier(_))
+            && (self.peek_at(1).is_arrow()
+                || (self.peek_at(1) == &Token::Colon
+                    && matches!(self.peek_at(2), Token::Identifier(_))
+                    && self.peek_at(3).is_arrow()));
+        let bare_multiple_end = self
+            .bare_multiple_parameter_end()
+            .filter(|&end| self.peek_at(end).is_arrow() || self.has_indented_suite(end));
         let bare_block = matches!(self.peek(), Token::Identifier(_)) && self.has_indented_suite(1);
         let bare_typed_block = matches!(
             (
@@ -680,7 +735,7 @@ impl Parser {
             // parenthesized parameter parser's diagnostics and positions.
             self.parameters()?
         };
-        let body = if self.eat(&Token::Arrow) {
+        let body = if self.eat_arrow() {
             let indented = self.has_indented_body(0);
             if indented {
                 self.skip_newlines();
@@ -876,9 +931,7 @@ impl Parser {
                         };
                         methods.push(function);
                     }
-                    Token::Identifier(field)
-                        if self.peek_at(1) == &Token::Colon && self.is_type_declaration() =>
-                    {
+                    Token::Identifier(field) if self.is_type_declaration() => {
                         self.advance();
                         self.advance();
                         let type_name = match self.advance() {
@@ -916,13 +969,19 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr> {
-        self.expression_in(false)
+        self.expression_in(ExpressionContext::Ordinary)
     }
 
-    fn expression_in(&mut self, object_value: bool) -> Result<Expr> {
-        let outer = std::mem::replace(&mut self.object_value, object_value);
+    /// An `if`/`else`/`for` header or subscript start: its top-level `:`
+    /// belongs to the enclosing construct, never to a contextual `lambda`.
+    fn clause_expression(&mut self) -> Result<Expr> {
+        self.expression_in(ExpressionContext::Clause)
+    }
+
+    fn expression_in(&mut self, context: ExpressionContext) -> Result<Expr> {
+        let outer = std::mem::replace(&mut self.context, context);
         let expression = self.nested_expression(Self::expression_inner);
-        self.object_value = outer;
+        self.context = outer;
         expression
     }
 
@@ -959,7 +1018,7 @@ impl Parser {
         }
 
         self.advance();
-        let value = self.expression_in(self.object_value)?;
+        let value = self.expression_in(self.context)?;
         let value = match operator {
             Some(operator) => {
                 let left = Box::new(left.clone());
@@ -1229,7 +1288,7 @@ impl Parser {
             if let Some(stage) = Stage::from_name(name) {
                 // An ordinary object value wins before the next explicit
                 // field, even on the right of an operator or an arrow.
-                let field_boundary = self.object_value
+                let field_boundary = self.context == ExpressionContext::ObjectValue
                     && matches!(stage, Stage::Stated | Stage::Derived)
                     && matches!(self.peek_at(1), Token::Identifier(_))
                     && self.peek_at(2) == &Token::Colon;
@@ -1358,7 +1417,7 @@ impl Parser {
             });
         }
 
-        let index = self.expression()?;
+        let index = self.clause_expression()?;
 
         if self.eat(&Token::Colon) {
             let end = if self.check(&Token::RightBracket) {
@@ -1425,23 +1484,23 @@ impl Parser {
         if self.check(&Token::At) {
             return Err(self.error("Unexpected character '@'"));
         }
-        // `name => ...`
-        if let Token::Identifier(name) = self.peek().clone() {
-            if self.peek_at(1) == &Token::Arrow {
-                self.advance();
-                self.advance();
-                return self.arrow_body(vec![Parameter {
-                    name,
-                    type_name: None,
-                    default: None,
-                }]);
-            }
+        // `name => ...` or `name -> ...`. Check before taking the name so
+        // that ordinary identifier operands are not cloned here.
+        if matches!(self.peek(), Token::Identifier(_)) && self.peek_at(1).is_arrow() {
+            let parameter = self.untyped_parameter();
+            self.advance();
+            return self.arrow_body(vec![parameter]);
         }
 
-        // `(a, b) => ...`
+        // `lambda a, b: ...`
+        if let Some(count) = self.lambda_parameter_count() {
+            return self.lambda(count);
+        }
+
+        // `(a, b) => ...` or `(a, b) -> ...`
         if self.check(&Token::LeftParen) && self.is_arrow_parameters() {
             let parameters = self.parameters()?;
-            self.expect(&Token::Arrow)?;
+            self.expect_arrow()?;
             return self.arrow_body(parameters);
         }
 
@@ -1536,7 +1595,7 @@ impl Parser {
                 Expr::Identifier(key.clone())
             } else {
                 self.expect(&Token::Colon)?;
-                self.expression_in(true)?
+                self.expression_in(ExpressionContext::ObjectValue)?
             };
             entries.push((key, value));
 
@@ -1565,13 +1624,79 @@ impl Parser {
         let body = if self.check(&Token::LeftBrace) {
             FunctionBody::Block(self.braced()?)
         } else {
-            FunctionBody::Expression(Box::new(self.expression_in(self.object_value)?))
+            FunctionBody::Expression(Box::new(self.expression_in(self.context)?))
         };
 
         Ok(Expr::Function(Arc::new(Function {
             name: None,
             parameters,
             body,
+        })))
+    }
+
+    /// The parameter count of a `lambda` expression starting here, qualified
+    /// without consuming tokens or allocating names. Only an ordinary
+    /// identifier spelled `lambda`, then nothing or comma-separated ordinary
+    /// names, then a `:` qualifies; `lambda` is not reserved.
+    ///
+    /// The name stays an ordinary identifier wherever accepted syntax owns
+    /// that colon: a clause header, subscript start or template interpolation;
+    /// a single name in an object value, where `lambda next:` is a comma-free
+    /// property boundary; and a single name whose colon starts a statement,
+    /// which statement loops accept directly after the expression ending at
+    /// `lambda`: a typed declaration (`lambda x: int`) or an assertion
+    /// statement (`lambda assert: x, 1`).
+    fn lambda_parameter_count(&self) -> Option<usize> {
+        if self.context == ExpressionContext::Clause
+            || !matches!(self.peek(), Token::Identifier(name) if name == "lambda")
+        {
+            return None;
+        }
+
+        let mut count = 0;
+        let mut colon = 1;
+        if self.peek_at(colon) != &Token::Colon {
+            loop {
+                if !matches!(self.peek_at(colon), Token::Identifier(_)) {
+                    return None;
+                }
+                count += 1;
+                colon += 1;
+                match self.peek_at(colon) {
+                    Token::Comma => colon += 1,
+                    Token::Colon => break,
+                    _ => return None,
+                }
+            }
+        }
+
+        // A single name and its colon keep every accepted reading: the next
+        // comma-free property, or a declaration or assertion statement.
+        let accepted_colon = count == 1
+            && (self.context == ExpressionContext::ObjectValue
+                || self.starts_colon_statement_at(1));
+        (!accepted_colon).then_some(count)
+    }
+
+    /// Parses a lambda that [`Self::lambda_parameter_count`] qualified. It
+    /// lowers to exactly the anonymous `(names) => (expression)` function:
+    /// untyped parameters and an expression body, where braces are an object.
+    fn lambda(&mut self, count: usize) -> Result<Expr> {
+        self.advance();
+        let mut parameters = Vec::with_capacity(count);
+        for index in 0..count {
+            if index > 0 {
+                self.expect(&Token::Comma)?;
+            }
+            parameters.push(self.untyped_parameter());
+        }
+        self.expect(&Token::Colon)?;
+        let body = self.expression_in(self.context)?;
+
+        Ok(Expr::Function(Arc::new(Function {
+            name: None,
+            parameters,
+            body: FunctionBody::Expression(Box::new(body)),
         })))
     }
 
@@ -1587,7 +1712,7 @@ impl Parser {
                 Token::RightParen | Token::RightBracket => {
                     depth -= 1;
                     if depth == 0 {
-                        return self.peek_at(offset + 1) == &Token::Arrow;
+                        return self.peek_at(offset + 1).is_arrow();
                     }
                 }
                 Token::Eof => return false,
@@ -1646,8 +1771,11 @@ impl Parser {
                 parts.push(TemplatePart::Literal(std::mem::take(&mut literal)));
             }
 
-            parts.push(TemplatePart::Expression(parse_expression(
+            // Trailing tokens after an interpolated expression are ignored,
+            // so a top-level `lambda` keeps its accepted name reading here.
+            parts.push(TemplatePart::Expression(parse_expression_in(
                 &raw[start..end],
+                ExpressionContext::Clause,
             )?));
 
             while let Some((offset, _)) = characters.peek() {
@@ -1904,6 +2032,198 @@ mod tests {
             assert_eq!(parser.depth, 0, "{header}");
             assert_eq!(parser.tokens, tokens, "{header}");
         }
+    }
+
+    #[test]
+    fn lambda_lookahead_qualifies_whole_headers_by_context_without_consuming() {
+        use ExpressionContext::{Clause, ObjectValue, Ordinary};
+        for (source, context, count) in [
+            ("lambda: 1", Ordinary, Some(0)),
+            ("lambda: value", Ordinary, Some(0)),
+            ("lambda x: x + 1", Ordinary, Some(1)),
+            ("lambda x: x.name", Ordinary, Some(1)),
+            ("lambda x: x)", Ordinary, Some(1)),
+            ("lambda x: x }", Ordinary, Some(1)),
+            ("lambda x: int: x", Ordinary, Some(1)),
+            ("lambda x: 1", Ordinary, Some(1)),
+            ("lambda a, b: a", Ordinary, Some(2)),
+            ("lambda a, b, c: a", Ordinary, Some(3)),
+            ("lambda a,\tb : a", Ordinary, Some(2)),
+            // A single name, a colon and one name before a statement boundary
+            // is an expression followed by a typed declaration.
+            ("lambda x: x", Ordinary, None),
+            ("lambda x: int\n", Ordinary, None),
+            ("lambda x: int; other", Ordinary, None),
+            ("lambda x: int # comment", Ordinary, None),
+            ("lambda a, b: int", Ordinary, Some(2)),
+            ("lambda: int", Ordinary, Some(0)),
+            // NUC45: a single `assert` and its colon start an assertion
+            // statement after the expression, whatever follows the colon.
+            ("lambda assert: x, 1", Ordinary, None),
+            ("lambda assert: 1, 1", Ordinary, None),
+            ("lambda assert: x", Ordinary, None),
+            ("lambda assert: int", Ordinary, None),
+            ("lambda assert:", Ordinary, None),
+            ("lambda assert : x, 1", Ordinary, None),
+            ("lambda assert: x, 1", ObjectValue, None),
+            ("lambda assert: x, 1", Clause, None),
+            ("lambda assert, b: 1", Ordinary, Some(2)),
+            ("lambda a, assert: 1", Ordinary, Some(2)),
+            ("lambda Assert: x, 1", Ordinary, Some(1)),
+            ("lambda asserts: x, 1", Ordinary, Some(1)),
+            // NUC44: one name and a colon in an object value is a property.
+            ("lambda x: 1", ObjectValue, None),
+            ("lambda x: x", ObjectValue, None),
+            ("lambda: 1", ObjectValue, Some(0)),
+            ("lambda a, b: 1", ObjectValue, Some(2)),
+            // Clause headers, subscript starts and interpolations own it.
+            ("lambda: 1", Clause, None),
+            ("lambda x: 1", Clause, None),
+            ("lambda a, b: 1", Clause, None),
+            ("lambda", Ordinary, None),
+            ("lambda x", Ordinary, None),
+            ("lambda x, : x", Ordinary, None),
+            ("lambda x,: x", Ordinary, None),
+            ("lambda , x: x", Ordinary, None),
+            ("lambda x y: x", Ordinary, None),
+            ("lambda x = 1: x", Ordinary, None),
+            ("lambda (x): x", Ordinary, None),
+            ("lambda [x]: x", Ordinary, None),
+            ("lambda *x: x", Ordinary, None),
+            ("lambda this: 1", Ordinary, None),
+            ("lambda self: 1", Ordinary, None),
+            ("lambda null: 1", Ordinary, None),
+            ("lambda $Type: 1", Ordinary, None),
+            ("lambda 1: 1", Ordinary, None),
+            ("lambda \"x\": 1", Ordinary, None),
+            ("lambda => 1", Ordinary, None),
+            ("lambda -> 1", Ordinary, None),
+            ("lambda(x)", Ordinary, None),
+            ("lambda.x", Ordinary, None),
+            ("lambda[0]", Ordinary, None),
+            ("lambda = 1", Ordinary, None),
+            ("lambda\n: 1", Ordinary, None),
+            ("lambda x\n: 1", Ordinary, None),
+            ("lambda; x: 1", Ordinary, None),
+            ("Lambda: 1", Ordinary, None),
+            ("lambdas: 1", Ordinary, None),
+            ("x: 1", Ordinary, None),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            parser.context = context;
+            let tokens = parser.tokens.clone();
+            assert_eq!(
+                parser.lambda_parameter_count(),
+                count,
+                "{source} in {context:?}"
+            );
+            assert_eq!(parser.position, 0, "{source}");
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.tokens, tokens, "{source}");
+        }
+    }
+
+    #[test]
+    fn colon_statement_lookahead_uses_the_statement_parser_guards() {
+        for (source, offset, starts) in [
+            ("value: int", 0, true),
+            ("value: int\nnext", 0, true),
+            ("value: int; next", 0, true),
+            ("value: int # comment", 0, true),
+            ("assert: value, 1", 0, true),
+            ("assert : value, 1", 0, true),
+            ("assert: int", 0, true),
+            ("assert: value", 0, true),
+            ("assert:", 0, true),
+            ("lambda x: int", 1, true),
+            ("lambda assert: x, 1", 1, true),
+            ("value: 1", 0, false),
+            ("value: int other", 0, false),
+            ("value: int }", 0, false),
+            ("value: $Type", 0, false),
+            ("value", 0, false),
+            ("value, other: int", 0, false),
+            ("Assert: value, 1", 0, false),
+            ("asserts: value, 1", 0, false),
+            ("assert(value, 1)", 0, false),
+            ("assert = 1", 0, false),
+            (": int", 0, false),
+            ("this: int", 0, false),
+            ("lambda x: 1", 1, false),
+            ("lambda x: x + 1", 1, false),
+        ] {
+            let parser = Parser::new(tokenize(source).unwrap());
+            assert_eq!(
+                parser.starts_colon_statement_at(offset),
+                starts,
+                "{source} at {offset}"
+            );
+            assert_eq!(parser.position, 0, "{source}");
+        }
+        // The `assert:` branch of the statement parser uses the same guard.
+        let statements = parse("assert: value, 1\nassert : value, 1").unwrap();
+        assert_eq!(statements.len(), 2);
+        assert_eq!(statements[0], statements[1]);
+        assert_eq!(statements[0], parse("assert(value, 1)").unwrap()[0]);
+        // The declaration guard checks the leading name and its colon itself,
+        // so neither its branches nor the lambda scan recheck them.
+        for (source, declares) in [
+            ("value: int", true),
+            ("value: int\nnext", true),
+            ("value other int", false),
+            ("value = int", false),
+            ("1: int", false),
+            ("this: int", false),
+        ] {
+            let parser = Parser::new(tokenize(source).unwrap());
+            assert_eq!(parser.is_type_declaration_at(0), declares, "{source}");
+        }
+        assert_eq!(
+            parse("value: int").unwrap(),
+            [Stmt::Declaration {
+                name: "value".into(),
+                type_name: "int".into(),
+            }]
+        );
+        let statements = parse("class Holder:\n    value: int").unwrap();
+        let [Stmt::Class(class)] = statements.as_slice() else {
+            panic!("one class with a typed field");
+        };
+        assert!(class.constructor.is_empty());
+        let [field] = class.fields.as_slice() else {
+            panic!("one typed field");
+        };
+        assert_eq!(field.name, "value");
+        assert_eq!(field.type_name.as_deref(), Some("int"));
+    }
+
+    #[test]
+    fn lambdas_and_thin_arrows_lower_to_the_existing_anonymous_function_ast() {
+        for (alias, canonical) in [
+            ("lambda: 1", "() => (1)"),
+            ("lambda value: value * 2", "(value) => (value * 2)"),
+            (
+                "lambda left, right: left + right",
+                "(left, right) => (left + right)",
+            ),
+            ("lambda: {x: 1}", "() => ({x: 1})"),
+            ("lambda: lambda: 1", "() => (() => (1))"),
+            ("lambda x: x = 2", "(x) => (x = 2)"),
+            ("value -> value * 2", "value => value * 2"),
+            ("(value: int) -> value", "(value: int) => value"),
+            ("(value = 1) -> value", "(value = 1) => value"),
+            ("value -> { return value }", "value => { return value }"),
+            ("() -> 1", "() => 1"),
+        ] {
+            let alias_ast = parse_expression(alias).unwrap();
+            assert_eq!(alias_ast, parse_expression(canonical).unwrap(), "{alias}");
+            assert!(matches!(alias_ast, Expr::Function(_)), "{alias}");
+        }
+        let mut parser = Parser::new(tokenize("{ a: lambda: 1, b: 2 }").unwrap());
+        parser.skip_separators();
+        parser.expression().unwrap();
+        assert_eq!(parser.context, ExpressionContext::Ordinary);
+        assert_eq!(parser.depth, 0);
     }
 
     #[test]

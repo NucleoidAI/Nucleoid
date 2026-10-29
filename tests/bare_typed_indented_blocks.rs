@@ -216,7 +216,7 @@ fn unsupported_typed_headers_do_not_consume_prefixes_or_body_layout() {
         "def f amount: int, other: str,:\n    return amount",
         "def f amount: int = 1:\n    return amount",
         "def f amount = 1: int:\n    return amount",
-        "def f amount: int -> int:\n    return amount",
+        "def f amount: int - > int:\n    return amount",
         "def f amount: Int.Name:\n    return amount",
         "def f amount: List[int]:\n    return amount",
         "def f amount: List<int>:\n    return amount",
@@ -440,7 +440,7 @@ fn parenthesized_signatures_class_lists_and_anonymous_forms_keep_their_metadata(
             "Expected a scalar literal parameter default",
             16,
         ),
-        ("def f() -> int: return 1", "Expected ':' but found '-'", 9),
+        ("def f() - > int: return 1", "Expected ':' but found '-'", 9),
         ("class Gauge(amount:)", "Expected a type but found ')'", 21),
     ] {
         let error = Runtime::check(source).unwrap_err();
