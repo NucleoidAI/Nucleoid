@@ -42,6 +42,8 @@ enum Raw {
     Comma,
     #[token(":")]
     Colon,
+    #[token("?")]
+    Question,
     #[token(";")]
     Semicolon,
     #[token(".")]
@@ -214,6 +216,9 @@ pub enum Token {
     RightBrace,
     Comma,
     Colon,
+    /// `?`, which opens a conditional expression's consequent (NUC 59). It is
+    /// always one character; `??`, `?.` and `?:` are not tokens.
+    Question,
     Semicolon,
     Dot,
     At,
@@ -274,6 +279,7 @@ impl Token {
             Token::RightBrace => "'}'".to_string(),
             Token::Comma => "','".to_string(),
             Token::Colon => "':'".to_string(),
+            Token::Question => "'?'".to_string(),
             Token::Semicolon => "';'".to_string(),
             Token::Dot => "'.'".to_string(),
             Token::At => "'@'".to_string(),
@@ -476,6 +482,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::RightBrace => Token::RightBrace,
             Raw::Comma => Token::Comma,
             Raw::Colon => Token::Colon,
+            Raw::Question => Token::Question,
             Raw::Semicolon => Token::Semicolon,
             Raw::Dot => Token::Dot,
             Raw::At => Token::At,
@@ -1013,5 +1020,94 @@ mod tests {
         let spanned = tokenize("f = value ->\n    value").unwrap();
         assert_eq!(spanned[3].token, Token::ThinArrow);
         assert_eq!(spanned[3].position, Position::new(1, 11));
+    }
+
+    #[test]
+    fn question_marks_are_single_tokens_and_keep_literal_text() {
+        let identifier = |name: &str| Token::Identifier(name.into());
+        assert_eq!(Token::Question.describe(), "'?'");
+        for (source, mut expected) in [
+            (
+                "a?b:c",
+                vec![
+                    identifier("a"),
+                    Token::Question,
+                    identifier("b"),
+                    Token::Colon,
+                    identifier("c"),
+                ],
+            ),
+            (
+                "a ?? b",
+                vec![
+                    identifier("a"),
+                    Token::Question,
+                    Token::Question,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a?.b",
+                vec![
+                    identifier("a"),
+                    Token::Question,
+                    Token::Dot,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a?.5:1",
+                vec![
+                    identifier("a"),
+                    Token::Question,
+                    Token::Number(0.5),
+                    Token::Colon,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "a ?: b",
+                vec![
+                    identifier("a"),
+                    Token::Question,
+                    Token::Colon,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "c ? /a?/ : /b/",
+                vec![
+                    identifier("c"),
+                    Token::Question,
+                    Token::Regex("a?".into()),
+                    Token::Colon,
+                    Token::Regex("b".into()),
+                ],
+            ),
+            ("\"why?\"", vec![Token::Str("why?".into())]),
+            ("'why?'", vec![Token::Str("why?".into())]),
+            ("`why? ${a}`", vec![Token::Template("why? ${a}".into())]),
+            ("/colou?r/", vec![Token::Regex("colou?r".into())]),
+            ("x # why?", vec![identifier("x")]),
+        ] {
+            expected.push(Token::Eof);
+            assert_eq!(tokens(source), expected, "{source}");
+        }
+        let spanned = tokenize("x = c ? 1 : 2").unwrap();
+        assert_eq!(spanned[3].token, Token::Question);
+        assert_eq!(spanned[3].position, Position::new(1, 7));
+        assert_eq!(
+            tokens("a ? b / 2 : c"),
+            [
+                identifier("a"),
+                Token::Question,
+                identifier("b"),
+                Token::Slash,
+                Token::Number(2.0),
+                Token::Colon,
+                identifier("c"),
+                Token::Eof,
+            ]
+        );
     }
 }

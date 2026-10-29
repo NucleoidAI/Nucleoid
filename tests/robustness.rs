@@ -78,6 +78,44 @@ fn nested_compound_targets_cannot_expand_exponentially() {
 }
 
 #[test]
+fn nested_python_conditionals_cannot_reparse_exponentially() {
+    // Every level is a Python-style conditional whose condition holds the
+    // next level in a block body. A level that does not qualify is re-parsed
+    // as an adjacent `if` statement; attempts are reused by token position
+    // and depth, so neither failing levels nor the nesting limit multiply the
+    // work along each path.
+    fn nest(levels: usize, head: &str, tail: &str) -> String {
+        let mut source = "z = 0".to_string();
+        for _ in 0..levels {
+            source = format!("y = 1 if {head} {{ {source} }}{tail}");
+        }
+        source
+    }
+
+    for head in ["function()", "x =>"] {
+        let mut runtime = Runtime::new();
+        let value = runtime.run(&nest(8, head, " else 2")).unwrap();
+        assert_eq!(value.to_string(), "1", "{head}");
+
+        for (tail, levels) in [(" else 2", 40), (" else 2", 160), (" b else 2", 160)] {
+            let error = Runtime::check(&nest(levels, head, tail)).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Syntax, "{head}{tail} x{levels}");
+            assert!(
+                matches!(
+                    error.message().as_str(),
+                    "Expressions are nested too deeply"
+                        | "Statements are nested too deeply"
+                        | "Expected ':' but found keyword 'else'"
+                        | "Expected ':' but found identifier 'b'"
+                ),
+                "{head}{tail} x{levels}: {}",
+                error.message()
+            );
+        }
+    }
+}
+
+#[test]
 fn malformed_compound_targets_do_not_change_state() {
     let mut runtime = Runtime::new();
     runtime.run("saved = 7").unwrap();

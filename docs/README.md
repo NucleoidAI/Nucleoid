@@ -396,6 +396,8 @@ assert(summary.kind, "alert")
   one token. `&& =`, `|| =`, `and=`, and `or=` do not form compound operators.
 - Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`.
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
+- Conditional: `condition ? consequent : alternate` or
+  `consequent if condition else alternate`; see below.
 - Parentheses override precedence.
 - `+` concatenates when an operand is a string.
 
@@ -405,6 +407,55 @@ assert((a + b) * c, 20)
 ```
 
 - A comparison may be assigned directly: `alarm = reading > threshold`.
+
+### Conditional expressions
+
+- `condition ? consequent : alternate` and Python's
+  `consequent if condition else alternate` are one expression. The condition
+  is evaluated once with the truthiness of `if`, then only the selected branch.
+- A declaration that uses one stays live: it re-evaluates when the condition or
+  the selected branch's inputs change and switches branches when the condition
+  changes. The unselected branch has no effects, errors or dependencies.
+- A falsy consequent such as `0` is still selected, unlike in `c && 0 || 5`.
+- Both spellings share one right-associative level between assignment and `|>`:
+  `x = c ? a : b` assigns the result, `a || b ? c : d` tests `a || b`, and
+  `a ? b : c ? d : e` groups to the right.
+
+```
+stock = 3
+status = stock > 0 ? "available" : "sold out"
+badge = "low" if stock < 5 else "plenty"
+assert(status, "available")
+assert(badge, "low")
+stock = 0
+assert(status, "sold out")
+assert(badge, "low")
+stock = 8
+assert(status, "available")
+assert(badge, "plenty")
+status
+```
+
+- This is the complete `Nucleoid chooses values with conditional expressions`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `"available"`.
+- The existing assignment rules apply: a stored declaration whose condition read
+  a null binding settles to `null`, as `x = flag || 2` does, and `.value` is
+  frozen in every branch when the declaration is stored. Class-level rules
+  validate names and cycles in both branches when they are declared.
+- Statement `if` rules are unchanged, including an `if` written after an
+  expression on the same line: the Python spelling applies only when `else`
+  directly follows its condition.
+- `lambda` stays a name at the top level of a `?` consequent and of a Python
+  condition. The Python spelling is not recognized at the top level of a
+  template interpolation, whose trailing tokens are ignored; write
+  `` `${c ? a : b}` `` or `` `${(a if c else b)}` `` there.
+- Both spellings render canonically as `(condition?consequent:alternate)`.
+  Grammar, errors and edge cases are in the authoritative
+  [conditional expressions](../nucleoid.spec.md#conditional-expressions)
+  section.
+
+Full detail: [NUC 59](nuc-0059.md).
 
 ### Indexing, slicing, and length
 
@@ -737,6 +788,10 @@ Full detail: [NUC 6](nuc-0006.md).
 ### Conditionals
 
 - A conditional is a standing rule, re-evaluated when its condition or its branches change.
+- To choose a value inside an expression instead of running a branch, use a
+  [conditional expression](#conditional-expressions). Separate `if` rules with
+  the same condition text replace each other; conditional expressions belong to
+  the declarations that contain them.
 - A false condition leaves the target untouched rather than clearing it.
 - Re-declaring a conditional replaces it.
 - Conditionals apply in the order received; when several match, the last one holds.
@@ -833,6 +888,8 @@ assert(signal.output, 8)
 - `null`, an undefined property, and `0` are false; a non-empty value is true.
 - An instance is true, so a query result can be tested directly.
 - `not` inverts the test.
+- Conditional expressions use the same test; see
+  [Conditional expressions](#conditional-expressions).
 
 ```
 if $Device.profile:
@@ -2239,6 +2296,9 @@ else                                   existing colon-free final indented suite
     statement
 elif                                   same unconditional alias without a colon
     statement
+
+condition ? consequent : alternate     conditional expression (NUC 59)
+consequent if condition else alternate same expression, Python spelling
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration

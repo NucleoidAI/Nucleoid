@@ -1,4 +1,4 @@
-//! Unary, binary and logical operators.
+//! Unary, binary, logical and conditional operators.
 
 use crate::error::Result;
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, UnaryOp};
@@ -23,6 +23,11 @@ impl<'a> Operator<'a> {
                 left,
                 right,
             } => runtime.evaluate_logical(*operator, left, right, scope),
+            Expr::Conditional {
+                condition,
+                consequent,
+                alternate,
+            } => runtime.evaluate_conditional(condition, consequent, alternate, scope),
             Expr::Binary {
                 operator,
                 left,
@@ -49,6 +54,15 @@ fn walk_operands<'a>(node: &'a Expr, accumulator: &mut Vec<&'a Expr>) {
             walk_operands(right, accumulator);
         }
         Expr::Unary { operand, .. } | Expr::Delete(operand) => walk_operands(operand, accumulator),
+        Expr::Conditional {
+            condition,
+            consequent,
+            alternate,
+        } => {
+            walk_operands(condition, accumulator);
+            walk_operands(consequent, accumulator);
+            walk_operands(alternate, accumulator);
+        }
         Expr::Assign { target, value } => {
             walk_operands(target, accumulator);
             walk_operands(value, accumulator);
@@ -132,6 +146,23 @@ impl Runtime {
                 }
             }
         }
+    }
+
+    /// Evaluates the condition once and then only the selected branch, with
+    /// the same truthiness and short-circuit reads as `&&` and `||`.
+    pub(crate) fn evaluate_conditional(
+        &mut self,
+        condition: &Expr,
+        consequent: &Expr,
+        alternate: &Expr,
+        scope: &mut Scope,
+    ) -> Result<Value> {
+        let branch = if self.evaluate(condition, scope)?.truthy() {
+            consequent
+        } else {
+            alternate
+        };
+        self.evaluate(branch, scope)
     }
 
     pub(crate) fn evaluate_binary(

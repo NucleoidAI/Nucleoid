@@ -254,6 +254,17 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
             visit(left);
             visit(right);
         }
+        // Static queries see every branch, as with a skipped logical operand;
+        // evaluation reads only the selected one.
+        Expr::Conditional {
+            condition,
+            consequent,
+            alternate,
+        } => {
+            visit(condition);
+            visit(consequent);
+            visit(alternate);
+        }
         Expr::List(items) | Expr::Super(items) => {
             for item in items {
                 visit(item);

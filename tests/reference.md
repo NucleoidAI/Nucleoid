@@ -1897,4 +1897,20 @@ assert(best, 40)
 assert([3, 1, 2].sort(), [1, 2, 3])
 scores
 # return: [40,30,20,10]
+---
+# Nucleoid chooses values with conditional expressions
+
+stock = 3
+status = stock > 0 ? "available" : "sold out"
+badge = "low" if stock < 5 else "plenty"
+assert(status, "available")
+assert(badge, "low")
+stock = 0
+assert(status, "sold out")
+assert(badge, "low")
+stock = 8
+assert(status, "available")
+assert(badge, "plenty")
+status
+# return: "available"
 ```

@@ -437,9 +437,16 @@ fn failed_complete_scans_preserve_parameter_boundary_messages_and_positions() {
             Position::new(1, 17),
         ),
         (
-            "def f left: int?, right:\n    return left",
-            "Unexpected character '?'",
+            "def f left: int^, right:\n    return left",
+            "Unexpected character '^'",
             Position::new(1, 16),
+        ),
+        // NUC 59 makes `?` a token, so this nullable-annotation lookalike
+        // now fails at the same boundary as other unsupported annotations.
+        (
+            "def f left: int?, right:\n    return left",
+            "Expected '(' but found identifier 'left'",
+            Position::new(1, 7),
         ),
     ] {
         let error = Runtime::check(source).unwrap_err();

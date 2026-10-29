@@ -2559,6 +2559,36 @@ labels
   See the [root contract](../nucleoid.spec.md#thin-arrows-and-python-style-lambdas)
   for every accepted position and the places where `lambda` stays a name.
 
+## Conditional expressions
+
+**Conditional expressions grade live class records**
+
+```nuc
+class Student(name, score):
+    this.name = name
+    this.score = score
+$Student.grade = $Student.score >= 90 ? "A" : $Student.score >= 75 ? "B" : "C"
+ana = Student("Ana", 92)
+ben = Student("Ben", 70)
+honors = Student.filter(student => student.grade == "A").map(student => student.name)
+assert(ben.grade, "C")
+assert(honors, ["Ana"])
+ben.score = 80
+assert(ben.grade, "B")
+ben.score = 95
+assert(ben.grade, "A")
+assert(honors, ["Ana", "Ben"])
+honors
+# return: ["Ana","Ben"]
+```
+
+- One class-level rule chains two conditionals to the right, in place of a
+  class-level `if`/`elif`/`else` statement. Each student evaluates only its
+  selected branch and is graded again when its score changes; the honors
+  query follows the grades.
+- See [NUC 59](nuc-0059.md) and the
+  [root contract](../nucleoid.spec.md#conditional-expressions).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

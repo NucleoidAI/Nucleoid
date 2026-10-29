@@ -1105,6 +1105,31 @@ assert(under, [1])
   exactly `(first, second) => (expression)`. `=>` stays canonical, and
   `lambda` is still an ordinary name wherever accepted syntax owns its colon.
 
+## Conditional expressions
+
+**Conditional expressions pick live values in either spelling**
+
+```nuc
+price = 120
+shipping = 0 if price > 100 else 5
+label = price > 100 ? "free shipping" : "standard"
+assert(shipping, 0)
+assert(label, "free shipping")
+price = 40
+assert(shipping, 5)
+assert(label, "standard")
+```
+
+- [NUC 59](docs/nuc-0059.md) adds `condition ? consequent : alternate`
+  and Python's `consequent if condition else alternate`. Both build one
+  expression that evaluates its condition once and then only the selected
+  branch, so a falsy consequent such as `0` works where
+  `price > 100 && 0 || 5` would always give `5`.
+- The declarations stay live and switch branches when the condition changes.
+  `if` statements, including one written after an expression on the same
+  line, keep their accepted readings. See the
+  [root contract](nucleoid.spec.md#conditional-expressions).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

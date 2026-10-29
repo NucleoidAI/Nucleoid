@@ -170,6 +170,14 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+    /// `condition ? consequent : alternate`, also written
+    /// `consequent if condition else alternate` (NUC 59). The condition is
+    /// evaluated once, then exactly one branch.
+    Conditional {
+        condition: Box<Expr>,
+        consequent: Box<Expr>,
+        alternate: Box<Expr>,
+    },
     List(Vec<Expr>),
     ObjectLiteral(Vec<(String, Expr)>),
     Function(Arc<Function>),
@@ -298,6 +306,15 @@ impl Expr {
                 target: left,
                 value: right,
             } => left.contains_reasoning() || right.contains_reasoning(),
+            Expr::Conditional {
+                condition,
+                consequent,
+                alternate,
+            } => {
+                condition.contains_reasoning()
+                    || consequent.contains_reasoning()
+                    || alternate.contains_reasoning()
+            }
             Expr::Call { callee, arguments } => {
                 callee.contains_reasoning()
                     || arguments
@@ -372,6 +389,7 @@ impl<'a> Ast<'a> {
             Expr::Unary { .. }
             | Expr::Binary { .. }
             | Expr::Logical { .. }
+            | Expr::Conditional { .. }
             | Expr::Assign { .. }
             | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
             Expr::Reason { .. } | Expr::Model => Ast::Reason(reason::Reason::new(node)),

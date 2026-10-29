@@ -78,6 +78,17 @@ impl Runtime {
                 left: Box::new(self.freeze(left, scope)?),
                 right: Box::new(self.freeze(right, scope)?),
             },
+            // Like a skipped logical operand, an unselected branch keeps the
+            // snapshot taken when its declaration is stored.
+            Expr::Conditional {
+                condition,
+                consequent,
+                alternate,
+            } => Expr::Conditional {
+                condition: Box::new(self.freeze(condition, scope)?),
+                consequent: Box::new(self.freeze(consequent, scope)?),
+                alternate: Box::new(self.freeze(alternate, scope)?),
+            },
             Expr::Unary { operator, operand } => Expr::Unary {
                 operator: *operator,
                 operand: Box::new(self.freeze(operand, scope)?),

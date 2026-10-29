@@ -11435,6 +11435,286 @@ assert(scores, [0, 1, 2, 3])
 assert(ranked, [0, 1, 2, 3])"#);
 }
 
+/// Nucleoid selects values with conditional expressions
+#[rustfmt::skip]
+#[test]
+fn selects_values_with_conditional_expressions() {
+    let mut run = runner();
+    run("total = 80");
+    run("member = false");
+    run("shipping = 0 if total > 100 else 5");
+    run("discount = member ? 10 : 0");
+    run(r#"grade = total >= 90 ? "A" : total >= 70 ? "B" : "C""#);
+    run(r#"level = "gold" if total > 150 else "silver" if total > 50 else "basic""#);
+    run(r#"size = total > 100 ? "large" : "medium" if total > 50 else "small""#);
+    run(r#"label = member || total > 100 ? "priority" : "standard""#);
+    run("charge = total + (member ? 0 : shipping)");
+    run(r#"vip = "yes" if member and total > 50 else "no""#);
+    assert_eq!(run("shipping"), 5);
+    assert_eq!(run("discount"), 0);
+    assert_eq!(run("grade"), "B");
+    assert_eq!(run("level"), "silver");
+    assert_eq!(run("size"), "medium");
+    assert_eq!(run("label"), "standard");
+    assert_eq!(run("charge"), 85);
+    assert_eq!(run("vip"), "no");
+    run("total = 120");
+    assert_eq!(run("shipping"), 0);
+    assert_eq!(run("grade"), "A");
+    assert_eq!(run("level"), "silver");
+    assert_eq!(run("size"), "large");
+    assert_eq!(run("label"), "priority");
+    assert_eq!(run("charge"), 120);
+    run("member = true");
+    assert_eq!(run("discount"), 10);
+    assert_eq!(run("vip"), "yes");
+    run("total = 40");
+    assert_eq!(run("shipping"), 5);
+    assert_eq!(run("grade"), "C");
+    assert_eq!(run("level"), "basic");
+    assert_eq!(run("size"), "small");
+    assert_eq!(run("label"), "priority");
+    assert_eq!(run("charge"), 40);
+    assert_eq!(run("vip"), "no");
+}
+
+/// Nucleoid evaluates only the selected conditional branch
+#[rustfmt::skip]
+#[test]
+fn evaluates_only_the_selected_conditional_branch() {
+    let mut run = runner();
+    run(r#"log = []
+def note(tag):
+    log.push(tag)
+    return tag
+flag = true
+other = 1
+pick = flag ? note("yes") : note(other)
+assert(pick, "yes")
+assert(log, ["yes"])
+other = 2
+assert(pick, "yes")
+assert(log, ["yes"])
+flag = false
+assert(pick, 2)
+assert(log, ["yes", 2])
+other = 3
+assert(pick, 3)
+assert(log, ["yes", 2, 3])
+checks = []
+def check(value):
+    checks.push(value)
+    return value > 1
+size = "big" if check(other) else "small"
+assert(size, "big")
+assert(checks, [3])
+ready = true
+safe = 1 if ready else missing
+assert(safe, 1)
+failure = ""
+try:
+    ready = false
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(ready, true)
+assert(safe, 1)
+missing = 7
+assert(safe, 1)
+ready = false
+assert(safe, 7)
+toggle = null
+state = toggle ? "on" : "off"
+assert(state, null)
+toggle = false
+assert(state, "off")
+toggle = 1
+assert(state, "on")"#);
+}
+
+/// Nucleoid applies conditional expressions in class level rules
+#[rustfmt::skip]
+#[test]
+fn applies_conditional_expressions_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Order(total, color):
+    this.total = total
+    this.color = color
+$Order.shipping = 0 if $Order.total > 100 else 5
+$Order.tag = $Order.color == 1 ? "a" : "b"
+$Order.rush = $Order.express ? 10 : 0
+$Order.due = $Order.total + $Order.shipping + $Order.rush
+small = Order(40, 1)
+large = Order(250, 2)
+assert(small.shipping, 5)
+assert(large.shipping, 0)
+assert(small.tag, "a")
+assert(large.tag, "b")
+assert(small.rush, 0)
+assert(small.due, 45)
+assert(large.due, 250)
+small.total = 120
+assert(small.shipping, 0)
+assert(small.due, 120)
+assert(large.shipping, 0)
+large.color = 1
+assert(large.tag, "a")
+assert(small.tag, "a")
+large.express = true
+assert(large.rush, 10)
+assert(small.rush, 0)
+large.total = 30
+assert(large.shipping, 5)
+assert(large.due, 45)
+failure = ""
+try:
+    $Order.note = $Order.total > 1000 ? vip : "regular"
+catch error:
+    failure = error
+assert(failure, ReferenceError("vip is not defined"))
+try:
+    $Order.limit = $Order.express ? $Order.cap : 50
+    $Order.cap = $Order.limit + 1
+catch error:
+    failure = error
+assert(failure, TypeError("Circular Dependency"))"#);
+}
+
+/// Nucleoid uses conditional expressions in functions callbacks and literals
+#[rustfmt::skip]
+#[test]
+fn uses_conditional_expressions_in_functions_callbacks_and_literals() {
+    let mut run = runner();
+    run("limit = 2");
+    run("items = [1, 2, 3]");
+    run(r#"def size(value) => value > limit ? "big" : "small""#);
+    run(r#"def sign(value):
+    return "neg" if value < 0 else "pos""#);
+    run(r#"labels = items.map(item => item > limit ? "big" : "small")"#);
+    run(r#"kinds = items.map(lambda item: "odd" if item % 2 else "even")"#);
+    run("first = size(items[0])");
+    run(r#"summary = { count: items.length > 2 ? "many" : "few", signs: [sign(-1), sign(limit)] }"#);
+    run("pick = items[limit > 2 ? 0 : 1]");
+    run(r#"banner = `${limit > 2 ? "wide" : "narrow"}`"#);
+    run("scaled = Math.max(limit > 2 ? 10 : 20, 5)");
+    assert_eq!(run("labels"), serde_json::json!(["small", "small", "big"]));
+    assert_eq!(run("kinds"), serde_json::json!(["odd", "even", "odd"]));
+    assert_eq!(run("first"), "small");
+    assert_eq!(run("summary.count"), "many");
+    assert_eq!(run("summary.signs"), serde_json::json!(["neg", "pos"]));
+    assert_eq!(run("pick"), 2);
+    assert_eq!(run("banner"), "narrow");
+    assert_eq!(run("scaled"), 20);
+    run("limit = 0");
+    assert_eq!(run("labels"), serde_json::json!(["big", "big", "big"]));
+    assert_eq!(run("first"), "big");
+    assert_eq!(run("pick"), 2);
+    run("limit = 5");
+    assert_eq!(run("pick"), 1);
+    assert_eq!(run("banner"), "wide");
+    assert_eq!(run("scaled"), 10);
+    run("items.push(6)");
+    assert_eq!(run("labels"), serde_json::json!(["small", "small", "small", "big"]));
+    assert_eq!(run("kinds"), serde_json::json!(["odd", "even", "odd", "even"]));
+}
+
+/// Nucleoid keeps if statements beside conditional expressions
+#[rustfmt::skip]
+#[test]
+fn keeps_if_statements_beside_conditional_expressions() {
+    let mut run = runner();
+    run("ready = true");
+    run("armed = true");
+    run("lit = true");
+    run("limit = 10");
+    run(r#"mode = "on" if ready else "off""#);
+    run(r#"x = 1 if armed:
+    y = 2"#);
+    run("z = 3 if lit: w = 4");
+    run("if limit > 5: a = 1 else: a = 2");
+    run("b = 5 c = 6");
+    run(r#"if limit > (ready ? 5 : 20):
+    band = "wide"
+else:
+    band = "narrow""#);
+    run(r#"if armed and lit
+    flow = "open"
+elif limit > 5
+    flow = "half"
+else
+    flow = "shut""#);
+    run(r#"note = "ready? yes""#);
+    run("pattern = /colou?r/");
+    assert_eq!(run("mode"), "on");
+    assert_eq!(run("[x, y, z, w, a, b, c]"), serde_json::json!([1, 2, 3, 4, 1, 5, 6]));
+    assert_eq!(run("band"), "wide");
+    assert_eq!(run("flow"), "open");
+    assert_eq!(run("note"), "ready? yes");
+    assert_eq!(run(r#"pattern.test("color")"#), true);
+    run("ready = false");
+    run("armed = false");
+    assert_eq!(run("mode"), "off");
+    assert_eq!(run("band"), "narrow");
+    assert_eq!(run("flow"), "half");
+    assert_eq!(run("[x, y, z, w, a]"), serde_json::json!([1, 2, 3, 4, 1]));
+    run("limit = 1");
+    assert_eq!(run("a"), 2);
+    assert_eq!(run("flow"), "shut");
+}
+
+/// Nucleoid rolls back failed conditional expression updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_conditional_expression_updates() {
+    let mut run = runner();
+    run(r#"def check(amount):
+    if amount > 100:
+        throw "TOO_LARGE"
+    return amount
+rate = 2
+amount = 5
+fee = amount > 10 ? check(amount) * rate : rate
+assert(fee, 2)
+failure = ""
+try:
+    amount = 500
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(amount, 5)
+assert(fee, 2)
+try:
+    amount = 20
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(amount, 5)
+assert(fee, 2)
+amount = 20
+assert(fee, 40)
+rate = 3
+assert(fee, 60)
+base = 3
+frozen = amount > 10 ? base.value : 0
+spare = base.value if amount > 50 else 1
+base = 4
+assert(frozen, 3)
+assert(spare, 1)
+amount = 60
+assert(spare, 3)
+assert(fee, 180)
+bonus = 7
+reward = bonus if amount > 30 else 0
+assert(reward, 7)
+delete bonus
+assert(reward, null)
+bonus = 9
+assert(reward, 9)
+amount = 25
+assert(reward, 0)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

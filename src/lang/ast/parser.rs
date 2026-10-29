@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use super::lexer::{Keyword, Spanned, Token, tokenize};
@@ -59,8 +60,9 @@ enum ArgumentContext {
 
 /// What may legally follow the expression being parsed. Contextual spellings
 /// consult it so that a following `:` keeps its accepted owner. Operands,
-/// assignment values and arrow or lambda bodies inherit it; an expression
-/// nested in brackets, braces or call arguments selects its own.
+/// assignment values, conditional alternates and arrow or lambda bodies
+/// inherit it; an expression nested in brackets, braces or call arguments
+/// selects its own.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ExpressionContext {
     /// Statements, grouping, list items, call arguments and slice ends.
@@ -68,10 +70,13 @@ enum ExpressionContext {
     /// An object-literal value, where a following `name:` starts the next
     /// comma-free property (NUC 44).
     ObjectValue,
-    /// An `if`, `else` or `for` header or a subscript start (an index or slice
-    /// start), whose top-level `:` belongs to that construct, or a template
-    /// interpolation, whose trailing tokens are ignored.
+    /// An `if`, `else` or `for` header, a subscript start (an index or slice
+    /// start), a conditional's consequent or a Python-style condition, whose
+    /// top-level `:` or `else` belongs to the enclosing construct.
     Clause,
+    /// A template interpolation, whose trailing tokens are ignored, so a
+    /// top-level `lambda` and a Python-style `if` keep their accepted readings.
+    Interpolation,
 }
 
 struct Parser {
@@ -79,6 +84,18 @@ struct Parser {
     position: usize,
     depth: usize,
     context: ExpressionContext,
+    /// Python-style conditional attempts by `if` token position and nesting
+    /// depth, which together decide one: the qualified condition and the
+    /// position after its `else`, or `None`. A re-parse of the same source
+    /// reuses an outcome instead of parsing the condition again.
+    python_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
+}
+
+/// A qualified Python-style condition and the position after its `else`.
+#[derive(Clone)]
+struct PythonCondition {
+    condition: Expr,
+    end: usize,
 }
 
 impl Parser {
@@ -88,6 +105,7 @@ impl Parser {
             position: 0,
             depth: 0,
             context: ExpressionContext::Ordinary,
+            python_conditions: HashMap::new(),
         }
     }
 
@@ -467,9 +485,11 @@ impl Parser {
 
     /// Qualify a nonempty, balanced header without consuming tokens or parsing
     /// an expression. Only a top-level colon or real body layout may end it;
-    /// colons in calls, slices and object literals still belong to the header.
+    /// colons in calls, slices and object literals still belong to the header,
+    /// as does each top-level conditional's colon after its `?`.
     fn has_direct_condition_suite(&self) -> bool {
         let mut delimiters = Vec::new();
+        let mut conditionals = 0usize;
         for (offset, spanned) in self.tokens.iter().skip(self.position).enumerate() {
             match &spanned.token {
                 token @ (Token::LeftParen | Token::LeftBracket | Token::LeftBrace) => {
@@ -485,6 +505,8 @@ impl Parser {
                         return false;
                     }
                 }
+                Token::Question if delimiters.is_empty() => conditionals += 1,
+                Token::Colon if delimiters.is_empty() && conditionals > 0 => conditionals -= 1,
                 Token::Colon if delimiters.is_empty() => {
                     return offset > 0 && self.has_indented_suite(offset);
                 }
@@ -972,15 +994,26 @@ impl Parser {
         self.expression_in(ExpressionContext::Ordinary)
     }
 
-    /// An `if`/`else`/`for` header or subscript start: its top-level `:`
-    /// belongs to the enclosing construct, never to a contextual `lambda`.
+    /// An `if`/`else`/`for` header, subscript start or conditional consequent:
+    /// its top-level `:` belongs to the enclosing construct, never to a
+    /// contextual `lambda`.
     fn clause_expression(&mut self) -> Result<Expr> {
         self.expression_in(ExpressionContext::Clause)
     }
 
     fn expression_in(&mut self, context: ExpressionContext) -> Result<Expr> {
+        self.nested_expression_in(context, Self::expression_inner)
+    }
+
+    /// Runs one nested `parse` in `context`, then restores the enclosing
+    /// context whether or not it succeeded.
+    fn nested_expression_in(
+        &mut self,
+        context: ExpressionContext,
+        parse: fn(&mut Self) -> Result<Expr>,
+    ) -> Result<Expr> {
         let outer = std::mem::replace(&mut self.context, context);
-        let expression = self.nested_expression(Self::expression_inner);
+        let expression = self.nested_expression(parse);
         self.context = outer;
         expression
     }
@@ -999,7 +1032,7 @@ impl Parser {
     }
 
     fn expression_inner(&mut self) -> Result<Expr> {
-        let left = self.pipeline()?;
+        let left = self.conditional()?;
 
         let operator = match self.peek() {
             Token::Assign => None,
@@ -1065,6 +1098,77 @@ impl Parser {
             Expr::ClassRef(_) | Expr::This if parts > 0 => Ok(()),
             _ => Err(self.error("Invalid compound assignment target")),
         }
+    }
+
+    /// `condition ? consequent : alternate` or Python's
+    /// `consequent if condition else alternate`: one right-associative level
+    /// above assignment and below the reasoning pipeline. Both spellings build
+    /// the same node. The consequent after `?` is a full expression whose
+    /// following `:` belongs to the conditional; the alternate continues in
+    /// the enclosing context.
+    fn conditional(&mut self) -> Result<Expr> {
+        let operand = self.pipeline()?;
+
+        let (condition, consequent) = if self.eat(&Token::Question) {
+            let consequent = self.clause_expression()?;
+            self.expect(&Token::Colon)?;
+            (operand, consequent)
+        } else if let Some(condition) = self.python_condition() {
+            (condition, operand)
+        } else {
+            return Ok(operand);
+        };
+
+        let alternate = self.nested_expression(Self::conditional)?;
+        Ok(Expr::Conditional {
+            condition: Box::new(condition),
+            consequent: Box::new(consequent),
+            alternate: Box::new(alternate),
+        })
+    }
+
+    /// Qualifies a Python-style conditional after a complete operand: `if`,
+    /// one condition parsed like an `if` header's up to the pipeline level,
+    /// and an immediately following `else`, which is consumed. Any other
+    /// outcome consumes nothing, so the statement parser still reads `if` as
+    /// an adjacent statement with its original positions and diagnostics.
+    /// Template interpolations keep ignoring a trailing `if`.
+    fn python_condition(&mut self) -> Option<Expr> {
+        if self.context == ExpressionContext::Interpolation
+            || self.peek() != &Token::Keyword(Keyword::If)
+        {
+            return None;
+        }
+
+        let attempt = (self.position, self.depth);
+        let outcome = match self.python_conditions.get(&attempt) {
+            Some(outcome) => outcome.clone(),
+            None => {
+                let outcome = self.attempt_python_condition();
+                self.python_conditions.insert(attempt, outcome.clone());
+                outcome
+            }
+        };
+        let PythonCondition { condition, end } = outcome?;
+        self.position = end;
+        Some(condition)
+    }
+
+    /// Parses one Python-style condition after `if` without keeping any
+    /// position, depth or context change.
+    fn attempt_python_condition(&mut self) -> Option<PythonCondition> {
+        let start = self.position;
+        self.advance();
+        let condition = self.nested_expression_in(ExpressionContext::Clause, Self::pipeline);
+        let outcome = match condition {
+            Ok(condition) if self.eat_keyword(Keyword::Else) => Some(PythonCondition {
+                condition,
+                end: self.position,
+            }),
+            _ => None,
+        };
+        self.position = start;
+        outcome
     }
 
     fn pipeline(&mut self) -> Result<Expr> {
@@ -1640,15 +1744,17 @@ impl Parser {
     /// names, then a `:` qualifies; `lambda` is not reserved.
     ///
     /// The name stays an ordinary identifier wherever accepted syntax owns
-    /// that colon: a clause header, subscript start or template interpolation;
-    /// a single name in an object value, where `lambda next:` is a comma-free
-    /// property boundary; and a single name whose colon starts a statement,
-    /// which statement loops accept directly after the expression ending at
-    /// `lambda`: a typed declaration (`lambda x: int`) or an assertion
-    /// statement (`lambda assert: x, 1`).
+    /// that colon: a clause header, subscript start, conditional consequent or
+    /// template interpolation; a single name in an object value, where
+    /// `lambda next:` is a comma-free property boundary; and a single name
+    /// whose colon starts a statement, which statement loops accept directly
+    /// after the expression ending at `lambda`: a typed declaration
+    /// (`lambda x: int`) or an assertion statement (`lambda assert: x, 1`).
     fn lambda_parameter_count(&self) -> Option<usize> {
-        if self.context == ExpressionContext::Clause
-            || !matches!(self.peek(), Token::Identifier(name) if name == "lambda")
+        if matches!(
+            self.context,
+            ExpressionContext::Clause | ExpressionContext::Interpolation
+        ) || !matches!(self.peek(), Token::Identifier(name) if name == "lambda")
         {
             return None;
         }
@@ -1772,10 +1878,11 @@ impl Parser {
             }
 
             // Trailing tokens after an interpolated expression are ignored,
-            // so a top-level `lambda` keeps its accepted name reading here.
+            // so a top-level `lambda` keeps its accepted name reading here
+            // and a trailing Python-style `if` stays ignored.
             parts.push(TemplatePart::Expression(parse_expression_in(
                 &raw[start..end],
-                ExpressionContext::Clause,
+                ExpressionContext::Interpolation,
             )?));
 
             while let Some((offset, _)) = characters.peek() {
@@ -1819,12 +1926,23 @@ mod tests {
             ("ready # header\n\n# blank\n    # body\n    pass", true),
             ("ready\n;\n    pass", true),
             ("ready\n    ;\n    pass", true),
+            // A top-level conditional expression's colon pairs with its `?`.
+            ("ready ? on : off:\n    pass", true),
+            ("ready ? on : off\n    pass", true),
+            ("a ? b ? c : d : e:\n    pass", true),
+            ("a ? b : c ? d : e\n    pass", true),
+            ("(ready ? on : off):\n    pass", true),
+            ("on if ready else off:\n    pass", true),
+            ("ready ? (x: int) => x : off:\n    pass", true),
             // Qualification is not expression validation. Real parsing must
             // report these malformed expressions rather than fall back.
             ("ready +:\n    pass", true),
             ("():\n    pass", true),
             ("pass:\n    pass", true),
             ("ready +\n    pass", true),
+            ("ready ? on:\n    pass", true),
+            ("ready ?\n    pass", true),
+            ("(ready ? on):\n    pass", true),
             (":\n    pass", false),
             ("\n    pass", false),
             ("ready: pass", false),
@@ -1851,6 +1969,11 @@ mod tests {
             ("ready):\n    pass", false),
             ("(ready:\n    pass", false),
             ("{ready: true:\n    pass", false),
+            ("ready ? on : off: pass", false),
+            ("ready ? on : off", false),
+            ("ready ? on : off:", false),
+            ("ready ? on", false),
+            ("ready ? on : off; other:\n    pass", false),
         ] {
             let mut parser = Parser::new(tokenize(&format!("else {header}")).unwrap());
             parser.expect(&Token::Keyword(Keyword::Else)).unwrap();
@@ -2036,7 +2159,7 @@ mod tests {
 
     #[test]
     fn lambda_lookahead_qualifies_whole_headers_by_context_without_consuming() {
-        use ExpressionContext::{Clause, ObjectValue, Ordinary};
+        use ExpressionContext::{Clause, Interpolation, ObjectValue, Ordinary};
         for (source, context, count) in [
             ("lambda: 1", Ordinary, Some(0)),
             ("lambda: value", Ordinary, Some(0)),
@@ -2076,10 +2199,14 @@ mod tests {
             ("lambda x: x", ObjectValue, None),
             ("lambda: 1", ObjectValue, Some(0)),
             ("lambda a, b: 1", ObjectValue, Some(2)),
-            // Clause headers, subscript starts and interpolations own it.
+            // Clause headers, subscript starts, conditional consequents and
+            // interpolations own it.
             ("lambda: 1", Clause, None),
             ("lambda x: 1", Clause, None),
             ("lambda a, b: 1", Clause, None),
+            ("lambda: 1", Interpolation, None),
+            ("lambda x: 1", Interpolation, None),
+            ("lambda a, b: 1", Interpolation, None),
             ("lambda", Ordinary, None),
             ("lambda x", Ordinary, None),
             ("lambda x, : x", Ordinary, None),
@@ -2195,6 +2322,59 @@ mod tests {
         };
         assert_eq!(field.name, "value");
         assert_eq!(field.type_name.as_deref(), Some("int"));
+    }
+
+    #[test]
+    fn python_conditions_consume_nothing_unless_else_follows_and_reuse_outcomes() {
+        for (source, qualifies) in [
+            ("a if b else c", true),
+            ("a if b elif c", true),
+            ("a if not b or c else d", true),
+            ("a if lambda else c", true),
+            ("a if x => x else c", true),
+            ("a if (b if c else d) else e", true),
+            ("a if b: c", false),
+            ("a if b\n    c", false),
+            ("a if b; c", false),
+            ("a if b c else d", false),
+            ("a if b", false),
+            ("a if (b else c", false),
+            ("a if lambda: 1 else c", false),
+            ("a if b ? c : d else e", false),
+            ("a if b if c else d else e", false),
+            ("a if b = 1 else c", false),
+            ("a if", false),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            parser.advance();
+            let start = parser.position;
+            let tokens = parser.tokens.clone();
+            let first = parser.python_condition();
+            assert_eq!(first.is_some(), qualifies, "{source}");
+            if !qualifies {
+                assert_eq!(parser.position, start, "{source}");
+            }
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+            let recorded = parser.python_conditions.len();
+            assert!(
+                parser.python_conditions.contains_key(&(start, 0)),
+                "{source}"
+            );
+            let end = parser.position;
+            parser.position = start;
+            assert_eq!(parser.python_condition(), first, "{source}");
+            assert_eq!(parser.position, end, "{source}");
+            assert_eq!(parser.python_conditions.len(), recorded, "{source}");
+            assert_eq!(parser.tokens, tokens, "{source}");
+        }
+
+        let mut parser = Parser::new(tokenize("a if b else c").unwrap());
+        parser.advance();
+        parser.context = ExpressionContext::Interpolation;
+        assert_eq!(parser.python_condition(), None);
+        assert_eq!(parser.position, 1);
+        assert!(parser.python_conditions.is_empty());
     }
 
     #[test]

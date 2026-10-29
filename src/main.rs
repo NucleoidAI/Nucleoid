@@ -292,9 +292,11 @@ fn indented_alternative_header(line: &str) -> bool {
 }
 
 /// Buffer only a lexical, nonempty balanced condition without a suite delimiter.
-/// Alternatives only adjust indentation inside an existing submission; they do
-/// not start one. This is not expression validation: commit/EOF still runs the
-/// unchanged real parser, including its body requirements and resource bounds.
+/// A top-level conditional expression's colon pairs with its `?`; it is not a
+/// suite delimiter. Alternatives only adjust indentation inside an existing
+/// submission; they do not start one. This is not expression validation:
+/// commit/EOF still runs the unchanged real parser, including its body
+/// requirements and resource bounds.
 fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
     let Ok(tokens) = tokenize(line) else {
         return false;
@@ -311,6 +313,7 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
     }
     let mut nonempty = false;
     let mut delimiters = Vec::new();
+    let mut conditionals = 0usize;
     while let Some(token) = tokens.next() {
         match token {
             Token::At => match tokens.next() {
@@ -319,12 +322,15 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
                     if matches!(name.as_str(), "first" | "last" | "previous") => {}
                 _ => return false,
             },
-            Token::Eof => return nonempty && delimiters.is_empty(),
+            Token::Eof => return nonempty && delimiters.is_empty() && conditionals == 0,
             Token::Newline | Token::Dedent if delimiters.is_empty() => {
                 return nonempty
+                    && conditionals == 0
                     && tokens
                         .all(|token| matches!(token, Token::Newline | Token::Dedent | Token::Eof));
             }
+            Token::Question if delimiters.is_empty() => conditionals += 1,
+            Token::Colon if delimiters.is_empty() && conditionals > 0 => conditionals -= 1,
             Token::Colon | Token::Semicolon | Token::Indent if delimiters.is_empty() => {
                 return false;
             }
@@ -657,6 +663,44 @@ mod tests {
         assert!(indented_condition_header("if ready +", Keyword::If));
         assert!(!indented_body_header("else ready"));
         assert!(!indented_body_header("elif if ready"));
+    }
+
+    #[test]
+    fn conditional_expression_colons_pair_with_their_question_marks_in_headers() {
+        for condition in [
+            "ready ? on : off",
+            "ready ? (x: int) => x : off",
+            "a ? b : c ? d : e",
+            "a ? b ? c : d : e",
+            "(ready ? on : off) == on",
+            "on if ready else off",
+            "ready ? `${a ? b : c}` : off",
+        ] {
+            for prefix in ["if", "else if", "elif if", "else", "elif"] {
+                let line = format!("{prefix} {condition}");
+                let keyword = if prefix == "if" {
+                    Keyword::If
+                } else {
+                    Keyword::Else
+                };
+                assert!(indented_condition_header(&line, keyword), "{line:?}");
+                assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+            }
+        }
+        for line in [
+            "if ready ?",
+            "if ready ? on",
+            "if ready : off",
+            "if ready ? on : off:",
+            "if ready ? on : off: pass",
+            "if ready ? on : off; other",
+        ] {
+            assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+        }
+        // A colon-bearing header still buffers through its final colon.
+        assert!(indented_body_header("if ready ? on : off:"));
+        assert!(!indented_body_header("label = ready ? on : off"));
+        assert!(!indented_body_header("label = on if ready else off"));
     }
 
     #[test]

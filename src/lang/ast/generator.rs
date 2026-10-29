@@ -101,6 +101,14 @@ impl fmt::Display for Expr {
                 };
                 write!(f, "{left}{operator}{right}")
             }
+            // Both spellings render as one grouped symbol form. The grouping
+            // keeps a conditional operand distinct from its enclosing operator
+            // in graph keys, as `(c?a:b)+1` and `(c?a:b+1)` are different.
+            Expr::Conditional {
+                condition,
+                consequent,
+                alternate,
+            } => write!(f, "({condition}?{consequent}:{alternate})"),
             Expr::List(items) => write!(f, "[{}]", join(items)),
             Expr::ObjectLiteral(entries) => {
                 let rendered: Vec<String> = entries

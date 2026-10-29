@@ -650,9 +650,10 @@ statement positions; caught values and transaction recovery are unchanged.
 - Lexical failures precede parsing: `def f left: int, right => @` gives
   `SyntaxError("Unexpected character '@'")` at line 1, column 27;
   `def f left: int | str, right => left` gives
-  `SyntaxError("Unexpected character '|'")` at column 17;
-  `def f left: int?, right => left` gives
-  `SyntaxError("Unexpected character '?'")` at column 16.
+  `SyntaxError("Unexpected character '|'")` at column 17. Since
+  [NUC 59](docs/nuc-0059.md) made `?` a token, the nullable-looking
+  `def f left: int?, right => left` fails the bare-header scan instead and
+  gives `SyntaxError("Expected '(' but found identifier 'left'")` at column 7.
   The malformed parenthesized `def f(left: int, right:) => left` keeps
   `SyntaxError("Expected a type but found ')'")` at line 1, column 26.
 - Undefined body/object reads retain `ReferenceError("missing is not defined")`.
@@ -792,9 +793,10 @@ statement positions; caught values and transaction recovery are unchanged.
   `SyntaxError("Expected a type but found ')'")` at line 1, column 25;
   `def f(a:):` keeps the same message at column 10.
   Lexical errors still precede parsing: `def f left: int | str, right:`
-  gives `SyntaxError("Unexpected character '|'")` at line 1, column 17, and
-  `def f left: int?, right:` gives `SyntaxError("Unexpected character '?'")`
-  at column 16.
+  gives `SyntaxError("Unexpected character '|'")` at line 1, column 17. Since
+  [NUC 59](docs/nuc-0059.md) made `?` a token, `def f left: int?, right:`
+  fails the bare-header scan instead and gives
+  `SyntaxError("Expected '(' but found identifier 'left'")` at column 7.
 - After a qualifying typed/mixed header and newline, four-space-indented
   `return left +)` gives `SyntaxError("Unexpected ')'")` at line 2, column 19;
   `return { left = 1 }` gives `SyntaxError("Expected ':' but found '='")`
@@ -2386,6 +2388,83 @@ statement positions; caught values and transaction recovery are unchanged.
 - No syntax, keyword, error type or message is added. The seven appended
   entries beginning `Nucleoid sorts a list in place like JavaScript` through
   `Nucleoid rolls back failed in place sorts` specify the executable behavior.
+
+## Conditional expressions
+
+- [NUC 59](docs/nuc-0059.md) adds conditional expressions in two optional
+  spellings that build one expression: `condition ? consequent : alternate`
+  and `consequent if condition else alternate`. Statement-level `if`, `else`
+  and `elif` rules keep their grammar and behavior.
+- The condition is evaluated once and tested with the existing truthiness of
+  `if`, `not`, `&&` and `||`: null, an undefined property, `false`, `0`, NaN
+  and the empty string are false; everything else, including empty lists and
+  objects, is true. Exactly one branch is then evaluated and its value is the
+  result. The unselected branch is not evaluated: it has no effects, raises
+  nothing and adds no dependency.
+- Reads follow the short-circuit reads of `&&` and `||`. A standing
+  declaration depends on what its condition and its selected branch read,
+  re-evaluates when either changes and switches branches when the condition
+  changes, replacing obsolete dependencies. Variables, properties, class-level
+  rules, function bodies and returns, arrow and lambda callbacks, list and
+  object elements, template interpolations, call arguments and subscripts use
+  a conditional as an ordinary operand.
+- Existing assignment rules are unchanged. A stored declaration whose
+  evaluation read a null binding or property, including in its condition,
+  settles to `null`, as `x = flag || 2` does. A missing property read by the
+  condition is false and stays subscribed, an undefined selected branch stores
+  `null` until it is defined, and reading a deleted variable during its
+  deletion's propagation defers to `null`. `.value` snapshots are taken in
+  every operand when the declaration is stored, as in a skipped logical
+  operand, so an unselected branch keeps the snapshot it had then.
+- Class-level rule validation inspects every operand, as for `&&` and `||`:
+  an undefined name in either branch raises
+  `ReferenceError("<name> is not defined")` when the rule is declared, and a
+  `$Class` property read in either branch takes part in
+  `TypeError("Circular Dependency")` checks. Each instance evaluates only its
+  selected branch. Unlike a class-level `if` statement, which stands aside
+  while its condition reads something undefined, a conditional expression
+  treats that condition as false and selects the alternate.
+- An error raised by the condition or the selected branch propagates through
+  the existing transaction, so a failed standing re-evaluation rolls back the
+  triggering change and keeps the earlier branch selection.
+- Both spellings share one right-associative precedence level above
+  assignment and below the reasoning pipeline `|>`. `x = c ? a : b` assigns
+  the result, `a || b ? c : d` tests `a || b`, `x |> why ? a : b` tests the
+  pipeline, and `a ? b : c ? d : e`, `a if b else c if d else e` and mixed
+  chains group to the right. The consequent after `?` is a complete
+  expression. The operand before `?` and both operands before `else` are
+  pipeline-level, so a nested conditional there needs parentheses; either
+  alternate is conditional-level. Arrow and lambda bodies extend over a
+  conditional, as in `items.map(x => x > 2 ? "big" : "small")`.
+- `?` is one lexer token. `??`, `?.` and `?:` are not operators, and a `/`
+  after `?` starts a regular expression. `?` inside strings, template text
+  outside interpolations, regular expressions and comments is unchanged. In
+  direct-alternative and native REPL header scans, a top-level conditional's
+  colon pairs with its `?`.
+- The Python spelling qualifies only when `if` follows a complete operand and
+  one condition, parsed like an `if` header's up to the pipeline level, is
+  immediately followed by `else` or its existing lexical alias `elif`.
+  Otherwise it consumes nothing, and `if` keeps its accepted reading as an
+  adjacent statement with its original diagnostics: `x = 1 if ready:` with an
+  indented suite, `z = 3 if lit: w = 4` and colon-free NUC49 headers are
+  unchanged. An attempt is decided by its `if` position and nesting depth and
+  reused when the same source is parsed again.
+- `lambda` stays an ordinary name at the top level of a `?` consequent and of
+  a Python condition, whose following `:` or `else` belongs to the
+  conditional; parenthesize a lambda there. At the top level of a template
+  interpolation, whose trailing tokens are ignored, the Python spelling is not
+  recognized, so `` `${a if b else c}` `` still renders `a`; use the `?`
+  spelling or parentheses, as in `` `${(a if b else c)}` ``.
+- Both spellings render canonically as `(condition?consequent:alternate)`.
+  The grouping keeps a conditional operand distinct from its enclosing
+  operator in graph keys.
+- Malformed forms use existing diagnostics, for example
+  `SyntaxError("Expected ':' but found end of input")` for `x = c ? 1`,
+  `SyntaxError("Unexpected '?'")` for `x = c ?? 1 : 2` and
+  `SyntaxError("Unexpected end of input")` for `x = 1 if c else`. The six
+  appended entries beginning `Nucleoid selects values with conditional
+  expressions` through `Nucleoid rolls back failed conditional expression
+  updates` specify the executable behavior.
 
 ```
 # Nucleoid runs a statement in the state
@@ -14205,4 +14284,260 @@ assert(ranked, [1, 2, 3])
 scores.push(0)
 assert(scores, [0, 1, 2, 3])
 assert(ranked, [0, 1, 2, 3])
+---
+# Nucleoid selects values with conditional expressions
+
+total = 80
+member = false
+shipping = 0 if total > 100 else 5
+discount = member ? 10 : 0
+grade = total >= 90 ? "A" : total >= 70 ? "B" : "C"
+level = "gold" if total > 150 else "silver" if total > 50 else "basic"
+size = total > 100 ? "large" : "medium" if total > 50 else "small"
+label = member || total > 100 ? "priority" : "standard"
+charge = total + (member ? 0 : shipping)
+vip = "yes" if member and total > 50 else "no"
+assert(shipping, 5)
+assert(discount, 0)
+assert(grade, "B")
+assert(level, "silver")
+assert(size, "medium")
+assert(label, "standard")
+assert(charge, 85)
+assert(vip, "no")
+total = 120
+assert(shipping, 0)
+assert(grade, "A")
+assert(level, "silver")
+assert(size, "large")
+assert(label, "priority")
+assert(charge, 120)
+member = true
+assert(discount, 10)
+assert(vip, "yes")
+total = 40
+assert(shipping, 5)
+assert(grade, "C")
+assert(level, "basic")
+assert(size, "small")
+assert(label, "priority")
+assert(charge, 40)
+assert(vip, "no")
+---
+# Nucleoid evaluates only the selected conditional branch
+
+log = []
+def note(tag):
+    log.push(tag)
+    return tag
+flag = true
+other = 1
+pick = flag ? note("yes") : note(other)
+assert(pick, "yes")
+assert(log, ["yes"])
+other = 2
+assert(pick, "yes")
+assert(log, ["yes"])
+flag = false
+assert(pick, 2)
+assert(log, ["yes", 2])
+other = 3
+assert(pick, 3)
+assert(log, ["yes", 2, 3])
+checks = []
+def check(value):
+    checks.push(value)
+    return value > 1
+size = "big" if check(other) else "small"
+assert(size, "big")
+assert(checks, [3])
+ready = true
+safe = 1 if ready else missing
+assert(safe, 1)
+failure = ""
+try:
+    ready = false
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(ready, true)
+assert(safe, 1)
+missing = 7
+assert(safe, 1)
+ready = false
+assert(safe, 7)
+toggle = null
+state = toggle ? "on" : "off"
+assert(state, null)
+toggle = false
+assert(state, "off")
+toggle = 1
+assert(state, "on")
+---
+# Nucleoid applies conditional expressions in class level rules
+
+class Order(total, color):
+    this.total = total
+    this.color = color
+$Order.shipping = 0 if $Order.total > 100 else 5
+$Order.tag = $Order.color == 1 ? "a" : "b"
+$Order.rush = $Order.express ? 10 : 0
+$Order.due = $Order.total + $Order.shipping + $Order.rush
+small = Order(40, 1)
+large = Order(250, 2)
+assert(small.shipping, 5)
+assert(large.shipping, 0)
+assert(small.tag, "a")
+assert(large.tag, "b")
+assert(small.rush, 0)
+assert(small.due, 45)
+assert(large.due, 250)
+small.total = 120
+assert(small.shipping, 0)
+assert(small.due, 120)
+assert(large.shipping, 0)
+large.color = 1
+assert(large.tag, "a")
+assert(small.tag, "a")
+large.express = true
+assert(large.rush, 10)
+assert(small.rush, 0)
+large.total = 30
+assert(large.shipping, 5)
+assert(large.due, 45)
+failure = ""
+try:
+    $Order.note = $Order.total > 1000 ? vip : "regular"
+catch error:
+    failure = error
+assert(failure, ReferenceError("vip is not defined"))
+try:
+    $Order.limit = $Order.express ? $Order.cap : 50
+    $Order.cap = $Order.limit + 1
+catch error:
+    failure = error
+assert(failure, TypeError("Circular Dependency"))
+---
+# Nucleoid uses conditional expressions in functions callbacks and literals
+
+limit = 2
+items = [1, 2, 3]
+def size(value) => value > limit ? "big" : "small"
+def sign(value):
+    return "neg" if value < 0 else "pos"
+labels = items.map(item => item > limit ? "big" : "small")
+kinds = items.map(lambda item: "odd" if item % 2 else "even")
+first = size(items[0])
+summary = { count: items.length > 2 ? "many" : "few", signs: [sign(-1), sign(limit)] }
+pick = items[limit > 2 ? 0 : 1]
+banner = `${limit > 2 ? "wide" : "narrow"}`
+scaled = Math.max(limit > 2 ? 10 : 20, 5)
+assert(labels, ["small", "small", "big"])
+assert(kinds, ["odd", "even", "odd"])
+assert(first, "small")
+assert(summary.count, "many")
+assert(summary.signs, ["neg", "pos"])
+assert(pick, 2)
+assert(banner, "narrow")
+assert(scaled, 20)
+limit = 0
+assert(labels, ["big", "big", "big"])
+assert(first, "big")
+assert(pick, 2)
+limit = 5
+assert(pick, 1)
+assert(banner, "wide")
+assert(scaled, 10)
+items.push(6)
+assert(labels, ["small", "small", "small", "big"])
+assert(kinds, ["odd", "even", "odd", "even"])
+---
+# Nucleoid keeps if statements beside conditional expressions
+
+ready = true
+armed = true
+lit = true
+limit = 10
+mode = "on" if ready else "off"
+x = 1 if armed:
+    y = 2
+z = 3 if lit: w = 4
+if limit > 5: a = 1 else: a = 2
+b = 5 c = 6
+if limit > (ready ? 5 : 20):
+    band = "wide"
+else:
+    band = "narrow"
+if armed and lit
+    flow = "open"
+elif limit > 5
+    flow = "half"
+else
+    flow = "shut"
+note = "ready? yes"
+pattern = /colou?r/
+assert(mode, "on")
+assert([x, y, z, w, a, b, c], [1, 2, 3, 4, 1, 5, 6])
+assert(band, "wide")
+assert(flow, "open")
+assert(note, "ready? yes")
+assert(pattern.test("color"), true)
+ready = false
+armed = false
+assert(mode, "off")
+assert(band, "narrow")
+assert(flow, "half")
+assert([x, y, z, w, a], [1, 2, 3, 4, 1])
+limit = 1
+assert(a, 2)
+assert(flow, "shut")
+---
+# Nucleoid rolls back failed conditional expression updates
+
+def check(amount):
+    if amount > 100:
+        throw "TOO_LARGE"
+    return amount
+rate = 2
+amount = 5
+fee = amount > 10 ? check(amount) * rate : rate
+assert(fee, 2)
+failure = ""
+try:
+    amount = 500
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(amount, 5)
+assert(fee, 2)
+try:
+    amount = 20
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(amount, 5)
+assert(fee, 2)
+amount = 20
+assert(fee, 40)
+rate = 3
+assert(fee, 60)
+base = 3
+frozen = amount > 10 ? base.value : 0
+spare = base.value if amount > 50 else 1
+base = 4
+assert(frozen, 3)
+assert(spare, 1)
+amount = 60
+assert(spare, 3)
+assert(fee, 180)
+bonus = 7
+reward = bonus if amount > 30 else 0
+assert(reward, 7)
+delete bonus
+assert(reward, null)
+bonus = 9
+assert(reward, 9)
+amount = 25
+assert(reward, 0)
 ```

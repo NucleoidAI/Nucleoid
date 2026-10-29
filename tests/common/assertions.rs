@@ -108,6 +108,15 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
             expression_assertions(left, assertions);
             expression_assertions(right, assertions);
         }
+        Expr::Conditional {
+            condition,
+            consequent,
+            alternate,
+        } => {
+            expression_assertions(condition, assertions);
+            expression_assertions(consequent, assertions);
+            expression_assertions(alternate, assertions);
+        }
         Expr::Super(items) | Expr::List(items) => {
             for item in items {
                 expression_assertions(item, assertions);

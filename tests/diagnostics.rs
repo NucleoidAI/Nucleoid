@@ -276,9 +276,9 @@ fn the_caught_value_carries_no_position() {
 
 #[test]
 fn columns_count_characters_not_bytes() {
-    // The `?` sits at character 22 of a line holding multi-byte text; counting
-    // bytes would report a larger column.
-    assert_eq!(at("greeting = \"héllo wörld\" ?\n"), (1, 26));
+    // The `^` sits at character 22 of a line holding multi-byte text; counting
+    // bytes would report a larger column. (`?` begins a token since NUC 59.)
+    assert_eq!(at("greeting = \"héllo wörld\" ^\n"), (1, 26));
 }
 
 /// The examples in NUC 9 and `docs/README.md` say exactly this.
@@ -316,8 +316,8 @@ fn the_documented_limits_are_reported_not_crashed() {
 
 #[test]
 fn an_unexpected_character_is_placed() {
-    let error = failure("a = 1\nb = ?\n");
+    let error = failure("a = 1\nb = ^\n");
 
-    assert_eq!(error.message(), "Unexpected character '?'");
+    assert_eq!(error.message(), "Unexpected character '^'");
     assert_eq!(error.position().map(|p| (p.line, p.column)), Some((2, 5)));
 }
