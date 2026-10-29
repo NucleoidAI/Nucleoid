@@ -4,14 +4,10 @@ import * as analyzer from "./analyzer";
 import * as visualizer from "./visualizer";
 import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
-import * as terminal from "./lib/terminal";
+import * as milestone from "./milestone";
 
 // Genesis puzzle_id: 3aa6fb7a
 export async function start(puzzle_id: string = "9af7a82c") {
-  if (!/^[0-9a-f]{8}$/.test(puzzle_id)) {
-    throw new Error("Puzzle ID must be eight lowercase hexadecimal characters");
-  }
-
   const puzzle = JSON.parse(
     await readFile(
       join(__dirname, "..", "data", "training", `${puzzle_id}.json`),
@@ -22,6 +18,7 @@ export async function start(puzzle_id: string = "9af7a82c") {
     train,
     test: [{ input: test_input_matrix }],
   } = puzzle;
+
   const training_input = {
     dataset: train.map(({ input, output }) => ({
       input_matrix: input,
@@ -31,13 +28,12 @@ export async function start(puzzle_id: string = "9af7a82c") {
   };
 
   const startedAt: number = performance.now();
-  terminal.header({ version: await nucleoid.version() });
-  terminal.puzzle({ train, testInput: test_input_matrix });
-  terminal.section(
-    1,
-    "Analyze",
-    "Infer reusable objects and transformation rules"
-  );
+  milestone.start({
+    version: await nucleoid.version(),
+    train,
+    test_input_matrix,
+  });
+  milestone.analysis();
 
   let instance_index: number = 0;
 
@@ -53,9 +49,7 @@ export async function start(puzzle_id: string = "9af7a82c") {
 
   for (const [index, dataset] of train_dataset.dataset.entries()) {
     const { input_matrix, output_matrix } = dataset;
-    terminal.step(
-      `Training pair ${index + 1} / ${train_dataset.dataset.length}`
-    );
+    milestone.training_pair({ index, total: train_dataset.dataset.length });
 
     const { instances } = await analyzer.instances({
       puzzle_id,
@@ -90,11 +84,7 @@ export async function start(puzzle_id: string = "9af7a82c") {
     }
   }
 
-  terminal.section(
-    2,
-    "Visualize",
-    "Apply the learned world model to the test input"
-  );
+  milestone.visualization();
 
   const { instances } = await visualizer.instances({
     puzzle_id,
@@ -142,15 +132,13 @@ export async function start(puzzle_id: string = "9af7a82c") {
   result_matrix = Matrix.canvas(result_matrix, output_canvas);
 
   const test_output_matrix = puzzle.test[0].output;
-  terminal.section(3, "Compare", "Expected and predicted canvases");
-  terminal.grid("Expected", test_output_matrix);
-  terminal.grid("Result", result_matrix);
+  milestone.comparison({ test_output_matrix, result_matrix });
 
   const difference: number = Matrix.difference(
     result_matrix,
     test_output_matrix
   );
-  terminal.summary(difference, performance.now() - startedAt);
+  milestone.summary({ difference, duration: performance.now() - startedAt });
 
   return difference;
 }

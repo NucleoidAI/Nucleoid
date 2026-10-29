@@ -1,10 +1,9 @@
-import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
-import * as terminal from "./lib/terminal";
+import * as milestone from "./milestone";
 
 export async function declarations({ puzzle_id, train_dataset }) {
-  terminal.step("Inferring declarations");
+  milestone.inferring_declarations();
 
   const { declarations, output_canvas } = await llm.generate({
     puzzle_id,
@@ -21,8 +20,7 @@ export async function declarations({ puzzle_id, train_dataset }) {
     ],
   });
 
-  terminal.code("Declarations", declarations);
-  terminal.step(`Output canvas ${output_canvas}`);
+  milestone.declarations_inferred({ declarations, output_canvas });
 
   return { declarations, output_canvas };
 }
@@ -33,7 +31,7 @@ export async function instances({
   input_matrix,
   output_matrix,
 }) {
-  terminal.step("Segmenting training objects");
+  milestone.segmenting_training_objects();
 
   const { instances } = await llm.generate({
     puzzle_id,
@@ -61,16 +59,7 @@ export async function instances({
     ],
   });
 
-  instances.forEach((instance, index: number) => {
-    terminal.grid(
-      `Object ${index + 1} · Input`,
-      instance.input_instance_matrix
-    );
-    terminal.grid(
-      `Object ${index + 1} · Output`,
-      instance.output_instance_matrix
-    );
-  });
+  milestone.training_objects_segmented({ instances });
 
   return { instances };
 }
@@ -82,7 +71,7 @@ export async function value({
   input_instance_matrix,
   output_instance_matrix,
 }) {
-  terminal.step(`Constructing ${instance_name}`);
+  milestone.constructing_instance({ instance_name });
 
   const { implementation } = await llm.generate({
     puzzle_id,
@@ -105,7 +94,7 @@ export async function value({
     ],
   });
 
-  terminal.step("Evaluating declarative rules");
+  milestone.evaluating_rules();
   const input_value = await nucleoid.run(
     [declarations[0], implementation].join("\n\n")
   );
@@ -113,11 +102,14 @@ export async function value({
     [...declarations, implementation].join("\n\n")
   );
 
-  terminal.grid("Input crop", Matrix.crop(input_instance_matrix));
-  terminal.grid("Output crop", Matrix.crop(output_instance_matrix));
-  terminal.code(`Implementation · ${instance_name}`, implementation);
-  terminal.value("Input state", input_value);
-  terminal.value("Output state", output_value);
+  milestone.instance_constructed({
+    instance_name,
+    implementation,
+    input_instance_matrix,
+    output_instance_matrix,
+    input_value,
+    output_value,
+  });
 
   return { implementation, input_value, output_value };
 }

@@ -94,6 +94,11 @@ and `wrap-ansi` wraps long output without breaking colors, so both vertical
 borders stay aligned even with wide Unicode text. Formatting does not change
 prompts, programs, matrices, provider settings, or scoring.
 
+Milestone functions in `src\milestone.ts` mark each point in a run that shows
+output, such as a stage, a step about to start, or a step's result, and are the
+only callers of the `src\lib\terminal.ts` renderer. The analyzer, visualizer,
+OpenRouter client, and entry point report progress only through them.
+
 ## Instruction datasets
 
 The synchronous `document(puzzle_id)` function reads only the puzzle's own

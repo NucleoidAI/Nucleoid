@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { start } from "./src/app";
-import * as terminal from "./src/lib/terminal";
+import * as milestone from "./src/milestone";
 
 start(process.argv[2])
   .then((difference: number) => {
@@ -8,6 +8,6 @@ start(process.argv[2])
     process.exitCode = Math.min(difference, 255);
   })
   .catch((error) => {
-    terminal.failure(error);
+    milestone.failure(error);
     process.exitCode = 1;
   });

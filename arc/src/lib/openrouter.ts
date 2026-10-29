@@ -1,5 +1,5 @@
 import axios from "axios";
-import * as terminal from "./terminal";
+import * as milestone from "../milestone";
 
 export async function generate({ messages = [] }) {
   const apiKey: string = process.env.OPENROUTER_API_KEY?.trim();
@@ -55,7 +55,7 @@ export async function generate({ messages = [] }) {
 
   if (data.usage) {
     const { prompt_tokens, completion_tokens } = data.usage;
-    terminal.usage({ prompt_tokens, completion_tokens });
+    milestone.usage({ prompt_tokens, completion_tokens });
   }
 
   let jsonContent;

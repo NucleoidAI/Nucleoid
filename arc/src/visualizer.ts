@@ -1,7 +1,7 @@
 import * as nucleoid from "./lib/nucleoid";
 import * as Matrix from "./lib/Matrix";
 import * as llm from "./lib/llm";
-import * as terminal from "./lib/terminal";
+import * as milestone from "./milestone";
 
 export async function instances({
   puzzle_id,
@@ -9,8 +9,7 @@ export async function instances({
   declarations,
   test_input_matrix,
 }) {
-  terminal.step("Segmenting the test input");
-  terminal.grid("Test input", test_input_matrix);
+  milestone.segmenting_test_input({ test_input_matrix });
 
   const { instances } = await llm.generate({
     puzzle_id,
@@ -53,10 +52,7 @@ export async function instances({
     ],
   });
 
-  terminal.step(`${instances.length} objects identified`);
-  instances.forEach(({ input_instance_matrix }, index: number) => {
-    terminal.grid(`Test object ${index + 1}`, input_instance_matrix);
-  });
+  milestone.test_input_segmented({ instances });
 
   return { instances };
 }
@@ -71,7 +67,7 @@ export async function value({
 }) {
   const { x, y } = Matrix.locate(input_instance_matrix);
 
-  terminal.step(`Synthesizing ${instance_name}`);
+  milestone.synthesizing_instance({ instance_name });
   const { implementation } = await llm.generate({
     puzzle_id,
     messages: [
@@ -120,9 +116,9 @@ export async function value({
     ],
   });
 
-  terminal.code(`Implementation · ${instance_name}`, implementation);
+  milestone.instance_synthesized({ instance_name, implementation });
 
-  terminal.step("Executing the object transformation");
+  milestone.executing_transformation();
   const input_value = await nucleoid.run(
     [train_dataset.declarations[0], implementation].join("\n\n")
   );
@@ -130,8 +126,7 @@ export async function value({
     [...train_dataset.declarations, implementation].join("\n\n")
   );
 
-  terminal.value("Input state", input_value);
-  terminal.value("Output state", output_value);
+  milestone.transformation_executed({ input_value, output_value });
 
   return { input_value, output_value };
 }
@@ -147,7 +142,7 @@ export async function output_instance_matrix({
 }) {
   const { x, y } = output_value;
 
-  terminal.step("Composing the output object");
+  milestone.composing_output();
   const { output_instance_matrix } = await llm.generate({
     puzzle_id,
     messages: [
@@ -208,7 +203,7 @@ export async function output_instance_matrix({
     ],
   });
 
-  terminal.grid("Output crop", output_instance_matrix);
+  milestone.output_composed({ output_instance_matrix });
 
   const output_instance_padded_matrix = Matrix.pad(
     output_instance_matrix,
@@ -218,7 +213,7 @@ export async function output_instance_matrix({
     y
   );
 
-  terminal.grid("Placed output", output_instance_padded_matrix);
+  milestone.output_placed({ output_instance_padded_matrix });
 
   return { output_instance_matrix: output_instance_padded_matrix };
 }
