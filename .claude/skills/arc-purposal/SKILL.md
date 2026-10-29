@@ -41,7 +41,10 @@ candidate's, so an idea from an unaccepted NUC is still a request.
 Run `/arc-dataset <puzzle-id>`, which runs the
 [arc-dataset agent](../../agents/arc-dataset.agent.md) with the accepted
 runtime. Pass along an explicit user request to overwrite an existing dataset.
-Continue by the handoff's status:
+The dataset always prefers declarative, higher-order logic; when accepted
+Nucleoid cannot express its rules that way, the handoff requests the missing
+enhancement instead of an imperative workaround. Continue by the handoff's
+status:
 
 - `written`: run the puzzle.
 - `nucleoid_enhancement_required`: prepare the requested enhancement.
@@ -51,14 +54,15 @@ Continue by the handoff's status:
 
 Handle at most one NUC request per invocation, as a single-proposal request.
 
-1. Follow the caller steps of the [nuc-proposal skill](../nuc-proposal/SKILL.md),
-   using the request's `requested_change` as the requested change. Choose the
-   next NUC number, confirm the category and runtime applicability (ask the user
-   when either is uncertain), pin the accepted revision and record its immutable
-   baseline, create a candidate worktree, and launch a fresh `nuc-proposal`
-   agent with the request and its evidence. Complete the Rust improvement pass
-   when required and freeze the handoff. If preparation is blocked, stop and
-   report it.
+1. Trigger `/nuc-proposal` for the request by following the caller steps of
+   the [nuc-proposal skill](../nuc-proposal/SKILL.md), using the request's
+   `requested_change` as the requested change. Choose the next NUC number,
+   confirm the category and runtime applicability (ask the user when either is
+   uncertain), pin the accepted revision and record its immutable baseline,
+   create a candidate worktree, and launch a fresh `nuc-proposal` agent with
+   the request and its evidence. Complete the Rust improvement pass when
+   required and freeze the handoff. If preparation is blocked, stop and report
+   it.
 2. Launch a fresh `nuc-evaluate` agent on the frozen handoff under the
    [nuc-evaluate skill](../nuc-evaluate/SKILL.md), with
    `NUC_PROPOSAL_MODE=single` and a fresh report path. Keep its decision and

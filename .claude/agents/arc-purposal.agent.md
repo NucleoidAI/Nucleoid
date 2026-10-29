@@ -17,6 +17,10 @@ the [ARC instructions](../rules/arc.instructions.md), and the
   and return `agent_launch_unavailable` with the puzzle ID and the next step.
 - Handle at most one NUC per invocation, as a single-proposal request, and hold
   its outcome until the solver run.
+- Always prefer declarative, higher-order logic. When the dataset's rules need
+  a feature accepted Nucleoid lacks, trigger `/nuc-proposal` for the requested
+  enhancement through the skill's caller steps instead of accepting an
+  imperative workaround.
 
 ## Honest scoring
 

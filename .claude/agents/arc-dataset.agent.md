@@ -86,6 +86,12 @@ formatting exactly:
   One rule set must explain the training pairs and every new pair: no per-pair
   or per-instance cases, puzzle IDs, or hard-coded grids. Properties created by rules stay
   absent from input states rather than receiving artificial defaults.
+- Always prefer declarative, higher-order logic. State each relationship once
+  over every `Obj`, derive properties from other rules or from relations
+  between objects, and use higher-order operations such as `Obj.filter`,
+  `map`, `reduce`, `some`, `every`, `find`, and reasoning selections where
+  they express the rule. Avoid `for` loops, imperative steps, and manual
+  bookkeeping.
 - A tag is `l` followed by four digits and names a geometry. Reuse the tag an
   existing dataset uses for the same geometry; otherwise mint one unused
   elsewhere.
@@ -98,16 +104,19 @@ formatting exactly:
 
 If no single rule set explains every training pair, stop and report why
 instead of writing a partial or special-cased dataset. If one does but accepted
-Nucleoid cannot express or execute it, request an enhancement instead.
+Nucleoid cannot express or execute it declaratively, request an enhancement
+instead.
 
 ## Request a Nucleoid enhancement
 
 Request one enhancement only when the gap is in the language or runtime, not
 in the inferred transformation:
 
-- First look for an accepted formulation in `nucleoid.spec.md`, which is
-  authoritative, and `docs/README.md`. Use one that works, however long; a
-  shorter spelling alone is no reason to request an enhancement.
+- First look for an accepted declarative, higher-order formulation in
+  `nucleoid.spec.md`, which is authoritative, and `docs/README.md`. Use one
+  that works, however long; a shorter spelling alone is no reason to request
+  an enhancement. When only an imperative or special-cased formulation works,
+  request the declarative or higher-order feature it lacks instead.
 - You may take the request's idea from `docs/README.md` or the documentation
   it links to, such as `docs/examples.md` and the NUCs indexed in
   `docs/nuc-0000.md`, whatever their status. Only accepted behavior is

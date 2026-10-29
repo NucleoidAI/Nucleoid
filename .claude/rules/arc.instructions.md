@@ -52,6 +52,16 @@ TypeScript types and executable Nucleoid classes, instances, and declarative
 rules where appropriate; JSON is the exchange format, not a substitute for
 symbolic execution. Avoid unstructured textual reasoning as the world model.
 
+Always prefer declarative, higher-order logic. State each transformation once
+as rules over every object and the relations between objects: class-level
+`$Obj` rules and conditions, properties derived from other rules, and
+higher-order operations such as `filter`, `map`, `reduce`, `some`, `every`,
+`find`, and reasoning selections. Avoid imperative loops, per-instance or
+per-case steps, and manual bookkeeping. When accepted Nucleoid cannot express
+such a formulation, request the enhancement it needs, which `/arc-purposal`
+carries through `/nuc-proposal`, rather than settling for an imperative or
+special-cased workaround.
+
 Infer segmentation, background, object roles, and transformations from training
 pairs. Treat colors `0` through `9` as categorical values. Preserve positions
 and the current full-size, zero-padded instance matrices at existing boundaries.
