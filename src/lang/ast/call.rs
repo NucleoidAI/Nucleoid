@@ -184,9 +184,11 @@ impl Runtime {
             }
         }
 
-        let (receiver, version_target) = if object.version_view() {
+        let (receiver, target) = if object.version_view() {
             let (value, target) = self.version_list_receiver(object, scope)?;
             (value, Some(target))
+        } else if property == "sort" {
+            self.sort_receiver(object, scope)?
         } else {
             (self.evaluate(object, scope)?, None)
         };
@@ -195,7 +197,7 @@ impl Runtime {
             Value::Class(name) => self.call_class_method(&name, property, arguments, scope),
 
             Value::List(items) => {
-                self.call_list_method(object, items, property, arguments, scope, version_target)
+                self.call_list_method(object, items, property, arguments, scope, target)
             }
 
             Value::String(string) => {

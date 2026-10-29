@@ -1303,6 +1303,9 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 
 - Built-in calls participate in the dependency graph like any other expression.
 - Mutating a list re-evaluates its dependents.
+- `push`, `pop`, `shift` and, under [NUC 58](nuc-0058.md), `sort` change a
+  writable list receiver in place; see
+  [In-place list sorting](#in-place-list-sorting).
 - `Math.max` and `Math.min` propagate `NaN`, including when an argument cannot be coerced to a number.
 - Accepted [NUC 56](nuc-0056.md) adds only static `Math.exp2(value)`, computing
   exactly the accepted `Math.pow(2, value)` host powf operation after intrinsic
@@ -1417,7 +1420,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort`, `join`, `length` |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length` |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -1958,6 +1961,52 @@ assert(mapped, 80)
   through its reducer; native flat mapping adds no artificial read to emulate
   that effect. Intentional runtime-call RHS rewrites change AST and canonical
   graph source; full-AST/graph-source equality is not promised.
+
+### In-place list sorting
+
+```
+scores = [30, 10, 20]
+ranked = scores.slice().sort((a, b) => a - b)
+best = scores.sort((a, b) => b - a)[0]
+assert(scores, [30, 20, 10])
+assert(ranked, [10, 20, 30])
+assert(best, 30)
+scores.push(40)
+assert(scores, [40, 30, 20, 10])
+assert(ranked, [10, 20, 30, 40])
+assert(best, 40)
+assert([3, 1, 2].sort(), [1, 2, 3])
+scores
+```
+
+- This is the complete `Nucleoid sorts lists in place` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `[40,30,20,10]`.
+- [NUC 58](nuc-0058.md) makes `sort` reorder a writable receiver in place and
+  return the sorted list, as JavaScript's `Array.prototype.sort` does. `sort`
+  used to return a sorted copy and leave every receiver unchanged; the change
+  for writable receivers is deliberate.
+- Ordering is unchanged. A comparator places each item, in input order, before
+  the first placed item it compares below zero, so equal items keep their
+  order. Without a function argument, items order stably by their string
+  forms: `[10, 9, 1]` sorts to `[1, 10, 9]`.
+- Writable receivers are variables, parameter and loop bindings, and real
+  object properties, including members reached through `this`, `self`,
+  `$Class`, a call result or a version-selected object. The write appends a
+  version when the order changes and re-runs dependents, as `push`, `pop` and
+  `shift` do; the receiver is read once and never evaluated again to write.
+- List literals, call results such as `scores.slice()`, indexes such as
+  `grid[0]`, `.value` snapshots, selected versions such as `scores@first`, and
+  class populations such as `Item.sort(comparator)` keep returning a sorted
+  copy and write nothing. Sort `scores.slice()` to keep the source order.
+- Lists are values, so sorting a parameter or loop binding leaves the list it
+  was copied from unchanged.
+- A `sort` in a declaration is a standing sort: `best = scores.sort(comparator)[0]`
+  keeps `scores` sorted whenever it, the comparator or what the comparator
+  reads changes. Two standing sorts of one list with different orders re-run
+  each other and raise `TypeError("Propagation did not settle")`.
+- The authoritative contract is the
+  [in-place list sorting](../nucleoid.spec.md#in-place-list-sorting) section.
 
 ---
 

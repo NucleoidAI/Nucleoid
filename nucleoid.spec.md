@@ -2330,6 +2330,63 @@ statement positions; caught values and transaction recovery are unchanged.
   are accepted` through `Nucleoid rolls back failed lambda and thin arrow
   updates` specify the executable behavior.
 
+## In-place list sorting
+
+- [NUC 58](docs/nuc-0058.md) makes `list.sort()` and `list.sort(comparator)`
+  reorder a writable receiver in place, as JavaScript's `Array.prototype.sort`
+  does, and return the sorted list. This deliberately changes the accepted
+  meaning of `sort` on a writable receiver, which returned a sorted copy and
+  left the receiver unchanged. Parsing and every other list method are
+  unchanged.
+- Ordering is unchanged. A function argument is a comparator: items are placed
+  in input order, each before the first already placed item for which
+  `comparator(item, placed)` converts to a number below zero, so equal items
+  keep their order. Without a function argument, including a non-function
+  argument, items order stably by their string forms: `[10, 9, 1]` sorts to
+  `[1, 10, 9]` and `["b", "a", "C"]` to `["C", "a", "b"]`.
+- The receiver is read once, before the arguments are evaluated, and the
+  complete order is computed before anything is written. A comparator error
+  leaves the receiver unchanged and propagates through the existing
+  transaction like any other error.
+- Writable receivers are exactly those `push`, `pop` and `shift` write back
+  to: variables, parameter and loop bindings, members of objects, including
+  members reached through `this`, `self`, a class-level `$Class` receiver or
+  a call result, and properties of an object selected through a state
+  version, by name or by index. A member's object is evaluated once, so the
+  write never evaluates the receiver again.
+- A variable or property write appends a version only when the order changes,
+  and re-runs the receiver's dependents. An equal list written outside a
+  propagation cascade still re-runs them, like any explicit write; inside a
+  cascade it wakes nothing.
+- Receivers without a writable list place keep returning the sorted list and
+  write nothing, exactly as before: list literals, call, operator and
+  pipeline results such as `scores.slice().sort()`, other indexes such as
+  `grid[0]` and `record["items"]`, `.value` snapshots, selected state versions
+  such as `scores@first`, and class populations such as
+  `Item.sort(comparator)`, which keep their creation order. `push`, `pop` and
+  `shift` still write nothing through those indexes, and still raise
+  `TypeError("State versions are read-only")` on a selected version; `sort`
+  never writes into history.
+- Lists are values. Sorting a parameter or loop binding reorders that binding
+  only; the list it was copied from is unchanged.
+- A `sort` in a declaration is a standing sort: `ranked = scores.sort(comparator)`
+  sorts `scores` in place and re-runs whenever `scores`, the comparator or
+  anything the comparator reads changes, including a reassignment of
+  `scores`, so `scores` stays sorted. A statement never re-runs for its own
+  write, so re-sorting does not loop, whatever the comparator returns.
+  `scores = scores.sort()` reads its own target, so it sorts once.
+- Two standing sorts of one list with different orders re-run each other. A
+  later change to that list raises `TypeError("Propagation did not settle")`
+  and rolls back.
+- Replacing a standing sort keeps the accepted replacement order of
+  declarations: the replaced rule is still filed while the replacement's
+  right-hand side runs, so the replacement's write re-runs it once and the
+  list keeps the replaced order until it next changes, exactly as a replaced
+  `count = items.push(item)` re-runs once.
+- No syntax, keyword, error type or message is added. The seven appended
+  entries beginning `Nucleoid sorts a list in place like JavaScript` through
+  `Nucleoid rolls back failed in place sorts` specify the executable behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -13959,4 +14016,193 @@ assert(charge, 20)
 rate = 5
 assert(scaled, [5, 10])
 assert(charge, 50)
+---
+# Nucleoid sorts a list in place like JavaScript
+
+scores = [30, 10, 20]
+first = scores[0]
+scores.sort((a, b) => a - b)
+assert(scores, [10, 20, 30])
+assert(first, 10)
+assert(scores.sort((a, b) => b - a), [30, 20, 10])
+assert(scores, [30, 20, 10])
+assert(first, 30)
+codes = [10, 9, 1]
+codes.sort()
+assert(codes, [1, 10, 9])
+names = ["b", "a", "C"]
+names.sort(null)
+assert(names, ["C", "a", "b"])
+people = [{ name: "a", age: 30 }, { name: "b", age: 20 }, { name: "c", age: 30 }, { name: "d", age: 20 }]
+people.sort((x, y) => x.age - y.age)
+assert(people.map(person => person.name), ["b", "d", "a", "c"])
+scores
+# return: [30,20,10]
+---
+# Nucleoid sorts properties and instance members in place
+
+board = { entries: [3, 1, 2] }
+board.entries.sort((a, b) => b - a)
+assert(board.entries, [3, 2, 1])
+calls = []
+def pick():
+    calls.push(1)
+    return board
+pick().entries.sort()
+assert(calls.length, 1)
+assert(board.entries, [1, 2, 3])
+class Team:
+    def init(scores) => this.scores = scores
+    def ranked() => self.scores.sort((a, b) => b - a)
+team = Team([2, 9, 4])
+assert(team.ranked(), [9, 4, 2])
+assert(team.scores, [9, 4, 2])
+class Squad(scores):
+    this.scores = scores
+$Squad.best = $Squad.scores.sort((a, b) => b - a)[0]
+red = Squad([3, 1, 2])
+blue = Squad([5, 9])
+assert(red.scores, [3, 2, 1])
+assert(blue.scores, [9, 5])
+red.scores.push(7)
+assert(red.scores, [7, 3, 2, 1])
+assert(red.best, 7)
+older = { items: [3, 1, 2] }
+newer = { items: [9, 8] }
+picked = older
+picked = newer
+picked@first.items.sort()
+assert(older.items, [1, 2, 3])
+assert(newer.items, [9, 8])
+---
+# Nucleoid returns sorted copies from receivers without a list place
+
+scores = [30, 10, 20]
+ranked = scores.slice().sort((a, b) => a - b)
+assert(ranked, [10, 20, 30])
+assert(scores, [30, 10, 20])
+assert([3, 1, 2].sort(), [1, 2, 3])
+grid = [[3, 1], [2, 0]]
+assert(grid[0].sort(), [1, 3])
+assert(grid, [[3, 1], [2, 0]])
+record = { items: [2, 1] }
+assert(record["items"].sort(), [1, 2])
+assert(record.items, [2, 1])
+snapshot = scores.value.sort()
+assert(snapshot, [10, 20, 30])
+scores = [5, 4]
+oldest = scores@first.sort()
+assert(oldest, [10, 20, 30])
+assert(scores@first, [30, 10, 20])
+assert(scores@last.sort(), [4, 5])
+assert(scores, [5, 4])
+assert(ranked, [4, 5])
+assert(snapshot, [10, 20, 30])
+try:
+    scores@first.push(1)
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+class Item(size):
+    this.size = size
+Item(2); Item(1); Item(3)
+smallest = Item.sort((x, y) => x.size - y.size)[0].size
+assert(smallest, 1)
+assert(Item.map(item => item.size), [2, 1, 3])
+Item(0)
+assert(smallest, 0)
+assert(Item[0].size, 2)
+---
+# Nucleoid sorts only the local binding of a copied list
+
+def ordered(values):
+    values.sort()
+    return values
+original = [3, 1, 2]
+assert(ordered(original), [1, 2, 3])
+assert(original, [3, 1, 2])
+rows = [[3, 1], [2, 0]]
+for row of rows:
+    row.sort()
+assert(rows, [[3, 1], [2, 0]])
+---
+# Nucleoid keeps a list sorted with a standing sort
+
+class Player(name, score):
+    this.name = name
+    this.score = score
+alice = Player("alice", 30)
+bob = Player("bob", 10)
+cara = Player("cara", 20)
+players = [alice, bob, cara]
+direction = 1
+ranked = players.sort((a, b) => (a.score - b.score) * direction)
+names = players.map(player => player.name)
+assert(names, ["bob", "cara", "alice"])
+assert(ranked, players)
+dave = Player("dave", 5)
+players.push(dave)
+assert(names, ["dave", "bob", "cara", "alice"])
+bob.score = 40
+assert(names, ["dave", "cara", "alice", "bob"])
+direction = -1
+assert(names, ["bob", "alice", "cara", "dave"])
+players = [cara, alice]
+assert(names, ["alice", "cara"])
+assert(ranked, players)
+values = [3, 1, 2]
+values = values.sort()
+values.push(0)
+assert(values, [1, 2, 3, 0])
+names
+# return: ["alice","cara"]
+---
+# Nucleoid records in place sorts as list versions
+
+scores = [3, 1, 2]
+log = []
+watched = scores.length + log.push("run") * 0
+assert(log.length, 1)
+scores.sort()
+assert(scores@0, [3, 1, 2])
+assert(scores@1, [1, 2, 3])
+assert(log.length, 2)
+scores.sort()
+assert(scores@2, null)
+assert(log.length, 3)
+assert(watched, 3)
+---
+# Nucleoid rolls back failed in place sorts
+
+scores = [3, 1, 2]
+failure = ""
+try:
+    scores.sort((a, b) => a - b)
+    throw "SORT_ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "SORT_ROLLBACK")
+assert(scores, [3, 1, 2])
+assert(scores@1, null)
+try:
+    scores.sort((a, b) => { throw "BAD_COMPARATOR" })
+catch error:
+    failure = error
+assert(failure, "BAD_COMPARATOR")
+assert(scores, [3, 1, 2])
+def compare(a, b):
+    if a > 100:
+        throw "TOO_LARGE"
+    return a - b
+ranked = scores.sort(compare)
+assert(scores, [1, 2, 3])
+try:
+    scores.push(500)
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(scores, [1, 2, 3])
+assert(ranked, [1, 2, 3])
+scores.push(0)
+assert(scores, [0, 1, 2, 3])
+assert(ranked, [0, 1, 2, 3])
 ```

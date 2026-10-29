@@ -8,11 +8,16 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
-/// A version-derived list receiver is resolved once, including side-effecting
-/// owners/keys. Only a real property of a returned object is writable.
-pub(crate) enum VersionListTarget {
+/// A list receiver resolved once, including side-effecting owners/keys, so
+/// writing a result back never evaluates the receiver again.
+pub(crate) enum ListTarget {
+    /// A real property of an object, the only writable place.
     Property(ObjectId, String),
+    /// A list read from a selected state version. History is never written.
     ReadOnly,
+    /// A `.value` snapshot, or a member of something that is not an object:
+    /// there is no place to write.
+    Detached,
 }
 
 pub struct Array<'a> {
@@ -137,6 +142,8 @@ impl Runtime {
         }
     }
 
+    /// A method on a list value. `push`, `append`, `pop`, `shift` and `sort`
+    /// write their result back to the receiver; the rest are read-only queries.
     pub(crate) fn call_list_method(
         &mut self,
         object: &Expr,
@@ -144,20 +151,20 @@ impl Runtime {
         property: &str,
         arguments: &[Expr],
         scope: &mut Scope,
-        version_target: Option<VersionListTarget>,
+        target: Option<ListTarget>,
     ) -> Result<Value> {
         match property {
             "push" | "append" => {
                 let values = self.evaluate_all(arguments, scope)?;
                 items.extend(values);
                 let length = items.len();
-                self.write_list(object, Value::List(items), scope, version_target)?;
+                self.write_list(object, Value::List(items), scope, target)?;
                 Ok(Value::Number(length as f64))
             }
 
             "pop" => {
                 let popped = items.pop().unwrap_or(Value::Undefined);
-                self.write_list(object, Value::List(items), scope, version_target)?;
+                self.write_list(object, Value::List(items), scope, target)?;
                 Ok(popped)
             }
 
@@ -167,8 +174,21 @@ impl Runtime {
                 } else {
                     items.remove(0)
                 };
-                self.write_list(object, Value::List(items), scope, version_target)?;
+                self.write_list(object, Value::List(items), scope, target)?;
                 Ok(removed)
+            }
+
+            // Sorts in place, as JavaScript does. History and detached
+            // receivers have no place to write, so they are sorted as copies.
+            "sort" => {
+                let values = self.evaluate_all(arguments, scope)?;
+                let sorted = self.sort_items(items, values.first())?;
+
+                if !matches!(target, Some(ListTarget::ReadOnly | ListTarget::Detached)) {
+                    self.write_list(object, Value::List(sorted.clone()), scope, target)?;
+                }
+
+                Ok(Value::List(sorted))
             }
 
             _ => {
@@ -183,32 +203,64 @@ impl Runtime {
         &mut self,
         expression: &Expr,
         scope: &mut Scope,
-    ) -> Result<(Value, VersionListTarget)> {
+    ) -> Result<(Value, ListTarget)> {
         match expression {
             Expr::Member { object, property } if property != "value" => {
-                let base = self.evaluate(object, scope)?;
-                let value = self.read_property(&base, property, scope)?;
-                let target = match base {
-                    Value::Object(id) => VersionListTarget::Property(id, property.clone()),
-                    _ => VersionListTarget::ReadOnly,
-                };
-                Ok((value, target))
+                self.member_list_receiver(object, property, scope, ListTarget::ReadOnly)
             }
             Expr::Index { object, index } => {
                 let base = self.evaluate(object, scope)?;
                 let key = self.evaluate(index, scope)?;
                 let value = self.read_index(&base, &key, scope)?;
                 let target = match base {
-                    Value::Object(id) => VersionListTarget::Property(id, key.to_string()),
-                    _ => VersionListTarget::ReadOnly,
+                    Value::Object(id) => ListTarget::Property(id, key.to_string()),
+                    _ => ListTarget::ReadOnly,
                 };
                 Ok((value, target))
             }
-            _ => Ok((
-                self.evaluate(expression, scope)?,
-                VersionListTarget::ReadOnly,
-            )),
+            _ => Ok((self.evaluate(expression, scope)?, ListTarget::ReadOnly)),
         }
+    }
+
+    /// Reads the receiver of a `sort` once. A member resolves to its object's
+    /// property, so the sorted list is written without evaluating the
+    /// receiver again; a `.value` snapshot is detached. Other receivers keep
+    /// the ordinary write-back, which stores names and ignores the rest.
+    pub(crate) fn sort_receiver(
+        &mut self,
+        expression: &Expr,
+        scope: &mut Scope,
+    ) -> Result<(Value, Option<ListTarget>)> {
+        let Expr::Member { object, property } = expression else {
+            return Ok((self.evaluate(expression, scope)?, None));
+        };
+
+        if property == "value" {
+            let value = self.evaluate(expression, scope)?;
+            return Ok((value, Some(ListTarget::Detached)));
+        }
+
+        let (value, target) =
+            self.member_list_receiver(object, property, scope, ListTarget::Detached)?;
+        Ok((value, Some(target)))
+    }
+
+    /// Reads `object.property` with the object evaluated once. A property of
+    /// an object is the place to write; any other owner resolves to `otherwise`.
+    fn member_list_receiver(
+        &mut self,
+        object: &Expr,
+        property: &str,
+        scope: &mut Scope,
+        otherwise: ListTarget,
+    ) -> Result<(Value, ListTarget)> {
+        let base = self.evaluate(object, scope)?;
+        let value = self.read_property(&base, property, scope)?;
+        let target = match base {
+            Value::Object(id) => ListTarget::Property(id, property.to_string()),
+            _ => otherwise,
+        };
+        Ok((value, target))
     }
 
     fn write_list(
@@ -216,13 +268,12 @@ impl Runtime {
         target: &Expr,
         value: Value,
         scope: &mut Scope,
-        version_target: Option<VersionListTarget>,
+        resolved: Option<ListTarget>,
     ) -> Result<()> {
-        match version_target {
-            Some(VersionListTarget::ReadOnly) => {
-                Err(Error::type_error("State versions are read-only"))
-            }
-            Some(VersionListTarget::Property(id, property)) => {
+        match resolved {
+            Some(ListTarget::ReadOnly) => Err(Error::type_error("State versions are read-only")),
+            Some(ListTarget::Detached) => Ok(()),
+            Some(ListTarget::Property(id, property)) => {
                 let changed = self.assign_property(&id, &property, value);
                 self.propagate_change(&NodeKey::property(&id, &property), changed)
             }
@@ -385,38 +436,9 @@ impl Runtime {
                 Ok(accumulator)
             }
 
-            "sort" => {
-                let mut sorted = items;
-
-                match predicate {
-                    Some(Value::Function(function)) => {
-                        // A comparator sort, kept simple with insertion order.
-                        let mut ordered: Vec<Value> = Vec::with_capacity(sorted.len());
-
-                        for item in sorted {
-                            let mut index = ordered.len();
-
-                            for (position, placed) in ordered.iter().enumerate() {
-                                let comparison =
-                                    self.invoke(&function, &[item.clone(), placed.clone()])?;
-
-                                if comparison.to_number() < 0.0 {
-                                    index = position;
-                                    break;
-                                }
-                            }
-
-                            ordered.insert(index, item);
-                        }
-
-                        Ok(Value::List(ordered))
-                    }
-                    _ => {
-                        sorted.sort_by_key(|item| item.to_string());
-                        Ok(Value::List(sorted))
-                    }
-                }
-            }
+            // Lists sort in place through `call_list_method`; a class population
+            // has no stored list to write, so its sort only returns the order.
+            "sort" => Ok(Value::List(self.sort_items(items, predicate.as_ref())?)),
 
             "slice" => {
                 let length = items.len();
@@ -457,6 +479,41 @@ impl Runtime {
                 "{receiver}.{property} is not a function"
             ))),
         }
+    }
+
+    /// Orders items stably. A comparator function places each item, in input
+    /// order, before the first already placed item it compares below zero;
+    /// without one, items order by their string forms.
+    fn sort_items(
+        &mut self,
+        mut items: Vec<Value>,
+        comparator: Option<&Value>,
+    ) -> Result<Vec<Value>> {
+        let Some(Value::Function(function)) = comparator else {
+            // Renders each string form once rather than on every comparison;
+            // the sort is still stable.
+            items.sort_by_cached_key(|item| item.to_string());
+            return Ok(items);
+        };
+
+        let mut ordered: Vec<Value> = Vec::with_capacity(items.len());
+
+        for item in items {
+            let mut index = ordered.len();
+
+            for (position, placed) in ordered.iter().enumerate() {
+                let comparison = self.invoke(function, &[item.clone(), placed.clone()])?;
+
+                if comparison.to_number() < 0.0 {
+                    index = position;
+                    break;
+                }
+            }
+
+            ordered.insert(index, item);
+        }
+
+        Ok(ordered)
     }
 
     /// Stores a mutated list back where it came from and wakes its dependents.

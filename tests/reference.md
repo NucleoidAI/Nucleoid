@@ -1881,4 +1881,20 @@ assert(thin, [10, 20, 30])
 assert(python, [10, 20, 30])
 python
 # return: [10,20,30]
+---
+# Nucleoid sorts lists in place
+
+scores = [30, 10, 20]
+ranked = scores.slice().sort((a, b) => a - b)
+best = scores.sort((a, b) => b - a)[0]
+assert(scores, [30, 20, 10])
+assert(ranked, [10, 20, 30])
+assert(best, 30)
+scores.push(40)
+assert(scores, [40, 30, 20, 10])
+assert(ranked, [10, 20, 30, 40])
+assert(best, 40)
+assert([3, 1, 2].sort(), [1, 2, 3])
+scores
+# return: [40,30,20,10]
 ```

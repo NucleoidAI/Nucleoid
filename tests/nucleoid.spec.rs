@@ -11208,6 +11208,233 @@ assert(scaled, [5, 10])
 assert(charge, 50)"#);
 }
 
+/// Nucleoid sorts a list in place like JavaScript
+#[rustfmt::skip]
+#[test]
+fn sorts_a_list_in_place_like_javascript() {
+    let mut run = runner();
+    run("scores = [30, 10, 20]");
+    run("first = scores[0]");
+    run("scores.sort((a, b) => a - b)");
+    assert_eq!(run("scores"), serde_json::json!([10, 20, 30]));
+    assert_eq!(run("first"), 10);
+    assert_eq!(run("scores.sort((a, b) => b - a)"), serde_json::json!([30, 20, 10]));
+    assert_eq!(run("scores"), serde_json::json!([30, 20, 10]));
+    assert_eq!(run("first"), 30);
+    run("codes = [10, 9, 1]");
+    run("codes.sort()");
+    assert_eq!(run("codes"), serde_json::json!([1, 10, 9]));
+    run(r#"names = ["b", "a", "C"]"#);
+    run("names.sort(null)");
+    assert_eq!(run("names"), serde_json::json!(["C", "a", "b"]));
+    run(r#"people = [{ name: "a", age: 30 }, { name: "b", age: 20 }, { name: "c", age: 30 }, { name: "d", age: 20 }]"#);
+    run("people.sort((x, y) => x.age - y.age)");
+    assert_eq!(run("people.map(person => person.name)"), serde_json::json!(["b", "d", "a", "c"]));
+    run(r#"scores
+
+# return: [30,20,10]"#);
+}
+
+/// Nucleoid sorts properties and instance members in place
+#[rustfmt::skip]
+#[test]
+fn sorts_properties_and_instance_members_in_place() {
+    let mut run = runner();
+    run("board = { entries: [3, 1, 2] }");
+    run("board.entries.sort((a, b) => b - a)");
+    assert_eq!(run("board.entries"), serde_json::json!([3, 2, 1]));
+    run("calls = []");
+    run(r#"def pick():
+    calls.push(1)
+    return board"#);
+    run("pick().entries.sort()");
+    assert_eq!(run("calls.length"), 1);
+    assert_eq!(run("board.entries"), serde_json::json!([1, 2, 3]));
+    run(r#"class Team:
+    def init(scores) => this.scores = scores
+    def ranked() => self.scores.sort((a, b) => b - a)"#);
+    run("team = Team([2, 9, 4])");
+    assert_eq!(run("team.ranked()"), serde_json::json!([9, 4, 2]));
+    assert_eq!(run("team.scores"), serde_json::json!([9, 4, 2]));
+    run(r#"class Squad(scores):
+    this.scores = scores"#);
+    run("$Squad.best = $Squad.scores.sort((a, b) => b - a)[0]");
+    run("red = Squad([3, 1, 2])");
+    run("blue = Squad([5, 9])");
+    assert_eq!(run("red.scores"), serde_json::json!([3, 2, 1]));
+    assert_eq!(run("blue.scores"), serde_json::json!([9, 5]));
+    run("red.scores.push(7)");
+    assert_eq!(run("red.scores"), serde_json::json!([7, 3, 2, 1]));
+    assert_eq!(run("red.best"), 7);
+    run("older = { items: [3, 1, 2] }");
+    run("newer = { items: [9, 8] }");
+    run("picked = older");
+    run("picked = newer");
+    run("picked@first.items.sort()");
+    assert_eq!(run("older.items"), serde_json::json!([1, 2, 3]));
+    assert_eq!(run("newer.items"), serde_json::json!([9, 8]));
+}
+
+/// Nucleoid returns sorted copies from receivers without a list place
+#[rustfmt::skip]
+#[test]
+fn returns_sorted_copies_from_receivers_without_a_list_place() {
+    let mut run = runner();
+    run(r#"scores = [30, 10, 20]
+ranked = scores.slice().sort((a, b) => a - b)
+assert(ranked, [10, 20, 30])
+assert(scores, [30, 10, 20])
+assert([3, 1, 2].sort(), [1, 2, 3])
+grid = [[3, 1], [2, 0]]
+assert(grid[0].sort(), [1, 3])
+assert(grid, [[3, 1], [2, 0]])
+record = { items: [2, 1] }
+assert(record["items"].sort(), [1, 2])
+assert(record.items, [2, 1])
+snapshot = scores.value.sort()
+assert(snapshot, [10, 20, 30])
+scores = [5, 4]
+oldest = scores@first.sort()
+assert(oldest, [10, 20, 30])
+assert(scores@first, [30, 10, 20])
+assert(scores@last.sort(), [4, 5])
+assert(scores, [5, 4])
+assert(ranked, [4, 5])
+assert(snapshot, [10, 20, 30])
+try:
+    scores@first.push(1)
+catch error:
+    assert(error, TypeError("State versions are read-only"))
+class Item(size):
+    this.size = size
+Item(2); Item(1); Item(3)
+smallest = Item.sort((x, y) => x.size - y.size)[0].size
+assert(smallest, 1)
+assert(Item.map(item => item.size), [2, 1, 3])
+Item(0)
+assert(smallest, 0)
+assert(Item[0].size, 2)"#);
+}
+
+/// Nucleoid sorts only the local binding of a copied list
+#[rustfmt::skip]
+#[test]
+fn sorts_only_the_local_binding_of_a_copied_list() {
+    let mut run = runner();
+    run(r#"def ordered(values):
+    values.sort()
+    return values"#);
+    run("original = [3, 1, 2]");
+    assert_eq!(run("ordered(original)"), serde_json::json!([1, 2, 3]));
+    assert_eq!(run("original"), serde_json::json!([3, 1, 2]));
+    run("rows = [[3, 1], [2, 0]]");
+    run(r#"for row of rows:
+    row.sort()"#);
+    assert_eq!(run("rows"), serde_json::json!([[3, 1], [2, 0]]));
+}
+
+/// Nucleoid keeps a list sorted with a standing sort
+#[rustfmt::skip]
+#[test]
+fn keeps_a_list_sorted_with_a_standing_sort() {
+    let mut run = runner();
+    run(r#"class Player(name, score):
+    this.name = name
+    this.score = score"#);
+    run(r#"alice = Player("alice", 30)"#);
+    run(r#"bob = Player("bob", 10)"#);
+    run(r#"cara = Player("cara", 20)"#);
+    run("players = [alice, bob, cara]");
+    run("direction = 1");
+    run("ranked = players.sort((a, b) => (a.score - b.score) * direction)");
+    run("names = players.map(player => player.name)");
+    assert_eq!(run("names"), serde_json::json!(["bob", "cara", "alice"]));
+    {
+        let actual = run("ranked");
+        let expected = run("(players)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"dave = Player("dave", 5)"#);
+    run("players.push(dave)");
+    assert_eq!(run("names"), serde_json::json!(["dave", "bob", "cara", "alice"]));
+    run("bob.score = 40");
+    assert_eq!(run("names"), serde_json::json!(["dave", "cara", "alice", "bob"]));
+    run("direction = -1");
+    assert_eq!(run("names"), serde_json::json!(["bob", "alice", "cara", "dave"]));
+    run("players = [cara, alice]");
+    assert_eq!(run("names"), serde_json::json!(["alice", "cara"]));
+    {
+        let actual = run("ranked");
+        let expected = run("(players)");
+        assert_eq!(actual, expected);
+    }
+    run("values = [3, 1, 2]");
+    run("values = values.sort()");
+    run("values.push(0)");
+    assert_eq!(run("values"), serde_json::json!([1, 2, 3, 0]));
+    run(r#"names
+
+# return: ["alice","cara"]"#);
+}
+
+/// Nucleoid records in place sorts as list versions
+#[rustfmt::skip]
+#[test]
+fn records_in_place_sorts_as_list_versions() {
+    let mut run = runner();
+    run("scores = [3, 1, 2]");
+    run("log = []");
+    run(r#"watched = scores.length + log.push("run") * 0"#);
+    assert_eq!(run("log.length"), 1);
+    run("scores.sort()");
+    assert_eq!(run("scores@0"), serde_json::json!([3, 1, 2]));
+    assert_eq!(run("scores@1"), serde_json::json!([1, 2, 3]));
+    assert_eq!(run("log.length"), 2);
+    run("scores.sort()");
+    assert_eq!(run("scores@2"), serde_json::Value::Null);
+    assert_eq!(run("log.length"), 3);
+    assert_eq!(run("watched"), 3);
+}
+
+/// Nucleoid rolls back failed in place sorts
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_in_place_sorts() {
+    let mut run = runner();
+    run(r#"scores = [3, 1, 2]
+failure = ""
+try:
+    scores.sort((a, b) => a - b)
+    throw "SORT_ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "SORT_ROLLBACK")
+assert(scores, [3, 1, 2])
+assert(scores@1, null)
+try:
+    scores.sort((a, b) => { throw "BAD_COMPARATOR" })
+catch error:
+    failure = error
+assert(failure, "BAD_COMPARATOR")
+assert(scores, [3, 1, 2])
+def compare(a, b):
+    if a > 100:
+        throw "TOO_LARGE"
+    return a - b
+ranked = scores.sort(compare)
+assert(scores, [1, 2, 3])
+try:
+    scores.push(500)
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(scores, [1, 2, 3])
+assert(ranked, [1, 2, 3])
+scores.push(0)
+assert(scores, [0, 1, 2, 3])
+assert(ranked, [0, 1, 2, 3])"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
