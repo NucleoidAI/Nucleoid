@@ -1,3 +1,6 @@
+mod terminal;
+
+use std::io::{self, IsTerminal};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -8,6 +11,8 @@ use nucleoid::{Runtime, Value};
 use rustyline::error::ReadlineError;
 use rustyline::{Cmd, DefaultEditor, KeyCode, KeyEvent, Modifiers};
 
+const REPL_TITLE: &str = "🌿 Nucleoid - Logic Language for World Models";
+const REPL_TAGLINE: &str = "🌎 Inspired by Nature";
 const INDENT: &str = "    ";
 const CONTINUATION_PROMPT: &str = "..";
 
@@ -28,6 +33,10 @@ struct Cli {
     /// Serialize the program's result as JSON.
     #[arg(long)]
     json: bool,
+
+    /// Use the line-oriented REPL instead of the full-screen terminal workspace.
+    #[arg(long)]
+    plain: bool,
 }
 
 fn main() -> ExitCode {
@@ -64,6 +73,15 @@ fn main() -> ExitCode {
                 }
                 Err(error) => {
                     eprintln!("{error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        None if !cli.plain && io::stdin().is_terminal() && io::stdout().is_terminal() => {
+            match terminal::run(&mut runtime, cli.json, cli.graph) {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("nucleoid: terminal editor failed: {error}");
                     ExitCode::FAILURE
                 }
             }
@@ -147,8 +165,8 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
     let mut multiline = false;
     let mut indentation = String::new();
 
-    println!("🌿 Nucleoid - Logic Language for World Models");
-    println!("🌎 Inspired by Nature");
+    println!("{REPL_TITLE}");
+    println!("{REPL_TAGLINE}");
     println!("Type .help for available commands.");
 
     loop {

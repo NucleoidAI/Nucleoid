@@ -41,6 +41,36 @@ runnable as written.
 13. [Error Reference](#13-error-reference)
 14. [Syntax Summary](#14-syntax-summary)
 
+## Terminal workspace
+
+With terminal stdin and stdout, `nucleoid` opens a full-screen REPL with
+reserved top tabs, a bottom multiline editor, autocomplete, result history,
+and mouse support. Text, JSON and Table are alternate views of the same
+captured result; switching views never reruns a program or changes its state.
+Table rows union the keys of object-array results, preserve missing cells
+separately from JSON nulls, and keep nested values in individual cells.
+Serialization errors, runtime errors and assertion failures remain visible.
+
+Enter inserts a newline without changing pasted indentation, including on
+empty lines; F5 submits the complete editor. Ctrl-Enter also submits on
+non-Windows terminals that report it distinctly. Native Windows input maps
+pasted LF to Ctrl-Enter, so that key inserts a newline on Windows rather than
+submitting a partial pasted program. Ctrl-J inserts an automatically indented
+newline when typing by hand. Tab completes or indents;
+Ctrl-Space opens suggestions. Ctrl-P / Ctrl-N navigates input history.
+Use F1-F3 for tabs, F6 or the view buttons for result formats, Ctrl-Up /
+Ctrl-Down for earlier results, and F4 to focus the editor, results or
+diagnostics. PageUp / PageDown and the mouse wheel scroll; focused-result
+Left / Right (or Shift-wheel) moves across text or table columns.
+Click/drag positions/selects editor text. `.help` documents all controls;
+`.json`, `.table` and `.graph` accept optional `on` / `off` arguments.
+
+Use `--plain` for the previous line-oriented REPL. Non-terminal stdin or stdout
+automatically uses that interface, preserving piped input, blank-line/EOF
+submission, JSON output, graph output and command recovery. Running a source
+file is unchanged. The terminal workspace changes no language syntax, runtime
+semantics or generated specification/dataset records.
+
 ---
 
 ## 1. Statements and State

@@ -47,6 +47,14 @@ clap = { version = "4", default-features = false, features = [
 ] }
 # Interactive line editing and in-session command history.
 rustyline = "17"
+# Full-screen terminal widgets, using the Crossterm backend on Windows and Unix.
+ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
+# Portable terminal input, mouse capture and bracketed paste.
+crossterm = "0.28"
+# Multiline editing, selection and undo rather than a hand-written text buffer.
+tui-textarea = "0.7"
+# Display-cell widths for mouse positioning and structured result columns.
+unicode-width = "0.2"
 
 [dev-dependencies]
 # Field-ordered serialisation of the dataset records. Only the tooling that

@@ -33,7 +33,28 @@ Install the CLI from crates.io:
 cargo install nucleoid
 ```
 
-Start the interactive CLI from any directory and teach it that Socrates is
+Run `nucleoid` from any directory to open the full-screen terminal workspace.
+It has top-level tabs (with two reserved for future views), a multiline editor
+at the bottom, autocomplete for keywords, built-ins and model properties, and
+in-session input/result history. Click **Text**, **JSON** or **Table** to
+inspect a result without running the program again. Arrays of objects become
+table rows; other JSON values have property/value or index/value views.
+
+Enter inserts a newline; F5 runs the whole editor. Blank lines and
+pasted newlines never submit code or add indentation. Ctrl-J inserts an
+automatically indented newline when writing a block by hand.
+Ctrl-Enter also runs on non-Windows terminals that report it distinctly;
+Windows treats it as a newline because pasted LF produces the same key event.
+Tab accepts autocomplete (or indents); Ctrl-Space opens suggestions.
+Ctrl-P / Ctrl-N recalls input while preserving an unfinished draft.
+F1-F3 changes tabs, F6 changes the result view, and Ctrl-Up / Ctrl-Down selects
+earlier results. Mouse clicks select tabs, views and results; click/drag edits
+the cursor/selection, and the wheel scrolls individual panes. Ctrl-C cancels
+input, Ctrl-Q exits, and `.help` lists all controls.
+
+`nucleoid --plain` keeps the line-oriented interface below. Piped stdin or
+redirected stdout selects it automatically; file execution and the `--json`
+and `--graph` flags keep their existing behavior. Teach it that Socrates is
 mortal:
 
 ```console
@@ -46,10 +67,10 @@ mortal:
 true
 ```
 
-Interactive body lines are prefilled with indentation after the `..` prompt.
-Tab inserts four spaces; use Backspace to dedent and submit a blank line to run
-the complete block. Piped input is not reindented and must include its own
-whitespace.
+In plain mode, body lines are prefilled with indentation after the `..`
+prompt. Tab inserts four spaces; use Backspace to dedent and submit a blank
+line to run the complete block. Piped input is not reindented and must include
+its own whitespace.
 
 ---
 
