@@ -261,9 +261,9 @@ to that evaluation and must not recursively launch another agent.
 `/arc-purposal <puzzle-id>` may request one NUC when the puzzle's
 `arc-dataset` handoff requires a Nucleoid enhancement. Prepare and evaluate it
 as a single-proposal request: fresh proposal and evaluation agents, a pinned
-baseline, an isolated candidate, the Rust improvement pass when required, and
-no token comparison. Hold its outcome until the puzzle's one solver run
-against the frozen candidate, as the
+baseline, an isolated candidate that changes nothing under `arc/`, the Rust
+improvement pass when required, and no token comparison. Hold its outcome until
+the puzzle's one solver run against the frozen candidate, as the
 [arc-purposal skill](../skills/arc-purposal/SKILL.md) describes, then decide:
 
 - `bun start <puzzle-id>` exits with `0`, an exact match: Accepted, regardless

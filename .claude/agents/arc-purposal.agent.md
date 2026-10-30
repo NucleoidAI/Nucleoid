@@ -21,6 +21,9 @@ the [ARC instructions](../rules/arc.instructions.md), and the
   a feature accepted Nucleoid lacks, trigger `/nuc-proposal` for the requested
   enhancement through the skill's caller steps instead of accepting an
   imperative workaround.
+- Never change the TypeScript implementation in `arc/`. Orchestrate the
+  approach between `arc-dataset` and `nuc-proposal` alone, and when the solver
+  would need a change, suggest it in the final report instead of making it.
 
 ## Honest scoring
 
@@ -43,4 +46,5 @@ the [ARC instructions](../rules/arc.instructions.md), and the
   the evaluator's decision, and the run's evidence. Never push or change project
   versions.
 - Save the JSON result record that the skill defines in the session workspace,
-  report a short summary with its path, and stop.
+  report a short summary with its path and any suggested solver changes, and
+  stop.

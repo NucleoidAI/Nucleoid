@@ -116,7 +116,7 @@ instead.
 ## Request a Nucleoid enhancement
 
 Request one enhancement only when the gap is in the language or runtime, not
-in the inferred transformation:
+in the inferred transformation or the solver:
 
 - First look for an accepted declarative, higher-order formulation in
   `nucleoid.spec.md`, which is authoritative, and `docs/README.md`. Use one
@@ -204,12 +204,13 @@ instances, the transformation, properties the rules create, tags, the sampled
 canvas and object sizes, orientation, and that held-out data is excluded.
 With a candidate executable, also name the NUC whose feature the rules use.
 
-Change nothing else: no other datasets, puzzle data, solver code, or
-`instruct_dataset.ts`, which finds `dataset.<id>.json` by name. Do not run
-the solver or make LLM calls, read `.env`, change versions, spawn agents,
-start a NUC, commit, or push.
+Change nothing else: no other datasets, puzzle data, or TypeScript in `arc/`,
+including `instruct_dataset.ts`, which finds `dataset.<id>.json` by name. When
+the solver would need a change to use the dataset, suggest it in the handoff
+instead. Do not run the solver or make LLM calls, read `.env`, change
+versions, spawn agents, start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
 with the dataset path, the synthesizer's path and seed, pair and instance
-counts, the declarations, each check with its result, any NUC request, and any
-blockers.
+counts, the declarations, each check with its result, any NUC request, any
+suggested solver change, and any blockers.

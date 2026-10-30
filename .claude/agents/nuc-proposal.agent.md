@@ -31,7 +31,9 @@ You draft and prototype exactly one added or updated NUC revision. Follow
   equivalent executable cases without weakening assertions or coverage.
 - For an ARC-requested change, the caller supplies the arc-dataset request and
   its evidence programs. Implement the general feature they need; never add
-  puzzle IDs, grids, or ARC-only helpers, and never read ARC test data.
+  puzzle IDs, grids, or ARC-only helpers, and never read ARC test data. Change
+  nothing under `arc/`; hand off any solver change the feature would need as a
+  suggestion.
 - Follow the [mode/category token policy](../skills/nuc-proposal/SKILL.md#choose-execution-mode-caller-only).
   The token non-regression gate requires each compared case to use the same
   or fewer lexer tokens than its accepted baseline. Single requests always skip

@@ -17,6 +17,16 @@ main conversation, not in a forked subagent. Launch each worker the steps
 name, and never do a worker's dataset, proposal, or evaluation work yourself.
 If you cannot launch agents, stop and report `agent_launch_unavailable`.
 
+## Keep the solver unchanged
+
+Never change the TypeScript implementation in `arc/`: no `.ts` file there,
+such as `server.ts`, `src/app.ts`, or `src/dataset/instruct_dataset.ts`, is
+added, edited, or removed. Orchestrate the approach between `/arc-dataset` and
+`/nuc-proposal` alone. In `arc/`, only the puzzle's dataset and its README
+paragraph change, both written by arc-dataset, and a NUC candidate changes
+nothing there. When the solver would need a change, finish the process
+without it and [suggest the change](#suggest-solver-changes) at the end.
+
 ## Check the puzzle
 
 - Require an eight-character lowercase hexadecimal ID with a file in
@@ -61,8 +71,9 @@ Handle at most one NUC request per invocation, as a single-proposal request.
    uncertain), pin the accepted revision and record its immutable baseline,
    create a candidate worktree, and launch a fresh `nuc-proposal` agent with
    the request and its evidence. Complete the Rust improvement pass when
-   required and freeze the handoff. If preparation is blocked, stop and report
-   it.
+   required and freeze the handoff. If the candidate's changes from the pinned
+   revision, untracked files included, touch any path under `arc/`, or
+   preparation is otherwise blocked, stop and report it.
 2. Launch a fresh `nuc-evaluate` agent on the frozen handoff under the
    [nuc-evaluate skill](../nuc-evaluate/SKILL.md), with
    `NUC_PROPOSAL_MODE=single` and a fresh report path. Keep its decision and
@@ -151,12 +162,21 @@ Record it with the nuc-proposal skill's caller steps:
 Leave the dataset and README changes uncommitted for review. Never push or
 change project versions.
 
+## Suggest solver changes
+
+When a dataset or NUC handoff, or an error in the run's log, shows that the
+solver's TypeScript would need a change, describe that change for the user
+instead of making it: the files, the change, and the evidence for it. Base no
+suggestion on the expected test grid or the difference from it, and never
+apply a suggestion or rerun the puzzle within the invocation.
+
 ## Report
 
 Save one JSON result record in the session workspace with the puzzle ID and
 starting revision; the dataset status and path; the NUC path, blob, category,
 evaluator decision, and report path; the run's command, executable, exit
 status or timeout, difference or error, and log paths; the outcome and its
-basis; and any blockers. Use `null` for anything not measured, including the
-difference before this dataset. Report a short summary with the record's path,
-then stop without starting another puzzle or NUC.
+basis; the suggested solver changes; and any blockers. Use `null` for anything
+not measured, including the difference before this dataset. Report a short
+summary with the record's path, ending with any suggested solver changes, then
+stop without starting another puzzle or NUC.

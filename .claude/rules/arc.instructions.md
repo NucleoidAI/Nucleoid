@@ -9,6 +9,9 @@ ARC records. Run an ARC proposal with `/arc-purposal <puzzle-id>` (the
 `arc-purposal` skill and agent). The `arc-dataset` agent writes the puzzle's
 instruction dataset, any Nucleoid enhancement that dataset requires goes
 through the NUC stages, and one solver run decides that enhancement's outcome.
+`/arc-purposal` never changes the TypeScript implementation in `arc/`. It
+orchestrates its approach between `/arc-dataset` and `/nuc-proposal` and, when
+the solver would need a change, suggests that change at the end of the process.
 Agent-configuration changes alone do not launch a solver run.
 
 ## No automated ARC tests

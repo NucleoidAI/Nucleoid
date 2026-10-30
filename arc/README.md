@@ -200,6 +200,9 @@ Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
    an exact match; a run still going at 10 minutes is killed and does not pass.
 4. An exact match accepts the requested NUC whatever the evaluator decided.
    Otherwise the NUC is accepted only if the evaluator accepted it.
+5. The workflow itself never changes the solver's TypeScript. When the
+   dataset, the candidate, or the run shows that the solver needs a change,
+   the final report suggests it for review.
 
 The run makes paid OpenRouter calls and shows the expected test grid, so it
 runs once, is never repeated to obtain a pass, and its output never feeds back
