@@ -119,6 +119,7 @@ export async function value({
   milestone.instance_synthesized({ instance_name, implementation });
 
   milestone.executing_transformation();
+
   const input_value = await nucleoid.run(
     [train_dataset.declarations[0], implementation].join("\n\n")
   );
@@ -128,7 +129,7 @@ export async function value({
 
   milestone.transformation_executed({ input_value, output_value });
 
-  return { input_value, output_value };
+  return { implementation, input_value, output_value };
 }
 
 export async function output_instance_matrix({

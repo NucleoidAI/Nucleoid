@@ -14,12 +14,13 @@ For code-changing tasks not covered by the skip rules below, the coordinating ag
 
 Skip documentation-, generated-data-, and agent-configuration-only tasks when no handwritten code or Cargo manifest has changed.
 
-The coordinating agent may also omit the pass when every task-owned changed
-path is under `arc/`, including handwritten ARC code changes. Determine this
-from the task-owned diff, not unrelated pre-existing worktree changes.
-Mixed-scope tasks follow the normal requirements. This exception skips only
-the improvement agent, not applicable formatting, type checking, linting, or
-other validation.
+Never trigger `rust-improver` for changes under `arc/`, including handwritten
+ARC code changes. When every task-owned changed path is under `arc/`, skip the
+pass entirely. In a mixed-scope task, run the pass only for the changes outside
+`arc/`, and leave `arc/` paths out of the changed paths and diff you provide.
+Determine this from the task-owned diff, not unrelated pre-existing worktree
+changes. This exception skips only the improvement agent, not applicable
+formatting, type checking, linting, or other validation.
 
 Use the `rust-improver` profile at `.claude/agents/rust-improver.agent.md`, which Claude Code and Copilot both load as a custom agent.
 
