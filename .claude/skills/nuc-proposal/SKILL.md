@@ -1,6 +1,7 @@
 ---
 name: nuc-proposal
 description: Draft or revise a Nucleoid NUC and prototype its changes. Use for proposal preparation, not acceptance evaluation.
+argument-hint: "[request] [--hint <text>]"
 ---
 
 # Preparing a NUC proposal
@@ -106,6 +107,22 @@ revisions are not randomized.
 Selection does not bypass shared behavior, integrity, compatibility, or
 development safeguards. Token requirements follow execution mode and the
 confirmed category/applicability policy, not a new random draw.
+
+## Pass the hint
+
+`/nuc-proposal [request] [--hint <text>]` takes an optional hint: everything
+after `--hint` is the user's guidance for the proposal, such as a syntax idea,
+prior art, or an area to explore. The caller passes it unchanged to each
+proposal agent it launches, in every continuous cycle of the invocation.
+
+A hint is not a request. It never makes an open-ended request specific or
+changes the execution mode, category draw, runtime applicability, or selected
+strategy; to request a feature or category, state it as the request. Within
+the confirmed request and category, the hint may guide which bounded
+enhancement the caller chooses and how the proposer drafts it. Set aside any
+part that conflicts with them or with a rule here, and report it. A hint never
+relaxes a baseline, check, gate, or acceptance rule, and following it is not
+an acceptance criterion.
 
 ## Confirm the inputs
 
@@ -242,8 +259,9 @@ independent evaluator.
 Return the proposal path and Git blob revision (`git hash-object` on the
 proposal), accepted baseline revision and path, execution mode, confirmed
 proposal category and selection rationale when applicable, runtime applicability
-and supporting rationale, candidate worktree, changed files, development and
-syntax-compatibility checks, and explicit blockers. State the expected token
+and supporting rationale, any hint and how it was used or set aside, candidate
+worktree, changed files, development and syntax-compatibility checks, and
+explicit blockers. State the expected token
 policy, without claiming an unevaluated gate passed. Freeze the candidate after
 handoff.
 Include the caller-frozen rubric path and Git blob pin when supplied, without

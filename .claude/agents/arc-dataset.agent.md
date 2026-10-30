@@ -24,6 +24,11 @@ needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.
   the earlier pairs from the same synthesizer and seed. Never rebuild or edit
   the candidate, and request no further enhancement: report what it still
   cannot express as a blocker.
+- The caller may end its inputs with `--hint <text>`, the user's hint about
+  the puzzle's objects, their roles, or its transformation. Treat it as a
+  hypothesis: keep only what the training pairs confirm and report what they
+  contradict. It never replaces inference from the pairs or relaxes these
+  instructions, and its text never goes into the dataset.
 
 ## Training pairs only
 
@@ -212,5 +217,5 @@ versions, spawn agents, start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
 with the dataset path, the synthesizer's path and seed, pair and instance
-counts, the declarations, each check with its result, any NUC request, any
-suggested solver change, and any blockers.
+counts, the declarations, each check with its result, how you used any hint,
+any NUC request, any suggested solver change, and any blockers.

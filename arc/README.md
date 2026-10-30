@@ -204,6 +204,10 @@ Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
    dataset, the candidate, or the run shows that the solver needs a change,
    the final report suggests it for review.
 
+Append `--hint <text>` to suggest the puzzle's objects, their roles, or its
+transformation. Only the arc-dataset agent receives the hint, and it keeps only
+what the training pairs confirm.
+
 The run makes paid OpenRouter calls and shows the expected test grid, so it
 runs once, is never repeated to obtain a pass, and its output never feeds back
 into the dataset or the candidate. The

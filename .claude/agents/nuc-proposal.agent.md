@@ -12,6 +12,10 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 
 - Follow the caller-owned [enhancement selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement);
   do not redraw the selected category.
+- Apply any caller-supplied hint under the skill's
+  [hint rule](../skills/nuc-proposal/SKILL.md#pass-the-hint) within the
+  confirmed request and category. It never changes the mode, category,
+  strategy, or any safeguard; report any part you set aside.
 - Require the proposal path, confirmed category and requested change,
   execution mode, runtime applicability and supporting rationale when applicable,
   accepted Git revision, immutable baseline JSON artifact, and isolated candidate
@@ -79,8 +83,9 @@ path, execution mode, confirmed proposal category and selection rationale when
 applicable,
 runtime applicability and supporting rationale, expected token ran/skipped policy,
 candidate worktree, changed files, development and syntax-compatibility checks,
-any supplied frozen rubric path/blob pin, and any blockers. Do not populate
-the independent evaluator's assessment.
+any supplied frozen rubric path/blob pin, any hint and how it was used or set
+aside, and any blockers. Do not populate the independent evaluator's
+assessment.
 Include any supplied policy/selection paths and raw pins, algorithm/scope,
 trial identity, selected approach and concrete consumption actions. Preserve
 all four strategy attribution variables for the evaluator; otherwise mark

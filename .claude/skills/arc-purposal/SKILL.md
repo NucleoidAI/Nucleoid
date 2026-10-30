@@ -1,14 +1,14 @@
 ---
 name: arc-purposal
 description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run that decides the enhancement's outcome.
-argument-hint: <puzzle-id>
+argument-hint: <puzzle-id> [--hint <text>]
 ---
 
 # Running an ARC puzzle proposal
 
-`/arc-purposal <puzzle-id>` takes one training puzzle through its instruction
-dataset, any Nucleoid enhancement that dataset requires, one solver run, and
-the outcome. Follow `.claude/CLAUDE.md`, the
+`/arc-purposal <puzzle-id> [--hint <text>]` takes one training puzzle through
+its instruction dataset, any Nucleoid enhancement that dataset requires, one
+solver run, and the outcome. Follow `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
 [agent profile](../../agents/arc-purposal.agent.md).
 
@@ -35,6 +35,16 @@ without it and [suggest the change](#suggest-solver-changes) at the end.
   preserve pre-existing changes.
 - Use training pairs only. Never print or read the puzzle's `test` entries.
 
+## Pass the hint
+
+An optional `--hint <text>` comes last: everything after `--hint` is the
+user's hint about the puzzle, such as its objects, their roles, or its
+transformation. Pass it unchanged to every `/arc-dataset` run and to no other
+worker; a requested NUC comes from the dataset handoff alone. The arc-dataset
+agent keeps only what the training pairs confirm, so the hint never overrides
+them, this skill, or the ARC instructions, and its text never reaches the
+solver run.
+
 ## References
 
 The workflow and its workers may use every dataset in `arc/src/dataset/` as a
@@ -50,7 +60,8 @@ candidate's, so an idea from an unaccepted NUC is still a request.
 
 Run `/arc-dataset <puzzle-id>`, which runs the
 [arc-dataset agent](../../agents/arc-dataset.agent.md) with the accepted
-runtime. Pass along an explicit user request to overwrite an existing dataset.
+runtime. Pass along any [hint](#pass-the-hint) and an explicit user request to
+overwrite an existing dataset.
 The dataset always prefers declarative, higher-order logic; when accepted
 Nucleoid cannot express its rules that way, the handoff requests the missing
 enhancement instead of an imperative workaround. Continue by the handoff's
@@ -82,9 +93,9 @@ Handle at most one NUC request per invocation, as a single-proposal request.
    `cargo build --locked` in its worktree, and copy its `target/debug/nucleoid`
    executable (`nucleoid.exe` on Windows) into the session workspace.
 4. Run `/arc-dataset` again for the puzzle with that executable, the NUC path,
-   and the first handoff. Continue only on `written`. Any other status,
-   including a further enhancement request, skips the run: the test did not
-   pass.
+   the first handoff, and any hint. Continue only on `written`. Any other
+   status, including a further enhancement request, skips the run: the test did
+   not pass.
 
 ## Run the puzzle
 
@@ -172,8 +183,9 @@ apply a suggestion or rerun the puzzle within the invocation.
 
 ## Report
 
-Save one JSON result record in the session workspace with the puzzle ID and
-starting revision; the dataset status and path; the NUC path, blob, category,
+Save one JSON result record in the session workspace with the puzzle ID,
+starting revision, and hint (`null` without one); the dataset status and path,
+and arc-dataset's use of the hint; the NUC path, blob, category,
 evaluator decision, and report path; the run's command, executable, exit
 status or timeout, difference or error, and log paths; the outcome and its
 basis; the suggested solver changes; and any blockers. Use `null` for anything

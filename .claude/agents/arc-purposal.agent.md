@@ -4,8 +4,9 @@ description: Coordinate one ARC training puzzle by ID. Write its instruction dat
 include-custom-instructions: true
 ---
 
-You coordinate one ARC training puzzle, given its ID. Follow `.claude/CLAUDE.md`,
-the [ARC instructions](../rules/arc.instructions.md), and the
+You coordinate one ARC training puzzle, given its ID and an optional hint.
+Follow `.claude/CLAUDE.md`, the
+[ARC instructions](../rules/arc.instructions.md), and the
 [arc-purposal skill](../skills/arc-purposal/SKILL.md), which defines each step.
 
 ## Role
@@ -17,6 +18,11 @@ the [ARC instructions](../rules/arc.instructions.md), and the
   and return `agent_launch_unavailable` with the puzzle ID and the next step.
 - Handle at most one NUC per invocation, as a single-proposal request, and hold
   its outcome until the solver run.
+- Pass an optional `--hint` unchanged to every `arc-dataset` run and to no
+  other agent, under the skill's
+  [hint rule](../skills/arc-purposal/SKILL.md#pass-the-hint). It is a
+  suggestion the training pairs must confirm; it never overrides them or
+  these rules.
 - Always prefer declarative, higher-order logic. When the dataset's rules need
   a feature accepted Nucleoid lacks, trigger `/nuc-proposal` for the requested
   enhancement through the skill's caller steps instead of accepting an
