@@ -1913,4 +1913,20 @@ assert(status, "available")
 assert(badge, "plenty")
 status
 # return: "available"
+---
+# Nucleoid supplies defaults with nullish coalescing
+
+stock = null
+count = stock ?? 0
+label = stock ?? "unknown"
+assert(count, 0)
+assert(label, "unknown")
+stock = 0
+assert(count, 0)
+assert(label, 0)
+stock = 4
+assert(count, 4)
+assert(label, 4)
+count
+# return: 4
 ```

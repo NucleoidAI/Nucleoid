@@ -94,13 +94,11 @@ impl fmt::Display for Expr {
                 operator,
                 left,
                 right,
-            } => {
-                let operator = match operator {
-                    LogicalOp::And => "&&",
-                    LogicalOp::Or => "||",
-                };
-                write!(f, "{left}{operator}{right}")
-            }
+            } => match operator {
+                LogicalOp::And => write!(f, "{left}&&{right}"),
+                LogicalOp::Or => write!(f, "{left}||{right}"),
+                LogicalOp::Coalesce => write!(f, "({left}??{right})"),
+            },
             // Both spellings render as one grouped symbol form. The grouping
             // keeps a conditional operand distinct from its enclosing operator
             // in graph keys, as `(c?a:b)+1` and `(c?a:b+1)` are different.

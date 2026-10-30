@@ -231,6 +231,7 @@ pub enum BinaryOp {
 pub enum LogicalOp {
     And,
     Or,
+    Coalesce,
 }
 
 impl Expr {

@@ -1130,6 +1130,29 @@ assert(label, "standard")
   line, keep their accepted readings. See the
   [root contract](nucleoid.spec.md#conditional-expressions).
 
+## Nullish coalescing
+
+**Nullish coalescing defaults unknown values and keeps zero**
+
+```nuc
+price = null
+shown = price ?? "TBD"
+discount = 0
+rate = discount ?? 10
+assert(shown, "TBD")
+assert(rate, 0)
+price = 12
+assert(shown, 12)
+```
+
+- [NUC 60](docs/nuc-0060.md) adds `left ?? right`, which yields `left` unless
+  it is null and otherwise its default. `price ?? "TBD"` stays live, and
+  `discount ?? 10` keeps a real `0` where `discount || 10` would give `10`.
+- A null read inside `left` no longer settles the declaration to `null`, as it
+  does for `price || "TBD"`, so `??` is the expression-level way to default an
+  unknown value. See the
+  [root contract](nucleoid.spec.md#nullish-coalescing).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

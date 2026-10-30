@@ -11715,6 +11715,294 @@ amount = 25
 assert(reward, 0)"#);
 }
 
+/// Nucleoid defaults unknown values with nullish coalescing
+#[rustfmt::skip]
+#[test]
+fn defaults_unknown_values_with_nullish_coalescing() {
+    let mut run = runner();
+    run("stock = null");
+    run("count = stock ?? 0");
+    run("discount = 0");
+    run("rate = discount ?? 10");
+    run(r#"page = { name: "", muted: false }"#);
+    run(r#"page.title = page.name ?? "untitled""#);
+    run("page.sound = page.muted ?? true");
+    run("nickname = null");
+    run(r#"first = "Ada""#);
+    run(r#"display = nickname ?? first ?? "guest""#);
+    run("other = null");
+    run("fallback = other ?? nickname");
+    run("plain = stock || 0");
+    run("legacy = discount || 10");
+    assert_eq!(run("count"), 0);
+    assert_eq!(run("rate"), 0);
+    assert_eq!(run("page.title"), "");
+    assert_eq!(run("page.sound"), false);
+    assert_eq!(run("display"), "Ada");
+    assert_eq!(run("fallback"), serde_json::Value::Null);
+    assert_eq!(run("plain"), serde_json::Value::Null);
+    assert_eq!(run("legacy"), 10);
+    run("stock = 5");
+    run("discount = null");
+    run("page.name = null");
+    run(r#"nickname = "Lady A""#);
+    assert_eq!(run("count"), 5);
+    assert_eq!(run("rate"), 10);
+    assert_eq!(run("page.title"), "untitled");
+    assert_eq!(run("display"), "Lady A");
+    assert_eq!(run("fallback"), "Lady A");
+    assert_eq!(run("plain"), 5);
+    assert_eq!(run("legacy"), serde_json::Value::Null);
+    run("stock = 0");
+    run("first = null");
+    run("nickname = null");
+    assert_eq!(run("count"), 0);
+    assert_eq!(run("display"), "guest");
+    assert_eq!(run("fallback"), serde_json::Value::Null);
+}
+
+/// Nucleoid evaluates the right operand of nullish coalescing only when needed
+#[rustfmt::skip]
+#[test]
+fn evaluates_the_right_operand_of_nullish_coalescing_only_when_needed() {
+    let mut run = runner();
+    run(r#"log = []
+def note(tag):
+    log.push(tag)
+    return tag
+saved = "draft"
+other = 1
+pick = saved ?? note(other)
+assert(pick, "draft")
+assert(log, [])
+other = 2
+assert(pick, "draft")
+assert(log, [])
+saved = null
+assert(pick, 2)
+assert(log, [2])
+other = 3
+assert(pick, 3)
+assert(log, [2, 3])
+saved = 0
+other = 4
+assert(pick, 0)
+assert(log, [2, 3])
+ready = 1
+safe = ready ?? missing
+assert(safe, 1)
+failure = ""
+try:
+    ready = null
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(ready, 1)
+assert(safe, 1)
+missing = 7
+ready = null
+assert(safe, 7)
+try:
+    loose = absent ?? 5
+catch error:
+    failure = error
+assert(failure, ReferenceError("absent is not defined"))"#);
+}
+
+/// Nucleoid applies nullish coalescing in class level rules
+#[rustfmt::skip]
+#[test]
+fn applies_nullish_coalescing_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Order(total, coupon):
+    this.total = total
+    this.coupon = coupon
+$Order.discount = $Order.coupon ?? 0
+$Order.due = $Order.total - $Order.discount
+if $Order.rush ?? false:
+    $Order.lane = "fast"
+else:
+    $Order.lane = "normal"
+small = Order(40, null)
+large = Order(250, 25)
+savings = Order.map(order => order.coupon ?? 0)
+assert(small.discount, 0)
+assert(large.discount, 25)
+assert(small.due, 40)
+assert(large.due, 225)
+assert(small.lane, "normal")
+assert(large.lane, "normal")
+assert(savings, [0, 25])
+small.coupon = 0
+assert(small.discount, 0)
+small.coupon = 5
+assert(small.discount, 5)
+assert(small.due, 35)
+large.coupon = null
+assert(large.discount, 0)
+assert(large.due, 250)
+assert(savings, [5, 0])
+large.rush = true
+assert(large.lane, "fast")
+assert(small.lane, "normal")
+large.rush = null
+assert(large.lane, "normal")
+failure = ""
+try:
+    $Order.note = $Order.memo ?? vip
+catch error:
+    failure = error
+assert(failure, ReferenceError("vip is not defined"))
+try:
+    $Order.limit = $Order.cap ?? 50
+    $Order.cap = $Order.limit + 1
+catch error:
+    failure = error
+assert(failure, TypeError("Circular Dependency"))"#);
+}
+
+/// Nucleoid uses nullish coalescing in functions callbacks and literals
+#[rustfmt::skip]
+#[test]
+fn uses_nullish_coalescing_in_functions_callbacks_and_literals() {
+    let mut run = runner();
+    run("settings = {}");
+    run(r#"items = [{ name: "pen", size: 2 }, { name: "cup", size: 0 }, { name: "box" }]"#);
+    run("def width(item) => item.size ?? settings.size ?? 1");
+    run(r#"def label(item):
+    return item.nick ?? item.name"#);
+    run("sizes = items.map(item => item.size ?? -1)");
+    run("names = items.map(lambda item: item.nick ?? item.name)");
+    run("first = width(items[2])");
+    run("last = label(items[2])");
+    run("summary = { cap: settings.cap ?? 10, widths: [settings.size ?? 1, width(items[1])] }");
+    run("pick = items[settings.index ?? 1].name");
+    run(r#"banner = `${settings.title ?? "untitled"}`"#);
+    run("scaled = Math.max(settings.cap ?? 0, 5)");
+    run(r#"mode = settings.strict ? "strict" : settings.mode ?? "auto""#);
+    assert_eq!(run("sizes"), serde_json::json!([2, 0, -1]));
+    assert_eq!(run("names"), serde_json::json!(["pen", "cup", "box"]));
+    assert_eq!(run("first"), 1);
+    assert_eq!(run("last"), "box");
+    assert_eq!(run("summary.cap"), 10);
+    assert_eq!(run("summary.widths"), serde_json::json!([1, 0]));
+    assert_eq!(run("pick"), "cup");
+    assert_eq!(run("banner"), "untitled");
+    assert_eq!(run("scaled"), 5);
+    assert_eq!(run("mode"), "auto");
+    run("settings.size = 3");
+    run("settings.index = 0");
+    run(r#"settings.title = "Sale""#);
+    run("settings.cap = 0");
+    run(r#"settings.mode = "manual""#);
+    assert_eq!(run("first"), 3);
+    assert_eq!(run("summary.cap"), 0);
+    assert_eq!(run("summary.widths"), serde_json::json!([3, 0]));
+    assert_eq!(run("pick"), "pen");
+    assert_eq!(run("banner"), "Sale");
+    assert_eq!(run("scaled"), 5);
+    assert_eq!(run("mode"), "manual");
+    run(r#"items.push({ name: "bag", nick: "tote" })"#);
+    assert_eq!(run("sizes"), serde_json::json!([2, 0, -1, -1]));
+    assert_eq!(run("names"), serde_json::json!(["pen", "cup", "box", "tote"]));
+}
+
+/// Nucleoid groups nullish coalescing between conditionals and logical operators
+#[rustfmt::skip]
+#[test]
+fn groups_nullish_coalescing_between_conditionals_and_logical_operators() {
+    let mut run = runner();
+    run("page = { base: 0, level: 3, visible: true }");
+    run(r#"state = page.custom ?? page.base ? "set" : "unset""#);
+    run(r#"shown = page.visible ? page.label ?? "untitled" : "hidden""#);
+    run(r#"spoken = page.label ?? "untitled" if page.visible else "hidden""#);
+    run("first = page.flag || page.backup ?? 9");
+    run("second = page.custom ?? page.base || page.level");
+    run("same = page.custom ?? page.level == 3");
+    run(r#"note = "why?? not""#);
+    run("pattern = /colou??r/");
+    run(r#"greeting = `who?? ${page.label ?? "you"}`"#);
+    assert_eq!(run("state"), "unset");
+    assert_eq!(run("shown"), "untitled");
+    assert_eq!(run("spoken"), "untitled");
+    assert_eq!(run("first"), 9);
+    assert_eq!(run("second"), 3);
+    assert_eq!(run("same"), true);
+    assert_eq!(run("note"), "why?? not");
+    assert_eq!(run(r#"pattern.test("color")"#), true);
+    assert_eq!(run("greeting"), "who?? you");
+    run("page.custom = 0");
+    run("page.backup = 4");
+    assert_eq!(run("state"), "unset");
+    assert_eq!(run("first"), 4);
+    assert_eq!(run("second"), 0);
+    assert_eq!(run("same"), 0);
+    run("page.custom = 2");
+    run(r#"page.label = "Main""#);
+    assert_eq!(run("state"), "set");
+    assert_eq!(run("shown"), "Main");
+    assert_eq!(run("spoken"), "Main");
+    assert_eq!(run("second"), 2);
+    assert_eq!(run("greeting"), "who?? Main");
+    run("page.visible = false");
+    assert_eq!(run("shown"), "hidden");
+    assert_eq!(run("spoken"), "hidden");
+}
+
+/// Nucleoid rolls back failed nullish coalescing updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_nullish_coalescing_updates() {
+    let mut run = runner();
+    run(r#"def check(amount):
+    if amount > 100:
+        throw "TOO_LARGE"
+    return amount
+rate = 2
+amount = 5
+custom = null
+fee = custom ?? check(amount) * rate
+assert(fee, 10)
+failure = ""
+try:
+    amount = 500
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(amount, 5)
+assert(fee, 10)
+try:
+    custom = 1
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(custom, null)
+assert(fee, 10)
+custom = 3
+assert(fee, 3)
+amount = 500
+assert(fee, 3)
+rate = 4
+amount = 20
+custom = null
+assert(fee, 80)
+base = 3
+config = { size: 2 }
+spare = config.size ?? base.value
+base = 4
+assert(spare, 2)
+delete config.size
+assert(spare, 3)
+bonus = 7
+reward = bonus ?? 0
+assert(reward, 7)
+delete bonus
+assert(reward, 0)
+bonus = 9
+assert(reward, 9)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

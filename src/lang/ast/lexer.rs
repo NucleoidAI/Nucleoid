@@ -44,6 +44,8 @@ enum Raw {
     Colon,
     #[token("?")]
     Question,
+    #[token("??")]
+    QuestionQuestion,
     #[token(";")]
     Semicolon,
     #[token(".")]
@@ -216,9 +218,9 @@ pub enum Token {
     RightBrace,
     Comma,
     Colon,
-    /// `?`, which opens a conditional expression's consequent (NUC 59). It is
-    /// always one character; `??`, `?.` and `?:` are not tokens.
+    /// `?`, which opens a conditional expression's consequent (NUC 59).
     Question,
+    QuestionQuestion,
     Semicolon,
     Dot,
     At,
@@ -280,6 +282,7 @@ impl Token {
             Token::Comma => "','".to_string(),
             Token::Colon => "':'".to_string(),
             Token::Question => "'?'".to_string(),
+            Token::QuestionQuestion => "'??'".to_string(),
             Token::Semicolon => "';'".to_string(),
             Token::Dot => "'.'".to_string(),
             Token::At => "'@'".to_string(),
@@ -483,6 +486,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::Comma => Token::Comma,
             Raw::Colon => Token::Colon,
             Raw::Question => Token::Question,
+            Raw::QuestionQuestion => Token::QuestionQuestion,
             Raw::Semicolon => Token::Semicolon,
             Raw::Dot => Token::Dot,
             Raw::At => Token::At,
@@ -1039,6 +1043,10 @@ mod tests {
             ),
             (
                 "a ?? b",
+                vec![identifier("a"), Token::QuestionQuestion, identifier("b")],
+            ),
+            (
+                "a ? ? b",
                 vec![
                     identifier("a"),
                     Token::Question,
@@ -1109,5 +1117,92 @@ mod tests {
                 Token::Eof,
             ]
         );
+    }
+
+    #[test]
+    fn double_question_marks_are_one_token_outside_literal_text() {
+        let identifier = |name: &str| Token::Identifier(name.into());
+        assert_eq!(Token::QuestionQuestion.describe(), "'??'");
+        for (source, mut expected) in [
+            (
+                "a??b",
+                vec![identifier("a"), Token::QuestionQuestion, identifier("b")],
+            ),
+            (
+                "a ??? b",
+                vec![
+                    identifier("a"),
+                    Token::QuestionQuestion,
+                    Token::Question,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a ?? ? b",
+                vec![
+                    identifier("a"),
+                    Token::QuestionQuestion,
+                    Token::Question,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a????b",
+                vec![
+                    identifier("a"),
+                    Token::QuestionQuestion,
+                    Token::QuestionQuestion,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a??.5",
+                vec![identifier("a"), Token::QuestionQuestion, Token::Number(0.5)],
+            ),
+            (
+                "a ?? /b?/",
+                vec![
+                    identifier("a"),
+                    Token::QuestionQuestion,
+                    Token::Regex("b?".into()),
+                ],
+            ),
+            (
+                "a ??= b",
+                vec![
+                    identifier("a"),
+                    Token::QuestionQuestion,
+                    Token::Assign,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "c ? a ?? b : d",
+                vec![
+                    identifier("c"),
+                    Token::Question,
+                    identifier("a"),
+                    Token::QuestionQuestion,
+                    identifier("b"),
+                    Token::Colon,
+                    identifier("d"),
+                ],
+            ),
+            ("\"why??\"", vec![Token::Str("why??".into())]),
+            ("'why??'", vec![Token::Str("why??".into())]),
+            (
+                "`why?? ${a ?? b}`",
+                vec![Token::Template("why?? ${a ?? b}".into())],
+            ),
+            ("/colou??r/", vec![Token::Regex("colou??r".into())]),
+            ("x # a ?? b", vec![identifier("x")]),
+        ] {
+            expected.push(Token::Eof);
+            assert_eq!(tokens(source), expected, "{source}");
+        }
+        let spanned = tokenize("x = a ?? b").unwrap();
+        assert_eq!(spanned[3].token, Token::QuestionQuestion);
+        assert_eq!(spanned[3].position, Position::new(1, 7));
+        assert_eq!(spanned[4].position, Position::new(1, 10));
     }
 }

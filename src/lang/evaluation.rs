@@ -219,4 +219,25 @@ impl Runtime {
             value
         }
     }
+
+    pub(crate) fn evaluate_settled(
+        &mut self,
+        expression: &Expr,
+        scope: &mut Scope,
+    ) -> Result<Value> {
+        let null_read = std::mem::take(&mut self.null_read);
+        let undefined_read = std::mem::take(&mut self.undefined_read);
+        let value = self
+            .evaluate(expression, scope)
+            .map(|value| self.settle(value));
+        let read_undefined = std::mem::replace(&mut self.undefined_read, undefined_read);
+        self.null_read = null_read;
+        let value = value?;
+
+        if !value.is_null() {
+            self.undefined_read |= read_undefined;
+        }
+
+        Ok(value)
+    }
 }

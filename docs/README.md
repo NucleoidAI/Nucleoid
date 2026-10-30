@@ -251,6 +251,8 @@ width = goldenRatio.value * altitude
 
 - Any `null` dependency yields `null`.
 - Reading something undefined yields `null` and re-evaluates when it arrives.
+- `value ?? fallback` supplies a default for a null or undefined value; see
+  [Nullish coalescing](#nullish-coalescing).
 
 ### Deletion
 
@@ -398,6 +400,7 @@ assert(summary.kind, "alert")
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Conditional: `condition ? consequent : alternate` or
   `consequent if condition else alternate`; see below.
+- Nullish coalescing: `left ?? right`; see below.
 - Parentheses override precedence.
 - `+` concatenates when an operand is a string.
 
@@ -456,6 +459,50 @@ status
   section.
 
 Full detail: [NUC 59](nuc-0059.md).
+
+### Nullish coalescing
+
+- `left ?? right` yields `left` unless it is null, and otherwise evaluates and
+  yields `right`. `left` is null exactly when a declaration of it alone would
+  store `null`: its value is null or undefined, or evaluating it read a null.
+- Falsy values such as `0`, `""` and `false` are kept, unlike with `||`, and a
+  null read inside `left` no longer settles the declaration to `null`.
+- `right` is evaluated only when `left` is null; otherwise it has no effects,
+  errors or dependencies. A declaration that uses `??` stays live and switches
+  between the value and the default as `left` changes.
+- One right-associative level sits between conditional expressions and `|>`,
+  below `||`: `a || b ?? c` is `(a || b) ?? c`, `a ?? b == c` is
+  `a ?? (b == c)`, and `a ?? b ? c : d` tests `a ?? b`. Write `(x ?? 0) > 5`
+  to compare a default.
+
+```
+stock = null
+count = stock ?? 0
+label = stock ?? "unknown"
+assert(count, 0)
+assert(label, "unknown")
+stock = 0
+assert(count, 0)
+assert(label, 0)
+stock = 4
+assert(count, 4)
+assert(label, 4)
+count
+```
+
+- This is the complete `Nucleoid supplies defaults with nullish coalescing`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `4`.
+- An undefined name is still an error: `missing ?? 5` raises
+  `ReferenceError("missing is not defined")`. Class-level rules validate both
+  operands when they are declared, and an undefined read that `??` replaced
+  with its default does not make a class-level `if` stand aside.
+- `??` is one token and renders canonically as `(left??right)`. `??=`, `?.`
+  and `?:` are not added. Grammar, errors and edge cases are in the
+  authoritative [nullish coalescing](../nucleoid.spec.md#nullish-coalescing)
+  section.
+
+Full detail: [NUC 60](nuc-0060.md).
 
 ### Indexing, slicing, and length
 
@@ -890,6 +937,8 @@ assert(signal.output, 8)
 - `not` inverts the test.
 - Conditional expressions use the same test; see
   [Conditional expressions](#conditional-expressions).
+- `??` tests whether a value is null rather than whether it is true, so `0`
+  and `""` are kept; see [Nullish coalescing](#nullish-coalescing).
 
 ```
 if $Device.profile:
@@ -2299,6 +2348,7 @@ elif                                   same unconditional alias without a colon
 
 condition ? consequent : alternate     conditional expression (NUC 59)
 consequent if condition else alternate same expression, Python spelling
+left ?? right                          left unless it is null, else right (NUC 60)
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration

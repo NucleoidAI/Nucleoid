@@ -128,23 +128,20 @@ impl Runtime {
         right: &Expr,
         scope: &mut Scope,
     ) -> Result<Value> {
-        let left = self.evaluate(left, scope)?;
+        let left = match operator {
+            LogicalOp::And | LogicalOp::Or => self.evaluate(left, scope)?,
+            LogicalOp::Coalesce => self.evaluate_settled(left, scope)?,
+        };
+        let selected = match operator {
+            LogicalOp::And => !left.truthy(),
+            LogicalOp::Or => left.truthy(),
+            LogicalOp::Coalesce => !left.is_null(),
+        };
 
-        match operator {
-            LogicalOp::And => {
-                if left.truthy() {
-                    self.evaluate(right, scope)
-                } else {
-                    Ok(left)
-                }
-            }
-            LogicalOp::Or => {
-                if left.truthy() {
-                    Ok(left)
-                } else {
-                    self.evaluate(right, scope)
-                }
-            }
+        if selected {
+            Ok(left)
+        } else {
+            self.evaluate(right, scope)
         }
     }
 

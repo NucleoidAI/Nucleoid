@@ -1108,6 +1108,7 @@ impl Parser {
     /// the enclosing context.
     fn conditional(&mut self) -> Result<Expr> {
         let operand = self.pipeline()?;
+        let operand = self.coalescing(operand)?;
 
         let (condition, consequent) = if self.eat(&Token::Question) {
             let consequent = self.clause_expression()?;
@@ -1128,7 +1129,7 @@ impl Parser {
     }
 
     /// Qualifies a Python-style conditional after a complete operand: `if`,
-    /// one condition parsed like an `if` header's up to the pipeline level,
+    /// one condition,
     /// and an immediately following `else`, which is consumed. Any other
     /// outcome consumes nothing, so the statement parser still reads `if` as
     /// an adjacent statement with its original positions and diagnostics.
@@ -1159,7 +1160,8 @@ impl Parser {
     fn attempt_python_condition(&mut self) -> Option<PythonCondition> {
         let start = self.position;
         self.advance();
-        let condition = self.nested_expression_in(ExpressionContext::Clause, Self::pipeline);
+        let condition =
+            self.nested_expression_in(ExpressionContext::Clause, Self::coalescing_expression);
         let outcome = match condition {
             Ok(condition) if self.eat_keyword(Keyword::Else) => Some(PythonCondition {
                 condition,
@@ -1169,6 +1171,38 @@ impl Parser {
         };
         self.position = start;
         outcome
+    }
+
+    fn coalescing_expression(&mut self) -> Result<Expr> {
+        let operand = self.pipeline()?;
+        self.coalescing(operand)
+    }
+
+    fn coalescing(&mut self, first: Expr) -> Result<Expr> {
+        if !self.check(&Token::QuestionQuestion) {
+            return Ok(first);
+        }
+
+        let mut operands = vec![first];
+
+        while self.eat(&Token::QuestionQuestion) {
+            if operands.len() > MAX_CHAIN {
+                return Err(self.error("Expression has too many operands"));
+            }
+
+            operands.push(self.pipeline()?);
+        }
+
+        let mut right = operands.pop().expect("a coalescing chain has operands");
+        while let Some(left) = operands.pop() {
+            right = Expr::Logical {
+                operator: LogicalOp::Coalesce,
+                left: Box::new(left),
+                right: Box::new(right),
+            };
+        }
+
+        Ok(right)
     }
 
     fn pipeline(&mut self) -> Result<Expr> {

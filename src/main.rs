@@ -704,6 +704,42 @@ mod tests {
     }
 
     #[test]
+    fn nullish_coalescing_pairs_with_no_colon_in_headers() {
+        for condition in [
+            "ready ?? false",
+            "a ?? b ?? c",
+            "(ready ?? false) == true",
+            "ready ? on ?? off : off",
+            "ready ?? false ? on : off",
+            "on if ready ?? false else off",
+            "`${ready ?? \"off\"}` == \"on\"",
+            "items[index ?? 0]",
+        ] {
+            for prefix in ["if", "else if", "elif if", "else", "elif"] {
+                let line = format!("{prefix} {condition}");
+                let keyword = if prefix == "if" {
+                    Keyword::If
+                } else {
+                    Keyword::Else
+                };
+                assert!(indented_condition_header(&line, keyword), "{line:?}");
+                assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+            }
+        }
+        for line in [
+            "if ready ? ? off",
+            "if ready ?? on : off",
+            "if ready ?? false:",
+            "if ready ?? false: pass",
+            "if ready ?? false; other",
+        ] {
+            assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+        }
+        assert!(indented_body_header("if ready ?? false:"));
+        assert!(!indented_body_header("label = ready ?? \"off\""));
+    }
+
+    #[test]
     fn multiline_input_keeps_the_final_physical_lines_indentation() {
         let source = "class Student(name, age):\n    this.name = name\n    this.age = age\n";
         assert!(!indented_body_header(source));

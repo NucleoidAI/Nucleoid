@@ -2433,16 +2433,17 @@ statement positions; caught values and transaction recovery are unchanged.
   pipeline, and `a ? b : c ? d : e`, `a if b else c if d else e` and mixed
   chains group to the right. The consequent after `?` is a complete
   expression. The operand before `?` and both operands before `else` are
-  pipeline-level, so a nested conditional there needs parentheses; either
-  alternate is conditional-level. Arrow and lambda bodies extend over a
+  coalescing-level, the pipeline level extended by NUC 60's `??`, so a nested
+  conditional there needs parentheses; either alternate is conditional-level. Arrow and lambda bodies extend over a
   conditional, as in `items.map(x => x > 2 ? "big" : "small")`.
-- `?` is one lexer token. `??`, `?.` and `?:` are not operators, and a `/`
-  after `?` starts a regular expression. `?` inside strings, template text
+- `?` is one lexer token. `?.` and `?:` are not operators, `??` is
+  [NUC 60](docs/nuc-0060.md)'s nullish coalescing operator, and a `/` after
+  `?` starts a regular expression. `?` inside strings, template text
   outside interpolations, regular expressions and comments is unchanged. In
   direct-alternative and native REPL header scans, a top-level conditional's
   colon pairs with its `?`.
 - The Python spelling qualifies only when `if` follows a complete operand and
-  one condition, parsed like an `if` header's up to the pipeline level, is
+  one condition, parsed like an `if` header's up to the coalescing level, is
   immediately followed by `else` or its existing lexical alias `elif`.
   Otherwise it consumes nothing, and `if` keeps its accepted reading as an
   adjacent statement with its original diagnostics: `x = 1 if ready:` with an
@@ -2460,11 +2461,76 @@ statement positions; caught values and transaction recovery are unchanged.
   operator in graph keys.
 - Malformed forms use existing diagnostics, for example
   `SyntaxError("Expected ':' but found end of input")` for `x = c ? 1`,
-  `SyntaxError("Unexpected '?'")` for `x = c ?? 1 : 2` and
+  `SyntaxError("Unexpected '?'")` for `x = c ? ? 1 : 2` and
   `SyntaxError("Unexpected end of input")` for `x = 1 if c else`. The six
   appended entries beginning `Nucleoid selects values with conditional
   expressions` through `Nucleoid rolls back failed conditional expression
   updates` specify the executable behavior.
+
+## Nullish coalescing
+
+- [NUC 60](docs/nuc-0060.md) adds the nullish coalescing operator
+  `left ?? right`. It yields `left` unless `left` is null, and otherwise
+  evaluates and yields `right`. `&&`, `||` and conditional expressions keep
+  their grammar and behavior.
+- `left` is evaluated once and settled by the existing assignment rules: it is
+  null when its value is null, when its value is undefined, as for a missing
+  property, or when its evaluation read a null binding or property, exactly
+  what a declaration of `left` alone would store. So `(n + 1) ?? 0` is `0`
+  while `n` is null. Falsy values that are not null, such as `0`, `""`,
+  `false`, NaN and empty lists and objects, are kept, unlike with `||`.
+- When `left` is not null, `right` is not evaluated: it has no effects, raises
+  nothing and adds no dependency. When `left` is null, the null and undefined
+  reads that `left` made are discarded and `right` is evaluated. Its reads
+  count as usual, so `a ?? b` with both null still stores `null`.
+- A standing declaration depends on what `left` read and, when it was
+  evaluated, on what `right` read. It re-evaluates when either changes and
+  switches between the left value and the default as `left` becomes null or
+  not, replacing obsolete dependencies. Variables, properties, class-level
+  rules, function bodies and returns, arrow and lambda callbacks, list and
+  object elements, template interpolations, call arguments, subscripts and
+  conditional-expression operands use `??` as an ordinary operand.
+- An undefined name is an error, not null: `missing ?? 5` raises
+  `ReferenceError("missing is not defined")`. A variable read while its
+  deletion propagates is undefined, so its dependents take their defaults and
+  follow it again once it is defined. `.value` snapshots are taken in both
+  operands when the declaration is stored, as in a skipped logical operand, so
+  an unevaluated `right` keeps the snapshot it had then.
+- Class-level rule validation inspects both operands, as for `||`: an
+  undefined name in either raises `ReferenceError("<name> is not defined")`
+  when the rule is declared, and a `$Class` property read in either takes part
+  in `TypeError("Circular Dependency")` checks. Each instance evaluates its
+  own operands. A class-level `if` statement still stands aside while its
+  condition reads something undefined, but an undefined read that `??`
+  replaced with its default does not count, so `if $Order.rush ?? false:`
+  decides for an order without `rush`.
+- An error raised by `left` or an evaluated `right` propagates through the
+  existing transaction, so a failed standing re-evaluation rolls back the
+  change that triggered it.
+- `??` is one right-associative level between the conditional expression and
+  the reasoning pipeline `|>`. It binds more loosely than `||`, `&&`,
+  comparisons and arithmetic, as in C#: `a || b ?? c` is `(a || b) ?? c`,
+  `a ?? b || c` is `a ?? (b || c)`, `a ?? b == c` is `a ?? (b == c)` and
+  `a ?? b ?? c` is `a ?? (b ?? c)`, so write `(x ?? 0) > 5` to compare a
+  default. `x |> why ?? b` defaults the pipeline. `a ?? b ? c : d` tests
+  `a ?? b`, a `?` consequent and either alternate may contain `??`, and the
+  operand before `?`, the Python consequent and the Python condition are
+  coalescing-level. One chain holds at most 128 `??` operators.
+- `??` is one lexer token. `? ?` stays two tokens and `???` is `??` followed by
+  `?`. A `/` after `??` starts a regular expression, and `a??.5` reads `.5` as
+  a number. `??` inside strings, template text outside interpolations,
+  regular expressions and comments is unchanged. In direct-alternative and
+  native REPL header scans, `??` pairs with no colon.
+- It renders canonically as `(left??right)`. The grouping keeps
+  `(x ?? 0) > 5` distinct from `x ?? 0 > 5` in graph keys.
+- `??=`, optional chaining `?.` and Kotlin's Elvis `?:` are not added, and
+  statement-level `if` and the null-read rule outside `??` are unchanged.
+  Malformed forms use existing diagnostics, for example
+  `SyntaxError("Unexpected ':'")` for `x = c ?? 1 : 2` and
+  `SyntaxError("Unexpected '='")` for `x ??= 1`. The six appended entries
+  beginning `Nucleoid defaults unknown values with nullish coalescing` through
+  `Nucleoid rolls back failed nullish coalescing updates` specify the
+  executable behavior.
 
 ```
 # Nucleoid runs a statement in the state
@@ -14540,4 +14606,268 @@ bonus = 9
 assert(reward, 9)
 amount = 25
 assert(reward, 0)
+---
+# Nucleoid defaults unknown values with nullish coalescing
+
+stock = null
+count = stock ?? 0
+discount = 0
+rate = discount ?? 10
+page = { name: "", muted: false }
+page.title = page.name ?? "untitled"
+page.sound = page.muted ?? true
+nickname = null
+first = "Ada"
+display = nickname ?? first ?? "guest"
+other = null
+fallback = other ?? nickname
+plain = stock || 0
+legacy = discount || 10
+assert(count, 0)
+assert(rate, 0)
+assert(page.title, "")
+assert(page.sound, false)
+assert(display, "Ada")
+assert(fallback, null)
+assert(plain, null)
+assert(legacy, 10)
+stock = 5
+discount = null
+page.name = null
+nickname = "Lady A"
+assert(count, 5)
+assert(rate, 10)
+assert(page.title, "untitled")
+assert(display, "Lady A")
+assert(fallback, "Lady A")
+assert(plain, 5)
+assert(legacy, null)
+stock = 0
+first = null
+nickname = null
+assert(count, 0)
+assert(display, "guest")
+assert(fallback, null)
+---
+# Nucleoid evaluates the right operand of nullish coalescing only when needed
+
+log = []
+def note(tag):
+    log.push(tag)
+    return tag
+saved = "draft"
+other = 1
+pick = saved ?? note(other)
+assert(pick, "draft")
+assert(log, [])
+other = 2
+assert(pick, "draft")
+assert(log, [])
+saved = null
+assert(pick, 2)
+assert(log, [2])
+other = 3
+assert(pick, 3)
+assert(log, [2, 3])
+saved = 0
+other = 4
+assert(pick, 0)
+assert(log, [2, 3])
+ready = 1
+safe = ready ?? missing
+assert(safe, 1)
+failure = ""
+try:
+    ready = null
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(ready, 1)
+assert(safe, 1)
+missing = 7
+ready = null
+assert(safe, 7)
+try:
+    loose = absent ?? 5
+catch error:
+    failure = error
+assert(failure, ReferenceError("absent is not defined"))
+---
+# Nucleoid applies nullish coalescing in class level rules
+
+class Order(total, coupon):
+    this.total = total
+    this.coupon = coupon
+$Order.discount = $Order.coupon ?? 0
+$Order.due = $Order.total - $Order.discount
+if $Order.rush ?? false:
+    $Order.lane = "fast"
+else:
+    $Order.lane = "normal"
+small = Order(40, null)
+large = Order(250, 25)
+savings = Order.map(order => order.coupon ?? 0)
+assert(small.discount, 0)
+assert(large.discount, 25)
+assert(small.due, 40)
+assert(large.due, 225)
+assert(small.lane, "normal")
+assert(large.lane, "normal")
+assert(savings, [0, 25])
+small.coupon = 0
+assert(small.discount, 0)
+small.coupon = 5
+assert(small.discount, 5)
+assert(small.due, 35)
+large.coupon = null
+assert(large.discount, 0)
+assert(large.due, 250)
+assert(savings, [5, 0])
+large.rush = true
+assert(large.lane, "fast")
+assert(small.lane, "normal")
+large.rush = null
+assert(large.lane, "normal")
+failure = ""
+try:
+    $Order.note = $Order.memo ?? vip
+catch error:
+    failure = error
+assert(failure, ReferenceError("vip is not defined"))
+try:
+    $Order.limit = $Order.cap ?? 50
+    $Order.cap = $Order.limit + 1
+catch error:
+    failure = error
+assert(failure, TypeError("Circular Dependency"))
+---
+# Nucleoid uses nullish coalescing in functions callbacks and literals
+
+settings = {}
+items = [{ name: "pen", size: 2 }, { name: "cup", size: 0 }, { name: "box" }]
+def width(item) => item.size ?? settings.size ?? 1
+def label(item):
+    return item.nick ?? item.name
+sizes = items.map(item => item.size ?? -1)
+names = items.map(lambda item: item.nick ?? item.name)
+first = width(items[2])
+last = label(items[2])
+summary = { cap: settings.cap ?? 10, widths: [settings.size ?? 1, width(items[1])] }
+pick = items[settings.index ?? 1].name
+banner = `${settings.title ?? "untitled"}`
+scaled = Math.max(settings.cap ?? 0, 5)
+mode = settings.strict ? "strict" : settings.mode ?? "auto"
+assert(sizes, [2, 0, -1])
+assert(names, ["pen", "cup", "box"])
+assert(first, 1)
+assert(last, "box")
+assert(summary.cap, 10)
+assert(summary.widths, [1, 0])
+assert(pick, "cup")
+assert(banner, "untitled")
+assert(scaled, 5)
+assert(mode, "auto")
+settings.size = 3
+settings.index = 0
+settings.title = "Sale"
+settings.cap = 0
+settings.mode = "manual"
+assert(first, 3)
+assert(summary.cap, 0)
+assert(summary.widths, [3, 0])
+assert(pick, "pen")
+assert(banner, "Sale")
+assert(scaled, 5)
+assert(mode, "manual")
+items.push({ name: "bag", nick: "tote" })
+assert(sizes, [2, 0, -1, -1])
+assert(names, ["pen", "cup", "box", "tote"])
+---
+# Nucleoid groups nullish coalescing between conditionals and logical operators
+
+page = { base: 0, level: 3, visible: true }
+state = page.custom ?? page.base ? "set" : "unset"
+shown = page.visible ? page.label ?? "untitled" : "hidden"
+spoken = page.label ?? "untitled" if page.visible else "hidden"
+first = page.flag || page.backup ?? 9
+second = page.custom ?? page.base || page.level
+same = page.custom ?? page.level == 3
+note = "why?? not"
+pattern = /colou??r/
+greeting = `who?? ${page.label ?? "you"}`
+assert(state, "unset")
+assert(shown, "untitled")
+assert(spoken, "untitled")
+assert(first, 9)
+assert(second, 3)
+assert(same, true)
+assert(note, "why?? not")
+assert(pattern.test("color"), true)
+assert(greeting, "who?? you")
+page.custom = 0
+page.backup = 4
+assert(state, "unset")
+assert(first, 4)
+assert(second, 0)
+assert(same, 0)
+page.custom = 2
+page.label = "Main"
+assert(state, "set")
+assert(shown, "Main")
+assert(spoken, "Main")
+assert(second, 2)
+assert(greeting, "who?? Main")
+page.visible = false
+assert(shown, "hidden")
+assert(spoken, "hidden")
+---
+# Nucleoid rolls back failed nullish coalescing updates
+
+def check(amount):
+    if amount > 100:
+        throw "TOO_LARGE"
+    return amount
+rate = 2
+amount = 5
+custom = null
+fee = custom ?? check(amount) * rate
+assert(fee, 10)
+failure = ""
+try:
+    amount = 500
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(amount, 5)
+assert(fee, 10)
+try:
+    custom = 1
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(custom, null)
+assert(fee, 10)
+custom = 3
+assert(fee, 3)
+amount = 500
+assert(fee, 3)
+rate = 4
+amount = 20
+custom = null
+assert(fee, 80)
+base = 3
+config = { size: 2 }
+spare = config.size ?? base.value
+base = 4
+assert(spare, 2)
+delete config.size
+assert(spare, 3)
+bonus = 7
+reward = bonus ?? 0
+assert(reward, 7)
+delete bonus
+assert(reward, 0)
+bonus = 9
+assert(reward, 9)
 ```

@@ -2589,6 +2589,37 @@ honors
 - See [NUC 59](nuc-0059.md) and the
   [root contract](../nucleoid.spec.md#conditional-expressions).
 
+## Nullish coalescing
+
+**Nullish coalescing fills missing fields of live class records**
+
+```nuc
+class Product(name, price):
+    this.name = name
+    this.price = price
+$Product.shown = $Product.price ?? "ask"
+$Product.stock = $Product.count ?? 0
+tea = Product("Tea", 4)
+herb = Product("Herb", null)
+labels = Product.map(product => `${product.name}: ${product.shown}`)
+assert(herb.shown, "ask")
+assert(herb.stock, 0)
+assert(labels, ["Tea: 4", "Herb: ask"])
+herb.price = 0
+assert(herb.shown, 0)
+assert(labels, ["Tea: 4", "Herb: 0"])
+herb.count = 3
+assert(herb.stock, 3)
+labels
+# return: ["Tea: 4","Herb: 0"]
+```
+
+- Two class-level rules default a missing price and stock count. Each product
+  evaluates its own operands, `0` is kept as a real price, and the labels
+  follow every change; an `||` default would store `null` for the null price.
+- See [NUC 60](nuc-0060.md) and the
+  [root contract](../nucleoid.spec.md#nullish-coalescing).
+
 ## Copyright
 
 Copyright 2020 Nucleoid
