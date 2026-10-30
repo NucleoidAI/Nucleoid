@@ -1929,4 +1929,28 @@ assert(count, 4)
 assert(label, 4)
 count
 # return: 4
+---
+# Nucleoid reads instance lists with ranges and list queries
+
+class Task(title, done):
+    this.title = title
+    this.done = done
+plan = Task("plan", true)
+build = Task("build", false)
+recent = Task[-1:]
+everyone = Task.list()
+pending = Task.findIndex(task => not task.done)
+newest = Task.at(-1).title
+assert(recent, [build])
+assert(everyone, Task.all())
+assert(pending, 1)
+ship = Task("ship", false)
+assert(recent, [ship])
+assert(everyone, [plan, build, ship])
+assert(newest, "ship")
+build.done = true
+assert(pending, 2)
+assert(Task.lastIndexOf(build), 1)
+everyone.map(task => task.title)
+# return: ["plan","build","ship"]
 ```

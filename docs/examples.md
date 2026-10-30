@@ -2620,6 +2620,43 @@ labels
 - See [NUC 60](nuc-0060.md) and the
   [root contract](../nucleoid.spec.md#nullish-coalescing).
 
+## Instance list ranges and list queries
+
+**Live leaderboards read instance lists by range and position**
+
+```nuc
+class Runner(name, time):
+    this.name = name
+    this.time = time
+ana = Runner("Ana", 61)
+ben = Runner("Ben", 58)
+cy = Runner("Cy", 64)
+cutoff = 62
+latest = Runner.at(-1).name
+qualified = Runner.list().filter(runner => runner.time < cutoff).map(runner => runner.name)
+lastSlow = Runner.findLastIndex(runner => runner.time >= cutoff)
+leaders = Runner[:2].map(runner => runner.name)
+assert(latest, "Cy")
+assert(qualified, ["Ana", "Ben"])
+assert(lastSlow, 2)
+assert(leaders, ["Ana", "Ben"])
+cy.time = 60
+assert(qualified, ["Ana", "Ben", "Cy"])
+assert(lastSlow, -1)
+dee = Runner("Dee", 63)
+assert(latest, "Dee")
+assert(lastSlow, 3)
+assert(leaders, ["Ana", "Ben"])
+qualified
+# return: ["Ana","Ben","Cy"]
+```
+
+- `Runner.at(-1)` follows the newest runner, `Runner[:2]` keeps the first two
+  in population order, and `Runner.findLastIndex(...)` searches from the end.
+  Each declaration re-evaluates when a runner is created or a time changes.
+- See [NUC 61](nuc-0061.md) and the
+  [root contract](../nucleoid.spec.md#instance-list-ranges-and-list-queries).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

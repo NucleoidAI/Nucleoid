@@ -12003,6 +12003,535 @@ bonus = 9
 assert(reward, 9)"#);
 }
 
+/// Nucleoid slices class instance lists with ranges
+#[rustfmt::skip]
+#[test]
+fn slices_class_instance_lists_with_ranges() {
+    let mut run = runner();
+    run(r#"class User(name):
+    this.name = name"#);
+    run(r#"ada = User("Ada")"#);
+    run(r#"bob = User("Bob")"#);
+    run(r#"cy = User("Cy")"#);
+    {
+        let actual = run("User[:]");
+        let expected = run("([ada, bob, cy])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[1:]");
+        let expected = run("([bob, cy])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[:2]");
+        let expected = run("([ada, bob])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[-2:]");
+        let expected = run("([bob, cy])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[1:-1]");
+        let expected = run("([bob])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[0:9]");
+        let expected = run("([ada, bob, cy])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[-9:1]");
+        let expected = run("([ada])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("User[2:1]"), serde_json::json!([]));
+    {
+        let actual = run("User[1:]");
+        let expected = run("(User.slice(1))");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[-2:-1]");
+        let expected = run("(User.slice(-2, -1))");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("User[:].length");
+        let expected = run("(User.length)");
+        assert_eq!(actual, expected);
+    }
+    run("start = 1");
+    {
+        let actual = run("User[start:start + 1]");
+        let expected = run("([bob])");
+        assert_eq!(actual, expected);
+    }
+    run("class Empty");
+    assert_eq!(run("Empty[:]"), serde_json::json!([]));
+    {
+        let actual = run("User[0]");
+        let expected = run("(ada)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run(r#"User["bob"]"#);
+        let expected = run("(bob)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("[1, 2, 3][1:]"), serde_json::json!([2, 3]));
+    assert_eq!(run(r#""Nucleoid"[-4:]"#), "eoid");
+    run(r#"User[1:].map(user => user.name)
+
+# return: ["Bob","Cy"]"#);
+}
+
+/// Nucleoid keeps instance list ranges live
+#[rustfmt::skip]
+#[test]
+fn keeps_instance_list_ranges_live() {
+    let mut run = runner();
+    run(r#"class Task(title):
+    this.title = title"#);
+    run(r#"first = Task("plan")"#);
+    run(r#"second = Task("build")"#);
+    run("count = 1");
+    run("recent = Task[-2:]");
+    run("opening = Task[:count]");
+    run("pinned = Task[:count.value]");
+    run("titles = Task[1:].map(task => task.title)");
+    {
+        let actual = run("recent");
+        let expected = run("([first, second])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("opening");
+        let expected = run("([first])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("pinned");
+        let expected = run("([first])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("titles"), serde_json::json!(["build"]));
+    run(r#"third = Task("ship")"#);
+    {
+        let actual = run("recent");
+        let expected = run("([second, third])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("titles"), serde_json::json!(["build", "ship"]));
+    run("count = 2");
+    {
+        let actual = run("opening");
+        let expected = run("([first, second])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("pinned");
+        let expected = run("([first])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"second.title = "test""#);
+    assert_eq!(run("titles"), serde_json::json!(["test", "ship"]));
+    run("class Ticket");
+    run("older = Ticket()");
+    run("newer = Ticket()");
+    run("latest = Ticket[-1:]");
+    run("extra = Ticket()");
+    {
+        let actual = run("latest");
+        let expected = run("([extra])");
+        assert_eq!(actual, expected);
+    }
+    run("delete extra");
+    {
+        let actual = run("latest");
+        let expected = run("([newer])");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("Ticket[:]");
+        let expected = run("([older, newer])");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid lists every instance with list and all
+#[rustfmt::skip]
+#[test]
+fn lists_every_instance_with_list_and_all() {
+    let mut run = runner();
+    run(r#"class Member(name):
+    this.name = name
+ana = Member("Ana")
+ben = Member("Ben")
+everyone = Member.list()
+roster = Member.all()
+names = Member.list().map(member => member.name)
+assert(everyone, [ana, ben])
+assert(roster, everyone)
+assert(everyone, Member[:])
+assert(everyone, Member.slice())
+cal = Member("Cal")
+assert(everyone, [ana, ben, cal])
+assert(roster, [ana, ben, cal])
+assert(names, ["Ana", "Ben", "Cal"])
+class Guest
+dee = Guest()
+party = Guest.concat(Member.list())
+assert(party, [dee, ana, ben, cal])
+assert(Guest.concat(Member[1:]), [dee, ben, cal])
+calls = []
+def note(tag):
+    calls.push(tag)
+    return tag
+assert(Member.all(note(1), note(2)), [ana, ben, cal])
+assert(calls, [1, 2])
+plain = [1, 2]
+failure = ""
+try:
+    plain.list()
+catch error:
+    failure = error
+assert(failure, TypeError("plain.list is not a function"))
+try:
+    plain.all()
+catch error:
+    failure = error
+assert(failure, TypeError("plain.all is not a function"))"#);
+}
+
+/// Nucleoid compares list members with deep equality
+#[rustfmt::skip]
+#[test]
+fn compares_list_members_with_deep_equality() {
+    let mut run = runner();
+    run(r#"tags = ["red", "blue", "red"]"#);
+    assert_eq!(run(r#"tags.includes("blue")"#), true);
+    assert_eq!(run(r#"tags.includes("green")"#), false);
+    assert_eq!(run(r#"tags.indexOf("red")"#), 0);
+    assert_eq!(run(r#"tags.indexOf("green")"#), -1);
+    assert_eq!(run(r#"tags.indexOf("red", 1)"#), 0);
+    assert_eq!(run(r#"tags.includes("red", 5)"#), true);
+    run("pairs = [[1, 2], { x: 1 }, null]");
+    assert_eq!(run("pairs.indexOf([1, 2])"), 0);
+    assert_eq!(run("pairs.includes({ x: 1 })"), true);
+    assert_eq!(run("pairs.includes({ x: 2 })"), false);
+    assert_eq!(run("pairs.indexOf()"), 2);
+    assert_eq!(run("pairs.includes()"), true);
+    assert_eq!(run("[Number.NaN].includes(Number.NaN)"), false);
+    assert_eq!(run("[Number.NaN].indexOf(Number.NaN)"), -1);
+    run(r#"class Seat(row):
+    this.row = row"#);
+    run("front = Seat(1)");
+    run("twin = Seat(1)");
+    assert_eq!(run("Seat.indexOf(twin)"), 1);
+    assert_eq!(run("Seat.indexOf(front)"), 0);
+    assert_eq!(run("Seat.includes(twin)"), true);
+    assert_eq!(run("Seat.includes({ row: 1 })"), false);
+    assert_eq!(run(r#"Seat.includes({ id: "twin", row: 1 })"#), true);
+    assert_eq!(run("Seat.indexOf(5)"), -1);
+    run(r#"where = tags.indexOf("green")"#);
+    run(r#"known = tags.includes("green")"#);
+    assert_eq!(run("where"), -1);
+    run(r#"tags.push("green")"#);
+    assert_eq!(run("where"), 3);
+    assert_eq!(run("known"), true);
+    run("back = Seat(2)");
+    run("spot = Seat.indexOf(back)");
+    assert_eq!(run("spot"), 2);
+}
+
+/// Nucleoid concatenates lists and instance lists into new lists
+#[rustfmt::skip]
+#[test]
+fn concatenates_lists_and_instance_lists_into_new_lists() {
+    let mut run = runner();
+    run("base = [1, 2]");
+    run("more = base.concat(3, [4, [5]])");
+    assert_eq!(run("more"), serde_json::json!([1, 2, 3, 4, [5]]));
+    assert_eq!(run("base"), serde_json::json!([1, 2]));
+    assert_eq!(run("base.concat()"), serde_json::json!([1, 2]));
+    assert_eq!(run("base.concat(null)"), serde_json::json!([1, 2, null]));
+    assert_eq!(run("base.concat([])"), serde_json::json!([1, 2]));
+    run("base.push(9)");
+    assert_eq!(run("more"), serde_json::json!([1, 2, 9, 3, 4, [5]]));
+    run("class Guest");
+    run("amy = Guest()");
+    run("ben = Guest()");
+    run("class Host");
+    run("cara = Host()");
+    run("dan = Host()");
+    run("party = Guest.concat([cara, dan])");
+    {
+        let actual = run("party");
+        let expected = run("([amy, ben, cara, dan])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Guest.concat(Host).length"), 3);
+    {
+        let actual = run("Guest.concat(Host)[2]");
+        let expected = run("(Host)");
+        assert_eq!(actual, expected);
+    }
+    run("eve = Guest()");
+    {
+        let actual = run("party");
+        let expected = run("([amy, ben, eve, cara, dan])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Guest.length"), 3);
+}
+
+/// Nucleoid reads positions from either end with at and lastIndexOf
+#[rustfmt::skip]
+#[test]
+fn reads_positions_from_either_end_with_at_and_lastindexof() {
+    let mut run = runner();
+    run("scores = [10, 20, 30]");
+    assert_eq!(run("scores.at(0)"), 10);
+    assert_eq!(run("scores.at(-1)"), 30);
+    assert_eq!(run("scores.at(1.9)"), 20);
+    assert_eq!(run("scores.at(-1.9)"), 30);
+    assert_eq!(run("scores.at()"), 10);
+    assert_eq!(run(r#"scores.at("2")"#), 30);
+    assert_eq!(run("scores.at(3)"), serde_json::Value::Null);
+    assert_eq!(run("scores.at(-4)"), serde_json::Value::Null);
+    assert_eq!(run("typeof scores.at(3)"), "undefined");
+    run("last = scores.at(-1)");
+    run("scores.push(40)");
+    assert_eq!(run("last"), 40);
+    run(r#"label = "top " + scores.at(9)"#);
+    assert_eq!(run("label"), serde_json::Value::Null);
+    run(r#"tags = ["red", "blue", "red"]"#);
+    assert_eq!(run(r#"tags.lastIndexOf("red")"#), 2);
+    assert_eq!(run(r#"tags.lastIndexOf("green")"#), -1);
+    assert_eq!(run(r#"tags.lastIndexOf("red", 0)"#), 2);
+    assert_eq!(run("[[1], [1]].lastIndexOf([1])"), 1);
+    assert_eq!(run("[null, 1].lastIndexOf()"), 0);
+    assert_eq!(run("[Number.NaN].lastIndexOf(Number.NaN)"), -1);
+    run(r#"where = tags.lastIndexOf("blue")"#);
+    run(r#"tags.push("blue")"#);
+    assert_eq!(run("where"), 3);
+    run(r#"class Lap(time):
+    this.time = time"#);
+    run("one = Lap(61)");
+    run("two = Lap(58)");
+    {
+        let actual = run("Lap.at(0)");
+        let expected = run("(one)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("Lap.at(-1)");
+        let expected = run("(two)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Lap.at(2)"), serde_json::Value::Null);
+    assert_eq!(run("typeof Lap.at(2)"), "null");
+    assert_eq!(run(r#""lap " + Lap.at(5)"#), "lap null");
+    assert_eq!(run("Lap.lastIndexOf(one)"), 0);
+    run("latest = Lap.at(-1).time");
+    run("three = Lap(57)");
+    assert_eq!(run("latest"), 57);
+}
+
+/// Nucleoid searches from either end with findIndex findLast and findLastIndex
+#[rustfmt::skip]
+#[test]
+fn searches_from_either_end_with_findindex_findlast_and_findlastindex() {
+    let mut run = runner();
+    run(r#"visits = []
+def big(value):
+    visits.push(value)
+    return value > 15
+readings = [10, 20, 30, 5]
+assert(readings.findIndex(big), 1)
+assert(visits, [10, 20])
+visits = []
+assert(readings.findLast(big), 30)
+assert(visits, [5, 30])
+visits = []
+assert(readings.findLastIndex(big), 2)
+assert(visits, [5, 30])
+assert(readings.find(big), 20)
+assert(readings.findIndex(value => value > 99), -1)
+assert(readings.findLast(value => value > 99), null)
+assert(readings.findLastIndex(value => value > 99), -1)
+assert(readings.findLastIndex((value, position) => position == null), 3)
+assert([].findLast(value => true), null)
+failure = ""
+try:
+    readings.findIndex(15)
+catch error:
+    failure = error
+assert(failure, TypeError("findIndex expects a function"))
+try:
+    [].findLast()
+catch error:
+    failure = error
+assert(failure, TypeError("findLast expects a function"))
+try:
+    [].findLastIndex(null)
+catch error:
+    failure = error
+assert(failure, TypeError("findLastIndex expects a function"))"#);
+}
+
+/// Nucleoid keeps list queries live
+#[rustfmt::skip]
+#[test]
+fn keeps_list_queries_live() {
+    let mut run = runner();
+    run(r#"class Order(total, rush):
+    this.total = total
+    this.rush = rush"#);
+    run("first = Order(20, false)");
+    run("second = Order(45, true)");
+    run("third = Order(30, false)");
+    run("limit = 25");
+    run("lastRush = Order.findLast(order => order.rush)");
+    run("lastBig = Order.findLastIndex(order => order.total > limit)");
+    run("firstBig = Order.findIndex(order => order.total > limit)");
+    run("newest = Order.at(-1)");
+    {
+        let actual = run("lastRush");
+        let expected = run("(second)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("lastBig"), 2);
+    assert_eq!(run("firstBig"), 1);
+    {
+        let actual = run("newest");
+        let expected = run("(third)");
+        assert_eq!(actual, expected);
+    }
+    run("third.rush = true");
+    {
+        let actual = run("lastRush");
+        let expected = run("(third)");
+        assert_eq!(actual, expected);
+    }
+    run("limit = 40");
+    assert_eq!(run("lastBig"), 1);
+    assert_eq!(run("firstBig"), 1);
+    run("second.total = 10");
+    assert_eq!(run("lastBig"), -1);
+    assert_eq!(run("firstBig"), -1);
+    run("fourth = Order(50, false)");
+    {
+        let actual = run("newest");
+        let expected = run("(fourth)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("lastBig"), 3);
+    assert_eq!(run("firstBig"), 3);
+    {
+        let actual = run("lastRush");
+        let expected = run("(third)");
+        assert_eq!(actual, expected);
+    }
+    run("queue = [3, 8, 1]");
+    run("peak = queue.findLastIndex(value => value > limit / 10)");
+    run("tail = queue.at(-1)");
+    run("where = queue.lastIndexOf(8)");
+    assert_eq!(run("peak"), 1);
+    run("queue.push(9)");
+    assert_eq!(run("peak"), 3);
+    assert_eq!(run("tail"), 9);
+    assert_eq!(run("where"), 1);
+    run("queue.pop()");
+    assert_eq!(run("tail"), 1);
+    assert_eq!(run("peak"), 1);
+}
+
+/// Nucleoid applies instance list ranges and queries in class level rules
+#[rustfmt::skip]
+#[test]
+fn applies_instance_list_ranges_and_queries_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Player(name):
+    this.name = name
+class Team(size):
+    this.size = size
+$Team.roster = Player[0:$Team.size]
+$Player.rank = Player.indexOf($Player)
+ana = Player("Ana")
+ben = Player("Ben")
+red = Team(1)
+blue = Team(3)
+assert(red.roster, [ana])
+assert(blue.roster, [ana, ben])
+assert(ana.rank, 0)
+assert(ben.rank, 1)
+cal = Player("Cal")
+assert(blue.roster, [ana, ben, cal])
+assert(cal.rank, 2)
+red.size = 2
+assert(red.roster, [ana, ben])
+failure = ""
+try:
+    $Team.bench = Player[$Team.size:limit]
+catch error:
+    failure = error
+assert(failure, ReferenceError("limit is not defined"))"#);
+}
+
+/// Nucleoid rolls back failed list query updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_list_query_updates() {
+    let mut run = runner();
+    run(r#"def check(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value > 2
+values = [1, 3]
+spot = values.findLastIndex(check)
+early = values.findIndex(check)
+assert(spot, 1)
+assert(early, 1)
+failure = ""
+try:
+    values.push(500)
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(values, [1, 3])
+assert(spot, 1)
+values.push(5)
+assert(spot, 2)
+assert(early, 1)
+class Item(size):
+    this.size = size
+small = Item(1)
+pick = Item.findLast(item => check(item.size))
+assert(pick, null)
+try:
+    big = Item(500)
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(Item.length, 1)
+assert(pick, null)
+try:
+    mid = Item(3)
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(Item.length, 1)
+assert(pick, null)
+mid = Item(3)
+assert(pick, mid)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

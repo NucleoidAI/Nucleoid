@@ -50,6 +50,29 @@ const WORDS: &[&str] = &[
 const COMMANDS: &[&str] = &[
     ".clear", ".exit", ".graph", ".help", ".json", ".quit", ".table",
 ];
+/// Read-only queries that lists and class instance lists share.
+const LIST_MEMBERS: &[&str] = &[
+    "length",
+    "map",
+    "filter",
+    "reduce",
+    "some",
+    "every",
+    "find",
+    "findIndex",
+    "findLast",
+    "findLastIndex",
+    "includes",
+    "indexOf",
+    "lastIndexOf",
+    "at",
+    "slice",
+    "concat",
+    "join",
+    "flatMap",
+];
+/// Members only a class's instance list has.
+const INSTANCE_LIST_MEMBERS: &[&str] = &["list", "all"];
 
 pub(super) struct Completion {
     pub candidates: Vec<String>,
@@ -192,16 +215,16 @@ fn add_members(runtime: &Runtime, owner: &str, candidates: &mut BTreeSet<String>
             }
         }
     }
+    // A class name that no variable shadows is its instance list.
+    let instance_list = value.is_none() && runtime.state.class(owner).is_some();
     let members: &[&str] = match owner {
         "Math" => &[
             "abs", "ceil", "floor", "round", "min", "max", "sqrt", "pow", "PI", "E", "clamp",
             "lerp",
         ],
         _ => match value {
-            Some(nucleoid::Value::List(_)) => &[
-                "length", "map", "filter", "reduce", "some", "every", "find", "includes",
-                "indexOf", "slice", "join", "flatMap",
-            ],
+            Some(nucleoid::Value::List(_)) => LIST_MEMBERS,
+            None if instance_list => LIST_MEMBERS,
             Some(nucleoid::Value::String(_)) => &[
                 "length",
                 "includes",
@@ -218,6 +241,13 @@ fn add_members(runtime: &Runtime, owner: &str, candidates: &mut BTreeSet<String>
         },
     };
     candidates.extend(members.iter().map(|name| format!("{owner}.{name}")));
+    if instance_list {
+        candidates.extend(
+            INSTANCE_LIST_MEMBERS
+                .iter()
+                .map(|name| format!("{owner}.{name}")),
+        );
+    }
 }
 
 #[cfg(test)]
@@ -241,6 +271,43 @@ mod tests {
             let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
             assert!(
                 completion.candidates.iter().any(|name| name == expected),
+                "{prefix}"
+            );
+        }
+    }
+
+    #[test]
+    fn completion_offers_list_queries_and_instance_list_members() {
+        let mut runtime = Runtime::new();
+        runtime
+            .run("scores = [3, 1]\nclass User\nada = User()")
+            .unwrap();
+        for (prefix, expected) in [
+            ("scores.findL", "scores.findLast"),
+            ("scores.findLastI", "scores.findLastIndex"),
+            ("scores.lastI", "scores.lastIndexOf"),
+            ("scores.con", "scores.concat"),
+            ("scores.a", "scores.at"),
+            ("User.li", "User.list"),
+            ("User.al", "User.all"),
+            ("User.findI", "User.findIndex"),
+            ("User.sl", "User.slice"),
+        ] {
+            let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+            assert!(
+                completion.candidates.iter().any(|name| name == expected),
+                "{prefix}"
+            );
+        }
+        // A plain list is already a list, so it offers neither list() nor all().
+        for prefix in ["scores.li", "scores.al"] {
+            assert!(
+                Completion::find(&runtime, &editor::new(prefix), false).is_none_or(|completion| {
+                    !completion
+                        .candidates
+                        .iter()
+                        .any(|name| name.ends_with(".list") || name.ends_with(".all"))
+                }),
                 "{prefix}"
             );
         }

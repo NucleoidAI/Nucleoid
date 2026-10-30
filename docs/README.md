@@ -539,6 +539,7 @@ Full detail: [NUC 60](nuc-0060.md).
 - Lists and instance lists index with brackets; the index may be a variable.
 - Object bracket access has the same null, undefined, and dependency behavior as a dotted property read.
 - A range is written `[start:end]`; either bound may be omitted, and a negative bound counts from the end.
+- A range on a class's instance list, such as `Task[-2:]` or `Task[:]`, returns its instances in population order with the same bound rules, and depends on the population ([NUC 61](nuc-0061.md)).
 - Both slice bounds are expressions whose references are checked when a class-level rule is declared.
 - `.length` is a dependency on the collection.
 
@@ -644,6 +645,7 @@ assert(point, {"id": "point", "x": 3, "y": 4})
 - The variable name becomes the instance `id`.
 - An instance created without a variable name gets a generated `id`.
 - Instances are addressed by index `Name[0]`, by id `Name["id"]`, or by query `Name.find(...)`.
+- `Name[1:]`, `Name.at(-1)`, `Name.list()` and `Name.all()` read them by range, by position from either end, and all at once, in population order ([NUC 61](nuc-0061.md)).
 
 ### Subtypes
 
@@ -1556,7 +1558,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length` |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -1567,7 +1569,7 @@ doubled = prices.map(p => p * rate)
 
 - `doubled[2]` is `60`; after `rate = 3`, `90`; after `prices.push(40)`, `doubled[3]` is `120`.
 
-- Class lists support the same functions and depend on the population.
+- Class lists support the same functions and depend on the population. Ranges such as `Task[1:]` slice them, and `Task.list()` or `Task.all()` returns one as a list.
 
 ```
 open = Task.filter(t => not t.done).length
@@ -2144,6 +2146,59 @@ scores
 - The authoritative contract is the
   [in-place list sorting](../nucleoid.spec.md#in-place-list-sorting) section.
 
+### Instance list ranges and list queries
+
+```
+class Task(title, done):
+    this.title = title
+    this.done = done
+plan = Task("plan", true)
+build = Task("build", false)
+recent = Task[-1:]
+everyone = Task.list()
+pending = Task.findIndex(task => not task.done)
+newest = Task.at(-1).title
+assert(recent, [build])
+assert(everyone, Task.all())
+assert(pending, 1)
+ship = Task("ship", false)
+assert(recent, [ship])
+assert(everyone, [plan, build, ship])
+assert(newest, "ship")
+build.done = true
+assert(pending, 2)
+assert(Task.lastIndexOf(build), 1)
+everyone.map(task => task.title)
+```
+
+- This is the complete
+  `Nucleoid reads instance lists with ranges and list queries` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `["plan","build","ship"]`.
+- [NUC 61](nuc-0061.md) lets a class's instance list take list ranges:
+  `Task[start:end]` returns its instances in population order with the bound
+  rules of list slices, equals `Task.slice(start, end)`, and depends on the
+  population and its bounds. `Task.list()` and `Task.all()` return every
+  instance; plain lists have neither method.
+- Lists and instance lists gain `at`, `lastIndexOf`, `findIndex`, `findLast`
+  and `findLastIndex`, beside the existing `includes`, `indexOf`, `concat` and
+  `slice`. All are read-only and live: a declaration follows the list or
+  population, its arguments and what its callback reads.
+- `at(index)` truncates the index and counts a negative one from the end, as
+  in JavaScript. Outside the receiver it returns what bracket indexing returns
+  there: undefined for a list, stored as `null`, and `null` for an instance
+  list. `findLast` and `findLastIndex` search from the last item back, and the
+  searches return `null` or `-1` when nothing matches, as `find` returns
+  `null`.
+- `includes`, `indexOf` and `lastIndexOf` use the deep equality of `assert`,
+  so lists and objects match on their contents and distinct instances never
+  match each other; a JavaScript `fromIndex` is ignored. `concat` spreads list
+  arguments one level and appends any other value, including an instance list
+  named by its class, as one item.
+- The authoritative contract is the
+  [instance list ranges and list queries](../nucleoid.spec.md#instance-list-ranges-and-list-queries)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -2281,6 +2336,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Using `value` as a property name | `Cannot use 'value' as a property` |
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
+| Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
@@ -2425,6 +2481,9 @@ Math.toRadians(value)                   static division-first degree conversion 
 Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
+Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
+Name.list()  Name.all()                every instance, in population order (NUC 61)
+items.at(-1)  items.findLast(callback) read or search from the end (NUC 61)
 
 why reference                         derive a live explanation
 affects reference                     inspect live downstream impact

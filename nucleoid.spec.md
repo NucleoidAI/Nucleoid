@@ -2532,6 +2532,73 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed nullish coalescing updates` specify the
   executable behavior.
 
+## Instance list ranges and list queries
+
+- [NUC 61](docs/nuc-0061.md) adds ranges on class instance lists,
+  `Name.list()` and `Name.all()`, and the list queries `at`, `lastIndexOf`,
+  `findIndex`, `findLast` and `findLastIndex` on lists and instance lists. It
+  specifies the existing `slice`, `includes`, `indexOf` and `concat` without
+  changing their results. No syntax, keyword or error type is added.
+- `Name[start:end]` on a declared class `Name` returns its instances in
+  population order, with the bound rules of list slices: either bound may be
+  omitted, a negative bound counts from the end, a bound is converted to a
+  number and clamped to the population, and a start at or after the end gives
+  `[]`. `Name[:]` lists every instance, and `Name[start:end]` equals
+  `Name.slice(start, end)`. The population is read once, before the bounds
+  are evaluated.
+- A range depends on the population and on what its bounds read, unless a
+  bound is frozen with `.value`, so creating or deleting an instance
+  re-evaluates it. A class-level rule validates the references in both bounds
+  when it is declared, and each instance evaluates its own bounds.
+- Bracket indexing is unchanged: `Name[0]` and `Name["id"]` keep their
+  accepted results. A range on anything other than a list, a string or a
+  declared class, such as `Math[:]` or the global `Class[:]`, still yields
+  undefined.
+- `Name.list()` and `Name.all()` return every instance in population order,
+  with the result and dependency of `Name[:]` and `Name.slice()`. Supplied
+  arguments are evaluated once, left to right, and ignored. Plain lists have
+  neither method and keep raising `TypeError("<list>.list is not a function")`
+  and `TypeError("<list>.all is not a function")`.
+- Every query below snapshots its receiver before its arguments, evaluates
+  every supplied argument once, left to right, including unused extras, and
+  never writes the receiver. A declaration that uses one depends on the list
+  or population, on its argument expressions and on whatever its callback
+  reads. Callback errors propagate through the existing transaction, so a
+  failed standing re-evaluation rolls back the change that triggered it.
+- `includes(value)`, `indexOf(value)` and `lastIndexOf(value)` compare items
+  with the deep equality of `assert`: lists and objects match on their
+  contents, `null` and undefined match each other, so `null` matches an
+  omitted value, and NaN matches nothing. Every instance holds its own `id`,
+  so distinct instances never match each other. `indexOf` and `lastIndexOf`
+  return the first and the last matching position, or `-1`. Only the first
+  argument is compared; a JavaScript `fromIndex` is evaluated and ignored.
+- A comparison reads the objects it compares without subscribing to their
+  properties: a declaration follows its list or population and its argument,
+  not a property of a compared object.
+- `at(index)` converts the index to a number, reads NaN, including an omitted
+  index, as `0`, truncates it toward zero and counts a negative index from
+  the end, as in JavaScript. It returns the item at that position. Outside the
+  receiver it returns what bracket indexing returns there: undefined for a
+  list, which a declaration stores as `null`, and `null` for an instance list.
+  A negative index before the start is outside the receiver too: `at` never
+  clamps an index into the receiver.
+- `findIndex(callback)` returns the position of the first item the callback
+  accepts, or `-1`. `findLast(callback)` and `findLastIndex(callback)` visit
+  items from last to first and return the first accepted item or its
+  position, or `null` and `-1`, as `find` returns `null`. The callback
+  receives only the item and is not called after an item is accepted, so
+  unvisited items add no dependency. A missing or non-function callback
+  raises `TypeError("<name> expects a function")`, even on an empty receiver.
+- `concat(...values)` returns a new list of the receiver's items followed by
+  each argument: a list contributes its items one level deep, and any other
+  value contributes itself. An instance list named by its class is one value,
+  not spread; `Guest.concat(Host.list())` appends the instances of `Host`.
+- `slice`, `reverse`, `shift` and the aliases `contains`, `any` and `append`
+  keep their accepted behavior. The ten appended entries beginning
+  `Nucleoid slices class instance lists with ranges` through
+  `Nucleoid rolls back failed list query updates` specify the executable
+  behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -14870,4 +14937,364 @@ delete bonus
 assert(reward, 0)
 bonus = 9
 assert(reward, 9)
+---
+# Nucleoid slices class instance lists with ranges
+
+class User(name):
+    this.name = name
+ada = User("Ada")
+bob = User("Bob")
+cy = User("Cy")
+assert(User[:], [ada, bob, cy])
+assert(User[1:], [bob, cy])
+assert(User[:2], [ada, bob])
+assert(User[-2:], [bob, cy])
+assert(User[1:-1], [bob])
+assert(User[0:9], [ada, bob, cy])
+assert(User[-9:1], [ada])
+assert(User[2:1], [])
+assert(User[1:], User.slice(1))
+assert(User[-2:-1], User.slice(-2, -1))
+assert(User[:].length, User.length)
+start = 1
+assert(User[start:start + 1], [bob])
+class Empty
+assert(Empty[:], [])
+assert(User[0], ada)
+assert(User["bob"], bob)
+assert([1, 2, 3][1:], [2, 3])
+assert("Nucleoid"[-4:], "eoid")
+User[1:].map(user => user.name)
+# return: ["Bob","Cy"]
+---
+# Nucleoid keeps instance list ranges live
+
+class Task(title):
+    this.title = title
+first = Task("plan")
+second = Task("build")
+count = 1
+recent = Task[-2:]
+opening = Task[:count]
+pinned = Task[:count.value]
+titles = Task[1:].map(task => task.title)
+assert(recent, [first, second])
+assert(opening, [first])
+assert(pinned, [first])
+assert(titles, ["build"])
+third = Task("ship")
+assert(recent, [second, third])
+assert(titles, ["build", "ship"])
+count = 2
+assert(opening, [first, second])
+assert(pinned, [first])
+second.title = "test"
+assert(titles, ["test", "ship"])
+class Ticket
+older = Ticket()
+newer = Ticket()
+latest = Ticket[-1:]
+extra = Ticket()
+assert(latest, [extra])
+delete extra
+assert(latest, [newer])
+assert(Ticket[:], [older, newer])
+---
+# Nucleoid lists every instance with list and all
+
+class Member(name):
+    this.name = name
+ana = Member("Ana")
+ben = Member("Ben")
+everyone = Member.list()
+roster = Member.all()
+names = Member.list().map(member => member.name)
+assert(everyone, [ana, ben])
+assert(roster, everyone)
+assert(everyone, Member[:])
+assert(everyone, Member.slice())
+cal = Member("Cal")
+assert(everyone, [ana, ben, cal])
+assert(roster, [ana, ben, cal])
+assert(names, ["Ana", "Ben", "Cal"])
+class Guest
+dee = Guest()
+party = Guest.concat(Member.list())
+assert(party, [dee, ana, ben, cal])
+assert(Guest.concat(Member[1:]), [dee, ben, cal])
+calls = []
+def note(tag):
+    calls.push(tag)
+    return tag
+assert(Member.all(note(1), note(2)), [ana, ben, cal])
+assert(calls, [1, 2])
+plain = [1, 2]
+failure = ""
+try:
+    plain.list()
+catch error:
+    failure = error
+assert(failure, TypeError("plain.list is not a function"))
+try:
+    plain.all()
+catch error:
+    failure = error
+assert(failure, TypeError("plain.all is not a function"))
+---
+# Nucleoid compares list members with deep equality
+
+tags = ["red", "blue", "red"]
+assert(tags.includes("blue"), true)
+assert(tags.includes("green"), false)
+assert(tags.indexOf("red"), 0)
+assert(tags.indexOf("green"), -1)
+assert(tags.indexOf("red", 1), 0)
+assert(tags.includes("red", 5), true)
+pairs = [[1, 2], { x: 1 }, null]
+assert(pairs.indexOf([1, 2]), 0)
+assert(pairs.includes({ x: 1 }), true)
+assert(pairs.includes({ x: 2 }), false)
+assert(pairs.indexOf(), 2)
+assert(pairs.includes(), true)
+assert([Number.NaN].includes(Number.NaN), false)
+assert([Number.NaN].indexOf(Number.NaN), -1)
+class Seat(row):
+    this.row = row
+front = Seat(1)
+twin = Seat(1)
+assert(Seat.indexOf(twin), 1)
+assert(Seat.indexOf(front), 0)
+assert(Seat.includes(twin), true)
+assert(Seat.includes({ row: 1 }), false)
+assert(Seat.includes({ id: "twin", row: 1 }), true)
+assert(Seat.indexOf(5), -1)
+where = tags.indexOf("green")
+known = tags.includes("green")
+assert(where, -1)
+tags.push("green")
+assert(where, 3)
+assert(known, true)
+back = Seat(2)
+spot = Seat.indexOf(back)
+assert(spot, 2)
+---
+# Nucleoid concatenates lists and instance lists into new lists
+
+base = [1, 2]
+more = base.concat(3, [4, [5]])
+assert(more, [1, 2, 3, 4, [5]])
+assert(base, [1, 2])
+assert(base.concat(), [1, 2])
+assert(base.concat(null), [1, 2, null])
+assert(base.concat([]), [1, 2])
+base.push(9)
+assert(more, [1, 2, 9, 3, 4, [5]])
+class Guest
+amy = Guest()
+ben = Guest()
+class Host
+cara = Host()
+dan = Host()
+party = Guest.concat([cara, dan])
+assert(party, [amy, ben, cara, dan])
+assert(Guest.concat(Host).length, 3)
+assert(Guest.concat(Host)[2], Host)
+eve = Guest()
+assert(party, [amy, ben, eve, cara, dan])
+assert(Guest.length, 3)
+---
+# Nucleoid reads positions from either end with at and lastIndexOf
+
+scores = [10, 20, 30]
+assert(scores.at(0), 10)
+assert(scores.at(-1), 30)
+assert(scores.at(1.9), 20)
+assert(scores.at(-1.9), 30)
+assert(scores.at(), 10)
+assert(scores.at("2"), 30)
+assert(scores.at(3), null)
+assert(scores.at(-4), null)
+assert(typeof scores.at(3), "undefined")
+last = scores.at(-1)
+scores.push(40)
+assert(last, 40)
+label = "top " + scores.at(9)
+assert(label, null)
+tags = ["red", "blue", "red"]
+assert(tags.lastIndexOf("red"), 2)
+assert(tags.lastIndexOf("green"), -1)
+assert(tags.lastIndexOf("red", 0), 2)
+assert([[1], [1]].lastIndexOf([1]), 1)
+assert([null, 1].lastIndexOf(), 0)
+assert([Number.NaN].lastIndexOf(Number.NaN), -1)
+where = tags.lastIndexOf("blue")
+tags.push("blue")
+assert(where, 3)
+class Lap(time):
+    this.time = time
+one = Lap(61)
+two = Lap(58)
+assert(Lap.at(0), one)
+assert(Lap.at(-1), two)
+assert(Lap.at(2), null)
+assert(typeof Lap.at(2), "null")
+assert("lap " + Lap.at(5), "lap null")
+assert(Lap.lastIndexOf(one), 0)
+latest = Lap.at(-1).time
+three = Lap(57)
+assert(latest, 57)
+---
+# Nucleoid searches from either end with findIndex findLast and findLastIndex
+
+visits = []
+def big(value):
+    visits.push(value)
+    return value > 15
+readings = [10, 20, 30, 5]
+assert(readings.findIndex(big), 1)
+assert(visits, [10, 20])
+visits = []
+assert(readings.findLast(big), 30)
+assert(visits, [5, 30])
+visits = []
+assert(readings.findLastIndex(big), 2)
+assert(visits, [5, 30])
+assert(readings.find(big), 20)
+assert(readings.findIndex(value => value > 99), -1)
+assert(readings.findLast(value => value > 99), null)
+assert(readings.findLastIndex(value => value > 99), -1)
+assert(readings.findLastIndex((value, position) => position == null), 3)
+assert([].findLast(value => true), null)
+failure = ""
+try:
+    readings.findIndex(15)
+catch error:
+    failure = error
+assert(failure, TypeError("findIndex expects a function"))
+try:
+    [].findLast()
+catch error:
+    failure = error
+assert(failure, TypeError("findLast expects a function"))
+try:
+    [].findLastIndex(null)
+catch error:
+    failure = error
+assert(failure, TypeError("findLastIndex expects a function"))
+---
+# Nucleoid keeps list queries live
+
+class Order(total, rush):
+    this.total = total
+    this.rush = rush
+first = Order(20, false)
+second = Order(45, true)
+third = Order(30, false)
+limit = 25
+lastRush = Order.findLast(order => order.rush)
+lastBig = Order.findLastIndex(order => order.total > limit)
+firstBig = Order.findIndex(order => order.total > limit)
+newest = Order.at(-1)
+assert(lastRush, second)
+assert(lastBig, 2)
+assert(firstBig, 1)
+assert(newest, third)
+third.rush = true
+assert(lastRush, third)
+limit = 40
+assert(lastBig, 1)
+assert(firstBig, 1)
+second.total = 10
+assert(lastBig, -1)
+assert(firstBig, -1)
+fourth = Order(50, false)
+assert(newest, fourth)
+assert(lastBig, 3)
+assert(firstBig, 3)
+assert(lastRush, third)
+queue = [3, 8, 1]
+peak = queue.findLastIndex(value => value > limit / 10)
+tail = queue.at(-1)
+where = queue.lastIndexOf(8)
+assert(peak, 1)
+queue.push(9)
+assert(peak, 3)
+assert(tail, 9)
+assert(where, 1)
+queue.pop()
+assert(tail, 1)
+assert(peak, 1)
+---
+# Nucleoid applies instance list ranges and queries in class level rules
+
+class Player(name):
+    this.name = name
+class Team(size):
+    this.size = size
+$Team.roster = Player[0:$Team.size]
+$Player.rank = Player.indexOf($Player)
+ana = Player("Ana")
+ben = Player("Ben")
+red = Team(1)
+blue = Team(3)
+assert(red.roster, [ana])
+assert(blue.roster, [ana, ben])
+assert(ana.rank, 0)
+assert(ben.rank, 1)
+cal = Player("Cal")
+assert(blue.roster, [ana, ben, cal])
+assert(cal.rank, 2)
+red.size = 2
+assert(red.roster, [ana, ben])
+failure = ""
+try:
+    $Team.bench = Player[$Team.size:limit]
+catch error:
+    failure = error
+assert(failure, ReferenceError("limit is not defined"))
+---
+# Nucleoid rolls back failed list query updates
+
+def check(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value > 2
+values = [1, 3]
+spot = values.findLastIndex(check)
+early = values.findIndex(check)
+assert(spot, 1)
+assert(early, 1)
+failure = ""
+try:
+    values.push(500)
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(values, [1, 3])
+assert(spot, 1)
+values.push(5)
+assert(spot, 2)
+assert(early, 1)
+class Item(size):
+    this.size = size
+small = Item(1)
+pick = Item.findLast(item => check(item.size))
+assert(pick, null)
+try:
+    big = Item(500)
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(Item.length, 1)
+assert(pick, null)
+try:
+    mid = Item(3)
+    throw "ROLLBACK"
+catch error:
+    failure = error
+assert(failure, "ROLLBACK")
+assert(Item.length, 1)
+assert(pick, null)
+mid = Item(3)
+assert(pick, mid)
 ```

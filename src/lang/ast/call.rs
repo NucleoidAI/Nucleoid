@@ -7,6 +7,7 @@ use crate::builtins::Global;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::Expr;
+use crate::lang::ast::array::ListSource;
 use crate::nuc::object::Object;
 use crate::runtime::{AssertionFailure, Runtime};
 use crate::scope::Scope;
@@ -275,15 +276,12 @@ impl Runtime {
             }
         }
 
-        let Some(class) = self.state.class(name).cloned() else {
+        let Some(instances) = self.population(name) else {
             return Err(Error::not_defined(name));
         };
 
-        let instances: Vec<Value> = class.instances.iter().cloned().map(Value::Object).collect();
-        self.track(NodeKey::class(name));
-
         let values = self.evaluate_all(arguments, scope)?;
-        self.list_query(instances, property, &values, name)
+        self.list_query(instances, property, &values, name, ListSource::Population)
     }
 
     /// A static call on a built-in namespace: `Math.max(...)`, `Date.now()`.

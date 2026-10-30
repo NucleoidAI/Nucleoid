@@ -1174,6 +1174,34 @@ assert(shown, 12)
   unknown value. See the
   [root contract](nucleoid.spec.md#nullish-coalescing).
 
+## Instance list ranges and list queries
+
+**Instance lists slice like lists and answer live queries**
+
+```nuc
+class Task(title):
+    this.title = title
+plan = Task("plan")
+build = Task("build")
+recent = Task[-1:]
+newest = Task.at(-1).title
+assert(recent, [build])
+ship = Task("ship")
+assert(recent, [ship])
+assert(newest, "ship")
+assert(Task.list(), [plan, build, ship])
+assert(Task.findLastIndex(task => task.title.length == 4), 2)
+```
+
+- [NUC 61](docs/nuc-0061.md) lets a class's instance list take list ranges,
+  such as `Task[-1:]` and `Task[:]`, and lists every instance with
+  `Task.list()` or `Task.all()`. Each stays live as instances are created.
+- Lists and instance lists gain JavaScript's `at`, `lastIndexOf`, `findIndex`,
+  `findLast` and `findLastIndex` beside the existing `includes`, `indexOf`,
+  `concat` and `slice`. All of them are read-only queries that follow the
+  list, the population and what their callbacks read. See the
+  [root contract](nucleoid.spec.md#instance-list-ranges-and-list-queries).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

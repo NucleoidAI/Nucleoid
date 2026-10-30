@@ -1,9 +1,11 @@
 //! Lists: literals, indexing, slicing and list operations.
 
+use std::sync::Arc;
+
 use crate::builtins;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
-use crate::lang::ast::Expr;
+use crate::lang::ast::{Expr, Function};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -18,6 +20,26 @@ pub(crate) enum ListTarget {
     /// A `.value` snapshot, or a member of something that is not an object:
     /// there is no place to write.
     Detached,
+}
+
+/// What a read-only list query runs over.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ListSource {
+    /// A list value.
+    List,
+    /// A class's instance list, in population order.
+    Population,
+}
+
+impl ListSource {
+    /// What `at` returns for a position outside the receiver: the same value
+    /// bracket indexing returns there, `list[9]` or `Name[9]`.
+    fn missing(self) -> Value {
+        match self {
+            ListSource::List => Value::Undefined,
+            ListSource::Population => Value::Null,
+        }
+    }
 }
 
 pub struct Array<'a> {
@@ -64,7 +86,15 @@ impl Runtime {
         end: Option<&Expr>,
         scope: &mut Scope,
     ) -> Result<Value> {
-        let base = self.evaluate(object, scope)?;
+        // A class's instances are read before the bounds, as `Name.slice()`
+        // reads them before its arguments, and sliced like a list.
+        let base = match self.evaluate(object, scope)? {
+            Value::Class(name) => match self.population(&name) {
+                Some(instances) => Value::List(instances),
+                None => Value::Class(name),
+            },
+            base => base,
+        };
 
         let start = match start {
             Some(start) => Some(self.evaluate(start, scope)?),
@@ -76,6 +106,21 @@ impl Runtime {
         };
 
         Ok(slice(&base, start.as_ref(), end.as_ref()))
+    }
+
+    /// The instances of class `name`, in population order, read as a
+    /// dependency on the population. `None` when no such class is declared.
+    pub(crate) fn population(&mut self, name: &str) -> Option<Vec<Value>> {
+        let instances = self
+            .state
+            .class(name)?
+            .instances
+            .iter()
+            .cloned()
+            .map(Value::Object)
+            .collect();
+        self.track(NodeKey::class(name));
+        Some(instances)
     }
 
     pub(crate) fn evaluate_index(
@@ -194,7 +239,7 @@ impl Runtime {
             _ => {
                 let values = self.evaluate_all(arguments, scope)?;
                 let receiver = object.path().unwrap_or_else(|| object.to_string());
-                self.list_query(items, property, &values, &receiver)
+                self.list_query(items, property, &values, &receiver, ListSource::List)
             }
         }
     }
@@ -288,26 +333,43 @@ impl Runtime {
         property: &str,
         arguments: &[Value],
         receiver: &str,
+        source: ListSource,
     ) -> Result<Value> {
         let predicate = arguments.first().cloned();
 
         match property {
-            "find" => {
+            "find" | "findLast" => {
                 let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("find expects a function"));
+                    return Err(Error::type_error(format!("{property} expects a function")));
                 };
 
-                for item in items {
-                    if self
-                        .invoke(&function, std::slice::from_ref(&item))?
-                        .truthy()
-                    {
-                        return Ok(item);
-                    }
-                }
-
-                Ok(Value::Null)
+                let from_end = property == "findLast";
+                let found = self.find_position(&function, &items, from_end)?;
+                Ok(found
+                    .and_then(|position| items.into_iter().nth(position))
+                    .unwrap_or(Value::Null))
             }
+
+            "findIndex" | "findLastIndex" => {
+                let Some(Value::Function(function)) = predicate else {
+                    return Err(Error::type_error(format!("{property} expects a function")));
+                };
+
+                let from_end = property == "findLastIndex";
+                let found = self.find_position(&function, &items, from_end)?;
+                Ok(position_number(found))
+            }
+
+            "at" => {
+                let index = predicate.as_ref().map_or(f64::NAN, Value::to_number);
+                let item = relative_index(index, items.len())
+                    .and_then(|position| items.into_iter().nth(position));
+                Ok(item.unwrap_or_else(|| source.missing()))
+            }
+
+            // A class's instance list as a list value. A list already is one,
+            // so plain lists keep raising `<list>.list is not a function`.
+            "list" | "all" if source == ListSource::Population => Ok(Value::List(items)),
 
             "filter" => {
                 let Some(Value::Function(function)) = predicate else {
@@ -369,9 +431,15 @@ impl Runtime {
             "indexOf" => {
                 let wanted = predicate.unwrap_or(Value::Undefined);
                 let found = items.iter().position(|item| self.deep_equal(item, &wanted));
-                Ok(Value::Number(
-                    found.map(|index| index as f64).unwrap_or(-1.0),
-                ))
+                Ok(position_number(found))
+            }
+
+            "lastIndexOf" => {
+                let wanted = predicate.unwrap_or(Value::Undefined);
+                let found = items
+                    .iter()
+                    .rposition(|item| self.deep_equal(item, &wanted));
+                Ok(position_number(found))
             }
 
             "join" => {
@@ -440,19 +508,11 @@ impl Runtime {
             // has no stored list to write, so its sort only returns the order.
             "sort" => Ok(Value::List(self.sort_items(items, predicate.as_ref())?)),
 
-            "slice" => {
-                let length = items.len();
-                let start = arguments
-                    .first()
-                    .map(|value| builtins::slice_index(value.to_number(), length))
-                    .unwrap_or(0);
-                let end = arguments
-                    .get(1)
-                    .map(|value| builtins::slice_index(value.to_number(), length))
-                    .unwrap_or(length);
-
-                Ok(Value::List(items[start.min(end)..end].to_vec()))
-            }
+            "slice" => Ok(Value::List(slice_items(
+                &items,
+                arguments.first(),
+                arguments.get(1),
+            ))),
 
             "reverse" => {
                 let mut reversed = items;
@@ -479,6 +539,31 @@ impl Runtime {
                 "{receiver}.{property} is not a function"
             ))),
         }
+    }
+
+    /// Calls `function` with each item, first to last or last to first, and
+    /// returns the position of the first item it accepts. Later items are
+    /// not visited, so their reads are not dependencies.
+    fn find_position(
+        &mut self,
+        function: &Arc<Function>,
+        items: &[Value],
+        from_end: bool,
+    ) -> Result<Option<usize>> {
+        let length = items.len();
+
+        for step in 0..length {
+            let position = if from_end { length - 1 - step } else { step };
+
+            if self
+                .invoke(function, std::slice::from_ref(&items[position]))?
+                .truthy()
+            {
+                return Ok(Some(position));
+            }
+        }
+
+        Ok(None)
     }
 
     /// Orders items stably. A comparator function places each item, in input
@@ -550,6 +635,28 @@ impl Runtime {
     }
 }
 
+/// A found position as a number, or `-1` when nothing was found.
+fn position_number(position: Option<usize>) -> Value {
+    Value::Number(position.map_or(-1.0, |position| position as f64))
+}
+
+/// Resolves the index of `at` the way JavaScript does: the number is
+/// truncated, NaN reads as zero and a negative index counts from the end.
+/// Unlike bracket indexing, an index outside the list is never clamped into
+/// it, so `None` means there is no such position.
+fn relative_index(index: f64, length: usize) -> Option<usize> {
+    let index = if index.is_nan() { 0.0 } else { index.trunc() };
+    let position = if index < 0.0 {
+        index + length as f64
+    } else {
+        index
+    };
+
+    (0.0..length as f64)
+        .contains(&position)
+        .then_some(position as usize)
+}
+
 pub fn slice(base: &Value, start: Option<&Value>, end: Option<&Value>) -> Value {
     match base {
         Value::String(string) => Value::String(builtins::string_slice(
@@ -558,18 +665,21 @@ pub fn slice(base: &Value, start: Option<&Value>, end: Option<&Value>) -> Value 
             end.map(Value::to_number),
         )),
 
-        Value::List(items) => {
-            let length = items.len();
-            let from = start
-                .map(|value| builtins::slice_index(value.to_number(), length))
-                .unwrap_or(0);
-            let to = end
-                .map(|value| builtins::slice_index(value.to_number(), length))
-                .unwrap_or(length);
-
-            Value::List(items[from.min(to)..to].to_vec())
-        }
+        Value::List(items) => Value::List(slice_items(items, start, end)),
 
         _ => Value::Undefined,
     }
+}
+
+/// The items from `start` up to `end`, with the bound rules that ranges and
+/// `slice` share: an omitted start or end is the start or the end of the list,
+/// a negative bound counts from the end, every bound is clamped to the list,
+/// and a start at or after the end gives no items.
+fn slice_items(items: &[Value], start: Option<&Value>, end: Option<&Value>) -> Vec<Value> {
+    let length = items.len();
+    let bound = |value: &Value| builtins::slice_index(value.to_number(), length);
+    let start = start.map_or(0, bound);
+    let end = end.map_or(length, bound);
+
+    items[start.min(end)..end].to_vec()
 }
