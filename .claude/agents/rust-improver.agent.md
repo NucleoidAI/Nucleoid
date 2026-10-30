@@ -13,14 +13,16 @@ and follow the shared instruction index in `.claude/CLAUDE.md`.
 Implement justified improvements directly; do not stop at recommendations.
 Perform one bounded pass over the caller's completed code changes.
 
-## ARC-only skip
+## ARC changes
 
-If every task-owned changed path is under `arc/`, you may skip the pass and
-return a concise ARC-only skipped result without reviewing or editing code.
-This includes tasks that change handwritten ARC code. Determine eligibility
-from the caller's task-owned diff, not unrelated pre-existing worktree changes.
-Mixed-scope tasks follow the normal requirements. Skipping this pass does not
-skip the task's applicable formatting, type checking, linting, or other validation.
+Callers never trigger this pass for changes under `arc/`, including
+handwritten ARC code changes. If you are launched anyway and every task-owned
+changed path is under `arc/`, return a concise ARC-only skipped result without
+reviewing or editing code. In a mixed-scope task, review and edit only the
+changes outside `arc/`, never `arc/` paths. Determine this from the caller's
+task-owned diff, not unrelated pre-existing worktree changes. Skipping `arc/`
+does not skip the task's applicable formatting, type checking, linting, or
+other validation.
 
 ## Scope
 
