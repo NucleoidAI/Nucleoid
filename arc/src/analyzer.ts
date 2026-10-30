@@ -66,6 +66,7 @@ export async function instances({
 
 export async function value({
   puzzle_id,
+  train_state,
   instance_name,
   declarations,
   input_instance_matrix,
@@ -95,11 +96,14 @@ export async function value({
   });
 
   milestone.evaluating_rules();
+
+  train_state.push(implementation);
+
   const input_value = await nucleoid.run(
-    [declarations[0], implementation].join("\n\n")
+    [declarations[0], ...train_state].join("\n\n")
   );
   const output_value = await nucleoid.run(
-    [...declarations, implementation].join("\n\n")
+    [...declarations, ...train_state].join("\n\n")
   );
 
   milestone.instance_constructed({

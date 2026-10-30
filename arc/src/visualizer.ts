@@ -59,6 +59,7 @@ export async function instances({
 
 export async function value({
   puzzle_id,
+  test_state,
   declarations,
   train_dataset,
   instance_name,
@@ -68,6 +69,7 @@ export async function value({
   const { x, y } = Matrix.locate(input_instance_matrix);
 
   milestone.synthesizing_instance({ instance_name });
+
   const { implementation } = await llm.generate({
     puzzle_id,
     messages: [
@@ -117,13 +119,15 @@ export async function value({
   });
 
   milestone.instance_synthesized({ instance_name, implementation });
-
   milestone.executing_transformation();
+
+  test_state.push(implementation);
+
   const input_value = await nucleoid.run(
-    [train_dataset.declarations[0], implementation].join("\n\n")
+    [train_dataset.declarations[0], ...test_state].join("\n\n")
   );
   const output_value = await nucleoid.run(
-    [...train_dataset.declarations, implementation].join("\n\n")
+    [...train_dataset.declarations, ...test_state].join("\n\n")
   );
 
   milestone.transformation_executed({ input_value, output_value });

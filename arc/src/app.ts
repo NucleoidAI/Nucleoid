@@ -7,7 +7,7 @@ import * as nucleoid from "./lib/nucleoid";
 import * as milestone from "./milestone";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "9af7a82c") {
+export async function start(puzzle_id: string = "3aa6fb7a") {
   const puzzle = JSON.parse(
     await readFile(
       join(__dirname, "..", "data", "training", `${puzzle_id}.json`),
@@ -58,6 +58,8 @@ export async function start(puzzle_id: string = "9af7a82c") {
       output_matrix,
     });
 
+    const train_state = [];
+
     for (const { input_instance_matrix, output_instance_matrix } of instances) {
       const instance_name: string = `obj${String(instance_index++).padStart(
         12,
@@ -67,6 +69,7 @@ export async function start(puzzle_id: string = "9af7a82c") {
       const { implementation, input_value, output_value } =
         await analyzer.value({
           puzzle_id,
+          train_state,
           instance_name,
           declarations,
           input_instance_matrix,
@@ -97,11 +100,13 @@ export async function start(puzzle_id: string = "9af7a82c") {
     Array(test_input_matrix[0].length).fill(0)
   );
 
+  const test_state = [];
   const input_instances = [];
 
   for (const { input_instance_matrix } of instances) {
     const { input_value, output_value } = await visualizer.value({
       puzzle_id,
+      test_state,
       declarations,
       train_dataset,
       instance_name: `obj${String(instance_index++).padStart(12, "0")}`,
@@ -109,22 +114,29 @@ export async function start(puzzle_id: string = "9af7a82c") {
       input_instance_matrix,
     });
 
+    input_instances.push({
+      input_value,
+      input_instance_matrix,
+      output_value,
+    });
+  }
+
+  for (const input_instance of input_instances) {
+    const { input_value, input_instance_matrix, output_value } = input_instance;
+
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
       puzzle_id,
       test_input_matrix,
       train_dataset,
-      input_instances,
+      input_instances: input_instances.filter(
+        ({ output_instance_matrix }) => output_instance_matrix
+      ),
       input_instance_matrix,
       input_value,
       output_value,
     });
 
-    input_instances.push({
-      input_value,
-      input_instance_matrix,
-      output_value,
-      output_instance_matrix,
-    });
+    input_instance.output_instance_matrix = output_instance_matrix;
 
     result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
