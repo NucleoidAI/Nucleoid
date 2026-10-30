@@ -502,11 +502,8 @@ offsets are still rejected.
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
 frozen before expected outputs are accessed for exact-grid scoring, including
-shape. Each training object executes with the learned declarations in a fresh
-Nucleoid process, so no training instance state carries into prediction. Every
-test object is synthesized before any is drawn, and their output states come
-from one Nucleoid run of the learned declarations with all test
-implementations, so rules that relate objects see the whole test input.
+shape. Each object executes with the learned declarations in a fresh Nucleoid
+process, so no training instance state carries into prediction.
 
 The run prints `Difference: N` after the result and expected matrices. Each
 different, missing, or extra cell adds one to the score: `0` means an exact

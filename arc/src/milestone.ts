@@ -1,9 +1,8 @@
 import * as Matrix from "./lib/Matrix";
 import * as terminal from "./lib/terminal";
-import * as nucleoid from "./lib/nucleoid.ts";
 
-export async function start({ train, test_input_matrix }) {
-  terminal.header({ version: await nucleoid.version() });
+export function start({ version, train, test_input_matrix }) {
+  terminal.header({ version });
   terminal.puzzle({ train, testInput: test_input_matrix });
 }
 
