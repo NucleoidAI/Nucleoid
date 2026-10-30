@@ -107,7 +107,8 @@ caller-owned commit yourself.
 The caller follows the skill's
 [execution-mode rule](../skills/nuc-proposal/SKILL.md#choose-execution-mode-caller-only).
 In continuous mode, after finalizing an `Accepted` or `Rejected` outcome for a
-new NUC, it immediately starts the next proposal under the
+new NUC, it starts the next proposal in a fresh session (`/clear`, then
+`/nuc-proposal`) under the
 [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
 In single-proposal mode, it finishes the requested outcome and stops without
 starting another proposal or running token comparison (the token non-regression

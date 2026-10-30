@@ -102,7 +102,8 @@ candidate sources or prior artifacts. Return the new checkpoint path/raw pin
 or explicit skip/error; the caller retains one head and all ancestors,
 receipts, reports and scoring evidence for subsequent validation/selection.
 Use that updated head for the next authorized proposal, or keep the old head
-on a legitimate skip. A learner error pauses the caller as a process blocker
+on a legitimate skip. Each continuous cycle starts a fresh session, so name
+that head's path and raw pin in the cycle's resume report. A learner error pauses the caller as a process blocker
 without changing the already-recorded gate/independent decision.
 
 This is a single-owner immutable checkpoint chain, not concurrent/global-head
@@ -323,16 +324,21 @@ not independent behavior/integrity, accepted-corpus baseline, compatibility,
 development evaluation, or outcome recording.
 
 In continuous mode, after finalizing and committing an `Accepted` or `Rejected`
-outcome for a new NUC, the caller immediately starts a distinct new proposal under
-the [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
-Run cycles sequentially with fresh agents, baselines, candidate worktrees and
-reports, preserving the selection, compatibility and acceptance requirements.
+outcome for a new NUC, the caller starts the next distinct proposal in a fresh
+session under the [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
+It ends the cycle with the exact resume command: `/clear` followed by
+`/nuc-proposal` with the same request and hint. Only the user can run
+`/clear`; never claim to have run it or continue in the same context instead.
+Run cycles sequentially with fresh sessions, agents, baselines, candidate
+worktrees and reports, preserving the selection, compatibility and acceptance
+requirements.
 Only the caller continues; workers stop at their handoffs. This does not
 recursively reevaluate the completed NUC's outcome metadata. Stop or pause
 under the conditions defined by the skill rather than bypassing a blocker.
 
 Continuous cycles, including those coordinated through `/nuc-evaluate`, do not
-request confirmation to record an outcome or start the next NUC. An uncertain
+request confirmation to record an outcome. The resumed session starts the next
+NUC without asking. An uncertain
 category addition, selection, or update is the exception: workers return it
 to the caller, who asks the user for confirmation before proceeding.
 Use the existing selection rules and verified inputs;
