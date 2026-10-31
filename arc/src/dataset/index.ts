@@ -1,1 +1,1 @@
-export { document } from "./instruct_dataset";
+export { document } from "./dataset";

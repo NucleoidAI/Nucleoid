@@ -1,7 +1,7 @@
 import * as nucleoid from "./lib/nucleoid";
 import * as Matrix from "./lib/Matrix";
 import * as llm from "./lib/llm";
-import * as milestone from "./milestone";
+import * as milestone from "./lib/milestone.ts";
 
 export async function instances({
   puzzle_id,
@@ -59,7 +59,6 @@ export async function instances({
 
 export async function value({
   puzzle_id,
-  test_state,
   declarations,
   train_dataset,
   instance_name,
@@ -121,18 +120,13 @@ export async function value({
   milestone.instance_synthesized({ instance_name, implementation });
   milestone.executing_transformation();
 
-  test_state.push(implementation);
-
   const input_value = await nucleoid.run(
-    [train_dataset.declarations[0], ...test_state].join("\n\n")
-  );
-  const output_value = await nucleoid.run(
-    [...train_dataset.declarations, ...test_state].join("\n\n")
+    [train_dataset.declarations[0], implementation].join("\n\n")
   );
 
-  milestone.transformation_executed({ input_value, output_value });
+  milestone.transformation_executed({ input_value });
 
-  return { input_value, output_value };
+  return { implementation, input_value };
 }
 
 export async function output_instance_matrix({
@@ -220,4 +214,23 @@ export async function output_instance_matrix({
   milestone.output_placed({ output_instance_padded_matrix });
 
   return { output_instance_matrix: output_instance_padded_matrix };
+}
+
+export async function state({ declarations, input_instances }) {
+  const implementations = input_instances.map(
+    ({ implementation }) => implementation
+  );
+
+  const obj_list = await nucleoid.run(
+    [...declarations, ...implementations, "Obj[:]"].join("\n\n")
+  );
+
+  milestone.state({ obj_list });
+
+  [...obj_list].forEach((instance) => {
+    const found_instance = input_instances.find(
+      ({ instance_name }) => instance.id === instance_name
+    );
+    found_instance.output_value = instance;
+  });
 }

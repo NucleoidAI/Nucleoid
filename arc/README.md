@@ -99,6 +99,17 @@ output, such as a stage, a step about to start, or a step's result, and are the
 only callers of the `src\lib\terminal.ts` renderer. The analyzer, visualizer,
 OpenRouter client, and entry point report progress only through them.
 
+`milestone.state` displays the result of each batched state pass as a table:
+one per training pair at the end of the analysis, titled
+`Training pair N · State`, and one for the test objects, titled
+`Test · State`, before their outputs are composed. Each row is an object that
+`Obj[:]` returns after the declarative rules run, with `id` first and then one
+column per property in the order the runtime reports them. Cells keep the
+formatting of the boxed object states, so strings stay quoted, and a property
+that an object lacks shows a grey `—`. Tables span the panel width. Wider
+tables continue in panels titled `(continued)` that repeat `id`, and a cell
+too wide for its panel wraps instead of being cut.
+
 ## Instruction datasets
 
 The synchronous `document(puzzle_id)` function reads only the puzzle's own
@@ -154,30 +165,35 @@ states because the shapes are not rotated. Held-out inputs and outputs are not
 included.
 
 `dataset.9af7a82c.json` follows the rule of `data\training\9af7a82c.json`
-with four synthesized pairs instead of copies of its grids, nineteen region
-instances in total (3, 4, 6, and 6 per pair). A seeded generator partitioned
-fully colored canvases (2 by 8, 6 by 3, 5 by 8, and 8 by 4, rows by columns,
+with four synthesized pairs instead of copies of its grids, eighteen region
+instances in total (3, 5, 6, and 4 per pair). A seeded generator partitioned
+fully colored canvases (3 by 6, 7 by 3, 4 by 7, and 6 by 4, rows by columns,
 unlike the puzzle's 3 by 3, 3 by 4, and 4 by 3 inputs) into three to six
-4-connected regions, one per color, with freshly drawn shapes, cell counts
-from 1 to 17, colors, and positions; no matrix equals a grid in `data`.
+4-connected regions, one per color, with freshly grown shapes, cell counts
+from 1 to 11, colors, and positions; no matrix equals a grid in `data`.
 Cell counts are distinct within each pair. In every pair the count order
-differs from color order and from first-appearance order, and some pairs
-contradict ordering by bounding-box width, height, or area. Each output is a
-histogram: the region with the r-th largest cell count becomes a vertical bar
-of its color in column r, starting at the top row and as tall as the region's
-cell count, giving 11 by 3, 8 by 4, 17 by 6, and 15 by 6 outputs. The class
-takes `color`, `cell_count`, and `size_rank`, the region's zero-based position
-when its pair's regions are ordered by cell count, largest first; each pair
-lists its instances in that order. Every object executes in its own Nucleoid
-process, so the rank is a constructor property rather than a comparison across
-instances. Unconditional class-level rules introduce `bar_height` (the cell
-count), which is absent before the rules run, and move `x` to `size_rank` and
-`y` to the output origin 0. Tags identify the geometry: `l9100` is a single
-shape, as in `dataset.28bf18c6.json`, and `l6953` is a vertical bar. Input
-masks retain each pair's input canvas and output masks its output canvas;
-`output_canvas` is `FIT` because each histogram fills its nonzero bounding
-box. Orientation is 0 in both states because the regions are not rotated and
-the bars are vertical. Held-out inputs and outputs are not included.
+differs from color order and from first-appearance order, and some bar is
+taller than its region's bounding box; the pairs also contradict ordering by
+bounding-box area, height, and width. Each output is a histogram: the region
+with the r-th largest cell count becomes a vertical bar of its color in
+column r, starting at the top row and as tall as the region's cell count,
+giving 9 by 3, 7 by 5, 11 by 6, and 8 by 4 outputs. The class takes `color`
+and `cell_count`, the region's number of cells, as scalars rather than a
+matrix of cells. Unconditional class-level rules introduce `bar_height` (the
+cell count), which is absent before the rules run, move `y` to the output
+origin 0, and derive `x`, the bar's column, from the pair's whole population:
+`Obj.filter(other => other.cell_count > $Obj.cell_count).length` counts the
+larger regions and re-evaluates whenever an instance is added. The solver
+runs each instance with the implementations of the earlier instances of its
+training pair or test input, so each pair lists its instances largest first,
+and every recorded `x` already counts all larger regions of its pair. Tags
+identify the geometry: `l9100` is a single shape, as in
+`dataset.28bf18c6.json`, and `l6953` is a vertical bar. Input masks retain
+each pair's input canvas and output masks its output canvas; `output_canvas`
+is `FIT` because each histogram fills its nonzero bounding box, and two
+outputs are narrower than their inputs. Orientation is 0 in both states
+because the regions are not rotated and the bars are vertical. Held-out
+inputs and outputs are not included.
 
 ## ARC proposal agent
 

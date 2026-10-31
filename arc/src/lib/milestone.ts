@@ -1,5 +1,5 @@
-import * as Matrix from "./lib/Matrix";
-import * as terminal from "./lib/terminal";
+import * as Matrix from "./Matrix.ts";
+import * as terminal from "./terminal.ts";
 
 export function start({ version, train, test_input_matrix }) {
   terminal.header({ version });
@@ -58,13 +58,23 @@ export function instance_constructed({
   input_instance_matrix,
   output_instance_matrix,
   input_value,
-  output_value,
 }) {
   terminal.grid("Input crop", Matrix.crop(input_instance_matrix));
   terminal.grid("Output crop", Matrix.crop(output_instance_matrix));
   terminal.code(`Implementation · ${instance_name}`, implementation);
   terminal.value("Input state", input_value);
-  terminal.value("Output state", output_value);
+}
+
+export function state({ index = null, obj_list }) {
+  const properties = [
+    ...new Set(obj_list.flatMap((instance) => Object.keys(instance))),
+  ].filter((property: string) => property !== "id");
+
+  terminal.table(
+    index === null ? "Test · State" : `Training pair ${index + 1} · State`,
+    ["id", ...properties],
+    obj_list
+  );
 }
 
 export function visualization() {
@@ -99,9 +109,8 @@ export function executing_transformation() {
   terminal.step("Executing the object transformation");
 }
 
-export function transformation_executed({ input_value, output_value }) {
+export function transformation_executed({ input_value }) {
   terminal.value("Input state", input_value);
-  terminal.value("Output state", output_value);
 }
 
 export function composing_output() {

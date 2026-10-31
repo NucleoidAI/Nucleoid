@@ -1,5 +1,5 @@
 import axios from "axios";
-import * as milestone from "../milestone";
+import * as milestone from "./milestone.ts";
 
 export async function generate({ messages = [] }) {
   const apiKey: string = process.env.OPENROUTER_API_KEY?.trim();
