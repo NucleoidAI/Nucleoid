@@ -2058,4 +2058,27 @@ scores = []
 assert(total, 0)
 revenue
 # return: 35
+---
+# Nucleoid finds extremes of lists and populations with max and min
+
+scores = [9, 3, 7]
+best = scores.max()
+worst = scores.min()
+class Bid(amount): this.amount = amount
+Bid(40)
+top = Bid.max(bid -> bid.amount)
+assert(best, 9)
+assert(worst, 3)
+assert(top, 40)
+scores.push(12)
+scores.shift()
+Bid(65)
+Bid(50)
+assert(best, 12)
+assert(worst, 3)
+assert(top, 65)
+scores = []
+assert(best, Number.NEGATIVE_INFINITY)
+top
+# return: 65
 ```

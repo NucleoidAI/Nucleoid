@@ -1659,7 +1659,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), and `sum` ([NUC 68](nuc-0068.md)) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), and `max` and `min` ([NUC 69](nuc-0069.md)) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2350,6 +2350,62 @@ revenue
   [list and population sums](../nucleoid.spec.md#list-and-population-sums)
   section.
 
+### List and population extremes
+
+```
+scores = [9, 3, 7]
+best = scores.max()
+worst = scores.min()
+class Bid(amount): this.amount = amount
+Bid(40)
+top = Bid.max(bid -> bid.amount)
+assert(best, 9)
+assert(worst, 3)
+assert(top, 40)
+scores.push(12)
+scores.shift()
+Bid(65)
+Bid(50)
+assert(best, 12)
+assert(worst, 3)
+assert(top, 65)
+scores = []
+assert(best, Number.NEGATIVE_INFINITY)
+top
+```
+
+- This is the complete
+  `Nucleoid finds extremes of lists and populations with max and min`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `65`.
+- [NUC 69](nuc-0069.md) adds `max()`, `min()`, `max(selector)` and
+  `min(selector)` to lists and class instance lists. The result is
+  `Math.max` or `Math.min` applied to the values in receiver order, so an
+  empty list or class gives `-Infinity` for `max` and `Infinity` for `min`.
+- The result is always a number: values convert as for `-`, `*` and the Math
+  helpers, so `["10", "9"].max()` is `10`, `true` counts `1`, `null` counts
+  `0`, and objects and other strings make the result NaN. An undefined value
+  makes the result undefined, stored as `null`. A `null` item counts `0`
+  without settling a declaration to `null`, while the reads inside a selector
+  follow the existing rules.
+- A tie between `0` and `-0` gives the same result as `Math.max` or
+  `Math.min` on the same values in the same order; the language does not
+  otherwise fix the sign of a zero tie. The current x86-64 reference build
+  keeps the later zero, so there `[0, -0].max()` is `-0`, where JavaScript's
+  `Math.max(0, -0)` is `0`.
+- The selector is called once per item, in order, with only the item, as
+  `map` calls its callback. A supplied selector that is not a function,
+  including `null`, raises `TypeError("max expects a function")` or
+  `TypeError("min expects a function")`, even on an empty receiver.
+- Extremes are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level
+  rules too. On a class name, `Name.max(...)` and `Name.min(...)` are
+  population queries even when the class declares instance methods `max` or
+  `min`; instances keep calling the methods.
+- The authoritative contract is the
+  [list and population extremes](../nucleoid.spec.md#list-and-population-extremes)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -2592,6 +2648,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
+| A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
 | `:=` on a class-level property outside a class-level rule | `Cannot use ':=' on a class-level property` |
@@ -2753,6 +2810,7 @@ Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
 Name.list()  Name.all()                every instance, in population order (NUC 61)
 items.at(-1)  items.findLast(callback) read or search from the end (NUC 61)
 items.sum()  Name.sum(selector)        live numeric total (NUC 68)
+items.max()  Name.min(selector)        live numeric extreme (NUC 69)
 
 why reference                         derive a live explanation
 affects reference                     inspect live downstream impact

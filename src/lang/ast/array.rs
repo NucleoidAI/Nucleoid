@@ -505,13 +505,14 @@ impl Runtime {
             }
 
             "sum" => {
-                let selector = match predicate {
-                    None => None,
-                    Some(Value::Function(function)) => Some(function),
-                    Some(_) => return Err(Error::type_error("sum expects a function")),
-                };
-
+                let selector = optional_selector(predicate, property)?;
                 self.sum_items(items, selector.as_ref())
+            }
+
+            "max" | "min" => {
+                let selector = optional_selector(predicate, property)?;
+                let values = self.select_items(items, selector.as_ref())?;
+                builtins::math(property, &values)
             }
 
             // Lists sort in place through `call_list_method`; a class population
@@ -596,6 +597,21 @@ impl Runtime {
         })
     }
 
+    fn select_items(
+        &mut self,
+        items: Vec<Value>,
+        selector: Option<&Arc<Function>>,
+    ) -> Result<Vec<Value>> {
+        let Some(function) = selector else {
+            return Ok(items);
+        };
+
+        items
+            .into_iter()
+            .map(|item| self.invoke(function, &[item]))
+            .collect()
+    }
+
     /// Orders items stably. A comparator function places each item, in input
     /// order, before the first already placed item it compares below zero;
     /// without one, items order by their string forms.
@@ -662,6 +678,14 @@ impl Runtime {
             other if other.version_view() => Err(Error::type_error("State versions are read-only")),
             _ => Ok(()),
         }
+    }
+}
+
+fn optional_selector(predicate: Option<Value>, query: &str) -> Result<Option<Arc<Function>>> {
+    match predicate {
+        None => Ok(None),
+        Some(Value::Function(function)) => Ok(Some(function)),
+        Some(_) => Err(Error::type_error(format!("{query} expects a function"))),
     }
 }
 

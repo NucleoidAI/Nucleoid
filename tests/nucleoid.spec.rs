@@ -13701,6 +13701,301 @@ Item(4)
 assert: spent, 7"#);
 }
 
+/// Nucleoid finds list extremes with max and min
+#[rustfmt::skip]
+#[test]
+fn finds_list_extremes_with_max_and_min() {
+    runner()("temps = [18, 24, 9]\nhigh = temps.max()\nlow = temps.min()\nassert: high, 24\nassert: low, 9\ntemps.push(30)\nassert: high, 30\ntemps.pop()\ntemps.pop()\nassert: high, 24\nassert: low, 18\ntemps = []\nassert: high, Number.NEGATIVE_INFINITY\nassert: low, Number.POSITIVE_INFINITY\ntrip = {legs: [{km: 5, mins: 10}, {km: 12, mins: 30}]}\nfastest = trip.legs.max(leg -> leg.km / leg.mins)\nshortest = trip.legs.min(leg -> leg.km)\nassert: fastest, 0.5\nassert: shortest, 5\ntrip.legs.push({km: 3, mins: 4})\nassert: fastest, 0.75\nassert: shortest, 3");
+    let mut run = runner();
+    run("temps = [18, 24, 9]");
+    run("high = temps.max()");
+    run("low = temps.min()");
+    assert_eq!(run("high"), 24);
+    assert_eq!(run("low"), 9);
+    run("temps.push(30)");
+    assert_eq!(run("high"), 30);
+    run("temps.pop()");
+    run("temps.pop()");
+    assert_eq!(run("high"), 24);
+    assert_eq!(run("low"), 18);
+    run("temps = []");
+    {
+        let actual = run("high");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("low");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("trip = {legs: [{km: 5, mins: 10}, {km: 12, mins: 30}]}");
+    run("fastest = trip.legs.max(leg -> leg.km / leg.mins)");
+    run("shortest = trip.legs.min(leg -> leg.km)");
+    assert_eq!(run("fastest"), 0.5);
+    assert_eq!(run("shortest"), 5);
+    run("trip.legs.push({km: 3, mins: 4})");
+    assert_eq!(run("fastest"), 0.75);
+    assert_eq!(run("shortest"), 3);
+}
+
+/// Nucleoid finds extremes of class instance populations with max and min
+#[rustfmt::skip]
+#[test]
+fn finds_extremes_of_class_instance_populations_with_max_and_min() {
+    runner()("class Bid(amount, live):\n    this.amount = amount\n    this.live = live\nhighest = Bid.max(bid -> bid.amount)\nlowest = Bid.min(bid -> bid.amount)\nassert: highest, Number.NEGATIVE_INFINITY\nassert: lowest, Number.POSITIVE_INFINITY\nfirst = Bid(120, true)\nsecond = Bid(90, false)\nthird = Bid(150, true)\nopen = Bid.filter(bid -> bid.live).min(bid -> bid.amount)\nrecent = Bid[-2:].min(bid -> bid.amount)\nassert: highest, 150\nassert: lowest, 90\nassert: open, 120\nassert: recent, 90\nsecond.amount = 200\nfirst.live = false\nassert: highest, 200\nassert: lowest, 120\nassert: open, 150\nassert: recent, 150\ndelete third.amount\nassert: highest, null\ndelete third.live\ndelete third\nassert: highest, 200\nassert: open, Number.POSITIVE_INFINITY\nassert: recent, 120");
+    let mut run = runner();
+    run(r#"class Bid(amount, live):
+    this.amount = amount
+    this.live = live"#);
+    run("highest = Bid.max(bid -> bid.amount)");
+    run("lowest = Bid.min(bid -> bid.amount)");
+    {
+        let actual = run("highest");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("lowest");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("first = Bid(120, true)");
+    run("second = Bid(90, false)");
+    run("third = Bid(150, true)");
+    run("open = Bid.filter(bid -> bid.live).min(bid -> bid.amount)");
+    run("recent = Bid[-2:].min(bid -> bid.amount)");
+    assert_eq!(run("highest"), 150);
+    assert_eq!(run("lowest"), 90);
+    assert_eq!(run("open"), 120);
+    assert_eq!(run("recent"), 90);
+    run("second.amount = 200");
+    run("first.live = false");
+    assert_eq!(run("highest"), 200);
+    assert_eq!(run("lowest"), 120);
+    assert_eq!(run("open"), 150);
+    assert_eq!(run("recent"), 150);
+    run("delete third.amount");
+    assert_eq!(run("highest"), serde_json::Value::Null);
+    run("delete third.live");
+    run("delete third");
+    assert_eq!(run("highest"), 200);
+    {
+        let actual = run("open");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("recent"), 120);
+}
+
+/// Nucleoid compares extreme values as numbers
+#[rustfmt::skip]
+#[test]
+fn compares_extreme_values_as_numbers() {
+    runner()("inputs = [\"10\", \" 7 \", \"9\"]\nlargest = inputs.max()\nsmallest = inputs.min()\nassert: largest, 10\nassert: smallest, 7\ninputs.push(true)\nassert: smallest, 1\ninputs.push(null)\nassert: smallest, 0\nassert: largest, 10\ninputs.push(\"n/a\")\nassert: Number.isNaN(largest), true\nassert: Number.isNaN(smallest), true\ninputs.pop()\ninputs.push(Number.POSITIVE_INFINITY)\nassert: largest, Number.POSITIVE_INFINITY\nassert: smallest, 0\nclass Gauge(level): this.level = level\npump = Gauge(55)\ntank = Gauge(40)\npeak = Gauge.max(gauge -> gauge.level)\nassert: peak, 55\nidle = Gauge(null)\nassert: peak, null\nidle.level = 70\nassert: peak, 70");
+    let mut run = runner();
+    run(r#"inputs = ["10", " 7 ", "9"]"#);
+    run("largest = inputs.max()");
+    run("smallest = inputs.min()");
+    assert_eq!(run("largest"), 10);
+    assert_eq!(run("smallest"), 7);
+    run("inputs.push(true)");
+    assert_eq!(run("smallest"), 1);
+    run("inputs.push(null)");
+    assert_eq!(run("smallest"), 0);
+    assert_eq!(run("largest"), 10);
+    run(r#"inputs.push("n/a")"#);
+    assert_eq!(run("Number.isNaN(largest)"), true);
+    assert_eq!(run("Number.isNaN(smallest)"), true);
+    run("inputs.pop()");
+    run("inputs.push(Number.POSITIVE_INFINITY)");
+    {
+        let actual = run("largest");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("smallest"), 0);
+    run("class Gauge(level): this.level = level");
+    run("pump = Gauge(55)");
+    run("tank = Gauge(40)");
+    run("peak = Gauge.max(gauge -> gauge.level)");
+    assert_eq!(run("peak"), 55);
+    run("idle = Gauge(null)");
+    assert_eq!(run("peak"), serde_json::Value::Null);
+    run("idle.level = 70");
+    assert_eq!(run("peak"), 70);
+}
+
+/// Nucleoid calls the extreme selector once per item with only the item
+#[rustfmt::skip]
+#[test]
+fn calls_the_extreme_selector_once_per_item_with_only_the_item() {
+    runner()("seen = []\ndef weigh(item, position):\n    seen.push(position ?? item)\n    return item * item\nitems = [3, -4, 2]\ndef heaviest() => items.max(weigh)\nassert: heaviest(), 16\nassert: seen, [3, -4, 2]\nitems.push(5)\nassert: heaviest(), 25\nassert: seen, [3, -4, 2, 3, -4, 2, 5]\ntarget = 4\ndef gap item => Math.abs(item - target)\nspread = items.max(gap)\nassert: spread, 8\ntarget = -1\nassert: spread, 6\nmissing = null\nskipped = missing.min(weigh(9))\nassert: skipped, null\nassert: seen, [3, -4, 2, 3, -4, 2, 5]");
+    let mut run = runner();
+    run("seen = []");
+    run(r#"def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item"#);
+    run("items = [3, -4, 2]");
+    run("def heaviest() => items.max(weigh)");
+    assert_eq!(run("heaviest()"), 16);
+    assert_eq!(run("seen"), serde_json::json!([3, -4, 2]));
+    run("items.push(5)");
+    assert_eq!(run("heaviest()"), 25);
+    assert_eq!(run("seen"), serde_json::json!([3, -4, 2, 3, -4, 2, 5]));
+    run("target = 4");
+    run("def gap item => Math.abs(item - target)");
+    run("spread = items.max(gap)");
+    assert_eq!(run("spread"), 8);
+    run("target = -1");
+    assert_eq!(run("spread"), 6);
+    run("missing = null");
+    run("skipped = missing.min(weigh(9))");
+    assert_eq!(run("skipped"), serde_json::Value::Null);
+    assert_eq!(run("seen"), serde_json::json!([3, -4, 2, 3, -4, 2, 5]));
+}
+
+/// Nucleoid keeps extremes live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_extremes_live_in_class_level_rules() {
+    runner()("class Room(name): this.name = name\nclass Sensor(room, temp):\n    this.room = room\n    this.temp = temp\n$Room.high = Sensor.filter(sensor -> sensor.room == $Room).max(sensor -> sensor.temp)\n$Room.low = Sensor.filter(sensor -> sensor.room == $Room).min(sensor -> sensor.temp)\n$Room.swing = $Room.high - $Room.low\nlab = Room(\"lab\")\nden = Room(\"den\")\nSensor(lab, 21)\nprobe = Sensor(lab, 25)\nSensor(den, 19)\nassert: lab.high, 25\nassert: lab.swing, 4\nassert: den.swing, 0\npeak = Room.max(room -> room.high)\nassert: peak, 25\nprobe.temp = 18\nassert: lab.high, 21\nassert: lab.low, 18\nassert: lab.swing, 3\nattic = Room(\"attic\")\nassert: attic.high, Number.NEGATIVE_INFINITY\nSensor(attic, 30)\nassert: peak, 30");
+    let mut run = runner();
+    run("class Room(name): this.name = name");
+    run(r#"class Sensor(room, temp):
+    this.room = room
+    this.temp = temp"#);
+    run("$Room.high = Sensor.filter(sensor -> sensor.room == $Room).max(sensor -> sensor.temp)");
+    run("$Room.low = Sensor.filter(sensor -> sensor.room == $Room).min(sensor -> sensor.temp)");
+    run("$Room.swing = $Room.high - $Room.low");
+    run(r#"lab = Room("lab")"#);
+    run(r#"den = Room("den")"#);
+    run("Sensor(lab, 21)");
+    run("probe = Sensor(lab, 25)");
+    run("Sensor(den, 19)");
+    assert_eq!(run("lab.high"), 25);
+    assert_eq!(run("lab.swing"), 4);
+    assert_eq!(run("den.swing"), 0);
+    run("peak = Room.max(room -> room.high)");
+    assert_eq!(run("peak"), 25);
+    run("probe.temp = 18");
+    assert_eq!(run("lab.high"), 21);
+    assert_eq!(run("lab.low"), 18);
+    assert_eq!(run("lab.swing"), 3);
+    run(r#"attic = Room("attic")"#);
+    {
+        let actual = run("attic.high");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("Sensor(attic, 30)");
+    assert_eq!(run("peak"), 30);
+}
+
+/// Nucleoid uses extremes in functions methods and conditional expressions
+#[rustfmt::skip]
+#[test]
+fn uses_extremes_in_functions_methods_and_conditional_expressions() {
+    runner()("class Team(name, scores):\n    this.name = name\n    this.scores = scores\n    def best(): return this.scores.max()\ndef worst(team) => team.scores.min()\nred = Team(\"red\", [4, 7, 9])\nblue = Team(\"blue\", [12, 6, 8])\nleader = red.best() > blue.best() ? red.name : blue.name\nchampion = Team.max(team -> team.best())\nsteady = Team.max(team -> team.scores.min())\nfloor = worst(red)\nassert: leader, \"blue\"\nassert: champion, 12\nassert: steady, 6\nassert: floor, 4\nblue.scores.push(3)\nred.scores = [9, 15]\nTeam(\"green\", [5, 13])\nassert: leader, \"red\"\nassert: champion, 15\nassert: steady, 9\nassert: floor, 9");
+    let mut run = runner();
+    run(r#"class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def best(): return this.scores.max()"#);
+    run("def worst(team) => team.scores.min()");
+    run(r#"red = Team("red", [4, 7, 9])"#);
+    run(r#"blue = Team("blue", [12, 6, 8])"#);
+    run("leader = red.best() > blue.best() ? red.name : blue.name");
+    run("champion = Team.max(team -> team.best())");
+    run("steady = Team.max(team -> team.scores.min())");
+    run("floor = worst(red)");
+    assert_eq!(run("leader"), "blue");
+    assert_eq!(run("champion"), 12);
+    assert_eq!(run("steady"), 6);
+    assert_eq!(run("floor"), 4);
+    run("blue.scores.push(3)");
+    run("red.scores = [9, 15]");
+    run(r#"Team("green", [5, 13])"#);
+    assert_eq!(run("leader"), "red");
+    assert_eq!(run("champion"), 15);
+    assert_eq!(run("steady"), 9);
+    assert_eq!(run("floor"), 9);
+}
+
+/// Nucleoid keeps max and min as ordinary names beside the extreme queries
+#[rustfmt::skip]
+#[test]
+fn keeps_max_and_min_as_ordinary_names_beside_the_extreme_queries() {
+    runner()("max = 3\nmin = 1\nlimits = {max: 10, min: 0}\ndef scale min => min * 2\nclass Gauge(readings):\n    this.readings = readings\n    def max(): return this.readings.max() + 1\ngauge = Gauge([4, 6])\nspare = Gauge([2])\ntop = gauge.readings.max() + max + limits.max\nlow = gauge.readings.min() - min - limits.min\npeaks = Gauge.max(each -> each.max())\nassert: top, 19\nassert: low, 3\nassert: gauge.max(), 7\nassert: peaks, 7\nassert: scale(min), 2\nassert: gauge.readings.max, null\nassert: Math.max(max, min), 3\ngauge.readings = [8, 5, 2]\nmax = 5\nGauge([12])\nassert: top, 23\nassert: low, 1\nassert: gauge.max(), 9\nassert: peaks, 13");
+    let mut run = runner();
+    run("max = 3");
+    run("min = 1");
+    run("limits = {max: 10, min: 0}");
+    run("def scale min => min * 2");
+    run(r#"class Gauge(readings):
+    this.readings = readings
+    def max(): return this.readings.max() + 1"#);
+    run("gauge = Gauge([4, 6])");
+    run("spare = Gauge([2])");
+    run("top = gauge.readings.max() + max + limits.max");
+    run("low = gauge.readings.min() - min - limits.min");
+    run("peaks = Gauge.max(each -> each.max())");
+    assert_eq!(run("top"), 19);
+    assert_eq!(run("low"), 3);
+    assert_eq!(run("gauge.max()"), 7);
+    assert_eq!(run("peaks"), 7);
+    assert_eq!(run("scale(min)"), 2);
+    assert_eq!(run("gauge.readings.max"), serde_json::Value::Null);
+    assert_eq!(run("Math.max(max, min)"), 3);
+    run("gauge.readings = [8, 5, 2]");
+    run("max = 5");
+    run("Gauge([12])");
+    assert_eq!(run("top"), 23);
+    assert_eq!(run("low"), 1);
+    assert_eq!(run("gauge.max()"), 9);
+    assert_eq!(run("peaks"), 13);
+}
+
+/// Nucleoid rolls back failed extreme updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_extreme_updates() {
+    runner()("def checked(value):\n    if value > 100:\n        throw \"TOO_HOT\"\n    return value\ntemps = [35, 20]\nhottest = temps.max(checked)\nassert: hottest, 35\nfailure = \"\"\ntry:\n    temps.push(500)\ncatch error:\n    failure = error\nassert: failure, \"TOO_HOT\"\nassert: temps, [35, 20]\nassert: hottest, 35\ntemps.push(40)\nassert: hottest, 40\nclass Probe(temp): this.temp = temp\nProbe(12)\nProbe(30)\ncoldest = Probe.min(probe -> checked(probe.temp))\nfailure = \"\"\ntry:\n    Probe(500)\ncatch error:\n    failure = error\nassert: failure, \"TOO_HOT\"\nassert: Probe.length, 2\nassert: coldest, 12\nProbe(9)\nProbe(4)\nassert: coldest, 4");
+    let mut run = runner();
+    run(r#"def checked(value):
+    if value > 100:
+        throw "TOO_HOT"
+    return value
+temps = [35, 20]
+hottest = temps.max(checked)
+assert: hottest, 35
+failure = ""
+try:
+    temps.push(500)
+catch error:
+    failure = error
+assert: failure, "TOO_HOT"
+assert: temps, [35, 20]
+assert: hottest, 35
+temps.push(40)
+assert: hottest, 40
+class Probe(temp): this.temp = temp
+Probe(12)
+Probe(30)
+coldest = Probe.min(probe -> checked(probe.temp))
+failure = ""
+try:
+    Probe(500)
+catch error:
+    failure = error
+assert: failure, "TOO_HOT"
+assert: Probe.length, 2
+assert: coldest, 12
+Probe(9)
+Probe(4)
+assert: coldest, 4"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

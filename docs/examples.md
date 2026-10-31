@@ -2835,6 +2835,54 @@ Device(garage, 700, true)
 - See [NUC 68](nuc-0068.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-sums).
 
+## List and population extremes
+
+**Extremes keep room temperature ranges live**
+
+```nuc
+class Room(name, limit):
+    this.name = name
+    this.limit = limit
+class Sensor(room, temp, on):
+    this.room = room
+    this.temp = temp
+    this.on = on
+$Room.high = Sensor.filter(sensor -> sensor.room == $Room and sensor.on).max(sensor -> sensor.temp)
+$Room.low = Sensor.filter(sensor -> sensor.room == $Room and sensor.on).min(sensor -> sensor.temp)
+$Room.uneven = $Room.high - $Room.low > $Room.limit
+hottest = Room.max(room -> room.high)
+lab = Room("lab", 4)
+den = Room("den", 3)
+Sensor(lab, 22, true)
+door = Sensor(lab, 19, true)
+vent = Sensor(den, 20, false)
+assert(den.high, Number.NEGATIVE_INFINITY)
+assert(lab.uneven, false)
+assert(hottest, 22)
+door.temp = 16
+assert(lab.uneven, true)
+vent.on = true
+Sensor(den, 27, true)
+assert(den.uneven, true)
+assert(hottest, 27)
+[lab.low, den.high, hottest]
+# return: [16,27,27]
+```
+
+- The class-level rules state each room's highest and lowest reading once:
+  they filter the sensors that are in the room and switched on, then take
+  the `max` and `min` of their temperatures. `uneven` compares the spread
+  with the room's limit, and `hottest` takes the highest reading over every
+  room.
+- Until the vent is switched on, the den has no active sensor, so its `high`
+  is `-Infinity`, the value of `Math.max()`. Cooling the door sensor to `16`
+  makes the lab uneven; switching the vent on and adding a `27` reading does
+  the same for the den and raises `hottest`. The accepted spelling
+  `Sensor.filter(...).reduce((high, sensor) -> Math.max(high, sensor.temp), -1 / 0)`
+  keeps working and gives the same results.
+- See [NUC 69](nuc-0069.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-extremes).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

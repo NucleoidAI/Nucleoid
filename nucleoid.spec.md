@@ -3045,6 +3045,59 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid totals lists with sum` through
   `Nucleoid rolls back failed sum updates` specify the executable behavior.
 
+## List and population extremes
+
+- [NUC 69](docs/nuc-0069.md) adds the read-only list queries `max` and `min`
+  to lists and class instance lists. No syntax, keyword or error type is
+  added.
+- `RECEIVER.max()` returns the largest of the receiver's items and
+  `RECEIVER.max(selector)` the largest `selector(item)`; `min` returns the
+  smallest. The result is `Math.max` or `Math.min` applied to those values in
+  receiver order. An empty receiver gives `-Infinity` for `max` and
+  `Infinity` for `min`, as `Math.max()` and `Math.min()` do.
+- The result is a number, never the item. Each value is converted with the
+  numeric conversion of `-`, `*` and the Math helpers, so `["10", "9"].max()`
+  is `10`, `true` counts `1`, `null`, `false` and `""` count `0`, a date
+  counts its time in milliseconds, and objects and other strings are NaN. A
+  NaN value makes the result NaN, and infinities compare as 64-bit floating
+  point.
+- An undefined item or selector result makes the result undefined, which a
+  declaration stores as `null`, even beside a NaN value; every item is still
+  visited. `max()` and `min()` read items, not bindings, so a `null` item
+  counts `0` without settling a declaration to `null`, while the reads inside
+  a selector follow the existing rules.
+- A tie between `0` and `-0` gives the same result as `Math.max` or
+  `Math.min` on the same values in the same order. That parity is the
+  contract, this specification, not JavaScript, decides, and the language
+  does not otherwise fix the sign of a zero tie. The current x86-64 reference
+  build keeps the later zero, so there `[0, -0].max()` is `-0` and
+  `[-0, 0].min()` is `0`, where JavaScript's `Math.max` and `Math.min` give
+  `0` and `-0`.
+- The receiver is a list, however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class.
+  On a class name, `max` and `min` are population queries even when the class
+  declares instance methods `max` or `min`; its instances keep calling those
+  methods.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("max expects a function")` or
+  `TypeError("min expects a function")`, even on an empty receiver.
+- `max` and `min` follow the shared rules of the list queries: they read the
+  receiver before their arguments, evaluate every supplied argument once, left
+  to right, including unused extras, and never write the receiver. A
+  declaration that uses one depends on the list or population, on its
+  argument expressions and on whatever the selector reads, so list mutations,
+  new and deleted instances and property changes re-evaluate it, in
+  class-level rules too. Selector errors roll back through the existing
+  transaction. A null or undefined receiver yields undefined without
+  evaluating the arguments.
+- Property reads such as `xs.max`, bindings and object properties named `max`
+  or `min`, instance methods named `max` or `min` called on an instance, and
+  `Math.max` and `Math.min` keep their accepted results. The eight appended
+  entries beginning `Nucleoid finds list extremes with max and min` through
+  `Nucleoid rolls back failed extreme updates` specify the executable
+  behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -16710,4 +16763,231 @@ assert: Item.length, 1
 assert: spent, 3
 Item(4)
 assert: spent, 7
+---
+# Nucleoid finds list extremes with max and min
+
+temps = [18, 24, 9]
+high = temps.max()
+low = temps.min()
+assert: high, 24
+assert: low, 9
+temps.push(30)
+assert: high, 30
+temps.pop()
+temps.pop()
+assert: high, 24
+assert: low, 18
+temps = []
+assert: high, Number.NEGATIVE_INFINITY
+assert: low, Number.POSITIVE_INFINITY
+trip = {legs: [{km: 5, mins: 10}, {km: 12, mins: 30}]}
+fastest = trip.legs.max(leg -> leg.km / leg.mins)
+shortest = trip.legs.min(leg -> leg.km)
+assert: fastest, 0.5
+assert: shortest, 5
+trip.legs.push({km: 3, mins: 4})
+assert: fastest, 0.75
+assert: shortest, 3
+---
+# Nucleoid finds extremes of class instance populations with max and min
+
+class Bid(amount, live):
+    this.amount = amount
+    this.live = live
+highest = Bid.max(bid -> bid.amount)
+lowest = Bid.min(bid -> bid.amount)
+assert: highest, Number.NEGATIVE_INFINITY
+assert: lowest, Number.POSITIVE_INFINITY
+first = Bid(120, true)
+second = Bid(90, false)
+third = Bid(150, true)
+open = Bid.filter(bid -> bid.live).min(bid -> bid.amount)
+recent = Bid[-2:].min(bid -> bid.amount)
+assert: highest, 150
+assert: lowest, 90
+assert: open, 120
+assert: recent, 90
+second.amount = 200
+first.live = false
+assert: highest, 200
+assert: lowest, 120
+assert: open, 150
+assert: recent, 150
+delete third.amount
+assert: highest, null
+delete third.live
+delete third
+assert: highest, 200
+assert: open, Number.POSITIVE_INFINITY
+assert: recent, 120
+---
+# Nucleoid compares extreme values as numbers
+
+inputs = ["10", " 7 ", "9"]
+largest = inputs.max()
+smallest = inputs.min()
+assert: largest, 10
+assert: smallest, 7
+inputs.push(true)
+assert: smallest, 1
+inputs.push(null)
+assert: smallest, 0
+assert: largest, 10
+inputs.push("n/a")
+assert: Number.isNaN(largest), true
+assert: Number.isNaN(smallest), true
+inputs.pop()
+inputs.push(Number.POSITIVE_INFINITY)
+assert: largest, Number.POSITIVE_INFINITY
+assert: smallest, 0
+class Gauge(level): this.level = level
+pump = Gauge(55)
+tank = Gauge(40)
+peak = Gauge.max(gauge -> gauge.level)
+assert: peak, 55
+idle = Gauge(null)
+assert: peak, null
+idle.level = 70
+assert: peak, 70
+---
+# Nucleoid calls the extreme selector once per item with only the item
+
+seen = []
+def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item
+items = [3, -4, 2]
+def heaviest() => items.max(weigh)
+assert: heaviest(), 16
+assert: seen, [3, -4, 2]
+items.push(5)
+assert: heaviest(), 25
+assert: seen, [3, -4, 2, 3, -4, 2, 5]
+target = 4
+def gap item => Math.abs(item - target)
+spread = items.max(gap)
+assert: spread, 8
+target = -1
+assert: spread, 6
+missing = null
+skipped = missing.min(weigh(9))
+assert: skipped, null
+assert: seen, [3, -4, 2, 3, -4, 2, 5]
+---
+# Nucleoid keeps extremes live in class level rules
+
+class Room(name): this.name = name
+class Sensor(room, temp):
+    this.room = room
+    this.temp = temp
+$Room.high = Sensor.filter(sensor -> sensor.room == $Room).max(sensor -> sensor.temp)
+$Room.low = Sensor.filter(sensor -> sensor.room == $Room).min(sensor -> sensor.temp)
+$Room.swing = $Room.high - $Room.low
+lab = Room("lab")
+den = Room("den")
+Sensor(lab, 21)
+probe = Sensor(lab, 25)
+Sensor(den, 19)
+assert: lab.high, 25
+assert: lab.swing, 4
+assert: den.swing, 0
+peak = Room.max(room -> room.high)
+assert: peak, 25
+probe.temp = 18
+assert: lab.high, 21
+assert: lab.low, 18
+assert: lab.swing, 3
+attic = Room("attic")
+assert: attic.high, Number.NEGATIVE_INFINITY
+Sensor(attic, 30)
+assert: peak, 30
+---
+# Nucleoid uses extremes in functions methods and conditional expressions
+
+class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def best(): return this.scores.max()
+def worst(team) => team.scores.min()
+red = Team("red", [4, 7, 9])
+blue = Team("blue", [12, 6, 8])
+leader = red.best() > blue.best() ? red.name : blue.name
+champion = Team.max(team -> team.best())
+steady = Team.max(team -> team.scores.min())
+floor = worst(red)
+assert: leader, "blue"
+assert: champion, 12
+assert: steady, 6
+assert: floor, 4
+blue.scores.push(3)
+red.scores = [9, 15]
+Team("green", [5, 13])
+assert: leader, "red"
+assert: champion, 15
+assert: steady, 9
+assert: floor, 9
+---
+# Nucleoid keeps max and min as ordinary names beside the extreme queries
+
+max = 3
+min = 1
+limits = {max: 10, min: 0}
+def scale min => min * 2
+class Gauge(readings):
+    this.readings = readings
+    def max(): return this.readings.max() + 1
+gauge = Gauge([4, 6])
+spare = Gauge([2])
+top = gauge.readings.max() + max + limits.max
+low = gauge.readings.min() - min - limits.min
+peaks = Gauge.max(each -> each.max())
+assert: top, 19
+assert: low, 3
+assert: gauge.max(), 7
+assert: peaks, 7
+assert: scale(min), 2
+assert: gauge.readings.max, null
+assert: Math.max(max, min), 3
+gauge.readings = [8, 5, 2]
+max = 5
+Gauge([12])
+assert: top, 23
+assert: low, 1
+assert: gauge.max(), 9
+assert: peaks, 13
+---
+# Nucleoid rolls back failed extreme updates
+
+def checked(value):
+    if value > 100:
+        throw "TOO_HOT"
+    return value
+temps = [35, 20]
+hottest = temps.max(checked)
+assert: hottest, 35
+failure = ""
+try:
+    temps.push(500)
+catch error:
+    failure = error
+assert: failure, "TOO_HOT"
+assert: temps, [35, 20]
+assert: hottest, 35
+temps.push(40)
+assert: hottest, 40
+class Probe(temp): this.temp = temp
+Probe(12)
+Probe(30)
+coldest = Probe.min(probe -> checked(probe.temp))
+failure = ""
+try:
+    Probe(500)
+catch error:
+    failure = error
+assert: failure, "TOO_HOT"
+assert: Probe.length, 2
+assert: coldest, 12
+Probe(9)
+Probe(4)
+assert: coldest, 4
 ```

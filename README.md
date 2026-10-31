@@ -1330,6 +1330,38 @@ assert(units, 14)
   as in arithmetic, so `true` counts `1` and `null` counts `0`. See the
   [root contract](nucleoid.spec.md#list-and-population-sums).
 
+## List and population extremes
+
+**Extremes keep the highest and lowest bids live as bids change**
+
+```nuc
+class Bid(bidder, amount):
+    this.bidder = bidder
+    this.amount = amount
+high = Bid.max(bid -> bid.amount)
+low = Bid.min(bid -> bid.amount)
+assert(high, Number.NEGATIVE_INFINITY)
+assert(low, Number.POSITIVE_INFINITY)
+ada = Bid("ada", 120)
+Bid("bo", 90)
+assert(high, 120)
+assert(low, 90)
+ada.amount = 60
+Bid("cy", 150)
+assert(high, 150)
+assert(low, 60)
+```
+
+- [NUC 69](docs/nuc-0069.md) adds `max()`, `min()` and their selector forms
+  to lists and class instance lists. `Bid.max(bid -> bid.amount)` is the
+  largest amount over every instance, compared exactly as `Math.max`
+  compares, and before the first bid `high` is `-Infinity` and `low` is
+  `Infinity`, the values of `Math.max()` and `Math.min()`.
+- `high` and `low` are live declarations: they re-evaluate when an instance
+  is created or an amount changes. Compared values convert to numbers as in
+  arithmetic, so the result is always a number. See the
+  [root contract](nucleoid.spec.md#list-and-population-extremes).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
