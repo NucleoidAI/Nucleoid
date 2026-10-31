@@ -6,7 +6,7 @@ import * as milestone from "./lib/milestone.ts";
 import arc_dataset from "./lib/arc_dataset.ts";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "9af7a82c") {
+export async function start(puzzle_id: string = "3aa6fb7a") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
