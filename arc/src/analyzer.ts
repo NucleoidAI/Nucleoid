@@ -112,8 +112,8 @@ export async function value({
 }
 
 export async function state(train_dataset) {
-  for (const entry of train_dataset.dataset) {
-    const implementations = entry.instances.map(
+  for (const [index, dataset] of train_dataset.dataset.entries()) {
+    const implementations = dataset.instances.map(
       ({ implementation }) => implementation
     );
 
@@ -121,8 +121,10 @@ export async function state(train_dataset) {
       [...train_dataset.declarations, ...implementations, "Obj[:]"].join("\n\n")
     );
 
+    milestone.state({ index, obj_list });
+
     [...obj_list].forEach((instance) => {
-      const found_instance = entry.instances.find(
+      const found_instance = dataset.instances.find(
         ({ instance_name }) => instance.id === instance_name
       );
       found_instance.output_value = instance;

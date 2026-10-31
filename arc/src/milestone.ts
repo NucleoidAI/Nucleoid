@@ -65,6 +65,18 @@ export function instance_constructed({
   terminal.value("Input state", input_value);
 }
 
+export function state({ index = null, obj_list }) {
+  const properties = [
+    ...new Set(obj_list.flatMap((instance) => Object.keys(instance))),
+  ].filter((property: string) => property !== "id");
+
+  terminal.table(
+    index === null ? "Test · State" : `Training pair ${index + 1} · State`,
+    ["id", ...properties],
+    obj_list
+  );
+}
+
 export function visualization() {
   terminal.section(
     2,

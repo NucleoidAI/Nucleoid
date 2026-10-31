@@ -225,6 +225,8 @@ export async function state({ declarations, input_instances }) {
     [...declarations, ...implementations, "Obj[:]"].join("\n\n")
   );
 
+  milestone.state({ obj_list });
+
   [...obj_list].forEach((instance) => {
     const found_instance = input_instances.find(
       ({ instance_name }) => instance.id === instance_name

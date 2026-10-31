@@ -194,6 +194,120 @@ export function value(title: string, data) {
   );
 }
 
+function span(widths): number {
+  return widths.reduce((sum: number, cell: number) => sum + cell + 3, -1);
+}
+
+function tableRule(widths, left: string, joint: string, right: string): string {
+  return `  ${frame(
+    left +
+      widths.map((cell: number) => "─".repeat(cell + 2)).join(joint) +
+      right
+  )}`;
+}
+
+function tableRow(widths, cells) {
+  const lines = cells.map((text: string, index: number) =>
+    wrap(text, widths[index])
+  );
+  const height: number = Math.max(...lines.map((cell) => cell.length));
+  return Array.from(
+    { length: height },
+    (_, line: number) =>
+      `  ${frame("│")}${lines
+        .map(
+          (cell, index: number) => ` ${pad(cell[line] ?? "", widths[index])} `
+        )
+        .join(frame("│"))}${frame("│")}`
+  );
+}
+
+export function table(title: string, columns, rows) {
+  if (rows.length === 0) {
+    block(title, [styleText("gray", "(empty)")]);
+    return;
+  }
+
+  const inner: number = width() - 2;
+  const header = columns.map((column: string) =>
+    styleText(["bold", "white"], column)
+  );
+  const body = rows.map((row) =>
+    columns.map((column: string) =>
+      Object.hasOwn(row, column)
+        ? styleText(
+            "whiteBright",
+            inspect(row[column], {
+              colors: false,
+              depth: null,
+              compact: true,
+              breakLength: Infinity,
+              maxArrayLength: null,
+              maxStringLength: null,
+            })
+          )
+        : styleText("gray", "—")
+    )
+  );
+  const natural = columns.map((_, column: number) =>
+    Math.max(...[header, ...body].map((cells) => stringWidth(cells[column])))
+  );
+
+  // The first column labels each row, so every panel repeats it.
+  const panels = [];
+  let current = [0];
+  let used: number = natural[0] + 2;
+  for (let column: number = 1; column < columns.length; column++) {
+    if (current.length > 1 && used + natural[column] + 3 > inner) {
+      panels.push(current);
+      current = [0];
+      used = natural[0] + 2;
+    }
+    current.push(column);
+    used += natural[column] + 3;
+  }
+  panels.push(current);
+
+  for (const [index, panel] of panels.entries()) {
+    const widths = panel.map((column: number) => natural[column]);
+    while (span(widths) > inner && Math.max(...widths) > 1) {
+      widths[widths.indexOf(Math.max(...widths))] -= 1;
+    }
+    widths[widths.length - 1] += Math.max(0, inner - span(widths));
+
+    const titleWidth: number = span(widths) - 2;
+    console.log(`\n  ${frame(`┌${"─".repeat(titleWidth + 2)}┐`)}`);
+    for (const line of wrap(
+      stripVTControlCharacters(index === 0 ? title : `${title} (continued)`),
+      titleWidth
+    )) {
+      console.log(
+        `  ${frame("│")} ${pad(
+          styleText(["bold", "white"], line),
+          titleWidth
+        )} ${frame("│")}`
+      );
+    }
+    console.log(tableRule(widths, "├", "┬", "┤"));
+    for (const line of tableRow(
+      widths,
+      panel.map((column: number) => header[column])
+    )) {
+      console.log(line);
+    }
+    console.log(tableRule(widths, "├", "┼", "┤"));
+    for (const cells of body) {
+      for (const line of tableRow(
+        widths,
+        panel.map((column: number) => cells[column])
+      )) {
+        console.log(line);
+      }
+    }
+    console.log(tableRule(widths, "└", "┴", "┘"));
+  }
+}
+
 function cell(value: number, colored: boolean): string {
   const text: string = `${String(value).padStart(2)} `;
   if (!colored || !palette[value]) {
