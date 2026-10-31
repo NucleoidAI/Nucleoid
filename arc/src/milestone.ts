@@ -58,13 +58,11 @@ export function instance_constructed({
   input_instance_matrix,
   output_instance_matrix,
   input_value,
-  output_value,
 }) {
   terminal.grid("Input crop", Matrix.crop(input_instance_matrix));
   terminal.grid("Output crop", Matrix.crop(output_instance_matrix));
   terminal.code(`Implementation · ${instance_name}`, implementation);
   terminal.value("Input state", input_value);
-  terminal.value("Output state", output_value);
 }
 
 export function visualization() {
@@ -99,9 +97,8 @@ export function executing_transformation() {
   terminal.step("Executing the object transformation");
 }
 
-export function transformation_executed({ input_value, output_value }) {
+export function transformation_executed({ input_value }) {
   terminal.value("Input state", input_value);
-  terminal.value("Output state", output_value);
 }
 
 export function composing_output() {

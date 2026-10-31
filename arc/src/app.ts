@@ -7,7 +7,7 @@ import * as nucleoid from "./lib/nucleoid";
 import * as milestone from "./milestone";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "3aa6fb7a") {
+export async function start(puzzle_id: string = "9af7a82c") {
   const puzzle = JSON.parse(
     await readFile(
       join(__dirname, "..", "data", "training", `${puzzle_id}.json`),
@@ -33,6 +33,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     train,
     test_input_matrix,
   });
+
   milestone.analysis();
 
   let instance_index: number = 0;
@@ -49,6 +50,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   for (const [index, dataset] of train_dataset.dataset.entries()) {
     const { input_matrix, output_matrix } = dataset;
+
     milestone.training_pair({ index, total: train_dataset.dataset.length });
 
     const { instances } = await analyzer.instances({
@@ -58,23 +60,19 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
       output_matrix,
     });
 
-    const train_state = [];
-
     for (const { input_instance_matrix, output_instance_matrix } of instances) {
       const instance_name: string = `obj${String(instance_index++).padStart(
         12,
         "0"
       )}`;
 
-      const { implementation, input_value, output_value } =
-        await analyzer.value({
-          puzzle_id,
-          train_state,
-          instance_name,
-          declarations,
-          input_instance_matrix,
-          output_instance_matrix,
-        });
+      const { implementation, input_value } = await analyzer.value({
+        puzzle_id,
+        instance_name,
+        declarations,
+        input_instance_matrix,
+        output_instance_matrix,
+      });
 
       dataset.instances.push({
         instance_name,
@@ -82,10 +80,11 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
         output_instance_matrix,
         implementation,
         input_value,
-        output_value,
       });
     }
   }
+
+  await analyzer.state(train_dataset);
 
   milestone.visualization();
 
@@ -100,26 +99,32 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     Array(test_input_matrix[0].length).fill(0)
   );
 
-  const test_state = [];
   const input_instances = [];
 
   for (const { input_instance_matrix } of instances) {
-    const { input_value, output_value } = await visualizer.value({
+    const instance_name: string = `obj${String(instance_index++).padStart(
+      12,
+      "0"
+    )}`;
+
+    const { implementation, input_value } = await visualizer.value({
       puzzle_id,
-      test_state,
       declarations,
       train_dataset,
-      instance_name: `obj${String(instance_index++).padStart(12, "0")}`,
+      instance_name,
       input_instances,
       input_instance_matrix,
     });
 
     input_instances.push({
+      instance_name,
+      implementation,
       input_value,
       input_instance_matrix,
-      output_value,
     });
   }
+
+  await visualizer.state({ declarations, input_instances });
 
   for (const input_instance of input_instances) {
     const { input_value, input_instance_matrix, output_value } = input_instance;
