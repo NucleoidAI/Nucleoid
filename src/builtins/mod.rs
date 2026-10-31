@@ -1138,6 +1138,54 @@ mod tests {
         assert!(math_constant("exp2").is_none());
     }
 
+    #[test]
+    fn power_operator_matches_accepted_pow_bits_for_every_value_pair() {
+        let mut numbers = vec![
+            -f64::MAX,
+            f64::NEG_INFINITY,
+            -8.0,
+            -2.0,
+            -1.0,
+            -0.5,
+            -f64::MIN_POSITIVE,
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            1.0 / 3.0,
+            0.5,
+            1.0,
+            2.0,
+            3.0,
+            1023.0,
+            1024.0,
+            f64::MAX,
+            f64::INFINITY,
+            f64::NAN,
+        ];
+        let mut bits = 0x2545_f491_4f6c_dd1d_u64;
+        for _ in 0..128 {
+            bits = bits
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            numbers.push(f64::from_bits(bits));
+            numbers.push((bits as i64 as f64) / (i64::MAX as f64) * 64.0);
+        }
+        let operands: Vec<Value> = values()
+            .into_iter()
+            .chain(numbers.into_iter().map(Value::Number))
+            .collect();
+        for base in &operands {
+            for exponent in &operands {
+                assert_same(
+                    &binary(BinaryOp::Power, base, exponent).unwrap(),
+                    &math("pow", &[base.clone(), exponent.clone()]).unwrap(),
+                );
+            }
+        }
+        assert_eq!(BinaryOp::Power.as_str(), "**");
+    }
+
     // Independent accepted binary operations: divide PI before multiplying.
     // In particular, multiplying MAX by PI first would overflow incorrectly.
     fn ordered_radians(value: &Value) -> Value {

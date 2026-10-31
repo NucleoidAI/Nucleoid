@@ -1044,6 +1044,7 @@ impl Parser {
             Token::PlusAssign => Some(CompoundOp::Arithmetic(BinaryOp::Add)),
             Token::MinusAssign => Some(CompoundOp::Arithmetic(BinaryOp::Subtract)),
             Token::StarAssign => Some(CompoundOp::Arithmetic(BinaryOp::Multiply)),
+            Token::StarStarAssign => Some(CompoundOp::Arithmetic(BinaryOp::Power)),
             Token::SlashAssign => Some(CompoundOp::Arithmetic(BinaryOp::Divide)),
             Token::PercentAssign => Some(CompoundOp::Arithmetic(BinaryOp::Modulo)),
             Token::AndAndAssign => Some(CompoundOp::Logical(LogicalOp::And)),
@@ -1452,7 +1453,7 @@ impl Parser {
             Token::Minus => UnaryOp::Negate,
             Token::Plus => UnaryOp::Plus,
             Token::Keyword(Keyword::TypeOf) => UnaryOp::TypeOf,
-            _ => return self.postfix(),
+            _ => return self.exponent(),
         };
 
         self.advance();
@@ -1461,6 +1462,19 @@ impl Parser {
         Ok(Expr::Unary {
             operator,
             operand: Box::new(operand),
+        })
+    }
+
+    fn exponent(&mut self) -> Result<Expr> {
+        let base = self.postfix()?;
+        if !self.eat(&Token::StarStar) {
+            return Ok(base);
+        }
+        let exponent = self.nested_expression(Self::unary)?;
+        Ok(Expr::Binary {
+            operator: BinaryOp::Power,
+            left: Box::new(base),
+            right: Box::new(exponent),
         })
     }
 
@@ -2549,7 +2563,7 @@ mod tests {
 
     #[test]
     fn compound_assignments_lower_to_identical_assignment_and_binary_asts() {
-        for operator in ["+", "-", "*", "/", "%"] {
+        for operator in ["+", "-", "*", "**", "/", "%"] {
             for target in [
                 "amount",
                 "meter.reading",
@@ -2628,6 +2642,22 @@ mod tests {
                 "text = `value: ${amount += 2}`",
                 "text = `value: ${amount = amount + 2}`",
             ),
+            (
+                "first **= second **= 2",
+                "first = first ** (second = second ** 2)",
+            ),
+            (
+                "def raise(current, power) => current **= power",
+                "def raise(current, power) => current = current ** power",
+            ),
+            (
+                "for item of items:\n    item.count **= 2",
+                "for item of items:\n    item.count = item.count ** 2",
+            ),
+            (
+                "text = `value: ${amount **= 2}`",
+                "text = `value: ${amount = amount ** 2}`",
+            ),
         ] {
             let compact_ast = parse(compact).unwrap();
             let expanded_ast = parse(expanded).unwrap();
@@ -2641,6 +2671,14 @@ mod tests {
         assert_eq!(
             generate_all(&parse("amount += step").unwrap()),
             "amount=amount+step"
+        );
+        assert_eq!(
+            generate_all(&parse("amount **= step").unwrap()),
+            "amount=amount**step"
+        );
+        assert_eq!(
+            generate_all(&parse("amount **= step + 1").unwrap()),
+            "amount=amount**(step+1)"
         );
     }
 
@@ -2804,8 +2842,10 @@ mod tests {
             "(first &&= 1).count",
             "(first => first)",
             "model |> why",
+            "first ** second",
+            "(first **= 1)",
         ] {
-            for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
+            for operator in ["+=", "-=", "*=", "**=", "/=", "%=", "&&=", "||="] {
                 let source = format!("{target} {operator} 2");
                 let error = parse(&source).unwrap_err();
                 assert_eq!(error.kind(), crate::ErrorKind::Syntax, "{source}");
@@ -2821,7 +2861,7 @@ mod tests {
 
     #[test]
     fn compound_target_limits_include_parenthesized_member_chains() {
-        for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
+        for operator in ["+=", "-=", "*=", "**=", "/=", "%=", "&&=", "||="] {
             let allowed = format!(
                 "(root{}){} {operator} 1",
                 ".next".repeat(64),
@@ -2841,6 +2881,116 @@ mod tests {
                 "{operator}"
             );
         }
+    }
+
+    #[test]
+    fn exponentiation_binds_tighter_than_products_and_groups_to_the_right() {
+        for (compact, grouped) in [
+            ("a ** b ** c", "a ** (b ** c)"),
+            ("a * b ** c", "a * (b ** c)"),
+            ("a ** b * c", "(a ** b) * c"),
+            ("a / b ** c % d", "a / (b ** c) % d"),
+            ("a + b ** c - d", "a + (b ** c) - d"),
+            ("a ** b > c", "(a ** b) > c"),
+            ("a ** b ?? c", "(a ** b) ?? c"),
+            ("a ** b && c", "(a ** b) && c"),
+            ("a ? b ** c : d ** e", "a ? (b ** c) : (d ** e)"),
+            ("-a ** b", "-(a ** b)"),
+            ("+a ** b", "+(a ** b)"),
+            ("!a ** b", "!(a ** b)"),
+            ("not a ** b", "not (a ** b)"),
+            ("typeof a ** b", "typeof (a ** b)"),
+            ("delete a ** b", "delete (a ** b)"),
+            ("why a ** b", "(a ** b) |> why"),
+            ("new a ** b", "a ** b"),
+            ("a ** -b", "a ** (-b)"),
+            ("a ** -b ** c", "a ** (-(b ** c))"),
+            ("a ** !b", "a ** (!b)"),
+            ("a ** typeof b", "a ** (typeof b)"),
+            ("a.b ** c[0]", "(a.b) ** (c[0])"),
+            ("f(a) ** g(b)", "(f(a)) ** (g(b))"),
+            ("a@first ** 2", "(a@first) ** 2"),
+            ("x => x ** 2", "x => (x ** 2)"),
+            ("lambda x: x ** 2", "(x) => (x ** 2)"),
+        ] {
+            assert_eq!(
+                parse_expression(compact).unwrap(),
+                parse_expression(grouped).unwrap(),
+                "{compact}"
+            );
+        }
+        assert_eq!(
+            parse_expression("a ** b").unwrap(),
+            Expr::Binary {
+                operator: BinaryOp::Power,
+                left: Box::new(Expr::Identifier("a".into())),
+                right: Box::new(Expr::Identifier("b".into())),
+            }
+        );
+    }
+
+    #[test]
+    fn power_rendering_reads_back_as_the_same_expression() {
+        for (source, rendered) in [
+            ("x ** 2", "x**2"),
+            ("x ** 2 ** 3", "x**2**3"),
+            ("(x ** 2) ** 3", "(x**2)**3"),
+            ("-x ** 2", "-x**2"),
+            ("(-x) ** 3", "(-x)**3"),
+            ("(!x) ** 2", "(!x)**2"),
+            ("(typeof x) ** 2", "(typeof x)**2"),
+            ("x ** -y", "x**-y"),
+            ("x ** (1 + 1)", "x**(1+1)"),
+            ("x ** (y > 1)", "x**(y>1)"),
+            ("(2 * x) ** 2", "(2*x)**2"),
+            ("2 * x ** 2", "2*x**2"),
+            ("x ** 2 * 2", "x**2*2"),
+            ("(a || b) ** 2", "(a||b)**2"),
+            ("x ** (a && b)", "x**(a&&b)"),
+            ("(a ?? b) ** 2", "(a??b)**2"),
+            ("x ** (a ?? b)", "x**(a??b)"),
+            ("(c ? a : b) ** 2", "(c?a:b)**2"),
+            ("x ** (c ? a : b)", "x**(c?a:b)"),
+            ("(why x) ** 2", "(x|>why)**2"),
+            ("2 ** (x |> why)", "2**(x|>why)"),
+            ("(x = 2) ** 2", "(x=2)**2"),
+            ("x ** (y = 2)", "x**(y=2)"),
+            ("(delete x.y) ** 2", "(delete x.y)**2"),
+            ("x ** delete y", "x**delete y"),
+            ("((a = 1) => a) ** 2", "((a=1)=>a)**2"),
+            ("2 ** ((a = 1) => a)", "2**((a=1)=>a)"),
+            ("x.y ** z[0]", "x.y**z[0]"),
+            ("f(x) ** g(y)", "f(x)**g(y)"),
+            ("(all v in xs: v) ** 2", "(all v in xs:v)**2"),
+        ] {
+            let expression = parse_expression(source).unwrap();
+            assert_eq!(expression.to_string(), rendered, "{source}");
+            assert_eq!(parse_expression(rendered).unwrap(), expression, "{source}");
+        }
+        let literal = Expr::Binary {
+            operator: BinaryOp::Power,
+            left: Box::new(Expr::Number(-3.0)),
+            right: Box::new(Expr::Number(-2.0)),
+        };
+        assert_eq!(literal.to_string(), "(-3)**-2");
+        assert_eq!(
+            generate_all(&parse("area = side ** 2 * depth").unwrap()),
+            "area=side**2*depth"
+        );
+    }
+
+    #[test]
+    fn power_chains_share_the_expression_nesting_budget() {
+        let assigned = |count: usize| format!("x = 1{}", " ** 1".repeat(count));
+        assert!(parse(&assigned(61)).is_ok());
+        let error = parse(&assigned(62)).unwrap_err();
+        assert_eq!(error.message(), "Expressions are nested too deeply");
+        assert_eq!(error.position(), Some(Position::new(1, 315)));
+        let bare = |count: usize| format!("1{}", " ** 1".repeat(count));
+        assert!(parse(&bare(62)).is_ok());
+        let error = parse(&bare(63)).unwrap_err();
+        assert_eq!(error.message(), "Expressions are nested too deeply");
+        assert_eq!(error.position(), Some(Position::new(1, 316)));
     }
 
     #[test]

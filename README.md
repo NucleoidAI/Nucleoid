@@ -1228,6 +1228,29 @@ assert(covered, true)
   created or a skill changes. Everywhere else `all` and `any` stay ordinary
   names. See the [root contract](nucleoid.spec.md#quantifiers).
 
+## Exponentiation
+
+**Exponentiation keeps compound growth live**
+
+```nuc
+rate = 0.5
+years = 2
+balance = 100 * (1 + rate) ** years
+assert(balance, 225)
+years = 3
+assert(balance, 337.5)
+rate = 1
+assert(balance, 800)
+```
+
+- [NUC 64](docs/nuc-0064.md) adds `base ** exponent` and its compound
+  assignment `target **= exponent`. `a ** b` gives exactly `Math.pow(a, b)`,
+  binds tighter than `*` and groups to the right, so `2 ** 3 ** 2` is `512`.
+- `balance` is a live declaration: it re-evaluates when `rate` or `years`
+  changes. As in Python, `-x ** 2` means `-(x ** 2)`; write `(-x) ** 2` to
+  raise a negative base. See the
+  [root contract](nucleoid.spec.md#exponentiation).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

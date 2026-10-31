@@ -69,7 +69,7 @@ fn named_expression_body_errors_use_the_existing_expression_grammar() {
 
 #[test]
 fn compound_assignment_diagnostics_name_exact_tokens_and_targets() {
-    for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
+    for operator in ["+=", "-=", "*=", "**=", "/=", "%=", "&&=", "||="] {
         for (source, message) in [
             (
                 format!("amount {operator}"),

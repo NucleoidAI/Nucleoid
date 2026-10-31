@@ -79,6 +79,7 @@ impl BinaryOp {
             BinaryOp::Multiply => "*",
             BinaryOp::Divide => "/",
             BinaryOp::Modulo => "%",
+            BinaryOp::Power => "**",
             BinaryOp::Equal => "==",
             BinaryOp::NotEqual => "!=",
             BinaryOp::StrictEqual => "===",
@@ -196,8 +197,10 @@ pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> 
 
     // A read of something undefined makes the whole expression undefined, which
     // an assignment then stores as null.
-    if matches!(operator, Add | Subtract | Multiply | Divide | Modulo)
-        && (left.is_undefined() || right.is_undefined())
+    if matches!(
+        operator,
+        Add | Subtract | Multiply | Divide | Modulo | Power
+    ) && (left.is_undefined() || right.is_undefined())
     {
         return Ok(Value::Undefined);
     }
@@ -213,6 +216,7 @@ pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> 
         Multiply => Value::Number(left.to_number() * right.to_number()),
         Divide => Value::Number(left.to_number() / right.to_number()),
         Modulo => Value::Number(left.to_number() % right.to_number()),
+        Power => Value::Number(left.to_number().powf(right.to_number())),
 
         Equal => Value::Bool(loose_equal(left, right)),
         NotEqual => Value::Bool(!loose_equal(left, right)),

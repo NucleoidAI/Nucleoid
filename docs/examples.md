@@ -2695,6 +2695,37 @@ alerts
 - See [NUC 62](nuc-0062.md) and the
   [root contract](../nucleoid.spec.md#quantifiers).
 
+## Exponentiation
+
+**Powers keep a kinetic energy model live**
+
+```nuc
+class Body(mass, speed):
+    this.mass = mass
+    this.speed = speed
+$Body.energy = 0.5 * $Body.mass * $Body.speed ** 2
+cart = Body(2, 3)
+ball = Body(0.5, 4)
+total = Body.reduce((sum, body) -> sum + body.energy, 0)
+assert(cart.energy, 9)
+assert(ball.energy, 4)
+assert(total, 13)
+cart.speed = 5
+assert(cart.energy, 25)
+assert(total, 29)
+total
+# return: 29
+```
+
+- The class-level rule states kinetic energy once for every body, and
+  `$Body.speed ** 2` squares each body's own speed. Changing a speed
+  re-evaluates that body's energy and the total that sums them.
+- `$Body.speed ** 2` gives exactly `Math.pow($Body.speed, 2)`. Prefix
+  operators apply to the whole power, so `-$Body.speed ** 2` is negative and
+  `(-$Body.speed) ** 2` squares the negated speed.
+- See [NUC 64](nuc-0064.md) and the
+  [root contract](../nucleoid.spec.md#exponentiation).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

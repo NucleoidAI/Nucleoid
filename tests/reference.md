@@ -1971,4 +1971,23 @@ assert(ready, true)
 assert(failing, false)
 ready
 # return: true
+---
+# Nucleoid raises values to live powers with exponentiation
+
+side = 3
+volume = side ** 3
+tower = 2 ** side ** 2
+assert(volume, 27)
+assert(tower, 512)
+side = 2
+assert(volume, 8)
+assert(tower, 16)
+rate = 0.5
+growth = 16
+growth **= rate
+assert(growth, 4)
+rate = 3
+assert(growth, 64)
+volume
+# return: 8
 ```

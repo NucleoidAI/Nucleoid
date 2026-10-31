@@ -220,6 +220,9 @@ radius += 10
 - Local parameters, property receivers, expression return values, graph keys, and transaction rollback are unchanged.
 - Class-level self-reference remains `TypeError("Circular Dependency")`; compound syntax does not make it a one-time update.
 - These forms passed independent per-case evaluation; existing assignment syntax remains valid.
+- [NUC 64](nuc-0064.md) adds `**=` to this family: `target **= expression`
+  lowers to `target = target ** (expression)` under the same target, bound,
+  precedence, relationship and rollback rules, and diagnostics name it `'**='`.
 
 ```
 amount = 10
@@ -422,8 +425,8 @@ assert(summary.kind, "alert")
 
 ### Operators
 
-- Arithmetic: `+`, `-`, `*`, `/`, `%`.
-- Compound assignment: `+=`, `-=`, `*=`, `/=`, `%=`; each operator is one token.
+- Arithmetic: `+`, `-`, `*`, `/`, `%`, and exponentiation `**`; see below.
+- Compound assignment: `+=`, `-=`, `*=`, `**=`, `/=`, `%=`; each operator is one token.
 - Logical compound assignment: `&&=`, `||=`; adjacent characters form
   one token. `&& =`, `|| =`, `and=`, and `or=` do not form compound operators.
 - Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`.
@@ -533,6 +536,56 @@ count
   section.
 
 Full detail: [NUC 60](nuc-0060.md).
+
+### Exponentiation
+
+- `base ** exponent` raises a number to a power and yields exactly the value
+  of `Math.pow(base, exponent)`, including its coercions, NaN, infinities and
+  signed zeros. It does not read the name `Math`, so a variable named `Math`
+  changes `Math.pow` calls but never `**`.
+- `**` binds tighter than `*`, `/` and `%` and groups to the right:
+  `2 ** 3 ** 2` is `512` and `3 * x ** 2` is `3 * (x ** 2)`.
+- As in Python, a prefix operator written before the base applies to the
+  whole power: `-x ** 2` is `-(x ** 2)`, and `not`, `!`, `+`, `typeof`,
+  `delete` and prefix stages such as `why` behave the same way. Write
+  `(-x) ** 2` to raise a negative base. The exponent may carry its own sign:
+  `2 ** -1` is `0.5`.
+- `target **= exponent` is the compound spelling of
+  `target = target ** (exponent)`, with every rule of compound arithmetic
+  assignment.
+- A declaration that uses `**` stays live, settles to `null` after a null
+  read and freezes `.value` operands when it is stored, as other arithmetic
+  does.
+
+```
+side = 3
+volume = side ** 3
+tower = 2 ** side ** 2
+assert(volume, 27)
+assert(tower, 512)
+side = 2
+assert(volume, 8)
+assert(tower, 16)
+rate = 0.5
+growth = 16
+growth **= rate
+assert(growth, 4)
+rate = 3
+assert(growth, 64)
+volume
+```
+
+- This is the complete
+  `Nucleoid raises values to live powers with exponentiation` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `8`.
+- `**` and `**=` are one token each and render canonically as
+  `base**exponent`, parenthesizing an operand where needed so the text reads
+  back as the same expression, such as `(-x)**2`. Each `**` takes one level
+  of the expression nesting budget. Grammar, errors and edge cases are in the
+  authoritative [exponentiation](../nucleoid.spec.md#exponentiation) section.
+
+Full detail: [NUC 64](nuc-0064.md).
 
 ### Indexing, slicing, and length
 
@@ -2397,6 +2450,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
+| Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
@@ -2410,6 +2464,8 @@ Messages are exact and are part of the observable behaviour of the language.
 | A character that begins no token | `Unexpected character '<character>'` |
 | A token other than the one required | `Expected <what> but found <what>` |
 | An unsupported compound target | `Invalid compound assignment target` |
+| `**` or `**=` where an operand is required | `Unexpected '**'`, `Unexpected '**='` |
+| Deleting something that is not a variable, property or instance, such as the power in `delete p.v ** 2` | `Cannot delete <expression>`, for example `Cannot delete p.v**2` |
 | A block or template that is never closed | `Unterminated block`, `Unterminated template expression` |
 | Nesting or a chain past the runtime's limit | `Expressions are nested too deeply`, `Expression has too many operands` |
 | A postfix chain or a compound path beyond its limit | `Expression has too many parts` |
@@ -2436,7 +2492,7 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ```
 name = expression                      variable assignment
-name += expression                     compound assignment; also -=, *=, /=, %=
+name += expression                     compound assignment; also -=, *=, **=, /=, %=
 name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected
 name.property = expression             property assignment
@@ -2495,6 +2551,9 @@ elif                                   same unconditional alias without a colon
 condition ? consequent : alternate     conditional expression (NUC 59)
 consequent if condition else alternate same expression, Python spelling
 left ?? right                          left unless it is null, else right (NUC 60)
+base ** exponent                       exactly Math.pow(base, exponent), right-associative (NUC 64)
+-x ** 2                                prefix operators apply to the whole power: -(x ** 2) (NUC 64)
+name **= exponent                      name = name ** (exponent) (NUC 64)
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration

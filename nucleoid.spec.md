@@ -15,7 +15,7 @@ Expression nesting is bounded, including consecutive unary operators and
 `SyntaxError("Expressions are nested too deeply")` rather than overflowing
 the host stack.
 
-Compound arithmetic assignments `+=`, `-=`, `*=`, `/=`, and `%=` lower
+Compound arithmetic assignments `+=`, `-=`, `*=`, `**=`, `/=`, and `%=` lower
 `target op= expression` to `target = target op (expression)` at the existing
 right-associative assignment precedence. They preserve standing relationships,
 self-reference, `.value` snapshots, locals, receivers, transactions, return
@@ -51,8 +51,8 @@ The bound and validation apply equally to arithmetic and logical compounds.
 Each compound operator is one lexer token. Adjacent unary signs are separate
 tokens; `/=` is distinguished from division and from a regular expression
 such as `/=/` in an operand position, including after `&&=` and `||=`.
-Diagnostics name the operator exactly as `'+='`, `'-='`, `'*='`, `'/='`,
-`'%='`, `'&&='`, or `'||='`. The compound characters must be adjacent;
+Diagnostics name the operator exactly as `'+='`, `'-='`, `'*='`, `'**='`,
+`'/='`, `'%='`, `'&&='`, or `'||='`. The compound characters must be adjacent;
 `&& =`, `|| =`, `and=`, and `or=` are not compound operators. Existing `=`,
 `&&`, `||`, `and`, `or`, arithmetic compound operators, comparisons, arrow
 tokens, and regex operand disambiguation retain their syntax and behavior.
@@ -2697,6 +2697,89 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid quantifies over class instances with all and any` through
   `Nucleoid rolls back failed quantifier updates` specify the executable
   behavior.
+
+## Exponentiation
+
+- [NUC 64](docs/nuc-0064.md) adds the exponentiation operator
+  `base ** exponent` and its compound assignment `target **= exponent`. Each
+  is one lexer token. `*`, `*=`, `Math.pow` and every other operator keep
+  their grammar and behavior.
+- `a ** b` yields exactly the value of `Math.pow(a, b)`. Both operands are
+  converted to numbers as for `*`: `null`, `false`, the empty string and an
+  empty list are `0`, `true` is `1`, a numeric string or a one-item list is
+  its number, a date is its time in milliseconds, and objects, classes,
+  regular expressions, functions, other strings and longer lists are NaN. The
+  same host floating-point power as `Math.pow` then
+  gives NaN for a negative base with a non-integer exponent, infinities for a
+  zero base with a negative exponent, and the signed zeros `Math.pow` gives.
+  An undefined operand, such as a missing property, makes the result
+  undefined, which a declaration stores as `null`.
+- `**` does not read the name `Math`. After `Math = 1`, `Math.pow(2, 3)`
+  raises `TypeError("number.pow is not a function")` while `2 ** 3` is still
+  `8`.
+- The left operand is evaluated before the right one, as `Math.pow` evaluates
+  its arguments.
+- A declaration that uses `**` is live like any arithmetic declaration: it
+  depends on what its operands read, re-evaluates when they change and
+  replaces obsolete dependencies. A stored declaration whose evaluation read
+  a null binding or property settles to `null`, as `y = x * 2` and
+  `y = Math.pow(x, 2)` do with a null `x`, while a literal `null` operand is
+  `0`. `.value` operands are frozen when the declaration is stored.
+  Class-level rules validate the names in both operands and take part in
+  `TypeError("Circular Dependency")` checks when they are declared, and each
+  instance evaluates its own power. Errors propagate through the existing
+  transaction, so a failed standing re-evaluation rolls back the change that
+  triggered it. Variables, properties, class-level rules, function and method
+  bodies, arrow and lambda callbacks, list and object elements, template
+  interpolations, call arguments and subscripts use `**` as an ordinary
+  operand.
+- `**` binds tighter than `*`, `/` and `%`, and so than every binary
+  operator, and it is right-associative: `2 ** 3 ** 2` is `512`,
+  `3 * x ** 2` is `3 * (x ** 2)` and `(2 ** 3) ** 2` is `64`. Member access,
+  calls, subscripts and version selectors bind tighter than `**`, so
+  `box.side ** 2` raises the property.
+- Prefix operators follow Python. `-`, `+`, `!`, `not`, `typeof`, `delete`
+  and prefix reasoning stages such as `why`, written before a base, apply to
+  the whole power: `-x ** 2` is `-(x ** 2)`, `not x ** 0` is
+  `not (x ** 0)` and `typeof x ** 2` is `"number"`. Write `(-x) ** 2` to
+  raise a negative base. The exponent after `**` may carry prefix operators
+  itself: `2 ** -1` is `0.5` and `2 ** -3 ** 2` is `2 ** (-(3 ** 2))`.
+  `new` stays part of its operand, so `new Shape(2) ** 2` raises the
+  instance.
+- Each `**` takes one level of the existing 64-level expression nesting
+  budget, as a prefix operator does. An assignment such as
+  `x = 1 ** 1 ** ...` holds at most 61 `**` operators and a bare expression
+  statement 62; one more raises
+  `SyntaxError("Expressions are nested too deeply")` at the operand after it.
+- `target **= exponent` is an optional single-token spelling of
+  `target = target ** (exponent)` under the compound arithmetic assignment
+  rules above: targets, validation and its 128-link bound, right-associative
+  assignment precedence, standing relationships and self-reference, locals
+  and receivers, rollback and canonical expanded rendering. Diagnostics name
+  the operator `'**='`.
+- `* *` stays two tokens, `***` is `**` followed by `*`, and `**==` is `**=`
+  followed by `=`. A `/` after `**` or `**=` starts a regular expression, as
+  after `*`. `**` inside strings, template text outside interpolations,
+  regular expressions such as `/x**y/`, and comments is unchanged. Adjacent
+  `**` or `**=` elsewhere was a syntax error before this operator, except in
+  the trailing tokens of a template interpolation, which are still ignored:
+  `` `${x y ** 2}` `` renders the value of `x`.
+- `**` renders canonically as `base**exponent`. A base that is a prefix,
+  binary, logical, assignment, `delete` or pipeline expression or a negative
+  number, and an exponent that is a binary expression other than `**` or a
+  logical, assignment or pipeline expression, are parenthesized, so the text
+  reads back as the same expression: `(-x)**2`, `-x**2`, `(x**2)**3`,
+  `x**2**3` and `x**(a+b)`. Other operators keep their rendering.
+- Malformed forms use existing diagnostics, for example
+  `SyntaxError("Unexpected '**'")` for `x = **2`,
+  `SyntaxError("Unexpected end of input")` for `x = 2 **` and
+  `SyntaxError("Invalid compound assignment target")` for `2 **= 3`.
+  Applying `delete` or `why` to a power raises, for example,
+  `SyntaxError("Cannot delete p.v**2")` and
+  `TypeError("Cannot explain x**2")`. The eight appended entries beginning
+  `Nucleoid raises numbers to powers with the exponentiation operator`
+  through `Nucleoid rolls back failed exponentiation updates` specify the
+  executable behavior.
 
 ```
 # Nucleoid runs a statement in the state
@@ -15580,4 +15663,199 @@ catch error:
     failure = error
 assert(failure, ReferenceError("missing is not defined"))
 assert(valid, false)
+---
+# Nucleoid raises numbers to powers with the exponentiation operator
+
+base = 2
+exponent = 3
+tower = base ** exponent ** 2
+grouped = (base ** exponent) ** 2
+scaled = 3 * base ** exponent + 1
+assert(tower, 512)
+assert(grouped, 64)
+assert(scaled, 25)
+base = 3
+exponent = 2
+assert(tower, 81)
+assert(grouped, 81)
+assert(scaled, 28)
+base = 16
+exponent = 0.5
+assert(tower, 2)
+assert(grouped, 16)
+assert(scaled, 13)
+tower
+# return: 2
+---
+# Nucleoid binds prefix operators around the exponentiation operator
+
+x = 2
+n = 2
+negated = -x ** n
+grouped = (-x) ** n
+inverse = x ** -n
+assert(negated, -4)
+assert(grouped, 4)
+assert(inverse, 0.25)
+n = 3
+assert(negated, -8)
+assert(grouped, -8)
+assert(inverse, 0.125)
+x = 0.5
+assert(negated, -0.125)
+assert(grouped, -0.125)
+assert(inverse, 8)
+---
+# Nucleoid gives the exponentiation operator the results of Math.pow
+
+base = "3"
+power = 2
+result = base ** power
+literal = null ** power
+assert(result, 9)
+assert(literal, 0)
+base = [2]
+assert(result, 4)
+base = true
+power = 3
+assert(result, 1)
+base = "a"
+assert(Number.isNaN(result), true)
+base = 0
+power = -1
+assert(result, Number.POSITIVE_INFINITY)
+assert(literal, Number.POSITIVE_INFINITY)
+base = -0
+assert(result, Number.NEGATIVE_INFINITY)
+base = -8
+power = 1 / 3
+assert(Number.isNaN(result), true)
+base = Number.NaN
+power = 0
+assert(result, 1)
+assert(literal, 1)
+base = null
+assert(result, null)
+---
+# Nucleoid keeps exponentiation relationships live in class level rules
+
+class Tank(side, depth):
+    this.side = side
+    this.depth = depth
+$Tank.volume = $Tank.side ** 2 * $Tank.depth
+$Tank.cube = $Tank.side ** 3
+small = Tank(2, 3)
+large = Tank(3, 1)
+assert(small.volume, 12)
+assert(large.volume, 9)
+assert(small.cube, 8)
+small.side = 4
+assert(small.volume, 48)
+assert(small.cube, 64)
+assert(large.cube, 27)
+small.depth = 0.5
+assert(small.volume, 8)
+delete small.side
+assert(small.volume, null)
+assert(small.cube, null)
+---
+# Nucleoid keeps compound exponentiation assignments equivalent
+
+value = 4
+step = 2
+value **= step
+assert(value, 16)
+step = 0.5
+assert(value, 4)
+class Meter(reading, power):
+    this.reading = reading
+    this.power = power
+    def root(degree):
+        degree **= -1
+        this.reading **= degree
+        return this.reading
+meter = Meter(2, 2)
+meter.reading **= meter.power
+assert(meter.reading, 4)
+meter.power = 3
+assert(meter.reading, 64)
+assert(meter.root(2), 8)
+assert(meter.reading, 8)
+class Scale
+scale = Scale()
+$Scale.factor = 2
+try:
+    $Scale.factor **= 3
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(scale.factor, 2)
+---
+# Nucleoid uses the exponentiation operator in functions callbacks and literals
+
+def hypotenuse(a, b) => (a ** 2 + b ** 2) ** 0.5
+def grow current rate => current **= rate
+sides = [3, 4]
+squares = sides.map(side -> side ** 2)
+box = {volume: sides[1] ** 3}
+label = `${sides[0]} cubed is ${sides[0] ** 3}`
+assert(hypotenuse(3, 4), 5)
+assert(hypotenuse(8, 15), 17)
+assert(grow(4, 1.5), 8)
+assert(grow(16, 0.25), 2)
+assert(squares, [9, 16])
+assert(box.volume, 64)
+assert(label, "3 cubed is 27")
+sides = [2, 5]
+assert(squares, [4, 25])
+assert(box.volume, 125)
+assert(label, "2 cubed is 8")
+---
+# Nucleoid keeps double stars in strings and regular expressions beside the exponentiation operator
+
+bits = 8
+states = 2 ** bits
+note = `2**${bits} is ${states}`
+pattern = /x**y/ # x**y stays a pattern
+assert(states, 256)
+assert(note, "2**8 is 256")
+assert(note.split("**"), ["2", "8 is 256"])
+assert(pattern.test("xxy"), true)
+assert(pattern.test("xx"), false)
+bits = 10
+assert(states, 1024)
+assert(note, "2**10 is 1024")
+---
+# Nucleoid rolls back failed exponentiation updates
+
+def checked(value):
+    if value > 1000:
+        throw "TOO_LARGE"
+    return value
+base = 2
+power = 3
+result = checked(base ** power)
+assert(result, 8)
+failure = ""
+try:
+    power = 11
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(power, 3)
+assert(result, 8)
+base = 3
+power = 5
+assert(result, 243)
+balance = 3
+if balance > 100:
+    throw "LIMIT"
+try:
+    balance **= power
+catch error:
+    failure = error
+assert(failure, "LIMIT")
+assert(balance, 3)
+power = 2
+assert(balance, 3)
+assert(result, 9)
 ```

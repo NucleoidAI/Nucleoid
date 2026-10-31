@@ -253,6 +253,7 @@ pub enum BinaryOp {
     Multiply,
     Divide,
     Modulo,
+    Power,
     Equal,
     NotEqual,
     StrictEqual,

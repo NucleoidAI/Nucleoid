@@ -811,6 +811,38 @@ mod tests {
     }
 
     #[test]
+    fn exponentiation_headers_buffer_exactly_like_other_operators() {
+        for line in [
+            "if side ** 2 > limit",
+            "if (side ** 2) > limit # body",
+            "if side * side > limit",
+        ] {
+            assert!(indented_body_header(line), "{line:?}");
+            assert!(indented_condition_header(line, Keyword::If), "{line:?}");
+        }
+        assert!(indented_body_header("if side ** 2 > limit:"));
+        assert!(!indented_condition_header(
+            "if side ** 2 > limit:",
+            Keyword::If
+        ));
+        for line in [
+            "area = side ** 2",
+            "area **= 2",
+            "area = side ** 2 if ready else 0",
+            "pattern = /x**y/",
+            "label = \"2**8\"",
+        ] {
+            assert!(!indented_body_header(line), "{line:?}");
+        }
+        let mut runtime = Runtime::new();
+        runtime.run("side = 3\nlimit = 8").unwrap();
+        runtime
+            .run("if side ** 2 > limit\n    big = side ** 2\n")
+            .unwrap();
+        assert_eq!(runtime.run("big").unwrap(), Value::Number(9.0));
+    }
+
+    #[test]
     fn multiline_input_keeps_the_final_physical_lines_indentation() {
         let source = "class Student(name, age):\n    this.name = name\n    this.age = age\n";
         assert!(!indented_body_header(source));

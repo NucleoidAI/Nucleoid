@@ -12748,6 +12748,246 @@ assert(failure, ReferenceError("missing is not defined"))
 assert(valid, false)"#);
 }
 
+/// Nucleoid raises numbers to powers with the exponentiation operator
+#[rustfmt::skip]
+#[test]
+fn raises_numbers_to_powers_with_the_exponentiation_operator() {
+    let mut run = runner();
+    run("base = 2");
+    run("exponent = 3");
+    run("tower = base ** exponent ** 2");
+    run("grouped = (base ** exponent) ** 2");
+    run("scaled = 3 * base ** exponent + 1");
+    assert_eq!(run("tower"), 512);
+    assert_eq!(run("grouped"), 64);
+    assert_eq!(run("scaled"), 25);
+    run("base = 3");
+    run("exponent = 2");
+    assert_eq!(run("tower"), 81);
+    assert_eq!(run("grouped"), 81);
+    assert_eq!(run("scaled"), 28);
+    run("base = 16");
+    run("exponent = 0.5");
+    assert_eq!(run("tower"), 2);
+    assert_eq!(run("grouped"), 16);
+    assert_eq!(run("scaled"), 13);
+    run(r#"tower
+
+# return: 2"#);
+}
+
+/// Nucleoid binds prefix operators around the exponentiation operator
+#[rustfmt::skip]
+#[test]
+fn binds_prefix_operators_around_the_exponentiation_operator() {
+    let mut run = runner();
+    run("x = 2");
+    run("n = 2");
+    run("negated = -x ** n");
+    run("grouped = (-x) ** n");
+    run("inverse = x ** -n");
+    assert_eq!(run("negated"), -4);
+    assert_eq!(run("grouped"), 4);
+    assert_eq!(run("inverse"), 0.25);
+    run("n = 3");
+    assert_eq!(run("negated"), -8);
+    assert_eq!(run("grouped"), -8);
+    assert_eq!(run("inverse"), 0.125);
+    run("x = 0.5");
+    assert_eq!(run("negated"), -0.125);
+    assert_eq!(run("grouped"), -0.125);
+    assert_eq!(run("inverse"), 8);
+}
+
+/// Nucleoid gives the exponentiation operator the results of Math.pow
+#[rustfmt::skip]
+#[test]
+fn gives_the_exponentiation_operator_the_results_of_math_pow() {
+    let mut run = runner();
+    run(r#"base = "3""#);
+    run("power = 2");
+    run("result = base ** power");
+    run("literal = null ** power");
+    assert_eq!(run("result"), 9);
+    assert_eq!(run("literal"), 0);
+    run("base = [2]");
+    assert_eq!(run("result"), 4);
+    run("base = true");
+    run("power = 3");
+    assert_eq!(run("result"), 1);
+    run(r#"base = "a""#);
+    assert_eq!(run("Number.isNaN(result)"), true);
+    run("base = 0");
+    run("power = -1");
+    {
+        let actual = run("result");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("literal");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("base = -0");
+    {
+        let actual = run("result");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("base = -8");
+    run("power = 1 / 3");
+    assert_eq!(run("Number.isNaN(result)"), true);
+    run("base = Number.NaN");
+    run("power = 0");
+    assert_eq!(run("result"), 1);
+    assert_eq!(run("literal"), 1);
+    run("base = null");
+    assert_eq!(run("result"), serde_json::Value::Null);
+}
+
+/// Nucleoid keeps exponentiation relationships live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_exponentiation_relationships_live_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Tank(side, depth):
+    this.side = side
+    this.depth = depth"#);
+    run("$Tank.volume = $Tank.side ** 2 * $Tank.depth");
+    run("$Tank.cube = $Tank.side ** 3");
+    run("small = Tank(2, 3)");
+    run("large = Tank(3, 1)");
+    assert_eq!(run("small.volume"), 12);
+    assert_eq!(run("large.volume"), 9);
+    assert_eq!(run("small.cube"), 8);
+    run("small.side = 4");
+    assert_eq!(run("small.volume"), 48);
+    assert_eq!(run("small.cube"), 64);
+    assert_eq!(run("large.cube"), 27);
+    run("small.depth = 0.5");
+    assert_eq!(run("small.volume"), 8);
+    run("delete small.side");
+    assert_eq!(run("small.volume"), serde_json::Value::Null);
+    assert_eq!(run("small.cube"), serde_json::Value::Null);
+}
+
+/// Nucleoid keeps compound exponentiation assignments equivalent
+#[rustfmt::skip]
+#[test]
+fn keeps_compound_exponentiation_assignments_equivalent() {
+    let mut run = runner();
+    run(r#"value = 4
+step = 2
+value **= step
+assert(value, 16)
+step = 0.5
+assert(value, 4)
+class Meter(reading, power):
+    this.reading = reading
+    this.power = power
+    def root(degree):
+        degree **= -1
+        this.reading **= degree
+        return this.reading
+meter = Meter(2, 2)
+meter.reading **= meter.power
+assert(meter.reading, 4)
+meter.power = 3
+assert(meter.reading, 64)
+assert(meter.root(2), 8)
+assert(meter.reading, 8)
+class Scale
+scale = Scale()
+$Scale.factor = 2
+try:
+    $Scale.factor **= 3
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(scale.factor, 2)"#);
+}
+
+/// Nucleoid uses the exponentiation operator in functions callbacks and literals
+#[rustfmt::skip]
+#[test]
+fn uses_the_exponentiation_operator_in_functions_callbacks_and_literals() {
+    let mut run = runner();
+    run("def hypotenuse(a, b) => (a ** 2 + b ** 2) ** 0.5");
+    run("def grow current rate => current **= rate");
+    run("sides = [3, 4]");
+    run("squares = sides.map(side -> side ** 2)");
+    run("box = {volume: sides[1] ** 3}");
+    run("label = `${sides[0]} cubed is ${sides[0] ** 3}`");
+    assert_eq!(run("hypotenuse(3, 4)"), 5);
+    assert_eq!(run("hypotenuse(8, 15)"), 17);
+    assert_eq!(run("grow(4, 1.5)"), 8);
+    assert_eq!(run("grow(16, 0.25)"), 2);
+    assert_eq!(run("squares"), serde_json::json!([9, 16]));
+    assert_eq!(run("box.volume"), 64);
+    assert_eq!(run("label"), "3 cubed is 27");
+    run("sides = [2, 5]");
+    assert_eq!(run("squares"), serde_json::json!([4, 25]));
+    assert_eq!(run("box.volume"), 125);
+    assert_eq!(run("label"), "2 cubed is 8");
+}
+
+/// Nucleoid keeps double stars in strings and regular expressions beside the exponentiation operator
+#[rustfmt::skip]
+#[test]
+fn keeps_double_stars_in_strings_and_regular_expressions_beside_the_exponentiation_operator() {
+    let mut run = runner();
+    run("bits = 8");
+    run("states = 2 ** bits");
+    run("note = `2**${bits} is ${states}`");
+    run("pattern = /x**y/ # x**y stays a pattern");
+    assert_eq!(run("states"), 256);
+    assert_eq!(run("note"), "2**8 is 256");
+    assert_eq!(run(r#"note.split("**")"#), serde_json::json!(["2", "8 is 256"]));
+    assert_eq!(run(r#"pattern.test("xxy")"#), true);
+    assert_eq!(run(r#"pattern.test("xx")"#), false);
+    run("bits = 10");
+    assert_eq!(run("states"), 1024);
+    assert_eq!(run("note"), "2**10 is 1024");
+}
+
+/// Nucleoid rolls back failed exponentiation updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_exponentiation_updates() {
+    let mut run = runner();
+    run(r#"def checked(value):
+    if value > 1000:
+        throw "TOO_LARGE"
+    return value
+base = 2
+power = 3
+result = checked(base ** power)
+assert(result, 8)
+failure = ""
+try:
+    power = 11
+catch error:
+    failure = error
+assert(failure, "TOO_LARGE")
+assert(power, 3)
+assert(result, 8)
+base = 3
+power = 5
+assert(result, 243)
+balance = 3
+if balance > 100:
+    throw "LIMIT"
+try:
+    balance **= power
+catch error:
+    failure = error
+assert(failure, "LIMIT")
+assert(balance, 3)
+power = 2
+assert(balance, 3)
+assert(result, 9)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

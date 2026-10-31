@@ -35,7 +35,7 @@ fn malformed_source_is_rejected() {
 
 #[test]
 fn compound_assignment_chains_respect_existing_resource_limits() {
-    for operator in ["+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
+    for operator in ["+=", "-=", "*=", "**=", "/=", "%=", "&&=", "||="] {
         for source in [
             format!("{}1", format!("amount {operator} ").repeat(4096)),
             format!(
@@ -131,6 +131,9 @@ fn malformed_compound_targets_do_not_change_state() {
         "(saved = 0).count ||= 2",
         "this &&= 2",
         "self ||= 2",
+        "1 **= 2",
+        "saved[0] **= 2",
+        "(saved **= 1).count **= 2",
     ] {
         let error = runtime.run(&format!("saved += 3\n{invalid}")).unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Syntax);

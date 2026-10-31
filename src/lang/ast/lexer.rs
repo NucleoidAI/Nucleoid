@@ -76,6 +76,8 @@ enum Raw {
     MinusAssign,
     #[token("*=")]
     StarAssign,
+    #[token("**=")]
+    StarStarAssign,
     #[token("/=")]
     SlashAssign,
     #[token("%=")]
@@ -94,6 +96,8 @@ enum Raw {
     Minus,
     #[token("*")]
     Star,
+    #[token("**")]
+    StarStar,
     #[token("/")]
     Slash,
     #[token("%")]
@@ -233,6 +237,7 @@ pub enum Token {
     PlusAssign,
     MinusAssign,
     StarAssign,
+    StarStarAssign,
     SlashAssign,
     PercentAssign,
     AndAndAssign,
@@ -248,6 +253,7 @@ pub enum Token {
     Plus,
     Minus,
     Star,
+    StarStar,
     Slash,
     Percent,
     Bang,
@@ -292,6 +298,7 @@ impl Token {
             Token::PlusAssign => "'+='".to_string(),
             Token::MinusAssign => "'-='".to_string(),
             Token::StarAssign => "'*='".to_string(),
+            Token::StarStarAssign => "'**='".to_string(),
             Token::SlashAssign => "'/='".to_string(),
             Token::PercentAssign => "'%='".to_string(),
             Token::AndAndAssign => "'&&='".to_string(),
@@ -307,6 +314,7 @@ impl Token {
             Token::Plus => "'+'".to_string(),
             Token::Minus => "'-'".to_string(),
             Token::Star => "'*'".to_string(),
+            Token::StarStar => "'**'".to_string(),
             Token::Slash => "'/'".to_string(),
             Token::Percent => "'%'".to_string(),
             Token::Bang => "'!'".to_string(),
@@ -496,6 +504,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::PlusAssign => Token::PlusAssign,
             Raw::MinusAssign => Token::MinusAssign,
             Raw::StarAssign => Token::StarAssign,
+            Raw::StarStarAssign => Token::StarStarAssign,
             Raw::PercentAssign => Token::PercentAssign,
             Raw::AndAndAssign => Token::AndAndAssign,
             Raw::OrOrAssign => Token::OrOrAssign,
@@ -510,6 +519,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::Plus => Token::Plus,
             Raw::Minus => Token::Minus,
             Raw::Star => Token::Star,
+            Raw::StarStar => Token::StarStar,
             Raw::Percent => Token::Percent,
             Raw::Bang => Token::Bang,
             Raw::AndAnd => Token::AndAnd,
@@ -733,6 +743,7 @@ mod tests {
             ("+=", Token::PlusAssign),
             ("-=", Token::MinusAssign),
             ("*=", Token::StarAssign),
+            ("**=", Token::StarStarAssign),
             ("/=", Token::SlashAssign),
             ("%=", Token::PercentAssign),
             ("&&=", Token::AndAndAssign),
@@ -929,7 +940,7 @@ mod tests {
                 ],
                 "{source}"
             );
-            for assignment in ["=", "+=", "-=", "*=", "/=", "%=", "&&=", "||="] {
+            for assignment in ["=", "+=", "-=", "*=", "**=", "/=", "%=", "&&=", "||="] {
                 let source = format!("pattern {assignment} {literal}");
                 let tokenized = tokens(&source);
                 assert_eq!(tokenized[2], Token::Regex(pattern.into()), "{source}");
@@ -1204,5 +1215,145 @@ mod tests {
         assert_eq!(spanned[3].token, Token::QuestionQuestion);
         assert_eq!(spanned[3].position, Position::new(1, 7));
         assert_eq!(spanned[4].position, Position::new(1, 10));
+    }
+
+    #[test]
+    fn double_stars_are_single_tokens_outside_literal_text() {
+        let identifier = |name: &str| Token::Identifier(name.into());
+        assert_eq!(Token::StarStar.describe(), "'**'");
+        assert_eq!(Token::StarStarAssign.describe(), "'**='");
+        for (source, mut expected) in [
+            (
+                "a**b",
+                vec![identifier("a"), Token::StarStar, identifier("b")],
+            ),
+            (
+                "a * * b",
+                vec![identifier("a"), Token::Star, Token::Star, identifier("b")],
+            ),
+            (
+                "a***b",
+                vec![
+                    identifier("a"),
+                    Token::StarStar,
+                    Token::Star,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a****b",
+                vec![
+                    identifier("a"),
+                    Token::StarStar,
+                    Token::StarStar,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a**=b",
+                vec![identifier("a"), Token::StarStarAssign, identifier("b")],
+            ),
+            (
+                "a* *=b",
+                vec![
+                    identifier("a"),
+                    Token::Star,
+                    Token::StarAssign,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a ** = b",
+                vec![
+                    identifier("a"),
+                    Token::StarStar,
+                    Token::Assign,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a**==b",
+                vec![
+                    identifier("a"),
+                    Token::StarStarAssign,
+                    Token::Assign,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a***=b",
+                vec![
+                    identifier("a"),
+                    Token::StarStar,
+                    Token::StarAssign,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "a*=*b",
+                vec![
+                    identifier("a"),
+                    Token::StarAssign,
+                    Token::Star,
+                    identifier("b"),
+                ],
+            ),
+            (
+                "2**-1",
+                vec![
+                    Token::Number(2.0),
+                    Token::StarStar,
+                    Token::Minus,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "a**.5",
+                vec![identifier("a"), Token::StarStar, Token::Number(0.5)],
+            ),
+            (
+                "a ** /x**y/",
+                vec![
+                    identifier("a"),
+                    Token::StarStar,
+                    Token::Regex("x**y".into()),
+                ],
+            ),
+            (
+                "a **= /=/",
+                vec![
+                    identifier("a"),
+                    Token::StarStarAssign,
+                    Token::Regex("=".into()),
+                ],
+            ),
+            (
+                "a ** b / 2",
+                vec![
+                    identifier("a"),
+                    Token::StarStar,
+                    identifier("b"),
+                    Token::Slash,
+                    Token::Number(2.0),
+                ],
+            ),
+            ("/x**y/", vec![Token::Regex("x**y".into())]),
+            ("/a**/i", vec![Token::Regex("a**".into())]),
+            ("\"2**8\"", vec![Token::Str("2**8".into())]),
+            ("'**='", vec![Token::Str("**=".into())]),
+            (
+                "`2**${a ** b}`",
+                vec![Token::Template("2**${a ** b}".into())],
+            ),
+            ("x # a ** b", vec![identifier("x")]),
+        ] {
+            expected.push(Token::Eof);
+            assert_eq!(tokens(source), expected, "{source}");
+        }
+        let spanned = tokenize("x = a ** b\nx **= 2").unwrap();
+        assert_eq!(spanned[3].token, Token::StarStar);
+        assert_eq!(spanned[3].position, Position::new(1, 7));
+        assert_eq!(spanned[7].token, Token::StarStarAssign);
+        assert_eq!(spanned[7].position, Position::new(2, 3));
     }
 }

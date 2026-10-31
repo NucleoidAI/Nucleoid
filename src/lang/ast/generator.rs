@@ -6,8 +6,8 @@
 use std::fmt;
 
 use crate::lang::ast::{
-    ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart, UnaryOp,
-    VersionSelector,
+    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
+    UnaryOp, VersionSelector,
 };
 
 fn has_defaults(parameters: &[Parameter]) -> bool {
@@ -86,6 +86,15 @@ impl fmt::Display for Expr {
                 UnaryOp::Positional => write!(f, "({operand})"),
             },
             Expr::Binary {
+                operator: BinaryOp::Power,
+                left,
+                right,
+            } => {
+                power_operand(f, left, groups_power_base(left))?;
+                f.write_str(BinaryOp::Power.as_str())?;
+                power_operand(f, right, groups_power_exponent(right))
+            }
+            Expr::Binary {
                 operator,
                 left,
                 right,
@@ -147,6 +156,32 @@ impl fmt::Display for Expr {
                 quantifier.as_str()
             ),
         }
+    }
+}
+
+fn power_operand(f: &mut fmt::Formatter<'_>, operand: &Expr, grouped: bool) -> fmt::Result {
+    if grouped {
+        write!(f, "({operand})")
+    } else {
+        write!(f, "{operand}")
+    }
+}
+
+fn groups_power_base(operand: &Expr) -> bool {
+    match operand {
+        Expr::Number(number) => *number < 0.0,
+        Expr::Unary { operator, .. } => *operator != UnaryOp::Positional,
+        Expr::Binary { .. } | Expr::Delete(_) => true,
+        _ => groups_power_exponent(operand),
+    }
+}
+
+fn groups_power_exponent(operand: &Expr) -> bool {
+    match operand {
+        Expr::Binary { operator, .. } => *operator != BinaryOp::Power,
+        Expr::Logical { operator, .. } => *operator != LogicalOp::Coalesce,
+        Expr::Assign { .. } | Expr::Reason { .. } | Expr::Function(_) => true,
+        _ => false,
     }
 }
 
