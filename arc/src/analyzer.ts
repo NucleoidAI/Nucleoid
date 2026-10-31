@@ -1,6 +1,6 @@
 import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
-import * as milestone from "./milestone";
+import * as milestone from "./lib/milestone.ts";
 
 export async function declarations({ puzzle_id, train_dataset }) {
   milestone.inferring_declarations();

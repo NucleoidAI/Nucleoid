@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { start } from "./src/app";
-import * as milestone from "./src/milestone";
+import * as milestone from "./src/lib/milestone.ts";
 
 start(process.argv[2])
   .then((difference: number) => {

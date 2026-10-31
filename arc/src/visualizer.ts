@@ -1,7 +1,7 @@
 import * as nucleoid from "./lib/nucleoid";
 import * as Matrix from "./lib/Matrix";
 import * as llm from "./lib/llm";
-import * as milestone from "./milestone";
+import * as milestone from "./lib/milestone.ts";
 
 export async function instances({
   puzzle_id,

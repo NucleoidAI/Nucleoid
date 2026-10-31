@@ -1,5 +1,5 @@
-import * as Matrix from "./lib/Matrix";
-import * as terminal from "./lib/terminal";
+import * as Matrix from "./Matrix.ts";
+import * as terminal from "./terminal.ts";
 
 export function start({ version, train, test_input_matrix }) {
   terminal.header({ version });
