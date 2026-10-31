@@ -113,8 +113,7 @@ confirmed category/applicability policy, not a new random draw.
 `/nuc-proposal [request] [--hint <text>]` takes an optional hint: everything
 after `--hint` is the user's guidance for the proposal, such as a syntax idea,
 prior art, or an area to explore. The caller passes it unchanged to each
-proposal agent it launches. It carries the hint into every later continuous
-cycle through that cycle's `/clear` resume command.
+proposal agent it launches, in every continuous cycle of the invocation.
 
 A hint is not a request. It never makes an open-ended request specific or
 changes the execution mode, category draw, runtime applicability, or selected
@@ -329,22 +328,15 @@ coordinating caller must finish its outcome before starting the next cycle:
 - **Rejected:** record and commit only rejection documentation and index/outcome
   metadata; leave rejected language changes isolated.
 
-Start every cycle in a fresh session. After the outcome commit, do not begin
-the next NUC in the same context. End the cycle with a short outcome report
-and the exact command that resumes the loop: `/clear`, then `/nuc-proposal`
-with this invocation's unchanged request and `--hint` text, if any. `/clear`
-is a CLI command only the user can run. Never claim to have run it, and never
-continue in the same context in its place. The fresh session derives the next
-NUC number, accepted revision, baselines, worktrees and report paths from
-`main` and these rules. The loop runs one cycle per session for as long as
-the user resumes it, and ends when the user stops, pauses or redirects the
-work. A `Blocked` decision, failed outcome recording, or missing required
+Immediately start another fresh "purpose a NUC" cycle without waiting for a
+new user prompt. Repeat sequentially in the active agent session until the
+user stops, pauses or redirects the work, the session ends, or a resource limit
+is reached. A `Blocked` decision, failed outcome recording, or missing required
 input pauses continuation; report the blocker instead of bypassing it.
 
-Continuous cycles do not ask for confirmation before recording an outcome,
-including when coordinated through `/nuc-evaluate`. The resumed session starts
-its NUC without asking. The resume command is a handoff, not a question. The
-exception is an uncertain proposal category: the caller asks the user under
+Continuous cycles do not ask for confirmation before recording an outcome or
+continuing, including when coordinated through `/nuc-evaluate`. The exception
+is an uncertain proposal category: the caller asks the user under
 [the classification rule](#classify-every-proposal) before assigning it.
 Workers return that uncertainty to the caller. Use the existing selection
 rules and verified inputs. For other missing prerequisites or blockers,
@@ -360,13 +352,9 @@ workers across cycles or combine pending proposals.
 
 Use actual independent behavior/compatibility results and token measurements
 when comparison ran as feedback for the next enhancement; report legitimate
-skips rather than inventing counts. The next cycle starts from cleared context,
-so it takes that feedback from the committed outcome records, such as the
-latest NUC's Evaluation section. With configured strategy learning, retain
+skips rather than inventing counts. With configured strategy learning, retain
 the independent evaluator's new verified checkpoint as the next head (or retain
-the old head when learning legitimately skipped). Name that head's path and
-raw pin in the resume report and command, so the fresh session selects from it
-rather than an older head or genesis. Actually invoke
+the old head when learning legitimately skipped). Actually invoke
 `select_proposal_strategy` from that head before dispatching the next proposer;
 use fresh trial/receipt paths and never carry a stale selection pin. Preserve
 earlier artifacts and all acceptance, compatibility and version-protection

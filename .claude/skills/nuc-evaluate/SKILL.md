@@ -308,9 +308,8 @@ Keep implementation changes isolated and preserve unrelated staged and
 unstaged work. Baselines and reports remain in the session workspace.
 
 After recording the outcome, follow the
-[continuous-cycle rule](../nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
-It ends the cycle with a fresh-session resume command (`/clear`, then
-`/nuc-proposal`), without requesting confirmation to record outcomes. For uncertain
+[continuous-cycle rule](../nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only)
+without requesting confirmation to record outcomes or continue. For uncertain
 category additions, selections, updates, or assignments, workers return the
 question to the caller, who asks the user for confirmation under the proposal skill's
 [classification rule](../nuc-proposal/SKILL.md#classify-every-proposal).
