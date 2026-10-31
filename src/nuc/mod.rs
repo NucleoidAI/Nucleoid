@@ -24,6 +24,7 @@ pub mod property;
 pub mod suppose;
 pub mod throw;
 pub mod r#try;
+pub mod value_assign;
 pub mod variable;
 
 #[path = "for.rs"]
@@ -40,7 +41,7 @@ use indexmap::IndexSet;
 use crate::error::{Error, Result};
 use crate::graph::{GraphNode, NodeKey, NodeKind, ShapeKey};
 use crate::lang::ast::{Expr, Stmt};
-use crate::lang::evaluation::Flow;
+use crate::lang::evaluation::{Flow, TrackingMode};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -58,6 +59,7 @@ use r#return::Return;
 use suppose::Suppose;
 use throw::Throw;
 use r#try::Try;
+use value_assign::ValueAssign;
 use variable::Variable;
 
 /// What [`Nuc::run`] produced: the value or `return` it ended with, and the
@@ -107,6 +109,7 @@ pub enum Nuc {
     Declaration,
     Pass,
     Suppose(Suppose),
+    ValueAssign(ValueAssign),
 }
 
 impl Nuc {
@@ -116,6 +119,9 @@ impl Nuc {
         Ok(match statement {
             Stmt::Assign { target, value } => {
                 Nuc::assignment(runtime, scope, target, value.clone())?
+            }
+            Stmt::ValueAssign { target, value } => {
+                Nuc::value_assignment(runtime, scope, target, value.clone())?
             }
             Stmt::Expression(expression) => Nuc::Expression(Expression::new(expression.clone())),
             Stmt::If {
@@ -217,6 +223,28 @@ impl Nuc {
         })
     }
 
+    fn value_assignment(
+        runtime: &mut Runtime,
+        scope: &mut Scope,
+        target: &Expr,
+        value: Expr,
+    ) -> Result<Nuc> {
+        let (assignment, _) = runtime.with_tracking(TrackingMode::Isolated, |runtime| {
+            Nuc::assignment(runtime, scope, target, value)
+        })?;
+
+        match assignment {
+            Nuc::Property(Property {
+                owner: Owner::Class(_),
+                ..
+            }) => Err(Error::type_error(
+                "Cannot use ':=' on a class-level property",
+            )),
+            Nuc::Pass => Ok(Nuc::Pass),
+            assignment => Ok(Nuc::ValueAssign(ValueAssign::new(assignment))),
+        }
+    }
+
     /// Prepares expressions before execution.
     pub fn before(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<()> {
         match self {
@@ -246,6 +274,7 @@ impl Nuc {
             Nuc::Declaration => Err(Error::reference("Missing definition")),
             Nuc::Pass => Ok(Outcome::null()),
             Nuc::Suppose(node) => node.run(runtime, scope),
+            Nuc::ValueAssign(node) => node.run(runtime, scope),
         }
     }
 
@@ -268,6 +297,7 @@ impl Nuc {
             Nuc::Block(node) => node.graph_observed(runtime, dependencies, shapes),
             Nuc::If(node) => node.graph_observed(runtime, dependencies, shapes),
             Nuc::Function(node) => node.graph(runtime),
+            Nuc::ValueAssign(node) => node.graph(runtime),
             _ => Ok(()),
         }
     }
@@ -280,6 +310,7 @@ impl Nuc {
             Nuc::Property(node) => node.after(runtime),
             Nuc::Class(node) => node.after(runtime),
             Nuc::Function(node) => node.after(runtime),
+            Nuc::ValueAssign(node) => node.after(runtime),
             _ => Ok(()),
         }
     }

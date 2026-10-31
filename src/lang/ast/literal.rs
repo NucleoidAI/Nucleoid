@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use crate::error::{Error, Result};
 use crate::lang::ast::Expr;
+use crate::runtime::MAX_DEPTH;
 use crate::value::Value;
 
 pub struct Literal<'a> {
@@ -49,6 +50,19 @@ pub fn of(value: &Value) -> Option<Expr> {
         Value::Object(id) => Expr::ObjectRef(id.to_string()),
         _ => return None,
     })
+}
+
+pub(crate) fn snapshot(value: &Value) -> Result<Expr> {
+    let mut pending = vec![(value, 1)];
+    while let Some((value, depth)) = pending.pop() {
+        if depth > MAX_DEPTH {
+            return Err(Error::type_error("Maximum expression depth exceeded"));
+        }
+        if let Value::List(items) = value {
+            pending.extend(items.iter().map(|item| (item, depth + 1)));
+        }
+    }
+    Ok(constant(value))
 }
 
 pub(crate) fn constant(value: &Value) -> Expr {

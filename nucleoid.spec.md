@@ -2903,6 +2903,104 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid supposes a changed class level rule` specify the executable
   behavior.
 
+## Value assignment
+
+- [NUC 66](docs/nuc-0066.md) adds the value assignment statement
+  `TARGET := EXPR`, an action taken once beside the standing declarations
+  that `=` makes. `:=` is one lexer token, described as `':='`. `=` and
+  `.value` keep their meaning.
+- `TARGET := EXPR` evaluates `EXPR` once, in the current scope, and assigns
+  the value to `TARGET` exactly as `TARGET = LITERAL` would. LITERAL is a
+  literal of the value, an object reference, a function,
+  `Date(<milliseconds>)` for a date or the name of a class. The value is the
+  one `TARGET = EXPR` would store at that moment, so an evaluation that reads
+  a null binding or property, or yields an undefined value, stores `null`.
+- The statement records no dependency and no structural subscription, for
+  its target or for anything around it: an `if`, a block, a function call or
+  a declaration that runs it. This covers every read made while evaluating
+  `EXPR`, including reads inside the functions, methods, callbacks and
+  reasoning selections it calls, and the reads that locate the target, such
+  as `order` in `order.total := 5`. `.value` inside `EXPR` changes nothing.
+- Wherever `=` files a declaration, as at the top level, the target becomes a
+  stated fact. Its declaration is the literal with no dependencies, so it
+  replaces any standing relationship the target had, and its dependents
+  propagate as usual. For a variable,
+  `why` shows the step `TARGET = LITERAL` with state `stated` and an empty
+  `from`; a property keeps the `$Class.property = LITERAL` rendering and the
+  `derived` state that every instance property has, with an empty `from`.
+  Later changes to what `EXPR` read do not change the target.
+- Wherever `=` is only carried out, in a `for` body, in the branch of a
+  standing `if`, in a `{ }` block and in the functions these run, the
+  statement is carried out once each time it runs, without being filed,
+  exactly as `=` is there. A standing `if` runs it again whenever its branch
+  runs, and the statement adds nothing to what the `if` depends on.
+- Targets are names and plain dotted paths rooted in a name, `$Class`,
+  `this` or `self`, under the compound assignment target rules: parentheses
+  may group a path, and a path holds at most 128 dotted links. A local name,
+  such as a parameter or a loop variable, is assigned locally. Any other name
+  and every property path are assigned as with `=`, so a name a function does
+  not bind is a state variable and a `:=` in a class body is a constructor
+  statement.
+- Outside a class-level rule, `$Class.property := EXPR`, and
+  `Name.property := EXPR` where `Name` is a class, raise
+  `TypeError("Cannot use ':=' on a class-level property")`. A class-level
+  declaration also governs instances created later, so it is a law rather
+  than an action. Inside a class-level `if` or block, `$Class` is the instance
+  being processed, so `$Class.property := EXPR` assigns that instance's
+  property once each time the rule runs for it. `$Class` inside `EXPR` reads
+  exactly as it does on the right of `=` in the same place.
+- `TARGET := Class(arguments)` creates the instance as `=` does, named after
+  its target, and reads the arguments without dependency.
+- The statement's value is the assigned value, as for `=`, so a program or a
+  native REPL input that ends with it shows that value. A state version is
+  recorded only when the value changes, as for `=`.
+- Errors raised while evaluating `EXPR`, while assigning or during the
+  propagation that follows roll back through the existing transaction.
+- When the statement files a declaration, its literal is bounded by the
+  runtime's 192-level expression depth limit. A list nested 192 levels or
+  more raises `TypeError("Maximum expression depth exceeded")` at the
+  statement, which rolls back. Nothing is filed in a `for` body, an `if`
+  branch or a block, so no limit beyond those of `=` applies there.
+- `:=` is a statement. Expression positions keep their existing diagnostics,
+  which now name `':='`: `[x := 1]` raises
+  `SyntaxError("Expected ']' but found ':='")`, `f(x := 1)` raises
+  `SyntaxError("Expected ')' but found ':='")`, `if x := 1:` raises
+  `SyntaxError("Expected ':' but found ':='")` and `return x := 1` raises
+  `SyntaxError("Unexpected ':='")`. `parse_expression` still ignores trailing
+  tokens.
+- Other targets raise `SyntaxError("Invalid value assignment target")` at the
+  `:=`: indexes, slices, calls, a bare `this` or `$Class`, literals and
+  assignment expressions such as `y = x := 1`. A version selector passes this
+  check and raises `TypeError("State versions are read-only")` when the
+  statement runs, as `x@previous += 1` does. A missing object, a non-object
+  base and the property name `value` raise the errors `=` raises.
+- The lexer reads `:=` by longest match: `: =` stays two tokens, `:==` is
+  `:=` followed by `=`, `:=>` is `:=` followed by `>`, `::=` is `:` followed
+  by `:=`, and `?:=` is `?` followed by `:=`. A `/` after `:=` starts a regular
+  expression. Strings, template text, regular expressions and comments are
+  unchanged. No accepted program had `:` directly followed by `=` outside such
+  text except in the trailing tokens of a template interpolation, which are
+  still ignored: `` `${x:=2}` `` renders the value of `x`.
+- Every other colon keeps its reading: typed declarations and fields,
+  `assert:` statements, conditional expressions, quantifiers, lambdas,
+  slices, object keys, class parents and suites. `x: =1` keeps
+  `SyntaxError("Unexpected ':'")`. `lambda`, `assert` and `suppose` stay
+  ordinary names, so `lambda := 3` assigns the name `lambda`.
+- `TARGET := suppose ...` is not a `suppose` block: `x := suppose` reads the
+  name `suppose`, and `x := suppose: 1` raises `SyntaxError("Unexpected ':'")`.
+  `TARGET = suppose ...` already stores a one-shot snapshot. A `suppose`
+  premise cannot be a value assignment. A value assignment inside a `suppose`
+  suite is discarded with the block.
+- Graph keys render the statement as `target:=value`, so `{ x := a }` and
+  `{ x = a }` are different blocks.
+- The native REPL runs a `:=` line at once. Its colon-free header scans and
+  the parser's direct-alternative scan treat a top-level `:=` like `;`, so
+  `if x := 1` is not held as a header. Completion words are unchanged.
+- The eight appended entries beginning
+  `Nucleoid applies a value assignment once` through
+  `Nucleoid rolls back failed value assignments` specify the executable
+  behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -16134,4 +16232,226 @@ assert: large.fee, 8
 Order(500)
 assert: fees, 20
 assert: floor, 13
+---
+# Nucleoid applies a value assignment once
+
+stock = 10
+qty = 3
+low = stock < 8
+stock := stock - qty
+assert: stock, 7
+assert: low, true
+qty = 5
+assert: stock, 7
+stock := stock - qty
+assert: stock, 2
+assert: stock@previous, 7
+assert: (why stock)[0].rule, "stock = 2"
+assert: (why stock)[0].state, "stated"
+assert: (affects qty).length, 0
+stock
+# return: 2
+---
+# Nucleoid replaces a standing relationship with a value assignment
+
+price = 4
+count = 3
+total = price * count
+due = total + 1
+assert: due, 13
+total := price * 2
+assert: total, 8
+assert: due, 9
+price = 10
+count = 5
+assert: total, 8
+assert: due, 9
+assert: (why total)[0].from, []
+assert: (affects price).length, 0
+box = {width: 2, height: 3}
+box.area = box.width * box.height
+box.area := box.width
+box.width = 7
+assert: box.area, 2
+total = price * count
+assert: due, 51
+assert: (affects price).length, 2
+total := price * count
+# return: 50
+---
+# Nucleoid assigns instance properties once with value assignments
+
+catalog = {price: 4}
+class Order(qty):
+    this.qty = qty
+    this.price := catalog.price
+    this.total = this.qty * this.price
+    def reprice(): this.price := catalog.price
+first = Order(3)
+catalog.price = 9
+second = Order(1)
+assert: first.price, 4
+assert: second.price, 9
+assert: first.total, 12
+first.qty = 5
+assert: first.total, 20
+first.reprice()
+assert: first.total, 45
+catalog.price = 2
+assert: first.price, 9
+assert: (why first.price)[0].from, []
+second.price := catalog.price + second.qty
+catalog.price = 6
+assert: second.price, 3
+assert: second.total, 3
+---
+# Nucleoid records no dependency through calls in a value assignment
+
+rate = 2
+def fee(amount) => amount * rate
+class Item(price):
+    this.price = price
+    def taxed() => this.price * rate
+pen = Item(3)
+book = Item(5)
+charged := fee(10)
+quote := pen.taxed()
+spent := Item.reduce(lambda sum, item: sum + item.price, 0)
+count := Item.length
+live = Item.length
+rate = 3
+pen.price = 4
+Item(7)
+assert: charged, 20
+assert: quote, 6
+assert: spent, 8
+assert: count, 2
+assert: live, 3
+assert: fee(10), 30
+assert: pen.taxed(), 12
+---
+# Nucleoid runs a value assignment whenever its conditional branch runs
+
+paid = false
+stock = 10
+qty = 3
+if paid:
+    shipped := qty
+    stock := stock - qty
+paid = true
+assert: stock, 7
+assert: shipped, 3
+qty = 4
+stock = 20
+assert: stock, 20
+assert: shipped, 3
+paid = false
+paid = true
+assert: stock, 16
+assert: shipped, 4
+class Order(qty, paid):
+    this.qty = qty
+    this.paid = paid
+if $Order.paid:
+    $Order.taken := $Order.qty
+    stock := stock - $Order.qty
+small = Order(2, true)
+large = Order(5, false)
+assert: stock, 14
+large.paid = true
+assert: stock, 9
+large.qty = 6
+assert: large.taken, 5
+assert: stock, 9
+assert: small.taken, 2
+---
+# Nucleoid uses value assignments in functions blocks and loops
+
+bonus = 5
+def award(points):
+    granted := points * bonus
+    return granted
+prize = award(2)
+class Player(name): this.name = name
+ada = Player("Ada")
+bo = Player("Bo")
+def roster():
+    for player of Player: last := player.name
+    return last
+final = roster()
+a = 1
+b = 2
+{
+    sum := a + b
+    double = sum * 2
+}
+bonus = 7
+bo.name = "Ben"
+a = 10
+assert: prize, 10
+assert: granted, 10
+assert: final, "Bo"
+assert: double, 6
+assert: sum, 3
+assert: award(2), 14
+assert: roster(), "Ben"
+---
+# Nucleoid keeps colon readings beside value assignments
+
+class Meter:
+    reading: int
+    def init(reading): this.reading = reading
+meter = Meter(4)
+scale = 2
+label := `${meter.reading:=scale}`
+level := meter.reading > 3 ? "high" : "low"
+box := {size: meter.reading * scale}
+double = lambda value: value * scale
+parts = [1, 2, 3][1:3]
+ready := all part in parts: part > 1
+if ready: total := double(meter.reading)
+meter.reading = 1
+scale = 5
+parts = [0]
+assert: label, "4"
+assert: level, "high"
+assert: box.size, 8
+assert: ready, true
+assert: total, 8
+assert: double(2), 10
+---
+# Nucleoid rolls back failed value assignments
+
+def checked(amount):
+    if amount > 100: throw "TOO_LARGE"
+    return amount
+limit = 50
+stock = 10
+stock := checked(limit)
+assert: stock, 50
+failure = ""
+try:
+    stock := checked(limit * 3)
+catch error:
+    failure = error
+assert: failure, "TOO_LARGE"
+assert: stock, 50
+balance = 3
+if balance > 100: throw "LIMIT"
+try:
+    balance := stock * 4
+catch error:
+    failure = error
+assert: failure, "LIMIT"
+assert: balance, 3
+try:
+    missing.total := stock
+catch error:
+    failure = error
+assert: failure, ReferenceError("missing is not defined")
+limit = 1000
+balance := stock + 40
+stock = 70
+assert: stock, 70
+assert: balance, 90
 ```

@@ -70,6 +70,8 @@ enum Raw {
     GreaterEqual,
     #[token("=")]
     Assign,
+    #[token(":=")]
+    ColonAssign,
     #[token("+=")]
     PlusAssign,
     #[token("-=")]
@@ -234,6 +236,7 @@ pub enum Token {
     ThinArrow,
 
     Assign,
+    ColonAssign,
     PlusAssign,
     MinusAssign,
     StarAssign,
@@ -295,6 +298,7 @@ impl Token {
             Token::Arrow => "'=>'".to_string(),
             Token::ThinArrow => "'->'".to_string(),
             Token::Assign => "'='".to_string(),
+            Token::ColonAssign => "':='".to_string(),
             Token::PlusAssign => "'+='".to_string(),
             Token::MinusAssign => "'-='".to_string(),
             Token::StarAssign => "'*='".to_string(),
@@ -501,6 +505,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::Arrow => Token::Arrow,
             Raw::ThinArrow => Token::ThinArrow,
             Raw::Assign => Token::Assign,
+            Raw::ColonAssign => Token::ColonAssign,
             Raw::PlusAssign => Token::PlusAssign,
             Raw::MinusAssign => Token::MinusAssign,
             Raw::StarAssign => Token::StarAssign,
@@ -1355,5 +1360,133 @@ mod tests {
         assert_eq!(spanned[3].position, Position::new(1, 7));
         assert_eq!(spanned[7].token, Token::StarStarAssign);
         assert_eq!(spanned[7].position, Position::new(2, 3));
+    }
+
+    #[test]
+    fn colon_assign_is_one_adjacent_token_outside_literal_text() {
+        let identifier = |name: &str| Token::Identifier(name.into());
+        assert_eq!(Token::ColonAssign.describe(), "':='");
+        for (source, mut expected) in [
+            (
+                "x:=1",
+                vec![identifier("x"), Token::ColonAssign, Token::Number(1.0)],
+            ),
+            (
+                "x := 1",
+                vec![identifier("x"), Token::ColonAssign, Token::Number(1.0)],
+            ),
+            (
+                "x : = 1",
+                vec![
+                    identifier("x"),
+                    Token::Colon,
+                    Token::Assign,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x: =1",
+                vec![
+                    identifier("x"),
+                    Token::Colon,
+                    Token::Assign,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x :== 1",
+                vec![
+                    identifier("x"),
+                    Token::ColonAssign,
+                    Token::Assign,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x :=> 1",
+                vec![
+                    identifier("x"),
+                    Token::ColonAssign,
+                    Token::Greater,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x ::= 1",
+                vec![
+                    identifier("x"),
+                    Token::Colon,
+                    Token::ColonAssign,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x ?:= 1",
+                vec![
+                    identifier("x"),
+                    Token::Question,
+                    Token::ColonAssign,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x := -1",
+                vec![
+                    identifier("x"),
+                    Token::ColonAssign,
+                    Token::Minus,
+                    Token::Number(1.0),
+                ],
+            ),
+            (
+                "x := /=/",
+                vec![
+                    identifier("x"),
+                    Token::ColonAssign,
+                    Token::Regex("=".into()),
+                ],
+            ),
+            (
+                "a ? b : c",
+                vec![
+                    identifier("a"),
+                    Token::Question,
+                    identifier("b"),
+                    Token::Colon,
+                    identifier("c"),
+                ],
+            ),
+            (
+                "xs[1:2]",
+                vec![
+                    identifier("xs"),
+                    Token::LeftBracket,
+                    Token::Number(1.0),
+                    Token::Colon,
+                    Token::Number(2.0),
+                    Token::RightBracket,
+                ],
+            ),
+            ("\"a:=b\"", vec![Token::Str("a:=b".into())]),
+            ("'a:=b'", vec![Token::Str("a:=b".into())]),
+            ("`${x:=2}`", vec![Token::Template("${x:=2}".into())]),
+            ("/a:=b/", vec![Token::Regex("a:=b".into())]),
+            ("x # a := b", vec![identifier("x")]),
+        ] {
+            expected.push(Token::Eof);
+            assert_eq!(tokens(source), expected, "{source}");
+        }
+        let spanned = tokenize("stock := 5\nstock = 6").unwrap();
+        assert_eq!(spanned[1].token, Token::ColonAssign);
+        assert_eq!(spanned[1].position, Position::new(1, 7));
+        assert_eq!(spanned[5].token, Token::Assign);
+        assert_eq!(spanned[5].position, Position::new(2, 7));
+        assert_eq!(
+            spanned
+                .iter()
+                .filter(|spanned| spanned.token != Token::Eof)
+                .count(),
+            7
+        );
     }
 }

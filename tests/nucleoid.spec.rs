@@ -13182,6 +13182,269 @@ assert: fees, 20
 assert: floor, 13"#);
 }
 
+/// Nucleoid applies a value assignment once
+#[rustfmt::skip]
+#[test]
+fn applies_a_value_assignment_once() {
+    runner()("stock = 10\nqty = 3\nlow = stock < 8\nstock := stock - qty\nassert: stock, 7\nassert: low, true\nqty = 5\nassert: stock, 7\nstock := stock - qty\nassert: stock, 2\nassert: stock@previous, 7\nassert: (why stock)[0].rule, \"stock = 2\"\nassert: (why stock)[0].state, \"stated\"\nassert: (affects qty).length, 0\nstock\n# return: 2");
+    let mut run = runner();
+    run("stock = 10");
+    run("qty = 3");
+    run("low = stock < 8");
+    run("stock := stock - qty");
+    assert_eq!(run("stock"), 7);
+    assert_eq!(run("low"), true);
+    run("qty = 5");
+    assert_eq!(run("stock"), 7);
+    run("stock := stock - qty");
+    assert_eq!(run("stock"), 2);
+    assert_eq!(run("stock@previous"), 7);
+    assert_eq!(run("(why stock)[0].rule"), "stock = 2");
+    assert_eq!(run("(why stock)[0].state"), "stated");
+    assert_eq!(run("(affects qty).length"), 0);
+    run(r#"stock
+
+# return: 2"#);
+}
+
+/// Nucleoid replaces a standing relationship with a value assignment
+#[rustfmt::skip]
+#[test]
+fn replaces_a_standing_relationship_with_a_value_assignment() {
+    runner()("price = 4\ncount = 3\ntotal = price * count\ndue = total + 1\nassert: due, 13\ntotal := price * 2\nassert: total, 8\nassert: due, 9\nprice = 10\ncount = 5\nassert: total, 8\nassert: due, 9\nassert: (why total)[0].from, []\nassert: (affects price).length, 0\nbox = {width: 2, height: 3}\nbox.area = box.width * box.height\nbox.area := box.width\nbox.width = 7\nassert: box.area, 2\ntotal = price * count\nassert: due, 51\nassert: (affects price).length, 2\ntotal := price * count\n# return: 50");
+    let mut run = runner();
+    run("price = 4");
+    run("count = 3");
+    run("total = price * count");
+    run("due = total + 1");
+    assert_eq!(run("due"), 13);
+    run("total := price * 2");
+    assert_eq!(run("total"), 8);
+    assert_eq!(run("due"), 9);
+    run("price = 10");
+    run("count = 5");
+    assert_eq!(run("total"), 8);
+    assert_eq!(run("due"), 9);
+    assert_eq!(run("(why total)[0].from"), serde_json::json!([]));
+    assert_eq!(run("(affects price).length"), 0);
+    run("box = {width: 2, height: 3}");
+    run("box.area = box.width * box.height");
+    run("box.area := box.width");
+    run("box.width = 7");
+    assert_eq!(run("box.area"), 2);
+    run("total = price * count");
+    assert_eq!(run("due"), 51);
+    assert_eq!(run("(affects price).length"), 2);
+    run(r#"total := price * count
+
+# return: 50"#);
+}
+
+/// Nucleoid assigns instance properties once with value assignments
+#[rustfmt::skip]
+#[test]
+fn assigns_instance_properties_once_with_value_assignments() {
+    runner()("catalog = {price: 4}\nclass Order(qty):\n    this.qty = qty\n    this.price := catalog.price\n    this.total = this.qty * this.price\n    def reprice(): this.price := catalog.price\nfirst = Order(3)\ncatalog.price = 9\nsecond = Order(1)\nassert: first.price, 4\nassert: second.price, 9\nassert: first.total, 12\nfirst.qty = 5\nassert: first.total, 20\nfirst.reprice()\nassert: first.total, 45\ncatalog.price = 2\nassert: first.price, 9\nassert: (why first.price)[0].from, []\nsecond.price := catalog.price + second.qty\ncatalog.price = 6\nassert: second.price, 3\nassert: second.total, 3");
+    let mut run = runner();
+    run("catalog = {price: 4}");
+    run(r#"class Order(qty):
+    this.qty = qty
+    this.price := catalog.price
+    this.total = this.qty * this.price
+    def reprice(): this.price := catalog.price"#);
+    run("first = Order(3)");
+    run("catalog.price = 9");
+    run("second = Order(1)");
+    assert_eq!(run("first.price"), 4);
+    assert_eq!(run("second.price"), 9);
+    assert_eq!(run("first.total"), 12);
+    run("first.qty = 5");
+    assert_eq!(run("first.total"), 20);
+    run("first.reprice()");
+    assert_eq!(run("first.total"), 45);
+    run("catalog.price = 2");
+    assert_eq!(run("first.price"), 9);
+    assert_eq!(run("(why first.price)[0].from"), serde_json::json!([]));
+    run("second.price := catalog.price + second.qty");
+    run("catalog.price = 6");
+    assert_eq!(run("second.price"), 3);
+    assert_eq!(run("second.total"), 3);
+}
+
+/// Nucleoid records no dependency through calls in a value assignment
+#[rustfmt::skip]
+#[test]
+fn records_no_dependency_through_calls_in_a_value_assignment() {
+    runner()("rate = 2\ndef fee(amount) => amount * rate\nclass Item(price):\n    this.price = price\n    def taxed() => this.price * rate\npen = Item(3)\nbook = Item(5)\ncharged := fee(10)\nquote := pen.taxed()\nspent := Item.reduce(lambda sum, item: sum + item.price, 0)\ncount := Item.length\nlive = Item.length\nrate = 3\npen.price = 4\nItem(7)\nassert: charged, 20\nassert: quote, 6\nassert: spent, 8\nassert: count, 2\nassert: live, 3\nassert: fee(10), 30\nassert: pen.taxed(), 12");
+    let mut run = runner();
+    run("rate = 2");
+    run("def fee(amount) => amount * rate");
+    run(r#"class Item(price):
+    this.price = price
+    def taxed() => this.price * rate"#);
+    run("pen = Item(3)");
+    run("book = Item(5)");
+    run("charged := fee(10)");
+    run("quote := pen.taxed()");
+    run("spent := Item.reduce(lambda sum, item: sum + item.price, 0)");
+    run("count := Item.length");
+    run("live = Item.length");
+    run("rate = 3");
+    run("pen.price = 4");
+    run("Item(7)");
+    assert_eq!(run("charged"), 20);
+    assert_eq!(run("quote"), 6);
+    assert_eq!(run("spent"), 8);
+    assert_eq!(run("count"), 2);
+    assert_eq!(run("live"), 3);
+    assert_eq!(run("fee(10)"), 30);
+    assert_eq!(run("pen.taxed()"), 12);
+}
+
+/// Nucleoid runs a value assignment whenever its conditional branch runs
+#[rustfmt::skip]
+#[test]
+fn runs_a_value_assignment_whenever_its_conditional_branch_runs() {
+    runner()("paid = false\nstock = 10\nqty = 3\nif paid:\n    shipped := qty\n    stock := stock - qty\npaid = true\nassert: stock, 7\nassert: shipped, 3\nqty = 4\nstock = 20\nassert: stock, 20\nassert: shipped, 3\npaid = false\npaid = true\nassert: stock, 16\nassert: shipped, 4\nclass Order(qty, paid):\n    this.qty = qty\n    this.paid = paid\nif $Order.paid:\n    $Order.taken := $Order.qty\n    stock := stock - $Order.qty\nsmall = Order(2, true)\nlarge = Order(5, false)\nassert: stock, 14\nlarge.paid = true\nassert: stock, 9\nlarge.qty = 6\nassert: large.taken, 5\nassert: stock, 9\nassert: small.taken, 2");
+    let mut run = runner();
+    run("paid = false");
+    run("stock = 10");
+    run("qty = 3");
+    run(r#"if paid:
+    shipped := qty
+    stock := stock - qty"#);
+    run("paid = true");
+    assert_eq!(run("stock"), 7);
+    assert_eq!(run("shipped"), 3);
+    run("qty = 4");
+    run("stock = 20");
+    assert_eq!(run("stock"), 20);
+    assert_eq!(run("shipped"), 3);
+    run("paid = false");
+    run("paid = true");
+    assert_eq!(run("stock"), 16);
+    assert_eq!(run("shipped"), 4);
+    run(r#"class Order(qty, paid):
+    this.qty = qty
+    this.paid = paid"#);
+    run(r#"if $Order.paid:
+    $Order.taken := $Order.qty
+    stock := stock - $Order.qty"#);
+    run("small = Order(2, true)");
+    run("large = Order(5, false)");
+    assert_eq!(run("stock"), 14);
+    run("large.paid = true");
+    assert_eq!(run("stock"), 9);
+    run("large.qty = 6");
+    assert_eq!(run("large.taken"), 5);
+    assert_eq!(run("stock"), 9);
+    assert_eq!(run("small.taken"), 2);
+}
+
+/// Nucleoid uses value assignments in functions blocks and loops
+#[rustfmt::skip]
+#[test]
+fn uses_value_assignments_in_functions_blocks_and_loops() {
+    runner()("bonus = 5\ndef award(points):\n    granted := points * bonus\n    return granted\nprize = award(2)\nclass Player(name): this.name = name\nada = Player(\"Ada\")\nbo = Player(\"Bo\")\ndef roster():\n    for player of Player: last := player.name\n    return last\nfinal = roster()\na = 1\nb = 2\n{\n    sum := a + b\n    double = sum * 2\n}\nbonus = 7\nbo.name = \"Ben\"\na = 10\nassert: prize, 10\nassert: granted, 10\nassert: final, \"Bo\"\nassert: double, 6\nassert: sum, 3\nassert: award(2), 14\nassert: roster(), \"Ben\"");
+    let mut run = runner();
+    run("bonus = 5");
+    run(r#"def award(points):
+    granted := points * bonus
+    return granted"#);
+    run("prize = award(2)");
+    run("class Player(name): this.name = name");
+    run(r#"ada = Player("Ada")"#);
+    run(r#"bo = Player("Bo")"#);
+    run(r#"def roster():
+    for player of Player: last := player.name
+    return last"#);
+    run("final = roster()");
+    run("a = 1");
+    run("b = 2");
+    run(r#"{
+    sum := a + b
+    double = sum * 2
+}"#);
+    run("bonus = 7");
+    run(r#"bo.name = "Ben""#);
+    run("a = 10");
+    assert_eq!(run("prize"), 10);
+    assert_eq!(run("granted"), 10);
+    assert_eq!(run("final"), "Bo");
+    assert_eq!(run("double"), 6);
+    assert_eq!(run("sum"), 3);
+    assert_eq!(run("award(2)"), 14);
+    assert_eq!(run("roster()"), "Ben");
+}
+
+/// Nucleoid keeps colon readings beside value assignments
+#[rustfmt::skip]
+#[test]
+fn keeps_colon_readings_beside_value_assignments() {
+    let mut run = runner();
+    run(r#"class Meter:
+    reading: int
+    def init(reading): this.reading = reading
+meter = Meter(4)
+scale = 2
+label := `${meter.reading:=scale}`
+level := meter.reading > 3 ? "high" : "low"
+box := {size: meter.reading * scale}
+double = lambda value: value * scale
+parts = [1, 2, 3][1:3]
+ready := all part in parts: part > 1
+if ready: total := double(meter.reading)
+meter.reading = 1
+scale = 5
+parts = [0]
+assert: label, "4"
+assert: level, "high"
+assert: box.size, 8
+assert: ready, true
+assert: total, 8
+assert: double(2), 10"#);
+}
+
+/// Nucleoid rolls back failed value assignments
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_value_assignments() {
+    runner()("def checked(amount):\n    if amount > 100: throw \"TOO_LARGE\"\n    return amount\nlimit = 50\nstock = 10\nstock := checked(limit)\nassert: stock, 50\nfailure = \"\"\ntry:\n    stock := checked(limit * 3)\ncatch error:\n    failure = error\nassert: failure, \"TOO_LARGE\"\nassert: stock, 50\nbalance = 3\nif balance > 100: throw \"LIMIT\"\ntry:\n    balance := stock * 4\ncatch error:\n    failure = error\nassert: failure, \"LIMIT\"\nassert: balance, 3\ntry:\n    missing.total := stock\ncatch error:\n    failure = error\nassert: failure, ReferenceError(\"missing is not defined\")\nlimit = 1000\nbalance := stock + 40\nstock = 70\nassert: stock, 70\nassert: balance, 90");
+    let mut run = runner();
+    run(r#"def checked(amount):
+    if amount > 100: throw "TOO_LARGE"
+    return amount
+limit = 50
+stock = 10
+stock := checked(limit)
+assert: stock, 50
+failure = ""
+try:
+    stock := checked(limit * 3)
+catch error:
+    failure = error
+assert: failure, "TOO_LARGE"
+assert: stock, 50
+balance = 3
+if balance > 100: throw "LIMIT"
+try:
+    balance := stock * 4
+catch error:
+    failure = error
+assert: failure, "LIMIT"
+assert: balance, 3
+try:
+    missing.total := stock
+catch error:
+    failure = error
+assert: failure, ReferenceError("missing is not defined")
+limit = 1000
+balance := stock + 40
+stock = 70
+assert: stock, 70
+assert: balance, 90"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

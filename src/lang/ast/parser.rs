@@ -386,6 +386,10 @@ impl Parser {
             _ => {
                 let expression = self.expression()?;
 
+                if self.check(&Token::ColonAssign) {
+                    return self.value_assignment(expression);
+                }
+
                 if let Some(statement) = self.suppose_statement(&expression)? {
                     return Ok(statement);
                 }
@@ -393,6 +397,13 @@ impl Parser {
                 Ok(simple_statement(expression))
             }
         }
+    }
+
+    fn value_assignment(&mut self, target: Expr) -> Result<Stmt> {
+        self.check_path_target(&target, "Invalid value assignment target")?;
+        self.advance();
+        let value = self.expression()?;
+        Ok(Stmt::ValueAssign { target, value })
     }
 
     fn suppose_statement(&mut self, expression: &Expr) -> Result<Option<Stmt>> {
@@ -588,7 +599,9 @@ impl Parser {
                 Token::Newline | Token::Indent if delimiters.is_empty() => {
                     return offset > 0 && self.has_indented_body(offset);
                 }
-                Token::Semicolon | Token::Dedent | Token::Eof if delimiters.is_empty() => {
+                Token::Semicolon | Token::ColonAssign | Token::Dedent | Token::Eof
+                    if delimiters.is_empty() =>
+                {
                     return false;
                 }
                 _ => {}
@@ -1155,7 +1168,11 @@ impl Parser {
 
     /// Only clone bounded, plain paths. A computed target containing another
     /// compound assignment could otherwise double its tree at each lowering.
-    fn check_compound_target(&self, mut target: &Expr) -> Result<()> {
+    fn check_compound_target(&self, target: &Expr) -> Result<()> {
+        self.check_path_target(target, "Invalid compound assignment target")
+    }
+
+    fn check_path_target(&self, mut target: &Expr, invalid: &str) -> Result<()> {
         let mut parts = 0;
         while let Expr::Member { object, .. }
         | Expr::Version {
@@ -1172,7 +1189,7 @@ impl Parser {
         match target {
             Expr::Identifier(_) => Ok(()),
             Expr::ClassRef(_) | Expr::This if parts > 0 => Ok(()),
-            _ => Err(self.error("Invalid compound assignment target")),
+            _ => Err(self.error(invalid)),
         }
     }
 
@@ -2171,6 +2188,27 @@ mod tests {
             ("all v in xs: v;\n    pass", false),
             ("all v of xs: v:\n    pass", false),
             ("all: v\n    pass", false),
+        ] {
+            let mut parser = Parser::new(tokenize(&format!("else {header}")).unwrap());
+            parser.expect(&Token::Keyword(Keyword::Else)).unwrap();
+            let position = parser.position;
+            let tokens = parser.tokens.clone();
+            assert_eq!(parser.has_direct_condition_suite(), qualifies, "{header}");
+            assert_eq!(parser.position, position, "{header}");
+            assert_eq!(parser.depth, 0, "{header}");
+            assert_eq!(parser.tokens, tokens, "{header}");
+        }
+    }
+
+    #[test]
+    fn direct_condition_lookahead_stops_at_a_top_level_value_assignment() {
+        for (header, qualifies) in [
+            ("ready := 1:\n    pass", false),
+            ("ready := 1\n    pass", false),
+            ("x := ready ? 1 : 2:\n    pass", false),
+            ("f(x := 1):\n    pass", true),
+            ("ready:\n    x := 1", true),
+            ("ready\n    x := 1", true),
         ] {
             let mut parser = Parser::new(tokenize(&format!("else {header}")).unwrap());
             parser.expect(&Token::Keyword(Keyword::Else)).unwrap();

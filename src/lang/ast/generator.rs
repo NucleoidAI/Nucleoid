@@ -206,6 +206,7 @@ pub fn generate_all(statements: &[Stmt]) -> String {
 pub fn generate(statement: &Stmt) -> String {
     match statement {
         Stmt::Assign { target, value } => format!("{target}={value}"),
+        Stmt::ValueAssign { target, value } => format!("{target}:={value}"),
         Stmt::Expression(expression) => expression.to_string(),
         Stmt::If {
             condition,

@@ -4,13 +4,13 @@ use indexmap::IndexSet;
 
 use crate::error::Result;
 use crate::graph::{NodeKey, NodeKind, ShapeKey};
-use crate::lang::ast::Expr;
+use crate::lang::ast::{Expr, literal};
 use crate::lang::evaluation::Flow;
 use crate::nuc::object::Object;
 use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-use crate::value::ObjectId;
+use crate::value::{ObjectId, Value};
 
 #[derive(Debug, Clone)]
 pub struct Variable {
@@ -105,5 +105,12 @@ impl Variable {
 
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
         runtime.propagate_change(&self.key(), self.changed)
+    }
+
+    pub(crate) fn hold(&mut self, value: &Value) -> Result<()> {
+        if self.kind == Some(NodeKind::Variable) {
+            self.value = literal::snapshot(value)?;
+        }
+        Ok(())
     }
 }

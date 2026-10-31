@@ -355,7 +355,9 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
                 conditionals += 1
             }
             Token::Colon if delimiters.is_empty() && conditionals > 0 => conditionals -= 1,
-            Token::Colon | Token::Semicolon | Token::Indent if delimiters.is_empty() => {
+            Token::Colon | Token::ColonAssign | Token::Semicolon | Token::Indent
+                if delimiters.is_empty() =>
+            {
                 return false;
             }
             Token::LeftParen | Token::LeftBracket | Token::LeftBrace => {
@@ -840,6 +842,35 @@ mod tests {
             .run("if side ** 2 > limit\n    big = side ** 2\n")
             .unwrap();
         assert_eq!(runtime.run("big").unwrap(), Value::Number(9.0));
+    }
+
+    #[test]
+    fn value_assignments_run_at_once_and_end_colon_free_header_scans() {
+        for line in [
+            "stock := stock - qty",
+            "stock :=",
+            "if ready := 1",
+            "if x := y ? 1 : 2",
+            "else total := 0",
+            "elif total := 0",
+            "if ready: stock := stock - qty",
+        ] {
+            assert!(!indented_body_header(line), "{line:?}");
+            assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+            assert!(!indented_alternative_header(line), "{line:?}");
+            assert_eq!(next_indentation(line, false), "", "{line:?}");
+        }
+        for line in ["if ready:", "if ready", "if f(x := 1)"] {
+            assert!(indented_body_header(line), "{line:?}");
+        }
+        let mut runtime = Runtime::new();
+        runtime.run("stock = 10\nqty = 3").unwrap();
+        assert_eq!(
+            runtime.run("stock := stock - qty").unwrap(),
+            Value::Number(7.0)
+        );
+        runtime.run("qty = 5").unwrap();
+        assert_eq!(runtime.run("stock").unwrap(), Value::Number(7.0));
     }
 
     #[test]

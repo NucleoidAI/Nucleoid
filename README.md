@@ -1277,6 +1277,30 @@ assert: total, 99
   values leave it as plain data. Everywhere else `suppose` stays an ordinary
   name. See the [root contract](nucleoid.spec.md#hypotheticals).
 
+## Value assignment
+
+**Value assignments take an action once while declarations stay live**
+
+```nuc
+price = 4
+quantity = 3
+quote = price * quantity
+paid := price * quantity
+price = 5
+quantity = 2
+assert: quote, 10
+assert: paid, 12
+assert: (why paid)[0].rule, "paid = 12"
+```
+
+- [NUC 66](docs/nuc-0066.md) adds the value assignment `TARGET := EXPR`, as
+  in Go and Pascal. It evaluates the expression once, records no dependency,
+  and stores the result as a stated fact, exactly as if the value had been
+  written as a literal with `=`.
+- `quote` is a declaration, a law that follows `price` and `quantity`. `paid`
+  is an action taken at one moment, so it keeps `12`, and `why` shows the
+  stated literal. See the [root contract](nucleoid.spec.md#value-assignment).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

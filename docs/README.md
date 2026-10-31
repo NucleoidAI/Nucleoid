@@ -280,6 +280,48 @@ width = goldenRatio.value * altitude
 
 - `width` is `16.18`; unchanged by `goldenRatio = 1.62`; becomes `161.8` after `altitude = 100`.
 
+### Value assignment
+
+- [NUC 66](nuc-0066.md) adds `target := expression`, an action taken once
+  beside the standing declarations that `=` makes, as `:=` assigns in Go and
+  Pascal. `:=` is one token.
+- The expression is evaluated once in the current scope and the value is
+  assigned exactly as `target = literal` would assign it. The value is what
+  `target = expression` would store at that moment, including `null` for a
+  null read.
+- Nothing is recorded as a dependency: not the reads of the expression, the
+  functions, methods and callbacks it calls or the path to the target, and
+  not for an enclosing `if`, block or declaration. Later changes to those
+  inputs leave the target alone.
+- At the top level the target becomes a stated fact that replaces any
+  standing relationship it had; its dependents still update, and `why` shows
+  `target = literal` with state `stated`. In a `for` body, an `if` branch or a
+  block it is carried out without being filed, as `=` is there, so a standing
+  `if` repeats it whenever its branch runs.
+- Targets follow the compound assignment rules: names and dotted paths
+  rooted in a name, `$Class`, `this` or `self`. Other targets raise
+  `SyntaxError("Invalid value assignment target")`. Outside a class-level
+  rule, a class-level target raises
+  `TypeError("Cannot use ':=' on a class-level property")`; inside one,
+  `$Class.property := expression` sets that instance's property.
+- `:=` is a statement only. `` `${x:=2}` `` still renders `x`, and every other
+  colon keeps its reading.
+
+```
+stock = 10
+qty = 3
+low = stock < 8
+stock := stock - qty
+qty = 5
+```
+
+- `stock` is `7` and `low` is `true`; `qty = 5` does not take `stock` again.
+  With `stock = stock - qty`, the same change would make `stock` `2`.
+- The executable counterpart is
+  `Nucleoid separates one-shot actions from standing laws` in
+  `tests/reference.md`; the root contract is
+  [Value assignment](../nucleoid.spec.md#value-assignment).
+
 ### Null and undefined
 
 - Any `null` dependency yields `null`.
@@ -2500,6 +2542,8 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
+| `:=` on a class-level property outside a class-level rule | `Cannot use ':=' on a class-level property` |
+| A `:=` declaration whose value nests lists 192 levels or more | `Maximum expression depth exceeded` |
 | Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
@@ -2514,6 +2558,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A character that begins no token | `Unexpected character '<character>'` |
 | A token other than the one required | `Expected <what> but found <what>` |
 | An unsupported compound target | `Invalid compound assignment target` |
+| An unsupported `:=` target, including an assignment such as `y = x := 1` | `Invalid value assignment target` |
 | `**` or `**=` where an operand is required | `Unexpected '**'`, `Unexpected '**='` |
 | Deleting something that is not a variable, property or instance, such as the power in `delete p.v ** 2` | `Cannot delete <expression>`, for example `Cannot delete p.v**2` |
 | A block or template that is never closed | `Unterminated block`, `Unterminated template expression` |
@@ -2542,6 +2587,8 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ```
 name = expression                      variable assignment
+name := expression                     value assignment: once, no dependency (NUC 66)
+name.property := expression            value assignment to a property (NUC 66)
 name += expression                     compound assignment; also -=, *=, **=, /=, %=
 name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected

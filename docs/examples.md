@@ -2759,6 +2759,38 @@ shortages
   [NUC 65](nuc-0065.md) and the
   [root contract](../nucleoid.spec.md#hypotheticals).
 
+## Value assignment
+
+**Value assignments lock deposit rates while interest stays live**
+
+```nuc
+rate = 2
+class Deposit(amount):
+    this.amount = amount
+    this.rate := rate
+$Deposit.interest = $Deposit.amount * $Deposit.rate / 100
+total = Deposit.reduce(lambda sum, deposit: sum + deposit.interest, 0)
+early = Deposit(100)
+rate = 3
+late = Deposit(100)
+opening := total
+early.amount = 300
+assert: early.interest, 6
+assert: late.interest, 3
+assert: total, 9
+assert: opening, 5
+Deposit.map(deposit -> deposit.rate)
+# return: [2,3]
+```
+
+- Each deposit locks in the rate that holds when it opens. `this.rate := rate`
+  runs once in the constructor and records no dependency on `rate`, so the
+  later `rate = 3` reaches only `late`.
+- `interest` and `total` stay live declarations, so raising `early.amount`
+  updates both, while `opening := total` keeps the total from the moment it
+  was taken. See [NUC 66](nuc-0066.md) and the
+  [root contract](../nucleoid.spec.md#value-assignment).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

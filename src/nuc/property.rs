@@ -6,14 +6,14 @@ use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind, ShapeKey};
-use crate::lang::ast::{Expr, Stmt};
+use crate::lang::ast::{Expr, Stmt, literal};
 use crate::lang::evaluation::Flow;
 use crate::nuc::object::Object;
 use crate::nuc::{Nuc, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::state::DeclarationKey;
-use crate::value::ObjectId;
+use crate::value::{ObjectId, Value};
 
 /// What the property is being set on.
 #[derive(Debug, Clone)]
@@ -142,6 +142,13 @@ impl Property {
             Some(object.clone()),
             shapes,
         )
+    }
+
+    pub(crate) fn hold(&mut self, value: &Value) -> Result<()> {
+        if self.kind == Some(NodeKind::Property) {
+            self.value = literal::snapshot(value)?;
+        }
+        Ok(())
     }
 
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {

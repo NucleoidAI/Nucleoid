@@ -2005,4 +2005,36 @@ assert: premium, 1
 assert: Item.length, 2
 suppose book.price = 5: premium
 # return: 0
+---
+# Nucleoid separates one-shot actions from standing laws
+
+class Product(price, stock):
+    this.price = price
+    this.stock = stock
+$Product.low = $Product.stock < 5
+class Order(product, qty):
+    this.product = product
+    this.qty = qty
+    this.paid = false
+    this.price := product.price
+$Order.total = $Order.qty * $Order.price
+if $Order.paid:
+    $Order.product.stock := $Order.product.stock - $Order.qty
+bolt = Product(2, 12)
+first = Order(bolt, 4)
+bolt.price = 3
+second = Order(bolt, 5)
+first.paid = true
+second.paid = true
+assert: first.total, 8
+assert: second.total, 15
+assert: bolt.stock, 3
+assert: bolt.low, true
+bolt.stock = 20
+first.qty = 6
+assert: bolt.stock, 20
+assert: first.total, 12
+assert: bolt.low, false
+bolt.stock
+# return: 20
 ```
