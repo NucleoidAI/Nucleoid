@@ -2657,6 +2657,44 @@ qualified
 - See [NUC 61](nuc-0061.md) and the
   [root contract](../nucleoid.spec.md#instance-list-ranges-and-list-queries).
 
+## Quantifiers
+
+**Quantifiers keep zone health true to every sensor**
+
+```nuc
+class Zone(name):
+    this.name = name
+class Sensor(zone, ok):
+    this.zone = zone
+    this.ok = ok
+$Zone.healthy = all s in Sensor: s.zone != $Zone.name or s.ok
+lab = Zone("lab")
+dock = Zone("dock")
+probe = Sensor("lab", true)
+door = Sensor("dock", false)
+alerts = Zone.filter(zone => not zone.healthy).map(zone => zone.name)
+assert(lab.healthy, true)
+assert(dock.healthy, false)
+assert(alerts, ["dock"])
+door.ok = true
+assert(dock.healthy, true)
+assert(alerts, [])
+Sensor("lab", false)
+assert(lab.healthy, false)
+alerts
+# return: ["lab"]
+```
+
+- The class-level rule states one claim per zone: every sensor is either in
+  another zone or reports `ok`. Inside the condition, `$Zone.name` is the zone
+  the rule is evaluated for, and `s` is the sensor being tested.
+- Creating a sensor or changing one re-evaluates every zone's `healthy`, and
+  `alerts` follows. The accepted spelling
+  `Sensor.every(s => s.zone != $Zone.name or s.ok)` keeps working and gives
+  the same results.
+- See [NUC 62](nuc-0062.md) and the
+  [root contract](../nucleoid.spec.md#quantifiers).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -5,7 +5,7 @@ use super::lexer::{Keyword, Spanned, Token, tokenize};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
     BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, ParameterDefault,
-    Stmt, TemplatePart, UnaryOp, VersionSelector,
+    Quantifier, Stmt, TemplatePart, UnaryOp, VersionSelector,
 };
 use crate::reasoning::Stage;
 
@@ -506,6 +506,11 @@ impl Parser {
                     }
                 }
                 Token::Question if delimiters.is_empty() => conditionals += 1,
+                Token::Identifier(_)
+                    if delimiters.is_empty() && self.quantifier_at(offset).is_some() =>
+                {
+                    conditionals += 1
+                }
                 Token::Colon if delimiters.is_empty() && conditionals > 0 => conditionals -= 1,
                 Token::Colon if delimiters.is_empty() => {
                     return offset > 0 && self.has_indented_suite(offset);
@@ -1622,6 +1627,11 @@ impl Parser {
         if self.check(&Token::At) {
             return Err(self.error("Unexpected character '@'"));
         }
+        if self.context != ExpressionContext::Interpolation {
+            if let Some(quantifier) = self.quantifier_at(0) {
+                return self.quantified(quantifier);
+            }
+        }
         // `name => ...` or `name -> ...`. Check before taking the name so
         // that ordinary identifier operands are not cloned here.
         if matches!(self.peek(), Token::Identifier(_)) && self.peek_at(1).is_arrow() {
@@ -1840,6 +1850,32 @@ impl Parser {
         })))
     }
 
+    fn quantifier_at(&self, offset: usize) -> Option<Quantifier> {
+        Quantifier::starting(
+            self.peek_at(offset),
+            self.peek_at(offset + 1),
+            self.peek_at(offset + 2),
+        )
+    }
+
+    fn quantified(&mut self, quantifier: Quantifier) -> Result<Expr> {
+        self.advance();
+        let Token::Identifier(binder) = self.advance() else {
+            unreachable!("quantifier_at checked the binder name")
+        };
+        self.advance();
+        let collection = self.clause_expression()?;
+        self.expect(&Token::Colon)?;
+        let condition = self.expression_in(self.context)?;
+
+        Ok(Expr::Quantified {
+            quantifier,
+            binder,
+            collection: Box::new(collection),
+            condition: Box::new(condition),
+        })
+    }
+
     /// Looks ahead past a balanced `( ... )` for an arrow, which distinguishes
     /// an arrow parameter list from a parenthesised expression.
     fn is_arrow_parameters(&self) -> bool {
@@ -2008,6 +2044,35 @@ mod tests {
             ("ready ? on : off:", false),
             ("ready ? on", false),
             ("ready ? on : off; other:\n    pass", false),
+        ] {
+            let mut parser = Parser::new(tokenize(&format!("else {header}")).unwrap());
+            parser.expect(&Token::Keyword(Keyword::Else)).unwrap();
+            let position = parser.position;
+            let tokens = parser.tokens.clone();
+            assert_eq!(parser.has_direct_condition_suite(), qualifies, "{header}");
+            assert_eq!(parser.position, position, "{header}");
+            assert_eq!(parser.depth, 0, "{header}");
+            assert_eq!(parser.tokens, tokens, "{header}");
+        }
+    }
+
+    #[test]
+    fn direct_condition_lookahead_pairs_quantifier_colons_without_consuming() {
+        for (header, qualifies) in [
+            ("all v in xs: v > 0:\n    pass", true),
+            ("all v in xs: v > 0\n    pass", true),
+            ("any v in xs: v ? on : off:\n    pass", true),
+            ("ready ? all v in xs: v : off:\n    pass", true),
+            ("all t in ts: any w in ws: w == t:\n    pass", true),
+            ("all v in ready ? xs : ys: v\n    pass", true),
+            ("all v in xs: v ?? false:\n    pass", true),
+            ("(all v in xs: v):\n    pass", true),
+            ("all v in xs:\n    pass", true),
+            ("all v in xs: v: pass", false),
+            ("all v in xs: v", false),
+            ("all v in xs: v;\n    pass", false),
+            ("all v of xs: v:\n    pass", false),
+            ("all: v\n    pass", false),
         ] {
             let mut parser = Parser::new(tokenize(&format!("else {header}")).unwrap());
             parser.expect(&Token::Keyword(Keyword::Else)).unwrap();

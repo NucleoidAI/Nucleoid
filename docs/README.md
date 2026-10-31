@@ -971,6 +971,8 @@ assert(signal.output, 8)
   [Conditional expressions](#conditional-expressions).
 - `??` tests whether a value is null rather than whether it is true, so `0`
   and `""` are kept; see [Nullish coalescing](#nullish-coalescing).
+- `all` and `any` quantifiers test each member's condition the same way; see
+  [Quantifiers](#quantifiers).
 
 ```
 if $Device.profile:
@@ -1574,6 +1576,8 @@ doubled = prices.map(p => p * rate)
 ```
 open = Task.filter(t => not t.done).length
 ```
+
+- `all t in Task: t.done` and `any t in Task: t.done` state the claims of `every` and `some` directly, and they nest; see [Quantifiers](#quantifiers).
 
 - Regular expressions support `.test(...)` and may be used in any condition.
 
@@ -2302,10 +2306,65 @@ c = b * 2
 - A caught failure discards only structural refreshes queued by its failing body, retaining work queued before it.
 - The accepted specification already implements selections, pipelines,
   `model`, `why`, and `affects`; the NUC 48 candidate adds only the two
-  state filters. Other NUC 11 operations remain proposals, not dependencies.
+  state filters, and [NUC 62](nuc-0062.md) adds NUC 11's `all` and `any`
+  quantifiers. Other NUC 11 operations remain proposals, not dependencies.
+
+### Quantifiers
+
+```
+class Check
+first = Check()
+first.passed = true
+ready = all c in Check: c.passed
+failing = any c in Check: not c.passed
+assert(ready, true)
+assert(failing, false)
+second = Check()
+assert(ready, false)
+assert(failing, true)
+second.passed = true
+assert(ready, true)
+assert(failing, false)
+ready
+```
+
+- This is the complete `Nucleoid states live facts with all and any` program
+  in `tests/reference.md`, without its title and expected-return metadata; it
+  returns `true`.
+- [NUC 62](nuc-0062.md) adds `all NAME in COLLECTION: CONDITION` and
+  `any NAME in COLLECTION: CONDITION`. The collection is a declared class's
+  instances, in population order, or a list, including a reasoning selection
+  such as `why c`. `all` is `false` at the first member whose condition is
+  falsy and `true` otherwise, so an empty collection is `true`; `any` is
+  `true` at the first truthy member and `false` otherwise.
+- A declaration that uses a quantifier is live, with the reads and
+  dependencies of `COLLECTION.every(NAME => CONDITION)` and
+  `COLLECTION.some(NAME => CONDITION)`: it follows the population or list and
+  what its condition read for the members it visited. A null collection or a
+  null read stores `null`, and a collection that is neither null nor a list or
+  instance list raises `TypeError("<collection> is not a collection")`.
+- The condition is evaluated in place: it reads enclosing quantifier binders,
+  function parameters and locals, `this`, and the instance of a class-level
+  rule, so `all t in Task: any w in Worker: w.skill == t.skill` nests. The
+  binder is not defined after the quantifier, and functions called from the
+  condition still do not see it.
+- The condition extends as far right as possible, like an arrow body, so
+  parenthesize a quantifier to combine it, as in
+  `(all v in scores: v > 0) ? "clean" : "dirty"`. Its collection ends at the
+  quantifier's own colon. `if`, `else if` and direct-alternative headers, with
+  or without their own colon, take quantifier conditions, and their header
+  scans, including the native REPL's, pair that colon with its `all` or
+  `any`.
+- `all` and `any` stay ordinary names everywhere else, including
+  `Name.all()`, the `.any(callback)` alias, variables, functions, keys and
+  parameters. At the top level of a template interpolation a quantifier needs
+  parentheses: `` `${(all v in xs: v)}` ``.
+- The authoritative contract is the
+  [quantifiers](../nucleoid.spec.md#quantifiers) section.
 
 Implemented semantic basis: the [root specification](../nucleoid.spec.md).
-Proposal context: [NUC 11](nuc-0011.md) and [NUC 48](nuc-0048.md).
+Proposal context: [NUC 11](nuc-0011.md), [NUC 48](nuc-0048.md) and
+[NUC 62](nuc-0062.md).
 
 ---
 
@@ -2337,6 +2396,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
+| An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
@@ -2495,6 +2555,9 @@ stated reference                      filter one reference without traversing (N
 derived reference                     filter one reference without traversing (NUC 48 candidate)
 model |> stated                       filter the current model by stated state (NUC 48 candidate)
 model |> derived                      filter the current model by derived state (NUC 48 candidate)
+all name in collection: condition     true when the condition holds for every member (NUC 62)
+any name in collection: condition     true when the condition holds for some member (NUC 62)
+(all name in collection: condition)   parenthesize to combine with what follows (NUC 62)
 ```
 
 ---

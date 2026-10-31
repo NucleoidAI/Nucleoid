@@ -1202,6 +1202,32 @@ assert(Task.findLastIndex(task => task.title.length == 4), 2)
   list, the population and what their callbacks read. See the
   [root contract](nucleoid.spec.md#instance-list-ranges-and-list-queries).
 
+## Quantifiers
+
+**Quantifiers keep claims about every instance live**
+
+```nuc
+class Task(skill):
+    this.skill = skill
+class Worker(skill):
+    this.skill = skill
+Task("rust")
+Task("docs")
+Worker("rust")
+covered = all t in Task: any w in Worker: w.skill == t.skill
+assert(covered, false)
+Worker("docs")
+assert(covered, true)
+```
+
+- [NUC 62](docs/nuc-0062.md) adds `all NAME in COLLECTION: CONDITION` and
+  `any NAME in COLLECTION: CONDITION`. They quantify over class instances,
+  lists and reasoning selections, and they nest, because a condition reads
+  the binders around it.
+- `covered` is a live declaration: it re-evaluates when a task or a worker is
+  created or a skill changes. Everywhere else `all` and `any` stay ordinary
+  names. See the [root contract](nucleoid.spec.md#quantifiers).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

@@ -143,6 +143,17 @@ fn roots(
                 roots(value, resolve(value), resolve, required, found);
             }
         }
+        Expr::Quantified {
+            binder,
+            collection,
+            condition,
+            ..
+        } => {
+            roots(collection, resolve(collection), resolve, required, found);
+            let mut bound = Vec::new();
+            roots(condition, resolve(condition), resolve, required, &mut bound);
+            found.extend(bound.into_iter().filter(|name| name != binder));
+        }
         _ => visit_children(expression, &mut |child| {
             roots(child, resolve(child), resolve, required, found)
         }),
@@ -264,6 +275,14 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
             visit(condition);
             visit(consequent);
             visit(alternate);
+        }
+        Expr::Quantified {
+            collection,
+            condition,
+            ..
+        } => {
+            visit(collection);
+            visit(condition);
         }
         Expr::List(items) | Expr::Super(items) => {
             for item in items {

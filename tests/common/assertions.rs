@@ -136,6 +136,14 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
             }
         }
         Expr::Reason { source, .. } => expression_assertions(source, assertions),
+        Expr::Quantified {
+            collection,
+            condition,
+            ..
+        } => {
+            expression_assertions(collection, assertions);
+            expression_assertions(condition, assertions);
+        }
         Expr::Null
         | Expr::Bool(_)
         | Expr::Number(_)

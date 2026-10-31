@@ -6,6 +6,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use nucleoid::graph::NodeKey;
+use nucleoid::lang::ast::Quantifier;
 use nucleoid::lang::ast::lexer::{Keyword, Spanned, Token, tokenize};
 use nucleoid::{Runtime, Value};
 use rustyline::error::ReadlineError;
@@ -348,6 +349,11 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
                         .all(|token| matches!(token, Token::Newline | Token::Dedent | Token::Eof));
             }
             Token::Question if delimiters.is_empty() => conditionals += 1,
+            Token::Identifier(_)
+                if delimiters.is_empty() && starts_quantifier(token, tokens.clone()) =>
+            {
+                conditionals += 1
+            }
             Token::Colon if delimiters.is_empty() && conditionals > 0 => conditionals -= 1,
             Token::Colon | Token::Semicolon | Token::Indent if delimiters.is_empty() => {
                 return false;
@@ -370,6 +376,13 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
         nonempty = true;
     }
     false
+}
+
+fn starts_quantifier<'a>(word: &Token, mut rest: impl Iterator<Item = &'a Token>) -> bool {
+    match (rest.next(), rest.next()) {
+        (Some(binder), Some(keyword)) => Quantifier::starting(word, binder, keyword).is_some(),
+        _ => false,
+    }
 }
 
 /// Buffer a lexical named-arrow header, not anonymous arrows or arrow text in
@@ -719,6 +732,46 @@ mod tests {
         assert!(indented_body_header("if ready ? on : off:"));
         assert!(!indented_body_header("label = ready ? on : off"));
         assert!(!indented_body_header("label = on if ready else off"));
+    }
+
+    #[test]
+    fn quantifier_colons_pair_with_their_prefix_in_headers() {
+        for condition in [
+            "all v in xs: v > 0",
+            "any v in xs: v ? on : off",
+            "(all v in xs: v) and ready",
+            "all t in Task: any w in Worker: w.skill == t.skill",
+            "ready ? all v in xs: v : false",
+            "all v in ready ? xs : ys: v",
+            "all v in xs: [v][0:1]",
+            "all v in xs: v ?? false",
+        ] {
+            for prefix in ["if", "else if", "elif if", "else", "elif"] {
+                let line = format!("{prefix} {condition}");
+                let keyword = if prefix == "if" {
+                    Keyword::If
+                } else {
+                    Keyword::Else
+                };
+                assert!(indented_condition_header(&line, keyword), "{line:?}");
+                assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+            }
+        }
+        for line in [
+            "if all v in xs",
+            "if all v in xs: v > 0:",
+            "if all v in xs: v > 0: pass",
+            "if all v in xs: v; other",
+            "if all v of xs: v",
+            "if all: v",
+            "if all in xs: v",
+        ] {
+            assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+        }
+        assert!(indented_body_header("if all v in xs: v > 0:"));
+        assert!(!indented_body_header("ok = all v in xs: v > 0"));
+        assert!(indented_alternative_header("else any v in xs: v > 1"));
+        assert_eq!(next_indentation("elif all v in xs: v", false), INDENT);
     }
 
     #[test]

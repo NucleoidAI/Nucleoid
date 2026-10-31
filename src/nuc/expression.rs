@@ -93,6 +93,17 @@ impl Runtime {
                 operator: *operator,
                 operand: Box::new(self.freeze(operand, scope)?),
             },
+            Expr::Quantified {
+                quantifier,
+                binder,
+                collection,
+                condition,
+            } => Expr::Quantified {
+                quantifier: *quantifier,
+                binder: binder.clone(),
+                collection: Box::new(self.freeze(collection, scope)?),
+                condition: condition.clone(),
+            },
             Expr::Call { .. } | Expr::Super(_)
                 if expression.has_named_arguments()
                     && self.is_constructor_call(expression, scope) =>

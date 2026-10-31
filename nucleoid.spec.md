@@ -2599,6 +2599,105 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed list query updates` specify the executable
   behavior.
 
+## Quantifiers
+
+- [NUC 62](docs/nuc-0062.md) adds the quantified expressions
+  `all NAME in COLLECTION: CONDITION` and `any NAME in COLLECTION: CONDITION`.
+  No keyword or lexer token is added. A quantifier starts only where the name
+  `all` or `any`, a binder name and the existing `in` keyword follow each
+  other. Everywhere else `all` and `any` keep every accepted reading:
+  variables, functions and calls, `Name.all()` and the `.any(callback)` list
+  alias, object keys and values, parameters, loop variables and typed
+  declarations. A variable named `all` or `any` does not disable quantifiers,
+  so `all n in all: n > any` reads both variables.
+- The collection is evaluated once. A declared class yields its instances in
+  population order and depends on the population, as `Name.every(...)` does.
+  A list, including a reasoning selection such as `why c` or
+  `c |> why |> stated`, yields its items. A null or undefined collection tests
+  no member and yields undefined, which a declaration stores as `null`. Any
+  other value, such as a number, string, boolean, object, instance, function
+  or built-in namespace, raises `TypeError("<collection> is not a collection")`
+  naming the collection's path or canonical source.
+- For each member in order, the binder is bound to it in a new innermost
+  frame and the condition is tested with the truthiness of `if`. `all` is
+  `false` at the first member whose condition is falsy and `true` otherwise,
+  including for an empty collection. `any` is `true` at the first member whose
+  condition is truthy and `false` otherwise, including for an empty
+  collection. Members after the deciding one are not visited and add no
+  dependency.
+- Over a list, an instance list, null or undefined, and with a condition that
+  reads only the binder and state names, results, reads, dependencies,
+  short-circuiting, null settling and errors equal those of
+  `COLLECTION.every(NAME => CONDITION)` and
+  `COLLECTION.some(NAME => CONDITION)`. A stored declaration whose evaluation
+  read a null binding or property settles to `null`, as `pending.every(...)`
+  with a null `pending` and `C.every(c => c.passed)` with a null `passed` do.
+- The condition is evaluated in place, not as a function call. It reads the
+  enclosing scope: enclosing binders, so quantifiers nest, function
+  parameters and locals, `this` or `self`, and the instance of a class-level
+  rule. The binder shadows an outer name only inside the condition and is not
+  defined after the quantifier. Functions and arrows called from the
+  condition still start from their own scope and do not see the binder, so
+  `all x in xs: ys.some(y => y > x)` raises
+  `ReferenceError("x is not defined")`; nest a quantifier instead, as in
+  `all x in xs: any y in ys: y > x`.
+- `.value` adds no dependency in either part. In the collection it is frozen
+  when the declaration is stored, exactly as in the receiver of `every`: the
+  existing freezing replaces a scalar or object reading with its value, and a
+  list, which has no literal form, is read again at each evaluation. In the
+  condition, as in a callback body, `.value` is read each time the condition
+  is tested.
+- Class-level rule validation treats the binder as bound inside the
+  condition. Any other undefined name in the collection or the condition
+  raises `ReferenceError("<name> is not defined")` when the rule is declared,
+  and a `$Class` property read in either takes part in
+  `TypeError("Circular Dependency")` checks. Each instance evaluates its own
+  quantifier.
+- A quantifier whose collection or condition contains a reasoning operation is
+  a reasoning observer, like `(why c).every(...)`: graph walks neither select
+  nor traverse it, and `model` excludes it.
+- An error raised by the collection or the condition propagates through the
+  existing transaction, so a failed standing re-evaluation rolls back the
+  change that triggered it.
+- A quantifier is an operand whose condition is a complete expression, like
+  an arrow or lambda body, so it extends as far right as possible:
+  `x and all v in xs: v > 0` is `x and (all v in xs: (v > 0))`,
+  `not all v in xs: v > 0` negates the quantifier, and
+  `all v in xs: v > 0 and ready` tests `v > 0 and ready` for each member.
+  Parenthesize a quantifier to combine it with what follows, as in
+  `(all v in scores: v > 0) ? "clean" : "dirty"`.
+- The collection is a complete expression that ends at the quantifier's own
+  `:`, parsed like the source of a `for` header. It may hold `|>`, `??`,
+  `and`, `or`, a prefix stage such as `why c`, a Python-style conditional and
+  conditional expressions whose colons pair with their `?`; a top-level
+  `lambda` there needs parentheses. A quantifier nested in the collection or
+  the condition pairs with its own colon.
+- A quantifier is one logical line. Wrap it in parentheses or brackets, where
+  layout is suppressed, to continue it over several lines.
+- Statement headers take quantifier conditions: `if all v in xs: v > 0:` with
+  an indented or same-line suite, the colon-free `if all v in xs: v > 0` of
+  [NUC 49](docs/nuc-0049.md), `else if` and `elif if` headers, and the indented
+  direct alternatives `else any v in xs: v > 2` of
+  [NUC 43](docs/nuc-0043.md). In direct-alternative and native REPL header
+  scans, a top-level quantifier's colon pairs with its `all` or `any` prefix,
+  as a conditional's colon pairs with its `?`.
+- At the top level of a template interpolation, whose trailing tokens are
+  ignored, a quantifier is not recognized, so `` `${all v in xs: v}` `` still
+  renders the variable `all`; parenthesize it, as in
+  `` `${(all v in xs: v)}` ``. Colon-led `assert:` statements, call arguments,
+  list items, object values with or without commas, subscripts and arrow,
+  lambda and named-function bodies take quantifiers as ordinary operands.
+- Both forms render canonically as `(all NAME in COLLECTION:CONDITION)` and
+  `(any NAME in COLLECTION:CONDITION)`. The grouping keeps a quantifier
+  distinct from an enclosing operator in graph keys and `rule` text.
+- Malformed forms use existing diagnostics, for example
+  `SyntaxError("Expected ':' but found end of input")` for `ok = all v in xs`
+  and `SyntaxError("Unexpected end of input")` for `ok = all v in xs:`. The
+  eight appended entries beginning
+  `Nucleoid quantifies over class instances with all and any` through
+  `Nucleoid rolls back failed quantifier updates` specify the executable
+  behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -15297,4 +15396,188 @@ assert(Item.length, 1)
 assert(pick, null)
 mid = Item(3)
 assert(pick, mid)
+---
+# Nucleoid quantifies over class instances with all and any
+
+class Check
+ready = all c in Check: c.passed
+blocked = any c in Check: c.failed
+assert(ready, true)
+assert(blocked, false)
+first = Check()
+second = Check()
+first.passed = true
+second.passed = true
+assert(ready, true)
+second.passed = false
+second.failed = true
+assert(ready, false)
+assert(blocked, true)
+second.passed = true
+second.failed = false
+assert(ready, true)
+assert(blocked, false)
+third = Check()
+assert(ready, false)
+third.passed = true
+assert(ready, true)
+---
+# Nucleoid quantifies over lists with all and any
+
+numbers = [3, 5, 8]
+limit = 2
+large = all n in numbers: n > limit
+even = any n in numbers: n % 2 == 0
+assert(large, true)
+assert(even, true)
+limit = 4
+assert(large, false)
+numbers = [5, 7]
+assert(large, true)
+assert(even, false)
+numbers.push(10)
+assert(even, true)
+empty = []
+vacuous = all n in empty: n > 0
+none = any n in empty: n > 0
+assert(vacuous, true)
+assert(none, false)
+---
+# Nucleoid quantifies over reasoning selections
+
+a = 1
+b = a + 2
+c = b * 2
+positive = all s in why c: s.holds > 0
+grounded = all s in c |> why |> stated: s.holds > 0
+mentions = any s in why c: s.node == "d"
+assert(positive, true)
+assert(grounded, true)
+assert(mentions, false)
+d = -5
+b = a + d
+assert(positive, false)
+assert(grounded, false)
+assert(mentions, true)
+d = 5
+assert(positive, true)
+assert(grounded, true)
+---
+# Nucleoid nests quantifiers over related instances
+
+class Task(skill):
+    this.skill = skill
+class Worker(skill):
+    this.skill = skill
+covered = all t in Task: any w in Worker: w.skill == t.skill
+spare = any w in Worker: all t in Task: t.skill != w.skill
+assert(covered, true)
+assert(spare, false)
+Task("rust")
+Task("docs")
+assert(covered, false)
+Worker("rust")
+writer = Worker("docs")
+assert(covered, true)
+assert(spare, false)
+Worker("ops")
+assert(spare, true)
+writer.skill = "ops"
+assert(covered, false)
+writer.skill = "docs"
+assert(covered, true)
+---
+# Nucleoid applies quantifiers in class level rules
+
+class Line(sent):
+    this.sent = sent
+class Order(lines):
+    this.lines = lines
+$Order.complete = all line in $Order.lines: line.sent
+$Order.started = any line in $Order.lines: line.sent
+first = Line(true)
+second = Line(false)
+order = Order([first, second])
+empty = Order([])
+assert(order.complete, false)
+assert(order.started, true)
+assert(empty.complete, true)
+assert(empty.started, false)
+second.sent = true
+assert(order.complete, true)
+first.sent = false
+second.sent = false
+assert(order.complete, false)
+assert(order.started, false)
+---
+# Nucleoid uses quantifiers in functions callbacks and conditionals
+
+def positive(values) => all v in values: v > 0
+scores = [2, 4]
+ok = positive(scores)
+label = (all v in scores: v > 0) ? "clean" : "dirty"
+assert(ok, true)
+assert(label, "clean")
+scores = [2, -1]
+assert(ok, false)
+assert(label, "dirty")
+groups = [[1, 2], [3, -4], []]
+whole = groups.filter(g => all v in g: v > 0)
+mixed = groups.map(g => any v in g: v < 0)
+assert(whole, [[1, 2], []])
+assert(mixed, [false, true, false])
+groups = [[-1]]
+assert(whole, [])
+assert(mixed, [true])
+---
+# Nucleoid keeps all and any as ordinary names beside quantifiers
+
+all = [1, 2, 3]
+any = 0
+large = all n in all: n > any
+some = any n in all: n > 2
+assert(large, true)
+assert(some, true)
+any = 2
+assert(large, false)
+assert(some, true)
+n = 10
+doubled = all n in all: n * 2 > n
+assert(doubled, true)
+assert(n, 10)
+---
+# Nucleoid rolls back failed quantifier updates
+
+def checked(value):
+    if value < 0:
+        throw "NEGATIVE"
+    return value > 0
+class Item(qty):
+    this.qty = qty
+item = Item(2)
+valid = all i in Item: checked(i.qty)
+assert(valid, true)
+failure = ""
+try:
+    item.qty = -1
+catch error:
+    failure = error
+assert(failure, "NEGATIVE")
+assert(item.qty, 2)
+assert(valid, true)
+failure = ""
+try:
+    Item(-3)
+catch error:
+    failure = error
+assert(failure, "NEGATIVE")
+assert(Item.length, 1)
+item.qty = 0
+assert(valid, false)
+try:
+    broken = all x in missing: x
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(valid, false)
 ```

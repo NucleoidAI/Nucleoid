@@ -1953,4 +1953,22 @@ assert(pending, 2)
 assert(Task.lastIndexOf(build), 1)
 everyone.map(task => task.title)
 # return: ["plan","build","ship"]
+---
+# Nucleoid states live facts with all and any
+
+class Check
+first = Check()
+first.passed = true
+ready = all c in Check: c.passed
+failing = any c in Check: not c.passed
+assert(ready, true)
+assert(failing, false)
+second = Check()
+assert(ready, false)
+assert(failing, true)
+second.passed = true
+assert(ready, true)
+assert(failing, false)
+ready
+# return: true
 ```

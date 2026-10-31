@@ -136,6 +136,16 @@ impl fmt::Display for Expr {
             Expr::Delete(operand) => write!(f, "delete {operand}"),
             Expr::Reason { stage, source } => write!(f, "{source}|>{}", stage.as_str()),
             Expr::Model => f.write_str("model"),
+            Expr::Quantified {
+                quantifier,
+                binder,
+                collection,
+                condition,
+            } => write!(
+                f,
+                "({} {binder} in {collection}:{condition})",
+                quantifier.as_str()
+            ),
         }
     }
 }

@@ -12532,6 +12532,222 @@ mid = Item(3)
 assert(pick, mid)"#);
 }
 
+/// Nucleoid quantifies over class instances with all and any
+#[rustfmt::skip]
+#[test]
+fn quantifies_over_class_instances_with_all_and_any() {
+    let mut run = runner();
+    run("class Check");
+    run("ready = all c in Check: c.passed");
+    run("blocked = any c in Check: c.failed");
+    assert_eq!(run("ready"), true);
+    assert_eq!(run("blocked"), false);
+    run("first = Check()");
+    run("second = Check()");
+    run("first.passed = true");
+    run("second.passed = true");
+    assert_eq!(run("ready"), true);
+    run("second.passed = false");
+    run("second.failed = true");
+    assert_eq!(run("ready"), false);
+    assert_eq!(run("blocked"), true);
+    run("second.passed = true");
+    run("second.failed = false");
+    assert_eq!(run("ready"), true);
+    assert_eq!(run("blocked"), false);
+    run("third = Check()");
+    assert_eq!(run("ready"), false);
+    run("third.passed = true");
+    assert_eq!(run("ready"), true);
+}
+
+/// Nucleoid quantifies over lists with all and any
+#[rustfmt::skip]
+#[test]
+fn quantifies_over_lists_with_all_and_any() {
+    let mut run = runner();
+    run("numbers = [3, 5, 8]");
+    run("limit = 2");
+    run("large = all n in numbers: n > limit");
+    run("even = any n in numbers: n % 2 == 0");
+    assert_eq!(run("large"), true);
+    assert_eq!(run("even"), true);
+    run("limit = 4");
+    assert_eq!(run("large"), false);
+    run("numbers = [5, 7]");
+    assert_eq!(run("large"), true);
+    assert_eq!(run("even"), false);
+    run("numbers.push(10)");
+    assert_eq!(run("even"), true);
+    run("empty = []");
+    run("vacuous = all n in empty: n > 0");
+    run("none = any n in empty: n > 0");
+    assert_eq!(run("vacuous"), true);
+    assert_eq!(run("none"), false);
+}
+
+/// Nucleoid quantifies over reasoning selections
+#[rustfmt::skip]
+#[test]
+fn quantifies_over_reasoning_selections() {
+    let mut run = runner();
+    run("a = 1");
+    run("b = a + 2");
+    run("c = b * 2");
+    run("positive = all s in why c: s.holds > 0");
+    run("grounded = all s in c |> why |> stated: s.holds > 0");
+    run(r#"mentions = any s in why c: s.node == "d""#);
+    assert_eq!(run("positive"), true);
+    assert_eq!(run("grounded"), true);
+    assert_eq!(run("mentions"), false);
+    run("d = -5");
+    run("b = a + d");
+    assert_eq!(run("positive"), false);
+    assert_eq!(run("grounded"), false);
+    assert_eq!(run("mentions"), true);
+    run("d = 5");
+    assert_eq!(run("positive"), true);
+    assert_eq!(run("grounded"), true);
+}
+
+/// Nucleoid nests quantifiers over related instances
+#[rustfmt::skip]
+#[test]
+fn nests_quantifiers_over_related_instances() {
+    let mut run = runner();
+    run(r#"class Task(skill):
+    this.skill = skill"#);
+    run(r#"class Worker(skill):
+    this.skill = skill"#);
+    run("covered = all t in Task: any w in Worker: w.skill == t.skill");
+    run("spare = any w in Worker: all t in Task: t.skill != w.skill");
+    assert_eq!(run("covered"), true);
+    assert_eq!(run("spare"), false);
+    run(r#"Task("rust")"#);
+    run(r#"Task("docs")"#);
+    assert_eq!(run("covered"), false);
+    run(r#"Worker("rust")"#);
+    run(r#"writer = Worker("docs")"#);
+    assert_eq!(run("covered"), true);
+    assert_eq!(run("spare"), false);
+    run(r#"Worker("ops")"#);
+    assert_eq!(run("spare"), true);
+    run(r#"writer.skill = "ops""#);
+    assert_eq!(run("covered"), false);
+    run(r#"writer.skill = "docs""#);
+    assert_eq!(run("covered"), true);
+}
+
+/// Nucleoid applies quantifiers in class level rules
+#[rustfmt::skip]
+#[test]
+fn applies_quantifiers_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Line(sent):
+    this.sent = sent"#);
+    run(r#"class Order(lines):
+    this.lines = lines"#);
+    run("$Order.complete = all line in $Order.lines: line.sent");
+    run("$Order.started = any line in $Order.lines: line.sent");
+    run("first = Line(true)");
+    run("second = Line(false)");
+    run("order = Order([first, second])");
+    run("empty = Order([])");
+    assert_eq!(run("order.complete"), false);
+    assert_eq!(run("order.started"), true);
+    assert_eq!(run("empty.complete"), true);
+    assert_eq!(run("empty.started"), false);
+    run("second.sent = true");
+    assert_eq!(run("order.complete"), true);
+    run("first.sent = false");
+    run("second.sent = false");
+    assert_eq!(run("order.complete"), false);
+    assert_eq!(run("order.started"), false);
+}
+
+/// Nucleoid uses quantifiers in functions callbacks and conditionals
+#[rustfmt::skip]
+#[test]
+fn uses_quantifiers_in_functions_callbacks_and_conditionals() {
+    let mut run = runner();
+    run("def positive(values) => all v in values: v > 0");
+    run("scores = [2, 4]");
+    run("ok = positive(scores)");
+    run(r#"label = (all v in scores: v > 0) ? "clean" : "dirty""#);
+    assert_eq!(run("ok"), true);
+    assert_eq!(run("label"), "clean");
+    run("scores = [2, -1]");
+    assert_eq!(run("ok"), false);
+    assert_eq!(run("label"), "dirty");
+    run("groups = [[1, 2], [3, -4], []]");
+    run("whole = groups.filter(g => all v in g: v > 0)");
+    run("mixed = groups.map(g => any v in g: v < 0)");
+    assert_eq!(run("whole"), serde_json::json!([[1, 2], []]));
+    assert_eq!(run("mixed"), serde_json::json!([false, true, false]));
+    run("groups = [[-1]]");
+    assert_eq!(run("whole"), serde_json::json!([]));
+    assert_eq!(run("mixed"), serde_json::json!([true]));
+}
+
+/// Nucleoid keeps all and any as ordinary names beside quantifiers
+#[rustfmt::skip]
+#[test]
+fn keeps_all_and_any_as_ordinary_names_beside_quantifiers() {
+    let mut run = runner();
+    run("all = [1, 2, 3]");
+    run("any = 0");
+    run("large = all n in all: n > any");
+    run("some = any n in all: n > 2");
+    assert_eq!(run("large"), true);
+    assert_eq!(run("some"), true);
+    run("any = 2");
+    assert_eq!(run("large"), false);
+    assert_eq!(run("some"), true);
+    run("n = 10");
+    run("doubled = all n in all: n * 2 > n");
+    assert_eq!(run("doubled"), true);
+    assert_eq!(run("n"), 10);
+}
+
+/// Nucleoid rolls back failed quantifier updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_quantifier_updates() {
+    let mut run = runner();
+    run(r#"def checked(value):
+    if value < 0:
+        throw "NEGATIVE"
+    return value > 0
+class Item(qty):
+    this.qty = qty
+item = Item(2)
+valid = all i in Item: checked(i.qty)
+assert(valid, true)
+failure = ""
+try:
+    item.qty = -1
+catch error:
+    failure = error
+assert(failure, "NEGATIVE")
+assert(item.qty, 2)
+assert(valid, true)
+failure = ""
+try:
+    Item(-3)
+catch error:
+    failure = error
+assert(failure, "NEGATIVE")
+assert(Item.length, 1)
+item.qty = 0
+assert(valid, false)
+try:
+    broken = all x in missing: x
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(valid, false)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

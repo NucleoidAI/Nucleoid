@@ -21,6 +21,7 @@ pub mod object;
 pub mod operator;
 pub mod parameter;
 pub mod parser;
+pub mod quantified;
 pub mod reason;
 pub mod template;
 pub mod version;
@@ -36,6 +37,7 @@ use crate::reasoning::Stage;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 use crate::value::Value;
+use lexer::{Keyword, Token};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -191,6 +193,40 @@ pub enum Expr {
         source: Box<Expr>,
     },
     Model,
+    Quantified {
+        quantifier: Quantifier,
+        binder: String,
+        collection: Box<Expr>,
+        condition: Box<Expr>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Quantifier {
+    All,
+    Any,
+}
+
+impl Quantifier {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Quantifier::All => "all",
+            Quantifier::Any => "any",
+        }
+    }
+
+    pub fn starting(word: &Token, binder: &Token, keyword: &Token) -> Option<Quantifier> {
+        match (word, binder, keyword) {
+            (Token::Identifier(word), Token::Identifier(_), Token::Keyword(Keyword::In)) => {
+                match word.as_str() {
+                    "all" => Some(Quantifier::All),
+                    "any" => Some(Quantifier::Any),
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -316,6 +352,11 @@ impl Expr {
                     || consequent.contains_reasoning()
                     || alternate.contains_reasoning()
             }
+            Expr::Quantified {
+                collection,
+                condition,
+                ..
+            } => collection.contains_reasoning() || condition.contains_reasoning(),
             Expr::Call { callee, arguments } => {
                 callee.contains_reasoning()
                     || arguments
@@ -367,6 +408,7 @@ pub enum Ast<'a> {
     Operator(operator::Operator<'a>),
     Reason(reason::Reason<'a>),
     Version(version::Version<'a>),
+    Quantified(quantified::Quantified<'a>),
 }
 
 impl<'a> Ast<'a> {
@@ -395,6 +437,7 @@ impl<'a> Ast<'a> {
             | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
             Expr::Reason { .. } | Expr::Model => Ast::Reason(reason::Reason::new(node)),
             Expr::Version { .. } => Ast::Version(version::Version::new(node)),
+            Expr::Quantified { .. } => Ast::Quantified(quantified::Quantified::new(node)),
         }
     }
 
@@ -411,6 +454,7 @@ impl<'a> Ast<'a> {
             Ast::Operator(node) => node.resolve(runtime, scope),
             Ast::Reason(node) => node.resolve(runtime, scope),
             Ast::Version(node) => node.resolve(runtime, scope),
+            Ast::Quantified(node) => node.resolve(runtime, scope),
         }
     }
 
@@ -426,6 +470,7 @@ impl<'a> Ast<'a> {
             Ast::Operator(node) => node.node,
             Ast::Reason(node) => node.node,
             Ast::Version(node) => node.node,
+            Ast::Quantified(node) => node.node,
         }
     }
 
