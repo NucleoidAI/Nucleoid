@@ -3001,6 +3001,50 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed value assignments` specify the executable
   behavior.
 
+## List and population sums
+
+- [NUC 68](docs/nuc-0068.md) adds the read-only list query `sum` to lists and
+  class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.sum()` returns the total of the receiver's items and
+  `RECEIVER.sum(selector)` the total of `selector(item)` for every item. The
+  values are converted to numbers and added left to right, starting from `0`,
+  in 64-bit floating point, so a list of numbers totals exactly what
+  `reduce((total, item) => total + item, 0)` returns. An empty receiver gives
+  `0`.
+- The receiver is a list, however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class.
+  On a class name, `sum` is the population query even when the class declares
+  an instance method `sum`; its instances keep calling that method.
+- Each added value is converted with the numeric conversion of `-`, `*` and
+  the Math helpers: `null`, `false`, an empty or whitespace-only string and an
+  empty list are `0`, `true` is `1`, a numeric string after trimming is its
+  number, a one-item list is its item's number, a date is its time in
+  milliseconds, and objects, classes, functions, regular expressions, other
+  strings and longer lists are NaN. NaN and infinities add as 64-bit floating
+  point.
+- An undefined item or selector result makes the total undefined, which a
+  declaration stores as `null`; every item is still visited. `sum()` reads
+  items, not bindings, so a `null` item counts `0` without settling a
+  declaration to `null`, while the reads inside a selector follow the existing
+  rules.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("sum expects a function")`,
+  even on an empty receiver.
+- `sum` follows the shared rules of the list queries: it reads its receiver
+  before its arguments, evaluates every supplied argument once, left to right,
+  including unused extras, and never writes the receiver. A declaration that
+  uses it depends on the list or population, on its argument expressions and
+  on whatever the selector reads, so list mutations, new and deleted
+  instances and property changes re-evaluate it, in class-level rules too.
+  Selector errors roll back through the existing transaction. A null or
+  undefined receiver yields undefined without evaluating the arguments.
+- Property reads such as `xs.sum`, bindings and object properties named
+  `sum`, and instance methods named `sum` called on an instance keep their
+  accepted results. The eight appended entries beginning
+  `Nucleoid totals lists with sum` through
+  `Nucleoid rolls back failed sum updates` specify the executable behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -16454,4 +16498,216 @@ balance := stock + 40
 stock = 70
 assert: stock, 70
 assert: balance, 90
+---
+# Nucleoid totals lists with sum
+
+moves = [4, -6, 10]
+net = moves.sum()
+travelled = moves.sum(move -> Math.abs(move))
+assert: net, 8
+assert: travelled, 20
+moves.push(-5)
+assert: net, 3
+assert: travelled, 25
+moves.pop()
+moves.pop()
+assert: net, -2
+assert: travelled, 10
+moves = []
+assert: net, 0
+assert: travelled, 0
+cart = {items: [0.1, 0.2]}
+paid = cart.items.sum()
+small = cart.items.filter(item -> item < 0.25).sum()
+assert: paid, 0.30000000000000004
+cart.items.push(0.3)
+assert: paid, 0.6000000000000001
+assert: small, 0.30000000000000004
+---
+# Nucleoid totals class instance populations with sum
+
+class Order(total, rush):
+    this.total = total
+    this.rush = rush
+first = Order(20, false)
+second = Order(45, true)
+revenue = Order.sum(order -> order.total)
+rushed = Order.filter(order -> order.rush).sum(order -> order.total)
+recent = Order[-2:].sum(order -> order.total)
+assert: revenue, 65
+assert: rushed, 45
+assert: recent, 65
+third = Order(30, true)
+assert: revenue, 95
+assert: rushed, 75
+assert: recent, 75
+first.total = 50
+assert: revenue, 125
+delete third.total
+assert: revenue, null
+delete third.rush
+delete third
+assert: revenue, 95
+assert: rushed, 45
+class Refund(amount): this.amount = amount
+refunds = Refund.sum(refund -> refund.amount)
+assert: refunds, 0
+Refund(5)
+assert: refunds, 5
+---
+# Nucleoid converts summed values to numbers
+
+flags = [true, false, true]
+count = flags.sum()
+entries = [2, "3", " 4 ", "", null, [5], []]
+total = entries.sum()
+assert: count, 2
+assert: total, 14
+flags.push(true)
+entries.push("x")
+assert: count, 3
+assert: Number.isNaN(total), true
+entries.pop()
+entries.push(Number.POSITIVE_INFINITY)
+assert: total, Number.POSITIVE_INFINITY
+class Item(price): this.price = price
+pen = Item(3)
+book = Item(12)
+spent = Item.sum(item -> item.price)
+assert: spent, 15
+gift = Item(null)
+assert: spent, null
+gift.price = 5
+assert: spent, 20
+---
+# Nucleoid calls the sum selector once per item with only the item
+
+seen = []
+def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item
+items = [3, 1, 2]
+weighed := items.sum(weigh)
+assert: weighed, 14
+assert: seen, [3, 1, 2]
+floor = 2
+def price item => Math.max(item, floor)
+cost = items.sum(price)
+assert: cost, 7
+floor = 3
+assert: cost, 9
+items.push(4)
+assert: cost, 13
+assert: seen, [3, 1, 2]
+missing = null
+skipped = missing.sum(weigh(9))
+assert: skipped, null
+assert: seen, [3, 1, 2]
+---
+# Nucleoid keeps sums live in class level rules
+
+class Order(name): this.name = name
+class Line(order, price, qty):
+    this.order = order
+    this.price = price
+    this.qty = qty
+$Line.cost = $Line.price * $Line.qty
+$Order.total = Line.filter(line -> line.order == $Order).sum(line -> line.cost)
+$Order.units = Line.filter(line -> line.order == $Order).sum(line -> line.qty)
+north = Order("north")
+south = Order("south")
+Line(north, 2, 3)
+pen = Line(south, 4, 2)
+Line(north, 5, 1)
+assert: north.total, 11
+assert: south.total, 8
+assert: north.units, 4
+pen.qty = 5
+assert: south.total, 20
+assert: south.units, 5
+grand = Order.sum(order -> order.total)
+assert: grand, 31
+west = Order("west")
+assert: west.total, 0
+Line(west, 1, 1)
+assert: grand, 32
+pen.price = 1
+assert: grand, 17
+---
+# Nucleoid uses sums in functions methods and conditional expressions
+
+class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def points(): return this.scores.sum()
+def squares(team) => team.scores.sum(score -> score * score)
+red = Team("red", [3, 4])
+blue = Team("blue", [5])
+league = Team.sum(team -> team.points())
+leader = red.points() > blue.points() ? red.name : blue.name
+spread = squares(red)
+assert: league, 12
+assert: leader, "red"
+assert: spread, 25
+blue.scores.push(4)
+red.scores.push(1)
+Team("green", [2])
+assert: league, 19
+assert: leader, "blue"
+assert: spread, 26
+---
+# Nucleoid keeps sum as an ordinary name beside the sum query
+
+sum = 2
+report = {sum: 5}
+def double sum => sum * 2
+class Bag(items):
+    this.items = items
+    def sum(): return this.items.sum() + 1
+bag = Bag([1, 2])
+total = bag.items.sum() + sum + report.sum
+bags = Bag.sum(each -> each.sum())
+assert: total, 10
+assert: bag.sum(), 4
+assert: bags, 4
+assert: double(sum), 4
+assert: bag.items.sum, null
+bag.items.push(3)
+sum = 4
+Bag([5])
+assert: total, 15
+assert: bags, 13
+---
+# Nucleoid rolls back failed sum updates
+
+def checked(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value
+amounts = [10, 20]
+total = amounts.sum(checked)
+assert: total, 30
+failure = ""
+try:
+    amounts.push(500)
+catch error:
+    failure = error
+assert: failure, "TOO_LARGE"
+assert: amounts, [10, 20]
+assert: total, 30
+amounts.push(5)
+assert: total, 35
+class Item(price): this.price = price
+pen = Item(3)
+spent = Item.sum(item -> checked(item.price))
+failure = ""
+try:
+    Item(500)
+catch error:
+    failure = error
+assert: failure, "TOO_LARGE"
+assert: Item.length, 1
+assert: spent, 3
+Item(4)
+assert: spent, 7
 ```

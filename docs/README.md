@@ -874,6 +874,9 @@ else:
 $Category.revenue = Product.filter(p => p.category == $Category).reduce((sum, p) => sum + p.price, 0)
 ```
 
+- With [NUC 68](nuc-0068.md), `Product.filter(p => p.category == $Category).sum(p => p.price)`
+  states the same total.
+
 Full detail: [NUC 5](nuc-0005.md).
 
 ### Fixed per-instance state anchors
@@ -1656,7 +1659,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), and `sum` ([NUC 68](nuc-0068.md)) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2299,6 +2302,54 @@ everyone.map(task => task.title)
   [instance list ranges and list queries](../nucleoid.spec.md#instance-list-ranges-and-list-queries)
   section.
 
+### List and population sums
+
+```
+scores = [3, 4, 5]
+total = scores.sum()
+squares = scores.sum(score -> score * score)
+class Order(amount): this.amount = amount
+first = Order(20)
+revenue = Order.sum(order -> order.amount)
+assert(total, 12)
+assert(squares, 50)
+assert(revenue, 20)
+scores.push(8)
+second = Order(15)
+assert(total, 20)
+assert(squares, 114)
+assert(revenue, 35)
+scores = []
+assert(total, 0)
+revenue
+```
+
+- This is the complete
+  `Nucleoid totals lists and populations with sum` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `35`.
+- [NUC 68](nuc-0068.md) adds `sum()` and `sum(selector)` to lists and class
+  instance lists. The values are converted to numbers and added left to right
+  from `0`, so a list of numbers totals exactly what
+  `reduce((total, item) => total + item, 0)` returns, and an empty list or
+  class totals `0`.
+- Values convert as for `-`, `*` and the Math helpers: `true` counts `1`;
+  `null`, `""` and `[]` count `0`; a numeric string counts its number; objects
+  and other strings are NaN. An undefined value makes the total undefined,
+  stored as `null`. A `null` item counts `0` without settling a declaration to
+  `null`, while the reads inside a selector follow the existing rules.
+- The selector is called once per item, in order, with only the item, as
+  `map` calls its callback. A supplied selector that is not a function,
+  including `null`, raises `TypeError("sum expects a function")`, even on an
+  empty receiver.
+- Sums are read-only and live: a declaration follows the list or population,
+  the arguments and what the selector reads, in class-level rules too. On a
+  class name, `Name.sum(...)` is the population query even when the class
+  declares an instance method `sum`; instances keep calling the method.
+- The authoritative contract is the
+  [list and population sums](../nucleoid.spec.md#list-and-population-sums)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -2540,6 +2591,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
+| A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
 | `:=` on a class-level property outside a class-level rule | `Cannot use ':=' on a class-level property` |
@@ -2700,6 +2752,7 @@ value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
 Name.list()  Name.all()                every instance, in population order (NUC 61)
 items.at(-1)  items.findLast(callback) read or search from the end (NUC 61)
+items.sum()  Name.sum(selector)        live numeric total (NUC 68)
 
 why reference                         derive a live explanation
 affects reference                     inspect live downstream impact

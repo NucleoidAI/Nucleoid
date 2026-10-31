@@ -13445,6 +13445,262 @@ assert: stock, 70
 assert: balance, 90"#);
 }
 
+/// Nucleoid totals lists with sum
+#[rustfmt::skip]
+#[test]
+fn totals_lists_with_sum() {
+    runner()("moves = [4, -6, 10]\nnet = moves.sum()\ntravelled = moves.sum(move -> Math.abs(move))\nassert: net, 8\nassert: travelled, 20\nmoves.push(-5)\nassert: net, 3\nassert: travelled, 25\nmoves.pop()\nmoves.pop()\nassert: net, -2\nassert: travelled, 10\nmoves = []\nassert: net, 0\nassert: travelled, 0\ncart = {items: [0.1, 0.2]}\npaid = cart.items.sum()\nsmall = cart.items.filter(item -> item < 0.25).sum()\nassert: paid, 0.30000000000000004\ncart.items.push(0.3)\nassert: paid, 0.6000000000000001\nassert: small, 0.30000000000000004");
+    let mut run = runner();
+    run("moves = [4, -6, 10]");
+    run("net = moves.sum()");
+    run("travelled = moves.sum(move -> Math.abs(move))");
+    assert_eq!(run("net"), 8);
+    assert_eq!(run("travelled"), 20);
+    run("moves.push(-5)");
+    assert_eq!(run("net"), 3);
+    assert_eq!(run("travelled"), 25);
+    run("moves.pop()");
+    run("moves.pop()");
+    assert_eq!(run("net"), -2);
+    assert_eq!(run("travelled"), 10);
+    run("moves = []");
+    assert_eq!(run("net"), 0);
+    assert_eq!(run("travelled"), 0);
+    run("cart = {items: [0.1, 0.2]}");
+    run("paid = cart.items.sum()");
+    run("small = cart.items.filter(item -> item < 0.25).sum()");
+    assert_eq!(run("paid"), 0.30000000000000004);
+    run("cart.items.push(0.3)");
+    assert_eq!(run("paid"), 0.6000000000000001);
+    assert_eq!(run("small"), 0.30000000000000004);
+}
+
+/// Nucleoid totals class instance populations with sum
+#[rustfmt::skip]
+#[test]
+fn totals_class_instance_populations_with_sum() {
+    runner()("class Order(total, rush):\n    this.total = total\n    this.rush = rush\nfirst = Order(20, false)\nsecond = Order(45, true)\nrevenue = Order.sum(order -> order.total)\nrushed = Order.filter(order -> order.rush).sum(order -> order.total)\nrecent = Order[-2:].sum(order -> order.total)\nassert: revenue, 65\nassert: rushed, 45\nassert: recent, 65\nthird = Order(30, true)\nassert: revenue, 95\nassert: rushed, 75\nassert: recent, 75\nfirst.total = 50\nassert: revenue, 125\ndelete third.total\nassert: revenue, null\ndelete third.rush\ndelete third\nassert: revenue, 95\nassert: rushed, 45\nclass Refund(amount): this.amount = amount\nrefunds = Refund.sum(refund -> refund.amount)\nassert: refunds, 0\nRefund(5)\nassert: refunds, 5");
+    let mut run = runner();
+    run(r#"class Order(total, rush):
+    this.total = total
+    this.rush = rush"#);
+    run("first = Order(20, false)");
+    run("second = Order(45, true)");
+    run("revenue = Order.sum(order -> order.total)");
+    run("rushed = Order.filter(order -> order.rush).sum(order -> order.total)");
+    run("recent = Order[-2:].sum(order -> order.total)");
+    assert_eq!(run("revenue"), 65);
+    assert_eq!(run("rushed"), 45);
+    assert_eq!(run("recent"), 65);
+    run("third = Order(30, true)");
+    assert_eq!(run("revenue"), 95);
+    assert_eq!(run("rushed"), 75);
+    assert_eq!(run("recent"), 75);
+    run("first.total = 50");
+    assert_eq!(run("revenue"), 125);
+    run("delete third.total");
+    assert_eq!(run("revenue"), serde_json::Value::Null);
+    run("delete third.rush");
+    run("delete third");
+    assert_eq!(run("revenue"), 95);
+    assert_eq!(run("rushed"), 45);
+    run("class Refund(amount): this.amount = amount");
+    run("refunds = Refund.sum(refund -> refund.amount)");
+    assert_eq!(run("refunds"), 0);
+    run("Refund(5)");
+    assert_eq!(run("refunds"), 5);
+}
+
+/// Nucleoid converts summed values to numbers
+#[rustfmt::skip]
+#[test]
+fn converts_summed_values_to_numbers() {
+    runner()("flags = [true, false, true]\ncount = flags.sum()\nentries = [2, \"3\", \" 4 \", \"\", null, [5], []]\ntotal = entries.sum()\nassert: count, 2\nassert: total, 14\nflags.push(true)\nentries.push(\"x\")\nassert: count, 3\nassert: Number.isNaN(total), true\nentries.pop()\nentries.push(Number.POSITIVE_INFINITY)\nassert: total, Number.POSITIVE_INFINITY\nclass Item(price): this.price = price\npen = Item(3)\nbook = Item(12)\nspent = Item.sum(item -> item.price)\nassert: spent, 15\ngift = Item(null)\nassert: spent, null\ngift.price = 5\nassert: spent, 20");
+    let mut run = runner();
+    run("flags = [true, false, true]");
+    run("count = flags.sum()");
+    run(r#"entries = [2, "3", " 4 ", "", null, [5], []]"#);
+    run("total = entries.sum()");
+    assert_eq!(run("count"), 2);
+    assert_eq!(run("total"), 14);
+    run("flags.push(true)");
+    run(r#"entries.push("x")"#);
+    assert_eq!(run("count"), 3);
+    assert_eq!(run("Number.isNaN(total)"), true);
+    run("entries.pop()");
+    run("entries.push(Number.POSITIVE_INFINITY)");
+    {
+        let actual = run("total");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("class Item(price): this.price = price");
+    run("pen = Item(3)");
+    run("book = Item(12)");
+    run("spent = Item.sum(item -> item.price)");
+    assert_eq!(run("spent"), 15);
+    run("gift = Item(null)");
+    assert_eq!(run("spent"), serde_json::Value::Null);
+    run("gift.price = 5");
+    assert_eq!(run("spent"), 20);
+}
+
+/// Nucleoid calls the sum selector once per item with only the item
+#[rustfmt::skip]
+#[test]
+fn calls_the_sum_selector_once_per_item_with_only_the_item() {
+    runner()("seen = []\ndef weigh(item, position):\n    seen.push(position ?? item)\n    return item * item\nitems = [3, 1, 2]\nweighed := items.sum(weigh)\nassert: weighed, 14\nassert: seen, [3, 1, 2]\nfloor = 2\ndef price item => Math.max(item, floor)\ncost = items.sum(price)\nassert: cost, 7\nfloor = 3\nassert: cost, 9\nitems.push(4)\nassert: cost, 13\nassert: seen, [3, 1, 2]\nmissing = null\nskipped = missing.sum(weigh(9))\nassert: skipped, null\nassert: seen, [3, 1, 2]");
+    let mut run = runner();
+    run("seen = []");
+    run(r#"def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item"#);
+    run("items = [3, 1, 2]");
+    run("weighed := items.sum(weigh)");
+    assert_eq!(run("weighed"), 14);
+    assert_eq!(run("seen"), serde_json::json!([3, 1, 2]));
+    run("floor = 2");
+    run("def price item => Math.max(item, floor)");
+    run("cost = items.sum(price)");
+    assert_eq!(run("cost"), 7);
+    run("floor = 3");
+    assert_eq!(run("cost"), 9);
+    run("items.push(4)");
+    assert_eq!(run("cost"), 13);
+    assert_eq!(run("seen"), serde_json::json!([3, 1, 2]));
+    run("missing = null");
+    run("skipped = missing.sum(weigh(9))");
+    assert_eq!(run("skipped"), serde_json::Value::Null);
+    assert_eq!(run("seen"), serde_json::json!([3, 1, 2]));
+}
+
+/// Nucleoid keeps sums live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_sums_live_in_class_level_rules() {
+    runner()("class Order(name): this.name = name\nclass Line(order, price, qty):\n    this.order = order\n    this.price = price\n    this.qty = qty\n$Line.cost = $Line.price * $Line.qty\n$Order.total = Line.filter(line -> line.order == $Order).sum(line -> line.cost)\n$Order.units = Line.filter(line -> line.order == $Order).sum(line -> line.qty)\nnorth = Order(\"north\")\nsouth = Order(\"south\")\nLine(north, 2, 3)\npen = Line(south, 4, 2)\nLine(north, 5, 1)\nassert: north.total, 11\nassert: south.total, 8\nassert: north.units, 4\npen.qty = 5\nassert: south.total, 20\nassert: south.units, 5\ngrand = Order.sum(order -> order.total)\nassert: grand, 31\nwest = Order(\"west\")\nassert: west.total, 0\nLine(west, 1, 1)\nassert: grand, 32\npen.price = 1\nassert: grand, 17");
+    let mut run = runner();
+    run("class Order(name): this.name = name");
+    run(r#"class Line(order, price, qty):
+    this.order = order
+    this.price = price
+    this.qty = qty"#);
+    run("$Line.cost = $Line.price * $Line.qty");
+    run("$Order.total = Line.filter(line -> line.order == $Order).sum(line -> line.cost)");
+    run("$Order.units = Line.filter(line -> line.order == $Order).sum(line -> line.qty)");
+    run(r#"north = Order("north")"#);
+    run(r#"south = Order("south")"#);
+    run("Line(north, 2, 3)");
+    run("pen = Line(south, 4, 2)");
+    run("Line(north, 5, 1)");
+    assert_eq!(run("north.total"), 11);
+    assert_eq!(run("south.total"), 8);
+    assert_eq!(run("north.units"), 4);
+    run("pen.qty = 5");
+    assert_eq!(run("south.total"), 20);
+    assert_eq!(run("south.units"), 5);
+    run("grand = Order.sum(order -> order.total)");
+    assert_eq!(run("grand"), 31);
+    run(r#"west = Order("west")"#);
+    assert_eq!(run("west.total"), 0);
+    run("Line(west, 1, 1)");
+    assert_eq!(run("grand"), 32);
+    run("pen.price = 1");
+    assert_eq!(run("grand"), 17);
+}
+
+/// Nucleoid uses sums in functions methods and conditional expressions
+#[rustfmt::skip]
+#[test]
+fn uses_sums_in_functions_methods_and_conditional_expressions() {
+    runner()("class Team(name, scores):\n    this.name = name\n    this.scores = scores\n    def points(): return this.scores.sum()\ndef squares(team) => team.scores.sum(score -> score * score)\nred = Team(\"red\", [3, 4])\nblue = Team(\"blue\", [5])\nleague = Team.sum(team -> team.points())\nleader = red.points() > blue.points() ? red.name : blue.name\nspread = squares(red)\nassert: league, 12\nassert: leader, \"red\"\nassert: spread, 25\nblue.scores.push(4)\nred.scores.push(1)\nTeam(\"green\", [2])\nassert: league, 19\nassert: leader, \"blue\"\nassert: spread, 26");
+    let mut run = runner();
+    run(r#"class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def points(): return this.scores.sum()"#);
+    run("def squares(team) => team.scores.sum(score -> score * score)");
+    run(r#"red = Team("red", [3, 4])"#);
+    run(r#"blue = Team("blue", [5])"#);
+    run("league = Team.sum(team -> team.points())");
+    run("leader = red.points() > blue.points() ? red.name : blue.name");
+    run("spread = squares(red)");
+    assert_eq!(run("league"), 12);
+    assert_eq!(run("leader"), "red");
+    assert_eq!(run("spread"), 25);
+    run("blue.scores.push(4)");
+    run("red.scores.push(1)");
+    run(r#"Team("green", [2])"#);
+    assert_eq!(run("league"), 19);
+    assert_eq!(run("leader"), "blue");
+    assert_eq!(run("spread"), 26);
+}
+
+/// Nucleoid keeps sum as an ordinary name beside the sum query
+#[rustfmt::skip]
+#[test]
+fn keeps_sum_as_an_ordinary_name_beside_the_sum_query() {
+    runner()("sum = 2\nreport = {sum: 5}\ndef double sum => sum * 2\nclass Bag(items):\n    this.items = items\n    def sum(): return this.items.sum() + 1\nbag = Bag([1, 2])\ntotal = bag.items.sum() + sum + report.sum\nbags = Bag.sum(each -> each.sum())\nassert: total, 10\nassert: bag.sum(), 4\nassert: bags, 4\nassert: double(sum), 4\nassert: bag.items.sum, null\nbag.items.push(3)\nsum = 4\nBag([5])\nassert: total, 15\nassert: bags, 13");
+    let mut run = runner();
+    run("sum = 2");
+    run("report = {sum: 5}");
+    run("def double sum => sum * 2");
+    run(r#"class Bag(items):
+    this.items = items
+    def sum(): return this.items.sum() + 1"#);
+    run("bag = Bag([1, 2])");
+    run("total = bag.items.sum() + sum + report.sum");
+    run("bags = Bag.sum(each -> each.sum())");
+    assert_eq!(run("total"), 10);
+    assert_eq!(run("bag.sum()"), 4);
+    assert_eq!(run("bags"), 4);
+    assert_eq!(run("double(sum)"), 4);
+    assert_eq!(run("bag.items.sum"), serde_json::Value::Null);
+    run("bag.items.push(3)");
+    run("sum = 4");
+    run("Bag([5])");
+    assert_eq!(run("total"), 15);
+    assert_eq!(run("bags"), 13);
+}
+
+/// Nucleoid rolls back failed sum updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_sum_updates() {
+    runner()("def checked(value):\n    if value > 100:\n        throw \"TOO_LARGE\"\n    return value\namounts = [10, 20]\ntotal = amounts.sum(checked)\nassert: total, 30\nfailure = \"\"\ntry:\n    amounts.push(500)\ncatch error:\n    failure = error\nassert: failure, \"TOO_LARGE\"\nassert: amounts, [10, 20]\nassert: total, 30\namounts.push(5)\nassert: total, 35\nclass Item(price): this.price = price\npen = Item(3)\nspent = Item.sum(item -> checked(item.price))\nfailure = \"\"\ntry:\n    Item(500)\ncatch error:\n    failure = error\nassert: failure, \"TOO_LARGE\"\nassert: Item.length, 1\nassert: spent, 3\nItem(4)\nassert: spent, 7");
+    let mut run = runner();
+    run(r#"def checked(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value
+amounts = [10, 20]
+total = amounts.sum(checked)
+assert: total, 30
+failure = ""
+try:
+    amounts.push(500)
+catch error:
+    failure = error
+assert: failure, "TOO_LARGE"
+assert: amounts, [10, 20]
+assert: total, 30
+amounts.push(5)
+assert: total, 35
+class Item(price): this.price = price
+pen = Item(3)
+spent = Item.sum(item -> checked(item.price))
+failure = ""
+try:
+    Item(500)
+catch error:
+    failure = error
+assert: failure, "TOO_LARGE"
+assert: Item.length, 1
+assert: spent, 3
+Item(4)
+assert: spent, 7"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

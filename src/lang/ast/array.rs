@@ -504,6 +504,16 @@ impl Runtime {
                 Ok(accumulator)
             }
 
+            "sum" => {
+                let selector = match predicate {
+                    None => None,
+                    Some(Value::Function(function)) => Some(function),
+                    Some(_) => return Err(Error::type_error("sum expects a function")),
+                };
+
+                self.sum_items(items, selector.as_ref())
+            }
+
             // Lists sort in place through `call_list_method`; a class population
             // has no stored list to write, so its sort only returns the order.
             "sort" => Ok(Value::List(self.sort_items(items, predicate.as_ref())?)),
@@ -564,6 +574,26 @@ impl Runtime {
         }
 
         Ok(None)
+    }
+
+    fn sum_items(&mut self, items: Vec<Value>, selector: Option<&Arc<Function>>) -> Result<Value> {
+        let mut total = 0.0;
+        let mut undefined = false;
+
+        for item in items {
+            let value = match selector {
+                Some(function) => self.invoke(function, &[item])?,
+                None => item,
+            };
+            undefined |= value.is_undefined();
+            total += value.to_number();
+        }
+
+        Ok(if undefined {
+            Value::Undefined
+        } else {
+            Value::Number(total)
+        })
     }
 
     /// Orders items stably. A comparator function places each item, in input

@@ -194,6 +194,7 @@ fn accepted_documents_use_value_assignments_only_in_the_appended_cases() {
         "Nucleoid separates one-shot actions from standing laws",
         "Value assignments take an action once while declarations stay live",
         "Value assignments lock deposit rates while interest stays live",
+        "Nucleoid calls the sum selector once per item with only the item",
     ];
     let mut with_operator = 0;
     let mut cases = 0;
@@ -210,8 +211,8 @@ fn accepted_documents_use_value_assignments_only_in_the_appended_cases() {
         }
         assert_eq!(uses, new, "{}", case.title);
     }
-    assert_eq!(with_operator, 11);
-    assert_eq!(cases, 780);
+    assert_eq!(with_operator, 12);
+    assert_eq!(cases, 791);
 }
 
 #[test]

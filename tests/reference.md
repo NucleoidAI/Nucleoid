@@ -2037,4 +2037,25 @@ assert: first.total, 12
 assert: bolt.low, false
 bolt.stock
 # return: 20
+---
+# Nucleoid totals lists and populations with sum
+
+scores = [3, 4, 5]
+total = scores.sum()
+squares = scores.sum(score -> score * score)
+class Order(amount): this.amount = amount
+first = Order(20)
+revenue = Order.sum(order -> order.amount)
+assert(total, 12)
+assert(squares, 50)
+assert(revenue, 20)
+scores.push(8)
+second = Order(15)
+assert(total, 20)
+assert(squares, 114)
+assert(revenue, 35)
+scores = []
+assert(total, 0)
+revenue
+# return: 35
 ```

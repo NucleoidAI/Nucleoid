@@ -2791,6 +2791,50 @@ Deposit.map(deposit -> deposit.rate)
   was taken. See [NUC 66](nuc-0066.md) and the
   [root contract](../nucleoid.spec.md#value-assignment).
 
+## List and population sums
+
+**Sums keep room and building power loads live**
+
+```nuc
+class Room(name, capacity):
+    this.name = name
+    this.capacity = capacity
+class Device(room, watts, on):
+    this.room = room
+    this.watts = watts
+    this.on = on
+$Room.load = Device.filter(device -> device.room == $Room and device.on).sum(device -> device.watts)
+$Room.tripped = $Room.load > $Room.capacity
+building = Room.sum(room -> room.load)
+kitchen = Room("kitchen", 3000)
+office = Room("office", 1000)
+kettle = Device(kitchen, 2000, true)
+oven = Device(kitchen, 1500, false)
+Device(office, 400, true)
+assert(kitchen.load, 2000)
+assert(building, 2400)
+oven.on = true
+assert(kitchen.tripped, true)
+assert(building, 3900)
+kettle.on = false
+garage = Room("garage", 2000)
+Device(garage, 700, true)
+[kitchen.load, kitchen.tripped, building]
+# return: [1500,false,2600]
+```
+
+- The class-level rule states each room's load once: it filters the devices
+  that are in the room and switched on, and sums their watts. `building` sums
+  the load of every room, so it follows a device switching on or off and a
+  room being added.
+- `$Room.tripped` compares each room's load with its capacity. Switching the
+  oven on trips the kitchen; switching the kettle off brings it back to
+  `1500` watts. The accepted spelling
+  `Device.filter(...).reduce((sum, device) -> sum + device.watts, 0)` keeps
+  working and gives the same results.
+- See [NUC 68](nuc-0068.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-sums).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

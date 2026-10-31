@@ -1301,6 +1301,35 @@ assert: (why paid)[0].rule, "paid = 12"
   is an action taken at one moment, so it keeps `12`, and `why` shows the
   stated literal. See the [root contract](nucleoid.spec.md#value-assignment).
 
+## List and population sums
+
+**Sums keep totals live as instances change**
+
+```nuc
+class Item(price, qty):
+    this.price = price
+    this.qty = qty
+pen = Item(2, 10)
+ink = Item(30, 2)
+total = Item.sum(item -> item.price * item.qty)
+units = Item.sum(item -> item.qty)
+assert(total, 80)
+assert(units, 12)
+ink.qty = 3
+Item(5, 1)
+assert(total, 115)
+assert(units, 14)
+```
+
+- [NUC 68](docs/nuc-0068.md) adds `sum()` and `sum(selector)` to lists and
+  class instance lists. `Item.sum(item -> item.price * item.qty)` totals
+  every instance, adding left to right from `0`, and an empty list or class
+  totals `0`.
+- `total` and `units` are live declarations: they re-evaluate when an
+  instance is created or a quantity changes. Summed values convert to numbers
+  as in arithmetic, so `true` counts `1` and `null` counts `0`. See the
+  [root contract](nucleoid.spec.md#list-and-population-sums).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
