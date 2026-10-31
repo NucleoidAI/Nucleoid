@@ -223,7 +223,7 @@ pub(crate) fn render_records(records: &[Record]) -> String {
                 ["try", "catch"]
                     .iter()
                     .any(|keyword| starts_keyword(line.trim_start(), keyword))
-            })
+            }) || mentions_suppose(statement)
         }) {
             let mut source = record.code.clone();
             if let Some(expected) = &record.returns {
@@ -317,6 +317,13 @@ pub(crate) fn render_records(records: &[Record]) -> String {
 
 fn is_assertion(statement: &str) -> bool {
     assertion(statement).is_some()
+}
+
+fn mentions_suppose(statement: &str) -> bool {
+    let word = |character: char| character.is_ascii_alphanumeric() || character == '_';
+    statement.match_indices("suppose").any(|(index, name)| {
+        !statement[..index].ends_with(word) && !statement[index + name.len()..].starts_with(word)
+    })
 }
 
 /// Identifies the scanner's colon extraction path, not valid language syntax.

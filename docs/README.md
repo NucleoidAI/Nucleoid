@@ -1435,6 +1435,7 @@ Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md),
 - A class-level rule that throws for any existing instance is not installed at all.
 - Propagation that does not settle raises `TypeError("Propagation did not settle")` and rolls back the transaction.
 - A caught failure restores the failing body's pending propagation and deletion tracking before the catch body runs. Work queued before the body is preserved, including across nested catches.
+- A `suppose` block runs its statements on a savepoint that always rolls back, whether it ends normally, by a failure or by `return`; see [Hypotheticals](#hypotheticals).
 
 ```
 a = 5
@@ -2359,8 +2360,10 @@ c = b * 2
 - A caught failure discards only structural refreshes queued by its failing body, retaining work queued before it.
 - The accepted specification already implements selections, pipelines,
   `model`, `why`, and `affects`; the NUC 48 candidate adds only the two
-  state filters, and [NUC 62](nuc-0062.md) adds NUC 11's `all` and `any`
-  quantifiers. Other NUC 11 operations remain proposals, not dependencies.
+  state filters, [NUC 62](nuc-0062.md) adds NUC 11's `all` and `any`
+  quantifiers, and [NUC 65](nuc-0065.md) adds its `suppose` hypotheticals
+  without `diff`. Other NUC 11 operations remain proposals, not
+  dependencies.
 
 ### Quantifiers
 
@@ -2415,9 +2418,55 @@ ready
 - The authoritative contract is the
   [quantifiers](../nucleoid.spec.md#quantifiers) section.
 
+### Hypotheticals
+
+- `suppose PREMISE:` followed by a suite runs the premise statement and the
+  suite in a hypothetical world, then rolls back everything they did:
+  writes, created instances, declarations, propagation, reasoning observers
+  and local bindings. `suppose:` has no premise. The suite is an indented
+  block or same-line statements separated by `;`, as for `if`.
+- Rules propagate inside the block exactly as they do outside, so
+  assertions there see the values the model derives in that world.
+- `TARGET = suppose ...` keeps the value of the block's last expression as
+  a snapshot. It is assigned as a literal with no dependency, so it does not
+  follow later changes. An assigned block that does not end in an
+  expression raises `TypeError("suppose has no value")` before it runs.
+  Without a target, the statement's value is the block's value, or `null`,
+  and the native REPL prints it.
+- Values leave the block as plain data. Objects, instances and reasoning
+  steps are copied into plain objects that keep the values they had in the
+  hypothetical world, a class declared inside the block leaves as `null`,
+  and a function stays callable. An error, a thrown value or a `return`
+  leaves after the rollback.
+- Blocks nest, and they work in functions, methods, loops and class-level
+  rules; each run of the enclosing statement runs the block again. A block
+  adds no dependency to whatever runs it. `suppose` stays an ordinary name
+  everywhere else, and a colon-free `suppose x = 1` keeps meaning the name
+  `suppose` followed by `x = 1`.
+
+```
+class Item(price): this.price = price
+$Item.premium = $Item.price > 10
+premium = Item.filter(item -> item.premium).length
+pen = Item(3)
+book = Item(12)
+suppose Item(20): assert: premium, 2
+raised = suppose pen.price = 15: premium
+assert: raised, 2
+assert: premium, 1
+assert: Item.length, 2
+suppose book.price = 5: premium
+```
+
+- This is the complete `Nucleoid answers what if questions with suppose`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `0`.
+- The authoritative contract is the
+  [hypotheticals](../nucleoid.spec.md#hypotheticals) section.
+
 Implemented semantic basis: the [root specification](../nucleoid.spec.md).
-Proposal context: [NUC 11](nuc-0011.md), [NUC 48](nuc-0048.md) and
-[NUC 62](nuc-0062.md).
+Proposal context: [NUC 11](nuc-0011.md), [NUC 48](nuc-0048.md),
+[NUC 62](nuc-0062.md) and [NUC 65](nuc-0065.md).
 
 ---
 
@@ -2450,6 +2499,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
+| Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
 | Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
@@ -2617,6 +2667,9 @@ model |> derived                      filter the current model by derived state 
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 any name in collection: condition     true when the condition holds for some member (NUC 62)
 (all name in collection: condition)   parenthesize to combine with what follows (NUC 62)
+suppose premise: suite                run premise and suite, then roll both back (NUC 65)
+suppose: suite                        a hypothetical without a premise (NUC 65)
+name = suppose premise: suite         keep the block's last expression value (NUC 65)
 ```
 
 ---

@@ -1990,4 +1990,19 @@ rate = 3
 assert(growth, 64)
 volume
 # return: 8
+---
+# Nucleoid answers what if questions with suppose
+
+class Item(price): this.price = price
+$Item.premium = $Item.price > 10
+premium = Item.filter(item -> item.premium).length
+pen = Item(3)
+book = Item(12)
+suppose Item(20): assert: premium, 2
+raised = suppose pen.price = 15: premium
+assert: raised, 2
+assert: premium, 1
+assert: Item.length, 2
+suppose book.price = 5: premium
+# return: 0
 ```

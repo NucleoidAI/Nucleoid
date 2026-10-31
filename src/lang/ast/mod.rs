@@ -73,6 +73,10 @@ pub enum Stmt {
         type_name: String,
     },
     Pass,
+    Suppose {
+        target: Option<Expr>,
+        body: Vec<Stmt>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -2726,6 +2726,39 @@ total
 - See [NUC 64](nuc-0064.md) and the
   [root contract](../nucleoid.spec.md#exponentiation).
 
+## Hypotheticals
+
+**Suppose blocks test restocking plans without committing them**
+
+```nuc
+class Item(name, stock, demand):
+    this.name = name
+    this.stock = stock
+    this.demand = demand
+$Item.short = $Item.stock < $Item.demand
+shortages = Item.filter(item -> item.short).map(item -> item.name)
+bolts = Item("bolts", 40, 50)
+nuts = Item("nuts", 80, 30)
+restock = suppose bolts.stock += 20: shortages
+surge = suppose nuts.demand = 100: shortages
+assert: restock, []
+assert: surge, ["bolts", "nuts"]
+assert: shortages, ["bolts"]
+assert: bolts.stock, 40
+nuts.stock = 20
+shortages
+# return: ["bolts","nuts"]
+```
+
+- Each `suppose` block applies one plan to the live model: the class-level
+  rule re-derives `short` for every item, and `shortages` follows. The block
+  keeps the resulting list as a snapshot and then rolls the plan back, so
+  `bolts.stock` is still `40` afterwards.
+- The snapshots do not follow later changes: after `nuts.stock = 20`,
+  `shortages` lists both items while `restock` stays empty. See
+  [NUC 65](nuc-0065.md) and the
+  [root contract](../nucleoid.spec.md#hypotheticals).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

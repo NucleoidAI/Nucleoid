@@ -89,12 +89,19 @@ struct Parser {
     /// position after its `else`, or `None`. A re-parse of the same source
     /// reuses an outcome instead of parsing the condition again.
     python_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
+    suppose_premises: HashMap<(usize, usize), Option<SupposePremise>>,
 }
 
 /// A qualified Python-style condition and the position after its `else`.
 #[derive(Clone)]
 struct PythonCondition {
     condition: Expr,
+    end: usize,
+}
+
+#[derive(Clone)]
+struct SupposePremise {
+    premise: Expr,
     end: usize,
 }
 
@@ -106,6 +113,7 @@ impl Parser {
             depth: 0,
             context: ExpressionContext::Ordinary,
             python_conditions: HashMap::new(),
+            suppose_premises: HashMap::new(),
         }
     }
 
@@ -378,15 +386,77 @@ impl Parser {
             _ => {
                 let expression = self.expression()?;
 
-                match expression {
-                    Expr::Assign { target, value } => Ok(Stmt::Assign {
-                        target: *target,
-                        value: *value,
-                    }),
-                    other => Ok(Stmt::Expression(other)),
+                if let Some(statement) = self.suppose_statement(&expression)? {
+                    return Ok(statement);
                 }
+
+                Ok(simple_statement(expression))
             }
         }
+    }
+
+    fn suppose_statement(&mut self, expression: &Expr) -> Result<Option<Stmt>> {
+        let target = match expression {
+            _ if names_suppose(expression) => None,
+            Expr::Assign { target, value } if names_suppose(value) => Some(target.as_ref().clone()),
+            _ => return Ok(None),
+        };
+
+        let mut body = Vec::new();
+        if !self.check(&Token::Colon) {
+            let Some(premise) = self.suppose_premise() else {
+                return Ok(None);
+            };
+            body.push(premise);
+        }
+        body.extend(self.suite()?);
+
+        Ok(Some(Stmt::Suppose { target, body }))
+    }
+
+    fn suppose_premise(&mut self) -> Option<Stmt> {
+        if self.starts_colon_statement_at(0)
+            || matches!(
+                self.peek(),
+                Token::Newline | Token::Semicolon | Token::Dedent | Token::RightBrace | Token::Eof
+            )
+        {
+            return None;
+        }
+
+        let attempt = (self.position, self.depth);
+        let outcome = match self.suppose_premises.get(&attempt) {
+            Some(outcome) => outcome.clone(),
+            None => {
+                let outcome = self.attempt_suppose_premise();
+                self.suppose_premises.insert(attempt, outcome.clone());
+                outcome
+            }
+        };
+        let SupposePremise { premise, end } = outcome?;
+        self.position = end;
+        Some(simple_statement(premise))
+    }
+
+    fn attempt_suppose_premise(&mut self) -> Option<SupposePremise> {
+        let start = self.position;
+        let outcome = match self.clause_expression() {
+            Ok(premise)
+                if self.check(&Token::Colon)
+                    && !matches!(
+                        &self.tokens[self.position - 1].token,
+                        Token::Identifier(name) if name == "lambda"
+                    ) =>
+            {
+                Some(SupposePremise {
+                    premise,
+                    end: self.position,
+                })
+            }
+            _ => None,
+        };
+        self.position = start;
+        outcome
     }
 
     fn assertion_expression(&mut self) -> Result<Expr> {
@@ -1986,10 +2056,24 @@ impl Parser {
     }
 }
 
+fn simple_statement(expression: Expr) -> Stmt {
+    match expression {
+        Expr::Assign { target, value } => Stmt::Assign {
+            target: *target,
+            value: *value,
+        },
+        other => Stmt::Expression(other),
+    }
+}
+
+fn names_suppose(expression: &Expr) -> bool {
+    matches!(expression, Expr::Identifier(name) if name == "suppose")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lang::ast::generator::generate_all;
+    use crate::lang::ast::generator::{generate, generate_all};
 
     #[test]
     fn direct_condition_lookahead_requires_balanced_header_and_real_suite_without_consuming() {
@@ -2488,6 +2572,67 @@ mod tests {
         assert_eq!(parser.python_condition(), None);
         assert_eq!(parser.position, 1);
         assert!(parser.python_conditions.is_empty());
+    }
+
+    #[test]
+    fn suppose_premises_consume_nothing_unless_a_colon_follows_and_reuse_outcomes() {
+        for (source, premise) in [
+            ("suppose reading = 95: alarm", Some("reading=95")),
+            ("suppose not ready: y", Some("!ready")),
+            ("suppose x = c ? 1 : 2: x", Some("x=(c?1:2)")),
+            (
+                "suppose ok = all v in xs: v > 0: ok",
+                Some("ok=(all v in xs:v>0)"),
+            ),
+            ("suppose Item(5): Item.length", Some("Item(5)")),
+            ("suppose $Order.fee = 0: fees", Some("$Order.fee=0")),
+            ("suppose delete x: y", Some("delete x")),
+            ("suppose reading = 95\n    reading = 50", None),
+            ("suppose reading = 95 { reading = 50 }", None),
+            ("suppose f = lambda: 1", None),
+            ("suppose x.lambda: 1", None),
+            ("suppose a b: c", None),
+            ("suppose (reading: 95", None),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            parser.advance();
+            let start = parser.position;
+            let tokens = parser.tokens.clone();
+            let first = parser.suppose_premise();
+            assert_eq!(first.as_ref().map(generate).as_deref(), premise, "{source}");
+            if first.is_some() {
+                assert_eq!(parser.peek(), &Token::Colon, "{source}");
+            } else {
+                assert_eq!(parser.position, start, "{source}");
+            }
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+            let recorded = parser.suppose_premises.len();
+            assert!(
+                parser.suppose_premises.contains_key(&(start, 0)),
+                "{source}"
+            );
+            let end = parser.position;
+            parser.position = start;
+            assert_eq!(parser.suppose_premise(), first, "{source}");
+            assert_eq!(parser.position, end, "{source}");
+            assert_eq!(parser.suppose_premises.len(), recorded, "{source}");
+            assert_eq!(parser.tokens, tokens, "{source}");
+        }
+
+        for source in [
+            "suppose x: int",
+            "suppose assert: x, 1",
+            "suppose",
+            "suppose\nx",
+            "suppose; x",
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            parser.advance();
+            assert_eq!(parser.suppose_premise(), None, "{source}");
+            assert_eq!(parser.position, 1, "{source}");
+            assert!(parser.suppose_premises.is_empty(), "{source}");
+        }
     }
 
     #[test]

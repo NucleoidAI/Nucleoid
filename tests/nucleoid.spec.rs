@@ -12988,6 +12988,200 @@ assert(balance, 3)
 assert(result, 9)"#);
 }
 
+/// Nucleoid runs a suppose block in a hypothetical world
+#[rustfmt::skip]
+#[test]
+fn runs_a_suppose_block_in_a_hypothetical_world() {
+    runner()("threshold = 90\nreading = 40\nalarm = reading > threshold\nstatus = alarm ? \"ALERT\" : \"OK\"\nsuppose reading = 95:\n    assert: status, \"ALERT\"\n    threshold = 99\n    assert: alarm, false\n    margin = threshold - reading\n    assert: margin, 4\n    assert: (affects reading).length, 3\nassert: reading, 40\nassert: threshold, 90\nassert: status, \"OK\"\nassert: (affects reading).length, 2\nsuppose threshold = 30: assert: status, \"ALERT\"\nassert: threshold, 90\nreading = 95\nassert: status, \"ALERT\"");
+    let mut run = runner();
+    run(r#"threshold = 90
+reading = 40
+alarm = reading > threshold
+status = alarm ? "ALERT" : "OK"
+suppose reading = 95:
+    assert: status, "ALERT"
+    threshold = 99
+    assert: alarm, false
+    margin = threshold - reading
+    assert: margin, 4
+    assert: (affects reading).length, 3
+assert: reading, 40
+assert: threshold, 90
+assert: status, "OK"
+assert: (affects reading).length, 2
+suppose threshold = 30: assert: status, "ALERT"
+assert: threshold, 90
+reading = 95
+assert: status, "ALERT""#);
+}
+
+/// Nucleoid discards instances created in a suppose block
+#[rustfmt::skip]
+#[test]
+fn discards_instances_created_in_a_suppose_block() {
+    runner()("class Account(balance): this.balance = balance\n$Account.rich = $Account.balance > 100\ntotal = Account.reduce(lambda sum, account: sum + account.balance, 0)\nrich = Account.filter(account -> account.rich).length\nchecking = Account(50)\nsavings = Account(150)\nsuppose Account(500):\n    assert: Account.length, 3\n    assert: total, 700\n    checking.balance = 300\n    assert: checking.rich, true\n    assert: rich, 3\nassert: Account.length, 2\nassert: total, 200\nassert: rich, 1\nassert: checking.rich, false\nsuppose savings.balance = 20: assert: rich, 0\nAccount(400)\nassert: Account.length, 3\nassert: total, 600\nassert: rich, 2");
+    let mut run = runner();
+    run(r#"class Account(balance): this.balance = balance
+$Account.rich = $Account.balance > 100
+total = Account.reduce(lambda sum, account: sum + account.balance, 0)
+rich = Account.filter(account -> account.rich).length
+checking = Account(50)
+savings = Account(150)
+suppose Account(500):
+    assert: Account.length, 3
+    assert: total, 700
+    checking.balance = 300
+    assert: checking.rich, true
+    assert: rich, 3
+assert: Account.length, 2
+assert: total, 200
+assert: rich, 1
+assert: checking.rich, false
+suppose savings.balance = 20: assert: rich, 0
+Account(400)
+assert: Account.length, 3
+assert: total, 600
+assert: rich, 2"#);
+}
+
+/// Nucleoid keeps the value of a suppose block as a snapshot
+#[rustfmt::skip]
+#[test]
+fn keeps_the_value_of_a_suppose_block_as_a_snapshot() {
+    runner()("class Line(price, quantity):\n    this.price = price\n    this.quantity = quantity\n$Line.cost = $Line.price * $Line.quantity\nsubtotal = Line.reduce(lambda sum, line: sum + line.cost, 0)\nshipping = subtotal >= 100 ? 0 : 15\ndue = subtotal + shipping\npens = Line(2, 10)\nink = Line(30, 2)\nbulk = suppose pens.quantity = 30: due\nquote = suppose ink.price = 45: pens.quantity = 5; [subtotal, shipping]\nassert: bulk, 120\nassert: quote, [100, 0]\nassert: due, 95\nink.quantity = 3\nassert: due, 110\nassert: bulk, 120\nassert: quote, [100, 0]");
+    let mut run = runner();
+    run(r#"class Line(price, quantity):
+    this.price = price
+    this.quantity = quantity
+$Line.cost = $Line.price * $Line.quantity
+subtotal = Line.reduce(lambda sum, line: sum + line.cost, 0)
+shipping = subtotal >= 100 ? 0 : 15
+due = subtotal + shipping
+pens = Line(2, 10)
+ink = Line(30, 2)
+bulk = suppose pens.quantity = 30: due
+quote = suppose ink.price = 45: pens.quantity = 5; [subtotal, shipping]
+assert: bulk, 120
+assert: quote, [100, 0]
+assert: due, 95
+ink.quantity = 3
+assert: due, 110
+assert: bulk, 120
+assert: quote, [100, 0]"#);
+}
+
+/// Nucleoid nests suppose blocks and discards the inner one first
+#[rustfmt::skip]
+#[test]
+fn nests_suppose_blocks_and_discards_the_inner_one_first() {
+    runner()("class Seat(taken): this.taken = taken\nfree = Seat.filter(seat -> not seat.taken).length\nfull = not free\nfront = Seat(false)\nback = Seat(true)\nouter = suppose front.taken = true:\n    assert: full, true\n    inner = suppose back.taken = false: [free, full]\n    assert: inner, [1, false]\n    assert: free, 0\n    [inner, full]\nassert: outer, [[1, false], true]\nassert: free, 1\nback.taken = false\nassert: free, 2\nassert: outer, [[1, false], true]");
+    let mut run = runner();
+    run(r#"class Seat(taken): this.taken = taken
+free = Seat.filter(seat -> not seat.taken).length
+full = not free
+front = Seat(false)
+back = Seat(true)
+outer = suppose front.taken = true:
+    assert: full, true
+    inner = suppose back.taken = false: [free, full]
+    assert: inner, [1, false]
+    assert: free, 0
+    [inner, full]
+assert: outer, [[1, false], true]
+assert: free, 1
+back.taken = false
+assert: free, 2
+assert: outer, [[1, false], true]"#);
+}
+
+/// Nucleoid runs header-less suppose blocks over whole populations
+#[rustfmt::skip]
+#[test]
+fn runs_header_less_suppose_blocks_over_whole_populations() {
+    runner()("class Account(balance):\n    this.balance = balance\n    def withdraw(amount): this.balance -= amount; return this.balance >= 0\n$Account.interest = $Account.balance * 0.05\ntotal = Account.reduce(lambda sum, account: sum + account.interest, 0)\ncash = Account(100)\nAccount(300)\nsuppose:\n    for account of Account: account.balance *= 2\n    assert: total, 40\ncovered = suppose: cash.withdraw(150)\nassert: covered, false\nassert: cash.balance, 100\ncash.withdraw(50)\nassert: total, 17.5\nassert: covered, false");
+    let mut run = runner();
+    run(r#"class Account(balance):
+    this.balance = balance
+    def withdraw(amount): this.balance -= amount; return this.balance >= 0
+$Account.interest = $Account.balance * 0.05
+total = Account.reduce(lambda sum, account: sum + account.interest, 0)
+cash = Account(100)
+Account(300)
+suppose:
+    for account of Account: account.balance *= 2
+    assert: total, 40
+covered = suppose: cash.withdraw(150)
+assert: covered, false
+assert: cash.balance, 100
+cash.withdraw(50)
+assert: total, 17.5
+assert: covered, false"#);
+}
+
+/// Nucleoid returns hypothetical answers from functions and methods
+#[rustfmt::skip]
+#[test]
+fn returns_hypothetical_answers_from_functions_and_methods() {
+    runner()("class Account(balance):\n    this.balance = balance\n    def projected(deposit): suppose this.balance += deposit: return this.tier\n$Account.tier = $Account.balance >= 1000 ? \"gold\" : \"basic\"\ndef tier_at(account, balance): suppose account.balance = balance: return account.tier\nacct = Account(600)\nassert: acct.projected(500), \"gold\"\nassert: acct.projected(100), \"basic\"\nassert: tier_at(acct, 2000), \"gold\"\nassert: acct.balance, 600\nassert: acct.tier, \"basic\"\n$Account.tier = $Account.balance >= 650 ? \"silver\" : \"basic\"\nassert: acct.projected(100), \"silver\"\nassert: tier_at(acct, 600), \"basic\"");
+    let mut run = runner();
+    run(r#"class Account(balance):
+    this.balance = balance
+    def projected(deposit): suppose this.balance += deposit: return this.tier
+$Account.tier = $Account.balance >= 1000 ? "gold" : "basic"
+def tier_at(account, balance): suppose account.balance = balance: return account.tier
+acct = Account(600)
+assert: acct.projected(500), "gold"
+assert: acct.projected(100), "basic"
+assert: tier_at(acct, 2000), "gold"
+assert: acct.balance, 600
+assert: acct.tier, "basic"
+$Account.tier = $Account.balance >= 650 ? "silver" : "basic"
+assert: acct.projected(100), "silver"
+assert: tier_at(acct, 600), "basic""#);
+}
+
+/// Nucleoid keeps suppose as an ordinary name beside suppose blocks
+#[rustfmt::skip]
+#[test]
+fn keeps_suppose_as_an_ordinary_name_beside_suppose_blocks() {
+    runner()("suppose = 2\nreading = 40\nscaled = reading * suppose\nsuppose reading = 95: assert: scaled, 190\nsuppose suppose = 3: assert: scaled, 120\nassert: scaled, 80\ndef twice suppose => suppose * 2\nassert: twice(suppose), 4\nbox = {suppose}\nassert: box.suppose, 2\nsuppose reading = 50\nassert: scaled, 100");
+    let mut run = runner();
+    run(r#"suppose = 2
+reading = 40
+scaled = reading * suppose
+suppose reading = 95: assert: scaled, 190
+suppose suppose = 3: assert: scaled, 120
+assert: scaled, 80
+def twice suppose => suppose * 2
+assert: twice(suppose), 4
+box = {suppose}
+assert: box.suppose, 2
+suppose reading = 50
+assert: scaled, 100"#);
+}
+
+/// Nucleoid supposes a changed class level rule
+#[rustfmt::skip]
+#[test]
+fn supposes_a_changed_class_level_rule() {
+    runner()("class Order(amount): this.amount = amount\n$Order.fee = $Order.amount * 0.02\nOrder(100)\nlarge = Order(400)\nfees = Order.reduce(lambda sum, order: sum + order.fee, 0)\nfloor = suppose $Order.fee = Math.max($Order.amount * 0.02, 5): fees\nwaived = suppose $Order.fee = 0: [fees, large.fee]\nassert: floor, 13\nassert: waived, [0, 0]\nassert: fees, 10\nassert: large.fee, 8\nOrder(500)\nassert: fees, 20\nassert: floor, 13");
+    let mut run = runner();
+    run(r#"class Order(amount): this.amount = amount
+$Order.fee = $Order.amount * 0.02
+Order(100)
+large = Order(400)
+fees = Order.reduce(lambda sum, order: sum + order.fee, 0)
+floor = suppose $Order.fee = Math.max($Order.amount * 0.02, 5): fees
+waived = suppose $Order.fee = 0: [fees, large.fee]
+assert: floor, 13
+assert: waived, [0, 0]
+assert: fees, 10
+assert: large.fee, 8
+Order(500)
+assert: fees, 20
+assert: floor, 13"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

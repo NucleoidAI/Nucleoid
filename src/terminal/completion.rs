@@ -28,6 +28,7 @@ const WORDS: &[&str] = &[
     "return",
     "self",
     "super",
+    "suppose",
     "this",
     "throw",
     "true",
@@ -309,6 +310,19 @@ mod tests {
                         .any(|name| name.ends_with(".list") || name.ends_with(".all"))
                 }),
                 "{prefix}"
+            );
+        }
+    }
+
+    #[test]
+    fn completion_offers_suppose_beside_a_variable_of_the_same_prefix() {
+        let mut runtime = Runtime::new();
+        runtime.run("supply = 3").unwrap();
+        let completion = Completion::find(&runtime, &editor::new("sup"), false).unwrap();
+        for expected in ["suppose", "supply", "super"] {
+            assert!(
+                completion.candidates.iter().any(|name| name == expected),
+                "{expected}"
             );
         }
     }

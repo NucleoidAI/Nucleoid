@@ -244,7 +244,20 @@ pub fn generate(statement: &Stmt) -> String {
         Stmt::Try { .. } => "try".to_string(),
         Stmt::Declaration { name, type_name } => format!("{name}:{type_name}"),
         Stmt::Pass => "pass".to_string(),
+        Stmt::Suppose { target, body } => {
+            format!(
+                "{}suppose{{{}}}",
+                suppose_target(target.as_ref()),
+                generate_all(body)
+            )
+        }
     }
+}
+
+fn suppose_target(target: Option<&Expr>) -> String {
+    target
+        .map(|target| format!("{target}="))
+        .unwrap_or_default()
 }
 
 // Default-bearing declarations must not discard signature metadata. Keep the
@@ -340,6 +353,11 @@ fn source(statement: &Stmt) -> String {
             indent(&source_all(catch))
         ),
         Stmt::Block(body) => format!("{{\n{}\n}}", source_all(body)),
+        Stmt::Suppose { target, body } => format!(
+            "{}suppose:\n{}",
+            suppose_target(target.as_ref()),
+            indent(&source_all(body))
+        ),
         statement => generate(statement),
     }
 }

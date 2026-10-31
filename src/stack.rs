@@ -36,6 +36,13 @@ impl Stack {
         Stack::default()
     }
 
+    pub(crate) fn nested(&self) -> Self {
+        Stack {
+            running: self.running.clone(),
+            ..Stack::default()
+        }
+    }
+
     pub fn is_draining(&self) -> bool {
         self.draining
     }

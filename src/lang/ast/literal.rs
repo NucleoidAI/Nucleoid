@@ -50,3 +50,21 @@ pub fn of(value: &Value) -> Option<Expr> {
         _ => return None,
     })
 }
+
+pub(crate) fn constant(value: &Value) -> Expr {
+    match value {
+        Value::Undefined | Value::Null => Expr::Null,
+        Value::Bool(bool) => Expr::Bool(*bool),
+        Value::Number(number) => Expr::Number(*number),
+        Value::String(string) => Expr::String(string.clone()),
+        Value::List(items) => Expr::List(items.iter().map(constant).collect()),
+        Value::Object(id) => Expr::ObjectRef(id.to_string()),
+        Value::Class(name) => Expr::Identifier(name.clone()),
+        Value::Date(millis) => Expr::Call {
+            callee: Box::new(Expr::Identifier("Date".to_string())),
+            arguments: vec![Expr::Number(*millis as f64)],
+        },
+        Value::Regex(regex) => Expr::Regex(regex.as_str().to_string()),
+        Value::Function(function) => Expr::Function(function.clone()),
+    }
+}

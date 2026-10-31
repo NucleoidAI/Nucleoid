@@ -843,6 +843,43 @@ mod tests {
     }
 
     #[test]
+    fn suppose_headers_buffer_through_their_final_colon() {
+        for line in [
+            "suppose reading = 95:",
+            "peak = suppose reading = 95:",
+            "suppose:",
+            "peak = suppose:",
+            "suppose ok = all v in xs: v > 0:",
+            "suppose x = ready ? 1 : 2: # body",
+        ] {
+            assert!(indented_body_header(line), "{line:?}");
+            assert_eq!(next_indentation(line, true), INDENT, "{line:?}");
+        }
+        for line in [
+            "suppose reading = 95: alarm",
+            "peak = suppose reading = 95: alarm",
+            "suppose reading = 95",
+            "suppose = 1",
+            "x = suppose + 1",
+        ] {
+            assert!(!indented_body_header(line), "{line:?}");
+        }
+        let mut runtime = Runtime::new();
+        runtime.run("reading = 40\nalarm = reading > 90").unwrap();
+        assert_eq!(
+            runtime
+                .run("peak = suppose reading = 95:\n    alarm\n")
+                .unwrap(),
+            Value::Bool(true)
+        );
+        assert_eq!(
+            runtime.run("suppose reading = 95: alarm").unwrap(),
+            Value::Bool(true)
+        );
+        assert_eq!(runtime.run("alarm").unwrap(), Value::Bool(false));
+    }
+
+    #[test]
     fn multiline_input_keeps_the_final_physical_lines_indentation() {
         let source = "class Student(name, age):\n    this.name = name\n    this.age = age\n";
         assert!(!indented_body_header(source));

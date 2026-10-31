@@ -1251,6 +1251,32 @@ assert(balance, 800)
   raise a negative base. See the
   [root contract](nucleoid.spec.md#exponentiation).
 
+## Hypotheticals
+
+**Suppose blocks answer what-if questions without changing the model**
+
+```nuc
+price = 80
+shipping = price >= 100 ? 0 : 9
+total = price + shipping
+suppose price = 100: assert: shipping, 0
+upgrade = suppose price = 120: total
+assert: upgrade, 120
+assert: total, 89
+price = 90
+assert: upgrade, 120
+assert: total, 99
+```
+
+- [NUC 65](docs/nuc-0065.md) adds `suppose` blocks. `suppose PREMISE:`
+  runs the premise and its suite in a hypothetical world, where rules
+  propagate as usual, and then discards everything they did.
+  `TARGET = suppose ...` keeps the value of the block's last expression as
+  a snapshot, so `upgrade` stays `120` when `price` changes later.
+- A thrown error, a `return` or a normal end all roll the block back, and
+  values leave it as plain data. Everywhere else `suppose` stays an ordinary
+  name. See the [root contract](nucleoid.spec.md#hypotheticals).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

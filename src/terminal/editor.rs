@@ -110,6 +110,19 @@ mod tests {
     }
 
     #[test]
+    fn newlines_indent_after_suppose_headers_only() {
+        let mut editor = new("peak = suppose reading = 95:");
+        newline(&mut editor);
+        assert_eq!(editor.lines(), ["peak = suppose reading = 95:", "    "]);
+        editor.insert_str("suppose:");
+        newline(&mut editor);
+        assert_eq!(editor.lines()[2], "        ");
+        let mut editor = new("suppose reading = 95: alarm");
+        newline(&mut editor);
+        assert_eq!(editor.lines(), ["suppose reading = 95: alarm", ""]);
+    }
+
+    #[test]
     fn mouse_positioning_tracks_scrolled_lines_and_wide_characters() {
         let mut editor = new("first\nsecond\nthird\nlast");
         let mut terminal = Terminal::new(TestBackend::new(10, 2)).unwrap();

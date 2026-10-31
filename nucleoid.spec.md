@@ -2781,6 +2781,128 @@ statement positions; caught values and transaction recovery are unchanged.
   through `Nucleoid rolls back failed exponentiation updates` specify the
   executable behavior.
 
+## Hypotheticals
+
+- [NUC 65](docs/nuc-0065.md) adds `suppose` blocks. `suppose PREMISE:`
+  followed by a suite runs the premise statement and then the suite in a
+  hypothetical world, and discards everything they did when the block ends.
+  `suppose:` followed by a suite has no premise. `TARGET = suppose PREMISE:`
+  and `TARGET = suppose:` assign the block's value. The suite is an indented
+  block or statements on the same line separated by `;`, as for `if`. No
+  keyword or lexer token is added.
+- A statement is a `suppose` block only where the accepted grammar rejected it.
+  The statement must be the name `suppose`, or a plain `=` assignment whose
+  value is exactly the name `suppose`, and the tokens after that name must be
+  `:` or one premise immediately followed by `:`. The premise is an expression
+  or an assignment, parsed like an `if` header, so conditional expressions and
+  quantifiers in it pair their own colons.
+- Everywhere else `suppose` stays an ordinary name: a variable, function,
+  parameter, property, object key, loop variable or template value. These
+  spellings keep their accepted readings:
+  - `suppose` followed by a statement and no colon, such as
+    `suppose reading = 95` followed by an indented block or by `{ ... }`,
+    which are juxtaposed statements;
+  - `suppose x: int`, `suppose: int` and `x = suppose y: int`, which hold a
+    typed declaration;
+  - `suppose assert: a, b`, the name `suppose` followed by a colon-led
+    assertion;
+  - a premise whose last token before the colon is `lambda`, as in
+    `suppose f = lambda: 1`, which is `suppose` followed by a lambda.
+- A compound or chained assignment such as `x += suppose ...` or
+  `a = b = suppose ...`, `return suppose ...`, and `suppose` inside
+  parentheses, brackets or call arguments are not `suppose` blocks; they keep
+  their accepted `SyntaxError`.
+- The premise and the suite run in the current scope on a transaction
+  savepoint. Rules propagate there exactly as they do outside, and the block's
+  own propagation finishes inside it, even when the block runs while other
+  changes are propagating; the statement being re-evaluated does not re-run
+  itself.
+- When the block ends, whether normally, by an error or a thrown value, or by
+  `return`, everything it did is rolled back:
+  - variable, property and object writes;
+  - created and deleted instances;
+  - class, function and class-level rule declarations;
+  - graph nodes and dependency edges;
+  - reasoning observers and their structural subscriptions;
+  - state versions and queued propagation;
+  - local bindings such as parameters and loop variables.
+- Assertions that ran inside the block stay counted, and their failures stay
+  recorded.
+- A `suppose` block adds no dependency and no structural subscription to the
+  declaration, block or call that runs it.
+- The block's value is the value of its last statement when that statement is
+  an expression statement other than an `assert` call, or a `suppose` block
+  without a target whose own block has a value. Otherwise the block has no
+  value.
+- The block's value, a value thrown out of it and a value returned from it
+  leave as plain data:
+  - null, booleans, numbers, strings, dates, regular expressions and functions
+    leave unchanged;
+  - a list leaves with each item converted the same way;
+  - every object the value reaches, instances and reasoning steps included,
+    is copied into a new plain object that holds its converted properties as
+    they were when the block ended, keeping shared references and cycles. A
+    copy belongs to no class: it is not an instance, joins no population, has
+    no methods and is skipped by `for`. An object that no longer existed when
+    the block ended is copied as an empty object;
+  - a class value leaves unchanged when a class or built-in namespace of that
+    name exists after the rollback, and as `null` when the class was declared
+    inside the block.
+- A function declared inside the block loses its name with the rollback, but
+  its value stays callable. The names in its body are resolved when it runs,
+  so a body that reads a name declared only inside the block raises
+  `ReferenceError("<name> is not defined")`.
+- A reasoning selection that leaves the block is plain data: its steps keep
+  their `holds` values and it no longer re-derives.
+- Without a target, a `suppose` block is a statement whose value is the
+  block's value, or `null` when the block has none. A program or native REPL
+  input that ends with one shows that value.
+- `TARGET = suppose ...` runs the block once and then assigns its value as
+  `TARGET = LITERAL` does. LITERAL is a literal of the value, an object
+  reference, a function, `Date(<milliseconds>)` for a date or the name of a
+  class. The stored declaration has no dependency and never runs the block
+  again. The target is resolved after the rollback, as for `TARGET = LITERAL`:
+  a name, a local, a property path, `this.x` or `$Class.property`, where
+  `$Class.property = suppose ...` declares a class-level rule whose value is
+  the same snapshot for every instance.
+- An assigned block that has no value raises
+  `TypeError("suppose has no value")` when the statement runs, before the block
+  runs.
+- `return` inside the block leaves the block, then the enclosing function,
+  method or program, with the returned value converted to plain data after the
+  rollback.
+- An error or a thrown value inside the block is raised to the enclosing
+  statement after the rollback. A thrown value is converted to plain data like
+  the block's value. A `try` that catches it then restores the state from
+  before its own body, as for any failure, which removes those plain copies
+  again. In the catch, scalars, lists and functions in the thrown value are
+  intact, and an object in it reads every property as undefined, like an
+  object created in a `try` body.
+- Blocks nest. An inner block is rolled back before the outer one, and its
+  value leaves into the outer hypothetical world.
+- A `suppose` block runs each time the statement holding it runs: once at the
+  top level, on each call of a function or method, on each iteration of a
+  `for` body, and whenever an enclosing standing `if` branch or block runs
+  again. A `suppose` block never makes the block or conditional around it a
+  class-level rule. Inside a block or conditional that is a class-level rule,
+  it runs once per instance, and `$Class` reads that instance.
+- Graph keys fold the premise into the block, as in `suppose{reading=95;alarm}`
+  and `peak=suppose{reading=95;alarm}`. Inside default-bearing declarations a
+  block renders as `suppose:` or `peak=suppose:` with an indented body. Both
+  forms parse back to the same block.
+- The native REPL buffers a line ending in `:` until a blank line, so
+  `suppose reading = 95:` and `peak = suppose reading = 95:` wait for their
+  body, while `suppose reading = 95: alarm` runs at once and prints its value.
+  In the terminal workspace, Ctrl-J indents after such a header, and
+  `suppose` is a completion word.
+- Malformed blocks use existing diagnostics, for example
+  `SyntaxError("Unexpected end of input")` for `peak = suppose reading = 95:`
+  and `SyntaxError("Expected an indented block but found end of input")` when
+  only a newline follows the colon. The eight appended entries beginning
+  `Nucleoid runs a suppose block in a hypothetical world` through
+  `Nucleoid supposes a changed class level rule` specify the executable
+  behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -15858,4 +15980,158 @@ assert(balance, 3)
 power = 2
 assert(balance, 3)
 assert(result, 9)
+---
+# Nucleoid runs a suppose block in a hypothetical world
+
+threshold = 90
+reading = 40
+alarm = reading > threshold
+status = alarm ? "ALERT" : "OK"
+suppose reading = 95:
+    assert: status, "ALERT"
+    threshold = 99
+    assert: alarm, false
+    margin = threshold - reading
+    assert: margin, 4
+    assert: (affects reading).length, 3
+assert: reading, 40
+assert: threshold, 90
+assert: status, "OK"
+assert: (affects reading).length, 2
+suppose threshold = 30: assert: status, "ALERT"
+assert: threshold, 90
+reading = 95
+assert: status, "ALERT"
+---
+# Nucleoid discards instances created in a suppose block
+
+class Account(balance): this.balance = balance
+$Account.rich = $Account.balance > 100
+total = Account.reduce(lambda sum, account: sum + account.balance, 0)
+rich = Account.filter(account -> account.rich).length
+checking = Account(50)
+savings = Account(150)
+suppose Account(500):
+    assert: Account.length, 3
+    assert: total, 700
+    checking.balance = 300
+    assert: checking.rich, true
+    assert: rich, 3
+assert: Account.length, 2
+assert: total, 200
+assert: rich, 1
+assert: checking.rich, false
+suppose savings.balance = 20: assert: rich, 0
+Account(400)
+assert: Account.length, 3
+assert: total, 600
+assert: rich, 2
+---
+# Nucleoid keeps the value of a suppose block as a snapshot
+
+class Line(price, quantity):
+    this.price = price
+    this.quantity = quantity
+$Line.cost = $Line.price * $Line.quantity
+subtotal = Line.reduce(lambda sum, line: sum + line.cost, 0)
+shipping = subtotal >= 100 ? 0 : 15
+due = subtotal + shipping
+pens = Line(2, 10)
+ink = Line(30, 2)
+bulk = suppose pens.quantity = 30: due
+quote = suppose ink.price = 45: pens.quantity = 5; [subtotal, shipping]
+assert: bulk, 120
+assert: quote, [100, 0]
+assert: due, 95
+ink.quantity = 3
+assert: due, 110
+assert: bulk, 120
+assert: quote, [100, 0]
+---
+# Nucleoid nests suppose blocks and discards the inner one first
+
+class Seat(taken): this.taken = taken
+free = Seat.filter(seat -> not seat.taken).length
+full = not free
+front = Seat(false)
+back = Seat(true)
+outer = suppose front.taken = true:
+    assert: full, true
+    inner = suppose back.taken = false: [free, full]
+    assert: inner, [1, false]
+    assert: free, 0
+    [inner, full]
+assert: outer, [[1, false], true]
+assert: free, 1
+back.taken = false
+assert: free, 2
+assert: outer, [[1, false], true]
+---
+# Nucleoid runs header-less suppose blocks over whole populations
+
+class Account(balance):
+    this.balance = balance
+    def withdraw(amount): this.balance -= amount; return this.balance >= 0
+$Account.interest = $Account.balance * 0.05
+total = Account.reduce(lambda sum, account: sum + account.interest, 0)
+cash = Account(100)
+Account(300)
+suppose:
+    for account of Account: account.balance *= 2
+    assert: total, 40
+covered = suppose: cash.withdraw(150)
+assert: covered, false
+assert: cash.balance, 100
+cash.withdraw(50)
+assert: total, 17.5
+assert: covered, false
+---
+# Nucleoid returns hypothetical answers from functions and methods
+
+class Account(balance):
+    this.balance = balance
+    def projected(deposit): suppose this.balance += deposit: return this.tier
+$Account.tier = $Account.balance >= 1000 ? "gold" : "basic"
+def tier_at(account, balance): suppose account.balance = balance: return account.tier
+acct = Account(600)
+assert: acct.projected(500), "gold"
+assert: acct.projected(100), "basic"
+assert: tier_at(acct, 2000), "gold"
+assert: acct.balance, 600
+assert: acct.tier, "basic"
+$Account.tier = $Account.balance >= 650 ? "silver" : "basic"
+assert: acct.projected(100), "silver"
+assert: tier_at(acct, 600), "basic"
+---
+# Nucleoid keeps suppose as an ordinary name beside suppose blocks
+
+suppose = 2
+reading = 40
+scaled = reading * suppose
+suppose reading = 95: assert: scaled, 190
+suppose suppose = 3: assert: scaled, 120
+assert: scaled, 80
+def twice suppose => suppose * 2
+assert: twice(suppose), 4
+box = {suppose}
+assert: box.suppose, 2
+suppose reading = 50
+assert: scaled, 100
+---
+# Nucleoid supposes a changed class level rule
+
+class Order(amount): this.amount = amount
+$Order.fee = $Order.amount * 0.02
+Order(100)
+large = Order(400)
+fees = Order.reduce(lambda sum, order: sum + order.fee, 0)
+floor = suppose $Order.fee = Math.max($Order.amount * 0.02, 5): fees
+waived = suppose $Order.fee = 0: [fees, large.fee]
+assert: floor, 13
+assert: waived, [0, 0]
+assert: fees, 10
+assert: large.fee, 8
+Order(500)
+assert: fees, 20
+assert: floor, 13
 ```

@@ -21,6 +21,7 @@ pub mod expression;
 pub mod function;
 pub mod object;
 pub mod property;
+pub mod suppose;
 pub mod throw;
 pub mod r#try;
 pub mod variable;
@@ -54,6 +55,7 @@ use r#if::If;
 use r#let::Let;
 use property::{Owner, Property};
 use r#return::Return;
+use suppose::Suppose;
 use throw::Throw;
 use r#try::Try;
 use variable::Variable;
@@ -104,6 +106,7 @@ pub enum Nuc {
     /// `a: int` — a type without a definition.
     Declaration,
     Pass,
+    Suppose(Suppose),
 }
 
 impl Nuc {
@@ -142,6 +145,9 @@ impl Nuc {
             } => Nuc::Try(Try::new(body.clone(), parameter.clone(), catch.clone())),
             Stmt::Declaration { .. } => Nuc::Declaration,
             Stmt::Pass => Nuc::Pass,
+            Stmt::Suppose { target, body } => {
+                Nuc::Suppose(Suppose::new(target.clone(), body.clone()))
+            }
         })
     }
 
@@ -239,6 +245,7 @@ impl Nuc {
             Nuc::Try(node) => node.run(runtime, scope),
             Nuc::Declaration => Err(Error::reference("Missing definition")),
             Nuc::Pass => Ok(Outcome::null()),
+            Nuc::Suppose(node) => node.run(runtime, scope),
         }
     }
 
