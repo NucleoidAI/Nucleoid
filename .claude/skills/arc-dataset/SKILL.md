@@ -13,6 +13,13 @@ first; inputs after it, such as a candidate Nucleoid executable or a final
 profile; if it is not already your system prompt, delegate this request to the
 `arc-dataset` agent.
 
+Whenever a new dataset is successfully introduced, the agent also registers
+its puzzle ID exactly once in `jobs.report.env.ARC_PUZZLES` in
+`.github/workflows/arc.yml` for the GitHub Actions pass/fail table. Preserve
+existing entries and keep the job's timeout budget sufficient for the list,
+as the profile specifies. Updating the list does not authorize a solver run
+or workflow dispatch.
+
 A `nucleoid_enhancement_required` handoff writes no dataset and returns a NUC
 request to the caller. Under `/arc-purposal`, the
 [arc-purposal skill](../arc-purposal/SKILL.md) handles it. Otherwise the caller

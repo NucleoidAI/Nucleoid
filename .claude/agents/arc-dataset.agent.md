@@ -209,7 +209,19 @@ instances, the transformation, properties the rules create, tags, the sampled
 canvas and object sizes, orientation, and that held-out data is excluded.
 With a candidate executable, also name the NUC whose feature the rules use.
 
-Change nothing else: no other datasets, puzzle data, or TypeScript in `arc/`,
+Whenever you successfully introduce a new dataset, also add its puzzle ID
+exactly once to `jobs.report.env.ARC_PUZZLES` in
+`.github/workflows/arc.yml`, preserving the existing IDs and their order.
+Keep the job's timeout at least ten minutes per listed puzzle plus twenty
+minutes for setup and reporting, within GitHub Actions' job limit. Verify the
+ID is registered and include the workflow path and whether this invocation
+added the ID in your handoff. Do not change the workflow's triggers,
+credentials, solver command, provider settings, or
+scoring, and do not dispatch it. A blocked or enhancement-required handoff
+introduces no dataset and does not change the reporting list.
+
+Apart from the README paragraph and reporting-list update, change nothing
+else: no other datasets, puzzle data, or TypeScript in `arc/`,
 including `instruct_dataset.ts`, which finds `dataset.<id>.json` by name. When
 the solver would need a change to use the dataset, suggest it in the handoff
 instead. Do not run the solver or make LLM calls, read `.env`, change

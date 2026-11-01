@@ -27,6 +27,10 @@ paragraph change, both written by arc-dataset, and a NUC candidate changes
 nothing there. When the solver would need a change, finish the process
 without it and [suggest the change](#suggest-solver-changes) at the end.
 
+The dataset agent also registers a new dataset's puzzle in
+`.github/workflows/arc.yml`, as its profile requires. Keep that reporting-list
+update with the dataset; it does not authorize dispatching the GitHub workflow.
+
 ## Check the puzzle
 
 - Require an eight-character lowercase hexadecimal ID with a file in
@@ -168,10 +172,12 @@ Record it with the nuc-proposal skill's caller steps:
   [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 - **Rejected or Blocked:** the dataset depends on an unaccepted feature, so
   move it and its README paragraph from the primary checkout into the session
-  workspace. Keep the candidate isolated.
+  workspace. If this invocation added the puzzle's reporting-list entry,
+  remove only that entry when withdrawing the dataset. Preserve pre-existing
+  entries and unrelated workflow changes. Keep the candidate isolated.
 
-Leave the dataset and README changes uncommitted for review. Never push or
-change project versions.
+Leave the dataset, README, and reporting-list changes uncommitted for review.
+Never push or change project versions.
 
 ## Suggest solver changes
 
@@ -185,7 +191,8 @@ apply a suggestion or rerun the puzzle within the invocation.
 
 Save one JSON result record in the session workspace with the puzzle ID,
 starting revision, and hint (`null` without one); the dataset status and path,
-and arc-dataset's use of the hint; the NUC path, blob, category,
+the reporting-workflow path and whether its new entry was retained or
+withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
 evaluator decision, and report path; the run's command, executable, exit
 status or timeout, difference or error, and log paths; the outcome and its
 basis; the suggested solver changes; and any blockers. Use `null` for anything
