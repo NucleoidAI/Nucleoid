@@ -16,7 +16,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
       output_matrix: output,
       instances: [],
     })),
-    declarations: undefined,
+    declarations: [],
     output_canvas: undefined,
   };
 

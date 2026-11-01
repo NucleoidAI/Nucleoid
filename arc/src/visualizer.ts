@@ -16,6 +16,8 @@ export async function instances({
       {
         role: "assistant",
         content: `
+          declarations:
+          ${JSON.stringify(train_dataset.declarations)}
           train_dataset:
           ${JSON.stringify(
             train_dataset.dataset.map(
@@ -84,9 +86,9 @@ export async function value({
                   input_instance_matrix: Matrix.crop(input_instance_matrix),
                 })
               ),
-            }))
+            })).flatMap(({ instances }) => instances)
           )}
-          input_instances:
+          instances:
           ${JSON.stringify(
             input_instances.map(({ input_value, input_instance_matrix }) => ({
               input_value,
@@ -160,9 +162,9 @@ export async function output_instance_matrix({
                   output_instance_matrix: Matrix.crop(output_instance_matrix),
                 })
               ),
-            }))
+            })).flatMap(({ instances }) => instances)
           )}
-          input_instances:
+          instances:
           ${JSON.stringify(
             input_instances.map(
               ({

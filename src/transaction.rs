@@ -39,6 +39,12 @@ enum Undo {
         property: String,
         before: Option<Value>,
     },
+    PropertyRemoved {
+        object: ObjectId,
+        property: String,
+        index: usize,
+        before: Value,
+    },
     Object {
         id: ObjectId,
         before: Option<ObjectData>,
@@ -75,7 +81,7 @@ enum Undo {
     },
 }
 
-/// Identifies one slot, so a slot is recorded once however often it is written.
+/// Identifies one slot, so an overwritten slot is recorded once however often it is written.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Slot {
     Variable(String),
@@ -92,10 +98,11 @@ enum Slot {
 /// State and graph writes are logged here. Runtime savepoints also preserve
 /// pending propagation and temporary deletion tracking.
 ///
-/// Only the first write to a slot is recorded: that is the value the run began
-/// with, which is what rolling back has to restore. Later writes to the same
-/// slot cost nothing, which matters because a class is rewritten once per
-/// instance it gains.
+/// Only the first write to a slot is recorded, except that every addition and
+/// removal of a property is recorded so rolling back also restores key order:
+/// the first write holds the value the run began with, which is what rolling
+/// back has to restore. Later overwrites of the same slot cost nothing, which
+/// matters because a class is rewritten once per instance it gains.
 #[derive(Debug, Clone, Default)]
 pub struct Transaction {
     entries: Vec<Undo>,
@@ -196,6 +203,37 @@ impl Transaction {
             self.entries.push(Undo::Property {
                 object: object.clone(),
                 property: property.to_string(),
+                before,
+            });
+        }
+    }
+
+    pub(crate) fn record_property_added(&mut self, object: &ObjectId, property: &str) {
+        if self.active {
+            self.recorded
+                .insert(Slot::Property(object.clone(), property.to_string()));
+            self.entries.push(Undo::Property {
+                object: object.clone(),
+                property: property.to_string(),
+                before: None,
+            });
+        }
+    }
+
+    pub(crate) fn record_property_removed(
+        &mut self,
+        object: &ObjectId,
+        property: &str,
+        index: usize,
+        before: Value,
+    ) {
+        if self.active {
+            self.recorded
+                .insert(Slot::Property(object.clone(), property.to_string()));
+            self.entries.push(Undo::PropertyRemoved {
+                object: object.clone(),
+                property: property.to_string(),
+                index,
                 before,
             });
         }
@@ -316,6 +354,12 @@ fn apply(entry: Undo, state: &mut State, graph: &mut Graph) {
             property,
             before,
         } => state.restore_property(&object, property, before),
+        Undo::PropertyRemoved {
+            object,
+            property,
+            index,
+            before,
+        } => state.restore_removed_property(&object, property, index, before),
         Undo::Object { id, before } => state.restore_object(id, before),
         Undo::Class { name, before } => state.restore_class(name, before),
         Undo::Function { name, before } => state.restore_function(name, before),

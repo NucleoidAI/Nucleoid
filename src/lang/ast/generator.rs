@@ -242,6 +242,12 @@ pub fn generate(statement: &Stmt) -> String {
         Stmt::For {
             variable, iterable, ..
         } => format!("for {variable} of {iterable}"),
+        Stmt::ForEntries {
+            key,
+            value,
+            iterable,
+            ..
+        } => format!("for {key},{value} of {iterable}"),
         Stmt::Try { .. } => "try".to_string(),
         Stmt::Declaration { name, type_name } => format!("{name}:{type_name}"),
         Stmt::Pass => "pass".to_string(),
@@ -344,6 +350,15 @@ fn source(statement: &Stmt) -> String {
                 indent(&source_all(body))
             )
         }
+        Stmt::ForEntries {
+            key,
+            value,
+            iterable,
+            body,
+        } => format!(
+            "for {key},{value} of {iterable}:\n{}",
+            indent(&source_all(body))
+        ),
         Stmt::Try {
             body,
             parameter,

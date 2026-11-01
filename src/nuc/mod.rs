@@ -141,6 +141,15 @@ impl Nuc {
                 iterable,
                 body,
             } => Nuc::For(For::new(variable.clone(), iterable.clone(), body.clone())),
+            Stmt::ForEntries {
+                key,
+                value,
+                iterable,
+                body,
+            } => Nuc::For(For {
+                value: Some(value.clone()),
+                ..For::new(key.clone(), iterable.clone(), body.clone())
+            }),
             Stmt::Return(value) => Nuc::Return(Return::new(value.clone())),
             Stmt::Throw(exception) => Nuc::Throw(Throw::new(exception.clone())),
             Stmt::Delete(target) => Nuc::Delete(Delete::new(target.clone())),

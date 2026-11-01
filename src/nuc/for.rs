@@ -12,6 +12,7 @@ use crate::value::Value;
 #[derive(Debug, Clone)]
 pub struct For {
     pub variable: String,
+    pub value: Option<String>,
     pub array: Expr,
     pub statements: Vec<Stmt>,
 }
@@ -20,17 +21,40 @@ impl For {
     pub fn new(variable: String, array: Expr, statements: Vec<Stmt>) -> Self {
         For {
             variable,
+            value: None,
             array,
             statements,
         }
     }
 
     pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
-        let items = self.iterate(runtime, scope)?;
+        match &self.value {
+            None => {
+                let items = self.iterate(runtime, scope)?;
+                self.repeat(runtime, scope, items, |scope, item| {
+                    scope.declare(self.variable.clone(), item);
+                })
+            }
+            Some(value) => {
+                let entries = self.entries(runtime, scope)?;
+                self.repeat(runtime, scope, entries, |scope, (key, entry)| {
+                    scope.declare(self.variable.clone(), Value::String(key));
+                    scope.declare(value.clone(), entry);
+                })
+            }
+        }
+    }
 
-        for item in items {
+    fn repeat<T>(
+        &self,
+        runtime: &mut Runtime,
+        scope: &mut Scope,
+        snapshot: Vec<T>,
+        bind: impl Fn(&mut Scope, T),
+    ) -> Result<Outcome> {
+        for item in snapshot {
             scope.push();
-            scope.declare(self.variable.clone(), item);
+            bind(scope, item);
             runtime.enter_imperative();
             let result = runtime.execute_all(&self.statements, scope);
             runtime.leave_imperative();
@@ -42,6 +66,28 @@ impl For {
         }
 
         Ok(Outcome::null())
+    }
+
+    fn entries(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Vec<(String, Value)>> {
+        let Value::Object(id) = runtime.evaluate(&self.array, scope)? else {
+            return Err(Error::type_error(format!(
+                "{} is not an object",
+                self.array
+            )));
+        };
+
+        Ok(runtime
+            .state
+            .object(&id)
+            .map(|object| {
+                object
+                    .properties
+                    .iter()
+                    .filter(|(_, value)| !value.is_undefined())
+                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .collect()
+            })
+            .unwrap_or_default())
     }
 
     /// Snapshot class instances, registered instances in a list, or a string's

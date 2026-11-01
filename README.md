@@ -1393,6 +1393,33 @@ assert(buyers, 3)
   equality of `includes` and never converted, so `1` and `"1"` stay apart.
   See the [root contract](nucleoid.spec.md#list-and-population-distinct-values).
 
+## Object entry loops
+
+**Entry loops read the keys and values of a record**
+
+```nuc
+class Item(shelf, name, qty):
+    this.shelf = shelf
+    this.name = name
+    this.qty = qty
+def stock(shelf, table):
+    for name, qty of table: Item(shelf, name, qty)
+    return Item.length
+assert([stock("pantry", {rice: 4, oil: 2, salt: 1}), stock("fridge", {milk: 1, eggs: 12})], [3, 5])
+assert(Item.map(item -> item.shelf + ":" + item.name + item.qty).join(" "), "pantry:rice4 pantry:oil2 pantry:salt1 fridge:milk1 fridge:eggs12")
+```
+
+- [NUC 72](docs/nuc-0072.md) adds `for KEY, VALUE of SOURCE:`, also spelled
+  with `in`. It visits an object's own entries in insertion order, binds each
+  key and its value, and runs the body once per entry, as a single-name loop
+  runs once per item.
+- `stock` takes any table: the pantry and fridge tables have different keys,
+  and the loop reads each one without naming them. A rolled-back `try` or a
+  `suppose` block leaves every object's entries where they were, in the same
+  order. Any other source raises `TypeError("<source> is not an object")`.
+  See the
+  [root contract](nucleoid.spec.md#object-entry-loops-with-ordered-rollback).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

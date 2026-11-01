@@ -1133,9 +1133,42 @@ for Task:
     it.done = true
 ```
 
-Normative detail: [implicit iterator indented loops](../nucleoid.spec.md#implicit-iterator-indented-loops)
-and [string iteration](../nucleoid.spec.md#string-iteration), alongside the
-unchanged explicit-loop entries in the root specification.
+- [NUC 72](nuc-0072.md) adds two-name loops over an object's entries:
+  `for key, value of source:` and `for key, value in source:`. A header is a
+  two-name header exactly when `for` is followed by a name, a comma, a name and
+  `of` or `in`; the source is any expression and the body any suite the
+  explicit loop accepts.
+- The source is evaluated once and must be an object; every other value raises
+  `TypeError("<source> is not an object")`, and an undefined name keeps
+  `ReferenceError("<name> is not defined")`.
+- The loop visits the object's own entries in insertion order: literal keys as
+  written, later properties when first assigned, deletions removed and
+  re-added properties last. An instance lists `id` first, then its stored
+  fields. `null` values are visited; undefined literal slots are not entries.
+- Keys and values are snapshotted before the first body. Added entries are not
+  visited, deleted ones still are, and the value binding keeps its snapshotted
+  value while `source[key]` reads the current one.
+- Each iteration binds the key, a string, and the value in its own scope and
+  runs the body imperatively. Returns, rollback, receivers and nesting are
+  those of the explicit loop. The snapshot records no dependency of its own,
+  so a loop in a standing branch or block does not rerun when an entry changes.
+- Rollback restores entry order: after a failed `try`, a failed statement or a
+  `suppose` block, every object lists its entries exactly as before.
+- Graph keys render `for key,value of source`; single-name loops, including
+  `TypeError("<name> is not iterable")` for objects and the
+  `Expected 'of' in for statement` diagnostics, are unchanged.
+
+```
+stock = {rice: 4, beans: 0, oil: 2}
+low = []
+for item, count of stock:
+    if count < 2: low.push(item)
+```
+
+Normative detail: [implicit iterator indented loops](../nucleoid.spec.md#implicit-iterator-indented-loops),
+[string iteration](../nucleoid.spec.md#string-iteration) and
+[object entry loops with ordered rollback](../nucleoid.spec.md#object-entry-loops-with-ordered-rollback),
+alongside the unchanged explicit-loop entries in the root specification.
 
 ---
 
@@ -1481,6 +1514,7 @@ Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md),
 - Propagation that does not settle raises `TypeError("Propagation did not settle")` and rolls back the transaction.
 - A caught failure restores the failing body's pending propagation and deletion tracking before the catch body runs. Work queued before the body is preserved, including across nested catches.
 - A `suppose` block runs its statements on a savepoint that always rolls back, whether it ends normally, by a failure or by `return`; see [Hypotheticals](#hypotheticals).
+- Rolling back restores the order of every object's entries as well as their values: a deleted property returns where it stood, an added one is removed, and an instance keeps `id` first, at every nested savepoint ([NUC 72](nuc-0072.md)). The order of graph nodes and edges that `model |> why` reflects is unchanged.
 
 ```
 a = 5
@@ -2704,6 +2738,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
+| A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
 | `:=` on a class-level property outside a class-level rule | `Cannot use ':=' on a class-level property` |
 | A `:=` declaration whose value nests lists 192 levels or more | `Maximum expression depth exceeded` |
@@ -2817,6 +2852,8 @@ name **= exponent                      name = name ** (exponent) (NUC 64)
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration
+for key, value of source:              object entries in insertion order (NUC 72)
+for key, value in source:              equivalent two-name iteration (NUC 72)
 for source:                            indented iteration with local it
     statement
 
