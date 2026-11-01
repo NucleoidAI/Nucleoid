@@ -90,6 +90,7 @@ struct Parser {
     /// reuses an outcome instead of parsing the condition again.
     python_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
     suppose_premises: HashMap<(usize, usize), Option<SupposePremise>>,
+    while_conditions: HashMap<(usize, usize), Option<LoopCondition>>,
 }
 
 /// A qualified Python-style condition and the position after its `else`.
@@ -105,6 +106,12 @@ struct SupposePremise {
     end: usize,
 }
 
+#[derive(Clone)]
+struct LoopCondition {
+    condition: Expr,
+    colon: usize,
+}
+
 impl Parser {
     fn new(tokens: Vec<Spanned>) -> Self {
         Parser {
@@ -114,6 +121,7 @@ impl Parser {
             context: ExpressionContext::Ordinary,
             python_conditions: HashMap::new(),
             suppose_premises: HashMap::new(),
+            while_conditions: HashMap::new(),
         }
     }
 
@@ -327,6 +335,11 @@ impl Parser {
     }
 
     fn statement_inner(&mut self) -> Result<Stmt> {
+        if let Some(condition) = self.while_condition() {
+            let body = self.suite()?;
+            return Ok(Stmt::While { condition, body });
+        }
+
         match self.peek().clone() {
             Token::Keyword(Keyword::If) => self.if_statement(),
             Token::Keyword(Keyword::For) => self.for_statement(),
@@ -407,10 +420,12 @@ impl Parser {
     }
 
     fn suppose_statement(&mut self, expression: &Expr) -> Result<Option<Stmt>> {
+        if !heads_suppose(expression) {
+            return Ok(None);
+        }
         let target = match expression {
-            _ if names_suppose(expression) => None,
-            Expr::Assign { target, value } if names_suppose(value) => Some(target.as_ref().clone()),
-            _ => return Ok(None),
+            Expr::Assign { target, .. } => Some(target.as_ref().clone()),
+            _ => None,
         };
 
         let mut body = Vec::new();
@@ -451,23 +466,22 @@ impl Parser {
 
     fn attempt_suppose_premise(&mut self) -> Option<SupposePremise> {
         let start = self.position;
-        let outcome = match self.clause_expression() {
-            Ok(premise)
-                if self.check(&Token::Colon)
-                    && !matches!(
-                        &self.tokens[self.position - 1].token,
-                        Token::Identifier(name) if name == "lambda"
-                    ) =>
-            {
-                Some(SupposePremise {
-                    premise,
-                    end: self.position,
-                })
-            }
-            _ => None,
-        };
+        let outcome = self.clause_before_colon().map(|premise| SupposePremise {
+            premise,
+            end: self.position,
+        });
         self.position = start;
         outcome
+    }
+
+    fn clause_before_colon(&mut self) -> Option<Expr> {
+        let clause = self.clause_expression().ok()?;
+        let owns_colon = self.check(&Token::Colon)
+            && !matches!(
+                &self.tokens[self.position - 1].token,
+                Token::Identifier(name) if name == "lambda"
+            );
+        owns_colon.then_some(clause)
     }
 
     fn assertion_expression(&mut self) -> Result<Expr> {
@@ -608,6 +622,41 @@ impl Parser {
             }
         }
         false
+    }
+
+    fn while_condition(&mut self) -> Option<Expr> {
+        if !matches!(self.peek(), Token::Identifier(name) if name == "while")
+            || self.starts_colon_statement_at(1)
+        {
+            return None;
+        }
+
+        let attempt = (self.position, self.depth);
+        let outcome = match self.while_conditions.get(&attempt) {
+            Some(outcome) => outcome.clone(),
+            None => {
+                let outcome = self.attempt_while_condition();
+                self.while_conditions.insert(attempt, outcome.clone());
+                outcome
+            }
+        };
+        let LoopCondition { condition, colon } = outcome?;
+        self.position = colon;
+        Some(condition)
+    }
+
+    fn attempt_while_condition(&mut self) -> Option<LoopCondition> {
+        let start = self.position;
+        self.advance();
+        let outcome = self
+            .clause_before_colon()
+            .filter(|condition| !heads_suppose(condition))
+            .map(|condition| LoopCondition {
+                condition,
+                colon: self.position,
+            });
+        self.position = start;
+        outcome
     }
 
     fn for_statement(&mut self) -> Result<Stmt> {
@@ -2112,6 +2161,13 @@ fn names_suppose(expression: &Expr) -> bool {
     matches!(expression, Expr::Identifier(name) if name == "suppose")
 }
 
+fn heads_suppose(expression: &Expr) -> bool {
+    match expression {
+        Expr::Assign { value, .. } => names_suppose(value),
+        _ => names_suppose(expression),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3280,5 +3336,155 @@ class Gauge:
 
         assert_eq!(compact, expanded);
         assert_eq!(generate_all(&compact), generate_all(&expanded));
+    }
+
+    #[test]
+    fn while_conditions_qualify_only_colon_headers_and_reuse_outcomes() {
+        for (source, condition) in [
+            ("while n < 3:\n    n = n + 1", Some("n<3")),
+            ("while n < 3: n = n + 1", Some("n<3")),
+            ("while (ready): pass", Some("ready")),
+            ("while -n: pass", Some("-n")),
+            ("while [n]: pass", Some("[n]")),
+            ("while {}: pass", Some("{}")),
+            ("while x if y else z: pass", Some("(y?x:z)")),
+            ("while all v in xs: v > 0: pass", Some("(all v in xs:v>0)")),
+            ("while ready ? on : off: pass", Some("(ready?on:off)")),
+            ("while x => lambda + 1: pass", Some("function()")),
+            ("while [lambda: 1]: pass", Some("[function()]")),
+            ("while while: pass", Some("while")),
+            ("while ready: tick()", Some("ready")),
+            ("while ready: 1", Some("ready")),
+            ("while n < 3 {\n    n = n + 1\n}", None),
+            ("while n < 3\n    n = n + 1", None),
+            ("while lambda: 1", None),
+            ("while ready + lambda: 1", None),
+            ("while not lambda: 1", None),
+            ("while ready ? on : lambda: 1", None),
+            ("while x => lambda: 1", None),
+            ("while gauge.lambda: tick()", None),
+            ("while lambda x: x", None),
+            ("while x if y: z", None),
+            ("while all v in xs: v", None),
+            ("while: int", None),
+            ("while(4)", None),
+            ("while = 1", None),
+            ("while", None),
+            ("while\n    ready: int", None),
+            ("while ready\n: tick()", None),
+            ("while @first: tick()", None),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            let start = parser.position;
+            let tokens = parser.tokens.clone();
+            let first = parser.while_condition();
+            assert_eq!(
+                first.as_ref().map(ToString::to_string).as_deref(),
+                condition,
+                "{source}"
+            );
+            if first.is_some() {
+                assert_eq!(parser.peek(), &Token::Colon, "{source}");
+            } else {
+                assert_eq!(parser.position, start, "{source}");
+            }
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+            let recorded = parser.while_conditions.len();
+            assert!(
+                parser.while_conditions.contains_key(&(start, 0)),
+                "{source}"
+            );
+            let end = parser.position;
+            parser.position = start;
+            assert_eq!(parser.while_condition(), first, "{source}");
+            assert_eq!(parser.position, end, "{source}");
+            assert_eq!(parser.while_conditions.len(), recorded, "{source}");
+            assert_eq!(parser.tokens, tokens, "{source}");
+        }
+
+        for source in [
+            "while ready: tick",
+            "while ready: tick;",
+            "while assert: ready, true",
+            "value = 1",
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            assert_eq!(parser.while_condition(), None, "{source}");
+            assert_eq!(parser.position, 0, "{source}");
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+            assert!(parser.while_conditions.is_empty(), "{source}");
+        }
+    }
+
+    #[test]
+    fn nested_unqualified_while_headers_are_attempted_once_per_position() {
+        let levels = 16;
+        let mut source = String::new();
+        for level in 0..levels {
+            source.push_str(&"    ".repeat(level));
+            source.push_str("while (function() {\n");
+        }
+        source.push_str(&"    ".repeat(levels));
+        source.push_str("ready\n");
+        for level in (0..levels).rev() {
+            source.push_str(&"    ".repeat(level));
+            source.push_str("})\n");
+        }
+
+        let mut parser = Parser::new(tokenize(&source).unwrap());
+        let program = parser.program().unwrap();
+
+        assert_eq!(program.statements.len(), 1);
+        assert!(matches!(
+            &program.statements[0],
+            Stmt::Expression(Expr::Call { callee, .. })
+                if matches!(callee.as_ref(), Expr::Identifier(name) if name == "while")
+        ));
+        assert!(parser.while_conditions.len() <= levels * 2);
+    }
+
+    #[test]
+    fn while_conditions_leave_suppose_heads_and_value_assignments_to_the_accepted_parser() {
+        for (source, condition) in [
+            ("while suppose: x", None),
+            ("while suppose:\n    x = 1", None),
+            ("while x = suppose: x", None),
+            ("while x = (suppose): x", None),
+            ("while point.x = suppose: x", None),
+            ("while (a) = suppose: a", None),
+            ("while [a] = suppose: a", None),
+            ("while (suppose): pass", None),
+            ("while (x = suppose): pass", None),
+            ("while suppose x > 1: x", None),
+            ("while x = suppose y: y", None),
+            ("while := 1", None),
+            ("while x := 1", None),
+            ("while x:= 1", None),
+            ("while suppose > 1: pass", Some("suppose>1")),
+            ("while x == suppose: pass", Some("x==suppose")),
+            ("while x = suppose + 1: pass", Some("x=suppose+1")),
+            ("while x = y = suppose: pass", Some("x=y=suppose")),
+            ("while not suppose: pass", Some("!suppose")),
+            ("while [suppose]: pass", Some("[suppose]")),
+            ("while x: y := 1", Some("x")),
+            ("while x > 0: x := x - 1", Some("x>0")),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            let first = parser.while_condition();
+            assert_eq!(
+                first.as_ref().map(ToString::to_string).as_deref(),
+                condition,
+                "{source}"
+            );
+            if first.is_some() {
+                assert_eq!(parser.peek(), &Token::Colon, "{source}");
+            } else {
+                assert_eq!(parser.position, 0, "{source}");
+            }
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+        }
     }
 }

@@ -248,6 +248,9 @@ pub fn generate(statement: &Stmt) -> String {
             iterable,
             ..
         } => format!("for {key},{value} of {iterable}"),
+        Stmt::While { condition, body } => {
+            format!("while({condition}){{{}}}", generate_all(body))
+        }
         Stmt::Try { .. } => "try".to_string(),
         Stmt::Declaration { name, type_name } => format!("{name}:{type_name}"),
         Stmt::Pass => "pass".to_string(),
@@ -359,6 +362,9 @@ fn source(statement: &Stmt) -> String {
             "for {key},{value} of {iterable}:\n{}",
             indent(&source_all(body))
         ),
+        Stmt::While { condition, body } => {
+            format!("while {condition}:\n{}", indent(&source_all(body)))
+        }
         Stmt::Try {
             body,
             parameter,

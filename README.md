@@ -1420,6 +1420,34 @@ assert(Item.map(item -> item.shelf + ":" + item.name + item.qty).join(" "), "pan
   See the
   [root contract](nucleoid.spec.md#object-entry-loops-with-ordered-rollback).
 
+## While loops
+
+**While loops step a world model until a goal holds**
+
+```nuc
+class Tank(level):
+    this.level = level
+tank = Tank(2)
+full = tank.level >= 10
+hours = 0
+while not full:
+    tank.level = tank.level + 3
+    hours = hours + 1
+assert(tank.level, 11)
+assert(hours, 3)
+assert(full, true)
+```
+
+- [NUC 63](docs/nuc-0063.md) adds `while CONDITION:` with an indented or
+  same-line body. The condition is tested with the truthiness of `if` before
+  every iteration, and each iteration sees the live values that its own
+  changes caused, such as `full` here.
+- A loop runs once, imperatively, like `for`: it leaves no standing rule and
+  does not run again when `tank.level` changes later. A runaway loop stops
+  after 100,000 iterations with `TypeError("Loop did not terminate")` and
+  rolls back. `while` stays an ordinary name everywhere else. See the
+  [root contract](nucleoid.spec.md#while-loops).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

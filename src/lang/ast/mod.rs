@@ -69,6 +69,10 @@ pub enum Stmt {
         iterable: Expr,
         body: Vec<Stmt>,
     },
+    While {
+        condition: Expr,
+        body: Vec<Stmt>,
+    },
     Return(Option<Expr>),
     Throw(Expr),
     Delete(Expr),

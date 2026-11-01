@@ -3246,6 +3246,108 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores object entries in place when it rolls back` specify the
   executable behavior.
 
+## While loops
+
+- [NUC 63](docs/nuc-0063.md) adds the condition-controlled loop
+  `while CONDITION:` followed by a suite: an indented block, or statements on
+  the same line separated by `;`. No keyword or lexer token is added, and
+  `while` stays an ordinary name everywhere else.
+- A statement is a loop when it starts with the name `while` and the tokens
+  after it form one complete condition immediately followed by `:`, except
+  in the four spellings below. The condition is parsed like an `if` header
+  condition, so conditional expressions, quantifiers, `??`, `|>`, arrows and
+  bracketed lambdas pair their own colons. At the accepted revision every
+  loop statement was a `SyntaxError`.
+- Four spellings keep their accepted readings, because accepted programs
+  use them:
+  - `while NAME: TYPE` before a newline, `;`, dedent or the end of input is
+    the statement `while` followed by the typed declaration `NAME: TYPE`, so
+    `while ready: tick` runs `while` and then declares `ready`. Executing it
+    raises `ReferenceError("while is not defined")`, or
+    `ReferenceError("Missing definition")` when `while` is defined. A loop
+    whose same-line body is one bare name could only read that name, so no
+    useful loop is lost; `while ready: tick()` and an indented `tick` body
+    are loops.
+  - `while assert: ACTUAL, EXPECTED` is `while` followed by the colon-led
+    assertion statement `assert: ACTUAL, EXPECTED`, so with `while = 1`,
+    `while assert: while, 1` runs that assertion.
+  - A condition whose last token is a bare `lambda`, as in `while lambda: 1`
+    or `while x + lambda: 1`, keeps its accepted reading: `while` followed by
+    an expression that holds the zero-parameter lambda `lambda: 1`.
+  - A condition that is the name `suppose`, or an assignment whose value is
+    the name `suppose`, keeps its accepted reading, which is usually a
+    `suppose` block ([NUC 65](docs/nuc-0065.md)): `while suppose: x` is
+    `while` followed by the block `suppose: x`, and `while x = suppose: x` is
+    `while` followed by the assigned block `x = suppose: x`. The test reads
+    the parsed condition, as the `suppose` statement does, so
+    `while x = (suppose): x` is an assigned block too, and
+    `while (suppose): pass` keeps its accepted `SyntaxError("Unexpected ':'")`.
+- `while CONDITION` followed by an indented block without a colon, and
+  `while CONDITION { ... }`, keep their accepted readings as the juxtaposed
+  statements `while`, `CONDITION` and the block. A variable, function,
+  parameter or loop variable named `while`, including either name of a
+  two-name `for` loop, an object key or property `while`, `while(...)`
+  calls, the value assignment `while := VALUE` and the declaration
+  `while: TYPE` keep working.
+- Before each iteration the condition is evaluated in the current state and
+  tested with the truthiness of `if`. While it holds the body runs again;
+  when it is falsy the loop ends. A condition that is falsy at the start runs
+  no iteration. A completed loop yields `null`.
+- The loop is one-shot and imperative, like a `for` loop. Its body,
+  including nested conditionals, blocks and loops, is carried out rather
+  than filed as standing rules. Each iteration's assignments, and the
+  propagation they cause, are visible to the rest of the body and to the next
+  condition test. The loop files nothing in the graph and does not run again
+  when its inputs change later.
+- A loop inside the body of a standing rule, such as the branch of a
+  top-level `if` or a function called from a declaration, runs again whenever
+  that rule runs, as a `for` loop does there.
+- The body runs in the enclosing scope, like an `if` branch. A `for` body
+  pushes a new scope frame for each iteration to hold its loop variable; a
+  `while` loop binds no variable and pushes no frame. This is the one place
+  where a `while` body differs from a `for` body. Inside a function, loop or
+  block body, a `for` iteration's frame turns a name that the enclosing body
+  already assigned into a local of that iteration: a function that sets
+  `sum = 0` and then runs `sum = sum + 1` in a `for` loop over two items
+  returns `0`, which is accepted behavior and unchanged. The same accumulator
+  in a `while` body updates the enclosing `sum`, so the function returns the
+  accumulated total. Parameters, enclosing loop variables, locals, `this` and
+  `self`, and `return` otherwise behave as in `for` bodies.
+- `return` in the body leaves the enclosing function, method, block or loop,
+  as from a `for` body. At the top level it ends the program with its value.
+- A `while` statement is never kept on a class. Outside a class-level rule,
+  `$Class` in its condition or body reads the declared class, as in a `for`
+  statement, and an undeclared `$Name` raises
+  `ReferenceError("Name is not defined")`. A body statement that is itself a
+  class-level declaration, such as `$Item.flag = true`, is declared on the
+  class when it runs, as in a `for` body. Inside the body of a class-level
+  rule the loop runs for each instance, and `$Class` reads that instance.
+- `.value` in the condition reads the current value at each test; it is not
+  frozen.
+- Termination is guaranteed. Each run of a `while` statement may run its body
+  at most 100,000 times, the same bound as propagation steps. If the
+  condition still holds after the 100,000th iteration, the loop raises
+  `TypeError("Loop did not terminate")` positioned at the running top-level
+  statement, and the transaction rolls back. Each run of a nested loop has
+  its own budget, so every run terminates, but nested loops multiply and the
+  bound is not a cap on total work.
+- Errors raised by the condition or the body, and thrown values, propagate
+  through the existing transaction unchanged. A caught failure restores the
+  state from before the enclosing `try` body.
+- Canonical rendering is `while(CONDITION){BODY}` in graph keys and
+  `while CONDITION:` with an indented body inside default-bearing
+  declarations.
+- The native REPL already buffers a line that ends in `:` until a blank
+  line, and the terminal workspace's indented newline indents after one, so
+  `while CONDITION:` waits for its indented body.
+- Malformed loops use existing diagnostics: `while n < 3:` at the end of
+  input raises `SyntaxError("Unexpected end of input")`, and an unindented
+  next line raises `SyntaxError("Expected an indented block but found ...")`.
+  The eight appended entries beginning
+  `Nucleoid repeats a while loop until its condition fails` through
+  `Nucleoid rolls back a while loop that fails during an iteration` specify
+  the executable behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -17571,4 +17673,154 @@ basket.salt = 1
 fourth = Order("fourth")
 assert: fourth.fill(basket), ["tea4", "jam3", "oats2", "salt1"]
 assert: Line.map(line -> line.order + ":" + line.item).join(" "), "second:tea second:jam second:oats fourth:tea fourth:jam fourth:oats fourth:salt"
+---
+# Nucleoid repeats a while loop until its condition fails
+
+level = 0
+full = level >= 10
+steps = 0
+while not full:
+    level = level + 3
+    steps = steps + 1
+assert(level, 12)
+assert(steps, 4)
+assert(full, true)
+level = 4
+assert(full, false)
+assert(steps, 4)
+---
+# Nucleoid skips a while loop whose condition starts falsy
+
+class Counter(count):
+    this.count = count
+    this.ticks = 0
+busy = Counter(3)
+idle = Counter(0)
+blank = Counter("")
+unset = Counter(null)
+for counter of Counter:
+    while counter.count:
+        counter.count = counter.count - 1
+        counter.ticks = counter.ticks + 1
+assert(busy.count, 0)
+assert(busy.ticks, 3)
+assert(idle.ticks, 0)
+assert(blank.ticks, 0)
+assert(unset.ticks, 0)
+assert(blank.count, "")
+---
+# Nucleoid runs while loops in methods with parameters and return
+
+class Tank(level):
+    this.level = level
+    this.cycles = 0
+    def drain(rate):
+        while this.level > 0:
+            if this.level < rate:
+                return "partial"
+            this.level = this.level - rate
+            this.cycles = this.cycles + 1
+        return "empty"
+big = Tank(9)
+small = Tank(7)
+assert(big.drain(3), "empty")
+assert(big.level, 0)
+assert(big.cycles, 3)
+assert(small.drain(3), "partial")
+assert(small.level, 1)
+assert(small.cycles, 2)
+assert(Tank(0).drain(3), "empty")
+---
+# Nucleoid nests while loops with conditionals and for loops
+
+class Shelf(stock):
+    this.stock = stock
+a = Shelf(0)
+b = Shelf(3)
+low = Shelf.filter(s => s.stock < 3).length
+rounds = 0
+moves = 0
+while low > 0:
+    for s of Shelf:
+        if s.stock < 3:
+            while s.stock < 3:
+                s.stock = s.stock + 2
+                moves = moves + 1
+        else:
+            s.stock = s.stock - 1
+    rounds = rounds + 1
+assert(rounds, 2)
+assert(moves, 3)
+assert(a.stock, 3)
+assert(b.stock, 4)
+assert(low, 0)
+a.stock = 0
+assert(low, 1)
+assert(moves, 3)
+---
+# Nucleoid creates instances in a while loop until a class rule holds
+
+class Cell(size):
+    this.size = size
+$Cell.big = $Cell.size > 4
+grown = Cell.filter(c => c.big).length
+while grown < 2:
+    Cell(Cell.length * 2)
+assert(Cell.length, 5)
+assert(grown, 2)
+assert(Cell.map(c => c.size), [0, 2, 4, 6, 8])
+assert(Cell.map(c => c.big), [false, false, false, true, true])
+---
+# Nucleoid stops a runaway while loop and rolls it back
+
+level = 0
+while level < 12:
+    level = level + 3
+assert(level, 12)
+try:
+    while level != 20: level = level + 3
+catch error:
+    failure = error
+assert(failure, TypeError("Loop did not terminate"))
+assert(level, 12)
+---
+# Nucleoid keeps while as an ordinary name beside while loops
+
+while = 3
+count = 0
+while while > 0:
+    while = while - 1
+    count = count + 1
+assert(while, 0)
+assert(count, 3)
+def twice(while) => while * 2
+assert(twice(4), 8)
+point = {while: 1}
+assert(point.while, 1)
+---
+# Nucleoid rolls back a while loop that fails during an iteration
+
+class Parcel
+stock = 16
+shipped = 0
+left = stock - shipped
+try:
+    while shipped < 20:
+        if left < 3:
+            throw "SHORT"
+        Parcel()
+        shipped = shipped + 3
+catch error:
+    failure = error
+assert(failure, "SHORT")
+assert(shipped, 0)
+assert(left, 16)
+assert(Parcel.length, 0)
+try:
+    while missing > 0:
+        shipped = 1
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(shipped, 0)
 ```

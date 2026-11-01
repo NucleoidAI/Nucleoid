@@ -2122,4 +2122,18 @@ assert(sold, ["north:3", "south:6"])
 assert(Sale.filter(sale -> sale.item == "nuts").sum(sale -> sale.units), 8)
 sales.north.nuts
 # return: 9
+---
+# Nucleoid repeats statements with a while loop
+
+class Account(balance):
+    this.balance = balance
+savings = Account(100)
+goal = 150
+years = 0
+while savings.balance < goal:
+    savings.balance = savings.balance * 1.1
+    years = years + 1
+assert(years, 5)
+years
+# return: 5
 ```

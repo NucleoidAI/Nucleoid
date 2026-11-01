@@ -240,4 +240,15 @@ impl Runtime {
 
         Ok(value)
     }
+
+    pub(crate) fn evaluate_condition(
+        &mut self,
+        condition: &Expr,
+        scope: &mut Scope,
+    ) -> Result<(Value, bool)> {
+        let enclosing = std::mem::take(&mut self.undefined_read);
+        let value = self.evaluate(condition, scope);
+        let unresolved = std::mem::replace(&mut self.undefined_read, enclosing);
+        Ok((value?, unresolved))
+    }
 }

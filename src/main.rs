@@ -777,6 +777,31 @@ mod tests {
     }
 
     #[test]
+    fn while_headers_buffer_through_their_suite_colon() {
+        for line in [
+            "while count < 3:",
+            "while not done: # loop",
+            "while ready ? on : off:",
+            "while all v in xs: v > 0:",
+        ] {
+            assert!(indented_body_header(line), "{line:?}");
+            assert_eq!(next_indentation(line, true), INDENT, "{line:?}");
+        }
+        for line in [
+            "while count < 3: count = count + 1",
+            "while ready: tick",
+            "while count < 3",
+            "while = 3",
+        ] {
+            assert!(!indented_body_header(line), "{line:?}");
+        }
+        assert_eq!(
+            next_indentation("    while count < 3:", true),
+            format!("    {INDENT}")
+        );
+    }
+
+    #[test]
     fn nullish_coalescing_pairs_with_no_colon_in_headers() {
         for condition in [
             "ready ?? false",

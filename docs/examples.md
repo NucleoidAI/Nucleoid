@@ -2968,6 +2968,42 @@ Product.filter(product -> product.low).map(product -> product.site + ":" + produ
 - See [NUC 72](nuc-0072.md) and the
   [root contract](../nucleoid.spec.md#object-entry-loops-with-ordered-rollback).
 
+## While loops
+
+**While loops run packing shifts until every order is done**
+
+```nuc
+class Order(qty):
+    this.qty = qty
+    this.packed = 0
+$Order.done = $Order.packed >= $Order.qty
+Order(3)
+Order(5)
+Order(2)
+open = Order.filter(o => not o.done).length
+shifts = 0
+while open > 0:
+    for order of Order:
+        if not order.done:
+            order.packed = order.packed + 2
+    shifts = shifts + 1
+assert(shifts, 3)
+assert(open, 0)
+assert(Order.map(o => o.packed), [4, 6, 2])
+shifts
+# return: 3
+```
+
+- The class-level rule keeps `done` true to each order's packed count, and
+  `open` counts the orders that are not done. Each shift packs two units for
+  every open order, and the loop tests `open` again after every shift, so it
+  stops as soon as the last order is done.
+- The nested `for` and `if` are part of the one-shot loop body, not standing
+  rules. In accepted syntax the shifts need a `for` loop over placeholder
+  instances, and their number must be known in advance.
+- See [NUC 63](nuc-0063.md) and the
+  [root contract](../nucleoid.spec.md#while-loops).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

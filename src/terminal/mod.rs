@@ -593,6 +593,34 @@ mod tests {
     }
 
     #[test]
+    fn indented_newlines_open_a_while_suite_and_submission_runs_the_loop_once() {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::new();
+        for line in ["count = 0", "while count < 3:"] {
+            app.editor.insert_str(line);
+            key(
+                &mut app,
+                &mut runtime,
+                KeyCode::Char('j'),
+                KeyModifiers::CONTROL,
+            );
+        }
+        app.editor.insert_str("count = count + 1");
+        assert_eq!(
+            app.editor.lines(),
+            ["count = 0", "while count < 3:", "    count = count + 1"]
+        );
+        assert!(app.entries.is_empty());
+        key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+        assert_eq!(
+            runtime.state.variable("count"),
+            Some(&nucleoid::Value::Number(3.0))
+        );
+        run(&mut app, &mut runtime, "count = 0\ncount");
+        assert_eq!(app.entries.last().unwrap().output.text(View::Text), "0");
+    }
+
+    #[test]
     fn paste_waits_for_submission_and_history_restores_multiline_drafts() {
         let mut app = App::new(false, false);
         let mut runtime = Runtime::new();

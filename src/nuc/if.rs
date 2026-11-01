@@ -80,11 +80,7 @@ impl If {
     }
 
     fn branch(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Flow> {
-        let saved = std::mem::take(&mut runtime.undefined_read);
-        let test = runtime.evaluate(&self.condition, scope);
-        let unresolved = runtime.undefined_read;
-        runtime.undefined_read = saved;
-        let test = test?;
+        let (test, unresolved) = runtime.evaluate_condition(&self.condition, scope)?;
 
         // While a class-level rule still reads something undefined it stands
         // aside, rather than deciding on a value that is not there yet.

@@ -35,6 +35,7 @@ const WORDS: &[&str] = &[
     "try",
     "typeof",
     "undefined",
+    "while",
     "Array",
     "Boolean",
     "Class",
@@ -337,6 +338,15 @@ mod tests {
                 "{expected}"
             );
         }
+    }
+
+    #[test]
+    fn completion_offers_while_beside_bindings_that_share_its_prefix() {
+        let mut runtime = Runtime::new();
+        runtime.run("whale = 1").unwrap();
+        let completion = Completion::find(&runtime, &editor::new("wh"), false).unwrap();
+        assert_eq!(completion.candidates, ["whale", "while"]);
+        assert!(Completion::find(&runtime, &editor::new("while"), false).is_none());
     }
 
     #[test]

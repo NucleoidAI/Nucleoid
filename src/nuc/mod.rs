@@ -35,6 +35,8 @@ pub mod r#if;
 pub mod r#let;
 #[path = "return.rs"]
 pub mod r#return;
+#[path = "while.rs"]
+pub mod r#while;
 
 use indexmap::IndexSet;
 
@@ -61,6 +63,7 @@ use throw::Throw;
 use r#try::Try;
 use value_assign::ValueAssign;
 use variable::Variable;
+use r#while::While;
 
 /// What [`Nuc::run`] produced: the value or `return` it ended with, and the
 /// dependency keys recorded during execution.
@@ -99,6 +102,7 @@ pub enum Nuc {
     Block(Block),
     If(If),
     For(For),
+    While(While),
     Function(Function),
     Return(Return),
     Throw(Throw),
@@ -150,6 +154,9 @@ impl Nuc {
                 value: Some(value.clone()),
                 ..For::new(key.clone(), iterable.clone(), body.clone())
             }),
+            Stmt::While { condition, body } => {
+                Nuc::While(While::new(condition.clone(), body.clone()))
+            }
             Stmt::Return(value) => Nuc::Return(Return::new(value.clone())),
             Stmt::Throw(exception) => Nuc::Throw(Throw::new(exception.clone())),
             Stmt::Delete(target) => Nuc::Delete(Delete::new(target.clone())),
@@ -274,6 +281,7 @@ impl Nuc {
             Nuc::Block(node) => node.run(runtime, scope),
             Nuc::If(node) => node.run(runtime, scope),
             Nuc::For(node) => node.run(runtime, scope),
+            Nuc::While(node) => node.run(runtime, scope),
             Nuc::Function(node) => node.run(runtime, scope),
             Nuc::Return(node) => node.run(runtime, scope),
             Nuc::Throw(node) => node.run(runtime, scope),

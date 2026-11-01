@@ -1074,6 +1074,8 @@ assert(signal.output, 8)
   and `""` are kept; see [Nullish coalescing](#nullish-coalescing).
 - `all` and `any` quantifiers test each member's condition the same way; see
   [Quantifiers](#quantifiers).
+- A `while` loop tests its condition the same way before every iteration; see
+  [while](#while).
 
 ```
 if $Device.profile:
@@ -1172,6 +1174,47 @@ Normative detail: [implicit iterator indented loops](../nucleoid.spec.md#implici
 [string iteration](../nucleoid.spec.md#string-iteration) and
 [object entry loops with ordered rollback](../nucleoid.spec.md#object-entry-loops-with-ordered-rollback),
 alongside the unchanged explicit-loop entries in the root specification.
+
+### while
+
+- `while <condition>:` repeats its body while the condition holds, under
+  [NUC 63](nuc-0063.md). The body is an indented block, or statements on the
+  same line separated by `;`.
+- The condition is tested before every iteration with the truthiness of
+  `if`, so a condition that is false at the start runs no iteration.
+- Each iteration's assignments, and the propagation they cause, are visible
+  to the rest of the body and to the next test.
+- The loop runs once, imperatively, like `for`: nested conditions and blocks
+  are part of that one-shot body, nothing is filed in the graph, and the loop
+  does not run again when its inputs change later.
+- The body runs in the enclosing scope, like an `if` branch, with no scope
+  frame per iteration. That is where it differs from a `for` body, whose
+  frame per iteration shadows a name that the enclosing function or loop body
+  already assigned. Parameters, enclosing loop variables, `this`/`self` and
+  `return` behave as in `for` bodies.
+- Each run of a loop stops after at most 100,000 iterations: a condition that
+  still holds then raises `TypeError("Loop did not terminate")` and the
+  transaction rolls back. Each run of a nested loop has its own budget, so
+  every run terminates, but nested loops multiply and the bound is not a cap
+  on total work.
+- `while` is not reserved. `while NAME: TYPE`, `while assert: ...`, a
+  condition whose last token is a bare `lambda`, and colon-free or braced
+  headers keep their accepted readings as separate statements. A condition
+  that is the name `suppose`, or an assignment whose value is that name, as
+  in `while suppose: ...`, keeps its accepted reading too: `while` followed
+  by a `suppose` block.
+
+```
+savings = Account(100)
+years = 0
+while savings.balance < 150:
+    savings.balance = savings.balance * 1.1
+    years = years + 1
+```
+
+- `years` is `5`; changing `savings.balance` later does not run the loop again.
+
+Normative detail: [while loops](../nucleoid.spec.md#while-loops).
 
 ---
 
@@ -2747,6 +2790,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A `:=` declaration whose value nests lists 192 levels or more | `Maximum expression depth exceeded` |
 | Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
+| A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
 | A positional constructor argument following a label | `Positional constructor argument after named arguments for <class>` |
@@ -2859,6 +2903,9 @@ for key, value of source:              object entries in insertion order (NUC 72
 for key, value in source:              equivalent two-name iteration (NUC 72)
 for source:                            indented iteration with local it
     statement
+while condition:                       repeat while the condition holds (NUC 63)
+    statement
+while condition: statement             same loop with a same-line body
 
 value => expression                    anonymous arrow; also (a, b) => expression
 value => { statement }                 anonymous arrow with a statement body

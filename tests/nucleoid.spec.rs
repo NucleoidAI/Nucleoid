@@ -14513,6 +14513,188 @@ assert: fourth.fill(basket), ["tea4", "jam3", "oats2", "salt1"]
 assert: Line.map(line -> line.order + ":" + line.item).join(" "), "second:tea second:jam second:oats fourth:tea fourth:jam fourth:oats fourth:salt""#);
 }
 
+/// Nucleoid repeats a while loop until its condition fails
+#[rustfmt::skip]
+#[test]
+fn repeats_a_while_loop_until_its_condition_fails() {
+    let mut run = runner();
+    run("level = 0");
+    run("full = level >= 10");
+    run("steps = 0");
+    run(r#"while not full:
+    level = level + 3
+    steps = steps + 1"#);
+    assert_eq!(run("level"), 12);
+    assert_eq!(run("steps"), 4);
+    assert_eq!(run("full"), true);
+    run("level = 4");
+    assert_eq!(run("full"), false);
+    assert_eq!(run("steps"), 4);
+}
+
+/// Nucleoid skips a while loop whose condition starts falsy
+#[rustfmt::skip]
+#[test]
+fn skips_a_while_loop_whose_condition_starts_falsy() {
+    let mut run = runner();
+    run(r#"class Counter(count):
+    this.count = count
+    this.ticks = 0"#);
+    run("busy = Counter(3)");
+    run("idle = Counter(0)");
+    run(r#"blank = Counter("")"#);
+    run("unset = Counter(null)");
+    run(r#"for counter of Counter:
+    while counter.count:
+        counter.count = counter.count - 1
+        counter.ticks = counter.ticks + 1"#);
+    assert_eq!(run("busy.count"), 0);
+    assert_eq!(run("busy.ticks"), 3);
+    assert_eq!(run("idle.ticks"), 0);
+    assert_eq!(run("blank.ticks"), 0);
+    assert_eq!(run("unset.ticks"), 0);
+    assert_eq!(run("blank.count"), "");
+}
+
+/// Nucleoid runs while loops in methods with parameters and return
+#[rustfmt::skip]
+#[test]
+fn runs_while_loops_in_methods_with_parameters_and_return() {
+    let mut run = runner();
+    run(r#"class Tank(level):
+    this.level = level
+    this.cycles = 0
+    def drain(rate):
+        while this.level > 0:
+            if this.level < rate:
+                return "partial"
+            this.level = this.level - rate
+            this.cycles = this.cycles + 1
+        return "empty""#);
+    run("big = Tank(9)");
+    run("small = Tank(7)");
+    assert_eq!(run("big.drain(3)"), "empty");
+    assert_eq!(run("big.level"), 0);
+    assert_eq!(run("big.cycles"), 3);
+    assert_eq!(run("small.drain(3)"), "partial");
+    assert_eq!(run("small.level"), 1);
+    assert_eq!(run("small.cycles"), 2);
+    assert_eq!(run("Tank(0).drain(3)"), "empty");
+}
+
+/// Nucleoid nests while loops with conditionals and for loops
+#[rustfmt::skip]
+#[test]
+fn nests_while_loops_with_conditionals_and_for_loops() {
+    let mut run = runner();
+    run(r#"class Shelf(stock):
+    this.stock = stock"#);
+    run("a = Shelf(0)");
+    run("b = Shelf(3)");
+    run("low = Shelf.filter(s => s.stock < 3).length");
+    run("rounds = 0");
+    run("moves = 0");
+    run(r#"while low > 0:
+    for s of Shelf:
+        if s.stock < 3:
+            while s.stock < 3:
+                s.stock = s.stock + 2
+                moves = moves + 1
+        else:
+            s.stock = s.stock - 1
+    rounds = rounds + 1"#);
+    assert_eq!(run("rounds"), 2);
+    assert_eq!(run("moves"), 3);
+    assert_eq!(run("a.stock"), 3);
+    assert_eq!(run("b.stock"), 4);
+    assert_eq!(run("low"), 0);
+    run("a.stock = 0");
+    assert_eq!(run("low"), 1);
+    assert_eq!(run("moves"), 3);
+}
+
+/// Nucleoid creates instances in a while loop until a class rule holds
+#[rustfmt::skip]
+#[test]
+fn creates_instances_in_a_while_loop_until_a_class_rule_holds() {
+    let mut run = runner();
+    run(r#"class Cell(size):
+    this.size = size"#);
+    run("$Cell.big = $Cell.size > 4");
+    run("grown = Cell.filter(c => c.big).length");
+    run(r#"while grown < 2:
+    Cell(Cell.length * 2)"#);
+    assert_eq!(run("Cell.length"), 5);
+    assert_eq!(run("grown"), 2);
+    assert_eq!(run("Cell.map(c => c.size)"), serde_json::json!([0, 2, 4, 6, 8]));
+    assert_eq!(run("Cell.map(c => c.big)"), serde_json::json!([false, false, false, true, true]));
+}
+
+/// Nucleoid stops a runaway while loop and rolls it back
+#[rustfmt::skip]
+#[test]
+fn stops_a_runaway_while_loop_and_rolls_it_back() {
+    let mut run = runner();
+    run(r#"level = 0
+while level < 12:
+    level = level + 3
+assert(level, 12)
+try:
+    while level != 20: level = level + 3
+catch error:
+    failure = error
+assert(failure, TypeError("Loop did not terminate"))
+assert(level, 12)"#);
+}
+
+/// Nucleoid keeps while as an ordinary name beside while loops
+#[rustfmt::skip]
+#[test]
+fn keeps_while_as_an_ordinary_name_beside_while_loops() {
+    let mut run = runner();
+    run("while = 3");
+    run("count = 0");
+    run(r#"while while > 0:
+    while = while - 1
+    count = count + 1"#);
+    assert_eq!(run("while"), 0);
+    assert_eq!(run("count"), 3);
+    run("def twice(while) => while * 2");
+    assert_eq!(run("twice(4)"), 8);
+    run("point = {while: 1}");
+    assert_eq!(run("point.while"), 1);
+}
+
+/// Nucleoid rolls back a while loop that fails during an iteration
+#[rustfmt::skip]
+#[test]
+fn rolls_back_a_while_loop_that_fails_during_an_iteration() {
+    let mut run = runner();
+    run(r#"class Parcel
+stock = 16
+shipped = 0
+left = stock - shipped
+try:
+    while shipped < 20:
+        if left < 3:
+            throw "SHORT"
+        Parcel()
+        shipped = shipped + 3
+catch error:
+    failure = error
+assert(failure, "SHORT")
+assert(shipped, 0)
+assert(left, 16)
+assert(Parcel.length, 0)
+try:
+    while missing > 0:
+        shipped = 1
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert(shipped, 0)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
