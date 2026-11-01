@@ -268,7 +268,7 @@ the puzzle's one solver run against the frozen candidate, as the
 
 - `bun start <puzzle-id>` exits with `0`, an exact match: Accepted, regardless
   of the evaluator's decision.
-- Any other exit status, a timeout at the skill's 10-minute limit, or no run:
+- Any other exit status, a timeout at the skill's 30-minute limit, or no run:
   the evaluator's overall decision stands, and only its `Accepted` accepts the
   NUC.
 

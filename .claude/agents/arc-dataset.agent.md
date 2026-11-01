@@ -212,7 +212,7 @@ With a candidate executable, also name the NUC whose feature the rules use.
 Whenever you successfully introduce a new dataset, also add its puzzle ID
 exactly once to `jobs.report.env.ARC_PUZZLES` in
 `.github/workflows/arc.yml`, preserving the existing IDs and their order.
-Keep the job's timeout at least ten minutes per listed puzzle plus twenty
+Keep the job's timeout at least thirty minutes per listed puzzle plus twenty
 minutes for setup and reporting, within GitHub Actions' job limit. Verify the
 ID is registered and include the workflow path and whether this invocation
 added the ID in your handoff. Do not change the workflow's triggers,

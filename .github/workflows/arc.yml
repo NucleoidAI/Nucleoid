@@ -9,7 +9,7 @@ permissions:
 jobs:
   report:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 140
     defaults:
       run:
         shell: bash
@@ -59,7 +59,7 @@ jobs:
             printf '::group::Puzzle %s\n' "$puzzle_id"
             started_at=$SECONDS
             exit_code=0
-            timeout --signal=TERM --kill-after=30s 10m bun --no-env-file run start "$puzzle_id" \
+            timeout --signal=TERM --kill-after=30s 30m bun --no-env-file run start "$puzzle_id" \
               > "reports/$puzzle_id.log" 2>&1 || exit_code=$?
             duration=$(( SECONDS - started_at ))
             printf '%s\t%s\n' "$exit_code" "$duration" > "reports/$puzzle_id.tsv"

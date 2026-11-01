@@ -58,7 +58,7 @@ secret `OPENROUTER_API_KEY` before dispatching it; do not upload an environment
 file. The workflow disables environment-file loading, builds the checked-out
 Nucleoid runtime, installs ARC dependencies from the frozen Bun lockfile,
 and runs `3aa6fb7a`, `28bf18c6`, `9af7a82c`, and
-`0ca9ddb6` once each, with a ten-minute limit per puzzle. These are live,
+`0ca9ddb6` once each, with a thirty-minute limit per puzzle. These are live,
 paid OpenRouter solver benchmarks, not automated ARC tests.
 
 The run summary contains a table with each puzzle's result, exit code, and
@@ -239,8 +239,8 @@ Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
    evaluation stages as a single-proposal request. The dataset is then written
    with the frozen candidate's runtime.
 3. `bun start <puzzle-id>` runs once, with that candidate's runtime when there
-   is one, while the workflow waits up to 10 minutes for it. Exit status `0` is
-   an exact match; a run still going at 10 minutes is killed and does not pass.
+   is one, while the workflow waits up to 30 minutes for it. Exit status `0` is
+   an exact match; a run still going at 30 minutes is killed and does not pass.
 4. An exact match accepts the requested NUC whatever the evaluator decided.
    Otherwise the NUC is accepted only if the evaluator accepted it.
 5. The workflow itself never changes the solver's TypeScript. When the

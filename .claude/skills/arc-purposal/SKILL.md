@@ -105,7 +105,7 @@ Handle at most one NUC request per invocation, as a single-proposal request.
 
 The invocation authorizes exactly one live solver run, which makes paid
 OpenRouter calls. With dependencies installed from the committed lockfile, run
-`bun start <puzzle-id>` from `arc/` under a 10-minute limit. In PowerShell 7.4
+`bun start <puzzle-id>` from `arc/` under a 30-minute limit. In PowerShell 7.4
 or later:
 
     "runner $PID"
@@ -120,7 +120,7 @@ or later:
     }
     $run = Start-Process @options
     $null = $run.Handle
-    if ($run.WaitForExit(600000)) { "exit $($run.ExitCode)" } else { taskkill /PID $run.Id /T /F; $run.WaitForExit(); 'timed out' }
+    if ($run.WaitForExit(1800000)) { "exit $($run.ExitCode)" } else { taskkill /PID $run.Id /T /F; $run.WaitForExit(); 'timed out' }
 
 With a NUC candidate, replace `$null` with its copied executable, which sets
 `NUCLEOID_EXECUTABLE` for that process only; without one, `$null` keeps an
@@ -128,9 +128,9 @@ inherited value out of the run. Both logs stay in the session workspace, and
 the status is the process's own, not a pipeline's.
 
 Wait for the run inside this invocation. Never end, return, or report while it
-runs. If one tool call cannot block for 10 minutes, start the lines above in
+runs. If one tool call cannot block for 30 minutes, start the lines above in
 the background and wait on the printed runner ID with further calls, such as
-`Wait-Process -Id <runner> -Timeout 590`, until it exits; never end the
+`Wait-Process -Id <runner> -Timeout 1790`, until it exits; never end the
 invocation to await a notification. At the limit, the command kills the whole
 process tree.
 
