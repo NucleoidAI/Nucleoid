@@ -12,7 +12,10 @@ export async function declarations({ puzzle_id, train_dataset }) {
         role: "user",
         content: `
           train_dataset:
-          ${JSON.stringify(train_dataset)}
+          ${JSON.stringify(train_dataset.dataset.map(({ input_matrix, output_matrix }) => ({
+            input_matrix,
+            output_matrix,
+          })))}
           json_format:
           { "declarations": <DECLARATIONS>, "output_canvas": <OUTPUT_CANVAS> }
         `,
