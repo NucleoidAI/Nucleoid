@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/9af7a82c.json`](../data/training/9af7a82c.json) |
-| Instruction dataset | [`dataset.9af7a82c.json`](../src/dataset/dataset.9af7a82c.json): the puzzle's 4 original training pairs, 14 region instances; full-canvas zero-padded masks |
+| Instruction dataset | [`dataset.9af7a82c.json`](../src/dataset/dataset.9af7a82c.json): the puzzle's 4 original training pairs and its test pair, 19 region instances; full-canvas zero-padded masks |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None recorded |
 | Solver changes | None specific to this puzzle |
@@ -28,8 +28,9 @@ box and the dataset is `FIT`; see
 
 The single dataset has the four original training pairs in source order:
 3 by 3 to 5 by 3, 3 by 4 to 6 by 4, 4 by 3 to 5 by 4, and 4 by 3 to
-6 by 3, with 3, 4, 4, and 3 regions. All source cells, colors, positions, and
-canvas dimensions are preserved.
+6 by 3, with 3, 4, 4, and 3 regions. The original test pair follows them at
+the same level: 4 by 4 to 6 by 5, with 5 regions. All source cells, colors,
+positions, and canvas dimensions are preserved.
 Each region is an `Obj(x, y, orientation, color, cell_count)`, where
 `cell_count` is the number of cells in its full-size, zero-padded input mask.
 Unconditional class rules derive the bar:
