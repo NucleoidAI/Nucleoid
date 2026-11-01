@@ -155,6 +155,14 @@ malformed JSON, fails explicitly; JSON errors name the file.
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations.
 
+Every `input_instance_matrix` has exactly its pair's `input_matrix` row and
+column counts, and every `output_instance_matrix` has exactly its pair's
+`output_matrix` row and column counts, even when the two canvases differ.
+Both masks are rectangular, with the object's cells at their canvas coordinates
+and every other cell padded with `0`. The x/y metadata records the nonzero
+bounding-box origin within the full mask, not an offset to apply again. This
+storage framing is separate from `output_canvas`'s final composition/cropping mode.
+
 Each dataset also sets `output_canvas`, how its output matrices are framed.
 `EXACT` outputs keep the input matrix's dimensions, while `FIT` outputs are
 cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`
@@ -216,9 +224,12 @@ training pair or test input, so each pair lists its instances largest first,
 and every recorded `x` already counts all larger regions of its pair. Tags
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l6953` is a vertical bar. Input masks retain
-each pair's input canvas and output masks its output canvas; `output_canvas`
-is `FIT` because each histogram fills its nonzero bounding box, and two
-outputs are narrower than their inputs. Orientation is 0 in both states
+each pair's full-size, zero-padded input canvas; output masks retain each
+pair's full-size output canvas padded with `0` outside the bar. The
+`output_x`/`output_y` fields record the bar's nonzero bounding-box world origin,
+equal to `output_value.x`/`output_value.y`, not offsets to apply again.
+`output_canvas` is `FIT` because each histogram fills its nonzero bounding box,
+and two outputs are narrower than their inputs. Orientation is 0 in both states
 because the regions are not rotated and the bars are vertical. Held-out
 inputs and outputs are not included.
 

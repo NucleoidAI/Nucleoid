@@ -158,10 +158,13 @@ the feature; you never start a NUC.
 
 ## Annotate instances
 
-- Segment every object of every pair into an instance. Masks keep their full
-  canvas: `input_instance_matrix` has the input matrix's dimensions and
-  `output_instance_matrix` the output matrix's, each holding only that
-  object's cells.
+- Segment every object of every pair into an instance. Both masks must be
+  rectangular and retain their full canvas: `input_instance_matrix` has exactly
+  the input matrix's row and column counts, and `output_instance_matrix` has
+  exactly the output matrix's row and column counts. Keep the object's cells at
+  their canvas coordinates and pad every other cell with `0`. Never store
+  cropped masks, including for points or bars; input and output canvas sizes
+  may differ.
 - `input_x`/`input_y` and `output_x`/`output_y` are the zero-based column and
   row of each mask's nonzero bounding-box origin.
 - `instance_name` is `obj` plus 12 random lowercase hexadecimal characters,
@@ -191,14 +194,22 @@ Verify with a throwaway script outside the repository; do not add tests:
   matrix, never puzzle contents; on a collision, change the example.
 - The synthesizer's transformation reproduces the output of every training
   pair and every synthesized pair.
-- Every mask has its canvas's dimensions, matches its x/y fields, and holds
-  only cells of its matrix.
+- Every input mask has exactly its pair's `input_matrix` dimensions, and every
+  output mask has exactly its pair's `output_matrix` dimensions. Both masks are
+  rectangular, padded with `0` outside the object, match their x/y fields, and
+  hold only cells of their respective matrices.
 - Merging a pair's input masks reproduces `input_matrix`, and merging its
   output masks reproduces `output_matrix`, cell for cell.
 - Rerunning Nucleoid reproduces every `input_value` and `output_value`.
 
-Apart from replacing a colliding example, report any mismatch; never adjust
-matrices or values to make a check pass.
+For an explicitly authorized existing-dataset repair, restore unambiguous
+cropped masks to their existing canvases by padding at the recorded world
+positions. Do not pad an already full-size mask again, change an object's
+position, or alter pair grids, identities, declarations, implementations, or
+runtime snapshots.
+
+Apart from replacing a colliding example or such an authorized padding repair,
+report any mismatch; never adjust matrices or values to make a check pass.
 
 ## Document and hand off
 
