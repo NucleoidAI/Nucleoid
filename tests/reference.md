@@ -2136,4 +2136,25 @@ while savings.balance < goal:
 assert(years, 5)
 years
 # return: 5
+---
+# Nucleoid destructures records and pairs into live names
+
+class Box(width, depth, height):
+    this.width = width
+    this.depth = depth
+    this.height = height
+$Box.base = $Box.width * $Box.depth
+crate = Box(2, 3, 4)
+{base, height: tall} = crate
+volume = base * tall
+route = ["Oslo", "Rome"]
+origin, destination = route
+assert: volume, 24
+crate.depth = 5
+crate.height = 2
+route = ["Lima", "Cusco"]
+assert: [base, tall, volume], [10, 2, 20]
+assert: [origin, destination], ["Lima", "Cusco"]
+volume
+# return: 20
 ```

@@ -325,6 +325,45 @@ qty = 5
   `tests/reference.md`; the root contract is
   [Value assignment](../nucleoid.spec.md#value-assignment).
 
+### Destructuring declarations
+
+- [NUC 67](nuc-0067.md) adds destructuring declarations: object patterns
+  `{x, y} = point`, renamed targets `{key: name} = source`, which may follow
+  each other without commas as object properties do, and Python-style
+  unpacking `a, b = pair`.
+- Each target is exactly one ordinary declaration, in pattern order:
+  `{x, y} = point` is `x = point.x` followed by `y = point.y`, and
+  `a, b = pair` is `a = pair[0]` followed by `b = pair[1]`. Every name stays
+  live, `why` explains it as that declaration, and a missing key or position
+  reads `null`.
+- The value is evaluated once per target, so a call or instantiation in it
+  runs once per target: `{x, y} = Point(1, 2)` creates two points. Name such
+  a value first, as in `p = Point(1, 2)` and `{x, y} = p`.
+- A destructuring is a whole statement on one line: it starts a line, or
+  follows `;`, a block's `{` or a suite's `:`, and its value ends the line or
+  is followed by `;`, `}`, `else` or `catch`. Keys and targets are names, one
+  trailing comma is allowed, and a pattern has at most 128 targets.
+- `[a, b] = pair` keeps its accepted meaning, an assignment to a list that
+  raises `SyntaxError("Cannot assign to [a,b]")` when it runs. Nested
+  patterns, defaults, rest targets, tuple values such as `a, b = 1, 2`, and
+  `let`, `var` and `const` prefixes are not destructuring and keep their
+  syntax errors.
+
+```
+point = {x: 2, y: 3}
+{x, y: up} = point
+pair = [4, 6]
+low, high = pair
+point.y = 10
+pair = [1, 9]
+```
+
+- `x` is `2`, `up` is `10`, `low` is `1` and `high` is `9`.
+- The executable counterpart is
+  `Nucleoid destructures records and pairs into live names` in
+  `tests/reference.md`; the root contract is
+  [Destructuring declarations](../nucleoid.spec.md#destructuring-declarations).
+
 ### Null and undefined
 
 - Any `null` dependency yields `null`.
@@ -2809,6 +2848,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A block or template that is never closed | `Unterminated block`, `Unterminated template expression` |
 | Nesting or a chain past the runtime's limit | `Expressions are nested too deeply`, `Expression has too many operands` |
 | A postfix chain or a compound path beyond its limit | `Expression has too many parts` |
+| A destructuring with more than 128 targets | `Destructuring has too many targets` |
 | A constructor-header star at a parameter position | `Expected a parameter but found '*'` |
 
 ### Where an error happened
@@ -2835,6 +2875,9 @@ name = expression                      variable assignment
 name := expression                     value assignment: once, no dependency (NUC 66)
 name.property := expression            value assignment to a property (NUC 66)
 name += expression                     compound assignment; also -=, *=, **=, /=, %=
+{a, b} = expression                    one declaration per field: a = expression.a (NUC 67)
+{key: name} = expression               renamed field: name = expression.key (NUC 67)
+a, b = expression                      one declaration per position: a = expression[0] (NUC 67)
 name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected
 name.property = expression             property assignment

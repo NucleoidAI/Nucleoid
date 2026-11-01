@@ -14695,6 +14695,224 @@ assert(failure, ReferenceError("missing is not defined"))
 assert(shipped, 0)"#);
 }
 
+/// Nucleoid destructures object fields into standing declarations
+#[rustfmt::skip]
+#[test]
+fn destructures_object_fields_into_standing_declarations() {
+    runner()("point = {x: 3, y: 4, z: 0}\n{x, y, z} = point\nassert: [x, y, z], [3, 4, 0]\npoint.x = 6\npoint.z = 2\nassert: [x, z], [6, 2]\npoint = {x: 1, y: 2}\nassert: [x, y, z], [1, 2, null]\nsize = {w: 5}\n{w, h,} = size\nassert: [w, h], [5, null]\nsize.h = 4\nsize.w = 3\nassert: [w, h], [3, 4]\nx + y + w * h\n# return: 15");
+    let mut run = runner();
+    run("point = {x: 3, y: 4, z: 0}");
+    run("{x, y, z} = point");
+    assert_eq!(run("[x, y, z]"), serde_json::json!([3, 4, 0]));
+    run("point.x = 6");
+    run("point.z = 2");
+    assert_eq!(run("[x, z]"), serde_json::json!([6, 2]));
+    run("point = {x: 1, y: 2}");
+    assert_eq!(run("[x, y, z]"), serde_json::json!([1, 2, null]));
+    run("size = {w: 5}");
+    run("{w, h,} = size");
+    assert_eq!(run("[w, h]"), serde_json::json!([5, null]));
+    run("size.h = 4");
+    run("size.w = 3");
+    assert_eq!(run("[w, h]"), serde_json::json!([3, 4]));
+    run(r#"x + y + w * h
+
+# return: 15"#);
+}
+
+/// Nucleoid destructures renamed fields of instances
+#[rustfmt::skip]
+#[test]
+fn destructures_renamed_fields_of_instances() {
+    runner()("class Room(name, width, depth):\n    this.name = name\n    this.width = width\n    this.depth = depth\n$Room.area = $Room.width * $Room.depth\nhall = Room(\"hall\", 2, 5)\nden = Room(\"den\", 4, 4)\n{name, area, width} = hall\n{name: other area: larger, depth} = den\nassert: [name, area, width], [\"hall\", 10, 2]\nassert: [other, larger, depth], [\"den\", 16, 4]\nhall.depth = 9\nden.width = 5\nassert: [area, larger], [18, 20]\nhall.width = 3\nden.depth = 2\nhall.name = \"atrium\"\nassert: [name, width, depth, area, larger], [\"atrium\", 3, 2, 27, 10]\nRoom.map(room -> room.area)\n# return: [27,10]");
+    let mut run = runner();
+    run(r#"class Room(name, width, depth):
+    this.name = name
+    this.width = width
+    this.depth = depth"#);
+    run("$Room.area = $Room.width * $Room.depth");
+    run(r#"hall = Room("hall", 2, 5)"#);
+    run(r#"den = Room("den", 4, 4)"#);
+    run("{name, area, width} = hall");
+    run("{name: other area: larger, depth} = den");
+    assert_eq!(run("[name, area, width]"), serde_json::json!(["hall", 10, 2]));
+    assert_eq!(run("[other, larger, depth]"), serde_json::json!(["den", 16, 4]));
+    run("hall.depth = 9");
+    run("den.width = 5");
+    assert_eq!(run("[area, larger]"), serde_json::json!([18, 20]));
+    run("hall.width = 3");
+    run("den.depth = 2");
+    run(r#"hall.name = "atrium""#);
+    assert_eq!(run("[name, width, depth, area, larger]"), serde_json::json!(["atrium", 3, 2, 27, 10]));
+    run(r#"Room.map(room -> room.area)
+
+# return: [27,10]"#);
+}
+
+/// Nucleoid unpacks lists and strings into comma separated names
+#[rustfmt::skip]
+#[test]
+fn unpacks_lists_and_strings_into_comma_separated_names() {
+    runner()("size = [4, 3]\nwidth, height = size\narea = width * height\nassert: area, 12\nsize = [5, 2]\nassert: [width, height, area], [5, 2, 10]\norigin = {at: [0, 3]}\nrow, column, = origin.at\norigin.at = [4, 1]\nassert: [row, column], [4, 1]\nword = \"ok\"\nfirst, = word\nword = \"no\"\nassert: first, \"n\"\ndims = [2, 7]\ndeep, wide = dims\ndims = [6]\nassert: [deep, wide], [6, null]\narea + row\n# return: 14");
+    let mut run = runner();
+    run("size = [4, 3]");
+    run("width, height = size");
+    run("area = width * height");
+    assert_eq!(run("area"), 12);
+    run("size = [5, 2]");
+    assert_eq!(run("[width, height, area]"), serde_json::json!([5, 2, 10]));
+    run("origin = {at: [0, 3]}");
+    run("row, column, = origin.at");
+    run("origin.at = [4, 1]");
+    assert_eq!(run("[row, column]"), serde_json::json!([4, 1]));
+    run(r#"word = "ok""#);
+    run("first, = word");
+    run(r#"word = "no""#);
+    assert_eq!(run("first"), "n");
+    run("dims = [2, 7]");
+    run("deep, wide = dims");
+    run("dims = [6]");
+    assert_eq!(run("[deep, wide]"), serde_json::json!([6, null]));
+    run(r#"area + row
+
+# return: 14"#);
+}
+
+/// Nucleoid destructures inside functions blocks and loops
+#[rustfmt::skip]
+#[test]
+fn destructures_inside_functions_blocks_and_loops() {
+    runner()("class Leg(span):\n    this.span = span\nLeg([0, 4])\nLeg([4, 10])\ndef length(leg):\n    start, end = leg.span\n    return end - start\ncovered = 0\nfor leg of Leg:\n    covered = covered + length(leg)\nassert: [covered, start, end], [10, 4, 10]\npoint = {x: 1, y: 2, z: 3}\n{\n    {x, y, z} = point\n    norm = x * x + y * y + z * z\n}\nassert: [x, y, z, norm], [1, 2, 3, 14]\npoint.z = 5\nassert: [z, norm], [5, 30]");
+    let mut run = runner();
+    run(r#"class Leg(span):
+    this.span = span"#);
+    run("Leg([0, 4])");
+    run("Leg([4, 10])");
+    run(r#"def length(leg):
+    start, end = leg.span
+    return end - start"#);
+    run("covered = 0");
+    run(r#"for leg of Leg:
+    covered = covered + length(leg)"#);
+    assert_eq!(run("[covered, start, end]"), serde_json::json!([10, 4, 10]));
+    run("point = {x: 1, y: 2, z: 3}");
+    run(r#"{
+    {x, y, z} = point
+    norm = x * x + y * y + z * z
+}"#);
+    assert_eq!(run("[x, y, z, norm]"), serde_json::json!([1, 2, 3, 14]));
+    run("point.z = 5");
+    assert_eq!(run("[z, norm]"), serde_json::json!([5, 30]));
+}
+
+/// Nucleoid destructures in conditional branches and hypotheticals
+#[rustfmt::skip]
+#[test]
+fn destructures_in_conditional_branches_and_hypotheticals() {
+    runner()("pair = [3, 4]\nready = false\nif ready: low, high = pair\nready = true\nassert: [low, high], [3, 4]\npair = [5, 6]\nassert: [low, high], [5, 6]\nready = false\npair = [7, 8]\nassert: [low, high], [5, 6]\nspread = suppose ready = true: high - low\nassert: [spread, low, high], [1, 5, 6]\npoint = {x: 1, y: 2}\nsuppose point.y = 9:\n    {x, y} = point\n    assert: [x, y], [1, 9]\nassert: point.y, 2");
+    let mut run = runner();
+    run(r#"pair = [3, 4]
+ready = false
+if ready: low, high = pair
+ready = true
+assert: [low, high], [3, 4]
+pair = [5, 6]
+assert: [low, high], [5, 6]
+ready = false
+pair = [7, 8]
+assert: [low, high], [5, 6]
+spread = suppose ready = true: high - low
+assert: [spread, low, high], [1, 5, 6]
+point = {x: 1, y: 2}
+suppose point.y = 9:
+    {x, y} = point
+    assert: [x, y], [1, 9]
+assert: point.y, 2"#);
+}
+
+/// Nucleoid explains destructured names as their declarations
+#[rustfmt::skip]
+#[test]
+fn explains_destructured_names_as_their_declarations() {
+    runner()("point = {x: 3, y: 4}\npair = [5, 6]\n{x, y} = point\nfirst, second = pair\nassert: (affects point).map(step -> step.rule), [\"x = point.x\", \"y = point.y\"]\nassert: (affects pair).map(step -> step.rule), [\"first = pair[0]\", \"second = pair[1]\"]\nassert: (why second)[0].from, [\"pair\"]\nclass Point(x, y):\n    this.x = x\n    this.y = y\n{x, y} = Point(1, 2)\nassert: [x, y, Point.length], [1, 2, 2]\nassert: (why y)[0].rule, \"y = Point(1,2).y\"\nassert: (affects point).length, 0");
+    let mut run = runner();
+    run("point = {x: 3, y: 4}");
+    run("pair = [5, 6]");
+    run("{x, y} = point");
+    run("first, second = pair");
+    assert_eq!(run("(affects point).map(step -> step.rule)"), serde_json::json!(["x = point.x", "y = point.y"]));
+    assert_eq!(run("(affects pair).map(step -> step.rule)"), serde_json::json!(["first = pair[0]", "second = pair[1]"]));
+    assert_eq!(run("(why second)[0].from"), serde_json::json!(["pair"]));
+    run(r#"class Point(x, y):
+    this.x = x
+    this.y = y"#);
+    run("{x, y} = Point(1, 2)");
+    assert_eq!(run("[x, y, Point.length]"), serde_json::json!([1, 2, 2]));
+    assert_eq!(run("(why y)[0].rule"), "y = Point(1,2).y");
+    assert_eq!(run("(affects point).length"), 0);
+}
+
+/// Nucleoid keeps block object and list readings beside destructuring
+#[rustfmt::skip]
+#[test]
+fn keeps_block_object_and_list_readings_beside_destructuring() {
+    runner()("point = {x: 1, y: 2}\n{x, y} = point\n{ total = x + y }\nbox = {x, y}\nrecord = {left: x right: y}\npair = [3, 4]\nlow, high = pair\nadd = lambda a, b: a + b\npositive = all v in pair: v > 0\nfailure = \"\"\ntry:\n    [a, b] = pair\ncatch error:\n    failure = error\nassert: failure, SyntaxError(\"Cannot assign to [a,b]\")\nassert: [total, box, record], [3, {x: 1, y: 2}, {left: 1, right: 2}]\nassert: [add(low, high), positive], [7, true]\npoint.x = 5\npair = [-1, 6]\nassert: [total, box.x, record.left, low, high, positive], [7, 5, 5, -1, 6, false]\n{ x }\n# return: 5");
+    let mut run = runner();
+    run(r#"point = {x: 1, y: 2}
+{x, y} = point
+{ total = x + y }
+box = {x, y}
+record = {left: x right: y}
+pair = [3, 4]
+low, high = pair
+add = lambda a, b: a + b
+positive = all v in pair: v > 0
+failure = ""
+try:
+    [a, b] = pair
+catch error:
+    failure = error
+assert: failure, SyntaxError("Cannot assign to [a,b]")
+assert: [total, box, record], [3, {x: 1, y: 2}, {left: 1, right: 2}]
+assert: [add(low, high), positive], [7, true]
+point.x = 5
+pair = [-1, 6]
+assert: [total, box.x, record.left, low, high, positive], [7, 5, 5, -1, 6, false]
+{ x }
+# return: 5"#);
+}
+
+/// Nucleoid rolls back failed destructuring
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_destructuring() {
+    runner()("limits = [4, 50]\nlow, high = limits\nif high - low > 100: throw \"WIDE\"\nwidened = \"\"\ntry: limits = [0, 500]\ncatch error: widened = error\nwide = [9, 300]\nmoved = \"\"\ntry: low, high = wide\ncatch error: moved = error\nassert: [widened, moved], [\"WIDE\", \"WIDE\"]\nassert: [low, high, limits], [4, 50, [4, 50]]\norder = {qty: 2, price: 5}\n{qty, price} = order\nif qty * price > 50: throw \"COSTLY\"\ncostly = \"\"\ntry: order.price = 40\ncatch error: costly = error\nassert: [costly, order.price, qty, price], [\"COSTLY\", 5, 2, 5]\norder.qty = 3\norder.price = 7\nlimits = [3, 60]\nassert: [low, high, qty, price], [3, 60, 3, 7]");
+    let mut run = runner();
+    run(r#"limits = [4, 50]
+low, high = limits
+if high - low > 100: throw "WIDE"
+widened = ""
+try: limits = [0, 500]
+catch error: widened = error
+wide = [9, 300]
+moved = ""
+try: low, high = wide
+catch error: moved = error
+assert: [widened, moved], ["WIDE", "WIDE"]
+assert: [low, high, limits], [4, 50, [4, 50]]
+order = {qty: 2, price: 5}
+{qty, price} = order
+if qty * price > 50: throw "COSTLY"
+costly = ""
+try: order.price = 40
+catch error: costly = error
+assert: [costly, order.price, qty, price], ["COSTLY", 5, 2, 5]
+order.qty = 3
+order.price = 7
+limits = [3, 60]
+assert: [low, high, qty, price], [3, 60, 3, 7]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -3348,6 +3348,71 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back a while loop that fails during an iteration` specify
   the executable behavior.
 
+## Destructuring declarations
+
+- [NUC 67](docs/nuc-0067.md) adds destructuring declarations: object patterns
+  `{x, y} = point`, renamed targets `{key: name} = source` and Python-style
+  unpacking `a, b = pair`. No token, syntax tree node or runtime path is
+  added.
+- Each target becomes exactly one ordinary declaration, in pattern order. An
+  object entry with key `key` and target `name` becomes `name = value.key`;
+  the comma-separated target at position `i`, counted from 0, becomes
+  `name = value[i]`. The value is copied into every declaration, so
+  `{x, y} = point` parses to exactly the statements of `x = point.x` and
+  `y = point.y`.
+- Each declaration is filed or carried out as it would be when written out:
+  a standing declaration at the top level; carried out in a `for` body, a
+  standing `if` branch and a block; a local for a parameter or loop variable;
+  a constructor statement in a class body. A destructured name stays live: a
+  later change to what its declaration read updates it. A missing key or
+  position reads `null`, as `value.key` and `value[i]` do.
+- The value is evaluated once per target, each time that target's
+  declaration runs, so a call or instantiation in it runs once per target:
+  `{x, y} = Point(1, 2)` creates two points. Name such a value first, as in
+  `p = Point(1, 2)` and `{x, y} = p`, to evaluate it once.
+- The declarations run in pattern order and each propagates before the next,
+  as consecutive statements do, so a standing rule that reads two targets can
+  run between them. A name that appears twice is declared twice and the last
+  declaration stands. The statement's value is the value of its last target.
+- `why` explains a destructured name as its declaration, such as
+  `x = point.x` or `first = pair[0]`, and `affects` lists the declarations.
+  Graph and block keys render the declarations; nothing records the pattern.
+- An object pattern is `{` entries `}` with at least one entry. An entry is a
+  shorthand `name`, followed by `,` or `}`, or a keyed `key: name`, followed
+  by `,`, `}` or directly by the next keyed entry, as in object literals. One
+  trailing comma is allowed. Keys and targets are ordinary identifiers.
+- A comma-separated pattern is ordinary identifiers separated by commas, with
+  at least one comma and an optional trailing comma: `a, b`, `a, b,` and
+  `first,`. There is no arity check, and extra positions are ignored.
+- The value is one expression accepted on the right of `=` that is not
+  itself an assignment.
+- A destructuring is a whole statement on one line. Its pattern begins the
+  input or follows a line break, `;`, an indentation change, a block's `{` or
+  a suite's `:`. Its value is followed by the end of the line or input, `;`,
+  a block's `}`, or `else` or `catch`. In an inline suite, as in
+  `if ready: low, high = pair`, all of its declarations belong to the suite.
+- Recognition is an attempt that consumes nothing unless the whole statement
+  qualifies. Every other input is parsed as before and keeps its accepted
+  diagnostic and position. `[a, b] = pair` still parses and raises
+  `SyntaxError("Cannot assign to [a,b]")` when it runs, `{ x }` is a block,
+  and inputs such as `{ amount, label }`, `{x, y} == point`, `{x} += point`,
+  `a, b = 1, 2`, `x, y = y, x`, `a, b = c = pair`, `(a, b) = pair`,
+  `let {x, y} = point` and `const a, b = pair`, rest, star, default, nested,
+  quoted and numeric entries, multi-line patterns, and property and index
+  targets keep their syntax errors.
+- A destructuring names at most 128 targets. The 129th target of an otherwise
+  complete destructuring raises
+  `SyntaxError("Destructuring has too many targets")` at that target.
+- Only inputs that were syntax errors change. Patterns whose keys or targets
+  are names that other statements read specially, such as
+  `{assert: a, lambda: b, suppose: c} = p` and `{x: int} = point`, now
+  destructure. A complete destructuring followed by a stray `else` or `catch`
+  now reports that keyword: `a, b = pair else: x = 1` raises
+  `SyntaxError("Unexpected keyword 'else'")`.
+- The eight appended entries beginning
+  `Nucleoid destructures object fields into standing declarations` through
+  `Nucleoid rolls back failed destructuring` specify the executable behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -17823,4 +17888,179 @@ catch error:
     failure = error
 assert(failure, ReferenceError("missing is not defined"))
 assert(shipped, 0)
+---
+# Nucleoid destructures object fields into standing declarations
+
+point = {x: 3, y: 4, z: 0}
+{x, y, z} = point
+assert: [x, y, z], [3, 4, 0]
+point.x = 6
+point.z = 2
+assert: [x, z], [6, 2]
+point = {x: 1, y: 2}
+assert: [x, y, z], [1, 2, null]
+size = {w: 5}
+{w, h,} = size
+assert: [w, h], [5, null]
+size.h = 4
+size.w = 3
+assert: [w, h], [3, 4]
+x + y + w * h
+# return: 15
+---
+# Nucleoid destructures renamed fields of instances
+
+class Room(name, width, depth):
+    this.name = name
+    this.width = width
+    this.depth = depth
+$Room.area = $Room.width * $Room.depth
+hall = Room("hall", 2, 5)
+den = Room("den", 4, 4)
+{name, area, width} = hall
+{name: other area: larger, depth} = den
+assert: [name, area, width], ["hall", 10, 2]
+assert: [other, larger, depth], ["den", 16, 4]
+hall.depth = 9
+den.width = 5
+assert: [area, larger], [18, 20]
+hall.width = 3
+den.depth = 2
+hall.name = "atrium"
+assert: [name, width, depth, area, larger], ["atrium", 3, 2, 27, 10]
+Room.map(room -> room.area)
+# return: [27,10]
+---
+# Nucleoid unpacks lists and strings into comma separated names
+
+size = [4, 3]
+width, height = size
+area = width * height
+assert: area, 12
+size = [5, 2]
+assert: [width, height, area], [5, 2, 10]
+origin = {at: [0, 3]}
+row, column, = origin.at
+origin.at = [4, 1]
+assert: [row, column], [4, 1]
+word = "ok"
+first, = word
+word = "no"
+assert: first, "n"
+dims = [2, 7]
+deep, wide = dims
+dims = [6]
+assert: [deep, wide], [6, null]
+area + row
+# return: 14
+---
+# Nucleoid destructures inside functions blocks and loops
+
+class Leg(span):
+    this.span = span
+Leg([0, 4])
+Leg([4, 10])
+def length(leg):
+    start, end = leg.span
+    return end - start
+covered = 0
+for leg of Leg:
+    covered = covered + length(leg)
+assert: [covered, start, end], [10, 4, 10]
+point = {x: 1, y: 2, z: 3}
+{
+    {x, y, z} = point
+    norm = x * x + y * y + z * z
+}
+assert: [x, y, z, norm], [1, 2, 3, 14]
+point.z = 5
+assert: [z, norm], [5, 30]
+---
+# Nucleoid destructures in conditional branches and hypotheticals
+
+pair = [3, 4]
+ready = false
+if ready: low, high = pair
+ready = true
+assert: [low, high], [3, 4]
+pair = [5, 6]
+assert: [low, high], [5, 6]
+ready = false
+pair = [7, 8]
+assert: [low, high], [5, 6]
+spread = suppose ready = true: high - low
+assert: [spread, low, high], [1, 5, 6]
+point = {x: 1, y: 2}
+suppose point.y = 9:
+    {x, y} = point
+    assert: [x, y], [1, 9]
+assert: point.y, 2
+---
+# Nucleoid explains destructured names as their declarations
+
+point = {x: 3, y: 4}
+pair = [5, 6]
+{x, y} = point
+first, second = pair
+assert: (affects point).map(step -> step.rule), ["x = point.x", "y = point.y"]
+assert: (affects pair).map(step -> step.rule), ["first = pair[0]", "second = pair[1]"]
+assert: (why second)[0].from, ["pair"]
+class Point(x, y):
+    this.x = x
+    this.y = y
+{x, y} = Point(1, 2)
+assert: [x, y, Point.length], [1, 2, 2]
+assert: (why y)[0].rule, "y = Point(1,2).y"
+assert: (affects point).length, 0
+---
+# Nucleoid keeps block object and list readings beside destructuring
+
+point = {x: 1, y: 2}
+{x, y} = point
+{ total = x + y }
+box = {x, y}
+record = {left: x right: y}
+pair = [3, 4]
+low, high = pair
+add = lambda a, b: a + b
+positive = all v in pair: v > 0
+failure = ""
+try:
+    [a, b] = pair
+catch error:
+    failure = error
+assert: failure, SyntaxError("Cannot assign to [a,b]")
+assert: [total, box, record], [3, {x: 1, y: 2}, {left: 1, right: 2}]
+assert: [add(low, high), positive], [7, true]
+point.x = 5
+pair = [-1, 6]
+assert: [total, box.x, record.left, low, high, positive], [7, 5, 5, -1, 6, false]
+{ x }
+# return: 5
+---
+# Nucleoid rolls back failed destructuring
+
+limits = [4, 50]
+low, high = limits
+if high - low > 100: throw "WIDE"
+widened = ""
+try: limits = [0, 500]
+catch error: widened = error
+wide = [9, 300]
+moved = ""
+try: low, high = wide
+catch error: moved = error
+assert: [widened, moved], ["WIDE", "WIDE"]
+assert: [low, high, limits], [4, 50, [4, 50]]
+order = {qty: 2, price: 5}
+{qty, price} = order
+if qty * price > 50: throw "COSTLY"
+costly = ""
+try: order.price = 40
+catch error: costly = error
+assert: [costly, order.price, qty, price], ["COSTLY", 5, 2, 5]
+order.qty = 3
+order.price = 7
+limits = [3, 60]
+assert: [low, high, qty, price], [3, 60, 3, 7]
 ```

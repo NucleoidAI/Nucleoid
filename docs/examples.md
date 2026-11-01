@@ -3004,6 +3004,35 @@ shifts
 - See [NUC 63](nuc-0063.md) and the
   [root contract](../nucleoid.spec.md#while-loops).
 
+## Destructuring
+
+**Destructuring keeps a rover heading model live**
+
+```nuc
+class Rover(name, position, heading):
+    this.name = name
+    this.position = position
+    this.heading = heading
+rover = Rover("scout", {x: 2, y: 3}, [1, 0])
+{x, y} = rover.position
+dx, dy = rover.heading
+ahead = {x: x + dx, y: y + dy}
+assert: ahead, {x: 3, y: 3}
+rover.heading = [0, -1]
+assert: ahead, {x: 2, y: 2}
+rover.position = {x: 5, y: 5}
+assert: [x, y, dx, dy], [5, 5, 0, -1]
+ahead
+# return: {"x":5,"y":4}
+```
+
+- `{x, y} = rover.position` and `dx, dy = rover.heading` declare one live
+  name per field and per position, exactly as `x = rover.position.x` and
+  `dx = rover.heading[0]` would.
+- Turning the rover or moving it updates `x`, `y`, `dx`, `dy` and `ahead`
+  together. See [NUC 67](nuc-0067.md) and the
+  [root contract](../nucleoid.spec.md#destructuring-declarations).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -46,6 +46,8 @@ const MAX_NESTING: usize = 64;
 /// that later walks recurse over.
 const MAX_CHAIN: usize = 128;
 
+const MAX_DESTRUCTURING_TARGETS: usize = 128;
+
 /// Compound syntax selects an existing operator, never a new runtime path.
 enum CompoundOp {
     Arithmetic(BinaryOp),
@@ -110,6 +112,38 @@ struct SupposePremise {
 struct LoopCondition {
     condition: Expr,
     colon: usize,
+}
+
+struct Pattern {
+    targets: Vec<Target>,
+    length: usize,
+}
+
+struct Target {
+    name: String,
+    read: Read,
+    position: Position,
+}
+
+enum Read {
+    Key(String),
+    Index(u32),
+}
+
+impl Target {
+    fn declaration(self, value: &Expr) -> Stmt {
+        let object = Box::new(value.clone());
+        Stmt::Assign {
+            target: Expr::Identifier(self.name),
+            value: match self.read {
+                Read::Key(property) => Expr::Member { object, property },
+                Read::Index(index) => Expr::Index {
+                    object,
+                    index: Box::new(Expr::Number(f64::from(index))),
+                },
+            },
+        }
+    }
 }
 
 impl Parser {
@@ -246,8 +280,9 @@ impl Parser {
                 break;
             }
 
-            positions.push(self.here());
-            statements.push(self.statement()?);
+            let position = self.here();
+            self.statement(&mut statements)?;
+            positions.resize(statements.len(), position);
         }
 
         Ok(Program {
@@ -279,19 +314,20 @@ impl Parser {
                     break;
                 }
 
-                statements.push(self.statement()?);
+                self.statement(&mut statements)?;
             }
 
             self.eat(&Token::Dedent);
             Ok(statements)
         } else {
-            let mut statements = vec![self.statement()?];
+            let mut statements = Vec::new();
+            self.statement(&mut statements)?;
 
             while self.eat(&Token::Semicolon) {
                 if matches!(self.peek(), Token::Newline | Token::Eof) {
                     break;
                 }
-                statements.push(self.statement()?);
+                self.statement(&mut statements)?;
             }
 
             Ok(statements)
@@ -315,13 +351,13 @@ impl Parser {
                 return Err(self.error("Unterminated block"));
             }
 
-            statements.push(self.statement()?);
+            self.statement(&mut statements)?;
         }
 
         Ok(statements)
     }
 
-    fn statement(&mut self) -> Result<Stmt> {
+    fn statement(&mut self, statements: &mut Vec<Stmt>) -> Result<()> {
         self.depth += 1;
 
         if self.depth > MAX_NESTING {
@@ -329,9 +365,159 @@ impl Parser {
             return Err(self.error("Statements are nested too deeply"));
         }
 
-        let result = self.statement_inner();
+        let result = self.destructuring().and_then(|declarations| {
+            match declarations {
+                Some(declarations) => statements.extend(declarations),
+                None => statements.push(self.statement_inner()?),
+            }
+            Ok(())
+        });
         self.depth -= 1;
         result
+    }
+
+    fn destructuring(&mut self) -> Result<Option<Vec<Stmt>>> {
+        if !self.starts_statement() {
+            return Ok(None);
+        }
+        let Some(pattern) = self.object_pattern().or_else(|| self.unpacking_pattern()) else {
+            return Ok(None);
+        };
+
+        let start = self.position;
+        self.position += pattern.length;
+        let value = match self.nested_expression(Self::destructured_value) {
+            Ok(value) if self.ends_destructuring() => value,
+            _ => {
+                self.position = start;
+                return Ok(None);
+            }
+        };
+
+        if let Some(target) = pattern.targets.get(MAX_DESTRUCTURING_TARGETS) {
+            return Err(Error::syntax("Destructuring has too many targets").at(target.position));
+        }
+
+        Ok(Some(
+            pattern
+                .targets
+                .into_iter()
+                .map(|target| target.declaration(&value))
+                .collect(),
+        ))
+    }
+
+    fn destructured_value(&mut self) -> Result<Expr> {
+        self.nested_expression_in(ExpressionContext::Ordinary, Self::conditional)
+    }
+
+    fn starts_statement(&self) -> bool {
+        self.position
+            .checked_sub(1)
+            .and_then(|previous| self.tokens.get(previous))
+            .is_none_or(|previous| {
+                matches!(
+                    previous.token,
+                    Token::Newline
+                        | Token::Semicolon
+                        | Token::Indent
+                        | Token::Dedent
+                        | Token::LeftBrace
+                        | Token::Colon
+                )
+            })
+    }
+
+    fn ends_destructuring(&self) -> bool {
+        matches!(
+            self.peek(),
+            Token::Newline
+                | Token::Semicolon
+                | Token::Dedent
+                | Token::RightBrace
+                | Token::Eof
+                | Token::Keyword(Keyword::Else | Keyword::Catch)
+        )
+    }
+
+    fn target_at(&self, offset: usize, name: &str, read: Read) -> Target {
+        Target {
+            name: name.to_string(),
+            read,
+            position: self.tokens[self.position + offset].position,
+        }
+    }
+
+    fn object_pattern(&self) -> Option<Pattern> {
+        if !matches!(
+            (self.peek(), self.peek_at(1)),
+            (Token::LeftBrace, Token::Identifier(_))
+        ) {
+            return None;
+        }
+        let mut targets = Vec::new();
+        let mut offset = 1;
+        loop {
+            match (
+                self.peek_at(offset),
+                self.peek_at(offset + 1),
+                self.peek_at(offset + 2),
+            ) {
+                (Token::RightBrace, _, _) if !targets.is_empty() => break,
+                (Token::Identifier(key), Token::Colon, Token::Identifier(name)) => {
+                    targets.push(self.target_at(offset + 2, name, Read::Key(key.clone())));
+                    offset += 3;
+                    match (self.peek_at(offset), self.peek_at(offset + 1)) {
+                        (Token::Comma, _) => offset += 1,
+                        (Token::RightBrace, _) | (Token::Identifier(_), Token::Colon) => {}
+                        _ => return None,
+                    }
+                }
+                (Token::Identifier(name), Token::Comma | Token::RightBrace, _) => {
+                    targets.push(self.target_at(offset, name, Read::Key(name.clone())));
+                    offset += 1;
+                    if self.peek_at(offset) == &Token::Comma {
+                        offset += 1;
+                    }
+                }
+                _ => return None,
+            }
+        }
+        (self.peek_at(offset + 1) == &Token::Assign).then_some(Pattern {
+            targets,
+            length: offset + 2,
+        })
+    }
+
+    fn unpacking_pattern(&self) -> Option<Pattern> {
+        if !matches!(
+            (self.peek(), self.peek_at(1)),
+            (Token::Identifier(_), Token::Comma)
+        ) {
+            return None;
+        }
+        let mut targets = Vec::new();
+        let mut offset = 0;
+        loop {
+            match self.peek_at(offset) {
+                Token::Identifier(name) => {
+                    let index = u32::try_from(targets.len()).ok()?;
+                    targets.push(self.target_at(offset, name, Read::Index(index)));
+                    offset += 1;
+                    match self.peek_at(offset) {
+                        Token::Comma => offset += 1,
+                        Token::Assign => break,
+                        _ => return None,
+                    }
+                }
+                Token::Assign => break,
+                _ => return None,
+            }
+        }
+        Some(Pattern {
+            targets,
+            length: offset + 1,
+        })
     }
 
     fn statement_inner(&mut self) -> Result<Stmt> {
@@ -1133,13 +1319,13 @@ impl Parser {
                             default: None,
                         });
                     }
-                    _ => constructor.push(self.statement()?),
+                    _ => self.statement(&mut constructor)?,
                 }
             }
 
             self.eat(&Token::Dedent);
         } else if !matches!(self.peek(), Token::Newline | Token::Eof) {
-            constructor.push(self.statement()?);
+            self.statement(&mut constructor)?;
         }
 
         Ok(Stmt::Class(ClassDecl {

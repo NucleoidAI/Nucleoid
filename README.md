@@ -1448,6 +1448,29 @@ assert(full, true)
   rolls back. `while` stays an ordinary name everywhere else. See the
   [root contract](nucleoid.spec.md#while-loops).
 
+## Destructuring
+
+**Destructuring declares one live name per field or position**
+
+```nuc
+size = {width: 3, height: 2}
+{width, height} = size
+area = width * height
+corner = [4, 1]
+x, y = corner
+size.width = 5
+corner = [0, 7]
+assert: [width, height, area], [5, 2, 10]
+assert: [x, y], [0, 7]
+```
+
+- [NUC 67](docs/nuc-0067.md) adds destructuring declarations: object patterns
+  such as `{width, height} = size`, renamed targets such as
+  `{width: wide} = size`, and Python-style unpacking such as `x, y = corner`.
+- Each name is an ordinary declaration of its own, `width = size.width` and
+  `x = corner[0]`, so every name stays live: changing `size` or `corner`
+  updates it. See the [root contract](nucleoid.spec.md#destructuring-declarations).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
