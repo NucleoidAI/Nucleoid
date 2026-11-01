@@ -20,7 +20,7 @@ If you cannot launch agents, stop and report `agent_launch_unavailable`.
 ## Keep the solver unchanged
 
 Never change the TypeScript implementation in `arc/`: no `.ts` file there,
-such as `server.ts`, `src/app.ts`, or `src/dataset/instruct_dataset.ts`, is
+such as `server.ts`, `src/app.ts`, or `src/dataset/dataset.ts`, is
 added, edited, or removed. Orchestrate the approach between `/arc-dataset` and
 `/nuc-proposal` alone. In `arc/`, only the puzzle's dataset and its README
 paragraph change, both written by arc-dataset, and a NUC candidate changes
@@ -66,6 +66,13 @@ Run `/arc-dataset <puzzle-id>`, which runs the
 [arc-dataset agent](../../agents/arc-dataset.agent.md) with the accepted
 runtime. Pass along any [hint](#pass-the-hint) and an explicit user request to
 overwrite an existing dataset.
+The handoff contains one `dataset_path`, `dataset.<puzzle-id>.json`, with the
+exact original training pairs in order. Track that path and source puzzle,
+not variants or synthesis seeds. Before an authorized replacement, preserve
+the previous dataset and README paragraph in the session workspace. If the
+handoff used external staging, integrate the verified single file before the
+run and confirm the loader selects it. Leave genesis's shared files and loading
+order unchanged.
 The dataset always prefers declarative, higher-order logic; when accepted
 Nucleoid cannot express its rules that way, the handoff requests the missing
 enhancement instead of an imperative workaround. Continue by the handoff's
@@ -97,7 +104,8 @@ Handle at most one NUC request per invocation, as a single-proposal request.
    `cargo build --locked` in its worktree, and copy its `target/debug/nucleoid`
    executable (`nucleoid.exe` on Windows) into the session workspace.
 4. Run `/arc-dataset` again for the puzzle with that executable, the NUC path,
-   the first handoff, and any hint. Continue only on `written`. Any other
+   the first handoff's source puzzle and annotation inputs, and any hint.
+   Continue only on `written`. Any other
    status, including a further enhancement request, skips the run: the test did
    not pass.
 
@@ -171,10 +179,13 @@ Record it with the nuc-proposal skill's caller steps:
   metadata under the
   [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 - **Rejected or Blocked:** the dataset depends on an unaccepted feature, so
-  move it and its README paragraph from the primary checkout into the session
-  workspace. If this invocation added the puzzle's reporting-list entry,
+  move the invocation-owned `dataset_path` and its README paragraph from the
+  primary checkout into the session workspace. Restore any pre-existing
+  dataset and paragraph saved before replacement, without overwriting later
+  unrelated changes. If this invocation added the puzzle's reporting-list entry,
   remove only that entry when withdrawing the dataset. Preserve pre-existing
-  entries and unrelated workflow changes. Keep the candidate isolated.
+  entries, other datasets, genesis files, and unrelated workflow changes.
+  Keep the candidate isolated.
 
 Leave the dataset, README, and reporting-list changes uncommitted for review.
 Never push or change project versions.
@@ -190,7 +201,8 @@ apply a suggestion or rerun the puzzle within the invocation.
 ## Report
 
 Save one JSON result record in the session workspace with the puzzle ID,
-starting revision, and hint (`null` without one); the dataset status and path,
+starting revision, and hint (`null` without one); the dataset status,
+`dataset_path` and source puzzle path,
 the reporting-workflow path and whether its new entry was retained or
 withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
 evaluator decision, and report path; the run's command, executable, exit

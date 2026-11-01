@@ -1,6 +1,6 @@
 ---
 name: arc-dataset
-description: Write the ARC instruction dataset for one training puzzle ID by running the arc-dataset agent, or return the Nucleoid enhancement request the dataset requires.
+description: Annotate one ARC puzzle's original training pairs in a single instruction dataset, or return the Nucleoid enhancement request it requires.
 argument-hint: <puzzle-id> [caller inputs] [--hint <text>]
 context: fork
 agent: arc-dataset
@@ -12,6 +12,26 @@ first; inputs after it, such as a candidate Nucleoid executable or a final
 [arc-dataset agent profile](../../agents/arc-dataset.agent.md). Follow the
 profile; if it is not already your system prompt, delegate this request to the
 `arc-dataset` agent.
+
+## One original-training dataset
+
+Create exactly one canonical `arc\src\dataset\dataset.<puzzle-id>.json`.
+Annotate every original `train` pair from
+`arc\data\training\<puzzle-id>.json`, in its original order. Copy the input and
+output grids exactly, including their colors, positions, zero padding, and
+canvas dimensions. Do not synthesize, resample, recolor, or duplicate examples
+into numbered variants. Never read or include `test` entries or their dimensions.
+
+Use one inferred transformation, Nucleoid declaration set, and output-canvas
+mode for all the training pairs. Object identifiers remain unique across
+datasets. The loader reads the puzzle's single canonical file, not numbered
+variants or other puzzles' examples.
+
+The genesis puzzle `3aa6fb7a` is an exception: preserve its four shared core,
+curve, and line datasets and their loading order. Do not regenerate or change
+genesis while updating other puzzles. Do not delete or overwrite existing
+datasets without explicit authorization; a padding-only audit does not replace
+their examples.
 
 ## Full-canvas instance masks
 

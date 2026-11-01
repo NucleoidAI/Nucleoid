@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted |
 | Solver changes | None specific to this puzzle |
 | Solver runs | None recorded |
-| Updated | 29-Oct-2026 |
+| Updated | 1-Nov-2026 |
 
 ## Puzzle
 
@@ -21,6 +21,15 @@ color-4 neighbors on its four diagonals; color-6 and color-8 points stay as
 they are. The output keeps the input's canvas, so the dataset is `EXACT`.
 
 ## Dataset
+
+The single dataset preserves all three original training pairs in source
+order. Every input and output instance mask retains the complete 9 by 9
+canvas, with zero padding outside the object; its x/y metadata records the
+nonzero bounding-box origin. This already follows `/arc-dataset`'s
+original-training-only policy, so its examples need no replacement.
+Only the key ordering of its twenty snapshot fields was normalized to the
+native runtime's output; grids, masks, identities, and snapshot values remain
+unchanged.
 
 Every point is one instance of `Obj(x, y, orientation, vertex_color)`, tagged
 `l7544`. Two class conditionals add the markers and move the object:
@@ -110,10 +119,4 @@ zero.
 
 ## Open items
 
-- The README paragraph for this dataset still says native snapshot
-  coordinates stay anchored to the input point; the output snapshots now carry
-  the shifted origin.
-- The pairs are the puzzle's own training grids. Datasets written by the
-  `arc-dataset` agent now synthesize their pairs instead, as `28bf18c6` does;
-  replacing these would take an explicit overwrite through `/arc-dataset`.
 - Record the first run's date, runtime, exit status, and difference.

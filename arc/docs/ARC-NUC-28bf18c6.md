@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/28bf18c6.json`](../data/training/28bf18c6.json) |
-| Instruction dataset | [`dataset.28bf18c6.json`](../src/dataset/dataset.28bf18c6.json): 3 synthesized pairs, 3 instances |
+| Instruction dataset | [`dataset.28bf18c6.json`](../src/dataset/dataset.28bf18c6.json): the puzzle's 3 original training pairs, 3 instances |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | `output_canvas`, applied by `Matrix.canvas` |
 | Solver runs | None recorded |
-| Updated | 29-Oct-2026 |
+| Updated | 1-Nov-2026 |
 
 ## Puzzle
 
@@ -22,10 +22,12 @@ nonzero bounding box.
 
 ## Dataset
 
-Three synthesized pairs follow the rule with freshly sampled canvases, shapes,
-colors, and positions: 7 by 10 to 2 by 8, 6 by 5 to 4 by 4, and 11 by 11 to
-2 by 6 (rows by columns). Every shape is left-right asymmetric, so the pairs
-tell repeating apart from mirroring. One `Obj(x, y, orientation, color)` class
+The single dataset contains the three original training pairs in source
+order, preserving their 8 by 8 inputs, 3 by 6 outputs, cells, colors, and
+positions. Each input instance mask retains its full 8 by 8 canvas; each
+output mask retains the full 3 by 6 canvas, with zero padding outside the
+object. Every shape is left-right asymmetric, so the pairs tell repeating
+apart from mirroring. One `Obj(x, y, orientation, color)` class
 carries unconditional class rules that hold for every instance:
 
 ```nuc

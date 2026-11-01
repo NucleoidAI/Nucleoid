@@ -139,9 +139,9 @@ too wide for its panel wraps instead of being cut.
 
 ## Instruction datasets
 
-The synchronous `document(puzzle_id)` function reads only the puzzle's own
-instruction datasets from `src\dataset`, alongside `instruct_dataset.ts`, on
-each call, independently of the working directory. Every LLM call in a run
+The synchronous `document(puzzle_id)` function in `src\dataset\dataset.ts`
+reads only the puzzle's own instruction datasets on each call, independently
+of the working directory. Every LLM call in a run
 passes the run's puzzle ID. A puzzle uses its `dataset.<puzzle_id>.json`; the
 genesis puzzle `3aa6fb7a` instead uses `dataset.core.1.json`,
 `dataset.core.2.json`, `dataset.curve.1.json`, and `dataset.line.1.json`, in
@@ -151,6 +151,14 @@ contents, numbers, and key order stay exactly as written. They are returned as
 one JSON array, with a separate entry per file. A puzzle's new dataset needs no
 additional imports, only its file name. A missing or unreadable dataset, or
 malformed JSON, fails explicitly; JSON errors name the file.
+
+Each non-genesis puzzle has exactly one `dataset.<puzzle_id>.json`, containing
+all its original `train` pairs from `data\training\<puzzle_id>.json` in source
+order. Input and output grids preserve every original cell, color, position,
+zero border, and canvas dimension. `/arc-dataset` annotates these pairs rather
+than synthesizing varieties or creating numbered copies. Held-out `test`
+entries and their dimensions are excluded. The shared genesis datasets remain
+unchanged.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations.
@@ -176,20 +184,19 @@ The declarative rules introduce `marker_color`, which is absent before the
 rules run. Tags identify the geometry: `l1707` is an orthogonal cross,
 `l2404` is a diagonal cross, and `l7544` remains a single point.
 Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
-records each mask's nonzero bounding-box origin; native snapshot coordinates
-remain anchored to the input point. Orientation is 0 in both states because
+records each mask's nonzero bounding-box origin. Native output snapshots carry
+the shifted pattern origin, derived from the original point coordinates with
+`@first` anchors. Orientation is 0 in both states because
 the patterns are symmetric. Held-out inputs and outputs are not included.
 `document()` sends it only when the run solves `0ca9ddb6`.
 
-`dataset.28bf18c6.json` follows the rule of `data\training\28bf18c6.json`
-with three synthesized pairs instead of copies of its grids, one shape instance
-per pair. A seeded generator sampled their canvas sizes (7 by 10, 6 by 5, and
-11 by 11, rows by columns), shape sizes (2 by 4, 4 by 2, and 2 by 3), colors,
-and positions, all different from the puzzle's 8 by 8 canvases and 3 by 3
-shapes, and no matrix equals a grid in `data`. Each shape is left-right
-asymmetric, so the pairs still distinguish repeating from mirroring.
+`dataset.28bf18c6.json` annotates the three original training pairs from
+`data\training\28bf18c6.json`, one shape instance per pair. Every input retains
+its original 8 by 8 canvas and 3 by 3 shape, including its color and position.
+Each shape is left-right asymmetric, so the pairs distinguish repeating from
+mirroring.
 Each output places two copies of the shape's crop side by side on a new canvas
-twice as wide as the crop: 2 by 8, 4 by 4, and 2 by 6. Unconditional
+twice as wide as the crop: the original 3 by 6 output. Unconditional
 class-level rules hold for every instance, whatever its `color`: they introduce
 `repeat_count` (2, the total number of copies) and `repeat_direction`
 (`right`), which are absent before the rules run, and move `x` and `y` to the
@@ -199,29 +206,24 @@ input canvas and output masks its output canvas. Orientation is 0 in both
 states because the shapes are not rotated. Held-out inputs and outputs are not
 included.
 
-`dataset.9af7a82c.json` follows the rule of `data\training\9af7a82c.json`
-with four synthesized pairs instead of copies of its grids, eighteen region
-instances in total (3, 5, 6, and 4 per pair). A seeded generator partitioned
-fully colored canvases (3 by 6, 7 by 3, 4 by 7, and 6 by 4, rows by columns,
-unlike the puzzle's 3 by 3, 3 by 4, and 4 by 3 inputs) into three to six
-4-connected regions, one per color, with freshly grown shapes, cell counts
-from 1 to 11, colors, and positions; no matrix equals a grid in `data`.
-Cell counts are distinct within each pair. In every pair the count order
-differs from color order and from first-appearance order, and some bar is
-taller than its region's bounding box; the pairs also contradict ordering by
-bounding-box area, height, and width. Each output is a histogram: the region
+`dataset.9af7a82c.json` annotates the four original training pairs from
+`data\training\9af7a82c.json`, fourteen region instances in total (3, 4, 4,
+and 3 per pair). The fully colored input canvases retain their original sizes:
+3 by 3, 3 by 4, 4 by 3, and 4 by 3, rows by columns. Each color is one region,
+with its original cells and position. Cell counts range from 1 to 6 and are
+distinct within each pair. Each output is a histogram: the region
 with the r-th largest cell count becomes a vertical bar of its color in
 column r, starting at the top row and as tall as the region's cell count,
-giving 9 by 3, 7 by 5, 11 by 6, and 8 by 4 outputs. The class takes `color`
-and `cell_count`, the region's number of cells, as scalars rather than a
+giving the original 5 by 3, 6 by 4, 5 by 4, and 6 by 3 outputs. The class takes
+`color` and `cell_count`, the region's number of cells, as scalars rather than a
 matrix of cells. Unconditional class-level rules introduce `bar_height` (the
 cell count), which is absent before the rules run, move `y` to the output
 origin 0, and derive `x`, the bar's column, from the pair's whole population:
 `Obj.filter(other => other.cell_count > $Obj.cell_count).length` counts the
-larger regions and re-evaluates whenever an instance is added. The solver
-runs each instance with the implementations of the earlier instances of its
-training pair or test input, so each pair lists its instances largest first,
-and every recorded `x` already counts all larger regions of its pair. Tags
+larger regions and re-evaluates whenever an instance is added. Each pair lists
+its instances largest first. Native output snapshots are captured with all of
+the same pair's implementations together, followed by `Obj[:]`, so every
+recorded `x` counts all larger regions of its pair. Tags
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l6953` is a vertical bar. Input masks retain
 each pair's full-size, zero-padded input canvas; output masks retain each
@@ -229,7 +231,7 @@ pair's full-size output canvas padded with `0` outside the bar. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box world origin,
 equal to `output_value.x`/`output_value.y`, not offsets to apply again.
 `output_canvas` is `FIT` because each histogram fills its nonzero bounding box,
-and two outputs are narrower than their inputs. Orientation is 0 in both states
+and one output is wider than its input. Orientation is 0 in both states
 because the regions are not rotated and the bars are vertical. Held-out
 inputs and outputs are not included.
 
