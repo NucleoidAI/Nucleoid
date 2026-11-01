@@ -613,6 +613,17 @@ impl Parser {
     fn for_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::For))?;
 
+        if let Some((key, value)) = self.entry_names() {
+            let iterable = self.clause_expression()?;
+            let body = self.suite()?;
+            return Ok(Stmt::ForEntries {
+                key,
+                value,
+                iterable,
+                body,
+            });
+        }
+
         let variable = if matches!(self.peek(), Token::Identifier(_)) && self.has_indented_suite(1)
         {
             // Leave the named source and its complete suite to the existing
@@ -643,6 +654,20 @@ impl Parser {
             iterable,
             body,
         })
+    }
+
+    fn entry_names(&mut self) -> Option<(String, String)> {
+        let (Token::Identifier(key), Token::Comma, Token::Identifier(value)) =
+            (self.peek(), self.peek_at(1), self.peek_at(2))
+        else {
+            return None;
+        };
+        if !matches!(self.peek_at(3), Token::Keyword(Keyword::Of | Keyword::In)) {
+            return None;
+        }
+        let names = (key.clone(), value.clone());
+        self.position += 4;
+        Some(names)
     }
 
     /// Recognizes only the real-indented colon path already accepted by

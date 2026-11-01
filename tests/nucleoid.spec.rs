@@ -14265,6 +14265,254 @@ Parcel("c")
 assert: routes, ["b", "a", "c"]"#);
 }
 
+/// Nucleoid loops over object entries in insertion order
+#[rustfmt::skip]
+#[test]
+fn loops_over_object_entries_in_insertion_order() {
+    runner()("class Line(shelf, item, count):\n    this.shelf = shelf\n    this.item = item\n    this.count = count\nclass Shelf(name):\n    this.name = name\n    this.units = 0\n    def stock(items):\n        for item, count in items:\n            Line(this.name, item, count)\n            this.units += count ?? 0\n        return this.units\nnone = {}\ndry = {rice: 4, beans: 1, oil: null, tea: none.tea}\ndry.flour = 6\ndelete dry.beans\ndry.beans = 2\npantry = Shelf(\"pantry\")\nassert: [pantry.stock(dry), Shelf(\"fridge\").stock({milk: 2, eggs: 12}), Shelf(\"cellar\").stock({wine: 3, cider: 1})], [12, 14, 4]\nassert: Line.map(line -> line.item).join(\" \"), \"rice oil flour beans milk eggs wine cider\"\nassert: Line.filter(line -> line.count == null).map(line -> line.shelf + \":\" + line.item), [\"pantry:oil\"]");
+    let mut run = runner();
+    run(r#"class Line(shelf, item, count):
+    this.shelf = shelf
+    this.item = item
+    this.count = count"#);
+    run(r#"class Shelf(name):
+    this.name = name
+    this.units = 0
+    def stock(items):
+        for item, count in items:
+            Line(this.name, item, count)
+            this.units += count ?? 0
+        return this.units"#);
+    run("none = {}");
+    run("dry = {rice: 4, beans: 1, oil: null, tea: none.tea}");
+    run("dry.flour = 6");
+    run("delete dry.beans");
+    run("dry.beans = 2");
+    run(r#"pantry = Shelf("pantry")"#);
+    assert_eq!(run(r#"[pantry.stock(dry), Shelf("fridge").stock({milk: 2, eggs: 12}), Shelf("cellar").stock({wine: 3, cider: 1})]"#), serde_json::json!([12, 14, 4]));
+    assert_eq!(run(r#"Line.map(line -> line.item).join(" ")"#), "rice oil flour beans milk eggs wine cider");
+    assert_eq!(run(r#"Line.filter(line -> line.count == null).map(line -> line.shelf + ":" + line.item)"#), serde_json::json!(["pantry:oil"]));
+}
+
+/// Nucleoid loops over the entries an instance holds
+#[rustfmt::skip]
+#[test]
+fn loops_over_the_entries_an_instance_holds() {
+    runner()("class Room(name, width, depth):\n    this.name = name\n    this.width = width\n    this.depth = depth\n$Room.area = $Room.width * $Room.depth\nclass Lamp(watts): this.watts = watts\nclass Fact(subject, field, data):\n    this.subject = subject\n    this.field = field\n    this.data = data\ndef record(thing):\n    for field, value of thing: Fact(thing.id, field, value)\n    return Fact.length\nlab = Room(\"lab\", 3, 4)\nden = Room(\"den\", 2, 2)\ndesk = Lamp(60)\ndesk.on = true\nlab.width = 5\ndelete lab.name\nlab.name = \"studio\"\ntry:\n    delete den.width\n    den.width = 7\n    throw \"BUSY\"\ncatch error:\n    pass\nassert: [record(lab), record(den), record(desk)], [5, 10, 13]\nassert: Fact.filter(fact -> fact.subject == \"lab\").map(fact -> fact.field).join(\" \"), \"id width depth area name\"\nassert: Fact.filter(fact -> fact.subject == \"den\").map(fact -> fact.field + \"=\" + fact.data).join(\" \"), \"id=den name=den width=2 depth=2 area=4\"\nassert: Fact.filter(fact -> fact.data == 20 or fact.data == true).map(fact -> fact.subject + \".\" + fact.field), [\"lab.area\", \"desk.on\"]");
+    let mut run = runner();
+    run(r#"class Room(name, width, depth):
+    this.name = name
+    this.width = width
+    this.depth = depth
+$Room.area = $Room.width * $Room.depth
+class Lamp(watts): this.watts = watts
+class Fact(subject, field, data):
+    this.subject = subject
+    this.field = field
+    this.data = data
+def record(thing):
+    for field, value of thing: Fact(thing.id, field, value)
+    return Fact.length
+lab = Room("lab", 3, 4)
+den = Room("den", 2, 2)
+desk = Lamp(60)
+desk.on = true
+lab.width = 5
+delete lab.name
+lab.name = "studio"
+try:
+    delete den.width
+    den.width = 7
+    throw "BUSY"
+catch error:
+    pass
+assert: [record(lab), record(den), record(desk)], [5, 10, 13]
+assert: Fact.filter(fact -> fact.subject == "lab").map(fact -> fact.field).join(" "), "id width depth area name"
+assert: Fact.filter(fact -> fact.subject == "den").map(fact -> fact.field + "=" + fact.data).join(" "), "id=den name=den width=2 depth=2 area=4"
+assert: Fact.filter(fact -> fact.data == 20 or fact.data == true).map(fact -> fact.subject + "." + fact.field), ["lab.area", "desk.on"]"#);
+}
+
+/// Nucleoid snapshots object entries before loop bodies
+#[rustfmt::skip]
+#[test]
+fn snapshots_object_entries_before_loop_bodies() {
+    runner()("bills = {rent: 900, food: 300, travel: 200, gym: 50}\nseen = []\nfor bill, amount of bills:\n    seen.push(bill + \":\" + amount + \":\" + (bills[bill] ?? \"gone\"))\n    bills.food = 0\n    delete bills.travel\n    bills.fee = (bills.fee ?? 0) + 5\nassert: seen, [\"rent:900:900\", \"food:300:0\", \"travel:200:gone\", \"gym:50:50\"]\nassert: [bills.food, bills.travel, bills.fee], [0, null, 20]\nowed = {total: 0}\nfor bill, amount of bills: owed.total += amount\nassert: owed.total, 970");
+    let mut run = runner();
+    run("bills = {rent: 900, food: 300, travel: 200, gym: 50}");
+    run("seen = []");
+    run(r#"for bill, amount of bills:
+    seen.push(bill + ":" + amount + ":" + (bills[bill] ?? "gone"))
+    bills.food = 0
+    delete bills.travel
+    bills.fee = (bills.fee ?? 0) + 5"#);
+    assert_eq!(run("seen"), serde_json::json!(["rent:900:900", "food:300:0", "travel:200:gone", "gym:50:50"]));
+    assert_eq!(run("[bills.food, bills.travel, bills.fee]"), serde_json::json!([0, null, 20]));
+    run("owed = {total: 0}");
+    run("for bill, amount of bills: owed.total += amount");
+    assert_eq!(run("owed.total"), 970);
+}
+
+/// Nucleoid nests object entry loops over nested records
+#[rustfmt::skip]
+#[test]
+fn nests_object_entry_loops_over_nested_records() {
+    runner()("class Store(region, city, units):\n    this.region = region\n    this.city = city\n    this.units = units\nclass Region(name, stores):\n    this.name = name\n    this.stores = stores\nregions = {north: {oslo: 4, bergen: 2}, south: {rome: 5, bari: 1, napoli: 3}, east: {riga: 6, vilnius: 2}}\nfor region, cities of regions:\n    for city, units of cities: Store(region, city, units)\n    Region(region, Store.length)\nregions.south.bari = 7\nassert: Store.map(store -> store.city).join(\" \"), \"oslo bergen rome bari napoli riga vilnius\"\nassert: Region.map(each -> each.name + each.stores).join(\" \"), \"north2 south5 east7\"\nassert: [Store.filter(store -> store.region == \"south\").sum(store -> store.units), regions.south.bari], [9, 7]");
+    let mut run = runner();
+    run(r#"class Store(region, city, units):
+    this.region = region
+    this.city = city
+    this.units = units"#);
+    run(r#"class Region(name, stores):
+    this.name = name
+    this.stores = stores"#);
+    run("regions = {north: {oslo: 4, bergen: 2}, south: {rome: 5, bari: 1, napoli: 3}, east: {riga: 6, vilnius: 2}}");
+    run(r#"for region, cities of regions:
+    for city, units of cities: Store(region, city, units)
+    Region(region, Store.length)"#);
+    run("regions.south.bari = 7");
+    assert_eq!(run(r#"Store.map(store -> store.city).join(" ")"#), "oslo bergen rome bari napoli riga vilnius");
+    assert_eq!(run(r#"Region.map(each -> each.name + each.stores).join(" ")"#), "north2 south5 east7");
+    assert_eq!(run(r#"[Store.filter(store -> store.region == "south").sum(store -> store.units), regions.south.bari]"#), serde_json::json!([9, 7]));
+}
+
+/// Nucleoid returns from object entry loops in functions and methods
+#[rustfmt::skip]
+#[test]
+fn returns_from_object_entry_loops_in_functions_and_methods() {
+    runner()("class Pick(item, qty):\n    this.item = item\n    this.qty = qty\nclass Store(stock):\n    this.stock = stock\n    def pick(order):\n        for item, qty of order:\n            if (this.stock[item] ?? 0) < qty:\n                return item\n            Pick(item, qty)\n        return \"done\"\ndef load(truck, crates):\n    for crate, kg of crates:\n        if truck.kg + kg > truck.limit:\n            return\n        truck.kg += kg\nshop = Store({nuts: 5, bolts: 2, gears: 7})\nassert: shop.pick({nuts: 3, gears: 2}), \"done\"\nassert: shop.pick({gears: 1, bolts: 4, nuts: 1}), \"bolts\"\nassert: Pick.map(pick -> pick.item).join(\" \"), \"nuts gears gears\"\nvan = {kg: 0, limit: 10}\nload(van, {tools: 4, tiles: 9, paint: 2})\nassert: van.kg, 4\nload(van, {paint: 2, rope: 3})\nassert: van.kg, 9");
+    let mut run = runner();
+    run(r#"class Pick(item, qty):
+    this.item = item
+    this.qty = qty"#);
+    run(r#"class Store(stock):
+    this.stock = stock
+    def pick(order):
+        for item, qty of order:
+            if (this.stock[item] ?? 0) < qty:
+                return item
+            Pick(item, qty)
+        return "done""#);
+    run(r#"def load(truck, crates):
+    for crate, kg of crates:
+        if truck.kg + kg > truck.limit:
+            return
+        truck.kg += kg"#);
+    run("shop = Store({nuts: 5, bolts: 2, gears: 7})");
+    assert_eq!(run("shop.pick({nuts: 3, gears: 2})"), "done");
+    assert_eq!(run("shop.pick({gears: 1, bolts: 4, nuts: 1})"), "bolts");
+    assert_eq!(run(r#"Pick.map(pick -> pick.item).join(" ")"#), "nuts gears gears");
+    run("van = {kg: 0, limit: 10}");
+    run("load(van, {tools: 4, tiles: 9, paint: 2})");
+    assert_eq!(run("van.kg"), 4);
+    run("load(van, {paint: 2, rope: 3})");
+    assert_eq!(run("van.kg"), 9);
+}
+
+/// Nucleoid keeps object entry loops one shot
+#[rustfmt::skip]
+#[test]
+fn keeps_object_entry_loops_one_shot() {
+    runner()("class Lamp(room, watts):\n    this.room = room\n    this.watts = watts\ndef light(rooms):\n    for room, watts of rooms: Lamp(room, watts)\n    return Lamp.length\nload = Lamp.sum(lamp -> lamp.watts)\nlights = {hall: 40, desk: 60, porch: 25}\nnight = false\nif night: light(lights)\nassert: Lamp.length, 0\nnight = true\nlights.desk = 100\nlights.shed = 30\nassert: [Lamp.length, load], [3, 125]\nlights = {shed: 30, gate: 10, pool: 20, yard: 5}\nassert: [Lamp.length, load], [7, 190]\nbill = {watts: 0}\nfor room, watts of lights: bill.watts += watts\nlights.gate = 50\nassert: [Lamp.map(lamp -> lamp.room).join(\" \"), bill.watts], [\"hall desk porch shed gate pool yard\", 65]");
+    let mut run = runner();
+    run(r#"class Lamp(room, watts):
+    this.room = room
+    this.watts = watts"#);
+    run(r#"def light(rooms):
+    for room, watts of rooms: Lamp(room, watts)
+    return Lamp.length"#);
+    run("load = Lamp.sum(lamp -> lamp.watts)");
+    run("lights = {hall: 40, desk: 60, porch: 25}");
+    run("night = false");
+    run("if night: light(lights)");
+    assert_eq!(run("Lamp.length"), 0);
+    run("night = true");
+    run("lights.desk = 100");
+    run("lights.shed = 30");
+    assert_eq!(run("[Lamp.length, load]"), serde_json::json!([3, 125]));
+    run("lights = {shed: 30, gate: 10, pool: 20, yard: 5}");
+    assert_eq!(run("[Lamp.length, load]"), serde_json::json!([7, 190]));
+    run("bill = {watts: 0}");
+    run("for room, watts of lights: bill.watts += watts");
+    run("lights.gate = 50");
+    assert_eq!(run(r#"[Lamp.map(lamp -> lamp.room).join(" "), bill.watts]"#), serde_json::json!(["hall desk porch shed gate pool yard", 65]));
+}
+
+/// Nucleoid restores object entries at nested savepoints
+#[rustfmt::skip]
+#[test]
+fn restores_object_entries_at_nested_savepoints() {
+    runner()("class Seat(row, guest, price):\n    this.row = row\n    this.guest = guest\n    this.price = price\ndef seat(row, guests):\n    for guest, price of guests:\n        if price > 50: throw guest + \" is over budget\"\n        Seat(row, guest, price)\n    return Seat.length\nparty = {ann: 30, bob: 40, cy: 20}\ntry:\n    delete party.ann\n    try:\n        delete party.bob\n        party.bob = 60\n        seat(\"a\", party)\n    catch error:\n        assert: [error, Seat.length], [\"bob is over budget\", 0]\n    party.ann = 35\n    assert: seat(\"b\", party), 3\n    assert: Seat.map(each -> each.guest + each.price).join(\" \"), \"bob40 cy20 ann35\"\n    throw \"CANCELLED\"\ncatch error:\n    assert: [error, Seat.length], [\"CANCELLED\", 0]\nassert: seat(\"c\", party), 3\nassert: Seat.map(each -> each.row + each.guest + each.price).join(\" \"), \"cann30 cbob40 ccy20\"");
+    let mut run = runner();
+    run(r#"class Seat(row, guest, price):
+    this.row = row
+    this.guest = guest
+    this.price = price
+def seat(row, guests):
+    for guest, price of guests:
+        if price > 50: throw guest + " is over budget"
+        Seat(row, guest, price)
+    return Seat.length
+party = {ann: 30, bob: 40, cy: 20}
+try:
+    delete party.ann
+    try:
+        delete party.bob
+        party.bob = 60
+        seat("a", party)
+    catch error:
+        assert: [error, Seat.length], ["bob is over budget", 0]
+    party.ann = 35
+    assert: seat("b", party), 3
+    assert: Seat.map(each -> each.guest + each.price).join(" "), "bob40 cy20 ann35"
+    throw "CANCELLED"
+catch error:
+    assert: [error, Seat.length], ["CANCELLED", 0]
+assert: seat("c", party), 3
+assert: Seat.map(each -> each.row + each.guest + each.price).join(" "), "cann30 cbob40 ccy20""#);
+}
+
+/// Nucleoid restores object entries in place when it rolls back
+#[rustfmt::skip]
+#[test]
+fn restores_object_entries_in_place_when_it_rolls_back() {
+    runner()("class Line(order, item, qty):\n    this.order = order\n    this.item = item\n    this.qty = qty\nclass Order(name):\n    this.name = name\n    this.items = []\n    def fill(stock):\n        for item, qty of stock:\n            if qty > 5: throw item + \" is short\"\n            Line(this.name, item, qty)\n            this.items.push(item + qty)\n        return this.items\nbasket = {tea: 4, jam: 3, oats: 2}\nfirst = Order(\"first\")\ntry:\n    basket.tea = 9\n    delete basket.jam\n    delete basket.tea\n    basket.tea = 6\n    first.fill(basket)\ncatch error:\n    assert: [error, first.items, Line.length], [\"tea is short\", [], 0]\nsecond = Order(\"second\")\nassert: second.fill(basket), [\"tea4\", \"jam3\", \"oats2\"]\nplan = suppose:\n    delete basket.jam\n    basket.rye = 5\n    Order(\"third\").fill(basket)\nassert: plan, [\"tea4\", \"oats2\", \"rye5\"]\nbasket.salt = 1\nfourth = Order(\"fourth\")\nassert: fourth.fill(basket), [\"tea4\", \"jam3\", \"oats2\", \"salt1\"]\nassert: Line.map(line -> line.order + \":\" + line.item).join(\" \"), \"second:tea second:jam second:oats fourth:tea fourth:jam fourth:oats fourth:salt\"");
+    let mut run = runner();
+    run(r#"class Line(order, item, qty):
+    this.order = order
+    this.item = item
+    this.qty = qty
+class Order(name):
+    this.name = name
+    this.items = []
+    def fill(stock):
+        for item, qty of stock:
+            if qty > 5: throw item + " is short"
+            Line(this.name, item, qty)
+            this.items.push(item + qty)
+        return this.items
+basket = {tea: 4, jam: 3, oats: 2}
+first = Order("first")
+try:
+    basket.tea = 9
+    delete basket.jam
+    delete basket.tea
+    basket.tea = 6
+    first.fill(basket)
+catch error:
+    assert: [error, first.items, Line.length], ["tea is short", [], 0]
+second = Order("second")
+assert: second.fill(basket), ["tea4", "jam3", "oats2"]
+plan = suppose:
+    delete basket.jam
+    basket.rye = 5
+    Order("third").fill(basket)
+assert: plan, ["tea4", "oats2", "rye5"]
+basket.salt = 1
+fourth = Order("fourth")
+assert: fourth.fill(basket), ["tea4", "jam3", "oats2", "salt1"]
+assert: Line.map(line -> line.order + ":" + line.item).join(" "), "second:tea second:jam second:oats fourth:tea fourth:jam fourth:oats fourth:salt""#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

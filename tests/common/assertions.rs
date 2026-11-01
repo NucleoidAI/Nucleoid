@@ -47,7 +47,7 @@ fn statement_assertions(statement: &Stmt, assertions: &mut Vec<String>) {
             }
         }
         Stmt::Function(function) => body_assertions(&function.body, assertions),
-        Stmt::For { iterable, body, .. } => {
+        Stmt::For { iterable, body, .. } | Stmt::ForEntries { iterable, body, .. } => {
             expression_assertions(iterable, assertions);
             for statement in body {
                 statement_assertions(statement, assertions);

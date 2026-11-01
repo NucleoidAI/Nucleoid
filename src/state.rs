@@ -204,6 +204,20 @@ impl State {
         }
     }
 
+    pub(crate) fn restore_removed_property(
+        &mut self,
+        object: &ObjectId,
+        property: String,
+        index: usize,
+        before: Value,
+    ) {
+        if let Some(data) = self.objects.get_mut(object) {
+            let (current, _) = data.properties.insert_full(property, before);
+            data.properties
+                .move_index(current, index.min(data.properties.len() - 1));
+        }
+    }
+
     pub(crate) fn restore_object(&mut self, id: ObjectId, before: Option<ObjectData>) {
         match before {
             Some(data) => self.objects.insert(id, data),
@@ -286,7 +300,11 @@ impl Runtime {
         let changed = before
             .as_ref()
             .is_none_or(|before| !before.same_value(&value));
-        self.transaction.record_property(object, property, before);
+        if before.is_some() {
+            self.transaction.record_property(object, property, before);
+        } else {
+            self.transaction.record_property_added(object, property);
+        }
         if changed {
             self.append_history(
                 HistoryKey::Property(object.clone(), property.to_string()),
@@ -311,13 +329,21 @@ impl Runtime {
 
     /// `state.delete` for a property.
     pub(crate) fn remove_property(&mut self, object: &ObjectId, property: &str) -> Option<Value> {
-        let before = self.state.property(object, property).cloned();
-        self.transaction
-            .record_property(object, property, before.clone());
-
-        if let Some(data) = self.state.object_mut(object) {
-            data.properties.shift_remove(property);
-        }
+        let removed = self
+            .state
+            .object_mut(object)
+            .and_then(|data| data.properties.shift_remove_full(property));
+        let before = match removed {
+            Some((index, _, value)) => {
+                self.transaction
+                    .record_property_removed(object, property, index, value.clone());
+                Some(value)
+            }
+            None => {
+                self.transaction.record_property(object, property, None);
+                None
+            }
+        };
         self.remove_history(HistoryKey::Property(object.clone(), property.to_string()));
 
         before

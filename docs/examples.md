@@ -2930,6 +2930,44 @@ spades.qty = 3
 - See [NUC 71](nuc-0071.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-distinct-values).
 
+## Object entry loops
+
+**Entry loops stock warehouses from delivery manifests**
+
+```nuc
+class Product(site, name, qty):
+    this.site = site
+    this.name = name
+    this.qty = qty
+$Product.low = $Product.qty < 10
+class Warehouse(site):
+    this.site = site
+    this.units = 0
+    def receive(manifest):
+        for name, qty of manifest:
+            Product(this.site, name, qty)
+            this.units += qty
+        return this.units
+north = Warehouse("north")
+south = Warehouse("south")
+assert([north.receive({bolts: 40, nuts: 25, gears: 8}), south.receive({belts: 3, bolts: 12}), south.receive({nuts: 5, gears: 8, springs: 30})], [73, 15, 58])
+Product.filter(product -> product.low).map(product -> product.site + ":" + product.name)
+# return: ["north:gears","south:belts","south:nuts","south:gears"]
+```
+
+- `receive` turns a delivery manifest into products for the warehouse that
+  received it and adds each quantity to the warehouse's total, in the order
+  the manifest lists its entries. The loop body reads `this` and the entry's
+  name and quantity, as a single-name loop body reads its item.
+- The three deliveries list different products, and the one method reads
+  each without naming them. The class-level rule marks every product under
+  ten units as low, so the result lists the low products in the order they
+  arrived: the north gears, then the south belts, nuts and gears. Each
+  manifest is snapshotted when its loop starts, and the loop runs once; it is
+  not a standing rule.
+- See [NUC 72](nuc-0072.md) and the
+  [root contract](../nucleoid.spec.md#object-entry-loops-with-ordered-rollback).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

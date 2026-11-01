@@ -2105,4 +2105,21 @@ tags = []
 assert(colors, [])
 palette.length
 # return: 3
+---
+# Nucleoid loops over the keys and values of an object
+
+class Sale(site, item, units):
+    this.site = site
+    this.item = item
+    this.units = units
+sales = {north: {bolts: 4, nuts: 2, gears: 1}, south: {bolts: 5, belts: 3, nuts: 6}}
+sold = []
+for site, items of sales:
+    for item, units of items: Sale(site, item, units)
+    sold.push(site + ":" + Sale.length)
+sales.north.nuts = 9
+assert(sold, ["north:3", "south:6"])
+assert(Sale.filter(sale -> sale.item == "nuts").sum(sale -> sale.units), 8)
+sales.north.nuts
+# return: 9
 ```

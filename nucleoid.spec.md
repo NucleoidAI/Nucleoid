@@ -3165,6 +3165,87 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed distinct updates` specify the executable
   behavior.
 
+## Object entry loops with ordered rollback
+
+- [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
+  `for KEY, VALUE of SOURCE:` and `for KEY, VALUE in SOURCE:`, and makes
+  rollback restore the order of every object's entries. No keyword, token or
+  error type is added.
+- A header is a two-name header exactly when `for` is followed by a name, a
+  comma, a name and `of` or `in`. `SOURCE` is any expression, and the body is
+  any suite the single-name loop accepts: an indented block, statements on
+  the same line separated by `;`, or a braced block after the colon. There is
+  no colon-free, implicit, parenthesized or three-name form.
+- `SOURCE` is evaluated once, before the names are bound, and must be an
+  object: an object literal, an instance, or any other object value. Every
+  other value raises `TypeError("<source> is not an object")`, with the source
+  in canonical form, for example `TypeError("xs is not an object")` for a list
+  named `xs`. An undefined name raises `ReferenceError("<name> is not defined")`
+  as before. Both are positioned at the running top-level statement.
+- The loop visits the object's own entries in insertion order: an object
+  literal's keys as written, later properties appended when they are first
+  assigned, deleted properties removed, and a property deleted and assigned
+  again moved to the end. An instance lists `id` first, then the properties
+  its constructor assigns, the properties its class-level rules derive and
+  the properties assigned later, in the order they were first stored.
+- An entry whose value is `null` is visited. A literal slot whose value is
+  undefined, such as `a` in `{a: none.x}` when `none.x` was never set, is not
+  an entry, as deep equality and JSON serialization already skip it. An empty
+  object runs no body.
+- Every entry, key and value, is snapshotted before the first body runs.
+  Entries the body adds are not visited, entries it deletes are still visited
+  with their snapshotted values, and an entry whose value it changes is still
+  bound to the snapshotted value, while `SOURCE[KEY]` reads the current one.
+  A later loop takes a fresh snapshot.
+- Each iteration pushes a scope, declares `KEY` as the entry's key, a string,
+  and `VALUE` as its value, and runs the body imperatively, as a single-name
+  loop does. The names shadow and restore outer names, and when both names
+  are the same, the value is bound.
+- Explicit and bare returns leave the loop as from a single-name loop; a
+  normally completed or empty loop yields `null`. Errors and thrown values
+  roll back through the existing transaction.
+- Taking the snapshot records no dependency of its own, as the class, list and
+  string snapshots do; evaluating `SOURCE` records its reads as usual. A loop
+  inside a standing `if` branch, a block or a function they call runs whenever
+  the branch or block runs. It does not run again because an entry changed or
+  was added, and it does when the binding that `SOURCE` reads is replaced.
+  Reads made by the body, such as `SOURCE[KEY]`, are dependencies as usual.
+- Loops run in functions and methods, where they see parameters and `this`
+  as single-name loops do, in constructors, class-level rules, blocks,
+  `suppose` suites and `try` bodies, and they nest. Inside a class-level `if`
+  or block, a source that reads `$Class`, such as `$Box.parts`, fails when the
+  block is declared, with `TypeError("$Box.parts is not an object")`, as the
+  single-name loop fails with `TypeError("$Box.parts is not iterable")`.
+- Rollback restores the order of every object's entries along with their
+  values. When a transaction or a savepoint rolls back, through a caught
+  failure in `try`, a failed top-level statement, the end of a `suppose` block
+  or an error inside one, every object holds exactly the entries it held when
+  the rolled-back work began, in the same order: a property the work deleted
+  returns at the position it held, a property it added is removed, a property
+  it overwrote keeps its position and regains its value, and a property it
+  deleted and assigned again returns to its original position with its
+  original value. An inner savepoint restores the order its own work changed,
+  and an enclosing rollback restores the rest; instances keep `id` first.
+- Rollback keeps its accepted behavior for everything else it restores,
+  including the order of graph nodes and dependency edges that `model |> why`
+  reflects. Before entry loops, the order of an object's entries had no
+  observable channel, so restoring it changes no accepted program.
+- Graph and block keys render the header as `for KEY,VALUE of SOURCE`, as they
+  render `for NAME of SOURCE`, and default-bearing declarations render the
+  suite form `for KEY,VALUE of SOURCE:` with its indented body. `in` renders as
+  `of`. The suite form parses back to the same statement.
+- Single-name loops are unchanged, including `TypeError("<name> is not
+  iterable")` for objects and every other noniterable source. Inputs that are
+  not two-name headers keep their diagnostics: `for values, other:` raises
+  `SyntaxError("Expected 'of' in for statement")` at line 1, column 11, and
+  `for t := "ab": pass` the same message at line 1, column 7. A malformed
+  two-name header reports its error where it occurs, as a malformed
+  single-name header does.
+- The eight appended entries beginning
+  `Nucleoid loops over object entries in insertion order` through
+  `Nucleoid restores object entries in place when it rolls back` specify the
+  executable behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -17282,4 +17363,212 @@ assert: routes, ["b", "a"]
 Parcel("a")
 Parcel("c")
 assert: routes, ["b", "a", "c"]
+---
+# Nucleoid loops over object entries in insertion order
+
+class Line(shelf, item, count):
+    this.shelf = shelf
+    this.item = item
+    this.count = count
+class Shelf(name):
+    this.name = name
+    this.units = 0
+    def stock(items):
+        for item, count in items:
+            Line(this.name, item, count)
+            this.units += count ?? 0
+        return this.units
+none = {}
+dry = {rice: 4, beans: 1, oil: null, tea: none.tea}
+dry.flour = 6
+delete dry.beans
+dry.beans = 2
+pantry = Shelf("pantry")
+assert: [pantry.stock(dry), Shelf("fridge").stock({milk: 2, eggs: 12}), Shelf("cellar").stock({wine: 3, cider: 1})], [12, 14, 4]
+assert: Line.map(line -> line.item).join(" "), "rice oil flour beans milk eggs wine cider"
+assert: Line.filter(line -> line.count == null).map(line -> line.shelf + ":" + line.item), ["pantry:oil"]
+---
+# Nucleoid loops over the entries an instance holds
+
+class Room(name, width, depth):
+    this.name = name
+    this.width = width
+    this.depth = depth
+$Room.area = $Room.width * $Room.depth
+class Lamp(watts): this.watts = watts
+class Fact(subject, field, data):
+    this.subject = subject
+    this.field = field
+    this.data = data
+def record(thing):
+    for field, value of thing: Fact(thing.id, field, value)
+    return Fact.length
+lab = Room("lab", 3, 4)
+den = Room("den", 2, 2)
+desk = Lamp(60)
+desk.on = true
+lab.width = 5
+delete lab.name
+lab.name = "studio"
+try:
+    delete den.width
+    den.width = 7
+    throw "BUSY"
+catch error:
+    pass
+assert: [record(lab), record(den), record(desk)], [5, 10, 13]
+assert: Fact.filter(fact -> fact.subject == "lab").map(fact -> fact.field).join(" "), "id width depth area name"
+assert: Fact.filter(fact -> fact.subject == "den").map(fact -> fact.field + "=" + fact.data).join(" "), "id=den name=den width=2 depth=2 area=4"
+assert: Fact.filter(fact -> fact.data == 20 or fact.data == true).map(fact -> fact.subject + "." + fact.field), ["lab.area", "desk.on"]
+---
+# Nucleoid snapshots object entries before loop bodies
+
+bills = {rent: 900, food: 300, travel: 200, gym: 50}
+seen = []
+for bill, amount of bills:
+    seen.push(bill + ":" + amount + ":" + (bills[bill] ?? "gone"))
+    bills.food = 0
+    delete bills.travel
+    bills.fee = (bills.fee ?? 0) + 5
+assert: seen, ["rent:900:900", "food:300:0", "travel:200:gone", "gym:50:50"]
+assert: [bills.food, bills.travel, bills.fee], [0, null, 20]
+owed = {total: 0}
+for bill, amount of bills: owed.total += amount
+assert: owed.total, 970
+---
+# Nucleoid nests object entry loops over nested records
+
+class Store(region, city, units):
+    this.region = region
+    this.city = city
+    this.units = units
+class Region(name, stores):
+    this.name = name
+    this.stores = stores
+regions = {north: {oslo: 4, bergen: 2}, south: {rome: 5, bari: 1, napoli: 3}, east: {riga: 6, vilnius: 2}}
+for region, cities of regions:
+    for city, units of cities: Store(region, city, units)
+    Region(region, Store.length)
+regions.south.bari = 7
+assert: Store.map(store -> store.city).join(" "), "oslo bergen rome bari napoli riga vilnius"
+assert: Region.map(each -> each.name + each.stores).join(" "), "north2 south5 east7"
+assert: [Store.filter(store -> store.region == "south").sum(store -> store.units), regions.south.bari], [9, 7]
+---
+# Nucleoid returns from object entry loops in functions and methods
+
+class Pick(item, qty):
+    this.item = item
+    this.qty = qty
+class Store(stock):
+    this.stock = stock
+    def pick(order):
+        for item, qty of order:
+            if (this.stock[item] ?? 0) < qty:
+                return item
+            Pick(item, qty)
+        return "done"
+def load(truck, crates):
+    for crate, kg of crates:
+        if truck.kg + kg > truck.limit:
+            return
+        truck.kg += kg
+shop = Store({nuts: 5, bolts: 2, gears: 7})
+assert: shop.pick({nuts: 3, gears: 2}), "done"
+assert: shop.pick({gears: 1, bolts: 4, nuts: 1}), "bolts"
+assert: Pick.map(pick -> pick.item).join(" "), "nuts gears gears"
+van = {kg: 0, limit: 10}
+load(van, {tools: 4, tiles: 9, paint: 2})
+assert: van.kg, 4
+load(van, {paint: 2, rope: 3})
+assert: van.kg, 9
+---
+# Nucleoid keeps object entry loops one shot
+
+class Lamp(room, watts):
+    this.room = room
+    this.watts = watts
+def light(rooms):
+    for room, watts of rooms: Lamp(room, watts)
+    return Lamp.length
+load = Lamp.sum(lamp -> lamp.watts)
+lights = {hall: 40, desk: 60, porch: 25}
+night = false
+if night: light(lights)
+assert: Lamp.length, 0
+night = true
+lights.desk = 100
+lights.shed = 30
+assert: [Lamp.length, load], [3, 125]
+lights = {shed: 30, gate: 10, pool: 20, yard: 5}
+assert: [Lamp.length, load], [7, 190]
+bill = {watts: 0}
+for room, watts of lights: bill.watts += watts
+lights.gate = 50
+assert: [Lamp.map(lamp -> lamp.room).join(" "), bill.watts], ["hall desk porch shed gate pool yard", 65]
+---
+# Nucleoid restores object entries at nested savepoints
+
+class Seat(row, guest, price):
+    this.row = row
+    this.guest = guest
+    this.price = price
+def seat(row, guests):
+    for guest, price of guests:
+        if price > 50: throw guest + " is over budget"
+        Seat(row, guest, price)
+    return Seat.length
+party = {ann: 30, bob: 40, cy: 20}
+try:
+    delete party.ann
+    try:
+        delete party.bob
+        party.bob = 60
+        seat("a", party)
+    catch error:
+        assert: [error, Seat.length], ["bob is over budget", 0]
+    party.ann = 35
+    assert: seat("b", party), 3
+    assert: Seat.map(each -> each.guest + each.price).join(" "), "bob40 cy20 ann35"
+    throw "CANCELLED"
+catch error:
+    assert: [error, Seat.length], ["CANCELLED", 0]
+assert: seat("c", party), 3
+assert: Seat.map(each -> each.row + each.guest + each.price).join(" "), "cann30 cbob40 ccy20"
+---
+# Nucleoid restores object entries in place when it rolls back
+
+class Line(order, item, qty):
+    this.order = order
+    this.item = item
+    this.qty = qty
+class Order(name):
+    this.name = name
+    this.items = []
+    def fill(stock):
+        for item, qty of stock:
+            if qty > 5: throw item + " is short"
+            Line(this.name, item, qty)
+            this.items.push(item + qty)
+        return this.items
+basket = {tea: 4, jam: 3, oats: 2}
+first = Order("first")
+try:
+    basket.tea = 9
+    delete basket.jam
+    delete basket.tea
+    basket.tea = 6
+    first.fill(basket)
+catch error:
+    assert: [error, first.items, Line.length], ["tea is short", [], 0]
+second = Order("second")
+assert: second.fill(basket), ["tea4", "jam3", "oats2"]
+plan = suppose:
+    delete basket.jam
+    basket.rye = 5
+    Order("third").fill(basket)
+assert: plan, ["tea4", "oats2", "rye5"]
+basket.salt = 1
+fourth = Order("fourth")
+assert: fourth.fill(basket), ["tea4", "jam3", "oats2", "salt1"]
+assert: Line.map(line -> line.order + ":" + line.item).join(" "), "second:tea second:jam second:oats fourth:tea fourth:jam fourth:oats fourth:salt"
 ```

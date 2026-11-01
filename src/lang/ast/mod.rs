@@ -63,6 +63,12 @@ pub enum Stmt {
         iterable: Expr,
         body: Vec<Stmt>,
     },
+    ForEntries {
+        key: String,
+        value: String,
+        iterable: Expr,
+        body: Vec<Stmt>,
+    },
     Return(Option<Expr>),
     Throw(Expr),
     Delete(Expr),
