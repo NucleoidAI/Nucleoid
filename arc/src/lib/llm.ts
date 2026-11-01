@@ -7,7 +7,7 @@ export async function generate({ puzzle_id, messages = [], document = true }) {
     messages.unshift({
       role: "assistant",
       content: `
-        instruct_dataset:
+        few_shot:
         ${dataset.document(puzzle_id)}
       `,
     });

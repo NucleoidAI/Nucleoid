@@ -6,7 +6,6 @@ import * as milestone from "./lib/milestone.ts";
 export async function instances({
   puzzle_id,
   train_dataset,
-  declarations,
   test_input_matrix,
 }) {
   milestone.segmenting_test_input({ test_input_matrix });
@@ -17,8 +16,6 @@ export async function instances({
       {
         role: "assistant",
         content: `
-          declarations:
-          ${JSON.stringify(declarations)}
           train_dataset:
           ${JSON.stringify(
             train_dataset.dataset.map(

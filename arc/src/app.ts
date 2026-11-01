@@ -16,8 +16,8 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
       output_matrix: output,
       instances: [],
     })),
-    declarations: [],
-    output_canvas: "EXACT",
+    declarations: undefined,
+    output_canvas: undefined,
   };
 
   const startedAt: number = performance.now();
@@ -83,7 +83,6 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   const { instances } = await visualizer.instances({
     puzzle_id,
     train_dataset,
-    declarations,
     test_input_matrix,
   });
 

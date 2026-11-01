@@ -45,8 +45,6 @@ export async function instances({
           ${JSON.stringify(input_matrix)}
           output_matrix:
           ${JSON.stringify(output_matrix)}
-          query:
-          Obj;
           json_format:
           {
             "instances": [{
