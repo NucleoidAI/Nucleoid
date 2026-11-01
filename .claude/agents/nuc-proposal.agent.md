@@ -49,7 +49,12 @@ You draft and prototype exactly one added or updated NUC revision. Follow
   coverage. Never invent before-counts.
 - Keep affected reference, synthesized sources, and rendered exports in sync.
 - Run the relevant development checks, but do not run `evaluate_proposal`,
-  write an acceptance report, or decide Accepted or Rejected.
+  write an acceptance report, or decide Accepted, Automatic-Accepted or
+  Rejected. Under the caller's
+  [automatic acceptance rule](../rules/proposals.instructions.md#automatic-acceptance-caller-only),
+  only the hard criteria (no compile errors, every test passing, backward
+  compatibility) decide acceptance, so treat them as non-negotiable while
+  preparing the candidate.
 - Do not spawn agents, combine pending proposals, overwrite caller changes,
   commit, push, or merge. Work only in the supplied candidate.
 - Report missing prerequisites explicitly; never edit the baseline or invent
@@ -98,7 +103,8 @@ are complete, then stop editing it. The caller launches a fresh `nuc-evaluate`
 agent with this handoff and a fresh report path. The caller owns integration
 and evaluation status/index updates.
 
-After a `Rejected` verdict, the caller must still record and commit the
+After a `Rejected` outcome, which requires a failed hard criterion, the caller
+must still record and commit the
 rejected proposal documentation and index/outcome metadata under the
 [shared rejection workflow](../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 Rejected candidate language changes remain isolated. Do not perform this
@@ -106,7 +112,8 @@ caller-owned commit yourself.
 
 The caller follows the skill's
 [execution-mode rule](../skills/nuc-proposal/SKILL.md#choose-execution-mode-caller-only).
-In continuous mode, after finalizing an `Accepted` or `Rejected` outcome for a
+In continuous mode, after finalizing an `Accepted`, `Automatic-Accepted` or
+`Rejected` outcome for a
 new NUC, it immediately starts the next proposal under the
 [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
 In single-proposal mode, it finishes the requested outcome and stops without

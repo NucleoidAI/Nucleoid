@@ -1,6 +1,6 @@
 ---
 name: arc-purposal
-description: Coordinate one ARC training puzzle by ID. Write its instruction dataset with arc-dataset, carry any Nucleoid enhancement that dataset requires through the NUC proposal and evaluation stages, run `bun start <puzzle-id>` once, and decide that NUC's outcome from the exact-match result.
+description: Coordinate one ARC training puzzle by ID. Write its instruction dataset with arc-dataset, carry any Nucleoid enhancement that dataset requires through the NUC proposal and evaluation stages, run `bun start <puzzle-id>` once, and decide that NUC's outcome under the automatic acceptance rule with the exact-match result.
 include-custom-instructions: true
 ---
 
@@ -46,8 +46,12 @@ Follow `.claude/CLAUDE.md`, the
 
 ## Outcome
 
-- An exact match accepts the requested NUC regardless of the evaluator's
-  decision. Otherwise the NUC is accepted only if the evaluator accepted it.
+- The requested NUC follows the
+  [automatic acceptance rule](../rules/proposals.instructions.md#automatic-acceptance-caller-only):
+  a failed hard criterion (compile errors, a failing test, a compatibility
+  break) rejects it. Otherwise an exact match makes it Accepted regardless of
+  the evaluator's decision, an evaluator acceptance makes it Accepted, and any
+  other result makes it Automatic-Accepted.
 - Record the outcome through the NUC workflow's caller steps, with its basis,
   the evaluator's decision, and the run's evidence. Never push or change project
   versions.

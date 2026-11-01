@@ -214,8 +214,11 @@ Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
 3. `bun start <puzzle-id>` runs once, with that candidate's runtime when there
    is one, while the workflow waits up to 10 minutes for it. Exit status `0` is
    an exact match; a run still going at 10 minutes is killed and does not pass.
-4. An exact match accepts the requested NUC whatever the evaluator decided.
-   Otherwise the NUC is accepted only if the evaluator accepted it.
+4. The requested NUC follows the automatic acceptance rule. A compile error, a
+   failing test or a backward-compatibility break rejects it. Otherwise an
+   exact match or an evaluator acceptance makes it Accepted, and any other
+   result makes it Automatic-Accepted, with the policy results recorded in the
+   NUC.
 5. The workflow itself never changes the solver's TypeScript. When the
    dataset, the candidate, or the run shows that the solver needs a change,
    the final report suggests it for review.

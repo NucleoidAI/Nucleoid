@@ -8,7 +8,8 @@ These rules apply when working on `arc/`, its LLM exchanges, or its associated
 ARC records. Run an ARC proposal with `/arc-purposal <puzzle-id>` (the
 `arc-purposal` skill and agent). The `arc-dataset` agent writes the puzzle's
 instruction dataset, any Nucleoid enhancement that dataset requires goes
-through the NUC stages, and one solver run decides that enhancement's outcome.
+through the NUC stages, and its outcome follows the automatic acceptance rule,
+with one solver run whose exact match makes it Accepted.
 `/arc-purposal` never changes the TypeScript implementation in `arc/`. It
 orchestrates its approach between `/arc-dataset` and `/nuc-proposal` and, when
 the solver would need a change, suggests that change at the end of the process.
@@ -93,8 +94,12 @@ expected grids or scoring.
 Keep changes focused on the ARC project and synchronize affected documentation
 and canonical ARC records when their behavior changes. Follow the existing NUC
 workflow for language changes and the human-owned version policy. A NUC that
-`/arc-purposal` requests is accepted on an exact match regardless of its
-evaluation, under the
+`/arc-purposal` requests follows the
+[automatic acceptance rule](proposals.instructions.md#automatic-acceptance-caller-only):
+when its candidate meets every hard criterion (no compile errors, every test
+passing, backward compatibility), an exact match makes it Accepted regardless
+of its evaluation, and otherwise it is Accepted or Automatic-Accepted; only a
+failed hard criterion rejects it, under the
 [ARC-requested proposal rule](proposals.instructions.md#arc-requested-proposals-caller-only).
 Do not read or expose credentials, make paid LLM calls without authorization,
 or alter provider/model settings merely to manufacture a passing result. An

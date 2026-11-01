@@ -16,6 +16,6 @@ profile; if it is not already your system prompt, delegate this request to the
 A `nucleoid_enhancement_required` handoff writes no dataset and returns a NUC
 request to the caller. Under `/arc-purposal`, the
 [arc-purposal skill](../arc-purposal/SKILL.md) handles it. Otherwise the caller
-may run `/nuc-proposal` with the request as a single-proposal request, which
-the independent evaluator alone decides, and run `/arc-dataset` again once the
+may run `/nuc-proposal` with the request as a single-proposal request, decided
+under the automatic acceptance rule, and run `/arc-dataset` again once the
 feature is accepted.

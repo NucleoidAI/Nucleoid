@@ -1,6 +1,6 @@
 ---
 name: arc-purposal
-description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run that decides the enhancement's outcome.
+description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run, then decide the enhancement's outcome under the automatic acceptance rule.
 argument-hint: <puzzle-id> [--hint <text>]
 ---
 
@@ -88,7 +88,8 @@ Handle at most one NUC request per invocation, as a single-proposal request.
 2. Launch a fresh `nuc-evaluate` agent on the frozen handoff under the
    [nuc-evaluate skill](../nuc-evaluate/SKILL.md), with
    `NUC_PROPOSAL_MODE=single` and a fresh report path. Keep its decision and
-   report. Do not record the outcome yet; the run decides it.
+   report, including its hard-criteria evidence. Do not record the outcome
+   yet; it waits for the run.
 3. Confirm the candidate still matches the handoff, build it with
    `cargo build --locked` in its worktree, and copy its `target/debug/nucleoid`
    executable (`nucleoid.exe` on Windows) into the session workspace.
@@ -146,23 +147,28 @@ it to revise the dataset or candidate.
 
 Without a NUC, report the run's result; there is no proposal outcome. With the
 requested NUC, decide under the
-[ARC-requested proposal rule](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only):
+[ARC-requested proposal rule](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only),
+which applies the
+[automatic acceptance rule](../../rules/proposals.instructions.md#automatic-acceptance-caller-only):
 
-| Run | Evaluator decision | Outcome |
-| --- | --- | --- |
-| Exit status `0` | Any | Accepted, on the exact match |
-| Not passed or not run | Accepted | Accepted, on the evaluation |
-| Not passed or not run | Rejected | Rejected |
-| Not passed or not run | Blocked | Blocked; the NUC stays Draft |
+| Hard criteria | Run | Evaluator decision | Outcome |
+| --- | --- | --- | --- |
+| Any failed | Any | Any | Rejected |
+| All passed | Exit status `0` | Any | Accepted, on the exact match |
+| All passed | Not passed or not run | Accepted | Accepted, on the evaluation |
+| All passed | Not passed or not run | Rejected | Automatic-Accepted |
+| Not verified | Any | Blocked | Blocked; the NUC stays Draft |
 
 Record it with the nuc-proposal skill's caller steps:
 
-- **Accepted:** integrate the unchanged frozen candidate, record its
-  status/index metadata, and commit that integration with explicit paths. In
-  the NUC's Evaluation section, record the basis, the evaluator's decision and
-  findings, and the run's puzzle ID, command, and exit status. Rebuild the
-  primary runtime with `cargo build`, run the development checks, and report
-  every failure, including any the evaluator found.
+- **Accepted or Automatic-Accepted:** integrate the unchanged frozen candidate,
+  record its status/index metadata, and commit that integration with explicit
+  paths. In the NUC's Evaluation section, record the basis, the hard-criteria
+  evidence, the evaluator's decision and findings, and the run's puzzle ID,
+  command, and exit status; for Automatic-Accepted also state which policy
+  checks failed. Rebuild the primary runtime with `cargo build`, run the
+  development checks, and report every failure, including any the evaluator
+  found.
 - **Rejected:** record and commit only the rejection documentation and index
   metadata under the
   [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).

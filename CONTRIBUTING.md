@@ -105,12 +105,21 @@ an isolated candidate, preserving behavior, case identities, canonical
 assertions, return expectations, and executed assertion coverage. It hands off
 the proposal's Git blob revision without deciding acceptance. The evaluator
 checks the frozen candidate without rewriting it, measuring tokens only when
-the execution-mode policy requires comparison. A NUC that `/arc-purposal`
-requests for an ARC puzzle is also accepted when the puzzle's solver run is an
-exact match; see the
+the execution-mode policy requires comparison.
+
+Outcomes follow the
+[automatic acceptance rule](.claude/rules/proposals.instructions.md#automatic-acceptance-caller-only).
+A candidate is accepted when it meets three hard criteria: no compile errors
+(build, warning-denied Clippy and formatting), the full `cargo test` passing
+with every existing test present and unweakened, and backward compatibility
+with all accepted syntax and behavior. It is `Accepted` when every policy check
+also passes and `Automatic-Accepted` when one fails, such as a token increase
+or an evaluator rejection; the NUC records those policy results. Only a failed
+hard criterion rejects a proposal. A NUC that `/arc-purposal` requests is
+Accepted on an exact solver match; see the
 [ARC-requested proposal rule](.claude/rules/proposals.instructions.md#arc-requested-proposals-caller-only).
-A NUC the user requests directly is also accepted when its frozen candidate
-compiles and passes every existing and new test; see the
+A NUC the user requests directly is Accepted when it meets the hard criteria;
+see the
 [user-requested proposal rule](.claude/rules/proposals.instructions.md#user-requested-proposals-caller-only).
 
 The procedures live in the [proposal skill](.claude/skills/nuc-proposal/SKILL.md)
@@ -149,15 +158,16 @@ All modes retain immutable accepted-corpus baselines, pre-existing case
 integrity, assertion execution/coverage, explicit return checks, backward
 syntax compatibility, development checks, and independent evaluation.
 An invalid baseline, bad input, or behavior/compatibility failure never becomes
-a successful skip. Missing comparisons still block a required token gate;
+a successful skip. Missing comparisons still fail a required token gate;
 missing artifacts do not establish that a feature is uncomparable.
 
 When required, the gate measures each case from the specification and executable
 reference, README, and examples. It uses Nucleoid lexer tokens, including
 `Newline`, `Indent`, and `Dedent`, excluding `Eof`; it does not measure LLM
 tokens, generated Rust, or synthesized training records. Each paired case must
-use the same or fewer tokens. Any increase rejects the proposal, regardless of
-savings in other cases.
+use the same or fewer tokens for the gate to pass. Any increase fails it,
+regardless of savings in other cases; that failure is a recorded policy result,
+and a candidate meeting the hard criteria is then Automatic-Accepted.
 
 Record the accepted baseline before editing the runtime or executable corpus.
 The recorder reads documents from the pinned Git revision and refuses to use

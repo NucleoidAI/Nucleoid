@@ -16,9 +16,12 @@ Each NUC is a language proposal. New or updated proposals get a fresh
 `nuc-proposal` agent to draft, prototype, and rewrite equivalent executable
 cases, followed by an independent fresh `nuc-evaluate` agent to check the
 frozen candidate and compare lexer tokens per case without rewriting it.
-Acceptance requires every case to use the same or fewer tokens and behavior
-checks to pass; any increase rejects it. Draft or rejected proposals do not
-change this implemented reference. See [NUC 1](nuc-0001.md#proposal-evaluation).
+A proposal is accepted when it has no compile errors, passes every test and
+stays backward compatible; it is `Automatic-Accepted` when a policy check such
+as the per-case token comparison fails, and its NUC records that result. Draft
+or rejected proposals do not change this implemented reference. See
+[NUC 1](nuc-0001.md#proposal-evaluation) and the
+[automatic acceptance rule](../.claude/rules/proposals.instructions.md#automatic-acceptance-caller-only).
 
 The entries below are abbreviated to the behaviour they state.
 [examples.md](examples.md) covers the same ground as complete programs, each one

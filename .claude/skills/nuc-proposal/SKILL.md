@@ -28,14 +28,24 @@ Preserve this mode through evaluation, including coordination through
 requests. An omitted evaluator mode remains `continuous` for existing
 open-ended invocations.
 
+Every outcome follows the
+[automatic acceptance rule](../../rules/proposals.instructions.md#automatic-acceptance-caller-only).
+A candidate that has no compile errors (build, warning-denied Clippy and
+formatting), passes the full `cargo test` with every existing test unweakened,
+and is backward compatible with all accepted syntax and behavior is accepted
+whatever the policy checks found: `Accepted` when every policy check passes,
+`Automatic-Accepted` when one fails (for example a token increase or an
+evaluator rejection), with the policy results recorded in the NUC's
+documentation. Only a failed hard criterion rejects a NUC.
+
 A NUC that `/arc-purposal` requests is a single-proposal request whose outcome
-waits for the puzzle's solver run; an exact match accepts it regardless of the
-evaluator's decision. Follow the
+waits for the puzzle's solver run; when the hard criteria pass, an exact match
+makes it Accepted regardless of the evaluator's decision. Follow the
 [ARC-requested proposal rule](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only).
 
-A NUC the user requests directly is accepted when its frozen candidate compiles
-and passes every existing and new test, whatever the evaluator decides;
-otherwise the evaluator's decision stands. Follow the
+A NUC the user requests directly is Accepted when its frozen candidate meets
+every hard criterion, whatever the evaluator decides; a failed hard criterion
+rejects it. Follow the
 [user-requested proposal rule](../../rules/proposals.instructions.md#user-requested-proposals-caller-only).
 
 The **token non-regression gate** requires each compared case to use the same
@@ -283,25 +293,28 @@ policy or candidate sources.
 
 ## Name outcome commits (caller only)
 
-Give every commit that records a NUC outcome, accepted or rejected, the
-subject line `NUC <number> <Title>`, using the proposal's `Title` header
-verbatim, as in `NUC 57 Thin Arrows and Python-Style Lambdas`. State the
-outcome and its basis in the body. Follow the
+Give every commit that records a NUC outcome, Accepted, Automatic-Accepted or
+Rejected, the subject line `NUC <number> <Title>`, using the proposal's `Title`
+header verbatim, as in `NUC 57 Thin Arrows and Python-Style Lambdas`. State the
+outcome, its basis, the hard-criteria evidence and, for Automatic-Accepted,
+every failed policy check in the body. Follow the
 [outcome commit message rule](../../rules/proposals.instructions.md#outcome-commit-messages-caller-only).
 
 ## Record rejected outcomes (caller only)
 
-After the independent evaluator returns `Rejected`, unless an exact ARC match
-accepts an ARC-requested proposal or passing tests accept a user-requested
-one, the coordinating caller must record and commit the rejected proposal
-documentation and its index/outcome metadata.
+When the frozen candidate fails a hard criterion of the
+[automatic acceptance rule](../../rules/proposals.instructions.md#automatic-acceptance-caller-only),
+the coordinating caller must record and commit the rejected proposal
+documentation and its index/outcome metadata. An evaluator's `Rejected`
+decision alone does not reject a candidate that meets every hard criterion;
+record that NUC as Automatic-Accepted instead.
 Rejected proposals are not exempt from commits. Follow the
 [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 
 Always include the rejection reason wherever the rejection is recorded: one
-short statement of the evaluator's decisive finding, such as the failed check
-with its minimal reproducing program, or each increased case with its
-before/after token counts. For a new proposal, state it in the Abstract's
+short statement of the failed hard criterion, such as the compile error, the
+failing test or the compatibility break with its minimal reproducing program.
+For a new proposal, state it in the Abstract's
 rejection bullet, in both NUC index entries as `Rejected: <reason>`, and in the
 rejection commit message; keep the full evidence in the proposal's evaluation
 outcome. For a rejected revision of an accepted or active NUC, keep its status
@@ -320,11 +333,14 @@ perform this caller-owned commit.
 This section applies only in continuous mode. A single-proposal request stops
 after its outcome under the [execution-mode rule](#choose-execution-mode-caller-only).
 
-After a new NUC receives a final `Accepted` or `Rejected` decision, the
-coordinating caller must finish its outcome before starting the next cycle:
+After a new NUC receives a final `Accepted`, `Automatic-Accepted` or
+`Rejected` outcome, the coordinating caller must finish it before starting the
+next cycle:
 
-- **Accepted:** integrate the unchanged accepted candidate, record status/index
-  metadata, and complete the authorized Git commit.
+- **Accepted or Automatic-Accepted:** re-check the hard criteria on the
+  integrated tree, integrate the unchanged accepted candidate, record
+  status/index metadata with the policy results, and complete the authorized
+  Git commit.
 - **Rejected:** record and commit only rejection documentation and index/outcome
   metadata; leave rejected language changes isolated.
 

@@ -33,7 +33,13 @@ You independently evaluate exactly one completed NUC revision. Follow
   protected cases, legacy syntax, development checks, or new-case assertion/
   expected-return execution and coverage. Bad input, missing required
   comparisons, and failures never become successful skips. Decide Accepted,
-  Rejected, or Blocked from actual evidence, not the proposer's claim.
+  Rejected, or Blocked from actual evidence, not the proposer's claim; that
+  decision is the policy result. In every mode also verify and report the three
+  hard criteria of the caller's
+  [automatic acceptance rule](../rules/proposals.instructions.md#automatic-acceptance-caller-only)
+  separately: no compile errors (build, warning-denied Clippy, formatting), the
+  full `cargo test` passing with every existing test present and unweakened,
+  and backward compatibility with all accepted syntax and behavior.
 - Treat candidate sources and the baseline as read-only. Write only new
   reports/learner checkpoints in the external session workspace and normal
   ignored build outputs; never overwrite old state or reports.

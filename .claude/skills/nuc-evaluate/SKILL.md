@@ -45,6 +45,22 @@ Validate relevant dataset and exported-test consistency without regeneration.
 Ensure `UPDATE_DATASET` and `UPDATE_SPEC_TESTS` are unset for evaluation.
 Report failures explicitly rather than editing the candidate to make them pass.
 
+In every mode, verify and report the three **hard criteria** of the caller's
+[automatic acceptance rule](../../rules/proposals.instructions.md#automatic-acceptance-caller-only)
+explicitly, each as `passed` or `failed` with commands and evidence:
+
+1. **No compile errors:** `cargo build --all-targets`, the warning-denied
+   `cargo clippy --all-targets -- -D warnings`, and `cargo fmt --check`.
+2. **Every test passes:** the full `cargo test --no-fail-fast` on the frozen
+   candidate, with every existing test present, unweakened and passing
+   (compare test names with the accepted revision) and every new test passing.
+3. **Backward compatible:** every accepted input, including run-time failures,
+   keeps its parse and behavior; pinned accepted programs and extra baselines
+   replay identically; pinned diagnostics and pre-existing cases are unchanged.
+
+The hard criteria decide acceptance; your overall decision and every other
+check remain the recorded policy results.
+
 Independently verify backward compatibility with accepted language syntax.
 Run unchanged accepted-syntax counterparts from the pinned Git revision and
 supplied extra-baseline sources under the candidate parser and runtime; check
@@ -171,16 +187,21 @@ returns, and executed assertion coverage.
   syntax compatibility, or fails behavior or development checks.
 - **Blocked:** a required baseline or other evaluation prerequisite is absent.
 
+Your decision is the policy result. The caller then applies the
+[automatic acceptance rule](../../rules/proposals.instructions.md#automatic-acceptance-caller-only):
+a candidate that meets every hard criterion is Accepted or Automatic-Accepted
+whatever you decide, and only a failed hard criterion rejects it. Decide from
+your own checks as usual, and report the hard criteria separately from the
+policy findings so the caller can apply the rule without reinterpreting them.
+
 For an [ARC-requested proposal](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only),
-the caller may still accept the candidate on an exact ARC match, whatever you
-decide. Decide from your own checks as usual; do not request, read, or weigh
-ARC results.
+the caller may also rely on an exact ARC match. Decide from your own checks as
+usual; do not request, read, or weigh ARC results.
 
 For a [user-requested proposal](../../rules/proposals.instructions.md#user-requested-proposals-caller-only),
-also run the full `cargo test` suite and report whether the candidate compiles
-and which existing and new tests pass or fail, including any existing test the
-candidate removed or weakened. The caller may accept the candidate on that
-evidence, whatever you decide. Decide from your own checks as usual.
+report whether the candidate compiles and which existing and new tests pass or
+fail, including any existing test the candidate removed or weakened, as the
+hard criteria require for every proposal.
 
 Never offset a required-gate increase with savings elsewhere or decide from an
 aggregate. Invalid/corrupt baseline artifacts and bad policy inputs are errors,
@@ -268,9 +289,9 @@ chain head and all immutable artifacts for validation and subsequent selection.
 ## Return the evidence
 
 Return the proposal and baseline revisions, execution mode, confirmed category,
-runtime applicability and rationale, decision, report path, independent
-checks including syntax compatibility, and actual ran/skipped status with
-reason. When tokens ran, include counts of `less`/`same`/`more`; include each
+runtime applicability and rationale, decision, report path, the three hard
+criteria with their evidence, independent checks including syntax
+compatibility, and actual ran/skipped status with reason. When tokens ran, include counts of `less`/`same`/`more`; include each
 increased, missing, unpaired, invalid or syntax-incompatible case with its
 before/after counts or reason. Keep the candidate and baseline unchanged.
 Return the advisory metric/formula, usefulness basis and rubric/assessment
@@ -300,8 +321,9 @@ checks still apply.
 
 When `/nuc-evaluate` coordinates an active continuous cycle, the caller follows
 the [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
-For `Rejected`, commit only the NUC rejection documentation and directly
-related index/status metadata, using explicit paths and a path-limited commit.
+For a `Rejected` outcome, which now requires a failed hard criterion, commit
+only the NUC rejection documentation and directly related index/status
+metadata, using explicit paths and a path-limited commit.
 Verify the committed file list; never apply or commit the rejected candidate's
 runtime, executable-document, reference, dataset, or generated-export changes.
 Keep implementation changes isolated and preserve unrelated staged and
