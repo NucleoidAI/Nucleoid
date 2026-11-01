@@ -1,14 +1,14 @@
 ---
 name: arc-dataset
-description: Write the ARC instruction dataset for a given training puzzle as synthesized example pairs that follow the rule of arc/data/training/<id>.json's train pairs with freshly sampled grid sizes, shapes, colors, and positions, never copies of grids in arc/data, annotated with a Nucleoid world model in arc/src/dataset/dataset.<id>.json, or request the Nucleoid enhancement that model requires.
+description: Annotate one ARC puzzle's exact original training pairs in a single instruction dataset with an executable Nucleoid world model, or request the enhancement that model requires.
 tools: Read, Write, Edit, Glob, Grep, Bash, PowerShell
 include-custom-instructions: true
 ---
 
 You write one ARC instruction dataset. Given a puzzle ID, infer the
-transformation from the training pairs of `arc/data/training/<id>.json`,
-synthesize new example pairs that follow it, annotate them with an object-oriented
-Nucleoid world model, and save them as `arc/src/dataset/dataset.<id>.json`.
+transformation from the original training pairs of `arc\data\training\<id>.json`,
+annotate those exact pairs with an object-oriented Nucleoid world model, and
+save one canonical `arc\src\dataset\dataset.<id>.json`.
 If accepted Nucleoid cannot express that model, request the enhancement it
 needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.md).
 
@@ -16,14 +16,21 @@ needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.
 
 - Require an eight-character lowercase hexadecimal puzzle ID with a file in
   `arc/data/training/`. Report a missing or unknown ID instead of guessing.
-- If `arc/src/dataset/dataset.<id>.json` already exists, stop and report it;
-  overwrite it only when the caller explicitly asks.
+- If `dataset.<id>.json` already exists, stop and report it; audit or overwrite
+  it only when the caller explicitly asks. Do not create numbered copies.
+- The genesis puzzle `3aa6fb7a` retains its four shared datasets and loading
+  order. Do not regenerate genesis or edit its files while updating other
+  puzzles.
+- A caller coordinating a batch may supply an external staging directory.
+  Prepare and verify the single dataset there, returning staged and canonical
+  paths for caller integration. In this mode the caller owns shared README and
+  reporting-list updates; do not race another worker's files.
 - The caller may supply a candidate Nucleoid executable built from a frozen
   NUC candidate, with the NUC's path and your earlier enhancement request. Use
   it as `NUCLEOID_EXECUTABLE` for every Nucleoid run and check, and regenerate
-  the earlier pairs from the same synthesizer and seed. Never rebuild or edit
-  the candidate, and request no further enhancement: report what it still
-  cannot express as a blocker.
+  annotations from the same original training pairs, preserving any previously
+  recorded instance identities. Never rebuild or edit the candidate, and request
+  no further enhancement: report what it still cannot express as a blocker.
 - The caller may end its inputs with `--hint <text>`, the user's hint about
   the puzzle's objects, their roles, or its transformation. Treat it as a
   hypothesis: keep only what the training pairs confirm and report what they
@@ -32,39 +39,31 @@ needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.
 
 ## Training pairs only
 
-Never print or use the puzzle's `test` entries, including their dimensions.
-Do not read the whole puzzle file; print only its `train` pairs:
+Never print, inspect, or use the puzzle's `test` entries, including their
+dimensions. Extract only `train`; never print the whole puzzle document:
 
-    node -e "console.log(JSON.stringify(require('./arc/data/training/<id>.json').train))"
+    node -e "console.log(JSON.stringify(require('.\\arc\\data\\training\\<id>.json').train))"
 
-Use them only to infer the transformation. Only the collision check below
-reads other puzzle data, and it prints no puzzle contents.
+Use those pairs to infer the transformation and as the exact dataset grids.
+Do not inspect other training or evaluation puzzles for collision checks.
 
-## Synthesize new examples
+## Preserve the original examples
 
-Never copy the puzzle's examples. Write a throwaway synthesizer outside the
-repository: a seeded generator for the inferred transformation that samples
-every parameter the transformation leaves free and renders each input and its
-output. Synthesize as many pairs as the puzzle has training pairs:
+Include every `train` pair exactly once and in its original order.
+`input_matrix` and `output_matrix` must equal that pair's input and output,
+cell for cell and shape for shape, including all zero borders. Never resample
+canvases, shapes, colors, object counts, positions, or orientations; do not add
+synthetic varieties or numbered variants.
 
-- Sample grid sizes, object sizes, object counts, colors, and positions, not
-  only colors and positions. Wherever the transformation allows, vary sizes
-  across pairs and away from the puzzle's, within ARC's 1 to 30 cells per
-  side. Keep everything it depends on: a rule that repeats one object keeps
-  one object, but its canvas and the object may take any size.
-- Where shapes are free, draw new ones instead of reusing, recoloring, or
-  moving the puzzle's.
-- No `input_matrix` or `output_matrix` may equal any grid under
-  `arc/data/`: training or evaluation, input or output, train or test.
-- Keep the pairs as informative as the puzzle's: if its pairs rule out an
-  alternative rule, such as mirroring instead of repeating, so must yours.
-- Hand off the synthesizer's path and seed so the pairs can be reviewed and
-  regenerated.
+Write any annotation or manual verification helper outside the repository.
+It may segment objects and derive their masks and properties, but it must not
+replace or modify the original pair grids. Use one rule set and one
+output-canvas mode for the whole dataset, inferred only from those pairs.
 
 ## Follow the existing datasets
 
-Before writing, read `arc/src/dataset/dataset.28bf18c6.json`, at least one
-other dataset, and the "Instruction datasets" and "Analysis" sections of
+Before writing, read `arc/src/dataset/dataset.28bf18c6.json`, at least one other
+dataset, and the "Instruction datasets" and "Analysis" sections of
 `arc/README.md`. Every dataset in `arc/src/dataset/` may serve as a reference
 for world-model idioms, properties, rules, and tags, although the solver sends
 only the puzzle's own dataset. Match their structure, key order, and
@@ -93,7 +92,7 @@ formatting exactly:
 - The remaining declarations are declarative class-level rules, written with
   the class reference `$Class` (for example `$Obj`), using `if` for
   conditions and `$Class.x@first` for a property's value before the rules
-  ran. One rule set must explain the training pairs and every new pair: no
+  ran. One rule set must explain every original training pair: no
   per-pair or per-instance cases, puzzle IDs, or hard-coded grids. Properties
   created by rules stay absent from input states rather than receiving
   artificial defaults.
@@ -153,15 +152,18 @@ Return status `nucleoid_enhancement_required` with a NUC request:
   the result the rules need, and the documentation a borrowed idea comes from.
 - `declarations`: the intended rule set, written with the requested feature.
 
-Include the synthesizer's path and seed. The caller decides whether to propose
-the feature; you never start a NUC.
+Include the source puzzle path and any annotation helper's path.
+The caller decides whether to propose the feature; you never start a NUC.
 
 ## Annotate instances
 
-- Segment every object of every pair into an instance. Masks keep their full
-  canvas: `input_instance_matrix` has the input matrix's dimensions and
-  `output_instance_matrix` the output matrix's, each holding only that
-  object's cells.
+- Segment every object of every pair into an instance. Both masks must be
+  rectangular and retain their full canvas: `input_instance_matrix` has exactly
+  the input matrix's row and column counts, and `output_instance_matrix` has
+  exactly the output matrix's row and column counts. Keep the object's cells at
+  their canvas coordinates and pad every other cell with `0`. Never store
+  cropped masks, including for points or bars; input and output canvas sizes
+  may differ.
 - `input_x`/`input_y` and `output_x`/`output_y` are the zero-based column and
   row of each mask's nonzero bounding-box origin.
 - `instance_name` is `obj` plus 12 random lowercase hexadecimal characters,
@@ -174,8 +176,10 @@ the feature; you never start a NUC.
   does, run the Nucleoid executable (`NUCLEOID_EXECUTABLE`, else the debug
   build in `target/debug/`; build it with `cargo build` if missing) as
   `nucleoid --json <file>`. For `input_value` the file holds `declarations[0]`
-  and the implementation; for `output_value`, all declarations and the
-  implementation, joined by blank lines. Keep program files in a temporary
+  and the implementation. For output states, run all declarations and all of
+  the same pair's implementations together, followed by `Obj[:]`, and copy each
+  object's result by its ID. Population-dependent rules must see the entire
+  world, not an isolated instance. Keep program files in a temporary
   directory outside the repository. Copy the JSON output, normalized with
   `JSON.stringify(JSON.parse(...))` so numbers read `7`, not `7.0`; keep the
   runtime's key order.
@@ -184,38 +188,72 @@ the feature; you never start a NUC.
 
 Verify with a throwaway script outside the repository; do not add tests:
 
-- The file parses, and `document("<id>")` from
-  `arc/src/dataset/instruct_dataset.ts` loads it.
-- No `input_matrix` or `output_matrix` equals a grid under `arc/data/`.
-  The script compares every grid there but prints only the colliding dataset
-  matrix, never puzzle contents; on a collision, change the example.
-- The synthesizer's transformation reproduces the output of every training
-  pair and every synthesized pair.
-- Every mask has its canvas's dimensions, matches its x/y fields, and holds
-  only cells of its matrix.
+- The single dataset parses, and `document("<id>")` from
+  `arc/src/dataset/dataset.ts` loads only `dataset.<id>.json`, with no numbered
+  or other-puzzle examples mixed in. When using external staging, verify the
+  staged document and leave the canonical loader check to the caller after
+  integration.
+- Pair count and order match `train`; every `input_matrix` and `output_matrix`
+  equals its original training grid, including dimensions, colors, positions,
+  and zero padding. There are no synthesized or held-out examples.
+- The inferred transformation reproduces every original training output.
+- All pairs share the dataset's declarations and output-canvas mode, and
+  instance names are unique across all retained datasets.
+- Every input mask has exactly its pair's `input_matrix` dimensions, and every
+  output mask has exactly its pair's `output_matrix` dimensions. Both masks are
+  rectangular, padded with `0` outside the object, match their x/y fields, and
+  hold only cells of their respective matrices.
 - Merging a pair's input masks reproduces `input_matrix`, and merging its
   output masks reproduces `output_matrix`, cell for cell.
 - Rerunning Nucleoid reproduces every `input_value` and `output_value`.
 
-Apart from replacing a colliding example, report any mismatch; never adjust
-matrices or values to make a check pass.
+For an explicitly authorized padding-only repair, restore unambiguous
+cropped masks to their existing canvases by padding at the recorded world
+positions. Do not pad an already full-size mask again, change an object's
+position, or alter pair grids, identities, declarations, implementations, or
+runtime snapshots.
+
+When explicitly asked to replace synthesized examples with original training
+pairs, replace their pair grids with the exact `train` entries and regenerate
+affected annotations and genuine native snapshots. Preserve already-correct
+original-training datasets rather than rewriting them unnecessarily.
+
+Report other mismatches; never adjust source grids or hand-write values to
+make a check pass.
 
 ## Document and hand off
 
 Add one paragraph about the dataset to the "Instruction datasets" section of
 `arc/README.md`, in the style of the `dataset.28bf18c6.json` paragraph: source
-puzzle, that its pairs are synthesized rather than copied, pair count,
-instances, the transformation, properties the rules create, tags, the sampled
+puzzle, its single canonical path, that it contains the exact original training
+pairs in order, pair and instance counts,
+instances, the transformation, properties the rules create, tags, the original
 canvas and object sizes, orientation, and that held-out data is excluded.
 With a candidate executable, also name the NUC whose feature the rules use.
 
-Change nothing else: no other datasets, puzzle data, or TypeScript in `arc/`,
-including `instruct_dataset.ts`, which finds `dataset.<id>.json` by name. When
+Whenever you successfully introduce a new dataset, also add its puzzle ID
+exactly once to `jobs.report.env.ARC_PUZZLES` in
+`.github/workflows/arc.yml`, preserving the existing IDs and their order.
+Keep the job's timeout at least thirty minutes per listed puzzle plus twenty
+minutes for setup and reporting, within GitHub Actions' job limit. Verify the
+ID is registered and include the workflow path and whether this invocation
+added the ID in your handoff. Do not change the workflow's triggers,
+credentials, solver command, provider settings, or
+scoring, and do not dispatch it. A blocked or enhancement-required handoff
+introduces no dataset and does not change the reporting list.
+
+Apart from the single dataset, README paragraph, and reporting-list update,
+change nothing else: no other datasets, puzzle data, or TypeScript in `arc/`,
+including `dataset.ts`, which selects one canonical file by puzzle ID. Preserve
+all shared genesis files. When
 the solver would need a change to use the dataset, suggest it in the handoff
 instead. Do not run the solver or make LLM calls, read `.env`, change
 versions, spawn agents, start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
-with the dataset path, the synthesizer's path and seed, pair and instance
-counts, the declarations, each check with its result, how you used any hint,
-any NUC request, any suggested solver change, and any blockers.
+with `dataset_path`, the source puzzle path, any annotation helper's path,
+pair and instance counts, the declarations, each check with
+its result, how you used any hint, any NUC request, any suggested solver change,
+and any blockers. A staged handoff also includes `staged_dataset_path` and
+leaves shared documentation/reporting changes to the caller. Publish no
+partial dataset when annotation is blocked.

@@ -1,0 +1,108 @@
+name: ARC puzzle report
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 140
+    defaults:
+      run:
+        shell: bash
+        working-directory: arc
+    env:
+      ARC_PUZZLES: >-
+        3aa6fb7a
+        28bf18c6
+        9af7a82c
+        0ca9ddb6
+      NUCLEOID_EXECUTABLE: ${{ github.workspace }}/target/debug/nucleoid
+      DOTENV_CONFIG_PATH: /dev/null
+      NO_COLOR: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check OpenRouter secret
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [[ -z "${OPENROUTER_API_KEY//[[:space:]]/}" ]]; then
+            echo "::error::Set the OPENROUTER_API_KEY repository Actions secret before running this workflow."
+            exit 1
+          fi
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build Nucleoid
+        working-directory: ${{ github.workspace }}
+        run: cargo build --locked --bin nucleoid
+
+      - name: Install ARC dependencies
+        run: bun --no-env-file install --frozen-lockfile
+
+      - name: Run puzzles
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          mkdir -p reports
+          failed=0
+          for puzzle_id in $ARC_PUZZLES; do
+            printf '::group::Puzzle %s\n' "$puzzle_id"
+            started_at=$SECONDS
+            exit_code=0
+            timeout --signal=TERM --kill-after=30s 30m bun --no-env-file run start "$puzzle_id" \
+              > "reports/$puzzle_id.log" 2>&1 || exit_code=$?
+            duration=$(( SECONDS - started_at ))
+            printf '%s\t%s\n' "$exit_code" "$duration" > "reports/$puzzle_id.tsv"
+            cat "reports/$puzzle_id.log"
+            printf '::endgroup::\n'
+            if [[ "$exit_code" -ne 0 ]]; then
+              failed=1
+            fi
+          done
+          exit "$failed"
+
+      - name: Publish puzzle table
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          {
+            echo '## ARC puzzle report'
+            echo
+            echo 'PASS means an exact grid match. FAIL means a mismatch, error, or timeout. NOT RUN means no completed solver result was recorded.'
+            echo
+            echo '| Puzzle | Result | Exit code | Seconds |'
+            echo '| --- | --- | --- | --- |'
+            for puzzle_id in $ARC_PUZZLES; do
+              if [[ -f "arc/reports/$puzzle_id.tsv" ]]; then
+                IFS=$'\t' read -r exit_code duration < "arc/reports/$puzzle_id.tsv"
+                result=FAIL
+                if [[ "$exit_code" -eq 0 ]]; then
+                  result=PASS
+                fi
+                printf '| `%s` | %s | %s | %s |\n' "$puzzle_id" "$result" "$exit_code" "$duration"
+              else
+                printf '| `%s` | NOT RUN | - | - |\n' "$puzzle_id"
+              fi
+            done
+            echo
+            echo 'Solver logs and exit records are available in the arc-puzzle-report artifact.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload solver logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-puzzle-report
+          path: arc/reports/
+          if-no-files-found: ignore
+          retention-days: 7

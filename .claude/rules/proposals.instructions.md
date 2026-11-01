@@ -338,12 +338,11 @@ the puzzle's one solver run against the frozen candidate, as the
 [arc-purposal skill](../skills/arc-purposal/SKILL.md) describes, then decide
 under the [automatic acceptance rule](#automatic-acceptance-caller-only):
 
-- A failed hard criterion: Rejected, whatever the run shows.
-- Otherwise, `bun start <puzzle-id>` exits with `0`, an exact match: Accepted,
-  regardless of the evaluator's decision.
-- Otherwise, any other exit status, a timeout at the skill's 10-minute limit,
-  or no run: Accepted when the evaluator's overall decision is Accepted, and
-  Automatic-Accepted when it is not.
+- `bun start <puzzle-id>` exits with `0`, an exact match: Accepted, regardless
+  of the evaluator's decision.
+- Any other exit status, a timeout at the skill's 10-minute limit, or no run:
+  the evaluator's overall decision stands, and only its `Accepted` accepts the
+  NUC.
 
 This exact-match basis covers only the NUC that the same invocation requested,
 frozen before its run and integrated unchanged; every other NUC follows the

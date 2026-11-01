@@ -5,15 +5,16 @@ import * as openrouter from "./openrouter";
 export async function generate({ puzzle_id, messages = [], document = true }) {
   if (document) {
     messages.unshift({
-      role: "assistant",
+      role: "system",
       content: `
         few_shot:
         ${dataset.document(puzzle_id)}
       `,
     });
   }
+
   messages.unshift({
-    role: "assistant",
+    role: "system",
     content: `
       control_id:
       ${uuid()}
