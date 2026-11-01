@@ -148,5 +148,17 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   milestone.summary({ difference, duration: performance.now() - startedAt });
 
+  // const debug = {
+  //   puzzle_id,
+  //   train_dataset,
+  //   input_instances,
+  //   test_input_matrix,
+  //   test_output_matrix,
+  //   result_matrix,
+  //   difference,
+  // };
+  //
+  // console.log(JSON.stringify(debug));
+
   return difference;
 }

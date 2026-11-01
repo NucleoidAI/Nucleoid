@@ -15,23 +15,10 @@ export function document(puzzle_id: string): string {
   const files =
     puzzle_id === genesis_puzzle_id
       ? genesis_datasets
-      : [`dataset.${puzzle_id}.json`];
+      : [...genesis_datasets, `dataset.${puzzle_id}.json`];
 
   const datasets = files.map((file: string) => {
     const source: string = readFileSync(join(__dirname, file), "utf8");
-
-    try {
-      JSON.parse(source);
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        throw new SyntaxError(
-          `Invalid JSON in instruction dataset ${file}: ${error.message}`,
-          { cause: error }
-        );
-      }
-      throw error;
-    }
-
     return source.replace(/("(?:[^"\\]|\\.)*")|\s+/g, "$1");
   });
 
