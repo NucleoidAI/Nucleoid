@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/0ca9ddb6.json`](../data/training/0ca9ddb6.json) |
-| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs, 10 point instances |
+| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted |
 | Solver changes | None specific to this puzzle |
@@ -25,11 +25,12 @@ they are. The output keeps the input's canvas, so the dataset is `EXACT`.
 The single dataset preserves all three original training pairs in source
 order. Every input and output instance mask retains the complete 9 by 9
 canvas, with zero padding outside the object; its x/y metadata records the
-nonzero bounding-box origin. This already follows `/arc-dataset`'s
-original-training-only policy, so its examples need no replacement.
-Only the key ordering of its twenty snapshot fields was normalized to the
+nonzero bounding-box origin. Its training examples already followed
+`/arc-dataset`'s original-pairs policy and needed no replacement.
+Only the key ordering of their twenty snapshot fields was normalized to the
 native runtime's output; grids, masks, identities, and snapshot values remain
-unchanged.
+unchanged. The original test pair follows the training pairs at the same
+level, adding five point instances annotated by the same rules.
 
 Every point is one instance of `Obj(x, y, orientation, vertex_color)`, tagged
 `l7544`. Two class conditionals add the markers and move the object:

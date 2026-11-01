@@ -1,6 +1,6 @@
 ---
 name: arc-dataset
-description: Annotate one ARC puzzle's original training pairs in a single instruction dataset, or return the Nucleoid enhancement request it requires.
+description: Annotate one ARC puzzle's original train and test pairs in a single instruction dataset, or return the Nucleoid enhancement request it requires.
 argument-hint: <puzzle-id> [caller inputs] [--hint <text>]
 context: fork
 agent: arc-dataset
@@ -13,25 +13,33 @@ first; inputs after it, such as a candidate Nucleoid executable or a final
 profile; if it is not already your system prompt, delegate this request to the
 `arc-dataset` agent.
 
-## One original-training dataset
+## One original-pairs dataset
 
 Create exactly one canonical `arc\src\dataset\dataset.<puzzle-id>.json`.
 Annotate every original `train` pair from
-`arc\data\training\<puzzle-id>.json`, in its original order. Copy the input and
-output grids exactly, including their colors, positions, zero padding, and
+`arc\data\training\<puzzle-id>.json`, in its original order, then every
+original `test` pair from the same file, in its original order. Test pairs are
+additional entries at the same level as the training pairs: the same `dataset`
+array and entry structure, with no separate section or marker. Copy the input
+and output grids exactly, including their colors, positions, zero padding, and
 canvas dimensions. Do not synthesize, resample, recolor, or duplicate examples
-into numbered variants. Never read or include `test` entries or their dimensions.
+into numbered variants.
 
-Use one inferred transformation, Nucleoid declaration set, and output-canvas
-mode for all the training pairs. Object identifiers remain unique across
-datasets. The loader reads the puzzle's single canonical file, not numbered
-variants or other puzzles' examples.
+Infer one transformation, Nucleoid declaration set, and output-canvas mode
+from the training pairs, then apply them unchanged to every pair, train and
+test. If they do not reproduce a test pair, stop and report it instead of
+revising the rules from that pair, special-casing it, or leaving it out.
+Object identifiers remain unique across datasets. Generation produces one file
+per puzzle; the loader aggregates every JSON instruction dataset in
+`arc\src\dataset` in filename order for all runs.
 
 The genesis puzzle `3aa6fb7a` is an exception: preserve its four shared core,
-curve, and line datasets and their loading order. Do not regenerate or change
-genesis while updating other puzzles. Do not delete or overwrite existing
-datasets without explicit authorization; a padding-only audit does not replace
-their examples.
+curve, and line datasets, and do not add its test pair to them. Do not
+regenerate or change genesis while updating other puzzles. Do not delete or
+overwrite existing datasets without explicit authorization; a padding-only
+audit does not replace their examples. When explicitly asked to add test pairs
+to an existing dataset, append them after its training pairs with its existing
+declarations and output-canvas mode, leaving every existing pair unchanged.
 
 ## Full-canvas instance masks
 

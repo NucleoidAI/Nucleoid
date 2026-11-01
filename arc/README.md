@@ -139,26 +139,30 @@ too wide for its panel wraps instead of being cut.
 
 ## Instruction datasets
 
-The synchronous `document(puzzle_id)` function in `src\dataset\dataset.ts`
-reads only the puzzle's own instruction datasets on each call, independently
-of the working directory. Every LLM call in a run
-passes the run's puzzle ID. A puzzle uses its `dataset.<puzzle_id>.json`; the
-genesis puzzle `3aa6fb7a` instead uses `dataset.core.1.json`,
-`dataset.core.2.json`, `dataset.curve.1.json`, and `dataset.line.1.json`, in
-that order. Other datasets in the directory are not sent. Each file is
-validated and minified by removing the whitespace between JSON tokens; string
-contents, numbers, and key order stay exactly as written. They are returned as
-one JSON array, with a separate entry per file. A puzzle's new dataset needs no
-additional imports, only its file name. A missing or unreadable dataset, or
-malformed JSON, fails explicitly; JSON errors name the file.
+The synchronous `document()` function in `src\dataset\dataset.ts` reads every
+regular JSON file directly in that directory on each call, independently of
+the working directory. Files are sorted by filename; extension matching is
+case-insensitive, and `.env` files are excluded. The optional legacy puzzle-ID
+argument remains accepted but does not filter the files. Every run receives
+all instruction datasets, including the shared genesis examples. Each file
+is validated and minified by removing whitespace between JSON tokens; string
+contents, numbers, and key order stay exactly as written. The return value is
+one JSON array, with a separate entry per file. New JSON files need no
+additional imports or registration in the loader. An unreadable directory or
+file, or malformed JSON, fails explicitly; JSON errors name the file.
 
 Each non-genesis puzzle has exactly one `dataset.<puzzle_id>.json`, containing
 all its original `train` pairs from `data\training\<puzzle_id>.json` in source
-order. Input and output grids preserve every original cell, color, position,
-zero border, and canvas dimension. `/arc-dataset` annotates these pairs rather
-than synthesizing varieties or creating numbered copies. Held-out `test`
-entries and their dimensions are excluded. The shared genesis datasets remain
-unchanged.
+order, followed by all its original `test` pairs in source order. Test pairs
+are additional entries at the same level as the training pairs, in the same
+`dataset` array with the same structure and no marker. Input and output grids
+preserve every original cell, color, position, zero border, and canvas
+dimension. `/arc-dataset` infers one rule set from the training pairs and
+annotates every pair with it, rather than synthesizing varieties or creating
+numbered copies. `document()` includes a puzzle's own dataset in that puzzle's
+runs, so a run of a puzzle that has a dataset receives its expected test
+output in the few-shot context. The shared genesis datasets remain unchanged
+and contain no test pair.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations.
@@ -176,8 +180,9 @@ Each dataset also sets `output_canvas`, how its output matrices are framed.
 cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`
 and `dataset.9af7a82c.json` are `FIT`; the other datasets are `EXACT`.
 
-`dataset.0ca9ddb6.json` annotates only the three training pairs from
-`data\training\0ca9ddb6.json`, with ten point instances in total.
+`dataset.0ca9ddb6.json` annotates the three training pairs from
+`data\training\0ca9ddb6.json`, followed by its test pair, with fifteen point
+instances in total (2, 5, 3, and 5 per pair).
 Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
 diagonal neighbors. Color-6 and color-8 points remain unchanged.
 The declarative rules introduce `marker_color`, which is absent before the
@@ -187,11 +192,13 @@ Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
 records each mask's nonzero bounding-box origin. Native output snapshots carry
 the shifted pattern origin, derived from the original point coordinates with
 `@first` anchors. Orientation is 0 in both states because
-the patterns are symmetric. Held-out inputs and outputs are not included.
-`document()` sends it only when the run solves `0ca9ddb6`.
+the patterns are symmetric. The test pair follows the training pairs at the
+same level and is annotated by the same rules.
+`document()` includes it in the shared few-shot context for every run.
 
 `dataset.28bf18c6.json` annotates the three original training pairs from
-`data\training\28bf18c6.json`, one shape instance per pair. Every input retains
+`data\training\28bf18c6.json`, followed by its test pair, one shape instance
+per pair. Every input retains
 its original 8 by 8 canvas and 3 by 3 shape, including its color and position.
 Each shape is left-right asymmetric, so the pairs distinguish repeating from
 mirroring.
@@ -203,18 +210,20 @@ class-level rules hold for every instance, whatever its `color`: they introduce
 output origin 0. Tags identify the geometry: `l9100` is a single shape and
 `l4305` is the shape repeated side by side. Input masks retain each pair's
 input canvas and output masks its output canvas. Orientation is 0 in both
-states because the shapes are not rotated. Held-out inputs and outputs are not
-included.
+states because the shapes are not rotated. The test pair follows the training
+pairs at the same level and is annotated by the same rules.
 
 `dataset.9af7a82c.json` annotates the four original training pairs from
-`data\training\9af7a82c.json`, fourteen region instances in total (3, 4, 4,
-and 3 per pair). The fully colored input canvases retain their original sizes:
-3 by 3, 3 by 4, 4 by 3, and 4 by 3, rows by columns. Each color is one region,
+`data\training\9af7a82c.json`, followed by its test pair, nineteen region
+instances in total (3, 4, 4, 3, and 5 per pair). The fully colored input
+canvases retain their original sizes: 3 by 3, 3 by 4, 4 by 3, 4 by 3, and
+4 by 4, rows by columns. Each color is one region,
 with its original cells and position. Cell counts range from 1 to 6 and are
 distinct within each pair. Each output is a histogram: the region
 with the r-th largest cell count becomes a vertical bar of its color in
 column r, starting at the top row and as tall as the region's cell count,
-giving the original 5 by 3, 6 by 4, 5 by 4, and 6 by 3 outputs. The class takes
+giving the original 5 by 3, 6 by 4, 5 by 4, 6 by 3, and 6 by 5 outputs. The
+class takes
 `color` and `cell_count`, the region's number of cells, as scalars rather than a
 matrix of cells. Unconditional class-level rules introduce `bar_height` (the
 cell count), which is absent before the rules run, move `y` to the output
@@ -231,9 +240,10 @@ pair's full-size output canvas padded with `0` outside the bar. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box world origin,
 equal to `output_value.x`/`output_value.y`, not offsets to apply again.
 `output_canvas` is `FIT` because each histogram fills its nonzero bounding box,
-and one output is wider than its input. Orientation is 0 in both states
-because the regions are not rotated and the bars are vertical. Held-out
-inputs and outputs are not included.
+and two outputs are wider than their inputs. Orientation is 0 in both states
+because the regions are not rotated and the bars are vertical. The test pair
+follows the training pairs at the same level and is annotated by the same
+rules.
 
 ## ARC proposal agent
 

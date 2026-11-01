@@ -52,8 +52,9 @@ solver run.
 ## References
 
 The workflow and its workers may use every dataset in `arc/src/dataset/` as a
-reference for structure, world-model idioms, properties, rules, and tags,
-although the solver sends only the puzzle's own dataset. A requested
+reference for structure, world-model idioms, properties, rules, and tags.
+The solver sends every JSON instruction dataset as shared few-shot context.
+A requested
 enhancement may take its idea from `docs/README.md` or the documentation it
 links to, such as `docs/examples.md` and the NUCs indexed in
 `docs/nuc-0000.md`, whatever their status. `nucleoid.spec.md` stays
@@ -67,12 +68,13 @@ Run `/arc-dataset <puzzle-id>`, which runs the
 runtime. Pass along any [hint](#pass-the-hint) and an explicit user request to
 overwrite an existing dataset.
 The handoff contains one `dataset_path`, `dataset.<puzzle-id>.json`, with the
-exact original training pairs in order. Track that path and source puzzle,
+exact original training pairs in order, followed by the puzzle's test pairs.
+Track that path and source puzzle,
 not variants or synthesis seeds. Before an authorized replacement, preserve
 the previous dataset and README paragraph in the session workspace. If the
 handoff used external staging, integrate the verified single file before the
-run and confirm the loader selects it. Leave genesis's shared files and loading
-order unchanged.
+run and confirm the loader includes it among all JSON instruction datasets.
+Leave genesis's shared files unchanged.
 The dataset always prefers declarative, higher-order logic; when accepted
 Nucleoid cannot express its rules that way, the handoff requests the missing
 enhancement instead of an imperative workaround. Continue by the handoff's
