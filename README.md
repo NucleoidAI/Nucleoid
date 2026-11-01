@@ -1362,6 +1362,37 @@ assert(low, 60)
   arithmetic, so the result is always a number. See the
   [root contract](nucleoid.spec.md#list-and-population-extremes).
 
+## List and population distinct values
+
+**Distinct values keep the regions of orders live as orders change**
+
+```nuc
+class Order(customer, region):
+    this.customer = customer
+    this.region = region
+regions = Order.distinct(order -> order.region)
+buyers = Order.distinct(order -> order.customer).length
+assert(regions, [])
+first = Order("ada", "north")
+Order("bo", "south")
+Order("ada", "north")
+assert(regions, ["north", "south"])
+assert(buyers, 2)
+first.region = "east"
+Order("cy", "south")
+assert(regions, ["east", "south", "north"])
+assert(buyers, 3)
+```
+
+- [NUC 71](docs/nuc-0071.md) adds `distinct()` and `distinct(selector)` to
+  lists and class instance lists. `Order.distinct(order -> order.region)`
+  lists each region once, in the order of the first order that has it, and an
+  empty list or class gives `[]`.
+- `regions` and `buyers` are live declarations: they re-evaluate when an order
+  is created or its region changes. Values are compared with the deep
+  equality of `includes` and never converted, so `1` and `"1"` stay apart.
+  See the [root contract](nucleoid.spec.md#list-and-population-distinct-values).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

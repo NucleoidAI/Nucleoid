@@ -3098,6 +3098,73 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed extreme updates` specify the executable
   behavior.
 
+## List and population distinct values
+
+- [NUC 71](docs/nuc-0071.md) adds the read-only list query `distinct` to lists
+  and class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.distinct()` returns a new list of the receiver's items without
+  repeats, keeping the first occurrence of each in receiver order.
+  `RECEIVER.distinct(selector)` returns the distinct values of
+  `selector(item)` the same way, so it equals
+  `RECEIVER.map(selector).distinct()`. An empty receiver gives `[]`.
+- A value is kept when no value already kept matches it under the deep
+  equality of `assert`, `includes` and `indexOf`, compared as
+  `kept.includes(value)` compares, so `xs.distinct()` returns the list that
+  `xs.reduce((kept, x) => kept.includes(x) ? kept : kept.concat([x]), [])`
+  evaluates to. Kept values are the first occurrences, unchanged: an object
+  stays the same object.
+- Values are compared, never converted: `1`, `"1"` and `true` are three
+  values, and a date matches the number of its milliseconds. `null` and
+  undefined are one value, and an undefined item or selector result is kept
+  like any other value. `0` and `-0` are one value, and the first is kept
+  with its sign. NaN matches nothing, so every NaN is kept.
+- Lists match when their items match in order. Objects match when they hold
+  matching values for the same defined properties, in any order; every
+  instance holds its own `id`, so distinct instances never match each other.
+  Functions and regular expressions match nothing, not even themselves. The
+  quirks of deep equality carry over exactly: after `a = {k: null, m: 1}`
+  and `b = {k: {}.none, m: 1, z: 5}`, `[a, b].distinct()` keeps only `a` and
+  `[b, a].distinct()` keeps both, as `[a].includes(b)` is `true` and
+  `[b].includes(a)` is `false`; a record holding an instance's `id` and
+  fields matches that instance; and a list nested more than 64 levels deep
+  matches nothing, not even itself, while an object always matches itself.
+- A comparison reads the objects it compares without subscribing to their
+  properties. A declaration that uses `distinct` follows its list or
+  population, its argument expressions and what the selector reads; changing
+  a property of a compared object does not re-evaluate it.
+- `distinct()` reads items, not bindings, so a `null` item is kept without
+  settling a declaration to `null`, while the reads inside a selector follow
+  the existing rules.
+- The receiver is a list, however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class.
+  On a class name, `distinct` is the population query even when the class
+  declares an instance method `distinct`; its instances keep calling that
+  method.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("distinct expects a function")`,
+  even on an empty receiver.
+- `distinct` follows the shared rules of the list queries: it reads its
+  receiver before its arguments, evaluates every supplied argument once, left
+  to right, including unused extras, and never writes the receiver. List
+  mutations, new and deleted instances and changes to properties that a
+  selector reads re-evaluate a declaration that uses it, in class-level rules
+  too. Selector errors roll back through the existing transaction, and a
+  rolled-back list keeps its order. A null or undefined receiver yields
+  undefined without evaluating the arguments.
+- Each value is compared with deep equality only against kept values that
+  share its structural hash. An object holding a property whose value is
+  undefined is also compared with the kept objects that hold a `null`
+  property and as many defined properties, the only values that can match it
+  outside its hash. A call makes at most one comparison per pair of a value
+  and a kept value.
+- Property reads such as `xs.distinct`, bindings and object properties named
+  `distinct`, and instance methods named `distinct` called on an instance keep
+  their accepted results. The eight appended entries beginning
+  `Nucleoid removes duplicate list items with distinct` through
+  `Nucleoid rolls back failed distinct updates` specify the executable
+  behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -16990,4 +17057,229 @@ assert: coldest, 12
 Probe(9)
 Probe(4)
 assert: coldest, 4
+---
+# Nucleoid removes duplicate list items with distinct
+
+visits = ["lab", "den", "lab", "hall", "den"]
+rooms = visits.distinct()
+assert: rooms, ["lab", "den", "hall"]
+visits.push("attic")
+visits.push("hall")
+assert: rooms, ["lab", "den", "hall", "attic"]
+visits.shift()
+assert: rooms, ["den", "lab", "hall", "attic"]
+visits = []
+assert: rooms, []
+cart = {lines: [{sku: "pen", qty: 2}, {sku: "ink", qty: 1}, {sku: "pen", qty: 5}]}
+skus = cart.lines.distinct(line -> line.sku)
+bulk = cart.lines.filter(line -> line.qty > 1).distinct(line -> line.sku)
+assert: skus, ["pen", "ink"]
+assert: bulk, ["pen"]
+cart.lines.push({sku: "cap", qty: 3})
+assert: skus, ["pen", "ink", "cap"]
+assert: bulk, ["pen", "cap"]
+---
+# Nucleoid lists the distinct values of class instance populations
+
+class Order(region, rush):
+    this.region = region
+    this.rush = rush
+regions = Order.distinct(order -> order.region)
+assert: regions, []
+first = Order("north", false)
+second = Order("south", true)
+third = Order("north", true)
+rushed = Order.filter(order -> order.rush).distinct(order -> order.region)
+recent = Order[-3:].distinct(order -> order.region)
+assert: regions, ["north", "south"]
+assert: rushed, ["south", "north"]
+assert: recent, ["north", "south"]
+first.region = "east"
+Order("south", true)
+assert: regions, ["east", "south", "north"]
+assert: rushed, ["south", "north"]
+assert: recent, ["south", "north"]
+delete third.region
+assert: regions, ["east", "south", null]
+delete third.rush
+delete third
+assert: regions, ["east", "south"]
+assert: rushed, ["south"]
+assert: recent, ["east", "south"]
+Order("east", false)
+assert: recent, ["south", "east"]
+---
+# Nucleoid compares distinct values with deep equality
+
+inputs = [2, "2", true, 2, null, "2", null]
+kinds = inputs.distinct()
+assert: kinds, [2, "2", true, null]
+inputs.push(1)
+inputs.push(-0)
+inputs.push(0)
+assert: kinds, [2, "2", true, null, 1, 0]
+assert: String(1 / kinds[5]), "-Infinity"
+inputs.push(0 / 0)
+inputs.push(0 / 0)
+assert: kinds.length, 8
+places = [{x: 1, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}]
+spots = places.distinct()
+assert: spots, [{x: 1, y: 2}, {x: 2, y: 1}]
+places.push({y: 2, x: 1})
+places.push({x: 1, y: 2, z: 0})
+assert: spots.length, 3
+paths = [[1, 2], [2, 1], [1, 2]]
+routes = paths.distinct()
+assert: routes, [[1, 2], [2, 1]]
+paths.push([1, [2]])
+paths.push([1, [2]])
+assert: routes, [[1, 2], [2, 1], [1, [2]]]
+class Robot(name): this.name = name
+first = Robot("ada")
+second = Robot("ada")
+crew = [first, first]
+team = crew.distinct()
+assert: team.length, 1
+crew.push(second)
+assert: team.length, 2
+---
+# Nucleoid calls the distinct selector once per item with only the item
+
+seen = []
+def zone(stop, position):
+    seen.push(position ?? stop.city)
+    return stop.zone
+stops = [{city: "Oslo", zone: 1}, {city: "Rome", zone: 3}, {city: "Bergen", zone: 1}]
+def zones() => stops.distinct(zone)
+assert: zones(), [1, 3]
+assert: seen, ["Oslo", "Rome", "Bergen"]
+stops.push({city: "Nice", zone: 2})
+assert: zones(), [1, 3, 2]
+assert: seen, ["Oslo", "Rome", "Bergen", "Oslo", "Rome", "Bergen", "Nice"]
+limit = 2
+def band stop => stop.zone > limit ? "far" : "near"
+bands = stops.distinct(band)
+assert: bands, ["near", "far"]
+limit = 0
+assert: bands, ["far"]
+missing = null
+skipped = missing.distinct(zone(9))
+assert: skipped, null
+assert: seen, ["Oslo", "Rome", "Bergen", "Oslo", "Rome", "Bergen", "Nice"]
+---
+# Nucleoid keeps distinct values live in class level rules
+
+class Customer(name): this.name = name
+class Order(customer, region, total):
+    this.customer = customer
+    this.region = region
+    this.total = total
+$Order.size = $Order.total > 100 ? "large" : "small"
+$Customer.regions = Order.filter(order -> order.customer == $Customer).distinct(order -> order.region)
+$Customer.sizes = Order.filter(order -> order.customer == $Customer).distinct(order -> order.size)
+$Customer.spread = $Customer.regions.length
+ada = Customer("ada")
+bo = Customer("bo")
+Order(ada, "north", 50)
+big = Order(ada, "south", 150)
+Order(bo, "north", 20)
+Order(ada, "north", 80)
+sizes = Order.distinct(order -> order.size)
+assert: ada.regions, ["north", "south"]
+assert: ada.sizes, ["small", "large"]
+assert: bo.spread, 1
+assert: sizes, ["small", "large"]
+big.total = 90
+assert: ada.sizes, ["small"]
+assert: sizes, ["small"]
+cy = Customer("cy")
+assert: cy.regions, []
+assert: cy.spread, 0
+Order(cy, "east", 300)
+Order(cy, "east", 60)
+assert: cy.regions, ["east"]
+assert: sizes, ["small", "large"]
+---
+# Nucleoid uses distinct values in functions methods and conditional expressions
+
+class Post(author, tags):
+    this.author = author
+    this.tags = tags
+    def topics(): return this.tags.distinct()
+def sizes(post) => post.tags.distinct(tag -> tag.length)
+first = Post("ada", ["rust", "logic", "rust"])
+second = Post("bo", ["logic", "go"])
+inuse = Post.flatMap(post -> post.topics()).distinct()
+broader = first.topics().length > second.topics().length ? first.author : second.author
+lengths = sizes(first)
+assert: inuse, ["rust", "logic", "go"]
+assert: broader, "bo"
+assert: lengths, [4, 5]
+second.tags.pop()
+first.tags.push("graphs")
+Post("cy", ["go", "sql"])
+assert: inuse, ["rust", "logic", "graphs", "go", "sql"]
+assert: broader, "ada"
+assert: lengths, [4, 5, 6]
+---
+# Nucleoid keeps distinct as an ordinary name beside the distinct query
+
+distinct = 2
+report = {distinct: 3}
+def twice distinct => distinct * 2
+class Shelf(items):
+    this.items = items
+    def distinct(): return this.items.distinct().length
+shelf = Shelf(["pen", "ink", "pen"])
+spare = Shelf(["cap", "pen"])
+kinds = shelf.items.distinct()
+count = shelf.distinct() + distinct + report.distinct
+shelves = Shelf.distinct(each -> each.distinct())
+assert: kinds, ["pen", "ink"]
+assert: count, 7
+assert: shelves, [2]
+assert: twice(distinct), 4
+assert: shelf.items.distinct, null
+shelf.items.push("cap")
+distinct = 4
+Shelf(["ink", "ink"])
+assert: kinds, ["pen", "ink", "cap"]
+assert: count, 10
+assert: shelves, [3, 2, 1]
+---
+# Nucleoid rolls back failed distinct updates
+
+def checked(zone):
+    if zone == "void":
+        throw "BAD_ZONE"
+    return zone
+zones = ["a", "b", "a"]
+seen = zones.distinct(checked)
+assert: seen, ["a", "b"]
+failure = ""
+try:
+    zones.shift()
+    zones.push("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: zones, ["a", "b", "a"]
+assert: seen, ["a", "b"]
+zones.push("c")
+assert: seen, ["a", "b", "c"]
+class Parcel(zone): this.zone = zone
+Parcel("b")
+Parcel("a")
+routes = Parcel.distinct(parcel -> checked(parcel.zone))
+failure = ""
+try:
+    Parcel("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: Parcel.length, 2
+assert: routes, ["b", "a"]
+Parcel("a")
+Parcel("c")
+assert: routes, ["b", "a", "c"]
 ```

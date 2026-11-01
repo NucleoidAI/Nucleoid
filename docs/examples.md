@@ -2883,6 +2883,53 @@ assert(hottest, 27)
 - See [NUC 69](nuc-0069.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-extremes).
 
+## List and population distinct values
+
+**Distinct values keep the categories stocked in each warehouse live**
+
+```nuc
+class Warehouse(name, minimum):
+    this.name = name
+    this.minimum = minimum
+class Item(warehouse, category, qty):
+    this.warehouse = warehouse
+    this.category = category
+    this.qty = qty
+$Warehouse.categories = Item.filter(item -> item.warehouse == $Warehouse and item.qty > 0).distinct(item -> item.category)
+$Warehouse.narrow = $Warehouse.categories.length < $Warehouse.minimum
+stocked = Item.filter(item -> item.qty > 0).distinct(item -> item.category)
+north = Warehouse("north", 2)
+south = Warehouse("south", 1)
+pens = Item(north, "office", 40)
+Item(north, "office", 15)
+Item(south, "garden", 8)
+assert(north.categories, ["office"])
+assert(north.narrow, true)
+assert(stocked, ["office", "garden"])
+Item(north, "garden", 5)
+pens.qty = 0
+assert(north.categories, ["office", "garden"])
+assert(north.narrow, false)
+spades = Item(south, "tools", 0)
+spades.qty = 3
+[north.categories, south.categories, stocked]
+# return: [["office","garden"],["garden","tools"],["office","garden","tools"]]
+```
+
+- The class-level rule states each warehouse's categories once: it filters
+  the items that are in the warehouse and in stock, and lists their
+  categories without repeats, in the order of the first item of each.
+  `narrow` compares the count with the warehouse's minimum, and `stocked`
+  lists the categories in stock anywhere.
+- Emptying the pens keeps `office`, because the second office item is still
+  in stock, and a garden item makes the north warehouse varied enough;
+  restocking the spades adds `tools` to the south warehouse and to
+  `stocked`. The accepted spelling
+  `Item.filter(...).reduce((kinds, item) -> kinds.includes(item.category) ? kinds : kinds.concat([item.category]), [])`
+  keeps working and gives the same results.
+- See [NUC 71](nuc-0071.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-distinct-values).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

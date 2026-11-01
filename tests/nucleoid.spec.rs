@@ -13996,6 +13996,275 @@ Probe(4)
 assert: coldest, 4"#);
 }
 
+/// Nucleoid removes duplicate list items with distinct
+#[rustfmt::skip]
+#[test]
+fn removes_duplicate_list_items_with_distinct() {
+    runner()("visits = [\"lab\", \"den\", \"lab\", \"hall\", \"den\"]\nrooms = visits.distinct()\nassert: rooms, [\"lab\", \"den\", \"hall\"]\nvisits.push(\"attic\")\nvisits.push(\"hall\")\nassert: rooms, [\"lab\", \"den\", \"hall\", \"attic\"]\nvisits.shift()\nassert: rooms, [\"den\", \"lab\", \"hall\", \"attic\"]\nvisits = []\nassert: rooms, []\ncart = {lines: [{sku: \"pen\", qty: 2}, {sku: \"ink\", qty: 1}, {sku: \"pen\", qty: 5}]}\nskus = cart.lines.distinct(line -> line.sku)\nbulk = cart.lines.filter(line -> line.qty > 1).distinct(line -> line.sku)\nassert: skus, [\"pen\", \"ink\"]\nassert: bulk, [\"pen\"]\ncart.lines.push({sku: \"cap\", qty: 3})\nassert: skus, [\"pen\", \"ink\", \"cap\"]\nassert: bulk, [\"pen\", \"cap\"]");
+    let mut run = runner();
+    run(r#"visits = ["lab", "den", "lab", "hall", "den"]"#);
+    run("rooms = visits.distinct()");
+    assert_eq!(run("rooms"), serde_json::json!(["lab", "den", "hall"]));
+    run(r#"visits.push("attic")"#);
+    run(r#"visits.push("hall")"#);
+    assert_eq!(run("rooms"), serde_json::json!(["lab", "den", "hall", "attic"]));
+    run("visits.shift()");
+    assert_eq!(run("rooms"), serde_json::json!(["den", "lab", "hall", "attic"]));
+    run("visits = []");
+    assert_eq!(run("rooms"), serde_json::json!([]));
+    run(r#"cart = {lines: [{sku: "pen", qty: 2}, {sku: "ink", qty: 1}, {sku: "pen", qty: 5}]}"#);
+    run("skus = cart.lines.distinct(line -> line.sku)");
+    run("bulk = cart.lines.filter(line -> line.qty > 1).distinct(line -> line.sku)");
+    assert_eq!(run("skus"), serde_json::json!(["pen", "ink"]));
+    assert_eq!(run("bulk"), serde_json::json!(["pen"]));
+    run(r#"cart.lines.push({sku: "cap", qty: 3})"#);
+    assert_eq!(run("skus"), serde_json::json!(["pen", "ink", "cap"]));
+    assert_eq!(run("bulk"), serde_json::json!(["pen", "cap"]));
+}
+
+/// Nucleoid lists the distinct values of class instance populations
+#[rustfmt::skip]
+#[test]
+fn lists_the_distinct_values_of_class_instance_populations() {
+    runner()("class Order(region, rush):\n    this.region = region\n    this.rush = rush\nregions = Order.distinct(order -> order.region)\nassert: regions, []\nfirst = Order(\"north\", false)\nsecond = Order(\"south\", true)\nthird = Order(\"north\", true)\nrushed = Order.filter(order -> order.rush).distinct(order -> order.region)\nrecent = Order[-3:].distinct(order -> order.region)\nassert: regions, [\"north\", \"south\"]\nassert: rushed, [\"south\", \"north\"]\nassert: recent, [\"north\", \"south\"]\nfirst.region = \"east\"\nOrder(\"south\", true)\nassert: regions, [\"east\", \"south\", \"north\"]\nassert: rushed, [\"south\", \"north\"]\nassert: recent, [\"south\", \"north\"]\ndelete third.region\nassert: regions, [\"east\", \"south\", null]\ndelete third.rush\ndelete third\nassert: regions, [\"east\", \"south\"]\nassert: rushed, [\"south\"]\nassert: recent, [\"east\", \"south\"]\nOrder(\"east\", false)\nassert: recent, [\"south\", \"east\"]");
+    let mut run = runner();
+    run(r#"class Order(region, rush):
+    this.region = region
+    this.rush = rush"#);
+    run("regions = Order.distinct(order -> order.region)");
+    assert_eq!(run("regions"), serde_json::json!([]));
+    run(r#"first = Order("north", false)"#);
+    run(r#"second = Order("south", true)"#);
+    run(r#"third = Order("north", true)"#);
+    run("rushed = Order.filter(order -> order.rush).distinct(order -> order.region)");
+    run("recent = Order[-3:].distinct(order -> order.region)");
+    assert_eq!(run("regions"), serde_json::json!(["north", "south"]));
+    assert_eq!(run("rushed"), serde_json::json!(["south", "north"]));
+    assert_eq!(run("recent"), serde_json::json!(["north", "south"]));
+    run(r#"first.region = "east""#);
+    run(r#"Order("south", true)"#);
+    assert_eq!(run("regions"), serde_json::json!(["east", "south", "north"]));
+    assert_eq!(run("rushed"), serde_json::json!(["south", "north"]));
+    assert_eq!(run("recent"), serde_json::json!(["south", "north"]));
+    run("delete third.region");
+    assert_eq!(run("regions"), serde_json::json!(["east", "south", null]));
+    run("delete third.rush");
+    run("delete third");
+    assert_eq!(run("regions"), serde_json::json!(["east", "south"]));
+    assert_eq!(run("rushed"), serde_json::json!(["south"]));
+    assert_eq!(run("recent"), serde_json::json!(["east", "south"]));
+    run(r#"Order("east", false)"#);
+    assert_eq!(run("recent"), serde_json::json!(["south", "east"]));
+}
+
+/// Nucleoid compares distinct values with deep equality
+#[rustfmt::skip]
+#[test]
+fn compares_distinct_values_with_deep_equality() {
+    runner()("inputs = [2, \"2\", true, 2, null, \"2\", null]\nkinds = inputs.distinct()\nassert: kinds, [2, \"2\", true, null]\ninputs.push(1)\ninputs.push(-0)\ninputs.push(0)\nassert: kinds, [2, \"2\", true, null, 1, 0]\nassert: String(1 / kinds[5]), \"-Infinity\"\ninputs.push(0 / 0)\ninputs.push(0 / 0)\nassert: kinds.length, 8\nplaces = [{x: 1, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}]\nspots = places.distinct()\nassert: spots, [{x: 1, y: 2}, {x: 2, y: 1}]\nplaces.push({y: 2, x: 1})\nplaces.push({x: 1, y: 2, z: 0})\nassert: spots.length, 3\npaths = [[1, 2], [2, 1], [1, 2]]\nroutes = paths.distinct()\nassert: routes, [[1, 2], [2, 1]]\npaths.push([1, [2]])\npaths.push([1, [2]])\nassert: routes, [[1, 2], [2, 1], [1, [2]]]\nclass Robot(name): this.name = name\nfirst = Robot(\"ada\")\nsecond = Robot(\"ada\")\ncrew = [first, first]\nteam = crew.distinct()\nassert: team.length, 1\ncrew.push(second)\nassert: team.length, 2");
+    let mut run = runner();
+    run(r#"inputs = [2, "2", true, 2, null, "2", null]"#);
+    run("kinds = inputs.distinct()");
+    assert_eq!(run("kinds"), serde_json::json!([2, "2", true, null]));
+    run("inputs.push(1)");
+    run("inputs.push(-0)");
+    run("inputs.push(0)");
+    assert_eq!(run("kinds"), serde_json::json!([2, "2", true, null, 1, 0]));
+    assert_eq!(run("String(1 / kinds[5])"), "-Infinity");
+    run("inputs.push(0 / 0)");
+    run("inputs.push(0 / 0)");
+    assert_eq!(run("kinds.length"), 8);
+    run("places = [{x: 1, y: 2}, {x: 1, y: 2}, {x: 2, y: 1}]");
+    run("spots = places.distinct()");
+    {
+        let actual = run("spots");
+        let expected = run("([{x: 1, y: 2}, {x: 2, y: 1}])");
+        assert_eq!(actual, expected);
+    }
+    run("places.push({y: 2, x: 1})");
+    run("places.push({x: 1, y: 2, z: 0})");
+    assert_eq!(run("spots.length"), 3);
+    run("paths = [[1, 2], [2, 1], [1, 2]]");
+    run("routes = paths.distinct()");
+    assert_eq!(run("routes"), serde_json::json!([[1, 2], [2, 1]]));
+    run("paths.push([1, [2]])");
+    run("paths.push([1, [2]])");
+    assert_eq!(run("routes"), serde_json::json!([[1, 2], [2, 1], [1, [2]]]));
+    run("class Robot(name): this.name = name");
+    run(r#"first = Robot("ada")"#);
+    run(r#"second = Robot("ada")"#);
+    run("crew = [first, first]");
+    run("team = crew.distinct()");
+    assert_eq!(run("team.length"), 1);
+    run("crew.push(second)");
+    assert_eq!(run("team.length"), 2);
+}
+
+/// Nucleoid calls the distinct selector once per item with only the item
+#[rustfmt::skip]
+#[test]
+fn calls_the_distinct_selector_once_per_item_with_only_the_item() {
+    runner()("seen = []\ndef zone(stop, position):\n    seen.push(position ?? stop.city)\n    return stop.zone\nstops = [{city: \"Oslo\", zone: 1}, {city: \"Rome\", zone: 3}, {city: \"Bergen\", zone: 1}]\ndef zones() => stops.distinct(zone)\nassert: zones(), [1, 3]\nassert: seen, [\"Oslo\", \"Rome\", \"Bergen\"]\nstops.push({city: \"Nice\", zone: 2})\nassert: zones(), [1, 3, 2]\nassert: seen, [\"Oslo\", \"Rome\", \"Bergen\", \"Oslo\", \"Rome\", \"Bergen\", \"Nice\"]\nlimit = 2\ndef band stop => stop.zone > limit ? \"far\" : \"near\"\nbands = stops.distinct(band)\nassert: bands, [\"near\", \"far\"]\nlimit = 0\nassert: bands, [\"far\"]\nmissing = null\nskipped = missing.distinct(zone(9))\nassert: skipped, null\nassert: seen, [\"Oslo\", \"Rome\", \"Bergen\", \"Oslo\", \"Rome\", \"Bergen\", \"Nice\"]");
+    let mut run = runner();
+    run("seen = []");
+    run(r#"def zone(stop, position):
+    seen.push(position ?? stop.city)
+    return stop.zone"#);
+    run(r#"stops = [{city: "Oslo", zone: 1}, {city: "Rome", zone: 3}, {city: "Bergen", zone: 1}]"#);
+    run("def zones() => stops.distinct(zone)");
+    assert_eq!(run("zones()"), serde_json::json!([1, 3]));
+    assert_eq!(run("seen"), serde_json::json!(["Oslo", "Rome", "Bergen"]));
+    run(r#"stops.push({city: "Nice", zone: 2})"#);
+    assert_eq!(run("zones()"), serde_json::json!([1, 3, 2]));
+    assert_eq!(run("seen"), serde_json::json!(["Oslo", "Rome", "Bergen", "Oslo", "Rome", "Bergen", "Nice"]));
+    run("limit = 2");
+    run(r#"def band stop => stop.zone > limit ? "far" : "near""#);
+    run("bands = stops.distinct(band)");
+    assert_eq!(run("bands"), serde_json::json!(["near", "far"]));
+    run("limit = 0");
+    assert_eq!(run("bands"), serde_json::json!(["far"]));
+    run("missing = null");
+    run("skipped = missing.distinct(zone(9))");
+    assert_eq!(run("skipped"), serde_json::Value::Null);
+    assert_eq!(run("seen"), serde_json::json!(["Oslo", "Rome", "Bergen", "Oslo", "Rome", "Bergen", "Nice"]));
+}
+
+/// Nucleoid keeps distinct values live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_distinct_values_live_in_class_level_rules() {
+    runner()("class Customer(name): this.name = name\nclass Order(customer, region, total):\n    this.customer = customer\n    this.region = region\n    this.total = total\n$Order.size = $Order.total > 100 ? \"large\" : \"small\"\n$Customer.regions = Order.filter(order -> order.customer == $Customer).distinct(order -> order.region)\n$Customer.sizes = Order.filter(order -> order.customer == $Customer).distinct(order -> order.size)\n$Customer.spread = $Customer.regions.length\nada = Customer(\"ada\")\nbo = Customer(\"bo\")\nOrder(ada, \"north\", 50)\nbig = Order(ada, \"south\", 150)\nOrder(bo, \"north\", 20)\nOrder(ada, \"north\", 80)\nsizes = Order.distinct(order -> order.size)\nassert: ada.regions, [\"north\", \"south\"]\nassert: ada.sizes, [\"small\", \"large\"]\nassert: bo.spread, 1\nassert: sizes, [\"small\", \"large\"]\nbig.total = 90\nassert: ada.sizes, [\"small\"]\nassert: sizes, [\"small\"]\ncy = Customer(\"cy\")\nassert: cy.regions, []\nassert: cy.spread, 0\nOrder(cy, \"east\", 300)\nOrder(cy, \"east\", 60)\nassert: cy.regions, [\"east\"]\nassert: sizes, [\"small\", \"large\"]");
+    let mut run = runner();
+    run("class Customer(name): this.name = name");
+    run(r#"class Order(customer, region, total):
+    this.customer = customer
+    this.region = region
+    this.total = total"#);
+    run(r#"$Order.size = $Order.total > 100 ? "large" : "small""#);
+    run("$Customer.regions = Order.filter(order -> order.customer == $Customer).distinct(order -> order.region)");
+    run("$Customer.sizes = Order.filter(order -> order.customer == $Customer).distinct(order -> order.size)");
+    run("$Customer.spread = $Customer.regions.length");
+    run(r#"ada = Customer("ada")"#);
+    run(r#"bo = Customer("bo")"#);
+    run(r#"Order(ada, "north", 50)"#);
+    run(r#"big = Order(ada, "south", 150)"#);
+    run(r#"Order(bo, "north", 20)"#);
+    run(r#"Order(ada, "north", 80)"#);
+    run("sizes = Order.distinct(order -> order.size)");
+    assert_eq!(run("ada.regions"), serde_json::json!(["north", "south"]));
+    assert_eq!(run("ada.sizes"), serde_json::json!(["small", "large"]));
+    assert_eq!(run("bo.spread"), 1);
+    assert_eq!(run("sizes"), serde_json::json!(["small", "large"]));
+    run("big.total = 90");
+    assert_eq!(run("ada.sizes"), serde_json::json!(["small"]));
+    assert_eq!(run("sizes"), serde_json::json!(["small"]));
+    run(r#"cy = Customer("cy")"#);
+    assert_eq!(run("cy.regions"), serde_json::json!([]));
+    assert_eq!(run("cy.spread"), 0);
+    run(r#"Order(cy, "east", 300)"#);
+    run(r#"Order(cy, "east", 60)"#);
+    assert_eq!(run("cy.regions"), serde_json::json!(["east"]));
+    assert_eq!(run("sizes"), serde_json::json!(["small", "large"]));
+}
+
+/// Nucleoid uses distinct values in functions methods and conditional expressions
+#[rustfmt::skip]
+#[test]
+fn uses_distinct_values_in_functions_methods_and_conditional_expressions() {
+    runner()("class Post(author, tags):\n    this.author = author\n    this.tags = tags\n    def topics(): return this.tags.distinct()\ndef sizes(post) => post.tags.distinct(tag -> tag.length)\nfirst = Post(\"ada\", [\"rust\", \"logic\", \"rust\"])\nsecond = Post(\"bo\", [\"logic\", \"go\"])\ninuse = Post.flatMap(post -> post.topics()).distinct()\nbroader = first.topics().length > second.topics().length ? first.author : second.author\nlengths = sizes(first)\nassert: inuse, [\"rust\", \"logic\", \"go\"]\nassert: broader, \"bo\"\nassert: lengths, [4, 5]\nsecond.tags.pop()\nfirst.tags.push(\"graphs\")\nPost(\"cy\", [\"go\", \"sql\"])\nassert: inuse, [\"rust\", \"logic\", \"graphs\", \"go\", \"sql\"]\nassert: broader, \"ada\"\nassert: lengths, [4, 5, 6]");
+    let mut run = runner();
+    run(r#"class Post(author, tags):
+    this.author = author
+    this.tags = tags
+    def topics(): return this.tags.distinct()"#);
+    run("def sizes(post) => post.tags.distinct(tag -> tag.length)");
+    run(r#"first = Post("ada", ["rust", "logic", "rust"])"#);
+    run(r#"second = Post("bo", ["logic", "go"])"#);
+    run("inuse = Post.flatMap(post -> post.topics()).distinct()");
+    run("broader = first.topics().length > second.topics().length ? first.author : second.author");
+    run("lengths = sizes(first)");
+    assert_eq!(run("inuse"), serde_json::json!(["rust", "logic", "go"]));
+    assert_eq!(run("broader"), "bo");
+    assert_eq!(run("lengths"), serde_json::json!([4, 5]));
+    run("second.tags.pop()");
+    run(r#"first.tags.push("graphs")"#);
+    run(r#"Post("cy", ["go", "sql"])"#);
+    assert_eq!(run("inuse"), serde_json::json!(["rust", "logic", "graphs", "go", "sql"]));
+    assert_eq!(run("broader"), "ada");
+    assert_eq!(run("lengths"), serde_json::json!([4, 5, 6]));
+}
+
+/// Nucleoid keeps distinct as an ordinary name beside the distinct query
+#[rustfmt::skip]
+#[test]
+fn keeps_distinct_as_an_ordinary_name_beside_the_distinct_query() {
+    runner()("distinct = 2\nreport = {distinct: 3}\ndef twice distinct => distinct * 2\nclass Shelf(items):\n    this.items = items\n    def distinct(): return this.items.distinct().length\nshelf = Shelf([\"pen\", \"ink\", \"pen\"])\nspare = Shelf([\"cap\", \"pen\"])\nkinds = shelf.items.distinct()\ncount = shelf.distinct() + distinct + report.distinct\nshelves = Shelf.distinct(each -> each.distinct())\nassert: kinds, [\"pen\", \"ink\"]\nassert: count, 7\nassert: shelves, [2]\nassert: twice(distinct), 4\nassert: shelf.items.distinct, null\nshelf.items.push(\"cap\")\ndistinct = 4\nShelf([\"ink\", \"ink\"])\nassert: kinds, [\"pen\", \"ink\", \"cap\"]\nassert: count, 10\nassert: shelves, [3, 2, 1]");
+    let mut run = runner();
+    run("distinct = 2");
+    run("report = {distinct: 3}");
+    run("def twice distinct => distinct * 2");
+    run(r#"class Shelf(items):
+    this.items = items
+    def distinct(): return this.items.distinct().length"#);
+    run(r#"shelf = Shelf(["pen", "ink", "pen"])"#);
+    run(r#"spare = Shelf(["cap", "pen"])"#);
+    run("kinds = shelf.items.distinct()");
+    run("count = shelf.distinct() + distinct + report.distinct");
+    run("shelves = Shelf.distinct(each -> each.distinct())");
+    assert_eq!(run("kinds"), serde_json::json!(["pen", "ink"]));
+    assert_eq!(run("count"), 7);
+    assert_eq!(run("shelves"), serde_json::json!([2]));
+    assert_eq!(run("twice(distinct)"), 4);
+    assert_eq!(run("shelf.items.distinct"), serde_json::Value::Null);
+    run(r#"shelf.items.push("cap")"#);
+    run("distinct = 4");
+    run(r#"Shelf(["ink", "ink"])"#);
+    assert_eq!(run("kinds"), serde_json::json!(["pen", "ink", "cap"]));
+    assert_eq!(run("count"), 10);
+    assert_eq!(run("shelves"), serde_json::json!([3, 2, 1]));
+}
+
+/// Nucleoid rolls back failed distinct updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_distinct_updates() {
+    runner()("def checked(zone):\n    if zone == \"void\":\n        throw \"BAD_ZONE\"\n    return zone\nzones = [\"a\", \"b\", \"a\"]\nseen = zones.distinct(checked)\nassert: seen, [\"a\", \"b\"]\nfailure = \"\"\ntry:\n    zones.shift()\n    zones.push(\"void\")\ncatch error:\n    failure = error\nassert: failure, \"BAD_ZONE\"\nassert: zones, [\"a\", \"b\", \"a\"]\nassert: seen, [\"a\", \"b\"]\nzones.push(\"c\")\nassert: seen, [\"a\", \"b\", \"c\"]\nclass Parcel(zone): this.zone = zone\nParcel(\"b\")\nParcel(\"a\")\nroutes = Parcel.distinct(parcel -> checked(parcel.zone))\nfailure = \"\"\ntry:\n    Parcel(\"void\")\ncatch error:\n    failure = error\nassert: failure, \"BAD_ZONE\"\nassert: Parcel.length, 2\nassert: routes, [\"b\", \"a\"]\nParcel(\"a\")\nParcel(\"c\")\nassert: routes, [\"b\", \"a\", \"c\"]");
+    let mut run = runner();
+    run(r#"def checked(zone):
+    if zone == "void":
+        throw "BAD_ZONE"
+    return zone
+zones = ["a", "b", "a"]
+seen = zones.distinct(checked)
+assert: seen, ["a", "b"]
+failure = ""
+try:
+    zones.shift()
+    zones.push("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: zones, ["a", "b", "a"]
+assert: seen, ["a", "b"]
+zones.push("c")
+assert: seen, ["a", "b", "c"]
+class Parcel(zone): this.zone = zone
+Parcel("b")
+Parcel("a")
+routes = Parcel.distinct(parcel -> checked(parcel.zone))
+failure = ""
+try:
+    Parcel("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: Parcel.length, 2
+assert: routes, ["b", "a"]
+Parcel("a")
+Parcel("c")
+assert: routes, ["b", "a", "c"]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

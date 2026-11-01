@@ -2081,4 +2081,28 @@ scores = []
 assert(best, Number.NEGATIVE_INFINITY)
 top
 # return: 65
+---
+# Nucleoid lists the distinct values of lists and populations
+
+tags = ["red", "blue", "red"]
+colors = tags.distinct()
+lengths = tags.distinct(tag -> tag.length)
+class Tile(color): this.color = color
+Tile("red")
+Tile("green")
+Tile("red")
+palette = Tile.distinct(tile -> tile.color)
+assert(colors, ["red", "blue"])
+assert(lengths, [3, 4])
+assert(palette, ["red", "green"])
+tags.push("green")
+tags.shift()
+Tile("blue")
+assert(colors, ["blue", "red", "green"])
+assert(lengths, [4, 3, 5])
+assert(palette, ["red", "green", "blue"])
+tags = []
+assert(colors, [])
+palette.length
+# return: 3
 ```
