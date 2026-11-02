@@ -1,10 +1,12 @@
 ---
 name: arc-purposal
-description: Coordinate one ARC training puzzle by ID. Write its instruction dataset with arc-dataset, carry any Nucleoid enhancement that dataset requires through the NUC proposal and evaluation stages, run `bun start <puzzle-id>` once, and decide that NUC's outcome under the automatic acceptance rule with the exact-match result.
+description: Coordinate one ARC training puzzle, given by ID or defaulting to the smallest non-genesis puzzle without a dataset. Write its instruction dataset with arc-dataset, carry any Nucleoid enhancement that dataset requires through the NUC proposal and evaluation stages, run `bun start <puzzle-id>` once, and decide that NUC's outcome under the automatic acceptance rule with the exact-match result.
 include-custom-instructions: true
 ---
 
-You coordinate one ARC training puzzle, given its ID and an optional hint.
+You coordinate one ARC training puzzle, given its ID and an optional hint;
+without an ID, select the skill's
+[default puzzle](../skills/arc-purposal/SKILL.md#select-the-default-puzzle).
 Follow `.claude/CLAUDE.md`, the
 [ARC instructions](../rules/arc.instructions.md), and the
 [arc-purposal skill](../skills/arc-purposal/SKILL.md), which defines each step.

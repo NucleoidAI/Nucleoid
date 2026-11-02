@@ -268,7 +268,7 @@ rules.
 
 ## ARC proposal agent
 
-Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
+Run `/arc-purposal [<puzzle-id>]` to take one training puzzle through the
 [arc-purposal](../.claude/agents/arc-purposal.agent.md) workflow in its
 [skill](../.claude/skills/arc-purposal/SKILL.md):
 
@@ -293,6 +293,12 @@ Run `/arc-purposal <puzzle-id>` to take one training puzzle through the
 5. The workflow itself never changes the solver's TypeScript. When the
    dataset, the candidate, or the run shows that the solver needs a change,
    the final report suggests it for review.
+
+Without a puzzle ID, the workflow chooses one from `data\training`. It skips
+the [genesis puzzle](#genesis-puzzle) and every puzzle that already has a
+`dataset.<puzzle_id>.json`, then takes the puzzle whose largest training
+matrix has the fewest cells, breaking ties by the fewest total training cells
+and then by the lowest ID. Only training pairs are measured.
 
 Append `--hint <text>` to suggest the puzzle's objects, their roles, or its
 transformation. Only the arc-dataset agent receives the hint, and it keeps only

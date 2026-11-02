@@ -1,12 +1,12 @@
 ---
 name: arc-purposal
 description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run, then decide the enhancement's outcome under the automatic acceptance rule.
-argument-hint: <puzzle-id> [--hint <text>]
+argument-hint: [<puzzle-id>] [--hint <text>]
 ---
 
 # Running an ARC puzzle proposal
 
-`/arc-purposal <puzzle-id> [--hint <text>]` takes one training puzzle through
+`/arc-purposal [<puzzle-id>] [--hint <text>]` takes one training puzzle through
 its instruction dataset, any Nucleoid enhancement that dataset requires, one
 solver run, and the outcome. Follow `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
@@ -33,11 +33,28 @@ update with the dataset; it does not authorize dispatching the GitHub workflow.
 
 ## Check the puzzle
 
+- Without a puzzle ID, [select the default puzzle](#select-the-default-puzzle).
 - Require an eight-character lowercase hexadecimal ID with a file in
-  `arc/data/training/`. Report a missing or unknown ID instead of guessing.
+  `arc/data/training/`. Report an unknown ID instead of guessing.
 - Record the revision and working-tree status in the session workspace, and
   preserve pre-existing changes.
 - Use training pairs only. Never print or read the puzzle's `test` entries.
+
+## Select the default puzzle
+
+When the invocation names no puzzle ID, choose one this way and use it as the
+puzzle ID in every later step:
+
+1. Consider each puzzle in `arc/data/training/` except the genesis puzzle
+   `3aa6fb7a` and every puzzle that already has
+   `arc/src/dataset/dataset.<puzzle-id>.json`.
+2. Measure each from its `train` pairs alone, never its `test` entries: the
+   cell count (rows times columns) of its largest input or output matrix, and
+   the total cells across all those matrices.
+3. Choose the puzzle whose largest matrix has the fewest cells, breaking ties
+   by the fewest total cells and then by the lowest puzzle ID.
+
+If no puzzle remains, stop and report it without a run.
 
 ## Pass the hint
 
@@ -208,7 +225,8 @@ apply a suggestion or rerun the puzzle within the invocation.
 
 ## Report
 
-Save one JSON result record in the session workspace with the puzzle ID,
+Save one JSON result record in the session workspace with the puzzle ID and
+how it was chosen (given, or the default with both its measurements), the
 starting revision, and hint (`null` without one); the dataset status,
 `dataset_path` and source puzzle path,
 the reporting-workflow path and whether its new entry was retained or

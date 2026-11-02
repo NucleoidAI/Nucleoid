@@ -5,8 +5,9 @@ applyTo: "**"
 # ARC project and solver proposals
 
 These rules apply when working on `arc/`, its LLM exchanges, or its associated
-ARC records. Run an ARC proposal with `/arc-purposal <puzzle-id>` (the
-`arc-purposal` skill and agent). The `arc-dataset` agent writes the puzzle's
+ARC records. Run an ARC proposal with `/arc-purposal [<puzzle-id>]` (the
+`arc-purposal` skill and agent), which selects a default puzzle when the ID is
+omitted. The `arc-dataset` agent writes the puzzle's
 instruction dataset, any Nucleoid enhancement that dataset requires goes
 through the NUC stages, and its outcome follows the automatic acceptance rule,
 with one solver run whose exact match makes it Accepted.
