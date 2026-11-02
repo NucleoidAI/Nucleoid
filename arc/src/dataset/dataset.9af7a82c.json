@@ -3,7 +3,7 @@
     "class Obj(x: int, y: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
     "$Obj.tag = 'l6953'",
     "$Obj.bar_height = $Obj.cell_count",
-    "$Obj.x = Obj.filter(other => other.cell_count > $Obj.cell_count).length",
+    "$Obj.x = Obj.filter(other => other.bar_height > $Obj.bar_height).length",
     "$Obj.y = 0"
   ],
   "output_canvas": "FIT",
