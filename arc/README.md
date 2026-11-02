@@ -234,6 +234,33 @@ input canvas and output masks its output canvas. Orientation is 0 in both
 states because the shapes are not rotated. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
 
+`dataset.6150a2bd.json` annotates the two original training pairs from
+`data\training\6150a2bd.json`, in order, followed by its test pair, twelve
+object instances in total (4, 3, and 5 per pair). Every input and output
+retains its original 3 by 3 canvas, colors, positions, and zero cells. Each
+object is one 4-connected region of a single color, listed in the reading
+order of its first cell: a three-cell corner in a 2 by 2 box, a horizontal and
+a vertical two-cell bar, and single cells. Each output turns its input a half
+turn about the canvas center, so every object keeps its color and cell count
+while its shape turns 180 degrees and its bounding box moves to the opposite
+side of the canvas. The class takes `color`, the bounding box's `width` and
+`height`, and the `canvas_width` and `canvas_height` of the object's canvas as
+scalars. Unconditional class-level rules read each object's input origin with
+`@first` anchors: `$Obj.canvas_width - $Obj.x@first - $Obj.width` gives `x`,
+`$Obj.canvas_height - $Obj.y@first - $Obj.height` gives `y`, and
+`($Obj.orientation@first + 180) % 360` gives `orientation`. The rules create
+no other properties, so input and output states share the same keys. The
+`output_x`/`output_y` fields record the turned object's bounding-box origin,
+equal to `output_value.x`/`output_value.y`. The tag `l9100` is a single shape,
+as in `dataset.28bf18c6.json`, in both states. Orientation is 0 in every input
+state, where no object is turned, and 180 in every output state, because the
+rules turn every object a half turn, including single cells and bars whose
+turned shape looks the same. Input and output masks retain the full 3 by 3
+canvas. `output_canvas` is `EXACT` because each output keeps its input's
+canvas, including the empty top row of the second training output. The test
+pair follows the training pairs at the same level and is annotated by the same
+rules.
+
 `dataset.9af7a82c.json` annotates the four original training pairs from
 `data\training\9af7a82c.json`, followed by its test pair, nineteen region
 instances in total (3, 4, 4, 3, and 5 per pair). The fully colored input
