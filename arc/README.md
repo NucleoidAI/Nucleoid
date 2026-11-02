@@ -45,10 +45,12 @@ automatic prompt/KV caching. See OpenRouter's
 and [prompt caching](https://openrouter.ai/docs/guides/best-practices/prompt-caching)
 documentation for the distinction.
 
-Run the ARC example with `bun run start`, which defaults to puzzle `3aa6fb7a`.
-Pass a puzzle ID as the first argument, for example `bun run start 0d3d703e`,
-to load `data\training\0d3d703e.json`. This makes live OpenRouter calls;
-type checking, linting, and offline inspection do not require model calls.
+Run the ARC example with `bun run start`, which loads the default `puzzle_id`
+in `src\app.ts`. [`/arc-purposal`](#arc-proposal-agent) sets that default to
+each puzzle it runs. Pass a puzzle ID as the first argument, for example
+`bun run start 0d3d703e`, to load `data\training\0d3d703e.json`. This makes
+live OpenRouter calls; type checking, linting, and offline inspection do not
+require model calls.
 
 ### Genesis puzzle
 
@@ -340,9 +342,10 @@ Run `/arc-purposal [<puzzle-id>]` to take one training puzzle through the
    exact match or an evaluator acceptance makes it Accepted, and any other
    result makes it Automatic-Accepted, with the policy results recorded in the
    NUC.
-5. The workflow itself never changes the solver's TypeScript. When the
-   dataset, the candidate, or the run shows that the solver needs a change,
-   the final report suggests it for review.
+5. The workflow itself never changes the solver's TypeScript, apart from
+   making the puzzle the default `puzzle_id` in `src\app.ts` before the run.
+   When the dataset, the candidate, or the run shows that the solver needs a
+   change, the final report suggests it for review.
 
 Without a puzzle ID, the workflow chooses one from `data\training`. It skips
 the [genesis puzzle](#genesis-puzzle) and every puzzle that already has a

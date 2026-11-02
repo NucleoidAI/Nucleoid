@@ -21,11 +21,13 @@ If you cannot launch agents, stop and report `agent_launch_unavailable`.
 
 Never change the TypeScript implementation in `arc/`: no `.ts` file there,
 such as `server.ts`, `src/app.ts`, or `src/dataset/dataset.ts`, is
-added, edited, or removed. Orchestrate the approach between `/arc-dataset` and
-`/nuc-proposal` alone. In `arc/`, only the puzzle's dataset and its README
-paragraph change, both written by arc-dataset, and a NUC candidate changes
-nothing there. When the solver would need a change, finish the process
-without it and [suggest the change](#suggest-solver-changes) at the end.
+added, edited, or removed, except for the solver's default puzzle in
+`src/app.ts`, which the [run step](#run-the-puzzle) sets. Orchestrate the
+approach between `/arc-dataset` and `/nuc-proposal` alone. In `arc/`, only
+three things change: the puzzle's dataset and its README paragraph, both
+written by arc-dataset, and that default. A NUC candidate changes nothing
+there. When the solver would need a change, finish the process without it and
+[suggest the change](#suggest-solver-changes) at the end.
 
 The dataset agent also registers a new dataset's puzzle in
 `.github/workflows/arc.yml`, as its profile requires. Keep that reporting-list
@@ -131,6 +133,14 @@ Handle at most one NUC request per invocation, as a single-proposal request.
 
 ## Run the puzzle
 
+Before the run, make the puzzle the solver's default puzzle: in
+`arc/src/app.ts`, replace only the string literal of `start`'s default
+`puzzle_id` with the puzzle ID, keeping the genesis comment and every other
+line, and record the previous value in the session workspace. A bare
+`bun start` then loads this puzzle. The default only selects that puzzle; it
+is not solver logic, and the run below names its puzzle explicitly, so setting
+it changes nothing around the run. A skipped run leaves the default unchanged.
+
 The invocation authorizes exactly one live solver run, which makes paid
 OpenRouter calls. With dependencies installed from the committed lockfile, run
 `bun start <puzzle-id>` from `arc/` under a 30-minute limit. In PowerShell 7.4
@@ -208,11 +218,13 @@ Record it with the nuc-proposal skill's caller steps:
   primary checkout into the session workspace. Restore any pre-existing
   dataset and paragraph saved before replacement, without overwriting later
   unrelated changes. If this invocation added the puzzle's reporting-list entry,
-  remove only that entry when withdrawing the dataset. Preserve pre-existing
-  entries, other datasets, genesis files, and unrelated workflow changes.
-  Keep the candidate isolated.
+  remove only that entry when withdrawing the dataset. If it set the solver's
+  default puzzle, restore the recorded previous value unless a later change
+  replaced it. Preserve pre-existing entries, other datasets, genesis files,
+  and unrelated workflow changes. Keep the candidate isolated.
 
-Leave the dataset, README, and reporting-list changes uncommitted for review.
+Leave the dataset, README, reporting-list, and solver-default changes
+uncommitted for review.
 Push every commit this invocation makes right after it, pulling first, under
 the [git synchronization policy](../../rules/git.instructions.md). Never change
 project versions.
@@ -233,9 +245,11 @@ starting revision, and hint (`null` without one); the dataset status,
 `dataset_path` and source puzzle path,
 the reporting-workflow path and whether its new entry was retained or
 withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
-evaluator decision, and report path; the run's command, executable, exit
-status or timeout, difference or error, and log paths; the outcome and its
-basis; the suggested solver changes; and any blockers. Use `null` for anything
+evaluator decision, and report path; the solver's previous and new default
+puzzle IDs and whether that change was retained or restored; the run's
+command, executable, exit status or timeout, difference or error, and log
+paths; the outcome and its basis; the suggested solver changes; and any
+blockers. Use `null` for anything
 not measured, including the difference before this dataset. Report a short
 summary with the record's path, ending with any suggested solver changes, then
 stop without starting another puzzle or NUC.

@@ -11,9 +11,12 @@ omitted. The `arc-dataset` agent writes the puzzle's
 instruction dataset, any Nucleoid enhancement that dataset requires goes
 through the NUC stages, and its outcome follows the automatic acceptance rule,
 with one solver run whose exact match makes it Accepted.
-`/arc-purposal` never changes the TypeScript implementation in `arc/`. It
-orchestrates its approach between `/arc-dataset` and `/nuc-proposal` and, when
-the solver would need a change, suggests that change at the end of the process.
+`/arc-purposal` never changes the TypeScript implementation in `arc/`, except
+that it sets the default `puzzle_id` in `arc/src/app.ts` to the puzzle it runs;
+that default only selects the puzzle for a bare `bun start` and is not solver
+logic. It orchestrates its approach between `/arc-dataset` and `/nuc-proposal`
+and, when the solver would need a change, suggests that change at the end of
+the process.
 Agent-configuration changes alone do not launch a solver run.
 
 ## No automated ARC tests

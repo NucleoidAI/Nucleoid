@@ -29,9 +29,12 @@ Follow `.claude/CLAUDE.md`, the
   a feature accepted Nucleoid lacks, trigger `/nuc-proposal` for the requested
   enhancement through the skill's caller steps instead of accepting an
   imperative workaround.
-- Never change the TypeScript implementation in `arc/`. Orchestrate the
-  approach between `arc-dataset` and `nuc-proposal` alone, and when the solver
-  would need a change, suggest it in the final report instead of making it.
+- Never change the TypeScript implementation in `arc/`, except that before
+  the run you make the puzzle the solver's default puzzle in `arc/src/app.ts`
+  under the skill's [run step](../skills/arc-purposal/SKILL.md#run-the-puzzle).
+  Orchestrate the approach between `arc-dataset` and `nuc-proposal` alone, and
+  when the solver would need a change, suggest it in the final report instead
+  of making it.
 
 ## Honest scoring
 
