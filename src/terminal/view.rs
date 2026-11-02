@@ -190,6 +190,8 @@ fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regio
     let Some(entry) = app.entries.get(app.selected) else {
         frame.render_widget(
             Paragraph::new(vec![
+                Line::styled("⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷", Style::default().fg(Color::LightGreen)),
+                Line::styled("⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶", Style::default().fg(Color::LightGreen)),
                 Line::from(""),
                 Line::from(Span::styled(
                     "A workspace for your world model.",

@@ -825,6 +825,41 @@ mod tests {
     }
 
     #[test]
+    fn original_wordmark_renders_in_the_welcome_pane_and_yields_to_results() {
+        for (width, height) in [(40, 18), (80, 24), (100, 30)] {
+            let mut app = App::new(false, false);
+            let mut runtime = Runtime::new();
+            let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+            terminal.draw(|frame| app.draw(frame)).unwrap();
+            let screen = terminal.backend().buffer();
+            let text: String = screen.content.iter().map(|cell| cell.symbol()).collect();
+            assert!(text.contains("⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷"), "{text}");
+            assert!(text.contains("⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶"), "{text}");
+            assert!(
+                screen
+                    .content
+                    .iter()
+                    .filter(|cell| cell.symbol() == "⣿")
+                    .all(|cell| cell.fg == ratatui::style::Color::LightGreen)
+            );
+            let editor_area = app.regions.editor;
+
+            run(&mut app, &mut runtime, "\"first result\"");
+            terminal.draw(|frame| app.draw(frame)).unwrap();
+            let text: String = terminal
+                .backend()
+                .buffer()
+                .content
+                .iter()
+                .map(|cell| cell.symbol())
+                .collect();
+            assert!(!text.contains("⣿⠋⢻⡄"), "{text}");
+            assert!(text.contains("first result"), "{text}");
+            assert_eq!(app.regions.editor, editor_area);
+        }
+    }
+
+    #[test]
     fn rendering_handles_small_resized_and_scrolled_table_workspaces() {
         let mut app = App::new(false, false);
         let mut runtime = Runtime::new();
