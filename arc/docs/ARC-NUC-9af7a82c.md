@@ -38,11 +38,21 @@ Unconditional class rules derive the bar:
 ```nuc
 $Obj.tag = 'l6953'
 $Obj.bar_height = $Obj.cell_count
-$Obj.x = Obj.filter(other => other.cell_count > $Obj.cell_count).length
+$Obj.x = Obj.filter(other => other.bar_height > $Obj.bar_height).length
 $Obj.y = 0
 ```
 
-`x` is the region's rank: the number of other regions with a larger cell count.
+`x` is the bar's rank: the number of other bars taller than it. At the user's
+request, the rank compares `bar_height`, the output bar's own property, instead
+of `cell_count`, the input measurement it is derived from, so the rule states
+the histogram's order in the histogram's own terms. Because `bar_height`
+equals `cell_count`, both rules give the same ranks and every snapshot is
+unchanged. On 2-Nov-2026 the accepted runtime at `feef5f8` replayed the
+output snapshots of all five pairs offline with each rule: with the instances
+created in source, reversed, and rotated order, and with the rank rule declared
+before `bar_height`, every `x`, `y`, `bar_height`, and `tag` matched its
+recorded value. Ranking by a derived property therefore needs no NUC. This
+offline check is not a solver run.
 
 Each `input_instance_matrix` matches its pair's complete `input_matrix`
 dimensions, and each `output_instance_matrix` matches its pair's complete
@@ -75,6 +85,9 @@ debug runtime and a 30-minute limit. The exit status is the difference score;
 seconds are the workflow's wall time for the puzzle, from each run's
 `arc-puzzle-report` artifact. Both non-zero exits were mismatches with those
 differences, not failed runs. No local `bun start 9af7a82c` run is recorded.
+Every recorded run used the earlier `cell_count` rank rule. The `bar_height`
+rank, committed in `0bf1b0f` after these runs, has no run yet, so its
+difference is unknown, not zero.
 
 ## Open items
 
