@@ -540,6 +540,12 @@ impl Runtime {
                 Ok(Value::List(self.distinct_values(values)))
             }
 
+            "mode" => {
+                let selector = optional_selector(predicate, property)?;
+                let values = self.select_items(items, selector.as_ref())?;
+                Ok(self.mode_value(values))
+            }
+
             // Lists sort in place through `call_list_method`; a class population
             // has no stored list to write, so its sort only returns the order.
             "sort" => Ok(Value::List(self.sort_items(items, predicate.as_ref())?)),

@@ -121,14 +121,23 @@ impl Runtime {
         self.distinct_by(values, |kept, value| self.deep_equal(kept, value))
     }
 
+    /// The most frequent of `values`, counted against the values `distinct`
+    /// keeps: the kept value with the highest count, the earliest on a tie,
+    /// or undefined when there are no values.
+    pub(crate) fn mode_value(&self, values: Vec<Value>) -> Value {
+        self.tally_by(values, |kept, value| self.deep_equal(kept, value))
+            .into_mode()
+    }
+
+    /// Keeps a value when `matches(kept, value)` holds for no value kept
+    /// before it.
     fn distinct_by(
         &self,
         values: Vec<Value>,
         mut matches: impl FnMut(&Value, &Value) -> bool,
     ) -> Vec<Value> {
         let mut kept: Vec<Value> = Vec::new();
-        let mut buckets: HashMap<u64, Vec<usize>> = HashMap::new();
-        let mut null_holders: HashMap<usize, Vec<(u64, usize)>> = HashMap::new();
+        let mut index = EqualityIndex::default();
 
         for value in values {
             let Some(key) = self.equality_key(&value) else {
@@ -136,34 +145,54 @@ impl Runtime {
                 continue;
             };
 
-            let bucket = buckets.get(&key.hash).into_iter().flatten().copied();
-            let loose = null_holders
-                .get(&key.defined)
-                .filter(|_| key.holds_undefined)
-                .into_iter()
-                .flatten()
-                .filter(|&&(hash, _)| hash != key.hash)
-                .map(|&(_, index)| index);
-
+            // Any match drops the value, so the values sharing its hash,
+            // which match unless their hashes collide, are tried first.
+            let (bucket, loose) = index.candidates(&key);
             if bucket
                 .chain(loose)
-                .any(|index| matches(&kept[index], &value))
+                .any(|position| matches(&kept[position], &value))
             {
                 continue;
             }
 
-            let index = kept.len();
-            buckets.entry(key.hash).or_default().push(index);
-            if key.holds_null {
-                null_holders
-                    .entry(key.defined)
-                    .or_default()
-                    .push((key.hash, index));
-            }
+            index.insert(&key, kept.len());
             kept.push(value);
         }
 
         kept
+    }
+
+    /// Keeps the values `distinct_by` keeps, and counts every other value as
+    /// a repeat of the earliest kept value it matches.
+    fn tally_by(
+        &self,
+        values: Vec<Value>,
+        mut matches: impl FnMut(&Value, &Value) -> bool,
+    ) -> Tally {
+        let mut tally = Tally::default();
+        let mut index = EqualityIndex::default();
+
+        for value in values {
+            let Some(key) = self.equality_key(&value) else {
+                tally.keep(value);
+                continue;
+            };
+
+            // Both candidate lists ascend, so the merged search meets kept
+            // values in receiver order and stops at the earliest match.
+            let (bucket, loose) = index.candidates(&key);
+            if let Some(position) =
+                ascending(bucket, loose).find(|&position| matches(&tally.kept[position], &value))
+            {
+                tally.counts[position] += 1;
+                continue;
+            }
+
+            index.insert(&key, tally.kept.len());
+            tally.keep(value);
+        }
+
+        tally
     }
 
     fn equality_key(&self, value: &Value) -> Option<EqualityKey> {
@@ -256,6 +285,97 @@ impl Runtime {
 
 const HASHED_DEPTH: usize = 8;
 
+/// The positions of kept values, filed under the keys of the values that can
+/// match them.
+#[derive(Default)]
+struct EqualityIndex {
+    /// Kept positions by structural hash.
+    buckets: HashMap<u64, Vec<usize>>,
+    /// The hash and position of each kept object holding a `null` property,
+    /// by its number of defined properties.
+    null_holders: HashMap<usize, Vec<(u64, usize)>>,
+}
+
+impl EqualityIndex {
+    /// The kept positions a value with `key` can match, as two ascending
+    /// sequences: those sharing its hash and, for an object holding an
+    /// undefined-valued property, the `null` holders of its size outside that
+    /// hash, which deep equality lets it match.
+    fn candidates(
+        &self,
+        key: &EqualityKey,
+    ) -> (impl Iterator<Item = usize>, impl Iterator<Item = usize>) {
+        let hash = key.hash;
+        let bucket = self.buckets.get(&hash).into_iter().flatten().copied();
+        let loose = self
+            .null_holders
+            .get(&key.defined)
+            .filter(|_| key.holds_undefined)
+            .into_iter()
+            .flatten()
+            .filter(move |&&(other, _)| other != hash)
+            .map(|&(_, position)| position);
+        (bucket, loose)
+    }
+
+    /// Files the value kept at `position` under its `key`.
+    fn insert(&mut self, key: &EqualityKey, position: usize) {
+        self.buckets.entry(key.hash).or_default().push(position);
+        if key.holds_null {
+            self.null_holders
+                .entry(key.defined)
+                .or_default()
+                .push((key.hash, position));
+        }
+    }
+}
+
+/// The values `distinct` keeps, in receiver order, each with how many values
+/// it stands for.
+#[derive(Default)]
+struct Tally {
+    kept: Vec<Value>,
+    /// For each kept value, itself and every value counted as its repeat.
+    counts: Vec<usize>,
+}
+
+impl Tally {
+    fn keep(&mut self, value: Value) {
+        self.kept.push(value);
+        self.counts.push(1);
+    }
+
+    /// The kept value with the highest count, the earliest on a tie.
+    fn into_mode(self) -> Value {
+        let Tally { mut kept, counts } = self;
+
+        // `max_by_key` returns the last of equal maxima, so scanning in
+        // reverse returns the earliest.
+        counts
+            .iter()
+            .enumerate()
+            .rev()
+            .max_by_key(|&(_, count)| *count)
+            .map_or(Value::Undefined, |(index, _)| kept.swap_remove(index))
+    }
+}
+
+/// Merges two ascending sequences of kept positions into one ascending
+/// sequence.
+fn ascending(
+    left: impl Iterator<Item = usize>,
+    right: impl Iterator<Item = usize>,
+) -> impl Iterator<Item = usize> {
+    let mut left = left.peekable();
+    let mut right = right.peekable();
+
+    std::iter::from_fn(move || match (left.peek(), right.peek()) {
+        (Some(&first), Some(&second)) if second < first => right.next(),
+        (Some(_), _) => left.next(),
+        (None, _) => right.next(),
+    })
+}
+
 struct EqualityKey {
     hash: u64,
     defined: usize,
@@ -319,6 +439,204 @@ mod tests {
             runtime.deep_equal(kept, value)
         });
         (kept, comparisons)
+    }
+
+    fn tallied(runtime: &Runtime, values: Vec<Value>) -> (Vec<Value>, Vec<usize>, usize) {
+        let mut comparisons = 0;
+        let tally = runtime.tally_by(values, |kept, value| {
+            comparisons += 1;
+            runtime.deep_equal(kept, value)
+        });
+        (tally.kept, tally.counts, comparisons)
+    }
+
+    #[test]
+    fn the_mode_is_the_earliest_of_the_highest_counts() {
+        let runtime = Runtime::new();
+        assert_eq!(runtime.mode_value(Vec::new()), Value::Undefined);
+        for (values, mode) in [
+            (vec![3, 4, 4, 3], 3),
+            (vec![3, 4, 4], 4),
+            (vec![1, 2, 3], 1),
+            (vec![5, 1, 1, 5, 5], 5),
+            (vec![2, 9, 9, 2, 9], 9),
+        ] {
+            let values: Vec<Value> = values.into_iter().map(Value::number).collect();
+            assert_eq!(
+                runtime.mode_value(values.clone()),
+                Value::number(mode),
+                "{values:?}"
+            );
+        }
+        let signed = vec![Value::Number(-0.0), Value::number(0), Value::number(1)];
+        match runtime.mode_value(signed) {
+            Value::Number(zero) => assert!(zero == 0.0 && zero.is_sign_negative()),
+            other => panic!("the first zero is kept, not {other:?}"),
+        }
+    }
+
+    #[test]
+    fn repeats_count_once_for_the_earliest_kept_value_they_match() {
+        let mut runtime = Runtime::new();
+        let null_holder = record(
+            &mut runtime,
+            vec![("k", Value::Null), ("m", Value::number(1))],
+        );
+        let plain = record(
+            &mut runtime,
+            vec![("m", Value::number(1)), ("z", Value::number(5))],
+        );
+        let other_holder = record(
+            &mut runtime,
+            vec![("l", Value::Null), ("m", Value::number(1))],
+        );
+        let gap = record(
+            &mut runtime,
+            vec![
+                ("k", Value::Undefined),
+                ("m", Value::number(1)),
+                ("z", Value::number(5)),
+            ],
+        );
+        let gaps = record(
+            &mut runtime,
+            vec![
+                ("k", Value::Undefined),
+                ("l", Value::Undefined),
+                ("m", Value::number(1)),
+                ("z", Value::number(5)),
+            ],
+        );
+
+        // `gap` shares the hash of `plain` and is compared with the null
+        // holders of its size too, so it is a candidate repeat of both
+        // records before it; the earlier one counts it, after one comparison.
+        for (label, values, kept, counts, comparisons) in [
+            (
+                "null holder before the plain record",
+                vec![null_holder.clone(), plain.clone(), gap.clone()],
+                vec![null_holder.clone(), plain.clone()],
+                vec![2, 1],
+                1,
+            ),
+            (
+                "plain record before the null holder",
+                vec![plain.clone(), null_holder.clone(), gap.clone()],
+                vec![plain.clone(), null_holder.clone()],
+                vec![2, 1],
+                1,
+            ),
+            (
+                "two null holders",
+                vec![null_holder.clone(), other_holder.clone(), gaps.clone()],
+                vec![null_holder.clone(), other_holder.clone()],
+                vec![2, 1],
+                1,
+            ),
+            (
+                "two null holders reversed",
+                vec![other_holder.clone(), null_holder.clone(), gaps.clone()],
+                vec![other_holder.clone(), null_holder.clone()],
+                vec![2, 1],
+                1,
+            ),
+            (
+                "undefined holder first",
+                vec![gap.clone(), null_holder.clone()],
+                vec![gap.clone(), null_holder.clone()],
+                vec![1, 1],
+                0,
+            ),
+        ] {
+            assert_eq!(
+                tallied(&runtime, values.clone()),
+                (kept.clone(), counts, comparisons),
+                "{label}"
+            );
+            assert_eq!(runtime.mode_value(values), kept[0], "{label}");
+        }
+    }
+
+    #[test]
+    fn a_tally_compares_each_repeat_once_with_the_value_it_repeats() {
+        let mut runtime = Runtime::new();
+        let mut residues: Vec<Value> = (0..ITEMS).map(|item| Value::number(item % 10)).collect();
+        residues.push(Value::number(7));
+        let (kept, counts, comparisons) = tallied(&runtime, residues.clone());
+        assert_eq!(kept.len(), 10);
+        assert_eq!(counts[7], 2_001);
+        assert_eq!(comparisons, ITEMS as usize - 10 + 1);
+        assert_eq!(runtime.mode_value(residues), Value::number(7));
+
+        let distinct: Vec<Value> = (0..ITEMS).map(Value::number).collect();
+        let (kept, counts, comparisons) = tallied(&runtime, distinct);
+        assert_eq!((kept.len(), comparisons), (ITEMS as usize, 0));
+        assert!(counts.iter().all(|&count| count == 1));
+
+        let rows: Vec<Value> = (0..ITEMS)
+            .map(|item| {
+                let fields = vec![("k", Value::number(item % 100)), ("v", Value::Null)];
+                record(&mut runtime, fields)
+            })
+            .collect();
+        let (kept, counts, comparisons) = tallied(&runtime, rows.clone());
+        assert_eq!(kept.len(), 100);
+        assert_eq!(comparisons, ITEMS as usize - 100);
+        assert!(counts.iter().all(|&count| count == ITEMS as usize / 100));
+        assert_eq!(runtime.mode_value(rows.clone()), rows[0]);
+
+        let unmatchable = vec![
+            Value::Number(f64::NAN),
+            Value::Number(f64::NAN),
+            Value::number(1),
+        ];
+        let (kept, counts, comparisons) = tallied(&runtime, unmatchable);
+        assert_eq!((kept.len(), counts, comparisons), (3, vec![1, 1, 1], 0));
+    }
+
+    #[test]
+    fn distinct_tries_the_hash_bucket_first_and_a_tally_tries_receiver_order() {
+        const HOLDERS: u32 = 100;
+        const REPEATS: usize = 100;
+        let holders = HOLDERS as usize;
+        let mut runtime = Runtime::new();
+        // `null` holders of two defined properties: `repeat` holds an
+        // undefined property, so it is compared with them, but matches none.
+        let mut values: Vec<Value> = (0..HOLDERS)
+            .map(|item| {
+                let fields = vec![("k", Value::Null), ("x", Value::number(item))];
+                record(&mut runtime, fields)
+            })
+            .collect();
+        // The record that shares the hash of `repeat` and matches it.
+        let plain = record(
+            &mut runtime,
+            vec![("m", Value::number(1)), ("z", Value::number(5))],
+        );
+        values.push(plain);
+        let repeat = record(
+            &mut runtime,
+            vec![
+                ("q", Value::Undefined),
+                ("m", Value::number(1)),
+                ("z", Value::number(5)),
+            ],
+        );
+        values.extend(std::iter::repeat_n(repeat, REPEATS));
+        let kept = &values[..=holders];
+
+        // Any match drops a value, so `distinct` compares each repeat only
+        // with the record of its hash.
+        let (found, comparisons) = counted(&runtime, values.clone());
+        assert_eq!(found, kept);
+        assert_eq!(comparisons, REPEATS);
+
+        // A tally credits the earliest match, so it also compares each repeat
+        // with every `null` holder kept before the record it repeats.
+        let (found, counts, comparisons) = tallied(&runtime, values.clone());
+        assert_eq!(found, kept);
+        assert_eq!(counts[holders], REPEATS + 1);
+        assert_eq!(comparisons, REPEATS * (holders + 1));
     }
 
     #[test]

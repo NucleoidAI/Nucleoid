@@ -1546,6 +1546,36 @@ assert(collect(5, [6, 7]), [5, [[6, 7]]])
   See [NUC 74](docs/nuc-0074.md) and the
   [root contract](nucleoid.spec.md#final-rest-parameters).
 
+## List and population modes
+
+**Modes keep the most requested size live as orders change**
+
+```nuc
+class Order(customer, size):
+    this.customer = customer
+    this.size = size
+popular = Order.mode(order -> order.size)
+assert(popular, null)
+first = Order("ada", "M")
+Order("bo", "L")
+Order("cy", "L")
+assert(popular, "L")
+first.size = "S"
+Order("di", "S")
+Order("ed", "S")
+assert(popular, "S")
+```
+
+- [NUC 75](docs/nuc-0075.md) adds `mode()` and `mode(selector)` to lists
+  and class instance lists. `Order.mode(order -> order.size)` is the size
+  that the most orders have; on a tie, the size that appears first wins, and
+  an empty list or class gives undefined, stored as `null`.
+- `popular` is a live declaration: it re-evaluates when an order is created
+  or its size changes. Items are matched with the deep equality of
+  `includes` and never converted, as `distinct` matches them, so `1` and
+  `"1"` are counted apart. See the
+  [root contract](nucleoid.spec.md#list-and-population-modes).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

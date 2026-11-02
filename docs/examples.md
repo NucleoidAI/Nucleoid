@@ -3089,6 +3089,43 @@ amount
   call-site spread are not supported. See [NUC 74](nuc-0074.md) and the
   [root contract](../nucleoid.spec.md#final-rest-parameters).
 
+## List and population modes
+
+**Modes keep the most common defect of each production line live**
+
+```nuc
+class Line(name): this.name = name
+class Defect(line, kind):
+    this.line = line
+    this.kind = kind
+$Line.common = Defect.filter(defect -> defect.line == $Line).mode(defect -> defect.kind)
+worst = Defect.mode(defect -> defect.kind)
+press = Line("press")
+paint = Line("paint")
+Defect(press, "dent")
+crack = Defect(press, "crack")
+Defect(press, "crack")
+Defect(paint, "drip")
+assert: [press.common, paint.common, worst], ["crack", "drip", "crack"]
+crack.kind = "dent"
+assert: [press.common, worst], ["dent", "dent"]
+crack.line = paint
+assert: [press.common, paint.common], ["dent", "dent"]
+Defect(paint, "drip")
+assert: [paint.common, worst], ["drip", "dent"]
+worst
+# return: "dent"
+```
+
+- One class-level rule keeps each line's most common defect, and `worst`
+  keeps the most common defect of every line. Reclassifying or moving a
+  defect updates every affected line.
+- On a tie the defect created first wins: once the reclassified dent moves to
+  the paint line, that line has one dent and one drip, and the dent, created
+  earlier, is its mode until a second drip arrives.
+- See [NUC 75](nuc-0075.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-modes).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

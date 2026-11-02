@@ -15171,6 +15171,280 @@ observed
 # return: 6"#);
 }
 
+/// Nucleoid finds the most frequent list item with mode
+#[rustfmt::skip]
+#[test]
+fn finds_the_most_frequent_list_item_with_mode() {
+    runner()("sizes = [\"M\", \"S\", \"M\", \"L\"]\ntop = sizes.mode()\nassert: top, \"M\"\nsizes.push(\"L\")\nsizes.push(\"L\")\nassert: top, \"L\"\nsizes.shift()\nassert: top, \"L\"\nsizes = []\nassert: top, null\nsizes = [3, 4, 4, 3]\nassert: top, 3\ncart = {lines: [{sku: \"pen\", qty: 2}, {sku: \"ink\", qty: 1}, {sku: \"ink\", qty: 5}]}\ncommon = cart.lines.mode(line -> line.sku)\nbulk = cart.lines.filter(line -> line.qty > 1).mode(line -> line.sku)\nassert: common, \"ink\"\nassert: bulk, \"pen\"\ncart.lines.push({sku: \"ink\", qty: 4})\nassert: bulk, \"ink\"\ncart.lines.push({sku: \"pen\", qty: 6})\ncart.lines.push({sku: \"pen\", qty: 7})\nassert: common, \"pen\"\nassert: bulk, \"pen\"");
+    let mut run = runner();
+    run(r#"sizes = ["M", "S", "M", "L"]"#);
+    run("top = sizes.mode()");
+    assert_eq!(run("top"), "M");
+    run(r#"sizes.push("L")"#);
+    run(r#"sizes.push("L")"#);
+    assert_eq!(run("top"), "L");
+    run("sizes.shift()");
+    assert_eq!(run("top"), "L");
+    run("sizes = []");
+    assert_eq!(run("top"), serde_json::Value::Null);
+    run("sizes = [3, 4, 4, 3]");
+    assert_eq!(run("top"), 3);
+    run(r#"cart = {lines: [{sku: "pen", qty: 2}, {sku: "ink", qty: 1}, {sku: "ink", qty: 5}]}"#);
+    run("common = cart.lines.mode(line -> line.sku)");
+    run("bulk = cart.lines.filter(line -> line.qty > 1).mode(line -> line.sku)");
+    assert_eq!(run("common"), "ink");
+    assert_eq!(run("bulk"), "pen");
+    run(r#"cart.lines.push({sku: "ink", qty: 4})"#);
+    assert_eq!(run("bulk"), "ink");
+    run(r#"cart.lines.push({sku: "pen", qty: 6})"#);
+    run(r#"cart.lines.push({sku: "pen", qty: 7})"#);
+    assert_eq!(run("common"), "pen");
+    assert_eq!(run("bulk"), "pen");
+}
+
+/// Nucleoid finds the most frequent value of class instance populations
+#[rustfmt::skip]
+#[test]
+fn finds_the_most_frequent_value_of_class_instance_populations() {
+    runner()("class Vote(choice, round):\n    this.choice = choice\n    this.round = round\nfavorite = Vote.mode(vote -> vote.choice)\nassert: favorite, null\nfirst = Vote(\"tea\", 1)\nVote(\"coffee\", 1)\nsecond = Vote(\"coffee\", 2)\nlate = Vote.filter(vote -> vote.round > 1).mode(vote -> vote.choice)\nrecent = Vote[-2:].mode(vote -> vote.choice)\nassert: favorite, \"coffee\"\nassert: late, \"coffee\"\nassert: recent, \"coffee\"\nsecond.choice = \"tea\"\nassert: favorite, \"tea\"\nassert: late, \"tea\"\nassert: recent, \"coffee\"\nVote(\"juice\", 2)\nVote(\"juice\", 3)\nassert: favorite, \"tea\"\nassert: late, \"juice\"\nassert: recent, \"juice\"\ndelete second.choice\ndelete second.round\ndelete second\nassert: favorite, \"juice\"\nkind = Vote\nassert: kind.mode(vote -> vote.round), 1");
+    let mut run = runner();
+    run(r#"class Vote(choice, round):
+    this.choice = choice
+    this.round = round"#);
+    run("favorite = Vote.mode(vote -> vote.choice)");
+    assert_eq!(run("favorite"), serde_json::Value::Null);
+    run(r#"first = Vote("tea", 1)"#);
+    run(r#"Vote("coffee", 1)"#);
+    run(r#"second = Vote("coffee", 2)"#);
+    run("late = Vote.filter(vote -> vote.round > 1).mode(vote -> vote.choice)");
+    run("recent = Vote[-2:].mode(vote -> vote.choice)");
+    assert_eq!(run("favorite"), "coffee");
+    assert_eq!(run("late"), "coffee");
+    assert_eq!(run("recent"), "coffee");
+    run(r#"second.choice = "tea""#);
+    assert_eq!(run("favorite"), "tea");
+    assert_eq!(run("late"), "tea");
+    assert_eq!(run("recent"), "coffee");
+    run(r#"Vote("juice", 2)"#);
+    run(r#"Vote("juice", 3)"#);
+    assert_eq!(run("favorite"), "tea");
+    assert_eq!(run("late"), "juice");
+    assert_eq!(run("recent"), "juice");
+    run("delete second.choice");
+    run("delete second.round");
+    run("delete second");
+    assert_eq!(run("favorite"), "juice");
+    run("kind = Vote");
+    assert_eq!(run("kind.mode(vote -> vote.round)"), 1);
+}
+
+/// Nucleoid compares mode items with deep equality
+#[rustfmt::skip]
+#[test]
+fn compares_mode_items_with_deep_equality() {
+    runner()("inputs = [2, \"2\", true, \"2\", 2]\ncommon = inputs.mode()\nassert: common, 2\ninputs.push(\"2\")\nassert: common, \"2\"\ninputs.push(null)\ninputs.push(inputs[99])\ninputs.push(null)\ninputs.push(null)\nassert: common, null\nsigns = [-0, 1, 0, 1]\nzero = signs.mode()\nassert: String(1 / zero), \"-Infinity\"\nreadings = [0 / 0, 0 / 0, 5]\nlevel = readings.mode()\nassert: String(level), \"NaN\"\nreadings.push(5)\nassert: level, 5\nfirst = {x: 1, y: 2}\nplaces = [{x: 2, y: 1}, first, {y: 2, x: 1}]\nspot = places.mode()\nassert: spot == first, true\nheld = {k: null, m: 1}\ngap = {k: {}.none, m: 1, z: 5}\nrecords = [held, gap]\nkept = records.mode()\nassert: kept == held, true\nrecords = [gap, held]\nassert: kept == gap, true\nclass Robot(name): this.name = name\nada = Robot(\"ada\")\ntwin = Robot(\"ada\")\ncrew = [ada, twin, twin]\nlead = crew.mode()\nassert: lead == twin, true\ncrew.push(ada)\nassert: lead == ada, true");
+    let mut run = runner();
+    run(r#"inputs = [2, "2", true, "2", 2]"#);
+    run("common = inputs.mode()");
+    assert_eq!(run("common"), 2);
+    run(r#"inputs.push("2")"#);
+    assert_eq!(run("common"), "2");
+    run("inputs.push(null)");
+    run("inputs.push(inputs[99])");
+    run("inputs.push(null)");
+    run("inputs.push(null)");
+    assert_eq!(run("common"), serde_json::Value::Null);
+    run("signs = [-0, 1, 0, 1]");
+    run("zero = signs.mode()");
+    assert_eq!(run("String(1 / zero)"), "-Infinity");
+    run("readings = [0 / 0, 0 / 0, 5]");
+    run("level = readings.mode()");
+    assert_eq!(run("String(level)"), "NaN");
+    run("readings.push(5)");
+    assert_eq!(run("level"), 5);
+    run("first = {x: 1, y: 2}");
+    run("places = [{x: 2, y: 1}, first, {y: 2, x: 1}]");
+    run("spot = places.mode()");
+    assert_eq!(run("spot == first"), true);
+    run("held = {k: null, m: 1}");
+    run("gap = {k: {}.none, m: 1, z: 5}");
+    run("records = [held, gap]");
+    run("kept = records.mode()");
+    assert_eq!(run("kept == held"), true);
+    run("records = [gap, held]");
+    assert_eq!(run("kept == gap"), true);
+    run("class Robot(name): this.name = name");
+    run(r#"ada = Robot("ada")"#);
+    run(r#"twin = Robot("ada")"#);
+    run("crew = [ada, twin, twin]");
+    run("lead = crew.mode()");
+    assert_eq!(run("lead == twin"), true);
+    run("crew.push(ada)");
+    assert_eq!(run("lead == ada"), true);
+}
+
+/// Nucleoid calls the mode selector once per item with only the item
+#[rustfmt::skip]
+#[test]
+fn calls_the_mode_selector_once_per_item_with_only_the_item() {
+    runner()("seen = []\ndef size(order, position):\n    seen.push(position ?? order.id)\n    return order.size\norders = [{id: 1, size: \"M\"}, {id: 2, size: \"S\"}, {id: 3, size: \"S\"}]\ndef common() => orders.mode(size)\nassert: common(), \"S\"\nassert: seen, [1, 2, 3]\norders.push({id: 4, size: \"M\"})\nassert: common(), \"M\"\nassert: seen, [1, 2, 3, 1, 2, 3, 4]\nlimit = 2\ndef band order => order.id > limit ? \"late\" : \"early\"\nphase = orders.mode(band)\nassert: phase, \"early\"\nlimit = 0\nassert: phase, \"late\"\nmissing = null\nskipped = missing.mode(size(9))\nassert: skipped, null\nassert: seen, [1, 2, 3, 1, 2, 3, 4]");
+    let mut run = runner();
+    run("seen = []");
+    run(r#"def size(order, position):
+    seen.push(position ?? order.id)
+    return order.size"#);
+    run(r#"orders = [{id: 1, size: "M"}, {id: 2, size: "S"}, {id: 3, size: "S"}]"#);
+    run("def common() => orders.mode(size)");
+    assert_eq!(run("common()"), "S");
+    assert_eq!(run("seen"), serde_json::json!([1, 2, 3]));
+    run(r#"orders.push({id: 4, size: "M"})"#);
+    assert_eq!(run("common()"), "M");
+    assert_eq!(run("seen"), serde_json::json!([1, 2, 3, 1, 2, 3, 4]));
+    run("limit = 2");
+    run(r#"def band order => order.id > limit ? "late" : "early""#);
+    run("phase = orders.mode(band)");
+    assert_eq!(run("phase"), "early");
+    run("limit = 0");
+    assert_eq!(run("phase"), "late");
+    run("missing = null");
+    run("skipped = missing.mode(size(9))");
+    assert_eq!(run("skipped"), serde_json::Value::Null);
+    assert_eq!(run("seen"), serde_json::json!([1, 2, 3, 1, 2, 3, 4]));
+}
+
+/// Nucleoid keeps modes live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_modes_live_in_class_level_rules() {
+    runner()("class Team(name): this.name = name\nclass Vote(team, choice):\n    this.team = team\n    this.choice = choice\n$Team.favorite = Vote.filter(vote -> vote.team == $Team).mode(vote -> vote.choice)\nred = Team(\"red\")\nblue = Team(\"blue\")\nVote(red, \"tea\")\nswing = Vote(red, \"coffee\")\nVote(red, \"coffee\")\nVote(blue, \"juice\")\noverall = Vote.mode(vote -> vote.choice)\nassert: red.favorite, \"coffee\"\nassert: blue.favorite, \"juice\"\nassert: overall, \"coffee\"\nswing.choice = \"tea\"\nassert: red.favorite, \"tea\"\nassert: overall, \"tea\"\ngreen = Team(\"green\")\nassert: green.favorite, null\nVote(green, \"juice\")\nVote(green, \"juice\")\nassert: green.favorite, \"juice\"\nassert: overall, \"juice\"");
+    let mut run = runner();
+    run("class Team(name): this.name = name");
+    run(r#"class Vote(team, choice):
+    this.team = team
+    this.choice = choice"#);
+    run("$Team.favorite = Vote.filter(vote -> vote.team == $Team).mode(vote -> vote.choice)");
+    run(r#"red = Team("red")"#);
+    run(r#"blue = Team("blue")"#);
+    run(r#"Vote(red, "tea")"#);
+    run(r#"swing = Vote(red, "coffee")"#);
+    run(r#"Vote(red, "coffee")"#);
+    run(r#"Vote(blue, "juice")"#);
+    run("overall = Vote.mode(vote -> vote.choice)");
+    assert_eq!(run("red.favorite"), "coffee");
+    assert_eq!(run("blue.favorite"), "juice");
+    assert_eq!(run("overall"), "coffee");
+    run(r#"swing.choice = "tea""#);
+    assert_eq!(run("red.favorite"), "tea");
+    assert_eq!(run("overall"), "tea");
+    run(r#"green = Team("green")"#);
+    assert_eq!(run("green.favorite"), serde_json::Value::Null);
+    run(r#"Vote(green, "juice")"#);
+    run(r#"Vote(green, "juice")"#);
+    assert_eq!(run("green.favorite"), "juice");
+    assert_eq!(run("overall"), "juice");
+}
+
+/// Nucleoid uses modes in functions methods and conditional expressions
+#[rustfmt::skip]
+#[test]
+fn uses_modes_in_functions_methods_and_conditional_expressions() {
+    runner()("class Shop(name, sales):\n    this.name = name\n    this.sales = sales\n    def bestseller(): return this.sales.mode()\ndef typical(shop) => shop.sales.mode(sale -> sale.length)\nnorth = Shop(\"north\", [\"tea\", \"cake\", \"tea\"])\nsouth = Shop(\"south\", [\"pie\", \"cake\", \"cake\"])\nhit = north.bestseller() == south.bestseller() ? \"shared\" : north.bestseller()\nsize = typical(north)\ntrend = Shop.mode(shop -> shop.bestseller())\nassert: hit, \"tea\"\nassert: size, 3\nassert: trend, \"tea\"\nnorth.sales.push(\"cake\")\nnorth.sales.push(\"cake\")\nassert: hit, \"shared\"\nassert: size, 4\nassert: trend, \"cake\"");
+    let mut run = runner();
+    run(r#"class Shop(name, sales):
+    this.name = name
+    this.sales = sales
+    def bestseller(): return this.sales.mode()"#);
+    run("def typical(shop) => shop.sales.mode(sale -> sale.length)");
+    run(r#"north = Shop("north", ["tea", "cake", "tea"])"#);
+    run(r#"south = Shop("south", ["pie", "cake", "cake"])"#);
+    run(r#"hit = north.bestseller() == south.bestseller() ? "shared" : north.bestseller()"#);
+    run("size = typical(north)");
+    run("trend = Shop.mode(shop -> shop.bestseller())");
+    assert_eq!(run("hit"), "tea");
+    assert_eq!(run("size"), 3);
+    assert_eq!(run("trend"), "tea");
+    run(r#"north.sales.push("cake")"#);
+    run(r#"north.sales.push("cake")"#);
+    assert_eq!(run("hit"), "shared");
+    assert_eq!(run("size"), 4);
+    assert_eq!(run("trend"), "cake");
+}
+
+/// Nucleoid keeps mode as an ordinary name beside the mode query
+#[rustfmt::skip]
+#[test]
+fn keeps_mode_as_an_ordinary_name_beside_the_mode_query() {
+    runner()("mode = 2\nreport = {mode: 3}\ndef twice mode => mode * 2\nclass Shelf(items):\n    this.items = items\n    def mode(): return this.items.mode()\nshelf = Shelf([\"pen\", \"ink\", \"pen\"])\nspare = Shelf([\"cap\", \"cap\"])\ncommon = shelf.items.mode()\nlabel = shelf.mode() + \"/\" + spare.mode()\nshelves = Shelf.mode(each -> each.mode())\nassert: common, \"pen\"\nassert: label, \"pen/cap\"\nassert: shelves, \"pen\"\nassert: [mode, report.mode, twice(mode)], [2, 3, 4]\nassert: shelf.items.mode, null\nassert: Shelf.mode() == shelf, true\nspare.items.push(\"ink\")\nShelf([\"cap\"])\nassert: shelves, \"cap\"\nshelf.items.push(\"ink\")\nshelf.items.push(\"ink\")\nassert: common, \"ink\"\nassert: label, \"ink/cap\"");
+    let mut run = runner();
+    run("mode = 2");
+    run("report = {mode: 3}");
+    run("def twice mode => mode * 2");
+    run(r#"class Shelf(items):
+    this.items = items
+    def mode(): return this.items.mode()"#);
+    run(r#"shelf = Shelf(["pen", "ink", "pen"])"#);
+    run(r#"spare = Shelf(["cap", "cap"])"#);
+    run("common = shelf.items.mode()");
+    run(r#"label = shelf.mode() + "/" + spare.mode()"#);
+    run("shelves = Shelf.mode(each -> each.mode())");
+    assert_eq!(run("common"), "pen");
+    assert_eq!(run("label"), "pen/cap");
+    assert_eq!(run("shelves"), "pen");
+    assert_eq!(run("[mode, report.mode, twice(mode)]"), serde_json::json!([2, 3, 4]));
+    assert_eq!(run("shelf.items.mode"), serde_json::Value::Null);
+    assert_eq!(run("Shelf.mode() == shelf"), true);
+    run(r#"spare.items.push("ink")"#);
+    run(r#"Shelf(["cap"])"#);
+    assert_eq!(run("shelves"), "cap");
+    run(r#"shelf.items.push("ink")"#);
+    run(r#"shelf.items.push("ink")"#);
+    assert_eq!(run("common"), "ink");
+    assert_eq!(run("label"), "ink/cap");
+}
+
+/// Nucleoid rolls back failed mode updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_mode_updates() {
+    runner()("def checked(zone):\n    if zone == \"void\":\n        throw \"BAD_ZONE\"\n    return zone\nzones = [\"a\", \"b\", \"b\"]\nbusiest = zones.mode(checked)\nassert: busiest, \"b\"\nfailure = \"\"\ntry:\n    zones.shift()\n    zones.push(\"void\")\ncatch error:\n    failure = error\nassert: failure, \"BAD_ZONE\"\nassert: zones, [\"a\", \"b\", \"b\"]\nassert: busiest, \"b\"\nzones.push(\"a\")\nzones.push(\"a\")\nassert: busiest, \"a\"\nclass Parcel(zone): this.zone = zone\nParcel(\"b\")\nParcel(\"a\")\nParcel(\"a\")\nroutes = Parcel.mode(parcel -> checked(parcel.zone))\nfailure = \"\"\ntry:\n    Parcel(\"void\")\ncatch error:\n    failure = error\nassert: failure, \"BAD_ZONE\"\nassert: Parcel.length, 3\nassert: routes, \"a\"\nParcel(\"b\")\nParcel(\"b\")\nassert: routes, \"b\"");
+    let mut run = runner();
+    run(r#"def checked(zone):
+    if zone == "void":
+        throw "BAD_ZONE"
+    return zone
+zones = ["a", "b", "b"]
+busiest = zones.mode(checked)
+assert: busiest, "b"
+failure = ""
+try:
+    zones.shift()
+    zones.push("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: zones, ["a", "b", "b"]
+assert: busiest, "b"
+zones.push("a")
+zones.push("a")
+assert: busiest, "a"
+class Parcel(zone): this.zone = zone
+Parcel("b")
+Parcel("a")
+Parcel("a")
+routes = Parcel.mode(parcel -> checked(parcel.zone))
+failure = ""
+try:
+    Parcel("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: Parcel.length, 3
+assert: routes, "a"
+Parcel("b")
+Parcel("b")
+assert: routes, "b""#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

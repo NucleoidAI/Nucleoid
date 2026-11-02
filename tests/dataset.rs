@@ -33,8 +33,8 @@ struct Record {
 
 const SPEC_DOCUMENT: &str = include_str!("../nucleoid.spec.md");
 
-const SPEC_RECORDS: usize = 588;
-const SYNTH_RECORDS: usize = 1_249;
+const SPEC_RECORDS: usize = 596;
+const SYNTH_RECORDS: usize = 1_254;
 const SYNTH_19_RECORDS: usize = 51;
 const SYNTH_21_RECORDS: usize = 120;
 const SYNTH_22_RECORDS: usize = 5;
@@ -62,7 +62,7 @@ const SYNTH_44_RECORDS: usize = 7;
 const SYNTH_45_RECORDS: usize = 8;
 const SYNTH_46_RECORDS: usize = 8;
 const SYNTH_47_RECORDS: usize = 8;
-const SYNTH_48_RECORDS: usize = 9;
+const SYNTH_48_RECORDS: usize = 14;
 const SYNTH_49_RECORDS: usize = 11;
 const SYNTH_50_RECORDS: usize = 8;
 const SYNTH_51_RECORDS: usize = 8;

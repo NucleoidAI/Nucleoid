@@ -3323,6 +3323,79 @@ statement positions; caught values and transaction recovery are unchanged.
   specify the executable behavior. Their original assertions, including the
   population `filter(...).length` assertions, are preserved.
 
+## List and population modes
+
+- [NUC 75](docs/nuc-0075.md) adds the read-only list query `mode` to lists
+  and class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.mode()` returns the receiver's most frequent item.
+  `RECEIVER.mode(selector)` returns the most frequent value of
+  `selector(item)` the same way, so it equals `RECEIVER.map(selector).mode()`.
+  An empty receiver gives undefined, which a declaration stores as `null`.
+- Items are counted against the values `distinct` keeps. An item that no
+  value kept before it matches, under the deep equality of `assert`,
+  `includes` and `indexOf` compared as `kept.includes(item)` compares, is
+  kept and counts once for itself. Every other item counts once for the
+  earliest kept value that matches it. The result is the kept value with the
+  highest count, unchanged: an object stays the same object, and the mode of
+  a nonempty receiver is always one of the values that `distinct` keeps.
+- Among kept values with the same count, the one that comes first in
+  receiver order wins, as Python's `statistics.mode` returns the first mode it
+  meets: `[3, 4, 4, 3].mode()` is `3`.
+- When deep equality sorts the items into groups, as it does for numbers
+  other than NaN, strings, booleans, dates, `null`, undefined, classes and
+  instances, and for lists and records built from them, nested at most 64
+  levels, in which no record holds an undefined-valued property, the result
+  is the item that `xs[counts.indexOf(counts.max())]` picks, where
+  `counts[i]` is the number of items that match `xs[i]`.
+- Values are compared, never converted: `1`, `"1"` and `true` are three
+  values, and a date matches the number of its milliseconds. `null` and
+  undefined are one value, and the first of them is the one returned. `0` and
+  `-0` are one value, and the first is returned with its sign.
+- NaN, functions and regular expressions match nothing, not even themselves,
+  so each one is kept and counts once: `[0 / 0, 0 / 0, 1].mode()` is the
+  first NaN, and `[1, 0 / 0, 1].mode()` is `1`.
+- Records match on their contents in any key order, and instances only
+  themselves. The quirks of deep equality carry over exactly: after
+  `a = {k: null, m: 1}` and `b = {k: {}.none, m: 1, z: 5}`, `[a, b].mode()`
+  is `a`, which `b` repeats, while `[b, a].mode()` is `b`, because
+  `[a].includes(b)` is `true` and `[b].includes(a)` is `false`. An item that
+  matches several kept values counts only for the earliest. A list nested
+  more than 64 levels deep matches nothing, not even itself, while an object
+  always matches itself.
+- A comparison reads the objects it compares without subscribing to their
+  properties. A declaration that uses `mode` follows its list or population,
+  its argument expressions and what the selector reads; changing a property
+  of a compared object does not re-evaluate it.
+- `mode()` reads items, not bindings, so a `null` item is counted without
+  settling a declaration to `null`, while the reads inside a selector follow
+  the existing rules.
+- The receiver is a list, however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class.
+  On a class name, `mode` is the population query even when the class
+  declares an instance method `mode`; its instances keep calling that method.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("mode expects a function")`,
+  even on an empty receiver.
+- `mode` follows the shared rules of the list queries: it reads its receiver
+  before its arguments, evaluates every supplied argument once, left to
+  right, including unused extras, and never writes the receiver. List
+  mutations, new and deleted instances and changes to properties that a
+  selector reads re-evaluate a declaration that uses it, in class-level rules
+  too. Selector errors roll back through the existing transaction. A null or
+  undefined receiver yields undefined without evaluating the arguments.
+- Each value is compared with deep equality only against kept values that
+  share its structural hash, and, for an object holding a property whose value
+  is undefined, against the kept objects that hold a `null` property and as
+  many defined properties. These candidates are compared in receiver order
+  until the first match. A call makes at most one comparison per pair of a
+  value and a kept value, then reads the count of each kept value once.
+- Property reads such as `xs.mode`, bindings and object properties named
+  `mode`, and instance methods named `mode` called on an instance keep their
+  accepted results. The eight appended entries beginning
+  `Nucleoid finds the most frequent list item with mode` through
+  `Nucleoid rolls back failed mode updates` specify the executable behavior.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -18439,4 +18512,238 @@ assert(observed, 6)
 assert(frozen(1, 2), 9)
 observed
 # return: 6
+---
+# Nucleoid finds the most frequent list item with mode
+
+sizes = ["M", "S", "M", "L"]
+top = sizes.mode()
+assert: top, "M"
+sizes.push("L")
+sizes.push("L")
+assert: top, "L"
+sizes.shift()
+assert: top, "L"
+sizes = []
+assert: top, null
+sizes = [3, 4, 4, 3]
+assert: top, 3
+cart = {lines: [{sku: "pen", qty: 2}, {sku: "ink", qty: 1}, {sku: "ink", qty: 5}]}
+common = cart.lines.mode(line -> line.sku)
+bulk = cart.lines.filter(line -> line.qty > 1).mode(line -> line.sku)
+assert: common, "ink"
+assert: bulk, "pen"
+cart.lines.push({sku: "ink", qty: 4})
+assert: bulk, "ink"
+cart.lines.push({sku: "pen", qty: 6})
+cart.lines.push({sku: "pen", qty: 7})
+assert: common, "pen"
+assert: bulk, "pen"
+---
+# Nucleoid finds the most frequent value of class instance populations
+
+class Vote(choice, round):
+    this.choice = choice
+    this.round = round
+favorite = Vote.mode(vote -> vote.choice)
+assert: favorite, null
+first = Vote("tea", 1)
+Vote("coffee", 1)
+second = Vote("coffee", 2)
+late = Vote.filter(vote -> vote.round > 1).mode(vote -> vote.choice)
+recent = Vote[-2:].mode(vote -> vote.choice)
+assert: favorite, "coffee"
+assert: late, "coffee"
+assert: recent, "coffee"
+second.choice = "tea"
+assert: favorite, "tea"
+assert: late, "tea"
+assert: recent, "coffee"
+Vote("juice", 2)
+Vote("juice", 3)
+assert: favorite, "tea"
+assert: late, "juice"
+assert: recent, "juice"
+delete second.choice
+delete second.round
+delete second
+assert: favorite, "juice"
+kind = Vote
+assert: kind.mode(vote -> vote.round), 1
+---
+# Nucleoid compares mode items with deep equality
+
+inputs = [2, "2", true, "2", 2]
+common = inputs.mode()
+assert: common, 2
+inputs.push("2")
+assert: common, "2"
+inputs.push(null)
+inputs.push(inputs[99])
+inputs.push(null)
+inputs.push(null)
+assert: common, null
+signs = [-0, 1, 0, 1]
+zero = signs.mode()
+assert: String(1 / zero), "-Infinity"
+readings = [0 / 0, 0 / 0, 5]
+level = readings.mode()
+assert: String(level), "NaN"
+readings.push(5)
+assert: level, 5
+first = {x: 1, y: 2}
+places = [{x: 2, y: 1}, first, {y: 2, x: 1}]
+spot = places.mode()
+assert: spot == first, true
+held = {k: null, m: 1}
+gap = {k: {}.none, m: 1, z: 5}
+records = [held, gap]
+kept = records.mode()
+assert: kept == held, true
+records = [gap, held]
+assert: kept == gap, true
+class Robot(name): this.name = name
+ada = Robot("ada")
+twin = Robot("ada")
+crew = [ada, twin, twin]
+lead = crew.mode()
+assert: lead == twin, true
+crew.push(ada)
+assert: lead == ada, true
+---
+# Nucleoid calls the mode selector once per item with only the item
+
+seen = []
+def size(order, position):
+    seen.push(position ?? order.id)
+    return order.size
+orders = [{id: 1, size: "M"}, {id: 2, size: "S"}, {id: 3, size: "S"}]
+def common() => orders.mode(size)
+assert: common(), "S"
+assert: seen, [1, 2, 3]
+orders.push({id: 4, size: "M"})
+assert: common(), "M"
+assert: seen, [1, 2, 3, 1, 2, 3, 4]
+limit = 2
+def band order => order.id > limit ? "late" : "early"
+phase = orders.mode(band)
+assert: phase, "early"
+limit = 0
+assert: phase, "late"
+missing = null
+skipped = missing.mode(size(9))
+assert: skipped, null
+assert: seen, [1, 2, 3, 1, 2, 3, 4]
+---
+# Nucleoid keeps modes live in class level rules
+
+class Team(name): this.name = name
+class Vote(team, choice):
+    this.team = team
+    this.choice = choice
+$Team.favorite = Vote.filter(vote -> vote.team == $Team).mode(vote -> vote.choice)
+red = Team("red")
+blue = Team("blue")
+Vote(red, "tea")
+swing = Vote(red, "coffee")
+Vote(red, "coffee")
+Vote(blue, "juice")
+overall = Vote.mode(vote -> vote.choice)
+assert: red.favorite, "coffee"
+assert: blue.favorite, "juice"
+assert: overall, "coffee"
+swing.choice = "tea"
+assert: red.favorite, "tea"
+assert: overall, "tea"
+green = Team("green")
+assert: green.favorite, null
+Vote(green, "juice")
+Vote(green, "juice")
+assert: green.favorite, "juice"
+assert: overall, "juice"
+---
+# Nucleoid uses modes in functions methods and conditional expressions
+
+class Shop(name, sales):
+    this.name = name
+    this.sales = sales
+    def bestseller(): return this.sales.mode()
+def typical(shop) => shop.sales.mode(sale -> sale.length)
+north = Shop("north", ["tea", "cake", "tea"])
+south = Shop("south", ["pie", "cake", "cake"])
+hit = north.bestseller() == south.bestseller() ? "shared" : north.bestseller()
+size = typical(north)
+trend = Shop.mode(shop -> shop.bestseller())
+assert: hit, "tea"
+assert: size, 3
+assert: trend, "tea"
+north.sales.push("cake")
+north.sales.push("cake")
+assert: hit, "shared"
+assert: size, 4
+assert: trend, "cake"
+---
+# Nucleoid keeps mode as an ordinary name beside the mode query
+
+mode = 2
+report = {mode: 3}
+def twice mode => mode * 2
+class Shelf(items):
+    this.items = items
+    def mode(): return this.items.mode()
+shelf = Shelf(["pen", "ink", "pen"])
+spare = Shelf(["cap", "cap"])
+common = shelf.items.mode()
+label = shelf.mode() + "/" + spare.mode()
+shelves = Shelf.mode(each -> each.mode())
+assert: common, "pen"
+assert: label, "pen/cap"
+assert: shelves, "pen"
+assert: [mode, report.mode, twice(mode)], [2, 3, 4]
+assert: shelf.items.mode, null
+assert: Shelf.mode() == shelf, true
+spare.items.push("ink")
+Shelf(["cap"])
+assert: shelves, "cap"
+shelf.items.push("ink")
+shelf.items.push("ink")
+assert: common, "ink"
+assert: label, "ink/cap"
+---
+# Nucleoid rolls back failed mode updates
+
+def checked(zone):
+    if zone == "void":
+        throw "BAD_ZONE"
+    return zone
+zones = ["a", "b", "b"]
+busiest = zones.mode(checked)
+assert: busiest, "b"
+failure = ""
+try:
+    zones.shift()
+    zones.push("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: zones, ["a", "b", "b"]
+assert: busiest, "b"
+zones.push("a")
+zones.push("a")
+assert: busiest, "a"
+class Parcel(zone): this.zone = zone
+Parcel("b")
+Parcel("a")
+Parcel("a")
+routes = Parcel.mode(parcel -> checked(parcel.zone))
+failure = ""
+try:
+    Parcel("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: Parcel.length, 3
+assert: routes, "a"
+Parcel("b")
+Parcel("b")
+assert: routes, "b"
 ```

@@ -2194,4 +2194,28 @@ packet = Packet(6, 7, 8)
 assert(packet.tail, [7, 8])
 packet.tail
 # return: [7,8]
+---
+# Nucleoid finds the most frequent items of lists and populations
+
+sizes = ["M", "XL", "M", "XL"]
+top = sizes.mode()
+width = sizes.mode(size -> size.length)
+class Vote(choice): this.choice = choice
+Vote("tea")
+Vote("coffee")
+Vote("coffee")
+favorite = Vote.mode(vote -> vote.choice)
+assert(top, "M")
+assert(width, 1)
+assert(favorite, "coffee")
+sizes.shift()
+Vote("tea")
+Vote("tea")
+assert(top, "XL")
+assert(width, 2)
+assert(favorite, "tea")
+sizes = []
+assert(top, null)
+favorite
+# return: "tea"
 ```

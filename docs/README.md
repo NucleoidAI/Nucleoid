@@ -1855,7 +1855,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), and `count(predicate)` ([NUC 73](nuc-0073.md)) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), and `mode` ([NUC 75](nuc-0075.md)) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2702,6 +2702,62 @@ assert: large, 2
   [list and population predicate counts](../nucleoid.spec.md#list-and-population-predicate-counts)
   section.
 
+### List and population modes
+
+```
+sizes = ["M", "XL", "M", "XL"]
+top = sizes.mode()
+width = sizes.mode(size -> size.length)
+class Vote(choice): this.choice = choice
+Vote("tea")
+Vote("coffee")
+Vote("coffee")
+favorite = Vote.mode(vote -> vote.choice)
+assert(top, "M")
+assert(width, 1)
+assert(favorite, "coffee")
+sizes.shift()
+Vote("tea")
+Vote("tea")
+assert(top, "XL")
+assert(width, 2)
+assert(favorite, "tea")
+sizes = []
+assert(top, null)
+favorite
+```
+
+- This is the complete
+  `Nucleoid finds the most frequent items of lists and populations` program
+  in `tests/reference.md`, without its title and expected-return metadata;
+  it returns `"tea"`.
+- [NUC 75](nuc-0075.md) adds `mode()` and `mode(selector)` to lists and
+  class instance lists. The result is the most frequent item, or selected
+  value, itself; on a tie, the one that comes first in receiver order wins,
+  so `[3, 4, 4, 3].mode()` is `3`. An empty list or class gives undefined,
+  which a declaration stores as `null`. `xs.mode(selector)` equals
+  `xs.map(selector).mode()`.
+- Items are counted against the values `distinct` keeps, with the deep
+  equality of `assert`, `includes` and `indexOf`, and never converted:
+  `1`, `"1"` and `true` stay three values, `null` and undefined are one,
+  `0` and `-0` are one with the first returned, every NaN, function and
+  regular expression counts once on its own, records match on their contents
+  and instances only themselves. The mode of a nonempty receiver is always
+  one of the values that `distinct` keeps, and an item that matches several
+  of them counts only for the earliest.
+- The selector is called once per item, in order, with only the item, as
+  `map` calls its callback. A supplied selector that is not a function,
+  including `null`, raises `TypeError("mode expects a function")`, even on an
+  empty receiver.
+- Modes are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level rules
+  too, but not the properties of the objects it compares. On a class name,
+  `Name.mode(...)` is the population query even when the class declares an
+  instance method `mode`; instances keep calling the method.
+- The authoritative contract is the
+  [list and population modes](../nucleoid.spec.md#list-and-population-modes)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -2947,6 +3003,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
+| A supplied `mode` selector that is not a function, including `null`, even on an empty receiver | `mode expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
@@ -3127,6 +3184,7 @@ items.sum()  Name.sum(selector)        live numeric total (NUC 68)
 items.max()  Name.min(selector)        live numeric extreme (NUC 69)
 items.distinct()  Name.distinct(selector) live values without repeats (NUC 71)
 items.count(predicate)  Name.count(predicate) live predicate count (NUC 73)
+items.mode()  Name.mode(selector)      live most frequent item (NUC 75)
 
 why reference                         derive a live explanation
 affects reference                     inspect live downstream impact

@@ -63,6 +63,7 @@ const LIST_MEMBERS: &[&str] = &[
     "max",
     "min",
     "distinct",
+    "mode",
     "some",
     "every",
     "find",
@@ -326,6 +327,24 @@ mod tests {
                 "{prefix}"
             );
         }
+    }
+
+    #[test]
+    fn completion_offers_the_mode_query_on_lists_and_instance_lists() {
+        let mut runtime = Runtime::new();
+        runtime
+            .run("sizes = [3, 1]\nclass Vote\nVote()\nmoderate = 1")
+            .unwrap();
+        for (prefix, expected) in [("sizes.mo", "sizes.mode"), ("Vote.mo", "Vote.mode")] {
+            let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+            assert!(
+                completion.candidates.iter().any(|name| name == expected),
+                "{prefix}"
+            );
+        }
+        // `mode` is a member of lists, not a name of its own.
+        let completion = Completion::find(&runtime, &editor::new("mo"), false).unwrap();
+        assert_eq!(completion.candidates, ["moderate"]);
     }
 
     #[test]
