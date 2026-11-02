@@ -86,7 +86,7 @@ Whenever `/arc-dataset` introduces a new dataset, it also adds that puzzle ID
 exactly once to the workflow's `jobs.report.env.ARC_PUZZLES` list and keeps the
 job timeout budget sufficient. Dataset and agent-configuration changes alone
 do not dispatch the workflow. If `/arc-purposal` withdraws a candidate dataset,
-it also removes only the reporting entry that invocation added.
+it also removes only the reporting entry that round added.
 
 ## Terminal presentation
 
@@ -320,9 +320,9 @@ by the same rules.
 
 ## ARC proposal agent
 
-Run `/arc-purposal [<puzzle-id>]` to take one training puzzle through the
+Run `/arc-purposal [<puzzle-id>]` to take training puzzles through the
 [arc-purposal](../.claude/agents/arc-purposal.agent.md) workflow in its
-[skill](../.claude/skills/arc-purposal/SKILL.md):
+[skill](../.claude/skills/arc-purposal/SKILL.md), one round per puzzle:
 
 1. The [arc-dataset](../.claude/agents/arc-dataset.agent.md) agent writes the
    puzzle's instruction dataset, using any dataset in `src\dataset` as a
@@ -347,19 +347,30 @@ Run `/arc-purposal [<puzzle-id>]` to take one training puzzle through the
    When the dataset, the candidate, or the run shows that the solver needs a
    change, the final report suggests it for review.
 
-Without a puzzle ID, the workflow chooses one from `data\training`. It skips
-the [genesis puzzle](#genesis-puzzle) and every puzzle that already has a
-`dataset.<puzzle_id>.json`, then takes the puzzle whose largest training
-matrix has the fewest cells, breaking ties by the fewest total training cells
-and then by the lowest ID. Only training pairs are measured.
+With a puzzle ID, the workflow runs one round for that puzzle and stops.
+Without one, it runs continuous rounds, the way `/nuc-proposal` continues with
+the next NUC. Each round chooses its puzzle from `data\training`: it skips the
+[genesis puzzle](#genesis-puzzle), every puzzle that already has a
+`dataset.<puzzle_id>.json`, and every puzzle an earlier round took, then takes
+the puzzle whose largest training matrix has the fewest cells, breaking ties
+by the fewest total training cells and then by the lowest ID. Only training
+pairs are measured.
+
+After each round records its outcome, the next round starts without a new
+prompt, until no puzzle remains or you stop it. A blocked dataset, a rejected
+NUC, or a run that does not pass ends only its round. A process blocker, such
+as a Blocked NUC, a failed commit or push, or an environment failure that
+would recur for any puzzle, pauses the loop for you to resolve. Each round's
+retained dataset, README paragraph, and reporting entry stay uncommitted for
+review.
 
 Append `--hint <text>` to suggest the puzzle's objects, their roles, or its
-transformation. Only the arc-dataset agent receives the hint, and it keeps only
-what the training pairs confirm.
+transformation. Only the arc-dataset agent receives the hint, in every round,
+and it keeps only what each puzzle's training pairs confirm.
 
-The run makes paid OpenRouter calls and shows the expected test grid, so it
-runs once, is never repeated to obtain a pass, and its output never feeds back
-into the dataset or the candidate. The
+Each run makes paid OpenRouter calls and shows the expected test grid, so a
+puzzle runs once, is never repeated to obtain a pass, and its output never
+feeds back into a dataset, a candidate, or a later round. The
 [ARC instructions](../.claude/rules/arc.instructions.md) require an
 object-oriented Nucleoid world model, training-only rule inference, and
 exact-grid evaluation without test-answer leakage.

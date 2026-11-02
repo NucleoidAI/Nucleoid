@@ -329,8 +329,9 @@ to that evaluation and must not recursively launch another agent.
 
 ## ARC-requested proposals (caller only)
 
-`/arc-purposal <puzzle-id>` may request one NUC when the puzzle's
-`arc-dataset` handoff requires a Nucleoid enhancement. Prepare and evaluate it
+Each `/arc-purposal` round may request one NUC when its puzzle's
+`arc-dataset` handoff requires a Nucleoid enhancement, including every round
+of a continuous invocation without a puzzle ID. Prepare and evaluate it
 as a single-proposal request: fresh proposal and evaluation agents, a pinned
 baseline, an isolated candidate that changes nothing under `arc/`, the Rust
 improvement pass when required, and no token comparison. Hold its outcome until
@@ -345,12 +346,12 @@ under the [automatic acceptance rule](#automatic-acceptance-caller-only):
   or no run: Accepted when the evaluator's overall decision is Accepted, and
   Automatic-Accepted when it is not.
 
-This exact-match basis covers only the NUC that the same invocation requested,
-frozen before its run and integrated unchanged; every other NUC follows the
-automatic acceptance rule directly. Record the basis, the evaluator's decision
-and report, and the run's evidence with the outcome, and never hide the
-evaluator's failures. The run is scored once: never rerun it, or revise the
-dataset or candidate from its output, to reach a pass.
+This exact-match basis covers only the NUC that the same round requested,
+frozen before that round's run and integrated unchanged; every other NUC
+follows the automatic acceptance rule directly. Record the basis, the
+evaluator's decision and report, and the run's evidence with the outcome, and
+never hide the evaluator's failures. The run is scored once: never rerun it,
+or revise the dataset or candidate from its output, to reach a pass.
 
 ## User-requested proposals (caller only)
 
