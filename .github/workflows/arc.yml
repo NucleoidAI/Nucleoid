@@ -9,7 +9,7 @@ permissions:
 jobs:
   report:
     runs-on: ubuntu-latest
-    timeout-minutes: 170
+    timeout-minutes: 200
     defaults:
       run:
         shell: bash
@@ -21,6 +21,7 @@ jobs:
         9af7a82c
         0ca9ddb6
         6150a2bd
+        d631b094
       NUCLEOID_EXECUTABLE: ${{ github.workspace }}/target/debug/nucleoid
       DOTENV_CONFIG_PATH: /dev/null
       NO_COLOR: "1"

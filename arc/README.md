@@ -198,8 +198,9 @@ storage framing is separate from `output_canvas`'s final composition/cropping mo
 
 Each dataset also sets `output_canvas`, how its output matrices are framed.
 `EXACT` outputs keep the input matrix's dimensions, while `FIT` outputs are
-cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`
-and `dataset.9af7a82c.json` are `FIT`; the other datasets are `EXACT`.
+cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`,
+`dataset.9af7a82c.json`, and `dataset.d631b094.json` are `FIT`; the other
+datasets are `EXACT`.
 
 `dataset.0ca9ddb6.json` annotates the three training pairs from
 `data\training\0ca9ddb6.json`, followed by its test pair, with fifteen point
@@ -292,6 +293,28 @@ and two outputs are wider than their inputs. Orientation is 0 in both states
 because the regions are not rotated and the bars are vertical. The test pair
 follows the training pairs at the same level and is annotated by the same
 rules.
+
+`dataset.d631b094.json` annotates the four original training pairs from
+`data\training\d631b094.json`, in order, followed by its test pair, five
+region instances in total, one per pair. Every input retains its original
+3 by 3 canvas, colors, positions, and zero cells. Each input holds a single
+nonzero color, and all cells of that color form one region, whether or not
+they touch: 2, 3, 1, 4, and 5 cells per pair. Each output is a horizontal bar
+of the region's color, one row high and as wide as the region's cell count,
+giving the original 1 by 2, 1 by 3, 1 by 1, 1 by 4, and 1 by 5 outputs. The
+class takes `color` and `cell_count`, the region's number of cells, as
+scalars rather than a matrix of cells. Unconditional class-level rules
+introduce `bar_width` (the cell count), which is absent before the rules run,
+and move `x` and `y` to the output origin 0. Tags identify the geometry:
+`l9100` is a single shape, as in `dataset.28bf18c6.json`, and `l3058` is a
+horizontal bar. Input masks retain each pair's full-size, zero-padded 3 by 3
+input canvas; output masks retain each pair's full-size output canvas. The
+`output_x`/`output_y` fields record the bar's nonzero bounding-box origin,
+equal to `output_value.x`/`output_value.y`. `output_canvas` is `FIT` because
+each output is cropped to the bar. Orientation is 0 in both states because
+the regions are not rotated and the bar is a distinct horizontal geometry.
+The test pair follows the training pairs at the same level and is annotated
+by the same rules.
 
 ## ARC proposal agent
 
