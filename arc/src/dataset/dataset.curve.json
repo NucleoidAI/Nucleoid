@@ -261,6 +261,58 @@
           "output_value": {"id":"obj1c4ff1a88360","x":1,"y":3,"orientation":180,"tag":"l9906","vertex_color":9,"rim_color":2}
         }
       ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 9, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 9, 0, 0],
+        [0, 0, 0, 2, 0, 2, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj3d302d758b50",
+          "input_x": 4,
+          "output_x": 3,
+          "input_y": 2,
+          "output_y": 2,
+          "input_orientation": 180,
+          "output_orientation": 180,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 9, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 9, 0, 0],
+            [0, 0, 0, 2, 0, 2, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "obj3d302d758b50 = Obj(x=4, y=2, orientation=180, vertex_color=9)",
+          "input_value": {"id":"obj3d302d758b50","orientation":180,"tag":"l7544","vertex_color":9,"x":4,"y":2},
+          "output_value": {"id":"obj3d302d758b50","orientation":180,"rim_color":2,"tag":"l9906","vertex_color":9,"x":3,"y":2}
+        }
+      ]
     }
   ]
 }

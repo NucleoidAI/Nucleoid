@@ -19,9 +19,10 @@ needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.
   `arc/data/training/`. Report a missing or unknown ID instead of guessing.
 - If `dataset.<id>.json` already exists, stop and report it; audit or overwrite
   it only when the caller explicitly asks. Do not create numbered copies.
-- The genesis puzzle `3aa6fb7a` retains its four shared datasets, without its
-  test pair. Do not regenerate genesis or edit its files while updating other
-  puzzles.
+- The genesis puzzle `3aa6fb7a` retains its four shared genesis datasets,
+  `dataset.core.json`, `dataset.extension.json`, `dataset.curve.json`, and
+  `dataset.line.json`, which hold synthesized examples and no test pair. Do not
+  regenerate genesis or edit its files while updating other puzzles.
 - A caller coordinating a batch may supply an external staging directory.
   Prepare and verify the single dataset there, returning staged and canonical
   paths for caller integration. In this mode the caller owns shared README and

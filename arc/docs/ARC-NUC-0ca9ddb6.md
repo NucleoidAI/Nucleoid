@@ -98,8 +98,8 @@ $Obj.y = $Obj.y@first - 1
 
 All ten output snapshots now agree with their `output_x` and `output_y`
 annotations, so the world model itself carries the position change that
-placement relies on. The genesis datasets `dataset.curve.1.json` and
-`dataset.line.1.json` use the same anchors; see
+placement relies on. The genesis datasets `dataset.curve.json` and
+`dataset.line.json` use the same anchors; see
 [ARC-NUC-3aa6fb7a](ARC-NUC-3aa6fb7a.md).
 
 ### Offline check

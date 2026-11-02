@@ -33,8 +33,10 @@ Object identifiers remain unique across datasets. Generation produces one file
 per puzzle; the loader aggregates every JSON instruction dataset in
 `arc\src\dataset` in filename order for all runs.
 
-The genesis puzzle `3aa6fb7a` is an exception: preserve its four shared core,
-curve, and line datasets, and do not add its test pair to them. Do not
+The genesis puzzle `3aa6fb7a` is an exception. Its four shared genesis
+datasets, `dataset.core.json`, `dataset.extension.json`, `dataset.curve.json`,
+and `dataset.line.json`, hold synthesized examples instead of original pairs;
+preserve them, and do not add the puzzle's test pair to them. Do not
 regenerate or change genesis while updating other puzzles. Do not delete or
 overwrite existing datasets without explicit authorization; a padding-only
 audit does not replace their examples. When explicitly asked to add test pairs

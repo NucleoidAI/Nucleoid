@@ -161,8 +161,20 @@ dimension. `/arc-dataset` infers one rule set from the training pairs and
 annotates every pair with it, rather than synthesizing varieties or creating
 numbered copies. `document()` includes a puzzle's own dataset in that puzzle's
 runs, so a run of a puzzle that has a dataset receives its expected test
-output in the few-shot context. The shared genesis datasets remain unchanged
-and contain no test pair.
+output in the few-shot context.
+
+The genesis datasets are `dataset.core.json`, `dataset.extension.json`,
+`dataset.curve.json`, and `dataset.line.json`. They are the shared examples of
+the genesis puzzle `3aa6fb7a`, which has no `dataset.3aa6fb7a.json`, and every
+run receives them with the other datasets. Their pairs are synthesized
+varieties of corners, curves, and lines rather than original training or test
+pairs, so they contain no test pair. Each ends with one synthesized pair that
+holds a single object on the genesis puzzle's 7 by 7 canvas, annotated with
+that dataset's own declarations: a color-9 corner at orientation 135 with its
+outside color-4 marker (`dataset.core.json`), a color-4 corner at orientation
+45 with its inside color-7 marker (`dataset.extension.json`), a color-9 point
+with its color-2 rim below (`dataset.curve.json`), and a vertical line that
+extends down from its top endpoint (`dataset.line.json`).
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations.
@@ -389,7 +401,7 @@ Based on declarations in `nuc` lang, the LLM extracts instances.
 Each instance matrix keeps the full canvas of its pair's input or output
 matrix: the object's cells stay at their canvas coordinates and every other
 cell is `0`, as in the [instruction datasets](#instruction-datasets). The core,
-line, and curve instruction datasets expose
+extension, curve, and line instruction datasets expose
 `input_x`, `output_x`, `input_y`, `output_y`, `input_orientation`, and
 `output_orientation` on each instance. The x/y fields give the zero-based
 column/row of the object's nonzero bounding-box origin within its mask; the
@@ -407,7 +419,7 @@ separate properties. Curve orientation gives the rim direction: 0 is up and
 
 | Dataset | Descriptive properties |
 | --- | --- |
-| Core | `vertex_color`, `vertical_segment_color`, `horizontal_segment_color`, `marker_color` |
+| Core and extension | `vertex_color`, `vertical_segment_color`, `horizontal_segment_color`, `marker_color` |
 | Line | `endpoint_position` (side of the color-8 endpoint), `extension_direction` |
 | Curve | `vertex_color`, `rim_color` |
 
@@ -422,7 +434,7 @@ with artificial defaults.
 
 Both native snapshots keep `x` and `y` anchored to the input bounding box;
 `output_x` and `output_y` record the output bounding box's origin instead.
-In `dataset.core.1.json`, adding the exterior marker grows the output to
+In `dataset.core.json`, adding the exterior marker grows the output to
 3 by 3: subtract one from the input bounding box's x origin for
 `input_orientation` 225 or 315, and from its y origin for `input_orientation`
 45 or 315.
@@ -432,8 +444,8 @@ y when it is `up`; extensions to the right or down keep the input origin.
 For curves, subtract one from x for either orientation, and from y only when
 `orientation` is 0. These offsets are already recorded in `output_x`
 and `output_y`; do not apply them a second time during placement.
-The inner markers in `dataset.core.2.json` do not change the bounding-box
-origin.
+The inner markers in `dataset.extension.json` do not change the
+bounding-box origin.
 
 ```json
 {

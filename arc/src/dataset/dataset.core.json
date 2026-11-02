@@ -364,6 +364,58 @@
           "output_value": {"id":"obj328ea79cc351","x":5,"y":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"horizontal_segment_color":9,"marker_color":4}
         }
       ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 9, 0, 0],
+        [0, 0, 0, 9, 9, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 9, 0, 0],
+        [0, 0, 0, 9, 9, 0, 0],
+        [0, 0, 0, 0, 0, 4, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "objb10dd4029d3e",
+          "input_x": 3,
+          "output_x": 3,
+          "input_y": 1,
+          "output_y": 1,
+          "input_orientation": 135,
+          "output_orientation": 135,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 9, 0, 0],
+            [0, 0, 0, 9, 9, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 9, 0, 0],
+            [0, 0, 0, 9, 9, 0, 0],
+            [0, 0, 0, 0, 0, 4, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "objb10dd4029d3e = Obj(x=3, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"horizontal_segment_color":9,"id":"objb10dd4029d3e","marker_color":0,"orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"x":3,"y":1},
+          "output_value": {"horizontal_segment_color":9,"id":"objb10dd4029d3e","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"x":3,"y":1}
+        }
+      ]
     }
   ]
 }
