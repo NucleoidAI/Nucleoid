@@ -10,8 +10,8 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | `output_canvas`, applied by `Matrix.canvas` |
-| Solver runs | None recorded |
-| Updated | 1-Nov-2026 |
+| Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0 |
+| Updated | 2-Nov-2026 |
 
 ## Puzzle
 
@@ -120,9 +120,27 @@ genesis datasets are `EXACT`.
 
 ## Runs
 
-No `bun start 28bf18c6` run is recorded yet; its difference is unknown, not
-zero.
+| Date | Run | Commit | Exit status | Difference | Seconds |
+| --- | --- | --- | --- | --- | --- |
+| 1-Nov-2026 12:00 UTC | [41304414238](https://github.com/NucleoidAI/Nucleoid/actions/runs/41304414238) | `3cca0aa` | 0 | 0 | 56 |
+| 1-Nov-2026 14:03 UTC | [41314257591](https://github.com/NucleoidAI/Nucleoid/actions/runs/41314257591) | `3f734a8` | 0 | 0 | 87 |
+| 1-Nov-2026 20:20 UTC | [41346341604](https://github.com/NucleoidAI/Nucleoid/actions/runs/41346341604) | `c2fff09` | 0 | 0 | 93 |
+| 2-Nov-2026 05:26 UTC | [41394006982](https://github.com/NucleoidAI/Nucleoid/actions/runs/41394006982) | `b90a525` | 0 | 0 | 78 |
+| 2-Nov-2026 06:45 UTC | [41401913542](https://github.com/NucleoidAI/Nucleoid/actions/runs/41401913542) | `ed49ce3` | 0 | 0 | 109 |
+
+Each run is the **ARC puzzle report** workflow's
+`bun --no-env-file run start 28bf18c6` on `ubuntu-latest`, with the commit's
+debug runtime and a 30-minute limit. The exit status is the difference score;
+seconds are the workflow's wall time for the puzzle, from each run's
+`arc-puzzle-report` artifact. No local `bun start 28bf18c6` run is recorded.
 
 ## Open items
 
-- Record the first run's date, runtime, exit status, and difference.
+- **Runs from `c2fff09` on saw the answer.** Since that commit,
+  `src/dataset/dataset.ts` sends every JSON dataset as few-shot context, and
+  this puzzle's dataset includes its annotated test pair with the expected
+  output. The exact matches at `c2fff09`, `b90a525`, and `ed49ce3` therefore
+  do not show that the rule was inferred from the training pairs; the runs at
+  `3cca0aa` and `3f734a8`, which predate it, also matched exactly. Suggested,
+  not applied: keep the running puzzle's test pairs out of
+  `document(puzzle_id)`.

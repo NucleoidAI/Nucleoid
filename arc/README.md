@@ -59,7 +59,6 @@ built and [benchmarked](#benchmark) on. Instead of its own
 `dataset.3aa6fb7a.json`, it learns from the four shared genesis datasets that
 every run receives, described under
 [Instruction datasets](#instruction-datasets).
-[ARC-NUC-3aa6fb7a](docs/ARC-NUC-3aa6fb7a.md) is its progress record.
 
 ### GitHub Actions reporting
 
@@ -86,7 +85,7 @@ Whenever `/arc-dataset` introduces a new dataset, it also adds that puzzle ID
 exactly once to the workflow's `jobs.report.env.ARC_PUZZLES` list and keeps the
 job timeout budget sufficient. Dataset and agent-configuration changes alone
 do not dispatch the workflow. If `/arc-purposal` withdraws a candidate dataset,
-it also removes only the reporting entry that round added.
+it also removes only the reporting entry that invocation added.
 
 ## Terminal presentation
 
@@ -200,9 +199,9 @@ storage framing is separate from `output_canvas`'s final composition/cropping mo
 
 Each dataset also sets `output_canvas`, how its output matrices are framed.
 `EXACT` outputs keep the input matrix's dimensions, while `FIT` outputs are
-cropped to the nonzero bounding box of their content. `dataset.28bf18c6.json`,
-`dataset.9af7a82c.json`, and `dataset.d631b094.json` are `FIT`; the other
-datasets are `EXACT`.
+cropped to the nonzero bounding box of their content. `dataset.27a28665.json`,
+`dataset.28bf18c6.json`, `dataset.44f52bb0.json`, `dataset.9af7a82c.json`, and
+`dataset.d631b094.json` are `FIT`; the other datasets are `EXACT`.
 
 `dataset.0ca9ddb6.json` annotates the three training pairs from
 `data\training\0ca9ddb6.json`, followed by its test pair, with fifteen point
@@ -220,6 +219,79 @@ the patterns are symmetric. The test pair follows the training pairs at the
 same level and is annotated by the same rules.
 `document()` includes it in the shared few-shot context for every run.
 
+`dataset.0d3d703e.json` annotates the four original training pairs from
+`data\training\0d3d703e.json`, in order, followed by its test pair, fifteen
+bar instances in total, three per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions. Each input holds three vertical
+bars of distinct colors, one per column; each object is one bar, 3 cells tall
+and 1 cell wide, listed from left to right. Each output keeps every bar in
+place and swaps its color with its partner in a fixed pairing of the colors 1
+and 5, 2 and 6, 3 and 4, and 8 and 9. The training pairs show every pairing
+in both directions, and the test pair turns 8, 1, and 3 into 9, 5, and 4. Colors
+0 and 7 never appear, and the rules leave them outside the pairing rather than
+assume an identity. The class takes `color` as its only descriptive scalar,
+with no canvas size or matrix of cells. One unconditional class-level rule
+rewrites `color` from the input color, anchored with `@first`:
+`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner != $Obj.color@first)`
+finds the pair that holds the input color and takes its other member, so each
+pairing is stated once and serves both directions. Each bar recolors
+independently of the other bars. The rules create no other properties,
+so input and output states share the same keys, and leave `x` and `y`
+unchanged because the bar stays in place. Native output snapshots are
+captured with all of the same pair's implementations together, followed by
+`Obj[:]`. The tag `l6953` is a vertical bar, as in `dataset.9af7a82c.json`
+and `dataset.d037b0a7.json`, in both states. Input and output masks retain the
+full 3 by 3 canvas, padded with `0` outside the bar, and merging a pair's masks
+reproduces its input and output. The `output_x`/`output_y` fields record the
+bar's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each output keeps its input's canvas.
+Orientation is 0 in both states because the bars are vertical and not
+rotated. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
+
+`dataset.27a28665.json` annotates the seven original training pairs from
+`data\training\27a28665.json`, in order, followed by its three test pairs,
+fifty point instances in total, five per pair. Every input retains its
+original 3 by 3 canvas, colors, positions, and zero cells. Each input holds one
+five-cell pattern of a single color whose 3 by 3 bounding box spans the
+canvas; each object is one of its cells, a single 1 by 1 point of that color,
+listed in reading order. Each output is the original 1 by 1 grid, a code color
+that depends only on the pattern's geometry, not on its color or cell count:
+color 5 alone yields the codes 1, 2, and 6. The rules identify the geometry by
+how many corners of the pattern's bounding box it fills: none, the orthogonal
+cross, gives 6; one, the pattern with an empty center, gives 1; two, a 2 by 2
+block with a diagonal tail, gives 3; and all four, the diagonal cross, give 2.
+The first and sixth training pairs and the second test pair give 1, the second
+and third training pairs and the third test pair give 2, the fourth and fifth
+training pairs give 3, and the seventh training pair and the first test pair
+give 6. The class takes `color` as its only descriptive scalar, with no canvas
+size or matrix of cells. Unconditional class-level rules introduce three
+properties, absent before the rules run, from the pair's whole population:
+`at_corner` tests whether the point's input column is
+`Obj.min(point => point.x@first)` or `Obj.max(point => point.x@first)` and its
+input row is the population's smallest or largest `y@first`, a corner of the
+pattern's bounding box; `corner_count` is
+`Obj.filter(point => point.at_corner).length`; and `fill_color` is
+`6 if $Obj.corner_count == 0 else 1 if $Obj.corner_count == 1 else 3 if $Obj.corner_count == 2 else 2`.
+The population rules re-evaluate whenever an instance is added, so every point
+of a pair records the same `corner_count` and `fill_color`. Other features,
+such as the number of points without an orthogonal neighbor, also separate the
+four training patterns; the rules count bounding-box corners, which needs
+neither the canvas size nor the pattern's position. The rules also move `x`
+and `y` to the output origin 0, and `@first` anchors keep the corner test on
+the input coordinates. Native output snapshots are captured with all of the
+same pair's implementations together, followed by `Obj[:]`. The tag `l7544` is
+a single point, as in `dataset.0ca9ddb6.json` and `dataset.44f52bb0.json`, in
+both states, because each point's output is the single output cell. Input
+masks retain each pair's full-size, zero-padded 3 by 3 input canvas; every
+point's output mask is the complete 1 by 1 output, and merging them reproduces
+it. The `output_x`/`output_y` fields record the cell's nonzero bounding-box
+origin, equal to `output_value.x`/`output_value.y`. `output_canvas` is `FIT`
+because each output is cropped to its single cell instead of keeping the
+3 by 3 input canvas. Orientation is 0 in both states because the points are
+symmetric. The test pairs follow the training pairs at the same level and are
+annotated by the same rules.
+
 `dataset.28bf18c6.json` annotates the three original training pairs from
 `data\training\28bf18c6.json`, followed by its test pair, one shape instance
 per pair. Every input retains
@@ -236,6 +308,82 @@ output origin 0. Tags identify the geometry: `l9100` is a single shape and
 input canvas and output masks its output canvas. Orientation is 0 in both
 states because the shapes are not rotated. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
+
+`dataset.44f52bb0.json` annotates the six original training pairs from
+`data\training\44f52bb0.json`, in order, followed by its two test pairs,
+thirty-two point instances in total (5, 3, 6, 2, 4, 3, 7, and 2 per pair).
+Every input retains its original 3 by 3 canvas, colors, positions, and zero
+cells. Each object is one nonzero input cell, a single 1 by 1 point of color
+2, listed in reading order. Each output is the original 1 by 1 grid: a color-1
+cell when the input is left-right mirror symmetric, meaning every point has a
+point of its color in the same row at the mirrored column of the canvas, and a
+color-7 cell otherwise. The first, third, and fourth training pairs and the
+first test pair are symmetric. The training pairs alone also fit a top-bottom
+mirror; the rules test the left-right one. The class takes `color` and
+`canvas_width`, the width of the object's canvas, as scalars rather than a
+matrix of cells. Unconditional class-level rules introduce three properties,
+absent before the rules run, from the pair's whole population: `has_mirror`
+uses `Obj.some(other => ...)` to look for a point of the same color in the
+same input row at input column `$Obj.canvas_width - 1 - $Obj.x@first`;
+`symmetric` is `Obj.every(point => point.has_mirror)`; and `fill_color` is
+`1 if $Obj.symmetric else 7`. Both population rules re-evaluate whenever an
+instance is added, so every point of a pair records the same `symmetric` and
+`fill_color`. The rules also move `x` and `y` to the output origin 0, and
+`@first` anchors keep the mirror test on the input coordinates. Native output
+snapshots are captured with all of the same pair's implementations together,
+followed by `Obj[:]`. The tag `l7544` is a single point, as in
+`dataset.0ca9ddb6.json`, in both states, because each point's output is the
+single output cell. Input masks retain each pair's full-size, zero-padded
+3 by 3 input canvas; every point's output mask is the complete 1 by 1 output,
+and merging them reproduces it. The `output_x`/`output_y` fields record the
+cell's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `FIT` because each output is cropped to its single cell
+instead of keeping the 3 by 3 input canvas. Orientation is 0 in both states
+because the points are symmetric. The test pairs follow the training pairs at
+the same level and are annotated by the same rules.
+
+`dataset.5582e5ca.json` annotates the three original training pairs from
+`data\training\5582e5ca.json`, in order, followed by its test pair, four block
+instances in total, one per pair. Every input and output retains its original
+3 by 3 canvas, colors, and positions, including the zero cell at the bottom
+right of the first training input and of the test input. Each input holds one
+multicolored block whose nonzero cells are edge-connected across colors and
+whose 3 by 3 bounding box spans the canvas; each object is that whole block,
+8 or 9 cells, and zero cells are background. Each output fills the block's
+whole 3 by 3 footprint, zero cell included, with the color that has the most
+cells in the block: three cells in every pair, a unique maximum, giving the
+colors 4, 9, 6, and 8. The numerically largest color, 8, 9, 9, and 9, differs
+from the fill in the first and third training pairs and the test pair, so the
+rules maximize a count, not a color. The class takes `parts`, a flat list of
+the block's nonzero cell colors in reading order, such as
+`[4, 4, 8, 6, 4, 3, 6, 3]` for the first training input, as its only
+descriptive property, with no count, histogram, fill color, canvas size, or
+matrix of cells, so no input property names a count or the fill color.
+Unconditional class-level rules introduce three properties, absent before the
+rules run: `sorted_parts` is `$Obj.parts.slice().sort()`, a sorted copy that
+groups equal colors and leaves `parts` in reading order; `part_counts` is
+`$Obj.parts.map(part => $Obj.sorted_parts.lastIndexOf(part) - $Obj.sorted_parts.indexOf(part) + 1)`,
+how many parts share each part's color, the length of that color's run in the
+sorted copy; and `fill_color` is
+`$Obj.parts[$Obj.part_counts.indexOf($Obj.part_counts.max())]`, the color of
+the first part whose count is the largest. On a tie, which no pair has, the
+tied color whose first cell comes first in reading order would win. Accepted
+Nucleoid callbacks do not capture an enclosing callback's parameter, so the
+direct count `$Obj.parts.map(part => $Obj.parts.count(other => other == part))`
+raises `ReferenceError("part is not defined")`; the sorted copy states the same
+count with callbacks that read only their own parameter and `$Obj`. The rules
+leave `x` and `y` unchanged because the fill starts at the block's origin, 0
+and 0. Native output snapshots are captured with the pair's implementation
+followed by `Obj[:]`. Tags identify the geometry: `l9100` is a single shape,
+as in `dataset.28bf18c6.json`, and `l5236` is a solid rectangle that fills the
+whole canvas. Input masks retain each pair's full-size 3 by 3 input canvas,
+with the zero cell padded `0`, and output masks the complete 3 by 3 output;
+merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the fill's nonzero bounding-box origin,
+equal to `output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because
+each output keeps its input's canvas. Orientation is 0 in both states because
+the block is not rotated and the fill is symmetric. The test pair follows the
+training pairs at the same level and is annotated by the same rules.
 
 `dataset.6150a2bd.json` annotates the two original training pairs from
 `data\training\6150a2bd.json`, in order, followed by its test pair, twelve
@@ -296,6 +444,35 @@ because the regions are not rotated and the bars are vertical. The test pair
 follows the training pairs at the same level and is annotated by the same
 rules.
 
+`dataset.d037b0a7.json` annotates the three original training pairs from
+`data\training\d037b0a7.json`, in order, followed by its test pair, eleven
+point instances in total (3, 3, 2, and 3 per pair). Every input and output
+retains its original 3 by 3 canvas, colors, positions, and zero cells. Each
+object is one nonzero input cell, a single 1 by 1 point of its own color,
+listed in reading order; no two points of a pair share a column, so their bars
+never overlap. Each output extends every point downward into a vertical bar of
+its color, from the point's row to the bottom row of the canvas, so each bar is
+1 to 3 cells tall and a point on the bottom row stays a single cell. The class
+takes `color` and `canvas_height`, the height of the object's canvas, as
+scalars rather than a matrix of cells. Unconditional class-level rules
+introduce `bar_height`, which is absent before the rules run, as
+`$Obj.canvas_height - $Obj.y`, and leave `x` and `y` unchanged because the
+point is the bar's top cell. The bottom edge comes from the canvas, not the
+population: the second training pair's lowest point lies on the middle row,
+yet its bars reach the bottom row. Native output snapshots are captured with
+all of the same pair's implementations together, followed by `Obj[:]`. Tags
+identify the geometry: `l7544` is a single point, as in
+`dataset.0ca9ddb6.json`, and `l6953` is a vertical bar, as in
+`dataset.9af7a82c.json`. Input masks retain each pair's full-size,
+zero-padded input canvas; output masks retain each pair's full-size output
+canvas padded with `0` outside the bar. The `output_x`/`output_y` fields
+record the bar's nonzero bounding-box origin, equal to
+`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
+output keeps its input's canvas, including the empty right column of the third
+training output. Orientation is 0 in both states because the points are
+symmetric and the bars are vertical. The test pair follows the training pairs
+at the same level and is annotated by the same rules.
+
 `dataset.d631b094.json` annotates the four original training pairs from
 `data\training\d631b094.json`, in order, followed by its test pair, five
 region instances in total, one per pair. Every input retains its original
@@ -320,9 +497,9 @@ by the same rules.
 
 ## ARC proposal agent
 
-Run `/arc-purposal [<puzzle-id>]` to take training puzzles through the
+Run `/arc-purposal [<puzzle-id>]` to take one training puzzle through the
 [arc-purposal](../.claude/agents/arc-purposal.agent.md) workflow in its
-[skill](../.claude/skills/arc-purposal/SKILL.md), one round per puzzle:
+[skill](../.claude/skills/arc-purposal/SKILL.md):
 
 1. The [arc-dataset](../.claude/agents/arc-dataset.agent.md) agent writes the
    puzzle's instruction dataset, using any dataset in `src\dataset` as a
@@ -346,31 +523,26 @@ Run `/arc-purposal [<puzzle-id>]` to take training puzzles through the
    making the puzzle the default `puzzle_id` in `src\app.ts` before the run.
    When the dataset, the candidate, or the run shows that the solver needs a
    change, the final report suggests it for review.
+6. Finally, the workflow creates or updates the puzzle's progress record,
+   `docs\ARC-NUC-<puzzle_id>.md`, in the format of the existing records such as
+   [ARC-NUC-0ca9ddb6](docs/ARC-NUC-0ca9ddb6.md): the dataset, any NUC and its
+   outcome, every run's exit status and difference, and the open items. The
+   record keeps earlier runs and stays uncommitted for review with the
+   dataset.
 
-With a puzzle ID, the workflow runs one round for that puzzle and stops.
-Without one, it runs continuous rounds, the way `/nuc-proposal` continues with
-the next NUC. Each round chooses its puzzle from `data\training`: it skips the
-[genesis puzzle](#genesis-puzzle), every puzzle that already has a
-`dataset.<puzzle_id>.json`, and every puzzle an earlier round took, then takes
-the puzzle whose largest training matrix has the fewest cells, breaking ties
-by the fewest total training cells and then by the lowest ID. Only training
-pairs are measured.
-
-After each round records its outcome, the next round starts without a new
-prompt, until no puzzle remains or you stop it. A blocked dataset, a rejected
-NUC, or a run that does not pass ends only its round. A process blocker, such
-as a Blocked NUC, a failed commit or push, or an environment failure that
-would recur for any puzzle, pauses the loop for you to resolve. Each round's
-retained dataset, README paragraph, and reporting entry stay uncommitted for
-review.
+Without a puzzle ID, the workflow chooses one from `data\training`. It skips
+the [genesis puzzle](#genesis-puzzle) and every puzzle that already has a
+`dataset.<puzzle_id>.json`, then takes the puzzle whose largest training
+matrix has the fewest cells, breaking ties by the fewest total training cells
+and then by the lowest ID. Only training pairs are measured.
 
 Append `--hint <text>` to suggest the puzzle's objects, their roles, or its
-transformation. Only the arc-dataset agent receives the hint, in every round,
-and it keeps only what each puzzle's training pairs confirm.
+transformation. Only the arc-dataset agent receives the hint, and it keeps only
+what the training pairs confirm.
 
-Each run makes paid OpenRouter calls and shows the expected test grid, so a
-puzzle runs once, is never repeated to obtain a pass, and its output never
-feeds back into a dataset, a candidate, or a later round. The
+The run makes paid OpenRouter calls and shows the expected test grid, so it
+runs once, is never repeated to obtain a pass, and its output never feeds back
+into the dataset or the candidate. The
 [ARC instructions](../.claude/rules/arc.instructions.md) require an
 object-oriented Nucleoid world model, training-only rule inference, and
 exact-grid evaluation without test-answer leakage.
