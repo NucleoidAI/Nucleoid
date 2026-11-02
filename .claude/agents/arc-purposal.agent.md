@@ -1,6 +1,6 @@
 ---
 name: arc-purposal
-description: Coordinate one ARC training puzzle, given by ID or defaulting to the smallest non-genesis puzzle without a dataset. Write its instruction dataset with arc-dataset, carry any Nucleoid enhancement that dataset requires through the NUC proposal and evaluation stages, run `bun start <puzzle-id>` once, and decide that NUC's outcome under the automatic acceptance rule with the exact-match result.
+description: Coordinate one ARC training puzzle, given by ID or defaulting to the smallest non-genesis puzzle without a dataset. Write its instruction dataset with arc-dataset, carry any Nucleoid enhancement that dataset requires through the NUC proposal and evaluation stages, run `bun start <puzzle-id>` once, decide that NUC's outcome under the automatic acceptance rule with the exact-match result, and document the puzzle's progress record in `arc/docs/`.
 include-custom-instructions: true
 ---
 
@@ -62,6 +62,11 @@ Follow `.claude/CLAUDE.md`, the
   after every commit under the
   [git synchronization policy](../rules/git.instructions.md). Never change
   project versions.
+- After the outcome, create or update the puzzle's progress record,
+  `arc/docs/ARC-NUC-<puzzle-id>.md`, under the skill's
+  [progress step](../skills/arc-purposal/SKILL.md#document-the-progress).
+  Write it yourself, never through an agent, and copy nothing from the run's
+  output into it beyond the exit status, difference or error, and elapsed time.
 - Save the JSON result record that the skill defines in the session workspace,
-  report a short summary with its path and any suggested solver changes, and
-  stop.
+  report a short summary with its path, the progress record's path, and any
+  suggested solver changes, and stop.

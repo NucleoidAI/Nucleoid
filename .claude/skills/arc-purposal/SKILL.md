@@ -1,6 +1,6 @@
 ---
 name: arc-purposal
-description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run, then decide the enhancement's outcome under the automatic acceptance rule.
+description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run, then decide the enhancement's outcome under the automatic acceptance rule and document the puzzle's progress record in arc/docs.
 argument-hint: [<puzzle-id>] [--hint <text>]
 ---
 
@@ -8,7 +8,8 @@ argument-hint: [<puzzle-id>] [--hint <text>]
 
 `/arc-purposal [<puzzle-id>] [--hint <text>]` takes one training puzzle through
 its instruction dataset, any Nucleoid enhancement that dataset requires, one
-solver run, and the outcome. Follow `.claude/CLAUDE.md`, the
+solver run, the outcome, and its progress record in `arc/docs/`. Follow
+`.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
 [agent profile](../../agents/arc-purposal.agent.md).
 
@@ -24,9 +25,10 @@ such as `server.ts`, `src/app.ts`, or `src/dataset/dataset.ts`, is
 added, edited, or removed, except for the solver's default puzzle in
 `src/app.ts`, which the [run step](#run-the-puzzle) sets. Orchestrate the
 approach between `/arc-dataset` and `/nuc-proposal` alone. In `arc/`, only
-three things change: the puzzle's dataset and its README paragraph, both
-written by arc-dataset, and that default. A NUC candidate changes nothing
-there. When the solver would need a change, finish the process without it and
+four things change: the puzzle's dataset and its README paragraph, both
+written by arc-dataset, that default, and the puzzle's
+[progress record](#document-the-progress) in `arc/docs/`. A NUC candidate
+changes nothing there. When the solver would need a change, finish the process without it and
 [suggest the change](#suggest-solver-changes) at the end.
 
 The dataset agent also registers a new dataset's puzzle in
@@ -240,6 +242,41 @@ instead of making it: the files, the change, and the evidence for it. Base no
 suggestion on the expected test grid or the difference from it, and never
 apply a suggestion or rerun the puzzle within the invocation.
 
+## Document the progress
+
+After the outcome is decided and recorded, including any NUC commit and push,
+document the invocation in the puzzle's progress record,
+`arc/docs/ARC-NUC-<puzzle-id>.md`, even when it ended without a run. Create
+the record when the puzzle has none; otherwise update it in place, keeping its
+earlier runs, decisions, and history. Write it yourself, because it carries
+the run's result, and never point a worker to it. Follow the existing records,
+such as `arc/docs/ARC-NUC-0ca9ddb6.md`:
+
+- The title `# ARC-NUC-<puzzle-id> -- <Name>`, where the name is a few
+  title-case words for the transformation, then the records' opening sentence.
+- A status table: the puzzle; the instruction dataset, linked with its pair
+  and instance counts, or why it is absent or was withdrawn; the output
+  canvas; each requested NUC, linked with its outcome and basis, or `None`;
+  the solver changes, `None` or suggested and not applied; the solver runs;
+  and the date updated, written like `2-Nov-2026`.
+- `Puzzle`: the transformation the training pairs show.
+- `Dataset`: the objects, their properties, and the rules in a `nuc` block,
+  linking the dataset's README paragraph for the rest. When the invocation
+  replaced a dataset, say what changed and why, such as the user's hint.
+- A `Decision` section for a requested NUC: the gap, the evidence programs
+  and their actual errors, and what the NUC adds.
+- `Runs`: one entry per run, never removed, with its date, command, runtime
+  (the accepted revision or the NUC candidate), exit status or timeout,
+  difference or error, and elapsed time. Without a run, say that the
+  difference is unknown, not zero.
+- `Open items`: blockers, open questions, and the suggested solver changes.
+
+Describe the puzzle and dataset from the training pairs and the arc-dataset
+handoff; never read the puzzle's `test` entries for the record. From the run's
+output, copy only its exit status, difference or error, and elapsed time,
+never a grid or cell. Leave the record uncommitted for review with the
+dataset.
+
 ## Report
 
 Save one JSON result record in the session workspace with the puzzle ID and
@@ -251,8 +288,8 @@ withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
 evaluator decision, and report path; the solver's previous and new default
 puzzle IDs and whether that change was retained or restored; the run's
 command, executable, exit status or timeout, difference or error, and log
-paths; the outcome and its basis; the suggested solver changes; and any
-blockers. Use `null` for anything
-not measured, including the difference before this dataset. Report a short
-summary with the record's path, ending with any suggested solver changes, then
-stop without starting another puzzle or NUC.
+paths; the outcome and its basis; the suggested solver changes; the progress
+record's path and whether it was created or updated; and any blockers. Use
+`null` for anything not measured, including the difference before this
+dataset. Report a short summary with both records' paths, ending with any
+suggested solver changes, then stop without starting another puzzle or NUC.
