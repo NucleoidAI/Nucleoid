@@ -50,6 +50,15 @@ Pass a puzzle ID as the first argument, for example `bun run start 0d3d703e`,
 to load `data\training\0d3d703e.json`. This makes live OpenRouter calls;
 type checking, linting, and offline inspection do not require model calls.
 
+### Genesis puzzle
+
+`3aa6fb7a` is the genesis puzzle, the training puzzle the solver was originally
+built and [benchmarked](#benchmark) on. Instead of its own
+`dataset.3aa6fb7a.json`, it learns from the four shared genesis datasets that
+every run receives, described under
+[Instruction datasets](#instruction-datasets).
+[ARC-NUC-3aa6fb7a](docs/ARC-NUC-3aa6fb7a.md) is its progress record.
+
 ### GitHub Actions reporting
 
 The **ARC puzzle report** workflow in `.github\workflows\arc.yml` runs

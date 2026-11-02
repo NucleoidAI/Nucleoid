@@ -74,7 +74,7 @@ not variants or synthesis seeds. Before an authorized replacement, preserve
 the previous dataset and README paragraph in the session workspace. If the
 handoff used external staging, integrate the verified single file before the
 run and confirm the loader includes it among all JSON instruction datasets.
-Leave genesis's shared files unchanged.
+Leave the shared files of the genesis puzzle `3aa6fb7a` unchanged.
 The dataset always prefers declarative, higher-order logic; when accepted
 Nucleoid cannot express its rules that way, the handoff requests the missing
 enhancement instead of an imperative workaround. Continue by the handoff's
