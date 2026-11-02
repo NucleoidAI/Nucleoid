@@ -386,13 +386,15 @@ Nucleoid session is initialized with the declarations in order to use for identi
 
 Based on declarations in `nuc` lang, the LLM extracts instances.
 `input_matrix` and `output_matrix` remain the complete world canvases.
-Each instance matrix is cropped to its own nonzero bounding box, retaining
-internal zeros. The core, line, and curve instruction datasets expose
+Each instance matrix keeps the full canvas of its pair's input or output
+matrix: the object's cells stay at their canvas coordinates and every other
+cell is `0`, as in the [instruction datasets](#instruction-datasets). The core,
+line, and curve instruction datasets expose
 `input_x`, `output_x`, `input_y`, `output_y`, `input_orientation`, and
 `output_orientation` on each instance. The x/y fields give the zero-based
-column/row of the corresponding crop's origin; the orientation fields give
-each state's numeric angle. The current transformations preserve orientation,
-so their input and output angles match.
+column/row of the object's nonzero bounding-box origin within its mask; the
+orientation fields give each state's numeric angle. The current
+transformations preserve orientation, so their input and output angles match.
 Native snapshots use `x`, `y`, and `orientation`; `tag` replaces `shape`
 with shortened identifiers such as `l6747`.
 Matrices already follow the canvas axes; composition does not rotate them.
@@ -419,24 +421,19 @@ by those rules and are absent from their input snapshots rather than filled
 with artificial defaults.
 
 Both native snapshots keep `x` and `y` anchored to the input bounding box;
-`output_x` and `output_y` record the output crop's origin instead.
+`output_x` and `output_y` record the output bounding box's origin instead.
 In `dataset.core.1.json`, adding the exterior marker grows the output to
-3 by 3: subtract one from the input crop's x origin for `input_orientation`
-225 or 315, and from its y origin for `input_orientation` 45 or 315.
+3 by 3: subtract one from the input bounding box's x origin for
+`input_orientation` 225 or 315, and from its y origin for `input_orientation`
+45 or 315.
 The other origins are unchanged.
 For lines, subtract one from x when `extension_direction` is `left`, or from
 y when it is `up`; extensions to the right or down keep the input origin.
 For curves, subtract one from x for either orientation, and from y only when
 `orientation` is 0. These offsets are already recorded in `output_x`
 and `output_y`; do not apply them a second time during placement.
-The inner markers in
-`dataset.core.2.json`, `dataset.core.3.json`, and `dataset.core.4.json` do not
-change the crop origin.
-The third core dataset uses 4 by 4 color-2 corners with color-6 markers one
-cell diagonally inward from each vertex, across all four orientations.
-The fourth uses 3 by 3 color-2 corners with a color-7 marker one cell
-diagonally inward from each vertex. Input and output masks retain the same
-origin and dimensions; the layouts keep the resized objects separate.
+The inner markers in `dataset.core.2.json` do not change the bounding-box
+origin.
 
 ```json
 {
@@ -450,13 +447,24 @@ origin and dimensions; the layouts keep the resized objects separate.
       "input_orientation": 135,
       "output_orientation": 135,
       "input_instance_matrix": [
-        [0, 9],
-        [9, 9]
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
       ],
       "output_instance_matrix": [
-        [0, 9, 0],
-        [9, 9, 0],
-        [0, 0, 1]
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
       ]
     }
   ]
@@ -479,13 +487,24 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
       "input_orientation": 135,
       "output_orientation": 135,
       "input_instance_matrix": [
-        [0, 9],
-        [9, 9]
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
       ],
       "output_instance_matrix": [
-        [0, 9, 0],
-        [9, 9, 0],
-        [0, 0, 1]
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 0],
+        [0, 0, 0, 0, 0, 9, 9, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
       ],
       "implementation": "obj0 = Obj(x=5, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
       "input_value": {
