@@ -49,8 +49,8 @@ impl ClassShape {
     }
 }
 
-/// A validated source expression and the declared slot it fills. Surplus
-/// positional arguments have no slot but must still be evaluated.
+/// A validated source expression and the fixed slot it fills. Surplus
+/// positional arguments have no fixed slot; a rest formal collects them.
 struct ArgumentBinding<'a> {
     slot: Option<usize>,
     expression: &'a Expr,
@@ -77,6 +77,12 @@ fn bind_arguments<'a>(
                     class.name
                 )));
             };
+            if class.parameters[index].rest {
+                return Err(Error::type_error(format!(
+                    "Rest parameter '{name}' cannot be a named constructor argument for {}",
+                    class.name
+                )));
+            }
             if !seen.insert(index) {
                 return Err(Error::type_error(format!(
                     "Duplicate constructor argument '{name}' for {}",
@@ -94,7 +100,11 @@ fn bind_arguments<'a>(
                     class.name
                 )));
             }
-            let slot = (positional < class.parameters.len()).then_some(positional);
+            let slot = class
+                .parameters
+                .get(positional)
+                .filter(|parameter| !parameter.rest)
+                .map(|_| positional);
             if let Some(slot) = slot {
                 seen.insert(slot);
             }
@@ -273,12 +283,21 @@ impl Runtime {
         // Invalid bindings need no owned snapshot, but valid calls must pin
         // the selected signature/body before evaluating any RHS.
         let constructor = ClassShape::of(class);
+        let has_rest = constructor
+            .parameters
+            .last()
+            .is_some_and(|parameter| parameter.rest);
         // None is an absent key, not a supplied Null or Undefined value.
-        let mut values = vec![None; constructor.parameters.len()];
+        // Keep only fixed holes, followed by raw positional extras, so the
+        // shared binder constructs the rest list exactly once.
+        let fixed_count = constructor.parameters.len() - usize::from(has_rest);
+        let mut values = vec![None; fixed_count];
         for binding in bindings {
             let value = self.evaluate(binding.expression, scope)?;
             if let Some(slot) = binding.slot {
                 values[slot] = Some(value);
+            } else if has_rest {
+                values.push(Some(value));
             }
         }
         Ok(ConstructorCall::Bound {
@@ -314,7 +333,7 @@ impl Runtime {
 
         let mut arguments = arguments.into_iter();
         for parameter in class.parameters {
-            let value = parameter.effective_value(arguments.next().flatten());
+            let value = parameter.bind_value(&mut arguments);
             scope.declare(parameter.name, value);
         }
 

@@ -89,6 +89,7 @@ fn typed_parameter_complete_block_ast_and_generator_match_the_explicit_form() {
                 name: name.to_string(),
                 type_name: Some(annotation.to_string()),
                 default: None,
+                rest: false,
             }]
         );
         assert_eq!(

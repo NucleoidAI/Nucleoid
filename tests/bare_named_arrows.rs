@@ -60,6 +60,7 @@ fn bare_parameters_lower_to_the_same_named_return_block_and_canonical_source() {
                 name: name.to_string(),
                 type_name: None,
                 default: None,
+                rest: false,
             }]
         );
         assert_eq!(

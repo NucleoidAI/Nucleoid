@@ -10,10 +10,10 @@ use crate::lang::ast::{
     UnaryOp, VersionSelector,
 };
 
-fn has_defaults(parameters: &[Parameter]) -> bool {
+fn has_binding_metadata(parameters: &[Parameter]) -> bool {
     parameters
         .iter()
-        .any(|parameter| parameter.default.is_some())
+        .any(|parameter| parameter.default.is_some() || parameter.rest)
 }
 
 fn signature(parameters: &[Parameter]) -> String {
@@ -124,7 +124,7 @@ impl fmt::Display for Expr {
                     .collect();
                 write!(f, "{{{}}}", rendered.join(","))
             }
-            Expr::Function(function) if has_defaults(&function.parameters) => {
+            Expr::Function(function) if has_binding_metadata(&function.parameters) => {
                 let parameters = signature(&function.parameters);
                 match &function.body {
                     FunctionBody::Expression(body) => write!(f, "({parameters})=>{body}"),
@@ -225,16 +225,18 @@ pub fn generate(statement: &Stmt) -> String {
         Stmt::Throw(expression) => format!("throw {expression}"),
         Stmt::Delete(expression) => format!("delete {expression}"),
         Stmt::Class(declaration)
-            if has_defaults(&declaration.parameters)
+            if has_binding_metadata(&declaration.parameters)
                 || declaration
                     .methods
                     .iter()
-                    .any(|method| has_defaults(&method.parameters)) =>
+                    .any(|method| has_binding_metadata(&method.parameters)) =>
         {
             class_source(declaration)
         }
         Stmt::Class(declaration) => format!("class {}", declaration.name),
-        Stmt::Function(function) if has_defaults(&function.parameters) => function_source(function),
+        Stmt::Function(function) if has_binding_metadata(&function.parameters) => {
+            function_source(function)
+        }
         Stmt::Function(function) => match &function.name {
             Some(name) => format!("def {name}"),
             None => "def".to_string(),
@@ -270,9 +272,9 @@ fn suppose_target(target: Option<&Expr>) -> String {
         .unwrap_or_default()
 }
 
-// Default-bearing declarations must not discard signature metadata. Keep the
-// established compact labels for every default-free declaration; render the
-// new declarations' bodies with real suite syntax, including init/method data.
+// Default/rest-bearing declarations must not discard signature metadata. Keep
+// established compact labels for every other declaration; render the new
+// declarations' bodies with real suite syntax, including init/method data.
 fn indent(source: &str) -> String {
     source
         .lines()
@@ -322,7 +324,7 @@ fn class_source(class: &ClassDecl) -> String {
     format!("{header}\n{}", indent(&body))
 }
 
-/// Suite-aware rendering inside a new default-bearing declaration. The
+/// Suite-aware rendering inside a new default/rest-bearing declaration. The
 /// public graph-label generator deliberately abbreviates legacy declarations.
 fn source(statement: &Stmt) -> String {
     match statement {

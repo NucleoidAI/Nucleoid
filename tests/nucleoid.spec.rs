@@ -15026,6 +15026,151 @@ fn uses_predicate_counts_beside_ordinary_count_names() {
     assert_eq!(run("Bag.filter(each -> each.count() > 1).length"), 0);
 }
 
+/// Nucleoid collects surplus positional arguments in fresh rest lists
+#[rustfmt::skip]
+#[test]
+fn collects_surplus_positional_arguments_in_fresh_rest_lists() {
+    let mut run = runner();
+    run(r#"def collect(head = 1, ...tail) => [head, tail]
+empty = collect()
+one = collect(0)
+many = collect(2, 3, 4)
+nested = collect(false, "", [5, 6])
+assert(empty, [1, []])
+assert(one, [0, []])
+assert(many, [2, [3, 4]])
+assert(nested, [false, ["", [5, 6]]])
+assert(collect(null).value, [null, []])
+many
+# return: [2,[3,4]]"#);
+}
+
+/// Nucleoid shares rest binding across anonymous functions callbacks and methods
+#[rustfmt::skip]
+#[test]
+fn shares_rest_binding_across_anonymous_functions_callbacks_and_methods() {
+    let mut run = runner();
+    run("arrow = (...items) -> items");
+    run("blocked = function(head, ...tail) { return [head, tail] }");
+    run("def collect(...items) => items");
+    run("alias = collect");
+    run("record = {call: collect}");
+    run("callbacks = [collect]");
+    assert_eq!(run("arrow(1, 2)"), serde_json::json!([1, 2]));
+    assert_eq!(run("blocked(1, 2, 3)"), serde_json::json!([1, [2, 3]]));
+    assert_eq!(run("alias()"), serde_json::json!([]));
+    assert_eq!(run("record.call(3, 4)"), serde_json::json!([3, 4]));
+    assert_eq!(run("callbacks[0](5)"), serde_json::json!([5]));
+    assert_eq!(run("[2, 3].map((item, ...extras) => [item, extras])"), serde_json::json!([[2, []], [3, []]]));
+    run(r#"class Meter(seed):
+    this.seed = seed
+    def read(...items) => [self.seed, items]"#);
+    run("meter = Meter(7)");
+    assert_eq!(run("meter.read(8, 9)"), serde_json::json!([7, [8, 9]]));
+    assert_eq!(run("meter.read()"), serde_json::json!([7, []]));
+}
+
+/// Nucleoid keeps fixed constructor labels separate from positional rest values
+#[rustfmt::skip]
+#[test]
+fn keeps_fixed_constructor_labels_separate_from_positional_rest_values() {
+    let mut run = runner();
+    run(r#"class Packet(head = 1, ...tail):
+    this.head = head
+    this.tail = tail
+empty = Packet()
+many = Packet(2, 3, 4)
+named = Packet(head=5)
+nested = Packet(6, [7, 8])
+assert(empty.tail, [])
+assert(many.tail, [3, 4])
+assert(named.head, 5)
+assert(named.tail, [])
+assert(nested.tail, [[7, 8]])
+class Pair(first = 1, second = 2, ...tail):
+    this.values = [first, second, tail]
+mixed = Pair(4, second=7)
+assert(mixed.values, [4, 7, []])
+try:
+    rejected = Packet(tail=[9])
+catch error:
+    assert(error, TypeError("Rest parameter 'tail' cannot be a named constructor argument for Packet"))
+class Base:
+    def init(...items):
+        this.items = items
+class Inherited: Base
+    pass
+class Child: Base
+    def init(...items):
+        super(1, 2)
+        this.own = items
+inherited = Inherited(3, 4)
+child = Child(5, 6)
+assert(inherited.items, [3, 4])
+assert(child.items, [1, 2])
+assert(child.own, [5, 6])"#);
+}
+
+/// Nucleoid initializes rest histories without capture or shared list mutation
+#[rustfmt::skip]
+#[test]
+fn initializes_rest_histories_without_capture_or_shared_list_mutation() {
+    let mut run = runner();
+    run(r#"tail = [100]
+def history(...tail):
+    tail.push(9)
+    return [tail@0, tail@last]
+one = history(1, 2)
+two = history()
+three = history()
+assert(one, [[1, 2], [1, 2, 9]])
+assert(two, [[], [9]])
+assert(three, [[], [9]])
+assert(tail, [100])
+def factory(...tail) => () => tail
+callback = factory(7, 8)
+assert(callback(), [100])
+state = 1
+def attempt(...tail):
+    try:
+        tail.push(8)
+        state = 2
+        throw "LOCAL_REST"
+    catch error:
+        state = state
+    return [tail@0, tail, state]
+assert(attempt(1), [[1], [1, 8], 1])
+assert(state, 1)"#);
+}
+
+/// Nucleoid restores variadic definitions and their reactive callers on rollback
+#[rustfmt::skip]
+#[test]
+fn restores_variadic_definitions_and_their_reactive_callers_on_rollback() {
+    let mut run = runner();
+    run(r#"unit = 2
+def total(...items) => items.sum() * unit
+live = total
+frozen = total.value
+observed = live(1, 2)
+assert(observed, 6)
+def total(head = 10, ...tail) => (head + tail.length) * unit
+assert(observed, 4)
+assert(frozen(1, 2), 6)
+try:
+    def total(...items) => 99
+    assert(observed, 99)
+    throw "RESTORE_REST"
+catch error:
+    assert(error, "RESTORE_REST")
+assert(observed, 4)
+unit = 3
+assert(observed, 6)
+assert(frozen(1, 2), 9)
+observed
+# return: 6"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -1,4 +1,4 @@
-//! Scalar formal defaults are data, not expressions or captured environments.
+//! Formal binding metadata is data, not expressions or captured environments.
 
 use std::fmt;
 
@@ -15,6 +15,9 @@ impl fmt::Debug for Parameter {
         // metadata is visible when present, not an invented legacy field.
         if self.default.is_some() {
             parameter.field("default", &self.default);
+        }
+        if self.rest {
+            parameter.field("rest", &self.rest);
         }
         parameter.finish()
     }
@@ -54,6 +57,16 @@ impl ParameterDefault {
 }
 
 impl Parameter {
+    /// Bind once before declaring the Scope slot, including its initial
+    /// history entry. Named constructors supply holes only for fixed slots.
+    pub(crate) fn bind_value(&self, arguments: &mut impl Iterator<Item = Option<Value>>) -> Value {
+        if self.rest {
+            Value::List(arguments.flatten().collect())
+        } else {
+            self.effective_value(arguments.next().flatten())
+        }
+    }
+
     /// Resolve omission before declaring the fresh Scope slot. Supplied Null,
     /// Undefined and falsy values are ordinary values, never omission markers.
     pub(crate) fn effective_value(&self, supplied: Option<Value>) -> Value {
@@ -95,6 +108,9 @@ impl fmt::Display for ParameterDefault {
 
 impl fmt::Display for Parameter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.rest {
+            f.write_str("...")?;
+        }
         f.write_str(&self.name)?;
         if let Some(type_name) = &self.type_name {
             write!(f, ":{type_name}")?;
@@ -116,6 +132,7 @@ mod tests {
             name: "value".to_string(),
             type_name: None,
             default: Some(ParameterDefault::Number(12.0)),
+            rest: false,
         };
         assert_eq!(parameter.effective_value(None), Value::Number(12.0));
         for supplied in [
@@ -141,6 +158,7 @@ mod tests {
             name: "value".to_string(),
             type_name: None,
             default: None,
+            rest: false,
         };
         assert_eq!(
             format!("{parameter:?}"),

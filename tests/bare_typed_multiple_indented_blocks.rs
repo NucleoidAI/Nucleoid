@@ -110,6 +110,7 @@ fn every_annotation_position_preserves_complete_metadata_order_body_and_renderin
                     name: (*name).to_string(),
                     type_name: (mask & (1 << index) != 0).then(|| format!("Type{index}")),
                     default: None,
+                    rest: false,
                 })
                 .collect::<Vec<_>>();
             let header = parameters

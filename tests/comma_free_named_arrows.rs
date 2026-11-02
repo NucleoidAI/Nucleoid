@@ -131,6 +131,7 @@ fn complete_identifier_runs_keep_order_none_annotations_name_and_return_lowering
                     name: (*name).to_string(),
                     type_name: None,
                     default: None,
+                    rest: false,
                 })
                 .collect::<Vec<_>>()
         );

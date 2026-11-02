@@ -2198,8 +2198,9 @@ statement positions; caught values and transaction recovery are unchanged.
   default. A supplied Null, Undefined, false, zero, empty String or any other
   value retains its existing evaluation and value semantics, including
   deferred/null propagation and `.value` snapshot boundaries. There is no
-  nullish/falsy substitution. Missing arguments without defaults still bind
-  Null; extra arguments and non-enforcing annotations keep their behavior.
+  nullish/falsy substitution. Missing fixed arguments without defaults still
+  bind Null; fixed-only signatures still evaluate and ignore extras, and
+  annotations remain non-enforcing. Final rest binding is specified below.
 - Defaults may occupy any formal slot, including one before a required slot.
   The effective scalar is chosen before declaring the fresh Scope binding:
   version zero is that value, not a synthetic Null followed by another write.
@@ -2223,6 +2224,66 @@ statement positions; caught values and transaction recovery are unchanged.
   appended entries beginning `Nucleoid fills omitted literal default parameters`
   through `Nucleoid restores defaulted function callers after failed
   redefinitions` specify the measured behavior.
+
+## Final rest parameters
+
+- An explicitly parenthesized user-defined signature may end in `...name`
+  or `...name: Type`, optionally followed by its ordinary trailing comma.
+  The three dots must be adjacent; no lexer token or keyword is added.
+  Named block/arrow functions, function expressions, parenthesized arrows,
+  methods, class headers and adopted `init` signatures share this syntax.
+- There is at most one rest formal, and it must be last. A following formal
+  raises `SyntaxError("Rest parameter must be last")`. A rest default raises
+  `SyntaxError("Rest parameter cannot have a default")`. Its name must differ
+  from each fixed formal, otherwise
+  `SyntaxError("Rest parameter '<name>' duplicates a fixed parameter")` is
+  raised. Duplicate fixed names retain their accepted binding/history
+  semantics, including in a new rest-bearing signature.
+- Bind the fixed prefix exactly as before: absence uses its scalar default
+  or Null, supplied Null/Undefined/falsy values remain supplied, required
+  fixed slots may follow defaults, and annotations remain non-enforcing.
+  Bind every remaining positional value, in source order, to a fresh List
+  under the rest name. With no remaining values bind `[]`, never Null.
+- List arguments remain single elements; there is no flattening or call-site
+  spread. The fresh outer list has ordinary Value semantics: local mutation
+  does not mutate a caller's list binding, while contained Object references
+  retain their ordinary shared identity. No deep-copy boundary is added.
+- Evaluate each argument once, left to right, per actual invocation, before
+  binding. A method's receiver is not an argument and never enters its rest
+  list. Existing higher-order operations pass exactly their existing
+  arguments; no hidden index or receiver arguments are added.
+- Constructor labels may address fixed formals only. Named-only calls leave
+  an empty rest list; mixed calls fill leading fixed positions, then fixed
+  labels, with positional extras collected only after the fixed prefix is
+  full. Naming the rest formal raises
+  `TypeError("Rest parameter '<name>' cannot be a named constructor argument for <class>")`.
+  Validate every label, duplicate and positional-after-named restriction
+  before evaluating any value, with existing diagnostics otherwise unchanged.
+- Inherited constructor selection, `init` adoption, bodyless headers and
+  `super` retain their existing rules. A bodyless rest header does not create
+  properties or displace a parent's nearest nonempty constructor. Purely
+  positional calls still select that constructor after argument evaluation;
+  calls with labels pin its signature/body first. A named-rest diagnostic
+  names the effective constructor class, not a bypassed subclass.
+- Functions, aliases, callbacks, callable properties/list items, methods and
+  stored Function Values share binding. Function/method argument assignments
+  remain positional expressions, not labels. Bare signatures and Python-style
+  lambdas gain no rest syntax; call-site spread, closures, built-in changes
+  and new arity/type enforcement are not introduced.
+- Initialize the local rest binding once: its version zero is the complete
+  collected list, including `[]`. Parameter shadowing, fresh invocation
+  frames, noncapture and nontransactional locals are unchanged. Caught
+  failures restore State/graph, not edits to an enclosing local binding.
+- Ordinary dependencies, standing re-evaluation, `.value` settlement and
+  snapshots are unchanged. Live callers observe redefinitions; frozen and
+  historical Function Values keep their own signature/body but continue to
+  read ordinary live state. Failed updates restore stored definitions,
+  class metadata, instances, histories and the graph through existing rollback.
+- Every fixed-only signature, including runtime-failing accepted inputs,
+  retains its AST Debug/display representation, canonical graph keys,
+  diagnostics and behavior. Fixed-only calls still evaluate and ignore
+  surplus arguments. The five appended entries beginning `Nucleoid collects
+  surplus positional arguments in fresh rest lists` specify this addition.
 
 ## Class-level state version anchors
 
@@ -18195,4 +18256,129 @@ cutoff = 6
 assert: bag.count(), 1
 assert: matching([2, 5, 9]), 1
 assert: Bag.filter(each -> each.count() > 1).length, 0
+---
+# Nucleoid collects surplus positional arguments in fresh rest lists
+
+def collect(head = 1, ...tail) => [head, tail]
+empty = collect()
+one = collect(0)
+many = collect(2, 3, 4)
+nested = collect(false, "", [5, 6])
+assert(empty, [1, []])
+assert(one, [0, []])
+assert(many, [2, [3, 4]])
+assert(nested, [false, ["", [5, 6]]])
+assert(collect(null).value, [null, []])
+many
+# return: [2,[3,4]]
+---
+# Nucleoid shares rest binding across anonymous functions callbacks and methods
+
+arrow = (...items) -> items
+blocked = function(head, ...tail) { return [head, tail] }
+def collect(...items) => items
+alias = collect
+record = {call: collect}
+callbacks = [collect]
+assert(arrow(1, 2), [1, 2])
+assert(blocked(1, 2, 3), [1, [2, 3]])
+assert(alias(), [])
+assert(record.call(3, 4), [3, 4])
+assert(callbacks[0](5), [5])
+assert([2, 3].map((item, ...extras) => [item, extras]), [[2, []], [3, []]])
+class Meter(seed):
+    this.seed = seed
+    def read(...items) => [self.seed, items]
+meter = Meter(7)
+assert(meter.read(8, 9), [7, [8, 9]])
+assert(meter.read(), [7, []])
+---
+# Nucleoid keeps fixed constructor labels separate from positional rest values
+
+class Packet(head = 1, ...tail):
+    this.head = head
+    this.tail = tail
+empty = Packet()
+many = Packet(2, 3, 4)
+named = Packet(head=5)
+nested = Packet(6, [7, 8])
+assert(empty.tail, [])
+assert(many.tail, [3, 4])
+assert(named.head, 5)
+assert(named.tail, [])
+assert(nested.tail, [[7, 8]])
+class Pair(first = 1, second = 2, ...tail):
+    this.values = [first, second, tail]
+mixed = Pair(4, second=7)
+assert(mixed.values, [4, 7, []])
+try:
+    rejected = Packet(tail=[9])
+catch error:
+    assert(error, TypeError("Rest parameter 'tail' cannot be a named constructor argument for Packet"))
+class Base:
+    def init(...items):
+        this.items = items
+class Inherited: Base
+    pass
+class Child: Base
+    def init(...items):
+        super(1, 2)
+        this.own = items
+inherited = Inherited(3, 4)
+child = Child(5, 6)
+assert(inherited.items, [3, 4])
+assert(child.items, [1, 2])
+assert(child.own, [5, 6])
+---
+# Nucleoid initializes rest histories without capture or shared list mutation
+
+tail = [100]
+def history(...tail):
+    tail.push(9)
+    return [tail@0, tail@last]
+one = history(1, 2)
+two = history()
+three = history()
+assert(one, [[1, 2], [1, 2, 9]])
+assert(two, [[], [9]])
+assert(three, [[], [9]])
+assert(tail, [100])
+def factory(...tail) => () => tail
+callback = factory(7, 8)
+assert(callback(), [100])
+state = 1
+def attempt(...tail):
+    try:
+        tail.push(8)
+        state = 2
+        throw "LOCAL_REST"
+    catch error:
+        state = state
+    return [tail@0, tail, state]
+assert(attempt(1), [[1], [1, 8], 1])
+assert(state, 1)
+---
+# Nucleoid restores variadic definitions and their reactive callers on rollback
+
+unit = 2
+def total(...items) => items.sum() * unit
+live = total
+frozen = total.value
+observed = live(1, 2)
+assert(observed, 6)
+def total(head = 10, ...tail) => (head + tail.length) * unit
+assert(observed, 4)
+assert(frozen(1, 2), 6)
+try:
+    def total(...items) => 99
+    assert(observed, 99)
+    throw "RESTORE_REST"
+catch error:
+    assert(error, "RESTORE_REST")
+assert(observed, 4)
+unit = 3
+assert(observed, 6)
+assert(frozen(1, 2), 9)
+observed
+# return: 6
 ```

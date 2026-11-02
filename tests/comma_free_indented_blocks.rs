@@ -110,6 +110,7 @@ fn complete_two_three_duplicate_and_1024_name_lists_preserve_metadata_and_bindin
                     name: (*name).to_string(),
                     type_name: None,
                     default: None,
+                    rest: false,
                 })
                 .collect::<Vec<_>>()
         );

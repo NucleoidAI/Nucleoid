@@ -1280,7 +1280,7 @@ Normative detail: [while loops](../nucleoid.spec.md#while-loops).
 - For the single-parameter untyped forms, a bare identifier must be immediately followed by `=>`, or by `:` whose body starts with a logical newline/indent and supplies a real `Indent` after normal newline/semicolon layout. The colon guard only looks ahead; the existing suite parser consumes the body.
 - No logical newline, semicolon or comment-induced logical break is skipped within a bare header. Blank/comment lines before an indented body retain the existing layout rules.
 - All parenthesized definitions remain available, including `def add(left, right) => left + right`, `def add(left: int, right: int) => left + right` and typed/untyped `def add(left, right):` alternatives with the same indented body. Nullary, multiline-parameter, inline and brace-suite definitions keep their parentheses, as do calls; typed single/multiple-parameter indented blocks have the optional spellings below.
-- Bare inline/braced or missing-indent blocks, trailing bare commas, bare defaults, destructured/variadic parameters, dotted/union/generic/nullable/keyword/dollar/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added. Parenthesized scalar defaults are specified separately below.
+- Bare inline/braced or missing-indent blocks, trailing bare commas, bare defaults, destructured or bare variadic parameters, dotted/union/generic/nullable/keyword/dollar/literal annotations, anonymous colon blocks, return annotations and call-parenthesis omissions are not added. Parenthesized scalar defaults and final rest parameters are specified separately below.
 - NUC18/20 single-parameter arrows and NUC19/24's exact untyped/typed indented-colon guards are unchanged; named return-block lowering, parameter metadata/order, argument binding, runtime behavior and canonical rendering remain those of the parenthesized counterparts.
 - Braces after a named arrow are object literals, not statement blocks. Parenthesized expressions may span physical lines, starting either on the header line or in the optional NUC32 real-indented body.
 - A call in an assignment depends on the function and its arguments.
@@ -1307,7 +1307,7 @@ Normative detail: [while loops](../nucleoid.spec.md#while-loops).
   Undefined, false, zero, empty Strings and other supplied values retain their
   existing evaluation/value semantics; missing nondefaulted slots still bind
   Null. Required slots may follow defaults, annotations remain non-enforcing,
-  and extra arguments keep their ordinary behavior.
+  and fixed-only signatures still evaluate and ignore extra arguments.
 - Allowed data are finite numeric literals with one optional sign (including
   exact `-0`), quoted Strings, Booleans and null with its existing aliases.
   Arrays, objects, regexes, templates, references, calls, grouped/compound
@@ -1334,6 +1334,45 @@ Normative detail: [while loops](../nucleoid.spec.md#while-loops).
   [literal parameter defaults](../nucleoid.spec.md#literal-parameter-defaults)
   contract and `Literal parameter defaults preserve supplied names` in
   `tests/reference.md`.
+
+### Final rest parameters
+
+- [NUC 74](nuc-0074.md) adds an optional final `...name` or
+  `...name: Type` to explicitly parenthesized user-defined signatures:
+  named functions, function expressions, arrows, methods, class headers
+  and adopted `init` methods. Bare signatures and lambdas gain no rest form.
+- Fixed slots retain their defaults, omissions, annotations and behavior.
+  The rest slot starts at version zero with a fresh list of surplus
+  positional values, in source order, or `[]`. A list argument remains one
+  element; no call-site spread, deep copy, closure or new callback argument
+  is introduced. Receivers never enter the list.
+- Require one final rest slot, without a default and with a name distinct
+  from fixed formals. A trailing comma is allowed. Other fixed-name
+  duplication retains its accepted behavior.
+- Constructor labels still address fixed slots only; named-only calls bind
+  an empty rest list, and mixed calls keep the ordinary fixed-prefix binding.
+  A named rest argument raises
+  `TypeError("Rest parameter '<name>' cannot be a named constructor argument for <class>")`
+  before any values run. Other label errors and inherited/`super` selection,
+  `init` adoption, named pinning and delayed positional selection are unchanged.
+- Arguments still run once, left to right, per invocation. Fresh local
+  lists shadow state without becoming graph nodes or captures; contained
+  objects retain identity. Live callers, frozen/historical Function Values,
+  `.value` settlement, nontransactional locals and State/graph rollback keep
+  their existing boundaries. Fixed-only signatures and their canonical
+  rendering remain unchanged.
+- Invalid rest signatures raise `SyntaxError("Rest parameter must be last")`,
+  `SyntaxError("Rest parameter cannot have a default")` or
+  `SyntaxError("Rest parameter '<name>' duplicates a fixed parameter")`.
+  See the authoritative [rest contract](../nucleoid.spec.md#final-rest-parameters)
+  and `Final rest parameters collect ordered surplus arguments` in
+  `tests/reference.md`.
+
+```
+def collect(head = 1, ...tail) => [head, tail]
+assert(collect(), [1, []])
+assert(collect(2, 3, 4), [2, [3, 4]])
+```
 
 ```
 def generate number => number * 10
@@ -2881,6 +2920,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
 | A positional constructor argument following a label | `Positional constructor argument after named arguments for <class>` |
+| A label targeting a rest formal | `Rest parameter '<name>' cannot be a named constructor argument for <class>` |
 
 ### SyntaxError
 
@@ -2889,6 +2929,9 @@ Messages are exact and are part of the observable behaviour of the language.
 | Declaring a class-level rule in a non-class block | `Cannot define class declaration in non-class block` |
 | A character that begins no token | `Unexpected character '<character>'` |
 | A token other than the one required | `Expected <what> but found <what>` |
+| A formal after a rest formal | `Rest parameter must be last` |
+| A default on a rest formal | `Rest parameter cannot have a default` |
+| A rest name duplicating a fixed formal | `Rest parameter '<name>' duplicates a fixed parameter` |
 | An unsupported compound target | `Invalid compound assignment target` |
 | An unsupported `:=` target, including an assignment such as `y = x := 1` | `Invalid value assignment target` |
 | `**` or `**=` where an operand is required | `Unexpected '**'`, `Unexpected '**='` |
@@ -3003,6 +3046,7 @@ value => { statement }                 anonymous arrow with a statement body
 value -> expression                    optional spelling wherever => is accepted (NUC 57)
 lambda a, b: expression                optional lambda, exactly (a, b) => (expression) (NUC 57)
 def name(params) => expression         single-return function
+def name(head = 1, ...tail) => expression final positional rest list (NUC 74)
 def name(params) =>                    optional indented single expression (NUC 32)
     expression
 def name left, right => expression    untyped multiple-parameter named arrow

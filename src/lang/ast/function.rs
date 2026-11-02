@@ -51,8 +51,9 @@ impl Runtime {
         // so `$Class` inside a predicate means the same thing as outside it.
         scope.set_instance(self.instances.last().cloned());
 
-        for (index, parameter) in function.parameters.iter().enumerate() {
-            let value = parameter.effective_value(arguments.get(index).cloned());
+        let mut arguments = arguments.iter().cloned().map(Some);
+        for parameter in &function.parameters {
+            let value = parameter.bind_value(&mut arguments);
             scope.declare(parameter.name.clone(), value);
         }
 

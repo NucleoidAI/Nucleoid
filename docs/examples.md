@@ -3065,6 +3065,30 @@ assert: south.pending, 2
 - See [NUC 73](nuc-0073.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-predicate-counts).
 
+## Final rest parameters
+
+**Variadic totals keep ordinary argument dependencies live**
+
+```nuc
+def total(head = 0, ...tail) => head + tail.sum()
+reading = 2
+amount = total(1, reading, 3)
+assert(amount, 6)
+assert(total(), 0)
+reading = 5
+assert(amount, 9)
+assert(total(4), 4)
+amount
+# return: 9
+```
+
+- Each invocation starts a fresh tail list and keeps ordinary fixed defaults
+  and argument dependencies. Changing the supplied reading re-evaluates the
+  standing call; it does not mutate a retained parameter frame.
+- Only the final parenthesized formal may use `...`; rest defaults and
+  call-site spread are not supported. See [NUC 74](nuc-0074.md) and the
+  [root contract](../nucleoid.spec.md#final-rest-parameters).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

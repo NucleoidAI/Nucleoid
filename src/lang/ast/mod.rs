@@ -109,6 +109,8 @@ pub struct Parameter {
     pub type_name: Option<String>,
     /// A scalar literal used only when the argument position/key is absent.
     pub default: Option<ParameterDefault>,
+    /// The final parenthesized formal collects remaining positional values.
+    pub rest: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -79,6 +79,7 @@ fn typed_metadata_and_named_return_block_are_exactly_the_parenthesized_form() {
                 name: name.to_string(),
                 type_name: Some(annotation.to_string()),
                 default: None,
+                rest: false,
             }]
         );
         assert_eq!(

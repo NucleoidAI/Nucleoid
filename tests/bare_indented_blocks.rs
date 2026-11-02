@@ -63,6 +63,7 @@ fn bare_parameter_keeps_function_metadata_body_and_canonical_source() {
                 name: name.to_string(),
                 type_name: None,
                 default: None,
+                rest: false,
             }]
         );
         assert_eq!(

@@ -344,6 +344,7 @@ fn canonical_rendering_folds_the_premise_and_reads_back() {
             name: "level".to_string(),
             type_name: None,
             default: Some(ParameterDefault::Number(95.0)),
+            rest: false,
         }],
         body: FunctionBody::Block(body.clone()),
     }));

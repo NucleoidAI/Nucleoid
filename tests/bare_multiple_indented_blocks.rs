@@ -69,6 +69,7 @@ fn complete_lists_preserve_order_untyped_metadata_body_and_canonical_rendering()
                     name: name.to_string(),
                     type_name: None,
                     default: None,
+                    rest: false,
                 })
                 .collect::<Vec<_>>()
         );

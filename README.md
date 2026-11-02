@@ -1496,6 +1496,24 @@ assert: pending, 1
   remains unchanged. See the
   [root contract](nucleoid.spec.md#list-and-population-predicate-counts).
 
+## Final rest parameters
+
+**Final rest parameters collect positional extras without changing fixed defaults**
+
+```nuc
+def collect(head = 1, ...tail) => [head, tail]
+assert(collect(), [1, []])
+assert(collect(2, 3, 4), [2, [3, 4]])
+assert(collect(5, [6, 7]), [5, [[6, 7]]])
+```
+
+- A final `...name` in a parenthesized user signature receives a fresh list,
+  including `[]` when there are no extras. Functions, methods and
+  constructors share binding; a constructor label may fill a fixed slot,
+  not its rest slot. No bare rest form or call-site spread is introduced.
+  See [NUC 74](docs/nuc-0074.md) and the
+  [root contract](nucleoid.spec.md#final-rest-parameters).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

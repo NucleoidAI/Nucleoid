@@ -1034,6 +1034,7 @@ impl Parser {
             name,
             type_name: None,
             default: None,
+            rest: false,
         }
     }
 
@@ -1157,6 +1158,7 @@ impl Parser {
             name,
             type_name,
             default: None,
+            rest: false,
         })
     }
 
@@ -1204,20 +1206,51 @@ impl Parser {
         Ok(default)
     }
 
+    /// Recognize adjacent dots only here, without changing tokenization of
+    /// any existing source or adding rest syntax to bare signatures.
+    fn starts_rest_parameter(&self) -> bool {
+        let start = self.here();
+        (0..3).all(|offset| {
+            self.tokens
+                .get(self.position + offset)
+                .is_some_and(|spanned| {
+                    spanned.token == Token::Dot
+                        && spanned.position == Position::new(start.line, start.column + offset)
+                })
+        })
+    }
+
     fn parameters(&mut self) -> Result<Vec<Parameter>> {
         self.expect(&Token::LeftParen)?;
 
-        let mut parameters = Vec::new();
+        let mut parameters: Vec<Parameter> = Vec::new();
 
         while !self.check(&Token::RightParen) {
+            let rest = self.starts_rest_parameter();
+            if rest {
+                self.position += 3;
+            }
             let mut parameter = self.parameter()?;
+            parameter.rest = rest;
+            if rest && parameters.iter().any(|fixed| fixed.name == parameter.name) {
+                return Err(self.error(format!(
+                    "Rest parameter '{}' duplicates a fixed parameter",
+                    parameter.name
+                )));
+            }
             if self.eat(&Token::Assign) {
+                if rest {
+                    return Err(self.error("Rest parameter cannot have a default"));
+                }
                 parameter.default = Some(self.parameter_default()?);
             }
             parameters.push(parameter);
 
             if !self.eat(&Token::Comma) {
                 break;
+            }
+            if rest && !self.check(&Token::RightParen) {
+                return Err(self.error("Rest parameter must be last"));
             }
         }
 
@@ -1317,6 +1350,7 @@ impl Parser {
                             name: field,
                             type_name: Some(type_name),
                             default: None,
+                            rest: false,
                         });
                     }
                     _ => self.statement(&mut constructor)?,

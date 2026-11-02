@@ -2178,4 +2178,20 @@ delete first
 assert: pending, 1
 limit = 9
 assert: large, 2
+---
+# Final rest parameters collect ordered surplus arguments
+
+def collect(head = 1, ...tail) => [head, tail]
+assert(collect(), [1, []])
+assert(collect(2, 3, 4), [2, [3, 4]])
+class Packet(head = 1, ...tail):
+    this.head = head
+    this.tail = tail
+packet = Packet(head=5)
+assert(packet.head, 5)
+assert(packet.tail, [])
+packet = Packet(6, 7, 8)
+assert(packet.tail, [7, 8])
+packet.tail
+# return: [7,8]
 ```

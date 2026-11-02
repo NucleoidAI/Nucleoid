@@ -62,6 +62,7 @@ fn complete_lists_preserve_parameter_order_metadata_and_named_return_lowering() 
                     name: name.to_string(),
                     type_name: None,
                     default: None,
+                    rest: false,
                 })
                 .collect::<Vec<_>>()
         );
