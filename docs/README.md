@@ -1778,7 +1778,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), and `distinct` ([NUC 71](nuc-0071.md)) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), and `count(predicate)` ([NUC 73](nuc-0073.md)) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2578,6 +2578,53 @@ palette.length
   [list and population distinct values](../nucleoid.spec.md#list-and-population-distinct-values)
   section.
 
+### List and population predicate counts
+
+```
+numbers = [1, 4, 7, 10]
+limit = 5
+large = numbers.count(number -> number > limit)
+assert: large, 2
+numbers.push(12)
+assert: large, 3
+class Job(done): this.done = done
+pending = Job.count(job -> not job.done)
+first = Job(false)
+second = Job(true)
+assert: pending, 1
+second.done = false
+assert: pending, 2
+delete first.done
+delete first
+assert: pending, 1
+limit = 9
+assert: large, 2
+```
+
+- This is the complete `Nucleoid counts matching items and instances`
+  program in `tests/reference.md`, without its title.
+- [NUC 73](nuc-0073.md) adds `count(predicate)` to every list or class
+  population receiver supported by `filter`, including class aliases. It
+  returns the Number from `filter(predicate).length` without allocating the
+  filtered result list; a valid empty receiver gives `0`.
+- The predicate is called once per item, in receiver order, with only the
+  item and the truthiness rules of `filter`. It visits every item without
+  short-circuiting. A missing or non-function predicate, including `null`,
+  raises `TypeError("count expects a function")`, even on an empty receiver;
+  there is no no-argument overload.
+- The receiver snapshot precedes argument evaluation. All supplied arguments,
+  including ignored extras, run once, left to right. Counts inherit `filter`'s
+  dependencies, nullish reads, deferred declarations, `.value`, state versions,
+  callback errors and rollback; a null or undefined receiver skips arguments
+  and yields undefined.
+- Counts stay live in declarations and class-level rules. Bindings, properties
+  and instance methods named `count` keep their behavior, while
+  `Name.count(predicate)` on a class or class alias queries its population.
+  All accepted `filter(predicate).length` forms remain unchanged.
+- The authoritative contract is the
+  [list and population predicate counts](../nucleoid.spec.md#list-and-population-predicate-counts)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -2822,6 +2869,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
+| Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
@@ -2996,6 +3044,7 @@ items.at(-1)  items.findLast(callback) read or search from the end (NUC 61)
 items.sum()  Name.sum(selector)        live numeric total (NUC 68)
 items.max()  Name.min(selector)        live numeric extreme (NUC 69)
 items.distinct()  Name.distinct(selector) live values without repeats (NUC 71)
+items.count(predicate)  Name.count(predicate) live predicate count (NUC 73)
 
 why reference                         derive a live explanation
 affects reference                     inspect live downstream impact

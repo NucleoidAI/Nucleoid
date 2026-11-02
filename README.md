@@ -1471,6 +1471,31 @@ assert: [x, y], [0, 7]
   `x = corner[0]`, so every name stays live: changing `size` or `corner`
   updates it. See the [root contract](nucleoid.spec.md#destructuring-declarations).
 
+## Predicate counts
+
+**Predicate counts keep the number of open tickets live as tickets change**
+
+```nuc
+class Ticket(open): this.open = open
+pending = Ticket.count(ticket -> ticket.open)
+first = Ticket(true)
+second = Ticket(false)
+assert: pending, 1
+second.open = true
+assert: pending, 2
+first.open = false
+assert: pending, 1
+```
+
+- [NUC 73](docs/nuc-0073.md) adds `count(predicate)` to lists and class
+  populations. It returns `filter(predicate).length` without allocating the
+  filtered result, and calls the predicate once per item in receiver order.
+- Counts remain live in declarations and class-level rules. A valid empty
+  receiver gives `0`; a missing or non-function predicate raises
+  `TypeError("count expects a function")`. The accepted `filter` spelling
+  remains unchanged. See the
+  [root contract](nucleoid.spec.md#list-and-population-predicate-counts).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

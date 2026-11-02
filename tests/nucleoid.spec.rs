@@ -14913,6 +14913,119 @@ limits = [3, 60]
 assert: [low, high, qty, price], [3, 60, 3, 7]"#);
 }
 
+/// Nucleoid counts matching list items
+#[rustfmt::skip]
+#[test]
+fn counts_matching_list_items() {
+    runner()("readings = [2, 5, 8, 11]\nthreshold = 6\nhigh = readings.count(reading -> reading > threshold)\nassert: high, 2\nreadings.push(14)\nassert: high, 3\nthreshold = 10\nassert: high, 2\nreadings.shift()\nassert: high, 2\nreadings = []\nassert: high, 0\ncart = {items: [0, 1, 2, 0, 3]}\nnonzero = cart.items.count(item -> item != 0)\nassert: nonzero, 3\ncart.items.push(4)\nassert: nonzero, 4");
+    let mut run = runner();
+    run("readings = [2, 5, 8, 11]");
+    run("threshold = 6");
+    run("high = readings.count(reading -> reading > threshold)");
+    assert_eq!(run("high"), 2);
+    run("readings.push(14)");
+    assert_eq!(run("high"), 3);
+    run("threshold = 10");
+    assert_eq!(run("high"), 2);
+    run("readings.shift()");
+    assert_eq!(run("high"), 2);
+    run("readings = []");
+    assert_eq!(run("high"), 0);
+    run("cart = {items: [0, 1, 2, 0, 3]}");
+    run("nonzero = cart.items.count(item -> item != 0)");
+    assert_eq!(run("nonzero"), 3);
+    run("cart.items.push(4)");
+    assert_eq!(run("nonzero"), 4);
+}
+
+/// Nucleoid counts matching class instances
+#[rustfmt::skip]
+#[test]
+fn counts_matching_class_instances() {
+    runner()("class Ticket(open, priority):\n    this.open = open\n    this.priority = priority\npending = Ticket.count(ticket -> ticket.open)\nassert: pending, 0\nfirst = Ticket(true, 2)\nsecond = Ticket(false, 5)\nthird = Ticket(true, 9)\nimportant = Ticket.count(ticket -> ticket.open and ticket.priority >= 5)\nassert: pending, 2\nassert: important, 1\nsecond.open = true\nassert: pending, 3\nassert: important, 2\nthird.priority = 1\nassert: important, 1\ndelete first.open\ndelete first.priority\ndelete first\nassert: pending, 2\nthird.open = false\nassert: pending, 1\nassert: important, 1");
+    let mut run = runner();
+    run(r#"class Ticket(open, priority):
+    this.open = open
+    this.priority = priority"#);
+    run("pending = Ticket.count(ticket -> ticket.open)");
+    assert_eq!(run("pending"), 0);
+    run("first = Ticket(true, 2)");
+    run("second = Ticket(false, 5)");
+    run("third = Ticket(true, 9)");
+    run("important = Ticket.count(ticket -> ticket.open and ticket.priority >= 5)");
+    assert_eq!(run("pending"), 2);
+    assert_eq!(run("important"), 1);
+    run("second.open = true");
+    assert_eq!(run("pending"), 3);
+    assert_eq!(run("important"), 2);
+    run("third.priority = 1");
+    assert_eq!(run("important"), 1);
+    run("delete first.open");
+    run("delete first.priority");
+    run("delete first");
+    assert_eq!(run("pending"), 2);
+    run("third.open = false");
+    assert_eq!(run("pending"), 1);
+    assert_eq!(run("important"), 1);
+}
+
+/// Nucleoid keeps predicate counts live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_predicate_counts_live_in_class_level_rules() {
+    runner()("class Team(name): this.name = name\nclass Task(team, done):\n    this.team = team\n    this.done = done\n$Team.pending = Task.count(task -> task.team == $Team and not task.done)\nalpha = Team(\"alpha\")\nbeta = Team(\"beta\")\nassert: alpha.pending, 0\nassert: beta.pending, 0\nfirst = Task(alpha, false)\nsecond = Task(alpha, true)\nthird = Task(beta, false)\nassert: alpha.pending, 1\nassert: beta.pending, 1\nfirst.team = beta\nassert: alpha.pending, 0\nassert: beta.pending, 2\nsecond.done = false\nassert: alpha.pending, 1\ndelete third.team\ndelete third.done\ndelete third\nassert: beta.pending, 1");
+    let mut run = runner();
+    run("class Team(name): this.name = name");
+    run(r#"class Task(team, done):
+    this.team = team
+    this.done = done"#);
+    run("$Team.pending = Task.count(task -> task.team == $Team and not task.done)");
+    run(r#"alpha = Team("alpha")"#);
+    run(r#"beta = Team("beta")"#);
+    assert_eq!(run("alpha.pending"), 0);
+    assert_eq!(run("beta.pending"), 0);
+    run("first = Task(alpha, false)");
+    run("second = Task(alpha, true)");
+    run("third = Task(beta, false)");
+    assert_eq!(run("alpha.pending"), 1);
+    assert_eq!(run("beta.pending"), 1);
+    run("first.team = beta");
+    assert_eq!(run("alpha.pending"), 0);
+    assert_eq!(run("beta.pending"), 2);
+    run("second.done = false");
+    assert_eq!(run("alpha.pending"), 1);
+    run("delete third.team");
+    run("delete third.done");
+    run("delete third");
+    assert_eq!(run("beta.pending"), 1);
+}
+
+/// Nucleoid uses predicate counts beside ordinary count names
+#[rustfmt::skip]
+#[test]
+fn uses_predicate_counts_beside_ordinary_count_names() {
+    runner()("cutoff = 3\ncount = 7\nreport = {count: 9}\nclass Bag(items):\n    this.items = items\n    def count(): return this.items.count(item -> item > cutoff)\nbag = Bag([1, 4, 8])\ndef matching(items) => items.count(item -> item > cutoff)\nassert: bag.count(), 2\nassert: matching([2, 5, 9]), 2\nassert: Bag.filter(each -> each.count() > 1).length, 1\nkind = Bag\nassert: kind.filter(each -> each.count() > 1).length, 1\nassert: [count, report.count], [7, 9]\ncutoff = 6\nassert: bag.count(), 1\nassert: matching([2, 5, 9]), 1\nassert: Bag.filter(each -> each.count() > 1).length, 0");
+    let mut run = runner();
+    run("cutoff = 3");
+    run("count = 7");
+    run("report = {count: 9}");
+    run(r#"class Bag(items):
+    this.items = items
+    def count(): return this.items.count(item -> item > cutoff)"#);
+    run("bag = Bag([1, 4, 8])");
+    run("def matching(items) => items.count(item -> item > cutoff)");
+    assert_eq!(run("bag.count()"), 2);
+    assert_eq!(run("matching([2, 5, 9])"), 2);
+    assert_eq!(run("Bag.filter(each -> each.count() > 1).length"), 1);
+    run("kind = Bag");
+    assert_eq!(run("kind.filter(each -> each.count() > 1).length"), 1);
+    assert_eq!(run("[count, report.count]"), serde_json::json!([7, 9]));
+    run("cutoff = 6");
+    assert_eq!(run("bag.count()"), 1);
+    assert_eq!(run("matching([2, 5, 9])"), 1);
+    assert_eq!(run("Bag.filter(each -> each.count() > 1).length"), 0);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

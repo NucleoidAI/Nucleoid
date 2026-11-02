@@ -3165,6 +3165,45 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed distinct updates` specify the executable
   behavior.
 
+## List and population predicate counts
+
+- [NUC 73](docs/nuc-0073.md) adds the read-only shared query
+  `RECEIVER.count(predicate)` to every list and class population receiver
+  supported by `filter`, including class aliases. No syntax, keyword, alias,
+  no-argument overload or public Rust API is added.
+- For a function predicate, the query returns the Number that
+  `RECEIVER.filter(predicate).length` returns, without allocating a filtered
+  result list. A valid empty receiver returns `0`.
+- The predicate is invoked once per item, in receiver order, with only the
+  item, through the same invocation and truthiness rules as `filter`.
+  Remaining parameters follow the normal missing-argument/default rules.
+  Every item is visited unless an invocation fails; a truthy or falsy result
+  never short-circuits the query.
+- A missing or non-function first argument, including `null` or undefined,
+  raises `TypeError("count expects a function")`, even on an empty list or
+  population. There is no `count()` form for the receiver's length.
+- The receiver is snapshotted before the arguments, and every supplied
+  argument is evaluated once, left to right, including evaluated-and-ignored
+  extras. The query never writes the receiver; callback side effects and
+  errors keep their existing behavior. A null or undefined receiver yields
+  undefined without evaluating the arguments, as for `filter`.
+- A declaration follows its receiver, argument expressions and the reads
+  made by every predicate invocation. List changes, population additions
+  and removals, and changes to those reads re-evaluate it, including in
+  class-level rules. `.value`, state-version receivers, nullish reads and
+  deferred declarations work exactly as in `filter(predicate).length`;
+  a numeric query result does not suppress missing-value settlement.
+  Failures use the existing transaction and rollback behavior.
+- Bindings, properties and instance methods named `count` are unchanged,
+  as are property reads such as `items.count`. On a class or class alias,
+  `Name.count(predicate)` queries the population even when its instances
+  have a method named `count`; calls on an instance still invoke that method.
+  All accepted `filter(predicate).length` forms remain available unchanged.
+- The four appended entries beginning `Nucleoid counts matching list items`
+  through `Nucleoid uses predicate counts beside ordinary count names`
+  specify the executable behavior. Their original assertions, including the
+  population `filter(...).length` assertions, are preserved.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -18063,4 +18102,97 @@ order.qty = 3
 order.price = 7
 limits = [3, 60]
 assert: [low, high, qty, price], [3, 60, 3, 7]
+---
+# Nucleoid counts matching list items
+
+readings = [2, 5, 8, 11]
+threshold = 6
+high = readings.count(reading -> reading > threshold)
+assert: high, 2
+readings.push(14)
+assert: high, 3
+threshold = 10
+assert: high, 2
+readings.shift()
+assert: high, 2
+readings = []
+assert: high, 0
+cart = {items: [0, 1, 2, 0, 3]}
+nonzero = cart.items.count(item -> item != 0)
+assert: nonzero, 3
+cart.items.push(4)
+assert: nonzero, 4
+---
+# Nucleoid counts matching class instances
+
+class Ticket(open, priority):
+    this.open = open
+    this.priority = priority
+pending = Ticket.count(ticket -> ticket.open)
+assert: pending, 0
+first = Ticket(true, 2)
+second = Ticket(false, 5)
+third = Ticket(true, 9)
+important = Ticket.count(ticket -> ticket.open and ticket.priority >= 5)
+assert: pending, 2
+assert: important, 1
+second.open = true
+assert: pending, 3
+assert: important, 2
+third.priority = 1
+assert: important, 1
+delete first.open
+delete first.priority
+delete first
+assert: pending, 2
+third.open = false
+assert: pending, 1
+assert: important, 1
+---
+# Nucleoid keeps predicate counts live in class level rules
+
+class Team(name): this.name = name
+class Task(team, done):
+    this.team = team
+    this.done = done
+$Team.pending = Task.count(task -> task.team == $Team and not task.done)
+alpha = Team("alpha")
+beta = Team("beta")
+assert: alpha.pending, 0
+assert: beta.pending, 0
+first = Task(alpha, false)
+second = Task(alpha, true)
+third = Task(beta, false)
+assert: alpha.pending, 1
+assert: beta.pending, 1
+first.team = beta
+assert: alpha.pending, 0
+assert: beta.pending, 2
+second.done = false
+assert: alpha.pending, 1
+delete third.team
+delete third.done
+delete third
+assert: beta.pending, 1
+---
+# Nucleoid uses predicate counts beside ordinary count names
+
+cutoff = 3
+count = 7
+report = {count: 9}
+class Bag(items):
+    this.items = items
+    def count(): return this.items.count(item -> item > cutoff)
+bag = Bag([1, 4, 8])
+def matching(items) => items.count(item -> item > cutoff)
+assert: bag.count(), 2
+assert: matching([2, 5, 9]), 2
+assert: Bag.filter(each -> each.count() > 1).length, 1
+kind = Bag
+assert: kind.filter(each -> each.count() > 1).length, 1
+assert: [count, report.count], [7, 9]
+cutoff = 6
+assert: bag.count(), 1
+assert: matching([2, 5, 9]), 1
+assert: Bag.filter(each -> each.count() > 1).length, 0
 ```

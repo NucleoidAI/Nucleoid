@@ -57,6 +57,7 @@ const LIST_MEMBERS: &[&str] = &[
     "length",
     "map",
     "filter",
+    "count",
     "reduce",
     "sum",
     "max",

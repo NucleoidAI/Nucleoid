@@ -3033,6 +3033,38 @@ ahead
   together. See [NUC 67](nuc-0067.md) and the
   [root contract](../nucleoid.spec.md#destructuring-declarations).
 
+## Predicate counts
+
+**Predicate counts keep the unfinished tasks of each team live**
+
+```nuc
+class Team(name): this.name = name
+class Task(team, done):
+    this.team = team
+    this.done = done
+$Team.pending = Task.count(task -> task.team == $Team and not task.done)
+north = Team("north")
+south = Team("south")
+first = Task(north, false)
+second = Task(north, true)
+Task(south, false)
+assert: north.pending, 1
+assert: south.pending, 1
+second.done = false
+assert: north.pending, 2
+first.team = south
+assert: north.pending, 1
+assert: south.pending, 2
+```
+
+- The one class-level rule counts each team's unfinished tasks. Completing
+  or transferring a task updates every affected team's count.
+- `count(predicate)` keeps the invocation, dependency and missing-value
+  behavior of `filter(predicate).length` without allocating its result list.
+  It does not replace instance methods named `count`.
+- See [NUC 73](nuc-0073.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-predicate-counts).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

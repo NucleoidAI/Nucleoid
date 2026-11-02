@@ -2157,4 +2157,25 @@ assert: [base, tall, volume], [10, 2, 20]
 assert: [origin, destination], ["Lima", "Cusco"]
 volume
 # return: 20
+---
+# Nucleoid counts matching items and instances
+
+numbers = [1, 4, 7, 10]
+limit = 5
+large = numbers.count(number -> number > limit)
+assert: large, 2
+numbers.push(12)
+assert: large, 3
+class Job(done): this.done = done
+pending = Job.count(job -> not job.done)
+first = Job(false)
+second = Job(true)
+assert: pending, 1
+second.done = false
+assert: pending, 2
+delete first.done
+delete first
+assert: pending, 1
+limit = 9
+assert: large, 2
 ```

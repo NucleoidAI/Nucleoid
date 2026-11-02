@@ -390,6 +390,25 @@ impl Runtime {
                 Ok(Value::List(matched))
             }
 
+            "count" => {
+                let Some(Value::Function(function)) = predicate else {
+                    return Err(Error::type_error("count expects a function"));
+                };
+
+                let mut matched = 0_usize;
+
+                for item in items {
+                    if self
+                        .invoke(&function, std::slice::from_ref(&item))?
+                        .truthy()
+                    {
+                        matched += 1;
+                    }
+                }
+
+                Ok(Value::Number(matched as f64))
+            }
+
             "map" => {
                 let Some(Value::Function(function)) = predicate else {
                     return Err(Error::type_error("map expects a function"));
