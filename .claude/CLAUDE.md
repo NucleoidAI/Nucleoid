@@ -17,6 +17,7 @@ not a replacement for the policies it links to.
 | [versions.instructions.md](rules/versions.instructions.md) | Human-owned version numbers; no AI version changes |
 | [proposals.instructions.md](rules/proposals.instructions.md) | Independent NUC proposal preparation and evaluation, the token policy, automatic acceptance on the hard criteria (no compile errors, every test passing, backward compatibility) with the `Automatic-Accepted` status, ARC- and user-requested bases, and `NUC <number> <Title>` outcome commit messages |
 | [rust-improvement.instructions.md](rules/rust-improvement.instructions.md) | Focused Rust improvements and the required post-change agent |
+| [git.instructions.md](rules/git.instructions.md) | Pull before agents start and before commit/push, push after every commit, resolve conflicts and push |
 
 All instruction files use `applyTo: "**"` to preserve their repository-wide scope.
 

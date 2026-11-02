@@ -325,7 +325,7 @@ to that evaluation and must not recursively launch another agent.
 - Keep rejected implementation changes isolated in the candidate worktree; do not apply its full diff merely to record the NUC.
 - Stage explicit proposal/index paths and use a path-limited commit. Verify the resulting commit contains only the rejection documentation and directly related metadata. Never use repository-wide staging or `git commit -a`, or include unrelated files already staged.
 - Preserve unrelated staged and unstaged changes. If the rejection documentation is already committed, verify and report that commit instead of creating an empty duplicate.
-- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the coordinating caller and does not authorize an automatic push.
+- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the coordinating caller, who pulls before committing and pushes right after under the [git synchronization policy](git.instructions.md).
 
 ## ARC-requested proposals (caller only)
 

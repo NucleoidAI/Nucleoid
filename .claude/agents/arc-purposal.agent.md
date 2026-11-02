@@ -55,8 +55,10 @@ Follow `.claude/CLAUDE.md`, the
   the evaluator's decision, an evaluator acceptance makes it Accepted, and any
   other result makes it Automatic-Accepted.
 - Record the outcome through the NUC workflow's caller steps, with its basis,
-  the evaluator's decision, and the run's evidence. Never push or change project
-  versions.
+  the evaluator's decision, and the run's evidence. Pull before and push right
+  after every commit under the
+  [git synchronization policy](../rules/git.instructions.md). Never change
+  project versions.
 - Save the JSON result record that the skill defines in the session workspace,
   report a short summary with its path and any suggested solver changes, and
   stop.

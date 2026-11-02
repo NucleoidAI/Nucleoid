@@ -213,7 +213,9 @@ Record it with the nuc-proposal skill's caller steps:
   Keep the candidate isolated.
 
 Leave the dataset, README, and reporting-list changes uncommitted for review.
-Never push or change project versions.
+Push every commit this invocation makes right after it, pulling first, under
+the [git synchronization policy](../../rules/git.instructions.md). Never change
+project versions.
 
 ## Suggest solver changes
 
