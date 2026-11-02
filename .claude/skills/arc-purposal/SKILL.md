@@ -1,37 +1,21 @@
 ---
 name: arc-purposal
-description: Run ARC training puzzles, one round each, through the puzzle's instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run, then decide the enhancement's outcome under the automatic acceptance rule. A given puzzle ID runs one round; without one, rounds continue with the next default puzzle.
+description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run, then decide the enhancement's outcome under the automatic acceptance rule.
 argument-hint: [<puzzle-id>] [--hint <text>]
 ---
 
 # Running an ARC puzzle proposal
 
-`/arc-purposal [<puzzle-id>] [--hint <text>]` takes training puzzles, one
-round each, through the puzzle's instruction dataset, any Nucleoid enhancement
-that dataset requires, one solver run, and the outcome. Follow
-`.claude/CLAUDE.md`, the [ARC instructions](../../rules/arc.instructions.md),
-and the [agent profile](../../agents/arc-purposal.agent.md).
+`/arc-purposal [<puzzle-id>] [--hint <text>]` takes one training puzzle through
+its instruction dataset, any Nucleoid enhancement that dataset requires, one
+solver run, and the outcome. Follow `.claude/CLAUDE.md`, the
+[ARC instructions](../../rules/arc.instructions.md), and the
+[agent profile](../../agents/arc-purposal.agent.md).
 
 You are the caller. Run this skill where you can launch agents, such as the
 main conversation, not in a forked subagent. Launch each worker the steps
 name, and never do a worker's dataset, proposal, or evaluation work yourself.
 If you cannot launch agents, stop and report `agent_launch_unavailable`.
-
-## Choose the execution mode
-
-- **Single:** with a puzzle ID, run one round for that puzzle, then stop
-  without starting another puzzle or NUC, unless the user explicitly asks to
-  continue; later rounds then take default puzzles.
-- **Continuous:** without a puzzle ID, run rounds one after another, each on
-  the [default puzzle](#select-the-default-puzzle), and
-  [continue with the next puzzle](#continue-with-the-next-puzzle) after every
-  round, the way `/nuc-proposal`'s continuous mode continues with the next NUC.
-
-The mode only decides how many rounds run. Each round takes its own puzzle
-through the steps below, from [checking the puzzle](#check-the-puzzle) to its
-[report](#report), with its own dataset, at most one NUC, one solver run, and
-its own outcome. A NUC that a round requests is a single-proposal request in
-both modes, never a continuous NUC cycle.
 
 ## Keep the solver unchanged
 
@@ -39,11 +23,11 @@ Never change the TypeScript implementation in `arc/`: no `.ts` file there,
 such as `server.ts`, `src/app.ts`, or `src/dataset/dataset.ts`, is
 added, edited, or removed, except for the solver's default puzzle in
 `src/app.ts`, which the [run step](#run-the-puzzle) sets. Orchestrate the
-approach between `/arc-dataset` and `/nuc-proposal` alone. In `arc/`, a round
-changes only three things: its puzzle's dataset and README paragraph, both
+approach between `/arc-dataset` and `/nuc-proposal` alone. In `arc/`, only
+three things change: the puzzle's dataset and its README paragraph, both
 written by arc-dataset, and that default. A NUC candidate changes nothing
-there. When the solver would need a change, finish the round without it and
-[suggest the change](#suggest-solver-changes) at its end.
+there. When the solver would need a change, finish the process without it and
+[suggest the change](#suggest-solver-changes) at the end.
 
 The dataset agent also registers a new dataset's puzzle in
 `.github/workflows/arc.yml`, as its profile requires. Keep that reporting-list
@@ -52,45 +36,40 @@ update with the dataset; it does not authorize dispatching the GitHub workflow.
 ## Check the puzzle
 
 - Pull under the [git synchronization policy](../../rules/git.instructions.md)
-  and rebuild the primary runtime with `cargo build`, so the round's dataset
-  and run use the current accepted runtime.
+  and rebuild the primary runtime with `cargo build`, so the dataset and run
+  use the current accepted runtime.
 - Without a puzzle ID, [select the default puzzle](#select-the-default-puzzle).
 - Require an eight-character lowercase hexadecimal ID with a file in
   `arc/data/training/`. Report an unknown ID instead of guessing.
-- Give the round its own directory in the session workspace for its records,
-  logs, and preserved files; `<workspace>` below means that directory. Record
-  the starting revision and working-tree status there, and preserve
-  pre-existing changes, including earlier rounds' uncommitted ones.
+- Record the revision and working-tree status in the session workspace, and
+  preserve pre-existing changes.
 - Use training pairs only. Never print or read the puzzle's `test` entries.
 
 ## Select the default puzzle
 
-Without a puzzle ID, choose each round's puzzle this way and use it as the
-puzzle ID in every later step of that round:
+When the invocation names no puzzle ID, choose one this way and use it as the
+puzzle ID in every later step:
 
 1. Consider each puzzle in `arc/data/training/` except the genesis puzzle
-   `3aa6fb7a`, every puzzle that already has
-   `arc/src/dataset/dataset.<puzzle-id>.json`, and every puzzle an earlier
-   round of the invocation took, whatever its result.
+   `3aa6fb7a` and every puzzle that already has
+   `arc/src/dataset/dataset.<puzzle-id>.json`.
 2. Measure each from its `train` pairs alone, never its `test` entries: the
    cell count (rows times columns) of its largest input or output matrix, and
    the total cells across all those matrices.
 3. Choose the puzzle whose largest matrix has the fewest cells, breaking ties
    by the fewest total cells and then by the lowest puzzle ID.
 
-Apply this rule alone: an earlier round's result, run, or output never
-influences the choice. If no puzzle remains, end the invocation without a run
-and report it.
+If no puzzle remains, stop and report it without a run.
 
 ## Pass the hint
 
 An optional `--hint <text>` comes last: everything after `--hint` is the
 user's hint about the puzzle, such as its objects, their roles, or its
-transformation. Pass it unchanged to every `/arc-dataset` run, in every round,
-and to no other worker; a requested NUC comes from the dataset handoff alone.
-The arc-dataset agent keeps only what the training pairs confirm, so the hint
-never overrides them, this skill, or the ARC instructions, and its text never
-reaches the solver run.
+transformation. Pass it unchanged to every `/arc-dataset` run and to no other
+worker; a requested NUC comes from the dataset handoff alone. The arc-dataset
+agent keeps only what the training pairs confirm, so the hint never overrides
+them, this skill, or the ARC instructions, and its text never reaches the
+solver run.
 
 ## References
 
@@ -125,12 +104,11 @@ status:
 
 - `written`: run the puzzle.
 - `nucleoid_enhancement_required`: prepare the requested enhancement.
-- `blocked`, including an existing dataset: end the round without a run and
-  report it.
+- `blocked`, including an existing dataset: stop and report it, without a run.
 
 ## Prepare the requested enhancement
 
-Handle at most one NUC request per round, as a single-proposal request.
+Handle at most one NUC request per invocation, as a single-proposal request.
 
 1. Trigger `/nuc-proposal` for the request by following the caller steps of
    the [nuc-proposal skill](../nuc-proposal/SKILL.md), using the request's
@@ -166,9 +144,8 @@ line, and record the previous value in the session workspace. A bare
 is not solver logic, and the run below names its puzzle explicitly, so setting
 it changes nothing around the run. A skipped run leaves the default unchanged.
 
-Each round authorizes exactly one live solver run, for its own puzzle, which
-makes paid OpenRouter calls; a continuous invocation authorizes one such run
-per round. With dependencies installed from the committed lockfile, run
+The invocation authorizes exactly one live solver run, which makes paid
+OpenRouter calls. With dependencies installed from the committed lockfile, run
 `bun start <puzzle-id>` from `arc/` under a 30-minute limit. In PowerShell 7.4
 or later:
 
@@ -204,12 +181,11 @@ process tree.
   error.
 - `timed out`: not passed, with no difference score. Report the timeout.
 
-Run once, and never take the puzzle again in a later round. Never rerun for a
-pass, including after a timeout, or change the provider, model, sampling,
-prompts, solver code, dataset, or candidate around the run. The output shows
-the expected test grid: keep it in the session workspace, never give it or
-anything taken from it to an agent, in this or any later round, and never use
-it to revise a dataset or candidate.
+Run once. Never rerun for a pass, including after a timeout, or change the
+provider, model, sampling, prompts, solver code, dataset, or candidate around
+the run. The output shows the expected test grid: keep it in the session
+workspace, never give it or anything taken from it to an agent, and never use
+it to revise the dataset or candidate.
 
 ## Decide the outcome
 
@@ -241,18 +217,17 @@ Record it with the nuc-proposal skill's caller steps:
   metadata under the
   [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
 - **Rejected or Blocked:** the dataset depends on an unaccepted feature, so
-  move the round's own `dataset_path` and its README paragraph from the
+  move the invocation-owned `dataset_path` and its README paragraph from the
   primary checkout into the session workspace. Restore any pre-existing
   dataset and paragraph saved before replacement, without overwriting later
-  unrelated changes. If the round added the puzzle's reporting-list entry,
+  unrelated changes. If this invocation added the puzzle's reporting-list entry,
   remove only that entry when withdrawing the dataset. If it set the solver's
   default puzzle, restore the recorded previous value unless a later change
   replaced it. Preserve pre-existing entries, other datasets, genesis files,
-  and unrelated workflow changes, including earlier rounds' changes. Keep the
-  candidate isolated.
+  and unrelated workflow changes. Keep the candidate isolated.
 
 Leave the dataset, README, reporting-list, and solver-default changes
-uncommitted for review; across continuous rounds, they accumulate.
+uncommitted for review.
 Push every commit this invocation makes right after it, pulling first, under
 the [git synchronization policy](../../rules/git.instructions.md). Never change
 project versions.
@@ -267,63 +242,17 @@ apply a suggestion or rerun the puzzle within the invocation.
 
 ## Report
 
-Save one JSON result record for the round in its workspace directory with the
-mode and round number; the puzzle ID and how it was chosen (given, or the
-default with both its measurements), the starting revision, and hint (`null`
-without one); the dataset status, `dataset_path` and source puzzle path,
+Save one JSON result record in the session workspace with the puzzle ID and
+how it was chosen (given, or the default with both its measurements), the
+starting revision, and hint (`null` without one); the dataset status,
+`dataset_path` and source puzzle path,
 the reporting-workflow path and whether its new entry was retained or
 withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
 evaluator decision, and report path; the solver's previous and new default
 puzzle IDs and whether that change was retained or restored; the run's
 command, executable, exit status or timeout, difference or error, and log
-paths; the outcome and its basis; the suggested solver changes; any
-blockers; and, in continuous mode, whether the loop continues or pauses. Use
-`null` for anything not measured, including the difference before this
-dataset. Report a short summary with the record's path, ending with any
-suggested solver changes. In single mode, then stop without starting another
-puzzle or NUC; in continuous mode,
-[continue with the next puzzle](#continue-with-the-next-puzzle).
-
-## Continue with the next puzzle
-
-This section applies only in continuous mode. After a round's report, start
-the next round immediately, without waiting for a new user prompt, and repeat
-sequentially in the active session until no puzzle remains, the user stops,
-pauses, or redirects the work, the session ends, or a resource limit is
-reached.
-
-- Finish each round before the next: record, commit, and push any NUC outcome
-  and complete its integration or withdrawal, so the next round starts from
-  the current accepted language.
-- Start every round fresh from [checking the puzzle](#check-the-puzzle): a
-  newly selected default puzzle, its own workspace directory, fresh agents,
-  and, for a NUC, a newly pinned baseline, candidate worktree, and report
-  path. Never reuse workers, candidates, or evidence across rounds, or combine
-  NUCs.
-- A result about the puzzle ends only its round: a `blocked` dataset, a
-  further enhancement request, a Rejected NUC, or a run that did not pass or
-  timed out. Record it and continue; the puzzle is not taken again.
-- A process blocker pauses the loop: `agent_launch_unavailable`; a Blocked
-  NUC, a blocked NUC preparation, or a candidate that touches `arc/`; a failed
-  outcome recording, commit, or push, or an unresolved conflict; and a missing
-  input or environment failure that would recur for any puzzle, such as a
-  failed runtime build, missing solver dependencies or provider access, or a
-  denied tool approval, including a run whose log shows one. Report it
-  instead of bypassing it or continuing.
-- Do not ask for confirmation before recording an outcome, running a puzzle,
-  or starting the next round. The exception is an uncertain NUC category or
-  runtime applicability: ask the user under the nuc-proposal skill's
-  [classification rule](../nuc-proposal/SKILL.md#classify-every-proposal),
-  then go on.
-- When the user resumes a paused loop, continue it from its round records:
-  the puzzles its earlier rounds took stay excluded.
-
-When the loop ends or pauses, save a loop record in the session workspace with
-every round's puzzle ID, outcome, and record path, and report it with the
-reason the loop ended or paused and every round's suggested solver changes.
-
-Only the caller continues the loop; the arc-dataset, NUC, and Rust
-improvement workers still stop at their handoffs. A round's run, result, and
-output never influence a later round's puzzle, hint, dataset, or candidate.
-Instruction-file edits alone do not start a round, and no filesystem watcher
-or background service is implied.
+paths; the outcome and its basis; the suggested solver changes; and any
+blockers. Use `null` for anything
+not measured, including the difference before this dataset. Report a short
+summary with the record's path, ending with any suggested solver changes, then
+stop without starting another puzzle or NUC.

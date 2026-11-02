@@ -38,10 +38,9 @@ whatever the policy checks found: `Accepted` when every policy check passes,
 evaluator rejection), with the policy results recorded in the NUC's
 documentation. Only a failed hard criterion rejects a NUC.
 
-A NUC that `/arc-purposal` requests, in any of its rounds, is a single-proposal
-request whose outcome waits for that round's solver run; when the hard
-criteria pass, an exact match makes it Accepted regardless of the evaluator's
-decision. Follow the
+A NUC that `/arc-purposal` requests is a single-proposal request whose outcome
+waits for the puzzle's solver run; when the hard criteria pass, an exact match
+makes it Accepted regardless of the evaluator's decision. Follow the
 [ARC-requested proposal rule](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only).
 
 A NUC the user requests directly is Accepted when its frozen candidate meets

@@ -6,21 +6,17 @@ applyTo: "**"
 
 These rules apply when working on `arc/`, its LLM exchanges, or its associated
 ARC records. Run an ARC proposal with `/arc-purposal [<puzzle-id>]` (the
-`arc-purposal` skill and agent), which takes puzzles one round each. A given
-puzzle ID runs one round. Without an ID, the invocation runs continuous
-rounds, the way `/nuc-proposal`'s continuous mode continues with the next NUC:
-each round takes the default puzzle, and the next round starts as soon as it
-finishes, until no puzzle remains, the user stops it, or a process blocker
-pauses it. In each round, the `arc-dataset` agent writes the puzzle's
+`arc-purposal` skill and agent), which selects a default puzzle when the ID is
+omitted. The `arc-dataset` agent writes the puzzle's
 instruction dataset, any Nucleoid enhancement that dataset requires goes
 through the NUC stages, and its outcome follows the automatic acceptance rule,
 with one solver run whose exact match makes it Accepted.
 `/arc-purposal` never changes the TypeScript implementation in `arc/`, except
-that it sets the default `puzzle_id` in `arc/src/app.ts` to each puzzle it
-runs; that default only selects the puzzle for a bare `bun start` and is not
-solver logic. It orchestrates its approach between `/arc-dataset` and
-`/nuc-proposal` and, when the solver would need a change, suggests that change
-at the end of the round.
+that it sets the default `puzzle_id` in `arc/src/app.ts` to the puzzle it runs;
+that default only selects the puzzle for a bare `bun start` and is not solver
+logic. It orchestrates its approach between `/arc-dataset` and `/nuc-proposal`
+and, when the solver would need a change, suggests that change at the end of
+the process.
 Agent-configuration changes alone do not launch a solver run.
 
 ## No automated ARC tests
@@ -90,8 +86,7 @@ expected grids, or task-specific answers into solver logic or language features.
 The solver's output shows the expected grid, so never feed it back into
 datasets, NUC candidates, or prompts. Deciding an `/arc-purposal` NUC from its
 one scored run is scoring, not candidate selection: never rerun it or compare
-alternatives against the expected grid. Continuous rounds never take a puzzle
-twice, and a round's run, result, and output never influence a later round.
+alternatives against the expected grid.
 
 Preserve puzzle datasets, expected outputs, instruction examples, and scoring.
 Replay every selected training pair, then score held-out predictions by exact
@@ -111,7 +106,6 @@ of its evaluation, and otherwise it is Accepted or Automatic-Accepted; only a
 failed hard criterion rejects it, under the
 [ARC-requested proposal rule](proposals.instructions.md#arc-requested-proposals-caller-only).
 Do not read or expose credentials, make paid LLM calls without authorization,
-or alter provider/model settings merely to manufacture a passing result. Each
-`/arc-purposal` round authorizes one `bun start <puzzle-id>` run, for its own
-puzzle, and nothing more; an invocation without a puzzle ID authorizes one
-such run for every round it starts.
+or alter provider/model settings merely to manufacture a passing result. An
+`/arc-purposal` invocation authorizes its one `bun start <puzzle-id>` run and
+nothing more.
