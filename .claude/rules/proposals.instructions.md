@@ -194,7 +194,17 @@ Only continuous cycles apply the
 - Runtime features: required for an existing comparable feature; skipped entirely
   for a brand-new feature; skipped for a genuinely uncomparable existing feature
   only with explicit reason and evidence.
+- Language compatibility: skipped entirely; additive cross-language aliases and
+  equivalent familiar forms may add lexer tokens or new token kinds.
 - Documentation: skipped.
+
+Language compatibility advances the language-superset aspiration, not a claim
+of full compatibility with every language. Preserve every accepted form and
+meaning. Its skip is not advisory token scoring, a zero-case comparison, or a
+passing token gate; single mode still takes precedence. Every category/mode
+retains valid immutable baselines, accepted-source replay, behavior/integrity,
+syntax compatibility, the full `cargo test`, `cargo build --all-targets`,
+warning-denied Clippy, and formatting.
 
 Read the proposal's actual registered Category header. Runtime proposals require
 explicit new/existing-comparable/existing-uncomparable applicability, including
@@ -226,8 +236,10 @@ Follow the caller-owned
 [selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement).
 Unspecified enhancements use equal random selection across the registry's
 eligible categories, currently Syntax enhancement, Runtime features, Utility
-enhancement, and Reasoning enhancement. Documentation is classified but is
-not automatically selected for a language enhancement.
+enhancement, Reasoning enhancement, and Language compatibility. Derive the
+eligible set and count from the live registry; the current five categories
+each have a 20% chance, not a hard-coded five-way draw. Documentation is
+classified but is not automatically selected for a language enhancement.
 Explicit feature/category requests still take precedence.
 
 ## Detailed proposal workflow

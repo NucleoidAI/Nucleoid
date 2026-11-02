@@ -11,11 +11,12 @@ const GENESIS: &str = r#"{
   "history": []
 }"#;
 
-const CATEGORIES: [Category; 5] = [
+const CATEGORIES: [Category; 6] = [
     Category::Syntax,
     Category::Runtime,
     Category::Utility,
     Category::Reasoning,
+    Category::LanguageCompatibility,
     Category::Documentation,
 ];
 
@@ -407,6 +408,47 @@ fn categories_are_independent_and_neutral_is_an_observation_not_absence() {
             );
         }
     }
+}
+
+#[test]
+fn language_compatibility_extends_histories_without_changing_old_categories() {
+    let mut legacy = genesis();
+    for category in CATEGORIES {
+        if category != Category::LanguageCompatibility {
+            synthetic_observation(&mut legacy, category, 0.0);
+        }
+    }
+    let legacy_json = serde_json::to_value(&legacy).unwrap();
+    let mut restored: Policy = serde_json::from_value(legacy_json.clone()).unwrap();
+    restored.validate().unwrap();
+    assert_eq!(serde_json::to_value(&restored).unwrap(), legacy_json);
+    assert_eq!(
+        restored.select(Category::LanguageCompatibility).unwrap(),
+        Strategy::ReuseFirst
+    );
+    synthetic_observation(&mut restored, Category::LanguageCompatibility, 0.0);
+    assert_eq!(restored.history[..legacy.history.len()], legacy.history);
+    assert_eq!(
+        restored.select(Category::LanguageCompatibility).unwrap(),
+        Strategy::EvidenceFirst
+    );
+    for category in CATEGORIES {
+        if category != Category::LanguageCompatibility {
+            assert_eq!(
+                restored.select(category).unwrap(),
+                legacy.select(category).unwrap()
+            );
+            assert_eq!(restored.stats(category).unwrap().trials, 1);
+        }
+    }
+    let updated = serde_json::to_value(&restored).unwrap();
+    assert_eq!(
+        updated["history"][legacy.history.len()]["selection"]["input"]["category"],
+        "Language compatibility"
+    );
+    let reloaded: Policy = serde_json::from_value(updated).unwrap();
+    reloaded.validate().unwrap();
+    assert_eq!(reloaded, restored);
 }
 
 #[test]

@@ -135,7 +135,18 @@ or proposal assignments are uncertain. Every category addition requires
 reviewing all existing proposals and updating those that fit the new category
 more accurately, with synchronized category and numerical indexes. Unspecified
 enhancements use an equal random draw across the currently eligible categories;
-Documentation is not part of that draw.
+derive eligibility and count from the live registry, not a fixed list or size.
+The current five eligible categories each have a 20% chance; Documentation is
+not part of that draw.
+
+Language compatibility advances Nucleoid's aspiration to be a superset of
+programming languages, not a claim of full compatibility with every language.
+It welcomes additive aliases and equivalent familiar source forms, such as
+the already accepted `this`/`self` and `=>`/`->`, without requiring reduced or
+unchanged lexer-token counts. New token kinds are allowed when appropriate;
+every accepted form and meaning remains protected. Classify by primary
+purpose, not familiar prior art alone. NUC 1 remains Process/Active with
+Category Documentation; registering this category adds no language behavior.
 
 The **token non-regression gate** requires each compared case to use the same
 or fewer lexer tokens than its accepted baseline. `/nuc-proposal`
@@ -152,11 +163,17 @@ Only continuous cycles use this matrix:
 | Runtime features | Required for existing comparable features; skipped for brand-new features or genuinely uncomparable existing features with explicit reason and evidence |
 | Utility enhancement | Required |
 | Reasoning enhancement | Required |
+| Language compatibility | Skipped entirely; additive aliases and equivalent familiar forms may use more lexer tokens |
 | Documentation | Skipped |
 
-All modes retain immutable accepted-corpus baselines, pre-existing case
-integrity, assertion execution/coverage, explicit return checks, backward
-syntax compatibility, development checks, and independent evaluation.
+This categorical skip is not advisory token scoring or a passing/zero-case
+token gate. Single mode still skips first for every category.
+All categories and modes retain immutable accepted-corpus baselines,
+accepted-source replay, pre-existing case integrity, assertion execution/coverage,
+explicit return checks, backward
+syntax compatibility, the full `cargo test`, `cargo build --all-targets`,
+`cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, and independent
+evaluation.
 An invalid baseline, bad input, or behavior/compatibility failure never becomes
 a successful skip. Missing comparisons still fail a required token gate;
 missing artifacts do not establish that a feature is uncomparable.
@@ -217,6 +234,8 @@ applicability and rationale, behavior checks, and `token_check.status`.
 For `ran`, it includes the metric and each paired case's `before`, `after`,
 and token change. For `skipped`, it includes the skip reason, not measured cases
 or zero placeholder counts; this is not a passing token gate.
+Language compatibility reports `language_compatibility` in continuous mode;
+single mode reports `single_proposal` instead.
 The evaluator does not fix failures or regenerate exports. A repaired,
 substantively revised, or rebased candidate needs a fresh agent pair and report.
 
@@ -453,8 +472,10 @@ brackets describe values, not actual observations):
 }
 ```
 
-All five registered categories and both modes are typed; strategy order is
-stable. Each category first explores unobserved arms in that order. Thereafter
+All registered categories, including Language compatibility, and both modes
+are typed; old policy histories retain their schema and category spellings.
+Each category's history is isolated, and strategy order is stable. Each category
+first explores unobserved arms in that order. Thereafter
 it maximizes `mean + sqrt(2 * ln(category_trials) / arm_trials)` with
 registry-order ties. Raw `r` in `[-1, 1]` is normalized to `(r + 1) / 2`.
 Neutral `0` is observed as `0.5`; missing evidence is never a zero observation.

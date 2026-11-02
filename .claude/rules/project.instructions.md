@@ -13,9 +13,16 @@ placeholders instead.
 
 ## Goals
 
-Design a new grammar with minimum tokenized syntax — a superset of Python, JavaScript/TypeScript, Kotlin, Go, Rust, Java, C# and C/C++.
+Design a minimal core grammar with minimum tokenized syntax, while aspiring to
+be a superset of programming languages, including Python, JavaScript/TypeScript,
+Kotlin, Go, Rust, Java, C# and C/C++. These are examples, not a fixed boundary.
+This is a goal, not a claim of full compatibility with every language.
 
-However, new syntax may be introduced where it is needed to achieve that goal. The superset is a starting point, not a hard constraint.
+Welcome additive cross-language aliases and equivalent familiar source forms,
+such as the already accepted `this`/`self` and `=>`/`->`, under the Language
+compatibility category. They need not reduce or preserve lexer-token counts;
+new syntax and token kinds may be introduced when appropriate. Keep every
+accepted form and meaning. The superset aspiration is not a hard constraint.
 
 Build a Rust implementation of Nucleoid. The crate is at the repository root (`Cargo.toml`, `src/`), and `nucleoid.spec.md` defines the behaviour it must implement.
 

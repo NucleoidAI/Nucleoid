@@ -46,6 +46,8 @@ enum Category {
     Utility,
     #[serde(rename = "Reasoning enhancement")]
     Reasoning,
+    #[serde(rename = "Language compatibility")]
+    LanguageCompatibility,
     Documentation,
 }
 
@@ -56,6 +58,7 @@ impl Category {
             "Runtime features" => Ok(Self::Runtime),
             "Utility enhancement" => Ok(Self::Utility),
             "Reasoning enhancement" => Ok(Self::Reasoning),
+            "Language compatibility" => Ok(Self::LanguageCompatibility),
             "Documentation" => Ok(Self::Documentation),
             _ => Err(GateError::Proposal(format!(
                 "unsupported Category {label:?}; confirm its registry and policy before evaluation"
@@ -144,6 +147,7 @@ impl EvaluationPolicy {
             return Some(TokenSkipReason::SingleProposal);
         }
         match self.category {
+            Category::LanguageCompatibility => Some(TokenSkipReason::LanguageCompatibility),
             Category::Documentation => Some(TokenSkipReason::Documentation),
             Category::Runtime => match self.runtime {
                 RuntimeApplicability::NewFeature => Some(TokenSkipReason::NewRuntimeFeature),
@@ -171,6 +175,7 @@ fn required_rationale(variable: &str, value: Option<&str>) -> Result<String, Gat
 #[serde(rename_all = "snake_case")]
 enum TokenSkipReason {
     SingleProposal,
+    LanguageCompatibility,
     Documentation,
     NewRuntimeFeature,
     UncomparableRuntimeFeature,
@@ -1851,6 +1856,11 @@ fn policy_matrix() -> Vec<(EvaluationPolicy, Option<TokenSkipReason>)> {
         (Category::Utility, None, None),
         (Category::Reasoning, None, None),
         (
+            Category::LanguageCompatibility,
+            None,
+            Some(TokenSkipReason::LanguageCompatibility),
+        ),
+        (
             Category::Documentation,
             None,
             Some(TokenSkipReason::Documentation),
@@ -1937,6 +1947,44 @@ fn complete_mode_category_matrix_enforces_required_token_increases() {
 }
 
 #[test]
+fn language_compatibility_reports_a_skip_without_measurements_or_token_limits() {
+    let before = [fixture("paired", "a = 1\nassert(a, 1)")];
+    let after = [fixture("paired", "a = (1)\nassert(a, 1)")];
+    assert!(count_tokens(&after[0]).unwrap() > count_tokens(&before[0]).unwrap());
+    for (mode, reason) in [
+        ("continuous", "language_compatibility"),
+        ("single", "single_proposal"),
+    ] {
+        let policy = EvaluationPolicy::from_inputs(
+            Category::LanguageCompatibility,
+            PolicyInputs {
+                mode: Some(mode),
+                ..PolicyInputs::default()
+            },
+        )
+        .unwrap();
+        let report = verdict_with_policy(&before, &after, policy.clone());
+        assert_eq!(report.decision, Decision::Accepted);
+        assert!(report.issues.is_empty());
+        assert_eq!(report.behavior.legacy_cases_passed, 1);
+        assert_eq!(report.behavior.candidate_cases_passed, 1);
+        let json = serde_json::to_value(&report).unwrap();
+        assert_eq!(json["proposal"]["category"], "Language compatibility");
+        assert_eq!(json["policy"]["category"], "Language compatibility");
+        assert_eq!(json["policy"]["mode"], mode);
+        assert_eq!(json["policy"]["runtime"]["kind"], "not_applicable");
+        assert_eq!(
+            serde_json::from_value::<EvaluationPolicy>(json["policy"].clone()).unwrap(),
+            policy
+        );
+        let skipped = serde_json::json!({"status": "skipped", "reason": reason});
+        assert_eq!(json["token_check"], skipped);
+        let restored: TokenCheck = serde_json::from_value(skipped.clone()).unwrap();
+        assert_eq!(serde_json::to_value(restored).unwrap(), skipped);
+    }
+}
+
+#[test]
 fn new_behavior_needs_a_comparison_only_when_the_matrix_requires_it() {
     let before = [fixture("paired", "assert(1, 1)")];
     for (policy, skip) in policy_matrix() {
@@ -1995,22 +2043,24 @@ fn runtime_noncomparison_requires_validated_reason_and_evidence() {
 
 #[test]
 fn invalid_policy_inputs_never_select_a_skip() {
-    for mode in [
-        Some(""),
-        Some("Single"),
-        Some("ignore"),
-        Some(" continuous "),
-    ] {
-        assert!(
-            EvaluationPolicy::from_inputs(
-                Category::Documentation,
-                PolicyInputs {
-                    mode,
-                    ..PolicyInputs::default()
-                },
-            )
-            .is_err()
-        );
+    for category in [Category::Documentation, Category::LanguageCompatibility] {
+        for mode in [
+            Some(""),
+            Some("Single"),
+            Some("ignore"),
+            Some(" continuous "),
+        ] {
+            assert!(
+                EvaluationPolicy::from_inputs(
+                    category,
+                    PolicyInputs {
+                        mode,
+                        ..PolicyInputs::default()
+                    },
+                )
+                .is_err()
+            );
+        }
     }
     for mode in [None, Some("single")] {
         for runtime in [None, Some(""), Some("new"), Some("not_applicable")] {
@@ -2026,18 +2076,20 @@ fn invalid_policy_inputs_never_select_a_skip() {
                 .is_err()
             );
         }
-        for runtime in [Some("new_feature"), Some("existing_comparable")] {
-            assert!(
-                EvaluationPolicy::from_inputs(
-                    Category::Documentation,
-                    PolicyInputs {
-                        mode,
-                        runtime,
-                        ..PolicyInputs::default()
-                    },
-                )
-                .is_err()
-            );
+        for category in [Category::Documentation, Category::LanguageCompatibility] {
+            for runtime in [Some("new_feature"), Some("existing_comparable")] {
+                assert!(
+                    EvaluationPolicy::from_inputs(
+                        category,
+                        PolicyInputs {
+                            mode,
+                            runtime,
+                            ..PolicyInputs::default()
+                        },
+                    )
+                    .is_err()
+                );
+            }
         }
         for (reason, evidence) in [
             (None, None),
@@ -2063,6 +2115,7 @@ fn invalid_policy_inputs_never_select_a_skip() {
     for (category, runtime) in [
         (Category::Syntax, None),
         (Category::Documentation, None),
+        (Category::LanguageCompatibility, None),
         (Category::Runtime, Some("new_feature")),
         (Category::Runtime, Some("existing_comparable")),
     ] {
@@ -2078,6 +2131,30 @@ fn invalid_policy_inputs_never_select_a_skip() {
             )
             .is_err()
         );
+    }
+}
+
+#[test]
+fn registered_category_labels_round_trip_without_changing_legacy_spellings() {
+    let registry = include_str!("../docs/nuc-0001.md");
+    for (label, category) in [
+        ("Syntax enhancement", Category::Syntax),
+        ("Runtime features", Category::Runtime),
+        ("Utility enhancement", Category::Utility),
+        ("Reasoning enhancement", Category::Reasoning),
+        ("Language compatibility", Category::LanguageCompatibility),
+        ("Documentation", Category::Documentation),
+    ] {
+        assert_eq!(Category::from_label(label).unwrap(), category);
+        let source = format!("```\nNUC: 99\nCategory: {label}\n```");
+        assert_eq!(header_category(&source, registry).unwrap(), category);
+        let json = serde_json::json!(label);
+        assert_eq!(serde_json::to_value(category).unwrap(), json);
+        assert_eq!(serde_json::from_value::<Category>(json).unwrap(), category);
+    }
+    for invalid in ["Language Compatibility", "language_compatibility", "Other"] {
+        assert!(Category::from_label(invalid).is_err());
+        assert!(serde_json::from_value::<Category>(serde_json::json!(invalid)).is_err());
     }
 }
 
@@ -2146,9 +2223,10 @@ fn category_parsing_uses_complete_line_fences_not_inline_backticks() {
 fn a_policy_cannot_override_the_proposals_category() {
     let cases = [fixture("paired", "assert(1, 1)")];
     let baseline = capture(FIXTURE_REVISION.to_string(), &cases).unwrap();
-    let policy =
-        EvaluationPolicy::from_inputs(Category::Documentation, PolicyInputs::default()).unwrap();
-    assert!(compare(&baseline, fixture_proposal(), policy, &cases, &cases).is_err());
+    for category in [Category::Documentation, Category::LanguageCompatibility] {
+        let policy = EvaluationPolicy::from_inputs(category, PolicyInputs::default()).unwrap();
+        assert!(compare(&baseline, fixture_proposal(), policy, &cases, &cases).is_err());
+    }
 }
 
 #[test]

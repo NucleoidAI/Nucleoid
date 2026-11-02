@@ -62,7 +62,15 @@ Only continuous cycles apply the
 - Runtime features: run for an existing comparable feature; do not run at all
   for a brand-new feature; explicitly skip a genuinely uncomparable existing
   feature with a reason and supporting evidence.
+- Language compatibility: do not run; additive cross-language aliases and
+  equivalent familiar source forms may add lexer tokens or new token kinds.
 - Documentation: do not run.
+
+Language compatibility is a categorical skip, not advisory token scoring,
+a zero-case comparison, or a passing token gate. Single mode takes precedence
+over every category's continuous policy. Every category/mode retains valid
+immutable baselines, accepted-source replay, behavior/integrity, compatibility,
+the full `cargo test`, build, warning-denied Clippy, and formatting checks.
 
 Supply explicit runtime applicability for Runtime features even in single mode.
 The independent evaluator verifies any uncomparable rationale and evidence;
@@ -77,6 +85,12 @@ Give every new and existing NUC exactly one `Category` header from the
 including Draft, Accepted, Rejected, Active, and Superseded documents.
 Category describes the proposal's purpose; it does not replace `Type` or
 change its status.
+
+Language compatibility covers proposals primarily intended to add optional
+cross-language aliases or equivalent familiar forms while preserving every
+accepted form and meaning. The language-superset aspiration is a goal, not
+existing full compatibility; familiar prior art alone does not reclassify
+other grammar, runtime, utility, or reasoning proposals.
 
 Use the user's explicit classification when supplied. Whenever a category is
 added, selected, or updated, the coordinating caller must ask the user for
@@ -98,7 +112,7 @@ do not invent categories or retain stale classifications without review.
 When asked to choose a language enhancement without a specific feature or
 category, the coordinating caller makes one unbiased random draw with equal
 probability across the registry's automatically selectable enhancement
-categories. The current four enhancement categories each have a 25% chance;
+categories. The current five enhancement categories each have a 20% chance;
 `Documentation` is not part of this automatic language-enhancement draw.
 
 Read the current registry before drawing; do not hard-code its size or retain

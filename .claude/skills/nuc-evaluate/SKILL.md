@@ -128,7 +128,17 @@ Only continuous cycles apply the
 - Runtime features: required for an existing comparable feature; skipped
   entirely for a brand-new feature; skipped for a genuinely uncomparable existing
   feature with explicit reason and evidence.
+- Language compatibility: skipped entirely; additive cross-language aliases and
+  equivalent familiar forms may add lexer tokens or new token kinds while
+  preserving every accepted form and meaning.
 - Documentation: skipped.
+
+Language compatibility advances a language-superset goal, not an assertion of
+existing full compatibility. Its `language_compatibility` skip is not advisory
+token scoring, a zero-case comparison, or a passing token gate. Single mode
+still takes precedence with `single_proposal`, regardless of category.
+Every category/mode retains accepted-source replay, the full `cargo test`,
+build, warning-denied Clippy, formatting, and the other independent checks.
 
 Every mode still requires valid immutable accepted-corpus inputs, behavior,
 case integrity, syntax compatibility, development checks, and outcome recording.
