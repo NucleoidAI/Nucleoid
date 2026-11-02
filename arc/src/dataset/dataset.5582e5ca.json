@@ -1,0 +1,156 @@
+{
+  "declarations": [
+    "class Obj(x: int, y: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
+    "$Obj.tag = 'l5236'",
+    "$Obj.sorted_parts = $Obj.parts.slice().sort()",
+    "$Obj.part_counts = $Obj.parts.map(part => $Obj.sorted_parts.lastIndexOf(part) - $Obj.sorted_parts.indexOf(part) + 1)",
+    "$Obj.fill_color = $Obj.parts[$Obj.part_counts.indexOf($Obj.part_counts.max())]"
+  ],
+  "output_canvas": "EXACT",
+  "dataset": [
+    {
+      "input_matrix": [
+        [4, 4, 8],
+        [6, 4, 3],
+        [6, 3, 0]
+      ],
+      "output_matrix": [
+        [4, 4, 4],
+        [4, 4, 4],
+        [4, 4, 4]
+      ],
+      "instances": [
+        {
+          "instance_name": "obja1b60a6c90dc",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [4, 4, 8],
+            [6, 4, 3],
+            [6, 3, 0]
+          ],
+          "output_instance_matrix": [
+            [4, 4, 4],
+            [4, 4, 4],
+            [4, 4, 4]
+          ],
+          "implementation": "obja1b60a6c90dc = Obj(x=0, y=0, orientation=0, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
+          "input_value": {"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":4,"id":"obja1b60a6c90dc","orientation":0,"part_counts":[3,3,1,2,3,2,2,2],"parts":[4,4,8,6,4,3,6,3],"sorted_parts":[3,3,4,4,4,6,6,8],"tag":"l5236","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [6, 8, 9],
+        [1, 8, 1],
+        [9, 4, 9]
+      ],
+      "output_matrix": [
+        [9, 9, 9],
+        [9, 9, 9],
+        [9, 9, 9]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj2f95578125dc",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [6, 8, 9],
+            [1, 8, 1],
+            [9, 4, 9]
+          ],
+          "output_instance_matrix": [
+            [9, 9, 9],
+            [9, 9, 9],
+            [9, 9, 9]
+          ],
+          "implementation": "obj2f95578125dc = Obj(x=0, y=0, orientation=0, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
+          "input_value": {"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":9,"id":"obj2f95578125dc","orientation":0,"part_counts":[1,2,3,2,2,2,3,1,3],"parts":[6,8,9,1,8,1,9,4,9],"sorted_parts":[1,1,4,6,8,8,9,9,9],"tag":"l5236","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [4, 6, 9],
+        [6, 4, 1],
+        [8, 8, 6]
+      ],
+      "output_matrix": [
+        [6, 6, 6],
+        [6, 6, 6],
+        [6, 6, 6]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj0a1a67aea6eb",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [4, 6, 9],
+            [6, 4, 1],
+            [8, 8, 6]
+          ],
+          "output_instance_matrix": [
+            [6, 6, 6],
+            [6, 6, 6],
+            [6, 6, 6]
+          ],
+          "implementation": "obj0a1a67aea6eb = Obj(x=0, y=0, orientation=0, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
+          "input_value": {"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":6,"id":"obj0a1a67aea6eb","orientation":0,"part_counts":[2,3,1,3,2,1,2,2,3],"parts":[4,6,9,6,4,1,8,8,6],"sorted_parts":[1,4,4,6,6,6,8,8,9],"tag":"l5236","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [8, 8, 6],
+        [4, 6, 9],
+        [8, 3, 0]
+      ],
+      "output_matrix": [
+        [8, 8, 8],
+        [8, 8, 8],
+        [8, 8, 8]
+      ],
+      "instances": [
+        {
+          "instance_name": "objea33ebd2f6a8",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [8, 8, 6],
+            [4, 6, 9],
+            [8, 3, 0]
+          ],
+          "output_instance_matrix": [
+            [8, 8, 8],
+            [8, 8, 8],
+            [8, 8, 8]
+          ],
+          "implementation": "objea33ebd2f6a8 = Obj(x=0, y=0, orientation=0, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
+          "input_value": {"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":8,"id":"objea33ebd2f6a8","orientation":0,"part_counts":[3,3,2,1,2,1,3,1],"parts":[8,8,6,4,6,9,8,3],"sorted_parts":[3,4,6,6,8,8,8,9],"tag":"l5236","x":0,"y":0}
+        }
+      ]
+    }
+  ]
+}
