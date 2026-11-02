@@ -257,7 +257,7 @@ impl App {
                 self.history_index = None;
             }
             KeyCode::Char('j') if ctrl => {
-                editor::newline(&mut self.editor);
+                editor::newline_with_options(&mut self.editor, runtime.options());
                 self.completion = None;
                 self.history_index = None;
             }
@@ -555,6 +555,56 @@ mod tests {
     fn run(app: &mut App, runtime: &mut Runtime, source: &str) {
         app.editor = editor::new(source);
         assert!(!key(app, runtime, KeyCode::F(5), KeyModifiers::NONE));
+    }
+
+    #[test]
+    fn opted_in_comments_reach_terminal_submission_indentation_and_diagnostics() {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::with_options(nucleoid::SyntaxOptions {
+            c_style_comments: true,
+        });
+        app.editor = editor::new("def half value => // header:");
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Char('j'),
+            KeyModifiers::CONTROL,
+        );
+        assert_eq!(app.editor.lines()[1], "    ");
+        app.editor.insert_str("value /* units */ / 2");
+        key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+        run(&mut app, &mut runtime, "half(10) // result");
+        assert_eq!(app.entries.last().unwrap().output.text(View::Text), "5");
+
+        app.editor = editor::new("if true:\n    /* doc\n                    */    if true:");
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Char('j'),
+            KeyModifiers::CONTROL,
+        );
+        assert_eq!(app.editor.lines()[3], "        ");
+        app.editor.insert_str("5");
+        key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+        assert_eq!(app.entries.last().unwrap().output.text(View::Text), "5");
+
+        app.editor = editor::new("/* open\nif true:");
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Char('j'),
+            KeyModifiers::CONTROL,
+        );
+        assert_eq!(app.editor.lines()[2], "");
+        key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+        assert_eq!(
+            app.entries.last().unwrap().output.text(View::Text),
+            "SyntaxError: Unterminated block comment (line 1, column 1)"
+        );
+        run(&mut app, &mut runtime, ".clear");
+        run(&mut app, &mut runtime, "/* done */ 7");
+        assert_eq!(app.entries.last().unwrap().output.text(View::Text), "7");
+        assert_eq!(runtime.assertions_run(), 0);
     }
 
     #[test]

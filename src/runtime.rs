@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use crate::error::{Error, Result};
 use crate::graph::{Graph, NodeKey};
 use crate::lang::ast::Stmt;
+use crate::lang::ast::lexer::SyntaxOptions;
 use crate::lang::evaluation::{Flow, Tracking, TrackingMode};
 use crate::nuc::Nuc;
 use crate::nuc::expression::is_assertion;
@@ -27,6 +28,7 @@ pub struct AssertionFailure {
 pub struct Runtime {
     pub state: State,
     pub graph: Graph,
+    options: SyntaxOptions,
     pub(crate) transaction: Transaction,
     pub(crate) stack: Stack,
     pub(crate) assertions: Vec<AssertionFailure>,
@@ -63,9 +65,23 @@ pub(crate) const MAX_DEPTH: usize = 192;
 
 impl Runtime {
     pub fn new() -> Self {
+        Self::with_options(SyntaxOptions::default())
+    }
+
+    /// Creates a runtime with explicit source options, retained across runs and
+    /// state clearing. The default keeps all accepted slash/regex behavior.
+    ///
+    /// ```
+    /// use nucleoid::{Runtime, SyntaxOptions};
+    ///
+    /// let mut runtime = Runtime::with_options(SyntaxOptions { c_style_comments: true });
+    /// assert_eq!(runtime.run("6 /* units */ / 2 // result").unwrap().to_string(), "3");
+    /// ```
+    pub fn with_options(options: SyntaxOptions) -> Self {
         Runtime {
             state: State::new(),
             graph: Graph::new(),
+            options,
             transaction: Transaction::new(),
             stack: Stack::new(),
             assertions: Vec::new(),
@@ -80,10 +96,15 @@ impl Runtime {
         }
     }
 
+    /// The source options used by every run and template interpolation.
+    pub fn options(&self) -> SyntaxOptions {
+        self.options
+    }
+
     /// Runs a program. Everything it changes is one transaction: if a statement
     /// raises, the state is left exactly as it was.
     pub fn run(&mut self, source: &str) -> Result<Value> {
-        let program = statement::compile(source)?;
+        let program = statement::compile_with_options(source, self.options)?;
         let mut scope = Scope::new();
 
         self.transaction.start();
@@ -132,6 +153,11 @@ impl Runtime {
     /// Parses without running, reporting the first syntax error.
     pub fn check(source: &str) -> Result<()> {
         statement::compile(source).map(|_| ())
+    }
+
+    /// Parses without running, with explicitly selected source options.
+    pub fn check_with_options(source: &str, options: SyntaxOptions) -> Result<()> {
+        statement::compile_with_options(source, options).map(|_| ())
     }
 
     pub fn take_assertions(&mut self) -> Vec<AssertionFailure> {

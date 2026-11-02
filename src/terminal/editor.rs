@@ -2,7 +2,12 @@ use ratatui::layout::Rect;
 use tui_textarea::{CursorMove, TextArea};
 use unicode_width::UnicodeWidthChar;
 
-use crate::{INDENT, indented_body_header, next_indentation};
+use nucleoid::SyntaxOptions;
+
+use crate::{
+    INDENT, indented_body_header_with_options, next_indentation_with_options,
+    unterminated_block_comment,
+};
 
 pub(super) fn new(source: &str) -> TextArea<'static> {
     let mut editor = TextArea::from(source.split('\n'));
@@ -13,10 +18,36 @@ pub(super) fn new(source: &str) -> TextArea<'static> {
     editor
 }
 
+#[cfg(test)]
 pub(super) fn newline(editor: &mut TextArea<'_>) {
+    newline_with_options(editor, SyntaxOptions::default());
+}
+
+pub(super) fn newline_with_options(editor: &mut TextArea<'_>, options: SyntaxOptions) {
     let (row, column) = editor.cursor();
     let prefix: String = editor.lines()[row].chars().take(column).collect();
-    let indentation = next_indentation(&prefix, indented_body_header(&prefix));
+    let source = if options.c_style_comments {
+        editor.lines()[..row]
+            .iter()
+            .map(String::as_str)
+            .chain(std::iter::once(prefix.as_str()))
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        prefix.clone()
+    };
+    let indentation = if unterminated_block_comment(&source, options) {
+        prefix
+            .chars()
+            .take_while(|character| matches!(character, ' ' | '\t'))
+            .collect()
+    } else {
+        next_indentation_with_options(
+            &source,
+            indented_body_header_with_options(&source, options),
+            options,
+        )
+    };
     editor.insert_newline();
     editor.insert_str(indentation);
 }

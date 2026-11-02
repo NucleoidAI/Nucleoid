@@ -44,6 +44,44 @@ runnable as written.
 13. [Error Reference](#13-error-reference)
 14. [Syntax Summary](#14-syntax-summary)
 
+## Comments and source options
+
+- Hash (`#`) comments are always available. The accepted default retains
+  regex/slash semantics, including empty regex `//`, the runtime reference
+  error from `// comment`, the runtime regex-compilation error from
+  `/* comment */`, and division by a regex in `1 // 2 /`.
+- Explicit CLI `--c-style-comments` enables `//` through LF/EOF and non-nesting
+  `/* ... */` through its first closing delimiter, alongside `#`. The equivalent
+  Rust API is `Runtime::with_options(SyntaxOptions { c_style_comments: true })`.
+  The concrete public option defaults to false and remains selected after
+  `clear()` or `.clear`. `Runtime::options()` returns it.
+- The configured runtime uses the option for every program and template
+  interpolation. Standalone lexer/parser/compilation functions retain default
+  behavior; their matching `_with_options` forms take `SyntaxOptions`, as does
+  `Runtime::check_with_options(source, options)`. There is no global toggle.
+- In enabled mode only, comment openers win over ambiguous regex delimiters;
+  `/(?:)/` supplies empty-matching behavior with pattern text `(?:)`, not an
+  empty string. No `RegExp` constructor is added. Ordinary division, `/=`,
+  nonambiguous regexes, quoted strings and template text retain their readings. Interpolation
+  braces inside literals/comments are protected; enabled interpolation errors
+  refer to original source positions. Outer template quoting is unchanged.
+- Comments separate tokens, never combine them. Block LFs preserve layout
+  except inside parentheses/brackets, where normal suppression applies.
+  Comment text and internal whitespace contribute no indentation; only
+  actual external whitespace does. Tabs keep width four; diagnostic columns
+  still count original characters, including one per tab, with CRLF preserved.
+- An unclosed block raises exact `SyntaxError: Unterminated block comment
+  (line L, column C)` at its opening slash, before program execution.
+- File execution and both interactive interfaces honor the flag. Plain input
+  buffers open blocks through blank lines and command-looking text; EOF
+  reports a remaining unclosed block once. Terminal Ctrl-J uses configured
+  lexical headers, not punctuation inside comments. Existing REPL exit and
+  error-recovery behavior remains unchanged.
+- [NUC 76](nuc-0076.md) specifies this candidate behavior. Enabled examples
+  are covered by focused library/CLI tests and Rust API documentation;
+  configuration-free default executable examples and canonical synthesized
+  JSONL programs remain unchanged.
+
 ## Terminal workspace
 
 With terminal stdin and stdout, `nucleoid` opens a full-screen REPL with

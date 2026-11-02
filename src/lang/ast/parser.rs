@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use super::lexer::{Keyword, Spanned, Token, tokenize};
+#[cfg(test)]
+use super::lexer::tokenize;
+use super::lexer::{
+    Keyword, Spanned, SyntaxOptions, Token, interpolation_end, tokenize_with_options,
+};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
     BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, ParameterDefault,
@@ -17,8 +21,14 @@ pub struct Program {
 }
 
 pub fn parse_program(source: &str) -> Result<Program> {
-    let tokens = tokenize(source)?;
+    parse_program_with_options(source, SyntaxOptions::default())
+}
+
+/// Parses a program with explicit, opt-in source forms.
+pub fn parse_program_with_options(source: &str, options: SyntaxOptions) -> Result<Program> {
+    let tokens = tokenize_with_options(source, options)?;
     let mut parser = Parser::new(tokens);
+    parser.options = options;
     parser.program()
 }
 
@@ -26,13 +36,26 @@ pub fn parse(source: &str) -> Result<Vec<Stmt>> {
     Ok(parse_program(source)?.statements)
 }
 
-pub fn parse_expression(source: &str) -> Result<Expr> {
-    parse_expression_in(source, ExpressionContext::Ordinary)
+pub fn parse_with_options(source: &str, options: SyntaxOptions) -> Result<Vec<Stmt>> {
+    Ok(parse_program_with_options(source, options)?.statements)
 }
 
-fn parse_expression_in(source: &str, context: ExpressionContext) -> Result<Expr> {
-    let tokens = tokenize(source)?;
+pub fn parse_expression(source: &str) -> Result<Expr> {
+    parse_expression_with_options(source, SyntaxOptions::default())
+}
+
+pub fn parse_expression_with_options(source: &str, options: SyntaxOptions) -> Result<Expr> {
+    parse_expression_in(source, ExpressionContext::Ordinary, options)
+}
+
+fn parse_expression_in(
+    source: &str,
+    context: ExpressionContext,
+    options: SyntaxOptions,
+) -> Result<Expr> {
+    let tokens = tokenize_with_options(source, options)?;
     let mut parser = Parser::new(tokens);
+    parser.options = options;
     parser.skip_separators();
     parser.expression_in(context)
 }
@@ -86,6 +109,7 @@ struct Parser {
     position: usize,
     depth: usize,
     context: ExpressionContext,
+    options: SyntaxOptions,
     /// Python-style conditional attempts by `if` token position and nesting
     /// depth, which together decide one: the qualified condition and the
     /// position after its `else`, or `None`. A re-parse of the same source
@@ -153,6 +177,7 @@ impl Parser {
             position: 0,
             depth: 0,
             context: ExpressionContext::Ordinary,
+            options: SyntaxOptions::default(),
             python_conditions: HashMap::new(),
             suppose_premises: HashMap::new(),
             while_conditions: HashMap::new(),
@@ -2295,6 +2320,7 @@ impl Parser {
     }
 
     fn template(&mut self, raw: &str) -> Result<Expr> {
+        let origin = self.tokens[self.position - 1].position;
         let mut parts = Vec::new();
         let mut literal = String::new();
         let mut characters = raw.char_indices().peekable();
@@ -2317,22 +2343,29 @@ impl Parser {
             }
 
             let start = index + 2;
-            let mut depth = 1usize;
-            let mut end = None;
-
-            for (offset, candidate) in raw[start..].char_indices() {
-                match candidate {
-                    '{' => depth += 1,
-                    '}' => {
-                        depth -= 1;
-                        if depth == 0 {
-                            end = Some(start + offset);
-                            break;
+            let end = if self.options.c_style_comments {
+                interpolation_end(&raw[start..], self.options)
+                    .map_err(|error| template_error(error, origin, &raw[..start]))?
+                    .map(|offset| start + offset)
+            } else {
+                // Preserve the accepted default interpolation boundary rule.
+                let mut depth = 1usize;
+                let mut end = None;
+                for (offset, candidate) in raw[start..].char_indices() {
+                    match candidate {
+                        '{' => depth += 1,
+                        '}' => {
+                            depth -= 1;
+                            if depth == 0 {
+                                end = Some(start + offset);
+                                break;
+                            }
                         }
+                        _ => {}
                     }
-                    _ => {}
                 }
-            }
+                end
+            };
 
             let Some(end) = end else {
                 return Err(self.error("Unterminated template expression"));
@@ -2345,10 +2378,19 @@ impl Parser {
             // Trailing tokens after an interpolated expression are ignored,
             // so a top-level `lambda` keeps its accepted name reading here
             // and a trailing Python-style `if` stays ignored.
-            parts.push(TemplatePart::Expression(parse_expression_in(
+            let expression = parse_expression_in(
                 &raw[start..end],
                 ExpressionContext::Interpolation,
-            )?));
+                self.options,
+            )
+            .map_err(|error| {
+                if self.options.c_style_comments {
+                    template_error(error, origin, &raw[..start])
+                } else {
+                    error
+                }
+            })?;
+            parts.push(TemplatePart::Expression(expression));
 
             while let Some((offset, _)) = characters.peek() {
                 if *offset <= end {
@@ -2357,6 +2399,27 @@ impl Parser {
                     break;
                 }
             }
+        }
+
+        /// Secondary parsers report relative positions; opt-in diagnostics retain the
+        /// location in the caller's original template, including Unicode and newlines.
+        fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
+            let Some(relative) = error.position() else {
+                return error;
+            };
+            let newlines = prefix.bytes().filter(|byte| *byte == b'\n').count();
+            let column = match prefix.rsplit_once('\n') {
+                Some((_, tail)) => tail.chars().count() + 1,
+                None => origin.column + 1 + prefix.chars().count(),
+            };
+            error.at(Position::new(
+                origin.line + newlines + relative.line - 1,
+                if relative.line == 1 {
+                    column + relative.column - 1
+                } else {
+                    relative.column
+                },
+            ))
         }
 
         if !literal.is_empty() {

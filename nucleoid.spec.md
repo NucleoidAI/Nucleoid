@@ -87,6 +87,64 @@ semicolon. Other unsupported tokens use `Expected ':' but found <token>` with
 the existing token descriptions. Existing name, parameter, nesting, and
 operator-chain diagnostics and source positions are preserved.
 
+## Opt-in C-style comments
+
+- `#` starts an accepted line comment in every mode. By default, slash
+  tokenization is unchanged: `//` is an empty regex, `// comment` parses then
+  raises `ReferenceError("comment is not defined")`, `/* comment */` parses
+  then raises a regex-compilation SyntaxError, and `1 // 2 /` divides by a
+  regex and produces NaN.
+- Explicit CLI `--c-style-comments` or Rust
+  `Runtime::with_options(SyntaxOptions { c_style_comments: true })` enables
+  optional `//` and non-nesting `/* ... */` comments. `SyntaxOptions` is a
+  concrete public, copyable value whose `c_style_comments` field defaults
+  to false. `Runtime::new()` and `Runtime::default()` retain the accepted mode.
+- Only in enabled mode do those openers take priority over regex/division
+  recognition outside literals. `//` skips to LF or EOF without consuming
+  LF; `/*` skips through the first `*/`, without nesting. Other comment
+  markers and quotes within a block are text. Existing `#` comments remain.
+- Comments separate rather than concatenate tokens: `left/**/right` is two
+  identifiers, and `+/**/=` is not `+=`. Block LFs remain layout newlines,
+  suppressed inside parentheses and brackets as usual. In enabled mode,
+  suppressed breaks do not reset operand context for division or `/=`.
+- Only literal whitespace outside comments contributes indentation; block
+  text and its internal whitespace have zero indentation width. Comment-only
+  lines cannot create a body. Tabs keep width four. Source locations retain
+  the original LF/CRLF lines and one-based character columns, including
+  Unicode; a tab counts as one character in a diagnostic column.
+- Ordinary division, `/=`, nonambiguous regex literals, escaped regex slashes,
+  regex character classes, quoted strings and template literal text retain
+  their meanings. Enabled source may use `/(?:)/` for empty-matching behavior;
+  its pattern text remains `(?:)`, not the empty string. No regex constructor
+  is introduced.
+  Template interpolations inherit the selected option; their strings, regexes
+  and comments protect brace boundaries. Enabled interpolation errors map to
+  original source positions; the accepted default interpolation algorithm and
+  diagnostics do not change. Outer template quoting rules are unchanged.
+- `Runtime::options()` returns the selected options, and `clear()` preserves
+  them. `run` and its expression evaluation use that configuration.
+  `Runtime::check_with_options(source, options)`, lexer
+  `tokenize_with_options`, parser `parse_program_with_options`,
+  `parse_with_options`, `parse_expression_with_options`, and
+  `statement::compile_with_options` accept the same value. Existing standalone
+  parsing/checking functions always keep their default semantics.
+- CLI file execution, plain/piped continuation and terminal submission share
+  the configured runtime. Comment punctuation cannot create a continuation
+  header. Plain input buffers an open block through blank lines and command
+  text until it closes; EOF reports it once if still open. Ctrl-C cancels
+  pending input. Terminal Ctrl-J indentation honors the option. `.clear`
+  preserves it; existing result/error formatting and REPL exit codes remain.
+- An unclosed enabled block raises `ErrorKind::Syntax` with exact message
+  `Unterminated block comment`, at the original opening slash, also within
+  interpolations. Its display is `SyntaxError: Unterminated block comment
+  (line L, column C)`. Compilation fails before statements execute.
+- This configuration-dependent behavior is executed in
+  `tests/c_style_comments.rs`, `tests/c_style_comments_cli.rs` and the terminal
+  unit suite. The existing default-only executable-document/JSONL schemas
+  have no syntax-option field; their protected programs, assertions and
+  expected results stay unchanged rather than running enabled source by
+  default. See [NUC 76](docs/nuc-0076.md).
+
 ## Reactive literal string replacement
 
 - `receiver.replaceAll(search, replacement)` is a string-instance method that

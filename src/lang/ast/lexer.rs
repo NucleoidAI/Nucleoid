@@ -1,6 +1,15 @@
 use logos::Logos;
+use std::ops::Range;
 
 use crate::error::{Error, Position, Result};
+
+/// Optional source forms. Defaults preserve the accepted slash/regex grammar.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct SyntaxOptions {
+    /// Recognize `//` line comments and non-nesting `/* ... */` comments.
+    /// These delimiters take priority over regular expressions only when set.
+    pub c_style_comments: bool,
+}
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(skip r"[ \t\f\r]+")]
@@ -390,9 +399,30 @@ pub struct Spanned {
 }
 
 pub fn tokenize(source: &str) -> Result<Vec<Spanned>> {
+    tokenize_with_options(source, SyntaxOptions::default())
+}
+
+/// Tokenizes with explicit source options, retaining original source positions.
+pub fn tokenize_with_options(source: &str, options: SyntaxOptions) -> Result<Vec<Spanned>> {
     let lines = Lines::new(source);
-    let flat = scan(source, &lines)?;
+    let (flat, _) = scan_until(source, &lines, options, |_| false)?;
     Ok(layout(flat, lines.end()))
+}
+
+/// Finds an interpolation's closing brace using the same literal/comment rules
+/// as its expression parser, without lexing the template text that follows it.
+pub(crate) fn interpolation_end(source: &str, options: SyntaxOptions) -> Result<Option<usize>> {
+    let mut depth = 0usize;
+    let (_, end) = scan_until(source, &Lines::new(source), options, |token| {
+        match token {
+            Token::LeftBrace => depth += 1,
+            Token::RightBrace if depth == 0 => return true,
+            Token::RightBrace => depth -= 1,
+            _ => {}
+        }
+        false
+    })?;
+    Ok(end)
 }
 
 /// Turns byte offsets into line and column numbers.
@@ -440,9 +470,18 @@ struct Scanned {
     indent: usize,
 }
 
-fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
+fn scan_until(
+    source: &str,
+    lines: &Lines<'_>,
+    options: SyntaxOptions,
+    mut stop: impl FnMut(&Token) -> bool,
+) -> Result<(Vec<Scanned>, Option<usize>)> {
     let mut lexer = Raw::lexer(source);
     let mut scanned: Vec<Scanned> = Vec::new();
+    let mut comments = Vec::new();
+    let mut layout_depth = 0usize;
+    // Keep suppressed trivia runs from repeatedly searching past old newlines.
+    let mut last_non_newline: Option<usize> = None;
 
     while let Some(next) = lexer.next() {
         let span = lexer.span();
@@ -455,6 +494,11 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             .at(lines.position(span.start))
         })?;
 
+        let previous = if options.c_style_comments && layout_depth > 0 {
+            last_non_newline.map(|index| &scanned[index])
+        } else {
+            scanned.last()
+        };
         let token = match raw {
             Raw::Newline => Token::Newline,
             Raw::Word(word) => match Keyword::from_word(&word) {
@@ -463,10 +507,7 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             },
             Raw::ClassRef(name) => Token::ClassRef(name),
             Raw::Number(number) => {
-                if scanned
-                    .last()
-                    .is_some_and(|previous| previous.token == Token::At)
-                {
+                if previous.is_some_and(|previous| previous.token == Token::At) {
                     let digits = &source[span.clone()];
                     let index = digits
                         .bytes()
@@ -531,14 +572,43 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             Raw::OrOr => Token::OrOr,
             Raw::Pipe => Token::Pipe,
             slash @ (Raw::Slash | Raw::SlashAssign) => {
+                if options.c_style_comments {
+                    let remainder = &source[span.start..];
+                    let end = if remainder.starts_with("//") {
+                        Some(span.start + remainder.find('\n').unwrap_or(remainder.len()))
+                    } else if let Some(body) = remainder.strip_prefix("/*") {
+                        let closing = body.find("*/").ok_or_else(|| {
+                            Error::syntax("Unterminated block comment")
+                                .at(lines.position(span.start))
+                        })?;
+                        Some(span.start + 2 + closing + 2)
+                    } else {
+                        None
+                    };
+                    if let Some(end) = end {
+                        // Keep physical line breaks for the ordinary layout
+                        // pass, but never count comment text as indentation.
+                        for (offset, byte) in source[span.start..end].bytes().enumerate() {
+                            if byte == b'\n' {
+                                scanned.push(Scanned {
+                                    token: Token::Newline,
+                                    position: lines.position(span.start + offset),
+                                    line_start: false,
+                                    indent: 0,
+                                });
+                            }
+                        }
+                        comments.push(span.start..end);
+                        lexer.bump(end - span.end);
+                        continue;
+                    }
+                }
                 let division = if matches!(slash, Raw::SlashAssign) {
                     Token::SlashAssign
                 } else {
                     Token::Slash
                 };
-                let starts_regex = scanned
-                    .last()
-                    .is_none_or(|previous| previous.token.precedes_regex());
+                let starts_regex = previous.is_none_or(|previous| previous.token.precedes_regex());
 
                 if starts_regex {
                     // Logos may have consumed `/=`. In an operand position,
@@ -556,7 +626,24 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
             }
         };
 
-        let (line_start, indent) = line_position(source, span.start);
+        if stop(&token) {
+            return Ok((scanned, Some(span.start)));
+        }
+        match token {
+            Token::LeftParen | Token::LeftBracket => layout_depth += 1,
+            Token::RightParen | Token::RightBracket => {
+                layout_depth = layout_depth.saturating_sub(1);
+            }
+            _ => {}
+        }
+        let (line_start, indent) = if comments.is_empty() {
+            line_position(source, span.start)
+        } else {
+            line_position_without_comments(source, span.start, &comments)
+        };
+        if token != Token::Newline {
+            last_non_newline = Some(scanned.len());
+        }
         scanned.push(Scanned {
             token,
             position: lines.position(span.start),
@@ -565,7 +652,37 @@ fn scan(source: &str, lines: &Lines<'_>) -> Result<Vec<Scanned>> {
         });
     }
 
-    Ok(scanned)
+    Ok((scanned, None))
+}
+
+/// Comments have zero indentation width. Only actual whitespace outside them
+/// may indent the first code token; whitespace inside a block is not layout.
+fn line_position_without_comments(
+    source: &str,
+    start: usize,
+    comments: &[Range<usize>],
+) -> (bool, usize) {
+    let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
+    let first = comments.partition_point(|comment| comment.end <= line_start);
+    let mut cursor = line_start;
+    let mut indent = 0;
+    let mut leading = true;
+    for comment in &comments[first..] {
+        if comment.start >= start {
+            break;
+        }
+        let end = comment.start.max(cursor);
+        for character in source[cursor..end].chars() {
+            leading &= character.is_whitespace();
+            indent += if character == '\t' { 4 } else { 1 };
+        }
+        cursor = comment.end.min(start);
+    }
+    for character in source[cursor..start].chars() {
+        leading &= character.is_whitespace();
+        indent += if character == '\t' { 4 } else { 1 };
+    }
+    (leading, indent)
 }
 
 /// Reads the body of a regular expression literal, given the source that

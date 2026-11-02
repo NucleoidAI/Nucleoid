@@ -55,5 +55,6 @@ pub mod transaction;
 pub mod value;
 
 pub use error::{Error, ErrorKind, Position, Result};
+pub use lang::ast::lexer::SyntaxOptions;
 pub use runtime::{AssertionFailure, Runtime};
 pub use value::{ObjectId, Value};

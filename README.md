@@ -72,6 +72,38 @@ prompt. Tab inserts four spaces; use Backspace to dedent and submit a blank
 line to run the complete block. Piped input is not reindented and must include
 its own whitespace.
 
+### Optional C-style comments
+
+Hash (`#`) line comments work by default. To also accept `//` line comments
+and non-nesting `/* ... */` blocks, explicitly enable them for a file or
+either interactive interface:
+
+```console
+nucleoid --c-style-comments program.nuc
+nucleoid --c-style-comments --plain
+```
+
+The equivalent library setting is per runtime and survives `clear()`:
+
+```rust
+use nucleoid::{Runtime, SyntaxOptions};
+
+let mut runtime = Runtime::with_options(SyntaxOptions { c_style_comments: true });
+assert_eq!(runtime.run("12 /* */ / 2 //").unwrap().to_string(), "6");
+```
+
+Without that flag/option, accepted slash/regex behavior is unchanged: `//`
+is an empty regex, not a comment. In enabled mode comments take delimiter
+priority outside literals; `/(?:)/` supplies empty-matching behavior (with
+pattern text `(?:)`, not an empty string). Strings,
+template text and nonambiguous regexes stay literal; interpolations inherit
+the option. Comments retain newlines and source positions and cannot join
+tokens or supply indentation. An unclosed block reports
+`SyntaxError: Unterminated block comment` at its opening slash.
+Plain input buffers an open block across blank lines until it closes or EOF;
+the terminal uses the same setting for submission and Ctrl-J indentation.
+See [NUC 76](docs/nuc-0076.md).
+
 ---
 
 # Design Theory 📐

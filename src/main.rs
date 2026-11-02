@@ -7,8 +7,8 @@ use std::process::ExitCode;
 use clap::Parser;
 use nucleoid::graph::NodeKey;
 use nucleoid::lang::ast::Quantifier;
-use nucleoid::lang::ast::lexer::{Keyword, Spanned, Token, tokenize};
-use nucleoid::{Runtime, Value};
+use nucleoid::lang::ast::lexer::{Keyword, Spanned, Token, tokenize_with_options};
+use nucleoid::{ErrorKind, Position, Runtime, SyntaxOptions, Value};
 use rustyline::error::ReadlineError;
 use rustyline::{Cmd, DefaultEditor, KeyCode, KeyEvent, Modifiers};
 
@@ -38,11 +38,17 @@ struct Cli {
     /// Use the line-oriented REPL instead of the full-screen terminal workspace.
     #[arg(long)]
     plain: bool,
+
+    /// Enable // line comments and non-nesting /* ... */ block comments.
+    #[arg(long)]
+    c_style_comments: bool,
 }
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    let mut runtime = Runtime::new();
+    let mut runtime = Runtime::with_options(SyntaxOptions {
+        c_style_comments: cli.c_style_comments,
+    });
 
     match cli.file {
         Some(path) => {
@@ -155,6 +161,7 @@ fn repl_editor() -> Result<DefaultEditor, ReadlineError> {
 }
 
 fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
+    let options = runtime.options();
     let mut editor = match repl_editor() {
         Ok(editor) => editor,
         Err(error) => {
@@ -223,6 +230,11 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
         }
 
         if trimmed.is_empty() {
+            if unterminated_block_comment(&source, options) {
+                source.push_str(&line);
+                source.push('\n');
+                continue;
+            }
             if !source.is_empty() {
                 if let Err(error) = editor.add_history_entry(source.trim_end()) {
                     eprintln!("nucleoid: cannot record history: {error}");
@@ -235,13 +247,27 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
             continue;
         }
 
-        let opens_body = indented_body_header(&line);
-        multiline |= line.trim_end().ends_with(':') || opens_body;
+        // A block comment may span physical reads. Inspect the complete pending
+        // source when it closes, rather than treating its contents as headers.
+        let continued;
+        let header = if unterminated_block_comment(&source, options) {
+            continued = format!("{source}{line}");
+            &continued
+        } else {
+            &line
+        };
+        let opens_body = indented_body_header_with_options(header, options);
+        multiline |= (!options.c_style_comments && line.trim_end().ends_with(':')) || opens_body;
+        let indentation_hint = next_indentation_with_options(header, opens_body, options);
         source.push_str(&line);
         source.push('\n');
 
+        if unterminated_block_comment(&source, options) {
+            indentation.clear();
+            continue;
+        }
         if multiline {
-            indentation = next_indentation(&line, opens_body);
+            indentation = indentation_hint;
         } else {
             if let Err(error) = editor.add_history_entry(source.trim_end()) {
                 eprintln!("nucleoid: cannot record history: {error}");
@@ -253,14 +279,55 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
     }
 }
 
+fn unterminated_block_comment(source: &str, options: SyntaxOptions) -> bool {
+    options.c_style_comments
+        && tokenize_with_options(source, options).is_err_and(|error| {
+            error.kind() == ErrorKind::Syntax && error.message() == "Unterminated block comment"
+        })
+}
+
+/// In opt-in mode, use the last logical code line, not text inside a trailing
+/// multiline comment. Default-mode header detection remains unchanged.
+fn lex_header(source: &str, options: SyntaxOptions) -> nucleoid::Result<Vec<Spanned>> {
+    let mut tokens = tokenize_with_options(source, options)?;
+    if options.c_style_comments {
+        if let Some(last) = tokens.iter().rposition(|spanned| {
+            !matches!(
+                spanned.token,
+                Token::Newline | Token::Indent | Token::Dedent | Token::Eof
+            )
+        }) {
+            let mut start = tokens[..last]
+                .iter()
+                .rposition(|spanned| spanned.token == Token::Newline)
+                .map_or(0, |index| index + 1);
+            while start < last
+                && matches!(
+                    tokens[start].token,
+                    Token::Newline | Token::Indent | Token::Dedent
+                )
+            {
+                start += 1;
+            }
+            tokens.drain(..start);
+        }
+    }
+    Ok(tokens)
+}
+
+#[cfg(test)]
 fn indented_body_header(line: &str) -> bool {
-    if indented_named_arrow_header(line)
-        || indented_try_header(line)
-        || indented_condition_header(line, Keyword::If)
+    indented_body_header_with_options(line, SyntaxOptions::default())
+}
+
+fn indented_body_header_with_options(line: &str, options: SyntaxOptions) -> bool {
+    if indented_named_arrow_header_with_options(line, options)
+        || indented_try_header_with_options(line, options)
+        || indented_condition_header_with_options(line, Keyword::If, options)
     {
         return true;
     }
-    let Ok(tokens) = tokenize(line) else {
+    let Ok(tokens) = lex_header(line, options) else {
         return false;
     };
     let mut tokens = header_tokens(&tokens);
@@ -272,25 +339,95 @@ fn indented_body_header(line: &str) -> bool {
             && matches!(tokens.next_back(), Some(Token::Colon)))
 }
 
+#[cfg(test)]
 fn next_indentation(line: &str, opens_body: bool) -> String {
+    next_indentation_with_options(line, opens_body, SyntaxOptions::default())
+}
+
+fn next_indentation_with_options(source: &str, opens_body: bool, options: SyntaxOptions) -> String {
     // A pasted, balanced conditional header may span several physical lines.
-    let opens_condition = indented_condition_header(line, Keyword::Else);
-    let line = line.lines().next_back().unwrap_or_default();
-    let mut indentation: String = line
-        .chars()
-        .take_while(|character| matches!(character, ' ' | '\t'))
-        .collect();
-    if opens_body || opens_condition || indented_alternative_header(line) {
+    let opens_condition = indented_condition_header_with_options(source, Keyword::Else, options);
+    let code_position = options
+        .c_style_comments
+        .then(|| lex_header(source, options).ok())
+        .flatten()
+        .and_then(|tokens| {
+            let last = tokens.iter().rev().find(|spanned| {
+                !matches!(
+                    spanned.token,
+                    Token::Newline | Token::Indent | Token::Dedent | Token::Eof
+                )
+            })?;
+            tokens
+                .iter()
+                .find(|spanned| spanned.position.line == last.position.line)
+                .map(|spanned| spanned.position)
+        });
+    let line = code_position
+        .and_then(|position| source.lines().nth(position.line - 1))
+        .unwrap_or_else(|| source.lines().next_back().unwrap_or_default());
+    let mut indentation: String = match code_position {
+        Some(position) => comment_free_indentation(source, position, options),
+        None => line
+            .chars()
+            .take_while(|character| matches!(character, ' ' | '\t'))
+            .collect(),
+    };
+    let alternative = if options.c_style_comments {
+        source
+    } else {
+        line
+    };
+    if opens_body
+        || opens_condition
+        || indented_alternative_header_with_options(alternative, options)
+    {
         indentation.push_str(INDENT);
     }
     indentation
 }
 
+/// Before the first code token, only whitespace and comments can contribute
+/// layout. Copy real indentation, never the columns occupied by a comment.
+fn comment_free_indentation(source: &str, position: Position, options: SyntaxOptions) -> String {
+    let start: usize = source
+        .split_inclusive('\n')
+        .take(position.line - 1)
+        .map(str::len)
+        .sum();
+    let prefix: String = source[start..].chars().take(position.column - 1).collect();
+    let mut remainder = prefix.as_str();
+    if unterminated_block_comment(&source[..start], options) {
+        remainder = remainder.split_once("*/").map_or("", |(_, tail)| tail);
+    }
+    let mut indentation = String::new();
+    while !remainder.is_empty() {
+        if let Some(body) = remainder.strip_prefix("/*") {
+            remainder = body.split_once("*/").map_or("", |(_, tail)| tail);
+        } else {
+            let character = remainder.chars().next().unwrap();
+            if !matches!(character, ' ' | '\t' | '\r' | '\u{c}') {
+                break;
+            }
+            if matches!(character, ' ' | '\t') {
+                indentation.push(character);
+            }
+            remainder = &remainder[character.len_utf8()..];
+        }
+    }
+    indentation
+}
+
+#[cfg(test)]
 fn indented_alternative_header(line: &str) -> bool {
-    if indented_condition_header(line, Keyword::Else) {
+    indented_alternative_header_with_options(line, SyntaxOptions::default())
+}
+
+fn indented_alternative_header_with_options(line: &str, options: SyntaxOptions) -> bool {
+    if indented_condition_header_with_options(line, Keyword::Else, options) {
         return true;
     }
-    let Ok(tokens) = tokenize(line) else {
+    let Ok(tokens) = lex_header(line, options) else {
         return false;
     };
     let mut tokens = header_tokens(&tokens);
@@ -316,8 +453,17 @@ fn indented_alternative_header(line: &str) -> bool {
 /// submission; they do not start one. This is not expression validation:
 /// commit/EOF still runs the unchanged real parser, including its body
 /// requirements and resource bounds.
+#[cfg(test)]
 fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
-    let Ok(tokens) = tokenize(line) else {
+    indented_condition_header_with_options(line, keyword, SyntaxOptions::default())
+}
+
+fn indented_condition_header_with_options(
+    line: &str,
+    keyword: Keyword,
+    options: SyntaxOptions,
+) -> bool {
+    let Ok(tokens) = lex_header(line, options) else {
         return false;
     };
     let mut tokens = tokens.iter().map(|spanned| &spanned.token).peekable();
@@ -391,8 +537,13 @@ fn starts_quantifier<'a>(word: &Token, mut rest: impl Iterator<Item = &'a Token>
 /// literals/comments. Either spelling, `=>` or `->`, ends the header. The
 /// parser still owns parameter validation and the real indentation
 /// requirement when the input is committed.
+#[cfg(test)]
 fn indented_named_arrow_header(line: &str) -> bool {
-    let Ok(tokens) = tokenize(line) else {
+    indented_named_arrow_header_with_options(line, SyntaxOptions::default())
+}
+
+fn indented_named_arrow_header_with_options(line: &str, options: SyntaxOptions) -> bool {
+    let Ok(tokens) = lex_header(line, options) else {
         return false;
     };
     let mut tokens = header_tokens(&tokens);
@@ -405,8 +556,13 @@ fn indented_named_arrow_header(line: &str) -> bool {
 /// A bare try starts the existing buffer; catch stays in that same submission.
 /// Lexing the whole line rejects malformed suffixes rather than hiding errors.
 /// The parser still validates both suites when blank-line commit or EOF runs it.
+#[cfg(test)]
 fn indented_try_header(line: &str) -> bool {
-    let Ok(tokens) = tokenize(line) else {
+    indented_try_header_with_options(line, SyntaxOptions::default())
+}
+
+fn indented_try_header_with_options(line: &str, options: SyntaxOptions) -> bool {
+    let Ok(tokens) = lex_header(line, options) else {
         return false;
     };
     let mut tokens = header_tokens(&tokens);
