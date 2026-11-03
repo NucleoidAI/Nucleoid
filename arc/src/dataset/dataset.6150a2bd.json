@@ -1,9 +1,9 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, color: int, width: int, height: int, canvas_width: int, canvas_height: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.width = width\n    this.height = height\n    this.canvas_width = canvas_width\n    this.canvas_height = canvas_height",
-    "$Obj.x = $Obj.canvas_width - $Obj.x@first - $Obj.width",
-    "$Obj.y = $Obj.canvas_height - $Obj.y@first - $Obj.height",
-    "$Obj.orientation = ($Obj.orientation@first + 180) % 360"
+    "# There is an Obj type, a region of one color on the canvas,\n# which has its x and y position, its orientation, its color,\n# its width and height, and its canvas's width and height\n# as integers\nclass Obj(x: int, y: int, orientation: int, color: int, width: int, height: int, canvas_width: int, canvas_height: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.width = width\n    this.height = height\n    this.canvas_width = canvas_width\n    this.canvas_height = canvas_height",
+    "# Every region turns a half turn about the canvas center,\n# so its box is now as far from the right edge\n# as it was from the left edge\n$Obj.x = $Obj.canvas_width - $Obj.x@first - $Obj.width",
+    "# The half turn also puts every region's box as far\n# from the bottom edge as it was from the top edge\n$Obj.y = $Obj.canvas_height - $Obj.y@first - $Obj.height",
+    "# Every region is turned 180 degrees\n$Obj.orientation = ($Obj.orientation@first + 180) % 360"
   ],
   "output_canvas": "EXACT",
   "dataset": [

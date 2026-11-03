@@ -1,8 +1,8 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, vertex_color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l7544'\n    this.vertex_color = vertex_color",
-    "if $Obj.vertex_color == 1:\n    $Obj.tag = 'l1707'\n    $Obj.marker_color = 7\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1",
-    "if $Obj.vertex_color == 2:\n    $Obj.tag = 'l2404'\n    $Obj.marker_color = 4\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1"
+    "# There is an Obj type, a single point on the grid,\n# which has its x and y position, its orientation\n# and its vertex color as integers\nclass Obj(x: int, y: int, orientation: int, vertex_color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l7544'\n    this.vertex_color = vertex_color",
+    "# A point of vertex color 1 gains color-7 neighbors\n# above, below, left and right, an orthogonal cross\n# that starts one column left and one row up\nif $Obj.vertex_color == 1:\n    $Obj.tag = 'l1707'\n    $Obj.marker_color = 7\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1",
+    "# A point of vertex color 2 gains color-4 neighbors\n# on its four diagonals, a diagonal cross\n# that starts one column left and one row up\nif $Obj.vertex_color == 2:\n    $Obj.tag = 'l2404'\n    $Obj.marker_color = 4\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [

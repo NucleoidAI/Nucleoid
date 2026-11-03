@@ -1,10 +1,10 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
-    "$Obj.tag = 'l3058'",
-    "$Obj.bar_width = $Obj.cell_count",
-    "$Obj.x = 0",
-    "$Obj.y = 0"
+    "# There is an Obj type, all the cells of one color,\n# which has its x and y position, its orientation, its color\n# and its number of cells as integers\nclass Obj(x: int, y: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
+    "# Every object becomes a horizontal bar\n$Obj.tag = 'l3058'",
+    "# Every bar is as wide as the object has cells\n$Obj.bar_width = $Obj.cell_count",
+    "# Every bar starts at the left edge of the output\n$Obj.x = 0",
+    "# Every bar starts at the top edge of the output\n$Obj.y = 0"
   ],
   "output_canvas": "FIT",
   "dataset": [

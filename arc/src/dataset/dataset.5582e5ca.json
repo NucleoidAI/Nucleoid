@@ -1,8 +1,8 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
-    "$Obj.tag = 'l5236'",
-    "$Obj.fill_color = $Obj.parts.mode()"
+    "# There is an Obj type, a whole block of colored cells,\n# which has its x and y position and its orientation as integers,\n# and its parts, the colors of its nonzero cells\n# in reading order, as a list\nclass Obj(x: int, y: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
+    "# Every block becomes a solid rectangle that fills the canvas\n$Obj.tag = 'l5236'",
+    "# Every block is filled with its most frequent color\n$Obj.fill_color = $Obj.parts.mode()"
   ],
   "output_canvas": "EXACT",
   "dataset": [

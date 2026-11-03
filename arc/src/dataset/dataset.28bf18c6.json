@@ -1,11 +1,11 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
-    "$Obj.tag = 'l4305'",
-    "$Obj.repeat_count = 2",
-    "$Obj.repeat_direction = 'right'",
-    "$Obj.x = 0",
-    "$Obj.y = 0"
+    "# There is an Obj type, a single shape on the grid,\n# which has its x and y position, its orientation\n# and its color as integers\nclass Obj(x: int, y: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
+    "# Every shape is repeated side by side\n$Obj.tag = 'l4305'",
+    "# Every shape appears twice in total\n$Obj.repeat_count = 2",
+    "# Every copy goes to the right of the one before it\n$Obj.repeat_direction = 'right'",
+    "# Every repeated shape starts at the left edge of the output\n$Obj.x = 0",
+    "# Every repeated shape starts at the top edge of the output\n$Obj.y = 0"
   ],
   "output_canvas": "FIT",
   "dataset": [

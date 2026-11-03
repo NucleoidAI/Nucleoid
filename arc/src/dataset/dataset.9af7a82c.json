@@ -1,10 +1,10 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
-    "$Obj.tag = 'l6953'",
-    "$Obj.bar_height = $Obj.cell_count",
-    "$Obj.x = Obj.filter(other => other.bar_height > $Obj.bar_height).length",
-    "$Obj.y = 0"
+    "# There is an Obj type, a region of one color,\n# which has its x and y position, its orientation, its color\n# and its number of cells as integers\nclass Obj(x: int, y: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
+    "# Every region becomes a vertical bar\n$Obj.tag = 'l6953'",
+    "# Every bar is as tall as its region has cells\n$Obj.bar_height = $Obj.cell_count",
+    "# Every bar's column is the number of taller bars,\n# so the bars stand tallest first, from left to right\n$Obj.x = Obj.filter(other => other.bar_height > $Obj.bar_height).length",
+    "# Every bar starts at the top row\n$Obj.y = 0"
   ],
   "output_canvas": "FIT",
   "dataset": [

@@ -1,10 +1,10 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, endpoint_position: str):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l8001'\n    this.endpoint_position = endpoint_position",
-    "if $Obj.orientation == 90 and $Obj.endpoint_position == 'left':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'",
-    "if $Obj.orientation == 90 and $Obj.endpoint_position == 'right':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'\n    $Obj.x = $Obj.x@first - 1",
-    "if $Obj.orientation == 0 and $Obj.endpoint_position == 'up':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'",
-    "if $Obj.orientation == 0 and $Obj.endpoint_position == 'down':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'\n    $Obj.y = $Obj.y@first - 1"
+    "# There is an Obj type, a straight line with a color-8 endpoint,\n# which has its x and y position and its orientation as integers,\n# and the side its endpoint is on as a string\nclass Obj(x: int, y: int, orientation: int, endpoint_position: str):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l8001'\n    this.endpoint_position = endpoint_position",
+    "# A horizontal line whose endpoint is on the left\n# grows one cell to the right\nif $Obj.orientation == 90 and $Obj.endpoint_position == 'left':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'",
+    "# A horizontal line whose endpoint is on the right\n# grows one cell to the left, so it starts one column further left\nif $Obj.orientation == 90 and $Obj.endpoint_position == 'right':\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'\n    $Obj.x = $Obj.x@first - 1",
+    "# A vertical line whose endpoint is at the top\n# grows one cell downward\nif $Obj.orientation == 0 and $Obj.endpoint_position == 'up':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'",
+    "# A vertical line whose endpoint is at the bottom\n# grows one cell upward, so it starts one row higher\nif $Obj.orientation == 0 and $Obj.endpoint_position == 'down':\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'\n    $Obj.y = $Obj.y@first - 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
