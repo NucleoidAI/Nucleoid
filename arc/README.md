@@ -382,31 +382,38 @@ block is not rotated and the fill is symmetric. The test pair follows the
 training pairs at the same level and is annotated by the same rules.
 
 `dataset.6150a2bd.json` annotates the two original training pairs from
-`data\training\6150a2bd.json`, in order, followed by its test pair, twelve
-object instances in total (4, 3, and 5 per pair). Every input and output
-retains its original 3 by 3 canvas, colors, positions, and zero cells. Each
-object is one 4-connected region of a single color, listed in the reading
-order of its first cell: a three-cell corner in a 2 by 2 box, a horizontal and
-a vertical two-cell bar, and single cells. Each output turns its input a half
-turn about the canvas center, so every object keeps its color and cell count
-while its shape turns 180 degrees and its bounding box moves to the opposite
-side of the canvas. The class takes `color`, the bounding box's `width` and
-`height`, and the `canvas_width` and `canvas_height` of the object's canvas as
-scalars. Unconditional class-level rules read each object's input origin with
-`@first` anchors: `$Obj.canvas_width - $Obj.x@first - $Obj.width` gives `x`,
-`$Obj.canvas_height - $Obj.y@first - $Obj.height` gives `y`, and
-`($Obj.orientation@first + 180) % 360` gives `orientation`. The rules create
-no other properties, so input and output states share the same keys. The
-`output_x`/`output_y` fields record the turned object's bounding-box origin,
-equal to `output_value.x`/`output_value.y`. The tag `l9100` is a single shape,
-as in `dataset.28bf18c6.json`, in both states. Orientation is 0 in every input
-state, where no object is turned, and 180 in every output state, because the
-rules turn every object a half turn, including single cells and bars whose
-turned shape looks the same. Input and output masks retain the full 3 by 3
-canvas. `output_canvas` is `EXACT` because each output keeps its input's
-canvas, including the empty top row of the second training output. The test
-pair follows the training pairs at the same level and is annotated by the same
-rules.
+`data\training\6150a2bd.json`, in order, followed by its test pair, three
+block instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, positions, and zero cells. Each object is the
+whole block of its grid's nonzero cells, edge-connected across colors: 6, 4,
+and 6 cells of four, three, and five colors, and zero cells are background.
+Each block's bounding box is 3 cells wide and 3, 2, and 3 cells tall. Each
+output turns its input block a half turn about the canvas center, so the block
+keeps its colors and cell count while it turns 180 degrees and its bounding
+box moves to the opposite side of the canvas. The 3 by 3 boxes span the canvas
+and keep their origin, 0 and 0, while the second training block's box moves
+down one row, from the top two rows to the bottom two. Redrawing the turned
+block at its input origin, a turn about its own center, would not reproduce
+that output. The class takes the bounding box's `width` and `height` and the
+`canvas_width` and `canvas_height` of the block's canvas as scalars, with no
+color, parts list, or matrix of cells. Unconditional class-level rules read
+the block's input state with `@first` anchors:
+`($Obj.orientation@first + 180) % 360` gives `orientation`,
+`$Obj.canvas_width - $Obj.x@first - $Obj.width` gives `x`, and
+`$Obj.canvas_height - $Obj.y@first - $Obj.height` gives `y`. The rules create
+no other properties, so input and output states share the same keys. Native
+output snapshots are captured with the pair's implementation followed by
+`Obj[:]`. The tag `l9100` is a single shape, as in `dataset.28bf18c6.json` and
+`dataset.5582e5ca.json`, in both states. Input masks retain each pair's
+full-size 3 by 3 input canvas, with its zero cells padded `0`, and output
+masks the complete 3 by 3 output; merging them reproduces each pair's input
+and output. The `output_x`/`output_y` fields record the turned block's nonzero
+bounding-box origin, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each output keeps its input's canvas,
+including the empty top row of the second training output. Orientation is 0
+in every input state, where the block is not turned, and 180 in every output
+state. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
 
 `dataset.9af7a82c.json` annotates the four original training pairs from
 `data\training\9af7a82c.json`, followed by its test pair, nineteen region

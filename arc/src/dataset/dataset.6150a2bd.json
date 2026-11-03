@@ -1,9 +1,9 @@
 {
   "declarations": [
-    "# There is an Obj type, a region of one color on the canvas,\n# which has its x and y position, its orientation, its color,\n# its width and height, and its canvas's width and height\n# as integers\nclass Obj(x: int, y: int, orientation: int, color: int, width: int, height: int, canvas_width: int, canvas_height: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.width = width\n    this.height = height\n    this.canvas_width = canvas_width\n    this.canvas_height = canvas_height",
-    "# Every region turns a half turn about the canvas center,\n# so its box is now as far from the right edge\n# as it was from the left edge\n$Obj.x = $Obj.canvas_width - $Obj.x@first - $Obj.width",
-    "# The half turn also puts every region's box as far\n# from the bottom edge as it was from the top edge\n$Obj.y = $Obj.canvas_height - $Obj.y@first - $Obj.height",
-    "# Every region is turned 180 degrees\n$Obj.orientation = ($Obj.orientation@first + 180) % 360"
+    "# There is an Obj type, the whole block of colored cells on the canvas,\n# which has its x and y position, its orientation, the width\n# and height of its box, and its canvas's width and height\n# as integers\nclass Obj(x: int, y: int, orientation: int, width: int, height: int, canvas_width: int, canvas_height: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.width = width\n    this.height = height\n    this.canvas_width = canvas_width\n    this.canvas_height = canvas_height",
+    "# Every block is turned a half turn, 180 degrees, and redrawn\n$Obj.orientation = ($Obj.orientation@first + 180) % 360",
+    "# The half turn is about the canvas center, so the block's box\n# is now as far from the right edge as it was from the left edge\n$Obj.x = $Obj.canvas_width - $Obj.x@first - $Obj.width",
+    "# The half turn also puts the block's box as far\n# from the bottom edge as it was from the top edge\n$Obj.y = $Obj.canvas_height - $Obj.y@first - $Obj.height"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -20,92 +20,26 @@
       ],
       "instances": [
         {
-          "instance_name": "obj5a9444a9e296",
+          "instance_name": "obj0c2414cf33eb",
           "input_x": 0,
-          "output_x": 1,
-          "input_y": 0,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [3, 3, 0],
-            [3, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 3],
-            [0, 3, 3]
-          ],
-          "implementation": "obj5a9444a9e296 = Obj(x=0, y=0, orientation=0, color=3, width=2, height=2, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":3,"height":2,"id":"obj5a9444a9e296","orientation":0,"tag":"l9100","width":2,"x":0,"y":0},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":3,"height":2,"id":"obj5a9444a9e296","orientation":180,"tag":"l9100","width":2,"x":1,"y":1}
-        },
-        {
-          "instance_name": "obj38c964fd8f24",
-          "input_x": 2,
           "output_x": 0,
           "input_y": 0,
-          "output_y": 2,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [0, 0, 8],
-            [0, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 0],
-            [8, 0, 0]
-          ],
-          "implementation": "obj38c964fd8f24 = Obj(x=2, y=0, orientation=0, color=8, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":8,"height":1,"id":"obj38c964fd8f24","orientation":0,"tag":"l9100","width":1,"x":2,"y":0},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":8,"height":1,"id":"obj38c964fd8f24","orientation":180,"tag":"l9100","width":1,"x":0,"y":2}
-        },
-        {
-          "instance_name": "obj9a58debc8635",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [0, 0, 0],
-            [0, 7, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 7, 0],
-            [0, 0, 0]
-          ],
-          "implementation": "obj9a58debc8635 = Obj(x=1, y=1, orientation=0, color=7, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":7,"height":1,"id":"obj9a58debc8635","orientation":0,"tag":"l9100","width":1,"x":1,"y":1},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":7,"height":1,"id":"obj9a58debc8635","orientation":180,"tag":"l9100","width":1,"x":1,"y":1}
-        },
-        {
-          "instance_name": "obj3456073e2c27",
-          "input_x": 0,
-          "output_x": 2,
-          "input_y": 2,
           "output_y": 0,
           "input_orientation": 0,
           "output_orientation": 180,
           "input_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 0],
+            [3, 3, 8],
+            [3, 7, 0],
             [5, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]
+            [0, 7, 3],
+            [8, 3, 3]
           ],
-          "implementation": "obj3456073e2c27 = Obj(x=0, y=2, orientation=0, color=5, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":5,"height":1,"id":"obj3456073e2c27","orientation":0,"tag":"l9100","width":1,"x":0,"y":2},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":5,"height":1,"id":"obj3456073e2c27","orientation":180,"tag":"l9100","width":1,"x":2,"y":0}
+          "implementation": "obj0c2414cf33eb = Obj(x=0, y=0, orientation=0, width=3, height=3, canvas_width=3, canvas_height=3)",
+          "input_value": {"canvas_height":3,"canvas_width":3,"height":3,"id":"obj0c2414cf33eb","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"canvas_height":3,"canvas_width":3,"height":3,"id":"obj0c2414cf33eb","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
@@ -122,70 +56,26 @@
       ],
       "instances": [
         {
-          "instance_name": "obj7ac30d1494db",
+          "instance_name": "obj19002ca3b8ed",
           "input_x": 0,
-          "output_x": 1,
-          "input_y": 0,
-          "output_y": 2,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [5, 5, 0],
-            [0, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 5, 5]
-          ],
-          "implementation": "obj7ac30d1494db = Obj(x=0, y=0, orientation=0, color=5, width=2, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":5,"height":1,"id":"obj7ac30d1494db","orientation":0,"tag":"l9100","width":2,"x":0,"y":0},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":5,"height":1,"id":"obj7ac30d1494db","orientation":180,"tag":"l9100","width":2,"x":1,"y":2}
-        },
-        {
-          "instance_name": "obj50a6a778459c",
-          "input_x": 2,
           "output_x": 0,
           "input_y": 0,
-          "output_y": 2,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [0, 0, 2],
-            [0, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 0],
-            [2, 0, 0]
-          ],
-          "implementation": "obj50a6a778459c = Obj(x=2, y=0, orientation=0, color=2, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":2,"height":1,"id":"obj50a6a778459c","orientation":0,"tag":"l9100","width":1,"x":2,"y":0},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":2,"height":1,"id":"obj50a6a778459c","orientation":180,"tag":"l9100","width":1,"x":0,"y":2}
-        },
-        {
-          "instance_name": "objdd6372580bcc",
-          "input_x": 0,
-          "output_x": 2,
-          "input_y": 1,
           "output_y": 1,
           "input_orientation": 0,
           "output_orientation": 180,
           "input_instance_matrix": [
-            [0, 0, 0],
+            [5, 5, 2],
             [1, 0, 0],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
             [0, 0, 1],
-            [0, 0, 0]
+            [2, 5, 5]
           ],
-          "implementation": "objdd6372580bcc = Obj(x=0, y=1, orientation=0, color=1, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":1,"height":1,"id":"objdd6372580bcc","orientation":0,"tag":"l9100","width":1,"x":0,"y":1},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":1,"height":1,"id":"objdd6372580bcc","orientation":180,"tag":"l9100","width":1,"x":2,"y":1}
+          "implementation": "obj19002ca3b8ed = Obj(x=0, y=0, orientation=0, width=3, height=2, canvas_width=3, canvas_height=3)",
+          "input_value": {"canvas_height":3,"canvas_width":3,"height":2,"id":"obj19002ca3b8ed","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"canvas_height":3,"canvas_width":3,"height":2,"id":"obj19002ca3b8ed","orientation":180,"tag":"l9100","width":3,"x":0,"y":1}
         }
       ]
     },
@@ -202,114 +92,26 @@
       ],
       "instances": [
         {
-          "instance_name": "obj7ead42509da1",
+          "instance_name": "obj18d0a3065349",
           "input_x": 0,
-          "output_x": 2,
-          "input_y": 0,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [6, 0, 0],
-            [6, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 6],
-            [0, 0, 6]
-          ],
-          "implementation": "obj7ead42509da1 = Obj(x=0, y=0, orientation=0, color=6, width=1, height=2, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":6,"height":2,"id":"obj7ead42509da1","orientation":0,"tag":"l9100","width":1,"x":0,"y":0},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":6,"height":2,"id":"obj7ead42509da1","orientation":180,"tag":"l9100","width":1,"x":2,"y":1}
-        },
-        {
-          "instance_name": "obj4abce73f1a4e",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 0,
-          "output_y": 2,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [0, 3, 0],
-            [0, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 3, 0]
-          ],
-          "implementation": "obj4abce73f1a4e = Obj(x=1, y=0, orientation=0, color=3, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":3,"height":1,"id":"obj4abce73f1a4e","orientation":0,"tag":"l9100","width":1,"x":1,"y":0},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":3,"height":1,"id":"obj4abce73f1a4e","orientation":180,"tag":"l9100","width":1,"x":1,"y":2}
-        },
-        {
-          "instance_name": "obj621b288f7ca6",
-          "input_x": 2,
           "output_x": 0,
           "input_y": 0,
-          "output_y": 2,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 0],
-            [5, 0, 0]
-          ],
-          "implementation": "obj621b288f7ca6 = Obj(x=2, y=0, orientation=0, color=5, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":5,"height":1,"id":"obj621b288f7ca6","orientation":0,"tag":"l9100","width":1,"x":2,"y":0},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":5,"height":1,"id":"obj621b288f7ca6","orientation":180,"tag":"l9100","width":1,"x":0,"y":2}
-        },
-        {
-          "instance_name": "objaebbac525ee6",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 180,
-          "input_instance_matrix": [
-            [0, 0, 0],
-            [0, 8, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0],
-            [0, 8, 0],
-            [0, 0, 0]
-          ],
-          "implementation": "objaebbac525ee6 = Obj(x=1, y=1, orientation=0, color=8, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":8,"height":1,"id":"objaebbac525ee6","orientation":0,"tag":"l9100","width":1,"x":1,"y":1},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":8,"height":1,"id":"objaebbac525ee6","orientation":180,"tag":"l9100","width":1,"x":1,"y":1}
-        },
-        {
-          "instance_name": "objcc696cef7092",
-          "input_x": 0,
-          "output_x": 2,
-          "input_y": 2,
           "output_y": 0,
           "input_orientation": 0,
           "output_orientation": 180,
           "input_instance_matrix": [
-            [0, 0, 0],
-            [0, 0, 0],
+            [6, 3, 5],
+            [6, 8, 0],
             [4, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 4],
-            [0, 0, 0],
-            [0, 0, 0]
+            [0, 8, 6],
+            [5, 3, 6]
           ],
-          "implementation": "objcc696cef7092 = Obj(x=0, y=2, orientation=0, color=4, width=1, height=1, canvas_width=3, canvas_height=3)",
-          "input_value": {"canvas_height":3,"canvas_width":3,"color":4,"height":1,"id":"objcc696cef7092","orientation":0,"tag":"l9100","width":1,"x":0,"y":2},
-          "output_value": {"canvas_height":3,"canvas_width":3,"color":4,"height":1,"id":"objcc696cef7092","orientation":180,"tag":"l9100","width":1,"x":2,"y":0}
+          "implementation": "obj18d0a3065349 = Obj(x=0, y=0, orientation=0, width=3, height=3, canvas_width=3, canvas_height=3)",
+          "input_value": {"canvas_height":3,"canvas_width":3,"height":3,"id":"obj18d0a3065349","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"canvas_height":3,"canvas_width":3,"height":3,"id":"obj18d0a3065349","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     }
