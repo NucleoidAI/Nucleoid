@@ -31,7 +31,9 @@ matches the accepted revision. Missing prerequisites block evaluation; never
 invent measurements or guess an uncertain category.
 
 Treat candidate sources, generated exports, and the baseline as read-only.
-Only new external session reports/learner checkpoints and normal ignored build
+Apart from the pull of the primary checkout before you start, under the
+[git synchronization policy](../../rules/git.instructions.md#pull-first), only
+new external session reports/learner checkpoints and normal ignored build
 outputs may be written; never overwrite old state or reports.
 Do not repair code, rewrite cases or assertions, regenerate exports, replace
 the baseline, or change proposal status/index metadata. A source change after

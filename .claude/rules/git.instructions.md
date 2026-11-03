@@ -5,8 +5,9 @@ applyTo: "**"
 # Git synchronization: pull, commit, push
 
 These rules apply to every agent in this repository, coordinating agents and
-delegated workers alike, and override any instruction elsewhere that lets
-another agent or flow commit or push.
+delegated workers alike. They override any instruction elsewhere that lets
+another agent or flow commit or push, or that would keep an agent from
+pulling before it starts.
 
 ## Only `/nuc-proposal` commits and pushes
 
@@ -29,15 +30,25 @@ another agent or flow commit or push.
 
 ## Pull first
 
-- Pull the current branch before starting work in a session and before
-  launching any agent, so every agent and candidate worktree starts from the
-  latest remote state. Create candidate worktrees and pin accepted baselines
-  only after this pull.
-- `/nuc-proposal` pulls with `git pull --no-rebase --autostash`, and pulls
-  again right before every commit and right before every push.
-- Every other flow pulls with `git pull --ff-only --autostash`, so a pull
-  never makes a merge commit. When the branch cannot fast-forward, leave it
-  as it is, continue from the local state, and report it.
+- Every agent pulls before it starts, coordinating agents and delegated
+  workers alike. Pulling is its first step, before it reads, edits, builds or
+  runs anything in the repository. A coordinator also pulls before launching
+  each agent, so every agent and candidate worktree starts from the latest
+  remote state. Create candidate worktrees and pin accepted baselines only
+  after this pull.
+- Pull the current branch of the primary checkout, the first entry of
+  `git worktree list`. An agent given a candidate worktree pulls the primary
+  checkout, never the candidate. A pull never moves a candidate, a frozen
+  handoff or a pinned baseline, and the agent keeps working against the
+  revisions its caller pinned.
+- Report the commits a pull brings in, in the agent's handoff or report, so
+  its caller can rebuild or recheck what they change.
+- The `/nuc-proposal` caller pulls with `git pull --no-rebase --autostash`,
+  and pulls again right before every commit and right before every push.
+- Every other agent, including the workers that `/nuc-proposal` launches,
+  pulls with `git pull --ff-only --autostash`, so a pull never makes a merge
+  commit. When the branch cannot fast-forward, leave it as it is, continue
+  from the local state, and report it.
 
 ## Push after every commit
 
@@ -59,7 +70,7 @@ another agent or flow commit or push.
   `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check` and
   `cargo test` for Rust or executable-document changes), commit the merge,
   and push it.
-- Any other flow commits no merge. Its fast-forward pull can conflict only
+- Every other agent commits no merge. Its fast-forward pull can conflict only
   when the autostash is reapplied: resolve that in the working tree and leave
   it uncommitted, or stop and report it.
 - Never force-push, rewrite published history, or skip hooks to get past a

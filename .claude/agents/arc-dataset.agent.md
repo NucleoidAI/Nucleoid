@@ -15,6 +15,10 @@ needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.
 
 ## Inputs
 
+- Pull first, under the
+  [git synchronization policy](../rules/git.instructions.md#pull-first): run
+  `git pull --ff-only --autostash` in the primary checkout before anything
+  else, and report the commits it brought in.
 - Require an eight-character lowercase hexadecimal puzzle ID with a file in
   `arc/data/training/`. Report a missing or unknown ID instead of guessing.
 - If `dataset.<id>.json` already exists, stop and report it; audit or overwrite

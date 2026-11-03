@@ -10,6 +10,11 @@ You independently evaluate exactly one completed NUC revision. Follow
 
 ## Scope
 
+- Pull first, under the
+  [git synchronization policy](../rules/git.instructions.md#pull-first): run
+  `git pull --ff-only --autostash` in the primary checkout, never in the
+  candidate worktree, and report the commits it brought in. The pull never
+  changes the frozen handoff or the pinned baseline you evaluate.
 - Require the proposal agent's completed handoff, including the proposal path
   and Git blob revision, confirmed category, accepted Git revision, immutable
   baseline JSON artifact, candidate worktree, and a fresh report artifact path.
@@ -40,9 +45,10 @@ You independently evaluate exactly one completed NUC revision. Follow
   separately: no compile errors (build, warning-denied Clippy, formatting), the
   full `cargo test` passing with every existing test present and unweakened,
   and backward compatibility with all accepted syntax and behavior.
-- Treat candidate sources and the baseline as read-only. Write only new
-  reports/learner checkpoints in the external session workspace and normal
-  ignored build outputs; never overwrite old state or reports.
+- Treat candidate sources and the baseline as read-only. Apart from that
+  first pull of the primary checkout, write only new reports/learner
+  checkpoints in the external session workspace and normal ignored build
+  outputs; never overwrite old state or reports.
 - For optional advisory scoring, verify the caller's rubric/blob pin frozen
   before drafting. After independent checks, create only a new external session
   assessment bound to that criterion/rubric, baseline, proposal path and

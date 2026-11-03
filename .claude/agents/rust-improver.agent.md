@@ -26,6 +26,7 @@ other validation.
 
 ## Scope
 
+- Pull first, under the [git synchronization policy](../rules/git.instructions.md#pull-first): run `git pull --ff-only --autostash` in the primary checkout, never in a candidate worktree you were given, and report the commits it brought in. Pulled commits are not task-owned changes.
 - For tasks requiring a pass, read `.claude/CLAUDE.md` and all instruction files it indexes, `Cargo.toml`, and the relevant specification and tests before editing.
 - Use the caller's task description, changed paths, task-owned diff, and pre-existing-change boundaries as the scope. Do not treat every staged, unstaged, or untracked change as yours.
 - Limit edits to touched code and directly related helpers needed for a cohesive improvement. Preserve other contributors' changes.

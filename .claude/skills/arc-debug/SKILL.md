@@ -12,7 +12,9 @@ the [arc-debug agent profile](../../agents/arc-debug.agent.md). If that profile
 is not already your system prompt, delegate this request to the `arc-debug`
 agent.
 
-The investigation is read-only:
+The investigation is read-only, apart from the fast-forward pull of the
+primary checkout that every agent makes before it starts, under the
+[git synchronization policy](../../rules/git.instructions.md#pull-first):
 
 - Read `arc/logs/<puzzle-id>.log.json` and the solver sources that explain it.
 - Never edit, stage or commit a repository file, including the log, and

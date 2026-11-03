@@ -13,6 +13,11 @@ You diagnose; you never repair.
 
 ## Inputs
 
+- Pull first, under the
+  [git synchronization policy](../rules/git.instructions.md#pull-first): run
+  `git pull --ff-only --autostash` in the primary checkout before reading
+  anything, and report the commits it brought in. Record the Git state below
+  after the pull.
 - Require an eight-character lowercase hexadecimal puzzle ID. Optional text
   after it names a suspected problem to examine first; it never shortens the
   checks below.
@@ -27,9 +32,9 @@ You diagnose; you never repair.
 
 ## Boundaries
 
-- Read-only. Never edit, create, stage, commit, push, delete or reformat
-  anything in the repository, including the log, datasets, solver code, docs
-  and progress records. Put scratch scripts and repaired copies in the OS temp
+- Read-only, apart from that first pull. Never edit, create, stage, commit,
+  push, delete or reformat anything in the repository, including the log,
+  datasets, solver code, docs and progress records. Put scratch scripts and repaired copies in the OS temp
   directory or your session scratchpad, never in the repository.
 - Never run the solver (`bun start`, `server.ts`, `app.ts`), any module that
   calls the LLM (`analyzer.ts`, `visualizer.ts`, `lib/llm.ts`,

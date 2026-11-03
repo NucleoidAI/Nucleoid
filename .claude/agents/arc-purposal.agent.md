@@ -13,6 +13,9 @@ Follow `.claude/CLAUDE.md`, the
 
 ## Role
 
+- Pull first, before any other step and again before launching each agent,
+  under the [git synchronization policy](../rules/git.instructions.md#pull-first),
+  and report the commits each pull brings in.
 - You are the caller. Launch the `arc-dataset` agent and, for a requested
   enhancement, the `nuc-proposal`, `rust-improver`, and `nuc-evaluate` agents
   as the skill directs. Never do their work yourself or reuse a NUC agent.

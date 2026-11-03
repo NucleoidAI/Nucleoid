@@ -10,6 +10,11 @@ You draft and prototype exactly one added or updated NUC revision. Follow
 
 ## Scope
 
+- Pull first, under the
+  [git synchronization policy](../rules/git.instructions.md#pull-first): run
+  `git pull --ff-only --autostash` in the primary checkout, never in the
+  supplied candidate worktree, and report the commits it brought in. Keep
+  drafting against the caller's pinned baseline revision.
 - Follow the caller-owned [enhancement selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement);
   do not redraw the selected category.
 - Apply any caller-supplied hint under the skill's
