@@ -449,10 +449,10 @@ never overlap. Each output extends every point downward into a vertical bar of
 its color, from the point's row to the bottom row of the canvas, so each bar is
 1 to 3 cells tall and a point on the bottom row stays a single cell. The class
 takes `color` and `canvas_height`, the height of the object's canvas, as
-scalars rather than a matrix of cells. Unconditional class-level rules
-introduce `bar_height`, which is absent before the rules run, as
-`$Obj.canvas_height - $Obj.y`, and leave `x` and `y` unchanged because the
-point is the bar's top cell. The bottom edge comes from the canvas, not the
+scalars rather than a matrix of cells. Unconditional class-level rules set
+the output tag and introduce `bar_height`, which is absent before the rules
+run, as `$Obj.canvas_height - $Obj.y`, and leave `x` and `y` unchanged because
+the point is the bar's top cell. The bottom edge comes from the canvas, not the
 population: the second training pair's lowest point lies on the middle row,
 yet its bars reach the bottom row. Native output snapshots are captured with
 all of the same pair's implementations together, followed by `Obj[:]`. Tags
