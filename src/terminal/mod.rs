@@ -4,6 +4,7 @@ mod output;
 mod view;
 
 use std::io;
+use std::time::{Duration, Instant};
 
 use crossterm::event::{
     self, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
@@ -11,6 +12,7 @@ use crossterm::event::{
 };
 use crossterm::execute;
 use nucleoid::Runtime;
+use rand::seq::IteratorRandom;
 use ratatui::Frame;
 use ratatui::widgets::ListState;
 use tui_textarea::TextArea;
@@ -20,6 +22,8 @@ use output::{Entry, Output, View};
 use view::Regions;
 
 const HISTORY_LIMIT: usize = 200;
+const REPL_LOGO: &str = " ⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷\n ⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶";
+const SPARKLE_DURATION: Duration = Duration::from_millis(220);
 const HELP: &str = "\
 .help            Show this help
 .json [on|off]   Toggle the JSON result view
@@ -56,8 +60,10 @@ pub(super) fn run(runtime: &mut Runtime, json: bool, graph: bool) -> io::Result<
     let mut app = App::new(json, graph);
 
     loop {
+        app.sparkle.advance(Instant::now());
         terminal.draw(|frame| app.draw(frame))?;
-        if app.event(event::read()?, runtime) {
+        let timeout = app.sparkle.next.saturating_duration_since(Instant::now());
+        if event::poll(timeout)? && app.event(event::read()?, runtime) {
             return Ok(());
         }
     }
@@ -69,6 +75,44 @@ impl Drop for Session {
     fn drop(&mut self) {
         let _ = execute!(io::stdout(), DisableBracketedPaste, DisableMouseCapture);
         ratatui::restore();
+    }
+}
+
+struct LogoSparkle {
+    next: Instant,
+    cell: Option<(usize, usize)>,
+}
+
+impl LogoSparkle {
+    fn new(now: Instant) -> Self {
+        Self {
+            next: now + Duration::from_millis(rand::random_range(4_000..=12_000)),
+            cell: None,
+        }
+    }
+
+    fn advance(&mut self, now: Instant) {
+        if now < self.next {
+            return;
+        }
+        if self.cell.is_some() {
+            *self = Self::new(now);
+            return;
+        }
+        self.cell = Some(
+            REPL_LOGO
+                .lines()
+                .enumerate()
+                .flat_map(|(row, line)| {
+                    line.chars()
+                        .enumerate()
+                        .filter(|(_, cell)| !cell.is_whitespace())
+                        .map(move |(column, _)| (row, column))
+                })
+                .choose(&mut rand::rng())
+                .expect("REPL logo has visible cells"),
+        );
+        self.next = now + SPARKLE_DURATION;
     }
 }
 
@@ -97,6 +141,7 @@ struct App {
     diagnostic_scroll: u16,
     diagnostic_horizontal: u16,
     dragging: bool,
+    sparkle: LogoSparkle,
     regions: Regions,
 }
 
@@ -120,6 +165,7 @@ impl App {
             diagnostic_scroll: 0,
             diagnostic_horizontal: 0,
             dragging: false,
+            sparkle: LogoSparkle::new(Instant::now()),
             regions: Regions::default(),
         }
     }
@@ -858,9 +904,9 @@ mod tests {
                     .map(|column| screen[(column, row)].symbol())
                     .collect::<String>()
             };
-            assert_eq!(screen[(1, 0)].symbol(), "🌿");
+            assert_eq!(screen[(15, 0)].symbol(), "🌿");
             assert!(line(0).contains("Nucleoid - Logic Language for World Models"));
-            assert_eq!(screen[(1, 1)].symbol(), "🌎");
+            assert_eq!(screen[(15, 1)].symbol(), "🌎");
             assert!(line(1).contains("Inspired by Nature"));
             for label in ["F1 REPL", "F2 Tab 2", "F3 Tab 3"] {
                 assert!(line(2).contains(label));
@@ -875,27 +921,36 @@ mod tests {
     }
 
     #[test]
-    fn original_wordmark_renders_in_the_welcome_pane_and_yields_to_results() {
+    fn original_wordmark_stays_top_left_after_results_and_tab_changes() {
         for (width, height) in [(40, 18), (80, 24), (100, 30)] {
             let mut app = App::new(false, false);
             let mut runtime = Runtime::new();
             let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+            let assert_wordmark = |screen: &ratatui::buffer::Buffer| {
+                for (row, logo) in [(0, "⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷"), (1, "⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶")]
+                {
+                    let line: String = (0..width)
+                        .map(|column| screen[(column, row)].symbol())
+                        .collect();
+                    assert!(line.starts_with(&format!(" {logo}")), "{line}");
+                    for (column, _) in (1_u16..).zip(logo.chars()) {
+                        assert_eq!(
+                            screen[(column, row)].fg,
+                            ratatui::style::Color::LightGreen,
+                            "logo cell ({column}, {row})"
+                        );
+                    }
+                }
+                let text: String = screen.content.iter().map(|cell| cell.symbol()).collect();
+                assert_eq!(text.matches("⣿⠋⢻⡄").count(), 1, "{text}");
+            };
             terminal.draw(|frame| app.draw(frame)).unwrap();
-            let screen = terminal.backend().buffer();
-            let text: String = screen.content.iter().map(|cell| cell.symbol()).collect();
-            assert!(text.contains("⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷"), "{text}");
-            assert!(text.contains("⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶"), "{text}");
-            assert!(
-                screen
-                    .content
-                    .iter()
-                    .filter(|cell| cell.symbol() == "⣿")
-                    .all(|cell| cell.fg == ratatui::style::Color::LightGreen)
-            );
+            assert_wordmark(terminal.backend().buffer());
             let editor_area = app.regions.editor;
 
             run(&mut app, &mut runtime, "\"first result\"");
             terminal.draw(|frame| app.draw(frame)).unwrap();
+            assert_wordmark(terminal.backend().buffer());
             let text: String = terminal
                 .backend()
                 .buffer()
@@ -903,8 +958,65 @@ mod tests {
                 .iter()
                 .map(|cell| cell.symbol())
                 .collect();
-            assert!(!text.contains("⣿⠋⢻⡄"), "{text}");
             assert!(text.contains("first result"), "{text}");
+            assert_eq!(app.regions.editor, editor_area);
+
+            key(&mut app, &mut runtime, KeyCode::F(2), KeyModifiers::NONE);
+            terminal.draw(|frame| app.draw(frame)).unwrap();
+            assert_wordmark(terminal.backend().buffer());
+            assert_eq!(app.regions.editor, editor_area);
+        }
+    }
+
+    #[test]
+    fn idle_logo_sparkles_briefly_without_changing_text_or_layout() {
+        let pause_bounds = Duration::from_secs(4)..=Duration::from_secs(12);
+        for (width, height) in [(40, 12), (80, 24), (100, 30)] {
+            let mut app = App::new(false, false);
+            let now = Instant::now();
+            app.sparkle = LogoSparkle::new(now);
+            let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+            terminal.draw(|frame| app.draw(frame)).unwrap();
+            let original = terminal.backend().buffer().clone();
+            let editor_area = app.regions.editor;
+            let start = app.sparkle.next;
+            assert!(pause_bounds.contains(&start.duration_since(now)));
+
+            app.sparkle.advance(start - Duration::from_millis(1));
+            assert!(app.sparkle.cell.is_none());
+
+            app.sparkle.advance(start);
+            let active_cell = app.sparkle.cell.unwrap();
+            let row = u16::try_from(active_cell.0).unwrap();
+            let column = u16::try_from(active_cell.1).unwrap();
+            let end = app.sparkle.next;
+            assert_eq!(end, start + Duration::from_millis(220));
+            terminal.draw(|frame| app.draw(frame)).unwrap();
+            let mut flashed = terminal.backend().buffer().clone();
+            assert_eq!(
+                flashed[(column, row)].symbol(),
+                original[(column, row)].symbol()
+            );
+            assert!(!flashed[(column, row)].symbol().trim().is_empty());
+            assert_eq!(flashed[(column, row)].fg, ratatui::style::Color::White);
+            assert!(
+                flashed[(column, row)]
+                    .modifier
+                    .contains(ratatui::style::Modifier::BOLD)
+            );
+            flashed[(column, row)] = original[(column, row)].clone();
+            assert_eq!(flashed, original);
+            assert_eq!(app.regions.editor, editor_area);
+
+            app.sparkle.advance(end - Duration::from_millis(1));
+            assert_eq!(app.sparkle.cell, Some(active_cell));
+
+            app.sparkle.advance(end);
+            assert!(app.sparkle.cell.is_none());
+            assert!(app.sparkle.next > end);
+            assert!(pause_bounds.contains(&app.sparkle.next.duration_since(end)));
+            terminal.draw(|frame| app.draw(frame)).unwrap();
+            assert_eq!(terminal.backend().buffer(), &original);
             assert_eq!(app.regions.editor, editor_area);
         }
     }

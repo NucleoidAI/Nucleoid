@@ -10,7 +10,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::{REPL_TAGLINE, REPL_TITLE};
 
 use super::output::{TableData, View, visible};
-use super::{App, Focus};
+use super::{App, Focus, REPL_LOGO};
 
 const BACKGROUND: Color = Color::Rgb(16, 20, 29);
 const PANEL: Color = Color::Rgb(23, 29, 40);
@@ -104,6 +104,41 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
 
 fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
     let rows = Layout::vertical([Constraint::Length(2), Constraint::Length(1)]).split(area);
+    let logo_width = as_u16(
+        REPL_LOGO
+            .lines()
+            .map(UnicodeWidthStr::width)
+            .max()
+            .unwrap_or_default(),
+    )
+    .saturating_add(1);
+    let columns =
+        Layout::horizontal([Constraint::Length(logo_width), Constraint::Min(0)]).split(rows[0]);
+    let logo: Vec<_> = REPL_LOGO
+        .lines()
+        .enumerate()
+        .map(|(row, line)| {
+            Line::from(
+                line.chars()
+                    .enumerate()
+                    .map(|(column, cell)| {
+                        let style = if app.sparkle.cell == Some((row, column)) {
+                            Style::default()
+                                .fg(Color::White)
+                                .add_modifier(Modifier::BOLD)
+                        } else {
+                            Style::default()
+                        };
+                        Span::styled(cell.to_string(), style)
+                    })
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect();
+    frame.render_widget(
+        Paragraph::new(logo).style(base().fg(Color::LightGreen)),
+        columns[0],
+    );
     frame.render_widget(
         Paragraph::new(vec![
             Line::styled(
@@ -113,7 +148,7 @@ fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
             Line::styled(format!(" {REPL_TAGLINE}"), Style::default().fg(MUTED)),
         ])
         .style(base()),
-        rows[0],
+        columns[1],
     );
     let parts = Layout::horizontal([
         Constraint::Length(12),
@@ -190,8 +225,6 @@ fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regio
     let Some(entry) = app.entries.get(app.selected) else {
         frame.render_widget(
             Paragraph::new(vec![
-                Line::styled("⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷", Style::default().fg(Color::LightGreen)),
-                Line::styled("⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶", Style::default().fg(Color::LightGreen)),
                 Line::from(""),
                 Line::from(Span::styled(
                     "A workspace for your world model.",

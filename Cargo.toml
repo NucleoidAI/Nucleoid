@@ -55,6 +55,8 @@ crossterm = "0.28"
 tui-textarea = "0.7"
 # Display-cell widths for mouse positioning and structured result columns.
 unicode-width = "0.2"
+# Random sparkle timing and glyph selection without a custom PRNG.
+rand = "0.9"
 
 [dev-dependencies]
 # Field-ordered serialisation of the dataset records. Only the tooling that
