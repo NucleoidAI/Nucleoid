@@ -222,6 +222,47 @@ pub enum Expr {
         collection: Box<Expr>,
         condition: Box<Expr>,
     },
+    /// `NOUN of OPERAND` (NUC 75): a list query named by a noun, written as a
+    /// prefix operator. It means exactly the method call `OPERAND.NOUN()` and
+    /// evaluates through it; only its rendering keeps the written form.
+    Of {
+        noun: Noun,
+        operand: Box<Expr>,
+    },
+}
+
+/// The list queries named by a noun, which `NOUN of OPERAND` names. Queries
+/// named by a verb, such as `sort` or `push`, keep the method call.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Noun {
+    Sum,
+    Max,
+    Min,
+    Mode,
+}
+
+impl Noun {
+    /// The noun as written, which is also the name of the method that
+    /// `NOUN of OPERAND` calls as `OPERAND.NOUN()`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Noun::Sum => "sum",
+            Noun::Max => "max",
+            Noun::Min => "min",
+            Noun::Mode => "mode",
+        }
+    }
+
+    /// The noun `name` spells exactly, or `None` for every other name.
+    pub fn from_name(name: &str) -> Option<Noun> {
+        match name {
+            "sum" => Some(Noun::Sum),
+            "max" => Some(Noun::Max),
+            "min" => Some(Noun::Min),
+            "mode" => Some(Noun::Mode),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -338,6 +379,7 @@ impl Expr {
             | Expr::Slice { object, .. } => object.first(),
             Expr::Version { reference, .. } => reference.first(),
             Expr::Call { callee, .. } => callee.first(),
+            Expr::Of { operand, .. } => operand.first(),
             _ => None,
         }
     }
@@ -360,7 +402,9 @@ impl Expr {
             | Expr::Index { object, .. }
             | Expr::Slice { object, .. } => object.contains_reasoning(),
             Expr::Version { reference, .. } => reference.contains_reasoning(),
-            Expr::Unary { operand, .. } | Expr::Delete(operand) => operand.contains_reasoning(),
+            Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
+                operand.contains_reasoning()
+            }
             Expr::Binary { left, right, .. }
             | Expr::Logical { left, right, .. }
             | Expr::Assign {
@@ -451,7 +495,9 @@ impl<'a> Ast<'a> {
             }
             Expr::ObjectLiteral(_) => Ast::Object(object::Object::new(node)),
             Expr::Function(_) => Ast::Function(function::Function::new(node)),
-            Expr::Call { .. } | Expr::Super(_) => Ast::Call(call::Call::new(node)),
+            Expr::Call { .. } | Expr::Super(_) | Expr::Of { .. } => {
+                Ast::Call(call::Call::new(node))
+            }
             Expr::Template(_) => Ast::Template(template::Template::new(node)),
             Expr::Unary { .. }
             | Expr::Binary { .. }

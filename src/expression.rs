@@ -192,11 +192,13 @@ fn class_properties(
             && destination.is_some_and(|property| class_property(reference, class, property)) => {}
         Expr::Member { property, .. } if property == "value" => {}
         Expr::Member { object, property } => {
-            if matches!(object.as_ref(), Expr::ClassRef(name) if name == class) {
-                found.push(property.clone());
-            } else {
-                class_properties(object, class, destination, found);
-            }
+            member_properties(object, property, class, destination, found)
+        }
+        // The method form `OPERAND.NOUN()` reads its callee `OPERAND.NOUN`, so
+        // `NOUN of OPERAND` reads what that member read does: the class
+        // property `NOUN` for `NOUN of $Class`, otherwise the operand's reads.
+        Expr::Of { noun, operand } => {
+            member_properties(operand, noun.as_str(), class, destination, found)
         }
         Expr::Index { object, index } => {
             if let (Expr::ClassRef(name), Expr::String(property)) =
@@ -213,6 +215,22 @@ fn class_properties(
         _ => visit_children(expression, &mut |child| {
             class_properties(child, class, destination, found)
         }),
+    }
+}
+
+/// The reads of `OBJECT.PROPERTY`: the class property itself when `OBJECT`
+/// is `$Class`, otherwise whatever `OBJECT` reads.
+fn member_properties(
+    object: &Expr,
+    property: &str,
+    class: &str,
+    destination: Option<&str>,
+    found: &mut Vec<String>,
+) {
+    if matches!(object, Expr::ClassRef(name) if name == class) {
+        found.push(property.to_string());
+    } else {
+        class_properties(object, class, destination, found);
     }
 }
 
@@ -254,7 +272,9 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
                 visit(argument);
             }
         }
-        Expr::Unary { operand, .. } | Expr::Delete(operand) => visit(operand),
+        Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
+            visit(operand)
+        }
         Expr::Reason { source, .. } => visit(source),
         Expr::Binary { left, right, .. }
         | Expr::Logical { left, right, .. }

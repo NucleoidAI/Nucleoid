@@ -47,7 +47,9 @@ impl fmt::Display for Expr {
                 for part in parts {
                     match part {
                         TemplatePart::Literal(literal) => f.write_str(literal)?,
-                        TemplatePart::Expression(expression) => write!(f, "${{{expression}}}")?,
+                        TemplatePart::Expression(expression) => {
+                            write!(f, "${{{}}}", Grouped(expression))?
+                        }
                     }
                 }
                 f.write_str("`")
@@ -60,14 +62,14 @@ impl fmt::Display for Expr {
             Expr::Super(arguments) => {
                 write!(f, "super({})", join(arguments))
             }
-            Expr::Member { object, property } => write!(f, "{object}.{property}"),
+            Expr::Member { object, property } => write!(f, "{}.{property}", Grouped(object)),
             Expr::Version {
                 reference,
                 selector,
-            } => write!(f, "{reference}@{selector}"),
-            Expr::Index { object, index } => write!(f, "{object}[{index}]"),
+            } => write!(f, "{}@{selector}", Grouped(reference)),
+            Expr::Index { object, index } => write!(f, "{}[{index}]", Grouped(object)),
             Expr::Slice { object, start, end } => {
-                write!(f, "{object}[")?;
+                write!(f, "{}[", Grouped(object))?;
                 if let Some(start) = start {
                     write!(f, "{start}")?;
                 }
@@ -77,7 +79,9 @@ impl fmt::Display for Expr {
                 }
                 f.write_str("]")
             }
-            Expr::Call { callee, arguments } => write!(f, "{callee}({})", join(arguments)),
+            Expr::Call { callee, arguments } => {
+                write!(f, "{}({})", Grouped(callee), join(arguments))
+            }
             Expr::Unary { operator, operand } => match operator {
                 UnaryOp::Not => write!(f, "!{operand}"),
                 UnaryOp::Negate => write!(f, "-{operand}"),
@@ -155,6 +159,27 @@ impl fmt::Display for Expr {
                 "({} {binder} in {collection}:{condition})",
                 quantifier.as_str()
             ),
+            // The written form. Its operand is parsed as the exponent of `**`
+            // is, by `unary`, so it is grouped as that exponent is.
+            Expr::Of { noun, operand } => {
+                write!(f, "{} of ", noun.as_str())?;
+                power_operand(f, operand, groups_power_exponent(operand))
+            }
+        }
+    }
+}
+
+/// A postfix chain's base or a whole template interpolation. A
+/// `NOUN of OPERAND` query is grouped there: its operand would otherwise take
+/// the chain, as in `(mode of words).length`, and an interpolation reads only
+/// a leading noun. Every other expression renders as before.
+struct Grouped<'a>(&'a Expr);
+
+impl fmt::Display for Grouped<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0 {
+            Expr::Of { .. } => write!(f, "({})", self.0),
+            expression => write!(f, "{expression}"),
         }
     }
 }
@@ -171,7 +196,7 @@ fn groups_power_base(operand: &Expr) -> bool {
     match operand {
         Expr::Number(number) => *number < 0.0,
         Expr::Unary { operator, .. } => *operator != UnaryOp::Positional,
-        Expr::Binary { .. } | Expr::Delete(_) => true,
+        Expr::Binary { .. } | Expr::Delete(_) | Expr::Of { .. } => true,
         _ => groups_power_exponent(operand),
     }
 }

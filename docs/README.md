@@ -556,6 +556,9 @@ assert(summary.kind, "alert")
 - Conditional: `condition ? consequent : alternate` or
   `consequent if condition else alternate`; see below.
 - Nullish coalescing: `left ?? right`; see below.
+- Noun queries: `sum of xs`, `max of xs`, `min of xs` and `mode of xs`, prefix
+  operators that mean exactly `xs.sum()` and so on; see
+  [noun list queries with `of`](#noun-list-queries-with-of).
 - Parentheses override precedence.
 - `+` concatenates when an operand is a string.
 
@@ -669,7 +672,8 @@ Full detail: [NUC 60](nuc-0060.md).
   `2 ** 3 ** 2` is `512` and `3 * x ** 2` is `3 * (x ** 2)`.
 - As in Python, a prefix operator written before the base applies to the
   whole power: `-x ** 2` is `-(x ** 2)`, and `not`, `!`, `+`, `typeof`,
-  `delete` and prefix stages such as `why` behave the same way. Write
+  `delete`, noun queries such as `sum of` ([NUC 75](nuc-0075.md)) and prefix
+  stages such as `why` behave the same way. Write
   `(-x) ** 2` to raise a negative base. The exponent may carry its own sign:
   `2 ** -1` is `0.5`.
 - `target **= exponent` is the compound spelling of
@@ -1855,7 +1859,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), and `mode` ([NUC 75](nuc-0075.md)) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), and `mode` ([NUC 75](nuc-0075.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2758,6 +2762,56 @@ favorite
   [list and population modes](../nucleoid.spec.md#list-and-population-modes)
   section.
 
+### Noun list queries with of
+
+```
+sizes = ["M", "XL", "M", "XL"]
+top = mode of sizes
+class Order(amount): this.amount = amount
+Order(20)
+Order(45)
+revenue = sum of Order.map(order -> order.amount)
+largest = max of Order.map(order -> order.amount)
+assert(top, "M")
+assert(revenue, 65)
+assert(largest, 45)
+sizes.shift()
+Order(80)
+assert(top, "XL")
+assert(revenue, 145)
+assert(largest, 80)
+assert(max of sizes.map(size -> size.length), sizes.max(size -> size.length))
+largest
+```
+
+- This is the complete
+  `Nucleoid reads list and population queries named by nouns with of`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `80`.
+- Revision 2 of [NUC 75](nuc-0075.md) adds `NOUN of OPERAND` for the four
+  list queries named by nouns: `sum`, `max`, `min` and `mode`. Queries named
+  by verbs keep the method call, as `xs.sort()` and `xs.push(x)` do.
+- `NOUN of OPERAND` means exactly `OPERAND.NOUN()`: the same receivers,
+  results, errors, evaluation order and null-receiver route, and the same
+  dependencies and liveness in declarations and class-level rules, such as
+  `$Obj.fill_color = mode of $Obj.parts`. The noun never reads a binding:
+  after `def sum(values): return 0`, `sum of [1, 2]` is still `3`.
+- It is a prefix operator like `-` and `typeof`: its operand takes the whole
+  postfix chain, `sum of xs.map(f)`, and binary operators end it,
+  `sum of xs + 1` is `(sum of xs) + 1`. It applies to a whole power, so
+  `sum of xs ** 2` is `sum of (xs ** 2)`; write `(sum of xs) ** 2` to square a
+  total.
+- A selector stays a method argument, `xs.max(selector)`, which equals
+  `max of xs.map(selector)` for every function selector.
+- `for mode of rows:` still names its loop variable `mode`. At the top level
+  of a template interpolation, `${sum of xs}` still reads the name `sum`;
+  write `${(sum of xs)}` for the query.
+- The query renders as written: `why` explains `top = mode of sizes` as
+  `top = mode of sizes`, and `(mode of words).length` keeps its parentheses.
+- The authoritative contract is the
+  [noun list queries with of](../nucleoid.spec.md#noun-list-queries-with-of)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -3185,6 +3239,8 @@ items.max()  Name.min(selector)        live numeric extreme (NUC 69)
 items.distinct()  Name.distinct(selector) live values without repeats (NUC 71)
 items.count(predicate)  Name.count(predicate) live predicate count (NUC 73)
 items.mode()  Name.mode(selector)      live most frequent item (NUC 75)
+mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
+sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 
 why reference                         derive a live explanation
 affects reference                     inspect live downstream impact

@@ -8,8 +8,8 @@ use super::lexer::{
 };
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
-    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, ParameterDefault,
-    Quantifier, Stmt, TemplatePart, UnaryOp, VersionSelector,
+    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Noun, Parameter,
+    ParameterDefault, Quantifier, Stmt, TemplatePart, UnaryOp, VersionSelector,
 };
 use crate::reasoning::Stage;
 
@@ -1854,6 +1854,16 @@ impl Parser {
             }
         }
 
+        if let Some(noun) = self.noun_query() {
+            self.position += 2;
+            let operand = self.nested_expression(Self::unary)?;
+
+            return Ok(Expr::Of {
+                noun,
+                operand: Box::new(operand),
+            });
+        }
+
         let operator = match self.peek() {
             Token::Bang | Token::Keyword(Keyword::Not) => UnaryOp::Not,
             Token::Minus => UnaryOp::Negate,
@@ -1882,6 +1892,25 @@ impl Parser {
             left: Box::new(base),
             right: Box::new(exponent),
         })
+    }
+
+    /// The noun of a `NOUN of OPERAND` query starting here (NUC 75): a
+    /// noun-named list query, then `of`. Accepted syntax gives `of` no other
+    /// place in an expression; a `for` header takes its loop name before any
+    /// expression starts. A template interpolation keeps ignoring trailing
+    /// tokens, so `${sum of xs}` still reads `sum`, as quantifiers and
+    /// `lambda` stay names there.
+    fn noun_query(&self) -> Option<Noun> {
+        if self.context == ExpressionContext::Interpolation
+            || self.peek_at(1) != &Token::Keyword(Keyword::Of)
+        {
+            return None;
+        }
+
+        match self.peek() {
+            Token::Identifier(name) => Noun::from_name(name),
+            _ => None,
+        }
     }
 
     fn starts_operand(&self, offset: usize) -> bool {
@@ -2847,6 +2876,77 @@ mod tests {
             assert_eq!(parser.depth, 0, "{source}");
             assert_eq!(parser.tokens, tokens, "{source}");
         }
+    }
+
+    #[test]
+    fn noun_query_lookahead_qualifies_a_noun_and_of_by_context_without_consuming() {
+        use ExpressionContext::{Clause, Interpolation, ObjectValue, Ordinary};
+        for (source, context, noun) in [
+            ("sum of xs", Ordinary, Some(Noun::Sum)),
+            ("max of xs", Ordinary, Some(Noun::Max)),
+            ("min of xs", Ordinary, Some(Noun::Min)),
+            ("mode of xs", Ordinary, Some(Noun::Mode)),
+            ("mode of", Ordinary, Some(Noun::Mode)),
+            ("sum of of", Ordinary, Some(Noun::Sum)),
+            ("sum of xs", Clause, Some(Noun::Sum)),
+            ("sum of xs", ObjectValue, Some(Noun::Sum)),
+            // An interpolation ignores trailing tokens, so a leading noun
+            // stays the name it was at the accepted revision.
+            ("sum of xs", Interpolation, None),
+            ("sum", Ordinary, None),
+            ("sum = 1", Ordinary, None),
+            ("sum.of", Ordinary, None),
+            ("sum(of)", Ordinary, None),
+            ("sum\nof xs", Ordinary, None),
+            ("sum in xs", Ordinary, None),
+            ("count of xs", Ordinary, None),
+            ("distinct of xs", Ordinary, None),
+            ("sort of xs", Ordinary, None),
+            ("Sum of xs", Ordinary, None),
+            ("sums of xs", Ordinary, None),
+            ("$sum of xs", Ordinary, None),
+            ("\"sum\" of xs", Ordinary, None),
+            ("of xs", Ordinary, None),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            parser.context = context;
+            let tokens = parser.tokens.clone();
+            assert_eq!(parser.noun_query(), noun, "{source} in {context:?}");
+            assert_eq!(parser.position, 0, "{source}");
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.tokens, tokens, "{source}");
+        }
+    }
+
+    #[test]
+    fn noun_queries_take_a_unary_operand_while_loop_headers_keep_their_names() {
+        let mut parser = Parser::new(tokenize("sum of xs.map(f) + 1").unwrap());
+        let expression = parser.expression().unwrap();
+        assert_eq!(parser.depth, 0);
+        assert_eq!(parser.context, ExpressionContext::Ordinary);
+        assert_eq!(expression.to_string(), "sum of xs.map(f)+1");
+        let Expr::Binary { left, .. } = &expression else {
+            panic!("the sum is the left operand: {expression:?}");
+        };
+        assert!(matches!(
+            left.as_ref(),
+            Expr::Of {
+                noun: Noun::Sum,
+                operand,
+            } if matches!(operand.as_ref(), Expr::Call { .. })
+        ));
+        assert_eq!(
+            generate_all(&parse("for sum of xs:\n    pass").unwrap()),
+            "for sum of xs"
+        );
+        assert_eq!(
+            generate_all(&parse("for k, max of rec:\n    pass").unwrap()),
+            "for k,max of rec"
+        );
+        assert_eq!(
+            generate_all(&parse("for x of mode of rows:\n    pass").unwrap()),
+            "for x of mode of rows"
+        );
     }
 
     #[test]

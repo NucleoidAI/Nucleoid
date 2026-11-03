@@ -15445,6 +15445,300 @@ Parcel("b")
 assert: routes, "b""#);
 }
 
+/// Nucleoid reads noun list queries with of
+#[rustfmt::skip]
+#[test]
+fn reads_noun_list_queries_with_of() {
+    runner()("prices = [4, 9, 2, 9]\ntotal = sum of prices\ntop = max of prices\nlow = min of prices\ncommon = mode of prices\nassert: [total, top, low, common], [24, 9, 2, 9]\nprices.push(2)\nprices.push(2)\nassert: [total, top, low, common], [28, 9, 2, 2]\nprices.shift()\nassert: [total, common], [24, 2]\nprices = [1, 3, 3]\nassert: [total, top, low, common], [7, 3, 1, 3]\nassert: sum of prices, prices.sum()\nassert: max of prices, prices.max()\nassert: min of prices, prices.min()\ncart = {lines: [{sku: \"pen\", qty: 2}, {sku: \"ink\", qty: 5}]}\nunits = sum of cart.lines.map(line -> line.qty)\nfavorite = mode of cart.lines.map(line -> line.sku)\nassert: units, cart.lines.sum(line -> line.qty)\nassert: favorite, \"pen\"\ncart.lines.push({sku: \"ink\", qty: 1})\nassert: [units, favorite], [8, \"ink\"]");
+    let mut run = runner();
+    run("prices = [4, 9, 2, 9]");
+    run("total = sum of prices");
+    run("top = max of prices");
+    run("low = min of prices");
+    run("common = mode of prices");
+    assert_eq!(run("[total, top, low, common]"), serde_json::json!([24, 9, 2, 9]));
+    run("prices.push(2)");
+    run("prices.push(2)");
+    assert_eq!(run("[total, top, low, common]"), serde_json::json!([28, 9, 2, 2]));
+    run("prices.shift()");
+    assert_eq!(run("[total, common]"), serde_json::json!([24, 2]));
+    run("prices = [1, 3, 3]");
+    assert_eq!(run("[total, top, low, common]"), serde_json::json!([7, 3, 1, 3]));
+    {
+        let actual = run("sum of prices");
+        let expected = run("(prices.sum())");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("max of prices");
+        let expected = run("(prices.max())");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("min of prices");
+        let expected = run("(prices.min())");
+        assert_eq!(actual, expected);
+    }
+    run(r#"cart = {lines: [{sku: "pen", qty: 2}, {sku: "ink", qty: 5}]}"#);
+    run("units = sum of cart.lines.map(line -> line.qty)");
+    run("favorite = mode of cart.lines.map(line -> line.sku)");
+    {
+        let actual = run("units");
+        let expected = run("(cart.lines.sum(line -> line.qty))");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("favorite"), "pen");
+    run(r#"cart.lines.push({sku: "ink", qty: 1})"#);
+    assert_eq!(run("[units, favorite]"), serde_json::json!([8, "ink"]));
+}
+
+/// Nucleoid reads noun queries of class instance populations with of
+#[rustfmt::skip]
+#[test]
+fn reads_noun_queries_of_class_instance_populations_with_of() {
+    runner()("class Ticket(queue, minutes):\n    this.queue = queue\n    this.minutes = minutes\nbusiest = mode of Ticket.map(ticket -> ticket.queue)\nlongest = max of Ticket.map(ticket -> ticket.minutes)\nassert: busiest, null\nassert: longest, Number.NEGATIVE_INFINITY\nfirst = Ticket(\"billing\", 30)\nTicket(\"support\", 5)\nsecond = Ticket(\"support\", 12)\nassert: [busiest, longest], [\"support\", 30]\nrecent = min of Ticket[1:].map(ticket -> ticket.minutes)\nkind = Ticket\nworkload = sum of kind.map(ticket -> ticket.minutes)\nlisted = sum of Ticket.list().map(ticket -> ticket.minutes)\nassert: [recent, workload, listed], [5, 47, 47]\nfirst.minutes = 8\nsecond.queue = \"billing\"\nassert: [busiest, longest, workload], [\"billing\", 12, 25]\nassert: mode of Ticket, first\ndelete second.queue\ndelete second.minutes\ndelete second\nassert: [busiest, longest, recent, workload], [\"billing\", 8, 5, 13]");
+    let mut run = runner();
+    run(r#"class Ticket(queue, minutes):
+    this.queue = queue
+    this.minutes = minutes"#);
+    run("busiest = mode of Ticket.map(ticket -> ticket.queue)");
+    run("longest = max of Ticket.map(ticket -> ticket.minutes)");
+    assert_eq!(run("busiest"), serde_json::Value::Null);
+    {
+        let actual = run("longest");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"first = Ticket("billing", 30)"#);
+    run(r#"Ticket("support", 5)"#);
+    run(r#"second = Ticket("support", 12)"#);
+    assert_eq!(run("[busiest, longest]"), serde_json::json!(["support", 30]));
+    run("recent = min of Ticket[1:].map(ticket -> ticket.minutes)");
+    run("kind = Ticket");
+    run("workload = sum of kind.map(ticket -> ticket.minutes)");
+    run("listed = sum of Ticket.list().map(ticket -> ticket.minutes)");
+    assert_eq!(run("[recent, workload, listed]"), serde_json::json!([5, 47, 47]));
+    run("first.minutes = 8");
+    run(r#"second.queue = "billing""#);
+    assert_eq!(run("[busiest, longest, workload]"), serde_json::json!(["billing", 12, 25]));
+    {
+        let actual = run("mode of Ticket");
+        let expected = run("(first)");
+        assert_eq!(actual, expected);
+    }
+    run("delete second.queue");
+    run("delete second.minutes");
+    run("delete second");
+    assert_eq!(run("[busiest, longest, recent, workload]"), serde_json::json!(["billing", 8, 5, 13]));
+}
+
+/// Nucleoid keeps noun queries live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_noun_queries_live_in_class_level_rules() {
+    runner()("class Obj(parts): this.parts = parts\n$Obj.fill_color = mode of $Obj.parts\n$Obj.brightest = max of $Obj.parts\nfirst = Obj([3, 1, 3])\nsecond = Obj([2, 2, 5])\nassert: [first.fill_color, first.brightest], [3, 3]\nassert: [second.fill_color, second.brightest], [2, 5]\nfirst.parts.push(1)\nfirst.parts.push(1)\nsecond.parts = [7]\nassert: [first.fill_color, second.fill_color, second.brightest], [1, 7, 7]\nclass Team(name): this.name = name\nclass Job(team, hours):\n    this.team = team\n    this.hours = hours\n$Team.load = sum of Job.filter(job -> job.team == $Team).map(job -> job.hours)\nred = Team(\"red\")\nblue = Team(\"blue\")\nJob(red, 3)\nlong = Job(blue, 8)\nJob(red, 2)\nassert: [red.load, blue.load], [5, 8]\nlong.team = red\nassert: [red.load, blue.load], [13, 0]\nlong.hours = 1\nassert: red.load, 6");
+    let mut run = runner();
+    run("class Obj(parts): this.parts = parts");
+    run("$Obj.fill_color = mode of $Obj.parts");
+    run("$Obj.brightest = max of $Obj.parts");
+    run("first = Obj([3, 1, 3])");
+    run("second = Obj([2, 2, 5])");
+    assert_eq!(run("[first.fill_color, first.brightest]"), serde_json::json!([3, 3]));
+    assert_eq!(run("[second.fill_color, second.brightest]"), serde_json::json!([2, 5]));
+    run("first.parts.push(1)");
+    run("first.parts.push(1)");
+    run("second.parts = [7]");
+    assert_eq!(run("[first.fill_color, second.fill_color, second.brightest]"), serde_json::json!([1, 7, 7]));
+    run("class Team(name): this.name = name");
+    run(r#"class Job(team, hours):
+    this.team = team
+    this.hours = hours"#);
+    run("$Team.load = sum of Job.filter(job -> job.team == $Team).map(job -> job.hours)");
+    run(r#"red = Team("red")"#);
+    run(r#"blue = Team("blue")"#);
+    run("Job(red, 3)");
+    run("long = Job(blue, 8)");
+    run("Job(red, 2)");
+    assert_eq!(run("[red.load, blue.load]"), serde_json::json!([5, 8]));
+    run("long.team = red");
+    assert_eq!(run("[red.load, blue.load]"), serde_json::json!([13, 0]));
+    run("long.hours = 1");
+    assert_eq!(run("red.load"), 6);
+}
+
+/// Nucleoid binds noun queries as prefix operators
+#[rustfmt::skip]
+#[test]
+fn binds_noun_queries_as_prefix_operators() {
+    runner()("xs = [1, 2, 3]\nassert: sum of xs + 1, 7\nassert: 1 + sum of xs * 2, 13\nassert: sum of xs.map(x -> x * 10), 60\nassert: (sum of xs) ** 2, 36\nassert: 2 ** max of xs, 8\nassert: -min of xs, -1\nassert: typeof mode of xs, \"number\"\nassert: max of xs > min of xs, true\nrows = [[1, 2], [1, 2], [5]]\nassert: sum of mode of rows, 3\nassert: max of rows.map(row -> sum of row), 5\nmissing = null\nassert: sum of missing ?? 0, 0\nready = false\nassert: sum of xs if ready else max of xs, 3\nfailure = \"\"\ntry:\n    sum of xs ** 2\ncatch error:\n    failure = error\nassert: failure, TypeError(\"number.sum is not a function\")");
+    let mut run = runner();
+    run(r#"xs = [1, 2, 3]
+assert: sum of xs + 1, 7
+assert: 1 + sum of xs * 2, 13
+assert: sum of xs.map(x -> x * 10), 60
+assert: (sum of xs) ** 2, 36
+assert: 2 ** max of xs, 8
+assert: -min of xs, -1
+assert: typeof mode of xs, "number"
+assert: max of xs > min of xs, true
+rows = [[1, 2], [1, 2], [5]]
+assert: sum of mode of rows, 3
+assert: max of rows.map(row -> sum of row), 5
+missing = null
+assert: sum of missing ?? 0, 0
+ready = false
+assert: sum of xs if ready else max of xs, 3
+failure = ""
+try:
+    sum of xs ** 2
+catch error:
+    failure = error
+assert: failure, TypeError("number.sum is not a function")"#);
+}
+
+/// Nucleoid keeps names and loop variables named like noun queries
+#[rustfmt::skip]
+#[test]
+fn keeps_names_and_loop_variables_named_like_noun_queries() {
+    runner()("def sum(values):\n    return 0\nmax = 9\nrecords = [{mode: 4}, {mode: 4}, {mode: 6}]\nassert: sum([1, 2]), 0\nassert: sum of [1, 2], 3\nassert: max, 9\nassert: max of [1, 2], 2\nassert: mode of records.map(record -> record.mode), 4\nclass Item(size): this.size = size\nItem(4)\nItem(6)\nsizes = []\nfor mode of Item:\n    sizes.push(mode.size)\nassert: sizes, [4, 6]\nfor min in Item: sizes.push(min.size * 10)\nassert: sizes, [4, 6, 40, 60]\ntotal = [1, 2, 3].reduce(lambda sum, x: sum + x, 0)\nassert: total, 6\nlabel = `${max of [1, 2]}`\ngrouped = `${(max of [1, 2])}`\nassert: [label, grouped], [\"9\", \"2\"]");
+    let mut run = runner();
+    run(r#"def sum(values):
+    return 0"#);
+    run("max = 9");
+    run("records = [{mode: 4}, {mode: 4}, {mode: 6}]");
+    assert_eq!(run("sum([1, 2])"), 0);
+    assert_eq!(run("sum of [1, 2]"), 3);
+    assert_eq!(run("max"), 9);
+    assert_eq!(run("max of [1, 2]"), 2);
+    assert_eq!(run("mode of records.map(record -> record.mode)"), 4);
+    run("class Item(size): this.size = size");
+    run("Item(4)");
+    run("Item(6)");
+    run("sizes = []");
+    run(r#"for mode of Item:
+    sizes.push(mode.size)"#);
+    assert_eq!(run("sizes"), serde_json::json!([4, 6]));
+    run("for min in Item: sizes.push(min.size * 10)");
+    assert_eq!(run("sizes"), serde_json::json!([4, 6, 40, 60]));
+    run("total = [1, 2, 3].reduce(lambda sum, x: sum + x, 0)");
+    assert_eq!(run("total"), 6);
+    run("label = `${max of [1, 2]}`");
+    run("grouped = `${(max of [1, 2])}`");
+    assert_eq!(run("[label, grouped]"), serde_json::json!(["9", "2"]));
+}
+
+/// Nucleoid reads noun queries in headers and nested expressions
+#[rustfmt::skip]
+#[test]
+fn reads_noun_queries_in_headers_and_nested_expressions() {
+    runner()("class Item(size): this.size = size\nsmall = Item(1)\nlarge = Item(2)\ngroups = [[small, large], [small, large], [large]]\nsizes = []\nfor item of mode of groups:\n    sizes.push(item.size)\nassert: sizes, [1, 2]\nqueue = [1]\nwhile sum of queue < 4:\n    queue.push(1)\nassert: queue.length, 4\nalert = false\nif max of queue > 0:\n    alert = true\nassert: alert, true\nassert: all group in groups: sum of group.map(item -> item.size) > 1, true\ndef spread(values) => max of values - min of values\nassert: spread([4, 9, 1]), 8\npick = values -> mode of values\nassert: pick([\"a\", \"b\", \"b\"]), \"b\"\nreport = {total: sum of queue, top: max of queue}\nassert: [report.total, report.top], [4, 1]\nassert: [max of queue, min of queue], [1, 1]\nassert: String(sum of queue), \"4\"\nready = true\nassert: ready ? sum of queue : 0, 4\nassert: [10, 20, 30][max of queue], 20");
+    let mut run = runner();
+    run("class Item(size): this.size = size");
+    run("small = Item(1)");
+    run("large = Item(2)");
+    run("groups = [[small, large], [small, large], [large]]");
+    run("sizes = []");
+    run(r#"for item of mode of groups:
+    sizes.push(item.size)"#);
+    assert_eq!(run("sizes"), serde_json::json!([1, 2]));
+    run("queue = [1]");
+    run(r#"while sum of queue < 4:
+    queue.push(1)"#);
+    assert_eq!(run("queue.length"), 4);
+    run("alert = false");
+    run(r#"if max of queue > 0:
+    alert = true"#);
+    assert_eq!(run("alert"), true);
+    assert_eq!(run("all group in groups: sum of group.map(item -> item.size) > 1"), true);
+    run("def spread(values) => max of values - min of values");
+    assert_eq!(run("spread([4, 9, 1])"), 8);
+    run("pick = values -> mode of values");
+    assert_eq!(run(r#"pick(["a", "b", "b"])"#), "b");
+    run("report = {total: sum of queue, top: max of queue}");
+    assert_eq!(run("[report.total, report.top]"), serde_json::json!([4, 1]));
+    assert_eq!(run("[max of queue, min of queue]"), serde_json::json!([1, 1]));
+    assert_eq!(run("String(sum of queue)"), "4");
+    run("ready = true");
+    assert_eq!(run("ready ? sum of queue : 0"), 4);
+    assert_eq!(run("[10, 20, 30][max of queue]"), 20);
+}
+
+/// Nucleoid explains noun queries in their written form
+#[rustfmt::skip]
+#[test]
+fn explains_noun_queries_in_their_written_form() {
+    runner()("prices = [4, 9, 9]\ntop = max of prices\nwords = [\"ab\", \"c\", \"ab\"]\nwidth = (mode of words).length\nsquared = (sum of prices) ** 2\nassert: (why top)[0].rule, \"top = max of prices\"\nassert: (why top)[0].from, [\"prices\"]\nassert: (why width)[0].rule, \"width = (mode of words).length\"\nassert: (why squared)[0].rule, \"squared = (sum of prices)**2\"\nassert: [top, width, squared], [9, 2, 484]");
+    let mut run = runner();
+    run("prices = [4, 9, 9]");
+    run("top = max of prices");
+    run(r#"words = ["ab", "c", "ab"]"#);
+    run("width = (mode of words).length");
+    run("squared = (sum of prices) ** 2");
+    assert_eq!(run("(why top)[0].rule"), "top = max of prices");
+    assert_eq!(run("(why top)[0].from"), serde_json::json!(["prices"]));
+    assert_eq!(run("(why width)[0].rule"), "width = (mode of words).length");
+    assert_eq!(run("(why squared)[0].rule"), "squared = (sum of prices)**2");
+    assert_eq!(run("[top, width, squared]"), serde_json::json!([9, 2, 484]));
+}
+
+/// Nucleoid rolls back failed noun query updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_noun_query_updates() {
+    runner()("def checked(zone):\n    if zone == \"void\":\n        throw \"BAD_ZONE\"\n    return zone\nzones = [\"a\", \"b\", \"b\"]\nbusiest = mode of zones.map(checked)\nassert: busiest, \"b\"\nfailure = \"\"\ntry:\n    zones.shift()\n    zones.push(\"void\")\ncatch error:\n    failure = error\nassert: failure, \"BAD_ZONE\"\nassert: zones, [\"a\", \"b\", \"b\"]\nassert: busiest, \"b\"\nzones.push(\"a\")\nzones.push(\"a\")\nassert: busiest, \"a\"");
+    let mut run = runner();
+    run(r#"def checked(zone):
+    if zone == "void":
+        throw "BAD_ZONE"
+    return zone
+zones = ["a", "b", "b"]
+busiest = mode of zones.map(checked)
+assert: busiest, "b"
+failure = ""
+try:
+    zones.shift()
+    zones.push("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: zones, ["a", "b", "b"]
+assert: busiest, "b"
+zones.push("a")
+zones.push("a")
+assert: busiest, "a""#);
+}
+
+/// Nucleoid reads noun queries of snapshots versions and other receivers
+#[rustfmt::skip]
+#[test]
+fn reads_noun_queries_of_snapshots_versions_and_other_receivers() {
+    runner()("history = [1]\nhistory.push(4)\nfirst = sum of history@first\nfrozen = sum of history.value\nhistory.push(5)\nassert: [first, frozen, sum of history], [1, 5, 10]\nnothing = null\nassert: sum of nothing, null\nassert: mode of [], null\nassert: [max of [], min of []], [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY]\nclass Shelf:\n    def mode(): return 9\nshelf = Shelf()\nassert: mode of shelf, 9\nassert: mode of Shelf, shelf\nrecord = {sum: () -> 5}\nassert: sum of record, 5\nfailure = \"\"\ntry:\n    sum of \"abc\"\ncatch error:\n    failure = error\nassert: failure, TypeError(\"abc.sum is not a function\")");
+    let mut run = runner();
+    run(r#"history = [1]
+history.push(4)
+first = sum of history@first
+frozen = sum of history.value
+history.push(5)
+assert: [first, frozen, sum of history], [1, 5, 10]
+nothing = null
+assert: sum of nothing, null
+assert: mode of [], null
+assert: [max of [], min of []], [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY]
+class Shelf:
+    def mode(): return 9
+shelf = Shelf()
+assert: mode of shelf, 9
+assert: mode of Shelf, shelf
+record = {sum: () -> 5}
+assert: sum of record, 5
+failure = ""
+try:
+    sum of "abc"
+catch error:
+    failure = error
+assert: failure, TypeError("abc.sum is not a function")"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

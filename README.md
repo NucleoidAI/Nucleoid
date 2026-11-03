@@ -1576,6 +1576,39 @@ assert(popular, "S")
   `"1"` are counted apart. See the
   [root contract](nucleoid.spec.md#list-and-population-modes).
 
+## Noun list queries
+
+**Noun queries read like the model they describe**
+
+```nuc
+class Order(customer, amount):
+    this.customer = customer
+    this.amount = amount
+revenue = sum of Order.map(order -> order.amount)
+largest = max of Order.map(order -> order.amount)
+regular = mode of Order.map(order -> order.customer)
+Order("ada", 20)
+second = Order("bo", 45)
+Order("ada", 15)
+assert: [revenue, largest, regular], [80, 45, "ada"]
+second.amount = 70
+Order("cy", 60)
+assert: [revenue, largest, regular], [165, 70, "ada"]
+amounts = [45, 20, 15]
+amounts.sort()
+assert: [amounts, min of amounts], [[15, 20, 45], 15]
+```
+
+- Revision 2 of [NUC 75](docs/nuc-0075.md) adds `NOUN of OPERAND` for the
+  list queries named by nouns: `sum`, `max`, `min` and `mode`.
+  `mode of list` means exactly `list.mode()`, and declarations that use it
+  stay live the same way.
+- Actions keep the method call: `amounts.sort()` sorts in place, while
+  `min of amounts` reads a value. A selector stays a method argument, as in
+  `Order.max(order -> order.amount)`, which equals
+  `max of Order.map(order -> order.amount)`. See the
+  [root contract](nucleoid.spec.md#noun-list-queries-with-of).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

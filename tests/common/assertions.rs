@@ -110,7 +110,7 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
                 expression_assertions(bound, assertions);
             }
         }
-        Expr::Unary { operand, .. } | Expr::Delete(operand) => {
+        Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
             expression_assertions(operand, assertions)
         }
         Expr::Binary { left, right, .. }

@@ -2218,4 +2218,25 @@ sizes = []
 assert(top, null)
 favorite
 # return: "tea"
+---
+# Nucleoid reads list and population queries named by nouns with of
+
+sizes = ["M", "XL", "M", "XL"]
+top = mode of sizes
+class Order(amount): this.amount = amount
+Order(20)
+Order(45)
+revenue = sum of Order.map(order -> order.amount)
+largest = max of Order.map(order -> order.amount)
+assert(top, "M")
+assert(revenue, 65)
+assert(largest, 45)
+sizes.shift()
+Order(80)
+assert(top, "XL")
+assert(revenue, 145)
+assert(largest, 80)
+assert(max of sizes.map(size -> size.length), sizes.max(size -> size.length))
+largest
+# return: 80
 ```

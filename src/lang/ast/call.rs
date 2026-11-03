@@ -41,6 +41,8 @@ impl<'a> Call<'a> {
         match self.node {
             Expr::Call { callee, arguments } => runtime.call(callee, arguments, scope),
             Expr::Super(arguments) => runtime.call_super(arguments, scope),
+            // Exactly the route of the method call `OPERAND.NOUN()`.
+            Expr::Of { noun, operand } => runtime.call_method(operand, noun.as_str(), &[], scope),
             other => unreachable!("{other} is not a call"),
         }
     }

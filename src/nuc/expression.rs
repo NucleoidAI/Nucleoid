@@ -122,6 +122,17 @@ impl Runtime {
                     arguments: frozen,
                 }
             }
+            // As the method form `OPERAND.NOUN()`, whose callee holds the
+            // operand one level deeper, so the depth budget is the same.
+            Expr::Of { noun, operand } => {
+                self.depth += 1;
+                let operand = self.freeze(operand, scope);
+                self.depth -= 1;
+                Expr::Of {
+                    noun: *noun,
+                    operand: Box::new(operand?),
+                }
+            }
             Expr::Index { object, index } => Expr::Index {
                 object: Box::new(self.freeze(object, scope)?),
                 index: Box::new(self.freeze(index, scope)?),

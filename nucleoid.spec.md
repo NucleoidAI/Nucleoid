@@ -3396,6 +3396,47 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid finds the most frequent list item with mode` through
   `Nucleoid rolls back failed mode updates` specify the executable behavior.
 
+## Noun list queries with of
+
+- Revision 2 of [NUC 75](docs/nuc-0075.md) adds the prefix operator
+  `NOUN of OPERAND` for the four list queries named by nouns: `sum`, `max`,
+  `min` and `mode`. Queries named by verbs keep the method call, such as
+  `xs.sort()` and `xs.push(x)`. `of` is already a keyword; no token, keyword
+  or error type is added.
+- `NOUN of OPERAND` means exactly the method call `OPERAND.NOUN()`. It accepts
+  the same receivers, returns the same results, raises the same errors and
+  evaluates the receiver once through the same route; a null or undefined
+  receiver yields undefined. Declarations and class-level rules that use it
+  depend on what the method call depends on, stay live the same way and roll
+  back through the existing transaction.
+- The noun always names the query, never a binding: `sum of xs` reads no
+  variable, function or parameter named `sum`. The receiver decides as for the
+  method call, so a record's function property or an instance's method named
+  like the noun answers, and on a class name the population query answers.
+- `NOUN of` is a prefix operator at the level of `-`, `not` and `typeof`. Its
+  operand is a unary expression with its whole postfix chain:
+  `sum of xs.map(f)` is `sum of (xs.map(f))`, and `sum of xs + 1` is
+  `(sum of xs) + 1`. Like the other prefix operators it applies to a whole
+  power: `sum of xs ** 2` is `sum of (xs ** 2)`, and `(sum of xs) ** 2` squares
+  the total. `sum of max of xs` nests.
+- A selector stays an argument of the method call, as in `xs.max(selector)`.
+  For every function selector, `NOUN of xs.map(selector)` equals
+  `xs.NOUN(selector)`.
+- In a `for` header, `NAME of` still names the loop variable:
+  `for mode of rows:` loops over `rows` with `mode` bound, and an iterable may
+  itself be a query, as in `for item of mode of groups:`. At the top level of a
+  template interpolation, which ignores trailing tokens, `${sum of xs}` still
+  reads the name `sum`, while `${(sum of xs)}` reads the query.
+- The query renders as written in graph keys, `why` rules and errors that
+  quote an expression, so `top = max of prices` explains as
+  `top = max of prices`. It is parenthesized where its reading would otherwise
+  change: as the base of `**` or of a postfix chain, as in
+  `(mode of words).length`, and as a whole template interpolation.
+- The nine appended entries beginning
+  `Nucleoid reads noun list queries with of` through
+  `Nucleoid reads noun queries of snapshots versions and other receivers`
+  specify the executable behavior.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -18746,4 +18787,229 @@ assert: routes, "a"
 Parcel("b")
 Parcel("b")
 assert: routes, "b"
+---
+# Nucleoid reads noun list queries with of
+
+prices = [4, 9, 2, 9]
+total = sum of prices
+top = max of prices
+low = min of prices
+common = mode of prices
+assert: [total, top, low, common], [24, 9, 2, 9]
+prices.push(2)
+prices.push(2)
+assert: [total, top, low, common], [28, 9, 2, 2]
+prices.shift()
+assert: [total, common], [24, 2]
+prices = [1, 3, 3]
+assert: [total, top, low, common], [7, 3, 1, 3]
+assert: sum of prices, prices.sum()
+assert: max of prices, prices.max()
+assert: min of prices, prices.min()
+cart = {lines: [{sku: "pen", qty: 2}, {sku: "ink", qty: 5}]}
+units = sum of cart.lines.map(line -> line.qty)
+favorite = mode of cart.lines.map(line -> line.sku)
+assert: units, cart.lines.sum(line -> line.qty)
+assert: favorite, "pen"
+cart.lines.push({sku: "ink", qty: 1})
+assert: [units, favorite], [8, "ink"]
+---
+# Nucleoid reads noun queries of class instance populations with of
+
+class Ticket(queue, minutes):
+    this.queue = queue
+    this.minutes = minutes
+busiest = mode of Ticket.map(ticket -> ticket.queue)
+longest = max of Ticket.map(ticket -> ticket.minutes)
+assert: busiest, null
+assert: longest, Number.NEGATIVE_INFINITY
+first = Ticket("billing", 30)
+Ticket("support", 5)
+second = Ticket("support", 12)
+assert: [busiest, longest], ["support", 30]
+recent = min of Ticket[1:].map(ticket -> ticket.minutes)
+kind = Ticket
+workload = sum of kind.map(ticket -> ticket.minutes)
+listed = sum of Ticket.list().map(ticket -> ticket.minutes)
+assert: [recent, workload, listed], [5, 47, 47]
+first.minutes = 8
+second.queue = "billing"
+assert: [busiest, longest, workload], ["billing", 12, 25]
+assert: mode of Ticket, first
+delete second.queue
+delete second.minutes
+delete second
+assert: [busiest, longest, recent, workload], ["billing", 8, 5, 13]
+---
+# Nucleoid keeps noun queries live in class level rules
+
+class Obj(parts): this.parts = parts
+$Obj.fill_color = mode of $Obj.parts
+$Obj.brightest = max of $Obj.parts
+first = Obj([3, 1, 3])
+second = Obj([2, 2, 5])
+assert: [first.fill_color, first.brightest], [3, 3]
+assert: [second.fill_color, second.brightest], [2, 5]
+first.parts.push(1)
+first.parts.push(1)
+second.parts = [7]
+assert: [first.fill_color, second.fill_color, second.brightest], [1, 7, 7]
+class Team(name): this.name = name
+class Job(team, hours):
+    this.team = team
+    this.hours = hours
+$Team.load = sum of Job.filter(job -> job.team == $Team).map(job -> job.hours)
+red = Team("red")
+blue = Team("blue")
+Job(red, 3)
+long = Job(blue, 8)
+Job(red, 2)
+assert: [red.load, blue.load], [5, 8]
+long.team = red
+assert: [red.load, blue.load], [13, 0]
+long.hours = 1
+assert: red.load, 6
+---
+# Nucleoid binds noun queries as prefix operators
+
+xs = [1, 2, 3]
+assert: sum of xs + 1, 7
+assert: 1 + sum of xs * 2, 13
+assert: sum of xs.map(x -> x * 10), 60
+assert: (sum of xs) ** 2, 36
+assert: 2 ** max of xs, 8
+assert: -min of xs, -1
+assert: typeof mode of xs, "number"
+assert: max of xs > min of xs, true
+rows = [[1, 2], [1, 2], [5]]
+assert: sum of mode of rows, 3
+assert: max of rows.map(row -> sum of row), 5
+missing = null
+assert: sum of missing ?? 0, 0
+ready = false
+assert: sum of xs if ready else max of xs, 3
+failure = ""
+try:
+    sum of xs ** 2
+catch error:
+    failure = error
+assert: failure, TypeError("number.sum is not a function")
+---
+# Nucleoid keeps names and loop variables named like noun queries
+
+def sum(values):
+    return 0
+max = 9
+records = [{mode: 4}, {mode: 4}, {mode: 6}]
+assert: sum([1, 2]), 0
+assert: sum of [1, 2], 3
+assert: max, 9
+assert: max of [1, 2], 2
+assert: mode of records.map(record -> record.mode), 4
+class Item(size): this.size = size
+Item(4)
+Item(6)
+sizes = []
+for mode of Item:
+    sizes.push(mode.size)
+assert: sizes, [4, 6]
+for min in Item: sizes.push(min.size * 10)
+assert: sizes, [4, 6, 40, 60]
+total = [1, 2, 3].reduce(lambda sum, x: sum + x, 0)
+assert: total, 6
+label = `${max of [1, 2]}`
+grouped = `${(max of [1, 2])}`
+assert: [label, grouped], ["9", "2"]
+---
+# Nucleoid reads noun queries in headers and nested expressions
+
+class Item(size): this.size = size
+small = Item(1)
+large = Item(2)
+groups = [[small, large], [small, large], [large]]
+sizes = []
+for item of mode of groups:
+    sizes.push(item.size)
+assert: sizes, [1, 2]
+queue = [1]
+while sum of queue < 4:
+    queue.push(1)
+assert: queue.length, 4
+alert = false
+if max of queue > 0:
+    alert = true
+assert: alert, true
+assert: all group in groups: sum of group.map(item -> item.size) > 1, true
+def spread(values) => max of values - min of values
+assert: spread([4, 9, 1]), 8
+pick = values -> mode of values
+assert: pick(["a", "b", "b"]), "b"
+report = {total: sum of queue, top: max of queue}
+assert: [report.total, report.top], [4, 1]
+assert: [max of queue, min of queue], [1, 1]
+assert: String(sum of queue), "4"
+ready = true
+assert: ready ? sum of queue : 0, 4
+assert: [10, 20, 30][max of queue], 20
+---
+# Nucleoid explains noun queries in their written form
+
+prices = [4, 9, 9]
+top = max of prices
+words = ["ab", "c", "ab"]
+width = (mode of words).length
+squared = (sum of prices) ** 2
+assert: (why top)[0].rule, "top = max of prices"
+assert: (why top)[0].from, ["prices"]
+assert: (why width)[0].rule, "width = (mode of words).length"
+assert: (why squared)[0].rule, "squared = (sum of prices)**2"
+assert: [top, width, squared], [9, 2, 484]
+---
+# Nucleoid rolls back failed noun query updates
+
+def checked(zone):
+    if zone == "void":
+        throw "BAD_ZONE"
+    return zone
+zones = ["a", "b", "b"]
+busiest = mode of zones.map(checked)
+assert: busiest, "b"
+failure = ""
+try:
+    zones.shift()
+    zones.push("void")
+catch error:
+    failure = error
+assert: failure, "BAD_ZONE"
+assert: zones, ["a", "b", "b"]
+assert: busiest, "b"
+zones.push("a")
+zones.push("a")
+assert: busiest, "a"
+---
+# Nucleoid reads noun queries of snapshots versions and other receivers
+
+history = [1]
+history.push(4)
+first = sum of history@first
+frozen = sum of history.value
+history.push(5)
+assert: [first, frozen, sum of history], [1, 5, 10]
+nothing = null
+assert: sum of nothing, null
+assert: mode of [], null
+assert: [max of [], min of []], [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY]
+class Shelf:
+    def mode(): return 9
+shelf = Shelf()
+assert: mode of shelf, 9
+assert: mode of Shelf, shelf
+record = {sum: () -> 5}
+assert: sum of record, 5
+failure = ""
+try:
+    sum of "abc"
+catch error:
+    failure = error
+assert: failure, TypeError("abc.sum is not a function")
 ```

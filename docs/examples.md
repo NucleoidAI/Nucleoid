@@ -3126,6 +3126,33 @@ worst
 - See [NUC 75](nuc-0075.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-modes).
 
+## Noun list queries
+
+**Noun queries keep the fill color and width of every shape live**
+
+```nuc
+class Shape(cells): this.cells = cells
+$Shape.fill_color = mode of $Shape.cells.map(cell -> cell.color)
+$Shape.width = max of $Shape.cells.map(cell -> cell.x) - min of $Shape.cells.map(cell -> cell.x) + 1
+square = Shape([{x: 1, color: 3}, {x: 2, color: 3}, {x: 2, color: 5}])
+line = Shape([{x: 4, color: 7}])
+widest = max of Shape.map(shape -> shape.width)
+assert: [square.fill_color, square.width, line.fill_color, line.width], [3, 2, 7, 1]
+assert: widest, 2
+square.cells.push({x: 5, color: 5})
+square.cells.push({x: 5, color: 5})
+assert: [square.fill_color, square.width, widest], [5, 5, 5]
+widest
+# return: 5
+```
+
+- Each shape's fill color is the most common color of its cells, and its
+  width spans its smallest and largest column. Both are class-level rules,
+  so every shape keeps its own, and `widest` follows every shape's width.
+- `NOUN of OPERAND` takes a unary operand, so the width rule subtracts two
+  queries and adds `1`. See [NUC 75](nuc-0075.md) and the
+  [root contract](../nucleoid.spec.md#noun-list-queries-with-of).
+
 ## Copyright
 
 Copyright 2020 Nucleoid
