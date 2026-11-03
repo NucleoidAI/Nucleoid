@@ -360,12 +360,13 @@ the block's nonzero cell colors in reading order, such as
 descriptive property, with no count, histogram, fill color, canvas size, or
 matrix of cells, so no input property names a count or the fill color.
 Unconditional class-level rules set the output tag and introduce one property,
-`fill_color`, which is absent before the rules run, as `$Obj.parts.mode()`:
-the accepted list query `mode` from [NUC 75](../docs/nuc-0075.md) returns the
-most frequent item of `parts`, the color with the most cells, matching items
-as `distinct` does. On a tie, which no pair has, `mode` returns the tied color
-that occurs first in `parts`, the one whose first cell comes first in reading
-order. The rules create no other properties, so each output state adds only
+`fill_color`, which is absent before the rules run, as `mode of $Obj.parts`.
+That is the noun form of `$Obj.parts.mode()`: the accepted list query `mode`
+from [NUC 75](../docs/nuc-0075.md) returns the most frequent item of `parts`,
+the color with the most cells, matching items as `distinct` does. On a tie,
+which no pair has, `mode` returns the tied color that occurs first in `parts`,
+the one whose first cell comes first in reading order. The rules create no
+other properties, so each output state adds only
 `fill_color` to its input state's keys, and they leave `x` and `y` unchanged
 because the fill starts at the block's origin, 0 and 0. Native output
 snapshots are captured with the pair's implementation followed by `Obj[:]`.

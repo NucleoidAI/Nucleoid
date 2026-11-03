@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/5582e5ca.json`](../data/training/5582e5ca.json) |
-| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the fifth version, uncommitted, replacing the fourth, which `e904938` committed |
+| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, uncommitted, replacing the fifth, which `99d8621` committed |
 | Output canvas | `EXACT` |
-| Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
+| Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; two suggested changes await review, not applied |
-| Solver runs | 5 local runs, one per dataset version: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0 |
+| Solver runs | 5 local runs, one for each of versions 1 to 5: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0; version 6 has not been run |
 | Updated | 3-Nov-2026 |
 
 ## Puzzle
@@ -32,11 +32,12 @@ fill color is an input. The rules derive the fill:
 
 ```nuc
 $Obj.tag = 'l5236'
-$Obj.fill_color = $Obj.parts.mode()
+$Obj.fill_color = mode of $Obj.parts
 ```
 
-`mode()` returns the most frequent item of `parts`, matching items as
-`distinct` does, so `fill_color` is the color with the most cells. On a tie,
+`mode of $Obj.parts` means `$Obj.parts.mode()`. It returns the most frequent
+item of `parts`, matching items as `distinct` does, so `fill_color` is the
+color with the most cells. On a tie,
 which no pair has, the value that occurs first in `parts` wins: the tied color
 whose first cell comes first in reading order. The tag changes from `l9100`,
 a single shape, to `l5236`, a rectangle that fills the canvas, and `x` and `y`
@@ -50,11 +51,18 @@ changed: the helper properties `sorted_parts` and `part_counts` are gone.
 Every pair grid, instance name, implementation, mask, input snapshot, and
 `fill_color` is the same as in the fourth version.
 
+Later on 3-Nov-2026 the sixth version replaced the fifth at the user's
+request, after NUC 75 revision 2 added the `of` operator in `4ad55da`. It
+writes the fill as `mode of $Obj.parts`, the noun form the user asked for.
+Only that one declaration changed. Every pair grid, instance name,
+implementation, mask, input snapshot, and output snapshot is the same as in
+the fifth version.
+
 ### Versions
 
-The dataset was written four times on 2-Nov-2026 and a fifth time on
-3-Nov-2026, each version replacing the last. `e904938` committed the fourth;
-the fifth is in the working tree, uncommitted.
+The dataset was written four times on 2-Nov-2026 and twice on 3-Nov-2026,
+each version replacing the last. `e904938` committed the fourth and `99d8621`
+the fifth; the sixth is in the working tree, uncommitted.
 
 | Version | Request | Instances | Rule for the fill color |
 | --- | --- | --- | --- |
@@ -63,6 +71,7 @@ the fifth is in the working tree, uncommitted.
 | 3 | Hint "Is there better way?" | One point per nonzero cell, with only `color` | `Obj.count(other => other.color == $Obj.color)` ([NUC 73](../../docs/nuc-0073.md)), then `Obj.find` with `Obj.max` |
 | 4 | Hint "how about putting parts in array like [4,4,8,6, 4, 3,6, 3] then find max out of it and instance actually whole block" | One whole-block instance with a flat `parts` list | A sorted run-length count: `sorted_parts` sorts a copy, `part_counts` takes each part's run length in it, and `fill_color` takes the part with the largest count |
 | 5 | The user's approval, after NUC 75 was accepted, to restate version 4's rule with `mode()` | The same whole-block instances as version 4 | `$Obj.parts.mode()` ([NUC 75](../../docs/nuc-0075.md)) |
+| 6 | "Go ahead update with "of" operator in dataset", after NUC 75 revision 2 was accepted | The same whole-block instances as version 5 | `mode of $Obj.parts` ([NUC 75](../../docs/nuc-0075.md) revision 2) |
 
 Version 2 took the colors' counts as input, so its rule only had to pick the
 largest. Version 3 derived every count from the population instead. Version 4
@@ -70,7 +79,8 @@ keeps one whole-block instance, as the user asked, and derives the counts from
 its `parts`. It reads "find max out of it" as the part with the largest count:
 the largest value itself is 8, 9, and 9, which fails the first and third
 training pairs. Version 5 keeps version 4's instances and states the most
-frequent part directly, with no helper properties.
+frequent part directly, with no helper properties. Version 6 only writes that
+rule as a noun query with `of`.
 
 ## Runs
 
@@ -87,6 +97,12 @@ with the primary checkout's debug runtime at that revision and a 30-minute
 limit. `13944b9` and `0ceace0` have the same runtime sources, and `4c57af8`
 adds NUC 75's `mode()`. Elapsed is the solver's own report. The puzzle has not been in an **ARC puzzle report**
 workflow run.
+
+Version 6 has no solver run. Its rule needs a runtime at `4ad55da` or later,
+which parses `of`, so the primary checkout's debug runtime was rebuilt at
+`4ad55da`. An offline check with that runtime reproduced every input and
+output snapshot of the four pairs, the same as the fifth version's rule
+gives. This was a manual check, not a live-model result.
 
 ## Open items
 
@@ -106,11 +122,15 @@ workflow run.
   as one JSON document. Suggested, not applied: build each message with
   `JSON.stringify` of one data object.
 - **A callback cannot read an enclosing callback's parameter.** Resolved for
-  this puzzle: version 5 states the count with `mode()` from
-  [NUC 75](../../docs/nuc-0075.md). The limit itself remains at `4c57af8`:
+  this puzzle since version 5, which states the count with `mode()` from
+  [NUC 75](../../docs/nuc-0075.md); version 6 writes it `mode of $Obj.parts`.
+  The limit itself remains at `4ad55da`:
   `parts.map(part => parts.count(other => other == part))` still fails with
   `ReferenceError: part is not defined`, so other per-item counts still need
   helper rules. No NUC for capturing outer parameters has been proposed.
-- Review and commit version 5, its README paragraph, and this record's
-  update, which remain uncommitted. `e904938` committed version 4 with its
-  paragraph and its `.github/workflows/arc.yml` entry.
+- **Version 6 is unscored.** The next `/arc-purposal 5582e5ca` run would score
+  it once.
+- Review and commit version 6, its README sentence, and this record's update,
+  which remain uncommitted. `99d8621` committed version 5 with its README
+  paragraph and this record's previous update. `e904938` committed version 4
+  with its paragraph and its `.github/workflows/arc.yml` entry.

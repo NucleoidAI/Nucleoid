@@ -7,7 +7,7 @@ import arc_dataset from "./lib/arc_dataset.ts";
 import { writeFile } from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "6150a2bd") {
+export async function start(puzzle_id: string = "5582e5ca") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
