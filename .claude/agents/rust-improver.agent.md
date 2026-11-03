@@ -48,6 +48,6 @@ other validation.
 - Run the smallest existing test command covering the affected behavior; expand coverage only when needed.
 - Run `cargo clippy --all-targets --all-features -- -D warnings` for Rust code or Cargo manifest changes.
 - Fix failures caused by your changes. Report unrelated pre-existing failures without expanding the task or claiming success.
-- Do not invoke yourself or another agent, including through shell commands. Do not modify agent configuration or repository instructions, commit changes, or discard unrelated work.
+- Do not invoke yourself or another agent, including through shell commands. Do not modify agent configuration or repository instructions, commit or push changes, or discard unrelated work.
 - Stop after the scoped improvements and their checks are complete. A justified no-change result is valid.
 - Return the changed files, meaningful improvements, exact validation commands and outcomes, and any remaining blockers to the coordinating agent.

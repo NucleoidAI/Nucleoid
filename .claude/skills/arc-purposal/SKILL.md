@@ -205,7 +205,8 @@ which applies the
 | All passed | Not passed or not run | Rejected | Automatic-Accepted |
 | Not verified | Any | Blocked | Blocked; the NUC stays Draft |
 
-Record it with the nuc-proposal skill's caller steps:
+Record it with the nuc-proposal skill's caller steps, which alone commit and
+push it:
 
 - **Accepted or Automatic-Accepted:** integrate the unchanged frozen candidate,
   record its status/index metadata, and commit that integration with explicit
@@ -228,11 +229,12 @@ Record it with the nuc-proposal skill's caller steps:
   replaced it. Preserve pre-existing entries, other datasets, genesis files,
   and unrelated workflow changes. Keep the candidate isolated.
 
-Leave the dataset, README, reporting-list, and solver-default changes
-uncommitted for review.
-Push every commit this invocation makes right after it, pulling first, under
-the [git synchronization policy](../../rules/git.instructions.md). Never change
-project versions.
+Only `/nuc-proposal` commits and pushes, under the
+[git synchronization policy](../../rules/git.instructions.md): those caller
+steps push the requested NUC's outcome commit right after it, pulling first.
+This invocation commits and pushes nothing else. Leave the dataset, README,
+reporting-list, solver-default, and progress-record changes uncommitted for
+review. Never change project versions.
 
 ## Suggest solver changes
 

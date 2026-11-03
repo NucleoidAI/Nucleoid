@@ -329,11 +329,14 @@ or running the token non-regression gate (token comparison). Independent
 behavior/integrity, accepted-corpus baseline, compatibility, and development
 checks still apply.
 
-When `/nuc-evaluate` coordinates an active continuous cycle, the caller follows
-the [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).
-For a `Rejected` outcome, which now requires a failed hard criterion, commit
-only the NUC rejection documentation and directly related index/status
-metadata, using explicit paths and a path-limited commit.
+When `/nuc-evaluate` coordinates an active continuous cycle, it commits and
+pushes nothing itself. The
+[nuc-proposal caller steps](../nuc-proposal/SKILL.md#name-outcome-commits-caller-only),
+the only flow that commits, record the outcome and commit and push it. A
+`Rejected` outcome, which now requires a failed hard criterion, follows the
+[shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only):
+its commit holds only the NUC rejection documentation and directly related
+index/status metadata, using explicit paths and a path-limited commit.
 Verify the committed file list; never apply or commit the rejected candidate's
 runtime, executable-document, reference, dataset, or generated-export changes.
 Keep implementation changes isolated and preserve unrelated staged and

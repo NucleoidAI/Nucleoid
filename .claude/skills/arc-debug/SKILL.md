@@ -15,7 +15,8 @@ agent.
 The investigation is read-only:
 
 - Read `arc/logs/<puzzle-id>.log.json` and the solver sources that explain it.
-- Never edit, stage or commit a repository file, including the log.
+- Never edit, stage or commit a repository file, including the log, and
+  never push.
 - Never run the solver, an LLM call, or anything that reads `.env` or
   credentials.
 - Never quote the expected test grid's values. Label findings that depend on

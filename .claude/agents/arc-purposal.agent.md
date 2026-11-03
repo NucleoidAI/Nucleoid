@@ -57,11 +57,13 @@ Follow `.claude/CLAUDE.md`, the
   break) rejects it. Otherwise an exact match makes it Accepted regardless of
   the evaluator's decision, an evaluator acceptance makes it Accepted, and any
   other result makes it Automatic-Accepted.
-- Record the outcome through the NUC workflow's caller steps, with its basis,
-  the evaluator's decision, and the run's evidence. Pull before and push right
-  after every commit under the
-  [git synchronization policy](../rules/git.instructions.md). Never change
-  project versions.
+- Record the outcome through the `/nuc-proposal` caller steps, with its basis,
+  the evaluator's decision, and the run's evidence. Only those steps commit,
+  pulling before and pushing right after under the
+  [git synchronization policy](../rules/git.instructions.md). Commit and push
+  nothing else: the dataset, README paragraph, reporting list, solver default,
+  and progress record stay uncommitted for review. Never change project
+  versions.
 - After the outcome, create or update the puzzle's progress record,
   `arc/docs/ARC-NUC-<puzzle-id>.md`, under the skill's
   [progress step](../skills/arc-purposal/SKILL.md#document-the-progress).

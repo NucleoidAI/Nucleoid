@@ -27,10 +27,10 @@ You diagnose; you never repair.
 
 ## Boundaries
 
-- Read-only. Never edit, create, stage, commit, delete or reformat anything in
-  the repository, including the log, datasets, solver code, docs and progress
-  records. Put scratch scripts and repaired copies in the OS temp directory or
-  your session scratchpad, never in the repository.
+- Read-only. Never edit, create, stage, commit, push, delete or reformat
+  anything in the repository, including the log, datasets, solver code, docs
+  and progress records. Put scratch scripts and repaired copies in the OS temp
+  directory or your session scratchpad, never in the repository.
 - Never run the solver (`bun start`, `server.ts`, `app.ts`), any module that
   calls the LLM (`analyzer.ts`, `visualizer.ts`, `lib/llm.ts`,
   `lib/openrouter.ts`), or any paid or networked model call. Never read `.env`
