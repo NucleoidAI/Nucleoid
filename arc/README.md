@@ -67,15 +67,15 @@ manually from the repository's Actions tab. Configure the repository Actions
 secret `OPENROUTER_API_KEY` before dispatching it; do not upload an environment
 file. The workflow disables environment-file loading, builds the checked-out
 Nucleoid runtime, installs ARC dependencies from the frozen Bun lockfile,
-and runs `3aa6fb7a`, `28bf18c6`, `9af7a82c`, and
-`0ca9ddb6` once each, with a thirty-minute limit per puzzle. These are live,
+and runs every puzzle in `ARC_PUZZLES` once in parallel, with a thirty-minute
+limit per puzzle. These are live,
 paid OpenRouter solver benchmarks, not automated ARC tests.
 
 The run summary contains a table with each puzzle's result, exit code, and
 elapsed seconds. `PASS` means exact grid equality, including shape; `FAIL`
 means a nonzero exit from a mismatch, execution error, or timeout. Missing
 exit records, such as after a setup failure, report `NOT RUN` instead of
-inventing a score. Puzzle failures do not prevent later puzzles from running,
+inventing a score. Puzzle failures do not cancel the other running puzzles,
 but any failure makes the workflow fail.
 The `arc-puzzle-report` artifact retains solver logs and exit records for seven
 days. Logs may contain expected held-out grids and must never feed back into

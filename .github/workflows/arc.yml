@@ -58,20 +58,27 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           mkdir -p reports
+          pids=()
+          for puzzle_id in $ARC_PUZZLES; do
+            (
+              started_at=$SECONDS
+              exit_code=0
+              timeout --signal=TERM --kill-after=30s 30m bun --no-env-file run start "$puzzle_id" \
+                > "reports/$puzzle_id.log" 2>&1 || exit_code=$?
+              duration=$(( SECONDS - started_at ))
+              printf '%s\t%s\n' "$exit_code" "$duration" > "reports/$puzzle_id.tsv"
+              exit "$exit_code"
+            ) &
+            pids+=("$!")
+          done
           failed=0
+          for pid in "${pids[@]}"; do
+            wait "$pid" || failed=1
+          done
           for puzzle_id in $ARC_PUZZLES; do
             printf '::group::Puzzle %s\n' "$puzzle_id"
-            started_at=$SECONDS
-            exit_code=0
-            timeout --signal=TERM --kill-after=30s 30m bun --no-env-file run start "$puzzle_id" \
-              > "reports/$puzzle_id.log" 2>&1 || exit_code=$?
-            duration=$(( SECONDS - started_at ))
-            printf '%s\t%s\n' "$exit_code" "$duration" > "reports/$puzzle_id.tsv"
-            cat "reports/$puzzle_id.log"
+            cat "reports/$puzzle_id.log" || failed=1
             printf '::endgroup::\n'
-            if [[ "$exit_code" -ne 0 ]]; then
-              failed=1
-            fi
           done
           exit "$failed"
 
