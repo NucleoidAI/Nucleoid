@@ -359,30 +359,25 @@ the block's nonzero cell colors in reading order, such as
 `[4, 4, 8, 6, 4, 3, 6, 3]` for the first training input, as its only
 descriptive property, with no count, histogram, fill color, canvas size, or
 matrix of cells, so no input property names a count or the fill color.
-Unconditional class-level rules introduce three properties, absent before the
-rules run: `sorted_parts` is `$Obj.parts.slice().sort()`, a sorted copy that
-groups equal colors and leaves `parts` in reading order; `part_counts` is
-`$Obj.parts.map(part => $Obj.sorted_parts.lastIndexOf(part) - $Obj.sorted_parts.indexOf(part) + 1)`,
-how many parts share each part's color, the length of that color's run in the
-sorted copy; and `fill_color` is
-`$Obj.parts[$Obj.part_counts.indexOf($Obj.part_counts.max())]`, the color of
-the first part whose count is the largest. On a tie, which no pair has, the
-tied color whose first cell comes first in reading order would win. Accepted
-Nucleoid callbacks do not capture an enclosing callback's parameter, so the
-direct count `$Obj.parts.map(part => $Obj.parts.count(other => other == part))`
-raises `ReferenceError("part is not defined")`; the sorted copy states the same
-count with callbacks that read only their own parameter and `$Obj`. The rules
-leave `x` and `y` unchanged because the fill starts at the block's origin, 0
-and 0. Native output snapshots are captured with the pair's implementation
-followed by `Obj[:]`. Tags identify the geometry: `l9100` is a single shape,
-as in `dataset.28bf18c6.json`, and `l5236` is a solid rectangle that fills the
-whole canvas. Input masks retain each pair's full-size 3 by 3 input canvas,
-with the zero cell padded `0`, and output masks the complete 3 by 3 output;
-merging them reproduces each pair's input and output. The
-`output_x`/`output_y` fields record the fill's nonzero bounding-box origin,
-equal to `output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because
-each output keeps its input's canvas. Orientation is 0 in both states because
-the block is not rotated and the fill is symmetric. The test pair follows the
+Unconditional class-level rules set the output tag and introduce one property,
+`fill_color`, which is absent before the rules run, as `$Obj.parts.mode()`:
+the accepted list query `mode` from [NUC 75](../docs/nuc-0075.md) returns the
+most frequent item of `parts`, the color with the most cells, matching items
+as `distinct` does. On a tie, which no pair has, `mode` returns the tied color
+that occurs first in `parts`, the one whose first cell comes first in reading
+order. The rules create no other properties, so each output state adds only
+`fill_color` to its input state's keys, and they leave `x` and `y` unchanged
+because the fill starts at the block's origin, 0 and 0. Native output
+snapshots are captured with the pair's implementation followed by `Obj[:]`.
+Tags identify the geometry: `l9100` is a single shape, as in
+`dataset.28bf18c6.json`, and `l5236` is a solid rectangle that fills the whole
+canvas. Input masks retain each pair's full-size 3 by 3 input canvas, with the
+zero cell padded `0`, and output masks the complete 3 by 3 output; merging
+them reproduces each pair's input and output. The `output_x`/`output_y` fields
+record the fill's nonzero bounding-box origin, equal to
+`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
+output keeps its input's canvas. Orientation is 0 in both states because the
+block is not rotated and the fill is symmetric. The test pair follows the
 training pairs at the same level and is annotated by the same rules.
 
 `dataset.6150a2bd.json` annotates the two original training pairs from

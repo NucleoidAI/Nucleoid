@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/5582e5ca.json`](../data/training/5582e5ca.json) |
-| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the fourth version, uncommitted |
+| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the fifth version, uncommitted, replacing the fourth, which `e904938` committed |
 | Output canvas | `EXACT` |
-| Nucleoid enhancements | None requested; the rules use accepted list methods, including `max` from [NUC 69](../../docs/nuc-0069.md) |
+| Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; two suggested changes await review, not applied |
-| Solver runs | 4 local runs on 2-Nov-2026, one per dataset version, all exit 0 |
-| Updated | 2-Nov-2026 |
+| Solver runs | 5 local runs, one per dataset version: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0 |
+| Updated | 3-Nov-2026 |
 
 ## Puzzle
 
@@ -32,36 +32,45 @@ fill color is an input. The rules derive the fill:
 
 ```nuc
 $Obj.tag = 'l5236'
-$Obj.sorted_parts = $Obj.parts.slice().sort()
-$Obj.part_counts = $Obj.parts.map(part => $Obj.sorted_parts.lastIndexOf(part) - $Obj.sorted_parts.indexOf(part) + 1)
-$Obj.fill_color = $Obj.parts[$Obj.part_counts.indexOf($Obj.part_counts.max())]
+$Obj.fill_color = $Obj.parts.mode()
 ```
 
-`part_counts` counts each part as the length of its run in a sorted copy, and
-`fill_color` takes the part with the largest count. On a tie, which no pair
-has, the first such part in reading order wins. The tag changes from `l9100`,
+`mode()` returns the most frequent item of `parts`, matching items as
+`distinct` does, so `fill_color` is the color with the most cells. On a tie,
+which no pair has, the value that occurs first in `parts` wins: the tied color
+whose first cell comes first in reading order. The tag changes from `l9100`,
 a single shape, to `l5236`, a rectangle that fills the canvas, and `x` and `y`
 stay at the origin. The [README](../README.md#instruction-datasets) describes
 the dataset in full.
 
+On 3-Nov-2026 the fifth version replaced the fourth at the user's request.
+Once NUC 75 made `mode()` accepted, the user approved restating the fill as
+`$Obj.parts.mode()`. Only the declarations and the native output snapshots
+changed: the helper properties `sorted_parts` and `part_counts` are gone.
+Every pair grid, instance name, implementation, mask, input snapshot, and
+`fill_color` is the same as in the fourth version.
+
 ### Versions
 
-The dataset was written four times on 2-Nov-2026, each version replacing the
-last. Only the fourth is in the working tree.
+The dataset was written four times on 2-Nov-2026 and a fifth time on
+3-Nov-2026, each version replacing the last. `e904938` committed the fourth;
+the fifth is in the working tree, uncommitted.
 
 | Version | Request | Instances | Rule for the fill color |
 | --- | --- | --- | --- |
 | 1 | Default puzzle of a continuous `/arc-purposal` run, no hint | One per nonzero color, with `color` and `cell_count`; each output mask is the whole filled canvas | `Obj.find(region => region.cell_count == Obj.max(other => other.cell_count)).color` |
 | 2 | Hint "Redo, but consider whole is a single instance" | One whole-grid instance with nine inputs, `color_1_count` to `color_9_count` | `$Obj.color_counts.indexOf($Obj.color_counts.max()) + 1` |
 | 3 | Hint "Is there better way?" | One point per nonzero cell, with only `color` | `Obj.count(other => other.color == $Obj.color)` ([NUC 73](../../docs/nuc-0073.md)), then `Obj.find` with `Obj.max` |
-| 4 | Hint "how about putting parts in array like [4,4,8,6, 4, 3,6, 3] then find max out of it and instance actually whole block" | One whole-block instance with a flat `parts` list | The sorted run-length count above |
+| 4 | Hint "how about putting parts in array like [4,4,8,6, 4, 3,6, 3] then find max out of it and instance actually whole block" | One whole-block instance with a flat `parts` list | A sorted run-length count: `sorted_parts` sorts a copy, `part_counts` takes each part's run length in it, and `fill_color` takes the part with the largest count |
+| 5 | The user's approval, after NUC 75 was accepted, to restate version 4's rule with `mode()` | The same whole-block instances as version 4 | `$Obj.parts.mode()` ([NUC 75](../../docs/nuc-0075.md)) |
 
 Version 2 took the colors' counts as input, so its rule only had to pick the
 largest. Version 3 derived every count from the population instead. Version 4
 keeps one whole-block instance, as the user asked, and derives the counts from
 its `parts`. It reads "find max out of it" as the part with the largest count:
 the largest value itself is 8, 9, and 9, which fails the first and third
-training pairs.
+training pairs. Version 5 keeps version 4's instances and states the most
+frequent part directly, with no helper properties.
 
 ## Runs
 
@@ -71,11 +80,12 @@ training pairs.
 | 2-Nov-2026 15:56 UTC | 2, whole grid with color counts | Accepted `13944b9` | 0 | 0 | 2m 42.7s |
 | 2-Nov-2026 16:32 UTC | 3, one point per cell | Accepted `13944b9` | 0 | 0 | 8m 42.8s |
 | 2-Nov-2026 18:05 UTC | 4, whole block with `parts` | Accepted `0ceace0` | 0 | 0 | 2m 23.7s |
+| 3-Nov-2026 05:40 UTC | 5, whole block with `mode()` | Accepted `4c57af8` | 0 | 0 | 1m 12.2s |
 
 Each run was `bun start 5582e5ca` from `arc/`, run once by `/arc-purposal`
 with the primary checkout's debug runtime at that revision and a 30-minute
-limit. `13944b9` and `0ceace0` have the same runtime sources. Elapsed is the
-solver's own report. The puzzle has not been in an **ARC puzzle report**
+limit. `13944b9` and `0ceace0` have the same runtime sources, and `4c57af8`
+adds NUC 75's `mode()`. Elapsed is the solver's own report. The puzzle has not been in an **ARC puzzle report**
 workflow run.
 
 ## Open items
@@ -84,17 +94,23 @@ workflow run.
   and sends every JSON dataset as few-shot context, so each run's prompt held
   this puzzle's annotated test pair, expected output included. These exact
   matches do not show that the rule was inferred from the training pairs.
-  Suggested, not applied: keep the running puzzle's test pairs out of
-  `document(puzzle_id)`.
+  This still held for the fifth run: `document()` still discards
+  `puzzle_id`. Also, while overwriting, the dataset worker read the fourth
+  version, which already held the annotated test pair; it fixed the fifth
+  version's rules from the training pairs and the hint before it extracted
+  the test pair. Suggested, not applied: keep the running puzzle's test pairs
+  out of `document(puzzle_id)`.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` wrap JSON in text labels such as `few_shot:` and
   `train_dataset:`, while the ARC instructions require every message to parse
   as one JSON document. Suggested, not applied: build each message with
   `JSON.stringify` of one data object.
-- **A callback cannot read an enclosing callback's parameter.** The direct
-  rule `$Obj.parts.map(part => $Obj.parts.count(other => other == part))`
-  fails with `ReferenceError: part is not defined`, so version 4 counts by
-  sorted run length. A NUC letting nested callbacks capture outer parameters
-  would allow the direct form.
-- Review and commit version 4, its README paragraph, and its
-  `.github/workflows/arc.yml` entry, which remain uncommitted.
+- **A callback cannot read an enclosing callback's parameter.** Resolved for
+  this puzzle: version 5 states the count with `mode()` from
+  [NUC 75](../../docs/nuc-0075.md). The limit itself remains at `4c57af8`:
+  `parts.map(part => parts.count(other => other == part))` still fails with
+  `ReferenceError: part is not defined`, so other per-item counts still need
+  helper rules. No NUC for capturing outer parameters has been proposed.
+- Review and commit version 5, its README paragraph, and this record's
+  update, which remain uncommitted. `e904938` committed version 4 with its
+  paragraph and its `.github/workflows/arc.yml` entry.
