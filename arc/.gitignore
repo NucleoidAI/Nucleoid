@@ -2,3 +2,4 @@
 /.idea
 /tools/dist
 .env
+/logs

@@ -4,9 +4,10 @@ import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as milestone from "./lib/milestone.ts";
 import arc_dataset from "./lib/arc_dataset.ts";
+import { writeFile } from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "d037b0a7") {
+export async function start(puzzle_id: string = "6150a2bd") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
@@ -148,17 +149,17 @@ export async function start(puzzle_id: string = "d037b0a7") {
 
   milestone.summary({ difference, duration: performance.now() - startedAt });
 
-  // const debug = {
-  //   puzzle_id,
-  //   train_dataset,
-  //   input_instances,
-  //   test_input_matrix,
-  //   test_output_matrix,
-  //   result_matrix,
-  //   difference,
-  // };
-  //
-  // console.log(JSON.stringify(debug));
+  const debug = {
+    puzzle_id,
+    train_dataset,
+    input_instances,
+    test_input_matrix,
+    test_output_matrix,
+    result_matrix,
+    difference,
+  };
+
+  await writeFile(`logs/${puzzle_id}.log.json`, JSON.stringify(debug, null, 2));
 
   return difference;
 }
