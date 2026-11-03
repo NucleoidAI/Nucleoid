@@ -895,7 +895,7 @@ mod tests {
     #[test]
     fn original_branding_renders_top_left_above_the_tabs() {
         let mut app = App::new(false, false);
-        for (width, height) in [(80, 24), (100, 30)] {
+        for (width, height) in [(80, 12), (80, 24), (100, 30)] {
             let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
             terminal.draw(|frame| app.draw(frame)).unwrap();
             let screen = terminal.backend().buffer();
@@ -904,18 +904,19 @@ mod tests {
                     .map(|column| screen[(column, row)].symbol())
                     .collect::<String>()
             };
-            assert_eq!(screen[(15, 0)].symbol(), "🌿");
-            assert!(line(0).contains("Nucleoid - Logic Language for World Models"));
-            assert_eq!(screen[(15, 1)].symbol(), "🌎");
-            assert!(line(1).contains("Inspired by Nature"));
+            assert!(line(0).trim().is_empty());
+            assert_eq!(screen[(15, 1)].symbol(), "🌿");
+            assert!(line(1).contains("Nucleoid - Logic Language for World Models"));
+            assert_eq!(screen[(15, 2)].symbol(), "🌎");
+            assert!(line(2).contains("Inspired by Nature"));
             for label in ["F1 REPL", "F2 Tab 2", "F3 Tab 3"] {
-                assert!(line(2).contains(label));
+                assert!(line(3).contains(label));
             }
             assert!(
                 app.regions
                     .tabs
                     .iter()
-                    .all(|tab| tab.y == 2 && tab.height == 1)
+                    .all(|tab| tab.y == 3 && tab.height == 1)
             );
         }
     }
@@ -927,7 +928,7 @@ mod tests {
             let mut runtime = Runtime::new();
             let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
             let assert_wordmark = |screen: &ratatui::buffer::Buffer| {
-                for (row, logo) in [(0, "⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷"), (1, "⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶")]
+                for (row, logo) in [(1, "⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷"), (2, "⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶")]
                 {
                     let line: String = (0..width)
                         .map(|column| screen[(column, row)].symbol())
@@ -987,7 +988,7 @@ mod tests {
 
             app.sparkle.advance(start);
             let active_cell = app.sparkle.cell.unwrap();
-            let row = u16::try_from(active_cell.0).unwrap();
+            let row = u16::try_from(active_cell.0).unwrap() + 1;
             let column = u16::try_from(active_cell.1).unwrap();
             let end = app.sparkle.next;
             assert_eq!(end, start + Duration::from_millis(220));

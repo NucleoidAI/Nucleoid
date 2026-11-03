@@ -46,7 +46,7 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
     }
     let editor_height = (area.height / 3).clamp(5, 12);
     let layout = Layout::vertical([
-        Constraint::Length(3),
+        Constraint::Length(4),
         Constraint::Min(3),
         Constraint::Length(editor_height),
         Constraint::Length(1),
@@ -103,7 +103,12 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
 }
 
 fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
-    let rows = Layout::vertical([Constraint::Length(2), Constraint::Length(1)]).split(area);
+    let rows = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Length(2),
+        Constraint::Length(1),
+    ])
+    .split(area);
     let logo_width = as_u16(
         REPL_LOGO
             .lines()
@@ -113,7 +118,7 @@ fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
     )
     .saturating_add(1);
     let columns =
-        Layout::horizontal([Constraint::Length(logo_width), Constraint::Min(0)]).split(rows[0]);
+        Layout::horizontal([Constraint::Length(logo_width), Constraint::Min(0)]).split(rows[1]);
     let logo: Vec<_> = REPL_LOGO
         .lines()
         .enumerate()
@@ -156,7 +161,7 @@ fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
         Constraint::Length(12),
         Constraint::Min(0),
     ])
-    .split(rows[1]);
+    .split(rows[2]);
     for (index, label) in ["F1 REPL", "F2 Tab 2", "F3 Tab 3"].into_iter().enumerate() {
         regions.tabs[index] = parts[index];
         button(frame, label, parts[index], app.tab == index);
