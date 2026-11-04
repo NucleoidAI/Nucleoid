@@ -1,0 +1,13 @@
+class Animal(name):
+    this.name = name
+$Animal.legs = 4
+class Dog(name, breed) extends Animal:
+    this.name = name
+    this.breed = breed
+class Cat extends Animal
+rex = Dog("Rex", "lab")
+tom = Cat("Tom")
+assert(rex.breed, "lab")
+assert(tom.name, "Tom")
+assert(tom.legs, 4)
+Dog.length + Cat.length

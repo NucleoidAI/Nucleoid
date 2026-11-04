@@ -16169,6 +16169,175 @@ Probe("d", 9)
 assert: coldest.name, "d""#);
 }
 
+/// Nucleoid declares subclasses with extends clauses
+#[rustfmt::skip]
+#[test]
+fn declares_subclasses_with_extends_clauses() {
+    let mut run = runner();
+    run(r#"class Animal(name):
+    this.name = name"#);
+    run("$Animal.legs = 4");
+    run(r#"class Dog(name, breed) extends Animal:
+    this.name = name
+    this.breed = breed
+    def speak():
+        return this.name + " barks""#);
+    run(r#"class Cat extends Animal:
+    def speak() => this.name + " meows""#);
+    run(r#"rex = Dog("Rex", "lab")"#);
+    run(r#"tom = Cat("Tom")"#);
+    assert_eq!(run("rex.breed"), "lab");
+    assert_eq!(run("rex.speak()"), "Rex barks");
+    assert_eq!(run("tom.name"), "Tom");
+    assert_eq!(run("tom.speak()"), "Tom meows");
+    assert_eq!(run("rex.legs"), 4);
+    assert_eq!(run("tom.legs"), 4);
+    assert_eq!(run("Animal.length"), 0);
+    assert_eq!(run("Dog.length"), 1);
+    assert_eq!(run("Cat.length"), 1);
+    run("$Animal.legs = 3");
+    assert_eq!(run("rex.legs"), 3);
+    assert_eq!(run("tom.legs"), 3);
+}
+
+/// Nucleoid declares bodyless subclasses with extends clauses
+#[rustfmt::skip]
+#[test]
+fn declares_bodyless_subclasses_with_extends_clauses() {
+    let mut run = runner();
+    run(r#"class Shape(sides):
+    this.sides = sides"#);
+    run("$Shape.polygon = $Shape.sides > 2");
+    run("class Square extends Shape");
+    run("square = Square(4)");
+    run("class Triangle(sides) extends Shape; triangle = Triangle(3)");
+    run("{ class Segment extends Shape }");
+    run("segment = Segment(1)");
+    assert_eq!(run("square.sides"), 4);
+    assert_eq!(run("triangle.sides"), 3);
+    assert_eq!(run("square.polygon"), true);
+    assert_eq!(run("segment.polygon"), false);
+    assert_eq!(run("Shape.length"), 0);
+    assert_eq!(run("Square.length"), 1);
+    assert_eq!(run("Triangle.length"), 1);
+    assert_eq!(run("Segment.length"), 1);
+    run("segment.sides = 5");
+    assert_eq!(run("segment.polygon"), true);
+}
+
+/// Nucleoid keeps extends subclasses equivalent to colon subclasses
+#[rustfmt::skip]
+#[test]
+fn keeps_extends_subclasses_equivalent_to_colon_subclasses() {
+    let mut run = runner();
+    run(r#"class Account(owner, balance):
+    this.owner = owner
+    this.balance = balance
+$Account.overdrawn = $Account.balance < 0
+class Savings: Account
+    def init(owner, balance, rate):
+        super(owner, balance)
+        this.rate = rate
+class Deposit extends Account:
+    def init(owner, balance, rate):
+        super(owner, balance)
+        this.rate = rate
+saving = Savings("ada", 100, 2)
+deposit = Deposit(rate=2, owner="ada", balance=100)
+assert(deposit.owner, saving.owner)
+assert(deposit.rate, saving.rate)
+assert(deposit.overdrawn, false)
+deposit.balance = -5
+saving.balance = -5
+assert(deposit.overdrawn, true)
+assert(saving.overdrawn, true)
+assert(Account.length, 0)
+assert(Deposit.length, Savings.length)"#);
+}
+
+/// Nucleoid resolves super and inherited rules through extends chains
+#[rustfmt::skip]
+#[test]
+fn resolves_super_and_inherited_rules_through_extends_chains() {
+    let mut run = runner();
+    run(r#"class Base:
+    def init():
+        this.trace = "A""#);
+    run(r#"class Middle extends Base:
+    def init():
+        super
+        this.trace = this.trace + "B""#);
+    run(r#"class Leaf: Middle
+    def init():
+        super
+        this.trace = this.trace + "C""#);
+    run("class Passive extends Leaf");
+    run("$Base.ready = true");
+    run("leaf = Leaf()");
+    run("passive = Passive()");
+    assert_eq!(run("leaf.trace"), "ABC");
+    assert_eq!(run("passive.trace"), "ABC");
+    assert_eq!(run("passive.ready"), true);
+    assert_eq!(run("Base.length"), 0);
+    assert_eq!(run("Middle.length"), 0);
+    assert_eq!(run("Leaf.length"), 1);
+    assert_eq!(run("Passive.length"), 1);
+}
+
+/// Nucleoid keeps extends an ordinary name
+#[rustfmt::skip]
+#[test]
+fn keeps_extends_an_ordinary_name() {
+    let mut run = runner();
+    run("extends = 2");
+    run("limits = {extends: 3}");
+    run("def scale(extends) => extends * 10");
+    run(r#"class Gate:
+    def extends(step) => step + 1"#);
+    run("gate = Gate()");
+    run("class extends");
+    run("class Probe extends extends");
+    run("$extends.ready = true");
+    run("probe = Probe()");
+    assert_eq!(run("extends + limits.extends"), 5);
+    assert_eq!(run("scale(extends)"), 20);
+    assert_eq!(run("gate.extends(4)"), 5);
+    assert_eq!(run("probe.ready"), true);
+    assert_eq!(run("Probe.length"), 1);
+    run("extends = 4");
+    assert_eq!(run("scale(extends)"), 40);
+}
+
+/// Nucleoid rolls back extends class declarations
+#[rustfmt::skip]
+#[test]
+fn rolls_back_extends_class_declarations() {
+    let mut run = runner();
+    run(r#"class Base
+try:
+    class Loop extends Loop
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+class Child extends Base
+try:
+    class Base extends Child
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+assert(Class.length, 2)
+class Limited extends Base:
+    def init(amount):
+        if amount > 10:
+            throw "LIMIT"
+        this.amount = amount
+small = Limited(5)
+try:
+    large = Limited(20)
+catch error:
+    assert(error, "LIMIT")
+assert(Limited.length, 1)
+assert(small.amount, 5)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

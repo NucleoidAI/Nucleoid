@@ -739,7 +739,7 @@ Full detail: [NUC 10](nuc-0010.md).
 - `class Entity` declares an empty type without a placeholder body.
 - The explicit `class Entity:` form with an indented `pass` remains valid.
 - A bare header ends at a statement boundary and does not adopt the next statement as a constructor.
-- An indented body still requires a colon; inheritance keeps its existing colon grammar.
+- An indented body still requires a colon. Inheritance keeps its colon grammar and may also be spelled with `extends`, as [Subtypes](#subtypes) shows.
 - `$Name` is the type; `Name` is the list of its instances.
 - `typeof $Name` is `Class`; `typeof Name` is `List`.
 - Every declared type is added to the global `Class` list.
@@ -840,6 +840,19 @@ class Truck: Vehicle
         this.payload = payload
 ```
 
+- `extends` is an optional spelling of the parent, as JavaScript, TypeScript, Java, PHP, Dart, Scala and Groovy write it ([NUC 78](nuc-0078.md)). It follows the class name and the optional parameter list: `class Truck extends Vehicle:` and `class Truck(make, payload) extends Vehicle:` take the same indented or same-line body as the colon spelling.
+- Without a colon, `class Van extends Vehicle` is a bodyless subtype, exactly `class Van: Vehicle` with an indented `pass`. Like `class Entity`, it ends at a statement boundary and does not adopt the next statement as a constructor; an indented body still requires the colon.
+- Every spelling declares the same class: parent, constructors, `super`, populations, class-level rules, graph keys and canonical rendering are unchanged, and canonical source keeps the colon spelling.
+- `extends` is not a keyword. Only `extends` directly after a class name or its parameter list starts the clause; variables, properties, parameters, functions, methods and classes named `extends` keep their meanings.
+
+```
+class Truck extends Vehicle:
+    def init make, payload:
+        super(make)
+        this.payload = payload
+class Van extends Vehicle
+```
+
 ### Bare zero-argument super calls
 
 - Bare `super` is the primary expression `super()`; it always passes zero arguments and returns `null` on success.
@@ -877,7 +890,7 @@ assert(child.code, 7)
 - Deletion is refused while the instance still has properties.
 - A variable name is reusable after its instance is deleted.
 
-Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md); candidate bare calls: [NUC 16](nuc-0016.md).
+Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md); candidate bare calls: [NUC 16](nuc-0016.md); extends clauses: [NUC 78](nuc-0078.md).
 
 ---
 
@@ -3145,6 +3158,8 @@ Messages are exact and are part of the observable behaviour of the language.
 | A postfix chain or a compound path beyond its limit | `Expression has too many parts` |
 | A destructuring with more than 128 targets | `Destructuring has too many targets` |
 | A constructor-header star at a parameter position | `Expected a parameter but found '*'` |
+| An `extends` clause whose parent is missing or not a name | `Expected a parent class name but found <what>` |
+| A second parent after `class Name extends Parent:` | `Class '<Name>' already extends '<Parent>'` |
 
 ### Where an error happened
 
@@ -3199,6 +3214,9 @@ class Sub: Super                       subtype
     def init(a, b):
         super(a)
         this.b = b
+class Sub extends Super:               same subtype, extends spelling (NUC 78)
+    statement
+class Sub(param) extends Super         bodyless subtype, as class Sub(param): Super with pass (NUC 78)
 
 super                                  zero-argument super() expression
 super(arguments)                       explicit parent-constructor arguments

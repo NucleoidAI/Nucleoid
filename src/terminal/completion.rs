@@ -13,6 +13,7 @@ const WORDS: &[&str] = &[
     "delete",
     "elif",
     "else",
+    "extends",
     "false",
     "for",
     "function",
@@ -405,6 +406,18 @@ mod tests {
         let completion = Completion::find(&runtime, &editor::new("wh"), false).unwrap();
         assert_eq!(completion.candidates, ["whale", "while"]);
         assert!(Completion::find(&runtime, &editor::new("while"), false).is_none());
+    }
+
+    #[test]
+    fn completion_offers_extends_beside_bindings_that_share_its_prefix() {
+        let mut runtime = Runtime::new();
+        runtime.run("extent = 4\nclass Animal").unwrap();
+        let completion = Completion::find(&runtime, &editor::new("ext"), false).unwrap();
+        assert_eq!(completion.candidates, ["extends", "extent"]);
+        let completion =
+            Completion::find(&runtime, &editor::new("class Dog extends An"), false).unwrap();
+        assert_eq!(completion.candidates, ["Animal"]);
+        assert!(Completion::find(&runtime, &editor::new("extends"), false).is_none());
     }
 
     #[test]

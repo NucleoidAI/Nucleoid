@@ -164,6 +164,16 @@ mod tests {
     }
 
     #[test]
+    fn newlines_indent_after_extends_headers_with_a_colon_only() {
+        let mut editor = new("class Dog extends Animal:");
+        newline(&mut editor);
+        assert_eq!(editor.lines(), ["class Dog extends Animal:", "    "]);
+        let mut editor = new("class Dog extends Animal");
+        newline(&mut editor);
+        assert_eq!(editor.lines(), ["class Dog extends Animal", ""]);
+    }
+
+    #[test]
     fn mouse_positioning_tracks_scrolled_lines_and_wide_characters() {
         let mut editor = new("first\nsecond\nthird\nlast");
         let mut terminal = Terminal::new(TestBackend::new(10, 2)).unwrap();

@@ -3193,6 +3193,41 @@ neediest.dock.name
 - See [NUC 77](nuc-0077.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-extreme-items).
 
+## Extends clauses
+
+**Extends clauses keep a fleet's inherited insurance rule live**
+
+```nuc
+threshold = 1000
+class Asset(name, worth):
+    this.name = name
+    this.worth = worth
+$Asset.insured = $Asset.worth > threshold
+class Vehicle(name, worth, wheels) extends Asset:
+    this.name = name
+    this.worth = worth
+    this.wheels = wheels
+class Drone extends Asset
+van = Vehicle("van", 30000, 4)
+probe = Drone("probe", 800)
+assert([van.insured, probe.insured], [true, false])
+threshold = 500
+assert(probe.insured, true)
+van.worth = 400
+assert(van.insured, false)
+[Asset.length, Vehicle.length, Drone.length]
+# return: [0,1,1]
+```
+
+- `Vehicle` names its parent with `extends` and declares its own
+  constructor, while the bodyless `class Drone extends Asset` uses the
+  constructor of `Asset`. The class-level rule `$Asset.insured` applies to
+  both, so lowering `threshold` insures the drone and a lower worth uninsures
+  the van.
+- The populations stay separate: `Asset` has no instances of its own. See
+  [NUC 78](nuc-0078.md) and the
+  [root contract](../nucleoid.spec.md#extends-clauses-for-subclasses).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

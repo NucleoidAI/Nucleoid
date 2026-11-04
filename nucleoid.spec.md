@@ -87,6 +87,73 @@ semicolon. Other unsupported tokens use `Expected ':' but found <token>` with
 the existing token descriptions. Existing name, parameter, nesting, and
 operator-chain diagnostics and source positions are preserved.
 
+## Extends clauses for subclasses
+
+- [NUC 78](docs/nuc-0078.md) adds `extends` as an optional spelling of a
+  class header's parent, as JavaScript, TypeScript, Java, PHP, Dart, Scala and
+  Groovy write it. `class Name: Parent` keeps its grammar and meaning. No
+  token, keyword, syntax tree node or runtime path is added.
+- After a class name and its optional parameter list, the identifier `extends`
+  and one parent name form the clause, as in `class Dog extends Animal` and
+  `class Dog(name, breed) extends Animal`. The parent is an ordinary
+  identifier, as after `class Name:`, and need not be declared yet.
+- A colon after the clause opens the class body that follows
+  `class Name(params):`: an indented body of typed fields, constructor
+  statements, `init` and methods, or one statement on the same line.
+  `class Dog extends Animal:` with an indented body declares the class that
+  `class Dog: Animal` with that body declares.
+- After that colon the accepted class body grammar applies unchanged. As
+  after `class Dog:` and `class Dog: Animal`, a colon that ends its line
+  without an indented body takes the next statement, if any, as the class's
+  one constructor statement, and such a header at the end of an indented
+  block raises `SyntaxError("Unexpected the end of a block")`.
+- Without a colon the header is bodyless, as `class Name` and
+  `class Name(params)` are. It ends at a logical newline, semicolon, end of
+  input, or the enclosing block's closing brace or dedent, and the following
+  statement is not part of a constructor. `class Dog extends Animal` declares
+  the class that `class Dog: Animal` with an indented `pass` declares.
+- An indented body still requires the colon. A bodyless clause followed by a
+  newline and indentation raises
+  `SyntaxError("Expected ':' but found end of line")`, or
+  `SyntaxError("Expected ':' but found ';'")` when the first separator is a
+  semicolon.
+- Every spelling builds the same class declaration: the same name, parent,
+  parameters, fields, constructor statements and methods. Registration, the
+  `Class` list, separate parent and child instance lists, `$Parent` rules on
+  child instances, constructors and the nearest ancestor constructor, `init`,
+  `super` and bare `super`, named constructor arguments, inheritance cycle
+  checks, redeclaration, graph keys, `why`, canonical rendering and
+  transactions are those of the colon spelling, which canonical source keeps
+  writing.
+- `extends` is not a keyword. Only the identifier `extends` directly after a
+  class name or its parameter list starts the clause, a position where the
+  accepted parser raised
+  `SyntaxError("Expected ':' but found identifier 'extends'")`. Variables,
+  properties, parameters, functions, methods, classes and parents named
+  `extends` keep their meanings, and `class extends extends Animal` declares
+  a class named `extends` whose parent is `Animal`.
+- A parent that is not a name raises
+  `SyntaxError("Expected a parent class name but found <token>")` at that
+  token, with the existing token descriptions. `class Dog extends` reports
+  `end of input` at line 1, column 18, and `class Dog extends 5`,
+  `class Dog extends "A"` and `class Dog extends $Animal` report `number 5`,
+  `a string` and `'$Animal'` at line 1, column 19.
+- A second parent raises `SyntaxError("Class 'Dog' already extends 'Animal'")`
+  for `class Dog extends Animal: Cat`, at `Cat`. The check covers a name
+  followed by the end of the line or input after the colon, the position that
+  names the parent in `class Dog: Cat`.
+- Any other token after the parent raises the existing
+  `SyntaxError("Expected ':' but found <token>")` at that token, as in
+  `class Dog extends Animal Cat`, `class Dog extends Animal(x)`,
+  `class Dog extends Animal, Cat` and `class Dog extends Animal {}`.
+- Only these former syntax errors change. The REPL runs a bodyless clause at
+  once and buffers a clause that ends in a colon, as it does other headers;
+  the terminal workspace indents after that colon and completes `extends`.
+- The six appended entries beginning
+  `Nucleoid declares subclasses with extends clauses` through
+  `Nucleoid rolls back extends class declarations` specify the executable
+  behavior.
+
 ## Opt-in C-style comments
 
 - `#` starts an accepted line comment in every mode. By default, slash
@@ -19327,4 +19394,149 @@ assert: Probe.length, 2
 assert: coldest.name, "a"
 Probe("d", 9)
 assert: coldest.name, "d"
+---
+# Nucleoid declares subclasses with extends clauses
+
+class Animal(name):
+    this.name = name
+$Animal.legs = 4
+class Dog(name, breed) extends Animal:
+    this.name = name
+    this.breed = breed
+    def speak():
+        return this.name + " barks"
+class Cat extends Animal:
+    def speak() => this.name + " meows"
+rex = Dog("Rex", "lab")
+tom = Cat("Tom")
+assert(rex.breed, "lab")
+assert(rex.speak(), "Rex barks")
+assert(tom.name, "Tom")
+assert(tom.speak(), "Tom meows")
+assert(rex.legs, 4)
+assert(tom.legs, 4)
+assert(Animal.length, 0)
+assert(Dog.length, 1)
+assert(Cat.length, 1)
+$Animal.legs = 3
+assert(rex.legs, 3)
+assert(tom.legs, 3)
+---
+# Nucleoid declares bodyless subclasses with extends clauses
+
+class Shape(sides):
+    this.sides = sides
+$Shape.polygon = $Shape.sides > 2
+class Square extends Shape
+square = Square(4)
+class Triangle(sides) extends Shape; triangle = Triangle(3)
+{ class Segment extends Shape }
+segment = Segment(1)
+assert(square.sides, 4)
+assert(triangle.sides, 3)
+assert(square.polygon, true)
+assert(segment.polygon, false)
+assert(Shape.length, 0)
+assert(Square.length, 1)
+assert(Triangle.length, 1)
+assert(Segment.length, 1)
+segment.sides = 5
+assert(segment.polygon, true)
+---
+# Nucleoid keeps extends subclasses equivalent to colon subclasses
+
+class Account(owner, balance):
+    this.owner = owner
+    this.balance = balance
+$Account.overdrawn = $Account.balance < 0
+class Savings: Account
+    def init(owner, balance, rate):
+        super(owner, balance)
+        this.rate = rate
+class Deposit extends Account:
+    def init(owner, balance, rate):
+        super(owner, balance)
+        this.rate = rate
+saving = Savings("ada", 100, 2)
+deposit = Deposit(rate=2, owner="ada", balance=100)
+assert(deposit.owner, saving.owner)
+assert(deposit.rate, saving.rate)
+assert(deposit.overdrawn, false)
+deposit.balance = -5
+saving.balance = -5
+assert(deposit.overdrawn, true)
+assert(saving.overdrawn, true)
+assert(Account.length, 0)
+assert(Deposit.length, Savings.length)
+---
+# Nucleoid resolves super and inherited rules through extends chains
+
+class Base:
+    def init():
+        this.trace = "A"
+class Middle extends Base:
+    def init():
+        super
+        this.trace = this.trace + "B"
+class Leaf: Middle
+    def init():
+        super
+        this.trace = this.trace + "C"
+class Passive extends Leaf
+$Base.ready = true
+leaf = Leaf()
+passive = Passive()
+assert(leaf.trace, "ABC")
+assert(passive.trace, "ABC")
+assert(passive.ready, true)
+assert(Base.length, 0)
+assert(Middle.length, 0)
+assert(Leaf.length, 1)
+assert(Passive.length, 1)
+---
+# Nucleoid keeps extends an ordinary name
+
+extends = 2
+limits = {extends: 3}
+def scale(extends) => extends * 10
+class Gate:
+    def extends(step) => step + 1
+gate = Gate()
+class extends
+class Probe extends extends
+$extends.ready = true
+probe = Probe()
+assert(extends + limits.extends, 5)
+assert(scale(extends), 20)
+assert(gate.extends(4), 5)
+assert(probe.ready, true)
+assert(Probe.length, 1)
+extends = 4
+assert(scale(extends), 40)
+---
+# Nucleoid rolls back extends class declarations
+
+class Base
+try:
+    class Loop extends Loop
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+class Child extends Base
+try:
+    class Base extends Child
+catch error:
+    assert(error, TypeError("Circular Inheritance"))
+assert(Class.length, 2)
+class Limited extends Base:
+    def init(amount):
+        if amount > 10:
+            throw "LIMIT"
+        this.amount = amount
+small = Limited(5)
+try:
+    large = Limited(20)
+catch error:
+    assert(error, "LIMIT")
+assert(Limited.length, 1)
+assert(small.amount, 5)
 ```

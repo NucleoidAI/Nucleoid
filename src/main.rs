@@ -824,6 +824,35 @@ mod tests {
     }
 
     #[test]
+    fn extends_class_headers_buffer_only_through_their_colon() {
+        for line in [
+            "class Dog extends Animal:",
+            "class Dog(name, breed) extends Animal:",
+            "class Dog extends Animal: # body",
+        ] {
+            assert!(indented_body_header(line), "{line:?}");
+            assert_eq!(
+                next_indentation(line, indented_body_header(line)),
+                INDENT,
+                "{line:?}"
+            );
+        }
+        for line in [
+            "class Dog extends Animal",
+            "class Dog(name) extends Animal # bodyless",
+            "class Dog extends Animal: this.sound = \"woof\"",
+            "extends = 1",
+        ] {
+            assert!(!indented_body_header(line), "{line:?}");
+            assert_eq!(
+                next_indentation(line, indented_body_header(line)),
+                "",
+                "{line:?}"
+            );
+        }
+    }
+
+    #[test]
     fn bare_alternatives_indent_only_their_existing_continuation_body() {
         for line in [
             "else",

@@ -1643,6 +1643,41 @@ assert(lowest.bidder, "ada")
   numbers compare as numbers, strings as text and dates by time. See the
   [root contract](nucleoid.spec.md#list-and-population-extreme-items).
 
+## Extends clauses
+
+**Extends clauses declare subclasses as JavaScript and Java do**
+
+```nuc
+class Sensor(name, reading):
+    this.name = name
+    this.reading = reading
+$Sensor.alarm = $Sensor.reading > 50
+class Thermometer extends Sensor
+class Barometer(name, reading, unit) extends Sensor:
+    this.name = name
+    this.reading = reading
+    this.unit = unit
+kitchen = Thermometer("kitchen", 21)
+roof = Barometer("roof", 1013, "hPa")
+assert(kitchen.alarm, false)
+assert(roof.alarm, true)
+assert(roof.unit, "hPa")
+kitchen.reading = 64
+assert(kitchen.alarm, true)
+assert(Sensor.length, 0)
+```
+
+- [NUC 78](docs/nuc-0078.md) accepts `extends` in a class header as an
+  optional spelling of the colon parent. `class Thermometer extends Sensor`
+  is the bodyless subtype that `class Thermometer: Sensor` with an indented
+  `pass` declares, and `class Barometer(name, reading, unit) extends Sensor:`
+  takes the indented body that `class Barometer(name, reading, unit): Sensor`
+  takes.
+- `$Sensor.alarm` applies to both subtypes, which use `Sensor`'s constructor
+  or their own, and each subtype keeps its own instance list. `extends` stays
+  an ordinary name everywhere else. See the
+  [root contract](nucleoid.spec.md#extends-clauses-for-subclasses).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

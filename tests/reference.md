@@ -2264,4 +2264,23 @@ scores = []
 assert(best, null)
 top.who
 # return: "bo"
+---
+# Nucleoid accepts extends as the subclass spelling
+
+class Vehicle(wheels):
+    this.wheels = wheels
+$Vehicle.road = $Vehicle.wheels > 2
+class Truck(wheels, payload) extends Vehicle:
+    this.wheels = wheels
+    this.payload = payload
+class Bike extends Vehicle
+truck = Truck(6, 900)
+bike = Bike(2)
+assert(truck.road, true)
+assert(bike.road, false)
+assert(Vehicle.length, 0)
+truck.wheels = 2
+assert(truck.road, false)
+[Truck.length, Bike.length, truck.payload]
+# return: [1,1,900]
 ```

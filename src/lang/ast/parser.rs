@@ -1309,61 +1309,89 @@ impl Parser {
             Vec::new()
         };
 
-        if matches!(
-            self.peek(),
-            Token::Newline | Token::Semicolon | Token::Dedent | Token::RightBrace | Token::Eof
-        ) {
-            // Leave the terminator for the enclosing suite or block. An indent
-            // after separators still requires a colon; skip_separators would
-            // otherwise turn a misspelled class body into separate statements.
-            let following = self
-                .tokens
-                .iter()
-                .skip(self.position)
-                .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon));
-            if following.is_none_or(|spanned| spanned.token != Token::Indent) {
-                return Ok(Stmt::Class(ClassDecl {
-                    name,
-                    parent: None,
-                    parameters,
-                    fields: Vec::new(),
-                    constructor: Vec::new(),
-                    methods: Vec::new(),
-                }));
-            }
+        if matches!(self.peek(), Token::Identifier(word) if word == "extends") {
+            return self.extends_class(name, parameters);
+        }
+
+        if self.ends_bodyless_header() {
+            return Ok(Stmt::Class(empty_class(name, None, parameters)));
         }
 
         self.expect(&Token::Colon)?;
 
         // `class Student: Person` names a parent on the same line.
-        let mut parent = None;
+        let parent = self.colon_parent().map(str::to_owned);
 
-        if let Token::Identifier(candidate) = self.peek().clone() {
-            if matches!(self.peek_at(1), Token::Newline | Token::Indent | Token::Eof) {
-                self.advance();
-                parent = Some(candidate);
-            }
+        if parent.is_some() {
+            self.advance();
         }
 
-        let mut declaration = ClassDecl {
-            name,
-            parent,
-            parameters,
-            fields: Vec::new(),
-            constructor: Vec::new(),
-            methods: Vec::new(),
-        };
+        let mut declaration = empty_class(name, parent, parameters);
+        self.class_body(&mut declaration)?;
+        Ok(Stmt::Class(declaration))
+    }
 
+    fn extends_class(&mut self, name: String, parameters: Vec<Parameter>) -> Result<Stmt> {
+        self.advance();
+
+        let Token::Identifier(parent) = self.peek().clone() else {
+            return Err(self.error(format!(
+                "Expected a parent class name but found {}",
+                self.peek().describe()
+            )));
+        };
+        self.advance();
+
+        if self.ends_bodyless_header() {
+            return Ok(Stmt::Class(empty_class(name, Some(parent), parameters)));
+        }
+
+        self.expect(&Token::Colon)?;
+
+        if self.colon_parent().is_some() {
+            return Err(self.error(format!("Class '{name}' already extends '{parent}'")));
+        }
+
+        let mut declaration = empty_class(name, Some(parent), parameters);
+        self.class_body(&mut declaration)?;
+        Ok(Stmt::Class(declaration))
+    }
+
+    fn ends_bodyless_header(&self) -> bool {
+        // Leave the terminator for the enclosing suite or block. An indent
+        // after separators still requires a colon; skip_separators would
+        // otherwise turn a misspelled class body into separate statements.
+        matches!(
+            self.peek(),
+            Token::Newline | Token::Semicolon | Token::Dedent | Token::RightBrace | Token::Eof
+        ) && self
+            .tokens
+            .iter()
+            .skip(self.position)
+            .find(|spanned| !matches!(spanned.token, Token::Newline | Token::Semicolon))
+            .is_none_or(|spanned| spanned.token != Token::Indent)
+    }
+
+    fn colon_parent(&self) -> Option<&str> {
+        match (self.peek(), self.peek_at(1)) {
+            (Token::Identifier(parent), Token::Newline | Token::Indent | Token::Eof) => {
+                Some(parent)
+            }
+            _ => None,
+        }
+    }
+
+    fn class_body(&mut self, declaration: &mut ClassDecl) -> Result<()> {
         self.skip_newlines();
 
         if self.eat(&Token::Indent) {
-            self.class_members(&mut declaration)?;
+            self.class_members(declaration)?;
             self.eat(&Token::Dedent);
         } else if !matches!(self.peek(), Token::Newline | Token::Eof) {
             self.statement(&mut declaration.constructor)?;
         }
 
-        Ok(Stmt::Class(declaration))
+        Ok(())
     }
 
     fn class_members(&mut self, declaration: &mut ClassDecl) -> Result<()> {
@@ -2499,6 +2527,17 @@ fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
             relative.column
         },
     ))
+}
+
+fn empty_class(name: String, parent: Option<String>, parameters: Vec<Parameter>) -> ClassDecl {
+    ClassDecl {
+        name,
+        parent,
+        parameters,
+        fields: Vec::new(),
+        constructor: Vec::new(),
+        methods: Vec::new(),
+    }
 }
 
 fn simple_statement(expression: Expr) -> Stmt {
