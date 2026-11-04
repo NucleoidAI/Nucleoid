@@ -300,44 +300,55 @@ annotated by the same rules.
 
 `dataset.27a28665.json` annotates the seven original training pairs from
 `data\training\27a28665.json`, in order, followed by its three test pairs,
-fifty point instances in total, five per pair. Every input retains its
-original 3 by 3 canvas, colors, positions, and zero cells. Each input holds one
-five-cell pattern of a single color whose 3 by 3 bounding box spans the
-canvas; each object is one of its cells, a single 1 by 1 point of that color,
-listed in reading order. Each output is the original 1 by 1 grid, a code color
-that depends only on the pattern's geometry, not on its color or cell count:
-color 5 alone yields the codes 1, 2, and 6. The rules identify the geometry by
-how many corners of the pattern's bounding box it fills: none, the orthogonal
-cross, gives 6; one, the pattern with an empty center, gives 1; two, a 2 by 2
-block with a diagonal tail, gives 3; and all four, the diagonal cross, give 2.
-The first and sixth training pairs and the second test pair give 1, the second
-and third training pairs and the third test pair give 2, the fourth and fifth
-training pairs give 3, and the seventh training pair and the first test pair
-give 6. The class takes `color` as its only descriptive scalar, with no canvas
-size or matrix of cells. Unconditional class-level rules introduce three
-properties, absent before the rules run, from the pair's whole population:
-`at_corner` tests whether the point's input column is
-`Obj.min(point => point.x@first)` or `Obj.max(point => point.x@first)` and its
-input row is the population's smallest or largest `y@first`, a corner of the
-pattern's bounding box; `corner_count` is
-`Obj.filter(point => point.at_corner).length`; and `fill_color` is
-`6 if $Obj.corner_count == 0 else 1 if $Obj.corner_count == 1 else 3 if $Obj.corner_count == 2 else 2`.
-The population rules re-evaluate whenever an instance is added, so every point
-of a pair records the same `corner_count` and `fill_color`. Other features,
-such as the number of points without an orthogonal neighbor, also separate the
-four training patterns; the rules count bounding-box corners, which needs
-neither the canvas size nor the pattern's position. The rules also move `x`
-and `y` to the output origin 0, and `@first` anchors keep the corner test on
-the input coordinates. Native output snapshots are captured with all of the
-same pair's implementations together, followed by `Obj[:]`. The tag `l7544` is
-a single point, as in `dataset.0ca9ddb6.json` and `dataset.44f52bb0.json`, in
-both states, because each point's output is the single output cell. Input
-masks retain each pair's full-size, zero-padded 3 by 3 input canvas; every
-point's output mask is the complete 1 by 1 output, and merging them reproduces
-it. The `output_x`/`output_y` fields record the cell's nonzero bounding-box
-origin, equal to `output_value.x`/`output_value.y`. `output_canvas` is `FIT`
-because each output is cropped to its single cell instead of keeping the
-3 by 3 input canvas. Orientation is 0 in both states because the points are
+ten block instances in total, one per pair. Every training input retains its
+original 3 by 3 canvas, colors, positions, and zero cells, and every training
+output its original 1 by 1 grid; the test pairs keep their original grids as
+well. Each training input holds one block of a single color, 5 cells that
+touch through edges or corners, whose 3 by 3 bounding box spans the canvas;
+each object is that whole block, and zero cells are background. The training
+blocks take four shapes: a hollow diamond, the four edge cells around an empty
+center, with its top-left corner filled, in colors 5 and 4 (the first and
+sixth pairs); a diagonal cross, the center and the four corners, in colors 8
+and 5 (the second and third); a square with a diagonal tail, a 2 by 2 square
+in the top-right corner with one cell touching its bottom-left corner, in
+colors 1 and 8 (the fourth and fifth); and an orthogonal cross, the center and
+its four edge neighbors, in color 5 (the seventh). Each output is a single
+cell whose color is the code of the block's shape, whatever the block's color:
+1 for the hollow diamond, 2 for the diagonal cross, 3 for the square with a
+tail, and 6 for the orthogonal cross. Three shapes appear in two colors with
+the same code, so the color is ignored. No measure of the shape yields the
+code: every block has 5 cells; both crosses keep every mirror and quarter-turn
+symmetry of the canvas yet give 2 and 6; the hollow diamond and the square
+with a tail each mirror only across one diagonal yet give 1 and 3; and their
+3, 5, 2, and 1 edge-connected pieces do not order the codes. Each block is
+therefore one instance whose tag names its shape, and the rules look the code
+up by that tag. The class takes `tag` as its only descriptive property, such
+as `tag='l4262'` for the first training input, with no color, cell count,
+parts list, canvas size, or matrix of cells. Its constructor stores the tag it
+is given instead of a fixed initial tag, so the input state names the shape
+and no input property names the code. One class serves every shape because the
+solver reads output states with `Obj[:]`, which lists no instance of a
+subclass. Tags identify the geometry: `l4262` is the hollow diamond with a
+filled corner and `l3743` the square with a diagonal tail, while `l2404` is a
+diagonal cross and `l1707` an orthogonal cross, as in `dataset.0ca9ddb6.json`.
+Unconditional class-level rules set the output tag `l7544`, a single point, as
+in `dataset.44f52bb0.json`, and introduce one property, `fill_color`, which is
+absent before the rules run, as
+`{'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.tag@first]`: the object
+literal states each shape's code once, and object bracket access reads the
+code of the block's input tag, anchored with `@first` because the other rule
+turns the tag into `l7544`. The rules create no other properties, so each
+output state adds only `fill_color` to its input state's keys, and they leave
+`x` and `y` unchanged because the point sits at the block's origin, 0 and 0 in
+every training pair. Native snapshots start with the pair's `canvas_width` and
+`canvas_height`, and output snapshots are captured with the pair's
+implementation followed by `Obj[:]`. Input masks retain each pair's full-size
+input canvas, and output masks the complete output; merging them reproduces
+each pair's input and output. The `output_x`/`output_y` fields record the
+cell's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `FIT` because each training output is cropped to its single
+cell instead of keeping the 3 by 3 input canvas. Orientation is 0 in both
+states of the training pairs because no block is turned and the point is
 symmetric. The test pairs follow the training pairs at the same level and are
 annotated by the same rules.
 
@@ -581,7 +592,11 @@ to take one training puzzle through the
 
 1. The [arc-dataset](../.claude/agents/arc-dataset.agent.md) agent writes the
    puzzle's instruction dataset, using any dataset in `src\dataset` as a
-   reference. It prefers declarative, higher-order rules over every object. If
+   reference. It designs with gestalt perception: it starts from the big
+   picture, each grid's figures and their relations, writes declarative
+   statements at that level, and goes down to single cells only when the big
+   picture cannot express what the training pairs show. It prefers
+   declarative, higher-order rules over every object. If
    accepted Nucleoid cannot express the rules the training pairs need that way,
    it writes nothing and requests one Nucleoid enhancement instead,
    whose idea may come from the [language reference](../docs/README.md) or
