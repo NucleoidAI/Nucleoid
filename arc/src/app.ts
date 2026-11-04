@@ -4,7 +4,7 @@ import * as Matrix from "./lib/Matrix";
 import * as nucleoid from "./lib/nucleoid";
 import * as milestone from "./lib/milestone.ts";
 import arc_dataset from "./lib/arc_dataset.ts";
-import { writeFile } from "node:fs/promises";
+import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
 export async function start(puzzle_id: string = "6150a2bd") {
@@ -159,7 +159,8 @@ export async function start(puzzle_id: string = "6150a2bd") {
     difference,
   };
 
-  await writeFile(`logs/${puzzle_id}.log.json`, JSON.stringify(debug, null, 2));
+  await fs.mkdir('logs', { recursive: true });
+  await fs.writeFile(`logs/${puzzle_id}.log.json`, JSON.stringify(debug, null, 2));
 
   return difference;
 }
