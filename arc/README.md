@@ -357,6 +357,48 @@ horizontal geometry. The declarations hold executable code only, without the
 `#` comments of the other datasets. The test pair follows the training pairs
 at the same level and is annotated by the same rules.
 
+`dataset.25ff71a9.json` annotates the four original training pairs from
+`data\training\25ff71a9.json`, in order, followed by its two test pairs, six
+figure instances in total, one per pair. Every training input and output
+retains its original 3 by 3 canvas, colors, positions, and zero cells, and the
+test pairs keep their original grids as well. Each training input holds one
+figure, 3 cells of a single color that touch through edges; each object is
+that whole figure, and zero cells are background. The first two figures are
+full-width horizontal bars of color 1, 1 by 3, on the top row and on the
+middle row; the third and fourth are L-shaped trominoes in a 2 by 2 box, of
+color 1 in the canvas's top-left corner and of color 2 in its top-right
+corner. Each output moves the whole figure down one row and keeps its shape,
+color, and columns, so nothing else changes. The step is one row, not a fall
+to the bottom edge: the first bar stops on the middle row above the empty
+bottom row, and the 2-row-tall trominoes also move one row rather than their
+height. Rolling the canvas's rows down with wraparound would also reproduce
+every training output, because every training input's bottom row is empty;
+the rules move the whole figure instead, the unit seen first, a choice fixed
+from the training pairs before the test pairs were read. The class takes no
+descriptive property, with no color, size, cell list, canvas size, or matrix
+of cells, because the rule needs none: the figure's cells travel unchanged in
+its masks. One unconditional class-level rule rewrites `y` as
+`$Obj.y@first + 1`, the row below the figure's input origin, anchored with
+`@first` because the rule rewrites `y` itself. Each training grid holds a
+single figure and shows no relation between objects, so no population
+operation appears; the class-level rule moves every figure on its own. The
+rules create no property and leave `x`, `orientation`, and the tag unchanged,
+so input and output states share the same keys and differ only in `y`. Native
+snapshots start with the pair's `canvas_width` and `canvas_height`, and output
+snapshots are captured with the pair's implementation followed by `Obj[:]`.
+The tag `l9100` is a single shape, as in `dataset.28bf18c6.json` and
+`dataset.6150a2bd.json`, in both states. Input masks retain each pair's
+full-size input canvas and output masks the complete output, each padded with
+`0` outside its figure; merging them reproduces each pair's input and output.
+The `output_x`/`output_y` fields record the moved figure's nonzero
+bounding-box origin, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each training output keeps its input's
+3 by 3 canvas, including the empty top row that `FIT` would crop from every
+one of them. Orientation is 0 in both states of the training pairs because no
+training figure is turned. The declarations hold executable code only,
+without `#` comments. The test pairs follow the training pairs at the same
+level and are annotated by the same rules.
+
 `dataset.27a28665.json` annotates the seven original training pairs from
 `data\training\27a28665.json`, in order, followed by its three test pairs,
 ten block instances in total, one per pair. Every training input retains its

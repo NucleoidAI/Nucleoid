@@ -1,0 +1,225 @@
+{
+  "declarations": [
+    "class Obj(x: int, y: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'",
+    "$Obj.y = $Obj.y@first + 1"
+  ],
+  "output_canvas": "EXACT",
+  "dataset": [
+    {
+      "input_matrix": [
+        [1, 1, 1],
+        [0, 0, 0],
+        [0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj56f6c04f44d8",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 1,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [1, 1, 1],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [1, 1, 1],
+            [0, 0, 0]
+          ],
+          "implementation": "obj56f6c04f44d8 = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"obj56f6c04f44d8","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"obj56f6c04f44d8","orientation":0,"tag":"l9100","x":0,"y":1}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0],
+        [0, 0, 0],
+        [1, 1, 1]
+      ],
+      "instances": [
+        {
+          "instance_name": "objb2baa9b2270c",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 1,
+          "output_y": 2,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [1, 1, 1],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 1, 1]
+          ],
+          "implementation": "objb2baa9b2270c = Obj(x=0, y=1, orientation=0)",
+          "input_value": {"id":"objb2baa9b2270c","orientation":0,"tag":"l9100","x":0,"y":1},
+          "output_value": {"id":"objb2baa9b2270c","orientation":0,"tag":"l9100","x":0,"y":2}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 1, 0],
+        [1, 1, 0],
+        [0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0],
+        [0, 1, 0],
+        [1, 1, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj470037f0334e",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 1,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 1, 0],
+            [1, 1, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [0, 1, 0],
+            [1, 1, 0]
+          ],
+          "implementation": "obj470037f0334e = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"obj470037f0334e","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"obj470037f0334e","orientation":0,"tag":"l9100","x":0,"y":1}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 2, 2],
+        [0, 0, 2],
+        [0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0],
+        [0, 2, 2],
+        [0, 0, 2]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj2ad74ac3e6ef",
+          "input_x": 1,
+          "output_x": 1,
+          "input_y": 0,
+          "output_y": 1,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 2, 2],
+            [0, 0, 2],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [0, 2, 2],
+            [0, 0, 2]
+          ],
+          "implementation": "obj2ad74ac3e6ef = Obj(x=1, y=0, orientation=0)",
+          "input_value": {"id":"obj2ad74ac3e6ef","orientation":0,"tag":"l9100","x":1,"y":0},
+          "output_value": {"id":"obj2ad74ac3e6ef","orientation":0,"tag":"l9100","x":1,"y":1}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [2, 0, 0],
+        [2, 0, 0],
+        [0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0],
+        [2, 0, 0],
+        [2, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "objb847b315216d",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 1,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [2, 0, 0],
+            [2, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [2, 0, 0],
+            [2, 0, 0]
+          ],
+          "implementation": "objb847b315216d = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"objb847b315216d","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"objb847b315216d","orientation":0,"tag":"l9100","x":0,"y":1}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0],
+        [0, 1, 0],
+        [0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 1, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "objf247c9d3ab45",
+          "input_x": 1,
+          "output_x": 1,
+          "input_y": 1,
+          "output_y": 2,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [0, 1, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 1, 0]
+          ],
+          "implementation": "objf247c9d3ab45 = Obj(x=1, y=1, orientation=0)",
+          "input_value": {"id":"objf247c9d3ab45","orientation":0,"tag":"l9100","x":1,"y":1},
+          "output_value": {"id":"objf247c9d3ab45","orientation":0,"tag":"l9100","x":1,"y":2}
+        }
+      ]
+    }
+  ]
+}
