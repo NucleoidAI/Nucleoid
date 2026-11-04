@@ -101,10 +101,20 @@ the previous dataset and README paragraph in the session workspace. If the
 handoff used external staging, integrate the verified single file before the
 run and confirm the loader includes it among all JSON instruction datasets.
 Leave the shared files of the genesis puzzle `3aa6fb7a` unchanged.
-The dataset always prefers declarative, higher-order logic; when accepted
-Nucleoid cannot express its rules that way, the handoff requests the missing
-enhancement instead of an imperative workaround. Continue by the handoff's
-status:
+
+Always go with the declarative, higher-order, and most expressive solution,
+and pass this requirement to every `/arc-dataset` run. Among the formulations
+the training pairs confirm, the dataset takes the one that says the most with
+the least: each relation stated once over every instance of a class,
+higher-order operations over class populations, such as `filter`, `map`,
+`reduce`, `some`, `every`, `find`, and reasoning selections, wherever they
+express a rule, and no rule or property that only restates what the others
+already determine. When accepted Nucleoid cannot express the rules that way,
+the handoff requests the missing enhancement instead of an imperative
+workaround. Check a `written` handoff's rules against this requirement before
+the run, and send any that fall short back to the arc-dataset worker.
+
+Continue by the handoff's status:
 
 - `written`: run the puzzle.
 - `nucleoid_enhancement_required`: prepare the requested enhancement.

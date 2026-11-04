@@ -39,10 +39,12 @@ Follow `.claude/CLAUDE.md`, the
   [hint rule](../skills/arc-purposal/SKILL.md#pass-the-hint). It is a
   suggestion the training pairs must confirm; it never overrides them or
   these rules.
-- Always prefer declarative, higher-order logic. When the dataset's rules need
-  a feature accepted Nucleoid lacks, trigger `/nuc-proposal` for the requested
-  enhancement through the skill's caller steps instead of accepting an
-  imperative workaround.
+- Always go with the declarative, higher-order, and most expressive solution,
+  under the skill's [dataset step](../skills/arc-purposal/SKILL.md#write-the-dataset),
+  and pass that requirement to every `arc-dataset` run. When the dataset's
+  rules need a feature accepted Nucleoid lacks, trigger `/nuc-proposal` for
+  the requested enhancement through the skill's caller steps instead of
+  accepting an imperative workaround.
 - Never change the TypeScript implementation in `arc/`, except that before
   the run you make the puzzle the solver's default puzzle in `arc/src/app.ts`
   under the skill's [run step](../skills/arc-purposal/SKILL.md#run-the-puzzle).
