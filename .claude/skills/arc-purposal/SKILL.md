@@ -1,6 +1,6 @@
 ---
 name: arc-purposal
-description: Run one ARC training puzzle through its instruction dataset, any required Nucleoid enhancement with the existing NUC strategy bandit, and one exact-match solver run, then decide the enhancement's outcome and document the puzzle's progress.
+description: Run one ARC training puzzle through its instruction dataset, any required Nucleoid enhancement with the existing NUC strategy bandit, and one exact-match solver run, then decide the enhancement's outcome, document the puzzle's progress, and commit and push the invocation's changes.
 argument-hint: "[<puzzle-id>] [--strategy-policy <absolute-json-path>] [--hint <text>]"
 ---
 
@@ -9,7 +9,8 @@ argument-hint: "[<puzzle-id>] [--strategy-policy <absolute-json-path>] [--hint <
 `/arc-purposal [<puzzle-id>] [--strategy-policy <absolute-json-path>] [--hint <text>]`
 takes one training puzzle through its instruction dataset, any Nucleoid
 enhancement that dataset requires, one solver run, the outcome, and its
-progress record in `arc/docs/`. A requested enhancement uses the existing
+progress record in `arc/docs/`, then [commits and pushes](#commit-and-push)
+its changes. A requested enhancement uses the existing
 [NUC strategy bandit](#learn-the-nuc-proposal-strategy). Follow
 `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
@@ -359,12 +360,13 @@ push it:
   replaced it. Preserve pre-existing entries, other datasets, genesis files,
   and unrelated workflow changes. Keep the candidate isolated.
 
-Only `/nuc-proposal` commits and pushes, under the
-[git synchronization policy](../../rules/git.instructions.md): those caller
-steps push the requested NUC's outcome commit right after it, pulling first.
-This invocation commits and pushes nothing else. Leave the dataset, README,
-reporting-list, solver-default, and progress-record changes uncommitted for
-review. Never change project versions.
+Those caller steps push the requested NUC's outcome commit right after it,
+pulling first, under the
+[git synchronization policy](../../rules/git.instructions.md). That commit
+holds only the NUC's own records and integration; the dataset, README,
+reporting-list, solver-default, and progress-record changes wait for this
+invocation's [own commit](#commit-and-push) at the end. Never change project
+versions.
 
 ## Suggest solver changes
 
@@ -408,8 +410,48 @@ such as `arc/docs/ARC-NUC-0ca9ddb6.md`:
 Describe the puzzle and dataset from the training pairs and the arc-dataset
 handoff; never read the puzzle's `test` entries for the record. From the run's
 output, copy only its exit status, difference or error, and elapsed time,
-never a grid or cell. Leave the record uncommitted for review with the
-dataset.
+never a grid or cell. Then [commit and push](#commit-and-push) the record
+with the dataset.
+
+## Commit and push
+
+When the invocation is done, after the progress record, commit its changes
+and push them under the
+[git synchronization policy](../../rules/git.instructions.md). This is its
+one commit of its own, separate from a requested NUC's outcome commit, which
+the nuc-proposal caller steps already made and pushed. An invocation that
+pauses, or stops before it writes the progress record, commits nothing.
+
+1. Pull with `git pull --no-rebase --autostash` right before committing, and
+   resolve any conflict under the policy, keeping every other session's work.
+   A conflict on the solver's default puzzle keeps the value the working tree
+   held before the pull: this invocation's puzzle ID, or a later session's.
+2. Stage, by explicit path, only what this invocation changed and kept in the
+   primary checkout: `arc/src/dataset/dataset.<puzzle-id>.json`, its
+   paragraph in `arc/README.md`, its entry in `.github/workflows/arc.yml`,
+   the default puzzle in `arc/src/app.ts` while it names this puzzle, and
+   `arc/docs/ARC-NUC-<puzzle-id>.md`. A withdrawn dataset, and the paragraph
+   and entry withdrawn with it, stay out. When a path also holds changes this
+   invocation did not make, such as the pre-existing changes recorded at the
+   start or another session's, stage only this invocation's hunks, for example
+   by applying its own diff with `git apply --cached`; if they cannot be
+   separated, leave the path out and report it. Never use `git add -A`,
+   `git add .`, or `git commit -a`, and never stage session artifacts, run
+   logs, `arc/logs/`, or anything from a candidate worktree.
+3. Commit with an imperative subject that names the puzzle and what changed,
+   as the existing ARC commits do, such as
+   `Add ARC dataset for puzzle <puzzle-id>` for a new dataset or
+   `Rework ARC 27a28665 dataset to whole-block shapes` for a replaced one. In
+   the body, state what the dataset models, the files changed, any requested
+   NUC with its outcome, and the run's exit status and difference or error,
+   or that there was no run. Copy nothing else from the run's output, never a
+   grid or cell.
+4. Verify that the commit holds only the intended paths and hunks, pull again
+   the same way, and push the branch right away. When the push is rejected
+   because the remote moved, pull, resolve, and push again until it succeeds.
+   Never force-push, rewrite published history, or skip hooks.
+
+When nothing is left to commit, make no empty commit, and report why.
 
 ## Report
 
@@ -423,7 +465,8 @@ evaluator decision, and report path; the solver's previous and new default
 puzzle IDs and whether that change was retained or restored; the run's
 command, executable, exit status or timeout, difference or error, and log
 paths; the outcome and its basis; the suggested solver changes; the progress
-record's path and whether it was created or updated; and any blockers. Use
+record's path and whether it was created or updated; the commit's hash,
+paths, and push result, or why nothing was committed; and any blockers. Use
 `strategy_learning` to record `not_applicable`, `blocked`, `updated`,
 `unscored`, or `error`, with its reason; the policy input path/raw pin, trial
 ID, selected arm and consumption evidence; rubric/assessment, selection and
@@ -432,5 +475,6 @@ the checkpoint path/raw pin when created; and the learning-result path and
 retained head path/raw pin for the next authorized invocation. Never substitute
 the ARC score or proposal outcome for the advisory reward. Use
 `null` for anything not measured, including the difference before this
-dataset. Report a short summary with both records' paths, ending with any
-suggested solver changes, then stop without starting another puzzle or NUC.
+dataset. Report a short summary with both records' paths and the pushed
+commit, ending with any suggested solver changes, then stop without starting
+another puzzle or NUC.

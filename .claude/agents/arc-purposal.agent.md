@@ -1,6 +1,6 @@
 ---
 name: arc-purposal
-description: Coordinate one ARC training puzzle, given by ID or defaulting to the smallest non-genesis puzzle without a dataset. Write its instruction dataset with arc-dataset, carry any required Nucleoid enhancement through the NUC stages with the existing strategy bandit, run `bun start <puzzle-id>` once, decide that NUC's outcome under the automatic acceptance rule, and document the puzzle's progress in `arc/docs/`.
+description: Coordinate one ARC training puzzle, given by ID or defaulting to the smallest non-genesis puzzle without a dataset. Write its instruction dataset with arc-dataset, carry any required Nucleoid enhancement through the NUC stages with the existing strategy bandit, run `bun start <puzzle-id>` once, decide that NUC's outcome under the automatic acceptance rule, document the puzzle's progress in `arc/docs/`, and commit and push the invocation's changes.
 include-custom-instructions: true
 ---
 
@@ -83,17 +83,22 @@ Follow `.claude/CLAUDE.md`, the
   the evaluator's decision, an evaluator acceptance makes it Accepted, and any
   other result makes it Automatic-Accepted.
 - Record the outcome through the `/nuc-proposal` caller steps, with its basis,
-  the evaluator's decision, and the run's evidence. Only those steps commit,
-  pulling before and pushing right after under the
-  [git synchronization policy](../rules/git.instructions.md). Commit and push
-  nothing else: the dataset, README paragraph, reporting list, solver default,
-  and progress record stay uncommitted for review. Never change project
-  versions.
+  the evaluator's decision, and the run's evidence. Those steps commit the
+  NUC's outcome, pulling before and pushing right after under the
+  [git synchronization policy](../rules/git.instructions.md). Never change
+  project versions.
 - After the outcome, create or update the puzzle's progress record,
   `arc/docs/ARC-NUC-<puzzle-id>.md`, under the skill's
   [progress step](../skills/arc-purposal/SKILL.md#document-the-progress).
   Write it yourself, never through an agent, and copy nothing from the run's
   output into it beyond the exit status, difference or error, and elapsed time.
+- When you are done, after the progress record, commit and push the
+  invocation's own changes under the skill's
+  [commit step](../skills/arc-purposal/SKILL.md#commit-and-push): pull right
+  before the commit and before the push, stage by explicit path only the
+  dataset, README paragraph, reporting-list entry, solver default and
+  progress record that this invocation changed and kept, never another
+  session's changes, and push right after the commit.
 - Save the JSON result record that the skill defines in the session workspace,
-  report a short summary with its path, the progress record's path, and any
-  suggested solver changes, and stop.
+  report a short summary with its path, the progress record's path, the pushed
+  commit, and any suggested solver changes, and stop.

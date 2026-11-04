@@ -314,11 +314,13 @@ outcome, its basis, the hard-criteria evidence and, for Automatic-Accepted,
 every failed policy check in the body. Follow the
 [outcome commit message rule](../../rules/proposals.instructions.md#outcome-commit-messages-caller-only).
 
-This caller is the only flow that commits and pushes. It makes every NUC
-outcome commit, including those of NUCs that `/arc-purposal` requests and of
-cycles coordinated through `/nuc-evaluate`, and pushes it right after, pulling
-first, under the [git synchronization policy](../../rules/git.instructions.md).
-No worker agent, `/arc-purposal` or `/nuc-evaluate` commits or pushes.
+This caller is the only flow that commits and pushes NUC outcomes. It makes
+every NUC outcome commit, including those of NUCs that `/arc-purposal`
+requests and of cycles coordinated through `/nuc-evaluate`, and pushes it right
+after, pulling first, under the
+[git synchronization policy](../../rules/git.instructions.md). No worker agent
+or `/nuc-evaluate` commits or pushes; `/arc-purposal` commits and pushes only
+its own ARC changes, separately, once it is done.
 
 ## Record rejected outcomes (caller only)
 

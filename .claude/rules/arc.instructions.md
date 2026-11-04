@@ -11,7 +11,9 @@ omitted. The `arc-dataset` agent writes the puzzle's
 instruction dataset, any Nucleoid enhancement that dataset requires goes
 through the NUC stages, and its outcome follows the automatic acceptance rule,
 with one solver run whose exact match makes it Accepted. Afterwards it
-documents the puzzle's progress in `arc/docs/ARC-NUC-<puzzle-id>.md`.
+documents the puzzle's progress in `arc/docs/ARC-NUC-<puzzle-id>.md`. When it
+is done, it commits and pushes its own changes under the
+[git synchronization policy](git.instructions.md).
 `/arc-purposal` never changes the TypeScript implementation in `arc/`, except
 that it sets the default `puzzle_id` in `arc/src/app.ts` to the puzzle it runs;
 that default only selects the puzzle for a bare `bun start` and is not solver

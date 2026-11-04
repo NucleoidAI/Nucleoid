@@ -109,7 +109,8 @@ agent with this handoff and a fresh report path. The caller owns integration
 and evaluation status/index updates.
 
 After a `Rejected` outcome, which requires a failed hard criterion, the
-`/nuc-proposal` caller, the only flow that commits and pushes, must still
+`/nuc-proposal` caller, the only flow that commits and pushes NUC outcomes,
+must still
 record and commit the
 rejected proposal documentation and index/outcome metadata under the
 [shared rejection workflow](../rules/proposals.instructions.md#record-rejected-outcomes-caller-only).

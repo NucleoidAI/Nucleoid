@@ -334,7 +334,8 @@ checks still apply.
 When `/nuc-evaluate` coordinates an active continuous cycle, it commits and
 pushes nothing itself. The
 [nuc-proposal caller steps](../nuc-proposal/SKILL.md#name-outcome-commits-caller-only),
-the only flow that commits, record the outcome and commit and push it. A
+the only flow that commits NUC outcomes, record the outcome and commit and
+push it. A
 `Rejected` outcome, which now requires a failed hard criterion, follows the
 [shared rejection workflow](../../rules/proposals.instructions.md#record-rejected-outcomes-caller-only):
 its commit holds only the NUC rejection documentation and directly related

@@ -718,12 +718,16 @@ to take one training puzzle through the
    making the puzzle the default `puzzle_id` in `src\app.ts` before the run.
    When the dataset, the candidate, or the run shows that the solver needs a
    change, the final report suggests it for review.
-6. Finally, the workflow creates or updates the puzzle's progress record,
+6. The workflow then creates or updates the puzzle's progress record,
    `docs\ARC-NUC-<puzzle_id>.md`, in the format of the existing records such as
    [ARC-NUC-0ca9ddb6](docs/ARC-NUC-0ca9ddb6.md): the dataset, any NUC and its
    outcome, every run's exit status and difference, and the open items. The
-   record keeps earlier runs and stays uncommitted for review with the
-   dataset.
+   record keeps earlier runs.
+7. Finally, the workflow commits its own changes in one commit and pushes it:
+   the dataset, its README paragraph, its reporting-list entry, the default
+   `puzzle_id`, and the progress record, as far as it changed and kept them,
+   never another session's changes. A requested NUC's outcome has its own
+   `NUC <number> <Title>` commit, pushed when the outcome is decided.
 
 Without a puzzle ID, the workflow chooses one from `data\training`. It skips
 the [genesis puzzle](#genesis-puzzle) and every puzzle that already has a

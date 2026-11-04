@@ -325,8 +325,9 @@ to that evaluation and must not recursively launch another agent.
   requests and revisited Rejected NUCs.
 - Only the `/nuc-proposal` caller makes these commits and pushes each one
   right after it, under the [git synchronization policy](git.instructions.md).
-  `/arc-purposal`, `/nuc-evaluate` and every worker agent commit and push
-  nothing.
+  `/nuc-evaluate` and every worker agent commit and push nothing, and
+  `/arc-purposal` commits and pushes only its own ARC changes, separately,
+  once it is done.
 - State the outcome in the body: `Accepted`, `Automatic-Accepted` or
   `Rejected`, its basis, the hard-criteria evidence, every failed policy check
   for Automatic-Accepted, and for a rejection the failing hard criterion that
@@ -341,7 +342,7 @@ to that evaluation and must not recursively launch another agent.
 - Keep rejected implementation changes isolated in the candidate worktree; do not apply its full diff merely to record the NUC.
 - Stage explicit proposal/index paths and use a path-limited commit. Verify the resulting commit contains only the rejection documentation and directly related metadata. Never use repository-wide staging or `git commit -a`, or include unrelated files already staged.
 - Preserve unrelated staged and unstaged changes. If the rejection documentation is already committed, verify and report that commit instead of creating an empty duplicate.
-- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the `/nuc-proposal` caller, the only flow that commits, which pulls before committing and pushes right after under the [git synchronization policy](git.instructions.md).
+- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the `/nuc-proposal` caller, the only flow that commits NUC outcomes, which pulls before committing and pushes right after under the [git synchronization policy](git.instructions.md).
 
 ## ARC-requested proposals (caller only)
 
@@ -367,8 +368,10 @@ automatic acceptance rule directly. Record the basis, the evaluator's decision
 and report, and the run's evidence with the outcome, and never hide the
 evaluator's failures. The run is scored once: never rerun it, or revise the
 dataset or candidate from its output, to reach a pass. The `/nuc-proposal`
-caller steps commit and push that outcome; `/arc-purposal` commits and pushes
-nothing of its own.
+caller steps commit and push that outcome. When the invocation is done,
+`/arc-purposal` commits and pushes its own ARC changes, among them the dataset
+and progress record, in a separate commit under the
+[arc-purposal skill](../skills/arc-purposal/SKILL.md#commit-and-push).
 
 ## User-requested proposals (caller only)
 
