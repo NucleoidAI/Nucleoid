@@ -9,7 +9,7 @@ permissions:
 jobs:
   report:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
