@@ -318,29 +318,40 @@ cells. Each object is one nonzero input cell, a single 1 by 1 point of color
 cell when the input is left-right mirror symmetric, meaning every point has a
 point of its color in the same row at the mirrored column of the canvas, and a
 color-7 cell otherwise. The first, third, and fourth training pairs and the
-first test pair are symmetric. The training pairs alone also fit a top-bottom
-mirror; the rules test the left-right one. The class takes `color` and
+first test pair are symmetric. No cell count separates the outputs: 5, 6, and
+2 cells give 1, while 3, 4, and 3 cells give 7. The fifth training input, a Z
+shape, is a half turn of itself about its own center, and the sixth, an L
+shape, mirrors itself across a diagonal of its own 2 by 2 box, yet both give
+7, so the rules judge symmetry in the canvas frame rather than about the
+pattern itself. The third and fourth training pairs rule out the canvas
+diagonals. The training pairs alone still fit a top-bottom mirror, a half turn
+about the canvas center, and their combinations with the left-right mirror.
+The rules test one mirror axis, the left-right one, by the convention that
+mirror symmetry is bilateral symmetry across the vertical axis; the test pairs
+do not separate these candidates either. The class takes `color` and
 `canvas_width`, the width of the object's canvas, as scalars rather than a
 matrix of cells. Unconditional class-level rules introduce three properties,
-absent before the rules run, from the pair's whole population: `has_mirror`
-uses `Obj.some(other => ...)` to look for a point of the same color in the
-same input row at input column `$Obj.canvas_width - 1 - $Obj.x@first`;
-`symmetric` is `Obj.every(point => point.has_mirror)`; and `fill_color` is
+absent before the rules run. `has_mirror` uses `Obj.some(other => ...)` over
+the pair's whole population to look for a point of the same color in the same
+input row at input column `$Obj.canvas_width - 1 - $Obj.x@first`; every input
+holds the single color 2, so the color comparison never decides a pair.
+`symmetric` is `Obj.every(point => point.has_mirror)`, and `fill_color` is
 `1 if $Obj.symmetric else 7`. Both population rules re-evaluate whenever an
 instance is added, so every point of a pair records the same `symmetric` and
 `fill_color`. The rules also move `x` and `y` to the output origin 0, and
 `@first` anchors keep the mirror test on the input coordinates. Native output
 snapshots are captured with all of the same pair's implementations together,
 followed by `Obj[:]`. The tag `l7544` is a single point, as in
-`dataset.0ca9ddb6.json`, in both states, because each point's output is the
-single output cell. Input masks retain each pair's full-size, zero-padded
-3 by 3 input canvas; every point's output mask is the complete 1 by 1 output,
-and merging them reproduces it. The `output_x`/`output_y` fields record the
-cell's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
-`output_canvas` is `FIT` because each output is cropped to its single cell
-instead of keeping the 3 by 3 input canvas. Orientation is 0 in both states
-because the points are symmetric. The test pairs follow the training pairs at
-the same level and are annotated by the same rules.
+`dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, in both states, because
+each point's output is the single output cell. Input masks retain each pair's
+full-size, zero-padded 3 by 3 input canvas; every point's output mask is the
+complete 1 by 1 output, and merging them reproduces it. The
+`output_x`/`output_y` fields record the cell's nonzero bounding-box origin,
+equal to `output_value.x`/`output_value.y`. `output_canvas` is `FIT` because
+each output is cropped to its single cell instead of keeping the 3 by 3 input
+canvas. Orientation is 0 in both states because the points are symmetric. The
+test pairs follow the training pairs at the same level and are annotated by
+the same rules.
 
 `dataset.5582e5ca.json` annotates the three original training pairs from
 `data\training\5582e5ca.json`, in order, followed by its test pair, four block
