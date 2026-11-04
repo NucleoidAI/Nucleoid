@@ -45,6 +45,12 @@ Follow `.claude/CLAUDE.md`, the
   rules need a feature accepted Nucleoid lacks, trigger `/nuc-proposal` for
   the requested enhancement through the skill's caller steps instead of
   accepting an imperative workaround.
+- Design every solution with gestalt perception, under the same step, and
+  pass that requirement to every `arc-dataset` run: zoom out to the big
+  picture first, the whole grid, its figures, and their relations, and write
+  the declarative statements at that level. Never start from pixels; go down
+  to pixel-level objects only when the big picture cannot express what the
+  training pairs show, and never steer a worker finer than that.
 - Never change the TypeScript implementation in `arc/`, except that before
   the run you make the puzzle the solver's default puzzle in `arc/src/app.ts`
   under the skill's [run step](../skills/arc-purposal/SKILL.md#run-the-puzzle).

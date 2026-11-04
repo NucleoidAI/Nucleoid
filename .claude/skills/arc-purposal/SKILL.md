@@ -114,6 +114,19 @@ the handoff requests the missing enhancement instead of an imperative
 workaround. Check a `written` handoff's rules against this requirement before
 the run, and send any that fall short back to the arc-dataset worker.
 
+Design every solution with gestalt perception, and pass this requirement to
+every `/arc-dataset` run too. Start by zooming out to the big picture: each
+grid as a whole, the figures and groups it shows, the relations between them,
+and how the whole changes from input to output. Write the declarative
+statements at that level, about the objects seen first, such as whole shapes,
+patterns, and regions. Do not start from pixels. A model goes down to finer
+objects, single cells included, only when the big-picture formulation cannot
+express what the training pairs show; a pixel-level solution is then allowed,
+but the big picture is always the starting point. When you check a `written`
+handoff, send back one that starts from pixels without showing why the big
+picture falls short, and never steer a worker toward a finer model than the
+training pairs need.
+
 Continue by the handoff's status:
 
 - `written`: run the puzzle.

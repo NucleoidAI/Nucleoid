@@ -97,6 +97,15 @@ formatting exactly:
 
 ## Model the world
 
+- Design with gestalt perception. Start by zooming out to the big picture:
+  each grid as a whole, the figures and groups it shows, the relations
+  between them, and how the whole changes from input to output. Write the
+  declarative statements at that level, about the objects seen first, such as
+  whole shapes, patterns, and regions. Do not start from pixels. Go down to
+  finer objects, single cells included, only when the big-picture formulation
+  cannot express what the training pairs show. A pixel-level model is then
+  allowed, but the big picture is always the starting point, and the handoff
+  names the big-picture formulation you started from and why it fell short.
 - `declarations[0]` holds every class declaration of the world model, because
   the solver runs it alone to build input states. Existing datasets declare
   one class, `Obj(x: int, y: int, orientation: int, ...)`; add another class
@@ -289,8 +298,9 @@ versions, spawn agents, start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
 with `dataset_path`, the source puzzle path, any annotation helper's path,
-train and test pair counts, instance counts, the declarations, each check with
-its result, how you used any hint, any NUC request, any suggested solver change,
-and any blockers. A staged handoff also includes `staged_dataset_path` and
-leaves shared documentation/reporting changes to the caller. Publish no
-partial dataset when annotation is blocked.
+train and test pair counts, instance counts, the declarations, the
+big-picture formulation you started from and, for a finer model, why it fell
+short, each check with its result, how you used any hint, any NUC request, any
+suggested solver change, and any blockers. A staged handoff also includes
+`staged_dataset_path` and leaves shared documentation/reporting changes to
+the caller. Publish no partial dataset when annotation is blocked.
