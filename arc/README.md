@@ -306,6 +306,57 @@ Orientation is 0 in both states because the stripes are vertical and not
 turned. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
 
+`dataset.25d8a9c8.json` annotates the four original training pairs from
+`data\training\25d8a9c8.json`, in order, followed by its test pair, fifteen
+row instances in total, three per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions, including the zero cells of
+the outputs. Each input is three full-width rows stacked from top to bottom,
+with no zero cell; each object is one row, 3 cells wide and 1 cell tall,
+listed from top to bottom. Some rows hold a single color, and the others mix
+two colors. Each output keeps every row in place: a row whose cells all share
+one color becomes a solid color-5 bar, and every other row is cleared to the
+background color 0, so seven rows become bars and eight are cleared. The
+single-color rows are the top row of the first training input, the middle row
+of the second, the middle and bottom rows of the third, the bottom row of the
+fourth, and the top and bottom rows of the test input. Their colors, 4, 6, 4
+and 9, and 1 in the training pairs, all turn 5, so the rule tests whether a
+row is uniform, not which color it has. The training pairs alone also fit
+reading each input as single-colored shapes and turning gray only the shapes
+that are one row tall and as wide as the canvas; the rules judge whole rows
+instead, the unit in which every output changes, since each output row is a
+single color, a choice fixed from the training pairs before the test pair was
+read. The class takes `parts`, the colors of the row's cells from left to
+right, as a list, such as `[4, 4, 4]` for the top row of the first training
+input, as its only descriptive property, with no color, color count, canvas
+size, or matrix of cells, so no input property states whether the row is
+uniform. One unconditional class-level rule introduces `fill_color`, which is
+absent before the rules run, as
+`5 if $Obj.parts.distinct().length == 1 else 0`: the list query `distinct` of
+[NUC 71](../docs/nuc-0071.md) keeps each of the row's colors once, so exactly
+one kept color means the row is a single color, and the conditional
+expression of [NUC 59](../docs/nuc-0059.md) gives such a row color 5 and
+every other row the background color 0. The rules create no other property
+and leave `x`, `y`, `orientation`, and the tag unchanged, so each output
+state adds only `fill_color` to its input state's keys. Native snapshots
+start with the pair's `canvas_width` and `canvas_height`, and output
+snapshots are captured with all of the same pair's implementations together,
+followed by `Obj[:]`. The tag `l3058` is a horizontal bar, as in
+`dataset.d631b094.json`, in both states. Input masks retain each pair's
+full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
+each padded with `0` outside its row, so a cleared row's output mask is all
+zero; merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the bar's nonzero bounding-box origin,
+equal to `output_value.x`/`output_value.y`. A cleared row has no nonzero
+output cell, so its fields record its explicit output position instead, the
+row's unchanged origin, as an erased output object keeps one in
+[composition](#8-visualize-output-instance). `output_canvas` is `EXACT`
+because each output keeps its input's canvas, including the cleared top or
+bottom rows that `FIT` would crop from every training output. Orientation is
+0 in both states because the rows are not turned and the bar is a distinct
+horizontal geometry. The declarations hold executable code only, without the
+`#` comments of the other datasets. The test pair follows the training pairs
+at the same level and is annotated by the same rules.
+
 `dataset.27a28665.json` annotates the seven original training pairs from
 `data\training\27a28665.json`, in order, followed by its three test pairs,
 ten block instances in total, one per pair. Every training input retains its
