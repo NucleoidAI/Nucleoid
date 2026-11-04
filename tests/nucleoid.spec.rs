@@ -16338,6 +16338,267 @@ assert(Limited.length, 1)
 assert(small.amount, 5)"#);
 }
 
+/// Nucleoid reads list item properties with selector arguments
+#[rustfmt::skip]
+#[test]
+fn reads_list_item_properties_with_selector_arguments() {
+    runner()("pen = {item: \"pen\", qty: 2, paid: true}\nink = {item: \"ink\", qty: 5, paid: false}\norders = [pen, ink]\nitems = orders.map(.item)\nunits = orders.sum(.qty)\nsettled = orders.count(.paid)\nlargest = orders.maxBy(.qty)\nassert: [items, units, settled, largest], [[\"pen\", \"ink\"], 7, 1, ink]\nink.paid = true\npen.qty = 8\norders.push({item: \"cap\", qty: 1, paid: false})\nassert: [items, units, settled, largest], [[\"pen\", \"ink\", \"cap\"], 14, 2, pen]\norders.shift()\nassert: [items, units, settled, largest], [[\"ink\", \"cap\"], 6, 1, ink]");
+    let mut run = runner();
+    run(r#"pen = {item: "pen", qty: 2, paid: true}"#);
+    run(r#"ink = {item: "ink", qty: 5, paid: false}"#);
+    run("orders = [pen, ink]");
+    run("items = orders.map(.item)");
+    run("units = orders.sum(.qty)");
+    run("settled = orders.count(.paid)");
+    run("largest = orders.maxBy(.qty)");
+    {
+        let actual = run("[items, units, settled, largest]");
+        let expected = run(r#"([["pen", "ink"], 7, 1, ink])"#);
+        assert_eq!(actual, expected);
+    }
+    run("ink.paid = true");
+    run("pen.qty = 8");
+    run(r#"orders.push({item: "cap", qty: 1, paid: false})"#);
+    {
+        let actual = run("[items, units, settled, largest]");
+        let expected = run(r#"([["pen", "ink", "cap"], 14, 2, pen])"#);
+        assert_eq!(actual, expected);
+    }
+    run("orders.shift()");
+    {
+        let actual = run("[items, units, settled, largest]");
+        let expected = run(r#"([["ink", "cap"], 6, 1, ink])"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid reads nested property paths with selector arguments
+#[rustfmt::skip]
+#[test]
+fn reads_nested_property_paths_with_selector_arguments() {
+    runner()("oslo = {to: {city: \"Oslo\", zip: \"0150\"}, tags: [\"cold\", \"fragile\"], \"class\": \"air\"}\nbergen = {to: {city: \"Bergen\"}, tags: [], \"class\": \"sea\"}\nshipments = [oslo, bergen]\ncities = shipments.map(.to.city)\nzips = shipments.map(.to.zip)\ncounts = shipments.map(.tags.length)\nmodes = shipments.map(.class)\nassert: [cities, zips, counts, modes], [[\"Oslo\", \"Bergen\"], [\"0150\", null], [2, 0], [\"air\", \"sea\"]]\nbergen.to.zip = \"5003\"\nbergen.tags.push(\"bulk\")\nshipments.push({tags: [], \"class\": \"rail\"})\nassert: [cities, zips, counts, modes], [[\"Oslo\", \"Bergen\", null], [\"0150\", \"5003\", null], [2, 1, 0], [\"air\", \"sea\", \"rail\"]]\noslo.to = null\nassert: [cities, zips, counts], [null, null, [2, 1, 0]]\noslo.to = {city: \"Tromso\"}\nassert: [cities, zips], [[\"Tromso\", \"Bergen\", null], [null, \"5003\", null]]");
+    let mut run = runner();
+    run(r#"oslo = {to: {city: "Oslo", zip: "0150"}, tags: ["cold", "fragile"], "class": "air"}"#);
+    run(r#"bergen = {to: {city: "Bergen"}, tags: [], "class": "sea"}"#);
+    run("shipments = [oslo, bergen]");
+    run("cities = shipments.map(.to.city)");
+    run("zips = shipments.map(.to.zip)");
+    run("counts = shipments.map(.tags.length)");
+    run("modes = shipments.map(.class)");
+    assert_eq!(run("[cities, zips, counts, modes]"), serde_json::json!([["Oslo", "Bergen"], ["0150", null], [2, 0], ["air", "sea"]]));
+    run(r#"bergen.to.zip = "5003""#);
+    run(r#"bergen.tags.push("bulk")"#);
+    run(r#"shipments.push({tags: [], "class": "rail"})"#);
+    assert_eq!(run("[cities, zips, counts, modes]"), serde_json::json!([["Oslo", "Bergen", null], ["0150", "5003", null], [2, 1, 0], ["air", "sea", "rail"]]));
+    run("oslo.to = null");
+    assert_eq!(run("[cities, zips, counts]"), serde_json::json!([null, null, [2, 1, 0]]));
+    run(r#"oslo.to = {city: "Tromso"}"#);
+    assert_eq!(run("[cities, zips]"), serde_json::json!([["Tromso", "Bergen", null], [null, "5003", null]]));
+}
+
+/// Nucleoid reads class instance properties with selector arguments
+#[rustfmt::skip]
+#[test]
+fn reads_class_instance_properties_with_selector_arguments() {
+    runner()("class Bid(bidder, amount, open):\n    this.bidder = bidder\n    this.amount = amount\n    this.open = open\nlow = Bid.min(.amount)\nleader = Bid.maxBy(.amount)\nbidding = Bid.filter(.open).map(.bidder)\nrecent = Bid[-1:].map(.bidder)\nassert: [low, leader, bidding, recent], [Number.POSITIVE_INFINITY, null, [], []]\nada = Bid(\"ada\", 120, true)\nbo = Bid(\"bo\", 90, false)\nassert: [low, leader, bidding, recent], [90, ada, [\"ada\"], [\"bo\"]]\nbo.amount = 150\nbo.open = true\nassert: [low, leader, bidding], [120, bo, [\"ada\", \"bo\"]]\ndelete bo.open\ndelete bo.bidder\ndelete bo.amount\ndelete bo\nassert: [low, leader, bidding, recent], [120, ada, [\"ada\"], [\"ada\"]]");
+    let mut run = runner();
+    run(r#"class Bid(bidder, amount, open):
+    this.bidder = bidder
+    this.amount = amount
+    this.open = open"#);
+    run("low = Bid.min(.amount)");
+    run("leader = Bid.maxBy(.amount)");
+    run("bidding = Bid.filter(.open).map(.bidder)");
+    run("recent = Bid[-1:].map(.bidder)");
+    {
+        let actual = run("[low, leader, bidding, recent]");
+        let expected = run("([Number.POSITIVE_INFINITY, null, [], []])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"ada = Bid("ada", 120, true)"#);
+    run(r#"bo = Bid("bo", 90, false)"#);
+    {
+        let actual = run("[low, leader, bidding, recent]");
+        let expected = run(r#"([90, ada, ["ada"], ["bo"]])"#);
+        assert_eq!(actual, expected);
+    }
+    run("bo.amount = 150");
+    run("bo.open = true");
+    {
+        let actual = run("[low, leader, bidding]");
+        let expected = run(r#"([120, bo, ["ada", "bo"]])"#);
+        assert_eq!(actual, expected);
+    }
+    run("delete bo.open");
+    run("delete bo.bidder");
+    run("delete bo.amount");
+    run("delete bo");
+    {
+        let actual = run("[low, leader, bidding, recent]");
+        let expected = run(r#"([120, ada, ["ada"], ["ada"]])"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid keeps selector arguments live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_selector_arguments_live_in_class_level_rules() {
+    runner()("class Order(lines): this.lines = lines\n$Order.units = $Order.lines.sum(.qty)\n$Order.skus = $Order.lines.map(.sku)\n$Order.bulky = $Order.lines.count(.bulk)\nsmall = Order([{sku: \"pen\", qty: 2, bulk: false}])\nlarge = Order([{sku: \"ink\", qty: 50, bulk: true}, {sku: \"cap\", qty: 1, bulk: false}])\nbusiest = Order.maxBy(.units)\nassert: [small.units, small.skus, small.bulky, large.units, large.bulky], [2, [\"pen\"], 0, 51, 1]\nassert: busiest, large\nsmall.lines.push({sku: \"pad\", qty: 80, bulk: true})\nassert: [small.units, small.skus, small.bulky, busiest], [82, [\"pen\", \"pad\"], 1, small]\nlarge.lines = [{sku: \"box\", qty: 99, bulk: true}]\nassert: [large.units, large.skus, large.bulky, busiest], [99, [\"box\"], 1, large]");
+    let mut run = runner();
+    run("class Order(lines): this.lines = lines");
+    run("$Order.units = $Order.lines.sum(.qty)");
+    run("$Order.skus = $Order.lines.map(.sku)");
+    run("$Order.bulky = $Order.lines.count(.bulk)");
+    run(r#"small = Order([{sku: "pen", qty: 2, bulk: false}])"#);
+    run(r#"large = Order([{sku: "ink", qty: 50, bulk: true}, {sku: "cap", qty: 1, bulk: false}])"#);
+    run("busiest = Order.maxBy(.units)");
+    assert_eq!(run("[small.units, small.skus, small.bulky, large.units, large.bulky]"), serde_json::json!([2, ["pen"], 0, 51, 1]));
+    {
+        let actual = run("busiest");
+        let expected = run("(large)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"small.lines.push({sku: "pad", qty: 80, bulk: true})"#);
+    {
+        let actual = run("[small.units, small.skus, small.bulky, busiest]");
+        let expected = run(r#"([82, ["pen", "pad"], 1, small])"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"large.lines = [{sku: "box", qty: 99, bulk: true}]"#);
+    {
+        let actual = run("[large.units, large.skus, large.bulky, busiest]");
+        let expected = run(r#"([99, ["box"], 1, large])"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid passes selector arguments as ordinary functions
+#[rustfmt::skip]
+#[test]
+fn passes_selector_arguments_as_ordinary_functions() {
+    runner()("def spread(list, key) => list.max(key) - list.min(key)\ndef column(list, key) => list.map(key).join(\"/\")\nboxes = [{w: 2, h: 9, tag: \"a\"}, {w: 5, h: 4, tag: \"b\"}]\nwide = spread(boxes, .w)\ntall = spread(boxes, .h)\nwidths = column(boxes, .w)\ntags = column(\n    boxes,\n    .tag\n)\nchain = {at: 1, next: {at: 2, next: {at: 3, next: null}}}\nsteps = [\"x\", \"y\"]\nhop = steps.reduce(.next, chain)\nassert: [wide, tall, widths, tags, hop.at], [3, 5, \"2/5\", \"a/b\", 3]\nboxes.push({w: 11, h: 1, tag: \"c\"})\nsteps.pop()\nassert: [wide, tall, widths, tags, hop.at], [9, 8, \"2/5/11\", \"a/b/c\", 2]");
+    let mut run = runner();
+    run("def spread(list, key) => list.max(key) - list.min(key)");
+    run(r#"def column(list, key) => list.map(key).join("/")"#);
+    run(r#"boxes = [{w: 2, h: 9, tag: "a"}, {w: 5, h: 4, tag: "b"}]"#);
+    run("wide = spread(boxes, .w)");
+    run("tall = spread(boxes, .h)");
+    run("widths = column(boxes, .w)");
+    run(r#"tags = column(
+    boxes,
+    .tag
+)"#);
+    run("chain = {at: 1, next: {at: 2, next: {at: 3, next: null}}}");
+    run(r#"steps = ["x", "y"]"#);
+    run("hop = steps.reduce(.next, chain)");
+    assert_eq!(run("[wide, tall, widths, tags, hop.at]"), serde_json::json!([3, 5, "2/5", "a/b", 3]));
+    run(r#"boxes.push({w: 11, h: 1, tag: "c"})"#);
+    run("steps.pop()");
+    assert_eq!(run("[wide, tall, widths, tags, hop.at]"), serde_json::json!([9, 8, "2/5/11", "a/b/c", 2]));
+}
+
+/// Nucleoid uses selector arguments in headers methods lambdas and templates
+#[rustfmt::skip]
+#[test]
+fn uses_selector_arguments_in_headers_methods_lambdas_and_templates() {
+    runner()("class Part(sku, kg, fragile, cost):\n    this.sku = sku\n    this.kg = kg\n    this.fragile = fragile\n    this.cost = cost\nclass Shelf(parts):\n    this.parts = parts\n    def weight(): return this.parts.sum(.kg)\npen = Part(\"pen\", 2, false, 4)\nink = Part(\"ink\", 5, true, 9)\nleft = Shelf([pen, ink])\ncare = left.parts.some(.fragile) ? \"careful\" : \"plain\"\nsize = \"big\" if left.parts.max(.kg) > 4 else \"small\"\nnote = `${left.parts.map(.sku).join(\"+\")}`\nprice = shelf -> shelf.parts.sum(.cost)\nwrapped = []\nfor part of Part.filter(.fragile):\n    wrapped.push(part.sku)\npending = [{open: true}, {open: true}, {open: false}]\nwhile pending.count(.open) > 1:\n    pending.shift()\nassert: [left.weight(), care, size, note, price(left)], [7, \"careful\", \"big\", \"pen+ink\", 13]\nassert: [wrapped, pending.length], [[\"ink\"], 2]\nink.fragile = false\nink.kg = 3\nassert: [left.weight(), care, size], [5, \"plain\", \"small\"]\nleft.parts.push(Part(\"cap\", 2, true, 1))\nassert: [left.weight(), care, note, price(left)], [7, \"careful\", \"pen+ink+cap\", 14]");
+    let mut run = runner();
+    run(r#"class Part(sku, kg, fragile, cost):
+    this.sku = sku
+    this.kg = kg
+    this.fragile = fragile
+    this.cost = cost"#);
+    run(r#"class Shelf(parts):
+    this.parts = parts
+    def weight(): return this.parts.sum(.kg)"#);
+    run(r#"pen = Part("pen", 2, false, 4)"#);
+    run(r#"ink = Part("ink", 5, true, 9)"#);
+    run("left = Shelf([pen, ink])");
+    run(r#"care = left.parts.some(.fragile) ? "careful" : "plain""#);
+    run(r#"size = "big" if left.parts.max(.kg) > 4 else "small""#);
+    run(r#"note = `${left.parts.map(.sku).join("+")}`"#);
+    run("price = shelf -> shelf.parts.sum(.cost)");
+    run("wrapped = []");
+    run(r#"for part of Part.filter(.fragile):
+    wrapped.push(part.sku)"#);
+    run("pending = [{open: true}, {open: true}, {open: false}]");
+    run(r#"while pending.count(.open) > 1:
+    pending.shift()"#);
+    assert_eq!(run("[left.weight(), care, size, note, price(left)]"), serde_json::json!([7, "careful", "big", "pen+ink", 13]));
+    assert_eq!(run("[wrapped, pending.length]"), serde_json::json!([["ink"], 2]));
+    run("ink.fragile = false");
+    run("ink.kg = 3");
+    assert_eq!(run("[left.weight(), care, size]"), serde_json::json!([5, "plain", "small"]));
+    run(r#"left.parts.push(Part("cap", 2, true, 1))"#);
+    assert_eq!(run("[left.weight(), care, note, price(left)]"), serde_json::json!([7, "careful", "pen+ink+cap", 14]));
+}
+
+/// Nucleoid rolls back failed selector argument updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_selector_argument_updates() {
+    runner()("def checked(total):\n    if total > 100:\n        throw \"TOO_MANY\"\n    return total\ncart = [{sku: \"pen\", qty: 2, price: 3}, {sku: \"ink\", qty: 5, price: 9}]\nunits = cart.sum(.qty)\nskus = cart.map(.sku)\ndearest = cart.maxBy(.price)\ncheapest = cart.minBy(.price)\ncap = checked(units)\nfailure = \"\"\ntry:\n    cart.push({sku: \"box\", qty: 500, price: 1})\ncatch error:\n    failure = error\nassert: [failure, units, skus, cap, cart.length], [\"TOO_MANY\", 7, [\"pen\", \"ink\"], 7, 2]\nsuppose:\n    cart.push({sku: \"cap\", qty: 30, price: 12})\n    assert: [units, skus, dearest.sku, cap], [37, [\"pen\", \"ink\", \"cap\"], \"cap\", 37]\nassert: [units, skus, dearest.sku, cheapest.sku, cart.length], [7, [\"pen\", \"ink\"], \"ink\", \"pen\", 2]\ncart.push({sku: \"pad\", qty: 9, price: 1})\nassert: [units, skus, dearest.sku, cheapest.sku, cap], [16, [\"pen\", \"ink\", \"pad\"], \"ink\", \"pad\", 16]");
+    let mut run = runner();
+    run(r#"def checked(total):
+    if total > 100:
+        throw "TOO_MANY"
+    return total
+cart = [{sku: "pen", qty: 2, price: 3}, {sku: "ink", qty: 5, price: 9}]
+units = cart.sum(.qty)
+skus = cart.map(.sku)
+dearest = cart.maxBy(.price)
+cheapest = cart.minBy(.price)
+cap = checked(units)
+failure = ""
+try:
+    cart.push({sku: "box", qty: 500, price: 1})
+catch error:
+    failure = error
+assert: [failure, units, skus, cap, cart.length], ["TOO_MANY", 7, ["pen", "ink"], 7, 2]
+suppose:
+    cart.push({sku: "cap", qty: 30, price: 12})
+    assert: [units, skus, dearest.sku, cap], [37, ["pen", "ink", "cap"], "cap", 37]
+assert: [units, skus, dearest.sku, cheapest.sku, cart.length], [7, ["pen", "ink"], "ink", "pen", 2]
+cart.push({sku: "pad", qty: 9, price: 1})
+assert: [units, skus, dearest.sku, cheapest.sku, cap], [16, ["pen", "ink", "pad"], "ink", "pad", 16]"#);
+}
+
+/// Nucleoid tracks only the properties that selector arguments read
+#[rustfmt::skip]
+#[test]
+fn tracks_only_the_properties_that_selector_arguments_read() {
+    runner()("class Sensor(room, temp):\n    this.room = room\n    this.temp = temp\nhottest = Sensor.maxBy(.temp)\nrooms = Sensor.map(.room)\nlab = Sensor(\"lab\", 21)\nhall = Sensor(\"hall\", 25)\nreaders = (affects hall.temp).map(.node)\nlisters = (affects hall.room).map(.node)\nassert: [readers, listers, hottest, rooms], [[\"hottest\"], [\"rooms\"], hall, [\"lab\", \"hall\"]]\ncoolest = Sensor.minBy(.temp)\nassert: [readers, listers, coolest], [[\"hottest\", \"coolest\"], [\"rooms\"], lab]\nlab.temp = 30\nhall.room = \"foyer\"\nassert: [hottest, coolest, rooms], [lab, hall, [\"lab\", \"foyer\"]]");
+    let mut run = runner();
+    run(r#"class Sensor(room, temp):
+    this.room = room
+    this.temp = temp"#);
+    run("hottest = Sensor.maxBy(.temp)");
+    run("rooms = Sensor.map(.room)");
+    run(r#"lab = Sensor("lab", 21)"#);
+    run(r#"hall = Sensor("hall", 25)"#);
+    run("readers = (affects hall.temp).map(.node)");
+    run("listers = (affects hall.room).map(.node)");
+    {
+        let actual = run("[readers, listers, hottest, rooms]");
+        let expected = run(r#"([["hottest"], ["rooms"], hall, ["lab", "hall"]])"#);
+        assert_eq!(actual, expected);
+    }
+    run("coolest = Sensor.minBy(.temp)");
+    {
+        let actual = run("[readers, listers, coolest]");
+        let expected = run(r#"([["hottest", "coolest"], ["rooms"], lab])"#);
+        assert_eq!(actual, expected);
+    }
+    run("lab.temp = 30");
+    run(r#"hall.room = "foyer""#);
+    {
+        let actual = run("[hottest, coolest, rooms]");
+        let expected = run(r#"([lab, hall, ["lab", "foyer"]])"#);
+        assert_eq!(actual, expected);
+    }
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -6,6 +6,7 @@ use crate::builtins::Global;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::Expr;
+use crate::lang::ast::function::SELECTOR_PARAMETER;
 use crate::lang::evaluation::TrackingMode;
 use crate::number;
 use crate::runtime::Runtime;
@@ -192,9 +193,11 @@ impl Runtime {
         let (value, _) = value?;
 
         if value.is_undefined() {
-            return Err(Error::not_defined(
-                object.path().unwrap_or_else(|| object.to_string()),
-            ));
+            let name = match object {
+                Expr::Identifier(name) if name == SELECTOR_PARAMETER => ".value".to_string(),
+                _ => object.path().unwrap_or_else(|| object.to_string()),
+            };
+            return Err(Error::not_defined(name));
         }
 
         Ok(value)

@@ -2076,7 +2076,13 @@ impl Parser {
         let mut arguments = Vec::new();
 
         while !self.check(&Token::RightParen) {
-            arguments.push(self.argument(context)?);
+            let length = self.selector_length();
+            let argument = if self.starts_selector(length) {
+                self.nested_expression(|parser| parser.selector(length))?
+            } else {
+                self.argument(context)?
+            };
+            arguments.push(argument);
 
             if !self.eat(&Token::Comma) {
                 break;
@@ -2085,6 +2091,45 @@ impl Parser {
 
         self.expect(&Token::RightParen)?;
         Ok(arguments)
+    }
+
+    fn selector_length(&self) -> usize {
+        let mut length = 0;
+        while length < MAX_CHAIN
+            && self.peek_at(2 * length) == &Token::Dot
+            && matches!(
+                self.peek_at(2 * length + 1),
+                Token::Identifier(_) | Token::Keyword(_)
+            )
+        {
+            length += 1;
+        }
+        length
+    }
+
+    fn starts_selector(&self, length: usize) -> bool {
+        length == MAX_CHAIN
+            || (length > 0 && matches!(self.peek_at(2 * length), Token::Comma | Token::RightParen))
+    }
+
+    fn selector(&mut self, length: usize) -> Result<Expr> {
+        if length == MAX_CHAIN {
+            return Err(Error::syntax("Expression has too many parts")
+                .at(self.position_at(2 * (MAX_CHAIN - 1))));
+        }
+        let mut path = Vec::with_capacity(length);
+        for _ in 0..length {
+            self.advance();
+            path.push(self.member_property()?);
+        }
+        debug_assert!(matches!(self.peek(), Token::Comma | Token::RightParen));
+        Ok(Expr::Function(Function::selector(path)))
+    }
+
+    fn position_at(&self, offset: usize) -> Position {
+        self.tokens
+            .get(self.position + offset)
+            .map_or_else(|| self.here(), |spanned| spanned.position)
     }
 
     fn argument(&mut self, context: ArgumentContext) -> Result<Expr> {

@@ -421,6 +421,28 @@ mod tests {
     }
 
     #[test]
+    fn completion_offers_nothing_after_a_selector_dot_and_no_unnamed_binding() {
+        let mut runtime = Runtime::new();
+        runtime
+            .run("class Bid(amount): this.amount = amount\nada = Bid(5)\ntop = Bid.max(.amount)")
+            .unwrap();
+        for prefix in ["Bid.max(.", "Bid.max(.am", "Bid.maxBy(1, .a"] {
+            assert!(
+                Completion::find(&runtime, &editor::new(prefix), true).is_none(),
+                "{prefix}"
+            );
+        }
+        let completion = Completion::find(&runtime, &editor::new(""), true).unwrap();
+        assert!(completion.candidates.iter().any(|name| name == "top"));
+        assert!(
+            completion
+                .candidates
+                .iter()
+                .all(|name| !name.is_empty() && !name.starts_with('.'))
+        );
+    }
+
+    #[test]
     fn completing_in_the_middle_replaces_the_suffix_and_respects_character_offsets() {
         let runtime = Runtime::new();
         let mut editor = editor::new("\"界\"; Math.squ");

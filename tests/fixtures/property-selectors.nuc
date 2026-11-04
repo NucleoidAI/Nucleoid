@@ -1,0 +1,14 @@
+class Bid(bidder, amount, open):
+    this.bidder = bidder
+    this.amount = amount
+    this.open = open
+leader = Bid.maxBy(.amount)
+bidding = Bid.filter(.open).map(.bidder)
+if Bid.some(.open):
+    alert = true
+Bid("ada", 120, true)
+Bid("bo", 150, false)
+assert(leader.bidder, "bo")
+assert(bidding, ["ada"])
+assert(alert, true)
+Bid.sum(.amount)

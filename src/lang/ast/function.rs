@@ -3,16 +3,69 @@
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
-use crate::lang::ast::{Expr, Function as FunctionDecl, FunctionBody};
+use crate::lang::ast::{Expr, Function as FunctionDecl, FunctionBody, Parameter};
 use crate::lang::evaluation::Flow;
 use crate::nuc::object::ConstructorCall;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
+pub(crate) const SELECTOR_PARAMETER: &str = "";
+
 #[derive(Debug)]
 pub struct Function<'a> {
     pub node: &'a Expr,
+}
+
+impl FunctionDecl {
+    #[must_use]
+    pub(crate) fn selector(path: Vec<String>) -> Arc<Self> {
+        let body = path.into_iter().fold(
+            Expr::Identifier(SELECTOR_PARAMETER.to_string()),
+            |object, property| Expr::Member {
+                object: Box::new(object),
+                property,
+            },
+        );
+        let selector = Arc::new(FunctionDecl {
+            name: None,
+            parameters: vec![Parameter {
+                name: SELECTOR_PARAMETER.to_string(),
+                type_name: None,
+                default: None,
+                rest: false,
+            }],
+            body: FunctionBody::Expression(Box::new(body)),
+        });
+        debug_assert!(selector.selector_path().is_some());
+        selector
+    }
+
+    #[must_use]
+    pub(crate) fn selector_path(&self) -> Option<&Expr> {
+        let [parameter] = self.parameters.as_slice() else {
+            return None;
+        };
+        let unnamed = self.name.is_none()
+            && parameter.name == SELECTOR_PARAMETER
+            && parameter.type_name.is_none()
+            && parameter.default.is_none()
+            && !parameter.rest;
+        if !unnamed {
+            return None;
+        }
+        let FunctionBody::Expression(body) = &self.body else {
+            return None;
+        };
+        let mut node = body.as_ref();
+        let mut members = 0_usize;
+        while let Expr::Member { object, .. } = node {
+            node = object;
+            members += 1;
+        }
+        let rooted = matches!(node, Expr::Identifier(name) if name == SELECTOR_PARAMETER);
+        (rooted && members > 0).then_some(body)
+    }
 }
 
 impl<'a> Function<'a> {

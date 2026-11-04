@@ -2283,4 +2283,26 @@ truck.wheels = 2
 assert(truck.road, false)
 [Truck.length, Bike.length, truck.payload]
 # return: [1,1,900]
+---
+# Nucleoid reads properties with selector arguments
+
+class Item(name, price, stock):
+    this.name = name
+    this.price = price
+    this.stock = stock
+names = Item.map(.name)
+dearest = Item.max(.price)
+stocked = Item.count(.stock)
+Item("pen", 3, 10)
+ink = Item("ink", 9, 0)
+assert(names, ["pen", "ink"])
+assert(dearest, 9)
+assert(stocked, 1)
+ink.price = 2
+ink.stock = 4
+Item("cap", 5, 0)
+assert(dearest, 5)
+assert(stocked, 2)
+names
+# return: ["pen","ink","cap"]
 ```

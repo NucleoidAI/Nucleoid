@@ -1677,7 +1677,36 @@ python
 - `lambda` is not reserved. It stays an ordinary name at the top level of `if`/`else`/`elif`/`for` headers, subscript starts (the index or slice start inside `[...]`) and template interpolations; as a single parameter inside an object-literal value (NUC44's `{first: lambda next: 2}`); and as a single parameter whose colon starts a statement, because statement loops accept one directly after an expression: `name: Type` before a statement boundary remains a typed declaration, and `x = lambda assert: x, 1` remains an assignment followed by NUC45's `assert:` statement. Parenthesize the lambda or pass it as an argument there; a single parameter named `assert` never forms a lambda.
 - Full grammar, exclusions and errors are in the authoritative [thin arrows and Python-style lambdas](../nucleoid.spec.md#thin-arrows-and-python-style-lambdas) section.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), and [NUC 57](nuc-0057.md).
+### Property selector arguments
+
+```
+class Item(name, price, stock):
+    this.name = name
+    this.price = price
+    this.stock = stock
+names = Item.map(.name)
+dearest = Item.max(.price)
+stocked = Item.count(.stock)
+Item("pen", 3, 10)
+ink = Item("ink", 9, 0)
+assert(names, ["pen", "ink"])
+assert(dearest, 9)
+assert(stocked, 1)
+ink.price = 2
+ink.stock = 4
+Item("cap", 5, 0)
+assert(dearest, 5)
+assert(stocked, 2)
+names
+```
+
+- This is the complete `Nucleoid reads properties with selector arguments` program in `tests/reference.md`, without its title and expected-return metadata; it returns `["pen","ink","cap"]`.
+- [NUC 79](nuc-0079.md) lets a call argument written `.name`, or a dotted path such as `.to.city`, stand for the one-parameter function that reads that path: `Item.max(.price)` is `Item.max(item -> item.price)`. A selector is a whole argument of a parenthesized argument list, the `.NAME` pairs directly followed by `,` or `)`, in any call, method call, constructor call, `new` call or `super(...)`.
+- Names are those member access accepts, keywords included in their canonical spelling, so `.self` reads `this`. The selector reads only its argument, exactly as the lambda would: missing steps read undefined, a declaration that reads through `null` settles to `null`, `.value` stays the snapshot read, a missing argument is `null` and extra arguments are ignored.
+- Selectors stay live and roll back like the lambda they abbreviate. They render as written, so `why` explains `dearest = Item.max(.price)`; anonymous lambdas keep rendering as `function()`.
+- Anything else that starts with `.` keeps its error: `f(.a + 1)`, `x = .a`, `[.a]` and `assert: .a, 1` still raise `SyntaxError("Unexpected '.'")`. A selector names at most 127 properties. See the authoritative [property selector arguments](../nucleoid.spec.md#property-selector-arguments) section.
+
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), and [NUC 79](nuc-0079.md).
 
 ---
 
@@ -3107,6 +3136,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Writing through an undefined instance property | `<path> is not defined` |
 | Writing through an undefined class-level reference | `<Name>.<property> is not defined` |
 | Reading `.value` of an undefined property | `<path> is not defined` |
+| Reading `.value` of a property selector's undefined argument | `.value is not defined` |
 | Declaring a variable with no value | `Missing definition` |
 
 ### TypeError
@@ -3155,7 +3185,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Deleting something that is not a variable, property or instance, such as the power in `delete p.v ** 2` | `Cannot delete <expression>`, for example `Cannot delete p.v**2` |
 | A block or template that is never closed | `Unterminated block`, `Unterminated template expression` |
 | Nesting or a chain past the runtime's limit | `Expressions are nested too deeply`, `Expression has too many operands` |
-| A postfix chain or a compound path beyond its limit | `Expression has too many parts` |
+| A postfix chain, a compound path or a property selector beyond its limit | `Expression has too many parts` |
 | A destructuring with more than 128 targets | `Destructuring has too many targets` |
 | A constructor-header star at a parameter position | `Expected a parameter but found '*'` |
 | An `extends` clause whose parent is missing or not a name | `Expected a parent class name but found <what>` |
@@ -3267,6 +3297,7 @@ value => expression                    anonymous arrow; also (a, b) => expressio
 value => { statement }                 anonymous arrow with a statement body
 value -> expression                    optional spelling wherever => is accepted (NUC 57)
 lambda a, b: expression                optional lambda, exactly (a, b) => (expression) (NUC 57)
+f(.a.b)                                property selector argument, exactly f(v => v.a.b) (NUC 79)
 def name(params) => expression         single-return function
 def name(head = 1, ...tail) => expression final positional rest list (NUC 74)
 def name(params) =>                    optional indented single expression (NUC 32)

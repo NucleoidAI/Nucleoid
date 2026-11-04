@@ -1678,6 +1678,36 @@ assert(Sensor.length, 0)
   an ordinary name everywhere else. See the
   [root contract](nucleoid.spec.md#extends-clauses-for-subclasses).
 
+## Property selector arguments
+
+**Selector arguments read properties without naming a parameter**
+
+```nuc
+class Order(customer, amount, paid):
+    this.customer = customer
+    this.amount = amount
+    this.paid = paid
+revenue = Order.sum(.amount)
+largest = Order.maxBy(.amount)
+settled = Order.filter(.paid).map(.customer)
+Order("ada", 20, true)
+bo = Order("bo", 45, false)
+assert: [revenue, largest.customer, settled], [65, "bo", ["ada"]]
+bo.paid = true
+Order("cy", 60, false)
+assert: [revenue, largest.customer, settled], [125, "cy", ["ada", "bo"]]
+```
+
+- [NUC 79](docs/nuc-0079.md) lets a call argument written `.amount`, or a
+  dotted path such as `.address.city`, stand for the function
+  `order -> order.amount` that reads it. `Order.sum(.amount)` totals every
+  order, and `Order.filter(.paid).map(.customer)` names the customers who
+  have paid.
+- A selector stays live like the lambda it abbreviates: a new order or a
+  changed amount re-evaluates `revenue` and `largest`. It is written only as
+  a whole call argument, so `x = .amount` stays a syntax error. See the
+  [root contract](nucleoid.spec.md#property-selector-arguments).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

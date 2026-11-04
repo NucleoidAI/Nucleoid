@@ -2518,6 +2518,69 @@ statement positions; caught values and transaction recovery are unchanged.
   are accepted` through `Nucleoid rolls back failed lambda and thin arrow
   updates` specify the executable behavior.
 
+## Property selector arguments
+
+- [NUC 79](docs/nuc-0079.md) lets a call argument written `.name`, or a
+  dotted path such as `.a.b`, stand for the one-parameter function that reads
+  that path from its argument: `Bid.max(.amount)` means
+  `Bid.max(bid -> bid.amount)`. No token, keyword, syntax tree node or error
+  type is added.
+- A selector is a whole argument of a parenthesized argument list: one or more
+  `.NAME` pairs directly followed by `,` or `)`. The argument lists are those
+  of calls, method calls, constructor calls, calls written with `new` and
+  `super(...)`, at any argument position. Inside the parentheses line breaks,
+  indentation and comments carry no layout, so `. a`, `.a .b` and a selector
+  on its own line are selectors, and one trailing comma may follow.
+- `NAME` is any identifier or keyword that member access accepts after `.`.
+  A keyword reads and renders its canonical spelling, as in member access:
+  `.self` reads `this`, `.elif` reads `else`, and `.None` and `.undefined`
+  read `null`. A digit after `.` is a number token, so `.5` stays `0.5`.
+- A selector is exactly the anonymous function `v -> v.a.b` whose parameter no
+  source can name, so it reads only its argument. Called with an argument it
+  returns what that member path returns; a missing property, or one read from
+  `null` or from a value without properties, reads undefined, and strings,
+  lists and classes answer `.length`. A missing argument is `null`, and
+  arguments after the first are ignored, so `reduce` reads the accumulator's
+  property and a `sort` comparator reads the item being placed. `typeof` gives
+  `"Function"` and the value displays as `[function]`.
+- Reads follow member access. A declaration that reads through a `null` value
+  settles to `null`, and `.value` stays the snapshot read, so
+  `[{value: 3}].map(.value)` yields the record. A call that receives a
+  selector depends on whatever it reads for each item, so declarations,
+  class-level rules, methods, lambda bodies, headers, conditional expressions,
+  template interpolations and `suppose` blocks stay live and roll back as with
+  the lambda.
+- A selector renders as its written path without spaces, such as `.to.city`,
+  in graph and block keys, `why` and `affects` rules and errors that quote an
+  expression, so `why` explains `top = Bid.max(.amount)`. Anonymous lambdas
+  keep rendering as `function()`, so a selector and its lambda spelling are
+  different graph keys, and selectors of different paths stay different keys.
+- Every changed input was a syntax error: `SyntaxError("Unexpected '.'")`
+  at the selector, or the fallback error of a tentatively parsed statement
+  whose value held one, as `first, second = xs.map(.a)` raised
+  `SyntaxError("Unexpected ','")` and now destructures. An argument that
+  starts with `.` but is not a complete selector keeps that error and its
+  position, as in `f(.a + 1)`, `f(.a())`, `f(.)`, `f(..a)`, `f(...xs)`,
+  `f(.a[0])` and `f(.a ?? 1)`. A complete selector earlier in the same
+  argument list is a valid argument, so the later error is reported where it
+  occurs: `f(.a, .b + 1)` reports `.b`, and `f(.a,,)` raises
+  `SyntaxError("Unexpected ','")`. Outside parenthesized argument lists
+  nothing changes: `x = .a`, `[.a]`, `xs[.a]`, `x -> .a`, `assert: .a, 1`,
+  `x = a?.b` and `x = a?? .b` keep their errors, and a line that starts with
+  `.` still raises its accepted error.
+- Building a selector passes the nesting guard of any argument, so nested
+  calls raise `SyntaxError("Expressions are nested too deeply")` where they
+  raised it before. A selector names at most 127 properties; the 128th
+  `.NAME` pair raises `SyntaxError("Expression has too many parts")` at its
+  `.`. A `.value` read of an undefined value inside a selector raises
+  `ReferenceError("<path> is not defined")` with the written path before
+  `.value`, such as `.a`, and `ReferenceError(".value is not defined")` when
+  the selector's own argument is undefined.
+- The eight appended entries beginning
+  `Nucleoid reads list item properties with selector arguments` through
+  `Nucleoid tracks only the properties that selector arguments read` specify
+  the executable behavior.
+
 ## In-place list sorting
 
 - [NUC 58](docs/nuc-0058.md) makes `list.sort()` and `list.sort(comparator)`
@@ -19539,4 +19602,173 @@ catch error:
     assert(error, "LIMIT")
 assert(Limited.length, 1)
 assert(small.amount, 5)
+---
+# Nucleoid reads list item properties with selector arguments
+
+pen = {item: "pen", qty: 2, paid: true}
+ink = {item: "ink", qty: 5, paid: false}
+orders = [pen, ink]
+items = orders.map(.item)
+units = orders.sum(.qty)
+settled = orders.count(.paid)
+largest = orders.maxBy(.qty)
+assert: [items, units, settled, largest], [["pen", "ink"], 7, 1, ink]
+ink.paid = true
+pen.qty = 8
+orders.push({item: "cap", qty: 1, paid: false})
+assert: [items, units, settled, largest], [["pen", "ink", "cap"], 14, 2, pen]
+orders.shift()
+assert: [items, units, settled, largest], [["ink", "cap"], 6, 1, ink]
+---
+# Nucleoid reads nested property paths with selector arguments
+
+oslo = {to: {city: "Oslo", zip: "0150"}, tags: ["cold", "fragile"], "class": "air"}
+bergen = {to: {city: "Bergen"}, tags: [], "class": "sea"}
+shipments = [oslo, bergen]
+cities = shipments.map(.to.city)
+zips = shipments.map(.to.zip)
+counts = shipments.map(.tags.length)
+modes = shipments.map(.class)
+assert: [cities, zips, counts, modes], [["Oslo", "Bergen"], ["0150", null], [2, 0], ["air", "sea"]]
+bergen.to.zip = "5003"
+bergen.tags.push("bulk")
+shipments.push({tags: [], "class": "rail"})
+assert: [cities, zips, counts, modes], [["Oslo", "Bergen", null], ["0150", "5003", null], [2, 1, 0], ["air", "sea", "rail"]]
+oslo.to = null
+assert: [cities, zips, counts], [null, null, [2, 1, 0]]
+oslo.to = {city: "Tromso"}
+assert: [cities, zips], [["Tromso", "Bergen", null], [null, "5003", null]]
+---
+# Nucleoid reads class instance properties with selector arguments
+
+class Bid(bidder, amount, open):
+    this.bidder = bidder
+    this.amount = amount
+    this.open = open
+low = Bid.min(.amount)
+leader = Bid.maxBy(.amount)
+bidding = Bid.filter(.open).map(.bidder)
+recent = Bid[-1:].map(.bidder)
+assert: [low, leader, bidding, recent], [Number.POSITIVE_INFINITY, null, [], []]
+ada = Bid("ada", 120, true)
+bo = Bid("bo", 90, false)
+assert: [low, leader, bidding, recent], [90, ada, ["ada"], ["bo"]]
+bo.amount = 150
+bo.open = true
+assert: [low, leader, bidding], [120, bo, ["ada", "bo"]]
+delete bo.open
+delete bo.bidder
+delete bo.amount
+delete bo
+assert: [low, leader, bidding, recent], [120, ada, ["ada"], ["ada"]]
+---
+# Nucleoid keeps selector arguments live in class level rules
+
+class Order(lines): this.lines = lines
+$Order.units = $Order.lines.sum(.qty)
+$Order.skus = $Order.lines.map(.sku)
+$Order.bulky = $Order.lines.count(.bulk)
+small = Order([{sku: "pen", qty: 2, bulk: false}])
+large = Order([{sku: "ink", qty: 50, bulk: true}, {sku: "cap", qty: 1, bulk: false}])
+busiest = Order.maxBy(.units)
+assert: [small.units, small.skus, small.bulky, large.units, large.bulky], [2, ["pen"], 0, 51, 1]
+assert: busiest, large
+small.lines.push({sku: "pad", qty: 80, bulk: true})
+assert: [small.units, small.skus, small.bulky, busiest], [82, ["pen", "pad"], 1, small]
+large.lines = [{sku: "box", qty: 99, bulk: true}]
+assert: [large.units, large.skus, large.bulky, busiest], [99, ["box"], 1, large]
+---
+# Nucleoid passes selector arguments as ordinary functions
+
+def spread(list, key) => list.max(key) - list.min(key)
+def column(list, key) => list.map(key).join("/")
+boxes = [{w: 2, h: 9, tag: "a"}, {w: 5, h: 4, tag: "b"}]
+wide = spread(boxes, .w)
+tall = spread(boxes, .h)
+widths = column(boxes, .w)
+tags = column(
+    boxes,
+    .tag
+)
+chain = {at: 1, next: {at: 2, next: {at: 3, next: null}}}
+steps = ["x", "y"]
+hop = steps.reduce(.next, chain)
+assert: [wide, tall, widths, tags, hop.at], [3, 5, "2/5", "a/b", 3]
+boxes.push({w: 11, h: 1, tag: "c"})
+steps.pop()
+assert: [wide, tall, widths, tags, hop.at], [9, 8, "2/5/11", "a/b/c", 2]
+---
+# Nucleoid uses selector arguments in headers methods lambdas and templates
+
+class Part(sku, kg, fragile, cost):
+    this.sku = sku
+    this.kg = kg
+    this.fragile = fragile
+    this.cost = cost
+class Shelf(parts):
+    this.parts = parts
+    def weight(): return this.parts.sum(.kg)
+pen = Part("pen", 2, false, 4)
+ink = Part("ink", 5, true, 9)
+left = Shelf([pen, ink])
+care = left.parts.some(.fragile) ? "careful" : "plain"
+size = "big" if left.parts.max(.kg) > 4 else "small"
+note = `${left.parts.map(.sku).join("+")}`
+price = shelf -> shelf.parts.sum(.cost)
+wrapped = []
+for part of Part.filter(.fragile):
+    wrapped.push(part.sku)
+pending = [{open: true}, {open: true}, {open: false}]
+while pending.count(.open) > 1:
+    pending.shift()
+assert: [left.weight(), care, size, note, price(left)], [7, "careful", "big", "pen+ink", 13]
+assert: [wrapped, pending.length], [["ink"], 2]
+ink.fragile = false
+ink.kg = 3
+assert: [left.weight(), care, size], [5, "plain", "small"]
+left.parts.push(Part("cap", 2, true, 1))
+assert: [left.weight(), care, note, price(left)], [7, "careful", "pen+ink+cap", 14]
+---
+# Nucleoid rolls back failed selector argument updates
+
+def checked(total):
+    if total > 100:
+        throw "TOO_MANY"
+    return total
+cart = [{sku: "pen", qty: 2, price: 3}, {sku: "ink", qty: 5, price: 9}]
+units = cart.sum(.qty)
+skus = cart.map(.sku)
+dearest = cart.maxBy(.price)
+cheapest = cart.minBy(.price)
+cap = checked(units)
+failure = ""
+try:
+    cart.push({sku: "box", qty: 500, price: 1})
+catch error:
+    failure = error
+assert: [failure, units, skus, cap, cart.length], ["TOO_MANY", 7, ["pen", "ink"], 7, 2]
+suppose:
+    cart.push({sku: "cap", qty: 30, price: 12})
+    assert: [units, skus, dearest.sku, cap], [37, ["pen", "ink", "cap"], "cap", 37]
+assert: [units, skus, dearest.sku, cheapest.sku, cart.length], [7, ["pen", "ink"], "ink", "pen", 2]
+cart.push({sku: "pad", qty: 9, price: 1})
+assert: [units, skus, dearest.sku, cheapest.sku, cap], [16, ["pen", "ink", "pad"], "ink", "pad", 16]
+---
+# Nucleoid tracks only the properties that selector arguments read
+
+class Sensor(room, temp):
+    this.room = room
+    this.temp = temp
+hottest = Sensor.maxBy(.temp)
+rooms = Sensor.map(.room)
+lab = Sensor("lab", 21)
+hall = Sensor("hall", 25)
+readers = (affects hall.temp).map(.node)
+listers = (affects hall.room).map(.node)
+assert: [readers, listers, hottest, rooms], [["hottest"], ["rooms"], hall, ["lab", "hall"]]
+coolest = Sensor.minBy(.temp)
+assert: [readers, listers, coolest], [["hottest", "coolest"], ["rooms"], lab]
+lab.temp = 30
+hall.room = "foyer"
+assert: [hottest, coolest, rooms], [lab, hall, ["lab", "foyer"]]
 ```

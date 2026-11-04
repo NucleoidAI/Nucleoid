@@ -185,6 +185,9 @@ fn write_object_literal(f: &mut fmt::Formatter<'_>, entries: &[(String, Expr)]) 
 }
 
 fn write_function(f: &mut fmt::Formatter<'_>, function: &Function) -> fmt::Result {
+    if let Some(path) = function.selector_path() {
+        return write!(f, "{path}");
+    }
     if !has_binding_metadata(&function.parameters) {
         return match &function.name {
             Some(name) => write!(f, "{name}()"),

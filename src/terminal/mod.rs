@@ -778,6 +778,31 @@ mod tests {
     }
 
     #[test]
+    fn selector_programs_show_written_paths_in_results_and_graph_diagnostics() {
+        let mut app = App::new(false, true);
+        let mut runtime = Runtime::new();
+        run(
+            &mut app,
+            &mut runtime,
+            "class Bid(amount): this.amount = amount\nBid(5)\nif Bid.some(.amount):\n    open = true\ntop = Bid.max(.amount)\n(why top)[0].rule",
+        );
+        let entry = app.entries.last().unwrap();
+        for view in [View::Text, View::Json, View::Table] {
+            assert!(
+                entry.output.text(view).contains("top = Bid.max(.amount)"),
+                "{}",
+                entry.output.text(view)
+            );
+        }
+        assert!(
+            entry.diagnostics.contains("if(Bid.some(.amount))"),
+            "{}",
+            entry.diagnostics
+        );
+        assert!(!entry.diagnostics.contains("function()"));
+    }
+
+    #[test]
     fn settings_errors_and_clear_preserve_runtime_and_result_history() {
         let mut app = App::new(true, false);
         let mut runtime = Runtime::new();

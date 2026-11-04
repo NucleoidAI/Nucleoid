@@ -3228,6 +3228,41 @@ assert(van.insured, false)
   [NUC 78](nuc-0078.md) and the
   [root contract](../nucleoid.spec.md#extends-clauses-for-subclasses).
 
+## Property selector arguments
+
+**Selector arguments keep the stock levels of every bin live**
+
+```nuc
+class Bin(zone, sku, qty):
+    this.zone = zone
+    this.sku = sku
+    this.qty = qty
+$Bin.low = $Bin.qty < 5
+stocked = Bin.sum(.qty)
+short = Bin.filter(.low).map(.sku)
+fullest = Bin.maxBy(.qty)
+zones = Bin.distinct(.zone)
+north = Bin("north", "bolt", 40)
+south = Bin("south", "nut", 3)
+Bin("north", "gear", 12)
+assert: [stocked, short, fullest, zones], [55, ["nut"], north, ["north", "south"]]
+north.qty = 2
+south.qty = 30
+assert: [stocked, short, fullest.sku], [44, ["bolt"], "nut"]
+fullest.zone
+# return: "south"
+```
+
+- `.qty`, `.low`, `.sku` and `.zone` stand for the functions that read those
+  properties from each bin, so `Bin.sum(.qty)` totals the stock and
+  `Bin.filter(.low).map(.sku)` lists the parts that run short. `.low` reads
+  the class-level rule `$Bin.low`, so it follows every quantity change.
+- Changing two quantities re-evaluates every declaration that reads them:
+  the bolt bin runs short, and the nut bin is no longer short and becomes
+  the fullest. See
+  [NUC 79](nuc-0079.md) and the
+  [root contract](../nucleoid.spec.md#property-selector-arguments).
+
 ## Copyright
 
 Copyright 2020 Nucleoid
