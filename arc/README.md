@@ -203,6 +203,50 @@ cropped to the nonzero bounding box of their content. `dataset.27a28665.json`,
 `dataset.28bf18c6.json`, `dataset.44f52bb0.json`, `dataset.9af7a82c.json`, and
 `dataset.d631b094.json` are `FIT`; the other datasets are `EXACT`.
 
+`dataset.017c7c7b.json` annotates the three original training pairs from
+`data\training\017c7c7b.json`, in order, followed by its test pair, four
+pattern instances in total, one per pair. Every input retains its original
+6 by 3 canvas, colors, positions, and zero cells, and every output its
+original 9 by 3 canvas. Each input holds one color-1 pattern whose cells touch
+through edges or corners, only through corners in the second training pair;
+each object is that whole pattern, 9, 9, 8, and 10 cells, and zero cells are
+background. Each pattern's box starts at the canvas's top-left corner and is
+6 rows tall, as tall as its canvas, and 3, 3, 2, and 3 columns wide. Its rows
+repeat down the box every 4, 2, and 3 rows in the training pairs and every 3
+rows in the test pair. Each output grows the pattern down to 9 rows, one and a
+half times its height, continuing it in color 2 while its top row stays in
+place. Appending the pattern's first half, its top three rows, would
+reproduce the second and third training outputs and the test output, whose
+periods divide the height, but not the first training output: its pattern
+repeats every four rows, so the rows added below repeat its rows 2 to 4, and
+its row 7 is 0, 2, 2 rather than 2, 2, 0. The class takes `color`, the box's
+`height`, and `period`, the number of rows after which the pattern starts
+over, as scalars, with no parts list, canvas size, or matrix of cells.
+`period` is the smallest number of rows such that every row of the box equals
+the row that many rows below it, wherever that row is still inside the box;
+like `height`, it is measured on the pattern's own box rather than the canvas.
+Unconditional class-level rules set the output tag and introduce one
+property, `extension_direction`, which is absent before the rules run and is
+`down`, as in `dataset.line.json`.
+The rules also rewrite `height` to `$Obj.height@first * 3 / 2`, 9 rows, and
+`color` to 2, and leave `x` and `y` unchanged because the pattern keeps its
+top-left origin. The training pairs alone also fit a fixed 9-row output; the
+rules scale the pattern's height instead. Native output snapshots are captured
+with the pair's implementation followed by `Obj[:]`. Tags identify the
+geometry: `l9100` is a single shape, as in `dataset.28bf18c6.json` and
+`dataset.6150a2bd.json`, and `l8384` is a pattern whose rows repeat every
+`period` rows down to its height. Input masks retain each pair's full-size
+6 by 3 input canvas, with zero cells padded `0`, and output masks the complete
+9 by 3 output; merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the grown pattern's nonzero bounding-box
+origin, equal to `output_value.x`/`output_value.y`. `output_canvas` is
+`EXACT`: the composed canvas starts at the input's 6 by 3 dimensions and grows
+only to retain the pattern placed down to row 8, giving the 9 by 3 outputs,
+while `FIT` would crop the empty right column of the third training output.
+Orientation is 0 in both states because the pattern is not turned. The test
+pair follows the training pairs at the same level and is annotated by the
+same rules.
+
 `dataset.0ca9ddb6.json` annotates the three training pairs from
 `data\training\0ca9ddb6.json`, followed by its test pair, with fifteen point
 instances in total (2, 5, 3, and 5 per pair).

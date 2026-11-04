@@ -1,0 +1,228 @@
+{
+  "declarations": [
+    "# There is an Obj type, the whole pattern of colored cells on the canvas,\n# which has its x and y position, its orientation, its color,\n# the height of its box, and its period, the number of rows\n# after which the pattern starts over, as integers\nclass Obj(x: int, y: int, orientation: int, color: int, height: int, period: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.height = height\n    this.period = period",
+    "# Every pattern grows by repeating its rows every period rows\n$Obj.tag = 'l8384'",
+    "# Every pattern grows down from its top row, which stays in place\n$Obj.extension_direction = 'down'",
+    "# Every pattern grows to one and a half times its height\n$Obj.height = $Obj.height@first * 3 / 2",
+    "# Every cell of the pattern turns color 2\n$Obj.color = 2"
+  ],
+  "output_canvas": "EXACT",
+  "dataset": [
+    {
+      "input_matrix": [
+        [0, 1, 0],
+        [1, 1, 0],
+        [0, 1, 0],
+        [0, 1, 1],
+        [0, 1, 0],
+        [1, 1, 0]
+      ],
+      "output_matrix": [
+        [0, 2, 0],
+        [2, 2, 0],
+        [0, 2, 0],
+        [0, 2, 2],
+        [0, 2, 0],
+        [2, 2, 0],
+        [0, 2, 0],
+        [0, 2, 2],
+        [0, 2, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj7868bfbcdc17",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 1, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 1, 1],
+            [0, 1, 0],
+            [1, 1, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 2, 0],
+            [2, 2, 0],
+            [0, 2, 0],
+            [0, 2, 2],
+            [0, 2, 0],
+            [2, 2, 0],
+            [0, 2, 0],
+            [0, 2, 2],
+            [0, 2, 0]
+          ],
+          "implementation": "obj7868bfbcdc17 = Obj(x=0, y=0, orientation=0, color=1, height=6, period=4)",
+          "input_value": {"color":1,"height":6,"id":"obj7868bfbcdc17","orientation":0,"period":4,"tag":"l9100","x":0,"y":0},
+          "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj7868bfbcdc17","orientation":0,"period":4,"tag":"l8384","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 1, 0],
+        [1, 0, 1],
+        [0, 1, 0],
+        [1, 0, 1],
+        [0, 1, 0],
+        [1, 0, 1]
+      ],
+      "output_matrix": [
+        [0, 2, 0],
+        [2, 0, 2],
+        [0, 2, 0],
+        [2, 0, 2],
+        [0, 2, 0],
+        [2, 0, 2],
+        [0, 2, 0],
+        [2, 0, 2],
+        [0, 2, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj251f7bd03919",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 1, 0],
+            [1, 0, 1],
+            [0, 1, 0],
+            [1, 0, 1],
+            [0, 1, 0],
+            [1, 0, 1]
+          ],
+          "output_instance_matrix": [
+            [0, 2, 0],
+            [2, 0, 2],
+            [0, 2, 0],
+            [2, 0, 2],
+            [0, 2, 0],
+            [2, 0, 2],
+            [0, 2, 0],
+            [2, 0, 2],
+            [0, 2, 0]
+          ],
+          "implementation": "obj251f7bd03919 = Obj(x=0, y=0, orientation=0, color=1, height=6, period=2)",
+          "input_value": {"color":1,"height":6,"id":"obj251f7bd03919","orientation":0,"period":2,"tag":"l9100","x":0,"y":0},
+          "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj251f7bd03919","orientation":0,"period":2,"tag":"l8384","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 1, 0],
+        [1, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
+        [1, 1, 0],
+        [0, 1, 0]
+      ],
+      "output_matrix": [
+        [0, 2, 0],
+        [2, 2, 0],
+        [0, 2, 0],
+        [0, 2, 0],
+        [2, 2, 0],
+        [0, 2, 0],
+        [0, 2, 0],
+        [2, 2, 0],
+        [0, 2, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj69f9506dfd32",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 1, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 1, 0],
+            [1, 1, 0],
+            [0, 1, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 2, 0],
+            [2, 2, 0],
+            [0, 2, 0],
+            [0, 2, 0],
+            [2, 2, 0],
+            [0, 2, 0],
+            [0, 2, 0],
+            [2, 2, 0],
+            [0, 2, 0]
+          ],
+          "implementation": "obj69f9506dfd32 = Obj(x=0, y=0, orientation=0, color=1, height=6, period=3)",
+          "input_value": {"color":1,"height":6,"id":"obj69f9506dfd32","orientation":0,"period":3,"tag":"l9100","x":0,"y":0},
+          "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj69f9506dfd32","orientation":0,"period":3,"tag":"l8384","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [1, 1, 1],
+        [0, 1, 0],
+        [0, 1, 0],
+        [1, 1, 1],
+        [0, 1, 0],
+        [0, 1, 0]
+      ],
+      "output_matrix": [
+        [2, 2, 2],
+        [0, 2, 0],
+        [0, 2, 0],
+        [2, 2, 2],
+        [0, 2, 0],
+        [0, 2, 0],
+        [2, 2, 2],
+        [0, 2, 0],
+        [0, 2, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj93fb566cfca3",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [1, 1, 1],
+            [0, 1, 0],
+            [0, 1, 0],
+            [1, 1, 1],
+            [0, 1, 0],
+            [0, 1, 0]
+          ],
+          "output_instance_matrix": [
+            [2, 2, 2],
+            [0, 2, 0],
+            [0, 2, 0],
+            [2, 2, 2],
+            [0, 2, 0],
+            [0, 2, 0],
+            [2, 2, 2],
+            [0, 2, 0],
+            [0, 2, 0]
+          ],
+          "implementation": "obj93fb566cfca3 = Obj(x=0, y=0, orientation=0, color=1, height=6, period=3)",
+          "input_value": {"color":1,"height":6,"id":"obj93fb566cfca3","orientation":0,"period":3,"tag":"l9100","x":0,"y":0},
+          "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj93fb566cfca3","orientation":0,"period":3,"tag":"l8384","x":0,"y":0}
+        }
+      ]
+    }
+  ]
+}
