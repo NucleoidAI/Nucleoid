@@ -500,7 +500,8 @@ by the same rules.
 
 ## ARC proposal agent
 
-Run `/arc-purposal [<puzzle-id>]` to take one training puzzle through the
+Run `/arc-purposal [<puzzle-id>] [--strategy-policy <absolute-json-path>]`
+to take one training puzzle through the
 [arc-purposal](../.claude/agents/arc-purposal.agent.md) workflow in its
 [skill](../.claude/skills/arc-purposal/SKILL.md):
 
@@ -512,8 +513,9 @@ Run `/arc-purposal [<puzzle-id>]` to take one training puzzle through the
    whose idea may come from the [language reference](../docs/README.md) or
    the documentation it links to.
 2. A requested enhancement goes through the usual NUC proposal and independent
-   evaluation stages as a single-proposal request. The dataset is then written
-   with the frozen candidate's runtime.
+   evaluation stages as a single-proposal request, using the existing UCB1
+   proposal-strategy learner. The dataset is then written with the frozen
+   candidate's runtime.
 3. `bun start <puzzle-id>` runs once, with that candidate's runtime when there
    is one, while the workflow waits up to 30 minutes for it. Exit status `0` is
    an exact match; a run still going at 30 minutes is killed and does not pass.
@@ -539,9 +541,22 @@ the [genesis puzzle](#genesis-puzzle) and every puzzle that already has a
 matrix has the fewest cells, breaking ties by the fewest total training cells
 and then by the lowest ID. Only training pairs are measured.
 
+Every requested NUC requires a retained strategy-policy checkpoint, or an
+explicit `--strategy-policy <absolute-json-path>` outside the repository.
+For an initial trial, supply the empty-history policy from the
+[existing NUC bandit contract](../CONTRIBUTING.md#reward-driven-proposal-strategies).
+There is no automatic initialization/reset; missing or invalid state pauses
+before drafting or a solver run. A dataset-only invocation needs no policy.
+Selection happens before drafting, and the independent evaluator updates
+from verified NUC usefulness/cost evidence before the ARC run. The session
+learning result retains the latest checkpoint for the next authorized NUC;
+unscored trials keep the prior head. ARC answers, scores and acceptance never
+train this learner, which does not train LLM weights or authorize extra runs.
+
 Append `--hint <text>` to suggest the puzzle's objects, their roles, or its
-transformation. Only the arc-dataset agent receives the hint, and it keeps only
-what the training pairs confirm.
+transformation, placing `--strategy-policy` before it when supplied. Only the
+arc-dataset agent receives the hint, and it keeps only what the training pairs
+confirm.
 
 The run makes paid OpenRouter calls and shows the expected test grid, so it
 runs once, is never repeated to obtain a pass, and its output never feeds back

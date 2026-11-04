@@ -20,6 +20,16 @@ and, when the solver would need a change, suggests that change at the end of
 the process.
 Agent-configuration changes alone do not launch a solver run.
 
+Every ARC-requested NUC uses the existing proposal-strategy UCB1 bandit under
+the [arc-purposal skill](../skills/arc-purposal/SKILL.md#learn-the-nuc-proposal-strategy).
+Require a retained policy head or explicit `--strategy-policy <absolute-json-path>`
+before drafting; never initialize/reset history automatically. Select before
+dispatch, preserve the pinned rubric and attribution through both NUC agents,
+and persist the independent evaluator's checkpoint or legitimate unscored skip
+before the ARC run. Missing/invalid learning state pauses the NUC; a
+dataset-only invocation needs no policy. ARC results and eventual acceptance
+are never learning rewards and do not change the existing NUC reward formula.
+
 ## No automated ARC tests
 
 Do not add tests for the ARC project. Remove existing ARC-related automated

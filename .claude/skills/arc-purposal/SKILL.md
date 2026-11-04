@@ -1,14 +1,16 @@
 ---
 name: arc-purposal
-description: Run one ARC training puzzle through its instruction dataset, any Nucleoid enhancement that dataset requires, and one exact-match solver run, then decide the enhancement's outcome under the automatic acceptance rule and document the puzzle's progress record in arc/docs.
-argument-hint: [<puzzle-id>] [--hint <text>]
+description: Run one ARC training puzzle through its instruction dataset, any required Nucleoid enhancement with the existing NUC strategy bandit, and one exact-match solver run, then decide the enhancement's outcome and document the puzzle's progress.
+argument-hint: "[<puzzle-id>] [--strategy-policy <absolute-json-path>] [--hint <text>]"
 ---
 
 # Running an ARC puzzle proposal
 
-`/arc-purposal [<puzzle-id>] [--hint <text>]` takes one training puzzle through
-its instruction dataset, any Nucleoid enhancement that dataset requires, one
-solver run, the outcome, and its progress record in `arc/docs/`. Follow
+`/arc-purposal [<puzzle-id>] [--strategy-policy <absolute-json-path>] [--hint <text>]`
+takes one training puzzle through its instruction dataset, any Nucleoid
+enhancement that dataset requires, one solver run, the outcome, and its
+progress record in `arc/docs/`. A requested enhancement uses the existing
+[NUC strategy bandit](#learn-the-nuc-proposal-strategy). Follow
 `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
 [agent profile](../../agents/arc-purposal.agent.md).
@@ -108,6 +110,106 @@ status:
 - `nucleoid_enhancement_required`: prepare the requested enhancement.
 - `blocked`, including an existing dataset: stop and report it, without a run.
 
+## Learn the NUC proposal strategy
+
+Every ARC-requested NUC uses the existing category-conditioned UCB1 learner
+under the [NUC caller protocol](../nuc-proposal/SKILL.md#select-and-consume-a-proposal-strategy)
+and [command/schema contract](../../../CONTRIBUTING.md#reward-driven-proposal-strategies).
+Do not add another bandit, reward formula, strategy registry, or ARC learner.
+The ordered arms remain `reuse_first` and `evidence_first`; learning chooses
+the proposal approach, never the feature, category, puzzle, or solver settings.
+
+**Policy input.** Reuse the caller's latest retained policy path and raw blob
+pin, including after resuming from its saved session learning result. When
+there is no retained head, require `--strategy-policy <absolute-json-path>`
+pointing to an explicitly supplied empty-history genesis or latest checkpoint
+with all its immutable ancestors and evidence. Use the exact genesis schema
+in the command contract; never create a genesis automatically. The file must
+be an existing absolute external `.json` path, outside the primary checkout
+and candidate worktree. Pin supplied raw bytes with
+`git hash-object --no-filters` before selection.
+
+Place `--strategy-policy` before any trailing `--hint`. It is a caller-only
+input, not part of the dataset hint or solver arguments. If a head is already
+retained, an explicitly supplied policy must match its path and pin; never
+fork an older checkpoint or silently replace/reset history. A missing policy
+blocks the requested enhancement with `strategy_policy_required`, before
+drafting or a solver run. Invalid, changed, stale, or incomplete state is a
+process blocker, not a fallback to unconfigured learning.
+
+Without a requested NUC, report learning as `not_applicable`: do not select an
+arm, create a trial, or update a checkpoint. A dataset-only run needs no policy.
+
+**Before drafting.** After fixing the NUC path, confirmed category, single
+mode, runtime applicability, accepted revision and immutable baseline:
+
+- Allocate a unique trial ID and fresh external session `.json` paths for the
+  selection, rubric, assessment, evaluator report, checkpoint, and learning
+  result. All artifacts are create-once; retain them and every policy ancestor.
+- Freeze and pin a caller-owned usefulness rubric under the
+  [existing scoring schema](../../../CONTRIBUTING.md#advisory-usefulnesscost-scoring).
+  Bind its criterion ID, NUC path and accepted baseline. Derive the observable
+  language-level benefit from the dataset handoff's `requested_change` and
+  unsupported operation, not from a proposed implementation or ARC outcome.
+  Use general-purpose Nucleoid evidence, never ARC grids, puzzle fixtures,
+  held-out answers, or new ARC automated tests.
+- Set `NUC_PROPOSAL`, `NUC_PROPOSAL_BASELINE`, `NUC_PROPOSAL_MODE=single`,
+  confirmed runtime inputs when applicable, `NUC_STRATEGY_CATEGORY`,
+  `NUC_STRATEGY_TRIAL_ID`, `NUC_STRATEGY_POLICY`, its original
+  `NUC_STRATEGY_POLICY_REVISION`, and fresh `NUC_STRATEGY_SELECTION`.
+  Preserve `NUC_PROPOSAL_RUBRIC` and `NUC_PROPOSAL_RUBRIC_REVISION` through both
+  handoffs. Unset old selection pins, checkpoint outputs, assessments and
+  report pins; never rely on environment state from another tool process.
+
+Actually run the selector before dispatching the proposer:
+
+```console
+cargo test --test proposals select_proposal_strategy -- --ignored --exact --nocapture
+```
+
+Check success and pin `NUC_STRATEGY_SELECTION_REVISION` with
+`git hash-object --no-filters` before drafting. Give the fresh proposer the
+unchanged policy, receipt, rubric and pins, trial bindings, selected arm and
+its actionable instructions. Require concrete evidence that it executed the
+selected approach in its frozen handoff; a label alone is insufficient.
+Never reselect, backfill attribution, or let the proposer score its own trial.
+
+**Independent update, before the ARC run.** Pass the unchanged rubric and all
+four attribution inputs (`NUC_STRATEGY_POLICY`, `NUC_STRATEGY_POLICY_REVISION`,
+`NUC_STRATEGY_SELECTION`, `NUC_STRATEGY_SELECTION_REVISION`) to the fresh
+evaluator with the frozen handoff, original trial/category/mode/runtime inputs,
+and fresh report, assessment and checkpoint paths. Request an independent
+assessment of the frozen criterion after its mandatory checks, with actual
+evidence for all six check groups. Missing or unknown usefulness is explicitly
+unscored, not neutral zero; never invent evidence to obtain a reward.
+
+Require the evaluator to save and verify the actual `evaluate_proposal`
+report, pin `NUC_PROPOSAL_REPORT_REVISION`, set fresh
+`NUC_STRATEGY_CHECKPOINT`, and actually run the existing update command under
+the [evaluator protocol](../nuc-evaluate/SKILL.md#update-the-attributed-strategy-policy):
+
+```console
+cargo test --test proposals learn_proposal_strategy -- --ignored --exact --nocapture
+```
+
+Use only the verifier's existing advisory reward: demonstrated usefulness
+with its evaluator-time discount, independently assessed neutral `0`, or
+genuine core/known external rejection `-1`. A legitimate unscored result
+retains the parent head without an observation or checkpoint. A learner error
+pauses the invocation without changing the saved independent decision.
+
+Verify the returned checkpoint path/raw pin, parent, receipt/report bindings
+and update or skip reason. Persist a new session learning-result JSON with
+those artifacts and the retained head before any ARC run. Advance the caller's
+one retained head only on a successful update; otherwise keep its original
+path and pin. A later separately authorized NUC uses that head, not the genesis.
+
+Never send the ARC run's output to the evaluator or learner. Its exact match,
+difference, exit status, timeout and eventual NUC acceptance are not reward
+inputs and cannot revise the already-saved score or checkpoint. The bandit
+does not change acceptance criteria, train LLM weights, or authorize another
+proposal or solver run. Do not claim improved proposal quality from one trial.
+
 ## Prepare the requested enhancement
 
 Handle at most one NUC request per invocation, as a single-proposal request.
@@ -117,16 +219,21 @@ Handle at most one NUC request per invocation, as a single-proposal request.
    `requested_change` as the requested change. Choose the next NUC number,
    confirm the category and runtime applicability (ask the user when either is
    uncertain), pin the accepted revision and record its immutable baseline,
-   create a candidate worktree, and launch a fresh `nuc-proposal` agent with
-   the request and its evidence. Complete the Rust improvement pass when
+   and create a candidate worktree. Complete the
+   [pre-draft strategy selection](#learn-the-nuc-proposal-strategy) before
+   launching a fresh `nuc-proposal` agent with the request, its evidence, and
+   the pinned strategy/rubric handoff. Complete the Rust improvement pass when
    required and freeze the handoff. If the candidate's changes from the pinned
    revision, untracked files included, touch any path under `arc/`, or
    preparation is otherwise blocked, stop and report it.
 2. Launch a fresh `nuc-evaluate` agent on the frozen handoff under the
    [nuc-evaluate skill](../nuc-evaluate/SKILL.md), with
-   `NUC_PROPOSAL_MODE=single` and a fresh report path. Keep its decision and
-   report, including its hard-criteria evidence. Do not record the outcome
-   yet; it waits for the run.
+   `NUC_PROPOSAL_MODE=single`, the unchanged scoring/strategy inputs, and fresh
+   report, assessment and checkpoint paths. Complete and persist the
+   [independent strategy update](#learn-the-nuc-proposal-strategy) before
+   proceeding; a learning error stops the invocation without a run. Keep its
+   decision and report, including its hard-criteria evidence. Do not record
+   the proposal outcome yet; it waits for the run.
 3. Confirm the candidate still matches the handoff, build it with
    `cargo build --locked` in its worktree, and copy its `target/debug/nucleoid`
    executable (`nucleoid.exe` on Windows) into the session workspace.
@@ -266,7 +373,9 @@ such as `arc/docs/ARC-NUC-0ca9ddb6.md`:
   linking the dataset's README paragraph for the rest. When the invocation
   replaced a dataset, say what changed and why, such as the user's hint.
 - A `Decision` section for a requested NUC: the gap, the evidence programs
-  and their actual errors, and what the NUC adds.
+  and their actual errors, and what the NUC adds. Include the selected
+  proposal strategy and whether learning updated, was unscored, or blocked,
+  without copying session artifacts or claiming an ARC-derived reward.
 - `Runs`: one entry per run, never removed, with its date, command, runtime
   (the accepted revision or the NUC candidate), exit status or timeout,
   difference or error, and elapsed time. Without a run, say that the
@@ -292,6 +401,13 @@ puzzle IDs and whether that change was retained or restored; the run's
 command, executable, exit status or timeout, difference or error, and log
 paths; the outcome and its basis; the suggested solver changes; the progress
 record's path and whether it was created or updated; and any blockers. Use
+`strategy_learning` to record `not_applicable`, `blocked`, `updated`,
+`unscored`, or `error`, with its reason; the policy input path/raw pin, trial
+ID, selected arm and consumption evidence; rubric/assessment, selection and
+evaluator report paths/pins; the verified advisory reward or unscored reason;
+the checkpoint path/raw pin when created; and the learning-result path and
+retained head path/raw pin for the next authorized invocation. Never substitute
+the ARC score or proposal outcome for the advisory reward. Use
 `null` for anything not measured, including the difference before this
 dataset. Report a short summary with both records' paths, ending with any
 suggested solver changes, then stop without starting another puzzle or NUC.

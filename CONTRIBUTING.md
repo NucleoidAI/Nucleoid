@@ -607,6 +607,22 @@ exploration, reward-dependent choice, persistence and provenance; they do not
 measure live-learning success or improved proposal quality. This bandit does
 not implement LLM-weight training or full multi-step reinforcement learning.
 
+**ARC caller integration.** `/arc-purposal` requires this existing learner
+when its dataset handoff requests a NUC; generic NUC invocations remain opt-in.
+Supply `--strategy-policy <absolute-json-path>` before any trailing `--hint`,
+or reuse the caller's latest retained session head. For a new chain, explicitly
+supply the genesis schema above; a resumed chain needs its latest checkpoint
+and all ancestors/evidence. A genesis is never created or reset automatically.
+Missing/invalid policy state pauses before NUC drafting or the solver run.
+A dataset-only invocation has no bandit trial.
+
+The [ARC caller](.claude/skills/arc-purposal/SKILL.md#learn-the-nuc-proposal-strategy)
+freezes a language-level usefulness rubric and selects before dispatching the
+proposer. Its independent evaluator scores and updates before the ARC run,
+using the unchanged reward contract. The caller persists the returned head
+and all provenance artifacts for the next separately authorized NUC. ARC
+answers, scores, timeouts and eventual acceptance never become rewards.
+
 ## Declarative Runtime Environment
 
 Nucleoid records declarative statements in a dependency graph and re-evaluates

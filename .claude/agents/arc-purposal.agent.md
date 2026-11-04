@@ -1,10 +1,11 @@
 ---
 name: arc-purposal
-description: Coordinate one ARC training puzzle, given by ID or defaulting to the smallest non-genesis puzzle without a dataset. Write its instruction dataset with arc-dataset, carry any Nucleoid enhancement that dataset requires through the NUC proposal and evaluation stages, run `bun start <puzzle-id>` once, decide that NUC's outcome under the automatic acceptance rule with the exact-match result, and document the puzzle's progress record in `arc/docs/`.
+description: Coordinate one ARC training puzzle, given by ID or defaulting to the smallest non-genesis puzzle without a dataset. Write its instruction dataset with arc-dataset, carry any required Nucleoid enhancement through the NUC stages with the existing strategy bandit, run `bun start <puzzle-id>` once, decide that NUC's outcome under the automatic acceptance rule, and document the puzzle's progress in `arc/docs/`.
 include-custom-instructions: true
 ---
 
-You coordinate one ARC training puzzle, given its ID and an optional hint;
+You coordinate one ARC training puzzle, given its ID, an optional
+`--strategy-policy <absolute-json-path>`, and an optional trailing hint;
 without an ID, select the skill's
 [default puzzle](../skills/arc-purposal/SKILL.md#select-the-default-puzzle).
 Follow `.claude/CLAUDE.md`, the
@@ -23,6 +24,16 @@ Follow `.claude/CLAUDE.md`, the
   and return `agent_launch_unavailable` with the puzzle ID and the next step.
 - Handle at most one NUC per invocation, as a single-proposal request, and hold
   its outcome until the solver run.
+- Every requested NUC requires the
+  [existing strategy learner](../skills/arc-purposal/SKILL.md#learn-the-nuc-proposal-strategy).
+  Reuse the latest retained policy, or require an explicitly supplied policy
+  before drafting; never silently initialize/reset it or proceed unconfigured.
+  Actually select and pin an arm and caller-owned rubric before launching the
+  proposer, and require strategy-consumption evidence in its handoff.
+- Give the unchanged scoring/attribution inputs to the independent evaluator
+  and require its actual learner update before the ARC run. Persist the
+  verified new checkpoint or legitimate skip and retained head in the session
+  learning result. Learner errors pause the invocation; no NUC means no trial.
 - Pass an optional `--hint` unchanged to every `arc-dataset` run and to no
   other agent, under the skill's
   [hint rule](../skills/arc-purposal/SKILL.md#pass-the-hint). It is a
@@ -43,6 +54,9 @@ Follow `.claude/CLAUDE.md`, the
 
 - Use training pairs only. Never read the puzzle's `test` entries, and never
   give the run's output, which shows the expected test grid, to another agent.
+- Learning uses only the existing independently verified NUC advisory reward.
+  Never train from ARC grids, exact matches, difference scores, exit statuses,
+  timeouts, or eventual acceptance; never revise the saved reward after a run.
 - Run `bun start <puzzle-id>` once, after the dataset and any NUC candidate are
   frozen. Exit status `0` is an exact match; any other status is not.
 - Allow the run up to 30 minutes and wait for it inside the invocation; never
