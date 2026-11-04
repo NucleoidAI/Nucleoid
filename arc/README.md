@@ -355,47 +355,60 @@ pairs at the same level and is annotated by the same rules.
 
 `dataset.44f52bb0.json` annotates the six original training pairs from
 `data\training\44f52bb0.json`, in order, followed by its two test pairs,
-thirty-two point instances in total (5, 3, 6, 2, 4, 3, 7, and 2 per pair).
-Every input retains its original 3 by 3 canvas, colors, positions, and zero
-cells. Each object is one nonzero input cell, a single 1 by 1 point of color
-2, listed in reading order. Each output is the original 1 by 1 grid: a color-1
-cell when the input is left-right mirror symmetric, meaning every point has a
-point of its color in the same row at the mirrored column of the canvas, and a
-color-7 cell otherwise. The first, third, and fourth training pairs and the
-first test pair are symmetric. No cell count separates the outputs: 5, 6, and
-2 cells give 1, while 3, 4, and 3 cells give 7. The fifth training input, a Z
-shape, is a half turn of itself about its own center, and the sixth, an L
-shape, mirrors itself across a diagonal of its own 2 by 2 box, yet both give
-7, so the rules judge symmetry in the canvas frame rather than about the
-pattern itself. The third and fourth training pairs rule out the canvas
-diagonals. The training pairs alone still fit a top-bottom mirror, a half turn
-about the canvas center, and their combinations with the left-right mirror.
-The rules test one mirror axis, the left-right one, by the convention that
-mirror symmetry is bilateral symmetry across the vertical axis; the test pairs
-do not separate these candidates either. The class takes `color` and
-`canvas_width`, the width of the object's canvas, as scalars rather than a
-matrix of cells. Unconditional class-level rules introduce three properties,
-absent before the rules run. `has_mirror` uses `Obj.some(other => ...)` over
-the pair's whole population to look for a point of the same color in the same
-input row at input column `$Obj.canvas_width - 1 - $Obj.x@first`; every input
-holds the single color 2, so the color comparison never decides a pair.
-`symmetric` is `Obj.every(point => point.has_mirror)`, and `fill_color` is
-`1 if $Obj.symmetric else 7`. Both population rules re-evaluate whenever an
-instance is added, so every point of a pair records the same `symmetric` and
-`fill_color`. The rules also move `x` and `y` to the output origin 0, and
-`@first` anchors keep the mirror test on the input coordinates. Native output
-snapshots are captured with all of the same pair's implementations together,
-followed by `Obj[:]`. The tag `l7544` is a single point, as in
-`dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, in both states, because
-each point's output is the single output cell. Input masks retain each pair's
-full-size, zero-padded 3 by 3 input canvas; every point's output mask is the
-complete 1 by 1 output, and merging them reproduces it. The
-`output_x`/`output_y` fields record the cell's nonzero bounding-box origin,
-equal to `output_value.x`/`output_value.y`. `output_canvas` is `FIT` because
-each output is cropped to its single cell instead of keeping the 3 by 3 input
-canvas. Orientation is 0 in both states because the points are symmetric. The
-test pairs follow the training pairs at the same level and are annotated by
-the same rules.
+eight pattern instances in total, one per pair. Every input retains its
+original 3 by 3 canvas, colors, positions, and zero cells, and every output
+its original 1 by 1 grid. Each input holds one pattern of color-2 cells,
+whether or not they touch; each object is that whole pattern, 5, 3, 6, 2, 4,
+and 3 cells in the training pairs and 7 and 2 in the test pairs, and zero
+cells are background. Each pattern's box starts at the canvas's left column,
+and at its top row except in the fourth training pair and the second test
+pair, where it starts one row down; the boxes are 3 by 3, 3 by 2, 3 by 3,
+1 by 3, 2 by 3, 2 by 2, 3 by 3, and 2 by 1, rows by columns. Each output is a
+single cell: color 1 when the pattern is left-right mirror symmetric, the
+same after a flip across the vertical center line of the canvas, and color 7
+otherwise; the first, third, and fourth training patterns are symmetric. No
+cell count separates the outputs: 5, 6, and 2 cells give 1, while 3, 4, and 3
+cells give 7. Symmetry about the pattern itself does not decide either: the
+fifth training input, a Z shape, is a half turn of itself, and the sixth, an
+L shape, mirrors itself across a diagonal of its own 2 by 2 box, yet both
+give 7. The third and fourth training pairs rule out the canvas diagonals.
+The training pairs alone still fit a top-bottom mirror, a half turn about the
+canvas center, and their combinations with the left-right mirror, and,
+because every symmetric training pattern spans the canvas's width, a
+left-right flip of the pattern's own box. The rules flip across the canvas's
+center line, by the convention that mirror symmetry is bilateral symmetry
+across the grid's vertical axis, a choice fixed from the training pairs
+before the test pairs were read. The class takes `canvas_width`, the width of
+the pattern's canvas, as an integer, and `points`, the `[column, row]` canvas
+position of each of the pattern's cells in reading order, as a list, such as
+`[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]]` for the first training input. It
+takes no color, cell count, symmetry flag, output color, or matrix of cells,
+so no input property states the symmetry or the answer. Unconditional
+class-level rules set the output tag and introduce two properties, absent
+before the rules run. `symmetric` is
+`all point in $Obj.points: $Obj.points.includes([$Obj.canvas_width - 1 - point[0], point[1]])`:
+the mirror image of every point, in the same row and as far from the right
+edge as the point is from the left edge, is also one of the points, which
+holds exactly when the pattern equals its mirror image. The rule uses the
+quantifier `all` of [NUC 62](../docs/nuc-0062.md), which states the claim of
+`every` directly, and `includes`, which matches the mirrored `[column, row]`
+list against the points with the deep equality of
+[NUC 61](../docs/nuc-0061.md). `fill_color` is `1 if $Obj.symmetric else 7`.
+The rules also move `x` and `y` to the output origin 0, which changes `y` in
+the fourth training pair and the second test pair. Native output snapshots
+are captured with the pair's implementation followed by `Obj[:]`. Tags
+identify the geometry: `l9100` is a single shape, as in
+`dataset.28bf18c6.json` and `dataset.017c7c7b.json`, and `l7544` is a single
+point, as in `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`. Input masks
+retain each pair's full-size, zero-padded 3 by 3 input canvas, and output
+masks the complete 1 by 1 output; merging them reproduces each pair's input
+and output. The `output_x`/`output_y` fields record the cell's nonzero
+bounding-box origin, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `FIT` because each output is cropped to its single cell
+instead of keeping the 3 by 3 input canvas. Orientation is 0 in both states
+because the pattern is not turned and the point is symmetric. The test pairs
+follow the training pairs at the same level and are annotated by the same
+rules.
 
 `dataset.5582e5ca.json` annotates the three original training pairs from
 `data\training\5582e5ca.json`, in order, followed by its test pair, four block
