@@ -1708,6 +1708,33 @@ assert: [revenue, largest.customer, settled], [125, "cy", ["ada", "bo"]]
   a whole call argument, so `x = .amount` stays a syntax error. See the
   [root contract](nucleoid.spec.md#property-selector-arguments).
 
+## List and population averages
+
+**Averages keep mean temperatures live as readings change**
+
+```nuc
+class Room(name, temps):
+    this.name = name
+    this.temps = temps
+$Room.mean = $Room.temps.average()
+lab = Room("lab", [21, 23])
+hall = Room("hall", [17, 18])
+building = Room.average(room -> room.mean)
+assert: [lab.mean, hall.mean, building], [22, 17.5, 19.75]
+hall.temps.push(25)
+Room("attic", [12])
+assert: [hall.mean, building], [20, 18]
+```
+
+- [NUC 80](docs/nuc-0080.md) adds `average()` and `average(selector)` to
+  lists and class instance lists. `$Room.temps.average()` is the mean of each
+  room's readings, and `Room.average(room -> room.mean)` the mean over every
+  room: exactly `sum(...)` divided by the number of items.
+- `$Room.mean` and `building` are live declarations: a new reading or a new
+  room re-evaluates them. An empty list or class averages to NaN, as `0 / 0`
+  does. See the
+  [root contract](nucleoid.spec.md#list-and-population-averages).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

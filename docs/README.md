@@ -1901,7 +1901,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), and `maxBy` and `minBy` ([NUC 77](nuc-0077.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), and `average` ([NUC 80](nuc-0080.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2908,6 +2908,60 @@ top.who
   [list and population extreme items](../nucleoid.spec.md#list-and-population-extreme-items)
   section.
 
+### List and population averages
+
+```
+scores = [70, 85, 90]
+mean = scores.average()
+passing = scores.filter(score -> score >= 80).average()
+class Student(name, points, total):
+    this.name = name
+    this.points = points
+    this.total = total
+grade = Student.average(student -> student.points / student.total * 100)
+Student("ana", 45, 50)
+bo = Student("bo", 30, 50)
+assert(mean, 81.66666666666667)
+assert(passing, 87.5)
+assert(grade, 75)
+scores.push(95)
+bo.points = 40
+Student("cy", 20, 40)
+assert(mean, 85)
+assert(passing, 90)
+assert(grade, 73.33333333333333)
+scores = []
+assert(Number.isNaN(mean), true)
+grade
+```
+
+- This is the complete
+  `Nucleoid averages lists and populations with average` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `73.33333333333333`.
+- [NUC 80](nuc-0080.md) adds `average()` and `average(selector)` to lists and
+  class instance lists. The result is exactly `sum(...)` divided by `length`
+  with the same arguments, using the division of `/`, so a list of numbers
+  averages bit for bit to `xs.sum() / xs.length`, and an empty list or class
+  averages to NaN, the value of `0 / 0`.
+- Values convert as `sum` converts them, and every item counts toward the
+  divisor: `[2, null].average()` is `1`. An undefined value makes the mean
+  undefined, stored as `null`. A `null` item counts `0` without settling a
+  declaration to `null`, while the reads inside a selector follow the existing
+  rules.
+- The selector is called once per item, in order, with only the item. A
+  supplied selector that is not a function, including `null`, raises
+  `TypeError("average expects a function")`, even on an empty receiver.
+- Averages are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level rules
+  too. On a class name, `Name.average(...)` is the population query even when
+  the class declares an instance method `average`; instances keep calling the
+  method. `average` is not a noun query, so `average of xs` stays a syntax
+  error.
+- The authoritative contract is the
+  [list and population averages](../nucleoid.spec.md#list-and-population-averages)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -3151,6 +3205,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
+| A supplied `average` selector that is not a function, including `null`, even on an empty receiver | `average expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
@@ -3344,6 +3399,7 @@ items.distinct()  Name.distinct(selector) live values without repeats (NUC 71)
 items.count(predicate)  Name.count(predicate) live predicate count (NUC 73)
 items.mode()  Name.mode(selector)      live most frequent item (NUC 75)
 items.maxBy(key)  Name.minBy(key)     live first item with the largest or smallest key (NUC 77)
+items.average()  Name.average(selector) live mean: exactly items.sum() / items.length (NUC 80)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

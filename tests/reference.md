@@ -2305,4 +2305,30 @@ assert(dearest, 5)
 assert(stocked, 2)
 names
 # return: ["pen","ink","cap"]
+---
+# Nucleoid averages lists and populations with average
+
+scores = [70, 85, 90]
+mean = scores.average()
+passing = scores.filter(score -> score >= 80).average()
+class Student(name, points, total):
+    this.name = name
+    this.points = points
+    this.total = total
+grade = Student.average(student -> student.points / student.total * 100)
+Student("ana", 45, 50)
+bo = Student("bo", 30, 50)
+assert(mean, 81.66666666666667)
+assert(passing, 87.5)
+assert(grade, 75)
+scores.push(95)
+bo.points = 40
+Student("cy", 20, 40)
+assert(mean, 85)
+assert(passing, 90)
+assert(grade, 73.33333333333333)
+scores = []
+assert(Number.isNaN(mean), true)
+grade
+# return: 73.33333333333333
 ```

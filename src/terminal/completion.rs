@@ -61,6 +61,7 @@ const LIST_MEMBERS: &[&str] = &[
     "count",
     "reduce",
     "sum",
+    "average",
     "max",
     "min",
     "distinct",
@@ -384,6 +385,23 @@ mod tests {
         }
         let completion = Completion::find(&runtime, &editor::new("maxB"), false).unwrap();
         assert_eq!(completion.candidates, ["maxBytes"]);
+    }
+
+    #[test]
+    fn completion_offers_the_average_query_on_lists_and_instance_lists() {
+        let mut runtime = Runtime::new();
+        runtime
+            .run("temps = [3, 1]\nclass Trip\nTrip()\navailable = 1")
+            .unwrap();
+        for (prefix, expected) in [("temps.av", "temps.average"), ("Trip.av", "Trip.average")] {
+            let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+            assert!(
+                completion.candidates.iter().any(|name| name == expected),
+                "{prefix}"
+            );
+        }
+        let completion = Completion::find(&runtime, &editor::new("av"), false).unwrap();
+        assert_eq!(completion.candidates, ["available"]);
     }
 
     #[test]

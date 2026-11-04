@@ -3636,6 +3636,57 @@ statement positions; caught values and transaction recovery are unchanged.
   through `Nucleoid rolls back failed extreme item updates` specify the
   executable behavior.
 
+## List and population averages
+
+- [NUC 80](docs/nuc-0080.md) adds the read-only list query `average` to lists
+  and class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.average()` returns the arithmetic mean of the receiver's items and
+  `RECEIVER.average(selector)` the mean of `selector(item)` for every item.
+  The result is exactly `RECEIVER.sum(...) / RECEIVER.length` with the same
+  arguments: the total of `sum`, divided by the number of items with the
+  division of `/`, in 64-bit floating point. A list of numbers therefore
+  averages to exactly what `xs.sum() / xs.length` gives, so
+  `[0.1, 0.2, 0.3].average()` is `0.20000000000000004`.
+- An empty receiver gives `0 / 0`, which is NaN. The result is a number, or
+  undefined when any added value is undefined, which a declaration stores as
+  `null`, because `/` gives undefined when an operand is undefined.
+- Every item counts toward the number of items, including items that convert
+  to `0` or NaN, so `[2, null].average()` is `1`.
+- The receivers, the numeric conversion, the selector and the liveness are
+  those of `sum`: a list however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class;
+  `null`, `false`, empty strings and empty lists count `0`, `true` counts `1`,
+  numeric strings and one-item lists count their number, and objects, other
+  strings and longer lists are NaN. On a class name, `average` is the
+  population query even when the class declares an instance method `average`;
+  its instances keep calling that method.
+- `average()` reads items, not bindings, so a `null` item counts `0` without
+  settling a declaration to `null`, while the reads inside a selector follow
+  the existing rules.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("average expects a function")`,
+  even on an empty receiver.
+- `average` follows the shared rules of the list queries: it reads its
+  receiver before its arguments, evaluates every supplied argument once, left
+  to right, including unused extras, and never writes the receiver. A
+  declaration that uses it depends on the list or population, on its argument
+  expressions and on whatever the selector reads, so list mutations, new and
+  deleted instances and property changes re-evaluate it, in class-level rules
+  too. Selector errors roll back through the existing transaction. A null or
+  undefined receiver yields undefined without evaluating the arguments.
+- The call keeps its ordinary rendering, so `mean = temps.average()` explains
+  as `mean = temps.average()`, and `why` lists the receiver among the
+  declaration's dependencies.
+- `average of xs` stays `SyntaxError("Unexpected keyword 'of'")`: `average`
+  is not one of the noun queries. Property reads such as `xs.average`,
+  bindings and object properties named `average`, `average(...)` without a
+  definition, `Math.average` and instance methods named `average` called on
+  an instance keep their accepted results. The eight appended
+  entries beginning `Nucleoid averages lists with average` through
+  `Nucleoid rolls back failed average updates` specify the executable
+  behavior.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -19771,4 +19822,183 @@ assert: [readers, listers, coolest], [["hottest", "coolest"], ["rooms"], lab]
 lab.temp = 30
 hall.room = "foyer"
 assert: [hottest, coolest, rooms], [lab, hall, ["lab", "foyer"]]
+---
+# Nucleoid averages lists with average
+
+temps = [18, 24, 9]
+mean = temps.average()
+gap = temps.average(temp -> Math.abs(temp - 20))
+assert: [mean, gap, (why mean)[0].from], [17, 5.666666666666667, ["temps"]]
+temps.push(29)
+assert: [mean, gap], [20, 6.5]
+temps.pop()
+temps.pop()
+assert: [mean, gap], [21, 3]
+temps = []
+assert: [Number.isNaN(mean), Number.isNaN(gap)], [true, true]
+cart = {items: [0.1, 0.2]}
+paid = cart.items.average()
+small = cart.items.filter(item -> item < 0.25).average()
+cart.items.push(0.3)
+assert: [paid, small], [0.20000000000000004, 0.15000000000000002]
+---
+# Nucleoid averages class instance populations with average
+
+class Trip(km, hours):
+    this.km = km
+    this.hours = hours
+def speed trip => trip.km / trip.hours
+first = Trip(120, 2)
+second = Trip(45, 1)
+pace = Trip.average(speed)
+far = Trip.filter(trip -> trip.km > 100).average(speed)
+recent = Trip[-2:].average(trip -> trip.hours * 60)
+assert: [pace, far, recent], [52.5, 60, 90]
+third = Trip(300, 4)
+assert: [pace, far, recent], [60, 67.5, 150]
+first.hours = 3
+assert: [pace, far], [53.333333333333336, 57.5]
+delete third.hours
+assert: [pace, far, recent], [null, null, null]
+delete third.km
+delete third
+assert: [pace, far, recent], [42.5, 40, 120]
+class Refund(cents): this.cents = cents
+refunds = Refund.average(refund -> refund.cents / 100)
+assert: Number.isNaN(refunds), true
+Refund(250)
+assert: refunds, 2.5
+---
+# Nucleoid converts averaged values to numbers
+
+flags = [true, false, true, true]
+share = flags.average()
+entries = [2, "3", " 4 ", "", null, [5], []]
+mean = entries.average()
+assert: [share, mean], [0.75, 2]
+flags.push(false)
+entries.push("x")
+assert: [share, Number.isNaN(mean)], [0.6, true]
+entries.pop()
+entries.push(Number.POSITIVE_INFINITY)
+assert: mean, Number.POSITIVE_INFINITY
+class Line(price, qty):
+    this.price = price
+    this.qty = qty
+pen = Line(3, 2)
+book = Line(12, 1)
+typical = Line.average(line -> line.price * line.qty)
+assert: typical, 9
+gift = Line(null, 1)
+assert: typical, null
+gift.price = 6
+assert: typical, 8
+---
+# Nucleoid calls the average selector once per item with only the item
+
+seen = []
+def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item
+items = [3, 1, 2]
+def spread() => items.average(weigh)
+assert: [spread(), seen], [4.666666666666667, [3, 1, 2]]
+floor = 2
+def price item => Math.max(item, floor)
+cost = items.average(price)
+assert: cost, 2.3333333333333335
+floor = 3
+items.push(5)
+assert: [cost, seen], [3.5, [3, 1, 2]]
+missing = null
+skipped = missing.average(weigh(9))
+assert: [skipped, seen], [null, [3, 1, 2]]
+---
+# Nucleoid keeps averages live in class level rules
+
+class Room(name): this.name = name
+class Sensor(room, temp):
+    this.room = room
+    this.temp = temp
+$Room.mean = Sensor.filter(sensor -> sensor.room == $Room).average(sensor -> sensor.temp)
+$Room.warm = $Room.mean > 21
+lab = Room("lab")
+hall = Room("hall")
+Sensor(lab, 20)
+probe = Sensor(lab, 25)
+Sensor(hall, 18)
+comfort = Room.average(room -> Math.abs(room.mean - 21))
+assert: [lab.mean, lab.warm, hall.mean, hall.warm, comfort], [22.5, true, 18, false, 2.25]
+probe.temp = 21
+assert: [lab.mean, lab.warm, comfort], [20.5, false, 1.75]
+probe.room = hall
+assert: [lab.mean, hall.mean, comfort], [20, 19.5, 1.25]
+attic = Room("attic")
+assert: [Number.isNaN(attic.mean), attic.warm, Number.isNaN(comfort)], [true, false, true]
+---
+# Nucleoid uses averages in functions methods and conditional expressions
+
+class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def mean(): return this.scores.average()
+def variance(team) => team.scores.average(score -> score * score) - team.mean() ** 2
+red = Team("red", [3, 5])
+blue = Team("blue", [6])
+league = Team.average(team -> team.mean())
+leader = red.mean() > blue.mean() ? red.name : blue.name
+spread = variance(red)
+assert: [league, leader, spread], [5, "blue", 1]
+blue.scores.push(2)
+red.scores.push(7)
+Team("green", [1])
+assert: [league, leader, spread], [3.3333333333333335, "red", 2.666666666666668]
+---
+# Nucleoid keeps average as an ordinary name beside the average query
+
+average = 2
+report = {average: 5}
+def double average => average * 2
+class Bag(items):
+    this.items = items
+    def average(): return this.items.average(item -> item * item)
+bag = Bag([1, 3])
+level = bag.items.average() + average + report.average
+bags = Bag.average(each -> each.average())
+assert: [level, bag.average(), bags, double(average)], [9, 5, 5, 4]
+assert: bag.items.average, null
+bag.items.push(5)
+average = 4
+Bag([6])
+assert: [level, bags], [12, 23.833333333333332]
+---
+# Nucleoid rolls back failed average updates
+
+def checked(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value
+amounts = [10, 20]
+mean = amounts.average(checked)
+failure = ""
+try:
+    amounts.push(500)
+catch error:
+    failure = error
+assert: [failure, amounts, mean], ["TOO_LARGE", [10, 20], 15]
+amounts.push(30)
+assert: mean, 20
+class Item(price): this.price = price
+pen = Item(3)
+typical = Item.average(item -> checked(item.price))
+failure = ""
+try:
+    Item(500)
+catch error:
+    failure = error
+assert: [failure, Item.length, typical], ["TOO_LARGE", 1, 3]
+suppose:
+    Item(5)
+    assert: typical, 4
+assert: [Item.length, typical], [1, 3]
 ```

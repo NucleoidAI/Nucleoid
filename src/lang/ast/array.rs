@@ -6,8 +6,8 @@ use std::sync::Arc;
 use crate::builtins;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
-use crate::lang::ast::operator::compare;
-use crate::lang::ast::{Expr, Function};
+use crate::lang::ast::operator::{binary, compare};
+use crate::lang::ast::{BinaryOp, Expr, Function};
 use crate::number;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
@@ -376,7 +376,7 @@ impl Runtime {
                 let function = expect_function(predicate, "reduce")?;
                 self.reduce_items(items, &function, arguments.get(1))
             }
-            "sum" | "max" | "min" | "distinct" | "mode" => {
+            "sum" | "average" | "max" | "min" | "distinct" | "mode" => {
                 self.aggregate_items(items, property, predicate)
             }
             "maxBy" | "minBy" => self.extreme_item(items, property, predicate),
@@ -500,8 +500,10 @@ impl Runtime {
     ) -> Result<Value> {
         let selector = optional_selector(predicate, property)?;
 
-        if property == "sum" {
-            return self.sum_items(items, selector.as_ref());
+        match property {
+            "sum" => return self.sum_items(items, selector.as_ref()),
+            "average" => return self.average_items(items, selector.as_ref()),
+            _ => {}
         }
 
         let values = self.select_items(items, selector.as_ref())?;
@@ -596,6 +598,16 @@ impl Runtime {
         } else {
             Value::Number(total)
         })
+    }
+
+    fn average_items(
+        &mut self,
+        items: Vec<Value>,
+        selector: Option<&Arc<Function>>,
+    ) -> Result<Value> {
+        let count = Value::Number(number::from_usize(items.len()));
+        let total = self.sum_items(items, selector)?;
+        binary(BinaryOp::Divide, &total, &count)
     }
 
     fn select_items(

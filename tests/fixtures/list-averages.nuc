@@ -1,0 +1,14 @@
+class Reading(room, celsius):
+    this.room = room
+    this.celsius = celsius
+mean = Reading.average(reading -> reading.celsius)
+labMean = Reading.filter(reading -> reading.room == "lab").average(reading -> reading.celsius)
+if Reading.average(reading -> reading.celsius) > 20:
+    warm = true
+Reading("lab", 21)
+Reading("lab", 25)
+Reading("hall", 17)
+assert(mean, 21)
+assert(labMean, 23)
+assert(warm, true)
+[mean, labMean, [].average()]

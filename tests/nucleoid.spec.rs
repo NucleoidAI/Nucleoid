@@ -16599,6 +16599,229 @@ fn tracks_only_the_properties_that_selector_arguments_read() {
     }
 }
 
+/// Nucleoid averages lists with average
+#[rustfmt::skip]
+#[test]
+fn averages_lists_with_average() {
+    runner()("temps = [18, 24, 9]\nmean = temps.average()\ngap = temps.average(temp -> Math.abs(temp - 20))\nassert: [mean, gap, (why mean)[0].from], [17, 5.666666666666667, [\"temps\"]]\ntemps.push(29)\nassert: [mean, gap], [20, 6.5]\ntemps.pop()\ntemps.pop()\nassert: [mean, gap], [21, 3]\ntemps = []\nassert: [Number.isNaN(mean), Number.isNaN(gap)], [true, true]\ncart = {items: [0.1, 0.2]}\npaid = cart.items.average()\nsmall = cart.items.filter(item -> item < 0.25).average()\ncart.items.push(0.3)\nassert: [paid, small], [0.20000000000000004, 0.15000000000000002]");
+    let mut run = runner();
+    run("temps = [18, 24, 9]");
+    run("mean = temps.average()");
+    run("gap = temps.average(temp -> Math.abs(temp - 20))");
+    assert_eq!(run("[mean, gap, (why mean)[0].from]"), serde_json::json!([17, 5.666666666666667, ["temps"]]));
+    run("temps.push(29)");
+    assert_eq!(run("[mean, gap]"), serde_json::json!([20, 6.5]));
+    run("temps.pop()");
+    run("temps.pop()");
+    assert_eq!(run("[mean, gap]"), serde_json::json!([21, 3]));
+    run("temps = []");
+    assert_eq!(run("[Number.isNaN(mean), Number.isNaN(gap)]"), serde_json::json!([true, true]));
+    run("cart = {items: [0.1, 0.2]}");
+    run("paid = cart.items.average()");
+    run("small = cart.items.filter(item -> item < 0.25).average()");
+    run("cart.items.push(0.3)");
+    assert_eq!(run("[paid, small]"), serde_json::json!([0.20000000000000004, 0.15000000000000002]));
+}
+
+/// Nucleoid averages class instance populations with average
+#[rustfmt::skip]
+#[test]
+fn averages_class_instance_populations_with_average() {
+    runner()("class Trip(km, hours):\n    this.km = km\n    this.hours = hours\ndef speed trip => trip.km / trip.hours\nfirst = Trip(120, 2)\nsecond = Trip(45, 1)\npace = Trip.average(speed)\nfar = Trip.filter(trip -> trip.km > 100).average(speed)\nrecent = Trip[-2:].average(trip -> trip.hours * 60)\nassert: [pace, far, recent], [52.5, 60, 90]\nthird = Trip(300, 4)\nassert: [pace, far, recent], [60, 67.5, 150]\nfirst.hours = 3\nassert: [pace, far], [53.333333333333336, 57.5]\ndelete third.hours\nassert: [pace, far, recent], [null, null, null]\ndelete third.km\ndelete third\nassert: [pace, far, recent], [42.5, 40, 120]\nclass Refund(cents): this.cents = cents\nrefunds = Refund.average(refund -> refund.cents / 100)\nassert: Number.isNaN(refunds), true\nRefund(250)\nassert: refunds, 2.5");
+    let mut run = runner();
+    run(r#"class Trip(km, hours):
+    this.km = km
+    this.hours = hours"#);
+    run("def speed trip => trip.km / trip.hours");
+    run("first = Trip(120, 2)");
+    run("second = Trip(45, 1)");
+    run("pace = Trip.average(speed)");
+    run("far = Trip.filter(trip -> trip.km > 100).average(speed)");
+    run("recent = Trip[-2:].average(trip -> trip.hours * 60)");
+    assert_eq!(run("[pace, far, recent]"), serde_json::json!([52.5, 60, 90]));
+    run("third = Trip(300, 4)");
+    assert_eq!(run("[pace, far, recent]"), serde_json::json!([60, 67.5, 150]));
+    run("first.hours = 3");
+    assert_eq!(run("[pace, far]"), serde_json::json!([53.333333333333336, 57.5]));
+    run("delete third.hours");
+    assert_eq!(run("[pace, far, recent]"), serde_json::json!([null, null, null]));
+    run("delete third.km");
+    run("delete third");
+    assert_eq!(run("[pace, far, recent]"), serde_json::json!([42.5, 40, 120]));
+    run("class Refund(cents): this.cents = cents");
+    run("refunds = Refund.average(refund -> refund.cents / 100)");
+    assert_eq!(run("Number.isNaN(refunds)"), true);
+    run("Refund(250)");
+    assert_eq!(run("refunds"), 2.5);
+}
+
+/// Nucleoid converts averaged values to numbers
+#[rustfmt::skip]
+#[test]
+fn converts_averaged_values_to_numbers() {
+    runner()("flags = [true, false, true, true]\nshare = flags.average()\nentries = [2, \"3\", \" 4 \", \"\", null, [5], []]\nmean = entries.average()\nassert: [share, mean], [0.75, 2]\nflags.push(false)\nentries.push(\"x\")\nassert: [share, Number.isNaN(mean)], [0.6, true]\nentries.pop()\nentries.push(Number.POSITIVE_INFINITY)\nassert: mean, Number.POSITIVE_INFINITY\nclass Line(price, qty):\n    this.price = price\n    this.qty = qty\npen = Line(3, 2)\nbook = Line(12, 1)\ntypical = Line.average(line -> line.price * line.qty)\nassert: typical, 9\ngift = Line(null, 1)\nassert: typical, null\ngift.price = 6\nassert: typical, 8");
+    let mut run = runner();
+    run("flags = [true, false, true, true]");
+    run("share = flags.average()");
+    run(r#"entries = [2, "3", " 4 ", "", null, [5], []]"#);
+    run("mean = entries.average()");
+    assert_eq!(run("[share, mean]"), serde_json::json!([0.75, 2]));
+    run("flags.push(false)");
+    run(r#"entries.push("x")"#);
+    assert_eq!(run("[share, Number.isNaN(mean)]"), serde_json::json!([0.6, true]));
+    run("entries.pop()");
+    run("entries.push(Number.POSITIVE_INFINITY)");
+    {
+        let actual = run("mean");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"class Line(price, qty):
+    this.price = price
+    this.qty = qty"#);
+    run("pen = Line(3, 2)");
+    run("book = Line(12, 1)");
+    run("typical = Line.average(line -> line.price * line.qty)");
+    assert_eq!(run("typical"), 9);
+    run("gift = Line(null, 1)");
+    assert_eq!(run("typical"), serde_json::Value::Null);
+    run("gift.price = 6");
+    assert_eq!(run("typical"), 8);
+}
+
+/// Nucleoid calls the average selector once per item with only the item
+#[rustfmt::skip]
+#[test]
+fn calls_the_average_selector_once_per_item_with_only_the_item() {
+    runner()("seen = []\ndef weigh(item, position):\n    seen.push(position ?? item)\n    return item * item\nitems = [3, 1, 2]\ndef spread() => items.average(weigh)\nassert: [spread(), seen], [4.666666666666667, [3, 1, 2]]\nfloor = 2\ndef price item => Math.max(item, floor)\ncost = items.average(price)\nassert: cost, 2.3333333333333335\nfloor = 3\nitems.push(5)\nassert: [cost, seen], [3.5, [3, 1, 2]]\nmissing = null\nskipped = missing.average(weigh(9))\nassert: [skipped, seen], [null, [3, 1, 2]]");
+    let mut run = runner();
+    run("seen = []");
+    run(r#"def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item"#);
+    run("items = [3, 1, 2]");
+    run("def spread() => items.average(weigh)");
+    assert_eq!(run("[spread(), seen]"), serde_json::json!([4.666666666666667, [3, 1, 2]]));
+    run("floor = 2");
+    run("def price item => Math.max(item, floor)");
+    run("cost = items.average(price)");
+    assert_eq!(run("cost"), 2.3333333333333335);
+    run("floor = 3");
+    run("items.push(5)");
+    assert_eq!(run("[cost, seen]"), serde_json::json!([3.5, [3, 1, 2]]));
+    run("missing = null");
+    run("skipped = missing.average(weigh(9))");
+    assert_eq!(run("[skipped, seen]"), serde_json::json!([null, [3, 1, 2]]));
+}
+
+/// Nucleoid keeps averages live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_averages_live_in_class_level_rules() {
+    runner()("class Room(name): this.name = name\nclass Sensor(room, temp):\n    this.room = room\n    this.temp = temp\n$Room.mean = Sensor.filter(sensor -> sensor.room == $Room).average(sensor -> sensor.temp)\n$Room.warm = $Room.mean > 21\nlab = Room(\"lab\")\nhall = Room(\"hall\")\nSensor(lab, 20)\nprobe = Sensor(lab, 25)\nSensor(hall, 18)\ncomfort = Room.average(room -> Math.abs(room.mean - 21))\nassert: [lab.mean, lab.warm, hall.mean, hall.warm, comfort], [22.5, true, 18, false, 2.25]\nprobe.temp = 21\nassert: [lab.mean, lab.warm, comfort], [20.5, false, 1.75]\nprobe.room = hall\nassert: [lab.mean, hall.mean, comfort], [20, 19.5, 1.25]\nattic = Room(\"attic\")\nassert: [Number.isNaN(attic.mean), attic.warm, Number.isNaN(comfort)], [true, false, true]");
+    let mut run = runner();
+    run("class Room(name): this.name = name");
+    run(r#"class Sensor(room, temp):
+    this.room = room
+    this.temp = temp"#);
+    run("$Room.mean = Sensor.filter(sensor -> sensor.room == $Room).average(sensor -> sensor.temp)");
+    run("$Room.warm = $Room.mean > 21");
+    run(r#"lab = Room("lab")"#);
+    run(r#"hall = Room("hall")"#);
+    run("Sensor(lab, 20)");
+    run("probe = Sensor(lab, 25)");
+    run("Sensor(hall, 18)");
+    run("comfort = Room.average(room -> Math.abs(room.mean - 21))");
+    assert_eq!(run("[lab.mean, lab.warm, hall.mean, hall.warm, comfort]"), serde_json::json!([22.5, true, 18, false, 2.25]));
+    run("probe.temp = 21");
+    assert_eq!(run("[lab.mean, lab.warm, comfort]"), serde_json::json!([20.5, false, 1.75]));
+    run("probe.room = hall");
+    assert_eq!(run("[lab.mean, hall.mean, comfort]"), serde_json::json!([20, 19.5, 1.25]));
+    run(r#"attic = Room("attic")"#);
+    assert_eq!(run("[Number.isNaN(attic.mean), attic.warm, Number.isNaN(comfort)]"), serde_json::json!([true, false, true]));
+}
+
+/// Nucleoid uses averages in functions methods and conditional expressions
+#[rustfmt::skip]
+#[test]
+fn uses_averages_in_functions_methods_and_conditional_expressions() {
+    runner()("class Team(name, scores):\n    this.name = name\n    this.scores = scores\n    def mean(): return this.scores.average()\ndef variance(team) => team.scores.average(score -> score * score) - team.mean() ** 2\nred = Team(\"red\", [3, 5])\nblue = Team(\"blue\", [6])\nleague = Team.average(team -> team.mean())\nleader = red.mean() > blue.mean() ? red.name : blue.name\nspread = variance(red)\nassert: [league, leader, spread], [5, \"blue\", 1]\nblue.scores.push(2)\nred.scores.push(7)\nTeam(\"green\", [1])\nassert: [league, leader, spread], [3.3333333333333335, \"red\", 2.666666666666668]");
+    let mut run = runner();
+    run(r#"class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def mean(): return this.scores.average()"#);
+    run("def variance(team) => team.scores.average(score -> score * score) - team.mean() ** 2");
+    run(r#"red = Team("red", [3, 5])"#);
+    run(r#"blue = Team("blue", [6])"#);
+    run("league = Team.average(team -> team.mean())");
+    run("leader = red.mean() > blue.mean() ? red.name : blue.name");
+    run("spread = variance(red)");
+    assert_eq!(run("[league, leader, spread]"), serde_json::json!([5, "blue", 1]));
+    run("blue.scores.push(2)");
+    run("red.scores.push(7)");
+    run(r#"Team("green", [1])"#);
+    assert_eq!(run("[league, leader, spread]"), serde_json::json!([3.3333333333333335, "red", 2.666666666666668]));
+}
+
+/// Nucleoid keeps average as an ordinary name beside the average query
+#[rustfmt::skip]
+#[test]
+fn keeps_average_as_an_ordinary_name_beside_the_average_query() {
+    runner()("average = 2\nreport = {average: 5}\ndef double average => average * 2\nclass Bag(items):\n    this.items = items\n    def average(): return this.items.average(item -> item * item)\nbag = Bag([1, 3])\nlevel = bag.items.average() + average + report.average\nbags = Bag.average(each -> each.average())\nassert: [level, bag.average(), bags, double(average)], [9, 5, 5, 4]\nassert: bag.items.average, null\nbag.items.push(5)\naverage = 4\nBag([6])\nassert: [level, bags], [12, 23.833333333333332]");
+    let mut run = runner();
+    run("average = 2");
+    run("report = {average: 5}");
+    run("def double average => average * 2");
+    run(r#"class Bag(items):
+    this.items = items
+    def average(): return this.items.average(item -> item * item)"#);
+    run("bag = Bag([1, 3])");
+    run("level = bag.items.average() + average + report.average");
+    run("bags = Bag.average(each -> each.average())");
+    assert_eq!(run("[level, bag.average(), bags, double(average)]"), serde_json::json!([9, 5, 5, 4]));
+    assert_eq!(run("bag.items.average"), serde_json::Value::Null);
+    run("bag.items.push(5)");
+    run("average = 4");
+    run("Bag([6])");
+    assert_eq!(run("[level, bags]"), serde_json::json!([12, 23.833333333333332]));
+}
+
+/// Nucleoid rolls back failed average updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_average_updates() {
+    runner()("def checked(value):\n    if value > 100:\n        throw \"TOO_LARGE\"\n    return value\namounts = [10, 20]\nmean = amounts.average(checked)\nfailure = \"\"\ntry:\n    amounts.push(500)\ncatch error:\n    failure = error\nassert: [failure, amounts, mean], [\"TOO_LARGE\", [10, 20], 15]\namounts.push(30)\nassert: mean, 20\nclass Item(price): this.price = price\npen = Item(3)\ntypical = Item.average(item -> checked(item.price))\nfailure = \"\"\ntry:\n    Item(500)\ncatch error:\n    failure = error\nassert: [failure, Item.length, typical], [\"TOO_LARGE\", 1, 3]\nsuppose:\n    Item(5)\n    assert: typical, 4\nassert: [Item.length, typical], [1, 3]");
+    let mut run = runner();
+    run(r#"def checked(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value
+amounts = [10, 20]
+mean = amounts.average(checked)
+failure = ""
+try:
+    amounts.push(500)
+catch error:
+    failure = error
+assert: [failure, amounts, mean], ["TOO_LARGE", [10, 20], 15]
+amounts.push(30)
+assert: mean, 20
+class Item(price): this.price = price
+pen = Item(3)
+typical = Item.average(item -> checked(item.price))
+failure = ""
+try:
+    Item(500)
+catch error:
+    failure = error
+assert: [failure, Item.length, typical], ["TOO_LARGE", 1, 3]
+suppose:
+    Item(5)
+    assert: typical, 4
+assert: [Item.length, typical], [1, 3]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -3263,6 +3263,42 @@ fullest.zone
   [NUC 79](nuc-0079.md) and the
   [root contract](../nucleoid.spec.md#property-selector-arguments).
 
+## List and population averages
+
+**Averages keep the rating of every product live as reviews arrive**
+
+```nuc
+class Product(name): this.name = name
+class Review(product, stars):
+    this.product = product
+    this.stars = stars
+$Product.rating = Review.filter(review -> review.product == $Product).average(review -> review.stars)
+$Product.featured = $Product.rating >= 4
+lamp = Product("lamp")
+desk = Product("desk")
+Review(lamp, 5)
+Review(lamp, 4)
+late = Review(desk, 2)
+store = Review.average(review -> review.stars)
+assert: [lamp.rating, lamp.featured, desk.rating, desk.featured, store], [4.5, true, 2, false, 3.6666666666666665]
+late.stars = 5
+Review(desk, 4)
+assert: [desk.rating, desk.featured, store], [4.5, true, 4.5]
+chair = Product("chair")
+assert: [Number.isNaN(chair.rating), chair.featured], [true, false]
+[lamp.featured, desk.featured, chair.featured]
+# return: [true,true,false]
+```
+
+- `$Product.rating` is the mean of the stars of each product's reviews, and
+  `$Product.featured` follows it. Raising the late review to five stars and
+  adding a four-star review lift the desk to `4.5`, so it becomes featured,
+  and `store`, the mean of every review, follows both changes.
+- The chair has no reviews, so its rating is NaN, the mean of nothing, and
+  it is not featured, because NaN compares false. See
+  [NUC 80](nuc-0080.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-averages).
+
 ## Copyright
 
 Copyright 2020 Nucleoid
