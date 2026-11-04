@@ -470,6 +470,54 @@ input canvas and output masks its output canvas. Orientation is 0 in both
 states because the shapes are not rotated. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
 
+`dataset.3c9b0459.json` annotates the four original training pairs from
+`data\training\3c9b0459.json`, in order, followed by its test pair, five
+mosaic instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions, and no grid has a zero cell.
+Each input is one mosaic of 9 cells that fills its canvas, in two or three
+colors: 1, 2, and 8; 2, 4, and 9; 5 and 8; and 2, 3, and 9 in the training
+pairs. Each object is that whole mosaic, the figure seen first, whose 3 by 3
+box spans the canvas from its origin, 0 and 0. Each output turns the whole
+mosaic a half turn, 180 degrees, so the cell in row r and column c moves to
+row 2 - r and column 2 - c, and every color keeps its cell count. The half
+turn is the only one of the square's eight turns and mirrors, the identity
+included, that reproduces any training pair: no training mosaic looks the
+same after a quarter turn, a half turn, a mirror across either center line,
+or a flip across either diagonal. The class takes no descriptive property,
+with no color, parts list, width, height, canvas size, or matrix of cells,
+because the rule needs none: the mosaic's cells travel in its masks, and its
+turn is its orientation. One unconditional class-level rule rewrites
+`orientation` as `($Obj.orientation@first + 180) % 360`, the half-turn rule
+of `dataset.6150a2bd.json`, anchored with `@first` because the rule rewrites
+`orientation` itself. The rules leave `x` and `y` unchanged: a mosaic that
+fills its canvas keeps its box in place under a half turn, whether about its
+own center or the canvas's. The two further rules of `dataset.6150a2bd.json`,
+which move the box about the canvas center as
+`canvas_width - $Obj.x@first - $Obj.width` and
+`canvas_height - $Obj.y@first - $Obj.height`, would reproduce every training
+output as well, but every mosaic's `width` and `height` equal the canvas's,
+so those properties would only restate the canvas size and those rules would
+only return the input origin; the rules state the half turn alone, a choice
+fixed from the training pairs before the test pair was read. Each training
+grid holds a single mosaic and shows no relation between objects, so no
+population operation appears. The rules create no property and leave `x`,
+`y`, and the tag unchanged, so input and output states share the same keys
+and differ only in `orientation`. Native snapshots start with the pair's
+`canvas_width` and `canvas_height`, and output snapshots are captured with
+the pair's implementation followed by `Obj[:]`. The tag `l9100` is a single
+shape, as in `dataset.28bf18c6.json` and `dataset.6150a2bd.json`, in both
+states. Input masks retain each pair's full-size 3 by 3 input canvas and
+output masks the complete 3 by 3 output; with no zero cell, each mask equals
+its pair's grid, and merging them reproduces each pair's input and output.
+The `output_x`/`output_y` fields record the turned mosaic's nonzero
+bounding-box origin, 0 and 0, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each output keeps its input's 3 by 3
+canvas; with no zero cell to crop, `FIT` would frame the same grids.
+Orientation is 0 in every input state, where the mosaic is not turned, and
+180 in every output state. The declarations hold executable code only,
+without `#` comments. The test pair follows the training pairs at the same
+level and is annotated by the same rules.
+
 `dataset.44f52bb0.json` annotates the six original training pairs from
 `data\training\44f52bb0.json`, in order, followed by its two test pairs,
 eight pattern instances in total, one per pair. Every input retains its
