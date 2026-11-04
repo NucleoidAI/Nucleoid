@@ -64,6 +64,8 @@ const LIST_MEMBERS: &[&str] = &[
     "min",
     "distinct",
     "mode",
+    "maxBy",
+    "minBy",
     "some",
     "every",
     "find",
@@ -359,6 +361,28 @@ mod tests {
         // `mode` is a member of lists, not a name of its own.
         let completion = Completion::find(&runtime, &editor::new("mo"), false).unwrap();
         assert_eq!(completion.candidates, ["moderate"]);
+    }
+
+    #[test]
+    fn completion_offers_the_extreme_item_queries_on_lists_and_instance_lists() {
+        let mut runtime = Runtime::new();
+        runtime
+            .run("readings = [3, 1]\nclass Bid\nBid()\nmaxBytes = 1")
+            .unwrap();
+        for (prefix, expected) in [
+            ("readings.maxB", "readings.maxBy"),
+            ("readings.minB", "readings.minBy"),
+            ("Bid.maxB", "Bid.maxBy"),
+            ("Bid.minB", "Bid.minBy"),
+        ] {
+            let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+            assert!(
+                completion.candidates.iter().any(|name| name == expected),
+                "{prefix}"
+            );
+        }
+        let completion = Completion::find(&runtime, &editor::new("maxB"), false).unwrap();
+        assert_eq!(completion.candidates, ["maxBytes"]);
     }
 
     #[test]

@@ -229,7 +229,7 @@ pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> 
     })
 }
 
-fn compare(left: &Value, right: &Value) -> Option<Ordering> {
+pub(crate) fn compare(left: &Value, right: &Value) -> Option<Ordering> {
     match (left, right) {
         (Value::String(left), Value::String(right)) => Some(left.as_str().cmp(right.as_str())),
         _ => left.to_number().partial_cmp(&right.to_number()),

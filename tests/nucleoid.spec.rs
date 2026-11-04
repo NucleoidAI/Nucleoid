@@ -15739,6 +15739,436 @@ catch error:
 assert: failure, TypeError("abc.sum is not a function")"#);
 }
 
+/// Nucleoid finds the extreme items of lists with maxBy and minBy
+#[rustfmt::skip]
+#[test]
+fn finds_the_extreme_items_of_lists_with_maxby_and_minby() {
+    runner()("readings = [{at: 9, c: 18}, {at: 12, c: 24}, {at: 15, c: 24}, {at: 18, c: 9}]\nwarmest = readings.maxBy(reading -> reading.c)\ncoldest = readings.minBy(reading -> reading.c)\nassert: warmest.at, 12\nassert: coldest.at, 18\nassert: warmest == readings[1], true\nreadings.push({at: 21, c: 30})\nreadings.shift()\nassert: warmest.at, 21\nassert: coldest.at, 18\nreadings.pop()\nreadings.pop()\nassert: warmest.at, 12\nassert: coldest.at, 12\nreadings = []\nassert: warmest, null\nassert: coldest, null\ntrip = {legs: [{to: \"oslo\", km: 410, mins: 300}, {to: \"voss\", km: 110, mins: 75}]}\nfastest = trip.legs.maxBy(leg -> leg.km / leg.mins)\nshortest = trip.legs.minBy(leg -> leg.km)\nassert: fastest.to, \"voss\"\nassert: shortest.to, \"voss\"\ntrip.legs.push({to: \"lom\", km: 60, mins: 90})\ntrip.legs.push({to: \"alta\", km: 900, mins: 480})\ntrip.legs.push({to: \"bodo\", km: 300, mins: 400})\nassert: fastest.to, \"alta\"\nassert: shortest.to, \"lom\"");
+    let mut run = runner();
+    run("readings = [{at: 9, c: 18}, {at: 12, c: 24}, {at: 15, c: 24}, {at: 18, c: 9}]");
+    run("warmest = readings.maxBy(reading -> reading.c)");
+    run("coldest = readings.minBy(reading -> reading.c)");
+    assert_eq!(run("warmest.at"), 12);
+    assert_eq!(run("coldest.at"), 18);
+    assert_eq!(run("warmest == readings[1]"), true);
+    run("readings.push({at: 21, c: 30})");
+    run("readings.shift()");
+    assert_eq!(run("warmest.at"), 21);
+    assert_eq!(run("coldest.at"), 18);
+    run("readings.pop()");
+    run("readings.pop()");
+    assert_eq!(run("warmest.at"), 12);
+    assert_eq!(run("coldest.at"), 12);
+    run("readings = []");
+    assert_eq!(run("warmest"), serde_json::Value::Null);
+    assert_eq!(run("coldest"), serde_json::Value::Null);
+    run(r#"trip = {legs: [{to: "oslo", km: 410, mins: 300}, {to: "voss", km: 110, mins: 75}]}"#);
+    run("fastest = trip.legs.maxBy(leg -> leg.km / leg.mins)");
+    run("shortest = trip.legs.minBy(leg -> leg.km)");
+    assert_eq!(run("fastest.to"), "voss");
+    assert_eq!(run("shortest.to"), "voss");
+    run(r#"trip.legs.push({to: "lom", km: 60, mins: 90})"#);
+    run(r#"trip.legs.push({to: "alta", km: 900, mins: 480})"#);
+    run(r#"trip.legs.push({to: "bodo", km: 300, mins: 400})"#);
+    assert_eq!(run("fastest.to"), "alta");
+    assert_eq!(run("shortest.to"), "lom");
+}
+
+/// Nucleoid finds the extreme instances of class populations with maxBy and minBy
+#[rustfmt::skip]
+#[test]
+fn finds_the_extreme_instances_of_class_populations_with_maxby_and_minby() {
+    runner()("class Bid(bidder, amount, open):\n    this.bidder = bidder\n    this.amount = amount\n    this.open = open\nbest = Bid.maxBy(bid -> bid.amount)\ncheapest = Bid.minBy(bid -> bid.amount)\nassert: best, null\nassert: cheapest, null\nada = Bid(\"ada\", 120, true)\nbo = Bid(\"bo\", 90, false)\ncy = Bid(\"cy\", 150, true)\nleading = Bid.filter(bid -> bid.open).minBy(bid -> bid.amount)\nrecent = Bid[-2:].maxBy(bid -> bid.amount)\nassert: best, cy\nassert: cheapest, bo\nassert: leading, ada\nassert: recent, cy\nbo.amount = 200\nada.open = false\nassert: best, bo\nassert: cheapest, ada\nassert: leading, cy\nassert: recent, bo\ndelete cy.amount\nassert: best, null\nassert: leading, null\ndelete cy.open\ndelete cy.bidder\ndelete cy\nassert: best, bo\nassert: cheapest, ada\nassert: leading, null\nassert: recent, bo");
+    let mut run = runner();
+    run(r#"class Bid(bidder, amount, open):
+    this.bidder = bidder
+    this.amount = amount
+    this.open = open"#);
+    run("best = Bid.maxBy(bid -> bid.amount)");
+    run("cheapest = Bid.minBy(bid -> bid.amount)");
+    assert_eq!(run("best"), serde_json::Value::Null);
+    assert_eq!(run("cheapest"), serde_json::Value::Null);
+    run(r#"ada = Bid("ada", 120, true)"#);
+    run(r#"bo = Bid("bo", 90, false)"#);
+    run(r#"cy = Bid("cy", 150, true)"#);
+    run("leading = Bid.filter(bid -> bid.open).minBy(bid -> bid.amount)");
+    run("recent = Bid[-2:].maxBy(bid -> bid.amount)");
+    {
+        let actual = run("best");
+        let expected = run("(cy)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("cheapest");
+        let expected = run("(bo)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("leading");
+        let expected = run("(ada)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("recent");
+        let expected = run("(cy)");
+        assert_eq!(actual, expected);
+    }
+    run("bo.amount = 200");
+    run("ada.open = false");
+    {
+        let actual = run("best");
+        let expected = run("(bo)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("cheapest");
+        let expected = run("(ada)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("leading");
+        let expected = run("(cy)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("recent");
+        let expected = run("(bo)");
+        assert_eq!(actual, expected);
+    }
+    run("delete cy.amount");
+    assert_eq!(run("best"), serde_json::Value::Null);
+    assert_eq!(run("leading"), serde_json::Value::Null);
+    run("delete cy.open");
+    run("delete cy.bidder");
+    run("delete cy");
+    {
+        let actual = run("best");
+        let expected = run("(bo)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("cheapest");
+        let expected = run("(ada)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("leading"), serde_json::Value::Null);
+    {
+        let actual = run("recent");
+        let expected = run("(bo)");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid compares maxBy and minBy keys as the comparison operators do
+#[rustfmt::skip]
+#[test]
+fn compares_maxby_and_minby_keys_as_the_comparison_operators_do() {
+    runner()("class Job(name, due, kg):\n    this.name = name\n    this.due = due\n    this.kg = kg\nalpha = Job.minBy(job -> job.name)\nsoonest = Job.minBy(job -> job.due)\nlatest = Job.maxBy(job -> job.due)\nheaviest = Job.maxBy(job -> job.kg)\npress = Job(\"press\", new Date(\"2026-12-01\"), 40)\ncoat = Job(\"Coat\", new Date(\"2026-11-20\"), \"9\")\nweld = Job(\"weld\", new Date(\"2026-11-28\"), 40)\nassert: alpha, coat\nassert: soonest, coat\nassert: latest, press\nassert: heaviest, press\ncoat.kg = \"75\"\nweld.due = new Date(\"2026-11-09\")\nJob(\"Anvil\", new Date(\"2026-12-24\"), \"100\")\nassert: alpha.name, \"Anvil\"\nassert: soonest, weld\nassert: latest.name, \"Anvil\"\nassert: heaviest, coat\npress.kg = 0 / 0\nassert: heaviest, null\npress.kg = 300\ndelete weld.due\nassert: heaviest, press\nassert: soonest, null\nassert: latest, null");
+    let mut run = runner();
+    run(r#"class Job(name, due, kg):
+    this.name = name
+    this.due = due
+    this.kg = kg"#);
+    run("alpha = Job.minBy(job -> job.name)");
+    run("soonest = Job.minBy(job -> job.due)");
+    run("latest = Job.maxBy(job -> job.due)");
+    run("heaviest = Job.maxBy(job -> job.kg)");
+    run(r#"press = Job("press", new Date("2026-12-01"), 40)"#);
+    run(r#"coat = Job("Coat", new Date("2026-11-20"), "9")"#);
+    run(r#"weld = Job("weld", new Date("2026-11-28"), 40)"#);
+    {
+        let actual = run("alpha");
+        let expected = run("(coat)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("soonest");
+        let expected = run("(coat)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("latest");
+        let expected = run("(press)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("heaviest");
+        let expected = run("(press)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"coat.kg = "75""#);
+    run(r#"weld.due = new Date("2026-11-09")"#);
+    run(r#"Job("Anvil", new Date("2026-12-24"), "100")"#);
+    assert_eq!(run("alpha.name"), "Anvil");
+    {
+        let actual = run("soonest");
+        let expected = run("(weld)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("latest.name"), "Anvil");
+    {
+        let actual = run("heaviest");
+        let expected = run("(coat)");
+        assert_eq!(actual, expected);
+    }
+    run("press.kg = 0 / 0");
+    assert_eq!(run("heaviest"), serde_json::Value::Null);
+    run("press.kg = 300");
+    run("delete weld.due");
+    {
+        let actual = run("heaviest");
+        let expected = run("(press)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("soonest"), serde_json::Value::Null);
+    assert_eq!(run("latest"), serde_json::Value::Null);
+}
+
+/// Nucleoid calls the extreme item selector once per item with only the item
+#[rustfmt::skip]
+#[test]
+fn calls_the_extreme_item_selector_once_per_item_with_only_the_item() {
+    runner()("seen = []\ndef weigh(parcel, position):\n    seen.push(position ?? parcel.id)\n    return parcel.kg\nparcels = [{id: 1, kg: 4}, {id: 2, kg: 9}, {id: 3, kg: 2}]\ndef heaviest() => parcels.maxBy(weigh)\nassert: heaviest().id, 2\nassert: seen, [1, 2, 3]\nparcels.push({id: 4, kg: 12})\nassert: heaviest().id, 4\nassert: seen, [1, 2, 3, 1, 2, 3, 4]\ndepot = 5\ndef gap parcel => Math.abs(parcel.kg - depot)\nclosest = parcels.minBy(gap)\nassert: closest.id, 1\ndepot = 10\nassert: closest.id, 2\nmissing = null\nskipped = missing.minBy(weigh(9))\nassert: skipped, null\nassert: seen, [1, 2, 3, 1, 2, 3, 4]");
+    let mut run = runner();
+    run("seen = []");
+    run(r#"def weigh(parcel, position):
+    seen.push(position ?? parcel.id)
+    return parcel.kg"#);
+    run("parcels = [{id: 1, kg: 4}, {id: 2, kg: 9}, {id: 3, kg: 2}]");
+    run("def heaviest() => parcels.maxBy(weigh)");
+    assert_eq!(run("heaviest().id"), 2);
+    assert_eq!(run("seen"), serde_json::json!([1, 2, 3]));
+    run("parcels.push({id: 4, kg: 12})");
+    assert_eq!(run("heaviest().id"), 4);
+    assert_eq!(run("seen"), serde_json::json!([1, 2, 3, 1, 2, 3, 4]));
+    run("depot = 5");
+    run("def gap parcel => Math.abs(parcel.kg - depot)");
+    run("closest = parcels.minBy(gap)");
+    assert_eq!(run("closest.id"), 1);
+    run("depot = 10");
+    assert_eq!(run("closest.id"), 2);
+    run("missing = null");
+    run("skipped = missing.minBy(weigh(9))");
+    assert_eq!(run("skipped"), serde_json::Value::Null);
+    assert_eq!(run("seen"), serde_json::json!([1, 2, 3, 1, 2, 3, 4]));
+}
+
+/// Nucleoid keeps extreme items live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_extreme_items_live_in_class_level_rules() {
+    runner()("class Team(name, target):\n    this.name = name\n    this.target = target\nclass Player(team, name, goals):\n    this.team = team\n    this.name = name\n    this.goals = goals\n$Team.star = Player.filter(player -> player.team == $Team.name).maxBy(player -> player.goals)\n$Team.total = Player.filter(player -> player.team == $Team.name).sum(player -> player.goals)\n$Team.fit = Player.minBy(player -> Math.abs(player.goals - $Team.target))\nreds = Team(\"reds\", 4)\nblues = Team(\"blues\", 10)\nleader = Team.maxBy(team -> team.total)\nana = Player(\"reds\", \"ana\", 7)\nPlayer(\"reds\", \"ben\", 3)\ncal = Player(\"blues\", \"cal\", 5)\nassert: reds.star, ana\nassert: blues.star, cal\nassert: reds.fit.name, \"ben\"\nassert: blues.fit, ana\nassert: leader, reds\ncal.goals = 12\nassert: blues.star, cal\nassert: blues.fit, cal\nassert: leader, blues\ncal.team = \"reds\"\nassert: reds.star, cal\nassert: blues.star, null\nassert: leader, reds\ngreens = Team(\"greens\", 6)\nassert: greens.star, null\nassert: greens.fit, ana");
+    let mut run = runner();
+    run(r#"class Team(name, target):
+    this.name = name
+    this.target = target"#);
+    run(r#"class Player(team, name, goals):
+    this.team = team
+    this.name = name
+    this.goals = goals"#);
+    run("$Team.star = Player.filter(player -> player.team == $Team.name).maxBy(player -> player.goals)");
+    run("$Team.total = Player.filter(player -> player.team == $Team.name).sum(player -> player.goals)");
+    run("$Team.fit = Player.minBy(player -> Math.abs(player.goals - $Team.target))");
+    run(r#"reds = Team("reds", 4)"#);
+    run(r#"blues = Team("blues", 10)"#);
+    run("leader = Team.maxBy(team -> team.total)");
+    run(r#"ana = Player("reds", "ana", 7)"#);
+    run(r#"Player("reds", "ben", 3)"#);
+    run(r#"cal = Player("blues", "cal", 5)"#);
+    {
+        let actual = run("reds.star");
+        let expected = run("(ana)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("blues.star");
+        let expected = run("(cal)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("reds.fit.name"), "ben");
+    {
+        let actual = run("blues.fit");
+        let expected = run("(ana)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("leader");
+        let expected = run("(reds)");
+        assert_eq!(actual, expected);
+    }
+    run("cal.goals = 12");
+    {
+        let actual = run("blues.star");
+        let expected = run("(cal)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("blues.fit");
+        let expected = run("(cal)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("leader");
+        let expected = run("(blues)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"cal.team = "reds""#);
+    {
+        let actual = run("reds.star");
+        let expected = run("(cal)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("blues.star"), serde_json::Value::Null);
+    {
+        let actual = run("leader");
+        let expected = run("(reds)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"greens = Team("greens", 6)"#);
+    assert_eq!(run("greens.star"), serde_json::Value::Null);
+    {
+        let actual = run("greens.fit");
+        let expected = run("(ana)");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid uses extreme items in functions methods and conditional expressions
+#[rustfmt::skip]
+#[test]
+fn uses_extreme_items_in_functions_methods_and_conditional_expressions() {
+    runner()("class Shelf(name, items):\n    this.name = name\n    this.items = items\n    def priciest(): return this.items.maxBy(item -> item.price)\ndef cheapest(shelf) => shelf.items.minBy(item -> item.price)\nleft = Shelf(\"left\", [{sku: \"pen\", price: 2}, {sku: \"ink\", price: 9}])\nright = Shelf(\"right\", [{sku: \"pad\", price: 4}, {sku: \"cap\", price: 1}])\ndearer = left.priciest().price > right.priciest().price ? left.name : right.name\ntop = Shelf.maxBy(shelf -> shelf.priciest().price)\nbargain = Shelf.minBy(shelf -> cheapest(shelf).price)\nassert: dearer, \"left\"\nassert: top, left\nassert: bargain, right\nassert: cheapest(left).sku, \"pen\"\nassert: right.priciest().sku, \"pad\"\nright.items.push({sku: \"tape\", price: 15})\nleft.items = [{sku: \"clip\", price: 0.5}]\nassert: dearer, \"right\"\nassert: top, right\nassert: bargain, left\nassert: cheapest(left).sku, \"clip\"");
+    let mut run = runner();
+    run(r#"class Shelf(name, items):
+    this.name = name
+    this.items = items
+    def priciest(): return this.items.maxBy(item -> item.price)"#);
+    run("def cheapest(shelf) => shelf.items.minBy(item -> item.price)");
+    run(r#"left = Shelf("left", [{sku: "pen", price: 2}, {sku: "ink", price: 9}])"#);
+    run(r#"right = Shelf("right", [{sku: "pad", price: 4}, {sku: "cap", price: 1}])"#);
+    run("dearer = left.priciest().price > right.priciest().price ? left.name : right.name");
+    run("top = Shelf.maxBy(shelf -> shelf.priciest().price)");
+    run("bargain = Shelf.minBy(shelf -> cheapest(shelf).price)");
+    assert_eq!(run("dearer"), "left");
+    {
+        let actual = run("top");
+        let expected = run("(left)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("bargain");
+        let expected = run("(right)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("cheapest(left).sku"), "pen");
+    assert_eq!(run("right.priciest().sku"), "pad");
+    run(r#"right.items.push({sku: "tape", price: 15})"#);
+    run(r#"left.items = [{sku: "clip", price: 0.5}]"#);
+    assert_eq!(run("dearer"), "right");
+    {
+        let actual = run("top");
+        let expected = run("(right)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("bargain");
+        let expected = run("(left)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("cheapest(left).sku"), "clip");
+}
+
+/// Nucleoid keeps maxBy and minBy as ordinary names beside the extreme item queries
+#[rustfmt::skip]
+#[test]
+fn keeps_maxby_and_minby_as_ordinary_names_beside_the_extreme_item_queries() {
+    runner()("maxBy = 3\nminBy = 1\nlimits = {maxBy: size -> size * 10, minBy: 2}\ndef scale minBy => minBy * 2\nclass Crate(items):\n    this.items = items\n    def maxBy(key): return key(this.items.length)\ncrate = Crate([{kg: 6}, {kg: 4}])\nspare = Crate([{kg: 9}])\nheavy = crate.items.maxBy(box -> box.kg)\nfullest = Crate.maxBy(each -> each.maxBy(count -> count))\nlightest = Crate.minBy(each -> each.items.min(box -> box.kg))\nassert: heavy.kg, 6\nassert: fullest, crate\nassert: lightest, crate\nassert: crate.maxBy(count -> count + maxBy), 5\nassert: limits.maxBy(minBy), 10\nassert: scale(minBy), 2\nassert: crate.items.maxBy, null\nspare.items = [{kg: 1}, {kg: 2}, {kg: 3}, {kg: 9}]\ncrate.items.push({kg: 7})\nmaxBy = 5\nassert: heavy.kg, 7\nassert: fullest, spare\nassert: lightest, spare\nassert: crate.maxBy(count -> count + maxBy), 8");
+    let mut run = runner();
+    run("maxBy = 3");
+    run("minBy = 1");
+    run("limits = {maxBy: size -> size * 10, minBy: 2}");
+    run("def scale minBy => minBy * 2");
+    run(r#"class Crate(items):
+    this.items = items
+    def maxBy(key): return key(this.items.length)"#);
+    run("crate = Crate([{kg: 6}, {kg: 4}])");
+    run("spare = Crate([{kg: 9}])");
+    run("heavy = crate.items.maxBy(box -> box.kg)");
+    run("fullest = Crate.maxBy(each -> each.maxBy(count -> count))");
+    run("lightest = Crate.minBy(each -> each.items.min(box -> box.kg))");
+    assert_eq!(run("heavy.kg"), 6);
+    {
+        let actual = run("fullest");
+        let expected = run("(crate)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("lightest");
+        let expected = run("(crate)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("crate.maxBy(count -> count + maxBy)"), 5);
+    assert_eq!(run("limits.maxBy(minBy)"), 10);
+    assert_eq!(run("scale(minBy)"), 2);
+    assert_eq!(run("crate.items.maxBy"), serde_json::Value::Null);
+    run("spare.items = [{kg: 1}, {kg: 2}, {kg: 3}, {kg: 9}]");
+    run("crate.items.push({kg: 7})");
+    run("maxBy = 5");
+    assert_eq!(run("heavy.kg"), 7);
+    {
+        let actual = run("fullest");
+        let expected = run("(spare)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("lightest");
+        let expected = run("(spare)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("crate.maxBy(count -> count + maxBy)"), 8);
+}
+
+/// Nucleoid rolls back failed extreme item updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_extreme_item_updates() {
+    runner()("def checked(value):\n    if value > 100:\n        throw \"TOO_MANY\"\n    return value\norders = [{id: 1, qty: 30}, {id: 2, qty: 50}]\nlargest = orders.maxBy(order -> checked(order.qty))\nassert: largest.id, 2\nfailure = \"\"\ntry:\n    orders.push({id: 3, qty: 500})\ncatch error:\n    failure = error\nassert: failure, \"TOO_MANY\"\nassert: orders.length, 2\nassert: largest.id, 2\norders.push({id: 4, qty: 80})\nassert: largest.id, 4\nclass Probe(name, temp):\n    this.name = name\n    this.temp = temp\nProbe(\"a\", 12)\nProbe(\"b\", 30)\ncoldest = Probe.minBy(probe -> checked(probe.temp))\nfailure = \"\"\ntry:\n    Probe(\"c\", 500)\ncatch error:\n    failure = error\nassert: failure, \"TOO_MANY\"\nassert: Probe.length, 2\nassert: coldest.name, \"a\"\nProbe(\"d\", 9)\nassert: coldest.name, \"d\"");
+    let mut run = runner();
+    run(r#"def checked(value):
+    if value > 100:
+        throw "TOO_MANY"
+    return value
+orders = [{id: 1, qty: 30}, {id: 2, qty: 50}]
+largest = orders.maxBy(order -> checked(order.qty))
+assert: largest.id, 2
+failure = ""
+try:
+    orders.push({id: 3, qty: 500})
+catch error:
+    failure = error
+assert: failure, "TOO_MANY"
+assert: orders.length, 2
+assert: largest.id, 2
+orders.push({id: 4, qty: 80})
+assert: largest.id, 4
+class Probe(name, temp):
+    this.name = name
+    this.temp = temp
+Probe("a", 12)
+Probe("b", 30)
+coldest = Probe.minBy(probe -> checked(probe.temp))
+failure = ""
+try:
+    Probe("c", 500)
+catch error:
+    failure = error
+assert: failure, "TOO_MANY"
+assert: Probe.length, 2
+assert: coldest.name, "a"
+Probe("d", 9)
+assert: coldest.name, "d""#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

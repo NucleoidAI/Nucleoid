@@ -1609,6 +1609,40 @@ assert: [amounts, min of amounts], [[15, 20, 45], 15]
   `max of Order.map(order -> order.amount)`. See the
   [root contract](nucleoid.spec.md#noun-list-queries-with-of).
 
+## List and population extreme items
+
+**Extreme items keep the leading and lowest bids live as bids change**
+
+```nuc
+class Bid(bidder, amount):
+    this.bidder = bidder
+    this.amount = amount
+leader = Bid.maxBy(bid -> bid.amount)
+lowest = Bid.minBy(bid -> bid.amount)
+assert(leader, null)
+assert(lowest, null)
+ada = Bid("ada", 120)
+Bid("bo", 90)
+Bid("cy", 120)
+Bid("di", 90)
+assert(leader.bidder, "ada")
+assert(lowest.bidder, "bo")
+ada.amount = 60
+Bid("ed", 150)
+assert(leader.bidder, "ed")
+assert(lowest.bidder, "ada")
+```
+
+- [NUC 77](docs/nuc-0077.md) adds `maxBy(selector)` and `minBy(selector)`
+  to lists and class instance lists. `Bid.maxBy(bid -> bid.amount)` is the
+  bid with the largest amount, the instance itself, so `leader.bidder` names
+  the bidder. Before the first bid `leader` and `lowest` are `null`, and on a
+  tie the earlier bid wins: `cy` and `di` do not displace `ada` and `bo`.
+- `leader` and `lowest` are live declarations: they re-evaluate when a bid is
+  created or an amount changes. Keys compare as `>` and `<` compare them, so
+  numbers compare as numbers, strings as text and dates by time. See the
+  [root contract](nucleoid.spec.md#list-and-population-extreme-items).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

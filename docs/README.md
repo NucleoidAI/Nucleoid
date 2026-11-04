@@ -1859,7 +1859,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), and `mode` ([NUC 75](nuc-0075.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), and `maxBy` and `minBy` ([NUC 77](nuc-0077.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2812,6 +2812,60 @@ largest
   [noun list queries with of](../nucleoid.spec.md#noun-list-queries-with-of)
   section.
 
+### List and population extreme items
+
+```
+scores = [{name: "ana", points: 9}, {name: "ben", points: 3}, {name: "cy", points: 9}, {name: "dan", points: 3}]
+best = scores.maxBy(score -> score.points)
+worst = scores.minBy(score -> score.points)
+class Bid(who, amount):
+    this.who = who
+    this.amount = amount
+Bid("ada", 40)
+top = Bid.maxBy(bid -> bid.amount)
+assert(best.name, "ana")
+assert(worst.name, "ben")
+assert(top.who, "ada")
+scores.push({name: "eve", points: 1})
+scores.shift()
+Bid("bo", 65)
+Bid("cy", 50)
+assert(best.name, "cy")
+assert(worst.name, "eve")
+assert(top.who, "bo")
+scores = []
+assert(best, null)
+top.who
+```
+
+- This is the complete
+  `Nucleoid finds the extreme items of lists and populations with maxBy and minBy`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `"bo"`.
+- [NUC 77](nuc-0077.md) adds `maxBy(selector)` and `minBy(selector)` to lists
+  and class instance lists. The result is the first item whose selected key
+  is the largest, or the smallest, and it is the item itself. On a tie the
+  item that comes first wins, so `best` is `ana` beside `cy` and `worst` is
+  `ben` beside `dan`. An empty list or class gives undefined, which a
+  declaration stores as `null`.
+- Keys compare as `>` and `<` compare them: two strings as text and every
+  other pair as numbers, so dates compare by time. A key that cannot be
+  compared with itself, such as undefined, NaN or an object, makes the result
+  undefined. For keys that are not strings, the key of `xs.maxBy(f)` converts
+  to `xs.max(f)` and the key of `xs.minBy(f)` to `xs.min(f)`.
+- The selector is required and is called once per item, in order, with only
+  the item. A missing selector, or one that is not a function, including
+  `null`, raises `TypeError("maxBy expects a function")` or
+  `TypeError("minBy expects a function")`, even on an empty receiver.
+- Extreme items are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level rules
+  too. On a class name, `Name.maxBy(...)` is the population query even when
+  the class declares an instance method `maxBy`; instances keep calling the
+  method.
+- The authoritative contract is the
+  [list and population extreme items](../nucleoid.spec.md#list-and-population-extreme-items)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -3058,6 +3112,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
 | A supplied `mode` selector that is not a function, including `null`, even on an empty receiver | `mode expects a function` |
+| Missing or non-function `maxBy` or `minBy` selector, including `null`, even on an empty receiver | `maxBy expects a function` or `minBy expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
@@ -3239,6 +3294,7 @@ items.max()  Name.min(selector)        live numeric extreme (NUC 69)
 items.distinct()  Name.distinct(selector) live values without repeats (NUC 71)
 items.count(predicate)  Name.count(predicate) live predicate count (NUC 73)
 items.mode()  Name.mode(selector)      live most frequent item (NUC 75)
+items.maxBy(key)  Name.minBy(key)     live first item with the largest or smallest key (NUC 77)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

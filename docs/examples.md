@@ -3153,6 +3153,46 @@ widest
   queries and adds `1`. See [NUC 75](nuc-0075.md) and the
   [root contract](../nucleoid.spec.md#noun-list-queries-with-of).
 
+## List and population extreme items
+
+**Extreme items keep the nearest free charger of every robot live**
+
+```nuc
+class Charger(name, x, free):
+    this.name = name
+    this.x = x
+    this.free = free
+class Robot(name, x, battery):
+    this.name = name
+    this.x = x
+    this.battery = battery
+$Robot.dock = Charger.filter(charger -> charger.free).minBy(charger -> Math.abs(charger.x - $Robot.x))
+neediest = Robot.minBy(robot -> robot.battery)
+north = Charger("north", 0, true)
+south = Charger("south", 10, true)
+rex = Robot("rex", 2, 80)
+ivy = Robot("ivy", 9, 35)
+assert: [rex.dock, ivy.dock, neediest], [north, south, ivy]
+north.free = false
+ivy.battery = 90
+assert: [rex.dock, neediest], [south, rex]
+Charger("mid", 4, true)
+rex.x = 6
+assert: [rex.dock.name, ivy.dock.name], ["mid", "south"]
+neediest.dock.name
+# return: "mid"
+```
+
+- A class-level rule keeps each robot's dock, the free charger nearest to it.
+  `$Robot` inside the selector is the robot the rule is evaluated for, so
+  every robot measures its own distances, and `neediest` keeps the robot with
+  the lowest battery.
+- Taking `north` out of service moves `rex` to `south`. A new charger at `4`
+  becomes the dock of `rex` and stays so when `rex` moves to `6`, while `ivy`
+  keeps `south`, and `neediest.dock` follows both rules.
+- See [NUC 77](nuc-0077.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-extreme-items).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

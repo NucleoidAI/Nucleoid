@@ -1,10 +1,12 @@
 //! Lists: literals, indexing, slicing and list operations.
 
+use std::cmp::Ordering;
 use std::sync::Arc;
 
 use crate::builtins;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
+use crate::lang::ast::operator::compare;
 use crate::lang::ast::{Expr, Function};
 use crate::number;
 use crate::runtime::Runtime;
@@ -377,6 +379,7 @@ impl Runtime {
             "sum" | "max" | "min" | "distinct" | "mode" => {
                 self.aggregate_items(items, property, predicate)
             }
+            "maxBy" | "minBy" => self.extreme_item(items, property, predicate),
             // Lists sort in place through `call_list_method`; a class population
             // has no stored list to write, so its sort only returns the order.
             "sort" => Ok(Value::List(self.sort_items(items, predicate.as_ref())?)),
@@ -507,6 +510,40 @@ impl Runtime {
             "distinct" => Value::List(self.distinct_values(values)),
             "mode" => self.mode_value(values),
             _ => builtins::math(property, &values)?,
+        })
+    }
+
+    fn extreme_item(
+        &mut self,
+        items: Vec<Value>,
+        property: &str,
+        predicate: Option<Value>,
+    ) -> Result<Value> {
+        let selector = expect_function(predicate, property)?;
+        let wanted = if property == "maxBy" {
+            Ordering::Greater
+        } else {
+            Ordering::Less
+        };
+        let mut extreme: Option<(Value, Value)> = None;
+        let mut unordered = false;
+
+        for item in items {
+            let key = self.invoke(&selector, std::slice::from_ref(&item))?;
+
+            if compare(&key, &key).is_none() {
+                unordered = true;
+            } else if extreme
+                .as_ref()
+                .is_none_or(|(_, kept)| compare(&key, kept) == Some(wanted))
+            {
+                extreme = Some((item, key));
+            }
+        }
+
+        Ok(match extreme {
+            Some((item, _)) if !unordered => item,
+            _ => Value::Undefined,
         })
     }
 

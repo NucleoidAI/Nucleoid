@@ -3437,6 +3437,75 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid reads noun queries of snapshots versions and other receivers`
   specify the executable behavior.
 
+## List and population extreme items
+
+- [NUC 77](docs/nuc-0077.md) adds the read-only list queries `maxBy` and
+  `minBy` to lists and class instance lists. No syntax, keyword or error type
+  is added.
+- `RECEIVER.maxBy(selector)` returns the first item of the receiver whose
+  `selector(item)` is the largest, and `RECEIVER.minBy(selector)` the first
+  item whose `selector(item)` is the smallest. The result is the item itself,
+  unchanged: an object or instance stays the same object, and the selected
+  key is not returned.
+- Keys compare as `>` and `<` compare them: two strings as text, and every
+  other pair as numbers with the numeric conversion of the comparisons, so
+  dates compare by time and `true`, `false`, `null`, empty lists and one-item
+  lists count as numbers. `["10", "9"].maxBy(code -> code)` is `"9"`, while
+  `["10", "9"].max()` is `10`.
+- The items are scanned in receiver order. The first item is kept, and a
+  later item replaces the kept one only when its key is greater for `maxBy`,
+  or smaller for `minBy`, so on a tie the item that comes first wins. A
+  string that is not numeric is neither greater nor smaller than a number, so
+  where such strings and other keys mix, the kept item stays.
+- A key that cannot be compared with itself, one for which `key >= key` is
+  `false`, makes the result undefined, which a declaration stores as `null`:
+  undefined, NaN, objects, instances, classes, functions, regular expressions
+  and lists that convert to NaN. Every item is still visited. An empty
+  receiver gives undefined.
+- When every key can be compared with itself, `xs.maxBy(f)` is the item that
+  `xs.reduce((best, item) -> f(item) > f(best) ? item : best)` returns, and
+  `xs.minBy(f)` the item that the same `reduce` with `<` returns, except that
+  `f` runs once per item.
+- When the keys are all strings, or none is a string, `xs.maxBy(f)` is the
+  item that `xs.find(x -> all y in xs: f(x) >= f(y))` finds, and undefined
+  where it finds none; `xs.minBy(f)` corresponds to the same `find` with
+  `<=`.
+- For keys that are not strings and a receiver that is not empty,
+  `xs.maxBy(f)` is undefined exactly when `xs.max(f)` is undefined or NaN,
+  and otherwise it is the first item whose key converts to `xs.max(f)`;
+  `minBy` and `min` correspond the same way.
+- A `null` key compares as `0`, as in `null > -1`. Reads inside a selector
+  follow the existing rules, so a selector that reads a `null` binding or
+  property settles a declaration to `null`.
+- The receiver is a list, however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class.
+  On a class name, `maxBy` and `minBy` are population queries even when the
+  class declares instance methods `maxBy` or `minBy`; its instances keep
+  calling those methods.
+- The selector is required. It is called once for every item, in order, with
+  only the item; further parameters are `null`. A missing first argument, or
+  one that is not a function, including `null`, raises
+  `TypeError("maxBy expects a function")` or
+  `TypeError("minBy expects a function")`, even on an empty receiver.
+- `maxBy` and `minBy` follow the shared rules of the list queries: they read
+  the receiver before their arguments, evaluate every supplied argument once,
+  left to right, including unused extras, and never write the receiver. A
+  declaration that uses one depends on the list or population, on its
+  argument expressions and on whatever the selector reads for every item, so
+  list mutations, new and deleted instances and property changes re-evaluate
+  it, in class-level rules too. Selector errors roll back through the
+  existing transaction. A null or undefined receiver yields undefined without
+  evaluating the arguments.
+- A call selects each key once and compares it once with itself and at most
+  once with the kept key, in one pass that neither sorts nor copies the
+  receiver.
+- Property reads such as `xs.maxBy`, bindings and object properties named
+  `maxBy` or `minBy`, and instance methods named `maxBy` or `minBy` called on
+  an instance keep their accepted results. The eight appended entries
+  beginning `Nucleoid finds the extreme items of lists with maxBy and minBy`
+  through `Nucleoid rolls back failed extreme item updates` specify the
+  executable behavior.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -19012,4 +19081,250 @@ try:
 catch error:
     failure = error
 assert: failure, TypeError("abc.sum is not a function")
+---
+# Nucleoid finds the extreme items of lists with maxBy and minBy
+
+readings = [{at: 9, c: 18}, {at: 12, c: 24}, {at: 15, c: 24}, {at: 18, c: 9}]
+warmest = readings.maxBy(reading -> reading.c)
+coldest = readings.minBy(reading -> reading.c)
+assert: warmest.at, 12
+assert: coldest.at, 18
+assert: warmest == readings[1], true
+readings.push({at: 21, c: 30})
+readings.shift()
+assert: warmest.at, 21
+assert: coldest.at, 18
+readings.pop()
+readings.pop()
+assert: warmest.at, 12
+assert: coldest.at, 12
+readings = []
+assert: warmest, null
+assert: coldest, null
+trip = {legs: [{to: "oslo", km: 410, mins: 300}, {to: "voss", km: 110, mins: 75}]}
+fastest = trip.legs.maxBy(leg -> leg.km / leg.mins)
+shortest = trip.legs.minBy(leg -> leg.km)
+assert: fastest.to, "voss"
+assert: shortest.to, "voss"
+trip.legs.push({to: "lom", km: 60, mins: 90})
+trip.legs.push({to: "alta", km: 900, mins: 480})
+trip.legs.push({to: "bodo", km: 300, mins: 400})
+assert: fastest.to, "alta"
+assert: shortest.to, "lom"
+---
+# Nucleoid finds the extreme instances of class populations with maxBy and minBy
+
+class Bid(bidder, amount, open):
+    this.bidder = bidder
+    this.amount = amount
+    this.open = open
+best = Bid.maxBy(bid -> bid.amount)
+cheapest = Bid.minBy(bid -> bid.amount)
+assert: best, null
+assert: cheapest, null
+ada = Bid("ada", 120, true)
+bo = Bid("bo", 90, false)
+cy = Bid("cy", 150, true)
+leading = Bid.filter(bid -> bid.open).minBy(bid -> bid.amount)
+recent = Bid[-2:].maxBy(bid -> bid.amount)
+assert: best, cy
+assert: cheapest, bo
+assert: leading, ada
+assert: recent, cy
+bo.amount = 200
+ada.open = false
+assert: best, bo
+assert: cheapest, ada
+assert: leading, cy
+assert: recent, bo
+delete cy.amount
+assert: best, null
+assert: leading, null
+delete cy.open
+delete cy.bidder
+delete cy
+assert: best, bo
+assert: cheapest, ada
+assert: leading, null
+assert: recent, bo
+---
+# Nucleoid compares maxBy and minBy keys as the comparison operators do
+
+class Job(name, due, kg):
+    this.name = name
+    this.due = due
+    this.kg = kg
+alpha = Job.minBy(job -> job.name)
+soonest = Job.minBy(job -> job.due)
+latest = Job.maxBy(job -> job.due)
+heaviest = Job.maxBy(job -> job.kg)
+press = Job("press", new Date("2026-12-01"), 40)
+coat = Job("Coat", new Date("2026-11-20"), "9")
+weld = Job("weld", new Date("2026-11-28"), 40)
+assert: alpha, coat
+assert: soonest, coat
+assert: latest, press
+assert: heaviest, press
+coat.kg = "75"
+weld.due = new Date("2026-11-09")
+Job("Anvil", new Date("2026-12-24"), "100")
+assert: alpha.name, "Anvil"
+assert: soonest, weld
+assert: latest.name, "Anvil"
+assert: heaviest, coat
+press.kg = 0 / 0
+assert: heaviest, null
+press.kg = 300
+delete weld.due
+assert: heaviest, press
+assert: soonest, null
+assert: latest, null
+---
+# Nucleoid calls the extreme item selector once per item with only the item
+
+seen = []
+def weigh(parcel, position):
+    seen.push(position ?? parcel.id)
+    return parcel.kg
+parcels = [{id: 1, kg: 4}, {id: 2, kg: 9}, {id: 3, kg: 2}]
+def heaviest() => parcels.maxBy(weigh)
+assert: heaviest().id, 2
+assert: seen, [1, 2, 3]
+parcels.push({id: 4, kg: 12})
+assert: heaviest().id, 4
+assert: seen, [1, 2, 3, 1, 2, 3, 4]
+depot = 5
+def gap parcel => Math.abs(parcel.kg - depot)
+closest = parcels.minBy(gap)
+assert: closest.id, 1
+depot = 10
+assert: closest.id, 2
+missing = null
+skipped = missing.minBy(weigh(9))
+assert: skipped, null
+assert: seen, [1, 2, 3, 1, 2, 3, 4]
+---
+# Nucleoid keeps extreme items live in class level rules
+
+class Team(name, target):
+    this.name = name
+    this.target = target
+class Player(team, name, goals):
+    this.team = team
+    this.name = name
+    this.goals = goals
+$Team.star = Player.filter(player -> player.team == $Team.name).maxBy(player -> player.goals)
+$Team.total = Player.filter(player -> player.team == $Team.name).sum(player -> player.goals)
+$Team.fit = Player.minBy(player -> Math.abs(player.goals - $Team.target))
+reds = Team("reds", 4)
+blues = Team("blues", 10)
+leader = Team.maxBy(team -> team.total)
+ana = Player("reds", "ana", 7)
+Player("reds", "ben", 3)
+cal = Player("blues", "cal", 5)
+assert: reds.star, ana
+assert: blues.star, cal
+assert: reds.fit.name, "ben"
+assert: blues.fit, ana
+assert: leader, reds
+cal.goals = 12
+assert: blues.star, cal
+assert: blues.fit, cal
+assert: leader, blues
+cal.team = "reds"
+assert: reds.star, cal
+assert: blues.star, null
+assert: leader, reds
+greens = Team("greens", 6)
+assert: greens.star, null
+assert: greens.fit, ana
+---
+# Nucleoid uses extreme items in functions methods and conditional expressions
+
+class Shelf(name, items):
+    this.name = name
+    this.items = items
+    def priciest(): return this.items.maxBy(item -> item.price)
+def cheapest(shelf) => shelf.items.minBy(item -> item.price)
+left = Shelf("left", [{sku: "pen", price: 2}, {sku: "ink", price: 9}])
+right = Shelf("right", [{sku: "pad", price: 4}, {sku: "cap", price: 1}])
+dearer = left.priciest().price > right.priciest().price ? left.name : right.name
+top = Shelf.maxBy(shelf -> shelf.priciest().price)
+bargain = Shelf.minBy(shelf -> cheapest(shelf).price)
+assert: dearer, "left"
+assert: top, left
+assert: bargain, right
+assert: cheapest(left).sku, "pen"
+assert: right.priciest().sku, "pad"
+right.items.push({sku: "tape", price: 15})
+left.items = [{sku: "clip", price: 0.5}]
+assert: dearer, "right"
+assert: top, right
+assert: bargain, left
+assert: cheapest(left).sku, "clip"
+---
+# Nucleoid keeps maxBy and minBy as ordinary names beside the extreme item queries
+
+maxBy = 3
+minBy = 1
+limits = {maxBy: size -> size * 10, minBy: 2}
+def scale minBy => minBy * 2
+class Crate(items):
+    this.items = items
+    def maxBy(key): return key(this.items.length)
+crate = Crate([{kg: 6}, {kg: 4}])
+spare = Crate([{kg: 9}])
+heavy = crate.items.maxBy(box -> box.kg)
+fullest = Crate.maxBy(each -> each.maxBy(count -> count))
+lightest = Crate.minBy(each -> each.items.min(box -> box.kg))
+assert: heavy.kg, 6
+assert: fullest, crate
+assert: lightest, crate
+assert: crate.maxBy(count -> count + maxBy), 5
+assert: limits.maxBy(minBy), 10
+assert: scale(minBy), 2
+assert: crate.items.maxBy, null
+spare.items = [{kg: 1}, {kg: 2}, {kg: 3}, {kg: 9}]
+crate.items.push({kg: 7})
+maxBy = 5
+assert: heavy.kg, 7
+assert: fullest, spare
+assert: lightest, spare
+assert: crate.maxBy(count -> count + maxBy), 8
+---
+# Nucleoid rolls back failed extreme item updates
+
+def checked(value):
+    if value > 100:
+        throw "TOO_MANY"
+    return value
+orders = [{id: 1, qty: 30}, {id: 2, qty: 50}]
+largest = orders.maxBy(order -> checked(order.qty))
+assert: largest.id, 2
+failure = ""
+try:
+    orders.push({id: 3, qty: 500})
+catch error:
+    failure = error
+assert: failure, "TOO_MANY"
+assert: orders.length, 2
+assert: largest.id, 2
+orders.push({id: 4, qty: 80})
+assert: largest.id, 4
+class Probe(name, temp):
+    this.name = name
+    this.temp = temp
+Probe("a", 12)
+Probe("b", 30)
+coldest = Probe.minBy(probe -> checked(probe.temp))
+failure = ""
+try:
+    Probe("c", 500)
+catch error:
+    failure = error
+assert: failure, "TOO_MANY"
+assert: Probe.length, 2
+assert: coldest.name, "a"
+Probe("d", 9)
+assert: coldest.name, "d"
 ```

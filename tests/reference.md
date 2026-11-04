@@ -2239,4 +2239,29 @@ assert(largest, 80)
 assert(max of sizes.map(size -> size.length), sizes.max(size -> size.length))
 largest
 # return: 80
+---
+# Nucleoid finds the extreme items of lists and populations with maxBy and minBy
+
+scores = [{name: "ana", points: 9}, {name: "ben", points: 3}, {name: "cy", points: 9}, {name: "dan", points: 3}]
+best = scores.maxBy(score -> score.points)
+worst = scores.minBy(score -> score.points)
+class Bid(who, amount):
+    this.who = who
+    this.amount = amount
+Bid("ada", 40)
+top = Bid.maxBy(bid -> bid.amount)
+assert(best.name, "ana")
+assert(worst.name, "ben")
+assert(top.who, "ada")
+scores.push({name: "eve", points: 1})
+scores.shift()
+Bid("bo", 65)
+Bid("cy", 50)
+assert(best.name, "cy")
+assert(worst.name, "eve")
+assert(top.who, "bo")
+scores = []
+assert(best, null)
+top.who
+# return: "bo"
 ```
