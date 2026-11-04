@@ -7,7 +7,7 @@ import arc_dataset from "./lib/arc_dataset.ts";
 import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "44f52bb0") {
+export async function start(puzzle_id: string = "3aa6fb7a") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
@@ -63,6 +63,7 @@ export async function start(puzzle_id: string = "44f52bb0") {
         puzzle_id,
         instance_name,
         declarations,
+        input_matrix,
         input_instance_matrix,
         output_instance_matrix,
       });
@@ -103,6 +104,7 @@ export async function start(puzzle_id: string = "44f52bb0") {
       puzzle_id,
       declarations,
       train_dataset,
+      test_input_matrix,
       instance_name,
       input_instances,
       input_instance_matrix,
@@ -116,7 +118,7 @@ export async function start(puzzle_id: string = "44f52bb0") {
     });
   }
 
-  await visualizer.state({ declarations, input_instances });
+  await visualizer.state({ declarations, test_input_matrix, input_instances });
 
   for (const input_instance of input_instances) {
     const { input_value, input_instance_matrix, output_value } = input_instance;
@@ -159,8 +161,11 @@ export async function start(puzzle_id: string = "44f52bb0") {
     difference,
   };
 
-  await fs.mkdir('logs', { recursive: true });
-  await fs.writeFile(`logs/${puzzle_id}.log.json`, JSON.stringify(debug, null, 2));
+  await fs.mkdir("logs", { recursive: true });
+  await fs.writeFile(
+    `logs/${puzzle_id}.log.json`,
+    JSON.stringify(debug, null, 2)
+  );
 
   return difference;
 }

@@ -1,8 +1,8 @@
 {
   "declarations": [
-    "# There is an Obj type, the whole pattern of colored cells on the canvas,\n# which has its x and y position, its orientation and its canvas's width\n# as integers, and its points, the column and row of each of its cells\n# in reading order, as a list\nclass Obj(x: int, y: int, orientation: int, canvas_width: int, points: list):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.canvas_width = canvas_width\n    this.points = points",
+    "# There is an Obj type, the whole pattern of colored cells on the canvas,\n# which has its x and y position and its orientation as integers,\n# and its points, the column and row of each of its cells\n# in reading order, as a list\nclass Obj(x: int, y: int, orientation: int, points: list):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.points = points",
     "# Every pattern becomes a single output point\n$Obj.tag = 'l7544'",
-    "# A pattern is symmetric when the mirror image of each of its points\n# across the canvas's vertical center line, in the same row and as far\n# from the right edge as the point is from the left edge,\n# is one of its points too\n$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([$Obj.canvas_width - 1 - point[0], point[1]])",
+    "# A pattern is symmetric when the mirror image of each of its points\n# across the canvas's vertical center line, in the same row and as far\n# from the right edge as the point is from the left edge,\n# is one of its points too\n$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])",
     "# Every output point is color 1 when its pattern is symmetric\n# and color 7 otherwise\n$Obj.fill_color = 1 if $Obj.symmetric else 7",
     "# Every output point sits in the left column\n$Obj.x = 0",
     "# Every output point sits in the top row\n$Obj.y = 0"
@@ -35,9 +35,9 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objaefa2ef1a32f = Obj(x=0, y=0, orientation=0, canvas_width=3, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
-          "input_value": {"canvas_width":3,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"tag":"l9100","x":0,"y":0},
-          "output_value": {"canvas_width":3,"fill_color":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","x":0,"y":0}
+          "implementation": "objaefa2ef1a32f = Obj(x=0, y=0, orientation=0, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
+          "input_value": {"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","x":0,"y":0}
         }
       ]
     },
@@ -67,9 +67,9 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj3914f7995d3e = Obj(x=0, y=0, orientation=0, canvas_width=3, points=[[0, 0], [0, 1], [1, 2]])",
-          "input_value": {"canvas_width":3,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"tag":"l9100","x":0,"y":0},
-          "output_value": {"canvas_width":3,"fill_color":7,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","x":0,"y":0}
+          "implementation": "obj3914f7995d3e = Obj(x=0, y=0, orientation=0, points=[[0, 0], [0, 1], [1, 2]])",
+          "input_value": {"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":7,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","x":0,"y":0}
         }
       ]
     },
@@ -99,9 +99,9 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objeb5c0167d445 = Obj(x=0, y=0, orientation=0, canvas_width=3, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
-          "input_value": {"canvas_width":3,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"tag":"l9100","x":0,"y":0},
-          "output_value": {"canvas_width":3,"fill_color":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","x":0,"y":0}
+          "implementation": "objeb5c0167d445 = Obj(x=0, y=0, orientation=0, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
+          "input_value": {"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","x":0,"y":0}
         }
       ]
     },
@@ -131,9 +131,9 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objcef2c78836a4 = Obj(x=0, y=1, orientation=0, canvas_width=3, points=[[0, 1], [2, 1]])",
-          "input_value": {"canvas_width":3,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"tag":"l9100","x":0,"y":1},
-          "output_value": {"canvas_width":3,"fill_color":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","x":0,"y":0}
+          "implementation": "objcef2c78836a4 = Obj(x=0, y=1, orientation=0, points=[[0, 1], [2, 1]])",
+          "input_value": {"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"tag":"l9100","x":0,"y":1},
+          "output_value": {"fill_color":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","x":0,"y":0}
         }
       ]
     },
@@ -163,9 +163,9 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obje0d187e059c6 = Obj(x=0, y=0, orientation=0, canvas_width=3, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
-          "input_value": {"canvas_width":3,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"tag":"l9100","x":0,"y":0},
-          "output_value": {"canvas_width":3,"fill_color":7,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","x":0,"y":0}
+          "implementation": "obje0d187e059c6 = Obj(x=0, y=0, orientation=0, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
+          "input_value": {"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":7,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","x":0,"y":0}
         }
       ]
     },
@@ -195,9 +195,9 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj656ae86cdc80 = Obj(x=0, y=0, orientation=0, canvas_width=3, points=[[0, 0], [1, 0], [1, 1]])",
-          "input_value": {"canvas_width":3,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","x":0,"y":0},
-          "output_value": {"canvas_width":3,"fill_color":7,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","x":0,"y":0}
+          "implementation": "obj656ae86cdc80 = Obj(x=0, y=0, orientation=0, points=[[0, 0], [1, 0], [1, 1]])",
+          "input_value": {"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":7,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","x":0,"y":0}
         }
       ]
     },
@@ -227,9 +227,9 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "obje4210d7a3726 = Obj(x=0, y=0, orientation=0, canvas_width=3, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
-          "input_value": {"canvas_width":3,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"tag":"l9100","x":0,"y":0},
-          "output_value": {"canvas_width":3,"fill_color":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","x":0,"y":0}
+          "implementation": "obje4210d7a3726 = Obj(x=0, y=0, orientation=0, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
+          "input_value": {"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","x":0,"y":0}
         }
       ]
     },
@@ -259,9 +259,9 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj7170e5f9a58a = Obj(x=0, y=1, orientation=0, canvas_width=3, points=[[0, 1], [0, 2]])",
-          "input_value": {"canvas_width":3,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"tag":"l9100","x":0,"y":1},
-          "output_value": {"canvas_width":3,"fill_color":7,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","x":0,"y":0}
+          "implementation": "obj7170e5f9a58a = Obj(x=0, y=1, orientation=0, points=[[0, 1], [0, 2]])",
+          "input_value": {"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"tag":"l9100","x":0,"y":1},
+          "output_value": {"fill_color":7,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","x":0,"y":0}
         }
       ]
     }

@@ -60,6 +60,7 @@ export async function value({
   puzzle_id,
   declarations,
   train_dataset,
+  test_input_matrix,
   instance_name,
   input_instances,
   input_instance_matrix,
@@ -119,8 +120,15 @@ export async function value({
   milestone.instance_synthesized({ instance_name, implementation });
   milestone.executing_transformation();
 
+  const canvas_width: number = test_input_matrix[0].length;
+  const canvas_height: number = test_input_matrix.length;
   const input_value = await nucleoid.run(
-    [train_dataset.declarations[0], implementation].join("\n\n")
+    [
+      `canvas_width = ${canvas_width}`,
+      `canvas_height = ${canvas_height}`,
+      train_dataset.declarations[0],
+      implementation,
+    ].join("\n\n")
   );
 
   milestone.transformation_executed({ input_value });
@@ -215,13 +223,25 @@ export async function output_instance_matrix({
   return { output_instance_matrix: output_instance_padded_matrix };
 }
 
-export async function state({ declarations, input_instances }) {
+export async function state({
+  declarations,
+  test_input_matrix,
+  input_instances,
+}) {
   const implementations = input_instances.map(
     ({ implementation }) => implementation
   );
 
+  const canvas_width: number = test_input_matrix[0].length;
+  const canvas_height: number = test_input_matrix.length;
   const obj_list = await nucleoid.run(
-    [...declarations, ...implementations, "Obj[:]"].join("\n\n")
+    [
+      `canvas_width = ${canvas_width}`,
+      `canvas_height = ${canvas_height}`,
+      ...declarations,
+      ...implementations,
+      "Obj[:]",
+    ].join("\n\n")
   );
 
   milestone.state({ obj_list });

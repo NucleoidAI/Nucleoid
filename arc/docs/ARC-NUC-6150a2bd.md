@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6150a2bd.json`](../data/training/6150a2bd.json) |
-| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the second version, which `cc87228` committed, replacing the first, with 12 region instances, which `ed49ce3` committed |
+| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, uncommitted, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the rules use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
-| Solver changes | None; three suggested changes await review, not applied |
-| Solver runs | 1 GitHub Actions run on 2-Nov-2026 for version 1 and 1 local run on 3-Nov-2026 for version 2, both exit 0 |
-| Updated | 3-Nov-2026 |
+| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
+| Solver runs | 1 GitHub Actions run on 2-Nov-2026 for version 1 and 1 local run on 3-Nov-2026 for version 2, both exit 0; version 3 not run |
+| Updated | 4-Nov-2026 |
 
 ## Puzzle
 
@@ -27,15 +27,17 @@ from the top two rows to the bottom two.
 
 The dataset holds the two original training pairs in source order, followed
 by the original test pair at the same level. Each pair is one instance, the
-whole block of nonzero cells: `Obj(x, y, orientation, width, height,
-canvas_width, canvas_height)`, tagged `l9100`, a single shape. The class has
-no color, parts list, or cell matrix, and zero cells are background.
-Unconditional class rules turn the block and move its bounding box:
+whole block of nonzero cells: `Obj(x, y, orientation, width, height)`, tagged
+`l9100`, a single shape. The class has no color, parts list, canvas size, or
+cell matrix, and zero cells are background. The rules read the canvas's size
+from `canvas_width` and `canvas_height`, which the solver declares at the
+start of every program. Unconditional class rules turn the block and move its
+bounding box:
 
 ```nuc
 $Obj.orientation = ($Obj.orientation@first + 180) % 360
-$Obj.x = $Obj.canvas_width - $Obj.x@first - $Obj.width
-$Obj.y = $Obj.canvas_height - $Obj.y@first - $Obj.height
+$Obj.x = canvas_width - $Obj.x@first - $Obj.width
+$Obj.y = canvas_height - $Obj.y@first - $Obj.height
 ```
 
 Orientation is 0 in every input state and 180 in every output state. The
@@ -64,6 +66,16 @@ committed both, with the solver's default puzzle, in `cc87228` during the run.
 | --- | --- | --- | --- |
 | 1 | The puzzle's first dataset, `ed49ce3` | One per 4-connected single-color region, with `color`, `width`, `height`, `canvas_width`, and `canvas_height`: 12, with 4, 3, and 5 per pair | Orientation turned by 180 with `@first`; `x` and `y` moved to the opposite side of the canvas |
 | 2 | `/arc-purposal 6150a2bd` with the hint "how about consider whole thing is one instance change orientation to 180 and redraw" | One whole block per pair, without `color`: 3 | The same three rules |
+| 3 | The user's request on 4-Nov-2026 that every `nucleoid.run` call declare `canvas_width` and `canvas_height`, so that datasets need not carry them | The same blocks, without `canvas_width` and `canvas_height`: 3 | The same three rules, reading the solver's variables |
+
+Version 3 removes `canvas_width` and `canvas_height` from the class, the three
+implementations, and their snapshots, and the `x` and `y` rules read the
+solver's variables instead of the properties. Regenerated with the accepted
+runtime, built at `6d3acec`, from programs that start with the same canvas
+declarations as the solver's `nucleoid.run` calls, every input and output
+state equals version 2's without the two properties, so the
+turned orientation and moved origins are unchanged. Instance names, masks,
+pair grids, and the output canvas are unchanged.
 
 ## Runs
 
@@ -85,7 +97,9 @@ dataset worker had captured the snapshots with the build before it. Rerun
 with the rebuilt runtime before the solver run, the worker's check script
 reproduced every input and output snapshot. The runtime's hash was the same
 before and after the run, and the dataset the run read is byte for byte the
-file `cc87228` committed. Elapsed is the solver's own report.
+file `cc87228` committed. Elapsed is the solver's own report. Version 3 has
+not been run; measuring it takes a new `/arc-purposal 6150a2bd` invocation,
+which authorizes its one run.
 
 ## Open items
 
@@ -97,15 +111,15 @@ file `cc87228` committed. Elapsed is the solver's own report.
   hand, which held the annotated test pair; it reports inferring the rules and
   the canvas mode from the training pairs. Suggested, not applied: keep the
   running puzzle's test pairs out of `document(puzzle_id)`.
-- **The test canvas's size is not in the instance prompt.** `value()` in
-  `src/visualizer.ts` sends the test instance's mask cropped by
-  `Matrix.crop`, with only `input_x` and `input_y`, and crops the training
-  masks as well. Nothing in that message gives the test canvas's width and
-  height, which the model needs for `canvas_width` and `canvas_height`. It can
-  only carry 3 over from the training implementations or the few-shot
-  datasets. Suggested, not applied: pass the test input's row and column
-  counts to `visualizer.value`. [ARC-NUC-d037b0a7](ARC-NUC-d037b0a7.md)
-  records the same need.
+- **Canvas size, resolved by version 3.** In versions 1 and 2 the model had
+  to fill in `canvas_width` and `canvas_height` for the test instance,
+  although `value()` in `src/visualizer.ts` sends only the cropped mask with
+  `input_x` and `input_y`, not the test canvas's size. Since 4-Nov-2026
+  every `nucleoid.run` call declares both at the start of its program, from
+  the test input in the visualizer, and version 3 reads them from there, so
+  the model no longer supplies them. This replaces the earlier suggestion to
+  pass the test input's row and column counts to `visualizer.value`, which
+  [ARC-NUC-d037b0a7](ARC-NUC-d037b0a7.md) also recorded.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` wrap JSON in text labels such as `few_shot:`,
   `train_dataset:`, and `input_x:`, while the ARC instructions require every
@@ -115,6 +129,8 @@ file `cc87228` committed. Elapsed is the solver's own report.
   executable code in `declarations` but no prose comments, while version 2
   follows the `#` comments that `e1bdb5a` added to every dataset. Decide which
   wins. Removing the comments needs no new snapshots.
-- Review and commit this record's update, which remains uncommitted. Since
+- Review and commit version 3, its README paragraph, the solver change in
+  `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`, and this record's
+  updates, which remain uncommitted. Since
   3-Nov-2026 only `/nuc-proposal` commits and pushes, so `/arc-purposal`
   leaves its changes for review.

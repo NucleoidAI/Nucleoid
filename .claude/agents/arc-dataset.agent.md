@@ -105,6 +105,13 @@ formatting exactly:
   orientation: int` first, and its body assigns every parameter to `this` and
   sets an initial `this.tag = 'lNNNN'`. Add only the descriptive properties
   the transformation needs, such as categorical colors.
+- The solver starts every Nucleoid program with `canvas_width` and
+  `canvas_height`, the column and row counts of the pair's `input_matrix`
+  (every `nucleoid.run` call in `arc/src/analyzer.ts` and
+  `arc/src/visualizer.ts`). Rules that need the canvas size read these
+  variables, as `$Obj.bar_height = canvas_height - $Obj.y` in
+  `dataset.d037b0a7.json` does. No class takes the canvas size as a parameter
+  or stores it as a property, and no implementation passes it.
 - The remaining declarations are declarative class-level rules, written with
   the class reference `$Class` (for example `$Obj`), using `if` for
   conditions and `$Class.x@first` for a property's value before the rules
@@ -193,12 +200,16 @@ The caller decides whether to propose the feature; you never start a NUC.
 - Never hand-write `input_value` or `output_value`. As `arc/src/analyzer.ts`
   does, run the Nucleoid executable (`NUCLEOID_EXECUTABLE`, else the debug
   build in `target/debug/`; build it with `cargo build` if missing) as
-  `nucleoid --json <file>`. For `input_value` the file holds `declarations[0]`
-  and the implementation. For output states, run all declarations and all of
-  the same pair's implementations together, followed by `Obj[:]`, and copy each
-  object's result by its ID. Population-dependent rules must see the entire
-  world, not an isolated instance. Keep program files in a temporary
-  directory outside the repository. Copy the JSON output, normalized with
+  `nucleoid --json <file>`. Start every file as the solver's `nucleoid.run`
+  calls do, with `canvas_width = <columns>` and `canvas_height = <rows>` of
+  the pair's `input_matrix`, each followed by a blank line. For
+  `input_value` the file then holds `declarations[0]` and the
+  implementation. For output states, run all declarations and all of the
+  same pair's implementations together, followed by `Obj[:]`, and copy each
+  object's result by its ID.
+  Population-dependent rules must see the entire world, not an isolated
+  instance. Keep program files in a temporary directory outside the
+  repository. Copy the JSON output, normalized with
   `JSON.stringify(JSON.parse(...))` so numbers read `7`, not `7.0`; keep the
   runtime's key order.
 

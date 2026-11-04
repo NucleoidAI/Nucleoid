@@ -191,8 +191,10 @@ zero. The puzzle has not been in an **ARC puzzle report** workflow run.
   needed the test canvas's height, which `value()` in `src/visualizer.ts`
   does not send. Versions 2 and 3 measure `height` on the pattern's own box,
   so this dataset no longer depends on it. The suggestion to pass the test
-  input's row and column counts to `visualizer.value` stands in the
-  `d037b0a7` and `6150a2bd` records.
+  input's row and column counts to `visualizer.value` is superseded: since
+  4-Nov-2026 every `nucleoid.run` call declares `canvas_width` and
+  `canvas_height` at the start of its program, and the `d037b0a7`,
+  `6150a2bd`, and `44f52bb0` datasets read them there.
 - **Run version 3.** Measuring it takes a new `/arc-purposal 017c7c7b`
   invocation, which authorizes its one run.
 - Review and commit the dataset, its README paragraph, the workflow entry, and

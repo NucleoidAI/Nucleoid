@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/d037b0a7.json`](../data/training/d037b0a7.json) |
-| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); uncommitted |
+| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, uncommitted, replacing version 1, which `81c0208` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested |
-| Solver changes | None; three suggested changes await review, not applied |
-| Solver runs | 1 local run on 3-Nov-2026, exit 0 |
-| Updated | 3-Nov-2026 |
+| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
+| Solver runs | 1 local run on 3-Nov-2026 for version 1, exit 0; version 2 not run |
+| Updated | 4-Nov-2026 |
 
 ## Puzzle
 
@@ -29,15 +29,15 @@ bottom row. The third training output keeps an empty right column, which
 
 The dataset holds the three original training pairs in source order, followed
 by the original test pair at the same level. Every nonzero input cell is one
-instance of `Obj(x, y, orientation, color, canvas_height)`, tagged `l7544`, a
-single point, as in `dataset.0ca9ddb6.json`. `canvas_height` is the height of
-the object's canvas, a scalar as in `dataset.6150a2bd.json`; no object
-carries a cell matrix. Two unconditional class-level rules turn every point
-into a bar:
+instance of `Obj(x, y, orientation, color)`, tagged `l7544`, a single point,
+as in `dataset.0ca9ddb6.json`; no object carries the canvas size or a cell
+matrix. The rules read the canvas's height from `canvas_height`, which the
+solver declares at the start of every program. Two unconditional class-level
+rules turn every point into a bar:
 
 ```nuc
 $Obj.tag = 'l6953'
-$Obj.bar_height = $Obj.canvas_height - $Obj.y
+$Obj.bar_height = canvas_height - $Obj.y
 ```
 
 `l6953` is a vertical bar, as in `dataset.9af7a82c.json`. `bar_height` is
@@ -56,6 +56,22 @@ That paragraph already described this model, so the worker kept it and added
 only that the rules also set the output tag. It also added `d037b0a7` to the
 **ARC puzzle report** workflow's `ARC_PUZZLES` list.
 
+### Versions
+
+| Version | Source | Instances | Rules |
+| --- | --- | --- | --- |
+| 1 | `/arc-purposal d037b0a7`, committed in `81c0208` | One per nonzero input cell, a point tagged `l7544` with `color` and `canvas_height`: 11 | The output tag and `$Obj.bar_height = $Obj.canvas_height - $Obj.y` |
+| 2 | The user's request on 4-Nov-2026 that every `nucleoid.run` call declare `canvas_width` and `canvas_height`, so that datasets need not carry them | The same points, without `canvas_height`: 11 | The two rules above |
+
+Version 2 removes `canvas_height` from the class, the 11 implementations, and
+their snapshots, and its rule reads the solver's variable instead of the
+property. Regenerated with the accepted runtime, built at `6d3acec`, from
+programs that start with the same canvas declarations as the solver's
+`nucleoid.run` calls, every input and output state equals version 1's
+without `canvas_height`, including each `bar_height`, so the rules still
+reproduce every pair. Instance names, masks, pair grids, and the output canvas
+are unchanged.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -71,7 +87,8 @@ REPL locked it. It had been built after the last runtime commit, `4c57af8`
 and an uncommitted `rand` dependency had changed, so it ran the accepted
 runtime. Its hash was the same before and after the run. Elapsed is the
 solver's own report. The puzzle has not been in an **ARC puzzle report**
-workflow run.
+workflow run. Version 2 has not been run; measuring it takes a new
+`/arc-purposal d037b0a7` invocation, which authorizes its one run.
 
 ## Open items
 
@@ -81,15 +98,16 @@ workflow run.
   included, and the exact match does not show that the rule was inferred from
   the training pairs. Suggested, not applied: keep the running puzzle's test
   pairs out of `document(puzzle_id)`.
-- **The test canvas's height is not in the instance prompt.**
-  `value()` in `src/visualizer.ts` sends the test instance's mask cropped by
-  `Matrix.crop`, with only `input_x` and `input_y`, and crops the training
-  masks as well. Nothing in that message gives the height of the test canvas,
-  which the model needs to fill in `canvas_height`. The model can only carry
-  the value over from the training implementations, where it is always 3, or
-  from the few-shot datasets. Suggested, not applied: pass the test input's
-  row and column counts to `visualizer.value`. `dataset.6150a2bd.json`'s
-  `canvas_width` and `canvas_height` have the same need.
+- **Canvas height, resolved by version 2.** In version 1 the model had to
+  fill in `canvas_height` for the test instance, although `value()` in
+  `src/visualizer.ts` sends only the cropped mask with `input_x` and
+  `input_y`, not the test canvas's size. Since 4-Nov-2026 every `nucleoid.run`
+  call declares `canvas_width` and `canvas_height` at the start of its
+  program, from the test input in the visualizer, and version 2 reads
+  `canvas_height` from there, so the model no longer supplies it. This
+  replaces the earlier suggestion to pass the test input's row and column
+  counts to `visualizer.value`. `dataset.6150a2bd.json` and
+  `dataset.44f52bb0.json` read the variables the same way.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` wrap JSON in text labels such as `few_shot:`,
   `train_dataset:`, and `input_x:`, while the ARC instructions require every
@@ -103,6 +121,8 @@ workflow run.
   `dataset.0d3d703e.json`, `dataset.27a28665.json`, and
   `dataset.44f52bb0.json`, which do not exist. Its GitHub Actions paragraph
   names four puzzles, while the workflow now lists eight.
-- Review and commit the dataset, its README paragraph, the workflow entry, the
-  solver's default puzzle in `src/app.ts`, and this record, which remain
-  uncommitted.
+- Review and commit version 2, its README paragraph, the solver change in
+  `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`, and this record's
+  update, which remain uncommitted. Version 1,
+  its README paragraph, the workflow entry, and this record's first version
+  were committed in `81c0208`.

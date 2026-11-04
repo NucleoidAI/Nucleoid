@@ -187,7 +187,12 @@ with its color-2 rim below (`dataset.curve.json`), and a vertical line that
 extends down from its top endpoint (`dataset.line.json`).
 
 Instance `implementation` snippets use named constructor arguments whose names
-match the parameters in their class declarations.
+match the parameters in their class declarations. The canvas size is not one
+of them: the solver declares `canvas_width` and `canvas_height` at the start of
+every program it runs, as
+[Initialize Nucleoid session](#2-initialize-nucleoid-session) describes, so
+rules read it from those variables. Native snapshots are captured the same
+way, with the pair's `input_matrix` size declared first.
 
 Every `input_instance_matrix` has exactly its pair's `input_matrix` row and
 column counts, and every `output_instance_matrix` has exactly its pair's
@@ -378,15 +383,15 @@ because every symmetric training pattern spans the canvas's width, a
 left-right flip of the pattern's own box. The rules flip across the canvas's
 center line, by the convention that mirror symmetry is bilateral symmetry
 across the grid's vertical axis, a choice fixed from the training pairs
-before the test pairs were read. The class takes `canvas_width`, the width of
-the pattern's canvas, as an integer, and `points`, the `[column, row]` canvas
-position of each of the pattern's cells in reading order, as a list, such as
-`[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]]` for the first training input. It
-takes no color, cell count, symmetry flag, output color, or matrix of cells,
-so no input property states the symmetry or the answer. Unconditional
-class-level rules set the output tag and introduce two properties, absent
-before the rules run. `symmetric` is
-`all point in $Obj.points: $Obj.points.includes([$Obj.canvas_width - 1 - point[0], point[1]])`:
+before the test pairs were read. The class takes `points`, the
+`[column, row]` canvas position of each of the pattern's cells in reading
+order, as a list, such as `[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]]` for the
+first training input. It takes no color, cell count, canvas size, symmetry
+flag, output color, or matrix of cells, so no input property states the
+symmetry or the answer; the rules read the canvas's width from the solver's
+`canvas_width`. Unconditional class-level rules set the output tag and
+introduce two properties, absent before the rules run. `symmetric` is
+`all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])`:
 the mirror image of every point, in the same row and as far from the right
 edge as the point is from the left edge, is also one of the points, which
 holds exactly when the pattern equals its mirror image. The rule uses the
@@ -462,13 +467,13 @@ box moves to the opposite side of the canvas. The 3 by 3 boxes span the canvas
 and keep their origin, 0 and 0, while the second training block's box moves
 down one row, from the top two rows to the bottom two. Redrawing the turned
 block at its input origin, a turn about its own center, would not reproduce
-that output. The class takes the bounding box's `width` and `height` and the
-`canvas_width` and `canvas_height` of the block's canvas as scalars, with no
-color, parts list, or matrix of cells. Unconditional class-level rules read
-the block's input state with `@first` anchors:
-`($Obj.orientation@first + 180) % 360` gives `orientation`,
-`$Obj.canvas_width - $Obj.x@first - $Obj.width` gives `x`, and
-`$Obj.canvas_height - $Obj.y@first - $Obj.height` gives `y`. The rules create
+that output. The class takes the bounding box's `width` and `height` as
+scalars, with no color, parts list, canvas size, or matrix of cells; the rules
+read the canvas's size from the solver's `canvas_width` and `canvas_height`.
+Unconditional class-level rules read the block's input state with `@first`
+anchors: `($Obj.orientation@first + 180) % 360` gives `orientation`,
+`canvas_width - $Obj.x@first - $Obj.width` gives `x`, and
+`canvas_height - $Obj.y@first - $Obj.height` gives `y`. The rules create
 no other properties, so input and output states share the same keys. Native
 output snapshots are captured with the pair's implementation followed by
 `Obj[:]`. The tag `l9100` is a single shape, as in `dataset.28bf18c6.json` and
@@ -524,11 +529,12 @@ listed in reading order; no two points of a pair share a column, so their bars
 never overlap. Each output extends every point downward into a vertical bar of
 its color, from the point's row to the bottom row of the canvas, so each bar is
 1 to 3 cells tall and a point on the bottom row stays a single cell. The class
-takes `color` and `canvas_height`, the height of the object's canvas, as
-scalars rather than a matrix of cells. Unconditional class-level rules set
-the output tag and introduce `bar_height`, which is absent before the rules
-run, as `$Obj.canvas_height - $Obj.y`, and leave `x` and `y` unchanged because
-the point is the bar's top cell. The bottom edge comes from the canvas, not the
+takes `color` as its only descriptive scalar, with no canvas size or matrix of
+cells. Unconditional class-level rules set the output tag and introduce
+`bar_height`, which is absent before the rules run, as
+`canvas_height - $Obj.y`, reading the canvas's height from the solver's
+`canvas_height`, and leave `x` and `y` unchanged because the point is the
+bar's top cell. The bottom edge comes from the canvas, not the
 population: the second training pair's lowest point lies on the middle row,
 yet its bars reach the bottom row. Native output snapshots are captured with
 all of the same pair's implementations together, followed by `Obj[:]`. Tags
@@ -731,6 +737,25 @@ It also infers the `output_canvas` from the training pairs.
 
 Nucleoid session is initialized with the declarations in order to use for identified instances later on.
 
+Every `nucleoid.run` call in `src\analyzer.ts` and `src\visualizer.ts` starts
+its program with two declarations of the canvas's size, ahead of the
+declarations and implementations:
+
+```nuc
+canvas_width = 3
+
+canvas_height = 3
+```
+
+Their values are the column and row counts of the training pair's
+`input_matrix`, or of the test input during visualization. Declarations read
+the canvas size from these variables, as
+`$Obj.bar_height = canvas_height - $Obj.y` in `dataset.d037b0a7.json` does, so
+no class takes it as a parameter and no implementation passes it. They are
+variables, not object properties, so the input and output states and `Obj[:]`
+do not include them. A class parameter of the same name still shadows them
+inside its constructor.
+
 ##### 3. Extract instances
 
 Based on declarations in `nuc` lang, the LLM extracts instances.
@@ -898,6 +923,8 @@ dimensions are never part of prediction requests.
 ##### 6. Initialize Nucleoid session for test input
 
 In order not to mix up instances with training dataset, new Nucleoid session required, but the same declarations is applied.
+Its `canvas_width` and `canvas_height` are the test input's column and row
+counts.
 
 ##### 7. Create test instances in Nucleoid session
 

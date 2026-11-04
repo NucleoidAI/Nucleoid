@@ -69,6 +69,7 @@ export async function value({
   puzzle_id,
   instance_name,
   declarations,
+  input_matrix,
   input_instance_matrix,
   output_instance_matrix,
 }) {
@@ -97,8 +98,15 @@ export async function value({
 
   milestone.evaluating_rules();
 
+  const canvas_width: number = input_matrix[0].length;
+  const canvas_height: number = input_matrix.length;
   const input_value = await nucleoid.run(
-    [declarations[0], implementation].join("\n\n")
+    [
+      `canvas_width = ${canvas_width}`,
+      `canvas_height = ${canvas_height}`,
+      declarations[0],
+      implementation,
+    ].join("\n\n")
   );
 
   milestone.instance_constructed({
@@ -118,8 +126,16 @@ export async function state(train_dataset) {
       ({ implementation }) => implementation
     );
 
+    const canvas_width: number = dataset.input_matrix[0].length;
+    const canvas_height: number = dataset.input_matrix.length;
     const obj_list = await nucleoid.run(
-      [...train_dataset.declarations, ...implementations, "Obj[:]"].join("\n\n")
+      [
+        `canvas_width = ${canvas_width}`,
+        `canvas_height = ${canvas_height}`,
+        ...train_dataset.declarations,
+        ...implementations,
+        "Obj[:]",
+      ].join("\n\n")
     );
 
     milestone.state({ index, obj_list });

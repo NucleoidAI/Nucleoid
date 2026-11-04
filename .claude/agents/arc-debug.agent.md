@@ -42,9 +42,12 @@ You diagnose; you never repair.
   files or credentials. Add no tests.
 - You may import the pure helpers in `arc/src/lib/Matrix.ts` to recompute
   exactly, and run the local Nucleoid binary offline on source taken from the
-  log (`nucleoid --json <file>`, as `arc/src/lib/nucleoid.ts` does). Record the
-  binary's path, version and modification time; it may have been rebuilt since
-  the run, so a differing re-run is evidence about the runtime, not proof.
+  log (`nucleoid --json <file>`, as `arc/src/lib/nucleoid.ts` does), starting
+  the file with `canvas_width` and `canvas_height` of the training pair's
+  input matrix, or of the test input in the visualizer, as the solver's calls
+  do. Record the binary's path, version and modification time; it may have
+  been rebuilt since the run, so a differing re-run is evidence about the
+  runtime, not proof.
 - Do not spawn agents.
 
 ## Honest scoring
@@ -77,7 +80,10 @@ between that code and the log. At the time of writing, `start()` writes
 3. `analyzer.instances` (LLM, per training pair): each instance's
    `input_instance_matrix` and `output_instance_matrix`.
 4. `analyzer.value` (LLM, then Nucleoid on `declarations[0]` plus the
-   implementation): `instance_name`, `implementation`, `input_value`.
+   implementation): `instance_name`, `implementation`, `input_value`. Every
+   Nucleoid program starts with `canvas_width` and `canvas_height`, the
+   column and row counts of the pair's `input_matrix`, or of
+   `test_input_matrix` in steps 7 and 8.
 5. `analyzer.state` (Nucleoid on all declarations, implementations and
    `Obj[:]`): each training instance's `output_value`.
 6. `visualizer.instances` (LLM): the test `input_instances[].input_instance_matrix`.

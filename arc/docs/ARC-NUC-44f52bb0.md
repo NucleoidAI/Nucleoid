@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/44f52bb0.json`](../data/training/44f52bb0.json) |
-| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 3, which derives `symmetric` by a rule, replacing version 2's input `symmetric` and version 1's 32 point instances; uncommitted |
+| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, uncommitted, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances |
 | Output canvas | `FIT` |
-| Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; version 3's rule uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
-| Solver changes | None; three suggested changes await review, not applied |
-| Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0 |
+| Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
+| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
+| Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run |
 | Updated | 4-Nov-2026 |
 
 ## Puzzle
@@ -35,16 +35,17 @@ The dataset holds the six original training pairs in source order, followed
 at the same level by the puzzle's two test pairs, which the same rules
 annotate. Every input mask keeps the full 3 by 3 canvas with zero padding,
 and every output mask is the complete 1 by 1 output. Each pair has one
-instance of `Obj(x, y, orientation, canvas_width, points)`, the whole
-pattern, tagged `l9100`, a single shape, as in `dataset.017c7c7b.json`.
-`canvas_width` is the input canvas's width, and `points` lists the
+instance of `Obj(x, y, orientation, points)`, the whole pattern, tagged
+`l9100`, a single shape, as in `dataset.017c7c7b.json`. `points` lists the
 `[column, row]` of each of the pattern's cells in reading order: only its
-colored cells, not a cell matrix. Unconditional class-level rules decide the
-pattern's symmetry and turn it into one point at the output origin:
+colored cells, not a cell matrix. The rules read the input canvas's width from
+`canvas_width`, which the solver declares at the start of every program.
+Unconditional class-level rules decide the pattern's symmetry and turn it
+into one point at the output origin:
 
 ```nuc
 $Obj.tag = 'l7544'
-$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([$Obj.canvas_width - 1 - point[0], point[1]])
+$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])
 $Obj.fill_color = 1 if $Obj.symmetric else 7
 $Obj.x = 0
 $Obj.y = 0
@@ -62,6 +63,20 @@ pairs and keeps the output position for patterns that do not; `$Obj.y = 0`
 moves the fourth training pair's pattern up from row 1. The declarations
 carry `#` comments, as the other datasets do. The
 [README](../README.md#instruction-datasets) describes the dataset in full.
+
+### Version 4 and the canvas width
+
+Later on 4-Nov-2026 the user asked that every `nucleoid.run` call declare
+`canvas_width` and `canvas_height`, so that datasets need not carry them.
+Version 4 removes `canvas_width` from the class, the eight implementations,
+and their snapshots, and the `symmetric` rule reads the solver's variable
+instead of the property; the rule's meaning, a flip across the canvas's
+center line, is unchanged. Regenerated with the accepted runtime, built at
+`6d3acec`, from programs that start with the same canvas declarations as the
+solver's `nucleoid.run` calls, every input and output state
+equals version 3's without `canvas_width`, so `symmetric`, `fill_color`, and
+the output origins are unchanged. Instance names, `points`, masks, pair grids,
+and the output canvas are unchanged.
 
 ### Version 3 and the hint
 
@@ -113,7 +128,8 @@ let accepted quantifiers derive it, which version 3 does.
 | --- | --- | --- | --- |
 | 1 | `/arc-purposal 44f52bb0` in an earlier session, committed in `bca5ff6` | One per colored input cell, a point tagged `l7544` with `color` and `canvas_width`: 32 | `has_mirror` and `symmetric` derived over the point population, `fill_color`, and every point moved to the origin |
 | 2 | `/arc-purposal 44f52bb0` with the hint "Consider whole thing as a single instance, 1 if $Obj.symmetric else 7" | One whole pattern per pair, with an input `symmetric`: 8 | `$Obj.tag = 'l7544'`, `fill_color`, `x` and `y`: the rules above without `symmetric` |
-| 3 | `/arc-purposal 44f52bb0` with the hint "Also declaratively formulise $Obj.symmetric" | One whole pattern per pair, with `canvas_width` and `points`: 8 | The five rules above |
+| 3 | `/arc-purposal 44f52bb0` with the hint "Also declaratively formulise $Obj.symmetric", committed in `6d3acec` | One whole pattern per pair, with `canvas_width` and `points`: 8 | The five rules above, with `$Obj.canvas_width` in `symmetric` |
+| 4 | The user's request that every `nucleoid.run` call declare `canvas_width` and `canvas_height` | One whole pattern per pair, with `points` only: 8 | The five rules above |
 
 Version 1's rules, whose `@first` reads of [NUC 53](../../docs/nuc-0053.md)
 kept the mirror test on the input coordinates after the last two rules moved
@@ -147,7 +163,8 @@ source had changed. Before the third, `cargo build` rebuilt the runtime at
 second and third runs, the runtime's hash and the dataset's were the same
 before and after the run. Each exit status is the difference score, neither
 scored run's log records an error, and elapsed is the solver's own report.
-Each invocation authorizes one run, so none was repeated.
+Each invocation authorizes one run, so none was repeated. Version 4 has not
+been run; measuring it takes a new `/arc-purposal 44f52bb0` invocation.
 
 ## Open items
 
@@ -164,12 +181,16 @@ Each invocation authorizes one run, so none was repeated.
   rather than a flat list of single values. A flat list of reading-order
   indices also works, with `%` arithmetic to decode positions. Confirm that
   the list of pairs is acceptable.
-- **Canvas size.** `canvas_width` is an input the solver's model must supply
-  for the test instance, and `symmetric` is defined across the canvas's
-  center line, but `value()` in `src/visualizer.ts` sends the model only the
-  cropped pattern and its `input_x` and `input_y`, not the canvas size.
-  Suggested, not applied, as in the `d037b0a7` and `6150a2bd` records: pass
-  the test input's row and column counts to `visualizer.value`.
+- **Canvas size, resolved by version 4.** Before version 4, `canvas_width`
+  was an input the solver's model had to supply for the test instance, while
+  `value()` in `src/visualizer.ts` sends the model only the cropped pattern
+  and its `input_x` and `input_y`, not the canvas size. Since 4-Nov-2026
+  every `nucleoid.run` call declares `canvas_width` and `canvas_height` at the
+  start of its program, from the test input in the visualizer, and version 4
+  reads `canvas_width` from there, so the model no longer supplies it. This
+  replaces the earlier suggestion, also in the `d037b0a7` and `6150a2bd`
+  records, to pass the test input's row and column counts to
+  `visualizer.value`.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` wrap JSON in text labels such as `few_shot:` and
   `input_x:`, while the ARC instructions require every message to parse as one
@@ -203,4 +224,6 @@ Each invocation authorizes one run, so none was repeated.
 - **Review.** Version 1, its README paragraph, the workflow entry, the
   solver's default puzzle and this record's first version were committed in
   `bca5ff6`. Version 2 was never committed. Version 3, its README paragraph
-  and this update are uncommitted for review.
+  and that update were committed in `6d3acec`. Version 4, its README
+  paragraph, the solver change in `src/analyzer.ts`, `src/visualizer.ts`, and
+  `src/app.ts`, and this update are uncommitted for review.
