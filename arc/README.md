@@ -178,13 +178,19 @@ The genesis datasets are `dataset.core.json`, `dataset.extension.json`,
 the genesis puzzle `3aa6fb7a`, which has no `dataset.3aa6fb7a.json`, and every
 run receives them with the other datasets. Their pairs are synthesized
 varieties of corners, curves, and lines rather than original training or test
-pairs, so they contain no test pair. Each ends with one synthesized pair that
-holds a single object on the genesis puzzle's 7 by 7 canvas, annotated with
-that dataset's own declarations: a color-9 corner at orientation 135 with its
-outside color-4 marker (`dataset.core.json`), a color-4 corner at orientation
-45 with its inside color-7 marker (`dataset.extension.json`), a color-9 point
-with its color-2 rim below (`dataset.curve.json`), and a vertical line that
-extends down from its top endpoint (`dataset.line.json`).
+pairs, so they contain no test pair. Each ends with two synthesized pairs on
+the genesis puzzle's 7 by 7 canvas, annotated with that dataset's own
+declarations. The first holds a single object: a color-9 corner at
+orientation 135 with its outside color-4 marker (`dataset.core.json`), a
+color-4 corner at orientation 45 with its inside color-7 marker
+(`dataset.extension.json`), a color-9 point with its color-2 rim below
+(`dataset.curve.json`), and a vertical line that extends down from its top
+endpoint (`dataset.line.json`). The last holds two objects: color-9 corners
+at orientations 45 and 315 with their outside color-4 markers, color-4
+corners at orientations 225 and 135 with their inside color-7 markers, a
+color-9 point with its color-2 rim below and a color-4 point with its color-8
+rim above, and a vertical line that extends up from its bottom endpoint with
+a horizontal line that extends left from its right endpoint.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations. The canvas size is not one

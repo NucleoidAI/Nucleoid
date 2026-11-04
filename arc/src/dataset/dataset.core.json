@@ -416,6 +416,88 @@
           "output_value": {"horizontal_segment_color":9,"id":"objb10dd4029d3e","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"x":3,"y":1}
         }
       ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 9, 9, 0, 0],
+        [0, 0, 0, 0, 9, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 9, 9, 0, 0, 0, 0],
+        [0, 9, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 4, 0],
+        [0, 0, 0, 9, 9, 0, 0],
+        [0, 0, 0, 0, 9, 0, 0],
+        [4, 0, 0, 0, 0, 0, 0],
+        [0, 9, 9, 0, 0, 0, 0],
+        [0, 9, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj1d3e297e70a8",
+          "input_x": 3,
+          "output_x": 3,
+          "input_y": 1,
+          "output_y": 0,
+          "input_orientation": 45,
+          "output_orientation": 45,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 9, 9, 0, 0],
+            [0, 0, 0, 0, 9, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 4, 0],
+            [0, 0, 0, 9, 9, 0, 0],
+            [0, 0, 0, 0, 9, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "obj1d3e297e70a8 = Obj(x=3, y=1, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"horizontal_segment_color":9,"id":"obj1d3e297e70a8","marker_color":0,"orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"x":3,"y":1},
+          "output_value": {"horizontal_segment_color":9,"id":"obj1d3e297e70a8","marker_color":4,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"x":3,"y":1}
+        },
+        {
+          "instance_name": "obj20499ff135c0",
+          "input_x": 1,
+          "output_x": 0,
+          "input_y": 4,
+          "output_y": 3,
+          "input_orientation": 315,
+          "output_orientation": 315,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 9, 9, 0, 0, 0, 0],
+            [0, 9, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [4, 0, 0, 0, 0, 0, 0],
+            [0, 9, 9, 0, 0, 0, 0],
+            [0, 9, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "obj20499ff135c0 = Obj(x=1, y=4, orientation=315, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "input_value": {"horizontal_segment_color":9,"id":"obj20499ff135c0","marker_color":0,"orientation":315,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"x":1,"y":4},
+          "output_value": {"horizontal_segment_color":9,"id":"obj20499ff135c0","marker_color":4,"orientation":315,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"x":1,"y":4}
+        }
+      ]
     }
   ]
 }
