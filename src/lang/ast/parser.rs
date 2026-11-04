@@ -3096,7 +3096,7 @@ mod tests {
         let [Stmt::Class(class)] = statements.as_slice() else {
             panic!("one class with a typed field");
         };
-        assert!(class.constructor.is_empty());
+        assert_eq!(class.constructor, []);
         let [field] = class.fields.as_slice() else {
             panic!("one typed field");
         };

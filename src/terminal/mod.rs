@@ -1041,7 +1041,7 @@ mod tests {
                     .map(|column| screen[(column, row)].symbol())
                     .collect::<String>()
             };
-            assert!(line(0).trim().is_empty());
+            assert_eq!(line(0).trim(), "");
             assert_eq!(screen[(15, 1)].symbol(), "🌿");
             assert!(line(1).contains("Nucleoid - Logic Language for World Models"));
             assert_eq!(screen[(15, 2)].symbol(), "🌎");
@@ -1140,7 +1140,7 @@ mod tests {
                 flashed[(column, row)].symbol(),
                 original[(column, row)].symbol()
             );
-            assert!(!flashed[(column, row)].symbol().trim().is_empty());
+            assert_ne!(flashed[(column, row)].symbol().trim(), "");
             assert_eq!(flashed[(column, row)].fg, ratatui::style::Color::White);
             assert!(
                 flashed[(column, row)]

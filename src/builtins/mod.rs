@@ -559,11 +559,7 @@ mod tests {
             assert_eq!(error.kind(), ErrorKind::Type);
             assert_eq!(error.message(), "Replaced string is too large");
         }
-        assert!(
-            string_replacement_buffer(0, 0, 0, usize::MAX)
-                .unwrap()
-                .is_empty()
-        );
+        assert_eq!(string_replacement_buffer(0, 0, 0, usize::MAX).unwrap(), "");
     }
 
     #[test]
