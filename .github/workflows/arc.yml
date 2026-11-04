@@ -27,6 +27,7 @@ jobs:
         44f52bb0
         017c7c7b
         27a28665
+        0d3d703e
       NUCLEOID_EXECUTABLE: ${{ github.workspace }}/target/debug/nucleoid
       DOTENV_CONFIG_PATH: /dev/null
       NO_COLOR: "1"
