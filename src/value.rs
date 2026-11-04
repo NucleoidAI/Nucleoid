@@ -23,12 +23,14 @@ impl ObjectId {
     }
 
     /// `person1.address = Address()` — named after the path that reaches it.
+    #[must_use]
     pub fn nested(owner: &ObjectId, property: &str) -> Self {
         ObjectId(format!("{owner}.{property}"))
     }
 
     /// `$Person.country = Country()` — one object the whole class shares,
     /// rather than one per instance.
+    #[must_use]
     pub fn shared(class: &str, property: &str) -> Self {
         ObjectId(format!("${class}.{property}"))
     }
@@ -40,6 +42,7 @@ impl ObjectId {
         ObjectId(format!("obj:{}", COUNTER.fetch_add(1, Ordering::Relaxed)))
     }
 
+    #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -92,14 +95,17 @@ impl Value {
         Value::String(value.into())
     }
 
+    #[must_use]
     pub fn is_undefined(&self) -> bool {
         matches!(self, Value::Undefined)
     }
 
+    #[must_use]
     pub fn is_null(&self) -> bool {
         matches!(self, Value::Null)
     }
 
+    #[must_use]
     pub fn is_nullish(&self) -> bool {
         matches!(self, Value::Null | Value::Undefined)
     }
@@ -122,22 +128,27 @@ impl Value {
         }
     }
 
+    #[must_use]
     pub fn truthy(&self) -> bool {
         match self {
             Value::Undefined | Value::Null => false,
             Value::Bool(bool) => *bool,
             Value::Number(number) => *number != 0.0 && !number.is_nan(),
             Value::String(string) => !string.is_empty(),
-            Value::Date(_) | Value::Object(_) | Value::Class(_) => true,
-            Value::List(_) | Value::Regex(_) | Value::Function(_) => true,
+            Value::Date(_)
+            | Value::Object(_)
+            | Value::Class(_)
+            | Value::List(_)
+            | Value::Regex(_)
+            | Value::Function(_) => true,
         }
     }
 
     /// Numeric coercion following the spec's arithmetic: `null` reads as zero,
     /// booleans as 0/1, and anything non-numeric as NaN.
+    #[must_use]
     pub fn to_number(&self) -> f64 {
         match self {
-            Value::Undefined => f64::NAN,
             Value::Null => 0.0,
             Value::Bool(bool) => {
                 if *bool {
@@ -147,7 +158,7 @@ impl Value {
                 }
             }
             Value::Number(number) => *number,
-            Value::Date(millis) => *millis as f64,
+            Value::Date(millis) => crate::number::from_i64(*millis),
             Value::String(string) => {
                 let trimmed = string.trim();
                 if trimmed.is_empty() {
@@ -161,10 +172,15 @@ impl Value {
                 [single] => single.to_number(),
                 _ => f64::NAN,
             },
-            Value::Object(_) | Value::Class(_) | Value::Regex(_) | Value::Function(_) => f64::NAN,
+            Value::Undefined
+            | Value::Object(_)
+            | Value::Class(_)
+            | Value::Regex(_)
+            | Value::Function(_) => f64::NAN,
         }
     }
 
+    #[must_use]
     pub fn type_name(&self) -> &'static str {
         match self {
             Value::Undefined => "undefined",
@@ -184,6 +200,7 @@ impl Value {
 
 /// Formats a float the way the runtime renders numbers: integral values without
 /// a trailing `.0`, everything else with the shortest round-tripping form.
+#[must_use]
 pub fn format_number(number: f64) -> String {
     if number.is_nan() {
         return "NaN".to_string();
@@ -211,7 +228,7 @@ impl fmt::Display for Value {
             Value::Number(number) => f.write_str(&format_number(*number)),
             Value::String(string) => f.write_str(string),
             Value::List(list) => {
-                let rendered: Vec<String> = list.iter().map(|item| item.to_string()).collect();
+                let rendered: Vec<String> = list.iter().map(ToString::to_string).collect();
                 f.write_str(&rendered.join(","))
             }
             Value::Object(id) => write!(f, "[object {id}]"),
@@ -226,14 +243,13 @@ impl fmt::Display for Value {
 impl PartialEq for Value {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Value::Undefined, Value::Undefined) => true,
-            (Value::Null, Value::Null) => true,
+            (Value::Undefined, Value::Undefined) | (Value::Null, Value::Null) => true,
             (Value::Bool(left), Value::Bool(right)) => left == right,
             (Value::Number(left), Value::Number(right)) => left == right,
-            (Value::String(left), Value::String(right)) => left == right,
+            (Value::String(left), Value::String(right))
+            | (Value::Class(left), Value::Class(right)) => left == right,
             (Value::List(left), Value::List(right)) => left == right,
             (Value::Object(left), Value::Object(right)) => left == right,
-            (Value::Class(left), Value::Class(right)) => left == right,
             (Value::Date(left), Value::Date(right)) => left == right,
             (Value::Regex(left), Value::Regex(right)) => left.as_str() == right.as_str(),
             (Value::Function(left), Value::Function(right)) => Arc::ptr_eq(left, right),
@@ -250,6 +266,7 @@ pub struct ObjectData {
 }
 
 impl ObjectData {
+    #[must_use]
     pub fn new(class: Option<String>) -> Self {
         ObjectData {
             class,

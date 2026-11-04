@@ -91,52 +91,43 @@ pub(super) struct Completion {
 }
 
 impl Completion {
-    pub fn find(runtime: &Runtime, editor: &TextArea<'_>, explicit: bool) -> Option<Self> {
+    pub(super) fn find(runtime: &Runtime, editor: &TextArea<'_>, explicit: bool) -> Option<Self> {
         if editor.is_selecting() {
             return None;
         }
         let (row, column) = editor.cursor();
-        let line: Vec<char> = editor.lines()[row].chars().collect();
-        let mut start = column;
-        while start > 0 && word(line[start - 1]) {
-            start -= 1;
-        }
-        let mut end = column;
-        while end < line.len() && word(line[end]) {
-            end += 1;
-        }
-        let prefix: String = line[start..column].iter().collect();
+        let line: Vec<char> = editor
+            .lines()
+            .get(row)
+            .map(|text| text.chars().collect())
+            .unwrap_or_default();
+        let column = column.min(line.len());
+        let (head, tail) = line.split_at(column);
+        let start = column
+            - head
+                .iter()
+                .rev()
+                .take_while(|&&character| word(character))
+                .count();
+        let end = column
+            + tail
+                .iter()
+                .take_while(|&&character| word(character))
+                .count();
+        let (before, prefix) = head.split_at(start);
+        let prefix: String = prefix.iter().collect();
         if prefix.is_empty() && !explicit {
             return None;
         }
-        let before: String = line[..start].iter().collect();
-        if in_literal_or_comment(&line[..column]) {
+        let before: String = before.iter().collect();
+        if in_literal_or_comment(head) {
             return None;
         }
-        let mut candidates = BTreeSet::new();
-        if row == 0 && before.trim().is_empty() && prefix.starts_with('.') {
-            candidates.extend(COMMANDS.iter().map(|name| (*name).to_owned()));
+        let candidates = if row == 0 && before.trim().is_empty() && prefix.starts_with('.') {
+            COMMANDS.iter().map(|name| (*name).to_owned()).collect()
         } else {
-            candidates.extend(WORDS.iter().map(|name| (*name).to_owned()));
-            for node in runtime.graph.nodes() {
-                match node.kind {
-                    NodeKind::Variable
-                    | NodeKind::Function
-                    | NodeKind::Object
-                    | NodeKind::Property => {
-                        candidates.insert(node.key.to_string());
-                    }
-                    NodeKind::Class => {
-                        candidates.insert(node.key.to_string());
-                        candidates.insert(node.key.as_str().trim_start_matches('$').to_owned());
-                    }
-                    _ => {}
-                }
-            }
-            if let Some((owner, _)) = prefix.rsplit_once('.') {
-                add_members(runtime, owner, &mut candidates);
-            }
-        }
+            names(runtime, &prefix)
+        };
         let candidates: Vec<_> = candidates
             .into_iter()
             .filter(|candidate| {
@@ -154,7 +145,7 @@ impl Completion {
         })
     }
 
-    pub fn select(&mut self, forward: bool) {
+    pub(super) fn select(&mut self, forward: bool) {
         let length = self.candidates.len();
         self.selected = if forward {
             (self.selected + 1) % length
@@ -163,14 +154,37 @@ impl Completion {
         };
     }
 
-    pub fn apply(&self, editor: &mut TextArea<'_>) {
+    pub(super) fn apply(&self, editor: &mut TextArea<'_>) {
+        let Some(candidate) = self.candidates.get(self.selected) else {
+            return;
+        };
         editor.move_cursor(CursorMove::Jump(
             u16::try_from(self.row).unwrap_or(u16::MAX),
             u16::try_from(self.start).unwrap_or(u16::MAX),
         ));
         editor.delete_str(self.end - self.start);
-        editor.insert_str(&self.candidates[self.selected]);
+        editor.insert_str(candidate);
     }
+}
+
+fn names(runtime: &Runtime, prefix: &str) -> BTreeSet<String> {
+    let mut candidates: BTreeSet<String> = WORDS.iter().map(|name| (*name).to_owned()).collect();
+    for node in runtime.graph.nodes() {
+        match node.kind {
+            NodeKind::Variable | NodeKind::Function | NodeKind::Object | NodeKind::Property => {
+                candidates.insert(node.key.to_string());
+            }
+            NodeKind::Class => {
+                candidates.insert(node.key.to_string());
+                candidates.insert(node.key.as_str().trim_start_matches('$').to_owned());
+            }
+            _ => {}
+        }
+    }
+    if let Some((owner, _)) = prefix.rsplit_once('.') {
+        add_members(runtime, owner, &mut candidates);
+    }
+    candidates
 }
 
 fn word(character: char) -> bool {
@@ -319,10 +333,10 @@ mod tests {
         for prefix in ["scores.li", "scores.al"] {
             assert!(
                 Completion::find(&runtime, &editor::new(prefix), false).is_none_or(|completion| {
-                    !completion
-                        .candidates
-                        .iter()
-                        .any(|name| name.ends_with(".list") || name.ends_with(".all"))
+                    !completion.candidates.iter().any(|name| {
+                        name.rsplit_once('.')
+                            .is_some_and(|(_, member)| member == "list" || member == "all")
+                    })
                 }),
                 "{prefix}"
             );

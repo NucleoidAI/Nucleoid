@@ -4,11 +4,13 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+#[derive(Debug)]
 pub struct Quantified<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Quantified<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Quantified { node }
     }
@@ -21,7 +23,10 @@ impl<'a> Quantified<'a> {
             condition,
         } = self.node
         else {
-            unreachable!("Quantified only wraps Expr::Quantified")
+            return Err(Error::type_error(format!(
+                "{} is not a quantifier",
+                self.node
+            )));
         };
 
         runtime.evaluate_quantified(*quantifier, binder, collection, condition, scope)
@@ -46,7 +51,7 @@ impl Runtime {
         let Some(members) = members else {
             return Err(Error::type_error(format!(
                 "{} is not a collection",
-                self.describe(collection, scope)
+                collection.describe()
             )));
         };
 

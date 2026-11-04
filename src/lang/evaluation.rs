@@ -10,7 +10,7 @@
 
 use indexmap::IndexSet;
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::{Expr, VersionSelector};
 use crate::runtime::Runtime;
@@ -18,6 +18,7 @@ use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
 /// How a statement finished: normally, or by returning out of its block.
+#[derive(Debug)]
 pub enum Flow {
     Normal(Value),
     Return(Value),
@@ -92,19 +93,21 @@ impl Runtime {
             anchor_target,
             pending_anchor: false,
         });
+        let depth = self.tracking.frames.len();
         let result = operation(self);
+        debug_assert_eq!(self.tracking.frames.len(), depth);
         let frame = self
             .tracking
             .frames
             .pop()
-            .expect("a scoped tracking operation must retain its frame");
+            .ok_or_else(|| Error::type_error("Dependency tracking lost its frame"))?;
 
         result.map(|value| (value, frame))
     }
 
     /// Records a read. Reads reach every enclosing frame up to a barrier, so an
     /// enclosing block depends on whatever its statements read.
-    pub(crate) fn track(&mut self, key: NodeKey) {
+    pub(crate) fn track(&mut self, key: &NodeKey) {
         for frame in self.tracking.frames.iter_mut().rev() {
             frame.keys.insert(key.clone());
 
@@ -118,17 +121,17 @@ impl Runtime {
     /// self-anchor defers an assignment on the active class receiver.
     pub(crate) fn track_property_version(
         &mut self,
-        key: NodeKey,
+        key: &NodeKey,
         selector: VersionSelector,
         available: bool,
     ) {
-        self.track(key.clone());
+        self.track(key);
         if available || !selector.is_fixed() {
             return;
         }
 
         for frame in self.tracking.frames.iter_mut().rev() {
-            if frame.anchor_target.as_ref() == Some(&key) {
+            if frame.anchor_target.as_ref() == Some(key) {
                 frame.pending_anchor = true;
             }
             if frame.mode == TrackingMode::Isolated {
@@ -137,7 +140,7 @@ impl Runtime {
         }
     }
 
-    pub(crate) fn track_shape(&mut self, key: ShapeKey) {
+    pub(crate) fn track_shape(&mut self, key: &ShapeKey) {
         for frame in self.tracking.frames.iter_mut().rev() {
             frame.shapes.insert(key.clone());
 
@@ -191,7 +194,7 @@ impl Runtime {
 
         // Reads made while evaluating still belong to any enclosing declaration.
         for dependency in &dependencies {
-            self.track(dependency.clone());
+            self.track(dependency);
         }
 
         Ok(PropertyEvaluation {

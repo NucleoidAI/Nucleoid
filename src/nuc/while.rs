@@ -14,6 +14,7 @@ pub struct While {
 }
 
 impl While {
+    #[must_use]
     pub fn new(condition: Expr, statements: Vec<Stmt>) -> Self {
         While {
             condition,

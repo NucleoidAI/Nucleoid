@@ -9,11 +9,13 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+#[derive(Debug)]
 pub struct Version<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Version<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Self { node }
     }
@@ -24,7 +26,10 @@ impl<'a> Version<'a> {
             selector,
         } = self.node
         else {
-            unreachable!("Version only wraps Expr::Version")
+            return Err(Error::type_error(format!(
+                "{} is not a version read",
+                self.node
+            )));
         };
         runtime.read_version(reference, *selector, scope)
     }
@@ -84,7 +89,7 @@ impl Runtime {
                 {
                     return Err(version_reference_error());
                 }
-                self.track(dependency);
+                self.track(&dependency);
                 HistoryKey::Variable(name.clone())
             }
             Expr::Member { object, property } if property != "value" => {
@@ -119,7 +124,7 @@ impl Runtime {
                     .state
                     .version(&HistoryKey::Property(id, property.to_string()), selector)
                     .cloned();
-                self.track_property_version(key, selector, value.is_some());
+                self.track_property_version(&key, selector, value.is_some());
                 Ok(value.unwrap_or(Value::Undefined))
             }
             Value::Null | Value::Undefined => Ok(Value::Undefined),

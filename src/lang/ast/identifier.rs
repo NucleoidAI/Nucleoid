@@ -7,15 +7,18 @@ use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::Expr;
 use crate::lang::evaluation::TrackingMode;
+use crate::number;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
+#[derive(Debug)]
 pub struct Identifier<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Identifier<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Identifier { node }
     }
@@ -25,9 +28,9 @@ impl<'a> Identifier<'a> {
             Expr::Identifier(name) => runtime.read_identifier(name, scope),
             Expr::ClassRef(name) => runtime.read_class_ref(name, scope),
             Expr::ObjectRef(id) => Ok(Value::Object(ObjectId::from(id.clone()))),
-            Expr::This => runtime.read_this(scope),
+            Expr::This => read_this(scope),
             Expr::Member { object, property } => runtime.read_member(object, property, scope),
-            other => unreachable!("{other} is not an identifier"),
+            other => Err(Error::type_error(format!("{other} is not an identifier"))),
         }
     }
 }
@@ -41,7 +44,7 @@ impl Runtime {
         }
 
         if let Some(value) = self.state.variable(name).cloned() {
-            self.track(NodeKey::variable(name));
+            self.track(&NodeKey::variable(name));
             self.note_nullish(&value);
             return Ok(value);
         }
@@ -51,7 +54,7 @@ impl Runtime {
         }
 
         if let Some(function) = self.state.function(name).cloned() {
-            self.track(NodeKey::function(name));
+            self.track(&NodeKey::function(name));
             return Ok(Value::Function(function));
         }
 
@@ -76,7 +79,7 @@ impl Runtime {
                 });
 
         if deferred {
-            self.track(key);
+            self.track(&key);
             self.undefined_read = true;
             return Ok(Value::Undefined);
         }
@@ -97,13 +100,6 @@ impl Runtime {
         }
     }
 
-    pub(crate) fn read_this(&mut self, scope: &mut Scope) -> Result<Value> {
-        match scope.this().or_else(|| scope.instance()) {
-            Some(id) => Ok(Value::Object(id.clone())),
-            None => Err(Error::reference("this is not defined")),
-        }
-    }
-
     pub(crate) fn read_member(
         &mut self,
         object: &Expr,
@@ -115,18 +111,13 @@ impl Runtime {
         }
 
         let base = self.evaluate(object, scope)?;
-        self.read_property(&base, property, scope)
+        Ok(self.read_property(&base, property))
     }
 
-    pub(crate) fn read_property(
-        &mut self,
-        base: &Value,
-        property: &str,
-        scope: &mut Scope,
-    ) -> Result<Value> {
+    pub(crate) fn read_property(&mut self, base: &Value, property: &str) -> Value {
         match base {
             Value::Object(id) => {
-                self.track(NodeKey::property(id, property));
+                self.track(&NodeKey::property(id, property));
 
                 let value = self
                     .state
@@ -140,46 +131,39 @@ impl Runtime {
                     self.undefined_read = true;
                 }
 
-                Ok(value)
+                value
             }
 
-            Value::Class(name) => self.read_class_property(name, property, scope),
+            Value::Class(name) => self.read_class_property(name, property),
 
-            Value::String(string) => Ok(match property {
-                "length" => Value::Number(string.chars().count() as f64),
+            Value::String(string) => match property {
+                "length" => Value::Number(number::from_usize(string.chars().count())),
                 _ => Value::Undefined,
-            }),
+            },
 
-            Value::List(items) => Ok(match property {
-                "length" => Value::Number(items.len() as f64),
+            Value::List(items) => match property {
+                "length" => Value::Number(number::from_usize(items.len())),
                 _ => Value::Undefined,
-            }),
+            },
 
-            Value::Undefined | Value::Null => Ok(Value::Undefined),
-
-            _ => Ok(Value::Undefined),
+            _ => Value::Undefined,
         }
     }
 
-    fn read_class_property(
-        &mut self,
-        name: &str,
-        property: &str,
-        _scope: &mut Scope,
-    ) -> Result<Value> {
+    fn read_class_property(&mut self, name: &str, property: &str) -> Value {
         match Global::from_name(name) {
             Some(Global::Class) if property == "length" => {
-                self.track(NodeKey::class("Class"));
-                return Ok(Value::Number(self.state.class_count() as f64));
+                self.track(&NodeKey::class("Class"));
+                return Value::Number(number::from_usize(self.state.class_count()));
             }
             Some(Global::Number) => {
                 if let Some(value) = builtins::number_constant(property) {
-                    return Ok(value);
+                    return value;
                 }
             }
             Some(Global::Math) => {
                 if let Some(value) = builtins::math_constant(property) {
-                    return Ok(value);
+                    return value;
                 }
             }
             _ => {}
@@ -188,12 +172,12 @@ impl Runtime {
         if let Some(class) = self.state.class(name) {
             if property == "length" {
                 let length = class.instances.len();
-                self.track(NodeKey::class(name));
-                return Ok(Value::Number(length as f64));
+                self.track(&NodeKey::class(name));
+                return Value::Number(number::from_usize(length));
             }
         }
 
-        Ok(Value::Undefined)
+        Value::Undefined
     }
 
     /// `x.value` reads the current value without recording a dependency. The
@@ -251,5 +235,12 @@ impl Runtime {
 
             other => Err(Error::syntax(format!("Cannot assign to {other}"))),
         }
+    }
+}
+
+fn read_this(scope: &Scope) -> Result<Value> {
+    match scope.this().or_else(|| scope.instance()) {
+        Some(id) => Ok(Value::Object(id.clone())),
+        None => Err(Error::reference("this is not defined")),
     }
 }

@@ -6,11 +6,13 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
+#[derive(Debug)]
 pub struct Reason<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Reason<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Reason { node }
     }
@@ -39,7 +41,7 @@ impl Runtime {
                 Ok(self.apply_stage(*stage, &selection))
             }
             Expr::Model => {
-                self.track_shape(ShapeKey::Model);
+                self.track_shape(&ShapeKey::Model);
                 let keys = self.model_keys();
                 Ok(self.selection_of(keys))
             }
@@ -65,9 +67,7 @@ impl Runtime {
 
                 match base {
                     Value::Object(id) => Ok(NodeKey::property(&id, property)),
-                    Value::Undefined | Value::Null => {
-                        Err(Error::not_defined(self.describe(object, scope)))
-                    }
+                    Value::Undefined | Value::Null => Err(Error::not_defined(object.describe())),
                     _ => Err(Error::type_error(format!("Cannot explain {expression}"))),
                 }
             }

@@ -52,6 +52,7 @@ impl Default for Scope {
 }
 
 impl Scope {
+    #[must_use]
     pub fn new() -> Self {
         Scope {
             frames: vec![Frame::default()],
@@ -63,21 +64,25 @@ impl Scope {
     }
 
     pub fn pop(&mut self) {
+        debug_assert!(self.frames.len() > 1);
         if self.frames.len() > 1 {
             self.frames.pop();
         }
     }
 
+    #[must_use]
     pub fn depth(&self) -> usize {
         self.frames.len()
     }
 
     /// Whether this is the outermost scope, where assignments become state.
+    #[must_use]
     pub fn is_root(&self) -> bool {
         self.frames.len() == 1
     }
 
     /// The innermost binding of a name, walking outwards through the frames.
+    #[must_use]
     pub fn retrieve(&self, name: &str) -> Option<&Value> {
         self.frames
             .iter()
@@ -94,6 +99,7 @@ impl Scope {
             .get(selector)
     }
 
+    #[must_use]
     pub fn has(&self, name: &str) -> bool {
         self.retrieve(name).is_some()
     }
@@ -134,15 +140,18 @@ impl Scope {
 
     /// Whether an enclosing block — not the outermost scope — already assigned
     /// this name.
+    #[must_use]
     pub fn assigned_by_enclosing(&self, name: &str) -> bool {
         let last = self.frames.len().saturating_sub(1);
 
-        self.frames[..last]
+        self.frames
             .iter()
+            .take(last)
             .skip(1)
             .any(|frame| frame.assigned.iter().any(|assigned| assigned == name))
     }
 
+    #[must_use]
     pub fn instance(&self) -> Option<&ObjectId> {
         self.frames
             .iter()
@@ -156,6 +165,7 @@ impl Scope {
         }
     }
 
+    #[must_use]
     pub fn this(&self) -> Option<&ObjectId> {
         self.frames
             .iter()

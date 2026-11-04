@@ -14,6 +14,7 @@ pub struct Expression {
 }
 
 impl Expression {
+    #[must_use]
     pub fn new(tokens: Expr) -> Self {
         Expression { tokens }
     }
@@ -35,12 +36,35 @@ impl Runtime {
             return Err(Error::type_error("Maximum expression depth exceeded"));
         }
 
+        let depth = self.depth;
         let result = self.freeze_inner(expression, scope);
+        debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
         result
     }
 
     fn freeze_inner(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
+        match expression {
+            Expr::Member { .. }
+            | Expr::Version { .. }
+            | Expr::Index { .. }
+            | Expr::Slice { .. } => self.freeze_access(expression, scope),
+            Expr::Binary { .. }
+            | Expr::Logical { .. }
+            | Expr::Conditional { .. }
+            | Expr::Quantified { .. }
+            | Expr::Unary { .. } => self.freeze_operator(expression, scope),
+            Expr::Call { .. } | Expr::Super(_) | Expr::Of { .. } => {
+                self.freeze_call(expression, scope)
+            }
+            Expr::List(_) | Expr::ObjectLiteral(_) | Expr::Template(_) => {
+                self.freeze_collection(expression, scope)
+            }
+            other => Ok(other.clone()),
+        }
+    }
+
+    fn freeze_access(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
         Ok(match expression {
             Expr::Member { object, property } if property == "value" => {
                 let value = self.evaluate(expression, scope)?;
@@ -60,6 +84,27 @@ impl Runtime {
                 reference: Box::new(self.freeze(reference, scope)?),
                 selector: *selector,
             },
+            Expr::Index { object, index } => Expr::Index {
+                object: Box::new(self.freeze(object, scope)?),
+                index: Box::new(self.freeze(index, scope)?),
+            },
+            Expr::Slice { object, start, end } => Expr::Slice {
+                object: Box::new(self.freeze(object, scope)?),
+                start: start
+                    .as_ref()
+                    .map(|start| self.freeze(start, scope).map(Box::new))
+                    .transpose()?,
+                end: end
+                    .as_ref()
+                    .map(|end| self.freeze(end, scope).map(Box::new))
+                    .transpose()?,
+            },
+            other => other.clone(),
+        })
+    }
+
+    fn freeze_operator(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
+        Ok(match expression {
             Expr::Binary {
                 operator,
                 left,
@@ -104,6 +149,12 @@ impl Runtime {
                 collection: Box::new(self.freeze(collection, scope)?),
                 condition: condition.clone(),
             },
+            other => other.clone(),
+        })
+    }
+
+    fn freeze_call(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
+        Ok(match expression {
             Expr::Call { .. } | Expr::Super(_)
                 if expression.has_named_arguments()
                     && self.is_constructor_call(expression, scope) =>
@@ -133,21 +184,12 @@ impl Runtime {
                     operand: Box::new(operand?),
                 }
             }
-            Expr::Index { object, index } => Expr::Index {
-                object: Box::new(self.freeze(object, scope)?),
-                index: Box::new(self.freeze(index, scope)?),
-            },
-            Expr::Slice { object, start, end } => Expr::Slice {
-                object: Box::new(self.freeze(object, scope)?),
-                start: start
-                    .as_ref()
-                    .map(|start| self.freeze(start, scope).map(Box::new))
-                    .transpose()?,
-                end: end
-                    .as_ref()
-                    .map(|end| self.freeze(end, scope).map(Box::new))
-                    .transpose()?,
-            },
+            other => other.clone(),
+        })
+    }
+
+    fn freeze_collection(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
+        Ok(match expression {
             Expr::List(items) => Expr::List(
                 items
                     .iter()

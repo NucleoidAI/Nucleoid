@@ -10,9 +10,9 @@ pub(super) enum View {
 }
 
 impl View {
-    pub const ALL: [Self; 3] = [Self::Text, Self::Json, Self::Table];
+    pub(super) const ALL: [Self; 3] = [Self::Text, Self::Json, Self::Table];
 
-    pub fn label(self) -> &'static str {
+    pub(super) fn label(self) -> &'static str {
         match self {
             Self::Text => "Text",
             Self::Json => "JSON",
@@ -20,7 +20,7 @@ impl View {
         }
     }
 
-    pub fn next(self) -> Self {
+    pub(super) fn next(self) -> Self {
         match self {
             Self::Text => Self::Json,
             Self::Json => Self::Table,
@@ -48,10 +48,10 @@ impl TableData {
                 }
                 let rows = values
                     .iter()
-                    .map(|value| {
+                    .map(|row| {
                         headers
                             .iter()
-                            .map(|key| value.get(key).map(cell).unwrap_or_default())
+                            .map(|key| row.get(key).map(cell).unwrap_or_default())
                             .collect()
                     })
                     .collect();
@@ -65,7 +65,7 @@ impl TableData {
                 headers: vec!["Property".into(), "Value".into()],
                 rows: properties
                     .iter()
-                    .map(|(key, value)| vec![visible(key, false), cell(value)])
+                    .map(|(key, field)| vec![visible(key, false), cell(field)])
                     .collect(),
             },
             value => Self {
@@ -113,7 +113,7 @@ impl Output {
         }
     }
 
-    pub fn text(&self, view: View) -> &str {
+    pub(super) fn text(&self, view: View) -> &str {
         match self {
             Self::Value {
                 structured: Ok((json, _)),
@@ -127,7 +127,7 @@ impl Output {
         }
     }
 
-    pub fn table(&self) -> Option<&TableData> {
+    pub(super) fn table(&self) -> Option<&TableData> {
         match self {
             Self::Value {
                 structured: Ok((_, table)),
@@ -137,7 +137,7 @@ impl Output {
         }
     }
 
-    pub fn is_error(&self, view: View) -> bool {
+    pub(super) fn is_error(&self, view: View) -> bool {
         matches!(self, Self::Error(_))
             || (view != View::Text
                 && matches!(
@@ -157,7 +157,7 @@ pub(super) struct Entry {
 }
 
 impl Entry {
-    pub fn execute(runtime: &mut Runtime, source: String, graph: bool) -> Self {
+    pub(super) fn execute(runtime: &mut Runtime, source: String, graph: bool) -> Self {
         let output = match runtime.run(&source) {
             Ok(value) => Output::value(runtime, &value),
             Err(error) => Output::Error(visible(&error.to_string(), true)),

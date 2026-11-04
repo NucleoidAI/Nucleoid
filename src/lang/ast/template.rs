@@ -1,23 +1,28 @@
 //! Template literals.
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::lang::ast::{Expr, TemplatePart};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+#[derive(Debug)]
 pub struct Template<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Template<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Template { node }
     }
 
     pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
         let Expr::Template(parts) = self.node else {
-            unreachable!("Template only wraps Expr::Template")
+            return Err(Error::type_error(format!(
+                "{} is not a template",
+                self.node
+            )));
         };
 
         let mut output = String::new();

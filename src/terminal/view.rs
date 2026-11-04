@@ -9,7 +9,7 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{REPL_TAGLINE, REPL_TITLE};
 
-use super::output::{TableData, View, visible};
+use super::output::{Output, TableData, View, visible};
 use super::{App, Focus, REPL_LOGO};
 
 const BACKGROUND: Color = Color::Rgb(16, 20, 29);
@@ -45,31 +45,49 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
         return Regions::default();
     }
     let editor_height = (area.height / 3).clamp(5, 12);
-    let layout = Layout::vertical([
+    let [top, body, editor, status] = Layout::vertical([
         Constraint::Length(4),
         Constraint::Min(3),
         Constraint::Length(editor_height),
         Constraint::Length(1),
     ])
-    .split(area);
+    .areas(area);
     let mut regions = Regions::default();
-    header(frame, layout[0], app, &mut regions);
+    header(frame, top, app, &mut regions);
 
     if app.tab == 0 {
-        results(frame, layout[1], app, &mut regions);
+        results(frame, body, app, &mut regions);
     } else {
-        frame.render_widget(
-            Paragraph::new(format!(
-                "\nTab {} is reserved for a future workspace.\n\nF1 or click REPL to return.",
-                app.tab + 1
-            ))
-            .alignment(Alignment::Center)
-            .style(Style::default().fg(MUTED))
-            .block(panel(" Reserved ", false)),
-            layout[1],
-        );
+        reserved(frame, body, app);
     }
 
+    editor_panel(frame, editor, app, &mut regions);
+    frame.render_widget(
+        Paragraph::new(" F1-F3 tabs  F4 focus  F6 view  Ctrl-P/N history  .help  Ctrl-Q quit")
+            .style(Style::default().fg(MUTED).bg(BACKGROUND)),
+        status,
+    );
+
+    if app.tab == 0 && app.focus == Focus::Editor {
+        completions(frame, editor, app, &mut regions);
+    }
+    regions
+}
+
+fn reserved(frame: &mut Frame<'_>, area: Rect, app: &App) {
+    frame.render_widget(
+        Paragraph::new(format!(
+            "\nTab {} is reserved for a future workspace.\n\nF1 or click REPL to return.",
+            app.tab + 1
+        ))
+        .alignment(Alignment::Center)
+        .style(Style::default().fg(MUTED))
+        .block(panel(" Reserved ", false)),
+        area,
+    );
+}
+
+fn editor_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
     let (row, column) = app.editor.cursor();
     let editor_block = panel(
         &format!(" Editor  {}:{} ", row + 1, column + 1),
@@ -78,7 +96,7 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
     .title_bottom(Line::from(
         " Enter newline  F5 run  Tab complete  Ctrl-J autoindent ",
     ));
-    regions.editor = editor_block.inner(layout[2]);
+    regions.editor = editor_block.inner(area);
     app.editor.set_block(editor_block);
     app.editor.set_style(base().bg(PANEL));
     app.editor.set_cursor_line_style(Style::default());
@@ -89,26 +107,16 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
     });
     app.editor.set_selection_style(Style::default().bg(BORDER));
     app.editor.set_placeholder_style(Style::default().fg(MUTED));
-    frame.render_widget(&app.editor, layout[2]);
-    frame.render_widget(
-        Paragraph::new(" F1-F3 tabs  F4 focus  F6 view  Ctrl-P/N history  .help  Ctrl-Q quit")
-            .style(Style::default().fg(MUTED).bg(BACKGROUND)),
-        layout[3],
-    );
-
-    if app.tab == 0 && app.focus == Focus::Editor {
-        completions(frame, layout[2], app, &mut regions);
-    }
-    regions
+    frame.render_widget(&app.editor, area);
 }
 
 fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
-    let rows = Layout::vertical([
+    let [_, banner, tabs] = Layout::vertical([
         Constraint::Length(1),
         Constraint::Length(2),
         Constraint::Length(1),
     ])
-    .split(area);
+    .areas(area);
     let logo_width = as_u16(
         REPL_LOGO
             .lines()
@@ -117,9 +125,45 @@ fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
             .unwrap_or_default(),
     )
     .saturating_add(1);
-    let columns =
-        Layout::horizontal([Constraint::Length(logo_width), Constraint::Min(0)]).split(rows[1]);
-    let logo: Vec<_> = REPL_LOGO
+    let [logo, title] =
+        Layout::horizontal([Constraint::Length(logo_width), Constraint::Min(0)]).areas(banner);
+    frame.render_widget(
+        Paragraph::new(logo_lines(app)).style(base().fg(Color::LightGreen)),
+        logo,
+    );
+    frame.render_widget(
+        Paragraph::new(vec![
+            Line::styled(
+                format!(" {REPL_TITLE}"),
+                Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+            ),
+            Line::styled(format!(" {REPL_TAGLINE}"), Style::default().fg(MUTED)),
+        ])
+        .style(base()),
+        title,
+    );
+    let [first, second, third, version] = Layout::horizontal([
+        Constraint::Length(12),
+        Constraint::Length(12),
+        Constraint::Length(12),
+        Constraint::Min(0),
+    ])
+    .areas(tabs);
+    regions.tabs = [first, second, third];
+    let labels = ["F1 REPL", "F2 Tab 2", "F3 Tab 3"];
+    for (index, (label, tab)) in labels.into_iter().zip(regions.tabs).enumerate() {
+        button(frame, label, tab, app.tab == index);
+    }
+    frame.render_widget(
+        Paragraph::new(format!("v{} ", env!("CARGO_PKG_VERSION")))
+            .alignment(Alignment::Right)
+            .style(Style::default().fg(MUTED)),
+        version,
+    );
+}
+
+fn logo_lines(app: &App) -> Vec<Line<'static>> {
+    REPL_LOGO
         .lines()
         .enumerate()
         .map(|(row, line)| {
@@ -139,53 +183,21 @@ fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
                     .collect::<Vec<_>>(),
             )
         })
-        .collect();
-    frame.render_widget(
-        Paragraph::new(logo).style(base().fg(Color::LightGreen)),
-        columns[0],
-    );
-    frame.render_widget(
-        Paragraph::new(vec![
-            Line::styled(
-                format!(" {REPL_TITLE}"),
-                Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
-            ),
-            Line::styled(format!(" {REPL_TAGLINE}"), Style::default().fg(MUTED)),
-        ])
-        .style(base()),
-        columns[1],
-    );
-    let parts = Layout::horizontal([
-        Constraint::Length(12),
-        Constraint::Length(12),
-        Constraint::Length(12),
-        Constraint::Min(0),
-    ])
-    .split(rows[2]);
-    for (index, label) in ["F1 REPL", "F2 Tab 2", "F3 Tab 3"].into_iter().enumerate() {
-        regions.tabs[index] = parts[index];
-        button(frame, label, parts[index], app.tab == index);
-    }
-    frame.render_widget(
-        Paragraph::new(format!("v{} ", env!("CARGO_PKG_VERSION")))
-            .alignment(Alignment::Right)
-            .style(Style::default().fg(MUTED)),
-        parts[3],
-    );
+        .collect()
 }
 
 fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
-    let layout = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(area);
-    let toolbar = Layout::horizontal([
+    let [toolbar, body] = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).areas(area);
+    let [text, json, table, summary] = Layout::horizontal([
         Constraint::Length(9),
         Constraint::Length(9),
         Constraint::Length(9),
         Constraint::Min(0),
     ])
-    .split(layout[0]);
-    for (index, view) in View::ALL.into_iter().enumerate() {
-        regions.views[index] = toolbar[index];
-        button(frame, view.label(), toolbar[index], app.view == view);
+    .areas(toolbar);
+    regions.views = [text, json, table];
+    for (view, view_area) in View::ALL.into_iter().zip(regions.views) {
+        button(frame, view.label(), view_area, app.view == view);
     }
     frame.render_widget(
         Paragraph::new(format!(
@@ -195,69 +207,79 @@ fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regio
         ))
         .alignment(Alignment::Right)
         .style(Style::default().fg(MUTED)),
-        toolbar[3],
+        summary,
     );
     let history_width = if area.width >= 80 { 24 } else { 0 };
-    let panes = Layout::horizontal([Constraint::Length(history_width), Constraint::Min(0)])
-        .split(layout[1]);
+    let [history, output] =
+        Layout::horizontal([Constraint::Length(history_width), Constraint::Min(0)]).areas(body);
     if history_width > 0 {
-        let block = panel(" History ", false);
-        regions.history = block.inner(panes[0]);
-        let items: Vec<_> = app
-            .entries
-            .iter()
-            .enumerate()
-            .map(|(index, entry)| {
-                ListItem::new(format!(
-                    "{}  {}",
-                    index + 1,
-                    visible(entry.source.lines().next().unwrap_or_default(), false)
-                ))
-            })
-            .collect();
-        app.list_state
-            .select((!app.entries.is_empty()).then_some(app.selected));
-        frame.render_stateful_widget(
-            List::new(items)
-                .block(block)
-                .style(base().bg(PANEL))
-                .highlight_style(Style::default().fg(ACCENT).bg(BORDER)),
-            panes[0],
-            &mut app.list_state,
-        );
+        history_panel(frame, history, app, regions);
     }
+    entry_panels(frame, output, app, regions);
+}
 
+fn history_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
+    let block = panel(" History ", false);
+    regions.history = block.inner(area);
+    let items: Vec<_> = app
+        .entries
+        .iter()
+        .enumerate()
+        .map(|(index, entry)| {
+            ListItem::new(format!(
+                "{}  {}",
+                index + 1,
+                visible(entry.source.lines().next().unwrap_or_default(), false)
+            ))
+        })
+        .collect();
+    app.list_state
+        .select((!app.entries.is_empty()).then_some(app.selected));
+    frame.render_stateful_widget(
+        List::new(items)
+            .block(block)
+            .style(base().bg(PANEL))
+            .highlight_style(Style::default().fg(ACCENT).bg(BORDER)),
+        area,
+        &mut app.list_state,
+    );
+}
+
+fn welcome(frame: &mut Frame<'_>, area: Rect, focused: bool) {
+    frame.render_widget(
+        Paragraph::new(vec![
+            Line::from(""),
+            Line::from(Span::styled(
+                "A workspace for your world model.",
+                Style::default().fg(ACCENT),
+            )),
+            Line::from(""),
+            Line::from("Write code below. Results appear here."),
+            Line::from("Switch between Text, JSON and Table without rerunning."),
+            Line::from(""),
+            Line::from("Tab completes names, properties and built-ins."),
+            Line::from("Use .help for all keyboard and mouse controls."),
+        ])
+        .alignment(Alignment::Center)
+        .style(base())
+        .block(panel(" Results ", focused))
+        .wrap(Wrap { trim: false }),
+        area,
+    );
+}
+
+fn entry_panels(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
     let Some(entry) = app.entries.get(app.selected) else {
-        frame.render_widget(
-            Paragraph::new(vec![
-                Line::from(""),
-                Line::from(Span::styled(
-                    "A workspace for your world model.",
-                    Style::default().fg(ACCENT),
-                )),
-                Line::from(""),
-                Line::from("Write code below. Results appear here."),
-                Line::from("Switch between Text, JSON and Table without rerunning."),
-                Line::from(""),
-                Line::from("Tab completes names, properties and built-ins."),
-                Line::from("Use .help for all keyboard and mouse controls."),
-            ])
-            .alignment(Alignment::Center)
-            .style(base())
-            .block(panel(" Results ", app.focus == Focus::Result))
-            .wrap(Wrap { trim: false }),
-            panes[1],
-        );
+        welcome(frame, area, app.focus == Focus::Result);
         return;
     };
     let diagnostic_height = if entry.diagnostics.is_empty() {
         0
     } else {
-        (panes[1].height / 3).clamp(3, 7)
+        (area.height / 3).clamp(3, 7)
     };
-    let output_layout =
-        Layout::vertical([Constraint::Min(0), Constraint::Length(diagnostic_height)])
-            .split(panes[1]);
+    let [result, diagnostics] =
+        Layout::vertical([Constraint::Min(0), Constraint::Length(diagnostic_height)]).areas(area);
     let result_block = panel(
         &format!(" Result {} / {} ", app.selected + 1, app.entries.len()),
         app.focus == Focus::Result,
@@ -266,8 +288,8 @@ fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regio
         " {} ",
         visible(entry.source.lines().next().unwrap_or_default(), false)
     )));
-    regions.output = result_block.inner(output_layout[0]);
-    frame.render_widget(result_block, output_layout[0]);
+    regions.output = result_block.inner(result);
+    frame.render_widget(result_block, result);
     if regions.output.height > 0 && regions.output.width > 0 {
         if let Some(table) = entry.output.table().filter(|_| app.view == View::Table) {
             draw_table(
@@ -278,41 +300,73 @@ fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regio
                 &mut app.horizontal,
             );
         } else {
-            let text = entry.output.text(app.view);
-            clamp_scroll(text, regions.output, &mut app.scroll, &mut app.horizontal);
-            frame.render_widget(
-                Paragraph::new(text)
-                    .style(
-                        Style::default()
-                            .fg(if entry.output.is_error(app.view) {
-                                ERROR
-                            } else {
-                                FOREGROUND
-                            })
-                            .bg(PANEL),
-                    )
-                    .scroll((app.scroll, app.horizontal)),
+            draw_text(
+                frame,
                 regions.output,
+                &entry.output,
+                app.view,
+                &mut app.scroll,
+                &mut app.horizontal,
             );
         }
     }
     if diagnostic_height > 0 {
-        let block = panel(" Diagnostics / graph ", app.focus == Focus::Diagnostics);
-        regions.diagnostics = block.inner(output_layout[1]);
-        clamp_scroll(
+        regions.diagnostics = draw_diagnostics(
+            frame,
+            diagnostics,
             &entry.diagnostics,
-            regions.diagnostics,
+            app.focus == Focus::Diagnostics,
             &mut app.diagnostic_scroll,
             &mut app.diagnostic_horizontal,
         );
-        frame.render_widget(
-            Paragraph::new(entry.diagnostics.as_str())
-                .block(block)
-                .style(Style::default().fg(MUTED).bg(PANEL))
-                .scroll((app.diagnostic_scroll, app.diagnostic_horizontal)),
-            output_layout[1],
-        );
     }
+}
+
+fn draw_text(
+    frame: &mut Frame<'_>,
+    area: Rect,
+    output: &Output,
+    view: View,
+    scroll: &mut u16,
+    horizontal: &mut u16,
+) {
+    let text = output.text(view);
+    clamp_scroll(text, area, scroll, horizontal);
+    frame.render_widget(
+        Paragraph::new(text)
+            .style(
+                Style::default()
+                    .fg(if output.is_error(view) {
+                        ERROR
+                    } else {
+                        FOREGROUND
+                    })
+                    .bg(PANEL),
+            )
+            .scroll((*scroll, *horizontal)),
+        area,
+    );
+}
+
+fn draw_diagnostics(
+    frame: &mut Frame<'_>,
+    area: Rect,
+    diagnostics: &str,
+    focused: bool,
+    scroll: &mut u16,
+    horizontal: &mut u16,
+) -> Rect {
+    let block = panel(" Diagnostics / graph ", focused);
+    let inner = block.inner(area);
+    clamp_scroll(diagnostics, inner, scroll, horizontal);
+    frame.render_widget(
+        Paragraph::new(diagnostics)
+            .block(block)
+            .style(Style::default().fg(MUTED).bg(PANEL))
+            .scroll((*scroll, *horizontal)),
+        area,
+    );
+    inner
 }
 
 fn draw_table(
@@ -338,7 +392,7 @@ fn draw_table(
         let width = data
             .rows
             .iter()
-            .map(|row| row[index].width())
+            .map(|row| row.get(index).map_or(0, |cell| cell.width()))
             .max()
             .unwrap_or_default()
             .max(header.width())

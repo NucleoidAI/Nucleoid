@@ -14,6 +14,7 @@ pub struct Return {
 }
 
 impl Return {
+    #[must_use]
     pub fn new(statement: Option<Expr>) -> Self {
         Return { statement }
     }

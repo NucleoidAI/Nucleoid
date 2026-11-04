@@ -23,6 +23,7 @@ pub struct If {
 }
 
 impl If {
+    #[must_use]
     pub fn new(condition: Expr, consequent: Vec<Stmt>, alternate: Option<Box<Stmt>>) -> Self {
         If {
             condition,

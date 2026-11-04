@@ -25,6 +25,7 @@ pub struct Block {
 }
 
 impl Block {
+    #[must_use]
     pub fn new(statements: Vec<Stmt>) -> Self {
         Block {
             statements,
@@ -130,7 +131,7 @@ fn declares_class_rule(statements: &[Stmt]) -> bool {
             declares_class_rule(consequent)
                 || alternate
                     .as_ref()
-                    .is_some_and(|statement| declares_class_rule(std::slice::from_ref(statement)))
+                    .is_some_and(|branch| declares_class_rule(std::slice::from_ref(branch)))
         }
         _ => false,
     })

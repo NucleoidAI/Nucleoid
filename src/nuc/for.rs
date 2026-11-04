@@ -18,6 +18,7 @@ pub struct For {
 }
 
 impl For {
+    #[must_use]
     pub fn new(variable: String, array: Expr, statements: Vec<Stmt>) -> Self {
         For {
             variable,

@@ -25,6 +25,7 @@ pub struct Variable {
 }
 
 impl Variable {
+    #[must_use]
     pub fn new(name: String, value: Expr) -> Self {
         Variable {
             name,
@@ -34,6 +35,7 @@ impl Variable {
         }
     }
 
+    #[must_use]
     pub fn key(&self) -> NodeKey {
         NodeKey::variable(self.name.clone())
     }

@@ -16,6 +16,7 @@ pub enum Stage {
 }
 
 impl Stage {
+    #[must_use]
     pub fn from_name(name: &str) -> Option<Stage> {
         match name {
             "why" => Some(Stage::Why),
@@ -26,6 +27,7 @@ impl Stage {
         }
     }
 
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Stage::Why => "why",
@@ -43,6 +45,7 @@ pub enum StepState {
 }
 
 impl StepState {
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             StepState::Stated => "stated",
@@ -65,7 +68,26 @@ pub struct Selection {
     pub steps: Vec<Step>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Direction {
+    Dependencies,
+    Dependents,
+}
+
+fn filtered(selection: &Selection, state: StepState) -> Selection {
+    // The source already observed every step, including excluded ones.
+    Selection {
+        steps: selection
+            .steps
+            .iter()
+            .filter(|step| step.state == state)
+            .cloned()
+            .collect(),
+    }
+}
+
 impl Selection {
+    #[must_use]
     pub fn keys(&self) -> Vec<NodeKey> {
         self.steps.iter().map(|step| step.node.clone()).collect()
     }
@@ -76,7 +98,7 @@ impl Runtime {
         let mut steps = Vec::new();
 
         for key in keys {
-            self.track_shape(ShapeKey::Node(key.clone()));
+            self.track_shape(&ShapeKey::Node(key.clone()));
 
             if self.graph.is_observer(&key) {
                 continue;
@@ -99,44 +121,34 @@ impl Runtime {
     }
 
     pub(crate) fn apply_stage(&mut self, stage: Stage, selection: &Selection) -> Selection {
-        let state = match stage {
-            Stage::Stated => Some(StepState::Stated),
-            Stage::Derived => Some(StepState::Derived),
-            Stage::Why | Stage::Affects => None,
-        };
-
-        if let Some(state) = state {
-            // The source already observed every step, including excluded ones.
-            return Selection {
-                steps: selection
-                    .steps
-                    .iter()
-                    .filter(|step| step.state == state)
-                    .cloned()
-                    .collect(),
-            };
+        match stage {
+            Stage::Stated => filtered(selection, StepState::Stated),
+            Stage::Derived => filtered(selection, StepState::Derived),
+            Stage::Why => self.traverse(selection, Direction::Dependencies),
+            Stage::Affects => self.traverse(selection, Direction::Dependents),
         }
+    }
 
+    fn traverse(&mut self, selection: &Selection, direction: Direction) -> Selection {
         let mut reached: IndexSet<NodeKey> = IndexSet::new();
         let mut pending: Vec<NodeKey> = Vec::new();
 
         for step in &selection.steps {
-            if stage == Stage::Why {
+            if direction == Direction::Dependencies {
                 reached.insert(step.node.clone());
             }
             pending.push(step.node.clone());
         }
 
         while let Some(current) = pending.pop() {
-            self.track_shape(ShapeKey::Node(current.clone()));
+            self.track_shape(&ShapeKey::Node(current.clone()));
             let Some(node) = self.graph.retrieve(&current) else {
                 continue;
             };
 
-            let next: Vec<NodeKey> = match stage {
-                Stage::Why => node.dependencies.iter().cloned().collect(),
-                Stage::Affects => self.graph.dependents_in_order(&current),
-                Stage::Stated | Stage::Derived => unreachable!("state filters do not traverse"),
+            let next: Vec<NodeKey> = match direction {
+                Direction::Dependencies => node.dependencies.iter().cloned().collect(),
+                Direction::Dependents => self.graph.dependents_in_order(&current),
             };
 
             for key in next {
@@ -174,7 +186,7 @@ impl Runtime {
         let kind = node.kind;
 
         let value = self.node_value(key, kind);
-        self.track(key.clone());
+        self.track(key);
 
         Some(Step {
             node: key.clone(),
@@ -260,6 +272,7 @@ impl Runtime {
     }
 }
 
+#[must_use]
 pub fn is_reasoning(node: &Nuc) -> bool {
     let value = match node {
         Nuc::Variable(variable) => &variable.value,

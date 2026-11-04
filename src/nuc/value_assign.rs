@@ -12,6 +12,7 @@ pub struct ValueAssign {
 }
 
 impl ValueAssign {
+    #[must_use]
     pub fn new(assignment: Nuc) -> Self {
         ValueAssign {
             assignment: Box::new(assignment),

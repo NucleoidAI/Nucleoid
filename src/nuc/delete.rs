@@ -16,6 +16,7 @@ pub struct Delete {
 }
 
 impl Delete {
+    #[must_use]
     pub fn new(target: Expr) -> Self {
         Delete { target }
     }
@@ -118,8 +119,8 @@ impl Runtime {
             .filter(|instance| !self.property_rule_is_overridden(class, instance, property))
             .collect();
 
-        self.update_class(class, |data| {
-            data.declarations.shift_remove(&key);
+        self.update_class(class, |updated| {
+            updated.declarations.shift_remove(&key);
         });
 
         for instance in instances {

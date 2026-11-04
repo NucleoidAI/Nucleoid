@@ -11,7 +11,7 @@ use crate::{
 
 pub(super) fn new(source: &str) -> TextArea<'static> {
     let mut editor = TextArea::from(source.split('\n'));
-    editor.set_tab_length(INDENT.len() as u8);
+    editor.set_tab_length(u8::try_from(INDENT.len()).unwrap_or(u8::MAX));
     editor.set_placeholder_text("Write Nucleoid code or .help");
     editor.move_cursor(CursorMove::Bottom);
     editor.move_cursor(CursorMove::End);
@@ -25,10 +25,12 @@ pub(super) fn newline(editor: &mut TextArea<'_>) {
 
 pub(super) fn newline_with_options(editor: &mut TextArea<'_>, options: SyntaxOptions) {
     let (row, column) = editor.cursor();
-    let prefix: String = editor.lines()[row].chars().take(column).collect();
+    let prefix: String = line(editor, row).chars().take(column).collect();
     let source = if options.c_style_comments {
-        editor.lines()[..row]
+        editor
+            .lines()
             .iter()
+            .take(row)
             .map(String::as_str)
             .chain(std::iter::once(prefix.as_str()))
             .collect::<Vec<_>>()
@@ -56,7 +58,7 @@ pub(super) fn dedent(editor: &mut TextArea<'_>) -> bool {
     let (row, column) = editor.cursor();
     if editor.is_selecting()
         || column == 0
-        || !editor.lines()[row]
+        || !line(editor, row)
             .chars()
             .take(column)
             .all(|character| character == ' ')
@@ -77,19 +79,23 @@ pub(super) fn click(editor: &mut TextArea<'_>, area: Rect, x: u16, y: u16, drag:
     // InViewport clamps columns to the probed line's length. Read the horizontal
     // origin on the cursor's rendered line before probing a potentially short
     // top line.
-    let (row, _) = editor.cursor();
-    editor.move_cursor(CursorMove::Jump(u16::try_from(row).unwrap_or(u16::MAX), 0));
+    let (cursor_row, _) = editor.cursor();
+    editor.move_cursor(CursorMove::Jump(
+        u16::try_from(cursor_row).unwrap_or(u16::MAX),
+        0,
+    ));
     editor.move_cursor(CursorMove::InViewport);
     let (_, left) = editor.cursor();
     editor.move_cursor(CursorMove::Jump(0, 0));
     editor.move_cursor(CursorMove::InViewport);
     let (top, _) = editor.cursor();
-    let row = (top + usize::from(y.saturating_sub(area.y))).min(editor.lines().len() - 1);
+    let row =
+        (top + usize::from(y.saturating_sub(area.y))).min(editor.lines().len().saturating_sub(1));
     let target = left + usize::from(x.saturating_sub(area.x));
     let tab_width = usize::from(editor.tab_length());
     let mut width = 0;
     let mut column = 0;
-    for character in editor.lines()[row].chars() {
+    for character in line(editor, row).chars() {
         let character_width = if character == '\t' && tab_width > 0 {
             tab_width - width % tab_width
         } else {
@@ -109,6 +115,10 @@ pub(super) fn click(editor: &mut TextArea<'_>, area: Rect, x: u16, y: u16, drag:
     if !drag {
         editor.start_selection();
     }
+}
+
+fn line<'e>(editor: &'e TextArea<'_>, row: usize) -> &'e str {
+    editor.lines().get(row).map_or("", String::as_str)
 }
 
 pub(super) fn paste(editor: &mut TextArea<'_>, source: &str) {

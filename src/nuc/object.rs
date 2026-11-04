@@ -67,17 +67,18 @@ fn bind_arguments<'a>(
     for argument in arguments {
         if let Some((name, value)) = argument.named_argument() {
             named = true;
-            let Some(index) = class
+            let Some((index, parameter)) = class
                 .parameters
                 .iter()
-                .position(|parameter| parameter.name == name)
+                .enumerate()
+                .find(|(_, parameter)| parameter.name == name)
             else {
                 return Err(Error::type_error(format!(
                     "Unknown constructor argument '{name}' for {}",
                     class.name
                 )));
             };
-            if class.parameters[index].rest {
+            if parameter.rest {
                 return Err(Error::type_error(format!(
                     "Rest parameter '{name}' cannot be a named constructor argument for {}",
                     class.name
@@ -119,6 +120,7 @@ fn bind_arguments<'a>(
 }
 
 impl Object {
+    #[must_use]
     pub fn new(id: ObjectId, class: String, arguments: Vec<Expr>) -> Self {
         Object {
             id,
@@ -127,6 +129,7 @@ impl Object {
         }
     }
 
+    #[must_use]
     pub fn key(&self) -> NodeKey {
         NodeKey::object(&self.id)
     }
@@ -184,15 +187,11 @@ impl Runtime {
             .state
             .class(name)
             .ok_or_else(|| Error::not_defined(name))?;
-        while class.constructor.is_empty() {
-            let Some(parent) = class
-                .parent
-                .as_ref()
-                .and_then(|name| self.state.class(name))
-            else {
+        for ancestor in self.state.lineage(Some(class)) {
+            class = ancestor;
+            if !class.constructor.is_empty() {
                 break;
-            };
-            class = parent;
+            }
         }
         Ok(class)
     }
@@ -295,7 +294,10 @@ impl Runtime {
         for binding in bindings {
             let value = self.evaluate(binding.expression, scope)?;
             if let Some(slot) = binding.slot {
-                values[slot] = Some(value);
+                let entry = values
+                    .get_mut(slot)
+                    .ok_or_else(|| Error::type_error("Constructor argument has no parameter"))?;
+                *entry = Some(value);
             } else if has_rest {
                 values.push(Some(value));
             }

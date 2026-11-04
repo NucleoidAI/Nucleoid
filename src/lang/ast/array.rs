@@ -6,6 +6,7 @@ use crate::builtins;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::{Expr, Function};
+use crate::number;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -42,11 +43,13 @@ impl ListSource {
     }
 }
 
+#[derive(Debug)]
 pub struct Array<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Array<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Array { node }
     }
@@ -58,11 +61,12 @@ impl<'a> Array<'a> {
             Expr::Slice { object, start, end } => {
                 runtime.evaluate_slice(object, start.as_deref(), end.as_deref(), scope)
             }
-            other => unreachable!("{other} is not a list"),
+            other => Err(Error::type_error(format!("{other} is not a list"))),
         }
     }
 
     /// Renders the expression as source.
+    #[must_use]
     pub fn generate(&self) -> String {
         self.node.to_string()
     }
@@ -119,7 +123,7 @@ impl Runtime {
             .cloned()
             .map(Value::Object)
             .collect();
-        self.track(NodeKey::class(name));
+        self.track(&NodeKey::class(name));
         Some(instances)
     }
 
@@ -131,41 +135,37 @@ impl Runtime {
     ) -> Result<Value> {
         let base = self.evaluate(object, scope)?;
         let key = self.evaluate(index, scope)?;
-        self.read_index(&base, &key, scope)
+        Ok(self.read_index(&base, &key))
     }
 
-    pub(crate) fn read_index(
-        &mut self,
-        base: &Value,
-        key: &Value,
-        scope: &mut Scope,
-    ) -> Result<Value> {
+    pub(crate) fn read_index(&mut self, base: &Value, key: &Value) -> Value {
         match base {
             Value::List(items) => {
                 let index = key.to_number();
                 let index = builtins::slice_index(index, items.len());
-                Ok(items.get(index).cloned().unwrap_or(Value::Undefined))
+                items.get(index).cloned().unwrap_or(Value::Undefined)
             }
 
             Value::String(string) => {
                 let index = builtins::slice_index(key.to_number(), string.chars().count());
-                Ok(string
+                string
                     .chars()
                     .nth(index)
-                    .map(|character| Value::String(character.to_string()))
-                    .unwrap_or(Value::Undefined))
+                    .map_or(Value::Undefined, |character| {
+                        Value::String(character.to_string())
+                    })
             }
 
             Value::Class(name) => {
                 let Some(class) = self.state.class(name) else {
-                    return Ok(Value::Undefined);
+                    return Value::Undefined;
                 };
 
                 let instances = class.instances.clone();
-                self.track(NodeKey::class(name));
+                self.track(&NodeKey::class(name));
 
                 let found = match key {
-                    Value::Number(index) => instances.get(*index as usize).cloned(),
+                    Value::Number(index) => instances.get(number::to_usize(*index)).cloned(),
                     other => {
                         let wanted = other.to_string();
                         instances
@@ -175,15 +175,15 @@ impl Runtime {
                     }
                 };
 
-                Ok(match found {
+                match found {
                     Some(id) => Value::Object(id),
                     None => Value::Null,
-                })
+                }
             }
 
-            Value::Object(_) => self.read_property(base, &key.to_string(), scope),
+            Value::Object(_) => self.read_property(base, &key.to_string()),
 
-            _ => Ok(Value::Undefined),
+            _ => Value::Undefined,
         }
     }
 
@@ -204,7 +204,7 @@ impl Runtime {
                 items.extend(values);
                 let length = items.len();
                 self.write_list(object, Value::List(items), scope, target)?;
-                Ok(Value::Number(length as f64))
+                Ok(Value::Number(number::from_usize(length)))
             }
 
             "pop" => {
@@ -256,7 +256,7 @@ impl Runtime {
             Expr::Index { object, index } => {
                 let base = self.evaluate(object, scope)?;
                 let key = self.evaluate(index, scope)?;
-                let value = self.read_index(&base, &key, scope)?;
+                let value = self.read_index(&base, &key);
                 let target = match base {
                     Value::Object(id) => ListTarget::Property(id, key.to_string()),
                     _ => ListTarget::ReadOnly,
@@ -300,7 +300,7 @@ impl Runtime {
         otherwise: ListTarget,
     ) -> Result<(Value, ListTarget)> {
         let base = self.evaluate(object, scope)?;
-        let value = self.read_property(&base, property, scope)?;
+        let value = self.read_property(&base, property);
         let target = match base {
             Value::Object(id) => ListTarget::Property(id, property.to_string()),
             _ => otherwise,
@@ -339,248 +339,175 @@ impl Runtime {
 
         match property {
             "find" | "findLast" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error(format!("{property} expects a function")));
-                };
-
-                let from_end = property == "findLast";
-                let found = self.find_position(&function, &items, from_end)?;
+                let function = expect_function(predicate, property)?;
+                let found = self.find_position(&function, &items, property == "findLast")?;
                 Ok(found
                     .and_then(|position| items.into_iter().nth(position))
                     .unwrap_or(Value::Null))
             }
-
             "findIndex" | "findLastIndex" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error(format!("{property} expects a function")));
-                };
-
-                let from_end = property == "findLastIndex";
-                let found = self.find_position(&function, &items, from_end)?;
+                let function = expect_function(predicate, property)?;
+                let found = self.find_position(&function, &items, property == "findLastIndex")?;
                 Ok(position_number(found))
             }
-
-            "at" => {
-                let index = predicate.as_ref().map_or(f64::NAN, Value::to_number);
-                let item = relative_index(index, items.len())
-                    .and_then(|position| items.into_iter().nth(position));
-                Ok(item.unwrap_or_else(|| source.missing()))
-            }
-
+            "at" => Ok(list_at(items, predicate.as_ref(), source)),
             // A class's instance list as a list value. A list already is one,
             // so plain lists keep raising `<list>.list is not a function`.
             "list" | "all" if source == ListSource::Population => Ok(Value::List(items)),
-
-            "filter" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("filter expects a function"));
-                };
-
-                let mut matched = Vec::new();
-
-                for item in items {
-                    if self
-                        .invoke(&function, std::slice::from_ref(&item))?
-                        .truthy()
-                    {
-                        matched.push(item);
-                    }
-                }
-
-                Ok(Value::List(matched))
+            "filter" => self.filter_items(items, &expect_function(predicate, "filter")?),
+            "count" => self.count_items(&items, &expect_function(predicate, "count")?),
+            "map" => self.map_items(items, &expect_function(predicate, "map")?, false),
+            "flatMap" => self.map_items(items, &expect_function(predicate, "flatMap")?, true),
+            "includes" | "contains" | "indexOf" | "lastIndexOf" => {
+                Ok(self.search_items(&items, property, predicate))
             }
-
-            "count" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("count expects a function"));
-                };
-
-                let mut matched = 0_usize;
-
-                for item in items {
-                    if self
-                        .invoke(&function, std::slice::from_ref(&item))?
-                        .truthy()
-                    {
-                        matched += 1;
-                    }
-                }
-
-                Ok(Value::Number(matched as f64))
-            }
-
-            "map" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("map expects a function"));
-                };
-
-                let mut mapped = Vec::new();
-
-                for item in items {
-                    mapped.push(self.invoke(&function, &[item])?);
-                }
-
-                Ok(Value::List(mapped))
-            }
-
-            "flatMap" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("flatMap expects a function"));
-                };
-
-                let mut mapped = Vec::new();
-
-                for item in items {
-                    match self.invoke(&function, &[item])? {
-                        Value::List(values) => mapped.extend(values),
-                        value => mapped.push(value),
-                    }
-                }
-
-                Ok(Value::List(mapped))
-            }
-
-            "includes" | "contains" => {
-                let wanted = predicate.unwrap_or(Value::Undefined);
-                Ok(Value::Bool(
-                    items.iter().any(|item| self.deep_equal(item, &wanted)),
-                ))
-            }
-
-            "indexOf" => {
-                let wanted = predicate.unwrap_or(Value::Undefined);
-                let found = items.iter().position(|item| self.deep_equal(item, &wanted));
-                Ok(position_number(found))
-            }
-
-            "lastIndexOf" => {
-                let wanted = predicate.unwrap_or(Value::Undefined);
-                let found = items
-                    .iter()
-                    .rposition(|item| self.deep_equal(item, &wanted));
-                Ok(position_number(found))
-            }
-
-            "join" => {
-                let separator = predicate.map(|value| value.to_string()).unwrap_or_default();
-                let rendered: Vec<String> = items.iter().map(|item| item.to_string()).collect();
-                Ok(Value::String(rendered.join(&separator)))
-            }
-
+            "join" => Ok(join_items(&items, predicate)),
             "every" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("every expects a function"));
-                };
-
-                for item in items {
-                    if !self
-                        .invoke(&function, std::slice::from_ref(&item))?
-                        .truthy()
-                    {
-                        return Ok(Value::Bool(false));
-                    }
-                }
-
-                Ok(Value::Bool(true))
+                let function = expect_function(predicate, "every")?;
+                Ok(Value::Bool(!self.any_item_is(&items, &function, false)?))
             }
-
             "some" | "any" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("some expects a function"));
-                };
-
-                for item in items {
-                    if self
-                        .invoke(&function, std::slice::from_ref(&item))?
-                        .truthy()
-                    {
-                        return Ok(Value::Bool(true));
-                    }
-                }
-
-                Ok(Value::Bool(false))
+                let function = expect_function(predicate, "some")?;
+                Ok(Value::Bool(self.any_item_is(&items, &function, true)?))
             }
-
             "reduce" => {
-                let Some(Value::Function(function)) = predicate else {
-                    return Err(Error::type_error("reduce expects a function"));
-                };
-
-                let mut items = items.into_iter();
-
-                let mut accumulator = match arguments.get(1) {
-                    Some(initial) => initial.clone(),
-                    None => match items.next() {
-                        Some(first) => first,
-                        None => return Ok(Value::Undefined),
-                    },
-                };
-
-                for item in items {
-                    accumulator = self.invoke(&function, &[accumulator, item])?;
-                }
-
-                Ok(accumulator)
+                let function = expect_function(predicate, "reduce")?;
+                self.reduce_items(items, &function, arguments.get(1))
             }
-
-            "sum" => {
-                let selector = optional_selector(predicate, property)?;
-                self.sum_items(items, selector.as_ref())
+            "sum" | "max" | "min" | "distinct" | "mode" => {
+                self.aggregate_items(items, property, predicate)
             }
-
-            "max" | "min" => {
-                let selector = optional_selector(predicate, property)?;
-                let values = self.select_items(items, selector.as_ref())?;
-                builtins::math(property, &values)
-            }
-
-            "distinct" => {
-                let selector = optional_selector(predicate, property)?;
-                let values = self.select_items(items, selector.as_ref())?;
-                Ok(Value::List(self.distinct_values(values)))
-            }
-
-            "mode" => {
-                let selector = optional_selector(predicate, property)?;
-                let values = self.select_items(items, selector.as_ref())?;
-                Ok(self.mode_value(values))
-            }
-
             // Lists sort in place through `call_list_method`; a class population
             // has no stored list to write, so its sort only returns the order.
             "sort" => Ok(Value::List(self.sort_items(items, predicate.as_ref())?)),
-
             "slice" => Ok(Value::List(slice_items(
                 &items,
                 arguments.first(),
                 arguments.get(1),
             ))),
-
             "reverse" => {
                 let mut reversed = items;
                 reversed.reverse();
                 Ok(Value::List(reversed))
             }
-
-            "concat" => {
-                let mut joined = items;
-
-                for argument in arguments {
-                    match argument {
-                        Value::List(other) => joined.extend(other.iter().cloned()),
-                        other => joined.push(other.clone()),
-                    }
-                }
-
-                Ok(Value::List(joined))
-            }
-
-            "length" => Ok(Value::Number(items.len() as f64)),
-
+            "concat" => Ok(Value::List(concat_items(items, arguments))),
+            "length" => Ok(Value::Number(number::from_usize(items.len()))),
             _ => Err(Error::type_error(format!(
                 "{receiver}.{property} is not a function"
             ))),
         }
+    }
+
+    fn filter_items(&mut self, items: Vec<Value>, function: &Arc<Function>) -> Result<Value> {
+        let mut matched = Vec::new();
+
+        for item in items {
+            if self.invoke(function, std::slice::from_ref(&item))?.truthy() {
+                matched.push(item);
+            }
+        }
+
+        Ok(Value::List(matched))
+    }
+
+    fn count_items(&mut self, items: &[Value], function: &Arc<Function>) -> Result<Value> {
+        let mut matched = 0_usize;
+
+        for item in items {
+            if self.invoke(function, std::slice::from_ref(item))?.truthy() {
+                matched += 1;
+            }
+        }
+
+        Ok(Value::Number(number::from_usize(matched)))
+    }
+
+    fn map_items(
+        &mut self,
+        items: Vec<Value>,
+        function: &Arc<Function>,
+        flatten: bool,
+    ) -> Result<Value> {
+        let mut mapped = Vec::new();
+
+        for item in items {
+            match self.invoke(function, &[item])? {
+                Value::List(values) if flatten => mapped.extend(values),
+                value => mapped.push(value),
+            }
+        }
+
+        Ok(Value::List(mapped))
+    }
+
+    fn search_items(&self, items: &[Value], property: &str, predicate: Option<Value>) -> Value {
+        let wanted = predicate.unwrap_or(Value::Undefined);
+        let matches = |item: &Value| self.deep_equal(item, &wanted);
+
+        match property {
+            "indexOf" => position_number(items.iter().position(matches)),
+            "lastIndexOf" => position_number(items.iter().rposition(matches)),
+            _ => Value::Bool(items.iter().any(matches)),
+        }
+    }
+
+    fn any_item_is(
+        &mut self,
+        items: &[Value],
+        function: &Arc<Function>,
+        wanted: bool,
+    ) -> Result<bool> {
+        for item in items {
+            if self.invoke(function, std::slice::from_ref(item))?.truthy() == wanted {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
+
+    fn reduce_items(
+        &mut self,
+        items: Vec<Value>,
+        function: &Arc<Function>,
+        initial: Option<&Value>,
+    ) -> Result<Value> {
+        let mut items = items.into_iter();
+
+        let mut accumulator = match initial {
+            Some(initial) => initial.clone(),
+            None => match items.next() {
+                Some(first) => first,
+                None => return Ok(Value::Undefined),
+            },
+        };
+
+        for item in items {
+            accumulator = self.invoke(function, &[accumulator, item])?;
+        }
+
+        Ok(accumulator)
+    }
+
+    fn aggregate_items(
+        &mut self,
+        items: Vec<Value>,
+        property: &str,
+        predicate: Option<Value>,
+    ) -> Result<Value> {
+        let selector = optional_selector(predicate, property)?;
+
+        if property == "sum" {
+            return self.sum_items(items, selector.as_ref());
+        }
+
+        let values = self.select_items(items, selector.as_ref())?;
+
+        Ok(match property {
+            "distinct" => Value::List(self.distinct_values(values)),
+            "mode" => self.mode_value(values),
+            _ => builtins::math(property, &values)?,
+        })
     }
 
     /// Calls `function` with each item, first to last or last to first, and
@@ -592,22 +519,28 @@ impl Runtime {
         items: &[Value],
         from_end: bool,
     ) -> Result<Option<usize>> {
-        let length = items.len();
+        let candidates = items.iter().enumerate();
 
-        for step in 0..length {
-            let position = if from_end { length - 1 - step } else { step };
+        if from_end {
+            self.first_accepted(function, candidates.rev())
+        } else {
+            self.first_accepted(function, candidates)
+        }
+    }
 
-            if self
-                .invoke(function, std::slice::from_ref(&items[position]))?
-                .truthy()
-            {
+    fn first_accepted<'v>(
+        &mut self,
+        function: &Arc<Function>,
+        candidates: impl Iterator<Item = (usize, &'v Value)>,
+    ) -> Result<Option<usize>> {
+        for (position, item) in candidates {
+            if self.invoke(function, std::slice::from_ref(item))?.truthy() {
                 return Ok(Some(position));
             }
         }
 
         Ok(None)
     }
-
     fn sum_items(&mut self, items: Vec<Value>, selector: Option<&Arc<Function>>) -> Result<Value> {
         let mut total = 0.0;
         let mut undefined = false;
@@ -654,7 +587,7 @@ impl Runtime {
         let Some(Value::Function(function)) = comparator else {
             // Renders each string form once rather than on every comparison;
             // the sort is still stable.
-            items.sort_by_cached_key(|item| item.to_string());
+            items.sort_by_cached_key(ToString::to_string);
             return Ok(items);
         };
 
@@ -712,6 +645,39 @@ impl Runtime {
     }
 }
 
+fn expect_function(predicate: Option<Value>, label: &str) -> Result<Arc<Function>> {
+    match predicate {
+        Some(Value::Function(function)) => Ok(function),
+        _ => Err(Error::type_error(format!("{label} expects a function"))),
+    }
+}
+
+fn list_at(items: Vec<Value>, index: Option<&Value>, source: ListSource) -> Value {
+    let index = index.map_or(f64::NAN, Value::to_number);
+    relative_index(index, items.len())
+        .and_then(|position| items.into_iter().nth(position))
+        .unwrap_or_else(|| source.missing())
+}
+
+fn join_items(items: &[Value], separator: Option<Value>) -> Value {
+    let separator = separator.map(|value| value.to_string()).unwrap_or_default();
+    let rendered: Vec<String> = items.iter().map(ToString::to_string).collect();
+    Value::String(rendered.join(&separator))
+}
+
+fn concat_items(items: Vec<Value>, arguments: &[Value]) -> Vec<Value> {
+    let mut joined = items;
+
+    for argument in arguments {
+        match argument {
+            Value::List(other) => joined.extend(other.iter().cloned()),
+            other => joined.push(other.clone()),
+        }
+    }
+
+    joined
+}
+
 fn optional_selector(predicate: Option<Value>, query: &str) -> Result<Option<Arc<Function>>> {
     match predicate {
         None => Ok(None),
@@ -722,7 +688,7 @@ fn optional_selector(predicate: Option<Value>, query: &str) -> Result<Option<Arc
 
 /// A found position as a number, or `-1` when nothing was found.
 fn position_number(position: Option<usize>) -> Value {
-    Value::Number(position.map_or(-1.0, |position| position as f64))
+    Value::Number(position.map_or(-1.0, number::from_usize))
 }
 
 /// Resolves the index of `at` the way JavaScript does: the number is
@@ -732,21 +698,22 @@ fn position_number(position: Option<usize>) -> Value {
 fn relative_index(index: f64, length: usize) -> Option<usize> {
     let index = if index.is_nan() { 0.0 } else { index.trunc() };
     let position = if index < 0.0 {
-        index + length as f64
+        index + number::from_usize(length)
     } else {
         index
     };
 
-    (0.0..length as f64)
+    (0.0..number::from_usize(length))
         .contains(&position)
-        .then_some(position as usize)
+        .then_some(number::to_usize(position))
 }
 
+#[must_use]
 pub fn slice(base: &Value, start: Option<&Value>, end: Option<&Value>) -> Value {
     match base {
         Value::String(string) => Value::String(builtins::string_slice(
             string,
-            start.map(Value::to_number).unwrap_or(0.0),
+            start.map_or(0.0, Value::to_number),
             end.map(Value::to_number),
         )),
 
@@ -766,5 +733,8 @@ fn slice_items(items: &[Value], start: Option<&Value>, end: Option<&Value>) -> V
     let start = start.map_or(0, bound);
     let end = end.map_or(length, bound);
 
-    items[start.min(end)..end].to_vec()
+    items
+        .get(start.min(end)..end)
+        .map(<[Value]>::to_vec)
+        .unwrap_or_default()
 }

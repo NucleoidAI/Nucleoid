@@ -14,6 +14,7 @@ pub struct Let {
 }
 
 impl Let {
+    #[must_use]
     pub fn new(name: String, value: Expr) -> Self {
         Let { name, value }
     }

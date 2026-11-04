@@ -17,6 +17,7 @@ pub struct Function {
 }
 
 impl Function {
+    #[must_use]
     pub fn new(function: Arc<FunctionDecl>) -> Self {
         Function { function }
     }

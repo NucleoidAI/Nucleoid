@@ -9,11 +9,13 @@ use crate::lang::ast::{Expr, FunctionBody, TemplatePart};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 
+#[derive(Debug)]
 pub struct Expression<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Expression<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Expression { node }
     }
@@ -24,6 +26,7 @@ impl<'a> Expression<'a> {
     /// function, so a rule that passes a lambda does not read them.
     /// Without runtime routing, this syntactic query assumes ordinary calls;
     /// runtime rule checks use context-aware collection for constructor labels.
+    #[must_use]
     pub fn roots(&self) -> Vec<String> {
         self.roots_with(false, &|_| false)
     }
@@ -52,6 +55,7 @@ impl<'a> Expression<'a> {
     }
 
     /// The first `$Class` this expression mentions, if any.
+    #[must_use]
     pub fn class_reference(&self) -> Option<String> {
         let mut found = None;
         class_reference(self.node, &mut found);
@@ -59,6 +63,7 @@ impl<'a> Expression<'a> {
     }
 
     /// The `$Class.property` names this expression reads, for the given class.
+    #[must_use]
     pub fn class_properties(&self, class: &str) -> Vec<String> {
         let mut found = Vec::new();
         class_properties(self.node, class, None, &mut found);
@@ -100,7 +105,7 @@ impl Runtime {
         scope: &Scope,
         assignment_instantiation: bool,
     ) -> Vec<String> {
-        let resolve = |expression: &Expr| self.is_constructor_call(expression, scope);
+        let resolve = |call: &Expr| self.is_constructor_call(call, scope);
         let constructor =
             (assignment_instantiation && self.is_instantiation(expression)) || resolve(expression);
         Expression::new(expression).roots_with(constructor, &resolve)
@@ -111,7 +116,7 @@ impl Runtime {
         expression: &Expr,
         scope: &Scope,
     ) -> Vec<String> {
-        let resolve = |expression: &Expr| self.is_constructor_call(expression, scope);
+        let resolve = |call: &Expr| self.is_constructor_call(call, scope);
         let constructor = self.is_instantiation(expression) || resolve(expression);
         Expression::new(expression).required_roots_with(constructor, &resolve)
     }
@@ -155,7 +160,7 @@ fn roots(
             found.extend(bound.into_iter().filter(|name| name != binder));
         }
         _ => visit_children(expression, &mut |child| {
-            roots(child, resolve(child), resolve, required, found)
+            roots(child, resolve(child), resolve, required, found);
         }),
     }
 }
@@ -192,13 +197,13 @@ fn class_properties(
             && destination.is_some_and(|property| class_property(reference, class, property)) => {}
         Expr::Member { property, .. } if property == "value" => {}
         Expr::Member { object, property } => {
-            member_properties(object, property, class, destination, found)
+            member_properties(object, property, class, destination, found);
         }
         // The method form `OPERAND.NOUN()` reads its callee `OPERAND.NOUN`, so
         // `NOUN of OPERAND` reads what that member read does: the class
         // property `NOUN` for `NOUN of $Class`, otherwise the operand's reads.
         Expr::Of { noun, operand } => {
-            member_properties(operand, noun.as_str(), class, destination, found)
+            member_properties(operand, noun.as_str(), class, destination, found);
         }
         Expr::Index { object, index } => {
             if let (Expr::ClassRef(name), Expr::String(property)) =
@@ -209,11 +214,11 @@ fn class_properties(
                 }
             }
             visit_children(expression, &mut |child| {
-                class_properties(child, class, destination, found)
+                class_properties(child, class, destination, found);
             });
         }
         _ => visit_children(expression, &mut |child| {
-            class_properties(child, class, destination, found)
+            class_properties(child, class, destination, found);
         }),
     }
 }
@@ -239,7 +244,7 @@ fn class_property(expression: &Expr, class: &str, property: &str) -> bool {
         Expr::Member {
             object,
             property: name,
-        } => matches!(object.as_ref(), Expr::ClassRef(name) if name == class) && name == property,
+        } => matches!(object.as_ref(), Expr::ClassRef(owner) if owner == class) && name == property,
         Expr::Index { object, index } => {
             matches!(object.as_ref(), Expr::ClassRef(name) if name == class)
                 && matches!(index.as_ref(), Expr::String(name) if name == property)
@@ -253,29 +258,61 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
     match expression {
         Expr::Member { object, .. } => visit(object),
         Expr::Version { reference, .. } => visit(reference),
+        Expr::Reason { source, .. } => visit(source),
         Expr::Index { object, index } => {
             visit(object);
             visit(index);
         }
         Expr::Slice { object, start, end } => {
             visit(object);
-            if let Some(start) = start {
-                visit(start);
-            }
-            if let Some(end) = end {
-                visit(end);
+            for bound in start.iter().chain(end) {
+                visit(bound);
             }
         }
         Expr::Call { callee, arguments } => {
             visit(callee);
-            for argument in arguments {
-                visit(argument);
+            visit_all(arguments, visit);
+        }
+        Expr::List(items) | Expr::Super(items) => visit_all(items, visit),
+        Expr::ObjectLiteral(entries) => {
+            for (_, value) in entries {
+                visit(value);
             }
         }
-        Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
-            visit(operand)
+        Expr::Template(parts) => {
+            for part in parts {
+                if let TemplatePart::Expression(embedded) = part {
+                    visit(embedded);
+                }
+            }
         }
-        Expr::Reason { source, .. } => visit(source),
+        Expr::Unary { .. }
+        | Expr::Delete(_)
+        | Expr::Of { .. }
+        | Expr::Binary { .. }
+        | Expr::Logical { .. }
+        | Expr::Assign { .. }
+        | Expr::Conditional { .. }
+        | Expr::Quantified { .. } => visit_operands(expression, visit),
+        Expr::Null
+        | Expr::Bool(_)
+        | Expr::Number(_)
+        | Expr::String(_)
+        | Expr::Regex(_)
+        | Expr::Identifier(_)
+        | Expr::ClassRef(_)
+        | Expr::ObjectRef(_)
+        | Expr::This
+        | Expr::Function(_)
+        | Expr::Model => {}
+    }
+}
+
+fn visit_operands(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
+    match expression {
+        Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
+            visit(operand);
+        }
         Expr::Binary { left, right, .. }
         | Expr::Logical { left, right, .. }
         | Expr::Assign {
@@ -304,24 +341,17 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
             visit(collection);
             visit(condition);
         }
-        Expr::List(items) | Expr::Super(items) => {
-            for item in items {
-                visit(item);
-            }
-        }
-        Expr::ObjectLiteral(entries) => {
-            for (_, value) in entries {
-                visit(value);
-            }
-        }
-        Expr::Template(parts) => {
-            for part in parts {
-                if let TemplatePart::Expression(expression) = part {
-                    visit(expression);
-                }
-            }
-        }
-        Expr::Null
+        Expr::Member { .. }
+        | Expr::Version { .. }
+        | Expr::Reason { .. }
+        | Expr::Index { .. }
+        | Expr::Slice { .. }
+        | Expr::Call { .. }
+        | Expr::List(_)
+        | Expr::Super(_)
+        | Expr::ObjectLiteral(_)
+        | Expr::Template(_)
+        | Expr::Null
         | Expr::Bool(_)
         | Expr::Number(_)
         | Expr::String(_)
@@ -332,5 +362,11 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         | Expr::This
         | Expr::Function(_)
         | Expr::Model => {}
+    }
+}
+
+fn visit_all(expressions: &[Expr], visit: &mut impl FnMut(&Expr)) {
+    for expression in expressions {
+        visit(expression);
     }
 }

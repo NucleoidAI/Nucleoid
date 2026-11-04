@@ -25,6 +25,7 @@ pub struct AssertionFailure {
     pub expected: Value,
 }
 
+#[derive(Debug)]
 pub struct Runtime {
     pub state: State,
     pub graph: Graph,
@@ -64,6 +65,7 @@ impl Default for Runtime {
 pub(crate) const MAX_DEPTH: usize = 192;
 
 impl Runtime {
+    #[must_use]
     pub fn new() -> Self {
         Self::with_options(SyntaxOptions::default())
     }
@@ -77,6 +79,7 @@ impl Runtime {
     /// let mut runtime = Runtime::with_options(SyntaxOptions { c_style_comments: true });
     /// assert_eq!(runtime.run("6 /* units */ / 2 // result").unwrap().to_string(), "3");
     /// ```
+    #[must_use]
     pub fn with_options(options: SyntaxOptions) -> Self {
         Runtime {
             state: State::new(),
@@ -97,6 +100,7 @@ impl Runtime {
     }
 
     /// The source options used by every run and template interpolation.
+    #[must_use]
     pub fn options(&self) -> SyntaxOptions {
         self.options
     }
@@ -167,6 +171,7 @@ impl Runtime {
     /// How many `assert` calls actually ran. A case whose assertions sit on a
     /// branch that was never taken proves nothing, and this is how the suites
     /// notice.
+    #[must_use]
     pub fn assertions_run(&self) -> usize {
         self.assertions_run
     }
@@ -189,13 +194,12 @@ impl Runtime {
             Value::Undefined | Value::Null => serde_json::Value::Null,
             Value::Bool(value) => serde_json::Value::Bool(*value),
             Value::Number(value) => serde_json::Number::from_f64(*value)
-                .map(serde_json::Value::Number)
-                .unwrap_or(serde_json::Value::Null),
+                .map_or(serde_json::Value::Null, serde_json::Value::Number),
             Value::String(value) => serde_json::Value::String(value.clone()),
             Value::List(values) => serde_json::Value::Array(
                 values
                     .iter()
-                    .map(|value| self.json_value(value, ancestors))
+                    .map(|item| self.json_value(item, ancestors))
                     .collect::<Result<Vec<_>>>()?,
             ),
             Value::Object(id) => {
@@ -206,9 +210,9 @@ impl Runtime {
                 let mut properties = serde_json::Map::new();
 
                 if let Some(object) = self.state.object(id) {
-                    for (name, value) in &object.properties {
-                        if !value.is_undefined() {
-                            properties.insert(name.clone(), self.json_value(value, ancestors)?);
+                    for (name, property) in &object.properties {
+                        if !property.is_undefined() {
+                            properties.insert(name.clone(), self.json_value(property, ancestors)?);
                         }
                     }
                 }
@@ -258,8 +262,10 @@ impl Runtime {
             return Err(Error::type_error("Maximum statement depth exceeded"));
         }
 
+        let depth = self.depth;
         let result = Nuc::convert(self, scope, statement)
             .and_then(|mut node| self.process(&mut node, scope));
+        debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
         result
     }
@@ -277,7 +283,9 @@ impl Runtime {
             return Err(Error::type_error("Maximum statement depth exceeded"));
         }
 
+        let depth = self.depth;
         let result = self.process(node, scope);
+        debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
         result
     }

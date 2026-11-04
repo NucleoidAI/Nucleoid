@@ -13,16 +13,19 @@ use crate::runtime::{AssertionFailure, Runtime};
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
+#[derive(Debug)]
 pub struct Call<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Call<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Call { node }
     }
 
     /// The callee expression.
+    #[must_use]
     pub fn function(&self) -> Option<&'a Expr> {
         match self.node {
             Expr::Call { callee, .. } => Some(callee),
@@ -30,6 +33,7 @@ impl<'a> Call<'a> {
         }
     }
 
+    #[must_use]
     pub fn arguments(&self) -> &'a [Expr] {
         match self.node {
             Expr::Call { arguments, .. } | Expr::Super(arguments) => arguments,
@@ -43,7 +47,7 @@ impl<'a> Call<'a> {
             Expr::Super(arguments) => runtime.call_super(arguments, scope),
             // Exactly the route of the method call `OPERAND.NOUN()`.
             Expr::Of { noun, operand } => runtime.call_method(operand, noun.as_str(), &[], scope),
-            other => unreachable!("{other} is not a call"),
+            other => Err(Error::type_error(format!("{other} is not a call"))),
         }
     }
 }
@@ -118,7 +122,7 @@ impl Runtime {
         }
 
         if let Some(function) = self.state.function(name).cloned() {
-            self.track(NodeKey::function(name));
+            self.track(&NodeKey::function(name));
             let values = self.evaluate_all(arguments, scope)?;
             return self.invoke(&function, &values);
         }
@@ -129,44 +133,43 @@ impl Runtime {
             return object.run(self, scope);
         }
 
-        match Global::from_callee(name) {
-            Some(Global::Object) => {
-                let properties = IndexMap::new();
-                return Ok(self.create_anonymous(properties));
-            }
-            Some(Global::Boolean) => {
-                let values = self.evaluate_all(arguments, scope)?;
-                let value = values.first().cloned().unwrap_or(Value::Undefined);
-                return Ok(Value::Bool(value.truthy()));
-            }
-            Some(Global::String) => {
-                let values = self.evaluate_all(arguments, scope)?;
-                let value = values.first().cloned().unwrap_or(Value::Undefined);
-                return Ok(Value::String(value.to_string()));
-            }
-            Some(Global::Number) => {
-                let values = self.evaluate_all(arguments, scope)?;
-                let value = values.first().cloned().unwrap_or(Value::Undefined);
-                return Ok(Value::Number(value.to_number()));
-            }
-            Some(Global::Date) => {
-                let values = self.evaluate_all(arguments, scope)?;
-                return builtins::date::construct(&values);
-            }
-            Some(Global::List) => {
-                let values = self.evaluate_all(arguments, scope)?;
-                return Ok(Value::List(values));
-            }
-            _ => {}
+        if let Some(value) = self.construct_global(name, arguments, scope)? {
+            return Ok(value);
         }
 
         if let Some(value) = self.state.variable(name).cloned() {
-            self.track(NodeKey::variable(name));
+            self.track(&NodeKey::variable(name));
             return self.call_value(name, value, arguments, scope);
         }
 
         let value = self.read_missing_identifier(name)?;
         self.call_value(name, value, arguments, scope)
+    }
+
+    fn construct_global(
+        &mut self,
+        name: &str,
+        arguments: &[Expr],
+        scope: &mut Scope,
+    ) -> Result<Option<Value>> {
+        Ok(Some(match Global::from_callee(name) {
+            Some(Global::Object) => self.create_anonymous(IndexMap::new()),
+            Some(Global::Boolean) => Value::Bool(self.first_argument(arguments, scope)?.truthy()),
+            Some(Global::String) => {
+                Value::String(self.first_argument(arguments, scope)?.to_string())
+            }
+            Some(Global::Number) => {
+                Value::Number(self.first_argument(arguments, scope)?.to_number())
+            }
+            Some(Global::Date) => builtins::date::construct(&self.evaluate_all(arguments, scope)?)?,
+            Some(Global::List) => Value::List(self.evaluate_all(arguments, scope)?),
+            _ => return Ok(None),
+        }))
+    }
+
+    fn first_argument(&mut self, arguments: &[Expr], scope: &mut Scope) -> Result<Value> {
+        let values = self.evaluate_all(arguments, scope)?;
+        Ok(values.into_iter().next().unwrap_or(Value::Undefined))
     }
 
     fn call_method(
@@ -261,7 +264,7 @@ impl Runtime {
             return Ok(Value::String(id.to_string()));
         }
 
-        let value = self.read_property(&Value::Object(id.clone()), property, scope)?;
+        let value = self.read_property(&Value::Object(id.clone()), property);
         self.call_value(format_args!("{id}.{property}"), value, arguments, scope)
     }
 
@@ -295,19 +298,14 @@ impl Runtime {
         arguments: &[Expr],
         scope: &mut Scope,
     ) -> Result<Option<Value>> {
-        let values = match global {
-            Global::Math | Global::Number | Global::String | Global::Date => {
-                self.evaluate_all(arguments, scope)?
+        Ok(Some(match global {
+            Global::Math => builtins::math(property, &self.evaluate_all(arguments, scope)?)?,
+            Global::Number => builtins::number(property, &self.evaluate_all(arguments, scope)?)?,
+            Global::String => builtins::string(property, &self.evaluate_all(arguments, scope)?)?,
+            Global::Date => {
+                builtins::date::statics(property, &self.evaluate_all(arguments, scope)?)?
             }
             _ => return Ok(None),
-        };
-
-        Ok(Some(match global {
-            Global::Math => builtins::math(property, &values)?,
-            Global::Number => builtins::number(property, &values)?,
-            Global::String => builtins::string(property, &values)?,
-            Global::Date => builtins::date::statics(property, &values)?,
-            _ => unreachable!("filtered above"),
         }))
     }
 }

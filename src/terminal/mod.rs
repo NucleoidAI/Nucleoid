@@ -14,6 +14,7 @@ use crossterm::execute;
 use nucleoid::Runtime;
 use rand::seq::IteratorRandom;
 use ratatui::Frame;
+use ratatui::layout::Position;
 use ratatui::widgets::ListState;
 use tui_textarea::TextArea;
 
@@ -73,8 +74,11 @@ struct Session;
 
 impl Drop for Session {
     fn drop(&mut self) {
-        let _ = execute!(io::stdout(), DisableBracketedPaste, DisableMouseCapture);
+        let disabled = execute!(io::stdout(), DisableBracketedPaste, DisableMouseCapture);
         ratatui::restore();
+        if let Err(error) = disabled {
+            eprintln!("nucleoid: could not restore terminal input modes: {error}");
+        }
     }
 }
 
@@ -99,19 +103,16 @@ impl LogoSparkle {
             *self = Self::new(now);
             return;
         }
-        self.cell = Some(
-            REPL_LOGO
-                .lines()
-                .enumerate()
-                .flat_map(|(row, line)| {
-                    line.chars()
-                        .enumerate()
-                        .filter(|(_, cell)| !cell.is_whitespace())
-                        .map(move |(column, _)| (row, column))
-                })
-                .choose(&mut rand::rng())
-                .expect("REPL logo has visible cells"),
-        );
+        self.cell = REPL_LOGO
+            .lines()
+            .enumerate()
+            .flat_map(|(row, line)| {
+                line.chars()
+                    .enumerate()
+                    .filter(|(_, cell)| !cell.is_whitespace())
+                    .map(move |(column, _)| (row, column))
+            })
+            .choose(&mut rand::rng());
         self.next = now + SPARKLE_DURATION;
     }
 }
@@ -192,9 +193,21 @@ impl App {
 
     fn key(&mut self, key: KeyEvent, runtime: &mut Runtime) -> bool {
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
-        match key.code {
-            KeyCode::Char('q') if ctrl => return true,
-            KeyCode::Char('d') if ctrl && self.editor.is_empty() => return true,
+        if let Some(quit) = self.global_key(key.code, ctrl, runtime) {
+            return quit;
+        }
+        if self.focus == Focus::Editor {
+            self.editor_key(key, ctrl, runtime);
+        } else {
+            self.result_key(key.code);
+        }
+        false
+    }
+
+    fn global_key(&mut self, code: KeyCode, ctrl: bool, runtime: &mut Runtime) -> Option<bool> {
+        match code {
+            KeyCode::Char('q') if ctrl => return Some(true),
+            KeyCode::Char('d') if ctrl && self.editor.is_empty() => return Some(true),
             KeyCode::Char('c') if ctrl => {
                 self.editor = editor::new("");
                 self.completion = None;
@@ -225,9 +238,9 @@ impl App {
                 self.completion = None;
             }
             KeyCode::F(6) => self.set_view(self.view.next()),
-            KeyCode::F(5) => return self.submit(runtime),
+            KeyCode::F(5) => return Some(self.submit(runtime)),
             // Native Windows input maps pasted LF to Ctrl-Enter as well.
-            KeyCode::Enter if ctrl && !cfg!(windows) => return self.submit(runtime),
+            KeyCode::Enter if ctrl && !cfg!(windows) => return Some(self.submit(runtime)),
             KeyCode::Up if ctrl => self.select_entry(self.selected.saturating_sub(1)),
             KeyCode::Down if ctrl => self.select_entry(self.selected.saturating_add(1)),
             KeyCode::PageUp => self.scroll_vertical(false, self.regions.output.height.max(1)),
@@ -239,20 +252,30 @@ impl App {
                     self.tab = 0;
                 }
             }
-            _ if self.focus != Focus::Editor => match key.code {
-                KeyCode::Up => self.scroll_vertical(false, 1),
-                KeyCode::Down => self.scroll_vertical(true, 1),
-                KeyCode::Left => self.scroll_horizontal(false, self.focus == Focus::Diagnostics),
-                KeyCode::Right => self.scroll_horizontal(true, self.focus == Focus::Diagnostics),
-                KeyCode::Home => {
-                    self.scroll = 0;
-                    self.diagnostic_scroll = 0;
-                    self.horizontal = 0;
-                    self.diagnostic_horizontal = 0;
-                }
-                KeyCode::End => self.scroll_vertical(true, u16::MAX),
-                _ => {}
-            },
+            _ => return None,
+        }
+        Some(false)
+    }
+
+    fn result_key(&mut self, code: KeyCode) {
+        match code {
+            KeyCode::Up => self.scroll_vertical(false, 1),
+            KeyCode::Down => self.scroll_vertical(true, 1),
+            KeyCode::Left => self.scroll_horizontal(false, self.focus == Focus::Diagnostics),
+            KeyCode::Right => self.scroll_horizontal(true, self.focus == Focus::Diagnostics),
+            KeyCode::Home => {
+                self.scroll = 0;
+                self.diagnostic_scroll = 0;
+                self.horizontal = 0;
+                self.diagnostic_horizontal = 0;
+            }
+            KeyCode::End => self.scroll_vertical(true, u16::MAX),
+            _ => {}
+        }
+    }
+
+    fn editor_key(&mut self, key: KeyEvent, ctrl: bool, runtime: &Runtime) {
+        match key.code {
             KeyCode::Char('p') if ctrl => self.recall(false),
             KeyCode::Char('n') if ctrl => self.recall(true),
             KeyCode::Char(' ') if ctrl => {
@@ -281,17 +304,7 @@ impl App {
             }
             KeyCode::Up if self.editor.lines().len() == 1 => self.recall(false),
             KeyCode::Down if self.editor.lines().len() == 1 => self.recall(true),
-            KeyCode::Tab => {
-                if self.completion.is_none() {
-                    self.completion = Completion::find(runtime, &self.editor, false);
-                }
-                if let Some(completion) = self.completion.take() {
-                    completion.apply(&mut self.editor);
-                } else {
-                    self.editor.insert_str(crate::INDENT);
-                }
-                self.history_index = None;
-            }
+            KeyCode::Tab => self.complete_or_indent(runtime),
             KeyCode::BackTab => {
                 editor::dedent(&mut self.editor);
                 self.completion = None;
@@ -315,7 +328,18 @@ impl App {
                 }
             }
         }
-        false
+    }
+
+    fn complete_or_indent(&mut self, runtime: &Runtime) {
+        if self.completion.is_none() {
+            self.completion = Completion::find(runtime, &self.editor, false);
+        }
+        if let Some(completion) = self.completion.take() {
+            completion.apply(&mut self.editor);
+        } else {
+            self.editor.insert_str(crate::INDENT);
+        }
+        self.history_index = None;
     }
 
     fn edited(&mut self, runtime: &Runtime) {
@@ -342,49 +366,13 @@ impl App {
         }
 
         let command = source.trim();
-        let output = if !command.contains('\n') && command.starts_with('.') {
-            let mut words = command.split_whitespace();
-            match words.next().unwrap_or_default() {
-                ".exit" | ".quit" if words.next().is_none() => return true,
-                ".help" if words.next().is_none() => Output::Message(HELP.into()),
-                ".clear" if words.next().is_none() => {
-                    runtime.clear();
-                    Output::Message("State cleared.".into())
-                }
-                name @ (".json" | ".table" | ".graph") => {
-                    let argument = command.strip_prefix(name).unwrap_or_default().trim();
-                    let current = match name {
-                        ".json" => self.view == View::Json,
-                        ".table" => self.view == View::Table,
-                        _ => self.graph,
-                    };
-                    match crate::setting_value(argument, current) {
-                        Some(enabled) => {
-                            match name {
-                                ".json" if enabled => self.set_view(View::Json),
-                                ".table" if enabled => self.set_view(View::Table),
-                                ".graph" => self.graph = enabled,
-                                _ if current => self.set_view(View::Text),
-                                _ => {}
-                            }
-                            Output::Message(format!(
-                                "{} {}.",
-                                name.trim_start_matches('.'),
-                                if enabled { "on" } else { "off" }
-                            ))
-                        }
-                        None => Output::Error(format!("Usage: {name} [on|off]")),
-                    }
-                }
-                _ => Output::Error(format!(
-                    "Unknown command '{}'. Type .help for commands.",
-                    output::visible(command, false)
-                )),
-            }
-        } else {
+        if command.contains('\n') || !command.starts_with('.') {
             let entry = Entry::execute(runtime, source, self.graph);
             self.push(entry);
             return false;
+        }
+        let Some(output) = self.command(command, runtime) else {
+            return true;
         };
         self.push(Entry {
             source,
@@ -392,6 +380,47 @@ impl App {
             diagnostics: String::new(),
         });
         false
+    }
+
+    fn command(&mut self, command: &str, runtime: &mut Runtime) -> Option<Output> {
+        let mut words = command.split_whitespace();
+        Some(match words.next().unwrap_or_default() {
+            ".exit" | ".quit" if words.next().is_none() => return None,
+            ".help" if words.next().is_none() => Output::Message(HELP.into()),
+            ".clear" if words.next().is_none() => {
+                runtime.clear();
+                Output::Message("State cleared.".into())
+            }
+            name @ (".json" | ".table" | ".graph") => self.setting(name, command),
+            _ => Output::Error(format!(
+                "Unknown command '{}'. Type .help for commands.",
+                output::visible(command, false)
+            )),
+        })
+    }
+
+    fn setting(&mut self, name: &str, command: &str) -> Output {
+        let argument = command.strip_prefix(name).unwrap_or_default().trim();
+        let current = match name {
+            ".json" => self.view == View::Json,
+            ".table" => self.view == View::Table,
+            _ => self.graph,
+        };
+        let Some(enabled) = crate::setting_value(argument, current) else {
+            return Output::Error(format!("Usage: {name} [on|off]"));
+        };
+        match name {
+            ".json" if enabled => self.set_view(View::Json),
+            ".table" if enabled => self.set_view(View::Table),
+            ".graph" => self.graph = enabled,
+            _ if current => self.set_view(View::Text),
+            _ => {}
+        }
+        Output::Message(format!(
+            "{} {}.",
+            name.trim_start_matches('.'),
+            if enabled { "on" } else { "off" }
+        ))
     }
 
     fn push(&mut self, entry: Entry) {
@@ -433,9 +462,9 @@ impl App {
         if index == self.history.len() {
             self.history_index = None;
             self.editor = editor::new(&self.draft);
-        } else {
+        } else if let Some(recalled) = self.history.get(index) {
             self.history_index = Some(index);
-            self.editor = editor::new(&self.history[index]);
+            self.editor = editor::new(recalled);
         }
     }
 
@@ -468,57 +497,7 @@ impl App {
     fn mouse(&mut self, mouse: MouseEvent) {
         let position = (mouse.column, mouse.row).into();
         match mouse.kind {
-            MouseEventKind::Down(MouseButton::Left) => {
-                if self.regions.completions.contains(position) {
-                    if let Some(mut completion) = self.completion.take() {
-                        let index = self.regions.completion_start
-                            + usize::from(mouse.row - self.regions.completions.y);
-                        if index < completion.candidates.len() {
-                            completion.selected = index;
-                            completion.apply(&mut self.editor);
-                            self.history_index = None;
-                        }
-                    }
-                } else if let Some(tab) = self
-                    .regions
-                    .tabs
-                    .iter()
-                    .position(|tab| tab.contains(position))
-                {
-                    self.tab = tab;
-                    self.completion = None;
-                } else if let Some(view) = self
-                    .regions
-                    .views
-                    .iter()
-                    .position(|view| view.contains(position))
-                {
-                    self.set_view(View::ALL[view]);
-                } else if self.regions.editor.contains(position) {
-                    self.focus = Focus::Editor;
-                    self.completion = None;
-                    self.dragging = true;
-                    editor::click(
-                        &mut self.editor,
-                        self.regions.editor,
-                        mouse.column,
-                        mouse.row,
-                        false,
-                    );
-                } else if self.regions.history.contains(position) {
-                    let index =
-                        self.list_state.offset() + usize::from(mouse.row - self.regions.history.y);
-                    if index < self.entries.len() {
-                        self.select_entry(index);
-                    }
-                } else if self.regions.diagnostics.contains(position) {
-                    self.focus = Focus::Diagnostics;
-                    self.completion = None;
-                } else if self.regions.output.contains(position) {
-                    self.focus = Focus::Result;
-                    self.completion = None;
-                }
-            }
+            MouseEventKind::Down(MouseButton::Left) => self.click(mouse, position),
             MouseEventKind::Drag(MouseButton::Left)
                 if self.dragging && self.regions.editor.contains(position) =>
             {
@@ -541,51 +520,108 @@ impl App {
                 }
             }
             MouseEventKind::ScrollUp | MouseEventKind::ScrollDown => {
-                let forward = mouse.kind == MouseEventKind::ScrollDown;
-                if self.regions.editor.contains(position) {
-                    self.editor.scroll((if forward { 3 } else { -3 }, 0));
-                    self.completion = None;
-                } else if self.regions.history.contains(position) {
-                    self.select_entry(if forward {
-                        self.selected.saturating_add(1)
-                    } else {
-                        self.selected.saturating_sub(1)
-                    });
-                } else if self.regions.diagnostics.contains(position) {
-                    if mouse.modifiers.contains(KeyModifiers::SHIFT) {
-                        self.scroll_horizontal(forward, true);
-                    } else {
-                        self.diagnostic_scroll = if forward {
-                            self.diagnostic_scroll.saturating_add(3)
-                        } else {
-                            self.diagnostic_scroll.saturating_sub(3)
-                        };
-                    }
-                } else if self.regions.output.contains(position) {
-                    if mouse.modifiers.contains(KeyModifiers::SHIFT) {
-                        self.scroll_horizontal(forward, false);
-                    } else {
-                        self.scroll = if forward {
-                            self.scroll.saturating_add(3)
-                        } else {
-                            self.scroll.saturating_sub(3)
-                        };
-                    }
-                }
+                self.wheel(mouse, position, mouse.kind == MouseEventKind::ScrollDown);
             }
             MouseEventKind::ScrollLeft | MouseEventKind::ScrollRight => {
-                let forward = mouse.kind == MouseEventKind::ScrollRight;
-                if self.regions.editor.contains(position) {
-                    self.editor.scroll((0, if forward { 3 } else { -3 }));
-                    self.completion = None;
-                } else if self.regions.diagnostics.contains(position) {
-                    self.scroll_horizontal(forward, true);
-                } else if self.regions.output.contains(position) {
-                    self.scroll_horizontal(forward, false);
-                }
+                self.wheel_sideways(position, mouse.kind == MouseEventKind::ScrollRight);
             }
             _ => {}
         }
+    }
+
+    fn click(&mut self, mouse: MouseEvent, position: Position) {
+        if self.regions.completions.contains(position) {
+            if let Some(mut completion) = self.completion.take() {
+                let index = self.regions.completion_start
+                    + usize::from(mouse.row - self.regions.completions.y);
+                if index < completion.candidates.len() {
+                    completion.selected = index;
+                    completion.apply(&mut self.editor);
+                    self.history_index = None;
+                }
+            }
+        } else if let Some(tab) = self
+            .regions
+            .tabs
+            .iter()
+            .position(|tab| tab.contains(position))
+        {
+            self.tab = tab;
+            self.completion = None;
+        } else if let Some(view) = View::ALL
+            .into_iter()
+            .zip(self.regions.views)
+            .find_map(|(view, area)| area.contains(position).then_some(view))
+        {
+            self.set_view(view);
+        } else if self.regions.editor.contains(position) {
+            self.focus = Focus::Editor;
+            self.completion = None;
+            self.dragging = true;
+            editor::click(
+                &mut self.editor,
+                self.regions.editor,
+                mouse.column,
+                mouse.row,
+                false,
+            );
+        } else if self.regions.history.contains(position) {
+            let index = self.list_state.offset() + usize::from(mouse.row - self.regions.history.y);
+            if index < self.entries.len() {
+                self.select_entry(index);
+            }
+        } else if self.regions.diagnostics.contains(position) {
+            self.focus = Focus::Diagnostics;
+            self.completion = None;
+        } else if self.regions.output.contains(position) {
+            self.focus = Focus::Result;
+            self.completion = None;
+        }
+    }
+
+    fn wheel(&mut self, mouse: MouseEvent, position: Position, forward: bool) {
+        let sideways = mouse.modifiers.contains(KeyModifiers::SHIFT);
+        if self.regions.editor.contains(position) {
+            self.editor.scroll((if forward { 3 } else { -3 }, 0));
+            self.completion = None;
+        } else if self.regions.history.contains(position) {
+            self.select_entry(if forward {
+                self.selected.saturating_add(1)
+            } else {
+                self.selected.saturating_sub(1)
+            });
+        } else if self.regions.diagnostics.contains(position) {
+            if sideways {
+                self.scroll_horizontal(forward, true);
+            } else {
+                self.diagnostic_scroll = scrolled(self.diagnostic_scroll, forward);
+            }
+        } else if self.regions.output.contains(position) {
+            if sideways {
+                self.scroll_horizontal(forward, false);
+            } else {
+                self.scroll = scrolled(self.scroll, forward);
+            }
+        }
+    }
+
+    fn wheel_sideways(&mut self, position: Position, forward: bool) {
+        if self.regions.editor.contains(position) {
+            self.editor.scroll((0, if forward { 3 } else { -3 }));
+            self.completion = None;
+        } else if self.regions.diagnostics.contains(position) {
+            self.scroll_horizontal(forward, true);
+        } else if self.regions.output.contains(position) {
+            self.scroll_horizontal(forward, false);
+        }
+    }
+}
+
+fn scrolled(offset: u16, forward: bool) -> u16 {
+    if forward {
+        offset.saturating_add(3)
+    } else {
+        offset.saturating_sub(3)
     }
 }
 
@@ -861,6 +897,107 @@ mod tests {
     }
 
     #[test]
+    fn result_focus_scrolls_output_without_editing_or_recalling() {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::new();
+        run(&mut app, &mut runtime, "value = 7");
+        app.editor = editor::new("    ");
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        assert!(app.focus == Focus::Result);
+        for code in [
+            KeyCode::Backspace,
+            KeyCode::Char('x'),
+            KeyCode::Enter,
+            KeyCode::Tab,
+            KeyCode::Down,
+            KeyCode::Down,
+            KeyCode::Up,
+            KeyCode::Right,
+        ] {
+            assert!(!key(&mut app, &mut runtime, code, KeyModifiers::NONE));
+        }
+        assert_eq!(app.editor.lines(), ["    "]);
+        assert!(app.history_index.is_none());
+        assert_eq!((app.scroll, app.horizontal), (1, 1));
+        key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
+        assert_eq!(app.scroll, u16::MAX);
+        key(&mut app, &mut runtime, KeyCode::Home, KeyModifiers::NONE);
+        assert_eq!((app.scroll, app.horizontal), (0, 0));
+
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        assert!(app.focus == Focus::Editor);
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Backspace,
+            KeyModifiers::NONE,
+        );
+        assert_eq!(app.editor.lines(), [""]);
+        app.editor = editor::new("x");
+        assert!(!key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Char('d'),
+            KeyModifiers::CONTROL
+        ));
+        assert_eq!(app.editor.lines(), ["x"]);
+
+        key(&mut app, &mut runtime, KeyCode::F(2), KeyModifiers::NONE);
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        assert!(app.focus == Focus::Result);
+        key(&mut app, &mut runtime, KeyCode::Esc, KeyModifiers::NONE);
+        assert!(app.focus == Focus::Editor);
+        assert_eq!(app.tab, 0);
+
+        app.editor = editor::new(".exit now");
+        assert!(!app.submit(&mut runtime));
+        assert_eq!(
+            app.entries.last().unwrap().output.text(View::Text),
+            "Unknown command '.exit now'. Type .help for commands."
+        );
+    }
+
+    #[test]
+    fn diagnostics_focus_needs_diagnostics_and_scrolls_its_own_offsets() {
+        let mut app = App::new(false, true);
+        let mut runtime = Runtime::new();
+        run(&mut app, &mut runtime, "first = 1");
+        run(&mut app, &mut runtime, "second = 2");
+        assert_eq!(app.selected, 1);
+        for expected in [
+            Focus::Result,
+            Focus::Diagnostics,
+            Focus::Editor,
+            Focus::Result,
+            Focus::Diagnostics,
+        ] {
+            key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+            assert!(app.focus == expected);
+        }
+        key(&mut app, &mut runtime, KeyCode::Down, KeyModifiers::NONE);
+        key(&mut app, &mut runtime, KeyCode::Right, KeyModifiers::NONE);
+        assert_eq!(
+            (
+                app.scroll,
+                app.horizontal,
+                app.diagnostic_scroll,
+                app.diagnostic_horizontal
+            ),
+            (0, 0, 1, 1)
+        );
+        key(&mut app, &mut runtime, KeyCode::Up, KeyModifiers::CONTROL);
+        assert_eq!(app.selected, 0);
+        assert!(app.focus == Focus::Diagnostics);
+        assert_eq!((app.diagnostic_scroll, app.diagnostic_horizontal), (0, 0));
+
+        app.graph = false;
+        run(&mut app, &mut runtime, "third = 3");
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        assert!(app.focus == Focus::Editor);
+    }
+
+    #[test]
     fn mouse_hits_real_tab_view_history_and_editor_regions() {
         let mut app = App::new(false, false);
         let mut runtime = Runtime::new();
@@ -942,7 +1079,11 @@ mod tests {
                         );
                     }
                 }
-                let text: String = screen.content.iter().map(|cell| cell.symbol()).collect();
+                let text: String = screen
+                    .content
+                    .iter()
+                    .map(ratatui::buffer::Cell::symbol)
+                    .collect();
                 assert_eq!(text.matches("⣿⠋⢻⡄").count(), 1, "{text}");
             };
             terminal.draw(|frame| app.draw(frame)).unwrap();
@@ -957,7 +1098,7 @@ mod tests {
                 .buffer()
                 .content
                 .iter()
-                .map(|cell| cell.symbol())
+                .map(ratatui::buffer::Cell::symbol)
                 .collect();
             assert!(text.contains("first result"), "{text}");
             assert_eq!(app.regions.editor, editor_area);
@@ -983,7 +1124,8 @@ mod tests {
             let start = app.sparkle.next;
             assert!(pause_bounds.contains(&start.duration_since(now)));
 
-            app.sparkle.advance(start - Duration::from_millis(1));
+            app.sparkle
+                .advance(start.checked_sub(Duration::from_millis(1)).unwrap());
             assert!(app.sparkle.cell.is_none());
 
             app.sparkle.advance(start);
@@ -1009,7 +1151,8 @@ mod tests {
             assert_eq!(flashed, original);
             assert_eq!(app.regions.editor, editor_area);
 
-            app.sparkle.advance(end - Duration::from_millis(1));
+            app.sparkle
+                .advance(end.checked_sub(Duration::from_millis(1)).unwrap());
             assert_eq!(app.sparkle.cell, Some(active_cell));
 
             app.sparkle.advance(end);
@@ -1042,7 +1185,7 @@ mod tests {
                 let text = screen
                     .content
                     .iter()
-                    .map(|cell| cell.symbol())
+                    .map(ratatui::buffer::Cell::symbol)
                     .collect::<String>();
                 assert!(text.contains("Nucleoid"));
                 assert!(text.contains("Editor"));

@@ -8,11 +8,13 @@ use crate::lang::ast::Expr;
 use crate::runtime::MAX_DEPTH;
 use crate::value::Value;
 
+#[derive(Debug)]
 pub struct Literal<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Literal<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Literal { node }
     }
@@ -29,11 +31,12 @@ impl<'a> Literal<'a> {
                     "Invalid regular expression: {error}"
                 ))),
             },
-            other => unreachable!("{other} is not a literal"),
+            other => Err(Error::type_error(format!("{other} is not a literal"))),
         }
     }
 
     /// Renders the literal as source.
+    #[must_use]
     pub fn generate(&self) -> String {
         self.node.to_string()
     }
@@ -41,6 +44,7 @@ impl<'a> Literal<'a> {
 
 /// The literal expression for a value, where one exists. This is how a frozen
 /// `.value` read is written back into a stored declaration.
+#[must_use]
 pub fn of(value: &Value) -> Option<Expr> {
     Some(match value {
         Value::Null | Value::Undefined => Expr::Null,
@@ -54,11 +58,11 @@ pub fn of(value: &Value) -> Option<Expr> {
 
 pub(crate) fn snapshot(value: &Value) -> Result<Expr> {
     let mut pending = vec![(value, 1)];
-    while let Some((value, depth)) = pending.pop() {
+    while let Some((current, depth)) = pending.pop() {
         if depth > MAX_DEPTH {
             return Err(Error::type_error("Maximum expression depth exceeded"));
         }
-        if let Value::List(items) = value {
+        if let Value::List(items) = current {
             pending.extend(items.iter().map(|item| (item, depth + 1)));
         }
     }
@@ -76,7 +80,7 @@ pub(crate) fn constant(value: &Value) -> Expr {
         Value::Class(name) => Expr::Identifier(name.clone()),
         Value::Date(millis) => Expr::Call {
             callee: Box::new(Expr::Identifier("Date".to_string())),
-            arguments: vec![Expr::Number(*millis as f64)],
+            arguments: vec![Expr::Number(crate::number::from_i64(*millis))],
         },
         Value::Regex(regex) => Expr::Regex(regex.as_str().to_string()),
         Value::Function(function) => Expr::Function(function.clone()),

@@ -941,7 +941,7 @@ fn direct_for_node_filters_unregistered_objects_and_restores_empty_and_invalid_s
         if matches!(source, Value::List(_)) {
             assert!(matches!(result.unwrap().flow, Flow::Normal(Value::Null)));
         } else {
-            let error = result.err().expect("noniterable sources must fail");
+            let error = result.expect_err("noniterable sources must fail");
             assert_eq!(error.kind(), ErrorKind::Type);
             assert_eq!(error.message(), "values is not iterable");
         }

@@ -1,3 +1,47 @@
+#![warn(
+    clippy::pedantic,
+    clippy::debug_assert_with_mut_call,
+    clippy::exit,
+    clippy::expect_used,
+    clippy::format_push_string,
+    clippy::indexing_slicing,
+    clippy::infinite_loop,
+    clippy::let_underscore_must_use,
+    clippy::let_underscore_untyped,
+    clippy::panic,
+    clippy::panic_in_result_fn,
+    clippy::shadow_unrelated,
+    clippy::string_slice,
+    clippy::todo,
+    clippy::unimplemented,
+    clippy::unreachable,
+    clippy::unused_result_ok,
+    clippy::unwrap_used,
+    missing_debug_implementations,
+    rust_2018_idioms,
+    single_use_lifetimes,
+    trivial_casts,
+    trivial_numeric_casts,
+    unreachable_pub,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications
+)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::expect_used,
+        clippy::indexing_slicing,
+        clippy::panic,
+        clippy::panic_in_result_fn,
+        clippy::shadow_unrelated,
+        clippy::string_slice,
+        clippy::too_many_lines,
+        clippy::unreachable,
+        clippy::unwrap_used
+    )
+)]
+
 mod terminal;
 
 use std::io::{self, IsTerminal};
@@ -10,7 +54,7 @@ use nucleoid::lang::ast::Quantifier;
 use nucleoid::lang::ast::lexer::{Keyword, Spanned, Token, tokenize_with_options};
 use nucleoid::{ErrorKind, Position, Runtime, SyntaxOptions, Value};
 use rustyline::error::ReadlineError;
-use rustyline::{Cmd, DefaultEditor, KeyCode, KeyEvent, Modifiers};
+use rustyline::{Cmd, DefaultEditor, EventHandler, KeyCode, KeyEvent, Modifiers};
 
 const REPL_TITLE: &str = "🌿 Nucleoid - Logic Language for World Models";
 const REPL_TAGLINE: &str = "🌎 Inspired by Nature";
@@ -23,6 +67,7 @@ const CONTINUATION_PROMPT: &str = "..";
     version,
     about = "Nucleoid declarative logic runtime"
 )]
+#[expect(clippy::struct_excessive_bools)]
 struct Cli {
     /// A source file to run. Without one, statements are read from the terminal.
     file: Option<PathBuf>,
@@ -153,7 +198,7 @@ fn report(runtime: &mut Runtime) -> ExitCode {
 
 fn repl_editor() -> Result<DefaultEditor, ReadlineError> {
     let mut editor = DefaultEditor::new()?;
-    let _ = editor.bind_sequence(
+    let _: Option<EventHandler> = editor.bind_sequence(
         KeyEvent(KeyCode::Tab, Modifiers::NONE),
         Cmd::Insert(1, INDENT.into()),
     );
@@ -169,32 +214,28 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let mut source = String::new();
-    let mut multiline = false;
-    let mut indentation = String::new();
+    let mut pending = Pending::default();
 
     println!("{REPL_TITLE}");
     println!("{REPL_TAGLINE}");
     println!("Type .help for available commands.");
 
     loop {
-        let prompt = if source.is_empty() {
+        let prompt = if pending.source.is_empty() {
             "> "
         } else {
             CONTINUATION_PROMPT
         };
-        let line = match editor.readline_with_initial(prompt, (&indentation, "")) {
+        let line = match editor.readline_with_initial(prompt, (&pending.indentation, "")) {
             Ok(line) => line,
             Err(ReadlineError::Interrupted) => {
-                source.clear();
-                multiline = false;
-                indentation.clear();
+                pending = Pending::default();
                 println!("^C");
                 continue;
             }
             Err(ReadlineError::Eof) => {
-                if !source.trim().is_empty() {
-                    run_interactive(runtime, &source, json, graph);
+                if !pending.source.trim().is_empty() {
+                    run_interactive(runtime, &pending.source, json, graph);
                 }
                 return ExitCode::SUCCESS;
             }
@@ -206,76 +247,91 @@ fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
 
         let trimmed = line.trim();
 
-        if source.is_empty() && trimmed.starts_with('.') {
-            if let Err(error) = editor.add_history_entry(trimmed) {
-                eprintln!("nucleoid: cannot record history: {error}");
-            }
-
-            match trimmed {
-                ".exit" | ".quit" => return ExitCode::SUCCESS,
-                ".help" => print_repl_help(),
-                ".clear" => {
-                    runtime.clear();
-                    println!("State cleared.");
-                }
-                command if command.starts_with(".json") => {
-                    update_repl_setting(command, ".json", &mut json);
-                }
-                command if command.starts_with(".graph") => {
-                    update_repl_setting(command, ".graph", &mut graph);
-                }
-                _ => eprintln!("Unknown command '{trimmed}'. Type .help for commands."),
+        if pending.source.is_empty() && trimmed.starts_with('.') {
+            record_history(&mut editor, trimmed);
+            if repl_command(trimmed, runtime, &mut json, &mut graph) {
+                return ExitCode::SUCCESS;
             }
             continue;
         }
 
-        if trimmed.is_empty() {
-            if unterminated_block_comment(&source, options) {
-                source.push_str(&line);
-                source.push('\n');
-                continue;
+        if let Some(source) = pending.accept(&line, options) {
+            record_history(&mut editor, source.trim_end());
+            run_interactive(runtime, &source, json, graph);
+        }
+    }
+}
+
+fn record_history(editor: &mut DefaultEditor, entry: &str) {
+    if let Err(error) = editor.add_history_entry(entry) {
+        eprintln!("nucleoid: cannot record history: {error}");
+    }
+}
+
+fn repl_command(command: &str, runtime: &mut Runtime, json: &mut bool, graph: &mut bool) -> bool {
+    match command {
+        ".exit" | ".quit" => return true,
+        ".help" => print_repl_help(),
+        ".clear" => {
+            runtime.clear();
+            println!("State cleared.");
+        }
+        _ if command.starts_with(".json") => update_repl_setting(command, ".json", json),
+        _ if command.starts_with(".graph") => update_repl_setting(command, ".graph", graph),
+        _ => eprintln!("Unknown command '{command}'. Type .help for commands."),
+    }
+    false
+}
+
+#[derive(Default)]
+struct Pending {
+    source: String,
+    multiline: bool,
+    indentation: String,
+}
+
+impl Pending {
+    fn accept(&mut self, line: &str, options: SyntaxOptions) -> Option<String> {
+        if line.trim().is_empty() {
+            if unterminated_block_comment(&self.source, options) {
+                self.source.push_str(line);
+                self.source.push('\n');
+                return None;
             }
-            if !source.is_empty() {
-                if let Err(error) = editor.add_history_entry(source.trim_end()) {
-                    eprintln!("nucleoid: cannot record history: {error}");
-                }
-                run_interactive(runtime, &source, json, graph);
-                source.clear();
-                multiline = false;
-                indentation.clear();
-            }
-            continue;
+            return (!self.source.is_empty()).then(|| self.take());
         }
 
         // A block comment may span physical reads. Inspect the complete pending
         // source when it closes, rather than treating its contents as headers.
         let continued;
-        let header = if unterminated_block_comment(&source, options) {
-            continued = format!("{source}{line}");
-            &continued
+        let header = if unterminated_block_comment(&self.source, options) {
+            continued = format!("{}{line}", self.source);
+            continued.as_str()
         } else {
-            &line
+            line
         };
         let opens_body = indented_body_header_with_options(header, options);
-        multiline |= (!options.c_style_comments && line.trim_end().ends_with(':')) || opens_body;
+        self.multiline |=
+            (!options.c_style_comments && line.trim_end().ends_with(':')) || opens_body;
         let indentation_hint = next_indentation_with_options(header, opens_body, options);
-        source.push_str(&line);
-        source.push('\n');
+        self.source.push_str(line);
+        self.source.push('\n');
 
-        if unterminated_block_comment(&source, options) {
-            indentation.clear();
-            continue;
+        if unterminated_block_comment(&self.source, options) {
+            self.indentation.clear();
+            return None;
         }
-        if multiline {
-            indentation = indentation_hint;
-        } else {
-            if let Err(error) = editor.add_history_entry(source.trim_end()) {
-                eprintln!("nucleoid: cannot record history: {error}");
-            }
-            run_interactive(runtime, &source, json, graph);
-            source.clear();
-            indentation.clear();
+        if self.multiline {
+            self.indentation = indentation_hint;
+            return None;
         }
+        Some(self.take())
+    }
+
+    fn take(&mut self) -> String {
+        self.multiline = false;
+        self.indentation.clear();
+        std::mem::take(&mut self.source)
     }
 }
 
@@ -297,15 +353,18 @@ fn lex_header(source: &str, options: SyntaxOptions) -> nucleoid::Result<Vec<Span
                 Token::Newline | Token::Indent | Token::Dedent | Token::Eof
             )
         }) {
-            let mut start = tokens[..last]
+            let mut start = tokens
                 .iter()
+                .take(last)
                 .rposition(|spanned| spanned.token == Token::Newline)
                 .map_or(0, |index| index + 1);
             while start < last
-                && matches!(
-                    tokens[start].token,
-                    Token::Newline | Token::Indent | Token::Dedent
-                )
+                && tokens.get(start).is_some_and(|spanned| {
+                    matches!(
+                        spanned.token,
+                        Token::Newline | Token::Indent | Token::Dedent
+                    )
+                })
             {
                 start += 1;
             }
@@ -395,9 +454,14 @@ fn comment_free_indentation(source: &str, position: Position, options: SyntaxOpt
         .take(position.line - 1)
         .map(str::len)
         .sum();
-    let prefix: String = source[start..].chars().take(position.column - 1).collect();
+    let prefix: String = source
+        .get(start..)
+        .unwrap_or_default()
+        .chars()
+        .take(position.column - 1)
+        .collect();
     let mut remainder = prefix.as_str();
-    if unterminated_block_comment(&source[..start], options) {
+    if unterminated_block_comment(source.get(..start).unwrap_or_default(), options) {
         remainder = remainder.split_once("*/").map_or("", |(_, tail)| tail);
     }
     let mut indentation = String::new();
@@ -405,14 +469,17 @@ fn comment_free_indentation(source: &str, position: Position, options: SyntaxOpt
         if let Some(body) = remainder.strip_prefix("/*") {
             remainder = body.split_once("*/").map_or("", |(_, tail)| tail);
         } else {
-            let character = remainder.chars().next().unwrap();
+            let mut characters = remainder.chars();
+            let Some(character) = characters.next() else {
+                break;
+            };
             if !matches!(character, ' ' | '\t' | '\r' | '\u{c}') {
                 break;
             }
             if matches!(character, ' ' | '\t') {
                 indentation.push(character);
             }
-            remainder = &remainder[character.len_utf8()..];
+            remainder = characters.as_str();
         }
     }
     indentation
@@ -492,13 +559,13 @@ fn indented_condition_header_with_options(
                 return nonempty
                     && conditionals == 0
                     && tokens
-                        .all(|token| matches!(token, Token::Newline | Token::Dedent | Token::Eof));
+                        .all(|rest| matches!(rest, Token::Newline | Token::Dedent | Token::Eof));
             }
             Token::Question if delimiters.is_empty() => conditionals += 1,
             Token::Identifier(_)
                 if delimiters.is_empty() && starts_quantifier(token, tokens.clone()) =>
             {
-                conditionals += 1
+                conditionals += 1;
             }
             Token::Colon if delimiters.is_empty() && conditionals > 0 => conditionals -= 1,
             Token::Colon | Token::ColonAssign | Token::Semicolon | Token::Indent
@@ -510,12 +577,7 @@ fn indented_condition_header_with_options(
                 delimiters.push(token);
             }
             Token::RightParen | Token::RightBracket | Token::RightBrace
-                if !matches!(
-                    (delimiters.pop(), token),
-                    (Some(Token::LeftParen), Token::RightParen)
-                        | (Some(Token::LeftBracket), Token::RightBracket)
-                        | (Some(Token::LeftBrace), Token::RightBrace)
-                ) =>
+                if !closes(delimiters.pop(), token) =>
             {
                 return false;
             }
@@ -524,6 +586,15 @@ fn indented_condition_header_with_options(
         nonempty = true;
     }
     false
+}
+
+fn closes(open: Option<&Token>, close: &Token) -> bool {
+    matches!(
+        (open, close),
+        (Some(Token::LeftParen), Token::RightParen)
+            | (Some(Token::LeftBracket), Token::RightBracket)
+            | (Some(Token::LeftBrace), Token::RightBrace)
+    )
 }
 
 fn starts_quantifier<'a>(word: &Token, mut rest: impl Iterator<Item = &'a Token>) -> bool {

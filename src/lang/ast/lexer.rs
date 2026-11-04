@@ -21,7 +21,7 @@ enum Raw {
     #[regex(r"[A-Za-z_][A-Za-z0-9_]*", |lexer| lexer.slice().to_string())]
     Word(String),
 
-    #[regex(r"\$[A-Za-z_][A-Za-z0-9_]*", |lexer| lexer.slice()[1..].to_string())]
+    #[regex(r"\$[A-Za-z_][A-Za-z0-9_]*", |lexer| lexer.slice().trim_start_matches('$').to_string())]
     ClassRef(String),
 
     #[regex(r"[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?", |lexer| lexer.slice().parse::<f64>().ok())]
@@ -32,7 +32,7 @@ enum Raw {
     #[regex(r"'([^'\\]|\\.)*'", |lexer| unescape(lexer.slice()))]
     Str(String),
 
-    #[regex(r"`([^`\\]|\\.)*`", |lexer| lexer.slice()[1..lexer.slice().len() - 1].to_string())]
+    #[regex(r"`([^`\\]|\\.)*`", |lexer| delimited(lexer.slice()).to_string())]
     Template(String),
 
     #[token("(")]
@@ -153,6 +153,7 @@ pub enum Keyword {
 }
 
 impl Keyword {
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Keyword::If => "if",
@@ -281,6 +282,7 @@ pub enum Token {
 
 impl Token {
     /// How this token is named in an error message.
+    #[must_use]
     pub fn describe(&self) -> String {
         match self {
             Token::Identifier(name) => format!("identifier '{name}'"),
@@ -343,6 +345,7 @@ impl Token {
 
     /// Whether this token is an arrow: canonical `=>` or its `->` spelling.
     /// Both spellings introduce exactly the same parameters and bodies.
+    #[must_use]
     pub fn is_arrow(&self) -> bool {
         matches!(self, Token::Arrow | Token::ThinArrow)
     }
@@ -367,8 +370,20 @@ impl Token {
     }
 }
 
+fn delimited(slice: &str) -> &str {
+    let mut characters = slice.chars();
+    characters.next();
+    characters.next_back();
+    characters.as_str()
+}
+
+pub(crate) fn excerpt(source: &str, range: Range<usize>) -> &str {
+    debug_assert!(source.get(range.clone()).is_some());
+    source.get(range).unwrap_or_default()
+}
+
 fn unescape(slice: &str) -> String {
-    let inner = &slice[1..slice.len() - 1];
+    let inner = delimited(slice);
     let mut output = String::with_capacity(inner.len());
     let mut characters = inner.chars();
 
@@ -452,8 +467,9 @@ impl<'a> Lines<'a> {
             Err(index) => index.saturating_sub(1),
         };
 
-        let start = self.starts[line];
-        let column = self.source[start..offset].chars().count() + 1;
+        debug_assert!(line < self.starts.len());
+        let start = self.starts.get(line).copied().unwrap_or_default();
+        let column = excerpt(self.source, start..offset).chars().count() + 1;
 
         Position::new(line + 1, column)
     }
@@ -470,18 +486,14 @@ struct Scanned {
     indent: usize,
 }
 
-fn scan_until(
-    source: &str,
-    lines: &Lines<'_>,
+fn scan_until<'a>(
+    source: &'a str,
+    lines: &'a Lines<'a>,
     options: SyntaxOptions,
     mut stop: impl FnMut(&Token) -> bool,
 ) -> Result<(Vec<Scanned>, Option<usize>)> {
     let mut lexer = Raw::lexer(source);
-    let mut scanned: Vec<Scanned> = Vec::new();
-    let mut comments = Vec::new();
-    let mut layout_depth = 0usize;
-    // Keep suppressed trivia runs from repeatedly searching past old newlines.
-    let mut last_non_newline: Option<usize> = None;
+    let mut scanner = Scanner::new(source, lines, options);
 
     while let Some(next) = lexer.next() {
         let span = lexer.span();
@@ -489,45 +501,175 @@ fn scan_until(
         let raw = next.map_err(|()| {
             Error::syntax(format!(
                 "Unexpected character '{}'",
-                &source[span.start..span.end]
+                excerpt(source, span.clone())
             ))
             .at(lines.position(span.start))
         })?;
 
-        let previous = if options.c_style_comments && layout_depth > 0 {
-            last_non_newline.map(|index| &scanned[index])
-        } else {
-            scanned.last()
-        };
         let token = match raw {
+            Raw::Number(_) if scanner.follows_at() => version_index(source, &span, lines)?,
+            slash @ (Raw::Slash | Raw::SlashAssign) => {
+                if let Some(end) = scanner.comment(span.start)? {
+                    lexer.bump(end - span.end);
+                    continue;
+                }
+                match scanner.regex(span.start) {
+                    Some((pattern, end)) => {
+                        lexer.bump(end - span.end);
+                        Token::Regex(pattern)
+                    }
+                    None => slash.plain(),
+                }
+            }
+            other => other.plain(),
+        };
+
+        if stop(&token) {
+            return Ok((scanner.scanned, Some(span.start)));
+        }
+        scanner.record(token, span.start);
+    }
+
+    Ok((scanner.scanned, None))
+}
+
+struct Scanner<'a> {
+    source: &'a str,
+    lines: &'a Lines<'a>,
+    options: SyntaxOptions,
+    scanned: Vec<Scanned>,
+    comments: Vec<Range<usize>>,
+    layout_depth: usize,
+    // Keep suppressed trivia runs from repeatedly searching past old newlines.
+    last_non_newline: Option<usize>,
+}
+
+impl<'a> Scanner<'a> {
+    fn new(source: &'a str, lines: &'a Lines<'a>, options: SyntaxOptions) -> Self {
+        Scanner {
+            source,
+            lines,
+            options,
+            scanned: Vec::new(),
+            comments: Vec::new(),
+            layout_depth: 0,
+            last_non_newline: None,
+        }
+    }
+
+    fn previous(&self) -> Option<&Scanned> {
+        if self.options.c_style_comments && self.layout_depth > 0 {
+            self.last_non_newline
+                .and_then(|index| self.scanned.get(index))
+        } else {
+            self.scanned.last()
+        }
+    }
+
+    fn follows_at(&self) -> bool {
+        self.previous()
+            .is_some_and(|previous| previous.token == Token::At)
+    }
+
+    fn comment(&mut self, start: usize) -> Result<Option<usize>> {
+        if !self.options.c_style_comments {
+            return Ok(None);
+        }
+        let remainder = self.source.get(start..).unwrap_or_default();
+        let end = if remainder.starts_with("//") {
+            start + remainder.find('\n').unwrap_or(remainder.len())
+        } else if let Some(body) = remainder.strip_prefix("/*") {
+            let closing = body.find("*/").ok_or_else(|| {
+                Error::syntax("Unterminated block comment").at(self.lines.position(start))
+            })?;
+            start + 2 + closing + 2
+        } else {
+            return Ok(None);
+        };
+        // Keep physical line breaks for the ordinary layout
+        // pass, but never count comment text as indentation.
+        for (offset, byte) in excerpt(self.source, start..end).bytes().enumerate() {
+            if byte == b'\n' {
+                self.scanned.push(Scanned {
+                    token: Token::Newline,
+                    position: self.lines.position(start + offset),
+                    line_start: false,
+                    indent: 0,
+                });
+            }
+        }
+        self.comments.push(start..end);
+        Ok(Some(end))
+    }
+
+    fn regex(&self, start: usize) -> Option<(String, usize)> {
+        let starts_regex = self
+            .previous()
+            .is_none_or(|previous| previous.token.precedes_regex());
+        if !starts_regex {
+            return None;
+        }
+        // Logos may have consumed `/=`. In an operand position,
+        // that `=` still belongs to an existing regex such as /=/.
+        let (pattern, consumed) = read_regex(self.source.get(start + 1..).unwrap_or_default())?;
+        Some((pattern, start + 1 + consumed))
+    }
+
+    fn record(&mut self, token: Token, start: usize) {
+        match token {
+            Token::LeftParen | Token::LeftBracket => self.layout_depth += 1,
+            Token::RightParen | Token::RightBracket => {
+                self.layout_depth = self.layout_depth.saturating_sub(1);
+            }
+            _ => {}
+        }
+        let (line_start, indent) = if self.comments.is_empty() {
+            line_position(self.source, start)
+        } else {
+            line_position_without_comments(self.source, start, &self.comments)
+        };
+        if token != Token::Newline {
+            self.last_non_newline = Some(self.scanned.len());
+        }
+        self.scanned.push(Scanned {
+            token,
+            position: self.lines.position(start),
+            line_start,
+            indent,
+        });
+    }
+}
+
+fn version_index(source: &str, span: &Range<usize>, lines: &Lines<'_>) -> Result<Token> {
+    let digits = excerpt(source, span.clone());
+    let index = digits
+        .bytes()
+        .all(|byte| byte.is_ascii_digit())
+        .then(|| digits.parse::<usize>().ok())
+        .flatten();
+    let malformed_suffix = source
+        .get(span.end..)
+        .and_then(|rest| rest.chars().next())
+        .is_some_and(|character| character.is_ascii_alphanumeric() || character == '_');
+    match index {
+        Some(index) if !malformed_suffix => Ok(Token::VersionIndex(index)),
+        _ => Err(Error::syntax(
+            "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'",
+        )
+        .at(lines.position(span.start))),
+    }
+}
+
+impl Raw {
+    fn plain(self) -> Token {
+        match self {
             Raw::Newline => Token::Newline,
             Raw::Word(word) => match Keyword::from_word(&word) {
                 Some(keyword) => Token::Keyword(keyword),
                 None => Token::Identifier(word),
             },
             Raw::ClassRef(name) => Token::ClassRef(name),
-            Raw::Number(number) => {
-                if previous.is_some_and(|previous| previous.token == Token::At) {
-                    let digits = &source[span.clone()];
-                    let index = digits
-                        .bytes()
-                        .all(|byte| byte.is_ascii_digit())
-                        .then(|| digits.parse::<usize>().ok())
-                        .flatten();
-                    let malformed_suffix =
-                        source[span.end..].chars().next().is_some_and(|character| {
-                            character.is_ascii_alphanumeric() || character == '_'
-                        });
-                    match index {
-                        Some(index) if !malformed_suffix => Token::VersionIndex(index),
-                        _ => return Err(Error::syntax(
-                            "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'"
-                        ).at(lines.position(span.start))),
-                    }
-                } else {
-                    Token::Number(number)
-                }
-            }
+            Raw::Number(number) => Token::Number(number),
             Raw::Str(string) => Token::Str(string),
             Raw::Template(template) => Token::Template(template),
             Raw::LeftParen => Token::LeftParen,
@@ -571,88 +713,10 @@ fn scan_until(
             Raw::AndAnd => Token::AndAnd,
             Raw::OrOr => Token::OrOr,
             Raw::Pipe => Token::Pipe,
-            slash @ (Raw::Slash | Raw::SlashAssign) => {
-                if options.c_style_comments {
-                    let remainder = &source[span.start..];
-                    let end = if remainder.starts_with("//") {
-                        Some(span.start + remainder.find('\n').unwrap_or(remainder.len()))
-                    } else if let Some(body) = remainder.strip_prefix("/*") {
-                        let closing = body.find("*/").ok_or_else(|| {
-                            Error::syntax("Unterminated block comment")
-                                .at(lines.position(span.start))
-                        })?;
-                        Some(span.start + 2 + closing + 2)
-                    } else {
-                        None
-                    };
-                    if let Some(end) = end {
-                        // Keep physical line breaks for the ordinary layout
-                        // pass, but never count comment text as indentation.
-                        for (offset, byte) in source[span.start..end].bytes().enumerate() {
-                            if byte == b'\n' {
-                                scanned.push(Scanned {
-                                    token: Token::Newline,
-                                    position: lines.position(span.start + offset),
-                                    line_start: false,
-                                    indent: 0,
-                                });
-                            }
-                        }
-                        comments.push(span.start..end);
-                        lexer.bump(end - span.end);
-                        continue;
-                    }
-                }
-                let division = if matches!(slash, Raw::SlashAssign) {
-                    Token::SlashAssign
-                } else {
-                    Token::Slash
-                };
-                let starts_regex = previous.is_none_or(|previous| previous.token.precedes_regex());
-
-                if starts_regex {
-                    // Logos may have consumed `/=`. In an operand position,
-                    // that `=` still belongs to an existing regex such as /=/.
-                    match read_regex(&source[span.start + 1..]) {
-                        Some((pattern, consumed)) => {
-                            lexer.bump(span.start + 1 + consumed - span.end);
-                            Token::Regex(pattern)
-                        }
-                        None => division,
-                    }
-                } else {
-                    division
-                }
-            }
-        };
-
-        if stop(&token) {
-            return Ok((scanned, Some(span.start)));
+            Raw::Slash => Token::Slash,
+            Raw::SlashAssign => Token::SlashAssign,
         }
-        match token {
-            Token::LeftParen | Token::LeftBracket => layout_depth += 1,
-            Token::RightParen | Token::RightBracket => {
-                layout_depth = layout_depth.saturating_sub(1);
-            }
-            _ => {}
-        }
-        let (line_start, indent) = if comments.is_empty() {
-            line_position(source, span.start)
-        } else {
-            line_position_without_comments(source, span.start, &comments)
-        };
-        if token != Token::Newline {
-            last_non_newline = Some(scanned.len());
-        }
-        scanned.push(Scanned {
-            token,
-            position: lines.position(span.start),
-            line_start,
-            indent,
-        });
     }
-
-    Ok((scanned, None))
 }
 
 /// Comments have zero indentation width. Only actual whitespace outside them
@@ -662,23 +726,25 @@ fn line_position_without_comments(
     start: usize,
     comments: &[Range<usize>],
 ) -> (bool, usize) {
-    let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
+    let line_start = excerpt(source, 0..start)
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
     let first = comments.partition_point(|comment| comment.end <= line_start);
     let mut cursor = line_start;
     let mut indent = 0;
     let mut leading = true;
-    for comment in &comments[first..] {
+    for comment in comments.get(first..).unwrap_or_default() {
         if comment.start >= start {
             break;
         }
         let end = comment.start.max(cursor);
-        for character in source[cursor..end].chars() {
+        for character in excerpt(source, cursor..end).chars() {
             leading &= character.is_whitespace();
             indent += if character == '\t' { 4 } else { 1 };
         }
         cursor = comment.end.min(start);
     }
-    for character in source[cursor..start].chars() {
+    for character in excerpt(source, cursor..start).chars() {
         leading &= character.is_whitespace();
         indent += if character == '\t' { 4 } else { 1 };
     }
@@ -711,7 +777,7 @@ fn read_regex(remainder: &str) -> Option<(String, usize)> {
             '/' if !in_class => {
                 let mut consumed = index + character.len_utf8();
 
-                for flag in remainder[consumed..].chars() {
+                for flag in remainder.get(consumed..).unwrap_or_default().chars() {
                     if flag.is_ascii_alphabetic() {
                         consumed += flag.len_utf8();
                     } else {
@@ -729,13 +795,10 @@ fn read_regex(remainder: &str) -> Option<(String, usize)> {
 }
 
 fn line_position(source: &str, start: usize) -> (bool, usize) {
-    let before = &source[..start];
-    let line = match before.rfind('\n') {
-        Some(index) => &before[index + 1..],
-        None => before,
-    };
+    let before = excerpt(source, 0..start);
+    let line = before.rsplit_once('\n').map_or(before, |(_, line)| line);
 
-    let line_start = line.chars().all(|character| character.is_whitespace());
+    let line_start = line.chars().all(char::is_whitespace);
     let indent = line
         .chars()
         .map(|character| if character == '\t' { 4 } else { 1 })
@@ -748,17 +811,13 @@ fn line_position(source: &str, start: usize) -> (bool, usize) {
 /// `Indent`, `Dedent` and `Newline` tokens. Layout is suppressed inside `(` and
 /// `[`, where line breaks carry no meaning.
 fn layout(scanned: Vec<Scanned>, end: Position) -> Vec<Spanned> {
-    let mut output: Vec<Spanned> = Vec::new();
-    let mut indents: Vec<usize> = vec![0];
+    let mut layout = Layout::new();
     let mut depth = 0usize;
-    let mut pending_newline = false;
-    // An end-of-line belongs to the line it ends, not to the one that follows.
-    let mut previous = Position::new(1, 1);
 
     for item in scanned {
         if item.token == Token::Newline {
             if depth == 0 {
-                pending_newline = true;
+                layout.pending_newline = true;
             }
             continue;
         }
@@ -771,80 +830,82 @@ fn layout(scanned: Vec<Scanned>, end: Position) -> Vec<Spanned> {
             _ => {}
         }
 
-        let position = item.position;
-
-        if depth_before > 0 {
-            previous = position;
-            output.push(Spanned {
-                token: item.token,
-                position,
-            });
-            continue;
+        if depth_before == 0 {
+            layout.separate(&item);
         }
 
+        layout.previous = item.position;
+        layout.push(item.token, item.position);
+    }
+
+    layout.finish(end)
+}
+
+struct Layout {
+    output: Vec<Spanned>,
+    indents: Vec<usize>,
+    pending_newline: bool,
+    // An end-of-line belongs to the line it ends, not to the one that follows.
+    previous: Position,
+}
+
+impl Layout {
+    fn new() -> Self {
+        Layout {
+            output: Vec::new(),
+            indents: vec![0],
+            pending_newline: false,
+            previous: Position::new(1, 1),
+        }
+    }
+
+    fn push(&mut self, token: Token, position: Position) {
+        self.output.push(Spanned { token, position });
+    }
+
+    fn separate(&mut self, item: &Scanned) {
         if item.line_start {
-            if pending_newline && !output.is_empty() {
-                output.push(Spanned {
-                    token: Token::Newline,
-                    position: previous,
-                });
+            if self.pending_newline && !self.output.is_empty() {
+                self.push(Token::Newline, self.previous);
             }
-            pending_newline = false;
+            self.pending_newline = false;
+            self.indent(item.indent, item.position);
+        } else if self.pending_newline {
+            self.push(Token::Newline, self.previous);
+            self.pending_newline = false;
+        }
+    }
 
-            let current = *indents.last().unwrap_or(&0);
+    fn indent(&mut self, indent: usize, position: Position) {
+        let current = self.indents.last().copied().unwrap_or_default();
 
-            if item.indent > current {
-                indents.push(item.indent);
-                output.push(Spanned {
-                    token: Token::Indent,
-                    position,
-                });
-            } else if item.indent < current {
-                while indents.len() > 1 && *indents.last().unwrap() > item.indent {
-                    indents.pop();
-                    output.push(Spanned {
-                        token: Token::Dedent,
-                        position,
-                    });
-                }
+        if indent > current {
+            self.indents.push(indent);
+            self.push(Token::Indent, position);
+        } else if indent < current {
+            while self.indents.len() > 1 && self.indents.last().is_some_and(|&top| top > indent) {
+                self.indents.pop();
+                self.push(Token::Dedent, position);
             }
-        } else if pending_newline {
-            output.push(Spanned {
-                token: Token::Newline,
-                position: previous,
-            });
-            pending_newline = false;
         }
 
-        previous = position;
-
-        output.push(Spanned {
-            token: item.token,
-            position,
-        });
+        debug_assert_eq!(self.indents.first(), Some(&0));
+        debug_assert!(self.indents.is_sorted_by(|lower, upper| lower < upper));
     }
 
-    if pending_newline {
-        output.push(Spanned {
-            token: Token::Newline,
-            position: previous,
-        });
+    fn finish(mut self, end: Position) -> Vec<Spanned> {
+        if self.pending_newline {
+            self.push(Token::Newline, self.previous);
+        }
+
+        while self.indents.len() > 1 {
+            self.indents.pop();
+            self.push(Token::Dedent, end);
+        }
+
+        self.push(Token::Eof, end);
+        self.output
     }
-
-    while indents.len() > 1 {
-        indents.pop();
-        output.push(Spanned {
-            token: Token::Dedent,
-            position: end,
-        });
-    }
-
-    output.push(Spanned {
-        token: Token::Eof,
-        position: end,
-    });
-
-    output
 }
 
 #[cfg(test)]

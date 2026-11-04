@@ -17,6 +17,7 @@ pub struct Suppose {
 }
 
 impl Suppose {
+    #[must_use]
     pub fn new(target: Option<Expr>, body: Vec<Stmt>) -> Self {
         Suppose { target, body }
     }
@@ -143,11 +144,14 @@ impl Runtime {
                 Some(data) => data
                     .properties
                     .iter()
-                    .map(|(name, value)| (name.clone(), snapshot.freeze(value)))
+                    .map(|(name, property)| (name.clone(), snapshot.freeze(property)))
                     .collect(),
                 None => Vec::new(),
             };
-            snapshot.objects[index] = properties;
+            debug_assert!(index < snapshot.objects.len());
+            if let Some(slot) = snapshot.objects.get_mut(index) {
+                *slot = properties;
+            }
         }
 
         Escaped {
@@ -182,7 +186,10 @@ impl Runtime {
                     .map(|item| self.thawed(item, ids))
                     .collect(),
             ),
-            Frozen::Object(index) => Value::Object(ids[index].clone()),
+            Frozen::Object(index) => {
+                debug_assert!(index < ids.len());
+                ids.get(index).cloned().map_or(Value::Null, Value::Object)
+            }
             Frozen::Value(Value::Class(name))
                 if !self.state.has_class(&name) && !builtins::is_global(&name) =>
             {

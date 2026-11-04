@@ -67,12 +67,14 @@ use r#while::While;
 
 /// What [`Nuc::run`] produced: the value or `return` it ended with, and the
 /// dependency keys recorded during execution.
+#[derive(Debug)]
 pub struct Outcome {
     pub flow: Flow,
     pub dependencies: IndexSet<NodeKey>,
 }
 
 impl Outcome {
+    #[must_use]
     pub fn value(value: Value) -> Self {
         Outcome {
             flow: Flow::Normal(value),
@@ -80,10 +82,12 @@ impl Outcome {
         }
     }
 
+    #[must_use]
     pub fn null() -> Self {
         Outcome::value(Value::Null)
     }
 
+    #[must_use]
     pub fn flow(flow: Flow) -> Self {
         Outcome {
             flow,
@@ -222,7 +226,7 @@ impl Nuc {
                         Nuc::Property(Property::new(Owner::Class(class), property.clone(), value))
                     }
                     Value::Undefined | Value::Null => {
-                        return Err(Error::not_defined(runtime.describe(object, scope)));
+                        return Err(Error::not_defined(object.describe()));
                     }
                     other => {
                         return Err(Error::type_error(format!(
@@ -363,26 +367,7 @@ impl Runtime {
             .as_ref()
             .is_some_and(|node| node.kind != NodeKind::Pending && !self.graph.is_observer(key));
 
-        for dependency in &dependencies {
-            if dependency == key {
-                continue;
-            }
-
-            // An edge that is already there was checked when it was made, and
-            // re-checking costs a walk of everything downstream — which is the
-            // whole graph, on every re-evaluation.
-            let unchanged = existing
-                .as_ref()
-                .is_some_and(|node| node.dependencies.contains(dependency));
-
-            if unchanged {
-                continue;
-            }
-
-            if self.graph.reaches(key, dependency) {
-                return Err(Error::type_error("Circular Dependency"));
-            }
-        }
+        self.check_new_edges(key, &dependencies, existing.as_ref())?;
 
         let sequence = match &existing {
             Some(existing) if self.stack.is_running(key) => existing.sequence,
@@ -391,7 +376,7 @@ impl Runtime {
         let mut node = GraphNode::new(key.clone(), kind, sequence);
         node.node = nuc;
         node.instance = instance;
-        node.dependencies = dependencies.clone();
+        node.dependencies.clone_from(&dependencies);
 
         match &existing {
             Some(existing) => self.replace(node, existing),
@@ -411,8 +396,8 @@ impl Runtime {
         let is_visible = kind != NodeKind::Pending && !self.graph.is_observer(key);
         let shape_changed = !self.stack.is_running(key)
             || was_visible != is_visible
-            || existing.as_ref().is_none_or(|node| {
-                node.kind != kind || !node.dependencies.iter().eq(dependencies.iter())
+            || existing.as_ref().is_none_or(|previous| {
+                previous.kind != kind || !previous.dependencies.iter().eq(dependencies.iter())
             });
 
         if (was_visible || is_visible) && shape_changed {
@@ -433,6 +418,34 @@ impl Runtime {
 
             if was_visible != is_visible {
                 self.queue_shape_change(&ShapeKey::Model);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn check_new_edges(
+        &self,
+        key: &NodeKey,
+        dependencies: &IndexSet<NodeKey>,
+        existing: Option<&GraphNode>,
+    ) -> Result<()> {
+        for dependency in dependencies {
+            if dependency == key {
+                continue;
+            }
+
+            // An edge that is already there was checked when it was made, and
+            // re-checking costs a walk of everything downstream — which is the
+            // whole graph, on every re-evaluation.
+            let unchanged = existing.is_some_and(|node| node.dependencies.contains(dependency));
+
+            if unchanged {
+                continue;
+            }
+
+            if self.graph.reaches(key, dependency) {
+                return Err(Error::type_error("Circular Dependency"));
             }
         }
 
@@ -475,7 +488,7 @@ impl Runtime {
             self.transaction.record_node(&key, Some(existing.clone()));
         }
 
-        node.dependents = existing.dependents.clone();
+        node.dependents.clone_from(&existing.dependents);
 
         // Drop edges from dependencies this declaration no longer has.
         for previous in &existing.dependencies {
@@ -535,7 +548,7 @@ impl Runtime {
 
             let sequence = self.graph.next_sequence();
             let mut placeholder = GraphNode::new(key.clone(), NodeKind::Pending, sequence);
-            placeholder.dependents = node.dependents.clone();
+            placeholder.dependents = node.dependents;
             self.graph.insert(placeholder);
             self.replace_shape_dependencies(key, IndexSet::new());
 

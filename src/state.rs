@@ -20,20 +20,24 @@ pub struct DeclarationKey(String);
 
 impl DeclarationKey {
     /// `$Person.mortal`.
+    #[must_use]
     pub fn property(class: &str, property: &str) -> Self {
         DeclarationKey(format!("${class}.{property}"))
     }
 
     /// `if(this.age>18)`.
+    #[must_use]
     pub fn conditional(condition: &Expr) -> Self {
         DeclarationKey(format!("if({condition})"))
     }
 
     /// A block of statements, keyed by their source.
+    #[must_use]
     pub fn block(statements: &[Stmt]) -> Self {
         DeclarationKey(format!("block({})", generate_all(statements)))
     }
 
+    #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -77,6 +81,7 @@ impl ClassData {
         }
     }
 
+    #[must_use]
     pub fn declarations_in_order(&self) -> Vec<Declaration> {
         let mut declarations: Vec<Declaration> = self.declarations.values().cloned().collect();
         declarations.sort_by_key(|declaration| declaration.sequence);
@@ -103,14 +108,17 @@ pub struct State {
 }
 
 impl State {
+    #[must_use]
     pub fn new() -> Self {
         State::default()
     }
 
+    #[must_use]
     pub fn variable(&self, name: &str) -> Option<&Value> {
         self.variables.get(name)
     }
 
+    #[must_use]
     pub fn has_variable(&self, name: &str) -> bool {
         self.variables.contains_key(name)
     }
@@ -131,27 +139,33 @@ impl State {
         self.histories.insert(key, history);
     }
 
+    #[must_use]
     pub fn has_object(&self, id: &ObjectId) -> bool {
         self.objects.contains_key(id)
     }
 
+    #[must_use]
     pub fn function(&self, name: &str) -> Option<&Arc<Function>> {
         self.functions.get(name)
     }
 
+    #[must_use]
     pub fn has_function(&self, name: &str) -> bool {
         self.functions.contains_key(name)
     }
 
+    #[must_use]
     pub fn has_class(&self, name: &str) -> bool {
         self.classes.contains_key(name)
     }
 
     /// How many classes are defined. `Class.length` reads this.
+    #[must_use]
     pub fn class_count(&self) -> usize {
         self.classes.len()
     }
 
+    #[must_use]
     pub fn object(&self, id: &ObjectId) -> Option<&ObjectData> {
         self.objects.get(id)
     }
@@ -160,18 +174,30 @@ impl State {
         self.objects.get_mut(id)
     }
 
+    #[must_use]
     pub fn property(&self, id: &ObjectId, property: &str) -> Option<&Value> {
         self.objects
             .get(id)
             .and_then(|object| object.properties.get(property))
     }
 
+    #[must_use]
     pub fn class(&self, name: &str) -> Option<&ClassData> {
         self.classes.get(name)
     }
 
     pub(crate) fn classes(&self) -> impl Iterator<Item = &ClassData> {
         self.classes.values()
+    }
+
+    pub(crate) fn lineage<'s>(
+        &'s self,
+        class: Option<&'s ClassData>,
+    ) -> impl Iterator<Item = &'s ClassData> {
+        std::iter::successors(class, |data| {
+            data.parent.as_deref().and_then(|parent| self.class(parent))
+        })
+        .take(self.classes.len())
     }
 
     pub fn class_mut(&mut self, name: &str) -> Option<&mut ClassData> {
@@ -257,9 +283,13 @@ impl State {
 /// differ.
 impl Runtime {
     fn append_history(&mut self, key: HistoryKey, value: &Value) {
-        let history = self.state.histories.entry(key.clone()).or_default();
-        self.transaction.record_history_append(&key, history.len());
-        history.push(value.clone());
+        let length = self.state.histories.get(&key).map_or(0, History::len);
+        self.transaction.record_history_append(&key, length);
+        self.state
+            .histories
+            .entry(key)
+            .or_default()
+            .push(value.clone());
     }
 
     fn remove_history(&mut self, key: HistoryKey) {
@@ -333,16 +363,13 @@ impl Runtime {
             .state
             .object_mut(object)
             .and_then(|data| data.properties.shift_remove_full(property));
-        let before = match removed {
-            Some((index, _, value)) => {
-                self.transaction
-                    .record_property_removed(object, property, index, value.clone());
-                Some(value)
-            }
-            None => {
-                self.transaction.record_property(object, property, None);
-                None
-            }
+        let before = if let Some((index, _, value)) = removed {
+            self.transaction
+                .record_property_removed(object, property, index, value.clone());
+            Some(value)
+        } else {
+            self.transaction.record_property(object, property, None);
+            None
         };
         self.remove_history(HistoryKey::Property(object.clone(), property.to_string()));
 

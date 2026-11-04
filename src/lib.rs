@@ -38,6 +38,51 @@
 //! their variants. Execution context is carried by scopes and graph nodes.
 //! Statements follow four phases: `before`, `run`, `graph`, and `after`.
 
+#![warn(
+    clippy::pedantic,
+    clippy::debug_assert_with_mut_call,
+    clippy::exit,
+    clippy::expect_used,
+    clippy::format_push_string,
+    clippy::indexing_slicing,
+    clippy::infinite_loop,
+    clippy::let_underscore_must_use,
+    clippy::let_underscore_untyped,
+    clippy::panic,
+    clippy::panic_in_result_fn,
+    clippy::shadow_unrelated,
+    clippy::string_slice,
+    clippy::todo,
+    clippy::unimplemented,
+    clippy::unreachable,
+    clippy::unused_result_ok,
+    clippy::unwrap_used,
+    missing_debug_implementations,
+    rust_2018_idioms,
+    single_use_lifetimes,
+    trivial_casts,
+    trivial_numeric_casts,
+    unreachable_pub,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications
+)]
+#![allow(clippy::missing_errors_doc)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::expect_used,
+        clippy::indexing_slicing,
+        clippy::panic,
+        clippy::panic_in_result_fn,
+        clippy::shadow_unrelated,
+        clippy::string_slice,
+        clippy::too_many_lines,
+        clippy::unreachable,
+        clippy::unwrap_used
+    )
+)]
+
 pub mod builtins;
 pub mod error;
 pub mod expression;
@@ -45,6 +90,7 @@ pub mod graph;
 mod history;
 pub mod lang;
 pub mod nuc;
+mod number;
 pub mod reasoning;
 pub mod runtime;
 pub mod scope;

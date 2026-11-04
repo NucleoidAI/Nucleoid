@@ -244,6 +244,7 @@ pub enum Noun {
 impl Noun {
     /// The noun as written, which is also the name of the method that
     /// `NOUN of OPERAND` calls as `OPERAND.NOUN()`.
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Noun::Sum => "sum",
@@ -254,6 +255,7 @@ impl Noun {
     }
 
     /// The noun `name` spells exactly, or `None` for every other name.
+    #[must_use]
     pub fn from_name(name: &str) -> Option<Noun> {
         match name {
             "sum" => Some(Noun::Sum),
@@ -272,6 +274,7 @@ pub enum Quantifier {
 }
 
 impl Quantifier {
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Quantifier::All => "all",
@@ -279,6 +282,7 @@ impl Quantifier {
         }
     }
 
+    #[must_use]
     pub fn starting(word: &Token, binder: &Token, keyword: &Token) -> Option<Quantifier> {
         match (word, binder, keyword) {
             (Token::Identifier(word), Token::Identifier(_), Token::Keyword(Keyword::In)) => {
@@ -356,13 +360,19 @@ impl Expr {
         }
     }
 
+    /// Renders a path for an error message, preferring the source spelling.
+    pub(crate) fn describe(&self) -> String {
+        self.path().unwrap_or_else(|| self.to_string())
+    }
+
     /// The dotted path this expression denotes, when it is a plain identifier
     /// chain such as `a`, `person1.name` or `$Person.mortal`.
+    #[must_use]
     pub fn path(&self) -> Option<String> {
         match self {
-            Expr::Identifier(name) => Some(name.clone()),
-            Expr::ClassRef(name) => Some(name.clone()),
-            Expr::ObjectRef(id) => Some(id.clone()),
+            Expr::Identifier(name) | Expr::ClassRef(name) | Expr::ObjectRef(name) => {
+                Some(name.clone())
+            }
             Expr::Member { object, property } => {
                 object.path().map(|base| format!("{base}.{property}"))
             }
@@ -371,6 +381,7 @@ impl Expr {
     }
 
     /// The leftmost node of a path expression.
+    #[must_use]
     pub fn first(&self) -> Option<&Expr> {
         match self {
             Expr::Identifier(_) | Expr::ClassRef(_) | Expr::ObjectRef(_) | Expr::This => Some(self),
@@ -385,6 +396,7 @@ impl Expr {
     }
 
     /// What this node is read from — the `a.b` of `a.b.c`.
+    #[must_use]
     pub fn object(&self) -> Option<&Expr> {
         match self {
             Expr::Member { object, .. }
@@ -395,6 +407,7 @@ impl Expr {
         }
     }
 
+    #[must_use]
     pub fn contains_reasoning(&self) -> bool {
         match self {
             Expr::Reason { .. } | Expr::Model => true,
@@ -426,12 +439,9 @@ impl Expr {
                 ..
             } => collection.contains_reasoning() || condition.contains_reasoning(),
             Expr::Call { callee, arguments } => {
-                callee.contains_reasoning()
-                    || arguments
-                        .iter()
-                        .any(|argument| argument.contains_reasoning())
+                callee.contains_reasoning() || arguments.iter().any(Expr::contains_reasoning)
             }
-            Expr::List(items) => items.iter().any(|item| item.contains_reasoning()),
+            Expr::List(items) => items.iter().any(Expr::contains_reasoning),
             Expr::ObjectLiteral(entries) => {
                 entries.iter().any(|(_, value)| value.contains_reasoning())
             }
@@ -452,6 +462,7 @@ impl Expr {
     }
 
     /// The rightmost name of a path expression — the `c` of `a.b.c`.
+    #[must_use]
     pub fn last(&self) -> Option<&str> {
         match self {
             Expr::Identifier(name) | Expr::ClassRef(name) | Expr::ObjectRef(name) => Some(name),
@@ -465,6 +476,7 @@ impl Expr {
 ///
 /// Instantiation uses call syntax rather than a separate variant;
 /// [`new::New`] recognizes calls to class names.
+#[derive(Debug)]
 pub enum Ast<'a> {
     Literal(literal::Literal<'a>),
     Identifier(identifier::Identifier<'a>),
@@ -480,6 +492,7 @@ pub enum Ast<'a> {
 }
 
 impl<'a> Ast<'a> {
+    #[must_use]
     pub fn convert(node: &'a Expr) -> Ast<'a> {
         match node {
             Expr::Null | Expr::Bool(_) | Expr::Number(_) | Expr::String(_) | Expr::Regex(_) => {
@@ -528,6 +541,7 @@ impl<'a> Ast<'a> {
         }
     }
 
+    #[must_use]
     pub fn node(&self) -> &'a Expr {
         match self {
             Ast::Literal(node) => node.node,
@@ -545,18 +559,22 @@ impl<'a> Ast<'a> {
     }
 
     /// Renders this node as source.
+    #[must_use]
     pub fn generate(&self) -> String {
         self.node().to_string()
     }
 
+    #[must_use]
     pub fn first(&self) -> Option<&'a Expr> {
         self.node().first()
     }
 
+    #[must_use]
     pub fn object(&self) -> Option<&'a Expr> {
         self.node().object()
     }
 
+    #[must_use]
     pub fn last(&self) -> Option<&'a str> {
         self.node().last()
     }
@@ -571,7 +589,9 @@ impl Runtime {
             return Err(Error::type_error("Maximum expression depth exceeded"));
         }
 
+        let depth = self.depth;
         let result = Ast::convert(expression).resolve(self, scope);
+        debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
         result
     }
@@ -589,11 +609,6 @@ impl Runtime {
 
         Ok(values)
     }
-
-    /// Renders a path for an error message, preferring the source spelling.
-    pub(crate) fn describe(&self, expression: &Expr, _scope: &Scope) -> String {
-        expression.path().unwrap_or_else(|| expression.to_string())
-    }
 }
 
 // -- walking -----------------------------------------------------------------
@@ -610,8 +625,8 @@ pub(crate) fn collect_assigned_names(statement: &Stmt, names: &mut Vec<String>) 
             ..
         } => names.push(name.clone()),
         Stmt::Block(nested) => {
-            for statement in nested {
-                collect_assigned_names(statement, names);
+            for child in nested {
+                collect_assigned_names(child, names);
             }
         }
         Stmt::If {
@@ -619,8 +634,8 @@ pub(crate) fn collect_assigned_names(statement: &Stmt, names: &mut Vec<String>) 
             alternate,
             ..
         } => {
-            for statement in consequent {
-                collect_assigned_names(statement, names);
+            for child in consequent {
+                collect_assigned_names(child, names);
             }
             if let Some(alternate) = alternate {
                 collect_assigned_names(alternate, names);
@@ -648,15 +663,15 @@ pub(crate) fn collect_read_roots(
                 matches!(target, Expr::Member { .. }),
             ));
         }
-        Stmt::Expression(expression) | Stmt::Throw(expression) | Stmt::Delete(expression) => {
-            roots.extend(runtime.expression_roots(expression, scope, false))
-        }
-        Stmt::Return(Some(expression)) => {
-            roots.extend(runtime.expression_roots(expression, scope, false))
+        Stmt::Expression(expression)
+        | Stmt::Throw(expression)
+        | Stmt::Delete(expression)
+        | Stmt::Return(Some(expression)) => {
+            roots.extend(runtime.expression_roots(expression, scope, false));
         }
         Stmt::Block(nested) => {
-            for statement in nested {
-                collect_read_roots(statement, roots, runtime, scope);
+            for child in nested {
+                collect_read_roots(child, roots, runtime, scope);
             }
         }
         Stmt::If {
@@ -665,8 +680,8 @@ pub(crate) fn collect_read_roots(
             alternate,
         } => {
             roots.extend(runtime.expression_roots(condition, scope, false));
-            for statement in consequent {
-                collect_read_roots(statement, roots, runtime, scope);
+            for child in consequent {
+                collect_read_roots(child, roots, runtime, scope);
             }
             if let Some(alternate) = alternate {
                 collect_read_roots(alternate, roots, runtime, scope);
@@ -688,7 +703,7 @@ pub(crate) fn find_class_reference_statement(statement: &Stmt, found: &mut Optio
             take(found, value);
         }
         Stmt::Expression(expression) | Stmt::Throw(expression) | Stmt::Delete(expression) => {
-            take(found, expression)
+            take(found, expression);
         }
         Stmt::Return(Some(expression)) => take(found, expression),
         Stmt::If {
@@ -697,16 +712,16 @@ pub(crate) fn find_class_reference_statement(statement: &Stmt, found: &mut Optio
             alternate,
         } => {
             take(found, condition);
-            for statement in consequent {
-                find_class_reference_statement(statement, found);
+            for child in consequent {
+                find_class_reference_statement(child, found);
             }
             if let Some(alternate) = alternate {
                 find_class_reference_statement(alternate, found);
             }
         }
         Stmt::Block(statements) => {
-            for statement in statements {
-                find_class_reference_statement(statement, found);
+            for child in statements {
+                find_class_reference_statement(child, found);
             }
         }
         _ => {}

@@ -111,6 +111,7 @@ pub struct Transaction {
 }
 
 impl Transaction {
+    #[must_use]
     pub fn new() -> Self {
         Transaction::default()
     }
@@ -134,14 +135,17 @@ impl Transaction {
 
     /// Whether a before-image is still wanted, so a caller can avoid cloning one
     /// that would be thrown away.
+    #[must_use]
     pub fn needs_class(&self, name: &str) -> bool {
         self.active && !self.recorded.contains(&Slot::Class(name.to_string()))
     }
 
+    #[must_use]
     pub fn needs_node(&self, key: &NodeKey) -> bool {
         self.active && !self.recorded.contains(&Slot::Node(key.clone()))
     }
 
+    #[must_use]
     pub fn needs_object(&self, id: &ObjectId) -> bool {
         self.active && !self.recorded.contains(&Slot::Object(id.clone()))
     }
@@ -159,6 +163,7 @@ impl Transaction {
     /// Undoes everything recorded since a mark, leaving earlier entries for the
     /// enclosing transaction.
     pub fn rollback_to(&mut self, mark: usize, state: &mut State, graph: &mut Graph) {
+        debug_assert!(mark <= self.entries.len());
         while self.entries.len() > mark {
             let Some(entry) = self.entries.pop() else {
                 break;
@@ -170,6 +175,7 @@ impl Transaction {
         self.recorded.clear();
     }
 
+    #[must_use]
     pub fn is_active(&self) -> bool {
         self.active
     }

@@ -21,10 +21,12 @@ pub struct Class {
 }
 
 impl Class {
+    #[must_use]
     pub fn new(declaration: ClassDecl) -> Self {
         Class { declaration }
     }
 
+    #[must_use]
     pub fn key(&self) -> NodeKey {
         NodeKey::class(&self.declaration.name)
     }
@@ -34,22 +36,22 @@ impl Class {
         let mut ancestors = IndexSet::from([name.as_str()]);
         let mut parent = self.declaration.parent.as_deref();
 
-        while let Some(name) = parent {
-            if !ancestors.insert(name) {
+        while let Some(ancestor) = parent {
+            if !ancestors.insert(ancestor) {
                 return Err(Error::type_error("Circular Inheritance"));
             }
             parent = runtime
                 .state
-                .class(name)
+                .class(ancestor)
                 .and_then(|class| class.parent.as_deref());
         }
 
         let existing = runtime.state.class(name).cloned();
 
         let mut data = ClassData::new(name.clone());
-        data.parent = self.declaration.parent.clone();
-        data.parameters = self.declaration.parameters.clone();
-        data.constructor = self.declaration.constructor.clone();
+        data.parent.clone_from(&self.declaration.parent);
+        data.parameters.clone_from(&self.declaration.parameters);
+        data.constructor.clone_from(&self.declaration.constructor);
 
         for method in &self.declaration.methods {
             if let Some(method_name) = &method.name {
@@ -93,10 +95,10 @@ impl ClassData {
             return;
         };
 
-        self.parameters = initializer.parameters.clone();
+        self.parameters.clone_from(&initializer.parameters);
 
         if let FunctionBody::Block(body) = &initializer.body {
-            self.constructor = body.clone();
+            self.constructor.clone_from(body);
         }
     }
 }
@@ -144,42 +146,7 @@ impl Runtime {
         statement: Stmt,
         scope: &mut Scope,
     ) -> Result<()> {
-        // `$Class.property = Other()` creates one object that every instance
-        // shares, rather than one per instance.
-        let statement = match &statement {
-            Stmt::Assign { target, value } => match (target, self.instantiation(value)) {
-                (
-                    Expr::Member {
-                        object,
-                        property: name,
-                    },
-                    Some((instantiated, arguments)),
-                ) if matches!(object.as_ref(), Expr::ClassRef(_)) => {
-                    let id = ObjectId::shared(class, name);
-                    let named = arguments
-                        .iter()
-                        .any(|argument| argument.named_argument().is_some());
-                    let object = Object::new(id.clone(), instantiated, arguments);
-                    // Named/mixed invocations evaluate in their actual caller's
-                    // scope. Keep the accepted global-only shared-construction
-                    // scope for every positional constructor.
-                    let mut global_scope = Scope::new();
-                    let argument_scope = if named {
-                        &mut *scope
-                    } else {
-                        &mut global_scope
-                    };
-                    object.run(self, argument_scope)?;
-
-                    Stmt::Assign {
-                        target: target.clone(),
-                        value: Expr::ObjectRef(id.to_string()),
-                    }
-                }
-                _ => statement.clone(),
-            },
-            other => other.clone(),
-        };
+        let statement = self.share_instantiation(class, statement, scope)?;
 
         self.check_class_cycle(class, &statement)?;
 
@@ -210,20 +177,56 @@ impl Runtime {
         Ok(())
     }
 
+    fn share_instantiation(
+        &mut self,
+        class: &str,
+        statement: Stmt,
+        scope: &mut Scope,
+    ) -> Result<Stmt> {
+        // `$Class.property = Other()` creates one object that every instance
+        // shares, rather than one per instance.
+        let Stmt::Assign { target, value } = &statement else {
+            return Ok(statement);
+        };
+        let Some((instantiated, arguments)) = self.instantiation(value) else {
+            return Ok(statement);
+        };
+        let Expr::Member { object, property } = target else {
+            return Ok(statement);
+        };
+        if !matches!(object.as_ref(), Expr::ClassRef(_)) {
+            return Ok(statement);
+        }
+
+        let id = ObjectId::shared(class, property);
+        let named = arguments
+            .iter()
+            .any(|argument| argument.named_argument().is_some());
+        let shared = Object::new(id.clone(), instantiated, arguments);
+        // Named/mixed invocations evaluate in their actual caller's
+        // scope. Keep the accepted global-only shared-construction
+        // scope for every positional constructor.
+        let mut global_scope = Scope::new();
+        let argument_scope = if named {
+            &mut *scope
+        } else {
+            &mut global_scope
+        };
+        shared.run(self, argument_scope)?;
+
+        Ok(Stmt::Assign {
+            target: target.clone(),
+            value: Expr::ObjectRef(id.to_string()),
+        })
+    }
+
     pub(crate) fn instances_for_class(&self, class: &str) -> Vec<ObjectId> {
         self.state
             .classes()
             .filter(|candidate| {
-                let mut current = Some(*candidate);
-
-                while let Some(data) = current {
-                    if data.name == class {
-                        return true;
-                    }
-                    current = data.parent.as_ref().and_then(|name| self.state.class(name));
-                }
-
-                false
+                self.state
+                    .lineage(Some(candidate))
+                    .any(|data| data.name == class)
             })
             .flat_map(|data| data.instances.iter().cloned())
             .collect()
@@ -235,21 +238,20 @@ impl Runtime {
         instance: &ObjectId,
         property: &str,
     ) -> bool {
-        let mut current = self
+        let start = self
             .state
             .object(instance)
             .and_then(|object| object.class.as_ref())
             .and_then(|name| self.state.class(name));
         let mut overridden = false;
 
-        while let Some(data) = current {
+        for data in self.state.lineage(start) {
             if data.name == class {
                 return overridden;
             }
             overridden |= data
                 .declarations
                 .contains_key(&DeclarationKey::property(&data.name, property));
-            current = data.parent.as_ref().and_then(|name| self.state.class(name));
         }
 
         false
@@ -293,8 +295,8 @@ impl Runtime {
                 .declarations
                 .get(&DeclarationKey::property(class, &current))
             {
-                if let Stmt::Assign { value, .. } = &declaration.statement {
-                    pending.extend(Expression::new(value).class_rule_properties(class, &current));
+                if let Stmt::Assign { value: rule, .. } = &declaration.statement {
+                    pending.extend(Expression::new(rule).class_rule_properties(class, &current));
                 }
             }
         }
@@ -318,7 +320,8 @@ impl Runtime {
         let result = self.with_tracking(TrackingMode::Isolated, |runtime| {
             runtime.execute(statement, &mut scope)
         });
-        self.instances.pop();
+        let applied = self.instances.pop();
+        debug_assert_eq!(applied.as_ref(), Some(instance));
         self.restore_imperative(nested);
 
         result.map(|_| ())
@@ -328,16 +331,7 @@ impl Runtime {
     /// they were declared.
     pub(crate) fn declarations_for(&self, class_name: &str) -> Vec<Declaration> {
         let mut declarations = Vec::new();
-        let mut chain = Vec::new();
-        let mut current = Some(class_name.to_string());
-
-        while let Some(name) = current {
-            let Some(class) = self.state.class(&name) else {
-                break;
-            };
-            chain.push(class);
-            current = class.parent.clone();
-        }
+        let chain: Vec<&ClassData> = self.state.lineage(self.state.class(class_name)).collect();
 
         for class in chain.into_iter().rev() {
             declarations.extend(class.declarations_in_order());

@@ -314,7 +314,7 @@ fn function_caller_receiver_scopes_explicit_returns_and_noncapture_stay_unchange
             let mut node = Nuc::convert(&mut runtime, &mut scope, &statements[0]).unwrap();
             let result = node.run(&mut runtime, &mut scope);
             if expression == "missing" {
-                let error = result.err().expect("missing must fail");
+                let error = result.expect_err("missing must fail");
                 assert_eq!(error.kind(), ErrorKind::Reference);
                 assert_eq!(error.message(), "missing is not defined");
             } else {

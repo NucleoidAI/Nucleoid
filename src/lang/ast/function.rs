@@ -10,18 +10,23 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
+#[derive(Debug)]
 pub struct Function<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Function<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Function { node }
     }
 
     pub fn resolve(&self) -> Result<Value> {
         let Expr::Function(function) = self.node else {
-            unreachable!("Function only wraps Expr::Function")
+            return Err(Error::type_error(format!(
+                "{} is not a function",
+                self.node
+            )));
         };
 
         Ok(Value::Function(function.clone()))

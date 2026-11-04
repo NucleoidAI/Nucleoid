@@ -18,6 +18,7 @@ pub struct Try {
 }
 
 impl Try {
+    #[must_use]
     pub fn new(body: Vec<Stmt>, parameter: String, catch: Vec<Stmt>) -> Self {
         Try {
             body,

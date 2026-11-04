@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "0 6 * * *"
 
 permissions:
   contents: read
@@ -29,6 +31,11 @@ jobs:
 
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features --locked -- -D warnings
+
+      - name: Check documentation
+        run: cargo doc --no-deps --lib --document-private-items --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
 
       - name: Run tests
         run: cargo test --all-features --locked

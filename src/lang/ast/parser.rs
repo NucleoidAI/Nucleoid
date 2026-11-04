@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+use std::ops::Range;
 use std::sync::Arc;
 
 #[cfg(test)]
 use super::lexer::tokenize;
 use super::lexer::{
-    Keyword, Spanned, SyntaxOptions, Token, interpolation_end, tokenize_with_options,
+    Keyword, Spanned, SyntaxOptions, Token, excerpt, interpolation_end, tokenize_with_options,
 };
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
@@ -15,6 +16,7 @@ use crate::reasoning::Stage;
 
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
+#[derive(Debug)]
 pub struct Program {
     pub statements: Vec<Stmt>,
     pub positions: Vec<Position>,
@@ -187,23 +189,20 @@ impl Parser {
     fn peek(&self) -> &Token {
         self.tokens
             .get(self.position)
-            .map(|spanned| &spanned.token)
-            .unwrap_or(&Token::Eof)
+            .map_or(&Token::Eof, |spanned| &spanned.token)
     }
 
     fn peek_at(&self, offset: usize) -> &Token {
         self.tokens
             .get(self.position + offset)
-            .map(|spanned| &spanned.token)
-            .unwrap_or(&Token::Eof)
+            .map_or(&Token::Eof, |spanned| &spanned.token)
     }
 
     fn advance(&mut self) -> Token {
         let token = self
             .tokens
             .get(self.position)
-            .map(|spanned| spanned.token.clone())
-            .unwrap_or(Token::Eof);
+            .map_or(Token::Eof, |spanned| spanned.token.clone());
 
         if self.position < self.tokens.len() {
             self.position += 1;
@@ -217,8 +216,7 @@ impl Parser {
         self.tokens
             .get(self.position)
             .or_else(|| self.tokens.last())
-            .map(|spanned| spanned.position)
-            .unwrap_or_else(|| Position::new(1, 1))
+            .map_or_else(|| Position::new(1, 1), |spanned| spanned.position)
     }
 
     /// A syntax error placed where the parser is looking.
@@ -390,6 +388,7 @@ impl Parser {
             return Err(self.error("Statements are nested too deeply"));
         }
 
+        let depth = self.depth;
         let result = self.destructuring().and_then(|declarations| {
             match declarations {
                 Some(declarations) => statements.extend(declarations),
@@ -397,6 +396,7 @@ impl Parser {
             }
             Ok(())
         });
+        debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
         result
     }
@@ -469,7 +469,10 @@ impl Parser {
         Target {
             name: name.to_string(),
             read,
-            position: self.tokens[self.position + offset].position,
+            position: self
+                .tokens
+                .get(self.position + offset)
+                .map_or_else(|| self.here(), |spanned| spanned.position),
         }
     }
 
@@ -561,22 +564,7 @@ impl Parser {
                 self.advance();
                 Ok(Stmt::Pass)
             }
-            Token::Keyword(Keyword::Return) => {
-                self.advance();
-
-                if matches!(
-                    self.peek(),
-                    Token::Newline
-                        | Token::Semicolon
-                        | Token::Dedent
-                        | Token::RightBrace
-                        | Token::Eof
-                ) {
-                    Ok(Stmt::Return(None))
-                } else {
-                    Ok(Stmt::Return(Some(self.expression()?)))
-                }
-            }
+            Token::Keyword(Keyword::Return) => self.return_statement(),
             Token::Keyword(Keyword::Throw) => {
                 self.advance();
                 Ok(Stmt::Throw(self.expression()?))
@@ -587,16 +575,7 @@ impl Parser {
             }
             Token::LeftBrace => Ok(Stmt::Block(self.braced()?)),
             Token::Identifier(name) if self.is_type_declaration() => {
-                self.advance();
-                self.advance();
-                let type_name = match self.advance() {
-                    Token::Identifier(type_name) => type_name,
-                    other => {
-                        return Err(
-                            self.error(format!("Expected a type but found {}", other.describe()))
-                        );
-                    }
-                };
+                let type_name = self.declared_type()?;
                 Ok(Stmt::Declaration { name, type_name })
             }
             Token::Identifier(_) if self.is_assertion_statement_at(0) => {
@@ -620,6 +599,19 @@ impl Parser {
 
                 Ok(simple_statement(expression))
             }
+        }
+    }
+
+    fn return_statement(&mut self) -> Result<Stmt> {
+        self.advance();
+
+        if matches!(
+            self.peek(),
+            Token::Newline | Token::Semicolon | Token::Dedent | Token::RightBrace | Token::Eof
+        ) {
+            Ok(Stmt::Return(None))
+        } else {
+            Ok(Stmt::Return(Some(self.expression()?)))
         }
     }
 
@@ -662,13 +654,12 @@ impl Parser {
         }
 
         let attempt = (self.position, self.depth);
-        let outcome = match self.suppose_premises.get(&attempt) {
-            Some(outcome) => outcome.clone(),
-            None => {
-                let outcome = self.attempt_suppose_premise();
-                self.suppose_premises.insert(attempt, outcome.clone());
-                outcome
-            }
+        let outcome = if let Some(outcome) = self.suppose_premises.get(&attempt) {
+            outcome.clone()
+        } else {
+            let outcome = self.attempt_suppose_premise();
+            self.suppose_premises.insert(attempt, outcome.clone());
+            outcome
         };
         let SupposePremise { premise, end } = outcome?;
         self.position = end;
@@ -689,8 +680,11 @@ impl Parser {
         let clause = self.clause_expression().ok()?;
         let owns_colon = self.check(&Token::Colon)
             && !matches!(
-                &self.tokens[self.position - 1].token,
-                Token::Identifier(name) if name == "lambda"
+                self.position
+                    .checked_sub(1)
+                    .and_then(|previous| self.tokens.get(previous))
+                    .map(|spanned| &spanned.token),
+                Some(Token::Identifier(name)) if name == "lambda"
             );
         owns_colon.then_some(clause)
     }
@@ -815,7 +809,7 @@ impl Parser {
                 Token::Identifier(_)
                     if delimiters.is_empty() && self.quantifier_at(offset).is_some() =>
                 {
-                    conditionals += 1
+                    conditionals += 1;
                 }
                 Token::Colon if delimiters.is_empty() && conditionals > 0 => conditionals -= 1,
                 Token::Colon if delimiters.is_empty() => {
@@ -843,13 +837,12 @@ impl Parser {
         }
 
         let attempt = (self.position, self.depth);
-        let outcome = match self.while_conditions.get(&attempt) {
-            Some(outcome) => outcome.clone(),
-            None => {
-                let outcome = self.attempt_while_condition();
-                self.while_conditions.insert(attempt, outcome.clone());
-                outcome
-            }
+        let outcome = if let Some(outcome) = self.while_conditions.get(&attempt) {
+            outcome.clone()
+        } else {
+            let outcome = self.attempt_while_condition();
+            self.while_conditions.insert(attempt, outcome.clone());
+            outcome
         };
         let LoopCondition { condition, colon } = outcome?;
         self.position = colon;
@@ -931,7 +924,7 @@ impl Parser {
     }
 
     /// Recognizes only the real-indented colon path already accepted by
-    /// suite(), without consuming tokens or skipping header separators.
+    /// `suite()`, without consuming tokens or skipping header separators.
     fn has_indented_suite(&self, colon_offset: usize) -> bool {
         matches!(self.peek_at(colon_offset), Token::Colon)
             && self.has_indented_body(colon_offset + 1)
@@ -1050,20 +1043,27 @@ impl Parser {
     }
 
     /// Only used after complete lookahead has qualified an untyped name.
-    /// In particular, leave a final suite colon for suite(), not parameter().
-    fn untyped_parameter(&mut self) -> Parameter {
-        let Token::Identifier(name) = self.advance() else {
-            unreachable!("lookahead checked the untyped parameter identifier")
-        };
-        Parameter {
-            name,
-            type_name: None,
-            default: None,
-            rest: false,
+    /// In particular, leave a final suite colon for `suite()`, not `parameter()`.
+    fn untyped_parameter(&mut self) -> Result<Parameter> {
+        match self.advance() {
+            Token::Identifier(name) => Ok(Parameter {
+                name,
+                type_name: None,
+                default: None,
+                rest: false,
+            }),
+            other => Err(self.error(format!(
+                "Expected a parameter but found {}",
+                other.describe()
+            ))),
         }
     }
 
     fn function_statement(&mut self) -> Result<Stmt> {
+        self.function_declaration().map(Stmt::Function)
+    }
+
+    fn function_declaration(&mut self) -> Result<Arc<Function>> {
         self.expect(&Token::Keyword(Keyword::Def))?;
 
         let name = match self.advance() {
@@ -1073,6 +1073,17 @@ impl Parser {
             }
         };
 
+        let parameters = self.named_parameters()?;
+        let body = self.named_body()?;
+
+        Ok(Arc::new(Function {
+            name: Some(name),
+            parameters,
+            body: FunctionBody::Block(body),
+        }))
+    }
+
+    fn named_parameters(&mut self) -> Result<Vec<Parameter>> {
         // Either arrow spelling, `=>` or `->`, ends a bare arrow header.
         let bare_arrow = matches!(self.peek(), Token::Identifier(_))
             && (self.peek_at(1).is_arrow()
@@ -1100,59 +1111,58 @@ impl Parser {
         let comma_free_end = self
             .comma_free_arrow_end()
             .or_else(|| self.comma_free_block_end());
-        let parameters = if let Some(end) = comma_free_end {
+        if let Some(end) = comma_free_end {
             (0..end).map(|_| self.untyped_parameter()).collect()
         } else if let Some(end) = bare_multiple_end {
-            let delimiter_position = self.position + end;
-            let mut parameters = Vec::new();
-            loop {
-                let parameter = if self.position + 1 == delimiter_position
-                    && matches!(self.peek_at(1), Token::Colon)
-                {
-                    // A final untyped parameter's colon belongs to suite(),
-                    // not parameter()'s annotation parser.
-                    self.untyped_parameter()
-                } else {
-                    self.parameter()?
-                };
-                parameters.push(parameter);
-                if !self.eat(&Token::Comma) {
-                    break;
-                }
-            }
-            // Leave the complete list's arrow or suite colon for the body.
-            parameters
+            self.bare_parameters(self.position + end)
         } else if bare_arrow || bare_typed_block {
-            vec![self.parameter()?]
+            Ok(vec![self.parameter()?])
         } else if bare_block {
-            vec![self.untyped_parameter()]
+            Ok(vec![self.untyped_parameter()?])
         } else {
             // Do not skip separators or consume other prefixes: preserve the
             // parenthesized parameter parser's diagnostics and positions.
-            self.parameters()?
-        };
-        let body = if self.eat_arrow() {
-            let indented = self.has_indented_body(0);
-            if indented {
-                self.skip_newlines();
-                self.expect(&Token::Indent)?;
-                self.skip_newlines();
-            }
-            let expression = self.expression()?;
-            if indented {
-                self.skip_newlines();
-                self.expect(&Token::Dedent)?;
-            }
-            vec![Stmt::Return(Some(expression))]
-        } else {
-            self.suite()?
-        };
+            self.parameters()
+        }
+    }
 
-        Ok(Stmt::Function(Arc::new(Function {
-            name: Some(name),
-            parameters,
-            body: FunctionBody::Block(body),
-        })))
+    fn bare_parameters(&mut self, delimiter_position: usize) -> Result<Vec<Parameter>> {
+        let mut parameters = Vec::new();
+        loop {
+            let parameter = if self.position + 1 == delimiter_position
+                && matches!(self.peek_at(1), Token::Colon)
+            {
+                // A final untyped parameter's colon belongs to suite(),
+                // not parameter()'s annotation parser.
+                self.untyped_parameter()?
+            } else {
+                self.parameter()?
+            };
+            parameters.push(parameter);
+            if !self.eat(&Token::Comma) {
+                break;
+            }
+        }
+        // Leave the complete list's arrow or suite colon for the body.
+        Ok(parameters)
+    }
+
+    fn named_body(&mut self) -> Result<Vec<Stmt>> {
+        if !self.eat_arrow() {
+            return self.suite();
+        }
+        let indented = self.has_indented_body(0);
+        if indented {
+            self.skip_newlines();
+            self.expect(&Token::Indent)?;
+            self.skip_newlines();
+        }
+        let expression = self.expression()?;
+        if indented {
+            self.skip_newlines();
+            self.expect(&Token::Dedent)?;
+        }
+        Ok(vec![Stmt::Return(Some(expression))])
     }
 
     fn parameter(&mut self) -> Result<Parameter> {
@@ -1187,7 +1197,7 @@ impl Parser {
         })
     }
 
-    /// Only parameters() calls this: bare signature parsing is unchanged.
+    /// Only `parameters()` calls this: bare signature parsing is unchanged.
     fn parameter_default(&mut self) -> Result<ParameterDefault> {
         let negative = if self.eat(&Token::Minus) {
             Some(true)
@@ -1335,66 +1345,63 @@ impl Parser {
             }
         }
 
-        let mut fields = Vec::new();
-        let mut constructor = Vec::new();
-        let mut methods = Vec::new();
+        let mut declaration = ClassDecl {
+            name,
+            parent,
+            parameters,
+            fields: Vec::new(),
+            constructor: Vec::new(),
+            methods: Vec::new(),
+        };
 
         self.skip_newlines();
 
         if self.eat(&Token::Indent) {
-            loop {
-                self.skip_newlines();
-
-                if self.check(&Token::Dedent) || self.check(&Token::Eof) {
-                    break;
-                }
-
-                match self.peek().clone() {
-                    Token::Keyword(Keyword::Pass) => {
-                        self.advance();
-                    }
-                    Token::Keyword(Keyword::Def) => {
-                        let Stmt::Function(function) = self.function_statement()? else {
-                            unreachable!("function_statement always returns Stmt::Function")
-                        };
-                        methods.push(function);
-                    }
-                    Token::Identifier(field) if self.is_type_declaration() => {
-                        self.advance();
-                        self.advance();
-                        let type_name = match self.advance() {
-                            Token::Identifier(type_name) => type_name,
-                            other => {
-                                return Err(self.error(format!(
-                                    "Expected a type but found {}",
-                                    other.describe()
-                                )));
-                            }
-                        };
-                        fields.push(Parameter {
-                            name: field,
-                            type_name: Some(type_name),
-                            default: None,
-                            rest: false,
-                        });
-                    }
-                    _ => self.statement(&mut constructor)?,
-                }
-            }
-
+            self.class_members(&mut declaration)?;
             self.eat(&Token::Dedent);
         } else if !matches!(self.peek(), Token::Newline | Token::Eof) {
-            self.statement(&mut constructor)?;
+            self.statement(&mut declaration.constructor)?;
         }
 
-        Ok(Stmt::Class(ClassDecl {
-            name,
-            parent,
-            parameters,
-            fields,
-            constructor,
-            methods,
-        }))
+        Ok(Stmt::Class(declaration))
+    }
+
+    fn class_members(&mut self, declaration: &mut ClassDecl) -> Result<()> {
+        loop {
+            self.skip_newlines();
+
+            if self.check(&Token::Dedent) || self.check(&Token::Eof) {
+                return Ok(());
+            }
+
+            match self.peek().clone() {
+                Token::Keyword(Keyword::Pass) => {
+                    self.advance();
+                }
+                Token::Keyword(Keyword::Def) => {
+                    declaration.methods.push(self.function_declaration()?);
+                }
+                Token::Identifier(field) if self.is_type_declaration() => {
+                    let type_name = self.declared_type()?;
+                    declaration.fields.push(Parameter {
+                        name: field,
+                        type_name: Some(type_name),
+                        default: None,
+                        rest: false,
+                    });
+                }
+                _ => self.statement(&mut declaration.constructor)?,
+            }
+        }
+    }
+
+    fn declared_type(&mut self) -> Result<String> {
+        self.advance();
+        self.advance();
+        match self.advance() {
+            Token::Identifier(type_name) => Ok(type_name),
+            other => Err(self.error(format!("Expected a type but found {}", other.describe()))),
+        }
     }
 
     fn expression(&mut self) -> Result<Expr> {
@@ -1417,7 +1424,7 @@ impl Parser {
     fn nested_expression_in(
         &mut self,
         context: ExpressionContext,
-        parse: fn(&mut Self) -> Result<Expr>,
+        parse: impl FnOnce(&mut Self) -> Result<Expr>,
     ) -> Result<Expr> {
         let outer = std::mem::replace(&mut self.context, context);
         let expression = self.nested_expression(parse);
@@ -1425,7 +1432,7 @@ impl Parser {
         expression
     }
 
-    fn nested_expression(&mut self, parse: fn(&mut Self) -> Result<Expr>) -> Result<Expr> {
+    fn nested_expression(&mut self, parse: impl FnOnce(&mut Self) -> Result<Expr>) -> Result<Expr> {
         self.depth += 1;
 
         if self.depth > MAX_NESTING {
@@ -1433,7 +1440,9 @@ impl Parser {
             return Err(self.error("Expressions are nested too deeply"));
         }
 
+        let depth = self.depth;
         let result = parse(self);
+        debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
         result
     }
@@ -1554,13 +1563,12 @@ impl Parser {
         }
 
         let attempt = (self.position, self.depth);
-        let outcome = match self.python_conditions.get(&attempt) {
-            Some(outcome) => outcome.clone(),
-            None => {
-                let outcome = self.attempt_python_condition();
-                self.python_conditions.insert(attempt, outcome.clone());
-                outcome
-            }
+        let outcome = if let Some(outcome) = self.python_conditions.get(&attempt) {
+            outcome.clone()
+        } else {
+            let outcome = self.attempt_python_condition();
+            self.python_conditions.insert(attempt, outcome.clone());
+            outcome
         };
         let PythonCondition { condition, end } = outcome?;
         self.position = end;
@@ -1591,30 +1599,26 @@ impl Parser {
     }
 
     fn coalescing(&mut self, first: Expr) -> Result<Expr> {
-        if !self.check(&Token::QuestionQuestion) {
-            return Ok(first);
-        }
-
-        let mut operands = vec![first];
+        let mut lefts = Vec::new();
+        let mut last = first;
 
         while self.eat(&Token::QuestionQuestion) {
-            if operands.len() > MAX_CHAIN {
+            if lefts.len() >= MAX_CHAIN {
                 return Err(self.error("Expression has too many operands"));
             }
 
-            operands.push(self.pipeline()?);
+            let next = self.pipeline()?;
+            lefts.push(std::mem::replace(&mut last, next));
         }
 
-        let mut right = operands.pop().expect("a coalescing chain has operands");
-        while let Some(left) = operands.pop() {
-            right = Expr::Logical {
+        Ok(lefts
+            .into_iter()
+            .rev()
+            .fold(last, |right, left| Expr::Logical {
                 operator: LogicalOp::Coalesce,
                 left: Box::new(left),
                 right: Box::new(right),
-            };
-        }
-
-        Ok(right)
+            }))
     }
 
     fn pipeline(&mut self) -> Result<Expr> {
@@ -1934,36 +1938,16 @@ impl Parser {
             match self.peek() {
                 Token::At => {
                     self.advance();
-                    let selector = match self.peek() {
-                        Token::VersionIndex(index) => VersionSelector::Index(*index),
-                        Token::Identifier(name) if name == "first" => VersionSelector::First,
-                        Token::Identifier(name) if name == "last" => VersionSelector::Last,
-                        Token::Identifier(name) if name == "previous" => VersionSelector::Previous,
-                        _ => return Err(self.error(
-                            "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'"
-                        )),
-                    };
-                    self.advance();
                     expression = Expr::Version {
                         reference: Box::new(expression),
-                        selector,
+                        selector: self.version_selector()?,
                     };
                 }
                 Token::Dot => {
                     self.advance();
-                    let property = match self.advance() {
-                        Token::Identifier(name) => name,
-                        Token::Keyword(keyword) => keyword.as_str().to_string(),
-                        other => {
-                            return Err(self.error(format!(
-                                "Expected a property but found {}",
-                                other.describe()
-                            )));
-                        }
-                    };
                     expression = Expr::Member {
                         object: Box::new(expression),
-                        property,
+                        property: self.member_property()?,
                     };
                 }
                 Token::LeftBracket => {
@@ -1992,6 +1976,33 @@ impl Parser {
         }
 
         Ok(expression)
+    }
+
+    fn version_selector(&mut self) -> Result<VersionSelector> {
+        let selector = match self.peek() {
+            Token::VersionIndex(index) => VersionSelector::Index(*index),
+            Token::Identifier(name) if name == "first" => VersionSelector::First,
+            Token::Identifier(name) if name == "last" => VersionSelector::Last,
+            Token::Identifier(name) if name == "previous" => VersionSelector::Previous,
+            _ => {
+                return Err(self.error(
+                    "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'",
+                ));
+            }
+        };
+        self.advance();
+        Ok(selector)
+    }
+
+    fn member_property(&mut self) -> Result<String> {
+        match self.advance() {
+            Token::Identifier(name) => Ok(name),
+            Token::Keyword(keyword) => Ok(keyword.as_str().to_string()),
+            other => Err(self.error(format!(
+                "Expected a property but found {}",
+                other.describe()
+            ))),
+        }
     }
 
     fn subscript(&mut self, object: Expr) -> Result<Expr> {
@@ -2084,7 +2095,7 @@ impl Parser {
         // `name => ...` or `name -> ...`. Check before taking the name so
         // that ordinary identifier operands are not cloned here.
         if matches!(self.peek(), Token::Identifier(_)) && self.peek_at(1).is_arrow() {
-            let parameter = self.untyped_parameter();
+            let parameter = self.untyped_parameter()?;
             self.advance();
             return self.arrow_body(vec![parameter]);
         }
@@ -2126,37 +2137,41 @@ impl Parser {
                 };
                 Ok(Expr::Super(arguments))
             }
-            Token::Keyword(Keyword::Function) => {
-                let parameters = self.parameters()?;
-                let body = self.braced()?;
-                Ok(Expr::Function(Arc::new(Function {
-                    name: None,
-                    parameters,
-                    body: FunctionBody::Block(body),
-                })))
-            }
+            Token::Keyword(Keyword::Function) => self.function_literal(),
             Token::LeftParen => {
                 let expression = self.expression()?;
                 self.expect(&Token::RightParen)?;
                 Ok(expression)
             }
-            Token::LeftBracket => {
-                let mut items = Vec::new();
-
-                while !self.check(&Token::RightBracket) {
-                    items.push(self.expression()?);
-
-                    if !self.eat(&Token::Comma) {
-                        break;
-                    }
-                }
-
-                self.expect(&Token::RightBracket)?;
-                Ok(Expr::List(items))
-            }
+            Token::LeftBracket => self.list_literal(),
             Token::LeftBrace => self.object_literal(),
             other => Err(self.error(format!("Unexpected {}", other.describe()))),
         }
+    }
+
+    fn function_literal(&mut self) -> Result<Expr> {
+        let parameters = self.parameters()?;
+        let body = self.braced()?;
+        Ok(Expr::Function(Arc::new(Function {
+            name: None,
+            parameters,
+            body: FunctionBody::Block(body),
+        })))
+    }
+
+    fn list_literal(&mut self) -> Result<Expr> {
+        let mut items = Vec::new();
+
+        while !self.check(&Token::RightBracket) {
+            items.push(self.expression()?);
+
+            if !self.eat(&Token::Comma) {
+                break;
+            }
+        }
+
+        self.expect(&Token::RightBracket)?;
+        Ok(Expr::List(items))
     }
 
     fn object_literal(&mut self) -> Result<Expr> {
@@ -2287,7 +2302,7 @@ impl Parser {
             if index > 0 {
                 self.expect(&Token::Comma)?;
             }
-            parameters.push(self.untyped_parameter());
+            parameters.push(self.untyped_parameter()?);
         }
         self.expect(&Token::Colon)?;
         let body = self.expression_in(self.context)?;
@@ -2309,8 +2324,11 @@ impl Parser {
 
     fn quantified(&mut self, quantifier: Quantifier) -> Result<Expr> {
         self.advance();
-        let Token::Identifier(binder) = self.advance() else {
-            unreachable!("quantifier_at checked the binder name")
+        let binder = match self.advance() {
+            Token::Identifier(binder) => binder,
+            other => {
+                return Err(self.error(format!("Expected a name but found {}", other.describe())));
+            }
         };
         self.advance();
         let collection = self.clause_expression()?;
@@ -2349,7 +2367,7 @@ impl Parser {
     }
 
     fn template(&mut self, raw: &str) -> Result<Expr> {
-        let origin = self.tokens[self.position - 1].position;
+        let origin = self.previous_position();
         let mut parts = Vec::new();
         let mut literal = String::new();
         let mut characters = raw.char_indices().peekable();
@@ -2372,31 +2390,7 @@ impl Parser {
             }
 
             let start = index + 2;
-            let end = if self.options.c_style_comments {
-                interpolation_end(&raw[start..], self.options)
-                    .map_err(|error| template_error(error, origin, &raw[..start]))?
-                    .map(|offset| start + offset)
-            } else {
-                // Preserve the accepted default interpolation boundary rule.
-                let mut depth = 1usize;
-                let mut end = None;
-                for (offset, candidate) in raw[start..].char_indices() {
-                    match candidate {
-                        '{' => depth += 1,
-                        '}' => {
-                            depth -= 1;
-                            if depth == 0 {
-                                end = Some(start + offset);
-                                break;
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                end
-            };
-
-            let Some(end) = end else {
+            let Some(end) = self.interpolation_close(raw, start, origin)? else {
                 return Err(self.error("Unterminated template expression"));
             };
 
@@ -2404,22 +2398,11 @@ impl Parser {
                 parts.push(TemplatePart::Literal(std::mem::take(&mut literal)));
             }
 
-            // Trailing tokens after an interpolated expression are ignored,
-            // so a top-level `lambda` keeps its accepted name reading here
-            // and a trailing Python-style `if` stays ignored.
-            let expression = parse_expression_in(
-                &raw[start..end],
-                ExpressionContext::Interpolation,
-                self.options,
-            )
-            .map_err(|error| {
-                if self.options.c_style_comments {
-                    template_error(error, origin, &raw[..start])
-                } else {
-                    error
-                }
-            })?;
-            parts.push(TemplatePart::Expression(expression));
+            parts.push(TemplatePart::Expression(self.interpolation(
+                raw,
+                start..end,
+                origin,
+            )?));
 
             while let Some((offset, _)) = characters.peek() {
                 if *offset <= end {
@@ -2430,33 +2413,92 @@ impl Parser {
             }
         }
 
-        /// Secondary parsers report relative positions; opt-in diagnostics retain the
-        /// location in the caller's original template, including Unicode and newlines.
-        fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
-            let Some(relative) = error.position() else {
-                return error;
-            };
-            let newlines = prefix.bytes().filter(|byte| *byte == b'\n').count();
-            let column = match prefix.rsplit_once('\n') {
-                Some((_, tail)) => tail.chars().count() + 1,
-                None => origin.column + 1 + prefix.chars().count(),
-            };
-            error.at(Position::new(
-                origin.line + newlines + relative.line - 1,
-                if relative.line == 1 {
-                    column + relative.column - 1
-                } else {
-                    relative.column
-                },
-            ))
-        }
-
         if !literal.is_empty() {
             parts.push(TemplatePart::Literal(literal));
         }
 
         Ok(Expr::Template(parts))
     }
+
+    fn previous_position(&self) -> Position {
+        self.position
+            .checked_sub(1)
+            .and_then(|previous| self.tokens.get(previous))
+            .map_or_else(|| self.here(), |spanned| spanned.position)
+    }
+
+    fn interpolation_close(
+        &self,
+        raw: &str,
+        start: usize,
+        origin: Position,
+    ) -> Result<Option<usize>> {
+        let body = raw.get(start..).unwrap_or_default();
+        if !self.options.c_style_comments {
+            return Ok(default_interpolation_end(body).map(|offset| start + offset));
+        }
+        Ok(interpolation_end(body, self.options)
+            .map_err(|error| template_error(error, origin, excerpt(raw, 0..start)))?
+            .map(|offset| start + offset))
+    }
+
+    fn interpolation(&self, raw: &str, span: Range<usize>, origin: Position) -> Result<Expr> {
+        let prefix = excerpt(raw, 0..span.start);
+        // Trailing tokens after an interpolated expression are ignored,
+        // so a top-level `lambda` keeps its accepted name reading here
+        // and a trailing Python-style `if` stays ignored.
+        parse_expression_in(
+            excerpt(raw, span),
+            ExpressionContext::Interpolation,
+            self.options,
+        )
+        .map_err(|error| {
+            if self.options.c_style_comments {
+                template_error(error, origin, prefix)
+            } else {
+                error
+            }
+        })
+    }
+}
+
+fn default_interpolation_end(body: &str) -> Option<usize> {
+    // Preserve the accepted default interpolation boundary rule.
+    let mut depth = 1usize;
+    for (offset, candidate) in body.char_indices() {
+        match candidate {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(offset);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Secondary parsers report relative positions; opt-in diagnostics retain the
+/// location in the caller's original template, including Unicode and newlines.
+fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
+    let Some(relative) = error.position() else {
+        return error;
+    };
+    let newlines = prefix.bytes().filter(|byte| *byte == b'\n').count();
+    let column = match prefix.rsplit_once('\n') {
+        Some((_, tail)) => tail.chars().count() + 1,
+        None => origin.column + 1 + prefix.chars().count(),
+    };
+    error.at(Position::new(
+        origin.line + newlines + relative.line - 1,
+        if relative.line == 1 {
+            column + relative.column - 1
+        } else {
+            relative.column
+        },
+    ))
 }
 
 fn simple_statement(expression: Expr) -> Stmt {
@@ -3680,21 +3722,21 @@ mod tests {
     #[test]
     fn named_expression_methods_share_block_lowering() {
         let compact = parse(
-            r#"
+            r"
 class Gauge:
     def init(amount: int) => this.amount = amount
     def reading() => self.amount
-"#,
+",
         )
         .unwrap();
         let expanded = parse(
-            r#"
+            r"
 class Gauge:
     def init(amount: int):
         return this.amount = amount
     def reading():
         return self.amount
-"#,
+",
         )
         .unwrap();
 

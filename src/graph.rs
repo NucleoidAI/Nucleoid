@@ -31,28 +31,33 @@ impl NodeKey {
     }
 
     /// A property of one object: `person1.age`.
+    #[must_use]
     pub fn property(object: &ObjectId, property: &str) -> Self {
         NodeKey(format!("{object}.{property}"))
     }
 
     /// A type: `$Person`. Reading the instances of a class depends on this, so
     /// creating or deleting an instance wakes whatever counted them.
+    #[must_use]
     pub fn class(name: &str) -> Self {
         NodeKey(format!("${name}"))
     }
 
     /// One instance, under its own id.
+    #[must_use]
     pub fn object(id: &ObjectId) -> Self {
         NodeKey(id.to_string())
     }
 
     /// A standing condition: `if(a>1)`, or `if(a>1)@person1` for the copy that
     /// belongs to one instance.
+    #[must_use]
     pub fn conditional(condition: &Expr, instance: Option<&ObjectId>) -> Self {
         NodeKey(qualify(format!("if({condition})"), instance))
     }
 
     /// A standing block, keyed by the source of its statements.
+    #[must_use]
     pub fn block(statements: &[Stmt], instance: Option<&ObjectId>) -> Self {
         NodeKey(qualify(
             format!("block({})", generate_all(statements)),
@@ -60,6 +65,7 @@ impl NodeKey {
         ))
     }
 
+    #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -112,6 +118,7 @@ pub enum NodeKind {
 }
 
 impl NodeKind {
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             NodeKind::Pending => "pending",
@@ -150,6 +157,7 @@ pub struct GraphNode {
 }
 
 impl GraphNode {
+    #[must_use]
     pub fn new(key: NodeKey, kind: NodeKind, sequence: u64) -> Self {
         GraphNode {
             key,
@@ -172,6 +180,7 @@ pub struct Graph {
 }
 
 impl Graph {
+    #[must_use]
     pub fn new() -> Self {
         Graph::default()
     }
@@ -182,6 +191,7 @@ impl Graph {
     }
 
     /// The node filed under a key, if there is one.
+    #[must_use]
     pub fn retrieve(&self, key: &NodeKey) -> Option<&GraphNode> {
         self.nodes.get(key)
     }
@@ -190,6 +200,7 @@ impl Graph {
         self.nodes.get_mut(key)
     }
 
+    #[must_use]
     pub fn contains(&self, key: &NodeKey) -> bool {
         self.nodes.contains_key(key)
     }
@@ -226,10 +237,12 @@ impl Graph {
         self.nodes.values()
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
     }
@@ -297,6 +310,7 @@ impl Graph {
 
     /// The dependents of a node, ordered by the sequence in which they were
     /// declared. A redeclared statement takes a fresh sequence, so it runs last.
+    #[must_use]
     pub fn dependents_in_order(&self, key: &NodeKey) -> Vec<NodeKey> {
         let Some(node) = self.nodes.get(key) else {
             return Vec::new();
@@ -308,12 +322,15 @@ impl Graph {
             .filter_map(|dependent| {
                 self.nodes
                     .get(dependent)
-                    .map(|node| (node.sequence, dependent.clone()))
+                    .map(|entry| (entry.sequence, dependent.clone()))
             })
             .collect();
 
         dependents.sort_by_key(|(sequence, _)| *sequence);
-        dependents.into_iter().map(|(_, key)| key).collect()
+        dependents
+            .into_iter()
+            .map(|(_, dependent)| dependent)
+            .collect()
     }
 
     /// Whether any queued statement is upstream of this one, including through
@@ -344,7 +361,7 @@ impl Graph {
 
         for source in self.shape_dependencies(key) {
             match source {
-                ShapeKey::Node(key) => pending.push(key),
+                ShapeKey::Node(node) => pending.push(node),
                 ShapeKey::Model => pending.extend(
                     self.nodes
                         .values()
@@ -359,6 +376,7 @@ impl Graph {
 
     /// Whether `from` can reach `to` by following dependent edges, which is what
     /// makes a new edge circular.
+    #[must_use]
     pub fn reaches(&self, from: &NodeKey, to: &NodeKey) -> bool {
         let mut seen: IndexSet<NodeKey> = IndexSet::new();
         let mut pending = vec![from.clone()];

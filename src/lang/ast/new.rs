@@ -7,16 +7,19 @@
 use crate::lang::ast::Expr;
 use crate::runtime::Runtime;
 
+#[derive(Debug)]
 pub struct New<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> New<'a> {
+    #[must_use]
     pub fn of(node: &'a Expr) -> Self {
         New { node }
     }
 
     /// The class and arguments, when the call really is an instantiation.
+    #[must_use]
     pub fn resolve(&self, runtime: &Runtime) -> Option<(String, Vec<Expr>)> {
         let Expr::Call { callee, arguments } = self.node else {
             return None;

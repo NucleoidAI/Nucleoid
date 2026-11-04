@@ -33,6 +33,7 @@ pub struct Property {
 }
 
 impl Property {
+    #[must_use]
     pub fn new(owner: Owner, name: String, value: Expr) -> Self {
         Property {
             owner,
@@ -43,6 +44,7 @@ impl Property {
         }
     }
 
+    #[must_use]
     pub fn key(&self) -> Option<NodeKey> {
         match &self.owner {
             Owner::Object(id) => Some(NodeKey::property(id, &self.name)),

@@ -13,6 +13,7 @@ pub struct Position {
 }
 
 impl Position {
+    #[must_use]
     pub fn new(line: usize, column: usize) -> Self {
         Position { line, column }
     }
@@ -71,11 +72,13 @@ impl Error {
         Error::reference(format!("{name} is not defined"))
     }
 
+    #[must_use]
     pub fn thrown(value: Value) -> Self {
         Error::new(Detail::Thrown(value))
     }
 
     /// Places the error in the source, replacing any position it already had.
+    #[must_use]
     pub fn at(mut self, position: Position) -> Self {
         self.position = Some(position);
         self
@@ -83,15 +86,18 @@ impl Error {
 
     /// Places the error only if it is not already placed, so the innermost
     /// report wins.
+    #[must_use]
     pub fn or_at(mut self, position: Position) -> Self {
         self.position = self.position.or(Some(position));
         self
     }
 
+    #[must_use]
     pub fn position(&self) -> Option<Position> {
         self.position
     }
 
+    #[must_use]
     pub fn kind(&self) -> ErrorKind {
         match self.detail {
             Detail::Syntax(_) => ErrorKind::Syntax,
@@ -101,6 +107,7 @@ impl Error {
         }
     }
 
+    #[must_use]
     pub fn message(&self) -> String {
         match &self.detail {
             Detail::Syntax(message) | Detail::Reference(message) | Detail::Type(message) => {
@@ -111,6 +118,7 @@ impl Error {
     }
 
     /// The value a `throw` raised, when that is what this is.
+    #[must_use]
     pub fn thrown_value(&self) -> Option<&Value> {
         match &self.detail {
             Detail::Thrown(value) => Some(value),
@@ -142,6 +150,7 @@ pub enum ErrorKind {
 }
 
 impl ErrorKind {
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             ErrorKind::Syntax => "SyntaxError",

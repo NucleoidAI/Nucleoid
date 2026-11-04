@@ -13,6 +13,7 @@ not a replacement for the policies it links to.
 | [project.instructions.md](rules/project.instructions.md) | Language goals, reference documents, and runtime architecture |
 | [arc.instructions.md](rules/arc.instructions.md) | ARC puzzle proposals and their `arc/docs` progress records, JSON-only LLM exchanges, and no automated ARC tests |
 | [rust.instructions.md](rules/rust.instructions.md) | Concrete runtime types, dependencies, and Rust community conventions |
+| [power-of-ten.instructions.md](rules/power-of-ten.instructions.md) | NASA's Power of 10 rules adapted to the Rust crate: the lints, runtime limits and policy test that enforce them, and the known runtime-value recursion gap |
 | [documents.instructions.md](rules/documents.instructions.md) | Authoritative specification, executable documents, and dataset synchronization |
 | [versions.instructions.md](rules/versions.instructions.md) | Human-owned version numbers; no AI version changes |
 | [proposals.instructions.md](rules/proposals.instructions.md) | Independent NUC proposal preparation and evaluation, the token policy, automatic acceptance on the hard criteria (no compile errors, every test passing, backward compatibility) with the `Automatic-Accepted` status, ARC- and user-requested bases, and `NUC <number> <Title>` outcome commit messages |

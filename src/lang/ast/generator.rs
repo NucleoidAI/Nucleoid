@@ -42,26 +42,13 @@ impl fmt::Display for Expr {
             Expr::Bool(bool) => write!(f, "{bool}"),
             Expr::Number(number) => f.write_str(&crate::value::format_number(*number)),
             Expr::String(string) => write!(f, "\"{string}\""),
-            Expr::Template(parts) => {
-                f.write_str("`")?;
-                for part in parts {
-                    match part {
-                        TemplatePart::Literal(literal) => f.write_str(literal)?,
-                        TemplatePart::Expression(expression) => {
-                            write!(f, "${{{}}}", Grouped(expression))?
-                        }
-                    }
-                }
-                f.write_str("`")
-            }
+            Expr::Template(parts) => write_template(f, parts),
             Expr::Regex(pattern) => write!(f, "/{pattern}/"),
             Expr::Identifier(name) => f.write_str(name),
             Expr::ClassRef(name) => write!(f, "${name}"),
             Expr::ObjectRef(id) => f.write_str(id),
             Expr::This => f.write_str("this"),
-            Expr::Super(arguments) => {
-                write!(f, "super({})", join(arguments))
-            }
+            Expr::Super(arguments) => write!(f, "super({})", join(arguments)),
             Expr::Member { object, property } => write!(f, "{}.{property}", Grouped(object)),
             Expr::Version {
                 reference,
@@ -69,49 +56,22 @@ impl fmt::Display for Expr {
             } => write!(f, "{}@{selector}", Grouped(reference)),
             Expr::Index { object, index } => write!(f, "{}[{index}]", Grouped(object)),
             Expr::Slice { object, start, end } => {
-                write!(f, "{}[", Grouped(object))?;
-                if let Some(start) = start {
-                    write!(f, "{start}")?;
-                }
-                f.write_str(":")?;
-                if let Some(end) = end {
-                    write!(f, "{end}")?;
-                }
-                f.write_str("]")
+                write_slice(f, object, start.as_deref(), end.as_deref())
             }
             Expr::Call { callee, arguments } => {
                 write!(f, "{}({})", Grouped(callee), join(arguments))
             }
-            Expr::Unary { operator, operand } => match operator {
-                UnaryOp::Not => write!(f, "!{operand}"),
-                UnaryOp::Negate => write!(f, "-{operand}"),
-                UnaryOp::Plus => write!(f, "+{operand}"),
-                UnaryOp::TypeOf => write!(f, "typeof {operand}"),
-                UnaryOp::Positional => write!(f, "({operand})"),
-            },
-            Expr::Binary {
-                operator: BinaryOp::Power,
-                left,
-                right,
-            } => {
-                power_operand(f, left, groups_power_base(left))?;
-                f.write_str(BinaryOp::Power.as_str())?;
-                power_operand(f, right, groups_power_exponent(right))
-            }
+            Expr::Unary { operator, operand } => write_unary(f, *operator, operand),
             Expr::Binary {
                 operator,
                 left,
                 right,
-            } => write!(f, "{left}{}{right}", operator.as_str()),
+            } => write_binary(f, *operator, left, right),
             Expr::Logical {
                 operator,
                 left,
                 right,
-            } => match operator {
-                LogicalOp::And => write!(f, "{left}&&{right}"),
-                LogicalOp::Or => write!(f, "{left}||{right}"),
-                LogicalOp::Coalesce => write!(f, "({left}??{right})"),
-            },
+            } => write_logical(f, *operator, left, right),
             // Both spellings render as one grouped symbol form. The grouping
             // keeps a conditional operand distinct from its enclosing operator
             // in graph keys, as `(c?a:b)+1` and `(c?a:b+1)` are different.
@@ -121,30 +81,8 @@ impl fmt::Display for Expr {
                 alternate,
             } => write!(f, "({condition}?{consequent}:{alternate})"),
             Expr::List(items) => write!(f, "[{}]", join(items)),
-            Expr::ObjectLiteral(entries) => {
-                let rendered: Vec<String> = entries
-                    .iter()
-                    .map(|(key, value)| format!("\"{key}\":{value}"))
-                    .collect();
-                write!(f, "{{{}}}", rendered.join(","))
-            }
-            Expr::Function(function) if has_binding_metadata(&function.parameters) => {
-                let parameters = signature(&function.parameters);
-                match &function.body {
-                    FunctionBody::Expression(body) => write!(f, "({parameters})=>{body}"),
-                    FunctionBody::Block(body) => {
-                        write!(
-                            f,
-                            "function({parameters}){{\n{}\n}}",
-                            indent(&source_all(body))
-                        )
-                    }
-                }
-            }
-            Expr::Function(function) => match &function.name {
-                Some(name) => write!(f, "{name}()"),
-                None => f.write_str("function()"),
-            },
+            Expr::ObjectLiteral(entries) => write_object_literal(f, entries),
+            Expr::Function(function) => write_function(f, function),
             Expr::Assign { target, value } => write!(f, "{target}={value}"),
             Expr::Delete(operand) => write!(f, "delete {operand}"),
             Expr::Reason { stage, source } => write!(f, "{source}|>{}", stage.as_str()),
@@ -159,12 +97,109 @@ impl fmt::Display for Expr {
                 "({} {binder} in {collection}:{condition})",
                 quantifier.as_str()
             ),
-            // The written form. Its operand is parsed as the exponent of `**`
-            // is, by `unary`, so it is grouped as that exponent is.
-            Expr::Of { noun, operand } => {
-                write!(f, "{} of ", noun.as_str())?;
-                power_operand(f, operand, groups_power_exponent(operand))
+            Expr::Of { noun, operand } => write_of(f, noun.as_str(), operand),
+        }
+    }
+}
+
+fn write_logical(
+    f: &mut fmt::Formatter<'_>,
+    operator: LogicalOp,
+    left: &Expr,
+    right: &Expr,
+) -> fmt::Result {
+    match operator {
+        LogicalOp::And => write!(f, "{left}&&{right}"),
+        LogicalOp::Or => write!(f, "{left}||{right}"),
+        LogicalOp::Coalesce => write!(f, "({left}??{right})"),
+    }
+}
+
+fn write_of(f: &mut fmt::Formatter<'_>, noun: &str, operand: &Expr) -> fmt::Result {
+    // The written form. Its operand is parsed as the exponent of `**`
+    // is, by `unary`, so it is grouped as that exponent is.
+    write!(f, "{noun} of ")?;
+    power_operand(f, operand, groups_power_exponent(operand))
+}
+
+fn write_template(f: &mut fmt::Formatter<'_>, parts: &[TemplatePart]) -> fmt::Result {
+    f.write_str("`")?;
+    for part in parts {
+        match part {
+            TemplatePart::Literal(literal) => f.write_str(literal)?,
+            TemplatePart::Expression(expression) => {
+                write!(f, "${{{}}}", Grouped(expression))?;
             }
+        }
+    }
+    f.write_str("`")
+}
+
+fn write_slice(
+    f: &mut fmt::Formatter<'_>,
+    object: &Expr,
+    start: Option<&Expr>,
+    end: Option<&Expr>,
+) -> fmt::Result {
+    write!(f, "{}[", Grouped(object))?;
+    if let Some(start) = start {
+        write!(f, "{start}")?;
+    }
+    f.write_str(":")?;
+    if let Some(end) = end {
+        write!(f, "{end}")?;
+    }
+    f.write_str("]")
+}
+
+fn write_unary(f: &mut fmt::Formatter<'_>, operator: UnaryOp, operand: &Expr) -> fmt::Result {
+    match operator {
+        UnaryOp::Not => write!(f, "!{operand}"),
+        UnaryOp::Negate => write!(f, "-{operand}"),
+        UnaryOp::Plus => write!(f, "+{operand}"),
+        UnaryOp::TypeOf => write!(f, "typeof {operand}"),
+        UnaryOp::Positional => write!(f, "({operand})"),
+    }
+}
+
+fn write_binary(
+    f: &mut fmt::Formatter<'_>,
+    operator: BinaryOp,
+    left: &Expr,
+    right: &Expr,
+) -> fmt::Result {
+    if operator != BinaryOp::Power {
+        return write!(f, "{left}{}{right}", operator.as_str());
+    }
+    power_operand(f, left, groups_power_base(left))?;
+    f.write_str(BinaryOp::Power.as_str())?;
+    power_operand(f, right, groups_power_exponent(right))
+}
+
+fn write_object_literal(f: &mut fmt::Formatter<'_>, entries: &[(String, Expr)]) -> fmt::Result {
+    let rendered: Vec<String> = entries
+        .iter()
+        .map(|(key, value)| format!("\"{key}\":{value}"))
+        .collect();
+    write!(f, "{{{}}}", rendered.join(","))
+}
+
+fn write_function(f: &mut fmt::Formatter<'_>, function: &Function) -> fmt::Result {
+    if !has_binding_metadata(&function.parameters) {
+        return match &function.name {
+            Some(name) => write!(f, "{name}()"),
+            None => f.write_str("function()"),
+        };
+    }
+    let parameters = signature(&function.parameters);
+    match &function.body {
+        FunctionBody::Expression(body) => write!(f, "({parameters})=>{body}"),
+        FunctionBody::Block(body) => {
+            write!(
+                f,
+                "function({parameters}){{\n{}\n}}",
+                indent(&source_all(body))
+            )
         }
     }
 }
@@ -213,7 +248,7 @@ fn groups_power_exponent(operand: &Expr) -> bool {
 fn join(expressions: &[Expr]) -> String {
     expressions
         .iter()
-        .map(|expression| expression.to_string())
+        .map(ToString::to_string)
         .collect::<Vec<_>>()
         .join(",")
 }
@@ -228,6 +263,7 @@ pub fn generate_all(statements: &[Stmt]) -> String {
         .join(";")
 }
 
+#[must_use]
 pub fn generate(statement: &Stmt) -> String {
     match statement {
         Stmt::Assign { target, value } => format!("{target}={value}"),
@@ -240,7 +276,7 @@ pub fn generate(statement: &Stmt) -> String {
         } => {
             let alternate = alternate
                 .as_ref()
-                .map(|statement| format!("else{{{}}}", generate(statement)))
+                .map(|branch| format!("else{{{}}}", generate(branch)))
                 .unwrap_or_default();
             format!("if({condition}){{{}}}{alternate}", generate_all(consequent))
         }
@@ -364,9 +400,10 @@ fn source(statement: &Stmt) -> String {
             if let Some(alternate) = alternate {
                 let body = match alternate.as_ref() {
                     Stmt::Block(body) => source_all(body),
-                    statement => source(statement),
+                    branch => source(branch),
                 };
-                rendered.push_str(&format!("\nelse:\n{}", indent(&body)));
+                rendered.push_str("\nelse:\n");
+                rendered.push_str(&indent(&body));
             }
             rendered
         }

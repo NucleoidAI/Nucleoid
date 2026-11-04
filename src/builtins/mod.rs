@@ -1,6 +1,7 @@
 pub mod date;
 
 use crate::error::{Error, Result};
+use crate::number;
 use crate::value::{Value, format_number};
 
 /// A name that resolves to a built-in rather than to state.
@@ -23,6 +24,7 @@ pub enum Global {
 
 impl Global {
     /// The built-in a bare name refers to, if any.
+    #[must_use]
     pub fn from_name(name: &str) -> Option<Global> {
         Some(match name {
             "Math" => Global::Math,
@@ -43,6 +45,7 @@ impl Global {
     /// The built-in a name in call position refers to. `Array` is callable as
     /// another spelling of `List`, but is not a name that resolves on its own,
     /// so it is not a [`Global::from_name`].
+    #[must_use]
     pub fn from_callee(name: &str) -> Option<Global> {
         match name {
             "Array" => Some(Global::List),
@@ -50,6 +53,7 @@ impl Global {
         }
     }
 
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Global::Math => "Math",
@@ -67,6 +71,7 @@ impl Global {
     }
 }
 
+#[must_use]
 pub fn is_global(name: &str) -> bool {
     Global::from_name(name).is_some()
 }
@@ -77,9 +82,28 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
         return Ok(Value::Undefined);
     }
 
-    let first = arguments.first().map(Value::to_number).unwrap_or(f64::NAN);
+    let first = numeric_argument(arguments, 0);
 
     let result = match name {
+        "max" | "min" => numeric_extremum(arguments.iter().map(Value::to_number), name == "max"),
+        "random" => return Err(Error::type_error("Math.random is not supported")),
+        "PI" => std::f64::consts::PI,
+        "E" => std::f64::consts::E,
+        _ => match math_unary(name, first).or_else(|| math_interpolation(name, first, arguments)) {
+            Some(result) => result,
+            None => return Err(Error::type_error(format!("Math.{name} is not a function"))),
+        },
+    };
+
+    Ok(Value::Number(result))
+}
+
+fn numeric_argument(arguments: &[Value], index: usize) -> f64 {
+    arguments.get(index).map_or(f64::NAN, Value::to_number)
+}
+
+fn math_unary(name: &str, first: f64) -> Option<f64> {
+    Some(match name {
         "abs" => first.abs(),
         "ceil" => first.ceil(),
         "floor" => first.floor(),
@@ -127,92 +151,82 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
         "atan" => first.atan(),
         "asin" => first.asin(),
         "acos" => first.acos(),
-        "pow" => {
-            let exponent = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            first.powf(exponent)
-        }
-        "atan2" => {
-            let second = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            first.atan2(second)
-        }
-        "max" | "min" => numeric_extremum(arguments.iter().map(Value::to_number), name == "max"),
-        "clamp" => {
-            let lower = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            let upper = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
-            numeric_clamp(first, lower, upper)
-        }
-        "saturate" => numeric_clamp(first, 0.0, 1.0),
-        "smoothstep" => {
-            let upper = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            let value = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
-            // `first` is the lower bound, not clamp's value-first argument.
-            // Keep normalization and the cubic as separate ordered operations.
-            let numerator = value - first;
-            let denominator = upper - first;
-            let normalize = numerator / denominator;
-            let t = numeric_clamp(normalize, 0.0, 1.0);
-            let square = t * t;
-            let scaled = 2.0 * t;
-            let falloff = 3.0 - scaled;
-            square * falloff
-        }
-        "smootherstep" => {
-            let upper = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            let value = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
-            // Match the accepted normalization and quintic expression's order,
-            // including its rounding; do not clamp the polynomial's result.
-            let numerator = value - first;
-            let denominator = upper - first;
-            let normalize = numerator / denominator;
-            let t = numeric_clamp(normalize, 0.0, 1.0);
-            let square = t * t;
-            let cube = square * t;
-            let scaled = 6.0 * t;
-            let offset = scaled - 15.0;
-            let weighted = t * offset;
-            let polynomial = weighted + 10.0;
-            cube * polynomial
-        }
-        "lerp" => {
-            let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            let weight = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
-            // Preserve ordinary subtraction, multiplication, then addition.
-            // No endpoint shortcut, clamping, reordering or fused operation.
-            let delta = end - first;
-            let scaled = delta * weight;
-            first + scaled
-        }
-        "inverseLerp" => {
-            let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            let value = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
-            let numerator = value - first;
-            let denominator = end - first;
-            numerator / denominator
-        }
-        "remap" => {
-            let end = arguments.get(1).map(Value::to_number).unwrap_or(f64::NAN);
-            let target_start = arguments.get(2).map(Value::to_number).unwrap_or(f64::NAN);
-            let target_end = arguments.get(3).map(Value::to_number).unwrap_or(f64::NAN);
-            let value = arguments.get(4).map(Value::to_number).unwrap_or(f64::NAN);
-            // Keep inverse interpolation and interpolation's separate rounding.
-            // No clamping, rescaling, endpoint shortcuts or fused operation.
-            let numerator = value - first;
-            let denominator = end - first;
-            let weight = numerator / denominator;
-            let delta = target_end - target_start;
-            let scaled = delta * weight;
-            target_start + scaled
-        }
-        "random" => return Err(Error::type_error("Math.random is not supported")),
-        "PI" => std::f64::consts::PI,
-        "E" => std::f64::consts::E,
-        _ => return Err(Error::type_error(format!("Math.{name} is not a function"))),
-    };
-
-    Ok(Value::Number(result))
+        _ => return None,
+    })
 }
 
-/// Ordered min(max(...), ...), not f64::clamp: retain the accepted folds for
+fn math_interpolation(name: &str, first: f64, arguments: &[Value]) -> Option<f64> {
+    let argument = |index| numeric_argument(arguments, index);
+
+    Some(match name {
+        "pow" => first.powf(argument(1)),
+        "atan2" => first.atan2(argument(1)),
+        "clamp" => numeric_clamp(first, argument(1), argument(2)),
+        "saturate" => numeric_clamp(first, 0.0, 1.0),
+        "smoothstep" => smoothstep(first, argument(1), argument(2)),
+        "smootherstep" => smootherstep(first, argument(1), argument(2)),
+        "lerp" => lerp(first, argument(1), argument(2)),
+        "inverseLerp" => inverse_lerp(first, argument(1), argument(2)),
+        "remap" => remap(first, argument(1), argument(2), argument(3), argument(4)),
+        _ => return None,
+    })
+}
+
+fn smoothstep(first: f64, upper: f64, value: f64) -> f64 {
+    // `first` is the lower bound, not clamp's value-first argument.
+    // Keep normalization and the cubic as separate ordered operations.
+    let numerator = value - first;
+    let denominator = upper - first;
+    let normalize = numerator / denominator;
+    let t = numeric_clamp(normalize, 0.0, 1.0);
+    let square = t * t;
+    let scaled = 2.0 * t;
+    let falloff = 3.0 - scaled;
+    square * falloff
+}
+
+fn smootherstep(first: f64, upper: f64, value: f64) -> f64 {
+    // Match the accepted normalization and quintic expression's order,
+    // including its rounding; do not clamp the polynomial's result.
+    let numerator = value - first;
+    let denominator = upper - first;
+    let normalize = numerator / denominator;
+    let t = numeric_clamp(normalize, 0.0, 1.0);
+    let square = t * t;
+    let cube = square * t;
+    let scaled = 6.0 * t;
+    let offset = scaled - 15.0;
+    let weighted = t * offset;
+    let polynomial = weighted + 10.0;
+    cube * polynomial
+}
+
+fn lerp(first: f64, end: f64, weight: f64) -> f64 {
+    // Preserve ordinary subtraction, multiplication, then addition.
+    // No endpoint shortcut, clamping, reordering or fused operation.
+    let delta = end - first;
+    let scaled = delta * weight;
+    first + scaled
+}
+
+fn inverse_lerp(first: f64, end: f64, value: f64) -> f64 {
+    let numerator = value - first;
+    let denominator = end - first;
+    numerator / denominator
+}
+
+fn remap(first: f64, end: f64, target_start: f64, target_end: f64, value: f64) -> f64 {
+    // Keep inverse interpolation and interpolation's separate rounding.
+    // No clamping, rescaling, endpoint shortcuts or fused operation.
+    let numerator = value - first;
+    let denominator = end - first;
+    let weight = numerator / denominator;
+    let delta = target_end - target_start;
+    let scaled = delta * weight;
+    target_start + scaled
+}
+
+/// Ordered min(max(...), ...), not `f64::clamp`: retain the accepted folds for
 /// NaN, reversed bounds and signed zeros, without allocating runtime values.
 fn numeric_clamp(value: f64, lower: f64, upper: f64) -> f64 {
     let bounded = numeric_extremum([value, lower], true);
@@ -239,6 +253,7 @@ fn numeric_extremum(numbers: impl IntoIterator<Item = f64>, maximum: bool) -> f6
 }
 
 /// `Math.<name>` read as a value rather than called.
+#[must_use]
 pub fn math_constant(name: &str) -> Option<Value> {
     Some(match name {
         "PI" => Value::Number(std::f64::consts::PI),
@@ -251,6 +266,7 @@ pub fn math_constant(name: &str) -> Option<Value> {
 }
 
 /// `Number.<name>` read as a value.
+#[must_use]
 pub fn number_constant(name: &str) -> Option<Value> {
     Some(match name {
         "MAX_INTEGER" | "MAX_SAFE_INTEGER" => Value::Number(9_007_199_254_740_991.0),
@@ -302,8 +318,8 @@ pub fn string(name: &str, arguments: &[Value]) -> Result<Value> {
             let mut output = String::new();
 
             for argument in arguments {
-                let code = argument.to_number();
-                if let Some(character) = u32::try_from(code as i64).ok().and_then(char::from_u32) {
+                let code = number::to_i64(argument.to_number());
+                if let Some(character) = u32::try_from(code).ok().and_then(char::from_u32) {
                     output.push(character);
                 }
             }
@@ -320,12 +336,18 @@ pub fn string(name: &str, arguments: &[Value]) -> Result<Value> {
 pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<Value> {
     let first = arguments.first().unwrap_or(&Value::Undefined);
 
-    Ok(match name {
-        "lower" | "toLowerCase" => Value::String(receiver.to_lowercase()),
-        "upper" | "toUpperCase" => Value::String(receiver.to_uppercase()),
-        "trim" | "strip" => Value::String(receiver.trim().to_string()),
+    if let Some(value) = string_query(receiver, name, first) {
+        return Ok(value);
+    }
+
+    string_transform(receiver, name, first, arguments)?
+        .ok_or_else(|| Error::type_error(format!("{receiver}.{name} is not a function")))
+}
+
+fn string_query(receiver: &str, name: &str, first: &Value) -> Option<Value> {
+    Some(match name {
         "charAt" => {
-            let index = first.to_number() as usize;
+            let index = number::to_usize(first.to_number());
             Value::String(
                 receiver
                     .chars()
@@ -335,22 +357,41 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
             )
         }
         "charCodeAt" => {
-            let index = first.to_number() as usize;
+            let index = number::to_usize(first.to_number());
             match receiver.chars().nth(index) {
-                Some(character) => Value::Number(character as u32 as f64),
+                Some(character) => Value::Number(f64::from(u32::from(character))),
                 None => Value::Number(f64::NAN),
             }
         }
         "indexOf" | "find" => {
             let needle = first.to_string();
             match receiver.find(&needle) {
-                Some(index) => Value::Number(receiver[..index].chars().count() as f64),
+                Some(index) => Value::Number(number::from_usize(
+                    receiver
+                        .char_indices()
+                        .take_while(|&(offset, _)| offset < index)
+                        .count(),
+                )),
                 None => Value::Number(-1.0),
             }
         }
         "includes" | "contains" => Value::Bool(receiver.contains(&first.to_string())),
         "startsWith" => Value::Bool(receiver.starts_with(&first.to_string())),
         "endsWith" => Value::Bool(receiver.ends_with(&first.to_string())),
+        _ => return None,
+    })
+}
+
+fn string_transform(
+    receiver: &str,
+    name: &str,
+    first: &Value,
+    arguments: &[Value],
+) -> Result<Option<Value>> {
+    Ok(Some(match name {
+        "lower" | "toLowerCase" => Value::String(receiver.to_lowercase()),
+        "upper" | "toUpperCase" => Value::String(receiver.to_uppercase()),
+        "trim" | "strip" => Value::String(receiver.trim().to_string()),
         "split" => {
             let separator = first.to_string();
             let parts: Vec<Value> = if separator.is_empty() {
@@ -378,7 +419,7 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
         }
         "repeat" => Value::String(string_repeat(
             receiver,
-            first.to_number().max(0.0) as usize,
+            number::to_usize(first.to_number().max(0.0)),
         )?),
         "substring" | "slice" | "substr" => {
             let end = arguments
@@ -388,12 +429,8 @@ pub fn string_method(receiver: &str, name: &str, arguments: &[Value]) -> Result<
             Value::String(string_slice(receiver, first.to_number(), end))
         }
         "toString" => Value::String(receiver.to_string()),
-        _ => {
-            return Err(Error::type_error(format!(
-                "{receiver}.{name} is not a function"
-            )));
-        }
-    })
+        _ => return Ok(None),
+    }))
 }
 
 fn string_replace_all(receiver: &str, search: &str, replacement: &str) -> Result<String> {
@@ -402,13 +439,14 @@ fn string_replace_all(receiver: &str, search: &str, replacement: &str) -> Result
     let matches = receiver.match_indices(search).count();
     let mut output =
         string_replacement_buffer(receiver.len(), search.len(), replacement.len(), matches)?;
-    let mut copied = 0;
-    for (index, matched) in receiver.match_indices(search) {
-        output.push_str(&receiver[copied..index]);
-        output.push_str(replacement);
-        copied = index + matched.len();
+    let mut pieces = receiver.split(search);
+    if let Some(piece) = pieces.next() {
+        output.push_str(piece);
     }
-    output.push_str(&receiver[copied..]);
+    for piece in pieces {
+        output.push_str(replacement);
+        output.push_str(piece);
+    }
     Ok(output)
 }
 
@@ -460,7 +498,7 @@ fn string_repeat(receiver: &str, count: usize) -> Result<String> {
 pub(crate) fn string_slice(receiver: &str, start: f64, end: Option<f64>) -> String {
     let length = receiver.chars().count();
     let start = slice_index(start, length);
-    let end = end.map(|end| slice_index(end, length)).unwrap_or(length);
+    let end = end.map_or(length, |end| slice_index(end, length));
 
     receiver
         .chars()
@@ -470,16 +508,18 @@ pub(crate) fn string_slice(receiver: &str, start: f64, end: Option<f64>) -> Stri
 }
 
 /// Resolves a possibly negative index against a length, the way slicing does.
+#[must_use]
 pub fn slice_index(index: f64, length: usize) -> usize {
     if index < 0.0 {
-        let from_end = length as f64 + index;
-        from_end.max(0.0) as usize
+        let from_end = number::from_usize(length) + index;
+        number::to_usize(from_end.max(0.0))
     } else {
-        (index as usize).min(length)
+        number::to_usize(index).min(length)
     }
 }
 
 /// Renders a number the way the runtime prints it.
+#[must_use]
 pub fn number_to_string(number: f64) -> String {
     format_number(number)
 }
@@ -654,7 +694,7 @@ mod tests {
             return Value::Undefined;
         }
         let [start, end, target_start, target_end, value] = std::array::from_fn::<_, 5, _>(|i| {
-            Value::Number(arguments.get(i).map(Value::to_number).unwrap_or(f64::NAN))
+            Value::Number(arguments.get(i).map_or(f64::NAN, Value::to_number))
         });
         let numerator = binary(BinaryOp::Subtract, &value, &start).unwrap();
         let denominator = binary(BinaryOp::Subtract, &end, &start).unwrap();
@@ -1081,7 +1121,9 @@ mod tests {
             // Full-bit inputs plus fractional exponents around the finite range.
             [
                 f64::from_bits(bits),
-                (bits as i64 as f64) / (i64::MAX as f64) * 1076.0,
+                number::from_i64(i64::from_ne_bytes(bits.to_ne_bytes()))
+                    / number::from_i64(i64::MAX)
+                    * 1076.0,
             ]
         });
         for exponent in exponents.into_iter().chain(samples) {
@@ -1169,7 +1211,11 @@ mod tests {
                 .wrapping_mul(6_364_136_223_846_793_005)
                 .wrapping_add(1_442_695_040_888_963_407);
             numbers.push(f64::from_bits(bits));
-            numbers.push((bits as i64 as f64) / (i64::MAX as f64) * 64.0);
+            numbers.push(
+                number::from_i64(i64::from_ne_bytes(bits.to_ne_bytes()))
+                    / number::from_i64(i64::MAX)
+                    * 64.0,
+            );
         }
         let operands: Vec<Value> = values()
             .into_iter()
@@ -1392,14 +1438,14 @@ mod tests {
     #[test]
     fn smootherstep_retains_quintic_rounding_overshoot_and_unvalidated_bound_order() {
         for (arguments, expected) in [
-            ([0.0, 8.0, 1.0], 0.01605224609375),
-            ([0.0, 8.0, 2.0], 0.103515625),
-            ([0.0, 8.0, 3.0], 0.27520751953125),
+            ([0.0, 8.0, 1.0], 0.016_052_246_093_75),
+            ([0.0, 8.0, 2.0], 0.103_515_625),
+            ([0.0, 8.0, 3.0], 0.275_207_519_531_25),
             ([0.0, 8.0, 4.0], 0.5),
-            ([0.0, 8.0, 6.0], 0.896484375),
+            ([0.0, 8.0, 6.0], 0.896_484_375),
             ([0.0, 8.0, -2.0], 0.0),
             ([0.0, 8.0, 10.0], 1.0),
-            ([8.0, 0.0, 2.0], 0.896484375),
+            ([8.0, 0.0, 2.0], 0.896_484_375),
             ([2.0, 2.0, 1.0], 0.0),
             ([2.0, 2.0, 3.0], 1.0),
             ([2.0, 2.0, 2.0], f64::NAN),
@@ -1432,7 +1478,7 @@ mod tests {
             let expected = if extra.is_undefined() {
                 Value::Undefined
             } else {
-                Value::number(0.103515625)
+                Value::number(0.103_515_625)
             };
             supplied.push(extra);
             assert_smoothing_same(&math("smootherstep", &supplied).unwrap(), &expected);

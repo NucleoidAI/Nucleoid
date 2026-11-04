@@ -32,6 +32,7 @@ pub struct Stack {
 }
 
 impl Stack {
+    #[must_use]
     pub fn new() -> Self {
         Stack::default()
     }
@@ -43,6 +44,7 @@ impl Stack {
         }
     }
 
+    #[must_use]
     pub fn is_draining(&self) -> bool {
         self.draining
     }
@@ -51,10 +53,12 @@ impl Stack {
         self.running.contains(key)
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.pending.len()
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.pending.is_empty()
     }
@@ -63,6 +67,7 @@ impl Stack {
         if self.queued.insert(key.clone()) {
             self.pending.push(Reverse((sequence, key)));
         }
+        debug_assert_eq!(self.queued.len(), self.pending.len());
     }
 
     fn pop(&mut self, graph: &Graph) -> Result<Option<NodeKey>> {
@@ -88,6 +93,7 @@ impl Stack {
         }
 
         self.pending.extend(blocked);
+        debug_assert_eq!(self.queued.len(), self.pending.len());
 
         if next.is_none() && !self.pending.is_empty() {
             return Err(Error::type_error("Circular Dependency"));
@@ -157,8 +163,7 @@ impl Runtime {
         let sequence = self
             .graph
             .retrieve(&key)
-            .map(|node| node.sequence)
-            .unwrap_or(u64::MAX);
+            .map_or(u64::MAX, |node| node.sequence);
 
         self.stack.push(sequence, key);
     }
@@ -185,7 +190,8 @@ impl Runtime {
             };
             let instance = node.instance.clone();
 
-            self.stack.running.insert(dependent.clone());
+            let started = self.stack.running.insert(dependent.clone());
+            debug_assert!(started);
 
             let mut scope = Scope::new();
             scope.set_instance(instance.clone());
@@ -198,11 +204,13 @@ impl Runtime {
                 runtime.rerun(&mut nuc, &mut scope)
             });
             if instance.is_some() {
-                self.instances.pop();
+                let applied = self.instances.pop();
+                debug_assert_eq!(applied, instance);
             }
             self.restore_imperative(nested);
 
-            self.stack.running.shift_remove(&dependent);
+            let finished = self.stack.running.shift_remove(&dependent);
+            debug_assert!(finished);
             result?;
         }
 

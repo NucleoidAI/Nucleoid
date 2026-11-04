@@ -276,12 +276,10 @@ fn grouped_invalid_headers_keep_the_whole_programs_parser_error() {
             "{\n    ready: true\n}.ready:\n    pass",
         ] {
             let source = format!("if false: pass\n{keyword}{tail}");
-            let whole = parse_program(&source).err().expect("invalid whole header");
+            let whole = parse_program(&source).expect_err("invalid whole header");
             let parts = statements(&source);
             // An unindented body remains a separate statement, as before.
-            let split = parse_program(&parts[0])
-                .err()
-                .expect("invalid split header");
+            let split = parse_program(&parts[0]).expect_err("invalid split header");
             assert_eq!(whole, split, "{source}");
         }
     }
@@ -293,9 +291,7 @@ fn standalone_alternatives_are_not_made_valid_by_export_grouping() {
         let source = format!("{keyword}(true):\n    pass");
         let parts = statements(&source);
         assert_eq!(parts.as_slice(), std::slice::from_ref(&source));
-        let error = parse_program(&parts[0])
-            .err()
-            .expect("standalone alternative");
+        let error = parse_program(&parts[0]).expect_err("standalone alternative");
         assert_eq!(error.message(), "Unexpected keyword 'else'");
     }
 }

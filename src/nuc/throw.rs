@@ -13,6 +13,7 @@ pub struct Throw {
 }
 
 impl Throw {
+    #[must_use]
     pub fn new(exception: Expr) -> Self {
         Throw { exception }
     }

@@ -481,7 +481,7 @@ fn direct_compile_and_node_apis_preserve_caller_frames_on_return_and_error() {
             let mut node = Nuc::convert(&mut runtime, &mut scope, &call[0]).unwrap();
             let result = node.run(&mut runtime, &mut scope);
             if expression == "missing" {
-                let error = result.err().expect("the missing read must fail");
+                let error = result.expect_err("the missing read must fail");
                 assert_eq!(error.kind(), ErrorKind::Reference);
                 assert_eq!(error.message(), "missing is not defined");
             } else {

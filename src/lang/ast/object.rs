@@ -6,24 +6,27 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use indexmap::IndexMap;
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::lang::ast::Expr;
+use crate::number;
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectData, ObjectId, Value};
 
+#[derive(Debug)]
 pub struct Object<'a> {
     pub node: &'a Expr,
 }
 
 impl<'a> Object<'a> {
+    #[must_use]
     pub fn new(node: &'a Expr) -> Self {
         Object { node }
     }
 
     pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
         let Expr::ObjectLiteral(entries) = self.node else {
-            unreachable!("Object only wraps Expr::ObjectLiteral")
+            return Err(Error::type_error(format!("{} is not an object", self.node)));
         };
 
         runtime.evaluate_object_literal(entries, scope)
@@ -104,14 +107,16 @@ impl Runtime {
                         .all(|(left, right)| self.equal_within(left, right, depth + 1))
             }
 
-            (Value::Number(left), Value::Number(right)) => left == right,
-            (Value::String(left), Value::String(right)) => left == right,
+            (Value::Number(left), Value::Number(right)) => number::equal(*left, *right),
+            (Value::String(left), Value::String(right))
+            | (Value::Class(left), Value::Class(right)) => left == right,
             (Value::Bool(left), Value::Bool(right)) => left == right,
             (Value::Date(left), Value::Date(right)) => left == right,
-            (Value::Class(left), Value::Class(right)) => left == right,
 
-            (Value::Date(millis), Value::Number(number))
-            | (Value::Number(number), Value::Date(millis)) => *millis as f64 == *number,
+            (Value::Date(millis), Value::Number(numeric))
+            | (Value::Number(numeric), Value::Date(millis)) => {
+                number::equal(number::from_i64(*millis), *numeric)
+            }
 
             _ => false,
         }
@@ -150,7 +155,8 @@ impl Runtime {
             let (bucket, loose) = index.candidates(&key);
             if bucket
                 .chain(loose)
-                .any(|position| matches(&kept[position], &value))
+                .filter_map(|position| kept.get(position))
+                .any(|candidate| matches(candidate, &value))
             {
                 continue;
             }
@@ -181,10 +187,13 @@ impl Runtime {
             // Both candidate lists ascend, so the merged search meets kept
             // values in receiver order and stops at the earliest match.
             let (bucket, loose) = index.candidates(&key);
-            if let Some(position) =
-                ascending(bucket, loose).find(|&position| matches(&tally.kept[position], &value))
-            {
-                tally.counts[position] += 1;
+            if let Some(position) = ascending(bucket, loose).find(|&position| {
+                tally
+                    .kept
+                    .get(position)
+                    .is_some_and(|candidate| matches(candidate, &value))
+            }) {
+                tally.repeat(position);
                 continue;
             }
 
@@ -204,8 +213,8 @@ impl Runtime {
         match value {
             Value::Number(number) if number.is_nan() => return None,
             Value::Function(_) | Value::Regex(_) => return None,
-            Value::Object(id) => match self.state.object(id) {
-                Some(object) => {
+            Value::Object(id) => {
+                if let Some(object) = self.state.object(id) {
                     EqualityTag::Record.hash(&mut hasher);
                     let mut entries = 0_u64;
                     for (name, field) in &object.properties {
@@ -222,12 +231,11 @@ impl Runtime {
                     }
                     defined.hash(&mut hasher);
                     entries.hash(&mut hasher);
-                }
-                None => {
+                } else {
                     EqualityTag::Missing.hash(&mut hasher);
                     id.as_str().hash(&mut hasher);
                 }
-            },
+            }
             other => self.hash_member(other, 0, &mut hasher),
         }
 
@@ -248,7 +256,7 @@ impl Runtime {
             }
             Value::Date(millis) => {
                 EqualityTag::Number.hash(hasher);
-                number_bits(*millis as f64).hash(hasher);
+                number_bits(number::from_i64(*millis)).hash(hasher);
             }
             Value::String(text) => {
                 EqualityTag::Text.hash(hasher);
@@ -343,6 +351,14 @@ impl Tally {
     fn keep(&mut self, value: Value) {
         self.kept.push(value);
         self.counts.push(1);
+        debug_assert_eq!(self.kept.len(), self.counts.len());
+    }
+
+    fn repeat(&mut self, position: usize) {
+        debug_assert!(position < self.counts.len());
+        if let Some(count) = self.counts.get_mut(position) {
+            *count += 1;
+        }
     }
 
     /// The kept value with the highest count, the earliest on a tie.
