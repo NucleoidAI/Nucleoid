@@ -270,32 +270,40 @@ same level and is annotated by the same rules.
 
 `dataset.0d3d703e.json` annotates the four original training pairs from
 `data\training\0d3d703e.json`, in order, followed by its test pair, fifteen
-bar instances in total, three per pair. Every input and output retains its
-original 3 by 3 canvas, colors, and positions. Each input holds three vertical
-bars of distinct colors, one per column; each object is one bar, 3 cells tall
-and 1 cell wide, listed from left to right. Each output keeps every bar in
-place and swaps its color with its partner in a fixed pairing of the colors 1
-and 5, 2 and 6, 3 and 4, and 8 and 9. The training pairs show every pairing
-in both directions, and the test pair turns 8, 1, and 3 into 9, 5, and 4. Colors
-0 and 7 never appear, and the rules leave them outside the pairing rather than
-assume an identity. The class takes `color` as its only descriptive scalar,
-with no canvas size or matrix of cells. One unconditional class-level rule
-rewrites `color` from the input color, anchored with `@first`:
-`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner != $Obj.color@first)`
-finds the pair that holds the input color and takes its other member, so each
-pairing is stated once and serves both directions. Each bar recolors
-independently of the other bars. The rules create no other properties,
-so input and output states share the same keys, and leave `x` and `y`
-unchanged because the bar stays in place. Native output snapshots are
-captured with all of the same pair's implementations together, followed by
-`Obj[:]`. The tag `l6953` is a vertical bar, as in `dataset.9af7a82c.json`
-and `dataset.d037b0a7.json`, in both states. Input and output masks retain the
-full 3 by 3 canvas, padded with `0` outside the bar, and merging a pair's masks
-reproduces its input and output. The `output_x`/`output_y` fields record the
-bar's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
+stripe instances in total, three per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions. Each input is three vertical
+stripes side by side, each one column wide and three rows tall and each of its
+own color, so no cell is zero; each object is one stripe, 3 cells of one
+color, listed from left to right. Each output keeps every stripe in place and
+swaps its color for its partner: the colors form four pairs, 1 and 5, 2 and 6,
+3 and 4, and 8 and 9, whose two colors trade places. The training pairs show
+every pair in both directions: 1 turns 5 in the first and 5 turns 1 in the
+third, 2 turns 6 in the first, second, and fourth and 6 turns 2 in the third,
+3 turns 4 in the first and second and 4 turns 3 in the fourth, and 8 turns 9
+in the second and third and 9 turns 8 in the fourth; colors 0 and 7 do not
+appear. Colors are categorical, and no arithmetic relates the partners, whose
+differences are 4, 4, 1, and 1, so the rule consults the pairs as data. The
+class takes `color` as its only descriptive scalar, with no partner color,
+canvas size, or matrix of cells. One class-level rule rewrites `color` as
+`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner != $Obj.color@first)`:
+the list states each pair once, the first `find` selects the pair that
+includes the stripe's input color, and the second `find` takes the other color
+of that pair. The `@first` anchors read the input color because the rule
+rewrites `color` itself; a dictionary from every color to its partner would
+state each pair twice. The two callbacks are chained rather than nested, so
+each reads only its own parameter and the stripe. The rules create no
+property and leave `x`, `y`, `orientation`, and the tag unchanged, so input
+and output states share the same keys. Native output snapshots are captured
+with all of the same pair's implementations together, followed by `Obj[:]`.
+The tag `l6953` is a vertical bar, as in `dataset.d037b0a7.json` and
+`dataset.9af7a82c.json`, in both states. Input masks retain each pair's
+full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
+each padded with `0` outside its stripe; merging them reproduces each pair's
+input and output. The `output_x`/`output_y` fields record the stripe's
+nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
 `output_canvas` is `EXACT` because each output keeps its input's canvas.
-Orientation is 0 in both states because the bars are vertical and not
-rotated. The test pair follows the training pairs at the same level and is
+Orientation is 0 in both states because the stripes are vertical and not
+turned. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
 
 `dataset.27a28665.json` annotates the seven original training pairs from
