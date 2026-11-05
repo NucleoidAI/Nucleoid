@@ -1,0 +1,227 @@
+{
+  "declarations": [
+    "class Obj(x: int, y: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
+    "$Obj.tag = 'l6074'",
+    "$Obj.orientation = {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",
+    "$Obj.fill_color = 5"
+  ],
+  "output_canvas": "EXACT",
+  "dataset": [
+    {
+      "input_matrix": [
+        [2, 2, 2],
+        [3, 2, 3],
+        [3, 3, 3]
+      ],
+      "output_matrix": [
+        [5, 0, 0],
+        [0, 5, 0],
+        [0, 0, 5]
+      ],
+      "instances": [
+        {
+          "instance_name": "objf30b9a69fe75",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 135,
+          "input_instance_matrix": [
+            [2, 2, 2],
+            [3, 2, 3],
+            [3, 3, 3]
+          ],
+          "output_instance_matrix": [
+            [5, 0, 0],
+            [0, 5, 0],
+            [0, 0, 5]
+          ],
+          "implementation": "objf30b9a69fe75 = Obj(x=0, y=0, orientation=0, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])",
+          "input_value": {"id":"objf30b9a69fe75","orientation":0,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":5,"id":"objf30b9a69fe75","orientation":135,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l6074","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [3, 3, 3],
+        [4, 2, 2],
+        [4, 4, 2]
+      ],
+      "output_matrix": [
+        [0, 0, 5],
+        [0, 5, 0],
+        [5, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj9b3f65ec8bbe",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 45,
+          "input_instance_matrix": [
+            [3, 3, 3],
+            [4, 2, 2],
+            [4, 4, 2]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 5],
+            [0, 5, 0],
+            [5, 0, 0]
+          ],
+          "implementation": "obj9b3f65ec8bbe = Obj(x=0, y=0, orientation=0, parts=[3, 3, 3, 4, 2, 2, 4, 4, 2])",
+          "input_value": {"id":"obj9b3f65ec8bbe","orientation":0,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":5,"id":"obj9b3f65ec8bbe","orientation":45,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l6074","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [4, 4, 4],
+        [4, 4, 4],
+        [4, 4, 4]
+      ],
+      "output_matrix": [
+        [5, 5, 5],
+        [0, 0, 0],
+        [0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj23d15ee33476",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 90,
+          "input_instance_matrix": [
+            [4, 4, 4],
+            [4, 4, 4],
+            [4, 4, 4]
+          ],
+          "output_instance_matrix": [
+            [5, 5, 5],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "implementation": "obj23d15ee33476 = Obj(x=0, y=0, orientation=0, parts=[4, 4, 4, 4, 4, 4, 4, 4, 4])",
+          "input_value": {"id":"obj23d15ee33476","orientation":0,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":5,"id":"obj23d15ee33476","orientation":90,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l6074","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [3, 3, 3],
+        [3, 3, 3],
+        [3, 3, 3]
+      ],
+      "output_matrix": [
+        [5, 5, 5],
+        [0, 0, 0],
+        [0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "objb16c3542a556",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 90,
+          "input_instance_matrix": [
+            [3, 3, 3],
+            [3, 3, 3],
+            [3, 3, 3]
+          ],
+          "output_instance_matrix": [
+            [5, 5, 5],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "implementation": "objb16c3542a556 = Obj(x=0, y=0, orientation=0, parts=[3, 3, 3, 3, 3, 3, 3, 3, 3])",
+          "input_value": {"id":"objb16c3542a556","orientation":0,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":5,"id":"objb16c3542a556","orientation":90,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l6074","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [4, 4, 4],
+        [4, 4, 4],
+        [3, 3, 3]
+      ],
+      "output_matrix": [
+        [5, 0, 0],
+        [0, 5, 0],
+        [0, 0, 5]
+      ],
+      "instances": [
+        {
+          "instance_name": "objde2fe15d0cff",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 135,
+          "input_instance_matrix": [
+            [4, 4, 4],
+            [4, 4, 4],
+            [3, 3, 3]
+          ],
+          "output_instance_matrix": [
+            [5, 0, 0],
+            [0, 5, 0],
+            [0, 0, 5]
+          ],
+          "implementation": "objde2fe15d0cff = Obj(x=0, y=0, orientation=0, parts=[4, 4, 4, 4, 4, 4, 3, 3, 3])",
+          "input_value": {"id":"objde2fe15d0cff","orientation":0,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":5,"id":"objde2fe15d0cff","orientation":135,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l6074","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [4, 4, 4],
+        [2, 3, 2],
+        [3, 2, 3]
+      ],
+      "output_matrix": [
+        [0, 0, 5],
+        [0, 5, 0],
+        [5, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj19a35427d914",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 45,
+          "input_instance_matrix": [
+            [4, 4, 4],
+            [2, 3, 2],
+            [3, 2, 3]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 5],
+            [0, 5, 0],
+            [5, 0, 0]
+          ],
+          "implementation": "obj19a35427d914 = Obj(x=0, y=0, orientation=0, parts=[4, 4, 4, 2, 3, 2, 3, 2, 3])",
+          "input_value": {"id":"obj19a35427d914","orientation":0,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l9100","x":0,"y":0},
+          "output_value": {"fill_color":5,"id":"obj19a35427d914","orientation":45,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l6074","x":0,"y":0}
+        }
+      ]
+    }
+  ]
+}

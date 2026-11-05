@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6e02f1e3.json`](../data/training/6e02f1e3.json) |
-| Instruction dataset | Not published: workflow timeout policy conflict. The prospective dataset's 5 training pairs and 1 test pair, with 6 whole-mosaic instances, were verified offline. |
+| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it |
 | Output canvas | `EXACT`, inferred from the training pairs |
-| Nucleoid enhancements | None: accepted distinct-value and class-level rules express the model |
-| Solver changes | JSON-only messages and held-out context exclusion suggested, not applied |
-| Solver runs | None in this invocation; live difference unknown |
+| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the accepted `distinct` list query of [NUC 71](../../docs/nuc-0071.md) |
+| Solver changes | None; suggested changes await review, not applied |
+| Solver runs | 1 local run on 5-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
 | Updated | 5-Nov-2026 |
 
 ## Puzzle
@@ -24,20 +24,79 @@ output background is color 0. The original 3 by 3 canvas stays intact,
 including the two empty rows beneath a horizontal bar, so the model uses
 `EXACT`, not `FIT`.
 
-The default selection chose this puzzle from 381 eligible puzzles: its
-largest training input or output matrix has 9 cells, and all training
-matrices total 90 cells. The accepted starting revision was `f4cf6803`;
-the working tree was clean and the pulls received no commits.
+`/arc-purposal` chose this puzzle by default twice on 5-Nov-2026. Both times
+it was the first of 381 eligible puzzles: its largest training input or output
+matrix has 9 cells, and all its training matrices total 90 cells. `794b24be`
+also has a largest matrix of 9 cells, but 180 cells in all. The first
+invocation started from `f4cf6803` and published no dataset, so the puzzle
+stayed eligible. The second started from `c57cbd6`. Both times the working
+tree was clean and the pulls brought in no commits.
 
 ## Dataset
 
-The dataset worker started from the entire mosaic as one pattern, not from
-cells or separate color regions. Its row-major color list, `parts`, is a
-descriptor of that whole object. One class-level expression counts distinct
-colors and derives the resulting line's orientation. No finer-object
-fallback, imperative steps, or per-pair rules were needed.
+Each grid's whole mosaic is one instance of `Obj(x, y, orientation, parts)`,
+tagged `l9100`, a single shape, as in `dataset.28bf18c6.json` and
+`dataset.3c9b0459.json`. `parts` is the flat list of the mosaic's cell colors
+in reading order, as in `dataset.5582e5ca.json`; it is the only descriptive
+property, so no input property names the color count or the line. Three
+unconditional class-level rules turn the mosaic into its line:
 
-The frozen declaration set is:
+```nuc
+$Obj.tag = 'l6074'
+$Obj.orientation = {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]
+$Obj.fill_color = 5
+```
+
+`distinct` keeps each of the mosaic's colors once, so its length is the number
+of colors. The object literal states each count's axis once: 90 for the
+horizontal top row, 135 for the main diagonal, and 45 for the other diagonal.
+The new tag `l6074` names a straight line of cells across the whole canvas,
+along the axis its orientation gives, so the rules state no length. Every line's
+box starts at the canvas origin, where the mosaic's box starts, so `x` and `y`
+stay unchanged. The rules create only `fill_color`, which is absent from input
+states. The [README](../README.md#instruction-datasets) describes the dataset in
+full.
+
+The worker started from the big picture, the whole mosaic as one figure, and
+stayed at that level. It rejected color regions as objects, because the output
+line follows none of them. The training pairs alone also fit counting
+edge-connected pieces instead of colors, since every training color forms one
+piece. The worker counted colors and froze the rules, with their hash, before
+it extracted the test pair.
+
+This model differs from the unpublished one below. It uses one line tag whose
+orientation gives the axis, where the earlier model used separate bar and
+diagonal tags. It drops `bar_width` and `line_length`, which only restated the
+canvas width. And it looks the axis up by count in an object literal instead of
+indexing a list with the count minus one.
+
+The caller checked the handoff against the declarative, higher-order, and
+gestalt requirements and found that it met them: each relation is stated once
+over every mosaic, no property restates another, and no rule reaches below the
+whole figure. It sent nothing back. Its own replay of the five training pairs
+on the accepted runtime passed all 84 checks in 15 Nucleoid runs:
+
+- grids and key order;
+- mask shapes, cells, bounding boxes, and merges;
+- implementations and orientations;
+- input and output snapshots, with the rules declared before and after the
+  instance;
+- declarations without `#` comments, and instance names unique across all
+  datasets.
+
+The worker's own checks also passed, among them `document()` loading the
+dataset in filename order.
+
+The worker wrote the dataset, its README paragraph, and the puzzle's entry in
+the **ARC puzzle report** workflow's list, its 20th puzzle. The caller made the
+puzzle the solver's default in `src/app.ts`, in place of `ed36ccf7`, before
+the run.
+
+### Earlier unpublished model
+
+The first invocation on 5-Nov-2026 also started from the entire mosaic as one
+pattern with a row-major `parts` list, and verified this declaration set
+offline for all six original pairs:
 
 ```nuc
 class Obj(x: int, y: int, orientation: int, parts: list):
@@ -59,69 +118,83 @@ if $Obj.orientation == 45 or $Obj.orientation == 135:
     $Obj.line_length = canvas_width
 ```
 
-The input pattern tag `l9100` and horizontal-bar tag `l3058` reuse existing
-geometries. The proposed unused tag `l8831` describes an unmarked,
-one-cell-thick diagonal whose raster-cell length is `canvas_width`.
-Positions remain at the origins inferred from the training pairs; the
-rules create the fill color and the applicable width or length.
+It reused `l3058` for the horizontal bar and proposed `l8831` for a
+one-cell-thick diagonal. Its model and evidence stayed in that invocation's
+session workspace. No canonical dataset, README paragraph, or reporting-list
+entry was created.
 
-The worker froze the model from training before evaluating the held-out
-pair. Manual/offline verification passed for all six original pairs:
-full-canvas masks, recomposition, identities, native snapshot replay, and
-the unchanged rule set. Twelve native programs were executed and replayed,
-for 24 successful Nucleoid executions. These checks are not a live-model
-solver result or an automated ARC test.
+### Publication blocker
 
-Publication was blocked, so no canonical `dataset.6e02f1e3.json`, README
-paragraph, or reporting-list entry was created. The model and verification
-evidence remain in the invocation's external session workspace. The
-[instruction dataset documentation](../README.md#instruction-datasets)
-describes the retained dataset conventions.
+The first invocation's worker returned `blocked` on the workflow timeout
+wording. The arc-dataset profile asks for a job timeout of at least thirty
+minutes per listed puzzle plus twenty minutes for setup and reporting, within
+GitHub Actions' job limit. Read serially, adding this puzzle to the nineteen
+listed would require 620 minutes, beyond the 360-minute hosted job limit.
 
-## Publication Blocker
-
-The dataset profile's literal minimum is thirty minutes per listed puzzle
-plus twenty minutes for setup and reporting. Adding this puzzle to the
-nineteen existing entries would require 620 minutes, exceeding the
-GitHub-hosted job limit of 360 minutes.
-
-The actual workflow already uses `ARC_CONCURRENCY = 5`: twenty puzzles
-need four thirty-minute batches plus twenty minutes, or 140 minutes.
-Its existing 150-minute timeout therefore covers the batched execution,
-but does not satisfy the profile's literal serial budget. The worker
-returned `blocked` instead of overriding the policy or publishing a partial
-dataset. Neither the policy nor the workflow was changed.
-
-No NUC was requested, so proposal-strategy learning is `not_applicable`;
-there was no strategy selection, trial, rubric, or checkpoint.
+The workflow already runs the puzzles in batches of `ARC_CONCURRENCY`, 5, and
+the README asks for a timeout budget sufficient for all batches. The second
+invocation sized the timeout by batch, as the `ed36ccf7` invocation did:
+twenty puzzles take four batches of 30 minutes plus 20, or 140 minutes. That
+fits the existing 150-minute timeout, so the timeout was left unchanged.
 
 ## Runs
 
-On 5-Nov-2026, no live solver run was started. The authorized
-`bun start 6e02f1e3` command was not executed because the dataset handoff
-was blocked. Its live exit status, difference, and elapsed time are
-unknown, not zero. The solver's previous default, `ed36ccf7`, remains
-unchanged.
+| Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
+| --- | --- | --- | --- | --- | --- |
+| 5-Nov-2026 09:37 UTC | 1, one mosaic per object | Accepted `c57cbd6`, local | 1 | Unknown: `Error: OPENROUTER_API_KEY is required` | 0.5s |
 
-The primary `cargo build` and ARC type checking succeeded. The existing
-ARC lint command failed with 28 `prettier/prettier` errors in unchanged
-`src/analyzer.ts` and `src/visualizer.ts`; no solver source was edited.
+The first invocation on 5-Nov-2026 started no run, because its dataset handoff
+was blocked. It left the solver's default at `ed36ccf7`.
 
-## Open Items
+The run was `bun start 6e02f1e3` from `arc/`, run once by `/arc-purposal` with
+a 30-minute limit and `NUCLEOID_EXECUTABLE` unset. Before it,
+`bun install --frozen-lockfile` reported no changes. It used the primary
+checkout's debug runtime (`nucleoid 1.0.0`), built with `cargo build` at
+`c57cbd6`, and the committed solver at `c57cbd6` with only its default puzzle
+changed.
 
-- Resolve the serial-versus-batched timeout requirement in
-  `.claude/agents/arc-dataset.agent.md` before publishing the dataset.
-- Make every analyzer, visualizer, and shared-wrapper message a complete
-  JSON document. `src/analyzer.ts`, `src/visualizer.ts`, and
-  `src/lib/llm.ts` currently concatenate labels and pseudo-JSON rather
-  than serializing structured operation and schema objects.
-- Exclude the active puzzle's held-out records from model context without
-  changing canonical datasets or inspecting held-out grids. In
-  `src/dataset/dataset.ts`, `document(puzzle_id)` ignores its argument;
-  `src/lib/llm.ts` prepends every instruction file, which would include
-  this puzzle's expected held-out outputs after publication.
-- Supply `OPENROUTER_API_KEY` through the process environment before a
-  separately authorized run. Only its absence was checked; no
-  environment file or credential content was read.
-- Resolve the pre-existing solver formatting errors in a separate change.
-  Solver changes above are suggestions only and were not applied.
+The run stopped in the analyzer's first model call, `analyzer.declarations`,
+where `src/lib/openrouter.ts` raised `OPENROUTER_API_KEY is required`. That was
+before any model request, prediction, or score, so the difference is unknown,
+not zero. The solver wrote no `logs/6e02f1e3.log.json` and reported no elapsed
+time. The elapsed time is the process's run, from 09:37:48.5 to 09:37:49.0 UTC.
+
+The runtime, the dataset, and `src/app.ts` had the same hashes before and after
+the run. The invocation authorizes one run, so none was repeated. The puzzle
+has not yet been in an **ARC puzzle report** workflow run.
+
+## Open items
+
+- **No model credential.** As in the runs of
+  [ed36ccf7](ARC-NUC-ed36ccf7.md), [25d8a9c8](ARC-NUC-25d8a9c8.md),
+  [25ff71a9](ARC-NUC-25ff71a9.md), and [3c9b0459](ARC-NUC-3c9b0459.md), the
+  solver process had no `OPENROUTER_API_KEY` value, so it stopped before its
+  first model request. Measuring this dataset takes a separately authorized
+  run with the credential in the process environment. No environment file or
+  credential was read.
+- **A run would see the answer.** `src/lib/llm.ts` sends
+  `dataset.document(puzzle_id)` as few-shot context, and
+  `src/dataset/dataset.ts` discards `puzzle_id`. Any run of this puzzle
+  therefore holds this dataset's annotated test pair in its prompts, expected
+  output included, and an exact match would not show that the rule was inferred
+  from the training pairs. Suggested, not applied: leave the running puzzle's
+  test pairs out of `document(puzzle_id)`. For example, keep only the first
+  `train.length` entries of that puzzle's own dataset, selected by count
+  without inspecting grids.
+- **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
+  `src/visualizer.ts` still wrap JSON in text labels such as `few_shot:` and
+  `control_id:`, while the ARC instructions require every message to parse as
+  one JSON document. Suggested, not applied: build each message with
+  `JSON.stringify` of one data object.
+- **Lint fails on untouched solver files.** At `c57cbd6`, `bun run lint`
+  reports 28 `prettier/prettier` errors, 4 in `src/analyzer.ts` and 24 in
+  `src/visualizer.ts`, which this invocation did not change. `src/app.ts`
+  lints clean with the new default, and `bun run typecheck` passes.
+  Suggested, not applied: reformat both files with Prettier, a
+  formatting-only change.
+- **Workflow timeout wording.** The arc-dataset profile still states the
+  serial budget that blocked the first invocation, 620 minutes for the twenty
+  puzzles now listed. The second invocation applied the batch budget that the
+  README and the batched workflow imply. Suggested, not applied: state the
+  batch budget, the number of batches times 30 minutes plus 20, in
+  `.claude/agents/arc-dataset.agent.md`.

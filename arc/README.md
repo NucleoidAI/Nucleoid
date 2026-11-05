@@ -656,6 +656,78 @@ in every input state, where the block is not turned, and 180 in every output
 state. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
 
+`dataset.6e02f1e3.json` annotates the five original training pairs from
+`data\training\6e02f1e3.json`, in order, followed by its test pair, six
+mosaic instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, positions, and zero cells; no input has a zero
+cell. Each input is one mosaic of 9 cells that fills its canvas, in one, two,
+or three colors: 2 and 3; 3, 4, and 2; 4; 3; and 4 and 3 in the training
+pairs, and 4, 2, and 3 in the test pair. Each object is that whole mosaic, the
+figure seen first, whose 3 by 3 box spans the canvas from its origin, 0 and 0.
+Each output replaces the mosaic with one straight line of three color-5 cells
+across the canvas, on a background of zero cells, and the number of colors in
+the mosaic decides the line: one color gives the top row, two colors the main
+diagonal, from the top-left corner to the bottom-right, and three colors the
+other diagonal, from the top-right corner to the bottom-left. The third and
+fourth training mosaics have one color, the first and fifth two, and the
+second three, as does the test mosaic. Neither the colors nor the top row
+decides the line: color 3 appears in the first, second, fourth, and fifth
+training mosaics, which give all three lines, and every training mosaic's top
+row is a single color. The whole mosaic changes as one: all its cells give way
+to one line that follows none of its color regions, so each grid holds one
+object, as in `dataset.3c9b0459.json` and `dataset.74dd1130.json`, rather
+than the color regions of `dataset.9565186b.json`. The training pairs alone
+also fit counting edge-connected pieces, because every training color forms
+one piece; the rules count colors instead, a choice fixed from the training
+pairs before the test pair was read, and in the test mosaic colors 2 and 3
+each split into three single cells. Every canvas is 3 by 3, so the training
+pairs alone also fit a line of three cells on a canvas of any size; the line
+instead crosses the whole canvas, from edge to edge or corner to corner, and
+its tag names that geometry, so the rules state no length, as the
+canvas-filling rectangle of `dataset.5582e5ca.json` carries no size. The
+class takes `parts`, a flat list of the mosaic's cell colors in reading order,
+as in `dataset.5582e5ca.json`, such as `[2, 2, 2, 3, 2, 3, 3, 3, 3]` for the
+first training input, as its only descriptive property, with no color list,
+color count, line direction, canvas size, or matrix of cells, so no input
+property names the count or the line. Three unconditional class-level rules
+turn the mosaic into the line. `$Obj.tag = 'l6074'` names the line, and
+`$Obj.fill_color = 5` introduces `fill_color`, which is absent before the
+rules run, because the line is gray whatever the mosaic's colors.
+`orientation` is `{1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]`: the
+list query `distinct` of [NUC 71](../docs/nuc-0071.md) keeps each of the
+mosaic's colors once, so its length is the number of colors, and the object
+literal, keyed by that number, states each count's axis once, by the
+convention of line orientations, where vertical is 0 and horizontal is 90, so
+the main diagonal, which runs from northwest to southeast, is 135 and the
+other diagonal 45, as `dataset.74dd1130.json` names its mirror axis. No
+arithmetic relates the counts to the axes, so the rule looks the axis up, as
+`dataset.27a28665.json` looks up its code by tag, and it reads no
+orientation, so it rewrites `orientation` without an `@first` anchor. Each
+training grid holds a single mosaic and shows no relation between objects, so
+no population operation appears; the count is a list query over the mosaic's
+own cells. The rules leave `x` and `y` unchanged, because every line's box
+starts at the canvas's origin, 0 and 0, where the mosaic's box starts, also
+for the other diagonal, whose cells run from the top-right corner. They create
+no other property, so each output state adds only `fill_color` to its input
+state's keys, its tag turns `l6074`, and its orientation turns 90, 135, or 45.
+Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
+output snapshots are captured with the pair's implementation followed by
+`Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
+`dataset.28bf18c6.json` and `dataset.3c9b0459.json`, and `l6074` is a
+straight line of cells across the whole canvas, along the axis its orientation
+gives. Input masks retain each pair's full-size 3 by 3 input canvas and output
+masks the complete 3 by 3 output, padded with `0` outside the line; with one
+object per grid, each mask equals its pair's grid, and merging them
+reproduces each pair's input and output. The `output_x`/`output_y` fields
+record the line's nonzero bounding-box origin, 0 and 0, equal to
+`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
+output keeps its input's 3 by 3 canvas, including the two empty rows below the
+top-row line that `FIT` would crop from the third and fourth training outputs.
+Orientation is 0 in every input state, where the mosaic is not turned, and the
+line's axis, 90, 135, or 45, in every output state. The declarations hold
+executable code only, without `#` comments. The test pair follows the training
+pairs at the same level and is annotated by the same rules.
+
 `dataset.74dd1130.json` annotates the four original training pairs from
 `data\training\74dd1130.json`, in order, followed by its test pair, five
 mosaic instances in total, one per pair. Every input and output retains its
