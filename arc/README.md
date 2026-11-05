@@ -654,6 +654,61 @@ in every input state, where the block is not turned, and 180 in every output
 state. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
 
+`dataset.74dd1130.json` annotates the four original training pairs from
+`data\training\74dd1130.json`, in order, followed by its test pair, five
+mosaic instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions, and no grid has a zero cell.
+Each input is one mosaic of 9 cells that fills its canvas, in three colors:
+1, 2, and 5; 2, 5, and 6; 5, 8, and 9; and 1, 2, and 6 in the training pairs.
+Each object is that whole mosaic, the figure seen first, whose 3 by 3 box
+spans the canvas from its origin, 0 and 0. Each output mirrors the whole
+mosaic across its main diagonal, the line from its top-left corner to its
+bottom-right corner, so the cell in row r and column c moves to row c and
+column r: each input row becomes the output column of the same index, read
+top to bottom as the row reads left to right, the three cells on the diagonal
+stay in place, and every color keeps its cell count. The flip across the main
+diagonal is the only one of the square's eight turns and mirrors, the
+identity included, that reproduces any training pair: no training mosaic
+looks the same after a quarter turn, a half turn, a mirror across either
+center line, or a flip across either diagonal, and the flip across the other
+diagonal, from the top-right corner to the bottom-left, reproduces none. No
+turn reproduces a training output, so `orientation`, a clockwise angle from
+north, cannot state the change: a mirror reverses the mosaic's handedness,
+which no turn does. The class takes no descriptive property, with no color,
+parts list, width, height, canvas size, or matrix of cells, because the rule
+needs none: the mosaic's cells travel in its masks, and its flip is its
+mirror axis. One unconditional class-level rule introduces `mirror_axis`,
+which is absent before the rules run, as `135`: the axis the mosaic is
+mirrored across, as an angle clockwise from north by the convention of line
+orientations, where vertical is 0 and horizontal is 90, so the main diagonal,
+which runs from northwest to southeast, is 135 and the other diagonal 45. The
+rules leave `x` and `y` unchanged: a mosaic that fills its square canvas keeps
+its box in place under a flip across its main diagonal, whether its own or the
+canvas's. Two further rules, `$Obj.x = $Obj.y@first` and
+`$Obj.y = $Obj.x@first`, which swap the box's origin as a flip across the
+canvas's diagonal does, would reproduce every training output as well, but
+every mosaic's origin is 0 and 0, so those rules would only return the input
+origin; the rules state the flip alone, a choice fixed from the training pairs
+before the test pair was read. Each training grid holds a single mosaic and
+shows no relation between objects, so no population operation appears. The
+rules create no other property and leave `x`, `y`, `orientation`, and the tag
+unchanged, so each output state adds only `mirror_axis` to its input state's
+keys. Native snapshots start with the pair's `canvas_width` and
+`canvas_height`, and output snapshots are captured with the pair's
+implementation followed by `Obj[:]`. The tag `l9100` is a single shape, as in
+`dataset.28bf18c6.json` and `dataset.3c9b0459.json`, in both states. Input
+masks retain each pair's full-size 3 by 3 input canvas and output masks the
+complete 3 by 3 output; with no zero cell, each mask equals its pair's grid,
+and merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the mirrored mosaic's nonzero bounding-box
+origin, 0 and 0, equal to `output_value.x`/`output_value.y`. `output_canvas`
+is `EXACT` because each output keeps its input's 3 by 3 canvas; with no zero
+cell to crop, `FIT` would frame the same grids. Orientation is 0 in both
+states because the mosaic is mirrored, not turned, and `mirror_axis` states
+the flip. The declarations hold executable code only, without `#` comments.
+The test pair follows the training pairs at the same level and is annotated
+by the same rules.
+
 `dataset.9af7a82c.json` annotates the four original training pairs from
 `data\training\9af7a82c.json`, followed by its test pair, nineteen region
 instances in total (3, 4, 4, 3, and 5 per pair). The fully colored input

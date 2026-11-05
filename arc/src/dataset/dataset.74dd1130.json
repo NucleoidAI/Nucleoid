@@ -1,0 +1,189 @@
+{
+  "declarations": [
+    "class Obj(x: int, y: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'",
+    "$Obj.mirror_axis = 135"
+  ],
+  "output_canvas": "EXACT",
+  "dataset": [
+    {
+      "input_matrix": [
+        [2, 2, 1],
+        [1, 5, 1],
+        [5, 2, 2]
+      ],
+      "output_matrix": [
+        [2, 1, 5],
+        [2, 5, 2],
+        [1, 1, 2]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj98ecd3af71f1",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [2, 2, 1],
+            [1, 5, 1],
+            [5, 2, 2]
+          ],
+          "output_instance_matrix": [
+            [2, 1, 5],
+            [2, 5, 2],
+            [1, 1, 2]
+          ],
+          "implementation": "obj98ecd3af71f1 = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"obj98ecd3af71f1","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"obj98ecd3af71f1","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [2, 2, 5],
+        [6, 2, 2],
+        [5, 5, 5]
+      ],
+      "output_matrix": [
+        [2, 6, 5],
+        [2, 2, 5],
+        [5, 2, 5]
+      ],
+      "instances": [
+        {
+          "instance_name": "objffef4308101e",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [2, 2, 5],
+            [6, 2, 2],
+            [5, 5, 5]
+          ],
+          "output_instance_matrix": [
+            [2, 6, 5],
+            [2, 2, 5],
+            [5, 2, 5]
+          ],
+          "implementation": "objffef4308101e = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"objffef4308101e","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"objffef4308101e","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [9, 9, 5],
+        [5, 5, 8],
+        [5, 8, 9]
+      ],
+      "output_matrix": [
+        [9, 5, 5],
+        [9, 5, 8],
+        [5, 8, 9]
+      ],
+      "instances": [
+        {
+          "instance_name": "objb5bc2fe94345",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [9, 9, 5],
+            [5, 5, 8],
+            [5, 8, 9]
+          ],
+          "output_instance_matrix": [
+            [9, 5, 5],
+            [9, 5, 8],
+            [5, 8, 9]
+          ],
+          "implementation": "objb5bc2fe94345 = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"objb5bc2fe94345","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"objb5bc2fe94345","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [2, 6, 6],
+        [2, 1, 1],
+        [2, 6, 2]
+      ],
+      "output_matrix": [
+        [2, 2, 2],
+        [6, 1, 6],
+        [6, 1, 2]
+      ],
+      "instances": [
+        {
+          "instance_name": "objf024b87c2f1b",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [2, 6, 6],
+            [2, 1, 1],
+            [2, 6, 2]
+          ],
+          "output_instance_matrix": [
+            [2, 2, 2],
+            [6, 1, 6],
+            [6, 1, 2]
+          ],
+          "implementation": "objf024b87c2f1b = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"objf024b87c2f1b","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"objf024b87c2f1b","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [9, 3, 4],
+        [9, 4, 4],
+        [9, 3, 4]
+      ],
+      "output_matrix": [
+        [9, 9, 9],
+        [3, 4, 3],
+        [4, 4, 4]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj661249916bd0",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [9, 3, 4],
+            [9, 4, 4],
+            [9, 3, 4]
+          ],
+          "output_instance_matrix": [
+            [9, 9, 9],
+            [3, 4, 3],
+            [4, 4, 4]
+          ],
+          "implementation": "obj661249916bd0 = Obj(x=0, y=0, orientation=0)",
+          "input_value": {"id":"obj661249916bd0","orientation":0,"tag":"l9100","x":0,"y":0},
+          "output_value": {"id":"obj661249916bd0","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+        }
+      ]
+    }
+  ]
+}
