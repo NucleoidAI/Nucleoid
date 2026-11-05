@@ -15,9 +15,20 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 
 /// How many statements one change may re-evaluate before the runtime decides it
-/// is not settling. The dependency graph is acyclic, but imperative rule bodies
-/// can feed changes back into earlier inputs.
+/// is not settling. The dependency graph is acyclic apart from cycles of fixed
+/// history anchors, which settle, but imperative rule bodies can feed changes
+/// back into earlier inputs.
 const MAX_PROPAGATION: usize = 100_000;
+
+/// Which queued statements a statement waits for before it runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Wait {
+    /// Every queued statement upstream of it, by any edge.
+    Upstream,
+    /// Only those upstream along a path that crosses an edge other than a
+    /// fixed anchor, the statement itself included.
+    BeyondAnchors,
+}
 
 /// Statements waiting to be re-evaluated. Upstream work runs first; otherwise
 /// declaration order decides which statement is next.
@@ -71,6 +82,24 @@ impl Stack {
     }
 
     fn pop(&mut self, graph: &Graph) -> Result<Option<NodeKey>> {
+        // Only fixed anchors can close a cycle of value edges, so queued rules
+        // on one can wait for each other. When every queued rule waits, the
+        // first whose every wait runs through fixed anchors alone goes next.
+        // A rule that waits through any other edge keeps waiting, and when no
+        // rule can go, that is a circular dependency, as before.
+        let next = self
+            .ready(graph, Wait::Upstream)
+            .or_else(|| self.ready(graph, Wait::BeyondAnchors));
+
+        if next.is_none() && !self.pending.is_empty() {
+            return Err(Error::type_error("Circular Dependency"));
+        }
+
+        Ok(next)
+    }
+
+    /// Takes the earliest queued statement that waits for no queued work.
+    fn ready(&mut self, graph: &Graph, wait: Wait) -> Option<NodeKey> {
         let mut blocked = Vec::new();
         let mut next = None;
 
@@ -82,7 +111,7 @@ impl Stack {
                 }
             }
 
-            if self.queued.len() > 1 && graph.depends_on_any(&key, &self.queued) {
+            if self.queued.len() > 1 && self.waits(graph, &key, wait) {
                 blocked.push(Reverse((sequence, key)));
                 continue;
             }
@@ -95,11 +124,14 @@ impl Stack {
         self.pending.extend(blocked);
         debug_assert_eq!(self.queued.len(), self.pending.len());
 
-        if next.is_none() && !self.pending.is_empty() {
-            return Err(Error::type_error("Circular Dependency"));
-        }
+        next
+    }
 
-        Ok(next)
+    fn waits(&self, graph: &Graph, key: &NodeKey, wait: Wait) -> bool {
+        match wait {
+            Wait::Upstream => graph.depends_on_any(key, &self.queued),
+            Wait::BeyondAnchors => graph.waits_beyond_anchors(key, &self.queued),
+        }
     }
 
     fn clear(&mut self) {

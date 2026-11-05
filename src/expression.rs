@@ -14,6 +14,16 @@ pub struct Expression<'a> {
     pub node: &'a Expr,
 }
 
+/// The `$Class` properties one class rule reads.
+#[derive(Debug, Default)]
+pub(crate) struct ClassReads {
+    /// Read live, at a moving history position, or through any other path.
+    pub(crate) live: Vec<String>,
+    /// Read only at `@first` or `@n`, written directly on `$Class`. A fixed
+    /// position never changes during its slot's lifetime.
+    pub(crate) fixed: Vec<String>,
+}
+
 impl<'a> Expression<'a> {
     #[must_use]
     pub fn new(node: &'a Expr) -> Self {
@@ -65,17 +75,20 @@ impl<'a> Expression<'a> {
     /// The `$Class.property` names this expression reads, for the given class.
     #[must_use]
     pub fn class_properties(&self, class: &str) -> Vec<String> {
-        let mut found = Vec::new();
-        class_properties(self.node, class, None, &mut found);
-        found
+        let mut reads = ClassReads::default();
+        class_properties(self.node, class, false, &mut reads);
+        reads.live
     }
 
-    /// Only a fixed history of the rule's own destination is a self-anchor.
-    /// Other property reads keep the accepted class-cycle checks.
-    pub(crate) fn class_rule_properties(&self, class: &str, destination: &str) -> Vec<String> {
-        let mut found = Vec::new();
-        class_properties(self.node, class, Some(destination), &mut found);
-        found
+    /// The class properties a rule reads, with those it names only at a fixed
+    /// history position directly on `$Class` kept apart as anchors.
+    pub(crate) fn class_rule_reads(&self, class: &str) -> ClassReads {
+        let mut reads = ClassReads::default();
+        class_properties(self.node, class, true, &mut reads);
+        reads
+            .fixed
+            .retain(|property| !reads.live.contains(property));
+        reads
     }
 
     /// Validate calls before a static reference check inspects their values.
@@ -183,42 +196,43 @@ fn class_reference(expression: &Expr, found: &mut Option<String>) {
     }
 }
 
-fn class_properties(
-    expression: &Expr,
-    class: &str,
-    destination: Option<&str>,
-    found: &mut Vec<String>,
-) {
+/// Collects class property reads. With `anchors`, a fixed history read written
+/// directly on `$Class` is reported as fixed rather than as a live read.
+fn class_properties(expression: &Expr, class: &str, anchors: bool, reads: &mut ClassReads) {
     match expression {
         Expr::Version {
             reference,
             selector,
-        } if selector.is_fixed()
-            && destination.is_some_and(|property| class_property(reference, class, property)) => {}
+        } if anchors && selector.is_fixed() => match class_property(reference, class) {
+            Some(property) => reads.fixed.push(property.to_string()),
+            None => visit_children(expression, &mut |child| {
+                class_properties(child, class, anchors, reads);
+            }),
+        },
         Expr::Member { property, .. } if property == "value" => {}
         Expr::Member { object, property } => {
-            member_properties(object, property, class, destination, found);
+            member_properties(object, property, class, anchors, reads);
         }
         // The method form `OPERAND.NOUN()` reads its callee `OPERAND.NOUN`, so
         // `NOUN of OPERAND` reads what that member read does: the class
         // property `NOUN` for `NOUN of $Class`, otherwise the operand's reads.
         Expr::Of { noun, operand } => {
-            member_properties(operand, noun.as_str(), class, destination, found);
+            member_properties(operand, noun.as_str(), class, anchors, reads);
         }
         Expr::Index { object, index } => {
             if let (Expr::ClassRef(name), Expr::String(property)) =
                 (object.as_ref(), index.as_ref())
             {
                 if name == class {
-                    found.push(property.clone());
+                    reads.live.push(property.clone());
                 }
             }
             visit_children(expression, &mut |child| {
-                class_properties(child, class, destination, found);
+                class_properties(child, class, anchors, reads);
             });
         }
         _ => visit_children(expression, &mut |child| {
-            class_properties(child, class, destination, found);
+            class_properties(child, class, anchors, reads);
         }),
     }
 }
@@ -229,28 +243,28 @@ fn member_properties(
     object: &Expr,
     property: &str,
     class: &str,
-    destination: Option<&str>,
-    found: &mut Vec<String>,
+    anchors: bool,
+    reads: &mut ClassReads,
 ) {
     if matches!(object, Expr::ClassRef(name) if name == class) {
-        found.push(property.to_string());
+        reads.live.push(property.to_string());
     } else {
-        class_properties(object, class, destination, found);
+        class_properties(object, class, anchors, reads);
     }
 }
 
-fn class_property(expression: &Expr, class: &str, property: &str) -> bool {
-    match expression {
-        Expr::Member {
-            object,
-            property: name,
-        } => matches!(object.as_ref(), Expr::ClassRef(owner) if owner == class) && name == property,
-        Expr::Index { object, index } => {
-            matches!(object.as_ref(), Expr::ClassRef(name) if name == class)
-                && matches!(index.as_ref(), Expr::String(name) if name == property)
-        }
-        _ => false,
-    }
+/// The property a version reference names directly on `$Class`, as
+/// `$Class.property` or `$Class["property"]`.
+fn class_property<'e>(expression: &'e Expr, class: &str) -> Option<&'e str> {
+    let (object, property) = match expression {
+        Expr::Member { object, property } if property != "value" => (object, property),
+        Expr::Index { object, index } => match index.as_ref() {
+            Expr::String(property) => (object, property),
+            _ => return None,
+        },
+        _ => return None,
+    };
+    matches!(object.as_ref(), Expr::ClassRef(name) if name == class).then_some(property.as_str())
 }
 
 /// Visits immediate expression children without entering a function's scope.

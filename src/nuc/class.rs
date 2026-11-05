@@ -259,6 +259,10 @@ impl Runtime {
 
     /// Rejects a class-level rule that would make two properties of the same
     /// class depend on each other, before any instance exists to reveal it.
+    ///
+    /// A cycle whose every edge is a fixed history read settles, because a
+    /// recorded position never changes during its slot's lifetime. The walk
+    /// therefore remembers whether its path has crossed any other read.
     fn check_class_cycle(&self, class: &str, statement: &Stmt) -> Result<()> {
         let Stmt::Assign { target, value } = statement else {
             return Ok(());
@@ -276,29 +280,34 @@ impl Runtime {
             return Ok(());
         };
 
-        let mut pending = Expression::new(value).class_rule_properties(class, property);
+        let mut pending = class_edges(value, class, false);
 
-        let mut seen: Vec<String> = Vec::new();
+        let mut seen: Vec<(String, bool)> = Vec::new();
 
-        while let Some(current) = pending.pop() {
-            if &current == property {
-                return Err(Error::type_error("Circular Dependency"));
-            }
+        while let Some(state) = pending.pop() {
+            let (current, live) = &state;
 
-            if seen.contains(&current) {
+            if current == property {
+                if *live {
+                    return Err(Error::type_error("Circular Dependency"));
+                }
                 continue;
             }
 
-            seen.push(current.clone());
+            if seen.contains(&state) {
+                continue;
+            }
 
             if let Some(declaration) = data
                 .declarations
-                .get(&DeclarationKey::property(class, &current))
+                .get(&DeclarationKey::property(class, current))
             {
                 if let Stmt::Assign { value: rule, .. } = &declaration.statement {
-                    pending.extend(Expression::new(rule).class_rule_properties(class, &current));
+                    pending.extend(class_edges(rule, class, *live));
                 }
             }
+
+            seen.push(state);
         }
 
         Ok(())
@@ -339,4 +348,17 @@ impl Runtime {
 
         declarations
     }
+}
+
+/// The class properties a rule reads, each paired with whether a path through
+/// that read has crossed a live or moving read. Fixed reads keep the path's
+/// state; every other read marks it live.
+fn class_edges(rule: &Expr, class: &str, live: bool) -> Vec<(String, bool)> {
+    let reads = Expression::new(rule).class_rule_reads(class);
+    reads
+        .live
+        .into_iter()
+        .map(|property| (property, true))
+        .chain(reads.fixed.into_iter().map(|property| (property, live)))
+        .collect()
 }

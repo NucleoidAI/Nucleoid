@@ -30,6 +30,11 @@ pub struct Property {
     pub value: Expr,
     kind: Option<NodeKind>,
     changed: bool,
+    /// The `$Class` a class rule names its instance by, when it is one.
+    receiver: Option<String>,
+    /// Dependencies the last evaluation read only at fixed positions of that
+    /// receiver. A cycle made of such edges settles.
+    anchors: IndexSet<NodeKey>,
 }
 
 impl Property {
@@ -41,7 +46,22 @@ impl Property {
             value,
             kind: None,
             changed: false,
+            receiver: None,
+            anchors: IndexSet::new(),
         }
+    }
+
+    /// Marks a class rule applied to one instance, written on `$Class`.
+    #[must_use]
+    pub(crate) fn with_receiver(mut self, class: &str) -> Self {
+        self.receiver = Some(class.to_string());
+        self
+    }
+
+    /// Whether this rule reads `source` only at fixed history positions of
+    /// its own receiver.
+    pub(crate) fn anchors_on(&self, source: &NodeKey) -> bool {
+        self.anchors.contains(source)
     }
 
     #[must_use]
@@ -102,10 +122,16 @@ impl Property {
                 }
 
                 let imperative = runtime.is_imperative();
-                let evaluated =
-                    runtime.evaluate_property_tracked(&self.value, scope, object, &self.name)?;
+                let evaluated = runtime.evaluate_property_tracked(
+                    &self.value,
+                    scope,
+                    object,
+                    &self.name,
+                    self.receiver.as_deref(),
+                )?;
                 self.changed = !evaluated.pending_anchor
                     && runtime.assign_property(object, &self.name, evaluated.value.clone());
+                self.anchors = evaluated.anchors;
 
                 if imperative {
                     self.kind = None;
@@ -149,6 +175,7 @@ impl Property {
     pub(crate) fn hold(&mut self, value: &Value) -> Result<()> {
         if self.kind == Some(NodeKind::Property) {
             self.value = literal::snapshot(value)?;
+            self.anchors.clear();
         }
         Ok(())
     }

@@ -1124,6 +1124,13 @@ assert([first.x@0, second.x@first], [10, 30])
   still raise Circular Dependency. Histories stay read-only, slot-owned and
   transactional. See the root
   `nucleoid.spec.md` **Class-level state version anchors** contract.
+- With [NUC 85](docs/nuc-0085.md), a class rule may also read another
+  property of its own receiver at a fixed position, so
+  `$Box.width = $Box.height@first` with `$Box.height = $Box.width@first`
+  swaps each box's first recorded values. Such a cycle stands only when every
+  read on it is fixed; a live or moving read still raises Circular
+  Dependency. Fixed reads stay tracked through deletion and recreation. See
+  **Fixed cross-property class anchors** in `nucleoid.spec.md`.
 
 **Reactive base two powers**
 

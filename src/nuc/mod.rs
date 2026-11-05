@@ -220,7 +220,11 @@ impl Nuc {
 
                 match base {
                     Value::Object(id) => {
-                        Nuc::Property(Property::new(Owner::Object(id), property.clone(), value))
+                        let assignment = Property::new(Owner::Object(id), property.clone(), value);
+                        Nuc::Property(match object.as_ref() {
+                            Expr::ClassRef(class) => assignment.with_receiver(class),
+                            _ => assignment,
+                        })
                     }
                     Value::Class(class) => {
                         Nuc::Property(Property::new(Owner::Class(class), property.clone(), value))
@@ -323,6 +327,12 @@ impl Nuc {
         }
     }
 
+    /// Whether this node reads `source` only at fixed history positions of its
+    /// own class receiver. Only such edges may close a cycle.
+    pub(crate) fn anchors_on(&self, source: &NodeKey) -> bool {
+        matches!(self, Nuc::Property(property) if property.anchors_on(source))
+    }
+
     /// Wakes everything that read what this node wrote.
     /// A kind whose key nothing can read has nothing to wake.
     pub fn after(&self, runtime: &mut Runtime) -> Result<()> {
@@ -367,7 +377,7 @@ impl Runtime {
             .as_ref()
             .is_some_and(|node| node.kind != NodeKind::Pending && !self.graph.is_observer(key));
 
-        self.check_new_edges(key, &dependencies, existing.as_ref())?;
+        self.check_new_edges(key, &dependencies, nuc.as_ref(), existing.as_ref())?;
 
         let sequence = match &existing {
             Some(existing) if self.stack.is_running(key) => existing.sequence,
@@ -424,10 +434,13 @@ impl Runtime {
         Ok(())
     }
 
+    /// A fixed anchor may close a cycle only when every other edge on it is
+    /// one too; any other new edge may close none.
     fn check_new_edges(
         &self,
         key: &NodeKey,
         dependencies: &IndexSet<NodeKey>,
+        nuc: Option<&Nuc>,
         existing: Option<&GraphNode>,
     ) -> Result<()> {
         for dependency in dependencies {
@@ -435,16 +448,27 @@ impl Runtime {
                 continue;
             }
 
+            let anchored = nuc.is_some_and(|nuc| nuc.anchors_on(dependency));
+
             // An edge that is already there was checked when it was made, and
             // re-checking costs a walk of everything downstream — which is the
-            // whole graph, on every re-evaluation.
-            let unchanged = existing.is_some_and(|node| node.dependencies.contains(dependency));
+            // whole graph, on every re-evaluation. An anchor that has become an
+            // ordinary read is checked again.
+            let unchanged = existing.is_some_and(|node| {
+                node.dependencies.contains(dependency) && (anchored || !node.anchors_on(dependency))
+            });
 
             if unchanged {
                 continue;
             }
 
-            if self.graph.reaches(key, dependency) {
+            let cycle = if anchored {
+                self.graph.reaches_through_ordinary(key, dependency)
+            } else {
+                self.graph.reaches(key, dependency)
+            };
+
+            if cycle {
                 return Err(Error::type_error("Circular Dependency"));
             }
         }

@@ -754,3 +754,313 @@ item = Sample()
         );
     }
 }
+
+#[test]
+fn fixed_cross_anchor_cycles_swap_first_values_and_keep_their_edges_tracked() {
+    let mut runtime = Runtime::new();
+    checked(
+        &mut runtime,
+        r#"
+class Box(width, height):
+    this.width = width
+    this.height = height
+early = Box(4, 1)
+$Box.width = $Box.height@first
+$Box.height = $Box.width@first
+box = Box(3, 2)
+assert([box.width, box.height, early.width, early.height], [2, 3, 1, 4])
+assert([box.width@2, box.height@2, early.width@2, early.height@2], [null, null, null, null])
+"#,
+    );
+    let instance = ObjectId::named("box");
+    let width = NodeKey::property(&instance, "width");
+    let height = NodeKey::property(&instance, "height");
+    for (reader, source) in [(&width, &height), (&height, &width)] {
+        let node = runtime.graph.retrieve(reader).unwrap();
+        assert!(
+            node.dependencies.contains(source),
+            "{reader} reads {source}"
+        );
+        let read = runtime.graph.retrieve(source).unwrap();
+        assert!(read.dependents.contains(reader), "{source} wakes {reader}");
+    }
+    checked(
+        &mut runtime,
+        r#"
+delete box.height
+assert(box.width, null)
+box.height = 7
+assert([box.width, box.height], [7, 7])
+assert([box.width@first, box.width@1, box.width@2, box.width@3], [3, 2, null, 7])
+"#,
+    );
+}
+
+#[test]
+fn class_cycles_with_a_live_moving_or_compound_read_still_fail_and_leave_no_rules() {
+    let mut runtime = Runtime::new();
+    checked(&mut runtime, "class Sample\nstep = 1");
+    for source in [
+        "$Sample.x = $Sample.y@first\n$Sample.y = $Sample.x@last",
+        "$Sample.x = $Sample.y@previous\n$Sample.y = $Sample.x@first",
+        "$Sample.x = $Sample.y@first + $Sample.y\n$Sample.y = $Sample.x@first",
+        "$Sample.x = $Sample[\"y\"]@first\n$Sample.y = $Sample[\"x\"]",
+        "$Sample.x = $Sample.y@first\n$Sample.y = $Sample.z@0\n$Sample.z = $Sample.x",
+        "$Sample.x = $Sample.y@first\n$Sample.y = $Sample.x@first\n$Sample.y += step",
+        "$Sample.x = $Sample.y@first\n$Sample.y = $Sample.x@first\n$Sample.x = $Sample.y + 1",
+    ] {
+        error(&mut runtime, source, ErrorKind::Type, "Circular Dependency");
+        assert!(
+            runtime
+                .state
+                .class("Sample")
+                .unwrap()
+                .declarations
+                .is_empty(),
+            "{source}"
+        );
+    }
+    checked(
+        &mut runtime,
+        "$Sample.x = $Sample.y@first\n$Sample.y = $Sample[\"z\"]@1\n$Sample.z = $Sample.x@0 + step",
+    );
+    assert_eq!(runtime.state.class("Sample").unwrap().declarations.len(), 3);
+}
+
+#[test]
+fn helper_and_alias_reads_keep_their_runtime_cycle_checks() {
+    let mut runtime = Runtime::new();
+    checked(
+        &mut runtime,
+        r#"
+class Sample(x, y):
+    this.x = x
+    this.y = y
+def latest(sample) => sample.y@last
+$Sample.x = $Sample.y@first + latest($Sample) * 0
+$Sample.y = $Sample.x@first
+"#,
+    );
+    assert_eq!(runtime.state.class("Sample").unwrap().declarations.len(), 2);
+    error(
+        &mut runtime,
+        "item = Sample(1, 2)",
+        ErrorKind::Type,
+        "Circular Dependency",
+    );
+    assert!(!runtime.state.has_object(&ObjectId::named("item")));
+
+    let mut runtime = Runtime::new();
+    checked(&mut runtime, "class Sample\nother = Sample()");
+    error(
+        &mut runtime,
+        "$Sample.x = other.y@first\n$Sample.y = $Sample.x@first",
+        ErrorKind::Type,
+        "Circular Dependency",
+    );
+    assert!(
+        runtime
+            .state
+            .class("Sample")
+            .unwrap()
+            .declarations
+            .is_empty()
+    );
+}
+
+#[test]
+fn failed_runs_restore_fixed_cross_anchor_rules_edges_and_histories() {
+    let mut runtime = Runtime::new();
+    checked(
+        &mut runtime,
+        "class Box(width, height):\n    this.width = width\n    this.height = height\nbox = Box(3, 2)",
+    );
+    let width = NodeKey::property(&ObjectId::named("box"), "width");
+    let dependencies = runtime.graph.retrieve(&width).unwrap().dependencies.clone();
+    error(
+        &mut runtime,
+        "$Box.width = $Box.height@first\n$Box.height = $Box.width@first\nmissing",
+        ErrorKind::Reference,
+        "missing is not defined",
+    );
+    assert!(runtime.state.class("Box").unwrap().declarations.is_empty());
+    assert_eq!(
+        runtime.graph.retrieve(&width).unwrap().dependencies,
+        dependencies
+    );
+    checked(
+        &mut runtime,
+        r#"
+assert([box.width, box.height], [3, 2])
+assert([box.width@1, box.height@1], [null, null])
+$Box.width = $Box.height@first
+$Box.height = $Box.width@first
+assert([box.width, box.height], [2, 3])
+assert([box.width@2, box.height@2], [null, null])
+"#,
+    );
+}
+
+#[test]
+fn queued_rules_on_a_fixed_cross_cycle_settle_with_upstream_work_first() {
+    let mut runtime = Runtime::new();
+    let result = checked(
+        &mut runtime,
+        r#"
+k = 1
+class Pair(a, b):
+    this.a = a
+    this.b = b
+$Pair.a = $Pair.b@first + k
+$Pair.b = $Pair.a@first + k
+$Pair.sum = $Pair.a + $Pair.b
+pair = Pair(1, 2)
+k = 10
+assert([pair.a, pair.b, pair.sum], [12, 11, 23])
+assert([pair.a@1, pair.a@2, pair.a@3], [3, 12, null])
+assert([pair.b@1, pair.b@2], [11, null])
+assert([pair.sum@first, pair.sum@1, pair.sum@2], [5, 23, null])
+pair.sum
+"#,
+    );
+    assert_eq!(result, Value::number(23));
+}
+
+/// A reasoning selection that a rule reads back waits for that rule through
+/// a structural link, never a fixed anchor, so its queue cycle still fails.
+const REASONING_CYCLE: &str = r#"
+x = 1
+k = (why x).length
+o = why k
+k = (why x).length + o.length
+w = k * 1
+y = w + x
+x = 2
+[k, w, y]
+"#;
+
+fn circular_at(runtime: &mut Runtime, source: &str, line: usize) {
+    let error = runtime.run(source).unwrap_err();
+    assert_eq!(error.kind(), ErrorKind::Type, "{source}: {error}");
+    assert_eq!(error.message(), "Circular Dependency", "{source}: {error}");
+    assert_eq!(
+        error
+            .position()
+            .map(|position| (position.line, position.column)),
+        Some((line, 1)),
+        "{source}: {error}"
+    );
+}
+
+#[test]
+fn reasoning_selection_cycles_keep_their_queue_errors_beside_fixed_cycles() {
+    circular_at(&mut Runtime::new(), REASONING_CYCLE.trim_start(), 7);
+    let beside = r#"
+x = 1
+class Pair(a, b):
+    this.a = a
+    this.b = b
+$Pair.a = $Pair.b@first + x
+$Pair.b = $Pair.a@first + x
+pair = Pair(1, 2)
+k = (why x).length
+o = why k
+k = (why x).length + o.length
+w = k * 1
+y = w + x
+x = 2
+[pair.a, k, w, y]
+"#;
+    circular_at(&mut Runtime::new(), beside.trim_start(), 13);
+}
+
+#[test]
+fn fixed_cycles_step_aside_without_changing_a_reasoning_pairs_queue_order() {
+    let pair = "x = 1\ns = (why x).length\no = why s\ns = (why x).length + o.length + k\nw = s * 1";
+    let mut alone = Runtime::new();
+    checked(&mut alone, &format!("k = 1\n{pair}\nk = 2"));
+    let mut beside = Runtime::new();
+    checked(
+        &mut beside,
+        &format!(
+            r#"k = 1
+class Pair(a, b):
+    this.a = a
+    this.b = b
+$Pair.a = $Pair.b@first + k
+$Pair.b = $Pair.a@first + k
+pair = Pair(1, 2)
+{pair}
+k = 2
+assert([pair.a, pair.b], [4, 3])"#
+        ),
+    );
+    for runtime in [&mut alone, &mut beside] {
+        assert_eq!(
+            runtime.run("[s, w]").unwrap(),
+            Value::List(vec![Value::number(3), Value::number(3)])
+        );
+    }
+}
+
+/// Runs a program in its own process, so a regression that never settles is
+/// stopped after a bounded wait instead of hanging or exhausting the suite.
+fn run_bounded(name: &str, source: &str) -> std::process::Output {
+    use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant};
+
+    let path = std::env::temp_dir().join(format!(
+        "nucleoid-class-state-versions-{name}-{}.nuc",
+        std::process::id()
+    ));
+    std::fs::write(&path, source).unwrap();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_nucleoid"))
+        .arg("--json")
+        .arg(&path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while child.try_wait().unwrap().is_none() {
+        if Instant::now() > deadline {
+            let _ = child.kill();
+            let _ = child.wait();
+            std::fs::remove_file(&path).unwrap();
+            panic!("{name} did not finish within 10 seconds");
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let output = child.wait_with_output().unwrap();
+    std::fs::remove_file(&path).unwrap();
+    output
+}
+
+#[test]
+fn reasoning_queue_cycles_beside_pushing_blocks_fail_without_unbounded_work() {
+    let output = run_bounded(
+        "pushing-blocks",
+        r#"log = []
+x = 1
+k = (why x).length
+o = why k
+k = (why x).length + o.length + x
+{
+    seen = k
+    log.push(seen)
+}
+{
+    other = x
+    log.push(other * 100)
+}
+x = 2
+[log, k]
+"#,
+    );
+    assert!(!output.status.success(), "{output:?}");
+    assert!(output.stdout.is_empty(), "{output:?}");
+    assert_eq!(
+        std::str::from_utf8(&output.stderr).unwrap().trim(),
+        "TypeError: Circular Dependency (line 14, column 1)"
+    );
+}

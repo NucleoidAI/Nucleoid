@@ -1069,6 +1069,29 @@ assert([first.x, second.x], [8, 28])
 assert([first.x@0, second.x@first], [10, 30])
 ```
 
+- With [NUC 85](nuc-0085.md), a rule may also read another property of its
+  own receiver at a fixed position, as in `$Point.x = $Point.y@first`. A class
+  cycle whose every read is such a fixed anchor, or a fixed self-anchor,
+  settles and is not a circular dependency; one live or moving read on the
+  cycle still raises `TypeError("Circular Dependency")`.
+- Fixed anchors stay tracked: deleting the slot they read makes them read
+  null, and recreating it makes them follow its new first entry. Only reads
+  written directly on `$Class` count; helpers, `this` and other objects keep
+  their existing checks. A missing entry of another property reads null.
+- The executable reference case is `Class state anchors exchange properties
+  through fixed cross anchors`. The root contract is **Fixed cross-property
+  class anchors** in `nucleoid.spec.md`.
+
+```
+class Point(x, y):
+    this.x = x
+    this.y = y
+$Point.x = $Point.y@first
+$Point.y = $Point.x@first
+p = Point(1, 5)
+assert([p.x, p.y], [5, 1])
+```
+
 ---
 
 ## 7. Blocks and Scope
@@ -3403,7 +3426,7 @@ Messages are exact and are part of the observable behaviour of the language.
 
 | Condition | Message |
 | --- | --- |
-| An assignment that would close a dependency cycle | `Circular Dependency` |
+| An assignment that would close a dependency cycle, unless every read on it is a fixed class history anchor | `Circular Dependency` |
 | A type declaration that would close an inheritance cycle | `Circular Inheritance` |
 | Deleting an instance that still has properties | `Cannot delete object '<id>'` |
 | Using `value` as a property name | `Cannot use 'value' as a property` |

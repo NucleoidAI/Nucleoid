@@ -11,6 +11,7 @@
 use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
+use crate::expression::Expression;
 use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::{Expr, VersionSelector};
 use crate::runtime::Runtime;
@@ -43,6 +44,9 @@ struct TrackingFrame {
     target: Option<NodeKey>,
     anchored: bool,
     pending_anchor: bool,
+    /// Receiver slots the rule names only at fixed history positions. Any
+    /// other read of one of them makes it an ordinary dependency again.
+    anchors: IndexSet<NodeKey>,
 }
 
 impl Tracking {
@@ -68,6 +72,8 @@ pub(crate) struct PropertyEvaluation {
     pub dependencies: IndexSet<NodeKey>,
     /// A self-history must not manufacture the version it is waiting for.
     pub pending_anchor: bool,
+    /// The dependencies read only at fixed positions of the rule's receiver.
+    pub anchors: IndexSet<NodeKey>,
 }
 
 impl Runtime {
@@ -96,7 +102,7 @@ impl Runtime {
         mode: TrackingMode,
         operation: impl FnOnce(&mut Self) -> Result<T>,
     ) -> Result<(T, TrackingFrame)> {
-        self.tracked_assignment(mode, None, false, operation)
+        self.tracked_assignment(mode, None, false, IndexSet::new(), operation)
     }
 
     fn tracked_assignment<T>(
@@ -104,6 +110,7 @@ impl Runtime {
         mode: TrackingMode,
         target: Option<NodeKey>,
         anchored: bool,
+        anchors: IndexSet<NodeKey>,
         operation: impl FnOnce(&mut Self) -> Result<T>,
     ) -> Result<(T, TrackingFrame)> {
         self.tracking.frames.push(TrackingFrame {
@@ -113,6 +120,7 @@ impl Runtime {
             target,
             anchored,
             pending_anchor: false,
+            anchors,
         });
         let depth = self.tracking.frames.len();
         let result = operation(self);
@@ -128,27 +136,34 @@ impl Runtime {
 
     /// Records a read. Reads reach every enclosing frame up to a barrier, so an
     /// enclosing block depends on whatever its statements read.
+    ///
+    /// This is a live read, so it also stops the slot being a fixed anchor.
     pub(crate) fn track(&mut self, key: &NodeKey) {
         for frame in self.tracking.reachable_mut() {
             frame.keys.insert(key.clone());
+            if !frame.anchors.is_empty() {
+                frame.anchors.swap_remove(key);
+            }
         }
     }
 
     /// History still observes its real slot. Only an unavailable fixed
     /// self-anchor defers an assignment on the active class receiver.
+    /// A moving position is a live read; a fixed one keeps a receiver anchor.
     pub(crate) fn track_property_version(
         &mut self,
         key: &NodeKey,
         selector: VersionSelector,
         available: bool,
     ) {
-        self.track(key);
-        if available || !selector.is_fixed() {
+        if !selector.is_fixed() {
+            self.track(key);
             return;
         }
 
         for frame in self.tracking.reachable_mut() {
-            if frame.anchored && frame.target.as_ref() == Some(key) {
+            frame.keys.insert(key.clone());
+            if !available && frame.anchored && frame.target.as_ref() == Some(key) {
                 frame.pending_anchor = true;
             }
         }
@@ -173,20 +188,33 @@ impl Runtime {
         scope: &mut Scope,
         exclude: Option<&NodeKey>,
     ) -> Result<(Value, IndexSet<NodeKey>)> {
-        let evaluated = self.evaluate_assignment(expression, scope, exclude.cloned(), false)?;
+        let evaluated =
+            self.evaluate_assignment(expression, scope, exclude.cloned(), false, IndexSet::new())?;
         Ok((evaluated.value, evaluated.dependencies))
     }
 
+    /// `receiver` is the `$Class` a class rule names its instance by. Its
+    /// fixed reads of the receiver's other slots are anchor candidates.
     pub(crate) fn evaluate_property_tracked(
         &mut self,
         expression: &Expr,
         scope: &mut Scope,
         object: &ObjectId,
         property: &str,
+        receiver: Option<&str>,
     ) -> Result<PropertyEvaluation> {
         let key = NodeKey::property(object, property);
         let anchored = scope.instance() == Some(object);
-        self.evaluate_assignment(expression, scope, Some(key), anchored)
+        let anchors = match receiver {
+            Some(class) if anchored => Expression::new(expression)
+                .class_rule_reads(class)
+                .fixed
+                .iter()
+                .map(|name| NodeKey::property(object, name))
+                .collect(),
+            _ => IndexSet::new(),
+        };
+        self.evaluate_assignment(expression, scope, Some(key), anchored, anchors)
     }
 
     fn evaluate_assignment(
@@ -195,13 +223,19 @@ impl Runtime {
         scope: &mut Scope,
         target: Option<NodeKey>,
         anchored: bool,
+        anchors: IndexSet<NodeKey>,
     ) -> Result<PropertyEvaluation> {
         let saved = std::mem::take(&mut self.null_read);
-        let result =
-            self.tracked_assignment(TrackingMode::Inherited, target, anchored, |runtime| {
+        let result = self.tracked_assignment(
+            TrackingMode::Inherited,
+            target,
+            anchored,
+            anchors,
+            |runtime| {
                 let value = runtime.evaluate(expression, scope)?;
                 Ok(runtime.settle(value))
-            });
+            },
+        );
         self.null_read = saved;
         let (value, frame) = result?;
         let mut dependencies = frame.keys;
@@ -215,6 +249,11 @@ impl Runtime {
             self.track(dependency);
         }
 
+        // An anchor is still an edge: keep only those this evaluation read,
+        // which never include its own destination.
+        let mut fixed = frame.anchors;
+        fixed.retain(|key| dependencies.contains(key));
+
         Ok(PropertyEvaluation {
             value: if frame.pending_anchor {
                 Value::Null
@@ -223,6 +262,7 @@ impl Runtime {
             },
             dependencies,
             pending_anchor: frame.pending_anchor,
+            anchors: fixed,
         })
     }
 
@@ -286,6 +326,7 @@ mod tests {
             target: Some(NodeKey::variable(target)),
             anchored,
             pending_anchor: false,
+            anchors: IndexSet::new(),
         }
     }
 

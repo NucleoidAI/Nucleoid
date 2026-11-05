@@ -2505,10 +2505,12 @@ statement positions; caught values and transaction recovery are unchanged.
   a rule was declared or first activated. Constructor parameters do not
   implicitly create fields: store `this.orientation = orientation` explicitly.
 - An ordinary class property rule may read its own fixed historical position
-  with `@first` or any numeric `@n`. Only that fixed self-reference is exempt
-  from static class self-cycle validation. Other live reads, non-self history
-  reads and transitive class cycles retain their existing dependency checks.
-  A live self-read alongside an anchor still raises
+  with `@first` or any numeric `@n`. That fixed self-reference is exempt from
+  static class self-cycle validation; **Fixed cross-property class anchors**
+  below extends the exemption to cycles made only of fixed reads of the
+  receiver's other properties. Live reads, moving history reads and class
+  cycles through them retain their existing dependency checks. A live
+  self-read alongside an anchor still raises
   `TypeError("Circular Dependency")`.
 - Class conditionals may tag an orientation-180 receiver and assign its `x`
   and `y` from their own first values minus one. Each receiver, including
@@ -2549,6 +2551,52 @@ statement positions; caught values and transaction recovery are unchanged.
   The eight appended entries beginning `Nucleoid anchors class conditionals to
   each instances first property values` through `Nucleoid preserves moving
   class conditionals beside fixed first anchors` specify this extension.
+
+## Fixed cross-property class anchors
+
+- A class property rule may read another property of its own receiver at a
+  fixed history position, written directly on its class: `$C.q@first`,
+  `$C.q@n` with a literal non-negative `n`, `$C["q"]@first` or `$C["q"]@n`.
+  Such a read is a fixed anchor, and `@0` is `@first`. No syntax is added.
+- A class property cycle whose every edge is a fixed anchor, including fixed
+  self-anchors, is valid. `$Box.width = $Box.height@first` with
+  `$Box.height = $Box.width@first` swaps each instance's first recorded
+  values, whether the rules are declared before or after the instances, and
+  records one new entry per changed property.
+- Such a cycle settles: a recorded position never changes during its slot's
+  lifetime, and storing an equal value records no entry and wakes nothing in a
+  cascade. The existing propagation limit still applies.
+- A cycle with any other edge still raises `TypeError("Circular Dependency")`:
+  a live read `$C.q`, a moving `@last` or `@previous` read, a compound
+  self-assignment, an index or noun read, or a read not written directly on
+  `$C`. A property read both as an anchor and in another way by the same rule
+  is an ordinary read. The static class check raises the error before
+  instances exist when it sees the cycle.
+- Anchors are tracked like other non-self history readers. They wake on writes
+  to the slot they read and on its deletion and recreation: a deleted slot
+  reads null, and a recreated one is followed from its new first entry.
+  Instance overrides and deletion still replace or remove that instance's
+  rule.
+- A missing entry of another property reads null, as every non-self history
+  read does, and that null is an ordinary recorded value. Only a rule's own
+  unavailable fixed self-anchor waits.
+- Only direct reads on the rule's own receiver are anchors. Reads through
+  helpers, `this`, other objects, aliases and populations, and any live or
+  moving read of an anchored slot in the same evaluation, including one inside
+  a helper, are ordinary dependencies with their existing checks. A cycle
+  whose only ordinary read is hidden in a helper fails when an instance
+  applies it.
+- Propagation order is unchanged: upstream work runs first and ready rules
+  keep declaration order. Only when every queued rule waits for another does
+  a rule whose waits all run through fixed anchors go next, in declaration
+  order. A rule that waits through any other edge, including the structural
+  link of a reasoning selection, keeps waiting, so a queue that cannot go on
+  still raises `TypeError("Circular Dependency")` as before. `.value` keeps
+  its detached snapshot meaning.
+- Only programs that raised `TypeError("Circular Dependency")` change. The six
+  appended entries beginning `Nucleoid swaps two class properties through
+  fixed cross anchors` through `Nucleoid keeps live and moving reads in class
+  cycles as circular dependencies` specify this extension.
 
 ## Thin arrows and Python-style lambdas
 
@@ -20931,4 +20979,193 @@ suppose:
     Item(12)
     assert: typical, 8
 assert: [Item.length, typical], [2, 5.5]
+---
+# Nucleoid swaps two class properties through fixed cross anchors
+
+class Box(width, height):
+    this.width = width
+    this.height = height
+early = Box(4, 1)
+$Box.width = $Box.height@first
+$Box.height = $Box.width@first
+box = Box(3, 2)
+assert([box.width, box.height], [2, 3])
+assert([early.width, early.height], [1, 4])
+assert([box.width@first, box.height@first], [3, 2])
+assert([box.width@1, box.height@1, box.width@2], [2, 3, null])
+assert([early.width@1, early.height@1, early.width@2], [1, 4, null])
+[box.width, box.height, early.width, early.height]
+# return: [2,3,1,4]
+---
+# Nucleoid exchanges coordinates and turns rectangles through fixed cross anchors
+
+class Point(x, y):
+    this.x = x
+    this.y = y
+$Point.x = $Point.y@first
+$Point.y = $Point.x@first
+p = Point(1, 5)
+q = Point(-2, 4)
+assert([p.x, p.y, q.x, q.y], [5, 1, 4, -2])
+size = 10
+class Rect(x, y, width, height):
+    this.x = x
+    this.y = y
+    this.width = width
+    this.height = height
+$Rect.x = $Rect.y@first
+$Rect.y = size - $Rect.x@first - $Rect.width@first
+$Rect.width = $Rect.height@first
+$Rect.height = $Rect.width@first
+r = Rect(1, 2, 4, 3)
+assert([r.x, r.y, r.width, r.height], [2, 5, 3, 4])
+size = 20
+assert([r.x, r.y, r.width, r.height], [2, 15, 3, 4])
+assert([r.x@first, r.y@first, r.width@first, r.height@first], [1, 2, 4, 3])
+[p.x, p.y, r.x, r.y]
+# return: [5,1,2,15]
+---
+# Nucleoid rotates class properties with numeric first and indexed anchors
+
+class Triple(a, b, c):
+    this.a = a
+    this.b = b
+    this.c = c
+$Triple.a = $Triple.b@0
+$Triple.b = $Triple["c"]@first
+$Triple.c = $Triple.a@0
+t = Triple(1, 2, 3)
+assert([t.a, t.b, t.c], [2, 3, 1])
+class Pair(a, b):
+    this.a = a
+    this.b = b
+$Pair.a = $Pair.a@first + $Pair.b@first
+$Pair.b = $Pair.a@first
+pair = Pair(1, 2)
+assert([pair.a, pair.b], [3, 1])
+class Base(a, b):
+    this.a = a
+    this.b = b
+class Child: Base
+    def init(a, b):
+        super(a, b)
+$Base.a = $Base.b@first
+$Child.b = $Child.a@first
+child = Child(1, 2)
+parent = Base(5, 6)
+assert([child.a, child.b], [2, 1])
+assert([parent.a, parent.b], [6, 6])
+[t.a, t.b, t.c]
+# return: [2,3,1]
+---
+# Nucleoid keeps fixed cross anchors tracked through slot deletion and recreation
+
+class Box(width, height):
+    this.width = width
+    this.height = height
+$Box.width = $Box.height@first
+$Box.height = $Box.width@first
+class Frozen(width, height):
+    this.width = width
+    this.height = height
+$Frozen.width = $Frozen.height@first.value
+$Frozen.height = $Frozen.width@first.value
+box = Box(3, 2)
+frozen = Frozen(3, 2)
+assert([box.width, box.height, frozen.width, frozen.height], [2, 3, 2, 3])
+delete box.height
+delete frozen.height
+assert(box.width, null)
+assert(frozen.width, 2)
+box.height = 7
+frozen.height = 7
+assert([box.width, box.height], [7, 7])
+assert([frozen.width, frozen.height], [2, 7])
+assert([box.width@first, box.width@1, box.width@2, box.width@3], [3, 2, null, 7])
+assert(box.height@first, 7)
+[box.width, frozen.width]
+# return: [7,2]
+---
+# Nucleoid settles fixed cross anchor cycles beside live inputs and readers
+
+k = 1
+class Pair(a, b):
+    this.a = a
+    this.b = b
+$Pair.a = $Pair.b@first + k
+$Pair.b = $Pair.a@first + k
+$Pair.sum = $Pair.a + $Pair.b
+pair = Pair(1, 2)
+assert([pair.a, pair.b, pair.sum], [3, 2, 5])
+k = 10
+assert([pair.a, pair.b, pair.sum], [12, 11, 23])
+assert([pair.a@first, pair.b@first, pair.a@3], [1, 2, null])
+class Late(a, b):
+    this.a = a
+    this.b = b
+$Late.a = $Late.b@1 ?? -1
+$Late.b = $Late.a@first
+late = Late(1, 2)
+assert([late.a, late.b], [1, 1])
+assert([late.a@1, late.a@2, late.b@1], [-1, 1, 1])
+class Missing(width):
+    this.width = width
+$Missing.width = $Missing.height@first
+$Missing.height = $Missing.width@first
+missing = Missing(3)
+assert([missing.width, missing.height], [3, 3])
+assert([missing.width@1, missing.width@2], [null, 3])
+[pair.a, pair.b, pair.sum]
+# return: [12,11,23]
+---
+# Nucleoid keeps live and moving reads in class cycles as circular dependencies
+
+class Sample(x, y):
+    this.x = x
+    this.y = y
+def latest(sample) => sample.y@last
+item = Sample(1, 2)
+try:
+    $Sample.x = $Sample.y@first
+    $Sample.y = $Sample.x + 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.x@first + $Sample.y
+    $Sample.y = $Sample.x
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first
+    $Sample.y = $Sample.x@last
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@previous
+    $Sample.y = $Sample.x@first
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first + $Sample.y
+    $Sample.y = $Sample.x@first
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first + latest($Sample) * 0
+    $Sample.y = $Sample.x@first
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first
+    $Sample.y = $Sample.x@first
+    $Sample.y += 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert([item.x, item.y], [1, 2])
+assert([item.x@1, item.y@1], [null, null])
+$Sample.x = $Sample.y@first
+$Sample.y = $Sample.x@first
+assert([item.x, item.y], [2, 1])
+[item.x, item.y]
+# return: [2,1]
 ```

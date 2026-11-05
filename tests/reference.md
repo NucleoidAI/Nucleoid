@@ -2397,4 +2397,22 @@ assert(typical, 42)
 assert(pace, 64)
 pace
 # return: 64
+---
+# Class state anchors exchange properties through fixed cross anchors
+
+class Point(x, y):
+    this.x = x
+    this.y = y
+$Point.x = $Point.y@first
+$Point.y = $Point.x@first
+p = Point(1, 5)
+q = Point(-2, 4)
+assert([p.x, p.y, q.x, q.y], [5, 1, 4, -2])
+delete p.y
+assert(p.x, null)
+p.y = 7
+assert([p.x, p.y], [7, 7])
+assert([p.x@first, p.x@1, p.x@2, p.x@3], [1, 5, null, 7])
+[p.x, q.x]
+# return: [7,4]
 ```

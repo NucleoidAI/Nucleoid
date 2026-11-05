@@ -17633,6 +17633,224 @@ suppose:
 assert: [Item.length, typical], [2, 5.5]"#);
 }
 
+/// Nucleoid swaps two class properties through fixed cross anchors
+#[rustfmt::skip]
+#[test]
+fn swaps_two_class_properties_through_fixed_cross_anchors() {
+    let mut run = runner();
+    run(r#"class Box(width, height):
+    this.width = width
+    this.height = height"#);
+    run("early = Box(4, 1)");
+    run("$Box.width = $Box.height@first");
+    run("$Box.height = $Box.width@first");
+    run("box = Box(3, 2)");
+    assert_eq!(run("[box.width, box.height]"), serde_json::json!([2, 3]));
+    assert_eq!(run("[early.width, early.height]"), serde_json::json!([1, 4]));
+    assert_eq!(run("[box.width@first, box.height@first]"), serde_json::json!([3, 2]));
+    assert_eq!(run("[box.width@1, box.height@1, box.width@2]"), serde_json::json!([2, 3, null]));
+    assert_eq!(run("[early.width@1, early.height@1, early.width@2]"), serde_json::json!([1, 4, null]));
+    run(r#"[box.width, box.height, early.width, early.height]
+
+# return: [2,3,1,4]"#);
+}
+
+/// Nucleoid exchanges coordinates and turns rectangles through fixed cross anchors
+#[rustfmt::skip]
+#[test]
+fn exchanges_coordinates_and_turns_rectangles_through_fixed_cross_anchors() {
+    let mut run = runner();
+    run(r#"class Point(x, y):
+    this.x = x
+    this.y = y"#);
+    run("$Point.x = $Point.y@first");
+    run("$Point.y = $Point.x@first");
+    run("p = Point(1, 5)");
+    run("q = Point(-2, 4)");
+    assert_eq!(run("[p.x, p.y, q.x, q.y]"), serde_json::json!([5, 1, 4, -2]));
+    run("size = 10");
+    run(r#"class Rect(x, y, width, height):
+    this.x = x
+    this.y = y
+    this.width = width
+    this.height = height"#);
+    run("$Rect.x = $Rect.y@first");
+    run("$Rect.y = size - $Rect.x@first - $Rect.width@first");
+    run("$Rect.width = $Rect.height@first");
+    run("$Rect.height = $Rect.width@first");
+    run("r = Rect(1, 2, 4, 3)");
+    assert_eq!(run("[r.x, r.y, r.width, r.height]"), serde_json::json!([2, 5, 3, 4]));
+    run("size = 20");
+    assert_eq!(run("[r.x, r.y, r.width, r.height]"), serde_json::json!([2, 15, 3, 4]));
+    assert_eq!(run("[r.x@first, r.y@first, r.width@first, r.height@first]"), serde_json::json!([1, 2, 4, 3]));
+    run(r#"[p.x, p.y, r.x, r.y]
+
+# return: [5,1,2,15]"#);
+}
+
+/// Nucleoid rotates class properties with numeric first and indexed anchors
+#[rustfmt::skip]
+#[test]
+fn rotates_class_properties_with_numeric_first_and_indexed_anchors() {
+    let mut run = runner();
+    run(r#"class Triple(a, b, c):
+    this.a = a
+    this.b = b
+    this.c = c"#);
+    run("$Triple.a = $Triple.b@0");
+    run(r#"$Triple.b = $Triple["c"]@first"#);
+    run("$Triple.c = $Triple.a@0");
+    run("t = Triple(1, 2, 3)");
+    assert_eq!(run("[t.a, t.b, t.c]"), serde_json::json!([2, 3, 1]));
+    run(r#"class Pair(a, b):
+    this.a = a
+    this.b = b"#);
+    run("$Pair.a = $Pair.a@first + $Pair.b@first");
+    run("$Pair.b = $Pair.a@first");
+    run("pair = Pair(1, 2)");
+    assert_eq!(run("[pair.a, pair.b]"), serde_json::json!([3, 1]));
+    run(r#"class Base(a, b):
+    this.a = a
+    this.b = b"#);
+    run(r#"class Child: Base
+    def init(a, b):
+        super(a, b)"#);
+    run("$Base.a = $Base.b@first");
+    run("$Child.b = $Child.a@first");
+    run("child = Child(1, 2)");
+    run("parent = Base(5, 6)");
+    assert_eq!(run("[child.a, child.b]"), serde_json::json!([2, 1]));
+    assert_eq!(run("[parent.a, parent.b]"), serde_json::json!([6, 6]));
+    run(r#"[t.a, t.b, t.c]
+
+# return: [2,3,1]"#);
+}
+
+/// Nucleoid keeps fixed cross anchors tracked through slot deletion and recreation
+#[rustfmt::skip]
+#[test]
+fn keeps_fixed_cross_anchors_tracked_through_slot_deletion_and_recreation() {
+    let mut run = runner();
+    run(r#"class Box(width, height):
+    this.width = width
+    this.height = height"#);
+    run("$Box.width = $Box.height@first");
+    run("$Box.height = $Box.width@first");
+    run(r#"class Frozen(width, height):
+    this.width = width
+    this.height = height"#);
+    run("$Frozen.width = $Frozen.height@first.value");
+    run("$Frozen.height = $Frozen.width@first.value");
+    run("box = Box(3, 2)");
+    run("frozen = Frozen(3, 2)");
+    assert_eq!(run("[box.width, box.height, frozen.width, frozen.height]"), serde_json::json!([2, 3, 2, 3]));
+    run("delete box.height");
+    run("delete frozen.height");
+    assert_eq!(run("box.width"), serde_json::Value::Null);
+    assert_eq!(run("frozen.width"), 2);
+    run("box.height = 7");
+    run("frozen.height = 7");
+    assert_eq!(run("[box.width, box.height]"), serde_json::json!([7, 7]));
+    assert_eq!(run("[frozen.width, frozen.height]"), serde_json::json!([2, 7]));
+    assert_eq!(run("[box.width@first, box.width@1, box.width@2, box.width@3]"), serde_json::json!([3, 2, null, 7]));
+    assert_eq!(run("box.height@first"), 7);
+    run(r#"[box.width, frozen.width]
+
+# return: [7,2]"#);
+}
+
+/// Nucleoid settles fixed cross anchor cycles beside live inputs and readers
+#[rustfmt::skip]
+#[test]
+fn settles_fixed_cross_anchor_cycles_beside_live_inputs_and_readers() {
+    let mut run = runner();
+    run("k = 1");
+    run(r#"class Pair(a, b):
+    this.a = a
+    this.b = b"#);
+    run("$Pair.a = $Pair.b@first + k");
+    run("$Pair.b = $Pair.a@first + k");
+    run("$Pair.sum = $Pair.a + $Pair.b");
+    run("pair = Pair(1, 2)");
+    assert_eq!(run("[pair.a, pair.b, pair.sum]"), serde_json::json!([3, 2, 5]));
+    run("k = 10");
+    assert_eq!(run("[pair.a, pair.b, pair.sum]"), serde_json::json!([12, 11, 23]));
+    assert_eq!(run("[pair.a@first, pair.b@first, pair.a@3]"), serde_json::json!([1, 2, null]));
+    run(r#"class Late(a, b):
+    this.a = a
+    this.b = b"#);
+    run("$Late.a = $Late.b@1 ?? -1");
+    run("$Late.b = $Late.a@first");
+    run("late = Late(1, 2)");
+    assert_eq!(run("[late.a, late.b]"), serde_json::json!([1, 1]));
+    assert_eq!(run("[late.a@1, late.a@2, late.b@1]"), serde_json::json!([-1, 1, 1]));
+    run(r#"class Missing(width):
+    this.width = width"#);
+    run("$Missing.width = $Missing.height@first");
+    run("$Missing.height = $Missing.width@first");
+    run("missing = Missing(3)");
+    assert_eq!(run("[missing.width, missing.height]"), serde_json::json!([3, 3]));
+    assert_eq!(run("[missing.width@1, missing.width@2]"), serde_json::json!([null, 3]));
+    run(r#"[pair.a, pair.b, pair.sum]
+
+# return: [12,11,23]"#);
+}
+
+/// Nucleoid keeps live and moving reads in class cycles as circular dependencies
+#[rustfmt::skip]
+#[test]
+fn keeps_live_and_moving_reads_in_class_cycles_as_circular_dependencies() {
+    let mut run = runner();
+    run(r#"class Sample(x, y):
+    this.x = x
+    this.y = y
+def latest(sample) => sample.y@last
+item = Sample(1, 2)
+try:
+    $Sample.x = $Sample.y@first
+    $Sample.y = $Sample.x + 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.x@first + $Sample.y
+    $Sample.y = $Sample.x
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first
+    $Sample.y = $Sample.x@last
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@previous
+    $Sample.y = $Sample.x@first
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first + $Sample.y
+    $Sample.y = $Sample.x@first
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first + latest($Sample) * 0
+    $Sample.y = $Sample.x@first
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+try:
+    $Sample.x = $Sample.y@first
+    $Sample.y = $Sample.x@first
+    $Sample.y += 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert([item.x, item.y], [1, 2])
+assert([item.x@1, item.y@1], [null, null])
+$Sample.x = $Sample.y@first
+$Sample.y = $Sample.x@first
+assert([item.x, item.y], [2, 1])
+[item.x, item.y]
+# return: [2,1]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
