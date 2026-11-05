@@ -2360,4 +2360,21 @@ assert((why total).length, 5)
 price = 12
 direct.map(step => step.holds)
 # return: [41,36,5]
+---
+# Nucleoid lists what a hypothetical changes with diff
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+free = total > 100
+def impact() => (model |> diff).map(step => step.node)
+bulk = suppose qty = 4: impact()
+assert(bulk, ["qty", "subtotal", "total"])
+price = 30
+bulk = suppose qty = 4: impact()
+assert(free, false)
+bulk
+# return: ["qty","subtotal","total","free"]
 ```

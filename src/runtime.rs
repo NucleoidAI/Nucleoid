@@ -118,6 +118,7 @@ impl Runtime {
         let mut failure = None;
 
         for (index, statement) in program.statements.iter().enumerate() {
+            debug_assert_eq!(self.transaction.hypotheses(), Vec::<usize>::new());
             let position = program.positions.get(index).copied();
 
             match self.execute(statement, &mut scope) {
@@ -141,6 +142,8 @@ impl Runtime {
                 }
             }
         }
+
+        debug_assert_eq!(self.transaction.hypotheses(), Vec::<usize>::new());
 
         match failure {
             None => {

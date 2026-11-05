@@ -1676,7 +1676,11 @@ impl Parser {
 
     fn stage(&mut self, source: Expr) -> Result<Expr> {
         if let Token::Identifier(name) = self.peek() {
-            if let Some(stage) = Stage::from_name(name) {
+            let stage = match name.as_str() {
+                "diff" => Some(Stage::Diff),
+                other => Stage::from_name(other),
+            };
+            if let Some(stage) = stage {
                 self.advance();
                 return Ok(Expr::Reason {
                     stage,

@@ -7,6 +7,7 @@ use crate::graph::{NodeKey, NodeKind, ShapeKey};
 use crate::nuc::Nuc;
 use crate::nuc::property::Owner;
 use crate::runtime::Runtime;
+use crate::transaction::{Origin, Start};
 use crate::value::{ObjectId, Value};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -15,6 +16,7 @@ pub enum Stage {
     Affects,
     Stated,
     Derived,
+    Diff,
 }
 
 impl Stage {
@@ -36,6 +38,7 @@ impl Stage {
             Stage::Affects => "affects",
             Stage::Stated => "stated",
             Stage::Derived => "derived",
+            Stage::Diff => "diff",
         }
     }
 }
@@ -165,22 +168,63 @@ impl Runtime {
             .collect()
     }
 
-    pub(crate) fn apply_stage(&mut self, stage: Stage, selection: &Selection) -> Selection {
-        match stage {
+    pub(crate) fn apply_stage(&mut self, stage: Stage, selection: &Selection) -> Result<Selection> {
+        Ok(match stage {
             Stage::Stated => filtered(selection, StepState::Stated),
             Stage::Derived => filtered(selection, StepState::Derived),
+            Stage::Diff => {
+                let origin = self.origin()?;
+                Selection {
+                    steps: selection
+                        .steps
+                        .iter()
+                        .filter(|step| self.changed(&origin, step))
+                        .cloned()
+                        .collect(),
+                }
+            }
             Stage::Why => self.traverse(selection, Direction::Dependencies),
             Stage::Affects => self.traverse(selection, Direction::Dependents),
+        })
+    }
+
+    pub(crate) fn apply_ranked(&mut self, stage: Stage, ranked: Ranked) -> Result<Ranked> {
+        Ok(match stage {
+            Stage::Stated => ranked.filtered(StepState::Stated),
+            Stage::Derived => ranked.filtered(StepState::Derived),
+            Stage::Diff => {
+                let origin = self.origin()?;
+                ranked.retained(|step, _| self.changed(&origin, step))
+            }
+            Stage::Why => self.walk(&ranked.selection, Direction::Dependencies),
+            Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
+        })
+    }
+
+    fn origin(&self) -> Result<Origin<'_>> {
+        self.transaction
+            .origin()
+            .ok_or_else(|| Error::type_error("Cannot use 'diff' outside suppose"))
+    }
+
+    fn changed(&self, origin: &Origin<'_>, step: &Step) -> bool {
+        let Some(kind) = self.start_kind(origin, &step.node) else {
+            return true;
+        };
+        match held(origin, &step.node, kind) {
+            Start::Unchanged => false,
+            Start::Absent => !step.value.is_null(),
+            Start::Held(value) => !value.same_value(&step.value),
         }
     }
 
-    pub(crate) fn apply_ranked(&mut self, stage: Stage, ranked: Ranked) -> Ranked {
-        match stage {
-            Stage::Stated => ranked.filtered(StepState::Stated),
-            Stage::Derived => ranked.filtered(StepState::Derived),
-            Stage::Why => self.walk(&ranked.selection, Direction::Dependencies),
-            Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
-        }
+    fn start_kind(&self, origin: &Origin<'_>, key: &NodeKey) -> Option<NodeKind> {
+        let kind = match origin.node(key) {
+            Start::Held(node) if !node.node.as_ref().is_some_and(is_reasoning) => node.kind,
+            Start::Held(_) | Start::Absent => return None,
+            Start::Unchanged => self.graph.retrieve(key)?.kind,
+        };
+        (kind != NodeKind::Pending && !origin.observed(key)).then_some(kind)
     }
 
     fn walk(&mut self, input: &Selection, direction: Direction) -> Ranked {
@@ -390,6 +434,23 @@ pub fn is_reasoning(node: &Nuc) -> bool {
     };
 
     value.contains_reasoning()
+}
+
+fn held<'t>(origin: &Origin<'t>, key: &NodeKey, kind: NodeKind) -> Start<&'t Value> {
+    match kind {
+        NodeKind::Variable | NodeKind::Object => origin.variable(key.as_str()),
+        NodeKind::Property => key
+            .as_str()
+            .rsplit_once('.')
+            .map_or(Start::Unchanged, |(object, property)| {
+                origin.property(object, property)
+            }),
+        NodeKind::Pending
+        | NodeKind::Class
+        | NodeKind::Function
+        | NodeKind::If
+        | NodeKind::Block => Start::Absent,
+    }
 }
 
 fn rule_of(node: Option<&Nuc>, key: &NodeKey) -> String {

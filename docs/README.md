@@ -3168,8 +3168,10 @@ c = b * 2
   `model`, `why`, and `affects`; the NUC 48 candidate adds only the two
   state filters, [NUC 62](nuc-0062.md) adds NUC 11's `all` and `any`
   quantifiers, [NUC 65](nuc-0065.md) adds its `suppose` hypotheticals
-  without `diff`, and the [NUC 82](nuc-0082.md) candidate adds its `depth`
-  stage without the `depth(x, n)` call form. Other NUC 11 operations remain
+  without `diff`, the [NUC 82](nuc-0082.md) candidate adds its `depth` stage
+  without the `depth(x, n)` call form, and the [NUC 83](nuc-0083.md)
+  candidate adds its `diff` as the `|> diff` stage, without the bare `diff`
+  and its `before` and `after` fields. Other NUC 11 operations remain
   proposals, not dependencies.
 
 ### Quantifiers
@@ -3271,6 +3273,56 @@ suppose book.price = 5: premium
 - The authoritative contract is the
   [hypotheticals](../nucleoid.spec.md#hypotheticals) section.
 
+### Hypothetical differences
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+free = total > 100
+def impact() => (model |> diff).map(step => step.node)
+bulk = suppose qty = 4: impact()
+assert(bulk, ["qty", "subtotal", "total"])
+price = 30
+bulk = suppose qty = 4: impact()
+assert(free, false)
+bulk
+```
+
+- This is the complete `Nucleoid lists what a hypothetical changes with diff`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `["qty","subtotal","total","free"]`.
+- [NUC 83](nuc-0083.md) adds the stage `selection |> diff`. Inside a
+  `suppose` block it keeps the steps whose node the model did not hold when
+  the innermost running block began, its premise included, or whose value
+  differs from the value the node held then, in their order and with their
+  fields unchanged. `model |> diff` therefore lists what a hypothetical
+  added or changed without naming any node: a fourth unit changes the
+  quantity, the subtotal and the total, and also `free` once the price is 30.
+- Values compare as a write compares the value it stores with the one it
+  replaces: numbers by value and sign with `NaN` equal to `NaN`, lists item
+  by item, and objects, instances and function values by identity. Classes,
+  named functions, conditions and blocks hold `null` in a step, so only
+  their appearance counts. An equal-valued write, a restored value and a
+  write undone by a caught failure are not differences.
+- The running block is dynamic: a function, method or lambda called inside a
+  block compares with that block, and a nested block with its own start.
+  Outside every block the stage raises
+  `TypeError("Cannot use 'diff' outside suppose")`.
+- Only `|>` followed by `diff` is the stage; `diff` stays an ordinary name
+  everywhere else, so a bare `diff` is still a reference. A local or
+  parameter, variable, function or class named `diff` shadows the stage, as
+  bindings shadow the state filters and `depth`: the stage then raises
+  `TypeError("diff is not an operation")` before selecting its source.
+- The selection stays live through every observation its source made,
+  composes with `why`, `affects`, `stated`, `derived` and `depth` in any
+  order, and renders as `selection|>diff`.
+- The authoritative contract is the
+  [hypothetical differences](../nucleoid.spec.md#hypothetical-differences)
+  section.
+
 Implemented semantic basis: the [root specification](../nucleoid.spec.md).
 Proposal context: [NUC 11](nuc-0011.md), [NUC 48](nuc-0048.md),
 [NUC 62](nuc-0062.md) and [NUC 65](nuc-0065.md).
@@ -3318,6 +3370,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | A spread entry `...source` whose source is neither an object nor `null` or undefined | `<source> is not an object` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
+| Evaluating a `diff` stage while no `suppose` block is running | `Cannot use 'diff' outside suppose` |
 | `:=` on a class-level property outside a class-level rule | `Cannot use ':=' on a class-level property` |
 | A `:=` declaration whose value nests lists 192 levels or more | `Maximum expression depth exceeded` |
 | Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
@@ -3527,6 +3580,9 @@ any name in collection: condition     true when the condition holds for some mem
 suppose premise: suite                run premise and suite, then roll both back (NUC 65)
 suppose: suite                        a hypothetical without a premise (NUC 65)
 name = suppose premise: suite         keep the block's last expression value (NUC 65)
+model |> diff                         what the running suppose block added or changed (NUC 83)
+reference |> why |> diff              the changed steps of an explanation (NUC 83)
+selection |> diff                     steps new or changed since the running block began (NUC 83)
 ```
 
 ---

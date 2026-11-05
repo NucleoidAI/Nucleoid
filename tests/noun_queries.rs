@@ -208,7 +208,7 @@ fn no_earlier_document_case_writes_a_noun_query() {
         with_query += usize::from(uses);
     }
     assert_eq!(with_query, 12);
-    assert_eq!(cases, 948);
+    assert_eq!(cases, 959);
 }
 
 #[test]

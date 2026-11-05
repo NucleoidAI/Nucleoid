@@ -1792,6 +1792,35 @@ assert: causes.map(step -> step.holds), [true, false, true, false]
   changes. See the
   [root contract](nucleoid.spec.md#depth-limited-reasoning-selections).
 
+## Hypothetical differences
+
+**Diff lists what a warmer room would change in a heating plan**
+
+```nuc
+temperature = 18
+target = 21
+heating = temperature < target
+fan = temperature > 30
+cost = heating ? 4 : 0
+suppose temperature = 24:
+    changes = model |> diff
+    assert: changes.map(step -> step.node), ["temperature", "heating", "cost"]
+    target = 26
+    assert: changes.map(step -> step.node), ["temperature", "target"]
+assert: [heating, cost], [true, 4]
+```
+
+- [NUC 83](docs/nuc-0083.md) adds the reasoning stage `|> diff`. Inside a
+  `suppose` block it keeps the steps of a selection that the block added or
+  changed, so `model |> diff` answers what a hypothetical would do without
+  naming any node: warming the room to 24 turns the heating off and drops its
+  cost, while the fan, which also reads the temperature, keeps its value.
+- The selection stays live inside the block: with the target raised to 26
+  the heating is back on, so only the temperature and the target still
+  differ. Outside a block the stage raises
+  `TypeError("Cannot use 'diff' outside suppose")`. See the
+  [root contract](nucleoid.spec.md#hypothetical-differences).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

@@ -97,7 +97,7 @@ enum Escape {
 
 impl Runtime {
     fn suppose(&mut self, body: &[Stmt], valued: bool, scope: &mut Scope) -> Result<Flow> {
-        let savepoint = self.savepoint();
+        let savepoint = self.hypothesis_savepoint();
         let locals = scope.clone();
         let null_read = std::mem::take(&mut self.null_read);
         let undefined_read = std::mem::take(&mut self.undefined_read);
@@ -116,7 +116,7 @@ impl Runtime {
             },
         };
 
-        self.rollback_to(savepoint);
+        self.rollback_hypothesis(savepoint);
         *scope = locals;
         self.null_read = null_read;
         self.undefined_read = undefined_read;
@@ -197,5 +197,58 @@ impl Runtime {
             }
             Frozen::Value(value) => value,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::Runtime;
+
+    fn settles(runtime: &mut Runtime, source: &str, succeeds: bool) {
+        assert_eq!(runtime.run(source).is_ok(), succeeds, "{source}");
+        assert!(runtime.transaction.hypotheses().is_empty(), "{source}");
+    }
+
+    #[test]
+    fn every_way_out_of_a_block_pops_its_mark() {
+        let mut runtime = Runtime::new();
+        settles(&mut runtime, "a = 1\nb = a + 1", true);
+        for (source, succeeds) in [
+            ("suppose a = 2: model |> diff", true),
+            ("r = suppose a = 2: (model |> diff).length", true),
+            ("suppose a = missing: 1", false),
+            ("suppose a = 2: missing", false),
+            ("suppose a = 2: throw \"STOP\"", false),
+            ("suppose a = 2:\n    suppose b = 3: missing", false),
+            (
+                "suppose a = 2:\n    try:\n        suppose b = 3: throw 1\n    catch error:\n        pass\n    (model |> diff).length",
+                true,
+            ),
+            (
+                "suppose a = 2:\n    try:\n        b = 9\n        throw 1\n    catch error:\n        pass",
+                true,
+            ),
+            ("def f(v):\n    suppose a = v: return a\nf(5)", true),
+            (
+                "x = 1\ndef g(v):\n    suppose a = v: return (model |> diff).length\ny = g(x)\nx = 2",
+                true,
+            ),
+            (
+                "def h(v):\n    suppose a = v:\n        if v == 7:\n            throw \"E\"\n        return a\nz = h(x)",
+                true,
+            ),
+            ("x = 7", false),
+            (
+                "class Item\n$Item.seen = g($Item.size)\npen = Item()\npen.size = 4",
+                true,
+            ),
+            ("x |> diff", false),
+        ] {
+            settles(&mut runtime, source, succeeds);
+        }
+        assert_eq!(
+            runtime.run("[x, y, z, pen.seen]").unwrap().to_string(),
+            "2,2,2,2"
+        );
     }
 }

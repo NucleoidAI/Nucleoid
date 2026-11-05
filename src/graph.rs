@@ -97,7 +97,7 @@ pub enum ShapeKey {
 }
 
 impl ShapeKey {
-    fn observes_graph(&self) -> bool {
+    pub(crate) fn observes_graph(&self) -> bool {
         match self {
             ShapeKey::Node(_) | ShapeKey::Model => true,
             ShapeKey::Entries(_) => false,

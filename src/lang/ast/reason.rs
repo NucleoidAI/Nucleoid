@@ -39,7 +39,9 @@ impl Link<'_> {
 
     fn operation(self) -> Option<&'static str> {
         match self {
-            Link::Stage(stage @ (Stage::Stated | Stage::Derived)) => Some(stage.as_str()),
+            Link::Stage(stage @ (Stage::Stated | Stage::Derived | Stage::Diff)) => {
+                Some(stage.as_str())
+            }
             Link::Stage(Stage::Why | Stage::Affects) => None,
             Link::Depth(_) => Some("depth"),
         }
@@ -83,7 +85,7 @@ impl Runtime {
         let mut selection = selection;
         for link in links.iter().rev() {
             if let Link::Stage(stage) = *link {
-                selection = self.apply_stage(stage, &selection);
+                selection = self.apply_stage(stage, &selection)?;
             }
         }
         Ok(Some(selection))
@@ -98,7 +100,7 @@ impl Runtime {
         let mut ranked = Ranked::unwalked(selection);
         for link in links.iter().rev() {
             ranked = match *link {
-                Link::Stage(stage) => self.apply_ranked(stage, ranked),
+                Link::Stage(stage) => self.apply_ranked(stage, ranked)?,
                 Link::Depth(limit) => match self.depth_limit(limit, scope)? {
                     Some(limit) => ranked.within(limit),
                     None => return Ok(None),

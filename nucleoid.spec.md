@@ -3239,6 +3239,100 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid supposes a changed class level rule` specify the executable
   behavior.
 
+## Hypothetical differences
+
+- [NUC 83](docs/nuc-0083.md) adds the pipeline stage `SELECTION |> diff`.
+  Inside a `suppose` block it keeps the steps of `SELECTION` whose node did
+  not exist when the innermost running block began, its premise included, or
+  whose value differs from the value the node held then. It keeps them in
+  their order, with their `node`, `holds`, `rule`, `state` and `from` fields
+  unchanged, and drops the others.
+- `model |> diff` therefore lists every node that the hypothetical added or
+  changed, `alarm |> why |> diff` the changed facts behind an alarm,
+  `price |> affects |> diff` what changed among the nodes a price reaches,
+  and `model |> diff |> affects` everything that rests on a change. A node
+  removed inside the block cannot appear, because the stage only keeps steps
+  that exist.
+- A node existed when the block began if the model held it then. The
+  placeholder of a name read before its definition and a reasoning observer,
+  which no selection lists, did not exist, so a property first defined in the
+  block under a rule that already read it is new, and so is a former
+  reasoning declaration redeclared there as an ordinary one. A property that a
+  statement declares inside the block is new, even when an object literal
+  already held that value.
+- The value a node held is what its step holds: the value of a variable or
+  an instance, the value of a property, and `null` for classes, named
+  functions, conditions and blocks, which therefore count only when they are
+  new. Values compare as a write compares the value it stores with the one it
+  replaces, which is what decides whether the write propagates:
+  - numbers are the same when they are equal and have the same sign, and
+    `NaN` is the same as `NaN`, so `-0` differs from `0`;
+  - strings, booleans, `null`, dates and class values compare by value, and
+    regular expressions by their pattern;
+  - lists are the same when they have the same length and the same items in
+    order under this rule, so a list mutated in place, as by `push`, differs
+    and a list restored, as by `pop`, does not;
+  - objects, instances and function values are the same only when they are
+    the same object or function. An instance whose properties change is not
+    listed, while each changed property is, and a new object with equal
+    entries differs.
+- An equal-valued write, a value restored before the stage runs, a rule
+  rewritten to give the same value, a node deleted and declared again with
+  the value it had, and a write undone by a caught failure are not
+  differences.
+- The innermost running block is the one whose premise or suite is running
+  when the stage is evaluated: directly, in a function, method or lambda
+  called there, or in a rule that propagation evaluates there. `try`
+  savepoints inside the block do not change it, and a nested block compares
+  with its own start. Each evaluation compares with the block running when it
+  happens, so a standing selection declared in an outer block that
+  re-derives inside a nested block compares with the nested block's start
+  until that block rolls back.
+- Evaluating the stage when no `suppose` block is running raises
+  `TypeError("Cannot use 'diff' outside suppose")`, positioned at the running
+  top-level statement, and rolls back its transaction. The error is raised
+  when the stage applies, after its source is selected and the stages before
+  it have applied. A declaration, class-level rule or function that holds the
+  stage can therefore only be evaluated inside a block; outside one, its
+  evaluation raises and rolls back the statement that triggered it.
+- The stage keeps the distances of the steps it keeps, so it composes with
+  `depth`, `stated`, `derived`, `why` and `affects` in any order:
+  `c |> why |> diff |> depth(1)` and `c |> why |> depth(1) |> diff` select
+  the same steps.
+- Only `|>` followed by the name `diff` is the stage, without an argument,
+  and further stages may follow it. `diff` remains an ordinary lexer
+  identifier: variables, parameters, properties, keys, functions and methods
+  named `diff` keep their accepted meanings, there is no prefix form, so
+  `diff c` stays two juxtaposed statements, and `diff(c)` is an ordinary
+  call. A bare `diff` stays a name, so `suppose a = 2: diff` still raises
+  `ReferenceError("diff is not defined")`. `c |> diff(1)` is the stage
+  followed by the juxtaposed statement `(1)`, as `c |> why(1)` is.
+- A local or parameter, state variable, function or class named `diff`
+  shadows the stage, as for `stated`, `derived` and `depth`: the stage then
+  raises `TypeError("diff is not an operation")` before selecting its source.
+  A binding declared after a standing selection makes its next evaluation
+  raise, which fails and rolls back the statement that triggered it. The
+  accepted `why` and `affects` shadowing behavior does not change.
+- An invalid source keeps its diagnostic and is reported first:
+  `1 |> diff` raises `TypeError("Cannot explain 1")` and `missing |> diff`
+  raises `ReferenceError("missing is not defined")`, inside a block or not.
+- Like the state filters, the stage preserves every value and structural
+  observation its source made, including those of the steps it drops, so a
+  standing selection inside a block re-derives when its source does, and a
+  dropped step joins it once that node changes. A declaration, property,
+  class-level rule, condition or quantifier that holds the stage is a
+  reasoning observer. `.value` snapshots it as for the accepted stages, and a
+  selection that leaves the block is plain data.
+- The stage renders as `SOURCE|>diff` in graph keys, block keys, conditions
+  and `rule` text. The values the block began with are read from the
+  transaction's undo records since the block's savepoint, in time linear in
+  those records and the selected steps; programs without the stage do no
+  work for it beyond noting where each block begins and ends.
+- The eight appended entries from
+  `Nucleoid lists what a supposed premise changes` through
+  `Nucleoid composes hypothetical differences with state filters` specify the
+  executable behavior.
+
 ## Value assignment
 
 - [NUC 66](docs/nuc-0066.md) adds the value assignment statement
@@ -20479,4 +20573,150 @@ limit = 2
 seed = 4
 assert(near.map(s -> s.holds), [10, 5, 4])
 assert(frozen.map(s -> s.holds), [4, 2])
+---
+# Nucleoid lists what a supposed premise changes
+
+threshold = 90
+reading = 40
+alarm = reading > threshold
+level = reading > 10
+suppose reading = 95:
+    moved = model |> diff
+    assert(moved.map(s -> s.node), ["reading", "alarm"])
+    assert(moved.map(s -> s.holds), [95, true])
+    assert(moved[1].from, ["reading", "threshold"])
+    threshold = 99
+    assert(moved.map(s -> s.node), ["threshold", "reading"])
+assert(alarm, false)
+---
+# Nucleoid lists what changed in an explanation or an impact
+
+base = 10
+rate = 2
+fee = 3
+cost = base * rate
+total = cost + fee
+label = total > 40
+charge = fee * 2
+suppose rate = 3:
+    causes = total |> why |> diff
+    effects = base |> affects |> diff
+    reach = model |> diff |> affects
+    assert(causes.map(s -> s.node), ["total", "cost", "rate"])
+    assert(effects.map(s -> s.node), ["cost", "total"])
+    assert(reach.map(s -> s.node).sort(), ["cost", "label", "total"])
+    fee = 30
+    assert(causes.map(s -> s.node), ["total", "cost", "fee", "rate"])
+    assert(effects.map(s -> s.node), ["cost", "total", "label"])
+    assert(reach.map(s -> s.node).sort(), ["charge", "cost", "label", "total"])
+---
+# Nucleoid compares instances and class level rules in a hypothetical
+
+class Item
+$Item.premium = $Item.price > 10
+pen = Item()
+pen.price = 5
+book = Item()
+book.price = 20
+suppose pen.price = 20:
+    moved = model |> diff
+    assert(moved.map(s -> s.node), ["pen.premium", "pen.price"])
+    cup = Item()
+    cup.price = 3
+    assert(moved.map(s -> s.node), ["pen.premium", "pen.price", "cup", "cup.premium", "cup.price"])
+    $Item.premium = $Item.price > 25
+    assert(book.premium, false)
+    assert(moved.map(s -> s.node), ["pen.price", "book.premium", "cup", "cup.premium", "cup.price"])
+assert(book.premium, true)
+---
+# Nucleoid compares lists and objects in a hypothetical
+
+tags = ["pen"]
+count = tags.length
+limits = {max: 3}
+full = count >= limits.max
+suppose tags.push("ink"):
+    moved = model |> diff
+    assert(moved.map(s -> s.node), ["tags", "count"])
+    assert(moved[0].holds, ["pen", "ink"])
+    tags.pop()
+    assert(moved, [])
+    limits = {max: 3}
+    assert(moved.map(s -> s.node), ["limits"])
+assert(tags, ["pen"])
+---
+# Nucleoid leaves equal values and undone writes out of a diff
+
+a = 1
+b = a + 1
+c = b * 2
+suppose a = 1:
+    moved = model |> diff
+    assert(moved, [])
+    b = 1 + a
+    delete c
+    c = b * 2
+    assert(moved, [])
+    try:
+        a = 5
+        throw "UNDO"
+    catch error:
+        assert(error, "UNDO")
+    assert(moved, [])
+    a = 3
+    assert(moved.map(s -> s.node), ["a", "b", "c"])
+    assert(moved[1].rule, "b = 1+a")
+---
+# Nucleoid compares nested hypotheticals with the innermost block
+
+price = 10
+qty = 2
+total = price * qty
+suppose price = 12:
+    outer = model |> diff
+    assert(outer.map(s -> s.node), ["price", "total"])
+    inner = suppose qty = 3:
+        nested = model |> diff
+        assert(nested.map(s -> s.node), ["qty", "total"])
+        price = 10
+        assert(nested.map(s -> s.node), ["price", "qty", "total"])
+        nested.map(s -> s.holds)
+    assert(inner, [10, 3, 30])
+    assert(outer.map(s -> s.node), ["price", "total", "inner"])
+assert(total, 20)
+---
+# Nucleoid finds hypothetical changes in functions methods and quantifiers
+
+class Tank(level):
+    this.level = level
+    def changed() => (model |> diff).map(s -> s.node)
+low = 10
+tank = Tank(5)
+empty = tank.level < low
+def touches(name) => any s in model |> diff: s.node == name
+suppose tank.level = 20:
+    stable = all s in model |> diff: s.node != "low"
+    assert(tank.changed(), ["tank.level", "empty"])
+    assert(touches("empty"), true)
+    assert(stable, true)
+    low = 30
+    assert(stable, false)
+    assert(touches("empty"), false)
+    assert(tank.changed(), ["low", "tank.level"])
+---
+# Nucleoid composes hypothetical differences with state filters
+
+price = 10
+discount = 0
+net = price - discount
+taxed = net * 2
+suppose discount = 3:
+    facts = model |> diff |> stated
+    effects = model |> derived |> diff
+    assert(facts.map(s -> s.node), ["discount"])
+    assert(effects.map(s -> s.node), ["net", "taxed"])
+    assert(effects[0].from, ["price", "discount"])
+    price = 13
+    assert(facts.map(s -> s.node), ["price", "discount"])
+    assert(effects, [])
 ```

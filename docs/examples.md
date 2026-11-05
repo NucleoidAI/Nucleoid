@@ -3360,6 +3360,37 @@ bolt.cost = 3
   [NUC 82](nuc-0082.md) and the
   [root contract](../nucleoid.spec.md#depth-limited-reasoning-selections).
 
+## Hypothetical differences
+
+**Diff shows which orders a delayed shipment would make late**
+
+```nuc
+class Order(item, days):
+    this.item = item
+    this.days = days
+$Order.late = $Order.days > 3
+overdue = Order.filter(order -> order.late).map(order -> order.item)
+desk = Order("desk", 2)
+lamp = Order("lamp", 5)
+def changes() => (model |> diff).map(step -> step.node)
+delay = suppose desk.days = 6: changes()
+rush = suppose lamp.days = 1: changes()
+assert: delay, ["overdue", "desk.days", "desk.late"]
+assert: rush, ["overdue", "lamp.days", "lamp.late"]
+lamp.days = 2
+suppose lamp.days = 3: changes()
+# return: ["lamp.days"]
+```
+
+- `changes()` evaluates `model |> diff` inside each `suppose` block that
+  calls it, so one function reports what each plan would change: a six-day
+  delay makes the desk late and adds it to `overdue`, and rushing the lamp
+  takes the lamp off it.
+- The answer follows the model: once the lamp ships in two days, a third day
+  would change only its `days`, because it stays on time. See
+  [NUC 83](nuc-0083.md) and the
+  [root contract](../nucleoid.spec.md#hypothetical-differences).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -33,8 +33,8 @@ struct Record {
 
 const SPEC_DOCUMENT: &str = include_str!("../nucleoid.spec.md");
 
-const SPEC_RECORDS: usize = 651;
-const SYNTH_RECORDS: usize = 1_307;
+const SPEC_RECORDS: usize = 659;
+const SYNTH_RECORDS: usize = 1_315;
 const SYNTH_19_RECORDS: usize = 51;
 const SYNTH_21_RECORDS: usize = 120;
 const SYNTH_22_RECORDS: usize = 5;
@@ -72,6 +72,7 @@ const SYNTH_54_RECORDS: usize = 8;
 const SYNTH_55_RECORDS: usize = 8;
 const SYNTH_56_RECORDS: usize = 8;
 const SYNTH_57_RECORDS: usize = 8;
+const SYNTH_58_RECORDS: usize = 8;
 
 #[test]
 fn dataset_contains_only_jsonl_files() {
@@ -148,6 +149,7 @@ fn synthesized_records_keep_their_identifiers_and_fields() {
         ("55", SYNTH_55_RECORDS),
         ("56", SYNTH_56_RECORDS),
         ("57", SYNTH_57_RECORDS),
+        ("58", SYNTH_58_RECORDS),
     ] {
         let (_, records) = sets
             .iter()

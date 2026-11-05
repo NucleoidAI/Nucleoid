@@ -17254,6 +17254,184 @@ assert(near.map(s -> s.holds), [10, 5, 4])
 assert(frozen.map(s -> s.holds), [4, 2])"#);
 }
 
+/// Nucleoid lists what a supposed premise changes
+#[rustfmt::skip]
+#[test]
+fn lists_what_a_supposed_premise_changes() {
+    let mut run = runner();
+    run(r#"threshold = 90
+reading = 40
+alarm = reading > threshold
+level = reading > 10
+suppose reading = 95:
+    moved = model |> diff
+    assert(moved.map(s -> s.node), ["reading", "alarm"])
+    assert(moved.map(s -> s.holds), [95, true])
+    assert(moved[1].from, ["reading", "threshold"])
+    threshold = 99
+    assert(moved.map(s -> s.node), ["threshold", "reading"])
+assert(alarm, false)"#);
+}
+
+/// Nucleoid lists what changed in an explanation or an impact
+#[rustfmt::skip]
+#[test]
+fn lists_what_changed_in_an_explanation_or_an_impact() {
+    let mut run = runner();
+    run(r#"base = 10
+rate = 2
+fee = 3
+cost = base * rate
+total = cost + fee
+label = total > 40
+charge = fee * 2
+suppose rate = 3:
+    causes = total |> why |> diff
+    effects = base |> affects |> diff
+    reach = model |> diff |> affects
+    assert(causes.map(s -> s.node), ["total", "cost", "rate"])
+    assert(effects.map(s -> s.node), ["cost", "total"])
+    assert(reach.map(s -> s.node).sort(), ["cost", "label", "total"])
+    fee = 30
+    assert(causes.map(s -> s.node), ["total", "cost", "fee", "rate"])
+    assert(effects.map(s -> s.node), ["cost", "total", "label"])
+    assert(reach.map(s -> s.node).sort(), ["charge", "cost", "label", "total"])"#);
+}
+
+/// Nucleoid compares instances and class level rules in a hypothetical
+#[rustfmt::skip]
+#[test]
+fn compares_instances_and_class_level_rules_in_a_hypothetical() {
+    let mut run = runner();
+    run(r#"class Item
+$Item.premium = $Item.price > 10
+pen = Item()
+pen.price = 5
+book = Item()
+book.price = 20
+suppose pen.price = 20:
+    moved = model |> diff
+    assert(moved.map(s -> s.node), ["pen.premium", "pen.price"])
+    cup = Item()
+    cup.price = 3
+    assert(moved.map(s -> s.node), ["pen.premium", "pen.price", "cup", "cup.premium", "cup.price"])
+    $Item.premium = $Item.price > 25
+    assert(book.premium, false)
+    assert(moved.map(s -> s.node), ["pen.price", "book.premium", "cup", "cup.premium", "cup.price"])
+assert(book.premium, true)"#);
+}
+
+/// Nucleoid compares lists and objects in a hypothetical
+#[rustfmt::skip]
+#[test]
+fn compares_lists_and_objects_in_a_hypothetical() {
+    let mut run = runner();
+    run(r#"tags = ["pen"]
+count = tags.length
+limits = {max: 3}
+full = count >= limits.max
+suppose tags.push("ink"):
+    moved = model |> diff
+    assert(moved.map(s -> s.node), ["tags", "count"])
+    assert(moved[0].holds, ["pen", "ink"])
+    tags.pop()
+    assert(moved, [])
+    limits = {max: 3}
+    assert(moved.map(s -> s.node), ["limits"])
+assert(tags, ["pen"])"#);
+}
+
+/// Nucleoid leaves equal values and undone writes out of a diff
+#[rustfmt::skip]
+#[test]
+fn leaves_equal_values_and_undone_writes_out_of_a_diff() {
+    let mut run = runner();
+    run(r#"a = 1
+b = a + 1
+c = b * 2
+suppose a = 1:
+    moved = model |> diff
+    assert(moved, [])
+    b = 1 + a
+    delete c
+    c = b * 2
+    assert(moved, [])
+    try:
+        a = 5
+        throw "UNDO"
+    catch error:
+        assert(error, "UNDO")
+    assert(moved, [])
+    a = 3
+    assert(moved.map(s -> s.node), ["a", "b", "c"])
+    assert(moved[1].rule, "b = 1+a")"#);
+}
+
+/// Nucleoid compares nested hypotheticals with the innermost block
+#[rustfmt::skip]
+#[test]
+fn compares_nested_hypotheticals_with_the_innermost_block() {
+    let mut run = runner();
+    run(r#"price = 10
+qty = 2
+total = price * qty
+suppose price = 12:
+    outer = model |> diff
+    assert(outer.map(s -> s.node), ["price", "total"])
+    inner = suppose qty = 3:
+        nested = model |> diff
+        assert(nested.map(s -> s.node), ["qty", "total"])
+        price = 10
+        assert(nested.map(s -> s.node), ["price", "qty", "total"])
+        nested.map(s -> s.holds)
+    assert(inner, [10, 3, 30])
+    assert(outer.map(s -> s.node), ["price", "total", "inner"])
+assert(total, 20)"#);
+}
+
+/// Nucleoid finds hypothetical changes in functions methods and quantifiers
+#[rustfmt::skip]
+#[test]
+fn finds_hypothetical_changes_in_functions_methods_and_quantifiers() {
+    let mut run = runner();
+    run(r#"class Tank(level):
+    this.level = level
+    def changed() => (model |> diff).map(s -> s.node)
+low = 10
+tank = Tank(5)
+empty = tank.level < low
+def touches(name) => any s in model |> diff: s.node == name
+suppose tank.level = 20:
+    stable = all s in model |> diff: s.node != "low"
+    assert(tank.changed(), ["tank.level", "empty"])
+    assert(touches("empty"), true)
+    assert(stable, true)
+    low = 30
+    assert(stable, false)
+    assert(touches("empty"), false)
+    assert(tank.changed(), ["low", "tank.level"])"#);
+}
+
+/// Nucleoid composes hypothetical differences with state filters
+#[rustfmt::skip]
+#[test]
+fn composes_hypothetical_differences_with_state_filters() {
+    let mut run = runner();
+    run(r#"price = 10
+discount = 0
+net = price - discount
+taxed = net * 2
+suppose discount = 3:
+    facts = model |> diff |> stated
+    effects = model |> derived |> diff
+    assert(facts.map(s -> s.node), ["discount"])
+    assert(effects.map(s -> s.node), ["net", "taxed"])
+    assert(effects[0].from, ["price", "discount"])
+    price = 13
+    assert(facts.map(s -> s.node), ["price", "discount"])
+    assert(effects, [])"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
