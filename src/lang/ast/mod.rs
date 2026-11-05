@@ -216,6 +216,10 @@ pub enum Expr {
         stage: Stage,
         source: Box<Expr>,
     },
+    Depth {
+        source: Box<Expr>,
+        limit: Box<Expr>,
+    },
     Model,
     Quantified {
         quantifier: Quantifier,
@@ -426,7 +430,7 @@ impl Expr {
     #[must_use]
     pub fn contains_reasoning(&self) -> bool {
         match self {
-            Expr::Reason { .. } | Expr::Model => true,
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Model => true,
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
             | Expr::Slice { object, .. } => object.contains_reasoning(),
@@ -539,7 +543,9 @@ impl<'a> Ast<'a> {
             | Expr::Conditional { .. }
             | Expr::Assign { .. }
             | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
-            Expr::Reason { .. } | Expr::Model => Ast::Reason(reason::Reason::new(node)),
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Model => {
+                Ast::Reason(reason::Reason::new(node))
+            }
             Expr::Version { .. } => Ast::Version(version::Version::new(node)),
             Expr::Quantified { .. } => Ast::Quantified(quantified::Quantified::new(node)),
         }

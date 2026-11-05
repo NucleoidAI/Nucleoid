@@ -259,6 +259,10 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         Expr::Member { object, .. } => visit(object),
         Expr::Version { reference, .. } => visit(reference),
         Expr::Reason { source, .. } => visit(source),
+        Expr::Depth { source, limit } => {
+            visit(source);
+            visit(limit);
+        }
         Expr::Index { object, index } => {
             visit(object);
             visit(index);
@@ -349,6 +353,7 @@ fn visit_operands(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         Expr::Member { .. }
         | Expr::Version { .. }
         | Expr::Reason { .. }
+        | Expr::Depth { .. }
         | Expr::Index { .. }
         | Expr::Slice { .. }
         | Expr::Call { .. }

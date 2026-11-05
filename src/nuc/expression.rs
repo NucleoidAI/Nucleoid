@@ -3,6 +3,7 @@
 //! to preserve snapshots.
 
 use crate::error::{Error, Result};
+use crate::lang::ast::reason::{self, Link};
 use crate::lang::ast::{Expr, ObjectEntry, Stmt, TemplatePart, literal};
 use crate::nuc::Outcome;
 use crate::runtime::{MAX_DEPTH, Runtime};
@@ -60,8 +61,30 @@ impl Runtime {
             Expr::List(_) | Expr::ObjectLiteral(_) | Expr::SpreadObject(_) | Expr::Template(_) => {
                 self.freeze_collection(expression, scope)
             }
+            Expr::Reason { .. } | Expr::Depth { .. } => self.freeze_pipeline(expression, scope),
             other => Ok(other.clone()),
         }
+    }
+
+    fn freeze_pipeline(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
+        let (links, base) = reason::pipeline(expression);
+        if !links.iter().copied().any(Link::is_depth) {
+            return Ok(expression.clone());
+        }
+        let mut frozen = base.clone();
+        for link in links.into_iter().rev() {
+            frozen = match link {
+                Link::Stage(stage) => Expr::Reason {
+                    stage,
+                    source: Box::new(frozen),
+                },
+                Link::Depth(limit) => Expr::Depth {
+                    source: Box::new(frozen),
+                    limit: Box::new(self.freeze(limit, scope)?),
+                },
+            };
+        }
+        Ok(frozen)
     }
 
     fn freeze_access(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {

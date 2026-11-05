@@ -1668,24 +1668,32 @@ impl Parser {
                 }
             }
 
-            let stage = self.stage()?;
-            left = Expr::Reason {
-                stage,
-                source: Box::new(left),
-            };
+            left = self.stage(left)?;
         }
 
         Ok(left)
     }
 
-    fn stage(&mut self) -> Result<Stage> {
+    fn stage(&mut self, source: Expr) -> Result<Expr> {
         if let Token::Identifier(name) = self.peek() {
             if let Some(stage) = Stage::from_name(name) {
                 self.advance();
-                return Ok(stage);
+                return Ok(Expr::Reason {
+                    stage,
+                    source: Box::new(source),
+                });
             }
 
-            let name = name.clone();
+            if name == "depth" && self.peek_at(1) == &Token::LeftParen {
+                self.position += 2;
+                let limit = self.expression()?;
+                self.expect(&Token::RightParen)?;
+                return Ok(Expr::Depth {
+                    source: Box::new(source),
+                    limit: Box::new(limit),
+                });
+            }
+
             return Err(Error::type_error(format!("{name} is not an operation")));
         }
 

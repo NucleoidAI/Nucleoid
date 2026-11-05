@@ -3332,6 +3332,34 @@ assert: desk.label, {id: "ada", name: "ada", city: "Lyon", zip: "69001", item: "
   customer's fields. See [NUC 81](nuc-0081.md) and the
   [root contract](../nucleoid.spec.md#object-spread-entries).
 
+## Depth-limited reasoning selections
+
+**Depth keeps the direct effects of a part's cost in view**
+
+```nuc
+class Part(cost):
+    this.cost = cost
+bolt = Part(2)
+gear = Part(5)
+motor = bolt.cost * 4 + gear.cost
+robot = motor * 2 + 10
+kit = bolt.cost * 10
+direct = bolt.cost |> affects |> depth(1)
+assert: direct.map(step -> step.node), ["motor", "kit"]
+assert: (affects bolt.cost).length, 3
+bolt.cost = 3
+[direct.length, direct[0].holds, direct[1].holds]
+# return: [2,17,30]
+```
+
+- `bolt.cost |> affects |> depth(1)` selects what reads the bolt's cost
+  directly, the motor and the kit, and leaves out the robot, which reads it
+  only through the motor; `affects bolt.cost` selects all three.
+- The selection follows the model: a new cost updates both steps it keeps,
+  and a new direct reader of the cost would join it. See
+  [NUC 82](nuc-0082.md) and the
+  [root contract](../nucleoid.spec.md#depth-limited-reasoning-selections).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

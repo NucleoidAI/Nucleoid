@@ -18,6 +18,10 @@ pub(crate) fn to_i64(number: f64) -> i64 {
     number as i64
 }
 
+pub(crate) fn non_negative_integer(number: f64) -> Option<usize> {
+    (number >= 0.0 && equal(number.fract(), 0.0)).then(|| to_usize(number))
+}
+
 #[expect(clippy::float_cmp)]
 pub(crate) fn equal(left: f64, right: f64) -> bool {
     left == right
@@ -46,6 +50,19 @@ mod tests {
             9_007_199_254_740_991.0
         ));
         assert!(equal(from_i64(-8_640_000_000_000_000), -8.64e15));
+    }
+
+    #[test]
+    fn only_finite_non_negative_integers_are_counts() {
+        assert_eq!(non_negative_integer(0.0), Some(0));
+        assert_eq!(non_negative_integer(-0.0), Some(0));
+        assert_eq!(non_negative_integer(3.0), Some(3));
+        assert_eq!(non_negative_integer(1e300), Some(usize::MAX));
+        assert_eq!(non_negative_integer(-1.0), None);
+        assert_eq!(non_negative_integer(0.5), None);
+        assert_eq!(non_negative_integer(f64::NAN), None);
+        assert_eq!(non_negative_integer(f64::INFINITY), None);
+        assert_eq!(non_negative_integer(f64::NEG_INFINITY), None);
     }
 
     #[test]

@@ -1762,6 +1762,36 @@ assert: [lamp.listing, draft], [{id: "lamp", name: "lamp", price: 60, stock: 3, 
   property it declares, so `listing` never holds an older listing. See the
   [root contract](nucleoid.spec.md#object-spread-entries).
 
+## Depth-limited reasoning selections
+
+**Depth keeps an alarm's explanation to its direct causes**
+
+```nuc
+pressure = 120
+limit = 100
+temperature = 70
+manual = false
+strained = pressure > limit
+hot = temperature > 90
+alarm = [strained, hot, manual].includes(true)
+causes = alarm |> why |> depth(1)
+assert: causes.map(step -> step.node), ["alarm", "strained", "hot", "manual"]
+assert: (why alarm).length, 7
+pressure = 90
+temperature = 95
+assert: causes.map(step -> step.holds), [true, false, true, false]
+```
+
+- [NUC 82](docs/nuc-0082.md) adds the reasoning stage `|> depth(LIMIT)`. It
+  keeps the steps of a selection that lie within `LIMIT` steps of where the
+  walk that selected them began, in their order, so `alarm |> why |> depth(1)`
+  is the alarm and the facts it reads directly: four steps, where
+  `why alarm` selects seven.
+- The selection stays live: new pressures and temperatures update the steps
+  it keeps, and a limit read from a variable re-derives it when the variable
+  changes. See the
+  [root contract](nucleoid.spec.md#depth-limited-reasoning-selections).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

@@ -17064,6 +17064,196 @@ cart.rye = 1
 assert: order, {tea: 4, jam: 3, rye: 1, count: 4}"#);
 }
 
+/// Nucleoid narrows explanations to a reasoning depth
+#[rustfmt::skip]
+#[test]
+fn narrows_explanations_to_a_reasoning_depth() {
+    let mut run = runner();
+    run("base = 1");
+    run("seed = base + 1");
+    run("step = seed + 1");
+    run("next = step * 2");
+    run("result = next + step");
+    run("own = result |> why |> depth(0)");
+    run("near = result |> why |> depth(1)");
+    run("wide = result |> why |> depth(2)");
+    assert_eq!(run("own.map(s -> s.node)"), serde_json::json!(["result"]));
+    assert_eq!(run("near.map(s -> s.node)"), serde_json::json!(["result", "next", "step"]));
+    assert_eq!(run("near[0].from"), serde_json::json!(["next", "step"]));
+    assert_eq!(run("wide.map(s -> s.node)"), serde_json::json!(["result", "next", "step", "seed"]));
+    run("base = 5");
+    run("step = base * 3");
+    assert_eq!(run("near.map(s -> s.holds)"), serde_json::json!([45, 30, 15]));
+    assert_eq!(run("wide.map(s -> s.node)"), serde_json::json!(["result", "next", "step", "base"]));
+    run("result = 7");
+    assert_eq!(run("own.map(s -> s.state)"), serde_json::json!(["stated"]));
+}
+
+/// Nucleoid measures reasoning depth along the shortest path
+#[rustfmt::skip]
+#[test]
+fn measures_reasoning_depth_along_the_shortest_path() {
+    let mut run = runner();
+    run("rate = 2");
+    run("fee = rate + 1");
+    run("charge = fee * 2");
+    run("base = rate * 3");
+    run("total = base + charge");
+    run("two = total |> why |> depth(2)");
+    assert_eq!(run("two.map(s -> s.node)"), serde_json::json!(["total", "base", "charge", "fee", "rate"]));
+    run("base = 10");
+    assert_eq!(run("two.map(s -> s.node)"), serde_json::json!(["total", "base", "charge", "fee"]));
+    assert_eq!(run("(why total).length"), 5);
+    run("rate = 4");
+    assert_eq!(run("two.map(s -> s.holds)"), serde_json::json!([20, 10, 10, 5]));
+}
+
+/// Nucleoid narrows impact selections to direct dependents
+#[rustfmt::skip]
+#[test]
+fn narrows_impact_selections_to_direct_dependents() {
+    let mut run = runner();
+    run("price = 10");
+    run("tax = price * 2");
+    run("total = price + tax");
+    run("label = total * 3");
+    run("direct = price |> affects |> depth(1)");
+    run("again = tax |> why |> affects |> depth(1)");
+    assert_eq!(run("(affects price).map(s -> s.node)"), serde_json::json!(["tax", "total", "label"]));
+    assert_eq!(run("direct.map(s -> s.node)"), serde_json::json!(["tax", "total"]));
+    assert_eq!(run("again.map(s -> s.node)"), serde_json::json!(["tax", "total"]));
+    run("label = price + 1");
+    assert_eq!(run("direct.map(s -> s.node)"), serde_json::json!(["tax", "total", "label"]));
+    assert_eq!(run("again.map(s -> s.node)"), serde_json::json!(["tax", "total", "label"]));
+    run("price = 4");
+    assert_eq!(run("direct.map(s -> s.holds)"), serde_json::json!([8, 12, 5]));
+}
+
+/// Nucleoid keeps depth selections live as limits and rules change
+#[rustfmt::skip]
+#[test]
+fn keeps_depth_selections_live_as_limits_and_rules_change() {
+    let mut run = runner();
+    run("base = 1");
+    run("mid = base + 1");
+    run("top = mid * 2");
+    run("limit = 1");
+    run("near = top |> why |> depth(limit)");
+    assert_eq!(run("near.map(s -> s.node)"), serde_json::json!(["top", "mid"]));
+    run("limit = 2");
+    assert_eq!(run("near.map(s -> s.node)"), serde_json::json!(["top", "mid", "base"]));
+    run("extra = 5");
+    run("mid = extra + base");
+    assert_eq!(run("near.map(s -> s.node)"), serde_json::json!(["top", "mid", "extra", "base"]));
+    assert_eq!(run("near[0].holds"), 12);
+    run("limit = 0");
+    assert_eq!(run("near.map(s -> s.node)"), serde_json::json!(["top"]));
+    run("top = 3");
+    run("limit = 1");
+    assert_eq!(run("near.map(s -> s.state)"), serde_json::json!(["stated"]));
+}
+
+/// Nucleoid composes depth with state filters and later walks
+#[rustfmt::skip]
+#[test]
+fn composes_depth_with_state_filters_and_later_walks() {
+    let mut run = runner();
+    run("base = 2");
+    run("rate = base * 2");
+    run("fee = 1");
+    run("cost = rate * 4");
+    run("price = cost + fee");
+    run("facts = price |> why |> depth(2) |> stated");
+    run("touched = price |> why |> stated |> affects |> depth(1)");
+    run("alone = price |> depth(2)");
+    assert_eq!(run("facts.map(s -> s.node)"), serde_json::json!(["fee"]));
+    assert_eq!(run("touched.map(s -> s.node)"), serde_json::json!(["rate", "price"]));
+    assert_eq!(run("alone.map(s -> s.node)"), serde_json::json!(["price"]));
+    run("fee = base + 1");
+    assert_eq!(run("facts.map(s -> s.node)"), serde_json::json!(["base"]));
+    assert_eq!(run("touched.map(s -> s.node)"), serde_json::json!(["rate", "fee"]));
+    run("price = 9");
+    assert_eq!(run("alone.map(s -> s.state)"), serde_json::json!(["stated"]));
+}
+
+/// Nucleoid waits for unknown depth limits
+#[rustfmt::skip]
+#[test]
+fn waits_for_unknown_depth_limits() {
+    let mut run = runner();
+    run("cause = 4");
+    run("effect = cause * 2");
+    run("class Plan");
+    run("plan = Plan()");
+    run("known = null");
+    run("pending = effect |> why |> depth(plan.depth)");
+    run("waiting = effect |> why |> depth(known)");
+    run("ready = all s in waiting: s.holds > 0");
+    assert_eq!(run("pending"), serde_json::Value::Null);
+    assert_eq!(run("waiting"), serde_json::Value::Null);
+    assert_eq!(run("ready"), serde_json::Value::Null);
+    run("plan.depth = 0");
+    run("known = 1");
+    assert_eq!(run("pending.map(s -> s.node)"), serde_json::json!(["effect"]));
+    assert_eq!(run("waiting.map(s -> s.node)"), serde_json::json!(["effect", "cause"]));
+    assert_eq!(run("ready"), true);
+    run("cause = -1");
+    assert_eq!(run("ready"), false);
+}
+
+/// Nucleoid applies depth in class level rules methods and quantifiers
+#[rustfmt::skip]
+#[test]
+fn applies_depth_in_class_level_rules_methods_and_quantifiers() {
+    let mut run = runner();
+    run(r#"class Order(qty, price):
+    this.qty = qty
+    this.price = price
+    def direct() => this.total |> why |> depth(1)"#);
+    run("$Order.units = $Order.qty * 10");
+    run("$Order.total = $Order.units * $Order.price");
+    run("$Order.causes = $Order.total |> why |> depth(1)");
+    run("pen = Order(2, 3)");
+    run("ok = all s in pen.total |> why |> depth(1): s.holds > 5");
+    assert_eq!(run("pen.causes.map(s -> s.node)"), serde_json::json!(["pen.total", "pen.units", "pen.price"]));
+    assert_eq!(run("pen.direct().map(s -> s.holds)"), serde_json::json!([60, 20, 3]));
+    assert_eq!(run("ok"), false);
+    run("pen.price = 7");
+    assert_eq!(run("pen.causes[0].holds"), 140);
+    assert_eq!(run("ok"), true);
+    run("cup = Order(1, 9)");
+    assert_eq!(run("cup.causes.map(s -> s.holds)"), serde_json::json!([90, 10, 9]));
+}
+
+/// Nucleoid restores depth selections after failed changes
+#[rustfmt::skip]
+#[test]
+fn restores_depth_selections_after_failed_changes() {
+    let mut run = runner();
+    run(r#"seed = 1
+mid = seed + 1
+top = mid * 2
+limit = 1
+near = top |> why |> depth(limit)
+frozen = near.value
+try:
+    limit = 2
+    mid = 5
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(near.map(s -> s.node), ["top", "mid"])
+plan = suppose:
+    limit = 2
+    near.length
+assert(plan, 3)
+assert(near.length, 2)
+limit = 2
+seed = 4
+assert(near.map(s -> s.holds), [10, 5, 4])
+assert(frozen.map(s -> s.holds), [4, 2])"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

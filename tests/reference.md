@@ -2346,4 +2346,18 @@ assert(settings.font, "mono")
 delete prefs.size
 settings.size
 # return: 12
+---
+# Nucleoid limits explanations to direct causes with depth
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+direct = total |> why |> depth(1)
+assert(direct.map(step => step.node), ["total", "subtotal", "shipping"])
+assert((why total).length, 5)
+price = 12
+direct.map(step => step.holds)
+# return: [41,36,5]
 ```

@@ -2133,6 +2133,93 @@ statement positions; caught values and transaction recovery are unchanged.
   accepted `.filter(step => step.state == ...)` counterparts, including the
   individual-reference counterparts' `.slice(0, 1)`, assertions and returns.
 
+## Depth-limited reasoning selections
+
+- [NUC 82](docs/nuc-0082.md) adds the pipeline stage `SELECTION |> depth(LIMIT)`.
+  It keeps the steps of `SELECTION` whose distance is at most `LIMIT`, in their
+  order and with their `node`, `holds`, `rule`, `state` and `from` fields
+  unchanged, and drops the others.
+- A step's distance is the number of edges on the shortest path by which the
+  most recent walking stage reached it from that stage's input selection:
+  `why` follows dependencies and `affects` follows dependents, skipping
+  reasoning observers as the walks do. Edges count whether or not the nodes
+  along them are selected, so pending nodes, which no selection lists, are
+  walked as before. Distances are shortest paths whatever order the walk
+  lists the steps in.
+- `why` keeps its input steps at distance 0, so `c |> why |> depth(1)` selects
+  `c` and the nodes it reads directly. `affects` never selects a node by the
+  empty path, so every step it selects is at distance 1 or more:
+  `a |> affects |> depth(1)` selects the direct dependents of `a`,
+  `a |> affects |> depth(0)` selects nothing, and an input that is also a
+  dependent of another input takes its shortest non-empty path.
+- Steps that no walk produced, the one-step selection of a reference and
+  `model`, are at distance 0. `stated`, `derived` and `depth` keep the
+  distances of the steps they keep, so `depth` and the state filters compose
+  in either order, and a later walk measures distances from its own input.
+  Prefix stages compose as before: `why c |> depth(1)` is
+  `(why c) |> depth(1)`.
+- `LIMIT` is one expression in parentheses, evaluated in place each time the
+  selection is evaluated, after the source selection. A declaration therefore
+  depends on what the limit reads, so `near = c |> why |> depth(n)` is
+  evaluated again when `n` changes. It must be a non-negative integer number;
+  `-0` is `0`, and a limit larger than every distance keeps every step.
+- A limit that evaluates to `null` or to undefined makes the reasoning
+  expression undefined: the stage keeps nothing that could be known, the
+  stages after it are not applied and their limits are not evaluated. A
+  declaration stores that undefined value as `null` until the limit is known,
+  a quantifier over it tests no member and yields undefined, and reads from
+  it, such as `.length` or `.map(...)`, give `null`, as they do from a `null`
+  binding.
+- Every other limit raises `TypeError("<limit> is not a non-negative integer")`,
+  where `<limit>` is the limit expression's path or canonical source, named as
+  quantifier errors name their collection, so `$Plan.depth` is `Plan.depth`.
+  This covers negative numbers, fractions, `NaN`, infinities, booleans,
+  strings, lists, objects, instances, classes, functions, dates and regular
+  expressions. After `n = 1.5`, `c |> why |> depth(n)` raises
+  `TypeError("n is not a non-negative integer")`, and `c |> why |> depth(-1)`
+  raises `TypeError("-1 is not a non-negative integer")`. The error is
+  positioned at the running top-level statement and rolls back its
+  transaction.
+- Only `|>` followed by the name `depth` and then a `(` token is the stage, so
+  `|> depth (1)` is the stage too. `depth` remains an ordinary lexer
+  identifier: variables, parameters, properties, keys, functions and methods
+  named `depth` keep their accepted meanings, there is no prefix form
+  `depth c`, and `depth(c, 1)` remains an ordinary call. A bare `|> depth`
+  keeps the parse-time `TypeError("depth is not an operation")`, and so does
+  `|> depth` followed by a line break and then `(` outside parentheses and
+  brackets, where a line break is a token. `|> depth()` raises
+  `SyntaxError("Unexpected ')'")` and `|> depth(1, 2)` raises
+  `SyntaxError("Expected ')' but found ','")`, as the parenthesized
+  expressions `()` and `(1, 2)` do.
+- A local or parameter, state variable, function or class named `depth`
+  shadows the stage, as the accepted `stated` and `derived` filters are
+  shadowed: the stage then raises `TypeError("depth is not an operation")`
+  before selecting its source. A binding declared after a standing selection
+  makes the selection's next evaluation raise, which fails and rolls back the
+  statement that triggered it, as it does for the state filters. The accepted
+  `why` and `affects` shadowing behavior does not change.
+- An invalid source keeps its existing diagnostic and is checked before the
+  limit is evaluated: `1 |> depth(1)` raises `TypeError("Cannot explain 1")`
+  and `missing |> depth(1)` raises
+  `ReferenceError("missing is not defined")`.
+- Like the state filters, `depth` preserves every value and structural
+  observation that its source selection established, including those of the
+  steps it drops, so a selection refreshes when a dropped ancestor's
+  declaration, value or edges change. A declaration that contains the stage is
+  a reasoning observer, whether it is a variable, a property, a class-level
+  rule, a condition or a quantifier. Functions, methods and lambdas evaluate
+  it in place. Propagation order, `.value` snapshots, `suppose` blocks and
+  rollback behave as for the accepted stages, and a `.value` read in the limit
+  is frozen when the declaration is stored.
+- The stage renders as `SOURCE|>depth(LIMIT)` in graph keys, block keys,
+  conditions and `rule` text, with its source and limit rendered once each.
+  Programs without the stage select, walk and filter exactly as before and
+  compute no distances.
+- The eight appended entries from
+  `Nucleoid narrows explanations to a reasoning depth` through
+  `Nucleoid restores depth selections after failed changes` specify the
+  executable behavior.
+
 ## Reactive degree to radian conversion
 
 - The [NUC 50 candidate](docs/nuc-0050.md) adds only unshadowed static
@@ -20234,4 +20321,162 @@ plan = suppose:
 assert: [plan, order.rye], [5, null]
 cart.rye = 1
 assert: order, {tea: 4, jam: 3, rye: 1, count: 4}
+---
+# Nucleoid narrows explanations to a reasoning depth
+
+base = 1
+seed = base + 1
+step = seed + 1
+next = step * 2
+result = next + step
+own = result |> why |> depth(0)
+near = result |> why |> depth(1)
+wide = result |> why |> depth(2)
+assert(own.map(s -> s.node), ["result"])
+assert(near.map(s -> s.node), ["result", "next", "step"])
+assert(near[0].from, ["next", "step"])
+assert(wide.map(s -> s.node), ["result", "next", "step", "seed"])
+base = 5
+step = base * 3
+assert(near.map(s -> s.holds), [45, 30, 15])
+assert(wide.map(s -> s.node), ["result", "next", "step", "base"])
+result = 7
+assert(own.map(s -> s.state), ["stated"])
+---
+# Nucleoid measures reasoning depth along the shortest path
+
+rate = 2
+fee = rate + 1
+charge = fee * 2
+base = rate * 3
+total = base + charge
+two = total |> why |> depth(2)
+assert(two.map(s -> s.node), ["total", "base", "charge", "fee", "rate"])
+base = 10
+assert(two.map(s -> s.node), ["total", "base", "charge", "fee"])
+assert((why total).length, 5)
+rate = 4
+assert(two.map(s -> s.holds), [20, 10, 10, 5])
+---
+# Nucleoid narrows impact selections to direct dependents
+
+price = 10
+tax = price * 2
+total = price + tax
+label = total * 3
+direct = price |> affects |> depth(1)
+again = tax |> why |> affects |> depth(1)
+assert((affects price).map(s -> s.node), ["tax", "total", "label"])
+assert(direct.map(s -> s.node), ["tax", "total"])
+assert(again.map(s -> s.node), ["tax", "total"])
+label = price + 1
+assert(direct.map(s -> s.node), ["tax", "total", "label"])
+assert(again.map(s -> s.node), ["tax", "total", "label"])
+price = 4
+assert(direct.map(s -> s.holds), [8, 12, 5])
+---
+# Nucleoid keeps depth selections live as limits and rules change
+
+base = 1
+mid = base + 1
+top = mid * 2
+limit = 1
+near = top |> why |> depth(limit)
+assert(near.map(s -> s.node), ["top", "mid"])
+limit = 2
+assert(near.map(s -> s.node), ["top", "mid", "base"])
+extra = 5
+mid = extra + base
+assert(near.map(s -> s.node), ["top", "mid", "extra", "base"])
+assert(near[0].holds, 12)
+limit = 0
+assert(near.map(s -> s.node), ["top"])
+top = 3
+limit = 1
+assert(near.map(s -> s.state), ["stated"])
+---
+# Nucleoid composes depth with state filters and later walks
+
+base = 2
+rate = base * 2
+fee = 1
+cost = rate * 4
+price = cost + fee
+facts = price |> why |> depth(2) |> stated
+touched = price |> why |> stated |> affects |> depth(1)
+alone = price |> depth(2)
+assert(facts.map(s -> s.node), ["fee"])
+assert(touched.map(s -> s.node), ["rate", "price"])
+assert(alone.map(s -> s.node), ["price"])
+fee = base + 1
+assert(facts.map(s -> s.node), ["base"])
+assert(touched.map(s -> s.node), ["rate", "fee"])
+price = 9
+assert(alone.map(s -> s.state), ["stated"])
+---
+# Nucleoid waits for unknown depth limits
+
+cause = 4
+effect = cause * 2
+class Plan
+plan = Plan()
+known = null
+pending = effect |> why |> depth(plan.depth)
+waiting = effect |> why |> depth(known)
+ready = all s in waiting: s.holds > 0
+assert(pending, null)
+assert(waiting, null)
+assert(ready, null)
+plan.depth = 0
+known = 1
+assert(pending.map(s -> s.node), ["effect"])
+assert(waiting.map(s -> s.node), ["effect", "cause"])
+assert(ready, true)
+cause = -1
+assert(ready, false)
+---
+# Nucleoid applies depth in class level rules methods and quantifiers
+
+class Order(qty, price):
+    this.qty = qty
+    this.price = price
+    def direct() => this.total |> why |> depth(1)
+$Order.units = $Order.qty * 10
+$Order.total = $Order.units * $Order.price
+$Order.causes = $Order.total |> why |> depth(1)
+pen = Order(2, 3)
+ok = all s in pen.total |> why |> depth(1): s.holds > 5
+assert(pen.causes.map(s -> s.node), ["pen.total", "pen.units", "pen.price"])
+assert(pen.direct().map(s -> s.holds), [60, 20, 3])
+assert(ok, false)
+pen.price = 7
+assert(pen.causes[0].holds, 140)
+assert(ok, true)
+cup = Order(1, 9)
+assert(cup.causes.map(s -> s.holds), [90, 10, 9])
+---
+# Nucleoid restores depth selections after failed changes
+
+seed = 1
+mid = seed + 1
+top = mid * 2
+limit = 1
+near = top |> why |> depth(limit)
+frozen = near.value
+try:
+    limit = 2
+    mid = 5
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(near.map(s -> s.node), ["top", "mid"])
+plan = suppose:
+    limit = 2
+    near.length
+assert(plan, 3)
+assert(near.length, 2)
+limit = 2
+seed = 4
+assert(near.map(s -> s.holds), [10, 5, 4])
+assert(frozen.map(s -> s.holds), [4, 2])
 ```

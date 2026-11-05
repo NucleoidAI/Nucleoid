@@ -6,8 +6,8 @@
 use std::fmt;
 
 use crate::lang::ast::{
-    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, ObjectEntry, Parameter, Stmt,
-    TemplatePart, UnaryOp, VersionSelector,
+    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, ObjectEntry, Parameter,
+    Quantifier, Stmt, TemplatePart, UnaryOp, VersionSelector,
 };
 
 fn has_binding_metadata(parameters: &[Parameter]) -> bool {
@@ -87,20 +87,31 @@ impl fmt::Display for Expr {
             Expr::Assign { target, value } => write!(f, "{target}={value}"),
             Expr::Delete(operand) => write!(f, "delete {operand}"),
             Expr::Reason { stage, source } => write!(f, "{source}|>{}", stage.as_str()),
+            Expr::Depth { source, limit } => write!(f, "{source}|>depth({limit})"),
             Expr::Model => f.write_str("model"),
             Expr::Quantified {
                 quantifier,
                 binder,
                 collection,
                 condition,
-            } => write!(
-                f,
-                "({} {binder} in {collection}:{condition})",
-                quantifier.as_str()
-            ),
+            } => write_quantified(f, *quantifier, binder, collection, condition),
             Expr::Of { noun, operand } => write_of(f, noun.as_str(), operand),
         }
     }
+}
+
+fn write_quantified(
+    f: &mut fmt::Formatter<'_>,
+    quantifier: Quantifier,
+    binder: &str,
+    collection: &Expr,
+    condition: &Expr,
+) -> fmt::Result {
+    write!(
+        f,
+        "({} {binder} in {collection}:{condition})",
+        quantifier.as_str()
+    )
 }
 
 fn write_logical(
@@ -258,7 +269,7 @@ fn groups_power_exponent(operand: &Expr) -> bool {
     match operand {
         Expr::Binary { operator, .. } => *operator != BinaryOp::Power,
         Expr::Logical { operator, .. } => *operator != LogicalOp::Coalesce,
-        Expr::Assign { .. } | Expr::Reason { .. } | Expr::Function(_) => true,
+        Expr::Assign { .. } | Expr::Reason { .. } | Expr::Depth { .. } | Expr::Function(_) => true,
         _ => false,
     }
 }

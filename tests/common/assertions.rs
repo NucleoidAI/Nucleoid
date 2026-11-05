@@ -155,6 +155,10 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
             }
         }
         Expr::Reason { source, .. } => expression_assertions(source, assertions),
+        Expr::Depth { source, limit } => {
+            expression_assertions(source, assertions);
+            expression_assertions(limit, assertions);
+        }
         Expr::Quantified {
             collection,
             condition,

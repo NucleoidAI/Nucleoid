@@ -3088,6 +3088,54 @@ assert(conclusions[0].state, "derived")
   `facts = (why result).filter(step => step.state == "stated")` and
   `conclusions = (why result).filter(step => step.state == "derived")`.
 
+### Depth-limited selections
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+direct = total |> why |> depth(1)
+assert(direct.map(step => step.node), ["total", "subtotal", "shipping"])
+assert((why total).length, 5)
+price = 12
+direct.map(step => step.holds)
+```
+
+- This is the complete `Nucleoid limits explanations to direct causes with depth`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `[41,36,5]`.
+- [NUC 82](nuc-0082.md) adds the stage `selection |> depth(limit)`. It keeps
+  the steps whose distance from where the walk that selected them began is at
+  most `limit`, in their order and with their fields unchanged, so
+  `total |> why |> depth(1)` is `total` and what it reads directly, while
+  `why total` selects every fact behind it.
+- A step's distance is the length of the shortest path by which the most
+  recent `why` or `affects` reached it from its input, whatever order the walk
+  lists the steps in. `why` keeps its inputs at distance 0; every `affects`
+  step is at distance 1 or more, so `price |> affects |> depth(1)` is what
+  reads the price directly and `depth(0)` after `affects` is empty. A
+  reference's own step and `model` are at distance 0, and `stated`, `derived`
+  and `depth` keep distances, so they compose in either order.
+- The limit is an expression evaluated in place, so `depth(n)` follows `n`. It
+  must be a non-negative integer; any other value raises
+  `TypeError("<limit> is not a non-negative integer")`. A `null` or undefined
+  limit makes the selection undefined, which a declaration stores as `null`
+  until the limit is known.
+- Only `|>` followed by `depth` and `(` is the stage; `depth` stays an
+  ordinary name everywhere else, and a bare `|> depth` keeps its parse-time
+  `TypeError("depth is not an operation")`. A local or parameter, variable,
+  function or class named `depth` shadows the stage, as bindings shadow the
+  state filters: the stage then raises `TypeError("depth is not an operation")`
+  before selecting its source.
+- The selection stays live through every observation its source made,
+  including the steps it drops, and through what its limit reads. It renders
+  as `selection|>depth(limit)`.
+- The authoritative contract is the
+  [depth-limited reasoning selections](../nucleoid.spec.md#depth-limited-reasoning-selections)
+  section.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -3119,9 +3167,10 @@ c = b * 2
 - The accepted specification already implements selections, pipelines,
   `model`, `why`, and `affects`; the NUC 48 candidate adds only the two
   state filters, [NUC 62](nuc-0062.md) adds NUC 11's `all` and `any`
-  quantifiers, and [NUC 65](nuc-0065.md) adds its `suppose` hypotheticals
-  without `diff`. Other NUC 11 operations remain proposals, not
-  dependencies.
+  quantifiers, [NUC 65](nuc-0065.md) adds its `suppose` hypotheticals
+  without `diff`, and the [NUC 82](nuc-0082.md) candidate adds its `depth`
+  stage without the `depth(x, n)` call form. Other NUC 11 operations remain
+  proposals, not dependencies.
 
 ### Quantifiers
 
@@ -3265,6 +3314,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `mode` selector that is not a function, including `null`, even on an empty receiver | `mode expects a function` |
 | Missing or non-function `maxBy` or `minBy` selector, including `null`, even on an empty receiver | `maxBy expects a function` or `minBy expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
+| A `depth` stage limit that is neither `null`, undefined nor a non-negative integer number | `<limit> is not a non-negative integer` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | A spread entry `...source` whose source is neither an object nor `null` or undefined | `<source> is not an object` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
@@ -3468,6 +3518,9 @@ stated reference                      filter one reference without traversing (N
 derived reference                     filter one reference without traversing (NUC 48 candidate)
 model |> stated                       filter the current model by stated state (NUC 48 candidate)
 model |> derived                      filter the current model by derived state (NUC 48 candidate)
+reference |> why |> depth(1)          the reference and what it reads directly (NUC 82)
+reference |> affects |> depth(1)      what reads the reference directly (NUC 82)
+selection |> depth(limit)             steps within limit steps of where the last walk began (NUC 82)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 any name in collection: condition     true when the condition holds for some member (NUC 62)
 (all name in collection: condition)   parenthesize to combine with what follows (NUC 62)

@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet, VecDeque};
+
 use indexmap::{IndexMap, IndexSet};
 
 use crate::error::{Error, Result};
@@ -93,6 +95,49 @@ impl Selection {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub(crate) struct Ranked {
+    selection: Selection,
+    distances: Vec<usize>,
+}
+
+impl Ranked {
+    pub(crate) fn unwalked(selection: Selection) -> Self {
+        let distances = vec![0; selection.steps.len()];
+        Ranked {
+            selection,
+            distances,
+        }
+    }
+
+    pub(crate) fn within(self, limit: usize) -> Self {
+        self.retained(|_, distance| distance <= limit)
+    }
+
+    pub(crate) fn into_selection(self) -> Selection {
+        self.selection
+    }
+
+    fn filtered(self, state: StepState) -> Self {
+        self.retained(|step, _| step.state == state)
+    }
+
+    fn retained(self, keep: impl Fn(&Step, usize) -> bool) -> Self {
+        debug_assert_eq!(self.selection.steps.len(), self.distances.len());
+        let (steps, distances) = self
+            .selection
+            .steps
+            .into_iter()
+            .zip(self.distances)
+            .filter(|(step, distance)| keep(step, *distance))
+            .unzip();
+        Ranked {
+            selection: Selection { steps },
+            distances,
+        }
+    }
+}
+
 impl Runtime {
     pub(crate) fn selection_of(&mut self, keys: Vec<NodeKey>) -> Selection {
         let mut steps = Vec::new();
@@ -129,6 +174,35 @@ impl Runtime {
         }
     }
 
+    pub(crate) fn apply_ranked(&mut self, stage: Stage, ranked: Ranked) -> Ranked {
+        match stage {
+            Stage::Stated => ranked.filtered(StepState::Stated),
+            Stage::Derived => ranked.filtered(StepState::Derived),
+            Stage::Why => self.walk(&ranked.selection, Direction::Dependencies),
+            Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
+        }
+    }
+
+    fn walk(&mut self, input: &Selection, direction: Direction) -> Ranked {
+        let selection = self.traverse(input, direction);
+        let shortest = self.distances(input, direction);
+        debug_assert!(
+            selection
+                .steps
+                .iter()
+                .all(|step| shortest.contains_key(&step.node))
+        );
+        let distances = selection
+            .steps
+            .iter()
+            .map(|step| shortest.get(&step.node).copied().unwrap_or_default())
+            .collect();
+        Ranked {
+            selection,
+            distances,
+        }
+    }
+
     fn traverse(&mut self, selection: &Selection, direction: Direction) -> Selection {
         let mut reached: IndexSet<NodeKey> = IndexSet::new();
         let mut pending: Vec<NodeKey> = Vec::new();
@@ -142,16 +216,8 @@ impl Runtime {
 
         while let Some(current) = pending.pop() {
             self.track_shape(&ShapeKey::Node(current.clone()));
-            let Some(node) = self.graph.retrieve(&current) else {
-                continue;
-            };
 
-            let next: Vec<NodeKey> = match direction {
-                Direction::Dependencies => node.dependencies.iter().cloned().collect(),
-                Direction::Dependents => self.graph.dependents_in_order(&current),
-            };
-
-            for key in next {
+            for key in self.neighbors(&current, direction) {
                 if self.graph.is_observer(&key) {
                     continue;
                 }
@@ -163,6 +229,47 @@ impl Runtime {
         }
 
         self.selection_of(reached.into_iter().collect())
+    }
+
+    fn distances(&self, input: &Selection, direction: Direction) -> HashMap<NodeKey, usize> {
+        let mut shortest: HashMap<NodeKey, usize> = HashMap::new();
+        let mut queued: HashSet<NodeKey> = HashSet::new();
+        let mut pending: VecDeque<(NodeKey, usize)> = VecDeque::new();
+
+        for step in &input.steps {
+            if direction == Direction::Dependencies {
+                shortest.insert(step.node.clone(), 0);
+            }
+            if queued.insert(step.node.clone()) {
+                pending.push_back((step.node.clone(), 0));
+            }
+        }
+
+        while let Some((current, distance)) = pending.pop_front() {
+            for key in self.neighbors(&current, direction) {
+                if self.graph.is_observer(&key) || shortest.contains_key(&key) {
+                    continue;
+                }
+
+                shortest.insert(key.clone(), distance + 1);
+                if queued.insert(key.clone()) {
+                    pending.push_back((key, distance + 1));
+                }
+            }
+        }
+
+        shortest
+    }
+
+    fn neighbors(&self, key: &NodeKey, direction: Direction) -> Vec<NodeKey> {
+        match direction {
+            Direction::Dependencies => self
+                .graph
+                .retrieve(key)
+                .map(|node| node.dependencies.iter().cloned().collect())
+                .unwrap_or_default(),
+            Direction::Dependents => self.graph.dependents_in_order(key),
+        }
     }
 
     fn step(&mut self, key: &NodeKey) -> Option<Step> {
