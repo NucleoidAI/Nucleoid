@@ -21,6 +21,22 @@ zero cell included, with the input's most frequent nonzero color. In every
 training pair that color has three cells and no other color ties it, and its
 cells need not touch: the threes of color 9 and color 6 are scattered.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 canvas of mixed colors, full but for one
+  background cell in the first pair; the output is one solid color.
+- **Figures.** One block per grid, its nonzero cells taken together. No
+  single-color shape stands out: the most frequent color's cells are
+  scattered in two of the three pairs.
+- **Relations.** The colors compete by count, and one color has more cells
+  than any other, three in every pair.
+- **Change.** That color floods the whole canvas, the background cell
+  included.
+- **World model.** One object per pair, the whole block, with `parts`
+  listing its colors as data; the fill is `mode of $Obj.parts`. Version 3's
+  one point per nonzero cell was finer than the figure, and the user's hint
+  for version 4 moved the model to the whole block.
+
 ## Dataset
 
 The dataset holds the three original training pairs in source order, followed

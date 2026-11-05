@@ -23,6 +23,21 @@ colors, then four cells of three colors. The first block's bounding box fills
 the canvas. The second is 3 cells wide and 2 tall, so the half turn moves it
 from the top two rows to the bottom two.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 canvas of colored and background cells.
+- **Figures.** One figure per grid, the block of nonzero cells, connected
+  through edges across its colors: six cells of four colors, then four cells
+  of three colors.
+- **Relations.** The block relates to the canvas center, which it turns
+  about, so a block that does not fill the canvas changes sides: the second
+  moves from the top two rows to the bottom two.
+- **Change.** The whole grid turns a half turn about its center.
+- **World model.** One object per pair, the whole block, turned by its
+  orientation and moved by its box. Version 1 split each block into its
+  single-color regions, finer than the figure, and the user's hint for
+  version 2 moved the model to the whole block.
+
 ## Dataset
 
 The dataset holds the two original training pairs in source order, followed

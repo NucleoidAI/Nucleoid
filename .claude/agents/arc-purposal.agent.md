@@ -89,7 +89,10 @@ Follow `.claude/CLAUDE.md`, the
   project versions.
 - After the outcome, create or update the puzzle's progress record,
   `arc/docs/ARC-NUC-<puzzle-id>.md`, under the skill's
-  [progress step](../skills/arc-purposal/SKILL.md#document-the-progress).
+  [progress step](../skills/arc-purposal/SKILL.md#document-the-progress),
+  and write or bring up to date its gestalt overview in every invocation:
+  the whole grids, their figures and relations, the whole change, and the
+  level of the dataset's world model.
   Write it yourself, never through an agent, and copy nothing from the run's
   output into it beyond the exit status, difference or error, and elapsed time.
 - When you are done, after the progress record, commit and push the

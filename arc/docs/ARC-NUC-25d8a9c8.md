@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the list query `distinct` of [NUC 71](../../docs/nuc-0071.md) and the conditional expression of [NUC 59](../../docs/nuc-0059.md) |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 4-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
-| Updated | 4-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -31,6 +31,21 @@ than the genesis puzzle `3aa6fb7a` and those with a dataset, its largest
 training matrix has the fewest cells, 9, with 72 cells in all its training
 matrices. Six other puzzles tie on both measures, and `25d8a9c8` has the
 lowest ID among them.
+
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 canvas of three full-width rows with no
+  background cell: some rows are one solid color, and the others mix two
+  colors.
+- **Figures.** The three rows, each seen as a band, either solid or broken.
+- **Relations.** None between rows. Each row relates only to itself: whether
+  all its cells share one color, whatever that color is.
+- **Change.** Every solid row becomes a gray bar, color 5, and every mixed
+  row is erased to the background; the rows keep their places.
+- **World model.** One object per row, the unit in which every output
+  changes, with `parts` listing its three colors as data, as the user
+  approved. The whole grid as one object would need a map of its rows, and
+  same-colored shapes would split mixed rows into pieces and need size tests.
 
 ## Dataset
 

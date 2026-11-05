@@ -394,6 +394,18 @@ such as `arc/docs/ARC-NUC-0ca9ddb6.md`:
   the solver changes, `None` or suggested and not applied; the solver runs;
   and the date updated, written like `2-Nov-2026`.
 - `Puzzle`: the transformation the training pairs show.
+- `Gestalt overview`: the puzzle zoomed out to the big picture, as the
+  [gestalt requirement](#write-the-dataset) reads it, in five bold-labeled
+  points: **Whole grid**, what each input and output grid shows at a glance;
+  **Figures**, the figures and groups seen first; **Relations**, how they
+  relate to each other or to the canvas; **Change**, how the whole changes
+  from input to output; and **World model**, the level of the dataset's
+  objects and, when they are finer than the figures seen first, why the big
+  picture fell short. Draw it from the training pairs and the handoff's
+  big-picture formulation. Every invocation writes this section, or brings it
+  up to date with the current dataset, and leaves earlier models to the
+  dataset's history. When no dataset was kept, say so under **World model**
+  and give the level the handoff proposed.
 - `Dataset`: the objects, their properties, and the rules in a `nuc` block,
   linking the dataset's README paragraph for the rest. When the invocation
   replaced a dataset, say what changed and why, such as the user's hint.

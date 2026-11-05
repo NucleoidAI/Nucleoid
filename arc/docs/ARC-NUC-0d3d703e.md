@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) and the list `includes` that [NUC 61](../../docs/nuc-0061.md) specifies |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 4-Nov-2026, exit 0 |
-| Updated | 4-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -32,6 +32,20 @@ than the genesis puzzle `3aa6fb7a` and those with a dataset, its largest
 training matrix has the fewest cells, 9, with 72 cells in all its training
 matrices. Seven other puzzles tie on both measures, and `0d3d703e` has the
 lowest ID among them.
+
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 canvas of three solid vertical stripes, each one
+  column of its own color, with no background cell.
+- **Figures.** The three stripes, seen as columns rather than cells.
+- **Relations.** No stripe depends on its neighbors. Each stripe's color has
+  one partner in four fixed pairs: 1 and 5, 2 and 6, 3 and 4, and 8 and 9.
+- **Change.** The grid keeps every stripe in place and gives each stripe its
+  partner color.
+- **World model.** One object per stripe, the figures seen first. The whole
+  grid as one object holding a list of its stripe colors would be one level
+  coarser, but accepted Nucleoid cannot run that form, and the stripe model
+  is the simpler one.
 
 ## Dataset
 

@@ -33,6 +33,23 @@ matrices. `ed36ccf7` ties on both measures, and `a85d4709` has the lower ID.
 Both had also tied with [`9565186b`](ARC-NUC-9565186b.md), which the previous
 invocation took.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 background canvas with one gray cell, color 5, in
+  each row; the output is painted throughout.
+- **Figures.** The three gray cells touch through edges or corners and form
+  one figure from top to bottom: a diagonal line, a vertical line, or a
+  right-pointing chevron.
+- **Relations.** Each row's gray cell sits in a column, and the column
+  decides the row's color; the figure's shape does not, since the two
+  chevrons color their rows differently.
+- **Change.** Every row is painted solid in the color its gray cell's column
+  selects: 2 for the left column, 4 for the middle, and 3 for the right.
+- **World model.** One object per gray cell, one level below the whole
+  figure. The figure does not change as one, since each of its rows takes its
+  own color, and its shape does not decide the colors, so the model went down
+  to the row, where each row holds one figure, its marker.
+
 ## Dataset
 
 The dataset holds the four original training pairs in source order, followed

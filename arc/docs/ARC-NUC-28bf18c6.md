@@ -20,6 +20,20 @@ the shape's 3 by 3 crop twice, side by side, as a 3 by 6 grid. The output is
 smaller than the input and has no empty border: it exactly fills its own
 nonzero bounding box.
 
+## Gestalt overview
+
+- **Whole grid.** An 8 by 8 background canvas holds one small shape of one
+  color that fits a 3 by 3 box; the output is a 3 by 6 strip.
+- **Figures.** One figure per grid, the whole shape. Its cells touch through
+  edges or corners, and no shape is its own left-right mirror.
+- **Relations.** The shape relates to nothing else, and the canvas around it
+  does not reach the output.
+- **Change.** The shape is lifted out of its canvas and set down twice, side
+  by side, the two copies filling the output.
+- **World model.** One object per pair, the whole shape, which the rules
+  repeat to the right and move to the origin; `FIT` drops the rest of the
+  canvas.
+
 ## Dataset
 
 The single dataset contains the three original training pairs in source

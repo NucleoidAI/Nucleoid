@@ -29,6 +29,22 @@ not separate the left-right mirror from a top-bottom mirror or a half turn
 either. The output canvas shrinks from 3 by 3 to 1 by 1, so the dataset is
 `FIT`.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 background canvas holds one pattern of color-2
+  cells; the output is one cell.
+- **Figures.** One figure per grid, the whole pattern, whether or not its
+  cells touch.
+- **Relations.** The pattern is held against its mirror image across the
+  canvas's vertical center line, and three of the six training patterns
+  match it.
+- **Change.** The whole pattern collapses into one cell: color 1 when it is
+  mirror symmetric, color 7 when it is not.
+- **World model.** One object per pair, the whole pattern. Its `points` list
+  is data that the symmetry rule quantifies over, not separate objects.
+  Version 1's one point per cell was finer than the figure, and the user's
+  hint for version 2 moved the model to the whole pattern.
+
 ## Dataset
 
 The dataset holds the six original training pairs in source order, followed

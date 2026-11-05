@@ -25,6 +25,23 @@ whose pattern repeats every four rows, so the period must be found. The third
 training output keeps an empty right column, which `FIT` would crop, so the
 dataset is `EXACT`.
 
+## Gestalt overview
+
+- **Whole grid.** A narrow 6 by 3 canvas holds one color-1 pattern from its
+  top row to its bottom row; the output is a taller 9 by 3 canvas.
+- **Figures.** One figure per grid, the whole pattern, whose cells all touch
+  through edges or corners. It reads as a motif of rows repeated down the
+  canvas, a motif 4, 2, and 3 rows tall in the three training pairs.
+- **Relations.** The pattern relates only to itself: its rows repeat every
+  `period` rows, and nothing else is on the canvas.
+- **Change.** The whole pattern grows down to one and a half times its
+  height, continuing its own rhythm rather than repeating its top rows, and
+  turns color 2 as one.
+- **World model.** One object per pair, the whole pattern, measured by its
+  `height` and `period`. Version 1's one point per cell was finer than the
+  figure, and the user's hint for version 2 moved the model to the whole
+  pattern.
+
 ## Dataset
 
 The dataset holds the three original training pairs in source order, followed

@@ -22,6 +22,18 @@ smaller than its input and fills its own bounding box, so the dataset is
 `FIT`; see
 [ARC-NUC-28bf18c6](ARC-NUC-28bf18c6.md#decision-output_canvas-trims-the-composed-matrix).
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 background canvas with one to four cells of a
+  single color; the output is one short row.
+- **Figures.** All the cells of the one color read as one group, whether or
+  not they touch.
+- **Relations.** Only the group's size matters, not its shape or position.
+- **Change.** The group gathers into one horizontal bar of its color, one
+  cell per member, and the empty canvas falls away.
+- **World model.** One object per pair, the whole group, measured by its
+  `cell_count`.
+
 ## Dataset
 
 The single dataset holds the four original training pairs in source order,

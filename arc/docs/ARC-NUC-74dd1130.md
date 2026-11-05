@@ -37,6 +37,20 @@ matrices. Three other puzzles, `9565186b`, `a85d4709`, and `ed36ccf7`, tie on
 both measures, and `74dd1130` has the lowest ID among them. It was one of the
 puzzles tied with [`3c9b0459`](ARC-NUC-3c9b0459.md), the previous default.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 canvas filled by one mosaic of three colors, with
+  no background cell.
+- **Figures.** One figure per grid, the whole mosaic.
+- **Relations.** The mosaic relates to the canvas's main diagonal, from the
+  top-left corner to the bottom-right. No training mosaic looks the same
+  under another turn or mirror of the square, so each pair shows the flip on
+  its own.
+- **Change.** The whole mosaic flips across that diagonal, so its rows
+  become its columns.
+- **World model.** One object per pair, the whole mosaic, whose flip is its
+  `mirror_axis`, 135.
+
 ## Dataset
 
 The dataset holds the four original training pairs in source order, followed

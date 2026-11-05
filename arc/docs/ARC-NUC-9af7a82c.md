@@ -24,6 +24,20 @@ top and the tallest spans every row, so each output fills its nonzero bounding
 box and the dataset is `FIT`; see
 [ARC-NUC-28bf18c6](ARC-NUC-28bf18c6.md#decision-output_canvas-trims-the-composed-matrix).
 
+## Gestalt overview
+
+- **Whole grid.** A small, fully colored canvas, 3 by 3, 3 by 4, or 4 by 3;
+  the output is a histogram on the background, as tall as the largest region
+  and as wide as the number of regions.
+- **Figures.** The single-color regions, three or four per grid; each color
+  forms one region.
+- **Relations.** The regions rank by size, their cell counts.
+- **Change.** The regions turn into a histogram: each becomes a vertical bar
+  of its color, from the top row and as tall as its cell count, placed from
+  left to right, largest first.
+- **World model.** One object per region, the figures seen first; the rank,
+  the relation between them, is stated over the whole population.
+
 ## Dataset
 
 The single dataset has the four original training pairs in source order:

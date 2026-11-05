@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 4-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
-| Updated | 4-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -34,6 +34,20 @@ training matrix has the fewest cells, 9, with 72 cells in all its training
 matrices. Five other puzzles, `3c9b0459`, `74dd1130`, `9565186b`, `a85d4709`,
 and `ed36ccf7`, tie on both measures, and `25ff71a9` has the lowest ID among
 them.
+
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 background canvas holds one figure of three cells
+  above an empty bottom row.
+- **Figures.** The whole figure, edge-connected and of one color: a
+  full-width bar of color 1 in the first two pairs, and an L-shaped tromino
+  of color 1 or 2 in the other two.
+- **Relations.** The figure relates to nothing but the canvas it moves in.
+- **Change.** The whole figure drops one row, keeping its shape, color, and
+  columns.
+- **World model.** One object per pair, the whole figure, the unit seen
+  first. Rolling the canvas's rows down would also fit the training pairs,
+  but it is a finer, row-level reading.
 
 ## Dataset
 

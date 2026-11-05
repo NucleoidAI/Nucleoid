@@ -25,6 +25,20 @@ training pairs the lowest point is on the middle row, yet the bars reach the
 bottom row. The third training output keeps an empty right column, which
 `FIT` would crop, so the dataset is `EXACT`.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 background canvas with two or three single-cell
+  points, each of its own color and no two in the same column.
+- **Figures.** Each point is a whole figure: its own color sets it apart, and
+  it touches no other point through an edge.
+- **Relations.** None between points. Each relates only to the canvas's
+  bottom edge, which every bar reaches even where no point is on the bottom
+  row.
+- **Change.** Every point extends straight down in its own color to the
+  bottom row, becoming a vertical bar.
+- **World model.** One object per point, the figure seen first, whose bar
+  takes its height from the canvas.
+
 ## Dataset
 
 The dataset holds the three original training pairs in source order, followed

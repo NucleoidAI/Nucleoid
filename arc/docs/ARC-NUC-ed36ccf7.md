@@ -40,6 +40,19 @@ had tied on both with [`3c9b0459`](ARC-NUC-3c9b0459.md),
 [`74dd1130`](ARC-NUC-74dd1130.md), [`9565186b`](ARC-NUC-9565186b.md), and
 [`a85d4709`](ARC-NUC-a85d4709.md), which earlier invocations took.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 background canvas holds one pattern of a single
+  color.
+- **Figures.** One figure per grid, the whole pattern, whether or not its
+  cells touch.
+- **Relations.** The pattern relates to the canvas center, which it turns
+  about.
+- **Change.** The whole grid turns a quarter turn counterclockwise, so the
+  right column becomes the top row.
+- **World model.** One object per pair, the whole pattern, turned to
+  orientation 270 and moved about the canvas center.
+
 ## Dataset
 
 The dataset holds the four original training pairs in source order, followed

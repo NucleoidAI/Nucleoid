@@ -20,6 +20,21 @@ gains color-7 neighbors above, below, left, and right; a color-2 point gains
 color-4 neighbors on its four diagonals; color-6 and color-8 points stay as
 they are. The output keeps the input's canvas, so the dataset is `EXACT`.
 
+## Gestalt overview
+
+- **Whole grid.** A 9 by 9 background canvas with two to five single-cell
+  points of colors 1, 2, 6, and 8 scattered over it.
+- **Figures.** Each point is a whole figure on its own: no nonzero cell
+  touches another through an edge or a corner.
+- **Relations.** None between points. Each point's color alone decides what
+  it becomes, and the markers they grow never overlap.
+- **Change.** Every color-1 point grows a plus of color-7 cells on its four
+  sides, every color-2 point an X of color-4 cells on its four diagonals, and
+  color-6 and color-8 points stay as they are, all on the same canvas.
+- **World model.** One object per point, the figure seen first. A marked
+  point's output is its whole 3 by 3 marker, so the rules move its box one
+  cell up and left from where the point started.
+
 ## Dataset
 
 The single dataset preserves all three original training pairs in source

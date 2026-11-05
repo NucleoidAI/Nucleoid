@@ -32,6 +32,21 @@ invocation started from `f4cf6803` and published no dataset, so the puzzle
 stayed eligible. The second started from `c57cbd6`. Both times the working
 tree was clean and the pulls brought in no commits.
 
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 canvas filled by a mosaic of one, two, or three
+  colors; the output is one gray line on the background.
+- **Figures.** One figure per grid, the whole mosaic. Its color regions are
+  not figures of their own here, since the output line follows none of them.
+- **Relations.** Only the mosaic's variety matters: how many distinct colors
+  it holds.
+- **Change.** The mosaic gives way to one gray line, color 5, across the
+  whole canvas: the top row for one color, the diagonal from the top-left
+  corner for two, and the diagonal from the bottom-left corner for three.
+- **World model.** One object per pair, the whole mosaic, with `parts`
+  listing its colors as data; its line is one tag whose orientation gives the
+  axis.
+
 ## Dataset
 
 Each grid's whole mosaic is one instance of `Obj(x, y, orientation, parts)`,

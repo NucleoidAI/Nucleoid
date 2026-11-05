@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 4-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
-| Updated | 4-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -32,6 +32,20 @@ other than the genesis puzzle `3aa6fb7a` and those with a dataset, its largest
 training matrix has the fewest cells, 9, with 72 cells in all its training
 matrices. Four other puzzles, `74dd1130`, `9565186b`, `a85d4709`, and
 `ed36ccf7`, tie on both measures, and `3c9b0459` has the lowest ID among them.
+
+## Gestalt overview
+
+- **Whole grid.** A 3 by 3 canvas filled by one mosaic of two or three
+  colors, with no background cell.
+- **Figures.** One figure per grid, the whole mosaic. Its color regions are
+  parts of it, not figures that act on their own.
+- **Relations.** The mosaic relates only to the canvas center. No training
+  mosaic looks the same under another turn or mirror of the square, so each
+  pair shows the half turn on its own.
+- **Change.** The whole mosaic turns a half turn about the canvas center, and
+  every color keeps its cell count.
+- **World model.** One object per pair, the whole mosaic, whose turn is its
+  orientation.
 
 ## Dataset
 
