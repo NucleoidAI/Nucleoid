@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | `output_canvas`, applied by `Matrix.canvas` |
 | Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0 |
-| Updated | 2-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -43,6 +43,15 @@ $Obj.y = 0
 move the object to the output origin, where the solver places the repeated
 crop. The [README](../README.md#instruction-datasets) describes the dataset in
 full.
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. The dataset meets it. Each training input shows one shape, and
+that whole shape is the object the rules repeat. Nothing needs to change.
 
 ## Decision: `output_canvas` trims the composed matrix
 

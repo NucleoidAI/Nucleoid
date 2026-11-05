@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | None specific to this puzzle |
 | Solver runs | 1 local run, 2-Nov-2026: exit 0 |
-| Updated | 2-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -40,6 +40,16 @@ $Obj.y = 0
 
 `l3058` is a horizontal bar. The dataset was committed in `b9d6551`; the
 [README](../README.md#instruction-datasets) describes it in full.
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. The dataset meets it. All cells of the one color read as one
+group, whether or not they touch, and that whole group is the object whose
+size sets the bar. Nothing needs to change.
 
 ## Runs
 

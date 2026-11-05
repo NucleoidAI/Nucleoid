@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None recorded |
 | Solver changes | None specific to this puzzle |
 | Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026: differences of 10 and 5, then three exact matches |
-| Updated | 2-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -68,6 +68,16 @@ implementations of the same pair together, followed by `Obj[:]`. Instances
 are listed largest first, and each recorded rank sees the complete pair's
 population. The original-training replacement changes no TypeScript and
 includes no live solver run.
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. The dataset meets it. The figures each input shows are its
+single-color regions, each region is one object, and the relation between
+them, their order by size, places the bars. Nothing needs to change.
 
 ## Runs
 

@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
 | Solver runs | 1 local run on 3-Nov-2026 for version 1, exit 0; version 2 not run |
-| Updated | 4-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -71,6 +71,17 @@ programs that start with the same canvas declarations as the solver's
 without `canvas_height`, including each `bar_height`, so the rules still
 reproduce every pair. Instance names, masks, pair grids, and the output canvas
 are unchanged.
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. Version 2 meets it. Each nonzero cell of a training input has a
+color of its own and touches no other through an edge, so each point is a
+whole figure, not a piece of a larger shape, and each grows into its own bar.
+Nothing needs to change.
 
 ## Runs
 

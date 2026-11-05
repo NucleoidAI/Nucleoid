@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested; the rules use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
 | Solver runs | 1 GitHub Actions run on 2-Nov-2026 for version 1 and 1 local run on 3-Nov-2026 for version 2, both exit 0; version 3 not run |
-| Updated | 4-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -76,6 +76,18 @@ declarations as the solver's `nucleoid.run` calls, every input and output
 state equals version 2's without the two properties, so the
 turned orientation and moved origins are unchanged. Instance names, masks,
 pair grids, and the output canvas are unchanged.
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. Version 3 meets it. Each training input's nonzero cells form one
+block, and the whole block is the object that turns. Version 1 split each
+block into its single-color regions, finer than the figure the training pairs
+show, and the user's hint for version 2 moved the model to the whole block.
+Nothing needs to change.
 
 ## Runs
 

@@ -67,8 +67,10 @@ manually from the repository's Actions tab. Configure the repository Actions
 secret `OPENROUTER_API_KEY` before dispatching it; do not upload an environment
 file. The workflow disables environment-file loading, builds the checked-out
 Nucleoid runtime, installs ARC dependencies from the frozen Bun lockfile,
-and runs every puzzle in `ARC_PUZZLES` once in parallel, with a thirty-minute
-limit per puzzle. These are live,
+and runs every puzzle in `ARC_PUZZLES` once in batches of up to
+`ARC_CONCURRENCY` puzzles (default `5`), with a thirty-minute limit per puzzle.
+Change `jobs.report.env.ARC_CONCURRENCY` to adjust the batch size, keeping the
+job timeout budget sufficient for all batches. These are live,
 paid OpenRouter solver benchmarks, not automated ARC tests.
 
 The run summary contains a table with each puzzle's result, exit code, and

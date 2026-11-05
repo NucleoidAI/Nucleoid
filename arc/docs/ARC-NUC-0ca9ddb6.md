@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted |
 | Solver changes | None specific to this puzzle |
 | Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0 |
-| Updated | 2-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -46,6 +46,17 @@ if $Obj.vertex_color == 1:
 The color-2 conditional is the same with tag `l2404` and marker color 4.
 Points of other colors match neither conditional and keep their state. The
 [README](../README.md#instruction-datasets) describes the dataset in full.
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. The dataset meets it. No nonzero cell of a training input touches
+another through an edge or a corner, so each point is a whole figure, not a
+piece of a larger shape, and the rules give each color-1 and color-2 point its
+whole marker cross. Nothing needs to change.
 
 ## Decision: locate the delta from the initial position (NUC 53 and NUC 55)
 

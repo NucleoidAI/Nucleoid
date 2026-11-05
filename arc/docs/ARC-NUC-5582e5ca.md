@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; two suggested changes await review, not applied |
 | Solver runs | 5 local runs, one for each of versions 1 to 5: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0; version 6 has not been run |
-| Updated | 3-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -81,6 +81,19 @@ the largest value itself is 8, 9, and 9, which fails the first and third
 training pairs. Version 5 keeps version 4's instances and states the most
 frequent part directly, with no helper properties. Version 6 only writes that
 rule as a noun query with `of`.
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. The sixth version meets it. Each grid's nonzero cells form one
+block, the whole block is the object, and `parts` lists its colors as data,
+not as separate objects. The third version's one point per nonzero cell was
+the pixel-level start that the requirement now rules out, and the user's hint
+for the fourth version moved the model to the whole block. Nothing needs to
+change.
 
 ## Runs
 

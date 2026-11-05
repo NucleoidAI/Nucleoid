@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
 | Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run |
-| Updated | 4-Nov-2026 |
+| Updated | 5-Nov-2026 |
 
 ## Puzzle
 
@@ -142,6 +142,19 @@ $Obj.fill_color = 1 if $Obj.symmetric else 7
 $Obj.x = 0
 $Obj.y = 0
 ```
+
+### Gestalt review
+
+On 5-Nov-2026 the dataset was checked against the gestalt requirement, which
+`/arc-purposal` and the arc-dataset profile added on 4-Nov-2026, after this
+dataset was written: start from the big picture, the figures each grid shows,
+and go down to single cells only when that cannot express what the training
+pairs show. Version 4 meets it. Each training input shows one pattern, the
+whole pattern is the object, and its `points` list is data that the symmetry
+rule quantifies over, not separate objects. Version 1's one point per colored
+cell was the pixel-level start that the requirement now rules out, and the
+user's hint for version 2 moved the model to the whole pattern. Nothing needs
+to change.
 
 ## Runs
 
