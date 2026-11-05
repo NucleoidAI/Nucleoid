@@ -798,6 +798,68 @@ because the regions are not rotated and the bars are vertical. The test pair
 follows the training pairs at the same level and is annotated by the same
 rules.
 
+`dataset.a85d4709.json` annotates the four original training pairs from
+`data\training\a85d4709.json`, in order, followed by its test pair, fifteen
+marker instances in total, three per pair. Every input and output retains its
+original 3 by 3 canvas, colors, positions, and zero cells. Each input holds
+three gray cells of color 5, one in each row, on a background of zero cells.
+In the training pairs they form one figure from the top row to the bottom row
+whose cells touch through edges or corners: a diagonal line from the top-right
+corner to the bottom-left corner, a vertical line down the right column, and,
+in the third and fourth pairs, the same chevron pointing right, in the left
+two columns and in the right two. Each output paints every row as a solid
+horizontal bar, 1 cell tall and as wide as the canvas, whose color is decided
+by the column of that row's gray cell: 2 for the left column, 4 for the middle
+column, and 3 for the right column, so no output cell is zero. The whole gray
+figure, the figure seen first, does not change as one: each of its rows takes
+its own color, which no scalar property of a single figure object can state.
+Its shape does not decide the colors either: the third and fourth training
+figures are the same chevron one column apart, yet their rows turn 2, 4, and
+2 and 4, 3, and 4. Each column instead gives the same color in every training
+pair where it holds a gray cell, whichever figure that cell belongs to. Each
+object is therefore one gray cell, the marker of its row, a single 1 by 1
+point, listed from top to bottom, because the row is the unit in which every
+output changes: each output row is a single color. The training pairs alone
+also fit reading the vertical line of the second training pair as one
+edge-connected object that widens into a solid 3 by 3 block, and reading the
+colors by the canvas's edges, 2 at the left edge, 3 at the right edge, and 4
+between them, because every canvas is 3 columns wide; the rules take one
+marker per row in every pair and look the color up by column instead, choices
+fixed from the training pairs before the test pair was read. The class takes
+no descriptive property, with no color, column list, canvas size, or matrix of
+cells: every marker is gray, which the rules never read, and the marker's
+column is its `x`. Unconditional class-level rules set the output tag,
+introduce two properties, absent before the rules run, and move `x` to the left
+edge, 0, while `y` keeps the marker's row. `fill_color` is
+`[2, 4, 3][$Obj.x@first]`: the list holds one color per column of the
+3-column canvases, from left to right, and indexing it with the marker's input
+column picks its row's color, anchored with `@first` because another rule
+moves `x`. `bar_width` is `canvas_width`, reading the canvas's width from the
+solver's `canvas_width`, as `dataset.d037b0a7.json` reads `canvas_height`. The
+bar's ends come from the canvas, not the population: in the second training
+pair every marker lies in the right column, yet every bar spans the whole row.
+Each bar depends only on its own marker, and the training pairs show no
+relation between markers, so no population operation appears. The rules create
+no other property and leave `y` and `orientation` unchanged, so each output
+state adds only `bar_width` and `fill_color` to its input state's keys, its tag
+turns `l3058`, and its `x` turns 0. Native snapshots start with the pair's
+`canvas_width` and `canvas_height`, and output snapshots are captured with all
+of the same pair's implementations together, followed by `Obj[:]`. Tags
+identify the geometry: `l7544` is a single point, as in
+`dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, and `l3058` is a
+horizontal bar, as in `dataset.d631b094.json` and `dataset.25d8a9c8.json`.
+Input masks retain each pair's full-size 3 by 3 input canvas, padded with `0`
+outside the marker, and output masks the complete 3 by 3 output, padded with
+`0` outside the bar; merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the bar's nonzero bounding-box origin, the
+left end of its marker's row, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each output keeps its input's 3 by 3
+canvas; with no zero cell in any output, `FIT` would frame the same grids.
+Orientation is 0 in both states because the point is symmetric and the bar is
+a distinct horizontal geometry. The declarations hold executable code only,
+without `#` comments. The test pair follows the training pairs at the same
+level and is annotated by the same rules.
+
 `dataset.d037b0a7.json` annotates the three original training pairs from
 `data\training\d037b0a7.json`, in order, followed by its test pair, eleven
 point instances in total (3, 3, 2, and 3 per pair). Every input and output
