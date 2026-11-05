@@ -40,8 +40,27 @@ struct TrackingFrame {
     keys: IndexSet<NodeKey>,
     shapes: IndexSet<ShapeKey>,
     mode: TrackingMode,
-    anchor_target: Option<NodeKey>,
+    target: Option<NodeKey>,
+    anchored: bool,
     pending_anchor: bool,
+}
+
+impl Tracking {
+    fn reachable(&self) -> &[TrackingFrame] {
+        self.frames.get(self.barrier()..).unwrap_or_default()
+    }
+
+    fn reachable_mut(&mut self) -> &mut [TrackingFrame] {
+        let barrier = self.barrier();
+        self.frames.get_mut(barrier..).unwrap_or_default()
+    }
+
+    fn barrier(&self) -> usize {
+        self.frames
+            .iter()
+            .rposition(|frame| frame.mode == TrackingMode::Isolated)
+            .unwrap_or(0)
+    }
 }
 
 pub(crate) struct PropertyEvaluation {
@@ -77,20 +96,22 @@ impl Runtime {
         mode: TrackingMode,
         operation: impl FnOnce(&mut Self) -> Result<T>,
     ) -> Result<(T, TrackingFrame)> {
-        self.tracked_assignment(mode, None, operation)
+        self.tracked_assignment(mode, None, false, operation)
     }
 
     fn tracked_assignment<T>(
         &mut self,
         mode: TrackingMode,
-        anchor_target: Option<NodeKey>,
+        target: Option<NodeKey>,
+        anchored: bool,
         operation: impl FnOnce(&mut Self) -> Result<T>,
     ) -> Result<(T, TrackingFrame)> {
         self.tracking.frames.push(TrackingFrame {
             keys: IndexSet::new(),
             shapes: IndexSet::new(),
             mode,
-            anchor_target,
+            target,
+            anchored,
             pending_anchor: false,
         });
         let depth = self.tracking.frames.len();
@@ -108,12 +129,8 @@ impl Runtime {
     /// Records a read. Reads reach every enclosing frame up to a barrier, so an
     /// enclosing block depends on whatever its statements read.
     pub(crate) fn track(&mut self, key: &NodeKey) {
-        for frame in self.tracking.frames.iter_mut().rev() {
+        for frame in self.tracking.reachable_mut() {
             frame.keys.insert(key.clone());
-
-            if frame.mode == TrackingMode::Isolated {
-                break;
-            }
         }
     }
 
@@ -130,24 +147,24 @@ impl Runtime {
             return;
         }
 
-        for frame in self.tracking.frames.iter_mut().rev() {
-            if frame.anchor_target.as_ref() == Some(key) {
+        for frame in self.tracking.reachable_mut() {
+            if frame.anchored && frame.target.as_ref() == Some(key) {
                 frame.pending_anchor = true;
-            }
-            if frame.mode == TrackingMode::Isolated {
-                break;
             }
         }
     }
 
     pub(crate) fn track_shape(&mut self, key: &ShapeKey) {
-        for frame in self.tracking.frames.iter_mut().rev() {
+        for frame in self.tracking.reachable_mut() {
             frame.shapes.insert(key.clone());
-
-            if frame.mode == TrackingMode::Isolated {
-                break;
-            }
         }
+    }
+
+    pub(crate) fn declares(&self, key: &NodeKey) -> bool {
+        self.tracking
+            .reachable()
+            .iter()
+            .any(|frame| frame.target.as_ref() == Some(key))
     }
 
     pub(crate) fn evaluate_tracked(
@@ -156,7 +173,7 @@ impl Runtime {
         scope: &mut Scope,
         exclude: Option<&NodeKey>,
     ) -> Result<(Value, IndexSet<NodeKey>)> {
-        let evaluated = self.evaluate_assignment(expression, scope, exclude, None)?;
+        let evaluated = self.evaluate_assignment(expression, scope, exclude.cloned(), false)?;
         Ok((evaluated.value, evaluated.dependencies))
     }
 
@@ -168,28 +185,29 @@ impl Runtime {
         property: &str,
     ) -> Result<PropertyEvaluation> {
         let key = NodeKey::property(object, property);
-        let anchor_target = (scope.instance() == Some(object)).then(|| key.clone());
-        self.evaluate_assignment(expression, scope, Some(&key), anchor_target)
+        let anchored = scope.instance() == Some(object);
+        self.evaluate_assignment(expression, scope, Some(key), anchored)
     }
 
     fn evaluate_assignment(
         &mut self,
         expression: &Expr,
         scope: &mut Scope,
-        exclude: Option<&NodeKey>,
-        anchor_target: Option<NodeKey>,
+        target: Option<NodeKey>,
+        anchored: bool,
     ) -> Result<PropertyEvaluation> {
         let saved = std::mem::take(&mut self.null_read);
-        let result = self.tracked_assignment(TrackingMode::Inherited, anchor_target, |runtime| {
-            let value = runtime.evaluate(expression, scope)?;
-            Ok(runtime.settle(value))
-        });
+        let result =
+            self.tracked_assignment(TrackingMode::Inherited, target, anchored, |runtime| {
+                let value = runtime.evaluate(expression, scope)?;
+                Ok(runtime.settle(value))
+            });
         self.null_read = saved;
         let (value, frame) = result?;
         let mut dependencies = frame.keys;
 
-        if let Some(exclude) = exclude {
-            dependencies.shift_remove(exclude);
+        if let Some(declared) = &frame.target {
+            dependencies.shift_remove(declared);
         }
 
         // Reads made while evaluating still belong to any enclosing declaration.
@@ -253,5 +271,95 @@ impl Runtime {
         let value = self.evaluate(condition, scope);
         let unresolved = std::mem::replace(&mut self.undefined_read, enclosing);
         Ok((value?, unresolved))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn frame(mode: TrackingMode, target: &str, anchored: bool) -> TrackingFrame {
+        TrackingFrame {
+            keys: IndexSet::new(),
+            shapes: IndexSet::new(),
+            mode,
+            target: Some(NodeKey::variable(target)),
+            anchored,
+            pending_anchor: false,
+        }
+    }
+
+    fn reached(runtime: &mut Runtime, targets: &[&str]) -> Vec<[bool; 4]> {
+        let read = NodeKey::variable("read");
+        runtime.track(&read);
+        runtime.track_shape(&ShapeKey::Model);
+        let declared: Vec<bool> = targets
+            .iter()
+            .map(|target| runtime.declares(&NodeKey::variable(*target)))
+            .collect();
+        for target in targets {
+            runtime.track_property_version(
+                &NodeKey::variable(*target),
+                VersionSelector::First,
+                false,
+            );
+        }
+        assert!(!runtime.declares(&read));
+        runtime
+            .tracking
+            .frames
+            .iter()
+            .zip(declared)
+            .map(|(frame, declared)| {
+                [
+                    frame.keys.contains(&read),
+                    frame.shapes.contains(&ShapeKey::Model),
+                    frame.pending_anchor,
+                    declared,
+                ]
+            })
+            .collect()
+    }
+
+    #[test]
+    fn reads_reach_every_frame_up_to_the_innermost_isolated_frame() {
+        let mut runtime = Runtime::new();
+        assert_eq!(reached(&mut runtime, &[]), Vec::<[bool; 4]>::new());
+
+        runtime.tracking.frames = vec![
+            frame(TrackingMode::Inherited, "outer", true),
+            frame(TrackingMode::Inherited, "inner", true),
+        ];
+        assert_eq!(reached(&mut runtime, &["outer", "inner"]), [[true; 4]; 2]);
+
+        runtime.tracking.frames = vec![
+            frame(TrackingMode::Inherited, "outer", true),
+            frame(TrackingMode::Isolated, "shadowed", true),
+            frame(TrackingMode::Inherited, "between", true),
+            frame(TrackingMode::Isolated, "barrier", true),
+            frame(TrackingMode::Inherited, "unanchored", false),
+            frame(TrackingMode::Inherited, "inner", true),
+        ];
+        assert_eq!(
+            reached(
+                &mut runtime,
+                &[
+                    "outer",
+                    "shadowed",
+                    "between",
+                    "barrier",
+                    "unanchored",
+                    "inner"
+                ]
+            ),
+            [
+                [false; 4],
+                [false; 4],
+                [false; 4],
+                [true; 4],
+                [true, true, false, true],
+                [true; 4],
+            ]
+        );
     }
 }

@@ -93,6 +93,16 @@ pub enum ShapeKey {
     Node(NodeKey),
     /// The membership of the model, excluding pending nodes and observers.
     Model,
+    Entries(ObjectId),
+}
+
+impl ShapeKey {
+    fn observes_graph(&self) -> bool {
+        match self {
+            ShapeKey::Node(_) | ShapeKey::Model => true,
+            ShapeKey::Entries(_) => false,
+        }
+    }
 }
 
 impl fmt::Display for ShapeKey {
@@ -100,6 +110,7 @@ impl fmt::Display for ShapeKey {
         match self {
             ShapeKey::Node(key) => key.fmt(f),
             ShapeKey::Model => f.write_str("model"),
+            ShapeKey::Entries(object) => write!(f, "{{...{object}}}"),
         }
     }
 }
@@ -300,7 +311,9 @@ impl Graph {
     }
 
     pub(crate) fn is_observer(&self, key: &NodeKey) -> bool {
-        self.shape_dependencies.contains_key(key)
+        self.shape_dependencies
+            .get(key)
+            .is_some_and(|sources| sources.iter().any(ShapeKey::observes_graph))
             || self
                 .nodes
                 .get(key)
@@ -370,6 +383,7 @@ impl Graph {
                         })
                         .map(|node| &node.key),
                 ),
+                ShapeKey::Entries(_) => {}
             }
         }
     }

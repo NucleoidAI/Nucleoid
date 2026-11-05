@@ -6,8 +6,8 @@
 use std::fmt;
 
 use crate::lang::ast::{
-    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Parameter, Stmt, TemplatePart,
-    UnaryOp, VersionSelector,
+    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, ObjectEntry, Parameter, Stmt,
+    TemplatePart, UnaryOp, VersionSelector,
 };
 
 fn has_binding_metadata(parameters: &[Parameter]) -> bool {
@@ -82,6 +82,7 @@ impl fmt::Display for Expr {
             } => write!(f, "({condition}?{consequent}:{alternate})"),
             Expr::List(items) => write!(f, "[{}]", join(items)),
             Expr::ObjectLiteral(entries) => write_object_literal(f, entries),
+            Expr::SpreadObject(entries) => write_spread_object(f, entries),
             Expr::Function(function) => write_function(f, function),
             Expr::Assign { target, value } => write!(f, "{target}={value}"),
             Expr::Delete(operand) => write!(f, "delete {operand}"),
@@ -182,6 +183,20 @@ fn write_object_literal(f: &mut fmt::Formatter<'_>, entries: &[(String, Expr)]) 
         .map(|(key, value)| format!("\"{key}\":{value}"))
         .collect();
     write!(f, "{{{}}}", rendered.join(","))
+}
+
+fn write_spread_object(f: &mut fmt::Formatter<'_>, entries: &[ObjectEntry]) -> fmt::Result {
+    f.write_str("{")?;
+    for (index, entry) in entries.iter().enumerate() {
+        if index > 0 {
+            f.write_str(",")?;
+        }
+        match entry {
+            ObjectEntry::Property(key, value) => write!(f, "\"{key}\":{value}")?,
+            ObjectEntry::Spread(source) => write!(f, "...{source}")?,
+        }
+    }
+    f.write_str("}")
 }
 
 fn write_function(f: &mut fmt::Formatter<'_>, function: &Function) -> fmt::Result {

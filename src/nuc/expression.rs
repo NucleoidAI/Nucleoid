@@ -3,7 +3,7 @@
 //! to preserve snapshots.
 
 use crate::error::{Error, Result};
-use crate::lang::ast::{Expr, Stmt, TemplatePart, literal};
+use crate::lang::ast::{Expr, ObjectEntry, Stmt, TemplatePart, literal};
 use crate::nuc::Outcome;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
@@ -57,7 +57,7 @@ impl Runtime {
             Expr::Call { .. } | Expr::Super(_) | Expr::Of { .. } => {
                 self.freeze_call(expression, scope)
             }
-            Expr::List(_) | Expr::ObjectLiteral(_) | Expr::Template(_) => {
+            Expr::List(_) | Expr::ObjectLiteral(_) | Expr::SpreadObject(_) | Expr::Template(_) => {
                 self.freeze_collection(expression, scope)
             }
             other => Ok(other.clone()),
@@ -200,6 +200,21 @@ impl Runtime {
                 entries
                     .iter()
                     .map(|(name, value)| Ok((name.clone(), self.freeze(value, scope)?)))
+                    .collect::<Result<_>>()?,
+            ),
+            Expr::SpreadObject(entries) => Expr::SpreadObject(
+                entries
+                    .iter()
+                    .map(|entry| {
+                        Ok(match entry {
+                            ObjectEntry::Property(name, value) => {
+                                ObjectEntry::Property(name.clone(), self.freeze(value, scope)?)
+                            }
+                            ObjectEntry::Spread(source) => {
+                                ObjectEntry::Spread(self.freeze(source, scope)?)
+                            }
+                        })
+                    })
                     .collect::<Result<_>>()?,
             ),
             Expr::Template(parts) => Expr::Template(

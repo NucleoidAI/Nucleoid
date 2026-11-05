@@ -3768,6 +3768,97 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores object entries in place when it rolls back` specify the
   executable behavior.
 
+## Object spread entries
+
+- [NUC 81](docs/nuc-0081.md) adds spread entries to object literals:
+  `{...SOURCE, key: value}` copies the entries of the object `SOURCE` holds
+  into the new object. No keyword, token or error type is added.
+- A spread entry is three dots at consecutive columns of one line, followed
+  by one expression, its source. It may begin wherever a key may: first in
+  the braces or after a comma, with the line breaks a key allows before it.
+  The source is parsed as an entry's value is, so it ends at a comma, at the
+  closing brace, or before a following keyed entry written without a comma,
+  as in `{...base qty: 1}`. Keyed, shorthand and spread entries mix in any
+  order, and one trailing comma is allowed: `{tag, ...base stock: 0,}`.
+- A spread that follows a value or another spread needs a comma before it:
+  `{y: 2 ...a}` keeps `SyntaxError("Expected a property but found '.'")`,
+  because the value reads the dots as a member access. Shorthand entries keep
+  needing a comma or the closing brace after them.
+- Spreads are entries of object literals written as expressions, in
+  assignments, arguments, list items, returns, named-arrow and `lambda`
+  bodies, parentheses, template interpolations, nested literals,
+  constructors, methods, class-level rules and every suite. A brace that
+  begins a statement is still a block, so `{...a, y: 2}` as a statement keeps
+  `SyntaxError("Unexpected '.'")`, and an anonymous arrow body in braces is
+  still a block; `({...a})`, `lambda p: {...p}` and `def f p => {...p}` write
+  objects. `[...xs]`, `f(...xs)` and `{x, ...rest} = p` keep their syntax
+  errors.
+- The entries are evaluated once each, from left to right. A keyed entry
+  stores its value. A spread evaluates its source once and copies the
+  source's entries in their insertion order, the entries an entry loop
+  visits: an instance's `id` first, then its other properties in the order
+  they were stored; every property whose value is not undefined, `null`
+  values included. A slot whose value is undefined is not copied. The result
+  is a new object that belongs to no class, and a copied object or list is
+  the same value in both records.
+- An entry for a key the object already holds replaces its value and keeps
+  the key's first position, as a repeated key does: with
+  `point = {x: 1, y: 2}`, `{...point, x: 5}` lists `x` then `y` with `x` 5,
+  and `{x: 9, ...point}` takes `x` from `point`.
+- Copying an entry is not a read of a binding, so a copied `null` does not
+  settle a declaration to `null`. The source's own reads follow the existing
+  rules: after `owner = null`, `card = {...owner, seen: true}` is `null`,
+  and it becomes a record when `owner` holds one. An undefined source, such
+  as a property never set, copies nothing, and the literal `null` copies
+  nothing. An undefined name raises `ReferenceError("<name> is not defined")`
+  as before.
+- Every other source raises `TypeError("<source> is not an object")`, with the
+  source in canonical form, as entry loops do: a list, a string, a number, a
+  boolean, a class outside a class-level rule, a function, a date and a
+  regular expression. After `sizes = [1, 2]`, `{...sizes}` raises
+  `TypeError("sizes is not an object")`. The error is positioned at the
+  running top-level statement and rolls back its transaction.
+- While a property declaration evaluates its value, a spread of the object
+  that owns the declared property leaves that property out:
+  `cart.copy = {...cart}` copies every other entry of `cart`, and the
+  class-level rule `$Order.view = {...$Order}` every other entry of each
+  order. This holds in
+  every suite, in constructors, class-level rules and value assignments, and
+  in the functions they call. An assignment used as an expression evaluates
+  its value before its target and copies every entry.
+- A declaration that spreads stays live. Its source's reads are dependencies
+  as usual. It also depends on every entry it copies, except an entry that a
+  later keyed entry of the same literal replaces, and it observes the set of
+  entries of the source object. Changing a copied entry, deleting an entry,
+  adding an entry and replacing the binding the source reads each evaluate it
+  again, so a derived record stays equal to the explicit record that names
+  every entry its source holds. Evaluating it again creates a new object, as
+  every object literal declaration does. `{...a.value}` follows the entries
+  of the object `a` held when the declaration was stored, and `b := {...a}`
+  copies once.
+- Entry-set observations are not graph nodes or value dependencies: `why`
+  lists the same dependencies as the explicit record, `affects`, `model` and
+  the reasoning stages are unchanged, and a declaration that spreads is an
+  ordinary declaration, not a reasoning observer. The `--graph` listing shows
+  each observation under `observes` as `{...<object id>}`. Programs without
+  spreads record none and propagate exactly as before. Two class-level rules
+  that spread the same receiver read each other and raise
+  `TypeError("Circular Dependency")` when an instance applies them.
+- Rollback restores spread records and observations with everything else it
+  restores: a caught failure in `try`, a failed top-level statement, the end
+  of a `suppose` block and an error inside one leave every record and every
+  object's entries as they were, in order.
+- Graph and block keys, conditions and `why` rules render a spread as `...`
+  followed by its source between the quoted keyed entries, such as
+  `view = {...lab,"unit":"C"}`. Each source renders once, and the rendering
+  parses back to the same literal.
+- Only inputs that raised `SyntaxError("Expected a key but found '.'")` at an
+  object-literal entry beginning with three adjacent dots change. The eight
+  appended entries beginning
+  `Nucleoid copies object entries into records with spread entries` through
+  `Nucleoid rolls back failed spread updates` specify the executable
+  behavior.
+
 ## While loops
 
 - [NUC 63](docs/nuc-0063.md) adds the condition-controlled loop
@@ -20001,4 +20092,146 @@ suppose:
     Item(5)
     assert: typical, 4
 assert: [Item.length, typical], [1, 3]
+---
+# Nucleoid copies object entries into records with spread entries
+
+base = {name: "tea", price: 4, stock: 10}
+sale = {...base, price: 3, tag: "sale"}
+floor = {price: 9, ...base}
+assert: [sale, floor], [{name: "tea", price: 3, stock: 10, tag: "sale"}, {price: 4, name: "tea", stock: 10}]
+assert: [sale == base, floor == base, base.tag], [false, false, null]
+base.name = "oolong"
+base.price = 6
+base.size = 2
+delete base.stock
+assert: [sale, floor], [{name: "oolong", price: 3, size: 2, tag: "sale"}, {price: 6, name: "oolong", size: 2}]
+tag = "new"
+fresh = {tag, ...base price: 5,}
+assert: fresh, {tag: "new", name: "oolong", price: 5, size: 2}
+---
+# Nucleoid keeps spread entries live as their sources change
+
+base = {name: "tea", price: 4}
+item = {...base, qty: 2}
+line = {...item, total: item.price * item.qty}
+assert: line, {name: "tea", price: 4, qty: 2, total: 8}
+base.price = 5
+base.size = "large"
+delete base.name
+assert: line, {price: 5, size: "large", qty: 2, total: 10}
+base = {name: "jam", price: 3}
+assert: [item, line], [{name: "jam", price: 3, qty: 2}, {name: "jam", price: 3, qty: 2, total: 6}]
+---
+# Nucleoid merges records with several spread entries
+
+defaults = {color: "red", size: 2, gift: false}
+custom = {size: 3}
+order = {...defaults, ...custom, id: 7}
+assert: order, {color: "red", size: 3, gift: false, id: 7}
+custom.gift = true
+custom.note = "rush"
+assert: order, {color: "red", size: 3, gift: true, note: "rush", id: 7}
+delete custom.size
+defaults.color = "blue"
+assert: order, {color: "blue", size: 2, gift: true, note: "rush", id: 7}
+---
+# Nucleoid spreads instances into records and class level rules
+
+class Room(name, temp):
+    this.name = name
+    this.temp = temp
+$Room.card = {...$Room, unit: "C"}
+lab = Room("lab", 20)
+lab.temp = 25
+lab.floor = 2
+assert: lab.card, {id: "lab", name: "lab", temp: 25, floor: 2, unit: "C"}
+hall = Room("hall", 18)
+copy = {...hall, temp: 19}
+assert: (why copy)[0].from, ["hall", "hall.id", "hall.name", "hall.card"]
+hall.name = "foyer"
+assert: copy, {id: "hall", name: "foyer", temp: 19, card: {id: "hall", name: "foyer", temp: 18, unit: "C"}}
+---
+# Nucleoid spreads entries in functions methods and lambdas
+
+class Point(x, y):
+    this.x = x
+    this.y = y
+    def shifted dx => {...this, x: this.x + dx}
+def flat p => {...p, z: 0}
+p = Point(1, 2)
+q = Point(3, 4)
+up = flat(p)
+far = p.shifted(10)
+grid = [p, q].map(lambda pt: {...pt, area: pt.x * pt.y})
+assert: [up, far], [{id: "p", x: 1, y: 2, z: 0}, {id: "p", x: 11, y: 2}]
+p.y = 5
+assert: [up, far, grid], [{id: "p", x: 1, y: 5, z: 0}, {id: "p", x: 11, y: 5}, [{id: "p", x: 1, y: 5, area: 5}, {id: "q", x: 3, y: 4, area: 12}]]
+---
+# Nucleoid spreads only objects and evaluates each source once
+
+owner = null
+card = {...owner, seen: true}
+assert: card, null
+owner = {name: "ada", role: "dev"}
+assert: card, {name: "ada", role: "dev", seen: true}
+box = {}
+packed = {...box.lid, open: false}
+assert: packed, {open: false}
+box.lid = {color: "tan", size: 3}
+assert: packed, {color: "tan", size: 3, open: false}
+class Tag(label, uses):
+    this.label = label
+    this.uses = uses
+made = {...Tag("new", 0), qty: 1}
+assert: [made.label, made.uses, made.qty, Tag.length], ["new", 0, 1, 1]
+sizes = [1, 2]
+try:
+    broken = {...sizes}
+catch error:
+    assert: error, TypeError("sizes is not an object")
+---
+# Nucleoid leaves the declared property out of spreads of its own object
+
+class Order(total, items):
+    this.total = total
+    this.items = items
+$Order.view = {...$Order, paid: false}
+order = Order(10, 2)
+order.total = 12
+order.total = 14
+assert: order.view, {id: "order", total: 14, items: 2, paid: false}
+cart = {tea: 4, jam: 2}
+cart.copy = {...cart, n: 1}
+cart.tea = 5
+cart.oat = 1
+assert: cart.copy, {tea: 5, jam: 2, oat: 1, n: 1}
+---
+# Nucleoid rolls back failed spread updates
+
+def checked(count):
+    if count > 9:
+        throw "TOO_MANY"
+    return count
+cart = {tea: 4, jam: 3}
+order = {...cart, count: checked(cart.tea)}
+failure = ""
+try:
+    cart.tea = 50
+catch error:
+    failure = error
+assert: [failure, cart.tea, order], ["TOO_MANY", 4, {tea: 4, jam: 3, count: 4}]
+try:
+    cart.oats = 2
+    delete cart.jam
+    assert: order, {tea: 4, oats: 2, count: 4}
+    throw "DECLINED"
+catch error:
+    pass
+assert: order, {tea: 4, jam: 3, count: 4}
+plan = suppose:
+    cart.rye = 5
+    order.rye
+assert: [plan, order.rye], [5, null]
+cart.rye = 1
+assert: order, {tea: 4, jam: 3, rye: 1, count: 4}
 ```

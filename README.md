@@ -1735,6 +1735,33 @@ assert: [hall.mean, building], [20, 18]
   does. See the
   [root contract](nucleoid.spec.md#list-and-population-averages).
 
+## Object spread entries
+
+**Spread entries keep derived listings in step with their products**
+
+```nuc
+class Product(name, price):
+    this.name = name
+    this.price = price
+$Product.listing = {...$Product, currency: "USD"}
+lamp = Product("lamp", 40)
+draft = {...lamp.listing, price: lamp.price * 0.75}
+assert: [lamp.listing.price, draft.price], [40, 30]
+lamp.price = 60
+lamp.stock = 3
+assert: [lamp.listing, draft], [{id: "lamp", name: "lamp", price: 60, stock: 3, currency: "USD"}, {id: "lamp", name: "lamp", price: 45, stock: 3, currency: "USD"}]
+```
+
+- [NUC 81](docs/nuc-0081.md) adds spread entries to object literals:
+  `...SOURCE` copies the entries of the object `SOURCE` holds, in order, and a
+  later entry for the same key replaces its value. `$Product.listing` copies
+  each product and adds a currency, and `draft` copies the listing with a
+  discounted price.
+- A spread stays live: a changed price and the new `stock` entry reach both
+  records. A class-level rule that spreads its own receiver leaves out the
+  property it declares, so `listing` never holds an older listing. See the
+  [root contract](nucleoid.spec.md#object-spread-entries).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

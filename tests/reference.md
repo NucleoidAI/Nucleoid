@@ -2331,4 +2331,19 @@ scores = []
 assert(Number.isNaN(mean), true)
 grade
 # return: 73.33333333333333
+---
+# Nucleoid derives records with spread entries
+
+defaults = {theme: "light", size: 12}
+prefs = {size: 14}
+settings = {...defaults, ...prefs}
+assert(settings.theme, "light")
+assert(settings.size, 14)
+prefs.theme = "dark"
+defaults.font = "mono"
+assert(settings.theme, "dark")
+assert(settings.font, "mono")
+delete prefs.size
+settings.size
+# return: 12
 ```

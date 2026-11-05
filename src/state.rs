@@ -2,6 +2,7 @@ use indexmap::IndexMap;
 use std::fmt;
 use std::sync::Arc;
 
+use crate::graph::ShapeKey;
 use crate::history::{History, HistoryKey};
 use crate::lang::ast::VersionSelector;
 use crate::lang::ast::generator::generate_all;
@@ -330,10 +331,11 @@ impl Runtime {
         let changed = before
             .as_ref()
             .is_none_or(|before| !before.same_value(&value));
-        if before.is_some() {
-            self.transaction.record_property(object, property, before);
-        } else {
+        let added = before.is_none();
+        if added {
             self.transaction.record_property_added(object, property);
+        } else {
+            self.transaction.record_property(object, property, before);
         }
         if changed {
             self.append_history(
@@ -345,7 +347,14 @@ impl Runtime {
         if let Some(data) = self.state.object_mut(object) {
             data.properties.insert(property.to_string(), value);
         }
+        if added {
+            self.queue_entries_change(object);
+        }
         changed
+    }
+
+    fn queue_entries_change(&mut self, object: &ObjectId) {
+        self.queue_shape_change(&ShapeKey::Entries(object.clone()));
     }
 
     /// `state.delete` for a top-level name, reporting what was there.
@@ -366,6 +375,7 @@ impl Runtime {
         let before = if let Some((index, _, value)) = removed {
             self.transaction
                 .record_property_removed(object, property, index, value.clone());
+            self.queue_entries_change(object);
             Some(value)
         } else {
             self.transaction.record_property(object, property, None);
@@ -393,6 +403,13 @@ impl Runtime {
                 .cloned()
                 .collect()
         });
+        let added = data
+            .properties
+            .keys()
+            .any(|property| self.state.property(&id, property).is_none());
+        if added || !removed.is_empty() {
+            self.queue_entries_change(&id);
+        }
         for property in removed {
             self.remove_history(HistoryKey::Property(id.clone(), property));
         }
@@ -415,6 +432,9 @@ impl Runtime {
         if let Some(data) = &before {
             for property in data.properties.keys() {
                 self.remove_history(HistoryKey::Property(id.clone(), property.clone()));
+            }
+            if !data.properties.is_empty() {
+                self.queue_entries_change(id);
             }
         }
         before

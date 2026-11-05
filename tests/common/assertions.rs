@@ -141,6 +141,11 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
                 expression_assertions(value, assertions);
             }
         }
+        Expr::SpreadObject(entries) => {
+            for entry in entries {
+                expression_assertions(entry.value(), assertions);
+            }
+        }
         Expr::Function(function) => body_assertions(&function.body, assertions),
         Expr::Template(parts) => {
             for part in parts {

@@ -16822,6 +16822,248 @@ suppose:
 assert: [Item.length, typical], [1, 3]"#);
 }
 
+/// Nucleoid copies object entries into records with spread entries
+#[rustfmt::skip]
+#[test]
+fn copies_object_entries_into_records_with_spread_entries() {
+    runner()("base = {name: \"tea\", price: 4, stock: 10}\nsale = {...base, price: 3, tag: \"sale\"}\nfloor = {price: 9, ...base}\nassert: [sale, floor], [{name: \"tea\", price: 3, stock: 10, tag: \"sale\"}, {price: 4, name: \"tea\", stock: 10}]\nassert: [sale == base, floor == base, base.tag], [false, false, null]\nbase.name = \"oolong\"\nbase.price = 6\nbase.size = 2\ndelete base.stock\nassert: [sale, floor], [{name: \"oolong\", price: 3, size: 2, tag: \"sale\"}, {price: 6, name: \"oolong\", size: 2}]\ntag = \"new\"\nfresh = {tag, ...base price: 5,}\nassert: fresh, {tag: \"new\", name: \"oolong\", price: 5, size: 2}");
+    let mut run = runner();
+    run(r#"base = {name: "tea", price: 4, stock: 10}"#);
+    run(r#"sale = {...base, price: 3, tag: "sale"}"#);
+    run("floor = {price: 9, ...base}");
+    {
+        let actual = run("[sale, floor]");
+        let expected = run(r#"([{name: "tea", price: 3, stock: 10, tag: "sale"}, {price: 4, name: "tea", stock: 10}])"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("[sale == base, floor == base, base.tag]"), serde_json::json!([false, false, null]));
+    run(r#"base.name = "oolong""#);
+    run("base.price = 6");
+    run("base.size = 2");
+    run("delete base.stock");
+    {
+        let actual = run("[sale, floor]");
+        let expected = run(r#"([{name: "oolong", price: 3, size: 2, tag: "sale"}, {price: 6, name: "oolong", size: 2}])"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"tag = "new""#);
+    run("fresh = {tag, ...base price: 5,}");
+    {
+        let actual = run("fresh");
+        let expected = run(r#"({tag: "new", name: "oolong", price: 5, size: 2})"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid keeps spread entries live as their sources change
+#[rustfmt::skip]
+#[test]
+fn keeps_spread_entries_live_as_their_sources_change() {
+    runner()("base = {name: \"tea\", price: 4}\nitem = {...base, qty: 2}\nline = {...item, total: item.price * item.qty}\nassert: line, {name: \"tea\", price: 4, qty: 2, total: 8}\nbase.price = 5\nbase.size = \"large\"\ndelete base.name\nassert: line, {price: 5, size: \"large\", qty: 2, total: 10}\nbase = {name: \"jam\", price: 3}\nassert: [item, line], [{name: \"jam\", price: 3, qty: 2}, {name: \"jam\", price: 3, qty: 2, total: 6}]");
+    let mut run = runner();
+    run(r#"base = {name: "tea", price: 4}"#);
+    run("item = {...base, qty: 2}");
+    run("line = {...item, total: item.price * item.qty}");
+    {
+        let actual = run("line");
+        let expected = run(r#"({name: "tea", price: 4, qty: 2, total: 8})"#);
+        assert_eq!(actual, expected);
+    }
+    run("base.price = 5");
+    run(r#"base.size = "large""#);
+    run("delete base.name");
+    {
+        let actual = run("line");
+        let expected = run(r#"({price: 5, size: "large", qty: 2, total: 10})"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"base = {name: "jam", price: 3}"#);
+    {
+        let actual = run("[item, line]");
+        let expected = run(r#"([{name: "jam", price: 3, qty: 2}, {name: "jam", price: 3, qty: 2, total: 6}])"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid merges records with several spread entries
+#[rustfmt::skip]
+#[test]
+fn merges_records_with_several_spread_entries() {
+    runner()("defaults = {color: \"red\", size: 2, gift: false}\ncustom = {size: 3}\norder = {...defaults, ...custom, id: 7}\nassert: order, {color: \"red\", size: 3, gift: false, id: 7}\ncustom.gift = true\ncustom.note = \"rush\"\nassert: order, {color: \"red\", size: 3, gift: true, note: \"rush\", id: 7}\ndelete custom.size\ndefaults.color = \"blue\"\nassert: order, {color: \"blue\", size: 2, gift: true, note: \"rush\", id: 7}");
+    let mut run = runner();
+    run(r#"defaults = {color: "red", size: 2, gift: false}"#);
+    run("custom = {size: 3}");
+    run("order = {...defaults, ...custom, id: 7}");
+    {
+        let actual = run("order");
+        let expected = run(r#"({color: "red", size: 3, gift: false, id: 7})"#);
+        assert_eq!(actual, expected);
+    }
+    run("custom.gift = true");
+    run(r#"custom.note = "rush""#);
+    {
+        let actual = run("order");
+        let expected = run(r#"({color: "red", size: 3, gift: true, note: "rush", id: 7})"#);
+        assert_eq!(actual, expected);
+    }
+    run("delete custom.size");
+    run(r#"defaults.color = "blue""#);
+    {
+        let actual = run("order");
+        let expected = run(r#"({color: "blue", size: 2, gift: true, note: "rush", id: 7})"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid spreads instances into records and class level rules
+#[rustfmt::skip]
+#[test]
+fn spreads_instances_into_records_and_class_level_rules() {
+    runner()("class Room(name, temp):\n    this.name = name\n    this.temp = temp\n$Room.card = {...$Room, unit: \"C\"}\nlab = Room(\"lab\", 20)\nlab.temp = 25\nlab.floor = 2\nassert: lab.card, {id: \"lab\", name: \"lab\", temp: 25, floor: 2, unit: \"C\"}\nhall = Room(\"hall\", 18)\ncopy = {...hall, temp: 19}\nassert: (why copy)[0].from, [\"hall\", \"hall.id\", \"hall.name\", \"hall.card\"]\nhall.name = \"foyer\"\nassert: copy, {id: \"hall\", name: \"foyer\", temp: 19, card: {id: \"hall\", name: \"foyer\", temp: 18, unit: \"C\"}}");
+    let mut run = runner();
+    run(r#"class Room(name, temp):
+    this.name = name
+    this.temp = temp"#);
+    run(r#"$Room.card = {...$Room, unit: "C"}"#);
+    run(r#"lab = Room("lab", 20)"#);
+    run("lab.temp = 25");
+    run("lab.floor = 2");
+    {
+        let actual = run("lab.card");
+        let expected = run(r#"({id: "lab", name: "lab", temp: 25, floor: 2, unit: "C"})"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"hall = Room("hall", 18)"#);
+    run("copy = {...hall, temp: 19}");
+    assert_eq!(run("(why copy)[0].from"), serde_json::json!(["hall", "hall.id", "hall.name", "hall.card"]));
+    run(r#"hall.name = "foyer""#);
+    {
+        let actual = run("copy");
+        let expected = run(r#"({id: "hall", name: "foyer", temp: 19, card: {id: "hall", name: "foyer", temp: 18, unit: "C"}})"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid spreads entries in functions methods and lambdas
+#[rustfmt::skip]
+#[test]
+fn spreads_entries_in_functions_methods_and_lambdas() {
+    runner()("class Point(x, y):\n    this.x = x\n    this.y = y\n    def shifted dx => {...this, x: this.x + dx}\ndef flat p => {...p, z: 0}\np = Point(1, 2)\nq = Point(3, 4)\nup = flat(p)\nfar = p.shifted(10)\ngrid = [p, q].map(lambda pt: {...pt, area: pt.x * pt.y})\nassert: [up, far], [{id: \"p\", x: 1, y: 2, z: 0}, {id: \"p\", x: 11, y: 2}]\np.y = 5\nassert: [up, far, grid], [{id: \"p\", x: 1, y: 5, z: 0}, {id: \"p\", x: 11, y: 5}, [{id: \"p\", x: 1, y: 5, area: 5}, {id: \"q\", x: 3, y: 4, area: 12}]]");
+    let mut run = runner();
+    run(r#"class Point(x, y):
+    this.x = x
+    this.y = y
+    def shifted dx => {...this, x: this.x + dx}"#);
+    run("def flat p => {...p, z: 0}");
+    run("p = Point(1, 2)");
+    run("q = Point(3, 4)");
+    run("up = flat(p)");
+    run("far = p.shifted(10)");
+    run("grid = [p, q].map(lambda pt: {...pt, area: pt.x * pt.y})");
+    {
+        let actual = run("[up, far]");
+        let expected = run(r#"([{id: "p", x: 1, y: 2, z: 0}, {id: "p", x: 11, y: 2}])"#);
+        assert_eq!(actual, expected);
+    }
+    run("p.y = 5");
+    {
+        let actual = run("[up, far, grid]");
+        let expected = run(r#"([{id: "p", x: 1, y: 5, z: 0}, {id: "p", x: 11, y: 5}, [{id: "p", x: 1, y: 5, area: 5}, {id: "q", x: 3, y: 4, area: 12}]])"#);
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid spreads only objects and evaluates each source once
+#[rustfmt::skip]
+#[test]
+fn spreads_only_objects_and_evaluates_each_source_once() {
+    runner()("owner = null\ncard = {...owner, seen: true}\nassert: card, null\nowner = {name: \"ada\", role: \"dev\"}\nassert: card, {name: \"ada\", role: \"dev\", seen: true}\nbox = {}\npacked = {...box.lid, open: false}\nassert: packed, {open: false}\nbox.lid = {color: \"tan\", size: 3}\nassert: packed, {color: \"tan\", size: 3, open: false}\nclass Tag(label, uses):\n    this.label = label\n    this.uses = uses\nmade = {...Tag(\"new\", 0), qty: 1}\nassert: [made.label, made.uses, made.qty, Tag.length], [\"new\", 0, 1, 1]\nsizes = [1, 2]\ntry:\n    broken = {...sizes}\ncatch error:\n    assert: error, TypeError(\"sizes is not an object\")");
+    let mut run = runner();
+    run(r#"owner = null
+card = {...owner, seen: true}
+assert: card, null
+owner = {name: "ada", role: "dev"}
+assert: card, {name: "ada", role: "dev", seen: true}
+box = {}
+packed = {...box.lid, open: false}
+assert: packed, {open: false}
+box.lid = {color: "tan", size: 3}
+assert: packed, {color: "tan", size: 3, open: false}
+class Tag(label, uses):
+    this.label = label
+    this.uses = uses
+made = {...Tag("new", 0), qty: 1}
+assert: [made.label, made.uses, made.qty, Tag.length], ["new", 0, 1, 1]
+sizes = [1, 2]
+try:
+    broken = {...sizes}
+catch error:
+    assert: error, TypeError("sizes is not an object")"#);
+}
+
+/// Nucleoid leaves the declared property out of spreads of its own object
+#[rustfmt::skip]
+#[test]
+fn leaves_the_declared_property_out_of_spreads_of_its_own_object() {
+    runner()("class Order(total, items):\n    this.total = total\n    this.items = items\n$Order.view = {...$Order, paid: false}\norder = Order(10, 2)\norder.total = 12\norder.total = 14\nassert: order.view, {id: \"order\", total: 14, items: 2, paid: false}\ncart = {tea: 4, jam: 2}\ncart.copy = {...cart, n: 1}\ncart.tea = 5\ncart.oat = 1\nassert: cart.copy, {tea: 5, jam: 2, oat: 1, n: 1}");
+    let mut run = runner();
+    run(r#"class Order(total, items):
+    this.total = total
+    this.items = items"#);
+    run("$Order.view = {...$Order, paid: false}");
+    run("order = Order(10, 2)");
+    run("order.total = 12");
+    run("order.total = 14");
+    {
+        let actual = run("order.view");
+        let expected = run(r#"({id: "order", total: 14, items: 2, paid: false})"#);
+        assert_eq!(actual, expected);
+    }
+    run("cart = {tea: 4, jam: 2}");
+    run("cart.copy = {...cart, n: 1}");
+    run("cart.tea = 5");
+    run("cart.oat = 1");
+    {
+        let actual = run("cart.copy");
+        let expected = run("({tea: 5, jam: 2, oat: 1, n: 1})");
+        assert_eq!(actual, expected);
+    }
+}
+
+/// Nucleoid rolls back failed spread updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_spread_updates() {
+    runner()("def checked(count):\n    if count > 9:\n        throw \"TOO_MANY\"\n    return count\ncart = {tea: 4, jam: 3}\norder = {...cart, count: checked(cart.tea)}\nfailure = \"\"\ntry:\n    cart.tea = 50\ncatch error:\n    failure = error\nassert: [failure, cart.tea, order], [\"TOO_MANY\", 4, {tea: 4, jam: 3, count: 4}]\ntry:\n    cart.oats = 2\n    delete cart.jam\n    assert: order, {tea: 4, oats: 2, count: 4}\n    throw \"DECLINED\"\ncatch error:\n    pass\nassert: order, {tea: 4, jam: 3, count: 4}\nplan = suppose:\n    cart.rye = 5\n    order.rye\nassert: [plan, order.rye], [5, null]\ncart.rye = 1\nassert: order, {tea: 4, jam: 3, rye: 1, count: 4}");
+    let mut run = runner();
+    run(r#"def checked(count):
+    if count > 9:
+        throw "TOO_MANY"
+    return count
+cart = {tea: 4, jam: 3}
+order = {...cart, count: checked(cart.tea)}
+failure = ""
+try:
+    cart.tea = 50
+catch error:
+    failure = error
+assert: [failure, cart.tea, order], ["TOO_MANY", 4, {tea: 4, jam: 3, count: 4}]
+try:
+    cart.oats = 2
+    delete cart.jam
+    assert: order, {tea: 4, oats: 2, count: 4}
+    throw "DECLINED"
+catch error:
+    pass
+assert: order, {tea: 4, jam: 3, count: 4}
+plan = suppose:
+    cart.rye = 5
+    order.rye
+assert: [plan, order.rye], [5, null]
+cart.rye = 1
+assert: order, {tea: 4, jam: 3, rye: 1, count: 4}"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

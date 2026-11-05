@@ -545,6 +545,59 @@ assert(summary.kind, "alert")
   Existing computed-key writes, exporter splitting and receiver-frame limits
   are not repaired.
 
+### Object spread entries
+
+```
+defaults = {theme: "light", size: 12}
+prefs = {size: 14}
+settings = {...defaults, ...prefs}
+assert(settings.theme, "light")
+assert(settings.size, 14)
+prefs.theme = "dark"
+defaults.font = "mono"
+assert(settings.theme, "dark")
+assert(settings.font, "mono")
+delete prefs.size
+settings.size
+```
+
+- This is the complete `Nucleoid derives records with spread entries`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `12`.
+- [NUC 81](nuc-0081.md) adds spread entries to object literals:
+  `...SOURCE` copies the entries of the object `SOURCE` holds, in insertion
+  order. They are the entries an entry loop visits: an instance's `id` first,
+  `null` values included, undefined slots left out. A copy is shallow, so a
+  nested object or list is the same value in both records.
+- Entries apply from left to right, and each source is evaluated once. A
+  later entry for a key the object already holds replaces its value and keeps
+  the key's first position, so `{...point, x: 5}` lists `x` first and
+  `{x: 9, ...point}` takes `x` from `point`.
+- A spread is three adjacent dots wherever a key may begin. A keyed entry may
+  follow it without a comma, as in `{...base qty: 1}`; a spread after a value
+  or another spread needs one. Statement-leading braces and anonymous arrow
+  bodies in braces stay blocks, so `({...a})` and `lambda p: {...p}` write
+  objects. `[...xs]`, `f(...xs)` and `{x, ...rest} = p` keep their syntax
+  errors.
+- A `null` source or an undefined property copies nothing. Reading a `null`
+  source is an ordinary null read, so the declaration is `null` until its
+  source holds an object, while copied `null` values never settle it. Any
+  other value raises `TypeError("<source> is not an object")`.
+- A declaration that spreads stays live. It depends on every entry it copies,
+  except one a later keyed entry replaces, and observes its source's set of
+  entries, so a changed, deleted or added entry and a rebound source
+  re-evaluate it. `why` lists the dependencies of the explicit record that
+  names the same entries, `--graph` shows the observation as
+  `observes {...<object id>}`, and rollback restores entries, their order and
+  observations together.
+- While a property declaration evaluates its value, a spread of the object
+  that owns the property leaves that property out, so
+  `$Order.view = {...$Order, paid: false}` never nests an older view. Two
+  class-level rules that spread the same receiver read each other and raise
+  `TypeError("Circular Dependency")` when an instance applies both.
+- The authoritative contract is the
+  [object spread entries](../nucleoid.spec.md#object-spread-entries) section.
+
 ### Operators
 
 - Arithmetic: `+`, `-`, `*`, `/`, `%`, and exponentiation `**`; see below.
@@ -3213,6 +3266,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `maxBy` or `minBy` selector, including `null`, even on an empty receiver | `maxBy expects a function` or `minBy expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
+| A spread entry `...source` whose source is neither an object nor `null` or undefined | `<source> is not an object` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
 | `:=` on a class-level property outside a class-level rule | `Cannot use ':=' on a class-level property` |
 | A `:=` declaration whose value nests lists 192 levels or more | `Maximum expression depth exceeded` |
@@ -3377,6 +3431,7 @@ def name amount: type:                 one typed parameter, indented only (NUC 2
 { statement; statement }               block
 record = { amount, label }             object shorthand (candidate NUC 17)
 record = {amount: amount unit: "C"}    optional explicit-property comma (NUC 44)
+record = {...base, qty: 1}             copy base's entries in order; later entries win (NUC 81)
 
 throw value                            raise a value
 return expression                      yield from a block or function

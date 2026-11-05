@@ -279,6 +279,11 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
                 visit(value);
             }
         }
+        Expr::SpreadObject(entries) => {
+            for entry in entries {
+                visit(entry.value());
+            }
+        }
         Expr::Template(parts) => {
             for part in parts {
                 if let TemplatePart::Expression(embedded) = part {
@@ -350,6 +355,7 @@ fn visit_operands(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         | Expr::List(_)
         | Expr::Super(_)
         | Expr::ObjectLiteral(_)
+        | Expr::SpreadObject(_)
         | Expr::Template(_)
         | Expr::Null
         | Expr::Bool(_)

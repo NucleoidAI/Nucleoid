@@ -9,7 +9,7 @@ use super::lexer::{
 };
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{
-    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Noun, Parameter,
+    BinaryOp, ClassDecl, Expr, Function, FunctionBody, LogicalOp, Noun, ObjectEntry, Parameter,
     ParameterDefault, Quantifier, Stmt, TemplatePart, UnaryOp, VersionSelector,
 };
 use crate::reasoning::Stage;
@@ -2257,32 +2257,7 @@ impl Parser {
                 break;
             }
 
-            let (key, is_identifier) = match self.advance() {
-                Token::Str(key) => (key, false),
-                Token::Identifier(key) => (key, true),
-                Token::Number(number) => (crate::value::format_number(number), false),
-                other => {
-                    return Err(
-                        self.error(format!("Expected a key but found {}", other.describe()))
-                    );
-                }
-            };
-
-            // Do not consume lookahead: malformed explicit fields must keep
-            // their original missing-colon diagnostics and positions.
-            let mut offset = 0;
-            while matches!(self.peek_at(offset), Token::Newline | Token::Semicolon) {
-                offset += 1;
-            }
-            let value = if is_identifier
-                && matches!(self.peek_at(offset), Token::Comma | Token::RightBrace)
-            {
-                Expr::Identifier(key.clone())
-            } else {
-                self.expect(&Token::Colon)?;
-                self.expression_in(ExpressionContext::ObjectValue)?
-            };
-            entries.push((key, value));
+            entries.push(self.object_entry()?);
 
             self.skip_newlines();
 
@@ -2302,7 +2277,37 @@ impl Parser {
             }
         }
 
-        Ok(Expr::ObjectLiteral(entries))
+        Ok(object_expression(entries))
+    }
+
+    fn object_entry(&mut self) -> Result<ObjectEntry> {
+        if self.starts_rest_parameter() {
+            self.position += 3;
+            let source = self.expression_in(ExpressionContext::ObjectValue)?;
+            return Ok(ObjectEntry::Spread(source));
+        }
+
+        let (key, is_identifier) = match self.advance() {
+            Token::Str(key) => (key, false),
+            Token::Identifier(key) => (key, true),
+            Token::Number(number) => (crate::value::format_number(number), false),
+            other => {
+                return Err(self.error(format!("Expected a key but found {}", other.describe())));
+            }
+        };
+
+        let mut offset = 0;
+        while matches!(self.peek_at(offset), Token::Newline | Token::Semicolon) {
+            offset += 1;
+        }
+        let value =
+            if is_identifier && matches!(self.peek_at(offset), Token::Comma | Token::RightBrace) {
+                Expr::Identifier(key.clone())
+            } else {
+                self.expect(&Token::Colon)?;
+                self.expression_in(ExpressionContext::ObjectValue)?
+            };
+        Ok(ObjectEntry::Property(key, value))
     }
 
     fn arrow_body(&mut self, parameters: Vec<Parameter>) -> Result<Expr> {
@@ -2583,6 +2588,24 @@ fn empty_class(name: String, parent: Option<String>, parameters: Vec<Parameter>)
         constructor: Vec::new(),
         methods: Vec::new(),
     }
+}
+
+fn object_expression(entries: Vec<ObjectEntry>) -> Expr {
+    if entries
+        .iter()
+        .any(|entry| matches!(entry, ObjectEntry::Spread(_)))
+    {
+        return Expr::SpreadObject(entries);
+    }
+    Expr::ObjectLiteral(
+        entries
+            .into_iter()
+            .filter_map(|entry| match entry {
+                ObjectEntry::Property(key, value) => Some((key, value)),
+                ObjectEntry::Spread(_) => None,
+            })
+            .collect(),
+    )
 }
 
 fn simple_statement(expression: Expr) -> Stmt {

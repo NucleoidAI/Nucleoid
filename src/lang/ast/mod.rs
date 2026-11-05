@@ -205,6 +205,7 @@ pub enum Expr {
     },
     List(Vec<Expr>),
     ObjectLiteral(Vec<(String, Expr)>),
+    SpreadObject(Vec<ObjectEntry>),
     Function(Arc<Function>),
     Assign {
         target: Box<Expr>,
@@ -229,6 +230,21 @@ pub enum Expr {
         noun: Noun,
         operand: Box<Expr>,
     },
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ObjectEntry {
+    Property(String, Expr),
+    Spread(Expr),
+}
+
+impl ObjectEntry {
+    #[must_use]
+    pub fn value(&self) -> &Expr {
+        match self {
+            ObjectEntry::Property(_, value) | ObjectEntry::Spread(value) => value,
+        }
+    }
 }
 
 /// The list queries named by a noun, which `NOUN of OPERAND` names. Queries
@@ -445,6 +461,9 @@ impl Expr {
             Expr::ObjectLiteral(entries) => {
                 entries.iter().any(|(_, value)| value.contains_reasoning())
             }
+            Expr::SpreadObject(entries) => entries
+                .iter()
+                .any(|entry| entry.value().contains_reasoning()),
             _ => false,
         }
     }
@@ -506,7 +525,9 @@ impl<'a> Ast<'a> {
             Expr::List(_) | Expr::Index { .. } | Expr::Slice { .. } => {
                 Ast::Array(array::Array::new(node))
             }
-            Expr::ObjectLiteral(_) => Ast::Object(object::Object::new(node)),
+            Expr::ObjectLiteral(_) | Expr::SpreadObject(_) => {
+                Ast::Object(object::Object::new(node))
+            }
             Expr::Function(_) => Ast::Function(function::Function::new(node)),
             Expr::Call { .. } | Expr::Super(_) | Expr::Of { .. } => {
                 Ast::Call(call::Call::new(node))

@@ -3299,6 +3299,39 @@ assert: [Number.isNaN(chair.rating), chair.featured], [true, false]
   [NUC 80](nuc-0080.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-averages).
 
+## Object spread entries
+
+**Spread entries keep shipping labels in step with their customers**
+
+```nuc
+class Customer(name, city):
+    this.name = name
+    this.city = city
+class Order(customer, item, qty):
+    this.customer = customer
+    this.item = item
+    this.qty = qty
+$Order.label = {...$Order.customer, item: $Order.item, qty: $Order.qty}
+ada = Customer("ada", "Paris")
+lamp = Order(ada, "lamp", 1)
+desk = Order(ada, "desk", 2)
+assert: lamp.label, {id: "ada", name: "ada", city: "Paris", item: "lamp", qty: 1}
+ada.city = "Lyon"
+ada.zip = "69001"
+desk.qty = 3
+assert: desk.label, {id: "ada", name: "ada", city: "Lyon", zip: "69001", item: "desk", qty: 3}
+[lamp.label.city, lamp.label.zip, desk.label.qty]
+# return: ["Lyon","69001",3]
+```
+
+- `$Order.label` copies every entry of the order's customer, its `id`
+  first, and adds the order's item and quantity. Each order gets its own
+  label from the same rule.
+- The labels follow their sources: Ada's move to Lyon, her new `zip` entry
+  and the desk's new quantity re-evaluate them without naming any of the
+  customer's fields. See [NUC 81](nuc-0081.md) and the
+  [root contract](../nucleoid.spec.md#object-spread-entries).
+
 ## Copyright
 
 Copyright 2020 Nucleoid
