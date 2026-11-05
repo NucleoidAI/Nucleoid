@@ -154,7 +154,7 @@ export async function start(puzzle_id: string = "ed36ccf7") {
   const debug = {
     puzzle_id,
     train_dataset,
-    input_instances,
+    test_input_instances: input_instances,
     test_input_matrix,
     test_output_matrix,
     result_matrix,
