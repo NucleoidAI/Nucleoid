@@ -41,10 +41,8 @@ export async function start(puzzle_id: string = "ed36ccf7") {
   train_dataset.declarations = declarations;
   train_dataset.output_canvas = output_canvas;
 
-  for (const [index, dataset] of train_dataset.dataset.entries()) {
+  for (const dataset of train_dataset.dataset) {
     const { input_matrix, output_matrix } = dataset;
-
-    milestone.training_pair({ index, total: train_dataset.dataset.length });
 
     const { instances } = await analyzer.instances({
       puzzle_id,

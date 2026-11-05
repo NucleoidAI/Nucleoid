@@ -22,13 +22,6 @@ export function declarations_inferred({ declarations, output_canvas }) {
   terminal.code(`Declarations · Output canvas ${output_canvas}`, declarations);
 }
 
-export function training_pair({ index, total }) {
-  terminal.step(`Training pair ${index + 1} / ${total}`, {
-    key: "training_pair",
-    loop: true,
-  });
-}
-
 export function segmenting_training_objects() {
   terminal.step("Segmenting training objects", {
     key: "segmenting_training_objects",

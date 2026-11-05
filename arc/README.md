@@ -122,7 +122,7 @@ and color-coded ARC grids with row/column coordinates keep the run readable.
 Milestone steps and panel titles include stage-local subnumbers, such as
 `1.1 Inferring declarations`, restarting at each stage and run. Repeated
 milestones retain the same second number and add a third occurrence number,
-such as `1.3.1` and `1.3.2` for training-pair milestones. Continued grid
+such as `1.3.1` and `1.3.2` for training-object segmentation. Continued grid
 panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone. Segmented-object panels
 use `Input` and `Output` without object-number labels. Model token usage remains
