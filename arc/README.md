@@ -914,6 +914,78 @@ the regions are not rotated and the bar is a distinct horizontal geometry.
 The test pair follows the training pairs at the same level and is annotated
 by the same rules.
 
+`dataset.ed36ccf7.json` annotates the four original training pairs from
+`data\training\ed36ccf7.json`, in order, followed by its test pair, five
+pattern instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, positions, and zero cells. Each input holds one
+pattern of a single color on a background of zero cells: 7 cells of color 9,
+5 of color 6, 5 of color 9, and 5 of color 2 in the training pairs, and 3 of
+color 5 in the test pair. Each object is that whole pattern, the figure seen
+first, whether or not its cells touch: the second training pattern is two
+bars, the fourth a lone corner cell and a hook of four cells, and the test
+pattern a single cell that touches a two-cell bar only at a corner. Each output
+turns the whole grid a quarter turn counterclockwise, so the cell in row r and
+column c moves to row 2 - c and column r: the right column becomes the top row,
+the top row becomes the left column, read from the bottom up, and every color
+keeps its cell count. The counterclockwise quarter turn is the only one of the
+square's eight turns and mirrors, the identity included, that reproduces every
+training pair: the third training pattern, an L symmetric across its main
+diagonal, also fits a top-bottom mirror, but the other three pairs fit only
+the quarter turn. The pattern turns as one, so each grid holds one object; the
+same rules would turn each separate piece as well. Every training pattern's box
+spans its canvas, 3 by 3 from the origin, 0 and 0, before and after the turn,
+so the training pairs alone also fit turning the pattern in place, with
+`orientation` alone, as `dataset.3c9b0459.json` states its half turn. The
+rules turn it about the canvas center instead, as `dataset.6150a2bd.json`
+turns its block a half turn, a choice fixed from the training pairs before the
+test pair was read: unlike the mosaics of `dataset.3c9b0459.json` and
+`dataset.74dd1130.json`, which have no zero cell and always fill their
+canvases, these patterns lie on a background, so their boxes need not span the
+canvas, and a turn of the whole grid carries a box that does not span it to a
+new place. The test pattern's box starts one row down and is 3 columns wide and
+2 rows tall; the turn carries it to a box 2 columns wide and 3 rows tall that
+starts one column right, which the turn in place, keeping the input origin,
+would not reproduce. The class takes `width`, the number of columns of the
+pattern's box, as its only descriptive scalar, with no color, height, parts
+list, canvas size, or matrix of cells: the pattern's cells travel in its masks,
+its turn is its orientation, and the rules read the canvas's width from the
+solver's `canvas_width`. Three unconditional class-level rules read the
+pattern's input state with `@first` anchors.
+`($Obj.orientation@first + 270) % 360` gives `orientation`, because a
+counterclockwise quarter turn is 270 degrees clockwise, as
+`dataset.6150a2bd.json` adds 180 for its half turn. `$Obj.y@first.value` gives
+`x`, because the box's top row becomes the turned box's left column.
+`canvas_width - $Obj.x@first.value - $Obj.width` gives `y`, because the box's
+right column becomes the turned box's top row, as far below the top edge as the
+box was left of the right edge; the box's height is not needed. The `x` and `y`
+rules each read the other coordinate, so plain `@first` reads would form a
+class cycle, which the accepted runtime rejects with
+`TypeError("Circular Dependency")`: [NUC 55](../docs/nuc-0055.md) exempts only
+a rule's own fixed anchor from that check. The `.value` snapshot of the
+[value property](../docs/README.md#the-value-property) records no dependency
+and breaks that cycle, while the `@first` anchors keep each read on the input
+coordinate whatever order the rules run in. Each training grid holds a single
+pattern and shows no relation between objects, so no population operation
+appears. The rules create no property and leave `width` and the tag unchanged,
+so input and output states share the same keys. Native snapshots start with
+the pair's `canvas_width` and `canvas_height`, and output snapshots are
+captured with the pair's implementation followed by `Obj[:]`. The tag `l9100`
+is a single shape, as in `dataset.28bf18c6.json`, `dataset.3c9b0459.json`, and
+`dataset.6150a2bd.json`, in both states. Input masks retain each pair's
+full-size 3 by 3 input canvas and output masks the complete 3 by 3 output, with
+zero cells padded `0`; with one pattern per grid, each mask equals its pair's
+grid, and merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the turned pattern's nonzero bounding-box
+origin, 0 and 0 in the training pairs and 1 and 0 in the test pair, equal to
+`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
+output keeps its input's 3 by 3 canvas, as a turn of the whole square grid
+does; every training output's pattern spans its canvas, so `FIT` would frame
+the same training grids, but it would crop the empty left column of the test
+output. Orientation is 0 in every input state, where the pattern is not
+turned, and 270 in every output state. The declarations hold executable code
+only, without `#` comments. The test pair follows the training pairs at the
+same level and is annotated by the same rules.
+
 ## ARC proposal agent
 
 Run `/arc-purposal [<puzzle-id>] [--strategy-policy <absolute-json-path>]`
