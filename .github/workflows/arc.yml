@@ -9,12 +9,13 @@ permissions:
 jobs:
   report:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 150
     defaults:
       run:
         shell: bash
         working-directory: arc
     env:
+      ARC_CONCURRENCY: "5"
       ARC_PUZZLES: >-
         3aa6fb7a
         28bf18c6
@@ -67,7 +68,12 @@ jobs:
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
+          if [[ ! "$ARC_CONCURRENCY" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::ARC_CONCURRENCY must be a positive integer."
+            exit 1
+          fi
           mkdir -p reports
+          failed=0
           pids=()
           for puzzle_id in $ARC_PUZZLES; do
             (
@@ -80,8 +86,13 @@ jobs:
               exit "$exit_code"
             ) &
             pids+=("$!")
+            if [[ "${#pids[@]}" -ge "$ARC_CONCURRENCY" ]]; then
+              for pid in "${pids[@]}"; do
+                wait "$pid" || failed=1
+              done
+              pids=()
+            fi
           done
-          failed=0
           for pid in "${pids[@]}"; do
             wait "$pid" || failed=1
           done
