@@ -2377,4 +2377,24 @@ bulk = suppose qty = 4: impact()
 assert(free, false)
 bulk
 # return: ["qty","subtotal","total","free"]
+---
+# Nucleoid finds the medians of lists and populations with median
+
+times = [42, 120]
+typical = times.median()
+class Runner(name, laps):
+    this.name = name
+    this.laps = laps
+Runner("ana", [61, 58, 102])
+bo = Runner("bo", [66, 64])
+pace = Runner.median(runner -> runner.laps.median())
+assert(typical, 81)
+assert(pace, 63)
+times.push(35)
+bo.laps.push(59)
+Runner("cy", [110])
+assert(typical, 42)
+assert(pace, 64)
+pace
+# return: 64
 ```

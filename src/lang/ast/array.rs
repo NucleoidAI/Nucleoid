@@ -376,7 +376,7 @@ impl Runtime {
                 let function = expect_function(predicate, "reduce")?;
                 self.reduce_items(items, &function, arguments.get(1))
             }
-            "sum" | "average" | "max" | "min" | "distinct" | "mode" => {
+            "sum" | "average" | "median" | "max" | "min" | "distinct" | "mode" => {
                 self.aggregate_items(items, property, predicate)
             }
             "maxBy" | "minBy" => self.extreme_item(items, property, predicate),
@@ -511,6 +511,7 @@ impl Runtime {
         Ok(match property {
             "distinct" => Value::List(self.distinct_values(values)),
             "mode" => self.mode_value(values),
+            "median" => median_value(&values),
             _ => builtins::math(property, &values)?,
         })
     }
@@ -725,6 +726,32 @@ fn concat_items(items: Vec<Value>, arguments: &[Value]) -> Vec<Value> {
     }
 
     joined
+}
+
+#[must_use]
+fn median_value(values: &[Value]) -> Value {
+    if values.iter().any(Value::is_undefined) {
+        return Value::Undefined;
+    }
+
+    let mut numbers: Vec<f64> = values.iter().map(Value::to_number).collect();
+
+    if numbers.iter().any(|number| number.is_nan()) {
+        return Value::Number(f64::NAN);
+    }
+
+    numbers.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
+
+    let median = match numbers.split_at_checked(numbers.len() / 2) {
+        Some((lower, upper)) => match (lower.last(), upper.first()) {
+            (Some(low), Some(high)) if lower.len() == upper.len() => (low + high) / 2.0,
+            (_, Some(center)) => *center,
+            (_, None) => f64::NAN,
+        },
+        None => f64::NAN,
+    };
+
+    Value::Number(median)
 }
 
 fn optional_selector(predicate: Option<Value>, query: &str) -> Result<Option<Arc<Function>>> {

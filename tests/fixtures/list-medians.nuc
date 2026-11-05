@@ -1,0 +1,14 @@
+class Reading(room, celsius):
+    this.room = room
+    this.celsius = celsius
+middle = Reading.median(reading -> reading.celsius)
+labMiddle = Reading.filter(reading -> reading.room == "lab").median(reading -> reading.celsius)
+if Reading.median(reading -> reading.celsius) > 20:
+    warm = true
+Reading("lab", 21)
+Reading("lab", 25)
+Reading("hall", 17)
+assert(middle, 21)
+assert(labMiddle, 23)
+assert(warm, true)
+[middle, labMiddle, [].median()]

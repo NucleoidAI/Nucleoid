@@ -1821,6 +1821,36 @@ assert: [heating, cost], [true, 4]
   `TypeError("Cannot use 'diff' outside suppose")`. See the
   [root contract](nucleoid.spec.md#hypothetical-differences).
 
+## List and population medians
+
+**Medians keep typical delivery times live as orders arrive**
+
+```nuc
+class Order(city, minutes):
+    this.city = city
+    this.minutes = minutes
+Order("oslo", 30)
+Order("oslo", 25)
+Order("bergen", 90)
+late = Order("bergen", 105)
+typical = Order.median(order -> order.minutes)
+local = Order.filter(order -> order.city == "oslo").median(order -> order.minutes)
+assert: [typical, local], [60, 27.5]
+Order("oslo", 8)
+late.minutes = 40
+assert: [typical, local], [30, 25]
+```
+
+- [NUC 84](docs/nuc-0084.md) adds `median()` and `median(selector)` to lists
+  and class instance lists. `Order.median(order -> order.minutes)` is the
+  middle delivery time of every order, and with an even number of orders the
+  mean of the two middle times.
+- `typical` and `local` are live declarations: a new order or a changed time
+  re-evaluates them. Once the late order takes 40 minutes, the 90-minute order
+  is the slowest, so however slow it is, `typical` stays 30, while the mean of
+  the five orders is 38.6. See the
+  [root contract](nucleoid.spec.md#list-and-population-medians).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

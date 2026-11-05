@@ -17432,6 +17432,207 @@ suppose discount = 3:
     assert(effects, [])"#);
 }
 
+/// Nucleoid finds the middle values of lists with median
+#[rustfmt::skip]
+#[test]
+fn finds_the_middle_values_of_lists_with_median() {
+    runner()("waits = [12, 3, 45]\ntypical = waits.median()\nassert: [typical, waits, (why typical)[0].from], [12, [12, 3, 45], [\"waits\"]]\nwaits.push(7)\nassert: typical, 9.5\nwaits.push(300)\nassert: [typical, waits.average()], [12, 73.4]\nwaits.pop()\nwaits.shift()\nassert: typical, 7\ncourier = {stops: [12, 2, 45, 31]}\nusual = courier.stops.median()\nshort = courier.stops.filter(stop -> stop < 30).median()\nassert: [usual, short], [21.5, 7]\ncourier.stops.push(5)\nassert: [usual, short], [12, 5]");
+    let mut run = runner();
+    run("waits = [12, 3, 45]");
+    run("typical = waits.median()");
+    assert_eq!(run("[typical, waits, (why typical)[0].from]"), serde_json::json!([12, [12, 3, 45], ["waits"]]));
+    run("waits.push(7)");
+    assert_eq!(run("typical"), 9.5);
+    run("waits.push(300)");
+    assert_eq!(run("[typical, waits.average()]"), serde_json::json!([12, 73.4]));
+    run("waits.pop()");
+    run("waits.shift()");
+    assert_eq!(run("typical"), 7);
+    run("courier = {stops: [12, 2, 45, 31]}");
+    run("usual = courier.stops.median()");
+    run("short = courier.stops.filter(stop -> stop < 30).median()");
+    assert_eq!(run("[usual, short]"), serde_json::json!([21.5, 7]));
+    run("courier.stops.push(5)");
+    assert_eq!(run("[usual, short]"), serde_json::json!([12, 5]));
+}
+
+/// Nucleoid finds the medians of class instance populations
+#[rustfmt::skip]
+#[test]
+fn finds_the_medians_of_class_instance_populations() {
+    runner()("class Listing(area, price):\n    this.area = area\n    this.price = price\ndef perMeter listing => listing.price / listing.area\nListing(50, 200000)\nloft = Listing(40, 400000)\ntypical = Listing.median(perMeter)\nroomy = Listing.filter(listing -> listing.area > 45).median(perMeter)\nrecent = Listing[-3:].median(listing -> listing.area)\nassert: [typical, roomy, recent], [7000, 4000, 45]\nListing(80, 72000)\nassert: [typical, roomy, recent], [4000, 2450, 50]\nListing(100, 450000)\nassert: [typical, roomy, recent], [4250, 4000, 80]\nloft.price = 120000\nassert: [typical, roomy], [3500, 4000]");
+    let mut run = runner();
+    run(r#"class Listing(area, price):
+    this.area = area
+    this.price = price"#);
+    run("def perMeter listing => listing.price / listing.area");
+    run("Listing(50, 200000)");
+    run("loft = Listing(40, 400000)");
+    run("typical = Listing.median(perMeter)");
+    run("roomy = Listing.filter(listing -> listing.area > 45).median(perMeter)");
+    run("recent = Listing[-3:].median(listing -> listing.area)");
+    assert_eq!(run("[typical, roomy, recent]"), serde_json::json!([7000, 4000, 45]));
+    run("Listing(80, 72000)");
+    assert_eq!(run("[typical, roomy, recent]"), serde_json::json!([4000, 2450, 50]));
+    run("Listing(100, 450000)");
+    assert_eq!(run("[typical, roomy, recent]"), serde_json::json!([4250, 4000, 80]));
+    run("loft.price = 120000");
+    assert_eq!(run("[typical, roomy]"), serde_json::json!([3500, 4000]));
+}
+
+/// Nucleoid orders values as numbers to find medians
+#[rustfmt::skip]
+#[test]
+fn orders_values_as_numbers_to_find_medians() {
+    runner()("north = [21, 9]\nsouth = [-3, 7.5]\nmiddle = north.concat(south).median()\nwarm = north.filter(temp -> temp > 0).median()\nassert: [middle, warm], [8.25, 15]\nnorth.push(-8)\nassert: [middle, warm, north], [7.5, 15, [21, 9, -8]]\nnorth.push(4)\nassert: [middle, warm], [5.75, 9]");
+    let mut run = runner();
+    run("north = [21, 9]");
+    run("south = [-3, 7.5]");
+    run("middle = north.concat(south).median()");
+    run("warm = north.filter(temp -> temp > 0).median()");
+    assert_eq!(run("[middle, warm]"), serde_json::json!([8.25, 15]));
+    run("north.push(-8)");
+    assert_eq!(run("[middle, warm, north]"), serde_json::json!([7.5, 15, [21, 9, -8]]));
+    run("north.push(4)");
+    assert_eq!(run("[middle, warm]"), serde_json::json!([5.75, 9]));
+}
+
+/// Nucleoid calls the median selector once per item with only the item
+#[rustfmt::skip]
+#[test]
+fn calls_the_median_selector_once_per_item_with_only_the_item() {
+    runner()("seen = []\ndef weigh(item, position):\n    seen.push(position ?? item)\n    return item * item\nitems = [4, 1]\ndef spread() => items.median(weigh)\nassert: [spread(), seen], [8.5, [4, 1]]\nfloor = 2\ndef price item => Math.max(item, floor)\ncost = items.median(price)\nassert: cost, 3\nfloor = 3\nitems.push(12)\nassert: [cost, spread(), seen], [4, 16, [4, 1, 4, 1, 12]]\nmissing = null\nskipped = missing.median(weigh(9))\nassert: [skipped, seen], [null, [4, 1, 4, 1, 12]]");
+    let mut run = runner();
+    run("seen = []");
+    run(r#"def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item"#);
+    run("items = [4, 1]");
+    run("def spread() => items.median(weigh)");
+    assert_eq!(run("[spread(), seen]"), serde_json::json!([8.5, [4, 1]]));
+    run("floor = 2");
+    run("def price item => Math.max(item, floor)");
+    run("cost = items.median(price)");
+    assert_eq!(run("cost"), 3);
+    run("floor = 3");
+    run("items.push(12)");
+    assert_eq!(run("[cost, spread(), seen]"), serde_json::json!([4, 16, [4, 1, 4, 1, 12]]));
+    run("missing = null");
+    run("skipped = missing.median(weigh(9))");
+    assert_eq!(run("[skipped, seen]"), serde_json::json!([null, [4, 1, 4, 1, 12]]));
+}
+
+/// Nucleoid keeps medians live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_medians_live_in_class_level_rules() {
+    runner()("class Room(name): this.name = name\nclass Sensor(room, temp):\n    this.room = room\n    this.temp = temp\n$Room.mid = Sensor.filter(sensor -> sensor.room == $Room).median(sensor -> sensor.temp)\n$Room.warm = $Room.mid > 21\nlab = Room(\"lab\")\nhall = Room(\"hall\")\nSensor(lab, 8)\nprobe = Sensor(lab, 25)\nSensor(lab, 30)\nSensor(hall, 18)\nSensor(hall, 23)\nspread = Room.median(room -> room.mid)\nassert: [lab.mid, lab.warm, hall.mid, hall.warm, spread], [25, true, 20.5, false, 22.75]\nprobe.temp = 21\nassert: [lab.mid, lab.warm, spread], [21, false, 20.75]\nprobe.room = hall\nporch = Room(\"porch\")\nSensor(porch, 5)\nassert: [lab.mid, hall.mid, porch.mid, spread], [19, 21, 5, 19]");
+    let mut run = runner();
+    run("class Room(name): this.name = name");
+    run(r#"class Sensor(room, temp):
+    this.room = room
+    this.temp = temp"#);
+    run("$Room.mid = Sensor.filter(sensor -> sensor.room == $Room).median(sensor -> sensor.temp)");
+    run("$Room.warm = $Room.mid > 21");
+    run(r#"lab = Room("lab")"#);
+    run(r#"hall = Room("hall")"#);
+    run("Sensor(lab, 8)");
+    run("probe = Sensor(lab, 25)");
+    run("Sensor(lab, 30)");
+    run("Sensor(hall, 18)");
+    run("Sensor(hall, 23)");
+    run("spread = Room.median(room -> room.mid)");
+    assert_eq!(run("[lab.mid, lab.warm, hall.mid, hall.warm, spread]"), serde_json::json!([25, true, 20.5, false, 22.75]));
+    run("probe.temp = 21");
+    assert_eq!(run("[lab.mid, lab.warm, spread]"), serde_json::json!([21, false, 20.75]));
+    run("probe.room = hall");
+    run(r#"porch = Room("porch")"#);
+    run("Sensor(porch, 5)");
+    assert_eq!(run("[lab.mid, hall.mid, porch.mid, spread]"), serde_json::json!([19, 21, 5, 19]));
+}
+
+/// Nucleoid uses medians in functions methods and conditional expressions
+#[rustfmt::skip]
+#[test]
+fn uses_medians_in_functions_methods_and_conditional_expressions() {
+    runner()("class Team(name, scores):\n    this.name = name\n    this.scores = scores\n    def middle(): return this.scores.median()\ndef lift(team) => team.scores.max() - team.scores.median()\nred = Team(\"red\", [3, 9])\nblue = Team(\"blue\", [8, 5, 7])\nleague = Team.median(team -> team.middle())\nleader = red.middle() > blue.middle() ? red.name : blue.name\nassert: [league, leader, lift(red)], [6.5, \"blue\", 3]\nred.scores.push(10)\nblue.scores.push(2)\nTeam(\"green\", [13])\nassert: [league, leader, lift(red)], [9, \"red\", 1]");
+    let mut run = runner();
+    run(r#"class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def middle(): return this.scores.median()"#);
+    run("def lift(team) => team.scores.max() - team.scores.median()");
+    run(r#"red = Team("red", [3, 9])"#);
+    run(r#"blue = Team("blue", [8, 5, 7])"#);
+    run("league = Team.median(team -> team.middle())");
+    run("leader = red.middle() > blue.middle() ? red.name : blue.name");
+    assert_eq!(run("[league, leader, lift(red)]"), serde_json::json!([6.5, "blue", 3]));
+    run("red.scores.push(10)");
+    run("blue.scores.push(2)");
+    run(r#"Team("green", [13])"#);
+    assert_eq!(run("[league, leader, lift(red)]"), serde_json::json!([9, "red", 1]));
+}
+
+/// Nucleoid keeps median as an ordinary name beside the median query
+#[rustfmt::skip]
+#[test]
+fn keeps_median_as_an_ordinary_name_beside_the_median_query() {
+    runner()("median = 2\nreport = {median: 5}\ndef double median => median * 2\nclass Bag(items):\n    this.items = items\n    def median(): return this.items.median(item -> item * item)\nbag = Bag([1, 3])\nBag([4])\nlevel = bag.items.median() + median + report.median\nbags = Bag.median(each -> each.median())\nassert: [level, bag.median(), bags, double(median)], [9, 5, 10.5, 4]\nassert: bag.items.median, null\nbag.items.push(10)\nmedian = 4\nBag([6])\nassert: [level, bag.median(), bags], [12, 9, 16]");
+    let mut run = runner();
+    run("median = 2");
+    run("report = {median: 5}");
+    run("def double median => median * 2");
+    run(r#"class Bag(items):
+    this.items = items
+    def median(): return this.items.median(item -> item * item)"#);
+    run("bag = Bag([1, 3])");
+    run("Bag([4])");
+    run("level = bag.items.median() + median + report.median");
+    run("bags = Bag.median(each -> each.median())");
+    assert_eq!(run("[level, bag.median(), bags, double(median)]"), serde_json::json!([9, 5, 10.5, 4]));
+    assert_eq!(run("bag.items.median"), serde_json::Value::Null);
+    run("bag.items.push(10)");
+    run("median = 4");
+    run("Bag([6])");
+    assert_eq!(run("[level, bag.median(), bags]"), serde_json::json!([12, 9, 16]));
+}
+
+/// Nucleoid rolls back failed median updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_median_updates() {
+    runner()("def checked(value):\n    if value > 100:\n        throw \"TOO_LARGE\"\n    return value\namounts = [10, 40]\nmid = amounts.median(checked)\nfailure = \"\"\ntry:\n    amounts.push(500)\ncatch error:\n    failure = error\nassert: [failure, amounts, mid], [\"TOO_LARGE\", [10, 40], 25]\namounts.push(5)\nassert: mid, 10\nclass Item(price): this.price = price\nItem(3)\nItem(8)\ntypical = Item.median(item -> checked(item.price))\nfailure = \"\"\ntry:\n    Item(500)\ncatch error:\n    failure = error\nassert: [failure, Item.length, typical], [\"TOO_LARGE\", 2, 5.5]\nsuppose:\n    Item(12)\n    assert: typical, 8\nassert: [Item.length, typical], [2, 5.5]");
+    let mut run = runner();
+    run(r#"def checked(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value
+amounts = [10, 40]
+mid = amounts.median(checked)
+failure = ""
+try:
+    amounts.push(500)
+catch error:
+    failure = error
+assert: [failure, amounts, mid], ["TOO_LARGE", [10, 40], 25]
+amounts.push(5)
+assert: mid, 10
+class Item(price): this.price = price
+Item(3)
+Item(8)
+typical = Item.median(item -> checked(item.price))
+failure = ""
+try:
+    Item(500)
+catch error:
+    failure = error
+assert: [failure, Item.length, typical], ["TOO_LARGE", 2, 5.5]
+suppose:
+    Item(12)
+    assert: typical, 8
+assert: [Item.length, typical], [2, 5.5]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

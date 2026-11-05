@@ -3391,6 +3391,41 @@ suppose lamp.days = 3: changes()
   [NUC 83](nuc-0083.md) and the
   [root contract](../nucleoid.spec.md#hypothetical-differences).
 
+## List and population medians
+
+**Medians keep the typical rent of every district live as listings change**
+
+```nuc
+class District(name): this.name = name
+class Flat(district, rent):
+    this.district = district
+    this.rent = rent
+$District.typical = Flat.filter(flat -> flat.district == $District).median(flat -> flat.rent)
+$District.affordable = $District.typical < 1500
+north = District("north")
+south = District("south")
+Flat(north, 1200)
+Flat(north, 1400)
+penthouse = Flat(north, 4000)
+Flat(south, 1600)
+Flat(south, 1700)
+assert: [north.typical, north.affordable, south.typical, south.affordable], [1400, true, 1650, false]
+penthouse.district = south
+Flat(north, 950)
+assert: [north.typical, south.typical, south.affordable], [1200, 1700, false]
+[north.affordable, south.affordable]
+# return: [true,false]
+```
+
+- `$District.typical` is the median rent of each district's flats, and
+  `$District.affordable` follows it. The penthouse leaves the north
+  affordable: however high its rent, the north's median is the middle flat's
+  1,400, while the mean of the three northern rents is 2,200.
+- Moving the penthouse to the south and adding a cheaper northern flat
+  re-evaluates both districts: the north's median falls to 1,200 and the
+  south's rises to 1,700. See [NUC 84](nuc-0084.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-medians).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

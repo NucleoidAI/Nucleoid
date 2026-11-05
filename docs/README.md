@@ -1954,7 +1954,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), and `average` ([NUC 80](nuc-0080.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), and `median` ([NUC 84](nuc-0084.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -3015,6 +3015,58 @@ grade
   [list and population averages](../nucleoid.spec.md#list-and-population-averages)
   section.
 
+### List and population medians
+
+```
+times = [42, 120]
+typical = times.median()
+class Runner(name, laps):
+    this.name = name
+    this.laps = laps
+Runner("ana", [61, 58, 102])
+bo = Runner("bo", [66, 64])
+pace = Runner.median(runner -> runner.laps.median())
+assert(typical, 81)
+assert(pace, 63)
+times.push(35)
+bo.laps.push(59)
+Runner("cy", [110])
+assert(typical, 42)
+assert(pace, 64)
+pace
+```
+
+- This is the complete
+  `Nucleoid finds the medians of lists and populations with median` program
+  in `tests/reference.md`, without its title and expected-return metadata;
+  it returns `64`.
+- [NUC 84](nuc-0084.md) adds `median()` and `median(selector)` to lists and
+  class instance lists. The values are ordered as numbers by a stable sort of
+  a private copy: an odd count gives the middle value itself and an even count
+  `(lower + upper) / 2`, so `[4, 1, 3, 2].median()` is `2.5`. The receiver is
+  never sorted or written.
+- Values convert as `sum` converts them. An empty list or class and any value
+  that converts to NaN give NaN. An undefined value makes the median
+  undefined, stored as `null`, and wins over a NaN value, as in `average`. A
+  `null` item counts `0` without settling a declaration to `null`, while the
+  reads inside a selector follow the existing rules.
+- `0` and `-0` keep their receiver order, an odd count keeps the middle
+  value's sign, and `[-0, -0].median()` is `-0` where `average()` gives `0`.
+  `[1e308, 1e308].median()` overflows to `Infinity`, and `-Infinity` beside
+  `Infinity` gives NaN.
+- The selector is called once per item, in order, with only the item. A
+  supplied selector that is not a function, including `null`, raises
+  `TypeError("median expects a function")`, even on an empty receiver.
+- Medians are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level rules
+  too. On a class name, `Name.median(...)` is the population query even when
+  the class declares an instance method `median`; instances keep calling the
+  method. `median` is not a noun query, so `median of xs` stays a syntax
+  error.
+- The authoritative contract is the
+  [list and population medians](../nucleoid.spec.md#list-and-population-medians)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -3360,6 +3412,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
 | A supplied `average` selector that is not a function, including `null`, even on an empty receiver | `average expects a function` |
+| A supplied `median` selector that is not a function, including `null`, even on an empty receiver | `median expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
@@ -3558,6 +3611,7 @@ items.count(predicate)  Name.count(predicate) live predicate count (NUC 73)
 items.mode()  Name.mode(selector)      live most frequent item (NUC 75)
 items.maxBy(key)  Name.minBy(key)     live first item with the largest or smallest key (NUC 77)
 items.average()  Name.average(selector) live mean: exactly items.sum() / items.length (NUC 80)
+items.median()  Name.median(selector)  live middle value; even counts take (lower + upper) / 2 (NUC 84)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

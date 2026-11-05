@@ -62,6 +62,7 @@ const LIST_MEMBERS: &[&str] = &[
     "reduce",
     "sum",
     "average",
+    "median",
     "max",
     "min",
     "distinct",
@@ -402,6 +403,23 @@ mod tests {
         }
         let completion = Completion::find(&runtime, &editor::new("av"), false).unwrap();
         assert_eq!(completion.candidates, ["available"]);
+    }
+
+    #[test]
+    fn completion_offers_the_median_query_on_lists_and_instance_lists() {
+        let mut runtime = Runtime::new();
+        runtime
+            .run("waits = [3, 1]\nclass Trip\nTrip()\nmeters = 1")
+            .unwrap();
+        for (prefix, expected) in [("waits.med", "waits.median"), ("Trip.med", "Trip.median")] {
+            let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+            assert!(
+                completion.candidates.iter().any(|name| name == expected),
+                "{prefix}"
+            );
+        }
+        let completion = Completion::find(&runtime, &editor::new("me"), false).unwrap();
+        assert_eq!(completion.candidates, ["meters"]);
     }
 
     #[test]

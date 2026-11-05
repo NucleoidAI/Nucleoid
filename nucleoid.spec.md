@@ -3868,6 +3868,57 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed average updates` specify the executable
   behavior.
 
+## List and population medians
+
+- [NUC 84](docs/nuc-0084.md) adds the read-only list query `median` to lists
+  and class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.median()` returns the middle value of the receiver's items in
+  ascending numeric order and `RECEIVER.median(selector)` the middle value of
+  `selector(item)` for every item. With an odd number of values it is the
+  middle value itself, unchanged. With an even number it is the mean of the
+  two middle values, `(lower + upper) / 2` in 64-bit floating point, so
+  `[4, 1, 3, 2].median()` is `2.5`.
+- The values are converted to numbers and ordered by a stable ascending sort,
+  so equal values such as `0` and `-0` keep their receiver order. The receiver
+  is never sorted or written: after `waits = [12, 3, 45]`, `waits.median()` is
+  `12` and `waits` keeps its order.
+- An empty receiver gives NaN. A value that converts to NaN makes the median
+  NaN, so `[1, "a", 3].median()` is NaN. An undefined value makes the median
+  undefined, which a declaration stores as `null`; every item is still visited.
+- The receivers, the numeric conversion and the selector are those of `sum`
+  and `average`: a list however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class;
+  `null`, `false`, empty strings and empty lists are `0`, `true` is `1`,
+  numeric strings and one-item lists are their number, and objects, other
+  strings and longer lists are NaN. On a class name, `median` is the
+  population query even when the class declares an instance method `median`;
+  its instances keep calling that method.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("median expects a function")`,
+  even on an empty receiver.
+- `median` follows the shared rules of the list queries: it reads its receiver
+  before its arguments, evaluates every supplied argument once, left to right,
+  including unused extras, and never writes the receiver. A declaration that
+  uses it depends on the list or population, on its argument expressions and
+  on whatever the selector reads, so list mutations, new and deleted instances
+  and property changes re-evaluate it, in class-level rules too. Selector
+  errors roll back through the existing transaction. A null or undefined
+  receiver yields undefined without evaluating the arguments.
+- A call converts every value once and sorts one list of numbers, in
+  O(n log n) time, without recursion.
+- The call keeps its ordinary rendering, so `typical = waits.median()`
+  explains as `typical = waits.median()`, and `why` lists the receiver among
+  the declaration's dependencies.
+- `median of xs` stays `SyntaxError("Unexpected keyword 'of'")`: `median` is
+  not one of the noun queries. Property reads such as `xs.median`, bindings
+  and object properties named `median`, `median(...)` without a definition,
+  `Math.median` and instance methods named `median` called on an instance
+  keep their accepted results. The eight appended entries beginning
+  `Nucleoid finds the middle values of lists with median` through
+  `Nucleoid rolls back failed median updates` specify the executable
+  behavior.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -20719,4 +20770,165 @@ suppose discount = 3:
     price = 13
     assert(facts.map(s -> s.node), ["price", "discount"])
     assert(effects, [])
+---
+# Nucleoid finds the middle values of lists with median
+
+waits = [12, 3, 45]
+typical = waits.median()
+assert: [typical, waits, (why typical)[0].from], [12, [12, 3, 45], ["waits"]]
+waits.push(7)
+assert: typical, 9.5
+waits.push(300)
+assert: [typical, waits.average()], [12, 73.4]
+waits.pop()
+waits.shift()
+assert: typical, 7
+courier = {stops: [12, 2, 45, 31]}
+usual = courier.stops.median()
+short = courier.stops.filter(stop -> stop < 30).median()
+assert: [usual, short], [21.5, 7]
+courier.stops.push(5)
+assert: [usual, short], [12, 5]
+---
+# Nucleoid finds the medians of class instance populations
+
+class Listing(area, price):
+    this.area = area
+    this.price = price
+def perMeter listing => listing.price / listing.area
+Listing(50, 200000)
+loft = Listing(40, 400000)
+typical = Listing.median(perMeter)
+roomy = Listing.filter(listing -> listing.area > 45).median(perMeter)
+recent = Listing[-3:].median(listing -> listing.area)
+assert: [typical, roomy, recent], [7000, 4000, 45]
+Listing(80, 72000)
+assert: [typical, roomy, recent], [4000, 2450, 50]
+Listing(100, 450000)
+assert: [typical, roomy, recent], [4250, 4000, 80]
+loft.price = 120000
+assert: [typical, roomy], [3500, 4000]
+---
+# Nucleoid orders values as numbers to find medians
+
+north = [21, 9]
+south = [-3, 7.5]
+middle = north.concat(south).median()
+warm = north.filter(temp -> temp > 0).median()
+assert: [middle, warm], [8.25, 15]
+north.push(-8)
+assert: [middle, warm, north], [7.5, 15, [21, 9, -8]]
+north.push(4)
+assert: [middle, warm], [5.75, 9]
+---
+# Nucleoid calls the median selector once per item with only the item
+
+seen = []
+def weigh(item, position):
+    seen.push(position ?? item)
+    return item * item
+items = [4, 1]
+def spread() => items.median(weigh)
+assert: [spread(), seen], [8.5, [4, 1]]
+floor = 2
+def price item => Math.max(item, floor)
+cost = items.median(price)
+assert: cost, 3
+floor = 3
+items.push(12)
+assert: [cost, spread(), seen], [4, 16, [4, 1, 4, 1, 12]]
+missing = null
+skipped = missing.median(weigh(9))
+assert: [skipped, seen], [null, [4, 1, 4, 1, 12]]
+---
+# Nucleoid keeps medians live in class level rules
+
+class Room(name): this.name = name
+class Sensor(room, temp):
+    this.room = room
+    this.temp = temp
+$Room.mid = Sensor.filter(sensor -> sensor.room == $Room).median(sensor -> sensor.temp)
+$Room.warm = $Room.mid > 21
+lab = Room("lab")
+hall = Room("hall")
+Sensor(lab, 8)
+probe = Sensor(lab, 25)
+Sensor(lab, 30)
+Sensor(hall, 18)
+Sensor(hall, 23)
+spread = Room.median(room -> room.mid)
+assert: [lab.mid, lab.warm, hall.mid, hall.warm, spread], [25, true, 20.5, false, 22.75]
+probe.temp = 21
+assert: [lab.mid, lab.warm, spread], [21, false, 20.75]
+probe.room = hall
+porch = Room("porch")
+Sensor(porch, 5)
+assert: [lab.mid, hall.mid, porch.mid, spread], [19, 21, 5, 19]
+---
+# Nucleoid uses medians in functions methods and conditional expressions
+
+class Team(name, scores):
+    this.name = name
+    this.scores = scores
+    def middle(): return this.scores.median()
+def lift(team) => team.scores.max() - team.scores.median()
+red = Team("red", [3, 9])
+blue = Team("blue", [8, 5, 7])
+league = Team.median(team -> team.middle())
+leader = red.middle() > blue.middle() ? red.name : blue.name
+assert: [league, leader, lift(red)], [6.5, "blue", 3]
+red.scores.push(10)
+blue.scores.push(2)
+Team("green", [13])
+assert: [league, leader, lift(red)], [9, "red", 1]
+---
+# Nucleoid keeps median as an ordinary name beside the median query
+
+median = 2
+report = {median: 5}
+def double median => median * 2
+class Bag(items):
+    this.items = items
+    def median(): return this.items.median(item -> item * item)
+bag = Bag([1, 3])
+Bag([4])
+level = bag.items.median() + median + report.median
+bags = Bag.median(each -> each.median())
+assert: [level, bag.median(), bags, double(median)], [9, 5, 10.5, 4]
+assert: bag.items.median, null
+bag.items.push(10)
+median = 4
+Bag([6])
+assert: [level, bag.median(), bags], [12, 9, 16]
+---
+# Nucleoid rolls back failed median updates
+
+def checked(value):
+    if value > 100:
+        throw "TOO_LARGE"
+    return value
+amounts = [10, 40]
+mid = amounts.median(checked)
+failure = ""
+try:
+    amounts.push(500)
+catch error:
+    failure = error
+assert: [failure, amounts, mid], ["TOO_LARGE", [10, 40], 25]
+amounts.push(5)
+assert: mid, 10
+class Item(price): this.price = price
+Item(3)
+Item(8)
+typical = Item.median(item -> checked(item.price))
+failure = ""
+try:
+    Item(500)
+catch error:
+    failure = error
+assert: [failure, Item.length, typical], ["TOO_LARGE", 2, 5.5]
+suppose:
+    Item(12)
+    assert: typical, 8
+assert: [Item.length, typical], [2, 5.5]
 ```
