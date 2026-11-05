@@ -119,6 +119,15 @@ the expected test output. The final Expected/Result comparison remains unchanged
 
 Numbered analysis/visualization stages, boxed declarations and object states,
 and color-coded ARC grids with row/column coordinates keep the run readable.
+Milestone steps and panel titles include stage-local subnumbers, such as
+`1.1 Inferring declarations`, restarting at each stage and run. Repeated
+milestones retain the same second number and add a third occurrence number,
+such as `1.3.1` and `1.3.2` for training-pair milestones. Continued grid
+panels keep the same full number. The declarations header includes the
+output canvas instead of adding a separate milestone. Segmented-object panels
+use `Input` and `Output` without object-number labels. Model token usage remains
+attached to its active milestone. Instance-specific steps, crop and
+implementation headers, and input-state headers include the instance name.
 Wide grids split into column panels rather than dropping cells. The final
 comparison keeps **Expected** before **Result**, followed by an
 exact-match badge in green or a mismatch badge in red, the unchanged difference
@@ -133,21 +142,25 @@ and `wrap-ansi` wraps long output without breaking colors, so both vertical
 borders stay aligned even with wide Unicode text. Formatting does not change
 prompts, programs, matrices, provider settings, or scoring.
 
-Milestone functions in `src\milestone.ts` mark each point in a run that shows
+Milestone functions in `src\lib\milestone.ts` mark each point in a run that shows
 output, such as a stage, a step about to start, or a step's result, and are the
 only callers of the `src\lib\terminal.ts` renderer. The analyzer, visualizer,
 OpenRouter client, and entry point report progress only through them.
 
-`milestone.state` displays the result of each batched state pass as a table:
-one per training pair at the end of the analysis, titled
-`Training pair N · State`, and one for the test objects, titled
-`Test · State`, before their outputs are composed. Each row is an object that
-`Obj[:]` returns after the declarative rules run, with `id` first and then one
-column per property in the order the runtime reports them. Cells keep the
-formatting of the boxed object states, so strings stay quoted, and a property
-that an object lacks shows a grey `—`. Tables span the panel width. Wider
-tables continue in panels titled `(continued)` that repeat `id`, and a cell
-too wide for its panel wraps instead of being cut.
+`milestone.state` displays exactly one `Analysis · State` table containing
+objects from all training pairs, in pair order, after the analysis state passes
+finish. One `Visualization · State` table shows the test objects before their
+outputs are composed. Each row is an object that `Obj[:]` returns after the
+declarative rules run, with `id` first and then one column per property in the
+order first reported by the runtime. Strings stay quoted, and a property that
+an object lacks shows a grey `—`.
+
+State tables are compact and never split into continued panels. Cells omit
+horizontal padding, and column widths share the available space so all
+properties stay in one table. Headers and values wrap without truncation.
+Small tables use only the width their content and title need. If even the
+minimum character widths and column separators cannot fit a narrow terminal,
+the single table extends beyond that width rather than hiding columns.
 
 ## Instruction datasets
 
@@ -1094,9 +1107,11 @@ to take one training puzzle through the
    change, the final report suggests it for review.
 6. The workflow then creates or updates the puzzle's progress record,
    `docs\ARC-NUC-<puzzle_id>.md`, in the format of the existing records such as
-   [ARC-NUC-0ca9ddb6](docs/ARC-NUC-0ca9ddb6.md): the dataset, any NUC and its
-   outcome, every run's exit status and difference, and the open items. The
-   record keeps earlier runs.
+   [ARC-NUC-0ca9ddb6](docs/ARC-NUC-0ca9ddb6.md): a gestalt overview of the
+   puzzle zoomed out to its figures, their relations, and its whole change,
+   the dataset, any NUC and its outcome, every run's exit status and
+   difference, and the open items. Every invocation brings the gestalt
+   overview up to date, and the record keeps earlier runs.
 7. Finally, the workflow commits its own changes in one commit and pushes it:
    the dataset, its README paragraph, its reporting-list entry, the default
    `puzzle_id`, and the progress record, as far as it changed and kept them,

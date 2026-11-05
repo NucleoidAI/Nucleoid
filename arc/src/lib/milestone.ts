@@ -19,37 +19,48 @@ export function inferring_declarations() {
 }
 
 export function declarations_inferred({ declarations, output_canvas }) {
-  terminal.code("Declarations", declarations);
-  terminal.step(`Output canvas ${output_canvas}`);
+  terminal.code(`Declarations · Output canvas ${output_canvas}`, declarations);
 }
 
 export function training_pair({ index, total }) {
-  terminal.step(`Training pair ${index + 1} / ${total}`);
+  terminal.step(`Training pair ${index + 1} / ${total}`, {
+    key: "training_pair",
+    loop: true,
+  });
 }
 
 export function segmenting_training_objects() {
-  terminal.step("Segmenting training objects");
+  terminal.step("Segmenting training objects", {
+    key: "segmenting_training_objects",
+    loop: true,
+  });
 }
 
 export function training_objects_segmented({ instances }) {
-  instances.forEach((instance, index: number) => {
-    terminal.grid(
-      `Object ${index + 1} · Input`,
-      instance.input_instance_matrix
-    );
-    terminal.grid(
-      `Object ${index + 1} · Output`,
-      instance.output_instance_matrix
-    );
+  instances.forEach((instance) => {
+    terminal.grid("Input", instance.input_instance_matrix, {
+      key: "training_input",
+      loop: true,
+    });
+    terminal.grid("Output", instance.output_instance_matrix, {
+      key: "training_output",
+      loop: true,
+    });
   });
 }
 
 export function constructing_instance({ instance_name }) {
-  terminal.step(`Constructing ${instance_name}`);
+  terminal.step(`Constructing ${instance_name}`, {
+    key: "constructing_instance",
+    loop: true,
+  });
 }
 
-export function evaluating_rules() {
-  terminal.step("Evaluating declarative rules");
+export function evaluating_rules({ instance_name }) {
+  terminal.step(`Evaluating declarative rules · ${instance_name}`, {
+    key: "evaluating_rules",
+    loop: true,
+  });
 }
 
 export function instance_constructed({
@@ -59,21 +70,42 @@ export function instance_constructed({
   output_instance_matrix,
   input_value,
 }) {
-  terminal.grid("Input crop", Matrix.crop(input_instance_matrix));
-  terminal.grid("Output crop", Matrix.crop(output_instance_matrix));
-  terminal.code(`Implementation · ${instance_name}`, implementation);
-  terminal.value("Input state", input_value);
+  terminal.grid(
+    `Input crop · ${instance_name}`,
+    Matrix.crop(input_instance_matrix),
+    { key: "input_crop", loop: true }
+  );
+  terminal.grid(
+    `Output crop · ${instance_name}`,
+    Matrix.crop(output_instance_matrix),
+    { key: "output_crop", loop: true }
+  );
+  terminal.code(`Implementation · ${instance_name}`, implementation, {
+    key: "implementation",
+    loop: true,
+  });
+  terminal.value(`Input state · ${instance_name}`, input_value, {
+    key: "input_state",
+    loop: true,
+  });
 }
 
-export function state({ index = null, obj_list }) {
+export function state({
+  phase,
+  obj_list,
+}: {
+  phase: "analysis" | "visualization";
+  obj_list: Record<string, unknown>[];
+}) {
   const properties = [
     ...new Set(obj_list.flatMap((instance) => Object.keys(instance))),
   ].filter((property: string) => property !== "id");
 
   terminal.table(
-    index === null ? "Test · State" : `Training pair ${index + 1} · State`,
+    phase === "analysis" ? "Analysis · State" : "Visualization · State",
     ["id", ...properties],
-    obj_list
+    obj_list,
+    { key: "state" }
   );
 }
 
@@ -92,37 +124,65 @@ export function segmenting_test_input({ test_input_matrix }) {
 
 export function test_input_segmented({ instances }) {
   terminal.step(`${instances.length} objects identified`);
-  instances.forEach(({ input_instance_matrix }, index: number) => {
-    terminal.grid(`Test object ${index + 1}`, input_instance_matrix);
+  instances.forEach(({ input_instance_matrix }) => {
+    terminal.grid("Input", input_instance_matrix, {
+      key: "test_input_object",
+      loop: true,
+    });
   });
 }
 
 export function synthesizing_instance({ instance_name }) {
-  terminal.step(`Synthesizing ${instance_name}`);
+  terminal.step(`Synthesizing ${instance_name}`, {
+    key: "synthesizing_instance",
+    loop: true,
+  });
 }
 
 export function instance_synthesized({ instance_name, implementation }) {
-  terminal.code(`Implementation · ${instance_name}`, implementation);
+  terminal.code(`Implementation · ${instance_name}`, implementation, {
+    key: "implementation",
+    loop: true,
+  });
 }
 
-export function executing_transformation() {
-  terminal.step("Executing the object transformation");
+export function executing_transformation({ instance_name }) {
+  terminal.step(`Executing the object transformation · ${instance_name}`, {
+    key: "executing_transformation",
+    loop: true,
+  });
 }
 
-export function transformation_executed({ input_value }) {
-  terminal.value("Input state", input_value);
+export function transformation_executed({ instance_name, input_value }) {
+  terminal.value(`Input state · ${instance_name}`, input_value, {
+    key: "input_state",
+    loop: true,
+  });
 }
 
-export function composing_output() {
-  terminal.step("Composing the output object");
+export function composing_output({ instance_name }) {
+  terminal.step(`Composing the output object · ${instance_name}`, {
+    key: "composing_output",
+    loop: true,
+  });
 }
 
-export function output_composed({ output_instance_matrix }) {
-  terminal.grid("Output crop", output_instance_matrix);
+export function output_composed({ instance_name, output_instance_matrix }) {
+  terminal.grid(`Output crop · ${instance_name}`, output_instance_matrix, {
+    key: "output_crop",
+    loop: true,
+  });
 }
 
-export function output_placed({ output_instance_padded_matrix }) {
-  terminal.grid("Placed output", output_instance_padded_matrix);
+export function output_placed({
+  instance_name,
+  output_instance_padded_matrix,
+}) {
+  terminal.grid(
+    `Placed output · ${instance_name}`,
+    output_instance_padded_matrix,
+    { key: "placed_output", loop: true }
+  );
 }
 
 export function comparison({ test_output_matrix, result_matrix }) {

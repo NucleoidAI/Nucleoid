@@ -7,7 +7,7 @@ import arc_dataset from "./lib/arc_dataset.ts";
 import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "6e02f1e3") {
+export async function start(puzzle_id: string = "ed36ccf7") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
@@ -121,10 +121,12 @@ export async function start(puzzle_id: string = "6e02f1e3") {
   await visualizer.state({ declarations, test_input_matrix, input_instances });
 
   for (const input_instance of input_instances) {
-    const { input_value, input_instance_matrix, output_value } = input_instance;
+    const { instance_name, input_value, input_instance_matrix, output_value } =
+      input_instance;
 
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
       puzzle_id,
+      instance_name,
       test_input_matrix,
       train_dataset,
       input_instances: input_instances.filter(

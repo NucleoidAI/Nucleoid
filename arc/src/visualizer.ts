@@ -79,15 +79,17 @@ export async function value({
           ${JSON.stringify(declarations)}
           train_dataset:
           ${JSON.stringify(
-            train_dataset.dataset.map(({ instances }) => ({
-              instances: instances.map(
-                ({ implementation, input_value, input_instance_matrix }) => ({
-                  implementation,
-                  input_value,
-                  input_instance_matrix: Matrix.crop(input_instance_matrix),
-                })
-              ),
-            })).flatMap(({ instances }) => instances)
+            train_dataset.dataset
+              .map(({ instances }) => ({
+                instances: instances.map(
+                  ({ implementation, input_value, input_instance_matrix }) => ({
+                    implementation,
+                    input_value,
+                    input_instance_matrix: Matrix.crop(input_instance_matrix),
+                  })
+                ),
+              }))
+              .flatMap(({ instances }) => instances)
           )}
           instances:
           ${JSON.stringify(
@@ -118,7 +120,7 @@ export async function value({
   });
 
   milestone.instance_synthesized({ instance_name, implementation });
-  milestone.executing_transformation();
+  milestone.executing_transformation({ instance_name });
 
   const canvas_width: number = test_input_matrix[0].length;
   const canvas_height: number = test_input_matrix.length;
@@ -131,13 +133,14 @@ export async function value({
     ].join("\n\n")
   );
 
-  milestone.transformation_executed({ input_value });
+  milestone.transformation_executed({ instance_name, input_value });
 
   return { implementation, input_value };
 }
 
 export async function output_instance_matrix({
   puzzle_id,
+  instance_name,
   test_input_matrix,
   train_dataset,
   input_instances,
@@ -147,7 +150,7 @@ export async function output_instance_matrix({
 }) {
   const { x, y } = output_value;
 
-  milestone.composing_output();
+  milestone.composing_output({ instance_name });
   const { output_instance_matrix } = await llm.generate({
     puzzle_id,
     messages: [
@@ -156,21 +159,23 @@ export async function output_instance_matrix({
         content: `
           train_dataset:
           ${JSON.stringify(
-            train_dataset.dataset.map(({ instances }) => ({
-              instances: instances.map(
-                ({
-                  input_value,
-                  input_instance_matrix,
-                  output_value,
-                  output_instance_matrix,
-                }) => ({
-                  input_value,
-                  input_instance_matrix: Matrix.crop(input_instance_matrix),
-                  output_value,
-                  output_instance_matrix: Matrix.crop(output_instance_matrix),
-                })
-              ),
-            })).flatMap(({ instances }) => instances)
+            train_dataset.dataset
+              .map(({ instances }) => ({
+                instances: instances.map(
+                  ({
+                    input_value,
+                    input_instance_matrix,
+                    output_value,
+                    output_instance_matrix,
+                  }) => ({
+                    input_value,
+                    input_instance_matrix: Matrix.crop(input_instance_matrix),
+                    output_value,
+                    output_instance_matrix: Matrix.crop(output_instance_matrix),
+                  })
+                ),
+              }))
+              .flatMap(({ instances }) => instances)
           )}
           instances:
           ${JSON.stringify(
@@ -208,7 +213,7 @@ export async function output_instance_matrix({
     ],
   });
 
-  milestone.output_composed({ output_instance_matrix });
+  milestone.output_composed({ instance_name, output_instance_matrix });
 
   const output_instance_padded_matrix = Matrix.pad(
     output_instance_matrix,
@@ -218,7 +223,7 @@ export async function output_instance_matrix({
     y
   );
 
-  milestone.output_placed({ output_instance_padded_matrix });
+  milestone.output_placed({ instance_name, output_instance_padded_matrix });
 
   return { output_instance_matrix: output_instance_padded_matrix };
 }
@@ -244,7 +249,7 @@ export async function state({
     ].join("\n\n")
   );
 
-  milestone.state({ obj_list });
+  milestone.state({ phase: "visualization", obj_list });
 
   [...obj_list].forEach((instance) => {
     const found_instance = input_instances.find(

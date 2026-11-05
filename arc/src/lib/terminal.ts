@@ -49,6 +49,29 @@ const wordmarks = [
   ["⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷", "⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶"],
 ];
 
+interface Milestone {
+  key: string;
+  loop?: boolean;
+}
+
+let stageNumber = 0;
+const milestones = new Map<string, { number: number; iteration: number }>();
+
+function numbered(title: string, milestone?: Milestone): string {
+  if (stageNumber === 0) {
+    return title;
+  }
+  const key: string = milestone?.key ?? title;
+  const counter = milestones.get(key) ?? {
+    number: milestones.size + 1,
+    iteration: 0,
+  };
+  counter.iteration += 1;
+  milestones.set(key, counter);
+  const iteration: string = milestone?.loop ? `.${counter.iteration}` : "";
+  return `${stageNumber}.${counter.number}${iteration} ${title}`;
+}
+
 function width(): number {
   return Math.max(8, Math.min(120, (process.stdout.columns ?? 124) - 4));
 }
@@ -93,6 +116,8 @@ function block(title: string, lines, write = console.log) {
 }
 
 export function header({ version }) {
+  stageNumber = 0;
+  milestones.clear();
   const available: number = width() - 4;
   const horizontal: boolean = available >= 32;
   const limit: number = Math.min(12, available);
@@ -136,6 +161,8 @@ export function header({ version }) {
 }
 
 export function section(index: number, title: string, detail: string) {
+  stageNumber = index;
+  milestones.clear();
   const [label, ...continuation] = wrap(
     `${String(index).padStart(2, "0")}  ${title.toUpperCase()}`,
     width() - 4
@@ -155,9 +182,9 @@ export function section(index: number, title: string, detail: string) {
   console.log("");
 }
 
-export function step(message: string) {
+export function step(message: string, milestone?: Milestone) {
   const [first, ...continuation] = wrap(
-    stripVTControlCharacters(String(message)),
+    numbered(stripVTControlCharacters(String(message)), milestone),
     width() - 2
   );
   console.log(`  ${frame("›")} ${styleText("white", first)}`);
@@ -166,21 +193,21 @@ export function step(message: string) {
   }
 }
 
-export function code(title: string, source) {
+export function code(title: string, source, milestone?: Milestone) {
   const text: string = Array.isArray(source)
     ? source.join("\n\n")
     : String(source);
   block(
-    title,
+    numbered(title, milestone),
     stripVTControlCharacters(text)
       .split("\n")
       .map((line: string) => styleText("whiteBright", line))
   );
 }
 
-export function value(title: string, data) {
+export function value(title: string, data, milestone?: Milestone) {
   block(
-    title,
+    numbered(title, milestone),
     inspect(data, {
       colors: false,
       depth: null,
@@ -195,14 +222,20 @@ export function value(title: string, data) {
 }
 
 function span(widths): number {
-  return widths.reduce((sum: number, cell: number) => sum + cell + 3, -1);
+  return widths.reduce((sum: number, cell: number) => sum + cell + 1, -1);
+}
+
+function minimumWidth(text: string): number {
+  return Array.from(stripVTControlCharacters(text)).reduce(
+    (minimum: number, character: string) =>
+      Math.max(minimum, stringWidth(character)),
+    1
+  );
 }
 
 function tableRule(widths, left: string, joint: string, right: string): string {
   return `  ${frame(
-    left +
-      widths.map((cell: number) => "─".repeat(cell + 2)).join(joint) +
-      right
+    left + widths.map((cell: number) => "─".repeat(cell)).join(joint) + right
   )}`;
 }
 
@@ -215,20 +248,18 @@ function tableRow(widths, cells) {
     { length: height },
     (_, line: number) =>
       `  ${frame("│")}${lines
-        .map(
-          (cell, index: number) => ` ${pad(cell[line] ?? "", widths[index])} `
-        )
+        .map((cell, index: number) => pad(cell[line] ?? "", widths[index]))
         .join(frame("│"))}${frame("│")}`
   );
 }
 
-export function table(title: string, columns, rows) {
+export function table(title: string, columns, rows, milestone?: Milestone) {
+  const heading: string = numbered(title, milestone);
   if (rows.length === 0) {
-    block(title, [styleText("gray", "(empty)")]);
+    block(heading, [styleText("gray", "(empty)")]);
     return;
   }
 
-  const inner: number = width() - 2;
   const header = columns.map((column: string) =>
     styleText(["bold", "white"], column)
   );
@@ -249,63 +280,53 @@ export function table(title: string, columns, rows) {
         : styleText("gray", "—")
     )
   );
+  const content = [header, ...body];
   const natural = columns.map((_, column: number) =>
-    Math.max(...[header, ...body].map((cells) => stringWidth(cells[column])))
+    Math.max(...content.map((cells) => stringWidth(cells[column])))
   );
-
-  // The first column labels each row, so every panel repeats it.
-  const panels = [];
-  let current = [0];
-  let used: number = natural[0] + 2;
-  for (let column: number = 1; column < columns.length; column++) {
-    if (current.length > 1 && used + natural[column] + 3 > inner) {
-      panels.push(current);
-      current = [0];
-      used = natural[0] + 2;
+  const widths = columns.map((_, column: number) =>
+    Math.max(...content.map((cells) => minimumWidth(cells[column])))
+  );
+  const inner: number = Math.max(
+    span(widths),
+    Math.min(width() - 2, Math.max(span(natural), stringWidth(heading) + 2))
+  );
+  let remaining: number = inner - span(widths);
+  while (remaining > 0) {
+    const growable = widths.flatMap((cell: number, column: number) =>
+      cell < natural[column] ? [column] : []
+    );
+    if (growable.length === 0) {
+      break;
     }
-    current.push(column);
-    used += natural[column] + 3;
+    for (const column of growable.slice(0, remaining)) {
+      widths[column] += 1;
+      remaining -= 1;
+    }
   }
-  panels.push(current);
+  widths[widths.length - 1] += remaining;
 
-  for (const [index, panel] of panels.entries()) {
-    const widths = panel.map((column: number) => natural[column]);
-    while (span(widths) > inner && Math.max(...widths) > 1) {
-      widths[widths.indexOf(Math.max(...widths))] -= 1;
-    }
-    widths[widths.length - 1] += Math.max(0, inner - span(widths));
-
-    const titleWidth: number = span(widths) - 2;
-    console.log(`\n  ${frame(`┌${"─".repeat(titleWidth + 2)}┐`)}`);
-    for (const line of wrap(
-      stripVTControlCharacters(index === 0 ? title : `${title} (continued)`),
-      titleWidth
-    )) {
-      console.log(
-        `  ${frame("│")} ${pad(
-          styleText(["bold", "white"], line),
-          titleWidth
-        )} ${frame("│")}`
-      );
-    }
-    console.log(tableRule(widths, "├", "┬", "┤"));
-    for (const line of tableRow(
-      widths,
-      panel.map((column: number) => header[column])
-    )) {
+  const titleWidth: number = span(widths) - 2;
+  console.log(`\n  ${frame(`┌${"─".repeat(titleWidth + 2)}┐`)}`);
+  for (const line of wrap(stripVTControlCharacters(heading), titleWidth)) {
+    console.log(
+      `  ${frame("│")} ${pad(
+        styleText(["bold", "white"], line),
+        titleWidth
+      )} ${frame("│")}`
+    );
+  }
+  console.log(tableRule(widths, "├", "┬", "┤"));
+  for (const line of tableRow(widths, header)) {
+    console.log(line);
+  }
+  console.log(tableRule(widths, "├", "┼", "┤"));
+  for (const cells of body) {
+    for (const line of tableRow(widths, cells)) {
       console.log(line);
     }
-    console.log(tableRule(widths, "├", "┼", "┤"));
-    for (const cells of body) {
-      for (const line of tableRow(
-        widths,
-        panel.map((column: number) => cells[column])
-      )) {
-        console.log(line);
-      }
-    }
-    console.log(tableRule(widths, "└", "┴", "┘"));
   }
+  console.log(tableRule(widths, "└", "┴", "┘"));
 }
 
 function cell(value: number, colored: boolean): string {
@@ -342,12 +363,13 @@ function matrixLines(matrix, start: number, end: number, colored: boolean) {
   ];
 }
 
-export function grid(title: string, matrix) {
+export function grid(title: string, matrix, milestone?: Milestone) {
+  const heading: string = numbered(title, milestone);
   const rows: number = matrix.length;
   const columns: number = Math.max(0, ...matrix.map((row) => row.length));
   const dimensions: string = `${columns} × ${rows}`;
   if (rows === 0 || columns === 0) {
-    block(`${title} · ${dimensions}`, [styleText("gray", "(empty)")]);
+    block(`${heading} · ${dimensions}`, [styleText("gray", "(empty)")]);
     return;
   }
 
@@ -356,7 +378,7 @@ export function grid(title: string, matrix) {
   const colored: boolean = colors();
   for (let start: number = 0; start < columns; start += chunk) {
     const end: number = Math.min(columns, start + chunk);
-    block(`${title} · ${dimensions}`, [
+    block(`${heading} · ${dimensions}`, [
       ...(columns > chunk
         ? [styleText("gray", `Columns ${start}–${end - 1}`), ""]
         : []),
@@ -446,7 +468,7 @@ export function summary(difference: number, duration: number) {
     difference === 0
       ? styleText(["bold", "green"], "✓ EXACT MATCH")
       : styleText(["bold", "red"], "◇ MISMATCH");
-  block("Run complete", [
+  block(numbered("Run complete"), [
     status,
     "",
     `Difference  ${difference}`,
@@ -463,7 +485,7 @@ export function failure(error) {
     maxStringLength: null,
   });
   block(
-    "Run failed",
+    numbered("Run failed"),
     stripVTControlCharacters(text)
       .split("\n")
       .map((line: string) => styleText("red", line)),

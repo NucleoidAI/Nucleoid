@@ -12,10 +12,12 @@ export async function declarations({ puzzle_id, train_dataset }) {
         role: "user",
         content: `
           train_dataset:
-          ${JSON.stringify(train_dataset.dataset.map(({ input_matrix, output_matrix }) => ({
-            input_matrix,
-            output_matrix,
-          })))}
+          ${JSON.stringify(
+            train_dataset.dataset.map(({ input_matrix, output_matrix }) => ({
+              input_matrix,
+              output_matrix,
+            }))
+          )}
           json_format:
           { "declarations": <DECLARATIONS>, "output_canvas": <OUTPUT_CANVAS> }
         `,
@@ -96,7 +98,7 @@ export async function value({
     ],
   });
 
-  milestone.evaluating_rules();
+  milestone.evaluating_rules({ instance_name });
 
   const canvas_width: number = input_matrix[0].length;
   const canvas_height: number = input_matrix.length;
@@ -121,7 +123,8 @@ export async function value({
 }
 
 export async function state(train_dataset) {
-  for (const [index, dataset] of train_dataset.dataset.entries()) {
+  const objects: Record<string, unknown>[] = [];
+  for (const dataset of train_dataset.dataset) {
     const implementations = dataset.instances.map(
       ({ implementation }) => implementation
     );
@@ -138,7 +141,7 @@ export async function state(train_dataset) {
       ].join("\n\n")
     );
 
-    milestone.state({ index, obj_list });
+    objects.push(...obj_list);
 
     [...obj_list].forEach((instance) => {
       const found_instance = dataset.instances.find(
@@ -147,4 +150,6 @@ export async function state(train_dataset) {
       found_instance.output_value = instance;
     });
   }
+
+  milestone.state({ phase: "analysis", obj_list: objects });
 }
