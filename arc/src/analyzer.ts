@@ -2,11 +2,16 @@ import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
 import * as milestone from "./lib/milestone.ts";
 
-export async function declarations({ puzzle_id, train_dataset }) {
+export async function declarations({
+  puzzle_id,
+  only_puzzle_dataset,
+  train_dataset,
+}) {
   milestone.inferring_declarations();
 
   const { declarations, output_canvas } = await llm.generate({
     puzzle_id,
+    only_puzzle_dataset,
     messages: [
       {
         role: "user",
@@ -32,6 +37,7 @@ export async function declarations({ puzzle_id, train_dataset }) {
 
 export async function instances({
   puzzle_id,
+  only_puzzle_dataset,
   declarations,
   input_matrix,
   output_matrix,
@@ -40,6 +46,7 @@ export async function instances({
 
   const { instances } = await llm.generate({
     puzzle_id,
+    only_puzzle_dataset,
     messages: [
       {
         role: "user",
@@ -69,6 +76,7 @@ export async function instances({
 
 export async function value({
   puzzle_id,
+  only_puzzle_dataset,
   instance_name,
   declarations,
   input_instances,
@@ -80,6 +88,7 @@ export async function value({
 
   const { implementation } = await llm.generate({
     puzzle_id,
+    only_puzzle_dataset,
     messages: [
       {
         role: "user",

@@ -7,7 +7,10 @@ import arc_dataset from "./lib/arc_dataset.ts";
 import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "3aa6fb7a") {
+export async function start(
+  puzzle_id: string = "0ca9ddb6",
+  only_puzzle_dataset: boolean = false
+) {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
@@ -35,6 +38,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   const { declarations, output_canvas } = await analyzer.declarations({
     puzzle_id,
+    only_puzzle_dataset,
     train_dataset,
   });
 
@@ -46,6 +50,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
     const { instances } = await analyzer.instances({
       puzzle_id,
+      only_puzzle_dataset,
       declarations,
       input_matrix,
       output_matrix,
@@ -59,9 +64,12 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
       const { implementation, input_value } = await analyzer.value({
         puzzle_id,
+        only_puzzle_dataset,
         instance_name,
         declarations,
-        input_instances: dataset.instances.filter(({ implementation }) => implementation),
+        input_instances: dataset.instances.filter(
+          ({ implementation }) => implementation
+        ),
         input_matrix,
         input_instance_matrix,
         output_instance_matrix,
@@ -83,6 +91,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   const { instances } = await visualizer.instances({
     puzzle_id,
+    only_puzzle_dataset,
     train_dataset,
     test_input_matrix,
   });
@@ -101,6 +110,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
     const { implementation, input_value } = await visualizer.value({
       puzzle_id,
+      only_puzzle_dataset,
       declarations,
       train_dataset,
       test_input_matrix,
@@ -125,6 +135,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
       puzzle_id,
+      only_puzzle_dataset,
       instance_name,
       test_input_matrix,
       train_dataset,
@@ -154,6 +165,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   const debug = {
     puzzle_id,
+    only_puzzle_dataset,
     train_dataset,
     test_input_instances: input_instances,
     test_input_matrix,

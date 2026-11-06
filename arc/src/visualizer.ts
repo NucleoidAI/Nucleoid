@@ -5,6 +5,7 @@ import * as milestone from "./lib/milestone.ts";
 
 export async function instances({
   puzzle_id,
+  only_puzzle_dataset,
   train_dataset,
   test_input_matrix,
 }) {
@@ -12,6 +13,7 @@ export async function instances({
 
   const { instances } = await llm.generate({
     puzzle_id,
+    only_puzzle_dataset,
     messages: [
       {
         role: "assistant",
@@ -58,6 +60,7 @@ export async function instances({
 
 export async function value({
   puzzle_id,
+  only_puzzle_dataset,
   declarations,
   train_dataset,
   test_input_matrix,
@@ -71,6 +74,7 @@ export async function value({
 
   const { implementation } = await llm.generate({
     puzzle_id,
+    only_puzzle_dataset,
     messages: [
       {
         role: "assistant",
@@ -140,6 +144,7 @@ export async function value({
 
 export async function output_instance_matrix({
   puzzle_id,
+  only_puzzle_dataset,
   instance_name,
   test_input_matrix,
   train_dataset,
@@ -153,6 +158,7 @@ export async function output_instance_matrix({
   milestone.composing_output({ instance_name });
   const { output_instance_matrix } = await llm.generate({
     puzzle_id,
+    only_puzzle_dataset,
     messages: [
       {
         role: "assistant",

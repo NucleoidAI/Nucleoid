@@ -47,10 +47,20 @@ documentation for the distinction.
 
 Run the ARC example with `bun run start`, which loads the default `puzzle_id`
 in `src\app.ts`. [`/arc-purposal`](#arc-proposal-agent) sets that default to
-each puzzle it runs. Pass a puzzle ID as the first argument, for example
-`bun run start 0d3d703e`, to load `data\training\0d3d703e.json`. This makes
-live OpenRouter calls; type checking, linting, and offline inspection do not
-require model calls.
+each puzzle it runs. Pass a puzzle ID, for example `bun run start 0d3d703e`,
+to load `data\training\0d3d703e.json`. This makes live OpenRouter calls; type
+checking, linting, and offline inspection do not require model calls.
+
+Add the `--only-puzzle-dataset` flag, before or after the puzzle ID, to limit
+the few-shot context to the genesis datasets and the puzzle's own dataset, for
+example `bun run start 0d3d703e --only-puzzle-dataset`. The
+[genesis puzzle](#genesis-puzzle), which has no dataset of its own, then
+receives only the genesis datasets. The flag is off by default, so a run
+otherwise receives all [instruction datasets](#instruction-datasets), and the
+run log records it as `only_puzzle_dataset`. `server.ts` reads its arguments
+with Node.js's built-in `util.parseArgs`, without an additional library; an
+unknown option, or a value such as `--only-puzzle-dataset=true`, fails the run
+before any model call.
 
 ### Genesis puzzle
 
@@ -167,9 +177,16 @@ the single table extends beyond that width rather than hiding columns.
 The synchronous `document()` function in `src\dataset\dataset.ts` reads every
 regular JSON file directly in that directory on each call, independently of
 the working directory. Files are sorted by filename; extension matching is
-case-insensitive, and `.env` files are excluded. The optional legacy puzzle-ID
-argument remains accepted but does not filter the files. Every run receives
-all instruction datasets, including the shared genesis examples. Each file
+case-insensitive, and `.env` files are excluded. By default, every run
+receives all instruction datasets, including the shared genesis examples, and
+the puzzle-ID argument does not filter the files. With its second argument,
+`only_puzzle_dataset`, set to `true`, as the
+[`--only-puzzle-dataset`](#development) flag does, `document()` keeps the
+genesis datasets and the running puzzle's own `dataset.<puzzle_id>.json`, and
+drops every other puzzle's dataset. Puzzle datasets are recognized by their
+eight-digit hexadecimal ARC IDs and matched case-insensitively; every other
+file counts as a genesis dataset. The genesis puzzle has no dataset of its
+own, so it then receives only the genesis datasets. Each file
 is validated and minified by removing whitespace between JSON tokens; string
 contents, numbers, and key order stay exactly as written. The return value is
 one JSON array, with a separate entry per file. New JSON files need no
@@ -192,9 +209,10 @@ prepared as few-shot examples, and these runs are not yet held-out tests.
 The genesis datasets are `dataset.core.json`, `dataset.extension.json`,
 `dataset.curve.json`, and `dataset.line.json`. They are the shared examples of
 the genesis puzzle `3aa6fb7a`, which has no `dataset.3aa6fb7a.json`, and every
-run receives them with the other datasets. Their pairs are synthesized
-varieties of corners, curves, and lines rather than original training or test
-pairs, so they contain no test pair. Each ends with two synthesized pairs on
+run receives them, with or without `--only-puzzle-dataset`. Their pairs are
+synthesized varieties of corners, curves, and lines rather than original
+training or test pairs, so they contain no test pair. Each ends with two
+synthesized pairs on
 the genesis puzzle's 7 by 7 canvas, annotated with that dataset's own
 declarations. The first holds a single object: a color-9 corner at
 orientation 135 with its outside color-4 marker (`dataset.core.json`), a
@@ -317,7 +335,8 @@ the shifted pattern origin, derived from the original point coordinates with
 bounding box. Orientation is 0 in both states because
 the patterns are symmetric. The test pair follows the training pairs at the
 same level and is annotated by the same rules.
-`document()` includes it in the shared few-shot context for every run.
+`document()` includes it in the shared few-shot context for every run by
+default.
 
 `dataset.0d3d703e.json` annotates the four original training pairs from
 `data\training\0d3d703e.json`, in order, followed by its test pair, fifteen
