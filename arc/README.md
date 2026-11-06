@@ -1332,6 +1332,94 @@ colors keep their places on the canvas in every pair, so `corner_colors`, not
 without `#` comments. The test pair follows the training pairs at the same
 level and is annotated by the same rules.
 
+`dataset.c9e6f938.json` annotates the three original training pairs from
+`data\training\c9e6f938.json`, in order, followed by its test pair, four
+pattern instances in total, one per pair. Every input retains its original
+3 by 3 canvas and every output its original 3 by 6 canvas, 3 rows of 6
+columns, with their colors, positions, and zero cells. Each input holds one
+pattern of color-7 cells on a background of zero cells: 4, 2, and 1 cells in
+the training pairs and 4 in the test pair. Each object is that whole pattern,
+the figure seen first, whether or not its cells touch: the first training
+pattern's top cell touches the rest only at a corner, and so does the test
+pattern's bottom-right cell; the same rules would mirror each separate piece
+as well. Each output sets the whole input grid beside its left-right mirror
+image on a canvas twice as wide: the input reappears unchanged in the left
+three columns, and its column c reappears as column 5 - c, so every output
+row reads the same from right to left as from left to right. Each pattern is
+therefore joined by its mirror image across the canvas's right edge, the line
+between columns 2 and 3, and keeps its color, its rows, and its place. The
+mirror line is the canvas's edge, not the pattern's own: the third training
+pattern is a single cell in the left column of the middle row, so its mirror
+image lies in the right column of the output, four empty columns away, while
+mirroring across the pattern's own right edge, which doubles its width,
+reproduces only the first and second training pairs, whose patterns reach the
+canvas's right edge. Repeating the grid to the right without mirroring it
+reproduces no training output, and a half turn of the grid placed to the
+right reproduces only the second and third, whose inputs are top-bottom
+symmetric. These choices were fixed from the training pairs before the test
+pair was read; the puzzle is the left-right counterpart of
+`dataset.8be77c9e.json`, which stacks its grid over its top-bottom mirror
+image. The class takes only the standard entries `x`, `y`, `width`,
+`height`, and `orientation`, in that order, where `width` and `height` are
+the column and row counts of the pattern's box, the nonzero bounding box of
+its input mask: 2 and 3 for the first training pattern, 2 and 1 for the
+second, 1 and 1 for the third, and 3 and 3 for the test pattern. It takes no
+descriptive property, with no color, parts list, canvas size, or matrix of
+cells, because the rules need none: the pattern's cells travel in its masks,
+and the rules read the canvas's width from the solver's `canvas_width`. Each
+implementation passes `width` and `height` right after `y`, such as
+`x=1, y=0, width=2, height=3, orientation=0` for the first training input.
+Two unconditional class-level rules turn every pattern into the figure it
+forms with its mirror image. `$Obj.tag = 'l6919'` names that geometry, and
+`$Obj.width = 2 * (canvas_width - $Obj.x@first)` grows the box right to the
+mirror image of its left column: twice the distance from the pattern's left
+column to the canvas's right edge, so the mirror line lies at the box's
+center. That gives 4 columns for the first and second training patterns,
+which start in the second column, and 6 for the third training pattern and
+the test pattern, which start in the left column. The rule reads the canvas's
+width as `dataset.8be77c9e.json` reads its height, anchored with `@first` to
+read the pattern's input column, as there, although no rule moves `x`. The
+rules leave `x`, `y`, `height`, and `orientation` unchanged, because the
+mirror image keeps the pattern's rows and the figure starts at the pattern's
+left column. They state no `mirror_axis`, the property of
+`dataset.74dd1130.json`: the tag already names a mirror image to the right of
+the shape, and only `width` grows, so an axis would restate them. Each grid
+holds a single pattern and shows no relation between objects, so no
+population operation appears. The rules give the same states in reverse
+order and when they are declared after the instances. They create no
+property, so input and output states share the same keys and differ only in
+the tag and `width`. Native snapshots start with the pair's `canvas_width`
+and `canvas_height`, and output snapshots are captured with the pair's
+implementation followed by `Obj[:]`. Tags identify the geometry: `l9100` is a
+single shape, as in `dataset.28bf18c6.json` and `dataset.8be77c9e.json`, and
+`l6919` is a shape beside its left-right mirror image, symmetric about the
+vertical center line of its box, the left-right counterpart of the `l7511` of
+`dataset.8be77c9e.json`. Input masks retain each pair's full-size 3 by 3
+input canvas and output masks the complete 3 by 6 output, with zero cells
+padded `0`; with one pattern per grid, each mask equals its pair's grid, and
+merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the figure's nonzero bounding-box origin,
+1 and 0 in the first training pair, 1 and 1 in the second, 0 and 1 in the
+third, and 0 and 0 in the test pair, equal to
+`output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height` equal its size, 4 and 3, 4 and 1,
+6 and 1, and 6 and 3. `output_canvas` is `EXACT`, which keeps the input's
+3 rows and grows the composed canvas right to retain the figure, as
+`dataset.8be77c9e.json` grows its canvas down, while `FIT` would crop the
+empty left and right columns from the first and second training outputs and
+the empty top and bottom rows from the second and third. The composed canvas
+grows only to the figure's rightmost cell, though, so it reaches the outputs'
+6 columns only when the pattern starts in the left column, as in the third
+training pair and the test pair. The first and second training patterns start
+one column right, so their outputs end in an empty column that neither mode
+frames: `EXACT` composes them 5 columns wide. Framing each output on the world
+model's canvas, twice `canvas_width` columns by `canvas_height` rows, needs a
+solver change. Orientation is 0 in both states because the pattern is not
+turned: its mirror image is part of the figure that `l6919` names, not a turn.
+The declarations hold executable code only, without `#` comments. The test
+pair follows the training pairs at the same level and is annotated by the same
+rules.
+
 `dataset.d037b0a7.json` annotates the three original training pairs from
 `data\training\d037b0a7.json`, in order, followed by its test pair, eleven
 point instances in total (3, 3, 2, and 3 per pair). Every input and output

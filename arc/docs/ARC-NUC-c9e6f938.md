@@ -1,0 +1,194 @@
+# ARC-NUC-c9e6f938 -- Grid Beside Its Mirror Image
+
+Progress record for ARC training puzzle `c9e6f938`: its instruction dataset,
+the solver and Nucleoid changes it needed, its runs, and what is still open.
+
+| Item | Status |
+| --- | --- |
+| Puzzle | [`data/training/c9e6f938.json`](../data/training/c9e6f938.json) |
+| Instruction dataset | [`dataset.c9e6f938.json`](../src/dataset/dataset.c9e6f938.json): the puzzle's 3 original training pairs and its test pair, 4 pattern instances, 1 in each pair; committed with this record |
+| Output canvas | `EXACT` |
+| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
+| Solver changes | None applied; one suggested and not applied, the output canvas framed on the world model's canvas size that [ARC-NUC-8be77c9e](ARC-NUC-8be77c9e.md) also suggests; the JSON-only message question carried over from earlier records stays open |
+| Solver runs | 1 local run on 6-Nov-2026: exit 0, difference 0 |
+| Updated | 6-Nov-2026 |
+
+## Puzzle
+
+Each training input is a 3 by 3 canvas holding one pattern of color-7 cells
+on a background of zero cells: 4, 2, and 1 cells in the three training
+pairs. Each output is a 3 by 6 canvas, twice as wide, that sets the input
+beside its left-right mirror image: the input reappears unchanged in the left
+three columns, and its column c reappears as column 5 - c, so every output
+row reads the same from right to left as from left to right. The mirror line
+is the canvas's right edge, not the pattern's: the third training pattern is
+a single cell in the left column of the middle row, so four empty columns
+separate it from its mirror image in the right column, while the first and
+second patterns reach the right edge and meet theirs. The output keeps the
+input's 3 rows and grows only to the right, so the dataset is `EXACT`.
+
+`/arc-purposal` chose this puzzle by default: among the 376 training puzzles
+other than the genesis puzzle `3aa6fb7a` and those with a dataset, its
+largest training matrix has the fewest cells, 18, with 81 cells in all its
+training matrices. `8be77c9e` tied on both measurements and came first by
+ID, and it already had its dataset; the next, `c8f0f002`, has 18 and 90. The
+puzzle is the left-right counterpart of
+[ARC-NUC-8be77c9e](ARC-NUC-8be77c9e.md), which stacks its grid over its
+top-bottom mirror image.
+
+## Gestalt overview
+
+- **Whole grid.** A small 3 by 3 canvas with one color-7 pattern; the output
+  is the same grid on the left and its reflection on the right, a 3 by 6
+  canvas that is symmetric about its vertical center line.
+- **Figures.** The whole color-7 pattern is the figure seen first, one per
+  grid, including where its cells touch only at a corner, as the first
+  training pattern's top cell does.
+- **Relations.** The pattern sits against the canvas's edges: against the
+  right edge in the first and second pairs, and against the left edge, two
+  empty columns from the right one, in the third. The canvas's right edge is
+  the line the pattern is mirrored across.
+- **Change.** The canvas doubles to the right, and the whole grid is joined
+  by its reflection across its right edge, so each pattern gains its mirror
+  image to its right, keeping its color, its rows, and its place.
+- **World model.** One object per grid, the whole pattern, the figure seen
+  first. Its box grows right to hold the pattern and its reflection, so
+  nothing finer was needed. Before it read the test pair, the worker set
+  aside a plain copy placed to the right, which reproduces no training
+  output; a half turn placed to the right, which reproduces only the second
+  and third, whose inputs are top-bottom symmetric; mirroring across the
+  pattern's own right edge, which fails the third; and a top-bottom mirror
+  or a mirror placed to the left, which reproduce none.
+
+## Dataset
+
+The single dataset holds the three original training pairs in source order,
+followed at the same level by the puzzle's test pair, which the same rules
+annotate. Each object is one whole pattern: an instance of
+`Obj(x, y, width, height, orientation)` with only the standard entries, whose
+initial tag `l9100` is the single shape of `dataset.28bf18c6.json` and
+`dataset.8be77c9e.json`. The class takes no descriptive property: the
+pattern's cells travel in its masks, and the rules read the canvas's width
+from the solver's `canvas_width`, so there is no color, parts list, canvas
+size, or matrix of cells. Two unconditional class-level rules turn every
+pattern into the figure it forms with its reflection:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int):
+$Obj.tag = 'l6919'
+$Obj.width = 2 * (canvas_width - $Obj.x@first)
+```
+
+`l6919`, a new tag, is a shape beside its left-right mirror image, symmetric
+about the vertical center line of its box, the left-right counterpart of the
+`l7511` of `dataset.8be77c9e.json`. `width` becomes twice the distance from
+the pattern's left column to the canvas's right edge, so the mirror line lies
+at the box's center: 4 columns for the first and second training patterns,
+which start in the second column, and 6 for the third, which starts in the
+left column. The rule reads `canvas_width` as `dataset.8be77c9e.json` reads
+`canvas_height`, anchored with `@first` to read the pattern's input column,
+although no rule moves `x`. `x`, `y`, `height`, and `orientation` stay as
+they were: the reflection keeps the pattern's rows, the figure starts at the
+pattern's left column, and the reflection is part of the figure `l6919`
+names, not a turn. The rules create no property and state no `mirror_axis`,
+the property of `dataset.74dd1130.json`, because the tag and the growing
+`width` already determine the axis. Each grid holds a single pattern and
+shows no relation between objects, so no population operation appears. The
+declarations carry no `#` comments. The
+[README](../README.md#instruction-datasets) describes the dataset in full.
+
+The caller checked the handoff against the declarative, higher-order, and
+gestalt requirements and found that it met them, so it sent nothing back. It
+reran the worker's offline check on the accepted runtime, printing only each
+check's name and result, and all 105 checks passed:
+
+- the file parses, with the datasets' top-level and instance keys in their
+  order, LF line endings, no byte-order mark, and no `#` comments;
+- the 3 training pairs and the test pair keep their original grids, in
+  order;
+- every mask keeps its full canvas, 3 by 3 for inputs and 3 by 6 for
+  outputs, holds only its grid's cells, and matches its x/y fields, and the
+  masks merge back into each grid;
+- each output mask is its input mask beside its left-right mirror image, and
+  each output box's width is `2 * (canvas_width - x)`;
+- every input and output snapshot reruns exactly, also with the rules
+  reversed and declared after the instances;
+- the 246 instance names across the 28 JSON datasets are unique.
+
+The worker's other offline checks passed as well: `document()` includes the
+dataset as the 20th of the 28 JSON instruction datasets, in filename order,
+and `bun run typecheck` and `bun run lint` pass. Its offline copy of the
+solver's composition found the canvas gap under Open items.
+
+The worker wrote the dataset, its README paragraph, and the puzzle's entry
+in the **ARC Benchmark** workflow's list, its 25th puzzle, which leaves the
+job's 170-minute timeout sufficient. The caller had asked for the paragraph
+at the end of the README's dataset paragraphs, which put it out of their
+filename order, so the caller moved it unchanged to follow the
+`dataset.a9f96cdd.json` paragraph. The caller made the puzzle the solver's
+default in `src/app.ts`, in place of `8be77c9e`, before the run.
+
+## Runs
+
+| Date | Command | Runtime | Exit status | Difference | Elapsed |
+| --- | --- | --- | --- | --- | --- |
+| 6-Nov-2026 13:00 UTC | `bun start c9e6f938` | Accepted runtime at `b3cbd26` (last runtime change `7096171`), local | 0 | 0 | 2m 1.2s |
+
+The run was `bun start c9e6f938` from `arc/`, run once by `/arc-purposal`
+with a 30-minute limit and `NUCLEOID_EXECUTABLE` unset, after
+`bun install --frozen-lockfile` reported no changes. It used the primary
+checkout's debug runtime (`nucleoid 1.0.0`), current with `cargo build` at
+`b3cbd26`. The solver was the one committed at `b3cbd26` with its default
+puzzle changed, plus another session's change to `src/lib/openrouter.ts`,
+`src/lib/milestone.ts`, and `src/lib/terminal.ts`, uncommitted when the run
+started. That session committed it as `0fd695d`, "Disable and report
+OpenRouter prompt caching", 19 seconds after the run ended, with the same
+file contents the run used; the files were last written 23 seconds before
+the run started. The change sends `X-OpenRouter-Cache: false`, fails a
+request whose response reports a cache hit, and reports cached input
+tokens; it leaves the model, sampling, provider, and prompts as they were.
+The model settings were the committed `qwen/qwen3.8-27b`, pinned to the
+`deepinfra/bf16` provider. `--only-puzzle-dataset` was off, so the few-shot
+context held all 28 instruction datasets, this dataset's annotated test pair
+among them, as the ARC instructions intend while the datasets are prepared
+as few-shot examples.
+
+The run ended in an exact match, exit status 0 and difference 0, in 2m 1.2s
+by the solver's own report; the runner recorded the process from 13:00:45.7
+to 13:02:47.3 UTC. Its error log holds only bun's command line, and it wrote
+`logs/c9e6f938.log.json`, which Git ignores. The runtime's hash was the same
+before and after the run, and no commit reached the primary checkout during
+it. The invocation authorizes one run, so none was repeated.
+`bun run typecheck` and `bun run lint` passed with the new default after the
+run. The puzzle joined the **ARC Benchmark** workflow with this dataset, so
+no workflow run is recorded yet.
+
+## Open items
+
+- **The output canvas cannot keep a trailing empty column.** This evidence
+  comes from the training pairs alone. Training outputs 1 and 2 are 3 by 6,
+  and their right column is empty, because their patterns start in the
+  second column. `src/visualizer.ts` crops each predicted output instance to
+  its nonzero cells, and `Matrix.pad` places it on the input's 3 columns or
+  as far right as its rightmost cell; `Matrix.canvas` in `src/lib/Matrix.ts`
+  then returns the merged result for `EXACT` and crops it for `FIT`. Composed
+  that way, the first and second training outputs come out 5 columns wide,
+  while the third comes out at its full 6. No dataset can close the gap,
+  because an output mask holds only cells of its output, and that column has
+  none. It is the column counterpart of the trailing empty row in
+  [ARC-NUC-8be77c9e](ARC-NUC-8be77c9e.md), and one change would close both.
+  Suggested, not applied: add an `output_canvas` form whose width and height
+  are Nucleoid expressions over `canvas_width` and `canvas_height`, here
+  `2 * canvas_width` and `canvas_height`. The solver would evaluate them with
+  the same canvas declarations and frame the merged result to exactly that
+  size, in `src/app.ts`, `src/lib/Matrix.ts`, the `output_canvas` format in
+  `src/analyzer.ts`, and the README's output-canvas description. `EXACT` and
+  `FIT` would stay unchanged, and this dataset could adopt the new form in a
+  later invocation.
+- **Messages are not JSON-only.** Carried over from
+  [ARC-NUC-8be77c9e](ARC-NUC-8be77c9e.md): `src/lib/llm.ts` sends its system
+  messages as JSON, but the user and assistant messages that
+  `src/analyzer.ts` and `src/visualizer.ts` build still wrap JSON in text
+  labels, while the ARC instructions require every message to parse as one
+  JSON document. It remains an open question for the user. This dataset does
+  not depend on it.
