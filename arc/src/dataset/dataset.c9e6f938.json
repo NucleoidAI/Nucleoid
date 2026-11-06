@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
+    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
     "$Obj.tag = 'l6919'",
     "$Obj.width = 2 * (canvas_width - $Obj.x@first)"
   ],
@@ -60,8 +60,8 @@
           "output_x": 1,
           "input_y": 1,
           "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 0,
+          "input_orientation": 90,
+          "output_orientation": 90,
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 7, 7],
@@ -72,9 +72,9 @@
             [0, 7, 7, 7, 7, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1c8ea9d1d2c7 = Obj(x=1, y=1, width=2, height=1, orientation=0)",
-          "input_value": {"height":1,"id":"obj1c8ea9d1d2c7","orientation":0,"tag":"l9100","width":2,"x":1,"y":1},
-          "output_value": {"height":1,"id":"obj1c8ea9d1d2c7","orientation":0,"tag":"l6919","width":4,"x":1,"y":1}
+          "implementation": "obj1c8ea9d1d2c7 = Obj(x=1, y=1, width=2, height=1, orientation=90)",
+          "input_value": {"height":1,"id":"obj1c8ea9d1d2c7","orientation":90,"tag":"l9100","width":2,"x":1,"y":1},
+          "output_value": {"height":1,"id":"obj1c8ea9d1d2c7","orientation":90,"tag":"l6919","width":4,"x":1,"y":1}
         }
       ]
     },

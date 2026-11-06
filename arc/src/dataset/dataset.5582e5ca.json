@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# There is an Obj type, a whole block of colored cells,\n# which has its x and y position, the width and height of its box\n# and its orientation as integers,\n# and its parts, the colors of its nonzero cells\n# in reading order, as a list\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
+    "# There is an Obj type, a whole block of colored cells,\n# which has its x and y position, the width and height of its box\n# and its orientation as integers,\n# and its parts, the colors of its nonzero cells\n# in reading order, as a list\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
     "# Every block becomes a solid rectangle that fills the canvas\n$Obj.tag = 'l5236'",
     "# Every block is filled with its most frequent color\n$Obj.fill_color = mode of $Obj.parts"
   ],

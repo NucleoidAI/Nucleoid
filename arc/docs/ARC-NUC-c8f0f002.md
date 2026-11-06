@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/c8f0f002.json`](../data/training/c8f0f002.json) |
-| Instruction dataset | [`dataset.c8f0f002.json`](../src/dataset/dataset.c8f0f002.json): the puzzle's 3 original training pairs and its test pair, 12 color-region instances, 3 in each pair; committed with this record; condition respelled with `is` later on 6-Nov-2026 |
+| Instruction dataset | [`dataset.c8f0f002.json`](../src/dataset/dataset.c8f0f002.json): the puzzle's 3 original training pairs and its test pair, 12 color-region instances, 3 in each pair; committed with this record; condition respelled with `is` later on 6-Nov-2026; shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md), and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None applied or suggested; the JSON-only message question carried over from earlier records stays open |
@@ -169,6 +169,38 @@ its declarations, every snapshot replays on that runtime, and the instance
 names stay unique across all datasets. `document()` loads it with the other
 28 datasets. At the user's choice, no solver run has measured this version.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+This dataset's labels already followed the convention, as the labeller
+confirmed: each region has no direction, so both states are 0. Only the
+comment line changed, so the class, the rules, the grids, masks, positions,
+instance names, implementations, and snapshots are as before, and the gestalt
+overview above still holds.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -202,6 +234,10 @@ The exact match above used the version with `==`. No solver run has measured
 the version with `is` of 6-Nov-2026, which the user chose to verify offline,
 so its difference is unknown, not zero.
 
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
+
 ## Open items
 
 - **Messages are not JSON-only.** Carried over from
@@ -219,3 +255,6 @@ so its difference is unknown, not zero.
   `$Obj.flag = $Obj.color@first is 7`, gets `is` read as a name and a
   `ReferenceError`. A dispatched **ARC Benchmark** run would measure the
   effect.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

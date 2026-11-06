@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
+    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
     "if $Obj.color@first is 7:\n    $Obj.color = 5"
   ],
   "output_canvas": "EXACT",

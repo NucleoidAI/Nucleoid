@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
+    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
     "$Obj.tag = 'l6074'",
     "$Obj.orientation = {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",
     "if $Obj.orientation is 90:\n    $Obj.height = 1",

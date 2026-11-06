@@ -1,10 +1,10 @@
 {
   "declarations": [
-    "# There is an Obj type, a straight line with a color-8 endpoint,\n# which has its x and y position, its width and height\n# and its orientation as integers,\n# and the side its endpoint is on as a string\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, endpoint_position: str):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l8001'\n    this.endpoint_position = endpoint_position",
-    "# A horizontal line whose endpoint is on the left\n# grows one cell to the right, so it is one column wider\nif $Obj.orientation is 90 and $Obj.endpoint_position is left:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'\n    $Obj.width = $Obj.width@first + 1",
-    "# A horizontal line whose endpoint is on the right\n# grows one cell to the left, so it starts one column further left\n# and is one column wider\nif $Obj.orientation is 90 and $Obj.endpoint_position is right:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'\n    $Obj.x = $Obj.x@first - 1\n    $Obj.width = $Obj.width@first + 1",
-    "# A vertical line whose endpoint is at the top\n# grows one cell downward, so it is one row taller\nif $Obj.orientation is 0 and $Obj.endpoint_position is up:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'\n    $Obj.height = $Obj.height@first + 1",
-    "# A vertical line whose endpoint is at the bottom\n# grows one cell upward, so it starts one row higher\n# and is one row taller\nif $Obj.orientation is 0 and $Obj.endpoint_position is down:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'\n    $Obj.y = $Obj.y@first - 1\n    $Obj.height = $Obj.height@first + 1"
+    "# There is an Obj type, a straight line with a color-8 endpoint,\n# which has its x and y position, its width and height\n# and its orientation as integers,\n# and it points toward its endpoint\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l8001'",
+    "# A horizontal line that points left, toward its endpoint,\n# grows one cell to the right, so it is one column wider\nif $Obj.orientation is 270:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'\n    $Obj.width = $Obj.width@first + 1",
+    "# A horizontal line that points right, toward its endpoint,\n# grows one cell to the left, so it starts one column further left\n# and is one column wider\nif $Obj.orientation is 90:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'\n    $Obj.x = $Obj.x@first - 1\n    $Obj.width = $Obj.width@first + 1",
+    "# A vertical line that points up, toward its endpoint,\n# grows one cell downward, so it is one row taller\nif $Obj.orientation is 0:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'\n    $Obj.height = $Obj.height@first + 1",
+    "# A vertical line that points down, toward its endpoint,\n# grows one cell upward, so it starts one row higher\n# and is one row taller\nif $Obj.orientation is 180:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'\n    $Obj.y = $Obj.y@first - 1\n    $Obj.height = $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -36,8 +36,8 @@
           "output_x": 2,
           "input_y": 0,
           "output_y": 0,
-          "input_orientation": 90,
-          "output_orientation": 90,
+          "input_orientation": 270,
+          "output_orientation": 270,
           "input_instance_matrix": [
             [0, 0, 8, 6, 6, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -58,9 +58,9 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj31dc1400794e = Obj(x=2, y=0, width=3, height=1, orientation=90, endpoint_position='left')",
-          "input_value": {"endpoint_position":"left","height":1,"id":"obj31dc1400794e","orientation":90,"tag":"l8001","width":3,"x":2,"y":0},
-          "output_value": {"endpoint_position":"left","extension_direction":"right","height":1,"id":"obj31dc1400794e","orientation":90,"tag":"l4102","width":4,"x":2,"y":0}
+          "implementation": "obj31dc1400794e = Obj(x=2, y=0, width=3, height=1, orientation=270)",
+          "input_value": {"height":1,"id":"obj31dc1400794e","orientation":270,"tag":"l8001","width":3,"x":2,"y":0},
+          "output_value": {"extension_direction":"right","height":1,"id":"obj31dc1400794e","orientation":270,"tag":"l4102","width":4,"x":2,"y":0}
         },
         {
           "instance_name": "obj1383c0d06fda",
@@ -90,9 +90,9 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1383c0d06fda = Obj(x=4, y=5, width=3, height=1, orientation=90, endpoint_position='right')",
-          "input_value": {"endpoint_position":"right","height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l8001","width":3,"x":4,"y":5},
-          "output_value": {"endpoint_position":"right","extension_direction":"left","height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l4102","width":4,"x":3,"y":5}
+          "implementation": "obj1383c0d06fda = Obj(x=4, y=5, width=3, height=1, orientation=90)",
+          "input_value": {"height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l8001","width":3,"x":4,"y":5},
+          "output_value": {"extension_direction":"left","height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l4102","width":4,"x":3,"y":5}
         }
       ]
     },
@@ -124,8 +124,8 @@
           "output_x": 0,
           "input_y": 3,
           "output_y": 2,
-          "input_orientation": 0,
-          "output_orientation": 0,
+          "input_orientation": 180,
+          "output_orientation": 180,
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -146,9 +146,9 @@
             [8, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objfef9b8e1a36c = Obj(x=0, y=3, width=1, height=4, orientation=0, endpoint_position='down')",
-          "input_value": {"endpoint_position":"down","height":4,"id":"objfef9b8e1a36c","orientation":0,"tag":"l8001","width":1,"x":0,"y":3},
-          "output_value": {"endpoint_position":"down","extension_direction":"up","height":5,"id":"objfef9b8e1a36c","orientation":0,"tag":"l6012","width":1,"x":0,"y":2}
+          "implementation": "objfef9b8e1a36c = Obj(x=0, y=3, width=1, height=4, orientation=180)",
+          "input_value": {"height":4,"id":"objfef9b8e1a36c","orientation":180,"tag":"l8001","width":1,"x":0,"y":3},
+          "output_value": {"extension_direction":"up","height":5,"id":"objfef9b8e1a36c","orientation":180,"tag":"l6012","width":1,"x":0,"y":2}
         },
         {
           "instance_name": "objb3a27e31f269",
@@ -156,8 +156,8 @@
           "output_x": 2,
           "input_y": 5,
           "output_y": 5,
-          "input_orientation": 90,
-          "output_orientation": 90,
+          "input_orientation": 270,
+          "output_orientation": 270,
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -178,9 +178,9 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objb3a27e31f269 = Obj(x=2, y=5, width=4, height=1, orientation=90, endpoint_position='left')",
-          "input_value": {"endpoint_position":"left","height":1,"id":"objb3a27e31f269","orientation":90,"tag":"l8001","width":4,"x":2,"y":5},
-          "output_value": {"endpoint_position":"left","extension_direction":"right","height":1,"id":"objb3a27e31f269","orientation":90,"tag":"l4102","width":5,"x":2,"y":5}
+          "implementation": "objb3a27e31f269 = Obj(x=2, y=5, width=4, height=1, orientation=270)",
+          "input_value": {"height":1,"id":"objb3a27e31f269","orientation":270,"tag":"l8001","width":4,"x":2,"y":5},
+          "output_value": {"extension_direction":"right","height":1,"id":"objb3a27e31f269","orientation":270,"tag":"l4102","width":5,"x":2,"y":5}
         }
       ]
     },
@@ -234,9 +234,9 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj3f1a34c478cd = Obj(x=3, y=0, width=4, height=1, orientation=90, endpoint_position='right')",
-          "input_value": {"endpoint_position":"right","height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l8001","width":4,"x":3,"y":0},
-          "output_value": {"endpoint_position":"right","extension_direction":"left","height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l4102","width":5,"x":2,"y":0}
+          "implementation": "obj3f1a34c478cd = Obj(x=3, y=0, width=4, height=1, orientation=90)",
+          "input_value": {"height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l8001","width":4,"x":3,"y":0},
+          "output_value": {"extension_direction":"left","height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l4102","width":5,"x":2,"y":0}
         },
         {
           "instance_name": "obja034f4182e12",
@@ -244,8 +244,8 @@
           "output_x": 1,
           "input_y": 4,
           "output_y": 3,
-          "input_orientation": 0,
-          "output_orientation": 0,
+          "input_orientation": 180,
+          "output_orientation": 180,
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -266,9 +266,9 @@
             [0, 6, 0, 0, 0, 0, 0, 0],
             [0, 8, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obja034f4182e12 = Obj(x=1, y=4, width=1, height=4, orientation=0, endpoint_position='down')",
-          "input_value": {"endpoint_position":"down","height":4,"id":"obja034f4182e12","orientation":0,"tag":"l8001","width":1,"x":1,"y":4},
-          "output_value": {"endpoint_position":"down","extension_direction":"up","height":5,"id":"obja034f4182e12","orientation":0,"tag":"l6012","width":1,"x":1,"y":3}
+          "implementation": "obja034f4182e12 = Obj(x=1, y=4, width=1, height=4, orientation=180)",
+          "input_value": {"height":4,"id":"obja034f4182e12","orientation":180,"tag":"l8001","width":1,"x":1,"y":4},
+          "output_value": {"extension_direction":"up","height":5,"id":"obja034f4182e12","orientation":180,"tag":"l6012","width":1,"x":1,"y":3}
         },
         {
           "instance_name": "obj4eba52e160b2",
@@ -298,9 +298,9 @@
             [0, 0, 0, 0, 0, 0, 6, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj4eba52e160b2 = Obj(x=6, y=2, width=1, height=4, orientation=0, endpoint_position='up')",
-          "input_value": {"endpoint_position":"up","height":4,"id":"obj4eba52e160b2","orientation":0,"tag":"l8001","width":1,"x":6,"y":2},
-          "output_value": {"endpoint_position":"up","extension_direction":"down","height":5,"id":"obj4eba52e160b2","orientation":0,"tag":"l6012","width":1,"x":6,"y":2}
+          "implementation": "obj4eba52e160b2 = Obj(x=6, y=2, width=1, height=4, orientation=0)",
+          "input_value": {"height":4,"id":"obj4eba52e160b2","orientation":0,"tag":"l8001","width":1,"x":6,"y":2},
+          "output_value": {"extension_direction":"down","height":5,"id":"obj4eba52e160b2","orientation":0,"tag":"l6012","width":1,"x":6,"y":2}
         }
       ]
     },
@@ -350,9 +350,9 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj84b61b7cd8f6 = Obj(x=2, y=1, width=1, height=3, orientation=0, endpoint_position='up')",
-          "input_value": {"endpoint_position":"up","height":3,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l8001","width":1,"x":2,"y":1},
-          "output_value": {"endpoint_position":"up","extension_direction":"down","height":4,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l6012","width":1,"x":2,"y":1}
+          "implementation": "obj84b61b7cd8f6 = Obj(x=2, y=1, width=1, height=3, orientation=0)",
+          "input_value": {"height":3,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l8001","width":1,"x":2,"y":1},
+          "output_value": {"extension_direction":"down","height":4,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l6012","width":1,"x":2,"y":1}
         }
       ]
     },
@@ -382,8 +382,8 @@
           "output_x": 1,
           "input_y": 1,
           "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
+          "input_orientation": 180,
+          "output_orientation": 180,
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0],
             [0, 6, 0, 0, 0, 0, 0],
@@ -402,9 +402,9 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj71a65bf8e5ce = Obj(x=1, y=1, width=1, height=4, orientation=0, endpoint_position='down')",
-          "input_value": {"endpoint_position":"down","height":4,"id":"obj71a65bf8e5ce","orientation":0,"tag":"l8001","width":1,"x":1,"y":1},
-          "output_value": {"endpoint_position":"down","extension_direction":"up","height":5,"id":"obj71a65bf8e5ce","orientation":0,"tag":"l6012","width":1,"x":1,"y":0}
+          "implementation": "obj71a65bf8e5ce = Obj(x=1, y=1, width=1, height=4, orientation=180)",
+          "input_value": {"height":4,"id":"obj71a65bf8e5ce","orientation":180,"tag":"l8001","width":1,"x":1,"y":1},
+          "output_value": {"extension_direction":"up","height":5,"id":"obj71a65bf8e5ce","orientation":180,"tag":"l6012","width":1,"x":1,"y":0}
         },
         {
           "instance_name": "obj400315cd8551",
@@ -432,9 +432,9 @@
             [0, 0, 0, 6, 6, 6, 8],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj400315cd8551 = Obj(x=4, y=5, width=3, height=1, orientation=90, endpoint_position='right')",
-          "input_value": {"endpoint_position":"right","height":1,"id":"obj400315cd8551","orientation":90,"tag":"l8001","width":3,"x":4,"y":5},
-          "output_value": {"endpoint_position":"right","extension_direction":"left","height":1,"id":"obj400315cd8551","orientation":90,"tag":"l4102","width":4,"x":3,"y":5}
+          "implementation": "obj400315cd8551 = Obj(x=4, y=5, width=3, height=1, orientation=90)",
+          "input_value": {"height":1,"id":"obj400315cd8551","orientation":90,"tag":"l8001","width":3,"x":4,"y":5},
+          "output_value": {"extension_direction":"left","height":1,"id":"obj400315cd8551","orientation":90,"tag":"l4102","width":4,"x":3,"y":5}
         }
       ]
     }

@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/d037b0a7.json`](../data/training/d037b0a7.json) |
-| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed |
+| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed; shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
-| Solver runs | 1 local run on 3-Nov-2026 for version 1, exit 0; version 2 not run |
+| Solver runs | 1 local run on 3-Nov-2026 for version 1, exit 0; version 2 not run; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -119,6 +119,38 @@ regenerated every snapshot with the accepted runtime at `491512d`, and the
 caller replayed every pair offline against the unchanged grids, masks,
 positions and instance names. No solver run has measured this version yet.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+This dataset's labels already followed the convention, as the labeller
+confirmed: each point is 0, and so is its output, a vertical bar along its
+axis or the point itself. Only the comment line changed, so the class, the
+rules, the grids, masks, positions, instance names, implementations, and
+snapshots are as before, and the gestalt overview above still holds.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -136,6 +168,10 @@ runtime. Its hash was the same before and after the run. Elapsed is the
 solver's own report. The puzzle has not been in an **ARC puzzle report**
 workflow run. Version 2 has not been run; measuring it takes a new
 `/arc-purposal d037b0a7` invocation, which authorizes its one run.
+
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
 
 ## Open items
 
@@ -176,3 +212,6 @@ workflow run. Version 2 has not been run; measuring it takes a new
   and this record's update. Version 1,
   its README paragraph, the workflow entry, and this record's first version
   were committed in `81c0208`.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

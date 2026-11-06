@@ -1,9 +1,10 @@
 {
   "declarations": [
-    "# There is an Obj type, the whole pattern of colored cells on the canvas,\n# which has its x and y position, the width and height of its box\n# and its orientation as integers,\n# and its points, the column and row of each of its cells\n# in reading order, as a list\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, points: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.points = points",
+    "# There is an Obj type, the whole pattern of colored cells on the canvas,\n# which has its x and y position, the width and height of its box\n# and its orientation as integers,\n# and its points, the column and row of each of its cells\n# in reading order, as a list\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, points: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.points = points",
     "# Every pattern becomes a single output point\n$Obj.tag = 'l7544'",
     "$Obj.width = 1",
     "$Obj.height = 1",
+    "# Every output point, a single cell with no direction, has orientation 0\n$Obj.orientation = 0",
     "# A pattern is symmetric when the mirror image of each of its points\n# across the canvas's vertical center line, in the same row and as far\n# from the right edge as the point is from the left edge,\n# is one of its points too\n$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])",
     "# Every output point is color 1 when its pattern is symmetric\n# and color 7 otherwise\n$Obj.fill_color = 1 if $Obj.symmetric else 7",
     "# Every output point sits in the left column\n$Obj.x = 0",
@@ -187,7 +188,7 @@
           "output_x": 0,
           "input_y": 0,
           "output_y": 0,
-          "input_orientation": 0,
+          "input_orientation": 45,
           "output_orientation": 0,
           "input_instance_matrix": [
             [2, 2, 0],
@@ -197,8 +198,8 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj656ae86cdc80 = Obj(x=0, y=0, width=2, height=2, orientation=0, points=[[0, 0], [1, 0], [1, 1]])",
-          "input_value": {"height":2,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","width":2,"x":0,"y":0},
+          "implementation": "obj656ae86cdc80 = Obj(x=0, y=0, width=2, height=2, orientation=45, points=[[0, 0], [1, 0], [1, 1]])",
+          "input_value": {"height":2,"id":"obj656ae86cdc80","orientation":45,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"fill_color":7,"height":1,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]

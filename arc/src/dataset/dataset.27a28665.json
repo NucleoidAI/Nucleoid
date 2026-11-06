@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# There is an Obj type, the whole block of colored cells on the canvas,\n# which has its x and y position, the width and height of its box\n# and its orientation as integers,\n# and its tag, the name of its shape, as a string\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, tag: str):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = tag",
+    "# There is an Obj type, the whole block of colored cells on the canvas,\n# which has its x and y position, the width and height of its box\n# and its orientation as integers,\n# and its tag, the name of its shape, as a string\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, tag: str):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = tag",
     "# Every block becomes a single output point\n$Obj.tag = 'l7544'",
     "$Obj.width = 1",
     "$Obj.height = 1",

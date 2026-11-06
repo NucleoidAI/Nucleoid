@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/794b24be.json`](../data/training/794b24be.json) |
-| Instruction dataset | [`dataset.794b24be.json`](../src/dataset/dataset.794b24be.json): the puzzle's 10 original training pairs and its 2 test pairs, 12 pattern instances, one per pair; committed with this record |
+| Instruction dataset | [`dataset.794b24be.json`](../src/dataset/dataset.794b24be.json): the puzzle's 10 original training pairs and its 2 test pairs, 12 pattern instances, one per pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the dataset uses accepted features only |
 | Solver changes | None; one suggested change awaits review, not applied |
-| Solver runs | 1 local run on 6-Nov-2026: exit 0, difference 0 |
+| Solver runs | 1 local run on 6-Nov-2026: exit 0, difference 0; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -78,6 +78,57 @@ every grid equals its original, the full-size 3 by 3 masks merge back into
 every input and output, every snapshot reruns byte for byte, and the loader
 includes the dataset among all 24 instruction datasets in filename order.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+Six of the twelve instances changed. In the inputs, two cells that touch at a
+corner are a diagonal line without a head, 45 when it rises to the right and
+135 when it falls, and the seventh training pattern is a three-cell corner
+that points toward its bottom-right vertex, 135. In the outputs, a tally of
+two or three cells is a horizontal bar, 90, while a single cell and the
+four-cell T stay 0. One new unconditional rule sets the tally's orientation
+from its own box, with the conditional expression of
+[NUC 59](../../docs/nuc-0059.md) and the `is` of
+[NUC 86](../../docs/nuc-0086.md). The rules now read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, cell_count: int):
+$Obj.tag = 'l5714'
+$Obj.fill_color = 2
+$Obj.width = min of [$Obj.cell_count, canvas_width]
+$Obj.height = 1 + $Obj.cell_count - $Obj.width
+$Obj.orientation = 90 if $Obj.height is 1 and $Obj.width > 1 else 0
+$Obj.x = 0
+$Obj.y = 0
+```
+
+The grids, masks, positions, instance names, tags, and every other property
+are as before; only the orientation values and the new rule changed, so the
+world model keeps its level.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -104,6 +155,10 @@ same before and after the run, and no commit landed during it. The invocation
 authorizes one run, so none was repeated. The puzzle joined the **ARC puzzle
 report** workflow with this dataset, so no workflow run is recorded yet.
 
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
+
 ## Open items
 
 - **Messages are not JSON-only.** Since `f58e26a`, `src/lib/llm.ts` sends
@@ -114,3 +169,6 @@ report** workflow with this dataset, so no workflow run is recorded yet.
   every message to parse as one JSON document. Suggested, not applied: build
   each of those messages with `JSON.stringify` of one data object. This
   dataset does not depend on it.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

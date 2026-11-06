@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/28bf18c6.json`](../data/training/28bf18c6.json) |
-| Instruction dataset | [`dataset.28bf18c6.json`](../src/dataset/dataset.28bf18c6.json): the puzzle's 3 original training pairs and its test pair, 4 instances |
+| Instruction dataset | [`dataset.28bf18c6.json`](../src/dataset/dataset.28bf18c6.json): the puzzle's 3 original training pairs and its test pair, 4 instances; shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | `output_canvas`, applied by `Matrix.canvas` |
-| Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0 |
+| Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -92,6 +92,38 @@ repeated shape its doubled width, while its height stays. The migration worker
 regenerated every snapshot with the accepted runtime at `491512d`, and the
 caller replayed every pair offline against the unchanged grids, masks,
 positions and instance names. No solver run has measured this version yet.
+
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+This dataset's labels already followed the convention, as the labeller
+confirmed: each shape has no direction, so both states are 0. Only the comment
+line changed, so the class, the rules, the grids, masks, positions, instance
+names, implementations, and snapshots are as before, and the gestalt overview
+above still holds.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
 
 ## Decision: `output_canvas` trims the composed matrix
 
@@ -183,6 +215,10 @@ debug runtime and a 30-minute limit. The exit status is the difference score;
 seconds are the workflow's wall time for the puzzle, from each run's
 `arc-puzzle-report` artifact. No local `bun start 28bf18c6` run is recorded.
 
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
+
 ## Open items
 
 - **Runs from `c2fff09` on saw the answer.** Resolved on 6-Nov-2026: the user
@@ -195,3 +231,6 @@ seconds are the workflow's wall time for the puzzle, from each run's
   expected output. The exact matches at `c2fff09`, `b90a525`, and `ed49ce3`
   therefore do not show that the rule was inferred from the training pairs;
   the runs at `3cca0aa` and `3f734a8`, which predate it, also matched exactly.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

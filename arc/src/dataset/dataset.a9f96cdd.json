@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l7544'",
+    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l7544'",
     "$Obj.tag = 'l2898'",
     "$Obj.corner_colors = [[3, 6], [8, 7]]",
     "$Obj.x = min of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width)",

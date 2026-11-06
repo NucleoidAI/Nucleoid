@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# There is an Obj type, a vertical stripe of one color,\n# which has its x and y position, the width and height of its box,\n# its orientation and its color as integers\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6953'\n    this.color = color",
+    "# There is an Obj type, a vertical stripe of one color,\n# which has its x and y position, the width and height of its box,\n# its orientation and its color as integers\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6953'\n    this.color = color",
     "# Colors come in four pairs, 1 and 5, 2 and 6, 3 and 4, and 8 and 9,\n# whose two colors trade places: every stripe takes the other color\n# of the pair its color belongs to\n$Obj.color = [[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)"
   ],
   "output_canvas": "EXACT",

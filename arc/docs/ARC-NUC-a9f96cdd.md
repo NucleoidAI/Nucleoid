@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/a9f96cdd.json`](../data/training/a9f96cdd.json) |
-| Instruction dataset | [`dataset.a9f96cdd.json`](../src/dataset/dataset.a9f96cdd.json): the puzzle's 4 original training pairs and its test pair, 5 point instances, 1 in each pair; committed with this record |
+| Instruction dataset | [`dataset.a9f96cdd.json`](../src/dataset/dataset.a9f96cdd.json): the puzzle's 4 original training pairs and its test pair, 5 point instances, 1 in each pair; committed with this record; shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md), and the `min of` and `max of` noun queries of [NUC 75](../../docs/nuc-0075.md) over the extremes of [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; the JSON-only message question carried over from earlier records stays open |
-| Solver runs | 1 local run on 6-Nov-2026: exit 1, a failed run, `OPENROUTER_API_KEY is required` before the first model request; difference unknown |
+| Solver runs | 1 local run on 6-Nov-2026: exit 1, a failed run, `OPENROUTER_API_KEY is required` before the first model request; difference unknown; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -130,6 +130,38 @@ in the **ARC puzzle report** workflow's list, its 23rd puzzle, which leaves
 the job's 170-minute timeout sufficient. The caller made the puzzle the
 solver's default in `src/app.ts`, in place of `e9afcf9a`, before the run.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+This dataset's labels already followed the convention, as the labeller
+confirmed: each point is 0, and so is its output, the cells around it. Only
+the comment line changed, so the class, the rules, the grids, masks,
+positions, instance names, implementations, and snapshots are as before, and
+the gestalt overview above still holds.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -157,6 +189,10 @@ before and after the run, and no commit reached the primary checkout during
 it. The invocation authorizes one run, so none was repeated. The puzzle
 joined the **ARC puzzle report** workflow with this dataset, so no workflow
 run is recorded yet.
+
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
 
 ## Open items
 
@@ -193,3 +229,6 @@ run is recorded yet.
   the ARC instructions require every message to parse as one JSON document.
   Open question for the user: change those messages, or give the rule an
   exception for them. This dataset does not depend on it.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

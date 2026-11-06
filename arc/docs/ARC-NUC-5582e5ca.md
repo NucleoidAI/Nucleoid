@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/5582e5ca.json`](../data/training/5582e5ca.json) |
-| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed |
+| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed; shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; one suggested change awaits review, not applied |
-| Solver runs | 5 local runs, one for each of versions 1 to 5: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0; version 6 has not been run |
+| Solver runs | 5 local runs, one for each of versions 1 to 5: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0; version 6 has not been run; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -132,6 +132,38 @@ regenerated every snapshot with the accepted runtime at `491512d`, and the
 caller replayed every pair offline against the unchanged grids, masks,
 positions and instance names. No solver run has measured this version yet.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+This dataset's labels already followed the convention, as the labeller
+confirmed: each block has no direction, so both states are 0. Only the comment
+line changed, so the class, the rules, the grids, masks, positions, instance
+names, implementations, and snapshots are as before, and the gestalt overview
+above still holds.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -153,6 +185,10 @@ which parses `of`, so the primary checkout's debug runtime was rebuilt at
 `4ad55da`. An offline check with that runtime reproduced every input and
 output snapshot of the four pairs, the same as the fifth version's rule
 gives. This was a manual check, not a live-model result.
+
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
 
 ## Open items
 
@@ -187,3 +223,6 @@ gives. This was a manual check, not a live-model result.
   record's update. `99d8621` committed version 5 with its README
   paragraph and this record's previous update. `e904938` committed version 4
   with its paragraph and its `.github/workflows/arc.yml` entry.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

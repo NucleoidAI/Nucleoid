@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/9af7a82c.json`](../data/training/9af7a82c.json) |
-| Instruction dataset | [`dataset.9af7a82c.json`](../src/dataset/dataset.9af7a82c.json): the puzzle's 4 original training pairs and its test pair, 19 region instances; full-canvas zero-padded masks |
+| Instruction dataset | [`dataset.9af7a82c.json`](../src/dataset/dataset.9af7a82c.json): the puzzle's 4 original training pairs and its test pair, 19 region instances; full-canvas zero-padded masks; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None recorded |
 | Solver changes | None specific to this puzzle |
-| Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026: differences of 10 and 5, then three exact matches |
+| Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026: differences of 10 and 5, then three exact matches; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -119,6 +119,52 @@ snapshot with the accepted runtime at `491512d`, and the caller replayed every
 pair offline against the unchanged grids, masks, positions and instance names.
 No solver run has measured this version yet.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+Ten of the nineteen input regions changed: seven corners point toward their
+vertices, at 45, 135, 225, or 315, and three horizontal bars are 90. Every
+output is a vertical bar or a single cell, 0, so one new unconditional rule,
+`$Obj.orientation = 0`, stands every bar upright, whatever its region's
+orientation, and the output states are as before. The rules now read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int, cell_count: int):
+$Obj.tag = 'l6953'
+$Obj.width = 1
+$Obj.orientation = 0
+$Obj.height = $Obj.cell_count
+$Obj.x = Obj.filter(other => other.height > $Obj.height).length
+$Obj.y = 0
+```
+
+The grids, masks, positions, instance names, tags, and every other property
+are as before; only the orientation values and the new rule changed, so the
+world model keeps its level.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Run | Commit | Exit status | Difference | Seconds |
@@ -139,6 +185,10 @@ Every recorded run used the earlier `cell_count` rank rule. The `bar_height`
 rank, committed in `0bf1b0f` after these runs, has no run yet, so its
 difference is unknown, not zero.
 
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
+
 ## Open items
 
 - **The rank needs every region in one program.** Isolated native execution
@@ -156,3 +206,6 @@ difference is unknown, not zero.
   expected output. The runs at `3cca0aa` and `3f734a8`, which predate it,
   scored differences of 10 and 5; the three runs since matched exactly, which
   does not show that the rule was inferred from the training pairs.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

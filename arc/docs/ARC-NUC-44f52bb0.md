@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/44f52bb0.json`](../data/training/44f52bb0.json) |
-| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances |
+| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
-| Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run |
+| Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -199,6 +199,56 @@ regenerated every snapshot with the accepted runtime at `491512d`, and the
 caller replayed every pair offline against the unchanged grids, masks,
 positions and instance names. No solver run has measured this version yet.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+One of the eight patterns changed: the sixth training pattern is a corner
+whose full top row and right column meet at the top-right vertex of its box,
+so its input is 45. Every output is a single point, 0, so one new
+unconditional rule, `$Obj.orientation = 0`, sets it; without it, the corner's
+45 would carry into its point. The other patterns, a vertical line in the
+second test pair and six shapes that are neither lines, corners, nor chevrons,
+stay 0. The rules now read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, points: list):
+$Obj.tag = 'l7544'
+$Obj.width = 1
+$Obj.height = 1
+$Obj.orientation = 0
+$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])
+$Obj.fill_color = 1 if $Obj.symmetric else 7
+$Obj.x = 0
+$Obj.y = 0
+```
+
+The grids, masks, positions, instance names, tags, and every other property
+are as before; only the orientation values and the new rule changed, so the
+world model keeps its level.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -221,6 +271,10 @@ before and after the run. Each exit status is the difference score, neither
 scored run's log records an error, and elapsed is the solver's own report.
 Each invocation authorizes one run, so none was repeated. Version 4 has not
 been run; measuring it takes a new `/arc-purposal 44f52bb0` invocation.
+
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
 
 ## Open items
 
@@ -287,3 +341,6 @@ been run; measuring it takes a new `/arc-purposal 44f52bb0` invocation.
   and that update were committed in `6d3acec`. Version 4, its README
   paragraph, the solver change in `src/analyzer.ts`, `src/visualizer.ts`, and
   `src/app.ts`, and this update were committed in `f771c15`.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.

@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/25d8a9c8.json`](../data/training/25d8a9c8.json) |
-| Instruction dataset | [`dataset.25d8a9c8.json`](../src/dataset/dataset.25d8a9c8.json): the puzzle's 4 original training pairs and its test pair, 15 row instances, three per pair; committed with this record; condition respelled with `is` on 6-Nov-2026 |
+| Instruction dataset | [`dataset.25d8a9c8.json`](../src/dataset/dataset.25d8a9c8.json): the puzzle's 4 original training pairs and its test pair, 15 row instances, three per pair; committed with this record; condition respelled with `is` on 6-Nov-2026; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the list query `distinct` of [NUC 71](../../docs/nuc-0071.md), the conditional expression of [NUC 59](../../docs/nuc-0059.md), and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None; suggested changes await review, not applied |
@@ -160,6 +160,44 @@ declarations, every snapshot replays on that runtime, and the instance names
 stay unique across all datasets. `document()` loads it with the other 28
 datasets. At the user's choice, no solver run has measured this version.
 
+### Orientation convention
+
+On 6-Nov-2026 the user asked `/arc-purposal` to make `orientation` consistent
+across all 29 instruction datasets, with a reference of eight directed 3-cell
+lines, each of which points toward its head. Every state now takes the
+direction its own shape points, by the convention in the
+[README](../README.md#3-extract-instances): a line toward its head or along
+its axis, a corner or chevron toward its vertex, and anything else 0, while a
+turn adds its angle. Every dataset's first declaration also carries one shared
+comment line, directly above its class, that states the convention for the
+model:
+
+```nuc
+# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
+```
+
+Each object is a row of three cells, a straight line. A row of one color, or
+with its lone color in the middle cell, has no head and takes the horizontal
+axis, 90; a row of exactly two colors whose one end cell alone has its color
+points toward that head, 270 on the left and 90 on the right. All 15 rows
+moved from 0, 12 to 90 and 3 to 270. The rules leave `orientation` unchanged,
+so a row that becomes a gray bar keeps 90 and a cleared row, which has no
+output cell, keeps its input orientation. No rule changed.
+
+The grids, masks, positions, instance names, tags, and every other property
+are as before; only the orientation values changed, so the world model keeps
+its level.
+
+The arc-dataset worker made the change in an external staging directory with
+the accepted runtime at `d3413e6` (last runtime change `7096171`), and every
+snapshot reruns byte for byte on it. The caller's own offline check passed on
+the staged file and again after integration: the pairs, grids, masks,
+positions, and instance names are as before, every state's orientation matches
+the convention's labeller, every snapshot replays on that runtime, and
+`document()` loads the dataset with the other 28. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. At the
+user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -182,6 +220,10 @@ not been in an **ARC puzzle report** workflow run.
 No solver run has measured any version of this dataset: the one run stopped
 before its first model request, and the user chose offline verification for
 the `is` version of 6-Nov-2026. The difference is unknown, not zero.
+
+None of these runs measured the orientation version of 6-Nov-2026: the user
+chose offline verification for the batch, so its difference is unknown, not
+zero.
 
 ## Open items
 
@@ -224,3 +266,6 @@ the `is` version of 6-Nov-2026. The difference is unknown, not zero.
   model that copies it straight into an assignment value, as above, gets `is`
   read as a name and a `ReferenceError`. A dispatched **ARC Benchmark** run
   would measure the effect.
+- **Orientation version unmeasured.** No solver run has measured the
+  6-Nov-2026 orientation version, so whether consistent orientation labels
+  change this puzzle's result is unknown.
