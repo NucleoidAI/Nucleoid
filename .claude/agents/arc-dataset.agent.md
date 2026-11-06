@@ -108,17 +108,26 @@ formatting exactly:
   names the big-picture formulation you started from and why it fell short.
 - `declarations[0]` holds every class declaration of the world model, because
   the solver runs it alone to build input states. Existing datasets declare
-  one class, `Obj(x: int, y: int, orientation: int, ...)`; add another class
-  only for a distinct kind of object the transformation needs. Each class
-  whose instances are annotated objects takes `x: int, y: int,
-  orientation: int` first, and its body assigns every parameter to `this` and
-  sets an initial `this.tag = 'lNNNN'`. Add only the descriptive properties
-  the transformation needs, such as categorical colors.
+  one class, `Obj(x: int, y: int, width: int, height: int, orientation: int,
+  ...)`; add another class only for a distinct kind of object the
+  transformation needs. Each class whose instances are annotated objects
+  takes the standard entries `x: int, y: int, width: int, height: int,
+  orientation: int` first, in that order, and its body assigns every
+  parameter to `this` and sets an initial `this.tag = 'lNNNN'`. Add only the
+  descriptive properties the transformation needs, such as categorical colors.
+- `width` and `height` are the column and row counts of the object's own
+  shape, the nonzero bounding box of its input mask. They do not change when
+  only the orientation changes: a turn or mirror is the orientation's job.
+  A rule changes them only when the shape itself changes size, such as a point
+  that grows into a bar or a pattern that repeats, and then computes the new
+  size from the input value with `@first`, as in
+  `$Obj.width = $Obj.width@first + 1`. Use them for an object's size instead
+  of separate size properties such as `bar_height` or `bar_width`.
 - The solver starts every Nucleoid program with `canvas_width` and
   `canvas_height`, the column and row counts of the pair's `input_matrix`
   (every `nucleoid.run` call in `arc/src/analyzer.ts` and
   `arc/src/visualizer.ts`). Rules that need the canvas size read these
-  variables, as `$Obj.bar_height = canvas_height - $Obj.y` in
+  variables, as `$Obj.height = canvas_height - $Obj.y@first` in
   `dataset.d037b0a7.json` does. No class takes the canvas size as a parameter
   or stores it as a property, and no implementation passes it.
 - The remaining declarations are declarative class-level rules, written with
@@ -204,8 +213,10 @@ The caller decides whether to propose the feature; you never start a NUC.
   unique across all datasets
   (`node -e "console.log(require('crypto').randomBytes(6).toString('hex'))"`).
 - `implementation` is `<instance_name> = <Class>(x=<input_x>, y=<input_y>,
-  orientation=<input_orientation>, ...)`, constructing the instance's class
-  (`Obj` in existing datasets) with named arguments matching its parameters.
+  width=<width>, height=<height>, orientation=<input_orientation>, ...)`,
+  constructing the instance's class (`Obj` in existing datasets) with named
+  arguments matching its parameters, where `width` and `height` are the input
+  mask's nonzero bounding-box column and row counts.
 - Never hand-write `input_value` or `output_value`. As `arc/src/analyzer.ts`
   does, run the Nucleoid executable (`NUCLEOID_EXECUTABLE`, else the debug
   build in `target/debug/`; build it with `cargo build` if missing) as

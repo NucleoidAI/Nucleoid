@@ -101,6 +101,27 @@ README paragraph, and the puzzle's entry in the **ARC puzzle report**
 workflow's list, its 13th puzzle. The caller made the puzzle the solver's
 default in `src/app.ts`, in place of `0d3d703e`, before the run.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):
+$Obj.fill_color = 5 if $Obj.parts.distinct().length == 1 else 0
+```
+
+No rule changed: each row keeps its 3 by 1 size, whether it becomes a bar or
+is cleared. The migration worker regenerated every snapshot with the accepted
+runtime at `491512d`, and the caller replayed every pair offline against the
+unchanged grids, masks, positions and instance names. No solver run has
+measured this version yet.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |

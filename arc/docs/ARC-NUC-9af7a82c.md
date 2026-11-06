@@ -93,6 +93,32 @@ pairs show. The dataset meets it. The figures each input shows are its
 single-color regions, each region is one object, and the relation between
 them, their order by size, places the bars. Nothing needs to change.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int, cell_count: int):
+$Obj.tag = 'l6953'
+$Obj.width = 1
+$Obj.height = $Obj.cell_count
+$Obj.x = Obj.filter(other => other.height > $Obj.height).length
+$Obj.y = 0
+```
+
+`bar_height` became the standard `height`: `$Obj.height = $Obj.cell_count` and
+`$Obj.width = 1` size each bar, and the ranking now reads `Obj.filter(other =>
+other.height > $Obj.height).length`. The migration worker regenerated every
+snapshot with the accepted runtime at `491512d`, and the caller replayed every
+pair offline against the unchanged grids, masks, positions and instance names.
+No solver run has measured this version yet.
+
 ## Runs
 
 | Date | Run | Commit | Exit status | Difference | Seconds |

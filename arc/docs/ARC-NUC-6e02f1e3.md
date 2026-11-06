@@ -152,6 +152,32 @@ invocation sized the timeout by batch, as the `ed36ccf7` invocation did:
 twenty puzzles take four batches of 30 minutes plus 20, or 140 minutes. That
 fits the existing 150-minute timeout, so the timeout was left unchanged.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):
+$Obj.tag = 'l6074'
+$Obj.orientation = {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]
+if $Obj.orientation == 90:
+    $Obj.height = 1
+$Obj.fill_color = 5
+```
+
+One conditional rule sets `$Obj.height = 1` when `$Obj.orientation == 90`,
+giving the top-row line its one-row height, while the diagonals stay 3 by 3.
+The migration worker regenerated every snapshot with the accepted runtime at
+`491512d`, and the caller replayed every pair offline against the unchanged
+grids, masks, positions and instance names. No solver run has measured this
+version yet.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |

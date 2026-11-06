@@ -206,6 +206,20 @@ corners at orientations 225 and 135 with their inside color-7 markers, a
 color-9 point with its color-2 rim below and a color-4 point with its color-8
 rim above, and a vertical line that extends up from its bottom endpoint with
 a horizontal line that extends left from its right endpoint.
+Each genesis class takes the standard entries `x`, `y`, `width`, `height`,
+and `orientation` first, then its descriptive properties in their existing
+order, and every implementation passes the input shape's bounding-box
+`width` and `height`. A rule that grows a shape computes its new size from
+its first values in the branch that sets its output tag: a core corner grows
+from 2 by 2 to 3 by 3 with its outside marker, and its origin moves one
+column left when it points west, at orientation 225 or 315, and one row up
+when it points north, at orientation 45 or 315; a curve point grows from
+1 by 1 to 3 by 2 with its rim; and a line of 3 or 4 cells grows by one cell,
+one column wider when horizontal and one row taller when vertical. An
+extension corner keeps its 3 by 3 size, because its inside marker fills a
+cell of its own box. Every native output snapshot therefore carries its
+shape's output bounding box, so `output_value.x` and `output_value.y` equal
+`output_x` and `output_y`.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations. The canvas size is not one
@@ -245,46 +259,61 @@ place. Appending the pattern's first half, its top three rows, would
 reproduce the second and third training outputs and the test output, whose
 periods divide the height, but not the first training output: its pattern
 repeats every four rows, so the rows added below repeat its rows 2 to 4, and
-its row 7 is 0, 2, 2 rather than 2, 2, 0. The class takes `color`, the box's
-`height`, and `period`, the number of rows after which the pattern starts
-over, as scalars, with no parts list, canvas size, or matrix of cells.
+its row 7 is 0, 2, 2 rather than 2, 2, 0. The class takes the standard entries
+`x`, `y`, `width`, `height`, and `orientation` first, in that order, where
+`width` and `height` are the column and row counts of the pattern's box, the
+nonzero bounding box of its input mask, and then `color` and `period`, the
+number of rows after which the pattern starts over, as scalars, with no parts
+list, canvas size, or matrix of cells. Each implementation passes `width` and
+`height` right after `y`, such as `width=3, height=6` for the first training
+input.
 `period` is the smallest number of rows such that every row of the box equals
 the row that many rows below it, wherever that row is still inside the box;
 like `height`, it is measured on the pattern's own box rather than the canvas.
 Unconditional class-level rules set the output tag and introduce one
 property, `extension_direction`, which is absent before the rules run and is
 `down`, as in `dataset.line.json`.
-The rules also rewrite `height` to `$Obj.height@first * 3 / 2`, 9 rows, and
-`color` to 2, and leave `x` and `y` unchanged because the pattern keeps its
-top-left origin. The training pairs alone also fit a fixed 9-row output; the
-rules scale the pattern's height instead. Native output snapshots are captured
-with the pair's implementation followed by `Obj[:]`. Tags identify the
-geometry: `l9100` is a single shape, as in `dataset.28bf18c6.json` and
-`dataset.6150a2bd.json`, and `l8384` is a pattern whose rows repeat every
-`period` rows down to its height. Input masks retain each pair's full-size
-6 by 3 input canvas, with zero cells padded `0`, and output masks the complete
-9 by 3 output; merging them reproduces each pair's input and output. The
-`output_x`/`output_y` fields record the grown pattern's nonzero bounding-box
-origin, equal to `output_value.x`/`output_value.y`. `output_canvas` is
-`EXACT`: the composed canvas starts at the input's 6 by 3 dimensions and grows
-only to retain the pattern placed down to row 8, giving the 9 by 3 outputs,
-while `FIT` would crop the empty right column of the third training output.
-Orientation is 0 in both states because the pattern is not turned. The test
-pair follows the training pairs at the same level and is annotated by the
-same rules.
+The rules also rewrite `height` to `$Obj.height@first * 3 / 2`, 9 rows, the
+pattern's one change in size, and `color` to 2. They leave `width` unchanged,
+because the pattern grows down only and each output's box is as wide as its
+input's, 3, 3, 2, and 3 columns, and they leave `x` and `y` unchanged because
+the pattern keeps its top-left origin. The training pairs alone also fit a
+fixed 9-row output; the rules scale the pattern's height instead. Native
+output snapshots are captured with the pair's implementation followed by
+`Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
+`dataset.28bf18c6.json` and `dataset.6150a2bd.json`, and `l8384` is a pattern
+whose rows repeat every `period` rows down to its height. Input masks retain
+each pair's full-size 6 by 3 input canvas, with zero cells padded `0`, and
+output masks the complete 9 by 3 output; merging them reproduces each pair's
+input and output. The `output_x`/`output_y` fields record the grown pattern's
+nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`, and
+each output state's `width` and `height` are the grown pattern's bounding box.
+`output_canvas` is `EXACT`: the composed canvas starts at the input's 6 by 3
+dimensions and grows only to retain the pattern placed down to row 8, giving
+the 9 by 3 outputs, while `FIT` would crop the empty right column of the third
+training output. Orientation is 0 in both states because the pattern is not
+turned. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
 
 `dataset.0ca9ddb6.json` annotates the three training pairs from
 `data\training\0ca9ddb6.json`, followed by its test pair, with fifteen point
 instances in total (2, 5, 3, and 5 per pair).
 Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
 diagonal neighbors. Color-6 and color-8 points remain unchanged.
+The class takes the standard entries `x`, `y`, `width`, `height`, and
+`orientation`, then `vertex_color`; every point is 1 by 1, so each
+implementation passes `width=1, height=1`.
 The declarative rules introduce `marker_color`, which is absent before the
-rules run. Tags identify the geometry: `l1707` is an orthogonal cross,
+rules run, and, in the same branches that shift the origin, grow each cross
+to 3 by 3 with `$Obj.width = $Obj.width@first + 2` and
+`$Obj.height = $Obj.height@first + 2`; color-6 and color-8 points keep their
+1 by 1 size. Tags identify the geometry: `l1707` is an orthogonal cross,
 `l2404` is a diagonal cross, and `l7544` remains a single point.
 Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
 records each mask's nonzero bounding-box origin. Native output snapshots carry
 the shifted pattern origin, derived from the original point coordinates with
-`@first` anchors. Orientation is 0 in both states because
+`@first` anchors, and the pattern's size, equal to its output mask's
+bounding box. Orientation is 0 in both states because
 the patterns are symmetric. The test pair follows the training pairs at the
 same level and is annotated by the same rules.
 `document()` includes it in the shared few-shot context for every run.
@@ -303,9 +332,12 @@ third, 2 turns 6 in the first, second, and fourth and 6 turns 2 in the third,
 3 turns 4 in the first and second and 4 turns 3 in the fourth, and 8 turns 9
 in the second and third and 9 turns 8 in the fourth; colors 0 and 7 do not
 appear. Colors are categorical, and no arithmetic relates the partners, whose
-differences are 4, 4, 1, and 1, so the rule consults the pairs as data. The
-class takes `color` as its only descriptive scalar, with no partner color,
-canvas size, or matrix of cells. One class-level rule rewrites `color` as
+differences are 4, 4, 1, and 1, so the rule consults the pairs as data.
+The class takes the standard entries `x`, `y`, `width`, `height`, and
+`orientation` first, then `color` as its only descriptive scalar,
+with no partner color, canvas size, or matrix of cells. `width` and
+`height`, the column and row counts of the stripe's bounding box, are
+1 and 3 for every stripe. One class-level rule rewrites `color` as
 `[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner != $Obj.color@first)`:
 the list states each pair once, the first `find` selects the pair that
 includes the stripe's input color, and the second `find` takes the other color
@@ -313,7 +345,8 @@ of that pair. The `@first` anchors read the input color because the rule
 rewrites `color` itself; a dictionary from every color to its partner would
 state each pair twice. The two callbacks are chained rather than nested, so
 each reads only its own parameter and the stripe. The rules create no
-property and leave `x`, `y`, `orientation`, and the tag unchanged, so input
+property and leave `x`, `y`, `width`, `height`, `orientation`, and the tag
+unchanged, since a stripe keeps its size when it changes color, so input
 and output states share the same keys. Native output snapshots are captured
 with all of the same pair's implementations together, followed by `Obj[:]`.
 The tag `l6953` is a vertical bar, as in `dataset.d037b0a7.json` and
@@ -346,8 +379,11 @@ reading each input as single-colored shapes and turning gray only the shapes
 that are one row tall and as wide as the canvas; the rules judge whole rows
 instead, the unit in which every output changes, since each output row is a
 single color, a choice fixed from the training pairs before the test pair was
-read. The class takes `parts`, the colors of the row's cells from left to
-right, as a list, such as `[4, 4, 4]` for the top row of the first training
+read. The class takes the standard entries `x`, `y`, `width`, `height`,
+and `orientation` first; `width` and `height`, the column and row
+counts of the row's bounding box, are 3 and 1 for every row. It then
+takes `parts`, the colors of the row's cells from left to right, as
+a list, such as `[4, 4, 4]` for the top row of the first training
 input, as its only descriptive property, with no color, color count, canvas
 size, or matrix of cells, so no input property states whether the row is
 uniform. One unconditional class-level rule introduces `fill_color`, which is
@@ -357,11 +393,12 @@ absent before the rules run, as
 one kept color means the row is a single color, and the conditional
 expression of [NUC 59](../docs/nuc-0059.md) gives such a row color 5 and
 every other row the background color 0. The rules create no other property
-and leave `x`, `y`, `orientation`, and the tag unchanged, so each output
-state adds only `fill_color` to its input state's keys. Native snapshots
-start with the pair's `canvas_width` and `canvas_height`, and output
-snapshots are captured with all of the same pair's implementations together,
-followed by `Obj[:]`. The tag `l3058` is a horizontal bar, as in
+and leave `x`, `y`, `width`, `height`, `orientation`, and the tag unchanged,
+since a row keeps its size whether it becomes a bar or is cleared, so each
+output state adds only `fill_color` to its input state's keys. Native
+snapshots start with the pair's `canvas_width` and `canvas_height`, and
+output snapshots are captured with all of the same pair's implementations
+together, followed by `Obj[:]`. The tag `l3058` is a horizontal bar, as in
 `dataset.d631b094.json`, in both states. Input masks retain each pair's
 full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
 each padded with `0` outside its row, so a cleared row's output mask is all
@@ -395,16 +432,20 @@ bottom row, and the 2-row-tall trominoes also move one row rather than their
 height. Rolling the canvas's rows down with wraparound would also reproduce
 every training output, because every training input's bottom row is empty;
 the rules move the whole figure instead, the unit seen first, a choice fixed
-from the training pairs before the test pairs were read. The class takes no
-descriptive property, with no color, size, cell list, canvas size, or matrix
-of cells, because the rule needs none: the figure's cells travel unchanged in
-its masks. One unconditional class-level rule rewrites `y` as
+from the training pairs before the test pairs were read. The class takes
+only the standard entries `x`, `y`, `width`, `height`, and `orientation`,
+and no descriptive property, with no color, cell list, canvas size, or
+matrix of cells, because the rule needs none: the figure's cells travel
+unchanged in its masks. `width` and `height`, the column and row counts
+of the figure's bounding box, are 3 and 1 for the bars and 2 and 2
+for the trominoes. One unconditional class-level rule rewrites `y` as
 `$Obj.y@first + 1`, the row below the figure's input origin, anchored with
 `@first` because the rule rewrites `y` itself. Each training grid holds a
 single figure and shows no relation between objects, so no population
 operation appears; the class-level rule moves every figure on its own. The
-rules create no property and leave `x`, `orientation`, and the tag unchanged,
-so input and output states share the same keys and differ only in `y`. Native
+rules create no property and leave `x`, `width`, `height`, `orientation`,
+and the tag unchanged, since the figure moves without changing its size, so
+input and output states share the same keys and differ only in `y`. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with the pair's implementation followed by `Obj[:]`.
 The tag `l9100` is a single shape, as in `dataset.28bf18c6.json` and
@@ -444,9 +485,12 @@ symmetry of the canvas yet give 2 and 6; the hollow diamond and the square
 with a tail each mirror only across one diagonal yet give 1 and 3; and their
 3, 5, 2, and 1 edge-connected pieces do not order the codes. Each block is
 therefore one instance whose tag names its shape, and the rules look the code
-up by that tag. The class takes `tag` as its only descriptive property, such
-as `tag='l4262'` for the first training input, with no color, cell count,
-parts list, canvas size, or matrix of cells. Its constructor stores the tag it
+up by that tag. The class takes the standard entries `x`, `y`, `width`,
+`height`, and `orientation`, where `width` and `height` are the column and row
+counts of the block's bounding box, 3 and 3 in every pair, and `tag` as its
+only descriptive property, such as `tag='l4262'` for the first training input,
+with no color, cell count, parts list, canvas size, or matrix of cells. Its
+constructor stores the tag it
 is given instead of a fixed initial tag, so the input state names the shape
 and no input property names the code. One class serves every shape because the
 solver reads output states with `Obj[:]`, which lists no instance of a
@@ -454,11 +498,12 @@ subclass. Tags identify the geometry: `l4262` is the hollow diamond with a
 filled corner and `l3743` the square with a diagonal tail, while `l2404` is a
 diagonal cross and `l1707` an orthogonal cross, as in `dataset.0ca9ddb6.json`.
 Unconditional class-level rules set the output tag `l7544`, a single point, as
-in `dataset.44f52bb0.json`, and introduce one property, `fill_color`, which is
-absent before the rules run, as
+in `dataset.44f52bb0.json`, shrink the block to that point's size, `width` 1
+and `height` 1, and introduce one property, `fill_color`, which is absent
+before the rules run, as
 `{'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.tag@first]`: the object
 literal states each shape's code once, and object bracket access reads the
-code of the block's input tag, anchored with `@first` because the other rule
+code of the block's input tag, anchored with `@first` because the tag rule
 turns the tag into `l7544`. The rules create no other properties, so each
 output state adds only `fill_color` to its input state's keys, and they leave
 `x` and `y` unchanged because the point sits at the block's origin, 0 and 0 in
@@ -467,7 +512,8 @@ every training pair. Native snapshots start with the pair's `canvas_width` and
 implementation followed by `Obj[:]`. Input masks retain each pair's full-size
 input canvas, and output masks the complete output; merging them reproduces
 each pair's input and output. The `output_x`/`output_y` fields record the
-cell's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
+cell's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`,
+and `output_value.width`/`output_value.height` equal its 1 by 1 size.
 `output_canvas` is `FIT` because each training output is cropped to its single
 cell instead of keeping the 3 by 3 input canvas. Orientation is 0 in both
 states of the training pairs because no block is turned and the point is
@@ -481,15 +527,24 @@ its original 8 by 8 canvas and 3 by 3 shape, including its color and position.
 Each shape is left-right asymmetric, so the pairs distinguish repeating from
 mirroring.
 Each output places two copies of the shape's crop side by side on a new canvas
-twice as wide as the crop: the original 3 by 6 output. Unconditional
-class-level rules hold for every instance, whatever its `color`: they introduce
-`repeat_count` (2, the total number of copies) and `repeat_direction`
-(`right`), which are absent before the rules run, and move `x` and `y` to the
-output origin 0. Tags identify the geometry: `l9100` is a single shape and
-`l4305` is the shape repeated side by side. Input masks retain each pair's
-input canvas and output masks its output canvas. Orientation is 0 in both
-states because the shapes are not rotated. The test pair follows the training
-pairs at the same level and is annotated by the same rules.
+twice as wide as the crop: the original 3 by 6 output. The class takes the
+standard entries `x`, `y`, `width`, `height`, and `orientation` first, in that
+order, where `width` and `height` are the column and row counts of the shape's
+box, the nonzero bounding box of its input mask, 3 and 3 in every pair, and
+then `color`; each implementation passes `width=3, height=3` right after `y`.
+Unconditional class-level rules hold for every instance, whatever its `color`:
+they introduce `repeat_count` (2, the total number of copies) and
+`repeat_direction` (`right`), which are absent before the rules run, rewrite
+`width` as `$Obj.width@first * $Obj.repeat_count`, 6 columns, because the
+copies side by side make the repeated shape that many times as wide as the
+input shape while its `height` stays 3, and move `x` and `y` to the output
+origin 0. Each output state's `width` and `height` are therefore the repeated
+shape's bounding box, the whole 3 by 6 output. Tags identify the geometry:
+`l9100` is a single shape and `l4305` is the shape repeated side by side.
+Input masks retain each pair's input canvas and output masks its output
+canvas. Orientation is 0 in both states because the shapes are not rotated.
+The test pair follows the training pairs at the same level and is annotated
+by the same rules.
 
 `dataset.3c9b0459.json` annotates the four original training pairs from
 `data\training\3c9b0459.json`, in order, followed by its test pair, five
@@ -504,10 +559,13 @@ row 2 - r and column 2 - c, and every color keeps its cell count. The half
 turn is the only one of the square's eight turns and mirrors, the identity
 included, that reproduces any training pair: no training mosaic looks the
 same after a quarter turn, a half turn, a mirror across either center line,
-or a flip across either diagonal. The class takes no descriptive property,
-with no color, parts list, width, height, canvas size, or matrix of cells,
-because the rule needs none: the mosaic's cells travel in its masks, and its
-turn is its orientation. One unconditional class-level rule rewrites
+or a flip across either diagonal. The class takes only the standard
+entries `x`, `y`, `width`, `height`, and `orientation`, and no
+descriptive property, with no color, parts list, canvas size, or
+matrix of cells, because the rule needs none: the mosaic's cells
+travel in its masks, and its turn is its orientation. `width` and
+`height`, the column and row counts of the mosaic's bounding box, are
+3 and 3 for every mosaic. One unconditional class-level rule rewrites
 `orientation` as `($Obj.orientation@first + 180) % 360`, the half-turn rule
 of `dataset.6150a2bd.json`, anchored with `@first` because the rule rewrites
 `orientation` itself. The rules leave `x` and `y` unchanged: a mosaic that
@@ -516,13 +574,14 @@ own center or the canvas's. The two further rules of `dataset.6150a2bd.json`,
 which move the box about the canvas center as
 `canvas_width - $Obj.x@first - $Obj.width` and
 `canvas_height - $Obj.y@first - $Obj.height`, would reproduce every training
-output as well, but every mosaic's `width` and `height` equal the canvas's,
-so those properties would only restate the canvas size and those rules would
-only return the input origin; the rules state the half turn alone, a choice
-fixed from the training pairs before the test pair was read. Each training
-grid holds a single mosaic and shows no relation between objects, so no
-population operation appears. The rules create no property and leave `x`,
-`y`, and the tag unchanged, so input and output states share the same keys
+output as well, but every mosaic's `width` and `height` equal the
+canvas's, so those rules would only return the input origin; the
+rules state the half turn alone, a choice fixed from the training
+pairs before the test pair was read. Each training grid holds a
+single mosaic and shows no relation between objects, so no population
+operation appears. The rules create no property and leave `x`, `y`, `width`,
+`height`, and the tag unchanged, since a turn changes the orientation alone,
+not the mosaic's size, so input and output states share the same keys
 and differ only in `orientation`. Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with
 the pair's implementation followed by `Obj[:]`. The tag `l9100` is a single
@@ -564,14 +623,18 @@ because every symmetric training pattern spans the canvas's width, a
 left-right flip of the pattern's own box. The rules flip across the canvas's
 center line, by the convention that mirror symmetry is bilateral symmetry
 across the grid's vertical axis, a choice fixed from the training pairs
-before the test pairs were read. The class takes `points`, the
+before the test pairs were read. The class takes the standard entries `x`,
+`y`, `width`, `height`, and `orientation`, where `width` and `height` are the
+column and row counts of the pattern's box, followed by `points`, the
 `[column, row]` canvas position of each of the pattern's cells in reading
 order, as a list, such as `[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]]` for the
 first training input. It takes no color, cell count, canvas size, symmetry
 flag, output color, or matrix of cells, so no input property states the
 symmetry or the answer; the rules read the canvas's width from the solver's
-`canvas_width`. Unconditional class-level rules set the output tag and
-introduce two properties, absent before the rules run. `symmetric` is
+`canvas_width`, not the pattern's own `width`. Unconditional class-level rules
+set the output tag, shrink the pattern to the output point's size, `width` 1
+and `height` 1, and introduce two properties, absent before the rules run.
+`symmetric` is
 `all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])`:
 the mirror image of every point, in the same row and as far from the right
 edge as the point is from the left edge, is also one of the points, which
@@ -589,7 +652,8 @@ point, as in `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`. Input masks
 retain each pair's full-size, zero-padded 3 by 3 input canvas, and output
 masks the complete 1 by 1 output; merging them reproduces each pair's input
 and output. The `output_x`/`output_y` fields record the cell's nonzero
-bounding-box origin, equal to `output_value.x`/`output_value.y`.
+bounding-box origin, equal to `output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height` equal its 1 by 1 size.
 `output_canvas` is `FIT` because each output is cropped to its single cell
 instead of keeping the 3 by 3 input canvas. Orientation is 0 in both states
 because the pattern is not turned and the point is symmetric. The test pairs
@@ -608,8 +672,11 @@ whole 3 by 3 footprint, zero cell included, with the color that has the most
 cells in the block: three cells in every pair, a unique maximum, giving the
 colors 4, 9, 6, and 8. The numerically largest color, 8, 9, 9, and 9, differs
 from the fill in the first and third training pairs and the test pair, so the
-rules maximize a count, not a color. The class takes `parts`, a flat list of
-the block's nonzero cell colors in reading order, such as
+rules maximize a count, not a color. The class takes the standard entries
+`x`, `y`, `width`, `height`, and `orientation` first; `width` and `height`,
+the column and row counts of the block's bounding box, are 3 and 3 for
+every block, with or without a zero cell. It then takes `parts`, a
+flat list of the block's nonzero cell colors in reading order, such as
 `[4, 4, 8, 6, 4, 3, 6, 3]` for the first training input, as its only
 descriptive property, with no count, histogram, fill color, canvas size, or
 matrix of cells, so no input property names a count or the fill color.
@@ -622,9 +689,10 @@ which no pair has, `mode` returns the tied color that occurs first in `parts`,
 the one whose first cell comes first in reading order. The rules create no
 other properties, so each output state adds only
 `fill_color` to its input state's keys, and they leave `x` and `y` unchanged
-because the fill starts at the block's origin, 0 and 0. Native output
-snapshots are captured with the pair's implementation followed by `Obj[:]`.
-Tags identify the geometry: `l9100` is a single shape, as in
+because the fill starts at the block's origin, 0 and 0, and `width` and
+`height` unchanged because the fill covers the block's 3 by 3 bounding box.
+Native output snapshots are captured with the pair's implementation followed
+by `Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l5236` is a solid rectangle that fills the whole
 canvas. Input masks retain each pair's full-size 3 by 3 input canvas, with the
 zero cell padded `0`, and output masks the complete 3 by 3 output; merging
@@ -648,26 +716,31 @@ box moves to the opposite side of the canvas. The 3 by 3 boxes span the canvas
 and keep their origin, 0 and 0, while the second training block's box moves
 down one row, from the top two rows to the bottom two. Redrawing the turned
 block at its input origin, a turn about its own center, would not reproduce
-that output. The class takes the bounding box's `width` and `height` as
-scalars, with no color, parts list, canvas size, or matrix of cells; the rules
-read the canvas's size from the solver's `canvas_width` and `canvas_height`.
+that output. The class takes only the standard entries `x`, `y`, `width`,
+`height`, and `orientation`, in that order, where `width` and `height` are the
+column and row counts of the block's bounding box, the nonzero bounding box of
+its input mask, with no color, parts list, canvas size, or matrix of cells;
+each implementation passes them right after `y`, such as `width=3, height=2`
+for the second training input, and the rules read the canvas's size from the
+solver's `canvas_width` and `canvas_height`.
 Unconditional class-level rules read the block's input state with `@first`
 anchors: `($Obj.orientation@first + 180) % 360` gives `orientation`,
 `canvas_width - $Obj.x@first - $Obj.width` gives `x`, and
-`canvas_height - $Obj.y@first - $Obj.height` gives `y`. The rules create
-no other properties, so input and output states share the same keys. Native
-output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. The tag `l9100` is a single shape, as in `dataset.28bf18c6.json` and
-`dataset.5582e5ca.json`, in both states. Input masks retain each pair's
-full-size 3 by 3 input canvas, with its zero cells padded `0`, and output
-masks the complete 3 by 3 output; merging them reproduces each pair's input
-and output. The `output_x`/`output_y` fields record the turned block's nonzero
-bounding-box origin, equal to `output_value.x`/`output_value.y`.
-`output_canvas` is `EXACT` because each output keeps its input's canvas,
-including the empty top row of the second training output. Orientation is 0
-in every input state, where the block is not turned, and 180 in every output
-state. The test pair follows the training pairs at the same level and is
-annotated by the same rules.
+`canvas_height - $Obj.y@first - $Obj.height` gives `y`. The rules leave
+`width` and `height` unchanged, because a half turn keeps the box's size while
+`orientation` carries the turn, and create no other properties, so input and
+output states share the same keys. Native output snapshots are captured with
+the pair's implementation followed by `Obj[:]`. The tag `l9100` is a single
+shape, as in `dataset.28bf18c6.json` and `dataset.5582e5ca.json`, in both
+states. Input masks retain each pair's full-size 3 by 3 input canvas, with its
+zero cells padded `0`, and output masks the complete 3 by 3 output; merging
+them reproduces each pair's input and output. The `output_x`/`output_y` fields
+record the turned block's nonzero bounding-box origin, equal to
+`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
+output keeps its input's canvas, including the empty top row of the second
+training output. Orientation is 0 in every input state, where the block is not
+turned, and 180 in every output state. The test pair follows the training
+pairs at the same level and is annotated by the same rules.
 
 `dataset.6e02f1e3.json` annotates the five original training pairs from
 `data\training\6e02f1e3.json`, in order, followed by its test pair, six
@@ -696,14 +769,18 @@ pairs before the test pair was read, and in the test mosaic colors 2 and 3
 each split into three single cells. Every canvas is 3 by 3, so the training
 pairs alone also fit a line of three cells on a canvas of any size; the line
 instead crosses the whole canvas, from edge to edge or corner to corner, and
-its tag names that geometry, so the rules state no length, as the
-canvas-filling rectangle of `dataset.5582e5ca.json` carries no size. The
-class takes `parts`, a flat list of the mosaic's cell colors in reading order,
-as in `dataset.5582e5ca.json`, such as `[2, 2, 2, 3, 2, 3, 3, 3, 3]` for the
-first training input, as its only descriptive property, with no color list,
-color count, line direction, canvas size, or matrix of cells, so no input
-property names the count or the line. Three unconditional class-level rules
-turn the mosaic into the line. `$Obj.tag = 'l6074'` names the line, and
+its tag names that geometry, so the rules state no length: every line keeps
+the mosaic's `width`, which spans the canvas. The class takes the standard
+entries `x`, `y`, `width`, `height`, and `orientation` first, in that order,
+where `width` and `height` are the column and row counts of the mosaic's box,
+the nonzero bounding box of its input mask, 3 and 3 in every pair, and then
+`parts`, a flat list of the mosaic's cell colors in reading order, as in
+`dataset.5582e5ca.json`, such as `[2, 2, 2, 3, 2, 3, 3, 3, 3]` for the first
+training input, as its only descriptive property, with no color list, color
+count, line direction, canvas size, or matrix of cells, so no input property
+names the count or the line. Each implementation passes `width=3, height=3`
+right after `y`. Three unconditional class-level rules and one conditional
+rule turn the mosaic into the line. `$Obj.tag = 'l6074'` names the line, and
 `$Obj.fill_color = 5` introduces `fill_color`, which is absent before the
 rules run, because the line is gray whatever the mosaic's colors.
 `orientation` is `{1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]`: the
@@ -715,31 +792,40 @@ the main diagonal, which runs from northwest to southeast, is 135 and the
 other diagonal 45, as `dataset.74dd1130.json` names its mirror axis. No
 arithmetic relates the counts to the axes, so the rule looks the axis up, as
 `dataset.27a28665.json` looks up its code by tag, and it reads no
-orientation, so it rewrites `orientation` without an `@first` anchor. Each
+orientation, so it rewrites `orientation` without an `@first` anchor. The
+conditional rule `if $Obj.orientation == 90:` sets `height` to 1, guarding on
+a horizontal line as `dataset.line.json` does: the line along the top row is
+one row tall, the one change in the shape's size, while a diagonal crosses the
+mosaic's whole 3 by 3 box and keeps its input `height`. The rule reads the
+orientation that the lookup gives and writes `height` only for the horizontal
+line, so it needs no `@first` anchor, and no rule writes `width`. Each
 training grid holds a single mosaic and shows no relation between objects, so
 no population operation appears; the count is a list query over the mosaic's
 own cells. The rules leave `x` and `y` unchanged, because every line's box
 starts at the canvas's origin, 0 and 0, where the mosaic's box starts, also
 for the other diagonal, whose cells run from the top-right corner. They create
 no other property, so each output state adds only `fill_color` to its input
-state's keys, its tag turns `l6074`, and its orientation turns 90, 135, or 45.
+state's keys, its tag turns `l6074`, its orientation turns 90, 135, or 45, and
+its `height` turns 1 for the top-row line, so its `width` and `height` are the
+line's bounding box: 3 and 1 for the top row and 3 and 3 for a diagonal.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
 `Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
-`dataset.28bf18c6.json` and `dataset.3c9b0459.json`, and `l6074` is a
-straight line of cells across the whole canvas, along the axis its orientation
-gives. Input masks retain each pair's full-size 3 by 3 input canvas and output
-masks the complete 3 by 3 output, padded with `0` outside the line; with one
-object per grid, each mask equals its pair's grid, and merging them
-reproduces each pair's input and output. The `output_x`/`output_y` fields
-record the line's nonzero bounding-box origin, 0 and 0, equal to
-`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
-output keeps its input's 3 by 3 canvas, including the two empty rows below the
-top-row line that `FIT` would crop from the third and fourth training outputs.
-Orientation is 0 in every input state, where the mosaic is not turned, and the
-line's axis, 90, 135, or 45, in every output state. The declarations hold
-executable code only, without `#` comments. The test pair follows the training
-pairs at the same level and is annotated by the same rules.
+`dataset.28bf18c6.json` and `dataset.3c9b0459.json`, and `l6074` is a straight
+line of cells across the whole canvas, along the axis its orientation gives.
+Input masks retain each pair's full-size 3 by 3 input canvas and output masks
+the complete 3 by 3 output, padded with `0` outside the line; with one object
+per grid, each mask equals its pair's grid, and merging them reproduces each
+pair's input and output. The `output_x`/`output_y` fields record the line's
+nonzero bounding-box origin, 0 and 0, equal to
+`output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each output keeps its input's 3 by 3
+canvas, including the two empty rows below the top-row line that `FIT` would
+crop from the third and fourth training outputs. Orientation is 0 in every
+input state, where the mosaic is not turned, and the line's axis, 90, 135, or
+45, in every output state. The declarations hold executable code only, without
+`#` comments. The test pair follows the training pairs at the same level and
+is annotated by the same rules.
 
 `dataset.74dd1130.json` annotates the four original training pairs from
 `data\training\74dd1130.json`, in order, followed by its test pair, five
@@ -761,8 +847,12 @@ center line, or a flip across either diagonal, and the flip across the other
 diagonal, from the top-right corner to the bottom-left, reproduces none. No
 turn reproduces a training output, so `orientation`, a clockwise angle from
 north, cannot state the change: a mirror reverses the mosaic's handedness,
-which no turn does. The class takes no descriptive property, with no color,
-parts list, width, height, canvas size, or matrix of cells, because the rule
+which no turn does. The class takes only the standard entries `x`, `y`,
+`width`, `height`, and `orientation`, in that order, where `width` and
+`height` are the column and row counts of the mosaic's box, the nonzero
+bounding box of its input mask, 3 and 3 in every pair, so each implementation
+passes `width=3, height=3` right after `y`. It takes no descriptive property,
+with no color, parts list, canvas size, or matrix of cells, because the rule
 needs none: the mosaic's cells travel in its masks, and its flip is its
 mirror axis. One unconditional class-level rule introduces `mirror_axis`,
 which is absent before the rules run, as `135`: the axis the mosaic is
@@ -778,15 +868,16 @@ every mosaic's origin is 0 and 0, so those rules would only return the input
 origin; the rules state the flip alone, a choice fixed from the training pairs
 before the test pair was read. Each training grid holds a single mosaic and
 shows no relation between objects, so no population operation appears. The
-rules create no other property and leave `x`, `y`, `orientation`, and the tag
-unchanged, so each output state adds only `mirror_axis` to its input state's
-keys. Native snapshots start with the pair's `canvas_width` and
-`canvas_height`, and output snapshots are captured with the pair's
-implementation followed by `Obj[:]`. The tag `l9100` is a single shape, as in
-`dataset.28bf18c6.json` and `dataset.3c9b0459.json`, in both states. Input
-masks retain each pair's full-size 3 by 3 input canvas and output masks the
-complete 3 by 3 output; with no zero cell, each mask equals its pair's grid,
-and merging them reproduces each pair's input and output. The
+rules create no other property and leave `x`, `y`, `width`, `height`,
+`orientation`, and the tag unchanged, because the flip keeps the square box's
+size and `mirror_axis` carries it, so each output state adds only
+`mirror_axis` to its input state's keys. Native snapshots start with the
+pair's `canvas_width` and `canvas_height`, and output snapshots are captured
+with the pair's implementation followed by `Obj[:]`. The tag `l9100` is a
+single shape, as in `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, in
+both states. Input masks retain each pair's full-size 3 by 3 input canvas and
+output masks the complete 3 by 3 output; with no zero cell, each mask equals
+its pair's grid, and merging them reproduces each pair's input and output. The
 `output_x`/`output_y` fields record the mirrored mosaic's nonzero bounding-box
 origin, 0 and 0, equal to `output_value.x`/`output_value.y`. `output_canvas`
 is `EXACT` because each output keeps its input's 3 by 3 canvas; with no zero
@@ -823,10 +914,16 @@ largest piece, because the only split color, the fourth pair's two single
 color-8 cells, turns gray either way; the rules count each color as one region
 instead, the unit in which every output changes, since all cells of a color
 share one output color, a choice fixed from the training pairs before the
-test pair was read. The class takes `color` and `cell_count`, the region's
+test pair was read. The class takes the standard entries `x`, `y`, `width`,
+`height`, and `orientation` first, then `color` and `cell_count`, the region's
 number of cells, as scalars, as in `dataset.9af7a82c.json`, with no parts
 list, histogram, rank, output color, canvas size, or matrix of cells, so no
-input property names the kept color. One conditional class-level rule,
+input property names the kept color. `width` and `height` are the column
+and row counts of the region's bounding box, from a single cell to the
+whole 3 by 3 canvas. They do not replace `cell_count`, because a region's
+box does not count its cells: the fourth training pair's two color-8 corner
+cells span a 3 by 3 box, yet that region turns gray, while the 3 cells of
+color 4, a single row, keep their color. One conditional class-level rule,
 `if any other in Obj: other.cell_count > $Obj.cell_count:` with the body
 `$Obj.color = 5`, turns gray every region that another region of its pair
 outnumbers: the quantifier `any` of [NUC 62](../docs/nuc-0062.md) states the
@@ -835,8 +932,9 @@ population, and `$Obj.cell_count` reads the region the rule is evaluated for.
 The condition reads no color, so the rule rewrites `color` without an
 `@first` anchor, and a tie for the most cells, which no pair has, would keep
 every tied region's color. The rules create no property and leave `x`, `y`,
-`orientation`, and the tag unchanged, so input and output states share the
-same keys, and a gray region's output state differs from its input state only
+`width`, `height`, `orientation`, and the tag unchanged, since a region keeps
+its cells when it turns gray, so input and output states share the same
+keys, and a gray region's output state differs from its input state only
 in `color`. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`, and output snapshots are captured with all of the same pair's
 implementations together, followed by `Obj[:]`, so every region is compared
@@ -863,22 +961,27 @@ distinct within each pair. Each output is a histogram: the region
 with the r-th largest cell count becomes a vertical bar of its color in
 column r, starting at the top row and as tall as the region's cell count,
 giving the original 5 by 3, 6 by 4, 5 by 4, 6 by 3, and 6 by 5 outputs. The
-class takes
-`color` and `cell_count`, the region's number of cells, as scalars rather than a
-matrix of cells. Unconditional class-level rules introduce `bar_height` (the
-cell count), which is absent before the rules run, move `y` to the output
-origin 0, and derive `x`, the bar's column, from the pair's whole population:
-`Obj.filter(other => other.cell_count > $Obj.cell_count).length` counts the
-larger regions and re-evaluates whenever an instance is added. Each pair lists
-its instances largest first. Native output snapshots are captured with all of
-the same pair's implementations together, followed by `Obj[:]`, so every
-recorded `x` counts all larger regions of its pair. Tags
+class takes the standard entries `x`, `y`, `width`, `height`, and
+`orientation`, where `width` and `height` are the column and row counts of the
+region's bounding box, 1 to 4 each, followed by `color` and `cell_count`, the
+region's number of cells, as scalars rather than a matrix of cells.
+Unconditional class-level rules resize every region into its bar, with `width`
+1 and `height` the cell count, move `y` to the output origin 0, and derive `x`,
+the bar's column, from the pair's whole population:
+`Obj.filter(other => other.height > $Obj.height).length` counts the taller
+bars, those of the larger regions, and re-evaluates whenever an instance is
+added. The bar's size is the object's own `width` and `height`, so the rules
+create no property, and input and output states share the same keys. Each pair
+lists its instances largest first. Native output snapshots are captured with
+all of the same pair's implementations together, followed by `Obj[:]`, so
+every recorded `x` counts all larger regions of its pair. Tags
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l6953` is a vertical bar. Input masks retain
 each pair's full-size, zero-padded input canvas; output masks retain each
 pair's full-size output canvas padded with `0` outside the bar. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box world origin,
-equal to `output_value.x`/`output_value.y`, not offsets to apply again.
+equal to `output_value.x`/`output_value.y`, not offsets to apply again, and
+`output_value.width`/`output_value.height` equal that bounding box's size.
 `output_canvas` is `FIT` because each histogram fills its nonzero bounding box,
 and two outputs are wider than their inputs. Orientation is 0 in both states
 because the regions are not rotated and the bars are vertical. The test pair
@@ -913,25 +1016,30 @@ colors by the canvas's edges, 2 at the left edge, 3 at the right edge, and 4
 between them, because every canvas is 3 columns wide; the rules take one
 marker per row in every pair and look the color up by column instead, choices
 fixed from the training pairs before the test pair was read. The class takes
-no descriptive property, with no color, column list, canvas size, or matrix of
-cells: every marker is gray, which the rules never read, and the marker's
-column is its `x`. Unconditional class-level rules set the output tag,
-introduce two properties, absent before the rules run, and move `x` to the left
-edge, 0, while `y` keeps the marker's row. `fill_color` is
+only the standard entries `x`, `y`, `width`, `height`, and `orientation`,
+where `width` and `height` are the column and row counts of the marker's box,
+1 and 1, and no descriptive property, with no color, column list, canvas size,
+or matrix of cells: every marker is gray, which the rules never read, and the
+marker's column is its `x`. Unconditional class-level rules set the output
+tag, introduce one property, `fill_color`, absent before the rules run, widen
+the marker into its bar, and move `x` to the left edge, 0, while `y` keeps the
+marker's row. `fill_color` is
 `[2, 4, 3][$Obj.x@first]`: the list holds one color per column of the
 3-column canvases, from left to right, and indexing it with the marker's input
 column picks its row's color, anchored with `@first` because another rule
-moves `x`. `bar_width` is `canvas_width`, reading the canvas's width from the
-solver's `canvas_width`, as `dataset.d037b0a7.json` reads `canvas_height`. The
+moves `x`. `width` becomes `canvas_width`, reading the canvas's width from the
+solver's `canvas_width`, as `dataset.d037b0a7.json` reads `canvas_height`,
+while `height` stays the marker's 1 because the bar is one row tall. The
 bar's ends come from the canvas, not the population: in the second training
 pair every marker lies in the right column, yet every bar spans the whole row.
 Each bar depends only on its own marker, and the training pairs show no
 relation between markers, so no population operation appears. The rules create
-no other property and leave `y` and `orientation` unchanged, so each output
-state adds only `bar_width` and `fill_color` to its input state's keys, its tag
-turns `l3058`, and its `x` turns 0. Native snapshots start with the pair's
-`canvas_width` and `canvas_height`, and output snapshots are captured with all
-of the same pair's implementations together, followed by `Obj[:]`. Tags
+no other property and leave `y`, `height`, and `orientation` unchanged, so
+each output state adds only `fill_color` to its input state's keys, its tag
+turns `l3058`, its `width` turns 3, and its `x` turns 0. Native snapshots
+start with the pair's `canvas_width` and `canvas_height`, and output snapshots
+are captured with all of the same pair's implementations together, followed by
+`Obj[:]`. Tags
 identify the geometry: `l7544` is a single point, as in
 `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, and `l3058` is a
 horizontal bar, as in `dataset.d631b094.json` and `dataset.25d8a9c8.json`.
@@ -939,7 +1047,8 @@ Input masks retain each pair's full-size 3 by 3 input canvas, padded with `0`
 outside the marker, and output masks the complete 3 by 3 output, padded with
 `0` outside the bar; merging them reproduces each pair's input and output. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box origin, the
-left end of its marker's row, equal to `output_value.x`/`output_value.y`.
+left end of its marker's row, equal to `output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height`, 3 and 1, equal the bar's size.
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 3
 canvas; with no zero cell in any output, `FIT` would frame the same grids.
 Orientation is 0 in both states because the point is symmetric and the bar is
@@ -956,12 +1065,17 @@ listed in reading order; no two points of a pair share a column, so their bars
 never overlap. Each output extends every point downward into a vertical bar of
 its color, from the point's row to the bottom row of the canvas, so each bar is
 1 to 3 cells tall and a point on the bottom row stays a single cell. The class
-takes `color` as its only descriptive scalar, with no canvas size or matrix of
-cells. Unconditional class-level rules set the output tag and introduce
-`bar_height`, which is absent before the rules run, as
-`canvas_height - $Obj.y`, reading the canvas's height from the solver's
-`canvas_height`, and leave `x` and `y` unchanged because the point is the
-bar's top cell. The bottom edge comes from the canvas, not the
+takes the standard entries `x`, `y`, `width`, `height`, and `orientation`,
+where `width` and `height` are the column and row counts of the point's box,
+1 and 1, and `color` as its only descriptive scalar, with no canvas size or
+matrix of cells. Unconditional class-level rules set the output tag and grow
+the point's `height` into the bar's, `canvas_height - $Obj.y@first`, reading
+the canvas's height from the solver's `canvas_height`, and leave `x`, `y`, and
+`width` unchanged because the point is the bar's top cell and the bar is one
+column wide. The `@first` anchor reads the point's input row, so the bar grows
+from the point's input state even though no rule moves `y`; the rules create
+no property, so input and output states share the same keys. The bottom edge
+comes from the canvas, not the
 population: the second training pair's lowest point lies on the middle row,
 yet its bars reach the bottom row. Native output snapshots are captured with
 all of the same pair's implementations together, followed by `Obj[:]`. Tags
@@ -971,11 +1085,13 @@ identify the geometry: `l7544` is a single point, as in
 zero-padded input canvas; output masks retain each pair's full-size output
 canvas padded with `0` outside the bar. The `output_x`/`output_y` fields
 record the bar's nonzero bounding-box origin, equal to
-`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
-output keeps its input's canvas, including the empty right column of the third
-training output. Orientation is 0 in both states because the points are
-symmetric and the bars are vertical. The test pair follows the training pairs
-at the same level and is annotated by the same rules.
+`output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height` equal the bar's size.
+`output_canvas` is `EXACT` because each output keeps its input's canvas,
+including the empty right column of the third training output. Orientation is
+0 in both states because the points are symmetric and the bars are vertical.
+The test pair follows the training pairs at the same level and is annotated by
+the same rules.
 
 `dataset.d631b094.json` annotates the four original training pairs from
 `data\training\d631b094.json`, in order, followed by its test pair, five
@@ -985,19 +1101,25 @@ nonzero color, and all cells of that color form one region, whether or not
 they touch: 2, 3, 1, 4, and 5 cells per pair. Each output is a horizontal bar
 of the region's color, one row high and as wide as the region's cell count,
 giving the original 1 by 2, 1 by 3, 1 by 1, 1 by 4, and 1 by 5 outputs. The
-class takes `color` and `cell_count`, the region's number of cells, as
-scalars rather than a matrix of cells. Unconditional class-level rules
-introduce `bar_width` (the cell count), which is absent before the rules run,
-and move `x` and `y` to the output origin 0. Tags identify the geometry:
+class takes the standard entries `x`, `y`, `width`, `height`, and
+`orientation`, where `width` and `height` are the column and row counts of the
+region's bounding box, 1 to 3 each, followed by `color` and `cell_count`, the
+region's number of cells, as scalars rather than a matrix of cells.
+Unconditional class-level rules resize every region into its bar, with `width`
+the cell count and `height` 1, and move `x` and `y` to the output origin 0.
+The bar's size is the object's own `width` and `height`, so the rules create
+no property, and input and output states share the same keys. Tags identify
+the geometry:
 `l9100` is a single shape, as in `dataset.28bf18c6.json`, and `l3058` is a
 horizontal bar. Input masks retain each pair's full-size, zero-padded 3 by 3
 input canvas; output masks retain each pair's full-size output canvas. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box origin,
-equal to `output_value.x`/`output_value.y`. `output_canvas` is `FIT` because
-each output is cropped to the bar. Orientation is 0 in both states because
-the regions are not rotated and the bar is a distinct horizontal geometry.
-The test pair follows the training pairs at the same level and is annotated
-by the same rules.
+equal to `output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height` equal the bar's size.
+`output_canvas` is `FIT` because each output is cropped to the bar.
+Orientation is 0 in both states because the regions are not rotated and the
+bar is a distinct horizontal geometry. The test pair follows the training
+pairs at the same level and is annotated by the same rules.
 
 `dataset.ed36ccf7.json` annotates the four original training pairs from
 `data\training\ed36ccf7.json`, in order, followed by its test pair, five
@@ -1017,59 +1139,71 @@ square's eight turns and mirrors, the identity included, that reproduces every
 training pair: the third training pattern, an L symmetric across its main
 diagonal, also fits a top-bottom mirror, but the other three pairs fit only
 the quarter turn. The pattern turns as one, so each grid holds one object; the
-same rules would turn each separate piece as well. Every training pattern's box
-spans its canvas, 3 by 3 from the origin, 0 and 0, before and after the turn,
-so the training pairs alone also fit turning the pattern in place, with
-`orientation` alone, as `dataset.3c9b0459.json` states its half turn. The
-rules turn it about the canvas center instead, as `dataset.6150a2bd.json`
-turns its block a half turn, a choice fixed from the training pairs before the
-test pair was read: unlike the mosaics of `dataset.3c9b0459.json` and
-`dataset.74dd1130.json`, which have no zero cell and always fill their
-canvases, these patterns lie on a background, so their boxes need not span the
-canvas, and a turn of the whole grid carries a box that does not span it to a
-new place. The test pattern's box starts one row down and is 3 columns wide and
-2 rows tall; the turn carries it to a box 2 columns wide and 3 rows tall that
-starts one column right, which the turn in place, keeping the input origin,
-would not reproduce. The class takes `width`, the number of columns of the
-pattern's box, as its only descriptive scalar, with no color, height, parts
-list, canvas size, or matrix of cells: the pattern's cells travel in its masks,
-its turn is its orientation, and the rules read the canvas's width from the
-solver's `canvas_width`. Three unconditional class-level rules read the
-pattern's input state with `@first` anchors.
+same rules would turn each separate piece as well. The class takes only the
+standard entries `x`, `y`, `width`, `height`, and `orientation`, in that
+order, with no color, parts list, canvas size, or matrix of cells: the
+pattern's cells travel in its masks, its turn is its orientation, and the
+rules read the canvas's width from the solver's `canvas_width`. `width` and
+`height` are the column and row counts of the pattern's box, the nonzero
+bounding box of its input mask, 3 and 3 for every training pattern and 3 and
+2 for the test pattern, and each implementation passes them right after `y`,
+such as `width=3, height=3` for the first training input. Every training
+pattern's box spans its canvas, 3 by 3 from the origin, 0 and 0, before and
+after the turn, so the training pairs alone also fit turning the pattern in
+place, with `orientation` alone, as `dataset.3c9b0459.json` states its half
+turn. The rules turn it about the canvas center instead, as
+`dataset.6150a2bd.json` turns its block a half turn, a choice fixed from the
+training pairs before the test pair was read: unlike the mosaics of
+`dataset.3c9b0459.json` and `dataset.74dd1130.json`, which have no zero cell
+and always fill their canvases, these patterns lie on a background, so their
+boxes need not span the canvas, and a turn of the whole grid carries a box
+that does not span it to a new place. Three unconditional class-level rules
+read the pattern's input state with `@first` anchors.
 `($Obj.orientation@first + 270) % 360` gives `orientation`, because a
 counterclockwise quarter turn is 270 degrees clockwise, as
-`dataset.6150a2bd.json` adds 180 for its half turn. `$Obj.y@first.value` gives
-`x`, because the box's top row becomes the turned box's left column.
-`canvas_width - $Obj.x@first.value - $Obj.width` gives `y`, because the box's
-right column becomes the turned box's top row, as far below the top edge as the
-box was left of the right edge; the box's height is not needed. The `x` and `y`
-rules each read the other coordinate, so plain `@first` reads would form a
-class cycle, which the accepted runtime rejects with
-`TypeError("Circular Dependency")`: [NUC 55](../docs/nuc-0055.md) exempts only
-a rule's own fixed anchor from that check. The `.value` snapshot of the
-[value property](../docs/README.md#the-value-property) records no dependency
-and breaks that cycle, while the `@first` anchors keep each read on the input
-coordinate whatever order the rules run in. Each training grid holds a single
-pattern and shows no relation between objects, so no population operation
-appears. The rules create no property and leave `width` and the tag unchanged,
-so input and output states share the same keys. Native snapshots start with
-the pair's `canvas_width` and `canvas_height`, and output snapshots are
-captured with the pair's implementation followed by `Obj[:]`. The tag `l9100`
-is a single shape, as in `dataset.28bf18c6.json`, `dataset.3c9b0459.json`, and
-`dataset.6150a2bd.json`, in both states. Input masks retain each pair's
-full-size 3 by 3 input canvas and output masks the complete 3 by 3 output, with
-zero cells padded `0`; with one pattern per grid, each mask equals its pair's
-grid, and merging them reproduces each pair's input and output. The
-`output_x`/`output_y` fields record the turned pattern's nonzero bounding-box
-origin, 0 and 0 in the training pairs and 1 and 0 in the test pair, equal to
-`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
-output keeps its input's 3 by 3 canvas, as a turn of the whole square grid
-does; every training output's pattern spans its canvas, so `FIT` would frame
-the same training grids, but it would crop the empty left column of the test
-output. Orientation is 0 in every input state, where the pattern is not
-turned, and 270 in every output state. The declarations hold executable code
-only, without `#` comments. The test pair follows the training pairs at the
-same level and is annotated by the same rules.
+`dataset.6150a2bd.json` adds 180 for its half turn. `$Obj.y@first` gives `x`,
+because the box's top row becomes the turned box's left column.
+`canvas_width - $Obj.x@first - $Obj.width@first` gives `y`, because the box's
+right column becomes the turned box's top row, as far below the top edge as
+the box was left of the right edge; the box's height is not needed. The rules
+leave `width` and `height` unchanged, because a quarter turn changes the
+pattern's orientation, not its size: they remain the column and row counts of
+the pattern's own box, and the output orientation of 270 says that the turned
+box is `height` columns wide and `width` rows tall. The test pattern's box
+starts one row down and is 3 columns wide and 2 rows tall; the turn carries it
+to a box 2 columns wide and 3 rows tall that starts one column right, which
+the turn in place, keeping the input origin, would not reproduce, while its
+output state keeps `width` 3 and `height` 2. The `x` and `y` rules each read
+the other coordinate's first value, a class cycle made only of fixed anchors.
+[NUC 55](../docs/nuc-0055.md) exempts only a rule's own fixed anchor from the
+circular-dependency check, so the runtime rejected such a cycle with
+`TypeError("Circular Dependency")` until [NUC 85](../docs/nuc-0085.md), Fixed
+Cross-Property Class Anchors, accepted every class cycle whose reads are all
+fixed anchors of the same instance. Those anchors stay tracked, so the rules
+read plain `@first` anchors and need no `.value` snapshot, and they give the
+same states whether they are declared before or after the instances. Each
+training grid holds a single pattern and shows no relation between objects,
+so no population operation appears. The rules create no property, so input
+and output states share the same keys; they differ only in `orientation` in
+the training pairs, and also in `x` and `y` in the test pair. Native
+snapshots start with the pair's `canvas_width` and `canvas_height`, and output
+snapshots are captured with the pair's implementation followed by `Obj[:]`.
+The tag `l9100` is a single shape, as in `dataset.28bf18c6.json`,
+`dataset.3c9b0459.json`, and `dataset.6150a2bd.json`, in both states. Input
+masks retain each pair's full-size 3 by 3 input canvas and output masks the
+complete 3 by 3 output, with zero cells padded `0`; with one pattern per grid,
+each mask equals its pair's grid, and merging them reproduces each pair's
+input and output. The `output_x`/`output_y` fields record the turned
+pattern's nonzero bounding-box origin, 0 and 0 in the training pairs and 1
+and 0 in the test pair, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each output keeps its input's 3 by 3
+canvas, as a turn of the whole square grid does; every training output's
+pattern spans its canvas, so `FIT` would frame the same training grids, but
+it would crop the empty left column of the test output. Orientation is 0 in
+every input state, where the pattern is not turned, and 270 in every output
+state. The declarations hold executable code only, without `#` comments. The
+test pair follows the training pairs at the same level and is annotated by
+the same rules.
 
 ## ARC proposal agent
 
@@ -1235,8 +1369,8 @@ It also infers the `output_canvas` from the training pairs.
 ```json
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color\n    this.marker_color = 0",
-    "if $Obj.vertex_color == 9 and $Obj.vertical_segment_color == 9 and $Obj.horizontal_segment_color == 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 1"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color\n    this.marker_color = 0",
+    "if $Obj.vertex_color == 9 and $Obj.vertical_segment_color == 9 and $Obj.horizontal_segment_color == 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 1\n    $Obj.x = $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y = $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width = $Obj.width@first + 1\n    $Obj.height = $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT"
 }
@@ -1259,7 +1393,7 @@ canvas_height = 3
 Their values are the column and row counts of the training pair's
 `input_matrix`, or of the test input during visualization. Declarations read
 the canvas size from these variables, as
-`$Obj.bar_height = canvas_height - $Obj.y` in `dataset.d037b0a7.json` does, so
+`$Obj.height = canvas_height - $Obj.y@first` in `dataset.d037b0a7.json` does, so
 no class takes it as a parameter and no implementation passes it. They are
 variables, not object properties, so the input and output states and `Obj[:]`
 do not include them. A class parameter of the same name still shadows them
@@ -1278,8 +1412,8 @@ extension, curve, and line instruction datasets expose
 column/row of the object's nonzero bounding-box origin within its mask; the
 orientation fields give each state's numeric angle. The current
 transformations preserve orientation, so their input and output angles match.
-Native snapshots use `x`, `y`, and `orientation`; `tag` replaces `shape`
-with shortened identifiers such as `l6747`.
+Native snapshots use `x`, `y`, `width`, `height`, and `orientation`; `tag`
+replaces `shape` with shortened identifiers such as `l6747`.
 Matrices already follow the canvas axes; composition does not rotate them.
 
 Angles run clockwise from north: `N = 0`, `NE = 45`, `SE = 135`, `S = 180`,
@@ -1303,20 +1437,23 @@ Line `extension_direction` and curve `rim_color` are created
 by those rules and are absent from their input snapshots rather than filled
 with artificial defaults.
 
-Both native snapshots keep `x` and `y` anchored to the input bounding box;
-`output_x` and `output_y` record the output bounding box's origin instead.
-In `dataset.core.json`, adding the exterior marker grows the output to
-3 by 3: subtract one from the input bounding box's x origin for
-`input_orientation` 225 or 315, and from its y origin for `input_orientation`
-45 or 315.
+The input snapshot's `x` and `y` give the input bounding box's origin, and its
+`width` and `height` give that box's column and row counts. The rules move the
+output snapshot's `x` and `y` to the output bounding box's origin, recorded in
+`output_x` and `output_y`, and set its `width` and `height` to that box's size.
+In `dataset.core.json`, adding the exterior marker grows the corner from
+2 by 2 to 3 by 3: the rule subtracts one from the x origin for orientation
+225 or 315, and from the y origin for orientation 45 or 315.
 The other origins are unchanged.
-For lines, subtract one from x when `extension_direction` is `left`, or from
-y when it is `up`; extensions to the right or down keep the input origin.
-For curves, subtract one from x for either orientation, and from y only when
-`orientation` is 0. These offsets are already recorded in `output_x`
-and `output_y`; do not apply them a second time during placement.
-The inner markers in `dataset.extension.json` do not change the
-bounding-box origin.
+For lines, the rules subtract one from x when `extension_direction` is `left`,
+or from y when it is `up`, and add one to `width` for a horizontal line or to
+`height` for a vertical one; extensions to the right or down keep the input
+origin. For curves, the rules subtract one from x for either orientation, and
+from y only when `orientation` is 0, and grow the point from 1 by 1 to 3 by 2.
+These offsets are already applied in the output snapshot and recorded in
+`output_x` and `output_y`; do not apply them a second time during placement.
+The inner markers in `dataset.extension.json` change neither the
+bounding-box origin nor the corner's 3 by 3 size.
 
 ```json
 {
@@ -1389,28 +1526,32 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0]
       ],
-      "implementation": "obj0 = Obj(x=5, y=1, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+      "implementation": "obj0 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
       "input_value": {
+        "height": 2,
+        "horizontal_segment_color": 9,
         "id": "obj0",
-        "x": 5,
-        "y": 1,
+        "marker_color": 0,
         "orientation": 135,
         "tag": "l6747",
         "vertex_color": 9,
         "vertical_segment_color": 9,
-        "horizontal_segment_color": 9,
-        "marker_color": 0
+        "width": 2,
+        "x": 5,
+        "y": 1
       },
       "output_value": {
+        "height": 3,
+        "horizontal_segment_color": 9,
         "id": "obj0",
-        "x": 5,
-        "y": 1,
+        "marker_color": 1,
         "orientation": 135,
         "tag": "l6624",
         "vertex_color": 9,
         "vertical_segment_color": 9,
-        "horizontal_segment_color": 9,
-        "marker_color": 1
+        "width": 3,
+        "x": 5,
+        "y": 1
       }
     }
   ]

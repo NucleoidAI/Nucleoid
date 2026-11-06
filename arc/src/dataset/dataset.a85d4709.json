@@ -1,9 +1,9 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l7544'",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l7544'",
     "$Obj.tag = 'l3058'",
     "$Obj.fill_color = [2, 4, 3][$Obj.x@first]",
-    "$Obj.bar_width = canvas_width",
+    "$Obj.width = canvas_width",
     "$Obj.x = 0"
   ],
   "output_canvas": "EXACT",
@@ -38,9 +38,9 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obja98bf6900c1c = Obj(x=2, y=0, orientation=0)",
-          "input_value": {"id":"obja98bf6900c1c","orientation":0,"tag":"l7544","x":2,"y":0},
-          "output_value": {"bar_width":3,"fill_color":3,"id":"obja98bf6900c1c","orientation":0,"tag":"l3058","x":0,"y":0}
+          "implementation": "obja98bf6900c1c = Obj(x=2, y=0, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obja98bf6900c1c","orientation":0,"tag":"l7544","width":1,"x":2,"y":0},
+          "output_value": {"fill_color":3,"height":1,"id":"obja98bf6900c1c","orientation":0,"tag":"l3058","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "obj9ab2c883b000",
@@ -60,9 +60,9 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "obj9ab2c883b000 = Obj(x=1, y=1, orientation=0)",
-          "input_value": {"id":"obj9ab2c883b000","orientation":0,"tag":"l7544","x":1,"y":1},
-          "output_value": {"bar_width":3,"fill_color":4,"id":"obj9ab2c883b000","orientation":0,"tag":"l3058","x":0,"y":1}
+          "implementation": "obj9ab2c883b000 = Obj(x=1, y=1, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obj9ab2c883b000","orientation":0,"tag":"l7544","width":1,"x":1,"y":1},
+          "output_value": {"fill_color":4,"height":1,"id":"obj9ab2c883b000","orientation":0,"tag":"l3058","width":3,"x":0,"y":1}
         },
         {
           "instance_name": "obj6d8b02455a90",
@@ -82,9 +82,9 @@
             [0, 0, 0],
             [2, 2, 2]
           ],
-          "implementation": "obj6d8b02455a90 = Obj(x=0, y=2, orientation=0)",
-          "input_value": {"id":"obj6d8b02455a90","orientation":0,"tag":"l7544","x":0,"y":2},
-          "output_value": {"bar_width":3,"fill_color":2,"id":"obj6d8b02455a90","orientation":0,"tag":"l3058","x":0,"y":2}
+          "implementation": "obj6d8b02455a90 = Obj(x=0, y=2, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obj6d8b02455a90","orientation":0,"tag":"l7544","width":1,"x":0,"y":2},
+          "output_value": {"fill_color":2,"height":1,"id":"obj6d8b02455a90","orientation":0,"tag":"l3058","width":3,"x":0,"y":2}
         }
       ]
     },
@@ -118,9 +118,9 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "objcf7eaf55c47f = Obj(x=2, y=0, orientation=0)",
-          "input_value": {"id":"objcf7eaf55c47f","orientation":0,"tag":"l7544","x":2,"y":0},
-          "output_value": {"bar_width":3,"fill_color":3,"id":"objcf7eaf55c47f","orientation":0,"tag":"l3058","x":0,"y":0}
+          "implementation": "objcf7eaf55c47f = Obj(x=2, y=0, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"objcf7eaf55c47f","orientation":0,"tag":"l7544","width":1,"x":2,"y":0},
+          "output_value": {"fill_color":3,"height":1,"id":"objcf7eaf55c47f","orientation":0,"tag":"l3058","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "obj3f6ca29afbc2",
@@ -140,9 +140,9 @@
             [3, 3, 3],
             [0, 0, 0]
           ],
-          "implementation": "obj3f6ca29afbc2 = Obj(x=2, y=1, orientation=0)",
-          "input_value": {"id":"obj3f6ca29afbc2","orientation":0,"tag":"l7544","x":2,"y":1},
-          "output_value": {"bar_width":3,"fill_color":3,"id":"obj3f6ca29afbc2","orientation":0,"tag":"l3058","x":0,"y":1}
+          "implementation": "obj3f6ca29afbc2 = Obj(x=2, y=1, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obj3f6ca29afbc2","orientation":0,"tag":"l7544","width":1,"x":2,"y":1},
+          "output_value": {"fill_color":3,"height":1,"id":"obj3f6ca29afbc2","orientation":0,"tag":"l3058","width":3,"x":0,"y":1}
         },
         {
           "instance_name": "objbd5858949c26",
@@ -162,9 +162,9 @@
             [0, 0, 0],
             [3, 3, 3]
           ],
-          "implementation": "objbd5858949c26 = Obj(x=2, y=2, orientation=0)",
-          "input_value": {"id":"objbd5858949c26","orientation":0,"tag":"l7544","x":2,"y":2},
-          "output_value": {"bar_width":3,"fill_color":3,"id":"objbd5858949c26","orientation":0,"tag":"l3058","x":0,"y":2}
+          "implementation": "objbd5858949c26 = Obj(x=2, y=2, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"objbd5858949c26","orientation":0,"tag":"l7544","width":1,"x":2,"y":2},
+          "output_value": {"fill_color":3,"height":1,"id":"objbd5858949c26","orientation":0,"tag":"l3058","width":3,"x":0,"y":2}
         }
       ]
     },
@@ -198,9 +198,9 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj2474c72b37ce = Obj(x=0, y=0, orientation=0)",
-          "input_value": {"id":"obj2474c72b37ce","orientation":0,"tag":"l7544","x":0,"y":0},
-          "output_value": {"bar_width":3,"fill_color":2,"id":"obj2474c72b37ce","orientation":0,"tag":"l3058","x":0,"y":0}
+          "implementation": "obj2474c72b37ce = Obj(x=0, y=0, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obj2474c72b37ce","orientation":0,"tag":"l7544","width":1,"x":0,"y":0},
+          "output_value": {"fill_color":2,"height":1,"id":"obj2474c72b37ce","orientation":0,"tag":"l3058","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "objaed8e33db4c8",
@@ -220,9 +220,9 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "objaed8e33db4c8 = Obj(x=1, y=1, orientation=0)",
-          "input_value": {"id":"objaed8e33db4c8","orientation":0,"tag":"l7544","x":1,"y":1},
-          "output_value": {"bar_width":3,"fill_color":4,"id":"objaed8e33db4c8","orientation":0,"tag":"l3058","x":0,"y":1}
+          "implementation": "objaed8e33db4c8 = Obj(x=1, y=1, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"objaed8e33db4c8","orientation":0,"tag":"l7544","width":1,"x":1,"y":1},
+          "output_value": {"fill_color":4,"height":1,"id":"objaed8e33db4c8","orientation":0,"tag":"l3058","width":3,"x":0,"y":1}
         },
         {
           "instance_name": "objb0a0c5cdd8e5",
@@ -242,9 +242,9 @@
             [0, 0, 0],
             [2, 2, 2]
           ],
-          "implementation": "objb0a0c5cdd8e5 = Obj(x=0, y=2, orientation=0)",
-          "input_value": {"id":"objb0a0c5cdd8e5","orientation":0,"tag":"l7544","x":0,"y":2},
-          "output_value": {"bar_width":3,"fill_color":2,"id":"objb0a0c5cdd8e5","orientation":0,"tag":"l3058","x":0,"y":2}
+          "implementation": "objb0a0c5cdd8e5 = Obj(x=0, y=2, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"objb0a0c5cdd8e5","orientation":0,"tag":"l7544","width":1,"x":0,"y":2},
+          "output_value": {"fill_color":2,"height":1,"id":"objb0a0c5cdd8e5","orientation":0,"tag":"l3058","width":3,"x":0,"y":2}
         }
       ]
     },
@@ -278,9 +278,9 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj841ba2992b5b = Obj(x=1, y=0, orientation=0)",
-          "input_value": {"id":"obj841ba2992b5b","orientation":0,"tag":"l7544","x":1,"y":0},
-          "output_value": {"bar_width":3,"fill_color":4,"id":"obj841ba2992b5b","orientation":0,"tag":"l3058","x":0,"y":0}
+          "implementation": "obj841ba2992b5b = Obj(x=1, y=0, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obj841ba2992b5b","orientation":0,"tag":"l7544","width":1,"x":1,"y":0},
+          "output_value": {"fill_color":4,"height":1,"id":"obj841ba2992b5b","orientation":0,"tag":"l3058","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "objd02c45de0173",
@@ -300,9 +300,9 @@
             [3, 3, 3],
             [0, 0, 0]
           ],
-          "implementation": "objd02c45de0173 = Obj(x=2, y=1, orientation=0)",
-          "input_value": {"id":"objd02c45de0173","orientation":0,"tag":"l7544","x":2,"y":1},
-          "output_value": {"bar_width":3,"fill_color":3,"id":"objd02c45de0173","orientation":0,"tag":"l3058","x":0,"y":1}
+          "implementation": "objd02c45de0173 = Obj(x=2, y=1, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"objd02c45de0173","orientation":0,"tag":"l7544","width":1,"x":2,"y":1},
+          "output_value": {"fill_color":3,"height":1,"id":"objd02c45de0173","orientation":0,"tag":"l3058","width":3,"x":0,"y":1}
         },
         {
           "instance_name": "objc7fe68b94a5b",
@@ -322,9 +322,9 @@
             [0, 0, 0],
             [4, 4, 4]
           ],
-          "implementation": "objc7fe68b94a5b = Obj(x=1, y=2, orientation=0)",
-          "input_value": {"id":"objc7fe68b94a5b","orientation":0,"tag":"l7544","x":1,"y":2},
-          "output_value": {"bar_width":3,"fill_color":4,"id":"objc7fe68b94a5b","orientation":0,"tag":"l3058","x":0,"y":2}
+          "implementation": "objc7fe68b94a5b = Obj(x=1, y=2, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"objc7fe68b94a5b","orientation":0,"tag":"l7544","width":1,"x":1,"y":2},
+          "output_value": {"fill_color":4,"height":1,"id":"objc7fe68b94a5b","orientation":0,"tag":"l3058","width":3,"x":0,"y":2}
         }
       ]
     },
@@ -358,9 +358,9 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj1bcc31ba8d87 = Obj(x=2, y=0, orientation=0)",
-          "input_value": {"id":"obj1bcc31ba8d87","orientation":0,"tag":"l7544","x":2,"y":0},
-          "output_value": {"bar_width":3,"fill_color":3,"id":"obj1bcc31ba8d87","orientation":0,"tag":"l3058","x":0,"y":0}
+          "implementation": "obj1bcc31ba8d87 = Obj(x=2, y=0, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obj1bcc31ba8d87","orientation":0,"tag":"l7544","width":1,"x":2,"y":0},
+          "output_value": {"fill_color":3,"height":1,"id":"obj1bcc31ba8d87","orientation":0,"tag":"l3058","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "obje9e3160f1271",
@@ -380,9 +380,9 @@
             [2, 2, 2],
             [0, 0, 0]
           ],
-          "implementation": "obje9e3160f1271 = Obj(x=0, y=1, orientation=0)",
-          "input_value": {"id":"obje9e3160f1271","orientation":0,"tag":"l7544","x":0,"y":1},
-          "output_value": {"bar_width":3,"fill_color":2,"id":"obje9e3160f1271","orientation":0,"tag":"l3058","x":0,"y":1}
+          "implementation": "obje9e3160f1271 = Obj(x=0, y=1, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obje9e3160f1271","orientation":0,"tag":"l7544","width":1,"x":0,"y":1},
+          "output_value": {"fill_color":2,"height":1,"id":"obje9e3160f1271","orientation":0,"tag":"l3058","width":3,"x":0,"y":1}
         },
         {
           "instance_name": "obj0695f02efe73",
@@ -402,9 +402,9 @@
             [0, 0, 0],
             [4, 4, 4]
           ],
-          "implementation": "obj0695f02efe73 = Obj(x=1, y=2, orientation=0)",
-          "input_value": {"id":"obj0695f02efe73","orientation":0,"tag":"l7544","x":1,"y":2},
-          "output_value": {"bar_width":3,"fill_color":4,"id":"obj0695f02efe73","orientation":0,"tag":"l3058","x":0,"y":2}
+          "implementation": "obj0695f02efe73 = Obj(x=1, y=2, width=1, height=1, orientation=0)",
+          "input_value": {"height":1,"id":"obj0695f02efe73","orientation":0,"tag":"l7544","width":1,"x":1,"y":2},
+          "output_value": {"fill_color":4,"height":1,"id":"obj0695f02efe73","orientation":0,"tag":"l3058","width":3,"x":0,"y":2}
         }
       ]
     }

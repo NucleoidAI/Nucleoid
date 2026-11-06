@@ -73,6 +73,41 @@ another through an edge or a corner, so each point is a whole figure, not a
 piece of a larger shape, and the rules give each color-1 and color-2 point its
 whole marker cross. Nothing needs to change.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int):
+if $Obj.vertex_color == 1:
+    $Obj.tag = 'l1707'
+    $Obj.marker_color = 7
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+    $Obj.width = $Obj.width@first + 2
+    $Obj.height = $Obj.height@first + 2
+if $Obj.vertex_color == 2:
+    $Obj.tag = 'l2404'
+    $Obj.marker_color = 4
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+    $Obj.width = $Obj.width@first + 2
+    $Obj.height = $Obj.height@first + 2
+```
+
+Both marker branches add `$Obj.width = $Obj.width@first + 2` and `$Obj.height
+= $Obj.height@first + 2`, because a marked point grows from 1 by 1 to its 3 by
+3 marker; color-6 and color-8 points stay 1 by 1. The migration worker
+regenerated every snapshot with the accepted runtime at `491512d`, and the
+caller replayed every pair offline against the unchanged grids, masks,
+positions and instance names. No solver run has measured this version yet.
+
 ## Decision: locate the delta from the initial position (NUC 53 and NUC 55)
 
 ### Why the world model has to move the object

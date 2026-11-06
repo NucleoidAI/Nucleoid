@@ -97,6 +97,28 @@ color of its own and touches no other through an edge, so each point is a
 whole figure, not a piece of a larger shape, and each grows into its own bar.
 Nothing needs to change.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):
+$Obj.tag = 'l6953'
+$Obj.height = canvas_height - $Obj.y@first
+```
+
+`bar_height` became the standard `height`: `$Obj.height = canvas_height -
+$Obj.y@first`, which reads the point's input row. The migration worker
+regenerated every snapshot with the accepted runtime at `491512d`, and the
+caller replayed every pair offline against the unchanged grids, masks,
+positions and instance names. No solver run has measured this version yet.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |

@@ -104,6 +104,29 @@ block into its single-color regions, finer than the figure the training pairs
 show, and the user's hint for version 2 moved the model to the whole block.
 Nothing needs to change.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int):
+$Obj.orientation = ($Obj.orientation@first + 180) % 360
+$Obj.x = canvas_width - $Obj.x@first - $Obj.width
+$Obj.y = canvas_height - $Obj.y@first - $Obj.height
+```
+
+No rule changed: the class's existing `width` and `height` moved into the
+standard position, and the half turn stays in `orientation`. The migration
+worker regenerated every snapshot with the accepted runtime at `491512d`, and
+the caller replayed every pair offline against the unchanged grids, masks,
+positions and instance names. No solver run has measured this version yet.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |

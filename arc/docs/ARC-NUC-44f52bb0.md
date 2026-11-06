@@ -172,6 +172,33 @@ cell was the pixel-level start that the requirement now rules out, and the
 user's hint for version 2 moved the model to the whole pattern. Nothing needs
 to change.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, points: list):
+$Obj.tag = 'l7544'
+$Obj.width = 1
+$Obj.height = 1
+$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])
+$Obj.fill_color = 1 if $Obj.symmetric else 7
+$Obj.x = 0
+$Obj.y = 0
+```
+
+Two rules, `$Obj.width = 1` and `$Obj.height = 1`, give the single output cell
+its size; the symmetry rule still reads `canvas_width`. The migration worker
+regenerated every snapshot with the accepted runtime at `491512d`, and the
+caller replayed every pair offline against the unchanged grids, masks,
+positions and instance names. No solver run has measured this version yet.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |

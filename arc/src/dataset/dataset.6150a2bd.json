@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# There is an Obj type, the whole block of colored cells on the canvas,\n# which has its x and y position, its orientation, and the width\n# and height of its box as integers\nclass Obj(x: int, y: int, orientation: int, width: int, height: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.width = width\n    this.height = height",
+    "# There is an Obj type, the whole block of colored cells on the canvas,\n# which has its x and y position, the width and height of its box,\n# and its orientation as integers\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
     "# Every block is turned a half turn, 180 degrees, and redrawn\n$Obj.orientation = ($Obj.orientation@first + 180) % 360",
     "# The half turn is about the canvas center, so the block's box\n# is now as far from the right edge as it was from the left edge\n$Obj.x = canvas_width - $Obj.x@first - $Obj.width",
     "# The half turn also puts the block's box as far\n# from the bottom edge as it was from the top edge\n$Obj.y = canvas_height - $Obj.y@first - $Obj.height"
@@ -37,7 +37,7 @@
             [0, 7, 3],
             [8, 3, 3]
           ],
-          "implementation": "obj0c2414cf33eb = Obj(x=0, y=0, orientation=0, width=3, height=3)",
+          "implementation": "obj0c2414cf33eb = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj0c2414cf33eb","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj0c2414cf33eb","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -73,7 +73,7 @@
             [0, 0, 1],
             [2, 5, 5]
           ],
-          "implementation": "obj19002ca3b8ed = Obj(x=0, y=0, orientation=0, width=3, height=2)",
+          "implementation": "obj19002ca3b8ed = Obj(x=0, y=0, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obj19002ca3b8ed","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":2,"id":"obj19002ca3b8ed","orientation":180,"tag":"l9100","width":3,"x":0,"y":1}
         }
@@ -109,7 +109,7 @@
             [0, 8, 6],
             [5, 3, 6]
           ],
-          "implementation": "obj18d0a3065349 = Obj(x=0, y=0, orientation=0, width=3, height=3)",
+          "implementation": "obj18d0a3065349 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj18d0a3065349","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj18d0a3065349","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }

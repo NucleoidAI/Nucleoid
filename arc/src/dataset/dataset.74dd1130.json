@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.orientation = orientation\n    this.tag = 'l9100'",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
     "$Obj.mirror_axis = 135"
   ],
   "output_canvas": "EXACT",
@@ -35,9 +35,9 @@
             [2, 5, 2],
             [1, 1, 2]
           ],
-          "implementation": "obj98ecd3af71f1 = Obj(x=0, y=0, orientation=0)",
-          "input_value": {"id":"obj98ecd3af71f1","orientation":0,"tag":"l9100","x":0,"y":0},
-          "output_value": {"id":"obj98ecd3af71f1","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+          "implementation": "obj98ecd3af71f1 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "input_value": {"height":3,"id":"obj98ecd3af71f1","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj98ecd3af71f1","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
@@ -71,9 +71,9 @@
             [2, 2, 5],
             [5, 2, 5]
           ],
-          "implementation": "objffef4308101e = Obj(x=0, y=0, orientation=0)",
-          "input_value": {"id":"objffef4308101e","orientation":0,"tag":"l9100","x":0,"y":0},
-          "output_value": {"id":"objffef4308101e","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+          "implementation": "objffef4308101e = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "input_value": {"height":3,"id":"objffef4308101e","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"objffef4308101e","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
@@ -107,9 +107,9 @@
             [9, 5, 8],
             [5, 8, 9]
           ],
-          "implementation": "objb5bc2fe94345 = Obj(x=0, y=0, orientation=0)",
-          "input_value": {"id":"objb5bc2fe94345","orientation":0,"tag":"l9100","x":0,"y":0},
-          "output_value": {"id":"objb5bc2fe94345","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+          "implementation": "objb5bc2fe94345 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "input_value": {"height":3,"id":"objb5bc2fe94345","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"objb5bc2fe94345","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
@@ -143,9 +143,9 @@
             [6, 1, 6],
             [6, 1, 2]
           ],
-          "implementation": "objf024b87c2f1b = Obj(x=0, y=0, orientation=0)",
-          "input_value": {"id":"objf024b87c2f1b","orientation":0,"tag":"l9100","x":0,"y":0},
-          "output_value": {"id":"objf024b87c2f1b","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+          "implementation": "objf024b87c2f1b = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "input_value": {"height":3,"id":"objf024b87c2f1b","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"objf024b87c2f1b","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
@@ -179,9 +179,9 @@
             [3, 4, 3],
             [4, 4, 4]
           ],
-          "implementation": "obj661249916bd0 = Obj(x=0, y=0, orientation=0)",
-          "input_value": {"id":"obj661249916bd0","orientation":0,"tag":"l9100","x":0,"y":0},
-          "output_value": {"id":"obj661249916bd0","mirror_axis":135,"orientation":0,"tag":"l9100","x":0,"y":0}
+          "implementation": "obj661249916bd0 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "input_value": {"height":3,"id":"obj661249916bd0","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj661249916bd0","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     }

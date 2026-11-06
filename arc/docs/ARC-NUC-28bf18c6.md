@@ -67,6 +67,32 @@ and go down to single cells only when that cannot express what the training
 pairs show. The dataset meets it. Each training input shows one shape, and
 that whole shape is the object the rules repeat. Nothing needs to change.
 
+### Standard entries
+
+On 5-Nov-2026, at the user's request, every ARC dataset moved to the standard
+object entries `x`, `y`, `width`, `height`, and `orientation`. `width` and
+`height` are the column and row counts of the object's input bounding box. An
+orientation change alone leaves them unchanged, and a rule changes them only
+when the shape itself changes size, reading the input with `@first`. Every
+implementation now passes the input box's `width` and `height` after `y`, and
+the class and rules read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):
+$Obj.tag = 'l4305'
+$Obj.repeat_count = 2
+$Obj.repeat_direction = 'right'
+$Obj.width = $Obj.width@first * $Obj.repeat_count
+$Obj.x = 0
+$Obj.y = 0
+```
+
+One rule, `$Obj.width = $Obj.width@first * $Obj.repeat_count`, gives the
+repeated shape its doubled width, while its height stays. The migration worker
+regenerated every snapshot with the accepted runtime at `491512d`, and the
+caller replayed every pair offline against the unchanged grids, masks,
+positions and instance names. No solver run has measured this version yet.
+
 ## Decision: `output_canvas` trims the composed matrix
 
 ### Problem
