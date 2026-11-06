@@ -13,6 +13,7 @@ export async function declarations({
   const { declarations, output_canvas } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    crop_instances: false,
     messages: [
       {
         role: "user",
@@ -48,6 +49,7 @@ export async function instances({
   const { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    crop_instances: false,
     messages: [
       {
         role: "user",
@@ -92,6 +94,7 @@ export async function value({
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    crop_instances: true,
     messages: [
       {
         role: "assistant",

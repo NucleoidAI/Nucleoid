@@ -14,6 +14,7 @@ export async function instances({
   const { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    crop_instances: false,
     messages: [
       {
         role: "assistant",
@@ -75,6 +76,7 @@ export async function value({
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    crop_instances: true,
     messages: [
       {
         role: "assistant",
@@ -123,7 +125,11 @@ export async function value({
     ],
   });
 
-  milestone.instance_synthesized({ instance_name, implementation });
+  milestone.instance_synthesized({
+    instance_name,
+    input_instance_matrix,
+    implementation,
+  });
   milestone.executing_transformation({ instance_name });
 
   const canvas_width: number = test_input_matrix[0].length;
@@ -159,6 +165,7 @@ export async function output_instance_matrix({
   const { output_instance_matrix } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    crop_instances: true,
     messages: [
       {
         role: "assistant",
@@ -221,8 +228,9 @@ export async function output_instance_matrix({
 
   milestone.output_composed({
     instance_name,
-    orientation: output_value.orientation,
+    input_instance_matrix,
     output_instance_matrix,
+    output_value,
   });
 
   const output_instance_padded_matrix = Matrix.pad(
