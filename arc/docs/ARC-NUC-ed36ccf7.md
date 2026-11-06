@@ -160,7 +160,9 @@ operation such as `filter` or `some`.
 The worker rewrote the dataset and its README paragraph. The puzzle's entry in
 the **ARC puzzle report** workflow's list, its 19th of 20 puzzles, was already
 there. The solver's default puzzle in `src/app.ts` already named `ed36ccf7`,
-set by `dd0cd5d`, so this invocation left it unchanged.
+set by `dd0cd5d`, so this invocation left it unchanged. After the run,
+`521aa3c` set the default to the genesis puzzle `3aa6fb7a`, a later change
+this record keeps.
 
 ## Decision: fixed cross-property anchors (NUC 85)
 
@@ -207,8 +209,8 @@ set by `dd0cd5d`, so this invocation left it unchanged.
   Its policy decision was Rejected: fixed-only cycles whose rules build fresh
   objects never settle, although NUC 85 says such cycles settle, and cascades
   across thousands of instances slow down sharply. The run below was no exact
-  match, so NUC 85 is Automatic-Accepted, integrated unchanged by
-  NUC_COMMIT_HASH; its Evaluation section records the findings.
+  match, so NUC 85 is Automatic-Accepted, integrated unchanged by `3592d4b`;
+  its Evaluation section records the findings.
 
 ## Runs
 
@@ -271,7 +273,14 @@ repeated.
   accepted equivalent. A follow-up proposal should make such cycles settle or
   document the limit, and bound the cascade cost. This dataset's rules read
   numbers, so they settle.
-- **The standard-entries migration.** MIGRATION_STATUS
+- **The standard-entries migration.** At the user's request, the other 22
+  datasets, their README paragraphs, the README's Analysis examples, 18
+  progress records and the arc-dataset profile moved to the standard entries
+  in this invocation, and `521aa3c` committed them with this dataset. Every
+  migrated snapshot replays offline on the accepted runtime and on NUC 85, but
+  no solver run has measured the migrated datasets yet. The genesis
+  dataset `dataset.core.json` also moves its grown corners' origins, so its
+  output states now place each 3 by 3 box where its output mask starts.
 - **Comments in declarations.** This dataset and seven others carry none,
   following `.claude/rules/arc.instructions.md`, while the other 15 datasets
   carry `#` comments, which the migration kept and updated. Decide which
