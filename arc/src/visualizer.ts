@@ -68,9 +68,9 @@ export async function value({
   input_instances,
   input_instance_matrix,
 }) {
-  const { x, y } = Matrix.locate(input_instance_matrix);
-
   milestone.synthesizing_instance({ instance_name });
+
+  const { x, y } = Matrix.locate(input_instance_matrix);
 
   const { implementation } = await llm.generate({
     puzzle_id,

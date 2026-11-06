@@ -1,6 +1,7 @@
 import * as nucleoid from "./lib/nucleoid";
 import * as llm from "./lib/llm";
 import * as milestone from "./lib/milestone.ts";
+import * as Matrix from "./lib/Matrix.ts";
 
 export async function declarations({
   puzzle_id,
@@ -86,15 +87,15 @@ export async function value({
 }) {
   milestone.constructing_instance({ instance_name });
 
+  const { x, y } = Matrix.locate(input_instance_matrix);
+
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     messages: [
       {
-        role: "user",
+        role: "assistant",
         content: `
-          instance_name:
-          ${instance_name}
           declarations:
           ${JSON.stringify(declarations)}
           input_instances:
@@ -107,18 +108,30 @@ export async function value({
                 implementation,
               }) => ({
                 instance_name,
-                input_instance_matrix,
-                output_instance_matrix,
+                input_instance_matrix: Matrix.crop(input_instance_matrix),
+                output_instance_matrix: Matrix.crop(output_instance_matrix),
                 implementation,
               })
             )
           )}
+          `,
+      },
+      {
+        role: "user",
+        content: `
+          instance_name:
+          ${instance_name}
           input_instance_matrix:
-          ${JSON.stringify(input_instance_matrix)}
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           output_instance_matrix:
-          ${JSON.stringify(output_instance_matrix)}
+          ${JSON.stringify(Matrix.crop(output_instance_matrix))}
+          input_x: ${x}
+          input_y: ${y}
           json_format:
-          { "implementation": <IMPLEMENTATION> }
+          {
+            "orientation": <ORIENTATION>,
+            "implementation": <IMPLEMENTATION>
+          }
         `,
       },
     ],
