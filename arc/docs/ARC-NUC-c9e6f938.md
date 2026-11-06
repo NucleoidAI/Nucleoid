@@ -141,10 +141,11 @@ checkout's debug runtime (`nucleoid 1.0.0`), current with `cargo build` at
 `b3cbd26`. The solver was the one committed at `b3cbd26` with its default
 puzzle changed, plus another session's change to `src/lib/openrouter.ts`,
 `src/lib/milestone.ts`, and `src/lib/terminal.ts`, uncommitted when the run
-started. That session committed it as `0fd695d`, "Disable and report
-OpenRouter prompt caching", 19 seconds after the run ended, with the same
-file contents the run used; the files were last written 23 seconds before
-the run started. The change sends `X-OpenRouter-Cache: false`, fails a
+started. That session committed it 19 seconds after the run ended, then
+rewrote its unpushed commits; the change is now `f45e54b`, "Disable
+OpenRouter caching and alert on cache use", whose three solver files hold
+the same contents the run used. The files were last written 23 seconds
+before the run started. The change sends `X-OpenRouter-Cache: false`, fails a
 request whose response reports a cache hit, and reports cached input
 tokens; it leaves the model, sampling, provider, and prompts as they were.
 The model settings were the committed `qwen/qwen3.8-27b`, pinned to the
