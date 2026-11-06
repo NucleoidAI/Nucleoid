@@ -1,8 +1,8 @@
 {
   "declarations": [
     "# There is an Obj type, a single point on the grid,\n# which has its x and y position, its width and height,\n# its orientation and its vertex color as integers\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l7544'\n    this.vertex_color = vertex_color",
-    "# A point of vertex color 4 gains a color-8 rim on its two\n# upper diagonals, so its shape starts one column left\n# and one row up and is two columns wider and one row taller\nif $Obj.vertex_color == 4:\n    $Obj.tag = 'l6840'\n    $Obj.rim_color = 8\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1\n    $Obj.width = $Obj.width@first + 2\n    $Obj.height = $Obj.height@first + 1",
-    "# A point of vertex color 9 gains a color-2 rim on its two\n# lower diagonals, so its shape starts one column left\n# and is two columns wider and one row taller\nif $Obj.vertex_color == 9:\n    $Obj.tag = 'l9906'\n    $Obj.rim_color = 2\n    $Obj.x = $Obj.x@first - 1\n    $Obj.width = $Obj.width@first + 2\n    $Obj.height = $Obj.height@first + 1"
+    "# A point of vertex color 4 gains a color-8 rim on its two\n# upper diagonals, so its shape starts one column left\n# and one row up and is two columns wider and one row taller\nif $Obj.vertex_color is 4:\n    $Obj.tag = 'l6840'\n    $Obj.rim_color = 8\n    $Obj.x = $Obj.x@first - 1\n    $Obj.y = $Obj.y@first - 1\n    $Obj.width = $Obj.width@first + 2\n    $Obj.height = $Obj.height@first + 1",
+    "# A point of vertex color 9 gains a color-2 rim on its two\n# lower diagonals, so its shape starts one column left\n# and is two columns wider and one row taller\nif $Obj.vertex_color is 9:\n    $Obj.tag = 'l9906'\n    $Obj.rim_color = 2\n    $Obj.x = $Obj.x@first - 1\n    $Obj.width = $Obj.width@first + 2\n    $Obj.height = $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [

@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/c8f0f002.json`](../data/training/c8f0f002.json) |
-| Instruction dataset | [`dataset.c8f0f002.json`](../src/dataset/dataset.c8f0f002.json): the puzzle's 3 original training pairs and its test pair, 12 color-region instances, 3 in each pair; committed with this record |
+| Instruction dataset | [`dataset.c8f0f002.json`](../src/dataset/dataset.c8f0f002.json): the puzzle's 3 original training pairs and its test pair, 12 color-region instances, 3 in each pair; committed with this record; condition respelled with `is` later on 6-Nov-2026 |
 | Output canvas | `EXACT` |
-| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
+| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md), and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None applied or suggested; the JSON-only message question carried over from earlier records stays open |
-| Solver runs | 1 local run on 6-Nov-2026: exit 0, difference 0 |
+| Solver runs | 1 local run on 6-Nov-2026: exit 0, difference 0, before the `is` respelling; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -133,6 +133,42 @@ the `dataset.a9f96cdd.json` paragraph, and the puzzle's entry in the
 as its own matrix job. The caller made the puzzle the solver's default in
 `src/app.ts`, in place of `c9e6f938`, before the run.
 
+### Is comparisons
+
+Later on 6-Nov-2026 the user asked `/arc-purposal` to apply
+[NUC 86](../../docs/nuc-0086.md) to the existing datasets where it fits. The
+condition now reads with `is`, NUC 86's spelling of `==`:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):
+if $Obj.color@first is 7:
+    $Obj.color = 5
+```
+
+`is` compares exactly as `==` does, with the same loose equality and
+precedence, and an `if` header is one of the enclosed positions where NUC 86
+reads it as an operator. Its left operand, the anchored `$Obj.color@first`,
+is a complete operand, and its right operand is the number 7, not a bare
+word, so the condition is the same standing rule as before. Only that header
+line changed. The class, the body, the grids, masks, positions, instance
+names, implementations, and snapshots are as before, and the world model
+keeps its level, so the gestalt overview above still holds. Replaying the
+rule now needs a runtime at `7096171`, the NUC 86 commit, or later. The
+README paragraph spells the rejected conditional expression with `is` too,
+so the two formulations still differ only in structure. No NUC was
+requested, so no proposal strategy was selected and strategy learning did
+not apply.
+
+The arc-dataset worker respelled the header in an external staging directory
+and regenerated all 24 input and output snapshots with the accepted runtime at
+`34d0b19`, which includes NUC 86; each is byte-identical to the previous
+version's. The caller's own offline check passed all 37 of its checks on the
+staged file and again after integration: the file equals the previous one
+with only `==` respelled, its pairs are unchanged, no `==` or `!=` is left in
+its declarations, every snapshot replays on that runtime, and the instance
+names stay unique across all datasets. `document()` loads it with the other
+28 datasets. At the user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -162,6 +198,10 @@ it. The invocation authorizes one run, so none was repeated. The puzzle
 joined the **ARC Benchmark** workflow with this dataset, so no workflow run
 is recorded yet.
 
+The exact match above used the version with `==`. No solver run has measured
+the version with `is` of 6-Nov-2026, which the user chose to verify offline,
+so its difference is unknown, not zero.
+
 ## Open items
 
 - **Messages are not JSON-only.** Carried over from
@@ -171,3 +211,11 @@ is recorded yet.
   labels such as `train_dataset:` and `json_format:`, while the ARC
   instructions require every message to parse as one JSON document. It
   remains an open question for the user. This dataset does not depend on it.
+- **The `is` version is unmeasured.** No solver run, local or in the
+  **ARC Benchmark** workflow, has used the version with `is`. Its snapshots
+  are unchanged, but every run's few-shot context now shows `is` in
+  conditions. NUC 86 reads `is` as an operator only in enclosed positions, so a
+  model that copies it straight into an assignment value, such as
+  `$Obj.flag = $Obj.color@first is 7`, gets `is` read as a name and a
+  `ReferenceError`. A dispatched **ARC Benchmark** run would measure the
+  effect.

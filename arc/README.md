@@ -268,7 +268,16 @@ one column wider when horizontal and one row taller when vertical. An
 extension corner keeps its 3 by 3 size, because its inside marker fills a
 cell of its own box. Every native output snapshot therefore carries its
 shape's output bounding box, so `output_value.x` and `output_value.y` equal
-`output_x` and `output_y`.
+`output_x` and `output_y`. The genesis rules match categorical colors,
+orientations, and endpoint sides with `is`, the spelling of `==` that
+[NUC 86](../docs/nuc-0086.md) adds, as in the line header
+`if $Obj.orientation is 90 and $Obj.endpoint_position is left:`. A bare word
+such as `left` compares with its own text while nothing defines that name,
+and no genesis program defines `left`, `right`, `up`, or `down`. Assignments
+and implementations keep their quoted strings, as in
+`$Obj.extension_direction = 'right'` and `endpoint_position='left'`: only the
+right operand of `is` reads as a word, and a bare name elsewhere would be
+undefined.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations. The canvas size is not one
@@ -356,8 +365,11 @@ The declarative rules introduce `marker_color`, which is absent before the
 rules run, and, in the same branches that shift the origin, grow each cross
 to 3 by 3 with `$Obj.width = $Obj.width@first + 2` and
 `$Obj.height = $Obj.height@first + 2`; color-6 and color-8 points keep their
-1 by 1 size. Tags identify the geometry: `l1707` is an orthogonal cross,
-`l2404` is a diagonal cross, and `l7544` remains a single point.
+1 by 1 size. The two branches are guarded by `if $Obj.vertex_color is 1:`
+and `if $Obj.vertex_color is 2:`, with `is`, the spelling of `==` that
+[NUC 86](../docs/nuc-0086.md) adds. Tags identify the geometry: `l1707` is an
+orthogonal cross, `l2404` is a diagonal cross, and `l7544` remains a single
+point.
 Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
 records each mask's nonzero bounding-box origin. Native output snapshots carry
 the shifted pattern origin, derived from the original point coordinates with
@@ -388,10 +400,12 @@ The class takes the standard entries `x`, `y`, `width`, `height`, and
 with no partner color, canvas size, or matrix of cells. `width` and
 `height`, the column and row counts of the stripe's bounding box, are
 1 and 3 for every stripe. One class-level rule rewrites `color` as
-`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner != $Obj.color@first)`:
+`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)`:
 the list states each pair once, the first `find` selects the pair that
 includes the stripe's input color, and the second `find` takes the other color
-of that pair. The `@first` anchors read the input color because the rule
+of that pair: the comparison `is not` of [NUC 86](../docs/nuc-0086.md), the
+spelling of `!=`, holds only for the color that differs from the input color.
+The `@first` anchors read the input color because the rule
 rewrites `color` itself; a dictionary from every color to its partner would
 state each pair twice. The two callbacks are chained rather than nested, so
 each reads only its own parameter and the stripe. The rules create no
@@ -438,7 +452,9 @@ input, as its only descriptive property, with no color, color count, canvas
 size, or matrix of cells, so no input property states whether the row is
 uniform. One unconditional class-level rule introduces `fill_color`, which is
 absent before the rules run, as
-`5 if $Obj.parts.distinct().length == 1 else 0`: the list query `distinct` of
+`5 if $Obj.parts.distinct().length is 1 else 0`, whose condition uses the
+comparison `is` of [NUC 86](../docs/nuc-0086.md), the spelling of `==`: the
+list query `distinct` of
 [NUC 71](../docs/nuc-0071.md) keeps each of the row's colors once, so exactly
 one kept color means the row is a single color, and the conditional
 expression of [NUC 59](../docs/nuc-0059.md) gives such a row color 5 and
@@ -843,8 +859,9 @@ other diagonal 45, as `dataset.74dd1130.json` names its mirror axis. No
 arithmetic relates the counts to the axes, so the rule looks the axis up, as
 `dataset.27a28665.json` looks up its code by tag, and it reads no
 orientation, so it rewrites `orientation` without an `@first` anchor. The
-conditional rule `if $Obj.orientation == 90:` sets `height` to 1, guarding on
-a horizontal line as `dataset.line.json` does: the line along the top row is
+conditional rule `if $Obj.orientation is 90:` uses `is`, the spelling of `==`
+that [NUC 86](../docs/nuc-0086.md) adds, and sets `height` to 1, guarding on a
+horizontal line as `dataset.line.json` does: the line along the top row is
 one row tall, the one change in the shape's size, while a diagonal crosses the
 mosaic's whole 3 by 3 box and keeps its input `height`. The rule reads the
 orientation that the lookup gives and writes `height` only for the horizontal
@@ -1392,13 +1409,15 @@ of the second training pair, 1 by 1, to 5 columns by 3 rows, and each
 implementation passes them right after `y`, such as
 `x=1, y=0, width=5, height=3, orientation=0, color=8` for the color-8 region
 of the first training input. One conditional class-level rule,
-`if $Obj.color@first == 7:` with the body `$Obj.color = 5`, turns every
-color-7 region gray. The condition reads the region's input color with an
+`if $Obj.color@first is 7:` with the body `$Obj.color = 5`, turns every
+color-7 region gray. Its condition uses `is`, the spelling of `==` from
+[NUC 86](../docs/nuc-0086.md), which an `if` header reads as an operator.
+The condition reads the region's input color with an
 `@first` anchor because the body rewrites `color` itself, as
 `dataset.0d3d703e.json` reads `$Obj.color@first`, and a region of any other
 color keeps its color because a false condition leaves its target untouched,
 so the rule states only the change; the conditional expression
-`5 if $Obj.color@first == 7 else $Obj.color@first` would give the same states
+`5 if $Obj.color@first is 7 else $Obj.color@first` would give the same states
 but restate every other region's color. Each region's change depends only on
 its own color, and no relation between regions decides it, so no population
 operation appears. The rule gives the same states when it is declared after

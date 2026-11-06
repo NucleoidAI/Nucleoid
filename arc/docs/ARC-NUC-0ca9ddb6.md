@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/0ca9ddb6.json`](../data/training/0ca9ddb6.json) |
-| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances |
+| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances; conditions respelled with `is` on 6-Nov-2026 |
 | Output canvas | `EXACT` |
-| Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted |
+| Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted; the conditions also use the accepted `is` of [NUC 86](../../docs/nuc-0086.md), which this puzzle did not request |
 | Solver changes | None specific to this puzzle |
-| Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0 |
+| Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -108,6 +108,51 @@ regenerated every snapshot with the accepted runtime at `491512d`, and the
 caller replayed every pair offline against the unchanged grids, masks,
 positions and instance names. No solver run has measured this version yet.
 
+### Is comparisons
+
+On 6-Nov-2026 the user asked `/arc-purposal` to apply
+[NUC 86](../../docs/nuc-0086.md) to the existing datasets where it fits. Both
+conditions now read with `is`, NUC 86's spelling of `==`, and the rules read:
+
+```nuc
+if $Obj.vertex_color is 1:
+    $Obj.tag = 'l1707'
+    $Obj.marker_color = 7
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+    $Obj.width = $Obj.width@first + 2
+    $Obj.height = $Obj.height@first + 2
+if $Obj.vertex_color is 2:
+    $Obj.tag = 'l2404'
+    $Obj.marker_color = 4
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+    $Obj.width = $Obj.width@first + 2
+    $Obj.height = $Obj.height@first + 2
+```
+
+`is` compares exactly as `==` does, with the same loose equality and
+precedence, and an `if` header is one of the enclosed positions where NUC 86
+reads it as an operator. The right operands are the numbers 1 and 2, not bare
+words, so each condition is the same standing rule as before. Only the two
+header lines changed. The class, the branch bodies, the grids, masks,
+positions, instance names, implementations, and snapshots are as before, and
+the world model keeps its level, so the gestalt overview above still holds.
+Replaying the rules now needs a runtime at `7096171`, the NUC 86 commit, or
+later. No NUC was requested, so no proposal strategy was selected and
+strategy learning did not apply.
+
+The arc-dataset worker respelled the headers in an external staging
+directory and regenerated all 30 input and output snapshots with the accepted
+runtime at `34d0b19`, which includes NUC 86; each is byte-identical to the
+previous version's. The caller's own offline check passed all 43 of its checks
+on the staged file and again after integration: the file equals the previous
+one with only `==` respelled, its pairs are unchanged, no `==` or `!=` is
+left in its declarations, every snapshot replays on that runtime, and the
+instance names stay unique across all datasets. `document()` loads it with
+the other 28 datasets. At the user's choice, no solver run has measured this
+version.
+
 ## Decision: locate the delta from the initial position (NUC 53 and NUC 55)
 
 ### Why the world model has to move the object
@@ -189,6 +234,11 @@ debug runtime and a 30-minute limit. The exit status is the difference score;
 seconds are the workflow's wall time for the puzzle, from each run's
 `arc-puzzle-report` artifact. No local `bun start 0ca9ddb6` run is recorded.
 
+None of these runs measured the current version: the standard entries of
+5-Nov-2026 and the `is` conditions of 6-Nov-2026 came later, and the user
+chose offline verification for the respelling. Its difference is unknown, not
+zero.
+
 ## Open items
 
 - **Runs from `c2fff09` on saw the answer.** Resolved on 6-Nov-2026: the user
@@ -201,3 +251,15 @@ seconds are the workflow's wall time for the puzzle, from each run's
   expected output. The exact matches at `c2fff09`, `b90a525`, and `ed49ce3`
   therefore do not show that the rule was inferred from the training pairs;
   the runs at `3cca0aa` and `3f734a8`, which predate it, also matched exactly.
+- **The `is` version is unmeasured.** No solver run, local or in the
+  **ARC Benchmark** workflow, has used the version of 6-Nov-2026. Its snapshots
+  are unchanged, but every run's few-shot context now shows `is` in
+  conditions. NUC 86 reads `is` as an operator only in enclosed positions, so a
+  model that copies it straight into an assignment value, such as
+  `$Obj.flag = $Obj.color is 5`, gets `is` read as a name and a
+  `ReferenceError`. A dispatched **ARC Benchmark** run would measure the
+  effect.
+- **Repeated branch bodies.** Noted by the arc-dataset worker and not
+  applied, because it is a redesign rather than the respelling the user asked
+  for: both branches repeat the four lines that shift the origin and grow the
+  point to 3 by 3, which a later model could state once.

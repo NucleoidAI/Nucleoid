@@ -1,7 +1,7 @@
 {
   "declarations": [
     "class Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l3058'\n    this.parts = parts",
-    "$Obj.fill_color = 5 if $Obj.parts.distinct().length == 1 else 0"
+    "$Obj.fill_color = 5 if $Obj.parts.distinct().length is 1 else 0"
   ],
   "output_canvas": "EXACT",
   "dataset": [

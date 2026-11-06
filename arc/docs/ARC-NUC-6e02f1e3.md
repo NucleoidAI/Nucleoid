@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6e02f1e3.json`](../data/training/6e02f1e3.json) |
-| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it |
+| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it. On 6-Nov-2026 its orientation guard was respelled with `is` |
 | Output canvas | `EXACT`, inferred from the training pairs |
-| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the accepted `distinct` list query of [NUC 71](../../docs/nuc-0071.md) |
+| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the accepted `distinct` list query of [NUC 71](../../docs/nuc-0071.md) and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None; suggested changes await review, not applied |
-| Solver runs | 1 local run on 5-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
+| Solver runs | 1 local run on 5-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -178,6 +178,43 @@ The migration worker regenerated every snapshot with the accepted runtime at
 grids, masks, positions and instance names. No solver run has measured this
 version yet.
 
+### Is comparisons
+
+On 6-Nov-2026 the user asked `/arc-purposal` to apply
+[NUC 86](../../docs/nuc-0086.md) to the existing datasets where it fits. The
+orientation guard now reads with `is`, NUC 86's spelling of `==`, and the
+rules read:
+
+```nuc
+$Obj.tag = 'l6074'
+$Obj.orientation = {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]
+if $Obj.orientation is 90:
+    $Obj.height = 1
+$Obj.fill_color = 5
+```
+
+`is` compares exactly as `==` does, with the same loose equality and
+precedence, and an `if` header is one of the enclosed positions where NUC 86
+reads it as an operator. The right operand is the number 90, not a bare word,
+so the condition is the same standing rule as before. Only that header line
+changed. The class, the other rules, the grids, masks, positions, instance
+names, implementations, and snapshots are as before, and the world model
+keeps its level, so the gestalt overview above still holds. Replaying the
+rules now needs a runtime at `7096171`, the NUC 86 commit, or later. The
+genesis `dataset.line.json`, whose horizontal-line guard this rule mirrors,
+was respelled the same way in the same invocation. No NUC was requested, so
+no proposal strategy was selected and strategy learning did not apply.
+
+The arc-dataset worker respelled the header in an external staging directory
+and regenerated all 12 input and output snapshots with the accepted runtime at
+`34d0b19`, which includes NUC 86; each is byte-identical to the previous
+version's. The caller's own offline check passed all 27 of its checks on the
+staged file and again after integration: the file equals the previous one
+with only `==` respelled, its pairs are unchanged, no `==` or `!=` is left in
+its declarations, every snapshot replays on that runtime, and the instance
+names stay unique across all datasets. `document()` loads it with the other
+28 datasets. At the user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -203,6 +240,10 @@ time. The elapsed time is the process's run, from 09:37:48.5 to 09:37:49.0 UTC.
 The runtime, the dataset, and `src/app.ts` had the same hashes before and after
 the run. The invocation authorizes one run, so none was repeated. The puzzle
 has not yet been in an **ARC puzzle report** workflow run.
+
+No solver run has measured any version of this dataset: the one run stopped
+before its first model request, and the user chose offline verification for
+the `is` version of 6-Nov-2026. The difference is unknown, not zero.
 
 ## Open items
 
@@ -239,3 +280,11 @@ has not yet been in an **ARC puzzle report** workflow run.
   `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
   Actions' 360-minute job limit. The workflow's 150-minute timeout covers its
   20 listed puzzles.
+- **The `is` version is unmeasured.** No solver run, local or in the
+  **ARC Benchmark** workflow, has used the version of 6-Nov-2026. Its snapshots
+  are unchanged, but every run's few-shot context now shows `is` in
+  conditions. NUC 86 reads `is` as an operator only in enclosed positions, so a
+  model that copies it straight into an assignment value, such as
+  `$Obj.flag = $Obj.orientation is 90`, gets `is` read as a name and a
+  `ReferenceError`. A dispatched **ARC Benchmark** run would measure the
+  effect.

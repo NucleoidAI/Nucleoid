@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/25d8a9c8.json`](../data/training/25d8a9c8.json) |
-| Instruction dataset | [`dataset.25d8a9c8.json`](../src/dataset/dataset.25d8a9c8.json): the puzzle's 4 original training pairs and its test pair, 15 row instances, three per pair; committed with this record |
+| Instruction dataset | [`dataset.25d8a9c8.json`](../src/dataset/dataset.25d8a9c8.json): the puzzle's 4 original training pairs and its test pair, 15 row instances, three per pair; committed with this record; condition respelled with `is` on 6-Nov-2026 |
 | Output canvas | `EXACT` |
-| Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the list query `distinct` of [NUC 71](../../docs/nuc-0071.md) and the conditional expression of [NUC 59](../../docs/nuc-0059.md) |
+| Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the list query `distinct` of [NUC 71](../../docs/nuc-0071.md), the conditional expression of [NUC 59](../../docs/nuc-0059.md), and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None; suggested changes await review, not applied |
-| Solver runs | 1 local run on 4-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
+| Solver runs | 1 local run on 4-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -122,6 +122,44 @@ runtime at `491512d`, and the caller replayed every pair offline against the
 unchanged grids, masks, positions and instance names. No solver run has
 measured this version yet.
 
+### Is comparisons
+
+On 6-Nov-2026 the user asked `/arc-purposal` to apply
+[NUC 86](../../docs/nuc-0086.md) to the existing datasets where it fits. The
+rule's condition now reads with `is`, NUC 86's spelling of `==`:
+
+```nuc
+$Obj.fill_color = 5 if $Obj.parts.distinct().length is 1 else 0
+```
+
+`is` compares exactly as `==` does, with the same loose equality and
+precedence. The condition of a Python-style conditional is one of the
+enclosed positions where NUC 86 reads `is` as an operator, and the right
+operand is the number 1, not a bare word. Only that comparison changed. The
+class, the grids, masks, positions, instance names, implementations, and
+snapshots are as before, and the world model keeps its level, so the gestalt
+overview above still holds. Replaying the rule now needs a runtime at
+`7096171`, the NUC 86 commit, or later. No NUC was requested, so no proposal
+strategy was selected and strategy learning did not apply.
+
+The arc-dataset worker respelled the condition in an external staging
+directory and regenerated all 30 input and output snapshots with the accepted
+runtime at `34d0b19`, which includes NUC 86; each is byte-identical to the
+previous version's. It also confirmed that the comparison written directly as
+an assignment value raises `ReferenceError: is is not defined`, because `is`
+stays a name where a statement can follow:
+
+```nuc
+$Obj.uniform = $Obj.parts.distinct().length is 1
+```
+
+The caller's own offline check passed all 44 of its checks on the staged file
+and again after integration: the file equals the previous one with only `==`
+respelled, its pairs are unchanged, no `==` or `!=` is left in its
+declarations, every snapshot replays on that runtime, and the instance names
+stay unique across all datasets. `document()` loads it with the other 28
+datasets. At the user's choice, no solver run has measured this version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -140,6 +178,10 @@ elapsed time, so elapsed is the process's run from 20:21:58.6 to 20:21:59.4
 UTC. The runtime's hash and the dataset's were the same before and after the
 run. The invocation authorizes one run, so none was repeated. The puzzle has
 not been in an **ARC puzzle report** workflow run.
+
+No solver run has measured any version of this dataset: the one run stopped
+before its first model request, and the user chose offline verification for
+the `is` version of 6-Nov-2026. The difference is unknown, not zero.
 
 ## Open items
 
@@ -175,3 +217,10 @@ not been in an **ARC puzzle report** workflow run.
   pair's input and output grids to the caller. The caller's review and its
   question to the user used the training pairs only, and nothing from the
   test pair reached another agent, the rules, or the run.
+- **The `is` version is unmeasured.** No solver run, local or in the
+  **ARC Benchmark** workflow, has used the version of 6-Nov-2026. Its snapshots
+  are unchanged, but every run's few-shot context now shows `is` in
+  conditions. NUC 86 reads `is` as an operator only in enclosed positions, so a
+  model that copies it straight into an assignment value, as above, gets `is`
+  read as a name and a `ReferenceError`. A dispatched **ARC Benchmark** run
+  would measure the effect.

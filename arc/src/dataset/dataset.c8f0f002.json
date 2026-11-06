@@ -1,7 +1,7 @@
 {
   "declarations": [
     "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
-    "if $Obj.color@first == 7:\n    $Obj.color = 5"
+    "if $Obj.color@first is 7:\n    $Obj.color = 5"
   ],
   "output_canvas": "EXACT",
   "dataset": [

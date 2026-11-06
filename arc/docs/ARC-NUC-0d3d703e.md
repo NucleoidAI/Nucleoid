@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/0d3d703e.json`](../data/training/0d3d703e.json) |
-| Instruction dataset | [`dataset.0d3d703e.json`](../src/dataset/dataset.0d3d703e.json): the puzzle's 4 original training pairs and its test pair, 15 stripe instances, three per pair; committed in `ebd026c` |
+| Instruction dataset | [`dataset.0d3d703e.json`](../src/dataset/dataset.0d3d703e.json): the puzzle's 4 original training pairs and its test pair, 15 stripe instances, three per pair; committed in `ebd026c`; partner test respelled with `is not` on 6-Nov-2026 |
 | Output canvas | `EXACT` |
-| Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) and the list `includes` that [NUC 61](../../docs/nuc-0061.md) specifies |
+| Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), the list `includes` that [NUC 61](../../docs/nuc-0061.md) specifies, and the accepted `is not` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None; suggested changes await review, not applied |
-| Solver runs | 1 local run on 4-Nov-2026, exit 0 |
+| Solver runs | 1 local run on 4-Nov-2026, exit 0; none of the current version |
 | Updated | 6-Nov-2026 |
 
 ## Puzzle
@@ -115,6 +115,38 @@ migration worker regenerated every snapshot with the accepted runtime at
 grids, masks, positions and instance names. No solver run has measured this
 version yet.
 
+### Is comparisons
+
+On 6-Nov-2026 the user asked `/arc-purposal` to apply
+[NUC 86](../../docs/nuc-0086.md) to the existing datasets where it fits. The
+second `find` now takes the partner with `is not`, NUC 86's spelling of `!=`:
+
+```nuc
+$Obj.color = [[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)
+```
+
+`is not` compares exactly as `!=` does, with the same loose equality and
+precedence. The callback is a call argument, one of the enclosed positions
+where NUC 86 reads `is` as an operator, and its right operand,
+`$Obj.color@first`, is an anchored property rather than a bare word, so it
+reads as it did with `!=`. Only that comparison changed. The class, the pair
+list, the grids, masks, positions, instance names, implementations, and
+snapshots are as before, and the world model keeps its level, so the gestalt
+overview above still holds. Replaying the rule now needs a runtime at
+`7096171`, the NUC 86 commit, or later. No NUC was requested, so no proposal
+strategy was selected and strategy learning did not apply.
+
+The arc-dataset worker respelled the comparison in an external staging
+directory and regenerated all 30 input and output snapshots with the accepted
+runtime at `34d0b19`, which includes NUC 86; each is byte-identical to the
+previous version's. The caller's own offline check passed all 44 of its checks
+on the staged file and again after integration: the file equals the previous
+one with only `!=` respelled, its pairs are unchanged, no `==` or `!=` is
+left in its declarations, every snapshot replays on that runtime, and the
+instance names stay unique across all datasets. `document()` loads it with
+the other 28 datasets. At the user's choice, no solver run has measured this
+version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -137,6 +169,11 @@ committed version when the caller went to restore it, so the caller changed
 nothing there. The few-shot document parsed, with all 15 JSON datasets,
 before the run. The puzzle has not been in an **ARC puzzle report** workflow
 run.
+
+The run used the first version of the dataset. No solver run has measured the
+version with standard entries or the version with `is not` of 6-Nov-2026,
+which the user chose to verify offline, so their difference is unknown, not
+zero.
 
 ## Open items
 
@@ -167,3 +204,11 @@ run.
   still lists the stale README paragraph about `dataset.0d3d703e.json` as
   open; `ebd026c` replaced that paragraph, so the item can be closed there.
 - **Committed.** `a526fec` committed this record with the dataset.
+- **The `is not` version is unmeasured.** No solver run, local or in the
+  **ARC Benchmark** workflow, has used the version of 6-Nov-2026. Its
+  snapshots are unchanged, but every run's few-shot context now shows `is`
+  and `is not` in conditions and callbacks. NUC 86 reads them as operators
+  only in enclosed positions, so a model that copies `is` straight into an
+  assignment value, such as `$Obj.flag = $Obj.color is 5`, gets `is` read as
+  a name and a `ReferenceError`. A dispatched **ARC Benchmark** run would
+  measure the effect.
