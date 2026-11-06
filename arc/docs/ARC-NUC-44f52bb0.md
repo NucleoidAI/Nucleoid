@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/44f52bb0.json`](../data/training/44f52bb0.json) |
-| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, uncommitted, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances |
+| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
 | Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -277,9 +277,9 @@ been run; measuring it takes a new `/arc-purposal 44f52bb0` invocation.
 - **The first run had no model credential.** That process had no
   `OPENROUTER_API_KEY` in its environment; the later runs' processes reached
   the model.
-- **Review.** Version 1, its README paragraph, the workflow entry, the
+- **Committed.** Version 1, its README paragraph, the workflow entry, the
   solver's default puzzle and this record's first version were committed in
   `bca5ff6`. Version 2 was never committed. Version 3, its README paragraph
   and that update were committed in `6d3acec`. Version 4, its README
   paragraph, the solver change in `src/analyzer.ts`, `src/visualizer.ts`, and
-  `src/app.ts`, and this update are uncommitted for review.
+  `src/app.ts`, and this update were committed in `f771c15`.

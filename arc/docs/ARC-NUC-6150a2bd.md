@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6150a2bd.json`](../data/training/6150a2bd.json) |
-| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, uncommitted, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed |
+| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the rules use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
 | Solver runs | 1 GitHub Actions run on 2-Nov-2026 for version 1 and 1 local run on 3-Nov-2026 for version 2, both exit 0; version 3 not run |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -179,8 +179,6 @@ which authorizes its one run.
   executable code in `declarations` but no prose comments, while version 2
   follows the `#` comments that `e1bdb5a` added to every dataset. Decide which
   wins. Removing the comments needs no new snapshots.
-- Review and commit version 3, its README paragraph, the solver change in
-  `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`, and this record's
-  updates, which remain uncommitted. Since
-  3-Nov-2026 only `/nuc-proposal` commits and pushes, so `/arc-purposal`
-  leaves its changes for review.
+- **Committed.** `f771c15` committed version 3, its README paragraph, the
+  solver change in `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`,
+  and this record's updates.

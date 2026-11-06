@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/5582e5ca.json`](../data/training/5582e5ca.json) |
-| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, uncommitted, replacing the fifth, which `99d8621` committed |
+| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; two suggested changes await review, not applied |
 | Solver runs | 5 local runs, one for each of versions 1 to 5: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0; version 6 has not been run |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -77,8 +77,8 @@ the fifth version.
 ### Versions
 
 The dataset was written four times on 2-Nov-2026 and twice on 3-Nov-2026,
-each version replacing the last. `e904938` committed the fourth and `99d8621`
-the fifth; the sixth is in the working tree, uncommitted.
+each version replacing the last. `e904938` committed the fourth, `99d8621`
+the fifth, and `3703f13` the sixth.
 
 | Version | Request | Instances | Rule for the fill color |
 | --- | --- | --- | --- |
@@ -180,7 +180,7 @@ gives. This was a manual check, not a live-model result.
   helper rules. No NUC for capturing outer parameters has been proposed.
 - **Version 6 is unscored.** The next `/arc-purposal 5582e5ca` run would score
   it once.
-- Review and commit version 6, its README sentence, and this record's update,
-  which remain uncommitted. `99d8621` committed version 5 with its README
+- **Committed.** `3703f13` committed version 6, its README sentence, and this
+  record's update. `99d8621` committed version 5 with its README
   paragraph and this record's previous update. `e904938` committed version 4
   with its paragraph and its `.github/workflows/arc.yml` entry.

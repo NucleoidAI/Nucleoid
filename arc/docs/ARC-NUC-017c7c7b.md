@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/017c7c7b.json`](../data/training/017c7c7b.json) |
-| Instruction dataset | [`dataset.017c7c7b.json`](../src/dataset/dataset.017c7c7b.json): the puzzle's 3 original training pairs and its test pair, one whole-pattern instance each (4 instances); version 3, which is version 2 without its `resume_row` rule (version 1 had 36 point instances); uncommitted |
+| Instruction dataset | [`dataset.017c7c7b.json`](../src/dataset/dataset.017c7c7b.json): the puzzle's 3 original training pairs and its test pair, one whole-pattern instance each (4 instances); version 3, which is version 2 without its `resume_row` rule (version 1 had 36 point instances); committed in `a5a793d` and moved to the standard entries in `521aa3c` |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; versions 2 and 3 use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
 | Solver changes | None; two suggested changes await review, not applied |
 | Solver runs | 2 local runs on 4-Nov-2026: version 1 exit 2, version 2 exit 0; version 3 not run |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -251,8 +251,8 @@ zero. The puzzle has not been in an **ARC puzzle report** workflow run.
   `6150a2bd`, and `44f52bb0` datasets read them there.
 - **Run version 3.** Measuring it takes a new `/arc-purposal 017c7c7b`
   invocation, which authorizes its one run.
-- Review and commit the dataset, its README paragraph, the workflow entry, and
-  this record, which remain uncommitted. The solver's default puzzle in
+- **Committed.** `a5a793d` committed the dataset, its README paragraph, the
+  workflow entry, and this record. The solver's default puzzle in
   `src/app.ts` is no longer this puzzle: commit `bca5ff6`, made after both
   runs, set it to `44f52bb0`, and the pull that brought it in kept that later
   value.

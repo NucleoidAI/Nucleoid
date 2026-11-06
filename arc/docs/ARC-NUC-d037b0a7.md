@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/d037b0a7.json`](../data/training/d037b0a7.json) |
-| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, uncommitted, replacing version 1, which `81c0208` committed |
+| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
 | Solver runs | 1 local run on 3-Nov-2026 for version 1, exit 0; version 2 not run |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -168,8 +168,8 @@ workflow run. Version 2 has not been run; measuring it takes a new
   `dataset.0d3d703e.json`, `dataset.27a28665.json`, and
   `dataset.44f52bb0.json`, which do not exist. Its GitHub Actions paragraph
   names four puzzles, while the workflow now lists eight.
-- Review and commit version 2, its README paragraph, the solver change in
-  `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`, and this record's
-  update, which remain uncommitted. Version 1,
+- **Committed.** `f771c15` committed version 2, its README paragraph, the
+  solver change in `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`,
+  and this record's update. Version 1,
   its README paragraph, the workflow entry, and this record's first version
   were committed in `81c0208`.

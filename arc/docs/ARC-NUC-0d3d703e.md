@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) and the list `includes` that [NUC 61](../../docs/nuc-0061.md) specifies |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 4-Nov-2026, exit 0 |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -164,4 +164,4 @@ run.
 - **Stale item in another record.** [ARC-NUC-27a28665](ARC-NUC-27a28665.md)
   still lists the stale README paragraph about `dataset.0d3d703e.json` as
   open; `ebd026c` replaced that paragraph, so the item can be closed there.
-- Review and commit this record, which remains uncommitted.
+- **Committed.** `a526fec` committed this record with the dataset.
