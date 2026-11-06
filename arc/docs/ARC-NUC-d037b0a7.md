@@ -9,7 +9,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested |
-| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
+| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
 | Solver runs | 1 local run on 3-Nov-2026 for version 1, exit 0; version 2 not run |
 | Updated | 6-Nov-2026 |
 
@@ -139,12 +139,15 @@ workflow run. Version 2 has not been run; measuring it takes a new
 
 ## Open items
 
-- **The run saw the answer.** `src/lib/llm.ts` sends `document(puzzle_id)` as
-  few-shot context, and `src/dataset/dataset.ts` discards `puzzle_id`. The
-  prompt therefore held this puzzle's annotated test pair, expected output
-  included, and the exact match does not show that the rule was inferred from
-  the training pairs. Suggested, not applied: keep the running puzzle's test
-  pairs out of `document(puzzle_id)`.
+- **The run saw the answer.** Resolved on 6-Nov-2026: the user decided this is
+  intended, because the datasets are being prepared as few-shot examples and
+  runs at this stage are not yet held-out tests. The ARC instructions now say
+  so, and the suggested change to keep the running puzzle's test pairs out of
+  `document(puzzle_id)` is withdrawn. `src/lib/llm.ts` sends
+  `document(puzzle_id)` as few-shot context, and `src/dataset/dataset.ts`
+  discards `puzzle_id`. The prompt therefore held this puzzle's annotated test
+  pair, expected output included, and the exact match does not show that the
+  rule was inferred from the training pairs.
 - **Canvas height, resolved by version 2.** In version 1 the model had to
   fill in `canvas_height` for the test instance, although `value()` in
   `src/visualizer.ts` sends only the cropped mask with `input_x` and
@@ -160,10 +163,10 @@ workflow run. Version 2 has not been run; measuring it takes a new
   `train_dataset:`, and `input_x:`, while the ARC instructions require every
   message to parse as one JSON document. Suggested, not applied: build each
   message with `JSON.stringify` of one data object.
-- **Comments in declarations.** `.claude/rules/arc.instructions.md` permits
-  executable code in `declarations` but no prose comments, while `e1bdb5a`
-  added `#` comments to every other dataset and this one follows them. Decide
-  which wins. Removing the comments needs no new snapshots.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
 - **Stale README text.** `arc/README.md` still describes
   `dataset.0d3d703e.json`, `dataset.27a28665.json`, and
   `dataset.44f52bb0.json`, which do not exist. Its GitHub Actions paragraph

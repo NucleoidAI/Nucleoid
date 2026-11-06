@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None recorded |
 | Solver changes | None specific to this puzzle |
 | Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026: differences of 10 and 5, then three exact matches |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -146,10 +146,13 @@ difference is unknown, not zero.
   earlier examples, per-object runs turned recorded ranks 1, 2, and 0 into
   0, 0, and 0. The current annotations use complete-pair output execution;
   this offline evidence is not a live solver result.
-- **Runs from `c2fff09` on saw the answer.** Since that commit,
-  `src/dataset/dataset.ts` sends every JSON dataset as few-shot context, and
-  this puzzle's dataset includes its annotated test pair with the expected
-  output. The runs at `3cca0aa` and `3f734a8`, which predate it, scored
-  differences of 10 and 5; the three runs since matched exactly, which does
-  not show that the rule was inferred from the training pairs. Suggested, not
-  applied: keep the running puzzle's test pairs out of `document(puzzle_id)`.
+- **Runs from `c2fff09` on saw the answer.** Resolved on 6-Nov-2026: the user
+  decided this is intended, because the datasets are being prepared as
+  few-shot examples and runs at this stage are not yet held-out tests. The ARC
+  instructions now say so, and the suggested change to keep the running
+  puzzle's test pairs out of `document(puzzle_id)` is withdrawn. Since that
+  commit, `src/dataset/dataset.ts` sends every JSON dataset as few-shot
+  context, and this puzzle's dataset includes its annotated test pair with the
+  expected output. The runs at `3cca0aa` and `3f734a8`, which predate it,
+  scored differences of 10 and 5; the three runs since matched exactly, which
+  does not show that the rule was inferred from the training pairs.

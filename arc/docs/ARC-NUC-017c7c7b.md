@@ -9,7 +9,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Instruction dataset | [`dataset.017c7c7b.json`](../src/dataset/dataset.017c7c7b.json): the puzzle's 3 original training pairs and its test pair, one whole-pattern instance each (4 instances); version 3, which is version 2 without its `resume_row` rule (version 1 had 36 point instances); committed in `a5a793d` and moved to the standard entries in `521aa3c` |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; versions 2 and 3 use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
-| Solver changes | None; two suggested changes await review, not applied |
+| Solver changes | None; one suggested change awaits review, not applied |
 | Solver runs | 2 local runs on 4-Nov-2026: version 1 exit 2, version 2 exit 0; version 3 not run |
 | Updated | 6-Nov-2026 |
 
@@ -202,15 +202,18 @@ zero. The puzzle has not been in an **ARC puzzle report** workflow run.
 
 ## Open items
 
-- **The runs saw the answer.** `src/lib/llm.ts` sends `document(puzzle_id)`
-  as few-shot context, and `src/dataset/dataset.ts` discards `puzzle_id`.
-  Both runs' prompts therefore held this puzzle's annotated test pair: its
-  expected output and, in version 2, the test instance's implementation with
-  its `period`. Version 2's exact match does not show that the rules were
-  inferred from the training pairs or that the period was measured on the
-  test pattern. Version 3 carries the same test implementation, so a run of it
-  would too. Suggested, not applied: keep the running puzzle's test pairs out
-  of `document(puzzle_id)`.
+- **The runs saw the answer.** Resolved on 6-Nov-2026: the user decided this
+  is intended, because the datasets are being prepared as few-shot examples
+  and runs at this stage are not yet held-out tests. The ARC instructions now
+  say so, and the suggested change to keep the running puzzle's test pairs out
+  of `document(puzzle_id)` is withdrawn. `src/lib/llm.ts` sends
+  `document(puzzle_id)` as few-shot context, and `src/dataset/dataset.ts`
+  discards `puzzle_id`. Both runs' prompts therefore held this puzzle's
+  annotated test pair: its expected output and, in version 2, the test
+  instance's implementation with its `period`. Version 2's exact match does
+  not show that the rules were inferred from the training pairs or that the
+  period was measured on the test pattern. Version 3 carries the same test
+  implementation, so a run of it would too.
 - **The period is an input property.** Since version 2, the rules no longer
   derive the period; the model supplies it for the test instance. Deriving it
   declaratively from one instance per pair would need a list property the
@@ -231,10 +234,10 @@ zero. The puzzle has not been in an **ARC puzzle report** workflow run.
   `train_dataset:`, and `input_x:`, while the ARC instructions require every
   message to parse as one JSON document. Suggested, not applied: build each
   message with `JSON.stringify` of one data object.
-- **Comments in declarations.** `.claude/rules/arc.instructions.md` permits
-  executable code in `declarations` but no prose comments, while the other
-  datasets carry `#` comments and both versions follow them. Decide which
-  wins. Removing the comments needs no new snapshots.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
 - **README text.** `arc/README.md`'s shared sentence that `EXACT` outputs
   keep the input matrix's dimensions does not hold for this dataset, whose
   6 by 3 inputs grow to 9 by 3 outputs; its paragraph explains the growth.

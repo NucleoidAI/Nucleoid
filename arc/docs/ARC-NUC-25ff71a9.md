@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 4-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -140,25 +140,27 @@ been in an **ARC puzzle report** workflow run.
   the solver process had no `OPENROUTER_API_KEY` value, so it stopped before
   its first model request. Measuring this dataset takes a separately
   authorized run with the credential available to the solver.
-- **A run would see the answer.** `src/lib/llm.ts` sends
-  `dataset.document(puzzle_id)` as few-shot context, and
-  `src/dataset/dataset.ts` discards `puzzle_id`. Any run of this puzzle
+- **A run would see the answer.** Resolved on 6-Nov-2026: the user decided
+  this is intended, because the datasets are being prepared as few-shot
+  examples and runs at this stage are not yet held-out tests. The ARC
+  instructions now say so, and the suggested change to keep the running
+  puzzle's test pairs out of `document(puzzle_id)` is withdrawn.
+  `src/lib/llm.ts` sends `dataset.document(puzzle_id)` as few-shot context,
+  and `src/dataset/dataset.ts` discards `puzzle_id`. Any run of this puzzle
   therefore holds this dataset's two annotated test pairs, expected outputs
   included, in its prompts, and an exact match would not show that the rule
-  was inferred from the training pairs. Suggested, not applied: keep the
-  running puzzle's test pairs out of `document(puzzle_id)`.
+  was inferred from the training pairs.
 - **Messages are not JSON-only.** `src/lib/llm.ts` and `src/analyzer.ts` wrap
   JSON in text labels such as `few_shot:`, `control_id:`, `train_dataset:`,
   and `json_format:`, while the ARC instructions require every message to
   parse as one JSON document. Suggested, not applied: build each message with
   `JSON.stringify` of one data object.
-- **Comments in declarations.** This dataset and `dataset.25d8a9c8.json`
-  carry none, following `.claude/rules/arc.instructions.md`, while the other
-  15 datasets carry `#` comments. Decide which wins; neither choice changes
-  any snapshot.
-- **Workflow timeout.** The arc-dataset profile asks for a job timeout of at
-  least 30 minutes per listed puzzle plus 20 minutes, 440 minutes for the 14
-  puzzles now listed, which exceeds GitHub Actions' 360-minute job limit,
-  while `e8ef229` set it to 30 minutes because the puzzles run in parallel.
-  The worker added this puzzle and left the timeout at 30. Decide which holds
-  and update the profile or the workflow.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
+- **Workflow timeout.** Resolved on 6-Nov-2026: at the user's request, the
+  arc-dataset profile now asks for the batch budget the workflow needs,
+  `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
+  Actions' 360-minute job limit. The workflow's 150-minute timeout covers its
+  20 listed puzzles.

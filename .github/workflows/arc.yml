@@ -1,4 +1,4 @@
-name: ARC puzzle report
+name: ARC Benchmark
 
 on:
   workflow_dispatch:
@@ -40,6 +40,7 @@ jobs:
         794b24be
         e9afcf9a
         a9f96cdd
+        8be77c9e
       NUCLEOID_EXECUTABLE: ${{ github.workspace }}/target/debug/nucleoid
       DOTENV_CONFIG_PATH: /dev/null
       NO_COLOR: "1"
@@ -112,34 +113,47 @@ jobs:
         if: always()
         working-directory: ${{ github.workspace }}
         run: |
+          pass_count=0
+          fail_count=0
+          not_run_count=0
           {
-            echo '## ARC puzzle report'
+            echo '## ARC Benchmark'
             echo
             echo 'PASS means an exact grid match. FAIL means a mismatch, error, or timeout. NOT RUN means no completed solver result was recorded.'
+            echo
+            echo 'Solver logs and exit records are available in the arc-benchmark artifact.'
             echo
             echo '| Puzzle | Result | Exit code | Seconds |'
             echo '| --- | --- | --- | --- |'
             for puzzle_id in $ARC_PUZZLES; do
               if [[ -f "arc/reports/$puzzle_id.tsv" ]]; then
                 IFS=$'\t' read -r exit_code duration < "arc/reports/$puzzle_id.tsv"
-                result=FAIL
                 if [[ "$exit_code" -eq 0 ]]; then
                   result=PASS
+                  pass_count=$(( pass_count + 1 ))
+                else
+                  result=FAIL
+                  fail_count=$(( fail_count + 1 ))
                 fi
                 printf '| `%s` | %s | %s | %s |\n' "$puzzle_id" "$result" "$exit_code" "$duration"
               else
+                not_run_count=$(( not_run_count + 1 ))
                 printf '| `%s` | NOT RUN | - | - |\n' "$puzzle_id"
               fi
             done
             echo
-            echo 'Solver logs and exit records are available in the arc-puzzle-report artifact.'
+            echo '### Summary'
+            echo
+            echo '| PASS | FAIL | NOT RUN | Total |'
+            echo '| --- | --- | --- | --- |'
+            printf '| %s | %s | %s | %s |\n' "$pass_count" "$fail_count" "$not_run_count" "$(( pass_count + fail_count + not_run_count ))"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload solver logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: arc-puzzle-report
+          name: arc-benchmark
           path: arc/reports/
           if-no-files-found: ignore
           retention-days: 7

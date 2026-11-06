@@ -26,9 +26,11 @@ Use type checking, linting, builds, and manual/offline evaluation instead.
 Keep puzzle datasets, instruction examples, and training/held-out scoring intact.
 
 OpenRouter is the only LLM provider. Set `OPENROUTER_API_KEY` in `.env`.
-Optionally set `OPENROUTER_MODEL` (default: `qwen/qwen3.8-27b`) to a model that
-supports JSON output. A request's `model` argument overrides that setting.
-The legacy `LLM` selector is no longer needed.
+`src\lib\openrouter.ts` fixes the model to `qwen/qwen3.8-27b`, served only by
+the `deepinfra/bf16` provider without fallbacks, with reasoning disabled and
+JSON output requested through `response_format: { type: "json_object" }`. No
+setting or request argument changes the model. The legacy `LLM` selector is no
+longer needed.
 
 Sampling defaults to `temperature: 0`, `top_k: 1`, `top_p: 1`, and `seed: 42`,
 with frequency and presence penalties set to `0`. These settings favor greedy,
@@ -38,9 +40,9 @@ requires identical prompts: `llm.generate` currently prepends a random
 `control_id`.
 See [OpenRouter's sampling parameters](https://openrouter.ai/docs/api/reference/parameters).
 
-Requests send `X-OpenRouter-Cache: false` to disable OpenRouter response caching,
-including caching enabled by a preset. This does not disable upstream providers'
-automatic prompt/KV caching. See OpenRouter's
+Requests send no `X-OpenRouter-Cache` header, so OpenRouter response caching
+stays at whatever the account or a preset sets, and upstream providers'
+automatic prompt/KV caching is unchanged as well. See OpenRouter's
 [response caching](https://openrouter.ai/docs/guides/features/response-caching)
 and [prompt caching](https://openrouter.ai/docs/guides/best-practices/prompt-caching)
 documentation for the distinction.
@@ -74,7 +76,7 @@ every run receives, described under
 
 ### GitHub Actions reporting
 
-The **ARC puzzle report** workflow in `.github\workflows\arc.yml` runs
+The **ARC Benchmark** workflow in `.github\workflows\arc.yml` runs
 manually from the repository's Actions tab. Configure the repository Actions
 secret `OPENROUTER_API_KEY` before dispatching it; do not upload an environment
 file. The workflow disables environment-file loading, builds the checked-out
@@ -89,9 +91,10 @@ The run summary contains a table with each puzzle's result, exit code, and
 elapsed seconds. `PASS` means exact grid equality, including shape; `FAIL`
 means a nonzero exit from a mismatch, execution error, or timeout. Missing
 exit records, such as after a setup failure, report `NOT RUN` instead of
-inventing a score. Puzzle failures do not cancel the other running puzzles,
-but any failure makes the workflow fail.
-The `arc-puzzle-report` artifact retains solver logs and exit records for seven
+inventing a score. A summary table at the bottom counts the `PASS`, `FAIL`,
+and `NOT RUN` puzzles and their total. Puzzle failures do not cancel the other
+running puzzles, but any failure makes the workflow fail.
+The `arc-benchmark` artifact retains solver logs and exit records for seven
 days. Logs may contain expected held-out grids and must never feed back into
 datasets, prompts, or NUC candidates.
 
@@ -191,11 +194,14 @@ drops every other puzzle's dataset. Puzzle datasets are recognized by their
 eight-digit hexadecimal ARC IDs and matched case-insensitively; every other
 file counts as a genesis dataset. The genesis puzzle has no dataset of its
 own, so it then receives only the genesis datasets. Each file
-is validated and minified by removing whitespace between JSON tokens; string
-contents, numbers, and key order stay exactly as written. The return value is
-one JSON array, with a separate entry per file. New JSON files need no
-additional imports or registration in the loader. An unreadable directory or
-file, or malformed JSON, fails explicitly; JSON errors name the file.
+is minified by removing whitespace between JSON tokens; string contents,
+numbers, and key order stay exactly as written. The return value is one JSON
+array, with a separate entry per file. New JSON files need no additional
+imports or registration in the loader. An unreadable directory or file fails
+explicitly. `document()` does not parse the files, so it passes malformed JSON
+through; `llm.generate` parses the combined array when it builds the few-shot
+message, so a malformed dataset fails there, with a JSON syntax error that does
+not name the file.
 
 Each non-genesis puzzle has exactly one `dataset.<puzzle_id>.json`, containing
 all its original `train` pairs from `data\training\<puzzle_id>.json` in source
@@ -988,6 +994,87 @@ the pattern is not turned and the tally stands upright, its stem below its
 bar. The declarations hold executable code only, without `#` comments. The
 test pairs follow the training pairs at the same level and are annotated by
 the same rules.
+
+`dataset.8be77c9e.json` annotates the three original training pairs from
+`data\training\8be77c9e.json`, in order, followed by its test pair, four
+pattern instances in total, one per pair. Every input retains its original
+3 by 3 canvas and every output its original 6 by 3 canvas, 6 rows of 3
+columns, with their colors, positions, and zero cells. Each input holds one
+pattern of color-1 cells on a background of zero cells: 5, 4, and 2 cells in
+the training pairs and 2 in the test pair. Each object is that whole pattern,
+the figure seen first, whether or not its cells touch: the second training
+pattern's top-right cell touches the rest only at a corner, and the test
+pattern's two cells do not touch at all; the same rules would mirror each
+separate piece as well. Each output stacks the whole input grid over its
+top-bottom mirror image on a canvas twice as tall: the input reappears
+unchanged in the top three rows, and its row r reappears as row 5 - r, so the
+output reads the same from the bottom up as from the top down. Each pattern is
+therefore joined by its mirror image across the canvas's bottom edge, the line
+between rows 2 and 3, and keeps its color, its columns, and its place. The
+mirror line is the canvas's edge, not the pattern's own: the first training
+pattern lies in the top two rows above an empty bottom row, so its mirror
+image lies in the bottom two rows of the output, two empty rows below it,
+while mirroring across the pattern's own bottom edge, which doubles its
+height, reproduces only the second and third training pairs, whose patterns
+reach the canvas's bottom edge. Repeating the grid below without mirroring it
+reproduces no training output, and neither does a half turn of the grid
+placed below, because no training grid is left-right symmetric. These choices
+were fixed from the training pairs before the test pair was read. The class
+takes only the standard entries `x`, `y`, `width`, `height`, and
+`orientation`, in that order, where `width` and `height` are the column and
+row counts of the pattern's box, the nonzero bounding box of its input mask:
+3 and 2 for the first and second training patterns and the test pattern, and
+1 and 2 for the third training pattern. It takes no descriptive property, with
+no color, parts list, canvas size, or matrix of cells, because the rules need
+none: the pattern's cells travel in its masks, and the rules read the canvas's
+height from the solver's `canvas_height`. Each implementation passes `width`
+and `height` right after `y`, such as
+`x=0, y=0, width=3, height=2, orientation=0` for the first training input.
+Two unconditional class-level rules turn every pattern into the figure it
+forms with its mirror image. `$Obj.tag = 'l7511'` names that geometry, and
+`$Obj.height = 2 * (canvas_height - $Obj.y@first)` grows the box down to the
+mirror image of its top row: twice the distance from the pattern's top row to
+the canvas's bottom edge, so the mirror line lies at the box's center. That
+gives 6 rows for the first training pattern, which starts on the top row, and
+4 for the others, which start one row down. The rule reads the canvas's height
+as `dataset.d037b0a7.json` grows its bars with `canvas_height - $Obj.y@first`,
+anchored with `@first` to read the pattern's input row, as there, although no
+rule moves `y`. The rules leave `x`, `y`, `width`, and `orientation`
+unchanged, because the mirror image keeps the pattern's columns and the figure
+starts on the pattern's top row. They state no `mirror_axis`, the property of
+`dataset.74dd1130.json`: the tag already names a mirror image below the shape,
+and only `height` grows, so an axis would restate them. Each grid holds a
+single pattern and shows no relation between objects, so no population
+operation appears. The rules give the same states in reverse order and when
+they are declared after the instances. They create no property, so input and
+output states share the same keys and differ only in the tag and `height`.
+Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
+output snapshots are captured with the pair's implementation followed by
+`Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
+`dataset.28bf18c6.json` and `dataset.25ff71a9.json`, and `l7511` is a shape
+over its top-bottom mirror image, symmetric about the horizontal center line
+of its box. Input masks retain each pair's full-size 3 by 3 input canvas and
+output masks the complete 6 by 3 output, with zero cells padded `0`; with one
+pattern per grid, each mask equals its pair's grid, and merging them
+reproduces each pair's input and output. The `output_x`/`output_y` fields
+record the figure's nonzero bounding-box origin, 0 and 0 in the first
+training pair, 2 and 1 in the third, and 0 and 1 in the second and the test
+pair, equal to `output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height` equal its size. `output_canvas` is
+`EXACT`, which keeps the input's 3 columns and grows the composed canvas down
+to retain the figure, as in `dataset.017c7c7b.json`, while `FIT` would crop
+the empty top row from the second and third training outputs and the two
+empty left columns from the third. The composed canvas grows only to the
+figure's lowest cell, though, so it reaches the outputs' 6 rows only when the
+pattern starts on the top row, as in the first training pair. The second and
+third training patterns, like the test pattern, start one row down, so their
+outputs end in an empty row that neither mode frames: `EXACT` composes them
+5 rows tall. Framing each output on the world model's canvas, `canvas_width`
+columns by twice `canvas_height` rows, needs a solver change. Orientation is 0
+in both states because the pattern is not turned: its mirror image is part of
+the figure that `l7511` names, not a turn. The declarations hold executable
+code only, without `#` comments. The test pair follows the training pairs at
+the same level and is annotated by the same rules.
 
 `dataset.9565186b.json` annotates the four original training pairs from
 `data\training\9565186b.json`, in order, followed by its test pair, sixteen

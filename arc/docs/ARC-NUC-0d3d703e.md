@@ -140,27 +140,29 @@ run.
 
 ## Open items
 
-- **The run saw the answer.** `src/lib/llm.ts` sends `document(puzzle_id)` as
-  few-shot context, and `src/dataset/dataset.ts` discards `puzzle_id`. The
-  prompts therefore held this dataset's annotated test pair, expected output
-  included, and the exact match does not show that the rule was inferred from
-  the training pairs. Suggested, not applied: keep the running puzzle's test
-  pairs out of `document(puzzle_id)`.
+- **The run saw the answer.** Resolved on 6-Nov-2026: the user decided this is
+  intended, because the datasets are being prepared as few-shot examples and
+  runs at this stage are not yet held-out tests. The ARC instructions now say
+  so, and the suggested change to keep the running puzzle's test pairs out of
+  `document(puzzle_id)` is withdrawn. `src/lib/llm.ts` sends
+  `document(puzzle_id)` as few-shot context, and `src/dataset/dataset.ts`
+  discards `puzzle_id`. The prompts therefore held this dataset's annotated
+  test pair, expected output included, and the exact match does not show that
+  the rule was inferred from the training pairs.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` wrap JSON in text labels such as `few_shot:`, while the
   ARC instructions require every message to parse as one JSON document.
   Suggested, not applied: build each message with `JSON.stringify` of one data
   object.
-- **Comments in declarations.** `.claude/rules/arc.instructions.md` permits
-  executable code in `declarations` but no prose comments, while this dataset
-  follows the `#` comments every other dataset carries. Decide which wins;
-  removing the comments needs no new snapshots.
-- **Workflow timeout.** The arc-dataset profile asks for a job timeout of at
-  least 30 minutes per listed puzzle plus 20 minutes, 380 minutes for the 12
-  puzzles now listed, which exceeds GitHub Actions' 360-minute job limit,
-  while `e8ef229` set it to 30 minutes because the puzzles run in parallel.
-  The worker added this puzzle and left the timeout at 30. Decide which holds
-  and update the profile or the workflow.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
+- **Workflow timeout.** Resolved on 6-Nov-2026: at the user's request, the
+  arc-dataset profile now asks for the batch budget the workflow needs,
+  `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
+  Actions' 360-minute job limit. The workflow's 150-minute timeout covers its
+  20 listed puzzles.
 - **Stale item in another record.** [ARC-NUC-27a28665](ARC-NUC-27a28665.md)
   still lists the stale README paragraph about `dataset.0d3d703e.json` as
   open; `ebd026c` replaced that paragraph, so the item can be closed there.

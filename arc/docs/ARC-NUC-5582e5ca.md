@@ -9,7 +9,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
-| Solver changes | None; two suggested changes await review, not applied |
+| Solver changes | None; one suggested change awaits review, not applied |
 | Solver runs | 5 local runs, one for each of versions 1 to 5: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0; version 6 has not been run |
 | Updated | 6-Nov-2026 |
 
@@ -156,16 +156,19 @@ gives. This was a manual check, not a live-model result.
 
 ## Open items
 
-- **Every run saw the answer.** `src/dataset/dataset.ts` ignores `puzzle_id`
-  and sends every JSON dataset as few-shot context, so each run's prompt held
-  this puzzle's annotated test pair, expected output included. These exact
-  matches do not show that the rule was inferred from the training pairs.
-  This still held for the fifth run: `document()` still discards
+- **Every run saw the answer.** Resolved on 6-Nov-2026: the user decided this
+  is intended, because the datasets are being prepared as few-shot examples
+  and runs at this stage are not yet held-out tests. The ARC instructions now
+  say so, and the suggested change to keep the running puzzle's test pairs out
+  of `document(puzzle_id)` is withdrawn. `src/dataset/dataset.ts` ignores
+  `puzzle_id` and sends every JSON dataset as few-shot context, so each run's
+  prompt held this puzzle's annotated test pair, expected output included.
+  These exact matches do not show that the rule was inferred from the training
+  pairs. This still held for the fifth run: `document()` still discards
   `puzzle_id`. Also, while overwriting, the dataset worker read the fourth
   version, which already held the annotated test pair; it fixed the fifth
-  version's rules from the training pairs and the hint before it extracted
-  the test pair. Suggested, not applied: keep the running puzzle's test pairs
-  out of `document(puzzle_id)`.
+  version's rules from the training pairs and the hint before it extracted the
+  test pair.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` wrap JSON in text labels such as `few_shot:` and
   `train_dataset:`, while the ARC instructions require every message to parse

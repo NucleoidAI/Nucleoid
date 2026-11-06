@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the accepted `distinct` list query of [NUC 71](../../docs/nuc-0071.md) |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 5-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -213,15 +213,16 @@ has not yet been in an **ARC puzzle report** workflow run.
   first model request. Measuring this dataset takes a separately authorized
   run with the credential in the process environment. No environment file or
   credential was read.
-- **A run would see the answer.** `src/lib/llm.ts` sends
-  `dataset.document(puzzle_id)` as few-shot context, and
-  `src/dataset/dataset.ts` discards `puzzle_id`. Any run of this puzzle
+- **A run would see the answer.** Resolved on 6-Nov-2026: the user decided
+  this is intended, because the datasets are being prepared as few-shot
+  examples and runs at this stage are not yet held-out tests. The ARC
+  instructions now say so, and the suggested change to keep the running
+  puzzle's test pairs out of `document(puzzle_id)` is withdrawn.
+  `src/lib/llm.ts` sends `dataset.document(puzzle_id)` as few-shot context,
+  and `src/dataset/dataset.ts` discards `puzzle_id`. Any run of this puzzle
   therefore holds this dataset's annotated test pair in its prompts, expected
-  output included, and an exact match would not show that the rule was inferred
-  from the training pairs. Suggested, not applied: leave the running puzzle's
-  test pairs out of `document(puzzle_id)`. For example, keep only the first
-  `train.length` entries of that puzzle's own dataset, selected by count
-  without inspecting grids.
+  output included, and an exact match would not show that the rule was
+  inferred from the training pairs.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` still wrap JSON in text labels such as `few_shot:` and
   `control_id:`, while the ARC instructions require every message to parse as
@@ -233,9 +234,8 @@ has not yet been in an **ARC puzzle report** workflow run.
   lints clean with the new default, and `bun run typecheck` passes.
   Suggested, not applied: reformat both files with Prettier, a
   formatting-only change.
-- **Workflow timeout wording.** The arc-dataset profile still states the
-  serial budget that blocked the first invocation, 620 minutes for the twenty
-  puzzles now listed. The second invocation applied the batch budget that the
-  README and the batched workflow imply. Suggested, not applied: state the
-  batch budget, the number of batches times 30 minutes plus 20, in
-  `.claude/agents/arc-dataset.agent.md`.
+- **Workflow timeout wording.** Resolved on 6-Nov-2026: at the user's request,
+  the arc-dataset profile now asks for the batch budget the workflow needs,
+  `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
+  Actions' 360-minute job limit. The workflow's 150-minute timeout covers its
+  20 listed puzzles.

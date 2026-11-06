@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | None specific to this puzzle |
 | Solver runs | 1 local run, 2-Nov-2026: exit 0 |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -101,9 +101,11 @@ recorded.
 
 ## Open items
 
-- **The run saw the answer.** `src/dataset/dataset.ts` sends every JSON
-  dataset as few-shot context, and this puzzle's dataset includes its
+- **The run saw the answer.** Resolved on 6-Nov-2026: the user decided this is
+  intended, because the datasets are being prepared as few-shot examples and
+  runs at this stage are not yet held-out tests. The ARC instructions now say
+  so, and the suggested change to keep the running puzzle's test pairs out of
+  `document(puzzle_id)` is withdrawn. `src/dataset/dataset.ts` sends every
+  JSON dataset as few-shot context, and this puzzle's dataset includes its
   annotated test pair with the expected output. This exact match therefore
   does not show that the rule was inferred from the training pairs.
-  Suggested, not applied: keep the running puzzle's test pairs out of
-  `document(puzzle_id)`.

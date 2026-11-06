@@ -9,7 +9,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the rules use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
-| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
+| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
 | Solver runs | 1 GitHub Actions run on 2-Nov-2026 for version 1 and 1 local run on 3-Nov-2026 for version 2, both exit 0; version 3 not run |
 | Updated | 6-Nov-2026 |
 
@@ -153,14 +153,17 @@ which authorizes its one run.
 
 ## Open items
 
-- **Every run saw the answer.** `src/lib/llm.ts` sends `document(puzzle_id)`
-  as few-shot context, and `src/dataset/dataset.ts` discards `puzzle_id`. Both
-  prompts therefore held this puzzle's annotated test pair, expected output
-  included, so neither exact match shows that the rule was inferred from the
-  training pairs. While overwriting, the dataset worker also had version 1 at
-  hand, which held the annotated test pair; it reports inferring the rules and
-  the canvas mode from the training pairs. Suggested, not applied: keep the
-  running puzzle's test pairs out of `document(puzzle_id)`.
+- **Every run saw the answer.** Resolved on 6-Nov-2026: the user decided this
+  is intended, because the datasets are being prepared as few-shot examples
+  and runs at this stage are not yet held-out tests. The ARC instructions now
+  say so, and the suggested change to keep the running puzzle's test pairs out
+  of `document(puzzle_id)` is withdrawn. `src/lib/llm.ts` sends
+  `document(puzzle_id)` as few-shot context, and `src/dataset/dataset.ts`
+  discards `puzzle_id`. Both prompts therefore held this puzzle's annotated
+  test pair, expected output included, so neither exact match shows that the
+  rule was inferred from the training pairs. While overwriting, the dataset
+  worker also had version 1 at hand, which held the annotated test pair; it
+  reports inferring the rules and the canvas mode from the training pairs.
 - **Canvas size, resolved by version 3.** In versions 1 and 2 the model had
   to fill in `canvas_width` and `canvas_height` for the test instance,
   although `value()` in `src/visualizer.ts` sends only the cropped mask with
@@ -175,10 +178,10 @@ which authorizes its one run.
   `train_dataset:`, and `input_x:`, while the ARC instructions require every
   message to parse as one JSON document. Suggested, not applied: build each
   message with `JSON.stringify` of one data object.
-- **Comments in declarations.** `.claude/rules/arc.instructions.md` permits
-  executable code in `declarations` but no prose comments, while version 2
-  follows the `#` comments that `e1bdb5a` added to every dataset. Decide which
-  wins. Removing the comments needs no new snapshots.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
 - **Committed.** `f771c15` committed version 3, its README paragraph, the
   solver change in `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`,
   and this record's updates.

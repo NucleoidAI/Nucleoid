@@ -9,7 +9,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
-| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; two suggested changes await review, not applied |
+| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
 | Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run |
 | Updated | 6-Nov-2026 |
 
@@ -224,14 +224,18 @@ been run; measuring it takes a new `/arc-purposal 44f52bb0` invocation.
 
 ## Open items
 
-- **The runs saw the answer.** `src/lib/llm.ts` sends `document(puzzle_id)` as
-  few-shot context, and `src/dataset/dataset.ts` discards `puzzle_id`. The
-  second and third runs' prompts therefore held this dataset's two annotated
-  test pairs: their expected outputs and each test instance's implementation,
-  with `symmetric` in version 2 and `canvas_width` and `points` in version 3.
-  Neither exact match shows that the rules were inferred from the training
-  pairs or that the model read the test patterns itself. Suggested, not
-  applied: keep the running puzzle's test pairs out of `document(puzzle_id)`.
+- **The runs saw the answer.** Resolved on 6-Nov-2026: the user decided this
+  is intended, because the datasets are being prepared as few-shot examples
+  and runs at this stage are not yet held-out tests. The ARC instructions now
+  say so, and the suggested change to keep the running puzzle's test pairs out
+  of `document(puzzle_id)` is withdrawn. `src/lib/llm.ts` sends
+  `document(puzzle_id)` as few-shot context, and `src/dataset/dataset.ts`
+  discards `puzzle_id`. The second and third runs' prompts therefore held this
+  dataset's two annotated test pairs: their expected outputs and each test
+  instance's implementation, with `symmetric` in version 2 and `canvas_width`
+  and `points` in version 3. Neither exact match shows that the rules were
+  inferred from the training pairs or that the model read the test patterns
+  itself.
 - **`points` is a list of pairs.** It holds only the pattern's colored cells,
   so it is not a grid or mask, but it is a list of `[column, row]` pairs
   rather than a flat list of single values. A flat list of reading-order
@@ -252,10 +256,10 @@ been run; measuring it takes a new `/arc-purposal 44f52bb0` invocation.
   `input_x:`, while the ARC instructions require every message to parse as one
   JSON document. Suggested, not applied: build each message with
   `JSON.stringify` of one data object.
-- **Comments in declarations.** `.claude/rules/arc.instructions.md` permits
-  executable code in `declarations` but no prose comments. Versions 2 and 3
-  carry `#` comments, as the other datasets do, while version 1 had none.
-  Decide which wins; removing the comments needs no new snapshots.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
 - **Test-pair facts.** Since `feef5f81`, `arc/README.md` had described a
   `dataset.44f52bb0.json` that was never committed, including facts about its
   test pairs. For version 1, `/arc-dataset` read that paragraph during its

@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply |
 | Solver changes | None; earlier suggested changes still await review, not applied |
 | Solver runs | 1 local run on 5-Nov-2026, exit 6, a difference of 6, not an exact match, with this dataset's test pair in its few-shot context |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -176,13 +176,14 @@ explains.
   `/arc-debug a85d4709` can look for abnormalities in the pipeline stages.
   Any dataset revision must come from the training pairs, never from the
   run's output.
-- **A run sees the answer.** As in earlier records, `src/lib/llm.ts` sends
-  `dataset.document(puzzle_id)` as few-shot context, and
+- **A run sees the answer.** Resolved on 6-Nov-2026: the user decided this is
+  intended, because the datasets are being prepared as few-shot examples and
+  runs at this stage are not yet held-out tests. The ARC instructions now say
+  so, and the suggested change to keep the running puzzle's test pairs out of
+  `document(puzzle_id)` is withdrawn. As in earlier records, `src/lib/llm.ts`
+  sends `dataset.document(puzzle_id)` as few-shot context, and
   `src/dataset/dataset.ts` discards `puzzle_id`, so this run's prompts held
-  this dataset's annotated test pair, expected output included. Suggested,
-  not applied: keep the running puzzle's test pairs out of
-  `document(puzzle_id)`, then measure the puzzle again in a separately
-  authorized run.
+  this dataset's annotated test pair, expected output included.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` still wrap JSON in text labels such as `few_shot:`,
   `control_id:`, `train_dataset:`, and `json_format:`, while the ARC
@@ -195,10 +196,8 @@ explains.
   lints clean with the new default, and `bun run typecheck` passes.
   Suggested, not applied: reformat both files with Prettier, a
   formatting-only change.
-- **Workflow timeout.** The arc-dataset profile asks for a job timeout of at
-  least 30 minutes per listed puzzle plus 20 minutes, 560 minutes for the 18
-  puzzles now listed. That exceeds GitHub Actions' 360-minute job limit.
-  `e8ef229` set the job to 30 minutes because the puzzles run in parallel,
-  each under its own 30-minute timeout. The worker added this puzzle and left
-  the job timeout at 30. Decide which holds and update the profile or the
-  workflow.
+- **Workflow timeout.** Resolved on 6-Nov-2026: at the user's request, the
+  arc-dataset profile now asks for the batch budget the workflow needs,
+  `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
+  Actions' 360-minute job limit. The workflow's 150-minute timeout covers its
+  20 listed puzzles.

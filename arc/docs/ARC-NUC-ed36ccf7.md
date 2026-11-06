@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | [NUC 85](../../docs/nuc-0085.md), Fixed Cross-Property Class Anchors: Automatic-Accepted, because it meets every hard criterion while the run was no exact match and the independent evaluation rejected it; proposal strategy `reuse_first`, learning updated |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 2 local runs on 5-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 on the NUC 85 candidate exit 7, difference 7 |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -249,15 +249,18 @@ repeated.
 
 ## Open items
 
-- **A run sees the answer.** `src/lib/llm.ts` sends
+- **A run sees the answer.** Resolved on 6-Nov-2026: the user decided this is
+  intended, because the datasets are being prepared as few-shot examples and
+  runs at this stage are not yet held-out tests. The ARC instructions now say
+  so, and the suggested change to keep the running puzzle's test pairs out of
+  `document(puzzle_id)` is withdrawn. `src/lib/llm.ts` sends
   `dataset.document(puzzle_id)` as few-shot context, and
   `src/dataset/dataset.ts` discards `puzzle_id`. The second run's prompts
   therefore held version 2's annotated test pair, expected output included,
   and an exact match would not have shown that the turn was inferred from the
   training pairs. Its mismatch is not explained here, because the run's log
-  shows the expected grid and this record does not read it; `/arc-debug
-  ed36ccf7` can investigate the log separately. Suggested, not applied: keep
-  the running puzzle's test pairs out of `document(puzzle_id)`.
+  shows the expected grid and this record does not read it;
+  `/arc-debug ed36ccf7` can investigate the log separately.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` still wrap JSON in text labels such as `few_shot:`,
   `control_id:`, `train_dataset:`, and `json_format:`, while the ARC
@@ -281,17 +284,15 @@ repeated.
   no solver run has measured the migrated datasets yet. The genesis
   dataset `dataset.core.json` also moves its grown corners' origins, so its
   output states now place each 3 by 3 box where its output mask starts.
-- **Comments in declarations.** This dataset and seven others carry none,
-  following `.claude/rules/arc.instructions.md`, while the other 15 datasets
-  carry `#` comments, which the migration kept and updated. Decide which
-  wins; neither choice changes any snapshot.
-- **Workflow timeout wording.** The arc-dataset profile still asks for a job
-  timeout of at least 30 minutes per listed puzzle plus 20 minutes, 620
-  minutes for the 20 puzzles now listed, beyond GitHub Actions' 360-minute job
-  limit. Since `56b093c` the workflow runs the puzzles in batches of
-  `ARC_CONCURRENCY`, 5, under a 150-minute job timeout: four batches of 30
-  minutes plus 20 make 140 minutes. Suggested, not applied: state the batch
-  budget in the profile.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
+- **Workflow timeout wording.** Resolved on 6-Nov-2026: at the user's request,
+  the arc-dataset profile now asks for the batch budget the workflow needs,
+  `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
+  Actions' 360-minute job limit. The workflow's 150-minute timeout covers its
+  20 listed puzzles.
 - **Resolved.** At `491512d` `bun run typecheck` and `bun run lint` pass, so
   the lint failures of `161e65d` are gone. NUC 85 answers the earlier question
   whether the fixed anchors of other properties should stop counting as

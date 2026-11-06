@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule is one unconditional class-level rule of accepted Nucleoid |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 5-Nov-2026, exit 0, an exact match, with this dataset's test pair in its few-shot context |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -153,14 +153,16 @@ this dataset, its annotated test pair and expected output included.
 
 ## Open items
 
-- **A run sees the answer.** `src/lib/llm.ts` sends
+- **A run sees the answer.** Resolved on 6-Nov-2026: the user decided this is
+  intended, because the datasets are being prepared as few-shot examples and
+  runs at this stage are not yet held-out tests. The ARC instructions now say
+  so, and the suggested change to keep the running puzzle's test pairs out of
+  `document(puzzle_id)` is withdrawn. `src/lib/llm.ts` sends
   `dataset.document(puzzle_id)` as few-shot context, and
   `src/dataset/dataset.ts` discards `puzzle_id`. This run's prompts therefore
   held this dataset's annotated test pair, expected output included, so its
   exact match does not show that the flip, or `mirror_axis`, a property no
-  other dataset uses, was learned from the training pairs. Suggested, not
-  applied: keep the running puzzle's test pairs out of `document(puzzle_id)`,
-  then measure the puzzle again in a separately authorized run.
+  other dataset uses, was learned from the training pairs.
 - **Messages are not JSON-only.** `src/lib/llm.ts`, `src/analyzer.ts`, and
   `src/visualizer.ts` wrap JSON in text labels such as `few_shot:`,
   `control_id:`, `train_dataset:`, and `json_format:`, while the ARC
@@ -173,13 +175,12 @@ this dataset, its annotated test pair and expected output included.
   `bun run typecheck` passes with the new default. Suggested, not applied:
   reformat both files with Prettier, for example `bunx eslint --fix
   src/analyzer.ts src/visualizer.ts`, a formatting-only change.
-- **Comments in declarations.** This dataset, `dataset.3c9b0459.json`,
-  `dataset.25d8a9c8.json`, and `dataset.25ff71a9.json` carry none, following
-  `.claude/rules/arc.instructions.md`, while the other 15 datasets carry `#`
-  comments. Decide which wins; neither choice changes any snapshot.
-- **Workflow timeout.** The arc-dataset profile asks for a job timeout of at
-  least 30 minutes per listed puzzle plus 20 minutes, 500 minutes for the 16
-  puzzles now listed, which exceeds GitHub Actions' 360-minute job limit,
-  while `e8ef229` set it to 30 minutes because the puzzles run in parallel.
-  The worker added this puzzle and left the timeout at 30. Decide which holds
-  and update the profile or the workflow.
+- **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
+  natural-language `#` comments may reach the model only as part of
+  `declarations`, and the ARC instructions now say so. Datasets with and
+  without such comments both follow them, so nothing needs to change.
+- **Workflow timeout.** Resolved on 6-Nov-2026: at the user's request, the
+  arc-dataset profile now asks for the batch budget the workflow needs,
+  `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
+  Actions' 360-minute job limit. The workflow's 150-minute timeout covers its
+  20 listed puzzles.

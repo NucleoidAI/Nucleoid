@@ -11,7 +11,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | `output_canvas`, applied by `Matrix.canvas` |
 | Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0 |
-| Updated | 5-Nov-2026 |
+| Updated | 6-Nov-2026 |
 
 ## Puzzle
 
@@ -185,11 +185,13 @@ seconds are the workflow's wall time for the puzzle, from each run's
 
 ## Open items
 
-- **Runs from `c2fff09` on saw the answer.** Since that commit,
-  `src/dataset/dataset.ts` sends every JSON dataset as few-shot context, and
-  this puzzle's dataset includes its annotated test pair with the expected
-  output. The exact matches at `c2fff09`, `b90a525`, and `ed49ce3` therefore
-  do not show that the rule was inferred from the training pairs; the runs at
-  `3cca0aa` and `3f734a8`, which predate it, also matched exactly. Suggested,
-  not applied: keep the running puzzle's test pairs out of
-  `document(puzzle_id)`.
+- **Runs from `c2fff09` on saw the answer.** Resolved on 6-Nov-2026: the user
+  decided this is intended, because the datasets are being prepared as
+  few-shot examples and runs at this stage are not yet held-out tests. The ARC
+  instructions now say so, and the suggested change to keep the running
+  puzzle's test pairs out of `document(puzzle_id)` is withdrawn. Since that
+  commit, `src/dataset/dataset.ts` sends every JSON dataset as few-shot
+  context, and this puzzle's dataset includes its annotated test pair with the
+  expected output. The exact matches at `c2fff09`, `b90a525`, and `ed49ce3`
+  therefore do not show that the rule was inferred from the training pairs;
+  the runs at `3cca0aa` and `3f734a8`, which predate it, also matched exactly.
