@@ -1158,6 +1158,93 @@ a distinct horizontal geometry. The declarations hold executable code only,
 without `#` comments. The test pair follows the training pairs at the same
 level and is annotated by the same rules.
 
+`dataset.a9f96cdd.json` annotates the four original training pairs from
+`data\training\a9f96cdd.json`, in order, followed by its test pair, five
+point instances in total, one per pair. Every input and output retains its
+original 3 by 5 canvas, 3 rows of 5 columns, with its colors, positions, and
+zero cells. Each input holds a single color-2 point on a background of zero
+cells: in the second column of the middle row, at the right end of the bottom
+row, in the middle of the top row, and in the fourth column of the middle row
+in the training pairs, and at the right end of the middle row in the test
+pair. Each output replaces the point with its four diagonal neighbors, the
+corners of the 3 by 3 box centered on it, each in a color of its own: 3 at the
+top left, 6 at the top right, 8 at the bottom left, and 7 at the bottom right,
+while the point's own cell turns 0. Corners that would fall outside the canvas
+are cut off: all four remain in the first and fourth training pairs, only the
+top-left corner in the second, whose point sits in the canvas's bottom-right
+corner, the two bottom corners in the third, whose point sits on the top row,
+and the two left corners in the test pair, whose point sits on the right edge.
+Each object is therefore the point, the figure seen first, which becomes the
+ring of its remaining corners: every corner's position and color follow from
+the point and the canvas alone, and no corner exists in the input, so no
+corner is an object of its own. The figure's box is the bounding box of the
+corners that remain, not the 3 by 3 box clamped to the canvas: the third
+training point lies on the top row, so the clamped box would start at that
+row, which holds no corner, while its corners lie only in the row below. The
+class takes only the standard entries `x`, `y`, `width`, `height`, and
+`orientation`, in that order, where `width` and `height` are the column and
+row counts of the point's box, 1 and 1, and no descriptive property, with no
+color, canvas size, or matrix of cells: every point has color 2, which the
+rules never read. Each implementation passes `width=1, height=1` right after
+`y`, such as `x=1, y=1, width=1, height=1, orientation=0` for the first
+training input. Six unconditional class-level rules turn every point into its
+figure. `$Obj.tag = 'l2898'` names the figure, and
+`$Obj.corner_colors = [[3, 6], [8, 7]]` introduces `corner_colors`, which is
+absent before the rules run: the corners' colors as they lie around the
+point, the top row's left and right corners first and then the bottom row's.
+The other four rules move the box onto the remaining corners. `x` becomes
+`min of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width)`,
+the leftmost of the two corner columns, one left and one right of the point,
+that lie on the canvas, reading the canvas's width from the solver's
+`canvas_width`, as `dataset.a85d4709.json` does; `y` becomes the topmost of
+the two corner rows, one above and one below the point, that lie on the
+canvas, filtered the same way with `canvas_height`. `width` becomes the
+`max of` the same filtered columns minus the new `x`, plus one, and `height`
+the `max of` the same filtered rows minus the new `y`, plus one, so the box
+ends at the rightmost corner column and the bottommost corner row on the
+canvas. The `@first` anchors read the point's input column and row, because
+the rules move `x` and `y`. The higher-order `filter` keeps the corners'
+columns and rows that lie on the canvas, and `min of` and `max of` take the
+ends of what it keeps. The filtered list is written out in each rule that
+uses it rather than stored, because a property such as `$Obj.columns`, read
+by `$Obj.x = min of $Obj.columns` while it reads `$Obj.x@first`, raises
+`TypeError("Circular Dependency")` in the accepted runtime. Each figure
+depends only on its own point and the canvas, and every pair holds one point,
+so no population operation appears. The training pairs alone also fit
+clipping at fixed rows and columns, because every canvas is 3 by 5; the rules
+read `canvas_width` and `canvas_height` instead, a choice fixed from the
+training pairs before the test pair was read. The rules create no other
+property, so each output state adds only `corner_colors` to its input state's
+keys, its tag turns `l2898`, and its `x`, `y`, `width`, and `height` become
+the remaining corners' box: origin 0 and 0, 3 columns by 3 rows, in the first
+training pair; 3 and 1, 1 column by 1 row, in the second; 1 and 1, 3 columns
+by 1 row, in the third; 2 and 0, 3 columns by 3 rows, in the fourth; and 3
+and 0, 1 column by 3 rows, in the test pair. The rules give the same states
+in reverse order and when they are declared after the instances. Native
+snapshots start with the pair's `canvas_width` and `canvas_height`, and
+output snapshots are captured with all of the same pair's implementations
+together, followed by `Obj[:]`. Tags identify the geometry: `l7544` is a
+single point, as in `dataset.0ca9ddb6.json`, `dataset.d037b0a7.json`, and
+`dataset.a85d4709.json`, and `l2898` is the four corners of a 3 by 3 box
+around its empty center, in the colors of `corner_colors`, unlike `l2404`,
+the diagonal cross of `dataset.0ca9ddb6.json` and `dataset.27a28665.json`,
+which keeps its center. Input masks retain each pair's full-size 3 by 5 input
+canvas, padded with `0` outside the point, and output masks the complete
+3 by 5 output, padded with `0` outside the remaining corners; merging them
+reproduces each pair's input and output. The `output_x`/`output_y` fields
+record the figure's nonzero bounding-box origin, equal to
+`output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height` equal its size, so the solver
+places each crop without a negative offset or a grown canvas.
+`output_canvas` is `EXACT` because each output keeps its input's 3 by 5
+canvas, while `FIT` would crop every output to its corners, such as the
+single cell of the second training output. Orientation is 0 in both states
+because the point is symmetric and the figure is not turned: its corner
+colors keep their places on the canvas in every pair, so `corner_colors`, not
+`orientation`, records them. The declarations hold executable code only,
+without `#` comments. The test pair follows the training pairs at the same
+level and is annotated by the same rules.
+
 `dataset.d037b0a7.json` annotates the three original training pairs from
 `data\training\d037b0a7.json`, in order, followed by its test pair, eleven
 point instances in total (3, 3, 2, and 3 per pair). Every input and output
