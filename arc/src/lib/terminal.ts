@@ -379,6 +379,16 @@ function matrixLines(matrix, start: number, end: number, colored: boolean) {
   ];
 }
 
+const compass: string[] = ["⬆️", "↗️", "➡️", "↘️", "⬇️", "↙️", "⬅️", "↖️"];
+
+export function orientation(degrees: unknown): string | undefined {
+  if (typeof degrees !== "number" || !Number.isFinite(degrees)) {
+    return undefined;
+  }
+  const turn: number = ((degrees % 360) + 360) % 360;
+  return `${compass[turn / 45] ?? "🧭"} ${degrees}°`;
+}
+
 export function grid(title: string, matrix, milestone?: Milestone) {
   const heading: string = numbered(title, milestone);
   const rows: number = matrix.length;

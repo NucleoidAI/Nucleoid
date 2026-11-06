@@ -219,7 +219,11 @@ export async function output_instance_matrix({
     ],
   });
 
-  milestone.output_composed({ instance_name, output_instance_matrix });
+  milestone.output_composed({
+    instance_name,
+    orientation: output_value.orientation,
+    output_instance_matrix,
+  });
 
   const output_instance_padded_matrix = Matrix.pad(
     Matrix.crop(output_instance_matrix),

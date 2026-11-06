@@ -161,6 +161,10 @@ output canvas instead of adding a separate milestone. Segmented-object panels
 use `Input` and `Output` without object-number labels. Model token usage remains
 attached to its active milestone. Instance-specific steps, crop and
 implementation headers, and input-state headers include the instance name.
+The visualization's output-crop header also shows the object's output
+orientation as an arrow emoji and its degrees, such as
+`2.11.1 Output crop · <instance> · ➡️ 90° · 6 × 3`; an orientation that is
+not a multiple of 45 degrees shows `🧭` instead of an arrow.
 Wide grids split into column panels rather than dropping cells. The final
 comparison keeps **Expected** before **Result**, followed by an
 exact-match badge in green or a mismatch badge in red, the unchanged difference

@@ -166,8 +166,16 @@ export function composing_output({ instance_name }) {
   });
 }
 
-export function output_composed({ instance_name, output_instance_matrix }) {
-  terminal.grid(`Output crop · ${instance_name}`, output_instance_matrix, {
+export function output_composed({
+  instance_name,
+  orientation,
+  output_instance_matrix,
+}) {
+  const direction: string | undefined = terminal.orientation(orientation);
+  const title: string = direction
+    ? `Output crop · ${instance_name} · ${direction}`
+    : `Output crop · ${instance_name}`;
+  terminal.grid(title, output_instance_matrix, {
     key: "output_crop",
     loop: true,
   });
