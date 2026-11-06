@@ -94,6 +94,8 @@ impl BinaryOp {
             BinaryOp::LessEqual => "<=",
             BinaryOp::Greater => ">",
             BinaryOp::GreaterEqual => ">=",
+            BinaryOp::Is => "is",
+            BinaryOp::IsNot => "is not",
         }
     }
 }
@@ -167,7 +169,10 @@ impl Runtime {
         scope: &mut Scope,
     ) -> Result<Value> {
         let left = self.evaluate(left, scope)?;
-        let right = self.evaluate(right, scope)?;
+        let right = match (operator, right) {
+            (BinaryOp::Is | BinaryOp::IsNot, Expr::Identifier(word)) => self.read_word(word, scope),
+            _ => self.evaluate(right, scope)?,
+        };
         binary(operator, &left, &right)
     }
 }
@@ -190,8 +195,8 @@ pub fn type_of(value: &Value) -> Value {
 
 pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> {
     use BinaryOp::{
-        Add, Divide, Equal, Greater, GreaterEqual, Less, LessEqual, Modulo, Multiply, NotEqual,
-        Power, StrictEqual, StrictNotEqual, Subtract,
+        Add, Divide, Equal, Greater, GreaterEqual, Is, IsNot, Less, LessEqual, Modulo, Multiply,
+        NotEqual, Power, StrictEqual, StrictNotEqual, Subtract,
     };
 
     // A read of something undefined makes the whole expression undefined, which
@@ -217,8 +222,8 @@ pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> 
         Modulo => Value::Number(left.to_number() % right.to_number()),
         Power => Value::Number(left.to_number().powf(right.to_number())),
 
-        Equal => Value::Bool(loose_equal(left, right)),
-        NotEqual => Value::Bool(!loose_equal(left, right)),
+        Equal | Is => Value::Bool(loose_equal(left, right)),
+        NotEqual | IsNot => Value::Bool(!loose_equal(left, right)),
         StrictEqual => Value::Bool(left == right),
         StrictNotEqual => Value::Bool(left != right),
 

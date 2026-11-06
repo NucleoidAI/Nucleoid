@@ -37,33 +37,43 @@ impl<'a> Identifier<'a> {
 }
 
 impl Runtime {
-    pub(crate) fn read_identifier(&mut self, name: &str, scope: &mut Scope) -> Result<Value> {
+    pub(crate) fn read_identifier(&mut self, name: &str, scope: &Scope) -> Result<Value> {
+        match self.read_bound(name, scope) {
+            Some(value) => Ok(value),
+            None => self.read_missing_identifier(name),
+        }
+    }
+
+    pub(crate) fn read_word(&mut self, word: &str, scope: &Scope) -> Value {
+        self.read_bound(word, scope).unwrap_or_else(|| {
+            self.track(&NodeKey::variable(word));
+            Value::String(word.to_string())
+        })
+    }
+
+    fn read_bound(&mut self, name: &str, scope: &Scope) -> Option<Value> {
         if let Some(value) = scope.retrieve(name) {
             let value = value.clone();
             self.note_nullish(&value);
-            return Ok(value);
+            return Some(value);
         }
 
         if let Some(value) = self.state.variable(name).cloned() {
             self.track(&NodeKey::variable(name));
             self.note_nullish(&value);
-            return Ok(value);
+            return Some(value);
         }
 
         if self.state.has_class(name) {
-            return Ok(Value::Class(name.to_string()));
+            return Some(Value::Class(name.to_string()));
         }
 
         if let Some(function) = self.state.function(name).cloned() {
             self.track(&NodeKey::function(name));
-            return Ok(Value::Function(function));
+            return Some(Value::Function(function));
         }
 
-        if builtins::is_global(name) {
-            return Ok(Value::Class(name.to_string()));
-        }
-
-        self.read_missing_identifier(name)
+        builtins::is_global(name).then(|| Value::Class(name.to_string()))
     }
 
     pub(crate) fn read_missing_identifier(&mut self, name: &str) -> Result<Value> {

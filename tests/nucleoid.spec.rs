@@ -17851,6 +17851,209 @@ assert([item.x, item.y], [2, 1])
 # return: [2,1]"#);
 }
 
+/// Nucleoid matches values with is and is not
+#[rustfmt::skip]
+#[test]
+fn matches_values_with_is_and_is_not() {
+    let mut run = runner();
+    run(r#"value = "EXACT""#);
+    run(r#"if value is "EXACT":
+    double = "match""#);
+    run(r#"if value is 'EXACT':
+    single = "match""#);
+    run(r#"if value is EXACT:
+    bare = "match""#);
+    run(r#"if value is not OTHER:
+    other = "differs""#);
+    assert_eq!(run("double"), "match");
+    assert_eq!(run("single"), "match");
+    assert_eq!(run("bare"), "match");
+    assert_eq!(run("other"), "differs");
+    run("count = 3");
+    run("ready = true");
+    run(r#"order = { status: "SHIPPED", total: 30 }"#);
+    run(r#"checks = [count is 3, count is "3", count is not 4, ready is true, ready is not false, order.status is SHIPPED, order.total is 30, order.status is not PENDING]"#);
+    assert_eq!(run("checks"), serde_json::json!([true, true, true, true, true, true, true, true]));
+    run(r#"order.status = "PENDING""#);
+    assert_eq!(run("checks"), serde_json::json!([true, true, true, true, true, false, true, false]));
+    run(r#"status = "PENDING""#);
+    run(r#"if status is SHIPPED:
+    stage = "done"
+else:
+    stage = "open""#);
+    assert_eq!(run("stage"), "open");
+    run(r#"status = "SHIPPED""#);
+    assert_eq!(run("stage"), "done");
+    run(r#"stage
+
+# return: "done""#);
+}
+
+/// Nucleoid reads a bare word after is as its variable or else as its text
+#[rustfmt::skip]
+#[test]
+fn reads_a_bare_word_after_is_as_its_variable_or_else_as_its_text() {
+    let mut run = runner();
+    run(r#"value = "EXACT""#);
+    run("flag = (value is EXACT)");
+    run("miss = (value is not EXACT)");
+    assert_eq!(run("flag"), true);
+    assert_eq!(run("miss"), false);
+    run(r#"EXACT = "OTHER""#);
+    assert_eq!(run("flag"), false);
+    assert_eq!(run("miss"), true);
+    run(r#"value = "OTHER""#);
+    assert_eq!(run("flag"), true);
+    run("delete EXACT");
+    assert_eq!(run("flag"), false);
+    assert_eq!(run("miss"), true);
+    run(r#"value = "EXACT""#);
+    assert_eq!(run("flag"), true);
+    run(r#"if value is not EXACT:
+    note = "changed"
+else:
+    note = "same""#);
+    assert_eq!(run("note"), "same");
+    run(r#"EXACT = "NEW""#);
+    assert_eq!(run("note"), "changed");
+    run("delete EXACT");
+    assert_eq!(run("note"), "same");
+    run(r#"kind = "Math""#);
+    run(r#"named = [(kind is Math), (kind is "Math"), (kind is MATH)]"#);
+    assert_eq!(run("named"), serde_json::json!([false, true, false]));
+    run("def pick(EXACT, candidate) => (candidate is EXACT)");
+    assert_eq!(run(r#"pick("A", "A")"#), true);
+    assert_eq!(run(r#"pick("A", "EXACT")"#), false);
+    run(r#"flag
+
+# return: true"#);
+}
+
+/// Nucleoid applies is comparisons in class level rules
+#[rustfmt::skip]
+#[test]
+fn applies_is_comparisons_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Order(status, total):
+    this.status = status
+    this.total = total"#);
+    run("$Order.shipped = ($Order.status is SHIPPED)");
+    run("$Order.open = ($Order.status is not SHIPPED)");
+    run(r#"if $Order.total is 0:
+    $Order.kind = "free"
+else:
+    $Order.kind = "paid""#);
+    run(r#"first = Order("SHIPPED", 0)"#);
+    run(r#"second = Order("PENDING", 30)"#);
+    assert_eq!(run("[first.shipped, second.shipped]"), serde_json::json!([true, false]));
+    assert_eq!(run("[first.open, second.open]"), serde_json::json!([false, true]));
+    assert_eq!(run("[first.kind, second.kind]"), serde_json::json!(["free", "paid"]));
+    run(r#"second.status = "SHIPPED""#);
+    assert_eq!(run("second.shipped"), true);
+    run(r#"SHIPPED = "PENDING""#);
+    assert_eq!(run("[first.shipped, second.shipped]"), serde_json::json!([false, false]));
+    run(r#"first.status = "PENDING""#);
+    assert_eq!(run("first.shipped"), true);
+    run("delete SHIPPED");
+    assert_eq!(run("[first.shipped, second.shipped]"), serde_json::json!([false, true]));
+    run("second.total = 0");
+    assert_eq!(run("second.kind"), "free");
+    run(r#"second.shipped
+
+# return: true"#);
+}
+
+/// Nucleoid uses is comparisons in callbacks literals conditions and loops
+#[rustfmt::skip]
+#[test]
+fn uses_is_comparisons_in_callbacks_literals_conditions_and_loops() {
+    let mut run = runner();
+    run(r#"statuses = ["SHIPPED", "PENDING", "SHIPPED"]"#);
+    run("shipped = statuses.filter(s => s is SHIPPED)");
+    run("pending = statuses.filter(lambda s: s is not SHIPPED)");
+    assert_eq!(run("shipped.length"), 2);
+    assert_eq!(run("pending"), serde_json::json!(["PENDING"]));
+    run(r#"mode = "FAST""#);
+    run("summary = { fast: mode is FAST, slow: mode is SLOW }");
+    run("flags = [mode is FAST, mode is not FAST]");
+    run("speed = 10 if mode is FAST else 1");
+    run(r#"label = (mode is FAST) ? "fast" : "slow""#);
+    run(r#"pick = ["slow", "fast"][mode is FAST ? 1 : 0]"#);
+    run("everyone = (all s in statuses: s is SHIPPED)");
+    run("banner = `${(mode is FAST)}`");
+    {
+        let actual = run("summary");
+        let expected = run("({ fast: true, slow: false })");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("flags"), serde_json::json!([true, false]));
+    assert_eq!(run("speed"), 10);
+    assert_eq!(run("label"), "fast");
+    assert_eq!(run("pick"), "fast");
+    assert_eq!(run("everyone"), false);
+    assert_eq!(run("banner"), "true");
+    run(r#"if any s in statuses: s is PENDING:
+    waiting = "yes"
+else:
+    waiting = "no""#);
+    assert_eq!(run("waiting"), "yes");
+    run(r#"mode = "SLOW""#);
+    {
+        let actual = run("summary");
+        let expected = run("({ fast: false, slow: true })");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("speed"), 1);
+    assert_eq!(run("label"), "slow");
+    assert_eq!(run("banner"), "false");
+    run("countdown = 3");
+    run("steps = 0");
+    run(r#"while countdown is not 0:
+    countdown -= 1
+    steps += 1"#);
+    assert_eq!(run("steps"), 3);
+    run(r#"def same(value) =>
+    (value is EXACT)"#);
+    assert_eq!(run(r#"same("EXACT")"#), true);
+    assert_eq!(run(r#"same("OTHER")"#), false);
+    run(r#"statuses.push("PENDING")"#);
+    assert_eq!(run("pending"), serde_json::json!(["PENDING", "PENDING"]));
+    run(r#"steps
+
+# return: 3"#);
+}
+
+/// Nucleoid keeps is as an ordinary name where a statement can follow
+#[rustfmt::skip]
+#[test]
+fn keeps_is_as_an_ordinary_name_where_a_statement_can_follow() {
+    let mut run = runner();
+    run(r#"is = 4
+value = 1
+result = value is 4
+assert(result, 1)
+assert(is, 4)
+def increment(is) => is + 1
+assert(increment(1), 2)
+record = { k: value is: 3 }
+assert(record.k, 1)
+assert(record.is, 3)
+text = `${value is 4}`
+assert(text, "1")
+same = (value is 1)
+assert(same, true)
+named = (value is is)
+assert(named, false)
+failure = ""
+try:
+    while value is x: T
+catch error:
+    failure = error
+assert(failure, ReferenceError("while is not defined"))
+named
+# return: false"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

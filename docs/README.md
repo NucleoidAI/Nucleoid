@@ -605,6 +605,8 @@ settings.size
 - Logical compound assignment: `&&=`, `||=`; adjacent characters form
   one token. `&& =`, `|| =`, `and=`, and `or=` do not form compound operators.
 - Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`.
+- Comparison words: `is` and `is not`, spellings of `==` and `!=` with a bare
+  word rule; see [is and is not comparisons](#is-and-is-not-comparisons).
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Conditional: `condition ? consequent : alternate` or
   `consequent if condition else alternate`; see below.
@@ -714,6 +716,59 @@ count
   section.
 
 Full detail: [NUC 60](nuc-0060.md).
+
+### Is and is not comparisons
+
+- `left is right` and `left is not right` are spellings of `==` and `!=`,
+  with their loose equality and precedence, for numbers, strings, booleans,
+  null and property reads: `count is 3`, `ready is true`,
+  `order.status is "SHIPPED"` and `a.x is not b.x`.
+- A quoted right operand is a string in either quote. A right operand that is
+  one bare word, such as `EXACT`, reads the local, variable, class, function or
+  built-in of that name when one exists, and otherwise compares with its own
+  text, `"EXACT"`. Keywords, `$Class` references, paths, calls and
+  parenthesized operands are ordinary operands, so `value is (EXACT)` still
+  needs `EXACT` to be defined.
+- A comparison with a word depends on that name even while nothing defines
+  it: defining, changing or deleting the variable re-evaluates every
+  declaration, `if` rule and class-level rule that uses it.
+- `is` is an operator in conditions, parentheses, call arguments, lists,
+  object values, subscripts, `?` consequents, Python-style conditions and the
+  first operand of `assert:`, and in callbacks written there. Where a
+  statement can follow, such as directly
+  after `flag =` or `return` or in a named arrow body, `is` stays an ordinary
+  name and starts the next statement, as before; write
+  `flag = (value is EXACT)`.
+
+```
+value = "EXACT"
+if value is "EXACT":
+    double = "yes"
+if value is 'EXACT':
+    single = "yes"
+if value is EXACT:
+    bare = "yes"
+assert([double, single, bare], ["yes", "yes", "yes"])
+changed = (value is not EXACT)
+assert(changed, false)
+EXACT = "OTHER"
+assert(changed, true)
+assert: value is EXACT, false
+assert(value is "EXACT", true)
+changed
+```
+
+- This is the complete `Nucleoid compares values with is and is not` program
+  in `tests/reference.md`, without its title and expected-return metadata; it
+  returns `true`.
+- A word comparison renders as `(value is EXACT)`, so it never shares a graph
+  key with `value == EXACT`; every other `is` renders as `==` or `!=`.
+  Malformed forms report the errors of their `==` spellings. Grammar, the
+  exact set of positions and edge cases are in the authoritative
+  [is and is not comparisons](../nucleoid.spec.md#is-and-is-not-comparisons)
+  section.
+
+Full detail: [NUC 86](nuc-0086.md).
 
 ### Exponentiation
 
@@ -3567,6 +3622,9 @@ elif                                   same unconditional alias without a colon
 condition ? consequent : alternate     conditional expression (NUC 59)
 consequent if condition else alternate same expression, Python spelling
 left ?? right                          left unless it is null, else right (NUC 60)
+if value is "EXACT":                   value == "EXACT" in a condition or other enclosed position (NUC 86)
+if value is EXACT:                     a bare word reads its variable, else its own text "EXACT" (NUC 86)
+flag = (value is not EXACT)            != with the same word rule; bare at statement level is a name (NUC 86)
 base ** exponent                       exactly Math.pow(base, exponent), right-associative (NUC 64)
 -x ** 2                                prefix operators apply to the whole power: -(x ** 2) (NUC 64)
 name **= exponent                      name = name ** (exponent) (NUC 64)

@@ -2916,6 +2916,83 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed nullish coalescing updates` specify the
   executable behavior.
 
+## Is and is not comparisons
+
+- [NUC 86](docs/nuc-0086.md) adds `is` and `is not` as spellings of `==` and
+  `!=`. They compare numbers, strings, booleans, null, lists, objects and
+  property reads with the loose equality, precedence and left associativity
+  of `==` and `!=`, so `count is 3`, `order.status is "SHIPPED"`,
+  `ready is true` and `a.x is b.x` mean `count == 3`,
+  `order.status == "SHIPPED"`, `ready == true` and `a.x == b.x`. No token or
+  keyword is added: `is` stays an ordinary identifier, and `is not` is `is`
+  followed by the existing keyword `not`.
+- A quoted right operand is an ordinary string in either quote, so
+  `value is "EXACT"` and `value is 'EXACT'` are `value == "EXACT"`.
+- When the whole right operand is one bare identifier, it is a word.
+  `value is EXACT` reads `EXACT` as any name is read when a local, variable,
+  class, function or built-in global of that name exists, and otherwise
+  compares with the string of its spelling, `"EXACT"`. Keywords such as
+  `true`, `false`, `null`, `None`, `undefined`, `this` and `self`, `$Class`
+  references, paths such as `EXACT.x`, calls, subscripts, versions, operator
+  expressions and parenthesized operands are not words and read as they do
+  with `==`: `value is (EXACT)` raises `ReferenceError("EXACT is not defined")`
+  while nothing defines `EXACT`. The left operand is never a word.
+- A word records a dependency on the variable of its name even while nothing
+  defines it, so a standing declaration, `if` rule or class-level rule that
+  compares with it re-evaluates when that variable is defined, changed or
+  deleted, and deleting it returns the word to its text. A `while` condition
+  or function body reads the word each time it runs. While undefined, the
+  name is a pending graph node, as any name read before it is defined: `why`
+  lists it among the sources, and `affects` of the pending name lists nothing
+  until it is defined. A class-level rule does not require a word to be
+  defined when it is declared.
+- `is` is an operator only directly after a complete operand in an enclosed
+  position, where the accepted grammar cannot continue with an identifier:
+  inside parentheses, call arguments, lists, object-literal values and
+  spreads, subscripts and slice bounds; in the condition of `if`, `elif`,
+  `else if`, a direct alternative or `while`, a `for` source, a quantifier
+  collection, the consequent after `?` and a Python-style condition; in the
+  first operand of an `assert:` statement; and in an arrow, lambda or
+  quantifier body or a conditional alternate that sits in one of these
+  positions. In an object value, `is` directly followed by `:` stays the next
+  comma-free property key.
+- Everywhere else `is` keeps its accepted reading as a name that begins the
+  next juxtaposed statement: expression statements, assignment, destructuring
+  and `:=` values, `return`, `throw` and `delete` operands, the operand before
+  `?` and
+  both operands around a Python-style condition at statement level, arrow,
+  lambda and quantifier bodies at statement level, a named arrow body on its
+  own line or the same line, which means exactly its `return` form, the
+  second operand of `assert:` and the top level of a template interpolation.
+  So `flag = value is "EXACT"` is still `flag = value`, `is` and `"EXACT"`;
+  write `flag = (value is "EXACT")`.
+- A program that parses at the accepted revision keeps that parse; the
+  operator applies only when the whole program would otherwise fail to parse.
+  Even then, a `while` header or a `suppose` premise that also parses through
+  its colon as separate statements keeps that reading, so
+  `while v is x: T` stays `while`, `v`, `is` and the declaration `x: T`.
+- `is` and `is not` share one left-associative level with `==`, `!=`, `===`
+  and `!==`, binding more tightly than `and` and `&&` and more loosely than
+  `<`, `>`, `<=` and `>=`: `a is b == c` is `(a is b) == c`,
+  `a is b < c` is `a is (b < c)`, and
+  `not a is b` is `(not a) is b`, as `not a == b` is. The right operand of
+  `is not` starts after `not`, so `value is not EXACT` applies the word rule
+  to `EXACT`, and `a is not not b` is `a != (not b)`. One chain holds at most
+  128 of these operators, as before.
+- A word comparison renders as `(left is word)` or `(left is not word)`.
+  Every other `is` renders as `==` or `!=`, so `if value is "EXACT":` and
+  `if value == "EXACT":` are one standing rule, while `if value is EXACT:` is
+  a different one.
+- Malformed forms raise the diagnostics of their `==` and `!=` spellings in
+  the same places, for example `SyntaxError("Unexpected ':'")` at line 1,
+  column 12 for `if value is:` followed by an indented body, and
+  `SyntaxError("Unexpected end of input")` at line 1, column 12 for
+  `if value is`.
+- The five appended entries beginning
+  `Nucleoid matches values with is and is not` through
+  `Nucleoid keeps is as an ordinary name where a statement can follow`
+  specify the executable behavior.
+
 ## Instance list ranges and list queries
 
 - [NUC 61](docs/nuc-0061.md) adds ranges on class instance lists,
@@ -21168,4 +21245,175 @@ $Sample.y = $Sample.x@first
 assert([item.x, item.y], [2, 1])
 [item.x, item.y]
 # return: [2,1]
+---
+# Nucleoid matches values with is and is not
+
+value = "EXACT"
+if value is "EXACT":
+    double = "match"
+if value is 'EXACT':
+    single = "match"
+if value is EXACT:
+    bare = "match"
+if value is not OTHER:
+    other = "differs"
+assert(double, "match")
+assert(single, "match")
+assert(bare, "match")
+assert(other, "differs")
+count = 3
+ready = true
+order = { status: "SHIPPED", total: 30 }
+checks = [count is 3, count is "3", count is not 4, ready is true, ready is not false, order.status is SHIPPED, order.total is 30, order.status is not PENDING]
+assert(checks, [true, true, true, true, true, true, true, true])
+order.status = "PENDING"
+assert(checks, [true, true, true, true, true, false, true, false])
+status = "PENDING"
+if status is SHIPPED:
+    stage = "done"
+else:
+    stage = "open"
+assert(stage, "open")
+status = "SHIPPED"
+assert(stage, "done")
+stage
+# return: "done"
+---
+# Nucleoid reads a bare word after is as its variable or else as its text
+
+value = "EXACT"
+flag = (value is EXACT)
+miss = (value is not EXACT)
+assert(flag, true)
+assert(miss, false)
+EXACT = "OTHER"
+assert(flag, false)
+assert(miss, true)
+value = "OTHER"
+assert(flag, true)
+delete EXACT
+assert(flag, false)
+assert(miss, true)
+value = "EXACT"
+assert(flag, true)
+if value is not EXACT:
+    note = "changed"
+else:
+    note = "same"
+assert(note, "same")
+EXACT = "NEW"
+assert(note, "changed")
+delete EXACT
+assert(note, "same")
+kind = "Math"
+named = [(kind is Math), (kind is "Math"), (kind is MATH)]
+assert(named, [false, true, false])
+def pick(EXACT, candidate) => (candidate is EXACT)
+assert(pick("A", "A"), true)
+assert(pick("A", "EXACT"), false)
+flag
+# return: true
+---
+# Nucleoid applies is comparisons in class level rules
+
+class Order(status, total):
+    this.status = status
+    this.total = total
+$Order.shipped = ($Order.status is SHIPPED)
+$Order.open = ($Order.status is not SHIPPED)
+if $Order.total is 0:
+    $Order.kind = "free"
+else:
+    $Order.kind = "paid"
+first = Order("SHIPPED", 0)
+second = Order("PENDING", 30)
+assert([first.shipped, second.shipped], [true, false])
+assert([first.open, second.open], [false, true])
+assert([first.kind, second.kind], ["free", "paid"])
+second.status = "SHIPPED"
+assert(second.shipped, true)
+SHIPPED = "PENDING"
+assert([first.shipped, second.shipped], [false, false])
+first.status = "PENDING"
+assert(first.shipped, true)
+delete SHIPPED
+assert([first.shipped, second.shipped], [false, true])
+second.total = 0
+assert(second.kind, "free")
+second.shipped
+# return: true
+---
+# Nucleoid uses is comparisons in callbacks literals conditions and loops
+
+statuses = ["SHIPPED", "PENDING", "SHIPPED"]
+shipped = statuses.filter(s => s is SHIPPED)
+pending = statuses.filter(lambda s: s is not SHIPPED)
+assert(shipped.length, 2)
+assert(pending, ["PENDING"])
+mode = "FAST"
+summary = { fast: mode is FAST, slow: mode is SLOW }
+flags = [mode is FAST, mode is not FAST]
+speed = 10 if mode is FAST else 1
+label = (mode is FAST) ? "fast" : "slow"
+pick = ["slow", "fast"][mode is FAST ? 1 : 0]
+everyone = (all s in statuses: s is SHIPPED)
+banner = `${(mode is FAST)}`
+assert(summary, { fast: true, slow: false })
+assert(flags, [true, false])
+assert(speed, 10)
+assert(label, "fast")
+assert(pick, "fast")
+assert(everyone, false)
+assert(banner, "true")
+if any s in statuses: s is PENDING:
+    waiting = "yes"
+else:
+    waiting = "no"
+assert(waiting, "yes")
+mode = "SLOW"
+assert(summary, { fast: false, slow: true })
+assert(speed, 1)
+assert(label, "slow")
+assert(banner, "false")
+countdown = 3
+steps = 0
+while countdown is not 0:
+    countdown -= 1
+    steps += 1
+assert(steps, 3)
+def same(value) =>
+    (value is EXACT)
+assert(same("EXACT"), true)
+assert(same("OTHER"), false)
+statuses.push("PENDING")
+assert(pending, ["PENDING", "PENDING"])
+steps
+# return: 3
+---
+# Nucleoid keeps is as an ordinary name where a statement can follow
+
+is = 4
+value = 1
+result = value is 4
+assert(result, 1)
+assert(is, 4)
+def increment(is) => is + 1
+assert(increment(1), 2)
+record = { k: value is: 3 }
+assert(record.k, 1)
+assert(record.is, 3)
+text = `${value is 4}`
+assert(text, "1")
+same = (value is 1)
+assert(same, true)
+named = (value is is)
+assert(named, false)
+failure = ""
+try:
+    while value is x: T
+catch error:
+    failure = error
+assert(failure, ReferenceError("while is not defined"))
+named
+# return: false
 ```

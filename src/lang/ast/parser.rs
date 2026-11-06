@@ -28,10 +28,7 @@ pub fn parse_program(source: &str) -> Result<Program> {
 
 /// Parses a program with explicit, opt-in source forms.
 pub fn parse_program_with_options(source: &str, options: SyntaxOptions) -> Result<Program> {
-    let tokens = tokenize_with_options(source, options)?;
-    let mut parser = Parser::new(tokens);
-    parser.options = options;
-    parser.program()
+    Parser::from_source(source, options)?.attempt(Parser::program)
 }
 
 pub fn parse(source: &str) -> Result<Vec<Stmt>> {
@@ -47,19 +44,24 @@ pub fn parse_expression(source: &str) -> Result<Expr> {
 }
 
 pub fn parse_expression_with_options(source: &str, options: SyntaxOptions) -> Result<Expr> {
-    parse_expression_in(source, ExpressionContext::Ordinary, options)
+    Parser::from_source(source, options)?
+        .attempt(|parser| parser.leading_expression(ExpressionContext::Ordinary))
 }
 
-fn parse_expression_in(
-    source: &str,
-    context: ExpressionContext,
-    options: SyntaxOptions,
-) -> Result<Expr> {
-    let tokens = tokenize_with_options(source, options)?;
-    let mut parser = Parser::new(tokens);
-    parser.options = options;
-    parser.skip_separators();
-    parser.expression_in(context)
+fn parse_interpolation(source: &str, options: SyntaxOptions, words: bool) -> Result<Expr> {
+    let mut parser = Parser {
+        words,
+        ..Parser::from_source(source, options)?
+    };
+    parser.leading_expression(ExpressionContext::Interpolation)
+}
+
+fn furthest(accepted: Error, retried: Error) -> Error {
+    let further = match (accepted.position(), retried.position()) {
+        (Some(first), Some(second)) => (second.line, second.column) > (first.line, first.column),
+        _ => false,
+    };
+    if further { retried } else { accepted }
 }
 
 /// How deeply expressions and blocks may nest. Recursive descent uses the
@@ -112,6 +114,8 @@ struct Parser {
     depth: usize,
     context: ExpressionContext,
     options: SyntaxOptions,
+    words: bool,
+    enclosed: bool,
     /// Python-style conditional attempts by `if` token position and nesting
     /// depth, which together decide one: the qualified condition and the
     /// position after its `else`, or `None`. A re-parse of the same source
@@ -180,10 +184,71 @@ impl Parser {
             depth: 0,
             context: ExpressionContext::Ordinary,
             options: SyntaxOptions::default(),
+            words: false,
+            enclosed: false,
             python_conditions: HashMap::new(),
             suppose_premises: HashMap::new(),
             while_conditions: HashMap::new(),
         }
+    }
+
+    fn from_source(source: &str, options: SyntaxOptions) -> Result<Self> {
+        Ok(Parser {
+            options,
+            ..Parser::new(tokenize_with_options(source, options)?)
+        })
+    }
+
+    fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
+        let accepted = match parse(self) {
+            Ok(parsed) => return Ok(parsed),
+            Err(error) => error,
+        };
+        if !self.mentions_words() {
+            return Err(accepted);
+        }
+        *self = Parser {
+            options: self.options,
+            words: true,
+            ..Parser::new(std::mem::take(&mut self.tokens))
+        };
+        parse(self).map_err(|retried| furthest(accepted, retried))
+    }
+
+    fn mentions_words(&self) -> bool {
+        self.tokens.iter().any(|spanned| match &spanned.token {
+            Token::Identifier(name) => name == "is",
+            Token::Template(_) => true,
+            _ => false,
+        })
+    }
+
+    fn leading_expression(&mut self, context: ExpressionContext) -> Result<Expr> {
+        self.skip_separators();
+        self.expression_in(context)
+    }
+
+    fn within<T>(
+        &mut self,
+        enclosed: bool,
+        parse: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<T> {
+        let outer = std::mem::replace(&mut self.enclosed, enclosed);
+        let result = parse(self);
+        self.enclosed = outer;
+        result
+    }
+
+    fn word_comparison(&self) -> Option<BinaryOp> {
+        let qualifies = self.words
+            && self.enclosed
+            && matches!(self.peek(), Token::Identifier(name) if name == "is")
+            && !(self.context == ExpressionContext::ObjectValue
+                && self.peek_at(1) == &Token::Colon);
+        qualifies.then(|| match self.peek_at(1) {
+            Token::Keyword(Keyword::Not) => BinaryOp::IsNot,
+            _ => BinaryOp::Is,
+        })
     }
 
     fn peek(&self) -> &Token {
@@ -389,10 +454,10 @@ impl Parser {
         }
 
         let depth = self.depth;
-        let result = self.destructuring().and_then(|declarations| {
-            match declarations {
+        let result = self.within(false, |parser| {
+            match parser.destructuring()? {
                 Some(declarations) => statements.extend(declarations),
-                None => statements.push(self.statement_inner()?),
+                None => statements.push(parser.statement_inner()?),
             }
             Ok(())
         });
@@ -673,7 +738,45 @@ impl Parser {
             end: self.position,
         });
         self.position = start;
+        let end = outcome.as_ref()?.end;
+        if self.words
+            && self.accepted(Self::attempt_suppose_premise).is_none()
+            && self.separates(start, end)
+        {
+            return None;
+        }
         outcome
+    }
+
+    fn accepted<T>(&mut self, parse: impl FnOnce(&mut Self) -> T) -> T {
+        let mut probe = Parser {
+            position: self.position,
+            depth: self.depth,
+            context: self.context,
+            options: self.options,
+            enclosed: self.enclosed,
+            ..Parser::new(std::mem::take(&mut self.tokens))
+        };
+        let parsed = parse(&mut probe);
+        self.tokens = probe.tokens;
+        parsed
+    }
+
+    fn separates(&mut self, from: usize, colon: usize) -> bool {
+        self.accepted(|parser| {
+            parser.position = from;
+            parser.depth = parser.depth.saturating_sub(1);
+            let mut statements = Vec::new();
+            for _ in from..=colon {
+                if parser.position > colon {
+                    return true;
+                }
+                if parser.statement(&mut statements).is_err() {
+                    return false;
+                }
+            }
+            parser.position > colon
+        })
     }
 
     fn clause_before_colon(&mut self) -> Option<Expr> {
@@ -692,7 +795,9 @@ impl Parser {
     fn assertion_expression(&mut self) -> Result<Expr> {
         // Keep the same argument AST as parenthesized assert(...).
         // Evaluation is still the ordinary helper, not a constructor.
-        let actual = self.argument(ArgumentContext::PotentialConstructor)?;
+        let actual = self.within(true, |parser| {
+            parser.argument(ArgumentContext::PotentialConstructor)
+        })?;
         self.expect(&Token::Comma)?;
         let expected = self.argument(ArgumentContext::PotentialConstructor)?;
         if self.check(&Token::Comma) {
@@ -860,6 +965,13 @@ impl Parser {
                 colon: self.position,
             });
         self.position = start;
+        let colon = outcome.as_ref()?.colon;
+        if self.words
+            && self.accepted(Self::attempt_while_condition).is_none()
+            && self.separates(start, colon)
+        {
+            return None;
+        }
         outcome
     }
 
@@ -1440,7 +1552,9 @@ impl Parser {
     /// its top-level `:` belongs to the enclosing construct, never to a
     /// contextual `lambda`.
     fn clause_expression(&mut self) -> Result<Expr> {
-        self.expression_in(ExpressionContext::Clause)
+        self.within(true, |parser| {
+            parser.expression_in(ExpressionContext::Clause)
+        })
     }
 
     fn expression_in(&mut self, context: ExpressionContext) -> Result<Expr> {
@@ -1608,8 +1722,9 @@ impl Parser {
     fn attempt_python_condition(&mut self) -> Option<PythonCondition> {
         let start = self.position;
         self.advance();
-        let condition =
-            self.nested_expression_in(ExpressionContext::Clause, Self::coalescing_expression);
+        let condition = self.within(true, |parser| {
+            parser.nested_expression_in(ExpressionContext::Clause, Self::coalescing_expression)
+        });
         let outcome = match condition {
             Ok(condition) if self.eat_keyword(Keyword::Else) => Some(PythonCondition {
                 condition,
@@ -1690,7 +1805,7 @@ impl Parser {
 
             if name == "depth" && self.peek_at(1) == &Token::LeftParen {
                 self.position += 2;
-                let limit = self.expression()?;
+                let limit = self.within(true, Self::expression)?;
                 self.expect(&Token::RightParen)?;
                 return Ok(Expr::Depth {
                     source: Box::new(source),
@@ -1763,19 +1878,31 @@ impl Parser {
                 Token::NotEqual => BinaryOp::NotEqual,
                 Token::StrictEqual => BinaryOp::StrictEqual,
                 Token::StrictNotEqual => BinaryOp::StrictNotEqual,
-                _ => break,
+                _ => match self.word_comparison() {
+                    Some(operator) => operator,
+                    None => break,
+                },
             };
 
             self.advance();
+            if operator == BinaryOp::IsNot {
+                self.advance();
+            }
             chain += 1;
 
             if chain > MAX_CHAIN {
                 return Err(self.error("Expression has too many operands"));
             }
 
+            let start = self.position;
             let right = self.relational()?;
+            let word = self.position == start + 1 && matches!(right, Expr::Identifier(_));
             left = Expr::Binary {
-                operator,
+                operator: match operator {
+                    BinaryOp::Is if !word => BinaryOp::Equal,
+                    BinaryOp::IsNot if !word => BinaryOp::NotEqual,
+                    operator => operator,
+                },
                 left: Box::new(left),
                 right: Box::new(right),
             };
@@ -2050,7 +2177,7 @@ impl Parser {
             let end = if self.check(&Token::RightBracket) {
                 None
             } else {
-                Some(Box::new(self.expression()?))
+                Some(Box::new(self.within(true, Self::expression)?))
             };
             self.expect(&Token::RightBracket)?;
             return Ok(Expr::Slice {
@@ -2066,7 +2193,7 @@ impl Parser {
             let end = if self.check(&Token::RightBracket) {
                 None
             } else {
-                Some(Box::new(self.expression()?))
+                Some(Box::new(self.within(true, Self::expression)?))
             };
             self.expect(&Token::RightBracket)?;
             return Ok(Expr::Slice {
@@ -2092,7 +2219,7 @@ impl Parser {
             let argument = if self.starts_selector(length) {
                 self.nested_expression(|parser| parser.selector(length))?
             } else {
-                self.argument(context)?
+                self.within(true, |parser| parser.argument(context))?
             };
             arguments.push(argument);
 
@@ -2224,7 +2351,7 @@ impl Parser {
             }
             Token::Keyword(Keyword::Function) => self.function_literal(),
             Token::LeftParen => {
-                let expression = self.expression()?;
+                let expression = self.within(true, Self::expression)?;
                 self.expect(&Token::RightParen)?;
                 Ok(expression)
             }
@@ -2248,7 +2375,7 @@ impl Parser {
         let mut items = Vec::new();
 
         while !self.check(&Token::RightBracket) {
-            items.push(self.expression()?);
+            items.push(self.within(true, Self::expression)?);
 
             if !self.eat(&Token::Comma) {
                 break;
@@ -2295,7 +2422,7 @@ impl Parser {
     fn object_entry(&mut self) -> Result<ObjectEntry> {
         if self.starts_rest_parameter() {
             self.position += 3;
-            let source = self.expression_in(ExpressionContext::ObjectValue)?;
+            let source = self.object_value()?;
             return Ok(ObjectEntry::Spread(source));
         }
 
@@ -2317,9 +2444,15 @@ impl Parser {
                 Expr::Identifier(key.clone())
             } else {
                 self.expect(&Token::Colon)?;
-                self.expression_in(ExpressionContext::ObjectValue)?
+                self.object_value()?
             };
         Ok(ObjectEntry::Property(key, value))
+    }
+
+    fn object_value(&mut self) -> Result<Expr> {
+        self.within(true, |parser| {
+            parser.expression_in(ExpressionContext::ObjectValue)
+        })
     }
 
     fn arrow_body(&mut self, parameters: Vec<Parameter>) -> Result<Expr> {
@@ -2537,12 +2670,7 @@ impl Parser {
         // Trailing tokens after an interpolated expression are ignored,
         // so a top-level `lambda` keeps its accepted name reading here
         // and a trailing Python-style `if` stays ignored.
-        parse_expression_in(
-            excerpt(raw, span),
-            ExpressionContext::Interpolation,
-            self.options,
-        )
-        .map_err(|error| {
+        parse_interpolation(excerpt(raw, span), self.options, self.words).map_err(|error| {
             if self.options.c_style_comments {
                 template_error(error, origin, prefix)
             } else {
@@ -4029,6 +4157,62 @@ class Gauge:
             }
             assert_eq!(parser.depth, 0, "{source}");
             assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+        }
+    }
+
+    #[test]
+    fn word_headers_consult_the_accepted_grammar_without_changing_the_parser() {
+        for (source, condition) in [
+            ("while v is x: T", None),
+            ("while v is assert: a, b", None),
+            ("while x is Y: pass", Some("(x is Y)")),
+            ("while x is not Y: pass", Some("(x is not Y)")),
+            ("while ready: f(x is Y)", Some("ready")),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            parser.words = true;
+            let tokens = parser.tokens.clone();
+            let first = parser.while_condition();
+            assert_eq!(
+                first.as_ref().map(ToString::to_string).as_deref(),
+                condition,
+                "{source}"
+            );
+            if first.is_some() {
+                assert_eq!(parser.peek(), &Token::Colon, "{source}");
+            } else {
+                assert_eq!(parser.position, 0, "{source}");
+            }
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+            assert!(parser.words && !parser.enclosed, "{source}");
+            assert_eq!(parser.tokens, tokens, "{source}");
+            assert_eq!(parser.while_conditions.len(), 1, "{source}");
+            assert!(parser.suppose_premises.is_empty(), "{source}");
+            assert!(parser.python_conditions.is_empty(), "{source}");
+        }
+
+        for (source, premise) in [
+            ("suppose v is x: T", None),
+            ("suppose v is Y: pass", Some("(v is Y)")),
+        ] {
+            let mut parser = Parser::new(tokenize(source).unwrap());
+            parser.words = true;
+            parser.advance();
+            let tokens = parser.tokens.clone();
+            let first = parser.suppose_premise();
+            assert_eq!(first.as_ref().map(generate).as_deref(), premise, "{source}");
+            if first.is_some() {
+                assert_eq!(parser.peek(), &Token::Colon, "{source}");
+            } else {
+                assert_eq!(parser.position, 1, "{source}");
+            }
+            assert_eq!(parser.depth, 0, "{source}");
+            assert_eq!(parser.context, ExpressionContext::Ordinary, "{source}");
+            assert!(parser.words && !parser.enclosed, "{source}");
+            assert_eq!(parser.tokens, tokens, "{source}");
+            assert_eq!(parser.suppose_premises.len(), 1, "{source}");
+            assert!(parser.while_conditions.is_empty(), "{source}");
         }
     }
 }

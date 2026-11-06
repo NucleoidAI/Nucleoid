@@ -180,12 +180,15 @@ fn write_binary(
     left: &Expr,
     right: &Expr,
 ) -> fmt::Result {
-    if operator != BinaryOp::Power {
-        return write!(f, "{left}{}{right}", operator.as_str());
+    match operator {
+        BinaryOp::Power => {
+            power_operand(f, left, groups_power_base(left))?;
+            f.write_str(BinaryOp::Power.as_str())?;
+            power_operand(f, right, groups_power_exponent(right))
+        }
+        BinaryOp::Is | BinaryOp::IsNot => write!(f, "({left} {} {right})", operator.as_str()),
+        _ => write!(f, "{left}{}{right}", operator.as_str()),
     }
-    power_operand(f, left, groups_power_base(left))?;
-    f.write_str(BinaryOp::Power.as_str())?;
-    power_operand(f, right, groups_power_exponent(right))
 }
 
 fn write_object_literal(f: &mut fmt::Formatter<'_>, entries: &[(String, Expr)]) -> fmt::Result {
@@ -260,6 +263,10 @@ fn groups_power_base(operand: &Expr) -> bool {
     match operand {
         Expr::Number(number) => *number < 0.0,
         Expr::Unary { operator, .. } => *operator != UnaryOp::Positional,
+        Expr::Binary {
+            operator: BinaryOp::Is | BinaryOp::IsNot,
+            ..
+        } => false,
         Expr::Binary { .. } | Expr::Delete(_) | Expr::Of { .. } => true,
         _ => groups_power_exponent(operand),
     }
@@ -267,7 +274,9 @@ fn groups_power_base(operand: &Expr) -> bool {
 
 fn groups_power_exponent(operand: &Expr) -> bool {
     match operand {
-        Expr::Binary { operator, .. } => *operator != BinaryOp::Power,
+        Expr::Binary { operator, .. } => {
+            !matches!(operator, BinaryOp::Power | BinaryOp::Is | BinaryOp::IsNot)
+        }
         Expr::Logical { operator, .. } => *operator != LogicalOp::Coalesce,
         Expr::Assign { .. } | Expr::Reason { .. } | Expr::Depth { .. } | Expr::Function(_) => true,
         _ => false,

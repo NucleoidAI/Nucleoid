@@ -2415,4 +2415,23 @@ assert([p.x, p.y], [7, 7])
 assert([p.x@first, p.x@1, p.x@2, p.x@3], [1, 5, null, 7])
 [p.x, q.x]
 # return: [7,4]
+---
+# Nucleoid compares values with is and is not
+
+value = "EXACT"
+if value is "EXACT":
+    double = "yes"
+if value is 'EXACT':
+    single = "yes"
+if value is EXACT:
+    bare = "yes"
+assert([double, single, bare], ["yes", "yes", "yes"])
+changed = (value is not EXACT)
+assert(changed, false)
+EXACT = "OTHER"
+assert(changed, true)
+assert: value is EXACT, false
+assert(value is "EXACT", true)
+changed
+# return: true
 ```

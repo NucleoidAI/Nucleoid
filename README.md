@@ -1858,6 +1858,35 @@ assert: [typical, local], [30, 25]
   the five orders is 38.6. See the
   [root contract](nucleoid.spec.md#list-and-population-medians).
 
+## Is comparisons
+
+**Is matches quoted and bare words as == does**
+
+```nuc
+status = "PENDING"
+if status is SHIPPED:
+    stage = "done"
+else:
+    stage = "open"
+late = (status is not 'SHIPPED')
+assert: [stage, late], ["open", true]
+status = "SHIPPED"
+assert: [stage, late], ["done", false]
+SHIPPED = "DELIVERED"
+assert: [stage, late], ["open", false]
+```
+
+- [NUC 86](docs/nuc-0086.md) adds `is` and `is not` as spellings of `==`
+  and `!=` for numbers, strings, booleans, null and property reads. A quoted
+  right operand is a string in either quote, and a lone bare word such as
+  `SHIPPED` reads the variable of that name, or its own text while nothing
+  defines it. Defining, changing or deleting `SHIPPED` re-evaluates every
+  rule that compares with it, while the quoted `'SHIPPED'` stays text.
+- `is` works in conditions, parentheses, call arguments, lists and object
+  values. Where a statement can follow, it stays an ordinary name, so write
+  `late = (status is not 'SHIPPED')` rather than leaving the comparison bare.
+  See the [root contract](nucleoid.spec.md#is-and-is-not-comparisons).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
