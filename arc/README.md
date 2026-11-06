@@ -1223,6 +1223,80 @@ Orientation is 0 in both states because the regions are not rotated and the
 bar is a distinct horizontal geometry. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
 
+`dataset.e9afcf9a.json` annotates the two original training pairs from
+`data\training\e9afcf9a.json`, in order, followed by its test pair, six bar
+instances in total, two per pair. Every input and output retains its original
+2 by 6 canvas, 2 rows of 6 columns, with its colors and positions, and no grid
+has a zero cell. Each input is two horizontal bars, one on top of the other,
+each 6 cells of one color, one row tall and as wide as the canvas: color 3
+over color 9 and 4 over 8 in the training pairs, and 6 over 2 in the test
+pair. Each object is one bar, the figure seen first, listed from top to
+bottom. Each output weaves the two bars into a checkerboard of their two
+colors that fills the canvas: each bar keeps its cells in its own row in every
+other column, starting with the left column, and moves its cells in the
+columns between them into the other bar's row, so the two colors alternate
+along every row and down every column, and the top-left cell keeps the top
+bar's color. Each bar therefore becomes one color of the checkerboard, the
+cells whose row plus column has the parity of the bar's own row, even for the
+top bar and odd for the bottom bar, and keeps its color and its 6 cells. The
+training pairs alone also fit reading the whole grid as one two-color mosaic
+that becomes a checkerboard, and as six columns, every other one turned upside
+down; the rules take the two bars instead, the figures seen first, each of
+which keeps its color and cell count while its cells move, and the columns
+would be finer objects than the bars, choices fixed from the training pairs
+before the test pair was read. The class takes only the standard entries `x`,
+`y`, `width`, `height`, and `orientation`, in that order, where `width` and
+`height` are the column and row counts of the bar's box, the nonzero bounding
+box of its input mask, 6 and 1 for every bar. It takes no descriptive
+property, with no color, parts list, canvas size, or matrix of cells, because
+the rules need none: the bar's color travels in its masks, and its share of
+the checkerboard follows from its row. Each implementation passes
+`width=6, height=1` right after `y`, such as
+`x=0, y=1, width=6, height=1, orientation=0` for the bottom bar of the first
+training input. Four unconditional class-level rules turn every bar into its
+share of the checkerboard. `$Obj.tag = 'l5973'` names that geometry, and
+`$Obj.parity = $Obj.y@first % 2` introduces `parity`, which is absent before
+the rules run: the parity of the bar's input row, 0 for the top bar and 1 for
+the bottom bar, and so of row plus column on every cell the bar fills,
+anchored with `@first` because another rule moves `y`.
+`$Obj.height = canvas_height` grows the bar from one row to the canvas's two,
+reading the canvas's height from the solver's `canvas_height`, as
+`dataset.a85d4709.json` reads `canvas_width`, and `$Obj.y = 0` moves its box
+to the top row, which changes `y` for every bottom bar. The rules leave `x`
+and `width` unchanged, because the checkerboard spans the bars' six columns,
+and `orientation` unchanged. Each bar's share depends only on its own row and
+the canvas, so no population operation appears: the two shares interlock
+because the bars lie in rows of different parity, not because a rule compares
+them. The two bars fill the canvas in every pair, so the training pairs alone
+also fit a checkerboard over only the rows the bars cover; the rules cover the
+canvas instead, a choice fixed from the training pairs before the test pair
+was read. The rules give the same states in reverse order and when they are
+declared after the instances. They create no other property, so each output
+state adds only `parity` to its input state's keys, its tag turns `l5973`, its
+`height` turns 2, and its `y` turns 0. Native snapshots start with the pair's
+`canvas_width` and `canvas_height`, and output snapshots are captured with all
+of the same pair's implementations together, followed by `Obj[:]`. Tags
+identify the geometry: `l3058` is a horizontal bar, as in
+`dataset.d631b094.json`, `dataset.25d8a9c8.json`, and
+`dataset.a85d4709.json`, and `l5973` is one color of a checkerboard, the cells
+of its box whose row plus column, counted from the canvas's top-left corner,
+has the parity `parity`, so they alternate along each row and down each
+column. Input masks retain each pair's full-size 2 by 6 input canvas and
+output masks the complete 2 by 6 output, each padded with `0` outside its bar
+or its share of the checkerboard; merging them reproduces each pair's input
+and output. The `output_x`/`output_y` fields record the share's nonzero
+bounding-box origin, 0 and 0, equal to `output_value.x`/`output_value.y`, and
+`output_value.width`/`output_value.height`, 6 and 2, equal its size, the whole
+canvas. `output_canvas` is `EXACT` because each output keeps its input's
+2 by 6 canvas; with no zero cell in any output, `FIT` would frame the same
+grids. Orientation is 0 in both states because no bar is turned: the two
+shares of a pair are mirror images of each other, but no turn carries one onto
+the other, since a half turn leaves each of them unchanged and a quarter turn
+stands it upright, so `parity`, not `orientation`, tells them apart. The
+declarations hold executable code only, without `#` comments. The test pair
+follows the training pairs at the same level and is annotated by the same
+rules.
+
 `dataset.ed36ccf7.json` annotates the four original training pairs from
 `data\training\ed36ccf7.json`, in order, followed by its test pair, five
 pattern instances in total, one per pair. Every input and output retains its
