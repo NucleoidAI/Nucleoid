@@ -393,9 +393,8 @@ export function grid(title: string, matrix, milestone?: Milestone) {
   const heading: string = numbered(title, milestone);
   const rows: number = matrix.length;
   const columns: number = Math.max(0, ...matrix.map((row) => row.length));
-  const dimensions: string = `${columns} × ${rows}`;
   if (rows === 0 || columns === 0) {
-    block(`${heading} · ${dimensions}`, [styleText("gray", "(empty)")]);
+    block(heading, [styleText("gray", "(empty)")]);
     return;
   }
 
@@ -404,7 +403,7 @@ export function grid(title: string, matrix, milestone?: Milestone) {
   const colored: boolean = colors();
   for (let start: number = 0; start < columns; start += chunk) {
     const end: number = Math.min(columns, start + chunk);
-    block(`${heading} · ${dimensions}`, [
+    block(heading, [
       ...(columns > chunk
         ? [styleText("gray", `Columns ${start}–${end - 1}`), ""]
         : []),
@@ -428,7 +427,7 @@ function sideBySide(panels) {
 function previewMatrix(title: string, matrix, colored: boolean) {
   const columns: number = Math.max(0, ...matrix.map((row) => row.length));
   return [
-    styleText("gray", `${title} · ${columns} × ${matrix.length}`),
+    styleText("gray", title),
     ...matrixLines(matrix, 0, columns, colored),
   ];
 }

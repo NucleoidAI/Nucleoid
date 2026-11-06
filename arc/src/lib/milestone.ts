@@ -1,6 +1,11 @@
 import * as Matrix from "./Matrix.ts";
 import * as terminal from "./terminal.ts";
 
+function oriented(title: string, orientation: unknown): string {
+  const direction: string | undefined = terminal.orientation(orientation);
+  return direction ? `${title} · ${direction}` : title;
+}
+
 export function start({
   version,
   puzzle_id,
@@ -83,10 +88,11 @@ export function instance_constructed({
     key: "implementation",
     loop: true,
   });
-  terminal.value(`Input state · ${instance_name}`, input_value, {
-    key: "input_state",
-    loop: true,
-  });
+  terminal.value(
+    oriented(`Input state · ${instance_name}`, input_value?.orientation),
+    input_value,
+    { key: "input_state", loop: true }
+  );
 }
 
 export function state({
@@ -138,7 +144,16 @@ export function synthesizing_instance({ instance_name }) {
   });
 }
 
-export function instance_synthesized({ instance_name, implementation }) {
+export function instance_synthesized({
+  instance_name,
+  input_instance_matrix,
+  implementation,
+}) {
+  terminal.grid(
+    `Input crop · ${instance_name}`,
+    Matrix.crop(input_instance_matrix),
+    { key: "input_crop", loop: true }
+  );
   terminal.code(`Implementation · ${instance_name}`, implementation, {
     key: "implementation",
     loop: true,
@@ -153,10 +168,11 @@ export function executing_transformation({ instance_name }) {
 }
 
 export function transformation_executed({ instance_name, input_value }) {
-  terminal.value(`Input state · ${instance_name}`, input_value, {
-    key: "input_state",
-    loop: true,
-  });
+  terminal.value(
+    oriented(`Input state · ${instance_name}`, input_value?.orientation),
+    input_value,
+    { key: "input_state", loop: true }
+  );
 }
 
 export function composing_output({ instance_name }) {
@@ -168,17 +184,25 @@ export function composing_output({ instance_name }) {
 
 export function output_composed({
   instance_name,
-  orientation,
+  input_instance_matrix,
   output_instance_matrix,
+  output_value,
 }) {
-  const direction: string | undefined = terminal.orientation(orientation);
-  const title: string = direction
-    ? `Output crop · ${instance_name} · ${direction}`
-    : `Output crop · ${instance_name}`;
-  terminal.grid(title, output_instance_matrix, {
-    key: "output_crop",
-    loop: true,
-  });
+  terminal.grid(
+    `Input crop · ${instance_name}`,
+    Matrix.crop(input_instance_matrix),
+    { key: "composition_input_crop", loop: true }
+  );
+  terminal.grid(
+    oriented(`Output crop · ${instance_name}`, output_value.orientation),
+    output_instance_matrix,
+    { key: "output_crop", loop: true }
+  );
+  terminal.value(
+    oriented(`Output state · ${instance_name}`, output_value.orientation),
+    output_value,
+    { key: "output_state", loop: true }
+  );
 }
 
 export function output_placed({

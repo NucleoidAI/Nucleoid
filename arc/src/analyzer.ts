@@ -165,7 +165,8 @@ export async function value({
 }
 
 export async function state(train_dataset) {
-  const objects: Record<string, unknown>[] = [];
+  const objects = [];
+
   for (const dataset of train_dataset.dataset) {
     const implementations = dataset.instances.map(
       ({ implementation }) => implementation

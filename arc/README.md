@@ -160,11 +160,25 @@ panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone. Segmented-object panels
 use `Input` and `Output` without object-number labels. Model token usage remains
 attached to its active milestone. Instance-specific steps, crop and
-implementation headers, and input-state headers include the instance name.
+implementation headers, and input- and output-state headers include the
+instance name. In the visualization, each test object's synthesis shows its
+`Input crop` right before its `Implementation`, as in
+`2.6.1 Input crop · <instance>` and
+`2.7.1 Implementation · <instance>`. Its composition shows the same
+`Input crop` again before its `Output crop`, under its own number, such as
+`2.12.1`, rather than continuing the synthesis count, and an `Output state`
+panel right after the `Output crop`: the object's row of the
+`Visualization · State` table, before its `Placed output`.
 The visualization's output-crop header also shows the object's output
 orientation as an arrow emoji and its degrees, such as
-`2.11.1 Output crop · <instance> · ➡️ 90° · 6 × 3`; an orientation that is
-not a multiple of 45 degrees shows `🧭` instead of an arrow.
+`2.13.1 Output crop · <instance> · ➡️ 90°`, and every input- and
+output-state header, in both stages, shows the orientation of the state it
+displays the same way, such as `2.9.1 Input state · <instance> · ⬆️ 0°`. An
+orientation that is not a multiple of 45 degrees shows `🧭` instead of an
+arrow, and an object without a numeric `orientation` adds nothing to the
+header.
+Grid headers and the preview's matrix labels omit the grid's dimensions; its
+row and column coordinates show its size.
 Wide grids split into column panels rather than dropping cells. The final
 comparison keeps **Expected** before **Result**, followed by an
 exact-match badge in green or a mismatch badge in red, the unchanged difference
@@ -219,9 +233,15 @@ numbers, and key order stay exactly as written. The return value is one JSON
 array, with a separate entry per file. New JSON files need no additional
 imports or registration in the loader. An unreadable directory or file fails
 explicitly. `document()` does not parse the files, so it passes malformed JSON
-through; `llm.generate` parses the combined array when it builds the few-shot
-message, so a malformed dataset fails there, with a JSON syntax error that does
-not name the file.
+through. By default `llm.generate` sends that array as it is in its
+`few_shot_examples` message, so a malformed dataset reaches the model
+unchanged. Its `crop_instances` option, off by default, parses the array
+instead, so a malformed dataset fails there with a JSON syntax error that does
+not name the file. It then replaces each instance's `input_instance_matrix`
+and `output_instance_matrix` with its crop to the nonzero bounding box, from
+`Matrix.crop`, or an empty list for an all-zero mask, and keeps every other
+field, so `input_x`, `input_y`, `output_x`, and `output_y` still give each
+crop's position. The dataset files keep their full-canvas matrices.
 
 Each non-genesis puzzle has exactly one `dataset.<puzzle_id>.json`, containing
 all its original `train` pairs from `data\training\<puzzle_id>.json` in source
