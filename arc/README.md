@@ -72,7 +72,7 @@ receives only the genesis datasets. The flag is off by default, so a run
 otherwise receives all [instruction datasets](#instruction-datasets), and the
 run log records it as `only_puzzle_dataset`. When the flag is on, the
 [terminal header](#terminal-presentation) also shows `--only-puzzle-dataset`
-below the runtime version; a run without it does not mention the flag.
+below the puzzle ID; a run without it does not mention the flag.
 `server.ts` reads its arguments with Node.js's built-in `util.parseArgs`,
 without an additional library; an unknown option, or a value such as
 `--only-puzzle-dataset=true`, fails the run before any model call.
@@ -90,29 +90,33 @@ every run receives, described under
 The **ARC Benchmark** workflow in `.github\workflows\arc.yml` runs
 manually from the repository's Actions tab. Configure the repository Actions
 secret `OPENROUTER_API_KEY` before dispatching it; do not upload an environment
-file. The workflow disables environment-file loading, builds the checked-out
-Nucleoid runtime, installs ARC dependencies from the frozen Bun lockfile,
-and runs every puzzle in `ARC_PUZZLES` once in batches of up to
-`ARC_CONCURRENCY` puzzles (default `5`), with a thirty-minute limit per puzzle.
-Change `jobs.report.env.ARC_CONCURRENCY` to adjust the batch size, keeping the
-job timeout budget sufficient for all batches. These are live,
-paid OpenRouter solver benchmarks, not automated ARC tests.
+file. The workflow disables environment-file loading. Its `build` job checks
+the secret and the puzzle list, then builds the checked-out Nucleoid runtime
+once and shares it with one `puzzle` job per entry of `ARC_PUZZLES`, up to 256,
+GitHub Actions' matrix limit. Each puzzle job installs ARC dependencies from
+the frozen Bun lockfile and runs its puzzle once under its own thirty-minute
+limit, within a 35-minute job timeout, with at most `ARC_CONCURRENCY` puzzle
+jobs (default `5`) running at a time. Change the workflow-level
+`env.ARC_CONCURRENCY` to adjust that limit; no timeout depends on how many
+puzzles are listed. These are live, paid OpenRouter solver benchmarks, not
+automated ARC tests.
 
-The run summary contains a table with each puzzle's result, exit code, and
-elapsed seconds. `PASS` means exact grid equality, including shape; `FAIL`
+After every puzzle job ends, the `report` job publishes a run summary with a
+table of each puzzle's result, exit code, and elapsed seconds. `PASS` means
+exact grid equality, including shape; `FAIL`
 means a nonzero exit from a mismatch, execution error, or timeout. Missing
 exit records, such as after a setup failure, report `NOT RUN` instead of
 inventing a score. A summary table at the bottom counts the `PASS`, `FAIL`,
 and `NOT RUN` puzzles and their total. Puzzle failures do not cancel the other
-running puzzles, but any failure makes the workflow fail.
+puzzle jobs, but any failure makes the workflow fail.
 The `arc-benchmark` artifact retains solver logs and exit records for seven
-days. Logs may contain expected held-out grids and must never feed back into
-datasets, prompts, or NUC candidates.
+days; the per-puzzle `arc-benchmark-<puzzle_id>` artifacts it is merged from
+expire after one day. Logs may contain expected held-out grids and must never
+feed back into datasets, prompts, or NUC candidates.
 
 Whenever `/arc-dataset` introduces a new dataset, it also adds that puzzle ID
-exactly once to the workflow's `jobs.report.env.ARC_PUZZLES` list and keeps the
-job timeout budget sufficient. Dataset and agent-configuration changes alone
-do not dispatch the workflow. If `/arc-purposal` withdraws a candidate dataset,
+exactly once to the workflow-level `env.ARC_PUZZLES` list. Dataset and
+agent-configuration changes alone do not dispatch the workflow. If `/arc-purposal` withdraws a candidate dataset,
 it also removes only the reporting entry that invocation added.
 
 ## Terminal presentation
@@ -126,9 +130,10 @@ Two blank rows pad the header content above and below.
 The header content is centered as one group, with its left inset set to
 50% of the unused horizontal space. Its first two rows pair the unboxed
 wordmark on the left with the title and `Inspired by Nature` on the right.
-After a blank line, the workflow and runtime version share the same text
+After a blank line, the workflow, the runtime version, and a grey
+`Puzzle <puzzle-id>` line naming the running puzzle share the same text
 column. When the run uses `--only-puzzle-dataset`, a grey line naming that
-flag follows the version; otherwise the header does not mention the flag.
+flag follows the puzzle line; otherwise the header does not mention the flag.
 Narrow terminals use smaller artwork and stack the header when both
 columns cannot fit. Artwork is embedded, with
 no image downloads during a run. Square corners, straight grey borders, light

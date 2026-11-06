@@ -6,49 +6,47 @@ on:
 permissions:
   contents: read
 
-jobs:
-  report:
-    runs-on: ubuntu-latest
-    timeout-minutes: 170
-    defaults:
-      run:
-        shell: bash
-        working-directory: arc
-    env:
-      ARC_CONCURRENCY: "5"
-      ARC_PUZZLES: >-
-        3aa6fb7a
-        28bf18c6
-        9af7a82c
-        0ca9ddb6
-        6150a2bd
-        d631b094
-        5582e5ca
-        d037b0a7
-        44f52bb0
-        017c7c7b
-        27a28665
-        0d3d703e
-        25d8a9c8
-        25ff71a9
-        3c9b0459
-        74dd1130
-        9565186b
-        a85d4709
-        ed36ccf7
-        6e02f1e3
-        794b24be
-        e9afcf9a
-        a9f96cdd
-        8be77c9e
-        c9e6f938
-      NUCLEOID_EXECUTABLE: ${{ github.workspace }}/target/debug/nucleoid
-      DOTENV_CONFIG_PATH: /dev/null
-      NO_COLOR: "1"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+env:
+  ARC_CONCURRENCY: "5"
+  ARC_PUZZLES: >-
+    3aa6fb7a
+    28bf18c6
+    9af7a82c
+    0ca9ddb6
+    6150a2bd
+    d631b094
+    5582e5ca
+    d037b0a7
+    44f52bb0
+    017c7c7b
+    27a28665
+    0d3d703e
+    25d8a9c8
+    25ff71a9
+    3c9b0459
+    74dd1130
+    9565186b
+    a85d4709
+    ed36ccf7
+    6e02f1e3
+    794b24be
+    e9afcf9a
+    a9f96cdd
+    8be77c9e
+    c9e6f938
 
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      concurrency: ${{ steps.plan.outputs.concurrency }}
+      puzzles: ${{ steps.plan.outputs.puzzles }}
+    steps:
       - name: Check OpenRouter secret
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -58,61 +56,123 @@ jobs:
             exit 1
           fi
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Build Nucleoid
-        working-directory: ${{ github.workspace }}
-        run: cargo build --locked --bin nucleoid
-
-      - name: Install ARC dependencies
-        run: bun --no-env-file install --frozen-lockfile
-
-      - name: Run puzzles
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - name: Plan puzzles
+        id: plan
         run: |
           if [[ ! "$ARC_CONCURRENCY" =~ ^[1-9][0-9]*$ ]]; then
             echo "::error::ARC_CONCURRENCY must be a positive integer."
             exit 1
           fi
-          mkdir -p reports
-          failed=0
-          pids=()
-          for puzzle_id in $ARC_PUZZLES; do
-            (
-              started_at=$SECONDS
-              exit_code=0
-              timeout --signal=TERM --kill-after=30s 30m bun --no-env-file run start "$puzzle_id" \
-                > "reports/$puzzle_id.log" 2>&1 || exit_code=$?
-              duration=$(( SECONDS - started_at ))
-              printf '%s\t%s\n' "$exit_code" "$duration" > "reports/$puzzle_id.tsv"
-              exit "$exit_code"
-            ) &
-            pids+=("$!")
-            if [[ "${#pids[@]}" -ge "$ARC_CONCURRENCY" ]]; then
-              for pid in "${pids[@]}"; do
-                wait "$pid" || failed=1
-              done
-              pids=()
+          read -r -d '' -a puzzle_ids <<< "$ARC_PUZZLES" || true
+          if [[ "${#puzzle_ids[@]}" -eq 0 || "${#puzzle_ids[@]}" -gt 256 ]]; then
+            echo "::error::ARC_PUZZLES must list between 1 and 256 puzzles, GitHub Actions' matrix limit."
+            exit 1
+          fi
+          for puzzle_id in "${puzzle_ids[@]}"; do
+            if [[ ! "$puzzle_id" =~ ^[0-9a-f]{8}$ ]]; then
+              echo "::error::ARC_PUZZLES entry '$puzzle_id' is not an eight-character lowercase hexadecimal puzzle ID."
+              exit 1
             fi
           done
-          for pid in "${pids[@]}"; do
-            wait "$pid" || failed=1
-          done
-          for puzzle_id in $ARC_PUZZLES; do
-            printf '::group::Puzzle %s\n' "$puzzle_id"
-            cat "reports/$puzzle_id.log" || failed=1
-            printf '::endgroup::\n'
-          done
-          exit "$failed"
+          duplicates=$(printf '%s\n' "${puzzle_ids[@]}" | sort | uniq -d | tr '\n' ' ')
+          if [[ -n "$duplicates" ]]; then
+            echo "::error::ARC_PUZZLES lists these puzzles more than once: $duplicates"
+            exit 1
+          fi
+          printf -v puzzles '"%s",' "${puzzle_ids[@]}"
+          echo "concurrency=$ARC_CONCURRENCY" >> "$GITHUB_OUTPUT"
+          echo "puzzles=[${puzzles%,}]" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Nucleoid
+        run: cargo build --locked --bin nucleoid
+
+      - name: Upload Nucleoid
+        uses: actions/upload-artifact@v4
+        with:
+          name: nucleoid
+          path: target/debug/nucleoid
+          if-no-files-found: error
+          retention-days: 1
+
+  puzzle:
+    name: Puzzle ${{ matrix.puzzle_id }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(needs.build.outputs.concurrency) }}
+      matrix:
+        puzzle_id: ${{ fromJSON(needs.build.outputs.puzzles) }}
+    defaults:
+      run:
+        working-directory: arc
+    env:
+      PUZZLE_ID: ${{ matrix.puzzle_id }}
+      NUCLEOID_EXECUTABLE: ${{ github.workspace }}/target/debug/nucleoid
+      DOTENV_CONFIG_PATH: /dev/null
+      NO_COLOR: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Download Nucleoid
+        uses: actions/download-artifact@v4
+        with:
+          name: nucleoid
+          path: target/debug
+
+      - name: Install ARC dependencies
+        run: |
+          chmod +x "$NUCLEOID_EXECUTABLE"
+          bun --no-env-file install --frozen-lockfile
+
+      - name: Run puzzle
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          mkdir -p reports
+          started_at=$SECONDS
+          exit_code=0
+          timeout --signal=TERM --kill-after=30s 30m bun --no-env-file run start "$PUZZLE_ID" \
+            > "reports/$PUZZLE_ID.log" 2>&1 || exit_code=$?
+          duration=$(( SECONDS - started_at ))
+          printf '%s\t%s\n' "$exit_code" "$duration" > "reports/$PUZZLE_ID.tsv"
+          cat "reports/$PUZZLE_ID.log"
+          exit "$exit_code"
+
+      - name: Upload puzzle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-benchmark-${{ matrix.puzzle_id }}
+          path: arc/reports/
+          if-no-files-found: ignore
+          retention-days: 1
+
+  report:
+    needs: [build, puzzle]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download puzzle reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: arc-benchmark-*
+          path: arc/reports
+          merge-multiple: true
 
       - name: Publish puzzle table
-        if: always()
-        working-directory: ${{ github.workspace }}
         run: |
           pass_count=0
           fail_count=0

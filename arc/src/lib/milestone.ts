@@ -3,11 +3,12 @@ import * as terminal from "./terminal.ts";
 
 export function start({
   version,
+  puzzle_id,
   only_puzzle_dataset,
   train,
   test_input_matrix,
 }) {
-  terminal.header({ version, only_puzzle_dataset });
+  terminal.header({ version, puzzle_id, only_puzzle_dataset });
   terminal.puzzle({ train, testInput: test_input_matrix });
 }
 

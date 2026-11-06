@@ -295,15 +295,13 @@ canvas and object sizes, and orientation.
 With a candidate executable, also name the NUC whose feature the rules use.
 
 Whenever you successfully introduce a new dataset, also add its puzzle ID
-exactly once to `jobs.report.env.ARC_PUZZLES` in
+exactly once to the workflow-level `env.ARC_PUZZLES` in
 `.github/workflows/arc.yml`, preserving the existing IDs and their order.
-The job runs the listed puzzles in batches of `ARC_CONCURRENCY`, each puzzle
-under its own thirty-minute limit, so keep its `timeout-minutes` at least
-thirty minutes per batch plus twenty for setup and reporting:
-`ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20`, such as 170 for 21 to 25
-puzzles at a concurrency of 5. Raise it when the new entry needs more, and
-report a list whose budget exceeds GitHub Actions' 360-minute job limit as a
-blocker. Verify the ID is registered and include the workflow path and
+Each listed puzzle runs as its own matrix job under its own thirty-minute
+limit, at most `ARC_CONCURRENCY` at a time, so no timeout depends on the
+list's length; leave every `timeout-minutes` unchanged. Report a list that
+would exceed 256 puzzles, GitHub Actions' matrix limit, as a blocker.
+Verify the ID is registered and include the workflow path and
 whether this invocation added the ID in your handoff. Do not change the
 workflow's triggers, credentials, solver command, provider settings, or
 scoring, and do not dispatch it. A blocked or enhancement-required handoff

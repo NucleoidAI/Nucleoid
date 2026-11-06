@@ -117,9 +117,11 @@ function block(title: string, lines, write = console.log) {
 
 export function header({
   version,
+  puzzle_id,
   only_puzzle_dataset,
 }: {
   version: string;
+  puzzle_id: string;
   only_puzzle_dataset: boolean;
 }) {
   stageNumber = 0;
@@ -145,6 +147,9 @@ export function header({
     "",
     ...wrap("Analyze / Construct / Visualize", textWidth),
     ...wrap(`Version ${version}`, textWidth).map((line: string) =>
+      styleText("gray", line)
+    ),
+    ...wrap(`Puzzle ${puzzle_id}`, textWidth).map((line: string) =>
       styleText("gray", line)
     ),
     ...(only_puzzle_dataset
