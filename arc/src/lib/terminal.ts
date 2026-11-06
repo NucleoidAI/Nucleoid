@@ -462,10 +462,18 @@ export function puzzle({ train, testInput }) {
   grid("Test input", testInput);
 }
 
-export function usage({ prompt_tokens, completion_tokens }) {
-  const message: string = `↳ Model usage  ${prompt_tokens} input / ${completion_tokens} output tokens`;
+export function usage({ prompt_tokens, completion_tokens, cached_tokens }) {
+  const cached: string =
+    typeof cached_tokens === "number" ? ` (${cached_tokens} cached)` : "";
+  const message: string = `↳ Model usage  ${prompt_tokens} input${cached} / ${completion_tokens} output tokens`;
   for (const line of wrap(message, width() - 2)) {
     console.log(`    ${styleText("gray", line)}`);
+  }
+}
+
+export function alert(message: string) {
+  for (const line of wrap(`⚠ ${message}`, width() - 2)) {
+    console.warn(`    ${styleText(["bold", "yellow"], line)}`);
   }
 }
 

@@ -193,8 +193,16 @@ export function summary({ difference, duration }) {
   terminal.summary(difference, duration);
 }
 
-export function usage({ prompt_tokens, completion_tokens }) {
-  terminal.usage({ prompt_tokens, completion_tokens });
+export function usage({ prompt_tokens, completion_tokens, cached_tokens }) {
+  terminal.usage({ prompt_tokens, completion_tokens, cached_tokens });
+}
+
+export function prompt_cache_alert({ cached_tokens }) {
+  terminal.alert(
+    typeof cached_tokens === "number"
+      ? `Provider prompt cache used · ${cached_tokens} cached input tokens`
+      : "Provider prompt cache unverified · no cached token count reported"
+  );
 }
 
 export function failure(error) {

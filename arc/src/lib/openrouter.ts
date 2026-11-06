@@ -7,12 +7,13 @@ export async function generate({ messages = [] }) {
     throw new Error("OPENROUTER_API_KEY is required");
   }
 
-  const { data } = await axios({
+  const { data, headers } = await axios({
     method: "POST",
     url: "https://openrouter.ai/api/v1/chat/completions",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      "X-OpenRouter-Cache": "false",
     },
     data: {
       model: "qwen/qwen3.8-27b",
@@ -44,6 +45,13 @@ export async function generate({ messages = [] }) {
     );
   });
 
+  const cacheStatus: string = String(
+    headers["x-openrouter-cache-status"] ?? ""
+  );
+  if (cacheStatus.toUpperCase() === "HIT") {
+    throw new Error("OpenRouter returned a cached response");
+  }
+
   if (data.error) {
     throw new Error(`OpenRouter error: ${data.error.message}`);
   }
@@ -53,9 +61,19 @@ export async function generate({ messages = [] }) {
     throw new Error("OpenRouter returned no text content");
   }
 
+  const cachedTokens: number = data.usage?.prompt_tokens_details?.cached_tokens;
+
   if (data.usage) {
     const { prompt_tokens, completion_tokens } = data.usage;
-    milestone.usage({ prompt_tokens, completion_tokens });
+    milestone.usage({
+      prompt_tokens,
+      completion_tokens,
+      cached_tokens: cachedTokens,
+    });
+  }
+
+  if (cachedTokens !== 0) {
+    milestone.prompt_cache_alert({ cached_tokens: cachedTokens });
   }
 
   let jsonContent;

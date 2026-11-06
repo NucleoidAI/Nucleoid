@@ -40,12 +40,23 @@ requires identical prompts: `llm.generate` currently prepends a random
 `control_id`.
 See [OpenRouter's sampling parameters](https://openrouter.ai/docs/api/reference/parameters).
 
-Requests send no `X-OpenRouter-Cache` header, so OpenRouter response caching
-stays at whatever the account or a preset sets, and upstream providers'
-automatic prompt/KV caching is unchanged as well. See OpenRouter's
+Requests disable OpenRouter response caching with `X-OpenRouter-Cache: false`,
+which applies even when a preset enables caching, and `src\lib\openrouter.ts`
+rejects any response whose `X-OpenRouter-Cache-Status` is `HIT`. Neither
+OpenRouter nor DeepInfra offers a switch for the provider's own automatic
+prompt/KV caching, which reuses a cached prefix only where a prompt matches it
+exactly from its first token. `llm.generate` therefore keeps the random
+`control_id` as the first message of every request, so another request's
+cached prefix can cover at most the few tokens before that identifier. Each
+response is checked for `usage.prompt_tokens_details.cached_tokens`: the model
+usage line shows the reported count as `(N cached)`, and the terminal prints a
+yellow `⚠` alert to standard error when a response reports cached tokens or
+reports no count at all, so an unverified response is never taken as uncached.
+See OpenRouter's
 [response caching](https://openrouter.ai/docs/guides/features/response-caching)
 and [prompt caching](https://openrouter.ai/docs/guides/best-practices/prompt-caching)
-documentation for the distinction.
+documentation for the distinction, and DeepInfra's
+[prompt caching](https://docs.deepinfra.com/chat/prompt-caching).
 
 Run the ARC example with `bun run start`, which loads the default `puzzle_id`
 in `src\app.ts`. [`/arc-purposal`](#arc-proposal-agent) sets that default to
