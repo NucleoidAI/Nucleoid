@@ -907,6 +907,84 @@ the flip. The declarations hold executable code only, without `#` comments.
 The test pair follows the training pairs at the same level and is annotated
 by the same rules.
 
+`dataset.794b24be.json` annotates the ten original training pairs from
+`data\training\794b24be.json`, in order, followed by its two test pairs,
+twelve pattern instances in total, one per pair. Every input and output
+retains its original 3 by 3 canvas, colors, positions, and zero cells. Each
+input holds a few blue cells of color 1 on a background of zero cells: 1, 2,
+2, 2, 1, 3, 3, 4, 4, and 4 cells in the training pairs and 2 and 4 in the
+test pairs. Each object is that whole pattern, all the input's color-1 cells,
+whether or not they touch, as in `dataset.d631b094.json`: the eighth training
+input's four cells lie in three pieces, the ninth's form one zigzag, and the
+tenth's are a corner cell and an L-shaped piece. Each output replaces the
+pattern with a red tally of color 2, as many cells as the pattern has, in the
+canvas's top-left corner: a bar along the top row, filled from the left, and,
+once the bar spans the canvas, a stem down from the bar's middle cell. One
+cell gives a point, two and three cells a bar of that length, and four cells
+a T, the full top row with the middle cell of the second row. Only the number
+of cells decides: the second, third, and fourth training patterns, two cells
+that touch at a corner in the second and fourth and lie in opposite corners
+of the canvas in the third, all give the same bar, and the three four-cell
+training patterns all give the same T. The figure seen first is the group of
+blue cells, whose count is all that the output keeps, so the whole pattern
+changes as one into the whole tally. The training pairs alone also fit one
+object per blue cell, each filling the tally's next cell in reading order;
+the rules count the whole pattern instead, because no pair ties a blue cell
+to a particular red cell. Because every canvas is 3 columns wide and no
+pattern has more than four cells, the training pairs alone also fit a bar of
+at most three cells on a canvas of any width, and any placement of a fifth
+cell; the rules let the bar span the canvas's width, read from the solver's
+`canvas_width` as in `dataset.a85d4709.json`, and give every cell beyond the
+bar to the stem, choices fixed from the training pairs before the test pairs
+were read. The class takes the standard entries `x`, `y`, `width`, `height`,
+and `orientation` first, in that order, where `width` and `height` are the
+column and row counts of the pattern's box, the nonzero bounding box of its
+input mask, from 1 by 1 to 3 by 3, and then `cell_count`, the pattern's
+number of cells, the scalar of `dataset.d631b094.json` and
+`dataset.9565186b.json`, as its only descriptive property, with no color,
+parts list, canvas size, or matrix of cells: every pattern is color 1, which
+the rules never read. Each implementation passes
+`width` and `height` right after `y`, such as
+`x=0, y=1, width=1, height=1, orientation=0, cell_count=1` for the first
+training input. Six unconditional class-level rules turn the pattern into the
+tally. `$Obj.tag = 'l5714'` names the tally, and `$Obj.fill_color = 2`
+introduces `fill_color`, which is absent before the rules run, because the
+tally is red whatever the pattern. `width` is
+`min of [$Obj.cell_count, canvas_width]`, the noun form of the list query
+`min` from [NUC 75](../docs/nuc-0075.md): the bar holds the first cells, up to
+the canvas's width. `height` is `1 + $Obj.cell_count - $Obj.width`: the bar's
+one row and one row for each cell beyond the bar, which the stem holds. That
+rule reads the bar's `width` as the width rule sets it, not the pattern's
+input width, so it takes no `@first` anchor, and no rule rewrites
+`cell_count`; the rules give the same states in reverse order and when they
+are declared after the instances. `$Obj.x = 0` and `$Obj.y = 0` move the
+tally to the canvas's top-left corner, wherever the pattern lies, which
+changes `x` in the fourth and fifth training pairs and the first test pair,
+and `y` in the first training pair. Each grid holds a single pattern and
+shows no relation between objects, so no population operation appears; the
+count is the pattern's own scalar. The rules create no other property, so
+each output state adds only `fill_color` to its input state's keys, its tag
+turns `l5714`, and its `width` and `height` are the tally's box: 1 and 1,
+2 and 1, 3 and 1, or 3 and 2. Native snapshots start with the pair's
+`canvas_width` and `canvas_height`, and output snapshots are captured with the
+pair's implementation followed by `Obj[:]`. Tags identify the geometry:
+`l9100` is a single shape, as in `dataset.28bf18c6.json` and
+`dataset.d631b094.json`, and `l5714` is a tally, a bar along the top row
+filled from the left up to the canvas's width, with the remaining cells as a
+stem down from the bar's middle cell, a T once it has a stem. Input masks
+retain each pair's full-size 3 by 3 input canvas and output masks the
+complete 3 by 3 output, padded with `0` outside the pattern and the tally;
+with one object per grid, each mask equals its pair's grid, and merging them
+reproduces each pair's input and output. The `output_x`/`output_y` fields
+record the tally's nonzero bounding-box origin, 0 and 0, equal to
+`output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because each
+output keeps its input's 3 by 3 canvas, including the empty bottom row that
+`FIT` would crop from every output. Orientation is 0 in both states because
+the pattern is not turned and the tally stands upright, its stem below its
+bar. The declarations hold executable code only, without `#` comments. The
+test pairs follow the training pairs at the same level and are annotated by
+the same rules.
+
 `dataset.9565186b.json` annotates the four original training pairs from
 `data\training\9565186b.json`, in order, followed by its test pair, sixteen
 region instances in total (3, 4, 2, and 4 per training pair and 3 in the test
