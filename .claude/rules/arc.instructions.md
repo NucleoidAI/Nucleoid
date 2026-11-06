@@ -56,7 +56,10 @@ evaluation intact; these are solver data and benchmarking, not automated tests.
   structured data with identifiers and enum values. No natural-language
   instructions, explanations, chain-of-thought, or prose hidden in string
   values. JSON keys, identifiers, and executable Nucleoid code fields such as
-  `declarations` and `implementation` are permitted; prose comments in code are not.
+  `declarations` and `implementation` are permitted. Natural-language `#`
+  comments reach the model only as part of `declarations`, where they describe
+  the world model's classes and rules; no other code field, such as
+  `implementation`, carries them.
 - Require exactly one JSON response matching the operation's schema. Validate
   its structure and values before code execution or grid composition.
   Reject surrounding prose, Markdown fences, malformed JSON, invalid grids,
@@ -100,6 +103,13 @@ The solver's output shows the expected grid, so never feed it back into
 datasets, NUC candidates, or prompts. Deciding an `/arc-purposal` NUC from its
 one scored run is scoring, not candidate selection: never rerun it or compare
 alternatives against the expected grid.
+
+The shared few-shot context is the one exception. `document()` sends every
+instruction dataset to every run, including the running puzzle's own annotated
+test pairs. That is intended: the datasets are being prepared as few-shot
+examples, and runs at this stage are not yet held-out tests. Do not report it
+as a leak or suggest excluding those pairs. Every other rule here still holds,
+and rules are still inferred from the training pairs alone.
 
 Preserve puzzle datasets, expected outputs, instruction examples, and scoring.
 Replay every selected training pair, then score held-out predictions by exact

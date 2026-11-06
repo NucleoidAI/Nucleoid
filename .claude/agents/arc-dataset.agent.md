@@ -94,6 +94,9 @@ formatting exactly:
   `input_value`, `output_value`.
 - Two-space indentation, one matrix row per line, and `implementation`,
   `input_value`, and `output_value` each on a single line.
+- Natural-language `#` comments are optional and appear only in
+  `declarations`, where they describe its classes and rules; no other field,
+  such as `implementation`, carries them.
 
 ## Model the world
 
@@ -113,8 +116,11 @@ formatting exactly:
   transformation needs. Each class whose instances are annotated objects
   takes the standard entries `x: int, y: int, width: int, height: int,
   orientation: int` first, in that order, and its body assigns every
-  parameter to `this` and sets an initial `this.tag = 'lNNNN'`. Add only the
-  descriptive properties the transformation needs, such as categorical colors.
+  parameter to `this` and sets an initial tag either way: a literal,
+  `this.tag = 'lNNNN'`, or a `tag: str` parameter, `this.tag = tag`, whose
+  value each implementation passes, as in `dataset.27a28665.json`. Add only
+  the descriptive properties the transformation needs, such as categorical
+  colors.
 - `width` and `height` are the column and row counts of the object's own
   shape, the nonzero bounding box of its input mask. They do not change when
   only the orientation changes: a turn or mirror is the orientation's job.
@@ -291,11 +297,15 @@ With a candidate executable, also name the NUC whose feature the rules use.
 Whenever you successfully introduce a new dataset, also add its puzzle ID
 exactly once to `jobs.report.env.ARC_PUZZLES` in
 `.github/workflows/arc.yml`, preserving the existing IDs and their order.
-Keep the job's timeout at least thirty minutes per listed puzzle plus twenty
-minutes for setup and reporting, within GitHub Actions' job limit. Verify the
-ID is registered and include the workflow path and whether this invocation
-added the ID in your handoff. Do not change the workflow's triggers,
-credentials, solver command, provider settings, or
+The job runs the listed puzzles in batches of `ARC_CONCURRENCY`, each puzzle
+under its own thirty-minute limit, so keep its `timeout-minutes` at least
+thirty minutes per batch plus twenty for setup and reporting:
+`ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20`, such as 170 for 21 to 25
+puzzles at a concurrency of 5. Raise it when the new entry needs more, and
+report a list whose budget exceeds GitHub Actions' 360-minute job limit as a
+blocker. Verify the ID is registered and include the workflow path and
+whether this invocation added the ID in your handoff. Do not change the
+workflow's triggers, credentials, solver command, provider settings, or
 scoring, and do not dispatch it. A blocked or enhancement-required handoff
 introduces no dataset and does not change the reporting list.
 

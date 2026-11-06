@@ -7,7 +7,7 @@ import arc_dataset from "./lib/arc_dataset.ts";
 import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "3aa6fb7a") {
+export async function start(puzzle_id: string = "0ca9ddb6") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
@@ -61,6 +61,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
         puzzle_id,
         instance_name,
         declarations,
+        input_instances: dataset.instances.filter(({ implementation }) => implementation),
         input_matrix,
         input_instance_matrix,
         output_instance_matrix,

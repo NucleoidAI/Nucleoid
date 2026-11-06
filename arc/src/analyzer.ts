@@ -71,6 +71,7 @@ export async function value({
   puzzle_id,
   instance_name,
   declarations,
+  input_instances,
   input_matrix,
   input_instance_matrix,
   output_instance_matrix,
@@ -87,6 +88,22 @@ export async function value({
           ${instance_name}
           declarations:
           ${JSON.stringify(declarations)}
+          input_instances:
+          ${JSON.stringify(
+            input_instances.map(
+              ({
+                instance_name,
+                input_instance_matrix,
+                output_instance_matrix,
+                implementation,
+              }) => ({
+                instance_name,
+                input_instance_matrix,
+                output_instance_matrix,
+                implementation,
+              })
+            )
+          )}
           input_instance_matrix:
           ${JSON.stringify(input_instance_matrix)}
           output_instance_matrix:

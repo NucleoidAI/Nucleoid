@@ -186,7 +186,8 @@ dimension. `/arc-dataset` infers one rule set from the training pairs and
 annotates every pair with it, rather than synthesizing varieties or creating
 numbered copies. `document()` includes a puzzle's own dataset in that puzzle's
 runs, so a run of a puzzle that has a dataset receives its expected test
-output in the few-shot context.
+output in the few-shot context. That is intended: the datasets are being
+prepared as few-shot examples, and these runs are not yet held-out tests.
 
 The genesis datasets are `dataset.core.json`, `dataset.extension.json`,
 `dataset.curve.json`, and `dataset.line.json`. They are the shared examples of
@@ -1369,7 +1370,7 @@ It also infers the `output_canvas` from the training pairs.
 ```json
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color\n    this.marker_color = 0",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color",
     "if $Obj.vertex_color == 9 and $Obj.vertical_segment_color == 9 and $Obj.horizontal_segment_color == 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 1\n    $Obj.x = $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y = $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width = $Obj.width@first + 1\n    $Obj.height = $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT"
@@ -1531,7 +1532,6 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "height": 2,
         "horizontal_segment_color": 9,
         "id": "obj0",
-        "marker_color": 0,
         "orientation": 135,
         "tag": "l6747",
         "vertex_color": 9,

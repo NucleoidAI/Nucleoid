@@ -80,7 +80,11 @@ solver run.
 
 The workflow and its workers may use every dataset in `arc/src/dataset/` as a
 reference for structure, world-model idioms, properties, rules, and tags.
-The solver sends every JSON instruction dataset as shared few-shot context.
+The solver sends every JSON instruction dataset as shared few-shot context,
+including the running puzzle's own annotated test pairs. That is intended
+while the datasets are prepared as few-shot examples, under the
+[ARC instructions](../../rules/arc.instructions.md#honest-evaluation-and-bounded-changes):
+neither report it as a leak nor suggest a solver change that excludes them.
 A requested
 enhancement may take its idea from `docs/README.md` or the documentation it
 links to, such as `docs/examples.md` and the NUCs indexed in
