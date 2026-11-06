@@ -1352,6 +1352,75 @@ colors keep their places on the canvas in every pair, so `corner_colors`, not
 without `#` comments. The test pair follows the training pairs at the same
 level and is annotated by the same rules.
 
+`dataset.c8f0f002.json` annotates the three original training pairs from
+`data\training\c8f0f002.json`, in order, followed by its test pair, twelve
+region instances in total, three per pair. Every input and output retains
+its original canvas, colors, and positions: 3 by 6, 3 by 4, and 3 by 5 in
+the training pairs and 3 by 5 in the test pair, rows by columns, and no grid
+has a zero cell. Each input is a mosaic of the same three colors, 1, 7, and
+8, that fills its canvas. Each output turns every color-7 cell gray, color
+5, and keeps every color-1 and color-8 cell, so 3 of the 9 training regions
+turn gray, one per pair. The whole mosaic, the figure seen first in
+`dataset.3c9b0459.json` and `dataset.74dd1130.json`, does not change as one:
+its color-7 cells turn gray while its other cells keep their colors, which a
+single mosaic object could state only cell by cell, through a list of its
+cells' colors. The objects are therefore the color regions the mosaic is made
+of, as in `dataset.9565186b.json`: each object is all the cells of one color,
+whether or not they touch, listed in reading order of each color's first
+cell: 6, 5, and 7 cells of colors 1, 8, and 7 in the first training pair; 6,
+5, and 1 cells of colors 7, 1, and 8 in the second; 6, 5, and 4 cells of
+colors 1, 8, and 7 in the third; and 4, 8, and 3 cells of colors 1, 7, and 8
+in the test pair. The color decides, not the count: color 7 has the most
+cells in the first and second training pairs, 7 of 18 and 6 of 12, and the
+fewest in the third, 4 of 15. Every training color-7 region lies in two or
+three edge-connected pieces, among them a single cell in the bottom-left
+corner of the first training input, and every piece turns gray. The training
+pairs alone also fit reading each edge-connected piece as an object, 6, 7,
+and 8 pieces in the training pairs, because the rule reads only a piece's
+color, and, because every training grid holds the same three colors, turning
+gray every region that is neither color 1 nor color 8; the rules take each
+color as one region, the unit in which every output changes, since all cells
+of a color share one output color, and name the one color that changes,
+choices fixed from the training pairs before the test pair was read. The
+class takes the standard entries `x`, `y`, `width`, `height`, and
+`orientation` first, then `color` as its only descriptive scalar, as in
+`dataset.0d3d703e.json`, with no cell count, parts list, output color, canvas
+size, or matrix of cells, so no input property names the output color.
+`width` and `height` are the column and row counts of the region's bounding
+box, the nonzero bounding box of its input mask, from the single color-8 cell
+of the second training pair, 1 by 1, to 5 columns by 3 rows, and each
+implementation passes them right after `y`, such as
+`x=1, y=0, width=5, height=3, orientation=0, color=8` for the color-8 region
+of the first training input. One conditional class-level rule,
+`if $Obj.color@first == 7:` with the body `$Obj.color = 5`, turns every
+color-7 region gray. The condition reads the region's input color with an
+`@first` anchor because the body rewrites `color` itself, as
+`dataset.0d3d703e.json` reads `$Obj.color@first`, and a region of any other
+color keeps its color because a false condition leaves its target untouched,
+so the rule states only the change; the conditional expression
+`5 if $Obj.color@first == 7 else $Obj.color@first` would give the same states
+but restate every other region's color. Each region's change depends only on
+its own color, and no relation between regions decides it, so no population
+operation appears. The rule gives the same states when it is declared after
+the instances. The rules create no property and leave `x`, `y`, `width`,
+`height`, `orientation`, and the tag unchanged, since a region keeps its cells
+when it turns gray, so input and output states share the same keys, and a gray
+region's output state differs from its input state only in `color`. Native
+snapshots start with the pair's `canvas_width` and `canvas_height`, and output
+snapshots are captured with all of the same pair's implementations together,
+followed by `Obj[:]`. The tag `l9100` is a single shape, as in
+`dataset.28bf18c6.json`, `dataset.9565186b.json`, and `dataset.d631b094.json`,
+in both states. Input masks retain each pair's full-size input canvas and
+output masks the complete output, each padded with `0` outside its region;
+merging them reproduces each pair's input and output. The
+`output_x`/`output_y` fields record the region's nonzero bounding-box origin,
+unchanged from its input and equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because each output keeps its input's canvas; with
+no zero cell to crop, `FIT` would frame the same grids. Orientation is 0 in
+both states because no region is turned. The declarations hold executable
+code only, without `#` comments. The test pair follows the training pairs at
+the same level and is annotated by the same rules.
+
 `dataset.c9e6f938.json` annotates the three original training pairs from
 `data\training\c9e6f938.json`, in order, followed by its test pair, four
 pattern instances in total, one per pair. Every input retains its original
