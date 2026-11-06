@@ -104,15 +104,9 @@ export async function value({
           input_instances:
           ${JSON.stringify(
             input_instances.map(
-              ({
-                instance_name,
-                input_instance_matrix,
-                output_instance_matrix,
-                implementation,
-              }) => ({
+              ({ instance_name, input_instance_matrix, implementation }) => ({
                 instance_name,
                 input_instance_matrix: Matrix.crop(input_instance_matrix),
-                output_instance_matrix: Matrix.crop(output_instance_matrix),
                 implementation,
               })
             )
@@ -126,8 +120,6 @@ export async function value({
           ${instance_name}
           input_instance_matrix:
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
-          output_instance_matrix:
-          ${JSON.stringify(Matrix.crop(output_instance_matrix))}
           input_x: ${x}
           input_y: ${y}
           json_format:
