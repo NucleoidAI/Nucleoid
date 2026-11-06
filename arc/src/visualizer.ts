@@ -216,7 +216,7 @@ export async function output_instance_matrix({
   milestone.output_composed({ instance_name, output_instance_matrix });
 
   const output_instance_padded_matrix = Matrix.pad(
-    output_instance_matrix,
+    Matrix.crop(output_instance_matrix),
     test_input_matrix.length,
     test_input_matrix[0].length,
     x,
