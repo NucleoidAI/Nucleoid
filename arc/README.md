@@ -57,10 +57,12 @@ example `bun run start 0d3d703e --only-puzzle-dataset`. The
 [genesis puzzle](#genesis-puzzle), which has no dataset of its own, then
 receives only the genesis datasets. The flag is off by default, so a run
 otherwise receives all [instruction datasets](#instruction-datasets), and the
-run log records it as `only_puzzle_dataset`. `server.ts` reads its arguments
-with Node.js's built-in `util.parseArgs`, without an additional library; an
-unknown option, or a value such as `--only-puzzle-dataset=true`, fails the run
-before any model call.
+run log records it as `only_puzzle_dataset`. When the flag is on, the
+[terminal header](#terminal-presentation) also shows `--only-puzzle-dataset`
+below the runtime version; a run without it does not mention the flag.
+`server.ts` reads its arguments with Node.js's built-in `util.parseArgs`,
+without an additional library; an unknown option, or a value such as
+`--only-puzzle-dataset=true`, fails the run before any model call.
 
 ### Genesis puzzle
 
@@ -111,7 +113,9 @@ The header content is centered as one group, with its left inset set to
 50% of the unused horizontal space. Its first two rows pair the unboxed
 wordmark on the left with the title and `Inspired by Nature` on the right.
 After a blank line, the workflow and runtime version share the same text
-column. Narrow terminals use smaller artwork and stack the header when both
+column. When the run uses `--only-puzzle-dataset`, a grey line naming that
+flag follows the version; otherwise the header does not mention the flag.
+Narrow terminals use smaller artwork and stack the header when both
 columns cannot fit. Artwork is embedded, with
 no image downloads during a run. Square corners, straight grey borders, light
 grey headings, and dark grey secondary text carry the theme throughout the run.

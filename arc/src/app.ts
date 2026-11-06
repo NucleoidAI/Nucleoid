@@ -28,6 +28,7 @@ export async function start(
 
   milestone.start({
     version: await nucleoid.version(),
+    only_puzzle_dataset,
     train: arc_train,
     test_input_matrix,
   });

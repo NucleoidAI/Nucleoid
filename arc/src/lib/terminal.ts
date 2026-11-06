@@ -115,7 +115,13 @@ function block(title: string, lines, write = console.log) {
   write(`  ${frame(`└${rule}┘`)}`);
 }
 
-export function header({ version }) {
+export function header({
+  version,
+  only_puzzle_dataset,
+}: {
+  version: string;
+  only_puzzle_dataset: boolean;
+}) {
   stageNumber = 0;
   milestones.clear();
   const available: number = width() - 4;
@@ -141,6 +147,11 @@ export function header({ version }) {
     ...wrap(`Version ${version}`, textWidth).map((line: string) =>
       styleText("gray", line)
     ),
+    ...(only_puzzle_dataset
+      ? wrap("--only-puzzle-dataset", textWidth).map((line: string) =>
+          styleText("gray", line)
+        )
+      : []),
   ];
   const height: number = Math.max(logo.length, text.length);
   const lines = horizontal
