@@ -14,6 +14,7 @@ export async function instances({
   const { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    few_shot: () => "",
     messages: [
       {
         role: "assistant",
@@ -62,14 +63,7 @@ export async function value({
   const { orientation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: ({ dataset }) => ({
-      dataset: dataset.flatMap(({ instances }) =>
-        instances.map(({ input_instance_matrix, input_value }) => ({
-          matrix: Matrix.silhouette(Matrix.crop(input_instance_matrix)),
-          orientation: input_value.orientation,
-        }))
-      ),
-    }),
+    few_shot: () => "",
     messages: [
       {
         role: "assistant",
@@ -115,15 +109,7 @@ export async function value({
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: ({ declarations, dataset }) => ({
-      declarations,
-      dataset: dataset.flatMap(({ instances }) =>
-        instances.map(({ input_instance_matrix, implementation }) => ({
-          input_instance_matrix: Matrix.crop(input_instance_matrix),
-          implementation,
-        }))
-      ),
-    }),
+    few_shot: () => "",
     messages: [
       {
         role: "assistant",
@@ -227,7 +213,7 @@ export async function output_instance_matrix({
   const { output_instance_matrix } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: ({ dataset }) => ({ dataset: train_instances(dataset) }),
+    few_shot: () => "",
     messages: [
       {
         role: "assistant",
