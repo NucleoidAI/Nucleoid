@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/44f52bb0.json`](../data/training/44f52bb0.json) |
-| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
@@ -313,7 +313,10 @@ zero.
 - **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
   natural-language `#` comments may reach the model only as part of
   `declarations`, and the ARC instructions now say so. Datasets with and
-  without such comments both follow them, so nothing needs to change.
+  without such comments both follow them, so nothing needs to change. On
+  7-Nov-2026 the user also allowed them in `implementation`, and each
+  implementation in this dataset now opens with comment lines that describe
+  its object.
 - **Test-pair facts.** Since `feef5f81`, `arc/README.md` had described a
   `dataset.44f52bb0.json` that was never committed, including facts about its
   test pairs. For version 1, `/arc-dataset` read that paragraph during its

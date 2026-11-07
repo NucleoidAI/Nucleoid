@@ -31,7 +31,7 @@
             [0, 9, 9],
             [9, 9, 9]
           ],
-          "implementation": "obje9d9d1e44f0a = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A shape of 7 cells of color 9,\n# 3 by 3 at x 0, y 0\nobje9d9d1e44f0a = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obje9d9d1e44f0a","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obje9d9d1e44f0a","orientation":270,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -61,7 +61,7 @@
             [6, 0, 6],
             [6, 0, 6]
           ],
-          "implementation": "obj2ce0294da665 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A group of 5 cells of color 6 in 2 pieces,\n# 3 by 3 at x 0, y 0\nobj2ce0294da665 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj2ce0294da665","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj2ce0294da665","orientation":270,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -91,7 +91,7 @@
             [0, 0, 9],
             [0, 0, 9]
           ],
-          "implementation": "obj25523b4dda3d = Obj(x=0, y=0, width=3, height=3, orientation=135)",
+          "implementation": "# A corner of 5 cells of color 9,\n# 3 by 3 at x 0, y 0, pointing southeast\nobj25523b4dda3d = Obj(x=0, y=0, width=3, height=3, orientation=135)",
           "input_value": {"height":3,"id":"obj25523b4dda3d","orientation":135,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj25523b4dda3d","orientation":45,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -121,7 +121,7 @@
             [0, 0, 2],
             [2, 0, 0]
           ],
-          "implementation": "objded558586cc9 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A group of 5 cells of color 2 in 2 pieces,\n# 3 by 3 at x 0, y 0\nobjded558586cc9 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"objded558586cc9","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objded558586cc9","orientation":270,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -151,7 +151,7 @@
             [0, 0, 5],
             [0, 5, 0]
           ],
-          "implementation": "obja49c69b886ff = Obj(x=0, y=1, width=3, height=2, orientation=0)",
+          "implementation": "# A shape of 3 cells of color 5,\n# 3 by 2 at x 0, y 1\nobja49c69b886ff = Obj(x=0, y=1, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obja49c69b886ff","orientation":0,"tag":"l9100","width":3,"x":0,"y":1},
           "output_value": {"height":2,"id":"obja49c69b886ff","orientation":270,"tag":"l9100","width":3,"x":1,"y":0}
         }

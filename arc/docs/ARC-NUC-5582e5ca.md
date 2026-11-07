@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/5582e5ca.json`](../data/training/5582e5ca.json) |
-| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed; shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; one suggested change awaits review, not applied |

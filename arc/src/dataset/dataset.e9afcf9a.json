@@ -29,7 +29,7 @@
             [3, 0, 3, 0, 3, 0],
             [0, 3, 0, 3, 0, 3]
           ],
-          "implementation": "objf75bfec5b742 = Obj(x=0, y=0, width=6, height=1, orientation=90)",
+          "implementation": "# A horizontal line of 6 cells of color 3,\n# 6 by 1 at x 0, y 0\nobjf75bfec5b742 = Obj(x=0, y=0, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objf75bfec5b742","orientation":90,"tag":"l3058","width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objf75bfec5b742","orientation":0,"parity":0,"tag":"l5973","width":6,"x":0,"y":0}
         },
@@ -43,7 +43,7 @@
             [0, 9, 0, 9, 0, 9],
             [9, 0, 9, 0, 9, 0]
           ],
-          "implementation": "obj3d85d507495c = Obj(x=0, y=1, width=6, height=1, orientation=90)",
+          "implementation": "# A horizontal line of 6 cells of color 9,\n# 6 by 1 at x 0, y 1\nobj3d85d507495c = Obj(x=0, y=1, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj3d85d507495c","orientation":90,"tag":"l3058","width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"obj3d85d507495c","orientation":0,"parity":1,"tag":"l5973","width":6,"x":0,"y":0}
         }
@@ -69,7 +69,7 @@
             [4, 0, 4, 0, 4, 0],
             [0, 4, 0, 4, 0, 4]
           ],
-          "implementation": "objd1bdb9496f7f = Obj(x=0, y=0, width=6, height=1, orientation=90)",
+          "implementation": "# A horizontal line of 6 cells of color 4,\n# 6 by 1 at x 0, y 0\nobjd1bdb9496f7f = Obj(x=0, y=0, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objd1bdb9496f7f","orientation":90,"tag":"l3058","width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objd1bdb9496f7f","orientation":0,"parity":0,"tag":"l5973","width":6,"x":0,"y":0}
         },
@@ -83,7 +83,7 @@
             [0, 8, 0, 8, 0, 8],
             [8, 0, 8, 0, 8, 0]
           ],
-          "implementation": "objfd7c9fde835c = Obj(x=0, y=1, width=6, height=1, orientation=90)",
+          "implementation": "# A horizontal line of 6 cells of color 8,\n# 6 by 1 at x 0, y 1\nobjfd7c9fde835c = Obj(x=0, y=1, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objfd7c9fde835c","orientation":90,"tag":"l3058","width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"objfd7c9fde835c","orientation":0,"parity":1,"tag":"l5973","width":6,"x":0,"y":0}
         }
@@ -109,7 +109,7 @@
             [6, 0, 6, 0, 6, 0],
             [0, 6, 0, 6, 0, 6]
           ],
-          "implementation": "objad6bf1b1995c = Obj(x=0, y=0, width=6, height=1, orientation=90)",
+          "implementation": "# A horizontal line of 6 cells of color 6,\n# 6 by 1 at x 0, y 0\nobjad6bf1b1995c = Obj(x=0, y=0, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objad6bf1b1995c","orientation":90,"tag":"l3058","width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objad6bf1b1995c","orientation":0,"parity":0,"tag":"l5973","width":6,"x":0,"y":0}
         },
@@ -123,7 +123,7 @@
             [0, 2, 0, 2, 0, 2],
             [2, 0, 2, 0, 2, 0]
           ],
-          "implementation": "obj595ac3a028ef = Obj(x=0, y=1, width=6, height=1, orientation=90)",
+          "implementation": "# A horizontal line of 6 cells of color 2,\n# 6 by 1 at x 0, y 1\nobj595ac3a028ef = Obj(x=0, y=1, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj595ac3a028ef","orientation":90,"tag":"l3058","width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"obj595ac3a028ef","orientation":0,"parity":1,"tag":"l5973","width":6,"x":0,"y":0}
         }

@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/8be77c9e.json`](../data/training/8be77c9e.json) |
-| Instruction dataset | [`dataset.8be77c9e.json`](../src/dataset/dataset.8be77c9e.json): the puzzle's 3 original training pairs and its test pair, 4 pattern instances, 1 in each pair; committed with this record; shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.8be77c9e.json`](../src/dataset/dataset.8be77c9e.json): the puzzle's 3 original training pairs and its test pair, 4 pattern instances, 1 in each pair; committed with this record; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
 | Solver changes | None applied; one suggested and not applied, an output canvas framed on the world model's canvas size; the JSON-only message question carried over from earlier records stays open |

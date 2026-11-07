@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/d037b0a7.json`](../data/training/d037b0a7.json) |
-| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed; shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
@@ -202,7 +202,10 @@ zero.
 - **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
   natural-language `#` comments may reach the model only as part of
   `declarations`, and the ARC instructions now say so. Datasets with and
-  without such comments both follow them, so nothing needs to change.
+  without such comments both follow them, so nothing needs to change. On
+  7-Nov-2026 the user also allowed them in `implementation`, and each
+  implementation in this dataset now opens with comment lines that describe
+  its object.
 - **Stale README text.** `arc/README.md` still describes
   `dataset.0d3d703e.json`, `dataset.27a28665.json`, and
   `dataset.44f52bb0.json`, which do not exist. Its GitHub Actions paragraph

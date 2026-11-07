@@ -57,9 +57,10 @@ evaluation intact; these are solver data and benchmarking, not automated tests.
   instructions, explanations, chain-of-thought, or prose hidden in string
   values. JSON keys, identifiers, and executable Nucleoid code fields such as
   `declarations` and `implementation` are permitted. Natural-language `#`
-  comments reach the model only as part of `declarations`, where they describe
-  the world model's classes and rules; no other code field, such as
-  `implementation`, carries them.
+  comments reach the model only as part of those two code fields: in
+  `declarations` they describe the world model's classes and rules, and in
+  `implementation` they describe the object it constructs. No other field
+  carries them.
 - Require exactly one JSON response matching the operation's schema. Validate
   its structure and values before code execution or grid composition.
   Reject surrounding prose, Markdown fences, malformed JSON, invalid grids,

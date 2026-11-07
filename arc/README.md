@@ -334,6 +334,18 @@ every program it runs, as
 rules read it from those variables. Native snapshots are captured the same
 way, with the pair's `input_matrix` size declared first.
 
+Each snippet starts with `#` comment lines that describe the object it
+constructs, in the style of the declarations' comments: its kind and colors,
+then its size and position and, when it points, its direction. They put the
+instance's own arguments and input mask into words, and Nucleoid skips them,
+so they change no snapshot:
+
+```nuc
+# A corner whose vertex and both segments are color 9,
+# 2 by 2 at x 5, y 1, pointing southeast
+obj7e96305711c2 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)
+```
+
 Every `input_instance_matrix` has exactly its pair's `input_matrix` row and
 column counts, and every `output_instance_matrix` has exactly its pair's
 `output_matrix` row and column counts, even when the two canvases differ.

@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/a85d4709.json`](../data/training/a85d4709.json) |
-| Instruction dataset | [`dataset.a85d4709.json`](../src/dataset/dataset.a85d4709.json): the puzzle's 4 original training pairs and its test pair, 15 marker instances, 3 in each pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.a85d4709.json`](../src/dataset/dataset.a85d4709.json): the puzzle's 4 original training pairs and its test pair, 15 marker instances, 3 in each pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply |
 | Solver changes | None; earlier suggested changes still await review, not applied |

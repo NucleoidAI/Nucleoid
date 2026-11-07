@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/794b24be.json`](../data/training/794b24be.json) |
-| Instruction dataset | [`dataset.794b24be.json`](../src/dataset/dataset.794b24be.json): the puzzle's 10 original training pairs and its 2 test pairs, 12 pattern instances, one per pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.794b24be.json`](../src/dataset/dataset.794b24be.json): the puzzle's 10 original training pairs and its 2 test pairs, 12 pattern instances, one per pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the dataset uses accepted features only |
 | Solver changes | None; one suggested change awaits review, not applied |

@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/017c7c7b.json`](../data/training/017c7c7b.json) |
-| Instruction dataset | [`dataset.017c7c7b.json`](../src/dataset/dataset.017c7c7b.json): the puzzle's 3 original training pairs and its test pair, one whole-pattern instance each (4 instances); version 3, which is version 2 without its `resume_row` rule (version 1 had 36 point instances); committed in `a5a793d` and moved to the standard entries in `521aa3c`; shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.017c7c7b.json`](../src/dataset/dataset.017c7c7b.json): the puzzle's 3 original training pairs and its test pair, one whole-pattern instance each (4 instances); version 3, which is version 2 without its `resume_row` rule (version 1 had 36 point instances); committed in `a5a793d` and moved to the standard entries in `521aa3c`; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; versions 2 and 3 use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
 | Solver changes | None; one suggested change awaits review, not applied |
@@ -273,7 +273,10 @@ zero.
 - **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
   natural-language `#` comments may reach the model only as part of
   `declarations`, and the ARC instructions now say so. Datasets with and
-  without such comments both follow them, so nothing needs to change.
+  without such comments both follow them, so nothing needs to change. On
+  7-Nov-2026 the user also allowed them in `implementation`, and each
+  implementation in this dataset now opens with comment lines that describe
+  its object.
 - **README text.** `arc/README.md`'s shared sentence that `EXACT` outputs
   keep the input matrix's dimensions does not hold for this dataset, whose
   6 by 3 inputs grow to 9 by 3 outputs; its paragraph explains the growth.

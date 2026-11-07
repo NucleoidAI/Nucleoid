@@ -14,7 +14,6 @@ export async function instances({
   const { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: () => "",
     messages: [
       {
         role: "assistant",
@@ -109,31 +108,16 @@ export async function value({
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: () => "",
     messages: [
       {
         role: "assistant",
         content: `
           declarations:
-          ${JSON.stringify(declarations)}
+          ${JSON.stringify(declarations[0])}
           train_dataset:
-          ${JSON.stringify(
-            train_dataset.dataset.flatMap(({ instances }) =>
-              instances.map(({ input_instance_matrix, implementation }) => ({
-                input_instance_matrix: Matrix.crop(input_instance_matrix),
-                implementation,
-              }))
-            )
-          )}
-          instances:
-          ${JSON.stringify(
-            input_instances.map(
-              ({ input_instance_matrix, implementation }) => ({
-                input_instance_matrix: Matrix.crop(input_instance_matrix),
-                implementation,
-              })
-            )
-          )}
+          ${JSON.stringify(train_dataset.dataset)}
+          input_instances:
+          ${JSON.stringify(input_instances)}
         `,
       },
       {
@@ -193,49 +177,15 @@ export async function output_instance_matrix({
 
   milestone.composing_output({ instance_name });
 
-  const train_instances = (dataset) =>
-    dataset.flatMap(({ instances }) =>
-      instances.map(
-        ({
-          input_value,
-          input_instance_matrix,
-          output_value,
-          output_instance_matrix,
-        }) => ({
-          input_value,
-          input_instance_matrix: Matrix.crop(input_instance_matrix),
-          output_value,
-          output_instance_matrix: Matrix.crop(output_instance_matrix),
-        })
-      )
-    );
-
   const { output_instance_matrix } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: () => "",
     messages: [
       {
         role: "assistant",
         content: `
           train_dataset:
-          ${JSON.stringify(train_instances(train_dataset.dataset))}
-          instances:
-          ${JSON.stringify(
-            input_instances.map(
-              ({
-                input_value,
-                input_instance_matrix,
-                output_value,
-                output_instance_matrix,
-              }) => ({
-                input_value,
-                input_instance_matrix: Matrix.crop(input_instance_matrix),
-                output_value,
-                output_instance_matrix: Matrix.crop(output_instance_matrix),
-              })
-            )
-          )}
+          ${JSON.stringify(train_dataset.dataset)}
         `,
       },
       {

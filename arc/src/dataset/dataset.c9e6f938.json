@@ -30,7 +30,7 @@
             [0, 0, 7, 7, 0, 0],
             [0, 7, 7, 7, 7, 0]
           ],
-          "implementation": "obj8e3cc5cb798f = Obj(x=1, y=0, width=2, height=3, orientation=0)",
+          "implementation": "# A shape of 4 cells of color 7,\n# 2 by 3 at x 1, y 0\nobj8e3cc5cb798f = Obj(x=1, y=0, width=2, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj8e3cc5cb798f","orientation":0,"tag":"l9100","width":2,"x":1,"y":0},
           "output_value": {"height":3,"id":"obj8e3cc5cb798f","orientation":0,"tag":"l6919","width":4,"x":1,"y":0}
         }
@@ -60,7 +60,7 @@
             [0, 7, 7, 7, 7, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1c8ea9d1d2c7 = Obj(x=1, y=1, width=2, height=1, orientation=90)",
+          "implementation": "# A horizontal line of 2 cells of color 7,\n# 2 by 1 at x 1, y 1\nobj1c8ea9d1d2c7 = Obj(x=1, y=1, width=2, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj1c8ea9d1d2c7","orientation":90,"tag":"l9100","width":2,"x":1,"y":1},
           "output_value": {"height":1,"id":"obj1c8ea9d1d2c7","orientation":90,"tag":"l6919","width":4,"x":1,"y":1}
         }
@@ -90,7 +90,7 @@
             [7, 0, 0, 0, 0, 7],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objb8e888e94133 = Obj(x=0, y=1, width=1, height=1, orientation=0)",
+          "implementation": "# A single cell of color 7 at x 0, y 1\nobjb8e888e94133 = Obj(x=0, y=1, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"objb8e888e94133","orientation":0,"tag":"l9100","width":1,"x":0,"y":1},
           "output_value": {"height":1,"id":"objb8e888e94133","orientation":0,"tag":"l6919","width":6,"x":0,"y":1}
         }
@@ -120,7 +120,7 @@
             [0, 7, 0, 0, 7, 0],
             [0, 0, 7, 7, 0, 0]
           ],
-          "implementation": "obj393be00403ff = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A shape of 4 cells of color 7,\n# 3 by 3 at x 0, y 0\nobj393be00403ff = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj393be00403ff","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj393be00403ff","orientation":0,"tag":"l6919","width":6,"x":0,"y":0}
         }

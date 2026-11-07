@@ -34,7 +34,7 @@
             [0, 0, 0, 0, 0],
             [8, 0, 7, 0, 0]
           ],
-          "implementation": "objed6a3fa35475 = Obj(x=1, y=1, width=1, height=1, orientation=0)",
+          "implementation": "# A single cell of color 2 at x 1, y 1\nobjed6a3fa35475 = Obj(x=1, y=1, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"objed6a3fa35475","orientation":0,"tag":"l7544","width":1,"x":1,"y":1},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":3,"id":"objed6a3fa35475","orientation":0,"tag":"l2898","width":3,"x":0,"y":0}
         }
@@ -64,7 +64,7 @@
             [0, 0, 0, 3, 0],
             [0, 0, 0, 0, 0]
           ],
-          "implementation": "obj9c3dbe145cc0 = Obj(x=4, y=2, width=1, height=1, orientation=0)",
+          "implementation": "# A single cell of color 2 at x 4, y 2\nobj9c3dbe145cc0 = Obj(x=4, y=2, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"obj9c3dbe145cc0","orientation":0,"tag":"l7544","width":1,"x":4,"y":2},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":1,"id":"obj9c3dbe145cc0","orientation":0,"tag":"l2898","width":1,"x":3,"y":1}
         }
@@ -94,7 +94,7 @@
             [0, 8, 0, 7, 0],
             [0, 0, 0, 0, 0]
           ],
-          "implementation": "obj20d2f816abe0 = Obj(x=2, y=0, width=1, height=1, orientation=0)",
+          "implementation": "# A single cell of color 2 at x 2, y 0\nobj20d2f816abe0 = Obj(x=2, y=0, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"obj20d2f816abe0","orientation":0,"tag":"l7544","width":1,"x":2,"y":0},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":1,"id":"obj20d2f816abe0","orientation":0,"tag":"l2898","width":3,"x":1,"y":1}
         }
@@ -124,7 +124,7 @@
             [0, 0, 0, 0, 0],
             [0, 0, 8, 0, 7]
           ],
-          "implementation": "obj6d81a3b4f5dd = Obj(x=3, y=1, width=1, height=1, orientation=0)",
+          "implementation": "# A single cell of color 2 at x 3, y 1\nobj6d81a3b4f5dd = Obj(x=3, y=1, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"obj6d81a3b4f5dd","orientation":0,"tag":"l7544","width":1,"x":3,"y":1},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":3,"id":"obj6d81a3b4f5dd","orientation":0,"tag":"l2898","width":3,"x":2,"y":0}
         }
@@ -154,7 +154,7 @@
             [0, 0, 0, 0, 0],
             [0, 0, 0, 8, 0]
           ],
-          "implementation": "obj1669859e3a8b = Obj(x=4, y=1, width=1, height=1, orientation=0)",
+          "implementation": "# A single cell of color 2 at x 4, y 1\nobj1669859e3a8b = Obj(x=4, y=1, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"obj1669859e3a8b","orientation":0,"tag":"l7544","width":1,"x":4,"y":1},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":3,"id":"obj1669859e3a8b","orientation":0,"tag":"l2898","width":1,"x":3,"y":0}
         }

@@ -94,9 +94,9 @@ formatting exactly:
   `input_value`, `output_value`.
 - Two-space indentation, one matrix row per line, and `implementation`,
   `input_value`, and `output_value` each on a single line.
-- Natural-language `#` comments are optional and appear only in
-  `declarations`, where they describe its classes and rules; no other field,
-  such as `implementation`, carries them.
+- Natural-language `#` comments appear only in `declarations`, where they are
+  optional and describe its classes and rules, and in `implementation`, where
+  they describe the object it constructs. No other field carries them.
 
 ## Model the world
 
@@ -223,6 +223,11 @@ The caller decides whether to propose the feature; you never start a NUC.
   constructing the instance's class (`Obj` in existing datasets) with named
   arguments matching its parameters, where `width` and `height` are the input
   mask's nonzero bounding-box column and row counts.
+- Before that code, `implementation` holds `#` comment lines that describe the
+  object, as in every existing dataset: its kind and colors, then its size,
+  position and, when it points, its direction, such as
+  `# 2 by 2 at x 5, y 1, pointing southeast`. They do not change its
+  snapshots.
 - Never hand-write `input_value` or `output_value`. As `arc/src/analyzer.ts`
   does, run the Nucleoid executable (`NUCLEOID_EXECUTABLE`, else the debug
   build in `target/debug/`; build it with `cargo build` if missing) as

@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/25ff71a9.json`](../data/training/25ff71a9.json) |
-| Instruction dataset | [`dataset.25ff71a9.json`](../src/dataset/dataset.25ff71a9.json): the puzzle's 4 original training pairs and its 2 test pairs, 6 figure instances, one per pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.25ff71a9.json`](../src/dataset/dataset.25ff71a9.json): the puzzle's 4 original training pairs and its 2 test pairs, 6 figure instances, one per pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
 | Solver changes | None; suggested changes await review, not applied |
@@ -198,7 +198,10 @@ zero.
 - **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
   natural-language `#` comments may reach the model only as part of
   `declarations`, and the ARC instructions now say so. Datasets with and
-  without such comments both follow them, so nothing needs to change.
+  without such comments both follow them, so nothing needs to change. On
+  7-Nov-2026 the user also allowed them in `implementation`, and each
+  implementation in this dataset now opens with comment lines that describe
+  its object.
 - **Workflow timeout.** Resolved on 6-Nov-2026: at the user's request, the
   arc-dataset profile now asks for the batch budget the workflow needs,
   `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub

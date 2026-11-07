@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/ed36ccf7.json`](../data/training/ed36ccf7.json) |
-| Instruction dataset | [`dataset.ed36ccf7.json`](../src/dataset/dataset.ed36ccf7.json): the puzzle's 4 original training pairs and its test pair, 5 pattern instances, one per pair; version 2, with the standard entries and plain fixed anchors, replaces version 1 of `f4cf680` and is committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.ed36ccf7.json`](../src/dataset/dataset.ed36ccf7.json): the puzzle's 4 original training pairs and its test pair, 5 pattern instances, one per pair; version 2, with the standard entries and plain fixed anchors, replaces version 1 of `f4cf680` and is committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | [NUC 85](../../docs/nuc-0085.md), Fixed Cross-Property Class Anchors: Automatic-Accepted, because it meets every hard criterion while the run was no exact match and the independent evaluation rejected it; proposal strategy `reuse_first`, learning updated |
 | Solver changes | None; suggested changes await review, not applied |
@@ -329,7 +329,10 @@ zero.
 - **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
   natural-language `#` comments may reach the model only as part of
   `declarations`, and the ARC instructions now say so. Datasets with and
-  without such comments both follow them, so nothing needs to change.
+  without such comments both follow them, so nothing needs to change. On
+  7-Nov-2026 the user also allowed them in `implementation`, and each
+  implementation in this dataset now opens with comment lines that describe
+  its object.
 - **Workflow timeout wording.** Resolved on 6-Nov-2026: at the user's request,
   the arc-dataset profile now asks for the batch budget the workflow needs,
   `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub

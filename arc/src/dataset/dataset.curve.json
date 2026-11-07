@@ -42,7 +42,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objf742ec5620c9 = Obj(x=3, y=2, width=1, height=1, orientation=0, vertex_color=4)",
+          "implementation": "# A single point of color 4 at x 3, y 2\nobjf742ec5620c9 = Obj(x=3, y=2, width=1, height=1, orientation=0, vertex_color=4)",
           "input_value": {"height":1,"id":"objf742ec5620c9","orientation":0,"tag":"l7544","vertex_color":4,"width":1,"x":3,"y":2},
           "output_value": {"height":2,"id":"objf742ec5620c9","orientation":180,"rim_color":8,"tag":"l6840","vertex_color":4,"width":3,"x":2,"y":1}
         },
@@ -64,7 +64,7 @@
             [0, 4, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj866f45cb5433 = Obj(x=1, y=4, width=1, height=1, orientation=0, vertex_color=4)",
+          "implementation": "# A single point of color 4 at x 1, y 4\nobj866f45cb5433 = Obj(x=1, y=4, width=1, height=1, orientation=0, vertex_color=4)",
           "input_value": {"height":1,"id":"obj866f45cb5433","orientation":0,"tag":"l7544","vertex_color":4,"width":1,"x":1,"y":4},
           "output_value": {"height":2,"id":"obj866f45cb5433","orientation":180,"rim_color":8,"tag":"l6840","vertex_color":4,"width":3,"x":0,"y":3}
         }
@@ -106,7 +106,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objaf6df8ed9e79 = Obj(x=4, y=1, width=1, height=1, orientation=0, vertex_color=4)",
+          "implementation": "# A single point of color 4 at x 4, y 1\nobjaf6df8ed9e79 = Obj(x=4, y=1, width=1, height=1, orientation=0, vertex_color=4)",
           "input_value": {"height":1,"id":"objaf6df8ed9e79","orientation":0,"tag":"l7544","vertex_color":4,"width":1,"x":4,"y":1},
           "output_value": {"height":2,"id":"objaf6df8ed9e79","orientation":180,"rim_color":8,"tag":"l6840","vertex_color":4,"width":3,"x":3,"y":0}
         },
@@ -128,7 +128,7 @@
             [2, 0, 2, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1394309b01df = Obj(x=1, y=3, width=1, height=1, orientation=0, vertex_color=9)",
+          "implementation": "# A single point of color 9 at x 1, y 3\nobj1394309b01df = Obj(x=1, y=3, width=1, height=1, orientation=0, vertex_color=9)",
           "input_value": {"height":1,"id":"obj1394309b01df","orientation":0,"tag":"l7544","vertex_color":9,"width":1,"x":1,"y":3},
           "output_value": {"height":2,"id":"obj1394309b01df","orientation":0,"rim_color":2,"tag":"l9906","vertex_color":9,"width":3,"x":0,"y":3}
         }
@@ -170,7 +170,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj55882ea787c6 = Obj(x=2, y=1, width=1, height=1, orientation=0, vertex_color=4)",
+          "implementation": "# A single point of color 4 at x 2, y 1\nobj55882ea787c6 = Obj(x=2, y=1, width=1, height=1, orientation=0, vertex_color=4)",
           "input_value": {"height":1,"id":"obj55882ea787c6","orientation":0,"tag":"l7544","vertex_color":4,"width":1,"x":2,"y":1},
           "output_value": {"height":2,"id":"obj55882ea787c6","orientation":180,"rim_color":8,"tag":"l6840","vertex_color":4,"width":3,"x":1,"y":0}
         },
@@ -192,7 +192,7 @@
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj98ba2cb040e8 = Obj(x=4, y=1, width=1, height=1, orientation=0, vertex_color=9)",
+          "implementation": "# A single point of color 9 at x 4, y 1\nobj98ba2cb040e8 = Obj(x=4, y=1, width=1, height=1, orientation=0, vertex_color=9)",
           "input_value": {"height":1,"id":"obj98ba2cb040e8","orientation":0,"tag":"l7544","vertex_color":9,"width":1,"x":4,"y":1},
           "output_value": {"height":2,"id":"obj98ba2cb040e8","orientation":0,"rim_color":2,"tag":"l9906","vertex_color":9,"width":3,"x":3,"y":1}
         },
@@ -214,7 +214,7 @@
             [0, 2, 0, 2, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1c4ff1a88360 = Obj(x=2, y=3, width=1, height=1, orientation=0, vertex_color=9)",
+          "implementation": "# A single point of color 9 at x 2, y 3\nobj1c4ff1a88360 = Obj(x=2, y=3, width=1, height=1, orientation=0, vertex_color=9)",
           "input_value": {"height":1,"id":"obj1c4ff1a88360","orientation":0,"tag":"l7544","vertex_color":9,"width":1,"x":2,"y":3},
           "output_value": {"height":2,"id":"obj1c4ff1a88360","orientation":0,"rim_color":2,"tag":"l9906","vertex_color":9,"width":3,"x":1,"y":3}
         }
@@ -260,7 +260,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj3d302d758b50 = Obj(x=4, y=2, width=1, height=1, orientation=0, vertex_color=9)",
+          "implementation": "# A single point of color 9 at x 4, y 2\nobj3d302d758b50 = Obj(x=4, y=2, width=1, height=1, orientation=0, vertex_color=9)",
           "input_value": {"height":1,"id":"obj3d302d758b50","orientation":0,"tag":"l7544","vertex_color":9,"width":1,"x":4,"y":2},
           "output_value": {"height":2,"id":"obj3d302d758b50","orientation":0,"rim_color":2,"tag":"l9906","vertex_color":9,"width":3,"x":3,"y":2}
         }
@@ -306,7 +306,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obja1b9ca3ab601 = Obj(x=4, y=1, width=1, height=1, orientation=0, vertex_color=9)",
+          "implementation": "# A single point of color 9 at x 4, y 1\nobja1b9ca3ab601 = Obj(x=4, y=1, width=1, height=1, orientation=0, vertex_color=9)",
           "input_value": {"height":1,"id":"obja1b9ca3ab601","orientation":0,"tag":"l7544","vertex_color":9,"width":1,"x":4,"y":1},
           "output_value": {"height":2,"id":"obja1b9ca3ab601","orientation":0,"rim_color":2,"tag":"l9906","vertex_color":9,"width":3,"x":3,"y":1}
         },
@@ -330,7 +330,7 @@
             [0, 0, 4, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj5fb3f33a329f = Obj(x=2, y=5, width=1, height=1, orientation=0, vertex_color=4)",
+          "implementation": "# A single point of color 4 at x 2, y 5\nobj5fb3f33a329f = Obj(x=2, y=5, width=1, height=1, orientation=0, vertex_color=4)",
           "input_value": {"height":1,"id":"obj5fb3f33a329f","orientation":0,"tag":"l7544","vertex_color":4,"width":1,"x":2,"y":5},
           "output_value": {"height":2,"id":"obj5fb3f33a329f","orientation":180,"rim_color":8,"tag":"l6840","vertex_color":4,"width":3,"x":1,"y":4}
         }

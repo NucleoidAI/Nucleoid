@@ -132,35 +132,15 @@ export async function value({
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: ({ declarations, dataset }) => ({
-      declarations: declarations[0],
-      dataset: dataset.map(({ instances }) => ({
-        instances: instances.map(
-          ({ instance_name, input_instance_matrix, implementation }) => ({
-            instance_name,
-            input_instance_matrix: Matrix.crop(input_instance_matrix),
-            implementation,
-          })
-        ),
-      })),
-    }),
     messages: [
       {
         role: "assistant",
         content: `
           declarations:
-          ${JSON.stringify(declarations[0])}
-          instances:
-          ${JSON.stringify(
-            input_instances.map(
-              ({ instance_name, input_instance_matrix, implementation }) => ({
-                instance_name,
-                input_instance_matrix: Matrix.crop(input_instance_matrix),
-                implementation,
-              })
-            )
-          )}
-          `,
+          ${JSON.stringify(declarations)}
+          input_instances:
+          ${JSON.stringify(input_instances)}
+        `,
       },
       {
         role: "user",

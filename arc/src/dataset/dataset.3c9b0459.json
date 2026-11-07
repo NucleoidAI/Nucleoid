@@ -29,7 +29,7 @@
             [2, 1, 2],
             [1, 2, 2]
           ],
-          "implementation": "objad2abfd1734f = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A block of colors 2, 1 and 8,\n# 3 by 3 at x 0, y 0\nobjad2abfd1734f = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"objad2abfd1734f","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objad2abfd1734f","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
             [4, 4, 2],
             [4, 2, 9]
           ],
-          "implementation": "obj67fe33c11cd0 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A block of colors 9, 2 and 4,\n# 3 by 3 at x 0, y 0\nobj67fe33c11cd0 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj67fe33c11cd0","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj67fe33c11cd0","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -89,7 +89,7 @@
             [8, 5, 5],
             [8, 8, 8]
           ],
-          "implementation": "obj6862d9b15c0c = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A block of colors 8 and 5,\n# 3 by 3 at x 0, y 0\nobj6862d9b15c0c = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj6862d9b15c0c","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj6862d9b15c0c","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -119,7 +119,7 @@
             [9, 9, 9],
             [9, 2, 3]
           ],
-          "implementation": "obj176130d1ca05 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A block of colors 3, 2 and 9,\n# 3 by 3 at x 0, y 0\nobj176130d1ca05 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj176130d1ca05","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj176130d1ca05","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -149,7 +149,7 @@
             [4, 6, 6],
             [4, 4, 6]
           ],
-          "implementation": "obj661d3fe38fde = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# A block of colors 6, 4 and 7,\n# 3 by 3 at x 0, y 0\nobj661d3fe38fde = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj661d3fe38fde","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj661d3fe38fde","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
         }

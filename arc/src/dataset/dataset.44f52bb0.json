@@ -32,7 +32,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objaefa2ef1a32f = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
+          "implementation": "# The whole pattern of 5 cells of color 2,\n# 3 by 3 at x 0, y 0\nobjaefa2ef1a32f = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
@@ -58,7 +58,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj3914f7995d3e = Obj(x=0, y=0, width=2, height=3, orientation=0, points=[[0, 0], [0, 1], [1, 2]])",
+          "implementation": "# The whole pattern of 3 cells of color 2,\n# 2 by 3 at x 0, y 0\nobj3914f7995d3e = Obj(x=0, y=0, width=2, height=3, orientation=0, points=[[0, 0], [0, 1], [1, 2]])",
           "input_value": {"height":3,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"fill_color":7,"height":1,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
@@ -84,7 +84,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objeb5c0167d445 = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
+          "implementation": "# The whole pattern of 6 cells of color 2,\n# 3 by 3 at x 0, y 0\nobjeb5c0167d445 = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
@@ -110,7 +110,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objcef2c78836a4 = Obj(x=0, y=1, width=3, height=1, orientation=0, points=[[0, 1], [2, 1]])",
+          "implementation": "# The whole pattern of 2 cells of color 2,\n# 3 by 1 at x 0, y 1\nobjcef2c78836a4 = Obj(x=0, y=1, width=3, height=1, orientation=0, points=[[0, 1], [2, 1]])",
           "input_value": {"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"tag":"l9100","width":3,"x":0,"y":1},
           "output_value": {"fill_color":1,"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
@@ -136,7 +136,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obje0d187e059c6 = Obj(x=0, y=0, width=3, height=2, orientation=0, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
+          "implementation": "# The whole pattern of 4 cells of color 2,\n# 3 by 2 at x 0, y 0\nobje0d187e059c6 = Obj(x=0, y=0, width=3, height=2, orientation=0, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
           "input_value": {"height":2,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":7,"height":1,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
@@ -162,7 +162,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj656ae86cdc80 = Obj(x=0, y=0, width=2, height=2, orientation=45, points=[[0, 0], [1, 0], [1, 1]])",
+          "implementation": "# The whole pattern of 3 cells of color 2,\n# 2 by 2 at x 0, y 0, pointing northeast\nobj656ae86cdc80 = Obj(x=0, y=0, width=2, height=2, orientation=45, points=[[0, 0], [1, 0], [1, 1]])",
           "input_value": {"height":2,"id":"obj656ae86cdc80","orientation":45,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"fill_color":7,"height":1,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
@@ -188,7 +188,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "obje4210d7a3726 = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
+          "implementation": "# The whole pattern of 7 cells of color 2,\n# 3 by 3 at x 0, y 0\nobje4210d7a3726 = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
@@ -214,7 +214,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj7170e5f9a58a = Obj(x=0, y=1, width=1, height=2, orientation=0, points=[[0, 1], [0, 2]])",
+          "implementation": "# The whole pattern of 2 cells of color 2,\n# 1 by 2 at x 0, y 1, vertical\nobj7170e5f9a58a = Obj(x=0, y=1, width=1, height=2, orientation=0, points=[[0, 1], [0, 2]])",
           "input_value": {"height":2,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"tag":"l9100","width":1,"x":0,"y":1},
           "output_value": {"fill_color":7,"height":1,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }

@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/d631b094.json`](../data/training/d631b094.json) |
-| Instruction dataset | [`dataset.d631b094.json`](../src/dataset/dataset.d631b094.json): the puzzle's 4 original training pairs and its test pair, one region instance each (5 instances); orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.d631b094.json`](../src/dataset/dataset.d631b094.json): the puzzle's 4 original training pairs and its test pair, one region instance each (5 instances); orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None; the dataset uses accepted features only |
 | Solver changes | None specific to this puzzle |

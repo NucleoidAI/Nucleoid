@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6150a2bd.json`](../data/training/6150a2bd.json) |
-| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026 |
+| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the rules use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
@@ -222,7 +222,10 @@ zero.
 - **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
   natural-language `#` comments may reach the model only as part of
   `declarations`, and the ARC instructions now say so. Datasets with and
-  without such comments both follow them, so nothing needs to change.
+  without such comments both follow them, so nothing needs to change. On
+  7-Nov-2026 the user also allowed them in `implementation`, and each
+  implementation in this dataset now opens with comment lines that describe
+  its object.
 - **Committed.** `f771c15` committed version 3, its README paragraph, the
   solver change in `src/analyzer.ts`, `src/visualizer.ts`, and `src/app.ts`,
   and this record's updates.
