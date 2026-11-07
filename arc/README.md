@@ -233,15 +233,34 @@ numbers, and key order stay exactly as written. The return value is one JSON
 array, with a separate entry per file. New JSON files need no additional
 imports or registration in the loader. An unreadable directory or file fails
 explicitly. `document()` does not parse the files, so it passes malformed JSON
-through. By default `llm.generate` sends that array as it is in its
-`few_shot_examples` message, so a malformed dataset reaches the model
-unchanged. Its `crop_instances` option, off by default, parses the array
-instead, so a malformed dataset fails there with a JSON syntax error that does
-not name the file. It then replaces each instance's `input_instance_matrix`
-and `output_instance_matrix` with its crop to the nonzero bounding box, from
-`Matrix.crop`, or an empty list for an all-zero mask, and keeps every other
-field, so `input_x`, `input_y`, `output_x`, and `output_y` still give each
-crop's position. The dataset files keep their full-canvas matrices.
+through. `llm.generate` parses that array for its `few_shot_examples`
+message, so a malformed dataset fails the run at its first model call, before
+any request, with a JSON syntax error that does not name the file.
+
+Each model call can pass `llm.generate` a `few_shot` function that maps every
+instruction dataset to only the properties of that call's own prompt; a call
+without one receives every instruction dataset with all its properties. A call
+that sends a `train_dataset` builds it and its few-shot examples with the same
+projection, so both carry the same properties in the same order. Every solver
+call passes its own:
+
+| Call | Few-shot properties of each instruction dataset |
+| --- | --- |
+| `analyzer.declarations` | `declarations`, `output_canvas`, and each pair's `input_matrix` and `output_matrix` |
+| `analyzer.instances`, `visualizer.instances` | `declarations`, and each pair's `input_matrix`, `output_matrix`, and `instances` with `input_instance_matrix` and `output_instance_matrix` |
+| `analyzer.value` | `declarations`, and each pair's `instances` with `instance_name`, `input_instance_matrix`, and `implementation` |
+| `visualizer.value` | `declarations`, and the instances of every pair in one list, with `implementation`, `input_value`, and `input_instance_matrix` |
+| `visualizer.output_instance_matrix` | The instances of every pair in one list, with `input_value`, `input_instance_matrix`, `output_value`, and `output_instance_matrix` |
+
+`analyzer.value` sends no `train_dataset`, so its examples carry the
+properties of the `instances` it sends, the instances of the same pair
+constructed before it. The calls that crop their own instance matrices,
+`analyzer.value`, `visualizer.value`, and `visualizer.output_instance_matrix`,
+also crop their examples' instance matrices to the nonzero bounding box with
+`Matrix.crop`, or to an empty list for an all-zero mask. None of these calls
+receives `input_x`, `output_x`, `input_y`, `output_y`, `input_orientation`, or
+`output_orientation`. The dataset files keep every property and their
+full-canvas matrices.
 
 Each non-genesis puzzle has exactly one `dataset.<puzzle_id>.json`, containing
 all its original `train` pairs from `data\training\<puzzle_id>.json` in source

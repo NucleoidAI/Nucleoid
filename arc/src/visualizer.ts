@@ -14,7 +14,6 @@ export async function instances({
   const { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    crop_instances: false,
     messages: [
       {
         role: "assistant",
@@ -22,20 +21,7 @@ export async function instances({
           declarations:
           ${JSON.stringify(train_dataset.declarations)}
           train_dataset:
-          ${JSON.stringify(
-            train_dataset.dataset.map(
-              ({ input_matrix, output_matrix, instances }) => ({
-                input_matrix,
-                output_matrix,
-                instances: instances.map(
-                  ({ input_instance_matrix, output_instance_matrix }) => ({
-                    input_instance_matrix,
-                    output_instance_matrix,
-                  })
-                ),
-              })
-            )
-          )}
+          ${JSON.stringify(train_dataset.dataset)}
         `,
       },
       {
@@ -73,10 +59,67 @@ export async function value({
 
   const { x, y } = Matrix.locate(input_instance_matrix);
 
+  const { orientation } = await llm.generate({
+    puzzle_id,
+    only_puzzle_dataset,
+    few_shot: ({ dataset }) => ({
+      dataset: dataset.flatMap(({ instances }) =>
+        instances.map(({ input_instance_matrix, input_value }) => ({
+          matrix: Matrix.crop(input_instance_matrix),
+          orientation: input_value.orientation,
+        }))
+      ),
+    }),
+    messages: [
+      {
+        role: "assistant",
+        content: `
+          train_dataset:
+          ${JSON.stringify(
+            train_dataset.dataset.flatMap(({ instances }) =>
+              instances.map(({ input_instance_matrix, input_value }) => ({
+                matrix: Matrix.crop(input_instance_matrix),
+                orientation: input_value.orientation,
+              }))
+            )
+          )}
+          instances:
+          ${JSON.stringify(
+            input_instances.map(({ input_instance_matrix, input_value }) => ({
+              input_instance_matrix: Matrix.crop(input_instance_matrix),
+              orientation: input_value.orientation,
+            }))
+          )}
+        `,
+      },
+      {
+        role: "user",
+        content: `
+          matrix:
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
+          input_x: ${x}
+          input_y: ${y}
+          json_format:
+          {
+            "orientation": <ORIENTATION>,
+          }
+        `,
+      },
+    ],
+  });
+
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    crop_instances: true,
+    few_shot: ({ declarations, dataset }) => ({
+      declarations,
+      dataset: dataset.flatMap(({ instances }) =>
+        instances.map(({ input_instance_matrix, implementation }) => ({
+          input_instance_matrix: Matrix.crop(input_instance_matrix),
+          implementation,
+        }))
+      ),
+    }),
     messages: [
       {
         role: "assistant",
@@ -85,24 +128,21 @@ export async function value({
           ${JSON.stringify(declarations)}
           train_dataset:
           ${JSON.stringify(
-            train_dataset.dataset
-              .map(({ instances }) => ({
-                instances: instances.map(
-                  ({ implementation, input_value, input_instance_matrix }) => ({
-                    implementation,
-                    input_value,
-                    input_instance_matrix: Matrix.crop(input_instance_matrix),
-                  })
-                ),
+            train_dataset.dataset.flatMap(({ instances }) =>
+              instances.map(({ input_instance_matrix, implementation }) => ({
+                input_instance_matrix: Matrix.crop(input_instance_matrix),
+                implementation,
               }))
-              .flatMap(({ instances }) => instances)
+            )
           )}
           instances:
           ${JSON.stringify(
-            input_instances.map(({ input_value, input_instance_matrix }) => ({
-              input_value,
-              input_instance_matrix: Matrix.crop(input_instance_matrix),
-            }))
+            input_instances.map(
+              ({ input_instance_matrix, implementation }) => ({
+                input_instance_matrix: Matrix.crop(input_instance_matrix),
+                implementation,
+              })
+            )
           )}
         `,
       },
@@ -115,9 +155,9 @@ export async function value({
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           input_x: ${x}
           input_y: ${y}
+          orientation: ${orientation}
           json_format:
           {
-            "orientation": <ORIENTATION>,
             "implementation": <IMPLEMENTATION>
           }
         `,
@@ -162,34 +202,34 @@ export async function output_instance_matrix({
   const { x, y } = output_value;
 
   milestone.composing_output({ instance_name });
+
+  const train_instances = (dataset) =>
+    dataset.flatMap(({ instances }) =>
+      instances.map(
+        ({
+          input_value,
+          input_instance_matrix,
+          output_value,
+          output_instance_matrix,
+        }) => ({
+          input_value,
+          input_instance_matrix: Matrix.crop(input_instance_matrix),
+          output_value,
+          output_instance_matrix: Matrix.crop(output_instance_matrix),
+        })
+      )
+    );
+
   const { output_instance_matrix } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    crop_instances: true,
+    few_shot: ({ dataset }) => ({ dataset: train_instances(dataset) }),
     messages: [
       {
         role: "assistant",
         content: `
           train_dataset:
-          ${JSON.stringify(
-            train_dataset.dataset
-              .map(({ instances }) => ({
-                instances: instances.map(
-                  ({
-                    input_value,
-                    input_instance_matrix,
-                    output_value,
-                    output_instance_matrix,
-                  }) => ({
-                    input_value,
-                    input_instance_matrix: Matrix.crop(input_instance_matrix),
-                    output_value,
-                    output_instance_matrix: Matrix.crop(output_instance_matrix),
-                  })
-                ),
-              }))
-              .flatMap(({ instances }) => instances)
-          )}
+          ${JSON.stringify(train_instances(train_dataset.dataset))}
           instances:
           ${JSON.stringify(
             input_instances.map(

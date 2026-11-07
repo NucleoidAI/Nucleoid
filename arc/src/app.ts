@@ -69,9 +69,9 @@ export async function start(
         only_puzzle_dataset,
         instance_name,
         declarations,
-        input_instances: dataset.instances.filter(
-          ({ implementation }) => implementation
-        ),
+        input_instances: train_dataset.dataset
+          .flatMap(({ instances }) => instances)
+          .filter(({ implementation }) => implementation),
         input_matrix,
         input_instance_matrix,
         output_instance_matrix,
@@ -176,11 +176,11 @@ export async function start(
     difference,
   };
 
-  await fs.mkdir("logs", { recursive: true });
-  await fs.writeFile(
-    `logs/${puzzle_id}.log.json`,
-    JSON.stringify(debug, null, 2)
-  );
+  // await fs.mkdir("logs", { recursive: true });
+  // await fs.writeFile(
+  //   `logs/${puzzle_id}.log.json`,
+  //   JSON.stringify(debug, null, 2)
+  // );
 
   return difference;
 }

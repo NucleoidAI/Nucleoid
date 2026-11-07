@@ -19,12 +19,6 @@
       "instances": [
         {
           "instance_name": "obj956c87d67c7c",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [1, 0, 0, 0, 0, 0],
             [1, 1, 0, 0, 1, 0],
@@ -41,12 +35,6 @@
         },
         {
           "instance_name": "objf90224b9c06f",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 8, 8, 0, 0, 8],
             [0, 0, 0, 0, 0, 8],
@@ -63,12 +51,6 @@
         },
         {
           "instance_name": "obj4df746967d02",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0, 7, 7, 0],
             [0, 0, 7, 7, 0, 0],
@@ -99,12 +81,6 @@
       "instances": [
         {
           "instance_name": "objf2f3621429ce",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [7, 7, 7, 0],
             [0, 0, 0, 7],
@@ -121,12 +97,6 @@
         },
         {
           "instance_name": "obj01feaae7ae02",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0, 1],
             [1, 0, 1, 0],
@@ -143,12 +113,6 @@
         },
         {
           "instance_name": "obja86be7ae7c94",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0, 0],
             [0, 8, 0, 0],
@@ -179,12 +143,6 @@
       "instances": [
         {
           "instance_name": "obj4c35be9e32a9",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [1, 0, 1, 0, 1],
             [0, 0, 0, 1, 1],
@@ -201,12 +159,6 @@
         },
         {
           "instance_name": "obj0a7020c0e8f9",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 8, 0, 0, 0],
             [0, 8, 8, 0, 0],
@@ -223,12 +175,6 @@
         },
         {
           "instance_name": "obj3c263747a93d",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0, 7, 0],
             [7, 0, 0, 0, 0],
@@ -259,12 +205,6 @@
       "instances": [
         {
           "instance_name": "obj5ed70ad29ddf",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [1, 0, 0, 1, 0],
             [0, 1, 0, 0, 0],
@@ -281,12 +221,6 @@
         },
         {
           "instance_name": "objd04757dd76e2",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 7, 7, 0, 7],
             [0, 0, 7, 7, 7],
@@ -303,12 +237,6 @@
         },
         {
           "instance_name": "objf2fd0d143dae",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0, 0, 0],
             [8, 0, 0, 0, 0],

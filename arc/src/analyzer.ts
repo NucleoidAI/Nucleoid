@@ -13,7 +13,6 @@ export async function declarations({
   const { declarations, output_canvas } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    crop_instances: false,
     messages: [
       {
         role: "user",
@@ -49,7 +48,6 @@ export async function instances({
   const { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    crop_instances: false,
     messages: [
       {
         role: "user",
@@ -91,17 +89,66 @@ export async function value({
 
   const { x, y } = Matrix.locate(input_instance_matrix);
 
+  const { orientation } = await llm.generate({
+    puzzle_id,
+    only_puzzle_dataset,
+    few_shot: ({ dataset }) => ({
+      dataset: dataset.map(({ instances }) => ({
+        instances: instances.map(({ input_instance_matrix, input_value }) => ({
+          matrix: Matrix.crop(input_instance_matrix),
+          orientation: input_value.orientation,
+        })),
+      })),
+    }),
+    messages: [
+      {
+        role: "assistant",
+        content: `
+          instances:
+          ${JSON.stringify(
+            input_instances.map(({ input_instance_matrix, input_value }) => ({
+              matrix: Matrix.crop(input_instance_matrix),
+              orientation: input_value.orientation,
+            }))
+          )}
+          `,
+      },
+      {
+        role: "user",
+        content: `
+          matrix:
+          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
+          json_format:
+          {
+            "orientation": <ORIENTATION>,
+          }
+        `,
+      },
+    ],
+  });
+
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    crop_instances: true,
+    few_shot: ({ declarations, dataset }) => ({
+      declarations: declarations[0],
+      dataset: dataset.map(({ instances }) => ({
+        instances: instances.map(
+          ({ instance_name, input_instance_matrix, implementation }) => ({
+            instance_name,
+            input_instance_matrix: Matrix.crop(input_instance_matrix),
+            implementation,
+          })
+        ),
+      })),
+    }),
     messages: [
       {
         role: "assistant",
         content: `
           declarations:
-          ${JSON.stringify(declarations)}
-          input_instances:
+          ${JSON.stringify(declarations[0])}
+          instances:
           ${JSON.stringify(
             input_instances.map(
               ({ instance_name, input_instance_matrix, implementation }) => ({
@@ -122,9 +169,9 @@ export async function value({
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           input_x: ${x}
           input_y: ${y}
+          orientation: ${orientation}
           json_format:
           {
-            "orientation": <ORIENTATION>,
             "implementation": <IMPLEMENTATION>
           }
         `,

@@ -19,12 +19,6 @@
       "instances": [
         {
           "instance_name": "objfd8da1fb82d2",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 315,
-          "output_orientation": 315,
           "input_instance_matrix": [
             [2, 2, 2],
             [2, 0, 0],
@@ -41,12 +35,6 @@
         },
         {
           "instance_name": "obj18a2b2379cda",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 1, 0],
@@ -63,12 +51,6 @@
         },
         {
           "instance_name": "objaabb8a63326c",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 135,
-          "output_orientation": 135,
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 8],
@@ -99,12 +81,6 @@
       "instances": [
         {
           "instance_name": "objb4c2bdc31cbd",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [1, 1, 1],
             [0, 1, 0],
@@ -121,12 +97,6 @@
         },
         {
           "instance_name": "objfbe4a4224d14",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0],
             [8, 0, 0],
@@ -143,12 +113,6 @@
         },
         {
           "instance_name": "obj9b51b0fdc01c",
-          "input_x": 2,
-          "output_x": 2,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 3],
@@ -165,12 +129,6 @@
         },
         {
           "instance_name": "obj91b67e1827b1",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 2,
-          "output_y": 2,
-          "input_orientation": 90,
-          "output_orientation": 90,
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 0],
@@ -201,12 +159,6 @@
       "instances": [
         {
           "instance_name": "obj3710037e184f",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [2, 2, 2],
             [0, 0, 2],
@@ -223,12 +175,6 @@
         },
         {
           "instance_name": "objcfb87667abdf",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 90,
-          "output_orientation": 90,
           "input_instance_matrix": [
             [0, 0, 0],
             [8, 8, 0],
@@ -259,12 +205,6 @@
       "instances": [
         {
           "instance_name": "obj501aae1fff6a",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 90,
-          "output_orientation": 90,
           "input_instance_matrix": [
             [3, 3, 0],
             [0, 0, 0],
@@ -281,12 +221,6 @@
         },
         {
           "instance_name": "obj5f62becffc78",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 8],
             [0, 0, 0],
@@ -303,12 +237,6 @@
         },
         {
           "instance_name": "obj50d280d9fceb",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 1,
-          "output_y": 1,
-          "input_orientation": 90,
-          "output_orientation": 90,
           "input_instance_matrix": [
             [0, 0, 0],
             [4, 4, 4],
@@ -325,12 +253,6 @@
         },
         {
           "instance_name": "objf2cf87623f42",
-          "input_x": 1,
-          "output_x": 1,
-          "input_y": 2,
-          "output_y": 2,
-          "input_orientation": 90,
-          "output_orientation": 90,
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 0],
@@ -361,12 +283,6 @@
       "instances": [
         {
           "instance_name": "obja0f8bb24bef9",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [1, 0, 0],
             [0, 0, 0],
@@ -383,12 +299,6 @@
         },
         {
           "instance_name": "obj6c6428c31841",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 3, 0],
             [3, 3, 0],
@@ -405,12 +315,6 @@
         },
         {
           "instance_name": "obja8f0a8586df4",
-          "input_x": 2,
-          "output_x": 2,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 2],
             [0, 0, 2],

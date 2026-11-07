@@ -31,12 +31,6 @@
       "instances": [
         {
           "instance_name": "obj7868bfbcdc17",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 1, 0],
             [1, 1, 0],
@@ -85,12 +79,6 @@
       "instances": [
         {
           "instance_name": "obj251f7bd03919",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 1, 0],
             [1, 0, 1],
@@ -139,12 +127,6 @@
       "instances": [
         {
           "instance_name": "obj69f9506dfd32",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [0, 1, 0],
             [1, 1, 0],
@@ -193,12 +175,6 @@
       "instances": [
         {
           "instance_name": "obj93fb566cfca3",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 0,
           "input_instance_matrix": [
             [1, 1, 1],
             [0, 1, 0],

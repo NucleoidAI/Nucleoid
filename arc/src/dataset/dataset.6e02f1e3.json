@@ -22,12 +22,6 @@
       "instances": [
         {
           "instance_name": "objf30b9a69fe75",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 135,
           "input_instance_matrix": [
             [2, 2, 2],
             [3, 2, 3],
@@ -58,12 +52,6 @@
       "instances": [
         {
           "instance_name": "obj9b3f65ec8bbe",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 45,
           "input_instance_matrix": [
             [3, 3, 3],
             [4, 2, 2],
@@ -94,12 +82,6 @@
       "instances": [
         {
           "instance_name": "obj23d15ee33476",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 90,
           "input_instance_matrix": [
             [4, 4, 4],
             [4, 4, 4],
@@ -130,12 +112,6 @@
       "instances": [
         {
           "instance_name": "objb16c3542a556",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 90,
           "input_instance_matrix": [
             [3, 3, 3],
             [3, 3, 3],
@@ -166,12 +142,6 @@
       "instances": [
         {
           "instance_name": "objde2fe15d0cff",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 135,
           "input_instance_matrix": [
             [4, 4, 4],
             [4, 4, 4],
@@ -202,12 +172,6 @@
       "instances": [
         {
           "instance_name": "obj19a35427d914",
-          "input_x": 0,
-          "output_x": 0,
-          "input_y": 0,
-          "output_y": 0,
-          "input_orientation": 0,
-          "output_orientation": 45,
           "input_instance_matrix": [
             [4, 4, 4],
             [2, 3, 2],
