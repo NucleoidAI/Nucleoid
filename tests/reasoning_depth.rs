@@ -250,7 +250,7 @@ fn no_earlier_document_case_writes_a_depth_stage() {
         with_depth += usize::from(uses);
     }
     assert_eq!(with_depth, 11);
-    assert_eq!(cases, 984);
+    assert_eq!(cases, 997);
 }
 
 #[test]

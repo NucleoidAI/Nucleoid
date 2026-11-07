@@ -1887,6 +1887,33 @@ assert: [stage, late], ["open", false]
   `late = (status is not 'SHIPPED')` rather than leaving the comparison bare.
   See the [root contract](nucleoid.spec.md#is-and-is-not-comparisons).
 
+## Initializing constructor parameters
+
+**Constructor parameters can assign the properties they name**
+
+```nuc
+class Room(this.name, this.temp, this.target = 21)
+$Room.heating = $Room.temp < $Room.target
+lab = Room("lab", 18)
+hall = Room("hall", 23, 25)
+assert: [lab.heating, hall.heating], [true, true]
+lab.temp = 22
+hall.target = 20
+assert: [lab.heating, hall.heating], [false, false]
+```
+
+- [NUC 87](docs/nuc-0087.md) lets a constructor parameter written
+  `this.name` or `self.name` also assign the property it names, so
+  `class Room(this.name, this.temp, this.target = 21)` declares what
+  `class Room(name, temp, target = 21):` declares with one indented
+  `this.name = name` line per parameter. Types, literal defaults and
+  labelled arguments work as before.
+- The assignments run before the constructor's own statements, and the
+  properties they make are ordinary: `$Room.heating` follows a changed
+  temperature or target. Parameters without the prefix still create no
+  properties. See the
+  [root contract](nucleoid.spec.md#initializing-constructor-parameters).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

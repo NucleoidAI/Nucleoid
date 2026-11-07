@@ -18054,6 +18054,196 @@ named
 # return: false"#);
 }
 
+/// Nucleoid assigns the properties that a constructor header names with this
+#[rustfmt::skip]
+#[test]
+fn assigns_the_properties_that_a_constructor_header_names_with_this() {
+    let mut run = runner();
+    run("class Point(this.x, this.y)");
+    run("origin = Point(0, 0)");
+    run("corner = Point(3, 4)");
+    assert_eq!(run("corner"), serde_json::json!({"id": "corner", "x": 3, "y": 4}));
+    {
+        let actual = run("[typeof corner, Point.length]");
+        let expected = run("([Object, 2])");
+        assert_eq!(actual, expected);
+    }
+    run("$Point.far = $Point.x + $Point.y > 5");
+    assert_eq!(run("[origin.far, corner.far]"), serde_json::json!([false, true]));
+    run("corner.x = 1");
+    assert_eq!(run("corner.far"), false);
+    run(r#"[origin.x, corner.x]
+
+# return: [0,1]"#);
+}
+
+/// Nucleoid initializes self parameters before the constructor body reads them
+#[rustfmt::skip]
+#[test]
+fn initializes_self_parameters_before_the_constructor_body_reads_them() {
+    let mut run = runner();
+    run(r#"class Rectangle(self.width, self.height):
+    this.area = width * height
+    this.square = this.width == this.height"#);
+    run("box = Rectangle(2, 5)");
+    run("tile = Rectangle(3, 3)");
+    assert_eq!(run("[box.width, box.height, box.area, box.square]"), serde_json::json!([2, 5, 10, false]));
+    assert_eq!(run("[tile.area, tile.square, Rectangle.length]"), serde_json::json!([9, true, 2]));
+    run("box.width = 5");
+    assert_eq!(run("[box.area, box.square]"), serde_json::json!([10, true]));
+    run(r#"box.square
+
+# return: true"#);
+}
+
+/// Nucleoid fills typed initializing parameters from literal defaults and labels
+#[rustfmt::skip]
+#[test]
+fn fills_typed_initializing_parameters_from_literal_defaults_and_labels() {
+    let mut run = runner();
+    run(r#"class Account(this.owner: str, this.balance: int = 0, this.currency = "EUR")
+plain = Account("ana")
+funded = Account("bo", 250)
+named = Account(currency="USD", owner="cy")
+mixed = Account("di", currency="GBP")
+assert([plain.owner, plain.balance, plain.currency], ["ana", 0, "EUR"])
+assert([funded.owner, funded.balance, funded.currency], ["bo", 250, "EUR"])
+assert([named.owner, named.balance, named.currency], ["cy", 0, "USD"])
+assert([mixed.owner, mixed.balance, mixed.currency], ["di", 0, "GBP"])
+Account.length
+# return: 4"#);
+}
+
+/// Nucleoid leaves missing initializing parameters null
+#[rustfmt::skip]
+#[test]
+fn leaves_missing_initializing_parameters_null() {
+    let mut run = runner();
+    run(r#"class Contact(this.name, this.email, this.phone)
+$Contact.reach = $Contact.email ?? $Contact.phone ?? "unreachable"
+ana = Contact("ana", "ana@example.com")
+bo = Contact(phone="555 0100", name="bo")
+cy = Contact("cy")
+assert([ana.phone, bo.email, cy.email, cy.phone], [null, null, null, null])
+assert([ana.reach, bo.reach, cy.reach], ["ana@example.com", "555 0100", "unreachable"])
+cy.phone = "555 0199"
+assert(cy.reach, "555 0199")
+Contact.length
+# return: 3"#);
+}
+
+/// Nucleoid collects final rest arguments into an initializing parameter
+#[rustfmt::skip]
+#[test]
+fn collects_final_rest_arguments_into_an_initializing_parameter() {
+    let mut run = runner();
+    run("class Route(this.name, ...this.stops)");
+    run("$Route.count = $Route.stops.length");
+    run(r#"north = Route("north", "oslo", "lillehammer", "trondheim")"#);
+    run(r#"loop = Route("loop")"#);
+    assert_eq!(run("north.stops"), serde_json::json!(["oslo", "lillehammer", "trondheim"]));
+    assert_eq!(run("[north.name, north.count, loop.stops, loop.count]"), serde_json::json!(["north", 3, [], 0]));
+    run(r#"north.stops.push("bodo")"#);
+    assert_eq!(run("north.count"), 4);
+    run(r#"north.count
+
+# return: 4"#);
+}
+
+/// Nucleoid initializes properties from the parameter list of init
+#[rustfmt::skip]
+#[test]
+fn initializes_properties_from_the_parameter_list_of_init() {
+    let mut run = runner();
+    run(r#"class Sensor:
+    unit: str
+    def init(this.room, this.reading, this.unit = "C"):
+        this.alarm = reading > 30
+lab = Sensor("lab", 21)
+attic = Sensor("attic", 34, "F")
+assert([lab.room, lab.reading, lab.unit, lab.alarm], ["lab", 21, "C", false])
+assert([attic.room, attic.reading, attic.unit, attic.alarm], ["attic", 34, "F", true])
+Sensor.length
+# return: 2"#);
+}
+
+/// Nucleoid initializes subclass parameters before the parent constructor runs
+#[rustfmt::skip]
+#[test]
+fn initializes_subclass_parameters_before_the_parent_constructor_runs() {
+    let mut run = runner();
+    run(r#"class Vehicle(this.make, this.wheels = 4)
+class Truck(this.payload): Vehicle
+    super("volvo", 6)
+class Van extends Vehicle
+class Racer(this.wheels) extends Vehicle:
+    super("kart", wheels * 2)
+truck = Truck(12)
+van = Van("ford")
+racer = Racer(3)
+assert([truck.make, truck.wheels, truck.payload], ["volvo", 6, 12])
+assert([van.make, van.wheels], ["ford", 4])
+assert([racer.make, racer.wheels], ["kart", 6])
+assert([Vehicle.length, Truck.length, Van.length, Racer.length], [0, 1, 1, 1])
+racer.wheels
+# return: 6"#);
+}
+
+/// Nucleoid applies class level rules to initialized properties
+#[rustfmt::skip]
+#[test]
+fn applies_class_level_rules_to_initialized_properties() {
+    let mut run = runner();
+    run("class Order(this.item, this.qty, this.price)");
+    run("$Order.total = $Order.qty * $Order.price");
+    run("$Order.bulk = $Order.qty >= 10");
+    run(r#"tea = Order("tea", 2, 4)"#);
+    run(r#"nuts = Order("nuts", 12, 1)"#);
+    run("revenue = Order.sum(order -> order.total)");
+    assert_eq!(run("[tea.total, tea.bulk, nuts.total, nuts.bulk, revenue]"), serde_json::json!([8, false, 12, true, 20]));
+    run("tea.qty = 10");
+    assert_eq!(run("[tea.total, tea.bulk, revenue]"), serde_json::json!([40, true, 52]));
+    run(r#"revenue
+
+# return: 52"#);
+}
+
+/// Nucleoid explains initialized properties by their constructor assignments
+#[rustfmt::skip]
+#[test]
+fn explains_initialized_properties_by_their_constructor_assignments() {
+    let mut run = runner();
+    run("class Shipment(this.origin, this.weight)");
+    run("$Shipment.heavy = $Shipment.weight > 10");
+    run(r#"parcel = Shipment("oslo", 3)"#);
+    assert_eq!(run("(why parcel.weight).map(step -> step.rule)"), serde_json::json!(["$Shipment.weight = weight"]));
+    assert_eq!(run("(why parcel.heavy).map(step -> step.rule)"), serde_json::json!(["$Shipment.heavy = $Shipment.weight>10", "$Shipment.weight = weight"]));
+    run("parcel.weight = 12");
+    assert_eq!(run("[parcel.heavy, (why parcel.weight)[0].rule]"), serde_json::json!([true, "$Shipment.weight = 12"]));
+    run(r#"parcel.heavy
+
+# return: true"#);
+}
+
+/// Nucleoid rolls back an instance whose initializing constructor fails
+#[rustfmt::skip]
+#[test]
+fn rolls_back_an_instance_whose_initializing_constructor_fails() {
+    let mut run = runner();
+    run(r#"class Ticket(this.code, this.seat):
+    if seat > 100:
+        throw "no such seat"
+first = Ticket("A1", 4)
+try:
+    Ticket("Z9", 400)
+catch error:
+    reason = error
+assert([Ticket.length, reason], [1, "no such seat"])
+assert([first.code, first.seat], ["A1", 4])
+Ticket.length
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -1,0 +1,6 @@
+class Vehicle(this.kind, this.wheels = 4)
+class Truck(this.load) extends Vehicle:
+    super("van", 6)
+$Truck.heavy = $Truck.load > 10
+hauler = Truck(12)
+[hauler.load, hauler.heavy, hauler.kind]

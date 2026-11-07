@@ -3426,6 +3426,33 @@ assert: [north.typical, south.typical, south.affordable], [1200, 1700, false]
   south's rises to 1,700. See [NUC 84](nuc-0084.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-medians).
 
+## Initializing constructor parameters
+
+**Initializing parameters keep a fleet's service schedule live**
+
+```nuc
+class Truck(this.plate, this.km, this.limit = 30000)
+$Truck.due = $Truck.km >= $Truck.limit
+$Truck.left = $Truck.limit - $Truck.km
+north = Truck("NO-1", 29500)
+south = Truck("SO-2", 12000, 15000)
+due = Truck.filter(truck -> truck.due).map(truck -> truck.plate)
+assert([north.left, south.left, due], [500, 3000, []])
+north.km = 30100
+south.limit = 12000
+assert(due, ["NO-1", "SO-2"])
+due
+# return: ["NO-1","SO-2"]
+```
+
+- The header of `Truck` both declares and stores each truck's plate,
+  mileage and service limit, so the class-level rules `$Truck.due` and
+  `$Truck.left` read them from the first truck on, and `south` keeps its own
+  limit instead of the default.
+- Driving `north` past its limit and lowering the limit of `south` put both
+  trucks on the `due` list. See [NUC 87](nuc-0087.md) and the
+  [root contract](../nucleoid.spec.md#initializing-constructor-parameters).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

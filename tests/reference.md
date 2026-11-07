@@ -2434,4 +2434,16 @@ assert: value is EXACT, false
 assert(value is "EXACT", true)
 changed
 # return: true
+---
+# Nucleoid initializes properties from constructor parameters
+
+class Point(this.x, this.y)
+class Box(this.width, self.height):
+    this.area = width * height
+p = Point(3, 4)
+b = Box(2, 5)
+assert(p, {"id": "p", "x": 3, "y": 4})
+assert([b.width, b.height, b.area, Box.length], [2, 5, 10, 1])
+b.area
+# return: 10
 ```

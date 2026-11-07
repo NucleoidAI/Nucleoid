@@ -861,6 +861,7 @@ class Entity
 
 - Parameters may be declared on the type, with optional annotations.
 - A bodyless header may keep the same parameter list, such as `class Shell(code: int)`; parameters alone do not create or assign properties.
+- A parameter written `this.name` or `self.name` also assigns the property it names, so `class Shape(this.type: str)` declares the first form below; see [Initializing constructor parameters](#initializing-constructor-parameters).
 - An equivalent form declares attributes plus an `init` function.
 - A missing argument leaves the attribute `null`.
 
@@ -919,6 +920,48 @@ assert(point, {"id": "point", "x": 3, "y": 4})
 - Exact binding/error rules are in the authoritative
   [default named constructors](../nucleoid.spec.md#default-named-constructors)
   section; [NUC 47](nuc-0047.md) records this isolated candidate revision.
+
+### Initializing constructor parameters
+
+- A constructor parameter written `this.name` or `self.name` declares the
+  parameter `name` and assigns it to the new instance's property `name`, as
+  Dart's initializing formals and TypeScript's parameter properties do
+  ([NUC 87](nuc-0087.md)).
+- `class Point(this.x, this.y)` declares exactly the class that
+  `class Point(x, y):` with the indented `this.x = x` and `this.y = y`
+  declares: the same parameters, constructor statements, binding, `why`
+  rules, graph keys and canonical rendering.
+- The prefix applies to the parenthesized list of a class header in every
+  header form, bodyless, with a colon body, with a colon parent or with
+  `extends`, and to the parenthesized list of a `def init` written in a
+  class's indented body. Annotations, literal defaults, labels and a final
+  rest parameter keep their meanings.
+- The assignments run first, in parameter order, before every written
+  statement, including a leading `super(...)`, which may assign the same
+  property again. A header with a prefixed parameter therefore has a
+  nonempty constructor even without a body, and a bodyless subclass header
+  with one is its own nearest nonempty constructor.
+- Parameters without the prefix still create no properties. Every other
+  parameter list, every bare signature and every other spelling after
+  `this` keep their accepted errors.
+- This is the exact
+  `Nucleoid initializes properties from constructor parameters` example
+  in `tests/reference.md`.
+
+```
+class Point(this.x, this.y)
+class Box(this.width, self.height):
+    this.area = width * height
+p = Point(3, 4)
+b = Box(2, 5)
+assert(p, {"id": "p", "x": 3, "y": 4})
+assert([b.width, b.height, b.area, Box.length], [2, 5, 10, 1])
+b.area
+```
+
+- Exact rules are in the authoritative
+  [initializing constructor parameters](../nucleoid.spec.md#initializing-constructor-parameters)
+  section.
 
 ### Instance keywords
 
@@ -998,7 +1041,7 @@ assert(child.code, 7)
 - Deletion is refused while the instance still has properties.
 - A variable name is reusable after its instance is deleted.
 
-Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md); candidate bare calls: [NUC 16](nuc-0016.md); extends clauses: [NUC 78](nuc-0078.md).
+Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md); candidate bare calls: [NUC 16](nuc-0016.md); extends clauses: [NUC 78](nuc-0078.md); initializing constructor parameters: [NUC 87](nuc-0087.md).
 
 ---
 
@@ -3531,6 +3574,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A postfix chain, a compound path or a property selector beyond its limit | `Expression has too many parts` |
 | A destructuring with more than 128 targets | `Destructuring has too many targets` |
 | A constructor-header star at a parameter position | `Expected a parameter but found '*'` |
+| A `this.` or `self.` prefix outside a constructor parameter list, or not followed by one name and then `,`, `)`, `:` or `=` | `Expected a parameter but found keyword 'this'` |
 | An `extends` clause whose parent is missing or not a name | `Expected a parent class name but found <what>` |
 | A second parent after `class Name extends Parent:` | `Class '<Name>' already extends '<Parent>'` |
 
@@ -3572,6 +3616,11 @@ class Name(param: type)                 empty type with parameters; no implicit 
 
 class Name(param: type):               type with a constructor
     this.param = param
+
+class Name(this.param: type)           the same constructor, assigned by the prefix (NUC 87)
+class Name(self.a, b = 1, ...this.c)   either receiver; defaults and a final rest kept
+class Name:
+    def init(this.param):              the same prefix in an init of the class body
 
 instance = Name(param=expression)      label binding without caller assignment
 instance = Name((param=expression))    explicit positional assignment argument

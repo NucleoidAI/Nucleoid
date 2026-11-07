@@ -2497,6 +2497,66 @@ statement positions; caught values and transaction recovery are unchanged.
   surplus arguments. The five appended entries beginning `Nucleoid collects
   surplus positional arguments in fresh rest lists` specify this addition.
 
+## Initializing constructor parameters
+
+- [NUC 87](docs/nuc-0087.md) lets a constructor parameter written
+  `this.name` or `self.name` declare the parameter `name` and assign it to
+  the new instance's property `name`, as Dart's initializing formals and
+  TypeScript's parameter properties do. `class Point(this.x, this.y)`
+  declares exactly what `class Point(x, y):` with the indented body
+  `this.x = x` and `this.y = y` declares. No token, keyword, syntax tree
+  node or runtime path is added.
+- Only constructor parameter lists written in parentheses accept the
+  prefix: the list of a class header, whether the header is bodyless, has a
+  colon body on its own lines or on the same line, names its parent after a
+  colon or with `extends`; and the list of a `def init(...)` written directly
+  in a class's indented body, with a block, same-line or arrow body.
+- A prefixed parameter is `this` or `self`, `.` and one identifier,
+  directly followed by `,`, `)`, a type annotation `: Type` or a literal
+  default `= literal`. The annotation, the literal default and, on the final
+  parameter, the rest marker `...this.name` keep their meanings.
+- The prefixed parameter is the ordinary parameter `name`. The statement
+  `this.name = name` starts the constructor body, one per prefixed
+  parameter in parameter order, before every written statement, including a
+  leading `super(...)`. In a `def init`, the statements start the method's
+  body, and an arrow body `=> expression` is the statement
+  `return expression` after them.
+- Binding is unchanged: positional, labelled and mixed arguments, missing
+  arguments as `null`, literal defaults, rest lists and repeated names,
+  where the later binding wins. So are dependencies, `why`, which explains
+  `p.x` by the rule `$Point.x = x`, transactions, redeclaration, class-level
+  rules, populations, `init` adoption, `super`, canonical rendering and graph
+  keys.
+- A header with a prefixed parameter has a nonempty constructor even when it
+  has no body, so `class Shell(this.code: int)` is not an empty class, and
+  a bodyless subclass header with a prefixed parameter is its own nearest
+  nonempty constructor. A header whose parameters are all plain, including a
+  rest header, still creates no properties and does not displace a parent's
+  nearest nonempty constructor. Typed attributes in class bodies, such as
+  `x: int`, are unchanged.
+- Every other parameter list keeps its accepted diagnostic and position:
+  named functions, methods other than `init`, a `def init` anywhere other
+  than directly in a class's indented body, function literals, arrow and
+  thin-arrow functions, Python-style lambdas and every bare signature. For
+  example `def f(this.x) => 1` still raises
+  `SyntaxError("Expected a parameter but found keyword 'this'")`, and
+  `def init this.x:` in a class body still raises
+  `SyntaxError("Expected '(' but found keyword 'this'")`.
+- A `this` or `self` that does not begin a complete prefixed parameter keeps
+  that accepted error, placed at the token after the keyword, as in
+  `this.a.b`, `this["x"]`, a bare `this`, `this.class`, `this.5` and
+  `this.x this.y`.
+- Only inputs that were errors at the accepted revision change: they now
+  parse, or report a later error. A complete prefixed parameter reports the
+  error its plain spelling reports, so `class P(this.x: 5)` raises
+  `SyntaxError("Expected a type but found number 5")`, and a statement the
+  parser reads tentatively, such as a destructuring declaration, may now
+  take the reading that failed before.
+- The ten appended entries beginning
+  `Nucleoid assigns the properties that a constructor header names with this`
+  through `Nucleoid rolls back an instance whose initializing constructor fails`
+  specify the executable behavior.
+
 ## Class-level state version anchors
 
 - Extend NUC53 property histories inside per-instance class rules, without new
@@ -21416,4 +21476,145 @@ catch error:
 assert(failure, ReferenceError("while is not defined"))
 named
 # return: false
+---
+# Nucleoid assigns the properties that a constructor header names with this
+
+class Point(this.x, this.y)
+origin = Point(0, 0)
+corner = Point(3, 4)
+assert(corner, {"id": "corner", "x": 3, "y": 4})
+assert([typeof corner, Point.length], [Object, 2])
+$Point.far = $Point.x + $Point.y > 5
+assert([origin.far, corner.far], [false, true])
+corner.x = 1
+assert(corner.far, false)
+[origin.x, corner.x]
+# return: [0,1]
+---
+# Nucleoid initializes self parameters before the constructor body reads them
+
+class Rectangle(self.width, self.height):
+    this.area = width * height
+    this.square = this.width == this.height
+box = Rectangle(2, 5)
+tile = Rectangle(3, 3)
+assert([box.width, box.height, box.area, box.square], [2, 5, 10, false])
+assert([tile.area, tile.square, Rectangle.length], [9, true, 2])
+box.width = 5
+assert([box.area, box.square], [10, true])
+box.square
+# return: true
+---
+# Nucleoid fills typed initializing parameters from literal defaults and labels
+
+class Account(this.owner: str, this.balance: int = 0, this.currency = "EUR")
+plain = Account("ana")
+funded = Account("bo", 250)
+named = Account(currency="USD", owner="cy")
+mixed = Account("di", currency="GBP")
+assert([plain.owner, plain.balance, plain.currency], ["ana", 0, "EUR"])
+assert([funded.owner, funded.balance, funded.currency], ["bo", 250, "EUR"])
+assert([named.owner, named.balance, named.currency], ["cy", 0, "USD"])
+assert([mixed.owner, mixed.balance, mixed.currency], ["di", 0, "GBP"])
+Account.length
+# return: 4
+---
+# Nucleoid leaves missing initializing parameters null
+
+class Contact(this.name, this.email, this.phone)
+$Contact.reach = $Contact.email ?? $Contact.phone ?? "unreachable"
+ana = Contact("ana", "ana@example.com")
+bo = Contact(phone="555 0100", name="bo")
+cy = Contact("cy")
+assert([ana.phone, bo.email, cy.email, cy.phone], [null, null, null, null])
+assert([ana.reach, bo.reach, cy.reach], ["ana@example.com", "555 0100", "unreachable"])
+cy.phone = "555 0199"
+assert(cy.reach, "555 0199")
+Contact.length
+# return: 3
+---
+# Nucleoid collects final rest arguments into an initializing parameter
+
+class Route(this.name, ...this.stops)
+$Route.count = $Route.stops.length
+north = Route("north", "oslo", "lillehammer", "trondheim")
+loop = Route("loop")
+assert(north.stops, ["oslo", "lillehammer", "trondheim"])
+assert([north.name, north.count, loop.stops, loop.count], ["north", 3, [], 0])
+north.stops.push("bodo")
+assert(north.count, 4)
+north.count
+# return: 4
+---
+# Nucleoid initializes properties from the parameter list of init
+
+class Sensor:
+    unit: str
+    def init(this.room, this.reading, this.unit = "C"):
+        this.alarm = reading > 30
+lab = Sensor("lab", 21)
+attic = Sensor("attic", 34, "F")
+assert([lab.room, lab.reading, lab.unit, lab.alarm], ["lab", 21, "C", false])
+assert([attic.room, attic.reading, attic.unit, attic.alarm], ["attic", 34, "F", true])
+Sensor.length
+# return: 2
+---
+# Nucleoid initializes subclass parameters before the parent constructor runs
+
+class Vehicle(this.make, this.wheels = 4)
+class Truck(this.payload): Vehicle
+    super("volvo", 6)
+class Van extends Vehicle
+class Racer(this.wheels) extends Vehicle:
+    super("kart", wheels * 2)
+truck = Truck(12)
+van = Van("ford")
+racer = Racer(3)
+assert([truck.make, truck.wheels, truck.payload], ["volvo", 6, 12])
+assert([van.make, van.wheels], ["ford", 4])
+assert([racer.make, racer.wheels], ["kart", 6])
+assert([Vehicle.length, Truck.length, Van.length, Racer.length], [0, 1, 1, 1])
+racer.wheels
+# return: 6
+---
+# Nucleoid applies class level rules to initialized properties
+
+class Order(this.item, this.qty, this.price)
+$Order.total = $Order.qty * $Order.price
+$Order.bulk = $Order.qty >= 10
+tea = Order("tea", 2, 4)
+nuts = Order("nuts", 12, 1)
+revenue = Order.sum(order -> order.total)
+assert([tea.total, tea.bulk, nuts.total, nuts.bulk, revenue], [8, false, 12, true, 20])
+tea.qty = 10
+assert([tea.total, tea.bulk, revenue], [40, true, 52])
+revenue
+# return: 52
+---
+# Nucleoid explains initialized properties by their constructor assignments
+
+class Shipment(this.origin, this.weight)
+$Shipment.heavy = $Shipment.weight > 10
+parcel = Shipment("oslo", 3)
+assert((why parcel.weight).map(step -> step.rule), ["$Shipment.weight = weight"])
+assert((why parcel.heavy).map(step -> step.rule), ["$Shipment.heavy = $Shipment.weight>10", "$Shipment.weight = weight"])
+parcel.weight = 12
+assert([parcel.heavy, (why parcel.weight)[0].rule], [true, "$Shipment.weight = 12"])
+parcel.heavy
+# return: true
+---
+# Nucleoid rolls back an instance whose initializing constructor fails
+
+class Ticket(this.code, this.seat):
+    if seat > 100:
+        throw "no such seat"
+first = Ticket("A1", 4)
+try:
+    Ticket("Z9", 400)
+catch error:
+    reason = error
+assert([Ticket.length, reason], [1, "no such seat"])
+assert([first.code, first.seat], ["A1", 4])
+Ticket.length
+# return: 1
 ```

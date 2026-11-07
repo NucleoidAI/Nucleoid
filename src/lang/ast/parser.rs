@@ -144,6 +144,12 @@ struct LoopCondition {
     colon: usize,
 }
 
+#[derive(Default)]
+struct ParameterList {
+    parameters: Vec<Parameter>,
+    initializers: Vec<Stmt>,
+}
+
 struct Pattern {
     targets: Vec<Target>,
     length: usize,
@@ -1176,15 +1182,7 @@ impl Parser {
     }
 
     fn function_declaration(&mut self) -> Result<Arc<Function>> {
-        self.expect(&Token::Keyword(Keyword::Def))?;
-
-        let name = match self.advance() {
-            Token::Identifier(name) => name,
-            other => {
-                return Err(self.error(format!("Expected a name but found {}", other.describe())));
-            }
-        };
-
+        let name = self.function_name()?;
         let parameters = self.named_parameters()?;
         let body = self.named_body()?;
 
@@ -1193,6 +1191,14 @@ impl Parser {
             parameters,
             body: FunctionBody::Block(body),
         }))
+    }
+
+    fn function_name(&mut self) -> Result<String> {
+        self.expect(&Token::Keyword(Keyword::Def))?;
+        match self.advance() {
+            Token::Identifier(name) => Ok(name),
+            other => Err(self.error(format!("Expected a name but found {}", other.describe()))),
+        }
     }
 
     fn named_parameters(&mut self) -> Result<Vec<Parameter>> {
@@ -1368,14 +1374,46 @@ impl Parser {
     }
 
     fn parameters(&mut self) -> Result<Vec<Parameter>> {
+        let list = self.parameter_list(false)?;
+        debug_assert_eq!(list.initializers, Vec::<Stmt>::new());
+        Ok(list.parameters)
+    }
+
+    fn constructor_parameters(&mut self) -> Result<ParameterList> {
+        self.parameter_list(true)
+    }
+
+    fn starts_initializing_parameter(&self) -> bool {
+        matches!(
+            (
+                self.peek(),
+                self.peek_at(1),
+                self.peek_at(2),
+                self.peek_at(3)
+            ),
+            (
+                Token::Keyword(Keyword::This),
+                Token::Dot,
+                Token::Identifier(_),
+                Token::Comma | Token::RightParen | Token::Colon | Token::Assign
+            )
+        )
+    }
+
+    fn parameter_list(&mut self, initializing: bool) -> Result<ParameterList> {
         self.expect(&Token::LeftParen)?;
 
         let mut parameters: Vec<Parameter> = Vec::new();
+        let mut initializers = Vec::new();
 
         while !self.check(&Token::RightParen) {
             let rest = self.starts_rest_parameter();
             if rest {
                 self.position += 3;
+            }
+            let initialized = initializing && self.starts_initializing_parameter();
+            if initialized {
+                self.position += 2;
             }
             let mut parameter = self.parameter()?;
             parameter.rest = rest;
@@ -1391,6 +1429,9 @@ impl Parser {
                 }
                 parameter.default = Some(self.parameter_default()?);
             }
+            if initialized {
+                initializers.push(initializer(&parameter.name));
+            }
             parameters.push(parameter);
 
             if !self.eat(&Token::Comma) {
@@ -1402,7 +1443,11 @@ impl Parser {
         }
 
         self.expect(&Token::RightParen)?;
-        Ok(parameters)
+        debug_assert!(initializers.len() <= parameters.len());
+        Ok(ParameterList {
+            parameters,
+            initializers,
+        })
     }
 
     fn class_statement(&mut self) -> Result<Stmt> {
@@ -1416,9 +1461,9 @@ impl Parser {
         };
 
         let parameters = if self.check(&Token::LeftParen) {
-            self.parameters()?
+            self.constructor_parameters()?
         } else {
-            Vec::new()
+            ParameterList::default()
         };
 
         if matches!(self.peek(), Token::Identifier(word) if word == "extends") {
@@ -1426,7 +1471,7 @@ impl Parser {
         }
 
         if self.ends_bodyless_header() {
-            return Ok(Stmt::Class(empty_class(name, None, parameters)));
+            return Ok(Stmt::Class(class_declaration(name, None, parameters)));
         }
 
         self.expect(&Token::Colon)?;
@@ -1438,12 +1483,12 @@ impl Parser {
             self.advance();
         }
 
-        let mut declaration = empty_class(name, parent, parameters);
+        let mut declaration = class_declaration(name, parent, parameters);
         self.class_body(&mut declaration)?;
         Ok(Stmt::Class(declaration))
     }
 
-    fn extends_class(&mut self, name: String, parameters: Vec<Parameter>) -> Result<Stmt> {
+    fn extends_class(&mut self, name: String, parameters: ParameterList) -> Result<Stmt> {
         self.advance();
 
         let Token::Identifier(parent) = self.peek().clone() else {
@@ -1455,7 +1500,11 @@ impl Parser {
         self.advance();
 
         if self.ends_bodyless_header() {
-            return Ok(Stmt::Class(empty_class(name, Some(parent), parameters)));
+            return Ok(Stmt::Class(class_declaration(
+                name,
+                Some(parent),
+                parameters,
+            )));
         }
 
         self.expect(&Token::Colon)?;
@@ -1464,7 +1513,7 @@ impl Parser {
             return Err(self.error(format!("Class '{name}' already extends '{parent}'")));
         }
 
-        let mut declaration = empty_class(name, Some(parent), parameters);
+        let mut declaration = class_declaration(name, Some(parent), parameters);
         self.class_body(&mut declaration)?;
         Ok(Stmt::Class(declaration))
     }
@@ -1519,7 +1568,7 @@ impl Parser {
                     self.advance();
                 }
                 Token::Keyword(Keyword::Def) => {
-                    declaration.methods.push(self.function_declaration()?);
+                    declaration.methods.push(self.method_declaration()?);
                 }
                 Token::Identifier(field) if self.is_type_declaration() => {
                     let type_name = self.declared_type()?;
@@ -1533,6 +1582,25 @@ impl Parser {
                 _ => self.statement(&mut declaration.constructor)?,
             }
         }
+    }
+
+    fn method_declaration(&mut self) -> Result<Arc<Function>> {
+        let adoptable = matches!(self.peek_at(1), Token::Identifier(name) if name == "init")
+            && self.peek_at(2) == &Token::LeftParen;
+        if !adoptable {
+            return self.function_declaration();
+        }
+        let name = self.function_name()?;
+        let ParameterList {
+            parameters,
+            initializers: mut body,
+        } = self.constructor_parameters()?;
+        body.extend(self.named_body()?);
+        Ok(Arc::new(Function {
+            name: Some(name),
+            parameters,
+            body: FunctionBody::Block(body),
+        }))
     }
 
     fn declared_type(&mut self) -> Result<String> {
@@ -2719,14 +2787,31 @@ fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
     ))
 }
 
-fn empty_class(name: String, parent: Option<String>, parameters: Vec<Parameter>) -> ClassDecl {
+fn class_declaration(
+    name: String,
+    parent: Option<String>,
+    ParameterList {
+        parameters,
+        initializers,
+    }: ParameterList,
+) -> ClassDecl {
     ClassDecl {
         name,
         parent,
         parameters,
         fields: Vec::new(),
-        constructor: Vec::new(),
+        constructor: initializers,
         methods: Vec::new(),
+    }
+}
+
+fn initializer(name: &str) -> Stmt {
+    Stmt::Assign {
+        target: Expr::Member {
+            object: Box::new(Expr::This),
+            property: name.to_string(),
+        },
+        value: Expr::Identifier(name.to_string()),
     }
 }
 
