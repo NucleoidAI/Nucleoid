@@ -22,6 +22,11 @@ means no macros, trait objects or function pointers, and zero warnings from
 pedantic Clippy and rustdoc. The lints in `src/lib.rs` and `src/main.rs`,
 `clippy.toml` and `tests/power_of_ten.rs` enforce them.
 
+It also follows the Rust API Guidelines, Google's Rust Style Guide,
+Microsoft's Pragmatic Rust Guidelines and Clippy, ranked below the Power of 10
+rules in [rust-guidelines.instructions.md](.claude/rules/rust-guidelines.instructions.md),
+which digests them for the crate and records its deliberate divergences.
+
 ### What lives where
 
 | path | what it is |

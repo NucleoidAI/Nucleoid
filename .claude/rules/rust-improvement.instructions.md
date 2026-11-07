@@ -4,7 +4,7 @@ applyTo: "**"
 
 # Leave the world better than you found it
 
-When adding a feature, review the code you touch and apply current Rust best practices where needed. Adopt improved idioms and methods incrementally, including ownership and borrowing, concrete types, typed errors, and maintainable APIs, so the codebase improves continuously.
+When adding a feature, review the code you touch and apply current Rust best practices, as [rust-guidelines.instructions.md](rust-guidelines.instructions.md) and [power-of-ten.instructions.md](power-of-ten.instructions.md) define them, where needed. Adopt improved idioms and methods incrementally, including ownership and borrowing, concrete types, typed errors, and maintainable APIs, so the codebase improves continuously.
 
 Keep improvements focused on touched code and directly related helpers, proportional to the feature. Preserve intended behavior, respect public API semantic versioning, and cover affected non-ARC behavior with appropriate tests. For ARC-related changes, follow the no-tests policy in [arc.instructions.md](arc.instructions.md). Avoid unrelated rewrites, and follow the existing `cargo fmt` and warning-denied `cargo clippy` conventions.
 

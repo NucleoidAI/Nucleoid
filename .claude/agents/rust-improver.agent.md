@@ -35,7 +35,7 @@ other validation.
 
 ## Improvements
 
-- Apply current Rust idioms where they materially improve correctness, clarity, reliability, or maintainability. Do not manufacture cleanup or rewrite code that is already appropriate.
+- Apply current Rust idioms, as [rust-guidelines.instructions.md](../rules/rust-guidelines.instructions.md) and [power-of-ten.instructions.md](../rules/power-of-ten.instructions.md) define them, where they materially improve correctness, clarity, reliability, or maintainability. Do not manufacture cleanup or rewrite code that is already appropriate.
 - Improve ownership and borrowing, concrete types, typed `Result` errors, API design, and shared helpers where needed. Avoid unnecessary cloning, casts, abstractions, and duplicated logic.
 - Respect `Cargo.toml`'s `rust-version`, intended behavior, and public API semantic versioning. Do not upgrade dependencies or the minimum Rust version just to use a newer idiom.
 - Reuse repository conventions and well-maintained crates rather than inventing infrastructure. Add dependencies only when the task requires them and document the choice.
