@@ -1872,12 +1872,16 @@ impl Parser {
             }
 
             if name == "depth" && self.peek_at(1) == &Token::LeftParen {
-                self.position += 2;
-                let limit = self.within(true, Self::expression)?;
-                self.expect(&Token::RightParen)?;
                 return Ok(Expr::Depth {
                     source: Box::new(source),
-                    limit: Box::new(limit),
+                    limit: self.stage_argument()?,
+                });
+            }
+
+            if name == "path" && self.peek_at(1) == &Token::LeftParen {
+                return Ok(Expr::Path {
+                    source: Box::new(source),
+                    target: self.stage_argument()?,
                 });
             }
 
@@ -1885,6 +1889,13 @@ impl Parser {
         }
 
         Err(self.error("Expected an operation"))
+    }
+
+    fn stage_argument(&mut self) -> Result<Box<Expr>> {
+        self.position += 2;
+        let argument = self.within(true, Self::expression)?;
+        self.expect(&Token::RightParen)?;
+        Ok(Box::new(argument))
     }
 
     fn logical_or(&mut self) -> Result<Expr> {

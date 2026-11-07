@@ -61,7 +61,9 @@ impl Runtime {
             Expr::List(_) | Expr::ObjectLiteral(_) | Expr::SpreadObject(_) | Expr::Template(_) => {
                 self.freeze_collection(expression, scope)
             }
-            Expr::Reason { .. } | Expr::Depth { .. } => self.freeze_pipeline(expression, scope),
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } => {
+                self.freeze_pipeline(expression, scope)
+            }
             other => Ok(other.clone()),
         }
     }
@@ -81,6 +83,10 @@ impl Runtime {
                 Link::Depth(limit) => Expr::Depth {
                     source: Box::new(frozen),
                     limit: Box::new(self.freeze(limit, scope)?),
+                },
+                Link::Path(target) => Expr::Path {
+                    source: Box::new(frozen),
+                    target: Box::new(target.clone()),
                 },
             };
         }

@@ -220,6 +220,10 @@ pub enum Expr {
         source: Box<Expr>,
         limit: Box<Expr>,
     },
+    Path {
+        source: Box<Expr>,
+        target: Box<Expr>,
+    },
     Model,
     Quantified {
         quantifier: Quantifier,
@@ -432,7 +436,7 @@ impl Expr {
     #[must_use]
     pub fn contains_reasoning(&self) -> bool {
         match self {
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Model => true,
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Model => true,
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
             | Expr::Slice { object, .. } => object.contains_reasoning(),
@@ -545,7 +549,7 @@ impl<'a> Ast<'a> {
             | Expr::Conditional { .. }
             | Expr::Assign { .. }
             | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Model => {
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Model => {
                 Ast::Reason(reason::Reason::new(node))
             }
             Expr::Version { .. } => Ast::Version(version::Version::new(node)),

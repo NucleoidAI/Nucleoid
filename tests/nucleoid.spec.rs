@@ -18244,6 +18244,233 @@ Ticket.length
 # return: 1"#);
 }
 
+/// Nucleoid narrows an explanation to the paths from one source
+#[rustfmt::skip]
+#[test]
+fn narrows_an_explanation_to_the_paths_from_one_source() {
+    let mut run = runner();
+    run("price = 10");
+    run("qty = 3");
+    run("shipping = 5");
+    run("subtotal = price * qty");
+    run("total = subtotal + shipping");
+    run("link = total |> why |> path(price)");
+    assert_eq!(run("link.map(s -> s.node)"), serde_json::json!(["total", "subtotal", "price"]));
+    assert_eq!(run("link[0].from"), serde_json::json!(["subtotal", "shipping"]));
+    assert_eq!(run("link[1].rule"), "subtotal = price*qty");
+    assert_eq!(run("(why total).length"), 5);
+    run("shipping = price + 1");
+    assert_eq!(run("link.map(s -> s.node)"), serde_json::json!(["total", "subtotal", "shipping", "price"]));
+    run("price = 4");
+    assert_eq!(run("link.map(s -> s.holds)"), serde_json::json!([17, 12, 5, 4]));
+}
+
+/// Nucleoid narrows an impact to the paths toward one target
+#[rustfmt::skip]
+#[test]
+fn narrows_an_impact_to_the_paths_toward_one_target() {
+    let mut run = runner();
+    run("price = 10");
+    run("fee = 2");
+    run("tax = price * 2");
+    run("net = price + fee");
+    run("total = tax + net");
+    run("label = total * 3");
+    run("report = price - 1");
+    run("reach = price |> affects |> path(total)");
+    assert_eq!(run("(affects price).map(s -> s.node)"), serde_json::json!(["tax", "net", "report", "total", "label"]));
+    assert_eq!(run("reach.map(s -> s.node)"), serde_json::json!(["tax", "net", "total"]));
+    assert_eq!(run("reach[2].from"), serde_json::json!(["tax", "net"]));
+    run("total = tax + net + report");
+    assert_eq!(run("reach.map(s -> s.node)"), serde_json::json!(["tax", "net", "report", "total"]));
+    run("price = 4");
+    assert_eq!(run("reach.map(s -> s.holds)"), serde_json::json!([8, 6, 3, 17]));
+}
+
+/// Nucleoid keeps every path through a diamond in walk order
+#[rustfmt::skip]
+#[test]
+fn keeps_every_path_through_a_diamond_in_walk_order() {
+    let mut run = runner();
+    run("seed = 2");
+    run("left = seed + 1");
+    run("right = seed * 3");
+    run("spare = 7");
+    run("joined = left + right + spare");
+    run("mixed = joined * 2");
+    run("paths = mixed |> why |> path(seed)");
+    assert_eq!(run("(why mixed).map(s -> s.node)"), serde_json::json!(["mixed", "joined", "left", "right", "spare", "seed"]));
+    assert_eq!(run("paths.map(s -> s.node)"), serde_json::json!(["mixed", "joined", "left", "right", "seed"]));
+    run("left = 4");
+    assert_eq!(run("paths.map(s -> s.node)"), serde_json::json!(["mixed", "joined", "right", "seed"]));
+    run("spare = seed - 1");
+    assert_eq!(run("paths.map(s -> s.node)"), serde_json::json!(["mixed", "joined", "right", "spare", "seed"]));
+    run("seed = 3");
+    assert_eq!(run("paths.map(s -> s.holds)"), serde_json::json!([30, 15, 9, 2, 3]));
+}
+
+/// Nucleoid selects no step until a path reaches the target
+#[rustfmt::skip]
+#[test]
+fn selects_no_step_until_a_path_reaches_the_target() {
+    let mut run = runner();
+    run("a = 1");
+    run("b = a + 1");
+    run("c = 5");
+    run("d = b * c");
+    run("z = 9");
+    run("gap = d |> why |> path(z)");
+    run("own = d |> why |> path(d)");
+    run("rest = model |> path(z)");
+    assert_eq!(run("[gap, rest.map(s -> s.node)]"), serde_json::json!([[], ["z"]]));
+    assert_eq!(run("own.map(s -> s.node)"), serde_json::json!(["d"]));
+    run("c = z + 1");
+    assert_eq!(run("gap.map(s -> s.node)"), serde_json::json!(["d", "c", "z"]));
+    assert_eq!(run("gap.map(s -> s.holds)"), serde_json::json!([20, 10, 9]));
+    run("b = c * 2");
+    assert_eq!(run("gap.map(s -> s.node)"), serde_json::json!(["d", "b", "c", "z"]));
+    assert_eq!(run("rest.map(s -> s.node)"), serde_json::json!(["b", "c", "d", "z"]));
+    assert_eq!(run("own[0].holds"), 200);
+}
+
+/// Nucleoid keeps path selections live as rules and targets change
+#[rustfmt::skip]
+#[test]
+fn keeps_path_selections_live_as_rules_and_targets_change() {
+    let mut run = runner();
+    run("base = 2");
+    run("rate = base * 3");
+    run("fee = 4");
+    run("cost = rate + fee");
+    run("via = cost |> why |> path(base)");
+    assert_eq!(run("via.map(s -> s.node)"), serde_json::json!(["cost", "rate", "base"]));
+    run("rate = 6");
+    assert_eq!(run("via"), serde_json::json!([]));
+    run("fee = base + 1");
+    assert_eq!(run("via.map(s -> s.node)"), serde_json::json!(["cost", "fee", "base"]));
+    run("delete base");
+    assert_eq!(run("[via, fee]"), serde_json::json!([[], null]));
+    run("base = 5");
+    assert_eq!(run("via.map(s -> s.holds)"), serde_json::json!([12, 6, 5]));
+}
+
+/// Nucleoid finds derivation paths in class level rules
+#[rustfmt::skip]
+#[test]
+fn finds_derivation_paths_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Item(price, qty):
+    this.price = price
+    this.qty = qty"#);
+    run("$Item.subtotal = $Item.price * $Item.qty");
+    run("$Item.total = $Item.subtotal + 1");
+    run("$Item.via = $Item.total |> why |> path($Item.price)");
+    run("pen = Item(2, 5)");
+    run("cup = Item(3, 1)");
+    assert_eq!(run("pen.via.map(s -> s.node)"), serde_json::json!(["pen.total", "pen.subtotal", "pen.price"]));
+    assert_eq!(run("cup.via.map(s -> s.holds)"), serde_json::json!([4, 3, 3]));
+    assert_eq!(run("pen.via[2].rule"), "$Item.price = price");
+    run("pen.qty = 7");
+    assert_eq!(run("pen.via.map(s -> s.holds)"), serde_json::json!([15, 14, 2]));
+    run("$Item.total = $Item.qty + 1");
+    assert_eq!(run("[pen.via, cup.via]"), serde_json::json!([[], []]));
+}
+
+/// Nucleoid composes path selections with state filters
+#[rustfmt::skip]
+#[test]
+fn composes_path_selections_with_state_filters() {
+    let mut run = runner();
+    run("base = 2");
+    run("rate = base * 2");
+    run("fee = 1");
+    run("cost = rate * 4");
+    run("price = cost + fee");
+    run("chain = price |> why |> path(base) |> derived");
+    run("facts = price |> why |> stated |> path(base)");
+    assert_eq!(run("chain.map(s -> s.node)"), serde_json::json!(["price", "cost", "rate"]));
+    assert_eq!(run("facts.map(s -> s.node)"), serde_json::json!(["base"]));
+    run("fee = base + 1");
+    assert_eq!(run("chain.map(s -> s.node)"), serde_json::json!(["price", "cost", "fee", "rate"]));
+    run("base = 5");
+    assert_eq!(run("chain.map(s -> s.holds)"), serde_json::json!([46, 40, 6, 10]));
+    assert_eq!(run("facts[0].holds"), 5);
+}
+
+/// Nucleoid uses path selections in functions and quantifiers
+#[rustfmt::skip]
+#[test]
+fn uses_path_selections_in_functions_and_quantifiers() {
+    let mut run = runner();
+    run(r#"class Order(qty, price):
+    this.qty = qty
+    this.price = price"#);
+    run("$Order.subtotal = $Order.qty * $Order.price");
+    run("$Order.total = $Order.subtotal + 1");
+    run("$Order.big = any s in $Order.total |> why |> path($Order.qty): s.holds > 10");
+    run("pen = Order(2, 3)");
+    run("cup = Order(4, 3)");
+    run("def link() => (pen.total |> why |> path(pen.qty)).map(s -> s.node)");
+    run("bulk = all s in pen.total |> why |> path(pen.qty): s.holds > 1");
+    assert_eq!(run("link()"), serde_json::json!(["pen.total", "pen.subtotal", "pen.qty"]));
+    assert_eq!(run("[pen.big, cup.big, bulk]"), serde_json::json!([false, true, true]));
+    run("pen.qty = 5");
+    assert_eq!(run("[pen.big, cup.big, bulk]"), serde_json::json!([true, true, true]));
+    run("pen.qty = 1");
+    assert_eq!(run("[pen.big, cup.big, bulk]"), serde_json::json!([false, true, false]));
+    run("$Order.total = $Order.price + 1");
+    assert_eq!(run("link()"), serde_json::json!([]));
+    assert_eq!(run("[pen.big, cup.big, bulk]"), serde_json::json!([false, false, true]));
+}
+
+/// Nucleoid keeps path an ordinary name beside path stages
+#[rustfmt::skip]
+#[test]
+fn keeps_path_an_ordinary_name_beside_path_stages() {
+    let mut run = runner();
+    run(r#"class Route(stops):
+    this.stops = stops
+    def path() => this.stops.join(">")"#);
+    run("def hops(path) => path.length - 1");
+    run(r#"trip = Route(["oslo", "bergen"])"#);
+    run(r#"plan = {path: "coast"}"#);
+    run("legs = hops(trip.stops)");
+    run("fare = legs * 40");
+    run("via = fare |> why |> path(trip.stops)");
+    assert_eq!(run("[trip.path(), plan.path, legs]"), serde_json::json!(["oslo>bergen", "coast", 1]));
+    assert_eq!(run("via.map(s -> s.node)"), serde_json::json!(["fare", "legs", "trip.stops"]));
+    run(r#"trip.stops.push("tromso")"#);
+    assert_eq!(run("via.map(s -> s.holds)"), serde_json::json!([80, 2, ["oslo", "bergen", "tromso"]]));
+}
+
+/// Nucleoid restores path selections after failed changes and hypotheticals
+#[rustfmt::skip]
+#[test]
+fn restores_path_selections_after_failed_changes_and_hypotheticals() {
+    let mut run = runner();
+    run(r#"seed = 1
+mid = seed + 1
+top = mid * 2
+side = 3
+via = top |> why |> path(side)
+frozen = (top |> why |> path(seed)).value
+assert(via, [])
+try:
+    mid = seed + side
+    assert(via.map(s -> s.node), ["top", "mid", "side"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(via, [])
+plan = suppose mid = side * 2: via.map(s -> s.holds)
+assert([plan, via], [[12, 6, 3], []])
+mid = side + 1
+seed = 7
+assert(via.map(s -> s.holds), [8, 4, 3])
+assert(frozen.map(s -> s.node), ["top", "mid", "seed"])
+assert(frozen.map(s -> s.holds), [4, 2, 1])"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

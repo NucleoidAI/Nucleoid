@@ -2446,4 +2446,18 @@ assert(p, {"id": "p", "x": 3, "y": 4})
 assert([b.width, b.height, b.area, Box.length], [2, 5, 10, 1])
 b.area
 # return: 10
+---
+# Nucleoid explains how one value reaches another with path
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+link = total |> why |> path(price)
+assert(link.map(step => step.node), ["total", "subtotal", "price"])
+assert((why total).length, 5)
+price = 12
+link.map(step => step.holds)
+# return: [41,36,12]
 ```

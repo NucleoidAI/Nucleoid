@@ -3453,6 +3453,38 @@ due
   trucks on the `due` list. See [NUC 87](nuc-0087.md) and the
   [root contract](../nucleoid.spec.md#initializing-constructor-parameters).
 
+## Derivation path selections
+
+**Paths show which steps a late supplier pushes back**
+
+```nuc
+class Supplier(days):
+    this.days = days
+steel = Supplier(5)
+glass = Supplier(3)
+frame = steel.days + 2
+panes = glass.days + 1
+assembly = frame + panes
+crating = steel.days + 1
+delivery = assembly + 4
+invoice = crating * 10
+late = steel.days |> affects |> path(delivery)
+assert(late.map(step -> step.node), ["frame", "assembly", "delivery"])
+assert((affects steel.days).length, 5)
+steel.days = 9
+late.map(step -> step.holds)
+# return: [11,15,19]
+```
+
+- `steel.days |> affects |> path(delivery)` selects what the steel lead time
+  moves on its way to the delivery date: the frame, the assembly and the
+  delivery. It leaves out the crating and the invoice, which also read the lead
+  time but do not reach the delivery; `affects steel.days` selects all five.
+- The selection follows the model: a longer lead time updates the three steps
+  it keeps, and a new step between the steel and the delivery would join it.
+  See [NUC 88](nuc-0088.md) and the
+  [root contract](../nucleoid.spec.md#derivation-path-selections).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

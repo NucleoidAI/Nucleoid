@@ -1914,6 +1914,35 @@ assert: [lab.heating, hall.heating], [false, false]
   properties. See the
   [root contract](nucleoid.spec.md#initializing-constructor-parameters).
 
+## Derivation path selections
+
+**Path shows how a discount tier reaches an order total**
+
+```nuc
+subtotal = 120
+tier = "gold"
+rate = tier == "gold" ? 20 : 5
+discount = subtotal * rate / 100
+shipping = 9
+total = subtotal - discount + shipping
+how = total |> why |> path(tier)
+assert: how.map(step -> step.node), ["total", "discount", "rate", "tier"]
+assert: (why total).length, 6
+tier = "silver"
+assert: how.map(step -> step.holds), [123, 6, 5, "silver"]
+```
+
+- [NUC 88](docs/nuc-0088.md) adds the reasoning stage `|> path(TARGET)`. It
+  keeps the steps of a selection that lie on a dependency path between the walk
+  and `TARGET`, in their order, so `total |> why |> path(tier)` is how the tier
+  reaches the total: through the discount and its rate, four steps where
+  `why total` selects six, leaving out the subtotal and the shipping.
+- The selection stays live: once the tier is silver, the same four steps hold
+  the new rate, discount and total, and a rule rewired to read the tier would
+  join it. After `affects`, `|> path(TARGET)` keeps what a change moves on its
+  way to `TARGET`. See the
+  [root contract](nucleoid.spec.md#derivation-path-selections).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
