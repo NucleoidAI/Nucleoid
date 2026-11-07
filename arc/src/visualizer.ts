@@ -175,7 +175,23 @@ export async function output_instance_matrix({
         role: "assistant",
         content: `
           train_dataset:
-          ${JSON.stringify(train_dataset.dataset)}
+          ${JSON.stringify(
+            train_dataset.dataset
+              .flatMap(({ instances }) => instances)
+              .map(
+                ({
+                  input_value,
+                  input_instance_matrix,
+                  output_value,
+                  output_instance_matrix,
+                }) => ({
+                  input_value,
+                  input_instance_matrix: Matrix.crop(input_instance_matrix),
+                  output_value,
+                  output_instance_matrix: Matrix.crop(output_instance_matrix),
+                })
+              )
+          )}
         `,
       },
       {
