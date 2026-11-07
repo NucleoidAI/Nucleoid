@@ -35,6 +35,12 @@ export function locate(matrix) {
   };
 }
 
+export function silhouette(matrix) {
+  return matrix.map((row) =>
+    row.map((value: number) => (value === 0 ? 0 : "X"))
+  );
+}
+
 export function pad(
   matrix,
   rows: number,

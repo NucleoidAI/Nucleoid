@@ -95,7 +95,7 @@ export async function value({
     few_shot: ({ dataset }) => ({
       dataset: dataset.map(({ instances }) => ({
         instances: instances.map(({ input_instance_matrix, input_value }) => ({
-          matrix: Matrix.crop(input_instance_matrix),
+          matrix: Matrix.silhouette(Matrix.crop(input_instance_matrix)),
           orientation: input_value.orientation,
         })),
       })),
@@ -107,7 +107,7 @@ export async function value({
           instances:
           ${JSON.stringify(
             input_instances.map(({ input_instance_matrix, input_value }) => ({
-              matrix: Matrix.crop(input_instance_matrix),
+              matrix: Matrix.silhouette(Matrix.crop(input_instance_matrix)),
               orientation: input_value.orientation,
             }))
           )}
@@ -117,7 +117,9 @@ export async function value({
         role: "user",
         content: `
           matrix:
-          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
+          ${JSON.stringify(
+            Matrix.silhouette(Matrix.crop(input_instance_matrix))
+          )}
           json_format:
           {
             "orientation": <ORIENTATION>,

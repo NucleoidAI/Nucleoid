@@ -257,10 +257,13 @@ properties of the `instances` it sends, the instances of the same pair
 constructed before it. The calls that crop their own instance matrices,
 `analyzer.value`, `visualizer.value`, and `visualizer.output_instance_matrix`,
 also crop their examples' instance matrices to the nonzero bounding box with
-`Matrix.crop`, or to an empty list for an all-zero mask. None of these calls
-receives `input_x`, `output_x`, `input_y`, `output_y`, `input_orientation`, or
-`output_orientation`. The dataset files keep every property and their
-full-canvas matrices.
+`Matrix.crop`, or to an empty list for an all-zero mask. The orientation calls
+of `analyzer.value` and `visualizer.value` then replace every nonzero cell of
+those crops with the string `"X"`, through `Matrix.silhouette`, in their
+examples and their own prompts alike, so they show shapes without colors. None
+of these calls receives `input_x`, `output_x`, `input_y`, `output_y`,
+`input_orientation`, or `output_orientation`. The dataset files keep every
+property and their full-canvas matrices.
 
 Each non-genesis puzzle has exactly one `dataset.<puzzle_id>.json`, containing
 all its original `train` pairs from `data\training\<puzzle_id>.json` in source
@@ -2322,6 +2325,10 @@ include the entire input and its placement offset instead of rejecting an
 undersized reference. It does not center or modify the input. Empty matrices
 can be padded to an all-zero canvas. Ragged matrices and negative dimensions or
 offsets are still rejected.
+
+`Matrix.silhouette(matrix)` returns a new matrix of the same size in which every
+nonzero cell is the string `"X"` and every zero stays `0`, keeping a shape and
+dropping its colors. It does not crop and does not modify the input.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
