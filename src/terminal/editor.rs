@@ -4,9 +4,9 @@ use unicode_width::UnicodeWidthChar;
 
 use nucleoid::SyntaxOptions;
 
-use crate::{
-    INDENT, indented_body_header_with_options, next_indentation_with_options,
-    unterminated_block_comment,
+use crate::INDENT;
+use crate::continuation::{
+    indented_body_header_with_options, next_indentation_with_options, unterminated_block_comment,
 };
 
 pub(super) fn new(source: &str) -> TextArea<'static> {

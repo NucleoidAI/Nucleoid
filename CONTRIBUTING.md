@@ -17,7 +17,8 @@ $ cargo run                   # or type statements at a prompt
 Production code follows NASA's Power of 10 rules for safety-critical code,
 adapted to Rust in [power-of-ten.instructions.md](.claude/rules/power-of-ten.instructions.md).
 That means no panics, bounded recursion and loops, functions of at most 60
-lines, debug assertions for invariants, and checked return values. It also
+lines, source files of at most 500 lines with unit tests in each module's
+`tests.rs`, debug assertions for invariants, and checked return values. It also
 means no macros, trait objects or function pointers, and zero warnings from
 pedantic Clippy and rustdoc. The lints in `src/lib.rs` and `src/main.rs`,
 `clippy.toml` and `tests/power_of_ten.rs` enforce them.

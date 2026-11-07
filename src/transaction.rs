@@ -1,5 +1,7 @@
+mod origin;
+mod undo;
+
 use indexmap::IndexSet;
-use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use crate::graph::{Graph, GraphNode, NodeKey, ShapeKey};
@@ -9,217 +11,14 @@ use crate::runtime::Runtime;
 use crate::stack::Stack;
 use crate::state::{ClassData, State};
 use crate::value::{ObjectData, ObjectId, Value};
+pub(crate) use origin::{Origin, Start};
+use undo::{Slot, Undo, apply};
 
 /// A caught failure must undo its queued effects as well as its writes.
 pub(crate) struct Savepoint {
     mark: usize,
     stack: Stack,
     deleted: IndexSet<NodeKey>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum Start<T> {
-    Unchanged,
-    Absent,
-    Held(T),
-}
-
-impl<T> Start<T> {
-    fn of(before: Option<T>) -> Self {
-        match before {
-            Some(value) => Start::Held(value),
-            None => Start::Absent,
-        }
-    }
-}
-
-#[derive(Debug, Default)]
-pub(crate) struct Origin<'t> {
-    variables: HashMap<&'t str, Option<&'t Value>>,
-    properties: HashMap<(&'t str, &'t str), (usize, Option<&'t Value>)>,
-    objects: HashMap<&'t str, (usize, Option<&'t ObjectData>)>,
-    nodes: HashMap<&'t str, Option<&'t GraphNode>>,
-    shapes: HashMap<(&'t ShapeKey, &'t str), bool>,
-    observers: HashSet<&'t str>,
-}
-
-impl<'t> Origin<'t> {
-    fn record(&mut self, index: usize, entry: &'t Undo) {
-        match entry {
-            Undo::Variable { name, before } => {
-                self.variables
-                    .entry(name.as_str())
-                    .or_insert(before.as_ref());
-            }
-            Undo::Property {
-                object,
-                property,
-                before,
-            } => {
-                self.properties
-                    .entry((object.as_str(), property.as_str()))
-                    .or_insert((index, before.as_ref()));
-            }
-            Undo::PropertyRemoved {
-                object,
-                property,
-                before,
-                ..
-            } => {
-                self.properties
-                    .entry((object.as_str(), property.as_str()))
-                    .or_insert((index, Some(before)));
-            }
-            Undo::Object { id, before } => {
-                self.objects
-                    .entry(id.as_str())
-                    .or_insert((index, before.as_ref()));
-            }
-            Undo::Node { key, before } => {
-                self.nodes.entry(key.as_str()).or_insert(before.as_ref());
-            }
-            Undo::ShapeDependentAdded { source, dependent } => {
-                self.shape(source, dependent, false);
-            }
-            Undo::ShapeDependentRemoved { source, dependent } => {
-                self.shape(source, dependent, true);
-            }
-            Undo::HistoryLength { .. }
-            | Undo::HistoryRemoved { .. }
-            | Undo::Class { .. }
-            | Undo::Function { .. }
-            | Undo::DependentAdded { .. }
-            | Undo::DependentRemoved { .. } => {}
-        }
-    }
-
-    fn shape(&mut self, source: &'t ShapeKey, dependent: &'t NodeKey, present: bool) {
-        if source.observes_graph() {
-            self.shapes
-                .entry((source, dependent.as_str()))
-                .or_insert(present);
-        }
-    }
-
-    fn settle(mut self) -> Self {
-        self.observers = self
-            .shapes
-            .iter()
-            .filter(|(_, present)| **present)
-            .map(|((_, dependent), _)| *dependent)
-            .collect();
-        self
-    }
-
-    #[must_use]
-    pub(crate) fn node(&self, key: &NodeKey) -> Start<&'t GraphNode> {
-        self.nodes
-            .get(key.as_str())
-            .map_or(Start::Unchanged, |before| Start::of(*before))
-    }
-
-    #[must_use]
-    pub(crate) fn observed(&self, key: &NodeKey) -> bool {
-        self.observers.contains(key.as_str())
-    }
-
-    #[must_use]
-    pub(crate) fn variable(&self, name: &str) -> Start<&'t Value> {
-        self.variables
-            .get(name)
-            .map_or(Start::Unchanged, |before| Start::of(*before))
-    }
-
-    #[must_use]
-    pub(crate) fn property(&self, object: &str, property: &str) -> Start<&'t Value> {
-        let own = self.properties.get(&(object, property)).copied();
-        let whole = self
-            .objects
-            .get(object)
-            .map(|(index, data)| (*index, data.and_then(|data| data.properties.get(property))));
-        let before = match (own, whole) {
-            (Some((first, value)), Some((second, _))) if first < second => value,
-            (_, Some((_, value))) | (Some((_, value)), None) => value,
-            (None, None) => return Start::Unchanged,
-        };
-        Start::of(before)
-    }
-}
-
-/// The previous contents of one slot, recorded before it was overwritten.
-#[derive(Debug, Clone)]
-enum Undo {
-    /// An append needs only a length, not a copy of all retained values.
-    HistoryLength {
-        key: HistoryKey,
-        length: usize,
-    },
-    /// Move deleted histories into the log, so delete/recreate and nested
-    /// savepoints restore the original lifetime without copying its values.
-    HistoryRemoved {
-        key: HistoryKey,
-        history: History,
-    },
-    Variable {
-        name: String,
-        before: Option<Value>,
-    },
-    Property {
-        object: ObjectId,
-        property: String,
-        before: Option<Value>,
-    },
-    PropertyRemoved {
-        object: ObjectId,
-        property: String,
-        index: usize,
-        before: Value,
-    },
-    Object {
-        id: ObjectId,
-        before: Option<ObjectData>,
-    },
-    Class {
-        name: String,
-        before: Option<ClassData>,
-    },
-    Function {
-        name: String,
-        before: Option<Arc<Function>>,
-    },
-    Node {
-        key: NodeKey,
-        before: Option<GraphNode>,
-    },
-    /// One edge, undone on its own. Recording the whole node instead would copy
-    /// its list of dependents, which is what a widely-read name accumulates.
-    DependentAdded {
-        source: NodeKey,
-        dependent: NodeKey,
-    },
-    DependentRemoved {
-        source: NodeKey,
-        dependent: NodeKey,
-    },
-    ShapeDependentAdded {
-        source: ShapeKey,
-        dependent: NodeKey,
-    },
-    ShapeDependentRemoved {
-        source: ShapeKey,
-        dependent: NodeKey,
-    },
-}
-
-/// Identifies one slot, so an overwritten slot is recorded once however often it is written.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum Slot {
-    Variable(String),
-    Property(ObjectId, String),
-    Object(ObjectId),
-    Class(String),
-    Function(String),
-    Node(NodeKey),
 }
 
 /// An undo log for one `run`. Everything a statement touches is recorded so an
@@ -515,51 +314,5 @@ impl Runtime {
     pub(crate) fn rollback_hypothesis(&mut self, savepoint: Savepoint) {
         self.transaction.end_hypothesis(savepoint.mark);
         self.rollback_to(savepoint);
-    }
-}
-
-fn apply(entry: Undo, state: &mut State, graph: &mut Graph) {
-    match entry {
-        Undo::HistoryLength { key, length } => state.truncate_history(&key, length),
-        Undo::HistoryRemoved { key, history } => state.restore_history(key, history),
-        Undo::Variable { name, before } => state.restore_variable(name, before),
-        Undo::Property {
-            object,
-            property,
-            before,
-        } => state.restore_property(&object, property, before),
-        Undo::PropertyRemoved {
-            object,
-            property,
-            index,
-            before,
-        } => state.restore_removed_property(&object, property, index, before),
-        Undo::Object { id, before } => state.restore_object(id, before),
-        Undo::Class { name, before } => state.restore_class(name, before),
-        Undo::Function { name, before } => state.restore_function(name, before),
-        Undo::Node { key, before } => match before {
-            Some(node) => {
-                graph.insert(node);
-            }
-            None => {
-                graph.remove(&key);
-            }
-        },
-        Undo::DependentAdded { source, dependent } => {
-            if let Some(node) = graph.get_mut(&source) {
-                node.dependents.shift_remove(&dependent);
-            }
-        }
-        Undo::DependentRemoved { source, dependent } => {
-            if let Some(node) = graph.get_mut(&source) {
-                node.dependents.insert(dependent);
-            }
-        }
-        Undo::ShapeDependentAdded { source, dependent } => {
-            graph.remove_shape_dependency(&source, &dependent);
-        }
-        Undo::ShapeDependentRemoved { source, dependent } => {
-            graph.add_shape_dependency(&source, &dependent);
-        }
     }
 }

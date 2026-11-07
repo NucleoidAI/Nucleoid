@@ -33,7 +33,8 @@ change by every agent: features, fixes, refactors, NUC candidates and the
      (`[chrome]`, `[Fuchsia]`, per-codebase formatters and test frameworks)
      do not apply.
 - Library API rules bind everything reachable from `src/lib.rs`; the binary
-  (`src/main.rs`, `src/terminal/`) follows the rest.
+  (`src/main.rs`, `src/interactive.rs`, `src/continuation.rs`,
+  `src/terminal/`) follows the rest.
 - Apply the guidelines to new and touched code. Bring older code in line
   incrementally under the
   [Leave the world better](rust-improvement.instructions.md) policy, never
