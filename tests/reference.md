@@ -2460,4 +2460,20 @@ assert((why total).length, 5)
 price = 12
 link.map(step => step.holds)
 # return: [41,36,12]
+---
+# Nucleoid accepts function as the named declaration spelling
+
+function scale(amount, factor = 2) {
+    return amount * factor
+}
+class Box:
+    function init(size) { this.size = size }
+    function grown() { return scale(this.size) }
+box = Box(3)
+assert(scale(4), 8)
+assert(box.grown(), 6)
+function scale(amount, factor = 3) { return amount * factor }
+assert(box.grown(), 9)
+box.grown()
+# return: 9
 ```

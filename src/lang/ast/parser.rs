@@ -145,6 +145,12 @@ struct LoopCondition {
     colon: usize,
 }
 
+#[derive(Clone, Copy)]
+enum FunctionSpelling {
+    Def,
+    Function,
+}
+
 #[derive(Default)]
 struct ParameterList {
     parameters: Vec<Parameter>,

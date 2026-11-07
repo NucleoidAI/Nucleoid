@@ -151,7 +151,7 @@ impl Parser {
                 Token::Keyword(Keyword::Pass) => {
                     self.advance();
                 }
-                Token::Keyword(Keyword::Def) => {
+                _ if self.starts_function_declaration() => {
                     declaration.methods.push(self.method_declaration()?);
                 }
                 Token::Identifier(field) if self.is_type_declaration() => {
@@ -174,12 +174,13 @@ impl Parser {
         if !adoptable {
             return self.function_declaration();
         }
+        let spelling = self.function_keyword()?;
         let name = self.function_name()?;
         let ParameterList {
             parameters,
             initializers: mut body,
         } = self.constructor_parameters()?;
-        body.extend(self.named_body()?);
+        body.extend(self.declaration_body(spelling)?);
         Ok(Arc::new(Function {
             name: Some(name),
             parameters,

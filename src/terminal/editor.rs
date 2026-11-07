@@ -174,6 +174,19 @@ mod tests {
     }
 
     #[test]
+    fn newlines_keep_the_indentation_of_braced_function_headers() {
+        let mut editor = new("    function scale(amount) {");
+        newline(&mut editor);
+        assert_eq!(editor.lines(), ["    function scale(amount) {", "    "]);
+        let mut editor = new("function scale(amount) { return amount }");
+        newline(&mut editor);
+        assert_eq!(
+            editor.lines(),
+            ["function scale(amount) { return amount }", ""]
+        );
+    }
+
+    #[test]
     fn mouse_positioning_tracks_scrolled_lines_and_wide_characters() {
         let mut editor = new("first\nsecond\nthird\nlast");
         let mut terminal = Terminal::new(TestBackend::new(10, 2)).unwrap();

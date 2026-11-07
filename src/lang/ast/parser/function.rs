@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::class::initializer;
-use super::{ParameterList, Parser};
+use super::{FunctionSpelling, ParameterList, Parser};
 use crate::error::{Position, Result};
 use crate::lang::ast::lexer::{Keyword, Token};
 use crate::lang::ast::{Function, FunctionBody, Parameter, ParameterDefault, Stmt};
@@ -80,10 +80,22 @@ impl Parser {
         self.function_declaration().map(Stmt::Function)
     }
 
+    pub(super) fn starts_function_declaration(&self) -> bool {
+        match self.peek() {
+            Token::Keyword(Keyword::Def) => true,
+            Token::Keyword(Keyword::Function) => matches!(self.peek_at(1), Token::Identifier(_)),
+            _ => false,
+        }
+    }
+
     pub(super) fn function_declaration(&mut self) -> Result<Arc<Function>> {
+        let spelling = self.function_keyword()?;
         let name = self.function_name()?;
-        let parameters = self.named_parameters()?;
-        let body = self.named_body()?;
+        let parameters = match spelling {
+            FunctionSpelling::Def => self.named_parameters()?,
+            FunctionSpelling::Function => self.parameters()?,
+        };
+        let body = self.declaration_body(spelling)?;
 
         Ok(Arc::new(Function {
             name: Some(name),
@@ -92,8 +104,22 @@ impl Parser {
         }))
     }
 
-    pub(super) fn function_name(&mut self) -> Result<String> {
+    pub(super) fn function_keyword(&mut self) -> Result<FunctionSpelling> {
+        if self.eat_keyword(Keyword::Function) {
+            return Ok(FunctionSpelling::Function);
+        }
         self.expect(&Token::Keyword(Keyword::Def))?;
+        Ok(FunctionSpelling::Def)
+    }
+
+    pub(super) fn declaration_body(&mut self, spelling: FunctionSpelling) -> Result<Vec<Stmt>> {
+        match spelling {
+            FunctionSpelling::Def => self.named_body(),
+            FunctionSpelling::Function => self.braced(),
+        }
+    }
+
+    pub(super) fn function_name(&mut self) -> Result<String> {
         match self.advance() {
             Token::Identifier(name) => Ok(name),
             other => Err(self.error(format!("Expected a name but found {}", other.describe()))),

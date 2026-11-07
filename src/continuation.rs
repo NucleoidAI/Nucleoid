@@ -14,7 +14,9 @@ pub(super) struct Pending {
 impl Pending {
     pub(super) fn accept(&mut self, line: &str, options: SyntaxOptions) -> Option<String> {
         if line.trim().is_empty() {
-            if unterminated_block_comment(&self.source, options) {
+            if unterminated_block_comment(&self.source, options)
+                || opens_function_body(&self.source, options)
+            {
                 self.source.push_str(line);
                 self.source.push('\n');
                 return None;
@@ -42,7 +44,7 @@ impl Pending {
             self.indentation.clear();
             return None;
         }
-        if self.multiline {
+        if self.multiline || opens_function_body(&self.source, options) {
             self.indentation = indentation_hint;
             return None;
         }
@@ -61,6 +63,29 @@ pub(super) fn unterminated_block_comment(source: &str, options: SyntaxOptions) -
         && tokenize_with_options(source, options).is_err_and(|error| {
             error.kind() == ErrorKind::Syntax && error.message() == "Unterminated block comment"
         })
+}
+
+fn opens_function_body(source: &str, options: SyntaxOptions) -> bool {
+    let Ok(tokens) = tokenize_with_options(source, options) else {
+        return false;
+    };
+    let mut tokens = header_tokens(&tokens).peekable();
+    let mut previous = None;
+    let mut declares = false;
+    let mut opened = 0usize;
+    let mut closed = 0usize;
+    while let Some(token) = tokens.next() {
+        match token {
+            Token::Keyword(Keyword::Function) if previous != Some(&Token::Dot) => {
+                declares |= matches!(tokens.peek(), Some(Token::Identifier(_)));
+            }
+            Token::LeftBrace => opened += 1,
+            Token::RightBrace => closed += 1,
+            _ => {}
+        }
+        previous = Some(token);
+    }
+    declares && opened > closed
 }
 
 /// In opt-in mode, use the last logical code line, not text inside a trailing

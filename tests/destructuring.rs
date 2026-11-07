@@ -184,7 +184,7 @@ fn accepted_documents_destructure_only_in_the_appended_cases() {
         assert_eq!(uses, new, "{}", case.title);
     }
     assert_eq!(destructuring, 11);
-    assert_eq!(cases, 1010);
+    assert_eq!(cases, 1019);
 }
 
 #[test]

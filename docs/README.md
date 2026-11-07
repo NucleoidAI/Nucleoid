@@ -1491,6 +1491,7 @@ Normative detail: [while loops](../nucleoid.spec.md#while-loops).
 - `def` defines a function in the state; a function with no `return` yields `null`.
 - `def name(params) => expression` is exactly a named block containing `return expression`; methods and parameter annotations use the same form.
 - [NUC 57](nuc-0057.md) accepts `->` in place of `=>` in every named and anonymous arrow, and Python-style `lambda` expressions; see [Thin arrows and Python-style lambdas](#thin-arrows-and-python-style-lambdas).
+- [NUC 89](nuc-0089.md) accepts `function name(params) { body }` as an optional spelling of `def name(params):` with the same statements; see [Named function declarations](#named-function-declarations).
 - Accepted [NUC 32](nuc-0032.md) optionally places that expression in a genuinely indented body after `=>`; it preserves the same sole-return block and every accepted parameter spelling.
 - [NUC 18](nuc-0018.md) specifies `def name amount => expression` as exactly `def name(amount) => expression` for one untyped ordinary identifier parameter, including methods and `init`.
 - [NUC 19](nuc-0019.md) specifies `def name amount:` followed by an indented suite as exactly `def name(amount):` with that same suite.
@@ -1880,7 +1881,31 @@ names
 - Selectors stay live and roll back like the lambda they abbreviate. They render as written, so `why` explains `dearest = Item.max(.price)`; anonymous lambdas keep rendering as `function()`.
 - Anything else that starts with `.` keeps its error: `f(.a + 1)`, `x = .a`, `[.a]` and `assert: .a, 1` still raise `SyntaxError("Unexpected '.'")`. A selector names at most 127 properties. See the authoritative [property selector arguments](../nucleoid.spec.md#property-selector-arguments) section.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), and [NUC 79](nuc-0079.md).
+### Named function declarations
+
+```
+function scale(amount, factor = 2) {
+    return amount * factor
+}
+class Box:
+    function init(size) { this.size = size }
+    function grown() { return scale(this.size) }
+box = Box(3)
+assert(scale(4), 8)
+assert(box.grown(), 6)
+function scale(amount, factor = 3) { return amount * factor }
+assert(box.grown(), 9)
+box.grown()
+```
+
+- This is the complete `Nucleoid accepts function as the named declaration spelling` program in `tests/reference.md`, without its title and expected-return metadata; it returns `9`.
+- [NUC 89](nuc-0089.md) accepts the named function declaration of JavaScript, TypeScript and PHP: `function`, a name, a parenthesized parameter list and a braced body. `function scale(amount, factor = 2) { ... }` declares exactly the function that `def scale(amount, factor = 2):` declares with the same statements, and canonical source keeps writing `def`.
+- The parameter list is that of a parenthesized `def`: annotations, literal defaults, a final rest parameter and, for `init` in a class body, NUC 87's `this.name` parameters. The body is the braced block of an anonymous `function (params) { ... }` literal; its `{` follows the parameters on the same line, and `{}` returns `null`.
+- The declaration is a statement wherever a statement may start, including after another statement on the same line and inside function bodies. In an indented class body it declares a method, and `function init(...)` becomes the constructor, as `def init(...)` does.
+- Declarations are not hoisted: a call before the declaration runs raises `ReferenceError("<name> is not defined")`, as for `def`. Redefinition, `.value`, scopes, `why`, `affects`, graph keys and transactions are also those of `def`.
+- In an expression, `function` must still be followed by `(`: `g = function f(a) { return a }` raises `SyntaxError("Expected '(' but found identifier 'f'")`. After the parameters, any token other than `{` raises `SyntaxError("Expected '{' but found <token>")`, so arrows, colon suites and return annotations are not added. The line-oriented REPL buffers a declaration until its braces close. See the authoritative [named function declarations](../nucleoid.spec.md#named-function-declarations) section.
+
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), [NUC 79](nuc-0079.md), and [NUC 89](nuc-0089.md).
 
 ---
 
@@ -3762,6 +3787,7 @@ def name amount:                       one untyped parameter, indented only (NUC
     statement
 def name amount: type:                 one typed parameter, indented only (NUC 24)
     statement
+function name(params) { statement }    the same block function, braced spelling (NUC 89)
 
 { statement; statement }               block
 record = { amount, label }             object shorthand (candidate NUC 17)

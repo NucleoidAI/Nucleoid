@@ -1,0 +1,10 @@
+function area(width, height) {
+    return width * height
+}
+function size(value) {
+    if value > 10:
+        return "large"
+    return "small"
+}
+room = area(3, 4)
+[room, size(room)]

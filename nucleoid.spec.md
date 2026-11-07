@@ -154,6 +154,69 @@ operator-chain diagnostics and source positions are preserved.
   `Nucleoid rolls back extends class declarations` specify the executable
   behavior.
 
+## Named function declarations
+
+- [NUC 89](docs/nuc-0089.md) adds the named function declaration of
+  JavaScript, TypeScript and PHP: the keyword `function`, a name, a
+  parenthesized parameter list and a braced body, as in
+  `function double(amount) { return amount * 2 }`. It declares the function
+  that `def double(amount):` declares with the same statements. `def` keeps
+  its grammar and meaning, and no token, keyword, syntax tree node or runtime
+  path is added.
+- The parameter list is the parenthesized list of `def`: annotations, literal
+  defaults, a final rest parameter, a trailing comma and newlines inside the
+  parentheses. In a class body, `init` also takes the `this.name` and
+  `self.name` parameters of [NUC 87](docs/nuc-0087.md). The bare, comma-free
+  and typed bare parameter lists remain spellings of `def` only. A PHP
+  parameter such as `$a` remains a class reference, so
+  `function f($a) { return $a }` raises
+  `SyntaxError("Expected a parameter but found '$a'")`.
+- The body is the braced block of an anonymous `function (params) { ... }`
+  literal: statements separated by newlines, semicolons or nothing, which may
+  contain colon suites and further blocks. Its `{` directly follows the
+  closing parenthesis on the same line, and `{}` is an empty body, which
+  returns `null`.
+- The declaration is a statement and may start wherever a statement starts:
+  at the top level, in indented and same-line suites, in braced blocks and
+  function bodies, and after another statement on the same line, as in
+  `function f(a) { return a } f(2)`. In an indented class body it declares a
+  method, and `function init(...)` becomes the constructor, as `def` does
+  there.
+- Every spelling builds the same declaration: the same name, parameters and
+  block body. The function is stored in the state when its declaration runs,
+  so a call before that raises `ReferenceError("<name> is not defined")`, as
+  for `def`; declarations are not hoisted. Redefinition and the callers it
+  updates, live and frozen `.value` definitions, scopes, graph keys, `why`,
+  `affects`, transactions and canonical rendering are those of `def`, which
+  canonical source keeps writing.
+- `function` followed by a name is a declaration only where a statement
+  starts. In an expression the accepted error remains:
+  `g = function f(a) { return a }` raises
+  `SyntaxError("Expected '(' but found identifier 'f'")` at line 1, column 14.
+  Anonymous literals, and `function` as a property name after `.`, keep their
+  meanings.
+- After the parameter list, any token other than `{` raises
+  `SyntaxError("Expected '{' but found <token>")` at that token, as the
+  anonymous literal does. Arrows, colon suites and return annotations are not
+  added: `function f(a) => a` reports `'=>'` at line 1, column 15, and
+  `function f(a): number { return a }` reports `':'` at line 1, column 14. A
+  name without a parameter list raises
+  `SyntaxError("Expected '(' but found <token>")`, so `function amount:`
+  followed by an indented body reports `':'` at line 1, column 16.
+- Only former syntax errors change. The accepted parser consumes `function`
+  only as an anonymous literal, which requires `(` next, or as a property name
+  after `.`, so every input in which `function` is followed by a name other
+  than after `.` was a syntax error. The declaration is recognized only at
+  such a token.
+- The REPL buffers a pending input that contains such a declaration until its
+  braces close, through blank lines, and runs it then, or after a blank line
+  when the input also opened a colon header. The terminal workspace submits
+  explicitly and needs no change.
+- The six appended entries beginning
+  `Nucleoid declares named functions with the function keyword` through
+  `Nucleoid rolls back failed function declarations` specify the executable
+  behavior.
+
 ## Opt-in C-style comments
 
 - `#` starts an accepted line comment in every mode. By default, slash
@@ -21891,4 +21954,116 @@ seed = 7
 assert(via.map(s -> s.holds), [8, 4, 3])
 assert(frozen.map(s -> s.node), ["top", "mid", "seed"])
 assert(frozen.map(s -> s.holds), [4, 2, 1])
+---
+# Nucleoid declares named functions with the function keyword
+
+function double(amount) {
+    return amount * 2
+}
+function area(width, height) { return width * height }
+function describe(size) {
+    if size > 10:
+        return "large"
+    return "small"
+}
+room = area(3, 4)
+assert(double(room), 24)
+assert(describe(room), "large")
+assert(describe(double(2)), "small")
+room = area(2, 2)
+assert([room, describe(room)], [4, "small"])
+double(5)
+# return: 10
+---
+# Nucleoid keeps function declarations equivalent to def declarations
+
+def fee(amount) => amount / 10
+base = 200
+charge = fee(base)
+assert(charge, 20)
+function fee(amount) { return amount / 4 }
+assert(charge, 50)
+function label(name, count: int = 1, ...tags) { return [name, count, tags] }
+assert(label("a"), ["a", 1, []])
+assert(label("b", 2, "x", "y"), ["b", 2, ["x", "y"]])
+def fee(amount) => amount / 2
+base = 300
+charge
+# return: 150
+---
+# Nucleoid declares methods and init with the function keyword
+
+class Account:
+    owner: str
+    function init(owner, balance = 0) {
+        this.owner = owner
+        this.balance = balance
+    }
+    function deposit(amount) { return this.balance + amount }
+    def withdraw(amount) => this.balance - amount
+$Account.rich = $Account.balance > 100
+ana = Account("ana", 80)
+bo = Account("bo")
+assert([ana.owner, ana.balance, bo.balance], ["ana", 80, 0])
+assert([ana.deposit(30), ana.withdraw(30)], [110, 50])
+assert([ana.rich, bo.rich], [false, false])
+ana.balance = 150
+assert(ana.rich, true)
+Account.length
+# return: 2
+---
+# Nucleoid declares functions wherever a statement may start
+
+ready = true
+if ready:
+    function greet(name) { return "hi " + name }
+{ function shout(name) { return name + "!" } }
+function outer(x) {
+    function inner(y) { return y * 10 }
+    return inner(x) + 1
+}
+function twice(x) { return x * 2 } total = twice(3)
+assert(greet("ana"), "hi ana")
+assert(shout("bo"), "bo!")
+assert(outer(2), 21)
+assert(total, 6)
+---
+# Nucleoid keeps function declarations live without hoisting
+
+try:
+    early = rate(2)
+catch error:
+    assert(error, ReferenceError("rate is not defined"))
+function rate(x) { return x * 2 }
+base = 3
+charge = rate(base)
+frozen = rate.value
+function rate(x) { return x * 5 }
+assert(charge, 15)
+assert(frozen(3), 6)
+base = 4
+assert(charge, 20)
+assert((why charge)[0].from, ["rate", "base"])
+charge
+# return: 20
+---
+# Nucleoid rolls back failed function declarations
+
+function fee(amount) { return amount + 1 }
+total = fee(10)
+try:
+    function fee(amount) { return amount * 100 }
+    assert(total, 1000)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(total, 11)
+assert(fee(1), 2)
+failure = ""
+try:
+    function fee(amount) { return missing + amount }
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert([total, fee(2)], [11, 3])
 ```

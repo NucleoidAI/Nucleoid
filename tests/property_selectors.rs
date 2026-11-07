@@ -909,5 +909,5 @@ fn the_appended_cases_use_selectors_and_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 37);
-    assert_eq!(cases, 1010);
+    assert_eq!(cases, 1019);
 }

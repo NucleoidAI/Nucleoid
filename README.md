@@ -1943,6 +1943,34 @@ assert: how.map(step -> step.holds), [123, 6, 5, "silver"]
   way to `TARGET`. See the
   [root contract](nucleoid.spec.md#derivation-path-selections).
 
+## Named function declarations
+
+**Function declarations keep JavaScript-style functions live**
+
+```nuc
+rate = 5
+function shipping(weight) { return rate * weight }
+function total(price, weight) {
+    return price + shipping(weight)
+}
+order = total(40, 2)
+assert(order, 50)
+rate = 4
+assert(order, 48)
+function shipping(weight) { return rate * weight + 1 }
+assert(order, 49)
+```
+
+- [NUC 89](docs/nuc-0089.md) accepts the named function declaration of
+  JavaScript, TypeScript and PHP. `function total(price, weight) { ... }`
+  declares exactly the function that `def total(price, weight):` declares
+  with the same statements, written in braces instead of an indented body.
+- `order` stays live through both functions: a new rate updates it, and so
+  does redeclaring `shipping`, whichever spelling either declaration uses.
+  Declarations are not hoisted, and in an expression `function` still takes
+  only an anonymous literal. See the
+  [root contract](nucleoid.spec.md#named-function-declarations).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

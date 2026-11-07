@@ -3485,6 +3485,40 @@ late.map(step -> step.holds)
   See [NUC 88](nuc-0088.md) and the
   [root contract](../nucleoid.spec.md#derivation-path-selections).
 
+## Named function declarations
+
+**Function declarations keep a class's grading rule live**
+
+```nuc
+function grade(score) {
+    if score >= 80:
+        return "merit"
+    if score >= 50:
+        return "pass"
+    return "fail"
+}
+class Student(name, score):
+    this.name = name
+    this.score = score
+$Student.result = grade($Student.score)
+ana = Student("ana", 72)
+bo = Student("bo", 41)
+assert([ana.result, bo.result], ["pass", "fail"])
+bo.score = 85
+assert(bo.result, "merit")
+function grade(score) { return score >= 60 }
+[ana.result, bo.result]
+# return: [true,true]
+```
+
+- `grade` is declared with the JavaScript spelling and called by the
+  class-level rule `$Student.result`, so each student's result follows its
+  own score: raising the score of `bo` moves it to `"merit"`.
+- Redeclaring `grade` updates every result that calls it, as redefining a
+  `def` function does: both students now reach the new mark of `60`. See
+  [NUC 89](nuc-0089.md) and the
+  [root contract](../nucleoid.spec.md#named-function-declarations).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

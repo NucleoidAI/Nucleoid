@@ -18471,6 +18471,143 @@ assert(frozen.map(s -> s.node), ["top", "mid", "seed"])
 assert(frozen.map(s -> s.holds), [4, 2, 1])"#);
 }
 
+/// Nucleoid declares named functions with the function keyword
+#[rustfmt::skip]
+#[test]
+fn declares_named_functions_with_the_function_keyword() {
+    let mut run = runner();
+    run(r#"function double(amount) {
+    return amount * 2
+}"#);
+    run("function area(width, height) { return width * height }");
+    run(r#"function describe(size) {
+    if size > 10:
+        return "large"
+    return "small"
+}"#);
+    run("room = area(3, 4)");
+    assert_eq!(run("double(room)"), 24);
+    assert_eq!(run("describe(room)"), "large");
+    assert_eq!(run("describe(double(2))"), "small");
+    run("room = area(2, 2)");
+    assert_eq!(run("[room, describe(room)]"), serde_json::json!([4, "small"]));
+    run(r#"double(5)
+
+# return: 10"#);
+}
+
+/// Nucleoid keeps function declarations equivalent to def declarations
+#[rustfmt::skip]
+#[test]
+fn keeps_function_declarations_equivalent_to_def_declarations() {
+    let mut run = runner();
+    run(r#"def fee(amount) => amount / 10
+base = 200
+charge = fee(base)
+assert(charge, 20)
+function fee(amount) { return amount / 4 }
+assert(charge, 50)
+function label(name, count: int = 1, ...tags) { return [name, count, tags] }
+assert(label("a"), ["a", 1, []])
+assert(label("b", 2, "x", "y"), ["b", 2, ["x", "y"]])
+def fee(amount) => amount / 2
+base = 300
+charge
+# return: 150"#);
+}
+
+/// Nucleoid declares methods and init with the function keyword
+#[rustfmt::skip]
+#[test]
+fn declares_methods_and_init_with_the_function_keyword() {
+    let mut run = runner();
+    run(r#"class Account:
+    owner: str
+    function init(owner, balance = 0) {
+        this.owner = owner
+        this.balance = balance
+    }
+    function deposit(amount) { return this.balance + amount }
+    def withdraw(amount) => this.balance - amount
+$Account.rich = $Account.balance > 100
+ana = Account("ana", 80)
+bo = Account("bo")
+assert([ana.owner, ana.balance, bo.balance], ["ana", 80, 0])
+assert([ana.deposit(30), ana.withdraw(30)], [110, 50])
+assert([ana.rich, bo.rich], [false, false])
+ana.balance = 150
+assert(ana.rich, true)
+Account.length
+# return: 2"#);
+}
+
+/// Nucleoid declares functions wherever a statement may start
+#[rustfmt::skip]
+#[test]
+fn declares_functions_wherever_a_statement_may_start() {
+    let mut run = runner();
+    run("ready = true");
+    run(r#"if ready:
+    function greet(name) { return "hi " + name }"#);
+    run(r#"{ function shout(name) { return name + "!" } }"#);
+    run(r#"function outer(x) {
+    function inner(y) { return y * 10 }
+    return inner(x) + 1
+}"#);
+    run("function twice(x) { return x * 2 } total = twice(3)");
+    assert_eq!(run(r#"greet("ana")"#), "hi ana");
+    assert_eq!(run(r#"shout("bo")"#), "bo!");
+    assert_eq!(run("outer(2)"), 21);
+    assert_eq!(run("total"), 6);
+}
+
+/// Nucleoid keeps function declarations live without hoisting
+#[rustfmt::skip]
+#[test]
+fn keeps_function_declarations_live_without_hoisting() {
+    let mut run = runner();
+    run(r#"try:
+    early = rate(2)
+catch error:
+    assert(error, ReferenceError("rate is not defined"))
+function rate(x) { return x * 2 }
+base = 3
+charge = rate(base)
+frozen = rate.value
+function rate(x) { return x * 5 }
+assert(charge, 15)
+assert(frozen(3), 6)
+base = 4
+assert(charge, 20)
+assert((why charge)[0].from, ["rate", "base"])
+charge
+# return: 20"#);
+}
+
+/// Nucleoid rolls back failed function declarations
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_function_declarations() {
+    let mut run = runner();
+    run(r#"function fee(amount) { return amount + 1 }
+total = fee(10)
+try:
+    function fee(amount) { return amount * 100 }
+    assert(total, 1000)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(total, 11)
+assert(fee(1), 2)
+failure = ""
+try:
+    function fee(amount) { return missing + amount }
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+assert([total, fee(2)], [11, 3])"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

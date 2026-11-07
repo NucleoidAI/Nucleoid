@@ -161,7 +161,7 @@ impl Parser {
             Token::Keyword(Keyword::If) => self.if_statement(),
             Token::Keyword(Keyword::For) => self.for_statement(),
             Token::Keyword(Keyword::Class) => self.class_statement(),
-            Token::Keyword(Keyword::Def) => self.function_statement(),
+            _ if self.starts_function_declaration() => self.function_statement(),
             Token::Keyword(Keyword::Try) => self.try_statement(),
             Token::Keyword(Keyword::Pass) => {
                 self.advance();
