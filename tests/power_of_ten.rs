@@ -91,6 +91,17 @@ fn functions_are_held_to_sixty_lines() {
 }
 
 #[test]
+fn production_files_are_held_to_five_hundred_lines() {
+    for path in production_sources() {
+        if path.file_name().is_some_and(|name| name == "tests.rs") {
+            continue;
+        }
+        let lines = read(&path).lines().count();
+        assert!(lines <= 500, "{} has {lines} lines", path.display());
+    }
+}
+
+#[test]
 fn production_code_avoids_macros_dynamic_dispatch_and_function_pointers() {
     let forbidden = [
         ("macro_rules!", Regex::new(r"\bmacro_rules!").unwrap()),

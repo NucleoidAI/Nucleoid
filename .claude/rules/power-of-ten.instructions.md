@@ -6,9 +6,10 @@ applyTo: "**"
 
 Gerard J. Holzmann's "The Power of 10: Rules for Developing Safety-Critical
 Code" (NASA/JPL, 2006) applies to the crate's production code: the library
-(`src/lib.rs` and its modules) and the binary (`src/main.rs` and
-`src/terminal/`). Integration tests, examples and build scripts keep the
-repository's warning-free default lint set.
+(`src/lib.rs` and its modules) and the binary (`src/main.rs`, its
+`src/interactive.rs` and `src/continuation.rs` modules, and `src/terminal/`).
+Integration tests, examples and build scripts keep the repository's
+warning-free default lint set.
 
 Each rule is enforced by a lint, a runtime limit, or `tests/power_of_ten.rs`.
 Review covers what tools cannot prove. Lints are declared `warn` in the crate
@@ -58,6 +59,17 @@ roots and denied in CI and the NUC hard criteria through
   `clippy.toml`.
 - Split long dispatchers into named helpers by category. Keep each `match`
   over a closed enum exhaustive rather than hiding variants behind `_`.
+- Source files stay small too: every production file under `src/` has at
+  most 500 lines, which `tests/power_of_ten.rs` checks. A unit-test module
+  lives out of line in its module's `tests.rs` (`#[cfg(test)] mod tests;`),
+  which the limit exempts, as the crate roots exempt unit tests from the
+  rule 4 lint.
+- Split a file that outgrows the limit into child modules by
+  responsibility, as `parser.rs` groups its `impl Parser` methods into
+  `parser/statement.rs`, `parser/expression.rs` and their siblings. Child
+  modules stay private, the parent re-exports what was public so public
+  paths do not change, and a helper widens only to `pub(super)` when a
+  sibling needs it.
 
 ## 5. Assertions
 
@@ -120,8 +132,8 @@ roots and denied in CI and the NUC hard criteria through
 ## Maintenance
 
 - Keep the lint lists in `src/lib.rs` and `src/main.rs` identical;
-  `tests/power_of_ten.rs` checks them, the 60-line threshold, and rules 8
-  and 9.
+  `tests/power_of_ten.rs` checks them, the 60-line threshold, the 500-line
+  file limit, and rules 8 and 9.
 - Unit tests relax only the rule 1, 4 and 6 lints, through
   `cfg_attr(test, allow(...))` in the crate roots.
 - NUC candidates and every other change meet these rules like any other

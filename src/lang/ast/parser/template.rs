@@ -1,0 +1,137 @@
+use std::ops::Range;
+
+use super::{Parser, parse_interpolation};
+use crate::error::{Error, Position, Result};
+use crate::lang::ast::lexer::{excerpt, interpolation_end};
+use crate::lang::ast::{Expr, TemplatePart};
+
+fn default_interpolation_end(body: &str) -> Option<usize> {
+    // Preserve the accepted default interpolation boundary rule.
+    let mut depth = 1usize;
+    for (offset, candidate) in body.char_indices() {
+        match candidate {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(offset);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Secondary parsers report relative positions; opt-in diagnostics retain the
+/// location in the caller's original template, including Unicode and newlines.
+fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
+    let Some(relative) = error.position() else {
+        return error;
+    };
+    let newlines = prefix.bytes().filter(|byte| *byte == b'\n').count();
+    let column = match prefix.rsplit_once('\n') {
+        Some((_, tail)) => tail.chars().count() + 1,
+        None => origin.column + 1 + prefix.chars().count(),
+    };
+    error.at(Position::new(
+        origin.line + newlines + relative.line - 1,
+        if relative.line == 1 {
+            column + relative.column - 1
+        } else {
+            relative.column
+        },
+    ))
+}
+
+impl Parser {
+    pub(super) fn template(&mut self, raw: &str) -> Result<Expr> {
+        let origin = self.previous_position();
+        let mut parts = Vec::new();
+        let mut literal = String::new();
+        let mut characters = raw.char_indices().peekable();
+
+        while let Some((index, character)) = characters.next() {
+            if character == '\\' {
+                if let Some((_, escaped)) = characters.next() {
+                    literal.push(match escaped {
+                        'n' => '\n',
+                        't' => '\t',
+                        other => other,
+                    });
+                }
+                continue;
+            }
+
+            if character != '$' || characters.peek().map(|(_, next)| *next) != Some('{') {
+                literal.push(character);
+                continue;
+            }
+
+            let start = index + 2;
+            let Some(end) = self.interpolation_close(raw, start, origin)? else {
+                return Err(self.error("Unterminated template expression"));
+            };
+
+            if !literal.is_empty() {
+                parts.push(TemplatePart::Literal(std::mem::take(&mut literal)));
+            }
+
+            parts.push(TemplatePart::Expression(self.interpolation(
+                raw,
+                start..end,
+                origin,
+            )?));
+
+            while let Some((offset, _)) = characters.peek() {
+                if *offset <= end {
+                    characters.next();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if !literal.is_empty() {
+            parts.push(TemplatePart::Literal(literal));
+        }
+
+        Ok(Expr::Template(parts))
+    }
+
+    fn previous_position(&self) -> Position {
+        self.position
+            .checked_sub(1)
+            .and_then(|previous| self.tokens.get(previous))
+            .map_or_else(|| self.here(), |spanned| spanned.position)
+    }
+
+    fn interpolation_close(
+        &self,
+        raw: &str,
+        start: usize,
+        origin: Position,
+    ) -> Result<Option<usize>> {
+        let body = raw.get(start..).unwrap_or_default();
+        if !self.options.c_style_comments {
+            return Ok(default_interpolation_end(body).map(|offset| start + offset));
+        }
+        Ok(interpolation_end(body, self.options)
+            .map_err(|error| template_error(error, origin, excerpt(raw, 0..start)))?
+            .map(|offset| start + offset))
+    }
+
+    fn interpolation(&self, raw: &str, span: Range<usize>, origin: Position) -> Result<Expr> {
+        let prefix = excerpt(raw, 0..span.start);
+        // Trailing tokens after an interpolated expression are ignored,
+        // so a top-level `lambda` keeps its accepted name reading here
+        // and a trailing Python-style `if` stays ignored.
+        parse_interpolation(excerpt(raw, span), self.options, self.words).map_err(|error| {
+            if self.options.c_style_comments {
+                template_error(error, origin, prefix)
+            } else {
+                error
+            }
+        })
+    }
+}
