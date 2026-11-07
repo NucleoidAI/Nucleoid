@@ -204,7 +204,9 @@ finish. One `Visualization · State` table shows the test objects before their
 outputs are composed. Each row is an object that `Obj[:]` returns after the
 declarative rules run, with `id` first and then one column per property in the
 order first reported by the runtime. Strings stay quoted, and a property that
-an object lacks shows a grey `—`.
+an object lacks shows a grey `—`. Numeric `orientation` values include the same
+direction emoji and degrees used by state headers. Present `time` values are
+prefixed with `⏱️`.
 
 State tables are compact and never split into continued panels. Cells omit
 horizontal padding, and column widths share the available space so all
@@ -258,10 +260,10 @@ constructed before it. The calls that crop their own instance matrices,
 `analyzer.value`, `visualizer.value`, and `visualizer.output_instance_matrix`,
 also crop their examples' instance matrices to the nonzero bounding box with
 `Matrix.crop`, or to an empty list for an all-zero mask. The orientation calls
-of `analyzer.value` and `visualizer.value` then replace every nonzero cell of
-those crops with the string `"X"`, through `Matrix.silhouette`, in their
-examples and their own prompts alike, so they show shapes without colors. None
-of these calls receives `input_x`, `output_x`, `input_y`, `output_y`,
+of `analyzer.value` and `visualizer.value` then write each nonzero color of
+those crops as a letter by its count, `A` for the most frequent, through
+`Matrix.silhouette`, in their examples and their own prompts alike. None of
+these calls receives `input_x`, `output_x`, `input_y`, `output_y`,
 `input_orientation`, or `output_orientation`. The dataset files keep every
 property and their full-canvas matrices.
 
@@ -2326,9 +2328,12 @@ undersized reference. It does not center or modify the input. Empty matrices
 can be padded to an all-zero canvas. Ragged matrices and negative dimensions or
 offsets are still rejected.
 
-`Matrix.silhouette(matrix)` returns a new matrix of the same size in which every
-nonzero cell is the string `"X"` and every zero stays `0`, keeping a shape and
-dropping its colors. It does not crop and does not modify the input.
+`Matrix.silhouette(matrix)` returns a new matrix of the same size in which each
+nonzero color is a letter ranked by how often it occurs in that matrix: `A` for
+the most frequent color, `B` for the next, and so on, with a tie going to the
+color that comes first in reading order. Every `0` stays `0`. It rejects any
+cell that is not an integer from 0 to 9, and it does not crop or modify the
+input.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

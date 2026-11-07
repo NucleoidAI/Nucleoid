@@ -35,9 +35,34 @@ export function locate(matrix) {
   };
 }
 
+const LETTERS: string = "ABCDEFGHI";
+
+// Writes each color as a letter ranked by how often it occurs in the matrix:
+// the most frequent color is A, the next B, and so on, while 0 stays 0. A tie
+// goes to the color read first, as Map keys keep insertion order and sort is
+// stable.
 export function silhouette(matrix) {
+  const counts = new Map<number, number>();
+  for (const row of matrix) {
+    for (const value of row) {
+      if (!Number.isInteger(value) || value < 0 || value > 9) {
+        throw new Error(
+          `Matrix cell ${JSON.stringify(value)} is not a color from 0 to 9`
+        );
+      }
+      if (value === 0) continue;
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+  }
+
+  const ranked: number[] = [...counts.keys()].sort(
+    (a: number, b: number) => counts.get(b) - counts.get(a)
+  );
+
   return matrix.map((row) =>
-    row.map((value: number) => (value === 0 ? 0 : "X"))
+    row.map((value: number) =>
+      value === 0 ? 0 : LETTERS[ranked.indexOf(value)]
+    )
   );
 }
 
