@@ -8,7 +8,7 @@ import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
 export async function start(
-  puzzle_id: string = "3aa6fb7a",
+  puzzle_id: string = "6d0aefbc",
   only_puzzle_dataset: boolean = false
 ) {
   const { arc_train, test_input_matrix, test_output_matrix } =
