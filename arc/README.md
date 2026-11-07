@@ -130,9 +130,10 @@ Two blank rows pad the header content above and below.
 The header content is centered as one group, with its left inset set to
 50% of the unused horizontal space. Its first two rows pair the unboxed
 wordmark on the left with the title and `Inspired by Nature` on the right.
-After a blank line, the workflow, the runtime version, and a grey
-`Puzzle <puzzle-id>` line naming the running puzzle share the same text
-column. When the run uses `--only-puzzle-dataset`, a grey line naming that
+After a blank line, the workflow, the runtime version, and grey
+`Run time (UTC) <ISO-8601 timestamp>` and `Puzzle <puzzle-id>` lines share the
+same text column. The UTC timestamp is captured when the header is rendered.
+When the run uses `--only-puzzle-dataset`, a grey line naming that
 flag follows the puzzle line; otherwise the header does not mention the flag.
 Narrow terminals use smaller artwork and stack the header when both
 columns cannot fit. Artwork is embedded, with
@@ -182,7 +183,8 @@ row and column coordinates show its size.
 Wide grids split into column panels rather than dropping cells. The final
 comparison keeps **Expected** before **Result**, followed by an
 exact-match badge in green or a mismatch badge in red, the unchanged difference
-score, and elapsed time.
+score prefixed with `✅` when zero or `❌` otherwise, and elapsed time prefixed
+with `⏱️`.
 Model token usage stays visible underneath the active step, and failures go to
 standard error with a boxed stack trace.
 

@@ -149,6 +149,9 @@ export function header({
     ...wrap(`Version ${version}`, textWidth).map((line: string) =>
       styleText("gray", line)
     ),
+    ...wrap(`Run time (UTC) ${new Date().toISOString()}`, textWidth).map(
+      (line: string) => styleText("gray", line)
+    ),
     ...wrap(`Puzzle ${puzzle_id}`, textWidth).map((line: string) =>
       styleText("gray", line)
     ),
@@ -508,8 +511,8 @@ export function summary(difference: number, duration: number) {
   block(numbered("Run complete"), [
     status,
     "",
-    `Difference  ${difference}`,
-    `Elapsed     ${elapsed}`,
+    `Difference  ${difference === 0 ? "✅" : "❌"} ${difference}`,
+    `Elapsed     ⏱️ ${elapsed}`,
   ]);
   console.log("");
 }
