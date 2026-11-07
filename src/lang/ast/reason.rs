@@ -2,7 +2,7 @@ use crate::error::{Error, Result};
 use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::Expr;
 use crate::number;
-use crate::reasoning::{Ranked, Selection, Stage};
+use crate::reasoning::{Direction, Ranked, Selection, Stage};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -30,6 +30,7 @@ impl<'a> Reason<'a> {
 pub(crate) enum Link<'a> {
     Stage(Stage),
     Depth(&'a Expr),
+    Path(&'a Expr),
 }
 
 impl Link<'_> {
@@ -44,6 +45,7 @@ impl Link<'_> {
             }
             Link::Stage(Stage::Why | Stage::Affects) => None,
             Link::Depth(_) => Some("depth"),
+            Link::Path(_) => Some("path"),
         }
     }
 }
@@ -62,6 +64,7 @@ fn split(expression: &Expr) -> Option<(Link<'_>, &Expr)> {
     match expression {
         Expr::Reason { stage, source } => Some((Link::Stage(*stage), source)),
         Expr::Depth { source, limit } => Some((Link::Depth(limit), source)),
+        Expr::Path { source, target } => Some((Link::Path(target), source)),
         _ => None,
     }
 }
@@ -83,9 +86,18 @@ impl Runtime {
         }
 
         let mut selection = selection;
+        let mut direction = Direction::Dependencies;
         for link in links.iter().rev() {
-            if let Link::Stage(stage) = *link {
-                selection = self.apply_stage(stage, &selection)?;
+            match *link {
+                Link::Stage(stage) => {
+                    direction = stage.direction().unwrap_or(direction);
+                    selection = self.apply_stage(stage, &selection)?;
+                }
+                Link::Path(target) => {
+                    let target = self.selection_key(target, scope)?;
+                    selection = self.apply_path(selection, &target, direction);
+                }
+                Link::Depth(_) => {}
             }
         }
         Ok(Some(selection))
@@ -105,6 +117,10 @@ impl Runtime {
                     Some(limit) => ranked.within(limit),
                     None => return Ok(None),
                 },
+                Link::Path(target) => {
+                    let target = self.selection_key(target, scope)?;
+                    self.ranked_path(ranked, &target)
+                }
             };
         }
         Ok(Some(ranked.into_selection()))

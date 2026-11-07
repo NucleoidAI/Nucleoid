@@ -3309,6 +3309,54 @@ direct.map(step => step.holds)
   [depth-limited reasoning selections](../nucleoid.spec.md#depth-limited-reasoning-selections)
   section.
 
+### Derivation path selections
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+link = total |> why |> path(price)
+assert(link.map(step => step.node), ["total", "subtotal", "price"])
+assert((why total).length, 5)
+price = 12
+link.map(step => step.holds)
+```
+
+- This is the complete `Nucleoid explains how one value reaches another with path`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `[41,36,12]`.
+- [NUC 88](nuc-0088.md) adds the stage `selection |> path(target)`. It keeps
+  the steps that lie on a dependency path between the walk that selected them
+  and `target`, in their order and with their fields unchanged, so
+  `total |> why |> path(price)` is how the price reaches the total, while
+  `why total` also selects the shipping and the quantity.
+- The most recent `why` or `affects` sets the direction. After `why` a step is
+  kept when it is the target or depends on it, which are the steps whose node
+  `affects target` selects, and after `affects` when the target depends on it,
+  which are the steps whose node `why target` selects. A reference's own step
+  and `model` use the direction of `why`. `stated`, `derived`, `depth`, `diff`
+  and `path` keep the direction and the steps' distances, so they compose in
+  either order.
+- The target is one node, resolved as a pipeline's source is. A target that is
+  not a node of the model, such as an absent property or a deleted name, selects
+  nothing until it is defined. A literal or any other expression that is not a
+  reference raises `TypeError("Cannot explain <target>")`, and an undefined
+  name raises `ReferenceError("<name> is not defined")`.
+- Only `|>` followed by `path` and `(` is the stage; `path` stays an ordinary
+  name everywhere else, and a bare `|> path` keeps its parse-time
+  `TypeError("path is not an operation")`. A local or parameter, variable,
+  function or class named `path` shadows the stage, as bindings shadow the
+  state filters, `depth` and `diff`: the stage then raises
+  `TypeError("path is not an operation")` before selecting its source.
+- The selection stays live through every observation its source made, the
+  structure between its steps and the target, and the target being declared,
+  replaced or deleted. It renders as `selection|>path(target)`.
+- The authoritative contract is the
+  [derivation path selections](../nucleoid.spec.md#derivation-path-selections)
+  section.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -3344,8 +3392,9 @@ c = b * 2
   without `diff`, the [NUC 82](nuc-0082.md) candidate adds its `depth` stage
   without the `depth(x, n)` call form, and the [NUC 83](nuc-0083.md)
   candidate adds its `diff` as the `|> diff` stage, without the bare `diff`
-  and its `before` and `after` fields. Other NUC 11 operations remain
-  proposals, not dependencies.
+  and its `before` and `after` fields, and the [NUC 88](nuc-0088.md)
+  candidate adds a `path(target)` stage that NUC 11 does not plan. Other
+  NUC 11 operations remain proposals, not dependencies.
 
 ### Quantifiers
 
@@ -3758,6 +3807,9 @@ model |> derived                      filter the current model by derived state 
 reference |> why |> depth(1)          the reference and what it reads directly (NUC 82)
 reference |> affects |> depth(1)      what reads the reference directly (NUC 82)
 selection |> depth(limit)             steps within limit steps of where the last walk began (NUC 82)
+reference |> why |> path(target)      how target reaches the reference (NUC 88)
+reference |> affects |> path(target)  what the reference moves on its way to target (NUC 88)
+selection |> path(target)             steps on a dependency path to target (NUC 88)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 any name in collection: condition     true when the condition holds for some member (NUC 62)
 (all name in collection: condition)   parenthesize to combine with what follows (NUC 62)

@@ -2220,6 +2220,93 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores depth selections after failed changes` specify the
   executable behavior.
 
+## Derivation path selections
+
+- [NUC 88](docs/nuc-0088.md) adds the pipeline stage `SELECTION |> path(TARGET)`.
+  It keeps the steps of `SELECTION` that lie on a dependency path between the
+  walk that selected them and one target node, in their order and with their
+  `node`, `holds`, `rule`, `state` and `from` fields unchanged, and drops the
+  others.
+- After `why`, a step is kept when it is the target or depends on the target
+  transitively, so `total |> why |> path(price)` selects the steps by which the
+  price reaches the total. They are the steps whose node is the target's or one
+  that `affects TARGET` selects. After `affects`, a step is kept when it is the
+  target or the target depends on it transitively, so
+  `price |> affects |> path(total)` selects what the price moves on its way to
+  the total: the steps whose node `why TARGET` selects.
+- The direction is that of the most recent `why` or `affects` in the pipeline. A
+  selection that no walk produced, the one-step selection of a reference and
+  `model`, uses the direction of `why`, as `depth` puts its steps at distance 0:
+  `price |> path(price)` keeps the price, and `model |> path(price)` is the
+  price and every node that rests on it, in model order. `stated`, `derived`,
+  `depth`, `diff` and `path` keep the direction and the steps' distances, and a
+  later walk sets its own, so a path stage composes with each of them in either
+  order.
+- Reachability follows the edges the walks follow, dependencies after `why` and
+  dependents after `affects`, through no reasoning observer. Edges count whether
+  or not the nodes along them are selected, so a step whose only path runs
+  through a step that an earlier filter dropped is still kept.
+- With the walk's own input as the target, `c |> why |> path(c)` keeps only the
+  step of `c`, and `a |> affects |> path(a)` keeps nothing, as `affects` never
+  selects its input. A target that no step reaches makes the selection empty.
+- `TARGET` is one expression in parentheses that names a node, resolved as the
+  source of a pipeline is: a name, a property path such as `order.price`,
+  `this.price` in a method, or `$Class.property` inside a class-level rule for
+  the instance's property. It is resolved when the stage applies, after the
+  source selection and the stages before it. A target that is not a node of the
+  model, such as an absent property, a pending placeholder that rules still read
+  after its name was deleted, or a reasoning observer, selects nothing, and the
+  selection fills in when the target is defined.
+- An invalid target keeps the diagnostics of a pipeline source. A literal, a
+  property path whose base holds no object, and any other expression that is
+  not a reference raise `TypeError("Cannot explain <target>")`, including a
+  pipeline such as `path(price |> why)` and `$Class.property` outside a
+  class-level rule. A name that nothing defines raises
+  `ReferenceError("<name> is not defined")`, including `model` when no node has
+  that name and an undefined first name of a property path. The error is
+  positioned at the running top-level statement and rolls back its
+  transaction.
+- Only `|>` followed by the name `path` and then a `(` token is the stage, so
+  `|> path (price)` is the stage too. `path` remains an ordinary lexer
+  identifier: variables, parameters, properties, keys, functions and methods
+  named `path` keep their accepted meanings, there is no prefix form `path c`,
+  and `path(c)` remains an ordinary call. A bare `|> path` keeps the parse-time
+  `TypeError("path is not an operation")`, and so does `|> path` followed by a
+  line break and then `(` outside parentheses and brackets. `|> path()` raises
+  `SyntaxError("Unexpected ')'")` and `|> path(a, b)` raises
+  `SyntaxError("Expected ')' but found ','")`, as the parenthesized expressions
+  `()` and `(a, b)` do.
+- A local or parameter, state variable, function or class named `path` shadows
+  the stage, as for `stated`, `derived`, `depth` and `diff`: the stage then
+  raises `TypeError("path is not an operation")` before selecting its source. A
+  binding declared after a standing selection makes its next evaluation raise,
+  which fails and rolls back the statement that triggered it. Methods,
+  properties and object keys named `path` are not bindings. The accepted `why`
+  and `affects` shadowing behavior does not change.
+- An invalid source keeps its diagnostic and is reported before the target is
+  resolved: `1 |> path(price)` raises `TypeError("Cannot explain 1")` and
+  `missing |> path(price)` raises `ReferenceError("missing is not defined")`.
+- The stage keeps every value and structural observation its source made,
+  including those of the steps it drops. It also observes the structure of
+  every node it walks to decide reachability and of the target, so a standing
+  selection refreshes when an edge on or toward a path appears or disappears and
+  when the target is declared, replaced or deleted. A declaration, property,
+  class-level rule, condition or quantifier that holds the stage is a reasoning
+  observer. Functions, methods and lambdas evaluate it in place, and class-level
+  rules give each instance its own selection. `.value` snapshots it, and
+  propagation order, `suppose` blocks and rollback behave as for the accepted
+  stages.
+- The stage renders as `SOURCE|>path(TARGET)` in graph keys, block keys,
+  conditions and `rule` text, with its source and target rendered once each. It
+  walks once from the selection's steps over the nodes they reach in the walk
+  direction, then once back from the target over the edges that walk found, in
+  time linear in those nodes and edges. Programs without the stage do no work
+  for it.
+- The ten appended entries from
+  `Nucleoid narrows an explanation to the paths from one source` through
+  `Nucleoid restores path selections after failed changes and hypotheticals`
+  specify the executable behavior.
+
 ## Reactive degree to radian conversion
 
 - The [NUC 50 candidate](docs/nuc-0050.md) adds only unshadowed static
@@ -21617,4 +21704,191 @@ assert([Ticket.length, reason], [1, "no such seat"])
 assert([first.code, first.seat], ["A1", 4])
 Ticket.length
 # return: 1
+---
+# Nucleoid narrows an explanation to the paths from one source
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+link = total |> why |> path(price)
+assert(link.map(s -> s.node), ["total", "subtotal", "price"])
+assert(link[0].from, ["subtotal", "shipping"])
+assert(link[1].rule, "subtotal = price*qty")
+assert((why total).length, 5)
+shipping = price + 1
+assert(link.map(s -> s.node), ["total", "subtotal", "shipping", "price"])
+price = 4
+assert(link.map(s -> s.holds), [17, 12, 5, 4])
+---
+# Nucleoid narrows an impact to the paths toward one target
+
+price = 10
+fee = 2
+tax = price * 2
+net = price + fee
+total = tax + net
+label = total * 3
+report = price - 1
+reach = price |> affects |> path(total)
+assert((affects price).map(s -> s.node), ["tax", "net", "report", "total", "label"])
+assert(reach.map(s -> s.node), ["tax", "net", "total"])
+assert(reach[2].from, ["tax", "net"])
+total = tax + net + report
+assert(reach.map(s -> s.node), ["tax", "net", "report", "total"])
+price = 4
+assert(reach.map(s -> s.holds), [8, 6, 3, 17])
+---
+# Nucleoid keeps every path through a diamond in walk order
+
+seed = 2
+left = seed + 1
+right = seed * 3
+spare = 7
+joined = left + right + spare
+mixed = joined * 2
+paths = mixed |> why |> path(seed)
+assert((why mixed).map(s -> s.node), ["mixed", "joined", "left", "right", "spare", "seed"])
+assert(paths.map(s -> s.node), ["mixed", "joined", "left", "right", "seed"])
+left = 4
+assert(paths.map(s -> s.node), ["mixed", "joined", "right", "seed"])
+spare = seed - 1
+assert(paths.map(s -> s.node), ["mixed", "joined", "right", "spare", "seed"])
+seed = 3
+assert(paths.map(s -> s.holds), [30, 15, 9, 2, 3])
+---
+# Nucleoid selects no step until a path reaches the target
+
+a = 1
+b = a + 1
+c = 5
+d = b * c
+z = 9
+gap = d |> why |> path(z)
+own = d |> why |> path(d)
+rest = model |> path(z)
+assert([gap, rest.map(s -> s.node)], [[], ["z"]])
+assert(own.map(s -> s.node), ["d"])
+c = z + 1
+assert(gap.map(s -> s.node), ["d", "c", "z"])
+assert(gap.map(s -> s.holds), [20, 10, 9])
+b = c * 2
+assert(gap.map(s -> s.node), ["d", "b", "c", "z"])
+assert(rest.map(s -> s.node), ["b", "c", "d", "z"])
+assert(own[0].holds, 200)
+---
+# Nucleoid keeps path selections live as rules and targets change
+
+base = 2
+rate = base * 3
+fee = 4
+cost = rate + fee
+via = cost |> why |> path(base)
+assert(via.map(s -> s.node), ["cost", "rate", "base"])
+rate = 6
+assert(via, [])
+fee = base + 1
+assert(via.map(s -> s.node), ["cost", "fee", "base"])
+delete base
+assert([via, fee], [[], null])
+base = 5
+assert(via.map(s -> s.holds), [12, 6, 5])
+---
+# Nucleoid finds derivation paths in class level rules
+
+class Item(price, qty):
+    this.price = price
+    this.qty = qty
+$Item.subtotal = $Item.price * $Item.qty
+$Item.total = $Item.subtotal + 1
+$Item.via = $Item.total |> why |> path($Item.price)
+pen = Item(2, 5)
+cup = Item(3, 1)
+assert(pen.via.map(s -> s.node), ["pen.total", "pen.subtotal", "pen.price"])
+assert(cup.via.map(s -> s.holds), [4, 3, 3])
+assert(pen.via[2].rule, "$Item.price = price")
+pen.qty = 7
+assert(pen.via.map(s -> s.holds), [15, 14, 2])
+$Item.total = $Item.qty + 1
+assert([pen.via, cup.via], [[], []])
+---
+# Nucleoid composes path selections with state filters
+
+base = 2
+rate = base * 2
+fee = 1
+cost = rate * 4
+price = cost + fee
+chain = price |> why |> path(base) |> derived
+facts = price |> why |> stated |> path(base)
+assert(chain.map(s -> s.node), ["price", "cost", "rate"])
+assert(facts.map(s -> s.node), ["base"])
+fee = base + 1
+assert(chain.map(s -> s.node), ["price", "cost", "fee", "rate"])
+base = 5
+assert(chain.map(s -> s.holds), [46, 40, 6, 10])
+assert(facts[0].holds, 5)
+---
+# Nucleoid uses path selections in functions and quantifiers
+
+class Order(qty, price):
+    this.qty = qty
+    this.price = price
+$Order.subtotal = $Order.qty * $Order.price
+$Order.total = $Order.subtotal + 1
+$Order.big = any s in $Order.total |> why |> path($Order.qty): s.holds > 10
+pen = Order(2, 3)
+cup = Order(4, 3)
+def link() => (pen.total |> why |> path(pen.qty)).map(s -> s.node)
+bulk = all s in pen.total |> why |> path(pen.qty): s.holds > 1
+assert(link(), ["pen.total", "pen.subtotal", "pen.qty"])
+assert([pen.big, cup.big, bulk], [false, true, true])
+pen.qty = 5
+assert([pen.big, cup.big, bulk], [true, true, true])
+pen.qty = 1
+assert([pen.big, cup.big, bulk], [false, true, false])
+$Order.total = $Order.price + 1
+assert(link(), [])
+assert([pen.big, cup.big, bulk], [false, false, true])
+---
+# Nucleoid keeps path an ordinary name beside path stages
+
+class Route(stops):
+    this.stops = stops
+    def path() => this.stops.join(">")
+def hops(path) => path.length - 1
+trip = Route(["oslo", "bergen"])
+plan = {path: "coast"}
+legs = hops(trip.stops)
+fare = legs * 40
+via = fare |> why |> path(trip.stops)
+assert([trip.path(), plan.path, legs], ["oslo>bergen", "coast", 1])
+assert(via.map(s -> s.node), ["fare", "legs", "trip.stops"])
+trip.stops.push("tromso")
+assert(via.map(s -> s.holds), [80, 2, ["oslo", "bergen", "tromso"]])
+---
+# Nucleoid restores path selections after failed changes and hypotheticals
+
+seed = 1
+mid = seed + 1
+top = mid * 2
+side = 3
+via = top |> why |> path(side)
+frozen = (top |> why |> path(seed)).value
+assert(via, [])
+try:
+    mid = seed + side
+    assert(via.map(s -> s.node), ["top", "mid", "side"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(via, [])
+plan = suppose mid = side * 2: via.map(s -> s.holds)
+assert([plan, via], [[12, 6, 3], []])
+mid = side + 1
+seed = 7
+assert(via.map(s -> s.holds), [8, 4, 3])
+assert(frozen.map(s -> s.node), ["top", "mid", "seed"])
+assert(frozen.map(s -> s.holds), [4, 2, 1])
 ```

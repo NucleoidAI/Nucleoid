@@ -1,9 +1,10 @@
+use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use indexmap::{IndexMap, IndexSet};
 
 use crate::error::{Error, Result};
-use crate::graph::{NodeKey, NodeKind, ShapeKey};
+use crate::graph::{GraphNode, NodeKey, NodeKind, ShapeKey};
 use crate::nuc::Nuc;
 use crate::nuc::property::Owner;
 use crate::runtime::Runtime;
@@ -28,6 +29,14 @@ impl Stage {
             "stated" => Some(Stage::Stated),
             "derived" => Some(Stage::Derived),
             _ => None,
+        }
+    }
+
+    pub(crate) fn direction(self) -> Option<Direction> {
+        match self {
+            Stage::Why => Some(Direction::Dependencies),
+            Stage::Affects => Some(Direction::Dependents),
+            Stage::Stated | Stage::Derived | Stage::Diff => None,
         }
     }
 
@@ -74,7 +83,7 @@ pub struct Selection {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Direction {
+pub(crate) enum Direction {
     Dependencies,
     Dependents,
 }
@@ -98,10 +107,11 @@ impl Selection {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub(crate) struct Ranked {
     selection: Selection,
     distances: Vec<usize>,
+    direction: Direction,
 }
 
 impl Ranked {
@@ -110,6 +120,7 @@ impl Ranked {
         Ranked {
             selection,
             distances,
+            direction: Direction::Dependencies,
         }
     }
 
@@ -137,7 +148,35 @@ impl Ranked {
         Ranked {
             selection: Selection { steps },
             distances,
+            direction: self.direction,
         }
+    }
+}
+
+#[derive(Debug, Default)]
+struct Region {
+    reached: HashMap<NodeKey, Vec<NodeKey>>,
+}
+
+impl Region {
+    fn back_from(&self, target: &NodeKey) -> HashSet<NodeKey> {
+        let mut kept: HashSet<&NodeKey> = HashSet::new();
+        let mut returning: Vec<&NodeKey> = Vec::new();
+        if let Some((key, _)) = self.reached.get_key_value(target) {
+            kept.insert(key);
+            returning.push(key);
+        }
+
+        while let Some(current) = returning.pop() {
+            for source in self.reached.get(current).into_iter().flatten() {
+                if kept.insert(source) {
+                    returning.push(source);
+                }
+            }
+        }
+
+        debug_assert!(kept.iter().all(|key| self.reached.contains_key(*key)));
+        kept.into_iter().cloned().collect()
     }
 }
 
@@ -147,10 +186,6 @@ impl Runtime {
 
         for key in keys {
             self.track_shape(&ShapeKey::Node(key.clone()));
-
-            if self.graph.is_observer(&key) {
-                continue;
-            }
 
             if let Some(step) = self.step(&key) {
                 steps.push(step);
@@ -163,9 +198,13 @@ impl Runtime {
     pub(crate) fn model_keys(&self) -> Vec<NodeKey> {
         self.graph
             .nodes()
-            .filter(|node| node.kind != NodeKind::Pending && !self.graph.is_observer(&node.key))
+            .filter(|node| self.selectable(node))
             .map(|node| node.key.clone())
             .collect()
+    }
+
+    fn selectable(&self, node: &GraphNode) -> bool {
+        node.kind != NodeKind::Pending && !self.graph.is_observer(&node.key)
     }
 
     pub(crate) fn apply_stage(&mut self, stage: Stage, selection: &Selection) -> Result<Selection> {
@@ -244,7 +283,73 @@ impl Runtime {
         Ranked {
             selection,
             distances,
+            direction,
         }
+    }
+
+    pub(crate) fn apply_path(
+        &mut self,
+        mut selection: Selection,
+        target: &NodeKey,
+        direction: Direction,
+    ) -> Selection {
+        let kept = self.reaching(&selection.steps, target, direction);
+        selection.steps.retain(|step| kept.contains(&step.node));
+        selection
+    }
+
+    pub(crate) fn ranked_path(&mut self, ranked: Ranked, target: &NodeKey) -> Ranked {
+        let kept = self.reaching(&ranked.selection.steps, target, ranked.direction);
+        ranked.retained(|step, _| kept.contains(&step.node))
+    }
+
+    fn reaching(
+        &mut self,
+        steps: &[Step],
+        target: &NodeKey,
+        direction: Direction,
+    ) -> HashSet<NodeKey> {
+        self.track_shape(&ShapeKey::Node(target.clone()));
+        if !self
+            .graph
+            .retrieve(target)
+            .is_some_and(|node| self.selectable(node))
+        {
+            return HashSet::new();
+        }
+        self.region(steps, direction).back_from(target)
+    }
+
+    fn region(&mut self, steps: &[Step], direction: Direction) -> Region {
+        let mut region = Region::default();
+        let mut pending: Vec<NodeKey> = Vec::new();
+
+        for step in steps {
+            if let Entry::Vacant(entry) = region.reached.entry(step.node.clone()) {
+                pending.push(entry.key().clone());
+                entry.insert(Vec::new());
+            }
+        }
+
+        while let Some(current) = pending.pop() {
+            self.track_shape(&ShapeKey::Node(current.clone()));
+
+            for key in self.neighbors(&current, direction) {
+                if self.graph.is_observer(&key) {
+                    continue;
+                }
+
+                match region.reached.entry(key) {
+                    Entry::Occupied(mut sources) => sources.get_mut().push(current.clone()),
+                    Entry::Vacant(entry) => {
+                        pending.push(entry.key().clone());
+                        entry.insert(vec![current.clone()]);
+                    }
+                }
+            }
+        }
+
+        region
     }
 
     fn traverse(&mut self, selection: &Selection, direction: Direction) -> Selection {
@@ -317,11 +422,10 @@ impl Runtime {
     }
 
     fn step(&mut self, key: &NodeKey) -> Option<Step> {
-        let node = self.graph.retrieve(key)?;
-
-        if node.kind == NodeKind::Pending {
-            return None;
-        }
+        let node = self
+            .graph
+            .retrieve(key)
+            .filter(|node| self.selectable(node))?;
 
         let from: Vec<NodeKey> = node.dependencies.iter().cloned().collect();
         let governed = node.instance.clone();

@@ -88,6 +88,7 @@ impl fmt::Display for Expr {
             Expr::Delete(operand) => write!(f, "delete {operand}"),
             Expr::Reason { stage, source } => write!(f, "{source}|>{}", stage.as_str()),
             Expr::Depth { source, limit } => write!(f, "{source}|>depth({limit})"),
+            Expr::Path { source, target } => write!(f, "{source}|>path({target})"),
             Expr::Model => f.write_str("model"),
             Expr::Quantified {
                 quantifier,
@@ -278,7 +279,11 @@ fn groups_power_exponent(operand: &Expr) -> bool {
             !matches!(operator, BinaryOp::Power | BinaryOp::Is | BinaryOp::IsNot)
         }
         Expr::Logical { operator, .. } => *operator != LogicalOp::Coalesce,
-        Expr::Assign { .. } | Expr::Reason { .. } | Expr::Depth { .. } | Expr::Function(_) => true,
+        Expr::Assign { .. }
+        | Expr::Reason { .. }
+        | Expr::Depth { .. }
+        | Expr::Path { .. }
+        | Expr::Function(_) => true,
         _ => false,
     }
 }

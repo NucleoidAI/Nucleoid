@@ -284,6 +284,10 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
             visit(source);
             visit(limit);
         }
+        Expr::Path { source, target } => {
+            visit(source);
+            visit(target);
+        }
         Expr::Index { object, index } => {
             visit(object);
             visit(index);
@@ -309,13 +313,7 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
                 visit(entry.value());
             }
         }
-        Expr::Template(parts) => {
-            for part in parts {
-                if let TemplatePart::Expression(embedded) = part {
-                    visit(embedded);
-                }
-            }
-        }
+        Expr::Template(parts) => visit_template(parts, visit),
         Expr::Unary { .. }
         | Expr::Delete(_)
         | Expr::Of { .. }
@@ -335,6 +333,14 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         | Expr::This
         | Expr::Function(_)
         | Expr::Model => {}
+    }
+}
+
+fn visit_template(parts: &[TemplatePart], visit: &mut impl FnMut(&Expr)) {
+    for part in parts {
+        if let TemplatePart::Expression(embedded) = part {
+            visit(embedded);
+        }
     }
 }
 
@@ -375,6 +381,7 @@ fn visit_operands(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         | Expr::Version { .. }
         | Expr::Reason { .. }
         | Expr::Depth { .. }
+        | Expr::Path { .. }
         | Expr::Index { .. }
         | Expr::Slice { .. }
         | Expr::Call { .. }
