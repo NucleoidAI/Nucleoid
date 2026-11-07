@@ -117,7 +117,6 @@ export async function start(
       train_dataset,
       test_input_matrix,
       instance_name,
-      input_instances,
       input_instance_matrix,
     });
 
@@ -141,9 +140,6 @@ export async function start(
       instance_name,
       test_input_matrix,
       train_dataset,
-      input_instances: input_instances.filter(
-        ({ output_instance_matrix }) => output_instance_matrix
-      ),
       input_instance_matrix,
       input_value,
       output_value,

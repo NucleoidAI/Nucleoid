@@ -52,7 +52,6 @@ export async function value({
   train_dataset,
   test_input_matrix,
   instance_name,
-  input_instances,
   input_instance_matrix,
 }) {
   milestone.synthesizing_instance({ instance_name });
@@ -75,15 +74,6 @@ export async function value({
                 orientation: input_value.orientation,
               }))
             )
-          )}
-          instances:
-          ${JSON.stringify(
-            input_instances.map(({ input_instance_matrix, input_value }) => ({
-              input_instance_matrix: Matrix.silhouette(
-                Matrix.crop(input_instance_matrix)
-              ),
-              orientation: input_value.orientation,
-            }))
           )}
         `,
       },
@@ -116,8 +106,6 @@ export async function value({
           ${JSON.stringify(declarations[0])}
           train_dataset:
           ${JSON.stringify(train_dataset.dataset)}
-          input_instances:
-          ${JSON.stringify(input_instances)}
         `,
       },
       {
@@ -168,7 +156,6 @@ export async function output_instance_matrix({
   instance_name,
   test_input_matrix,
   train_dataset,
-  input_instances,
   input_instance_matrix,
   input_value,
   output_value,
