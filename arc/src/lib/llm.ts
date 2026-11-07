@@ -5,6 +5,7 @@ import * as openrouter from "./openrouter";
 export async function generate({
   puzzle_id,
   only_puzzle_dataset,
+  reasoning = false,
   few_shot = (instruction) => instruction,
   messages = [],
   document = true,
@@ -27,6 +28,7 @@ export async function generate({
   });
 
   return openrouter.generate({
+    reasoning,
     messages,
   });
 }

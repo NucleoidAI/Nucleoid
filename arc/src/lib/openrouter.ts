@@ -1,7 +1,7 @@
 import axios from "axios";
 import * as milestone from "./milestone.ts";
 
-export async function generate({ messages = [] }) {
+export async function generate({ reasoning = false, messages = [] }) {
   const apiKey: string = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is required");
@@ -24,7 +24,7 @@ export async function generate({ messages = [] }) {
       seed: 42,
       frequency_penalty: 0,
       presence_penalty: 0,
-      reasoning: { enabled: false },
+      reasoning: { enabled: reasoning },
       response_format: { type: "json_object" },
       provider: {
         only: ["deepinfra/bf16"],
