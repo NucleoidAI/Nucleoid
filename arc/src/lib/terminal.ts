@@ -269,6 +269,20 @@ function tableRow(widths, cells) {
   );
 }
 
+function tableValue(column: string, value: unknown): string {
+  const formatted: string =
+    (column === "orientation" ? orientation(value) : undefined) ??
+    inspect(value, {
+      colors: false,
+      depth: null,
+      compact: true,
+      breakLength: Infinity,
+      maxArrayLength: null,
+      maxStringLength: null,
+    });
+  return column === "time" ? `⏱️ ${formatted}` : formatted;
+}
+
 export function table(title: string, columns, rows, milestone?: Milestone) {
   const heading: string = numbered(title, milestone);
   if (rows.length === 0) {
@@ -282,17 +296,7 @@ export function table(title: string, columns, rows, milestone?: Milestone) {
   const body = rows.map((row) =>
     columns.map((column: string) =>
       Object.hasOwn(row, column)
-        ? styleText(
-            "whiteBright",
-            inspect(row[column], {
-              colors: false,
-              depth: null,
-              compact: true,
-              breakLength: Infinity,
-              maxArrayLength: null,
-              maxStringLength: null,
-            })
-          )
+        ? styleText("whiteBright", tableValue(column, row[column]))
         : styleText("gray", "—")
     )
   );
