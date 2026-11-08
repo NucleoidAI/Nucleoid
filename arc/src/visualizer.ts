@@ -11,7 +11,7 @@ export async function instances({
 }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
-  const { instances } = await llm.generate({
+  const response = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     messages: [
@@ -39,6 +39,10 @@ export async function instances({
       },
     ],
   });
+
+  const instances = response.instances.map(({ input_instance_matrix }) => ({
+    input_instance_matrix: Matrix.normalize(input_instance_matrix),
+  }));
 
   milestone.test_input_segmented({ instances });
 
@@ -164,7 +168,7 @@ export async function output_instance_matrix({
 
   milestone.composing_output({ instance_name });
 
-  const { output_instance_matrix } = await llm.generate({
+  const response = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     messages: [
@@ -208,6 +212,10 @@ export async function output_instance_matrix({
       },
     ],
   });
+
+  const output_instance_matrix = Matrix.normalize(
+    response.output_instance_matrix
+  );
 
   milestone.output_composed({
     instance_name,

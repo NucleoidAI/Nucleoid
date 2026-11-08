@@ -77,6 +77,25 @@ below the puzzle ID; a run without it does not mention the flag.
 without an additional library; an unknown option, or a value such as
 `--only-puzzle-dataset=true`, fails the run before any model call.
 
+### Parallel local run
+
+Run the five-puzzle batch from the repository root with PowerShell 7:
+
+```powershell
+pwsh -NoProfile -File .\arc\run-puzzles.ps1
+```
+
+The script starts `3aa6fb7a`, `0ca9ddb6`, `e9afcf9a`, `6fa7a44f`, and
+`d631b094` concurrently, using the same Bun, Nucleoid runtime, and OpenRouter
+setup as `bun run start`. These are live, paid OpenRouter calls.
+
+Each puzzle's standard output and standard error go to separate files in a
+new `arc\logs\batch-*` directory. After all runs finish, a table shows each
+puzzle's result, exit code, and elapsed seconds. `PASS` means an exact grid
+match; `FAIL` means a mismatch or execution error; `NOT RUN` means the process
+could not start. A failed puzzle does not cancel the others. The script exits
+with `0` only when all five pass, and otherwise exits with `1`.
+
 ### Genesis puzzle
 
 `3aa6fb7a` is the genesis puzzle, the training puzzle the solver was originally
@@ -2576,6 +2595,14 @@ be one of the letters `A` to `I` that the instruction datasets write their
 colors as, ranked the same way, so a dataset crop is ranked by its own counts.
 It rejects any other cell, such as `10` or `J`, and it does not crop or modify
 the input.
+
+`Matrix.normalize(matrix)` returns a new matrix in which every cell written as
+a one-digit string, such as `"8"`, becomes that number, `8`, so the model may
+write a color either way. Every other cell stays as it is, and the input is not
+modified. The analyzer and the visualizer apply it to every matrix the model
+returns, the instance masks of the training pairs and of the test input and
+each output instance matrix, before the solver crops, silhouettes, merges, or
+scores them.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

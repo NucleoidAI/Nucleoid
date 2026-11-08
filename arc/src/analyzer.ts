@@ -45,7 +45,7 @@ export async function instances({
 }) {
   milestone.segmenting_training_objects();
 
-  const { instances } = await llm.generate({
+  const response = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     messages: [
@@ -69,6 +69,13 @@ export async function instances({
       },
     ],
   });
+
+  const instances = response.instances.map(
+    ({ input_instance_matrix, output_instance_matrix }) => ({
+      input_instance_matrix: Matrix.normalize(input_instance_matrix),
+      output_instance_matrix: Matrix.normalize(output_instance_matrix),
+    })
+  );
 
   milestone.training_objects_segmented({ instances });
 

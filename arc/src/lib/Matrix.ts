@@ -38,6 +38,15 @@ export function locate(matrix) {
 }
 
 const LETTERS: string = "ABCDEFGHI";
+const DIGITS = [..."0123456789"];
+
+// Reads each cell written as a one-digit string, such as "8", as that number,
+// so the model may write a color either way. Every other cell stays as it is.
+export function normalize(matrix) {
+  return matrix.map((row) =>
+    row.map((value) => (DIGITS.includes(value) ? Number(value) : value))
+  );
+}
 
 type Color = number | string;
 
