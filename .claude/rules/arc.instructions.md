@@ -90,7 +90,7 @@ special-cased workaround.
 Infer segmentation, background, object roles, and transformations from training
 pairs. Treat colors `0` through `9` as categorical values. Instruction datasets
 write them as letters: `0` stays `0`, and every other color is a letter from
-`A` to `Z` out of the dataset's own random set, fixed by its file name and
+the dataset's SHA-256 shuffle of `A` to `Z`, keyed by its file name and
 consistent inside the file, under the
 [arc-dataset profile](../agents/arc-dataset.agent.md#write-colors-as-letters).
 Preserve positions

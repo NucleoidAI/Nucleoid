@@ -291,9 +291,10 @@ Verify with a throwaway script outside the repository; do not add tests:
   back to their colors makes every `input_matrix` and `output_matrix` equal
   its original grid, including dimensions, colors, positions, and zero
   padding. There are no synthesized examples.
-- Recomputing the dataset's random set from its key gives exactly its
-  letters, one per color, and no color is written as its number in the grids,
-  masks, declarations, implementations, or snapshots.
+- Recomputing the dataset's SHA-256 shuffle from its key gives exactly its
+  letters, one per color in increasing color order, and no color is written as
+  its number in the grids, masks, declarations, implementations, or
+  snapshots.
 - The transformation inferred from the training pairs reproduces every
   original train and test output.
 - All pairs share the dataset's declarations and output-canvas mode, and

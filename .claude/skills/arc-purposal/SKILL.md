@@ -135,18 +135,39 @@ training pairs need.
 Write every color as a letter, and pass this requirement to every
 `/arc-dataset` run too. The dataset follows the exact pattern of the puzzle's
 pairs in `arc/data/training/`, cell for cell and shape for shape, but never
-writes a color as its number. `0` stays `0`, and every other color becomes a
-letter from `A` to `Z` out of the dataset's own random set, fixed by its file
-name: each file has its own letters, and a color keeps one letter in every pair
-of its file. The letters carry no meaning beyond which cells share a color, so
-the pattern reaches the model without the colors. The same letters replace the
-colors in the instance masks and the world model: color properties hold
-letters, such as `color='B'`, and rules name colors by letter, such as
-`if $Obj.color is 'C':`. The arc-dataset profile's
+writes a color as its number. `0` stays `0`, and every other color takes its
+letter from the dataset's own SHA-256 shuffle of the alphabet:
+
+1. Take the dataset's key, the name between `dataset.` and `.json`: the
+   puzzle ID, or a genesis name such as `core`.
+2. Shuffle `A` to `Z` by SHA-256: order the 26 letters by the hexadecimal
+   SHA-256 digest of `<key>:<letter>`, such as `c8f0f002:A`, smallest digest
+   first.
+3. Give the colors that occur in any of the dataset's `input_matrix` and
+   `output_matrix` grids, in increasing order, the letters in that order.
+
+For `c8f0f002` the shuffle starts `T B Q D`, so its colors 1, 5, 7, and 8
+become `T`, `B`, `Q`, and `D`; for `0d3d703e` it starts `H J Y Q G U S D`, so
+color 1 is `H` there. The SHA-256 shuffle is what makes each file's letters its
+own and random across files, yet reproducible from the file name alone, and a
+color keeps one letter in every pair of its file. Never choose letters by
+hand, by frequency, or with any other shuffle or seed. The letters carry no
+meaning beyond which cells share a color, so the pattern reaches the model
+without the colors. The same letters replace the colors in the instance masks
+and the world model: color properties hold letters, such as `color='B'`, and
+rules name colors by letter, such as `if $Obj.color is 'C':`. The arc-dataset
+profile's
 [letter rule](../../agents/arc-dataset.agent.md#write-colors-as-letters)
-defines how the set is drawn. Check a `written` handoff against it before the
-run, and send back one that writes a color as its number or uses other
-letters.
+states the same shuffle.
+
+Before the run, recompute the shuffle for a `written` handoff's dataset:
+
+    node -e "const {createHash} = require('crypto'); const digest = (l) => createHash('sha256').update(process.argv[1] + ':' + l).digest('hex'); console.log([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].sort((a, b) => (digest(a) < digest(b) ? -1 : 1)).join(' '))" <key>
+
+The dataset's colors, in increasing order, must hold the first letters of that
+output, one each, in every grid, mask, declaration, implementation, and
+snapshot. Send back a handoff whose letters differ from the shuffle or that
+writes a color as its number.
 
 Continue by the handoff's status:
 
@@ -490,7 +511,8 @@ When nothing is left to commit, make no empty commit, and report why.
 Save one JSON result record in the session workspace with the puzzle ID and
 how it was chosen (given, or the default with both its measurements), the
 starting revision, and hint (`null` without one); the dataset status,
-`dataset_path` and source puzzle path,
+`dataset_path` and source puzzle path, the dataset's key with its recomputed
+SHA-256 letters and whether the dataset matches them,
 the reporting-workflow path and whether its new entry was retained or
 withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
 evaluator decision, and report path; the solver's previous and new default
