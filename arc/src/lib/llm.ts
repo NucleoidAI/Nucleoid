@@ -17,7 +17,7 @@ export async function generate({
     messages.unshift({
       role: "system",
       content: `
-        few_shot_examples:
+        few_shot:
         ${examples(puzzle_id, only_puzzle_dataset, few_shot)}
       `,
     });

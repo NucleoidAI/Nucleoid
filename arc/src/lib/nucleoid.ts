@@ -45,7 +45,7 @@ export async function run(source: string) {
   try {
     const file: string = join(directory, "program.nuc");
     await writeFile(file, source, "utf8");
-    const stdout: string = await execute(["--json", file]);
+    const stdout: string = await execute(["--json", "--is-assignment", file]);
 
     try {
       const result = JSON.parse(stdout);

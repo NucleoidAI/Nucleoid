@@ -1,8 +1,8 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: str):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l7544'\n    this.color = color",
-    "$Obj.tag = 'l6953'",
-    "$Obj.height = canvas_height - $Obj.y@first"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: str):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l7544\n    this.color is color",
+    "$Obj.tag is l6953",
+    "$Obj.height is canvas_height - $Obj.y@first"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -30,7 +30,7 @@
             [0, 0, "E"],
             [0, 0, "E"]
           ],
-          "implementation": "obj7ed0b8b9b5eb = Obj(x=2, y=0, width=1, height=1, orientation=0, color='E')",
+          "implementation": "obj7ed0b8b9b5eb is Obj(x=2, y=0, width=1, height=1, orientation=0, color='E')",
           "input_value": {"color":"E","height":1,"id":"obj7ed0b8b9b5eb","orientation":0,"tag":"l7544","width":1,"x":2,"y":0},
           "output_value": {"color":"E","height":3,"id":"obj7ed0b8b9b5eb","orientation":0,"tag":"l6953","width":1,"x":2,"y":0}
         },
@@ -46,7 +46,7 @@
             [0, "A", 0],
             [0, "A", 0]
           ],
-          "implementation": "objcd75eb6d92af = Obj(x=1, y=1, width=1, height=1, orientation=0, color='A')",
+          "implementation": "objcd75eb6d92af is Obj(x=1, y=1, width=1, height=1, orientation=0, color='A')",
           "input_value": {"color":"A","height":1,"id":"objcd75eb6d92af","orientation":0,"tag":"l7544","width":1,"x":1,"y":1},
           "output_value": {"color":"A","height":2,"id":"objcd75eb6d92af","orientation":0,"tag":"l6953","width":1,"x":1,"y":1}
         },
@@ -62,7 +62,7 @@
             [0, 0, 0],
             ["F", 0, 0]
           ],
-          "implementation": "obj64246d126f5a = Obj(x=0, y=2, width=1, height=1, orientation=0, color='F')",
+          "implementation": "obj64246d126f5a is Obj(x=0, y=2, width=1, height=1, orientation=0, color='F')",
           "input_value": {"color":"F","height":1,"id":"obj64246d126f5a","orientation":0,"tag":"l7544","width":1,"x":0,"y":2},
           "output_value": {"color":"F","height":1,"id":"obj64246d126f5a","orientation":0,"tag":"l6953","width":1,"x":0,"y":2}
         }
@@ -92,7 +92,7 @@
             [0, "B", 0],
             [0, "B", 0]
           ],
-          "implementation": "obj0cad03e1a41e = Obj(x=1, y=0, width=1, height=1, orientation=0, color='B')",
+          "implementation": "obj0cad03e1a41e is Obj(x=1, y=0, width=1, height=1, orientation=0, color='B')",
           "input_value": {"color":"B","height":1,"id":"obj0cad03e1a41e","orientation":0,"tag":"l7544","width":1,"x":1,"y":0},
           "output_value": {"color":"B","height":3,"id":"obj0cad03e1a41e","orientation":0,"tag":"l6953","width":1,"x":1,"y":0}
         },
@@ -108,7 +108,7 @@
             ["D", 0, 0],
             ["D", 0, 0]
           ],
-          "implementation": "obj00ed3078c7da = Obj(x=0, y=1, width=1, height=1, orientation=0, color='D')",
+          "implementation": "obj00ed3078c7da is Obj(x=0, y=1, width=1, height=1, orientation=0, color='D')",
           "input_value": {"color":"D","height":1,"id":"obj00ed3078c7da","orientation":0,"tag":"l7544","width":1,"x":0,"y":1},
           "output_value": {"color":"D","height":2,"id":"obj00ed3078c7da","orientation":0,"tag":"l6953","width":1,"x":0,"y":1}
         },
@@ -124,7 +124,7 @@
             [0, 0, "C"],
             [0, 0, "C"]
           ],
-          "implementation": "obj2c96fafb078f = Obj(x=2, y=1, width=1, height=1, orientation=0, color='C')",
+          "implementation": "obj2c96fafb078f is Obj(x=2, y=1, width=1, height=1, orientation=0, color='C')",
           "input_value": {"color":"C","height":1,"id":"obj2c96fafb078f","orientation":0,"tag":"l7544","width":1,"x":2,"y":1},
           "output_value": {"color":"C","height":2,"id":"obj2c96fafb078f","orientation":0,"tag":"l6953","width":1,"x":2,"y":1}
         }
@@ -154,7 +154,7 @@
             ["A", 0, 0],
             ["A", 0, 0]
           ],
-          "implementation": "obja1fc4c6969c5 = Obj(x=0, y=0, width=1, height=1, orientation=0, color='A')",
+          "implementation": "obja1fc4c6969c5 is Obj(x=0, y=0, width=1, height=1, orientation=0, color='A')",
           "input_value": {"color":"A","height":1,"id":"obja1fc4c6969c5","orientation":0,"tag":"l7544","width":1,"x":0,"y":0},
           "output_value": {"color":"A","height":3,"id":"obja1fc4c6969c5","orientation":0,"tag":"l6953","width":1,"x":0,"y":0}
         },
@@ -170,7 +170,7 @@
             [0, "B", 0],
             [0, "B", 0]
           ],
-          "implementation": "obj8f5e8ba44614 = Obj(x=1, y=1, width=1, height=1, orientation=0, color='B')",
+          "implementation": "obj8f5e8ba44614 is Obj(x=1, y=1, width=1, height=1, orientation=0, color='B')",
           "input_value": {"color":"B","height":1,"id":"obj8f5e8ba44614","orientation":0,"tag":"l7544","width":1,"x":1,"y":1},
           "output_value": {"color":"B","height":2,"id":"obj8f5e8ba44614","orientation":0,"tag":"l6953","width":1,"x":1,"y":1}
         }
@@ -200,7 +200,7 @@
             ["A", 0, 0],
             ["A", 0, 0]
           ],
-          "implementation": "obj279d8caacd73 = Obj(x=0, y=0, width=1, height=1, orientation=0, color='A')",
+          "implementation": "obj279d8caacd73 is Obj(x=0, y=0, width=1, height=1, orientation=0, color='A')",
           "input_value": {"color":"A","height":1,"id":"obj279d8caacd73","orientation":0,"tag":"l7544","width":1,"x":0,"y":0},
           "output_value": {"color":"A","height":3,"id":"obj279d8caacd73","orientation":0,"tag":"l6953","width":1,"x":0,"y":0}
         },
@@ -216,7 +216,7 @@
             [0, 0, "C"],
             [0, 0, "C"]
           ],
-          "implementation": "obje0d11c952ecc = Obj(x=2, y=0, width=1, height=1, orientation=0, color='C')",
+          "implementation": "obje0d11c952ecc is Obj(x=2, y=0, width=1, height=1, orientation=0, color='C')",
           "input_value": {"color":"C","height":1,"id":"obje0d11c952ecc","orientation":0,"tag":"l7544","width":1,"x":2,"y":0},
           "output_value": {"color":"C","height":3,"id":"obje0d11c952ecc","orientation":0,"tag":"l6953","width":1,"x":2,"y":0}
         },
@@ -232,7 +232,7 @@
             [0, 0, 0],
             [0, "D", 0]
           ],
-          "implementation": "objbf4bef4c3e59 = Obj(x=1, y=2, width=1, height=1, orientation=0, color='D')",
+          "implementation": "objbf4bef4c3e59 is Obj(x=1, y=2, width=1, height=1, orientation=0, color='D')",
           "input_value": {"color":"D","height":1,"id":"objbf4bef4c3e59","orientation":0,"tag":"l7544","width":1,"x":1,"y":2},
           "output_value": {"color":"D","height":1,"id":"objbf4bef4c3e59","orientation":0,"tag":"l6953","width":1,"x":1,"y":2}
         }

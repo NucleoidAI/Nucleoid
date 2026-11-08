@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
-    "$Obj.y = $Obj.y@first + 1"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l9100",
+    "$Obj.y is $Obj.y@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             ["A", "A", "A"],
             [0, 0, 0]
           ],
-          "implementation": "obj56f6c04f44d8 = Obj(x=0, y=0, width=3, height=1, orientation=90)",
+          "implementation": "obj56f6c04f44d8 is Obj(x=0, y=0, width=3, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj56f6c04f44d8","orientation":90,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":1,"id":"obj56f6c04f44d8","orientation":90,"tag":"l9100","width":3,"x":0,"y":1}
         }
@@ -59,7 +59,7 @@
             [0, 0, 0],
             ["A", "A", "A"]
           ],
-          "implementation": "objb2baa9b2270c = Obj(x=0, y=1, width=3, height=1, orientation=90)",
+          "implementation": "objb2baa9b2270c is Obj(x=0, y=1, width=3, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objb2baa9b2270c","orientation":90,"tag":"l9100","width":3,"x":0,"y":1},
           "output_value": {"height":1,"id":"objb2baa9b2270c","orientation":90,"tag":"l9100","width":3,"x":0,"y":2}
         }
@@ -89,7 +89,7 @@
             [0, "A", 0],
             ["A", "A", 0]
           ],
-          "implementation": "obj470037f0334e = Obj(x=0, y=0, width=2, height=2, orientation=135)",
+          "implementation": "obj470037f0334e is Obj(x=0, y=0, width=2, height=2, orientation=135)",
           "input_value": {"height":2,"id":"obj470037f0334e","orientation":135,"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"height":2,"id":"obj470037f0334e","orientation":135,"tag":"l9100","width":2,"x":0,"y":1}
         }
@@ -119,7 +119,7 @@
             [0, "B", "B"],
             [0, 0, "B"]
           ],
-          "implementation": "obj2ad74ac3e6ef = Obj(x=1, y=0, width=2, height=2, orientation=45)",
+          "implementation": "obj2ad74ac3e6ef is Obj(x=1, y=0, width=2, height=2, orientation=45)",
           "input_value": {"height":2,"id":"obj2ad74ac3e6ef","orientation":45,"tag":"l9100","width":2,"x":1,"y":0},
           "output_value": {"height":2,"id":"obj2ad74ac3e6ef","orientation":45,"tag":"l9100","width":2,"x":1,"y":1}
         }
@@ -149,7 +149,7 @@
             ["B", 0, 0],
             ["B", 0, 0]
           ],
-          "implementation": "objb847b315216d = Obj(x=0, y=0, width=1, height=2, orientation=0)",
+          "implementation": "objb847b315216d is Obj(x=0, y=0, width=1, height=2, orientation=0)",
           "input_value": {"height":2,"id":"objb847b315216d","orientation":0,"tag":"l9100","width":1,"x":0,"y":0},
           "output_value": {"height":2,"id":"objb847b315216d","orientation":0,"tag":"l9100","width":1,"x":0,"y":1}
         }
@@ -179,7 +179,7 @@
             [0, 0, 0],
             [0, "A", 0]
           ],
-          "implementation": "objf247c9d3ab45 = Obj(x=1, y=1, width=1, height=1, orientation=0)",
+          "implementation": "objf247c9d3ab45 is Obj(x=1, y=1, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"objf247c9d3ab45","orientation":0,"tag":"l9100","width":1,"x":1,"y":1},
           "output_value": {"height":1,"id":"objf247c9d3ab45","orientation":0,"tag":"l9100","width":1,"x":1,"y":2}
         }

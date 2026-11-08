@@ -1,8 +1,8 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
-    "$Obj.tag = 'l7511'",
-    "$Obj.height = 2 * (canvas_height - $Obj.y@first)"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l9100",
+    "$Obj.tag is l7511",
+    "$Obj.height is 2 * (canvas_height - $Obj.y@first)"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -36,7 +36,7 @@
             ["A", "A", "A"],
             ["A", "A", 0]
           ],
-          "implementation": "obj4b7fccaa77ad = Obj(x=0, y=0, width=3, height=2, orientation=0)",
+          "implementation": "obj4b7fccaa77ad is Obj(x=0, y=0, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obj4b7fccaa77ad","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":6,"id":"obj4b7fccaa77ad","orientation":0,"tag":"l7511","width":3,"x":0,"y":0}
         }
@@ -72,7 +72,7 @@
             ["A", 0, "A"],
             [0, 0, 0]
           ],
-          "implementation": "obj3f17f1cda1fa = Obj(x=0, y=1, width=3, height=2, orientation=0)",
+          "implementation": "obj3f17f1cda1fa is Obj(x=0, y=1, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obj3f17f1cda1fa","orientation":0,"tag":"l9100","width":3,"x":0,"y":1},
           "output_value": {"height":4,"id":"obj3f17f1cda1fa","orientation":0,"tag":"l7511","width":3,"x":0,"y":1}
         }
@@ -108,7 +108,7 @@
             [0, 0, "A"],
             [0, 0, 0]
           ],
-          "implementation": "obj74ba27429594 = Obj(x=2, y=1, width=1, height=2, orientation=0)",
+          "implementation": "obj74ba27429594 is Obj(x=2, y=1, width=1, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obj74ba27429594","orientation":0,"tag":"l9100","width":1,"x":2,"y":1},
           "output_value": {"height":4,"id":"obj74ba27429594","orientation":0,"tag":"l7511","width":1,"x":2,"y":1}
         }
@@ -144,7 +144,7 @@
             [0, 0, "A"],
             [0, 0, 0]
           ],
-          "implementation": "obj03af268cfbef = Obj(x=0, y=1, width=3, height=2, orientation=0)",
+          "implementation": "obj03af268cfbef is Obj(x=0, y=1, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obj03af268cfbef","orientation":0,"tag":"l9100","width":3,"x":0,"y":1},
           "output_value": {"height":4,"id":"obj03af268cfbef","orientation":0,"tag":"l7511","width":3,"x":0,"y":1}
         }

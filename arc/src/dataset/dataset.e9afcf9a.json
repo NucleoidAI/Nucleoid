@@ -1,11 +1,11 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l3058'",
-    "$Obj.tag = 'l5973'",
-    "$Obj.orientation = 0",
-    "$Obj.parity = $Obj.y@first % 2",
-    "$Obj.height = canvas_height",
-    "$Obj.y = 0"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l3058",
+    "$Obj.tag is l5973",
+    "$Obj.orientation is 0",
+    "$Obj.parity is $Obj.y@first % 2",
+    "$Obj.height is canvas_height",
+    "$Obj.y is 0"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             ["A", 0, "A", 0, "A", 0],
             [0, "A", 0, "A", 0, "A"]
           ],
-          "implementation": "objf75bfec5b742 = Obj(x=0, y=0, width=6, height=1, orientation=90)",
+          "implementation": "objf75bfec5b742 is Obj(x=0, y=0, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objf75bfec5b742","orientation":90,"tag":"l3058","width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objf75bfec5b742","orientation":0,"parity":0,"tag":"l5973","width":6,"x":0,"y":0}
         },
@@ -43,7 +43,7 @@
             [0, "B", 0, "B", 0, "B"],
             ["B", 0, "B", 0, "B", 0]
           ],
-          "implementation": "obj3d85d507495c = Obj(x=0, y=1, width=6, height=1, orientation=90)",
+          "implementation": "obj3d85d507495c is Obj(x=0, y=1, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj3d85d507495c","orientation":90,"tag":"l3058","width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"obj3d85d507495c","orientation":0,"parity":1,"tag":"l5973","width":6,"x":0,"y":0}
         }
@@ -69,7 +69,7 @@
             ["C", 0, "C", 0, "C", 0],
             [0, "C", 0, "C", 0, "C"]
           ],
-          "implementation": "objd1bdb9496f7f = Obj(x=0, y=0, width=6, height=1, orientation=90)",
+          "implementation": "objd1bdb9496f7f is Obj(x=0, y=0, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objd1bdb9496f7f","orientation":90,"tag":"l3058","width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objd1bdb9496f7f","orientation":0,"parity":0,"tag":"l5973","width":6,"x":0,"y":0}
         },
@@ -83,7 +83,7 @@
             [0, "D", 0, "D", 0, "D"],
             ["D", 0, "D", 0, "D", 0]
           ],
-          "implementation": "objfd7c9fde835c = Obj(x=0, y=1, width=6, height=1, orientation=90)",
+          "implementation": "objfd7c9fde835c is Obj(x=0, y=1, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objfd7c9fde835c","orientation":90,"tag":"l3058","width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"objfd7c9fde835c","orientation":0,"parity":1,"tag":"l5973","width":6,"x":0,"y":0}
         }
@@ -109,7 +109,7 @@
             ["E", 0, "E", 0, "E", 0],
             [0, "E", 0, "E", 0, "E"]
           ],
-          "implementation": "objad6bf1b1995c = Obj(x=0, y=0, width=6, height=1, orientation=90)",
+          "implementation": "objad6bf1b1995c is Obj(x=0, y=0, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objad6bf1b1995c","orientation":90,"tag":"l3058","width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objad6bf1b1995c","orientation":0,"parity":0,"tag":"l5973","width":6,"x":0,"y":0}
         },
@@ -123,7 +123,7 @@
             [0, "F", 0, "F", 0, "F"],
             ["F", 0, "F", 0, "F", 0]
           ],
-          "implementation": "obj595ac3a028ef = Obj(x=0, y=1, width=6, height=1, orientation=90)",
+          "implementation": "obj595ac3a028ef is Obj(x=0, y=1, width=6, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj595ac3a028ef","orientation":90,"tag":"l3058","width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"obj595ac3a028ef","orientation":0,"parity":1,"tag":"l5973","width":6,"x":0,"y":0}
         }
