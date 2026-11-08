@@ -25,13 +25,15 @@ export function locate(matrix) {
     }
   }
 
-  if (bottom === -1) return { matrix: [], x: 0, y: 0 };
+  if (bottom === -1) return { matrix: [], x: 0, y: 0, width: 0, height: 0 };
   return {
     matrix: matrix
       .slice(top, bottom + 1)
       .map((row) => row.slice(left, right + 1)),
     x: left,
     y: top,
+    width: right - left + 1,
+    height: bottom - top + 1,
   };
 }
 

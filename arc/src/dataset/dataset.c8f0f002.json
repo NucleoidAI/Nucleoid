@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
     "if $Obj.color@first is 7:\n    $Obj.color = 5"
   ],
   "output_canvas": "EXACT",
@@ -29,7 +29,7 @@
             [1, 1, 0, 0, 1, 0],
             [0, 1, 1, 0, 0, 0]
           ],
-          "implementation": "# A group of 6 cells of color 1 in 2 pieces,\n# 5 by 3 at x 0, y 0\nobj956c87d67c7c = Obj(x=0, y=0, width=5, height=3, orientation=0, color=1)",
+          "implementation": "obj956c87d67c7c = Obj(x=0, y=0, width=5, height=3, orientation=0, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj956c87d67c7c","orientation":0,"tag":"l9100","width":5,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj956c87d67c7c","orientation":0,"tag":"l9100","width":5,"x":0,"y":0}
         },
@@ -45,7 +45,7 @@
             [0, 0, 0, 0, 0, 8],
             [0, 0, 0, 0, 0, 8]
           ],
-          "implementation": "# A group of 5 cells of color 8 in 2 pieces,\n# 5 by 3 at x 1, y 0\nobjf90224b9c06f = Obj(x=1, y=0, width=5, height=3, orientation=0, color=8)",
+          "implementation": "objf90224b9c06f = Obj(x=1, y=0, width=5, height=3, orientation=0, color=8)",
           "input_value": {"color":8,"height":3,"id":"objf90224b9c06f","orientation":0,"tag":"l9100","width":5,"x":1,"y":0},
           "output_value": {"color":8,"height":3,"id":"objf90224b9c06f","orientation":0,"tag":"l9100","width":5,"x":1,"y":0}
         },
@@ -61,7 +61,7 @@
             [0, 0, 5, 5, 0, 0],
             [5, 0, 0, 5, 5, 0]
           ],
-          "implementation": "# A group of 7 cells of color 7 in 2 pieces,\n# 5 by 3 at x 0, y 0\nobj4df746967d02 = Obj(x=0, y=0, width=5, height=3, orientation=0, color=7)",
+          "implementation": "obj4df746967d02 = Obj(x=0, y=0, width=5, height=3, orientation=0, color=7)",
           "input_value": {"color":7,"height":3,"id":"obj4df746967d02","orientation":0,"tag":"l9100","width":5,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"obj4df746967d02","orientation":0,"tag":"l9100","width":5,"x":0,"y":0}
         }
@@ -91,7 +91,7 @@
             [0, 0, 0, 5],
             [5, 0, 0, 5]
           ],
-          "implementation": "# A group of 6 cells of color 7 in 2 pieces,\n# 4 by 3 at x 0, y 0\nobjf2f3621429ce = Obj(x=0, y=0, width=4, height=3, orientation=0, color=7)",
+          "implementation": "objf2f3621429ce = Obj(x=0, y=0, width=4, height=3, orientation=0, color=7)",
           "input_value": {"color":7,"height":3,"id":"objf2f3621429ce","orientation":0,"tag":"l9100","width":4,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"objf2f3621429ce","orientation":0,"tag":"l9100","width":4,"x":0,"y":0}
         },
@@ -107,7 +107,7 @@
             [1, 0, 1, 0],
             [0, 1, 1, 0]
           ],
-          "implementation": "# A shape of 5 cells of color 1,\n# 4 by 3 at x 0, y 0\nobj01feaae7ae02 = Obj(x=0, y=0, width=4, height=3, orientation=0, color=1)",
+          "implementation": "obj01feaae7ae02 = Obj(x=0, y=0, width=4, height=3, orientation=0, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj01feaae7ae02","orientation":0,"tag":"l9100","width":4,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj01feaae7ae02","orientation":0,"tag":"l9100","width":4,"x":0,"y":0}
         },
@@ -123,7 +123,7 @@
             [0, 8, 0, 0],
             [0, 0, 0, 0]
           ],
-          "implementation": "# A single cell of color 8 at x 1, y 1\nobja86be7ae7c94 = Obj(x=1, y=1, width=1, height=1, orientation=0, color=8)",
+          "implementation": "obja86be7ae7c94 = Obj(x=1, y=1, width=1, height=1, orientation=0, color=8)",
           "input_value": {"color":8,"height":1,"id":"obja86be7ae7c94","orientation":0,"tag":"l9100","width":1,"x":1,"y":1},
           "output_value": {"color":8,"height":1,"id":"obja86be7ae7c94","orientation":0,"tag":"l9100","width":1,"x":1,"y":1}
         }
@@ -153,7 +153,7 @@
             [0, 0, 0, 1, 1],
             [0, 1, 0, 0, 0]
           ],
-          "implementation": "# A group of 6 cells of color 1 in 3 pieces,\n# 5 by 3 at x 0, y 0\nobj4c35be9e32a9 = Obj(x=0, y=0, width=5, height=3, orientation=0, color=1)",
+          "implementation": "obj4c35be9e32a9 = Obj(x=0, y=0, width=5, height=3, orientation=0, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj4c35be9e32a9","orientation":0,"tag":"l9100","width":5,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj4c35be9e32a9","orientation":0,"tag":"l9100","width":5,"x":0,"y":0}
         },
@@ -169,7 +169,7 @@
             [0, 8, 8, 0, 0],
             [0, 0, 8, 8, 0]
           ],
-          "implementation": "# A shape of 5 cells of color 8,\n# 3 by 3 at x 1, y 0\nobj0a7020c0e8f9 = Obj(x=1, y=0, width=3, height=3, orientation=0, color=8)",
+          "implementation": "obj0a7020c0e8f9 = Obj(x=1, y=0, width=3, height=3, orientation=0, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj0a7020c0e8f9","orientation":0,"tag":"l9100","width":3,"x":1,"y":0},
           "output_value": {"color":8,"height":3,"id":"obj0a7020c0e8f9","orientation":0,"tag":"l9100","width":3,"x":1,"y":0}
         },
@@ -185,7 +185,7 @@
             [5, 0, 0, 0, 0],
             [5, 0, 0, 0, 5]
           ],
-          "implementation": "# A group of 4 cells of color 7 in 3 pieces,\n# 5 by 3 at x 0, y 0\nobj3c263747a93d = Obj(x=0, y=0, width=5, height=3, orientation=0, color=7)",
+          "implementation": "obj3c263747a93d = Obj(x=0, y=0, width=5, height=3, orientation=0, color=7)",
           "input_value": {"color":7,"height":3,"id":"obj3c263747a93d","orientation":0,"tag":"l9100","width":5,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"obj3c263747a93d","orientation":0,"tag":"l9100","width":5,"x":0,"y":0}
         }
@@ -215,7 +215,7 @@
             [0, 1, 0, 0, 0],
             [0, 0, 1, 0, 0]
           ],
-          "implementation": "# A group of 4 cells of color 1 in 2 pieces,\n# 4 by 3 at x 0, y 0\nobj5ed70ad29ddf = Obj(x=0, y=0, width=4, height=3, orientation=0, color=1)",
+          "implementation": "obj5ed70ad29ddf = Obj(x=0, y=0, width=4, height=3, orientation=0, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj5ed70ad29ddf","orientation":0,"tag":"l9100","width":4,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj5ed70ad29ddf","orientation":0,"tag":"l9100","width":4,"x":0,"y":0}
         },
@@ -231,7 +231,7 @@
             [0, 0, 5, 5, 5],
             [0, 5, 0, 5, 0]
           ],
-          "implementation": "# A shape of 8 cells of color 7,\n# 4 by 3 at x 1, y 0\nobjd04757dd76e2 = Obj(x=1, y=0, width=4, height=3, orientation=0, color=7)",
+          "implementation": "objd04757dd76e2 = Obj(x=1, y=0, width=4, height=3, orientation=0, color=7)",
           "input_value": {"color":7,"height":3,"id":"objd04757dd76e2","orientation":0,"tag":"l9100","width":4,"x":1,"y":0},
           "output_value": {"color":5,"height":3,"id":"objd04757dd76e2","orientation":0,"tag":"l9100","width":4,"x":1,"y":0}
         },
@@ -247,7 +247,7 @@
             [8, 0, 0, 0, 0],
             [8, 0, 0, 0, 8]
           ],
-          "implementation": "# A group of 3 cells of color 8 in 2 pieces,\n# 5 by 2 at x 0, y 1\nobjf2fd0d143dae = Obj(x=0, y=1, width=5, height=2, orientation=0, color=8)",
+          "implementation": "objf2fd0d143dae = Obj(x=0, y=1, width=5, height=2, orientation=0, color=8)",
           "input_value": {"color":8,"height":2,"id":"objf2fd0d143dae","orientation":0,"tag":"l9100","width":5,"x":0,"y":1},
           "output_value": {"color":8,"height":2,"id":"objf2fd0d143dae","orientation":0,"tag":"l9100","width":5,"x":0,"y":1}
         }

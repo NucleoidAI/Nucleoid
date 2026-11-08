@@ -1,10 +1,10 @@
 {
   "declarations": [
-    "# There is an Obj type, a straight line with a color-8 endpoint,\n# which has its x and y position, its width and height\n# and its orientation as integers,\n# and it points toward its endpoint\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l8001'",
-    "# A horizontal line that points left, toward its endpoint,\n# grows one cell to the right, so it is one column wider\nif $Obj.orientation is 270:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'\n    $Obj.width = $Obj.width@first + 1",
-    "# A horizontal line that points right, toward its endpoint,\n# grows one cell to the left, so it starts one column further left\n# and is one column wider\nif $Obj.orientation is 90:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'\n    $Obj.x = $Obj.x@first - 1\n    $Obj.width = $Obj.width@first + 1",
-    "# A vertical line that points up, toward its endpoint,\n# grows one cell downward, so it is one row taller\nif $Obj.orientation is 0:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'\n    $Obj.height = $Obj.height@first + 1",
-    "# A vertical line that points down, toward its endpoint,\n# grows one cell upward, so it starts one row higher\n# and is one row taller\nif $Obj.orientation is 180:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'\n    $Obj.y = $Obj.y@first - 1\n    $Obj.height = $Obj.height@first + 1"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l8001'",
+    "if $Obj.orientation is 270:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'right'\n    $Obj.width = $Obj.width@first + 1",
+    "if $Obj.orientation is 90:\n    $Obj.tag = 'l4102'\n    $Obj.extension_direction = 'left'\n    $Obj.x = $Obj.x@first - 1\n    $Obj.width = $Obj.width@first + 1",
+    "if $Obj.orientation is 0:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'down'\n    $Obj.height = $Obj.height@first + 1",
+    "if $Obj.orientation is 180:\n    $Obj.tag = 'l6012'\n    $Obj.extension_direction = 'up'\n    $Obj.y = $Obj.y@first - 1\n    $Obj.height = $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -52,7 +52,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 3 cells of color 6 with a color-8 endpoint,\n# 3 by 1 at x 2, y 0, pointing west\nobj31dc1400794e = Obj(x=2, y=0, width=3, height=1, orientation=270)",
+          "implementation": "obj31dc1400794e = Obj(x=2, y=0, width=3, height=1, orientation=270)",
           "input_value": {"height":1,"id":"obj31dc1400794e","orientation":270,"tag":"l8001","width":3,"x":2,"y":0},
           "output_value": {"extension_direction":"right","height":1,"id":"obj31dc1400794e","orientation":270,"tag":"l4102","width":4,"x":2,"y":0}
         },
@@ -78,7 +78,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 3 cells of color 6 with a color-8 endpoint,\n# 3 by 1 at x 4, y 5, pointing east\nobj1383c0d06fda = Obj(x=4, y=5, width=3, height=1, orientation=90)",
+          "implementation": "obj1383c0d06fda = Obj(x=4, y=5, width=3, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l8001","width":3,"x":4,"y":5},
           "output_value": {"extension_direction":"left","height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l4102","width":4,"x":3,"y":5}
         }
@@ -128,7 +128,7 @@
             [8, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A vertical line of 4 cells of color 6 with a color-8 endpoint,\n# 1 by 4 at x 0, y 3, pointing south\nobjfef9b8e1a36c = Obj(x=0, y=3, width=1, height=4, orientation=180)",
+          "implementation": "objfef9b8e1a36c = Obj(x=0, y=3, width=1, height=4, orientation=180)",
           "input_value": {"height":4,"id":"objfef9b8e1a36c","orientation":180,"tag":"l8001","width":1,"x":0,"y":3},
           "output_value": {"extension_direction":"up","height":5,"id":"objfef9b8e1a36c","orientation":180,"tag":"l6012","width":1,"x":0,"y":2}
         },
@@ -154,7 +154,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 4 cells of color 6 with a color-8 endpoint,\n# 4 by 1 at x 2, y 5, pointing west\nobjb3a27e31f269 = Obj(x=2, y=5, width=4, height=1, orientation=270)",
+          "implementation": "objb3a27e31f269 = Obj(x=2, y=5, width=4, height=1, orientation=270)",
           "input_value": {"height":1,"id":"objb3a27e31f269","orientation":270,"tag":"l8001","width":4,"x":2,"y":5},
           "output_value": {"extension_direction":"right","height":1,"id":"objb3a27e31f269","orientation":270,"tag":"l4102","width":5,"x":2,"y":5}
         }
@@ -204,7 +204,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 4 cells of color 6 with a color-8 endpoint,\n# 4 by 1 at x 3, y 0, pointing east\nobj3f1a34c478cd = Obj(x=3, y=0, width=4, height=1, orientation=90)",
+          "implementation": "obj3f1a34c478cd = Obj(x=3, y=0, width=4, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l8001","width":4,"x":3,"y":0},
           "output_value": {"extension_direction":"left","height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l4102","width":5,"x":2,"y":0}
         },
@@ -230,7 +230,7 @@
             [0, 6, 0, 0, 0, 0, 0, 0],
             [0, 8, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A vertical line of 4 cells of color 6 with a color-8 endpoint,\n# 1 by 4 at x 1, y 4, pointing south\nobja034f4182e12 = Obj(x=1, y=4, width=1, height=4, orientation=180)",
+          "implementation": "obja034f4182e12 = Obj(x=1, y=4, width=1, height=4, orientation=180)",
           "input_value": {"height":4,"id":"obja034f4182e12","orientation":180,"tag":"l8001","width":1,"x":1,"y":4},
           "output_value": {"extension_direction":"up","height":5,"id":"obja034f4182e12","orientation":180,"tag":"l6012","width":1,"x":1,"y":3}
         },
@@ -256,7 +256,7 @@
             [0, 0, 0, 0, 0, 0, 6, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A vertical line of 4 cells of color 6 with a color-8 endpoint,\n# 1 by 4 at x 6, y 2, pointing north\nobj4eba52e160b2 = Obj(x=6, y=2, width=1, height=4, orientation=0)",
+          "implementation": "obj4eba52e160b2 = Obj(x=6, y=2, width=1, height=4, orientation=0)",
           "input_value": {"height":4,"id":"obj4eba52e160b2","orientation":0,"tag":"l8001","width":1,"x":6,"y":2},
           "output_value": {"extension_direction":"down","height":5,"id":"obj4eba52e160b2","orientation":0,"tag":"l6012","width":1,"x":6,"y":2}
         }
@@ -302,7 +302,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A vertical line of 3 cells of color 6 with a color-8 endpoint,\n# 1 by 3 at x 2, y 1, pointing north\nobj84b61b7cd8f6 = Obj(x=2, y=1, width=1, height=3, orientation=0)",
+          "implementation": "obj84b61b7cd8f6 = Obj(x=2, y=1, width=1, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l8001","width":1,"x":2,"y":1},
           "output_value": {"extension_direction":"down","height":4,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l6012","width":1,"x":2,"y":1}
         }
@@ -348,7 +348,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A vertical line of 4 cells of color 6 with a color-8 endpoint,\n# 1 by 4 at x 1, y 1, pointing south\nobj71a65bf8e5ce = Obj(x=1, y=1, width=1, height=4, orientation=180)",
+          "implementation": "obj71a65bf8e5ce = Obj(x=1, y=1, width=1, height=4, orientation=180)",
           "input_value": {"height":4,"id":"obj71a65bf8e5ce","orientation":180,"tag":"l8001","width":1,"x":1,"y":1},
           "output_value": {"extension_direction":"up","height":5,"id":"obj71a65bf8e5ce","orientation":180,"tag":"l6012","width":1,"x":1,"y":0}
         },
@@ -372,7 +372,7 @@
             [0, 0, 0, 6, 6, 6, 8],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 3 cells of color 6 with a color-8 endpoint,\n# 3 by 1 at x 4, y 5, pointing east\nobj400315cd8551 = Obj(x=4, y=5, width=3, height=1, orientation=90)",
+          "implementation": "obj400315cd8551 = Obj(x=4, y=5, width=3, height=1, orientation=90)",
           "input_value": {"height":1,"id":"obj400315cd8551","orientation":90,"tag":"l8001","width":3,"x":4,"y":5},
           "output_value": {"extension_direction":"left","height":1,"id":"obj400315cd8551","orientation":90,"tag":"l4102","width":4,"x":3,"y":5}
         }

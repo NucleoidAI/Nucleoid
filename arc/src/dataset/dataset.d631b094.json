@@ -1,12 +1,12 @@
 {
   "declarations": [
-    "# There is an Obj type, all the cells of one color,\n# which has its x and y position, the width and height of its box,\n# its orientation, its color and its number of cells as integers\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
-    "# Every object becomes a horizontal bar\n$Obj.tag = 'l3058'",
-    "# Every bar is as wide as the object has cells\n$Obj.width = $Obj.cell_count",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
+    "$Obj.tag = 'l3058'",
+    "$Obj.width = $Obj.cell_count",
     "$Obj.height = 1",
-    "# Every bar wider than one cell is a horizontal line, orientation 90,\n# and a bar one cell wide is a point, orientation 0\n$Obj.orientation = 90 if $Obj.width > 1 else 0",
-    "# Every bar starts at the left edge of the output\n$Obj.x = 0",
-    "# Every bar starts at the top edge of the output\n$Obj.y = 0"
+    "$Obj.orientation = 90 if $Obj.width > 1 else 0",
+    "$Obj.x = 0",
+    "$Obj.y = 0"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -30,7 +30,7 @@
           "output_instance_matrix": [
             [1, 1]
           ],
-          "implementation": "# A diagonal line of 2 cells of color 1,\n# 2 by 2 at x 0, y 1, falling to the right\nobje6495176f8fb = Obj(x=0, y=1, width=2, height=2, orientation=135, color=1, cell_count=2)",
+          "implementation": "obje6495176f8fb = Obj(x=0, y=1, width=2, height=2, orientation=135, color=1, cell_count=2)",
           "input_value": {"cell_count":2,"color":1,"height":2,"id":"obje6495176f8fb","orientation":135,"tag":"l9100","width":2,"x":0,"y":1},
           "output_value": {"cell_count":2,"color":1,"height":1,"id":"obje6495176f8fb","orientation":90,"tag":"l3058","width":2,"x":0,"y":0}
         }
@@ -56,7 +56,7 @@
           "output_instance_matrix": [
             [2, 2, 2]
           ],
-          "implementation": "# A chevron of 3 cells of color 2,\n# 2 by 3 at x 0, y 0, pointing west\nobjc658ccf52db5 = Obj(x=0, y=0, width=2, height=3, orientation=270, color=2, cell_count=3)",
+          "implementation": "objc658ccf52db5 = Obj(x=0, y=0, width=2, height=3, orientation=270, color=2, cell_count=3)",
           "input_value": {"cell_count":3,"color":2,"height":3,"id":"objc658ccf52db5","orientation":270,"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"cell_count":3,"color":2,"height":1,"id":"objc658ccf52db5","orientation":90,"tag":"l3058","width":3,"x":0,"y":0}
         }
@@ -82,7 +82,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "# A single cell of color 7 at x 1, y 0\nobjfd9f284dcfeb = Obj(x=1, y=0, width=1, height=1, orientation=0, color=7, cell_count=1)",
+          "implementation": "objfd9f284dcfeb = Obj(x=1, y=0, width=1, height=1, orientation=0, color=7, cell_count=1)",
           "input_value": {"cell_count":1,"color":7,"height":1,"id":"objfd9f284dcfeb","orientation":0,"tag":"l9100","width":1,"x":1,"y":0},
           "output_value": {"cell_count":1,"color":7,"height":1,"id":"objfd9f284dcfeb","orientation":0,"tag":"l3058","width":1,"x":0,"y":0}
         }
@@ -108,7 +108,7 @@
           "output_instance_matrix": [
             [8, 8, 8, 8]
           ],
-          "implementation": "# A shape of 4 cells of color 8,\n# 2 by 3 at x 0, y 0\nobj3ec9cc61c7f7 = Obj(x=0, y=0, width=2, height=3, orientation=0, color=8, cell_count=4)",
+          "implementation": "obj3ec9cc61c7f7 = Obj(x=0, y=0, width=2, height=3, orientation=0, color=8, cell_count=4)",
           "input_value": {"cell_count":4,"color":8,"height":3,"id":"obj3ec9cc61c7f7","orientation":0,"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"cell_count":4,"color":8,"height":1,"id":"obj3ec9cc61c7f7","orientation":90,"tag":"l3058","width":4,"x":0,"y":0}
         }
@@ -134,7 +134,7 @@
           "output_instance_matrix": [
             [4, 4, 4, 4, 4]
           ],
-          "implementation": "# A shape of 5 cells of color 4,\n# 3 by 3 at x 0, y 0\nobj7ec5133e61b7 = Obj(x=0, y=0, width=3, height=3, orientation=0, color=4, cell_count=5)",
+          "implementation": "obj7ec5133e61b7 = Obj(x=0, y=0, width=3, height=3, orientation=0, color=4, cell_count=5)",
           "input_value": {"cell_count":5,"color":4,"height":3,"id":"obj7ec5133e61b7","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"cell_count":5,"color":4,"height":1,"id":"obj7ec5133e61b7","orientation":90,"tag":"l3058","width":5,"x":0,"y":0}
         }

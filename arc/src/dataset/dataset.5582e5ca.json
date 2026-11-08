@@ -1,8 +1,8 @@
 {
   "declarations": [
-    "# There is an Obj type, a whole block of colored cells,\n# which has its x and y position, the width and height of its box\n# and its orientation as integers,\n# and its parts, the colors of its nonzero cells\n# in reading order, as a list\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
-    "# Every block becomes a solid rectangle that fills the canvas\n$Obj.tag = 'l5236'",
-    "# Every block is filled with its most frequent color\n$Obj.fill_color = mode of $Obj.parts"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
+    "$Obj.tag = 'l5236'",
+    "$Obj.fill_color = mode of $Obj.parts"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -30,7 +30,7 @@
             [4, 4, 4],
             [4, 4, 4]
           ],
-          "implementation": "# A whole block of colors 4, 8, 6 and 3,\n# 3 by 3 at x 0, y 0\nobja1b60a6c90dc = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
+          "implementation": "obja1b60a6c90dc = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
           "input_value": {"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":4,"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"tag":"l5236","width":3,"x":0,"y":0}
         }
@@ -60,7 +60,7 @@
             [9, 9, 9],
             [9, 9, 9]
           ],
-          "implementation": "# A whole block of colors 6, 8, 9, 1 and 4,\n# 3 by 3 at x 0, y 0\nobj2f95578125dc = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
+          "implementation": "obj2f95578125dc = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
           "input_value": {"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":9,"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"tag":"l5236","width":3,"x":0,"y":0}
         }
@@ -90,7 +90,7 @@
             [6, 6, 6],
             [6, 6, 6]
           ],
-          "implementation": "# A whole block of colors 4, 6, 9, 1 and 8,\n# 3 by 3 at x 0, y 0\nobj0a1a67aea6eb = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
+          "implementation": "obj0a1a67aea6eb = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
           "input_value": {"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":6,"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"tag":"l5236","width":3,"x":0,"y":0}
         }
@@ -120,7 +120,7 @@
             [8, 8, 8],
             [8, 8, 8]
           ],
-          "implementation": "# A whole block of colors 8, 6, 4, 9 and 3,\n# 3 by 3 at x 0, y 0\nobjea33ebd2f6a8 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
+          "implementation": "objea33ebd2f6a8 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
           "input_value": {"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":8,"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"tag":"l5236","width":3,"x":0,"y":0}
         }

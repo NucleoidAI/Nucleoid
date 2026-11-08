@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, parts: list):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.parts = parts",
     "$Obj.tag = 'l6074'",
     "$Obj.orientation = {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",
     "if $Obj.orientation is 90:\n    $Obj.height = 1",
@@ -32,7 +32,7 @@
             [0, 5, 0],
             [0, 0, 5]
           ],
-          "implementation": "# A block of colors 2 and 3,\n# 3 by 3 at x 0, y 0\nobjf30b9a69fe75 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])",
+          "implementation": "objf30b9a69fe75 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])",
           "input_value": {"height":3,"id":"objf30b9a69fe75","orientation":0,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"objf30b9a69fe75","orientation":135,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l6074","width":3,"x":0,"y":0}
         }
@@ -62,7 +62,7 @@
             [0, 5, 0],
             [5, 0, 0]
           ],
-          "implementation": "# A block of colors 3, 4 and 2,\n# 3 by 3 at x 0, y 0\nobj9b3f65ec8bbe = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[3, 3, 3, 4, 2, 2, 4, 4, 2])",
+          "implementation": "obj9b3f65ec8bbe = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[3, 3, 3, 4, 2, 2, 4, 4, 2])",
           "input_value": {"height":3,"id":"obj9b3f65ec8bbe","orientation":0,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"obj9b3f65ec8bbe","orientation":45,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l6074","width":3,"x":0,"y":0}
         }
@@ -92,7 +92,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# A block of color 4,\n# 3 by 3 at x 0, y 0\nobj23d15ee33476 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 4, 4, 4, 4, 4, 4, 4])",
+          "implementation": "obj23d15ee33476 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 4, 4, 4, 4, 4, 4, 4])",
           "input_value": {"height":3,"id":"obj23d15ee33476","orientation":0,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":1,"id":"obj23d15ee33476","orientation":90,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l6074","width":3,"x":0,"y":0}
         }
@@ -122,7 +122,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# A block of color 3,\n# 3 by 3 at x 0, y 0\nobjb16c3542a556 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[3, 3, 3, 3, 3, 3, 3, 3, 3])",
+          "implementation": "objb16c3542a556 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[3, 3, 3, 3, 3, 3, 3, 3, 3])",
           "input_value": {"height":3,"id":"objb16c3542a556","orientation":0,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":1,"id":"objb16c3542a556","orientation":90,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l6074","width":3,"x":0,"y":0}
         }
@@ -152,7 +152,7 @@
             [0, 5, 0],
             [0, 0, 5]
           ],
-          "implementation": "# A block of colors 4 and 3,\n# 3 by 3 at x 0, y 0\nobjde2fe15d0cff = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 4, 4, 4, 4, 3, 3, 3])",
+          "implementation": "objde2fe15d0cff = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 4, 4, 4, 4, 3, 3, 3])",
           "input_value": {"height":3,"id":"objde2fe15d0cff","orientation":0,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"objde2fe15d0cff","orientation":135,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l6074","width":3,"x":0,"y":0}
         }
@@ -182,7 +182,7 @@
             [0, 5, 0],
             [5, 0, 0]
           ],
-          "implementation": "# A block of colors 4, 2 and 3,\n# 3 by 3 at x 0, y 0\nobj19a35427d914 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 4, 2, 3, 2, 3, 2, 3])",
+          "implementation": "obj19a35427d914 = Obj(x=0, y=0, width=3, height=3, orientation=0, parts=[4, 4, 4, 2, 3, 2, 3, 2, 3])",
           "input_value": {"height":3,"id":"obj19a35427d914","orientation":0,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"obj19a35427d914","orientation":45,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l6074","width":3,"x":0,"y":0}
         }

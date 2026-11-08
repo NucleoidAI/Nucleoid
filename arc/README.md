@@ -2389,11 +2389,12 @@ This standalone utility does not change the full-size instance masks or return
 position metadata. Use `Matrix.locate` to retain the original position with
 the crop.
 
-`Matrix.locate(matrix)` returns `{ matrix, x, y }`, pairing the same tight crop
-with its zero-based top-left position in the original matrix: `x` is the column
-and `y` is the row. Empty and all-zero matrices return
-`{ matrix: [], x: 0, y: 0 }`. It uses the same validation as `Matrix.crop` and
-does not modify the input. For a located result,
+`Matrix.locate(matrix)` returns `{ matrix, x, y, width, height }`, pairing the
+same tight crop with its zero-based top-left position in the original matrix
+and its size: `x` is the column, `y` is the row, `width` is the crop's column
+count and `height` is its row count. Empty and all-zero matrices return
+`{ matrix: [], x: 0, y: 0, width: 0, height: 0 }`. It uses the same validation
+as `Matrix.crop` and does not modify the input. For a located result,
 `Matrix.pad(result.matrix, rows, cols, result.x, result.y)` restores the crop
 to its original position on a canvas at least as large as the supplied dimensions.
 

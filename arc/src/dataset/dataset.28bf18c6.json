@@ -1,12 +1,12 @@
 {
   "declarations": [
-    "# There is an Obj type, a single shape on the grid,\n# which has its x and y position, the width and height\n# of its box, its orientation and its color as integers\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
-    "# Every shape is repeated side by side\n$Obj.tag = 'l4305'",
-    "# Every shape appears twice in total\n$Obj.repeat_count = 2",
-    "# Every copy goes to the right of the one before it\n$Obj.repeat_direction = 'right'",
-    "# Every repeated shape is as wide as all its copies side by side\n$Obj.width = $Obj.width@first * $Obj.repeat_count",
-    "# Every repeated shape starts at the left edge of the output\n$Obj.x = 0",
-    "# Every repeated shape starts at the top edge of the output\n$Obj.y = 0"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color",
+    "$Obj.tag = 'l4305'",
+    "$Obj.repeat_count = 2",
+    "$Obj.repeat_direction = 'right'",
+    "$Obj.width = $Obj.width@first * $Obj.repeat_count",
+    "$Obj.x = 0",
+    "$Obj.y = 0"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -44,7 +44,7 @@
             [0, 8, 0, 0, 8, 0],
             [8, 8, 8, 8, 8, 8]
           ],
-          "implementation": "# A shape of 6 cells of color 8,\n# 3 by 3 at x 1, y 1\nobj9b9fe2a02df1 = Obj(x=1, y=1, width=3, height=3, orientation=0, color=8)",
+          "implementation": "obj9b9fe2a02df1 = Obj(x=1, y=1, width=3, height=3, orientation=0, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj9b9fe2a02df1","orientation":0,"tag":"l9100","width":3,"x":1,"y":1},
           "output_value": {"color":8,"height":3,"id":"obj9b9fe2a02df1","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","width":6,"x":0,"y":0}
         }
@@ -84,7 +84,7 @@
             [2, 2, 2, 2, 2, 2],
             [2, 2, 0, 2, 2, 0]
           ],
-          "implementation": "# A shape of 6 cells of color 2,\n# 3 by 3 at x 2, y 5\nobje0404a753c87 = Obj(x=2, y=5, width=3, height=3, orientation=0, color=2)",
+          "implementation": "obje0404a753c87 = Obj(x=2, y=5, width=3, height=3, orientation=0, color=2)",
           "input_value": {"color":2,"height":3,"id":"obje0404a753c87","orientation":0,"tag":"l9100","width":3,"x":2,"y":5},
           "output_value": {"color":2,"height":3,"id":"obje0404a753c87","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","width":6,"x":0,"y":0}
         }
@@ -124,7 +124,7 @@
             [1, 0, 0, 1, 0, 0],
             [0, 1, 0, 0, 1, 0]
           ],
-          "implementation": "# A shape of 4 cells of color 1,\n# 3 by 3 at x 4, y 1\nobjb063b1a80b04 = Obj(x=4, y=1, width=3, height=3, orientation=0, color=1)",
+          "implementation": "objb063b1a80b04 = Obj(x=4, y=1, width=3, height=3, orientation=0, color=1)",
           "input_value": {"color":1,"height":3,"id":"objb063b1a80b04","orientation":0,"tag":"l9100","width":3,"x":4,"y":1},
           "output_value": {"color":1,"height":3,"id":"objb063b1a80b04","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","width":6,"x":0,"y":0}
         }
@@ -164,7 +164,7 @@
             [3, 3, 3, 3, 3, 3],
             [3, 0, 0, 3, 0, 0]
           ],
-          "implementation": "# A shape of 5 cells of color 3,\n# 3 by 3 at x 1, y 4\nobj4b7b41624747 = Obj(x=1, y=4, width=3, height=3, orientation=0, color=3)",
+          "implementation": "obj4b7b41624747 = Obj(x=1, y=4, width=3, height=3, orientation=0, color=3)",
           "input_value": {"color":3,"height":3,"id":"obj4b7b41624747","orientation":0,"tag":"l9100","width":3,"x":1,"y":4},
           "output_value": {"color":3,"height":3,"id":"obj4b7b41624747","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","width":6,"x":0,"y":0}
         }

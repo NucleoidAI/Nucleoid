@@ -511,7 +511,7 @@ export function summary(difference: number, duration: number) {
   block(numbered("Run complete"), [
     status,
     "",
-    `Difference  ${difference === 0 ? "✅" : "❌"}  ${difference}`,
+    `Difference  ${difference === 0 ? "✅" : "❌"} ${difference}`,
     `Elapsed     ⏱️ ${elapsed}`,
   ]);
   console.log("");

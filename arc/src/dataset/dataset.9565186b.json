@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, color: int, cell_count: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'\n    this.color = color\n    this.cell_count = cell_count",
     "if any other in Obj: other.cell_count > $Obj.cell_count:\n    $Obj.color = 5"
   ],
   "output_canvas": "EXACT",
@@ -29,7 +29,7 @@
             [2, 0, 0],
             [2, 0, 0]
           ],
-          "implementation": "# A corner of 5 cells of color 2,\n# 3 by 3 at x 0, y 0, pointing northwest\nobjfd8da1fb82d2 = Obj(x=0, y=0, width=3, height=3, orientation=315, color=2, cell_count=5)",
+          "implementation": "objfd8da1fb82d2 = Obj(x=0, y=0, width=3, height=3, orientation=315, color=2, cell_count=5)",
           "input_value": {"cell_count":5,"color":2,"height":3,"id":"objfd8da1fb82d2","orientation":315,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"cell_count":5,"color":2,"height":3,"id":"objfd8da1fb82d2","orientation":315,"tag":"l9100","width":3,"x":0,"y":0}
         },
@@ -45,7 +45,7 @@
             [0, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "# A single cell of color 1 at x 1, y 1\nobj18a2b2379cda = Obj(x=1, y=1, width=1, height=1, orientation=0, color=1, cell_count=1)",
+          "implementation": "obj18a2b2379cda = Obj(x=1, y=1, width=1, height=1, orientation=0, color=1, cell_count=1)",
           "input_value": {"cell_count":1,"color":1,"height":1,"id":"obj18a2b2379cda","orientation":0,"tag":"l9100","width":1,"x":1,"y":1},
           "output_value": {"cell_count":1,"color":5,"height":1,"id":"obj18a2b2379cda","orientation":0,"tag":"l9100","width":1,"x":1,"y":1}
         },
@@ -61,7 +61,7 @@
             [0, 0, 5],
             [0, 5, 5]
           ],
-          "implementation": "# A corner of 3 cells of color 8,\n# 2 by 2 at x 1, y 1, pointing southeast\nobjaabb8a63326c = Obj(x=1, y=1, width=2, height=2, orientation=135, color=8, cell_count=3)",
+          "implementation": "objaabb8a63326c = Obj(x=1, y=1, width=2, height=2, orientation=135, color=8, cell_count=3)",
           "input_value": {"cell_count":3,"color":8,"height":2,"id":"objaabb8a63326c","orientation":135,"tag":"l9100","width":2,"x":1,"y":1},
           "output_value": {"cell_count":3,"color":5,"height":2,"id":"objaabb8a63326c","orientation":135,"tag":"l9100","width":2,"x":1,"y":1}
         }
@@ -91,7 +91,7 @@
             [0, 1, 0],
             [0, 0, 0]
           ],
-          "implementation": "# A shape of 4 cells of color 1,\n# 3 by 2 at x 0, y 0\nobjb4c2bdc31cbd = Obj(x=0, y=0, width=3, height=2, orientation=0, color=1, cell_count=4)",
+          "implementation": "objb4c2bdc31cbd = Obj(x=0, y=0, width=3, height=2, orientation=0, color=1, cell_count=4)",
           "input_value": {"cell_count":4,"color":1,"height":2,"id":"objb4c2bdc31cbd","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"cell_count":4,"color":1,"height":2,"id":"objb4c2bdc31cbd","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         },
@@ -107,7 +107,7 @@
             [5, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "# A vertical line of 2 cells of color 8,\n# 1 by 2 at x 0, y 1\nobjfbe4a4224d14 = Obj(x=0, y=1, width=1, height=2, orientation=0, color=8, cell_count=2)",
+          "implementation": "objfbe4a4224d14 = Obj(x=0, y=1, width=1, height=2, orientation=0, color=8, cell_count=2)",
           "input_value": {"cell_count":2,"color":8,"height":2,"id":"objfbe4a4224d14","orientation":0,"tag":"l9100","width":1,"x":0,"y":1},
           "output_value": {"cell_count":2,"color":5,"height":2,"id":"objfbe4a4224d14","orientation":0,"tag":"l9100","width":1,"x":0,"y":1}
         },
@@ -123,7 +123,7 @@
             [0, 0, 5],
             [0, 0, 0]
           ],
-          "implementation": "# A single cell of color 3 at x 2, y 1\nobj9b51b0fdc01c = Obj(x=2, y=1, width=1, height=1, orientation=0, color=3, cell_count=1)",
+          "implementation": "obj9b51b0fdc01c = Obj(x=2, y=1, width=1, height=1, orientation=0, color=3, cell_count=1)",
           "input_value": {"cell_count":1,"color":3,"height":1,"id":"obj9b51b0fdc01c","orientation":0,"tag":"l9100","width":1,"x":2,"y":1},
           "output_value": {"cell_count":1,"color":5,"height":1,"id":"obj9b51b0fdc01c","orientation":0,"tag":"l9100","width":1,"x":2,"y":1}
         },
@@ -139,7 +139,7 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "# A horizontal line of 2 cells of color 2,\n# 2 by 1 at x 1, y 2\nobj91b67e1827b1 = Obj(x=1, y=2, width=2, height=1, orientation=90, color=2, cell_count=2)",
+          "implementation": "obj91b67e1827b1 = Obj(x=1, y=2, width=2, height=1, orientation=90, color=2, cell_count=2)",
           "input_value": {"cell_count":2,"color":2,"height":1,"id":"obj91b67e1827b1","orientation":90,"tag":"l9100","width":2,"x":1,"y":2},
           "output_value": {"cell_count":2,"color":5,"height":1,"id":"obj91b67e1827b1","orientation":90,"tag":"l9100","width":2,"x":1,"y":2}
         }
@@ -169,7 +169,7 @@
             [0, 0, 2],
             [2, 2, 2]
           ],
-          "implementation": "# A shape of 7 cells of color 2,\n# 3 by 3 at x 0, y 0\nobj3710037e184f = Obj(x=0, y=0, width=3, height=3, orientation=0, color=2, cell_count=7)",
+          "implementation": "obj3710037e184f = Obj(x=0, y=0, width=3, height=3, orientation=0, color=2, cell_count=7)",
           "input_value": {"cell_count":7,"color":2,"height":3,"id":"obj3710037e184f","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"cell_count":7,"color":2,"height":3,"id":"obj3710037e184f","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         },
@@ -185,7 +185,7 @@
             [5, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 2 cells of color 8,\n# 2 by 1 at x 0, y 1\nobjcfb87667abdf = Obj(x=0, y=1, width=2, height=1, orientation=90, color=8, cell_count=2)",
+          "implementation": "objcfb87667abdf = Obj(x=0, y=1, width=2, height=1, orientation=90, color=8, cell_count=2)",
           "input_value": {"cell_count":2,"color":8,"height":1,"id":"objcfb87667abdf","orientation":90,"tag":"l9100","width":2,"x":0,"y":1},
           "output_value": {"cell_count":2,"color":5,"height":1,"id":"objcfb87667abdf","orientation":90,"tag":"l9100","width":2,"x":0,"y":1}
         }
@@ -215,7 +215,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 2 cells of color 3,\n# 2 by 1 at x 0, y 0\nobj501aae1fff6a = Obj(x=0, y=0, width=2, height=1, orientation=90, color=3, cell_count=2)",
+          "implementation": "obj501aae1fff6a = Obj(x=0, y=0, width=2, height=1, orientation=90, color=3, cell_count=2)",
           "input_value": {"cell_count":2,"color":3,"height":1,"id":"obj501aae1fff6a","orientation":90,"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"cell_count":2,"color":5,"height":1,"id":"obj501aae1fff6a","orientation":90,"tag":"l9100","width":2,"x":0,"y":0}
         },
@@ -231,7 +231,7 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "# A group of 2 scattered cells of color 8,\n# 3 by 3 at x 0, y 0\nobj5f62becffc78 = Obj(x=0, y=0, width=3, height=3, orientation=0, color=8, cell_count=2)",
+          "implementation": "obj5f62becffc78 = Obj(x=0, y=0, width=3, height=3, orientation=0, color=8, cell_count=2)",
           "input_value": {"cell_count":2,"color":8,"height":3,"id":"obj5f62becffc78","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"cell_count":2,"color":5,"height":3,"id":"obj5f62becffc78","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         },
@@ -247,7 +247,7 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "# A horizontal line of 3 cells of color 4,\n# 3 by 1 at x 0, y 1\nobj50d280d9fceb = Obj(x=0, y=1, width=3, height=1, orientation=90, color=4, cell_count=3)",
+          "implementation": "obj50d280d9fceb = Obj(x=0, y=1, width=3, height=1, orientation=90, color=4, cell_count=3)",
           "input_value": {"cell_count":3,"color":4,"height":1,"id":"obj50d280d9fceb","orientation":90,"tag":"l9100","width":3,"x":0,"y":1},
           "output_value": {"cell_count":3,"color":4,"height":1,"id":"obj50d280d9fceb","orientation":90,"tag":"l9100","width":3,"x":0,"y":1}
         },
@@ -263,7 +263,7 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "# A horizontal line of 2 cells of color 1,\n# 2 by 1 at x 1, y 2\nobjf2cf87623f42 = Obj(x=1, y=2, width=2, height=1, orientation=90, color=1, cell_count=2)",
+          "implementation": "objf2cf87623f42 = Obj(x=1, y=2, width=2, height=1, orientation=90, color=1, cell_count=2)",
           "input_value": {"cell_count":2,"color":1,"height":1,"id":"objf2cf87623f42","orientation":90,"tag":"l9100","width":2,"x":1,"y":2},
           "output_value": {"cell_count":2,"color":5,"height":1,"id":"objf2cf87623f42","orientation":90,"tag":"l9100","width":2,"x":1,"y":2}
         }
@@ -293,7 +293,7 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "# A group of 2 scattered cells of color 1,\n# 1 by 3 at x 0, y 0\nobja0f8bb24bef9 = Obj(x=0, y=0, width=1, height=3, orientation=0, color=1, cell_count=2)",
+          "implementation": "obja0f8bb24bef9 = Obj(x=0, y=0, width=1, height=3, orientation=0, color=1, cell_count=2)",
           "input_value": {"cell_count":2,"color":1,"height":3,"id":"obja0f8bb24bef9","orientation":0,"tag":"l9100","width":1,"x":0,"y":0},
           "output_value": {"cell_count":2,"color":5,"height":3,"id":"obja0f8bb24bef9","orientation":0,"tag":"l9100","width":1,"x":0,"y":0}
         },
@@ -309,7 +309,7 @@
             [3, 3, 0],
             [0, 3, 0]
           ],
-          "implementation": "# A shape of 4 cells of color 3,\n# 2 by 3 at x 0, y 0\nobj6c6428c31841 = Obj(x=0, y=0, width=2, height=3, orientation=0, color=3, cell_count=4)",
+          "implementation": "obj6c6428c31841 = Obj(x=0, y=0, width=2, height=3, orientation=0, color=3, cell_count=4)",
           "input_value": {"cell_count":4,"color":3,"height":3,"id":"obj6c6428c31841","orientation":0,"tag":"l9100","width":2,"x":0,"y":0},
           "output_value": {"cell_count":4,"color":3,"height":3,"id":"obj6c6428c31841","orientation":0,"tag":"l9100","width":2,"x":0,"y":0}
         },
@@ -325,7 +325,7 @@
             [0, 0, 5],
             [0, 0, 5]
           ],
-          "implementation": "# A vertical line of 3 cells of color 2,\n# 1 by 3 at x 2, y 0\nobja8f0a8586df4 = Obj(x=2, y=0, width=1, height=3, orientation=0, color=2, cell_count=3)",
+          "implementation": "obja8f0a8586df4 = Obj(x=2, y=0, width=1, height=3, orientation=0, color=2, cell_count=3)",
           "input_value": {"cell_count":3,"color":2,"height":3,"id":"obja8f0a8586df4","orientation":0,"tag":"l9100","width":1,"x":2,"y":0},
           "output_value": {"cell_count":3,"color":5,"height":3,"id":"obja8f0a8586df4","orientation":0,"tag":"l9100","width":1,"x":2,"y":0}
         }

@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
     "$Obj.mirror_axis = 135"
   ],
   "output_canvas": "EXACT",
@@ -29,7 +29,7 @@
             [2, 5, 2],
             [1, 1, 2]
           ],
-          "implementation": "# A block of colors 2, 1 and 5,\n# 3 by 3 at x 0, y 0\nobj98ecd3af71f1 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "obj98ecd3af71f1 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj98ecd3af71f1","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj98ecd3af71f1","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
             [2, 2, 5],
             [5, 2, 5]
           ],
-          "implementation": "# A block of colors 2, 5 and 6,\n# 3 by 3 at x 0, y 0\nobjffef4308101e = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "objffef4308101e = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"objffef4308101e","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objffef4308101e","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -89,7 +89,7 @@
             [9, 5, 8],
             [5, 8, 9]
           ],
-          "implementation": "# A block of colors 9, 5 and 8,\n# 3 by 3 at x 0, y 0\nobjb5bc2fe94345 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "objb5bc2fe94345 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"objb5bc2fe94345","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objb5bc2fe94345","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -119,7 +119,7 @@
             [6, 1, 6],
             [6, 1, 2]
           ],
-          "implementation": "# A block of colors 2, 6 and 1,\n# 3 by 3 at x 0, y 0\nobjf024b87c2f1b = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "objf024b87c2f1b = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"objf024b87c2f1b","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objf024b87c2f1b","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
@@ -149,7 +149,7 @@
             [3, 4, 3],
             [4, 4, 4]
           ],
-          "implementation": "# A block of colors 9, 3 and 4,\n# 3 by 3 at x 0, y 0\nobj661249916bd0 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "obj661249916bd0 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj661249916bd0","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj661249916bd0","mirror_axis":135,"orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }

@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "# There is an Obj type, a corner where a vertical and\n# a horizontal segment meet at a vertex,\n# which has its x and y position, its width and height,\n# its orientation and the colors of its vertex\n# and both segments as integers\n# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color",
-    "# A corner whose vertex and both segments are color 9\n# gains a color-4 marker diagonally outside its vertex,\n# toward its orientation, so its shape is one column wider\n# and one row taller and starts one column left when it\n# points west and one row up when it points north\nif $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 4\n    $Obj.x = $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y = $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width = $Obj.width@first + 1\n    $Obj.height = $Obj.height@first + 1"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color",
+    "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 4\n    $Obj.x = $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y = $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width = $Obj.width@first + 1\n    $Obj.height = $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -49,7 +49,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 5, y 1, pointing southeast\nobj7e96305711c2 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj7e96305711c2 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj7e96305711c2","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":5,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj7e96305711c2","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":5,"y":1}
         },
@@ -75,7 +75,7 @@
             [0, 0, 9, 9, 0, 0, 0, 0],
             [0, 4, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 2, y 5, pointing southwest\nobj4a5e1d49d8a8 = Obj(x=2, y=5, width=2, height=2, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj4a5e1d49d8a8 = Obj(x=2, y=5, width=2, height=2, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj4a5e1d49d8a8","orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":2,"y":5},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj4a5e1d49d8a8","marker_color":4,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":1,"y":5}
         }
@@ -125,7 +125,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 2, y 1, pointing southeast\nobj4837a1872f63 = Obj(x=2, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj4837a1872f63 = Obj(x=2, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj4837a1872f63","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":2,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj4837a1872f63","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":2,"y":1}
         },
@@ -151,7 +151,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 5, y 2, pointing northeast\nobj09c863f4a1f2 = Obj(x=5, y=2, width=2, height=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj09c863f4a1f2 = Obj(x=5, y=2, width=2, height=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj09c863f4a1f2","orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":5,"y":2},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj09c863f4a1f2","marker_color":4,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":5,"y":1}
         },
@@ -177,7 +177,7 @@
             [0, 9, 9, 0, 0, 0, 0, 0],
             [4, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 1, y 5, pointing southwest\nobj2d9a28fe473f = Obj(x=1, y=5, width=2, height=2, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj2d9a28fe473f = Obj(x=1, y=5, width=2, height=2, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj2d9a28fe473f","orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":1,"y":5},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj2d9a28fe473f","marker_color":4,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":0,"y":5}
         }
@@ -227,7 +227,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 1, y 0, pointing southwest\nobje642e90734f5 = Obj(x=1, y=0, width=2, height=2, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obje642e90734f5 = Obj(x=1, y=0, width=2, height=2, orientation=225, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obje642e90734f5","orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":1,"y":0},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obje642e90734f5","marker_color":4,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":0,"y":0}
         },
@@ -253,7 +253,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 5, y 1, pointing northeast\nobj2712ba28a6ea = Obj(x=5, y=1, width=2, height=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj2712ba28a6ea = Obj(x=5, y=1, width=2, height=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj2712ba28a6ea","orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":5,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj2712ba28a6ea","marker_color":4,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":5,"y":0}
         },
@@ -279,7 +279,7 @@
             [0, 9, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 1, y 5, pointing northwest\nobjccce8d81e316 = Obj(x=1, y=5, width=2, height=2, orientation=315, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "objccce8d81e316 = Obj(x=1, y=5, width=2, height=2, orientation=315, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"objccce8d81e316","orientation":315,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":1,"y":5},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"objccce8d81e316","marker_color":4,"orientation":315,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":0,"y":4}
         },
@@ -305,7 +305,7 @@
             [0, 0, 0, 0, 0, 0, 0, 4],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 5, y 4, pointing southeast\nobj328ea79cc351 = Obj(x=5, y=4, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj328ea79cc351 = Obj(x=5, y=4, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj328ea79cc351","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":5,"y":4},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj328ea79cc351","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":5,"y":4}
         }
@@ -351,7 +351,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 3, y 1, pointing southeast\nobjb10dd4029d3e = Obj(x=3, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "objb10dd4029d3e = Obj(x=3, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"objb10dd4029d3e","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":3,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"objb10dd4029d3e","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":3,"y":1}
         }
@@ -397,7 +397,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 3, y 1, pointing northeast\nobj1d3e297e70a8 = Obj(x=3, y=1, width=2, height=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj1d3e297e70a8 = Obj(x=3, y=1, width=2, height=2, orientation=45, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj1d3e297e70a8","orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":3,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj1d3e297e70a8","marker_color":4,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":3,"y":0}
         },
@@ -421,7 +421,7 @@
             [0, 9, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# A corner whose vertex and both segments are color 9,\n# 2 by 2 at x 1, y 4, pointing northwest\nobj20499ff135c0 = Obj(x=1, y=4, width=2, height=2, orientation=315, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj20499ff135c0 = Obj(x=1, y=4, width=2, height=2, orientation=315, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj20499ff135c0","orientation":315,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"width":2,"x":1,"y":4},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj20499ff135c0","marker_color":4,"orientation":315,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"width":3,"x":0,"y":3}
         }
