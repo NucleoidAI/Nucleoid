@@ -2476,4 +2476,15 @@ function scale(amount, factor = 3) { return amount * factor }
 assert(box.grown(), 9)
 box.grown()
 # return: 9
+---
+# Nucleoid declares enums of named members
+
+enum Size: SMALL, MEDIUM, LARGE
+enum Fit: TIGHT = -1, REGULAR = 0, LOOSE = 1
+shirt = {size: Size.MEDIUM, fit: Fit.REGULAR}
+assert(shirt, {size: "MEDIUM", fit: 0})
+assert([Size.LARGE, Fit.TIGHT, Size.HUGE], ["LARGE", -1, null])
+enum Fit: TIGHT = -1, REGULAR = 1, LOOSE = 2
+shirt.fit
+# return: 1
 ```

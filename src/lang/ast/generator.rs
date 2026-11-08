@@ -8,8 +8,8 @@ mod statement;
 use std::fmt;
 
 use crate::lang::ast::{
-    BinaryOp, Expr, Function, FunctionBody, LogicalOp, ObjectEntry, Parameter, Quantifier,
-    TemplatePart, UnaryOp, VersionSelector,
+    BinaryOp, EnumMember, Expr, Function, FunctionBody, LogicalOp, ObjectEntry, Parameter,
+    ParameterDefault, Quantifier, TemplatePart, UnaryOp, VersionSelector,
 };
 pub use statement::{generate, generate_all};
 use statement::{indent, source_all};
@@ -21,11 +21,7 @@ fn has_binding_metadata(parameters: &[Parameter]) -> bool {
 }
 
 fn signature(parameters: &[Parameter]) -> String {
-    parameters
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>()
-        .join(",")
+    join(parameters)
 }
 
 impl fmt::Display for VersionSelector {
@@ -101,7 +97,24 @@ impl fmt::Display for Expr {
                 condition,
             } => write_quantified(f, *quantifier, binder, collection, condition),
             Expr::Of { noun, operand } => write_of(f, noun.as_str(), operand),
+            Expr::Enum(members) => write!(f, "enum{{{}}}", join(members)),
         }
+    }
+}
+
+impl fmt::Display for EnumMember {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.value {
+            ParameterDefault::String(value) if *value == self.name => f.write_str(&self.name),
+            _ => write!(f, "{}={}", self.name, self.value),
+        }
+    }
+}
+
+pub(crate) fn enum_source(name: &str, members: &[EnumMember]) -> String {
+    match members {
+        [member] => format!("enum {name}:\n{}", indent(&member.to_string())),
+        _ => format!("enum {name}:{}", join(members)),
     }
 }
 
@@ -292,8 +305,8 @@ fn groups_power_exponent(operand: &Expr) -> bool {
     }
 }
 
-fn join(expressions: &[Expr]) -> String {
-    expressions
+fn join<T: fmt::Display>(items: &[T]) -> String {
+    items
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<_>>()

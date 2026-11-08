@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use super::ClassData;
-use crate::graph::ShapeKey;
+use crate::error::{Error, Result};
+use crate::graph::{NodeKey, ShapeKey};
 use crate::history::{History, HistoryKey};
 use crate::lang::ast::Function;
 use crate::runtime::Runtime;
@@ -49,12 +50,31 @@ impl Runtime {
         changed
     }
 
+    pub(crate) fn ensure_writable(&self, object: &ObjectId) -> Result<()> {
+        if self.state.is_read_only(object) {
+            return Err(Error::type_error("Enums are read-only"));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn write_property(
+        &mut self,
+        object: &ObjectId,
+        property: &str,
+        value: Value,
+    ) -> Result<()> {
+        self.ensure_writable(object)?;
+        let changed = self.assign_property(object, property, value);
+        self.propagate_change(&NodeKey::property(object, property), changed)
+    }
+
     pub(crate) fn assign_property(
         &mut self,
         object: &ObjectId,
         property: &str,
         value: Value,
     ) -> bool {
+        debug_assert!(!self.state.is_read_only(object));
         if !self.state.objects.contains_key(object) {
             self.insert_object(object.clone(), ObjectData::new(None));
         }
@@ -100,6 +120,7 @@ impl Runtime {
 
     /// `state.delete` for a property.
     pub(crate) fn remove_property(&mut self, object: &ObjectId, property: &str) -> Option<Value> {
+        debug_assert!(!self.state.is_read_only(object));
         let removed = self
             .state
             .object_mut(object)

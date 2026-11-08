@@ -299,9 +299,7 @@ impl Runtime {
                 let base = self.evaluate(object, scope)?;
 
                 if let Value::Object(id) = base {
-                    let changed = self.assign_property(&id, property, value);
-                    let key = NodeKey::property(&id, property);
-                    self.propagate_change(&key, changed)?;
+                    self.write_property(&id, property, value)?;
                 } else if target.version_view() {
                     return Err(Error::type_error("State versions are read-only"));
                 }

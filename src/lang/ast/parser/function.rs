@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::class::initializer;
-use super::{FunctionSpelling, ParameterList, Parser};
+use super::{FunctionSpelling, ParameterList, Parser, ScalarLiteral};
 use crate::error::{Position, Result};
 use crate::lang::ast::lexer::{Keyword, Token};
 use crate::lang::ast::{Function, FunctionBody, Parameter, ParameterDefault, Stmt};
@@ -242,6 +242,22 @@ impl Parser {
 
     /// Only `parameters()` calls this: bare signature parsing is unchanged.
     fn parameter_default(&mut self) -> Result<ParameterDefault> {
+        let default = match self.scalar_literal() {
+            ScalarLiteral::Value(default) => default,
+            ScalarLiteral::NotFinite => {
+                return Err(self.error("Parameter default must be a finite number"));
+            }
+            ScalarLiteral::Missing => {
+                return Err(self.error("Expected a scalar literal parameter default"));
+            }
+        };
+        if !matches!(self.peek(), Token::Comma | Token::RightParen) {
+            return Err(self.error("Expected ',' or ')' after parameter default"));
+        }
+        Ok(default)
+    }
+
+    pub(super) fn scalar_literal(&mut self) -> ScalarLiteral {
         let negative = if self.eat(&Token::Minus) {
             Some(true)
         } else if self.eat(&Token::Plus) {
@@ -249,11 +265,9 @@ impl Parser {
         } else {
             None
         };
-        let default = match self.peek().clone() {
+        ScalarLiteral::Value(match self.peek().clone() {
+            Token::Number(number) if !number.is_finite() => return ScalarLiteral::NotFinite,
             Token::Number(number) => {
-                if !number.is_finite() {
-                    return Err(self.error("Parameter default must be a finite number"));
-                }
                 self.advance();
                 ParameterDefault::Number(if negative == Some(true) {
                     -number
@@ -276,12 +290,8 @@ impl Parser {
                 self.advance();
                 ParameterDefault::Null
             }
-            _ => return Err(self.error("Expected a scalar literal parameter default")),
-        };
-        if !matches!(self.peek(), Token::Comma | Token::RightParen) {
-            return Err(self.error("Expected ',' or ')' after parameter default"));
-        }
-        Ok(default)
+            _ => return ScalarLiteral::Missing,
+        })
     }
 
     /// Recognize adjacent dots only here, without changing tokenization of

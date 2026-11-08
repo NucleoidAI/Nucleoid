@@ -41,7 +41,7 @@ impl<'a> Ast<'a> {
             Expr::List(_) | Expr::Index { .. } | Expr::Slice { .. } => {
                 Ast::Array(array::Array::new(node))
             }
-            Expr::ObjectLiteral(_) | Expr::SpreadObject(_) => {
+            Expr::ObjectLiteral(_) | Expr::SpreadObject(_) | Expr::Enum(_) => {
                 Ast::Object(object::Object::new(node))
             }
             Expr::Function(_) => Ast::Function(function::Function::new(node)),

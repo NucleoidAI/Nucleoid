@@ -1,6 +1,7 @@
 mod class;
 mod control;
 mod destructuring;
+mod enumeration;
 mod expression;
 mod function;
 mod postfix;
@@ -13,7 +14,7 @@ use std::collections::HashMap;
 
 use super::lexer::{Keyword, Spanned, SyntaxOptions, Token, tokenize_with_options};
 use crate::error::{Error, Position, Result};
-use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, Stmt};
+use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, Stmt};
 
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
@@ -47,14 +48,6 @@ pub fn parse_expression(source: &str) -> Result<Expr> {
 pub fn parse_expression_with_options(source: &str, options: SyntaxOptions) -> Result<Expr> {
     Parser::from_source(source, options)?
         .attempt(|parser| parser.leading_expression(ExpressionContext::Ordinary))
-}
-
-fn parse_interpolation(source: &str, options: SyntaxOptions, words: bool) -> Result<Expr> {
-    let mut parser = Parser {
-        words,
-        ..Parser::from_source(source, options)?
-    };
-    parser.leading_expression(ExpressionContext::Interpolation)
 }
 
 fn furthest(accepted: Error, retried: Error) -> Error {
@@ -117,6 +110,7 @@ struct Parser {
     options: SyntaxOptions,
     words: bool,
     enclosed: bool,
+    in_class: bool,
     /// Python-style conditional attempts by `if` token position and nesting
     /// depth, which together decide one: the qualified condition and the
     /// position after its `else`, or `None`. A re-parse of the same source
@@ -157,6 +151,12 @@ struct ParameterList {
     initializers: Vec<Stmt>,
 }
 
+enum ScalarLiteral {
+    Value(ParameterDefault),
+    NotFinite,
+    Missing,
+}
+
 struct Pattern {
     targets: Vec<Target>,
     length: usize,
@@ -183,6 +183,7 @@ impl Parser {
             options: SyntaxOptions::default(),
             words: false,
             enclosed: false,
+            in_class: false,
             python_conditions: HashMap::new(),
             suppose_premises: HashMap::new(),
             while_conditions: HashMap::new(),

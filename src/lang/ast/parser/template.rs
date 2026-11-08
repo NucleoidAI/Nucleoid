@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use super::{Parser, parse_interpolation};
+use super::{ExpressionContext, Parser};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::lexer::{excerpt, interpolation_end};
 use crate::lang::ast::{Expr, TemplatePart};
@@ -126,12 +126,22 @@ impl Parser {
         // Trailing tokens after an interpolated expression are ignored,
         // so a top-level `lambda` keeps its accepted name reading here
         // and a trailing Python-style `if` stays ignored.
-        parse_interpolation(excerpt(raw, span), self.options, self.words).map_err(|error| {
-            if self.options.c_style_comments {
-                template_error(error, origin, prefix)
-            } else {
-                error
-            }
-        })
+        self.interpolated_expression(excerpt(raw, span))
+            .map_err(|error| {
+                if self.options.c_style_comments {
+                    template_error(error, origin, prefix)
+                } else {
+                    error
+                }
+            })
+    }
+
+    fn interpolated_expression(&self, source: &str) -> Result<Expr> {
+        let mut parser = Parser {
+            words: self.words,
+            in_class: self.in_class,
+            ..Parser::from_source(source, self.options)?
+        };
+        parser.leading_expression(ExpressionContext::Interpolation)
     }
 }

@@ -13,6 +13,7 @@ const WORDS: &[&str] = &[
     "delete",
     "elif",
     "else",
+    "enum",
     "extends",
     "false",
     "for",

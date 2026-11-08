@@ -180,6 +180,7 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
         | Expr::ClassRef(_)
         | Expr::ObjectRef(_)
         | Expr::This
+        | Expr::Enum(_)
         | Expr::Model => {}
     }
 }

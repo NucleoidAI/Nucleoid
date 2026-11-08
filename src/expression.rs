@@ -332,6 +332,7 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         | Expr::ObjectRef(_)
         | Expr::This
         | Expr::Function(_)
+        | Expr::Enum(_)
         | Expr::Model => {}
     }
 }
@@ -400,6 +401,7 @@ fn visit_operands(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
         | Expr::ObjectRef(_)
         | Expr::This
         | Expr::Function(_)
+        | Expr::Enum(_)
         | Expr::Model => {}
     }
 }

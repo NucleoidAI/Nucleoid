@@ -4593,6 +4593,82 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid destructures object fields into standing declarations` through
   `Nucleoid rolls back failed destructuring` specify the executable behavior.
 
+## Enum declarations
+
+- [NUC 90](docs/nuc-0090.md) adds enum declarations, the categorical types
+  that TypeScript, Java, C#, Kotlin, Swift, Rust and Python models write:
+  `enum Status: PENDING, PAID, SHIPPED` on one line, or `enum Status:`
+  followed by an indented block with one member per line. `enum` stays an
+  ordinary name, and no token is added.
+- A member is a name, optionally followed by `=` and a scalar literal: a
+  finite number with an optional `-` or `+` sign, a string, `true`, `false`
+  or `null`, the literals of literal parameter defaults. A member without a
+  value holds its own name as a string, so `enum Status: PENDING, PAID`
+  holds `{PENDING: "PENDING", PAID: "PAID"}` and
+  `enum Level: LOW = 1, HIGH = 3` holds `{LOW: 1, HIGH: 3}`.
+- The one-line form has at least two members separated by commas, with no
+  trailing comma. Its last member is followed by the end of the line or
+  input, `;`, a block's `}`, the end of an indented block, or `else` or
+  `catch`. The block form ends its first line at the colon and writes each
+  member on its own indented line, with at least one member; blank lines may
+  separate members.
+- A declaration starts wherever a statement may start: at the top level, in
+  indented and same-line suites, in braced blocks and function bodies, after
+  `;`, and after another statement on the same line. Inside a class body,
+  including its methods and the suites in it, every `enum` spelling keeps its
+  accepted reading.
+- `enum NAME: ...` declares `NAME` exactly as `NAME = {...}` with the same
+  members would: a standing declaration at the top level and in standing
+  branches, a declaration carried out in a loop body, a local when `NAME` is
+  a parameter or loop variable, and a declaration in the state when a
+  function body runs it. It reads nothing, so `why` lists it as stated and no
+  change re-evaluates it. Declaring the name again replaces it and
+  re-evaluates its readers, and a failed transaction or a `suppose` block
+  restores the earlier binding. Each run creates a new object.
+- The value is an ordinary object whose properties are the members in
+  declaration order. `Status.PAID` and `Status["PAID"]` read a member, a
+  missing member reads `undefined` as a missing property does, `typeof`
+  gives `"Object"`, and assertions, JSON, entry loops and spreads see the
+  members as they see an object literal's properties. A spread such as
+  `{...Status}` builds an ordinary object.
+- The object is read-only. Assigning a member, adding a property or deleting
+  one raises `TypeError("Enums are read-only")` through every spelling and
+  every name that holds the object: property declarations, compound and value
+  assignments, assignment expressions, `delete` and the list write-backs of
+  `push`, `append`, `pop` and `shift`. The error is placed at the running
+  top-level statement and rolls back its transaction, so the enum and its
+  readers stay unchanged. A copy that a `suppose` block's value carries out
+  of the block is read-only too. Binding the name to another value is not a
+  write: a later declaration of `Status` replaces it, and `delete Status`
+  follows the accepted rule for objects, raising
+  `TypeError("Cannot delete object '<id>'")` while the object holds a
+  property other than `id`.
+- Canonical source writes an enum on one line, `enum Status:PENDING,PAID`
+  or `enum Level:LOW=1,HIGH=3`, leaving out a value that equals the member's
+  own name; an enum with one member is written `enum NAME:` with the member
+  on an indented line. `why` rules show the same text, and it parses back to
+  the same declaration.
+- Only inputs that were syntax errors at the accepted revision change.
+  `enum Status: PENDING`, one name after the colon before the end of the
+  statement, keeps its accepted reading: the expression `enum` followed by
+  the typed declaration `Status: PENDING`. So do `enum assert: ...`,
+  `enum lambda: ...` and `enum suppose: ...`, whose colon statements parse,
+  and every use of `enum` as a variable, property, key or parameter.
+- A repeated member raises
+  `SyntaxError("Enum '<name>' already has member '<member>'")` at the repeated
+  member, and a one-line enum with a single member raises
+  `SyntaxError("Enum '<name>' needs at least two members on one line")` where
+  its second member should begin. A value that is not a scalar literal raises
+  `SyntaxError("Expected a scalar literal enum member value")`, and a number
+  that is not finite raises
+  `SyntaxError("Enum member value must be a finite number")`, both at that
+  token. Other malformed declarations raise
+  `SyntaxError("Expected <what> but found <what>")` at the offending token.
+- The eight appended entries beginning
+  `Nucleoid declares enums whose members name themselves` through
+  `Nucleoid keeps enum an ordinary name outside enum declarations` specify
+  the executable behavior.
+
 ```
 # Nucleoid runs a statement in the state
 
@@ -22066,4 +22142,133 @@ catch error:
     failure = error
 assert(failure, ReferenceError("missing is not defined"))
 assert([total, fee(2)], [11, 3])
+---
+# Nucleoid declares enums whose members name themselves
+
+enum Status: PENDING, PAID, SHIPPED
+assert(Status.PAID, "PAID")
+assert(Status["SHIPPED"], "SHIPPED")
+assert(Status, {PENDING: "PENDING", PAID: "PAID", SHIPPED: "SHIPPED"})
+assert(Status.REFUNDED, null)
+label = Status.PENDING + " order"
+assert(label, "PENDING order")
+typeof Status
+# return: "Object"
+---
+# Nucleoid gives enum members explicit scalar values
+
+enum Level: LOW = 1, HIGH = 10
+enum Size: LARGE = "XL", SMALL, MEDIUM, CUSTOM = null
+enum Move: BACK = -1, AHEAD = 1
+enum Flag: ON = true, OFF = false
+assert([Level.LOW, Level.HIGH], [1, 10])
+assert([Size.SMALL, Size.LARGE, Size.CUSTOM], ["SMALL", "XL", null])
+assert(Size, {LARGE: "XL", SMALL: "SMALL", MEDIUM: "MEDIUM", CUSTOM: null})
+assert(Move.BACK + Move.AHEAD, 0)
+assert(Flag.ON && !Flag.OFF, true)
+steps = Level.HIGH * 2 + Move.BACK
+steps
+# return: 19
+---
+# Nucleoid declares enums in indented blocks
+
+enum Color:
+    RED
+    GREEN
+    BLUE
+    BLACK = "#000"
+enum Mode:
+    AUTO
+pen = {color: Color.GREEN, mode: Mode.AUTO}
+assert(pen, {color: "GREEN", mode: "AUTO"})
+assert([Color.RED, Color.BLACK], ["RED", "#000"])
+enum Mode: AUTO = "auto", MANUAL
+assert(pen.mode, "auto")
+pen.color
+# return: "GREEN"
+---
+# Nucleoid keeps class level rules over enum members live
+
+enum Status: PENDING, PAID, SHIPPED
+class Order(total, status):
+    this.total = total
+    this.status = status
+$Order.billable = $Order.status != Status.PENDING
+first = Order(30, Status.PENDING)
+second = Order(45, Status.PAID)
+waiting = Order.filter(o -> o.status == Status.PENDING)
+assert([first.billable, second.billable, waiting.length], [false, true, 1])
+first.status = Status.SHIPPED
+assert([first.billable, waiting.length], [true, 0])
+second.status
+# return: "PAID"
+---
+# Nucleoid updates readers when an enum is declared again
+
+enum Plan: FREE, PRO
+choice = Plan.TEAM
+assert(choice, null)
+price = Plan.PRO == "PRO" ? 20 : 0
+enum Plan: FREE, PRO, TEAM
+assert([choice, price], ["TEAM", 20])
+enum Plan: PRO = "PREMIUM", FREE, TEAM
+assert([choice, price], ["TEAM", 0])
+assert((why choice).map(s -> s.node), ["choice", "Plan"])
+(affects Plan).map(s -> s.node)
+# return: ["choice","price"]
+---
+# Nucleoid declares enums wherever a statement may start
+
+def kinds():
+    enum Kind: BOOK, GAME
+    return Kind.GAME
+assert([kinds(), Kind.BOOK], ["GAME", "BOOK"])
+Pick = "outer"
+def pick(Pick):
+    enum Pick: LEFT, RIGHT
+    return Pick.RIGHT
+assert([pick(null), Pick], ["RIGHT", "outer"])
+ready = true
+if ready: enum Mood: CALM, BUSY
+{ enum Tier: GOLD, SILVER }
+count = 2 enum Pair: ONE, TWO
+assert([Mood.BUSY, Tier.GOLD, Pair.TWO, count], ["BUSY", "GOLD", "TWO", 2])
+---
+# Nucleoid rolls back enum declarations with their transactions
+
+enum Status: OPEN, CLOSED
+view = Status.CLOSED
+try:
+    enum Status: OPEN, DONE
+    assert(view, null)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(view, "CLOSED")
+failure = ""
+try:
+    enum Status: CLOSED = "SHUT", OPEN
+    missing + 1
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+seen = suppose: enum Status: OPEN, DONE; view
+assert([seen, view], [null, "CLOSED"])
+assert(Status, {OPEN: "OPEN", CLOSED: "CLOSED"})
+---
+# Nucleoid keeps enum an ordinary name outside enum declarations
+
+enum = 5
+assert(enum * 2, 10)
+try:
+    enum Size: SMALL
+catch error:
+    assert(error, ReferenceError("Missing definition"))
+enum Size: SMALL, LARGE
+enum Unit:
+    ONLY
+record = {enum: enum, size: Size.LARGE, unit: Unit.ONLY}
+assert(record, {enum: 5, size: "LARGE", unit: "ONLY"})
+enum = 7
+assert(record.enum, 7)
 ```

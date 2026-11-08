@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, ShapeKey};
-use crate::lang::ast::{Expr, ObjectEntry};
+use crate::lang::ast::{EnumMember, Expr, ObjectEntry};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::{ObjectData, ObjectId, Value};
@@ -29,6 +29,7 @@ impl<'a> Object<'a> {
         match self.node {
             Expr::ObjectLiteral(entries) => runtime.evaluate_object_literal(entries, scope),
             Expr::SpreadObject(entries) => runtime.evaluate_spread_object(entries, scope),
+            Expr::Enum(members) => Ok(runtime.create_enum(members)),
             other => Err(Error::type_error(format!("{other} is not an object"))),
         }
     }
@@ -135,13 +136,27 @@ impl Runtime {
     /// Creates an object that belongs to no class, used for object literals and
     /// `Object()`. Such objects are skipped by `for ... of`.
     pub(crate) fn create_anonymous(&mut self, properties: IndexMap<String, Value>) -> Value {
+        Value::Object(self.insert_anonymous(properties))
+    }
+
+    fn create_enum(&mut self, members: &[EnumMember]) -> Value {
+        let properties = members
+            .iter()
+            .map(|member| (member.name.clone(), member.value.value()))
+            .collect();
+        let id = self.insert_anonymous(properties);
+        self.state.mark_read_only(id.clone());
+        Value::Object(id)
+    }
+
+    fn insert_anonymous(&mut self, properties: IndexMap<String, Value>) -> ObjectId {
         let id = ObjectId::anonymous();
         let mut data = ObjectData::new(None);
         data.properties = properties;
 
         self.insert_object(id.clone(), data);
 
-        Value::Object(id)
+        id
     }
 }
 

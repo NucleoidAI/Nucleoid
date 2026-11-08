@@ -1,6 +1,6 @@
 mod mutation;
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use std::fmt;
 use std::sync::Arc;
 
@@ -107,6 +107,7 @@ pub struct State {
     classes: IndexMap<String, ClassData>,
     functions: IndexMap<String, Arc<Function>>,
     histories: IndexMap<HistoryKey, History>,
+    read_only: IndexSet<ObjectId>,
 }
 
 impl State {
@@ -174,6 +175,15 @@ impl State {
 
     pub fn object_mut(&mut self, id: &ObjectId) -> Option<&mut ObjectData> {
         self.objects.get_mut(id)
+    }
+
+    #[must_use]
+    pub(crate) fn is_read_only(&self, id: &ObjectId) -> bool {
+        self.read_only.contains(id)
+    }
+
+    pub(crate) fn mark_read_only(&mut self, id: ObjectId) {
+        self.read_only.insert(id);
     }
 
     #[must_use]
@@ -247,10 +257,12 @@ impl State {
     }
 
     pub(crate) fn restore_object(&mut self, id: ObjectId, before: Option<ObjectData>) {
-        match before {
-            Some(data) => self.objects.insert(id, data),
-            None => self.objects.shift_remove(&id),
-        };
+        if let Some(data) = before {
+            self.objects.insert(id, data);
+        } else {
+            self.objects.shift_remove(&id);
+            self.read_only.swap_remove(&id);
+        }
     }
 
     pub(crate) fn restore_class(&mut self, name: String, before: Option<ClassData>) {
@@ -273,5 +285,6 @@ impl State {
         self.classes.clear();
         self.functions.clear();
         self.histories.clear();
+        self.read_only.clear();
     }
 }

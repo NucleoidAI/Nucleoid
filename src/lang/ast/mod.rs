@@ -239,6 +239,13 @@ pub enum Expr {
         noun: Noun,
         operand: Box<Expr>,
     },
+    Enum(Vec<EnumMember>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EnumMember {
+    pub name: String,
+    pub value: ParameterDefault,
 }
 
 #[derive(Debug, Clone, PartialEq)]

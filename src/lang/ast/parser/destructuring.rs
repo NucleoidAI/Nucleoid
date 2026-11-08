@@ -31,7 +31,7 @@ impl Parser {
         let start = self.position;
         self.position += pattern.length;
         let value = match self.nested_expression(Self::destructured_value) {
-            Ok(value) if self.ends_destructuring() => value,
+            Ok(value) if self.ends_line_statement() => value,
             _ => {
                 self.position = start;
                 return Ok(None);
@@ -55,7 +55,7 @@ impl Parser {
         self.nested_expression_in(ExpressionContext::Ordinary, Self::conditional)
     }
 
-    fn ends_destructuring(&self) -> bool {
+    pub(super) fn ends_line_statement(&self) -> bool {
         matches!(
             self.peek(),
             Token::Newline
