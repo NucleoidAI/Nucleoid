@@ -183,8 +183,9 @@ row and column coordinates show its size.
 Wide grids split into column panels rather than dropping cells. The final
 comparison keeps **Expected** before **Result**, followed by an
 exact-match badge in green or a mismatch badge in red, the unchanged difference
-score prefixed with `✅` when zero or `❌` otherwise, and elapsed time prefixed
-with `⏱️`.
+score rendered with keycap digit emojis and padded to at least two digits
+(`0️⃣0️⃣` for zero, `0️⃣7️⃣` for seven). Larger scores retain every digit.
+Elapsed time is prefixed with `⏱️`.
 Model token usage stays visible underneath the active step, and failures go to
 standard error with a boxed stack trace.
 
@@ -264,7 +265,10 @@ also crop their examples' instance matrices to the nonzero bounding box with
 `Matrix.crop`, or to an empty list for an all-zero mask. The orientation calls
 of `analyzer.value` and `visualizer.value` then write each nonzero color of
 those crops as a letter by its count, `A` for the most frequent, through
-`Matrix.silhouette`, in their examples and their own prompts alike. None of
+`Matrix.silhouette`, in their examples and their own prompts alike. An
+example's crop already holds its dataset's letters, which `Matrix.silhouette`
+ranks again by their counts in the crop, so each example reads as the crop of
+its source colors would. None of
 these calls receives `input_x`, `output_x`, `input_y`, `output_y`,
 `input_orientation`, or `output_orientation`. The dataset files keep every
 property and their full-canvas matrices.
@@ -274,13 +278,34 @@ all its original `train` pairs from `data\training\<puzzle_id>.json` in source
 order, followed by all its original `test` pairs in source order. Test pairs
 are additional entries at the same level as the training pairs, in the same
 `dataset` array with the same structure and no marker. Input and output grids
-preserve every original cell, color, position, zero border, and canvas
-dimension. `/arc-dataset` infers one rule set from the training pairs and
-annotates every pair with it, rather than synthesizing varieties or creating
-numbered copies. `document()` includes a puzzle's own dataset in that puzzle's
-runs, so a run of a puzzle that has a dataset receives its expected test
-output in the few-shot context. That is intended: the datasets are being
-prepared as few-shot examples, and these runs are not yet held-out tests.
+preserve every original cell, position, zero border, and canvas dimension,
+with each color written as its letter, as described below. `/arc-dataset`
+infers one rule set from the training pairs and annotates every pair with it,
+rather than synthesizing varieties or creating numbered copies. `document()`
+includes a puzzle's own dataset in that puzzle's runs, so a run of a puzzle
+that has a dataset receives its expected test output in the few-shot context.
+That is intended: the datasets are being prepared as few-shot examples, and
+these runs are not yet held-out tests.
+
+Every dataset writes its colors as letters rather than numbers. `0` stays `0`,
+and every other color becomes a letter of `ABCDEFGHI`, ranked by how often it
+occurs across all of the dataset's `input_matrix` and `output_matrix` grids,
+training and test pairs together: the most frequent color is `A`, the next
+`B`, and so on, with a tie going to the color read first, pair by pair, each
+input before its output, row by row. This is `Matrix.silhouette`'s ranking
+applied to a whole dataset at once, so a color keeps one letter in every pair
+of its dataset, while each dataset ranks its own colors: 2 is `A` in
+`dataset.017c7c7b.json`, `B` in `dataset.0d3d703e.json`, and `D` in
+`dataset.27a28665.json`. The same letters replace the colors in both instance
+masks, in the world model's color parameters, which are `str`, such as
+`color: str`, and its rules, such as `if $Obj.color@first is 'C':`, in the
+implementations' arguments, such as `color='B'` or `parts=['A', 'C']`, and in
+the snapshots, such as `"color":"B"`. Coordinates, sizes, orientations,
+counts, and tags stay numbers. Mapping a dataset's letters back to its colors
+reproduces its source grids cell for cell. The paragraphs below name colors by
+their numbers in the source puzzles, quote the datasets' code with its
+letters, and end with each dataset's letters. The solver still sends the
+running puzzle's own grids as numbers, as `data\training` holds them.
 
 The genesis datasets are `dataset.core.json`, `dataset.extension.json`,
 `dataset.curve.json`, and `dataset.line.json`. They are the shared examples of
@@ -325,6 +350,10 @@ V points up. The genesis rules match categorical colors and orientations with
 `is`, the spelling of `==` that [NUC 86](../docs/nuc-0086.md) adds, as in the
 line header `if $Obj.orientation is 270:`, and the line rules assign quoted
 strings, as in `$Obj.extension_direction = 'right'`.
+The genesis datasets write these colors as letters too, ranked by count: in
+`dataset.core.json` 9 is `A` and 4 is `B`, in `dataset.extension.json` 4 is
+`A` and 7 is `B`, in `dataset.curve.json` 4 is `A`, 8 is `B`, 9 is `C`, and 2
+is `D`, and in `dataset.line.json` 6 is `A` and 8 is `B`.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations. The canvas size is not one
@@ -341,9 +370,9 @@ instance's own arguments and input mask into words, and Nucleoid skips them,
 so they change no snapshot:
 
 ```nuc
-# A corner whose vertex and both segments are color 9,
+# A corner whose vertex and both segments are color A,
 # 2 by 2 at x 5, y 1, pointing southeast
-obj7e96305711c2 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)
+obj7e96305711c2 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color='A', vertical_segment_color='A', horizontal_segment_color='A')
 ```
 
 Every `input_instance_matrix` has exactly its pair's `input_matrix` row and
@@ -391,7 +420,8 @@ Unconditional class-level rules set the output tag and introduce one
 property, `extension_direction`, which is absent before the rules run and is
 `down`, as in `dataset.line.json`.
 The rules also rewrite `height` to `$Obj.height@first * 3 / 2`, 9 rows, the
-pattern's one change in size, and `color` to 2. They leave `width` unchanged,
+pattern's one change in size, and `color` to `'A'`, the letter of color 2.
+They leave `width` unchanged,
 because the pattern grows down only and each output's box is as wide as its
 input's, 3, 3, 2, and 3 columns, and they leave `x` and `y` unchanged because
 the pattern keeps its top-left origin. The training pairs alone also fit a
@@ -411,6 +441,8 @@ the 9 by 3 outputs, while `FIT` would crop the empty right column of the third
 training output. Orientation is 0 in both states because the pattern is not
 turned. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 2 as `A` and 1 as
+`B`.
 
 `dataset.0ca9ddb6.json` annotates the three training pairs from
 `data\training\0ca9ddb6.json`, followed by its test pair, with fifteen point
@@ -424,8 +456,8 @@ The declarative rules introduce `marker_color`, which is absent before the
 rules run, and, in the same branches that shift the origin, grow each cross
 to 3 by 3 with `$Obj.width = $Obj.width@first + 2` and
 `$Obj.height = $Obj.height@first + 2`; color-6 and color-8 points keep their
-1 by 1 size. The two branches are guarded by `if $Obj.vertex_color is 1:`
-and `if $Obj.vertex_color is 2:`, with `is`, the spelling of `==` that
+1 by 1 size. The two branches are guarded by `if $Obj.vertex_color is 'D':`
+and `if $Obj.vertex_color is 'C':`, with `is`, the spelling of `==` that
 [NUC 86](../docs/nuc-0086.md) adds. Tags identify the geometry: `l1707` is an
 orthogonal cross, `l2404` is a diagonal cross, and `l7544` remains a single
 point.
@@ -438,6 +470,8 @@ the patterns are symmetric. The test pair follows the training pairs at the
 same level and is annotated by the same rules.
 `document()` includes it in the shared few-shot context for every run by
 default.
+The dataset writes its colors as letters ranked by count: 4 as `A`, 7 as `B`,
+2 as `C`, 1 as `D`, 8 as `E`, and 6 as `F`.
 
 `dataset.0d3d703e.json` annotates the four original training pairs from
 `data\training\0d3d703e.json`, in order, followed by its test pair, fifteen
@@ -459,7 +493,7 @@ The class takes the standard entries `x`, `y`, `width`, `height`, and
 with no partner color, canvas size, or matrix of cells. `width` and
 `height`, the column and row counts of the stripe's bounding box, are
 1 and 3 for every stripe. One class-level rule rewrites `color` as
-`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)`:
+`[['G', 'H'], ['B', 'D'], ['A', 'C'], ['E', 'F']].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)`:
 the list states each pair once, the first `find` selects the pair that
 includes the stripe's input color, and the second `find` takes the other color
 of that pair: the comparison `is not` of [NUC 86](../docs/nuc-0086.md), the
@@ -482,6 +516,8 @@ nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
 Orientation is 0 in both states because the stripes are vertical and not
 turned. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 3 as `A`, 2 as `B`,
+4 as `C`, 6 as `D`, 8 as `E`, 9 as `F`, 1 as `G`, and 5 as `H`.
 
 `dataset.25d8a9c8.json` annotates the four original training pairs from
 `data\training\25d8a9c8.json`, in order, followed by its test pair, fifteen
@@ -506,12 +542,12 @@ read. The class takes the standard entries `x`, `y`, `width`, `height`,
 and `orientation` first; `width` and `height`, the column and row
 counts of the row's bounding box, are 3 and 1 for every row. It then
 takes `parts`, the colors of the row's cells from left to right, as
-a list, such as `[4, 4, 4]` for the top row of the first training
+a list, such as `['B', 'B', 'B']` for the top row of the first training
 input, as its only descriptive property, with no color, color count, canvas
 size, or matrix of cells, so no input property states whether the row is
 uniform. One unconditional class-level rule introduces `fill_color`, which is
 absent before the rules run, as
-`5 if $Obj.parts.distinct().length is 1 else 0`, whose condition uses the
+`'A' if $Obj.parts.distinct().length is 1 else 0`, whose condition uses the
 comparison `is` of [NUC 86](../docs/nuc-0086.md), the spelling of `==`: the
 list query `distinct` of
 [NUC 71](../docs/nuc-0071.md) keeps each of the row's colors once, so exactly
@@ -537,8 +573,8 @@ because each output keeps its input's canvas, including the cleared top or
 bottom rows that `FIT` would crop from every training output. Orientation is
 the direction each row points as a straight line of 3 cells. A row of exactly
 two colors in which one end cell alone has its color has that cell as its head
-and points toward it: 270 for the left end cells of `[2, 3, 3]`, `[7, 3, 3]`,
-and `[3, 7, 7]`, and 90 for the right end cell of `[2, 2, 4]`. Every other
+and points toward it: 270 for the left end cells of `['C', 'D', 'D']`, `['F', 'D', 'D']`,
+and `['D', 'F', 'F']`, and 90 for the right end cell of `['C', 'C', 'B']`. Every other
 row, of one color or with its lone color in the middle cell, has no head and
 takes the horizontal axis, 90. The rules leave `orientation` unchanged: each
 bar keeps 90, and each cleared row, which has no output cell, keeps its input
@@ -546,6 +582,8 @@ orientation, 270 for three of the cleared rows and 90 for the other five. The
 declarations hold executable code and one `#` comment, the orientation line
 that every dataset places above its class. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 5 as `A`, 4 as `B`,
+2 as `C`, 3 as `D`, 9 as `E`, 7 as `F`, 6 as `G`, 1 as `H`, and 8 as `I`.
 
 `dataset.25ff71a9.json` annotates the four original training pairs from
 `data\training\25ff71a9.json`, in order, followed by its two test pairs, six
@@ -597,6 +635,8 @@ bar and single cell. The declarations hold executable code and one `#` comment,
 the orientation line that every dataset places above its class. The test pairs
 follow the training pairs at the same level and are annotated by the same
 rules.
+The dataset writes its colors as letters ranked by count: 1 as `A` and 2 as
+`B`.
 
 `dataset.27a28665.json` annotates the seven original training pairs from
 `data\training\27a28665.json`, in order, followed by its three test pairs,
@@ -638,7 +678,7 @@ Unconditional class-level rules set the output tag `l7544`, a single point, as
 in `dataset.44f52bb0.json`, shrink the block to that point's size, `width` 1
 and `height` 1, and introduce one property, `fill_color`, which is absent
 before the rules run, as
-`{'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.tag@first]`: the object
+`{'l4262': 'C', 'l2404': 'D', 'l3743': 'G', 'l1707': 'H'}[$Obj.tag@first]`: the object
 literal states each shape's code once, and object bracket access reads the
 code of the block's input tag, anchored with `@first` because the tag rule
 turns the tag into `l7544`. The rules create no other properties, so each
@@ -656,6 +696,8 @@ cell instead of keeping the 3 by 3 input canvas. Orientation is 0 in both
 states of the training pairs because no block is turned and the point is
 symmetric. The test pairs follow the training pairs at the same level and are
 annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 5 as `A`, 8 as `B`,
+1 as `C`, 2 as `D`, 4 as `E`, 7 as `F`, 3 as `G`, and 6 as `H`.
 
 `dataset.28bf18c6.json` annotates the three original training pairs from
 `data\training\28bf18c6.json`, followed by its test pair, one shape instance
@@ -682,6 +724,8 @@ Input masks retain each pair's input canvas and output masks its output
 canvas. Orientation is 0 in both states because the shapes are not rotated.
 The test pair follows the training pairs at the same level and is annotated
 by the same rules.
+The dataset writes its colors as letters ranked by count: 8 as `A`, 2 as `B`,
+3 as `C`, and 1 as `D`.
 
 `dataset.3c9b0459.json` annotates the four original training pairs from
 `data\training\3c9b0459.json`, in order, followed by its test pair, five
@@ -735,6 +779,8 @@ Orientation is 0 in every input state, where the mosaic is not turned, and
 comment, the orientation line that every dataset places above its class. The
 test pair follows the training pairs at the same level and is annotated by the
 same rules.
+The dataset writes its colors as letters ranked by count: 2 as `A`, 4 as `B`,
+8 as `C`, 9 as `D`, 5 as `E`, 6 as `F`, 1 as `G`, 3 as `H`, and 7 as `I`.
 
 `dataset.44f52bb0.json` annotates the six original training pairs from
 `data\training\44f52bb0.json`, in order, followed by its two test pairs,
@@ -780,7 +826,7 @@ holds exactly when the pattern equals its mirror image. The rule uses the
 quantifier `all` of [NUC 62](../docs/nuc-0062.md), which states the claim of
 `every` directly, and `includes`, which matches the mirrored `[column, row]`
 list against the points with the deep equality of
-[NUC 61](../docs/nuc-0061.md). `fill_color` is `1 if $Obj.symmetric else 7`.
+[NUC 61](../docs/nuc-0061.md). `fill_color` is `'B' if $Obj.symmetric else 'C'`.
 The rules also move `x` and `y` to the output origin 0, which changes `y` in
 the fourth training pair and the second test pair. Native output snapshots
 are captured with the pair's implementation followed by `Obj[:]`. Tags
@@ -803,6 +849,8 @@ single point, whose orientation is 0, so one more unconditional class-level
 rule sets `orientation` to 0, replacing the corner's 45 in the sixth training
 pair. The test pairs follow the training pairs at the same level and are
 annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 2 as `A`, 1 as `B`,
+and 7 as `C`.
 
 `dataset.5582e5ca.json` annotates the three original training pairs from
 `data\training\5582e5ca.json`, in order, followed by its test pair, four block
@@ -821,7 +869,7 @@ rules maximize a count, not a color. The class takes the standard entries
 the column and row counts of the block's bounding box, are 3 and 3 for
 every block, with or without a zero cell. It then takes `parts`, a
 flat list of the block's nonzero cell colors in reading order, such as
-`[4, 4, 8, 6, 4, 3, 6, 3]` for the first training input, as its only
+`['C', 'C', 'A', 'B', 'C', 'E', 'B', 'E']` for the first training input, as its only
 descriptive property, with no count, histogram, fill color, canvas size, or
 matrix of cells, so no input property names a count or the fill color.
 Unconditional class-level rules set the output tag and introduce one property,
@@ -846,6 +894,8 @@ record the fill's nonzero bounding-box origin, equal to
 output keeps its input's canvas. Orientation is 0 in both states because the
 block is not rotated and the fill is symmetric. The test pair follows the
 training pairs at the same level and is annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 8 as `A`, 6 as `B`,
+4 as `C`, 9 as `D`, 3 as `E`, and 1 as `F`.
 
 `dataset.6150a2bd.json` annotates the two original training pairs from
 `data\training\6150a2bd.json`, in order, followed by its test pair, three
@@ -891,6 +941,8 @@ block and the test block are neither lines, corners, nor chevrons, so they
 are 0 in their input states and 180 in their output states. The test pair
 follows the training
 pairs at the same level and is annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 3 as `A`, 5 as `B`,
+8 as `C`, 6 as `D`, 7 as `E`, 2 as `F`, 1 as `G`, and 4 as `H`.
 
 `dataset.6d0aefbc.json` annotates the four original training pairs from
 `data\training\6d0aefbc.json`, in order, followed by its test pair, five
@@ -954,6 +1006,8 @@ keep the input's origin and cut nothing from a larger canvas. Orientation is
 line, a corner, nor a chevron, and its mirror image is part of the figure
 that `l6919` names, not a turn. The test pair follows the training pairs at
 the same level and is annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 6 as `A`, 1 as `B`,
+and 8 as `C`.
 
 `dataset.6e02f1e3.json` annotates the five original training pairs from
 `data\training\6e02f1e3.json`, in order, followed by its test pair, six
@@ -988,13 +1042,13 @@ entries `x`, `y`, `width`, `height`, and `orientation` first, in that order,
 where `width` and `height` are the column and row counts of the mosaic's box,
 the nonzero bounding box of its input mask, 3 and 3 in every pair, and then
 `parts`, a flat list of the mosaic's cell colors in reading order, as in
-`dataset.5582e5ca.json`, such as `[2, 2, 2, 3, 2, 3, 3, 3, 3]` for the first
+`dataset.5582e5ca.json`, such as `['D', 'D', 'D', 'A', 'D', 'A', 'A', 'A', 'A']` for the first
 training input, as its only descriptive property, with no color list, color
 count, line direction, canvas size, or matrix of cells, so no input property
 names the count or the line. Each implementation passes `width=3, height=3`
 right after `y`. Three unconditional class-level rules and one conditional
 rule turn the mosaic into the line. `$Obj.tag = 'l6074'` names the line, and
-`$Obj.fill_color = 5` introduces `fill_color`, which is absent before the
+`$Obj.fill_color = 'C'` introduces `fill_color`, which is absent before the
 rules run, because the line is gray whatever the mosaic's colors.
 `orientation` is `{1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]`: the
 list query `distinct` of [NUC 71](../docs/nuc-0071.md) keeps each of the
@@ -1042,6 +1096,8 @@ input state, where the mosaic is not turned, and the line's axis, 90, 135, or
 comment, the orientation line that every dataset places above its class. The
 test pair follows the training pairs at the same level and is annotated by the
 same rules.
+The dataset writes its colors as letters ranked by count: 3 as `A`, 4 as `B`,
+5 as `C`, and 2 as `D`.
 
 `dataset.74dd1130.json` annotates the four original training pairs from
 `data\training\74dd1130.json`, in order, followed by its test pair, five
@@ -1104,6 +1160,8 @@ the flip. The declarations hold executable code and one `#` comment, the
 orientation line that every dataset places above its class. The test pair
 follows the training pairs at the same level and is annotated by the same
 rules.
+The dataset writes its colors as letters ranked by count: 2 as `A`, 5 as `B`,
+9 as `C`, 1 as `D`, 6 as `E`, 4 as `F`, 8 as `G`, and 3 as `H`.
 
 `dataset.794b24be.json` annotates the ten original training pairs from
 `data\training\794b24be.json`, in order, followed by its two test pairs,
@@ -1145,7 +1203,7 @@ the rules never read. Each implementation passes
 `width` and `height` right after `y`, such as
 `x=0, y=1, width=1, height=1, orientation=0, cell_count=1` for the first
 training input. Seven unconditional class-level rules turn the pattern into the
-tally. `$Obj.tag = 'l5714'` names the tally, and `$Obj.fill_color = 2`
+tally. `$Obj.tag = 'l5714'` names the tally, and `$Obj.fill_color = 'B'`
 introduces `fill_color`, which is absent before the rules run, because the
 tally is red whatever the pattern. `width` is
 `min of [$Obj.cell_count, canvas_width]`, the noun form of the list query
@@ -1198,6 +1256,8 @@ corner. The declarations hold executable code and one `#` comment, the
 orientation line that every dataset places above its class. The test pairs
 follow the training pairs at the same level and are annotated by the same
 rules.
+The dataset writes its colors as letters ranked by count: 1 as `A` and 2 as
+`B`.
 
 `dataset.8be77c9e.json` annotates the three original training pairs from
 `data\training\8be77c9e.json`, in order, followed by its test pair, four
@@ -1280,6 +1340,7 @@ the figure that `l7511` names, not a turn. The declarations hold executable
 code and one `#` comment, the orientation line that every dataset places above
 its class. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
+The dataset writes its only color, 1, as `A`.
 
 `dataset.9565186b.json` annotates the four original training pairs from
 `data\training\9565186b.json`, in order, followed by its test pair, sixteen
@@ -1319,7 +1380,7 @@ box does not count its cells: the fourth training pair's two color-8 corner
 cells span a 3 by 3 box, yet that region turns gray, while the 3 cells of
 color 4, a single row, keep their color. One conditional class-level rule,
 `if any other in Obj: other.cell_count > $Obj.cell_count:` with the body
-`$Obj.color = 5`, turns gray every region that another region of its pair
+`$Obj.color = 'B'`, turns gray every region that another region of its pair
 outnumbers: the quantifier `any` of [NUC 62](../docs/nuc-0062.md) states the
 claim of `Obj.some(...)` directly, its binder ranges over the pair's whole
 population, and `$Obj.cell_count` reads the region the rule is evaluated for.
@@ -1350,6 +1411,8 @@ regions split into separate cells. The declarations hold executable code and
 one `#` comment, the orientation line that every dataset places above its
 class. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 2 as `A`, 5 as `B`,
+1 as `C`, 3 as `D`, 8 as `E`, and 4 as `F`.
 
 `dataset.9af7a82c.json` annotates the four original training pairs from
 `data\training\9af7a82c.json`, followed by its test pair, nineteen region
@@ -1395,6 +1458,8 @@ also 0, so one unconditional class-level rule, `$Obj.orientation = 0`, stands
 every bar upright, whatever its region's orientation. The test pair
 follows the training pairs at the same level and is annotated by the same
 rules.
+The dataset writes its colors as letters ranked by count: 1 as `A`, 2 as `B`,
+8 as `C`, 3 as `D`, and 4 as `E`.
 
 `dataset.a85d4709.json` annotates the four original training pairs from
 `data\training\a85d4709.json`, in order, followed by its test pair, fifteen
@@ -1432,7 +1497,7 @@ marker's column is its `x`. Unconditional class-level rules set the output
 tag and orientation, introduce one property, `fill_color`, absent before the
 rules run, widen the marker into its bar, and move `x` to the left edge, 0,
 while `y` keeps the marker's row. `fill_color` is
-`[2, 4, 3][$Obj.x@first]`: the list holds one color per column of the
+`['D', 'C', 'A'][$Obj.x@first]`: the list holds one color per column of the
 3-column canvases, from left to right, and indexing it with the marker's input
 column picks its row's color, anchored with `@first` because another rule
 moves `x`. `width` becomes `canvas_width`, reading the canvas's width from the
@@ -1466,6 +1531,8 @@ horizontal axis. The declarations hold executable code and one `#` comment, the
 orientation line that every dataset places above its class. The test pair
 follows the training pairs at the same level and is annotated by the same
 rules.
+The dataset writes its colors as letters ranked by count: 3 as `A`, 5 as `B`,
+4 as `C`, and 2 as `D`.
 
 `dataset.a9f96cdd.json` annotates the four original training pairs from
 `data\training\a9f96cdd.json`, in order, followed by its test pair, five
@@ -1498,7 +1565,7 @@ rules never read. Each implementation passes `width=1, height=1` right after
 `y`, such as `x=1, y=1, width=1, height=1, orientation=0` for the first
 training input. Six unconditional class-level rules turn every point into its
 figure. `$Obj.tag = 'l2898'` names the figure, and
-`$Obj.corner_colors = [[3, 6], [8, 7]]` introduces `corner_colors`, which is
+`$Obj.corner_colors = [['B', 'E'], ['C', 'D']]` introduces `corner_colors`, which is
 absent before the rules run: the corners' colors as they lie around the
 point, the top row's left and right corners first and then the bottom row's.
 The other four rules move the box onto the remaining corners. `x` becomes
@@ -1554,6 +1621,8 @@ colors keep their places on the canvas in every pair, so `corner_colors`, not
 comment, the orientation line that every dataset places above its class. The
 test pair follows the training pairs at the same level and is annotated by the
 same rules.
+The dataset writes its colors as letters ranked by count: 2 as `A`, 3 as `B`,
+8 as `C`, 7 as `D`, and 6 as `E`.
 
 `dataset.c8f0f002.json` annotates the three original training pairs from
 `data\training\c8f0f002.json`, in order, followed by its test pair, twelve
@@ -1593,9 +1662,9 @@ size, or matrix of cells, so no input property names the output color.
 box, the nonzero bounding box of its input mask, from the single color-8 cell
 of the second training pair, 1 by 1, to 5 columns by 3 rows, and each
 implementation passes them right after `y`, such as
-`x=1, y=0, width=5, height=3, orientation=0, color=8` for the color-8 region
+`x=1, y=0, width=5, height=3, orientation=0, color='B'` for the color-8 region
 of the first training input. One conditional class-level rule,
-`if $Obj.color@first is 7:` with the body `$Obj.color = 5`, turns every
+`if $Obj.color@first is 'C':` with the body `$Obj.color = 'D'`, turns every
 color-7 region gray. Its condition uses `is`, the spelling of `==` from
 [NUC 86](../docs/nuc-0086.md), which an `if` header reads as an operator.
 The condition reads the region's input color with an
@@ -1603,7 +1672,7 @@ The condition reads the region's input color with an
 `dataset.0d3d703e.json` reads `$Obj.color@first`, and a region of any other
 color keeps its color because a false condition leaves its target untouched,
 so the rule states only the change; the conditional expression
-`5 if $Obj.color@first is 7 else $Obj.color@first` would give the same states
+`'D' if $Obj.color@first is 'C' else $Obj.color@first` would give the same states
 but restate every other region's color. Each region's change depends only on
 its own color, and no relation between regions decides it, so no population
 operation appears. The rule gives the same states when it is declared after
@@ -1626,6 +1695,8 @@ both states because no region is turned. The declarations hold executable code
 and one `#` comment, the orientation line that every dataset places above its
 class. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 1 as `A`, 8 as `B`,
+7 as `C`, and 5 as `D`.
 
 `dataset.c9e6f938.json` annotates the three original training pairs from
 `data\training\c9e6f938.json`, in order, followed by its test pair, four
@@ -1718,6 +1789,7 @@ figures are neither lines, corners, nor chevrons.
 The declarations hold executable code and one `#` comment, the orientation line
 that every dataset places above its class. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
+The dataset writes its only color, 7, as `A`.
 
 `dataset.d037b0a7.json` annotates the three original training pairs from
 `data\training\d037b0a7.json`, in order, followed by its test pair, eleven
@@ -1755,6 +1827,8 @@ including the empty right column of the third training output. Orientation is
 0 in both states because the points are symmetric and the bars are vertical.
 The test pair follows the training pairs at the same level and is annotated by
 the same rules.
+The dataset writes its colors as letters ranked by count: 4 as `A`, 2 as `B`,
+8 as `C`, 7 as `D`, 6 as `E`, and 3 as `F`.
 
 `dataset.d631b094.json` annotates the four original training pairs from
 `data\training\d631b094.json`, in order, followed by its test pair, five
@@ -1794,6 +1868,8 @@ are 0. Another unconditional class-level rule,
 pair is a point, 0. The rule reads no input orientation, so it rewrites
 `orientation` without an `@first` anchor. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 4 as `A`, 8 as `B`,
+2 as `C`, 1 as `D`, and 7 as `E`.
 
 `dataset.e9afcf9a.json` annotates the two original training pairs from
 `data\training\e9afcf9a.json`, in order, followed by its test pair, six bar
@@ -1872,6 +1948,8 @@ stands it upright, so `parity`, not `orientation`, tells them apart. The
 declarations hold executable code and one `#` comment, the orientation line
 that every dataset places above its class. The test pair follows the training
 pairs at the same level and is annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 3 as `A`, 9 as `B`,
+4 as `C`, 8 as `D`, 6 as `E`, and 2 as `F`.
 
 `dataset.ed36ccf7.json` annotates the four original training pairs from
 `data\training\ed36ccf7.json`, in order, followed by its test pair, five
@@ -1962,6 +2040,8 @@ is 0 in its input state and 270 in its output state. The declarations hold
 executable code and one `#` comment, the orientation line that every dataset
 places above its class. The test pair follows the training pairs at the same
 level and is annotated by the same rules.
+The dataset writes its colors as letters ranked by count: 9 as `A`, 6 as `B`,
+2 as `C`, and 5 as `D`.
 
 ## ARC proposal agent
 
@@ -2409,9 +2489,11 @@ offsets are still rejected.
 `Matrix.silhouette(matrix)` returns a new matrix of the same size in which each
 nonzero color is a letter ranked by how often it occurs in that matrix: `A` for
 the most frequent color, `B` for the next, and so on, with a tie going to the
-color that comes first in reading order. Every `0` stays `0`. It rejects any
-cell that is not an integer from 0 to 9, and it does not crop or modify the
-input.
+color that comes first in reading order. Every `0` stays `0`. A cell may also
+be one of the letters `A` to `I` that the instruction datasets write their
+colors as, ranked the same way, so a dataset crop is ranked by its own counts.
+It rejects any other cell, such as `10` or `J`, and it does not crop or modify
+the input.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
@@ -2419,7 +2501,8 @@ frozen before expected outputs are accessed for exact-grid scoring, including
 shape. Each object executes with the learned declarations in a fresh Nucleoid
 process, so no training instance state carries into prediction.
 
-The run prints `Difference: N` after the result and expected matrices. Each
+The run summary displays `Difference` as keycap digit emojis after the expected
+and result matrices. Each
 different, missing, or extra cell adds one to the score: `0` means an exact
 match, and higher scores are worse. An extra empty row counts as one shape
 mismatch.

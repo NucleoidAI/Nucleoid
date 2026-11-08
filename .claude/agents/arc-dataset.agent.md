@@ -55,8 +55,10 @@ rules, as additional dataset entries:
 
     node -e "console.log(JSON.stringify(require('.\\arc\\data\\training\\<id>.json').test))"
 
-Use both as the exact dataset grids. A test pair never changes the inferred
-rules. Do not inspect other training or evaluation puzzles for collision checks.
+Use both as the dataset grids, with their colors written as letters under
+[Write colors as letters](#write-colors-as-letters). A test pair never changes
+the inferred rules. Do not inspect other training or evaluation puzzles for
+collision checks.
 
 ## Preserve the original examples
 
@@ -64,15 +66,46 @@ Include every `train` pair exactly once and in its original order, then every
 `test` pair exactly once and in its original order. Test pairs sit at the same
 level as the training pairs: entries of the same `dataset` array, with the
 same keys and annotation and no separate section, flag, or marker.
-`input_matrix` and `output_matrix` must equal that pair's input and output,
-cell for cell and shape for shape, including all zero borders. Never resample
-canvases, shapes, colors, object counts, positions, or orientations; do not add
-synthetic varieties or numbered variants.
+`input_matrix` and `output_matrix` must follow that pair's input and output
+exactly, cell for cell and shape for shape, including all zero borders, with
+each color written as its letter. Never resample canvases, shapes, object
+counts, positions, or orientations, never change a color except into its
+letter, and do not add synthetic varieties or numbered variants.
 
 Write any annotation or manual verification helper outside the repository.
 It may segment objects and derive their masks and properties, but it must not
-replace or modify the original pair grids. Use one rule set and one
-output-canvas mode for the whole dataset, inferred only from the training pairs.
+replace or modify the original pair grids beyond writing their colors as
+letters. Use one rule set and one output-canvas mode for the whole dataset,
+inferred only from the training pairs.
+
+## Write colors as letters
+
+Follow the exact pattern of each pair in `arc/data/training/<id>.json`, but
+write no color as its number. `0` stays `0`. Every other color becomes a
+letter of `ABCDEFGHI`, ranked by how often it occurs across every
+`input_matrix` and `output_matrix` of the dataset, training and test pairs
+together: the most used color is `A`, the next `B`, and so on. A tie goes to
+the color read first, reading the pairs in dataset order, each input before
+its output, and each matrix row by row. This is how `Matrix.silhouette` in
+`arc/src/lib/Matrix.ts` ranks one matrix, applied to the whole dataset at once
+so that a color keeps one letter in every pair. The letters are no fixed map
+from numbers: color 1 is not always `A`, because each dataset ranks its own
+colors. Count only the pair grids, not the instance masks.
+
+Use the same letters everywhere the dataset holds a color:
+
+- Both instance masks, which keep `0` outside the object.
+- The world model: a color property is a string, such as `color: str`; an
+  implementation passes letters, such as `color='B'` or `parts=['A', 'C']`;
+  and a rule names colors by letter, such as `if $Obj.color@first is 'C':` or
+  `$Obj.fill_color = 'D'`.
+- The snapshots, which the runtime writes with the same letters, such as
+  `"color":"B"`.
+
+Coordinates, sizes, orientations, counts, and tags stay numbers. Infer the
+rules from the training pairs as usual: the letters rename the colors without
+changing which cells share one, so the rules are the ones the original colors
+show.
 
 ## Follow the existing datasets
 
@@ -120,7 +153,7 @@ formatting exactly:
   `this.tag = 'lNNNN'`, or a `tag: str` parameter, `this.tag = tag`, whose
   value each implementation passes, as in `dataset.27a28665.json`. Add only
   the descriptive properties the transformation needs, such as categorical
-  colors.
+  colors, which hold letters.
 - `width` and `height` are the column and row counts of the object's own
   shape, the nonzero bounding box of its input mask. They do not change when
   only the orientation changes: a turn or mirror is the orientation's job.
@@ -253,9 +286,13 @@ Verify with a throwaway script outside the repository; do not add tests:
   filename order. When using external staging, verify the
   staged document and leave the canonical loader check to the caller after
   integration.
-- Pair count and order match `train` followed by `test`; every `input_matrix`
-  and `output_matrix` equals its original grid, including dimensions, colors,
-  positions, and zero padding. There are no synthesized examples.
+- Pair count and order match `train` followed by `test`; mapping the letters
+  back to their colors makes every `input_matrix` and `output_matrix` equal
+  its original grid, including dimensions, colors, positions, and zero
+  padding. There are no synthesized examples.
+- Ranking the dataset's letters again by their counts gives `A`, `B`, `C`, and
+  so on in order, and no color is written as its number in the grids, masks,
+  declarations, implementations, or snapshots.
 - The transformation inferred from the training pairs reproduces every
   original train and test output.
 - All pairs share the dataset's declarations and output-canvas mode, and
@@ -296,7 +333,7 @@ Add one paragraph about the dataset to the "Instruction datasets" section of
 puzzle, its single canonical path, that it contains the exact original training
 pairs in order followed by the test pairs, pair and instance counts,
 instances, the transformation, properties the rules create, tags, the original
-canvas and object sizes, and orientation.
+canvas and object sizes, orientation, and the dataset's letter for each color.
 With a candidate executable, also name the NUC whose feature the rules use.
 
 Whenever you successfully introduce a new dataset, also add its puzzle ID
@@ -322,7 +359,8 @@ versions, spawn agents, start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
 with `dataset_path`, the source puzzle path, any annotation helper's path,
-train and test pair counts, instance counts, the declarations, the
+train and test pair counts, instance counts, the color-to-letter mapping with
+each color's count, the declarations, the
 big-picture formulation you started from and, for a finer model, why it fell
 short, each check with its result, how you used any hint, any NUC request, any
 suggested solver change, and any blockers. A staged handoff also includes

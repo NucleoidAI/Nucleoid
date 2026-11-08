@@ -21,9 +21,14 @@ Annotate every original `train` pair from
 original `test` pair from the same file, in its original order. Test pairs are
 additional entries at the same level as the training pairs: the same `dataset`
 array and entry structure, with no separate section or marker. Copy the input
-and output grids exactly, including their colors, positions, zero padding, and
-canvas dimensions. Do not synthesize, resample, recolor, or duplicate examples
-into numbered variants.
+and output grids' exact pattern, positions, zero padding, and canvas
+dimensions, but write each color as a letter: `0` stays `0`, and the other
+colors take the letters `ABCDEFGHI` by how often they occur across all of the
+dataset's input and output matrices, `A` for the most used, never as their
+numbers. The masks and the world model use the same letters, as the profile's
+[letter rule](../../agents/arc-dataset.agent.md#write-colors-as-letters)
+defines. Do not synthesize, resample, recolor beyond those letters, or
+duplicate examples into numbered variants.
 
 Infer one transformation, Nucleoid declaration set, and output-canvas mode
 from the training pairs, then apply them unchanged to every pair, train and

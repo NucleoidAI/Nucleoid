@@ -39,17 +39,34 @@ export function locate(matrix) {
 
 const LETTERS: string = "ABCDEFGHI";
 
+type Color = number | string;
+
+// A cell is a color from 0 to 9, or one of the letters A to I that the
+// instruction datasets write their nonzero colors as.
+function color(value: unknown): value is Color {
+  return (
+    (typeof value === "number" &&
+      Number.isInteger(value) &&
+      value >= 0 &&
+      value <= 9) ||
+    (typeof value === "string" && value.length === 1 && LETTERS.includes(value))
+  );
+}
+
 // Writes each color as a letter ranked by how often it occurs in the matrix:
 // the most frequent color is A, the next B, and so on, while 0 stays 0. A tie
 // goes to the color read first, as Map keys keep insertion order and sort is
-// stable.
+// stable. Cells that are already letters, as in the instruction datasets, are
+// ranked the same way, so a crop is ranked by its own counts.
 export function silhouette(matrix) {
-  const counts = new Map<number, number>();
+  const counts = new Map<Color, number>();
   for (const row of matrix) {
     for (const value of row) {
-      if (!Number.isInteger(value) || value < 0 || value > 9) {
+      if (!color(value)) {
         throw new Error(
-          `Matrix cell ${JSON.stringify(value)} is not a color from 0 to 9`
+          `Matrix cell ${JSON.stringify(
+            value
+          )} is not a color from 0 to 9 or a letter from A to I`
         );
       }
       if (value === 0) continue;
@@ -57,12 +74,12 @@ export function silhouette(matrix) {
     }
   }
 
-  const ranked: number[] = [...counts.keys()].sort(
-    (a: number, b: number) => counts.get(b) - counts.get(a)
+  const ranked: Color[] = [...counts.keys()].sort(
+    (a: Color, b: Color) => counts.get(b) - counts.get(a)
   );
 
   return matrix.map((row) =>
-    row.map((value: number) =>
+    row.map((value: Color) =>
       value === 0 ? 0 : LETTERS[ranked.indexOf(value)]
     )
   );

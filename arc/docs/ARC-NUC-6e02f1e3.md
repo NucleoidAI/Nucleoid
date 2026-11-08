@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6e02f1e3.json`](../data/training/6e02f1e3.json) |
-| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it. On 6-Nov-2026 its orientation guard was respelled with `is`; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
+| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it. On 6-Nov-2026 its orientation guard was respelled with `is`; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
 | Output canvas | `EXACT`, inferred from the training pairs |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the accepted `distinct` list query of [NUC 71](../../docs/nuc-0071.md) and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None; suggested changes await review, not applied |
 | Solver runs | 1 local run on 5-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown; none of the current version |
-| Updated | 6-Nov-2026 |
+| Updated | 8-Nov-2026 |
 
 ## Puzzle
 
@@ -250,6 +250,32 @@ the convention's labeller, every snapshot replays on that runtime, and
 proposal strategy was selected and strategy learning did not apply. At the
 user's choice, no solver run has measured this version.
 
+### Letter colors
+
+On 8-Nov-2026, at the user's request, every instruction dataset started
+writing its colors as letters instead of numbers. `0` stays `0`, and every
+other color is a letter of `ABCDEFGHI`, ranked by how often it occurs across
+all of the dataset's input and output matrices, training and test pairs
+together: `A` for the most used, then `B`, and so on, a tie going to the color
+read first, as `Matrix.silhouette` ranks one matrix. This dataset writes its
+colors as letters ranked by count: 3 as `A`, 4 as `B`, 5 as `C`, and 2 as `D`.
+Mapping the letters back reproduces the puzzle's pairs cell for cell.
+
+The pair grids, both instance masks, the implementations, and the snapshots
+use those letters, and the class and rules name the same colors by letter.
+Only the color literals changed, and the changed declarations now read:
+
+```nuc
+$Obj.fill_color = 'C'
+```
+
+Every snapshot was regenerated with the accepted runtime at `adc282a` and
+equals its earlier snapshot with its colors replaced by their letters, so the
+rules behave as before; instance names, positions, sizes, orientations, and
+tags are unchanged. `Matrix.silhouette` now also takes letters, so the
+orientation call's few-shot crops read exactly as before. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -330,3 +356,6 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
+- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
+  letter version. The solver still sends this puzzle's own grids as numbers,
+  while every few-shot dataset now writes its colors as letters.

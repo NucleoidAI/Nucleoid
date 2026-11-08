@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/44f52bb0.json`](../data/training/44f52bb0.json) |
-| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
+| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
 | Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run; none of the current version |
-| Updated | 6-Nov-2026 |
+| Updated | 8-Nov-2026 |
 
 ## Puzzle
 
@@ -249,6 +249,32 @@ the convention's labeller, every snapshot replays on that runtime, and
 proposal strategy was selected and strategy learning did not apply. At the
 user's choice, no solver run has measured this version.
 
+### Letter colors
+
+On 8-Nov-2026, at the user's request, every instruction dataset started
+writing its colors as letters instead of numbers. `0` stays `0`, and every
+other color is a letter of `ABCDEFGHI`, ranked by how often it occurs across
+all of the dataset's input and output matrices, training and test pairs
+together: `A` for the most used, then `B`, and so on, a tie going to the color
+read first, as `Matrix.silhouette` ranks one matrix. This dataset writes its
+colors as letters ranked by count: 2 as `A`, 1 as `B`, and 7 as `C`. Mapping
+the letters back reproduces the puzzle's pairs cell for cell.
+
+The pair grids, both instance masks, the implementations, and the snapshots
+use those letters, and the class and rules name the same colors by letter.
+Only the color literals changed, and the changed declarations now read:
+
+```nuc
+$Obj.fill_color = 'B' if $Obj.symmetric else 'C'
+```
+
+Every snapshot was regenerated with the accepted runtime at `adc282a` and
+equals its earlier snapshot with its colors replaced by their letters, so the
+rules behave as before; instance names, positions, sizes, orientations, and
+tags are unchanged. `Matrix.silhouette` now also takes letters, so the
+orientation call's few-shot crops read exactly as before. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -347,3 +373,6 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
+- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
+  letter version. The solver still sends this puzzle's own grids as numbers,
+  while every few-shot dataset now writes its colors as letters.

@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/5582e5ca.json`](../data/training/5582e5ca.json) |
-| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
+| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; one suggested change awaits review, not applied |
 | Solver runs | 5 local runs, one for each of versions 1 to 5: 4 on 2-Nov-2026 and 1 on 3-Nov-2026, all exit 0; version 6 has not been run; none of the current version |
-| Updated | 6-Nov-2026 |
+| Updated | 8-Nov-2026 |
 
 ## Puzzle
 
@@ -164,6 +164,32 @@ the convention's labeller, every snapshot replays on that runtime, and
 proposal strategy was selected and strategy learning did not apply. At the
 user's choice, no solver run has measured this version.
 
+### Letter colors
+
+On 8-Nov-2026, at the user's request, every instruction dataset started
+writing its colors as letters instead of numbers. `0` stays `0`, and every
+other color is a letter of `ABCDEFGHI`, ranked by how often it occurs across
+all of the dataset's input and output matrices, training and test pairs
+together: `A` for the most used, then `B`, and so on, a tie going to the color
+read first, as `Matrix.silhouette` ranks one matrix. This dataset writes its
+colors as letters ranked by count: 8 as `A`, 6 as `B`, 4 as `C`, 9 as `D`, 3
+as `E`, and 1 as `F`. Mapping the letters back reproduces the puzzle's pairs
+cell for cell.
+
+The pair grids, both instance masks, the implementations, and the snapshots
+use those letters, and the class and rules name the same colors by letter.
+Only the color literals changed, and the changed declarations now read:
+
+```nuc
+```
+
+Every snapshot was regenerated with the accepted runtime at `adc282a` and
+equals its earlier snapshot with its colors replaced by their letters, so the
+rules behave as before; instance names, positions, sizes, orientations, and
+tags are unchanged. `Matrix.silhouette` now also takes letters, so the
+orientation call's few-shot crops read exactly as before. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -226,3 +252,6 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
+- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
+  letter version. The solver still sends this puzzle's own grids as numbers,
+  while every few-shot dataset now writes its colors as letters.

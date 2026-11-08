@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6d0aefbc.json`](../data/training/6d0aefbc.json) |
-| Instruction dataset | [`dataset.6d0aefbc.json`](../src/dataset/dataset.6d0aefbc.json): the puzzle's 4 original training pairs and its test pair, 5 block instances, 1 in each pair; committed with this record |
+| Instruction dataset | [`dataset.6d0aefbc.json`](../src/dataset/dataset.6d0aefbc.json): the puzzle's 4 original training pairs and its test pair, 5 block instances, 1 in each pair; committed with this record; colors written as letters on 8-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the width rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
 | Solver changes | None applied or suggested; the JSON-only message question carried over from earlier records stays open |
 | Solver runs | 1 local run on 7-Nov-2026: exit 0, difference 0 |
-| Updated | 7-Nov-2026 |
+| Updated | 8-Nov-2026 |
 
 ## Puzzle
 
@@ -133,6 +133,26 @@ puzzle's entry at the end of the **ARC Benchmark** workflow's list, its 27th
 puzzle. The caller made the puzzle the solver's default in `src/app.ts`, in
 place of the genesis puzzle `3aa6fb7a`, before the run.
 
+### Letter colors
+
+On 8-Nov-2026, at the user's request, every instruction dataset started
+writing its colors as letters instead of numbers. `0` stays `0`, and every
+other color is a letter of `ABCDEFGHI`, ranked by how often it occurs across
+all of the dataset's input and output matrices, training and test pairs
+together: `A` for the most used, then `B`, and so on, a tie going to the color
+read first, as `Matrix.silhouette` ranks one matrix. This dataset writes its
+colors as letters ranked by count: 6 as `A`, 1 as `B`, and 8 as `C`. Mapping
+the letters back reproduces the puzzle's pairs cell for cell.
+
+The class and rules hold no color, so only the pair grids and both instance
+masks changed; the declarations and implementations are unchanged.
+
+Every snapshot was regenerated with the accepted runtime at `adc282a` and
+equals its earlier snapshot byte for byte, so the rules behave as before;
+instance names, positions, sizes, orientations, and tags are unchanged. `Matrix.silhouette` now also takes letters, so the
+orientation call's few-shot crops read exactly as before. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -195,3 +215,6 @@ workflow run is recorded yet.
   instances" text, which says the genesis datasets expose them on each
   instance. This dataset has the six keys the current datasets share.
   Updating the profile and the README is the user's call.
+- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
+  letter version. The solver still sends this puzzle's own grids as numbers,
+  while every few-shot dataset now writes its colors as letters.

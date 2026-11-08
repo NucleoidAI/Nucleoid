@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6150a2bd.json`](../data/training/6150a2bd.json) |
-| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
+| Instruction dataset | [`dataset.6150a2bd.json`](../src/dataset/dataset.6150a2bd.json): the puzzle's 2 original training pairs and its test pair, one whole-block instance each (3 instances); the third version, which reads the canvas size from the solver's `canvas_width` and `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing the second, which `cc87228` committed, and the first, with 12 region instances, which `ed49ce3` committed; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the rules use the `@first` anchors of [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied |
 | Solver runs | 1 GitHub Actions run on 2-Nov-2026 for version 1 and 1 local run on 3-Nov-2026 for version 2, both exit 0; version 3 not run; none of the current version |
-| Updated | 6-Nov-2026 |
+| Updated | 8-Nov-2026 |
 
 ## Puzzle
 
@@ -164,6 +164,27 @@ the convention's labeller, every snapshot replays on that runtime, and
 proposal strategy was selected and strategy learning did not apply. At the
 user's choice, no solver run has measured this version.
 
+### Letter colors
+
+On 8-Nov-2026, at the user's request, every instruction dataset started
+writing its colors as letters instead of numbers. `0` stays `0`, and every
+other color is a letter of `ABCDEFGHI`, ranked by how often it occurs across
+all of the dataset's input and output matrices, training and test pairs
+together: `A` for the most used, then `B`, and so on, a tie going to the color
+read first, as `Matrix.silhouette` ranks one matrix. This dataset writes its
+colors as letters ranked by count: 3 as `A`, 5 as `B`, 8 as `C`, 6 as `D`, 7
+as `E`, 2 as `F`, 1 as `G`, and 4 as `H`. Mapping the letters back reproduces
+the puzzle's pairs cell for cell.
+
+The class and rules hold no color, so only the pair grids and both instance
+masks changed; the declarations and implementations are unchanged.
+
+Every snapshot was regenerated with the accepted runtime at `adc282a` and
+equals its earlier snapshot byte for byte, so the rules behave as before;
+instance names, positions, sizes, orientations, and tags are unchanged. `Matrix.silhouette` now also takes letters, so the
+orientation call's few-shot crops read exactly as before. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -232,3 +253,6 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
+- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
+  letter version. The solver still sends this puzzle's own grids as numbers,
+  while every few-shot dataset now writes its colors as letters.

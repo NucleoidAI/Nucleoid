@@ -8,27 +8,27 @@
   "dataset": [
     {
       "input_matrix": [
-        [6, 6, 6],
-        [1, 6, 1],
-        [8, 8, 6]
+        ["A", "A", "A"],
+        ["B", "A", "B"],
+        ["C", "C", "A"]
       ],
       "output_matrix": [
-        [6, 6, 6, 6, 6, 6],
-        [1, 6, 1, 1, 6, 1],
-        [8, 8, 6, 6, 8, 8]
+        ["A", "A", "A", "A", "A", "A"],
+        ["B", "A", "B", "B", "A", "B"],
+        ["C", "C", "A", "A", "C", "C"]
       ],
       "instances": [
         {
           "instance_name": "objce22a605afee",
           "input_instance_matrix": [
-            [6, 6, 6],
-            [1, 6, 1],
-            [8, 8, 6]
+            ["A", "A", "A"],
+            ["B", "A", "B"],
+            ["C", "C", "A"]
           ],
           "output_instance_matrix": [
-            [6, 6, 6, 6, 6, 6],
-            [1, 6, 1, 1, 6, 1],
-            [8, 8, 6, 6, 8, 8]
+            ["A", "A", "A", "A", "A", "A"],
+            ["B", "A", "B", "B", "A", "B"],
+            ["C", "C", "A", "A", "C", "C"]
           ],
           "implementation": "objce22a605afee = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"objce22a605afee","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
@@ -38,27 +38,27 @@
     },
     {
       "input_matrix": [
-        [6, 8, 1],
-        [6, 1, 1],
-        [1, 1, 6]
+        ["A", "C", "B"],
+        ["A", "B", "B"],
+        ["B", "B", "A"]
       ],
       "output_matrix": [
-        [6, 8, 1, 1, 8, 6],
-        [6, 1, 1, 1, 1, 6],
-        [1, 1, 6, 6, 1, 1]
+        ["A", "C", "B", "B", "C", "A"],
+        ["A", "B", "B", "B", "B", "A"],
+        ["B", "B", "A", "A", "B", "B"]
       ],
       "instances": [
         {
           "instance_name": "obj88e2482314bf",
           "input_instance_matrix": [
-            [6, 8, 1],
-            [6, 1, 1],
-            [1, 1, 6]
+            ["A", "C", "B"],
+            ["A", "B", "B"],
+            ["B", "B", "A"]
           ],
           "output_instance_matrix": [
-            [6, 8, 1, 1, 8, 6],
-            [6, 1, 1, 1, 1, 6],
-            [1, 1, 6, 6, 1, 1]
+            ["A", "C", "B", "B", "C", "A"],
+            ["A", "B", "B", "B", "B", "A"],
+            ["B", "B", "A", "A", "B", "B"]
           ],
           "implementation": "obj88e2482314bf = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj88e2482314bf","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
@@ -68,27 +68,27 @@
     },
     {
       "input_matrix": [
-        [1, 1, 1],
-        [8, 1, 6],
-        [6, 8, 8]
+        ["B", "B", "B"],
+        ["C", "B", "A"],
+        ["A", "C", "C"]
       ],
       "output_matrix": [
-        [1, 1, 1, 1, 1, 1],
-        [8, 1, 6, 6, 1, 8],
-        [6, 8, 8, 8, 8, 6]
+        ["B", "B", "B", "B", "B", "B"],
+        ["C", "B", "A", "A", "B", "C"],
+        ["A", "C", "C", "C", "C", "A"]
       ],
       "instances": [
         {
           "instance_name": "obj7d2c15cfefa5",
           "input_instance_matrix": [
-            [1, 1, 1],
-            [8, 1, 6],
-            [6, 8, 8]
+            ["B", "B", "B"],
+            ["C", "B", "A"],
+            ["A", "C", "C"]
           ],
           "output_instance_matrix": [
-            [1, 1, 1, 1, 1, 1],
-            [8, 1, 6, 6, 1, 8],
-            [6, 8, 8, 8, 8, 6]
+            ["B", "B", "B", "B", "B", "B"],
+            ["C", "B", "A", "A", "B", "C"],
+            ["A", "C", "C", "C", "C", "A"]
           ],
           "implementation": "obj7d2c15cfefa5 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj7d2c15cfefa5","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
@@ -98,27 +98,27 @@
     },
     {
       "input_matrix": [
-        [1, 1, 1],
-        [1, 6, 6],
-        [6, 6, 6]
+        ["B", "B", "B"],
+        ["B", "A", "A"],
+        ["A", "A", "A"]
       ],
       "output_matrix": [
-        [1, 1, 1, 1, 1, 1],
-        [1, 6, 6, 6, 6, 1],
-        [6, 6, 6, 6, 6, 6]
+        ["B", "B", "B", "B", "B", "B"],
+        ["B", "A", "A", "A", "A", "B"],
+        ["A", "A", "A", "A", "A", "A"]
       ],
       "instances": [
         {
           "instance_name": "obj4341e1a39ab9",
           "input_instance_matrix": [
-            [1, 1, 1],
-            [1, 6, 6],
-            [6, 6, 6]
+            ["B", "B", "B"],
+            ["B", "A", "A"],
+            ["A", "A", "A"]
           ],
           "output_instance_matrix": [
-            [1, 1, 1, 1, 1, 1],
-            [1, 6, 6, 6, 6, 1],
-            [6, 6, 6, 6, 6, 6]
+            ["B", "B", "B", "B", "B", "B"],
+            ["B", "A", "A", "A", "A", "B"],
+            ["A", "A", "A", "A", "A", "A"]
           ],
           "implementation": "obj4341e1a39ab9 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj4341e1a39ab9","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
@@ -128,27 +128,27 @@
     },
     {
       "input_matrix": [
-        [6, 8, 6],
-        [8, 6, 8],
-        [1, 6, 1]
+        ["A", "C", "A"],
+        ["C", "A", "C"],
+        ["B", "A", "B"]
       ],
       "output_matrix": [
-        [6, 8, 6, 6, 8, 6],
-        [8, 6, 8, 8, 6, 8],
-        [1, 6, 1, 1, 6, 1]
+        ["A", "C", "A", "A", "C", "A"],
+        ["C", "A", "C", "C", "A", "C"],
+        ["B", "A", "B", "B", "A", "B"]
       ],
       "instances": [
         {
           "instance_name": "obj38a4ace7876a",
           "input_instance_matrix": [
-            [6, 8, 6],
-            [8, 6, 8],
-            [1, 6, 1]
+            ["A", "C", "A"],
+            ["C", "A", "C"],
+            ["B", "A", "B"]
           ],
           "output_instance_matrix": [
-            [6, 8, 6, 6, 8, 6],
-            [8, 6, 8, 8, 6, 8],
-            [1, 6, 1, 1, 6, 1]
+            ["A", "C", "A", "A", "C", "A"],
+            ["C", "A", "C", "C", "A", "C"],
+            ["B", "A", "B", "B", "A", "B"]
           ],
           "implementation": "obj38a4ace7876a = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj38a4ace7876a","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},

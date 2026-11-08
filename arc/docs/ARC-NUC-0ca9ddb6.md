@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/0ca9ddb6.json`](../data/training/0ca9ddb6.json) |
-| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances; conditions respelled with `is` on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026 |
+| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances; conditions respelled with `is` on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted; the conditions also use the accepted `is` of [NUC 86](../../docs/nuc-0086.md), which this puzzle did not request |
 | Solver changes | None specific to this puzzle |
 | Solver runs | 5 GitHub Actions runs, 1-2 Nov 2026; all exit 0; none of the current version |
-| Updated | 6-Nov-2026 |
+| Updated | 8-Nov-2026 |
 
 ## Puzzle
 
@@ -185,6 +185,47 @@ the convention's labeller, every snapshot replays on that runtime, and
 proposal strategy was selected and strategy learning did not apply. At the
 user's choice, no solver run has measured this version.
 
+### Letter colors
+
+On 8-Nov-2026, at the user's request, every instruction dataset started
+writing its colors as letters instead of numbers. `0` stays `0`, and every
+other color is a letter of `ABCDEFGHI`, ranked by how often it occurs across
+all of the dataset's input and output matrices, training and test pairs
+together: `A` for the most used, then `B`, and so on, a tie going to the color
+read first, as `Matrix.silhouette` ranks one matrix. This dataset writes its
+colors as letters ranked by count: 4 as `A`, 7 as `B`, 2 as `C`, 1 as `D`, 8
+as `E`, and 6 as `F`. Mapping the letters back reproduces the puzzle's pairs
+cell for cell.
+
+The pair grids, both instance masks, the implementations, and the snapshots
+use those letters, and the class and rules name the same colors by letter.
+Only the color literals changed, and the changed declarations now read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: str):
+if $Obj.vertex_color is 'D':
+    $Obj.tag = 'l1707'
+    $Obj.marker_color = 'B'
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+    $Obj.width = $Obj.width@first + 2
+    $Obj.height = $Obj.height@first + 2
+if $Obj.vertex_color is 'C':
+    $Obj.tag = 'l2404'
+    $Obj.marker_color = 'A'
+    $Obj.x = $Obj.x@first - 1
+    $Obj.y = $Obj.y@first - 1
+    $Obj.width = $Obj.width@first + 2
+    $Obj.height = $Obj.height@first + 2
+```
+
+Every snapshot was regenerated with the accepted runtime at `adc282a` and
+equals its earlier snapshot with its colors replaced by their letters, so the
+rules behave as before; instance names, positions, sizes, orientations, and
+tags are unchanged. `Matrix.silhouette` now also takes letters, so the
+orientation call's few-shot crops read exactly as before. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Decision: locate the delta from the initial position (NUC 53 and NUC 55)
 
 ### Why the world model has to move the object
@@ -302,3 +343,6 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
+- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
+  letter version. The solver still sends this puzzle's own grids as numbers,
+  while every few-shot dataset now writes its colors as letters.
