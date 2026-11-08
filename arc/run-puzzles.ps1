@@ -1,9 +1,48 @@
-#requires -Version 7.0
+#requires -Version 5.0
 
 [CmdletBinding()]
 param()
 
 $ErrorActionPreference = 'Stop'
+
+function Stop-PuzzleProcess {
+    param([System.Diagnostics.Process]$Process)
+
+    if ($Process.HasExited) {
+        return
+    }
+
+    if ($PSVersionTable.PSVersion.Major -ge 7) {
+        $Process.Kill($true)
+    }
+    else {
+        $processes = @(Get-CimInstance -ClassName Win32_Process -Property ProcessId, ParentProcessId)
+        $processIds = @($Process.Id)
+
+        for ($index = 0; $index -lt $processIds.Count; $index++) {
+            $parentId = $processIds[$index]
+            $processIds += @(
+                $processes | Where-Object {
+                    $_.ParentProcessId -eq $parentId -and $_.ProcessId -notin $processIds
+                } | Select-Object -ExpandProperty ProcessId
+            )
+        }
+
+        [array]::Reverse($processIds)
+        foreach ($processId in $processIds) {
+            try {
+                Stop-Process -Id $processId -Force -ErrorAction Stop
+            }
+            catch {
+                if ($_.CategoryInfo.Category -ne [System.Management.Automation.ErrorCategory]::ObjectNotFound) {
+                    throw
+                }
+            }
+        }
+    }
+
+    $Process.WaitForExit()
+}
 
 $puzzleIds = @(
     '3aa6fb7a'
@@ -70,10 +109,7 @@ finally {
         }
 
         try {
-            if (-not $run.Process.HasExited) {
-                $run.Process.Kill($true)
-                $run.Process.WaitForExit()
-            }
+            Stop-PuzzleProcess -Process $run.Process
         }
         catch {
             Write-Warning "Could not stop $($run.Puzzle): $($_.Exception.Message)"

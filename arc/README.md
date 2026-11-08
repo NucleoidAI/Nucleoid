@@ -79,11 +79,14 @@ without an additional library; an unknown option, or a value such as
 
 ### Parallel local run
 
-Run the five-puzzle batch from the repository root with PowerShell 7:
+Run the five-puzzle batch from the repository root with Windows PowerShell 5
+or PowerShell 7:
 
 ```powershell
-pwsh -NoProfile -File .\arc\run-puzzles.ps1
+powershell -NoProfile -File .\arc\run-puzzles.ps1
 ```
+
+Use `pwsh` instead of `powershell` for PowerShell 7.
 
 The script starts `3aa6fb7a`, `0ca9ddb6`, `e9afcf9a`, `6fa7a44f`, and
 `d631b094` concurrently, using the same Bun, Nucleoid runtime, and OpenRouter
