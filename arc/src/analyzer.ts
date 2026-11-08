@@ -13,6 +13,7 @@ export async function declarations({
   const { declarations, output_canvas } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    grammar: true,
     messages: [
       {
         role: "user",

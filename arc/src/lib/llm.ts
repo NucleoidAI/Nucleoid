@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { v4 as uuid } from "uuid";
 import * as dataset from "../dataset";
 import * as openrouter from "./openrouter";
@@ -9,6 +11,7 @@ export async function generate({
   few_shot = (instruction) => instruction,
   messages = [],
   document = true,
+  grammar = false,
 }) {
   if (document) {
     messages.unshift({
@@ -17,6 +20,16 @@ export async function generate({
         few_shot_examples:
         ${examples(puzzle_id, only_puzzle_dataset, few_shot)}
       `,
+    });
+  }
+
+  if (grammar) {
+    messages.unshift({
+      role: "system",
+      content: readFileSync(
+        join(__dirname, "..", "..", "..", "docs", "grammar.md"),
+        "utf8"
+      ),
     });
   }
 
