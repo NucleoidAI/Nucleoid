@@ -801,7 +801,7 @@ fn only_the_appended_cases_declare_named_functions_and_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 35);
-    assert_eq!(cases, 1030);
+    assert_eq!(cases, 1041);
     assert!(declares_named_function("x = 1 function f() {}"));
     assert!(!declares_named_function("record.function f"));
     assert!(!declares_named_function("f = function (a) { return a }"));

@@ -162,8 +162,10 @@ impl Parser {
     /// an adjacent statement with its original positions and diagnostics.
     /// Template interpolations keep ignoring a trailing `if`.
     pub(super) fn python_condition(&mut self) -> Option<Expr> {
-        if self.context == ExpressionContext::Interpolation
-            || self.peek() != &Token::Keyword(Keyword::If)
+        if matches!(
+            self.context,
+            ExpressionContext::Interpolation | ExpressionContext::ComprehensionSource
+        ) || self.peek() != &Token::Keyword(Keyword::If)
         {
             return None;
         }

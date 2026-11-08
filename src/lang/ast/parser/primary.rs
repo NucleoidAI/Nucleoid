@@ -106,7 +106,11 @@ impl Parser {
         let mut items = Vec::new();
 
         while !self.check(&Token::RightBracket) {
-            items.push(self.within(true, Self::expression)?);
+            let item = self.within(true, Self::expression)?;
+            if items.is_empty() && self.starts_comprehension() {
+                return self.comprehension(item);
+            }
+            items.push(item);
 
             if !self.eat(&Token::Comma) {
                 break;

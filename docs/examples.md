@@ -3549,6 +3549,35 @@ crash.state = State.CLOSED
   [NUC 90](nuc-0090.md) and the
   [root contract](../nucleoid.spec.md#enum-declarations).
 
+## List comprehensions
+
+**List comprehensions keep a class's shipping labels live**
+
+```nuc
+class Parcel(code, weight):
+    this.code = code
+    this.weight = weight
+limit = 5
+heavy = [parcel.code for parcel of Parcel if parcel.weight > limit]
+labels = ["#" + code for code in heavy]
+Parcel("A1", 2)
+b2 = Parcel("B2", 8)
+assert(labels, ["#B2"])
+b2.weight = 4
+assert(labels, [])
+limit = 1
+[heavy, labels]
+# return: [["A1","B2"],["#A1","#B2"]]
+```
+
+- `heavy` filters the parcels over the weight limit and keeps their codes,
+  and `labels` builds a label from each of those codes. Both are
+  comprehensions, exactly the `filter` and `map` calls they spell.
+- `labels` follows `heavy`, which follows the parcels, their weights and the
+  limit: lightening `B2` empties the labels, and lowering the limit brings
+  both parcels back. See [NUC 92](nuc-0092.md) and the
+  [root contract](../nucleoid.spec.md#list-comprehensions).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

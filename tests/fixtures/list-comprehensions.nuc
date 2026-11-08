@@ -1,0 +1,8 @@
+prices = [12, 30, 8]
+limit = 10
+picked = [price * 2 for price in prices if price > limit]
+labels = [
+    "#" + price
+    for price of prices
+]
+[picked, labels]

@@ -18786,6 +18786,197 @@ enum = 7
 assert(record.enum, 7)"#);
 }
 
+/// Nucleoid builds lists with comprehensions
+#[rustfmt::skip]
+#[test]
+fn builds_lists_with_comprehensions() {
+    let mut run = runner();
+    run("prices = [12, 30, 8]");
+    run("doubled = [price * 2 for price in prices]");
+    run(r##"labels = ["#" + price for price in prices]"##);
+    assert_eq!(run("doubled"), serde_json::json!([24, 60, 16]));
+    assert_eq!(run("labels"), serde_json::json!(["#12", "#30", "#8"]));
+    run("prices.push(5)");
+    assert_eq!(run("doubled"), serde_json::json!([24, 60, 16, 10]));
+    run("prices = [1, 2]");
+    assert_eq!(run("doubled"), serde_json::json!([2, 4]));
+    run("rate = 3");
+    run("scaled = [price * rate for price in prices]");
+    assert_eq!(run("scaled"), serde_json::json!([3, 6]));
+    run("rate = 10");
+    run(r#"scaled
+
+# return: [10,20]"#);
+}
+
+/// Nucleoid filters comprehensions with an if clause
+#[rustfmt::skip]
+#[test]
+fn filters_comprehensions_with_an_if_clause() {
+    let mut run = runner();
+    run("scores = [40, 75, 90, 55]");
+    run("passing = [score for score in scores if score >= 50]");
+    assert_eq!(run("passing"), serde_json::json!([75, 90, 55]));
+    run("bar = 60");
+    run("curved = [score + 5 for score in scores if score >= bar]");
+    assert_eq!(run("curved"), serde_json::json!([80, 95]));
+    run("bar = 50");
+    assert_eq!(run("curved"), serde_json::json!([80, 95, 60]));
+    run("scores.push(70)");
+    assert_eq!(run("curved"), serde_json::json!([80, 95, 60, 75]));
+    run(r#"grades = ["high" if score > 80 else "mid" for score in scores if score > 50]"#);
+    assert_eq!(run("grades"), serde_json::json!(["mid", "high", "mid", "mid"]));
+    run(r#"curved
+
+# return: [80,95,60,75]"#);
+}
+
+/// Nucleoid keeps comprehensions over class populations live
+#[rustfmt::skip]
+#[test]
+fn keeps_comprehensions_over_class_populations_live() {
+    let mut run = runner();
+    run(r#"class Order(item, qty):
+    this.item = item
+    this.qty = qty"#);
+    run("minimum = 2");
+    run("bulk = [order.item for order in Order if order.qty >= minimum]");
+    run(r#"Order("pen", 1)"#);
+    run(r#"ink = Order("ink", 3)"#);
+    assert_eq!(run("bulk"), serde_json::json!(["ink"]));
+    run(r#"Order("cap", 5)"#);
+    assert_eq!(run("bulk"), serde_json::json!(["ink", "cap"]));
+    run("minimum = 4");
+    assert_eq!(run("bulk"), serde_json::json!(["cap"]));
+    run("ink.qty = 9");
+    assert_eq!(run("bulk"), serde_json::json!(["ink", "cap"]));
+    run(r#"bulk
+
+# return: ["ink","cap"]"#);
+}
+
+/// Nucleoid accepts of in comprehensions over lists and populations
+#[rustfmt::skip]
+#[test]
+fn accepts_of_in_comprehensions_over_lists_and_populations() {
+    let mut run = runner();
+    run(r#"class Room(name, temp):
+    this.name = name
+    this.temp = temp"#);
+    run("target = 20");
+    run("names = [room.name for room of Room]");
+    run("cold = [room.name for room of Room if room.temp < target]");
+    run(r#"lab = Room("lab", 18)"#);
+    run(r#"Room("hall", 22)"#);
+    run("readings = [17, 21]");
+    run("offsets = [reading - target for reading of readings]");
+    assert_eq!(run("names"), serde_json::json!(["lab", "hall"]));
+    assert_eq!(run("cold"), serde_json::json!(["lab"]));
+    assert_eq!(run("offsets"), serde_json::json!([-3, 1]));
+    {
+        let actual = run("offsets");
+        let expected = run("([reading - target for reading in readings])");
+        assert_eq!(actual, expected);
+    }
+    run("target = 23");
+    assert_eq!(run("cold"), serde_json::json!(["lab", "hall"]));
+    run("lab.temp = 25");
+    run(r#"cold
+
+# return: ["hall"]"#);
+}
+
+/// Nucleoid writes comprehensions across lines
+#[rustfmt::skip]
+#[test]
+fn writes_comprehensions_across_lines() {
+    let mut run = runner();
+    run("readings = [18, 25, 31, 22]");
+    run(r#"warm = [
+    reading - 20
+    for reading in readings
+    if reading > 20
+]"#);
+    assert_eq!(run("warm"), serde_json::json!([5, 11, 2]));
+    run(r#"pairs = [[reading, reading * 2]
+         for reading of readings
+         if reading < 20]"#);
+    assert_eq!(run("pairs"), serde_json::json!([[18, 36]]));
+    run("readings.push(28)");
+    assert_eq!(run("warm"), serde_json::json!([5, 11, 2, 8]));
+    run(r#"warm
+
+# return: [5,11,2,8]"#);
+}
+
+/// Nucleoid nests comprehensions that read only their own names
+#[rustfmt::skip]
+#[test]
+fn nests_comprehensions_that_read_only_their_own_names() {
+    let mut run = runner();
+    run("grid = [[1, 2], [3, 4]]");
+    run("scaled = [[cell * 10 for cell in row] for row in grid]");
+    assert_eq!(run("scaled"), serde_json::json!([[10, 20], [30, 40]]));
+    run("large = [[cell for cell in row if cell > 1] for row in grid]");
+    assert_eq!(run("large"), serde_json::json!([[2], [3, 4]]));
+    run("sizes = [row.length for row in [[cell for cell in row if cell > 2] for row in grid]]");
+    assert_eq!(run("sizes"), serde_json::json!([0, 2]));
+    run("grid.push([5, 6])");
+    assert_eq!(run("scaled"), serde_json::json!([[10, 20], [30, 40], [50, 60]]));
+    run(r#"large
+
+# return: [[2],[3,4],[5,6]]"#);
+}
+
+/// Nucleoid writes comprehensions wherever a list may start
+#[rustfmt::skip]
+#[test]
+fn writes_comprehensions_wherever_a_list_may_start() {
+    let mut run = runner();
+    run(r#"stock = [3, 0, 7, 2]
+def doubled(values):
+    return [value * 2 for value in values]
+def count(values) => values.length
+summary = {low: [qty for qty in stock if qty < 3], total: count([qty for qty of stock if qty > 0])}
+note = `restock ${[qty + 10 for qty in stock if qty == 0]}`
+assert(doubled(stock), [6, 0, 14, 4])
+assert(summary, {low: [0, 2], total: 3})
+assert(note, "restock 10")
+status = [qty for qty in stock if qty > 5].length > 0 ? "order" : "wait"
+assert(status, "order")
+if [qty for qty in stock if qty > 9].length == 0:
+    quiet = true
+assert(quiet, true)
+[qty - 1 for qty in stock if qty > 1]
+# return: [2,6,1]"#);
+}
+
+/// Nucleoid keeps comprehensions identical to their map and filter spellings
+#[rustfmt::skip]
+#[test]
+fn keeps_comprehensions_identical_to_their_map_and_filter_spellings() {
+    let mut run = runner();
+    run(r#"stock = [3, 0, 7]
+limit = 1
+listed = [qty * 2 for qty in stock if qty > limit]
+spelled = stock.filter(qty => qty > limit).map(qty => qty * 2)
+plain = [qty + 1 for qty of stock]
+assert(listed, spelled)
+assert(plain, stock.map(qty => qty + 1))
+assert((why listed).map(step -> step.rule), ["listed = stock.filter(function()).map(function())", "stock = [3,0,7]", "limit = 1"])
+assert((why plain).map(step -> step.rule), ["plain = stock.map(function())", "stock = [3,0,7]"])
+assert((affects limit).map(step -> step.node), ["listed", "spelled"])
+try:
+    limit = 5
+    assert(listed, [14])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([listed, spelled], [[6, 14], [6, 14]])
+listed
+# return: [6,14]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -1,4 +1,5 @@
 mod class;
+mod comprehension;
 mod control;
 mod destructuring;
 mod enumeration;
@@ -100,6 +101,13 @@ enum ExpressionContext {
     /// A template interpolation, whose trailing tokens are ignored, so a
     /// top-level `lambda` and a Python-style `if` keep their accepted readings.
     Interpolation,
+    ComprehensionSource,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Lists {
+    Literals,
+    Comprehensions,
 }
 
 struct Parser {
@@ -109,6 +117,7 @@ struct Parser {
     context: ExpressionContext,
     options: SyntaxOptions,
     words: bool,
+    lists: Lists,
     enclosed: bool,
     in_class: bool,
     /// Python-style conditional attempts by `if` token position and nesting
@@ -182,6 +191,7 @@ impl Parser {
             context: ExpressionContext::Ordinary,
             options: SyntaxOptions::default(),
             words: false,
+            lists: Lists::Literals,
             enclosed: false,
             in_class: false,
             python_conditions: HashMap::new(),
@@ -198,6 +208,19 @@ impl Parser {
     }
 
     fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
+        let accepted = self.attempt_words(&parse);
+        if accepted.is_ok() || !self.mentions_comprehensions() {
+            return accepted;
+        }
+        *self = Parser {
+            options: self.options,
+            lists: Lists::Comprehensions,
+            ..Parser::new(std::mem::take(&mut self.tokens))
+        };
+        self.attempt_words(&parse)
+    }
+
+    fn attempt_words<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {
         let accepted = match parse(self) {
             Ok(parsed) => return Ok(parsed),
             Err(error) => error,
@@ -208,9 +231,19 @@ impl Parser {
         *self = Parser {
             options: self.options,
             words: true,
+            lists: self.lists,
             ..Parser::new(std::mem::take(&mut self.tokens))
         };
         parse(self).map_err(|retried| furthest(accepted, retried))
+    }
+
+    fn mentions_comprehensions(&self) -> bool {
+        self.tokens.iter().any(|spanned| {
+            matches!(
+                spanned.token,
+                Token::Keyword(Keyword::For) | Token::Template(_)
+            )
+        })
     }
 
     fn mentions_words(&self) -> bool {

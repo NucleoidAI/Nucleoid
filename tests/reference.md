@@ -2487,4 +2487,15 @@ assert([Size.LARGE, Fit.TIGHT, Size.HUGE], ["LARGE", -1, null])
 enum Fit: TIGHT = -1, REGULAR = 1, LOOSE = 2
 shirt.fit
 # return: 1
+---
+# Nucleoid reads list comprehensions as map and filter
+
+prices = [12, 30, 8]
+limit = 10
+picked = [price * 2 for price in prices if price > limit]
+assert(picked, prices.filter(price => price > limit).map(price => price * 2))
+assert(picked, [24, 60])
+limit = 5
+picked
+# return: [24,60,16]
 ```

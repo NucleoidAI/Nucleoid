@@ -1998,6 +1998,35 @@ assert(Task.count(t -> t.active), 2)
   read-only, so `Stage.DONE = "X"` raises `TypeError("Enums are read-only")`.
   See the [root contract](nucleoid.spec.md#enum-declarations).
 
+## List comprehensions
+
+**List comprehensions keep Python-style lists live**
+
+```nuc
+class Item(name, price):
+    this.name = name
+    this.price = price
+budget = 10
+cheap = [item.name for item in Item if item.price <= budget]
+Item("pen", 3)
+ink = Item("ink", 12)
+assert(cheap, ["pen"])
+budget = 15
+assert(cheap, ["pen", "ink"])
+ink.price = 20
+assert(cheap, ["pen"])
+```
+
+- [NUC 92](docs/nuc-0092.md) accepts Python's list comprehensions.
+  `[item.name for item in Item if item.price <= budget]` is exactly
+  `Item.filter(item => item.price <= budget).map(item => item.name)`, and
+  `for item of Item` is the same as `for item in Item`.
+- `cheap` stays live like the arrow spelling: a new budget or a changed price
+  updates it. A comprehension has one `for` and at most one `if`, and its
+  lambdas read variables and their own name but not the parameters of an
+  enclosing function. See the
+  [root contract](nucleoid.spec.md#list-comprehensions).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

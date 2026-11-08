@@ -139,6 +139,7 @@ impl Parser {
     fn interpolated_expression(&self, source: &str) -> Result<Expr> {
         let mut parser = Parser {
             words: self.words,
+            lists: self.lists,
             in_class: self.in_class,
             ..Parser::from_source(source, self.options)?
         };

@@ -1945,7 +1945,26 @@ box.grown()
 - Declarations are not hoisted: a call before the declaration runs raises `ReferenceError("<name> is not defined")`, as for `def`. Redefinition, `.value`, scopes, `why`, `affects`, graph keys and transactions are also those of `def`.
 - In an expression, `function` must still be followed by `(`: `g = function f(a) { return a }` raises `SyntaxError("Expected '(' but found identifier 'f'")`. After the parameters, any token other than `{` raises `SyntaxError("Expected '{' but found <token>")`, so arrows, colon suites and return annotations are not added. The line-oriented REPL buffers a declaration until its braces close. See the authoritative [named function declarations](../nucleoid.spec.md#named-function-declarations) section.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), [NUC 79](nuc-0079.md), and [NUC 89](nuc-0089.md).
+### List comprehensions
+
+```
+prices = [12, 30, 8]
+limit = 10
+picked = [price * 2 for price in prices if price > limit]
+assert(picked, prices.filter(price => price > limit).map(price => price * 2))
+assert(picked, [24, 60])
+limit = 5
+picked
+```
+
+- This is the complete `Nucleoid reads list comprehensions as map and filter` program in `tests/reference.md`, without its title and expected-return metadata; it returns `[24,60,16]`.
+- [NUC 92](nuc-0092.md) accepts Python's list comprehensions. A list literal whose whole content is `EXPR for NAME in SOURCE`, optionally followed by one `if COND`, is exactly `SOURCE.map(NAME => EXPR)` or `SOURCE.filter(NAME => COND).map(NAME => EXPR)`, and `for NAME of SOURCE` is the same. Evaluation, liveness, `why`, `affects`, transactions and canonical source are those of the arrow spelling, which renders as `SOURCE.map(function())`.
+- SOURCE is a list or a class's population, evaluated once. NAME is one plain identifier, local to the comprehension. EXPR is a full expression, including another comprehension; SOURCE ends before an `if` at its top level, so a Python-style conditional there needs parentheses; COND runs to `]`. Line breaks inside the brackets carry no layout.
+- There is one `for` and at most one `if`, with no other items: a second clause or a trailing comma raises `SyntaxError("Expected ']' but found <token>")`. A NAME that is not an identifier raises `SyntaxError("Expected a name but found <token>")`, and a missing `in` or `of` raises `SyntaxError("Expected 'in' or 'of' but found <token>")`, so tuple targets are not added. Index brackets, `(x for x in xs)`, `f(x for x in xs)` and dict and set comprehensions keep their accepted errors.
+- The lambda limits are inherited: the lambdas read variables and their own name but not an enclosing function's or lambda's parameters, so a nested comprehension reads only its own names, `this` inside a method's comprehension raises `ReferenceError("this is not defined")`, and `[c for c in "abc"]` raises `TypeError("abc.map is not a function")`.
+- Every input the accepted parser accepts keeps its parse: a source is parsed with comprehensions only after the accepted parse fails. See the authoritative [list comprehensions](../nucleoid.spec.md#list-comprehensions) section.
+
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), [NUC 79](nuc-0079.md), [NUC 89](nuc-0089.md), and [NUC 92](nuc-0092.md).
 
 ---
 
@@ -3696,6 +3715,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A `this.` or `self.` prefix outside a constructor parameter list, or not followed by one name and then `,`, `)`, `:` or `=` | `Expected a parameter but found keyword 'this'` |
 | An `extends` clause whose parent is missing or not a name | `Expected a parent class name but found <what>` |
 | A second parent after `class Name extends Parent:` | `Class '<Name>' already extends '<Parent>'` |
+| A list comprehension whose name is not followed by `in` or `of` | `Expected 'in' or 'of' but found <what>` |
 
 ### Where an error happened
 
@@ -3816,6 +3836,8 @@ value => { statement }                 anonymous arrow with a statement body
 value -> expression                    optional spelling wherever => is accepted (NUC 57)
 lambda a, b: expression                optional lambda, exactly (a, b) => (expression) (NUC 57)
 f(.a.b)                                property selector argument, exactly f(v => v.a.b) (NUC 79)
+[expr for name in source]              list comprehension, exactly source.map(name => expr) (NUC 92)
+[expr for name of source if cond]      source.filter(name => cond).map(name => expr) (NUC 92)
 def name(params) => expression         single-return function
 def name(head = 1, ...tail) => expression final positional rest list (NUC 74)
 def name(params) =>                    optional indented single expression (NUC 32)

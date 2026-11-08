@@ -2863,6 +2863,75 @@ statement positions; caught values and transaction recovery are unchanged.
   are accepted` through `Nucleoid rolls back failed lambda and thin arrow
   updates` specify the executable behavior.
 
+## List comprehensions
+
+- [NUC 92](docs/nuc-0092.md) adds Python's list comprehensions. A list literal
+  whose whole content is `EXPR for NAME in SOURCE` or `EXPR for NAME of SOURCE`,
+  optionally followed by one `if COND`, is a comprehension. No token, keyword,
+  syntax tree node or runtime path is added.
+- `[EXPR for NAME in SOURCE]` is exactly `SOURCE.map(NAME => EXPR)`, and
+  `[EXPR for NAME in SOURCE if COND]` is exactly
+  `SOURCE.filter(NAME => COND).map(NAME => EXPR)`; `of` is the same as `in`.
+  The parser builds the trees those arrow spellings build, so evaluation,
+  errors, graph keys, liveness, `why`, `affects`, transactions and canonical
+  rendering are theirs, and canonical source writes
+  `SOURCE.filter(function()).map(function())`.
+- SOURCE is evaluated once, as the receiver: a list or a class's population.
+  The comprehension stays live on SOURCE, on the instances and properties that
+  EXPR and COND read and on the variables they read. NAME is local to the
+  comprehension, so a variable of the same name keeps its value.
+- NAME is one plain identifier. EXPR is a full expression, including a
+  Python-style conditional, `?:`, a lambda or another comprehension. SOURCE
+  ends before an `if` at its top level, so a Python-style conditional as
+  SOURCE needs parentheses, while `?:` and calls need none. COND is a full
+  expression up to `]`.
+- A comprehension has exactly one `for` clause and at most one `if` clause,
+  with no other items and no trailing comma. Line breaks and indentation
+  inside the brackets carry no layout, as in every list literal.
+- A comprehension may stand wherever a list literal may: as a value, an
+  argument, a return value, an object value, inside a template interpolation
+  or another list, in a condition and at the start of a statement. Index and
+  slice brackets, parenthesized generators such as `(x for x in xs)`, bare
+  call arguments such as `f(x for x in xs)` and dict and set comprehensions
+  keep their accepted errors.
+- The limits of lambdas are inherited. A lambda reads variables and its own
+  parameter but not the parameters of an enclosing function or lambda, so a
+  comprehension in a function reads the function's parameters only in SOURCE,
+  and a nested comprehension reads only its own names: reading `row` inside
+  `[[cell + row.length for cell in row] for row in grid]` raises
+  `ReferenceError("row is not defined")`. `this` in a method's comprehension
+  raises `ReferenceError("this is not defined")`, and a string has no `map`,
+  so `[c for c in "abc"]` raises `TypeError("abc.map is not a function")`.
+- A NAME that is not an identifier raises
+  `SyntaxError("Expected a name but found <token>")`, and a missing `in` or
+  `of` raises `SyntaxError("Expected 'in' or 'of' but found <token>")`, both
+  at that token. A tuple target such as `[a for a, b in pairs]` reports its
+  comma that way. After SOURCE or COND, any token other than `]` raises the
+  existing `SyntaxError("Expected ']' but found <token>")`, so a second `for`
+  or `if` clause, a trailing comma and an `else` after COND report there.
+- Nested comprehensions raise
+  `SyntaxError("Expressions are nested too deeply")` where nested list
+  literals do. A comprehension as an assignment target raises
+  `SyntaxError("Cannot assign to <rendering>")`, such as
+  `Cannot assign to xs.map(function())`, when the statement runs, as its
+  arrow spelling does.
+- The line-oriented REPL keeps its buffering rules: a comprehension on one
+  line, or inside a header that it buffers, runs, and one split over lines
+  fails at its first line, as a list literal split over lines does.
+- Only former syntax errors change. A program, an expression or a template
+  interpolation is parsed exactly as the accepted parser parses it first;
+  only when that fails and its tokens include `for` or a template is it parsed
+  again with comprehensions. So every input the accepted parser accepts keeps
+  its parse, including the ignored tokens after an interpolation's
+  expression. When the comprehension parse fails too, its error is
+  reported. The two parses agree until a list literal's first item is
+  followed by `for`, so the error differs from the accepted parser's only for
+  such a source.
+- The eight appended entries beginning
+  `Nucleoid builds lists with comprehensions` through
+  `Nucleoid keeps comprehensions identical to their map and filter spellings`
+  specify the executable behavior.
+
 ## Property selector arguments
 
 - [NUC 79](docs/nuc-0079.md) lets a call argument written `.name`, or a
@@ -22271,4 +22340,153 @@ record = {enum: enum, size: Size.LARGE, unit: Unit.ONLY}
 assert(record, {enum: 5, size: "LARGE", unit: "ONLY"})
 enum = 7
 assert(record.enum, 7)
+---
+# Nucleoid builds lists with comprehensions
+
+prices = [12, 30, 8]
+doubled = [price * 2 for price in prices]
+labels = ["#" + price for price in prices]
+assert(doubled, [24, 60, 16])
+assert(labels, ["#12", "#30", "#8"])
+prices.push(5)
+assert(doubled, [24, 60, 16, 10])
+prices = [1, 2]
+assert(doubled, [2, 4])
+rate = 3
+scaled = [price * rate for price in prices]
+assert(scaled, [3, 6])
+rate = 10
+scaled
+# return: [10,20]
+---
+# Nucleoid filters comprehensions with an if clause
+
+scores = [40, 75, 90, 55]
+passing = [score for score in scores if score >= 50]
+assert(passing, [75, 90, 55])
+bar = 60
+curved = [score + 5 for score in scores if score >= bar]
+assert(curved, [80, 95])
+bar = 50
+assert(curved, [80, 95, 60])
+scores.push(70)
+assert(curved, [80, 95, 60, 75])
+grades = ["high" if score > 80 else "mid" for score in scores if score > 50]
+assert(grades, ["mid", "high", "mid", "mid"])
+curved
+# return: [80,95,60,75]
+---
+# Nucleoid keeps comprehensions over class populations live
+
+class Order(item, qty):
+    this.item = item
+    this.qty = qty
+minimum = 2
+bulk = [order.item for order in Order if order.qty >= minimum]
+Order("pen", 1)
+ink = Order("ink", 3)
+assert(bulk, ["ink"])
+Order("cap", 5)
+assert(bulk, ["ink", "cap"])
+minimum = 4
+assert(bulk, ["cap"])
+ink.qty = 9
+assert(bulk, ["ink", "cap"])
+bulk
+# return: ["ink","cap"]
+---
+# Nucleoid accepts of in comprehensions over lists and populations
+
+class Room(name, temp):
+    this.name = name
+    this.temp = temp
+target = 20
+names = [room.name for room of Room]
+cold = [room.name for room of Room if room.temp < target]
+lab = Room("lab", 18)
+Room("hall", 22)
+readings = [17, 21]
+offsets = [reading - target for reading of readings]
+assert(names, ["lab", "hall"])
+assert(cold, ["lab"])
+assert(offsets, [-3, 1])
+assert(offsets, [reading - target for reading in readings])
+target = 23
+assert(cold, ["lab", "hall"])
+lab.temp = 25
+cold
+# return: ["hall"]
+---
+# Nucleoid writes comprehensions across lines
+
+readings = [18, 25, 31, 22]
+warm = [
+    reading - 20
+    for reading in readings
+    if reading > 20
+]
+assert(warm, [5, 11, 2])
+pairs = [[reading, reading * 2]
+         for reading of readings
+         if reading < 20]
+assert(pairs, [[18, 36]])
+readings.push(28)
+assert(warm, [5, 11, 2, 8])
+warm
+# return: [5,11,2,8]
+---
+# Nucleoid nests comprehensions that read only their own names
+
+grid = [[1, 2], [3, 4]]
+scaled = [[cell * 10 for cell in row] for row in grid]
+assert(scaled, [[10, 20], [30, 40]])
+large = [[cell for cell in row if cell > 1] for row in grid]
+assert(large, [[2], [3, 4]])
+sizes = [row.length for row in [[cell for cell in row if cell > 2] for row in grid]]
+assert(sizes, [0, 2])
+grid.push([5, 6])
+assert(scaled, [[10, 20], [30, 40], [50, 60]])
+large
+# return: [[2],[3,4],[5,6]]
+---
+# Nucleoid writes comprehensions wherever a list may start
+
+stock = [3, 0, 7, 2]
+def doubled(values):
+    return [value * 2 for value in values]
+def count(values) => values.length
+summary = {low: [qty for qty in stock if qty < 3], total: count([qty for qty of stock if qty > 0])}
+note = `restock ${[qty + 10 for qty in stock if qty == 0]}`
+assert(doubled(stock), [6, 0, 14, 4])
+assert(summary, {low: [0, 2], total: 3})
+assert(note, "restock 10")
+status = [qty for qty in stock if qty > 5].length > 0 ? "order" : "wait"
+assert(status, "order")
+if [qty for qty in stock if qty > 9].length == 0:
+    quiet = true
+assert(quiet, true)
+[qty - 1 for qty in stock if qty > 1]
+# return: [2,6,1]
+---
+# Nucleoid keeps comprehensions identical to their map and filter spellings
+
+stock = [3, 0, 7]
+limit = 1
+listed = [qty * 2 for qty in stock if qty > limit]
+spelled = stock.filter(qty => qty > limit).map(qty => qty * 2)
+plain = [qty + 1 for qty of stock]
+assert(listed, spelled)
+assert(plain, stock.map(qty => qty + 1))
+assert((why listed).map(step -> step.rule), ["listed = stock.filter(function()).map(function())", "stock = [3,0,7]", "limit = 1"])
+assert((why plain).map(step -> step.rule), ["plain = stock.map(function())", "stock = [3,0,7]"])
+assert((affects limit).map(step -> step.node), ["listed", "spelled"])
+try:
+    limit = 5
+    assert(listed, [14])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([listed, spelled], [[6, 14], [6, 14]])
+listed
+# return: [6,14]
 ```
