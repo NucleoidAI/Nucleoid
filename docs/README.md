@@ -3736,6 +3736,8 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ## 14. Syntax Summary
 
+The complete grammar, as the parser accepts it, is in [grammar.md](grammar.md).
+
 ```
 name = expression                      variable assignment
 name := expression                     value assignment: once, no dependency (NUC 66)
