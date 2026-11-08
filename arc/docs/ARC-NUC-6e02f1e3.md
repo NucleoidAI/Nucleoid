@@ -253,28 +253,35 @@ user's choice, no solver run has measured this version.
 ### Letter colors
 
 On 8-Nov-2026, at the user's request, every instruction dataset started
-writing its colors as letters instead of numbers. `0` stays `0`, and every
-other color is a letter of `ABCDEFGHI`, ranked by how often it occurs across
-all of the dataset's input and output matrices, training and test pairs
-together: `A` for the most used, then `B`, and so on, a tie going to the color
-read first, as `Matrix.silhouette` ranks one matrix. This dataset writes its
-colors as letters ranked by count: 3 as `A`, 4 as `B`, 5 as `C`, and 2 as `D`.
-Mapping the letters back reproduces the puzzle's pairs cell for cell.
+writing its colors as letters instead of numbers, so that the pattern reaches
+the model without the colors. `0` stays `0`, and every other color takes a
+letter from `A` to `Z` out of the dataset's own random set: the 26 letters,
+ordered by the SHA-256 digest of `<key>:<letter>` with the puzzle ID as the
+key, go to the dataset's colors in increasing order. Each file therefore has
+its own letters, a color keeps one letter in every pair, and the letters carry
+no meaning beyond which cells share a color. This dataset writes its colors in
+its own random letters: 2 as `Z`, 3 as `Q`, 4 as `M`, and 5 as `T`. Mapping
+the letters back reproduces the puzzle's pairs cell for cell. A first version
+the same day ranked the letters by count, `A` for the most used color, which
+gave every letter a meaning; the random set replaced it.
 
 The pair grids, both instance masks, the implementations, and the snapshots
 use those letters, and the class and rules name the same colors by letter.
 Only the color literals changed, and the changed declarations now read:
 
 ```nuc
-$Obj.fill_color = 'C'
+$Obj.fill_color = 'T'
 ```
 
-Every snapshot was regenerated with the accepted runtime at `adc282a` and
-equals its earlier snapshot with its colors replaced by their letters, so the
-rules behave as before; instance names, positions, sizes, orientations, and
-tags are unchanged. `Matrix.silhouette` now also takes letters, so the
-orientation call's few-shot crops read exactly as before. No solver run has
-measured this version, so its difference is unknown, not zero.
+Every snapshot was regenerated and replays byte for byte with the accepted
+runtime at `1931f77`, whose last runtime change is `34bbba0`, and equals its
+earlier snapshot with its colors replaced by their letters, so the rules
+behave as before; instance names, positions, sizes, orientations, and tags are
+unchanged. `Matrix.silhouette` takes any letter from `A` to `Z` and still
+ranks each crop by its own counts, the most used color as `A`, so the
+orientation call's crops read exactly as before. The solver still sends the
+running puzzle as numbers. No solver run has measured this version, so its
+difference is unknown, not zero.
 
 ## Runs
 

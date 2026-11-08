@@ -136,19 +136,17 @@ Write every color as a letter, and pass this requirement to every
 `/arc-dataset` run too. The dataset follows the exact pattern of the puzzle's
 pairs in `arc/data/training/`, cell for cell and shape for shape, but never
 writes a color as its number. `0` stays `0`, and every other color becomes a
-letter of `ABCDEFGHI`, ranked by how often it occurs across all of the
-dataset's input and output matrices, training and test pairs together: the
-most used color is `A`, the next `B`, and so on, as `Matrix.silhouette` in
-`arc/src/lib/Matrix.ts` ranks a matrix, with a tie going to the color read
-first. The letters are the dataset's own ranking, not a fixed map from
-numbers to letters, so a color keeps one letter in every pair of its dataset.
-The same letters replace the colors in the instance masks and the world model:
-color properties hold letters, such as `color='B'`, and rules name colors by
-letter, such as `if $Obj.color is 'C':`. The arc-dataset profile's
+letter from `A` to `Z` out of the dataset's own random set, fixed by its file
+name: each file has its own letters, and a color keeps one letter in every pair
+of its file. The letters carry no meaning beyond which cells share a color, so
+the pattern reaches the model without the colors. The same letters replace the
+colors in the instance masks and the world model: color properties hold
+letters, such as `color='B'`, and rules name colors by letter, such as
+`if $Obj.color is 'C':`. The arc-dataset profile's
 [letter rule](../../agents/arc-dataset.agent.md#write-colors-as-letters)
-defines the ranking in full. Check a `written` handoff against it before the
-run, and send back one that writes a color as its number or ranks its letters
-another way.
+defines how the set is drawn. Check a `written` handoff against it before the
+run, and send back one that writes a color as its number or uses other
+letters.
 
 Continue by the handoff's status:
 

@@ -54,9 +54,9 @@ Follow `.claude/CLAUDE.md`, the
 - Have every dataset write its colors as letters, under the same step, and
   pass that requirement to every `arc-dataset` run: the grids follow the
   puzzle's pairs in `arc/data/training/` exactly, but `0` stays `0` and every
-  other color is a letter of `ABCDEFGHI` ranked by how often it occurs across
-  the dataset's input and output matrices, `A` for the most used, never its
-  number. The masks and the world model use the same letters.
+  other color is a letter from `A` to `Z` out of the dataset's own random set,
+  fixed by its file name and consistent inside the file, never its number. The
+  masks and the world model use the same letters.
 - Never change the TypeScript implementation in `arc/`, except that before
   the run you make the puzzle the solver's default puzzle in `arc/src/app.ts`
   under the skill's [run step](../skills/arc-purposal/SKILL.md#run-the-puzzle).

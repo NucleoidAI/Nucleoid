@@ -9,27 +9,27 @@
   "dataset": [
     {
       "input_matrix": [
-        ["A", "A", "C"],
-        ["A", "E", 0],
-        ["B", 0, 0]
+        ["F", "F", "H"],
+        ["F", "C", 0],
+        ["V", 0, 0]
       ],
       "output_matrix": [
-        [0, 0, "B"],
-        [0, "E", "A"],
-        ["C", "A", "A"]
+        [0, 0, "V"],
+        [0, "C", "F"],
+        ["H", "F", "F"]
       ],
       "instances": [
         {
           "instance_name": "obj0c2414cf33eb",
           "input_instance_matrix": [
-            ["A", "A", "C"],
-            ["A", "E", 0],
-            ["B", 0, 0]
+            ["F", "F", "H"],
+            ["F", "C", 0],
+            ["V", 0, 0]
           ],
           "output_instance_matrix": [
-            [0, 0, "B"],
-            [0, "E", "A"],
-            ["C", "A", "A"]
+            [0, 0, "V"],
+            [0, "C", "F"],
+            ["H", "F", "F"]
           ],
           "implementation": "obj0c2414cf33eb = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj0c2414cf33eb","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
@@ -39,27 +39,27 @@
     },
     {
       "input_matrix": [
-        ["B", "B", "F"],
-        ["G", 0, 0],
+        ["V", "V", "R"],
+        ["Q", 0, 0],
         [0, 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
-        [0, 0, "G"],
-        ["F", "B", "B"]
+        [0, 0, "Q"],
+        ["R", "V", "V"]
       ],
       "instances": [
         {
           "instance_name": "obj19002ca3b8ed",
           "input_instance_matrix": [
-            ["B", "B", "F"],
-            ["G", 0, 0],
+            ["V", "V", "R"],
+            ["Q", 0, 0],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            [0, 0, "G"],
-            ["F", "B", "B"]
+            [0, 0, "Q"],
+            ["R", "V", "V"]
           ],
           "implementation": "obj19002ca3b8ed = Obj(x=0, y=0, width=3, height=2, orientation=315)",
           "input_value": {"height":2,"id":"obj19002ca3b8ed","orientation":315,"tag":"l9100","width":3,"x":0,"y":0},
@@ -69,27 +69,27 @@
     },
     {
       "input_matrix": [
-        ["D", "A", "B"],
-        ["D", "C", 0],
-        ["H", 0, 0]
+        ["P", "F", "V"],
+        ["P", "H", 0],
+        ["L", 0, 0]
       ],
       "output_matrix": [
-        [0, 0, "H"],
-        [0, "C", "D"],
-        ["B", "A", "D"]
+        [0, 0, "L"],
+        [0, "H", "P"],
+        ["V", "F", "P"]
       ],
       "instances": [
         {
           "instance_name": "obj18d0a3065349",
           "input_instance_matrix": [
-            ["D", "A", "B"],
-            ["D", "C", 0],
-            ["H", 0, 0]
+            ["P", "F", "V"],
+            ["P", "H", 0],
+            ["L", 0, 0]
           ],
           "output_instance_matrix": [
-            [0, 0, "H"],
-            [0, "C", "D"],
-            ["B", "A", "D"]
+            [0, 0, "L"],
+            [0, "H", "P"],
+            ["V", "F", "P"]
           ],
           "implementation": "obj18d0a3065349 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj18d0a3065349","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},

@@ -7,26 +7,26 @@
   "dataset": [
     {
       "input_matrix": [
-        ["A", "A", "A"],
+        ["M", "M", "M"],
         [0, 0, 0],
         [0, 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
-        ["A", "A", "A"],
+        ["M", "M", "M"],
         [0, 0, 0]
       ],
       "instances": [
         {
           "instance_name": "obj56f6c04f44d8",
           "input_instance_matrix": [
-            ["A", "A", "A"],
+            ["M", "M", "M"],
             [0, 0, 0],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            ["A", "A", "A"],
+            ["M", "M", "M"],
             [0, 0, 0]
           ],
           "implementation": "obj56f6c04f44d8 = Obj(x=0, y=0, width=3, height=1, orientation=90)",
@@ -38,26 +38,26 @@
     {
       "input_matrix": [
         [0, 0, 0],
-        ["A", "A", "A"],
+        ["M", "M", "M"],
         [0, 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
         [0, 0, 0],
-        ["A", "A", "A"]
+        ["M", "M", "M"]
       ],
       "instances": [
         {
           "instance_name": "objb2baa9b2270c",
           "input_instance_matrix": [
             [0, 0, 0],
-            ["A", "A", "A"],
+            ["M", "M", "M"],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
             [0, 0, 0],
-            ["A", "A", "A"]
+            ["M", "M", "M"]
           ],
           "implementation": "objb2baa9b2270c = Obj(x=0, y=1, width=3, height=1, orientation=90)",
           "input_value": {"height":1,"id":"objb2baa9b2270c","orientation":90,"tag":"l9100","width":3,"x":0,"y":1},
@@ -67,27 +67,27 @@
     },
     {
       "input_matrix": [
-        [0, "A", 0],
-        ["A", "A", 0],
+        [0, "M", 0],
+        ["M", "M", 0],
         [0, 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
-        [0, "A", 0],
-        ["A", "A", 0]
+        [0, "M", 0],
+        ["M", "M", 0]
       ],
       "instances": [
         {
           "instance_name": "obj470037f0334e",
           "input_instance_matrix": [
-            [0, "A", 0],
-            ["A", "A", 0],
+            [0, "M", 0],
+            ["M", "M", 0],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            [0, "A", 0],
-            ["A", "A", 0]
+            [0, "M", 0],
+            ["M", "M", 0]
           ],
           "implementation": "obj470037f0334e = Obj(x=0, y=0, width=2, height=2, orientation=135)",
           "input_value": {"height":2,"id":"obj470037f0334e","orientation":135,"tag":"l9100","width":2,"x":0,"y":0},
@@ -97,27 +97,27 @@
     },
     {
       "input_matrix": [
-        [0, "B", "B"],
-        [0, 0, "B"],
+        [0, "L", "L"],
+        [0, 0, "L"],
         [0, 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
-        [0, "B", "B"],
-        [0, 0, "B"]
+        [0, "L", "L"],
+        [0, 0, "L"]
       ],
       "instances": [
         {
           "instance_name": "obj2ad74ac3e6ef",
           "input_instance_matrix": [
-            [0, "B", "B"],
-            [0, 0, "B"],
+            [0, "L", "L"],
+            [0, 0, "L"],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            [0, "B", "B"],
-            [0, 0, "B"]
+            [0, "L", "L"],
+            [0, 0, "L"]
           ],
           "implementation": "obj2ad74ac3e6ef = Obj(x=1, y=0, width=2, height=2, orientation=45)",
           "input_value": {"height":2,"id":"obj2ad74ac3e6ef","orientation":45,"tag":"l9100","width":2,"x":1,"y":0},
@@ -127,27 +127,27 @@
     },
     {
       "input_matrix": [
-        ["B", 0, 0],
-        ["B", 0, 0],
+        ["L", 0, 0],
+        ["L", 0, 0],
         [0, 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
-        ["B", 0, 0],
-        ["B", 0, 0]
+        ["L", 0, 0],
+        ["L", 0, 0]
       ],
       "instances": [
         {
           "instance_name": "objb847b315216d",
           "input_instance_matrix": [
-            ["B", 0, 0],
-            ["B", 0, 0],
+            ["L", 0, 0],
+            ["L", 0, 0],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            ["B", 0, 0],
-            ["B", 0, 0]
+            ["L", 0, 0],
+            ["L", 0, 0]
           ],
           "implementation": "objb847b315216d = Obj(x=0, y=0, width=1, height=2, orientation=0)",
           "input_value": {"height":2,"id":"objb847b315216d","orientation":0,"tag":"l9100","width":1,"x":0,"y":0},
@@ -158,26 +158,26 @@
     {
       "input_matrix": [
         [0, 0, 0],
-        [0, "A", 0],
+        [0, "M", 0],
         [0, 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
         [0, 0, 0],
-        [0, "A", 0]
+        [0, "M", 0]
       ],
       "instances": [
         {
           "instance_name": "objf247c9d3ab45",
           "input_instance_matrix": [
             [0, 0, 0],
-            [0, "A", 0],
+            [0, "M", 0],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
             [0, 0, 0],
-            [0, "A", 0]
+            [0, "M", 0]
           ],
           "implementation": "objf247c9d3ab45 = Obj(x=1, y=1, width=1, height=1, orientation=0)",
           "input_value": {"height":1,"id":"objf247c9d3ab45","orientation":0,"tag":"l9100","width":1,"x":1,"y":1},

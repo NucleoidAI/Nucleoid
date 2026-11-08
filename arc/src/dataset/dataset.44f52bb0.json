@@ -6,7 +6,7 @@
     "$Obj.height = 1",
     "$Obj.orientation = 0",
     "$Obj.symmetric = all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])",
-    "$Obj.fill_color = 'B' if $Obj.symmetric else 'C'",
+    "$Obj.fill_color = 'L' if $Obj.symmetric else 'Q'",
     "$Obj.x = 0",
     "$Obj.y = 0"
   ],
@@ -14,209 +14,209 @@
   "dataset": [
     {
       "input_matrix": [
-        ["A", 0, "A"],
-        [0, "A", 0],
-        ["A", 0, "A"]
+        ["F", 0, "F"],
+        [0, "F", 0],
+        ["F", 0, "F"]
       ],
       "output_matrix": [
-        ["B"]
+        ["L"]
       ],
       "instances": [
         {
           "instance_name": "objaefa2ef1a32f",
           "input_instance_matrix": [
-            ["A", 0, "A"],
-            [0, "A", 0],
-            ["A", 0, "A"]
+            ["F", 0, "F"],
+            [0, "F", 0],
+            ["F", 0, "F"]
           ],
           "output_instance_matrix": [
-            ["B"]
+            ["L"]
           ],
           "implementation": "objaefa2ef1a32f = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"B","height":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"L","height":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        ["A", 0, 0],
-        ["A", 0, 0],
-        [0, "A", 0]
+        ["F", 0, 0],
+        ["F", 0, 0],
+        [0, "F", 0]
       ],
       "output_matrix": [
-        ["C"]
+        ["Q"]
       ],
       "instances": [
         {
           "instance_name": "obj3914f7995d3e",
           "input_instance_matrix": [
-            ["A", 0, 0],
-            ["A", 0, 0],
-            [0, "A", 0]
+            ["F", 0, 0],
+            ["F", 0, 0],
+            [0, "F", 0]
           ],
           "output_instance_matrix": [
-            ["C"]
+            ["Q"]
           ],
           "implementation": "obj3914f7995d3e = Obj(x=0, y=0, width=2, height=3, orientation=0, points=[[0, 0], [0, 1], [1, 2]])",
           "input_value": {"height":3,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"tag":"l9100","width":2,"x":0,"y":0},
-          "output_value": {"fill_color":"C","height":1,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"Q","height":1,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        ["A", 0, "A"],
-        ["A", 0, "A"],
-        ["A", 0, "A"]
+        ["F", 0, "F"],
+        ["F", 0, "F"],
+        ["F", 0, "F"]
       ],
       "output_matrix": [
-        ["B"]
+        ["L"]
       ],
       "instances": [
         {
           "instance_name": "objeb5c0167d445",
           "input_instance_matrix": [
-            ["A", 0, "A"],
-            ["A", 0, "A"],
-            ["A", 0, "A"]
+            ["F", 0, "F"],
+            ["F", 0, "F"],
+            ["F", 0, "F"]
           ],
           "output_instance_matrix": [
-            ["B"]
+            ["L"]
           ],
           "implementation": "objeb5c0167d445 = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"B","height":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"L","height":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
         [0, 0, 0],
-        ["A", 0, "A"],
+        ["F", 0, "F"],
         [0, 0, 0]
       ],
       "output_matrix": [
-        ["B"]
+        ["L"]
       ],
       "instances": [
         {
           "instance_name": "objcef2c78836a4",
           "input_instance_matrix": [
             [0, 0, 0],
-            ["A", 0, "A"],
+            ["F", 0, "F"],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["B"]
+            ["L"]
           ],
           "implementation": "objcef2c78836a4 = Obj(x=0, y=1, width=3, height=1, orientation=0, points=[[0, 1], [2, 1]])",
           "input_value": {"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"tag":"l9100","width":3,"x":0,"y":1},
-          "output_value": {"fill_color":"B","height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"L","height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        ["A", "A", 0],
-        [0, "A", "A"],
+        ["F", "F", 0],
+        [0, "F", "F"],
         [0, 0, 0]
       ],
       "output_matrix": [
-        ["C"]
+        ["Q"]
       ],
       "instances": [
         {
           "instance_name": "obje0d187e059c6",
           "input_instance_matrix": [
-            ["A", "A", 0],
-            [0, "A", "A"],
+            ["F", "F", 0],
+            [0, "F", "F"],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["C"]
+            ["Q"]
           ],
           "implementation": "obje0d187e059c6 = Obj(x=0, y=0, width=3, height=2, orientation=0, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
           "input_value": {"height":2,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"C","height":1,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"Q","height":1,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        ["A", "A", 0],
-        [0, "A", 0],
+        ["F", "F", 0],
+        [0, "F", 0],
         [0, 0, 0]
       ],
       "output_matrix": [
-        ["C"]
+        ["Q"]
       ],
       "instances": [
         {
           "instance_name": "obj656ae86cdc80",
           "input_instance_matrix": [
-            ["A", "A", 0],
-            [0, "A", 0],
+            ["F", "F", 0],
+            [0, "F", 0],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["C"]
+            ["Q"]
           ],
           "implementation": "obj656ae86cdc80 = Obj(x=0, y=0, width=2, height=2, orientation=45, points=[[0, 0], [1, 0], [1, 1]])",
           "input_value": {"height":2,"id":"obj656ae86cdc80","orientation":45,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","width":2,"x":0,"y":0},
-          "output_value": {"fill_color":"C","height":1,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"Q","height":1,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        ["A", 0, "A"],
-        ["A", "A", "A"],
-        ["A", 0, "A"]
+        ["F", 0, "F"],
+        ["F", "F", "F"],
+        ["F", 0, "F"]
       ],
       "output_matrix": [
-        ["B"]
+        ["L"]
       ],
       "instances": [
         {
           "instance_name": "obje4210d7a3726",
           "input_instance_matrix": [
-            ["A", 0, "A"],
-            ["A", "A", "A"],
-            ["A", 0, "A"]
+            ["F", 0, "F"],
+            ["F", "F", "F"],
+            ["F", 0, "F"]
           ],
           "output_instance_matrix": [
-            ["B"]
+            ["L"]
           ],
           "implementation": "obje4210d7a3726 = Obj(x=0, y=0, width=3, height=3, orientation=0, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"B","height":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"L","height":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
         [0, 0, 0],
-        ["A", 0, 0],
-        ["A", 0, 0]
+        ["F", 0, 0],
+        ["F", 0, 0]
       ],
       "output_matrix": [
-        ["C"]
+        ["Q"]
       ],
       "instances": [
         {
           "instance_name": "obj7170e5f9a58a",
           "input_instance_matrix": [
             [0, 0, 0],
-            ["A", 0, 0],
-            ["A", 0, 0]
+            ["F", 0, 0],
+            ["F", 0, 0]
           ],
           "output_instance_matrix": [
-            ["C"]
+            ["Q"]
           ],
           "implementation": "obj7170e5f9a58a = Obj(x=0, y=1, width=1, height=2, orientation=0, points=[[0, 1], [0, 2]])",
           "input_value": {"height":2,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"tag":"l9100","width":1,"x":0,"y":1},
-          "output_value": {"fill_color":"C","height":1,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
+          "output_value": {"fill_color":"Q","height":1,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","width":1,"x":0,"y":0}
         }
       ]
     }

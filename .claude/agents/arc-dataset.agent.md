@@ -82,15 +82,16 @@ inferred only from the training pairs.
 
 Follow the exact pattern of each pair in `arc/data/training/<id>.json`, but
 write no color as its number. `0` stays `0`. Every other color becomes a
-letter of `ABCDEFGHI`, ranked by how often it occurs across every
-`input_matrix` and `output_matrix` of the dataset, training and test pairs
-together: the most used color is `A`, the next `B`, and so on. A tie goes to
-the color read first, reading the pairs in dataset order, each input before
-its output, and each matrix row by row. This is how `Matrix.silhouette` in
-`arc/src/lib/Matrix.ts` ranks one matrix, applied to the whole dataset at once
-so that a color keeps one letter in every pair. The letters are no fixed map
-from numbers: color 1 is not always `A`, because each dataset ranks its own
-colors. Count only the pair grids, not the instance masks.
+letter from `A` to `Z` out of the dataset's own random set, so each file has
+its own letters and a color keeps one letter everywhere in its file. The set
+is fixed by the dataset's key, the name between `dataset.` and `.json`: the
+puzzle ID, or a genesis name such as `core`. Order the 26 letters by the
+hexadecimal SHA-256 digest of `<key>:<letter>`, such as `c8f0f002:A`,
+smallest first, and give the colors that occur in any of the dataset's
+`input_matrix` and `output_matrix` grids, in increasing order, the letters in
+that order. For `c8f0f002`, that writes 1 as `T`, 5 as `B`, 7 as `Q`, and 8 as
+`D`. The letters carry no meaning beyond which cells share a color: `A` is not
+the most used color, and one color has different letters in different files.
 
 Use the same letters everywhere the dataset holds a color:
 
@@ -290,9 +291,9 @@ Verify with a throwaway script outside the repository; do not add tests:
   back to their colors makes every `input_matrix` and `output_matrix` equal
   its original grid, including dimensions, colors, positions, and zero
   padding. There are no synthesized examples.
-- Ranking the dataset's letters again by their counts gives `A`, `B`, `C`, and
-  so on in order, and no color is written as its number in the grids, masks,
-  declarations, implementations, or snapshots.
+- Recomputing the dataset's random set from its key gives exactly its
+  letters, one per color, and no color is written as its number in the grids,
+  masks, declarations, implementations, or snapshots.
 - The transformation inferred from the training pairs reproduces every
   original train and test output.
 - All pairs share the dataset's declarations and output-canvas mode, and
@@ -359,8 +360,8 @@ versions, spawn agents, start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
 with `dataset_path`, the source puzzle path, any annotation helper's path,
-train and test pair counts, instance counts, the color-to-letter mapping with
-each color's count, the declarations, the
+train and test pair counts, instance counts, the color-to-letter mapping, the
+declarations, the
 big-picture formulation you started from and, for a finer model, why it fell
 short, each check with its result, how you used any hint, any NUC request, any
 suggested solver change, and any blockers. A staged handoff also includes
