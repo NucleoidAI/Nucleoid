@@ -2623,14 +2623,6 @@ colors as, ranked the same way, so a dataset crop is ranked by its own counts.
 It rejects any other cell, such as `10` or `J`, and it does not crop or modify
 the input.
 
-`Matrix.normalize(matrix)` returns a new matrix in which every cell written as
-a one-digit string, such as `"8"`, becomes that number, `8`, so the model may
-write a color either way. Every other cell stays as it is, and the input is not
-modified. The analyzer and the visualizer apply it to every matrix the model
-returns, the instance masks of the training pairs and of the test input and
-each output instance matrix, before the solver crops, silhouettes, merges, or
-scores them.
-
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
 frozen before expected outputs are accessed for exact-grid scoring, including
