@@ -176,6 +176,15 @@ fn completion_offers_extends_beside_bindings_that_share_its_prefix() {
 }
 
 #[test]
+fn completion_offers_enum_beside_bindings_that_share_its_prefix() {
+    let mut runtime = Runtime::new();
+    runtime.run("energy = 4").unwrap();
+    let completion = Completion::find(&runtime, &editor::new("en"), false).unwrap();
+    assert_eq!(completion.candidates, ["energy", "enum"]);
+    assert!(Completion::find(&runtime, &editor::new("enum"), false).is_none());
+}
+
+#[test]
 fn completion_offers_nothing_after_a_selector_dot_and_no_unnamed_binding() {
     let mut runtime = Runtime::new();
     runtime

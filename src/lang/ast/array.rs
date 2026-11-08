@@ -231,10 +231,7 @@ impl Runtime {
         match resolved {
             Some(ListTarget::ReadOnly) => Err(Error::type_error("State versions are read-only")),
             Some(ListTarget::Detached) => Ok(()),
-            Some(ListTarget::Property(id, property)) => {
-                let changed = self.assign_property(&id, &property, value);
-                self.propagate_change(&NodeKey::property(&id, &property), changed)
-            }
+            Some(ListTarget::Property(id, property)) => self.write_property(&id, &property, value),
             None => self.write_back(target, value, scope),
         }
     }

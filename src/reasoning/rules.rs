@@ -3,6 +3,8 @@ use indexmap::IndexMap;
 use super::Selection;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
+use crate::lang::ast::Expr;
+use crate::lang::ast::generator::enum_source;
 use crate::nuc::Nuc;
 use crate::nuc::property::Owner;
 use crate::runtime::Runtime;
@@ -32,13 +34,20 @@ pub(super) fn rule_of(node: Option<&Nuc>, key: &NodeKey) -> String {
     };
 
     match node {
-        Nuc::Variable(variable) => format!("{} = {}", variable.name, variable.value),
-        Nuc::Let(binding) => format!("{} = {}", binding.name, binding.value),
+        Nuc::Variable(variable) => declaration_rule(&variable.name, &variable.value),
+        Nuc::Let(binding) => declaration_rule(&binding.name, &binding.value),
         Nuc::Property(property) => match &property.owner {
             Owner::Object(id) => format!("{}.{} = {}", id, property.name, property.value),
             Owner::Class(class) => format!("${}.{} = {}", class, property.name, property.value),
         },
         _ => key.to_string(),
+    }
+}
+
+fn declaration_rule(name: &str, value: &Expr) -> String {
+    match value {
+        Expr::Enum(members) => enum_source(name, members),
+        _ => format!("{name} = {value}"),
     }
 }
 

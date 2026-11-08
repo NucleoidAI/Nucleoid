@@ -223,6 +223,7 @@ impl Nuc {
 
                 match base {
                     Value::Object(id) => {
+                        runtime.ensure_writable(&id)?;
                         let assignment = Property::new(Owner::Object(id), property.clone(), value);
                         Nuc::Property(match object.as_ref() {
                             Expr::ClassRef(class) => assignment.with_receiver(class),

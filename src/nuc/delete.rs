@@ -63,6 +63,8 @@ impl Runtime {
                     return Ok(Value::Bool(false));
                 };
 
+                self.ensure_writable(&id)?;
+
                 if self.state.property(&id, property).is_none() {
                     return Ok(Value::Bool(false));
                 }

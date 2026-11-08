@@ -157,6 +157,10 @@ impl Parser {
             return Ok(Stmt::While { condition, body });
         }
 
+        if let Some(name) = self.enum_header() {
+            return self.enum_declaration(name);
+        }
+
         match self.peek().clone() {
             Token::Keyword(Keyword::If) => self.if_statement(),
             Token::Keyword(Keyword::For) => self.for_statement(),
@@ -293,6 +297,7 @@ impl Parser {
             context: self.context,
             options: self.options,
             enclosed: self.enclosed,
+            in_class: self.in_class,
             ..Parser::new(std::mem::take(&mut self.tokens))
         };
         let parsed = parse(&mut probe);

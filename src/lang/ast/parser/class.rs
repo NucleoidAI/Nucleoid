@@ -127,6 +127,13 @@ impl Parser {
     }
 
     fn class_body(&mut self, declaration: &mut ClassDecl) -> Result<()> {
+        let outer = std::mem::replace(&mut self.in_class, true);
+        let result = self.class_contents(declaration);
+        self.in_class = outer;
+        result
+    }
+
+    fn class_contents(&mut self, declaration: &mut ClassDecl) -> Result<()> {
         self.skip_newlines();
 
         if self.eat(&Token::Indent) {

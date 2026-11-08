@@ -18608,6 +18608,184 @@ assert(failure, ReferenceError("missing is not defined"))
 assert([total, fee(2)], [11, 3])"#);
 }
 
+/// Nucleoid declares enums whose members name themselves
+#[rustfmt::skip]
+#[test]
+fn declares_enums_whose_members_name_themselves() {
+    let mut run = runner();
+    run("enum Status: PENDING, PAID, SHIPPED");
+    assert_eq!(run("Status.PAID"), "PAID");
+    assert_eq!(run(r#"Status["SHIPPED"]"#), "SHIPPED");
+    {
+        let actual = run("Status");
+        let expected = run(r#"({PENDING: "PENDING", PAID: "PAID", SHIPPED: "SHIPPED"})"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Status.REFUNDED"), serde_json::Value::Null);
+    run(r#"label = Status.PENDING + " order""#);
+    assert_eq!(run("label"), "PENDING order");
+    run(r#"typeof Status
+
+# return: "Object""#);
+}
+
+/// Nucleoid gives enum members explicit scalar values
+#[rustfmt::skip]
+#[test]
+fn gives_enum_members_explicit_scalar_values() {
+    let mut run = runner();
+    run("enum Level: LOW = 1, HIGH = 10");
+    run(r#"enum Size: LARGE = "XL", SMALL, MEDIUM, CUSTOM = null"#);
+    run("enum Move: BACK = -1, AHEAD = 1");
+    run("enum Flag: ON = true, OFF = false");
+    assert_eq!(run("[Level.LOW, Level.HIGH]"), serde_json::json!([1, 10]));
+    assert_eq!(run("[Size.SMALL, Size.LARGE, Size.CUSTOM]"), serde_json::json!(["SMALL", "XL", null]));
+    {
+        let actual = run("Size");
+        let expected = run(r#"({LARGE: "XL", SMALL: "SMALL", MEDIUM: "MEDIUM", CUSTOM: null})"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Move.BACK + Move.AHEAD"), 0);
+    assert_eq!(run("Flag.ON && !Flag.OFF"), true);
+    run("steps = Level.HIGH * 2 + Move.BACK");
+    run(r#"steps
+
+# return: 19"#);
+}
+
+/// Nucleoid declares enums in indented blocks
+#[rustfmt::skip]
+#[test]
+fn declares_enums_in_indented_blocks() {
+    let mut run = runner();
+    run(r##"enum Color:
+    RED
+    GREEN
+    BLUE
+    BLACK = "#000""##);
+    run(r#"enum Mode:
+    AUTO"#);
+    run("pen = {color: Color.GREEN, mode: Mode.AUTO}");
+    {
+        let actual = run("pen");
+        let expected = run(r#"({color: "GREEN", mode: "AUTO"})"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("[Color.RED, Color.BLACK]"), serde_json::json!(["RED", "#000"]));
+    run(r#"enum Mode: AUTO = "auto", MANUAL"#);
+    assert_eq!(run("pen.mode"), "auto");
+    run(r#"pen.color
+
+# return: "GREEN""#);
+}
+
+/// Nucleoid keeps class level rules over enum members live
+#[rustfmt::skip]
+#[test]
+fn keeps_class_level_rules_over_enum_members_live() {
+    let mut run = runner();
+    run("enum Status: PENDING, PAID, SHIPPED");
+    run(r#"class Order(total, status):
+    this.total = total
+    this.status = status"#);
+    run("$Order.billable = $Order.status != Status.PENDING");
+    run("first = Order(30, Status.PENDING)");
+    run("second = Order(45, Status.PAID)");
+    run("waiting = Order.filter(o -> o.status == Status.PENDING)");
+    assert_eq!(run("[first.billable, second.billable, waiting.length]"), serde_json::json!([false, true, 1]));
+    run("first.status = Status.SHIPPED");
+    assert_eq!(run("[first.billable, waiting.length]"), serde_json::json!([true, 0]));
+    run(r#"second.status
+
+# return: "PAID""#);
+}
+
+/// Nucleoid updates readers when an enum is declared again
+#[rustfmt::skip]
+#[test]
+fn updates_readers_when_an_enum_is_declared_again() {
+    let mut run = runner();
+    run("enum Plan: FREE, PRO");
+    run("choice = Plan.TEAM");
+    assert_eq!(run("choice"), serde_json::Value::Null);
+    run(r#"price = Plan.PRO == "PRO" ? 20 : 0"#);
+    run("enum Plan: FREE, PRO, TEAM");
+    assert_eq!(run("[choice, price]"), serde_json::json!(["TEAM", 20]));
+    run(r#"enum Plan: PRO = "PREMIUM", FREE, TEAM"#);
+    assert_eq!(run("[choice, price]"), serde_json::json!(["TEAM", 0]));
+    assert_eq!(run("(why choice).map(s -> s.node)"), serde_json::json!(["choice", "Plan"]));
+    run(r#"(affects Plan).map(s -> s.node)
+
+# return: ["choice","price"]"#);
+}
+
+/// Nucleoid declares enums wherever a statement may start
+#[rustfmt::skip]
+#[test]
+fn declares_enums_wherever_a_statement_may_start() {
+    let mut run = runner();
+    run(r#"def kinds():
+    enum Kind: BOOK, GAME
+    return Kind.GAME"#);
+    assert_eq!(run("[kinds(), Kind.BOOK]"), serde_json::json!(["GAME", "BOOK"]));
+    run(r#"Pick = "outer""#);
+    run(r#"def pick(Pick):
+    enum Pick: LEFT, RIGHT
+    return Pick.RIGHT"#);
+    assert_eq!(run("[pick(null), Pick]"), serde_json::json!(["RIGHT", "outer"]));
+    run("ready = true");
+    run("if ready: enum Mood: CALM, BUSY");
+    run("{ enum Tier: GOLD, SILVER }");
+    run("count = 2 enum Pair: ONE, TWO");
+    assert_eq!(run("[Mood.BUSY, Tier.GOLD, Pair.TWO, count]"), serde_json::json!(["BUSY", "GOLD", "TWO", 2]));
+}
+
+/// Nucleoid rolls back enum declarations with their transactions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_enum_declarations_with_their_transactions() {
+    let mut run = runner();
+    run(r#"enum Status: OPEN, CLOSED
+view = Status.CLOSED
+try:
+    enum Status: OPEN, DONE
+    assert(view, null)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(view, "CLOSED")
+failure = ""
+try:
+    enum Status: CLOSED = "SHUT", OPEN
+    missing + 1
+catch error:
+    failure = error
+assert(failure, ReferenceError("missing is not defined"))
+seen = suppose: enum Status: OPEN, DONE; view
+assert([seen, view], [null, "CLOSED"])
+assert(Status, {OPEN: "OPEN", CLOSED: "CLOSED"})"#);
+}
+
+/// Nucleoid keeps enum an ordinary name outside enum declarations
+#[rustfmt::skip]
+#[test]
+fn keeps_enum_an_ordinary_name_outside_enum_declarations() {
+    let mut run = runner();
+    run(r#"enum = 5
+assert(enum * 2, 10)
+try:
+    enum Size: SMALL
+catch error:
+    assert(error, ReferenceError("Missing definition"))
+enum Size: SMALL, LARGE
+enum Unit:
+    ONLY
+record = {enum: enum, size: Size.LARGE, unit: Unit.ONLY}
+assert(record, {enum: 5, size: "LARGE", unit: "ONLY"})
+enum = 7
+assert(record.enum, 7)"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

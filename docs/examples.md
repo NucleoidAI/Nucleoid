@@ -3519,6 +3519,36 @@ function grade(score) { return score >= 60 }
   [NUC 89](nuc-0089.md) and the
   [root contract](../nucleoid.spec.md#named-function-declarations).
 
+## Enum declarations
+
+**Enums keep a ticket's priority rules readable**
+
+```nuc
+enum Priority: LOW = 1, HIGH = 3
+enum State: OPEN, CLOSED
+class Ticket(title, priority):
+    this.title = title
+    this.priority = priority
+    this.state = State.OPEN
+$Ticket.urgent = $Ticket.priority == Priority.HIGH && $Ticket.state == State.OPEN
+crash = Ticket("crash", Priority.HIGH)
+typo = Ticket("typo", Priority.LOW)
+assert([crash.urgent, typo.urgent], [true, false])
+crash.state = State.CLOSED
+[crash.urgent, Ticket.filter(t -> t.priority > Priority.LOW).length]
+# return: [false,1]
+```
+
+- `Priority` gives its members numbers, so the filter compares
+  `t.priority > Priority.LOW`, and `State` names the two states a ticket
+  can be in. Members read as ordinary values in constructors and class-level
+  rules.
+- Closing the crash ticket clears `urgent`, because the rule reads the
+  ticket's state. Every write to an enum raises
+  `TypeError("Enums are read-only")`, so the categories cannot drift. See
+  [NUC 90](nuc-0090.md) and the
+  [root contract](../nucleoid.spec.md#enum-declarations).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

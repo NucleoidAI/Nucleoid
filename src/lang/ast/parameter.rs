@@ -23,7 +23,8 @@ impl fmt::Debug for Parameter {
     }
 }
 
-/// The immutable scalar literals permitted in a parenthesized formal list.
+/// The immutable scalar literals permitted in a parenthesized formal list and
+/// as enum member values.
 /// The parser accepts only finite numbers, preserving their signed-zero bits.
 #[derive(Debug, Clone)]
 pub enum ParameterDefault {
@@ -46,7 +47,7 @@ impl PartialEq for ParameterDefault {
 }
 
 impl ParameterDefault {
-    fn value(&self) -> Value {
+    pub(crate) fn value(&self) -> Value {
         match self {
             Self::Null => Value::Null,
             Self::Bool(value) => Value::Bool(*value),

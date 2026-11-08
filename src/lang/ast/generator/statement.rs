@@ -1,4 +1,4 @@
-use super::{has_binding_metadata, signature};
+use super::{enum_source, has_binding_metadata, signature};
 use crate::lang::ast::{ClassDecl, Expr, Function, FunctionBody, Stmt};
 
 /// Renders a run of statements as the body of a block, which is what a block or
@@ -14,7 +14,7 @@ pub fn generate_all(statements: &[Stmt]) -> String {
 #[must_use]
 pub fn generate(statement: &Stmt) -> String {
     match statement {
-        Stmt::Assign { target, value } => format!("{target}={value}"),
+        Stmt::Assign { target, value } => assignment_source(target, value),
         Stmt::ValueAssign { target, value } => format!("{target}:={value}"),
         Stmt::Expression(expression) => expression.to_string(),
         Stmt::If {
@@ -72,6 +72,13 @@ pub fn generate(statement: &Stmt) -> String {
                 generate_all(body)
             )
         }
+    }
+}
+
+fn assignment_source(target: &Expr, value: &Expr) -> String {
+    match (target, value) {
+        (Expr::Identifier(name), Expr::Enum(members)) => enum_source(name, members),
+        _ => format!("{target}={value}"),
     }
 }
 

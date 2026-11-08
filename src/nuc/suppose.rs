@@ -57,9 +57,15 @@ enum Frozen {
 
 #[derive(Default)]
 struct Snapshot {
-    objects: Vec<Vec<(String, Frozen)>>,
+    objects: Vec<FrozenObject>,
     indices: HashMap<ObjectId, usize>,
     pending: Vec<(usize, ObjectId)>,
+}
+
+#[derive(Default)]
+struct FrozenObject {
+    properties: Vec<(String, Frozen)>,
+    read_only: bool,
 }
 
 impl Snapshot {
@@ -73,7 +79,7 @@ impl Snapshot {
                     return Frozen::Object(*index);
                 }
                 let index = self.objects.len();
-                self.objects.push(Vec::new());
+                self.objects.push(FrozenObject::default());
                 self.indices.insert(id.clone(), index);
                 self.pending.push((index, id.clone()));
                 Frozen::Object(index)
@@ -85,7 +91,7 @@ impl Snapshot {
 
 struct Escaped {
     root: Frozen,
-    objects: Vec<Vec<(String, Frozen)>>,
+    objects: Vec<FrozenObject>,
 }
 
 enum Escape {
@@ -150,7 +156,10 @@ impl Runtime {
             };
             debug_assert!(index < snapshot.objects.len());
             if let Some(slot) = snapshot.objects.get_mut(index) {
-                *slot = properties;
+                *slot = FrozenObject {
+                    properties,
+                    read_only: self.state.is_read_only(&id),
+                };
             }
         }
 
@@ -167,12 +176,15 @@ impl Runtime {
             .map(|_| ObjectId::anonymous())
             .collect();
 
-        for (id, properties) in ids.iter().zip(escaped.objects) {
+        for (id, object) in ids.iter().zip(escaped.objects) {
             let mut data = ObjectData::new(None);
-            for (name, frozen) in properties {
+            for (name, frozen) in object.properties {
                 data.properties.insert(name, self.thawed(frozen, &ids));
             }
             self.insert_object(id.clone(), data);
+            if object.read_only {
+                self.state.mark_read_only(id.clone());
+            }
         }
 
         self.thawed(escaped.root, &ids)

@@ -238,9 +238,7 @@ impl Runtime {
                 let base = self.evaluate(object, scope)?;
 
                 if let Value::Object(id) = base {
-                    let changed = self.assign_property(&id, property, evaluated.clone());
-                    let key = NodeKey::property(&id, property);
-                    self.propagate_change(&key, changed)?;
+                    self.write_property(&id, property, evaluated.clone())?;
                 }
 
                 Ok(evaluated)

@@ -402,6 +402,46 @@ pair = [1, 9]
   `tests/reference.md`; the root contract is
   [Destructuring declarations](../nucleoid.spec.md#destructuring-declarations).
 
+### Enum declarations
+
+```
+enum Size: SMALL, MEDIUM, LARGE
+enum Fit: TIGHT = -1, REGULAR = 0, LOOSE = 1
+shirt = {size: Size.MEDIUM, fit: Fit.REGULAR}
+assert(shirt, {size: "MEDIUM", fit: 0})
+assert([Size.LARGE, Fit.TIGHT, Size.HUGE], ["LARGE", -1, null])
+enum Fit: TIGHT = -1, REGULAR = 1, LOOSE = 2
+shirt.fit
+```
+
+- This is the complete `Nucleoid declares enums of named members` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `1`.
+- [NUC 90](nuc-0090.md) adds enum declarations: `enum NAME:` followed by two
+  or more comma-separated members on the same line, or by an indented block
+  with one member per line. A member is a name, optionally followed by `=`
+  and a scalar literal: a finite number with an optional sign, a string,
+  `true`, `false` or `null`. A member without a value holds its own name as a
+  string.
+- `enum NAME: ...` declares `NAME` exactly as `NAME = {...}` with the same
+  members would, wherever a statement may start outside a class body. The
+  declaration reads nothing. Declaring the name again replaces it and
+  re-evaluates its readers, as declaring `Fit` again above moves `shirt.fit`
+  to `1`, and rollback restores the earlier enum.
+- The value is an ordinary object with the members in declaration order.
+  Member reads, missing members, `typeof`, assertions, JSON, entry loops and
+  spreads treat it as they treat an object literal. It is read-only:
+  assigning, adding or deleting a member raises
+  `TypeError("Enums are read-only")` and rolls back its transaction. A copy
+  that a `suppose` block's value carries out stays read-only, and a spread
+  builds an ordinary object.
+- `enum Status: PENDING`, a single name after the colon, keeps its accepted
+  reading, the name `enum` followed by a typed declaration, so a single
+  member uses the block form. `enum` stays an ordinary name everywhere else,
+  and class bodies keep every `enum` spelling as before. Canonical source
+  writes `enum Fit:TIGHT=-1,REGULAR=1,LOOSE=2`. See the authoritative
+  [enum declarations](../nucleoid.spec.md#enum-declarations) section.
+
 ### Null and undefined
 
 - Any `null` dependency yields `null`.
@@ -3617,6 +3657,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A `depth` stage limit that is neither `null`, undefined nor a non-negative integer number | `<limit> is not a non-negative integer` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | A spread entry `...source` whose source is neither an object nor `null` or undefined | `<source> is not an object` |
+| Assigning, adding or deleting a property of an enum's object, through any name that holds it | `Enums are read-only` |
 | Assigning a `suppose` block whose last statement is not an expression | `suppose has no value` |
 | Evaluating a `diff` stage while no `suppose` block is running | `Cannot use 'diff' outside suppose` |
 | `:=` on a class-level property outside a class-level rule | `Cannot use ':=' on a class-level property` |
@@ -3647,6 +3688,10 @@ Messages are exact and are part of the observable behaviour of the language.
 | Nesting or a chain past the runtime's limit | `Expressions are nested too deeply`, `Expression has too many operands` |
 | A postfix chain, a compound path or a property selector beyond its limit | `Expression has too many parts` |
 | A destructuring with more than 128 targets | `Destructuring has too many targets` |
+| An enum member named twice in one declaration, at the second | `Enum '<name>' already has member '<member>'` |
+| A one-line enum with a single member | `Enum '<name>' needs at least two members on one line` |
+| An enum member value that is not a scalar literal | `Expected a scalar literal enum member value` |
+| An enum member value that is a number but not finite | `Enum member value must be a finite number` |
 | A constructor-header star at a parameter position | `Expected a parameter but found '*'` |
 | A `this.` or `self.` prefix outside a constructor parameter list, or not followed by one name and then `,`, `)`, `:` or `=` | `Expected a parameter but found keyword 'this'` |
 | An `extends` clause whose parent is missing or not a name | `Expected a parent class name but found <what>` |
@@ -3679,6 +3724,10 @@ name += expression                     compound assignment; also -=, *=, **=, /=
 {a, b} = expression                    one declaration per field: a = expression.a (NUC 67)
 {key: name} = expression               renamed field: name = expression.key (NUC 67)
 a, b = expression                      one declaration per position: a = expression[0] (NUC 67)
+enum Name: A, B, C = 1                 read-only object; a bare member holds its own name (NUC 90)
+enum Name:                             the same enum, one member per indented line (NUC 90)
+    A
+    B = "b"
 name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected
 name.property = expression             property assignment

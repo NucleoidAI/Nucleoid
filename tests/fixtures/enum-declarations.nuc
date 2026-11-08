@@ -1,0 +1,6 @@
+enum Status: PENDING, PAID
+class Order(status):
+    this.status = status
+$Order.paid = $Order.status == Status.PAID
+order = Order(Status.PAID)
+[Status, order.paid]

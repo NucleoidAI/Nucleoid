@@ -1971,6 +1971,33 @@ assert(order, 49)
   only an anonymous literal. See the
   [root contract](nucleoid.spec.md#named-function-declarations).
 
+## Enum declarations
+
+**Enums name a model's categories once**
+
+```nuc
+enum Stage: TODO, DOING, DONE
+class Task(title, stage):
+    this.title = title
+    this.stage = stage
+$Task.active = $Task.stage == Stage.DOING
+write = Task("write", Stage.TODO)
+review = Task("review", Stage.DOING)
+assert([write.active, review.active], [false, true])
+write.stage = Stage.DOING
+assert(Task.count(t -> t.active), 2)
+```
+
+- [NUC 90](docs/nuc-0090.md) adds enum declarations.
+  `enum Stage: TODO, DOING, DONE` declares `Stage` as an object whose
+  members hold their own names, so `Stage.DOING` is `"DOING"`. A member may
+  instead take a literal value, as in `enum Level: LOW = 1, HIGH = 3`, and
+  `enum Stage:` followed by an indented block lists one member per line.
+- Rules that read a member stay live like any other: moving `write` to
+  `Stage.DOING` makes it active, and the count follows. The enum itself is
+  read-only, so `Stage.DONE = "X"` raises `TypeError("Enums are read-only")`.
+  See the [root contract](nucleoid.spec.md#enum-declarations).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.
