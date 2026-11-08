@@ -87,7 +87,7 @@ export async function value({
 }) {
   milestone.constructing_instance({ instance_name });
 
-  const { x, y } = Matrix.locate(input_instance_matrix);
+  const { x, y, width, height } = Matrix.locate(input_instance_matrix);
 
   const { orientation } = await llm.generate({
     puzzle_id,
@@ -151,6 +151,8 @@ export async function value({
           ${JSON.stringify(Matrix.crop(input_instance_matrix))}
           input_x: ${x}
           input_y: ${y}
+          input_width: ${width}
+          input_height: ${height}
           orientation: ${orientation}
           json_format:
           {
