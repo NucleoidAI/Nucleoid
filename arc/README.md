@@ -192,8 +192,12 @@ standard error with a boxed stack trace.
 Colors follow the terminal automatically. Set `NO_COLOR=1` for uncolored output;
 redirected output is uncolored unless `FORCE_COLOR=1` is set. Styling uses
 Node.js's built-in utilities. `string-width` measures terminal display cells,
-and `wrap-ansi` wraps long output without breaking colors, so both vertical
-borders stay aligned even with wide Unicode text. Formatting does not change
+and `wrap-ansi` wraps long output without breaking colors. In interactive
+output, summary boxes pin the right border to a terminal column instead of
+relying on font-dependent emoji widths. Redirected output uses whitespace
+padding without cursor commands. Difference scores wrap between whole keycap
+emojis, reserving PowerShell's three buffer cells per digit on Windows.
+Formatting does not change
 prompts, programs, matrices, provider settings, or scoring.
 
 Milestone functions in `src\lib\milestone.ts` mark each point in a run that shows

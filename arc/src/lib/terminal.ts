@@ -98,8 +98,12 @@ function pad(text: string, columns: number): string {
 function block(title: string, lines, write = console.log) {
   const columns: number = width() - 4;
   const rule: string = "─".repeat(columns + 2);
-  const row = (line: string) =>
-    write(`  ${frame("│")} ${pad(line, columns)} ${frame("│")}`);
+  const output = write === console.error ? process.stderr : process.stdout;
+  const rightBorder: string = output.isTTY ? `\x1b[${columns + 6}G` : " ";
+  const row = (line: string) => {
+    const content: string = output.isTTY ? line : pad(line, columns);
+    write(`  ${frame("│")} ${content}${rightBorder}${frame("│")}`);
+  };
   write(`\n  ${frame(`┌${rule}┐`)}`);
   if (title !== "") {
     for (const line of wrap(stripVTControlCharacters(String(title)), columns)) {
@@ -498,6 +502,28 @@ export function alert(message: string) {
   }
 }
 
+function differenceLines(difference: number, columns: number): string[] {
+  const digits: string[] =
+    String(difference)
+      .padStart(2, "0")
+      .replace(/\d/g, (digit: string) => `${digit}\ufe0f\u20e3`)
+      .match(/\d\ufe0f\u20e3|./gu) ?? [];
+  const prefix: string = "Difference  ";
+  const digitWidth: number = process.platform === "win32" ? 3 : 2;
+  if (prefix.length + digits.length * digitWidth <= columns) {
+    return [prefix + digits.join("")];
+  }
+  const perLine: number = Math.max(1, Math.floor(columns / digitWidth));
+  return [
+    prefix.trimEnd(),
+    ...Array.from(
+      { length: Math.ceil(digits.length / perLine) },
+      (_, index: number) =>
+        digits.slice(index * perLine, (index + 1) * perLine).join("")
+    ),
+  ];
+}
+
 export function summary(difference: number, duration: number) {
   const seconds: number = duration / 1000;
   const elapsed: string =
@@ -508,13 +534,10 @@ export function summary(difference: number, duration: number) {
     difference === 0
       ? styleText(["bold", "green"], "✓ EXACT MATCH")
       : styleText(["bold", "red"], "◇ MISMATCH");
-  const differenceDigits: string = String(difference)
-    .padStart(2, "0")
-    .replace(/\d/g, (digit: string) => `${digit}\ufe0f\u20e3`);
   block(numbered("Run complete"), [
     status,
     "",
-    `Difference  ${differenceDigits}`,
+    ...differenceLines(difference, width() - 4),
     `Elapsed     ⏱️ ${elapsed}`,
   ]);
   console.log("");
