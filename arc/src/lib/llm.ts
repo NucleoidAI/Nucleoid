@@ -26,10 +26,7 @@ export async function generate({
   if (grammar) {
     messages.unshift({
       role: "system",
-      content: readFileSync(
-        join(__dirname, "..", "..", "..", "docs", "nucleoid.g4"),
-        "utf8"
-      ),
+      content: readFileSync(join(__dirname, "..", "..", "nucleoid.md"), "utf8"),
     });
   }
 
