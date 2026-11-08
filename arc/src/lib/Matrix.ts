@@ -38,22 +38,18 @@ export function locate(matrix) {
 }
 
 const LETTERS: string = "ABCDEFGHI";
-const ALPHABET: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 type Color = number | string;
 
-// A cell is a color from 0 to 9, or one of the letters A to Z that the
-// instruction datasets write their nonzero colors as, each dataset with its
-// own random letters.
+// A cell is a color from 0 to 9, or one of the letters A to I that the
+// instruction datasets write their nonzero colors as.
 function color(value: unknown): value is Color {
   return (
     (typeof value === "number" &&
       Number.isInteger(value) &&
       value >= 0 &&
       value <= 9) ||
-    (typeof value === "string" &&
-      value.length === 1 &&
-      ALPHABET.includes(value))
+    (typeof value === "string" && value.length === 1 && LETTERS.includes(value))
   );
 }
 
@@ -70,7 +66,7 @@ export function silhouette(matrix) {
         throw new Error(
           `Matrix cell ${JSON.stringify(
             value
-          )} is not a color from 0 to 9 or a letter from A to Z`
+          )} is not a color from 0 to 9 or a letter from A to I`
         );
       }
       if (value === 0) continue;
@@ -81,11 +77,6 @@ export function silhouette(matrix) {
   const ranked: Color[] = [...counts.keys()].sort(
     (a: Color, b: Color) => counts.get(b) - counts.get(a)
   );
-  if (ranked.length > LETTERS.length) {
-    throw new Error(
-      `Matrix holds ${ranked.length} colors, more than ${LETTERS.length}`
-    );
-  }
 
   return matrix.map((row) =>
     row.map((value: Color) =>

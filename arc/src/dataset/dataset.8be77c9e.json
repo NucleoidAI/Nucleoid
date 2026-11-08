@@ -8,33 +8,33 @@
   "dataset": [
     {
       "input_matrix": [
-        ["X", "X", 0],
-        ["X", "X", "X"],
+        ["A", "A", 0],
+        ["A", "A", "A"],
         [0, 0, 0]
       ],
       "output_matrix": [
-        ["X", "X", 0],
-        ["X", "X", "X"],
+        ["A", "A", 0],
+        ["A", "A", "A"],
         [0, 0, 0],
         [0, 0, 0],
-        ["X", "X", "X"],
-        ["X", "X", 0]
+        ["A", "A", "A"],
+        ["A", "A", 0]
       ],
       "instances": [
         {
           "instance_name": "obj4b7fccaa77ad",
           "input_instance_matrix": [
-            ["X", "X", 0],
-            ["X", "X", "X"],
+            ["A", "A", 0],
+            ["A", "A", "A"],
             [0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["X", "X", 0],
-            ["X", "X", "X"],
+            ["A", "A", 0],
+            ["A", "A", "A"],
             [0, 0, 0],
             [0, 0, 0],
-            ["X", "X", "X"],
-            ["X", "X", 0]
+            ["A", "A", "A"],
+            ["A", "A", 0]
           ],
           "implementation": "obj4b7fccaa77ad = Obj(x=0, y=0, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obj4b7fccaa77ad","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
@@ -45,15 +45,15 @@
     {
       "input_matrix": [
         [0, 0, 0],
-        ["X", 0, "X"],
-        ["X", "X", 0]
+        ["A", 0, "A"],
+        ["A", "A", 0]
       ],
       "output_matrix": [
         [0, 0, 0],
-        ["X", 0, "X"],
-        ["X", "X", 0],
-        ["X", "X", 0],
-        ["X", 0, "X"],
+        ["A", 0, "A"],
+        ["A", "A", 0],
+        ["A", "A", 0],
+        ["A", 0, "A"],
         [0, 0, 0]
       ],
       "instances": [
@@ -61,15 +61,15 @@
           "instance_name": "obj3f17f1cda1fa",
           "input_instance_matrix": [
             [0, 0, 0],
-            ["X", 0, "X"],
-            ["X", "X", 0]
+            ["A", 0, "A"],
+            ["A", "A", 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            ["X", 0, "X"],
-            ["X", "X", 0],
-            ["X", "X", 0],
-            ["X", 0, "X"],
+            ["A", 0, "A"],
+            ["A", "A", 0],
+            ["A", "A", 0],
+            ["A", 0, "A"],
             [0, 0, 0]
           ],
           "implementation": "obj3f17f1cda1fa = Obj(x=0, y=1, width=3, height=2, orientation=0)",
@@ -81,15 +81,15 @@
     {
       "input_matrix": [
         [0, 0, 0],
-        [0, 0, "X"],
-        [0, 0, "X"]
+        [0, 0, "A"],
+        [0, 0, "A"]
       ],
       "output_matrix": [
         [0, 0, 0],
-        [0, 0, "X"],
-        [0, 0, "X"],
-        [0, 0, "X"],
-        [0, 0, "X"],
+        [0, 0, "A"],
+        [0, 0, "A"],
+        [0, 0, "A"],
+        [0, 0, "A"],
         [0, 0, 0]
       ],
       "instances": [
@@ -97,15 +97,15 @@
           "instance_name": "obj74ba27429594",
           "input_instance_matrix": [
             [0, 0, 0],
-            [0, 0, "X"],
-            [0, 0, "X"]
+            [0, 0, "A"],
+            [0, 0, "A"]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            [0, 0, "X"],
-            [0, 0, "X"],
-            [0, 0, "X"],
-            [0, 0, "X"],
+            [0, 0, "A"],
+            [0, 0, "A"],
+            [0, 0, "A"],
+            [0, 0, "A"],
             [0, 0, 0]
           ],
           "implementation": "obj74ba27429594 = Obj(x=2, y=1, width=1, height=2, orientation=0)",
@@ -117,15 +117,15 @@
     {
       "input_matrix": [
         [0, 0, 0],
-        [0, 0, "X"],
-        ["X", 0, 0]
+        [0, 0, "A"],
+        ["A", 0, 0]
       ],
       "output_matrix": [
         [0, 0, 0],
-        [0, 0, "X"],
-        ["X", 0, 0],
-        ["X", 0, 0],
-        [0, 0, "X"],
+        [0, 0, "A"],
+        ["A", 0, 0],
+        ["A", 0, 0],
+        [0, 0, "A"],
         [0, 0, 0]
       ],
       "instances": [
@@ -133,15 +133,15 @@
           "instance_name": "obj03af268cfbef",
           "input_instance_matrix": [
             [0, 0, 0],
-            [0, 0, "X"],
-            ["X", 0, 0]
+            [0, 0, "A"],
+            ["A", 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            [0, 0, "X"],
-            ["X", 0, 0],
-            ["X", 0, 0],
-            [0, 0, "X"],
+            [0, 0, "A"],
+            ["A", 0, 0],
+            ["A", 0, 0],
+            [0, 0, "A"],
             [0, 0, 0]
           ],
           "implementation": "obj03af268cfbef = Obj(x=0, y=1, width=3, height=2, orientation=0)",
