@@ -3784,7 +3784,9 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ## 14. Syntax Summary
 
-The complete grammar, as the parser accepts it, is in [grammar.md](grammar.md).
+The ANTLR4 syntax reference is in [nucleoid.g4](nucleoid.g4). Its comments
+record the runtime-specific token-source and contextual parsing requirements;
+the Rust parser remains the implementation of those requirements.
 
 ```
 name = expression                      variable assignment
