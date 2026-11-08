@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/74dd1130.json`](../data/training/74dd1130.json) |
-| Instruction dataset | [`dataset.74dd1130.json`](../src/dataset/dataset.74dd1130.json): the puzzle's 4 original training pairs and its test pair, 5 mosaic instances, one per pair; committed with this record; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
+| Instruction dataset | [`dataset.74dd1130.json`](../src/dataset/dataset.74dd1130.json): the puzzle's 4 original training pairs and its test pair, 5 mosaic instances, one per pair; committed with this record; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; dynamic-axis revision blocked before publication on 8-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule is one unconditional class-level rule of accepted Nucleoid |
 | Solver changes | None; suggested changes await review, not applied |
-| Solver runs | 1 local run on 5-Nov-2026, exit 0, an exact match, with this dataset's test pair in its few-shot context; none of the current version |
+| Solver runs | 1 local run on 5-Nov-2026, exit 0, an exact match, with this dataset's test pair in its few-shot context; none of the current version; the 8-Nov-2026 dynamic-axis invocation ended without a run |
 | Updated | 8-Nov-2026 |
 
 ## Puzzle
@@ -39,8 +39,8 @@ puzzles tied with [`3c9b0459`](ARC-NUC-3c9b0459.md), the previous default.
 
 ## Gestalt overview
 
-- **Whole grid.** A 3 by 3 canvas filled by one mosaic of three colors, with
-  no background cell.
+- **Whole grid.** Each input and output is a 3 by 3 canvas filled by one
+  mosaic of three colors, with no background cell.
 - **Figures.** One figure per grid, the whole mosaic.
 - **Relations.** The mosaic relates to the canvas's main diagonal, from the
   top-left corner to the bottom-right. No training mosaic looks the same
@@ -48,8 +48,10 @@ puzzles tied with [`3c9b0459`](ARC-NUC-3c9b0459.md), the previous default.
   its own.
 - **Change.** The whole mosaic flips across that diagonal, so its rows
   become its columns.
-- **World model.** One object per pair, the whole mosaic, whose flip is its
-  `mirror_axis`, 135.
+- **World model.** The retained dataset has one object per pair, the whole
+  mosaic, whose flip is its `mirror_axis`, 135. The unpublished 8-Nov-2026
+  revision keeps that whole-object level and derives the mirror line from
+  its opposite bounding-box corners; no finer model was needed.
 
 ## Dataset
 
@@ -183,11 +185,56 @@ instance names, positions, sizes, orientations, and tags are unchanged. `Matrix.
 orientation call's few-shot crops read exactly as before. No solver run has
 measured this version, so its difference is unknown, not zero.
 
+### Dynamic axis attempt -- 8-Nov-2026
+
+The user requested `dynamic set $Obj.mirror_axis instead of 135 direcly`.
+This invocation named the puzzle explicitly and authorized replacing its
+fixed-axis rule, rather than selecting another default puzzle. The
+arc-dataset worker kept the whole mosaic as the figure and fixed the
+northwest-to-southeast reflection from the training pairs alone. Its proposed
+axis is the line between the mosaic's opposite input bounding-box corners:
+
+```nuc
+$Obj.mirror_axis = {start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}
+```
+
+This would replace a scalar degree bearing with an endpoint-defined line,
+not move `135` into a default or disguise it with arithmetic. The existing
+standard entries supply its geometry, so it adds no input property, pixel
+objects, or redundant population operation. The worker reported native
+regeneration and independent replay of all five input and output states on
+accepted `e059f4b`, together with offline geometric reconstruction of the
+original outputs. This is offline evidence, not a live solver result. No
+NUC was requested, and strategy learning is `not_applicable`.
+
+The handoff was **blocked**, not `written`. The dataset and README changed
+outside this invocation while the worker was preparing the revision, and
+the shared letter-ranking policy changed too. There was no stable
+preservation baseline to overwrite safely. The worker also reported 30
+missing coordinate/orientation metadata fields across five instances and
+five missing object-description comments under its schema checks. Its
+original-grid and letter-ranking failures used the earlier palette policy
+that counted test outputs; concurrent working-tree policy edits instead
+rank the training pairs and test inputs. Those earlier diagnostics do not
+establish that the new palette is wrong.
+
+No replacement dataset or README paragraph was published. The existing
+dataset, its reporting-list entry, the solver default `25ff71a9`, and all
+concurrent changes were left in place; the canonical axis rule remains
+`$Obj.mirror_axis = 135`. Neither pull brought in commits, and the native
+runtime remained unchanged. No solver change was suggested or applied for
+this attempt. A stable, validated dataset handoff is still required before
+the proposed representation can be installed.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
 | --- | --- | --- | --- | --- | --- |
 | 5-Nov-2026 05:46 UTC | 1, one mosaic per object | Accepted `a605465`, local | 0 | 0, exact match | 1m 55.1s |
+
+The 8-Nov-2026 dynamic-axis invocation had no run: its dataset handoff was
+blocked before publication. No live prediction was made, so its exit status,
+elapsed time, and difference are unknown, not zero.
 
 The run was `bun start 74dd1130` from `arc/`, run once by `/arc-purposal` with
 a 30-minute limit and `NUCLEOID_EXECUTABLE` unset, after
@@ -213,6 +260,11 @@ zero.
 
 ## Open items
 
+- **Dynamic axis blocked.** The endpoint-derived whole-mosaic rule above
+  remains unpublished. Concurrent dataset, README, and policy edits
+  invalidated the worker's preservation baseline. A new authorized
+  invocation needs a stable dataset and successful current-policy checks,
+  including the required instance metadata and implementation descriptions.
 - **A run sees the answer.** Resolved on 6-Nov-2026: the user decided this is
   intended, because the datasets are being prepared as few-shot examples and
   runs at this stage are not yet held-out tests. The ARC instructions now say
