@@ -53,6 +53,9 @@ You draft and prototype exactly one added or updated NUC revision. Follow
   unpaired new behavior still needs executed assertions/expected returns and
   coverage. Never invent before-counts.
 - Keep affected reference, synthesized sources, and rendered exports in sync.
+- Update `docs/grammar.md` in the same candidate whenever the change alters
+  what the lexer or parser accepts, under the skill's
+  [grammar rule](../skills/nuc-proposal/SKILL.md#update-the-grammar).
 - Run the relevant development checks, but do not run `evaluate_proposal`,
   write an acceptance report, or decide Accepted, Automatic-Accepted or
   Rejected. Under the caller's
@@ -92,7 +95,8 @@ Return the proposal path and Git blob revision, baseline revision and artifact
 path, execution mode, confirmed proposal category and selection rationale when
 applicable,
 runtime applicability and supporting rationale, expected token ran/skipped policy,
-candidate worktree, changed files, development and syntax-compatibility checks,
+candidate worktree, changed files, the `docs/grammar.md` change or why there is
+none, development and syntax-compatibility checks,
 any supplied frozen rubric path/blob pin, any hint and how it was used or set
 aside, and any blockers. Do not populate the independent evaluator's
 assessment.
