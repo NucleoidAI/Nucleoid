@@ -344,6 +344,7 @@ pub enum UnaryOp {
     /// Identity evaluation with explicit grouping in canonical source. Used
     /// only for assignment-shaped call arguments that were not bare labels.
     Positional,
+    Word,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -4,6 +4,36 @@ use crate::lang::ast::lexer::{Keyword, Token};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp};
 use crate::reasoning::Stage;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum PathTarget {
+    Plain,
+    TooManyParts,
+    Invalid,
+}
+
+impl PathTarget {
+    pub(super) fn of(mut target: &Expr) -> Self {
+        let mut parts = 0;
+        while let Expr::Member { object, .. }
+        | Expr::Version {
+            reference: object, ..
+        } = target
+        {
+            parts += 1;
+            if parts > MAX_CHAIN {
+                return PathTarget::TooManyParts;
+            }
+            target = object;
+        }
+
+        match target {
+            Expr::Identifier(_) => PathTarget::Plain,
+            Expr::ClassRef(_) | Expr::This if parts > 0 => PathTarget::Plain,
+            _ => PathTarget::Invalid,
+        }
+    }
+}
+
 impl Parser {
     pub(super) fn expression(&mut self) -> Result<Expr> {
         self.expression_in(ExpressionContext::Ordinary)
@@ -106,24 +136,11 @@ impl Parser {
         self.check_path_target(target, "Invalid compound assignment target")
     }
 
-    pub(super) fn check_path_target(&self, mut target: &Expr, invalid: &str) -> Result<()> {
-        let mut parts = 0;
-        while let Expr::Member { object, .. }
-        | Expr::Version {
-            reference: object, ..
-        } = target
-        {
-            parts += 1;
-            if parts > MAX_CHAIN {
-                return Err(self.error("Expression has too many parts"));
-            }
-            target = object;
-        }
-
-        match target {
-            Expr::Identifier(_) => Ok(()),
-            Expr::ClassRef(_) | Expr::This if parts > 0 => Ok(()),
-            _ => Err(self.error(invalid)),
+    pub(super) fn check_path_target(&self, target: &Expr, invalid: &str) -> Result<()> {
+        match PathTarget::of(target) {
+            PathTarget::Plain => Ok(()),
+            PathTarget::TooManyParts => Err(self.error("Expression has too many parts")),
+            PathTarget::Invalid => Err(self.error(invalid)),
         }
     }
 

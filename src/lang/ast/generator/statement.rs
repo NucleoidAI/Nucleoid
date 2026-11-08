@@ -1,5 +1,5 @@
 use super::{enum_source, has_binding_metadata, signature};
-use crate::lang::ast::{ClassDecl, Expr, Function, FunctionBody, Stmt};
+use crate::lang::ast::{ClassDecl, Expr, Function, FunctionBody, Stmt, UnaryOp};
 
 /// Renders a run of statements as the body of a block, which is what a block or
 /// branch is keyed by in the graph.
@@ -78,6 +78,13 @@ pub fn generate(statement: &Stmt) -> String {
 fn assignment_source(target: &Expr, value: &Expr) -> String {
     match (target, value) {
         (Expr::Identifier(name), Expr::Enum(members)) => enum_source(name, members),
+        (
+            _,
+            Expr::Unary {
+                operator: UnaryOp::Word,
+                operand,
+            },
+        ) => format!("{target} is {operand}"),
         _ => format!("{target}={value}"),
     }
 }

@@ -52,9 +52,15 @@ runnable as written.
   `/* comment */`, and division by a regex in `1 // 2 /`.
 - Explicit CLI `--c-style-comments` enables `//` through LF/EOF and non-nesting
   `/* ... */` through its first closing delimiter, alongside `#`. The equivalent
-  Rust API is `Runtime::with_options(SyntaxOptions { c_style_comments: true })`.
+  Rust API is
+  `Runtime::with_options(SyntaxOptions { c_style_comments: true, ..SyntaxOptions::default() })`.
   The concrete public option defaults to false and remains selected after
   `clear()` or `.clear`. `Runtime::options()` returns it.
+- Explicit CLI `--is-assignment`, or the `is_assignment` field of the same
+  `SyntaxOptions`, reads a statement `target is value` as `target = value`;
+  see [opt-in is assignments](#opt-in-is-assignments). It also defaults to
+  false, combines with `--c-style-comments`, and is honored and kept in the
+  same places.
 - The configured runtime uses the option for every program and template
   interpolation. Standalone lexer/parser/compilation functions retain default
   behavior; their matching `_with_options` forms take `SyntaxOptions`, as does
@@ -362,6 +368,48 @@ qty = 5
   `Nucleoid separates one-shot actions from standing laws` in
   `tests/reference.md`; the root contract is
   [Value assignment](../nucleoid.spec.md#value-assignment).
+
+### Opt-in is assignments
+
+- [NUC 93](nuc-0093.md) adds `target is value` as a spelling of
+  `target = value` for variables and properties. It is opt-in: CLI
+  `--is-assignment`, or `SyntaxOptions { is_assignment: true, .. }` in Rust.
+  Without it, `a is good` stays the three statements `a`, `is` and `good`.
+- The statement form is a name or a dotted path that `:=` accepts, then
+  `is` on the same line, then a token that can begin an expression. After
+  `is`, a `:`, `=`, `:=`, `+=` or other operator, a keyword such as `if`, or
+  the end of the line keeps the accepted reading, so `a is: T`, `a is = 5`
+  and `a is` are unchanged.
+- The value is parsed and evaluated exactly as the value of `=`: `a is 5`,
+  `o.x is "good"`, `this.total is total * 2`, `$Order.state is "open"`,
+  `a is b = c` and `a is suppose:` with a body build the trees of their `=`
+  spellings and render as them.
+- Quotes are optional around a word. A value of exactly one bare identifier
+  reads the local, variable, class, function or built-in of that name when
+  one exists, and otherwise stores its own text: `a is good` stores `"good"`
+  until something defines `good`, then follows it, and returns to `"good"`
+  when it is deleted. `a is "good"` and `a is 'good'` are ordinary strings,
+  and `a is (good)` requires `good` to be defined.
+- It applies wherever a statement can start, including blocks, bodies and
+  constructors, but never inside an expression, so `is` comparisons in
+  conditions and parentheses work beside it: `flag is (value is EXACT)`.
+- A word assignment renders as `a is good` in graph keys and in `why` and
+  `affects`; every other one renders as its `=` spelling. Malformed values
+  report the errors of their `=` spellings.
+
+```
+status is OPEN
+label is "shipped"
+count is 2 + 3
+OPEN = "open"
+```
+
+- With the option, `status` is `"OPEN"` until `OPEN = "open"`, then
+  `"open"`; `label` is `"shipped"` and `count` is `5`. Grammar, the opt-in
+  readings of default statements and edge cases are in the authoritative
+  [opt-in is assignments](../nucleoid.spec.md#opt-in-is-assignments) section.
+
+Full detail: [NUC 93](nuc-0093.md).
 
 ### Destructuring declarations
 
@@ -3740,6 +3788,8 @@ Full detail: [NUC 9](nuc-0009.md).
 name = expression                      variable assignment
 name := expression                     value assignment: once, no dependency (NUC 66)
 name.property := expression            value assignment to a property (NUC 66)
+name is expression                     opt-in --is-assignment: name = expression (NUC 93)
+name.property is word                  opt-in: a bare word reads its name, else its text "word" (NUC 93)
 name += expression                     compound assignment; also -=, *=, **=, /=, %=
 {a, b} = expression                    one declaration per field: a = expression.a (NUC 67)
 {key: name} = expression               renamed field: name = expression.key (NUC 67)

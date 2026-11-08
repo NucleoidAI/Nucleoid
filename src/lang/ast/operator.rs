@@ -109,6 +109,10 @@ impl Runtime {
     ) -> Result<Value> {
         match operator {
             UnaryOp::Positional => self.evaluate(operand, scope),
+            UnaryOp::Word => match operand {
+                Expr::Identifier(word) => Ok(self.read_word(word, scope)),
+                other => self.evaluate(other, scope),
+            },
             // `$Person` is the class itself; `Person` is its instances.
             UnaryOp::TypeOf if matches!(operand, Expr::ClassRef(_)) => {
                 Ok(Value::Class("Class".to_string()))

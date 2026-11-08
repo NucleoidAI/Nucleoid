@@ -189,6 +189,7 @@ fn write_unary(f: &mut fmt::Formatter<'_>, operator: UnaryOp, operand: &Expr) ->
         UnaryOp::Plus => write!(f, "+{operand}"),
         UnaryOp::TypeOf => write!(f, "typeof {operand}"),
         UnaryOp::Positional => write!(f, "({operand})"),
+        UnaryOp::Word => write!(f, "{operand}"),
     }
 }
 

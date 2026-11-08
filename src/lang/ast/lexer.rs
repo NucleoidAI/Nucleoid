@@ -16,6 +16,7 @@ pub struct SyntaxOptions {
     /// Recognize `//` line comments and non-nesting `/* ... */` comments.
     /// These delimiters take priority over regular expressions only when set.
     pub c_style_comments: bool,
+    pub is_assignment: bool,
 }
 
 fn delimited(slice: &str) -> &str {

@@ -88,7 +88,10 @@ The equivalent library setting is per runtime and survives `clear()`:
 ```rust
 use nucleoid::{Runtime, SyntaxOptions};
 
-let mut runtime = Runtime::with_options(SyntaxOptions { c_style_comments: true });
+let mut runtime = Runtime::with_options(SyntaxOptions {
+    c_style_comments: true,
+    ..SyntaxOptions::default()
+});
 assert_eq!(runtime.run("12 /* */ / 2 //").unwrap().to_string(), "6");
 ```
 
@@ -103,6 +106,40 @@ tokens or supply indentation. An unclosed block reports
 Plain input buffers an open block across blank lines until it closes or EOF;
 the terminal uses the same setting for submission and Ctrl-J indentation.
 See [NUC 76](docs/nuc-0076.md).
+
+### Optional is assignments
+
+To also write an assignment as `target is value`, with quotes optional around
+a single word, explicitly enable it for a file or either interactive
+interface, alone or beside `--c-style-comments`:
+
+```console
+nucleoid --is-assignment program.nuc
+nucleoid --is-assignment --plain
+```
+
+The equivalent library setting is per runtime and survives `clear()`:
+
+```rust
+use nucleoid::{Runtime, SyntaxOptions};
+
+let mut runtime = Runtime::with_options(SyntaxOptions {
+    is_assignment: true,
+    ..SyntaxOptions::default()
+});
+runtime.run("status is OPEN").unwrap();
+assert_eq!(runtime.run("status").unwrap().to_string(), "OPEN");
+runtime.run("OPEN = \"open\"").unwrap();
+assert_eq!(runtime.run("status").unwrap().to_string(), "open");
+```
+
+`a is 5`, `o.x is "good"` and `this.total is total * 2` mean their `=`
+spellings. A value of one bare word reads the variable, class, function or
+built-in of that name when one exists, and otherwise stores its own text, so
+`status` above follows `OPEN` once it is defined. Without the flag/option,
+`a is good` keeps its accepted reading as three statements. `is` comparisons
+such as `if status is OPEN:` work in both modes. See
+[NUC 93](docs/nuc-0093.md).
 
 ---
 
