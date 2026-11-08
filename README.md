@@ -141,6 +141,40 @@ built-in of that name when one exists, and otherwise stores its own text, so
 such as `if status is OPEN:` work in both modes. See
 [NUC 93](docs/nuc-0093.md).
 
+### Optional conditional words
+
+To also write a bare word as a branch of a conditional `is` value, add
+`--conditional-words` beside `--is-assignment`:
+
+```console
+nucleoid --is-assignment --conditional-words program.nuc
+nucleoid --is-assignment --conditional-words --plain
+```
+
+The equivalent library setting is per runtime and survives `clear()`:
+
+```rust
+use nucleoid::{Runtime, SyntaxOptions};
+
+let mut runtime = Runtime::with_options(SyntaxOptions {
+    is_assignment: true,
+    conditional_words: true,
+    ..SyntaxOptions::default()
+});
+runtime.run("ready = false").unwrap();
+runtime.run("status is OPEN if ready else WAITING").unwrap();
+assert_eq!(runtime.run("status").unwrap().to_string(), "WAITING");
+runtime.run("ready = true").unwrap();
+assert_eq!(runtime.run("status").unwrap().to_string(), "OPEN");
+```
+
+`a is A if c else B` and `a is c ? A : B` read each branch that is one bare
+word as a word value is read: the variable, class, function or built-in of
+that name when one exists, otherwise its own text. Conditions and parenthesized
+operands are not words, so `a is (A if c else B)` needs `A` and `B` to be
+defined. Without `--is-assignment` the flag changes nothing. See
+[NUC 94](docs/nuc-0094.md).
+
 ---
 
 # Design Theory 📐

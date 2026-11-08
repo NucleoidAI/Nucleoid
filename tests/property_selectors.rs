@@ -218,6 +218,7 @@ fn selectors_parse_to_anonymous_functions_of_one_unnamed_parameter() {
     let options = SyntaxOptions {
         c_style_comments: true,
         is_assignment: false,
+        conditional_words: false,
     };
     assert_eq!(
         parse_with_options("f(1, .a /* step */ .b)", options).unwrap(),

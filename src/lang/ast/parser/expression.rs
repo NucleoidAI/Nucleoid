@@ -1,3 +1,4 @@
+use super::is_assignment::Branches;
 use super::{CompoundOp, ExpressionContext, MAX_CHAIN, MAX_NESTING, Parser, PythonCondition};
 use crate::error::{Error, Result};
 use crate::lang::ast::lexer::{Keyword, Token};
@@ -43,8 +44,14 @@ impl Parser {
     /// its top-level `:` belongs to the enclosing construct, never to a
     /// contextual `lambda`.
     pub(super) fn clause_expression(&mut self) -> Result<Expr> {
+        self.clause_expression_with(Branches::Plain)
+    }
+
+    fn clause_expression_with(&mut self, branches: Branches) -> Result<Expr> {
         self.within(true, |parser| {
-            parser.expression_in(ExpressionContext::Clause)
+            parser.nested_expression_in(ExpressionContext::Clause, |clause| {
+                clause.assignment_expression(branches)
+            })
         })
     }
 
@@ -84,7 +91,11 @@ impl Parser {
     }
 
     fn expression_inner(&mut self) -> Result<Expr> {
-        let left = self.conditional()?;
+        self.assignment_expression(Branches::Plain)
+    }
+
+    pub(super) fn assignment_expression(&mut self, branches: Branches) -> Result<Expr> {
+        let left = self.conditional_with(branches)?;
 
         let operator = match self.peek() {
             Token::Assign => None,
@@ -98,6 +109,7 @@ impl Parser {
             Token::OrOrAssign => Some(CompoundOp::Logical(LogicalOp::Or)),
             _ => return Ok(left),
         };
+        let left = branches.unmark(left);
 
         if operator.is_some() {
             self.check_compound_target(&left)?;
@@ -151,25 +163,44 @@ impl Parser {
     /// following `:` belongs to the conditional; the alternate continues in
     /// the enclosing context.
     pub(super) fn conditional(&mut self) -> Result<Expr> {
+        self.conditional_with(Branches::Plain)
+    }
+
+    fn conditional_with(&mut self, branches: Branches) -> Result<Expr> {
+        let start = self.position;
         let operand = self.pipeline()?;
         let operand = self.coalescing(operand)?;
+        let end = self.position;
 
         let (condition, consequent) = if self.eat(&Token::Question) {
-            let consequent = self.clause_expression()?;
+            let consequent =
+                self.branch(branches, |parser| parser.clause_expression_with(branches))?;
             self.expect(&Token::Colon)?;
             (operand, consequent)
         } else if let Some(condition) = self.python_condition() {
-            (condition, operand)
+            (condition, branches.mark(start, end, operand))
         } else {
             return Ok(operand);
         };
 
-        let alternate = self.nested_expression(Self::conditional)?;
+        let alternate = self.branch(branches, |parser| {
+            parser.nested_expression(|alternate| alternate.conditional_with(branches))
+        })?;
         Ok(Expr::Conditional {
             condition: Box::new(condition),
             consequent: Box::new(consequent),
             alternate: Box::new(alternate),
         })
+    }
+
+    fn branch(
+        &mut self,
+        branches: Branches,
+        parse: impl FnOnce(&mut Self) -> Result<Expr>,
+    ) -> Result<Expr> {
+        let start = self.position;
+        let branch = parse(self)?;
+        Ok(branches.mark(start, self.position, branch))
     }
 
     /// Qualifies a Python-style conditional after a complete operand: `if`,

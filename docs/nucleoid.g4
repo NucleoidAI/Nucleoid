@@ -121,6 +121,7 @@ statement
     | assertStmt
     | supposeStmt
     | valueAssignment
+    | isAssignment
     | expression                        // Stmt::Assign or Stmt::Expression
     ;
 
@@ -140,8 +141,9 @@ assertStmt
 
 // A premise is tentative: it ends exactly at ':' and cannot be a colon
 // statement or end in the word 'lambda'. Otherwise 'suppose' stays a name.
+// The 'path IS' head requires SyntaxOptions.is_assignment, as isAssignment.
 supposeStmt
-    : (conditional ASSIGN)? SUPPOSE premise? suite
+    : (conditional ASSIGN | path IS)? SUPPOSE premise? suite
     ;
 
 premise
@@ -150,6 +152,35 @@ premise
 
 valueAssignment
     : path VALUE_ASSIGN expression      // Stmt::ValueAssign
+    ;
+
+/*
+ * Opt-in is-assignment contract (NUC 93, NUC 94):
+ * - isAssignment requires SyntaxOptions.is_assignment. Its path may be
+ *   parenthesized and has at most 128 links. No NEWLINE separates it from
+ *   'is', and the token after 'is' must begin an expression: a name token,
+ *   CLASS_REF, NUMBER, STRING, TEMPLATE, REGEX, LPAREN, LBRACK, LBRACE,
+ *   BANG, MINUS, PLUS, TRUE, FALSE, NULL, THIS, SUPER, NEW, DELETE,
+ *   FUNCTION, NOT or TYPEOF. Otherwise 'is' stays a name that begins the
+ *   next statement, and 'why', 'affects', 'stated' or 'derived' before
+ *   'is' keep their reasoning-selection reading.
+ * - The value is ASSIGN's statement-level value and builds the tree of
+ *   'path = expression' apart from its word markers. A following ':=' or a
+ *   'suppose' value is handled as after ASSIGN.
+ * - Word positions of the value: the whole value, and with
+ *   SyntaxOptions.conditional_words as well, both branches of a conditional
+ *   standing in a word position, in either spelling. A word position holding
+ *   exactly one name token is a word, UnaryOp::Word, which reads that name
+ *   when something defines it and otherwise its own text.
+ * - Conditions, grouping parentheses, operands of other operators, call
+ *   arguments, list and object members, function, lambda and arrow bodies,
+ *   template interpolations, the value of an inner assignment and the target
+ *   of an assignment operator are not word positions.
+ * - SyntaxOptions.conditional_words without SyntaxOptions.is_assignment
+ *   changes nothing.
+ */
+isAssignment
+    : path IS expression                // Stmt::Assign, as path = expression
     ;
 
 // Only at a statement boundary; require NEWLINE, ';', DEDENT, '}', EOF,
@@ -809,6 +840,9 @@ fragment REGEX_CHAR
  * require an 'is' name or template in the source; comprehension passes
  * require 'for' or a template. Keep the first successful complete parse.
  * A later pass never changes a source accepted by an earlier pass.
+ * SyntaxOptions.is_assignment adds isAssignment to every pass, and
+ * SyntaxOptions.conditional_words changes only the word positions of its
+ * value, never whether or where a pass succeeds or fails.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -833,6 +867,10 @@ fragment REGEX_CHAR
  * [e for x in s]           -> s.map(x => e).
  * [e for x in s if c]      -> s.filter(x => c).map(x => e).
  * a if c else b            -> c ? a : b.
+ * p is v                   -> p = v, with SyntaxOptions.is_assignment.
+ * p is w                   -> p = UnaryOp::Word(w) for a single name w.
+ * p is A if c else B       -> p = c ? Word(A) : Word(B), with
+ *                             SyntaxOptions.conditional_words as well.
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
@@ -852,4 +890,6 @@ fragment REGEX_CHAR
  * Operators/postfix/primary: parser\expression.rs, parser\precedence.rs,
  * parser\postfix.rs and parser\primary.rs.
  * Comprehensions/templates: parser\comprehension.rs and parser\template.rs.
+ * Is assignments and their words: parser\is_assignment.rs, with the
+ * conditional word positions in parser\expression.rs.
  */

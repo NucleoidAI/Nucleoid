@@ -61,6 +61,11 @@ runnable as written.
   see [opt-in is assignments](#opt-in-is-assignments). It also defaults to
   false, combines with `--c-style-comments`, and is honored and kept in the
   same places.
+- Explicit CLI `--conditional-words`, or the `conditional_words` field,
+  additionally reads a bare-word branch of a conditional `is` value as a
+  word; see [opt-in conditional words](#opt-in-conditional-words). It
+  defaults to false, changes nothing without `--is-assignment`, and is
+  honored and kept in the same places.
 - The configured runtime uses the option for every program and template
   interpolation. Standalone lexer/parser/compilation functions retain default
   behavior; their matching `_with_options` forms take `SyntaxOptions`, as does
@@ -410,6 +415,44 @@ OPEN = "open"
   [opt-in is assignments](../nucleoid.spec.md#opt-in-is-assignments) section.
 
 Full detail: [NUC 93](nuc-0093.md).
+
+### Opt-in conditional words
+
+- [NUC 94](nuc-0094.md) extends opt-in `is` assignments. With CLI
+  `--conditional-words` beside `--is-assignment`, or
+  `SyntaxOptions { is_assignment: true, conditional_words: true, .. }` in
+  Rust, a branch of a conditional value can be a bare word, in either
+  spelling. Without `--is-assignment` the flag changes nothing.
+- The word positions are the value and both branches of a conditional in a
+  word position, so in `a is A if c1 else B if c2 else C`, `A`, `B` and `C`
+  are words. A branch is a word when it is exactly one identifier token;
+  `1`, `"text"`, `true`, `(A)` and `A.x` are not.
+- Conditions are never words, and neither is anything inside parentheses,
+  calls, lists, objects or other operators: `a is (A if c else B)` needs `A`
+  and `B` to be defined, as `a = (A if c else B)` does.
+- A word branch reads the local, variable, class, function or built-in of
+  its name when one exists, and otherwise its own text, as a word value
+  does; only the selected branch is read. Class-level rules do not require
+  branch words to be defined.
+- A statement with word branches renders as `a is c?A:B` in graph keys and
+  in `why` and `affects`. An `is` comparison before `?` needs parentheses,
+  as in `mark is (shape is SQUARE) ? CORNER : EDGE`, while
+  `mark is CORNER if shape is SQUARE else EDGE` needs none.
+
+```
+ready = false
+status is OPEN if ready else WAITING
+OPEN = "open"
+ready = true
+```
+
+- With both options, `status` is `"WAITING"` while `ready` is false, and
+  `"open"` once `ready` is true, because `OPEN` is defined by then. Word
+  positions, rendering and edge cases are in the authoritative
+  [opt-in conditional words](../nucleoid.spec.md#opt-in-conditional-words)
+  section.
+
+Full detail: [NUC 94](nuc-0094.md).
 
 ### Destructuring declarations
 
@@ -3794,6 +3837,7 @@ name := expression                     value assignment: once, no dependency (NU
 name.property := expression            value assignment to a property (NUC 66)
 name is expression                     opt-in --is-assignment: name = expression (NUC 93)
 name.property is word                  opt-in: a bare word reads its name, else its text "word" (NUC 93)
+name is A if c else B                  opt-in --conditional-words too: bare-word branches are words (NUC 94)
 name += expression                     compound assignment; also -=, *=, **=, /=, %=
 {a, b} = expression                    one declaration per field: a = expression.a (NUC 67)
 {key: name} = expression               renamed field: name = expression.key (NUC 67)

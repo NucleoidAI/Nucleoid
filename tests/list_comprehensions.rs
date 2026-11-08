@@ -31,6 +31,7 @@ const SPELLED: &str = "xs.filter(x => x > 1).map(x => x * 2)";
 const COMMENTS: SyntaxOptions = SyntaxOptions {
     c_style_comments: true,
     is_assignment: false,
+    conditional_words: false,
 };
 
 fn uses_comprehension(source: &str) -> bool {

@@ -17,6 +17,7 @@ pub struct SyntaxOptions {
     /// These delimiters take priority over regular expressions only when set.
     pub c_style_comments: bool,
     pub is_assignment: bool,
+    pub conditional_words: bool,
 }
 
 fn delimited(slice: &str) -> &str {

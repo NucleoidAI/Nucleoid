@@ -3087,6 +3087,11 @@ statement positions; caught values and transaction recovery are unchanged.
   selected branch. Unlike a class-level `if` statement, which stands aside
   while its condition reads something undefined, a conditional expression
   treats that condition as false and selects the alternate.
+- These readings are those of the default mode. With
+  [Opt-in conditional words](#opt-in-conditional-words), a branch of an `is`
+  assignment's conditional value that is exactly one identifier token is a
+  word instead, which class-level rule validation does not require to be
+  defined.
 - An error raised by the condition or the selected branch propagates through
   the existing transaction, so a failed standing re-evaluation rolls back the
   triggering change and keeps the earlier branch selection.
@@ -3385,6 +3390,95 @@ statement positions; caught values and transaction recovery are unchanged.
   `tests/is_assignments.rs`, `tests/is_assignments_cli.rs` and the terminal
   unit suite. The default-only executable documents and JSONL records keep
   their programs, assertions and expected results.
+- With [Opt-in conditional words](#opt-in-conditional-words) also enabled, a
+  branch of a conditional value can be a word as well. Without that option,
+  a conditional value builds the tree of its `=` spelling, as above.
+
+## Opt-in conditional words
+
+- [NUC 94](docs/nuc-0094.md) adds the opt-in syntax option
+  `conditional_words`, which lets a branch of a conditional expression in the
+  value of an `is` assignment be a word. CLI `--conditional-words` beside
+  `--is-assignment`, or Rust
+  `Runtime::with_options(SyntaxOptions { is_assignment: true, conditional_words: true, ..SyntaxOptions::default() })`,
+  enables it. `SyntaxOptions` gains the public field `conditional_words`,
+  which defaults to false.
+- The option extends [Opt-in is assignments](#opt-in-is-assignments) only.
+  Without `is_assignment` it changes nothing: every program keeps the
+  reading it has under the same options without `conditional_words`. With
+  `is_assignment` alone, every program keeps the reading of NUC 93.
+- The option combines with `c_style_comments`. `Runtime::options()` returns
+  it, `clear()` and `.clear` keep it, and `Runtime::check_with_options`,
+  `parse_program_with_options`, `parse_with_options`,
+  `parse_expression_with_options` and `statement::compile_with_options`
+  accept it. File runs, the plain and redirected REPL, the terminal
+  workspace, `--json` and `--graph` honor the flag as they honor
+  `--is-assignment`.
+- The word positions of an `is` assignment's value are the value itself,
+  which is a word position under NUC 93, and both branches of a conditional
+  expression that stands in a word position, in either spelling,
+  `consequent if condition else alternate` or
+  `condition ? consequent : alternate`. So `A`, `B` and `C` are in word
+  positions in `a is A if c1 else B if c2 else C`,
+  `a is c1 ? A : c2 ? B : C` and `a is c1 ? c2 ? A : B : C`.
+- A branch in a word position is a word when it is exactly one identifier
+  token, as a value is under NUC 93: `a is A if c else 1` makes `A` a word
+  and keeps `1` a number. Keywords such as `true`, `null`, `this` and `self`,
+  `$Class` references, quoted strings, paths, calls, subscripts, versions,
+  operator expressions and parenthesized operands are not words, so
+  `a is (A) if c else B` reads `A` as `a = A if c else B` does and makes only
+  `B` a word.
+- Nothing else is a word position. Conditions, including the `is`
+  comparisons of [Is and is not comparisons](#is-and-is-not-comparisons) in
+  them, keep their reading. So does a parenthesized conditional:
+  `a is (A if c else B)` reads `A` and `B` as `a = (A if c else B)` does. So
+  do the operands of other operators, call arguments, list items, object
+  values, function, arrow and lambda bodies and template interpolations
+  inside the value, and the value of an assignment inside the value, as in
+  `a is b = A if c else B`. A conditional that an assignment operator
+  follows is that assignment's target, not a result, so
+  `a is X if c else Y = 5` keeps its tree and raises
+  `SyntaxError("Cannot assign to (c?X:Y)")` at its statement, as with
+  `is_assignment` alone.
+- A word branch reads by the word rule of NUC 93: the local, variable,
+  class, function or built-in global of that name when one exists, and
+  otherwise the string of its spelling, recording a dependency on the
+  variable of that name. The condition is evaluated once and then only the
+  selected branch, so a word in the unselected branch is not read and adds
+  no dependency.
+- A standing declaration, property, constructor property or class-level
+  rule re-evaluates when the variable named by its selected word is
+  defined, changed or deleted, including inside a `suppose` block whose
+  rollback restores it, and switches branches when its condition changes.
+  Deleting the variable returns the word to its text. While undefined, the
+  selected word is a pending graph node that `why` lists among the sources.
+- Static class-rule validation does not require a branch word to be
+  defined, as for the words of NUC 93. It still requires every other name,
+  so `$Order.bad is (MISSING) if $Order.total > 0 else OTHER` raises
+  `ReferenceError("MISSING is not defined")` when declared, while
+  `$Order.ok is MISSING if $Order.total > 0 else OTHER` is accepted.
+- An `is` assignment whose value holds a word renders as `target is value`
+  in statement rendering, block graph keys such as `block(total is c?A:(B))`,
+  `--graph` output and the `rule` that `why` and `affects` report. In such a
+  value, a conditional that holds a word renders without its grouping
+  parentheses, as in `a is c?A:B`, and a name in a word position that is not
+  a word renders in parentheses, as in `c?A:(B)`, so the rendering reads back
+  as the same statement with both options. Every other `is` assignment
+  renders as before, so `a is 1 if c else 2` renders as `a=(c?1:2)`.
+- At statement level, the operand before `?` is not an enclosed position, so
+  an `is` comparison there needs parentheses, as in
+  `mark is (shape is SQUARE) ? CORNER : EDGE`; a Python-style condition is
+  enclosed, as in `mark is CORNER if shape is SQUARE else EDGE`.
+- No token, keyword or error type or message is added, and the option never
+  changes whether a program parses or where a syntax error is raised. A
+  malformed value raises what it raises with `is_assignment` alone at the
+  same place,
+  for example `SyntaxError("Unexpected end of input")` at line 1, column 17
+  for `a is A if c else`.
+- This configuration-dependent behavior is executed in
+  `tests/conditional_words.rs`, `tests/conditional_words_cli.rs` and the
+  terminal unit suite. The default-only executable documents and JSONL
+  records keep their programs, assertions and expected results.
 
 ## Instance list ranges and list queries
 

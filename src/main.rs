@@ -90,6 +90,12 @@ struct Cli {
         help = "Read a `target is value` statement as `target = value`; a bare word reads its name or else its own text"
     )]
     is_assignment: bool,
+
+    #[arg(
+        long,
+        help = "With --is-assignment, a bare word branch of a conditional value also reads its name or else its own text"
+    )]
+    conditional_words: bool,
 }
 
 fn main() -> ExitCode {
@@ -97,6 +103,7 @@ fn main() -> ExitCode {
     let mut runtime = Runtime::with_options(SyntaxOptions {
         c_style_comments: cli.c_style_comments,
         is_assignment: cli.is_assignment,
+        conditional_words: cli.conditional_words,
     });
 
     match cli.file {

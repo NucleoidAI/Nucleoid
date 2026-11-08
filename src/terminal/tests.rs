@@ -18,6 +18,7 @@ fn opted_in_comments_reach_terminal_submission_indentation_and_diagnostics() {
     let mut runtime = Runtime::with_options(nucleoid::SyntaxOptions {
         c_style_comments: true,
         is_assignment: false,
+        conditional_words: false,
     });
     app.editor = editor::new("def half value => // header:");
     key(
@@ -69,6 +70,7 @@ fn opted_in_is_assignments_reach_terminal_submission_and_survive_clear() {
     let mut runtime = Runtime::with_options(nucleoid::SyntaxOptions {
         c_style_comments: false,
         is_assignment: true,
+        conditional_words: false,
     });
     app.editor = editor::new("if true:");
     key(
@@ -94,6 +96,52 @@ fn opted_in_is_assignments_reach_terminal_submission_and_survive_clear() {
     assert_eq!(
         app.entries.last().unwrap().output.text(View::Text),
         "ReferenceError: late is not defined (line 1, column 1)"
+    );
+    assert_eq!(runtime.assertions_run(), 0);
+}
+
+#[test]
+fn opted_in_conditional_words_reach_terminal_submission_and_survive_clear() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::with_options(nucleoid::SyntaxOptions {
+        c_style_comments: false,
+        is_assignment: true,
+        conditional_words: true,
+    });
+    run(&mut app, &mut runtime, "ready = false");
+    app.editor = editor::new("if true:");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('j'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines()[1], "    ");
+    app.editor
+        .insert_str("status is OPEN if ready else WAITING");
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    run(&mut app, &mut runtime, "status");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "WAITING"
+    );
+    run(&mut app, &mut runtime, "ready = true");
+    run(&mut app, &mut runtime, "OPEN = \"open\"");
+    run(&mut app, &mut runtime, "status");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "open");
+    run(&mut app, &mut runtime, ".clear");
+    run(&mut app, &mut runtime, "other is YES if true else NO");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "YES");
+    assert!(runtime.options().conditional_words);
+    let mut alone = Runtime::with_options(nucleoid::SyntaxOptions {
+        c_style_comments: false,
+        is_assignment: true,
+        conditional_words: false,
+    });
+    run(&mut app, &mut alone, "late is YES if true else NO");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "ReferenceError: YES is not defined (line 1, column 1)"
     );
     assert_eq!(runtime.assertions_run(), 0);
 }

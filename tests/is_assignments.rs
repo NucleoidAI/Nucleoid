@@ -11,16 +11,19 @@ use nucleoid::{ErrorKind, Position, Runtime, SyntaxOptions, Value};
 const IS: SyntaxOptions = SyntaxOptions {
     c_style_comments: false,
     is_assignment: true,
+    conditional_words: false,
 };
 
 const BOTH: SyntaxOptions = SyntaxOptions {
     c_style_comments: true,
     is_assignment: true,
+    conditional_words: false,
 };
 
 const COMMENTS: SyntaxOptions = SyntaxOptions {
     c_style_comments: true,
     is_assignment: false,
+    conditional_words: false,
 };
 
 fn name(name: &str) -> Expr {
