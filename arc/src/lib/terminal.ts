@@ -508,10 +508,13 @@ export function summary(difference: number, duration: number) {
     difference === 0
       ? styleText(["bold", "green"], "✓ EXACT MATCH")
       : styleText(["bold", "red"], "◇ MISMATCH");
+  const differenceDigits: string = String(difference)
+    .padStart(2, "0")
+    .replace(/\d/g, (digit: string) => `${digit}\ufe0f\u20e3`);
   block(numbered("Run complete"), [
     status,
     "",
-    `Difference  ${difference === 0 ? "✅" : "❌"} ${difference}`,
+    `Difference  ${differenceDigits}`,
     `Elapsed     ⏱️ ${elapsed}`,
   ]);
   console.log("");
