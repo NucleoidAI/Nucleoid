@@ -14,7 +14,6 @@ export async function instances({
   const response = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: () => "",
     messages: [
       {
         role: "assistant",
@@ -101,7 +100,6 @@ export async function value({
   const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: () => "",
     messages: [
       {
         role: "assistant",
@@ -173,7 +171,6 @@ export async function output_instance_matrix({
   const response = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: () => "",
     messages: [
       {
         role: "assistant",
