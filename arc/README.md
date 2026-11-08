@@ -1169,8 +1169,8 @@ each block, every cell of its box colored, is neither a line, a corner, nor a
 chevron, and its mirror image is part of the figure that `l7511` names, not a
 turn. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
-The dataset writes its colors in its own random letters: 1 as `M`, 2 as `B`, 4
-as `C`, 5 as `Y`, 6 as `Q`, 7 as `E`, 8 as `J`, and 9 as `H`.
+The dataset writes its colors as letters ranked by count: 2 as `A`, 9 as `B`,
+7 as `C`, 1 as `D`, 8 as `E`, 4 as `F`, 5 as `G`, and 6 as `H`.
 
 `dataset.74dd1130.json` annotates the four original training pairs from
 `data\training\74dd1130.json`, in order, followed by its test pair, five
