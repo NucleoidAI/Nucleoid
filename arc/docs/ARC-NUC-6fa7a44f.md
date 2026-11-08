@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6fa7a44f.json`](../data/training/6fa7a44f.json) |
-| Instruction dataset | [`dataset.6fa7a44f.json`](../src/dataset/dataset.6fa7a44f.json): the puzzle's 4 original training pairs and its test pair, 5 block instances, 1 in each pair; colors written as letters; committed with this record |
+| Instruction dataset | [`dataset.6fa7a44f.json`](../src/dataset/dataset.6fa7a44f.json): the puzzle's 4 original training pairs and its test pair, 5 block instances, 1 in each pair; added in `f7ec134` with SHA-256 letters; colors relettered by count on 8-Nov-2026 in `af795b3` |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the height rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
 | Solver changes | None applied or suggested; the JSON-only message question carried over from earlier records stays open |
-| Solver runs | 1 local run on 8-Nov-2026: exit 0, difference 0 |
+| Solver runs | 1 local run on 8-Nov-2026 of the first, SHA-256 letter version: exit 0, difference 0; none of the current count-ranked version |
 | Updated | 8-Nov-2026 |
 
 ## Puzzle
@@ -103,14 +103,16 @@ canvas, so both give 6 rows in every pair. The worker took the doubling
 rule, which reads only the block, as `dataset.6d0aefbc.json` doubles its
 block's width.
 
-The dataset writes its colors as letters from its own SHA-256 shuffle. The
-26 letters are ordered by the SHA-256 digest of `6fa7a44f:<letter>`, which
-begins `M B C Y Q E J H`, and they go to the colors in increasing order: 1 as
-`M`, 2 as `B`, 4 as `C`, 5 as `Y`, 6 as `Q`, 7 as `E`, 8 as `J`, and 9 as
-`H`. Mapping the letters back reproduces the puzzle's training pairs cell for
-cell.
+The dataset writes its colors as letters ranked by count across all its pair
+grids, training and test pairs together: `A` for the most used color, then
+`B`, and so on, with a tie going to the color read first. That gives 2 as
+`A`, 9 as `B`, 7 as `C`, 1 as `D`, 8 as `E`, 4 as `F`, 5 as `G`, and 6 as
+`H`. Mapping the letters back reproduces the puzzle's pairs cell for cell.
+The dataset was first committed with letters from a SHA-256 shuffle; see
+[Letters ranked by count](#letters-ranked-by-count) below.
 
-The caller passed the arc-dataset worker these requirements:
+For the first version, the caller passed the arc-dataset worker these
+requirements:
 
 - the declarative, higher-order, gestalt, and letter requirements;
 - the orientation convention and the standard entries;
@@ -118,8 +120,9 @@ The caller passed the arc-dataset worker these requirements:
   profile does not reflect yet.
 
 It checked the handoff against those requirements and found that it met
-them, so it sent nothing back. It then recomputed the shuffle from the
-dataset's key and ran its own offline check on the accepted runtime, printing
+them, so it sent nothing back. It then recomputed the SHA-256 shuffle then
+in force from the dataset's key and ran its own offline check on the accepted
+runtime, printing
 only each check's name and result. The letter checks covered the whole file;
 every other check read the training pairs alone. All 24 checks passed:
 
@@ -163,11 +166,61 @@ dataset's hash was the same before and after the run. That session's
 uncommitted README paragraph is not sent to the model, and this record's
 commit leaves it out.
 
+### Letters ranked by count
+
+Later on 8-Nov-2026 the user reverted the SHA-256 letter rule (`cea73a4` and
+`cfc11db`) to letters ranked by count, the rule every other dataset uses
+again, and asked for this dataset to be reworked to match. The revert also
+restored `Matrix.silhouette` in `src/lib/Matrix.ts` to accept only `0` to `9`
+and `A` to `I`. The orientation calls of `analyzer.value` and
+`visualizer.value` pass every dataset's crops through it. So the first
+version's letters, such as `M`, `J`, `Y`, and `Q`, made those calls throw in
+every solver run, whatever its puzzle.
+
+A fresh arc-dataset worker, explicitly authorized to overwrite this dataset,
+relettered it from the puzzle's original colors, not from the old letters:
+
+| Color | SHA-256 letter | Ranked letter |
+| --- | --- | --- |
+| 2 | `B` | `A` |
+| 9 | `H` | `B` |
+| 7 | `E` | `C` |
+| 1 | `M` | `D` |
+| 8 | `J` | `E` |
+| 4 | `C` | `F` |
+| 5 | `Y` | `G` |
+| 6 | `Q` | `H` |
+
+Three ties went to the color read first: 9 before 7, 1 before 8, and 4
+before 5. Only the letters of the pair grids and both instance masks
+changed, 270 cells in all. The declarations, output canvas, instance names,
+and implementations are unchanged. Every regenerated snapshot equals its
+committed one byte for byte, because the class and rules hold no color.
+
+The worker's checks all passed:
+
+- the letters map back to the original grids;
+- the recount gives the ranked letters;
+- every crop passes `Matrix.silhouette`, where all ten of the first
+  version's crops throw;
+- `document()` loads all 31 datasets;
+- the instance names are unique.
+
+It also changed the README paragraph's last sentence to the ranked form.
+
+The user committed the worker's output as `af795b3`, "Rank ARC dataset
+6fa7a44f colors by frequency", while the caller was still reviewing it. The
+caller then reran its own check, adapted to the ranked rule, on the committed
+file, and all 24 checks passed. As before, the letter checks covered the
+whole file and every other check read the training pairs alone. The gestalt
+overview and the world model are unchanged. At the user's choice, no solver
+run has measured this version.
+
 ## Runs
 
-| Date | Command | Runtime | Exit status | Difference | Elapsed |
-| --- | --- | --- | --- | --- | --- |
-| 8-Nov-2026 13:39 UTC | `bun start 6fa7a44f` | Accepted runtime at `11443aa` (last runtime change `34bbba0`), local | 0 | 0 | 2m 48.7s |
+| Date | Command | Dataset version | Runtime | Exit status | Difference | Elapsed |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8-Nov-2026 13:39 UTC | `bun start 6fa7a44f` | 1, SHA-256 letters | Accepted runtime at `11443aa` (last runtime change `34bbba0`), local | 0 | 0 | 2m 48.7s |
 
 `/arc-purposal` ran `bun start 6fa7a44f` once from `arc/`, with a 30-minute
 limit and `NUCLEOID_EXECUTABLE` unset, after `bun install --frozen-lockfile`
@@ -198,6 +251,9 @@ invocation authorizes one run, so none was repeated.
 run. The puzzle joined the **ARC Benchmark** workflow with this dataset, so
 no workflow run is recorded yet.
 
+No run has measured the count-ranked version of 8-Nov-2026. The user chose
+offline verification for it, so its difference is unknown, not zero.
+
 ## Open items
 
 - **Messages are not JSON-only.** Carried over from
@@ -216,3 +272,7 @@ no workflow run is recorded yet.
   `arc/README.md` still describe the removed fields and the shared
   orientation comment line. The caller briefed the worker on all of these
   explicitly. Updating the profile and the README is the user's call.
+- **Count-ranked version unmeasured.** No solver run has measured the
+  relettered version, so whether the new letters change this puzzle's
+  result is unknown. The solver still sends the running puzzle's own grids
+  as numbers, while every few-shot dataset writes its colors as letters.
