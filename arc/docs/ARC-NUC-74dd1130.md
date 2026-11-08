@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/74dd1130.json`](../data/training/74dd1130.json) |
-| Instruction dataset | [`dataset.74dd1130.json`](../src/dataset/dataset.74dd1130.json): the puzzle's 4 original training pairs and its test pair, 5 mosaic instances, one per pair; committed with this record; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
+| Instruction dataset | [`dataset.74dd1130.json`](../src/dataset/dataset.74dd1130.json): the puzzle's 4 original training pairs and its test pair, 5 mosaic instances, one per pair; committed with this record; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; mirror axis derived from each mosaic's input box with `@first` on 8-Nov-2026 |
 | Output canvas | `EXACT` |
-| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule is one unconditional class-level rule of accepted Nucleoid |
-| Solver changes | None; suggested changes await review, not applied |
-| Solver runs | 1 local run on 5-Nov-2026, exit 0, an exact match, with this dataset's test pair in its few-shot context; none of the current version |
+| Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule is one unconditional class-level rule of accepted Nucleoid, using the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md) |
+| Solver changes | None applied; on 8-Nov-2026, validating the model's declarations and rejecting a `null` input state in `src/analyzer.ts` were suggested and not applied; earlier suggestions await review |
+| Solver runs | 2 local runs: 5-Nov-2026, exit 0, an exact match, with this dataset's test pair in its few-shot context; 8-Nov-2026, of the dynamic-axis version, exit 1, a failed run with no prediction |
 | Updated | 8-Nov-2026 |
 
 ## Puzzle
@@ -49,38 +49,48 @@ puzzles tied with [`3c9b0459`](ARC-NUC-3c9b0459.md), the previous default.
 - **Change.** The whole mosaic flips across that diagonal, so its rows
   become its columns.
 - **World model.** One object per pair, the whole mosaic, whose flip is its
-  `mirror_axis`, 135.
+  `mirror_axis`: the line from its input box's top-left cell to its
+  bottom-right cell, read with `@first`. No finer model was needed.
 
 ## Dataset
 
 The dataset holds the four original training pairs in source order, followed
 at the same level by the puzzle's test pair, which the same rule annotates.
-Every mosaic is one instance of `Obj(x, y, orientation)`, tagged `l9100`, a
-single shape, as in `dataset.28bf18c6.json` and `dataset.3c9b0459.json`. The
-class takes no color, size, cell list, canvas size, or matrix of cells: the
-mosaic's cells travel unchanged in its masks. One unconditional class-level
-rule states the flip:
+Every mosaic is one instance of `Obj(x, y, width, height, orientation)` with
+only the standard entries, tagged `l9100`, a single shape, as in
+`dataset.28bf18c6.json` and `dataset.3c9b0459.json`. The class takes no
+color, cell list, canvas size, or matrix of cells: the mosaic's cells travel
+unchanged in its masks. One unconditional class-level rule states the flip
+and derives its axis from the mosaic's own input box:
 
 ```nuc
-$Obj.mirror_axis = 135
+class Obj(x: int, y: int, width: int, height: int, orientation: int):
+$Obj.mirror_axis = {start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}
 ```
 
-`mirror_axis` is the axis the mosaic is mirrored across, as an angle clockwise
-from north, and is absent from every input state. It follows the convention of
-the line orientations in `dataset.line.json`, where vertical lines are 0 and
-horizontal lines 90, so the main diagonal, which runs from northwest to
-southeast, is 135, and the other diagonal would be 45. `orientation` cannot
-carry the change, since it is a clockwise turn and no turn reproduces a
-training output, so it stays 0 in both states. The rule creates no other
-property and leaves `x`, `y`, and the tag unchanged: a mosaic that fills its
-square canvas keeps its box at 0 and 0 under the flip. Each output state adds
-only `mirror_axis` to its input state. The declarations carry no `#` comments,
-as in `dataset.3c9b0459.json`, `dataset.25d8a9c8.json`, and
-`dataset.25ff71a9.json`. The [README](../README.md#instruction-datasets)
-describes the dataset in full.
+`mirror_axis` is the line the mosaic is mirrored across, and it is absent
+from every input state. `start` is the top-left cell of the mosaic's input
+box and `end` its bottom-right cell, as canvas columns and rows, both read
+with `@first`. So the axis is the mosaic's own main diagonal wherever its box
+lies: from 0 and 0 to 2 and 2 in every pair, and the cells on it stay in
+place.
 
-The worker started from the big picture, the whole mosaic as the object, and
-that formulation explained every training pair, so it never went down to rows,
+`orientation` cannot carry the change, because it is a clockwise turn and no
+turn reproduces a training output, so it stays 0 in both states. The rule
+creates no other property and leaves `x`, `y`, `width`, `height`, and the
+tag unchanged: a flip across its own diagonal keeps a square box in place.
+Each output state adds only `mirror_axis` to its input state, as
+`{"end":{"x":2,"y":2},"start":{"x":0,"y":0}}` in the runtime's key order.
+
+The declarations and implementations carry no `#` comments, and each instance
+has the six keys the datasets have shared since `d0e3eed`. The
+[README](../README.md#instruction-datasets) describes the dataset in full,
+and [Dynamic mirror axis](#dynamic-mirror-axis) below says what changed from
+the constant `135`, and why.
+
+For the first version, the worker started from the big picture, the whole
+mosaic as the object, and that formulation explained every training pair, so
+it never went down to rows,
 color regions, or single cells. It weighed two alternatives. A turn plus a
 mirror flag would state one change with two properties and a convention for
 their order. Rules that swap the box's origin, `$Obj.x = $Obj.y@first` and
@@ -183,11 +193,86 @@ instance names, positions, sizes, orientations, and tags are unchanged. `Matrix.
 orientation call's few-shot crops read exactly as before. No solver run has
 measured this version, so its difference is unknown, not zero.
 
+### Dynamic mirror axis
+
+On 8-Nov-2026 the user asked to rework this dataset to use "more dynamic with
+@first" instead of the constant `= 135`, adding that it had been done that
+way before. Earlier the same day, the user had asked to "dynamic set
+$Obj.mirror_axis instead of 135 direcly". The worker of that attempt proposed
+the same endpoint rule, but concurrent edits blocked its handoff before
+publication. The note recording it, `713cc5a`, was later reverted by the
+user in `653ec5d`. Another session's uncommitted revision applied the rule
+too, but it also restored the removed instance keys and comments, and it was
+reverted.
+
+A fresh arc-dataset worker, explicitly authorized to replace this dataset,
+kept the whole mosaic as the figure. It saved the rule, fixed from the
+training pairs, before it extracted the test pair from the puzzle, and the
+test pair changed nothing. It disclosed that the committed dataset it
+reworked already held the annotated test pair, so it had seen those grids
+before. It adopted the earlier attempt's rule unchanged after weighing these
+alternatives, measured on the training pairs alone:
+
+- The constant `135`, `(orientation@first + 135) % 360`, and
+  `90 + 45 * height@first / width@first` each reproduce all 4 training pairs.
+  But each states the same constant, which gives only the axis's direction,
+  not where the line lies.
+- The same ends without `@first` reproduce them too, but they are not
+  anchored to the input state.
+- `[[x, y], [x, y]]` lists leave the order of x and y to a convention.
+- Exclusive corners, ending at 3 and 3, name a point outside the canvas's
+  cells.
+- The canvas's diagonal, from `canvas_width` and `canvas_height`, reads the
+  canvas rather than the figure.
+- Rules that also swap `x` and `y` only restate the 0 and 0 origin.
+- Rows turned into columns would be finer than the training pairs need.
+- The other diagonal, both center lines, the origin swap alone, no rule, and
+  each of the three turns reproduce no training pair.
+
+Only the rule and the five output snapshots changed. The grids, masks,
+letters, instance names, implementations, and input snapshots are
+byte-identical to the previous version, and the worker's recount confirmed
+that the letters still follow the ranking above. The worker worked in an
+external directory and changed nothing in the repository. It staged three
+things:
+
+- the dataset;
+- its README paragraph's new text;
+- a fix to the `dataset.6e02f1e3.json` paragraph, which had cited this
+  dataset's `135` as the way it names its axis.
+
+All 42 of its checks passed. Among them:
+
+- every snapshot reruns, also in reverse order and with the rule after the
+  instances;
+- mirroring across each axis reproduces every output;
+- every crop passes `Matrix.silhouette`.
+
+The caller checked the handoff against the declarative, higher-order,
+gestalt, and letter requirements and found that it met them. The pull before
+integration brought in `453a0da`, "NUC 92 List Comprehensions", a parser
+change. So the caller rebuilt the runtime and reran its own checks of the
+staged file on the new build. All 24 dataset checks and all 4 mirror checks
+passed: the letter checks covered the whole file, and every other check read
+the training pairs alone. The mirror checks confirm that:
+
+- reflecting each training input mask across its axis gives its output mask;
+- the axis runs from each input box's top-left to its bottom-right corner;
+- the box, orientation, and tag stay unchanged.
+
+After integration, `document()` loads the dataset as the 15th of the 31 JSON
+instruction datasets, with every entry matching its file, and all 536 crops
+of the 31 datasets pass `Matrix.silhouette`. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. The
+caller made the puzzle the solver's default in `src/app.ts`, in place of
+`6fa7a44f`, before the run.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
 | --- | --- | --- | --- | --- | --- |
 | 5-Nov-2026 05:46 UTC | 1, one mosaic per object | Accepted `a605465`, local | 0 | 0, exact match | 1m 55.1s |
+| 8-Nov-2026 14:14 UTC | Dynamic mirror axis | Accepted `453a0da`, local | 1 | None: the run failed before a prediction | 51.7s, runner's clock |
 
 The run was `bun start 74dd1130` from `arc/`, run once by `/arc-purposal` with
 a 30-minute limit and `NUCLEOID_EXECUTABLE` unset, after
@@ -211,8 +296,66 @@ None of these runs measured the orientation version of 6-Nov-2026: the user
 chose offline verification for the batch, so its difference is unknown, not
 zero.
 
+At the user's choice, the second run tested the dynamic-axis version: one
+`bun start 74dd1130` from `arc/`, with a 30-minute limit and
+`NUCLEOID_EXECUTABLE` unset, after `bun install --frozen-lockfile` reported
+no changes. The setup was:
+
+- **Runtime:** the primary checkout's debug runtime (`nucleoid 1.0.0`),
+  rebuilt with `cargo build` at `453a0da`, whose runtime sources last changed
+  in that commit.
+- **Solver:** the one committed at `453a0da`, with only its default puzzle
+  changed.
+- **Model:** the committed `qwen/qwen3.8-27b`, pinned to the `deepinfra/bf16`
+  provider with fallbacks and caching off. Each of the run's 5 model
+  requests reported 0 cached input tokens.
+- **Few-shot context:** `--only-puzzle-dataset` was off, so the few-shot
+  context held all 31 instruction datasets, this dataset's reworked version
+  and its annotated test pair among them.
+
+The run failed with exit status 1 before it made a prediction, so it has no
+difference score, and the solver printed no elapsed time. By the runner's
+clock it lasted 51.7 seconds, from 14:14:11.6 to 14:15:03.3 UTC. The model
+returned its class declaration split into one array element per line, so
+`declarations[0]` held only the class header. `analyzer.value` builds each
+input state from `declarations[0]` and the instance's implementation alone.
+Nucleoid returns `null` for a program whose class has no body, as an offline
+replay of that program confirms. So the first training instance's input
+state was `null`, which the solver accepted. Step 1.12, the second
+instance's orientation call, then failed with
+`TypeError: Cannot read properties of null (reading 'orientation')` at
+`src/analyzer.ts:111`.
+
+The error log holds bun's command line, that error, and the script's exit
+line. The run wrote no `logs/74dd1130.log.json`; the file there is from the
+5-Nov-2026 run. The runtime's hash and every instruction dataset's hash were
+the same before and after the run, and no commit reached the primary
+checkout or the remote during it. The invocation authorized one run, so none
+was repeated, and nothing was revised from its output. `bun run typecheck`
+and `bun run lint` passed with the new default after the run.
+
 ## Open items
 
+- **A malformed declarations response passes unchecked.** Suggested, not
+  applied, in `src/analyzer.ts`:
+  - Validate the `declarations` that `analyzer.declarations` returns before
+    any code runs. Every element must be a complete statement, so reject a
+    response whose class body arrives as separate indented elements. For
+    example, run `declarations[0]` alone after the canvas variables and
+    require that it declares the class. Answer a failure with a JSON error
+    code and the field path, retried within the call's budget, as the ARC
+    instructions require.
+  - Have `analyzer.value` treat an `input_value` that is not an object with
+    the instance's `id` as an error, rather than passing `null` on.
+    `visualizer.value` builds its states the same way and would need the
+    same check.
+
+  The evidence is the 8-Nov-2026 run alone, not its expected grid. Its first
+  input state came back `null` from a header-only `declarations[0]`, the
+  next step failed with a `TypeError`, and an offline replay of the
+  header-only program gives `null`.
+- **Dynamic-axis version unscored.** The one run of the reworked version
+  failed before a prediction, so its difference is unknown, not zero.
 - **A run sees the answer.** Resolved on 6-Nov-2026: the user decided this is
   intended, because the datasets are being prepared as few-shot examples and
   runs at this stage are not yet held-out tests. The ARC instructions now say
@@ -229,19 +372,17 @@ zero.
   instructions require every message to parse as one JSON document.
   Suggested, not applied: build each message with `JSON.stringify` of one
   data object.
-- **Lint fails on untouched solver files.** At `a605465`, `bun run lint`
-  reports 28 `prettier/prettier` errors, 4 in `src/analyzer.ts` and 24 in
-  `src/visualizer.ts`, files this invocation did not change, while
-  `bun run typecheck` passes with the new default. Suggested, not applied:
-  reformat both files with Prettier, for example `bunx eslint --fix
-  src/analyzer.ts src/visualizer.ts`, a formatting-only change.
+- **Lint fails on untouched solver files.** Resolved: at `453a0da`,
+  `bun run lint` and `bun run typecheck` both pass. At `a605465`,
+  `bun run lint` reported 28 `prettier/prettier` errors, 4 in
+  `src/analyzer.ts` and 24 in `src/visualizer.ts`.
 - **Comments in declarations.** Resolved on 6-Nov-2026: the user decided that
   natural-language `#` comments may reach the model only as part of
   `declarations`, and the ARC instructions now say so. Datasets with and
   without such comments both follow them, so nothing needs to change. On
   7-Nov-2026 the user also allowed them in `implementation`, and each
-  implementation in this dataset now opens with comment lines that describe
-  its object.
+  implementation in this dataset opened with comment lines that described
+  its object until `ac49bb3` removed every dataset comment on 8-Nov-2026.
 - **Workflow timeout.** Resolved on 6-Nov-2026: at the user's request, the
   arc-dataset profile now asks for the batch budget the workflow needs,
   `ceil(listed puzzles / ARC_CONCURRENCY) * 30 + 20` minutes, within GitHub
@@ -250,6 +391,7 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
-- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
-  letter version. The solver still sends this puzzle's own grids as numbers,
-  while every few-shot dataset now writes its colors as letters.
+- **Letter version unmeasured.** No solver run has scored the 8-Nov-2026
+  letter version: the dynamic-axis run carried its letters but failed before
+  a prediction. The solver still sends this puzzle's own grids as numbers,
+  while every few-shot dataset writes its colors as letters.

@@ -1060,8 +1060,7 @@ mosaic's colors once, so its length is the number of colors, and the object
 literal, keyed by that number, states each count's axis once, by the shared
 convention for straight lines without a head, where vertical is 0 and
 horizontal is 90, so the main diagonal, which runs from northwest to southeast,
-is 135 and the other diagonal 45, as `dataset.74dd1130.json` names its mirror
-axis. No
+is 135 and the other diagonal 45. No
 arithmetic relates the counts to the axes, so the rule looks the axis up, as
 `dataset.27a28665.json` looks up its code by tag, and it reads no
 orientation, so it rewrites `orientation` without an `@first` anchor. The
@@ -1198,16 +1197,24 @@ which no turn does. The class takes only the standard entries `x`, `y`,
 bounding box of its input mask, 3 and 3 in every pair, so each implementation
 passes `width=3, height=3` right after `y`. It takes no descriptive property,
 with no color, parts list, canvas size, or matrix of cells, because the rule
-needs none: the mosaic's cells travel in its masks, and its flip is its
+needs none: the mosaic's cells travel in its masks, and its box gives its
 mirror axis. One unconditional class-level rule introduces `mirror_axis`,
-which is absent before the rules run, as `135`: the axis the mosaic is
-mirrored across, as an angle clockwise from north by the shared convention for
-straight lines without a head, where vertical is 0 and horizontal is 90, so the
-main diagonal, which runs from northwest to southeast, is 135 and the other
-diagonal 45. The
-rules leave `x` and `y` unchanged: a mosaic that fills its square canvas keeps
-its box in place under a flip across its main diagonal, whether its own or the
-canvas's. Two further rules, `$Obj.x = $Obj.y@first` and
+which is absent before the rules run: the line the mosaic is mirrored across,
+read from the mosaic's input box with `@first` anchors rather than stated as a
+constant,
+`{start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}`.
+`start` is the box's top-left cell and `end` its bottom-right cell, as canvas
+columns and rows, so the axis is the mosaic's own main diagonal wherever its
+box lies, from 0 and 0 to 2 and 2 in every pair, and the cells on it stay in
+place. A constant bearing, `135`, the angle that the convention for straight
+lines without a head gives the diagonal that falls to the right, would
+reproduce every training output as well, but it is the same number for every
+mosaic and gives only the axis's direction, not where the line lies. The
+canvas's diagonal, from 0 and 0 to `canvas_width - 1` and
+`canvas_height - 1`, gives the same ends in every training pair too, because
+every mosaic fills its canvas, but it reads the canvas rather than the figure.
+The rules leave `x` and `y` unchanged: a flip across its own diagonal keeps a
+square box in place. Two further rules, `$Obj.x = $Obj.y@first` and
 `$Obj.y = $Obj.x@first`, which swap the box's origin as a flip across the
 canvas's diagonal does, would reproduce every training output as well, but
 every mosaic's origin is 0 and 0, so those rules would only return the input
@@ -1217,22 +1224,24 @@ shows no relation between objects, so no population operation appears. The
 rules create no other property and leave `x`, `y`, `width`, `height`,
 `orientation`, and the tag unchanged, because the flip keeps the square box's
 size and `mirror_axis` carries it, so each output state adds only
-`mirror_axis` to its input state's keys. Native snapshots start with the
+`mirror_axis` to its input state's keys, as
+`{"end":{"x":2,"y":2},"start":{"x":0,"y":0}}` in every pair, its keys in the
+runtime's order. The rule gives the same states when declared after the
+instances. Native snapshots start with the
 pair's `canvas_width` and `canvas_height`, and output snapshots are captured
 with the pair's implementation followed by `Obj[:]`. The tag `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, in
 both states. Input masks retain each pair's full-size 3 by 3 input canvas and
 output masks the complete 3 by 3 output; with no zero cell, each mask equals
-its pair's grid, and merging them reproduces each pair's input and output. The
-`output_x`/`output_y` fields record the mirrored mosaic's nonzero bounding-box
-origin, 0 and 0, equal to `output_value.x`/`output_value.y`. `output_canvas`
+its pair's grid, and merging them reproduces each pair's input and output.
+Each output state's `x`, `y`, `width`, and `height`, 0, 0, 3, and 3, are the
+mirrored mosaic's nonzero bounding box in its output mask. `output_canvas`
 is `EXACT` because each output keeps its input's 3 by 3 canvas; with no zero
 cell to crop, `FIT` would frame the same grids. Orientation is 0 in both
-states because the mosaic is mirrored, not turned, and `mirror_axis` states
-the flip. The declarations hold executable code and one `#` comment, the
-orientation line that every dataset places above its class. The test pair
-follows the training pairs at the same level and is annotated by the same
-rules.
+states: the mosaic, every cell of its box colored, is neither a line, a
+corner, nor a chevron, and a mirror is not a turn, so `mirror_axis` states
+the flip. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
 The dataset writes its colors as letters ranked by count: 2 as `A`, 5 as `B`,
 9 as `C`, 1 as `D`, 6 as `E`, 4 as `F`, 8 as `G`, and 3 as `H`.
 
