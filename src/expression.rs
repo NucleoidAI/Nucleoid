@@ -5,7 +5,7 @@
 //! are not names the surrounding declaration reads.
 
 use crate::error::Result;
-use crate::lang::ast::{BinaryOp, Expr, FunctionBody, TemplatePart};
+use crate::lang::ast::{BinaryOp, Expr, FunctionBody, TemplatePart, UnaryOp};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
 
@@ -152,6 +152,10 @@ fn roots(
         } if required && matches!(right.as_ref(), Expr::Identifier(_)) => {
             roots(left, resolve(left), resolve, required, found);
         }
+        Expr::Unary {
+            operator: UnaryOp::Word,
+            operand,
+        } if required && matches!(operand.as_ref(), Expr::Identifier(_)) => {}
         Expr::Identifier(name) => found.push(name.clone()),
         Expr::Call { arguments, .. } | Expr::Super(arguments) => {
             if let Expr::Call { callee, .. } = expression {

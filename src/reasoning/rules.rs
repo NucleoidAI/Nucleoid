@@ -1,10 +1,11 @@
 use indexmap::IndexMap;
+use std::fmt;
 
 use super::Selection;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
-use crate::lang::ast::Expr;
 use crate::lang::ast::generator::enum_source;
+use crate::lang::ast::{Expr, UnaryOp};
 use crate::nuc::Nuc;
 use crate::nuc::property::Owner;
 use crate::runtime::Runtime;
@@ -37,8 +38,10 @@ pub(super) fn rule_of(node: Option<&Nuc>, key: &NodeKey) -> String {
         Nuc::Variable(variable) => declaration_rule(&variable.name, &variable.value),
         Nuc::Let(binding) => declaration_rule(&binding.name, &binding.value),
         Nuc::Property(property) => match &property.owner {
-            Owner::Object(id) => format!("{}.{} = {}", id, property.name, property.value),
-            Owner::Class(class) => format!("${}.{} = {}", class, property.name, property.value),
+            Owner::Object(id) => format!("{}.{}{}", id, property.name, Bound(&property.value)),
+            Owner::Class(class) => {
+                format!("${}.{}{}", class, property.name, Bound(&property.value))
+            }
         },
         _ => key.to_string(),
     }
@@ -47,7 +50,21 @@ pub(super) fn rule_of(node: Option<&Nuc>, key: &NodeKey) -> String {
 fn declaration_rule(name: &str, value: &Expr) -> String {
     match value {
         Expr::Enum(members) => enum_source(name, members),
-        _ => format!("{name} = {value}"),
+        _ => format!("{name}{}", Bound(value)),
+    }
+}
+
+struct Bound<'a>(&'a Expr);
+
+impl fmt::Display for Bound<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0 {
+            Expr::Unary {
+                operator: UnaryOp::Word,
+                operand,
+            } => write!(f, " is {operand}"),
+            value => write!(f, " = {value}"),
+        }
     }
 }
 
@@ -65,7 +82,7 @@ impl Runtime {
 
         match (class, node) {
             (Some(class), Some(Nuc::Property(property))) => {
-                format!("${}.{} = {}", class, property.name, property.value)
+                format!("${}.{}{}", class, property.name, Bound(&property.value))
             }
             _ => rule_of(node, key),
         }

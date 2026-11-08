@@ -193,20 +193,30 @@ impl Parser {
                 self.nested_expression(Self::assertion_expression)
                     .map(Stmt::Expression)
             }
-            _ => {
-                let expression = self.expression()?;
-
-                if self.check(&Token::ColonAssign) {
-                    return self.value_assignment(expression);
-                }
-
-                if let Some(statement) = self.suppose_statement(&expression)? {
-                    return Ok(statement);
-                }
-
-                Ok(simple_statement(expression))
-            }
+            _ => self.expression_statement(),
         }
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt> {
+        let expression = self.expression()?;
+
+        if self.starts_is_assignment(&expression) {
+            return self.is_assignment(expression);
+        }
+
+        self.expression_tail(expression)
+    }
+
+    pub(super) fn expression_tail(&mut self, expression: Expr) -> Result<Stmt> {
+        if self.check(&Token::ColonAssign) {
+            return self.value_assignment(expression);
+        }
+
+        if let Some(statement) = self.suppose_statement(&expression)? {
+            return Ok(statement);
+        }
+
+        Ok(simple_statement(expression))
     }
 
     fn return_statement(&mut self) -> Result<Stmt> {

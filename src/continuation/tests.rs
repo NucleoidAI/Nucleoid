@@ -214,6 +214,7 @@ fn named_function_buffering_ends_at_lexical_errors_and_follows_comment_options()
     );
     let enabled = SyntaxOptions {
         c_style_comments: true,
+        is_assignment: false,
     };
     assert_eq!(
         submitted(

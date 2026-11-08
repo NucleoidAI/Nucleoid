@@ -76,7 +76,10 @@ impl Runtime {
     /// ```
     /// use nucleoid::{Runtime, SyntaxOptions};
     ///
-    /// let mut runtime = Runtime::with_options(SyntaxOptions { c_style_comments: true });
+    /// let mut runtime = Runtime::with_options(SyntaxOptions {
+    ///     c_style_comments: true,
+    ///     ..SyntaxOptions::default()
+    /// });
     /// assert_eq!(runtime.run("6 /* units */ / 2 // result").unwrap().to_string(), "3");
     /// ```
     #[must_use]

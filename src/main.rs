@@ -84,12 +84,19 @@ struct Cli {
     /// Enable // line comments and non-nesting /* ... */ block comments.
     #[arg(long)]
     c_style_comments: bool,
+
+    #[arg(
+        long,
+        help = "Read a `target is value` statement as `target = value`; a bare word reads its name or else its own text"
+    )]
+    is_assignment: bool,
 }
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
     let mut runtime = Runtime::with_options(SyntaxOptions {
         c_style_comments: cli.c_style_comments,
+        is_assignment: cli.is_assignment,
     });
 
     match cli.file {

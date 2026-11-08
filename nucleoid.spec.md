@@ -225,9 +225,9 @@ operator-chain diagnostics and source positions are preserved.
   then raises a regex-compilation SyntaxError, and `1 // 2 /` divides by a
   regex and produces NaN.
 - Explicit CLI `--c-style-comments` or Rust
-  `Runtime::with_options(SyntaxOptions { c_style_comments: true })` enables
-  optional `//` and non-nesting `/* ... */` comments. `SyntaxOptions` is a
-  concrete public, copyable value whose `c_style_comments` field defaults
+  `Runtime::with_options(SyntaxOptions { c_style_comments: true, ..SyntaxOptions::default() })`
+  enables optional `//` and non-nesting `/* ... */` comments. `SyntaxOptions`
+  is a concrete public, copyable value whose `c_style_comments` field defaults
   to false. `Runtime::new()` and `Runtime::default()` retain the accepted mode.
 - Only in enabled mode do those openers take priority over regex/division
   recognition outside literals. `//` skips to LF or EOF without consuming
@@ -3267,10 +3267,124 @@ statement positions; caught values and transaction recovery are unchanged.
   column 12 for `if value is:` followed by an indented body, and
   `SyntaxError("Unexpected end of input")` at line 1, column 12 for
   `if value is`.
+- These readings are those of the default mode. The opt-in mode of
+  [Opt-in is assignments](#opt-in-is-assignments) reads a statement that
+  begins with an assignable path directly followed by `is` as an assignment;
+  every enclosed comparison above is unchanged in that mode.
 - The five appended entries beginning
   `Nucleoid matches values with is and is not` through
   `Nucleoid keeps is as an ordinary name where a statement can follow`
   specify the executable behavior.
+
+## Opt-in is assignments
+
+- [NUC 93](docs/nuc-0093.md) adds the opt-in statement `target is value`,
+  which means `target = value`, for variables and properties. CLI
+  `--is-assignment` or Rust
+  `Runtime::with_options(SyntaxOptions { is_assignment: true, ..SyntaxOptions::default() })`
+  enables it. `SyntaxOptions` gains the public field `is_assignment`, which
+  defaults to false. `Runtime::new()`, `Runtime::default()` and every
+  function without options keep the accepted reading, in which `a is good` is
+  the three juxtaposed statements `a`, `is` and `good`.
+- The option combines with `c_style_comments`. `Runtime::options()` returns
+  it, `clear()` and `.clear` keep it, and `Runtime::check_with_options`,
+  `parse_program_with_options`, `parse_with_options`,
+  `parse_expression_with_options` and `statement::compile_with_options`
+  accept it. File runs, the plain and redirected REPL, the terminal
+  workspace, `--json` and `--graph` honor the flag as they honor
+  `--c-style-comments`; REPL continuation and terminal indentation are
+  lexical and unchanged.
+- With the option, a statement is `target is value` when its leading
+  expression is a target that `:=` accepts and the next two tokens are the
+  identifier `is` and a token that can begin an expression. Such a target is
+  a name or a dotted path rooted in a name, `this`, `self` or `$Class`, as for
+  compound assignment, possibly grouped in parentheses, with at most 128
+  links; a root `this`, `self` or `$Class` needs a property. A link may be a
+  state version, so
+  `a@first is 1` raises `TypeError("State versions are read-only")` as
+  `a@first = 1` does. Nothing may separate the target from `is` but spaces
+  or comments on the same line.
+- A token can begin an expression when it is an identifier, a `$Class`
+  reference, a number, a string in either quote, a template, a regular
+  expression, `(`, `[`, `{`, `!`, `-`, `+`, or one of the keywords `true`,
+  `false`, `null` (also spelled `None` and `undefined`), `this` (also `self`),
+  `super`, `new`, `delete`, `function`, `not` and `typeof`. Any other token
+  after `is` keeps the accepted reading, in which `is` is a name that begins
+  the next statement: `:`, `=`, `:=`, a compound assignment such as `+=`,
+  another operator or punctuation, a keyword such as `if`, `and` or `of`, or
+  the end of the line or input. So `a is: T`, `a is = 5`, `a is += 1` and
+  `a is` at the end of a line read as before.
+- A leading expression that `:=` rejects also keeps the accepted reading:
+  `f() is 5`, `1 is 2`, `a[0] is 1`, `this is 5`, `$Order is 5`,
+  `a + b is 5`, `a = b is c` and `x => x is 5` are juxtaposed statements as
+  before, and destructuring declarations are unchanged. A statement that
+  begins with `why`, `affects`, `stated` or `derived` followed by `is` keeps
+  its accepted reading as a reasoning selection of the name `is`, so those
+  variables are assigned with `=`.
+- The lexer is unchanged, so a `/` directly after `is` is division, as after
+  any name. A regular-expression value is written in parentheses:
+  `pattern is (/colou?r/)`.
+- The form applies in every statement position: the top level, after another
+  statement on the same line, indented, same-line and braced blocks, the
+  bodies of `if`, `elif`, `else`, `for`, `while`, `try`, `catch` and
+  `suppose`, function, method, `init` and constructor bodies, one-statement
+  class bodies, and the block bodies of function literals wherever they
+  appear, including inside template interpolations. It never applies inside
+  an expression: conditions, parentheses, arguments, lists, object values,
+  named arrow bodies, the top level of a template interpolation and the top
+  level of `parse_expression_with_options` keep their readings, including the
+  enclosed `is` and `is not` comparisons of
+  [Is and is not comparisons](#is-and-is-not-comparisons).
+- Unless its value is a word, `target is value` builds exactly the syntax
+  tree of `target = value`. The value is parsed as the value of `=` is at
+  statement level, in the same context and at the same nesting depth, and
+  ends where that value ends. So
+  standing declarations and their dependencies, property assignments,
+  `this.p` in constructors, class-level `$Class.p` rules for every instance,
+  chains such as `a is b = c`, values such as `a is b += 1`, `a is suppose:`
+  with a body, runtime errors and syntax errors all follow from `=`.
+  `a is not b` assigns `not b`, and `a is b is c` is `a is b` followed by the
+  juxtaposed statements `is` and `c`, as `a = b is c` is `a = b`, `is` and
+  `c`.
+- When the value is exactly one identifier token, it is a word, with the
+  word rule of `is` comparisons. It reads the local, variable, class,
+  function or built-in global of that name when one exists, so after
+  `good = 2`, `a is good` makes `a` follow `good`. Otherwise its value is the
+  string of its spelling, so `a is good` stores `"good"`.
+- A word records a dependency on the variable of its name even while nothing
+  defines it. The declaration re-evaluates when that variable is defined,
+  changed or deleted, including inside a `suppose` block whose rollback
+  restores it, and deleting the variable returns the word to its text. While
+  undefined, the name is a pending graph node that `why` lists among the
+  sources. Static class-rule validation does not require a word to be
+  defined, so `$Order.state is OPEN` is accepted while `OPEN` is undefined.
+- Keywords, `$Class` references, paths, calls, subscripts, versions, operator
+  expressions and parenthesized operands are not words. `a is (good)` reads
+  `good` as `a = good` does and raises `ReferenceError("good is not defined")`
+  while nothing defines it, and `$Order.bad is (MISSING)` raises
+  `ReferenceError("MISSING is not defined")` when declared. Quoted values
+  `"good"` and `'good'` are ordinary strings.
+- A word assignment renders as `target is word`: in graph keys such as
+  `block(total is good)`, in `--graph` output and in the `rule` that `why` and
+  `affects` report, as `a is good` and `$Order.state is OPEN`. Every other
+  `is` assignment renders as its `=` spelling, such as `a = 5`.
+- No error type or message is added. A malformed value raises what its `=`
+  spelling raises at the same place in the source, which is one column
+  further right when that place follows `is` on its line:
+  `a is (1 + )` raises `SyntaxError("Unexpected ')'")` at line 1, column 12,
+  and `a is b := 1` raises `SyntaxError("Invalid value assignment target")`
+  at line 1, column 8.
+- These default-mode readings change only with the option, because each
+  contains such a statement: `value is "EXACT"` assigns `"EXACT"`;
+  `{ a is b }` assigns the word `b`; `a is 1 ? 2 : 3` assigns `2`;
+  `while v is x: T` is a loop whose condition is the comparison `v is x`;
+  `suppose v is x: T` is a `suppose` block whose premise is `v is x`;
+  `while v is suppose:` with a body is `while` followed by `v = suppose:`; and
+  `a is x: T` and `while v is assert: a, b` are syntax errors.
+- This configuration-dependent behavior is executed in
+  `tests/is_assignments.rs`, `tests/is_assignments_cli.rs` and the terminal
+  unit suite. The default-only executable documents and JSONL records keep
+  their programs, assertions and expected results.
 
 ## Instance list ranges and list queries
 

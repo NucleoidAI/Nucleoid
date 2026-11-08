@@ -11,6 +11,7 @@ use nucleoid::{ErrorKind, Position, Runtime, SyntaxOptions, Value};
 
 const COMMENTS: SyntaxOptions = SyntaxOptions {
     c_style_comments: true,
+    is_assignment: false,
 };
 
 fn checked(source: &str, expected: &str, assertions: usize) {
