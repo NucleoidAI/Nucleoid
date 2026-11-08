@@ -1105,6 +1105,75 @@ same rules.
 The dataset writes its colors in its own random letters: 2 as `Z`, 3 as `Q`, 4
 as `M`, and 5 as `T`.
 
+`dataset.6fa7a44f.json` annotates the four original training pairs from
+`data\training\6fa7a44f.json`, in order, followed by its test pair, five
+block instances in total, one per pair. Every input retains its original
+3 by 3 canvas and every output its original 6 by 3 canvas, 6 rows of 3
+columns, with their colors and positions. No cell is zero: each grid is one
+block of three or four colors, 9, 1, 4, and 2; 4, 8, 7, and 6; 7, 9, 5, and
+1; and 2, 6, and 9 in the training pairs, in reading order, and 2, 9, 8, and 5
+in the test pair, so each object is that whole block, the figure seen first,
+and its box is the whole canvas. Each output stacks the block over its
+top-bottom mirror image: the input reappears unchanged in the top three rows,
+and its row r reappears as row 5 - r, so the output reads the same from the
+bottom up as from the top down. Repeating the block below without mirroring
+it reproduces no training output, because no training block is top-bottom
+symmetric, and neither does setting its left-right mirror image below it or
+its top-bottom mirror image above it; a half turn of the block placed below
+reproduces only the second training pair, whose rows each read the same from
+right to left. Every block fills its canvas, so its own bottom edge is the
+canvas's bottom edge: the canvas-edge rule of `dataset.8be77c9e.json`,
+`$Obj.height = 2 * (canvas_height - $Obj.y@first)`, and doubling the block's
+own height give the same 6 rows in every training pair, and the rules take
+the latter, which reads only the block, as `dataset.6d0aefbc.json` doubles
+its block's width. These choices were fixed from the training pairs before
+the test pair was read; the test block is neither top-bottom nor left-right
+symmetric, and the same rules annotate it. The puzzle is the top-bottom
+counterpart of `dataset.6d0aefbc.json`, which sets its block beside its
+left-right mirror image. The class takes only the standard entries `x`, `y`,
+`width`, `height`, and `orientation`, in that order, where `width` and
+`height` are the column and row counts of the block's box, the nonzero
+bounding box of its input mask, 3 and 3 in every pair, with no color, parts
+list, canvas size, or matrix of cells, because the rules need none: the
+block's cells travel in its masks. Its declaration is that of
+`dataset.6d0aefbc.json`, and each implementation passes
+`x=0, y=0, width=3, height=3, orientation=0`. Two unconditional class-level
+rules turn every block into the figure it forms with its mirror image:
+`$Obj.tag = 'l7511'` names that geometry, and
+`$Obj.height = $Obj.height@first * 2` makes the figure twice as tall as the
+block, 6 rows, anchored with `@first` because the rule rewrites `height`
+itself. The rules leave `x`, `y`, `width`, and `orientation` unchanged,
+because the figure keeps the block's top-left corner and columns, and state
+no `mirror_axis`, the property of `dataset.74dd1130.json`, because the tag
+already names a mirror image below the shape and only `height` grows. Each
+grid holds a single block and shows no relation between objects, so no
+population operation appears. The rules create no property, so input and
+output states share the same keys and differ only in the tag and `height`,
+and they give the same states in reverse order and when declared after the
+instance. Native snapshots start with the pair's `canvas_width` and
+`canvas_height`, and output snapshots are captured with the pair's
+implementation followed by `Obj[:]`. Tags identify the geometry: `l9100` is
+a single shape, as in `dataset.6d0aefbc.json` and `dataset.3c9b0459.json`,
+and `l7511` is a shape over its top-bottom mirror image, symmetric about the
+horizontal center line of its box, as in `dataset.8be77c9e.json`. Input masks
+retain each pair's full 3 by 3 input canvas and output masks the complete
+6 by 3 output; with one block per grid and no zero cell, each mask equals its
+pair's grid, and merging them reproduces each pair's input and output. Each
+output state's `x`, `y`, `width`, and `height`, 0, 0, 3, and 6, are the
+figure's nonzero bounding box in its output mask. `output_canvas` is `EXACT`:
+the composed canvas starts at the input's 3 by 3 dimensions and grows down to
+retain the figure placed from row 0, giving the 6 by 3 outputs, as
+`dataset.8be77c9e.json` grows its canvas down; every block starts on the top
+row, so the composed canvas reaches all 6 rows. `FIT` would compose the same
+outputs, because no output cell is zero, but the outputs keep the input's
+origin and cut nothing from a larger canvas. Orientation is 0 in both states:
+each block, every cell of its box colored, is neither a line, a corner, nor a
+chevron, and its mirror image is part of the figure that `l7511` names, not a
+turn. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
+The dataset writes its colors in its own random letters: 1 as `M`, 2 as `B`, 4
+as `C`, 5 as `Y`, 6 as `Q`, 7 as `E`, 8 as `J`, and 9 as `H`.
+
 `dataset.74dd1130.json` annotates the four original training pairs from
 `data\training\74dd1130.json`, in order, followed by its test pair, five
 mosaic instances in total, one per pair. Every input and output retains its
