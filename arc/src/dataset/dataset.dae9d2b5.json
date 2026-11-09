@@ -2,20 +2,20 @@
   "declarations": [
     "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\n# Each object is a whole panel figure, including any disconnected pieces.\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l9100'",
     "# Register the right panel with the left panel without changing either figure's shape.\nif $Obj.x@first >= canvas_width / 2:\n    $Obj.x = $Obj.x@first - canvas_width / 2",
-    "# Recolor every occupied figure cell; identically colored overlaps compose as a union.\n$Obj.fill_color = 'A'"
+    "# Recolor every occupied figure cell; identically colored overlaps compose as a union.\n$Obj.fill_color = 6"
   ],
   "output_canvas": "FIT",
   "dataset": [
     {
       "input_matrix": [
-        ["C", "C", 0, "B", "B", 0],
-        ["C", 0, 0, "B", 0, 0],
-        [0, 0, 0, 0, 0, "B"]
+        [4, 4, 0, 3, 3, 0],
+        [4, 0, 0, 3, 0, 0],
+        [0, 0, 0, 0, 0, 3]
       ],
       "output_matrix": [
-        ["A", "A", 0],
-        ["A", 0, 0],
-        [0, 0, "A"]
+        [6, 6, 0],
+        [6, 0, 0],
+        [0, 0, 6]
       ],
       "instances": [
         {
@@ -27,18 +27,18 @@
           "input_orientation": 315,
           "output_orientation": 315,
           "input_instance_matrix": [
-            ["C", "C", 0, 0, 0, 0],
-            ["C", 0, 0, 0, 0, 0],
+            [4, 4, 0, 0, 0, 0],
+            [4, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["A", "A", 0],
-            ["A", 0, 0],
+            [6, 6, 0],
+            [6, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The whole left-panel corner of color C,\n# 2 by 2 at x 0, y 0, pointing northwest\nobj9794a3111594 = Obj(x=0, y=0, width=2, height=2, orientation=315)",
+          "implementation": "# The whole left-panel corner of color 4,\n# 2 by 2 at x 0, y 0, pointing northwest\nobj9794a3111594 = Obj(x=0, y=0, width=2, height=2, orientation=315)",
           "input_value": {"height":2,"id":"obj9794a3111594","orientation":315,"tag":"l9100","width":2,"x":0,"y":0},
-          "output_value": {"fill_color":"A","height":2,"id":"obj9794a3111594","orientation":315,"tag":"l9100","width":2,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":2,"id":"obj9794a3111594","orientation":315,"tag":"l9100","width":2,"x":0,"y":0}
         },
         {
           "instance_name": "obj76d109fcf155",
@@ -49,31 +49,31 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, 0, 0, "B", "B", 0],
-            [0, 0, 0, "B", 0, 0],
-            [0, 0, 0, 0, 0, "B"]
+            [0, 0, 0, 3, 3, 0],
+            [0, 0, 0, 3, 0, 0],
+            [0, 0, 0, 0, 0, 3]
           ],
           "output_instance_matrix": [
-            ["A", "A", 0],
-            ["A", 0, 0],
-            [0, 0, "A"]
+            [6, 6, 0],
+            [6, 0, 0],
+            [0, 0, 6]
           ],
-          "implementation": "# The whole right-panel pattern of color B,\n# 3 by 3 at x 3, y 0\nobj76d109fcf155 = Obj(x=3, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# The whole right-panel pattern of color 3,\n# 3 by 3 at x 3, y 0\nobj76d109fcf155 = Obj(x=3, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj76d109fcf155","orientation":0,"tag":"l9100","width":3,"x":3,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj76d109fcf155","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj76d109fcf155","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        ["C", 0, "C", "B", "B", 0],
-        ["C", 0, 0, "B", 0, 0],
-        [0, 0, "C", "B", 0, 0]
+        [4, 0, 4, 3, 3, 0],
+        [4, 0, 0, 3, 0, 0],
+        [0, 0, 4, 3, 0, 0]
       ],
       "output_matrix": [
-        ["A", "A", "A"],
-        ["A", 0, 0],
-        ["A", 0, "A"]
+        [6, 6, 6],
+        [6, 0, 0],
+        [6, 0, 6]
       ],
       "instances": [
         {
@@ -85,18 +85,18 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            ["C", 0, "C", 0, 0, 0],
-            ["C", 0, 0, 0, 0, 0],
-            [0, 0, "C", 0, 0, 0]
+            [4, 0, 4, 0, 0, 0],
+            [4, 0, 0, 0, 0, 0],
+            [0, 0, 4, 0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["A", 0, "A"],
-            ["A", 0, 0],
-            [0, 0, "A"]
+            [6, 0, 6],
+            [6, 0, 0],
+            [0, 0, 6]
           ],
-          "implementation": "# The whole left-panel pattern of color C,\n# 3 by 3 at x 0, y 0\nobjc2fe1d5c024b = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# The whole left-panel pattern of color 4,\n# 3 by 3 at x 0, y 0\nobjc2fe1d5c024b = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"objc2fe1d5c024b","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"objc2fe1d5c024b","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"objc2fe1d5c024b","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "obj3981ce96f289",
@@ -107,31 +107,31 @@
           "input_orientation": 315,
           "output_orientation": 315,
           "input_instance_matrix": [
-            [0, 0, 0, "B", "B", 0],
-            [0, 0, 0, "B", 0, 0],
-            [0, 0, 0, "B", 0, 0]
+            [0, 0, 0, 3, 3, 0],
+            [0, 0, 0, 3, 0, 0],
+            [0, 0, 0, 3, 0, 0]
           ],
           "output_instance_matrix": [
-            ["A", "A", 0],
-            ["A", 0, 0],
-            ["A", 0, 0]
+            [6, 6, 0],
+            [6, 0, 0],
+            [6, 0, 0]
           ],
-          "implementation": "# The whole right-panel corner of color B,\n# 3 by 2 at x 3, y 0, pointing northwest\nobj3981ce96f289 = Obj(x=3, y=0, width=2, height=3, orientation=315)",
+          "implementation": "# The whole right-panel corner of color 3,\n# 3 by 2 at x 3, y 0, pointing northwest\nobj3981ce96f289 = Obj(x=3, y=0, width=2, height=3, orientation=315)",
           "input_value": {"height":3,"id":"obj3981ce96f289","orientation":315,"tag":"l9100","width":2,"x":3,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj3981ce96f289","orientation":315,"tag":"l9100","width":2,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj3981ce96f289","orientation":315,"tag":"l9100","width":2,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        [0, 0, "C", 0, "B", 0],
-        [0, "C", "C", "B", 0, "B"],
-        ["C", "C", 0, 0, 0, "B"]
+        [0, 0, 4, 0, 3, 0],
+        [0, 4, 4, 3, 0, 3],
+        [4, 4, 0, 0, 0, 3]
       ],
       "output_matrix": [
-        [0, "A", "A"],
-        ["A", "A", "A"],
-        ["A", "A", "A"]
+        [0, 6, 6],
+        [6, 6, 6],
+        [6, 6, 6]
       ],
       "instances": [
         {
@@ -143,18 +143,18 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, 0, "C", 0, 0, 0],
-            [0, "C", "C", 0, 0, 0],
-            ["C", "C", 0, 0, 0, 0]
+            [0, 0, 4, 0, 0, 0],
+            [0, 4, 4, 0, 0, 0],
+            [4, 4, 0, 0, 0, 0]
           ],
           "output_instance_matrix": [
-            [0, 0, "A"],
-            [0, "A", "A"],
-            ["A", "A", 0]
+            [0, 0, 6],
+            [0, 6, 6],
+            [6, 6, 0]
           ],
-          "implementation": "# The whole left-panel pattern of color C,\n# 3 by 3 at x 0, y 0\nobj501566e9788a = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# The whole left-panel pattern of color 4,\n# 3 by 3 at x 0, y 0\nobj501566e9788a = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj501566e9788a","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj501566e9788a","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj501566e9788a","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "obj19bac09d8db8",
@@ -165,31 +165,31 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, 0, 0, 0, "B", 0],
-            [0, 0, 0, "B", 0, "B"],
-            [0, 0, 0, 0, 0, "B"]
+            [0, 0, 0, 0, 3, 0],
+            [0, 0, 0, 3, 0, 3],
+            [0, 0, 0, 0, 0, 3]
           ],
           "output_instance_matrix": [
-            [0, "A", 0],
-            ["A", 0, "A"],
-            [0, 0, "A"]
+            [0, 6, 0],
+            [6, 0, 6],
+            [0, 0, 6]
           ],
-          "implementation": "# The whole right-panel pattern of color B,\n# 3 by 3 at x 3, y 0\nobj19bac09d8db8 = Obj(x=3, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# The whole right-panel pattern of color 3,\n# 3 by 3 at x 3, y 0\nobj19bac09d8db8 = Obj(x=3, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj19bac09d8db8","orientation":0,"tag":"l9100","width":3,"x":3,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj19bac09d8db8","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj19bac09d8db8","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        ["C", "C", 0, "B", 0, 0],
-        [0, 0, 0, 0, 0, "B"],
-        ["C", 0, 0, 0, 0, 0]
+        [4, 4, 0, 3, 0, 0],
+        [0, 0, 0, 0, 0, 3],
+        [4, 0, 0, 0, 0, 0]
       ],
       "output_matrix": [
-        ["A", "A", 0],
-        [0, 0, "A"],
-        ["A", 0, 0]
+        [6, 6, 0],
+        [0, 0, 6],
+        [6, 0, 0]
       ],
       "instances": [
         {
@@ -201,18 +201,18 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            ["C", "C", 0, 0, 0, 0],
+            [4, 4, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0],
-            ["C", 0, 0, 0, 0, 0]
+            [4, 0, 0, 0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["A", "A", 0],
+            [6, 6, 0],
             [0, 0, 0],
-            ["A", 0, 0]
+            [6, 0, 0]
           ],
-          "implementation": "# The whole left-panel pattern of color C,\n# 3 by 2 at x 0, y 0\nobj8b0a385d693b = Obj(x=0, y=0, width=2, height=3, orientation=0)",
+          "implementation": "# The whole left-panel pattern of color 4,\n# 3 by 2 at x 0, y 0\nobj8b0a385d693b = Obj(x=0, y=0, width=2, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj8b0a385d693b","orientation":0,"tag":"l9100","width":2,"x":0,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj8b0a385d693b","orientation":0,"tag":"l9100","width":2,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj8b0a385d693b","orientation":0,"tag":"l9100","width":2,"x":0,"y":0}
         },
         {
           "instance_name": "obja1bbf6de4842",
@@ -223,31 +223,31 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, 0, 0, "B", 0, 0],
-            [0, 0, 0, 0, 0, "B"],
+            [0, 0, 0, 3, 0, 0],
+            [0, 0, 0, 0, 0, 3],
             [0, 0, 0, 0, 0, 0]
           ],
           "output_instance_matrix": [
-            ["A", 0, 0],
-            [0, 0, "A"],
+            [6, 0, 0],
+            [0, 0, 6],
             [0, 0, 0]
           ],
-          "implementation": "# The whole right-panel pattern of color B,\n# 2 by 3 at x 3, y 0\nobja1bbf6de4842 = Obj(x=3, y=0, width=3, height=2, orientation=0)",
+          "implementation": "# The whole right-panel pattern of color 3,\n# 2 by 3 at x 3, y 0\nobja1bbf6de4842 = Obj(x=3, y=0, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"obja1bbf6de4842","orientation":0,"tag":"l9100","width":3,"x":3,"y":0},
-          "output_value": {"fill_color":"A","height":2,"id":"obja1bbf6de4842","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":2,"id":"obja1bbf6de4842","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        [0, 0, 0, 0, "B", 0],
-        ["C", 0, 0, 0, 0, 0],
-        [0, 0, "C", "B", "B", 0]
+        [0, 0, 0, 0, 3, 0],
+        [4, 0, 0, 0, 0, 0],
+        [0, 0, 4, 3, 3, 0]
       ],
       "output_matrix": [
-        [0, "A", 0],
-        ["A", 0, 0],
-        ["A", "A", "A"]
+        [0, 6, 0],
+        [6, 0, 0],
+        [6, 6, 6]
       ],
       "instances": [
         {
@@ -260,17 +260,17 @@
           "output_orientation": 0,
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0],
-            ["C", 0, 0, 0, 0, 0],
-            [0, 0, "C", 0, 0, 0]
+            [4, 0, 0, 0, 0, 0],
+            [0, 0, 4, 0, 0, 0]
           ],
           "output_instance_matrix": [
             [0, 0, 0],
-            ["A", 0, 0],
-            [0, 0, "A"]
+            [6, 0, 0],
+            [0, 0, 6]
           ],
-          "implementation": "# The whole left-panel pattern of color C,\n# 2 by 3 at x 0, y 1\nobjd2112d58bee2 = Obj(x=0, y=1, width=3, height=2, orientation=0)",
+          "implementation": "# The whole left-panel pattern of color 4,\n# 2 by 3 at x 0, y 1\nobjd2112d58bee2 = Obj(x=0, y=1, width=3, height=2, orientation=0)",
           "input_value": {"height":2,"id":"objd2112d58bee2","orientation":0,"tag":"l9100","width":3,"x":0,"y":1},
-          "output_value": {"fill_color":"A","height":2,"id":"objd2112d58bee2","orientation":0,"tag":"l9100","width":3,"x":0,"y":1}
+          "output_value": {"fill_color":6,"height":2,"id":"objd2112d58bee2","orientation":0,"tag":"l9100","width":3,"x":0,"y":1}
         },
         {
           "instance_name": "obj84dbfb8fffc4",
@@ -281,31 +281,31 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, 0, 0, 0, "B", 0],
+            [0, 0, 0, 0, 3, 0],
             [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, "B", "B", 0]
+            [0, 0, 0, 3, 3, 0]
           ],
           "output_instance_matrix": [
-            [0, "A", 0],
+            [0, 6, 0],
             [0, 0, 0],
-            ["A", "A", 0]
+            [6, 6, 0]
           ],
-          "implementation": "# The whole right-panel pattern of color B,\n# 3 by 2 at x 3, y 0\nobj84dbfb8fffc4 = Obj(x=3, y=0, width=2, height=3, orientation=0)",
+          "implementation": "# The whole right-panel pattern of color 3,\n# 3 by 2 at x 3, y 0\nobj84dbfb8fffc4 = Obj(x=3, y=0, width=2, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj84dbfb8fffc4","orientation":0,"tag":"l9100","width":2,"x":3,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj84dbfb8fffc4","orientation":0,"tag":"l9100","width":2,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj84dbfb8fffc4","orientation":0,"tag":"l9100","width":2,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        [0, "C", "C", "B", 0, 0],
-        ["C", 0, 0, "B", "B", 0],
-        [0, "C", 0, "B", 0, 0]
+        [0, 4, 4, 3, 0, 0],
+        [4, 0, 0, 3, 3, 0],
+        [0, 4, 0, 3, 0, 0]
       ],
       "output_matrix": [
-        ["A", "A", "A"],
-        ["A", "A", 0],
-        ["A", "A", 0]
+        [6, 6, 6],
+        [6, 6, 0],
+        [6, 6, 0]
       ],
       "instances": [
         {
@@ -317,18 +317,18 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, "C", "C", 0, 0, 0],
-            ["C", 0, 0, 0, 0, 0],
-            [0, "C", 0, 0, 0, 0]
+            [0, 4, 4, 0, 0, 0],
+            [4, 0, 0, 0, 0, 0],
+            [0, 4, 0, 0, 0, 0]
           ],
           "output_instance_matrix": [
-            [0, "A", "A"],
-            ["A", 0, 0],
-            [0, "A", 0]
+            [0, 6, 6],
+            [6, 0, 0],
+            [0, 6, 0]
           ],
-          "implementation": "# The whole left-panel pattern of color C,\n# 3 by 3 at x 0, y 0\nobj2ebab5673422 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# The whole left-panel pattern of color 4,\n# 3 by 3 at x 0, y 0\nobj2ebab5673422 = Obj(x=0, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj2ebab5673422","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj2ebab5673422","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj2ebab5673422","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "obj2c8e5fc013f1",
@@ -339,31 +339,31 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, 0, 0, "B", 0, 0],
-            [0, 0, 0, "B", "B", 0],
-            [0, 0, 0, "B", 0, 0]
+            [0, 0, 0, 3, 0, 0],
+            [0, 0, 0, 3, 3, 0],
+            [0, 0, 0, 3, 0, 0]
           ],
           "output_instance_matrix": [
-            ["A", 0, 0],
-            ["A", "A", 0],
-            ["A", 0, 0]
+            [6, 0, 0],
+            [6, 6, 0],
+            [6, 0, 0]
           ],
-          "implementation": "# The whole right-panel pattern of color B,\n# 3 by 2 at x 3, y 0\nobj2c8e5fc013f1 = Obj(x=3, y=0, width=2, height=3, orientation=0)",
+          "implementation": "# The whole right-panel pattern of color 3,\n# 3 by 2 at x 3, y 0\nobj2c8e5fc013f1 = Obj(x=3, y=0, width=2, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj2c8e5fc013f1","orientation":0,"tag":"l9100","width":2,"x":3,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj2c8e5fc013f1","orientation":0,"tag":"l9100","width":2,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj2c8e5fc013f1","orientation":0,"tag":"l9100","width":2,"x":0,"y":0}
         }
       ]
     },
     {
       "input_matrix": [
-        [0, 0, "C", 0, "B", 0],
-        [0, "C", 0, "B", "B", "B"],
-        ["C", 0, 0, "B", 0, 0]
+        [0, 0, 4, 0, 3, 0],
+        [0, 4, 0, 3, 3, 3],
+        [4, 0, 0, 3, 0, 0]
       ],
       "output_matrix": [
-        [0, "A", "A"],
-        ["A", "A", "A"],
-        ["A", 0, 0]
+        [0, 6, 6],
+        [6, 6, 6],
+        [6, 0, 0]
       ],
       "instances": [
         {
@@ -375,18 +375,18 @@
           "input_orientation": 45,
           "output_orientation": 45,
           "input_instance_matrix": [
-            [0, 0, "C", 0, 0, 0],
-            [0, "C", 0, 0, 0, 0],
-            ["C", 0, 0, 0, 0, 0]
+            [0, 0, 4, 0, 0, 0],
+            [0, 4, 0, 0, 0, 0],
+            [4, 0, 0, 0, 0, 0]
           ],
           "output_instance_matrix": [
-            [0, 0, "A"],
-            [0, "A", 0],
-            ["A", 0, 0]
+            [0, 0, 6],
+            [0, 6, 0],
+            [6, 0, 0]
           ],
-          "implementation": "# The whole left-panel line of color C,\n# 3 by 3 at x 0, y 0, pointing northeast\nobjb1303da77c0a = Obj(x=0, y=0, width=3, height=3, orientation=45)",
+          "implementation": "# The whole left-panel line of color 4,\n# 3 by 3 at x 0, y 0, pointing northeast\nobjb1303da77c0a = Obj(x=0, y=0, width=3, height=3, orientation=45)",
           "input_value": {"height":3,"id":"objb1303da77c0a","orientation":45,"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"objb1303da77c0a","orientation":45,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"objb1303da77c0a","orientation":45,"tag":"l9100","width":3,"x":0,"y":0}
         },
         {
           "instance_name": "obj187535fe2ed0",
@@ -397,18 +397,18 @@
           "input_orientation": 0,
           "output_orientation": 0,
           "input_instance_matrix": [
-            [0, 0, 0, 0, "B", 0],
-            [0, 0, 0, "B", "B", "B"],
-            [0, 0, 0, "B", 0, 0]
+            [0, 0, 0, 0, 3, 0],
+            [0, 0, 0, 3, 3, 3],
+            [0, 0, 0, 3, 0, 0]
           ],
           "output_instance_matrix": [
-            [0, "A", 0],
-            ["A", "A", "A"],
-            ["A", 0, 0]
+            [0, 6, 0],
+            [6, 6, 6],
+            [6, 0, 0]
           ],
-          "implementation": "# The whole right-panel pattern of color B,\n# 3 by 3 at x 3, y 0\nobj187535fe2ed0 = Obj(x=3, y=0, width=3, height=3, orientation=0)",
+          "implementation": "# The whole right-panel pattern of color 3,\n# 3 by 3 at x 3, y 0\nobj187535fe2ed0 = Obj(x=3, y=0, width=3, height=3, orientation=0)",
           "input_value": {"height":3,"id":"obj187535fe2ed0","orientation":0,"tag":"l9100","width":3,"x":3,"y":0},
-          "output_value": {"fill_color":"A","height":3,"id":"obj187535fe2ed0","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
+          "output_value": {"fill_color":6,"height":3,"id":"obj187535fe2ed0","orientation":0,"tag":"l9100","width":3,"x":0,"y":0}
         }
       ]
     }

@@ -139,34 +139,17 @@ handoff, send back one that starts from pixels without showing why the big
 picture falls short, and never steer a worker toward a finer model than the
 training pairs need.
 
-Write every color as a letter, and pass this requirement to every
-`/arc-dataset` run too. The dataset follows the exact pattern of the puzzle's
-pairs in `arc/data/training/`, cell for cell and shape for shape, but never
-writes a color as its number. `0` stays `0`, and every other color becomes a
-letter of `ABCDEFGHI`, ranked by how often it occurs across all of the
-dataset's input and output matrices, training and test pairs together: the
-most used color is `A`, the next `B`, and so on, as `Matrix.silhouette` in
-`arc/src/lib/Matrix.ts` ranks a matrix, with a tie going to the color read
-first. The letters are the dataset's own ranking, not a fixed map from
-numbers to letters, so a color keeps one letter in every pair of its dataset.
-The same letters replace the colors in the instance masks and the world model:
-color properties hold letters, such as `color='B'`, and rules name colors by
-letter, such as `if $Obj.color is C:`. The arc-dataset profile's
-[letter rule](../../agents/arc-dataset.agent.md#write-colors-as-letters)
-defines the ranking in full. Check a `written` handoff against it before the
-run, and send back one that writes a color as its number or ranks its letters
-another way.
-
 Write no quote that accepted Nucleoid can do without, and pass this
 requirement to every `/arc-dataset` run too. A quote is a single- or
 double-quoted string literal that the runtime lexer reads in a code field,
 `declarations` or an instance's `implementation`; the JSON file's own quotes
 and `#` comments are not quotes. The dataset writes a literal as a bare word
 wherever the run's runtime, run as `arc/src/lib/nucleoid.ts` runs it, reads
-that word as the same value, as NUC 86, NUC 93 and NUC 94 read `C` in
-`if $Obj.color is C:`, `$Obj.fill_color is C` and
-`$Obj.fill_color is C if $Obj.symmetric else 0`. The arc-dataset profile's
-older examples that quote such letters do not override this. Have the
+that word as the same value, as NUC 86, NUC 93 and NUC 94 read `right` in
+`if $Obj.repeat_direction is right:`, `$Obj.repeat_direction is right` and
+`$Obj.repeat_direction is right if $Obj.wide else down`. The arc-dataset
+profile's older examples that quote such words, such as
+`this.tag = 'lNNNN'`, do not override this. Have the
 handoff list every quote it keeps, with the actual result of its bare
 spelling. Check that list before the run, and send back a handoff that keeps
 a quote a bare word would replace. The quotes that remain go to the

@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/dae9d2b5.json`](../data/training/dae9d2b5.json) |
-| Instruction dataset | [`dataset.dae9d2b5.json`](../src/dataset/dataset.dae9d2b5.json): 5 original training pairs followed by 2 test pairs, 14 whole panel-figure instances, written on 8-Nov-2026 |
+| Instruction dataset | [`dataset.dae9d2b5.json`](../src/dataset/dataset.dae9d2b5.json): 5 original training pairs followed by 2 test pairs, 14 whole panel-figure instances, written on 8-Nov-2026; colors written as numbers instead of letters on 8-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None; accepted Nucleoid expresses the model |
 | Solver changes | JSON-only message construction suggested in `src/lib/llm.ts`, `src/analyzer.ts`, and `src/visualizer.ts`; not applied |
@@ -98,6 +98,29 @@ datasets. Its puzzle ID was added once to the existing reporting list in
 their order, settings, and timeouts. No workflow was dispatched.
 No hint or NUC was supplied or needed, so strategy learning is
 `not_applicable`; no strategy trial or checkpoint was created.
+
+### Number colors
+
+On 8-Nov-2026, at the user's request, the letter colors were reverted, and the
+dataset writes every color as its number, as the puzzle's pairs hold it,
+turning `A` into 6, `B` into 3, and `C` into 4. The pair grids, both instance
+masks, the implementations' `#` comments, and the snapshots hold numbers. The
+changed declarations now read:
+
+```nuc
+# Recolor every occupied figure cell; identically colored overlaps compose as a union.
+$Obj.fill_color = 6
+```
+
+Every other spelling is unchanged. Offline, with the accepted runtime at
+`1a41ca7` (last runtime change `f463d94`), all 14 input and 14 output
+snapshots of the 7 pairs replay, each equal to its letter snapshot with every
+letter read as its number. The pair grids equal the puzzle's pairs cell for
+cell. `Matrix.silhouette` again takes only the colors 0 to 9, and the
+orientation calls' few-shot crops read exactly as they did with letters,
+because the counts that rank them are unchanged. No NUC was requested, so no
+proposal strategy was selected and strategy learning did not apply. No solver
+run has measured this version, so its difference is unknown, not zero.
 
 ## Runs
 

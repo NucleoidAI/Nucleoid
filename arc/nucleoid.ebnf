@@ -34,7 +34,6 @@ call                 ::= '(' expression? ')'
 primary              ::= quantified
                        | arrowFunction
                        | INTEGER
-                       | STRING
                        | NAME
                        | CLASS_REF
                        | '(' expression ')'

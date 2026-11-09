@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/3c9b0459.json`](../data/training/3c9b0459.json) |
-| Instruction dataset | [`dataset.3c9b0459.json`](../src/dataset/dataset.3c9b0459.json): the puzzle's 4 original training pairs and its test pair, 5 mosaic instances, one per pair; committed with this record; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged |
+| Instruction dataset | [`dataset.3c9b0459.json`](../src/dataset/dataset.3c9b0459.json): the puzzle's 4 original training pairs and its test pair, 5 mosaic instances, one per pair; committed with this record; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
 | Solver changes | None; suggested changes await review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default |
@@ -210,6 +210,26 @@ them with and without the flag. No NUC was requested, so no proposal strategy
 was selected and strategy learning did not apply. No solver run has used this
 version.
 
+### Number colors
+
+On 8-Nov-2026, at the user's request, the letter colors were reverted, and the
+dataset writes every color as its number again, as the puzzle's pairs hold it,
+turning `A` back into 2, `B` into 4, `C` into 8, `D` into 9, `E` into 5, `F`
+into 6, `G` into 1, `H` into 3, and `I` into 7. The pair grids and both
+instance masks hold numbers. The declarations and implementations name no
+color, so they and the snapshots are unchanged.
+
+The `is` assignments and bare words of the previous section are unchanged.
+Offline, with the accepted runtime at `1a41ca7` (last runtime change
+`f463d94`), all 5 input and 5 output snapshots of the 5 pairs replay
+unchanged. The pair grids equal the puzzle's pairs cell for cell, and the
+grids, masks, and snapshots are again those of the version before the letters.
+`Matrix.silhouette` again takes only the colors 0 to 9, and the orientation
+calls' few-shot crops read exactly as they did with letters, because the
+counts that rank them are unchanged. No NUC was requested, so no proposal
+strategy was selected and strategy learning did not apply. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -279,9 +299,11 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
-- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
-  letter version. The solver still sends this puzzle's own grids as numbers,
-  while every few-shot dataset now writes its colors as letters.
+- **Letter version withdrawn.** No solver run measured the 8-Nov-2026 letter
+  version before the user reverted it the same day. The dataset writes its
+  colors as numbers again, as the solver sends this puzzle's own grids, and
+  no solver run has measured that version either, so its difference is
+  unknown.
 - **The `is` assignment version is unmeasured.** No solver run has used the
   8-Nov-2026 version with `is` assignments and bare words, so its effect on
   this puzzle's result is unknown. Every run's few-shot context now shows bare

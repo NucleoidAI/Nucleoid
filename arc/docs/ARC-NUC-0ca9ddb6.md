@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/0ca9ddb6.json`](../data/training/0ca9ddb6.json) |
-| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances; conditions respelled with `is` on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged |
+| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances; conditions respelled with `is` on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted; the conditions also use the accepted `is` of [NUC 86](../../docs/nuc-0086.md), which this puzzle did not request |
 | Solver changes | None specific to this puzzle; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default |
@@ -351,6 +351,47 @@ them with and without the flag. No NUC was requested, so no proposal strategy
 was selected and strategy learning did not apply. No solver run has used this
 version.
 
+### Number colors
+
+On 8-Nov-2026, at the user's request, the letter colors were reverted, and the
+dataset writes every color as its number again, as the puzzle's pairs hold it,
+turning `A` back into 4, `B` into 7, `C` into 2, `D` into 1, `E` into 8, and
+`F` into 6. The pair grids, both instance masks, the implementations'
+`vertex_color` arguments, and the snapshots hold numbers, and `vertex_color`
+is an `int` parameter again. The changed declarations now read:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int):
+
+if $Obj.vertex_color is 1:
+    $Obj.tag is l1707
+    $Obj.marker_color is 7
+    $Obj.x is $Obj.x@first - 1
+    $Obj.y is $Obj.y@first - 1
+    $Obj.width is $Obj.width@first + 2
+    $Obj.height is $Obj.height@first + 2
+
+if $Obj.vertex_color is 2:
+    $Obj.tag is l2404
+    $Obj.marker_color is 4
+    $Obj.x is $Obj.x@first - 1
+    $Obj.y is $Obj.y@first - 1
+    $Obj.width is $Obj.width@first + 2
+    $Obj.height is $Obj.height@first + 2
+```
+
+The `is` assignments and bare words of the previous section are unchanged.
+Offline, with the accepted runtime at `1a41ca7` (last runtime change
+`f463d94`), all 15 input and 15 output snapshots of the 4 pairs replay, each
+equal to its letter snapshot with every letter read as its number. The pair
+grids equal the puzzle's pairs cell for cell, and the grids, masks, and
+snapshots are again those of the version before the letters.
+`Matrix.silhouette` again takes only the colors 0 to 9, and the orientation
+calls' few-shot crops read exactly as they did with letters, because the
+counts that rank them are unchanged. No NUC was requested, so no proposal
+strategy was selected and strategy learning did not apply. No solver run has
+measured this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Run | Commit | Exit status | Difference | Seconds |
@@ -403,9 +444,11 @@ zero.
 - **Orientation version unmeasured.** No solver run has measured the
   6-Nov-2026 orientation version, so whether consistent orientation labels
   change this puzzle's result is unknown.
-- **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
-  letter version. The solver still sends this puzzle's own grids as numbers,
-  while every few-shot dataset now writes its colors as letters.
+- **Letter version withdrawn.** No solver run measured the 8-Nov-2026 letter
+  version before the user reverted it the same day. The dataset writes its
+  colors as numbers again, as the solver sends this puzzle's own grids, and
+  no solver run has measured that version either, so its difference is
+  unknown.
 - **The `is` assignment version is unmeasured.** No solver run has used the
   8-Nov-2026 version with `is` assignments and bare words, so its effect on
   this puzzle's result is unknown. Every run's few-shot context now shows bare
