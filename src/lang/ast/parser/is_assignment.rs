@@ -137,6 +137,7 @@ impl Branches {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Items {
     Plain,
+    Variables,
     Words,
 }
 
@@ -152,13 +153,14 @@ impl Items {
 impl Parser {
     pub(super) fn starts_is_assignment(&self, target: &Expr) -> bool {
         matches!(self.peek(), Token::Identifier(name) if name == "is")
-            && begins_expression(self.peek_at(1))
+            && (begins_expression(self.peek_at(1)) || self.starts_at_variable(1))
             && PathTarget::of(target) == PathTarget::Plain
     }
 
     pub(super) fn is_assignment(&mut self, target: Expr) -> Result<Stmt> {
         self.advance();
         let start = self.position;
+        self.record_value_start();
         let items = std::mem::replace(&mut self.items, Items::Words);
         let value = self.nested_expression(|parser| {
             parser.nested_expression_in(ExpressionContext::Ordinary, |value| {
@@ -194,7 +196,7 @@ impl Parser {
 
     fn item_expression(&mut self) -> Result<Expr> {
         let branches = match self.items {
-            Items::Plain => Branches::Plain,
+            Items::Plain | Items::Variables => Branches::Plain,
             Items::Words => Branches::Words,
         };
         self.assignment_expression(branches)
@@ -229,12 +231,13 @@ impl Parser {
     pub(super) fn conditions(&mut self) -> &mut HashMap<(usize, usize), Option<PythonCondition>> {
         match self.items {
             Items::Plain => &mut self.python_conditions,
+            Items::Variables => &mut self.variable_conditions,
             Items::Words => &mut self.item_conditions,
         }
     }
 
     pub(super) fn unmark(&self, branches: Branches, target: Expr) -> Expr {
-        if branches == Branches::Plain && self.items == Items::Plain {
+        if branches == Branches::Plain && self.items != Items::Words {
             target
         } else {
             without_words(target)

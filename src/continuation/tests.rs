@@ -740,3 +740,56 @@ fn repl_settings_toggle_or_accept_explicit_values() {
     assert_eq!(setting_value("off", true), Some(false));
     assert_eq!(setting_value("invalid", false), None);
 }
+
+#[test]
+fn colon_free_condition_headers_buffer_at_variables_after_is_comparisons() {
+    for condition in [
+        "x is @C",
+        "x is not @C",
+        "a is @b and c is not @d",
+        "$Obj.color is @RED",
+        "x is @C.p",
+        "x is @C@first",
+        "f(x is @C)",
+        "x is@C",
+        "(x) is @C",
+        "x is @first",
+    ] {
+        for prefix in ["if", "else if", "elif if", "else", "elif"] {
+            let line = format!("{prefix} {condition}");
+            let keyword = if prefix == "if" {
+                Keyword::If
+            } else {
+                Keyword::Else
+            };
+            assert!(indented_condition_header(&line, keyword), "{line:?}");
+            assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+        }
+    }
+    for line in [
+        "if x is @ C",
+        "if x is @",
+        "if @a",
+        "if (@a)",
+        "if x + @a",
+        "if is @a",
+        "if x@a",
+        "if x is @C:",
+        "if x == @C",
+        "if not @a",
+    ] {
+        assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+    }
+    let mut pending = Pending::default();
+    assert_eq!(pending.accept("if x is @C"), None);
+    assert_eq!(pending.indentation, INDENT);
+    assert_eq!(pending.accept("    y = 1"), None);
+    assert_eq!(
+        pending.accept(""),
+        Some("if x is @C\n    y = 1\n".to_string())
+    );
+    assert_eq!(
+        pending.accept("b is @a + 2"),
+        Some("b is @a + 2\n".to_string())
+    );
+}

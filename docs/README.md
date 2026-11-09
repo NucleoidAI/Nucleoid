@@ -478,6 +478,41 @@ RED = "red"
 
 Full detail: [NUC 95](nuc-0095.md).
 
+### At variables
+
+- [NUC 96](nuc-0096.md) adds `@name`, an `@` directly followed by a name,
+  which reads the variable `name` where a bare name could be a word. It
+  needs no option or flag.
+- It may stand wherever an operand begins inside an `is` value and inside
+  the right operand of an `is` or `is not` comparison: `b is @a + 2`,
+  `x is @A if c else B`, `[@A, B]`, `{k: @A}`, `Light(color=@A)` and
+  `if state is @OPEN:`. Function, arrow and lambda bodies, comprehension
+  elements and filters, template interpolations, inner assignment values
+  and assignment targets are not part of those regions.
+- `@name` reads the name exactly as `(name)` does and is never a word: the
+  value when something defines it, and `ReferenceError` when nothing does,
+  where a bare word would read its own text. Postfix operations follow it,
+  as in `@a.b`, `@a[0]`, `@a(1)` and `@a@first`.
+- Everywhere else a leading `@` is still a syntax error, and an `@` after an
+  operand is still a version selector. `b is @first` keeps its accepted
+  reading as `b` and `is@first`; write `b is (@first)` for the variable
+  `first`. A space between `@` and the name keeps the accepted reading too.
+
+```
+a is 1
+b is @a + 2
+RED = "red"
+colors is [@RED, GREEN]
+```
+
+- `b` is `3` and follows `a`, and `colors` is `["red", "GREEN"]`. While
+  nothing defines `c`, `b is @c + 3` raises
+  `ReferenceError("c is not defined")`, as `b = c + 3` does. Regions,
+  errors and rendering are in the authoritative
+  [at variables](../nucleoid.spec.md#at-variables) section.
+
+Full detail: [NUC 96](nuc-0096.md).
+
 ### Destructuring declarations
 
 - [NUC 67](nuc-0067.md) adds destructuring declarations: object patterns
@@ -883,7 +918,8 @@ Full detail: [NUC 60](nuc-0060.md).
   built-in of that name when one exists, and otherwise compares with its own
   text, `"EXACT"`. Keywords, `$Class` references, paths, calls and
   parenthesized operands are ordinary operands, so `value is (EXACT)` still
-  needs `EXACT` to be defined.
+  needs `EXACT` to be defined, and so does `value is @EXACT`, the
+  [at variable](#at-variables) spelling.
 - A comparison with a word depends on that name even while nothing defines
   it: defining, changing or deleting the variable re-evaluates every
   declaration, `if` rule and class-level rule that uses it.
@@ -3864,6 +3900,7 @@ name is expression                     is assignment: name = expression (NUC 93)
 name.property is word                  a bare word reads its name, else its text "word" (NUC 93)
 name is A if c else B                  bare-word branches are words too (NUC 94)
 name is [A, {k: B}, X(n=C)]            bare-word items, values and labels are words too (NUC 95)
+name is @a + 2                         @name reads the variable a, never the word "a" (NUC 96)
 name += expression                     compound assignment; also -=, *=, **=, /=, %=
 {a, b} = expression                    one declaration per field: a = expression.a (NUC 67)
 {key: name} = expression               renamed field: name = expression.key (NUC 67)

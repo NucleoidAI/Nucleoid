@@ -140,7 +140,8 @@ assertStmt
     ;
 
 // A premise is tentative: it ends exactly at ':' and cannot be a colon
-// statement or end in the word 'lambda'. Otherwise 'suppose' stays a name.
+// statement or end in the word 'lambda'; an atVariable named lambda is not
+// that word. Otherwise 'suppose' stays a name.
 // The 'path IS' head follows the isAssignment contract.
 supposeStmt
     : (conditional ASSIGN | path IS)? SUPPOSE premise? suite
@@ -155,12 +156,13 @@ valueAssignment
     ;
 
 /*
- * Is-assignment contract (NUC 93, NUC 94, NUC 95):
+ * Is-assignment contract (NUC 93, NUC 94, NUC 95, NUC 96):
  * - An isAssignment path may be parenthesized and has at most 128 links. No NEWLINE separates it from
  *   'is', and the token after 'is' must begin an expression: a name token,
  *   CLASS_REF, NUMBER, STRING, TEMPLATE, REGEX, LPAREN, LBRACK, LBRACE,
  *   BANG, MINUS, PLUS, TRUE, FALSE, NULL, THIS, SUPER, NEW, DELETE,
- *   FUNCTION, NOT or TYPEOF. Otherwise 'is' stays a name that begins the
+ *   FUNCTION, NOT or TYPEOF, or the AT of an atVariable whose name is not
+ *   FIRST, LAST or PREVIOUS. Otherwise 'is' stays a name that begins the
  *   next statement, and 'why', 'affects', 'stated' or 'derived' before
  *   'is' keep their reasoning-selection reading.
  * - The value is ASSIGN's statement-level value and builds the tree of
@@ -268,7 +270,8 @@ forStmt
     ;
 
 // The tentative condition must end exactly at ':', cannot be a colon
-// statement or suppose expression, and cannot end in the word 'lambda'.
+// statement or suppose expression, and cannot end in the word 'lambda';
+// an atVariable named lambda is not that word.
 whileStmt
     : WHILE clauseExpression suite      // Stmt::While
     ;
@@ -373,7 +376,8 @@ methodDecl
  *   not enclosed.
  * - 'is'/'is not' compare only in enclosed positions and in an enabled
  *   parse pass. A single-name right operand is a word comparison;
- *   otherwise they mean '=='/'!='.
+ *   otherwise they mean '=='/'!='. The right operand is an atVariable
+ *   region, and an atVariable there is not a single name.
  * - In an object value, a following name ':' starts the next property.
  *   'is:', 'stated name:' and 'derived name:' keep that interpretation.
  * - A Python conditional is tentative and needs 'else' directly after its
@@ -530,7 +534,8 @@ selector
 // A plain-name callee treats bare name=value arguments as constructor
 // labels; grouping or another assignment-shaped target stays positional.
 primary
-    : quantified
+    : atVariable
+    | quantified
     | name arrow arrowBody
     | lambdaExpression
     | parameters arrow arrowBody
@@ -551,6 +556,35 @@ primary
     | LPAREN expression RPAREN
     | listDisplay
     | objectDisplay
+    ;
+
+/*
+ * At-variable contract (NUC 96):
+ * - AT and the name are adjacent: the name token starts in the column
+ *   after AT on the same line, so no whitespace, comment or NEWLINE
+ *   separates them. A keyword, CLASS_REF, NUMBER, VERSION_INDEX, STRING or
+ *   LPAREN after AT is not a name.
+ * - The rule applies only where an operand begins inside an at-variable
+ *   region: an isAssignment value, wherever its item positions can lie, and
+ *   the right operand of an 'is'/'is not' comparison. Neither region
+ *   reaches into function, lambda and arrow bodies, comprehension elements
+ *   and filters, template interpolations, the value of an inner assignment
+ *   operator or the target of an assignment operator; a comparison inside
+ *   such a part has its own right operand. Elsewhere AT where an operand
+ *   begins is "Unexpected character '@'" at the AT.
+ * - An atVariable builds Expr::Identifier(name), the tree of
+ *   'LPAREN name RPAREN': it spans two tokens, so it is never a word.
+ *   FIRST, LAST and PREVIOUS are names here; after an operand, AT starts a
+ *   version, and 'path IS AT (FIRST | LAST | PREVIOUS | VERSION_INDEX)'
+ *   keeps the reading 'path' followed by the statement 'IS version'.
+ * - An atVariable in an assignment target or a comprehension element is
+ *   rejected with the accepted error: "Unexpected character '@'" at its
+ *   AT, or, for a target that begins an isAssignment value, "Expected a
+ *   non-negative integer, 'first', 'last', or 'previous' after '@'" at its
+ *   name, which the accepted reading 'path' then 'IS version' reports.
+ */
+atVariable
+    : AT name                                             // Expr::Identifier
     ;
 
 arrow
@@ -851,7 +885,10 @@ fragment REGEX_CHAR
  * require 'for' or a template. Keep the first successful complete parse.
  * A later pass never changes a source accepted by an earlier pass.
  * Every pass reads isAssignment, and its word positions never change
- * whether or where a pass succeeds or fails.
+ * whether or where a pass succeeds or fails. Every pass reads atVariable in
+ * isAssignment values, and the passes that read 'is' comparisons also read
+ * it in their right operands; it applies only where the accepted grammar
+ * fails at the AT, so it never changes a source that parses without it.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -880,6 +917,8 @@ fragment REGEX_CHAR
  * p is w                   -> p = UnaryOp::Word(w) for a single name w.
  * p is A if c else B       -> p = c ? Word(A) : Word(B).
  * p is [A, {k: B}, X(n=C)] -> p = [Word(A), {k: Word(B)}, X(n=Word(C))].
+ * p is @a + 2              -> p = a + 2, the tree of p is (a) + 2.
+ * p is [@A, B]             -> p = [A, Word(B)].
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
@@ -903,4 +942,8 @@ fragment REGEX_CHAR
  * conditional word positions in parser\expression.rs and the item
  * positions in parser\primary.rs, parser\postfix.rs and
  * parser\comprehension.rs.
+ * At variables: parser\at_variable.rs, with their regions in
+ * parser\is_assignment.rs and parser\precedence.rs, their rejection in
+ * parser\expression.rs and parser\comprehension.rs and the 'lambda' header
+ * colon in parser\statement.rs.
  */

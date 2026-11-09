@@ -1,3 +1,4 @@
+mod at_variable;
 mod class;
 mod comprehension;
 mod control;
@@ -12,11 +13,12 @@ mod primary;
 mod statement;
 mod template;
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use super::lexer::{Keyword, Spanned, Token, tokenize};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, Stmt};
+use at_variable::Rejection;
 use is_assignment::Items;
 
 /// A parsed program: its statements, and where each top-level statement began.
@@ -114,7 +116,9 @@ struct Parser {
     /// position after its `else`, or `None`. A re-parse of the same source
     /// reuses an outcome instead of parsing the condition again.
     python_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
+    variable_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
     item_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
+    at_variables: BTreeMap<usize, Rejection>,
     suppose_premises: HashMap<(usize, usize), Option<SupposePremise>>,
     while_conditions: HashMap<(usize, usize), Option<LoopCondition>>,
 }
@@ -185,7 +189,9 @@ impl Parser {
             enclosed: false,
             in_class: false,
             python_conditions: HashMap::new(),
+            variable_conditions: HashMap::new(),
             item_conditions: HashMap::new(),
+            at_variables: BTreeMap::new(),
             suppose_premises: HashMap::new(),
             while_conditions: HashMap::new(),
         }

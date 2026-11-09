@@ -2,10 +2,10 @@ use std::ops::Range;
 
 use logos::Logos;
 
-use super::excerpt;
 use super::indentation::{Lines, line_position, line_position_without_comments};
 use super::raw::Raw;
 use super::token::Token;
+use super::{EXPECTED_VERSION_SELECTOR, excerpt};
 use crate::error::{Error, Position, Result};
 
 pub(super) struct Scanned {
@@ -176,10 +176,7 @@ fn version_index(source: &str, span: &Range<usize>, lines: &Lines<'_>) -> Result
         .is_some_and(|character| character.is_ascii_alphanumeric() || character == '_');
     match index {
         Some(index) if !malformed_suffix => Ok(Token::VersionIndex(index)),
-        _ => Err(Error::syntax(
-            "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'",
-        )
-        .at(lines.position(span.start))),
+        _ => Err(Error::syntax(EXPECTED_VERSION_SELECTOR).at(lines.position(span.start))),
     }
 }
 

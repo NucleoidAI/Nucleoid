@@ -137,6 +137,15 @@ pub enum VersionSelector {
 }
 
 impl VersionSelector {
+    pub(crate) fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "first" => Some(Self::First),
+            "last" => Some(Self::Last),
+            "previous" => Some(Self::Previous),
+            _ => None,
+        }
+    }
+
     pub(crate) fn is_fixed(self) -> bool {
         matches!(self, Self::Index(_) | Self::First)
     }

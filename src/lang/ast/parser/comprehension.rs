@@ -29,7 +29,10 @@ impl Parser {
         self.lists == Lists::Comprehensions && self.check(&Token::Keyword(Keyword::For))
     }
 
-    pub(super) fn comprehension(&mut self, element: Expr) -> Result<Expr> {
+    pub(super) fn comprehension(&mut self, start: usize, element: Expr) -> Result<Expr> {
+        if let Some(variable) = self.at_variable_since(start) {
+            return self.reject_at_variable(variable);
+        }
         let element = self.unmark(Branches::Plain, element);
         self.advance();
         let parameter = self.comprehension_name()?;

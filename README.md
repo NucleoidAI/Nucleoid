@@ -159,6 +159,28 @@ such as `[A if c else B]` has word branches. It needs no flag, and `=` keeps
 the reference reading, so `colors = [RED, GREEN]` needs `RED` and `GREEN` to
 be defined; see [NUC 95](docs/nuc-0095.md).
 
+### At variables
+
+Inside an `is` value, `@name` reads the variable `name`, never the word:
+
+```
+a is 1
+b is @a + 2
+RED = "red"
+colors is [@RED, GREEN]
+assert([b, colors], [3, ["red", "GREEN"]])
+```
+
+`@a` is read exactly as `(a)` is, so `b is @c + 3` raises
+`ReferenceError("c is not defined")` while nothing defines `c`, and so does
+`b is @c`, where `b is c` would store the word `"c"`. The mark works
+wherever an operand begins in an `is` value, outside function bodies,
+comprehension elements, template interpolations, inner assignments and
+targets, and in the right operand of an `is` comparison, as in
+`if state is @OPEN:`. Everywhere else a leading `@` is still a syntax error,
+`x@first` is still a version, and `b is @first` still reads as `b` followed
+by `is@first`; see [NUC 96](docs/nuc-0096.md).
+
 ---
 
 # Design Theory 📐

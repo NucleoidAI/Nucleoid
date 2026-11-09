@@ -10,6 +10,9 @@ use indentation::{Lines, layout};
 use scanner::scan_until;
 pub use token::{Keyword, Token};
 
+pub(crate) const EXPECTED_VERSION_SELECTOR: &str =
+    "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'";
+
 fn delimited(slice: &str) -> &str {
     let mut characters = slice.chars();
     characters.next();

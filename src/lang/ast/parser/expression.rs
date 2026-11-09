@@ -95,8 +95,12 @@ impl Parser {
     }
 
     pub(super) fn assignment_expression(&mut self, branches: Branches) -> Result<Expr> {
+        let start = self.position;
         let left = self.conditional_with(branches)?;
+        self.assignment(start, branches, left)
+    }
 
+    fn assignment(&mut self, start: usize, branches: Branches, left: Expr) -> Result<Expr> {
         let operator = match self.peek() {
             Token::Assign => None,
             Token::PlusAssign => Some(CompoundOp::Arithmetic(BinaryOp::Add)),
@@ -109,15 +113,9 @@ impl Parser {
             Token::OrOrAssign => Some(CompoundOp::Logical(LogicalOp::Or)),
             _ => return Ok(left),
         };
-        self.assignment(branches, left, operator)
-    }
-
-    fn assignment(
-        &mut self,
-        branches: Branches,
-        left: Expr,
-        operator: Option<CompoundOp>,
-    ) -> Result<Expr> {
+        if let Some(variable) = self.at_variable_since(start) {
+            return self.reject_at_variable(variable);
+        }
         let left = self.unmark(branches, left);
 
         if operator.is_some() {

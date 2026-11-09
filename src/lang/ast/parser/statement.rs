@@ -336,15 +336,19 @@ impl Parser {
 
     pub(super) fn clause_before_colon(&mut self) -> Option<Expr> {
         let clause = self.clause_expression().ok()?;
-        let owns_colon = self.check(&Token::Colon)
-            && !matches!(
-                self.position
-                    .checked_sub(1)
-                    .and_then(|previous| self.tokens.get(previous))
-                    .map(|spanned| &spanned.token),
-                Some(Token::Identifier(name)) if name == "lambda"
-            );
+        let owns_colon = self.check(&Token::Colon) && !self.ends_with_lambda_word();
         owns_colon.then_some(clause)
+    }
+
+    fn ends_with_lambda_word(&self) -> bool {
+        let token = |back: usize| {
+            self.position
+                .checked_sub(back)
+                .and_then(|index| self.tokens.get(index))
+                .map(|spanned| &spanned.token)
+        };
+        matches!(token(1), Some(Token::Identifier(name)) if name == "lambda")
+            && token(2) != Some(&Token::At)
     }
 
     fn assertion_expression(&mut self) -> Result<Expr> {

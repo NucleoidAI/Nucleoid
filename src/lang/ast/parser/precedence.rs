@@ -81,7 +81,10 @@ impl Parser {
             }
 
             let start = self.position;
-            let right = self.relational()?;
+            let right = match operator {
+                BinaryOp::Is | BinaryOp::IsNot => self.compared(),
+                _ => self.relational(),
+            }?;
             let word = self.position == start + 1 && matches!(right, Expr::Identifier(_));
             left = Expr::Binary {
                 operator: match operator {
@@ -95,6 +98,13 @@ impl Parser {
         }
 
         Ok(left)
+    }
+
+    fn compared(&mut self) -> Result<Expr> {
+        let items = self.enter_variables();
+        let right = self.relational();
+        self.items = items;
+        right
     }
 
     fn relational(&mut self) -> Result<Expr> {

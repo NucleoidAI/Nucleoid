@@ -233,37 +233,38 @@ fn indented_alternative_header(line: &str) -> bool {
 /// commit/EOF still runs the unchanged real parser, including its body
 /// requirements and resource bounds.
 fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
-    let Ok(tokens) = lex_header(line) else {
+    let Ok(header) = lex_header(line) else {
         return false;
     };
-    let mut tokens = tokens.iter().map(|spanned| &spanned.token).peekable();
-    if tokens.next() != Some(&Token::Keyword(keyword)) {
+    let Some(start) = condition_start(&header, keyword) else {
         return false;
-    }
-    if keyword == Keyword::Else && tokens.peek() == Some(&&Token::Keyword(Keyword::If)) {
-        tokens.next();
-    }
+    };
+    let mut tokens = header
+        .iter()
+        .map(|spanned| &spanned.token)
+        .enumerate()
+        .skip(start);
     let mut nonempty = false;
     let mut delimiters = Vec::new();
     let mut conditionals = 0usize;
-    while let Some(token) = tokens.next() {
+    while let Some((index, token)) = tokens.next() {
         match token {
-            Token::At => match tokens.next() {
-                Some(Token::VersionIndex(_)) => {}
-                Some(Token::Identifier(name))
-                    if matches!(name.as_str(), "first" | "last" | "previous") => {}
-                _ => return false,
-            },
+            Token::At if reads_at(&header, index) => {
+                tokens.next();
+            }
+            Token::At => return false,
             Token::Eof => return nonempty && delimiters.is_empty() && conditionals == 0,
             Token::Newline | Token::Dedent if delimiters.is_empty() => {
                 return nonempty
                     && conditionals == 0
-                    && tokens
-                        .all(|rest| matches!(rest, Token::Newline | Token::Dedent | Token::Eof));
+                    && tokens.all(|(_, rest)| {
+                        matches!(rest, Token::Newline | Token::Dedent | Token::Eof)
+                    });
             }
             Token::Question if delimiters.is_empty() => conditionals += 1,
             Token::Identifier(_)
-                if delimiters.is_empty() && starts_quantifier(token, tokens.clone()) =>
+                if delimiters.is_empty()
+                    && starts_quantifier(token, tokens.clone().map(|(_, rest)| rest)) =>
             {
                 conditionals += 1;
             }
@@ -286,6 +287,64 @@ fn indented_condition_header(line: &str, keyword: Keyword) -> bool {
         nonempty = true;
     }
     false
+}
+
+fn condition_start(header: &[Spanned], keyword: Keyword) -> Option<usize> {
+    let mut tokens = header.iter().map(|spanned| &spanned.token);
+    if tokens.next() != Some(&Token::Keyword(keyword)) {
+        return None;
+    }
+    let else_if = keyword == Keyword::Else && tokens.next() == Some(&Token::Keyword(Keyword::If));
+    Some(if else_if { 2 } else { 1 })
+}
+
+fn reads_at(tokens: &[Spanned], at: usize) -> bool {
+    match tokens.get(at + 1).map(|spanned| &spanned.token) {
+        Some(Token::VersionIndex(_)) => true,
+        Some(Token::Identifier(name)) => {
+            matches!(name.as_str(), "first" | "last" | "previous") || marks_variable(tokens, at)
+        }
+        _ => false,
+    }
+}
+
+fn marks_variable(tokens: &[Spanned], at: usize) -> bool {
+    let token = |back: usize| {
+        at.checked_sub(back)
+            .and_then(|index| tokens.get(index))
+            .map(|spanned| &spanned.token)
+    };
+    let compares = |back: usize| {
+        matches!(token(back), Some(Token::Identifier(word)) if word == "is")
+            && token(back + 1).is_some_and(ends_operand)
+    };
+    let follows_comparison =
+        compares(1) || (token(1) == Some(&Token::Keyword(Keyword::Not)) && compares(2));
+    let adjacent = matches!(
+        (tokens.get(at), tokens.get(at + 1)),
+        (Some(mark), Some(name)) if name.position.line == mark.position.line
+            && name.position.column == mark.position.column + 1
+    );
+    follows_comparison && adjacent
+}
+
+fn ends_operand(token: &Token) -> bool {
+    matches!(
+        token,
+        Token::Identifier(_)
+            | Token::ClassRef(_)
+            | Token::Number(_)
+            | Token::VersionIndex(_)
+            | Token::Str(_)
+            | Token::Template(_)
+            | Token::Regex(_)
+            | Token::RightParen
+            | Token::RightBracket
+            | Token::RightBrace
+            | Token::Keyword(
+                Keyword::True | Keyword::False | Keyword::Null | Keyword::This | Keyword::Super
+            )
+    )
 }
 
 fn closes(open: Option<&Token>, close: &Token) -> bool {

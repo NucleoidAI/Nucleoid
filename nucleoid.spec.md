@@ -2480,7 +2480,9 @@ statement positions; caught values and transaction recovery are unchanged.
   `@last` means the newest entry, and `@previous` means the entry before it.
   Decimal digit literals must fit the host's `usize`; signs, decimal points,
   exponent spellings, expressions and unknown selector words are not selectors.
-  The three words remain ordinary identifiers everywhere except after `@`.
+  The three words remain ordinary identifiers everywhere except in a selector
+  after an operand; a prefix `@first` of [At variables](#at-variables) reads
+  the variable `first`.
 - Versioning is automatic. Record the initial stored value at zero and append
   only on actual `Value::same_value` changes, including reactive propagation,
   constructors, initial object-property maps and mutable-list write-backs.
@@ -3209,6 +3211,9 @@ statement positions; caught values and transaction recovery are unchanged.
   expressions and parenthesized operands are not words and read as they do
   with `==`: `value is (EXACT)` raises `ReferenceError("EXACT is not defined")`
   while nothing defines `EXACT`. The left operand is never a word.
+- The right operand may hold the `@name` of [At variables](#at-variables),
+  which reads the variable and is never a word: `value is @EXACT` means
+  `value == EXACT`.
 - A word records a dependency on the variable of its name even while nothing
   defines it, so a standing declaration, `if` rule or class-level rule that
   compares with it re-evaluates when that variable is defined, changed or
@@ -3303,7 +3308,10 @@ statement positions; caught values and transaction recovery are unchanged.
   the next statement: `:`, `=`, `:=`, a compound assignment such as `+=`,
   another operator or punctuation, a keyword such as `if`, `and` or `of`, or
   the end of the line or input. So `a is: T`, `a is = 5`, `a is += 1` and
-  `a is` at the end of a line read as before.
+  `a is` at the end of a line read as before. An `@` directly followed by a
+  name other than `first`, `last` and `previous` also begins the value, as
+  [At variables](#at-variables) describes; any other `@`, as in
+  `a is @first`, keeps the accepted reading.
 - A leading expression that `:=` rejects also keeps the accepted reading:
   `f() is 5`, `1 is 2`, `a[0] is 1`, `this is 5`, `$Order is 5`,
   `a + b is 5`, `a = b is c` and `x => x is 5` are juxtaposed statements as
@@ -3379,7 +3387,8 @@ statement positions; caught values and transaction recovery are unchanged.
 - A branch of a conditional value can be a word as well, as
   [Conditional words](#conditional-words) describes, and so can an item of a
   list, a dictionary value or a named argument, as
-  [Item words](#item-words) describes.
+  [Item words](#item-words) describes. An `@name` in the value reads the
+  variable `name` instead, as [At variables](#at-variables) describes.
 
 ## Conditional words
 
@@ -3574,6 +3583,90 @@ statement positions; caught values and transaction recovery are unchanged.
   reading, so `z = [A, B]` still raises `ReferenceError("A is not defined")`.
 - `tests/item_words.rs`, `tests/item_words_cli.rs` and the terminal unit
   suite execute this behavior.
+
+## At variables
+
+- [NUC 96](docs/nuc-0096.md) adds `@name`: the character `@` directly
+  followed by a name reads the variable of that name where a bare name could
+  be a word. No option or flag enables it, and no token, keyword or error
+  message is added.
+- `@name` is `@` with a name token immediately after it: nothing, not even a
+  space, tab, comment or line break, stands between them. A name is an
+  identifier token. Keywords such as `true`, `null`, `None`, `this`, `self`,
+  `not`, `if`, `in`, `of` and `typeof`, `$Class` references, numbers,
+  strings, `(` and another `@` are not names, so `@ a`, `@1`, `@"a"`,
+  `@(a)`, `@$Order`, `@this` and `@@a` keep their accepted readings.
+- `@name` may stand wherever an operand begins in two regions:
+  - the value of an `is` assignment of [Is assignments](#is-assignments),
+    through every construct where [item positions](#item-words) can lie: the
+    whole value, conditions and branches, the operands of every operator,
+    receivers, arguments and named-argument values, list items, dictionary
+    values, subscripts and slice bounds, quantifiers, comprehension sources,
+    pipeline stage arguments, spread sources and grouping parentheses;
+  - the right operand of an `is` or `is not` comparison of
+    [Is and is not comparisons](#is-and-is-not-comparisons), wherever that
+    comparison stands, as in `if $Order.state is @OPEN:`.
+- Neither region reaches into a function, arrow or lambda body, the element
+  or filter condition of a list comprehension, a template interpolation, the
+  value of an assignment operator inside the region, or the target of an
+  assignment operator. Outside an `is` value a `name=value` argument is such
+  an assignment, so `if x is Light(color=@C):` keeps the accepted error. A
+  comparison inside one of these parts has its own right operand, and a
+  block body's own `is` assignments have their own values.
+- `@name` reads `name` as `(name)` does: the local, variable, class, function
+  or built-in global of that name, recording a dependency on it, and
+  `ReferenceError("<name> is not defined")` when nothing defines it, raised
+  at the start of its statement as for `=`. It is never a word. So after
+  `a is 1`, `b is @a + 2` makes `b` follow `a` and be `3`, and `b is @c + 3`
+  raises `ReferenceError("c is not defined")` at line 1, column 1 while
+  nothing defines `c`, as `b = c + 3` does.
+- Where a bare name would be a word, `@name` reads the variable instead:
+  `x is @A`, `x is @A if c else B`, `x is [@A, B]`, `x is {k: @A}` and
+  `x is Light(color=@A)` read `A` as `(A)` does, and `if state is @OPEN:` is
+  the comparison `state == OPEN`. Where a bare name is already a reference,
+  as in `b is @a + 2`, the mark changes nothing. Static class-rule
+  validation requires the name to be defined, so `$Order.state is @OPEN`
+  raises `ReferenceError("OPEN is not defined")` when declared while nothing
+  defines `OPEN`.
+- Postfix operations follow `@name` as they follow any name: `@a.b`, `@a[0]`,
+  `@a(1)`, `@Light(color=RED)`, a constructor call whose named arguments are
+  item positions, and `@a@first`, the version `first` of the variable `a`.
+- After a complete operand, `@` is the version selector of
+  [Read-only state versions](#read-only-state-versions), unchanged, as in
+  `x@first` and `x@3`. A reasoning name is such an operand, so in `why @a`
+  the `@a` is an unknown selector word of `why` and still raises the
+  selector error. In prefix position `first`, `last` and `previous` are
+  names, so `x is [@first]` reads the variable `first`. The one exception is the start of an `is`
+  assignment's value: `target is @first`, `@last`, `@previous` or `@` with
+  digits keeps its accepted reading as the statement `target` followed by a
+  version of the name `is`, so `b is @first` is `b` and `is@first`. Write
+  `b is (@first)` to read the variable `first` there.
+- A leading `@` outside both regions keeps
+  `SyntaxError("Unexpected character '@'")` at the `@`, as in `b = @a`,
+  `return @a`, `f(@a)`, `x == @a`, a statement that starts with `@a` and
+  `x is () => @a`; so does the left operand of a comparison outside an `is`
+  value, as in `(@a is x)`. An assignment target or comprehension element
+  that holds `@name` raises the error the accepted reading raises, at the
+  same place: `SyntaxError("Unexpected character '@'")` at its first `@`, as
+  for `x is [@y] = 1` and `x is [@a for v in xs]`, or, when the target begins
+  the value, as in `x is @y = 1`, which the accepted grammar reads as `x`
+  followed by `is@y = 1`,
+  `SyntaxError("Expected a non-negative integer, 'first', 'last', or 'previous' after '@'")`
+  at the name.
+- A `while` or `suppose` header owns its colon after `@lambda`, which reads
+  the variable `lambda`, as it does after `(lambda)`; after the bare word
+  `lambda` it still does not.
+- `@name` builds exactly the syntax tree of `(name)`, so a value with at
+  variables renders as that spelling: `b is @a` renders as `b=a`,
+  `b is c ? @a : B` as `b is c?(a):B` and `b is [@A, B]` as `b is [(A),B]`,
+  and each rendering reads back as the same statement.
+- REPL continuation stays lexical. A colon-free `if` header waits for its
+  indented body, and an `elif`, `else if` or direct `else` alternative
+  indents its next line, when an `@` and a name follow the comparison word
+  `is`, or `is not`, after an operand, as in `if x is @C`; any other `@`
+  keeps the accepted rule that a version selector must follow.
+- `tests/at_variables.rs`, `tests/at_variables_cli.rs` and the REPL
+  continuation and terminal unit suites execute this behavior.
 
 ## Instance list ranges and list queries
 

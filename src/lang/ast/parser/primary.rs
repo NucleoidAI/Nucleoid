@@ -25,10 +25,8 @@ fn object_expression(entries: Vec<ObjectEntry>) -> Expr {
 
 impl Parser {
     pub(super) fn primary(&mut self) -> Result<Expr> {
-        // `@` is only additive postfix syntax. At an operand boundary retain
-        // the accepted diagnostic and its original character position.
         if self.check(&Token::At) {
-            return Err(self.error("Unexpected character '@'"));
+            return self.at_variable();
         }
         if self.context != ExpressionContext::Interpolation {
             if let Some(quantifier) = self.quantifier_at(0) {
@@ -112,7 +110,7 @@ impl Parser {
             let start = self.position;
             let mut item = self.within(true, Self::item)?;
             if items.is_empty() && self.starts_comprehension() {
-                return self.comprehension(item);
+                return self.comprehension(start, item);
             }
             self.items.mark(start, self.position, &mut item);
             items.push(item);

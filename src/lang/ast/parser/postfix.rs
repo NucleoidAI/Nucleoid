@@ -1,6 +1,6 @@
 use super::{ArgumentContext, MAX_CHAIN, Parser};
 use crate::error::{Error, Position, Result};
-use crate::lang::ast::lexer::Token;
+use crate::lang::ast::lexer::{EXPECTED_VERSION_SELECTOR, Token};
 use crate::lang::ast::{Expr, Function, UnaryOp, VersionSelector};
 
 impl Parser {
@@ -60,15 +60,12 @@ impl Parser {
 
     fn version_selector(&mut self) -> Result<VersionSelector> {
         let selector = match self.peek() {
-            Token::VersionIndex(index) => VersionSelector::Index(*index),
-            Token::Identifier(name) if name == "first" => VersionSelector::First,
-            Token::Identifier(name) if name == "last" => VersionSelector::Last,
-            Token::Identifier(name) if name == "previous" => VersionSelector::Previous,
-            _ => {
-                return Err(self.error(
-                    "Expected a non-negative integer, 'first', 'last', or 'previous' after '@'",
-                ));
-            }
+            Token::VersionIndex(index) => Some(VersionSelector::Index(*index)),
+            Token::Identifier(name) => VersionSelector::from_name(name),
+            _ => None,
+        };
+        let Some(selector) = selector else {
+            return Err(self.error(EXPECTED_VERSION_SELECTOR));
         };
         self.advance();
         Ok(selector)
