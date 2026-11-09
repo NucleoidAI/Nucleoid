@@ -1,0 +1,417 @@
+{
+  "declarations": [
+    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\n# Each object is the whole figure of one panel, the top or bottom half of the canvas, including any disconnected pieces.\n# holes are the [column, row] cells of its panel that the figure leaves empty, counted from the top-left corner of the panel.\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, holes: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l9100\n    this.holes is holes",
+    "$Obj.tag is l8372",
+    "# Overlay the panels and keep the holes that every panel shares.\n$Obj.points is $Obj.holes.filter(hole => all figure in Obj: figure.holes.includes(hole))",
+    "$Obj.fill_color is 2",
+    "$Obj.x is $Obj.points.min(point => point[0])",
+    "$Obj.y is $Obj.points.min(point => point[1])",
+    "$Obj.width is $Obj.points.max(point => point[0]) - $Obj.x + 1",
+    "$Obj.height is $Obj.points.max(point => point[1]) - $Obj.y + 1"
+  ],
+  "output_canvas": "FIT",
+  "dataset": [
+    {
+      "input_matrix": [
+        [0, 9, 9],
+        [0, 9, 9],
+        [9, 9, 9],
+        [0, 1, 0],
+        [0, 0, 1],
+        [1, 1, 1]
+      ],
+      "output_matrix": [
+        [2, 0, 0],
+        [2, 0, 0],
+        [0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obje25bf2e9e53d",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 9, 9],
+            [0, 9, 9],
+            [9, 9, 9],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [2, 0, 0],
+            [2, 0, 0],
+            [0, 0, 0]
+          ],
+          "implementation": "# The whole top-panel pattern of color 9,\n# 3 by 3 at x 0, y 0\nobje25bf2e9e53d is Obj(x=0, y=0, width=3, height=3, orientation=0, holes=[[0, 0], [0, 1]])",
+          "input_value": {"height":3,"holes":[[0,0],[0,1]],"id":"obje25bf2e9e53d","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"fill_color":2,"height":2,"holes":[[0,0],[0,1]],"id":"obje25bf2e9e53d","orientation":0,"points":[[0,0],[0,1]],"tag":"l8372","width":1,"x":0,"y":0}
+        },
+        {
+          "instance_name": "obj999f7889a66e",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 3,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 1, 1]
+          ],
+          "output_instance_matrix": [
+            [2, 0, 0],
+            [2, 0, 0],
+            [0, 0, 0]
+          ],
+          "implementation": "# The whole bottom-panel pattern of color 1,\n# 3 by 3 at x 0, y 3\nobj999f7889a66e is Obj(x=0, y=3, width=3, height=3, orientation=0, holes=[[0, 0], [2, 0], [0, 1], [1, 1]])",
+          "input_value": {"height":3,"holes":[[0,0],[2,0],[0,1],[1,1]],"id":"obj999f7889a66e","orientation":0,"tag":"l9100","width":3,"x":0,"y":3},
+          "output_value": {"fill_color":2,"height":2,"holes":[[0,0],[2,0],[0,1],[1,1]],"id":"obj999f7889a66e","orientation":0,"points":[[0,0],[0,1]],"tag":"l8372","width":1,"x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [9, 0, 9],
+        [0, 9, 9],
+        [0, 0, 9],
+        [1, 0, 1],
+        [1, 0, 0],
+        [1, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 2, 0],
+        [0, 0, 0],
+        [0, 2, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj07489bc01ff6",
+          "input_x": 0,
+          "output_x": 1,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [9, 0, 9],
+            [0, 9, 9],
+            [0, 0, 9],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 2, 0],
+            [0, 0, 0],
+            [0, 2, 0]
+          ],
+          "implementation": "# The whole top-panel pattern of color 9,\n# 3 by 3 at x 0, y 0\nobj07489bc01ff6 is Obj(x=0, y=0, width=3, height=3, orientation=0, holes=[[1, 0], [0, 1], [0, 2], [1, 2]])",
+          "input_value": {"height":3,"holes":[[1,0],[0,1],[0,2],[1,2]],"id":"obj07489bc01ff6","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"fill_color":2,"height":3,"holes":[[1,0],[0,1],[0,2],[1,2]],"id":"obj07489bc01ff6","orientation":0,"points":[[1,0],[1,2]],"tag":"l8372","width":1,"x":1,"y":0}
+        },
+        {
+          "instance_name": "objf496979cac4a",
+          "input_x": 0,
+          "output_x": 1,
+          "input_y": 3,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 0, 1],
+            [1, 0, 0],
+            [1, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 2, 0],
+            [0, 0, 0],
+            [0, 2, 0]
+          ],
+          "implementation": "# The whole bottom-panel pattern of color 1,\n# 3 by 3 at x 0, y 3\nobjf496979cac4a is Obj(x=0, y=3, width=3, height=3, orientation=0, holes=[[1, 0], [1, 1], [2, 1], [1, 2], [2, 2]])",
+          "input_value": {"height":3,"holes":[[1,0],[1,1],[2,1],[1,2],[2,2]],"id":"objf496979cac4a","orientation":0,"tag":"l9100","width":3,"x":0,"y":3},
+          "output_value": {"fill_color":2,"height":3,"holes":[[1,0],[1,1],[2,1],[1,2],[2,2]],"id":"objf496979cac4a","orientation":0,"points":[[1,0],[1,2]],"tag":"l8372","width":1,"x":1,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 9, 0],
+        [9, 0, 9],
+        [9, 0, 0],
+        [0, 0, 0],
+        [0, 0, 1],
+        [1, 0, 0]
+      ],
+      "output_matrix": [
+        [2, 0, 2],
+        [0, 2, 0],
+        [0, 2, 2]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj92a92c4b1e74",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 9, 0],
+            [9, 0, 9],
+            [9, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [2, 0, 2],
+            [0, 2, 0],
+            [0, 2, 2]
+          ],
+          "implementation": "# The whole top-panel pattern of color 9,\n# 3 by 3 at x 0, y 0\nobj92a92c4b1e74 is Obj(x=0, y=0, width=3, height=3, orientation=0, holes=[[0, 0], [2, 0], [1, 1], [1, 2], [2, 2]])",
+          "input_value": {"height":3,"holes":[[0,0],[2,0],[1,1],[1,2],[2,2]],"id":"obj92a92c4b1e74","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"fill_color":2,"height":3,"holes":[[0,0],[2,0],[1,1],[1,2],[2,2]],"id":"obj92a92c4b1e74","orientation":0,"points":[[0,0],[2,0],[1,1],[1,2],[2,2]],"tag":"l8372","width":3,"x":0,"y":0}
+        },
+        {
+          "instance_name": "obj4bdedda9fb5c",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 4,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 1],
+            [1, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [2, 0, 2],
+            [0, 2, 0],
+            [0, 2, 2]
+          ],
+          "implementation": "# The whole bottom-panel pattern of color 1,\n# 2 by 3 at x 0, y 4\nobj4bdedda9fb5c is Obj(x=0, y=4, width=3, height=2, orientation=0, holes=[[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [1, 2], [2, 2]])",
+          "input_value": {"height":2,"holes":[[0,0],[1,0],[2,0],[0,1],[1,1],[1,2],[2,2]],"id":"obj4bdedda9fb5c","orientation":0,"tag":"l9100","width":3,"x":0,"y":4},
+          "output_value": {"fill_color":2,"height":3,"holes":[[0,0],[1,0],[2,0],[0,1],[1,1],[1,2],[2,2]],"id":"obj4bdedda9fb5c","orientation":0,"points":[[0,0],[2,0],[1,1],[1,2],[2,2]],"tag":"l8372","width":3,"x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 9],
+        [9, 9, 9],
+        [0, 9, 0],
+        [1, 0, 0],
+        [0, 1, 1],
+        [0, 0, 1]
+      ],
+      "output_matrix": [
+        [0, 2, 0],
+        [0, 0, 0],
+        [2, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj6102e564630f",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 9],
+            [9, 9, 9],
+            [0, 9, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 2, 0],
+            [0, 0, 0],
+            [2, 0, 0]
+          ],
+          "implementation": "# The whole top-panel pattern of color 9,\n# 3 by 3 at x 0, y 0\nobj6102e564630f is Obj(x=0, y=0, width=3, height=3, orientation=0, holes=[[0, 0], [1, 0], [0, 2], [2, 2]])",
+          "input_value": {"height":3,"holes":[[0,0],[1,0],[0,2],[2,2]],"id":"obj6102e564630f","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"fill_color":2,"height":3,"holes":[[0,0],[1,0],[0,2],[2,2]],"id":"obj6102e564630f","orientation":0,"points":[[1,0],[0,2]],"tag":"l8372","width":2,"x":0,"y":0}
+        },
+        {
+          "instance_name": "obj385c4c0f1620",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 3,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 1],
+            [0, 0, 1]
+          ],
+          "output_instance_matrix": [
+            [0, 2, 0],
+            [0, 0, 0],
+            [2, 0, 0]
+          ],
+          "implementation": "# The whole bottom-panel pattern of color 1,\n# 3 by 3 at x 0, y 3\nobj385c4c0f1620 is Obj(x=0, y=3, width=3, height=3, orientation=0, holes=[[1, 0], [2, 0], [0, 1], [0, 2], [1, 2]])",
+          "input_value": {"height":3,"holes":[[1,0],[2,0],[0,1],[0,2],[1,2]],"id":"obj385c4c0f1620","orientation":0,"tag":"l9100","width":3,"x":0,"y":3},
+          "output_value": {"fill_color":2,"height":3,"holes":[[1,0],[2,0],[0,1],[0,2],[1,2]],"id":"obj385c4c0f1620","orientation":0,"points":[[1,0],[0,2]],"tag":"l8372","width":2,"x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 9, 0],
+        [0, 9, 9],
+        [0, 9, 9],
+        [0, 0, 0],
+        [1, 1, 1],
+        [1, 0, 1]
+      ],
+      "output_matrix": [
+        [2, 0, 2],
+        [0, 0, 0],
+        [0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obje89b0722fb21",
+          "input_x": 1,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 9, 0],
+            [0, 9, 9],
+            [0, 9, 9],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [2, 0, 2],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "implementation": "# The whole top-panel pattern of color 9,\n# 3 by 2 at x 1, y 0\nobje89b0722fb21 is Obj(x=1, y=0, width=2, height=3, orientation=0, holes=[[0, 0], [2, 0], [0, 1], [0, 2]])",
+          "input_value": {"height":3,"holes":[[0,0],[2,0],[0,1],[0,2]],"id":"obje89b0722fb21","orientation":0,"tag":"l9100","width":2,"x":1,"y":0},
+          "output_value": {"fill_color":2,"height":1,"holes":[[0,0],[2,0],[0,1],[0,2]],"id":"obje89b0722fb21","orientation":0,"points":[[0,0],[2,0]],"tag":"l8372","width":3,"x":0,"y":0}
+        },
+        {
+          "instance_name": "obj6e001dfd3c27",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 4,
+          "output_y": 0,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 1, 1],
+            [1, 0, 1]
+          ],
+          "output_instance_matrix": [
+            [2, 0, 2],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "implementation": "# The whole bottom-panel pattern of color 1,\n# 2 by 3 at x 0, y 4\nobj6e001dfd3c27 is Obj(x=0, y=4, width=3, height=2, orientation=0, holes=[[0, 0], [1, 0], [2, 0], [1, 2]])",
+          "input_value": {"height":2,"holes":[[0,0],[1,0],[2,0],[1,2]],"id":"obj6e001dfd3c27","orientation":0,"tag":"l9100","width":3,"x":0,"y":4},
+          "output_value": {"fill_color":2,"height":1,"holes":[[0,0],[1,0],[2,0],[1,2]],"id":"obj6e001dfd3c27","orientation":0,"points":[[0,0],[2,0]],"tag":"l8372","width":3,"x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [9, 0, 9],
+        [0, 0, 9],
+        [9, 0, 9],
+        [0, 1, 1],
+        [0, 1, 0],
+        [1, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0],
+        [2, 0, 0],
+        [0, 2, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "objafa7f1aafe2c",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 0,
+          "output_y": 1,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [9, 0, 9],
+            [0, 0, 9],
+            [9, 0, 9],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [2, 0, 0],
+            [0, 2, 0]
+          ],
+          "implementation": "# The whole top-panel pattern of color 9,\n# 3 by 3 at x 0, y 0\nobjafa7f1aafe2c is Obj(x=0, y=0, width=3, height=3, orientation=0, holes=[[1, 0], [0, 1], [1, 1], [1, 2]])",
+          "input_value": {"height":3,"holes":[[1,0],[0,1],[1,1],[1,2]],"id":"objafa7f1aafe2c","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
+          "output_value": {"fill_color":2,"height":2,"holes":[[1,0],[0,1],[1,1],[1,2]],"id":"objafa7f1aafe2c","orientation":0,"points":[[0,1],[1,2]],"tag":"l8372","width":2,"x":0,"y":1}
+        },
+        {
+          "instance_name": "obj89ee9fd110b1",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 3,
+          "output_y": 1,
+          "input_orientation": 0,
+          "output_orientation": 0,
+          "input_instance_matrix": [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 1, 1],
+            [0, 1, 0],
+            [1, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0],
+            [2, 0, 0],
+            [0, 2, 0]
+          ],
+          "implementation": "# The whole bottom-panel pattern of color 1,\n# 3 by 3 at x 0, y 3\nobj89ee9fd110b1 is Obj(x=0, y=3, width=3, height=3, orientation=0, holes=[[0, 0], [0, 1], [2, 1], [1, 2], [2, 2]])",
+          "input_value": {"height":3,"holes":[[0,0],[0,1],[2,1],[1,2],[2,2]],"id":"obj89ee9fd110b1","orientation":0,"tag":"l9100","width":3,"x":0,"y":3},
+          "output_value": {"fill_color":2,"height":2,"holes":[[0,0],[0,1],[2,1],[1,2],[2,2]],"id":"obj89ee9fd110b1","orientation":0,"points":[[0,1],[1,2]],"tag":"l8372","width":2,"x":0,"y":1}
+        }
+      ]
+    }
+  ]
+}

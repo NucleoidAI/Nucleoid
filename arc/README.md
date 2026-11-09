@@ -2129,6 +2129,95 @@ executable code and one `#` comment, the orientation line that every dataset
 places above its class. The test pair follows the training pairs at the same
 level and is annotated by the same rules.
 
+`dataset.fafffa47.json` annotates the five exact original training pairs from
+`data\training\fafffa47.json`, in order, followed by its test pair at the same
+level, in the single canonical `src\dataset\dataset.fafffa47.json`, twelve
+whole panel-figure instances in total, two per pair. Every input retains its
+original 6 by 3 canvas, 6 rows of 3 columns, and every output its original
+3 by 3 canvas, with their colors, positions, and zero cells. Each input shows
+two equal 3 by 3 panels stacked vertically, a color-9 figure in the top half of
+the canvas and a color-1 figure in the bottom half; each object is the whole
+figure of one panel, including disconnected pieces, as in the bottom figures of
+the second and third training pairs, and zero cells are background. Each output
+is one panel: it lays the two panels over each other at matching panel
+coordinates and paints color 2 every cell that both leave empty, the complement
+of the figures' union, while every other cell is 0. The panels' colors do not
+matter, only which cells each panel leaves empty. The big-picture formulation
+of `dataset.dae9d2b5.json`, which registers its two panel figures and lets the
+solver compose their union from each figure's own mask, falls short here:
+merging masks only adds nonzero cells, so no composition of the figures' masks
+gives the cells that neither covers. Each figure therefore carries the empty
+space of its panel, read as a stencil whose holes are its empty cells, and the
+output is the overlap of the two stencils' holes, the cells through which both
+panels are open. The class takes the standard entries `x`, `y`, `width`,
+`height`, and `orientation` first, in that order, where `width` and `height`
+are the column and row counts of the figure's box, the nonzero bounding box of
+its input mask, and then `holes`, the `[column, row]` cells of its panel that
+the figure leaves empty, counted from the panel's top-left corner in reading
+order, as a list, such as `[[0, 0], [0, 1]]` for the top figure of the first
+training input. It takes no color, cell list, panel index, canvas size, or
+matrix of cells. The figure boxes are 3 by 3, rows by columns, except the
+bottom figures of the third and fifth training pairs, 2 by 3 at `y` 4, and the
+top figure of the fifth, 3 by 2 at `x` 1; each implementation passes `width`
+and `height` right after `y`. The figures' own cells would serve as well only
+if a rule could list a panel's cells, and accepted Nucleoid has no integer
+range: `range`, `Array`, and `Object` are undefined, lists have no `keys` or
+`entries`, and `map` passes its callback no index. The empty cells are
+therefore the input property. One unconditional class-level rule introduces
+`points`, which is absent before the rules run, as
+`$Obj.holes.filter(hole => all figure in Obj: figure.holes.includes(hole))`:
+the holes of the figure's own panel that every figure's panel also has, read
+with the quantifier `all` of [NUC 62](../docs/nuc-0062.md) over the class's
+population and with `includes`, which matches `[column, row]` lists by the deep
+equality of [NUC 61](../docs/nuc-0061.md). Others set the output tag and
+introduce `fill_color` as 2, and four rewrite the box to the bounding box of
+`points` with the list
+extremes of [NUC 69](../docs/nuc-0069.md): `$Obj.points.min(point => point[0])`
+gives `x` and `$Obj.points.min(point => point[1])` gives `y`, while
+`$Obj.points.max(point => point[0]) - $Obj.x + 1` and
+`$Obj.points.max(point => point[1]) - $Obj.y + 1` give `width` and `height`,
+the box's column and row counts. Both figures of a pair thus reach the same
+output state apart from their `id` and `holes`: each becomes the shared empty
+space, and their identical masks compose to the output. The `points` rule reads
+every figure's holes, so it needs the whole world; the rules give the same
+states in either instance order, with the rules in reverse order, and with the
+rules declared after the instances. They leave `orientation` and `holes` unchanged and create no other
+property, so each output state adds `points` and `fill_color` to its input
+state's keys. Native snapshots start with the pair's `canvas_width` and
+`canvas_height`; input states run the class alone, and output states run both
+implementations together with all declarations, followed by `Obj[:]`. Tags
+identify the geometry: `l9100` is a single shape, as in
+`dataset.28bf18c6.json` and `dataset.dae9d2b5.json`, and `l8372` is the empty
+space that every panel shares, the cells listed in `points`. Input masks
+retain each pair's full-size 6 by 3 input canvas and output masks the complete
+3 by 3 output, padded with `0` outside the figure or the shared empty space;
+the two figures of a pair share one output mask, and merging the masks
+reproduces each pair's input and output. The `output_x`/`output_y` fields
+record the shared space's nonzero bounding-box origin, 0 and 0 except 1 and 0
+in the second training pair and 0 and 1 in the test pair, equal to
+`output_value.x`/`output_value.y`, and the output states' `width` and `height`
+are its box, 2 by 1, 3 by 1, 3 by 3, 3 by 2, and 1 by 3, rows by columns, in
+the training pairs. `output_canvas` is `FIT`, because each output is one panel,
+smaller than the two-panel input canvas that `EXACT` keeps, and `FIT` frames
+the third training output exactly. It crops the composed canvas to the shared
+space, though, which spans the panel only in that pair; the other four
+training outputs keep empty border rows or columns, which neither mode
+retains. The solver places every output crop at its output position, so the
+top half of its composed canvas equals every training output, but no current
+mode frames the canvas to one panel. Orientation is 0 in both states for every
+object. Every figure is a pattern, neither a line, a corner, nor a chevron,
+and every training output's shared space reads 0 as well: a vertical two-cell
+line without a head in the first pair, and scattered cells or a pattern in the
+others. No rule sets `orientation`. The test output's two cells touch only at
+a corner, a line that falls to the right, which the shape convention reads as
+135; the rules, fixed from training outputs that all read 0, do not turn it,
+so its output state keeps 0. The declarations write their assignments with
+`is` and their tags as bare words, with no quoted string, and hold `#`
+comments: three lines above the class, the orientation line among them, and
+one above the `points` rule. Each implementation starts with two comment lines
+that describe its figure. The test pair follows the training pairs at the same
+level and is annotated by the same rules.
+
 ## ARC proposal agent
 
 Run `/arc-purposal [<puzzle-id>] [--strategy-policy <absolute-json-path>]`
