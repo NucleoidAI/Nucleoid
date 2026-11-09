@@ -50,6 +50,7 @@ $puzzleIds = @(
     'e9afcf9a'
     '6fa7a44f'
     'd631b094'
+    'd037b0a7'
 )
 
 $bun = (Get-Command bun -CommandType Application -ErrorAction Stop).Source

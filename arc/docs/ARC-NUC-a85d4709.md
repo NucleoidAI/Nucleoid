@@ -6,11 +6,11 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/a85d4709.json`](../data/training/a85d4709.json) |
-| Instruction dataset | [`dataset.a85d4709.json`](../src/dataset/dataset.a85d4709.json): the puzzle's 4 original training pairs and its test pair, 15 marker instances, 3 in each pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026 |
+| Instruction dataset | [`dataset.a85d4709.json`](../src/dataset/dataset.a85d4709.json): the puzzle's 4 original training pairs and its test pair, 15 marker instances, 3 in each pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply |
-| Solver changes | None; earlier suggested changes still await review, not applied |
-| Solver runs | 1 local run on 5-Nov-2026, exit 6, a difference of 6, not an exact match, with this dataset's test pair in its few-shot context; none of the current version |
+| Solver changes | None; earlier suggested changes still await review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default |
+| Solver runs | 1 local run on 5-Nov-2026, exit 6, a difference of 6, not an exact match, with this dataset's test pair in its few-shot context; none of the current version; none of the 8-Nov-2026 `is` version |
 | Updated | 8-Nov-2026 |
 
 ## Puzzle
@@ -214,6 +214,57 @@ tags are unchanged. `Matrix.silhouette` now also takes letters, so the
 orientation call's few-shot crops read exactly as before. No solver run has
 measured this version, so its difference is unknown, not zero.
 
+### Is assignments
+
+On 8-Nov-2026 the user asked to apply [NUC 93](../../docs/nuc-0093.md) and
+[NUC 86](../../docs/nuc-0086.md) to every dataset in `src/dataset`. Every
+assignment in the declarations and implementations now uses `is`, the opt-in
+assignment of NUC 93, and a quoted word that was a whole value, or the whole
+right operand of an `is` comparison, lost its quotes:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int):
+    this.x is x
+    this.y is y
+    this.width is width
+    this.height is height
+    this.orientation is orientation
+    this.tag is l7544
+
+$Obj.tag is l3058
+
+$Obj.orientation is 90
+
+$Obj.fill_color is ['D', 'C', 'A'][$Obj.x@first]
+
+$Obj.width is canvas_width
+
+$Obj.x is 0
+```
+
+`target is value` builds exactly the syntax tree of `target = value`. A bare
+word reads the name of its spelling when one exists and otherwise stores its
+own text: in the constructor, `this.x is x` reads the parameter `x`, and no
+program of this dataset defines any of `l7544` and `l3058`, so those words
+read as their own text. A string inside a larger value keeps its quotes, as in
+`$Obj.fill_color is ['D', 'C', 'A'][$Obj.x@first]`, because a word must be the
+whole value. Implementations construct their instances with `is` as well, as
+in `obja98bf6900c1c is Obj(x=2, y=0, width=1, height=1, orientation=0)`. Only
+the spelling changed: the class, the rules' structure, the grids, masks,
+positions, instance names, and snapshots are as before, and the world model
+keeps its level, so the gestalt overview above still holds.
+
+The rules now need a runtime at `ad45ba4`, the NUC 93 commit, or later, run
+with `--is-assignment`, which `src/lib/nucleoid.ts` now passes to every
+program; without the flag, `obja98bf6900c1c is Obj(...)` reads as three
+juxtaposed statements and raises `ReferenceError`. Offline, with the accepted
+runtime at `4ac649b` (last runtime change `ad45ba4`), the flag reproduced all
+15 input and 15 output snapshots of the 5 pairs, both in a direct replay and
+through the solver's own `nucleoid.run`, and the previous version reproduced
+them with and without the flag. No NUC was requested, so no proposal strategy
+was selected and strategy learning did not apply. No solver run has used this
+version.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -281,3 +332,9 @@ zero.
 - **Letter version unmeasured.** No solver run has measured the 8-Nov-2026
   letter version. The solver still sends this puzzle's own grids as numbers,
   while every few-shot dataset now writes its colors as letters.
+- **The `is` assignment version is unmeasured.** No solver run has used the
+  8-Nov-2026 version with `is` assignments and bare words, so its effect on
+  this puzzle's result is unknown. Every run's few-shot context now shows bare
+  words beside quoted strings, and a word reads as its text only as a whole
+  value: a model that writes one inside a larger value, such as
+  `$Obj.fill_color is A if $Obj.symmetric else C`, gets a `ReferenceError`.

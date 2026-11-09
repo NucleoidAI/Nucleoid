@@ -116,6 +116,25 @@ built-in of that name when one exists, and otherwise stores its own text, so
 longer needs the removed `--is-assignment` flag, so `a is good` assigns
 rather than reading as three statements; see [NUC 93](docs/nuc-0093.md).
 
+### Conditional words
+
+A branch of a conditional `is` value can be a bare word too:
+
+```
+ready = false
+status is OPEN if ready else WAITING
+assert(status, "WAITING")
+ready = true
+assert(status, "OPEN")
+```
+
+`a is A if c else B` and `a is c ? A : B` read each branch that is one bare
+word as a word value is read: the variable, class, function or built-in of
+that name when one exists, otherwise its own text. Conditions and parenthesized
+operands are not words, so `a is (A if c else B)` needs `A` and `B` to be
+defined. It no longer needs the removed `--conditional-words` flag; see
+[NUC 94](docs/nuc-0094.md).
+
 ---
 
 # Design Theory 📐

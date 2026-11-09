@@ -118,6 +118,52 @@ pub(crate) fn enum_source(name: &str, members: &[EnumMember]) -> String {
     }
 }
 
+pub(crate) struct WordValue<'a>(&'a Expr);
+
+impl<'a> WordValue<'a> {
+    pub(crate) fn of(value: &'a Expr) -> Option<Self> {
+        holds_words(value).then_some(WordValue(value))
+    }
+}
+
+impl fmt::Display for WordValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0 {
+            Expr::Conditional {
+                condition,
+                consequent,
+                alternate,
+            } if holds_words(self.0) => write!(
+                f,
+                "{condition}?{}:{}",
+                WordValue(consequent),
+                WordValue(alternate)
+            ),
+            Expr::Identifier(name) => write!(f, "({name})"),
+            value => write!(f, "{value}"),
+        }
+    }
+}
+
+fn holds_words(value: &Expr) -> bool {
+    let mut pending = vec![value];
+    while let Some(expression) = pending.pop() {
+        match expression {
+            Expr::Unary {
+                operator: UnaryOp::Word,
+                ..
+            } => return true,
+            Expr::Conditional {
+                consequent,
+                alternate,
+                ..
+            } => pending.extend([consequent.as_ref(), alternate.as_ref()]),
+            _ => {}
+        }
+    }
+    false
+}
+
 fn write_quantified(
     f: &mut fmt::Formatter<'_>,
     quantifier: Quantifier,

@@ -86,6 +86,37 @@ fn is_assignments_reach_terminal_submission_and_survive_clear() {
 }
 
 #[test]
+fn conditional_words_reach_terminal_submission_and_survive_clear() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    run(&mut app, &mut runtime, "ready = false");
+    app.editor = editor::new("if true:");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('j'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines()[1], "    ");
+    app.editor
+        .insert_str("status is OPEN if ready else WAITING");
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    run(&mut app, &mut runtime, "status");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "WAITING"
+    );
+    run(&mut app, &mut runtime, "ready = true");
+    run(&mut app, &mut runtime, "OPEN = \"open\"");
+    run(&mut app, &mut runtime, "status");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "open");
+    run(&mut app, &mut runtime, ".clear");
+    run(&mut app, &mut runtime, "other is YES if true else NO");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "YES");
+    assert_eq!(runtime.assertions_run(), 0);
+}
+
+#[test]
 fn enter_preserves_pasted_indentation_and_never_executes_blank_lines() {
     let mut app = App::new(false, false);
     let mut runtime = Runtime::new();

@@ -324,7 +324,7 @@ of its dataset, while each dataset ranks its own colors: 2 is `A` in
 `dataset.017c7c7b.json`, `B` in `dataset.0d3d703e.json`, and `D` in
 `dataset.27a28665.json`. The same letters replace the colors in both instance
 masks, in the world model's color parameters, which are `str`, such as
-`color: str`, and its rules, such as `if $Obj.color@first is 'C':`, in the
+`color: str`, and its rules, such as `if $Obj.color@first is C:`, in the
 implementations' arguments, such as `color='B'` or `parts=['A', 'C']`, and in
 the snapshots, such as `"color":"B"`. Coordinates, sizes, orientations,
 counts, and tags stay numbers. Mapping a dataset's letters back to its colors
@@ -370,12 +370,12 @@ orientation is 270, 90, 0, or 180 when the endpoint is on the left, on the
 right, at the top, or at the bottom, and it keeps that orientation as it grows
 away from the endpoint. A curve point, a single cell, is at orientation 0, and
 its rim makes a V that points toward the point, its vertex: the color-4 rule
-sets `$Obj.orientation = 180`, because its color-8 arms go up and the V points
+sets `$Obj.orientation is 180`, because its color-8 arms go up and the V points
 down, while a color-9 point keeps 0, because its color-2 arms go down and the
 V points up. The genesis rules match categorical colors and orientations with
 `is`, the spelling of `==` that [NUC 86](../docs/nuc-0086.md) adds, as in the
-line header `if $Obj.orientation is 270:`, and the line rules assign quoted
-strings, as in `$Obj.extension_direction = 'right'`.
+line header `if $Obj.orientation is 270:`, and the line rules assign bare
+words with `is`, as in `$Obj.extension_direction is right`.
 The genesis datasets write these colors as letters too, ranked by count: in
 `dataset.core.json` 9 is `A` and 4 is `B`, in `dataset.extension.json` 4 is
 `A` and 7 is `B`, in `dataset.curve.json` 4 is `A`, 8 is `B`, 9 is `C`, and 2
@@ -389,6 +389,31 @@ every program it runs, as
 rules read it from those variables. Native snapshots are captured the same
 way, with the pair's `input_matrix` size declared first.
 
+Every dataset writes its assignments with `is`, the opt-in assignment of
+[NUC 93](../docs/nuc-0093.md), and its equality tests with `is` and `is not`,
+the comparisons of [NUC 86](../docs/nuc-0086.md). Constructors set
+`this.x is x`, class-level rules set `$Obj.height is $Obj.height@first * 2`,
+and implementations construct
+`obj0c2414cf33eb is Obj(x=0, y=0, width=3, height=3, orientation=0)`; each
+`target is value` builds exactly the syntax tree of `target = value`. When a
+whole value, or the whole right operand of an `is` comparison, is one bare
+word, it reads the name of that spelling if one exists and otherwise its own
+text, so tags, letters, and directions drop their quotes there, as in
+`this.tag is l9100`, `$Obj.color is A`, `$Obj.extension_direction is right`,
+and `if $Obj.color@first is C:`. No dataset program defines a name with those
+spellings, and the solver adds only `canvas_width` and `canvas_height`. A
+string inside a larger value keeps its quotes, as in
+`$Obj.fill_color is 'A' if $Obj.parts.distinct().length is 1 else 0` and
+`$Obj.corner_colors is [['B', 'E'], ['C', 'D']]`, and so do keyword
+arguments such as `color='B'`, which are not assignments. `src\lib\nucleoid.ts`
+passes no syntax flag: the runtime reads `is` assignments without one since
+`d945213`, which removed the opt-in syntax options, so the solver needs that
+runtime or later. An older runtime reads `obj0c2414cf33eb is Obj(...)` as
+three juxtaposed statements and raises `ReferenceError`. The solver's own
+`canvas_width = 3` and `canvas_height = 3` lines keep `=`, which reads the
+same. Every snapshot is the state that the same rules give when spelled with
+`=`.
+
 Each snippet starts with `#` comment lines that describe the object it
 constructs, in the style of the declarations' comments: its kind and colors,
 then its size and position and, when it points, its direction. They put the
@@ -398,7 +423,7 @@ so they change no snapshot:
 ```nuc
 # A corner whose vertex and both segments are color A,
 # 2 by 2 at x 5, y 1, pointing southeast
-obj7e96305711c2 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color='A', vertical_segment_color='A', horizontal_segment_color='A')
+obj7e96305711c2 is Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color='A', vertical_segment_color='A', horizontal_segment_color='A')
 ```
 
 Every `input_instance_matrix` has exactly its pair's `input_matrix` row and
@@ -480,10 +505,10 @@ The class takes the standard entries `x`, `y`, `width`, `height`, and
 implementation passes `width=1, height=1`.
 The declarative rules introduce `marker_color`, which is absent before the
 rules run, and, in the same branches that shift the origin, grow each cross
-to 3 by 3 with `$Obj.width = $Obj.width@first + 2` and
-`$Obj.height = $Obj.height@first + 2`; color-6 and color-8 points keep their
-1 by 1 size. The two branches are guarded by `if $Obj.vertex_color is 'D':`
-and `if $Obj.vertex_color is 'C':`, with `is`, the spelling of `==` that
+to 3 by 3 with `$Obj.width is $Obj.width@first + 2` and
+`$Obj.height is $Obj.height@first + 2`; color-6 and color-8 points keep their
+1 by 1 size. The two branches are guarded by `if $Obj.vertex_color is D:`
+and `if $Obj.vertex_color is C:`, with `is`, the spelling of `==` that
 [NUC 86](../docs/nuc-0086.md) adds. Tags identify the geometry: `l1707` is an
 orthogonal cross, `l2404` is a diagonal cross, and `l7544` remains a single
 point.
@@ -986,7 +1011,7 @@ left-right symmetric, and neither does setting its half turn or its
 top-bottom mirror image to the right, or its mirror image on its left. Every
 block fills its canvas, so its own right edge is the canvas's right edge:
 the canvas-edge rule of `dataset.c9e6f938.json`,
-`$Obj.width = 2 * (canvas_width - $Obj.x@first)`, and doubling the block's
+`$Obj.width is 2 * (canvas_width - $Obj.x@first)`, and doubling the block's
 own width give the same 6 columns in every training pair, and the rules take
 the latter, which reads only the block. These choices were fixed from the
 training pairs before the test pair was read; the test block happens to be
@@ -1002,8 +1027,8 @@ name the block's colors in reading order and its box, such as
 `# The whole block of colors 6, 1 and 8,` and `# 3 by 3 at x 0, y 0` for the
 first training input. Two unconditional, commented class-level rules turn
 every block into the figure it forms with its mirror image:
-`$Obj.tag = 'l6919'` names that geometry, and
-`$Obj.width = $Obj.width@first * 2` makes the figure twice as wide as the
+`$Obj.tag is l6919` names that geometry, and
+`$Obj.width is $Obj.width@first * 2` makes the figure twice as wide as the
 block, 6 columns, as `dataset.28bf18c6.json` multiplies its shape's width by
 its copies. The rules leave `x`, `y`, `height`, and `orientation` unchanged,
 because the figure keeps the block's top-left corner and rows, and state no
@@ -1073,8 +1098,8 @@ training input, as its only descriptive property, with no color list, color
 count, line direction, canvas size, or matrix of cells, so no input property
 names the count or the line. Each implementation passes `width=3, height=3`
 right after `y`. Three unconditional class-level rules and one conditional
-rule turn the mosaic into the line. `$Obj.tag = 'l6074'` names the line, and
-`$Obj.fill_color = 'C'` introduces `fill_color`, which is absent before the
+rule turn the mosaic into the line. `$Obj.tag is l6074` names the line, and
+`$Obj.fill_color is C` introduces `fill_color`, which is absent before the
 rules run, because the line is gray whatever the mosaic's colors.
 `orientation` is `{1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]`: the
 list query `distinct` of [NUC 71](../docs/nuc-0071.md) keeps each of the
@@ -1142,7 +1167,7 @@ its top-bottom mirror image above it; a half turn of the block placed below
 reproduces only the second training pair, whose rows each read the same from
 right to left. Every block fills its canvas, so its own bottom edge is the
 canvas's bottom edge: the canvas-edge rule of `dataset.8be77c9e.json`,
-`$Obj.height = 2 * (canvas_height - $Obj.y@first)`, and doubling the block's
+`$Obj.height is 2 * (canvas_height - $Obj.y@first)`, and doubling the block's
 own height give the same 6 rows in every training pair, and the rules take
 the latter, which reads only the block, as `dataset.6d0aefbc.json` doubles
 its block's width. These choices were fixed from the training pairs before
@@ -1158,8 +1183,8 @@ block's cells travel in its masks. Its declaration is that of
 `dataset.6d0aefbc.json`, and each implementation passes
 `x=0, y=0, width=3, height=3, orientation=0`. Two unconditional class-level
 rules turn every block into the figure it forms with its mirror image:
-`$Obj.tag = 'l7511'` names that geometry, and
-`$Obj.height = $Obj.height@first * 2` makes the figure twice as tall as the
+`$Obj.tag is l7511` names that geometry, and
+`$Obj.height is $Obj.height@first * 2` makes the figure twice as tall as the
 block, 6 rows, anchored with `@first` because the rule rewrites `height`
 itself. The rules leave `x`, `y`, `width`, and `orientation` unchanged,
 because the figure keeps the block's top-left corner and columns, and state
@@ -1236,8 +1261,8 @@ canvas's diagonal, from 0 and 0 to `canvas_width - 1` and
 `canvas_height - 1`, gives the same ends in every training pair too, because
 every mosaic fills its canvas, but it reads the canvas rather than the figure.
 The rules leave `x` and `y` unchanged: a flip across its own diagonal keeps a
-square box in place. Two further rules, `$Obj.x = $Obj.y@first` and
-`$Obj.y = $Obj.x@first`, which swap the box's origin as a flip across the
+square box in place. Two further rules, `$Obj.x is $Obj.y@first` and
+`$Obj.y is $Obj.x@first`, which swap the box's origin as a flip across the
 canvas's diagonal does, would reproduce every training output as well, but
 every mosaic's origin is 0 and 0, so those rules would only return the input
 origin; the rules state the flip alone, a choice fixed from the training pairs
@@ -1307,7 +1332,7 @@ the rules never read. Each implementation passes
 `width` and `height` right after `y`, such as
 `x=0, y=1, width=1, height=1, orientation=0, cell_count=1` for the first
 training input. Seven unconditional class-level rules turn the pattern into the
-tally. `$Obj.tag = 'l5714'` names the tally, and `$Obj.fill_color = 'B'`
+tally. `$Obj.tag is l5714` names the tally, and `$Obj.fill_color is B`
 introduces `fill_color`, which is absent before the rules run, because the
 tally is red whatever the pattern. `width` is
 `min of [$Obj.cell_count, canvas_width]`, the noun form of the list query
@@ -1325,7 +1350,7 @@ every other tally, a single cell or a T, is 0. It reads the tally's `width`
 and `height` as their rules set them, never the pattern's input
 orientation, which the tally does not keep. The rules give the same states
 in reverse order and when they are declared after the instances.
-`$Obj.x = 0` and `$Obj.y = 0` move the
+`$Obj.x is 0` and `$Obj.y is 0` move the
 tally to the canvas's top-left corner, wherever the pattern lies, which
 changes `x` in the fourth and fifth training pairs and the first test pair,
 and `y` in the first training pair. Each grid holds a single pattern and
@@ -1399,8 +1424,8 @@ height from the solver's `canvas_height`. Each implementation passes `width`
 and `height` right after `y`, such as
 `x=0, y=0, width=3, height=2, orientation=0` for the first training input.
 Two unconditional class-level rules turn every pattern into the figure it
-forms with its mirror image. `$Obj.tag = 'l7511'` names that geometry, and
-`$Obj.height = 2 * (canvas_height - $Obj.y@first)` grows the box down to the
+forms with its mirror image. `$Obj.tag is l7511` names that geometry, and
+`$Obj.height is 2 * (canvas_height - $Obj.y@first)` grows the box down to the
 mirror image of its top row: twice the distance from the pattern's top row to
 the canvas's bottom edge, so the mirror line lies at the box's center. That
 gives 6 rows for the first training pattern, which starts on the top row, and
@@ -1484,7 +1509,7 @@ box does not count its cells: the fourth training pair's two color-8 corner
 cells span a 3 by 3 box, yet that region turns gray, while the 3 cells of
 color 4, a single row, keep their color. One conditional class-level rule,
 `if any other in Obj: other.cell_count > $Obj.cell_count:` with the body
-`$Obj.color = 'B'`, turns gray every region that another region of its pair
+`$Obj.color is B`, turns gray every region that another region of its pair
 outnumbers: the quantifier `any` of [NUC 62](../docs/nuc-0062.md) states the
 claim of `Obj.some(...)` directly, its binder ranges over the pair's whole
 population, and `$Obj.cell_count` reads the region the rule is evaluated for.
@@ -1558,7 +1583,7 @@ top left. Three regions are horizontal bars of two or three cells, at 90; the
 two vertical bars and the four single cells are at 0, and so are the three
 remaining regions, a notched block and two zigzags, which have no direction.
 Every output is a vertical bar, at 0 by its vertical axis, or a single cell,
-also 0, so one unconditional class-level rule, `$Obj.orientation = 0`, stands
+also 0, so one unconditional class-level rule, `$Obj.orientation is 0`, stands
 every bar upright, whatever its region's orientation. The test pair
 follows the training pairs at the same level and is annotated by the same
 rules.
@@ -1629,7 +1654,7 @@ left end of its marker's row, equal to `output_value.x`/`output_value.y`, and
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 3
 canvas; with no zero cell in any output, `FIT` would frame the same grids.
 Orientation is 0 in the input state because the marker is a single point,
-and 90 in the output state, where `$Obj.orientation = 90` sets it, because
+and 90 in the output state, where `$Obj.orientation is 90` sets it, because
 the bar is a horizontal line without a head, which points along its
 horizontal axis. The declarations hold executable code and one `#` comment, the
 orientation line that every dataset places above its class. The test pair
@@ -1668,8 +1693,8 @@ color, canvas size, or matrix of cells: every point has color 2, which the
 rules never read. Each implementation passes `width=1, height=1` right after
 `y`, such as `x=1, y=1, width=1, height=1, orientation=0` for the first
 training input. Six unconditional class-level rules turn every point into its
-figure. `$Obj.tag = 'l2898'` names the figure, and
-`$Obj.corner_colors = [['B', 'E'], ['C', 'D']]` introduces `corner_colors`, which is
+figure. `$Obj.tag is l2898` names the figure, and
+`$Obj.corner_colors is [['B', 'E'], ['C', 'D']]` introduces `corner_colors`, which is
 absent before the rules run: the corners' colors as they lie around the
 point, the top row's left and right corners first and then the bottom row's.
 The other four rules move the box onto the remaining corners. `x` becomes
@@ -1687,7 +1712,7 @@ the rules move `x` and `y`. The higher-order `filter` keeps the corners'
 columns and rows that lie on the canvas, and `min of` and `max of` take the
 ends of what it keeps. The filtered list is written out in each rule that
 uses it rather than stored, because a property such as `$Obj.columns`, read
-by `$Obj.x = min of $Obj.columns` while it reads `$Obj.x@first`, raises
+by `$Obj.x is min of $Obj.columns` while it reads `$Obj.x@first`, raises
 `TypeError("Circular Dependency")` in the accepted runtime. Each figure
 depends only on its own point and the canvas, and every pair holds one point,
 so no population operation appears. The training pairs alone also fit
@@ -1768,7 +1793,7 @@ of the second training pair, 1 by 1, to 5 columns by 3 rows, and each
 implementation passes them right after `y`, such as
 `x=1, y=0, width=5, height=3, orientation=0, color='B'` for the color-8 region
 of the first training input. One conditional class-level rule,
-`if $Obj.color@first is 'C':` with the body `$Obj.color = 'D'`, turns every
+`if $Obj.color@first is C:` with the body `$Obj.color is D`, turns every
 color-7 region gray. Its condition uses `is`, the spelling of `==` from
 [NUC 86](../docs/nuc-0086.md), which an `if` header reads as an operator.
 The condition reads the region's input color with an
@@ -1776,7 +1801,7 @@ The condition reads the region's input color with an
 `dataset.0d3d703e.json` reads `$Obj.color@first`, and a region of any other
 color keeps its color because a false condition leaves its target untouched,
 so the rule states only the change; the conditional expression
-`'D' if $Obj.color@first is 'C' else $Obj.color@first` would give the same states
+`'D' if $Obj.color@first is C else $Obj.color@first` would give the same states
 but restate every other region's color. Each region's change depends only on
 its own color, and no relation between regions decides it, so no population
 operation appears. The rule gives the same states when it is declared after
@@ -1840,8 +1865,8 @@ and the rules read the canvas's width from the solver's `canvas_width`. Each
 implementation passes `width` and `height` right after `y`, such as
 `x=1, y=0, width=2, height=3, orientation=0` for the first training input.
 Two unconditional class-level rules turn every pattern into the figure it
-forms with its mirror image. `$Obj.tag = 'l6919'` names that geometry, and
-`$Obj.width = 2 * (canvas_width - $Obj.x@first)` grows the box right to the
+forms with its mirror image. `$Obj.tag is l6919` names that geometry, and
+`$Obj.width is 2 * (canvas_width - $Obj.x@first)` grows the box right to the
 mirror image of its left column: twice the distance from the pattern's left
 column to the canvas's right edge, so the mirror line lies at the box's
 center. That gives 4 columns for the first and second training patterns,
@@ -1965,7 +1990,7 @@ three-cell chevron with its vertex on the left and both arms going right,
 points left, 270; the single cell of the third is a point, 0; and the fourth
 training region and the test region, neither a line, a corner, nor a chevron,
 are 0. Another unconditional class-level rule,
-`$Obj.orientation = 90 if $Obj.width > 1 else 0`, a conditional expression of
+`$Obj.orientation is 90 if $Obj.width > 1 else 0`, a conditional expression of
 [NUC 59](../docs/nuc-0059.md), sets each bar's orientation from the bar's own
 `width`, which the width rule makes the cell count: the bars of 2, 3, 4, and
 5 cells are horizontal lines, 90, and the one-cell bar of the third training
@@ -2006,15 +2031,15 @@ the checkerboard follows from its row. Each implementation passes
 `width=6, height=1` right after `y`, such as
 `x=0, y=1, width=6, height=1, orientation=90` for the bottom bar of the first
 training input. Five unconditional class-level rules turn every bar into its
-share of the checkerboard. `$Obj.tag = 'l5973'` names that geometry,
-`$Obj.orientation = 0` marks it as a pattern that points no way, and
-`$Obj.parity = $Obj.y@first % 2` introduces `parity`, which is absent before
+share of the checkerboard. `$Obj.tag is l5973` names that geometry,
+`$Obj.orientation is 0` marks it as a pattern that points no way, and
+`$Obj.parity is $Obj.y@first % 2` introduces `parity`, which is absent before
 the rules run: the parity of the bar's input row, 0 for the top bar and 1 for
 the bottom bar, and so of row plus column on every cell the bar fills,
 anchored with `@first` because another rule moves `y`.
-`$Obj.height = canvas_height` grows the bar from one row to the canvas's two,
+`$Obj.height is canvas_height` grows the bar from one row to the canvas's two,
 reading the canvas's height from the solver's `canvas_height`, as
-`dataset.a85d4709.json` reads `canvas_width`, and `$Obj.y = 0` moves its box
+`dataset.a85d4709.json` reads `canvas_width`, and `$Obj.y is 0` moves its box
 to the top row, which changes `y` for every bottom bar. The rules leave `x`
 and `width` unchanged, because the checkerboard spans the bars' six columns.
 Each bar's share depends only on its own row and
@@ -2311,8 +2336,8 @@ It also infers the `output_canvas` from the training pairs.
 ```json
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.tag = 'l6747'\n    this.vertex_color = vertex_color\n    this.vertical_segment_color = vertical_segment_color\n    this.horizontal_segment_color = horizontal_segment_color",
-    "if $Obj.vertex_color == 9 and $Obj.vertical_segment_color == 9 and $Obj.horizontal_segment_color == 9:\n    $Obj.tag = 'l6624'\n    $Obj.marker_color = 1\n    $Obj.x = $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y = $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width = $Obj.width@first + 1\n    $Obj.height = $Obj.height@first + 1"
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: str, vertical_segment_color: str, horizontal_segment_color: str):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l6747\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
+    "if $Obj.vertex_color is A and $Obj.vertical_segment_color is A and $Obj.horizontal_segment_color is A:\n    $Obj.tag is l6624\n    $Obj.marker_color is B\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT"
 }
@@ -2335,7 +2360,7 @@ canvas_height = 3
 Their values are the column and row counts of the training pair's
 `input_matrix`, or of the test input during visualization. Declarations read
 the canvas size from these variables, as
-`$Obj.height = canvas_height - $Obj.y@first` in `dataset.d037b0a7.json` does, so
+`$Obj.height is canvas_height - $Obj.y@first` in `dataset.d037b0a7.json` does, so
 no class takes it as a parameter and no implementation passes it. They are
 variables, not object properties, so the input and output states and `Obj[:]`
 do not include them. A class parameter of the same name still shadows them
@@ -2381,7 +2406,7 @@ first of these rules that applies:
 An object that vanishes keeps its orientation, and a rule that turns an
 object adds its clockwise turn, as in `($Obj.orientation@first + 180) % 360`.
 Wherever an output's shape points another way, a class-level rule sets its
-orientation, as `$Obj.orientation = 90` does for the rows that
+orientation, as `$Obj.orientation is 90` does for the rows that
 `dataset.a85d4709.json` paints. A line in `dataset.line.json` points toward its
 color-8 endpoint, so it needs no separate endpoint property. The first
 declaration of every dataset states the convention for the model in one
@@ -2598,14 +2623,6 @@ be one of the letters `A` to `I` that the instruction datasets write their
 colors as, ranked the same way, so a dataset crop is ranked by its own counts.
 It rejects any other cell, such as `10` or `J`, and it does not crop or modify
 the input.
-
-`Matrix.normalize(matrix)` returns a new matrix in which every cell written as
-a one-digit string, such as `"8"`, becomes that number, `8`, so the model may
-write a color either way. Every other cell stays as it is, and the input is not
-modified. The analyzer and the visualizer apply it to every matrix the model
-returns, the instance masks of the training pairs and of the test input and
-each output instance matrix, before the solver crops, silhouettes, merges, or
-scores them.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

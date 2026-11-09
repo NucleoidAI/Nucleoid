@@ -4,8 +4,8 @@ use std::fmt;
 use super::Selection;
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
-use crate::lang::ast::generator::enum_source;
-use crate::lang::ast::{Expr, UnaryOp};
+use crate::lang::ast::Expr;
+use crate::lang::ast::generator::{WordValue, enum_source};
 use crate::nuc::Nuc;
 use crate::nuc::property::Owner;
 use crate::runtime::Runtime;
@@ -58,12 +58,9 @@ struct Bound<'a>(&'a Expr);
 
 impl fmt::Display for Bound<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            Expr::Unary {
-                operator: UnaryOp::Word,
-                operand,
-            } => write!(f, " is {operand}"),
-            value => write!(f, " = {value}"),
+        match WordValue::of(self.0) {
+            Some(words) => write!(f, " is {words}"),
+            None => write!(f, " = {}", self.0),
         }
     }
 }

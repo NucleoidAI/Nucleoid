@@ -3076,6 +3076,10 @@ statement positions; caught values and transaction recovery are unchanged.
   selected branch. Unlike a class-level `if` statement, which stands aside
   while its condition reads something undefined, a conditional expression
   treats that condition as false and selects the alternate.
+- In the value of an `is` assignment, a branch that is exactly one
+  identifier token is a word instead, as
+  [Conditional words](#conditional-words) describes, which class-level rule
+  validation does not require to be defined.
 - An error raised by the condition or the selected branch propagates through
   the existing transaction, so a failed standing re-evaluation rolls back the
   triggering change and keeps the earlier branch selection.
@@ -3321,8 +3325,9 @@ statement positions; caught values and transaction recovery are unchanged.
   level of `parse_expression` keep their readings, including the
   enclosed `is` and `is not` comparisons of
   [Is and is not comparisons](#is-and-is-not-comparisons).
-- Unless its value is a word, `target is value` builds exactly the syntax
-  tree of `target = value`. The value is parsed as the value of `=` is at
+- Unless its value is a word or holds the word branches of
+  [Conditional words](#conditional-words), `target is value` builds exactly
+  the syntax tree of `target = value`. The value is parsed as the value of `=` is at
   statement level, in the same context and at the same nesting depth, and
   ends where that value ends. So
   standing declarations and their dependencies, property assignments,
@@ -3353,7 +3358,8 @@ statement positions; caught values and transaction recovery are unchanged.
 - A word assignment renders as `target is word`: in graph keys such as
   `block(total is good)`, in `--graph` output and in the `rule` that `why` and
   `affects` report, as `a is good` and `$Order.state is OPEN`. Every other
-  `is` assignment renders as its `=` spelling, such as `a = 5`.
+  `is` assignment without word branches renders as its `=` spelling, such
+  as `a = 5`.
 - No error type or message is added. A malformed value raises what its `=`
   spelling raises at the same place in the source, which is one column
   further right when that place follows `is` on its line:
@@ -3369,6 +3375,82 @@ statement positions; caught values and transaction recovery are unchanged.
   `a is x: T` and `while v is assert: a, b` are syntax errors.
 - `tests/is_assignments.rs`, `tests/is_assignments_cli.rs` and the terminal
   unit suite execute this behavior.
+- A branch of a conditional value can be a word as well, as
+  [Conditional words](#conditional-words) describes.
+
+## Conditional words
+
+- [NUC 94](docs/nuc-0094.md) lets a branch of a conditional expression in the
+  value of an `is` assignment be a word. NUC 94 introduced it behind a
+  `--conditional-words` flag and a `SyntaxOptions` field; both were removed,
+  and every source reads it.
+- It extends [Is assignments](#is-assignments) only and combines with C-style
+  comments. `run`, `check`, `parse_program`, `parse`, `parse_expression` and
+  `statement::compile` read it, and `clear()` and `.clear` keep reading it.
+  File runs, the plain and redirected REPL, the terminal workspace, `--json`
+  and `--graph` read it.
+- The word positions of an `is` assignment's value are the value itself,
+  which is a word position under NUC 93, and both branches of a conditional
+  expression that stands in a word position, in either spelling,
+  `consequent if condition else alternate` or
+  `condition ? consequent : alternate`. So `A`, `B` and `C` are in word
+  positions in `a is A if c1 else B if c2 else C`,
+  `a is c1 ? A : c2 ? B : C` and `a is c1 ? c2 ? A : B : C`.
+- A branch in a word position is a word when it is exactly one identifier
+  token, as a value is under NUC 93: `a is A if c else 1` makes `A` a word
+  and keeps `1` a number. Keywords such as `true`, `null`, `this` and `self`,
+  `$Class` references, quoted strings, paths, calls, subscripts, versions,
+  operator expressions and parenthesized operands are not words, so
+  `a is (A) if c else B` reads `A` as `a = A if c else B` does and makes only
+  `B` a word.
+- Nothing else is a word position. Conditions, including the `is`
+  comparisons of [Is and is not comparisons](#is-and-is-not-comparisons) in
+  them, keep their reading. So does a parenthesized conditional:
+  `a is (A if c else B)` reads `A` and `B` as `a = (A if c else B)` does. So
+  do the operands of other operators, call arguments, list items, object
+  values, function, arrow and lambda bodies and template interpolations
+  inside the value, and the value of an assignment inside the value, as in
+  `a is b = A if c else B`. A conditional that an assignment operator
+  follows is that assignment's target, not a result, so
+  `a is X if c else Y = 5` keeps its tree and raises
+  `SyntaxError("Cannot assign to (c?X:Y)")` at its statement.
+- A word branch reads by the word rule of NUC 93: the local, variable,
+  class, function or built-in global of that name when one exists, and
+  otherwise the string of its spelling, recording a dependency on the
+  variable of that name. The condition is evaluated once and then only the
+  selected branch, so a word in the unselected branch is not read and adds
+  no dependency.
+- A standing declaration, property, constructor property or class-level
+  rule re-evaluates when the variable named by its selected word is
+  defined, changed or deleted, including inside a `suppose` block whose
+  rollback restores it, and switches branches when its condition changes.
+  Deleting the variable returns the word to its text. While undefined, the
+  selected word is a pending graph node that `why` lists among the sources.
+- Static class-rule validation does not require a branch word to be
+  defined, as for the words of NUC 93. It still requires every other name,
+  so `$Order.bad is (MISSING) if $Order.total > 0 else OTHER` raises
+  `ReferenceError("MISSING is not defined")` when declared, while
+  `$Order.ok is MISSING if $Order.total > 0 else OTHER` is accepted.
+- An `is` assignment whose value holds a word renders as `target is value`
+  in statement rendering, block graph keys such as `block(total is c?A:(B))`,
+  `--graph` output and the `rule` that `why` and `affects` report. In such a
+  value, a conditional that holds a word renders without its grouping
+  parentheses, as in `a is c?A:B`, and a name in a word position that is not
+  a word renders in parentheses, as in `c?A:(B)`, so the rendering reads back
+  as the same statement. Every other `is` assignment renders as before, so
+  `a is 1 if c else 2` renders as `a=(c?1:2)`.
+- At statement level, the operand before `?` is not an enclosed position, so
+  an `is` comparison there needs parentheses, as in
+  `mark is (shape is SQUARE) ? CORNER : EDGE`; a Python-style condition is
+  enclosed, as in `mark is CORNER if shape is SQUARE else EDGE`.
+- No token, keyword or error type or message is added, and word branches
+  never change whether a program parses or where a syntax error is raised.
+  A malformed value raises what its `=` spelling raises, as for
+  [Is assignments](#is-assignments), for example
+  `SyntaxError("Unexpected end of input")` at line 1, column 17 for
+  `a is A if c else`.
+- `tests/conditional_words.rs`, `tests/conditional_words_cli.rs` and the
+  terminal unit suite execute this behavior.
 
 ## Instance list ranges and list queries
 

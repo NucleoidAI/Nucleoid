@@ -17,7 +17,7 @@ export async function generate({
     messages.unshift({
       role: "system",
       content: `
-        few_shot_examples:
+        few_shot:
         ${examples(puzzle_id, only_puzzle_dataset, few_shot)}
       `,
     });
@@ -26,10 +26,7 @@ export async function generate({
   if (grammar) {
     messages.unshift({
       role: "system",
-      content: readFileSync(
-        join(__dirname, "..", "..", "..", "docs", "grammar.md"),
-        "utf8"
-      ),
+      content: readFileSync(join(__dirname, "..", "..", "nucleoid.md"), "utf8"),
     });
   }
 

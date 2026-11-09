@@ -267,14 +267,15 @@ change, regenerate using `UPDATE_DATASET=1 cargo test --test dataset` and
 
 ## Update the grammar
 
-Keep `docs/grammar.md`, the grammar taken from the lexer and parser, in step
-with every candidate. When a proposal changes what the lexer or parser accepts,
-such as a token, keyword, alias, contextual word, rule, lookahead, lowering,
-limit or layout rule, update the affected rules, notes and tables in the same
-candidate. Keep the file's PEG notation and syntax-tree node comments, and
-check each changed rule against the candidate parser. A proposal that leaves
-the accepted syntax unchanged leaves the file as it is. Either way, the handoff
-states the grammar change or why there is none.
+Keep `docs/nucleoid.g4`, the ANTLR4 syntax reference taken from the lexer and
+parser, in step with every candidate. When a proposal changes what the lexer
+or parser accepts, such as a token, keyword, alias, contextual word, rule,
+lookahead, lowering, limit or layout rule, update the affected rules and
+implementation-contract comments in the same candidate. Keep valid ANTLR4
+notation and syntax-tree node comments, and check each changed rule against
+the candidate parser. A proposal that leaves the accepted syntax unchanged
+leaves the file as it is. Either way, the handoff states the grammar change or
+why there is none.
 
 ## Check and hand off
 
@@ -295,7 +296,7 @@ Return the proposal path and Git blob revision (`git hash-object` on the
 proposal), accepted baseline revision and path, execution mode, confirmed
 proposal category and selection rationale when applicable, runtime applicability
 and supporting rationale, any hint and how it was used or set aside, candidate
-worktree, changed files, the `docs/grammar.md` change or why there is none,
+worktree, changed files, the `docs/nucleoid.g4` change or why there is none,
 development and syntax-compatibility checks, and explicit blockers. State the
 expected token policy, without claiming an unevaluated gate passed. Freeze the
 candidate after handoff.

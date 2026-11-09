@@ -1,5 +1,5 @@
-use super::Parser;
 use super::expression::PathTarget;
+use super::{ExpressionContext, Parser};
 use crate::error::Result;
 use crate::lang::ast::lexer::{Keyword, Token};
 use crate::lang::ast::{Expr, Stmt, UnaryOp};
@@ -41,6 +41,58 @@ fn word(value: Expr) -> Expr {
     }
 }
 
+fn is_word(start: usize, end: usize, value: &Expr) -> bool {
+    end == start + 1 && matches!(value, Expr::Identifier(_))
+}
+
+fn without_words(mut target: Expr) -> Expr {
+    let mut pending = vec![&mut target];
+    while let Some(expression) = pending.pop() {
+        match expression {
+            Expr::Unary {
+                operator: UnaryOp::Word,
+                operand,
+            } => {
+                let name = std::mem::replace(operand.as_mut(), Expr::Null);
+                *expression = name;
+            }
+            Expr::Conditional {
+                consequent,
+                alternate,
+                ..
+            } => {
+                pending.push(consequent.as_mut());
+                pending.push(alternate.as_mut());
+            }
+            _ => {}
+        }
+    }
+    target
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum Branches {
+    Plain,
+    Words,
+}
+
+impl Branches {
+    pub(super) fn mark(self, start: usize, end: usize, branch: Expr) -> Expr {
+        if self == Branches::Words && is_word(start, end, &branch) {
+            word(branch)
+        } else {
+            branch
+        }
+    }
+
+    pub(super) fn unmark(self, target: Expr) -> Expr {
+        match self {
+            Branches::Plain => target,
+            Branches::Words => without_words(target),
+        }
+    }
+}
+
 impl Parser {
     pub(super) fn starts_is_assignment(&self, target: &Expr) -> bool {
         matches!(self.peek(), Token::Identifier(name) if name == "is")
@@ -51,8 +103,12 @@ impl Parser {
     pub(super) fn is_assignment(&mut self, target: Expr) -> Result<Stmt> {
         self.advance();
         let start = self.position;
-        let value = self.nested_expression(Self::expression)?;
-        let bare = self.position == start + 1 && matches!(value, Expr::Identifier(_));
+        let value = self.nested_expression(|parser| {
+            parser.nested_expression_in(ExpressionContext::Ordinary, |value| {
+                value.assignment_expression(Branches::Words)
+            })
+        })?;
+        let bare = is_word(start, self.position, &value);
         let statement = self.expression_tail(Expr::Assign {
             target: Box::new(target),
             value: Box::new(value),
