@@ -132,7 +132,8 @@ or an evaluator rejection; the NUC records those policy results. Only a failed
 hard criterion rejects a proposal. A NUC that `/arc-purposal` requests for its
 dataset is Accepted on an exact solver match, while the quote-free NUC it
 prepares after the run, for quotes its datasets cannot drop, is decided on its
-evaluation; see the
+evaluation, with its always-on bare words' one break (an undefined bare word
+that raised `ReferenceError` reads as its text) accepted in advance; see the
 [ARC-requested proposal rule](.claude/rules/proposals.instructions.md#arc-requested-proposals-caller-only).
 A NUC the user requests directly is Accepted when it meets the hard criteria;
 see the

@@ -26,7 +26,16 @@ export async function generate({
   if (grammar) {
     messages.unshift({
       role: "system",
-      content: readFileSync(join(__dirname, "..", "..", "nucleoid.md"), "utf8"),
+      content:
+        "init_class:\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n   this.x is x\n   this.y is y\n   this.width is width\n   this.height is height\n   this.orientation is orientation\n\n",
+    });
+
+    messages.unshift({
+      role: "system",
+      content: `
+        EBNF:
+        ${readFileSync(join(__dirname, "..", "..", "nucleoid.ebnf"), "utf8")}
+      `,
     });
   }
 
