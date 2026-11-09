@@ -33,18 +33,29 @@ repeats it:
    details: the Abstract and Motivation of the requested change, followed by
    the remaining required sections for the proposer to complete. Add its Draft
    rows to both indexes in `docs/nuc-0000.md`, and change nothing else.
-3. **Allocate.** Commit those two paths alone, with the subject
+3. **Check before submitting.** Right before the allocation commit, pull
+   again and compare the draft with every NUC that `main` now records:
+   - **Same number:** when another NUC already uses the drafted number,
+     claim the next one, the highest number recorded plus one, and renumber
+     the draft's file name, title line, header and both index rows.
+   - **Same concept:** when a NUC of any status already proposes the same
+     concept, the same feature or change under any title, skip this
+     proposal. Remove the uncommitted draft and its own index rows, allocate
+     nothing, and start again at step 1 with a new selection under the
+     [selection rule](#select-an-unspecified-enhancement). A request that
+     names that concept stops instead and reports the existing NUC.
+4. **Allocate.** Commit those two paths alone, with the subject
    `Draft NUC <number> <Title>` and the category and requested change in the
    body, and push right away. The pushed commit allocates the proposal and its
    number, so concurrent sessions number their NUCs after it.
-4. **Work on the details as usual.** Pin the `HEAD` just pushed, which holds
+5. **Work on the details as usual.** Pin the `HEAD` just pushed, which holds
    the allocation, as the accepted revision, record its baseline, and create
    the candidate worktree from it. Then
    [select the strategy](#select-and-consume-a-proposal-strategy) and run the
    fresh proposer, which completes the draft and prototypes the change, the
    Rust improvement pass and the fresh evaluator, as the rest of this skill
    describes.
-5. **Commit and push the final version.** Record the outcome in a new commit,
+6. **Commit and push the final version.** Record the outcome in a new commit,
    `NUC <number> <Title>`, that holds the final proposal along with its code
    changes when it is accepted, and push it right after, under the
    [outcome commit rule](#name-outcome-commits-caller-only).

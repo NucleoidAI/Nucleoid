@@ -123,8 +123,11 @@ the execution-mode policy requires comparison.
 
 The caller pulls first, then allocates a new NUC before its details: it
 commits and pushes the Draft document, with its header, category and proposal
-details, and the NUC's index rows as `Draft NUC <number> <Title>`. The outcome
-commit, `NUC <number> <Title>`, later carries the final version with its code
+details, and the NUC's index rows as `Draft NUC <number> <Title>`. Right before
+that commit it pulls again, claims the next number when another NUC already
+uses the drafted one, and skips the proposal and starts again when a NUC on
+`main` already proposes the same concept. The outcome commit,
+`NUC <number> <Title>`, later carries the final version with its code
 changes; see the
 [allocation step](.claude/skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only).
 

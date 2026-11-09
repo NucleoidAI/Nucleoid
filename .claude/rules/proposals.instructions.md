@@ -327,6 +327,11 @@ to that evaluation and must not recursively launch another agent.
   change, plus its Draft rows in both NUC indexes. It commits only those
   paths as `Draft NUC <number> <Title>` and pushes right after. That commit
   allocates the proposal and its number.
+- Right before that commit the caller pulls again. When another NUC already
+  uses the drafted number, it claims the next number. When a NUC on `main`,
+  whatever its status, already proposes the same concept, it skips the
+  proposal, allocates nothing and starts again with a new selection; a
+  request that names that concept stops and reports the existing NUC.
 - The pushed allocation is the accepted revision the NUC pins: it changes no
   runtime, executable document, test, dataset or export. The proposer then
   completes the draft in the candidate worktree, followed by the usual
