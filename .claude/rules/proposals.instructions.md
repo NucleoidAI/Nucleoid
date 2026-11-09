@@ -369,7 +369,14 @@ invocation prepares after its run, under the
 [arc-purposal skill](../skills/arc-purposal/SKILL.md#propose-quote-free-spellings),
 for quotes in `arc/src/dataset/` that accepted Nucleoid cannot drop: it is
 prepared and evaluated like the requested NUC, with the strategy learner, but
-never run against the puzzle. Record the basis, the evaluator's decision
+never run against the puzzle. Its bare words are always on, and the user
+accepts in advance the one compatibility break they bring. A bare word in a
+new word position, whose name is not defined, raised `ReferenceError` and now
+reads as its own text. Existing assertions that pin exactly that error may
+move to the `=` spelling, which keeps the reference reading, or to the new
+reading, and the NUC lists each one. That break alone fails no hard
+criterion; any other break or test edit still does. Record the basis, the
+evaluator's decision
 and report, and the run's evidence with the outcome, and never hide the
 evaluator's failures. The run is scored once: never rerun it, or revise the
 dataset or candidate from its output, to reach a pass. The `/nuc-proposal`

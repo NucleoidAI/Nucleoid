@@ -2243,18 +2243,29 @@ to take one training puzzle through the
    exact match or an evaluator acceptance makes it Accepted, and any other
    result makes it Automatic-Accepted, with the policy results recorded in the
    NUC.
-5. The workflow itself never changes the solver's TypeScript, apart from
+5. Whenever a quote is used in `src\dataset`, the workflow triggers
+   `/nuc-proposal` for a version without it. A dataset drops every quote that
+   accepted Nucleoid can already read as a bare word.
+   - For the quotes no accepted, Draft or Rejected NUC covers, the workflow
+     prepares one quote-free NUC after the run, through the same stages.
+   - Its bare words are always on. The user has accepted in advance its one
+     compatibility break: an undefined bare word that raised `ReferenceError`
+     reads as its own text.
+   - It is never run against the puzzle. It is decided on its evaluation
+     under the automatic acceptance rule, and it has its own
+     `NUC <number> <Title>` commit.
+6. The workflow itself never changes the solver's TypeScript, apart from
    making the puzzle the default `puzzle_id` in `src\app.ts` before the run.
    When the dataset, the candidate, or the run shows that the solver needs a
    change, the final report suggests it for review.
-6. The workflow then creates or updates the puzzle's progress record,
+7. The workflow then creates or updates the puzzle's progress record,
    `docs\ARC-NUC-<puzzle_id>.md`, in the format of the existing records such as
    [ARC-NUC-0ca9ddb6](docs/ARC-NUC-0ca9ddb6.md): a gestalt overview of the
    puzzle zoomed out to its figures, their relations, and its whole change,
    the dataset, any NUC and its outcome, every run's exit status and
    difference, and the open items. Every invocation brings the gestalt
    overview up to date, and the record keeps earlier runs.
-7. Finally, the workflow commits its own changes in one commit and pushes it:
+8. Finally, the workflow commits its own changes in one commit and pushes it:
    the dataset, its README paragraph, its reporting-list entry, the default
    `puzzle_id`, and the progress record, as far as it changed and kept them,
    never another session's changes. A requested NUC's outcome has its own

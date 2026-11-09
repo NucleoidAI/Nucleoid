@@ -63,14 +63,18 @@ Follow `.claude/CLAUDE.md`, the
   [quote step](../skills/arc-purposal/SKILL.md#propose-quote-free-spellings).
   A quote is a quoted string literal in a code field.
   - Pass every `arc-dataset` run the requirement to write a literal as a
-    bare word wherever accepted Nucleoid, with the solver's options, reads
+    bare word wherever accepted Nucleoid, as the solver runs it, reads
     that word as the same value.
   - After the outcome, prepare one quote-free NUC for the quotes that no
     accepted, Draft or Rejected NUC writes without quotes, with its own
-    strategy trial.
+    strategy trial. Its words are always on, with no option, and need no
+    solver change.
+  - The user accepts in advance its one compatibility break: an undefined
+    bare word in a new word position, which raised `ReferenceError`, reads
+    as its own text.
   - That NUC is never run against the puzzle, and it is decided directly
-    under the automatic acceptance rule.
-  - Suggest the solver option it adds rather than changing the solver.
+    under the automatic acceptance rule, where the accepted break counts as
+    no failure.
 - Whenever a dataset introduces new syntax, add that syntax to
   `arc/nucleoid.ebnf` yourself after the outcome, under the skill's
   [grammar step](../skills/arc-purposal/SKILL.md#keep-the-dataset-grammar),
@@ -109,8 +113,8 @@ Follow `.claude/CLAUDE.md`, the
   break) rejects it. Otherwise an exact match makes it Accepted regardless of
   the evaluator's decision, an evaluator acceptance makes it Accepted, and any
   other result makes it Automatic-Accepted. The quote-free NUC has no run:
-  unless a hard criterion fails, the evaluator's acceptance makes it Accepted
-  and any other decision Automatic-Accepted.
+  unless a hard criterion fails beyond its accepted break, the evaluator's
+  acceptance makes it Accepted and any other decision Automatic-Accepted.
 - Record the outcome through the `/nuc-proposal` caller steps, with its basis,
   the evaluator's decision, and the run's evidence. Those steps commit the
   NUC's outcome, pulling before and pushing right after under the

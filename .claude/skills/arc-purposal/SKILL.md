@@ -162,9 +162,10 @@ requirement to every `/arc-dataset` run too. A quote is a single- or
 double-quoted string literal that the runtime lexer reads in a code field,
 `declarations` or an instance's `implementation`; the JSON file's own quotes
 and `#` comments are not quotes. The dataset writes a literal as a bare word
-wherever the run's runtime, given the options `arc/src/lib/nucleoid.ts`
-passes, reads that word as the same value, as NUC 86 and NUC 93 read `C` in
-`if $Obj.color is C:` and `$Obj.fill_color is C`. The arc-dataset profile's
+wherever the run's runtime, run as `arc/src/lib/nucleoid.ts` runs it, reads
+that word as the same value, as NUC 86, NUC 93 and NUC 94 read `C` in
+`if $Obj.color is C:`, `$Obj.fill_color is C` and
+`$Obj.fill_color is C if $Obj.symmetric else 0`. The arc-dataset profile's
 older examples that quote such letters do not override this. Have the
 handoff list every quote it keeps, with the actual result of its bare
 spelling. Check that list before the run, and send back a handoff that keeps
@@ -419,16 +420,12 @@ Whenever a quote is used in `arc/src/dataset/`, trigger `/nuc-proposal` to
 propose a version without it. After the outcome is decided and recorded, list
 every [quote](#write-the-dataset) in the datasets that `arc/src/dataset/`
 holds at `HEAD` and in this invocation's kept dataset. Check each one's bare
-spelling with the accepted runtime and the options `arc/src/lib/nucleoid.ts`
-passes:
+spelling with the accepted runtime, run as `arc/src/lib/nucleoid.ts` runs it:
 
 - **Already bare:** the bare word reads the same value, so the dataset should
   drop the quote. This invocation's dataset was checked before the run.
   Report another dataset's quote as a respelling for a later invocation,
   without making it.
-- **Behind an option:** an accepted NUC reads the bare word only under an
-  option the solver does not pass, such as NUC 94's `--conditional-words`.
-  [Suggest](#suggest-solver-changes) passing that option instead of a NUC.
 - **Already proposed:** a Draft or Rejected NUC already proposes the bare
   spelling, whether it is recorded in `docs/nuc-0000.md` or is still in a
   candidate worktree that `git worktree list` shows. Report that NUC instead
@@ -442,21 +439,30 @@ Use steps 1 and 2 of
 its own [strategy trial](#learn-the-nuc-proposal-strategy) from the retained
 head, except that its outcome waits for no run.
 
-- **Requested change:** write each listed quote without quotes, reading the
-  same value, and keep every accepted form and meaning. That usually means a
-  new opt-in option that composes with the accepted ones, as NUC 94 added.
+- **Requested change:** write each listed quote as a bare word that reads
+  the same value. The words are always on, with no option, just as `is`
+  values and the branches of a conditional `is` value already read words.
+  Every other accepted form and meaning stays.
+- **Accepted break:** the user accepts in advance the one compatibility break
+  that always-on words bring. A bare word in a new word position, whose name
+  is not defined, raised `ReferenceError` and now reads as its own text. A
+  defined name still reads its value.
+  - Existing assertions that pin exactly that error may move to the `=`
+    spelling, which keeps the reference reading, or to the new reading. The
+    NUC lists each one.
+  - Any other compatibility break or test edit still fails a hard criterion.
 - **Evidence:** each quote's dataset, field and code line, with a minimal
-  general-purpose program and its actual result under the accepted runtime
-  and the solver's options. Never give it an ARC grid.
+  general-purpose program and its actual result under the accepted runtime.
+  Never give it an ARC grid.
 - **Blockers:** a missing or invalid policy, or any other blocker, stops only
   this NUC. Report it and finish the invocation.
 
 The quote-free NUC is never run against the puzzle. The invocation's one run
-is over, and the datasets keep their quotes until the solver passes the
-option the NUC adds. Its independent strategy update therefore precedes its
+is over, and the datasets keep their quotes until a later invocation
+respells them. Its independent strategy update therefore precedes its
 outcome, which follows the
 [automatic acceptance rule](../../rules/proposals.instructions.md#automatic-acceptance-caller-only)
-directly:
+directly, with the accepted break counting as no failure:
 
 - A failed hard criterion rejects it.
 - Otherwise the evaluator's acceptance makes it Accepted, and any other
@@ -464,15 +470,13 @@ directly:
 - Without an evaluation result it is Blocked and stays Draft.
 
 Record the outcome with the nuc-proposal skill's caller steps, which commit
-and push it. When it is accepted with an option, suggest passing that option
-in `arc/src/lib/nucleoid.ts`, and list the quotes to respell once the solver
-does.
+and push it. Its words need no solver change. Once it is accepted, list the
+quotes it lets the datasets drop as respellings for a later invocation.
 
 ## Suggest solver changes
 
-When a dataset or NUC handoff, the [quote check](#propose-quote-free-spellings),
-or an error in the run's log shows that the solver's TypeScript would need a
-change, describe that change for the user
+When a dataset or NUC handoff, or an error in the run's log, shows that the
+solver's TypeScript would need a change, describe that change for the user
 instead of making it: the files, the change, and the evidence for it. Base no
 suggestion on the expected test grid or the difference from it, and never
 apply a suggestion or rerun the puzzle within the invocation.
