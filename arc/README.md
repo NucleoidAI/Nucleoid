@@ -1999,6 +1999,47 @@ pairs at the same level and is annotated by the same rules.
 The dataset writes its colors as letters ranked by count: 4 as `A`, 8 as `B`,
 2 as `C`, 1 as `D`, and 7 as `E`.
 
+`dataset.dae9d2b5.json` annotates the five exact original training pairs from
+`data\training\dae9d2b5.json`, in order, followed by its two test pairs at the
+same level, in the single canonical `src\dataset\dataset.dae9d2b5.json`,
+fourteen whole panel-figure instances in total, two per pair. Every training
+input retains its original 3 by 6 canvas and every training output its
+original 3 by 3 canvas; the test pairs also retain their exact source grids,
+and every pair keeps its colors, positions, and zero cells under the dataset's
+letter mapping. Each input shows two equal-width panels side by side, a
+color-4 figure on the left and a color-3 figure on the right; each object is
+the whole occupied figure of one panel, including disconnected pieces, and
+zero cells are background. Each output overlays the panels at matching panel
+coordinates and paints their union color 6, retaining a cell when either or
+both figures occupy it. Registration follows the canvas, not the figures'
+tight crops: their empty rows and columns remain aligned. The class takes
+only the standard entries `x`, `y`, `width`, `height`, and `orientation`, with
+no color, panel index, cell list, or canvas-size parameter. Training figure
+boxes are 2 or 3 columns wide and 2 or 3 rows tall, and translation and
+recoloring leave each figure's own `width` and `height` unchanged. One
+conditional class-level rule, `if $Obj.x@first >= canvas_width / 2:`, moves
+only a right-panel figure with `$Obj.x = $Obj.x@first - canvas_width / 2`;
+the `@first` anchor reads its input origin without cumulative movement.
+The other rule introduces only `fill_color`, absent from input states, as
+`$Obj.fill_color = 'A'`, the common color of every occupied output cell.
+The rules leave `y`, size, orientation, and tag unchanged and need no
+population query: the canvas determines registration, while identically
+colored masks compose the union regardless of their order. Native snapshots
+start with the pair's input `canvas_width` and `canvas_height`; input states
+run the class alone, and output states run both implementations together with
+all declarations, followed by `Obj[:]`. The tag `l9100` is a single shape,
+as in `dataset.28bf18c6.json`, in both states. Both instance masks retain
+their respective pair's complete canvas and pad every other cell with `0`;
+merging the input masks and the overlapping output masks reproduces every
+original pair. Each output state's position equals its mask's nonzero
+bounding-box origin. `output_canvas` is `FIT`, because each training output
+is the union's tight crop rather than the larger two-panel input canvas.
+The two training corners point northwest, at 315, and the other training
+figures take 0; every figure keeps its orientation because none turns.
+The test pairs use these same training-derived declarations without revision.
+The dataset writes its colors as letters ranked across all pair grids:
+6 as `A` (40 cells), 3 as `B` (26), and 4 as `C` (24); 0 remains `0`.
+
 `dataset.e9afcf9a.json` annotates the two original training pairs from
 `data\training\e9afcf9a.json`, in order, followed by its test pair, six bar
 instances in total, two per pair. Every input and output retains its original
