@@ -109,14 +109,26 @@ impl Parser {
             Token::OrOrAssign => Some(CompoundOp::Logical(LogicalOp::Or)),
             _ => return Ok(left),
         };
-        let left = branches.unmark(left);
+        self.assignment(branches, left, operator)
+    }
+
+    fn assignment(
+        &mut self,
+        branches: Branches,
+        left: Expr,
+        operator: Option<CompoundOp>,
+    ) -> Result<Expr> {
+        let left = self.unmark(branches, left);
 
         if operator.is_some() {
             self.check_compound_target(&left)?;
         }
 
         self.advance();
-        let value = self.expression_in(self.context)?;
+        let items = self.leave_items();
+        let value = self.expression_in(self.context);
+        self.items = items;
+        let value = value?;
         let value = match operator {
             Some(operator) => {
                 let left = Box::new(left.clone());
@@ -219,11 +231,11 @@ impl Parser {
         }
 
         let attempt = (self.position, self.depth);
-        let outcome = if let Some(outcome) = self.python_conditions.get(&attempt) {
+        let outcome = if let Some(outcome) = self.conditions().get(&attempt) {
             outcome.clone()
         } else {
             let outcome = self.attempt_python_condition();
-            self.python_conditions.insert(attempt, outcome.clone());
+            self.conditions().insert(attempt, outcome.clone());
             outcome
         };
         let PythonCondition { condition, end } = outcome?;

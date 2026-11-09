@@ -135,6 +135,30 @@ operands are not words, so `a is (A if c else B)` needs `A` and `B` to be
 defined. It no longer needs the removed `--conditional-words` flag; see
 [NUC 94](docs/nuc-0094.md).
 
+### Item words
+
+A list item, a dictionary value or a named argument inside an `is` value can
+be a bare word too:
+
+```
+colors is [RED, GREEN]
+pair is {left: RED, right: BLUE}
+assert([colors, pair], [["RED", "GREEN"], {"left": "RED", "right": "BLUE"}])
+RED = "red"
+assert([colors[0], pair.left], ["red", "red"])
+```
+
+`colors is [RED, GREEN]`, `glow is {small: DIM, large: BRIGHT}[size]` and
+`first is Light(color=RED, parts=[GREEN, GREEN])` read each item, dictionary
+value and named argument that is one bare word as a word value is read,
+wherever the list, dictionary or call stands in the value, outside function
+bodies, comprehension elements, template interpolations and inner
+assignments. Keys keep their text, `{A}` still reads the variable `A`, a
+parenthesized item such as `[(A)]` is a reference, and a conditional item
+such as `[A if c else B]` has word branches. It needs no flag, and `=` keeps
+the reference reading, so `colors = [RED, GREEN]` needs `RED` and `GREEN` to
+be defined; see [NUC 95](docs/nuc-0095.md).
+
 ---
 
 # Design Theory 📐

@@ -3,16 +3,20 @@
 //! Statement keys in the dependency graph are derived from this, so two
 //! spellings of the same condition collapse onto one node.
 
+mod shown;
 mod statement;
+mod words;
 
 use std::fmt;
 
 use crate::lang::ast::{
     BinaryOp, EnumMember, Expr, Function, FunctionBody, LogicalOp, ObjectEntry, Parameter,
-    ParameterDefault, Quantifier, TemplatePart, UnaryOp, VersionSelector,
+    ParameterDefault, TemplatePart, UnaryOp, VersionSelector,
 };
+use shown::{Grouped, Shown};
 pub use statement::{generate, generate_all};
 use statement::{indent, source_all};
+pub(crate) use words::WordValue;
 
 fn has_binding_metadata(parameters: &[Parameter]) -> bool {
     parameters
@@ -20,7 +24,7 @@ fn has_binding_metadata(parameters: &[Parameter]) -> bool {
         .any(|parameter| parameter.default.is_some() || parameter.rest)
 }
 
-fn signature(parameters: &[Parameter]) -> String {
+fn signature(parameters: &[Parameter]) -> impl fmt::Display {
     join(parameters)
 }
 
@@ -37,68 +41,7 @@ impl fmt::Display for VersionSelector {
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Expr::Null => f.write_str("null"),
-            Expr::Bool(bool) => write!(f, "{bool}"),
-            Expr::Number(number) => f.write_str(&crate::value::format_number(*number)),
-            Expr::String(string) => write!(f, "\"{string}\""),
-            Expr::Template(parts) => write_template(f, parts),
-            Expr::Regex(pattern) => write!(f, "/{pattern}/"),
-            Expr::Identifier(name) => f.write_str(name),
-            Expr::ClassRef(name) => write!(f, "${name}"),
-            Expr::ObjectRef(id) => f.write_str(id),
-            Expr::This => f.write_str("this"),
-            Expr::Super(arguments) => write!(f, "super({})", join(arguments)),
-            Expr::Member { object, property } => write!(f, "{}.{property}", Grouped(object)),
-            Expr::Version {
-                reference,
-                selector,
-            } => write!(f, "{}@{selector}", Grouped(reference)),
-            Expr::Index { object, index } => write!(f, "{}[{index}]", Grouped(object)),
-            Expr::Slice { object, start, end } => {
-                write_slice(f, object, start.as_deref(), end.as_deref())
-            }
-            Expr::Call { callee, arguments } => {
-                write!(f, "{}({})", Grouped(callee), join(arguments))
-            }
-            Expr::Unary { operator, operand } => write_unary(f, *operator, operand),
-            Expr::Binary {
-                operator,
-                left,
-                right,
-            } => write_binary(f, *operator, left, right),
-            Expr::Logical {
-                operator,
-                left,
-                right,
-            } => write_logical(f, *operator, left, right),
-            // Both spellings render as one grouped symbol form. The grouping
-            // keeps a conditional operand distinct from its enclosing operator
-            // in graph keys, as `(c?a:b)+1` and `(c?a:b+1)` are different.
-            Expr::Conditional {
-                condition,
-                consequent,
-                alternate,
-            } => write!(f, "({condition}?{consequent}:{alternate})"),
-            Expr::List(items) => write!(f, "[{}]", join(items)),
-            Expr::ObjectLiteral(entries) => write_object_literal(f, entries),
-            Expr::SpreadObject(entries) => write_spread_object(f, entries),
-            Expr::Function(function) => write_function(f, function),
-            Expr::Assign { target, value } => write!(f, "{target}={value}"),
-            Expr::Delete(operand) => write!(f, "delete {operand}"),
-            Expr::Reason { stage, source } => write!(f, "{source}|>{}", stage.as_str()),
-            Expr::Depth { source, limit } => write!(f, "{source}|>depth({limit})"),
-            Expr::Path { source, target } => write!(f, "{source}|>path({target})"),
-            Expr::Model => f.write_str("model"),
-            Expr::Quantified {
-                quantifier,
-                binder,
-                collection,
-                condition,
-            } => write_quantified(f, *quantifier, binder, collection, condition),
-            Expr::Of { noun, operand } => write_of(f, noun.as_str(), operand),
-            Expr::Enum(members) => write!(f, "enum{{{}}}", join(members)),
-        }
+        fmt::Display::fmt(&Shown::plain(self), f)
     }
 }
 
@@ -118,71 +61,11 @@ pub(crate) fn enum_source(name: &str, members: &[EnumMember]) -> String {
     }
 }
 
-pub(crate) struct WordValue<'a>(&'a Expr);
-
-impl<'a> WordValue<'a> {
-    pub(crate) fn of(value: &'a Expr) -> Option<Self> {
-        holds_words(value).then_some(WordValue(value))
-    }
-}
-
-impl fmt::Display for WordValue<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            Expr::Conditional {
-                condition,
-                consequent,
-                alternate,
-            } if holds_words(self.0) => write!(
-                f,
-                "{condition}?{}:{}",
-                WordValue(consequent),
-                WordValue(alternate)
-            ),
-            Expr::Identifier(name) => write!(f, "({name})"),
-            value => write!(f, "{value}"),
-        }
-    }
-}
-
-fn holds_words(value: &Expr) -> bool {
-    let mut pending = vec![value];
-    while let Some(expression) = pending.pop() {
-        match expression {
-            Expr::Unary {
-                operator: UnaryOp::Word,
-                ..
-            } => return true,
-            Expr::Conditional {
-                consequent,
-                alternate,
-                ..
-            } => pending.extend([consequent.as_ref(), alternate.as_ref()]),
-            _ => {}
-        }
-    }
-    false
-}
-
-fn write_quantified(
-    f: &mut fmt::Formatter<'_>,
-    quantifier: Quantifier,
-    binder: &str,
-    collection: &Expr,
-    condition: &Expr,
-) -> fmt::Result {
-    write!(
-        f,
-        "({} {binder} in {collection}:{condition})",
-        quantifier.as_str()
-    )
-}
-
 fn write_logical(
     f: &mut fmt::Formatter<'_>,
     operator: LogicalOp,
-    left: &Expr,
-    right: &Expr,
+    left: Shown<'_>,
+    right: Shown<'_>,
 ) -> fmt::Result {
     match operator {
         LogicalOp::And => write!(f, "{left}&&{right}"),
@@ -191,11 +74,11 @@ fn write_logical(
     }
 }
 
-fn write_of(f: &mut fmt::Formatter<'_>, noun: &str, operand: &Expr) -> fmt::Result {
+fn write_of(f: &mut fmt::Formatter<'_>, noun: &str, operand: Shown<'_>) -> fmt::Result {
     // The written form. Its operand is parsed as the exponent of `**`
     // is, by `unary`, so it is grouped as that exponent is.
     write!(f, "{noun} of ")?;
-    power_operand(f, operand, groups_power_exponent(operand))
+    power_operand(f, operand, groups_power_exponent(operand.expression))
 }
 
 fn write_template(f: &mut fmt::Formatter<'_>, parts: &[TemplatePart]) -> fmt::Result {
@@ -204,31 +87,14 @@ fn write_template(f: &mut fmt::Formatter<'_>, parts: &[TemplatePart]) -> fmt::Re
         match part {
             TemplatePart::Literal(literal) => f.write_str(literal)?,
             TemplatePart::Expression(expression) => {
-                write!(f, "${{{}}}", Grouped(expression))?;
+                write!(f, "${{{}}}", Grouped(Shown::plain(expression)))?;
             }
         }
     }
     f.write_str("`")
 }
 
-fn write_slice(
-    f: &mut fmt::Formatter<'_>,
-    object: &Expr,
-    start: Option<&Expr>,
-    end: Option<&Expr>,
-) -> fmt::Result {
-    write!(f, "{}[", Grouped(object))?;
-    if let Some(start) = start {
-        write!(f, "{start}")?;
-    }
-    f.write_str(":")?;
-    if let Some(end) = end {
-        write!(f, "{end}")?;
-    }
-    f.write_str("]")
-}
-
-fn write_unary(f: &mut fmt::Formatter<'_>, operator: UnaryOp, operand: &Expr) -> fmt::Result {
+fn write_unary(f: &mut fmt::Formatter<'_>, operator: UnaryOp, operand: Shown<'_>) -> fmt::Result {
     match operator {
         UnaryOp::Not => write!(f, "!{operand}"),
         UnaryOp::Negate => write!(f, "-{operand}"),
@@ -242,37 +108,48 @@ fn write_unary(f: &mut fmt::Formatter<'_>, operator: UnaryOp, operand: &Expr) ->
 fn write_binary(
     f: &mut fmt::Formatter<'_>,
     operator: BinaryOp,
-    left: &Expr,
-    right: &Expr,
+    left: Shown<'_>,
+    right: Shown<'_>,
 ) -> fmt::Result {
     match operator {
         BinaryOp::Power => {
-            power_operand(f, left, groups_power_base(left))?;
+            power_operand(f, left, groups_power_base(left.expression))?;
             f.write_str(BinaryOp::Power.as_str())?;
-            power_operand(f, right, groups_power_exponent(right))
+            power_operand(f, right, groups_power_exponent(right.expression))
         }
         BinaryOp::Is | BinaryOp::IsNot => write!(f, "({left} {} {right})", operator.as_str()),
         _ => write!(f, "{left}{}{right}", operator.as_str()),
     }
 }
 
-fn write_object_literal(f: &mut fmt::Formatter<'_>, entries: &[(String, Expr)]) -> fmt::Result {
-    let rendered: Vec<String> = entries
-        .iter()
-        .map(|(key, value)| format!("\"{key}\":{value}"))
-        .collect();
-    write!(f, "{{{}}}", rendered.join(","))
+fn write_object_literal(
+    f: &mut fmt::Formatter<'_>,
+    shown: Shown<'_>,
+    entries: &[(String, Expr)],
+) -> fmt::Result {
+    f.write_str("{")?;
+    for (index, (key, value)) in entries.iter().enumerate() {
+        if index > 0 {
+            f.write_str(",")?;
+        }
+        write!(f, "\"{key}\":{}", shown.item(value))?;
+    }
+    f.write_str("}")
 }
 
-fn write_spread_object(f: &mut fmt::Formatter<'_>, entries: &[ObjectEntry]) -> fmt::Result {
+fn write_spread_object(
+    f: &mut fmt::Formatter<'_>,
+    shown: Shown<'_>,
+    entries: &[ObjectEntry],
+) -> fmt::Result {
     f.write_str("{")?;
     for (index, entry) in entries.iter().enumerate() {
         if index > 0 {
             f.write_str(",")?;
         }
         match entry {
-            ObjectEntry::Property(key, value) => write!(f, "\"{key}\":{value}")?,
-            ObjectEntry::Spread(source) => write!(f, "...{source}")?,
+            ObjectEntry::Property(key, value) => write!(f, "\"{key}\":{}", shown.item(value))?,
+            ObjectEntry::Spread(source) => write!(f, "...{}", shown.inner(source))?,
         }
     }
     f.write_str("}")
@@ -301,22 +178,7 @@ fn write_function(f: &mut fmt::Formatter<'_>, function: &Function) -> fmt::Resul
     }
 }
 
-/// A postfix chain's base or a whole template interpolation. A
-/// `NOUN of OPERAND` query is grouped there: its operand would otherwise take
-/// the chain, as in `(mode of words).length`, and an interpolation reads only
-/// a leading noun. Every other expression renders as before.
-struct Grouped<'a>(&'a Expr);
-
-impl fmt::Display for Grouped<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            Expr::Of { .. } => write!(f, "({})", self.0),
-            expression => write!(f, "{expression}"),
-        }
-    }
-}
-
-fn power_operand(f: &mut fmt::Formatter<'_>, operand: &Expr, grouped: bool) -> fmt::Result {
+fn power_operand(f: &mut fmt::Formatter<'_>, operand: Shown<'_>, grouped: bool) -> fmt::Result {
     if grouped {
         write!(f, "({operand})")
     } else {
@@ -352,10 +214,26 @@ fn groups_power_exponent(operand: &Expr) -> bool {
     }
 }
 
-fn join<T: fmt::Display>(items: &[T]) -> String {
-    items
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>()
-        .join(",")
+fn join<I>(items: I) -> Joined<I::IntoIter>
+where
+    I: IntoIterator<IntoIter: Clone, Item: fmt::Display>,
+{
+    Joined(items.into_iter())
+}
+
+struct Joined<I>(I);
+
+impl<I> fmt::Display for Joined<I>
+where
+    I: Iterator<Item: fmt::Display> + Clone,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (index, item) in self.0.clone().enumerate() {
+            if index > 0 {
+                f.write_str(",")?;
+            }
+            fmt::Display::fmt(&item, f)?;
+        }
+        Ok(())
+    }
 }

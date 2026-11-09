@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use super::is_assignment::Branches;
 use super::{ExpressionContext, Lists, Parser};
 use crate::error::Result;
 use crate::lang::ast::lexer::{Keyword, Token};
@@ -29,6 +30,7 @@ impl Parser {
     }
 
     pub(super) fn comprehension(&mut self, element: Expr) -> Result<Expr> {
+        let element = self.unmark(Branches::Plain, element);
         self.advance();
         let parameter = self.comprehension_name()?;
         if !self.eat_keyword(Keyword::In) && !self.eat_keyword(Keyword::Of) {
@@ -41,8 +43,10 @@ impl Parser {
             parser.expression_in(ExpressionContext::ComprehensionSource)
         })?;
         let source = if self.eat_keyword(Keyword::If) {
-            let condition = self.within(true, Self::expression)?;
-            method_call(source, "filter", lambda(parameter.clone(), condition))
+            let items = self.leave_items();
+            let condition = self.within(true, Self::expression);
+            self.items = items;
+            method_call(source, "filter", lambda(parameter.clone(), condition?))
         } else {
             source
         };

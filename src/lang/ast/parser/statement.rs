@@ -1,3 +1,4 @@
+use super::is_assignment::Items;
 use super::{ArgumentContext, MAX_NESTING, Parser, Program, SupposePremise};
 use crate::error::Result;
 use crate::lang::ast::lexer::{Keyword, Token};
@@ -114,6 +115,7 @@ impl Parser {
     }
 
     pub(super) fn statement(&mut self, statements: &mut Vec<Stmt>) -> Result<()> {
+        debug_assert_eq!(self.items, Items::Plain);
         self.depth += 1;
 
         if self.depth > MAX_NESTING {

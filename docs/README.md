@@ -409,8 +409,10 @@ Full detail: [NUC 93](nuc-0093.md).
   are words. A branch is a word when it is exactly one identifier token;
   `1`, `"text"`, `true`, `(A)` and `A.x` are not.
 - Conditions are never words, and neither is anything inside parentheses,
-  calls, lists, objects or other operators: `a is (A if c else B)` needs `A`
-  and `B` to be defined, as `a = (A if c else B)` does.
+  positional call arguments or other operators: `a is (A if c else B)` reads
+  `A` or `B` as `a = (A if c else B)` does. List items, dictionary values and
+  named arguments are [item words](#item-words) positions, so a conditional
+  there has word branches, as in `a is [A if c else B]`.
 - A word branch reads the local, variable, class, function or built-in of
   its name when one exists, and otherwise its own text, as a word value
   does; only the selected branch is read. Class-level rules do not require
@@ -433,6 +435,48 @@ ready = true
   [conditional words](../nucleoid.spec.md#conditional-words) section.
 
 Full detail: [NUC 94](nuc-0094.md).
+
+### Item words
+
+- [NUC 95](nuc-0095.md) extends `is` assignments: an item of a list, the
+  value of a dictionary entry and the value of a named argument inside an
+  `is` value can be a bare word. It needs no option or flag, so every `is`
+  assignment reads its item words.
+- The list, dictionary or call may stand anywhere in the value: nested in
+  another one, as the receiver of `.find(...)` or of a subscript, in a
+  condition or a branch, or inside parentheses. So
+  `[[RED, GREEN], [BLUE, AMBER]]`, `{small: DIM, large: BRIGHT}[size]`,
+  `[RED, GREEN, BLUE][x]` and `Light(color=RED, parts=[GREEN, GREEN])` hold
+  words. Function, arrow and lambda bodies, comprehension elements and
+  filters, template interpolations, the value of an inner assignment and
+  assignment targets hold none.
+- An item is a word when it is exactly one identifier token; `1`, `"text"`,
+  `true`, `(A)` and `A.x` are not. Keys keep their text, the shorthand `{A}`
+  still reads the variable `A`, and positional arguments stay ordinary. A
+  `name=value` argument of a method call is an assignment, not a named
+  argument.
+- An item word reads the local, variable, class, function or built-in of
+  its name when one exists, and otherwise its own text, as a word value does;
+  only the items that are evaluated are read. Class-level rules do not
+  require item words to be defined, and a named instance reads its
+  constructor values once, when it is built.
+- A conditional item such as `[A if c else B]` has word branches. A
+  statement with item words renders as `a is [A,(B)]` in graph keys and in
+  `why` and `affects`. `=` keeps the reference reading, so `a = [A]` still
+  needs `A` to be defined.
+
+```
+colors is [RED, GREEN]
+pair is {left: RED, right: BLUE}
+RED = "red"
+```
+
+- `colors` is `["RED", "GREEN"]` and `pair.left` is `"RED"` until `RED` is
+  defined, and `"red"` after it. Item positions, rendering, the accepted
+  compatibility break and edge cases are in the authoritative
+  [item words](../nucleoid.spec.md#item-words) section.
+
+Full detail: [NUC 95](nuc-0095.md).
 
 ### Destructuring declarations
 
@@ -3819,6 +3863,7 @@ name.property := expression            value assignment to a property (NUC 66)
 name is expression                     is assignment: name = expression (NUC 93)
 name.property is word                  a bare word reads its name, else its text "word" (NUC 93)
 name is A if c else B                  bare-word branches are words too (NUC 94)
+name is [A, {k: B}, X(n=C)]            bare-word items, values and labels are words too (NUC 95)
 name += expression                     compound assignment; also -=, *=, **=, /=, %=
 {a, b} = expression                    one declaration per field: a = expression.a (NUC 67)
 {key: name} = expression               renamed field: name = expression.key (NUC 67)

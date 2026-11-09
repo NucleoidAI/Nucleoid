@@ -279,7 +279,7 @@ fn class_property<'e>(expression: &'e Expr, class: &str) -> Option<&'e str> {
 }
 
 /// Visits immediate expression children without entering a function's scope.
-fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
+pub(crate) fn visit_children<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'a Expr)) {
     match expression {
         Expr::Member { object, .. } => visit(object),
         Expr::Version { reference, .. } => visit(reference),
@@ -341,7 +341,7 @@ fn visit_children(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
     }
 }
 
-fn visit_template(parts: &[TemplatePart], visit: &mut impl FnMut(&Expr)) {
+fn visit_template<'a>(parts: &'a [TemplatePart], visit: &mut impl FnMut(&'a Expr)) {
     for part in parts {
         if let TemplatePart::Expression(embedded) = part {
             visit(embedded);
@@ -349,7 +349,7 @@ fn visit_template(parts: &[TemplatePart], visit: &mut impl FnMut(&Expr)) {
     }
 }
 
-fn visit_operands(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
+fn visit_operands<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'a Expr)) {
     match expression {
         Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
             visit(operand);
@@ -410,7 +410,7 @@ fn visit_operands(expression: &Expr, visit: &mut impl FnMut(&Expr)) {
     }
 }
 
-fn visit_all(expressions: &[Expr], visit: &mut impl FnMut(&Expr)) {
+fn visit_all<'a>(expressions: &'a [Expr], visit: &mut impl FnMut(&'a Expr)) {
     for expression in expressions {
         visit(expression);
     }

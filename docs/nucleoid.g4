@@ -155,7 +155,7 @@ valueAssignment
     ;
 
 /*
- * Is-assignment contract (NUC 93, NUC 94):
+ * Is-assignment contract (NUC 93, NUC 94, NUC 95):
  * - An isAssignment path may be parenthesized and has at most 128 links. No NEWLINE separates it from
  *   'is', and the token after 'is' must begin an expression: a name token,
  *   CLASS_REF, NUMBER, STRING, TEMPLATE, REGEX, LPAREN, LBRACK, LBRACE,
@@ -166,14 +166,28 @@ valueAssignment
  * - The value is ASSIGN's statement-level value and builds the tree of
  *   'path = expression' apart from its word markers. A following ':=' or a
  *   'suppose' value is handled as after ASSIGN.
- * - Word positions of the value: the whole value, and both branches of a
- *   conditional standing in a word position, in either spelling. A word position holding
- *   exactly one name token is a word, UnaryOp::Word, which reads that name
- *   when something defines it and otherwise its own text.
- * - Conditions, grouping parentheses, operands of other operators, call
- *   arguments, list and object members, function, lambda and arrow bodies,
- *   template interpolations, the value of an inner assignment and the target
- *   of an assignment operator are not word positions.
+ * - Word positions of the value: the whole value, its item positions, and
+ *   both branches of a conditional standing in a word position, in either
+ *   spelling. A word position holding exactly one name token is a word,
+ *   UnaryOp::Word, which reads that name when something defines it and
+ *   otherwise its own text.
+ * - Item positions: each expression of a listDisplay without a
+ *   comprehension, the expression of each 'objectKey COLON expression'
+ *   entry, and the expression after ASSIGN of each 'name ASSIGN expression'
+ *   argument of a call whose callee is a plain name, of a 'NEW primary' call
+ *   and of 'SUPER call'. They lie anywhere in the value, through every
+ *   construct, including conditions, branches, grouping parentheses,
+ *   subscripts, slice bounds, stage arguments, quantifiers and comprehension
+ *   sources, except inside function, lambda and arrow bodies, comprehension
+ *   elements and filters, template interpolations, the value of an inner
+ *   assignment operator and the target of an assignment operator.
+ * - Conditions, grouping parentheses, operands of other operators,
+ *   positional call arguments, the 'name ASSIGN expression' arguments of
+ *   other calls, objectKey, shorthand 'name' entries, spread sources,
+ *   function, lambda and arrow bodies, template interpolations, the value of
+ *   an inner assignment and the target of an assignment operator are not
+ *   word positions themselves; an item position inside a condition, group,
+ *   operand, positional argument or spread source stays an item position.
  */
 isAssignment
     : path IS expression                // Stmt::Assign, as path = expression
@@ -865,6 +879,7 @@ fragment REGEX_CHAR
  * p is v                   -> p = v.
  * p is w                   -> p = UnaryOp::Word(w) for a single name w.
  * p is A if c else B       -> p = c ? Word(A) : Word(B).
+ * p is [A, {k: B}, X(n=C)] -> p = [Word(A), {k: Word(B)}, X(n=Word(C))].
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
@@ -885,5 +900,7 @@ fragment REGEX_CHAR
  * parser\postfix.rs and parser\primary.rs.
  * Comprehensions/templates: parser\comprehension.rs and parser\template.rs.
  * Is assignments and their words: parser\is_assignment.rs, with the
- * conditional word positions in parser\expression.rs.
+ * conditional word positions in parser\expression.rs and the item
+ * positions in parser\primary.rs, parser\postfix.rs and
+ * parser\comprehension.rs.
  */

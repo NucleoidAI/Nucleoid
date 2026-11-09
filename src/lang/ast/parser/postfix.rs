@@ -185,6 +185,9 @@ impl Parser {
     }
 
     pub(super) fn argument(&mut self, context: ArgumentContext) -> Result<Expr> {
+        if self.starts_item_label(context) {
+            return self.item_label();
+        }
         let bare_label =
             matches!(self.peek(), Token::Identifier(_)) && self.peek_at(1) == &Token::Assign;
         let argument = self.expression()?;

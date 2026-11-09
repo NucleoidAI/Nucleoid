@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use super::lexer::{Keyword, Spanned, Token, tokenize};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, Stmt};
+use is_assignment::Items;
 
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
@@ -105,6 +106,7 @@ struct Parser {
     context: ExpressionContext,
     words: bool,
     lists: Lists,
+    items: Items,
     enclosed: bool,
     in_class: bool,
     /// Python-style conditional attempts by `if` token position and nesting
@@ -112,6 +114,7 @@ struct Parser {
     /// position after its `else`, or `None`. A re-parse of the same source
     /// reuses an outcome instead of parsing the condition again.
     python_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
+    item_conditions: HashMap<(usize, usize), Option<PythonCondition>>,
     suppose_premises: HashMap<(usize, usize), Option<SupposePremise>>,
     while_conditions: HashMap<(usize, usize), Option<LoopCondition>>,
 }
@@ -178,9 +181,11 @@ impl Parser {
             context: ExpressionContext::Ordinary,
             words: false,
             lists: Lists::Literals,
+            items: Items::Plain,
             enclosed: false,
             in_class: false,
             python_conditions: HashMap::new(),
+            item_conditions: HashMap::new(),
             suppose_premises: HashMap::new(),
             while_conditions: HashMap::new(),
         }

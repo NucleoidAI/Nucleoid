@@ -94,7 +94,10 @@ impl Parser {
 
     fn function_literal(&mut self) -> Result<Expr> {
         let parameters = self.parameters()?;
-        let body = self.braced()?;
+        let items = self.leave_items();
+        let body = self.braced();
+        self.items = items;
+        let body = body?;
         Ok(Expr::Function(Arc::new(Function {
             name: None,
             parameters,
@@ -106,10 +109,12 @@ impl Parser {
         let mut items = Vec::new();
 
         while !self.check(&Token::RightBracket) {
-            let item = self.within(true, Self::expression)?;
+            let start = self.position;
+            let mut item = self.within(true, Self::item)?;
             if items.is_empty() && self.starts_comprehension() {
                 return self.comprehension(item);
             }
+            self.items.mark(start, self.position, &mut item);
             items.push(item);
 
             if !self.eat(&Token::Comma) {
@@ -179,7 +184,10 @@ impl Parser {
                 Expr::Identifier(key.clone())
             } else {
                 self.expect(&Token::Colon)?;
-                self.object_value()?
+                let start = self.position;
+                let mut value = self.within(true, Self::object_item)?;
+                self.items.mark(start, self.position, &mut value);
+                value
             };
         Ok(ObjectEntry::Property(key, value))
     }
@@ -191,11 +199,15 @@ impl Parser {
     }
 
     fn arrow_body(&mut self, parameters: Vec<Parameter>) -> Result<Expr> {
+        let items = self.leave_items();
         let body = if self.check(&Token::LeftBrace) {
-            FunctionBody::Block(self.braced()?)
+            self.braced().map(FunctionBody::Block)
         } else {
-            FunctionBody::Expression(Box::new(self.expression_in(self.context)?))
+            self.expression_in(self.context)
+                .map(|body| FunctionBody::Expression(Box::new(body)))
         };
+        self.items = items;
+        let body = body?;
 
         Ok(Expr::Function(Arc::new(Function {
             name: None,
@@ -263,7 +275,10 @@ impl Parser {
             parameters.push(self.untyped_parameter()?);
         }
         self.expect(&Token::Colon)?;
-        let body = self.expression_in(self.context)?;
+        let items = self.leave_items();
+        let body = self.expression_in(self.context);
+        self.items = items;
+        let body = body?;
 
         Ok(Expr::Function(Arc::new(Function {
             name: None,

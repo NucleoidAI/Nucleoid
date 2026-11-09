@@ -3326,7 +3326,8 @@ statement positions; caught values and transaction recovery are unchanged.
   enclosed `is` and `is not` comparisons of
   [Is and is not comparisons](#is-and-is-not-comparisons).
 - Unless its value is a word or holds the word branches of
-  [Conditional words](#conditional-words), `target is value` builds exactly
+  [Conditional words](#conditional-words) or the item words of
+  [Item words](#item-words), `target is value` builds exactly
   the syntax tree of `target = value`. The value is parsed as the value of `=` is at
   statement level, in the same context and at the same nesting depth, and
   ends where that value ends. So
@@ -3358,8 +3359,8 @@ statement positions; caught values and transaction recovery are unchanged.
 - A word assignment renders as `target is word`: in graph keys such as
   `block(total is good)`, in `--graph` output and in the `rule` that `why` and
   `affects` report, as `a is good` and `$Order.state is OPEN`. Every other
-  `is` assignment without word branches renders as its `=` spelling, such
-  as `a = 5`.
+  `is` assignment without word branches or item words renders as its `=`
+  spelling, such as `a = 5`.
 - No error type or message is added. A malformed value raises what its `=`
   spelling raises at the same place in the source, which is one column
   further right when that place follows `is` on its line:
@@ -3376,7 +3377,9 @@ statement positions; caught values and transaction recovery are unchanged.
 - `tests/is_assignments.rs`, `tests/is_assignments_cli.rs` and the terminal
   unit suite execute this behavior.
 - A branch of a conditional value can be a word as well, as
-  [Conditional words](#conditional-words) describes.
+  [Conditional words](#conditional-words) describes, and so can an item of a
+  list, a dictionary value or a named argument, as
+  [Item words](#item-words) describes.
 
 ## Conditional words
 
@@ -3390,12 +3393,14 @@ statement positions; caught values and transaction recovery are unchanged.
   File runs, the plain and redirected REPL, the terminal workspace, `--json`
   and `--graph` read it.
 - The word positions of an `is` assignment's value are the value itself,
-  which is a word position under NUC 93, and both branches of a conditional
+  which is a word position under NUC 93, the item positions of
+  [Item words](#item-words), and both branches of a conditional
   expression that stands in a word position, in either spelling,
   `consequent if condition else alternate` or
   `condition ? consequent : alternate`. So `A`, `B` and `C` are in word
   positions in `a is A if c1 else B if c2 else C`,
-  `a is c1 ? A : c2 ? B : C` and `a is c1 ? c2 ? A : B : C`.
+  `a is c1 ? A : c2 ? B : C` and `a is c1 ? c2 ? A : B : C`, and `A` and `B`
+  are in word positions in `a is [A if c else B]`.
 - A branch in a word position is a word when it is exactly one identifier
   token, as a value is under NUC 93: `a is A if c else 1` makes `A` a word
   and keeps `1` a number. Keywords such as `true`, `null`, `this` and `self`,
@@ -3407,10 +3412,10 @@ statement positions; caught values and transaction recovery are unchanged.
   comparisons of [Is and is not comparisons](#is-and-is-not-comparisons) in
   them, keep their reading. So does a parenthesized conditional:
   `a is (A if c else B)` reads `A` and `B` as `a = (A if c else B)` does. So
-  do the operands of other operators, call arguments, list items, object
-  values, function, arrow and lambda bodies and template interpolations
-  inside the value, and the value of an assignment inside the value, as in
-  `a is b = A if c else B`. A conditional that an assignment operator
+  do the operands of other operators, positional call arguments, the
+  `name=value` arguments that are not item positions, function, arrow and
+  lambda bodies and template interpolations inside the value, and the value
+  of an assignment inside the value, as in `a is b = A if c else B`. A conditional that an assignment operator
   follows is that assignment's target, not a result, so
   `a is X if c else Y = 5` keeps its tree and raises
   `SyntaxError("Cannot assign to (c?X:Y)")` at its statement.
@@ -3437,7 +3442,11 @@ statement positions; caught values and transaction recovery are unchanged.
   value, a conditional that holds a word renders without its grouping
   parentheses, as in `a is c?A:B`, and a name in a word position that is not
   a word renders in parentheses, as in `c?A:(B)`, so the rendering reads back
-  as the same statement. Every other `is` assignment renders as before, so
+  as the same statement. A value that also holds item words renders its item
+  positions as [Item words](#item-words) describes. A value whose only words
+  are word branches renders its item positions as before, so
+  `a is [(A)] if c else B` renders as `a is c?[A]:B`, which reads back with
+  the item word `A`. Every other `is` assignment renders as before, so
   `a is 1 if c else 2` renders as `a=(c?1:2)`.
 - At statement level, the operand before `?` is not an enclosed position, so
   an `is` comparison there needs parentheses, as in
@@ -3451,6 +3460,120 @@ statement positions; caught values and transaction recovery are unchanged.
   `a is A if c else`.
 - `tests/conditional_words.rs`, `tests/conditional_words_cli.rs` and the
   terminal unit suite execute this behavior.
+
+## Item words
+
+- [NUC 95](docs/nuc-0095.md) lets an item of a list, the value of a
+  dictionary entry and the value of a named argument inside the value of an
+  `is` assignment be a word. No option or flag enables it: every source
+  reads it, as every source reads [Is assignments](#is-assignments) and
+  [Conditional words](#conditional-words).
+- It extends [Is assignments](#is-assignments) only and combines with
+  C-style comments and conditional words. `run`, `check`, `parse_program`,
+  `parse`, `parse_expression` and `statement::compile` read it, and
+  `clear()` and `.clear` keep reading it. File runs, the plain and
+  redirected REPL, the terminal workspace, `--json` and `--graph` read it.
+- These are the item positions of an `is` assignment's value:
+  - each item of a list literal;
+  - the value of each `key: value` entry of a dictionary literal;
+  - the value of each named argument `name=value` of a call whose callee is
+    a bare name, including `new Name(...)`, and of `super(...)`. These are
+    exactly the arguments that [Default named constructors](#default-named-constructors)
+    reads as constructor labels when the name is a class.
+- The literal or call may stand anywhere in the value, at any depth: inside
+  another list, dictionary or named argument, as the receiver of a member
+  access, call or subscript, as an argument, an operand, a subscript, a
+  slice bound or a pipeline stage argument, in a condition or a branch of a
+  conditional, in a quantifier, in the source of a list comprehension and
+  inside grouping parentheses. So
+  `[[RED, GREEN], [BLUE, AMBER]].find(pair => pair.includes(color))`,
+  `{small: DIM, large: BRIGHT}[size]`, `[RED, GREEN, BLUE][x]`,
+  `X if [A, B].includes(c) else Y` and
+  `Light(color=RED, parts=[GREEN, GREEN])` all hold item positions.
+- No item position lies inside a function, arrow or lambda body, inside the
+  element or filter condition of a list comprehension, which are the bodies
+  of the functions it lowers to, inside a template interpolation, in the
+  value of an assignment operator inside the value, or in the target of an
+  assignment operator. A block body's own `is` assignments have their own
+  item positions, as every `is` assignment does. A `name=value` argument of
+  any other call, such as `o.m(k=A)`, is an assignment expression, so its
+  value is not an item position.
+- An item position whose expression is exactly one identifier token is a
+  word. Keywords such as `true`, `null`, `this` and `self`, `$Class`
+  references, quoted strings, numbers, paths, calls, subscripts, versions,
+  operator expressions and parenthesized operands are not words, so
+  `a is [A, (B), "C", D.x]` makes only `A` a word. Every other expression in
+  an item position keeps its reading.
+- Dictionary keys keep their reading: an identifier key is already its own
+  text, so `{s7: C}` has the key `"s7"` whatever `s7` names. The shorthand
+  entry `{A}` keeps reading the variable `A`, as [NUC 17](docs/nuc-0017.md)
+  defines it. Spread sources such as `{...o}`, positional arguments,
+  subscripts and slice bounds are not item positions, though literals inside
+  them have their own. The accepted grammar has no list spread and no
+  computed dictionary key.
+- An item position is a word position of
+  [Conditional words](#conditional-words) as well, so a conditional standing
+  in one has word branches, recursively: `A` and `B` are words in
+  `a is [A if c else B]` and in `a is Light(color=c ? A : B)`. Literals in
+  the branches of a conditional value have item positions as everywhere in
+  the value, so `a is [A] if c else {k: B}` makes `A` and `B` words.
+- An item word reads by the word rule of [Is assignments](#is-assignments):
+  the local, variable, class, function or built-in global of that name when
+  one exists, read as an identifier is, and otherwise the string of its
+  spelling, recording a dependency on the variable of that name. Because the
+  read is an identifier read, a standing declaration whose item word names a
+  variable that holds `null` stores `null`, as `xs = [D, 2]` does.
+- Only items that are evaluated are read. A list literal evaluates every
+  item in order and a dictionary literal every value in order. A constructor
+  call validates its named arguments first and then evaluates every supplied
+  value once, in source order, so a call with an unknown label reads none of
+  them. A conditional reads only its selected branch, and `&&`, `||` and
+  `??` skip their right operand when the left one decides, so an item word
+  there is not read and adds no dependency.
+- A standing declaration, property, constructor property or class-level rule
+  re-evaluates when the variable named by an item word it read is defined,
+  changed or deleted, including inside a `suppose` block whose rollback
+  restores it. Deleting the variable returns the word to its text. While
+  undefined, the word is a pending graph node that `why` lists among the
+  sources. A named instance such as `first is Light(color=BLUE)` reads its
+  constructor values once, when it is built, as every constructor value is,
+  so defining `BLUE` later leaves `first.color` as `"BLUE"`; an anonymous
+  construction inside a standing value, as in
+  `lights is [Light(color=BLUE)]`, builds a new instance when the value
+  re-evaluates.
+- Static class-rule validation does not require an item word to be defined.
+  It still requires every other name, so `$Light.bad is [(MISSING)]` raises
+  `ReferenceError("MISSING is not defined")` when declared, while
+  `$Light.ok is [MISSING]` is accepted.
+- An `is` assignment whose value holds an item word renders as
+  `target is value` in statement rendering, block graph keys, `--graph`
+  output and the `rule` that `why` and `affects` report, and every item
+  position in it renders as a word position: a name there that is not a word
+  renders in parentheses, as in `a is [A,(B)]` and `Light(color=(A))`, and a
+  shorthand entry renders as `{"A":(A)}`. Dictionary keys render quoted, as
+  in `a is {"small":DIM}`. The rendering then reads back as the same
+  statement. A value whose only words are word branches renders as
+  [Conditional words](#conditional-words) describes, so
+  `a is [(A)] if c else B` renders as `a is c?[A]:B`, which reads back with
+  the item word `A`, and a block holding it has the same key as a block
+  holding `a is [A] if c else B`.
+- No token, keyword or error type or message is added, and item words never
+  change whether a program parses or where a syntax error is raised. A
+  malformed value raises what its `=` spelling raises, as for
+  [Is assignments](#is-assignments), for example
+  `SyntaxError("Unexpected end of input")` at line 1, column 10 for
+  `a is [A, `. Nested lists, dictionaries and named arguments stop at the
+  nesting limit where those of the `=` spelling stop.
+- These readings differ from those before NUC 95, because each holds such an
+  item: `z is [A, B]` stores `["A", "B"]`, where it raised
+  `ReferenceError("A is not defined")`; `$Light.ok is [MISSING]` is accepted,
+  where its declaration raised `ReferenceError("MISSING is not defined")`;
+  and after `good = 3`, `xs is [1, good]` renders as `xs is [1,good]`, where
+  it rendered as `xs=[1,good]`, and `delete good` makes `xs` `[1, "good"]`,
+  where it made `xs[1]` undefined. `=` assignments keep the reference
+  reading, so `z = [A, B]` still raises `ReferenceError("A is not defined")`.
+- `tests/item_words.rs`, `tests/item_words_cli.rs` and the terminal unit
+  suite execute this behavior.
 
 ## Instance list ranges and list queries
 

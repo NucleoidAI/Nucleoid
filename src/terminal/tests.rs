@@ -117,6 +117,37 @@ fn conditional_words_reach_terminal_submission_and_survive_clear() {
 }
 
 #[test]
+fn item_words_reach_terminal_submission_and_survive_clear() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.editor = editor::new("if true:");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('j'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines()[1], "    ");
+    app.editor.insert_str("colors is [RED, GREEN]");
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    run(&mut app, &mut runtime, "colors[0]");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "RED");
+    run(&mut app, &mut runtime, "RED = \"red\"");
+    run(&mut app, &mut runtime, "colors[0]");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "red");
+    run(&mut app, &mut runtime, ".clear");
+    run(&mut app, &mut runtime, "pair is {left: YES}");
+    run(&mut app, &mut runtime, "pair.left");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "YES");
+    run(&mut app, &mut runtime, "late = [YES]");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "ReferenceError: YES is not defined (line 1, column 1)"
+    );
+    assert_eq!(runtime.assertions_run(), 0);
+}
+
+#[test]
 fn enter_preserves_pasted_indentation_and_never_executes_blank_lines() {
     let mut app = App::new(false, false);
     let mut runtime = Runtime::new();
