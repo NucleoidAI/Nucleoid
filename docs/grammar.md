@@ -53,12 +53,11 @@ NAME  NEWLINE     a token class produced by the lexer
   `Unexpected character`.
 - Space, tab, form feed and carriage return separate tokens. A line feed ends a
   line.
-- `#` starts a comment that runs to the end of the line.
-- The C-style comments option (`--c-style-comments`, or
-  `SyntaxOptions { c_style_comments: true }`) adds `//` line comments and
-  `/* ... */` block comments. A block comment ends at the first `*/`, does not
-  nest, and is an error when unterminated. Without the option `/` keeps its
-  operator and regular-expression readings, so `//` is an empty regular
+- `#` and `//` start a comment that runs to the end of the line, and `/*`
+  starts a block comment that ends at the first `*/`, does not nest, and is
+  an error when unterminated. Outside strings, templates and regular
+  expressions, `//` and `/*` are comments before they are division or a
+  regular expression, so `//` is a comment rather than an empty regular
   expression.
 
 ### 2.2 Tokens
@@ -132,7 +131,7 @@ Contextual words are ordinary names except in these positions:
 | `assert` | an assertion statement, `assert:` |
 | `suppose` | a hypothetical block |
 | `lambda` | a lambda expression |
-| `is` | an equality operator in enclosed positions |
+| `is` | an assignment after a path at the start of a statement; an equality operator in enclosed positions |
 | `all`, `any` | a quantifier, before `NAME in` |
 | `sum`, `max`, `min`, `mode` | a noun query, before `of` |
 | `why`, `affects`, `stated`, `derived` | a reasoning prefix before a name or class reference; pipeline stages |
@@ -234,6 +233,7 @@ statement ::= destructuring                     # tentative
             | assert_stmt
             | suppose_stmt
             | value_assignment
+            | is_assignment
             | expression                        # Stmt::Assign for '=', otherwise Stmt::Expression
 ```
 
@@ -248,6 +248,11 @@ premise          ::= !colon_statement clause_expression
 colon_statement  ::= type_declaration
                    | "assert" ':'
 value_assignment ::= path ':=' expression                                # Stmt::ValueAssign
+is_assignment    ::= path "is" &expression_start expression              # Stmt::Assign, as path '=' expression
+expression_start ::= NAME | CLASS_REF | NUMBER | STRING | TEMPLATE | REGEX
+                   | '(' | '[' | '{' | '!' | '-' | '+'
+                   | 'true' | 'false' | 'null' | 'this' | 'super' | 'new'
+                   | 'delete' | 'function' | 'not' | 'typeof'
 ```
 
 - A type declaration takes exactly one type name followed by the end of the
@@ -257,6 +262,13 @@ value_assignment ::= path ':=' expression                                # Stmt:
   expression that is the name `suppose`, or a plain assignment of it, makes a
   `suppose` block when a premise or the colon follows; otherwise `suppose` is
   an ordinary name.
+- An expression that is a path of at most 128 links, possibly in parentheses,
+  followed by the word `is` and an `expression_start` makes an is assignment
+  with the tree of `path = expression`. A value that is exactly one NAME is a
+  word (`Expr::Unary` with `UnaryOp::Word`): it reads that name when one is
+  defined and otherwise its own spelling. After any other expression, or
+  before any other token, `is` is a NAME that starts the next statement, so
+  `f() is 5` and `a is: T` are juxtaposed statements.
 - A premise is tentative. It must end exactly at the colon, and that colon
   must not directly follow the word `lambda`. Its statement runs first in the
   block.
@@ -594,7 +606,8 @@ interpolation ::= expression TOKEN*                                    # the tok
 The parser reads a program up to four times and keeps the first reading that
 succeeds:
 
-1. without `is` comparisons or list comprehensions;
+1. without `is` comparisons or list comprehensions, though with is
+   assignments (section 4.1), which every pass reads;
 2. with `is` comparisons, when the source contains the name `is` or a template
    literal;
 3. with list comprehensions, when the source contains `for` or a template
@@ -608,8 +621,8 @@ never changes a program that parses without it.
 
 | Function | Start rule |
 | --- | --- |
-| `parse`, `parse_program` and their `_with_options` forms | `program` |
-| `parse_expression` and `parse_expression_with_options` | `expression`, after skipping leading separators; the tokens after it are ignored |
+| `parse` and `parse_program` | `program` |
+| `parse_expression` | `expression`, after skipping leading separators; the tokens after it are ignored |
 
 ### 7.3 Limits
 

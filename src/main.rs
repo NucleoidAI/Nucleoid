@@ -52,7 +52,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use nucleoid::graph::NodeKey;
-use nucleoid::{Runtime, SyntaxOptions, Value};
+use nucleoid::{Runtime, Value};
 
 const REPL_TITLE: &str = "🌿 Nucleoid - Logic Language for World Models";
 const REPL_TAGLINE: &str = "🌎 Inspired by Nature";
@@ -64,7 +64,6 @@ const INDENT: &str = "    ";
     version,
     about = "Nucleoid declarative logic runtime"
 )]
-#[expect(clippy::struct_excessive_bools)]
 struct Cli {
     /// A source file to run. Without one, statements are read from the terminal.
     file: Option<PathBuf>,
@@ -80,24 +79,11 @@ struct Cli {
     /// Use the line-oriented REPL instead of the full-screen terminal workspace.
     #[arg(long)]
     plain: bool,
-
-    /// Enable // line comments and non-nesting /* ... */ block comments.
-    #[arg(long)]
-    c_style_comments: bool,
-
-    #[arg(
-        long,
-        help = "Read a `target is value` statement as `target = value`; a bare word reads its name or else its own text"
-    )]
-    is_assignment: bool,
 }
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    let mut runtime = Runtime::with_options(SyntaxOptions {
-        c_style_comments: cli.c_style_comments,
-        is_assignment: cli.is_assignment,
-    });
+    let mut runtime = Runtime::new();
 
     match cli.file {
         Some(path) => {

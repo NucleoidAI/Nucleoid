@@ -60,36 +60,30 @@ fn text(bytes: &[u8]) -> &str {
 }
 
 #[test]
-fn the_flag_reads_is_assignments_in_files_and_the_default_keeps_juxtaposed_statements() {
+fn files_read_is_assignments_without_a_flag() {
     let file = SourceFile::new("file");
     let source = "a is good\nb is \"good\"\nc is 'good'\ngood = 3\n[a, b, c]";
-    let output = file.run(source, &["--is-assignment"]);
+    let output = file.run(source, &[]);
     assert!(output.status.success(), "{output:?}");
     assert!(output.stderr.is_empty(), "{output:?}");
     assert_eq!(text(&output.stdout), "[3.0,\"good\",\"good\"]\n");
-    for options in [&[][..], &["--c-style-comments"][..]] {
-        let output = file.run(source, options);
-        assert!(!output.status.success(), "{output:?}");
-        assert!(output.stdout.is_empty(), "{output:?}");
-        assert_eq!(
-            text(&output.stderr),
-            "ReferenceError: a is not defined (line 1, column 1)\n"
-        );
-    }
-    let output = file.run("is = 4\na = 1\na is 5", &[]);
-    assert!(output.status.success(), "{output:?}");
-    assert_eq!(text(&output.stdout), "5.0\n");
-    let output = file.run("is = 4\na = 1\na is 5\n[a, is]", &["--is-assignment"]);
+    let output = file.run("is = 4\na = 1\na is 5\n[a, is]", &[]);
     assert!(output.status.success(), "{output:?}");
     assert_eq!(text(&output.stdout), "[5.0,4.0]\n");
+    let output = file.run(source, &["--is-assignment"]);
+    assert!(!output.status.success(), "{output:?}");
+    assert!(
+        text(&output.stderr).contains("unexpected argument '--is-assignment'"),
+        "{output:?}"
+    );
     let help = Command::new(env!("CARGO_BIN_EXE_nucleoid"))
         .arg("--help")
         .output()
         .unwrap();
     assert!(help.status.success(), "{help:?}");
-    assert!(text(&help.stdout).contains("--is-assignment"), "{help:?}");
+    assert!(!text(&help.stdout).contains("--is-assignment"), "{help:?}");
     assert!(
-        text(&help.stdout).contains("--c-style-comments"),
+        !text(&help.stdout).contains("--c-style-comments"),
         "{help:?}"
     );
     assert!(
@@ -99,24 +93,13 @@ fn the_flag_reads_is_assignments_in_files_and_the_default_keeps_juxtaposed_state
 }
 
 #[test]
-fn the_flag_combines_with_c_style_comments_and_reports_errors_of_equals() {
+fn is_assignments_combine_with_c_style_comments_and_report_errors_of_equals() {
     let file = SourceFile::new("comments");
     let source = "a is good // a word\nb /* name */ is /* text */ 'x'\nc is 6 / 2\n[a, b, c]";
-    for options in [
-        &["--is-assignment", "--c-style-comments"][..],
-        &["--c-style-comments", "--is-assignment"][..],
-    ] {
-        let output = file.run(source, options);
-        assert!(output.status.success(), "{output:?}");
-        assert!(output.stderr.is_empty(), "{output:?}");
-        assert_eq!(text(&output.stdout), "[\"good\",\"x\",3.0]\n");
-    }
-    let output = file.run(source, &["--c-style-comments"]);
-    assert!(!output.status.success(), "{output:?}");
-    assert_eq!(
-        text(&output.stderr),
-        "ReferenceError: a is not defined (line 1, column 1)\n"
-    );
+    let output = file.run(source, &[]);
+    assert!(output.status.success(), "{output:?}");
+    assert!(output.stderr.is_empty(), "{output:?}");
+    assert_eq!(text(&output.stdout), "[\"good\",\"x\",3.0]\n");
     for (source, expected) in [
         (
             "a is (1 + )",
@@ -131,7 +114,7 @@ fn the_flag_combines_with_c_style_comments_and_reports_errors_of_equals() {
             "ReferenceError: good is not defined (line 1, column 1)\n",
         ),
     ] {
-        let output = file.run(source, &["--is-assignment"]);
+        let output = file.run(source, &[]);
         assert!(!output.status.success(), "{output:?}");
         assert_eq!(text(&output.stderr), expected, "{source}");
     }
@@ -140,10 +123,7 @@ fn the_flag_combines_with_c_style_comments_and_reports_errors_of_equals() {
 #[test]
 fn graph_output_shows_word_assignments_and_their_pending_words() {
     let file = SourceFile::new("graph");
-    let output = file.run(
-        "a is good\nb is 5\n{ total is good }\na",
-        &["--is-assignment", "--graph"],
-    );
+    let output = file.run("a is good\nb is 5\n{ total is good }\na", &["--graph"]);
     assert!(output.status.success(), "{output:?}");
     assert!(output.stderr.is_empty(), "{output:?}");
     assert_eq!(
@@ -153,15 +133,12 @@ fn graph_output_shows_word_assignments_and_their_pending_words() {
 }
 
 #[test]
-fn plain_and_redirected_repls_honor_the_flag_and_clear_keeps_it() {
+fn plain_and_redirected_repls_read_is_assignments_and_clear_keeps_them() {
     for plain in [false, true] {
         for newline in ["\n", "\r\n"] {
-            let mut options = vec!["--is-assignment"];
-            if plain {
-                options.push("--plain");
-            }
+            let options: &[&str] = if plain { &["--plain"] } else { &[] };
             let source = "a is good\na\ngood = 2\na\n.clear\nb is ok\nb\nif true:\n    c is yes\n\nc\n.exit\n";
-            let output = repl(&source.replace('\n', newline), &options);
+            let output = repl(&source.replace('\n', newline), options);
             assert!(output.status.success(), "{output:?}");
             assert!(output.stderr.is_empty(), "{output:?}");
             assert_eq!(
@@ -172,11 +149,4 @@ fn plain_and_redirected_repls_honor_the_flag_and_clear_keeps_it() {
             );
         }
     }
-    let output = repl("a is good\na\n", &["--plain"]);
-    assert!(output.status.success(), "{output:?}");
-    assert_eq!(text(&output.stdout), BANNER);
-    assert_eq!(
-        text(&output.stderr),
-        "ReferenceError: a is not defined (line 1, column 1)\nReferenceError: a is not defined (line 1, column 1)\n"
-    );
 }

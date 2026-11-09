@@ -6,10 +6,8 @@ use std::process::{Command, Stdio};
 
 use nucleoid::lang::ast::generator::generate_all;
 use nucleoid::lang::ast::lexer::{Keyword, Token, tokenize};
-use nucleoid::lang::ast::{
-    Expr, parse, parse_expression, parse_expression_with_options, parse_with_options,
-};
-use nucleoid::{ErrorKind, Position, Runtime, SyntaxOptions};
+use nucleoid::lang::ast::{Expr, parse, parse_expression};
+use nucleoid::{ErrorKind, Position, Runtime};
 
 const SPEC_TITLES: [&str; 8] = [
     "Nucleoid builds lists with comprehensions",
@@ -27,11 +25,6 @@ const EXAMPLES_TITLE: &str = "List comprehensions keep a class's shipping labels
 
 const COMPREHENSION: &str = "[x * 2 for x in xs if x > 1]";
 const SPELLED: &str = "xs.filter(x => x > 1).map(x => x * 2)";
-
-const COMMENTS: SyntaxOptions = SyntaxOptions {
-    c_style_comments: true,
-    is_assignment: false,
-};
 
 fn uses_comprehension(source: &str) -> bool {
     let mut brackets = Vec::new();
@@ -260,17 +253,13 @@ fn comprehensions_stand_wherever_a_list_literal_may() {
         ),
     ] {
         assert_eq!(
-            parse_with_options(comprehension, COMMENTS).unwrap(),
-            parse_with_options(spelled, COMMENTS).unwrap(),
+            parse(comprehension).unwrap(),
+            parse(spelled).unwrap(),
             "{comprehension}"
         );
     }
     assert_eq!(
         parse_expression(COMPREHENSION).unwrap(),
-        parse_expression(SPELLED).unwrap()
-    );
-    assert_eq!(
-        parse_expression_with_options(COMPREHENSION, COMMENTS).unwrap(),
         parse_expression(SPELLED).unwrap()
     );
 }
@@ -483,11 +472,6 @@ fn accepted_inputs_keep_their_readings_and_ignored_tails() {
         "x in xs",
     ] {
         assert_eq!(parse_expression(source).unwrap(), x(), "{source}");
-        assert_eq!(
-            parse_expression_with_options(source, COMMENTS).unwrap(),
-            x(),
-            "{source}"
-        );
     }
     assert_eq!(
         parse_expression("x |> why for x in xs").unwrap(),

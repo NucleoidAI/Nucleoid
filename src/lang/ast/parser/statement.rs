@@ -305,7 +305,6 @@ impl Parser {
             position: self.position,
             depth: self.depth,
             context: self.context,
-            options: self.options,
             lists: self.lists,
             enclosed: self.enclosed,
             in_class: self.in_class,

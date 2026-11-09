@@ -72,74 +72,49 @@ prompt. Tab inserts four spaces; use Backspace to dedent and submit a blank
 line to run the complete block. Piped input is not reindented and must include
 its own whitespace.
 
-### Optional C-style comments
+### C-style comments
 
-Hash (`#`) line comments work by default. To also accept `//` line comments
-and non-nesting `/* ... */` blocks, explicitly enable them for a file or
-either interactive interface:
+Hash (`#`) line comments, `//` line comments and non-nesting `/* ... */`
+blocks all work in files and both interactive interfaces:
 
-```console
-nucleoid --c-style-comments program.nuc
-nucleoid --c-style-comments --plain
+```
+total = 12 /* units */ / 2 // half of twelve
+# hash comments still work
+assert(total, 6)
 ```
 
-The equivalent library setting is per runtime and survives `clear()`:
+Comments take delimiter priority outside literals, so `//` is a comment, not
+an empty regex; write `/(?:)/` for an empty-matching regex (with pattern text
+`(?:)`, not an empty string). Strings, template text and nonambiguous regexes
+stay literal, and interpolations read comments too. Comments retain newlines
+and source positions and cannot join tokens or supply indentation. An
+unclosed block reports `SyntaxError: Unterminated block comment` at its
+opening slash. Plain input buffers an open block across blank lines until it
+closes or EOF. They no longer need the removed `--c-style-comments` flag; see
+[NUC 76](docs/nuc-0076.md).
 
-```rust
-use nucleoid::{Runtime, SyntaxOptions};
+### Is assignments
 
-let mut runtime = Runtime::with_options(SyntaxOptions {
-    c_style_comments: true,
-    ..SyntaxOptions::default()
-});
-assert_eq!(runtime.run("12 /* */ / 2 //").unwrap().to_string(), "6");
+An assignment can also be written `target is value`, with quotes optional
+around a single word:
+
 ```
-
-Without that flag/option, accepted slash/regex behavior is unchanged: `//`
-is an empty regex, not a comment. In enabled mode comments take delimiter
-priority outside literals; `/(?:)/` supplies empty-matching behavior (with
-pattern text `(?:)`, not an empty string). Strings,
-template text and nonambiguous regexes stay literal; interpolations inherit
-the option. Comments retain newlines and source positions and cannot join
-tokens or supply indentation. An unclosed block reports
-`SyntaxError: Unterminated block comment` at its opening slash.
-Plain input buffers an open block across blank lines until it closes or EOF;
-the terminal uses the same setting for submission and Ctrl-J indentation.
-See [NUC 76](docs/nuc-0076.md).
-
-### Optional is assignments
-
-To also write an assignment as `target is value`, with quotes optional around
-a single word, explicitly enable it for a file or either interactive
-interface, alone or beside `--c-style-comments`:
-
-```console
-nucleoid --is-assignment program.nuc
-nucleoid --is-assignment --plain
-```
-
-The equivalent library setting is per runtime and survives `clear()`:
-
-```rust
-use nucleoid::{Runtime, SyntaxOptions};
-
-let mut runtime = Runtime::with_options(SyntaxOptions {
-    is_assignment: true,
-    ..SyntaxOptions::default()
-});
-runtime.run("status is OPEN").unwrap();
-assert_eq!(runtime.run("status").unwrap().to_string(), "OPEN");
-runtime.run("OPEN = \"open\"").unwrap();
-assert_eq!(runtime.run("status").unwrap().to_string(), "open");
+status is OPEN
+label is "shipped"
+assert([status, label], ["OPEN", "shipped"])
+OPEN = "open"
+assert(status, "open")
+delete OPEN
+assert(status, "OPEN")
 ```
 
 `a is 5`, `o.x is "good"` and `this.total is total * 2` mean their `=`
 spellings. A value of one bare word reads the variable, class, function or
 built-in of that name when one exists, and otherwise stores its own text, so
-`status` above follows `OPEN` once it is defined. Without the flag/option,
-`a is good` keeps its accepted reading as three statements. `is` comparisons
-such as `if status is OPEN:` work in both modes. See
-[NUC 93](docs/nuc-0093.md).
+`status` above follows `OPEN` while it is defined. `is` comparisons such as
+`if status is OPEN:` keep working inside conditions and parentheses. It no
+longer needs the removed `--is-assignment` flag, so `a is good` assigns
+rather than reading as three statements; see [NUC 93](docs/nuc-0093.md).
 
 ---
 

@@ -131,7 +131,7 @@ impl App {
                 self.history_index = None;
             }
             KeyCode::Char('j') if ctrl => {
-                editor::newline_with_options(&mut self.editor, runtime.options());
+                editor::newline(&mut self.editor);
                 self.completion = None;
                 self.history_index = None;
             }

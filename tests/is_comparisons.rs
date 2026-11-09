@@ -252,13 +252,13 @@ fn is_compares_in_every_enclosed_position() {
 #[test]
 fn is_stays_a_name_where_a_statement_can_follow() {
     for (source, separated) in [
-        ("value is \"EXACT\"", "value\nis\n\"EXACT\""),
+        ("f() is \"EXACT\"", "f()\nis\n\"EXACT\""),
         ("flag = value is \"EXACT\"", "flag = value\nis\n\"EXACT\""),
         ("flag = value is not EXACT", "flag = value\nis\nnot EXACT"),
         ("f = x => x is 3", "f = x => x\nis\n3"),
         ("f = x -> x is 3", "f = x -> x\nis\n3"),
         ("f = lambda x: x is 3", "f = lambda x: (x)\nis\n3"),
-        ("a is 1 ? 2 : 3", "a\nis\n1 ? 2 : 3"),
+        ("f() is 1 ? 2 : 3", "f()\nis\n1 ? 2 : 3"),
         ("x = c ? 1 : 2 is 3", "x = c ? 1 : 2\nis\n3"),
         ("x = 1 if c else 2 is 3", "x = 1 if c else 2\nis\n3"),
         ("x = a is b if c else d", "x = a\nis\nb if c else d"),
@@ -274,14 +274,14 @@ fn is_stays_a_name_where_a_statement_can_follow() {
         ),
         ("throw x is 1", "throw x\nis\n1"),
         ("delete x is 1", "delete x\nis\n1"),
-        ("{ a is b }", "{ a\nis\nb }"),
-        ("while v is x: T", "while v\nis\nx: T"),
-        ("while v is assert: a, b", "while v\nis\nassert: a, b"),
+        ("{ f() is b }", "{ f()\nis\nb }"),
+        ("while f() is x: T", "while f()\nis\nx: T"),
+        ("while f() is assert: a, b", "while f()\nis\nassert: a, b"),
         (
-            "while v is suppose:\n    a = 1",
-            "while v\nis\nsuppose:\n    a = 1",
+            "while f() is suppose:\n    a = 1",
+            "while f()\nis\nsuppose:\n    a = 1",
         ),
-        ("suppose v is x: T", "suppose v\nis\nx: T"),
+        ("suppose f() is x: T", "suppose f()\nis\nx: T"),
         ("x = {k: 1 is: 2}", "x = {k: 1, is: 2}"),
         ("t = `${a is 1}`", "t = `${a}`"),
         ("t = `${a is}`", "t = `${a}`"),
@@ -358,12 +358,21 @@ fn equivalent_spellings_keep_one_syntax_tree_with_is() {
 
 #[test]
 fn a_program_read_with_the_operator_keeps_headers_that_also_read_as_statements() {
-    let read = statements("while v is x: T\nif a is b:\n    c = 1");
-    assert_eq!(read.get(..4), statements("while\nv\nis\nx: T").get(..));
+    let read = statements("while f() is x: T\nif a is b:\n    c = 1");
+    assert_eq!(read.get(..4), statements("while\nf()\nis\nx: T").get(..));
     assert!(compares_words(&read[4..]));
-    let read = statements("suppose v is x: T\nif a is b:\n    c = 1");
-    assert_eq!(read.get(..4), statements("suppose\nv\nis\nx: T").get(..));
-    let read = statements("v = 1\nwhile v is suppose:\n    a = 1\nif v is 1:\n    b = 2");
+    let read = statements("suppose f() is x: T\nif a is b:\n    c = 1");
+    assert_eq!(read.get(..4), statements("suppose\nf()\nis\nx: T").get(..));
+    let read = statements("while v is x: T\nif a is b:\n    c = 1");
+    assert_eq!(
+        read,
+        [
+            statements("while v is x: T"),
+            statements("if a is b:\n    c = 1")
+        ]
+        .concat()
+    );
+    let read = statements("v = 1\nwhile f() is suppose:\n    a = 1\nif v is 1:\n    b = 2");
     assert!(matches!(read.get(3), Some(Stmt::Expression(Expr::Identifier(word))) if word == "is"));
     assert!(matches!(read.get(4), Some(Stmt::Suppose { .. })));
     let read = statements("n = 0\nwhile n < 3:\n    n = n + 1\nif n is DONE:\n    pass");

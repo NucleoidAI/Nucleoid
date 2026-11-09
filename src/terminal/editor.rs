@@ -2,12 +2,8 @@ use ratatui::layout::Rect;
 use tui_textarea::{CursorMove, TextArea};
 use unicode_width::UnicodeWidthChar;
 
-use nucleoid::SyntaxOptions;
-
 use crate::INDENT;
-use crate::continuation::{
-    indented_body_header_with_options, next_indentation_with_options, unterminated_block_comment,
-};
+use crate::continuation::{indented_body_header, next_indentation, unterminated_block_comment};
 
 pub(super) fn new(source: &str) -> TextArea<'static> {
     let mut editor = TextArea::from(source.split('\n'));
@@ -18,37 +14,24 @@ pub(super) fn new(source: &str) -> TextArea<'static> {
     editor
 }
 
-#[cfg(test)]
 pub(super) fn newline(editor: &mut TextArea<'_>) {
-    newline_with_options(editor, SyntaxOptions::default());
-}
-
-pub(super) fn newline_with_options(editor: &mut TextArea<'_>, options: SyntaxOptions) {
     let (row, column) = editor.cursor();
     let prefix: String = line(editor, row).chars().take(column).collect();
-    let source = if options.c_style_comments {
-        editor
-            .lines()
-            .iter()
-            .take(row)
-            .map(String::as_str)
-            .chain(std::iter::once(prefix.as_str()))
-            .collect::<Vec<_>>()
-            .join("\n")
-    } else {
-        prefix.clone()
-    };
-    let indentation = if unterminated_block_comment(&source, options) {
+    let source = editor
+        .lines()
+        .iter()
+        .take(row)
+        .map(String::as_str)
+        .chain(std::iter::once(prefix.as_str()))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let indentation = if unterminated_block_comment(&source) {
         prefix
             .chars()
             .take_while(|character| matches!(character, ' ' | '\t'))
             .collect()
     } else {
-        next_indentation_with_options(
-            &source,
-            indented_body_header_with_options(&source, options),
-            options,
-        )
+        next_indentation(&source, indented_body_header(&source))
     };
     editor.insert_newline();
     editor.insert_str(indentation);

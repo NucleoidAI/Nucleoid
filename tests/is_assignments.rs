@@ -2,26 +2,8 @@ mod common;
 
 use nucleoid::graph::{NodeKey, NodeKind};
 use nucleoid::lang::ast::generator::generate_all;
-use nucleoid::lang::ast::{
-    BinaryOp, Expr, Stmt, UnaryOp, parse, parse_expression, parse_expression_with_options,
-    parse_program_with_options, parse_with_options,
-};
-use nucleoid::{ErrorKind, Position, Runtime, SyntaxOptions, Value};
-
-const IS: SyntaxOptions = SyntaxOptions {
-    c_style_comments: false,
-    is_assignment: true,
-};
-
-const BOTH: SyntaxOptions = SyntaxOptions {
-    c_style_comments: true,
-    is_assignment: true,
-};
-
-const COMMENTS: SyntaxOptions = SyntaxOptions {
-    c_style_comments: true,
-    is_assignment: false,
-};
+use nucleoid::lang::ast::{BinaryOp, Expr, Stmt, UnaryOp, parse, parse_expression, parse_program};
+use nucleoid::{ErrorKind, Position, Runtime, Value};
 
 fn name(name: &str) -> Expr {
     Expr::Identifier(name.to_string())
@@ -46,22 +28,21 @@ fn member(object: Expr, property: &str) -> Expr {
 }
 
 fn statements(source: &str) -> Vec<Stmt> {
-    parse_with_options(source, IS).unwrap_or_else(|error| panic!("{source}: {error}"))
-}
-
-fn accepted(source: &str) -> Vec<Stmt> {
     parse(source).unwrap_or_else(|error| panic!("{source}: {error}"))
 }
 
-fn syntax_error(source: &str, options: SyntaxOptions) -> (String, Position) {
-    let error = Runtime::check_with_options(source, options).unwrap_err();
+fn rendered(source: &str) -> String {
+    generate_all(&statements(source))
+}
+
+fn syntax_error(source: &str) -> (String, Position) {
+    let error = Runtime::check(source).unwrap_err();
     assert_eq!(error.kind(), ErrorKind::Syntax, "{source}");
     (error.message(), error.position().unwrap())
 }
 
 fn expect(runtime: &mut Runtime, source: &str, expected: &str) {
-    let parsed = parse_with_options(source, runtime.options())
-        .unwrap_or_else(|error| panic!("{source}: {error}"));
+    let parsed = parse(source).unwrap_or_else(|error| panic!("{source}: {error}"));
     let assertions = common::assertions::protected_assertions(&parsed).len();
     let case = common::Case {
         title: "is assignment regression".to_string(),
@@ -73,7 +54,7 @@ fn expect(runtime: &mut Runtime, source: &str, expected: &str) {
 }
 
 fn fresh(source: &str, expected: &str) {
-    expect(&mut Runtime::with_options(IS), source, expected);
+    expect(&mut Runtime::new(), source, expected);
 }
 
 fn failure(runtime: &mut Runtime, source: &str) -> String {
@@ -148,12 +129,7 @@ fn every_value_but_a_bare_word_builds_the_tree_of_its_equals_spelling() {
             let spelled = format!("{target} is {value}");
             assert_eq!(
                 statements(&spelled),
-                accepted(&format!("{target} = {value}")),
-                "{spelled}"
-            );
-            assert_eq!(
-                parse_with_options(&spelled, BOTH).unwrap(),
-                statements(&spelled),
+                statements(&format!("{target} = {value}")),
                 "{spelled}"
             );
         }
@@ -206,8 +182,8 @@ fn a_value_of_exactly_one_identifier_token_is_a_word() {
     ] {
         assert_eq!(statements(source), expected, "{source}");
     }
-    assert_ne!(statements("a is good"), accepted("a = good"));
-    assert_eq!(statements("a is (good)"), accepted("a = good"));
+    assert_ne!(statements("a is good"), statements("a = good"));
+    assert_eq!(statements("a is (good)"), statements("a = good"));
 }
 
 #[test]
@@ -226,11 +202,11 @@ fn values_are_parsed_as_the_value_of_equals_at_statement_level() {
     }
     assert_eq!(
         statements("a is suppose:\n    b = 1"),
-        accepted("a = suppose:\n    b = 1")
+        statements("a = suppose:\n    b = 1")
     );
     assert_eq!(
         statements("a is suppose b > 1:\n    c = 2"),
-        accepted("a = suppose b > 1:\n    c = 2")
+        statements("a = suppose b > 1:\n    c = 2")
     );
     assert!(matches!(
         statements("a is suppose:\n    b = 1").first(),
@@ -242,100 +218,103 @@ fn values_are_parsed_as_the_value_of_equals_at_statement_level() {
 }
 
 #[test]
-fn guard_tokens_and_other_leading_expressions_keep_the_default_reading() {
-    for source in [
-        "a is: T",
-        "a is = 5",
-        "a is += 1",
-        "a is -= 1",
-        "a is *= 2",
-        "a is **= 2",
-        "a is /= 2",
-        "a is %= 2",
-        "a is &&= b",
-        "a is ||= b",
-        "a is := 1",
-        "a is",
-        "a is;",
-        "a is\nb",
-        "a is => 1",
-        "a is -> 1",
-        "a is == b",
-        "a is != b",
-        "a is === b",
-        "a is < b",
-        "a is >= b",
-        "a is * 2",
-        "a is ** 2",
-        "a is / 2",
-        "a is % 2",
-        "a is && b",
-        "a is || b",
-        "a is and b",
-        "a is or b",
-        "a is ?? b",
-        "a is |> why",
-        "a is . b",
-        "a is @1",
-        "a is if c else d",
-        "a is if c:\n    d = 1",
-        "f() is 5",
-        "1 is 2",
-        "\"s\" is 1",
-        "a[0] is 1",
-        "a[0:1] is 1",
-        "this is 5",
-        "self is 5",
-        "$Order is 5",
-        "a + b is 5",
-        "(a + b) is 5",
-        "-a is 5",
-        "not a is 5",
-        "[a] is 5",
-        "a = b is c",
-        "a := b is c",
-        "a += b is c",
-        "x => x is 5",
-        "a if c else b is 5",
-        "c ? a : b is 5",
-        "def f(x) => x is 1",
-        "return a is 1",
-        "throw a is 1",
-        "delete a is 1",
-        "assert: 1, a is 1",
-        "a: int",
-        "is = 5",
-        "is",
-        "is(4)",
-        "x = {is: 1}",
-        "def is(x) => x",
-        "for is in xs:\n    pass",
-        "while a:\n    is",
+fn guard_tokens_and_other_leading_expressions_keep_their_juxtaposed_readings() {
+    for (source, reading) in [
+        ("a is: T", "a;is:T"),
+        ("a is = 5", "a;is=5"),
+        ("a is += 1", "a;is=is+1"),
+        ("a is -= 1", "a;is=is-1"),
+        ("a is *= 2", "a;is=is*2"),
+        ("a is **= 2", "a;is=is**2"),
+        ("a is /= 2", "a;is=is/2"),
+        ("a is %= 2", "a;is=is%2"),
+        ("a is &&= b", "a;is=is&&b"),
+        ("a is ||= b", "a;is=is||b"),
+        ("a is := 1", "a;is:=1"),
+        ("a is", "a;is"),
+        ("a is;", "a;is"),
+        ("a is\nb", "a;is;b"),
+        ("a is => 1", "a;function()"),
+        ("a is -> 1", "a;function()"),
+        ("a is == b", "a;is==b"),
+        ("a is != b", "a;is!=b"),
+        ("a is === b", "a;is===b"),
+        ("a is < b", "a;is<b"),
+        ("a is >= b", "a;is>=b"),
+        ("a is * 2", "a;is*2"),
+        ("a is ** 2", "a;is**2"),
+        ("a is / 2", "a;is/2"),
+        ("a is % 2", "a;is%2"),
+        ("a is && b", "a;is&&b"),
+        ("a is || b", "a;is||b"),
+        ("a is and b", "a;is&&b"),
+        ("a is or b", "a;is||b"),
+        ("a is ?? b", "a;(is??b)"),
+        ("a is |> why", "a;is|>why"),
+        ("a is . b", "a;is.b"),
+        ("a is @1", "a;is@1"),
+        ("a is if c else d", "a;(c?is:d)"),
+        ("a is if c:\n    d = 1", "a;is;if(c){d=1}"),
+        ("f() is 5", "f();is;5"),
+        ("1 is 2", "1;is;2"),
+        ("\"s\" is 1", "\"s\";is;1"),
+        ("a[0] is 1", "a[0];is;1"),
+        ("a[0:1] is 1", "a[0:1];is;1"),
+        ("this is 5", "this;is;5"),
+        ("self is 5", "this;is;5"),
+        ("$Order is 5", "$Order;is;5"),
+        ("a + b is 5", "a+b;is;5"),
+        ("(a + b) is 5", "a+b;is;5"),
+        ("-a is 5", "-a;is;5"),
+        ("not a is 5", "!a;is;5"),
+        ("[a] is 5", "[a];is;5"),
+        ("a = b is c", "a=b;is;c"),
+        ("a := b is c", "a:=b;is;c"),
+        ("a += b is c", "a=a+b;is;c"),
+        ("x => x is 5", "function();is;5"),
+        ("a if c else b is 5", "(c?a:b);is;5"),
+        ("c ? a : b is 5", "(c?a:b);is;5"),
+        ("def f(x) => x is 1", "def f;is;1"),
+        ("return a is 1", "return a;is;1"),
+        ("throw a is 1", "throw a;is;1"),
+        ("delete a is 1", "delete a;is;1"),
+        ("assert: 1, a is 1", "assert(1,a);is;1"),
+        ("a: int", "a:int"),
+        ("is = 5", "is=5"),
+        ("is", "is"),
+        ("is(4)", "is(4)"),
+        ("x = {is: 1}", "x={\"is\":1}"),
+        ("def is(x) => x", "def is"),
+        ("for is in xs:\n    pass", "for is of xs"),
+        ("while a:\n    is", "while(a){is}"),
     ] {
-        assert_eq!(statements(source), accepted(source), "{source}");
+        assert_eq!(rendered(source), reading, "{source}");
     }
+    assert_eq!(parse_expression("a is b").unwrap(), name("a"));
     assert_eq!(
-        parse_expression_with_options("a is b", IS).unwrap(),
-        name("a")
-    );
-    assert_eq!(
-        parse_expression_with_options("(a is b)", IS).unwrap(),
-        parse_expression("(a is b)").unwrap()
+        parse_expression("(a is b)").unwrap(),
+        Expr::Binary {
+            operator: BinaryOp::Is,
+            left: Box::new(name("a")),
+            right: Box::new(name("b")),
+        }
     );
 }
 
 #[test]
-fn targets_past_the_chain_limit_keep_the_default_reading() {
+fn targets_past_the_chain_limit_keep_their_juxtaposed_reading() {
     let chain = |links: usize| format!("(root{}){}", ".next".repeat(64), ".next".repeat(links));
     let longest = chain(64);
     assert_eq!(
         statements(&format!("{longest} is 1")),
-        accepted(&format!("{longest} = 1"))
+        statements(&format!("{longest} = 1"))
     );
-    let excessive = format!("{} is 1", chain(65));
-    assert_eq!(statements(&excessive), accepted(&excessive));
     assert_eq!(
-        syntax_error(&format!("{} := 1", chain(65)), IS).0,
+        statements(&format!("{} is 1", chain(65))),
+        statements(&format!("{}\nis\n1", chain(65)))
+    );
+    assert_eq!(
+        syntax_error(&format!("{} := 1", chain(65))).0,
         "Expression has too many parts"
     );
 }
@@ -395,10 +374,10 @@ fn is_assigns_in_every_statement_position() {
             "t = `${(() => { a = 1 })()}`",
         ),
     ] {
-        assert_eq!(statements(spelled), accepted(symbol), "{spelled}");
+        assert_eq!(statements(spelled), statements(symbol), "{spelled}");
     }
     assert_eq!(
-        parse_expression_with_options("() => { a is 1 }", IS).unwrap(),
+        parse_expression("() => { a is 1 }").unwrap(),
         parse_expression("() => { a = 1 }").unwrap()
     );
 }
@@ -422,13 +401,13 @@ fn word_assignments_render_with_is_and_every_other_value_renders_as_equals() {
     }
     assert_ne!(
         generate_all(&statements("{ a is good }")),
-        generate_all(&accepted("{ a = good }"))
+        generate_all(&statements("{ a = good }"))
     );
 }
 
 #[test]
 fn a_bare_word_reads_its_variable_once_defined_and_its_text_otherwise() {
-    let mut runtime = Runtime::with_options(IS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "a is good\nquoted is \"good\"\nsingle is 'good'\nassert([a, quoted, single], [\"good\", \"good\", \"good\"])\na",
@@ -464,7 +443,7 @@ fn a_bare_word_reads_its_variable_once_defined_and_its_text_otherwise() {
 
 #[test]
 fn constructors_and_class_level_rules_assign_with_is_per_instance() {
-    let mut runtime = Runtime::with_options(IS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "class Order(status, total):\n    this.status is status\n    this.total is total\n    this.stage is NEW\n$Order.state is OPEN\n$Order.big is $Order.total > 10\nfirst = Order(\"PAID\", 5)\nsecond = Order(\"SENT\", 20)\nassert([first.status, second.status], [\"PAID\", \"SENT\"])\nassert([first.stage, second.stage], [\"NEW\", \"NEW\"])\nassert([first.state, second.state], [\"OPEN\", \"OPEN\"])\nassert([first.big, second.big], [false, true])\nfirst.state",
@@ -517,7 +496,7 @@ fn words_that_name_a_local_class_function_or_global_read_it() {
 
 #[test]
 fn hypotheticals_and_rollback_restore_word_assignments() {
-    let mut runtime = Runtime::with_options(IS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "a is good\nsuppose good = 9:\n    assert(a, 9)\nassert(a, \"good\")\na",
@@ -555,7 +534,7 @@ fn non_word_values_behave_as_their_equals_spelling() {
         "ready = false\nsum is 1 + 2\nlist is [1, sum]\nobject is {k: sum}\ndouble is x => x * 2\nnext is lambda x: x + 1\nnegated is not ready\nmaybe is ready ?? 1\nassert([sum, list, object.k, double(4), next(4), negated, maybe], [3, [1, 3], 3, 8, 5, true, false])\nready = true\nassert(negated, false)\nsum",
         "3",
     );
-    let mut runtime = Runtime::with_options(IS);
+    let mut runtime = Runtime::new();
     assert_eq!(
         failure(&mut runtime, "a is (good)"),
         "ReferenceError: good is not defined (line 1, column 1)"
@@ -597,8 +576,8 @@ fn malformed_values_report_the_diagnostics_of_equals() {
         "b := 1",
         "suppose 1 >",
     ] {
-        let (message, position) = syntax_error(&format!("a is {value}"), IS);
-        let (expected, at) = syntax_error(&format!("a = {value}"), IS);
+        let (message, position) = syntax_error(&format!("a is {value}"));
+        let (expected, at) = syntax_error(&format!("a = {value}"));
         assert_eq!(message, expected, "a is {value}");
         assert_eq!(position.line, at.line, "a is {value}");
         assert!(
@@ -607,21 +586,20 @@ fn malformed_values_report_the_diagnostics_of_equals() {
         );
     }
     assert_eq!(
-        syntax_error("a is (1 + )", IS),
+        syntax_error("a is (1 + )"),
         ("Unexpected ')'".to_string(), Position::new(1, 12))
     );
     assert_eq!(
-        syntax_error("a is b := 1", IS),
+        syntax_error("a is b := 1"),
         (
             "Invalid value assignment target".to_string(),
             Position::new(1, 8)
         )
     );
     assert_eq!(
-        syntax_error("a is x: T", IS),
+        syntax_error("a is x: T"),
         ("Unexpected ':'".to_string(), Position::new(1, 9))
     );
-    assert!(Runtime::check("a is x: T").is_ok());
 }
 
 #[test]
@@ -633,8 +611,8 @@ fn nuc86_comparisons_in_enclosed_positions_work_beside_is_assignments() {
 }
 
 #[test]
-fn nuc86_protected_statement_forms_take_new_opt_in_readings() {
-    for (source, opted) in [
+fn nuc86_statement_forms_take_is_assignment_readings() {
+    for (source, expected) in [
         (
             "value is \"EXACT\"",
             vec![assign(name("value"), Expr::String("EXACT".to_string()))],
@@ -643,10 +621,9 @@ fn nuc86_protected_statement_forms_take_new_opt_in_readings() {
             "{ a is b }",
             vec![Stmt::Block(vec![assign(name("a"), word("b"))])],
         ),
-        ("a is 1 ? 2 : 3", accepted("a = 1 ? 2 : 3")),
+        ("a is 1 ? 2 : 3", statements("a = 1 ? 2 : 3")),
     ] {
-        assert_eq!(statements(source), opted, "{source}");
-        assert_ne!(accepted(source), opted, "{source}");
+        assert_eq!(statements(source), expected, "{source}");
     }
     assert_eq!(
         statements("while v is x: T"),
@@ -675,33 +652,17 @@ fn nuc86_protected_statement_forms_take_new_opt_in_readings() {
     );
     assert_eq!(
         statements("while v is suppose:\n    a = 1"),
-        accepted("while\nv = suppose:\n    a = 1")
+        statements("while\nv = suppose:\n    a = 1")
     );
     assert_eq!(
-        syntax_error("while v is assert: a, b", IS),
+        syntax_error("while v is assert: a, b"),
         ("Unexpected ','".to_string(), Position::new(1, 23))
     );
-    for source in [
-        "value is \"EXACT\"",
-        "{ a is b }",
-        "a is 1 ? 2 : 3",
-        "while v is x: T",
-        "suppose v is x: T",
-        "while v is suppose:\n    a = 1",
-        "while v is assert: a, b",
-    ] {
-        assert!(Runtime::check(source).is_ok(), "{source}");
-        assert_eq!(
-            parse_with_options(source, COMMENTS).unwrap(),
-            accepted(source),
-            "{source}"
-        );
-    }
 }
 
 #[test]
 fn explanations_and_graph_keys_show_word_assignments() {
-    let mut runtime = Runtime::with_options(IS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "a is good\nb is 5\no = {x: 1}\no.x is good\nclass Order:\n    pass\n$Order.state is OPEN\nfirst = Order()\n{ total is good }\na",
@@ -738,23 +699,14 @@ fn run_ok(runtime: &mut Runtime, source: &str) -> Value {
 }
 
 #[test]
-fn the_option_is_explicit_per_runtime_and_survives_clear() {
-    for runtime in [Runtime::new(), Runtime::default()] {
-        assert_eq!(runtime.options(), SyntaxOptions::default());
-        assert!(!runtime.options().is_assignment);
+fn is_assignments_need_no_option_and_survive_clear() {
+    for mut runtime in [Runtime::new(), Runtime::default()] {
+        assert_eq!(run_ok(&mut runtime, "a is good\na"), Value::string("good"));
+        runtime.clear();
+        assert_eq!(run_ok(&mut runtime, "b is 2\nb"), Value::Number(2.0));
     }
-    let mut runtime = Runtime::with_options(IS);
-    assert_eq!(runtime.options(), IS);
-    assert_eq!(run_ok(&mut runtime, "a is good\na"), Value::string("good"));
-    runtime.clear();
-    assert_eq!(runtime.options(), IS);
-    assert_eq!(run_ok(&mut runtime, "b is 2\nb"), Value::Number(2.0));
-    assert_eq!(
-        Runtime::new().run("a is good").unwrap_err().to_string(),
-        "ReferenceError: a is not defined (line 1, column 1)"
-    );
-    assert!(Runtime::check_with_options("a is good", IS).is_ok());
-    let program = parse_program_with_options("x = 1\n  \na is good\nb is 2", IS).unwrap();
+    assert!(Runtime::check("a is good").is_ok());
+    let program = parse_program("x = 1\n  \na is good\nb is 2").unwrap();
     assert_eq!(program.statements.len(), 3);
     assert_eq!(
         program.positions,
@@ -765,7 +717,7 @@ fn the_option_is_explicit_per_runtime_and_survives_clear() {
         ]
     );
     assert_eq!(
-        nucleoid::statement::compile_with_options("a is good", IS)
+        nucleoid::statement::compile("a is good")
             .unwrap()
             .statements,
         statements("a is good")
@@ -773,22 +725,14 @@ fn the_option_is_explicit_per_runtime_and_survives_clear() {
 }
 
 #[test]
-fn the_option_combines_with_c_style_comments() {
-    let mut runtime = Runtime::with_options(BOTH);
+fn is_assignments_combine_with_c_style_comments() {
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "a is good // the word\nb is /* quoted */ \"x\"\nc /* name */ is 6 / 2\nassert([a, b, c], [\"good\", \"x\", 3])\na",
         "\"good\"",
     );
-    assert_eq!(
-        parse_with_options("a /*\n*/ is 1", BOTH).unwrap(),
-        accepted("a\nis 1")
-    );
-    let mut comments = Runtime::with_options(COMMENTS);
-    assert_eq!(
-        failure(&mut comments, "a is good // the word"),
-        "ReferenceError: a is not defined (line 1, column 1)"
-    );
+    assert_eq!(statements("a /*\n*/ is 1"), statements("a\nis 1"));
 }
 
 #[test]
@@ -805,16 +749,13 @@ fn the_documented_examples_run_as_written() {
         "value is EXACT\nif value is EXACT:\n    hit is \"yes\"\nflag is (value is EXACT)\nxs = [\"EXACT\", \"B\"]\nfound is xs.filter(x => x is EXACT)\nassert([hit, flag, found], [\"yes\", true, [\"EXACT\"]])\nEXACT = \"B\"\nassert([value, flag, found], [\"B\", true, [\"B\"]])\nfound",
         "[\"B\"]",
     );
-    let mut runtime = Runtime::with_options(IS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "status is OPEN\nlabel is \"shipped\"\ncount is 2 + 3\nOPEN = \"open\"\n[status, label, count]",
         "[\"open\",\"shipped\",5]",
     );
-    let mut runtime = Runtime::with_options(SyntaxOptions {
-        is_assignment: true,
-        ..SyntaxOptions::default()
-    });
+    let mut runtime = Runtime::new();
     runtime.run("status is OPEN").unwrap();
     assert_eq!(runtime.run("status").unwrap().to_string(), "OPEN");
     runtime.run("OPEN = \"open\"").unwrap();
@@ -823,13 +764,13 @@ fn the_documented_examples_run_as_written() {
         "pattern is (/colou?r/)\nassert(pattern.test(\"color\"), true)\npattern.test(\"colour\")",
         "true",
     );
-    for source in [
-        "pattern is /x/ 2",
-        "why is 1",
-        "affects is 1",
-        "stated is 1",
-        "derived is 1",
+    for (source, reading) in [
+        ("pattern is /x/ 2", "pattern;is/x/2"),
+        ("why is 1", "is|>why;1"),
+        ("affects is 1", "is|>affects;1"),
+        ("stated is 1", "is|>stated;1"),
+        ("derived is 1", "is|>derived;1"),
     ] {
-        assert_eq!(statements(source), accepted(source), "{source}");
+        assert_eq!(rendered(source), reading, "{source}");
     }
 }

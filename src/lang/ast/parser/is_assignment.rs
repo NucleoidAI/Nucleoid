@@ -43,8 +43,7 @@ fn word(value: Expr) -> Expr {
 
 impl Parser {
     pub(super) fn starts_is_assignment(&self, target: &Expr) -> bool {
-        self.options.is_assignment
-            && matches!(self.peek(), Token::Identifier(name) if name == "is")
+        matches!(self.peek(), Token::Identifier(name) if name == "is")
             && begins_expression(self.peek_at(1))
             && PathTarget::of(target) == PathTarget::Plain
     }

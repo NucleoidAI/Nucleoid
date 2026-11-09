@@ -1,5 +1,5 @@
 use nucleoid::lang::ast::lexer::Keyword;
-use nucleoid::{Runtime, SyntaxOptions, Value};
+use nucleoid::{Runtime, Value};
 use rustyline::{Cmd, EventHandler, KeyCode, KeyEvent, Modifiers};
 
 use super::{
@@ -110,30 +110,23 @@ fn lexical_block_headers_include_comments_and_parent_classes() {
     }
 }
 
-fn submitted(lines: &[&str], options: SyntaxOptions) -> Vec<Option<String>> {
+fn submitted(lines: &[&str]) -> Vec<Option<String>> {
     let mut pending = Pending::default();
-    lines
-        .iter()
-        .map(|line| pending.accept(line, options))
-        .collect()
+    lines.iter().map(|line| pending.accept(line)).collect()
 }
 
 #[test]
 fn named_function_headers_buffer_until_their_braces_close() {
-    let options = SyntaxOptions::default();
     let source = "function scale(amount) {\n\n    factor = 2 # }\n    return amount * factor\n}\n";
     let lines: Vec<&str> = source.lines().collect();
     let mut expected = vec![None; lines.len() - 1];
     expected.push(Some(source.to_string()));
-    assert_eq!(submitted(&lines, options), expected);
+    assert_eq!(submitted(&lines), expected);
 
     let mut pending = Pending::default();
-    assert_eq!(
-        pending.accept("    function scale(amount) {", options),
-        None
-    );
+    assert_eq!(pending.accept("    function scale(amount) {"), None);
     assert_eq!(pending.indentation, "    ");
-    assert_eq!(pending.accept("        return amount", options), None);
+    assert_eq!(pending.accept("        return amount"), None);
     assert_eq!(pending.indentation, "        ");
 
     let mut runtime = Runtime::new();
@@ -150,11 +143,7 @@ fn named_function_headers_buffer_until_their_braces_close() {
         "# function scale(amount) {",
         "function (amount) {",
     ] {
-        assert_eq!(
-            submitted(&[line], options),
-            [Some(format!("{line}\n"))],
-            "{line:?}"
-        );
+        assert_eq!(submitted(&[line]), [Some(format!("{line}\n"))], "{line:?}");
     }
 }
 
@@ -169,12 +158,11 @@ fn named_function_bodies_buffer_through_nested_function_literals_and_declaration
     ];
     let mut expected = vec![None; lines.len() - 1];
     expected.push(Some(format!("{}\n", lines.join("\n"))));
-    assert_eq!(submitted(&lines, SyntaxOptions::default()), expected);
+    assert_eq!(submitted(&lines), expected);
 }
 
 #[test]
 fn named_function_bodies_inside_colon_blocks_wait_for_both_endings() {
-    let options = SyntaxOptions::default();
     let lines = [
         "if ready:",
         "    function scale(amount) {",
@@ -187,7 +175,7 @@ fn named_function_bodies_inside_colon_blocks_wait_for_both_endings() {
     expected.push(Some(
         "if ready:\n    function scale(amount) {\n\n        return amount\n    }\n".to_string(),
     ));
-    assert_eq!(submitted(&lines, options), expected);
+    assert_eq!(submitted(&lines), expected);
 
     let lines = [
         "function grade(score) {",
@@ -199,38 +187,50 @@ fn named_function_bodies_inside_colon_blocks_wait_for_both_endings() {
     ];
     let mut expected = vec![None; lines.len() - 1];
     expected.push(Some(format!("{}\n", lines[..5].join("\n"))));
-    assert_eq!(submitted(&lines, options), expected);
+    assert_eq!(submitted(&lines), expected);
 }
 
 #[test]
-fn named_function_buffering_ends_at_lexical_errors_and_follows_comment_options() {
-    let options = SyntaxOptions::default();
+fn named_function_buffering_ends_at_lexical_errors_and_skips_comments() {
     assert_eq!(
-        submitted(&["function scale(amount) {", "    amount ~ 2"], options),
+        submitted(&["function scale(amount) {", "    amount ~ 2"]),
         [
             None,
             Some("function scale(amount) {\n    amount ~ 2\n".to_string())
         ]
     );
-    let enabled = SyntaxOptions {
-        c_style_comments: true,
-        is_assignment: false,
-    };
     assert_eq!(
-        submitted(
-            &[
-                "function scale(amount) { /* {",
-                "",
-                "*/ return amount // }",
-                "}"
-            ],
-            enabled
-        ),
+        submitted(&[
+            "function scale(amount) { /* {",
+            "",
+            "*/ return amount // }",
+            "}"
+        ]),
         [
             None,
             None,
             None,
             Some("function scale(amount) { /* {\n\n*/ return amount // }\n}\n".to_string())
+        ]
+    );
+}
+
+#[test]
+fn comment_colons_run_at_once_instead_of_opening_a_buffer() {
+    for line in [
+        "x = 1 # note:",
+        "x = 1 // note:",
+        "x = 1 /* note: */",
+        "# note:",
+    ] {
+        assert_eq!(submitted(&[line]), [Some(format!("{line}\n"))], "{line:?}");
+    }
+    assert_eq!(
+        submitted(&["if ready: # body", "    x = 1", ""]),
+        [
+            None,
+            None,
+            Some("if ready: # body\n    x = 1\n".to_string())
         ]
     );
 }

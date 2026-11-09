@@ -13,12 +13,9 @@ fn run(app: &mut App, runtime: &mut Runtime, source: &str) {
 }
 
 #[test]
-fn opted_in_comments_reach_terminal_submission_indentation_and_diagnostics() {
+fn comments_reach_terminal_submission_indentation_and_diagnostics() {
     let mut app = App::new(false, false);
-    let mut runtime = Runtime::with_options(nucleoid::SyntaxOptions {
-        c_style_comments: true,
-        is_assignment: false,
-    });
+    let mut runtime = Runtime::new();
     app.editor = editor::new("def half value => // header:");
     key(
         &mut app,
@@ -64,12 +61,9 @@ fn opted_in_comments_reach_terminal_submission_indentation_and_diagnostics() {
 }
 
 #[test]
-fn opted_in_is_assignments_reach_terminal_submission_and_survive_clear() {
+fn is_assignments_reach_terminal_submission_and_survive_clear() {
     let mut app = App::new(false, false);
-    let mut runtime = Runtime::with_options(nucleoid::SyntaxOptions {
-        c_style_comments: false,
-        is_assignment: true,
-    });
+    let mut runtime = Runtime::new();
     app.editor = editor::new("if true:");
     key(
         &mut app,
@@ -88,13 +82,6 @@ fn opted_in_is_assignments_reach_terminal_submission_and_survive_clear() {
     run(&mut app, &mut runtime, ".clear");
     run(&mut app, &mut runtime, "other is 'x'");
     assert_eq!(app.entries.last().unwrap().output.text(View::Text), "x");
-    assert!(runtime.options().is_assignment);
-    let mut default = Runtime::new();
-    run(&mut app, &mut default, "late is good");
-    assert_eq!(
-        app.entries.last().unwrap().output.text(View::Text),
-        "ReferenceError: late is not defined (line 1, column 1)"
-    );
     assert_eq!(runtime.assertions_run(), 0);
 }
 

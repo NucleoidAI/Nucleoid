@@ -44,33 +44,22 @@ runnable as written.
 13. [Error Reference](#13-error-reference)
 14. [Syntax Summary](#14-syntax-summary)
 
-## Comments and source options
+## Comments
 
-- Hash (`#`) comments are always available. The accepted default retains
-  regex/slash semantics, including empty regex `//`, the runtime reference
-  error from `// comment`, the runtime regex-compilation error from
-  `/* comment */`, and division by a regex in `1 // 2 /`.
-- Explicit CLI `--c-style-comments` enables `//` through LF/EOF and non-nesting
-  `/* ... */` through its first closing delimiter, alongside `#`. The equivalent
-  Rust API is
-  `Runtime::with_options(SyntaxOptions { c_style_comments: true, ..SyntaxOptions::default() })`.
-  The concrete public option defaults to false and remains selected after
-  `clear()` or `.clear`. `Runtime::options()` returns it.
-- Explicit CLI `--is-assignment`, or the `is_assignment` field of the same
-  `SyntaxOptions`, reads a statement `target is value` as `target = value`;
-  see [opt-in is assignments](#opt-in-is-assignments). It also defaults to
-  false, combines with `--c-style-comments`, and is honored and kept in the
-  same places.
-- The configured runtime uses the option for every program and template
-  interpolation. Standalone lexer/parser/compilation functions retain default
-  behavior; their matching `_with_options` forms take `SyntaxOptions`, as does
-  `Runtime::check_with_options(source, options)`. There is no global toggle.
-- In enabled mode only, comment openers win over ambiguous regex delimiters;
-  `/(?:)/` supplies empty-matching behavior with pattern text `(?:)`, not an
-  empty string. No `RegExp` constructor is added. Ordinary division, `/=`,
-  nonambiguous regexes, quoted strings and template text retain their readings. Interpolation
-  braces inside literals/comments are protected; enabled interpolation errors
-  refer to original source positions. Outer template quoting is unchanged.
+- Hash (`#`) line comments, `//` line comments through LF/EOF and non-nesting
+  `/* ... */` block comments through their first closing delimiter are always
+  available. [NUC 76](nuc-0076.md) introduced the C-style forms behind a
+  `--c-style-comments` flag; the flag and Rust's `SyntaxOptions` were
+  removed, and every program, interpolation, lexer, parser and `check` call
+  reads them.
+- Comment openers win over ambiguous regex delimiters, so `//` is a comment,
+  not an empty regex, and `1 // 2 /` is `1`; `/(?:)/` supplies
+  empty-matching behavior with pattern text `(?:)`, not an empty string. No
+  `RegExp` constructor is added. Ordinary division, `/=`, nonambiguous
+  regexes, quoted strings and template text retain their readings.
+  Interpolation braces inside literals/comments are protected, and
+  interpolation errors refer to original source positions. Outer template
+  quoting is unchanged.
 - Comments separate tokens, never combine them. Block LFs preserve layout
   except inside parentheses/brackets, where normal suppression applies.
   Comment text and internal whitespace contribute no indentation; only
@@ -78,15 +67,12 @@ runnable as written.
   still count original characters, including one per tab, with CRLF preserved.
 - An unclosed block raises exact `SyntaxError: Unterminated block comment
   (line L, column C)` at its opening slash, before program execution.
-- File execution and both interactive interfaces honor the flag. Plain input
+- File execution and both interactive interfaces read comments. Plain input
   buffers open blocks through blank lines and command-looking text; EOF
-  reports a remaining unclosed block once. Terminal Ctrl-J uses configured
-  lexical headers, not punctuation inside comments. Existing REPL exit and
-  error-recovery behavior remains unchanged.
-- [NUC 76](nuc-0076.md) specifies this candidate behavior. Enabled examples
-  are covered by focused library/CLI tests and Rust API documentation;
-  configuration-free default executable examples and canonical synthesized
-  JSONL programs remain unchanged.
+  reports a remaining unclosed block once. Continuation and Terminal Ctrl-J
+  use lexical headers, not punctuation inside comments, so `x = 1 # note:`
+  runs at once. Existing REPL exit and error-recovery behavior remains
+  unchanged.
 
 ## Terminal workspace
 
@@ -369,12 +355,13 @@ qty = 5
   `tests/reference.md`; the root contract is
   [Value assignment](../nucleoid.spec.md#value-assignment).
 
-### Opt-in is assignments
+### Is assignments
 
-- [NUC 93](nuc-0093.md) adds `target is value` as a spelling of
-  `target = value` for variables and properties. It is opt-in: CLI
-  `--is-assignment`, or `SyntaxOptions { is_assignment: true, .. }` in Rust.
-  Without it, `a is good` stays the three statements `a`, `is` and `good`.
+- `target is value` is a spelling of `target = value` for variables and
+  properties. [NUC 93](nuc-0093.md) introduced it behind an
+  `--is-assignment` flag; the flag and Rust's `SyntaxOptions` were removed,
+  so `a is good` assigns rather than reading as the three statements `a`,
+  `is` and `good`.
 - The statement form is a name or a dotted path that `:=` accepts, then
   `is` on the same line, then a token that can begin an expression. After
   `is`, a `:`, `=`, `:=`, `+=` or other operator, a keyword such as `if`, or
@@ -404,10 +391,10 @@ count is 2 + 3
 OPEN = "open"
 ```
 
-- With the option, `status` is `"OPEN"` until `OPEN = "open"`, then
-  `"open"`; `label` is `"shipped"` and `count` is `5`. Grammar, the opt-in
-  readings of default statements and edge cases are in the authoritative
-  [opt-in is assignments](../nucleoid.spec.md#opt-in-is-assignments) section.
+- `status` is `"OPEN"` until `OPEN = "open"`, then `"open"`; `label` is
+  `"shipped"` and `count` is `5`. Grammar, the statements whose NUC 86
+  readings changed and edge cases are in the authoritative
+  [is assignments](../nucleoid.spec.md#is-assignments) section.
 
 Full detail: [NUC 93](nuc-0093.md).
 
@@ -826,7 +813,8 @@ Full detail: [NUC 60](nuc-0060.md).
   statement can follow, such as directly
   after `flag =` or `return` or in a named arrow body, `is` stays an ordinary
   name and starts the next statement, as before; write
-  `flag = (value is EXACT)`.
+  `flag = (value is EXACT)`. At the start of a statement, `value is EXACT`
+  is an [is assignment](#is-assignments).
 
 ```
 value = "EXACT"
@@ -3790,8 +3778,8 @@ The complete grammar, as the parser accepts it, is in [grammar.md](grammar.md).
 name = expression                      variable assignment
 name := expression                     value assignment: once, no dependency (NUC 66)
 name.property := expression            value assignment to a property (NUC 66)
-name is expression                     opt-in --is-assignment: name = expression (NUC 93)
-name.property is word                  opt-in: a bare word reads its name, else its text "word" (NUC 93)
+name is expression                     is assignment: name = expression (NUC 93)
+name.property is word                  a bare word reads its name, else its text "word" (NUC 93)
 name += expression                     compound assignment; also -=, *=, **=, /=, %=
 {a, b} = expression                    one declaration per field: a = expression.a (NUC 67)
 {key: name} = expression               renamed field: name = expression.key (NUC 67)

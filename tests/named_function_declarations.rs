@@ -417,7 +417,7 @@ fn named_function_expressions_keep_their_accepted_errors() {
         ("throw function f() {}", 16),
         ("delete function f() {}", 17),
         ("pick = ready ? function f() {} : 0", 25),
-        ("label = `${function f() {}}`", 10),
+        ("label = `${function f() {}}`", 21),
         ("for x of function f() {}:\n    pass", 19),
         ("x = function f", 14),
     ] {

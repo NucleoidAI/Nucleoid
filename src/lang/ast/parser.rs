@@ -14,7 +14,7 @@ mod template;
 
 use std::collections::HashMap;
 
-use super::lexer::{Keyword, Spanned, SyntaxOptions, Token, tokenize_with_options};
+use super::lexer::{Keyword, Spanned, Token, tokenize};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, Stmt};
 
@@ -27,28 +27,15 @@ pub struct Program {
 }
 
 pub fn parse_program(source: &str) -> Result<Program> {
-    parse_program_with_options(source, SyntaxOptions::default())
-}
-
-/// Parses a program with explicit, opt-in source forms.
-pub fn parse_program_with_options(source: &str, options: SyntaxOptions) -> Result<Program> {
-    Parser::from_source(source, options)?.attempt(Parser::program)
+    Parser::from_source(source)?.attempt(Parser::program)
 }
 
 pub fn parse(source: &str) -> Result<Vec<Stmt>> {
     Ok(parse_program(source)?.statements)
 }
 
-pub fn parse_with_options(source: &str, options: SyntaxOptions) -> Result<Vec<Stmt>> {
-    Ok(parse_program_with_options(source, options)?.statements)
-}
-
 pub fn parse_expression(source: &str) -> Result<Expr> {
-    parse_expression_with_options(source, SyntaxOptions::default())
-}
-
-pub fn parse_expression_with_options(source: &str, options: SyntaxOptions) -> Result<Expr> {
-    Parser::from_source(source, options)?
+    Parser::from_source(source)?
         .attempt(|parser| parser.leading_expression(ExpressionContext::Ordinary))
 }
 
@@ -116,7 +103,6 @@ struct Parser {
     position: usize,
     depth: usize,
     context: ExpressionContext,
-    options: SyntaxOptions,
     words: bool,
     lists: Lists,
     enclosed: bool,
@@ -190,7 +176,6 @@ impl Parser {
             position: 0,
             depth: 0,
             context: ExpressionContext::Ordinary,
-            options: SyntaxOptions::default(),
             words: false,
             lists: Lists::Literals,
             enclosed: false,
@@ -201,11 +186,8 @@ impl Parser {
         }
     }
 
-    fn from_source(source: &str, options: SyntaxOptions) -> Result<Self> {
-        Ok(Parser {
-            options,
-            ..Parser::new(tokenize_with_options(source, options)?)
-        })
+    fn from_source(source: &str) -> Result<Self> {
+        Ok(Parser::new(tokenize(source)?))
     }
 
     fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
@@ -214,7 +196,6 @@ impl Parser {
             return accepted;
         }
         *self = Parser {
-            options: self.options,
             lists: Lists::Comprehensions,
             ..Parser::new(std::mem::take(&mut self.tokens))
         };
@@ -230,7 +211,6 @@ impl Parser {
             return Err(accepted);
         }
         *self = Parser {
-            options: self.options,
             words: true,
             lists: self.lists,
             ..Parser::new(std::mem::take(&mut self.tokens))

@@ -29,10 +29,7 @@ mod typed;
 pub mod version;
 
 pub use parameter::ParameterDefault;
-pub use parser::{
-    Program, parse, parse_expression, parse_expression_with_options, parse_program,
-    parse_program_with_options, parse_with_options,
-};
+pub use parser::{Program, parse, parse_expression, parse_program};
 
 use std::sync::Arc;
 
