@@ -364,7 +364,12 @@ under the [automatic acceptance rule](#automatic-acceptance-caller-only):
 
 This exact-match basis covers only the NUC that the same invocation requested,
 frozen before its run and integrated unchanged; every other NUC follows the
-automatic acceptance rule directly. Record the basis, the evaluator's decision
+automatic acceptance rule directly. That includes the quote-free NUC that an
+invocation prepares after its run, under the
+[arc-purposal skill](../skills/arc-purposal/SKILL.md#propose-quote-free-spellings),
+for quotes in `arc/src/dataset/` that accepted Nucleoid cannot drop: it is
+prepared and evaluated like the requested NUC, with the strategy learner, but
+never run against the puzzle. Record the basis, the evaluator's decision
 and report, and the run's evidence with the outcome, and never hide the
 evaluator's failures. The run is scored once: never rerun it, or revise the
 dataset or candidate from its output, to reach a pass. The `/nuc-proposal`

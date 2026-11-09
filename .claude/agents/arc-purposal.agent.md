@@ -22,8 +22,9 @@ Follow `.claude/CLAUDE.md`, the
   as the skill directs. Never do their work yourself or reuse a NUC agent.
 - If you cannot launch agents where you run, for example as a subagent, stop
   and return `agent_launch_unavailable` with the puzzle ID and the next step.
-- Handle at most one NUC per invocation, as a single-proposal request, and hold
-  its outcome until the solver run.
+- Handle at most one NUC per invocation for the dataset's required
+  enhancement, as a single-proposal request, and hold its outcome until the
+  solver run. The skill's quote-free NUC is the only other one.
 - Every requested NUC requires the
   [existing strategy learner](../skills/arc-purposal/SKILL.md#learn-the-nuc-proposal-strategy).
   Reuse the latest retained policy, or require an explicitly supplied policy
@@ -57,6 +58,19 @@ Follow `.claude/CLAUDE.md`, the
   other color is a letter of `ABCDEFGHI` ranked by how often it occurs across
   the dataset's input and output matrices, `A` for the most used, never its
   number. The masks and the world model use the same letters.
+- Whenever a quote is used in `arc/src/dataset/`, trigger `/nuc-proposal` to
+  propose a version without it, under the skill's
+  [quote step](../skills/arc-purposal/SKILL.md#propose-quote-free-spellings).
+  A quote is a quoted string literal in a code field.
+  - Pass every `arc-dataset` run the requirement to write a literal as a
+    bare word wherever accepted Nucleoid, with the solver's options, reads
+    that word as the same value.
+  - After the outcome, prepare one quote-free NUC for the quotes that no
+    accepted, Draft or Rejected NUC writes without quotes, with its own
+    strategy trial.
+  - That NUC is never run against the puzzle, and it is decided directly
+    under the automatic acceptance rule.
+  - Suggest the solver option it adds rather than changing the solver.
 - Never change the TypeScript implementation in `arc/`, except that before
   the run you make the puzzle the solver's default puzzle in `arc/src/app.ts`
   under the skill's [run step](../skills/arc-purposal/SKILL.md#run-the-puzzle).
@@ -87,7 +101,9 @@ Follow `.claude/CLAUDE.md`, the
   a failed hard criterion (compile errors, a failing test, a compatibility
   break) rejects it. Otherwise an exact match makes it Accepted regardless of
   the evaluator's decision, an evaluator acceptance makes it Accepted, and any
-  other result makes it Automatic-Accepted.
+  other result makes it Automatic-Accepted. The quote-free NUC has no run:
+  unless a hard criterion fails, the evaluator's acceptance makes it Accepted
+  and any other decision Automatic-Accepted.
 - Record the outcome through the `/nuc-proposal` caller steps, with its basis,
   the evaluator's decision, and the run's evidence. Those steps commit the
   NUC's outcome, pulling before and pushing right after under the

@@ -10,7 +10,12 @@ ARC records. Run an ARC proposal with `/arc-purposal [<puzzle-id>]` (the
 omitted. The `arc-dataset` agent writes the puzzle's
 instruction dataset, any Nucleoid enhancement that dataset requires goes
 through the NUC stages, and its outcome follows the automatic acceptance rule,
-with one solver run whose exact match makes it Accepted. Afterwards it
+with one solver run whose exact match makes it Accepted. Whenever a quote is
+used in `arc/src/dataset/`, it also triggers `/nuc-proposal` to propose a
+version without it, under the
+[skill's quote step](../skills/arc-purposal/SKILL.md#propose-quote-free-spellings);
+that NUC is never run against the puzzle and follows the automatic acceptance
+rule directly. Afterwards it
 documents the puzzle's progress in `arc/docs/ARC-NUC-<puzzle-id>.md`. When it
 is done, it commits and pushes its own changes under the
 [git synchronization policy](git.instructions.md).

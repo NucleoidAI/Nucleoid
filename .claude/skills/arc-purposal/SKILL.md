@@ -11,7 +11,9 @@ takes one training puzzle through its instruction dataset, any Nucleoid
 enhancement that dataset requires, one solver run, the outcome, and its
 progress record in `arc/docs/`, then [commits and pushes](#commit-and-push)
 its changes. A requested enhancement uses the existing
-[NUC strategy bandit](#learn-the-nuc-proposal-strategy). Follow
+[NUC strategy bandit](#learn-the-nuc-proposal-strategy). Whenever a quote is
+used in `arc/src/dataset/`, it also triggers `/nuc-proposal` to
+[propose a version without it](#propose-quote-free-spellings). Follow
 `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
 [agent profile](../../agents/arc-purposal.agent.md).
@@ -144,11 +146,25 @@ first. The letters are the dataset's own ranking, not a fixed map from
 numbers to letters, so a color keeps one letter in every pair of its dataset.
 The same letters replace the colors in the instance masks and the world model:
 color properties hold letters, such as `color='B'`, and rules name colors by
-letter, such as `if $Obj.color is 'C':`. The arc-dataset profile's
+letter, such as `if $Obj.color is C:`. The arc-dataset profile's
 [letter rule](../../agents/arc-dataset.agent.md#write-colors-as-letters)
 defines the ranking in full. Check a `written` handoff against it before the
 run, and send back one that writes a color as its number or ranks its letters
 another way.
+
+Write no quote that accepted Nucleoid can do without, and pass this
+requirement to every `/arc-dataset` run too. A quote is a single- or
+double-quoted string literal that the runtime lexer reads in a code field,
+`declarations` or an instance's `implementation`; the JSON file's own quotes
+and `#` comments are not quotes. The dataset writes a literal as a bare word
+wherever the run's runtime, given the options `arc/src/lib/nucleoid.ts`
+passes, reads that word as the same value, as NUC 86 and NUC 93 read `C` in
+`if $Obj.color is C:` and `$Obj.fill_color is C`. The arc-dataset profile's
+older examples that quote such letters do not override this. Have the
+handoff list every quote it keeps, with the actual result of its bare
+spelling. Check that list before the run, and send back a handoff that keeps
+a quote a bare word would replace. The quotes that remain go to the
+[quote-free proposal](#propose-quote-free-spellings).
 
 Continue by the handoff's status:
 
@@ -259,6 +275,8 @@ proposal or solver run. Do not claim improved proposal quality from one trial.
 ## Prepare the requested enhancement
 
 Handle at most one NUC request per invocation, as a single-proposal request.
+The only other NUC an invocation prepares is its
+[quote-free NUC](#propose-quote-free-spellings), after the run.
 
 1. Trigger `/nuc-proposal` for the request by following the caller steps of
    the [nuc-proposal skill](../nuc-proposal/SKILL.md), using the request's
@@ -390,10 +408,66 @@ reporting-list, solver-default, and progress-record changes wait for this
 invocation's [own commit](#commit-and-push) at the end. Never change project
 versions.
 
+## Propose quote-free spellings
+
+Whenever a quote is used in `arc/src/dataset/`, trigger `/nuc-proposal` to
+propose a version without it. After the outcome is decided and recorded, list
+every [quote](#write-the-dataset) in the datasets that `arc/src/dataset/`
+holds at `HEAD` and in this invocation's kept dataset. Check each one's bare
+spelling with the accepted runtime and the options `arc/src/lib/nucleoid.ts`
+passes:
+
+- **Already bare:** the bare word reads the same value, so the dataset should
+  drop the quote. This invocation's dataset was checked before the run.
+  Report another dataset's quote as a respelling for a later invocation,
+  without making it.
+- **Behind an option:** an accepted NUC reads the bare word only under an
+  option the solver does not pass, such as NUC 94's `--conditional-words`.
+  [Suggest](#suggest-solver-changes) passing that option instead of a NUC.
+- **Already proposed:** a Draft or Rejected NUC already proposes the bare
+  spelling, whether it is recorded in `docs/nuc-0000.md` or is still in a
+  candidate worktree that `git worktree list` shows. Report that NUC instead
+  of starting a duplicate.
+- **Not expressible:** no accepted, Draft or Rejected NUC writes it without
+  quotes.
+
+When any quote is not expressible, prepare one quote-free NUC for all of them.
+Use steps 1 and 2 of
+[Prepare the requested enhancement](#prepare-the-requested-enhancement), with
+its own [strategy trial](#learn-the-nuc-proposal-strategy) from the retained
+head, except that its outcome waits for no run.
+
+- **Requested change:** write each listed quote without quotes, reading the
+  same value, and keep every accepted form and meaning. That usually means a
+  new opt-in option that composes with the accepted ones, as NUC 94 added.
+- **Evidence:** each quote's dataset, field and code line, with a minimal
+  general-purpose program and its actual result under the accepted runtime
+  and the solver's options. Never give it an ARC grid.
+- **Blockers:** a missing or invalid policy, or any other blocker, stops only
+  this NUC. Report it and finish the invocation.
+
+The quote-free NUC is never run against the puzzle. The invocation's one run
+is over, and the datasets keep their quotes until the solver passes the
+option the NUC adds. Its independent strategy update therefore precedes its
+outcome, which follows the
+[automatic acceptance rule](../../rules/proposals.instructions.md#automatic-acceptance-caller-only)
+directly:
+
+- A failed hard criterion rejects it.
+- Otherwise the evaluator's acceptance makes it Accepted, and any other
+  decision makes it Automatic-Accepted.
+- Without an evaluation result it is Blocked and stays Draft.
+
+Record the outcome with the nuc-proposal skill's caller steps, which commit
+and push it. When it is accepted with an option, suggest passing that option
+in `arc/src/lib/nucleoid.ts`, and list the quotes to respell once the solver
+does.
+
 ## Suggest solver changes
 
-When a dataset or NUC handoff, or an error in the run's log, shows that the
-solver's TypeScript would need a change, describe that change for the user
+When a dataset or NUC handoff, the [quote check](#propose-quote-free-spellings),
+or an error in the run's log shows that the solver's TypeScript would need a
+change, describe that change for the user
 instead of making it: the files, the change, and the evidence for it. Base no
 suggestion on the expected test grid or the difference from it, and never
 apply a suggestion or rerun the puzzle within the invocation.
@@ -439,7 +513,8 @@ such as `arc/docs/ARC-NUC-0ca9ddb6.md`:
   (the accepted revision or the NUC candidate), exit status or timeout,
   difference or error, and elapsed time. Without a run, say that the
   difference is unknown, not zero.
-- `Open items`: blockers, open questions, and the suggested solver changes.
+- `Open items`: blockers, open questions, the suggested solver changes, and
+  the quotes in the puzzle's dataset that wait for them or for a respelling.
 
 Describe the puzzle and dataset from the training pairs and the arc-dataset
 handoff; never read the puzzle's `test` entries for the record. From the run's
@@ -500,8 +575,11 @@ puzzle IDs and whether that change was retained or restored; the run's
 command, executable, exit status or timeout, difference or error, and log
 paths; the outcome and its basis; the suggested solver changes; the progress
 record's path and whether it was created or updated; the commit's hash,
-paths, and push result, or why nothing was committed; and any blockers. Use
-`strategy_learning` to record `not_applicable`, `blocked`, `updated`,
+paths, and push result, or why nothing was committed; and any blockers. Record
+the quote check as each quote's dataset, field, code line and result, and the
+quote-free NUC with the same fields as a requested NUC, or why there is none.
+Use `strategy_learning`, once per requested NUC or once without one, to record
+`not_applicable`, `blocked`, `updated`,
 `unscored`, or `error`, with its reason; the policy input path/raw pin, trial
 ID, selected arm and consumption evidence; rubric/assessment, selection and
 evaluator report paths/pins; the verified advisory reward or unscored reason;

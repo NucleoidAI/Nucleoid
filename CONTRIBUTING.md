@@ -129,8 +129,10 @@ with every existing test present and unweakened, and backward compatibility
 with all accepted syntax and behavior. It is `Accepted` when every policy check
 also passes and `Automatic-Accepted` when one fails, such as a token increase
 or an evaluator rejection; the NUC records those policy results. Only a failed
-hard criterion rejects a proposal. A NUC that `/arc-purposal` requests is
-Accepted on an exact solver match; see the
+hard criterion rejects a proposal. A NUC that `/arc-purposal` requests for its
+dataset is Accepted on an exact solver match, while the quote-free NUC it
+prepares after the run, for quotes its datasets cannot drop, is decided on its
+evaluation; see the
 [ARC-requested proposal rule](.claude/rules/proposals.instructions.md#arc-requested-proposals-caller-only).
 A NUC the user requests directly is Accepted when it meets the hard criteria;
 see the
@@ -614,7 +616,8 @@ measure live-learning success or improved proposal quality. This bandit does
 not implement LLM-weight training or full multi-step reinforcement learning.
 
 **ARC caller integration.** `/arc-purposal` requires this existing learner
-when its dataset handoff requests a NUC; generic NUC invocations remain opt-in.
+for every NUC it requests, including the quote-free NUC it prepares after a
+run; generic NUC invocations remain opt-in.
 Supply `--strategy-policy <absolute-json-path>` before any trailing `--hint`,
 or reuse the caller's latest retained session head. For a new chain, explicitly
 supply the genesis schema above; a resumed chain needs its latest checkpoint
