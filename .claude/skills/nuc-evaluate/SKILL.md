@@ -27,8 +27,11 @@ Independently verify applicability and that evidence; missing comparison
 artifacts do not prove impossibility. A Runtime features proposal needs an
 explicit branch even in single mode.
 Confirm that the current proposal blob matches the handoff and the baseline
-matches the accepted revision. Missing prerequisites block evaluation; never
-invent measurements or guess an uncertain category.
+matches the accepted revision. For a new NUC, that revision is its pushed
+[allocation](../nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only),
+which adds only the Draft document and its index rows, so it is not a
+revision containing the candidate. Missing prerequisites block evaluation;
+never invent measurements or guess an uncertain category.
 
 Treat candidate sources, generated exports, and the baseline as read-only.
 Apart from the pull of the primary checkout before you start, under the

@@ -269,10 +269,14 @@ The only other NUC an invocation prepares is its
 
 1. Trigger `/nuc-proposal` for the request by following the caller steps of
    the [nuc-proposal skill](../nuc-proposal/SKILL.md), using the request's
-   `requested_change` as the requested change. Choose the next NUC number,
-   confirm the category and runtime applicability (ask the user when either is
-   uncertain), pin the accepted revision and record its immutable baseline,
-   and create a candidate worktree. Complete the
+   `requested_change` as the requested change. Confirm the category and
+   runtime applicability (ask the user when either is uncertain), and
+   allocate the NUC under the skill's
+   [allocation step](../nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only):
+   draft its number, category and proposal details from the request, then
+   commit and push that Draft alone. Pin the pushed allocation as the accepted
+   revision, record its immutable baseline, and create a candidate worktree
+   from it. Complete the
    [pre-draft strategy selection](#learn-the-nuc-proposal-strategy) before
    launching a fresh `nuc-proposal` agent with the request, its evidence, and
    the pinned strategy/rubric handoff. Complete the Rust improvement pass when
@@ -389,10 +393,10 @@ push it:
   replaced it. Preserve pre-existing entries, other datasets, genesis files,
   and unrelated workflow changes. Keep the candidate isolated.
 
-Those caller steps push the requested NUC's outcome commit right after it,
-pulling first, under the
-[git synchronization policy](../../rules/git.instructions.md). That commit
-holds only the NUC's own records and integration; the dataset, README,
+Those caller steps push the requested NUC's allocation and outcome commits
+right after each, pulling first, under the
+[git synchronization policy](../../rules/git.instructions.md). Those commits
+hold only the NUC's own records and integration; the dataset, README,
 reporting-list, solver-default, and progress-record changes wait for this
 invocation's [own commit](#commit-and-push) at the end. Never change project
 versions.
@@ -554,9 +558,10 @@ with the dataset.
 When the invocation is done, after the progress record, commit its changes
 and push them under the
 [git synchronization policy](../../rules/git.instructions.md). This is its
-one commit of its own, separate from a requested NUC's outcome commit, which
-the nuc-proposal caller steps already made and pushed. An invocation that
-pauses, or stops before it writes the progress record, commits nothing.
+one commit of its own, separate from a requested NUC's allocation and outcome
+commits, which the nuc-proposal caller steps already made and pushed. An
+invocation that pauses, or stops before it writes the progress record, commits
+nothing.
 
 1. Pull with `git pull --no-rebase --autostash` right before committing, and
    resolve any conflict under the policy, keeping every other session's work.
@@ -599,9 +604,10 @@ how it was chosen (given, or the default with both its measurements), the
 starting revision, and hint (`null` without one); the dataset status,
 `dataset_path` and source puzzle path,
 the reporting-workflow path and whether its new entry was retained or
-withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
-evaluator decision, and report path; the solver's previous and new default
-puzzle IDs and whether that change was retained or restored; the run's
+withdrawn, and arc-dataset's use of the hint; the NUC path, allocation
+commit, blob, category, evaluator decision, and report path; the solver's
+previous and new default puzzle IDs and whether that change was retained or
+restored; the run's
 command, executable, exit status or timeout, difference or error, and log
 paths; the outcome and its basis; the suggested solver changes; the dataset
 grammar's forms added or removed, or that it already fit, with the offline

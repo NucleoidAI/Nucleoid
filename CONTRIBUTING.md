@@ -121,6 +121,13 @@ the proposal's Git blob revision without deciding acceptance. The evaluator
 checks the frozen candidate without rewriting it, measuring tokens only when
 the execution-mode policy requires comparison.
 
+The caller pulls first, then allocates a new NUC before its details: it
+commits and pushes the Draft document, with its header, category and proposal
+details, and the NUC's index rows as `Draft NUC <number> <Title>`. The outcome
+commit, `NUC <number> <Title>`, later carries the final version with its code
+changes; see the
+[allocation step](.claude/skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only).
+
 Outcomes follow the
 [automatic acceptance rule](.claude/rules/proposals.instructions.md#automatic-acceptance-caller-only).
 A candidate is accepted when it meets three hard criteria: no compile errors
@@ -207,7 +214,9 @@ Record the accepted baseline before editing the runtime or executable corpus.
 The recorder reads documents from the pinned Git revision and refuses to use
 a runtime that differs from it. Use a separate baseline worktree if candidate
 runtime edits already exist. `HEAD` is suitable only when it is the accepted
-revision, not a commit containing an unevaluated proposal.
+revision, not a commit containing unevaluated candidate changes. A new NUC's
+allocation commit, which adds only its Draft document and index rows, is
+still the accepted revision, and the proposal pins it.
 
 Example PowerShell commands, using fresh artifact paths outside the repository:
 

@@ -255,11 +255,13 @@ revision. This applies to process and documentation-only NUCs too; they still
 undergo independent behavior, integrity, compatibility, and development checks.
 
 Pin the accepted Git revision and record its token baseline before editing
-runtime behavior or executable cases. Give the proposer its requested change,
-proposal path and confirmed category, execution mode and runtime applicability
-with supporting rationale, baseline revision and immutable JSON artifact,
-and candidate worktree. When configured, also supply the pre-draft strategy
-receipt and policy paths/raw pins, trial identity and actionable approach.
+runtime behavior or executable cases. For a new NUC, that revision is its
+pushed [allocation](#allocate-new-nucs-first-caller-only). Give the proposer
+its requested change, proposal path and confirmed category, execution mode
+and runtime applicability with supporting rationale, baseline revision and
+immutable JSON artifact, and candidate worktree. When configured, also supply
+the pre-draft strategy receipt and policy paths/raw pins, trial identity and
+actionable approach.
 Use `.claude/agents/nuc-proposal.agent.md` and
 `.claude/skills/nuc-proposal/SKILL.md` for drafting, prototyping, equivalent
 case rewrites, synchronization, and development checks. It must not run the
@@ -314,6 +316,31 @@ runtime, reference, synthesized sources, and rendered exports synchronized.
 Outcome metadata, such as updating a status or index after evaluation, belongs
 to that evaluation and must not recursively launch another agent.
 
+## Allocate new NUCs first (caller only)
+
+- Every `/nuc-proposal` task first pulls under the
+  [git synchronization policy](git.instructions.md#pull-first), so it runs
+  against the most current remote state.
+- The caller drafts a new NUC before its details: `docs/nuc-XXXX.md` with its
+  complete header, including `Status: Draft` and the confirmed `Category`,
+  and its proposal details, the Abstract and Motivation of the requested
+  change, plus its Draft rows in both NUC indexes. It commits only those
+  paths as `Draft NUC <number> <Title>` and pushes right after. That commit
+  allocates the proposal and its number.
+- The pushed allocation is the accepted revision the NUC pins: it changes no
+  runtime, executable document, test, dataset or export. The proposer then
+  completes the draft in the candidate worktree, followed by the usual
+  improvement pass, independent evaluation and decision.
+- The outcome commit carries the final version: the final proposal with the
+  integrated code changes for Accepted or Automatic-Accepted, and only the
+  rejection documentation for Rejected. It is a new commit; the pushed
+  allocation is never amended.
+- The allocation records no outcome and needs no evaluation of its own.
+  Revisions of an existing NUC already hold their number and skip it, and a
+  Blocked or paused NUC keeps its allocated Draft. The
+  [nuc-proposal skill](../skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only)
+  has the steps.
+
 ## Outcome commit messages (caller only)
 
 - Every commit that records a NUC outcome, Accepted, Automatic-Accepted or
@@ -342,7 +369,7 @@ to that evaluation and must not recursively launch another agent.
 - Keep rejected implementation changes isolated in the candidate worktree; do not apply its full diff merely to record the NUC.
 - Stage explicit proposal/index paths and use a path-limited commit. Verify the resulting commit contains only the rejection documentation and directly related metadata. Never use repository-wide staging or `git commit -a`, or include unrelated files already staged.
 - Preserve unrelated staged and unstaged changes. If the rejection documentation is already committed, verify and report that commit instead of creating an empty duplicate.
-- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the `/nuc-proposal` caller, the only flow that commits NUC outcomes, which pulls before committing and pushes right after under the [git synchronization policy](git.instructions.md).
+- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the `/nuc-proposal` caller, the only flow that commits NUC allocations and outcomes, which pulls before committing and pushes right after under the [git synchronization policy](git.instructions.md).
 
 ## ARC-requested proposals (caller only)
 

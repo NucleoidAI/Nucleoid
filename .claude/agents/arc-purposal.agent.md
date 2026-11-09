@@ -111,7 +111,8 @@ Follow `.claude/CLAUDE.md`, the
   acceptance makes it Accepted and any other decision Automatic-Accepted.
 - Record the outcome through the `/nuc-proposal` caller steps, with its basis,
   the evaluator's decision, and the run's evidence. Those steps commit the
-  NUC's outcome, pulling before and pushing right after under the
+  NUC's Draft allocation before its proposer starts and its outcome after the
+  run, pulling before and pushing right after each under the
   [git synchronization policy](../rules/git.instructions.md). Never change
   project versions.
 - After the outcome, create or update the puzzle's progress record,

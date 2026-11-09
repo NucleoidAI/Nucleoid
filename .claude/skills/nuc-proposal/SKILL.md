@@ -14,6 +14,70 @@ agent. Inside that agent, execute the steps below; do not spawn another agent.
 Follow `.claude/CLAUDE.md` and `docs/nuc-0001.md`.
 Work on exactly one proposal revision in the caller's isolated candidate.
 
+## Allocate the NUC first (caller only)
+
+Every `/nuc-proposal` task runs in this order, and every continuous cycle
+repeats it:
+
+1. **Pull.** As always before starting a task, pull the primary checkout with
+   `git pull --no-rebase --autostash` under the
+   [git synchronization policy](../../rules/git.instructions.md#pull-first),
+   so the task runs against the most current remote state. Report the commits
+   it brought in.
+2. **Draft first.** Once the
+   [execution mode](#choose-execution-mode-caller-only), the confirmed
+   [category](#classify-every-proposal) and the requested change are chosen,
+   number the new NUC as the highest NUC recorded in `docs/` plus one. In the
+   primary checkout, write `docs/nuc-XXXX.md` with its complete header,
+   including `Status: Draft` and the confirmed `Category`, and its proposal
+   details: the Abstract and Motivation of the requested change, followed by
+   the remaining required sections for the proposer to complete. Add its Draft
+   rows to both indexes in `docs/nuc-0000.md`, and change nothing else.
+3. **Allocate.** Commit those two paths alone, with the subject
+   `Draft NUC <number> <Title>` and the category and requested change in the
+   body, and push right away. The pushed commit allocates the proposal and its
+   number, so concurrent sessions number their NUCs after it.
+4. **Work on the details as usual.** Pin the `HEAD` just pushed, which holds
+   the allocation, as the accepted revision, record its baseline, and create
+   the candidate worktree from it. Then
+   [select the strategy](#select-and-consume-a-proposal-strategy) and run the
+   fresh proposer, which completes the draft and prototypes the change, the
+   Rust improvement pass and the fresh evaluator, as the rest of this skill
+   describes.
+5. **Commit and push the final version.** Record the outcome in a new commit,
+   `NUC <number> <Title>`, that holds the final proposal along with its code
+   changes when it is accepted, and push it right after, under the
+   [outcome commit rule](#name-outcome-commits-caller-only).
+
+- Pull again right before each commit and each push. When a pull brings in
+  the drafted number, keep the other session's NUC and renumber the draft to
+  main's next number, in the merge if the allocation is already committed.
+  When a push is rejected because the remote moved, pull, resolve, and push
+  again until it succeeds.
+- Stage the two paths explicitly, only the allocation's own hunks where
+  another session's uncommitted edits share them, and verify that the commit
+  holds nothing else. It changes no runtime, executable document, test,
+  dataset, export or grammar, so its language is still the accepted language.
+- Verify the inputs that do not depend on the pinned revision, such as a
+  configured strategy policy, before drafting, so a missing one blocks the
+  task before anything is committed.
+- The allocation is not an outcome and needs no evaluation of its own; the
+  one proposal/evaluation pair covers the final version. The draft records
+  only the caller's own inputs, so the strategy selection and any usefulness
+  rubric, which bind the pinned revision, still precede the proposer's
+  drafting.
+- The final commit builds on the allocation; never amend or rewrite the
+  pushed allocation. For Accepted or Automatic-Accepted, it integrates the
+  unchanged frozen candidate with the final proposal and its status/index
+  metadata. For Rejected, it holds only the final rejection documentation
+  under the [rejection rule](#record-rejected-outcomes-caller-only), and the
+  candidate's code stays isolated.
+- A revision of an existing NUC, including a revisited Rejected NUC, already
+  holds its number: skip the draft and allocation steps, and leave its text
+  and status on `main` unchanged until the outcome commit. A Blocked or paused
+  NUC keeps its pushed Draft and number, and a later task resumes it under
+  that number instead of allocating another.
+
 ## Choose execution mode (caller only)
 
 `/nuc-proposal` defaults to continuous mode for open-ended proposal requests.
@@ -153,12 +217,14 @@ an acceptance criterion.
 Require the proposal path, confirmed category and requested change, execution
 mode and runtime applicability with supporting rationale when applicable,
 accepted Git revision, immutable baseline JSON artifact, and candidate worktree.
-Confirm that the baseline belongs to that accepted revision before making
-runtime or executable document edits. Missing inputs stop preparation, not
-justify assumptions.
+For a new NUC, the accepted revision is the pushed
+[allocation](#allocate-the-nuc-first-caller-only), and the candidate starts
+from its Draft. Confirm that the baseline belongs to that accepted revision
+before making runtime or executable document edits. Missing inputs stop
+preparation, not justify assumptions.
 
 For advisory usefulness scoring, the caller freezes a create-once session
-rubric and its full Git blob pin **before drafting** under
+rubric and its full Git blob pin **before the proposer drafts** under
 [NUC 1](../../../docs/nuc-0001.md#advisory-usefulness-and-evaluation-cost).
 Require the supplied rubric/pin when scoring is requested; preserve its
 criterion, proposal path, and accepted-baseline binding through the handoff.
@@ -179,7 +245,8 @@ feature or category.
 
 For configured learning, the **caller must actually run**
 `cargo test --test proposals select_proposal_strategy -- --ignored --exact --nocapture`
-**before drafting or dispatching the proposer**. Use the latest verified
+**after the [allocation](#allocate-the-nuc-first-caller-only) and before the
+proposer drafts the details or is dispatched**. Use the latest verified
 single-owner checkpoint (or an explicit frozen empty-history genesis), not an
 older head or fabricated history. Fix `NUC_PROPOSAL`, accepted
 `NUC_PROPOSAL_BASELINE`, preserved `NUC_PROPOSAL_MODE`/runtime inputs,
@@ -187,8 +254,8 @@ older head or fabricated history. Fix `NUC_PROPOSAL`, accepted
 `NUC_STRATEGY_POLICY`/`NUC_STRATEGY_POLICY_REVISION` and fresh
 `NUC_STRATEGY_SELECTION`; unset any old selection pin/checkpoint output.
 After success, freeze `NUC_STRATEGY_SELECTION_REVISION` using
-`git hash-object --no-filters` before drafting. Do not select again in the
-worker, backfill attribution, or silently reset missing/invalid state.
+`git hash-object --no-filters` before the proposer drafts. Do not select again
+in the worker, backfill attribution, or silently reset missing/invalid state.
 
 Inside the proposal agent, require both policy/receipt paths and raw full blob
 pins when learning is configured. Verify them and their algorithm, parent,
@@ -248,9 +315,11 @@ token savings or new functionality never justify a breaking syntax change.
 
 ## Draft and prototype
 
-Draft or revise the NUC using its required format and sections. Trace implemented
-claims to `nucleoid.spec.md`; draft claims do not override the accepted language.
-Keep dependencies already accepted and do not combine pending proposals.
+Complete the caller's allocated Draft of a new NUC, keeping its number and
+confirmed category, or revise an existing NUC, using the required format and
+sections. Trace implemented claims to `nucleoid.spec.md`; draft claims do not
+override the accepted language. Keep dependencies already accepted and do not
+combine pending proposals.
 
 Implement the candidate change where needed,
 then rewrite applicable cases in `nucleoid.spec.md`, `tests/reference.md`, and
@@ -326,10 +395,13 @@ outcome, its basis, the hard-criteria evidence and, for Automatic-Accepted,
 every failed policy check in the body. Follow the
 [outcome commit message rule](../../rules/proposals.instructions.md#outcome-commit-messages-caller-only).
 
-This caller is the only flow that commits and pushes NUC outcomes. It makes
-every NUC outcome commit, including those of NUCs that `/arc-purposal`
-requests and of cycles coordinated through `/nuc-evaluate`, and pushes it right
-after, pulling first, under the
+This caller is the only flow that commits and pushes NUC allocations and
+outcomes. It makes every
+[allocation commit](#allocate-the-nuc-first-caller-only),
+`Draft NUC <number> <Title>`, which records no outcome, and every NUC outcome
+commit, including those of NUCs that `/arc-purposal` requests and of cycles
+coordinated through `/nuc-evaluate`, and pushes each right after, pulling
+first, under the
 [git synchronization policy](../../rules/git.instructions.md). No worker agent
 or `/nuc-evaluate` commits or pushes; `/arc-purposal` commits and pushes only
 its own ARC changes, separately, once it is done.
@@ -393,11 +465,13 @@ rules and verified inputs. For other missing prerequisites or blockers,
 report them and pause without a question; do not invent inputs or bypass
 checks or required tool approvals.
 
-Each cycle chooses a new NUC number and one bounded enhancement under the
-existing selection rule. Pin the current verified accepted-language revision,
-not a rejected candidate; create fresh immutable baselines, an isolated
-candidate and report paths. Launch fresh proposal and evaluation agents, and
-perform the required Rust improvement pass when applicable. Never reuse
+Each cycle pulls, chooses one bounded enhancement under the existing selection
+rule, and allocates its new NUC number with a pushed Draft under the
+[allocation rule](#allocate-the-nuc-first-caller-only). Pin that allocation,
+the current verified accepted-language revision, not a rejected candidate;
+create fresh immutable baselines, an isolated candidate and report paths.
+Launch fresh proposal and evaluation agents, and perform the required Rust
+improvement pass when applicable. Never reuse
 workers across cycles or combine pending proposals.
 
 Use actual independent behavior/compatibility results and token measurements

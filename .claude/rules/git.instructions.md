@@ -14,10 +14,13 @@ pulling before it starts.
 - Among all agents, only two coordinating callers commit and push, each
   following the caller steps of its own skill:
   - `/nuc-proposal`, under the
-    [nuc-proposal skill](../skills/nuc-proposal/SKILL.md), commits NUC
-    outcomes (Accepted, Automatic-Accepted, Rejected) under the
-    [proposal rules](proposals.instructions.md), including those of NUCs that
-    `/arc-purposal` requests and of cycles that `/nuc-evaluate` coordinates.
+    [nuc-proposal skill](../skills/nuc-proposal/SKILL.md), commits each new
+    NUC's Draft allocation before working on its details, under the
+    [allocation step](../skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only),
+    and NUC outcomes (Accepted, Automatic-Accepted, Rejected), which carry the
+    final version, under the [proposal rules](proposals.instructions.md),
+    including those of NUCs that `/arc-purposal` requests and of cycles that
+    `/nuc-evaluate` coordinates.
   - `/arc-purposal`, under the
     [arc-purposal skill](../skills/arc-purposal/SKILL.md#commit-and-push),
     commits its own ARC changes once, when it is done: the puzzle's dataset,
@@ -59,8 +62,9 @@ pulling before it starts.
 ## Push after every commit
 
 - Every `/nuc-proposal` and `/arc-purposal` commit is followed immediately by
-  `git push` of the same branch. This includes NUC outcome commits (Accepted,
-  Automatic-Accepted, Rejected), those for NUCs that `/arc-purposal` requests,
+  `git push` of the same branch. This includes NUC allocation commits, NUC
+  outcome commits (Accepted, Automatic-Accepted, Rejected), those for NUCs
+  that `/arc-purposal` requests,
   `/arc-purposal`'s own commit of its ARC changes, and merge commits. A commit
   is not finished until it is pushed.
 - If the push is rejected because the remote moved, pull, resolve, and push
