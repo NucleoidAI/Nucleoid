@@ -15,7 +15,11 @@ used in `arc/src/dataset/`, it also triggers `/nuc-proposal` to propose a
 version without it, under the
 [skill's quote step](../skills/arc-purposal/SKILL.md#propose-quote-free-spellings);
 that NUC is never run against the puzzle and follows the automatic acceptance
-rule directly. Afterwards it
+rule directly. `arc/nucleoid.ebnf` is the minimal grammar of the syntax that
+the code fields in `arc/src/dataset/` use, and it stays minimal: whenever a
+dataset introduces new syntax, `/arc-purposal` adds that syntax to it under the
+[skill's grammar step](../skills/arc-purposal/SKILL.md#keep-the-dataset-grammar),
+and a form leaves it once no dataset uses it. Afterwards it
 documents the puzzle's progress in `arc/docs/ARC-NUC-<puzzle-id>.md`. When it
 is done, it commits and pushes its own changes under the
 [git synchronization policy](git.instructions.md).

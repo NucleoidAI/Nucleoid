@@ -21,8 +21,8 @@ pulling before it starts.
   - `/arc-purposal`, under the
     [arc-purposal skill](../skills/arc-purposal/SKILL.md#commit-and-push),
     commits its own ARC changes once, when it is done: the puzzle's dataset,
-    README paragraph, reporting-list entry, solver default and progress
-    record, as far as the invocation changed and kept them.
+    README paragraph, reporting-list entry, solver default, dataset grammar
+    and progress record, as far as the invocation changed and kept them.
 - Each of them also commits the merges its own pulls need, and pushes every
   commit it makes.
 - No other agent or flow commits, pushes, or makes a merge commit:

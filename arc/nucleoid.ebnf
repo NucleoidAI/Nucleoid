@@ -1,9 +1,9 @@
 declaration          ::= ( COMMENT NEWLINE )* ( classStmt | ifStmt | classRule )
 implementation       ::= ( COMMENT NEWLINE )* NAME assign NAME
-                         '(' labeledArgument ( ',' labeledArgument )* ')'
+                         '(' labeledArgument ( ',' labeledArgument )+ ')'
 assign               ::= 'is' | '='
 
-classStmt            ::= 'class' NAME '(' constructorParameter ( ',' constructorParameter )* ')'
+classStmt            ::= 'class' NAME '(' constructorParameter ( ',' constructorParameter )+ ')'
                          ':' classBody
 constructorParameter ::= NAME ':' type
 type                 ::= 'int' | 'str' | 'list'
@@ -15,22 +15,22 @@ ruleBody             ::= ( NEWLINE INDENT classRule )+
 classRule            ::= CLASS_REF '.' NAME assign expression
 
 labeledArgument      ::= NAME '=' literal
-literal              ::= INTEGER | STRING | '[' literal ( ',' literal )* ']'
+literal              ::= INTEGER | STRING | '[' literal ( ',' literal )+ ']'
 
-expression           ::= logicalOr ( 'if' logicalOr 'else' expression )?
-logicalOr            ::= logicalAnd ( 'or' logicalAnd )*
+expression           ::= logicalOr ( 'if' logicalOr 'else' logicalOr )?
+logicalOr            ::= logicalAnd ( 'or' logicalAnd )?
 logicalAnd           ::= equality ( 'and' equality )*
 equality             ::= relational ( 'is' 'not'? relational )?
 relational           ::= additive ( ( '<' | '>' | '>=' ) additive )?
 additive             ::= term ( ( '+' | '-' ) term )*
 term                 ::= unary ( ( '*' | '/' | '%' ) unary )*
-unary                ::= noun 'of' unary | postfix
+unary                ::= ( noun 'of' )? postfix
 noun                 ::= 'min' | 'max' | 'mode'
 postfix              ::= primary ( version | member | subscript | call )*
 version              ::= '@first'
 member               ::= '.' NAME
 subscript            ::= '[' expression ']'
-call                 ::= '(' ( expression ( ',' expression )* )? ')'
+call                 ::= '(' expression? ')'
 primary              ::= quantified
                        | arrowFunction
                        | INTEGER
@@ -42,16 +42,12 @@ primary              ::= quantified
                        | objectDisplay
 quantified           ::= ( 'all' | 'any' ) NAME 'in' expression ':' expression
 arrowFunction        ::= NAME '=>' expression
-listDisplay          ::= '[' expression ( ',' expression )* ']'
-objectDisplay        ::= '{' objectEntry ( ',' objectEntry )* '}'
+listDisplay          ::= '[' expression ( ',' expression )+ ']'
+objectDisplay        ::= '{' objectEntry ( ',' objectEntry )+ '}'
 objectEntry          ::= ( NAME | STRING | INTEGER ) ':' expression
 
 NAME                 ::= ( [A-Za-z_] [A-Za-z0-9_]* ) - RESERVED
-RESERVED             ::= 'and' | 'catch' | 'class' | 'def' | 'delete' | 'elif' | 'else'
-                       | 'false' | 'for' | 'function' | 'if' | 'in' | 'new' | 'None'
-                       | 'not' | 'null' | 'of' | 'or' | 'pass' | 'return' | 'self'
-                       | 'super' | 'this' | 'throw' | 'true' | 'try' | 'typeof'
-                       | 'undefined'
+RESERVED             ::= 'and' | 'class' | 'else' | 'if' | 'in' | 'not' | 'of' | 'or' | 'this'
 CLASS_REF            ::= '$' NAME
 INTEGER              ::= [0-9]+
 STRING               ::= "'" [^']* "'"

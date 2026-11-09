@@ -13,7 +13,10 @@ progress record in `arc/docs/`, then [commits and pushes](#commit-and-push)
 its changes. A requested enhancement uses the existing
 [NUC strategy bandit](#learn-the-nuc-proposal-strategy). Whenever a quote is
 used in `arc/src/dataset/`, it also triggers `/nuc-proposal` to
-[propose a version without it](#propose-quote-free-spellings). Follow
+[propose a version without it](#propose-quote-free-spellings). Whenever a
+dataset introduces new syntax, it also adds that syntax to the
+[dataset grammar](#keep-the-dataset-grammar), `arc/nucleoid.ebnf`, which it
+keeps minimal. Follow
 `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
 [agent profile](../../agents/arc-purposal.agent.md).
@@ -30,11 +33,13 @@ such as `server.ts`, `src/app.ts`, or `src/dataset/dataset.ts`, is
 added, edited, or removed, except for the solver's default puzzle in
 `src/app.ts`, which the [run step](#run-the-puzzle) sets. Orchestrate the
 approach between `/arc-dataset` and `/nuc-proposal` alone. In `arc/`, only
-four things change: the puzzle's dataset and its README paragraph, both
-written by arc-dataset, that default, and the puzzle's
-[progress record](#document-the-progress) in `arc/docs/`. A NUC candidate
-changes nothing there. When the solver would need a change, finish the process without it and
-[suggest the change](#suggest-solver-changes) at the end.
+five things change: the puzzle's dataset and its README paragraph, both
+written by arc-dataset, that default, the
+[dataset grammar](#keep-the-dataset-grammar) `arc/nucleoid.ebnf`, and the
+puzzle's [progress record](#document-the-progress) in `arc/docs/`. A NUC
+candidate changes nothing there. When the solver would need a change, finish
+the process without it and [suggest the change](#suggest-solver-changes) at
+the end.
 
 The dataset agent also registers a new dataset's puzzle in
 `.github/workflows/arc.yml`, as its profile requires. Keep that reporting-list
@@ -472,6 +477,39 @@ instead of making it: the files, the change, and the evidence for it. Base no
 suggestion on the expected test grid or the difference from it, and never
 apply a suggestion or rerun the puzzle within the invocation.
 
+## Keep the dataset grammar
+
+`arc/nucleoid.ebnf` is the minimal grammar of the Nucleoid syntax that the
+code fields in `arc/src/dataset/` use: `declaration` derives each entry of
+`declarations`, and `implementation` each instance's `implementation`. After
+the outcome is decided and recorded, and before the progress record, bring
+it up to date with every dataset that `arc/src/dataset/` holds, this
+invocation's kept dataset among them. Write it yourself, never through a
+worker. A withdrawn dataset changes nothing, and a grammar that already fits
+stays as it is.
+
+- **Include new syntax:** whenever a dataset uses syntax the grammar does not
+  derive, such as a form that a requested NUC adds or an accepted form that
+  no earlier dataset used, add that form.
+- **Keep it minimal:** the grammar derives the syntax the datasets use and
+  nothing more. Every alternative, optional part and repetition in its syntax
+  rules is used by some dataset program, and each is only as wide as the
+  datasets use it: a part that no program repeats is at most optional, and
+  one that no program omits is required. Lexical rules define only the token
+  kinds the datasets use, such as single-quoted strings, and `RESERVED` holds
+  only the reserved words of `docs/nucleoid.g4` that the grammar uses as
+  terminals. Add only the form a dataset uses, never the rest of its feature
+  from `docs/nucleoid.g4`, and remove or narrow a form once no dataset uses
+  it, as after a dataset is replaced or respelled.
+- **Keep its style:** W3C EBNF with `::=`, syntax rules named after those of
+  `docs/nucleoid.g4`, uppercase lexical rules, and no comments.
+- **Verify offline:** every program in `arc/src/dataset/` derives from
+  `declaration` or `implementation`, and removing or narrowing any
+  alternative, optional part or repetition rejects at least one of them.
+  Check both in the session workspace, for example with a throwaway
+  recognizer that reads the grammar file, never with a test, fixture or
+  runner in the repository.
+
 ## Document the progress
 
 After the outcome is decided and recorded, including any NUC commit and push,
@@ -505,6 +543,8 @@ such as `arc/docs/ARC-NUC-0ca9ddb6.md`:
 - `Dataset`: the objects, their properties, and the rules in a `nuc` block,
   linking the dataset's README paragraph for the rest. When the invocation
   replaced a dataset, say what changed and why, such as the user's hint.
+  Name any form the invocation added to or removed from the
+  [dataset grammar](#keep-the-dataset-grammar).
 - A `Decision` section for a requested NUC: the gap, the evidence programs
   and their actual errors, and what the NUC adds. Include the selected
   proposal strategy and whether learning updated, was unscored, or blocked,
@@ -538,21 +578,24 @@ pauses, or stops before it writes the progress record, commits nothing.
 2. Stage, by explicit path, only what this invocation changed and kept in the
    primary checkout: `arc/src/dataset/dataset.<puzzle-id>.json`, its
    paragraph in `arc/README.md`, its entry in `.github/workflows/arc.yml`,
-   the default puzzle in `arc/src/app.ts` while it names this puzzle, and
-   `arc/docs/ARC-NUC-<puzzle-id>.md`. A withdrawn dataset, and the paragraph
-   and entry withdrawn with it, stay out. When a path also holds changes this
-   invocation did not make, such as the pre-existing changes recorded at the
-   start or another session's, stage only this invocation's hunks, for example
-   by applying its own diff with `git apply --cached`; if they cannot be
-   separated, leave the path out and report it. Never use `git add -A`,
+   the default puzzle in `arc/src/app.ts` while it names this puzzle,
+   `arc/nucleoid.ebnf` when the [grammar step](#keep-the-dataset-grammar)
+   changed it, and `arc/docs/ARC-NUC-<puzzle-id>.md`. A withdrawn dataset,
+   and the paragraph and entry withdrawn with it, stay out. When a path also
+   holds changes this invocation did not make, such as the pre-existing
+   changes recorded at the start or another session's, stage only this
+   invocation's hunks, for example by applying its own diff with
+   `git apply --cached`; if they cannot be separated, leave the path out and
+   report it. Never use `git add -A`,
    `git add .`, or `git commit -a`, and never stage session artifacts, run
    logs, `arc/logs/`, or anything from a candidate worktree.
 3. Commit with an imperative subject that names the puzzle and what changed,
    as the existing ARC commits do, such as
    `Add ARC dataset for puzzle <puzzle-id>` for a new dataset or
    `Rework ARC 27a28665 dataset to whole-block shapes` for a replaced one. In
-   the body, state what the dataset models, the files changed, any requested
-   NUC with its outcome, and the run's exit status and difference or error,
+   the body, state what the dataset models, the files changed, the grammar
+   forms added or removed, any requested NUC with its outcome, and the run's
+   exit status and difference or error,
    or that there was no run. Copy nothing else from the run's output, never a
    grid or cell.
 4. Verify that the commit holds only the intended paths and hunks, pull again
@@ -573,8 +616,10 @@ withdrawn, and arc-dataset's use of the hint; the NUC path, blob, category,
 evaluator decision, and report path; the solver's previous and new default
 puzzle IDs and whether that change was retained or restored; the run's
 command, executable, exit status or timeout, difference or error, and log
-paths; the outcome and its basis; the suggested solver changes; the progress
-record's path and whether it was created or updated; the commit's hash,
+paths; the outcome and its basis; the suggested solver changes; the dataset
+grammar's forms added or removed, or that it already fit, with the offline
+coverage and minimality results; the progress record's path and whether it
+was created or updated; the commit's hash,
 paths, and push result, or why nothing was committed; and any blockers. Record
 the quote check as each quote's dataset, field, code line and result, and the
 quote-free NUC with the same fields as a requested NUC, or why there is none.

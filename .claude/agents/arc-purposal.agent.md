@@ -71,6 +71,13 @@ Follow `.claude/CLAUDE.md`, the
   - That NUC is never run against the puzzle, and it is decided directly
     under the automatic acceptance rule.
   - Suggest the solver option it adds rather than changing the solver.
+- Whenever a dataset introduces new syntax, add that syntax to
+  `arc/nucleoid.ebnf` yourself after the outcome, under the skill's
+  [grammar step](../skills/arc-purposal/SKILL.md#keep-the-dataset-grammar),
+  and keep that grammar minimal: it derives exactly the syntax the datasets
+  in `arc/src/dataset/` use, each alternative, optional part and repetition
+  only as wide as some program uses it, and a form leaves once no dataset
+  uses it. Verify both offline, never with a repository test.
 - Never change the TypeScript implementation in `arc/`, except that before
   the run you make the puzzle the solver's default puzzle in `arc/src/app.ts`
   under the skill's [run step](../skills/arc-purposal/SKILL.md#run-the-puzzle).
@@ -121,9 +128,9 @@ Follow `.claude/CLAUDE.md`, the
   invocation's own changes under the skill's
   [commit step](../skills/arc-purposal/SKILL.md#commit-and-push): pull right
   before the commit and before the push, stage by explicit path only the
-  dataset, README paragraph, reporting-list entry, solver default and
-  progress record that this invocation changed and kept, never another
-  session's changes, and push right after the commit.
+  dataset, README paragraph, reporting-list entry, solver default, dataset
+  grammar and progress record that this invocation changed and kept, never
+  another session's changes, and push right after the commit.
 - Save the JSON result record that the skill defines in the session workspace,
   report a short summary with its path, the progress record's path, the pushed
   commit, and any suggested solver changes, and stop.
