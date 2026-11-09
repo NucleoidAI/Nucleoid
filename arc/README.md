@@ -406,12 +406,13 @@ string inside a larger value keeps its quotes, as in
 `$Obj.fill_color is 'A' if $Obj.parts.distinct().length is 1 else 0` and
 `$Obj.corner_colors is [['B', 'E'], ['C', 'D']]`, and so do keyword
 arguments such as `color='B'`, which are not assignments. `src\lib\nucleoid.ts`
-runs every program with the `--is-assignment` flag that NUC 93 requires, so
-the solver needs a runtime at `ad45ba4`, the NUC 93 commit, or later; without
-the flag, `obj0c2414cf33eb is Obj(...)` reads as three juxtaposed statements
-and raises `ReferenceError`. The solver's own `canvas_width = 3` and
-`canvas_height = 3` lines keep `=`, which reads the same with the flag. Every
-snapshot is the state that the same rules give when spelled with `=`.
+passes no syntax flag: the runtime reads `is` assignments without one since
+`d945213`, which removed the opt-in syntax options, so the solver needs that
+runtime or later. An older runtime reads `obj0c2414cf33eb is Obj(...)` as
+three juxtaposed statements and raises `ReferenceError`. The solver's own
+`canvas_width = 3` and `canvas_height = 3` lines keep `=`, which reads the
+same. Every snapshot is the state that the same rules give when spelled with
+`=`.
 
 Each snippet starts with `#` comment lines that describe the object it
 constructs, in the style of the declarations' comments: its kind and colors,

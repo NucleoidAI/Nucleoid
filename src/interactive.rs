@@ -19,7 +19,6 @@ pub(super) fn repl_editor() -> Result<DefaultEditor, ReadlineError> {
 }
 
 pub(super) fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> ExitCode {
-    let options = runtime.options();
     let mut editor = match repl_editor() {
         Ok(editor) => editor,
         Err(error) => {
@@ -68,7 +67,7 @@ pub(super) fn repl(runtime: &mut Runtime, mut json: bool, mut graph: bool) -> Ex
             continue;
         }
 
-        if let Some(source) = pending.accept(&line, options) {
+        if let Some(source) = pending.accept(&line) {
             record_history(&mut editor, source.trim_end());
             run_interactive(runtime, &source, json, graph);
         }

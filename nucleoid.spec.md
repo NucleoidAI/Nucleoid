@@ -217,26 +217,22 @@ operator-chain diagnostics and source positions are preserved.
   `Nucleoid rolls back failed function declarations` specify the executable
   behavior.
 
-## Opt-in C-style comments
+## C-style comments
 
-- `#` starts an accepted line comment in every mode. By default, slash
-  tokenization is unchanged: `//` is an empty regex, `// comment` parses then
-  raises `ReferenceError("comment is not defined")`, `/* comment */` parses
-  then raises a regex-compilation SyntaxError, and `1 // 2 /` divides by a
-  regex and produces NaN.
-- Explicit CLI `--c-style-comments` or Rust
-  `Runtime::with_options(SyntaxOptions { c_style_comments: true, ..SyntaxOptions::default() })`
-  enables optional `//` and non-nesting `/* ... */` comments. `SyntaxOptions`
-  is a concrete public, copyable value whose `c_style_comments` field defaults
-  to false. `Runtime::new()` and `Runtime::default()` retain the accepted mode.
-- Only in enabled mode do those openers take priority over regex/division
-  recognition outside literals. `//` skips to LF or EOF without consuming
-  LF; `/*` skips through the first `*/`, without nesting. Other comment
-  markers and quotes within a block are text. Existing `#` comments remain.
+- `//` line comments and non-nesting `/* ... */` block comments sit beside
+  `#` line comments. [NUC 76](docs/nuc-0076.md) introduced them behind a
+  `--c-style-comments` flag and a `SyntaxOptions` field; both were removed,
+  and every source reads these comments.
+- The openers take priority over regex and division recognition outside
+  literals. `//` skips to LF or EOF without consuming LF; `/*` skips through
+  the first `*/`, without nesting. Other comment markers and quotes within a
+  block are text. So `//` and `// comment` are comments rather than an empty
+  regex, `/* comment */` is a comment rather than a regex, and `1 // 2 /` is
+  `1`.
 - Comments separate rather than concatenate tokens: `left/**/right` is two
   identifiers, and `+/**/=` is not `+=`. Block LFs remain layout newlines,
-  suppressed inside parentheses and brackets as usual. In enabled mode,
-  suppressed breaks do not reset operand context for division or `/=`.
+  suppressed inside parentheses and brackets as usual, and suppressed breaks
+  do not reset operand context for division or `/=`.
 - Only literal whitespace outside comments contributes indentation; block
   text and its internal whitespace have zero indentation width. Comment-only
   lines cannot create a body. Tabs keep width four. Source locations retain
@@ -244,36 +240,29 @@ operator-chain diagnostics and source positions are preserved.
   Unicode; a tab counts as one character in a diagnostic column.
 - Ordinary division, `/=`, nonambiguous regex literals, escaped regex slashes,
   regex character classes, quoted strings and template literal text retain
-  their meanings. Enabled source may use `/(?:)/` for empty-matching behavior;
-  its pattern text remains `(?:)`, not the empty string. No regex constructor
-  is introduced.
-  Template interpolations inherit the selected option; their strings, regexes
-  and comments protect brace boundaries. Enabled interpolation errors map to
-  original source positions; the accepted default interpolation algorithm and
-  diagnostics do not change. Outer template quoting rules are unchanged.
-- `Runtime::options()` returns the selected options, and `clear()` preserves
-  them. `run` and its expression evaluation use that configuration.
-  `Runtime::check_with_options(source, options)`, lexer
-  `tokenize_with_options`, parser `parse_program_with_options`,
-  `parse_with_options`, `parse_expression_with_options`, and
-  `statement::compile_with_options` accept the same value. Existing standalone
-  parsing/checking functions always keep their default semantics.
-- CLI file execution, plain/piped continuation and terminal submission share
-  the configured runtime. Comment punctuation cannot create a continuation
-  header. Plain input buffers an open block through blank lines and command
-  text until it closes; EOF reports it once if still open. Ctrl-C cancels
-  pending input. Terminal Ctrl-J indentation honors the option. `.clear`
-  preserves it; existing result/error formatting and REPL exit codes remain.
-- An unclosed enabled block raises `ErrorKind::Syntax` with exact message
+  their meanings. An empty-matching regex is written `/(?:)/`; its pattern
+  text is `(?:)`, not the empty string. No regex constructor is introduced.
+  Template interpolations follow the same rules: their strings, regexes and
+  comments protect brace boundaries, and a syntax error inside an
+  interpolation reports the line and column of the original source, so
+  ``x = `${a ?? }` `` reports `Unexpected end of input` at line 1, column 13.
+  Outer template quoting rules are unchanged.
+- `run`, `check`, the lexer's `tokenize`, the parser's `parse_program`,
+  `parse` and `parse_expression`, and `statement::compile` all read comments.
+- CLI file execution, plain/piped continuation and terminal submission read
+  comments. Comment punctuation cannot create a continuation header, so a
+  line such as `x = 1 # note:` runs at once rather than opening a buffer, as a
+  line whose last code token is `:` does. Plain input
+  buffers an open block through blank lines and command text until it closes;
+  EOF reports it once if still open. Ctrl-C cancels pending input. Terminal
+  Ctrl-J indentation reads the lines above the cursor and skips comments.
+  Existing result/error formatting and REPL exit codes remain.
+- An unclosed block raises `ErrorKind::Syntax` with exact message
   `Unterminated block comment`, at the original opening slash, also within
   interpolations. Its display is `SyntaxError: Unterminated block comment
   (line L, column C)`. Compilation fails before statements execute.
-- This configuration-dependent behavior is executed in
-  `tests/c_style_comments.rs`, `tests/c_style_comments_cli.rs` and the terminal
-  unit suite. The existing default-only executable-document/JSONL schemas
-  have no syntax-option field; their protected programs, assertions and
-  expected results stay unchanged rather than running enabled source by
-  default. See [NUC 76](docs/nuc-0076.md).
+- `tests/c_style_comments.rs`, `tests/c_style_comments_cli.rs` and the
+  terminal unit suite execute this behavior.
 
 ## Reactive literal string replacement
 
@@ -3087,11 +3076,10 @@ statement positions; caught values and transaction recovery are unchanged.
   selected branch. Unlike a class-level `if` statement, which stands aside
   while its condition reads something undefined, a conditional expression
   treats that condition as false and selects the alternate.
-- These readings are those of the default mode. With
-  [Opt-in conditional words](#opt-in-conditional-words), a branch of an `is`
-  assignment's conditional value that is exactly one identifier token is a
-  word instead, which class-level rule validation does not require to be
-  defined.
+- In the value of an `is` assignment, a branch that is exactly one
+  identifier token is a word instead, as
+  [Conditional words](#conditional-words) describes, which class-level rule
+  validation does not require to be defined.
 - An error raised by the condition or the selected branch propagates through
   the existing transaction, so a failed standing re-evaluation rolls back the
   triggering change and keeps the earlier branch selection.
@@ -3240,8 +3228,10 @@ statement positions; caught values and transaction recovery are unchanged.
   quantifier body or a conditional alternate that sits in one of these
   positions. In an object value, `is` directly followed by `:` stays the next
   comma-free property key.
-- Everywhere else `is` keeps its accepted reading as a name that begins the
-  next juxtaposed statement: expression statements, assignment, destructuring
+- Everywhere else, apart from the statements of
+  [Is assignments](#is-assignments), `is` keeps its accepted reading as a
+  name that begins the next juxtaposed statement: expression statements,
+  assignment, destructuring
   and `:=` values, `return`, `throw` and `delete` operands, the operand before
   `?` and
   both operands around a Python-style condition at statement level, arrow,
@@ -3254,7 +3244,7 @@ statement positions; caught values and transaction recovery are unchanged.
   operator applies only when the whole program would otherwise fail to parse.
   Even then, a `while` header or a `suppose` premise that also parses through
   its colon as separate statements keeps that reading, so
-  `while v is x: T` stays `while`, `v`, `is` and the declaration `x: T`.
+  `while f() is x: T` stays `while`, `f()`, `is` and the declaration `x: T`.
 - `is` and `is not` share one left-associative level with `==`, `!=`, `===`
   and `!==`, binding more tightly than `and` and `&&` and more loosely than
   `<`, `>`, `<=` and `>=`: `a is b == c` is `(a is b) == c`,
@@ -3272,34 +3262,29 @@ statement positions; caught values and transaction recovery are unchanged.
   column 12 for `if value is:` followed by an indented body, and
   `SyntaxError("Unexpected end of input")` at line 1, column 12 for
   `if value is`.
-- These readings are those of the default mode. The opt-in mode of
-  [Opt-in is assignments](#opt-in-is-assignments) reads a statement that
-  begins with an assignable path directly followed by `is` as an assignment;
-  every enclosed comparison above is unchanged in that mode.
+- A statement that begins with an assignable path directly followed by `is`
+  and a value is an assignment under [Is assignments](#is-assignments), so
+  `value is "EXACT"` assigns and `while v is x: T` is a loop; every enclosed
+  comparison above keeps its reading.
 - The five appended entries beginning
   `Nucleoid matches values with is and is not` through
   `Nucleoid keeps is as an ordinary name where a statement can follow`
   specify the executable behavior.
 
-## Opt-in is assignments
+## Is assignments
 
-- [NUC 93](docs/nuc-0093.md) adds the opt-in statement `target is value`,
-  which means `target = value`, for variables and properties. CLI
-  `--is-assignment` or Rust
-  `Runtime::with_options(SyntaxOptions { is_assignment: true, ..SyntaxOptions::default() })`
-  enables it. `SyntaxOptions` gains the public field `is_assignment`, which
-  defaults to false. `Runtime::new()`, `Runtime::default()` and every
-  function without options keep the accepted reading, in which `a is good` is
-  the three juxtaposed statements `a`, `is` and `good`.
-- The option combines with `c_style_comments`. `Runtime::options()` returns
-  it, `clear()` and `.clear` keep it, and `Runtime::check_with_options`,
-  `parse_program_with_options`, `parse_with_options`,
-  `parse_expression_with_options` and `statement::compile_with_options`
-  accept it. File runs, the plain and redirected REPL, the terminal
-  workspace, `--json` and `--graph` honor the flag as they honor
-  `--c-style-comments`; REPL continuation and terminal indentation are
-  lexical and unchanged.
-- With the option, a statement is `target is value` when its leading
+- The statement `target is value` means `target = value`, for variables and
+  properties. [NUC 93](docs/nuc-0093.md) introduced it behind an
+  `--is-assignment` flag and a `SyntaxOptions` field; both were removed, and
+  every source reads it. So `a is good` assigns, where
+  [NUC 86](docs/nuc-0086.md) read the three juxtaposed statements `a`, `is`
+  and `good`.
+- It combines with C-style comments. `run`, `check`, `parse_program`, `parse`
+  and `statement::compile` read it, and `clear()` and `.clear` keep reading
+  it. File runs, the plain and redirected REPL, the terminal workspace,
+  `--json` and `--graph` read it; REPL continuation and terminal indentation
+  are lexical and unchanged.
+- A statement is `target is value` when its leading
   expression is a target that `:=` accepts and the next two tokens are the
   identifier `is` and a token that can begin an expression. Such a target is
   a name or a dotted path rooted in a name, `this`, `self` or `$Class`, as for
@@ -3337,11 +3322,12 @@ statement positions; caught values and transaction recovery are unchanged.
   appear, including inside template interpolations. It never applies inside
   an expression: conditions, parentheses, arguments, lists, object values,
   named arrow bodies, the top level of a template interpolation and the top
-  level of `parse_expression_with_options` keep their readings, including the
+  level of `parse_expression` keep their readings, including the
   enclosed `is` and `is not` comparisons of
   [Is and is not comparisons](#is-and-is-not-comparisons).
-- Unless its value is a word, `target is value` builds exactly the syntax
-  tree of `target = value`. The value is parsed as the value of `=` is at
+- Unless its value is a word or holds the word branches of
+  [Conditional words](#conditional-words), `target is value` builds exactly
+  the syntax tree of `target = value`. The value is parsed as the value of `=` is at
   statement level, in the same context and at the same nesting depth, and
   ends where that value ends. So
   standing declarations and their dependencies, property assignments,
@@ -3372,48 +3358,37 @@ statement positions; caught values and transaction recovery are unchanged.
 - A word assignment renders as `target is word`: in graph keys such as
   `block(total is good)`, in `--graph` output and in the `rule` that `why` and
   `affects` report, as `a is good` and `$Order.state is OPEN`. Every other
-  `is` assignment renders as its `=` spelling, such as `a = 5`.
+  `is` assignment without word branches renders as its `=` spelling, such
+  as `a = 5`.
 - No error type or message is added. A malformed value raises what its `=`
   spelling raises at the same place in the source, which is one column
   further right when that place follows `is` on its line:
   `a is (1 + )` raises `SyntaxError("Unexpected ')'")` at line 1, column 12,
   and `a is b := 1` raises `SyntaxError("Invalid value assignment target")`
   at line 1, column 8.
-- These default-mode readings change only with the option, because each
-  contains such a statement: `value is "EXACT"` assigns `"EXACT"`;
+- These readings differ from those of NUC 86, because each contains such a
+  statement: `value is "EXACT"` assigns `"EXACT"`;
   `{ a is b }` assigns the word `b`; `a is 1 ? 2 : 3` assigns `2`;
   `while v is x: T` is a loop whose condition is the comparison `v is x`;
   `suppose v is x: T` is a `suppose` block whose premise is `v is x`;
   `while v is suppose:` with a body is `while` followed by `v = suppose:`; and
   `a is x: T` and `while v is assert: a, b` are syntax errors.
-- This configuration-dependent behavior is executed in
-  `tests/is_assignments.rs`, `tests/is_assignments_cli.rs` and the terminal
-  unit suite. The default-only executable documents and JSONL records keep
-  their programs, assertions and expected results.
-- With [Opt-in conditional words](#opt-in-conditional-words) also enabled, a
-  branch of a conditional value can be a word as well. Without that option,
-  a conditional value builds the tree of its `=` spelling, as above.
+- `tests/is_assignments.rs`, `tests/is_assignments_cli.rs` and the terminal
+  unit suite execute this behavior.
+- A branch of a conditional value can be a word as well, as
+  [Conditional words](#conditional-words) describes.
 
-## Opt-in conditional words
+## Conditional words
 
-- [NUC 94](docs/nuc-0094.md) adds the opt-in syntax option
-  `conditional_words`, which lets a branch of a conditional expression in the
-  value of an `is` assignment be a word. CLI `--conditional-words` beside
-  `--is-assignment`, or Rust
-  `Runtime::with_options(SyntaxOptions { is_assignment: true, conditional_words: true, ..SyntaxOptions::default() })`,
-  enables it. `SyntaxOptions` gains the public field `conditional_words`,
-  which defaults to false.
-- The option extends [Opt-in is assignments](#opt-in-is-assignments) only.
-  Without `is_assignment` it changes nothing: every program keeps the
-  reading it has under the same options without `conditional_words`. With
-  `is_assignment` alone, every program keeps the reading of NUC 93.
-- The option combines with `c_style_comments`. `Runtime::options()` returns
-  it, `clear()` and `.clear` keep it, and `Runtime::check_with_options`,
-  `parse_program_with_options`, `parse_with_options`,
-  `parse_expression_with_options` and `statement::compile_with_options`
-  accept it. File runs, the plain and redirected REPL, the terminal
-  workspace, `--json` and `--graph` honor the flag as they honor
-  `--is-assignment`.
+- [NUC 94](docs/nuc-0094.md) lets a branch of a conditional expression in the
+  value of an `is` assignment be a word. NUC 94 introduced it behind a
+  `--conditional-words` flag and a `SyntaxOptions` field; both were removed,
+  and every source reads it.
+- It extends [Is assignments](#is-assignments) only and combines with C-style
+  comments. `run`, `check`, `parse_program`, `parse`, `parse_expression` and
+  `statement::compile` read it, and `clear()` and `.clear` keep reading it.
+  File runs, the plain and redirected REPL, the terminal workspace, `--json`
+  and `--graph` read it.
 - The word positions of an `is` assignment's value are the value itself,
   which is a word position under NUC 93, and both branches of a conditional
   expression that stands in a word position, in either spelling,
@@ -3438,8 +3413,7 @@ statement positions; caught values and transaction recovery are unchanged.
   `a is b = A if c else B`. A conditional that an assignment operator
   follows is that assignment's target, not a result, so
   `a is X if c else Y = 5` keeps its tree and raises
-  `SyntaxError("Cannot assign to (c?X:Y)")` at its statement, as with
-  `is_assignment` alone.
+  `SyntaxError("Cannot assign to (c?X:Y)")` at its statement.
 - A word branch reads by the word rule of NUC 93: the local, variable,
   class, function or built-in global of that name when one exists, and
   otherwise the string of its spelling, recording a dependency on the
@@ -3463,22 +3437,20 @@ statement positions; caught values and transaction recovery are unchanged.
   value, a conditional that holds a word renders without its grouping
   parentheses, as in `a is c?A:B`, and a name in a word position that is not
   a word renders in parentheses, as in `c?A:(B)`, so the rendering reads back
-  as the same statement with both options. Every other `is` assignment
-  renders as before, so `a is 1 if c else 2` renders as `a=(c?1:2)`.
+  as the same statement. Every other `is` assignment renders as before, so
+  `a is 1 if c else 2` renders as `a=(c?1:2)`.
 - At statement level, the operand before `?` is not an enclosed position, so
   an `is` comparison there needs parentheses, as in
   `mark is (shape is SQUARE) ? CORNER : EDGE`; a Python-style condition is
   enclosed, as in `mark is CORNER if shape is SQUARE else EDGE`.
-- No token, keyword or error type or message is added, and the option never
-  changes whether a program parses or where a syntax error is raised. A
-  malformed value raises what it raises with `is_assignment` alone at the
-  same place,
-  for example `SyntaxError("Unexpected end of input")` at line 1, column 17
-  for `a is A if c else`.
-- This configuration-dependent behavior is executed in
-  `tests/conditional_words.rs`, `tests/conditional_words_cli.rs` and the
-  terminal unit suite. The default-only executable documents and JSONL
-  records keep their programs, assertions and expected results.
+- No token, keyword or error type or message is added, and word branches
+  never change whether a program parses or where a syntax error is raised.
+  A malformed value raises what its `=` spelling raises, as for
+  [Is assignments](#is-assignments), for example
+  `SyntaxError("Unexpected end of input")` at line 1, column 17 for
+  `a is A if c else`.
+- `tests/conditional_words.rs`, `tests/conditional_words_cli.rs` and the
+  terminal unit suite execute this behavior.
 
 ## Instance list ranges and list queries
 
@@ -21973,7 +21945,7 @@ named = (value is is)
 assert(named, false)
 failure = ""
 try:
-    while value is x: T
+    while value() is x: T
 catch error:
     failure = error
 assert(failure, ReferenceError("while is not defined"))

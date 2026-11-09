@@ -5,26 +5,8 @@ use crate::error::{Error, Position, Result};
 use crate::lang::ast::lexer::{excerpt, interpolation_end};
 use crate::lang::ast::{Expr, TemplatePart};
 
-fn default_interpolation_end(body: &str) -> Option<usize> {
-    // Preserve the accepted default interpolation boundary rule.
-    let mut depth = 1usize;
-    for (offset, candidate) in body.char_indices() {
-        match candidate {
-            '{' => depth += 1,
-            '}' => {
-                depth -= 1;
-                if depth == 0 {
-                    return Some(offset);
-                }
-            }
-            _ => {}
-        }
-    }
-    None
-}
-
-/// Secondary parsers report relative positions; opt-in diagnostics retain the
-/// location in the caller's original template, including Unicode and newlines.
+/// Secondary parsers report relative positions; diagnostics retain the location
+/// in the caller's original template, including Unicode and newlines.
 fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
     let Some(relative) = error.position() else {
         return error;
@@ -42,6 +24,13 @@ fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
             relative.column
         },
     ))
+}
+
+fn interpolation_close(raw: &str, start: usize, origin: Position) -> Result<Option<usize>> {
+    let body = raw.get(start..).unwrap_or_default();
+    Ok(interpolation_end(body)
+        .map_err(|error| template_error(error, origin, excerpt(raw, 0..start)))?
+        .map(|offset| start + offset))
 }
 
 impl Parser {
@@ -69,7 +58,7 @@ impl Parser {
             }
 
             let start = index + 2;
-            let Some(end) = self.interpolation_close(raw, start, origin)? else {
+            let Some(end) = interpolation_close(raw, start, origin)? else {
                 return Err(self.error("Unterminated template expression"));
             };
 
@@ -106,34 +95,13 @@ impl Parser {
             .map_or_else(|| self.here(), |spanned| spanned.position)
     }
 
-    fn interpolation_close(
-        &self,
-        raw: &str,
-        start: usize,
-        origin: Position,
-    ) -> Result<Option<usize>> {
-        let body = raw.get(start..).unwrap_or_default();
-        if !self.options.c_style_comments {
-            return Ok(default_interpolation_end(body).map(|offset| start + offset));
-        }
-        Ok(interpolation_end(body, self.options)
-            .map_err(|error| template_error(error, origin, excerpt(raw, 0..start)))?
-            .map(|offset| start + offset))
-    }
-
     fn interpolation(&self, raw: &str, span: Range<usize>, origin: Position) -> Result<Expr> {
         let prefix = excerpt(raw, 0..span.start);
         // Trailing tokens after an interpolated expression are ignored,
         // so a top-level `lambda` keeps its accepted name reading here
         // and a trailing Python-style `if` stays ignored.
         self.interpolated_expression(excerpt(raw, span))
-            .map_err(|error| {
-                if self.options.c_style_comments {
-                    template_error(error, origin, prefix)
-                } else {
-                    error
-                }
-            })
+            .map_err(|error| template_error(error, origin, prefix))
     }
 
     fn interpolated_expression(&self, source: &str) -> Result<Expr> {
@@ -141,7 +109,7 @@ impl Parser {
             words: self.words,
             lists: self.lists,
             in_class: self.in_class,
-            ..Parser::from_source(source, self.options)?
+            ..Parser::from_source(source)?
         };
         parser.leading_expression(ExpressionContext::Interpolation)
     }

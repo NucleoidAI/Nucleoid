@@ -9,7 +9,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Instruction dataset | [`dataset.6fa7a44f.json`](../src/dataset/dataset.6fa7a44f.json): the puzzle's 4 original training pairs and its test pair, 5 block instances, 1 in each pair; added in `f7ec134` with SHA-256 letters; colors relettered by count on 8-Nov-2026 in `af795b3`; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the height rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md) |
-| Solver changes | None applied or suggested; the JSON-only message question carried over from earlier records stays open; since 8-Nov-2026 `src/lib/nucleoid.ts` passes `--is-assignment`, which every respelled dataset needs |
+| Solver changes | None applied or suggested; the JSON-only message question carried over from earlier records stays open; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default |
 | Solver runs | 1 local run on 8-Nov-2026 of the first, SHA-256 letter version: exit 0, difference 0; none of the current count-ranked version; none of the 8-Nov-2026 `is` version |
 | Updated | 8-Nov-2026 |
 

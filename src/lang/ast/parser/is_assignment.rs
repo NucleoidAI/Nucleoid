@@ -1,7 +1,7 @@
 use super::expression::PathTarget;
 use super::{ExpressionContext, Parser};
 use crate::error::Result;
-use crate::lang::ast::lexer::{Keyword, SyntaxOptions, Token};
+use crate::lang::ast::lexer::{Keyword, Token};
 use crate::lang::ast::{Expr, Stmt, UnaryOp};
 
 fn begins_expression(token: &Token) -> bool {
@@ -77,14 +77,6 @@ pub(super) enum Branches {
 }
 
 impl Branches {
-    fn of(options: SyntaxOptions) -> Self {
-        if options.conditional_words {
-            Branches::Words
-        } else {
-            Branches::Plain
-        }
-    }
-
     pub(super) fn mark(self, start: usize, end: usize, branch: Expr) -> Expr {
         if self == Branches::Words && is_word(start, end, &branch) {
             word(branch)
@@ -103,8 +95,7 @@ impl Branches {
 
 impl Parser {
     pub(super) fn starts_is_assignment(&self, target: &Expr) -> bool {
-        self.options.is_assignment
-            && matches!(self.peek(), Token::Identifier(name) if name == "is")
+        matches!(self.peek(), Token::Identifier(name) if name == "is")
             && begins_expression(self.peek_at(1))
             && PathTarget::of(target) == PathTarget::Plain
     }
@@ -112,10 +103,9 @@ impl Parser {
     pub(super) fn is_assignment(&mut self, target: Expr) -> Result<Stmt> {
         self.advance();
         let start = self.position;
-        let branches = Branches::of(self.options);
         let value = self.nested_expression(|parser| {
             parser.nested_expression_in(ExpressionContext::Ordinary, |value| {
-                value.assignment_expression(branches)
+                value.assignment_expression(Branches::Words)
             })
         })?;
         let bare = is_word(start, self.position, &value);

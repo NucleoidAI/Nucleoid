@@ -530,7 +530,7 @@ fn malformed_coalescing_reports_exact_errors() {
         ("x = (a ??)", "Unexpected ')'", 1, 11),
         ("a = 1\nb = ??", "Unexpected '??'", 2, 7),
         ("x = a?? .b", "Unexpected '.'", 1, 10),
-        ("x = `${a ?? }`", "Unexpected end of input", 1, 6),
+        ("x = `${a ?? }`", "Unexpected end of input", 1, 13),
         ("a ?? b += 1", "Invalid compound assignment target", 1, 8),
         ("x = a ? ? b", "Unexpected '?'", 1, 11),
         ("x = a?.b", "Unexpected '.'", 1, 8),

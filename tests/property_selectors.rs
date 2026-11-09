@@ -8,8 +8,8 @@ use std::process::{Command, Stdio};
 use nucleoid::graph::NodeKey;
 use nucleoid::lang::ast::generator::generate;
 use nucleoid::lang::ast::lexer::{Token, tokenize};
-use nucleoid::lang::ast::{Expr, FunctionBody, Stmt, parse, parse_expression, parse_with_options};
-use nucleoid::{Error, ErrorKind, Runtime, SyntaxOptions, Value};
+use nucleoid::lang::ast::{Expr, FunctionBody, Stmt, parse, parse_expression};
+use nucleoid::{Error, ErrorKind, Runtime, Value};
 use serde_json::json;
 
 const SPEC_TITLES: [&str; 8] = [
@@ -215,15 +215,7 @@ fn selectors_parse_to_anonymous_functions_of_one_unnamed_parameter() {
     ] {
         assert_eq!(parse(spelling).unwrap(), statements, "{spelling:?}");
     }
-    let options = SyntaxOptions {
-        c_style_comments: true,
-        is_assignment: false,
-        conditional_words: false,
-    };
-    assert_eq!(
-        parse_with_options("f(1, .a /* step */ .b)", options).unwrap(),
-        statements
-    );
+    assert_eq!(parse("f(1, .a /* step */ .b)").unwrap(), statements);
     assert_eq!(
         parse_expression("xs.map(.a)").unwrap().to_string(),
         "xs.map(.a)"

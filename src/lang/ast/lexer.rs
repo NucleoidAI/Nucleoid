@@ -10,16 +10,6 @@ use indentation::{Lines, layout};
 use scanner::scan_until;
 pub use token::{Keyword, Token};
 
-/// Optional source forms. Defaults preserve the accepted slash/regex grammar.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct SyntaxOptions {
-    /// Recognize `//` line comments and non-nesting `/* ... */` comments.
-    /// These delimiters take priority over regular expressions only when set.
-    pub c_style_comments: bool,
-    pub is_assignment: bool,
-    pub conditional_words: bool,
-}
-
 fn delimited(slice: &str) -> &str {
     let mut characters = slice.chars();
     characters.next();
@@ -64,21 +54,16 @@ pub struct Spanned {
 }
 
 pub fn tokenize(source: &str) -> Result<Vec<Spanned>> {
-    tokenize_with_options(source, SyntaxOptions::default())
-}
-
-/// Tokenizes with explicit source options, retaining original source positions.
-pub fn tokenize_with_options(source: &str, options: SyntaxOptions) -> Result<Vec<Spanned>> {
     let lines = Lines::new(source);
-    let (flat, _) = scan_until(source, &lines, options, |_| false)?;
+    let (flat, _) = scan_until(source, &lines, |_| false)?;
     Ok(layout(flat, lines.end()))
 }
 
 /// Finds an interpolation's closing brace using the same literal/comment rules
 /// as its expression parser, without lexing the template text that follows it.
-pub(crate) fn interpolation_end(source: &str, options: SyntaxOptions) -> Result<Option<usize>> {
+pub(crate) fn interpolation_end(source: &str) -> Result<Option<usize>> {
     let mut depth = 0usize;
-    let (_, end) = scan_until(source, &Lines::new(source), options, |token| {
+    let (_, end) = scan_until(source, &Lines::new(source), |token| {
         match token {
             Token::LeftBrace => depth += 1,
             Token::RightBrace if depth == 0 => return true,

@@ -18046,7 +18046,7 @@ named = (value is is)
 assert(named, false)
 failure = ""
 try:
-    while value is x: T
+    while value() is x: T
 catch error:
     failure = error
 assert(failure, ReferenceError("while is not defined"))

@@ -397,8 +397,8 @@ fn class_bodies_keep_every_enum_spelling() {
         (
             "class A:\n    x = `${(() => { enum S: P, Q; return S.P })()}`",
             "Unexpected ':'",
-            1,
-            18,
+            2,
+            29,
         ),
     ] {
         syntax_error(source, message, line, column);

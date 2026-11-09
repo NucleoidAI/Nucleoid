@@ -3,52 +3,9 @@ mod common;
 use nucleoid::graph::{NodeKey, NodeKind};
 use nucleoid::lang::ast::generator::generate_all;
 use nucleoid::lang::ast::{
-    BinaryOp, Expr, FunctionBody, Stmt, UnaryOp, parse, parse_expression,
-    parse_expression_with_options, parse_program_with_options, parse_with_options,
+    BinaryOp, Expr, FunctionBody, Stmt, UnaryOp, parse, parse_expression, parse_program,
 };
-use nucleoid::{ErrorKind, Position, Runtime, SyntaxOptions, Value};
-
-const IS: SyntaxOptions = SyntaxOptions {
-    c_style_comments: false,
-    is_assignment: true,
-    conditional_words: false,
-};
-
-const WORDS: SyntaxOptions = SyntaxOptions {
-    c_style_comments: false,
-    is_assignment: true,
-    conditional_words: true,
-};
-
-const IS_COMMENTS: SyntaxOptions = SyntaxOptions {
-    c_style_comments: true,
-    is_assignment: true,
-    conditional_words: false,
-};
-
-const ALL: SyntaxOptions = SyntaxOptions {
-    c_style_comments: true,
-    is_assignment: true,
-    conditional_words: true,
-};
-
-const COMMENTS: SyntaxOptions = SyntaxOptions {
-    c_style_comments: true,
-    is_assignment: false,
-    conditional_words: false,
-};
-
-const ALONE: SyntaxOptions = SyntaxOptions {
-    c_style_comments: false,
-    is_assignment: false,
-    conditional_words: true,
-};
-
-const COMMENTS_ALONE: SyntaxOptions = SyntaxOptions {
-    c_style_comments: true,
-    is_assignment: false,
-    conditional_words: true,
-};
+use nucleoid::{ErrorKind, Position, Runtime, Value};
 
 fn name(name: &str) -> Expr {
     Expr::Identifier(name.to_string())
@@ -81,26 +38,42 @@ fn member(object: Expr, property: &str) -> Expr {
 }
 
 fn statements(source: &str) -> Vec<Stmt> {
-    parse_with_options(source, WORDS).unwrap_or_else(|error| panic!("{source}: {error}"))
-}
-
-fn is_alone(source: &str) -> Vec<Stmt> {
-    parse_with_options(source, IS).unwrap_or_else(|error| panic!("{source}: {error}"))
-}
-
-fn accepted(source: &str) -> Vec<Stmt> {
     parse(source).unwrap_or_else(|error| panic!("{source}: {error}"))
 }
 
-fn syntax_error(source: &str, options: SyntaxOptions) -> (String, Position) {
-    let error = Runtime::check_with_options(source, options).unwrap_err();
+fn words(source: &str) -> usize {
+    format!("{:?}", statements(source))
+        .matches("operator: Word")
+        .count()
+}
+
+fn syntax_error(source: &str) -> (String, Position) {
+    let error = Runtime::check(source).unwrap_err();
     assert_eq!(error.kind(), ErrorKind::Syntax, "{source}");
     (error.message(), error.position().unwrap())
 }
 
+fn equals_spelling(source: &str) -> Option<String> {
+    source
+        .strip_prefix("a is ")
+        .map(|value| format!("a = {value}"))
+}
+
+fn assert_diagnostics_of_equals(source: &str) {
+    let equals =
+        equals_spelling(source).unwrap_or_else(|| panic!("{source} is not an is assignment to a"));
+    let (message, position) = syntax_error(source);
+    let (expected, at) = syntax_error(&equals);
+    assert_eq!(message, expected, "{source}");
+    assert_eq!(position.line, at.line, "{source}");
+    assert!(
+        position.column == at.column + 1 || (position.line > 1 && position.column == at.column),
+        "{source}: {position:?} against {at:?}"
+    );
+}
+
 fn expect(runtime: &mut Runtime, source: &str, expected: &str) {
-    let parsed = parse_with_options(source, runtime.options())
-        .unwrap_or_else(|error| panic!("{source}: {error}"));
+    let parsed = statements(source);
     let assertions = common::assertions::protected_assertions(&parsed).len();
     let case = common::Case {
         title: "conditional word regression".to_string(),
@@ -112,7 +85,7 @@ fn expect(runtime: &mut Runtime, source: &str, expected: &str) {
 }
 
 fn fresh(source: &str, expected: &str) {
-    expect(&mut Runtime::with_options(WORDS), source, expected);
+    expect(&mut Runtime::new(), source, expected);
 }
 
 fn failure(runtime: &mut Runtime, source: &str) -> String {
@@ -290,24 +263,19 @@ fn branches_of_one_identifier_token_in_result_positions_are_words() {
         ),
     ] {
         assert_eq!(statements(source), expected, "{source}");
-        assert_eq!(
-            parse_with_options(source, ALL).unwrap(),
-            expected,
-            "{source}"
-        );
     }
     assert_ne!(
         statements("a is A if c else B"),
-        is_alone("a is A if c else B")
+        statements("a = A if c else B")
     );
     assert_eq!(
-        is_alone("a is A if c else B"),
-        accepted("a = A if c else B")
+        statements("a is (A if c else B)"),
+        statements("a = A if c else B")
     );
 }
 
 #[test]
-fn conditions_parentheses_and_other_operands_keep_the_trees_of_is_assignments() {
+fn conditions_parentheses_and_other_operands_hold_no_word_branches() {
     for source in [
         "a is (A if c else B)",
         "a is (c ? A : B)",
@@ -344,7 +312,6 @@ fn conditions_parentheses_and_other_operands_keep_the_trees_of_is_assignments() 
         "a is `${c ? A : B}`",
         "a is `${(A if c else B)}`",
         "a is all x in xs: A if c else B",
-        "a is A",
         "a is (A)",
         "a = A if c else B",
         "a := A if c else B",
@@ -362,76 +329,24 @@ fn conditions_parentheses_and_other_operands_keep_the_trees_of_is_assignments() 
         "suppose A if c else B:\n    pass",
         "while A if c else B:\n    pass",
     ] {
-        assert_eq!(statements(source), is_alone(source), "{source}");
-        assert_eq!(
-            parse_with_options(source, ALL).unwrap(),
-            parse_with_options(source, IS_COMMENTS).unwrap(),
-            "{source}"
-        );
+        assert_eq!(words(source), 0, "{source}");
+        if let Some(equals) = equals_spelling(source) {
+            assert_eq!(statements(source), statements(&equals), "{source}");
+        }
     }
-}
-
-#[test]
-fn the_option_changes_nothing_without_is_assignments() {
-    for source in [
-        "a is A if c else B",
-        "a is c ? A : B",
-        "a is A if c1 else B if c2 else C",
-        "value is \"EXACT\"",
-        "{ a is A if c else B }",
-        "a is 1 ? 2 : 3",
-        "while v is x: T",
-        "suppose v is x: T",
-        "if v is X:\n    a = A if c else B",
-        "a = A if c else B",
-        "a = c ? A : B",
-        "x = (v is X) ? A : B",
-        "x = [A if c else B for c in cs]",
-        "f = () => { a is A if c else B }",
-        "t = `${(() => { a is A if c else B })()}`",
-        "a is",
-        "is = 4\na = 1\na is 5",
-    ] {
-        assert_eq!(
-            parse_with_options(source, ALONE).unwrap(),
-            accepted(source),
-            "{source}"
-        );
-        assert_eq!(
-            parse_with_options(source, COMMENTS_ALONE).unwrap(),
-            parse_with_options(source, COMMENTS).unwrap(),
-            "{source}"
-        );
-    }
-    let mut alone = Runtime::with_options(ALONE);
+    assert_eq!(words("a is A"), 1);
     assert_eq!(
-        failure(&mut alone, "c = true\na is A if c else B"),
-        "ReferenceError: a is not defined (line 2, column 1)"
-    );
-    assert_eq!(
-        failure(&mut Runtime::new(), "c = true\na is A if c else B"),
-        "ReferenceError: a is not defined (line 2, column 1)"
-    );
-    assert_eq!(
-        failure(
-            &mut Runtime::with_options(IS),
-            "c = true\na is A if c else B"
-        ),
-        "ReferenceError: A is not defined (line 2, column 1)"
-    );
-    assert_eq!(
-        parse_expression_with_options("A if c else B", WORDS).unwrap(),
-        parse_expression("A if c else B").unwrap()
+        parse_expression("A if c else B").unwrap(),
+        conditional(name("c"), name("A"), name("B"))
     );
 }
 
 #[test]
-fn every_is_assignment_value_without_word_branches_keeps_its_tree() {
+fn every_is_assignment_value_without_word_branches_builds_the_tree_of_its_equals_spelling() {
     let targets = ["a", "o.x", "this.p", "$Order.p", "(a)", "a@first"];
     let values = [
         "5",
         "\"good\"",
-        "good",
         "(good)",
         "good.x",
         "good()",
@@ -453,17 +368,15 @@ fn every_is_assignment_value_without_word_branches_keeps_its_tree() {
         "b = c",
         "b = c ? x : y",
         "b += 1",
-        "suppose",
         "all x in xs: x > 0",
         "sum of xs",
     ];
     for target in targets {
         for value in values {
             let spelled = format!("{target} is {value}");
-            assert_eq!(statements(&spelled), is_alone(&spelled), "{spelled}");
             assert_eq!(
-                parse_with_options(&spelled, ALL).unwrap(),
-                parse_with_options(&spelled, IS_COMMENTS).unwrap(),
+                statements(&spelled),
+                statements(&format!("{target} = {value}")),
                 "{spelled}"
             );
         }
@@ -507,17 +420,17 @@ fn word_branches_render_with_is_and_read_back_as_the_same_statement() {
     }
     assert_ne!(
         generate_all(&statements("{ a is A if c else B }")),
-        generate_all(&accepted("{ a = A if c else B }"))
+        generate_all(&statements("{ a = A if c else B }"))
     );
     assert_eq!(
         generate_all(&statements("{ a is 1 if c else 2 }")),
-        generate_all(&accepted("{ a = 1 if c else 2 }"))
+        generate_all(&statements("{ a = 1 if c else 2 }"))
     );
 }
 
 #[test]
 fn a_word_branch_reads_its_variable_once_defined_and_its_text_otherwise() {
-    let mut runtime = Runtime::with_options(WORDS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "c = true\na is A if c else B\nb is c ? A : B\nq is 'A' if c else \"B\"\nassert([a, b, q], [\"A\", \"A\", \"A\"])\na",
@@ -562,7 +475,7 @@ fn a_word_branch_reads_its_variable_once_defined_and_its_text_otherwise() {
 
 #[test]
 fn constructors_and_class_level_rules_take_word_branches_per_instance() {
-    let mut runtime = Runtime::with_options(WORDS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "class Order(total):\n    this.total = total\n    this.size is BIG if this.total > 10 else SMALL\n$Order.state is OPEN if $Order.total > 0 else EMPTY\n$Order.flag is $Order.total > 0 ? YES : NO\nfirst = Order(0)\nsecond = Order(20)\nassert([first.size, second.size], [\"SMALL\", \"BIG\"])\nassert([first.state, second.state], [\"EMPTY\", \"OPEN\"])\nassert([first.flag, second.flag], [\"NO\", \"YES\"])\nsecond.state",
@@ -599,13 +512,6 @@ fn constructors_and_class_level_rules_take_word_branches_per_instance() {
         ),
         "ReferenceError: MISSING is not defined (line 1, column 1)"
     );
-    assert_eq!(
-        failure(
-            &mut Runtime::with_options(IS),
-            "class Order(total):\n    this.total = total\n$Order.bad is MISSING if $Order.total > 0 else OTHER"
-        ),
-        "ReferenceError: MISSING is not defined (line 3, column 1)"
-    );
     expect(
         &mut runtime,
         "$Order.ok is MISSING if $Order.total > 0 else OTHER\n[first.ok, second.ok]",
@@ -631,7 +537,7 @@ fn words_that_name_a_local_class_function_or_global_read_them() {
 
 #[test]
 fn hypotheticals_and_rollback_restore_word_branches() {
-    let mut runtime = Runtime::with_options(WORDS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "c = true\na is A if c else B\nsuppose A = 9:\n    assert(a, 9)\nsuppose c = false:\n    assert(a, \"B\")\nassert(a, \"A\")\na",
@@ -749,7 +655,7 @@ fn word_branches_apply_in_every_statement_position_of_an_is_assignment() {
         );
         assert_eq!(
             without_word_markers(&tree),
-            format!("{:?}", accepted(symbol)),
+            format!("{:?}", statements(symbol)),
             "{spelled}"
         );
     }
@@ -761,9 +667,7 @@ fn every_statement_position_takes_word_branches() {
         "c = true\nif true: one is ONE if c else NO\nif false:\n    two is 0\nelse:\n    two is TWO if c else NO\n{ three is THREE if c else NO }\ntry:\n    throw \"four\"\ncatch issue:\n    four is FOUR if issue is \"four\" else NO\nn = 0\nwhile n < 1:\n    n is n + 1\n    five is FIVE if n > 0 else NO\ndef six():\n    local is SIX if c else NO\n    return local\nf = () => { seven is SEVEN if c else NO }\nf()\nr = `${[8].map(v => { eight is c ? EIGHT : NO; return eight })}`\nclass K:\n    this.p is TEN if c else NO\nsuppose c = false:\n    eleven is ELEVEN if c else NO\n    assert(eleven, \"NO\")\nassert([one, two, three, four, five, six(), seven, eight, K().p], [\"ONE\", \"TWO\", \"THREE\", \"FOUR\", \"FIVE\", \"SIX\", \"SEVEN\", \"EIGHT\", \"TEN\"])\nr",
         "\"EIGHT\"",
     );
-    let Expr::Function(function) =
-        parse_expression_with_options("() => { a is A if c else B }", WORDS).unwrap()
-    else {
+    let Expr::Function(function) = parse_expression("() => { a is A if c else B }").unwrap() else {
         panic!("a function literal");
     };
     let FunctionBody::Block(body) = &function.body else {
@@ -773,7 +677,7 @@ fn every_statement_position_takes_word_branches() {
 }
 
 #[test]
-fn malformed_values_report_the_diagnostics_of_is_assignments() {
+fn malformed_values_report_the_diagnostics_of_equals() {
     for value in [
         "A if c else",
         "A if c else\n",
@@ -791,29 +695,24 @@ fn malformed_values_report_the_diagnostics_of_is_assignments() {
         "A if c else B@",
         "c ? ? A : B",
     ] {
-        let source = format!("a is {value}");
-        assert_eq!(
-            syntax_error(&source, WORDS),
-            syntax_error(&source, IS),
-            "{source}"
-        );
+        assert_diagnostics_of_equals(&format!("a is {value}"));
     }
     assert_eq!(
-        syntax_error("a is A if c else", WORDS),
+        syntax_error("a is A if c else"),
         ("Unexpected end of input".to_string(), Position::new(1, 17))
     );
     assert_eq!(
-        syntax_error("a is c ? A", WORDS),
+        syntax_error("a is c ? A"),
         (
             "Expected ':' but found end of input".to_string(),
             Position::new(1, 11)
         )
     );
     assert_eq!(
-        syntax_error("a is c ? A : (1 + )", WORDS),
+        syntax_error("a is c ? A : (1 + )"),
         ("Unexpected ')'".to_string(), Position::new(1, 20))
     );
-    let mut runtime = Runtime::with_options(WORDS);
+    let mut runtime = Runtime::new();
     assert_eq!(
         failure(&mut runtime, "c = true\na is (A) if c else B"),
         "ReferenceError: A is not defined (line 2, column 1)"
@@ -828,13 +727,6 @@ fn malformed_values_report_the_diagnostics_of_is_assignments() {
     );
     assert_eq!(
         failure(&mut runtime, "c = true\na is X if c else Y = 5"),
-        "SyntaxError: Cannot assign to (c?X:Y) (line 2, column 1)"
-    );
-    assert_eq!(
-        failure(
-            &mut Runtime::with_options(IS),
-            "c = true\na is X if c else Y = 5"
-        ),
         "SyntaxError: Cannot assign to (c?X:Y) (line 2, column 1)"
     );
     assert!(!runtime.state.has_variable("c"));
@@ -864,21 +756,18 @@ fn consequent_chain(levels: usize) -> (String, String) {
 }
 
 #[test]
-fn word_chains_stop_where_the_chains_of_is_assignments_stop_and_read_back_at_their_deepest() {
+fn word_chains_stop_where_the_chains_of_equals_stop_and_read_back_at_their_deepest() {
     let chains: [fn(usize) -> (String, String); 3] =
         [python_chain, alternate_chain, consequent_chain];
     for chain in chains {
         let limit = (1..128)
-            .find(|&levels| Runtime::check_with_options(&chain(levels).0, IS).is_err())
+            .find(|&levels| Runtime::check(&chain(levels).0).is_err())
             .expect("a chain of conditionals stops at a parser limit");
-        for levels in 1..=limit {
-            let (source, _) = chain(levels);
-            assert_eq!(
-                Runtime::check_with_options(&source, WORDS),
-                Runtime::check_with_options(&source, IS),
-                "{source}"
-            );
+        for levels in 1..limit {
+            let equals = equals_spelling(&chain(levels).0).unwrap();
+            assert!(Runtime::check(&equals).is_ok(), "{equals}");
         }
+        assert_diagnostics_of_equals(&chain(limit).0);
         let (source, selected) = chain(limit - 1);
         let parsed = statements(&source);
         assert_eq!(statements(&generate_all(&parsed)), parsed, "{source}");
@@ -899,7 +788,7 @@ fn nuc86_comparisons_in_conditions_work_beside_word_branches() {
 
 #[test]
 fn explanations_and_graph_keys_show_word_branches() {
-    let mut runtime = Runtime::with_options(WORDS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "c = true\na is A if c else B\nb is 1 if c else 2\no = {x: 1}\no.x is A if c else B\nclass Order:\n    pass\n$Order.state is OPEN if c else CLOSED\nfirst = Order()\n{ total is A if c else (B) }\na",
@@ -931,26 +820,20 @@ fn explanations_and_graph_keys_show_word_branches() {
 }
 
 #[test]
-fn the_option_is_explicit_per_runtime_and_survives_clear() {
-    for runtime in [Runtime::new(), Runtime::default()] {
-        assert_eq!(runtime.options(), SyntaxOptions::default());
-        assert!(!runtime.options().conditional_words);
+fn word_branches_survive_clear_and_reach_every_parse_entry_point() {
+    for mut runtime in [Runtime::new(), Runtime::default()] {
+        assert_eq!(
+            run_ok(&mut runtime, "c = true\na is A if c else B\na"),
+            Value::string("A")
+        );
+        runtime.clear();
+        assert_eq!(
+            run_ok(&mut runtime, "b is YES if true else NO\nb"),
+            Value::string("YES")
+        );
     }
-    let mut runtime = Runtime::with_options(WORDS);
-    assert_eq!(runtime.options(), WORDS);
-    assert_eq!(
-        run_ok(&mut runtime, "c = true\na is A if c else B\na"),
-        Value::string("A")
-    );
-    runtime.clear();
-    assert_eq!(runtime.options(), WORDS);
-    assert_eq!(
-        run_ok(&mut runtime, "b is YES if true else NO\nb"),
-        Value::string("YES")
-    );
-    assert!(Runtime::check_with_options("a is A if c else B", WORDS).is_ok());
-    let program =
-        parse_program_with_options("x = 1\n  \na is A if c else B\nb is 2", WORDS).unwrap();
+    assert!(Runtime::check("a is A if c else B").is_ok());
+    let program = parse_program("x = 1\n  \na is A if c else B\nb is 2").unwrap();
     assert_eq!(program.statements.len(), 3);
     assert_eq!(
         program.positions,
@@ -961,7 +844,7 @@ fn the_option_is_explicit_per_runtime_and_survives_clear() {
         ]
     );
     assert_eq!(
-        nucleoid::statement::compile_with_options("a is A if c else B", WORDS)
+        nucleoid::statement::compile("a is A if c else B")
             .unwrap()
             .statements,
         statements("a is A if c else B")
@@ -969,29 +852,23 @@ fn the_option_is_explicit_per_runtime_and_survives_clear() {
 }
 
 #[test]
-fn the_option_combines_with_c_style_comments() {
-    let mut runtime = Runtime::with_options(ALL);
+fn word_branches_combine_with_c_style_comments() {
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "c = true // a flag\na is A /* first */ if c else B // second\nb is c ? /* yes */ YES : NO\nx is 6 / 2 if c else 0\nassert([a, b, x], [\"A\", \"YES\", 3])\na",
         "\"A\"",
     );
     assert_eq!(
-        parse_with_options("a is A /* x */ if c else /* y */ B // z", ALL).unwrap(),
+        parse("a is A /* x */ if c else /* y */ B // z").unwrap(),
         statements("a is A if c else B")
-    );
-    let mut comments = Runtime::with_options(COMMENTS_ALONE);
-    assert_eq!(
-        failure(&mut comments, "c = true\na is A if c else B // words"),
-        "ReferenceError: a is not defined (line 2, column 1)"
     );
 }
 
 #[test]
 fn the_documented_examples_run_as_written() {
     let tiles = "class Tile(symmetric, parts):\n    this.symmetric = symmetric\n    this.parts = parts\nfirst = Tile(true, [1, 1])\nsecond = Tile(false, [1, 2])\n";
-    expect(
-        &mut Runtime::with_options(IS),
+    fresh(
         &format!(
             "{tiles}$Tile.fill is 'B' if $Tile.symmetric else 'C'\n$Tile.mark is 'A' if $Tile.parts.distinct().length is 1 else 0\n[first.fill, second.fill, first.mark, second.mark]"
         ),
@@ -1003,20 +880,6 @@ fn the_documented_examples_run_as_written() {
         ),
         "[\"B\",\"C\",\"A\",0]",
     );
-    for rule in [
-        "$Tile.fill is B if $Tile.symmetric else C",
-        "$Tile.mark is A if $Tile.parts.distinct().length is 1 else 0",
-    ] {
-        let missing = if rule.contains("fill") { "B" } else { "A" };
-        assert_eq!(
-            failure(&mut Runtime::with_options(IS), &format!("{tiles}{rule}")),
-            format!("ReferenceError: {missing} is not defined (line 6, column 1)")
-        );
-    }
-    assert_eq!(
-        failure(&mut Runtime::with_options(IS), "y is A if true else B"),
-        "ReferenceError: A is not defined (line 1, column 1)"
-    );
     fresh(
         "class Order(total):\n    this.total = total\n    this.size is BIG if this.total > 10 else SMALL\n$Order.state is OPEN if $Order.total > 0 else EMPTY\nfirst = Order(0)\nsecond = Order(20)\nassert([first.size, second.size], [\"SMALL\", \"BIG\"])\nassert([first.state, second.state], [\"EMPTY\", \"OPEN\"])\nOPEN = \"open\"\nassert(second.state, \"open\")\nsecond.state",
         "\"open\"",
@@ -1025,17 +888,7 @@ fn the_documented_examples_run_as_written() {
         "value is EXACT\nlabel is MATCH if value is EXACT else MISS\nother is MATCH if value is not EXACT else MISS\nassert([label, other], [\"MATCH\", \"MISS\"])\nEXACT = \"B\"\nassert([value, label, other], [\"B\", \"MATCH\", \"MISS\"])\nlabel",
         "\"MATCH\"",
     );
-    for options in [IS, WORDS] {
-        expect(
-            &mut Runtime::with_options(options),
-            "c = false\na is c ? A : 1\na",
-            "1",
-        );
-    }
-    assert_eq!(
-        generate_all(&is_alone("{ a is A if c else B }")),
-        "{a=(c?A:B)}"
-    );
+    fresh("c = false\na is c ? A : 1\na", "1");
     fresh(
         "shape is SQUARE\nsize is 12\nlabel is BIG if size > 10 else SMALL\nmark is CORNER if shape is SQUARE else EDGE\nassert([label, mark], [\"BIG\", \"CORNER\"])\nBIG = \"big\"\nsize = 3\nassert([label, mark], [\"SMALL\", \"CORNER\"])\nsize = 30\nassert(label, \"big\")\nlabel",
         "\"big\"",
@@ -1054,12 +907,12 @@ fn the_documented_examples_run_as_written() {
     );
     assert_eq!(
         failure(
-            &mut Runtime::with_options(WORDS),
+            &mut Runtime::new(),
             "shape is SQUARE\nmark is shape is SQUARE ? CORNER : EDGE"
         ),
         "ReferenceError: is is not defined (line 2, column 15)"
     );
-    let mut runtime = Runtime::with_options(WORDS);
+    let mut runtime = Runtime::new();
     expect(
         &mut runtime,
         "ready = false\nstatus is OPEN if ready else WAITING\nOPEN = \"open\"\nready = true\nstatus",
@@ -1067,16 +920,12 @@ fn the_documented_examples_run_as_written() {
     );
     assert_eq!(
         failure(
-            &mut Runtime::with_options(WORDS),
+            &mut Runtime::new(),
             "ready = false\nlevel is (HIGH if ready else LOW)"
         ),
         "ReferenceError: LOW is not defined (line 2, column 1)"
     );
-    let mut runtime = Runtime::with_options(SyntaxOptions {
-        is_assignment: true,
-        conditional_words: true,
-        ..SyntaxOptions::default()
-    });
+    let mut runtime = Runtime::new();
     runtime.run("ready = false").unwrap();
     runtime.run("status is OPEN if ready else WAITING").unwrap();
     assert_eq!(runtime.run("status").unwrap().to_string(), "WAITING");

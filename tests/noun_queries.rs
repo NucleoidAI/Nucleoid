@@ -936,7 +936,7 @@ fn malformed_noun_queries_report_where_the_operand_should_start() {
         ("x = sum of of xs", "Unexpected keyword 'of'", 1, 15),
         ("x = mode of :", "Unexpected ':'", 1, 14),
         ("for x of mode of:\n    pass", "Unexpected ':'", 1, 17),
-        ("`${(sum of)}`", "Unexpected ')'", 1, 9),
+        ("`${(sum of)}`", "Unexpected ')'", 1, 12),
     ] {
         let error = Runtime::check(source).unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Syntax, "{source}");

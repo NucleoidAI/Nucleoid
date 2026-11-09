@@ -2,10 +2,10 @@ use std::ops::Range;
 
 use logos::Logos;
 
+use super::excerpt;
 use super::indentation::{Lines, line_position, line_position_without_comments};
 use super::raw::Raw;
 use super::token::Token;
-use super::{SyntaxOptions, excerpt};
 use crate::error::{Error, Position, Result};
 
 pub(super) struct Scanned {
@@ -18,11 +18,10 @@ pub(super) struct Scanned {
 pub(super) fn scan_until<'a>(
     source: &'a str,
     lines: &'a Lines<'a>,
-    options: SyntaxOptions,
     mut stop: impl FnMut(&Token) -> bool,
 ) -> Result<(Vec<Scanned>, Option<usize>)> {
     let mut lexer = Raw::lexer(source);
-    let mut scanner = Scanner::new(source, lines, options);
+    let mut scanner = Scanner::new(source, lines);
 
     while let Some(next) = lexer.next() {
         let span = lexer.span();
@@ -65,7 +64,6 @@ pub(super) fn scan_until<'a>(
 struct Scanner<'a> {
     source: &'a str,
     lines: &'a Lines<'a>,
-    options: SyntaxOptions,
     scanned: Vec<Scanned>,
     comments: Vec<Range<usize>>,
     layout_depth: usize,
@@ -74,11 +72,10 @@ struct Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
-    fn new(source: &'a str, lines: &'a Lines<'a>, options: SyntaxOptions) -> Self {
+    fn new(source: &'a str, lines: &'a Lines<'a>) -> Self {
         Scanner {
             source,
             lines,
-            options,
             scanned: Vec::new(),
             comments: Vec::new(),
             layout_depth: 0,
@@ -87,7 +84,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn previous(&self) -> Option<&Scanned> {
-        if self.options.c_style_comments && self.layout_depth > 0 {
+        if self.layout_depth > 0 {
             self.last_non_newline
                 .and_then(|index| self.scanned.get(index))
         } else {
@@ -101,9 +98,6 @@ impl<'a> Scanner<'a> {
     }
 
     fn comment(&mut self, start: usize) -> Result<Option<usize>> {
-        if !self.options.c_style_comments {
-            return Ok(None);
-        }
         let remainder = self.source.get(start..).unwrap_or_default();
         let end = if remainder.starts_with("//") {
             start + remainder.find('\n').unwrap_or(remainder.len())

@@ -9,7 +9,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Instruction dataset | [`dataset.ed36ccf7.json`](../src/dataset/dataset.ed36ccf7.json): the puzzle's 4 original training pairs and its test pair, 5 pattern instances, one per pair; version 2, with the standard entries and plain fixed anchors, replaces version 1 of `f4cf680` and is committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | [NUC 85](../../docs/nuc-0085.md), Fixed Cross-Property Class Anchors: Automatic-Accepted, because it meets every hard criterion while the run was no exact match and the independent evaluation rejected it; proposal strategy `reuse_first`, learning updated |
-| Solver changes | None; suggested changes await review, not applied; since 8-Nov-2026 `src/lib/nucleoid.ts` passes `--is-assignment`, which every respelled dataset needs |
+| Solver changes | None; suggested changes await review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default |
 | Solver runs | 2 local runs on 5-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 on the NUC 85 candidate exit 7, difference 7; none of the current version; none of the 8-Nov-2026 `is` version |
 | Updated | 8-Nov-2026 |
 

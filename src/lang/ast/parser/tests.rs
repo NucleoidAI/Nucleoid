@@ -1391,8 +1391,10 @@ fn while_conditions_leave_suppose_heads_and_value_assignments_to_the_accepted_pa
 #[test]
 fn word_headers_consult_the_accepted_grammar_without_changing_the_parser() {
     for (source, condition) in [
-        ("while v is x: T", None),
-        ("while v is assert: a, b", None),
+        ("while v is x: T", Some("(v is x)")),
+        ("while f() is x: T", None),
+        ("while v is assert: a, b", Some("(v is assert)")),
+        ("while f() is assert: a, b", None),
         ("while x is Y: pass", Some("(x is Y)")),
         ("while x is not Y: pass", Some("(x is not Y)")),
         ("while ready: f(x is Y)", Some("ready")),
@@ -1421,7 +1423,8 @@ fn word_headers_consult_the_accepted_grammar_without_changing_the_parser() {
     }
 
     for (source, premise) in [
-        ("suppose v is x: T", None),
+        ("suppose v is x: T", Some("(v is x)")),
+        ("suppose f() is x: T", None),
         ("suppose v is Y: pass", Some("(v is Y)")),
     ] {
         let mut parser = Parser::new(tokenize(source).unwrap());

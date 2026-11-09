@@ -4,8 +4,6 @@ use std::process::{Command, Output, Stdio};
 
 const BANNER: &str = "🌿 Nucleoid - Logic Language for World Models\n🌎 Inspired by Nature\nType .help for available commands.\n";
 
-const WORDS: [&str; 2] = ["--is-assignment", "--conditional-words"];
-
 struct SourceFile(PathBuf);
 
 impl SourceFile {
@@ -62,67 +60,37 @@ fn text(bytes: &[u8]) -> &str {
 }
 
 #[test]
-fn the_flag_reads_word_branches_in_files_only_beside_is_assignments() {
+fn files_read_word_branches_without_a_flag() {
     let file = SourceFile::new("file");
     let source = "ready = true\nstatus is OPEN if ready else WAITING\nlevel is ready ? HIGH : LOW\nOPEN = 1\n[status, level]";
-    for options in [&WORDS[..], &["--conditional-words", "--is-assignment"][..]] {
-        let output = file.run(source, options);
-        assert!(output.status.success(), "{output:?}");
-        assert!(output.stderr.is_empty(), "{output:?}");
-        assert_eq!(text(&output.stdout), "[1.0,\"HIGH\"]\n");
-    }
-    let output = file.run(source, &["--is-assignment"]);
+    let output = file.run(source, &[]);
+    assert!(output.status.success(), "{output:?}");
+    assert!(output.stderr.is_empty(), "{output:?}");
+    assert_eq!(text(&output.stdout), "[1.0,\"HIGH\"]\n");
+    let output = file.run(source, &["--conditional-words"]);
     assert!(!output.status.success(), "{output:?}");
-    assert!(output.stdout.is_empty(), "{output:?}");
-    assert_eq!(
-        text(&output.stderr),
-        "ReferenceError: OPEN is not defined (line 2, column 1)\n"
+    assert!(
+        text(&output.stderr).contains("unexpected argument '--conditional-words'"),
+        "{output:?}"
     );
-    for options in [
-        &[][..],
-        &["--conditional-words"][..],
-        &["--c-style-comments", "--conditional-words"][..],
-    ] {
-        let output = file.run(source, options);
-        assert!(!output.status.success(), "{output:?}");
-        assert!(output.stdout.is_empty(), "{output:?}");
-        assert_eq!(
-            text(&output.stderr),
-            "ReferenceError: status is not defined (line 2, column 1)\n"
-        );
-    }
     let help = Command::new(env!("CARGO_BIN_EXE_nucleoid"))
         .arg("--help")
         .output()
         .unwrap();
     assert!(help.status.success(), "{help:?}");
     let help = text(&help.stdout);
-    assert!(help.contains("--conditional-words"), "{help}");
-    assert!(help.contains("--is-assignment"), "{help}");
+    assert!(!help.contains("--conditional-words"), "{help}");
     assert!(help.lines().all(|line| !line.ends_with('.')), "{help}");
 }
 
 #[test]
-fn the_flag_combines_with_c_style_comments_and_reports_the_errors_of_is_assignments() {
+fn word_branches_combine_with_c_style_comments_and_report_the_errors_of_is_assignments() {
     let file = SourceFile::new("comments");
     let source = "ready = false // flag\nstatus is OPEN /* yes */ if ready else WAITING // no\nlevel is 6 / 2 if ready else 0\n[status, level]";
-    for options in [
-        &[
-            "--is-assignment",
-            "--conditional-words",
-            "--c-style-comments",
-        ][..],
-        &[
-            "--c-style-comments",
-            "--conditional-words",
-            "--is-assignment",
-        ][..],
-    ] {
-        let output = file.run(source, options);
-        assert!(output.status.success(), "{output:?}");
-        assert!(output.stderr.is_empty(), "{output:?}");
-        assert_eq!(text(&output.stdout), "[\"WAITING\",0.0]\n");
-    }
+    let output = file.run(source, &[]);
+    assert!(output.status.success(), "{output:?}");
+    assert!(output.stderr.is_empty(), "{output:?}");
+    assert_eq!(text(&output.stdout), "[\"WAITING\",0.0]\n");
     for (source, expected) in [
         (
             "a is A if c else",
@@ -141,22 +109,18 @@ fn the_flag_combines_with_c_style_comments_and_reports_the_errors_of_is_assignme
             "SyntaxError: Cannot assign to (c?X:Y) (line 2, column 1)\n",
         ),
     ] {
-        for options in [&WORDS[..], &["--is-assignment"][..]] {
-            let output = file.run(source, options);
-            assert!(!output.status.success(), "{output:?}");
-            assert_eq!(text(&output.stderr), expected, "{source}");
-        }
+        let output = file.run(source, &[]);
+        assert!(!output.status.success(), "{output:?}");
+        assert_eq!(text(&output.stderr), expected, "{source}");
     }
 }
 
 #[test]
 fn graph_output_shows_word_branches_and_their_pending_words() {
     let file = SourceFile::new("graph");
-    let mut options = WORDS.to_vec();
-    options.push("--graph");
     let output = file.run(
         "c = true\na is A if c else B\n{ total is A if c else (B) }\na",
-        &options,
+        &["--graph"],
     );
     assert!(output.status.success(), "{output:?}");
     assert!(output.stderr.is_empty(), "{output:?}");
@@ -167,15 +131,12 @@ fn graph_output_shows_word_branches_and_their_pending_words() {
 }
 
 #[test]
-fn plain_and_redirected_repls_honor_the_flag_and_clear_keeps_it() {
+fn plain_and_redirected_repls_read_word_branches_and_clear_keeps_them() {
     for plain in [false, true] {
         for newline in ["\n", "\r\n"] {
-            let mut options = WORDS.to_vec();
-            if plain {
-                options.push("--plain");
-            }
+            let options: &[&str] = if plain { &["--plain"] } else { &[] };
             let source = "ready = false\nstatus is OPEN if ready else WAITING\nready = true\nstatus\n.clear\nb is YES if true else NO\nb\nif true:\n    c is ON if true else OFF\n\nc\n.exit\n";
-            let output = repl(&source.replace('\n', newline), &options);
+            let output = repl(&source.replace('\n', newline), options);
             assert!(output.status.success(), "{output:?}");
             assert!(output.stderr.is_empty(), "{output:?}");
             assert_eq!(
@@ -186,14 +147,4 @@ fn plain_and_redirected_repls_honor_the_flag_and_clear_keeps_it() {
             );
         }
     }
-    let output = repl(
-        "b is YES if true else NO\nb\n",
-        &["--plain", "--is-assignment"],
-    );
-    assert!(output.status.success(), "{output:?}");
-    assert_eq!(text(&output.stdout), BANNER);
-    assert_eq!(
-        text(&output.stderr),
-        "ReferenceError: YES is not defined (line 1, column 1)\nReferenceError: b is not defined (line 1, column 1)\n"
-    );
 }
