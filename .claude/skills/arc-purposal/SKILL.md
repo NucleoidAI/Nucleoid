@@ -273,7 +273,12 @@ The only other NUC an invocation prepares is its
    runtime applicability (ask the user when either is uncertain), and
    allocate the NUC under the skill's
    [allocation step](../nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only):
-   draft its number, category and proposal details from the request, then
+   draft its number, category and proposal details from the request. Right
+   before the allocation commit, pull again and check the draft against every
+   NUC that `main` now records. When another NUC already uses the drafted
+   number, claim the next one and renumber the draft. When a NUC of any status
+   already proposes the requested concept, remove the uncommitted draft and
+   its index rows, allocate nothing, and stop and report that NUC. Otherwise
    commit and push that Draft alone. Pin the pushed allocation as the accepted
    revision, record its immutable baseline, and create a candidate worktree
    from it. Complete the
