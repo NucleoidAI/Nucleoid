@@ -2473,6 +2473,55 @@ statement positions; caught values and transaction recovery are unchanged.
   assertions and expected return. New RHS call ASTs intentionally differ;
   unchanged historical sources and their complete ASTs remain protected.
 
+## Reactive cotangent
+
+- The [NUC 100 candidate](docs/nuc-0100.md) adds only unshadowed static
+  `Math.cot(value)`, exactly the numeric composition `1 / Math.tan(value)`.
+  Inputs are radians, as for tangent; the accepted composition stays available.
+- Apply Math's existing any-supplied-`Undefined` gate before intrinsic
+  first-argument conversion, then compute exactly `1.0 / first.tan()`.
+  Do not substitute cosine divided by sine, rearrange operations, use higher
+  precision, normalize angles or special-case any input.
+- Every non-NaN result agrees by bits with the accepted tangent followed by
+  reciprocal, including finite extremes, subnormal inputs and signed-zero
+  reciprocal infinities. Positive zero yields positive infinity, negative
+  zero yields negative infinity, and infinite or NaN inputs yield numeric NaN.
+  NaNs agree by classification, without a payload guarantee.
+- Omission supplies numeric NaN. Literal null converts to zero, booleans to
+  zero/one, strings and empty/singleton lists keep intrinsic conversion, and
+  dates contribute milliseconds. Other nonnumeric conversions produce
+  numeric NaN, not a new type error. Conversion never resolves a shadowable
+  `Number` binding.
+- Every supplied expression evaluates once left to right, including ignored
+  extras and expressions after Undefined. Extras are not numerically converted
+  but retain their effects, strict errors, reads, dependencies and the
+  any-supplied-Undefined gate.
+- Missing properties, deletion and later definition retain deferral and
+  recovery. Literal-null numeric conversion does not override live-input
+  assignment or parameter-null deferral. Class rules remain independent per
+  instance; scopes, call frames, receivers, subscriptions and transactions,
+  including rollback, use the existing machinery unchanged.
+- State/local `Math` bindings still shadow the static namespace. Ordinary
+  `.cot` members and methods keep their lookup. Reading `Math.cot` as a value
+  remains unsupported/Undefined, not a first-class callable.
+- Introduce no arity, conversion, numeric or range error. Strict unknown
+  arguments retain `ReferenceError("<name> is not defined")`, including extras
+  after Undefined. Other unknown static methods retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after their unchanged gate.
+  Numeric `Math = 7` retains the ordinary receiver error
+  `TypeError("number.cot is not a function")`. Preserve error positions and
+  caught values. Former unknown unshadowed `Math.cot(...)` calls may succeed;
+  other accepted behavior and diagnostics remain unchanged.
+- Add no parser/lexer form, public Rust API/type, dependency, option or project
+  version. All legacy Math helpers and arithmetic forms remain available.
+- The appended spec entry `Nucleoid keeps cotangents reactive`, reference
+  entry `Nucleoid preserves cotangent argument dependencies`, and example
+  `Cotangents keep directional ratios live as angles change` retain the
+  caller's executed accepted-tangent counterparts except for their single
+  designated RHS. Canonical tangent assertions, order, returns and executed
+  coverage remain unchanged.
+
 ## Read-only state versions
 
 - A postfix `reference@0`, `@1`, ... reads a non-negative, oldest-first
@@ -22885,4 +22934,20 @@ catch error:
 assert([listed, spelled], [[6, 14], [6, 14]])
 listed
 # return: [6,14]
+---
+# Nucleoid keeps cotangents reactive
+
+angle = 0
+ratio = Math.cot(angle)
+assert(ratio, Number.POSITIVE_INFINITY)
+angle = 1
+assert(ratio, 1 / Math.tan(1))
+angle = -0
+assert(ratio, Number.NEGATIVE_INFINITY)
+angle = -1
+assert(ratio, 1 / Math.tan(-1))
+angle = Number.NaN
+assert(Number.isNaN(ratio), true)
+angle = 0.5
+assert(ratio, 1 / Math.tan(0.5))
 ```

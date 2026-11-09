@@ -1222,6 +1222,14 @@ assert(multiplier, 32)
 - Accepted [NUC 56](docs/nuc-0056.md) names `Math.exp2(value)` while retaining
   the exact accepted `Math.pow(2, value)` numeric operation and reactive call
   behavior. Ordinary `Math.pow` remains supported.
+- The [NUC 100 candidate](docs/nuc-0100.md) adds unshadowed static
+  `Math.cot(value)`, exactly the existing `1 / Math.tan(value)` in radians:
+  intrinsic conversion, tangent, then reciprocal with the same rounding.
+  Missing-first NaN, signed-zero infinities, ignored-extra evaluation and
+  dependencies, live-null/parameter deferral, shadowing and rollback retain
+  Math's existing behavior. It adds no syntax or callable method reference.
+  See the [contract](nucleoid.spec.md#reactive-cotangent) and
+  [reactive direction example](docs/examples.md#reactive-cotangent).
 
 **Thin arrows and lambdas spell the same callbacks**
 

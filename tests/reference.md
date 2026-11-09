@@ -2498,4 +2498,25 @@ assert(picked, [24, 60])
 limit = 5
 picked
 # return: [24,60,16]
+---
+# Nucleoid preserves cotangent argument dependencies
+
+class Probe
+probe = Probe()
+probe.angle = 1
+probe.extra = 3
+ratio = Math.cot(probe.angle, probe.extra)
+assert(ratio, 1 / Math.tan(1))
+probe.extra = null
+assert(ratio, null)
+probe.extra = Number.NaN
+assert(ratio, 1 / Math.tan(1))
+delete probe.angle
+assert(ratio, null)
+probe.angle = 0
+assert(ratio, Number.POSITIVE_INFINITY)
+delete probe.extra
+assert(ratio, null)
+probe.extra = [1, 2]
+assert(ratio, Number.POSITIVE_INFINITY)
 ```

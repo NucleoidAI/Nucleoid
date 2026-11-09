@@ -73,6 +73,7 @@ fn math_unary(name: &str, first: f64) -> Option<f64> {
         "sin" => first.sin(),
         "cos" => first.cos(),
         "tan" => first.tan(),
+        "cot" => 1.0 / first.tan(),
         "atan" => first.atan(),
         "asin" => first.asin(),
         "acos" => first.acos(),

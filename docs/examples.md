@@ -3578,6 +3578,39 @@ limit = 1
   both parcels back. See [NUC 92](nuc-0092.md) and the
   [root contract](../nucleoid.spec.md#list-comprehensions).
 
+## Reactive cotangent
+
+**Cotangents keep directional ratios live as angles change**
+
+```nuc
+class Direction(angle):
+    this.angle = angle
+$Direction.ratio = Math.cot($Direction.angle)
+north = Direction(0)
+diagonal = Direction(1)
+assert([north.ratio, diagonal.ratio], [Number.POSITIVE_INFINITY, 1 / Math.tan(1)])
+diagonal.angle = -1
+assert(diagonal.ratio, 1 / Math.tan(-1))
+north.angle = 0.5
+assert(north.ratio, 1 / Math.tan(0.5))
+try:
+    diagonal.angle = 0
+    throw "restore"
+catch error:
+    assert(error, "restore")
+assert(diagonal.angle, -1)
+assert(diagonal.ratio, 1 / Math.tan(-1))
+```
+
+- The [NUC 100 candidate](nuc-0100.md) names exactly `1 / Math.tan(angle)`,
+  with radians as input and tangent followed by reciprocal in that order.
+  Each direction's ratio follows its own angle; a failed transaction restores
+  the angle and its derived ratio. The tangent assertions remain independent
+  controls. See the [root contract](../nucleoid.spec.md#reactive-cotangent).
+- Intrinsic numeric conversion, missing-first NaN, signed-zero reciprocal
+  infinities, ignored-extra dependencies, the supplied-Undefined gate and
+  inherited live-null/parameter deferral remain as for existing Math calls.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -18977,6 +18977,46 @@ listed
 # return: [6,14]"#);
 }
 
+/// Nucleoid keeps cotangents reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_cotangents_reactive() {
+    let mut run = runner();
+    run("angle = 0");
+    run("ratio = Math.cot(angle)");
+    {
+        let actual = run("ratio");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("angle = 1");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.tan(1))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = -0");
+    {
+        let actual = run("ratio");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("angle = -1");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.tan(-1))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = Number.NaN");
+    assert_eq!(run("Number.isNaN(ratio)"), true);
+    run("angle = 0.5");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.tan(0.5))");
+        assert_eq!(actual, expected);
+    }
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

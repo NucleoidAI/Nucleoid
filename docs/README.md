@@ -2198,6 +2198,18 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
   writable list receiver in place; see
   [In-place list sorting](#in-place-list-sorting).
 - `Math.max` and `Math.min` propagate `NaN`, including when an argument cannot be coerced to a number.
+- The [NUC 100 candidate](nuc-0100.md) adds only unshadowed static
+  `Math.cot(value)`, exactly `1 / Math.tan(value)` with radians as input.
+  After the existing any-supplied-Undefined gate and intrinsic first-input
+  conversion, compute exactly `1.0 / first.tan()`, not cosine divided by sine
+  or a rearranged formula. Omission yields numeric NaN; signed-zero inputs
+  yield the corresponding reciprocal infinities. All extras still evaluate
+  once left to right and retain reads, dependencies and errors without numeric
+  conversion. Live-input/parameter deferral, shadowing, ordinary `.cot`
+  members, unsupported `Math.cot` value reads and rollback stay unchanged.
+  See the [cotangent contract](../nucleoid.spec.md#reactive-cotangent),
+  `Nucleoid preserves cotangent argument dependencies` in `tests/reference.md`,
+  and the [direction example](examples.md#reactive-cotangent).
 - Accepted [NUC 56](nuc-0056.md) adds only static `Math.exp2(value)`, computing
   exactly the accepted `Math.pow(2, value)` host powf operation after intrinsic
   first-input conversion and the existing supplied-Undefined gate. The
@@ -4036,6 +4048,7 @@ items.flatMap(callback)                 ordered one-level projection (Accepted N
 Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping (Accepted NUC 39)
 Math.toRadians(value)                   static division-first degree conversion (NUC 50 candidate)
 Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)
+Math.cot(value)                         static reciprocal of tangent in radians (NUC 100 candidate)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
