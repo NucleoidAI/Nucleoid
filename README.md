@@ -2112,6 +2112,30 @@ assert(cheap, ["pen"])
   enclosing function. See the
   [root contract](nucleoid.spec.md#list-comprehensions).
 
+## Every and predicate sentences
+
+**Every states a class-level claim as it is said**
+
+```nuc
+class Human(name: str):
+    this.name = name
+every Human is mortal
+every Human.legs is 2
+socrates = Human("Socrates")
+assert([socrates.mortal, socrates.legs], [true, 2])
+assert(every h in Human: h.mortal, true)
+```
+
+- [NUC 98](docs/nuc-0098.md) reads `every Human` as the class reference
+  `$Human`, so `every Human.legs is 2` is the class-level rule
+  `$Human.legs = 2`, and `every h in Human: h.mortal` as the quantifier
+  `all h in Human: h.mortal`.
+- The statement `every Human is mortal`, like `$Human is mortal`, states
+  `$Human.mortal = true` for every instance, and `why` reports it as that
+  rule. Elsewhere `every` stays an ordinary name, so `xs.every(...)` and a
+  variable named `every` work as before. See the
+  [root contract](nucleoid.spec.md#every-quantifiers-class-references-and-predicate-sentences).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

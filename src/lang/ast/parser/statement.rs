@@ -206,6 +206,10 @@ impl Parser {
             return self.is_assignment(expression);
         }
 
+        if self.starts_predicate(&expression) {
+            return self.predicate(&expression);
+        }
+
         self.expression_tail(expression)
     }
 

@@ -1209,7 +1209,7 @@ fn only_the_appended_cases_declare_enums_and_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 37);
-    assert_eq!(cases, 1044);
+    assert_eq!(cases, 1052);
 }
 
 #[test]

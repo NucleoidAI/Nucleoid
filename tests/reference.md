@@ -2519,4 +2519,19 @@ delete probe.extra
 assert(ratio, null)
 probe.extra = [1, 2]
 assert(ratio, Number.POSITIVE_INFINITY)
+---
+# Nucleoid states universal claims with every and is
+
+class Human(name: str):
+    this.name = name
+every Human is mortal
+socrates = Human("Socrates")
+every Human.legs is 2
+assert([socrates.mortal, socrates.legs], [true, 2])
+assert(every h in Human: h.mortal, true)
+plato = Human("Plato")
+plato.mortal = false
+assert(every h in Human: h.mortal, false)
+socrates.mortal
+# return: true
 ```

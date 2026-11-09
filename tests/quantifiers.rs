@@ -954,7 +954,6 @@ fn malformed_quantifiers_report_exact_errors() {
         ("ok = all (v) in xs: v", "Unexpected keyword 'in'", 1, 17),
         ("ok = all this in xs: 1", "Unexpected keyword 'in'", 1, 18),
         ("ok = all v of xs: v", "Unexpected keyword 'of'", 1, 15),
-        ("ok = every v in xs: v", "Unexpected keyword 'in'", 1, 17),
     ] {
         assert_eq!(
             syntax_error(source),
@@ -962,6 +961,10 @@ fn malformed_quantifiers_report_exact_errors() {
             "{source}"
         );
     }
+    assert_eq!(
+        parse("ok = every v in xs: v").unwrap(),
+        parse("ok = all v in xs: v").unwrap()
+    );
     let nested = format!("ok = {}true", "all v in xs: ".repeat(200));
     assert_eq!(syntax_error(&nested).0, "Expressions are nested too deeply");
     assert_eq!(

@@ -793,3 +793,56 @@ fn colon_free_condition_headers_buffer_at_variables_after_is_comparisons() {
         Some("b is @a + 2\n".to_string())
     );
 }
+
+#[test]
+fn every_quantifier_colons_pair_with_their_prefix_in_headers() {
+    for condition in [
+        "every v in xs: v > 0",
+        "every v in xs: v ? on : off",
+        "(every v in xs: v) and ready",
+        "every t in Task: any w in Worker: w.skill == t.skill",
+        "any t in Task: every w in Worker: w.skill == t.skill",
+        "ready ? every v in xs: v : false",
+        "every v in ready ? xs : ys: v",
+        "every Order.total > 10",
+        "every Order.total > 10 and every Order.open",
+    ] {
+        for prefix in ["if", "else if", "elif if", "else", "elif"] {
+            let line = format!("{prefix} {condition}");
+            let keyword = if prefix == "if" {
+                Keyword::If
+            } else {
+                Keyword::Else
+            };
+            assert!(indented_condition_header(&line, keyword), "{line:?}");
+            assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+        }
+    }
+    for line in [
+        "if every v in xs",
+        "if every v in xs: v > 0:",
+        "if every v in xs: v; other",
+        "if every v of xs: v",
+        "if every: v",
+        "if every in xs: v",
+        "if every x: v",
+    ] {
+        assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+    }
+    assert!(indented_body_header("if every v in xs: v > 0:"));
+    assert!(!indented_body_header("ok = every v in xs: v > 0"));
+    assert!(indented_alternative_header("else every v in xs: v > 1"));
+    assert_eq!(next_indentation("elif every v in xs: v", false), INDENT);
+    let mut pending = Pending::default();
+    assert_eq!(pending.accept("if every v in xs: v > 0"), None);
+    assert_eq!(pending.indentation, INDENT);
+    assert_eq!(pending.accept("    r = 1"), None);
+    assert_eq!(
+        pending.accept(""),
+        Some("if every v in xs: v > 0\n    r = 1\n".to_string())
+    );
+    assert_eq!(
+        pending.accept("every Human is mortal"),
+        Some("every Human is mortal\n".to_string())
+    );
+}

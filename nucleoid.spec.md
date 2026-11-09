@@ -3283,7 +3283,9 @@ statement positions; caught values and transaction recovery are unchanged.
   positions. In an object value, `is` directly followed by `:` stays the next
   comma-free property key.
 - Everywhere else, apart from the statements of
-  [Is assignments](#is-assignments), `is` keeps its accepted reading as a
+  [Is assignments](#is-assignments) and the predicate sentences of
+  [Every quantifiers, class references and predicate sentences](#every-quantifiers-class-references-and-predicate-sentences),
+  `is` keeps its accepted reading as a
   name that begins the next juxtaposed statement: expression statements,
   assignment, destructuring
   and `:=` values, `return`, `throw` and `delete` operands, the operand before
@@ -3364,7 +3366,11 @@ statement positions; caught values and transaction recovery are unchanged.
 - A leading expression that `:=` rejects also keeps the accepted reading:
   `f() is 5`, `1 is 2`, `a[0] is 1`, `this is 5`, `$Order is 5`,
   `a + b is 5`, `a = b is c` and `x => x is 5` are juxtaposed statements as
-  before, and destructuring declarations are unchanged. A statement that
+  before, and destructuring declarations are unchanged. The one exception is
+  a class reference without a property followed by `is` and one name, the
+  predicate sentence of
+  [Every quantifiers, class references and predicate sentences](#every-quantifiers-class-references-and-predicate-sentences):
+  `$Human is mortal` states `$Human.mortal = true`. A statement that
   begins with `why`, `affects`, `stated` or `derived` followed by `is` keeps
   its accepted reading as a reasoning selection of the name `is`, so those
   variables are assigned with `=`.
@@ -3789,8 +3795,9 @@ statement positions; caught values and transaction recovery are unchanged.
 - [NUC 62](docs/nuc-0062.md) adds the quantified expressions
   `all NAME in COLLECTION: CONDITION` and `any NAME in COLLECTION: CONDITION`.
   No keyword or lexer token is added. A quantifier starts only where the name
-  `all` or `any`, a binder name and the existing `in` keyword follow each
-  other. Everywhere else `all` and `any` keep every accepted reading:
+  `all`, `every` or `any`, a binder name and the existing `in` keyword follow
+  each other; `every` spells `all`. Everywhere else `all` and `any` keep every
+  accepted reading:
   variables, functions and calls, `Name.all()` and the `.any(callback)` list
   alias, object keys and values, parameters, loop variables and typed
   declarations. A variable named `all` or `any` does not disable quantifiers,
@@ -3864,8 +3871,8 @@ statement positions; caught values and transaction recovery are unchanged.
   [NUC 49](docs/nuc-0049.md), `else if` and `elif if` headers, and the indented
   direct alternatives `else any v in xs: v > 2` of
   [NUC 43](docs/nuc-0043.md). In direct-alternative and native REPL header
-  scans, a top-level quantifier's colon pairs with its `all` or `any` prefix,
-  as a conditional's colon pairs with its `?`.
+  scans, a top-level quantifier's colon pairs with its `all`, `every` or
+  `any` prefix, as a conditional's colon pairs with its `?`.
 - At the top level of a template interpolation, whose trailing tokens are
   ignored, a quantifier is not recognized, so `` `${all v in xs: v}` `` still
   renders the variable `all`; parenthesize it, as in
@@ -3882,6 +3889,141 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid quantifies over class instances with all and any` through
   `Nucleoid rolls back failed quantifier updates` specify the executable
   behavior.
+- `every` is a third prefix that spells `all`, as
+  [Every quantifiers, class references and predicate sentences](#every-quantifiers-class-references-and-predicate-sentences)
+  describes.
+
+## Every quantifiers, class references and predicate sentences
+
+- [NUC 98](docs/nuc-0098.md) adds three spellings of universal claims. Each
+  builds the syntax tree of an accepted form, so its results, dependencies,
+  errors and rendering are that form's. No token, keyword, syntax-tree
+  variant, error type or message, option or flag is added, and `every` stays
+  an ordinary identifier.
+- **Every quantifiers.** `every NAME in COLLECTION: CONDITION` is the
+  quantifier `all NAME in COLLECTION: CONDITION` of
+  [Quantifiers](#quantifiers). It starts only where the name `every`, a
+  binder name and the keyword `in` follow each other, wherever `all` starts
+  one, and it builds the `all` node, rendered as
+  `(all NAME in COLLECTION:CONDITION)`. So it evaluates, nests, depends,
+  validates class-level rules, rolls back and reports diagnostics as `all`
+  does, and `every v in xs: v > 0` and `all v in xs: v > 0` are one standing
+  rule. Statement headers take it, and the direct-alternative and REPL header
+  scans pair its colon with its `every` as they pair it with `all`. At the
+  top level of a template interpolation it is not recognized, as `all` is
+  not, so `` `${every v in xs: v}` `` reads the variable `every`; parentheses
+  select the quantifier.
+- **Class references.** Where an operand begins, the name `every` directly
+  followed by another name `NAME` is the class reference `$NAME`:
+  `every Human.mortal = true` is `$Human.mortal = true`,
+  `every Order.big = every Order.total > 10` is a class-level rule, and
+  `if every Order.total > 10:` is the class-level conditional
+  `if $Order.total > 10:`. Names stay exact, so `every human` is `$human`.
+  It builds exactly the tree of `$NAME`, so evaluation, class-level rule
+  validation, dependencies, errors such as
+  `SyntaxError("Cannot assign to $Human")` for `every Human = 4` and the
+  rendering `$NAME` follow from `$NAME`. A block comment may stand between
+  `every` and `NAME`, while a line break outside parentheses and brackets
+  separates them, so they keep their accepted reading.
+- These keep their accepted readings although `every` and a name follow each
+  other where an operand begins:
+  - `every NAME in`, which begins an every quantifier;
+  - `every is`, whose `is` assigns or compares a variable named `every`, as
+    in `every is 3` and `if every is 3:`;
+  - `every NAME:`, when the colon follows `NAME` outside a statement header,
+    a subscript start, the consequent after `?`, a Python-style condition and
+    a quantifier collection. `NAME:` then begins the next comma-free object
+    property or a colon statement, as in `{k: every x: 1}`, `every x: int`
+    and `every assert: a, b`. In those clauses the colon is the clause's, so
+    `if every Ready:` is `if $Ready:`;
+  - the top level of a template interpolation, whose trailing tokens are
+    ignored, so `` `${every x}` `` and `` `${1 + every x}` `` read the
+    variable `every`, while `` `${(every Human)}` `` reads `$Human`.
+- Everywhere else `every` keeps every accepted reading: a variable,
+  function, parameter, property, key, label, loop name or binder, as in
+  `every = 3`, `every.x`, `every(1)`, `[every, x]`, `xs.every(v => v > 0)`,
+  `x.every`, `def every(x) => x`, `def f every x => every + x`,
+  `lambda every: every`, `{every: 1}`, `{every}`, `f(every=1)`,
+  `{every} = o`, `every, x = [1, 2]`, `class every:`, `for every in xs:` and
+  `all every in xs: every`, and `every` followed by anything but a name. A
+  variable named `every` disables neither form: after `every = [1]`,
+  `every n in every: n > 0` quantifies over it.
+- `parse_expression` reads both forms and still ignores what follows them,
+  so it returns the quantifier for `every v in xs: v` and `$Human` for
+  `every Human` and for `every Human is mortal`.
+- **Predicate sentences.** In every statement position of
+  [Is assignments](#is-assignments), a statement whose leading expression is
+  a class reference without a property, written `$Class` or `every Class`
+  and possibly grouped in parentheses, followed by `is` and exactly one
+  name `WORD`, states `$Class.WORD = true` and builds its tree. So
+  `$Human is mortal` and `every Human is mortal` both state
+  `$Human.mortal = true`, which holds for every instance, created before or
+  after it. `WORD` names the property whatever a variable of that name
+  holds.
+- It applies only when the token after `WORD` ends a line statement: the
+  end of the line, a `;`, the end of an indented or braced block, the end of
+  the input, `else` or `catch`. Those tokens then always ran as the three
+  one-token statements `$Class`, `is` and `WORD`. Any other token after
+  `WORD` keeps the accepted reading, including another statement on the
+  same line: `$Human is mortal x = 1` is still `$Human`, `is`, `mortal` and
+  `x = 1`, and in `$Human is mortal $Human is wise` only the second sentence
+  ends its line. Inside parentheses line breaks are not statement ends, so
+  a sentence in the body of a function literal passed to a call needs a
+  `;` or the end of the body after it.
+- Every other statement keeps its accepted reading as juxtaposed statements
+  or an `is` assignment:
+  - a value that is not one name, as in `$Order is 5`, `$Human is true`,
+    `$Human is "mortal"`, `$Human is (mortal)` and `$Human is not mortal`;
+  - a name that the expression continues, as in
+    `$Human is mortal and wise`, `$Human is mortal.x` and
+    `$Human is mortal = 1`;
+  - a name that begins a longer statement, as in `$Human is mortal := 1`,
+    `$Human is mortal: int`, `$Human is mortal is wise`,
+    `$Human is while c: x` and `$Human is suppose:` with a body, and
+    `$Human is is wise`, whose `is is wise` assigns a variable named `is`;
+  - a class reference with a property or a state version, which is an
+    `is` assignment target: `$Human.kind is mortal` stores the word
+    `"mortal"`;
+  - any other subject: `socrates is mortal` still stores the word
+    `"mortal"`, and `this is mortal` reads three statements.
+- `is` inside an expression keeps its reading as the comparison of
+  [Is and is not comparisons](#is-and-is-not-comparisons), so
+  `if $Human is mortal:` and `r = ($Human is mortal)` compare.
+- A predicate sentence renders as its `=` spelling, `$Human.mortal=true`, in
+  statement rendering, block graph keys, `--graph` output and the `rule`
+  that `why` and `affects` report. It is the same rule as
+  `$Human.mortal = true`: either spelling replaces the other, an instance's
+  own assignment overrides it, a subclass inherits it and a `suppose` block
+  or a failed transaction rolls it back.
+- Not added: `is not` sentences, which keep their accepted reading, and
+  `every` in any other role.
+- REPL continuation stays lexical. A colon-free `if every v in xs: v > 0`
+  header waits for its indented body, and an `elif` or direct `else`
+  alternative with that condition indents its next line, as with `all`.
+- These readings changed, as the user accepted in advance; every other input
+  keeps its parse and behavior:
+  - `every NAME in` where an operand begins, outside the top level of a
+    template interpolation, raised a `SyntaxError`, usually
+    `Unexpected keyword 'in'`, and now begins a quantifier, and
+    `parse_expression("every v in xs: v")` returned the name `every` and now
+    returns the quantifier;
+  - `every NAME` where an operand begins, outside the readings kept above,
+    ended an expression with `every` and began the next statement or item
+    with `NAME`, and now reads `$NAME`. So after `every = 3`,
+    `every Human = 4` assigned `Human` and now raises
+    `SyntaxError("Cannot assign to $Human")` when it runs, and
+    `parse_expression("every x")` returned the name `every` and now returns
+    `$x`;
+  - a predicate sentence ran as the three statements `$Class`, `is` and
+    `WORD`, so `$Human is mortal` raised
+    `ReferenceError("is is not defined")` at its `is` unless a variable
+    named `is` existed, and now states the rule.
+- The five appended entries beginning
+  `Nucleoid states class predicates with is` through
+  `Nucleoid keeps other is statements on a class reference` specify the
+  executable behavior. `tests/universal_claims.rs`,
+  `tests/universal_claims_cli.rs` and the REPL continuation and terminal unit
+  suites execute the rest.
 
 ## Exponentiation
 
@@ -22950,4 +23092,91 @@ angle = Number.NaN
 assert(Number.isNaN(ratio), true)
 angle = 0.5
 assert(ratio, 1 / Math.tan(0.5))
+---
+# Nucleoid states class predicates with is
+
+class Human(name: str):
+    this.name = name
+plato = Human("Plato")
+every Human is mortal
+socrates = Human("Socrates")
+assert([plato.mortal, socrates.mortal], [true, true])
+$Human is wise
+assert(socrates.wise, true)
+assert((why socrates.mortal)[0].rule, "$Human.mortal = true")
+mortal = false
+assert(socrates.mortal, true)
+plato.mortal = false
+assert([plato.mortal, socrates.mortal], [false, true])
+socrates.mortal
+# return: true
+---
+# Nucleoid spells class references with every
+
+class Order(total):
+    this.total = total
+every Order.big = every Order.total > 10
+if every Order.total > 100:
+    every Order.vip = true
+small = Order(5)
+large = Order(200)
+assert([small.big, large.big], [false, true])
+assert([small.vip, large.vip], [null, true])
+small.total = 50
+assert(small.big, true)
+every Order.tier is "gold"
+assert(large.tier, "gold")
+small.big
+# return: true
+---
+# Nucleoid quantifies with every as with all
+
+class Check
+ready = every check in Check: check.passed
+assert(ready, true)
+first = Check()
+first.passed = true
+second = Check()
+assert(ready, false)
+second.passed = true
+assert(ready, true)
+scores = [3, 4]
+assert(every score in scores: score > 2, all score in scores: score > 2)
+assert(every score in scores: score > 3, false)
+assert((every score in scores: score > 2) ? "pass" : "fail", "pass")
+ready
+# return: true
+---
+# Nucleoid keeps every an ordinary name where no name follows it
+
+every = [1, 2]
+total = every.length
+assert(total, 2)
+assert(every.every(v => v > 0), true)
+pairs = {every: 3, other: every[0]}
+assert(pairs, {every: 3, other: 1})
+def count(every) => every + 1
+assert(count(4), 5)
+every is [5]
+assert(total, 1)
+assert(every n in every: n > 4, true)
+every
+# return: [5]
+---
+# Nucleoid keeps other is statements on a class reference
+
+class Order(total):
+    this.total = total
+order = Order(20)
+$Order.size is big
+assert(order.size, "big")
+try:
+    $Order is 5
+catch error:
+    assert(error, ReferenceError("is is not defined"))
+assert(order.big, null)
+$Order is big
+assert(order.big, true)
+order.size
+# return: "big"
 ```

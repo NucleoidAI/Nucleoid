@@ -56,8 +56,12 @@ impl Parser {
     }
 
     pub(super) fn ends_line_statement(&self) -> bool {
+        self.ends_line_statement_at(0)
+    }
+
+    pub(super) fn ends_line_statement_at(&self, offset: usize) -> bool {
         matches!(
-            self.peek(),
+            self.peek_at(offset),
             Token::Newline
                 | Token::Semicolon
                 | Token::Dedent

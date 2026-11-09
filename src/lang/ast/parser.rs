@@ -9,6 +9,7 @@ mod function;
 mod is_assignment;
 mod postfix;
 mod precedence;
+mod predicate;
 mod primary;
 mod statement;
 mod template;

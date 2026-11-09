@@ -383,6 +383,11 @@ qty = 5
 - A word assignment renders as `a is good` in graph keys and in `why` and
   `affects`; every other one renders as its `=` spelling. Malformed values
   report the errors of their `=` spellings.
+- A class reference without a property is not a target, so `$Order is 5`
+  keeps its accepted reading, but `$Human is mortal` with exactly one name
+  after `is` is the predicate sentence of
+  [NUC 98](nuc-0098.md), which states `$Human.mortal = true`; see
+  [Class-Level Rules](#6-class-level-rules).
 
 ```
 status is OPEN
@@ -1286,6 +1291,29 @@ $Human.mortal = true
 ```
 
 - Every `Human` has `mortal` `true`.
+- [NUC 98](nuc-0098.md) spells `$Name` as `every Name` wherever an operand
+  begins, so `every Human.mortal = true` and
+  `every Order.big = every Order.total > 10` are class-level rules. Names
+  stay exact: `every human` is `$human`. `every Name in` begins a
+  [quantifier](#quantifiers) instead, and `every is ...` and `every Name:`
+  outside a header keep their accepted readings, as does `every` at the top
+  level of a template interpolation.
+- The statement `$Human is mortal`, or `every Human is mortal`, states
+  `$Human.mortal = true` and renders as it. It needs exactly one name after
+  `is`, followed by the end of the line, a `;`, the end of a block or of
+  the input, `else` or `catch`. `$Order is 5`, `$Human is "mortal"`,
+  `$Human is not mortal` and `$Human is mortal x = 1` keep their accepted
+  readings as juxtaposed statements, and `$Human.kind is mortal` still
+  stores the word `"mortal"`.
+
+```
+class Human(name: str):
+    this.name = name
+
+every Human is mortal
+```
+
+- This states the same rule as the program above.
 
 ### Conditionals, order, and overriding
 
@@ -2340,7 +2368,7 @@ doubled = prices.map(p => p * rate)
 open = Task.filter(t => not t.done).length
 ```
 
-- `all t in Task: t.done` and `any t in Task: t.done` state the claims of `every` and `some` directly, and they nest; see [Quantifiers](#quantifiers).
+- `all t in Task: t.done`, its spelling `every t in Task: t.done`, and `any t in Task: t.done` state the claims of `every` and `some` directly, and they nest; see [Quantifiers](#quantifiers).
 
 - Regular expressions support `.test(...)` and may be used in any condition.
 
@@ -3694,6 +3722,10 @@ ready
   `Name.all()`, the `.any(callback)` alias, variables, functions, keys and
   parameters. At the top level of a template interpolation a quantifier needs
   parentheses: `` `${(all v in xs: v)}` ``.
+- [NUC 98](nuc-0098.md) adds `every NAME in COLLECTION: CONDITION` as a
+  spelling of `all NAME in COLLECTION: CONDITION`. It builds the same node,
+  renders as `(all ...)` and pairs its colon in header scans as `all` does.
+  `every` stays an ordinary name elsewhere, including `xs.every(callback)`.
 - The authoritative contract is the
   [quantifiers](../nucleoid.spec.md#quantifiers) section.
 
@@ -3925,6 +3957,9 @@ name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected
 name.property = expression             property assignment
 $Type.property = expression            class-level rule
+every Type.property = expression       the same class-level rule; every Type is $Type (NUC 98)
+$Type is word                          predicate sentence: $Type.word = true (NUC 98)
+every Type is word                     the same predicate sentence (NUC 98)
 delete name                            remove a variable, property, or instance
 
 class Name                             empty type declaration
@@ -4082,6 +4117,7 @@ reference |> why |> path(target)      how target reaches the reference (NUC 88)
 reference |> affects |> path(target)  what the reference moves on its way to target (NUC 88)
 selection |> path(target)             steps on a dependency path to target (NUC 88)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
+every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)
 (all name in collection: condition)   parenthesize to combine with what follows (NUC 62)
 suppose premise: suite                run premise and suite, then roll both back (NUC 65)

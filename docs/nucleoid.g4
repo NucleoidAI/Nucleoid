@@ -122,6 +122,7 @@ statement
     | supposeStmt
     | valueAssignment
     | isAssignment
+    | predicateSentence
     | expression                        // Stmt::Assign or Stmt::Expression
     ;
 
@@ -193,6 +194,29 @@ valueAssignment
  */
 isAssignment
     : path IS expression                // Stmt::Assign, as path = expression
+    ;
+
+/*
+ * Predicate-sentence contract (NUC 98):
+ * - The leading expression is a class reference without a property: a
+ *   CLASS_REF or an everyClass, possibly grouped in parentheses. A path
+ *   with a member or version is an isAssignment instead.
+ * - IS and one name token follow it, and the token after the name is
+ *   NEWLINE, ';', DEDENT, '}', EOF, ELSE or CATCH, so the accepted grammar
+ *   read 'CLASS_REF', 'IS' and 'name' as three one-token statements. Any
+ *   other token after the name, including the start of another statement
+ *   on the same line, keeps the accepted reading.
+ * - It builds the tree of 'CLASS_REF DOT name ASSIGN TRUE' and renders as
+ *   it; the name is the property, never a word.
+ */
+predicateSentence
+    : classReference IS name            // Stmt::Assign, as $Class.name = true
+    ;
+
+classReference
+    : CLASS_REF
+    | everyClass
+    | LPAREN classReference RPAREN
     ;
 
 // Only at a statement boundary; require NEWLINE, ';', DEDENT, '}', EOF,
@@ -382,7 +406,8 @@ methodDecl
  *   'is:', 'stated name:' and 'derived name:' keep that interpretation.
  * - A Python conditional is tentative and needs 'else' directly after its
  *   condition. It is disabled in interpolation and comprehension sources.
- * - Interpolation also disables quantifiers, noun queries and lambdas.
+ * - Interpolation also disables quantifiers, every class references, noun
+ *   queries and lambdas.
  *   Object values retain 'lambda name:' as a property/declaration boundary
  *   when that boundary has the accepted reading.
  */
@@ -536,6 +561,7 @@ selector
 primary
     : atVariable
     | quantified
+    | everyClass
     | name arrow arrowBody
     | lambdaExpression
     | parameters arrow arrowBody
@@ -598,8 +624,24 @@ arrowBody
     | expression
     ;
 
+// EVERY builds the ALL node and renders as 'all' (NUC 98).
 quantified
-    : (ALL | ANY) name IN clauseExpression COLON expression
+    : (ALL | EVERY | ANY) name IN clauseExpression COLON expression
+    ;
+
+/*
+ * Every-class contract (NUC 98):
+ * - EVERY and the name token after it, where an operand begins outside the
+ *   top level of an interpolation, build Expr::ClassRef(name), the tree of
+ *   the CLASS_REF '$name'. A block comment may stand between them; NEWLINE
+ *   outside parentheses and brackets separates them.
+ * - Not when IN follows the name, which is quantified; not when the name is
+ *   IS, so 'every is v' stays an isAssignment or comparison of the name
+ *   'every'; and not when COLON follows the name outside a clause, so the
+ *   name keeps starting the next comma-free property or colon statement.
+ */
+everyClass
+    : EVERY name                        // Expr::ClassRef
     ;
 
 lambdaExpression
@@ -676,6 +718,7 @@ enumName
     | EXTENDS
     | IS
     | ALL
+    | EVERY
     | ANY
     | SUM
     | MAX
@@ -757,6 +800,7 @@ SUPPOSE          : 'suppose';
 LAMBDA           : 'lambda';
 IS               : 'is';
 ALL              : 'all';
+EVERY            : 'every';
 ANY              : 'any';
 SUM              : 'sum';
 MAX              : 'max';
@@ -919,6 +963,9 @@ fragment REGEX_CHAR
  * p is [A, {k: B}, X(n=C)] -> p = [Word(A), {k: Word(B)}, X(n=Word(C))].
  * p is @a + 2              -> p = a + 2, the tree of p is (a) + 2.
  * p is [@A, B]             -> p = [A, Word(B)].
+ * every n in s: c          -> all n in s: c.
+ * every C                  -> $C.
+ * $C is w                  -> $C.w = true, also spelled every C is w.
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
@@ -946,4 +993,8 @@ fragment REGEX_CHAR
  * parser\is_assignment.rs and parser\precedence.rs, their rejection in
  * parser\expression.rs and parser\comprehension.rs and the 'lambda' header
  * colon in parser\statement.rs.
+ * Every quantifiers, class references and predicate sentences:
+ * Quantifier::starting in src\lang\ast\mod.rs, everyClass in
+ * parser\primary.rs and predicateSentence in parser\predicate.rs, which
+ * parser\statement.rs consults after an expression statement's head.
  */

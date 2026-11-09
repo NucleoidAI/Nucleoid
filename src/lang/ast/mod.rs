@@ -325,7 +325,7 @@ impl Quantifier {
         match (word, binder, keyword) {
             (Token::Identifier(word), Token::Identifier(_), Token::Keyword(Keyword::In)) => {
                 match word.as_str() {
-                    "all" => Some(Quantifier::All),
+                    "all" | "every" => Some(Quantifier::All),
                     "any" => Some(Quantifier::Any),
                     _ => None,
                 }

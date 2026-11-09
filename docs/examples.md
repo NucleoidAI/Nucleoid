@@ -3611,6 +3611,39 @@ assert(diagonal.ratio, 1 / Math.tan(-1))
   infinities, ignored-extra dependencies, the supplied-Undefined gate and
   inherited live-null/parameter deferral remain as for existing Math calls.
 
+## Every and predicate sentences
+
+**Every keeps a fleet's rules stated as claims about every truck**
+
+```nuc
+class Truck(name, load, limit):
+    this.name = name
+    this.load = load
+    this.limit = limit
+every Truck is registered
+every Truck.overloaded = every Truck.load > every Truck.limit
+if every Truck.overloaded:
+    every Truck.status = "hold"
+else:
+    every Truck.status = "go"
+north = Truck("north", 8, 10)
+south = Truck("south", 12, 10)
+assert([north.status, south.status], ["go", "hold"])
+assert(every truck in Truck: truck.registered, true)
+south.load = 9
+safe = every truck in Truck: not truck.overloaded
+[south.status, safe]
+# return: ["go",true]
+```
+
+- `every Truck is registered` states `$Truck.registered = true`, and
+  `every Truck` stands for `$Truck` in the other rules, so each truck is
+  registered, knows whether it is overloaded and takes its status from that.
+- `every truck in Truck: not truck.overloaded` is the quantifier
+  `all truck in Truck: not truck.overloaded`. Lightening `south` releases it
+  and makes the fleet safe. See [NUC 98](nuc-0098.md) and the
+  [root contract](../nucleoid.spec.md#every-quantifiers-class-references-and-predicate-sentences).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

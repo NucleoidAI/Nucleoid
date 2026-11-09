@@ -32,6 +32,9 @@ impl Parser {
             if let Some(quantifier) = self.quantifier_at(0) {
                 return self.quantified(quantifier);
             }
+            if self.starts_every_class() {
+                return self.every_class();
+            }
         }
         // `name => ...` or `name -> ...`. Check before taking the name so
         // that ordinary identifier operands are not cloned here.
@@ -312,6 +315,21 @@ impl Parser {
             collection: Box::new(collection),
             condition: Box::new(condition),
         })
+    }
+
+    fn starts_every_class(&self) -> bool {
+        matches!(
+            (self.peek(), self.peek_at(1)),
+            (Token::Identifier(word), Token::Identifier(name)) if word == "every" && name != "is"
+        ) && (self.context == ExpressionContext::Clause || self.peek_at(2) != &Token::Colon)
+    }
+
+    fn every_class(&mut self) -> Result<Expr> {
+        self.advance();
+        match self.advance() {
+            Token::Identifier(name) => Ok(Expr::ClassRef(name)),
+            other => Err(self.error(format!("Expected a name but found {}", other.describe()))),
+        }
     }
 
     /// Looks ahead past a balanced `( ... )` for an arrow, which distinguishes

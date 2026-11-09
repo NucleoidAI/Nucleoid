@@ -702,3 +702,35 @@ fn rendering_handles_small_resized_and_scrolled_table_workspaces() {
         }
     }
 }
+
+#[test]
+fn universal_claims_reach_terminal_submission_and_indent_every_quantifier_headers() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    run(&mut app, &mut runtime, "xs = [1, 2]");
+    app.editor = editor::new("if every v in xs: v > 0");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('j'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines()[1], "    ");
+    app.editor.insert_str("r = 1");
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    run(&mut app, &mut runtime, "r");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "1");
+    run(
+        &mut app,
+        &mut runtime,
+        "class Human\nevery Human is mortal\nh = Human()\nh.mortal",
+    );
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "true");
+    run(&mut app, &mut runtime, ".clear");
+    run(&mut app, &mut runtime, "every Human is mortal");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "ReferenceError: Human is not defined (line 1, column 1)"
+    );
+    assert_eq!(runtime.assertions_run(), 0);
+}

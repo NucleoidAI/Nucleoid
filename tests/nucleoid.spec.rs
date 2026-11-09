@@ -19017,6 +19017,125 @@ fn keeps_cotangents_reactive() {
     }
 }
 
+/// Nucleoid states class predicates with is
+#[rustfmt::skip]
+#[test]
+fn states_class_predicates_with_is() {
+    let mut run = runner();
+    run(r#"class Human(name: str):
+    this.name = name"#);
+    run(r#"plato = Human("Plato")"#);
+    run("every Human is mortal");
+    run(r#"socrates = Human("Socrates")"#);
+    assert_eq!(run("[plato.mortal, socrates.mortal]"), serde_json::json!([true, true]));
+    run("$Human is wise");
+    assert_eq!(run("socrates.wise"), true);
+    assert_eq!(run("(why socrates.mortal)[0].rule"), "$Human.mortal = true");
+    run("mortal = false");
+    assert_eq!(run("socrates.mortal"), true);
+    run("plato.mortal = false");
+    assert_eq!(run("[plato.mortal, socrates.mortal]"), serde_json::json!([false, true]));
+    run(r#"socrates.mortal
+
+# return: true"#);
+}
+
+/// Nucleoid spells class references with every
+#[rustfmt::skip]
+#[test]
+fn spells_class_references_with_every() {
+    let mut run = runner();
+    run(r#"class Order(total):
+    this.total = total"#);
+    run("every Order.big = every Order.total > 10");
+    run(r#"if every Order.total > 100:
+    every Order.vip = true"#);
+    run("small = Order(5)");
+    run("large = Order(200)");
+    assert_eq!(run("[small.big, large.big]"), serde_json::json!([false, true]));
+    assert_eq!(run("[small.vip, large.vip]"), serde_json::json!([null, true]));
+    run("small.total = 50");
+    assert_eq!(run("small.big"), true);
+    run(r#"every Order.tier is "gold""#);
+    assert_eq!(run("large.tier"), "gold");
+    run(r#"small.big
+
+# return: true"#);
+}
+
+/// Nucleoid quantifies with every as with all
+#[rustfmt::skip]
+#[test]
+fn quantifies_with_every_as_with_all() {
+    let mut run = runner();
+    run("class Check");
+    run("ready = every check in Check: check.passed");
+    assert_eq!(run("ready"), true);
+    run("first = Check()");
+    run("first.passed = true");
+    run("second = Check()");
+    assert_eq!(run("ready"), false);
+    run("second.passed = true");
+    assert_eq!(run("ready"), true);
+    run("scores = [3, 4]");
+    {
+        let actual = run("every score in scores: score > 2");
+        let expected = run("(all score in scores: score > 2)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("every score in scores: score > 3"), false);
+    assert_eq!(run(r#"(every score in scores: score > 2) ? "pass" : "fail""#), "pass");
+    run(r#"ready
+
+# return: true"#);
+}
+
+/// Nucleoid keeps every an ordinary name where no name follows it
+#[rustfmt::skip]
+#[test]
+fn keeps_every_an_ordinary_name_where_no_name_follows_it() {
+    let mut run = runner();
+    run("every = [1, 2]");
+    run("total = every.length");
+    assert_eq!(run("total"), 2);
+    assert_eq!(run("every.every(v => v > 0)"), true);
+    run("pairs = {every: 3, other: every[0]}");
+    {
+        let actual = run("pairs");
+        let expected = run("({every: 3, other: 1})");
+        assert_eq!(actual, expected);
+    }
+    run("def count(every) => every + 1");
+    assert_eq!(run("count(4)"), 5);
+    run("every is [5]");
+    assert_eq!(run("total"), 1);
+    assert_eq!(run("every n in every: n > 4"), true);
+    run(r#"every
+
+# return: [5]"#);
+}
+
+/// Nucleoid keeps other is statements on a class reference
+#[rustfmt::skip]
+#[test]
+fn keeps_other_is_statements_on_a_class_reference() {
+    let mut run = runner();
+    run(r#"class Order(total):
+    this.total = total
+order = Order(20)
+$Order.size is big
+assert(order.size, "big")
+try:
+    $Order is 5
+catch error:
+    assert(error, ReferenceError("is is not defined"))
+assert(order.big, null)
+$Order is big
+assert(order.big, true)
+order.size
+# return: "big""#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
