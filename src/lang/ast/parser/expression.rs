@@ -113,6 +113,7 @@ impl Parser {
             Token::OrOrAssign => Some(CompoundOp::Logical(LogicalOp::Or)),
             _ => return Ok(left),
         };
+        self.check_target_start(start)?;
         if let Some(variable) = self.at_variable_since(start) {
             return self.reject_at_variable(variable);
         }
@@ -124,7 +125,7 @@ impl Parser {
 
         self.advance();
         let items = self.leave_items();
-        let value = self.expression_in(self.context);
+        let value = self.receiving(&left, |parser| parser.expression_in(parser.context));
         self.items = items;
         let value = value?;
         let value = match operator {

@@ -3611,6 +3611,37 @@ assert(diagonal.ratio, 1 / Math.tan(-1))
   infinities, ignored-extra dependencies, the supplied-Undefined gate and
   inherited live-null/parameter deferral remain as for existing Math calls.
 
+## Implicit receiver properties
+
+**Leading dots keep an order line's rules about its own fields**
+
+```nuc
+class Line(item, qty, price):
+    this.item = item
+    this.qty = qty
+    this.price = price
+$Line.total = .qty * .price
+$Line.size = .qty >= 10 ? "bulk" : "single"
+$Line.text = `${.item} x${.qty}: ${.total}`
+pens = Line("pen", 12, 2)
+ink = Line("ink", 1, 9)
+assert([pens.size, ink.text], ["bulk", "ink x1: 9"])
+pens.qty = 4
+ink.price = 10
+[pens.total, pens.size, pens.text, ink.text]
+# return: [8,"single","pen x4: 8","ink x1: 10"]
+```
+
+- Each rule names `$Line` once, in its target, and reads the line's other
+  fields with a leading dot: `.qty * .price` is
+  `$Line.qty * $Line.price`, and the template reads `$Line.item`,
+  `$Line.qty` and `$Line.total`.
+- The rules stay live like their spelled-out forms: dropping the pens to
+  four makes them single-quantity and updates their total and text, and a
+  new ink price updates the ink's text. See
+  [NUC 102](nuc-0102.md) and the
+  [root contract](../nucleoid.spec.md#implicit-receiver-properties).
+
 ## Every and predicate sentences
 
 **Every keeps a fleet's rules stated as claims about every truck**

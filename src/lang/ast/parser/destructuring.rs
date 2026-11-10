@@ -52,7 +52,9 @@ impl Parser {
     }
 
     fn destructured_value(&mut self) -> Result<Expr> {
-        self.nested_expression_in(ExpressionContext::Ordinary, Self::conditional)
+        self.without_receiver(|parser| {
+            parser.nested_expression_in(ExpressionContext::Ordinary, Self::conditional)
+        })
     }
 
     pub(super) fn ends_line_statement(&self) -> bool {

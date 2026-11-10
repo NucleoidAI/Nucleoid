@@ -2112,6 +2112,33 @@ assert(cheap, ["pen"])
   enclosing function. See the
   [root contract](nucleoid.spec.md#list-comprehensions).
 
+## Implicit receiver properties
+
+**A leading dot reads a property of the assigned object**
+
+```nuc
+class Box(w, h):
+    this.w = w
+    this.h = h
+$Box.area = .w * .h
+box = Box(2, 3)
+box.label = `${.w}x${.h}`
+assert([box.area, box.label], [6, "2x3"])
+box.w = 5
+box.h = 4
+assert([box.area, box.label], [20, "5x4"])
+```
+
+- [NUC 102](docs/nuc-0102.md) reads `.w` in the value of an assignment to
+  a property as a property of the same object, its receiver:
+  `$Box.area = .w * .h` is `$Box.area = $Box.w * $Box.h`, and
+  `` box.label = `${.w}x${.h}` `` reads `box.w` and `box.h`.
+- The parser writes the path out, so the rule renders, depends, stays live
+  and rolls back exactly as its spelled-out form. A call argument that starts
+  with `.` stays a selector, and a leading dot anywhere without a property
+  target keeps its error. See the
+  [root contract](nucleoid.spec.md#implicit-receiver-properties).
+
 ## Every and predicate sentences
 
 **Every states a class-level claim as it is said**

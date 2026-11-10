@@ -88,7 +88,7 @@ impl Parser {
         Ok(Expr::Template(parts))
     }
 
-    fn previous_position(&self) -> Position {
+    pub(super) fn previous_position(&self) -> Position {
         self.position
             .checked_sub(1)
             .and_then(|previous| self.tokens.get(previous))
@@ -109,6 +109,8 @@ impl Parser {
             words: self.words,
             lists: self.lists,
             in_class: self.in_class,
+            dots: self.dots,
+            receiver: self.receiver.clone(),
             ..Parser::from_source(source)?
         };
         parser.leading_expression(ExpressionContext::Interpolation)

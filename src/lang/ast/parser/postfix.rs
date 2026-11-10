@@ -5,8 +5,8 @@ use crate::lang::ast::{Expr, Function, UnaryOp, VersionSelector};
 
 impl Parser {
     pub(super) fn postfix(&mut self) -> Result<Expr> {
+        let mut chain = usize::from(self.reads_receiver());
         let mut expression = self.primary()?;
-        let mut chain = 0;
 
         loop {
             chain += 1;
@@ -71,7 +71,7 @@ impl Parser {
         Ok(selector)
     }
 
-    fn member_property(&mut self) -> Result<String> {
+    pub(super) fn member_property(&mut self) -> Result<String> {
         match self.advance() {
             Token::Identifier(name) => Ok(name),
             Token::Keyword(keyword) => Ok(keyword.as_str().to_string()),
@@ -187,7 +187,7 @@ impl Parser {
         }
         let bare_label =
             matches!(self.peek(), Token::Identifier(_)) && self.peek_at(1) == &Token::Assign;
-        let argument = self.expression()?;
+        let argument = self.without_head_read(Self::expression)?;
         // Grouping is normally erased by primary(). Preserve it only when
         // erasing it could turn an explicit assignment into a constructor
         // label. Compound assignments need the same escape. All other
