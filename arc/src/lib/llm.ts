@@ -8,7 +8,7 @@ export async function generate({
   puzzle_id,
   only_puzzle_dataset,
   reasoning = false,
-  few_shot = (instruction) => instruction,
+  few_shot = (file) => file,
   messages = [],
   document = true,
   grammar = false,
@@ -18,7 +18,9 @@ export async function generate({
       role: "system",
       content: `
         few_shot:
-        ${examples(puzzle_id, only_puzzle_dataset, few_shot)}
+        ${JSON.parse(dataset.document(puzzle_id, only_puzzle_dataset))
+          .map(few_shot)
+          .map((file) => JSON.stringify(file) + "\n")}
       `,
     });
   }
@@ -50,14 +52,4 @@ export async function generate({
     reasoning,
     messages,
   });
-}
-
-function examples(
-  puzzle_id: string,
-  only_puzzle_dataset: boolean,
-  few_shot: (instruction) => unknown
-): string {
-  return JSON.stringify(
-    JSON.parse(dataset.document(puzzle_id, only_puzzle_dataset)).map(few_shot)
-  );
 }

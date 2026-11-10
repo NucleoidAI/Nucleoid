@@ -8,7 +8,7 @@ import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
 export async function start(
-  puzzle_id: string = "fafffa47",
+  puzzle_id: string = "3aa6fb7a",
   only_puzzle_dataset: boolean = false
 ) {
   const { arc_train, test_input_matrix, test_output_matrix } =
@@ -18,9 +18,9 @@ export async function start(
     dataset: arc_train.map(({ input, output }) => ({
       input_matrix: input,
       output_matrix: output,
-      instances: [],
+      instances: undefined,
     })),
-    declarations: [],
+    declarations: undefined,
     output_canvas: undefined,
   };
 
@@ -48,18 +48,16 @@ export async function start(
   train_dataset.output_canvas = output_canvas;
 
   for (const dataset of train_dataset.dataset) {
-    const { input_matrix, output_matrix } = dataset;
-
     const { instances } = await analyzer.instances({
       puzzle_id,
       only_puzzle_dataset,
-      declarations,
-      input_matrix,
-      output_matrix,
+      train_dataset: { ...train_dataset, dataset: [dataset] },
     });
 
-    for (const { input_instance_matrix, output_instance_matrix } of instances) {
-      const instance_name: string = `obj${String(instance_index++).padStart(
+    dataset.instances = instances;
+
+    for (const instance of dataset.instances) {
+      instance.instance_name = `obj${String(instance_index++).padStart(
         12,
         "0"
       )}`;
@@ -67,23 +65,13 @@ export async function start(
       const { implementation, input_value } = await analyzer.value({
         puzzle_id,
         only_puzzle_dataset,
-        instance_name,
-        declarations,
-        input_instances: train_dataset.dataset
-          .flatMap(({ instances }) => instances)
-          .filter(({ implementation }) => implementation),
-        input_matrix,
-        input_instance_matrix,
-        output_instance_matrix,
+        train_dataset,
+        instance,
+        input_matrix: dataset.input_matrix,
       });
 
-      dataset.instances.push({
-        instance_name,
-        input_instance_matrix,
-        output_instance_matrix,
-        implementation,
-        input_value,
-      });
+      instance.implementation = implementation;
+      instance.input_value = input_value;
     }
   }
 
@@ -113,7 +101,6 @@ export async function start(
     const { implementation, input_value } = await visualizer.value({
       puzzle_id,
       only_puzzle_dataset,
-      declarations,
       train_dataset,
       test_input_matrix,
       instance_name,
@@ -131,18 +118,12 @@ export async function start(
   await visualizer.state({ declarations, test_input_matrix, input_instances });
 
   for (const input_instance of input_instances) {
-    const { instance_name, input_value, input_instance_matrix, output_value } =
-      input_instance;
-
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
       puzzle_id,
       only_puzzle_dataset,
-      instance_name,
       test_input_matrix,
       train_dataset,
-      input_instance_matrix,
-      input_value,
-      output_value,
+      instance: input_instance,
     });
 
     input_instance.output_instance_matrix = output_instance_matrix;

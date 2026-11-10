@@ -11,34 +11,40 @@ export async function instances({
 }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
-  const { instances } = await llm.generate({
+  const { dataset } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     messages: [
       {
         role: "assistant",
         content: `
-          declarations:
-          ${JSON.stringify(train_dataset.declarations)}
-          train_dataset:
-          ${JSON.stringify(train_dataset.dataset)}
+          current:
+          ${JSON.stringify(train_dataset)}
         `,
       },
       {
         role: "user",
         content: `
-          input_matrix:
-          ${JSON.stringify(test_input_matrix)}
+          query:
+          ${JSON.stringify({
+            dataset: {
+              input_matrix: test_input_matrix,
+            },
+          })}
           json_format:
           {
-            "instances": [{
-              "input_instance_matrix": <INPUT_INSTANCE_MATRIX>
+            dataset: [{
+              "instances": [{
+                "input_instance_matrix": <INPUT_INSTANCE_MATRIX>
+              }]
             }]
           }
         `,
       },
     ],
   });
+
+  const instances = dataset[0].instances;
 
   milestone.test_input_segmented({ instances });
 
@@ -48,7 +54,6 @@ export async function instances({
 export async function value({
   puzzle_id,
   only_puzzle_dataset,
-  declarations,
   train_dataset,
   test_input_matrix,
   instance_name,
@@ -56,34 +61,51 @@ export async function value({
 }) {
   milestone.synthesizing_instance({ instance_name });
 
+  const instance = {
+    instance_name,
+    input_instance_matrix,
+  };
+
   const { x, y, width, height } = Matrix.locate(input_instance_matrix);
 
   const { orientation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: () => "",
+    few_shot: (train_dataset) =>
+      train_dataset.dataset
+        .flat()
+        .flatMap(({ instances }) => instances)
+        .map(({ input_instance_matrix, input_value }) => ({
+          matrix: Matrix.silhouette(Matrix.crop(input_instance_matrix)),
+          orientation: input_value.orientation,
+        })),
     messages: [
       {
         role: "assistant",
         content: `
-          train_dataset:
+          current:
           ${JSON.stringify(
-            train_dataset.dataset.flatMap(({ instances }) =>
-              instances.map(({ input_instance_matrix, input_value }) => ({
+            train_dataset.dataset
+              .flat()
+              .filter(({ instances }) => instances)
+              .flatMap(({ instances }) => instances)
+              .filter(({ input_value }) => input_value)
+              .map(({ input_instance_matrix, input_value }) => ({
                 matrix: Matrix.silhouette(Matrix.crop(input_instance_matrix)),
                 orientation: input_value.orientation,
               }))
-            )
           )}
         `,
       },
       {
         role: "user",
         content: `
-          matrix:
-          ${JSON.stringify(
-            Matrix.silhouette(Matrix.crop(input_instance_matrix))
-          )}
+          query:
+          ${JSON.stringify({
+            matrix: Matrix.silhouette(
+              Matrix.crop(instance.input_instance_matrix)
+            ),
+          })}
           json_format:
           {
             "orientation": <ORIENTATION>,
@@ -93,26 +115,53 @@ export async function value({
     ],
   });
 
-  const { implementation } = await llm.generate({
+  const { dataset } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    few_shot: (train_dataset) => ({
+      ...train_dataset,
+      declarations: train_dataset.declarations[0],
+      dataset: train_dataset.dataset.map(({ instances }) => ({
+        instances: instances.map((instance) => ({
+          ...instance,
+          input_matrix: Matrix.crop(instance.input_instance_matrix),
+          output_matrix: Matrix.crop(instance.output_instance_matrix),
+        })),
+      })),
+    }),
     messages: [
       {
         role: "assistant",
         content: `
-          declarations:
-          ${JSON.stringify(declarations[0])}
-          train_dataset:
-          ${JSON.stringify(train_dataset.dataset)}
+          current:
+          ${JSON.stringify({
+            ...train_dataset,
+            declarations: train_dataset.declarations[0],
+            dataset: train_dataset.dataset
+              .filter(({ instances }) => instances)
+              .map(({ instances }) => ({
+                instances: instances
+                  .filter(({ implementation }) => implementation)
+                  .map((instance) => ({
+                    ...instance,
+                    input_matrix: Matrix.crop(instance.input_instance_matrix),
+                    output_matrix: Matrix.crop(instance.output_instance_matrix),
+                  })),
+              })),
+          })}
         `,
       },
       {
         role: "user",
         content: `
-          instance_name:
-          ${instance_name}
-          input_instance_matrix:
-          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
+          query:
+          ${JSON.stringify({
+            dataset: [
+              {
+                instances: [instance],
+              },
+            ],
+          })}
           input_x: ${x}
           input_y: ${y}
           input_width: ${width}
@@ -120,12 +169,18 @@ export async function value({
           orientation: ${orientation}
           json_format:
           {
-            "implementation": <IMPLEMENTATION>
-          }
+            "dataset": [{
+              "instances": [{
+                "implementation": <IMPLEMENTATION>
+              }]
+            }]
+          }  
         `,
       },
     ],
   });
+
+  const implementation = dataset[0].instances[0].implementation;
 
   milestone.instance_synthesized({
     instance_name,
@@ -153,68 +208,79 @@ export async function value({
 export async function output_instance_matrix({
   puzzle_id,
   only_puzzle_dataset,
-  instance_name,
   test_input_matrix,
   train_dataset,
-  input_instance_matrix,
-  input_value,
-  output_value,
+  instance,
 }) {
-  const { x, y } = output_value;
+  const { x, y } = instance.output_value;
 
-  milestone.composing_output({ instance_name });
+  milestone.composing_output({ instance_name: instance.instance_name });
 
-  const { output_instance_matrix } = await llm.generate({
+  const { dataset } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    few_shot: (train_dataset) => ({
+      ...train_dataset,
+      dataset: train_dataset.dataset.map(({ instances }) => ({
+        instances: instances.map((instance) => ({
+          ...instance,
+          input_matrix: Matrix.crop(instance.input_instance_matrix),
+          output_matrix: Matrix.crop(instance.output_instance_matrix),
+        })),
+      })),
+    }),
     messages: [
       {
         role: "assistant",
         content: `
-          train_dataset:
-          ${JSON.stringify(
-            train_dataset.dataset
-              .flatMap(({ instances }) => instances)
-              .map(
-                ({
-                  input_value,
-                  input_instance_matrix,
-                  output_value,
-                  output_instance_matrix,
-                }) => ({
-                  input_value,
-                  input_instance_matrix: Matrix.crop(input_instance_matrix),
-                  output_value,
-                  output_instance_matrix: Matrix.crop(output_instance_matrix),
-                })
-              )
-          )}
+          current:
+          ${JSON.stringify({
+            ...train_dataset,
+            dataset: train_dataset.dataset.map(({ instances }) => ({
+              instances: instances.map((instance) => ({
+                ...instance,
+                input_matrix: Matrix.crop(instance.input_instance_matrix),
+                output_matrix: Matrix.crop(instance.output_instance_matrix),
+              })),
+            })),
+          })}
         `,
       },
       {
         role: "user",
         content: `
-          input_value:
-          ${JSON.stringify(input_value)}
-          input_instance_matrix:
-          ${JSON.stringify(Matrix.crop(input_instance_matrix))}
-          output_value:
-          ${JSON.stringify(output_value)}
+          instance:
+          ${JSON.stringify({
+            dataset: [
+              {
+                instances: [
+                  {
+                    ...instance,
+                    input_instance_matrix: Matrix.crop(
+                      instance.input_instance_matrix
+                    ),
+                  },
+                ],
+              },
+            ],
+          })}
           json_format:
           {
-            "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
+            "dataset": [{
+              "instances": [{
+                "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
+              }]
+            }]
           }
         `,
       },
     ],
   });
 
-  milestone.output_composed({
-    instance_name,
-    input_instance_matrix,
-    output_instance_matrix,
-    output_value,
-  });
+  const output_instance_matrix = dataset[0].instances[0].output_instance_matrix;
+  instance.output_instance_matrix = output_instance_matrix;
+
+  milestone.output_composed(instance);
 
   const output_instance_padded_matrix = Matrix.pad(
     Matrix.crop(output_instance_matrix),
@@ -224,7 +290,7 @@ export async function output_instance_matrix({
     y
   );
 
-  milestone.output_placed({ instance_name, output_instance_padded_matrix });
+  milestone.output_placed(instance);
 
   return { output_instance_matrix: output_instance_padded_matrix };
 }
