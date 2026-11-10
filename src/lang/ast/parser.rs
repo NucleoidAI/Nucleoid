@@ -53,6 +53,8 @@ fn furthest(accepted: Error, retried: Error) -> Error {
     if further { retried } else { accepted }
 }
 
+const EVERY_INSIDE_IF: &str = "Use all instead of every inside if";
+
 /// How deeply expressions and blocks may nest. Recursive descent uses the
 /// stack, so the limit is what keeps a pathological source from overflowing it.
 const MAX_NESTING: usize = 64;
@@ -126,6 +128,8 @@ struct Parser {
     at_variables: BTreeMap<usize, Rejection>,
     suppose_premises: HashMap<(usize, usize), Option<SupposePremise>>,
     while_conditions: HashMap<(usize, usize), Option<LoopCondition>>,
+    if_statements: usize,
+    misplaced_every: Option<Position>,
 }
 
 /// A qualified Python-style condition and the position after its `else`.
@@ -133,18 +137,21 @@ struct Parser {
 struct PythonCondition {
     condition: Expr,
     end: usize,
+    misplaced_every: Option<Position>,
 }
 
 #[derive(Clone)]
 struct SupposePremise {
     premise: Expr,
     end: usize,
+    misplaced_every: Option<Position>,
 }
 
 #[derive(Clone)]
 struct LoopCondition {
     condition: Expr,
     colon: usize,
+    misplaced_every: Option<Position>,
 }
 
 #[derive(Clone, Copy)]
@@ -201,6 +208,8 @@ impl Parser {
             at_variables: BTreeMap::new(),
             suppose_premises: HashMap::new(),
             while_conditions: HashMap::new(),
+            if_statements: 0,
+            misplaced_every: None,
         }
     }
 
@@ -210,7 +219,7 @@ impl Parser {
 
     fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
         let accepted = match self.attempt_accepted(&parse) {
-            Ok(parsed) => return Ok(parsed),
+            Ok(parsed) => return self.settle(parsed),
             Err(error) => error,
         };
         if !self.mentions_receivers() && !self.mentions_templates() {
@@ -228,7 +237,8 @@ impl Parser {
             dots: Dots::Receivers,
             ..Parser::new(std::mem::take(&mut self.tokens))
         };
-        parse(self).map_err(|reread| furthest(accepted, reread))
+        let parsed = parse(self).map_err(|reread| furthest(accepted, reread))?;
+        self.settle(parsed)
     }
 
     fn attempt_accepted<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {
@@ -257,6 +267,33 @@ impl Parser {
             ..Parser::new(std::mem::take(&mut self.tokens))
         };
         parse(self).map_err(|retried| furthest(accepted, retried))
+    }
+
+    fn settle<T>(&self, parsed: T) -> Result<T> {
+        debug_assert_eq!(self.if_statements, 0);
+        match self.misplaced_every {
+            Some(position) => Err(Error::syntax(EVERY_INSIDE_IF).at(position)),
+            None => Ok(parsed),
+        }
+    }
+
+    fn tentatively<T>(&mut self, parse: impl FnOnce(&mut Self) -> T) -> (T, Option<Position>) {
+        let outer = self.misplaced_every.take();
+        let if_statements = self.if_statements;
+        let parsed = parse(self);
+        debug_assert!(self.if_statements >= if_statements);
+        self.if_statements = if_statements;
+        (parsed, std::mem::replace(&mut self.misplaced_every, outer))
+    }
+
+    fn adopt(&mut self, misplaced_every: Option<Position>) {
+        self.misplaced_every = self.misplaced_every.or(misplaced_every);
+    }
+
+    fn misplace_every(&mut self) {
+        if self.misplaced_every.is_none() {
+            self.misplaced_every = Some(self.here());
+        }
     }
 
     fn mentions_comprehensions(&self) -> bool {

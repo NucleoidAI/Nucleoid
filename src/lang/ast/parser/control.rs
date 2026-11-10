@@ -13,6 +13,7 @@ impl Parser {
     /// Explicit `else if` and qualified direct alternatives share the entire
     /// condition, suite and recursive alternate parser.
     fn condition_clause(&mut self) -> Result<Stmt> {
+        self.if_statements += 1;
         let condition = self.clause_expression()?;
         // Explicit colons retain every accepted suite and diagnostic. Only a
         // real indented body can select the optional conditional spelling.
@@ -43,6 +44,8 @@ impl Parser {
             self.position = checkpoint;
         }
 
+        debug_assert!(self.if_statements > 0);
+        self.if_statements -= 1;
         Ok(Stmt::If {
             condition,
             consequent,
@@ -111,20 +114,26 @@ impl Parser {
             self.while_conditions.insert(attempt, outcome.clone());
             outcome
         };
-        let LoopCondition { condition, colon } = outcome?;
+        let LoopCondition {
+            condition,
+            colon,
+            misplaced_every,
+        } = outcome?;
         self.position = colon;
+        self.adopt(misplaced_every);
         Some(condition)
     }
 
     fn attempt_while_condition(&mut self) -> Option<LoopCondition> {
         let start = self.position;
         self.advance();
-        let outcome = self
-            .clause_before_colon()
+        let (clause, misplaced_every) = self.tentatively(Self::clause_before_colon);
+        let outcome = clause
             .filter(|condition| !heads_suppose(condition))
             .map(|condition| LoopCondition {
                 condition,
                 colon: self.position,
+                misplaced_every,
             });
         self.position = start;
         let colon = outcome.as_ref()?.colon;

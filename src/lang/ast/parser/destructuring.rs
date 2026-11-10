@@ -30,13 +30,16 @@ impl Parser {
 
         let start = self.position;
         self.position += pattern.length;
-        let value = match self.nested_expression(Self::destructured_value) {
+        let (value, misplaced_every) =
+            self.tentatively(|parser| parser.nested_expression(Self::destructured_value));
+        let value = match value {
             Ok(value) if self.ends_line_statement() => value,
             _ => {
                 self.position = start;
                 return Ok(None);
             }
         };
+        self.adopt(misplaced_every);
 
         if let Some(target) = pattern.targets.get(MAX_DESTRUCTURING_TARGETS) {
             return Err(Error::syntax("Destructuring has too many targets").at(target.position));

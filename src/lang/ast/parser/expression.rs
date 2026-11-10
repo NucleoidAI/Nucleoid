@@ -237,8 +237,13 @@ impl Parser {
             self.conditions().insert(attempt, outcome.clone());
             outcome
         };
-        let PythonCondition { condition, end } = outcome?;
+        let PythonCondition {
+            condition,
+            end,
+            misplaced_every,
+        } = outcome?;
         self.position = end;
+        self.adopt(misplaced_every);
         Some(condition)
     }
 
@@ -247,13 +252,16 @@ impl Parser {
     fn attempt_python_condition(&mut self) -> Option<PythonCondition> {
         let start = self.position;
         self.advance();
-        let condition = self.within(true, |parser| {
-            parser.nested_expression_in(ExpressionContext::Clause, Self::coalescing_expression)
+        let (condition, misplaced_every) = self.tentatively(|parser| {
+            parser.within(true, |parser| {
+                parser.nested_expression_in(ExpressionContext::Clause, Self::coalescing_expression)
+            })
         });
         let outcome = match condition {
             Ok(condition) if self.eat_keyword(Keyword::Else) => Some(PythonCondition {
                 condition,
                 end: self.position,
+                misplaced_every,
             }),
             _ => None,
         };

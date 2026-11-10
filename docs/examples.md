@@ -3708,10 +3708,10 @@ class Truck(name, load, limit):
     this.limit = limit
 every Truck is registered
 every Truck.overloaded = every Truck.load > every Truck.limit
-if every Truck.overloaded:
-    every Truck.status = "hold"
+if any Truck.overloaded:
+    all Truck.status = "hold"
 else:
-    every Truck.status = "go"
+    all Truck.status = "go"
 north = Truck("north", 8, 10)
 south = Truck("south", 12, 10)
 assert([north.status, south.status], ["go", "hold"])
@@ -3723,7 +3723,9 @@ safe = every truck in Truck: not truck.overloaded
 ```
 
 - `every Truck is registered` states `$Truck.registered = true`, and
-  `every Truck` stands for `$Truck` in the other rules, so each truck is
+  `every Truck` stands for `$Truck` in the overloaded rule. Inside the if
+  statement `every` is rejected, so its condition reads `any Truck` and both
+  of its clauses `all Truck`, which stand for `$Truck` too. So each truck is
   registered, knows whether it is overloaded and takes its status from that.
 - `every truck in Truck: not truck.overloaded` is the quantifier
   `all truck in Truck: not truck.overloaded`. Lightening `south` releases it

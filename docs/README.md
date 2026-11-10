@@ -1316,19 +1316,25 @@ $Human.mortal = true
 
 - Every `Human` has `mortal` `true`.
 - [NUC 98](nuc-0098.md) spells `$Name` as `every Name` wherever an operand
-  begins, so `every Human.mortal = true` and
+  begins outside an if statement, so `every Human.mortal = true` and
   `every Order.big = every Order.total > 10` are class-level rules. Names
   stay exact: `every human` is `$human`. `every Name in` begins a
   [quantifier](#quantifiers) instead, and `every is ...` and `every Name:`
   outside a header keep their accepted readings, as does `every` at the top
   level of a template interpolation.
-- The statement `$Human is mortal`, or `every Human is mortal`, states
-  `$Human.mortal = true` and renders as it. It needs exactly one name after
-  `is`, followed by the end of the line, a `;`, the end of a block or of
-  the input, `else` or `catch`. `$Order is 5`, `$Human is "mortal"`,
-  `$Human is not mortal` and `$Human is mortal x = 1` keep their accepted
-  readings as juxtaposed statements, and `$Human.kind is mortal` still
-  stores the word `"mortal"`.
+- Inside an if statement, in its condition and in the bodies of its `if`,
+  `elif` and `else` clauses with everything nested in them, `every Name`
+  raises `SyntaxError("Use all instead of every inside if")` at its `every`
+  before the program runs (NUC 98 revision 2). Write `any Name` in the
+  condition and `all Name` in the body, as below. The quantifier
+  `every v in xs: v > 0` and the other readings of `every` stay valid there.
+- The statement `$Human is mortal`, or `every Human is mortal` outside an if
+  statement, states `$Human.mortal = true` and renders as it. It needs
+  exactly one name after `is`, followed by the end of the line, a `;`, the
+  end of a block or of the input, `else` or `catch`. `$Order is 5`,
+  `$Human is "mortal"`, `$Human is not mortal` and `$Human is mortal x = 1`
+  keep their accepted readings as juxtaposed statements, and
+  `$Human.kind is mortal` still stores the word `"mortal"`.
 
 ```
 class Human(name: str):
@@ -1339,10 +1345,11 @@ every Human is mortal
 
 - This states the same rule as the program above.
 - [NUC 104](nuc-0104.md) spells `$Name` as `any Name` and `all Name`
-  wherever `every Name` spells it, so a condition about a class reads with
-  `any` and the rule it guards with `all`. They are spellings of `$Name`,
-  not quantifiers: each instance is tested on its own, so here only `b`
-  turns red, and instances created or changed later follow the rules.
+  wherever `every Name` spells it and inside if statements too, so a
+  condition about a class reads with `any` and the rule it guards with
+  `all`. They are spellings of `$Name`, not quantifiers: each instance is
+  tested on its own, so here only `b` turns red, and instances created or
+  changed later follow the rules.
 
 ```
 class Object(number):
@@ -3821,8 +3828,11 @@ ready
   interpolation a quantifier needs parentheses: `` `${(all v in xs: v)}` ``.
 - [NUC 98](nuc-0098.md) adds `every NAME in COLLECTION: CONDITION` as a
   spelling of `all NAME in COLLECTION: CONDITION`. It builds the same node,
-  renders as `(all ...)` and pairs its colon in header scans as `all` does.
-  `every` stays an ordinary name elsewhere, including `xs.every(callback)`.
+  renders as `(all ...)` and pairs its colon in header scans as `all` does,
+  inside if statements too. `every Name` without `in` is the class
+  reference `$Name` outside if statements and is rejected inside them, where
+  `any Name` and `all Name` spell it. `every` stays an ordinary name
+  elsewhere, including `xs.every(callback)`.
 - The authoritative contract is the
   [quantifiers](../nucleoid.spec.md#quantifiers) section.
 
@@ -4056,11 +4066,12 @@ name.property = expression             property assignment
 name.property = .other + 1             .other reads name.other in a property value (NUC 102)
 $Type.property = expression            class-level rule
 $Type.property = .a * .b               $Type.property = $Type.a * $Type.b (NUC 102)
-every Type.property = expression       the same class-level rule; every Type is $Type (NUC 98)
+every Type.property = expression       the same class-level rule; every Type is $Type outside if (NUC 98)
 $Type is word                          predicate sentence: $Type.word = true (NUC 98)
-every Type is word                     the same predicate sentence (NUC 98)
+every Type is word                     the same predicate sentence, outside if (NUC 98)
 all Type.property = expression         the same class-level rule; all Type and any Type are $Type (NUC 104)
 if any Type.property > value:          the class-level conditional of $Type, per instance (NUC 104)
+if every Type.property > value:        every Type inside if -- rejected; use any and all (NUC 98)
 all Type is word                       the same predicate sentence; also any Type is word (NUC 104)
 delete name                            remove a variable, property, or instance
 

@@ -671,9 +671,19 @@ quantified
  *   not when COLON follows the name outside a clause, so the name keeps
  *   starting the next comma-free property or colon statement.
  * - The three words build the same node; none of them quantifies here.
+ * - Inside an ifStmt, from its IF to the end of its last body, with every
+ *   statement, block, function, lambda and class body nested there and the
+ *   interpolations of its templates, the EVERY alternative is rejected with
+ *   "Use all instead of every inside if" at the EVERY (NUC 98 revision 2).
+ *   The other two words are unchanged there. The rule decides no parse: it
+ *   is checked on the reading the parser keeps, so a tentative
+ *   destructuring value, whileStmt condition, premise or Python conditional
+ *   that holds such an EVERY and is dropped, or a parse pass that fails,
+ *   leaves every decision as before; see the parse-pass contract.
  */
 spelledClass
-    : (EVERY | ANY | ALL) name          // Expr::ClassRef
+    : (ANY | ALL) name                  // Expr::ClassRef
+    | EVERY name                        // Expr::ClassRef, outside an ifStmt only
     ;
 
 lambdaExpression
@@ -971,6 +981,11 @@ fragment REGEX_CHAR
  * comparisons when the source holds 'is' or a template and with
  * comprehensions when it holds 'for' or a template. When it fails too, its
  * error replaces the accepted one only when it lies further into the source.
+ * Passes run and succeed or fail exactly as without the EVERY rule of the
+ * spelled-class contract. When the kept pass read an EVERY spelledClass
+ * inside an ifStmt, the parse fails with that rule's error at the first
+ * such EVERY instead. When every pass fails, the error chosen above is
+ * reported, as before.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -1002,7 +1017,7 @@ fragment REGEX_CHAR
  * p is @a + 2              -> p = a + 2, the tree of p is (a) + 2.
  * p is [@A, B]             -> p = [A, Word(B)].
  * every n in s: c          -> all n in s: c.
- * every C, any C, all C    -> $C.
+ * every C, any C, all C    -> $C; every C inside an ifStmt is an error.
  * $C is w                  -> $C.w = true, also spelled every C is w,
  *                             any C is w and all C is w.
  * o.p = .a + .b            -> o.p = o.a + o.b, in the final parse.
@@ -1037,6 +1052,10 @@ fragment REGEX_CHAR
  * Quantifier::starting in src\lang\ast\mod.rs, spelledClass in
  * parser\primary.rs and predicateSentence in parser\predicate.rs, which
  * parser\statement.rs consults after an expression statement's head.
+ * EVERY inside an ifStmt: the ifStmt count in parser\control.rs, the error
+ * and its passes in src\lang\ast\parser.rs, and the tentative readings that
+ * keep or drop it in parser\expression.rs, parser\control.rs,
+ * parser\statement.rs, parser\destructuring.rs and parser\template.rs.
  * Implicit receivers: parser\receiver.rs, with the final parse in
  * src\lang\ast\parser.rs, receivers set in parser\expression.rs and
  * parser\statement.rs, reads in parser\primary.rs and parser\postfix.rs, and

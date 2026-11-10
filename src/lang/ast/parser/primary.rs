@@ -327,6 +327,11 @@ impl Parser {
     }
 
     fn spelled_class(&mut self) -> Result<Expr> {
+        if self.if_statements > 0
+            && matches!(self.peek(), Token::Identifier(word) if word == "every")
+        {
+            self.misplace_every();
+        }
         self.advance();
         match self.advance() {
             Token::Identifier(name) => Ok(Expr::ClassRef(name)),

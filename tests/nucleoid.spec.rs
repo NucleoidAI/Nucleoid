@@ -19436,8 +19436,8 @@ fn spells_class_references_with_every() {
     run(r#"class Order(total):
     this.total = total"#);
     run("every Order.big = every Order.total > 10");
-    run(r#"if every Order.total > 100:
-    every Order.vip = true"#);
+    run(r#"if any Order.total > 100:
+    all Order.vip = true"#);
     run("small = Order(5)");
     run("large = Order(200)");
     assert_eq!(run("[small.big, large.big]"), serde_json::json!([false, true]));

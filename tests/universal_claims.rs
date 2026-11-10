@@ -57,16 +57,21 @@ const QUANTIFIER_CONTEXTS: [&str; 24] = [
     "ok = lambda: {q}",
 ];
 
-const CLASS_CONTEXTS: [&str; 46] = [
+const EVERY_INSIDE_IF: &str = "Use all instead of every inside if";
+
+const IF_CLASS_CONTEXTS: [&str; 4] = [
+    "if {c}.total > 10:\n    {b}.big = true",
+    "if {c}.total > 10:\n    {b}.big = true\nelse:\n    {b}.big = false",
+    "if {c}.total > 10\n    {b}.big = true",
+    "if {c}:\n    r = 1",
+];
+
+const CLASS_CONTEXTS: [&str; 42] = [
     "{c}.mortal = true",
     "{c}.big = {c}.total > 10",
     "{c}.legs is 2",
     "{c}.tag is {c}.name",
     "{c}.ok = all v in xs: v > {c}.total",
-    "if {c}.total > 10:\n    {c}.big = true",
-    "if {c}.total > 10:\n    {c}.big = true\nelse:\n    {c}.big = false",
-    "if {c}.total > 10\n    {c}.big = true",
-    "if {c}:\n    r = 1",
     "while {c}.open:\n    r = 1",
     "r = {c}",
     "r = [{c}, 1]",
@@ -172,7 +177,16 @@ const PROTECTED: [&str; 63] = [
     "r = every if c else x",
 ];
 
-const STATEMENT_POSITIONS: [&str; 29] = [
+const IF_STATEMENT_POSITIONS: [(&str, usize, usize); 6] = [
+    ("if c:\n{i}", 2, 5),
+    ("if c: {s}", 1, 7),
+    ("if c\n{i}", 2, 5),
+    ("if c:\n    pass\nelse:\n{i}", 4, 5),
+    ("if c:\n    pass\nelif d:\n{i}", 4, 5),
+    ("if c: {s} else: {s}", 1, 7),
+];
+
+const STATEMENT_POSITIONS: [&str; 23] = [
     "{s}",
     "z0 = 0; {s}",
     "z0 = 0 {s}",
@@ -180,12 +194,6 @@ const STATEMENT_POSITIONS: [&str; 29] = [
     "{s}\nz1 = 1",
     "{s}; {s}",
     "{s}\n{s}",
-    "if c:\n{i}",
-    "if c: {s}",
-    "if c\n{i}",
-    "if c:\n    pass\nelse:\n{i}",
-    "if c:\n    pass\nelif d:\n{i}",
-    "if c: {s} else: {s}",
     "for v in xs:\n{i}",
     "while c:\n{i}\n    c = false",
     "try:\n{i}\ncatch e:\n    pass",
@@ -465,7 +473,25 @@ fn every_names_build_exactly_the_tree_of_their_class_references() {
             compared += 1;
         }
     }
-    assert_eq!(compared, 92);
+    assert_eq!(compared, 84);
+    for context in IF_CLASS_CONTEXTS {
+        for (spelled, reference) in [("Order", "$Order"), ("order", "$order")] {
+            let source = context
+                .replace("{c}", &format!("every {spelled}"))
+                .replace("{b}", &format!("every {spelled}"));
+            assert_eq!(
+                syntax_error(&source),
+                (EVERY_INSIDE_IF.to_string(), Position::new(1, 4)),
+                "{source}"
+            );
+            let source = context
+                .replace("{c}", &format!("any {spelled}"))
+                .replace("{b}", &format!("all {spelled}"));
+            let expected = context.replace("{c}", reference).replace("{b}", reference);
+            assert_eq!(statements(&source), statements(&expected), "{source}");
+            assert_eq!(rendered(&source), rendered(&expected), "{source}");
+        }
+    }
     assert_eq!(parse_expression("every Human").unwrap(), class("Human"));
     assert_eq!(
         parse_expression("every Human.mortal").unwrap(),
@@ -477,7 +503,11 @@ fn every_names_build_exactly_the_tree_of_their_class_references() {
     );
     assert_eq!(rendered("every Human.mortal = true"), "$Human.mortal=true");
     assert_eq!(
-        rendered("if every Order.total > 10:\n    every Order.big = true"),
+        syntax_error("if every Order.total > 10:\n    every Order.big = true"),
+        (EVERY_INSIDE_IF.to_string(), Position::new(1, 4))
+    );
+    assert_eq!(
+        rendered("if any Order.total > 10:\n    all Order.big = true"),
         rendered("if $Order.total > 10:\n    $Order.big = true")
     );
 }
@@ -489,8 +519,14 @@ fn class_references_spelled_with_every_are_class_level_rules() {
         "true",
     );
     fresh(
-        "class Order(total):\n    this.total = total\nif every Order.total > 10:\n    every Order.big = true\nlarge = Order(20)\nsmall = Order(5)\nassert(small.big, null)\nlarge.big",
+        "class Order(total):\n    this.total = total\nif any Order.total > 10:\n    all Order.big = true\nlarge = Order(20)\nsmall = Order(5)\nassert(small.big, null)\nlarge.big",
         "true",
+    );
+    assert_eq!(
+        syntax_error(
+            "class Order(total):\n    this.total = total\nif every Order.total > 10:\n    every Order.big = true\nlarge = Order(20)\nsmall = Order(5)\nassert(small.big, null)\nlarge.big"
+        ),
+        (EVERY_INSIDE_IF.to_string(), Position::new(3, 4))
     );
     fresh(
         "class Human(name):\n    this.name = name\nevery Human.legs is 2\nevery Human.tag is every Human.name\ns = Human(\"S\")\nassert(s.tag, \"S\")\ns.legs",
@@ -577,7 +613,20 @@ fn predicate_sentences_build_the_tree_of_their_true_property_in_every_statement_
             compared += 1;
         }
     }
-    assert_eq!(compared, 58);
+    assert_eq!(compared, 46);
+    for (position, line, column) in IF_STATEMENT_POSITIONS {
+        let expected = place(position, "$Human.mortal = true");
+        for sentence in ["$Human is mortal", "all Human is mortal"] {
+            let source = place(position, sentence);
+            assert_eq!(statements(&source), statements(&expected), "{source}");
+        }
+        let source = place(position, "every Human is mortal");
+        assert_eq!(
+            syntax_error(&source),
+            (EVERY_INSIDE_IF.to_string(), Position::new(line, column)),
+            "{source}"
+        );
+    }
     assert_eq!(
         statements("$Human is mortal; $Order is big"),
         [predicate("Human", "mortal"), predicate("Order", "big")]

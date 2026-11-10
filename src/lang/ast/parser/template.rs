@@ -5,25 +5,29 @@ use crate::error::{Error, Position, Result};
 use crate::lang::ast::lexer::{excerpt, interpolation_end};
 use crate::lang::ast::{Expr, TemplatePart};
 
-/// Secondary parsers report relative positions; diagnostics retain the location
-/// in the caller's original template, including Unicode and newlines.
-fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
-    let Some(relative) = error.position() else {
-        return error;
-    };
+fn template_position(relative: Position, origin: Position, prefix: &str) -> Position {
     let newlines = prefix.bytes().filter(|byte| *byte == b'\n').count();
     let column = match prefix.rsplit_once('\n') {
         Some((_, tail)) => tail.chars().count() + 1,
         None => origin.column + 1 + prefix.chars().count(),
     };
-    error.at(Position::new(
+    Position::new(
         origin.line + newlines + relative.line - 1,
         if relative.line == 1 {
             column + relative.column - 1
         } else {
             relative.column
         },
-    ))
+    )
+}
+
+/// Secondary parsers report relative positions; diagnostics retain the location
+/// in the caller's original template, including Unicode and newlines.
+fn template_error(error: Error, origin: Position, prefix: &str) -> Error {
+    let Some(relative) = error.position() else {
+        return error;
+    };
+    error.at(template_position(relative, origin, prefix))
 }
 
 fn interpolation_close(raw: &str, start: usize, origin: Position) -> Result<Option<usize>> {
@@ -95,24 +99,31 @@ impl Parser {
             .map_or_else(|| self.here(), |spanned| spanned.position)
     }
 
-    fn interpolation(&self, raw: &str, span: Range<usize>, origin: Position) -> Result<Expr> {
+    fn interpolation(&mut self, raw: &str, span: Range<usize>, origin: Position) -> Result<Expr> {
         let prefix = excerpt(raw, 0..span.start);
         // Trailing tokens after an interpolated expression are ignored,
         // so a top-level `lambda` keeps its accepted name reading here
         // and a trailing Python-style `if` stays ignored.
-        self.interpolated_expression(excerpt(raw, span))
-            .map_err(|error| template_error(error, origin, prefix))
+        let (expression, misplaced_every) = self.interpolated_expression(excerpt(raw, span));
+        self.adopt(misplaced_every.map(|relative| template_position(relative, origin, prefix)));
+        expression.map_err(|error| template_error(error, origin, prefix))
     }
 
-    fn interpolated_expression(&self, source: &str) -> Result<Expr> {
+    fn interpolated_expression(&self, source: &str) -> (Result<Expr>, Option<Position>) {
+        let fresh = match Parser::from_source(source) {
+            Ok(fresh) => fresh,
+            Err(error) => return (Err(error), None),
+        };
         let mut parser = Parser {
             words: self.words,
             lists: self.lists,
             in_class: self.in_class,
             dots: self.dots,
             receiver: self.receiver.clone(),
-            ..Parser::from_source(source)?
+            if_statements: self.if_statements,
+            ..fresh
         };
-        parser.leading_expression(ExpressionContext::Interpolation)
+        let expression = parser.leading_expression(ExpressionContext::Interpolation);
+        (expression, parser.misplaced_every)
     }
 }

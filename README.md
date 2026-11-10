@@ -2157,7 +2157,8 @@ assert([a.color, b.color], [null, "red"])
 
 - [NUC 104](docs/nuc-0104.md) reads `any Object` and `all Object` as the
   class reference `$Object`, wherever [NUC 98](docs/nuc-0098.md) reads
-  `every Object` as one. So `if any Object.number > 4:` is the class-level
+  `every Object` as one and inside if statements, where NUC 98 rejects
+  `every Object`. So `if any Object.number > 4:` is the class-level
   conditional `if $Object.number > 4:`, and `all Object.color is red` is the
   rule `$Object.color is red` it guards for each Object over 4.
 - They are spellings, not quantifiers: each instance is tested on its own,
@@ -2205,6 +2206,10 @@ assert(every h in Human: h.mortal, true)
   `$Human`, so `every Human.legs is 2` is the class-level rule
   `$Human.legs = 2`, and `every h in Human: h.mortal` as the quantifier
   `all h in Human: h.mortal`.
+- Inside an if statement `every Human` raises
+  `SyntaxError("Use all instead of every inside if")` before the program
+  runs, so a condition reads `if any Human.age > 60:` and the rule it guards
+  `all Human.senior = true`.
 - The statement `every Human is mortal`, like `$Human is mortal`, states
   `$Human.mortal = true` for every instance, and `why` reports it as that
   rule. Elsewhere `every` stays an ordinary name, so `xs.every(...)` and a

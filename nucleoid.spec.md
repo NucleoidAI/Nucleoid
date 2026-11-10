@@ -4080,8 +4080,9 @@ statement positions; caught values and transaction recovery are unchanged.
 - [NUC 98](docs/nuc-0098.md) adds three spellings of universal claims. Each
   builds the syntax tree of an accepted form, so its results, dependencies,
   errors and rendering are that form's. No token, keyword, syntax-tree
-  variant, error type or message, option or flag is added, and `every` stays
-  an ordinary identifier.
+  variant, error type, option or flag is added, and `every` stays an
+  ordinary identifier. Its revision 2 adds one syntax error message, which
+  keeps `every` class references out of if statements.
 - **Every quantifiers.** `every NAME in COLLECTION: CONDITION` is the
   quantifier `all NAME in COLLECTION: CONDITION` of
   [Quantifiers](#quantifiers). It starts only where the name `every`, a
@@ -4096,11 +4097,11 @@ statement positions; caught values and transaction recovery are unchanged.
   not, so `` `${every v in xs: v}` `` reads the variable `every`; parentheses
   select the quantifier.
 - **Class references.** Where an operand begins, the name `every` directly
-  followed by another name `NAME` is the class reference `$NAME`:
-  `every Human.mortal = true` is `$Human.mortal = true`,
-  `every Order.big = every Order.total > 10` is a class-level rule, and
-  `if every Order.total > 10:` is the class-level conditional
-  `if $Order.total > 10:`. Names stay exact, so `every human` is `$human`.
+  followed by another name `NAME` is the class reference `$NAME`, except
+  inside an if statement, as described below:
+  `every Human.mortal = true` is `$Human.mortal = true`, and
+  `every Order.big = every Order.total > 10` is a class-level rule. Names
+  stay exact, so `every human` is `$human`.
   It builds exactly the tree of `$NAME`, so evaluation, class-level rule
   validation, dependencies, errors such as
   `SyntaxError("Cannot assign to $Human")` for `every Human = 4` and the
@@ -4117,7 +4118,7 @@ statement positions; caught values and transaction recovery are unchanged.
     a quantifier collection. `NAME:` then begins the next comma-free object
     property or a colon statement, as in `{k: every x: 1}`, `every x: int`
     and `every assert: a, b`. In those clauses the colon is the clause's, so
-    `if every Ready:` is `if $Ready:`;
+    `while every Ready:` is `while $Ready:`;
   - the top level of a template interpolation, whose trailing tokens are
     ignored, so `` `${every x}` `` and `` `${1 + every x}` `` read the
     variable `every`, while `` `${(every Human)}` `` reads `$Human`.
@@ -4133,12 +4134,48 @@ statement positions; caught values and transaction recovery are unchanged.
 - `parse_expression` reads both forms and still ignores what follows them,
   so it returns the quantifier for `every v in xs: v` and `$Human` for
   `every Human` and for `every Human is mortal`.
+- **Inside if statements.** Lexically anywhere inside an if statement,
+  where the class-reference rule above reads `every NAME` as `$NAME`, the
+  parse fails with `SyntaxError("Use all instead of every inside if")` at
+  the line and column of the first such `every`, so the program does not
+  run. Inside an
+  if statement means its condition and the bodies of its `if`, `elif` and
+  `else` clauses, in every spelling: the colon-free `if` of
+  [NUC 49](docs/nuc-0049.md), `else if`, `elif if`, the direct alternatives
+  `else CONDITION` and `elif CONDITION` of [NUC 43](docs/nuc-0043.md) and
+  inline suites, with every block, statement, function, lambda and class
+  body nested in them and their parenthesized template interpolations. A
+  condition reads with `any` and the rule it guards with `all`, the
+  spellings of [Any and all class references](#any-and-all-class-references),
+  as in `if any Order.total > 100:` with `all Order.vip = true`. A predicate
+  sentence whose subject is spelled `every Class` raises the same error
+  there, as in `if c: every Human is mortal`.
+- Only that reading changes. Inside if statements the quantifier
+  `every NAME in COLLECTION: CONDITION`, `every is ...`, `every NAME:`
+  outside a clause, the top level of a template interpolation,
+  `xs.every(...)` and `every` as a declared name, parameter, key, label,
+  loop name or binder keep their readings, and `any NAME`, `all NAME` and
+  `$NAME` are class references there as everywhere else. Outside if
+  statements `every NAME` still reads `$NAME`: at the top level, in `while`,
+  `for`, `suppose` and `try` statements, in function and class bodies that
+  no if statement holds, and in Python-style conditionals, `?` conditionals
+  and comprehension filters, which are not if statements. `parse_expression`
+  parses no if statement around its input, so it still returns `$Human` for
+  `every Human`.
+- The error belongs to the reading the parser keeps, and the rule decides
+  no reading. A reading that the parser tries and abandons raises nothing:
+  the header it tries for `while every lambda: 1` inside an if body leaves
+  the accepted reading `while`, `every` and `lambda: 1`, and the if
+  statement it first tries for `r = 1 if every Human is mortal else 2`
+  leaves the Python-style conditional, which is outside any if statement
+  and reads `$Human`. A program that fails to parse for another reason
+  reports that error, as it did before.
 - **Predicate sentences.** In every statement position of
   [Is assignments](#is-assignments), a statement whose leading expression is
-  a class reference without a property, written `$Class`, `every Class`,
-  `all Class` or `any Class` and possibly grouped in parentheses, followed
-  by `is` and exactly one name `WORD`, states `$Class.WORD = true` and
-  builds its tree. So
+  a class reference without a property, written `$Class`, `all Class`,
+  `any Class` or, outside if statements, `every Class`, and possibly
+  grouped in parentheses, followed by `is` and exactly one name `WORD`,
+  states `$Class.WORD = true` and builds its tree. So
   `$Human is mortal` and `every Human is mortal` both state
   `$Human.mortal = true`, which holds for every instance, created before or
   after it. `WORD` names the property whatever a variable of that name
@@ -4182,7 +4219,10 @@ statement positions; caught values and transaction recovery are unchanged.
   `every` in any other role.
 - REPL continuation stays lexical. A colon-free `if every v in xs: v > 0`
   header waits for its indented body, and an `elif` or direct `else`
-  alternative with that condition indents its next line, as with `all`.
+  alternative with that condition indents its next line, as with `all`. A
+  colon-free `if every Order.total > 100` header also waits for its body,
+  and the submitted statement then reports the error of an `every` inside
+  an if statement, as a file does.
 - These readings changed, as the user accepted in advance; every other input
   keeps its parse and behavior:
   - `every NAME in` where an operand begins, outside the top level of a
@@ -4200,20 +4240,29 @@ statement positions; caught values and transaction recovery are unchanged.
   - a predicate sentence ran as the three statements `$Class`, `is` and
     `WORD`, so `$Human is mortal` raised
     `ReferenceError("is is not defined")` at its `is` unless a variable
-    named `is` existed, and now states the rule.
+    named `is` existed, and now states the rule;
+  - with revision 2, `every NAME` inside an if statement, outside the
+    readings kept above, read `$NAME`, so `if every Order.total > 100:` with
+    the body `every Order.vip = true` was a class-level conditional; it now
+    raises `SyntaxError("Use all instead of every inside if")` at its first
+    such `every`, and `if any Order.total > 100:` with
+    `all Order.vip = true` states the rule.
 - The five appended entries beginning
   `Nucleoid states class predicates with is` through
   `Nucleoid keeps other is statements on a class reference` specify the
   executable behavior. `tests/universal_claims.rs`,
-  `tests/universal_claims_cli.rs` and the REPL continuation and terminal unit
+  `tests/universal_claims_cli.rs`, `tests/every_inside_if.rs`,
+  `tests/every_inside_if_cli.rs` and the REPL continuation and terminal unit
   suites execute the rest.
 
 ## Any and all class references
 
 - [NUC 104](docs/nuc-0104.md) adds `any NAME` and `all NAME` as spellings of
-  the class reference `$NAME`, wherever
+  the class reference `$NAME`, wherever the class-reference rule of
   [Every quantifiers, class references and predicate sentences](#every-quantifiers-class-references-and-predicate-sentences)
-  reads `every NAME` as one. They build exactly the tree of `$NAME`, so
+  applies to `every NAME`, inside if statements too, where `every NAME`
+  raises `SyntaxError("Use all instead of every inside if")` and these are
+  the spellings to write. They build exactly the tree of `$NAME`, so
   results, dependencies, class-level rule validation, errors and rendering
   are those of `$NAME`. No token, keyword, syntax-tree variant, error type or
   message, option or flag is added, and `any` and `all` stay ordinary
@@ -23669,8 +23718,8 @@ socrates.mortal
 class Order(total):
     this.total = total
 every Order.big = every Order.total > 10
-if every Order.total > 100:
-    every Order.vip = true
+if any Order.total > 100:
+    all Order.vip = true
 small = Order(5)
 large = Order(200)
 assert([small.big, large.big], [false, true])

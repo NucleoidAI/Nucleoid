@@ -775,3 +775,40 @@ fn any_and_all_class_references_reach_terminal_submission_and_indent_their_heade
     );
     assert_eq!(runtime.assertions_run(), 0);
 }
+
+#[test]
+fn every_inside_if_reaches_terminal_submission_as_a_syntax_error() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    run(
+        &mut app,
+        &mut runtime,
+        "class Order(total):\n    this.total = total\nlarge = Order(200)",
+    );
+    app.editor = editor::new("if every Order.total > 100");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('j'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines()[1], "    ");
+    app.editor.insert_str("every Order.vip = true");
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "SyntaxError: Use all instead of every inside if (line 1, column 4)"
+    );
+    run(&mut app, &mut runtime, "large.vip");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "undefined"
+    );
+    run(
+        &mut app,
+        &mut runtime,
+        "if any Order.total > 100:\n    all Order.vip = true\nlarge.vip",
+    );
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "true");
+    assert_eq!(runtime.assertions_run(), 0);
+}

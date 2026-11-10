@@ -284,16 +284,23 @@ impl Parser {
             self.suppose_premises.insert(attempt, outcome.clone());
             outcome
         };
-        let SupposePremise { premise, end } = outcome?;
+        let SupposePremise {
+            premise,
+            end,
+            misplaced_every,
+        } = outcome?;
         self.position = end;
+        self.adopt(misplaced_every);
         Some(simple_statement(premise))
     }
 
     fn attempt_suppose_premise(&mut self) -> Option<SupposePremise> {
         let start = self.position;
-        let outcome = self.clause_before_colon().map(|premise| SupposePremise {
+        let (clause, misplaced_every) = self.tentatively(Self::clause_before_colon);
+        let outcome = clause.map(|premise| SupposePremise {
             premise,
             end: self.position,
+            misplaced_every,
         });
         self.position = start;
         let end = outcome.as_ref()?.end;
@@ -314,6 +321,7 @@ impl Parser {
             lists: self.lists,
             enclosed: self.enclosed,
             in_class: self.in_class,
+            if_statements: self.if_statements,
             ..Parser::new(std::mem::take(&mut self.tokens))
         };
         let parsed = parse(&mut probe);
