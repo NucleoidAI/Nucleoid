@@ -108,6 +108,23 @@ fn completion_offers_the_extreme_item_queries_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_flat_beside_flat_map_on_lists_and_instance_lists() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("rows = [[1], [2]]\nclass Row\nRow()\nflatness = 1")
+        .unwrap();
+    for (prefix, expected) in [
+        ("rows.fla", ["rows.flat", "rows.flatMap"]),
+        ("Row.fla", ["Row.flat", "Row.flatMap"]),
+    ] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+    let completion = Completion::find(&runtime, &editor::new("fla"), false).unwrap();
+    assert_eq!(completion.candidates, ["flatness"]);
+}
+
+#[test]
 fn completion_offers_the_average_query_on_lists_and_instance_lists() {
     let mut runtime = Runtime::new();
     runtime

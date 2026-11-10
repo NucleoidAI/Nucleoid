@@ -2139,6 +2139,27 @@ assert([box.area, box.label], [20, "5x4"])
   target keeps its error. See the
   [root contract](nucleoid.spec.md#implicit-receiver-properties).
 
+## Reactive list flattening
+
+**Flat turns nested lists into one live list**
+
+```nuc
+weeks = [["mon", "tue"], ["wed"]]
+days = weeks.flat()
+assert(days, ["mon", "tue", "wed"])
+weeks.push(["thu", "fri"])
+assert(days, ["mon", "tue", "wed", "thu", "fri"])
+```
+
+- [NUC 103](docs/nuc-0103.md) adds JavaScript's `flat` to lists
+  and class populations: `weeks.flat()` is exactly
+  `weeks.flatMap(v => v)`, and `weeks.flat(2)` flattens two levels, as two
+  such steps do. `flat(0)` copies, and `flat(Number.POSITIVE_INFINITY)`
+  flattens every level.
+- `days` stays live like its `flatMap` spelling, so another week of days
+  extends it. See the
+  [root contract](nucleoid.spec.md#reactive-list-flattening).
+
 ## Every and predicate sentences
 
 **Every states a class-level claim as it is said**

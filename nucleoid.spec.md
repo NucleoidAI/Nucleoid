@@ -1596,6 +1596,71 @@ statement positions; caught values and transaction recovery are unchanged.
   and canonical graph source; preserved assertions, returns and actual
   dependencies are checked rather than claiming complete graph-source equality.
 
+## Reactive list flattening
+
+- [NUC 103](docs/nuc-0103.md) adds the read-only list query `flat`,
+  JavaScript's `Array.prototype.flat`, to ordinary lists and class
+  populations, the receivers of `flatMap`, through the same shared
+  list-query route. No syntax, keyword, error type or message is added.
+- `list.flat()` is `list.flat(1)`, exactly `list.flatMap(v => v)`: each item
+  that is a list contributes its immediate items and every other item
+  contributes itself. Order, duplicates, deeper lists and object and function
+  identities are kept, an empty list contributes nothing, a string is not
+  split, and the receiver is never written.
+- `list.flat(n)` for a whole number `n` of at least 1 is exactly `n`
+  successive `.flatMap(v => v)` steps, `list.flat(0)` is a copy, exactly
+  `list.map(v => v)`, and `list.flat(Number.POSITIVE_INFINITY)` flattens until
+  no item is a list. `Infinity` is not a defined name, so `list.flat(Infinity)`
+  keeps raising `ReferenceError("Infinity is not defined")` while its argument
+  is evaluated, unless the program defines `Infinity`.
+- **Depth.** A missing depth is 1. A supplied depth converts as the index of
+  `at` does: the value converts to a number as arithmetic converts it, NaN
+  becomes 0 and a fraction truncates toward zero. So `null`, `undefined`,
+  `false`, `""`, `Number.NaN`, text that is not a number, objects and the
+  undefined value of a missing property flatten nothing, `true` is 1, `"2"`
+  and `[2]` are 2 and `2.9` is 2. A depth of 0 or less flattens nothing, and
+  a depth at least as deep as the receiver's nesting, such as positive
+  infinity, `"Infinity"` or `1e300`, flattens every level. Arguments after
+  the depth are evaluated, left to right, and ignored, as `flatMap` ignores
+  its extra arguments.
+- **Reads.** A level is flattened by reading each of its items, as the
+  identity callback reads its parameter. `list.flat(n)` reads the items of
+  the first `n` levels, `list.flat(0)` the receiver's own items and an
+  infinite depth every item, so a `null` item that is read makes the
+  declaration holding the call settle to `null`, exactly as its `flatMap`
+  spelling does: `cells = [[1], null].flat()` stores `null`, while
+  `cells = [[1, null]].flat()` keeps the `null` as an item. No other read or
+  dependency is recorded for the items.
+- **Live.** The call reads its receiver and arguments as every list query
+  does, so a declaration holding it follows later writes of its receiver:
+  `push`, `pop`, `shift`, a replaced list or property, a changed population
+  and a changed depth argument. A statement that writes nothing, such as
+  `rows[0].push(9)`, which writes nothing through an index, changes nothing.
+- **Populations.** A population's items are instances, which are not lists,
+  so `Name.flat(n)` is the instance list in population order for every depth,
+  read as a dependency on the population.
+- **Rendering.** Statements, `why`, `affects` and graph keys show the call as
+  written: `why` reports `cells = rows.flat()`. A `flat` call and its
+  `flatMap` spelling are different statements and graph keys, as
+  `sum of xs` and `xs.sum()` are.
+- **Transactions.** Failed statements and transactions restore flattened
+  declarations, their values and their dependencies like any other
+  declaration, and later updates keep working.
+- **Bounds.** Flattening walks an explicit worklist, visiting each item at
+  most once and taking no stack for each level, so its cost is linear in the
+  items it visits. Existing depth, propagation and memory bounds apply, and
+  no flattening-specific limit is added.
+- **Unchanged.** Only calls of `flat` on lists and class populations change;
+  they raised `TypeError("<receiver>.flat is not a function")`. Reading
+  `list.flat` or `Name.flat` without a call still gives `null`, objects and
+  instances keep their own `flat` properties and methods, a `null` or
+  undefined receiver keeps its deferred reading, and calls on strings,
+  numbers, booleans, dates, regular expressions, functions and the built-in
+  namespaces keep their accepted errors.
+- The six entries beginning `Nucleoid flattens nested lists by one level`
+  through `Nucleoid rolls back failed flattening updates` specify the
+  executable behavior. `tests/list_flattening.rs` executes the rest.
+
 ## Implicit iterator indented loops
 
 - `for NAME:` with a genuine indented body is optionally exactly
@@ -23331,6 +23396,100 @@ assert(cart.total, 10)
 cart.qty = 3
 cart.total
 # return: 15
+---
+# Nucleoid flattens nested lists by one level
+
+nested = [[1, 2], 2, [[3, [4]]], [], "ab"]
+once = nested.flat()
+twice = once.flat(1)
+assert(once, [1, 2, 2, [3, [4]], "ab"])
+assert(twice, [1, 2, 2, 3, [4], "ab"])
+assert(nested, [[1, 2], 2, [[3, [4]]], [], "ab"])
+nested.push([[5]], 6)
+assert(once, [1, 2, 2, [3, [4]], "ab", [5], 6])
+assert(twice, [1, 2, 2, 3, [4], "ab", 5, 6])
+twice.length
+# return: 8
+---
+# Nucleoid flattens lists to a given depth
+
+deep = [1, [2, [3, [4, [5]]]], [[6]]]
+two = deep.flat(2)
+three = deep.flat(3)
+same = deep.flat(0)
+assert(two, [1, 2, 3, [4, [5]], 6])
+assert(three, [1, 2, 3, 4, [5], 6])
+assert(same, [1, [2, [3, [4, [5]]]], [[6]]])
+deep.push([[7, [8]]])
+assert(two, [1, 2, 3, [4, [5]], 6, 7, [8]])
+assert(three, [1, 2, 3, 4, [5], 6, 7, 8])
+assert(same, deep)
+three.length
+# return: 8
+---
+# Nucleoid keeps flattened lists live
+
+shifts = [["ana", "bo"], ["cy"]]
+staff = shifts.flat()
+size = staff.length
+assert([staff, size], [["ana", "bo", "cy"], 3])
+shifts.push(["di"])
+assert([staff, size], [["ana", "bo", "cy", "di"], 4])
+shifts = [["eve"], [], ["fay", "gus"]]
+assert([staff, size], [["eve", "fay", "gus"], 3])
+shifts.shift()
+assert([staff, size], [["fay", "gus"], 2])
+size
+# return: 2
+---
+# Nucleoid flattens lists in class level rules
+
+class Team(squads):
+    this.squads = squads
+$Team.members = $Team.squads.flat()
+red = Team([["ana", "bo"], ["cy"]])
+blue = Team([["di"]])
+assert([red.members, blue.members], [["ana", "bo", "cy"], ["di"]])
+red.squads.push(["ed"])
+blue.squads = [["fay"], ["gus", "hal"]]
+assert([red.members, blue.members], [["ana", "bo", "cy", "ed"], ["fay", "gus", "hal"]])
+red.members.length
+# return: 4
+---
+# Nucleoid queries the cells of flattened grids
+
+grid = [[1, 0, 2], [0, 3, 2]]
+cells = grid.flat()
+total = cells.sum()
+colors = cells.distinct()
+filled = cells.count(cell => cell > 0)
+assert([total, colors, filled], [8, [1, 0, 2, 3], 4])
+grid.push([5, 0, 0])
+assert([total, colors, filled], [13, [1, 0, 2, 3, 5], 5])
+grid = [[4, 4], [0]]
+[total, colors, filled]
+# return: [8,[4,0],2]
+---
+# Nucleoid rolls back failed flattening updates
+
+rows = [[1, [2]], [3]]
+cells = rows.flat()
+try:
+    rows.push([4])
+    assert(cells, [1, [2], 3, 4])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([rows, cells], [[[1, [2]], [3]], [1, [2], 3]])
+try:
+    cells = rows.flat(2)
+    assert(cells, [1, 2, 3])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+rows.push([[5]])
+cells
+# return: [1,[2],3,[5]]
 ---
 # Nucleoid states class predicates with is
 

@@ -62,6 +62,7 @@ impl Runtime {
             "count" => self.count_items(&items, &expect_function(predicate, "count")?),
             "map" => self.map_items(items, &expect_function(predicate, "map")?, false),
             "flatMap" => self.map_items(items, &expect_function(predicate, "flatMap")?, true),
+            "flat" => Ok(Value::List(self.flatten_items(items, arguments.first()))),
             "includes" | "contains" | "indexOf" | "lastIndexOf" => {
                 Ok(self.search_items(&items, property, predicate))
             }

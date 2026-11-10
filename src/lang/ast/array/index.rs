@@ -19,12 +19,16 @@ pub(super) fn position_number(position: Option<usize>) -> Value {
     Value::Number(position.map_or(-1.0, number::from_usize))
 }
 
+pub(super) fn integer_or_infinity(number: f64) -> f64 {
+    if number.is_nan() { 0.0 } else { number.trunc() }
+}
+
 /// Resolves the index of `at` the way JavaScript does: the number is
 /// truncated, NaN reads as zero and a negative index counts from the end.
 /// Unlike bracket indexing, an index outside the list is never clamped into
 /// it, so `None` means there is no such position.
 fn relative_index(index: f64, length: usize) -> Option<usize> {
-    let index = if index.is_nan() { 0.0 } else { index.trunc() };
+    let index = integer_or_infinity(index);
     let position = if index < 0.0 {
         index + number::from_usize(length)
     } else {

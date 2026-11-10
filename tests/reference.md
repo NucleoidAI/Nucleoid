@@ -2534,6 +2534,18 @@ order.price = 5
 order.label
 # return: "6 for 30"
 ---
+# Nucleoid flattens nested lists with flat
+
+pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]
+crates = pallets.flat()
+parts = pallets.flat(2)
+assert(crates, [["bolt", "nut"], ["gear"], ["cog"]])
+assert(parts, ["bolt", "nut", "gear", "cog"])
+pallets.push([["pin"], ["rod", "nib"]])
+assert(parts, ["bolt", "nut", "gear", "cog", "pin", "rod", "nib"])
+crates.length
+# return: 5
+---
 # Nucleoid states universal claims with every and is
 
 class Human(name: str):

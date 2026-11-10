@@ -2375,7 +2375,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), and `median` ([NUC 84](nuc-0084.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), and `median` ([NUC 84](nuc-0084.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2918,6 +2918,51 @@ assert(mapped, 80)
   through its reducer; native flat mapping adds no artificial read to emulate
   that effect. Intentional runtime-call RHS rewrites change AST and canonical
   graph source; full-AST/graph-source equality is not promised.
+
+### Reactive list flattening
+
+```
+pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]
+crates = pallets.flat()
+parts = pallets.flat(2)
+assert(crates, [["bolt", "nut"], ["gear"], ["cog"]])
+assert(parts, ["bolt", "nut", "gear", "cog"])
+pallets.push([["pin"], ["rod", "nib"]])
+assert(parts, ["bolt", "nut", "gear", "cog", "pin", "rod", "nib"])
+crates.length
+```
+
+- This is the complete `Nucleoid flattens nested lists with flat` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `5`.
+- [NUC 103](nuc-0103.md) adds JavaScript's `Array.prototype.flat`
+  to lists and class populations as a read-only list query beside `flatMap`.
+  `list.flat()` is `list.flat(1)`, exactly `list.flatMap(v => v)`: a list
+  item contributes its items, and any other item contributes itself, with
+  order, duplicates and identities kept.
+- `list.flat(n)` is exactly `n` such steps, `list.flat(0)` is a copy, exactly
+  `list.map(v => v)`, and `list.flat(Number.POSITIVE_INFINITY)` flattens every
+  level; `Infinity` is not a defined name, so `list.flat(Infinity)` keeps
+  raising `ReferenceError`. A missing depth is 1; any other depth converts as
+  the index of `at` does, so fractions truncate, and NaN, text that is not a
+  number and `null` are 0. A depth of 0 or less flattens nothing, and
+  arguments after the depth are evaluated and ignored.
+- Each flattened level is read as the identity callback reads its parameter,
+  so a `null` item at a level the call flattens makes the declaration settle
+  to `null`, as its `flatMap` spelling does.
+- A declaration holding the call follows later changes of its receiver, its
+  depth and a population, and failed transactions restore it. `why` shows the
+  written call, so `flat` and its `flatMap` spelling are different graph
+  keys. A class population's items are instances, so `Name.flat()` is its
+  instance list.
+- Flattening walks an explicit worklist with no recursion over runtime
+  values, at a cost linear in the items it visits.
+- Only calls of `flat` on lists and populations change; they raised
+  `TypeError("<receiver>.flat is not a function")`. `list.flat` without a call,
+  objects and instances with their own `flat`, and every other receiver keep
+  their accepted behavior. The authoritative contract is the
+  [reactive list flattening](../nucleoid.spec.md#reactive-list-flattening)
+  section.
 
 ### In-place list sorting
 
@@ -4106,6 +4151,7 @@ assert: actual, expected                optional statement spelling (Accepted NU
 
 name.value                             read without depending
 items.flatMap(callback)                 ordered one-level projection (Accepted NUC 41)
+items.flat()  items.flat(depth)        exactly items.flatMap(v => v), depth times; flat(0) copies (NUC 103)
 Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping (Accepted NUC 39)
 Math.toRadians(value)                   static division-first degree conversion (NUC 50 candidate)
 Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)

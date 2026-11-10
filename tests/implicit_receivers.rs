@@ -219,7 +219,7 @@ fn only_the_appended_cases_read_receivers_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 24);
-    assert_eq!(cases, 1063);
+    assert_eq!(cases, 1072);
 }
 
 #[test]

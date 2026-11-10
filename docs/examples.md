@@ -3642,6 +3642,31 @@ ink.price = 10
   [NUC 102](nuc-0102.md) and the
   [root contract](../nucleoid.spec.md#implicit-receiver-properties).
 
+## Reactive list flattening
+
+**Flattening keeps the dirty tiles of every room counted**
+
+```nuc
+class Room(tiles):
+    this.tiles = tiles
+$Room.floor = $Room.tiles.flat()
+$Room.dirty = $Room.floor.count(tile => tile == "dirt")
+kitchen = Room([["dirt", "clean"], ["clean", "dirt"]])
+hall = Room([["clean"]])
+assert([kitchen.dirty, hall.dirty], [2, 0])
+kitchen.tiles.push(["dirt", "dirt"])
+hall.tiles = [["dirt"], ["clean"]]
+[kitchen.dirty, hall.dirty]
+# return: [4,1]
+```
+
+- Each room keeps its tiles as rows, and `$Room.floor` flattens them into
+  one list per room, exactly as `$Room.tiles.flatMap(v => v)` would, so
+  `$Room.dirty` counts the dirty tiles of every room.
+- A new row of tiles in the kitchen and a new floor plan in the hall update
+  both counts. See [NUC 103](nuc-0103.md) and the
+  [root contract](../nucleoid.spec.md#reactive-list-flattening).
+
 ## Every and predicate sentences
 
 **Every keeps a fleet's rules stated as claims about every truck**

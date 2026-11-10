@@ -196,7 +196,7 @@ fn no_earlier_document_case_uses_a_two_name_header() {
         with_entries += usize::from(uses);
     }
     assert_eq!(with_entries, 11);
-    assert_eq!(cases, 1063);
+    assert_eq!(cases, 1072);
 }
 
 #[test]

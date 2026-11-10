@@ -1,6 +1,7 @@
 //! Lists: literals, indexing, slicing and list operations.
 
 mod aggregate;
+mod flat;
 mod index;
 mod query;
 

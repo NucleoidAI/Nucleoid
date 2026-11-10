@@ -19186,6 +19186,133 @@ cart.total
 # return: 15"#);
 }
 
+/// Nucleoid flattens nested lists by one level
+#[rustfmt::skip]
+#[test]
+fn flattens_nested_lists_by_one_level() {
+    let mut run = runner();
+    run(r#"nested = [[1, 2], 2, [[3, [4]]], [], "ab"]"#);
+    run("once = nested.flat()");
+    run("twice = once.flat(1)");
+    assert_eq!(run("once"), serde_json::json!([1, 2, 2, [3, [4]], "ab"]));
+    assert_eq!(run("twice"), serde_json::json!([1, 2, 2, 3, [4], "ab"]));
+    assert_eq!(run("nested"), serde_json::json!([[1, 2], 2, [[3, [4]]], [], "ab"]));
+    run("nested.push([[5]], 6)");
+    assert_eq!(run("once"), serde_json::json!([1, 2, 2, [3, [4]], "ab", [5], 6]));
+    assert_eq!(run("twice"), serde_json::json!([1, 2, 2, 3, [4], "ab", 5, 6]));
+    run(r#"twice.length
+
+# return: 8"#);
+}
+
+/// Nucleoid flattens lists to a given depth
+#[rustfmt::skip]
+#[test]
+fn flattens_lists_to_a_given_depth() {
+    let mut run = runner();
+    run("deep = [1, [2, [3, [4, [5]]]], [[6]]]");
+    run("two = deep.flat(2)");
+    run("three = deep.flat(3)");
+    run("same = deep.flat(0)");
+    assert_eq!(run("two"), serde_json::json!([1, 2, 3, [4, [5]], 6]));
+    assert_eq!(run("three"), serde_json::json!([1, 2, 3, 4, [5], 6]));
+    assert_eq!(run("same"), serde_json::json!([1, [2, [3, [4, [5]]]], [[6]]]));
+    run("deep.push([[7, [8]]])");
+    assert_eq!(run("two"), serde_json::json!([1, 2, 3, [4, [5]], 6, 7, [8]]));
+    assert_eq!(run("three"), serde_json::json!([1, 2, 3, 4, [5], 6, 7, 8]));
+    {
+        let actual = run("same");
+        let expected = run("(deep)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"three.length
+
+# return: 8"#);
+}
+
+/// Nucleoid keeps flattened lists live
+#[rustfmt::skip]
+#[test]
+fn keeps_flattened_lists_live() {
+    let mut run = runner();
+    run(r#"shifts = [["ana", "bo"], ["cy"]]"#);
+    run("staff = shifts.flat()");
+    run("size = staff.length");
+    assert_eq!(run("[staff, size]"), serde_json::json!([["ana", "bo", "cy"], 3]));
+    run(r#"shifts.push(["di"])"#);
+    assert_eq!(run("[staff, size]"), serde_json::json!([["ana", "bo", "cy", "di"], 4]));
+    run(r#"shifts = [["eve"], [], ["fay", "gus"]]"#);
+    assert_eq!(run("[staff, size]"), serde_json::json!([["eve", "fay", "gus"], 3]));
+    run("shifts.shift()");
+    assert_eq!(run("[staff, size]"), serde_json::json!([["fay", "gus"], 2]));
+    run(r#"size
+
+# return: 2"#);
+}
+
+/// Nucleoid flattens lists in class level rules
+#[rustfmt::skip]
+#[test]
+fn flattens_lists_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Team(squads):
+    this.squads = squads"#);
+    run("$Team.members = $Team.squads.flat()");
+    run(r#"red = Team([["ana", "bo"], ["cy"]])"#);
+    run(r#"blue = Team([["di"]])"#);
+    assert_eq!(run("[red.members, blue.members]"), serde_json::json!([["ana", "bo", "cy"], ["di"]]));
+    run(r#"red.squads.push(["ed"])"#);
+    run(r#"blue.squads = [["fay"], ["gus", "hal"]]"#);
+    assert_eq!(run("[red.members, blue.members]"), serde_json::json!([["ana", "bo", "cy", "ed"], ["fay", "gus", "hal"]]));
+    run(r#"red.members.length
+
+# return: 4"#);
+}
+
+/// Nucleoid queries the cells of flattened grids
+#[rustfmt::skip]
+#[test]
+fn queries_the_cells_of_flattened_grids() {
+    let mut run = runner();
+    run("grid = [[1, 0, 2], [0, 3, 2]]");
+    run("cells = grid.flat()");
+    run("total = cells.sum()");
+    run("colors = cells.distinct()");
+    run("filled = cells.count(cell => cell > 0)");
+    assert_eq!(run("[total, colors, filled]"), serde_json::json!([8, [1, 0, 2, 3], 4]));
+    run("grid.push([5, 0, 0])");
+    assert_eq!(run("[total, colors, filled]"), serde_json::json!([13, [1, 0, 2, 3, 5], 5]));
+    run("grid = [[4, 4], [0]]");
+    run(r#"[total, colors, filled]
+
+# return: [8,[4,0],2]"#);
+}
+
+/// Nucleoid rolls back failed flattening updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_flattening_updates() {
+    let mut run = runner();
+    run(r#"rows = [[1, [2]], [3]]
+cells = rows.flat()
+try:
+    rows.push([4])
+    assert(cells, [1, [2], 3, 4])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([rows, cells], [[[1, [2]], [3]], [1, [2], 3]])
+try:
+    cells = rows.flat(2)
+    assert(cells, [1, 2, 3])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+rows.push([[5]])
+cells
+# return: [1,[2],3,[5]]"#);
+}
+
 /// Nucleoid states class predicates with is
 #[rustfmt::skip]
 #[test]

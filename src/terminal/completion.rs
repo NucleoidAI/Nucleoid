@@ -84,6 +84,7 @@ const LIST_MEMBERS: &[&str] = &[
     "concat",
     "join",
     "flatMap",
+    "flat",
 ];
 /// Members only a class's instance list has.
 const INSTANCE_LIST_MEMBERS: &[&str] = &["list", "all"];
