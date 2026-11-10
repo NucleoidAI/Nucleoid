@@ -249,7 +249,7 @@ export async function output_instance_matrix({
       {
         role: "user",
         content: `
-          instance:
+          query:
           ${JSON.stringify({
             dataset: [
               {
