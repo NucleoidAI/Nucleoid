@@ -734,3 +734,44 @@ fn universal_claims_reach_terminal_submission_and_indent_every_quantifier_header
     );
     assert_eq!(runtime.assertions_run(), 0);
 }
+
+#[test]
+fn any_and_all_class_references_reach_terminal_submission_and_indent_their_headers() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    run(
+        &mut app,
+        &mut runtime,
+        "class Object(number):\n    this.number = number\nevery Object.label is square",
+    );
+    app.editor = editor::new("if any Object.number > 4");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('j'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines()[1], "    ");
+    app.editor.insert_str("all Object.color is red");
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    run(
+        &mut app,
+        &mut runtime,
+        "a = Object(3)\nb = Object(7)\nb.color",
+    );
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "red");
+    run(&mut app, &mut runtime, "a.color");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "undefined"
+    );
+    run(&mut app, &mut runtime, "any Object is shaped\na.shaped");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "true");
+    run(&mut app, &mut runtime, ".clear");
+    run(&mut app, &mut runtime, "all Object.color is red");
+    assert_eq!(
+        app.entries.last().unwrap().output.text(View::Text),
+        "ReferenceError: Object is not defined (line 1, column 1)"
+    );
+    assert_eq!(runtime.assertions_run(), 0);
+}

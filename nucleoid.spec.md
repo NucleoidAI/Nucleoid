@@ -3110,9 +3110,10 @@ statement positions; caught values and transaction recovery are unchanged.
 - **Receivers.** The assignment forms are `=`, `:=`, `+=`, `-=`, `*=`,
   `**=`, `/=`, `%=`, `&&=` and `||=`. A target that is a plain path whose
   last link is a property, `RECEIVER.NAME`, rooted in a name, a class
-  reference `$Class` or `every Class`, `this` or `self`, gives its value the
-  receiver `RECEIVER`, the path without its last property. These are the
-  paths that compound assignments accept, apart from a bare name. So
+  reference `$Class`, `every Class`, `all Class` or `any Class`, `this` or
+  `self`, gives its value the receiver `RECEIVER`, the path without its last
+  property. These are the paths that compound assignments accept, apart
+  from a bare name. So
   `order.customer.label = .first` reads `order.customer.first`. A variable,
   a destructuring pattern, a path that ends in a state version and a
   computed target such as `xs[0].p` or `f().p` give no receiver.
@@ -3974,8 +3975,10 @@ statement positions; caught values and transaction recovery are unchanged.
   `all NAME in COLLECTION: CONDITION` and `any NAME in COLLECTION: CONDITION`.
   No keyword or lexer token is added. A quantifier starts only where the name
   `all`, `every` or `any`, a binder name and the existing `in` keyword follow
-  each other; `every` spells `all`. Everywhere else `all` and `any` keep every
-  accepted reading:
+  each other; `every` spells `all`. Where an operand begins, `all` or `any`
+  directly followed by another name is otherwise the class reference of
+  [Any and all class references](#any-and-all-class-references). Everywhere
+  else `all` and `any` keep every accepted reading:
   variables, functions and calls, `Name.all()` and the `.any(callback)` list
   alias, object keys and values, parameters, loop variables and typed
   declarations. A variable named `all` or `any` does not disable quantifiers,
@@ -4069,7 +4072,8 @@ statement positions; caught values and transaction recovery are unchanged.
   behavior.
 - `every` is a third prefix that spells `all`, as
   [Every quantifiers, class references and predicate sentences](#every-quantifiers-class-references-and-predicate-sentences)
-  describes.
+  describes. `all NAME` and `any NAME` without `in` are class references, as
+  [Any and all class references](#any-and-all-class-references) describes.
 
 ## Every quantifiers, class references and predicate sentences
 
@@ -4131,9 +4135,10 @@ statement positions; caught values and transaction recovery are unchanged.
   `every Human` and for `every Human is mortal`.
 - **Predicate sentences.** In every statement position of
   [Is assignments](#is-assignments), a statement whose leading expression is
-  a class reference without a property, written `$Class` or `every Class`
-  and possibly grouped in parentheses, followed by `is` and exactly one
-  name `WORD`, states `$Class.WORD = true` and builds its tree. So
+  a class reference without a property, written `$Class`, `every Class`,
+  `all Class` or `any Class` and possibly grouped in parentheses, followed
+  by `is` and exactly one name `WORD`, states `$Class.WORD = true` and
+  builds its tree. So
   `$Human is mortal` and `every Human is mortal` both state
   `$Human.mortal = true`, which holds for every instance, created before or
   after it. `WORD` names the property whatever a variable of that name
@@ -4202,6 +4207,84 @@ statement positions; caught values and transaction recovery are unchanged.
   executable behavior. `tests/universal_claims.rs`,
   `tests/universal_claims_cli.rs` and the REPL continuation and terminal unit
   suites execute the rest.
+
+## Any and all class references
+
+- [NUC 104](docs/nuc-0104.md) adds `any NAME` and `all NAME` as spellings of
+  the class reference `$NAME`, wherever
+  [Every quantifiers, class references and predicate sentences](#every-quantifiers-class-references-and-predicate-sentences)
+  reads `every NAME` as one. They build exactly the tree of `$NAME`, so
+  results, dependencies, class-level rule validation, errors and rendering
+  are those of `$NAME`. No token, keyword, syntax-tree variant, error type or
+  message, option or flag is added, and `any` and `all` stay ordinary
+  identifiers.
+- **Class references.** Where an operand begins, the name `any` or `all`
+  directly followed by another name `NAME` is the class reference `$NAME`:
+  `all Order.big = all Order.total > 10` is the class-level rule
+  `$Order.big = $Order.total > 10`, `if any Order.total > 100:` is the
+  class-level conditional `if $Order.total > 100:`, and
+  `all Object.color is red` is the `is` assignment `$Object.color is red`.
+  Names stay exact, so `all human` is `$human`. A block comment may stand
+  between the word and `NAME`, while a line break outside parentheses and
+  brackets separates them, so they keep their accepted reading.
+- They are not quantifiers and add no existential or universal meaning: as
+  with `$NAME`, each instance is tested and updated on its own. With
+  `a = Object(3)` and `b = Object(7)`, `if any Object.number > 4:` followed
+  by `all Object.color is red` makes only `b.color` `"red"`, and an instance
+  created or changed later follows the rule.
+- **Predicate sentences.** `all Class` and `any Class` are class references
+  without a property, so `all Human is mortal` and `any Human is mortal`
+  are the predicate sentence `$Human is mortal`, which states
+  `$Human.mortal = true` wherever that sentence does.
+- These keep their accepted readings although `any` or `all` and a name
+  follow each other where an operand begins, as for `every`:
+  - `any NAME in` and `all NAME in`, which begin the quantifiers of
+    [Quantifiers](#quantifiers);
+  - `any is` and `all is`, whose `is` assigns or compares a variable named
+    `any` or `all`, as in `all is 3`, `any is not 3`, `if all is 3:` and
+    `(any is 3)`;
+  - `any NAME:` and `all NAME:`, when the colon follows `NAME` outside a
+    statement header, a `suppose` premise, a subscript start, the consequent
+    after `?`, a Python-style condition and a quantifier collection. `NAME:`
+    then begins the next comma-free object property or a colon statement,
+    as in `{a: all b: b}`, `all x: int`, `any assert: 1, 1`, `all suppose:`
+    and `any lambda: 1`. In those clauses the colon is the clause's, so
+    `if any Ready:` is `if $Ready:`;
+  - the top level of a template interpolation, whose trailing tokens are
+    ignored, so `` `${all x}` `` and `` `${all x in xs}` `` read the variable
+    `all`. Parentheses, brackets, call arguments and the consequent after
+    `?` inside an interpolation read the class reference, so
+    `` `${(all Human)}` `` reads `$Human`.
+- Everywhere else `any` and `all` keep every accepted reading: a variable,
+  function, parameter, property, key, label, loop name or binder, as in
+  `all = [1, 2]`, `all.length`, `any(xs)`, `xs.any(v => v > 2)`,
+  `Member.all()`, `def all(xs) => xs.length`, `def h all any => all * any`,
+  `(all, any) => all + any`, `{all: 1}`, `{all, any}`, `for all in Seen:`
+  and `all all in [1, 2]: all > 0`, and `any` or `all` followed by anything
+  but a name, as in `all and not any` and `all ?? 9`. A variable named `all`
+  or `any` disables neither form: after `all = [1, 2, 3]` and `any = 2`,
+  `all Item.big = all Item.x > any` is a class-level rule that reads the
+  variable `any`, and `all n in all: n > any` quantifies over the variable
+  `all`.
+- `parse_expression` reads both spellings and still ignores what follows
+  them, so it returns `$Human` for `all Human`, for `any Human` and for
+  `all Human is mortal`.
+- REPL continuation stays lexical: a colon-free `if any Object.number > 4`
+  header waits for its indented body, as it did, and the body now runs.
+- These readings changed, as the user accepted in advance; every other input
+  keeps its parse and behavior. `any NAME` and `all NAME` where an operand
+  begins, outside the readings kept above, ended an expression with `any` or
+  `all` and began the next statement or item with `NAME`, and now read
+  `$NAME`. So after `all = 3`, `all Human = 4` assigned `Human` and now raises
+  `SyntaxError("Cannot assign to $Human")` when it runs, `x = all c` stored
+  the variable `all` and now reads `$c`, and `parse_expression("all x")`
+  returned the name `all` and now returns `$x`.
+- The four entries beginning
+  `Nucleoid spells class references with any and all` through
+  `Nucleoid keeps all and any as names and quantifiers beside class references`
+  specify the executable behavior. `tests/any_all_class_references.rs`,
+  `tests/any_all_class_references_cli.rs` and the REPL continuation and
+  terminal unit suites execute the rest.
 
 ## Exponentiation
 
@@ -23396,6 +23479,78 @@ assert(cart.total, 10)
 cart.qty = 3
 cart.total
 # return: 15
+---
+# Nucleoid spells class references with any and all
+
+class Object(number):
+    this.number = number
+every Object.label is square
+if any Object.number > 4:
+    all Object.color is red
+a = Object(3)
+b = Object(7)
+assert([a.label, b.label], ["square", "square"])
+assert([a.color, b.color], [null, "red"])
+a.number = 9
+assert(a.color, "red")
+c = Object(1)
+assert([c.label, c.color], ["square", null])
+b.color
+# return: "red"
+---
+# Nucleoid writes class level rules and conditionals with all and any
+
+class Order(total):
+    this.total = total
+small = Order(5)
+all Order.big = all Order.total > 10
+if any Order.total > 100:
+    all Order.vip = true
+large = Order(200)
+assert([small.big, large.big], [false, true])
+assert([small.vip, large.vip], [null, true])
+small.total = 150
+assert([small.big, small.vip], [true, true])
+large.total = 8
+assert(large.big, false)
+all Order.big = all Order.total > 100
+[small.big, large.big]
+# return: [true,false]
+---
+# Nucleoid states class predicates with all and any
+
+class Human(name: str):
+    this.name = name
+plato = Human("Plato")
+all Human is mortal
+any Human is wise
+socrates = Human("Socrates")
+assert([plato.mortal, socrates.mortal], [true, true])
+assert([plato.wise, socrates.wise], [true, true])
+assert((why socrates.mortal)[0].rule, "$Human.mortal = true")
+plato.wise = false
+assert([plato.wise, socrates.wise], [false, true])
+socrates.mortal
+# return: true
+---
+# Nucleoid keeps all and any as names and quantifiers beside class references
+
+class Item(x):
+    this.x = x
+all = [1, 2, 3]
+any = 2
+all Item.big = all Item.x > any
+first = Item(1)
+third = Item(3)
+assert([first.big, third.big], [false, true])
+assert(all n in all: n > any, false)
+assert(any n in all: n > any, true)
+assert(all.length + any, 5)
+any = 0
+assert([first.big, third.big], [true, true])
+assert(all i in Item: i.big, true)
+first.big
+# return: true
 ---
 # Nucleoid flattens nested lists by one level
 

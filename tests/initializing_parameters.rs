@@ -988,7 +988,7 @@ fn only_the_appended_cases_use_initializing_parameters_and_run_every_assertion()
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 36);
-    assert_eq!(cases, 1072);
+    assert_eq!(cases, 1079);
     assert!(uses_prefix("class P(a, ...this.b)"));
     assert!(uses_prefix("class P:\n    def init(self.a):\n        pass"));
     assert!(!uses_prefix("class P(a):\n    this.a = f(this.b)"));

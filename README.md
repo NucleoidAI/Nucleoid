@@ -2139,6 +2139,33 @@ assert([box.area, box.label], [20, "5x4"])
   target keeps its error. See the
   [root contract](nucleoid.spec.md#implicit-receiver-properties).
 
+## Any and all class references
+
+**Any and all state a class condition and the rule it guards**
+
+```nuc
+class Object(number):
+    this.number = number
+every Object.label is square
+if any Object.number > 4:
+    all Object.color is red
+a = Object(3)
+b = Object(7)
+assert([a.label, b.label], ["square", "square"])
+assert([a.color, b.color], [null, "red"])
+```
+
+- [NUC 104](docs/nuc-0104.md) reads `any Object` and `all Object` as the
+  class reference `$Object`, wherever [NUC 98](docs/nuc-0098.md) reads
+  `every Object` as one. So `if any Object.number > 4:` is the class-level
+  conditional `if $Object.number > 4:`, and `all Object.color is red` is the
+  rule `$Object.color is red` it guards for each Object over 4.
+- They are spellings, not quantifiers: each instance is tested on its own,
+  so only `b` turns red. `any n in xs: n > 4` and `all n in xs: n > 4` stay
+  the quantifiers of NUC 62, and variables named `all` and `any` work as
+  before. See the
+  [root contract](nucleoid.spec.md#any-and-all-class-references).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

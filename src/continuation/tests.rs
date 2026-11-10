@@ -846,3 +846,47 @@ fn every_quantifier_colons_pair_with_their_prefix_in_headers() {
         Some("every Human is mortal\n".to_string())
     );
 }
+
+#[test]
+fn any_and_all_class_conditions_open_colon_free_headers() {
+    for condition in [
+        "any Object.number > 4",
+        "all Order.total > 10 and any Order.open",
+        "any Ready",
+        "(all Order).total > 10",
+        "any Order.total > 10 ? on : off",
+        "all v in xs: any Order.total > v",
+    ] {
+        for prefix in ["if", "else if", "elif if", "else", "elif"] {
+            let line = format!("{prefix} {condition}");
+            let keyword = if prefix == "if" {
+                Keyword::If
+            } else {
+                Keyword::Else
+            };
+            assert!(indented_condition_header(&line, keyword), "{line:?}");
+            assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+        }
+    }
+    for line in ["if any Ready:", "if all x: v", "if any x; other"] {
+        assert!(!indented_condition_header(line, Keyword::If), "{line:?}");
+    }
+    assert!(indented_body_header("if any Ready:"));
+    assert!(!indented_body_header(
+        "all Order.big = any Order.total > 10"
+    ));
+    assert!(indented_alternative_header("else any Order.total > 1"));
+    assert_eq!(next_indentation("elif all Order.open", false), INDENT);
+    let mut pending = Pending::default();
+    assert_eq!(pending.accept("if any Object.number > 4"), None);
+    assert_eq!(pending.indentation, INDENT);
+    assert_eq!(pending.accept("    all Object.color is red"), None);
+    assert_eq!(
+        pending.accept(""),
+        Some("if any Object.number > 4\n    all Object.color is red\n".to_string())
+    );
+    assert_eq!(
+        pending.accept("all Human is mortal"),
+        Some("all Human is mortal\n".to_string())
+    );
+}

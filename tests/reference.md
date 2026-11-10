@@ -2534,6 +2534,26 @@ order.price = 5
 order.label
 # return: "6 for 30"
 ---
+# Nucleoid writes class conditions with any and their rules with all
+
+class Sensor(reading, limit):
+    this.reading = reading
+    this.limit = limit
+all Sensor.alarm = all Sensor.reading > all Sensor.limit
+if any Sensor.alarm:
+    all Sensor.status is critical
+else:
+    all Sensor.status is normal
+boiler = Sensor(120, 100)
+fridge = Sensor(3, 5)
+assert([boiler.status, fridge.status], ["critical", "normal"])
+fridge.reading = 9
+assert(fridge.status, "critical")
+assert(any s in Sensor: s.alarm, true)
+boiler.reading = 80
+[boiler.status, fridge.status]
+# return: ["normal","critical"]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

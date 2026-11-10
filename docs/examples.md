@@ -3642,6 +3642,36 @@ ink.price = 10
   [NUC 102](nuc-0102.md) and the
   [root contract](../nucleoid.spec.md#implicit-receiver-properties).
 
+## Any and all class references
+
+**Any and all keep every shelf's reorder rule live**
+
+```nuc
+class Shelf(stock, minimum):
+    this.stock = stock
+    this.minimum = minimum
+all Shelf.low = all Shelf.stock < all Shelf.minimum
+if any Shelf.low:
+    all Shelf.order = all Shelf.minimum * 2 - all Shelf.stock
+else:
+    all Shelf.order = 0
+apples = Shelf(4, 10)
+pears = Shelf(12, 10)
+assert([apples.order, pears.order], [16, 0])
+pears.stock = 3
+all Shelf is tracked
+[apples.order, pears.order, pears.tracked]
+# return: [16,17,true]
+```
+
+- `all Shelf` and `any Shelf` stand for `$Shelf`, so each shelf knows
+  whether it runs low and orders enough to reach twice its minimum, and a
+  shelf that is not low orders nothing.
+- Lowering the pears' stock to 3 makes them low, and their order follows.
+  The predicate sentence `all Shelf is tracked` states
+  `$Shelf.tracked = true` for every shelf. See [NUC 104](nuc-0104.md) and the
+  [root contract](../nucleoid.spec.md#any-and-all-class-references).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

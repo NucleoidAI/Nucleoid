@@ -32,8 +32,8 @@ impl Parser {
             if let Some(quantifier) = self.quantifier_at(0) {
                 return self.quantified(quantifier);
             }
-            if self.starts_every_class() {
-                return self.every_class();
+            if self.starts_spelled_class() {
+                return self.spelled_class();
             }
         }
         // `name => ...` or `name -> ...`. Check before taking the name so
@@ -318,14 +318,15 @@ impl Parser {
         })
     }
 
-    fn starts_every_class(&self) -> bool {
+    fn starts_spelled_class(&self) -> bool {
         matches!(
             (self.peek(), self.peek_at(1)),
-            (Token::Identifier(word), Token::Identifier(name)) if word == "every" && name != "is"
+            (Token::Identifier(word), Token::Identifier(name))
+                if matches!(word.as_str(), "every" | "any" | "all") && name != "is"
         ) && (self.context == ExpressionContext::Clause || self.peek_at(2) != &Token::Colon)
     }
 
-    fn every_class(&mut self) -> Result<Expr> {
+    fn spelled_class(&mut self) -> Result<Expr> {
         self.advance();
         match self.advance() {
             Token::Identifier(name) => Ok(Expr::ClassRef(name)),

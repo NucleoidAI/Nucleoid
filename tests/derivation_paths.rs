@@ -265,7 +265,7 @@ fn no_earlier_document_case_writes_a_path_stage() {
         with_path += usize::from(uses);
     }
     assert_eq!(with_path, 13);
-    assert_eq!(cases, 1072);
+    assert_eq!(cases, 1079);
 }
 
 #[test]

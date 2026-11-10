@@ -442,7 +442,6 @@ fn ordinary_names_keep_every_accepted_reading() {
             "all = 2\nb = 3\no = {a: all b: b}\n[o.a, o.b]",
             json!([2, 3]),
         ),
-        ("c = 1\nall = 2\nx = all c\nx", json!(2)),
         (
             "f = all => all + 1\ng = (all, any) => all + any\n[f(1), g(1, 2)]",
             json!([2, 3]),
@@ -478,8 +477,16 @@ fn ordinary_names_keep_every_accepted_reading() {
             type_name: "int".to_string(),
         }]
     );
-    equivalent("x = all c", "x = all\nc");
-    equivalent("x = any c", "x = any\nc");
+    assert_eq!(
+        failure("c = 1\nall = 2\nx = all c\nx"),
+        (
+            ErrorKind::Reference,
+            "c is not defined".to_string(),
+            Some(Position::new(3, 1))
+        )
+    );
+    equivalent("x = all c", "x = $c");
+    equivalent("x = any c", "x = $c");
 
     for (source, expected) in [
         (
@@ -503,7 +510,10 @@ fn parse_expression_now_reads_a_quantifier_and_still_ignores_what_follows() {
     let expected = quantified(Quantifier::All, "x", name("xs"), name("x"));
     assert_eq!(parse_expression("all x in xs: x").unwrap(), expected);
     assert_eq!(parse_expression("all x in xs: x d").unwrap(), expected);
-    assert_eq!(parse_expression("all x").unwrap(), name("all"));
+    assert_eq!(
+        parse_expression("all x").unwrap(),
+        Expr::ClassRef("x".to_string())
+    );
     assert_eq!(parse_expression("all in xs").unwrap(), name("all"));
     assert_eq!(
         parse_expression("all(x) in xs").unwrap().to_string(),

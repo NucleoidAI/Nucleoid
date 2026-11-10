@@ -197,9 +197,9 @@ isAssignment
     ;
 
 /*
- * Predicate-sentence contract (NUC 98):
+ * Predicate-sentence contract (NUC 98, NUC 104):
  * - The leading expression is a class reference without a property: a
- *   CLASS_REF or an everyClass, possibly grouped in parentheses. A path
+ *   CLASS_REF or a spelledClass, possibly grouped in parentheses. A path
  *   with a member or version is an isAssignment instead.
  * - IS and one name token follow it, and the token after the name is
  *   NEWLINE, ';', DEDENT, '}', EOF, ELSE or CATCH, so the accepted grammar
@@ -215,7 +215,7 @@ predicateSentence
 
 classReference
     : CLASS_REF
-    | everyClass
+    | spelledClass
     | LPAREN classReference RPAREN
     ;
 
@@ -406,7 +406,7 @@ methodDecl
  *   'is:', 'stated name:' and 'derived name:' keep that interpretation.
  * - A Python conditional is tentative and needs 'else' directly after its
  *   condition. It is disabled in interpolation and comprehension sources.
- * - Interpolation also disables quantifiers, every class references, noun
+ * - Interpolation also disables quantifiers, spelled class references, noun
  *   queries and lambdas.
  *   Object values retain 'lambda name:' as a property/declaration boundary
  *   when that boundary has the accepted reading.
@@ -562,7 +562,7 @@ primary
     : receiverRead
     | atVariable
     | quantified
-    | everyClass
+    | spelledClass
     | name arrow arrowBody
     | lambdaExpression
     | parameters arrow arrowBody
@@ -620,7 +620,7 @@ atVariable
  *   value of an assignment with a receiver. ASSIGN, VALUE_ASSIGN and the
  *   compound operators give their value the receiver of their target: a
  *   path whose last link is a member, rooted in a name, CLASS_REF,
- *   everyClass or THIS, without that last member. A variable, a
+ *   spelledClass or THIS, without that last member. A variable, a
  *   destructuring pattern, a computed target and a path ending in a
  *   version give none. A target of more than 128 links gives a receiver
  *   that a read rejects with "Expression has too many parts" at its DOT.
@@ -660,18 +660,20 @@ quantified
     ;
 
 /*
- * Every-class contract (NUC 98):
- * - EVERY and the name token after it, where an operand begins outside the
- *   top level of an interpolation, build Expr::ClassRef(name), the tree of
- *   the CLASS_REF '$name'. A block comment may stand between them; NEWLINE
- *   outside parentheses and brackets separates them.
- * - Not when IN follows the name, which is quantified; not when the name is
- *   IS, so 'every is v' stays an isAssignment or comparison of the name
- *   'every'; and not when COLON follows the name outside a clause, so the
- *   name keeps starting the next comma-free property or colon statement.
+ * Spelled-class contract (NUC 98, NUC 104):
+ * - EVERY, ANY or ALL and the name token after it, where an operand begins
+ *   outside the top level of an interpolation, build Expr::ClassRef(name),
+ *   the tree of the CLASS_REF '$name'. A block comment may stand between
+ *   them; NEWLINE outside parentheses and brackets separates them.
+ * - Not when IN follows the name, which is quantified and keeps its
+ *   priority; not when the name is IS, so 'every is v', 'any is v' and
+ *   'all is v' stay an isAssignment or comparison of the first name; and
+ *   not when COLON follows the name outside a clause, so the name keeps
+ *   starting the next comma-free property or colon statement.
+ * - The three words build the same node; none of them quantifies here.
  */
-everyClass
-    : EVERY name                        // Expr::ClassRef
+spelledClass
+    : (EVERY | ANY | ALL) name          // Expr::ClassRef
     ;
 
 lambdaExpression
@@ -1000,8 +1002,9 @@ fragment REGEX_CHAR
  * p is @a + 2              -> p = a + 2, the tree of p is (a) + 2.
  * p is [@A, B]             -> p = [A, Word(B)].
  * every n in s: c          -> all n in s: c.
- * every C                  -> $C.
- * $C is w                  -> $C.w = true, also spelled every C is w.
+ * every C, any C, all C    -> $C.
+ * $C is w                  -> $C.w = true, also spelled every C is w,
+ *                             any C is w and all C is w.
  * o.p = .a + .b            -> o.p = o.a + o.b, in the final parse.
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
@@ -1030,8 +1033,8 @@ fragment REGEX_CHAR
  * parser\is_assignment.rs and parser\precedence.rs, their rejection in
  * parser\expression.rs and parser\comprehension.rs and the 'lambda' header
  * colon in parser\statement.rs.
- * Every quantifiers, class references and predicate sentences:
- * Quantifier::starting in src\lang\ast\mod.rs, everyClass in
+ * Every quantifiers, spelled class references and predicate sentences:
+ * Quantifier::starting in src\lang\ast\mod.rs, spelledClass in
  * parser\primary.rs and predicateSentence in parser\predicate.rs, which
  * parser\statement.rs consults after an expression statement's head.
  * Implicit receivers: parser\receiver.rs, with the final parse in

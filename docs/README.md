@@ -1292,7 +1292,7 @@ order.label
 
 - This is the complete `Nucleoid reads properties of the assigned object with a leading dot` program in `tests/reference.md`, without its title and expected-return metadata; it returns `"6 for 30"`.
 - [NUC 102](nuc-0102.md) reads a `.` that begins an operand, directly followed by a name, in the value of an assignment to a property path as that property of the path's object, the receiver. `$Order.total = .price * .qty` is `$Order.total = $Order.price * $Order.qty`, `order.customer.label = .first` reads `order.customer.first`, and `this.area = .w * .h` reads `this.w` and `this.h`.
-- The forms are `=`, `:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class` or `every Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
+- The forms are `=`, `:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class`, `every Class`, `all Class` or `any Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
 - The read continues as member access does, so `.a.b`, `.a[0]`, `.a()` and `.a@first` work, in every operand of the value: operators, `?:` and Python-style conditionals with their conditions, lists, objects, subscripts, lambda and function bodies and template interpolations. The innermost assignment decides, so in `o.p = (q.r = .a)` the dot reads `q.a`.
 - The parser builds the written-out member path, so evaluation, dependencies, `why`, `affects`, graph keys, rendering and rollback are those of that path, and `why` reports `$Order.total = $Order.price*$Order.qty`.
 - These keep their accepted readings and errors: a call argument that starts with `.`, which is a selector or its error; `is` assignments; a statement or target that starts with `.`; a dot after a name, such as `x .a`; the values of variables and destructuring declarations; and every position without a property target.
@@ -1338,6 +1338,32 @@ every Human is mortal
 ```
 
 - This states the same rule as the program above.
+- [NUC 104](nuc-0104.md) spells `$Name` as `any Name` and `all Name`
+  wherever `every Name` spells it, so a condition about a class reads with
+  `any` and the rule it guards with `all`. They are spellings of `$Name`,
+  not quantifiers: each instance is tested on its own, so here only `b`
+  turns red, and instances created or changed later follow the rules.
+
+```
+class Object(number):
+    this.number = number
+
+every Object.label is square
+
+if any Object.number > 4:
+    all Object.color is red
+
+a = Object(3)
+b = Object(7)
+```
+
+- `all Human is mortal` and `any Human is mortal` are the predicate sentence
+  `$Human is mortal`. `any Name in` and `all Name in` still begin
+  [quantifiers](#quantifiers), and `all is ...`, `all Name:` outside a
+  header and the top level of a template interpolation keep their accepted
+  readings, as for `every`; see the authoritative
+  [any and all class references](../nucleoid.spec.md#any-and-all-class-references)
+  section.
 
 ### Conditionals, order, and overriding
 
@@ -3787,10 +3813,12 @@ ready
   or without their own colon, take quantifier conditions, and their header
   scans, including the native REPL's, pair that colon with its `all` or
   `any`.
-- `all` and `any` stay ordinary names everywhere else, including
-  `Name.all()`, the `.any(callback)` alias, variables, functions, keys and
-  parameters. At the top level of a template interpolation a quantifier needs
-  parentheses: `` `${(all v in xs: v)}` ``.
+- Where an operand begins, `all` or `any` directly followed by another name
+  is otherwise the class reference `$Name` of [NUC 104](nuc-0104.md), as in
+  `if any Order.total > 100:`. `all` and `any` stay ordinary names
+  everywhere else, including `Name.all()`, the `.any(callback)` alias,
+  variables, functions, keys and parameters. At the top level of a template
+  interpolation a quantifier needs parentheses: `` `${(all v in xs: v)}` ``.
 - [NUC 98](nuc-0098.md) adds `every NAME in COLLECTION: CONDITION` as a
   spelling of `all NAME in COLLECTION: CONDITION`. It builds the same node,
   renders as `(all ...)` and pairs its colon in header scans as `all` does.
@@ -4031,6 +4059,9 @@ $Type.property = .a * .b               $Type.property = $Type.a * $Type.b (NUC 1
 every Type.property = expression       the same class-level rule; every Type is $Type (NUC 98)
 $Type is word                          predicate sentence: $Type.word = true (NUC 98)
 every Type is word                     the same predicate sentence (NUC 98)
+all Type.property = expression         the same class-level rule; all Type and any Type are $Type (NUC 104)
+if any Type.property > value:          the class-level conditional of $Type, per instance (NUC 104)
+all Type is word                       the same predicate sentence; also any Type is word (NUC 104)
 delete name                            remove a variable, property, or instance
 
 class Name                             empty type declaration

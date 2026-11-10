@@ -19186,6 +19186,98 @@ cart.total
 # return: 15"#);
 }
 
+/// Nucleoid spells class references with any and all
+#[rustfmt::skip]
+#[test]
+fn spells_class_references_with_any_and_all() {
+    let mut run = runner();
+    run(r#"class Object(number):
+    this.number = number"#);
+    run("every Object.label is square");
+    run(r#"if any Object.number > 4:
+    all Object.color is red"#);
+    run("a = Object(3)");
+    run("b = Object(7)");
+    assert_eq!(run("[a.label, b.label]"), serde_json::json!(["square", "square"]));
+    assert_eq!(run("[a.color, b.color]"), serde_json::json!([null, "red"]));
+    run("a.number = 9");
+    assert_eq!(run("a.color"), "red");
+    run("c = Object(1)");
+    assert_eq!(run("[c.label, c.color]"), serde_json::json!(["square", null]));
+    run(r#"b.color
+
+# return: "red""#);
+}
+
+/// Nucleoid writes class level rules and conditionals with all and any
+#[rustfmt::skip]
+#[test]
+fn writes_class_level_rules_and_conditionals_with_all_and_any() {
+    let mut run = runner();
+    run(r#"class Order(total):
+    this.total = total"#);
+    run("small = Order(5)");
+    run("all Order.big = all Order.total > 10");
+    run(r#"if any Order.total > 100:
+    all Order.vip = true"#);
+    run("large = Order(200)");
+    assert_eq!(run("[small.big, large.big]"), serde_json::json!([false, true]));
+    assert_eq!(run("[small.vip, large.vip]"), serde_json::json!([null, true]));
+    run("small.total = 150");
+    assert_eq!(run("[small.big, small.vip]"), serde_json::json!([true, true]));
+    run("large.total = 8");
+    assert_eq!(run("large.big"), false);
+    run("all Order.big = all Order.total > 100");
+    run(r#"[small.big, large.big]
+
+# return: [true,false]"#);
+}
+
+/// Nucleoid states class predicates with all and any
+#[rustfmt::skip]
+#[test]
+fn states_class_predicates_with_all_and_any() {
+    let mut run = runner();
+    run(r#"class Human(name: str):
+    this.name = name"#);
+    run(r#"plato = Human("Plato")"#);
+    run("all Human is mortal");
+    run("any Human is wise");
+    run(r#"socrates = Human("Socrates")"#);
+    assert_eq!(run("[plato.mortal, socrates.mortal]"), serde_json::json!([true, true]));
+    assert_eq!(run("[plato.wise, socrates.wise]"), serde_json::json!([true, true]));
+    assert_eq!(run("(why socrates.mortal)[0].rule"), "$Human.mortal = true");
+    run("plato.wise = false");
+    assert_eq!(run("[plato.wise, socrates.wise]"), serde_json::json!([false, true]));
+    run(r#"socrates.mortal
+
+# return: true"#);
+}
+
+/// Nucleoid keeps all and any as names and quantifiers beside class references
+#[rustfmt::skip]
+#[test]
+fn keeps_all_and_any_as_names_and_quantifiers_beside_class_references() {
+    let mut run = runner();
+    run(r#"class Item(x):
+    this.x = x"#);
+    run("all = [1, 2, 3]");
+    run("any = 2");
+    run("all Item.big = all Item.x > any");
+    run("first = Item(1)");
+    run("third = Item(3)");
+    assert_eq!(run("[first.big, third.big]"), serde_json::json!([false, true]));
+    assert_eq!(run("all n in all: n > any"), false);
+    assert_eq!(run("any n in all: n > any"), true);
+    assert_eq!(run("all.length + any"), 5);
+    run("any = 0");
+    assert_eq!(run("[first.big, third.big]"), serde_json::json!([true, true]));
+    assert_eq!(run("all i in Item: i.big"), true);
+    run(r#"first.big
+
+# return: true"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]
