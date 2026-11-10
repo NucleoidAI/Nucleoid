@@ -10,10 +10,9 @@ export async function generate({
   reasoning = false,
   few_shot = (file) => file,
   messages = [],
-  document = true,
   grammar = false,
 }) {
-  if (document) {
+  if (few_shot) {
     messages.unshift({
       role: "system",
       content: `

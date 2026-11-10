@@ -219,16 +219,7 @@ export async function output_instance_matrix({
   const { dataset } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: (train_dataset) => ({
-      ...train_dataset,
-      dataset: train_dataset.dataset.map(({ instances }) => ({
-        instances: instances.map((instance) => ({
-          ...instance,
-          input_matrix: Matrix.crop(instance.input_instance_matrix),
-          output_matrix: Matrix.crop(instance.output_instance_matrix),
-        })),
-      })),
-    }),
+    few_shot: null,
     messages: [
       {
         role: "assistant",
@@ -239,8 +230,18 @@ export async function output_instance_matrix({
             dataset: train_dataset.dataset.map(({ instances }) => ({
               instances: instances.map((instance) => ({
                 ...instance,
-                input_matrix: Matrix.crop(instance.input_instance_matrix),
-                output_matrix: Matrix.crop(instance.output_instance_matrix),
+                input_instance_matrix: Matrix.crop(
+                  instance.input_instance_matrix
+                ),
+                output_instance_matrix: Matrix.crop(
+                  instance.output_instance_matrix
+                ),
+                input_silhouette_matrix: Matrix.silhouette(
+                  Matrix.crop(instance.input_instance_matrix)
+                ),
+                output_silhouette_matrix: Matrix.silhouette(
+                  Matrix.crop(instance.output_instance_matrix)
+                ),
               })),
             })),
           })}
@@ -290,7 +291,7 @@ export async function output_instance_matrix({
     y
   );
 
-  milestone.output_placed(instance);
+  milestone.output_placed({ ...instance, output_instance_padded_matrix });
 
   return { output_instance_matrix: output_instance_padded_matrix };
 }
