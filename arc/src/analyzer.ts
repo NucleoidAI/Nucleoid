@@ -134,8 +134,8 @@ export async function value({
       dataset: train_dataset.dataset.map(({ instances }) => ({
         instances: instances.map((instance) => ({
           ...instance,
-          input_matrix: Matrix.crop(instance.input_instance_matrix),
-          output_matrix: Matrix.crop(instance.output_instance_matrix),
+          input_instance_matrix: Matrix.crop(instance.input_instance_matrix),
+          output_instance_matrix: Matrix.crop(instance.output_instance_matrix),
         })),
       })),
     }),
