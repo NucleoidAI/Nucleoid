@@ -57,6 +57,7 @@ impl Parser {
         }
 
         match self.advance() {
+            Token::Dot if self.reads_behind() => self.receiver_read(),
             Token::Number(number) => Ok(Expr::Number(number)),
             Token::Str(string) => Ok(Expr::String(string)),
             Token::Template(template) => self.template(&template),

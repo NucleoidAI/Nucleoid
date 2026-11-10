@@ -2520,6 +2520,20 @@ assert(ratio, null)
 probe.extra = [1, 2]
 assert(ratio, Number.POSITIVE_INFINITY)
 ---
+# Nucleoid reads properties of the assigned object with a leading dot
+
+class Order(price, qty):
+    this.price = price
+    this.qty = qty
+$Order.total = .price * .qty
+order = Order(4, 5)
+order.label = `${.qty} for ${.total}`
+assert([order.total, order.label], [20, "5 for 20"])
+order.qty = 6
+order.price = 5
+order.label
+# return: "6 for 30"
+---
 # Nucleoid states universal claims with every and is
 
 class Human(name: str):

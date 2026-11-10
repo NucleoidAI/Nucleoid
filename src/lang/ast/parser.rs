@@ -11,6 +11,7 @@ mod postfix;
 mod precedence;
 mod predicate;
 mod primary;
+mod receiver;
 mod statement;
 mod template;
 
@@ -21,6 +22,7 @@ use crate::error::{Error, Position, Result};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, Stmt};
 use at_variable::Rejection;
 use is_assignment::Items;
+use receiver::{Dots, Receiver};
 
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
@@ -112,6 +114,8 @@ struct Parser {
     items: Items,
     enclosed: bool,
     in_class: bool,
+    dots: Dots,
+    receiver: Receiver,
     /// Python-style conditional attempts by `if` token position and nesting
     /// depth, which together decide one: the qualified condition and the
     /// position after its `else`, or `None`. A re-parse of the same source
@@ -189,6 +193,8 @@ impl Parser {
             items: Items::Plain,
             enclosed: false,
             in_class: false,
+            dots: Dots::Accepted,
+            receiver: Receiver::Absent,
             python_conditions: HashMap::new(),
             variable_conditions: HashMap::new(),
             item_conditions: HashMap::new(),
@@ -203,7 +209,30 @@ impl Parser {
     }
 
     fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
-        let accepted = self.attempt_words(&parse);
+        let accepted = match self.attempt_accepted(&parse) {
+            Ok(parsed) => return Ok(parsed),
+            Err(error) => error,
+        };
+        if !self.mentions_receivers() && !self.mentions_templates() {
+            return Err(accepted);
+        }
+        let words = self.mentions_words();
+        let lists = if self.mentions_comprehensions() {
+            Lists::Comprehensions
+        } else {
+            Lists::Literals
+        };
+        *self = Parser {
+            words,
+            lists,
+            dots: Dots::Receivers,
+            ..Parser::new(std::mem::take(&mut self.tokens))
+        };
+        parse(self).map_err(|reread| furthest(accepted, reread))
+    }
+
+    fn attempt_accepted<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {
+        let accepted = self.attempt_words(parse);
         if accepted.is_ok() || !self.mentions_comprehensions() {
             return accepted;
         }
@@ -211,7 +240,7 @@ impl Parser {
             lists: Lists::Comprehensions,
             ..Parser::new(std::mem::take(&mut self.tokens))
         };
-        self.attempt_words(&parse)
+        self.attempt_words(parse)
     }
 
     fn attempt_words<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {

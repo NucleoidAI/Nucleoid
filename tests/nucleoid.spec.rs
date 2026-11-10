@@ -19017,6 +19017,175 @@ fn keeps_cotangents_reactive() {
     }
 }
 
+/// Nucleoid reads receiver properties in class level rules
+#[rustfmt::skip]
+#[test]
+fn reads_receiver_properties_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Order(price, qty):
+    this.price = price
+    this.qty = qty"#);
+    run("$Order.total = .price * .qty");
+    run("first = Order(4, 5)");
+    run("second = Order(2, 10)");
+    assert_eq!(run("[first.total, second.total]"), serde_json::json!([20, 20]));
+    run("first.qty = 6");
+    assert_eq!(run("[first.total, second.total]"), serde_json::json!([24, 20]));
+    run("$Order.change = .total - .total@first");
+    run("second.price = 3");
+    assert_eq!(run("[first.change, second.change]"), serde_json::json!([4, 10]));
+    assert_eq!(run("(why first.total)[0].rule"), "$Order.total = $Order.price*$Order.qty");
+    run(r#"first.total
+
+# return: 24"#);
+}
+
+/// Nucleoid reads receiver properties through nested targets
+#[rustfmt::skip]
+#[test]
+fn reads_receiver_properties_through_nested_targets() {
+    let mut run = runner();
+    run(r#"person = {first: "Ada", last: "Lovelace"}"#);
+    run("order = {customer: person, qty: 2, price: 5}");
+    run("order.total = .qty * .price");
+    run(r#"order.customer.label = .first + " " + .last"#);
+    assert_eq!(run("[order.total, person.label]"), serde_json::json!([10, "Ada Lovelace"]));
+    run(r#"person.first = "Augusta""#);
+    run(r#"person.last = "King""#);
+    run("order.qty = 3");
+    run("order.price = 4");
+    run(r#"[order.total, order.customer.label]
+
+# return: [12,"Augusta King"]"#);
+}
+
+/// Nucleoid reads receiver properties through this and self
+#[rustfmt::skip]
+#[test]
+fn reads_receiver_properties_through_this_and_self() {
+    let mut run = runner();
+    run(r#"class Rect(w, h):
+    this.w = w
+    this.h = h
+    this.area = .w * .h
+    def square():
+        self.w = .h
+        return self.area"#);
+    run("r = Rect(2, 3)");
+    assert_eq!(run("r.area"), 6);
+    run("r.w = 5");
+    assert_eq!(run("r.area"), 15);
+    assert_eq!(run("r.square()"), 9);
+    run("r.h = 4");
+    run(r#"[r.w, r.area]
+
+# return: [4,16]"#);
+}
+
+/// Nucleoid reads receiver properties in compound assignments
+#[rustfmt::skip]
+#[test]
+fn reads_receiver_properties_in_compound_assignments() {
+    let mut run = runner();
+    run("account = {balance: 100, deposit: 20, fee: 5}");
+    run("account.balance += .deposit");
+    assert_eq!(run("account.balance"), 120);
+    run("account.deposit = 30");
+    assert_eq!(run("account.balance"), 150);
+    run("account.balance -= .fee");
+    assert_eq!(run("account.balance"), 145);
+    run("account.fee = 10");
+    assert_eq!(run("account.balance"), 135);
+    run("account.deposit = 0");
+    run(r#"account.balance
+
+# return: 135"#);
+}
+
+/// Nucleoid reads receiver properties inside lambdas of class level rules
+#[rustfmt::skip]
+#[test]
+fn reads_receiver_properties_inside_lambdas_of_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Cell(h):
+    this.h = h"#);
+    run("$Cell.taller = Cell.filter(other -> other.h > .h).length");
+    run("low = Cell(1)");
+    run("high = Cell(3)");
+    run("mid = Cell(2)");
+    assert_eq!(run("[low.taller, high.taller, mid.taller]"), serde_json::json!([2, 0, 1]));
+    run("high.h = 0");
+    run(r#"[low.taller, high.taller, mid.taller]
+
+# return: [1,2,0]"#);
+}
+
+/// Nucleoid reads receiver properties in conditionals objects and templates
+#[rustfmt::skip]
+#[test]
+fn reads_receiver_properties_in_conditionals_objects_and_templates() {
+    let mut run = runner();
+    run(r#"item = {name: "lamp", stock: 3, price: 20}"#);
+    run(r#"item.status = .stock > 0 ? "open" : "sold""#);
+    run("item.card = {title: .name, cost: .price * 2}");
+    run("item.label = `${.name}: ${.stock} left`");
+    {
+        let actual = run("[item.status, item.card, item.label]");
+        let expected = run(r#"(["open", {title: "lamp", cost: 40}, "lamp: 3 left"])"#);
+        assert_eq!(actual, expected);
+    }
+    run("item.stock = 0");
+    run(r#"item.name = "desk""#);
+    run("item.price = 15");
+    run(r#"[item.status, item.card, item.label]
+
+# return: ["sold",{"title":"desk","cost":30},"desk: 0 left"]"#);
+}
+
+/// Nucleoid continues receiver reads with members indexes and calls
+#[rustfmt::skip]
+#[test]
+fn continues_receiver_reads_with_members_indexes_and_calls() {
+    let mut run = runner();
+    run(r#"team = {members: ["ada", "grace"], lead: {name: "ada"}}"#);
+    run("team.size = .members.length");
+    run("team.first = .members[0]");
+    run("team.title = .lead.name.toUpperCase()");
+    assert_eq!(run("[team.size, team.first, team.title]"), serde_json::json!([2, "ada", "ADA"]));
+    run(r#"team.members = ["linus", "ada", "grace"]"#);
+    run(r#"team.lead.name = "grace""#);
+    run(r#"[team.size, team.first, team.title]
+
+# return: [3,"linus","GRACE"]"#);
+}
+
+/// Nucleoid rolls back failed receiver assignments
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_receiver_assignments() {
+    let mut run = runner();
+    run(r#"class Cart(qty, price):
+    this.qty = qty
+    this.price = price
+$Cart.total = .qty * .price
+cart = Cart(2, 5)
+try:
+    cart.price = 7
+    assert(cart.total, 14)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([cart.price, cart.total], [5, 10])
+try:
+    $Cart.total = .total + 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(cart.total, 10)
+cart.qty = 3
+cart.total
+# return: 15"#);
+}
+
 /// Nucleoid states class predicates with is
 #[rustfmt::skip]
 #[test]

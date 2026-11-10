@@ -227,7 +227,7 @@ impl Token {
 
     /// Whether a `/` following this token starts a regular expression literal
     /// rather than a division.
-    pub(super) fn precedes_regex(&self) -> bool {
+    pub(crate) fn precedes_regex(&self) -> bool {
         !matches!(
             self,
             Token::Identifier(_)

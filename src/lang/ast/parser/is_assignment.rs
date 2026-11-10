@@ -162,9 +162,11 @@ impl Parser {
         let start = self.position;
         self.record_value_start();
         let items = std::mem::replace(&mut self.items, Items::Words);
-        let value = self.nested_expression(|parser| {
-            parser.nested_expression_in(ExpressionContext::Ordinary, |value| {
-                value.assignment_expression(Branches::Words)
+        let value = self.without_reads(|parser| {
+            parser.nested_expression(|parser| {
+                parser.nested_expression_in(ExpressionContext::Ordinary, |value| {
+                    value.assignment_expression(Branches::Words)
+                })
             })
         });
         self.items = items;

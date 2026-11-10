@@ -200,7 +200,7 @@ impl Parser {
     }
 
     fn expression_statement(&mut self) -> Result<Stmt> {
-        let expression = self.expression()?;
+        let expression = self.without_head_read(Self::expression)?;
 
         if self.starts_is_assignment(&expression) {
             return self.is_assignment(expression);
@@ -241,7 +241,7 @@ impl Parser {
     fn value_assignment(&mut self, target: Expr) -> Result<Stmt> {
         self.check_path_target(&target, "Invalid value assignment target")?;
         self.advance();
-        let value = self.expression()?;
+        let value = self.receiving(&target, Self::expression)?;
         Ok(Stmt::ValueAssign { target, value })
     }
 

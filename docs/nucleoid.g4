@@ -559,7 +559,8 @@ selector
 // A plain-name callee treats bare name=value arguments as constructor
 // labels; grouping or another assignment-shaped target stays positional.
 primary
-    : atVariable
+    : receiverRead
+    | atVariable
     | quantified
     | everyClass
     | name arrow arrowBody
@@ -611,6 +612,35 @@ primary
  */
 atVariable
     : AT name                                             // Expr::Identifier
+    ;
+
+/*
+ * Receiver-read contract (NUC 102):
+ * - It applies only in the final parse of the parse-pass contract, in the
+ *   value of an assignment with a receiver. ASSIGN, VALUE_ASSIGN and the
+ *   compound operators give their value the receiver of their target: a
+ *   path whose last link is a member, rooted in a name, CLASS_REF,
+ *   everyClass or THIS, without that last member. A variable, a
+ *   destructuring pattern, a computed target and a path ending in a
+ *   version give none. A target of more than 128 links gives a receiver
+ *   that a read rejects with "Expression has too many parts" at its DOT.
+ * - The innermost assignment whose value holds the DOT decides, including
+ *   assignments nested in the value and the statements of function, lambda
+ *   and arrow bodies written in it; their reads are lexical.
+ * - DOT begins a receiverRead only after a token in operand position, as
+ *   the token-source contract defines it, or at the start of the input or
+ *   of an interpolation. Never at the start of a statement, of a call
+ *   argument or of an assertStmt argument, where selector and the accepted
+ *   errors keep their readings, and never in an isAssignment value,
+ *   including assignments nested in it.
+ * - An assignment whose target begins with a receiverRead keeps the
+ *   accepted error "Unexpected '.'" at its property.
+ * - It builds Expr::Member over a copy of the receiver path, the tree of
+ *   'receiver DOT property'. Postfix suffixes continue it as one chain, as
+ *   after '(' receiver ')' DOT property.
+ */
+receiverRead
+    : DOT property                      // Expr::Member over the receiver path
     ;
 
 arrow
@@ -933,6 +963,12 @@ fragment REGEX_CHAR
  * isAssignment values, and the passes that read 'is' comparisons also read
  * it in their right operands; it applies only where the accepted grammar
  * fails at the AT, so it never changes a source that parses without it.
+ * Only when all of these passes fail, and the tokens hold a receiver dot
+ * (DOT, then a name or keyword, after a token in operand position or at the
+ * start) or a template, one final parse reads receiverRead, with 'is'
+ * comparisons when the source holds 'is' or a template and with
+ * comprehensions when it holds 'for' or a template. When it fails too, its
+ * error replaces the accepted one only when it lies further into the source.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -966,6 +1002,7 @@ fragment REGEX_CHAR
  * every n in s: c          -> all n in s: c.
  * every C                  -> $C.
  * $C is w                  -> $C.w = true, also spelled every C is w.
+ * o.p = .a + .b            -> o.p = o.a + o.b, in the final parse.
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
@@ -997,4 +1034,8 @@ fragment REGEX_CHAR
  * Quantifier::starting in src\lang\ast\mod.rs, everyClass in
  * parser\primary.rs and predicateSentence in parser\predicate.rs, which
  * parser\statement.rs consults after an expression statement's head.
+ * Implicit receivers: parser\receiver.rs, with the final parse in
+ * src\lang\ast\parser.rs, receivers set in parser\expression.rs and
+ * parser\statement.rs, reads in parser\primary.rs and parser\postfix.rs, and
+ * the operand-position rule in src\lang\ast\lexer\token.rs.
  */

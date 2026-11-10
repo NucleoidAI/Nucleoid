@@ -755,7 +755,7 @@ fn only_the_appended_cases_use_comprehensions_and_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 46);
-    assert_eq!(cases, 1052);
+    assert_eq!(cases, 1063);
     assert!(uses_comprehension("y = f([x for x in xs])"));
     assert!(!uses_comprehension("y = f(x for x in xs)"));
     assert!(!uses_comprehension("for x in xs:\n    pass"));

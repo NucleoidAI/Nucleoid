@@ -3035,6 +3035,119 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid tracks only the properties that selector arguments read` specify
   the executable behavior.
 
+## Implicit receiver properties
+
+- [NUC 102](docs/nuc-0102.md) lets the value of an assignment to a property
+  read the other properties of the same object with a leading dot:
+  `$Order.total = .price * .qty` is
+  `$Order.total = $Order.price * $Order.qty`. No token, keyword, syntax tree
+  node, error type or message is added.
+- **Receivers.** The assignment forms are `=`, `:=`, `+=`, `-=`, `*=`,
+  `**=`, `/=`, `%=`, `&&=` and `||=`. A target that is a plain path whose
+  last link is a property, `RECEIVER.NAME`, rooted in a name, a class
+  reference `$Class` or `every Class`, `this` or `self`, gives its value the
+  receiver `RECEIVER`, the path without its last property. These are the
+  paths that compound assignments accept, apart from a bare name. So
+  `order.customer.label = .first` reads `order.customer.first`. A variable,
+  a destructuring pattern, a path that ends in a state version and a
+  computed target such as `xs[0].p` or `f().p` give no receiver.
+- **Receiver reads.** In the value of an assignment with a receiver, a `.`
+  that begins an operand and is directly followed by a name reads that
+  property of the receiver. The name is read as member access reads it: an
+  identifier, or a keyword in its canonical spelling, so `.self` reads
+  `this` and `.None` reads `null`. The operand continues with every suffix
+  that member access takes: `.a.b`, `.a[0]`, `.a[1:]`, `.a()` and
+  `.a@first` read `RECEIVER.a.b`, `RECEIVER.a[0]`, `RECEIVER.a[1:]`,
+  `RECEIVER.a()` and `RECEIVER.a@first`.
+- A dot begins an operand only after a token in operand position, which the
+  lexer also uses to tell a regular expression from a division: not after a
+  name, a class reference, a literal, `)`, `]`, `}` or `this`. After such a
+  token the dot keeps its accepted reading: `x .a` and `1 .a` are member
+  access, as are `x` and `.a` on the next line inside brackets, while
+  `(x is .a)` and `while .a: ...` keep their errors. A digit after `.` is a
+  number, so `.5` stays `0.5`.
+- So the comparison words differ: `is` is a name and `not` a keyword, and
+  in the value of `o.p = ...`, `(1 is .a)` keeps its error while
+  `(1 is not .a)` reads `o.a`, as `(1 is not o.a)`. Without grouping,
+  `o.p = 1 is not .a` is the three statements `o.p = 1`, `is` and
+  `not .a`, whose dot has no receiver and keeps its error.
+- **The innermost assignment.** A dot reads the receiver of the innermost
+  assignment whose value contains it, through every construct of that
+  value: operands of operators, `?:` and Python-style conditionals with
+  their conditions, lists, objects, subscripts, quantifiers, lambda, arrow
+  and function bodies, the `if`, `for` and `while` headers and `suppose`
+  premises in those bodies, and template interpolations. So
+  `o.p = .a if .b else .c` reads all three. An assignment nested in the
+  value has a receiver of its own: in `o.p = (q.r = .a)` the dot reads
+  `q.a`, and in `o.p = (x = .a)` it keeps its error, as do the values of
+  variables and destructuring declarations, whose targets are names. A
+  property assignment nested in such a value reads its own receiver, so
+  `{a} = (q.r = .x)` reads `q.x`.
+- Lambda and function bodies read the receiver lexically. A read is
+  evaluated where its written-out path would be, with the accepted scoping
+  rules, so when a constructor holds `this.xs = [1, 2].map(i -> i * .w)`,
+  creating an instance raises `ReferenceError("this is not defined")`, as
+  `this.w` does in that lambda, while
+  `$Cell.taller = Cell.filter(c -> c.h > .h).length` compares every cell
+  with the instance that the rule computes.
+- **Kept readings.** These dots keep their accepted readings and errors,
+  although they begin an operand:
+  - the first token of a call argument, which is a selector of
+    [Property selector arguments](#property-selector-arguments) when the
+    argument is exactly a property path, and otherwise its accepted error:
+    `$O.p = f(.a)` passes `v -> v.a`, and `$O.p = f(.a + 1)` keeps its
+    error. The first tokens of the two arguments of an `assert:` statement
+    follow the same rule. A dot later in an argument reads the receiver, as
+    in `f(1 + .a)`, `f(-.a)` and `f(x -> x + .a)`;
+  - every dot in the value of an `is` assignment of
+    [Is assignments](#is-assignments), including the values of assignments
+    nested in it: `$Obj.h is .h * 2` and `o.p is .a` still run as two
+    statements, and `$Obj.d is 2 * .h` keeps its error;
+  - a dot that begins a statement or the target of an assignment, as in
+    `.a = 1`, `.a.push(1)` in a function body and `o.p = (.a = 1)`;
+  - every position outside the value of an assignment with a receiver:
+    statements, conditions and headers, `return`, `throw` and `assert` at
+    the top level, the values of variables, destructuring declarations and
+    label arguments such as `P(n = .a)`, and `parse_expression` of an input
+    without a property assignment.
+- **The written-out path.** A read builds the member expression over a copy
+  of the receiver path, the tree of `RECEIVER.NAME` written out. Evaluation,
+  dependencies, class-level rules, `.value` snapshots, state versions,
+  `why`, `affects`, rendering, graph and block keys, rollback and run-time
+  errors are those of that path. Rendering shows the expanded path, as a
+  compound assignment renders its lowering: `why` reports
+  `$Order.total = $Order.price*$Order.qty`, and
+  `$Cart.total = .total + 1` raises `TypeError("Circular Dependency")`.
+- **Limits.** A read and its suffixes form one member chain, as
+  `(RECEIVER).NAME` would, also after `new`, so the 128th link after the
+  receiver raises `SyntaxError("Expression has too many parts")`. A target of more than 128
+  links gives a receiver that no read may use: a dot that would read it
+  raises `SyntaxError("Expression has too many parts")` at the dot.
+  Expression and statement nesting keep their accepted limits.
+- **Parse passes.** Every input first runs the accepted passes exactly as
+  before, with no receiver reads: the plain parse, the parse with `is`
+  comparisons when the tokens hold `is` or a template, and the parses with
+  comprehensions of [List comprehensions](#list-comprehensions) when they
+  hold `for` or a template. Only when all of them fail, and the tokens hold
+  a `.` directly followed by a name after a token in operand position or a
+  template, one final parse reads receivers, with `is` comparisons when the
+  tokens hold `is` or a template and with comprehensions when they hold
+  `for` or a template. An input is parsed at most five times, and at most
+  three times when it holds neither `for` nor a template.
+- When the final parse fails too, the input reports whichever of the
+  accepted error and the final parse's error lies further into the source,
+  by line and column, the accepted one on a tie. So `o.p = .a +` reports
+  the missing operand at its end, and `x = .a` keeps its accepted error.
+- **Compatibility.** Only inputs that were errors at the accepted revision
+  change. Every input that an accepted pass parses, including
+  `parse_expression` inputs and template interpolations whose trailing
+  tokens are ignored, gets that pass's result before the final parse can
+  run.
+- The eight entries beginning
+  `Nucleoid reads receiver properties in class level rules` through
+  `Nucleoid rolls back failed receiver assignments` specify the executable
+  behavior. `tests/implicit_receivers.rs` executes the rest.
+
 ## In-place list sorting
 
 - [NUC 58](docs/nuc-0058.md) makes `list.sort()` and `list.sort(comparator)`
@@ -23092,6 +23205,132 @@ angle = Number.NaN
 assert(Number.isNaN(ratio), true)
 angle = 0.5
 assert(ratio, 1 / Math.tan(0.5))
+---
+# Nucleoid reads receiver properties in class level rules
+
+class Order(price, qty):
+    this.price = price
+    this.qty = qty
+$Order.total = .price * .qty
+first = Order(4, 5)
+second = Order(2, 10)
+assert([first.total, second.total], [20, 20])
+first.qty = 6
+assert([first.total, second.total], [24, 20])
+$Order.change = .total - .total@first
+second.price = 3
+assert([first.change, second.change], [4, 10])
+assert((why first.total)[0].rule, "$Order.total = $Order.price*$Order.qty")
+first.total
+# return: 24
+---
+# Nucleoid reads receiver properties through nested targets
+
+person = {first: "Ada", last: "Lovelace"}
+order = {customer: person, qty: 2, price: 5}
+order.total = .qty * .price
+order.customer.label = .first + " " + .last
+assert([order.total, person.label], [10, "Ada Lovelace"])
+person.first = "Augusta"
+person.last = "King"
+order.qty = 3
+order.price = 4
+[order.total, order.customer.label]
+# return: [12,"Augusta King"]
+---
+# Nucleoid reads receiver properties through this and self
+
+class Rect(w, h):
+    this.w = w
+    this.h = h
+    this.area = .w * .h
+    def square():
+        self.w = .h
+        return self.area
+r = Rect(2, 3)
+assert(r.area, 6)
+r.w = 5
+assert(r.area, 15)
+assert(r.square(), 9)
+r.h = 4
+[r.w, r.area]
+# return: [4,16]
+---
+# Nucleoid reads receiver properties in compound assignments
+
+account = {balance: 100, deposit: 20, fee: 5}
+account.balance += .deposit
+assert(account.balance, 120)
+account.deposit = 30
+assert(account.balance, 150)
+account.balance -= .fee
+assert(account.balance, 145)
+account.fee = 10
+assert(account.balance, 135)
+account.deposit = 0
+account.balance
+# return: 135
+---
+# Nucleoid reads receiver properties inside lambdas of class level rules
+
+class Cell(h):
+    this.h = h
+$Cell.taller = Cell.filter(other -> other.h > .h).length
+low = Cell(1)
+high = Cell(3)
+mid = Cell(2)
+assert([low.taller, high.taller, mid.taller], [2, 0, 1])
+high.h = 0
+[low.taller, high.taller, mid.taller]
+# return: [1,2,0]
+---
+# Nucleoid reads receiver properties in conditionals objects and templates
+
+item = {name: "lamp", stock: 3, price: 20}
+item.status = .stock > 0 ? "open" : "sold"
+item.card = {title: .name, cost: .price * 2}
+item.label = `${.name}: ${.stock} left`
+assert([item.status, item.card, item.label], ["open", {title: "lamp", cost: 40}, "lamp: 3 left"])
+item.stock = 0
+item.name = "desk"
+item.price = 15
+[item.status, item.card, item.label]
+# return: ["sold",{"title":"desk","cost":30},"desk: 0 left"]
+---
+# Nucleoid continues receiver reads with members indexes and calls
+
+team = {members: ["ada", "grace"], lead: {name: "ada"}}
+team.size = .members.length
+team.first = .members[0]
+team.title = .lead.name.toUpperCase()
+assert([team.size, team.first, team.title], [2, "ada", "ADA"])
+team.members = ["linus", "ada", "grace"]
+team.lead.name = "grace"
+[team.size, team.first, team.title]
+# return: [3,"linus","GRACE"]
+---
+# Nucleoid rolls back failed receiver assignments
+
+class Cart(qty, price):
+    this.qty = qty
+    this.price = price
+$Cart.total = .qty * .price
+cart = Cart(2, 5)
+try:
+    cart.price = 7
+    assert(cart.total, 14)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([cart.price, cart.total], [5, 10])
+try:
+    $Cart.total = .total + 1
+catch error:
+    assert(error, TypeError("Circular Dependency"))
+assert(cart.total, 10)
+cart.qty = 3
+cart.total
+# return: 15
 ---
 # Nucleoid states class predicates with is
 

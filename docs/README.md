@@ -1275,6 +1275,30 @@ user1.bill = user1.plan.rate * 12
 
 Full detail: [NUC 4](nuc-0004.md).
 
+### Implicit receiver properties
+
+```
+class Order(price, qty):
+    this.price = price
+    this.qty = qty
+$Order.total = .price * .qty
+order = Order(4, 5)
+order.label = `${.qty} for ${.total}`
+assert([order.total, order.label], [20, "5 for 20"])
+order.qty = 6
+order.price = 5
+order.label
+```
+
+- This is the complete `Nucleoid reads properties of the assigned object with a leading dot` program in `tests/reference.md`, without its title and expected-return metadata; it returns `"6 for 30"`.
+- [NUC 102](nuc-0102.md) reads a `.` that begins an operand, directly followed by a name, in the value of an assignment to a property path as that property of the path's object, the receiver. `$Order.total = .price * .qty` is `$Order.total = $Order.price * $Order.qty`, `order.customer.label = .first` reads `order.customer.first`, and `this.area = .w * .h` reads `this.w` and `this.h`.
+- The forms are `=`, `:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class` or `every Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
+- The read continues as member access does, so `.a.b`, `.a[0]`, `.a()` and `.a@first` work, in every operand of the value: operators, `?:` and Python-style conditionals with their conditions, lists, objects, subscripts, lambda and function bodies and template interpolations. The innermost assignment decides, so in `o.p = (q.r = .a)` the dot reads `q.a`.
+- The parser builds the written-out member path, so evaluation, dependencies, `why`, `affects`, graph keys, rendering and rollback are those of that path, and `why` reports `$Order.total = $Order.price*$Order.qty`.
+- These keep their accepted readings and errors: a call argument that starts with `.`, which is a selector or its error; `is` assignments; a statement or target that starts with `.`; a dot after a name, such as `x .a`; the values of variables and destructuring declarations; and every position without a property target.
+- Because `is` is a name and `not` a keyword, `o.p = (1 is .a)` keeps its error while `o.p = (1 is not .a)` reads `o.a`, as `(1 is not o.a)`. Without grouping, `o.p = 1 is not .a` is the three statements `o.p = 1`, `is` and `not .a`, and keeps its error.
+- Receivers are read only in a final parse that runs after every accepted parse has failed, so every input the accepted grammar reads keeps its reading. See the authoritative [implicit receiver properties](../nucleoid.spec.md#implicit-receiver-properties) section.
+
 ---
 
 ## 6. Class-Level Rules
@@ -3956,7 +3980,9 @@ enum Name:                             the same enum, one member per indented li
 name = a; name = b                     several statements on one line
 name: type                             declaration without value -- rejected
 name.property = expression             property assignment
+name.property = .other + 1             .other reads name.other in a property value (NUC 102)
 $Type.property = expression            class-level rule
+$Type.property = .a * .b               $Type.property = $Type.a * $Type.b (NUC 102)
 every Type.property = expression       the same class-level rule; every Type is $Type (NUC 98)
 $Type is word                          predicate sentence: $Type.word = true (NUC 98)
 every Type is word                     the same predicate sentence (NUC 98)
