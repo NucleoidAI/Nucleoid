@@ -2441,6 +2441,13 @@ Native snapshots use `x`, `y`, `width`, `height`, and `orientation`; `tag`
 replaces `shape` with shortened identifiers such as `l6747`.
 Matrices already follow the canvas axes; composition does not rotate them.
 
+Right after a training pair's instances are extracted, `analyzer.synthetize`
+asks the LLM for new pairs, each with its `input_matrix`, `output_matrix`, and
+instance matrices, and appends them to the training dataset. Original pairs
+carry `accuracy: 1` and synthesized pairs `accuracy: 0.8`. Synthesized pairs
+keep their instance matrices and are not synthesized again; their instances
+are constructed and evaluated like those of the original pairs.
+
 Angles run clockwise from north: `N = 0`, `NE = 45`, `E = 90`, `SE = 135`,
 `S = 180`, `SW = 225`, `W = 270`, and `NW = 315`. Every instruction dataset
 gives each input and output state the direction its own shape points, by the
