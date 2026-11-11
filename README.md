@@ -2188,6 +2188,31 @@ assert(days, ["mon", "tue", "wed", "thu", "fri"])
   extends it. See the
   [root contract](nucleoid.spec.md#reactive-list-flattening).
 
+## Membership tests
+
+**Membership tests read in the order they are said**
+
+```nuc
+allowed = ["new", "paid"]
+status = "paid"
+open = status in allowed
+closed = status not in allowed
+assert([open, closed], [true, false])
+allowed = ["new"]
+assert([open, closed], [false, true])
+```
+
+- [NUC 97](docs/nuc-0097.md) adds `item in collection` and
+  `item not in collection`, the shorter spellings of
+  `collection.includes(item)` and `!collection.includes(item)` for lists,
+  classes and strings. Both stay live, so changing `allowed` re-evaluates
+  `open` and `closed`.
+- A declaration over a null collection holds `null` until the collection is
+  set, and any other value, such as a number or an object, raises
+  `TypeError("<collection> is not a collection")`. `in` keeps its `for`,
+  comprehension and quantifier readings. See the
+  [root contract](nucleoid.spec.md#membership-tests).
+
 ## Every and predicate sentences
 
 **Every states a class-level claim as it is said**

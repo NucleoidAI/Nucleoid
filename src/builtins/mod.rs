@@ -5,8 +5,8 @@ mod text;
 use crate::error::{Error, Result};
 use crate::value::{Value, format_number};
 pub use numeric::{math, math_constant};
-pub(crate) use text::string_slice;
 pub use text::{slice_index, string, string_method};
+pub(crate) use text::{string_contains, string_slice};
 
 /// A name that resolves to a built-in rather than to state.
 ///

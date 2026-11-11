@@ -19405,6 +19405,185 @@ cells
 # return: [1,[2],3,[5]]"#);
 }
 
+/// Nucleoid tests membership with in and not in
+#[rustfmt::skip]
+#[test]
+fn tests_membership_with_in_and_not_in() {
+    let mut run = runner();
+    run(r#"tags = ["red", "blue"]"#);
+    assert_eq!(run(r#""red" in tags"#), true);
+    assert_eq!(run(r#""green" in tags"#), false);
+    assert_eq!(run(r#""green" not in tags"#), true);
+    assert_eq!(run(r#""red" not in tags"#), false);
+    assert_eq!(run("[1, 2] in [[1, 2], [3]]"), true);
+    assert_eq!(run("({ x: 1 } in [{ x: 1 }, null])"), true);
+    assert_eq!(run("null in [1, null]"), true);
+    assert_eq!(run("Number.NaN in [Number.NaN]"), false);
+    assert_eq!(run(r#""ell" in "hello""#), true);
+    assert_eq!(run(r#"1 in "a1""#), true);
+    assert_eq!(run(r#""" in "abc""#), true);
+    assert_eq!(run(r#""z" not in "abc""#), true);
+    run(r#"class Seat(row):
+    this.row = row"#);
+    run("front = Seat(1)");
+    assert_eq!(run("front in Seat"), true);
+    assert_eq!(run("({ row: 1 } in Seat)"), false);
+    assert_eq!(run(r#"({ id: "front", row: 1 } in Seat)"#), true);
+    assert_eq!(run("front not in Seat"), false);
+    {
+        let actual = run(r#""red" in tags"#);
+        let expected = run(r#"(tags.includes("red"))"#);
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run(r#""green" not in tags"#);
+        let expected = run(r#"(!tags.includes("green"))"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#""red" in tags
+
+# return: true"#);
+}
+
+/// Nucleoid keeps membership tests live
+#[rustfmt::skip]
+#[test]
+fn keeps_membership_tests_live() {
+    let mut run = runner();
+    run(r#"tags = ["red"]"#);
+    run(r#"known = "green" in tags"#);
+    run(r#"missing = "green" not in tags"#);
+    assert_eq!(run("[known, missing]"), serde_json::json!([false, true]));
+    run(r#"tags.push("green")"#);
+    assert_eq!(run("[known, missing]"), serde_json::json!([true, false]));
+    run(r#"tags = ["blue"]"#);
+    assert_eq!(run("[known, missing]"), serde_json::json!([false, true]));
+    assert_eq!(run("(why known).map(step -> step.rule)"), serde_json::json!(["known = (\"green\" in tags)", "tags = [\"blue\"]"]));
+    run(r#"word = "cat""#);
+    run(r#"short = "at" in word"#);
+    run(r#"word = "dog""#);
+    assert_eq!(run("short"), false);
+    run("class Guest");
+    run("amy = Guest()");
+    run(r#"invited = { id: "ben" } in Guest"#);
+    assert_eq!(run("invited"), false);
+    run("ben = Guest()");
+    assert_eq!(run("invited"), true);
+    run(r#"class Order(status):
+    this.status = status"#);
+    run(r#"$Order.open = $Order.status in ["new", "paid"]"#);
+    run(r#"if $Order.status not in ["new", "paid"]:
+    $Order.done = true"#);
+    run(r#"first = Order("new")"#);
+    run(r#"second = Order("shipped")"#);
+    assert_eq!(run("[first.open, second.open]"), serde_json::json!([true, false]));
+    assert_eq!(run("[first.done, second.done]"), serde_json::json!([null, true]));
+    run(r#"first.status = "lost""#);
+    assert_eq!(run("[first.open, first.done]"), serde_json::json!([false, true]));
+    run(r#"known
+
+# return: false"#);
+}
+
+/// Nucleoid binds membership tests as comparisons
+#[rustfmt::skip]
+#[test]
+fn binds_membership_tests_as_comparisons() {
+    let mut run = runner();
+    run("xs = [1, 2, 3]");
+    assert_eq!(run("1 + 1 in xs"), true);
+    assert_eq!(run("2 in xs == true"), true);
+    assert_eq!(run("4 in xs or 3 in xs"), true);
+    assert_eq!(run("1 in xs and 5 not in xs"), true);
+    assert_eq!(run("1 < 2 in [true]"), true);
+    assert_eq!(run("2 in xs in [true]"), true);
+    assert_eq!(run("not 5 in xs"), false);
+    assert_eq!(run("not (5 in xs)"), true);
+    assert_eq!(run("5 not in xs"), true);
+    assert_eq!(run("2 ** 2 not in xs"), true);
+    assert_eq!(run(r#"2 * 2 in xs ? "yes" : "no""#), "no");
+    assert_eq!(run(r#""yes" if 3 in xs else "no""#), "yes");
+    assert_eq!(run("[1 in xs, 4 in xs]"), serde_json::json!([true, false]));
+    run(r#"5 not in xs
+
+# return: true"#);
+}
+
+/// Nucleoid waits on null collections and rejects other values in membership tests
+#[rustfmt::skip]
+#[test]
+fn waits_on_null_collections_and_rejects_other_values_in_membership_tests() {
+    let mut run = runner();
+    run(r#"tags = null
+seen = "a" in tags
+unseen = "a" not in tags
+assert([seen, unseen], [null, null])
+tags = ["a"]
+assert([seen, unseen], [true, false])
+class Item
+$Item.hot = "red" in $Item.tags
+cart = Item()
+assert(cart.hot, null)
+cart.tags = ["red"]
+assert(cart.hot, true)
+count = 5
+failure = ""
+try:
+    ready = 1 in count
+catch error:
+    failure = error
+assert(failure, TypeError("count is not a collection"))
+record = { a: 1 }
+try:
+    ready = "a" not in record
+catch error:
+    failure = error
+assert(failure, TypeError("record is not a collection"))
+try:
+    ready = cart in Math
+catch error:
+    failure = error
+assert(failure, TypeError("Math is not a collection"))
+items = [1]
+present = 1 in items
+try:
+    items = 7
+catch error:
+    failure = error
+assert(failure, TypeError("items is not a collection"))
+assert([items, present], [[1], true])
+failure
+# return: "TypeError: items is not a collection""#);
+}
+
+/// Nucleoid keeps in readings where membership tests do not apply
+#[rustfmt::skip]
+#[test]
+fn keeps_in_readings_where_membership_tests_do_not_apply() {
+    let mut run = runner();
+    run(r#"class Box(size):
+    this.size = size"#);
+    run("small = Box(1)");
+    run("large = Box(2)");
+    run("seen = []");
+    run(r#"for box in Box:
+    seen.push(box.size in [2])"#);
+    assert_eq!(run("seen"), serde_json::json!([false, true]));
+    run("xs = [1, 2]");
+    assert_eq!(run("all v in xs: v in [1, 2]"), true);
+    assert_eq!(run("any v in xs: v not in [1]"), true);
+    assert_eq!(run("every v in xs: v > 0"), true);
+    run("label = `${1 in xs}`");
+    assert_eq!(run("label"), "1");
+    assert_eq!(run("`${(1 in xs)}`"), "true");
+    run("record = { a: 1 }");
+    run("record.in = 2");
+    assert_eq!(run("record.in in xs"), true);
+    run(r#"seen
+
+# return: [false,true]"#);
+}
+
 /// Nucleoid states class predicates with is
 #[rustfmt::skip]
 #[test]

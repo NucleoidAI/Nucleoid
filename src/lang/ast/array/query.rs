@@ -153,8 +153,12 @@ impl Runtime {
         match property {
             "indexOf" => position_number(items.iter().position(matches)),
             "lastIndexOf" => position_number(items.iter().rposition(matches)),
-            _ => Value::Bool(items.iter().any(matches)),
+            _ => Value::Bool(self.holds(items, &wanted)),
         }
+    }
+
+    pub(crate) fn holds(&self, items: &[Value], wanted: &Value) -> bool {
+        items.iter().any(|item| self.deep_equal(item, wanted))
     }
 
     fn any_item_is(

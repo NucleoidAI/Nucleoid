@@ -890,3 +890,42 @@ fn any_and_all_class_conditions_open_colon_free_headers() {
         Some("all Human is mortal\n".to_string())
     );
 }
+
+#[test]
+fn membership_headers_wait_for_their_indented_body() {
+    for condition in [
+        "x in xs",
+        "x not in xs",
+        "x in xs and y not in ys",
+        "all v in xs: v in ys",
+        "ready ? x in xs : false",
+    ] {
+        for prefix in ["if", "else if", "elif if", "else", "elif"] {
+            let line = format!("{prefix} {condition}");
+            let keyword = if prefix == "if" {
+                Keyword::If
+            } else {
+                Keyword::Else
+            };
+            assert!(indented_condition_header(&line, keyword), "{line:?}");
+            assert_eq!(indented_body_header(&line), prefix == "if", "{line:?}");
+        }
+    }
+    assert!(indented_body_header("if x in xs:"));
+    assert!(!indented_body_header("ok = x in xs"));
+    assert!(!indented_condition_header("if x in xs: r = 1", Keyword::If));
+    assert!(indented_alternative_header("else x not in xs"));
+    assert_eq!(next_indentation("elif x in xs", false), INDENT);
+    let mut pending = Pending::default();
+    assert_eq!(pending.accept("if x in xs"), None);
+    assert_eq!(pending.indentation, INDENT);
+    assert_eq!(pending.accept("    r = 1"), None);
+    assert_eq!(
+        pending.accept(""),
+        Some("if x in xs\n    r = 1\n".to_string())
+    );
+    assert_eq!(
+        pending.accept("ok = x not in xs"),
+        Some("ok = x not in xs\n".to_string())
+    );
+}

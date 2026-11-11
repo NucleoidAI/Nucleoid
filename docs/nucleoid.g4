@@ -45,6 +45,7 @@ program
     ;
 
 // parse_expression skips leading separators and ignores trailing tokens.
+// Its top level forms no membership test, as an interpolation's does not.
 expressionInput
     : separator* expression remainingTokens EOF
     ;
@@ -407,7 +408,8 @@ methodDecl
  * - A Python conditional is tentative and needs 'else' directly after its
  *   condition. It is disabled in interpolation and comprehension sources.
  * - Interpolation also disables quantifiers, spelled class references, noun
- *   queries and lambdas.
+ *   queries, lambdas and membership tests. The top level of an
+ *   expressionInput disables membership tests only.
  *   Object values retain 'lambda name:' as a property/declaration boundary
  *   when that boundary has the accepted reading.
  */
@@ -482,8 +484,30 @@ equalityOperator
     | IS NOT?
     ;
 
+/*
+ * Membership contract (NUC 97):
+ * - IN, and NOT directly followed by IN, after an additive operand build
+ *   BinaryOp::In and BinaryOp::NotIn on the left-associative level of
+ *   LESS, LESS_EQUAL, GREATER and GREATER_EQUAL, sharing its MAX_CHAIN
+ *   operand limit. NOT before an operand stays a prefix, so
+ *   'NOT a IN b' is '(NOT a) IN b'.
+ * - Not at the top level of an interpolation or of an expressionInput,
+ *   whose trailing tokens are ignored: IN stays their first ignored token.
+ * - Not when COLON directly follows the right operand outside a clause:
+ *   such a colon can only close a malformed quantifier, so IN keeps its
+ *   accepted reading and the error "Unexpected keyword 'in'".
+ */
 relational
-    : additive ((LESS | LESS_EQUAL | GREATER | GREATER_EQUAL) additive)*
+    : additive (relationalOperator additive)*              // Expr::Binary, left
+    ;
+
+relationalOperator
+    : LESS
+    | LESS_EQUAL
+    | GREATER
+    | GREATER_EQUAL
+    | IN                                                  // BinaryOp::In
+    | NOT IN                                              // BinaryOp::NotIn
     ;
 
 additive
@@ -1060,4 +1084,7 @@ fragment REGEX_CHAR
  * src\lang\ast\parser.rs, receivers set in parser\expression.rs and
  * parser\statement.rs, reads in parser\primary.rs and parser\postfix.rs, and
  * the operand-position rule in src\lang\ast\lexer\token.rs.
+ * Membership tests: relationalOperator in parser\precedence.rs, the
+ * expressionInput context in parser.rs and their evaluation in
+ * src\lang\ast\operator.rs.
  */

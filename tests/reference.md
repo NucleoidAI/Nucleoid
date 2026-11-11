@@ -2566,6 +2566,22 @@ assert(parts, ["bolt", "nut", "gear", "cog", "pin", "rod", "nib"])
 crates.length
 # return: 5
 ---
+# Nucleoid tests membership with in
+
+palette = ["red", "green"]
+color = "green"
+listed = color in palette
+banned = color not in ["black"]
+assert([listed, banned], [true, true])
+palette = ["red"]
+assert(listed, false)
+assert("ee" in "green", true)
+class Tag
+urgent = Tag()
+assert(urgent in Tag, true)
+listed
+# return: false
+---
 # Nucleoid states universal claims with every and is
 
 class Human(name: str):

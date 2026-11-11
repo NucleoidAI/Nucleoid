@@ -72,6 +72,10 @@ impl Error {
         Error::reference(format!("{name} is not defined"))
     }
 
+    pub(crate) fn not_a_collection(collection: impl fmt::Display) -> Self {
+        Error::type_error(format!("{collection} is not a collection"))
+    }
+
     #[must_use]
     pub fn thrown(value: Value) -> Self {
         Error::new(Detail::Thrown(value))

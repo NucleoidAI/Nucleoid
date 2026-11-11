@@ -66,7 +66,7 @@ fn string_query(receiver: &str, name: &str, first: &Value) -> Option<Value> {
                 None => Value::Number(-1.0),
             }
         }
-        "includes" | "contains" => Value::Bool(receiver.contains(&first.to_string())),
+        "includes" | "contains" => Value::Bool(string_contains(receiver, first)),
         "startsWith" => Value::Bool(receiver.starts_with(&first.to_string())),
         "endsWith" => Value::Bool(receiver.ends_with(&first.to_string())),
         _ => return None,
@@ -187,6 +187,10 @@ fn string_repeat(receiver: &str, count: usize) -> Result<String> {
     }
 
     Ok(output)
+}
+
+pub(crate) fn string_contains(receiver: &str, needle: &Value) -> bool {
+    receiver.contains(&needle.to_string())
 }
 
 /// Slices by Unicode scalar indices without allocating a character buffer.

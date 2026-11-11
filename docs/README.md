@@ -802,6 +802,9 @@ settings.size
 - Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`.
 - Comparison words: `is` and `is not`, spellings of `==` and `!=` with a bare
   word rule; see [is and is not comparisons](#is-and-is-not-comparisons).
+- Membership: `item in collection` and `item not in collection` for lists,
+  classes and strings, at the level of `<`; see
+  [membership tests](#membership-tests).
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Conditional: `condition ? consequent : alternate` or
   `consequent if condition else alternate`; see below.
@@ -1017,6 +1020,53 @@ volume
   authoritative [exponentiation](../nucleoid.spec.md#exponentiation) section.
 
 Full detail: [NUC 64](nuc-0064.md).
+
+### Membership tests
+
+- `item in collection` tests whether a list, a declared class's instances
+  or a string holds `item`, and `item not in collection` tests that it does
+  not. Over lists, classes and strings they give the results of
+  `collection.includes(item)` and `!collection.includes(item)`: list items
+  and instances match on their contents, as in `assert`, and a string holds
+  the text of `item`, so `"ee" in "green"` is `true`.
+- A null or undefined collection yields undefined in both forms, which a
+  declaration stores as `null`, so a rule over a list that is not yet set
+  waits for it. Any other value, such as a number
+  or an object, raises `TypeError("<collection> is not a collection")`, as a
+  quantifier does, so `"a" in {a: 1}` is an error rather than `undefined`.
+- They stand at the level of `<` and `>`: `x + 1 in xs` adds first,
+  `x in xs and y in ys` tests both, and `not x in xs` is `(not x) in xs`, as
+  `not x < y` is; write `x not in xs` to negate the test.
+- A declaration that uses one stays live: it follows the list, the string
+  or the class's population, and whatever `item` reads.
+
+```
+palette = ["red", "green"]
+color = "green"
+listed = color in palette
+banned = color not in ["black"]
+assert([listed, banned], [true, true])
+palette = ["red"]
+assert(listed, false)
+assert("ee" in "green", true)
+class Tag
+urgent = Tag()
+assert(urgent in Tag, true)
+listed
+```
+
+- This is the complete `Nucleoid tests membership with in` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `false`.
+- Both forms render as `(item in collection)` and
+  `(item not in collection)`. `in` keeps its loop, comprehension, quantifier
+  and property readings, and at the top level of a template interpolation
+  it stays an ignored token: `` `${x in xs}` `` renders `x`, while
+  `` `${(x in xs)}` `` tests membership. Grammar, errors and edge cases are
+  in the authoritative [membership tests](../nucleoid.spec.md#membership-tests)
+  section.
+
+Full detail: [NUC 97](nuc-0097.md).
 
 ### Indexing, slicing, and length
 
@@ -3976,6 +4026,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `mode` selector that is not a function, including `null`, even on an empty receiver | `mode expects a function` |
 | Missing or non-function `maxBy` or `minBy` selector, including `null`, even on an empty receiver | `maxBy expects a function` or `minBy expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
+| An `in` or `not in` membership test over a value that is neither null nor a list, a string or a declared class's instances | `<collection> is not a collection` |
 | A `depth` stage limit that is neither `null`, undefined nor a non-negative integer number | `<limit> is not a non-negative integer` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | A spread entry `...source` whose source is neither an object nor `null` or undefined | `<source> is not an object` |
@@ -4141,6 +4192,8 @@ flag = (value is not EXACT)            != with the same word rule; bare at state
 base ** exponent                       exactly Math.pow(base, exponent), right-associative (NUC 64)
 -x ** 2                                prefix operators apply to the whole power: -(x ** 2) (NUC 64)
 name **= exponent                      name = name ** (exponent) (NUC 64)
+item in collection                     list, class or string membership at the level of < (NUC 97)
+item not in collection                 its negation; not item in xs is (not item) in xs (NUC 97)
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration

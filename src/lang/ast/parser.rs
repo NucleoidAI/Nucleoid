@@ -42,7 +42,7 @@ pub fn parse(source: &str) -> Result<Vec<Stmt>> {
 
 pub fn parse_expression(source: &str) -> Result<Expr> {
     Parser::from_source(source)?
-        .attempt(|parser| parser.leading_expression(ExpressionContext::Ordinary))
+        .attempt(|parser| parser.leading_expression(ExpressionContext::Standalone))
 }
 
 fn furthest(accepted: Error, retried: Error) -> Error {
@@ -98,6 +98,7 @@ enum ExpressionContext {
     /// top-level `lambda` and a Python-style `if` keep their accepted readings.
     Interpolation,
     ComprehensionSource,
+    Standalone,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

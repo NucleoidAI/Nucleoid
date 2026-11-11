@@ -2,6 +2,7 @@
 
 use std::cmp::Ordering;
 
+use crate::builtins;
 use crate::error::{Error, Result};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, UnaryOp};
 use crate::runtime::Runtime;
@@ -96,6 +97,8 @@ impl BinaryOp {
             BinaryOp::GreaterEqual => ">=",
             BinaryOp::Is => "is",
             BinaryOp::IsNot => "is not",
+            BinaryOp::In => "in",
+            BinaryOp::NotIn => "not in",
         }
     }
 }
@@ -173,11 +176,39 @@ impl Runtime {
         scope: &mut Scope,
     ) -> Result<Value> {
         let left = self.evaluate(left, scope)?;
-        let right = match (operator, right) {
+        let value = match (operator, right) {
             (BinaryOp::Is | BinaryOp::IsNot, Expr::Identifier(word)) => self.read_word(word, scope),
             _ => self.evaluate(right, scope)?,
         };
-        binary(operator, &left, &right)
+        match operator {
+            BinaryOp::In | BinaryOp::NotIn => self.membership(operator, &left, value, right),
+            _ => binary(operator, &left, &value),
+        }
+    }
+
+    fn membership(
+        &mut self,
+        operator: BinaryOp,
+        item: &Value,
+        collection: Value,
+        source: &Expr,
+    ) -> Result<Value> {
+        let found = match collection {
+            Value::List(items) => self.holds(&items, item),
+            Value::String(text) => builtins::string_contains(&text, item),
+            Value::Class(name) => match self.population(&name) {
+                Some(instances) => self.holds(&instances, item),
+                None => return Err(Error::not_a_collection(source.describe())),
+            },
+            Value::Null | Value::Undefined => return Ok(Value::Undefined),
+            Value::Object(_)
+            | Value::Function(_)
+            | Value::Number(_)
+            | Value::Bool(_)
+            | Value::Date(_)
+            | Value::Regex(_) => return Err(Error::not_a_collection(source.describe())),
+        };
+        Ok(Value::Bool(found != (operator == BinaryOp::NotIn)))
     }
 }
 
@@ -199,8 +230,8 @@ pub fn type_of(value: &Value) -> Value {
 
 pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> {
     use BinaryOp::{
-        Add, Divide, Equal, Greater, GreaterEqual, Is, IsNot, Less, LessEqual, Modulo, Multiply,
-        NotEqual, Power, StrictEqual, StrictNotEqual, Subtract,
+        Add, Divide, Equal, Greater, GreaterEqual, In, Is, IsNot, Less, LessEqual, Modulo,
+        Multiply, NotEqual, NotIn, Power, StrictEqual, StrictNotEqual, Subtract,
     };
 
     // A read of something undefined makes the whole expression undefined, which
@@ -235,6 +266,13 @@ pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> 
         LessEqual => Value::Bool(compare(left, right).is_some_and(Ordering::is_le)),
         Greater => Value::Bool(compare(left, right).is_some_and(Ordering::is_gt)),
         GreaterEqual => Value::Bool(compare(left, right).is_some_and(Ordering::is_ge)),
+
+        In | NotIn => {
+            return Err(Error::type_error(format!(
+                "'{}' needs the runtime's state",
+                operator.as_str()
+            )));
+        }
     })
 }
 

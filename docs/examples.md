@@ -3697,6 +3697,32 @@ hall.tiles = [["dirt"], ["clean"]]
   both counts. See [NUC 103](nuc-0103.md) and the
   [root contract](../nucleoid.spec.md#reactive-list-flattening).
 
+## Membership tests
+
+**Membership tests keep an order book's rules live**
+
+```nuc
+class Order(status):
+    this.status = status
+$Order.open = $Order.status in ["new", "paid"]
+if $Order.status not in ["new", "paid"]:
+    $Order.archived = true
+first = Order("new")
+second = Order("shipped")
+assert([first.open, second.open], [true, false])
+assert(second.archived, true)
+first.status = "paid"
+first.open
+# return: true
+```
+
+- `$Order.open = $Order.status in ["new", "paid"]` gives every order its
+  own `open`, and the class-level `if` archives each order whose status is
+  not in that list.
+- Changing `first.status` re-evaluates both rules for that order. See
+  [NUC 97](nuc-0097.md) and the
+  [root contract](../nucleoid.spec.md#membership-tests).
+
 ## Every and predicate sentences
 
 **Every keeps a fleet's rules stated as claims about every truck**

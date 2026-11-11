@@ -49,10 +49,7 @@ impl Runtime {
             _ => None,
         };
         let Some(members) = members else {
-            return Err(Error::type_error(format!(
-                "{} is not a collection",
-                collection.describe()
-            )));
+            return Err(Error::not_a_collection(collection.describe()));
         };
 
         let decisive = quantifier == Quantifier::Any;

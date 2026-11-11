@@ -118,10 +118,17 @@ impl Parser {
                 Token::LessEqual => BinaryOp::LessEqual,
                 Token::Greater => BinaryOp::Greater,
                 Token::GreaterEqual => BinaryOp::GreaterEqual,
-                _ => break,
+                _ => match self.membership() {
+                    Some(operator) => operator,
+                    None => break,
+                },
             };
 
+            let start = self.position;
             self.advance();
+            if operator == BinaryOp::NotIn {
+                self.advance();
+            }
             chain += 1;
 
             if chain > MAX_CHAIN {
@@ -129,6 +136,10 @@ impl Parser {
             }
 
             let right = self.additive()?;
+            if self.leaves_quantifier_colon(operator) {
+                self.position = start;
+                break;
+            }
             left = Expr::Binary {
                 operator,
                 left: Box::new(left),
@@ -137,6 +148,27 @@ impl Parser {
         }
 
         Ok(left)
+    }
+
+    fn membership(&self) -> Option<BinaryOp> {
+        if matches!(
+            self.context,
+            ExpressionContext::Interpolation | ExpressionContext::Standalone
+        ) {
+            return None;
+        }
+
+        match (self.peek(), self.peek_at(1)) {
+            (Token::Keyword(Keyword::In), _) => Some(BinaryOp::In),
+            (Token::Keyword(Keyword::Not), Token::Keyword(Keyword::In)) => Some(BinaryOp::NotIn),
+            _ => None,
+        }
+    }
+
+    fn leaves_quantifier_colon(&self, operator: BinaryOp) -> bool {
+        matches!(operator, BinaryOp::In | BinaryOp::NotIn)
+            && self.context != ExpressionContext::Clause
+            && self.check(&Token::Colon)
     }
 
     fn additive(&mut self) -> Result<Expr> {

@@ -117,7 +117,9 @@ fn write_binary(
             f.write_str(BinaryOp::Power.as_str())?;
             power_operand(f, right, groups_power_exponent(right.expression))
         }
-        BinaryOp::Is | BinaryOp::IsNot => write!(f, "({left} {} {right})", operator.as_str()),
+        BinaryOp::Is | BinaryOp::IsNot | BinaryOp::In | BinaryOp::NotIn => {
+            write!(f, "({left} {} {right})", operator.as_str())
+        }
         _ => write!(f, "{left}{}{right}", operator.as_str()),
     }
 }
@@ -191,7 +193,7 @@ fn groups_power_base(operand: &Expr) -> bool {
         Expr::Number(number) => *number < 0.0,
         Expr::Unary { operator, .. } => *operator != UnaryOp::Positional,
         Expr::Binary {
-            operator: BinaryOp::Is | BinaryOp::IsNot,
+            operator: BinaryOp::Is | BinaryOp::IsNot | BinaryOp::In | BinaryOp::NotIn,
             ..
         } => false,
         Expr::Binary { .. } | Expr::Delete(_) | Expr::Of { .. } => true,
@@ -201,9 +203,10 @@ fn groups_power_base(operand: &Expr) -> bool {
 
 fn groups_power_exponent(operand: &Expr) -> bool {
     match operand {
-        Expr::Binary { operator, .. } => {
-            !matches!(operator, BinaryOp::Power | BinaryOp::Is | BinaryOp::IsNot)
-        }
+        Expr::Binary { operator, .. } => !matches!(
+            operator,
+            BinaryOp::Power | BinaryOp::Is | BinaryOp::IsNot | BinaryOp::In | BinaryOp::NotIn
+        ),
         Expr::Logical { operator, .. } => *operator != LogicalOp::Coalesce,
         Expr::Assign { .. }
         | Expr::Reason { .. }

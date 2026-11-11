@@ -4335,6 +4335,113 @@ statement positions; caught values and transaction recovery are unchanged.
   `tests/any_all_class_references_cli.rs` and the REPL continuation and
   terminal unit suites execute the rest.
 
+## Membership tests
+
+- [NUC 97](docs/nuc-0097.md) adds the membership tests `ITEM in COLLECTION`
+  and `ITEM not in COLLECTION`. `not in` is the keyword `not` directly
+  followed by the keyword `in`. No token, keyword, option or flag is added,
+  and no error message that a program can reach.
+- A list, including a reasoning selection such as `why c`, holds `ITEM` when
+  one of its items matches it under the deep equality of `includes`: lists
+  and objects match on their contents, `null` and undefined match each
+  other, and NaN matches nothing. A declared class holds `ITEM` when one of
+  its instances matches it, as `Name.includes(ITEM)` compares: every
+  instance holds its own `id`, so for an instance `front` of `Seat`,
+  `{row: 1} in Seat` is `false` and `{id: "front", row: 1} in Seat` is
+  `true`. A string holds `ITEM` when the text of `ITEM`, as `includes`
+  converts it, occurs in it, so `1 in "a1"` and `"" in "abc"` are `true`.
+- `in` yields `true` when the collection holds `ITEM` and `false`
+  otherwise, and `not in` yields the opposite. Over a list, a declared class
+  and a string, the results and the reads equal those of
+  `COLLECTION.includes(ITEM)` and `!COLLECTION.includes(ITEM)`, apart from
+  their order: `ITEM` is evaluated first, as the left operand of `<` is, so
+  its reads and errors come first. A declared class named `Math`, `Number`,
+  `String` or `Date` holds its instances here too, while its `includes`
+  call reaches the built-in namespace of that name.
+- A null or undefined collection holds nothing that can be known: both
+  forms yield undefined, which a declaration stores as `null`, as a
+  quantifier over a null collection does. A rule over a list or property
+  that is not yet set therefore waits for it, and `not in` never reads
+  `true` from a missing collection.
+- Any other collection raises `TypeError("<collection> is not a collection")`,
+  naming the collection's path or canonical source as a quantifier does: a
+  number, boolean, object, instance, function, date, regular expression or
+  built-in namespace such as `Math`. So `"a" in {a: 1}` and
+  `"a" not in {a: 1}` raise `TypeError("{\"a\":1} is not a collection")`,
+  where `{a: 1}.includes("a")` yields undefined and its negation `true`, and
+  key membership in objects is left to a later proposal.
+- A declaration, `if` rule or class-level rule that uses a membership test
+  depends on what both operands read: the list, the string or the
+  population of the class, and whatever `ITEM` reads, but not the
+  properties of a compared object, as for `includes`. So
+  `known = "green" in tags` re-evaluates when `tags` is reassigned or
+  pushed to, `invited = {id: "ben"} in Guest` when a `Guest` is created or
+  deleted, and `$Order.open = $Order.status in ["new", "paid"]` holds for
+  each instance. `.value` freezes an operand when the declaration is
+  stored, as for every operator. An error propagates through the existing
+  transaction, so a failed standing re-evaluation rolls back the change that
+  triggered it.
+- Both forms stand on the left-associative level of `<`, `<=`, `>` and
+  `>=`, whose chain holds at most 128 of these operators. They bind more
+  tightly than `==`, `!=`, `===`, `!==`, `is`, `is not`, `and`, `&&`, `or`,
+  `||`, `??`, `|>`, the conditional forms and assignment, and more loosely
+  than `+`, `-`, `*`, `/`, `%`, `**` and the prefix operators. So
+  `x + 1 in xs` is `(x + 1) in xs`, `x in xs == true` is
+  `(x in xs) == true`, `a < b in c` is `(a < b) in c`, `a is b in c` is
+  `a is (b in c)`, `x in why c` tests the selection `why c`, and
+  `not x in xs` is `(not x) in xs`, as `not x < y` is `(not x) < y`; write
+  `x not in xs` or `not (x in xs)` to negate the test.
+- They apply wherever the accepted grammar reads a comparison, apart from
+  the two places whose trailing tokens are ignored: the top level of a
+  template interpolation and the top level of the public Rust
+  `parse_expression` input. There `in` stays the first ignored token, so
+  `` `${x in xs}` `` still renders `x`, and `parse_expression("x in xs")`
+  still returns `x`. Parentheses, brackets, braces, arguments and clauses
+  inside them take membership tests, as in `` `${(x in xs)}` ``.
+- Outside a clause, a membership test does not end directly before a `:`.
+  The clauses are statement headers, `suppose` premises, subscript starts,
+  the consequent after `?`, Python-style conditions and quantifier
+  collections, whose top-level `:` belongs to the enclosing construct, so
+  `if x in xs:` and `ready ? x in xs : false` hold membership tests.
+  Anywhere else a colon after the right operand can only close a malformed
+  quantifier, so `in` keeps its accepted reading there:
+  `ok = all 1 in xs: v`, `ok = all (v) in xs: v` and
+  `ok = all this in xs: 1` still raise
+  `SyntaxError("Unexpected keyword 'in'")` at line 1, columns 15, 17 and 18.
+- `in` keeps every other accepted reading: the loops `for NAME in` and
+  `for KEY, VALUE in`, list comprehensions, the quantifiers `all NAME in`,
+  `any NAME in` and `every NAME in`, and a property after `.`, as in
+  `record.in`.
+- `ITEM in COLLECTION` renders as `(ITEM in COLLECTION)` and
+  `ITEM not in COLLECTION` as `(ITEM not in COLLECTION)` in graph keys and
+  the `rule` that `why` and `affects` report. The grouping keeps a
+  membership test distinct from an enclosing operator, as word comparisons
+  and quantifiers are grouped, and neither form shares a rule with its
+  `includes` spelling.
+- Only inputs that were syntax errors at the accepted revision change: a
+  membership test holds `in`, or `not` and `in`, directly after a complete
+  operand, which no accepted construct reads outside the places whose
+  trailing tokens are ignored. Malformed forms raise the existing
+  diagnostics where the parser stops, such as
+  `SyntaxError("Unexpected end of input")` for `ok = x in` and
+  `SyntaxError("Unexpected ')'")` for `ok = (x in )`. The REPL keeps
+  buffering a colon-free `if x in xs` header for its indented body, which
+  now parses. `parse_expression` returns a new result only where its
+  leading expression now continues through a membership test: a
+  Python-style conditional whose condition holds one. It returned the
+  consequent, as `a` for `a if x in xs else b`, and now returns the
+  conditional, or the error of what follows `else` when that is not an
+  expression, as `SyntaxError("Expected ')' but found end of input")` for
+  `A if c in q else (B`.
+- The five entries beginning
+  `Nucleoid tests membership with in and not in` through
+  `Nucleoid keeps in readings where membership tests do not apply`, which
+  stand directly before the five entries of
+  [Every quantifiers, class references and predicate sentences](#every-quantifiers-class-references-and-predicate-sentences),
+  specify the executable behavior. `tests/membership_tests.rs`,
+  `tests/membership_tests_cli.rs` and the REPL continuation unit suite
+  execute the rest.
+
 ## Exponentiation
 
 - [NUC 64](docs/nuc-0064.md) adds the exponentiation operator
@@ -23694,6 +23801,153 @@ catch error:
 rows.push([[5]])
 cells
 # return: [1,[2],3,[5]]
+---
+# Nucleoid tests membership with in and not in
+
+tags = ["red", "blue"]
+assert("red" in tags, true)
+assert("green" in tags, false)
+assert("green" not in tags, true)
+assert("red" not in tags, false)
+assert([1, 2] in [[1, 2], [3]], true)
+assert({ x: 1 } in [{ x: 1 }, null], true)
+assert(null in [1, null], true)
+assert(Number.NaN in [Number.NaN], false)
+assert("ell" in "hello", true)
+assert(1 in "a1", true)
+assert("" in "abc", true)
+assert("z" not in "abc", true)
+class Seat(row):
+    this.row = row
+front = Seat(1)
+assert(front in Seat, true)
+assert({ row: 1 } in Seat, false)
+assert({ id: "front", row: 1 } in Seat, true)
+assert(front not in Seat, false)
+assert("red" in tags, tags.includes("red"))
+assert("green" not in tags, !tags.includes("green"))
+"red" in tags
+# return: true
+---
+# Nucleoid keeps membership tests live
+
+tags = ["red"]
+known = "green" in tags
+missing = "green" not in tags
+assert([known, missing], [false, true])
+tags.push("green")
+assert([known, missing], [true, false])
+tags = ["blue"]
+assert([known, missing], [false, true])
+assert((why known).map(step -> step.rule), ["known = (\"green\" in tags)", "tags = [\"blue\"]"])
+word = "cat"
+short = "at" in word
+word = "dog"
+assert(short, false)
+class Guest
+amy = Guest()
+invited = { id: "ben" } in Guest
+assert(invited, false)
+ben = Guest()
+assert(invited, true)
+class Order(status):
+    this.status = status
+$Order.open = $Order.status in ["new", "paid"]
+if $Order.status not in ["new", "paid"]:
+    $Order.done = true
+first = Order("new")
+second = Order("shipped")
+assert([first.open, second.open], [true, false])
+assert([first.done, second.done], [null, true])
+first.status = "lost"
+assert([first.open, first.done], [false, true])
+known
+# return: false
+---
+# Nucleoid binds membership tests as comparisons
+
+xs = [1, 2, 3]
+assert(1 + 1 in xs, true)
+assert(2 in xs == true, true)
+assert(4 in xs or 3 in xs, true)
+assert(1 in xs and 5 not in xs, true)
+assert(1 < 2 in [true], true)
+assert(2 in xs in [true], true)
+assert(not 5 in xs, false)
+assert(not (5 in xs), true)
+assert(5 not in xs, true)
+assert(2 ** 2 not in xs, true)
+assert(2 * 2 in xs ? "yes" : "no", "no")
+assert("yes" if 3 in xs else "no", "yes")
+assert([1 in xs, 4 in xs], [true, false])
+5 not in xs
+# return: true
+---
+# Nucleoid waits on null collections and rejects other values in membership tests
+
+tags = null
+seen = "a" in tags
+unseen = "a" not in tags
+assert([seen, unseen], [null, null])
+tags = ["a"]
+assert([seen, unseen], [true, false])
+class Item
+$Item.hot = "red" in $Item.tags
+cart = Item()
+assert(cart.hot, null)
+cart.tags = ["red"]
+assert(cart.hot, true)
+count = 5
+failure = ""
+try:
+    ready = 1 in count
+catch error:
+    failure = error
+assert(failure, TypeError("count is not a collection"))
+record = { a: 1 }
+try:
+    ready = "a" not in record
+catch error:
+    failure = error
+assert(failure, TypeError("record is not a collection"))
+try:
+    ready = cart in Math
+catch error:
+    failure = error
+assert(failure, TypeError("Math is not a collection"))
+items = [1]
+present = 1 in items
+try:
+    items = 7
+catch error:
+    failure = error
+assert(failure, TypeError("items is not a collection"))
+assert([items, present], [[1], true])
+failure
+# return: "TypeError: items is not a collection"
+---
+# Nucleoid keeps in readings where membership tests do not apply
+
+class Box(size):
+    this.size = size
+small = Box(1)
+large = Box(2)
+seen = []
+for box in Box:
+    seen.push(box.size in [2])
+assert(seen, [false, true])
+xs = [1, 2]
+assert(all v in xs: v in [1, 2], true)
+assert(any v in xs: v not in [1], true)
+assert(every v in xs: v > 0, true)
+label = `${1 in xs}`
+assert(label, "1")
+assert(`${(1 in xs)}`, "true")
+record = { a: 1 }
+record.in = 2
+assert(record.in in xs, true)
+seen
+# return: [false,true]
 ---
 # Nucleoid states class predicates with is
 
