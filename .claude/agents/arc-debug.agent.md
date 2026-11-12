@@ -80,10 +80,11 @@ between that code and the log. At the time of writing, `start()` writes
 3. `analyzer.instances` (LLM, per training pair): each instance's
    `input_instance_matrix` and `output_instance_matrix`. The extracted
    instances get their `instance_name`, then `analyzer.synthesize` (no LLM)
-   creates three synthesized pairs per training pair, one per synthesis:
+   creates six synthesized pairs per training pair, one per synthesis:
    every extracted instance turned clockwise by 90 degrees and moved by
-   x+1 y+1, x-1 y+1 or x-1 y-1. They follow the training pairs in
-   `train_dataset.dataset`, three per training pair in turn, in that order.
+   x+1 y+1, x-1 y+1 or x-1 y-1, or turned counterclockwise by 90 degrees and
+   moved by x+2 y+2, x-2 y+2 or x-2 y-2. They follow the training pairs in
+   `train_dataset.dataset`, six per training pair in turn, in that order.
    Each holds one instance per extracted instance of its source pair, in
    source order, with `synthesis` (`source`, `rotation`, `offset`), named
    after every training pair's instances. Its `input_matrix` merges their
@@ -147,21 +148,22 @@ Run every check that applies and record each result:
   instances reproduce the pair's input, and its merged and canvassed output
   instances reproduce its output, without conflicting overlaps. The test input
   instances reproduce `test_input_matrix`.
-- **Synthesis.** Three synthesized pairs per training pair follow the
-  training pairs, in training pair order, each pair's three in the synthesis
-  order x+1 y+1, x-1 y+1, x-1 y-1, all with rotation 90. Each holds one
-  instance per extracted instance of its source pair, in source order, whose
-  `source` names it. Recompute each instance from its source with the
-  `Matrix.ts` helpers: turn the input and output crops with `Matrix.rotate`,
-  place the input crop at the source's located position plus the offset, and
-  place the output crop so that its gaps to the input object's bounding box
-  turn with it, its new left gap being the old bottom gap and its new top gap
-  the old left gap. The output object's box is the pivot when the input is
-  empty, and an object without cells stays all zeros. Draw both with
-  `Matrix.draw` on their source matrices' sizes, then draw every drawing of
-  the pair on one frame that covers them all and starts at its top-left cell,
-  and compare them with the instances' matrices. The pair's `input_matrix`
-  equals `Matrix.merge` of its input instance matrices, and its
+- **Synthesis.** Six synthesized pairs per training pair follow the training
+  pairs, in training pair order, each pair's six in the synthesis order
+  +90 x+1 y+1, +90 x-1 y+1, +90 x-1 y-1, -90 x+2 y+2, -90 x-2 y+2,
+  -90 x-2 y-2. Each holds one instance per extracted instance of its source
+  pair, in source order, whose `source` names it. Recompute each instance
+  from its source with the `Matrix.ts` helpers: turn the input and output
+  crops with `Matrix.rotate`, place the input crop at the source's located
+  position plus the offset, and place the output crop so that its gaps to the
+  input object's bounding box turn with it. At +90 its new left gap is the old
+  bottom gap and its new top gap the old left gap; at -90 they are the old
+  top gap and the old right gap. The output object's box is the pivot when
+  the input is empty, and an object without cells stays all zeros. Draw both
+  with `Matrix.draw` on their source matrices' sizes, then draw every drawing
+  of the pair on one frame that covers them all and starts at its top-left
+  cell, and compare them with the instances' matrices. The pair's
+  `input_matrix` equals `Matrix.merge` of its input instance matrices, and its
   `output_matrix` equals `Matrix.canvas` of the merge of its output instance
   matrices with `output_canvas`. Turned objects may overlap, the later one
   winning in the merge, which is intended; count the pairs where they do.

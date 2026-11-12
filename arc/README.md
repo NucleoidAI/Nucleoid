@@ -183,7 +183,7 @@ panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone. Segmented-object panels
 use `Input` and `Output` without object-number labels. After each pair's
 segmentation, a `<count> training objects synthesized` step shows the `Input`
-and `Output` panels of the three training pairs synthesized from it, titled
+and `Output` panels of the six training pairs synthesized from it, titled
 with their synthesis, such as `Input · +90° x-1 y+1`. A synthesized
 instance's construction starts with a `Deriving <instance> from <source>`
 step. Model
@@ -2554,13 +2554,16 @@ bounding-box origin nor the corner's 3 by 3 size.
 ```
 
 After `analyzer.instances` extracts a pair's instances, `analyzer.synthesize`
-creates three more training pairs from them, one per synthesis, without an LLM
-call. Each synthesis turns every instance clockwise by `+90` degrees and moves
-it by an offset:
+creates six more training pairs from them, one per synthesis, without an LLM
+call. Each synthesis turns every instance by `+90` degrees, clockwise, or by
+`-90` degrees, counterclockwise, and moves it by an offset:
 
 1. `+90` degrees, x `+1`, y `+1`
 2. `+90` degrees, x `-1`, y `+1`
 3. `+90` degrees, x `-1`, y `-1`
+4. `-90` degrees, x `+2`, y `+2`
+5. `-90` degrees, x `-2`, y `+2`
+6. `-90` degrees, x `-2`, y `-2`
 
 An instance's input and output objects turn together about its input object's
 bounding box, which keeps its top-left corner, so the input object moves to its
@@ -2650,7 +2653,7 @@ left and one row down:
 ```
 
 The synthesized pairs follow the training pairs in the training dataset,
-three for each training pair in turn, in the order above, and every later
+six for each training pair in turn, in the order above, and every later
 stage treats them as training pairs. Only the analysis synthesizes: the
 visualization adds no pairs of its own and reads the synthesized pairs from
 the training dataset as training examples, like the others. Instance names
@@ -2673,7 +2676,8 @@ argument, such as a color, unchanged. Orientation turns the way the datasets
 label it by shape: a shape that the turn leaves unchanged, such as a single
 cell, keeps its orientation, a shape that a half turn leaves unchanged, such
 as a bar, counts it modulo 180 degrees, and any other shape modulo 360
-degrees, so a corner at 135 turns to 225 and a bar at 90 to 0. The source's
+degrees. A corner at 135 turns to 225 at `+90` and to 45 at `-90`, and a bar
+at 90 turns to 0 either way. The source's
 implementation must construct the source by its name and give each of the
 five arguments once as `name=<integer>`, or the run fails. A list argument
 carries over unchanged too, so a list of cell positions, such as `points` in
