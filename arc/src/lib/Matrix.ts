@@ -102,6 +102,54 @@ export function pad(
   return result;
 }
 
+// Turns the matrix clockwise by a multiple of 90 degrees, the direction in
+// which orientation counts, so the turn from one orientation to another is
+// their difference. A quarter turn swaps the row and column counts.
+export function rotate(matrix, degrees: number) {
+  if (!Number.isInteger(degrees) || degrees % 90 !== 0) {
+    throw new Error(
+      `Rotation ${JSON.stringify(degrees)} is not a multiple of 90 degrees`
+    );
+  }
+  const rows: number = matrix.length;
+  const cols: number = matrix[0]?.length ?? 0;
+  for (const row of matrix) {
+    if (row.length !== cols) {
+      throw new Error("Matrix must be rectangular for rotating");
+    }
+  }
+
+  const turns: number = (((degrees / 90) % 4) + 4) % 4;
+  const quarter: boolean = turns % 2 === 1;
+  return Array.from({ length: quarter ? cols : rows }, (_, y: number) =>
+    Array.from({ length: quarter ? rows : cols }, (_, x: number) => {
+      switch (turns) {
+        case 1:
+          return matrix[rows - 1 - x][y];
+        case 2:
+          return matrix[rows - 1 - y][cols - 1 - x];
+        case 3:
+          return matrix[x][cols - 1 - y];
+        default:
+          return matrix[y][x];
+      }
+    })
+  );
+}
+
+// Moves the nonzero cells together so that their bounding box starts at
+// column x and row y, the position locate reports. The canvas keeps the
+// matrix's size and grows right or down, as pad does, when the moved cells
+// need more room.
+export function move(matrix, x: number, y: number) {
+  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0) {
+    throw new Error(
+      `Move position ${JSON.stringify({ x, y })} must be non-negative integers`
+    );
+  }
+  return pad(crop(matrix), matrix.length, matrix[0]?.length ?? 0, x, y);
+}
+
 export function merge(...matrices) {
   if (matrices.length === 0) {
     throw new Error("At least one matrix is required for merging");

@@ -2679,6 +2679,27 @@ color that comes first in reading order. Every `0` stays `0`. It rejects any
 cell that is not an integer from 0 to 9, and it does not crop or modify the
 input.
 
+`Matrix.rotate(matrix, degrees)` returns a new matrix turned clockwise by
+`degrees`, the direction in which `orientation` counts, so the turn from an
+input orientation to an output orientation is their difference: each
+`ed36ccf7` training input, at orientation 0, becomes its output, at 270, with
+`Matrix.rotate(input, 270)`. `degrees` must be an integer multiple of 90.
+Negative turns go counterclockwise and whole turns wrap around, so `-90` and
+`270` give the same matrix. A quarter turn swaps the row and column counts. It
+rejects any other angle, such as the diagonal 45, and ragged matrices, returns
+`[]` for an empty matrix, and does not modify the input.
+
+`Matrix.move(matrix, x, y)` returns a new matrix in which the nonzero cells
+keep their shape and move together so that their bounding box starts at column
+`x` and row `y`, the position `Matrix.locate` reports. It equals
+`Matrix.pad(Matrix.crop(matrix), rows, cols, x, y)` with the matrix's own row
+and column counts: the cells left behind become zeros, and the canvas keeps its
+size unless the moved cells need more room to the right or below. An all-zero
+matrix has no cells to move and gives zeros. It rejects negative or non-integer
+positions and ragged matrices, and it does not modify the input. Together,
+`Matrix.move(Matrix.rotate(Matrix.crop(matrix), turn), x, y)` turns an object
+and places it at an output position.
+
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
 frozen before expected outputs are accessed for exact-grid scoring, including
