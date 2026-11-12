@@ -28,6 +28,8 @@ export async function instances({
         content: `
           query:
           ${JSON.stringify({
+            declarations: train_dataset.declarations,
+            output_canvas: train_dataset.output_canvas,
             dataset: {
               input_matrix: test_input_matrix,
             },
