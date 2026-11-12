@@ -2592,7 +2592,10 @@ right, or down to hold it, and the instance records each grid's epoch as
 
 The pair lists its extracted instances first, then the synthesized instances,
 grouped by synthesis in the order above and by source within each synthesis,
-and every later stage treats them alike. Instance names stay consecutive. The
+and every later stage treats them alike. Only the analysis synthesizes: the
+visualization adds no instances of its own and reads the synthesized
+instances from the training dataset as training examples, like the extracted
+ones. Instance names stay consecutive. The
 extracted instances are named before the synthesis, so it can name each
 source, and the synthesized instances follow them. `analyzer.value` locates a
 synthesized input object from its epoch, so its `input_x` and `input_y` may be

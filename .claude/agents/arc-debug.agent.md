@@ -85,7 +85,9 @@ between that code and the log. At the time of writing, `start()` writes
    moved by x+1 y+1, x-1 y+1 and x-1 y-1, with `input_instance_epoch`,
    `output_instance_epoch` and `synthesis` (`source`, `rotation`, `offset`),
    then named in turn. Logs written before the synthesis have no synthesized
-   instances.
+   instances. Only the analysis synthesizes. The visualizer's prompts read
+   the synthesized instances from `train_dataset` as training examples, like
+   the extracted ones, which is intended and not an abnormality.
 4. `analyzer.value` (LLM, then Nucleoid on `declarations[0]` plus the
    implementation): `implementation`, `input_value`. Every Nucleoid program
    starts with `canvas_width` and `canvas_height`, the column and row counts

@@ -14,6 +14,7 @@ export async function instances({
   const { dataset } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
+    few_shot: null,
     messages: [
       {
         role: "assistant",
@@ -118,17 +119,7 @@ export async function value({
   const { dataset } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
-    few_shot: (train_dataset) => ({
-      ...train_dataset,
-      declarations: train_dataset.declarations[0],
-      dataset: train_dataset.dataset.map(({ instances }) => ({
-        instances: instances.map((instance) => ({
-          ...instance,
-          input_matrix: Matrix.crop(instance.input_instance_matrix),
-          output_matrix: Matrix.crop(instance.output_instance_matrix),
-        })),
-      })),
-    }),
+    few_shot: null,
     messages: [
       {
         role: "assistant",
@@ -235,12 +226,6 @@ export async function output_instance_matrix({
                 ),
                 output_instance_matrix: Matrix.crop(
                   instance.output_instance_matrix
-                ),
-                input_silhouette_matrix: Matrix.silhouette(
-                  Matrix.crop(instance.input_instance_matrix)
-                ),
-                output_silhouette_matrix: Matrix.silhouette(
-                  Matrix.crop(instance.output_instance_matrix)
                 ),
               })),
             })),
