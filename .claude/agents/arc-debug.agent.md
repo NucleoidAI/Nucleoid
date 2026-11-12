@@ -89,9 +89,13 @@ between that code and the log. At the time of writing, `start()` writes
 6. `visualizer.instances` (LLM): the test `input_instances[].input_instance_matrix`.
 7. `visualizer.value` (LLM, then Nucleoid): test `implementation`, `input_value`.
 8. `visualizer.state` (Nucleoid): test `output_value`.
-9. `visualizer.output_instance_matrix` (LLM): the instance's matrix, padded by
-   `Matrix.pad` at `output_value.x` / `output_value.y` to the test input's size.
-10. `Matrix.merge` of the test output instances, then
+9. `visualizer.output_instance_matrix` (LLM): the instance's matrix, drawn by
+   `Matrix.draw` at `output_value.x` / `output_value.y` on the test input's
+   canvas: `output_instance_matrix`, and `output_instance_epoch`, the column
+   and row of position (0, 0) in it. Positions count from that epoch, the test
+   input's top-left cell, so they can be negative. Logs written before the
+   epoch have no `output_instance_epoch`; their epoch is `{ x: 0, y: 0 }`.
+10. `Matrix.merge` of the test output drawings, lined up at their epochs, then
     `Matrix.canvas(..., output_canvas)`: `result_matrix`.
 11. `Matrix.difference(result_matrix, test_output_matrix)`: `difference`;
     `0` is an exact match.
@@ -133,11 +137,14 @@ Run every check that applies and record each result:
   training data. This is the strongest evidence of a root cause that needs no
   test answer. Re-run the logged declarations and implementations offline to
   confirm the state.
-- **Test composition.** Every test `output_value` has in-range numeric `x` and
-  `y`. Every padded `output_instance_matrix` keeps the test input's shape; a
-  larger one means the instance was placed out of bounds and `Matrix.pad`
-  enlarged the grid. Recompute merge and canvas and compare the result with
-  `result_matrix`, noting cells that a later instance overwrote.
+- **Test composition.** Every test `output_value` has integer `x` and `y`; a
+  negative one lies left of or above the test input. Every drawn
+  `output_instance_matrix` keeps the test input's shape with the epoch
+  `{ x: 0, y: 0 }`; a larger one means the instance reached past an edge and
+  `Matrix.draw` grew the grid that way, and a nonzero `output_instance_epoch`
+  means it grew left or up. Recompute the drawings, merge and canvas and
+  compare the result with `result_matrix`, noting cells that a later instance
+  overwrote.
 - **Scoring (scoring-only).** Compare the shapes of `result_matrix` and
   `test_output_matrix`. Recompute the difference and compare it with the
   logged `difference`. Count the mismatched cells and give their coordinates.

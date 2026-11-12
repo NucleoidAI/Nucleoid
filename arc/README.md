@@ -192,6 +192,9 @@ instance name. In the visualization, each test object's synthesis shows its
 `2.12.1`, rather than continuing the synthesis count, and an `Output state`
 panel right after the `Output crop`: the object's row of the
 `Visualization · State` table, before its `Placed output`.
+A `Placed output` that grew left of or above the test input's top-left cell
+adds its epoch, the column and row of position (0, 0) in the drawn grid, as in
+`Placed output · <instance> · epoch x=1 y=0`.
 The visualization's output-crop header also shows the object's output
 orientation as an arrow emoji and its degrees, such as
 `2.13.1 Output crop · <instance> · ➡️ 90°`, and every input- and
@@ -2635,16 +2638,30 @@ For identified instances, the LLM represents instances in `nuc` lang, this is pa
 
 For each input instance in test, the LLM generates output instance since it has all information needed from **knowledge packets**.
 
-Finally, `Matrix.pad` places each output matrix at its output position before
-`Matrix.merge` combines the masks. Padding expands the reference canvas when
-needed to retain the entire placed matrix, and merging preserves the largest
-height and width across its inputs. Zero is transparent; later nonzero cells
-win on overlap, as before. An erased output object uses `[[0]]` with an explicit
-output position.
-`Matrix.canvas` then frames the merged result with the inferred
+Finally, `Matrix.draw` draws each output crop at its output position on the
+test input's canvas before `Matrix.merge` combines the drawings. Positions count
+from the epoch, position (0, 0), which is the test input's top-left cell, so an
+object left of or above the test input has a negative position. A drawing grows
+left, up, right, or down as needed to retain the entire placed crop instead of
+rejecting an undersized reference, and its epoch records where position (0, 0)
+landed. Merging lines the drawings up at their epochs and covers every cell any
+of them covers. Zero is transparent; later nonzero cells win on overlap, as
+before. An erased output object uses `[[0]]` with an explicit output position.
+The run log keeps each test instance's drawn matrix as `output_instance_matrix`
+and its epoch as `output_instance_epoch`.
+`Matrix.canvas` then frames the merged drawing's matrix with the inferred
 `output_canvas`: `EXACT` keeps the composed canvas, which starts at the test
-input's dimensions, and `FIT` crops it to its nonzero bounding box with
-`Matrix.crop`. Any other value fails explicitly.
+input's dimensions and grows in every direction a drawing needed, and `FIT`
+crops it to its nonzero bounding box with `Matrix.crop`. Any other value fails
+explicitly.
+
+A drawing is `{ matrix, epoch }`: a matrix together with its epoch, the
+zero-based column `x` and row `y` of the matrix cell at position (0, 0).
+Positions left of or above the epoch are negative. A matrix by itself is a
+drawing whose epoch is its top-left cell, `{ x: 0, y: 0 }`, so `Matrix.locate`,
+`Matrix.crop`, `Matrix.move`, and `Matrix.merge` accept either, while
+`Matrix.draw`, `Matrix.move`, and `Matrix.merge` return drawings. A drawing
+whose epoch is not a pair of integers is rejected.
 
 `Matrix.crop(matrix)` returns a new matrix containing the smallest rectangle
 around all nonzero cells. All-zero borders are removed from all four sides:
@@ -2656,13 +2673,28 @@ position metadata. Use `Matrix.locate` to retain the original position with
 the crop.
 
 `Matrix.locate(matrix)` returns `{ matrix, x, y, width, height }`, pairing the
-same tight crop with its zero-based top-left position in the original matrix
-and its size: `x` is the column, `y` is the row, `width` is the crop's column
-count and `height` is its row count. Empty and all-zero matrices return
+same tight crop with the position of its top-left cell and its size: `x` is the
+column and `y` is the row, both counted from the epoch, `width` is the crop's
+column count and `height` is its row count. For a plain matrix, whose epoch is
+its top-left cell, the position is the zero-based column and row in that
+matrix; in a drawing it can be negative. Empty and all-zero matrices return
 `{ matrix: [], x: 0, y: 0, width: 0, height: 0 }`. It uses the same validation
 as `Matrix.crop` and does not modify the input. For a located result,
-`Matrix.pad(result.matrix, rows, cols, result.x, result.y)` restores the crop
-to its original position on a canvas at least as large as the supplied dimensions.
+`Matrix.draw(result.matrix, rows, cols, result.x, result.y)` restores the crop
+to its position on a canvas that covers at least the supplied dimensions from
+the epoch, and so does `Matrix.pad` when the position is not negative.
+
+`Matrix.draw(matrix, rows, cols, x, y)` returns the drawing of `matrix` with
+its top-left cell at position (`x`, `y`), on a canvas that covers `rows` by
+`cols` cells from the epoch. The canvas grows left, up, right, or down as
+needed to include the entire matrix, so `x` and `y` may be negative, and the
+epoch locates position (0, 0) in the drawn matrix: a 2 by 2 crop drawn at
+(-1, 0) on a 3 by 3 canvas gives a 3 by 4 matrix with epoch `{ x: 1, y: 0 }`.
+Drawing each 3 by 4 `4c4377d9` training input at (0, 0) and its vertical
+mirror, its rows in reverse order, at (0, -3), then merging the two, gives that
+pair's 6 by 4 output, with the epoch at row 3. It rejects ragged matrices,
+dimensions that are not non-negative integers, and positions that are not
+integers, and it does not modify the input.
 
 `Matrix.pad(matrix, rows, cols, left, top)` treats the requested dimensions as
 minimums, placing the input at the required zero-based column and row offsets
@@ -2670,7 +2702,9 @@ and filling the remaining cells with zeros. Each dimension grows as needed to
 include the entire input and its placement offset instead of rejecting an
 undersized reference. It does not center or modify the input. Empty matrices
 can be padded to an all-zero canvas. Ragged matrices and negative dimensions or
-offsets are still rejected.
+offsets are still rejected. It returns the matrix that `Matrix.draw` draws with
+those offsets as the position, without the epoch, which is always its top-left
+cell.
 
 `Matrix.silhouette(matrix)` returns a new matrix of the same size in which each
 nonzero color is a letter ranked by how often it occurs in that matrix: `A` for
@@ -2689,16 +2723,19 @@ Negative turns go counterclockwise and whole turns wrap around, so `-90` and
 rejects any other angle, such as the diagonal 45, and ragged matrices, returns
 `[]` for an empty matrix, and does not modify the input.
 
-`Matrix.move(matrix, x, y)` returns a new matrix in which the nonzero cells
-keep their shape and move together so that their bounding box starts at column
-`x` and row `y`, the position `Matrix.locate` reports. It equals
+`Matrix.move(matrix, x, y)` returns a new drawing in which the nonzero cells
+keep their shape and move together so that their bounding box starts at
+position (`x`, `y`), the position `Matrix.locate` reports, which may be
+negative. It covers the cells of the matrix or drawing it moves and grows left,
+up, right, or down only when the moved cells need more room; the cells left
+behind become zeros, and the epoch locates position (0, 0). For a plain matrix
+and a position that is not negative, its matrix equals
 `Matrix.pad(Matrix.crop(matrix), rows, cols, x, y)` with the matrix's own row
-and column counts: the cells left behind become zeros, and the canvas keeps its
-size unless the moved cells need more room to the right or below. An all-zero
-matrix has no cells to move and gives zeros. It rejects negative or non-integer
-positions and ragged matrices, and it does not modify the input. Together,
+and column counts, and its epoch is `{ x: 0, y: 0 }`. An all-zero matrix has no
+cells to move and gives zeros. It rejects positions that are not integers and
+ragged matrices, and it does not modify the input. Together,
 `Matrix.move(Matrix.rotate(Matrix.crop(matrix), turn), x, y)` turns an object
-and places it at an output position.
+and draws it at an output position.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

@@ -205,15 +205,13 @@ export function output_composed({
   );
 }
 
-export function output_placed({
-  instance_name,
-  output_instance_padded_matrix,
-}) {
-  terminal.grid(
-    `Placed output · ${instance_name}`,
-    output_instance_padded_matrix,
-    { key: "placed_output", loop: true }
-  );
+export function output_placed({ instance_name, output_instance_drawing }) {
+  const { matrix, epoch } = output_instance_drawing;
+  const title: string =
+    epoch.x === 0 && epoch.y === 0
+      ? `Placed output · ${instance_name}`
+      : `Placed output · ${instance_name} · epoch x=${epoch.x} y=${epoch.y}`;
+  terminal.grid(title, matrix, { key: "placed_output", loop: true });
 }
 
 export function comparison({ test_output_matrix, result_matrix }) {
