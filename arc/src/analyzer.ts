@@ -179,6 +179,21 @@ export function synthesize({ instances, output_canvas }) {
   return { dataset };
 }
 
+// Runs an implementation after the world model's class on the pair's canvas
+// and returns the object it constructs.
+async function evaluate(train_dataset, input_matrix, implementation: string) {
+  const canvas_width: number = input_matrix[0].length;
+  const canvas_height: number = input_matrix.length;
+  return nucleoid.run(
+    [
+      `canvas_width = ${canvas_width}`,
+      `canvas_height = ${canvas_height}`,
+      train_dataset.declarations[0],
+      implementation,
+    ].join("\n\n")
+  );
+}
+
 export async function value({
   puzzle_id,
   only_puzzle_dataset,
@@ -306,15 +321,128 @@ export async function value({
 
   milestone.evaluating_rules({ instance_name: instance.instance_name });
 
-  const canvas_width: number = input_matrix[0].length;
-  const canvas_height: number = input_matrix.length;
-  const input_value = await nucleoid.run(
-    [
-      `canvas_width = ${canvas_width}`,
-      `canvas_height = ${canvas_height}`,
-      train_dataset.declarations[0],
+  const input_value = await evaluate(
+    train_dataset,
+    input_matrix,
+    implementation
+  );
+
+  milestone.instance_constructed({
+    instance_name: instance.instance_name,
+    input_instance_matrix: instance.input_instance_matrix,
+    output_instance_matrix: instance.output_instance_matrix,
+    implementation,
+    input_value,
+  });
+
+  return { implementation, input_value };
+}
+
+// The orientation of a shape turned clockwise by the rotation, as the datasets
+// label orientation by shape: a shape that the turn leaves unchanged, such as a
+// single cell, keeps its orientation, a shape that a half turn leaves
+// unchanged, such as a bar, counts it modulo 180 degrees, and any other shape
+// counts it modulo 360 degrees.
+function turned_orientation(matrix, orientation: number, rotation: number) {
+  const shape = Matrix.crop(matrix);
+  const unchanged = (degrees: number): boolean =>
+    JSON.stringify(Matrix.rotate(shape, degrees)) === JSON.stringify(shape);
+  if (unchanged(rotation)) {
+    return orientation;
+  }
+
+  const period: number = unchanged(180) ? 180 : 360;
+  return (((orientation + rotation) % period) + period) % period;
+}
+
+// Sets the constructor argument that an implementation gives once as an
+// integer, such as x=5, to the value computed from its old one.
+function set_argument(
+  implementation: string,
+  name: string,
+  value: (old: number) => number,
+  instance_name: string
+): string {
+  const argument = new RegExp(`\\b${name}\\s*=\\s*(-?\\d+)`, "g");
+  const count: number = [...implementation.matchAll(argument)].length;
+  if (count !== 1) {
+    throw new Error(
+      `Implementation of ${instance_name} gives ${name} ${count} times, not once`
+    );
+  }
+
+  return implementation.replace(
+    argument,
+    (_, old: string) => `${name}=${value(Number(old))}`
+  );
+}
+
+// A synthesized instance's implementation, written from its source's without
+// an LLM call: the source's implementation under the instance's name, with the
+// position and size of the instance's input object and the source's
+// orientation turned with it. Every other argument, such as a color, carries
+// over unchanged.
+function synthesized_implementation(source, instance): string {
+  if (!source.implementation.includes(source.instance_name)) {
+    throw new Error(
+      `Implementation of ${source.instance_name} does not construct it by name`
+    );
+  }
+
+  const { x, y, width, height } = Matrix.locate(instance.input_instance_matrix);
+  const values = {
+    x: () => x,
+    y: () => y,
+    width: () => width,
+    height: () => height,
+    orientation: (orientation: number) =>
+      turned_orientation(
+        source.input_instance_matrix,
+        orientation,
+        instance.synthesis.rotation
+      ),
+  };
+
+  let implementation: string = source.implementation
+    .split(source.instance_name)
+    .join(instance.instance_name);
+  for (const [name, value] of Object.entries(values)) {
+    implementation = set_argument(
       implementation,
-    ].join("\n\n")
+      name,
+      value,
+      source.instance_name
+    );
+  }
+
+  return implementation;
+}
+
+// Constructs a synthesized instance from the extracted instance it was
+// synthesized from, and evaluates it as value() does.
+export async function derive({ train_dataset, input_matrix, instance }) {
+  const source = train_dataset.dataset
+    .flatMap(({ instances }) => instances)
+    .find(({ instance_name }) => instance_name === instance.synthesis.source);
+  if (!source) {
+    throw new Error(
+      `Source ${instance.synthesis.source} of ${instance.instance_name} is not a training instance`
+    );
+  }
+
+  milestone.deriving_instance({
+    instance_name: instance.instance_name,
+    source: source.instance_name,
+  });
+
+  const implementation = synthesized_implementation(source, instance);
+
+  milestone.evaluating_rules({ instance_name: instance.instance_name });
+
+  const input_value = await evaluate(
+    train_dataset,
+    input_matrix,
+    implementation
   );
 
   milestone.instance_constructed({

@@ -100,8 +100,11 @@ between that code and the log. At the time of writing, `start()` writes
    implementation): `implementation`, `input_value`. Every Nucleoid program
    starts with `canvas_width` and `canvas_height`, the column and row counts
    of the pair's own `input_matrix`, or of `test_input_matrix` in steps 7
-   and 8. The training pairs' instances are constructed first, then each
-   synthesized pair's.
+   and 8. The training pairs' instances are constructed first. Each
+   synthesized pair's instances then come from `analyzer.derive` (no LLM,
+   then the same Nucleoid run): the source's implementation under the
+   instance's name, with `x`, `y`, `width` and `height` of its located input
+   object and `orientation` turned with it, every other argument unchanged.
 5. `analyzer.state` (Nucleoid on all declarations, implementations and
    `Obj[:]`, once per pair): each training instance's `output_value`. Every
    pair, synthesized or not, is one world on its own canvas.
@@ -169,7 +172,13 @@ Run every check that applies and record each result:
   `id` is its name, and an `output_value`. The state steps matched every
   instance; none is missing, unmatched or duplicated. `input_value` agrees with
   its input instance matrix, for example its `x` and `y` with `Matrix.locate`
-  when the model has those properties.
+  when the model has those properties. A synthesized instance's
+  `implementation` equals its source's with the instance's name, and with
+  `x`, `y`, `width` and `height` set to its located input object. Its
+  `orientation` is the source's, unchanged when the turn leaves the source's
+  input crop unchanged, plus the rotation modulo 180 when a half turn does,
+  and plus the rotation modulo 360 otherwise. Every other argument, lists
+  included, is unchanged.
 - **Training replay.** Every training instance's rule-derived `output_value`
   agrees with its actual `output_instance_matrix`: the located position,
   colors and size. A disagreement means the world model mispredicts its own
@@ -178,7 +187,8 @@ Run every check that applies and record each result:
   program per pair, to confirm the state. For a synthesized instance, a
   disagreement can also mean that a rule does not turn with its object, such
   as a rim that always grows above its point, or that it reads a canvas that
-  grew to hold the turned objects, or objects that overlap after turning.
+  grew to hold the turned objects, objects that overlap after turning, or a
+  list argument, such as cell positions, that carried over unturned.
   Report those separately from the extracted instances' disagreements, which
   alone show the world model mispredicting its own training data.
 - **Test composition.** Every test `output_value` has integer `x` and `y`; a

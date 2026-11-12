@@ -184,7 +184,9 @@ output canvas instead of adding a separate milestone. Segmented-object panels
 use `Input` and `Output` without object-number labels. After each pair's
 segmentation, a `<count> training objects synthesized` step shows the `Input`
 and `Output` panels of the three training pairs synthesized from it, titled
-with their synthesis, such as `Input · +90° x-1 y+1`. Model
+with their synthesis, such as `Input · +90° x-1 y+1`. A synthesized
+instance's construction starts with a `Deriving <instance> from <source>`
+step. Model
 token usage remains
 attached to its active milestone. Instance-specific steps, crop and
 implementation headers, and input- and output-state headers include the
@@ -2661,9 +2663,23 @@ on its own canvas, so the objects of one synthesis share a world, and a rule
 that relates objects, such as
 `Obj.filter(other => other.height > $Obj.height)` in
 `dataset.9af7a82c.json`, compares them with one another and never with
-objects of another pair. A synthesized instance makes the same two
-`analyzer.value` LLM calls as an extracted one, so the analysis makes four
-times as many.
+objects of another pair.
+
+A synthesized instance makes no LLM call. `analyzer.derive` writes its
+implementation from its source's: the source's implementation under the
+instance's name, with `x`, `y`, `width`, and `height` set to the instance's
+located input object and `orientation` turned with it, and every other
+argument, such as a color, unchanged. Orientation turns the way the datasets
+label it by shape: a shape that the turn leaves unchanged, such as a single
+cell, keeps its orientation, a shape that a half turn leaves unchanged, such
+as a bar, counts it modulo 180 degrees, and any other shape modulo 360
+degrees, so a corner at 135 turns to 225 and a bar at 90 to 0. The source's
+implementation must construct the source by its name and give each of the
+five arguments once as `name=<integer>`, or the run fails. A list argument
+carries over unchanged too, so a list of cell positions, such as `points` in
+`dataset.44f52bb0.json`, still describes the source object. Nucleoid then
+evaluates the implementation on the synthesized pair's canvas, as
+`analyzer.value` does.
 
 ##### 4. Create instances in Nucleoid session
 

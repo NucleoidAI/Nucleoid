@@ -94,6 +94,13 @@ export function constructing_instance({ instance_name }) {
   });
 }
 
+export function deriving_instance({ instance_name, source }) {
+  terminal.step(`Deriving ${instance_name} from ${source}`, {
+    key: "deriving_instance",
+    loop: true,
+  });
+}
+
 export function evaluating_rules({ instance_name }) {
   terminal.step(`Evaluating declarative rules · ${instance_name}`, {
     key: "evaluating_rules",

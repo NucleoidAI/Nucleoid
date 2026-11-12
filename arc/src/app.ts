@@ -49,9 +49,9 @@ export async function start(
   train_dataset.declarations = declarations;
   train_dataset.output_canvas = output_canvas;
 
-  const construct = async (dataset): Promise<void> => {
+  const construct = async (dataset, build): Promise<void> => {
     for (const instance of dataset.instances) {
-      const { implementation, input_value } = await analyzer.value({
+      const { implementation, input_value } = await build({
         puzzle_id,
         only_puzzle_dataset,
         train_dataset,
@@ -86,11 +86,11 @@ export async function start(
 
     dataset.instances = instances;
 
-    await construct(dataset);
+    await construct(dataset, analyzer.value);
   }
 
-  // The synthesized pairs follow the training pairs, and each joins the
-  // training dataset when its instances are constructed.
+  // The synthesized pairs follow the training pairs, and their instances are
+  // derived from their sources without an LLM call.
   for (const dataset of synthesized_dataset) {
     for (const instance of dataset.instances) {
       instance.instance_name = next_instance_name();
@@ -98,7 +98,7 @@ export async function start(
 
     train_dataset.dataset.push(dataset);
 
-    await construct(dataset);
+    await construct(dataset, analyzer.derive);
   }
 
   await analyzer.state(train_dataset);
