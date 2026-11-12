@@ -49,27 +49,7 @@ export async function start(
   train_dataset.declarations = declarations;
   train_dataset.output_canvas = output_canvas;
 
-  for (const dataset of train_dataset.dataset) {
-    const { instances } = await analyzer.instances({
-      puzzle_id,
-      only_puzzle_dataset,
-      train_dataset: { ...train_dataset, dataset: [dataset] },
-    });
-
-    for (const instance of instances) {
-      instance.instance_name = next_instance_name();
-    }
-
-    const { instances: synthesized_instances } = analyzer.synthesize({
-      instances,
-    });
-
-    for (const instance of synthesized_instances) {
-      instance.instance_name = next_instance_name();
-    }
-
-    dataset.instances = [...instances, ...synthesized_instances];
-
+  const construct = async (dataset): Promise<void> => {
     for (const instance of dataset.instances) {
       const { implementation, input_value } = await analyzer.value({
         puzzle_id,
@@ -82,6 +62,43 @@ export async function start(
       instance.implementation = implementation;
       instance.input_value = input_value;
     }
+  };
+
+  const synthesized_dataset = [];
+
+  for (const dataset of train_dataset.dataset) {
+    const { instances } = await analyzer.instances({
+      puzzle_id,
+      only_puzzle_dataset,
+      train_dataset: { ...train_dataset, dataset: [dataset] },
+    });
+
+    for (const instance of instances) {
+      instance.instance_name = next_instance_name();
+    }
+
+    const { dataset: synthesized } = analyzer.synthesize({
+      instances,
+      output_canvas,
+    });
+
+    synthesized_dataset.push(...synthesized);
+
+    dataset.instances = instances;
+
+    await construct(dataset);
+  }
+
+  // The synthesized pairs follow the training pairs, and each joins the
+  // training dataset when its instance is constructed.
+  for (const dataset of synthesized_dataset) {
+    for (const instance of dataset.instances) {
+      instance.instance_name = next_instance_name();
+    }
+
+    train_dataset.dataset.push(dataset);
+
+    await construct(dataset);
   }
 
   await analyzer.state(train_dataset);

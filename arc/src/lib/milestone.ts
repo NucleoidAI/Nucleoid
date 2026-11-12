@@ -65,26 +65,24 @@ export function training_objects_segmented({ instances }) {
   });
 }
 
-export function training_objects_synthesized({ instances }) {
-  terminal.step(`${instances.length} training objects synthesized`, {
+export function training_objects_synthesized({ dataset }) {
+  terminal.step(`${dataset.length} training objects synthesized`, {
     key: "training_objects_synthesized",
     loop: true,
   });
-  instances.forEach((instance) => {
-    const { source, rotation, offset } = instance.synthesis;
+  dataset.forEach(({ input_matrix, output_matrix, instances }) => {
+    const { source, rotation, offset } = instances[0].synthesis;
     const title: string = `${source} · ${signed(rotation)}° x${signed(
       offset.x
     )} y${signed(offset.y)}`;
-    terminal.grid(
-      epoched(`Input · ${title}`, instance.input_instance_epoch),
-      instance.input_instance_matrix,
-      { key: "synthesized_input", loop: true }
-    );
-    terminal.grid(
-      epoched(`Output · ${title}`, instance.output_instance_epoch),
-      instance.output_instance_matrix,
-      { key: "synthesized_output", loop: true }
-    );
+    terminal.grid(`Input · ${title}`, input_matrix, {
+      key: "synthesized_input",
+      loop: true,
+    });
+    terminal.grid(`Output · ${title}`, output_matrix, {
+      key: "synthesized_output",
+      loop: true,
+    });
   });
 }
 

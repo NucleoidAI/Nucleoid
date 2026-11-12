@@ -80,24 +80,29 @@ between that code and the log. At the time of writing, `start()` writes
 3. `analyzer.instances` (LLM, per training pair): each instance's
    `input_instance_matrix` and `output_instance_matrix`. The extracted
    instances get their `instance_name`, then `analyzer.synthesize` (no LLM)
-   appends three synthesized instances per extracted one, grouped by synthesis
-   and by source within it: each source turned clockwise by 90 degrees and
-   moved by x+1 y+1, x-1 y+1 and x-1 y-1, with `input_instance_epoch`,
-   `output_instance_epoch` and `synthesis` (`source`, `rotation`, `offset`),
-   then named in turn. Logs written before the synthesis have no synthesized
-   instances. Only the analysis synthesizes. The visualizer's prompts read
-   the synthesized instances from `train_dataset` as training examples, like
-   the extracted ones, which is intended and not an abnormality.
+   creates three synthesized pairs per extracted one: the source turned
+   clockwise by 90 degrees and moved by x+1 y+1, x-1 y+1 and x-1 y-1. They
+   follow the training pairs in `train_dataset.dataset`, grouped by source
+   pair, then by synthesis, then by source instance. Each holds one instance
+   with `synthesis` (`source`, `rotation`, `offset`), named after every
+   training pair's instances, and its `input_matrix` and `output_matrix` are
+   that instance's grids, the output under `output_canvas`. Logs written
+   before the synthesis have no synthesized pairs. Logs written before this
+   layout list synthesized instances inside their source pair, with
+   `input_instance_epoch` and `output_instance_epoch`, each synthesis a world
+   of its own on the pair's canvas. Only the analysis synthesizes. The
+   visualizer's prompts read the synthesized pairs from `train_dataset` as
+   training examples, like the others, which is intended and not an
+   abnormality.
 4. `analyzer.value` (LLM, then Nucleoid on `declarations[0]` plus the
    implementation): `implementation`, `input_value`. Every Nucleoid program
    starts with `canvas_width` and `canvas_height`, the column and row counts
-   of the pair's `input_matrix`, or of `test_input_matrix` in steps 7 and 8.
-   A synthesized instance's `input_x` and `input_y` are located from its
-   `input_instance_epoch`, so they can be negative.
+   of the pair's own `input_matrix`, or of `test_input_matrix` in steps 7
+   and 8. The training pairs' instances are constructed first, then each
+   synthesized pair's.
 5. `analyzer.state` (Nucleoid on all declarations, implementations and
-   `Obj[:]`, once per world): each training instance's `output_value`. A
-   pair's extracted instances form one world and each synthesis's instances
-   another, all on the pair's canvas size.
+   `Obj[:]`, once per pair): each training instance's `output_value`. Every
+   pair, synthesized or not, is one world on its own canvas.
 6. `visualizer.instances` (LLM): the test `input_instances[].input_instance_matrix`.
 7. `visualizer.value` (LLM, then Nucleoid): test `implementation`, `input_value`.
 8. `visualizer.state` (Nucleoid): test `output_value`.
@@ -124,49 +129,54 @@ Run every check that applies and record each result:
   stage should have produced is missing, `null` or empty.
 - **Grids.** Every matrix is non-empty and rectangular, with integer cells
   `0` to `9`.
-- **Training fidelity.** The logged training pairs equal the puzzle's `train`
-  pairs, in order and count.
+- **Training fidelity.** The logged training pairs before the synthesized
+  ones equal the puzzle's `train` pairs, in order and count.
 - **Declarations and canvas.** The declarations are non-empty and run on the
   local binary without errors. Compare them with the declarations in
   `arc/src/dataset/dataset.<puzzle-id>.json`, when it exists, and report drift.
   `output_canvas` is a value `Matrix.canvas` accepts, and it agrees with the
   training shapes: `EXACT` keeps each pair's shape, and `FIT` crops.
-- **Segmentation.** Every training pair has at least one extracted instance,
-  one without `synthesis`. Extracted instance matrices keep their pair's full
-  shape, zero-padded at their positions. Merged extracted input instances
-  reproduce the pair's input, and merged and canvassed extracted output
+- **Segmentation.** Every training pair before the synthesized ones has at
+  least one instance, none with `synthesis`. Its instance matrices keep the
+  pair's full shape, zero-padded at their positions. Its merged input
+  instances reproduce the pair's input, and its merged and canvassed output
   instances reproduce its output, without conflicting overlaps. The test input
   instances reproduce `test_input_matrix`.
-- **Synthesis.** Each pair has three synthesized instances per extracted one,
-  after them, grouped by synthesis in the order x+1 y+1, x-1 y+1, x-1 y-1, all
-  with rotation 90, and by source within each; every `source` names an
-  extracted instance of the same pair. Recompute each from its source with the
+- **Synthesis.** Three synthesized pairs per extracted instance follow the
+  training pairs, grouped by source pair in order, then by synthesis in the
+  order x+1 y+1, x-1 y+1, x-1 y-1, all with rotation 90, then by source
+  instance. Each holds exactly one instance, whose `source` names an extracted
+  instance of its source pair. Recompute each from its source with the
   `Matrix.ts` helpers: turn the input and output crops with `Matrix.rotate`,
   place the input crop at the source's located position plus the offset, and
   place the output crop so that its gaps to the input object's bounding box
   turn with it, its new left gap being the old bottom gap and its new top gap
   the old left gap. The output object's box is the pivot when the input is
-  empty, and an object without cells stays an all-zero grid. Draw both with
-  `Matrix.draw` on their source matrices' sizes, then compare the matrices and
-  epochs.
+  empty, and an object without cells stays all zeros. Draw both with
+  `Matrix.draw` on their source matrices' sizes, then on one frame that covers
+  both drawings and starts at its top-left cell, and compare them with the
+  instance's matrices. The pair's `input_matrix` equals its input instance
+  matrix, and its `output_matrix` equals `Matrix.canvas` of its output
+  instance matrix with `output_canvas`.
 - **Instance names.** Every name is unique, has the form `obj` plus twelve
-  digits, and is consecutive from `0` across training and then test.
+  digits, and is consecutive from `0` in dataset order, across the training
+  pairs, the synthesized pairs and then test.
 - **Values.** Every instance has an `implementation`, an `input_value` whose
   `id` is its name, and an `output_value`. The state steps matched every
   instance; none is missing, unmatched or duplicated. `input_value` agrees with
   its input instance matrix, for example its `x` and `y` with `Matrix.locate`
-  when the model has those properties, located from `input_instance_epoch`
-  for a synthesized instance.
+  when the model has those properties.
 - **Training replay.** Every training instance's rule-derived `output_value`
   agrees with its actual `output_instance_matrix`: the located position,
   colors and size. A disagreement means the world model mispredicts its own
   training data. This is the strongest evidence of a root cause that needs no
   test answer. Re-run the logged declarations and implementations offline, one
-  program per world, to confirm the state. For a synthesized instance, a
+  program per pair, to confirm the state. For a synthesized instance, a
   disagreement can also mean that a rule does not turn with its object, such
-  as a rim that always grows above its point. Report those separately from the
-  extracted instances' disagreements, which alone show the world model
-  mispredicting its own training data.
+  as a rim that always grows above its point, or that it relates objects,
+  since a synthesized instance is alone in its world. Report those separately
+  from the extracted instances' disagreements, which alone show the world
+  model mispredicting its own training data.
 - **Test composition.** Every test `output_value` has integer `x` and `y`; a
   negative one lies left of or above the test input. Every drawn
   `output_instance_matrix` keeps the test input's shape with the epoch
