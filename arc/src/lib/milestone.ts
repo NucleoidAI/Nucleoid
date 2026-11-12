@@ -6,6 +6,18 @@ function oriented(title: string, orientation: unknown): string {
   return direction ? `${title} · ${direction}` : title;
 }
 
+// Adds a drawing's epoch, the column and row of position (0, 0) in its grid,
+// when the drawing grew left of or above that position.
+function epoched(title: string, epoch): string {
+  return epoch && (epoch.x !== 0 || epoch.y !== 0)
+    ? `${title} · epoch x=${epoch.x} y=${epoch.y}`
+    : title;
+}
+
+function signed(value: number): string {
+  return value < 0 ? `${value}` : `+${value}`;
+}
+
 export function start({
   version,
   puzzle_id,
@@ -50,6 +62,29 @@ export function training_objects_segmented({ instances }) {
       key: "training_output",
       loop: true,
     });
+  });
+}
+
+export function training_objects_synthesized({ instances }) {
+  terminal.step(`${instances.length} training objects synthesized`, {
+    key: "training_objects_synthesized",
+    loop: true,
+  });
+  instances.forEach((instance) => {
+    const { source, rotation, offset } = instance.synthesis;
+    const title: string = `${source} · ${signed(rotation)}° x${signed(
+      offset.x
+    )} y${signed(offset.y)}`;
+    terminal.grid(
+      epoched(`Input · ${title}`, instance.input_instance_epoch),
+      instance.input_instance_matrix,
+      { key: "synthesized_input", loop: true }
+    );
+    terminal.grid(
+      epoched(`Output · ${title}`, instance.output_instance_epoch),
+      instance.output_instance_matrix,
+      { key: "synthesized_output", loop: true }
+    );
   });
 }
 
@@ -207,11 +242,10 @@ export function output_composed({
 
 export function output_placed({ instance_name, output_instance_drawing }) {
   const { matrix, epoch } = output_instance_drawing;
-  const title: string =
-    epoch.x === 0 && epoch.y === 0
-      ? `Placed output · ${instance_name}`
-      : `Placed output · ${instance_name} · epoch x=${epoch.x} y=${epoch.y}`;
-  terminal.grid(title, matrix, { key: "placed_output", loop: true });
+  terminal.grid(epoched(`Placed output · ${instance_name}`, epoch), matrix, {
+    key: "placed_output",
+    loop: true,
+  });
 }
 
 export function comparison({ test_output_matrix, result_matrix }) {

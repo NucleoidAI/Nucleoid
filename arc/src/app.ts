@@ -37,6 +37,8 @@ export async function start(
   milestone.analysis();
 
   let instance_index: number = 0;
+  const next_instance_name = (): string =>
+    `obj${String(instance_index++).padStart(12, "0")}`;
 
   const { declarations, output_canvas } = await analyzer.declarations({
     puzzle_id,
@@ -54,14 +56,21 @@ export async function start(
       train_dataset: { ...train_dataset, dataset: [dataset] },
     });
 
-    dataset.instances = instances;
+    for (const instance of instances) {
+      instance.instance_name = next_instance_name();
+    }
+
+    const { instances: synthesized_instances } = analyzer.synthesize({
+      instances,
+    });
+
+    for (const instance of synthesized_instances) {
+      instance.instance_name = next_instance_name();
+    }
+
+    dataset.instances = [...instances, ...synthesized_instances];
 
     for (const instance of dataset.instances) {
-      instance.instance_name = `obj${String(instance_index++).padStart(
-        12,
-        "0"
-      )}`;
-
       const { implementation, input_value } = await analyzer.value({
         puzzle_id,
         only_puzzle_dataset,
@@ -97,10 +106,7 @@ export async function start(
   const input_instances = [];
 
   for (const { input_instance_matrix } of instances) {
-    const instance_name: string = `obj${String(instance_index++).padStart(
-      12,
-      "0"
-    )}`;
+    const instance_name: string = next_instance_name();
 
     const { implementation, input_value } = await visualizer.value({
       puzzle_id,

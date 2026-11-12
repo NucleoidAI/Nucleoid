@@ -181,7 +181,12 @@ milestones retain the same second number and add a third occurrence number,
 such as `1.3.1` and `1.3.2` for training-object segmentation. Continued grid
 panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone. Segmented-object panels
-use `Input` and `Output` without object-number labels. Model token usage remains
+use `Input` and `Output` without object-number labels. After each pair's
+segmentation, a `<count> training objects synthesized` step shows every
+synthesized object's `Input` and `Output` panels, titled with its source
+instance and its synthesis, such as `Input · <instance> · +90° x-1 y+1`, and
+with its epoch when its grid grew left or up, as for `Placed output`. Model
+token usage remains
 attached to its active milestone. Instance-specific steps, crop and
 implementation headers, and input- and output-state headers include the
 instance name. In the visualization, each test object's synthesis shows its
@@ -232,7 +237,8 @@ OpenRouter client, and entry point report progress only through them.
 
 `milestone.state` displays exactly one `Analysis · State` table containing
 objects from all training pairs, in pair order, after the analysis state passes
-finish. One `Visualization · State` table shows the test objects before their
+finish. Within a pair, the extracted objects come first, followed by each
+synthesis's objects in turn. One `Visualization · State` table shows the test objects before their
 outputs are composed. Each row is an object that `Obj[:]` returns after the
 declarative rules run, with `id` first and then one column per property in the
 order first reported by the runtime. Strings stay quoted, and a property that
@@ -2545,6 +2551,58 @@ bounding-box origin nor the corner's 3 by 3 size.
   ]
 }
 ```
+
+After `analyzer.instances` extracts a pair's instances, `analyzer.synthesize`
+adds three more instances for each one, without an LLM call. Each synthesis
+turns the instance clockwise by `+90` degrees and moves it by an offset:
+
+1. `+90` degrees, x `+1`, y `+1`
+2. `+90` degrees, x `-1`, y `+1`
+3. `+90` degrees, x `-1`, y `-1`
+
+The input and output objects turn together about the input object's bounding
+box, which keeps its top-left corner, so the input object moves to its
+position plus the offset, and the output object keeps its place relative to
+the input object, turned with it. A marker beyond a corner's vertex in
+`dataset.core.json` stays beyond the turned vertex, and a line in
+`dataset.line.json` still grows at its turned tail, so the rules of both
+datasets give each synthesized output the box it is drawn in. A rule that does
+not turn with its object, such as the curve rim that always grows above or
+below its point, disagrees with the synthesized output instead. An instance
+whose input is empty turns about its output object, and an object without
+cells stays an all-zero grid. Turning swaps an object's row and column counts.
+
+Positions count from the epoch, the top-left cell of the pair's canvas, so a
+synthesized object can have a negative position. `Matrix.draw` draws each
+turned object on a grid of its source matrix's size that grows left, up,
+right, or down to hold it, and the instance records each grid's epoch as
+`input_instance_epoch` and `output_instance_epoch`, with its synthesis:
+
+```json
+{
+  "input_instance_epoch": { "x": 1, "y": 0 },
+  "output_instance_epoch": { "x": 1, "y": 0 },
+  "synthesis": {
+    "source": "obj000000000000",
+    "rotation": 90,
+    "offset": { "x": -1, "y": 1 }
+  }
+}
+```
+
+The pair lists its extracted instances first, then the synthesized instances,
+grouped by synthesis in the order above and by source within each synthesis,
+and every later stage treats them alike. Instance names stay consecutive. The
+extracted instances are named before the synthesis, so it can name each
+source, and the synthesized instances follow them. `analyzer.value` locates a
+synthesized input object from its epoch, so its `input_x` and `input_y` may be
+negative. The analysis state runs each pair's extracted instances as one
+Nucleoid world and each synthesis's instances as a world of its own, on the
+pair's canvas size, so a rule that relates objects, such as
+`Obj.filter(other => other.height > $Obj.height)` in
+`dataset.9af7a82c.json`, never compares objects from different worlds. A
+synthesized instance makes the same two `analyzer.value` LLM calls as an
+extracted one, so the analysis makes four times as many.
 
 ##### 4. Create instances in Nucleoid session
 
