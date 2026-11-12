@@ -67,9 +67,9 @@ export async function instances({
   return { instances: dataset[0].instances };
 }
 
-// Each synthesis turns an extracted instance clockwise by its rotation and
-// moves it by its offset, so every extracted instance gains three training
-// pairs.
+// Each synthesis turns the extracted instances of a training pair clockwise by
+// its rotation and moves them by its offset, so every training pair gains three
+// synthesized pairs.
 const SYNTHESES = [
   { rotation: 90, offset: { x: 1, y: 1 } },
   { rotation: 90, offset: { x: -1, y: 1 } },
@@ -111,65 +111,68 @@ function turn(matrix, pivot, rotation: number, offset) {
   );
 }
 
-// Draws the drawing on a frame that also covers the other drawing, so the two
-// grids line up, and returns its grid, which starts at the frame's top-left
-// cell.
-function frame(drawing, other) {
-  const blank = {
+// Draws the drawing on the frame that covers every drawing, so their grids line
+// up, and returns its grid, which starts at the frame's top-left cell.
+function frame(drawing, drawings) {
+  const blanks = drawings.map((other) => ({
     ...other,
     matrix: other.matrix.map((row) => row.map(() => 0)),
-  };
-  return Matrix.merge(drawing, blank).matrix;
+  }));
+  return Matrix.merge(drawing, ...blanks).matrix;
 }
 
-// Synthesizes three training pairs from each extracted instance, one per
-// synthesis, each holding its one synthesized instance: the instance's input
-// and output objects turn together about the input object's bounding box, or
-// the output object's when the input is empty, and move by the offset, so each
-// keeps its place relative to the other. Both grids share one frame, which
-// covers the instance's canvas and both turned objects and starts at its
-// top-left cell, so the pair's positions are never negative. The pair's input
-// and output matrices are those grids, the output under the output canvas.
-export function synthesize({ instances, output_canvas }) {
-  const dataset = SYNTHESES.flatMap(({ rotation, offset }) =>
-    instances.map((instance) => {
-      const input = Matrix.locate(instance.input_instance_matrix);
-      const pivot =
-        input.width > 0
-          ? input
-          : Matrix.locate(instance.output_instance_matrix);
-      const input_drawing = turn(
-        instance.input_instance_matrix,
-        pivot,
-        rotation,
-        offset
-      );
-      const output_drawing = turn(
-        instance.output_instance_matrix,
-        pivot,
-        rotation,
-        offset
-      );
-      const input_instance_matrix = frame(input_drawing, output_drawing);
-      const output_instance_matrix = frame(output_drawing, input_drawing);
+// The training pair that one synthesis makes of a training pair's extracted
+// instances: each instance's input and output objects turn together about its
+// input object's bounding box, or its output object's when the input is empty,
+// and move by the offset, so each keeps its place relative to the other. Every
+// grid of the pair shares one frame, which covers the instances' canvas and
+// every turned object and starts at its top-left cell, so the pair's positions
+// are never negative. The pair's input and output matrices merge its
+// instances' grids, the output under the output canvas, so a later object wins
+// where turned objects overlap.
+function synthesized_pair(instances, { rotation, offset }, output_canvas) {
+  const drawings = instances.map((instance) => {
+    const input = Matrix.locate(instance.input_instance_matrix);
+    const pivot =
+      input.width > 0 ? input : Matrix.locate(instance.output_instance_matrix);
 
-      return {
-        input_matrix: input_instance_matrix,
-        output_matrix: Matrix.canvas(output_instance_matrix, output_canvas),
-        instances: [
-          {
-            input_instance_matrix,
-            output_instance_matrix,
-            synthesis: {
-              source: instance.instance_name,
-              rotation,
-              offset: { ...offset },
-            },
-          },
-        ],
-      };
-    })
-  );
+    return {
+      source: instance.instance_name,
+      input: turn(instance.input_instance_matrix, pivot, rotation, offset),
+      output: turn(instance.output_instance_matrix, pivot, rotation, offset),
+    };
+  });
+  const drawn = drawings.flatMap(({ input, output }) => [input, output]);
+  const synthesized = drawings.map(({ source, input, output }) => ({
+    input_instance_matrix: frame(input, drawn),
+    output_instance_matrix: frame(output, drawn),
+    synthesis: { source, rotation, offset: { ...offset } },
+  }));
+
+  const input_matrix = Matrix.merge(
+    ...synthesized.map(({ input_instance_matrix }) => input_instance_matrix)
+  ).matrix;
+  const output_matrix = Matrix.merge(
+    ...synthesized.map(({ output_instance_matrix }) => output_instance_matrix)
+  ).matrix;
+
+  return {
+    input_matrix,
+    output_matrix: Matrix.canvas(output_matrix, output_canvas),
+    instances: synthesized,
+  };
+}
+
+// Synthesizes three training pairs from a training pair's extracted instances,
+// one per synthesis, each holding every instance turned and moved by it. A
+// pair without instances synthesizes none.
+export function synthesize({ instances, output_canvas }) {
+  const dataset =
+    instances.length > 0
+      ? SYNTHESES.map((synthesis) =>
+          synthesized_pair(instances, synthesis, output_canvas)
+        )
+      : [];
 
   milestone.training_objects_synthesized({ dataset });
 

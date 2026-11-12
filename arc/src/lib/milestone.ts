@@ -66,15 +66,16 @@ export function training_objects_segmented({ instances }) {
 }
 
 export function training_objects_synthesized({ dataset }) {
-  terminal.step(`${dataset.length} training objects synthesized`, {
+  const count: number = dataset.flatMap(({ instances }) => instances).length;
+  terminal.step(`${count} training objects synthesized`, {
     key: "training_objects_synthesized",
     loop: true,
   });
   dataset.forEach(({ input_matrix, output_matrix, instances }) => {
-    const { source, rotation, offset } = instances[0].synthesis;
-    const title: string = `${source} · ${signed(rotation)}° x${signed(
-      offset.x
-    )} y${signed(offset.y)}`;
+    const { rotation, offset } = instances[0].synthesis;
+    const title: string = `${signed(rotation)}° x${signed(offset.x)} y${signed(
+      offset.y
+    )}`;
     terminal.grid(`Input · ${title}`, input_matrix, {
       key: "synthesized_input",
       loop: true,

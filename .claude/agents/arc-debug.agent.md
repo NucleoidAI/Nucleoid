@@ -80,17 +80,19 @@ between that code and the log. At the time of writing, `start()` writes
 3. `analyzer.instances` (LLM, per training pair): each instance's
    `input_instance_matrix` and `output_instance_matrix`. The extracted
    instances get their `instance_name`, then `analyzer.synthesize` (no LLM)
-   creates three synthesized pairs per extracted one: the source turned
-   clockwise by 90 degrees and moved by x+1 y+1, x-1 y+1 and x-1 y-1. They
-   follow the training pairs in `train_dataset.dataset`, grouped by source
-   pair, then by synthesis, then by source instance. Each holds one instance
-   with `synthesis` (`source`, `rotation`, `offset`), named after every
-   training pair's instances, and its `input_matrix` and `output_matrix` are
-   that instance's grids, the output under `output_canvas`. Logs written
-   before the synthesis have no synthesized pairs. Logs written before this
-   layout list synthesized instances inside their source pair, with
-   `input_instance_epoch` and `output_instance_epoch`, each synthesis a world
-   of its own on the pair's canvas. Only the analysis synthesizes. The
+   creates three synthesized pairs per training pair, one per synthesis:
+   every extracted instance turned clockwise by 90 degrees and moved by
+   x+1 y+1, x-1 y+1 or x-1 y-1. They follow the training pairs in
+   `train_dataset.dataset`, three per training pair in turn, in that order.
+   Each holds one instance per extracted instance of its source pair, in
+   source order, with `synthesis` (`source`, `rotation`, `offset`), named
+   after every training pair's instances. Its `input_matrix` merges their
+   input grids, and its `output_matrix` merges their output grids under
+   `output_canvas`. Logs written before the synthesis have no synthesized
+   pairs. Older logs may instead list synthesized instances inside their
+   source pair, with `input_instance_epoch` and `output_instance_epoch` and
+   each synthesis a world of its own on the pair's canvas, or hold one
+   synthesized instance per synthesized pair. Only the analysis synthesizes. The
    visualizer's prompts read the synthesized pairs from `train_dataset` as
    training examples, like the others, which is intended and not an
    abnormality.
@@ -142,22 +144,24 @@ Run every check that applies and record each result:
   instances reproduce the pair's input, and its merged and canvassed output
   instances reproduce its output, without conflicting overlaps. The test input
   instances reproduce `test_input_matrix`.
-- **Synthesis.** Three synthesized pairs per extracted instance follow the
-  training pairs, grouped by source pair in order, then by synthesis in the
-  order x+1 y+1, x-1 y+1, x-1 y-1, all with rotation 90, then by source
-  instance. Each holds exactly one instance, whose `source` names an extracted
-  instance of its source pair. Recompute each from its source with the
+- **Synthesis.** Three synthesized pairs per training pair follow the
+  training pairs, in training pair order, each pair's three in the synthesis
+  order x+1 y+1, x-1 y+1, x-1 y-1, all with rotation 90. Each holds one
+  instance per extracted instance of its source pair, in source order, whose
+  `source` names it. Recompute each instance from its source with the
   `Matrix.ts` helpers: turn the input and output crops with `Matrix.rotate`,
   place the input crop at the source's located position plus the offset, and
   place the output crop so that its gaps to the input object's bounding box
   turn with it, its new left gap being the old bottom gap and its new top gap
   the old left gap. The output object's box is the pivot when the input is
   empty, and an object without cells stays all zeros. Draw both with
-  `Matrix.draw` on their source matrices' sizes, then on one frame that covers
-  both drawings and starts at its top-left cell, and compare them with the
-  instance's matrices. The pair's `input_matrix` equals its input instance
-  matrix, and its `output_matrix` equals `Matrix.canvas` of its output
-  instance matrix with `output_canvas`.
+  `Matrix.draw` on their source matrices' sizes, then draw every drawing of
+  the pair on one frame that covers them all and starts at its top-left cell,
+  and compare them with the instances' matrices. The pair's `input_matrix`
+  equals `Matrix.merge` of its input instance matrices, and its
+  `output_matrix` equals `Matrix.canvas` of the merge of its output instance
+  matrices with `output_canvas`. Turned objects may overlap, the later one
+  winning in the merge, which is intended; count the pairs where they do.
 - **Instance names.** Every name is unique, has the form `obj` plus twelve
   digits, and is consecutive from `0` in dataset order, across the training
   pairs, the synthesized pairs and then test.
@@ -173,10 +177,10 @@ Run every check that applies and record each result:
   test answer. Re-run the logged declarations and implementations offline, one
   program per pair, to confirm the state. For a synthesized instance, a
   disagreement can also mean that a rule does not turn with its object, such
-  as a rim that always grows above its point, or that it relates objects,
-  since a synthesized instance is alone in its world. Report those separately
-  from the extracted instances' disagreements, which alone show the world
-  model mispredicting its own training data.
+  as a rim that always grows above its point, or that it reads a canvas that
+  grew to hold the turned objects, or objects that overlap after turning.
+  Report those separately from the extracted instances' disagreements, which
+  alone show the world model mispredicting its own training data.
 - **Test composition.** Every test `output_value` has integer `x` and `y`; a
   negative one lies left of or above the test input. Every drawn
   `output_instance_matrix` keeps the test input's shape with the epoch

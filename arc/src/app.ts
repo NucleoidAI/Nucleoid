@@ -90,7 +90,7 @@ export async function start(
   }
 
   // The synthesized pairs follow the training pairs, and each joins the
-  // training dataset when its instance is constructed.
+  // training dataset when its instances are constructed.
   for (const dataset of synthesized_dataset) {
     for (const instance of dataset.instances) {
       instance.instance_name = next_instance_name();

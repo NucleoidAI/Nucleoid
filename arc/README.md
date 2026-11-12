@@ -183,9 +183,8 @@ panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone. Segmented-object panels
 use `Input` and `Output` without object-number labels. After each pair's
 segmentation, a `<count> training objects synthesized` step shows the `Input`
-and `Output` panels of every training pair synthesized from it, titled with
-its source instance and its synthesis, such as
-`Input · <instance> · +90° x-1 y+1`. Model
+and `Output` panels of the three training pairs synthesized from it, titled
+with their synthesis, such as `Input · +90° x-1 y+1`. Model
 token usage remains
 attached to its active milestone. Instance-specific steps, crop and
 implementation headers, and input- and output-state headers include the
@@ -2553,16 +2552,16 @@ bounding-box origin nor the corner's 3 by 3 size.
 ```
 
 After `analyzer.instances` extracts a pair's instances, `analyzer.synthesize`
-creates three more training pairs from each one, without an LLM call. Each
-synthesis turns the instance clockwise by `+90` degrees and moves it by an
-offset:
+creates three more training pairs from them, one per synthesis, without an LLM
+call. Each synthesis turns every instance clockwise by `+90` degrees and moves
+it by an offset:
 
 1. `+90` degrees, x `+1`, y `+1`
 2. `+90` degrees, x `-1`, y `+1`
 3. `+90` degrees, x `-1`, y `-1`
 
-The input and output objects turn together about the input object's bounding
-box, which keeps its top-left corner, so the input object moves to its
+An instance's input and output objects turn together about its input object's
+bounding box, which keeps its top-left corner, so the input object moves to its
 position plus the offset, and the output object keeps its place relative to
 the input object, turned with it. A marker beyond a corner's vertex in
 `dataset.core.json` stays beyond the turned vertex, and a line in
@@ -2573,31 +2572,35 @@ below its point, disagrees with the synthesized output instead. An instance
 whose input is empty turns about its output object, and an object without
 cells stays an all-zero grid. Turning swaps an object's row and column counts.
 
-Each synthesized pair holds its one synthesized instance and is created from
-it. `Matrix.draw` draws each turned object on a grid of its source matrix's
-size that grows left, up, right, or down to hold it, and both grids are then
-drawn on one frame that covers the two, so they line up. The frame starts at
-its top-left cell, so positions in a synthesized pair are never negative, and
-a pair whose objects reach past an edge of the source canvas is larger than
-its source pair. The two grids are the instance's `input_instance_matrix` and
-`output_instance_matrix`. The pair's `input_matrix` is its input grid, and its
-`output_matrix` is its output grid under the output canvas, so `FIT` crops it.
-The instance records its synthesis. A vertical domino at a 3 by 3 grid's left
-edge, with a marker right of its bottom cell, turns into a horizontal domino
-with the marker below its left cell, and moving it by x `-1` and y `+1` grows
-the frame one column left and one row down:
+A synthesized pair holds one instance per extracted instance, in the same
+order, each turned and moved by the pair's synthesis. `Matrix.draw` draws each
+turned object on a grid of its source matrix's size that grows left, up,
+right, or down to hold it, and every grid of the pair is then drawn on one
+frame that covers them all, so they line up. The frame starts at its top-left
+cell, so positions in a synthesized pair are never negative, and a pair whose
+objects reach past an edge of the source canvas is larger than its source
+pair. These grids are the instances' `input_instance_matrix` and
+`output_instance_matrix`. The pair's `input_matrix` merges its input grids,
+and its `output_matrix` merges its output grids under the output canvas, so
+`FIT` crops it. Turned objects that land on the same cell overlap there, and
+the later one wins in the merge, as in `Matrix.merge`. Each instance records
+its synthesis. For x `-1` and y `+1`, a vertical domino at a 3 by 3 grid's
+left edge, with a marker right of its bottom cell, turns into a horizontal
+domino with the marker below its left cell, growing the frame one column left
+and one row down, and a dot in the grid's top-right corner moves one column
+left and one row down:
 
 ```json
 {
   "input_matrix": [
     [0, 0, 0, 0],
-    [0, 0, 0, 0],
+    [0, 0, 7, 0],
     [5, 5, 0, 0],
     [0, 0, 0, 0]
   ],
   "output_matrix": [
     [0, 0, 0, 0],
-    [0, 0, 0, 0],
+    [0, 0, 7, 0],
     [5, 5, 0, 0],
     [1, 0, 0, 0]
   ],
@@ -2620,27 +2623,47 @@ the frame one column left and one row down:
         "rotation": 90,
         "offset": { "x": -1, "y": 1 }
       }
+    },
+    {
+      "input_instance_matrix": [
+        [0, 0, 0, 0],
+        [0, 0, 7, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+      ],
+      "output_instance_matrix": [
+        [0, 0, 0, 0],
+        [0, 0, 7, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+      ],
+      "synthesis": {
+        "source": "obj000000000001",
+        "rotation": 90,
+        "offset": { "x": -1, "y": 1 }
+      }
     }
   ]
 }
 ```
 
 The synthesized pairs follow the training pairs in the training dataset,
-grouped by source pair, then by synthesis in the order above, then by source
-instance, and every later stage treats them as training pairs. Only the
-analysis synthesizes: the visualization adds no pairs of its own and reads
-the synthesized pairs from the training dataset as training examples, like
-the others. Instance names stay consecutive in dataset order. The extracted
-instances are named before the synthesis, so it can name each source, and
-the synthesized instances are named after every training pair's. The analysis
-constructs every training pair's instances first, and each synthesized pair
-joins the training dataset when its instance is constructed. Every pair is a
-Nucleoid world of its own, on its own canvas, so a synthesized instance is
-alone in its world, and a rule that relates objects, such as
+three for each training pair in turn, in the order above, and every later
+stage treats them as training pairs. Only the analysis synthesizes: the
+visualization adds no pairs of its own and reads the synthesized pairs from
+the training dataset as training examples, like the others. Instance names
+stay consecutive in dataset order. The extracted instances are named before
+the synthesis, so it can name each source, and the synthesized instances are
+named after every training pair's. The analysis constructs every training
+pair's instances first, and each synthesized pair joins the training dataset
+when its instances are constructed. Every pair is a Nucleoid world of its own,
+on its own canvas, so the objects of one synthesis share a world, and a rule
+that relates objects, such as
 `Obj.filter(other => other.height > $Obj.height)` in
-`dataset.9af7a82c.json`, finds no other object. A synthesized instance makes
-the same two `analyzer.value` LLM calls as an extracted one, so the analysis
-makes four times as many.
+`dataset.9af7a82c.json`, compares them with one another and never with
+objects of another pair. A synthesized instance makes the same two
+`analyzer.value` LLM calls as an extracted one, so the analysis makes four
+times as many.
 
 ##### 4. Create instances in Nucleoid session
 
