@@ -67,39 +67,6 @@ export async function instances({
   return { instances: dataset[0].instances };
 }
 
-export async function synthetize({
-  puzzle_id,
-  only_puzzle_dataset,
-  train_dataset,
-}) {
-  const { dataset } = await llm.generate({
-    puzzle_id,
-    only_puzzle_dataset,
-    messages: [
-      {
-        role: "user",
-        content: `
-          query:
-          ${JSON.stringify(train_dataset)}
-          json_format:
-          {
-            "dataset": [{
-              "input_matrix": <INPUT_MATRIX>,
-              "output_matrix": <OUTPUT_MATRIX>,
-              "instances": [{
-                "input_instance_matrix": <INPUT_INSTANCE_MATRIX>,
-                "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
-              }]
-            }]
-          }
-        `,
-      },
-    ],
-  });
-
-  return dataset.map((pair) => ({ ...pair, accuracy: 0.8 }));
-}
-
 export async function value({
   puzzle_id,
   only_puzzle_dataset,

@@ -19,7 +19,6 @@ export async function start(
       input_matrix: input,
       output_matrix: output,
       instances: undefined,
-      accuracy: 1,
     })),
     declarations: undefined,
     output_canvas: undefined,
@@ -49,23 +48,13 @@ export async function start(
   train_dataset.output_canvas = output_canvas;
 
   for (const dataset of train_dataset.dataset) {
-    if (dataset.accuracy === 1) {
-      const { instances } = await analyzer.instances({
-        puzzle_id,
-        only_puzzle_dataset,
-        train_dataset: { ...train_dataset, dataset: [dataset] },
-      });
+    const { instances } = await analyzer.instances({
+      puzzle_id,
+      only_puzzle_dataset,
+      train_dataset: { ...train_dataset, dataset: [dataset] },
+    });
 
-      dataset.instances = instances;
-
-      train_dataset.dataset.push(
-        ...(await analyzer.synthetize({
-          puzzle_id,
-          only_puzzle_dataset,
-          train_dataset: { ...train_dataset, dataset: [dataset] },
-        }))
-      );
-    }
+    dataset.instances = instances;
 
     for (const instance of dataset.instances) {
       instance.instance_name = `obj${String(instance_index++).padStart(

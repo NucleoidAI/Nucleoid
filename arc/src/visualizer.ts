@@ -236,6 +236,12 @@ export async function output_instance_matrix({
                 output_instance_matrix: Matrix.crop(
                   instance.output_instance_matrix
                 ),
+                input_silhouette_matrix: Matrix.silhouette(
+                  Matrix.crop(instance.input_instance_matrix)
+                ),
+                output_silhouette_matrix: Matrix.silhouette(
+                  Matrix.crop(instance.output_instance_matrix)
+                ),
               })),
             })),
           })}
