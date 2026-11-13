@@ -20,7 +20,19 @@ export async function instances({
         role: "assistant",
         content: `
           current:
-          ${JSON.stringify(train_dataset)}
+          ${JSON.stringify({
+            declarations: train_dataset.declarations[0],
+            dataset: train_dataset.dataset.map(
+              ({ input_matrix, instances }) => ({
+                input_matrix,
+                instances: instances.map((instance) => ({
+                  instance_matrix: instance.input_instance_matrix,
+                  implementation: instance.implementation,
+                  value: instance.input_value,
+                })),
+              })
+            ),
+          })}
         `,
       },
       {
@@ -28,17 +40,16 @@ export async function instances({
         content: `
           query:
           ${JSON.stringify({
-            declarations: train_dataset.declarations,
-            output_canvas: train_dataset.output_canvas,
+            declarations: train_dataset.declarations[0],
             dataset: {
-              input_matrix: test_input_matrix,
+              instance_matrix: test_input_matrix,
             },
           })}
           json_format:
           {
             dataset: [{
               "instances": [{
-                "input_instance_matrix": <INPUT_INSTANCE_MATRIX>
+                "instance_matrix": <INSTANCE_MATRIX>
               }]
             }]
           }
@@ -46,6 +57,11 @@ export async function instances({
       },
     ],
   });
+
+  dataset[0].instances = dataset[0].instances.map((instance) => ({
+    ...instance,
+    input_instance_matrix: instance.instance_matrix,
+  }));
 
   const instances = dataset[0].instances;
 
