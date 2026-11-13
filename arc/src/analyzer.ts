@@ -67,24 +67,21 @@ export async function instances({
   return { instances: dataset[0].instances };
 }
 
-// Each synthesis turns the extracted instances of a training pair by its
-// rotation, clockwise when positive and counterclockwise when negative, and
-// moves them by its offset, so every training pair gains six synthesized pairs.
+// Each synthesis turns the extracted instances of a training pair clockwise by
+// its rotation and moves them by its offset, so every training pair gains three
+// synthesized pairs.
 const SYNTHESES = [
   { rotation: 90, offset: { x: 1, y: 1 } },
   { rotation: 90, offset: { x: -1, y: 1 } },
   { rotation: 90, offset: { x: -1, y: -1 } },
-  { rotation: -90, offset: { x: 2, y: 2 } },
-  { rotation: -90, offset: { x: -2, y: 2 } },
-  { rotation: -90, offset: { x: -2, y: -2 } },
 ];
 
-// Draws the object of an instance matrix turned by the rotation, clockwise when
-// positive, about the pivot, the bounding box the instance turns about, which
-// keeps its top-left corner, and moved by the offset, on a canvas of the
-// matrix's size that grows as needed. The gaps between the object's and the
-// pivot's edges turn with them, so the object keeps its place relative to the
-// pivot. An object without cells stays an all-zero canvas.
+// Draws the object of an instance matrix turned clockwise by the rotation about
+// the pivot, the bounding box the instance turns about, which keeps its top-left
+// corner, and moved by the offset, on a canvas of the matrix's size that grows
+// as needed. The gaps between the object's and the pivot's edges turn with
+// them, so the object keeps its place relative to the pivot. An object without
+// cells stays an all-zero canvas.
 function turn(matrix, pivot, rotation: number, offset) {
   const object = Matrix.locate(matrix);
   const rows: number = matrix.length;
@@ -166,7 +163,7 @@ function synthesized_pair(instances, { rotation, offset }, output_canvas) {
   };
 }
 
-// Synthesizes six training pairs from a training pair's extracted instances,
+// Synthesizes three training pairs from a training pair's extracted instances,
 // one per synthesis, each holding every instance turned and moved by it. A
 // pair without instances synthesizes none.
 export function synthesize({ instances, output_canvas }) {
@@ -341,11 +338,11 @@ export async function value({
   return { implementation, input_value };
 }
 
-// The orientation of a shape turned by the rotation, clockwise when positive,
-// as the datasets label orientation by shape: a shape that the turn leaves
-// unchanged, such as a single cell, keeps its orientation, a shape that a half
-// turn leaves unchanged, such as a bar, counts it modulo 180 degrees, and any
-// other shape counts it modulo 360 degrees.
+// The orientation of a shape turned clockwise by the rotation, as the datasets
+// label orientation by shape: a shape that the turn leaves unchanged, such as a
+// single cell, keeps its orientation, a shape that a half turn leaves
+// unchanged, such as a bar, counts it modulo 180 degrees, and any other shape
+// counts it modulo 360 degrees.
 function turned_orientation(matrix, orientation: number, rotation: number) {
   const shape = Matrix.crop(matrix);
   const unchanged = (degrees: number): boolean =>
