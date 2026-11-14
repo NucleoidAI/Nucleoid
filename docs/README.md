@@ -3837,6 +3837,59 @@ link.map(step => step.holds)
   [derivation path selections](../nucleoid.spec.md#derivation-path-selections)
   section.
 
+### Intersect and except selections
+
+```
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+common = tax |> why |> intersect(shipping |> why)
+only = tax |> why |> except(shipping |> why)
+assert(common.map(step => step.node), ["quantity"])
+assert(only.map(step => step.node), ["tax", "subtotal", "rate", "price"])
+shipping = price + quantity
+common.map(step => step.node)
+```
+
+- This is the complete `Nucleoid compares two explanations with intersect and except`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `["price","quantity"]`.
+- [NUC 106](nuc-0106.md) adds the stages `selection |> intersect(other)` and
+  `selection |> except(other)`. `intersect` keeps the steps whose node `other`
+  also selects and `except` the steps whose node it does not, in their order
+  and with their fields unchanged, so `tax |> why |> intersect(shipping |> why)`
+  is what the tax and the shipping both rest on, and
+  `tax |> why |> except(shipping |> why)` what only the tax rests on.
+- `other` is written as a pipeline's source is: a reference, `model`, a prefix
+  stage such as `why shipping` or a pipeline. It is evaluated in place each
+  time the stage applies, and steps are compared by their node, whatever they
+  hold. A name that holds a selection is a reasoning observer, which no
+  selection holds, so the selection is written out, as in
+  `intersect(why shipping)`.
+- The kept steps keep the direction of the most recent walk and their
+  distances, so the stages compose with `stated`, `derived`, `depth`, `diff`,
+  `path` and each other in either order, and a later `why` or `affects` walks
+  from the kept steps. An `other` that is undefined, because a `depth` in it
+  has a `null` limit, makes the selection undefined.
+- An invalid `other` keeps the diagnostics of a pipeline source, such as
+  `TypeError("Cannot explain 1")`. Only `|>` followed by `intersect` or
+  `except` and `(` is a stage; both names stay ordinary everywhere else, and a
+  bare `|> intersect` keeps its parse-time
+  `TypeError("intersect is not an operation")`. A local or parameter,
+  variable, function or class named `intersect` or `except` shadows its stage,
+  as bindings shadow the state filters, `depth`, `diff` and `path`: the stage
+  then raises `TypeError("intersect is not an operation")` or
+  `TypeError("except is not an operation")` before selecting its source.
+- The selection stays live through every observation of both selections,
+  including the steps each one drops. It renders as
+  `selection|>intersect(other)` and `selection|>except(other)`.
+- The authoritative contract is the
+  [intersect and except reasoning selections](../nucleoid.spec.md#intersect-and-except-reasoning-selections)
+  section.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -3872,9 +3925,11 @@ c = b * 2
   without `diff`, the [NUC 82](nuc-0082.md) candidate adds its `depth` stage
   without the `depth(x, n)` call form, and the [NUC 83](nuc-0083.md)
   candidate adds its `diff` as the `|> diff` stage, without the bare `diff`
-  and its `before` and `after` fields, and the [NUC 88](nuc-0088.md)
-  candidate adds a `path(target)` stage that NUC 11 does not plan. Other
-  NUC 11 operations remain proposals, not dependencies.
+  and its `before` and `after` fields, the [NUC 88](nuc-0088.md)
+  candidate adds a `path(target)` stage that NUC 11 does not plan, and the
+  [NUC 106](nuc-0106.md) candidate adds `intersect(other)` and
+  `except(other)` stages, which NUC 11 does not plan either. Other NUC 11
+  operations remain proposals, not dependencies.
 
 ### Quantifiers
 
@@ -4337,6 +4392,11 @@ selection |> depth(limit)             steps within limit steps of where the last
 reference |> why |> path(target)      how target reaches the reference (NUC 88)
 reference |> affects |> path(target)  what the reference moves on its way to target (NUC 88)
 selection |> path(target)             steps on a dependency path to target (NUC 88)
+why a |> intersect(why b)             the causes a and b share (NUC 106)
+why a |> except(why b)                what a rests on and b does not (NUC 106)
+affects a |> intersect(affects b)     what a and b both move (NUC 106)
+selection |> intersect(other)         steps whose node other also selects (NUC 106)
+selection |> except(other)            steps whose node other does not select (NUC 106)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)

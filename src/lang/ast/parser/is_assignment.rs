@@ -77,6 +77,7 @@ fn push_children<'a>(expression: &'a mut Expr, pending: &mut Vec<&'a mut Expr>) 
         Expr::Assign { target, value } => pending.extend([target, value].map(Box::as_mut)),
         Expr::Depth { source, limit } => pending.extend([source, limit].map(Box::as_mut)),
         Expr::Path { source, target } => pending.extend([source, target].map(Box::as_mut)),
+        Expr::Combine { source, other, .. } => pending.extend([source, other].map(Box::as_mut)),
         Expr::Quantified {
             collection,
             condition,

@@ -212,7 +212,7 @@ fn accepted_documents_use_value_assignments_only_in_the_appended_cases() {
         assert_eq!(uses, new, "{}", case.title);
     }
     assert_eq!(with_operator, 12);
-    assert_eq!(cases, 1096);
+    assert_eq!(cases, 1105);
 }
 
 #[test]

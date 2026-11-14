@@ -161,7 +161,7 @@ fn no_earlier_document_case_holds_a_membership_test() {
             earlier += 1;
         }
     }
-    assert_eq!(earlier, 1080);
+    assert_eq!(earlier, 1089);
 }
 
 #[test]

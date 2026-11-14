@@ -2193,6 +2193,36 @@ assert(tasks.map(task -> task.name), ["ship", "plan", "build", "test"])
   and strings as text. See the
   [root contract](nucleoid.spec.md#list-and-population-sorting-by-key).
 
+## Intersect and except reasoning selections
+
+**Intersect and except tell apart what two symptoms rest on**
+
+```nuc
+fan = 2
+load = 40
+voltage = 230
+current = load / voltage * 100
+heat = current * 3 + fan
+noise = fan * 10
+shared = why heat |> intersect(why noise)
+own = why heat |> except(why noise)
+assert(shared.map(step -> step.node), ["fan"])
+assert(own.map(step -> step.node), ["heat", "current", "load", "voltage"])
+noise = fan * 10 + load
+assert(shared.map(step -> step.node), ["fan", "load"])
+assert(own.map(step -> step.node), ["heat", "current", "voltage"])
+```
+
+- [NUC 106](docs/nuc-0106.md) adds the reasoning stages `|> intersect(OTHER)`
+  and `|> except(OTHER)`. `why heat |> intersect(why noise)` keeps the steps
+  of the heat's explanation whose node the noise's explanation also selects,
+  here the fan, and `why heat |> except(why noise)` keeps the others: what
+  only the heat rests on.
+- Both keep the first selection's order and every field of the steps they
+  keep, and they stay live: once the noise also reads the load, the load
+  moves from the heat's own causes to the shared ones. See the
+  [root contract](nucleoid.spec.md#intersect-and-except-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

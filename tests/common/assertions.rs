@@ -163,6 +163,10 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
             expression_assertions(source, assertions);
             expression_assertions(target, assertions);
         }
+        Expr::Combine { source, other, .. } => {
+            expression_assertions(source, assertions);
+            expression_assertions(other, assertions);
+        }
         Expr::Quantified {
             collection,
             condition,

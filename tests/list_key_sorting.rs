@@ -377,7 +377,7 @@ fn only_the_appended_cases_sort_by_key_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 36);
-    assert_eq!(cases, 1096);
+    assert_eq!(cases, 1105);
 }
 
 #[test]
@@ -389,7 +389,7 @@ fn the_appended_cases_stand_after_nuc_104_and_before_nuc_103() {
         "Nucleoid keeps all and any as names and quantifiers beside class references"
     );
     assert_eq!(titles[733..739], SPEC_TITLES);
-    assert_eq!(titles[739], "Nucleoid flattens nested lists by one level");
+    assert_eq!(titles[745], "Nucleoid flattens nested lists by one level");
     for (cases, title, following) in [
         (
             &reference,
@@ -407,7 +407,7 @@ fn the_appended_cases_stand_after_nuc_104_and_before_nuc_103() {
             "Flattening keeps the dirty tiles of every room counted",
         ),
     ] {
-        assert_eq!(cases[cases.len() - 4].title, title);
+        assert_eq!(cases[cases.len() - 5].title, title);
         assert_eq!(cases[cases.len() - 3].title, following);
     }
 }

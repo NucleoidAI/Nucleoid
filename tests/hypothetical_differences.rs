@@ -230,7 +230,7 @@ fn no_earlier_document_case_writes_a_diff_stage() {
         with_diff += usize::from(uses);
     }
     assert_eq!(with_diff, 11);
-    assert_eq!(cases, 1096);
+    assert_eq!(cases, 1105);
 }
 
 #[test]

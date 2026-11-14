@@ -5,6 +5,7 @@
 //! are not names the surrounding declaration reads.
 
 use crate::error::Result;
+use crate::lang::ast::reason::{self, Link};
 use crate::lang::ast::{BinaryOp, Expr, FunctionBody, TemplatePart, UnaryOp};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
@@ -283,14 +284,8 @@ pub(crate) fn visit_children<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'
     match expression {
         Expr::Member { object, .. } => visit(object),
         Expr::Version { reference, .. } => visit(reference),
-        Expr::Reason { source, .. } => visit(source),
-        Expr::Depth { source, limit } => {
-            visit(source);
-            visit(limit);
-        }
-        Expr::Path { source, target } => {
-            visit(source);
-            visit(target);
+        Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
+            visit_link(expression, visit);
         }
         Expr::Index { object, index } => {
             visit(object);
@@ -341,6 +336,19 @@ pub(crate) fn visit_children<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'
     }
 }
 
+fn visit_link<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'a Expr)) {
+    let Some((link, source)) = reason::split(expression) else {
+        return;
+    };
+    visit(source);
+    match link {
+        Link::Stage(_) => {}
+        Link::Depth(argument) | Link::Path(argument) | Link::Combine(_, argument) => {
+            visit(argument);
+        }
+    }
+}
+
 fn visit_template<'a>(parts: &'a [TemplatePart], visit: &mut impl FnMut(&'a Expr)) {
     for part in parts {
         if let TemplatePart::Expression(embedded) = part {
@@ -387,6 +395,7 @@ fn visit_operands<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'a Expr)) {
         | Expr::Reason { .. }
         | Expr::Depth { .. }
         | Expr::Path { .. }
+        | Expr::Combine { .. }
         | Expr::Index { .. }
         | Expr::Slice { .. }
         | Expr::Call { .. }

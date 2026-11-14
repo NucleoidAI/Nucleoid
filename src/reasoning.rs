@@ -1,8 +1,11 @@
 mod rules;
 mod traversal;
 
+use std::collections::HashSet;
+
 use crate::error::{Error, Result};
 use crate::graph::{GraphNode, NodeKey, NodeKind, ShapeKey};
+use crate::lang::ast::SetOperation;
 use crate::nuc::Nuc;
 use crate::runtime::Runtime;
 use crate::transaction::{Origin, Start};
@@ -103,6 +106,17 @@ impl Selection {
     pub fn keys(&self) -> Vec<NodeKey> {
         self.steps.iter().map(|step| step.node.clone()).collect()
     }
+
+    pub(crate) fn combined(mut self, operation: SetOperation, other: &Selection) -> Selection {
+        let members = other.members();
+        self.steps
+            .retain(|step| operation.keeps(members.contains(&step.node)));
+        self
+    }
+
+    fn members(&self) -> HashSet<&NodeKey> {
+        self.steps.iter().map(|step| &step.node).collect()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -128,6 +142,11 @@ impl Ranked {
 
     pub(crate) fn into_selection(self) -> Selection {
         self.selection
+    }
+
+    pub(crate) fn combined(self, operation: SetOperation, other: &Selection) -> Self {
+        let members = other.members();
+        self.retained(|step, _| operation.keeps(members.contains(&step.node)))
     }
 
     fn filtered(self, state: StepState) -> Self {

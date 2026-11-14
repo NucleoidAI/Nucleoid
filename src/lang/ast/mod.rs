@@ -231,6 +231,11 @@ pub enum Expr {
         source: Box<Expr>,
         target: Box<Expr>,
     },
+    Combine {
+        operation: SetOperation,
+        source: Box<Expr>,
+        other: Box<Expr>,
+    },
     Model,
     Quantified {
         quantifier: Quantifier,
@@ -380,4 +385,36 @@ pub enum LogicalOp {
     And,
     Or,
     Coalesce,
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SetOperation {
+    Intersect,
+    Except,
+}
+
+impl SetOperation {
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            SetOperation::Intersect => "intersect",
+            SetOperation::Except => "except",
+        }
+    }
+
+    pub(crate) fn from_name(name: &str) -> Option<SetOperation> {
+        match name {
+            "intersect" => Some(SetOperation::Intersect),
+            "except" => Some(SetOperation::Except),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn keeps(self, member: bool) -> bool {
+        match self {
+            SetOperation::Intersect => member,
+            SetOperation::Except => !member,
+        }
+    }
 }

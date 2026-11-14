@@ -2,7 +2,7 @@ use super::is_assignment::Branches;
 use super::{CompoundOp, ExpressionContext, MAX_CHAIN, MAX_NESTING, Parser, PythonCondition};
 use crate::error::{Error, Result};
 use crate::lang::ast::lexer::{Keyword, Token};
-use crate::lang::ast::{BinaryOp, Expr, LogicalOp};
+use crate::lang::ast::{BinaryOp, Expr, LogicalOp, SetOperation};
 use crate::reasoning::Stage;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -310,12 +310,7 @@ impl Parser {
                 return Err(self.error("Expression has too many operands"));
             }
 
-            if let Expr::Identifier(name) = &left {
-                if name == "model" {
-                    left = Expr::Model;
-                }
-            }
-
+            lower_model(&mut left);
             left = self.stage(left)?;
         }
 
@@ -350,6 +345,16 @@ impl Parser {
                 });
             }
 
+            if let (Some(operation), Token::LeftParen) =
+                (SetOperation::from_name(name), self.peek_at(1))
+            {
+                return Ok(Expr::Combine {
+                    operation,
+                    source: Box::new(source),
+                    other: self.selection_argument()?,
+                });
+            }
+
             return Err(Error::type_error(format!("{name} is not an operation")));
         }
 
@@ -361,5 +366,17 @@ impl Parser {
         let argument = self.within(true, Self::expression)?;
         self.expect(&Token::RightParen)?;
         Ok(Box::new(argument))
+    }
+
+    fn selection_argument(&mut self) -> Result<Box<Expr>> {
+        let mut argument = self.stage_argument()?;
+        lower_model(&mut argument);
+        Ok(argument)
+    }
+}
+
+fn lower_model(selection: &mut Expr) {
+    if matches!(selection, Expr::Identifier(name) if name == "model") {
+        *selection = Expr::Model;
     }
 }

@@ -55,9 +55,11 @@ impl<'a> Ast<'a> {
             | Expr::Conditional { .. }
             | Expr::Assign { .. }
             | Expr::Delete(_) => Ast::Operator(operator::Operator::new(node)),
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Model => {
-                Ast::Reason(reason::Reason::new(node))
-            }
+            Expr::Reason { .. }
+            | Expr::Depth { .. }
+            | Expr::Path { .. }
+            | Expr::Combine { .. }
+            | Expr::Model => Ast::Reason(reason::Reason::new(node)),
             Expr::Version { .. } => Ast::Version(version::Version::new(node)),
             Expr::Quantified { .. } => Ast::Quantified(quantified::Quantified::new(node)),
         }

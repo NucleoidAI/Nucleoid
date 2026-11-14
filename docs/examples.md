@@ -3700,6 +3700,38 @@ assert(ana.stops[0].name, "mill")
   [NUC 105](nuc-0105.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-sorting-by-key).
 
+## Intersect and except reasoning selections
+
+**Except shows what a steel delay moves and a glass delay does not**
+
+```nuc
+steel = 5
+glass = 3
+frame = steel + 2
+panes = glass + 1
+assembly = frame + panes
+crating = steel + 1
+delivery = assembly + 4
+invoice = crating * 10
+pushed = affects steel |> except(affects glass)
+shared = affects steel |> intersect(affects glass)
+assert(pushed.map(step -> step.node), ["frame", "crating", "invoice"])
+assert(shared.map(step -> step.node), ["assembly", "delivery"])
+crating = panes + 1
+steel = 9
+[pushed.map(step -> step.node), shared.map(step -> step.holds)]
+# return: [["frame"],[15,19]]
+```
+
+- `affects steel |> except(affects glass)` is what a later steel delivery
+  moves and a later glass delivery does not: the frame, the crating and the
+  invoice. `affects steel |> intersect(affects glass)` is what both delays
+  move: the assembly and the delivery.
+- Both follow the model: once the crating is built from the panes, a steel
+  delay moves only the frame of its own, and the shared steps hold the new
+  dates. See [NUC 106](nuc-0106.md) and the
+  [root contract](../nucleoid.spec.md#intersect-and-except-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

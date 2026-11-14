@@ -462,6 +462,7 @@ stage
     | DIFF                                                // Expr::Reason
     | DEPTH LPAREN expression RPAREN                       // Expr::Depth
     | PATH LPAREN expression RPAREN                        // Expr::Path
+    | (INTERSECT | EXCEPT) LPAREN expression RPAREN        // Expr::Combine
     ;
 
 logicalOr
@@ -797,6 +798,8 @@ enumName
     | DIFF
     | DEPTH
     | PATH
+    | INTERSECT
+    | EXCEPT
     | MODEL
     | FIRST
     | LAST
@@ -879,6 +882,8 @@ DERIVED          : 'derived';
 DIFF             : 'diff';
 DEPTH            : 'depth';
 PATH             : 'path';
+INTERSECT        : 'intersect';
+EXCEPT           : 'except';
 MODEL            : 'model';
 FIRST            : 'first';
 LAST             : 'last';
@@ -1049,6 +1054,7 @@ fragment REGEX_CHAR
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
  * model directly before |> -> Expr::Model.
+ * |> intersect(model)      -> its other selection is Expr::Model; also except.
  * An object containing spread uses Expr::SpreadObject, with later entries
  * winning; otherwise it uses Expr::ObjectLiteral. Numeric keys become text.
  *

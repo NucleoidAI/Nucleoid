@@ -2574,6 +2574,22 @@ assert(scores[0].name, "ben")
 book[1].who
 # return: "col"
 ---
+# Nucleoid compares two explanations with intersect and except
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+common = tax |> why |> intersect(shipping |> why)
+only = tax |> why |> except(shipping |> why)
+assert(common.map(step => step.node), ["quantity"])
+assert(only.map(step => step.node), ["tax", "subtotal", "rate", "price"])
+shipping = price + quantity
+common.map(step => step.node)
+# return: ["price","quantity"]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

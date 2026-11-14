@@ -19428,6 +19428,144 @@ labels
 # return: [4,2,1]"#);
 }
 
+/// Nucleoid finds the causes two explanations share with intersect
+#[rustfmt::skip]
+#[test]
+fn finds_the_causes_two_explanations_share_with_intersect() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("shipping = quantity * 2");
+    run("common = why tax |> intersect(why shipping)");
+    assert_eq!(run("common.map(s -> s.node)"), serde_json::json!(["quantity"]));
+    assert_eq!(run("common[0].rule"), "quantity = 3");
+    assert_eq!(run("(why tax).length"), 5);
+    run("shipping = price + quantity");
+    assert_eq!(run("common.map(s -> s.node)"), serde_json::json!(["price", "quantity"]));
+    run("quantity = 4");
+    assert_eq!(run("common.map(s -> s.holds)"), serde_json::json!([10, 4]));
+}
+
+/// Nucleoid tells two explanations apart with except
+#[rustfmt::skip]
+#[test]
+fn tells_two_explanations_apart_with_except() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("shipping = quantity * 2");
+    run("only = why tax |> except(why shipping)");
+    assert_eq!(run("only.map(s -> s.node)"), serde_json::json!(["tax", "subtotal", "rate", "price"]));
+    assert_eq!(run("only[1].from"), serde_json::json!(["price", "quantity"]));
+    run("shipping = rate * 10");
+    assert_eq!(run("only.map(s -> s.node)"), serde_json::json!(["tax", "subtotal", "price", "quantity"]));
+    run("rate = 0.5");
+    assert_eq!(run("only.map(s -> s.holds)"), serde_json::json!([15, 30, 10, 3]));
+}
+
+/// Nucleoid finds what two inputs both move with intersect
+#[rustfmt::skip]
+#[test]
+fn finds_what_two_inputs_both_move_with_intersect() {
+    let mut run = runner();
+    run("price = 10");
+    run("rate = 0.2");
+    run("quantity = 3");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("total = subtotal + tax");
+    run("fee = rate * 5");
+    run("moved = affects price |> intersect(affects rate)");
+    assert_eq!(run("moved.map(s -> s.node)"), serde_json::json!(["tax", "total"]));
+    run("charge = fee + subtotal");
+    assert_eq!(run("moved.map(s -> s.node)"), serde_json::json!(["tax", "total", "charge"]));
+    run("fee = 5");
+    assert_eq!(run("moved.map(s -> s.node)"), serde_json::json!(["tax", "total"]));
+    run("rate = 0.5");
+    assert_eq!(run("moved.map(s -> s.holds)"), serde_json::json!([15, 45]));
+}
+
+/// Nucleoid composes intersect and except with state filters
+#[rustfmt::skip]
+#[test]
+fn composes_intersect_and_except_with_state_filters() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("fee = 2");
+    run("subtotal = price * quantity");
+    run("total = subtotal + 5");
+    run("credit = fee * 2");
+    run("refund = credit + 1");
+    run("shared = why total |> stated |> intersect(why refund |> stated)");
+    run("steps = why total |> derived |> except(why refund)");
+    assert_eq!(run("shared"), serde_json::json!([]));
+    assert_eq!(run("steps.map(s -> s.node)"), serde_json::json!(["total", "subtotal"]));
+    run("subtotal = price * quantity + fee");
+    assert_eq!(run("shared.map(s -> s.node)"), serde_json::json!(["fee"]));
+    run("credit = price - fee");
+    assert_eq!(run("shared.map(s -> s.node)"), serde_json::json!(["price", "fee"]));
+    run("refund = subtotal - credit");
+    assert_eq!(run("steps.map(s -> s.node)"), serde_json::json!(["total"]));
+    assert_eq!(run("shared.map(s -> s.node)"), serde_json::json!(["price", "quantity", "fee"]));
+}
+
+/// Nucleoid fills an empty intersection when two explanations meet
+#[rustfmt::skip]
+#[test]
+fn fills_an_empty_intersection_when_two_explanations_meet() {
+    let mut run = runner();
+    run("a = 2");
+    run("b = 3");
+    run("left = a * 10");
+    run("right = b * 10");
+    run("both = why left |> intersect(why right)");
+    run("apart = why left |> except(why right)");
+    assert_eq!(run("both"), serde_json::json!([]));
+    assert_eq!(run("apart.map(s -> s.node)"), serde_json::json!(["left", "a"]));
+    run("right = a + b");
+    assert_eq!(run("both.map(s -> s.node)"), serde_json::json!(["a"]));
+    assert_eq!(run("apart.map(s -> s.node)"), serde_json::json!(["left"]));
+    run("left = b - a");
+    assert_eq!(run("both.map(s -> s.node)"), serde_json::json!(["b", "a"]));
+    run("a = 5");
+    assert_eq!(run("both.map(s -> s.holds)"), serde_json::json!([3, 5]));
+}
+
+/// Nucleoid restores intersections after failed changes
+#[rustfmt::skip]
+#[test]
+fn restores_intersections_after_failed_changes() {
+    let mut run = runner();
+    run(r#"price = 10
+quantity = 3
+subtotal = price * quantity
+shipping = quantity * 2
+common = why subtotal |> intersect(why shipping)
+failure = ""
+try:
+    common = why subtotal |> intersect(1)
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(common.map(s -> s.node), ["quantity"])
+try:
+    shipping = price + 1
+    assert(common.map(s -> s.node), ["price"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(common.map(s -> s.node), ["quantity"])
+quantity = 6
+assert(common[0].holds, 6)"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

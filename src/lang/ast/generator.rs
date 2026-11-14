@@ -212,6 +212,7 @@ fn groups_power_exponent(operand: &Expr) -> bool {
         | Expr::Reason { .. }
         | Expr::Depth { .. }
         | Expr::Path { .. }
+        | Expr::Combine { .. }
         | Expr::Function(_) => true,
         _ => false,
     }

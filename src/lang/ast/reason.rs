@@ -1,9 +1,9 @@
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, ShapeKey};
-use crate::lang::ast::Expr;
+use crate::lang::ast::{Expr, SetOperation};
 use crate::number;
 use crate::reasoning::{Direction, Ranked, Selection, Stage};
-use crate::runtime::Runtime;
+use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
 
@@ -31,11 +31,16 @@ pub(crate) enum Link<'a> {
     Stage(Stage),
     Depth(&'a Expr),
     Path(&'a Expr),
+    Combine(SetOperation, &'a Expr),
 }
 
 impl Link<'_> {
-    pub(crate) fn is_depth(self) -> bool {
+    fn is_depth(self) -> bool {
         matches!(self, Link::Depth(_))
+    }
+
+    pub(crate) fn freezes_argument(self) -> bool {
+        matches!(self, Link::Depth(_) | Link::Combine(..))
     }
 
     fn operation(self) -> Option<&'static str> {
@@ -46,6 +51,7 @@ impl Link<'_> {
             Link::Stage(Stage::Why | Stage::Affects) => None,
             Link::Depth(_) => Some("depth"),
             Link::Path(_) => Some("path"),
+            Link::Combine(operation, _) => Some(operation.as_str()),
         }
     }
 }
@@ -60,11 +66,16 @@ pub(crate) fn pipeline(expression: &Expr) -> (Vec<Link<'_>>, &Expr) {
     (links, base)
 }
 
-fn split(expression: &Expr) -> Option<(Link<'_>, &Expr)> {
+pub(crate) fn split(expression: &Expr) -> Option<(Link<'_>, &Expr)> {
     match expression {
         Expr::Reason { stage, source } => Some((Link::Stage(*stage), source)),
         Expr::Depth { source, limit } => Some((Link::Depth(limit), source)),
         Expr::Path { source, target } => Some((Link::Path(target), source)),
+        Expr::Combine {
+            operation,
+            source,
+            other,
+        } => Some((Link::Combine(*operation, other), source)),
         _ => None,
     }
 }
@@ -97,10 +108,29 @@ impl Runtime {
                     let target = self.selection_key(target, scope)?;
                     selection = self.apply_path(selection, &target, direction);
                 }
+                Link::Combine(operation, other) => match self.other_selection(other, scope)? {
+                    Some(other) => selection = selection.combined(operation, &other),
+                    None => return Ok(None),
+                },
                 Link::Depth(_) => {}
             }
         }
         Ok(Some(selection))
+    }
+
+    fn other_selection(&mut self, other: &Expr, scope: &mut Scope) -> Result<Option<Selection>> {
+        self.depth += 1;
+
+        if self.depth > MAX_DEPTH {
+            self.depth -= 1;
+            return Err(Error::type_error("Maximum expression depth exceeded"));
+        }
+
+        let depth = self.depth;
+        let selection = self.reason(other, scope);
+        debug_assert_eq!(self.depth, depth);
+        self.depth -= 1;
+        selection
     }
 
     fn ranked(
@@ -121,6 +151,10 @@ impl Runtime {
                     let target = self.selection_key(target, scope)?;
                     self.ranked_path(ranked, &target)
                 }
+                Link::Combine(operation, other) => match self.other_selection(other, scope)? {
+                    Some(other) => ranked.combined(operation, &other),
+                    None => return Ok(None),
+                },
             };
         }
         Ok(Some(ranked.into_selection()))

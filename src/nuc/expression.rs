@@ -61,7 +61,7 @@ impl Runtime {
             Expr::List(_) | Expr::ObjectLiteral(_) | Expr::SpreadObject(_) | Expr::Template(_) => {
                 self.freeze_collection(expression, scope)
             }
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } => {
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
                 self.freeze_pipeline(expression, scope)
             }
             other => Ok(other.clone()),
@@ -70,7 +70,7 @@ impl Runtime {
 
     fn freeze_pipeline(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
         let (links, base) = reason::pipeline(expression);
-        if !links.iter().copied().any(Link::is_depth) {
+        if !links.iter().copied().any(Link::freezes_argument) {
             return Ok(expression.clone());
         }
         let mut frozen = base.clone();
@@ -88,9 +88,23 @@ impl Runtime {
                     source: Box::new(frozen),
                     target: Box::new(target.clone()),
                 },
+                Link::Combine(operation, other) => Expr::Combine {
+                    operation,
+                    source: Box::new(frozen),
+                    other: Box::new(self.freeze_selection(other, scope)?),
+                },
             };
         }
         Ok(frozen)
+    }
+
+    fn freeze_selection(&mut self, other: &Expr, scope: &mut Scope) -> Result<Expr> {
+        match other {
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
+                self.freeze(other, scope)
+            }
+            _ => Ok(other.clone()),
+        }
     }
 
     fn freeze_access(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {

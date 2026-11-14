@@ -74,7 +74,11 @@ impl Expr {
     #[must_use]
     pub fn contains_reasoning(&self) -> bool {
         match self {
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Model => true,
+            Expr::Reason { .. }
+            | Expr::Depth { .. }
+            | Expr::Path { .. }
+            | Expr::Combine { .. }
+            | Expr::Model => true,
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
             | Expr::Slice { object, .. } => object.contains_reasoning(),

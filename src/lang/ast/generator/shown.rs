@@ -5,6 +5,7 @@ use super::{
     join, write_binary, write_function, write_logical, write_object_literal, write_of,
     write_spread_object, write_template, write_unary,
 };
+use crate::lang::ast::reason::{self, Link};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Quantifier, VersionSelector};
 use crate::reasoning::Stage;
 
@@ -173,6 +174,18 @@ impl<'a> Shown<'a> {
         f.write_str("]")
     }
 
+    fn link(self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Some((link, source)) = reason::split(self.expression) else {
+            return Ok(());
+        };
+        match link {
+            Link::Stage(stage) => self.reason(f, stage, source),
+            Link::Depth(limit) => self.stage(f, source, "depth", limit),
+            Link::Path(target) => self.stage(f, source, "path", target),
+            Link::Combine(operation, other) => self.stage(f, source, operation.as_str(), other),
+        }
+    }
+
     fn reason(self, f: &mut fmt::Formatter<'_>, stage: Stage, source: &'a Expr) -> fmt::Result {
         write!(f, "{}|>{}", self.inner(source), stage.as_str())
     }
@@ -294,9 +307,9 @@ impl fmt::Display for Shown<'_> {
             Expr::Function(function) => write_function(f, function),
             Expr::Assign { target, value } => write!(f, "{target}={value}"),
             Expr::Delete(operand) => write!(f, "delete {}", shown.inner(operand)),
-            Expr::Reason { stage, source } => shown.reason(f, *stage, source),
-            Expr::Depth { source, limit } => shown.stage(f, source, "depth", limit),
-            Expr::Path { source, target } => shown.stage(f, source, "path", target),
+            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
+                shown.link(f)
+            }
             Expr::Model => f.write_str("model"),
             Expr::Quantified {
                 quantifier,

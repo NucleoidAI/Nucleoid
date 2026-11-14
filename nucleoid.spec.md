@@ -2424,6 +2424,103 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores path selections after failed changes and hypotheticals`
   specify the executable behavior.
 
+## Intersect and except reasoning selections
+
+- [NUC 106](docs/nuc-0106.md) adds two pipeline stages that compare a
+  selection with another one. `SELECTION |> intersect(OTHER)` keeps the steps
+  of `SELECTION` whose node `OTHER` also selects, and
+  `SELECTION |> except(OTHER)` keeps the steps whose node `OTHER` does not
+  select. Both keep the steps they keep in their order and with their `node`,
+  `holds`, `rule`, `state` and `from` fields unchanged, and drop the others.
+- So `why tax |> intersect(why shipping)` selects the causes that the tax and
+  the shipping share, `why tax |> except(why shipping)` selects what the tax
+  rests on and the shipping does not, and
+  `affects price |> intersect(affects rate)` selects what both inputs move.
+- Steps are compared by their graph node, whatever they hold: `intersect`
+  keeps a step exactly when `OTHER` has a step for the same node. The order,
+  the walk direction and the distances of `OTHER`'s steps are not used.
+- `OTHER` is one expression in parentheses that denotes a selection, as the
+  source of a pipeline does: a reference, which selects its own node, such as
+  `shipping`, `order.price`, `this.price` in a method or `$Class.property` in
+  a class-level rule; `model`, which selects every node of the model; a
+  prefix stage such as `why shipping`; or a pipeline such as
+  `shipping |> why |> stated`, which may hold `intersect` and `except` too. A
+  name that holds a selection is a reasoning observer, which no selection
+  holds, so after `causes = why shipping`, `intersect(causes)` keeps nothing
+  and `except(causes)` keeps every step; the selection is written out, as in
+  `intersect(why shipping)`.
+- `OTHER` is evaluated in place each time the stage applies: after the source
+  selection and the stages before it, and before the stages after it. Every
+  step of a selection is a node of the model, so `SELECTION |> intersect(model)`
+  selects what `SELECTION` selects and `SELECTION |> except(model)` selects
+  nothing.
+- The kept steps keep the direction of `SELECTION`'s most recent walk and
+  their distances. Between two walks, `stated`, `derived`, `depth`, `diff`,
+  `path`, `intersect` and `except` therefore select the same steps in any
+  order, and a later `why` or `affects` walks from the kept steps.
+  `S |> intersect(S)` selects what `S` selects, `S |> except(S)` selects
+  nothing, and repeating a stage changes nothing. `A |> intersect(B)` and
+  `B |> intersect(A)` select the same nodes, each in its own source's order.
+- A `depth` stage whose limit is `null` or undefined makes `OTHER` undefined,
+  and then the reasoning expression is undefined, as when `SELECTION` holds
+  such a stage: the stages after it are not applied and their arguments are
+  not evaluated, and a declaration stores the undefined value as `null`. When
+  `SELECTION` is undefined, `OTHER` is not evaluated.
+- An invalid `OTHER` keeps the diagnostics of a pipeline source. A literal, a
+  property path whose base holds no object and any other expression that is
+  neither a reference nor a selection raise `TypeError("Cannot explain <other>")`,
+  where `<other>` is its canonical source, such as `TypeError("Cannot explain 1")`
+  for `intersect(1)` and `TypeError("Cannot explain price+1")` for
+  `intersect(price + 1)`. A name that nothing defines raises
+  `ReferenceError("<name> is not defined")`. The error is positioned at the
+  running top-level statement and rolls back its transaction.
+- Only `|>` followed by the name `intersect` or `except` and then a `(` token
+  is a stage, so `|> intersect (b)` is a stage too. Both names remain ordinary
+  lexer identifiers: variables, parameters, properties, keys, functions and
+  methods named `intersect` or `except` keep their accepted meanings, there is
+  no prefix form, and `intersect(a, b)` remains an ordinary call. A bare
+  `|> intersect` or `|> except` keeps the parse-time
+  `TypeError("intersect is not an operation")` or
+  `TypeError("except is not an operation")`, and so does a line break before
+  the `(` outside parentheses and brackets. `|> intersect()` raises
+  `SyntaxError("Unexpected ')'")` and `|> intersect(a, b)` raises
+  `SyntaxError("Expected ')' but found ','")`, as the parenthesized
+  expressions `()` and `(a, b)` do.
+- A local or parameter, state variable, function or class named `intersect`
+  or `except` shadows its stage, as for `stated`, `derived`, `depth`, `diff`
+  and `path`: the stage then raises `TypeError("intersect is not an operation")`
+  or `TypeError("except is not an operation")` before the source is selected,
+  and so before `OTHER` is evaluated. A binding declared after a standing
+  selection makes its next evaluation raise, which fails and rolls back the
+  statement that triggered it. Methods, properties and object keys named
+  `intersect` or `except` are not bindings. The accepted `why` and `affects`
+  shadowing behavior does not change.
+- An invalid source keeps its diagnostic and is reported before `OTHER` is
+  evaluated: `1 |> intersect(missing)` raises `TypeError("Cannot explain 1")`
+  and `missing |> except(1)` raises `ReferenceError("missing is not defined")`.
+- The stage keeps every value and structural observation that `SELECTION`
+  made, including those of the steps it drops, and adds every observation that
+  evaluating `OTHER` makes, including those of the steps `OTHER`'s own stages
+  drop and of model membership when `OTHER` reads `model`. A standing
+  selection therefore refreshes when either side changes, through a value, a
+  rule, a new or deleted node or a class-level rule, and an empty result still
+  follows both sides. A declaration, property, class-level rule, condition or
+  quantifier that holds the stage is a reasoning observer. Functions, methods
+  and lambdas evaluate it in place, and class-level rules give each instance
+  its own selection. `.value` snapshots it, and propagation order, `suppose`
+  blocks and rollback behave as for the accepted stages.
+- The stages render as `SOURCE|>intersect(OTHER)` and
+  `SOURCE|>except(OTHER)` in graph keys, block keys, conditions and `rule`
+  text, with the source and `OTHER` rendered once each, so a stage and its
+  accepted filter spelling are different graph keys. One stage evaluates
+  `OTHER` once and keeps steps through a set of its nodes, in time linear in
+  the sizes of both selections. Programs without the stages do no work for
+  them.
+- The six appended entries from
+  `Nucleoid finds the causes two explanations share with intersect` through
+  `Nucleoid restores intersections after failed changes` specify the
+  executable behavior. `tests/selection_intersections.rs` executes the rest.
+
 ## Reactive degree to radian conversion
 
 - The [NUC 50 candidate](docs/nuc-0050.md) adds only unshadowed static
@@ -23893,6 +23990,120 @@ catch error:
     assert(error, "UNDO")
 labels
 # return: [4,2,1]
+---
+# Nucleoid finds the causes two explanations share with intersect
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+common = why tax |> intersect(why shipping)
+assert(common.map(s -> s.node), ["quantity"])
+assert(common[0].rule, "quantity = 3")
+assert((why tax).length, 5)
+shipping = price + quantity
+assert(common.map(s -> s.node), ["price", "quantity"])
+quantity = 4
+assert(common.map(s -> s.holds), [10, 4])
+---
+# Nucleoid tells two explanations apart with except
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+only = why tax |> except(why shipping)
+assert(only.map(s -> s.node), ["tax", "subtotal", "rate", "price"])
+assert(only[1].from, ["price", "quantity"])
+shipping = rate * 10
+assert(only.map(s -> s.node), ["tax", "subtotal", "price", "quantity"])
+rate = 0.5
+assert(only.map(s -> s.holds), [15, 30, 10, 3])
+---
+# Nucleoid finds what two inputs both move with intersect
+
+price = 10
+rate = 0.2
+quantity = 3
+subtotal = price * quantity
+tax = subtotal * rate
+total = subtotal + tax
+fee = rate * 5
+moved = affects price |> intersect(affects rate)
+assert(moved.map(s -> s.node), ["tax", "total"])
+charge = fee + subtotal
+assert(moved.map(s -> s.node), ["tax", "total", "charge"])
+fee = 5
+assert(moved.map(s -> s.node), ["tax", "total"])
+rate = 0.5
+assert(moved.map(s -> s.holds), [15, 45])
+---
+# Nucleoid composes intersect and except with state filters
+
+price = 10
+quantity = 3
+fee = 2
+subtotal = price * quantity
+total = subtotal + 5
+credit = fee * 2
+refund = credit + 1
+shared = why total |> stated |> intersect(why refund |> stated)
+steps = why total |> derived |> except(why refund)
+assert(shared, [])
+assert(steps.map(s -> s.node), ["total", "subtotal"])
+subtotal = price * quantity + fee
+assert(shared.map(s -> s.node), ["fee"])
+credit = price - fee
+assert(shared.map(s -> s.node), ["price", "fee"])
+refund = subtotal - credit
+assert(steps.map(s -> s.node), ["total"])
+assert(shared.map(s -> s.node), ["price", "quantity", "fee"])
+---
+# Nucleoid fills an empty intersection when two explanations meet
+
+a = 2
+b = 3
+left = a * 10
+right = b * 10
+both = why left |> intersect(why right)
+apart = why left |> except(why right)
+assert(both, [])
+assert(apart.map(s -> s.node), ["left", "a"])
+right = a + b
+assert(both.map(s -> s.node), ["a"])
+assert(apart.map(s -> s.node), ["left"])
+left = b - a
+assert(both.map(s -> s.node), ["b", "a"])
+a = 5
+assert(both.map(s -> s.holds), [3, 5])
+---
+# Nucleoid restores intersections after failed changes
+
+price = 10
+quantity = 3
+subtotal = price * quantity
+shipping = quantity * 2
+common = why subtotal |> intersect(why shipping)
+failure = ""
+try:
+    common = why subtotal |> intersect(1)
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(common.map(s -> s.node), ["quantity"])
+try:
+    shipping = price + 1
+    assert(common.map(s -> s.node), ["price"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(common.map(s -> s.node), ["quantity"])
+quantity = 6
+assert(common[0].holds, 6)
 ---
 # Nucleoid flattens nested lists by one level
 
