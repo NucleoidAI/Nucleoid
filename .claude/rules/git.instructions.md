@@ -17,6 +17,9 @@ pulling before it starts.
     [nuc-proposal skill](../skills/nuc-proposal/SKILL.md), commits each new
     NUC's Draft allocation before working on its details, under the
     [allocation step](../skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only),
+    the empty `Resume NUC <number> <Title>` claims that pick up a stale Draft
+    or keep a NUC in progress claimed, under the
+    [stale-Draft rule](../skills/nuc-proposal/SKILL.md#pick-up-stale-drafts-first-caller-only),
     and NUC outcomes (Accepted, Automatic-Accepted, Rejected), which carry the
     final version, under the [proposal rules](proposals.instructions.md),
     including those of NUCs that `/arc-purposal` requests and of cycles that
@@ -63,8 +66,8 @@ pulling before it starts.
 
 - Every `/nuc-proposal` and `/arc-purposal` commit is followed immediately by
   `git push` of the same branch. This includes NUC allocation commits, NUC
-  outcome commits (Accepted, Automatic-Accepted, Rejected), those for NUCs
-  that `/arc-purposal` requests,
+  claim commits, NUC outcome commits (Accepted, Automatic-Accepted, Rejected),
+  those for NUCs that `/arc-purposal` requests,
   `/arc-purposal`'s own commit of its ARC changes, and merge commits. A commit
   is not finished until it is pushed.
 - If the push is rejected because the remote moved, pull, resolve, and push
