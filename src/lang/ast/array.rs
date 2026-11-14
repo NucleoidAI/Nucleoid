@@ -4,6 +4,7 @@ mod aggregate;
 mod flat;
 mod index;
 mod query;
+mod sort_by_key;
 
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;

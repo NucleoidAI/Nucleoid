@@ -125,6 +125,23 @@ fn completion_offers_flat_beside_flat_map_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_sort_by_beside_some_on_lists_and_instance_lists() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("scores = [3, 1]\nclass Bid\nBid()\nsorting = 1")
+        .unwrap();
+    for (prefix, expected) in [
+        ("scores.so", ["scores.some", "scores.sortBy"]),
+        ("Bid.so", ["Bid.some", "Bid.sortBy"]),
+    ] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+    let completion = Completion::find(&runtime, &editor::new("sor"), false).unwrap();
+    assert_eq!(completion.candidates, ["sorting"]);
+}
+
+#[test]
 fn completion_offers_the_average_query_on_lists_and_instance_lists() {
     let mut runtime = Runtime::new();
     runtime

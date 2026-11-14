@@ -2167,6 +2167,32 @@ assert([a.color, b.color], [null, "red"])
   before. See the
   [root contract](nucleoid.spec.md#any-and-all-class-references).
 
+## List and population sorting by key
+
+**Sorting by key keeps a live agenda while the list keeps its order**
+
+```nuc
+tasks = [{name: "ship", due: 3}, {name: "plan", due: 1}, {name: "build", due: 2}]
+agenda = tasks.sortBy(task -> task.due)
+assert(agenda.map(task -> task.name), ["plan", "build", "ship"])
+tasks.push({name: "test", due: 2})
+assert(agenda.map(task -> task.name), ["plan", "build", "test", "ship"])
+tasks[2].due = 4
+assert(agenda.map(task -> task.name), ["plan", "test", "ship", "build"])
+assert(tasks.map(task -> task.name), ["ship", "plan", "build", "test"])
+```
+
+- [NUC 105](docs/nuc-0105.md) adds `sortBy(selector)` to lists and class
+  populations. `tasks.sortBy(task -> task.due)` is a new list of the tasks
+  themselves in ascending order of their due days, and tasks due the same day
+  keep their list order, so `test` follows `build` until `build` moves to
+  day 4.
+- `agenda` is a live declaration that follows new tasks and changed days,
+  while `tasks` keeps its own order, where `sort` would reorder `tasks`
+  itself. Keys compare as `<` compares them, so numbers compare as numbers
+  and strings as text. See the
+  [root contract](nucleoid.spec.md#list-and-population-sorting-by-key).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

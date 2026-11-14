@@ -19278,6 +19278,156 @@ fn keeps_all_and_any_as_names_and_quantifiers_beside_class_references() {
 # return: true"#);
 }
 
+/// Nucleoid sorts lists by numeric and text keys with sortBy
+#[rustfmt::skip]
+#[test]
+fn sorts_lists_by_numeric_and_text_keys_with_sortby() {
+    let mut run = runner();
+    run(r#"parcels = [{code: "B12", kg: 4}, {code: "A7", kg: 9}, {code: "B3", kg: 4}, {code: "C1", kg: 2}]"#);
+    run("light = parcels.sortBy(parcel -> parcel.kg)");
+    run("coded = parcels.sortBy(parcel -> parcel.code)");
+    assert_eq!(run("light.map(parcel -> parcel.code)"), serde_json::json!(["C1", "B12", "B3", "A7"]));
+    assert_eq!(run("coded.map(parcel -> parcel.code)"), serde_json::json!(["A7", "B12", "B3", "C1"]));
+    assert_eq!(run("light[1] == parcels[0]"), true);
+    run(r#"parcels.push({code: "A10", kg: 4})"#);
+    assert_eq!(run("light.map(parcel -> parcel.code)"), serde_json::json!(["C1", "B12", "B3", "A10", "A7"]));
+    assert_eq!(run("coded.map(parcel -> parcel.code)"), serde_json::json!(["A10", "A7", "B12", "B3", "C1"]));
+    run(r#"parcels.map(parcel -> parcel.code)
+
+# return: ["B12","A7","B3","C1","A10"]"#);
+}
+
+/// Nucleoid keeps key sorted lists live while the receiver keeps its order
+#[rustfmt::skip]
+#[test]
+fn keeps_key_sorted_lists_live_while_the_receiver_keeps_its_order() {
+    let mut run = runner();
+    run("stops = [{id: 1, eta: 30}, {id: 2, eta: 10}, {id: 3, eta: 20}]");
+    run("route = stops.sortBy(stop -> stop.eta).map(stop -> stop.id)");
+    assert_eq!(run("route"), serde_json::json!([2, 3, 1]));
+    run("stops.push({id: 4, eta: 15})");
+    assert_eq!(run("route"), serde_json::json!([2, 4, 3, 1]));
+    run("stops.shift()");
+    assert_eq!(run("route"), serde_json::json!([2, 4, 3]));
+    run("stops[0].eta = 25");
+    assert_eq!(run("route"), serde_json::json!([4, 3, 2]));
+    run("stops.pop()");
+    assert_eq!(run("route"), serde_json::json!([3, 2]));
+    run(r#"stops.map(stop -> stop.id)
+
+# return: [2,3]"#);
+}
+
+/// Nucleoid sorts class populations by key with sortBy
+#[rustfmt::skip]
+#[test]
+fn sorts_class_populations_by_key_with_sortby() {
+    let mut run = runner();
+    run(r#"class Runner(name, time):
+    this.name = name
+    this.time = time"#);
+    run("board = Runner.sortBy(runner -> runner.time)");
+    assert_eq!(run("board"), serde_json::json!([]));
+    run(r#"ana = Runner("ana", 31)"#);
+    run(r#"bo = Runner("bo", 28)"#);
+    run(r#"cy = Runner("cy", 35)"#);
+    {
+        let actual = run("board");
+        let expected = run("([bo, ana, cy])");
+        assert_eq!(actual, expected);
+    }
+    run("cy.time = 27");
+    run(r#"Runner("di", 28)"#);
+    assert_eq!(run("board.map(runner -> runner.name)"), serde_json::json!(["cy", "bo", "di", "ana"]));
+    run("delete bo.name");
+    run("delete bo.time");
+    run("delete bo");
+    assert_eq!(run("board.map(runner -> runner.name)"), serde_json::json!(["cy", "di", "ana"]));
+    run(r#"board.length
+
+# return: 3"#);
+}
+
+/// Nucleoid ranks instances by key in class level rules
+#[rustfmt::skip]
+#[test]
+fn ranks_instances_by_key_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Runner(name, time):
+    this.name = name
+    this.time = time"#);
+    run("$Runner.place = Runner.sortBy(runner -> runner.time).indexOf($Runner) + 1");
+    run(r#"ana = Runner("ana", 31)"#);
+    run(r#"bo = Runner("bo", 28)"#);
+    run(r#"cy = Runner("cy", 31)"#);
+    assert_eq!(run("[ana.place, bo.place, cy.place]"), serde_json::json!([2, 1, 3]));
+    run("bo.time = 33");
+    assert_eq!(run("[ana.place, bo.place, cy.place]"), serde_json::json!([1, 3, 2]));
+    run(r#"Runner("di", 25)"#);
+    run(r#"[ana.place, bo.place, cy.place]
+
+# return: [2,4,3]"#);
+}
+
+/// Nucleoid waits for every sortBy key to be comparable
+#[rustfmt::skip]
+#[test]
+fn waits_for_every_sortby_key_to_be_comparable() {
+    let mut run = runner();
+    run(r#"class Job(name):
+    this.name = name"#);
+    run("queue = Job.sortBy(job -> job.due)");
+    run(r#"press = Job("press")"#);
+    run(r#"press.due = new Date("2026-12-01")"#);
+    run(r#"coat = Job("coat")"#);
+    assert_eq!(run("queue"), serde_json::Value::Null);
+    run(r#"coat.due = new Date("2026-11-20")"#);
+    {
+        let actual = run("queue");
+        let expected = run("([coat, press])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"weld = Job("weld")"#);
+    run(r#"weld.due = new Date("2026-11-28")"#);
+    {
+        let actual = run("queue");
+        let expected = run("([coat, weld, press])");
+        assert_eq!(actual, expected);
+    }
+    run("weld.due = 0 / 0");
+    assert_eq!(run("queue"), serde_json::Value::Null);
+    run("weld.due = coat.due");
+    run(r#"queue.map(job -> job.name)
+
+# return: ["coat","weld","press"]"#);
+}
+
+/// Nucleoid rolls back failed key sorting updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_key_sorting_updates() {
+    let mut run = runner();
+    run(r#"parcels = [{id: 1, code: "B2"}, {id: 2, code: "a9"}]
+labels = parcels.sortBy(parcel -> parcel.code.toUpperCase()).map(parcel -> parcel.id)
+failure = ""
+try:
+    parcels.push({id: 3, code: 7})
+catch error:
+    failure = error
+assert(failure, TypeError("number.toUpperCase is not a function"))
+assert([parcels.length, labels], [2, [2, 1]])
+parcels.push({id: 4, code: "a1"})
+assert(labels, [4, 2, 1])
+try:
+    parcels[0].code = "a0"
+    assert(labels, [1, 4, 2])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+labels
+# return: [4,2,1]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

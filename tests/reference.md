@@ -2554,6 +2554,26 @@ boiler.reading = 80
 [boiler.status, fridge.status]
 # return: ["normal","critical"]
 ---
+# Nucleoid sorts lists and populations by key with sortBy
+
+scores = [{name: "ben", points: 3}, {name: "ana", points: 9}, {name: "dan", points: 5}, {name: "cy", points: 9}]
+ranked = scores.sortBy(score -> -score.points)
+class Bid(who, amount):
+    this.who = who
+    this.amount = amount
+Bid("ada", 40)
+Bid("bo", 65)
+book = Bid.sortBy(bid -> bid.amount)
+assert(ranked.map(score -> score.name), ["ana", "cy", "dan", "ben"])
+assert(book.map(bid -> bid.who), ["ada", "bo"])
+scores.push({name: "eve", points: 7})
+Bid("col", 50)
+assert(ranked.map(score -> score.name), ["ana", "cy", "eve", "dan", "ben"])
+assert(book.map(bid -> bid.who), ["ada", "col", "bo"])
+assert(scores[0].name, "ben")
+book[1].who
+# return: "col"
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

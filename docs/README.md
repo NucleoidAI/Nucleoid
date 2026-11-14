@@ -2458,7 +2458,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), and `median` ([NUC 84](nuc-0084.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), and `sortBy` ([NUC 105](nuc-0105.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -3510,6 +3510,58 @@ top.who
   [list and population extreme items](../nucleoid.spec.md#list-and-population-extreme-items)
   section.
 
+### List and population sorting by key
+
+```
+scores = [{name: "ben", points: 3}, {name: "ana", points: 9}, {name: "dan", points: 5}, {name: "cy", points: 9}]
+ranked = scores.sortBy(score -> -score.points)
+class Bid(who, amount):
+    this.who = who
+    this.amount = amount
+Bid("ada", 40)
+Bid("bo", 65)
+book = Bid.sortBy(bid -> bid.amount)
+assert(ranked.map(score -> score.name), ["ana", "cy", "dan", "ben"])
+assert(book.map(bid -> bid.who), ["ada", "bo"])
+scores.push({name: "eve", points: 7})
+Bid("col", 50)
+assert(ranked.map(score -> score.name), ["ana", "cy", "eve", "dan", "ben"])
+assert(book.map(bid -> bid.who), ["ada", "col", "bo"])
+assert(scores[0].name, "ben")
+book[1].who
+```
+
+- This is the complete
+  `Nucleoid sorts lists and populations by key with sortBy` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `"col"`.
+- [NUC 105](nuc-0105.md) adds `sortBy(selector)` to lists and class instance
+  lists. The result is a new list of the items themselves in ascending order
+  of their selected keys, and items with equal keys keep their receiver
+  order, so `ana` stays before `cy`. A negated key, such as
+  `score -> -score.points`, sorts in descending order. An empty list or class
+  gives `[]`.
+- The receiver is never written: `scores` keeps its own order, where `sort`
+  reorders a writable list in place.
+- Keys compare as `<` compares them: two strings as text and every other pair
+  as numbers, so dates compare by time. When every key can be compared with
+  itself, `xs.sortBy(f)` is exactly
+  `xs.map(x -> [f(x), x]).sort((a, b) -> a[0] < b[0] ? -1 : 0).map(p -> p[1])`.
+  A key that cannot be compared with itself, such as undefined, NaN or an
+  object, makes the result undefined, which a declaration stores as `null`.
+- The selector is required and is called once per item, in order, with only
+  the item. A missing selector, or one that is not a function, including
+  `null`, raises `TypeError("sortBy expects a function")`, even on an empty
+  receiver.
+- Sorted lists are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level rules
+  too. On a class name, `Name.sortBy(...)` is the population query even when
+  the class declares an instance method `sortBy`; instances keep calling the
+  method.
+- The authoritative contract is the
+  [list and population sorting by key](../nucleoid.spec.md#list-and-population-sorting-by-key)
+  section.
+
 ### List and population averages
 
 ```
@@ -4025,6 +4077,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
 | A supplied `mode` selector that is not a function, including `null`, even on an empty receiver | `mode expects a function` |
 | Missing or non-function `maxBy` or `minBy` selector, including `null`, even on an empty receiver | `maxBy expects a function` or `minBy expects a function` |
+| Missing or non-function `sortBy` selector, including `null`, even on an empty receiver | `sortBy expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | An `in` or `not in` membership test over a value that is neither null nor a list, a string or a declared class's instances | `<collection> is not a collection` |
 | A `depth` stage limit that is neither `null`, undefined nor a non-negative integer number | `<limit> is not a non-negative integer` |
@@ -4264,6 +4317,7 @@ items.mode()  Name.mode(selector)      live most frequent item (NUC 75)
 items.maxBy(key)  Name.minBy(key)     live first item with the largest or smallest key (NUC 77)
 items.average()  Name.average(selector) live mean: exactly items.sum() / items.length (NUC 80)
 items.median()  Name.median(selector)  live middle value; even counts take (lower + upper) / 2 (NUC 84)
+items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties keep receiver order (NUC 105)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

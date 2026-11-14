@@ -5327,6 +5327,83 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed median updates` specify the executable
   behavior.
 
+## List and population sorting by key
+
+- [NUC 105](docs/nuc-0105.md) adds the read-only list query `sortBy` to lists
+  and class instance lists, the receivers of `maxBy` and `minBy`, through the
+  same shared list-query route. No syntax, keyword or error type is added.
+- `RECEIVER.sortBy(selector)` returns a new list of the receiver's items in
+  ascending order of `selector(item)`. The items are the items themselves,
+  unchanged: an object or instance stays the same object, and the keys are
+  not returned. Items with equal keys keep their receiver order, and an empty
+  receiver gives `[]`.
+- **Read-only.** The receiver is never written, whatever its kind. After
+  `ranked = scores.sortBy(score -> score)`, `scores` keeps its own order and
+  `ranked` follows it, while the `sort` of [NUC 58](docs/nuc-0058.md)
+  reorders a writable receiver in place.
+- **Keys.** Keys compare as `<` compares them: two strings as text, by code
+  point, and every other pair as numbers with the numeric conversion of the
+  comparisons, so dates compare by time and `true`, `false`, `null`, empty
+  lists and one-item lists count as numbers. `["10", "9", "2"].sortBy(code -> code)`
+  is `["10", "2", "9"]`, while `[10, 9, 2].sortBy(count -> count)` is
+  `[2, 9, 10]`, and `0` and `-0` keys tie.
+- **Unordered keys.** A key that cannot be compared with itself, one for
+  which `key >= key` is `false`, makes the result undefined, which a
+  declaration stores as `null`: undefined, NaN, objects, instances, classes,
+  functions, regular expressions and lists that convert to NaN. Every item is
+  still visited, so a declaration waits for every key to be comparable.
+- **Accepted spelling.** When every key can be compared with itself,
+  `xs.sortBy(f)` evaluates to exactly the list that
+  `xs.map(x -> [f(x), x]).sort((a, b) -> a[0] < b[0] ? -1 : 0).map(p -> p[1])`
+  evaluates to, with `f` called once per item: each item, in receiver order,
+  is placed before the first already placed item whose key it compares
+  below. Where strings that are not numeric mix with other keys, which they
+  are neither smaller nor greater than, that placement decides the order, so
+  `["b", 5, "a", 3].sortBy(key -> key)` is `["a", "b", 3, 5]`. A declaration
+  of either spelling settles by what that spelling reads.
+- **Selectors.** The selector is required. It is called once for every item,
+  in receiver order, with only the item; further parameters are `null`. A
+  missing first argument, or one that is not a function, including `null`,
+  raises `TypeError("sortBy expects a function")`, even on an empty receiver.
+- **Reads.** A `null` key compares as `0`. Reads inside a selector follow the
+  existing rules, so a selector that reads a `null` binding or property
+  settles a declaration to `null`, while an item the selector does not read
+  stays an item: after `xs = [1, null]`, `r = xs.sortBy(x -> 1)` stores
+  `[1, null]`.
+- **Receivers.** The receiver is a list, however it is reached, or a class's
+  instance list in population order, named by the class, by a variable that
+  holds the class or by `$Name`. On a class name, `sortBy` is the population
+  query even when the class declares an instance method `sortBy`; its
+  instances keep calling that method.
+- **Live.** `sortBy` follows the shared rules of the list queries: it reads
+  the receiver before its arguments and evaluates every supplied argument
+  once, left to right, including unused extras. A declaration that uses it
+  depends on the list or population, on its argument expressions and on
+  whatever the selector reads for every item, so list mutations, new and
+  deleted instances and property changes re-evaluate it, in class-level
+  rules too. Selector errors roll back through the existing transaction. A
+  null or undefined receiver yields undefined without evaluating the
+  arguments.
+- **Cost.** A call selects each key once. Keys that are all strings, or among
+  which none is a string, are ordered by a stable sort in O(n log n)
+  comparisons; only a mix of strings and other keys is ordered by the
+  placement rule above, in up to O(n²) comparisons.
+- **Rendering.** The call keeps its ordinary rendering, so
+  `ranked = scores.sortBy(score -> score.points)` explains as
+  `ranked = scores.sortBy(function())`, and a `sortBy` call and its accepted
+  spelling are different statements and graph keys.
+- **Unchanged.** Only calls of `sortBy` on lists and class populations
+  change; they raised `TypeError("<receiver>.sortBy is not a function")`.
+  `sortBy of xs` stays `SyntaxError("Unexpected keyword 'of'")`. Property
+  reads such as `xs.sortBy`, bindings and object properties named `sortBy`,
+  `sortBy(...)` without a definition, `Math.sortBy` and the other built-in
+  namespaces, instance methods named `sortBy` called on an instance, `sort`,
+  `maxBy` and `minBy` keep their accepted results.
+- The six entries beginning
+  `Nucleoid sorts lists by numeric and text keys with sortBy` through
+  `Nucleoid rolls back failed key sorting updates` specify the executable
+  behavior. `tests/list_key_sorting.rs` executes the rest.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -23707,6 +23784,115 @@ assert([first.big, third.big], [true, true])
 assert(all i in Item: i.big, true)
 first.big
 # return: true
+---
+# Nucleoid sorts lists by numeric and text keys with sortBy
+
+parcels = [{code: "B12", kg: 4}, {code: "A7", kg: 9}, {code: "B3", kg: 4}, {code: "C1", kg: 2}]
+light = parcels.sortBy(parcel -> parcel.kg)
+coded = parcels.sortBy(parcel -> parcel.code)
+assert(light.map(parcel -> parcel.code), ["C1", "B12", "B3", "A7"])
+assert(coded.map(parcel -> parcel.code), ["A7", "B12", "B3", "C1"])
+assert(light[1] == parcels[0], true)
+parcels.push({code: "A10", kg: 4})
+assert(light.map(parcel -> parcel.code), ["C1", "B12", "B3", "A10", "A7"])
+assert(coded.map(parcel -> parcel.code), ["A10", "A7", "B12", "B3", "C1"])
+parcels.map(parcel -> parcel.code)
+# return: ["B12","A7","B3","C1","A10"]
+---
+# Nucleoid keeps key sorted lists live while the receiver keeps its order
+
+stops = [{id: 1, eta: 30}, {id: 2, eta: 10}, {id: 3, eta: 20}]
+route = stops.sortBy(stop -> stop.eta).map(stop -> stop.id)
+assert(route, [2, 3, 1])
+stops.push({id: 4, eta: 15})
+assert(route, [2, 4, 3, 1])
+stops.shift()
+assert(route, [2, 4, 3])
+stops[0].eta = 25
+assert(route, [4, 3, 2])
+stops.pop()
+assert(route, [3, 2])
+stops.map(stop -> stop.id)
+# return: [2,3]
+---
+# Nucleoid sorts class populations by key with sortBy
+
+class Runner(name, time):
+    this.name = name
+    this.time = time
+board = Runner.sortBy(runner -> runner.time)
+assert(board, [])
+ana = Runner("ana", 31)
+bo = Runner("bo", 28)
+cy = Runner("cy", 35)
+assert(board, [bo, ana, cy])
+cy.time = 27
+Runner("di", 28)
+assert(board.map(runner -> runner.name), ["cy", "bo", "di", "ana"])
+delete bo.name
+delete bo.time
+delete bo
+assert(board.map(runner -> runner.name), ["cy", "di", "ana"])
+board.length
+# return: 3
+---
+# Nucleoid ranks instances by key in class level rules
+
+class Runner(name, time):
+    this.name = name
+    this.time = time
+$Runner.place = Runner.sortBy(runner -> runner.time).indexOf($Runner) + 1
+ana = Runner("ana", 31)
+bo = Runner("bo", 28)
+cy = Runner("cy", 31)
+assert([ana.place, bo.place, cy.place], [2, 1, 3])
+bo.time = 33
+assert([ana.place, bo.place, cy.place], [1, 3, 2])
+Runner("di", 25)
+[ana.place, bo.place, cy.place]
+# return: [2,4,3]
+---
+# Nucleoid waits for every sortBy key to be comparable
+
+class Job(name):
+    this.name = name
+queue = Job.sortBy(job -> job.due)
+press = Job("press")
+press.due = new Date("2026-12-01")
+coat = Job("coat")
+assert(queue, null)
+coat.due = new Date("2026-11-20")
+assert(queue, [coat, press])
+weld = Job("weld")
+weld.due = new Date("2026-11-28")
+assert(queue, [coat, weld, press])
+weld.due = 0 / 0
+assert(queue, null)
+weld.due = coat.due
+queue.map(job -> job.name)
+# return: ["coat","weld","press"]
+---
+# Nucleoid rolls back failed key sorting updates
+
+parcels = [{id: 1, code: "B2"}, {id: 2, code: "a9"}]
+labels = parcels.sortBy(parcel -> parcel.code.toUpperCase()).map(parcel -> parcel.id)
+failure = ""
+try:
+    parcels.push({id: 3, code: 7})
+catch error:
+    failure = error
+assert(failure, TypeError("number.toUpperCase is not a function"))
+assert([parcels.length, labels], [2, [2, 1]])
+parcels.push({id: 4, code: "a1"})
+assert(labels, [4, 2, 1])
+try:
+    parcels[0].code = "a0"
+    assert(labels, [1, 4, 2])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+labels
+# return: [4,2,1]
 ---
 # Nucleoid flattens nested lists by one level
 

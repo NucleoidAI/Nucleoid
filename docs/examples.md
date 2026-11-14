@@ -3672,6 +3672,34 @@ all Shelf is tracked
   `$Shelf.tracked = true` for every shelf. See [NUC 104](nuc-0104.md) and the
   [root contract](../nucleoid.spec.md#any-and-all-class-references).
 
+## List and population sorting by key
+
+**Sorting by key keeps every courier's route in order of distance**
+
+```nuc
+class Courier(name, stops):
+    this.name = name
+    this.stops = stops
+$Courier.route = $Courier.stops.sortBy(stop -> stop.km).map(stop -> stop.name)
+ana = Courier("ana", [{name: "mill", km: 12}, {name: "dock", km: 3}, {name: "farm", km: 7}])
+bo = Courier("bo", [{name: "pier", km: 5}])
+assert([ana.route, bo.route], [["dock", "farm", "mill"], ["pier"]])
+ana.stops.push({name: "yard", km: 1})
+ana.stops[0].km = 2
+bo.stops = [{name: "gate", km: 9}, {name: "lane", km: 2}]
+assert(ana.stops[0].name, "mill")
+[ana.route, bo.route]
+# return: [["yard","mill","dock","farm"],["lane","gate"]]
+```
+
+- A class-level rule keeps the route of each courier: the names of its stops
+  in order of distance. `$Courier.stops.sortBy(stop -> stop.km)` sorts the
+  courier's own list, so every courier has its own route.
+- A new stop, a changed distance and a new list of stops re-sort the routes,
+  while each courier's `stops` keep the order they were listed in. See
+  [NUC 105](nuc-0105.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-sorting-by-key).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

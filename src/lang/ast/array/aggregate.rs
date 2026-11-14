@@ -29,6 +29,11 @@ pub(super) fn concat_items(items: Vec<Value>, arguments: &[Value]) -> Vec<Value>
 }
 
 #[must_use]
+pub(super) fn is_unordered(key: &Value) -> bool {
+    compare(key, key).is_none()
+}
+
+#[must_use]
 fn median_value(values: &[Value]) -> Value {
     if values.iter().any(Value::is_undefined) {
         return Value::Undefined;
@@ -97,7 +102,7 @@ impl Runtime {
         for item in items {
             let key = self.invoke(&selector, std::slice::from_ref(&item))?;
 
-            if compare(&key, &key).is_none() {
+            if is_unordered(&key) {
                 unordered = true;
             } else if extreme
                 .as_ref()

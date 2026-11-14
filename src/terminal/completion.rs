@@ -70,6 +70,7 @@ const LIST_MEMBERS: &[&str] = &[
     "mode",
     "maxBy",
     "minBy",
+    "sortBy",
     "some",
     "every",
     "find",

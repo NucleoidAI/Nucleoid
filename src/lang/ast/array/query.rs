@@ -83,6 +83,7 @@ impl Runtime {
                 self.aggregate_items(items, property, predicate)
             }
             "maxBy" | "minBy" => self.extreme_item(items, property, predicate),
+            "sortBy" => self.sort_by_key(items, predicate),
             // Lists sort in place through `call_list_method`; a class population
             // has no stored list to write, so its sort only returns the order.
             "sort" => Ok(Value::List(self.sort_items(items, predicate.as_ref())?)),
