@@ -256,12 +256,13 @@ undergo independent behavior, integrity, compatibility, and development checks.
 
 Pin the accepted Git revision and record its token baseline before editing
 runtime behavior or executable cases. For a new NUC, that revision is its
-pushed [allocation](#allocate-new-nucs-first-caller-only). Give the proposer
-its requested change, proposal path and confirmed category, execution mode
-and runtime applicability with supporting rationale, baseline revision and
-immutable JSON artifact, and candidate worktree. When configured, also supply
-the pre-draft strategy receipt and policy paths/raw pins, trial identity and
-actionable approach.
+pushed [allocation](#allocate-new-nucs-first-caller-only), or the pushed claim
+of a [picked-up Draft](#pick-up-stale-drafts-first-caller-only). Give the
+proposer its requested change, proposal path and confirmed category, execution
+mode and runtime applicability with supporting rationale, baseline revision
+and immutable JSON artifact, and candidate worktree. When configured, also
+supply the pre-draft strategy receipt and policy paths/raw pins, trial
+identity and actionable approach.
 Use `.claude/agents/nuc-proposal.agent.md` and
 `.claude/skills/nuc-proposal/SKILL.md` for drafting, prototyping, equivalent
 case rewrites, synchronization, and development checks. It must not run the
@@ -346,6 +347,34 @@ to that evaluation and must not recursively launch another agent.
   [nuc-proposal skill](../skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only)
   has the steps.
 
+## Pick up stale Drafts first (caller only)
+
+- In continuous mode, every cycle, the first one included, completes an
+  abandoned NUC before it drafts a new one. A Draft on `main` is stale when it
+  has a pushed `Draft NUC <number> <Title>` allocation and the latest of that
+  commit and any `Resume NUC <number> <Title>` claim is more than 24 hours
+  old. A Draft without an allocation commit, such as the reference NUCs 2–7
+  and 9–11, is never picked up.
+- The cycle takes the lowest-numbered stale Draft, keeps its number, title,
+  category and requested change, and skips the selection and allocation.
+  Right after a pull that confirms the Draft is still stale, it claims it with
+  an empty `Resume NUC <number> <Title>` commit that leaves anything staged
+  out, and pushes it right away. The pushed claim restarts the 24 hours, so
+  concurrent sessions leave the NUC alone.
+- The claim is the accepted revision the NUC pins. Fresh agents, baselines
+  and a fresh candidate complete it like a new NUC, under the
+  [automatic acceptance rule](#automatic-acceptance-caller-only) directly and
+  the continuous token policy of its category; the ARC-requested and
+  user-requested bases do not carry over.
+- Every task working on an allocated NUC renews its claim once the latest
+  allocation or claim is 12 hours old, and claims a Blocked or paused NUC
+  before resuming it. Another session's claim takes the NUC over only when it
+  came more than 24 hours after the task's own; on a takeover, or an outcome
+  already on `main`, the task records nothing for that NUC.
+- A claim records no outcome and needs no evaluation of its own. The
+  [nuc-proposal skill](../skills/nuc-proposal/SKILL.md#pick-up-stale-drafts-first-caller-only)
+  has the steps.
+
 ## Outcome commit messages (caller only)
 
 - Every commit that records a NUC outcome, Accepted, Automatic-Accepted or
@@ -374,7 +403,7 @@ to that evaluation and must not recursively launch another agent.
 - Keep rejected implementation changes isolated in the candidate worktree; do not apply its full diff merely to record the NUC.
 - Stage explicit proposal/index paths and use a path-limited commit. Verify the resulting commit contains only the rejection documentation and directly related metadata. Never use repository-wide staging or `git commit -a`, or include unrelated files already staged.
 - Preserve unrelated staged and unstaged changes. If the rejection documentation is already committed, verify and report that commit instead of creating an empty duplicate.
-- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the `/nuc-proposal` caller, the only flow that commits NUC allocations and outcomes, which pulls before committing and pushes right after under the [git synchronization policy](git.instructions.md).
+- Proposal and evaluation agents must not commit, push or merge; the rejection commit belongs solely to the `/nuc-proposal` caller, the only flow that commits NUC allocations, claims and outcomes, which pulls before committing and pushes right after under the [git synchronization policy](git.instructions.md).
 
 ## ARC-requested proposals (caller only)
 
@@ -465,8 +494,11 @@ In continuous mode, after finalizing and committing an `Accepted`,
 `Automatic-Accepted` or `Rejected` outcome for a new NUC, the caller
 immediately starts a distinct new proposal under
 the [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
-Run cycles sequentially with fresh agents, baselines, candidate worktrees and
-reports, preserving the selection, compatibility and acceptance requirements.
+Each cycle, the first one included, first
+[picks up a stale Draft](#pick-up-stale-drafts-first-caller-only) when one
+exists. Run cycles sequentially with fresh agents, baselines, candidate
+worktrees and reports, preserving the selection, compatibility and acceptance
+requirements.
 Only the caller continues; workers stop at their handoffs. This does not
 recursively reevaluate the completed NUC's outcome metadata. Stop or pause
 under the conditions defined by the skill rather than bypassing a blocker.

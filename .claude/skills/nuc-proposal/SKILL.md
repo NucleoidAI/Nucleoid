@@ -24,7 +24,12 @@ repeats it:
    [git synchronization policy](../../rules/git.instructions.md#pull-first),
    so the task runs against the most current remote state. Report the commits
    it brought in.
-2. **Draft first.** Once the
+2. **Pick up a stale Draft first.** In continuous mode, look for an allocated
+   Draft that has gone 24 hours without an allocation or claim commit. When
+   one exists, the cycle claims and completes it under the
+   [stale-Draft rule](#pick-up-stale-drafts-first-caller-only) instead of
+   starting a new NUC, and continues at step 6 with that claim pinned.
+3. **Draft first.** Once the
    [execution mode](#choose-execution-mode-caller-only), the confirmed
    [category](#classify-every-proposal) and the requested change are chosen,
    number the new NUC as the highest NUC recorded in `docs/` plus one. In the
@@ -33,7 +38,7 @@ repeats it:
    details: the Abstract and Motivation of the requested change, followed by
    the remaining required sections for the proposer to complete. Add its Draft
    rows to both indexes in `docs/nuc-0000.md`, and change nothing else.
-3. **Check before submitting.** Right before the allocation commit, pull
+4. **Check before submitting.** Right before the allocation commit, pull
    again and compare the draft with every NUC that `main` now records:
    - **Same number:** when another NUC already uses the drafted number,
      claim the next one, the highest number recorded plus one, and renumber
@@ -44,18 +49,18 @@ repeats it:
      nothing, and start again at step 1 with a new selection under the
      [selection rule](#select-an-unspecified-enhancement). A request that
      names that concept stops instead and reports the existing NUC.
-4. **Allocate.** Commit those two paths alone, with the subject
+5. **Allocate.** Commit those two paths alone, with the subject
    `Draft NUC <number> <Title>` and the category and requested change in the
    body, and push right away. The pushed commit allocates the proposal and its
    number, so concurrent sessions number their NUCs after it.
-5. **Work on the details as usual.** Pin the `HEAD` just pushed, which holds
-   the allocation, as the accepted revision, record its baseline, and create
-   the candidate worktree from it. Then
+6. **Work on the details as usual.** Pin the `HEAD` just pushed, which holds
+   the allocation or the claim, as the accepted revision, record its baseline,
+   and create the candidate worktree from it. Then
    [select the strategy](#select-and-consume-a-proposal-strategy) and run the
    fresh proposer, which completes the draft and prototypes the change, the
    Rust improvement pass and the fresh evaluator, as the rest of this skill
    describes.
-6. **Commit and push the final version.** Record the outcome in a new commit,
+7. **Commit and push the final version.** Record the outcome in a new commit,
    `NUC <number> <Title>`, that holds the final proposal along with its code
    changes when it is accepted, and push it right after, under the
    [outcome commit rule](#name-outcome-commits-caller-only).
@@ -86,8 +91,78 @@ repeats it:
 - A revision of an existing NUC, including a revisited Rejected NUC, already
   holds its number: skip the draft and allocation steps, and leave its text
   and status on `main` unchanged until the outcome commit. A Blocked or paused
-  NUC keeps its pushed Draft and number, and a later task resumes it under
-  that number instead of allocating another.
+  NUC keeps its pushed Draft and number, and a later task claims and resumes
+  it under that number, under the
+  [stale-Draft rule](#pick-up-stale-drafts-first-caller-only), instead of
+  allocating another.
+
+## Pick up stale Drafts first (caller only)
+
+In continuous mode, every cycle, the first one included, completes an
+abandoned NUC before it starts a new one. A single-proposal request still does
+only what it asks.
+
+1. **Find.** After the cycle's pull, a NUC is a stale Draft when its header on
+   `main` still reads `Status: Draft`, it has a pushed
+   `Draft NUC <number> <Title>` allocation commit, and the latest of that
+   commit and any `Resume NUC <number> <Title>` claim commit is more than
+   24 hours old by committer date, which
+   `git log -1 --format=%cI -E --grep='^(Draft|Resume) NUC <number> '` shows.
+   A Draft without an allocation commit, such as the reference NUCs 2–7 and
+   9–11, is never picked up. When the request names a category, only Drafts
+   of that category count.
+2. **Pick the lowest-numbered stale Draft,** one per cycle. The cycle skips
+   the [selection](#select-an-unspecified-enhancement) and steps 3–5 of the
+   [allocation order](#allocate-the-nuc-first-caller-only). Its confirmed
+   inputs are the Draft's number, `Title` and `Category`, and the requested
+   change that its Abstract, Motivation and allocation commit body record. An
+   uncertain category still goes to the user under the
+   [classification rule](#classify-every-proposal).
+3. **Claim it.** Pull again right before the claim, and look again when the
+   NUC is no longer a stale Draft. Otherwise make the claim with
+   `git commit --allow-empty --only`, which leaves anything staged out of it:
+   the subject `Resume NUC <number> <Title>`, and in the body the allocation
+   commit and how long the Draft waited. Verify that the commit holds no file
+   and push it right away. The pushed claim restarts the Draft's 24 hours, so
+   other sessions leave it alone, as the allocation keeps them off its number.
+   A claim whose push is rejected for another session's claim or outcome of
+   that NUC never holds it: push the merge as usual, leave the NUC to that
+   session and look again.
+4. **Complete it like a new NUC.** Pin the pushed claim and continue at step 6
+   of the allocation order with a fresh baseline, candidate worktree, strategy
+   trial, proposer and evaluator; the proposer completes the Draft under its
+   number and category. Never reuse another session's candidate worktree,
+   agents, baselines, receipts or reports, and leave them as they are.
+5. **Decide under the automatic acceptance rule directly.** The cycle stays in
+   continuous mode, so the
+   [NUC 1 token policy](../../../docs/nuc-0001.md#proposal-evaluation)
+   follows the Draft's registered `Category`. The
+   [ARC-requested](../../rules/proposals.instructions.md#arc-requested-proposals-caller-only)
+   and
+   [user-requested](../../rules/proposals.instructions.md#user-requested-proposals-caller-only)
+   bases cover only the invocation that requested a NUC, so they never carry
+   over to a pickup.
+
+Only a cycle that finds no stale Draft selects and allocates a new NUC. A
+picked-up NUC that is Blocked pauses the loop like any other and keeps its
+Draft, which a later cycle picks up again once its claim is 24 hours old.
+
+Every task that works on an allocated NUC, in either mode, keeps it claimed:
+
+- **Renew.** At each pull, when the latest allocation or claim of the NUC it
+  is still working on is more than 12 hours old, half the 24 hours, the task
+  pushes another `Resume NUC <number> <Title>` claim, so a long agent run
+  cannot let the NUC go stale. A task that resumes a Blocked or paused NUC,
+  including one the user names, claims it the same way before it starts.
+- **Yield.** Another session's claim takes over a NUC the task holds only when
+  it came more than 24 hours after the task's own latest allocation or held
+  claim; a sooner one lost a race, and its session has left the NUC. When a
+  pull shows a takeover, or the NUC's outcome already on `main`, the task
+  records nothing for that NUC, leaves its candidate isolated, reports it and,
+  in continuous mode, moves on to the next cycle.
+- **Record nothing else.** A claim changes no file and records no outcome, so
+  it needs no evaluation of its own; the outcome commit still carries the
+  final version.
 
 ## Choose execution mode (caller only)
 
@@ -229,8 +304,9 @@ Require the proposal path, confirmed category and requested change, execution
 mode and runtime applicability with supporting rationale when applicable,
 accepted Git revision, immutable baseline JSON artifact, and candidate worktree.
 For a new NUC, the accepted revision is the pushed
-[allocation](#allocate-the-nuc-first-caller-only), and the candidate starts
-from its Draft. Confirm that the baseline belongs to that accepted revision
+[allocation](#allocate-the-nuc-first-caller-only), or the pushed claim of a
+[picked-up Draft](#pick-up-stale-drafts-first-caller-only), and the candidate
+starts from its Draft. Confirm that the baseline belongs to that accepted revision
 before making runtime or executable document edits. Missing inputs stop
 preparation, not justify assumptions.
 
@@ -256,7 +332,8 @@ feature or category.
 
 For configured learning, the **caller must actually run**
 `cargo test --test proposals select_proposal_strategy -- --ignored --exact --nocapture`
-**after the [allocation](#allocate-the-nuc-first-caller-only) and before the
+**after the [allocation](#allocate-the-nuc-first-caller-only), or the claim of
+a [picked-up Draft](#pick-up-stale-drafts-first-caller-only), and before the
 proposer drafts the details or is dispatched**. Use the latest verified
 single-owner checkpoint (or an explicit frozen empty-history genesis), not an
 older head or fabricated history. Fix `NUC_PROPOSAL`, accepted
@@ -406,11 +483,13 @@ outcome, its basis, the hard-criteria evidence and, for Automatic-Accepted,
 every failed policy check in the body. Follow the
 [outcome commit message rule](../../rules/proposals.instructions.md#outcome-commit-messages-caller-only).
 
-This caller is the only flow that commits and pushes NUC allocations and
-outcomes. It makes every
+This caller is the only flow that commits and pushes NUC allocations, claims
+and outcomes. It makes every
 [allocation commit](#allocate-the-nuc-first-caller-only),
-`Draft NUC <number> <Title>`, which records no outcome, and every NUC outcome
-commit, including those of NUCs that `/arc-purposal` requests and of cycles
+`Draft NUC <number> <Title>`, and every
+[claim commit](#pick-up-stale-drafts-first-caller-only),
+`Resume NUC <number> <Title>`, neither of which records an outcome, and every
+NUC outcome commit, including those of NUCs that `/arc-purposal` requests and of cycles
 coordinated through `/nuc-evaluate`, and pushes each right after, pulling
 first, under the
 [git synchronization policy](../../rules/git.instructions.md). No worker agent
@@ -476,10 +555,13 @@ rules and verified inputs. For other missing prerequisites or blockers,
 report them and pause without a question; do not invent inputs or bypass
 checks or required tool approvals.
 
-Each cycle pulls, chooses one bounded enhancement under the existing selection
-rule, and allocates its new NUC number with a pushed Draft under the
-[allocation rule](#allocate-the-nuc-first-caller-only). Pin that allocation,
-the current verified accepted-language revision, not a rejected candidate;
+Each cycle pulls and first claims the lowest-numbered stale Draft under the
+[stale-Draft rule](#pick-up-stale-drafts-first-caller-only). Only a cycle that
+finds none chooses one bounded enhancement under the existing selection rule
+and allocates its new NUC number with a pushed Draft under the
+[allocation rule](#allocate-the-nuc-first-caller-only). Pin that claim or
+allocation, the current verified accepted-language revision, not a rejected
+candidate;
 create fresh immutable baselines, an isolated candidate and report paths.
 Launch fresh proposal and evaluation agents, and perform the required Rust
 improvement pass when applicable. Never reuse

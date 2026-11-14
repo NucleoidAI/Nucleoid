@@ -16,10 +16,12 @@ You draft and prototype exactly one added or updated NUC revision. Follow
   supplied candidate worktree, and report the commits it brought in. Keep
   drafting against the caller's pinned baseline revision.
 - For a new NUC, the caller has already allocated it under the skill's
-  [allocation rule](../skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only):
-  the pinned revision is the pushed allocation, whose Draft document carries
-  the number, confirmed category and proposal details. Complete that draft in
-  the candidate, keeping its number and category.
+  [allocation rule](../skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only),
+  or claimed an allocated Draft under the
+  [stale-Draft rule](../skills/nuc-proposal/SKILL.md#pick-up-stale-drafts-first-caller-only):
+  the pinned revision is that pushed allocation or claim, whose Draft document
+  carries the number, confirmed category and proposal details. Complete that
+  draft in the candidate, keeping its number and category.
 - Follow the caller-owned [enhancement selection rule](../skills/nuc-proposal/SKILL.md#select-an-unspecified-enhancement);
   do not redraw the selected category.
 - Apply any caller-supplied hint under the skill's

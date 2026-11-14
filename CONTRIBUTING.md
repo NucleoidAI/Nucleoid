@@ -131,6 +131,15 @@ uses the drafted one, and skips the proposal and starts again when a NUC on
 changes; see the
 [allocation step](.claude/skills/nuc-proposal/SKILL.md#allocate-the-nuc-first-caller-only).
 
+In continuous mode, every cycle first completes an abandoned NUC: a Draft
+whose latest `Draft NUC <number> <Title>` allocation or
+`Resume NUC <number> <Title>` claim is more than 24 hours old. The caller
+claims the lowest-numbered one with an empty, pushed
+`Resume NUC <number> <Title>` commit, pins that claim, and completes the NUC
+like a new one. Only a cycle that finds no such Draft selects a new NUC; see
+the
+[stale-Draft rule](.claude/skills/nuc-proposal/SKILL.md#pick-up-stale-drafts-first-caller-only).
+
 Outcomes follow the
 [automatic acceptance rule](.claude/rules/proposals.instructions.md#automatic-acceptance-caller-only).
 A candidate is accepted when it meets three hard criteria: no compile errors
@@ -219,7 +228,8 @@ a runtime that differs from it. Use a separate baseline worktree if candidate
 runtime edits already exist. `HEAD` is suitable only when it is the accepted
 revision, not a commit containing unevaluated candidate changes. A new NUC's
 allocation commit, which adds only its Draft document and index rows, is
-still the accepted revision, and the proposal pins it.
+still the accepted revision, and the proposal pins it. A picked-up Draft pins
+its empty claim commit the same way.
 
 Example PowerShell commands, using fresh artifact paths outside the repository:
 
