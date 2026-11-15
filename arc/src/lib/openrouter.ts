@@ -79,6 +79,7 @@ export async function generate({ reasoning = false, messages = [] }) {
   let jsonContent;
 
   try {
+    console.debug(content);
     jsonContent = JSON.parse(content);
   } catch (error) {
     throw new Error(

@@ -11,7 +11,7 @@ export async function instances({
 }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
-  const { dataset } = await llm.generate({
+  let { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     few_shot: null,
@@ -41,16 +41,21 @@ export async function instances({
           query:
           ${JSON.stringify({
             declarations: train_dataset.declarations[0],
-            dataset: {
-              instance_matrix: test_input_matrix,
-            },
+            dataset: [
+              {
+                instance_matrix: test_input_matrix,
+                instances: [
+                  {
+                    instance_matrix: "<INSTANCE_MATRIX>",
+                  },
+                ],
+              },
+            ],
           })}
           json_format:
           {
-            dataset: [{
-              "instances": [{
-                "instance_matrix": <INSTANCE_MATRIX>
-              }]
+            "instances": [{
+              "instance_matrix": <INSTANCE_MATRIX>
             }]
           }
         `,
@@ -58,12 +63,11 @@ export async function instances({
     ],
   });
 
-  dataset[0].instances = dataset[0].instances.map((instance) => ({
+  instances = instances.map((instance) => ({
     ...instance,
     input_instance_matrix: instance.instance_matrix,
+    instance_matrix: undefined,
   }));
-
-  const instances = dataset[0].instances;
 
   milestone.test_input_segmented({ instances });
 
@@ -124,6 +128,7 @@ export async function value({
             matrix: Matrix.silhouette(
               Matrix.crop(instance.input_instance_matrix)
             ),
+            orientation: "<ORIENTATION>",
           })}
           json_format:
           {
@@ -134,7 +139,7 @@ export async function value({
     ],
   });
 
-  const { dataset } = await llm.generate({
+  const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     few_shot: null,
@@ -168,6 +173,7 @@ export async function value({
             dataset: [
               {
                 instances: [instance],
+                implementation: "<IMPLEMENTATION>",
               },
             ],
           })}
@@ -178,18 +184,12 @@ export async function value({
           orientation: ${orientation}
           json_format:
           {
-            "dataset": [{
-              "instances": [{
-                "implementation": <IMPLEMENTATION>
-              }]
-            }]
+            "implementation": <IMPLEMENTATION>
           }  
         `,
       },
     ],
   });
-
-  const implementation = dataset[0].instances[0].implementation;
 
   milestone.instance_synthesized({
     instance_name,
@@ -225,7 +225,7 @@ export async function output_instance_matrix({
 
   milestone.composing_output({ instance_name: instance.instance_name });
 
-  const { dataset } = await llm.generate({
+  const { output_instance_matrix } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     few_shot: null,
@@ -263,6 +263,7 @@ export async function output_instance_matrix({
                     input_instance_matrix: Matrix.crop(
                       instance.input_instance_matrix
                     ),
+                    output_instance_matrix: "<OUTPUT_INSTANCE_MATRIX>",
                   },
                 ],
               },
@@ -270,18 +271,13 @@ export async function output_instance_matrix({
           })}
           json_format:
           {
-            "dataset": [{
-              "instances": [{
-                "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
-              }]
-            }]
+            "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
           }
         `,
       },
     ],
   });
 
-  const output_instance_matrix = dataset[0].instances[0].output_instance_matrix;
   instance.output_instance_matrix = output_instance_matrix;
 
   milestone.output_composed(instance);

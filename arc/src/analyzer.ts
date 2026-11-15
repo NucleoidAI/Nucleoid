@@ -43,7 +43,7 @@ export async function instances({
 }) {
   milestone.segmenting_training_objects();
 
-  const { dataset } = await llm.generate({
+  const { instances } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     messages: [
@@ -65,11 +65,9 @@ export async function instances({
           })}
           json_format:
           {
-            "dataset": [{
-              "instances": [{
-                "input_instance_matrix": <INPUT_INSTANCE_MATRIX>,
-                "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
-              }]
+            "instances": [{
+              "input_instance_matrix": <INPUT_INSTANCE_MATRIX>,
+              "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
             }]
           }
         `,
@@ -77,9 +75,9 @@ export async function instances({
     ],
   });
 
-  milestone.training_objects_segmented({ instances: dataset[0].instances });
+  milestone.training_objects_segmented({ instances });
 
-  return { instances: dataset[0].instances };
+  return { instances };
 }
 
 // Each synthesis turns the extracted instances of a training pair clockwise by
@@ -269,6 +267,7 @@ export async function value({
             matrix: Matrix.silhouette(
               Matrix.crop(instance.input_instance_matrix)
             ),
+            orientation: "<ORIENTATION>",
           })}
           json_format:
           {
@@ -279,7 +278,7 @@ export async function value({
     ],
   });
 
-  const { dataset } = await llm.generate({
+  const { implementation } = await llm.generate({
     puzzle_id,
     only_puzzle_dataset,
     few_shot: (train_dataset) => ({
@@ -323,6 +322,7 @@ export async function value({
             dataset: [
               {
                 instances: [instance],
+                implementation: "<IMPLEMENTATION>",
               },
             ],
           })}
@@ -333,18 +333,12 @@ export async function value({
           orientation: ${orientation}
           json_format:
           {
-            "dataset": [{
-              "instances": [{
-                "implementation": <IMPLEMENTATION>
-              }]
-            }]
+            "implementation": <IMPLEMENTATION>
           }  
         `,
       },
     ],
   });
-
-  const implementation = dataset[0].instances[0].implementation;
 
   milestone.evaluating_rules({ instance_name: instance.instance_name });
 
