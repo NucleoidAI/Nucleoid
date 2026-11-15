@@ -82,10 +82,13 @@ between that code and the log. At the time of writing, `start()` writes
    instances get their `instance_name`, then `analyzer.synthesize` (no LLM)
    creates three synthesized pairs per training pair, one per synthesis:
    every extracted instance turned clockwise by 90 degrees and moved by
-   x+1 y+1, x-1 y+1 or x-1 y-1. They follow the training pairs in
-   `train_dataset.dataset`, three per training pair in turn, in that order.
-   Each holds one instance per extracted instance of its source pair, in
-   source order, with `synthesis` (`source`, `rotation`, `offset`), named
+   x+1 y+1, x-1 y+1 or x-1 y-1, except an instance whose object, its input
+   object or its output object when the input is empty, is a single pixel.
+   A training pair without other instances gains none. They follow the
+   training pairs in `train_dataset.dataset`, three per training pair in
+   turn, in that order. Each holds one instance per synthesized extracted
+   instance of its source pair, in source order, with `synthesis` (`source`,
+   `rotation`, `offset`), named
    after every training pair's instances. Its `input_matrix` merges their
    input grids, and its `output_matrix` merges their output grids under
    `output_canvas`. Logs written before the synthesis have no synthesized
@@ -150,8 +153,11 @@ Run every check that applies and record each result:
 - **Synthesis.** Three synthesized pairs per training pair follow the
   training pairs, in training pair order, each pair's three in the synthesis
   order x+1 y+1, x-1 y+1, x-1 y-1, all with rotation 90. Each holds one
-  instance per extracted instance of its source pair, in source order, whose
-  `source` names it. Recompute each instance from its source with the
+  instance per extracted instance of its source pair whose object, its input
+  object or its output object when the input is empty, is not a single pixel,
+  in source order, whose `source` names it; a training pair whose instances
+  are all single pixels has no synthesized pairs, and no `source` names a
+  single pixel. Recompute each instance from its source with the
   `Matrix.ts` helpers: turn the input and output crops with `Matrix.rotate`,
   place the input crop at the source's located position plus the offset, and
   place the output crop so that its gaps to the input object's bounding box
@@ -186,9 +192,10 @@ Run every check that applies and record each result:
   test answer. Re-run the logged declarations and implementations offline, one
   program per pair, to confirm the state. For a synthesized instance, a
   disagreement can also mean that a rule does not turn with its object, such
-  as a rim that always grows above its point, or that it reads a canvas that
-  grew to hold the turned objects, objects that overlap after turning, or a
-  list argument, such as cell positions, that carried over unturned.
+  as one that always grows its object in one direction, or that it reads a
+  canvas that grew to hold the turned objects, objects that overlap after
+  turning, or a list argument, such as cell positions, that carried over
+  unturned.
   Report those separately from the extracted instances' disagreements, which
   alone show the world model mispredicting its own training data.
 - **Test composition.** Every test `output_value` has integer `x` and `y`; a

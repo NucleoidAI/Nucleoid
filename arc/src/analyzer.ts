@@ -19,7 +19,11 @@ export async function declarations({
         role: "user",
         content: `
           query:
-          ${JSON.stringify(train_dataset)}
+          ${JSON.stringify({
+            ...train_dataset,
+            declarations: "<DECLARATIONS>",
+            output_canvas: "<OUTPUT_CANVAS>",
+          })}
           json_format:
           { "declarations": <DECLARATIONS>, "output_canvas": <OUTPUT_CANVAS> }
         `,
@@ -47,7 +51,18 @@ export async function instances({
         role: "user",
         content: `
           query:
-          ${JSON.stringify(train_dataset)}
+          ${JSON.stringify({
+            ...train_dataset,
+            dataset: train_dataset.dataset.map((dataset) => ({
+              ...dataset,
+              instances: [
+                {
+                  input_instance_matrix: "<INPUT_INSTANCE_MATRIX>",
+                  output_instance_matrix: "<OUTPUT_INSTANCE_MATRIX>",
+                },
+              ],
+            })),
+          })}
           json_format:
           {
             "dataset": [{
@@ -121,6 +136,15 @@ function frame(drawing, drawings) {
   return Matrix.merge(drawing, ...blanks).matrix;
 }
 
+// The bounding box an instance turns about: its input object's, or its output
+// object's when the input is empty.
+function pivot_box(instance) {
+  const input = Matrix.locate(instance.input_instance_matrix);
+  return input.width > 0
+    ? input
+    : Matrix.locate(instance.output_instance_matrix);
+}
+
 // The training pair that one synthesis makes of a training pair's extracted
 // instances: each instance's input and output objects turn together about its
 // input object's bounding box, or its output object's when the input is empty,
@@ -132,9 +156,7 @@ function frame(drawing, drawings) {
 // where turned objects overlap.
 function synthesized_pair(instances, { rotation, offset }, output_canvas) {
   const drawings = instances.map((instance) => {
-    const input = Matrix.locate(instance.input_instance_matrix);
-    const pivot =
-      input.width > 0 ? input : Matrix.locate(instance.output_instance_matrix);
+    const pivot = pivot_box(instance);
 
     return {
       source: instance.instance_name,
@@ -164,13 +186,18 @@ function synthesized_pair(instances, { rotation, offset }, output_canvas) {
 }
 
 // Synthesizes three training pairs from a training pair's extracted instances,
-// one per synthesis, each holding every instance turned and moved by it. A
-// pair without instances synthesizes none.
+// one per synthesis, each holding every instance turned and moved by it. An
+// instance whose object is a single pixel is not synthesized, and a pair
+// without other instances synthesizes none.
 export function synthesize({ instances, output_canvas }) {
+  const sources = instances.filter((instance) => {
+    const { width, height } = pivot_box(instance);
+    return width !== 1 || height !== 1;
+  });
   const dataset =
-    instances.length > 0
+    sources.length > 0
       ? SYNTHESES.map((synthesis) =>
-          synthesized_pair(instances, synthesis, output_canvas)
+          synthesized_pair(sources, synthesis, output_canvas)
         )
       : [];
 
@@ -340,7 +367,7 @@ export async function value({
 
 // The orientation of a shape turned clockwise by the rotation, as the datasets
 // label orientation by shape: a shape that the turn leaves unchanged, such as a
-// single cell, keeps its orientation, a shape that a half turn leaves
+// square, keeps its orientation, a shape that a half turn leaves
 // unchanged, such as a bar, counts it modulo 180 degrees, and any other shape
 // counts it modulo 360 degrees.
 function turned_orientation(matrix, orientation: number, rotation: number) {
