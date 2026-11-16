@@ -4,17 +4,10 @@ import * as llm from "./lib/llm";
 import * as milestone from "./lib/milestone.ts";
 import object from "./object.ts";
 
-export async function instances({
-  puzzle_id,
-  only_puzzle_dataset,
-  train_dataset,
-  test_input_matrix,
-}) {
+export async function instances({ train_dataset, test_input_matrix }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
   let { instances } = await llm.generate({
-    puzzle_id,
-    only_puzzle_dataset,
     few_shot: null,
     messages: [
       {
@@ -76,8 +69,6 @@ export async function instances({
 }
 
 export async function value({
-  puzzle_id,
-  only_puzzle_dataset,
   train_dataset,
   test_input_matrix,
   instance_name,
@@ -129,8 +120,6 @@ export async function value({
 }
 
 export async function output_instance_matrix({
-  puzzle_id,
-  only_puzzle_dataset,
   test_input_matrix,
   train_dataset,
   instance,
@@ -140,8 +129,6 @@ export async function output_instance_matrix({
   milestone.composing_output({ instance_name: instance.instance_name });
 
   const { output_instance_matrix } = await llm.generate({
-    puzzle_id,
-    only_puzzle_dataset,
     few_shot: null,
     messages: [
       {

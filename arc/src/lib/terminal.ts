@@ -122,11 +122,9 @@ function block(title: string, lines, write = console.log) {
 export function header({
   version,
   puzzle_id,
-  only_puzzle_dataset,
 }: {
   version: string;
   puzzle_id: string;
-  only_puzzle_dataset: boolean;
 }) {
   stageNumber = 0;
   milestones.clear();
@@ -159,11 +157,6 @@ export function header({
     ...wrap(`Puzzle ${puzzle_id}`, textWidth).map((line: string) =>
       styleText("gray", line)
     ),
-    ...(only_puzzle_dataset
-      ? wrap("--only-puzzle-dataset", textWidth).map((line: string) =>
-          styleText("gray", line)
-        )
-      : []),
   ];
   const height: number = Math.max(logo.length, text.length);
   const lines = horizontal

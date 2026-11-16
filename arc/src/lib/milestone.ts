@@ -18,14 +18,8 @@ function signed(value: number): string {
   return value < 0 ? `${value}` : `+${value}`;
 }
 
-export function start({
-  version,
-  puzzle_id,
-  only_puzzle_dataset,
-  train,
-  test_input_matrix,
-}) {
-  terminal.header({ version, puzzle_id, only_puzzle_dataset });
+export function start({ version, puzzle_id, train, test_input_matrix }) {
+  terminal.header({ version, puzzle_id });
   terminal.puzzle({ train, testInput: test_input_matrix });
 }
 
