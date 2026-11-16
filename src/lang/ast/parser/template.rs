@@ -120,6 +120,7 @@ impl Parser {
             in_class: self.in_class,
             dots: self.dots,
             receiver: self.receiver.clone(),
+            selves: self.selves,
             if_statements: self.if_statements,
             ..fresh
         };

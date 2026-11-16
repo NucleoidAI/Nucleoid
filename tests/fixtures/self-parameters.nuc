@@ -1,0 +1,13 @@
+class Tank:
+    def __init__(self, name, level, capacity):
+        self.name = name
+        self.level = level
+        self.capacity = capacity
+    def pump(self, amount):
+        self.level = self.level + amount
+        return self.level
+    def free(self) => self.capacity - self.level
+$Tank.full = $Tank.level >= $Tank.capacity
+east = Tank("east", 70, 80)
+east.pump(10)
+[east.level, east.full, east.free()]

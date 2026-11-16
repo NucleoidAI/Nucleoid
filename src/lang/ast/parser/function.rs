@@ -337,7 +337,10 @@ impl Parser {
 
     fn parameter_list(&mut self, initializing: bool) -> Result<ParameterList> {
         self.expect(&Token::LeftParen)?;
+        self.parameter_items(initializing)
+    }
 
+    pub(super) fn parameter_items(&mut self, initializing: bool) -> Result<ParameterList> {
         let mut parameters: Vec<Parameter> = Vec::new();
         let mut initializers = Vec::new();
 

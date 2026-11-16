@@ -2223,6 +2223,31 @@ assert(own.map(step -> step.node), ["heat", "current", "voltage"])
   moves from the heat's own causes to the shared ones. See the
   [root contract](nucleoid.spec.md#intersect-and-except-reasoning-selections).
 
+## Python-style self parameters
+
+**Methods may declare self as Python methods do**
+
+```nuc
+class Account:
+    def __init__(self, balance):
+        self.balance = balance
+    def deposit(self, amount):
+        self.balance = self.balance + amount
+        return self.balance
+account = Account(100)
+assert(account.deposit(5), 105)
+assert(account.balance, 105)
+```
+
+- [NUC 107](docs/nuc-0107.md) lets a method in a class's indented body
+  declare its receiver as a leading `self` parameter, as Python does.
+  `def deposit(self, amount):` declares exactly `def deposit(amount):`, and
+  the call `account.deposit(5)` passes no receiver.
+- `def __init__(self, balance):` declares the class's `init` constructor,
+  exactly `def init(balance):`, so `Account(100)` runs it. The bodies read
+  the receiver through `self`, as every method does. See the
+  [root contract](nucleoid.spec.md#python-style-self-parameters).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

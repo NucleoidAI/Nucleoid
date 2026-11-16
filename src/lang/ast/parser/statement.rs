@@ -322,7 +322,7 @@ impl Parser {
             enclosed: self.enclosed,
             in_class: self.in_class,
             if_statements: self.if_statements,
-            ..Parser::new(std::mem::take(&mut self.tokens))
+            ..self.rewound()
         };
         let parsed = parse(&mut probe);
         self.tokens = probe.tokens;

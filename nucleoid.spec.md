@@ -2909,6 +2909,60 @@ statement positions; caught values and transaction recovery are unchanged.
   through `Nucleoid rolls back an instance whose initializing constructor fails`
   specify the executable behavior.
 
+## Python-style self parameters
+
+- [NUC 107](docs/nuc-0107.md) lets a method written with `def` directly in a
+  class's indented body declare its receiver as a leading `self` parameter,
+  as Python methods do. `def deposit(self, amount):` declares exactly what
+  `def deposit(amount):` declares, and `def area(self) => self.w * self.h`
+  exactly what `def area() => self.w * self.h` declares. Calls pass no
+  receiver, so `account.deposit(5)` runs either spelling.
+- `def __init__(self, ...)` declares the class's `init` constructor:
+  `def __init__(self, balance):` declares exactly what `def init(balance):`
+  declares, so `Account(100)` runs it. The parameters after the receiver keep
+  NUC 87's prefixed parameters, literal defaults, annotations and a final
+  rest parameter. A `def __init__` whose list does not begin with the
+  receiver stays an ordinary method named `__init__`.
+- The receiver is the keyword `self`, or its alias `this`, written directly
+  after the `(` of the list and directly followed by `,` or `)`. It adds no
+  binding and no parameter: the method has exactly the parameters written
+  after it, and its body reads the receiver through `self` or `this`, as
+  every method does. Block, same-line and arrow bodies are all accepted.
+- The parser builds the tree of the spelling without the receiver, with the
+  name `init` for `__init__`. Binding, arity, labels, defaults, rest lists,
+  `init` adoption, header constructors, the later of two `init` methods,
+  inheritance, `super`, class-level rules, redeclaration, `why`, graph keys,
+  transactions and rollback are therefore those of that spelling, and
+  canonical rendering writes that spelling wherever it writes a method, as
+  in `def pump(amount=1)`. No token, keyword, syntax tree node or runtime
+  path is added.
+- Every other place keeps its accepted diagnostic and position: functions at
+  the top level or nested in other statements, function literals, arrows,
+  thin arrows, Python-style lambdas, `function` declarations, also in a class
+  body, methods inside an `if` or a braced block of a class body, same-line
+  class bodies such as `class P: def m(self): 1`, class headers such as
+  `class P(self)` and bare signatures such as `def f self:`. So do a receiver
+  with an annotation, a default, a rest marker or a prefix, a second
+  receiver, as in `def m(self, self)`, and a receiver that is not first. Each
+  keeps the error that the accepted parser raises, such as
+  `SyntaxError("Expected a parameter but found keyword 'this'")` at the token
+  after the keyword. A leading `self.x` in an `init` stays NUC 87's prefixed
+  parameter.
+- Python's `super().__init__(...)` keeps its accepted behavior: it runs
+  without error and passes no arguments to the parent's constructor, which
+  `super(...)` receives. `class Dog(Animal):` still declares a constructor
+  parameter named `Animal`, and `class Dog extends Animal:` names the parent.
+- Only inputs that were errors at the accepted revision change. A program is
+  first parsed exactly as at the accepted revision. Only when that fails and
+  its tokens hold `def`, a name, `(`, `self` or `this` and then `,` or `)`,
+  or a template whose text holds `def` and `self` or `this`, it is parsed
+  again with the same readings, dropping receivers. When that parse fails
+  too, the program reports its accepted error.
+- The five appended entries beginning
+  `Nucleoid declares the receiver of methods as a self parameter` through
+  `Nucleoid rolls back failed self parameter method calls and constructions`
+  specify the executable behavior.
+
 ## Class-level state version anchors
 
 - Extend NUC53 property histories inside per-instance class rules, without new
@@ -24104,6 +24158,115 @@ catch error:
 assert(common.map(s -> s.node), ["quantity"])
 quantity = 6
 assert(common[0].holds, 6)
+---
+# Nucleoid declares the receiver of methods as a self parameter
+
+class Account:
+    def __init__(self, owner, balance):
+        self.owner = owner
+        self.balance = balance
+    def deposit(self, amount):
+        self.balance = self.balance + amount
+        return self.balance
+    def covers(self, amount):
+        return self.balance >= amount
+account = Account("ada", 100)
+assert([account.owner, account.balance], ["ada", 100])
+assert(account.deposit(5), 105)
+assert([account.covers(100), account.covers(200)], [true, false])
+assert(Account.length, 1)
+account.balance
+# return: 105
+---
+# Nucleoid reads self parameters in arrow and same line methods
+
+class Tank:
+    def __init__(self, capacity, level = 0):
+        self.capacity = capacity
+        self.level = level
+    def free(self) => self.capacity - self.level
+    def fill(self, amount): self.level = self.level + amount
+    def full(this) -> this.level >= this.capacity
+tank = Tank(50)
+assert([tank.level, tank.free(), tank.full()], [0, 50, false])
+tank.fill(30)
+assert([tank.level, tank.free()], [30, 20])
+tank.fill(20)
+assert(tank.full(), true)
+tank.free()
+# return: 0
+---
+# Nucleoid constructs subclasses through self parameter initializers and super
+
+class Vessel:
+    def __init__(self, name, capacity):
+        self.name = name
+        self.capacity = capacity
+    def describe(self):
+        return self.name + " holds " + self.capacity
+class Tanker extends Vessel:
+    def __init__(self, name, capacity, cargo):
+        super(name, capacity * 1000)
+        self.cargo = cargo
+    def describe(self):
+        return self.name + " carries " + self.cargo
+barge = Vessel("barge", 40)
+tanker = Tanker("aurora", 80, "oil")
+assert([tanker.name, tanker.capacity, tanker.cargo], ["aurora", 80000, "oil"])
+assert([barge.describe(), tanker.describe()], ["barge holds 40", "aurora carries oil"])
+assert([Vessel.length, Tanker.length], [1, 1])
+tanker.capacity
+# return: 80000
+---
+# Nucleoid applies class level rules to instances of self parameter methods
+
+class Tank:
+    def __init__(self, level, capacity):
+        self.level = level
+        self.capacity = capacity
+    def drain(self, amount):
+        self.level = self.level - amount
+$Tank.ratio = $Tank.level / $Tank.capacity
+$Tank.low = $Tank.ratio < 0.25
+north = Tank(30, 100)
+south = Tank(90, 100)
+reserve = north.level + south.level
+assert([north.low, south.low, reserve], [false, false, 120])
+north.drain(10)
+assert([north.ratio, north.low, reserve], [0.2, true, 110])
+south.drain(80)
+assert([south.low, reserve], [true, 30])
+reserve
+# return: 30
+---
+# Nucleoid rolls back failed self parameter method calls and constructions
+
+class Account:
+    def __init__(self, owner, balance):
+        if balance < 0:
+            throw "NEGATIVE"
+        self.owner = owner
+        self.balance = balance
+    def withdraw(self, amount):
+        self.balance = self.balance - amount
+        if self.balance < 0:
+            throw "OVERDRAWN"
+        return self.balance
+account = Account("ada", 50)
+failure = ""
+try:
+    account.withdraw(80)
+catch error:
+    failure = error
+assert([failure, account.balance], ["OVERDRAWN", 50])
+try:
+    Account("bo", -5)
+catch error:
+    failure = error
+assert([failure, Account.length], ["NEGATIVE", 1])
+assert(account.withdraw(20), 30)
+account.balance
+# return: 30
 ---
 # Nucleoid flattens nested lists by one level
 

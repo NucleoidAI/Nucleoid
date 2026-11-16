@@ -2590,6 +2590,21 @@ shipping = price + quantity
 common.map(step => step.node)
 # return: ["price","quantity"]
 ---
+# Nucleoid accepts self parameters in methods and constructors
+
+class Counter:
+    def __init__(self, start):
+        self.count = start
+    def add(self, step):
+        self.count = self.count + step
+        return self.count
+    def doubled(self) => self.count * 2
+counter = Counter(3)
+assert(counter.add(4), 7)
+assert([counter.count, counter.doubled()], [7, 14])
+counter.doubled()
+# return: 14
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

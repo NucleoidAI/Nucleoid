@@ -19566,6 +19566,138 @@ quantity = 6
 assert(common[0].holds, 6)"#);
 }
 
+/// Nucleoid declares the receiver of methods as a self parameter
+#[rustfmt::skip]
+#[test]
+fn declares_the_receiver_of_methods_as_a_self_parameter() {
+    let mut run = runner();
+    run(r#"class Account:
+    def __init__(self, owner, balance):
+        self.owner = owner
+        self.balance = balance
+    def deposit(self, amount):
+        self.balance = self.balance + amount
+        return self.balance
+    def covers(self, amount):
+        return self.balance >= amount"#);
+    run(r#"account = Account("ada", 100)"#);
+    assert_eq!(run("[account.owner, account.balance]"), serde_json::json!(["ada", 100]));
+    assert_eq!(run("account.deposit(5)"), 105);
+    assert_eq!(run("[account.covers(100), account.covers(200)]"), serde_json::json!([true, false]));
+    assert_eq!(run("Account.length"), 1);
+    run(r#"account.balance
+
+# return: 105"#);
+}
+
+/// Nucleoid reads self parameters in arrow and same line methods
+#[rustfmt::skip]
+#[test]
+fn reads_self_parameters_in_arrow_and_same_line_methods() {
+    let mut run = runner();
+    run(r#"class Tank:
+    def __init__(self, capacity, level = 0):
+        self.capacity = capacity
+        self.level = level
+    def free(self) => self.capacity - self.level
+    def fill(self, amount): self.level = self.level + amount
+    def full(this) -> this.level >= this.capacity
+tank = Tank(50)
+assert([tank.level, tank.free(), tank.full()], [0, 50, false])
+tank.fill(30)
+assert([tank.level, tank.free()], [30, 20])
+tank.fill(20)
+assert(tank.full(), true)
+tank.free()
+# return: 0"#);
+}
+
+/// Nucleoid constructs subclasses through self parameter initializers and super
+#[rustfmt::skip]
+#[test]
+fn constructs_subclasses_through_self_parameter_initializers_and_super() {
+    let mut run = runner();
+    run(r#"class Vessel:
+    def __init__(self, name, capacity):
+        self.name = name
+        self.capacity = capacity
+    def describe(self):
+        return self.name + " holds " + self.capacity"#);
+    run(r#"class Tanker extends Vessel:
+    def __init__(self, name, capacity, cargo):
+        super(name, capacity * 1000)
+        self.cargo = cargo
+    def describe(self):
+        return self.name + " carries " + self.cargo"#);
+    run(r#"barge = Vessel("barge", 40)"#);
+    run(r#"tanker = Tanker("aurora", 80, "oil")"#);
+    assert_eq!(run("[tanker.name, tanker.capacity, tanker.cargo]"), serde_json::json!(["aurora", 80000, "oil"]));
+    assert_eq!(run("[barge.describe(), tanker.describe()]"), serde_json::json!(["barge holds 40", "aurora carries oil"]));
+    assert_eq!(run("[Vessel.length, Tanker.length]"), serde_json::json!([1, 1]));
+    run(r#"tanker.capacity
+
+# return: 80000"#);
+}
+
+/// Nucleoid applies class level rules to instances of self parameter methods
+#[rustfmt::skip]
+#[test]
+fn applies_class_level_rules_to_instances_of_self_parameter_methods() {
+    let mut run = runner();
+    run(r#"class Tank:
+    def __init__(self, level, capacity):
+        self.level = level
+        self.capacity = capacity
+    def drain(self, amount):
+        self.level = self.level - amount"#);
+    run("$Tank.ratio = $Tank.level / $Tank.capacity");
+    run("$Tank.low = $Tank.ratio < 0.25");
+    run("north = Tank(30, 100)");
+    run("south = Tank(90, 100)");
+    run("reserve = north.level + south.level");
+    assert_eq!(run("[north.low, south.low, reserve]"), serde_json::json!([false, false, 120]));
+    run("north.drain(10)");
+    assert_eq!(run("[north.ratio, north.low, reserve]"), serde_json::json!([0.2, true, 110]));
+    run("south.drain(80)");
+    assert_eq!(run("[south.low, reserve]"), serde_json::json!([true, 30]));
+    run(r#"reserve
+
+# return: 30"#);
+}
+
+/// Nucleoid rolls back failed self parameter method calls and constructions
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_self_parameter_method_calls_and_constructions() {
+    let mut run = runner();
+    run(r#"class Account:
+    def __init__(self, owner, balance):
+        if balance < 0:
+            throw "NEGATIVE"
+        self.owner = owner
+        self.balance = balance
+    def withdraw(self, amount):
+        self.balance = self.balance - amount
+        if self.balance < 0:
+            throw "OVERDRAWN"
+        return self.balance
+account = Account("ada", 50)
+failure = ""
+try:
+    account.withdraw(80)
+catch error:
+    failure = error
+assert([failure, account.balance], ["OVERDRAWN", 50])
+try:
+    Account("bo", -5)
+catch error:
+    failure = error
+assert([failure, Account.length], ["NEGATIVE", 1])
+assert(account.withdraw(20), 30)
+account.balance
+# return: 30"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

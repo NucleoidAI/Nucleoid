@@ -1210,10 +1210,59 @@ b.area
   [initializing constructor parameters](../nucleoid.spec.md#initializing-constructor-parameters)
   section.
 
+### Python-style self parameters
+
+- A method written with `def` directly in a class's indented body may
+  declare its receiver as a leading `self` parameter, as Python methods do
+  ([NUC 107](nuc-0107.md)). `def deposit(self, amount):` declares exactly
+  what `def deposit(amount):` declares, and a call passes no receiver:
+  `account.deposit(5)`.
+- `def __init__(self, ...)` declares the class's `init` constructor:
+  `def __init__(self, balance):` is exactly `def init(balance):`, so
+  `Account(100)` runs it. The parameters after the receiver keep their
+  prefixes, literal defaults, annotations and a final rest parameter. A
+  `def __init__` without the receiver stays an ordinary method of that name.
+- The receiver is `self` or `this`, first in the list and followed by `,` or
+  `)`, in a block, same-line or arrow method. It adds no binding: the body
+  reads the receiver through `self` or `this` as every method does, and
+  canonical source writes the method without it.
+- Only methods directly in a class's indented body take the receiver.
+  Functions, function literals, arrows, lambdas, `function` declarations,
+  same-line class bodies, class headers and bare signatures keep the
+  accepted `Expected a parameter but found keyword 'this'` error, and so do
+  a receiver with an annotation, a default or a prefix, a second receiver
+  and a receiver that is not first.
+- `super().__init__(...)` keeps its accepted behavior and passes no
+  arguments to the parent's constructor, so a subclass forwards them with
+  `super(...)`. `class Dog(Animal):` still declares a constructor parameter;
+  `class Dog extends Animal:` names the parent.
+- This is the exact
+  `Nucleoid accepts self parameters in methods and constructors` example
+  in `tests/reference.md`.
+
+```
+class Counter:
+    def __init__(self, start):
+        self.count = start
+    def add(self, step):
+        self.count = self.count + step
+        return self.count
+    def doubled(self) => self.count * 2
+counter = Counter(3)
+assert(counter.add(4), 7)
+assert([counter.count, counter.doubled()], [7, 14])
+counter.doubled()
+```
+
+- Exact rules are in the authoritative
+  [Python-style self parameters](../nucleoid.spec.md#python-style-self-parameters)
+  section.
+
 ### Instance keywords
 
 - `this` and `self` are interchangeable keywords for the current instance in constructors, methods, and class-level rules.
 - Either spelling reads and writes the same properties; both may be mixed in one body without declaring a receiver parameter.
+- A method may still declare its receiver as a leading `self` parameter, which adds no binding; see [Python-style self parameters](#python-style-self-parameters).
 - Neither keyword may be rebound. Using either without a current instance raises `ReferenceError("this is not defined")`; rebinding either raises `TypeError("Cannot assign to 'this'")`.
 
 ### Instances
@@ -4244,6 +4293,9 @@ class Name(this.param: type)           the same constructor, assigned by the pre
 class Name(self.a, b = 1, ...this.c)   either receiver; defaults and a final rest kept
 class Name:
     def init(this.param):              the same prefix in an init of the class body
+class Name:
+    def __init__(self, param):         Python's constructor: exactly def init(param): (NUC 107)
+    def method(self, a) => a           a leading self or this receiver: exactly def method(a) => a
 
 instance = Name(param=expression)      label binding without caller assignment
 instance = Name((param=expression))    explicit positional assignment argument

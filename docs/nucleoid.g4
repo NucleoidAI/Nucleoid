@@ -385,8 +385,38 @@ classMember
 
 methodDecl
     : DEF INIT constructorParameters defBody
+    | DEF (INIT | PYTHON_INIT) receiverConstructorParameters defBody
+    | DEF name receiverParameters defBody
     | FUNCTION INIT constructorParameters block
     | functionDecl
+    ;
+
+/*
+ * Receiver-parameter contract (NUC 107):
+ * - The receiverParameters and receiverConstructorParameters alternatives
+ *   of methodDecl apply only in the receiver parse of the parse-pass
+ *   contract, and only to a DEF written directly in a class's indented
+ *   body. Every other parameter list, including those of a same-line class
+ *   body, keeps its accepted reading and error.
+ * - The receiver is THIS ('this' or 'self') directly after LPAREN and
+ *   directly followed by COMMA or RPAREN. It is dropped: the method has
+ *   exactly the parameters after it and binds no receiver name.
+ * - DEF INIT or DEF '__init__' with a receiver declares the method 'init',
+ *   whose list keeps constructorParameter prefixes. DEF '__init__' without
+ *   one stays an ordinary method named '__init__'.
+ * - The tree is that of the spelling without the receiver, with 'init' for
+ *   '__init__'; no syntax-tree node records the receiver.
+ */
+receiverParameters
+    : LPAREN receiver (COMMA (parameter (COMMA parameter)* COMMA?)?)? RPAREN
+    ;
+
+receiverConstructorParameters
+    : LPAREN receiver (COMMA (constructorParameter (COMMA constructorParameter)* COMMA?)?)? RPAREN
+    ;
+
+receiver
+    : THIS
     ;
 
 /*
@@ -805,6 +835,7 @@ enumName
     | LAST
     | PREVIOUS
     | INIT
+    | PYTHON_INIT
     ;
 
 // Reserved words may follow '.' as properties, but are not declared names
@@ -889,6 +920,7 @@ FIRST            : 'first';
 LAST             : 'last';
 PREVIOUS         : 'previous';
 INIT             : 'init';
+PYTHON_INIT      : '__init__';
 
 STRICT_EQUAL     : '===';
 STRICT_NOT_EQUAL : '!==';
@@ -1015,6 +1047,12 @@ fragment REGEX_CHAR
  * inside an ifStmt, the parse fails with that rule's error at the first
  * such EVERY instead. When every pass fails, the error chosen above is
  * reported, as before.
+ * Only when this whole sequence fails, and the tokens hold DEF, a name,
+ * LPAREN, THIS and then COMMA or RPAREN, or a template whose text holds
+ * 'def' and 'self' or 'this', the same sequence runs once more reading the
+ * receiverParameters of the receiver-parameter contract. Every pass, probe,
+ * tentative statement and interpolation of that run reads them. When it
+ * fails too, the error of the first sequence is reported unchanged.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -1034,6 +1072,8 @@ fragment REGEX_CHAR
  * assert: a, b             -> assert(a, b).
  * def f(x) => e            -> a function body returning e.
  * class C(this.x)          -> C(x) with this.x = x at constructor start.
+ * def m(self, a): s        -> def m(a): s, in a class body's receiver parse.
+ * def __init__(self, a): s -> def init(a): s, also with 'this'.
  * lambda a, b: e           -> (a, b) => e.
  * f(.a.b)                  -> f(v => v.a.b).
  * [e for x in s]           -> s.map(x => e).
@@ -1093,4 +1133,8 @@ fragment REGEX_CHAR
  * Membership tests: relationalOperator in parser\precedence.rs, the
  * expressionInput context in parser.rs and their evaluation in
  * src\lang\ast\operator.rs.
+ * Self parameters: parser\self_parameter.rs, with the receiver parse in
+ * src\lang\ast\parser.rs, the method in parser\class.rs, the shared list
+ * loop in parser\function.rs, and the mode carried into the accepted probe
+ * in parser\statement.rs and into interpolations in parser\template.rs.
  */

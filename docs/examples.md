@@ -3732,6 +3732,36 @@ steel = 9
   dates. See [NUC 106](nuc-0106.md) and the
   [root contract](../nucleoid.spec.md#intersect-and-except-reasoning-selections).
 
+## Python-style self parameters
+
+**Python-style methods keep a tank farm's rules live**
+
+```nuc
+class Tank:
+    def __init__(self, name, level, capacity):
+        self.name = name
+        self.level = level
+        self.capacity = capacity
+    def pump(self, amount):
+        self.level = self.level + amount
+$Tank.full = $Tank.level >= $Tank.capacity
+east = Tank("east", 70, 80)
+west = Tank("west", 20, 80)
+east.pump(10)
+assert([east.full, west.full], [true, false])
+west.pump(60)
+assert(west.full, true)
+[east.level, west.level]
+# return: [80,80]
+```
+
+- Each tank is written as a Python class: `def __init__(self, ...)` is its
+  constructor and `def pump(self, amount)` a method whose leading `self` is
+  the receiver, so `east.pump(10)` passes only the amount.
+- The class-level rule `$Tank.full` follows every pump, as it would for the
+  same methods written without `self`. See [NUC 107](nuc-0107.md) and the
+  [root contract](../nucleoid.spec.md#python-style-self-parameters).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

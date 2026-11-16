@@ -5,6 +5,8 @@ use crate::error::Result;
 use crate::lang::ast::lexer::{Keyword, Token};
 use crate::lang::ast::{ClassDecl, Expr, Function, FunctionBody, Parameter, Stmt};
 
+pub(super) const CONSTRUCTOR: &str = "init";
+
 fn class_declaration(
     name: String,
     parent: Option<String>,
@@ -31,6 +33,22 @@ pub(super) fn initializer(name: &str) -> Stmt {
         },
         value: Expr::Identifier(name.to_string()),
     }
+}
+
+pub(super) fn declared_method(
+    name: String,
+    ParameterList {
+        parameters,
+        initializers: mut statements,
+    }: ParameterList,
+    body: Vec<Stmt>,
+) -> Arc<Function> {
+    statements.extend(body);
+    Arc::new(Function {
+        name: Some(name),
+        parameters,
+        body: FunctionBody::Block(statements),
+    })
 }
 
 impl Parser {
@@ -176,23 +194,19 @@ impl Parser {
     }
 
     fn method_declaration(&mut self) -> Result<Arc<Function>> {
-        let adoptable = matches!(self.peek_at(1), Token::Identifier(name) if name == "init")
+        if let Some(method) = self.receiver_method() {
+            return self.receiver_declaration(method);
+        }
+        let adoptable = matches!(self.peek_at(1), Token::Identifier(name) if name == CONSTRUCTOR)
             && self.peek_at(2) == &Token::LeftParen;
         if !adoptable {
             return self.function_declaration();
         }
         let spelling = self.function_keyword()?;
         let name = self.function_name()?;
-        let ParameterList {
-            parameters,
-            initializers: mut body,
-        } = self.constructor_parameters()?;
-        body.extend(self.declaration_body(spelling)?);
-        Ok(Arc::new(Function {
-            name: Some(name),
-            parameters,
-            body: FunctionBody::Block(body),
-        }))
+        let parameters = self.constructor_parameters()?;
+        let body = self.declaration_body(spelling)?;
+        Ok(declared_method(name, parameters, body))
     }
 
     pub(super) fn declared_type(&mut self) -> Result<String> {

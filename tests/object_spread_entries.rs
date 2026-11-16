@@ -278,7 +278,7 @@ fn no_earlier_document_case_writes_a_spread_entry() {
         with_spreads += usize::from(uses);
     }
     assert_eq!(with_spreads, 11);
-    assert_eq!(cases, 1105);
+    assert_eq!(cases, 1113);
 }
 
 #[test]
@@ -302,7 +302,7 @@ fn programs_without_spreads_file_no_entry_observations() {
         );
         programs += 1;
     }
-    assert_eq!(programs, 1094);
+    assert_eq!(programs, 1102);
 }
 
 #[test]

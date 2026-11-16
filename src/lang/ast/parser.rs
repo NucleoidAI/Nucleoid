@@ -12,6 +12,7 @@ mod precedence;
 mod predicate;
 mod primary;
 mod receiver;
+mod self_parameter;
 mod statement;
 mod template;
 
@@ -23,6 +24,7 @@ use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, S
 use at_variable::Rejection;
 use is_assignment::Items;
 use receiver::{Dots, Receiver};
+use self_parameter::Selves;
 
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
@@ -119,6 +121,7 @@ struct Parser {
     in_class: bool,
     dots: Dots,
     receiver: Receiver,
+    selves: Selves,
     /// Python-style conditional attempts by `if` token position and nesting
     /// depth, which together decide one: the qualified condition and the
     /// position after its `else`, or `None`. A re-parse of the same source
@@ -203,6 +206,7 @@ impl Parser {
             in_class: false,
             dots: Dots::Accepted,
             receiver: Receiver::Absent,
+            selves: Selves::Accepted,
             python_conditions: HashMap::new(),
             variable_conditions: HashMap::new(),
             item_conditions: HashMap::new(),
@@ -219,7 +223,25 @@ impl Parser {
     }
 
     fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
-        let accepted = match self.attempt_accepted(&parse) {
+        let accepted = match self.attempt_readings(&parse) {
+            Ok(parsed) => return Ok(parsed),
+            Err(error) => error,
+        };
+        if !self.mentions_self_parameters() {
+            return Err(accepted);
+        }
+        *self = Parser {
+            selves: Selves::Dropped,
+            ..Parser::new(std::mem::take(&mut self.tokens))
+        };
+        match self.attempt_readings(&parse) {
+            Ok(parsed) => Ok(parsed),
+            Err(_) => Err(accepted),
+        }
+    }
+
+    fn attempt_readings<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {
+        let accepted = match self.attempt_accepted(parse) {
             Ok(parsed) => return self.settle(parsed),
             Err(error) => error,
         };
@@ -236,7 +258,7 @@ impl Parser {
             words,
             lists,
             dots: Dots::Receivers,
-            ..Parser::new(std::mem::take(&mut self.tokens))
+            ..self.rewound()
         };
         let parsed = parse(self).map_err(|reread| furthest(accepted, reread))?;
         self.settle(parsed)
@@ -249,7 +271,7 @@ impl Parser {
         }
         *self = Parser {
             lists: Lists::Comprehensions,
-            ..Parser::new(std::mem::take(&mut self.tokens))
+            ..self.rewound()
         };
         self.attempt_words(parse)
     }
@@ -265,9 +287,16 @@ impl Parser {
         *self = Parser {
             words: true,
             lists: self.lists,
-            ..Parser::new(std::mem::take(&mut self.tokens))
+            ..self.rewound()
         };
         parse(self).map_err(|retried| furthest(accepted, retried))
+    }
+
+    fn rewound(&mut self) -> Self {
+        Parser {
+            selves: self.selves,
+            ..Parser::new(std::mem::take(&mut self.tokens))
+        }
     }
 
     fn settle<T>(&self, parsed: T) -> Result<T> {
