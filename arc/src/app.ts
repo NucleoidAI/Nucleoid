@@ -8,7 +8,7 @@ import fs from "node:fs/promises";
 
 // Genesis puzzle_id: 3aa6fb7a
 export async function start(
-  puzzle_id: string = "d631b094",
+  puzzle_id: string = "3aa6fb7a",
   only_puzzle_dataset: boolean = false
 ) {
   const { arc_train, test_input_matrix, test_output_matrix } =
@@ -49,23 +49,6 @@ export async function start(
   train_dataset.declarations = declarations;
   train_dataset.output_canvas = output_canvas;
 
-  const construct = async (dataset, build): Promise<void> => {
-    for (const instance of dataset.instances) {
-      const { implementation, input_value } = await build({
-        puzzle_id,
-        only_puzzle_dataset,
-        train_dataset,
-        instance,
-        input_matrix: dataset.input_matrix,
-      });
-
-      instance.implementation = implementation;
-      instance.input_value = input_value;
-    }
-  };
-
-  const synthesized_dataset = [];
-
   for (const dataset of train_dataset.dataset) {
     const { instances } = await analyzer.instances({
       puzzle_id,
@@ -77,28 +60,7 @@ export async function start(
       instance.instance_name = next_instance_name();
     }
 
-    const { dataset: synthesized } = analyzer.synthesize({
-      instances,
-      output_canvas,
-    });
-
-    synthesized_dataset.push(...synthesized);
-
     dataset.instances = instances;
-
-    await construct(dataset, analyzer.value);
-  }
-
-  // The synthesized pairs follow the training pairs, and their instances are
-  // derived from their sources without an LLM call.
-  for (const dataset of synthesized_dataset) {
-    for (const instance of dataset.instances) {
-      instance.instance_name = next_instance_name();
-    }
-
-    train_dataset.dataset.push(dataset);
-
-    await construct(dataset, analyzer.derive);
   }
 
   await analyzer.state(train_dataset);
