@@ -5555,6 +5555,79 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed key sorting updates` specify the executable
   behavior. `tests/list_key_sorting.rs` executes the rest.
 
+## List and population partitions
+
+- [NUC 108](docs/nuc-0108.md) adds the read-only list query `partition` to
+  lists and class instance lists, the receivers of `filter`, through the same
+  shared list-query route. No syntax, keyword or error type is added.
+- `RECEIVER.partition(predicate)` returns a new list of exactly two new lists.
+  The first holds the items whose predicate result is truthy, the items that
+  `RECEIVER.filter(predicate)` keeps, and the second holds every other item.
+  Both keep receiver order. The items are the items themselves, unchanged: an
+  object or instance stays the same object. An empty receiver gives `[[], []]`.
+- **Truthiness.** The predicate's result decides as it decides for `filter`:
+  `false`, `0`, `-0`, NaN, `""`, `null` and undefined send an item to the
+  second list, and every other value, including `[]`, `{}`, `"0"` and every
+  date, to the first. The second list is therefore exactly the list that
+  `RECEIVER.filter(item -> not predicate(item))` keeps. A negated comparison
+  is not always that complement: for an item that is NaN, undefined, as a
+  missing property reads, a string that is not numeric or an object, both
+  `item > 4` and `item <= 4` are `false`, so `xs.partition(item -> item > 4)`
+  puts that item in the second list, where `xs.filter(item -> item <= 4)`
+  drops it. The keyword `undefined` is `null`, which compares as `0`.
+- **Accepted spelling.** For a predicate without side effects,
+  `RECEIVER.partition(p)` evaluates to exactly the list that
+  `[RECEIVER.filter(p), RECEIVER.filter(item -> not p(item))]` evaluates to.
+  `partition` reads the receiver once and calls the predicate once per item,
+  where that spelling reads the receiver twice and calls the predicate twice
+  for every item. So a receiver that creates objects, such as a list literal
+  of records, gives the spelling's second list equal objects of its second
+  evaluation, while `partition` keeps the objects of its one evaluation in
+  both lists.
+- **Read-only.** The receiver is never written, whatever its kind.
+- **Predicates.** The predicate is required. It is called once for every item,
+  in receiver order, with the item as its only argument; further parameters
+  are `null`. The call order and the argument are those of `filter`. A missing
+  first argument, or one that is not a function, including `null`, raises
+  `TypeError("partition expects a function")`, even on an empty receiver.
+- **Reads.** Reads inside a predicate follow the existing rules, so a
+  predicate that reads a `null` binding, parameter or property settles a
+  declaration to `null`, as it settles one that uses `filter`, while an item
+  the predicate does not read stays an item: after `xs = [1, null]`,
+  `r = xs.partition(x -> true)` stores `[[1, null], []]`.
+- **Receivers.** The receiver is a list, however it is reached, or a class's
+  instance list in population order, named by the class, by a variable that
+  holds the class or by `$Name`. On a class name, `partition` is the
+  population query even when the class declares an instance method
+  `partition`; its instances keep calling that method.
+- **Live.** `partition` follows the shared rules of the list queries: it reads
+  the receiver before its arguments and evaluates every supplied argument
+  once, left to right, including unused extras. A declaration that uses it
+  depends on the list or population, on its argument expressions and on
+  whatever the predicate reads for every item, so list mutations, new and
+  deleted instances and property changes re-evaluate it, in class-level rules
+  too, and an item moves to the other list when what its predicate reads
+  changes. Predicate errors roll back through the existing transaction. A
+  null or undefined receiver yields undefined without evaluating the
+  arguments.
+- **Cost.** A call makes one pass over the items and calls the predicate once
+  per item, so its cost grows linearly with the receiver.
+- **Rendering.** The call keeps its ordinary rendering, so
+  `split = readings.partition(reading -> reading > limit)` explains as
+  `split = readings.partition(function())`, and a `partition` call and its
+  accepted spelling are different statements and graph keys.
+- **Unchanged.** Only calls of `partition` on lists and class populations
+  change; they raised `TypeError("<receiver>.partition is not a function")`.
+  `partition of xs` stays `SyntaxError("Unexpected keyword 'of'")`. Property
+  reads such as `xs.partition`, bindings and object properties named
+  `partition`, `partition(...)` without a definition, `Math.partition` and
+  the other built-in namespaces, instance methods named `partition` called on
+  an instance, `filter` and `count` keep their accepted results.
+- The six entries beginning
+  `Nucleoid partitions lists into the items a predicate keeps and drops`
+  through `Nucleoid rolls back failed partition updates` specify the
+  executable behavior. `tests/list_partitions.rs` executes the rest.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -24267,6 +24340,107 @@ assert([failure, Account.length], ["NEGATIVE", 1])
 assert(account.withdraw(20), 30)
 account.balance
 # return: 30
+---
+# Nucleoid partitions lists into the items a predicate keeps and drops
+
+readings = [12, 31, 7, 45, 18]
+limit = 20
+split = readings.partition(reading -> reading > limit)
+assert(split, [[31, 45], [12, 7, 18]])
+readings.push(26)
+assert(split, [[31, 45, 26], [12, 7, 18]])
+limit = 15
+assert(split, [[31, 45, 18, 26], [12, 7]])
+assert(readings, [12, 31, 7, 45, 18, 26])
+readings = []
+assert(split, [[], []])
+split.length
+# return: 2
+---
+# Nucleoid partitions class populations with partition
+
+class Order(item, shipped):
+    this.item = item
+    this.shipped = shipped
+book = Order.partition(order -> order.shipped)
+assert(book, [[], []])
+pen = Order("pen", true)
+ink = Order("ink", false)
+cap = Order("cap", true)
+assert(book, [[pen, cap], [ink]])
+ink.shipped = true
+pen.shipped = false
+assert(book, [[ink, cap], [pen]])
+delete pen.item
+delete pen.shipped
+delete pen
+assert(book, [[ink, cap], []])
+book[0][0] == ink
+# return: true
+---
+# Nucleoid fills an empty side of a partition as its items change
+
+tasks = [{name: "plan", done: true}, {name: "draw", done: true}]
+board = tasks.partition(task -> task.done)
+assert(board, [tasks, []])
+tasks.push({name: "test", done: false})
+assert(board[1][0] == tasks[2], true)
+tasks[0].done = false
+assert(board.map(side -> side.map(task -> task.name)), [["draw"], ["plan", "test"]])
+tasks.shift()
+board[1].map(task -> task.name)
+# return: ["test"]
+---
+# Nucleoid maps and counts each side of a partition
+
+class Shape(name, area):
+    this.name = name
+    this.area = area
+parts = Shape.partition(shape -> shape.area >= 10)
+names = parts.map(side -> side.map(shape -> shape.name))
+sizes = parts.map(side -> side.length)
+Shape("square", 16)
+Shape("dot", 1)
+bar = Shape("bar", 12)
+assert([names, sizes], [[["square", "bar"], ["dot"]], [2, 1]])
+bar.area = 4
+assert(names, [["square"], ["dot", "bar"]])
+Shape("ring", 30)
+sizes
+# return: [2,2]
+---
+# Nucleoid partitions items by the truthiness of the predicate result
+
+answers = ["yes", "", 0, 7, false, "no"]
+given = answers.partition(answer -> answer)
+assert(given, [["yes", 7, "no"], ["", 0, false]])
+answers.push([], "", true)
+answers.shift()
+assert(given, [[7, "no", [], true], ["", 0, false, ""]])
+given[1].length
+# return: 4
+---
+# Nucleoid rolls back failed partition updates
+
+parcels = [{code: "b2", kg: 4}, {code: "A7", kg: 9}]
+weights = parcels.partition(parcel -> parcel.code.toUpperCase() < "B").map(side -> side.map(parcel -> parcel.kg))
+failure = ""
+try:
+    parcels.push({code: 7, kg: 1})
+catch error:
+    failure = error
+assert(failure, TypeError("number.toUpperCase is not a function"))
+assert([parcels.length, weights], [2, [[9], [4]]])
+parcels.push({code: "a1", kg: 2})
+assert(weights, [[9, 2], [4]])
+try:
+    parcels[0].code = "a0"
+    assert(weights, [[4, 9, 2], []])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+weights
+# return: [[9,2],[4]]
 ---
 # Nucleoid flattens nested lists by one level
 

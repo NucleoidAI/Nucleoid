@@ -3762,6 +3762,33 @@ assert(west.full, true)
   same methods written without `self`. See [NUC 107](nuc-0107.md) and the
   [root contract](../nucleoid.spec.md#python-style-self-parameters).
 
+## List and population partitions
+
+**Partition keeps every store's shelves to restock apart from the stocked ones**
+
+```nuc
+class Store(name, shelves):
+    this.name = name
+    this.shelves = shelves
+$Store.restock = $Store.shelves.partition(shelf -> shelf.have < shelf.need).map(side -> side.map(shelf -> shelf.item))
+north = Store("north", [{item: "tea", have: 2, need: 5}, {item: "jam", have: 9, need: 4}, {item: "oat", have: 1, need: 3}])
+south = Store("south", [{item: "rice", have: 8, need: 2}])
+assert([north.restock, south.restock], [[["tea", "oat"], ["jam"]], [[], ["rice"]]])
+north.shelves[0].have = 7
+south.shelves.push({item: "salt", have: 0, need: 1})
+[north.restock, south.restock]
+# return: [[["oat"],["tea","jam"]],[["salt"],["rice"]]]
+```
+
+- A class-level rule keeps each store's plan: the items of the shelves that
+  have less than they need, then the items of the others.
+  `$Store.shelves.partition(...)` splits the store's own list, so every store
+  has its own two sides, each in shelf order.
+- A refilled shelf moves to the stocked side, and a new empty shelf fills the
+  south store's restock side, which started empty. See
+  [NUC 108](nuc-0108.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-partitions).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**
