@@ -60,6 +60,7 @@ impl Runtime {
             "list" | "all" if source == ListSource::Population => Ok(Value::List(items)),
             "filter" => self.filter_items(items, &expect_function(predicate, "filter")?),
             "count" => self.count_items(&items, &expect_function(predicate, "count")?),
+            "partition" => self.partition_items(items, &expect_function(predicate, "partition")?),
             "map" => self.map_items(items, &expect_function(predicate, "map")?, false),
             "flatMap" => self.map_items(items, &expect_function(predicate, "flatMap")?, true),
             "flat" => Ok(Value::List(self.flatten_items(items, arguments.first()))),
@@ -109,7 +110,7 @@ impl Runtime {
         let mut matched = Vec::new();
 
         for item in items {
-            if self.invoke(function, std::slice::from_ref(&item))?.truthy() {
+            if self.accepts(function, &item)? {
                 matched.push(item);
             }
         }
@@ -121,12 +122,31 @@ impl Runtime {
         let mut matched = 0_usize;
 
         for item in items {
-            if self.invoke(function, std::slice::from_ref(item))?.truthy() {
+            if self.accepts(function, item)? {
                 matched += 1;
             }
         }
 
         Ok(Value::Number(number::from_usize(matched)))
+    }
+
+    fn partition_items(&mut self, items: Vec<Value>, function: &Arc<Function>) -> Result<Value> {
+        let mut kept = Vec::new();
+        let mut rest = Vec::new();
+
+        for item in items {
+            if self.accepts(function, &item)? {
+                kept.push(item);
+            } else {
+                rest.push(item);
+            }
+        }
+
+        Ok(Value::List(vec![Value::List(kept), Value::List(rest)]))
+    }
+
+    fn accepts(&mut self, function: &Arc<Function>, item: &Value) -> Result<bool> {
+        Ok(self.invoke(function, std::slice::from_ref(item))?.truthy())
     }
 
     fn map_items(
@@ -169,7 +189,7 @@ impl Runtime {
         wanted: bool,
     ) -> Result<bool> {
         for item in items {
-            if self.invoke(function, std::slice::from_ref(item))?.truthy() == wanted {
+            if self.accepts(function, item)? == wanted {
                 return Ok(true);
             }
         }
@@ -224,7 +244,7 @@ impl Runtime {
         candidates: impl Iterator<Item = (usize, &'v Value)>,
     ) -> Result<Option<usize>> {
         for (position, item) in candidates {
-            if self.invoke(function, std::slice::from_ref(item))?.truthy() {
+            if self.accepts(function, item)? {
                 return Ok(Some(position));
             }
         }

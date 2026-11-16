@@ -59,6 +59,7 @@ const LIST_MEMBERS: &[&str] = &[
     "length",
     "map",
     "filter",
+    "partition",
     "count",
     "reduce",
     "sum",

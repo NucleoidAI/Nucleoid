@@ -142,6 +142,23 @@ fn completion_offers_sort_by_beside_some_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_partition_on_lists_and_instance_lists() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("scores = [3, 1]\nclass Bid\nBid()\nparts = 1")
+        .unwrap();
+    for (prefix, expected) in [
+        ("scores.pa", ["scores.partition"]),
+        ("Bid.pa", ["Bid.partition"]),
+    ] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+    let completion = Completion::find(&runtime, &editor::new("par"), false).unwrap();
+    assert_eq!(completion.candidates, ["parts"]);
+}
+
+#[test]
 fn completion_offers_the_average_query_on_lists_and_instance_lists() {
     let mut runtime = Runtime::new();
     runtime

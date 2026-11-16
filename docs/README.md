@@ -2507,7 +2507,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), and `sortBy` ([NUC 105](nuc-0105.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), and `partition` ([NUC 108](nuc-0108.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -3611,6 +3611,59 @@ book[1].who
   [list and population sorting by key](../nucleoid.spec.md#list-and-population-sorting-by-key)
   section.
 
+### List and population partitions
+
+```
+scores = [72, 45, 90, 58]
+passing = scores.partition(score -> score >= 60)
+class Bid(who, amount):
+    this.who = who
+    this.amount = amount
+ada = Bid("ada", 40)
+Bid("bo", 65)
+book = Bid.partition(bid -> bid.amount > 50)
+assert(passing, [[72, 90], [45, 58]])
+assert(book.map(side -> side.map(bid -> bid.who)), [["bo"], ["ada"]])
+scores.push(61, 12)
+Bid("col", 30)
+ada.amount = 70
+assert(passing, [[72, 90, 61], [45, 58, 12]])
+assert(book.map(side -> side.map(bid -> bid.who)), [["ada", "bo"], ["col"]])
+assert(scores[0], 72)
+book[1][0].who
+```
+
+- This is the complete
+  `Nucleoid partitions lists and populations with partition` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `"col"`.
+- [NUC 108](nuc-0108.md) adds `partition(predicate)` to lists and class
+  instance lists. The result is a list of two lists: the items the predicate
+  keeps, as `filter` keeps them, then every other item, each list in receiver
+  order and each item the item itself. An empty list or class gives
+  `[[], []]`.
+- The predicate's result decides by truthiness, as for `filter`, so the second
+  list is exactly what `filter(item -> not predicate(item))` keeps. A negated
+  comparison is not always that complement: NaN, undefined, as a missing
+  property reads, objects and strings that are not numeric fail both
+  `item > 4` and `item <= 4`.
+- For a predicate without side effects, `xs.partition(p)` is exactly
+  `[xs.filter(p), xs.filter(item -> not p(item))]`, which calls the predicate
+  twice for every item where `partition` calls it once.
+- The predicate is required and is called once per item, in order, with only
+  the item. A missing predicate, or one that is not a function, including
+  `null`, raises `TypeError("partition expects a function")`, even on an empty
+  receiver.
+- Partitions are read-only and live: a declaration follows the list or
+  population, the arguments and what the predicate reads, in class-level rules
+  too, so an item moves to the other list when what its predicate reads
+  changes, as `ada` does here. On a class name, `Name.partition(...)` is the
+  population query even when the class declares an instance method
+  `partition`; instances keep calling the method.
+- The authoritative contract is the
+  [list and population partitions](../nucleoid.spec.md#list-and-population-partitions)
+  section.
+
 ### List and population averages
 
 ```
@@ -4182,6 +4235,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `mode` selector that is not a function, including `null`, even on an empty receiver | `mode expects a function` |
 | Missing or non-function `maxBy` or `minBy` selector, including `null`, even on an empty receiver | `maxBy expects a function` or `minBy expects a function` |
 | Missing or non-function `sortBy` selector, including `null`, even on an empty receiver | `sortBy expects a function` |
+| Missing or non-function `partition` predicate, including `null`, even on an empty receiver | `partition expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
 | An `in` or `not in` membership test over a value that is neither null nor a list, a string or a declared class's instances | `<collection> is not a collection` |
 | A `depth` stage limit that is neither `null`, undefined nor a non-negative integer number | `<limit> is not a non-negative integer` |
@@ -4425,6 +4479,7 @@ items.maxBy(key)  Name.minBy(key)     live first item with the largest or smalle
 items.average()  Name.average(selector) live mean: exactly items.sum() / items.length (NUC 80)
 items.median()  Name.median(selector)  live middle value; even counts take (lower + upper) / 2 (NUC 84)
 items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties keep receiver order (NUC 105)
+items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

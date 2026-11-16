@@ -2605,6 +2605,27 @@ assert([counter.count, counter.doubled()], [7, 14])
 counter.doubled()
 # return: 14
 ---
+# Nucleoid partitions lists and populations with partition
+
+scores = [72, 45, 90, 58]
+passing = scores.partition(score -> score >= 60)
+class Bid(who, amount):
+    this.who = who
+    this.amount = amount
+ada = Bid("ada", 40)
+Bid("bo", 65)
+book = Bid.partition(bid -> bid.amount > 50)
+assert(passing, [[72, 90], [45, 58]])
+assert(book.map(side -> side.map(bid -> bid.who)), [["bo"], ["ada"]])
+scores.push(61, 12)
+Bid("col", 30)
+ada.amount = 70
+assert(passing, [[72, 90, 61], [45, 58, 12]])
+assert(book.map(side -> side.map(bid -> bid.who)), [["ada", "bo"], ["col"]])
+assert(scores[0], 72)
+book[1][0].who
+# return: "col"
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

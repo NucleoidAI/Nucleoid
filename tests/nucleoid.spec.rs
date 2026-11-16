@@ -19698,6 +19698,152 @@ account.balance
 # return: 30"#);
 }
 
+/// Nucleoid partitions lists into the items a predicate keeps and drops
+#[rustfmt::skip]
+#[test]
+fn partitions_lists_into_the_items_a_predicate_keeps_and_drops() {
+    let mut run = runner();
+    run("readings = [12, 31, 7, 45, 18]");
+    run("limit = 20");
+    run("split = readings.partition(reading -> reading > limit)");
+    assert_eq!(run("split"), serde_json::json!([[31, 45], [12, 7, 18]]));
+    run("readings.push(26)");
+    assert_eq!(run("split"), serde_json::json!([[31, 45, 26], [12, 7, 18]]));
+    run("limit = 15");
+    assert_eq!(run("split"), serde_json::json!([[31, 45, 18, 26], [12, 7]]));
+    assert_eq!(run("readings"), serde_json::json!([12, 31, 7, 45, 18, 26]));
+    run("readings = []");
+    assert_eq!(run("split"), serde_json::json!([[], []]));
+    run(r#"split.length
+
+# return: 2"#);
+}
+
+/// Nucleoid partitions class populations with partition
+#[rustfmt::skip]
+#[test]
+fn partitions_class_populations_with_partition() {
+    let mut run = runner();
+    run(r#"class Order(item, shipped):
+    this.item = item
+    this.shipped = shipped"#);
+    run("book = Order.partition(order -> order.shipped)");
+    assert_eq!(run("book"), serde_json::json!([[], []]));
+    run(r#"pen = Order("pen", true)"#);
+    run(r#"ink = Order("ink", false)"#);
+    run(r#"cap = Order("cap", true)"#);
+    {
+        let actual = run("book");
+        let expected = run("([[pen, cap], [ink]])");
+        assert_eq!(actual, expected);
+    }
+    run("ink.shipped = true");
+    run("pen.shipped = false");
+    {
+        let actual = run("book");
+        let expected = run("([[ink, cap], [pen]])");
+        assert_eq!(actual, expected);
+    }
+    run("delete pen.item");
+    run("delete pen.shipped");
+    run("delete pen");
+    {
+        let actual = run("book");
+        let expected = run("([[ink, cap], []])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"book[0][0] == ink
+
+# return: true"#);
+}
+
+/// Nucleoid fills an empty side of a partition as its items change
+#[rustfmt::skip]
+#[test]
+fn fills_an_empty_side_of_a_partition_as_its_items_change() {
+    let mut run = runner();
+    run(r#"tasks = [{name: "plan", done: true}, {name: "draw", done: true}]"#);
+    run("board = tasks.partition(task -> task.done)");
+    {
+        let actual = run("board");
+        let expected = run("([tasks, []])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"tasks.push({name: "test", done: false})"#);
+    assert_eq!(run("board[1][0] == tasks[2]"), true);
+    run("tasks[0].done = false");
+    assert_eq!(run("board.map(side -> side.map(task -> task.name))"), serde_json::json!([["draw"], ["plan", "test"]]));
+    run("tasks.shift()");
+    run(r#"board[1].map(task -> task.name)
+
+# return: ["test"]"#);
+}
+
+/// Nucleoid maps and counts each side of a partition
+#[rustfmt::skip]
+#[test]
+fn maps_and_counts_each_side_of_a_partition() {
+    let mut run = runner();
+    run(r#"class Shape(name, area):
+    this.name = name
+    this.area = area"#);
+    run("parts = Shape.partition(shape -> shape.area >= 10)");
+    run("names = parts.map(side -> side.map(shape -> shape.name))");
+    run("sizes = parts.map(side -> side.length)");
+    run(r#"Shape("square", 16)"#);
+    run(r#"Shape("dot", 1)"#);
+    run(r#"bar = Shape("bar", 12)"#);
+    assert_eq!(run("[names, sizes]"), serde_json::json!([[["square", "bar"], ["dot"]], [2, 1]]));
+    run("bar.area = 4");
+    assert_eq!(run("names"), serde_json::json!([["square"], ["dot", "bar"]]));
+    run(r#"Shape("ring", 30)"#);
+    run(r#"sizes
+
+# return: [2,2]"#);
+}
+
+/// Nucleoid partitions items by the truthiness of the predicate result
+#[rustfmt::skip]
+#[test]
+fn partitions_items_by_the_truthiness_of_the_predicate_result() {
+    let mut run = runner();
+    run(r#"answers = ["yes", "", 0, 7, false, "no"]"#);
+    run("given = answers.partition(answer -> answer)");
+    assert_eq!(run("given"), serde_json::json!([["yes", 7, "no"], ["", 0, false]]));
+    run(r#"answers.push([], "", true)"#);
+    run("answers.shift()");
+    assert_eq!(run("given"), serde_json::json!([[7, "no", [], true], ["", 0, false, ""]]));
+    run(r#"given[1].length
+
+# return: 4"#);
+}
+
+/// Nucleoid rolls back failed partition updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_partition_updates() {
+    let mut run = runner();
+    run(r#"parcels = [{code: "b2", kg: 4}, {code: "A7", kg: 9}]
+weights = parcels.partition(parcel -> parcel.code.toUpperCase() < "B").map(side -> side.map(parcel -> parcel.kg))
+failure = ""
+try:
+    parcels.push({code: 7, kg: 1})
+catch error:
+    failure = error
+assert(failure, TypeError("number.toUpperCase is not a function"))
+assert([parcels.length, weights], [2, [[9], [4]]])
+parcels.push({code: "a1", kg: 2})
+assert(weights, [[9, 2], [4]])
+try:
+    parcels[0].code = "a0"
+    assert(weights, [[4, 9, 2], []])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+weights
+# return: [[9,2],[4]]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

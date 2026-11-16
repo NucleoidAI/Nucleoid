@@ -2248,6 +2248,34 @@ assert(account.balance, 105)
   the receiver through `self`, as every method does. See the
   [root contract](nucleoid.spec.md#python-style-self-parameters).
 
+## List and population partitions
+
+**Partition keeps shipped and pending orders apart in one live rule**
+
+```nuc
+class Order(total, shipped):
+    this.total = total
+    this.shipped = shipped
+totals = Order.partition(order -> order.shipped).map(side -> side.map(order -> order.total))
+Order(40, true)
+late = Order(15, false)
+Order(90, true)
+assert(totals, [[40, 90], [15]])
+late.shipped = true
+Order(25, false)
+assert(totals, [[40, 15, 90], [25]])
+```
+
+- [NUC 108](docs/nuc-0108.md) adds `partition(predicate)` to lists and class
+  populations. `Order.partition(order -> order.shipped)` is a list of two
+  lists: the orders the predicate keeps, as `filter` keeps them, and the
+  orders it drops, each side in population order.
+- The rule is stated once and runs once per order, where two `filter` calls
+  state it twice, the second time negated. `totals` stays live: the late
+  order joins the shipped side once it ships, and a new pending order takes
+  its place on the other. See the
+  [root contract](nucleoid.spec.md#list-and-population-partitions).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**
