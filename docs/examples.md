@@ -3789,6 +3789,36 @@ south.shelves.push({item: "salt", have: 0, need: 1})
   [NUC 108](nuc-0108.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-partitions).
 
+## Operator section arguments
+
+**Operator sections keep every sensor's alarm count live**
+
+```nuc
+class Sensor(name, readings, limit):
+    this.name = name
+    this.readings = readings
+    this.limit = limit
+$Sensor.alarms = $Sensor.readings.count(> $Sensor.limit)
+$Sensor.first = $Sensor.readings.findIndex(> $Sensor.limit)
+north = Sensor("north", [12, 31, 7], 20)
+south = Sensor("south", [5, 9], 10)
+assert([north.alarms, north.first, south.first], [1, 1, -1])
+north.limit = 10
+south.readings.push(14)
+[north.alarms, north.first, south.alarms, south.first]
+# return: [2,0,1,2]
+```
+
+- Each sensor's two class-level rules count its readings above its own
+  limit and find the first of them.
+  `$Sensor.readings.count(> $Sensor.limit)` is
+  `$Sensor.readings.count(reading -> reading > $Sensor.limit)`, so each
+  section reads `$Sensor.limit` for the sensor that its rule computes.
+- Lowering the north limit and a new south reading update the rules of the
+  sensor they touch, and `findIndex` gives `-1` while no reading is above
+  the limit. See [NUC 109](nuc-0109.md) and the
+  [root contract](../nucleoid.spec.md#operator-section-arguments).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

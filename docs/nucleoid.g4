@@ -604,11 +604,50 @@ call
 
 argument
     : selector
+    | section
     | expression
     ;
 
 selector
     : (DOT property)+
+    ;
+
+/*
+ * Section contract (NUC 109):
+ * - It applies only in the section run of the parse-pass contract, to a
+ *   whole positional argument of a call that begins with a
+ *   sectionOperator. Grouping parentheses, list items, object values,
+ *   subscripts, stage arguments, assertStmt arguments, parameter lists,
+ *   arrow and lambda bodies and the values of named arguments keep their
+ *   accepted errors.
+ * - The tokens after the operator are not a separate expression: they
+ *   continue an expression whose first operand is NUC 79's unnamed
+ *   parameter, with the usual precedence, so '* 2 + 1' is '(v * 2) + 1' and
+ *   '> 4 ? 1 : 0' is '(v > 4) ? 1 : 0'. The section ends at the COMMA or
+ *   RPAREN that ends the argument.
+ * - It builds the Expr::Function of 'v ARROW v sectionOperator ...' over
+ *   that parameter, inside the nesting guards of an argument and of an
+ *   arrowBody, and renders as 'function()'.
+ */
+section
+    : sectionOperator expression        // Expr::Function over the unnamed parameter
+    ;
+
+sectionOperator
+    : EQUAL
+    | NOT_EQUAL
+    | STRICT_EQUAL
+    | STRICT_NOT_EQUAL
+    | LESS
+    | LESS_EQUAL
+    | GREATER
+    | GREATER_EQUAL
+    | STAR
+    | PERCENT
+    | POWER
+    | AND_AND
+    | OR_OR
+    | COALESCE
     ;
 
 // A plain-name callee treats bare name=value arguments as constructor
@@ -1053,6 +1092,14 @@ fragment REGEX_CHAR
  * receiverParameters of the receiver-parameter contract. Every pass, probe,
  * tentative statement and interpolation of that run reads them. When it
  * fails too, the error of the first sequence is reported unchanged.
+ * Only when all of that fails, and the tokens hold LPAREN or COMMA directly
+ * followed by a sectionOperator, or a template, the whole sequence above,
+ * the receiver-parameter run included, runs once more from a fresh parser
+ * reading section arguments of the section contract. Every pass, probe,
+ * tentative statement and interpolation of that run reads them. When it
+ * fails too, its error replaces the error above only when it lies further
+ * into the source, by line and column; an interpolation maps its errors to
+ * program positions before they are compared.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -1076,6 +1123,7 @@ fragment REGEX_CHAR
  * def __init__(self, a): s -> def init(a): s, also with 'this'.
  * lambda a, b: e           -> (a, b) => e.
  * f(.a.b)                  -> f(v => v.a.b).
+ * f(> a + 1)               -> f(v => v > a + 1), in the section run.
  * [e for x in s]           -> s.map(x => e).
  * [e for x in s if c]      -> s.filter(x => c).map(x => e).
  * a if c else b            -> c ? a : b.
@@ -1137,4 +1185,8 @@ fragment REGEX_CHAR
  * src\lang\ast\parser.rs, the method in parser\class.rs, the shared list
  * loop in parser\function.rs, and the mode carried into the accepted probe
  * in parser\statement.rs and into interpolations in parser\template.rs.
+ * Operator sections: parser\section.rs, with the section run started in
+ * src\lang\ast\parser.rs, the argument and the pending left operand in
+ * parser\postfix.rs, the mode carried into interpolations in
+ * parser\template.rs and the function in src\lang\ast\function.rs.
  */

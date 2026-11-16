@@ -19844,6 +19844,148 @@ weights
 # return: [[9,2],[4]]"#);
 }
 
+/// Nucleoid passes comparison sections as one-parameter functions
+#[rustfmt::skip]
+#[test]
+fn passes_comparison_sections_as_one_parameter_functions() {
+    let mut run = runner();
+    run("readings = [12, 31, 7, 45, 18]");
+    run("high = readings.filter(> 20)");
+    run("low = readings.count(<= 12)");
+    run("peak = readings.find(>= 40)");
+    run("spot = readings.findIndex(< 10)");
+    run("alarm = readings.some(> 50)");
+    run("sane = readings.every(!= 0)");
+    assert_eq!(run("[high, low, peak, spot, alarm, sane]"), serde_json::json!([[31, 45], 2, 45, 2, false, true]));
+    run("readings.push(60, 0)");
+    assert_eq!(run("[high, low, peak, spot, alarm, sane]"), serde_json::json!([[31, 45, 60], 3, 45, 2, true, false]));
+    run("readings.shift()");
+    assert_eq!(run("[low, spot]"), serde_json::json!([2, 1]));
+    run(r#"high.length
+
+# return: 3"#);
+}
+
+/// Nucleoid reads the rest of a section argument with the usual precedence
+#[rustfmt::skip]
+#[test]
+fn reads_the_rest_of_a_section_argument_with_the_usual_precedence() {
+    let mut run = runner();
+    run("values = [3, 8, 1, 9]");
+    run("low = 2");
+    run("doubled = values.map(* 2 + 1)");
+    run("squares = values.map(** 2 - 1)");
+    run("evens = values.count(% 2 == 0)");
+    run("rests = values.map(% 3)");
+    run(r#"sizes = values.map(> 4 ? "big" : "small")"#);
+    run("above = values.filter(> low + 1)");
+    assert_eq!(run("[doubled, squares]"), serde_json::json!([[7, 17, 3, 19], [8, 63, 0, 80]]));
+    assert_eq!(run("[evens, rests]"), serde_json::json!([1, [0, 2, 1, 0]]));
+    assert_eq!(run("[sizes, above]"), serde_json::json!([["small", "big", "small", "big"], [8, 9]]));
+    run("low = 0");
+    run("values.push(4)");
+    assert_eq!(run("[above, evens, rests]"), serde_json::json!([[3, 8, 9, 4], 2, [0, 2, 1, 0, 1]]));
+    run(r#"sizes
+
+# return: ["small","big","small","big","small"]"#);
+}
+
+/// Nucleoid fills and combines values with nullish and logical sections
+#[rustfmt::skip]
+#[test]
+fn fills_and_combines_values_with_nullish_and_logical_sections() {
+    let mut run = runner();
+    run("scores = [7, null, 3, null]");
+    run("filled = scores.map(?? 0)");
+    run(r#"names = ["ada", "", "bo"]"#);
+    run(r#"shown = names.map(|| "anonymous")"#);
+    run("flags = [true, false, true]");
+    run(r#"labels = flags.map(&& "on")"#);
+    run("exact = flags.count(=== true)");
+    assert_eq!(run("filled"), serde_json::json!([7, 0, 3, 0]));
+    assert_eq!(run("[shown, labels, exact]"), serde_json::json!([["ada", "anonymous", "bo"], ["on", false, "on"], 2]));
+    run("scores.push(null, 5)");
+    run(r#"names.push("")"#);
+    run("flags.push(1)");
+    assert_eq!(run("filled"), serde_json::json!([7, 0, 3, 0, 0, 5]));
+    assert_eq!(run("shown"), serde_json::json!(["ada", "anonymous", "bo", "anonymous"]));
+    run(r#"[labels, exact]
+
+# return: [["on",false,"on","on"],2]"#);
+}
+
+/// Nucleoid keeps section operands live like lambda bodies
+#[rustfmt::skip]
+#[test]
+fn keeps_section_operands_live_like_lambda_bodies() {
+    let mut run = runner();
+    run("limit = 20");
+    run("readings = [12, 31, 7]");
+    run("over = readings.filter(> limit)");
+    run("alerts = over.count(>= limit * 2)");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[31], 0]));
+    run("limit = 10");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[12, 31], 1]));
+    run("readings.push(45)");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[12, 31, 45], 2]));
+    run("readings = [5, 25]");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[25], 1]));
+    run(r#"alerts
+
+# return: 1"#);
+}
+
+/// Nucleoid passes sections to functions and constructors beside other arguments
+#[rustfmt::skip]
+#[test]
+fn passes_sections_to_functions_and_constructors_beside_other_arguments() {
+    let mut run = runner();
+    run("def keep(values, test, change) => values.filter(test).map(change)");
+    run(r#"class Gate(name, test):
+    this.name = name
+    this.test = test"#);
+    run(r#"loud = Gate("loud", > 80)"#);
+    run(r#"quiet = new Gate("quiet", < 30)"#);
+    run("levels = [20, 90, 50, 85]");
+    run("heard = levels.filter(loud.test)");
+    run("scaled = keep(levels, >= 50, x -> x / 10)");
+    run("first = levels.find(> 100) ?? levels.find(quiet.test)");
+    assert_eq!(run("[heard, scaled, first]"), serde_json::json!([[90, 85], [9, 5, 8.5], 20]));
+    run("levels.push(120)");
+    assert_eq!(run("[heard, scaled, first]"), serde_json::json!([[90, 85, 120], [9, 5, 8.5, 12], 120]));
+    run(r#"quiet.name
+
+# return: "quiet""#);
+}
+
+/// Nucleoid rolls back failed updates through sections
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_sections() {
+    let mut run = runner();
+    run(r#"counts = [3, 5]
+filled = counts.map(?? spare())
+failure = ""
+try:
+    counts.push(null)
+catch error:
+    failure = error
+assert(failure, ReferenceError("spare is not defined"))
+assert([counts.length, filled], [2, [3, 5]])
+def spare() => 0
+counts.push(null)
+assert(filled, [3, 5, 0])
+big = filled.filter(> 4)
+try:
+    counts.push(9)
+    assert([filled, big], [[3, 5, 0, 9], [5, 9]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[filled, big]
+# return: [[3,5,0],[5]]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

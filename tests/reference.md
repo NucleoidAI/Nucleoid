@@ -2626,6 +2626,21 @@ assert(scores[0], 72)
 book[1][0].who
 # return: "col"
 ---
+# Nucleoid writes one-parameter functions as operator sections
+
+prices = [12, 30, 8, 45]
+limit = 10
+picked = prices.filter(> limit)
+doubled = picked.map(* 2)
+cheap = prices.count(<= limit)
+assert(picked, [12, 30, 45])
+assert([doubled, cheap], [[24, 60, 90], 1])
+limit = 20
+assert([doubled, cheap], [[60, 90], 2])
+stock = [4, null, 7]
+stock.map(?? 0)
+# return: [4,0,7]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

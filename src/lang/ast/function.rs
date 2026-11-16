@@ -19,15 +19,13 @@ pub struct Function<'a> {
 
 impl FunctionDecl {
     #[must_use]
-    pub(crate) fn selector(path: Vec<String>) -> Arc<Self> {
-        let body = path.into_iter().fold(
-            Expr::Identifier(SELECTOR_PARAMETER.to_string()),
-            |object, property| Expr::Member {
-                object: Box::new(object),
-                property,
-            },
-        );
-        let selector = Arc::new(FunctionDecl {
+    pub(crate) fn unnamed_parameter() -> Expr {
+        Expr::Identifier(SELECTOR_PARAMETER.to_string())
+    }
+
+    #[must_use]
+    fn over_unnamed_parameter(body: Expr) -> Arc<Self> {
+        Arc::new(FunctionDecl {
             name: None,
             parameters: vec![Parameter {
                 name: SELECTOR_PARAMETER.to_string(),
@@ -36,9 +34,27 @@ impl FunctionDecl {
                 rest: false,
             }],
             body: FunctionBody::Expression(Box::new(body)),
-        });
+        })
+    }
+
+    #[must_use]
+    pub(crate) fn selector(path: Vec<String>) -> Arc<Self> {
+        let body = path
+            .into_iter()
+            .fold(Self::unnamed_parameter(), |object, property| Expr::Member {
+                object: Box::new(object),
+                property,
+            });
+        let selector = Self::over_unnamed_parameter(body);
         debug_assert!(selector.selector_path().is_some());
         selector
+    }
+
+    #[must_use]
+    pub(crate) fn section(body: Expr) -> Arc<Self> {
+        let section = Self::over_unnamed_parameter(body);
+        debug_assert!(section.selector_path().is_none());
+        section
     }
 
     #[must_use]

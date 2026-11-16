@@ -2257,6 +2257,29 @@ names
 - Selectors stay live and roll back like the lambda they abbreviate. They render as written, so `why` explains `dearest = Item.max(.price)`; anonymous lambdas keep rendering as `function()`.
 - Anything else that starts with `.` keeps its error: `f(.a + 1)`, `x = .a`, `[.a]` and `assert: .a, 1` still raise `SyntaxError("Unexpected '.'")`. A selector names at most 127 properties. See the authoritative [property selector arguments](../nucleoid.spec.md#property-selector-arguments) section.
 
+### Operator section arguments
+
+```
+prices = [12, 30, 8, 45]
+limit = 10
+picked = prices.filter(> limit)
+doubled = picked.map(* 2)
+cheap = prices.count(<= limit)
+assert(picked, [12, 30, 45])
+assert([doubled, cheap], [[24, 60, 90], 1])
+limit = 20
+assert([doubled, cheap], [[60, 90], 2])
+stock = [4, null, 7]
+stock.map(?? 0)
+```
+
+- This is the complete `Nucleoid writes one-parameter functions as operator sections` program in `tests/reference.md`, without its title and expected-return metadata; it returns `[4,0,7]`.
+- [NUC 109](nuc-0109.md) lets a call argument that begins with a binary operator stand for the one-parameter function that applies the operator to its argument: `prices.filter(> limit)` is `prices.filter(price -> price > limit)`. A section is a whole argument of a parenthesized argument list, from the operator to the `,` or `)` that ends it, in any call, method call, constructor call, `new` call or `super(...)`.
+- The operators are `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, `>=`, `*`, `%`, `**`, `&&`, `||` and `??`. `+` and `-` stay signs, so `xs.map(- 1)` passes `-1`; `!`, `/` and the words `is`, `in`, `not`, `and` and `or` do not begin a section.
+- The rest of the argument is read with the usual precedence as if the parameter stood before the operator: `* 2 + 1` is `v -> v * 2 + 1` and `% 2 == 0` is `v -> v % 2 == 0`. The parameter has no name, so the rest cannot read or shadow it, and its names are read on each call, as in the lambda's body.
+- The parser builds the lambda's tree, so sections stay live, explain, render as `function()` and roll back exactly as the lambda does. Grouping parentheses, list items, object values, named arguments, subscripts and pipeline stage arguments keep their accepted errors, and `xs.filter(> 4 && < 9)` raises `SyntaxError("Unexpected '<'")` at its second operator.
+- Sections are read only in a run of the parse passes that starts after every accepted pass has failed, so every input the accepted grammar reads keeps its reading. See the authoritative [operator section arguments](../nucleoid.spec.md#operator-section-arguments) section.
+
 ### Named function declarations
 
 ```
@@ -2300,7 +2323,7 @@ picked
 - The lambda limits are inherited: the lambdas read variables and their own name but not an enclosing function's or lambda's parameters, so a nested comprehension reads only its own names, `this` inside a method's comprehension raises `ReferenceError("this is not defined")`, and `[c for c in "abc"]` raises `TypeError("abc.map is not a function")`.
 - Every input the accepted parser accepts keeps its parse: a source is parsed with comprehensions only after the accepted parse fails. See the authoritative [list comprehensions](../nucleoid.spec.md#list-comprehensions) section.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), [NUC 79](nuc-0079.md), [NUC 89](nuc-0089.md), and [NUC 92](nuc-0092.md).
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), [NUC 79](nuc-0079.md), [NUC 89](nuc-0089.md), [NUC 92](nuc-0092.md), and [NUC 109](nuc-0109.md).
 
 ---
 
@@ -4424,6 +4447,7 @@ value => { statement }                 anonymous arrow with a statement body
 value -> expression                    optional spelling wherever => is accepted (NUC 57)
 lambda a, b: expression                optional lambda, exactly (a, b) => (expression) (NUC 57)
 f(.a.b)                                property selector argument, exactly f(v => v.a.b) (NUC 79)
+f(> 4)  f(* 2 + 1)                     operator section argument, exactly f(v => v > 4) (NUC 109)
 [expr for name in source]              list comprehension, exactly source.map(name => expr) (NUC 92)
 [expr for name of source if cond]      source.filter(name => cond).map(name => expr) (NUC 92)
 def name(params) => expression         single-return function

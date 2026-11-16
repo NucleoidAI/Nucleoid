@@ -2276,6 +2276,29 @@ assert(totals, [[40, 15, 90], [25]])
   its place on the other. See the
   [root contract](nucleoid.spec.md#list-and-population-partitions).
 
+## Operator section arguments
+
+**Operator sections pass a comparison without naming a parameter**
+
+```nuc
+cells = [0, 3, 0, 7, 7]
+filled = cells.filter(!= 0)
+sevens = cells.count(== 7)
+assert([filled, sevens], [[3, 7, 7], 2])
+cells.push(7)
+assert([filled, sevens], [[3, 7, 7, 7], 3])
+```
+
+- [NUC 109](docs/nuc-0109.md) lets a call argument that begins with a
+  binary operator stand for the function that applies the operator to its
+  argument: `cells.filter(!= 0)` is `cells.filter(cell -> cell != 0)`, and
+  `cells.count(== 7)` counts the sevens.
+- The rest of the argument is read as if the item stood before the
+  operator, with the usual precedence, so `xs.map(* 2 + 1)` maps
+  `x -> x * 2 + 1`. Both declarations stay live like their lambdas: another
+  seven extends `filled` and raises `sevens`. See the
+  [root contract](nucleoid.spec.md#operator-section-arguments).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

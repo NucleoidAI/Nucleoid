@@ -3251,6 +3251,100 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid tracks only the properties that selector arguments read` specify
   the executable behavior.
 
+## Operator section arguments
+
+- [NUC 109](docs/nuc-0109.md) lets a call argument that begins with a binary
+  operator stand for the one-parameter function that applies the operator to
+  its argument, an operator section: `readings.filter(> 20)` means
+  `readings.filter(x -> x > 20)`. No token, keyword, syntax tree node, error
+  type or message is added.
+- The section operators are `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, `>=`,
+  `*`, `%`, `**`, `&&`, `||` and `??`, the binary operators that cannot begin
+  an operand. `+` and `-` begin an operand as signs, so `xs.map(- 1)` still
+  passes the number `-1`; `!` is a negation; a `/` after `(` begins a
+  regular expression; and `is`, `is not`, `in`, `not in`, `and` and `or` are
+  words. None of them begins a section, and each keeps its accepted reading
+  and error.
+- A section is a whole positional argument of a parenthesized argument list,
+  where a [property selector](#property-selector-arguments) may stand: in
+  calls, method calls, constructor calls, calls written with `new` and
+  `super(...)`, at any argument position. It runs from its operator to the
+  `,` or `)` that ends the argument. Inside the parentheses line breaks,
+  indentation and comments carry no layout, and one trailing comma may
+  follow.
+- `OP REST` is exactly the anonymous function of one parameter
+  `v -> v OP REST`, whose parameter no source can name. REST is read with the
+  usual precedence as if the parameter stood before the operator, so
+  `* 2 + 1` is `v -> v * 2 + 1`, `% 2 == 0` is `v -> v % 2 == 0`,
+  `> low + 1` is `v -> v > low + 1`, `** 2 - 1` is `v -> v ** 2 - 1` and
+  `> 4 ? "big" : "small"` is `v -> v > 4 ? "big" : "small"`. The parameter is
+  only the operator's left operand: REST cannot read it, and no name in REST
+  shadows it.
+- The parser builds the tree that the lambda builds, so evaluation, reads,
+  dependencies, liveness, `.value` snapshots, class-level rules, `why`,
+  `affects`, graph and block keys, canonical rendering and rollback are those
+  of the lambda. Names in REST are read when the function is called, once per
+  item, as in the lambda's body: a standing `over = readings.filter(> limit)`
+  follows later writes of `readings` and of `limit`, and
+  `[].filter(> missing)` is `[]`. A stored declaration whose section reads a
+  `null` item settles to `null`, as with the lambda, while `?? 0` reads a
+  `null` item without settling. `typeof` gives `"Function"`, and the value
+  displays as `[function]`.
+- A section renders as `function()`, as every anonymous lambda does, so
+  `why` explains `over = readings.filter(function())`, and a section and its
+  lambda spelling are the same graph key. An error that quotes an expression
+  holding the parameter quotes it without the parameter, so `[1].map(> 4 = 1)`
+  raises `SyntaxError("Cannot assign to >4")` when it runs, where
+  `[1].map(x -> x > 4 = 1)` raises `SyntaxError("Cannot assign to x>4")`.
+- Everywhere else a section operator keeps its accepted error: `f = (> 4)`,
+  `xs.filter((> 4))`, `[> 4]`, `{a: > 4}`, the named argument `f(test= > 4)`,
+  `xs[> 4]`, a pipeline stage argument such as `b |> depth(> 1)`,
+  `assert: > 4, true`, parameter lists, and a left section such as
+  `xs.map(1 +)`. A section holds one operator before REST, so
+  `xs.filter(> 4 && < 9)` raises `SyntaxError("Unexpected '<'")` at its
+  second operator, and `xs.filter(> 4 &&)` raises
+  `SyntaxError("Unexpected ')'")`. A section without REST, such as
+  `xs.filter(>)`, fails where the accepted parse failed, so it keeps its
+  accepted `SyntaxError("Unexpected '>'")`.
+- **Parse passes.** Every input first runs the parse sequence of the accepted
+  revision exactly as before: the plain parse, the `is` and comprehension
+  retries, the final parse of
+  [Implicit receiver properties](#implicit-receiver-properties) and the
+  receiver run of [Python-style self parameters](#python-style-self-parameters).
+  Only when that whole sequence fails, and the tokens hold `(` or `,`
+  directly followed by a section operator, or a template, the same sequence
+  runs once more reading sections in every pass, probe, tentative statement
+  and template interpolation. Its first success is the result.
+- When that run fails too, the input reports whichever of the accepted error
+  and that run's error lies further into the source, by line and column, the
+  accepted one on a tie. An error inside a template interpolation is placed
+  at its line and column in the program before it leaves the interpolation,
+  as at the accepted revision, so both errors are compared as program
+  positions.
+- **Compatibility.** Only inputs that were errors at the accepted revision
+  change. Every input that an accepted pass parses keeps its result,
+  including programs, template interpolations and `parse_expression` inputs
+  whose ignored tail holds a section: `` `v ${xs.length, xs.filter(> 4)}` ``
+  stays `"v 4"`, and `parse_expression("1 if xs.some(> 4) else 2")` stays the
+  number `1`.
+- Nesting is bounded as before. Building a section passes the nesting guards
+  of an argument and of a lambda body, so nested calls raise
+  `SyntaxError("Expressions are nested too deeply")` at the depth of their
+  lambda spellings, and REST keeps the operand and part limits of every
+  expression. A Python-style condition in REST always belongs to the
+  section's body. Near the limit, a lambda spelling whose condition no
+  longer fits in its body is read with the condition around the lambda, a
+  different program; a section has no such reading. So
+  `y = f(> 1 if f(> 1 if ... c else 0) else 0)` reads 20 levels as its
+  lambda spelling does, and at 21 levels it raises
+  `SyntaxError("Expected ')' but found keyword 'if'")` at its first `if`,
+  where the lambda spelling still parses by reading its deepest conditions
+  around their lambdas.
+- The six appended entries beginning
+  `Nucleoid passes comparison sections as one-parameter functions` through
+  `Nucleoid rolls back failed updates through sections` specify the
+  executable behavior. `tests/operator_sections.rs` executes the rest.
+
 ## Implicit receiver properties
 
 - [NUC 102](docs/nuc-0102.md) lets the value of an assignment to a property
@@ -24441,6 +24535,119 @@ catch error:
     assert(error, "UNDO")
 weights
 # return: [[9,2],[4]]
+---
+# Nucleoid passes comparison sections as one-parameter functions
+
+readings = [12, 31, 7, 45, 18]
+high = readings.filter(> 20)
+low = readings.count(<= 12)
+peak = readings.find(>= 40)
+spot = readings.findIndex(< 10)
+alarm = readings.some(> 50)
+sane = readings.every(!= 0)
+assert([high, low, peak, spot, alarm, sane], [[31, 45], 2, 45, 2, false, true])
+readings.push(60, 0)
+assert([high, low, peak, spot, alarm, sane], [[31, 45, 60], 3, 45, 2, true, false])
+readings.shift()
+assert([low, spot], [2, 1])
+high.length
+# return: 3
+---
+# Nucleoid reads the rest of a section argument with the usual precedence
+
+values = [3, 8, 1, 9]
+low = 2
+doubled = values.map(* 2 + 1)
+squares = values.map(** 2 - 1)
+evens = values.count(% 2 == 0)
+rests = values.map(% 3)
+sizes = values.map(> 4 ? "big" : "small")
+above = values.filter(> low + 1)
+assert([doubled, squares], [[7, 17, 3, 19], [8, 63, 0, 80]])
+assert([evens, rests], [1, [0, 2, 1, 0]])
+assert([sizes, above], [["small", "big", "small", "big"], [8, 9]])
+low = 0
+values.push(4)
+assert([above, evens, rests], [[3, 8, 9, 4], 2, [0, 2, 1, 0, 1]])
+sizes
+# return: ["small","big","small","big","small"]
+---
+# Nucleoid fills and combines values with nullish and logical sections
+
+scores = [7, null, 3, null]
+filled = scores.map(?? 0)
+names = ["ada", "", "bo"]
+shown = names.map(|| "anonymous")
+flags = [true, false, true]
+labels = flags.map(&& "on")
+exact = flags.count(=== true)
+assert(filled, [7, 0, 3, 0])
+assert([shown, labels, exact], [["ada", "anonymous", "bo"], ["on", false, "on"], 2])
+scores.push(null, 5)
+names.push("")
+flags.push(1)
+assert(filled, [7, 0, 3, 0, 0, 5])
+assert(shown, ["ada", "anonymous", "bo", "anonymous"])
+[labels, exact]
+# return: [["on",false,"on","on"],2]
+---
+# Nucleoid keeps section operands live like lambda bodies
+
+limit = 20
+readings = [12, 31, 7]
+over = readings.filter(> limit)
+alerts = over.count(>= limit * 2)
+assert([over, alerts], [[31], 0])
+limit = 10
+assert([over, alerts], [[12, 31], 1])
+readings.push(45)
+assert([over, alerts], [[12, 31, 45], 2])
+readings = [5, 25]
+assert([over, alerts], [[25], 1])
+alerts
+# return: 1
+---
+# Nucleoid passes sections to functions and constructors beside other arguments
+
+def keep(values, test, change) => values.filter(test).map(change)
+class Gate(name, test):
+    this.name = name
+    this.test = test
+loud = Gate("loud", > 80)
+quiet = new Gate("quiet", < 30)
+levels = [20, 90, 50, 85]
+heard = levels.filter(loud.test)
+scaled = keep(levels, >= 50, x -> x / 10)
+first = levels.find(> 100) ?? levels.find(quiet.test)
+assert([heard, scaled, first], [[90, 85], [9, 5, 8.5], 20])
+levels.push(120)
+assert([heard, scaled, first], [[90, 85, 120], [9, 5, 8.5, 12], 120])
+quiet.name
+# return: "quiet"
+---
+# Nucleoid rolls back failed updates through sections
+
+counts = [3, 5]
+filled = counts.map(?? spare())
+failure = ""
+try:
+    counts.push(null)
+catch error:
+    failure = error
+assert(failure, ReferenceError("spare is not defined"))
+assert([counts.length, filled], [2, [3, 5]])
+def spare() => 0
+counts.push(null)
+assert(filled, [3, 5, 0])
+big = filled.filter(> 4)
+try:
+    counts.push(9)
+    assert([filled, big], [[3, 5, 0, 9], [5, 9]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[filled, big]
+# return: [[3,5,0],[5]]
 ---
 # Nucleoid flattens nested lists by one level
 
