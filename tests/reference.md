@@ -2666,6 +2666,22 @@ assert(codes, ["007", "042", "123"])
 rows[2]
 # return: "123.|"
 ---
+# Nucleoid names the nodes of selections with nodes
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+facts = total |> why |> stated |> nodes
+reach = price |> affects |> nodes
+assert(facts, ["shipping", "price", "qty"])
+assert(reach, ["subtotal", "total"])
+base = 4
+shipping = base + 1
+facts
+# return: ["base","price","qty"]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

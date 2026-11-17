@@ -2652,6 +2652,91 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores intersections after failed changes` specify the
   executable behavior. `tests/selection_intersections.rs` executes the rest.
 
+## Node names of reasoning selections
+
+- [NUC 112](docs/nuc-0112.md) adds the final pipeline stage
+  `SELECTION |> nodes`. It gives the `node` names of the steps that
+  `SELECTION` selects, as a list of strings in the selection's order. It is
+  exactly `(SELECTION).map(step => step.node)`, where `SELECTION` is the
+  selection that the pipeline before `nodes` denotes, read as the accepted
+  stages read their source: `total |> why |> nodes` is
+  `(why total).map(step => step.node)` and
+  `total |> why |> stated |> nodes` is
+  `(total |> why |> stated).map(step => step.node)`.
+- A reference alone denotes its own one-step selection, not its value, so
+  `total |> nodes` is `["total"]`, as
+  `(total |> why |> depth(0)).map(step => step.node)` is, while the value
+  `(total).map(step => step.node)` of a number raises
+  `TypeError("number.map is not a function")`.
+- So `total |> why |> stated |> nodes` names the facts a conclusion rests on,
+  `total |> why |> derived |> nodes` the conclusions on the way to it,
+  `price |> affects |> nodes` what a change of the price reaches, and
+  `model |> nodes` every node of the model in model order, without pending
+  nodes and reasoning observers.
+- `SELECTION` is written as the source of a pipeline is: a reference, which
+  selects its own step; `model`; a prefix stage, as in `why total |> nodes`;
+  or a pipeline of the stages `why`, `affects`, `stated`, `derived`, `depth`,
+  `path`, `intersect`, `except` and `diff`. An empty selection gives `[]`. A selection that a `depth` stage
+  with a `null` or undefined limit makes undefined gives undefined, which a
+  declaration stores as `null`, as a read from that selection does.
+- The stage ends the pipeline: its result is a list of names, not a
+  selection. A stage written after it has that list as its source, which is
+  neither a reference nor a selection, so `total |> why |> nodes |> why` and
+  `total |> why |> nodes |> depth(1)` raise
+  `TypeError("Cannot explain total|>why|>nodes")`, as the same stages after
+  `(why total).map(step => step.node)` raise for that source. An
+  `intersect`, `except` or `path` argument that ends with `nodes` raises
+  `TypeError("Cannot explain <argument>")`, such as
+  `TypeError("Cannot explain shipping|>why|>nodes")` for
+  `intersect(shipping |> why |> nodes)`. A name that holds the list is a
+  reasoning observer, which no selection holds, so after
+  `names = shipping |> why |> nodes`, `intersect(names)` keeps nothing.
+- Only `|>` followed by the name `nodes` is the stage. `nodes` remains an
+  ordinary lexer identifier: variables, parameters, properties, keys,
+  functions and methods named `nodes` keep their accepted meanings, and there
+  is no prefix form, so `nodes total` remains the two statements `nodes` and
+  `total`. `|> Nodes` and `|> node` keep their parse-time
+  `TypeError("<name> is not an operation")`, and a line break after `|>`
+  keeps `SyntaxError("Expected an operation")`.
+- A local or parameter, state variable, function or class named `nodes`
+  shadows the stage, as for `stated`, `derived`, `depth`, `diff`, `path`,
+  `intersect` and `except`: the pipeline then raises
+  `TypeError("nodes is not an operation")` at the running statement, before
+  its source is selected. A binding declared after a standing declaration
+  makes its next evaluation raise, which fails and rolls back the statement
+  that triggered it. Methods, properties and object keys named `nodes` are
+  not bindings. The accepted `why` and `affects` shadowing behavior does not
+  change.
+- An invalid source keeps its diagnostic: `1 |> nodes` raises
+  `TypeError("Cannot explain 1")`, `missing |> why |> nodes` raises
+  `ReferenceError("missing is not defined")`, and outside a `suppose` block
+  `total |> why |> diff |> nodes` raises
+  `TypeError("Cannot use 'diff' outside suppose")`. These errors are
+  positioned at the running top-level statement and roll back its
+  transaction.
+- The stage keeps every value and structural observation that its selection
+  made, including those of the steps a filter drops, so a declaration,
+  property, class-level rule, condition or quantifier that holds it
+  re-derives whenever its selection would, and an empty result still follows
+  its source. It is a reasoning observer, which walks neither select nor
+  traverse and `model` excludes. Functions, methods and lambdas evaluate it
+  in place, and class-level rules give each instance its own list. `.value`
+  snapshots it, and propagation order, `suppose` blocks and rollback behave
+  as for the accepted stages.
+- The stage builds the step records that the accepted spelling builds, so
+  the anonymous objects that later statements create are numbered as after
+  that spelling, and it reads their `node` fields without depending on them:
+  a declaration that holds it depends only on what its selection observes,
+  and gains no pending graph node for the records it reads.
+- The stage renders as `SOURCE|>nodes` in graph keys, block keys,
+  conditions, `rule` text and the errors that quote an expression, so a stage
+  and its accepted spelling are different graph keys. Programs without the
+  stage do no work for it.
+- The four appended entries from
+  `Nucleoid names the nodes of an explanation with nodes` through
+  `Nucleoid rolls back failed updates through node names` specify the
+  executable behavior. `tests/reasoning_node_names.rs` executes the rest.
+
 ## Reactive degree to radian conversion
 
 - The [NUC 50 candidate](docs/nuc-0050.md) adds only unshadowed static
@@ -24930,6 +25015,90 @@ catch error:
     assert(error, "UNDO")
 [codes, size]
 # return: [["007","042"],3]
+---
+# Nucleoid names the nodes of an explanation with nodes
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+steps = total |> why |> nodes
+facts = total |> why |> stated |> nodes
+rules = total |> why |> derived |> nodes
+assert(steps, ["total", "subtotal", "shipping", "price", "qty"])
+assert([facts, rules], [["shipping", "price", "qty"], ["total", "subtotal"]])
+base = 4
+shipping = base + 1
+assert(steps, ["total", "subtotal", "shipping", "base", "price", "qty"])
+assert(facts, ["base", "price", "qty"])
+rules
+# return: ["total","subtotal","shipping"]
+---
+# Nucleoid names what a change reaches and the model with nodes
+
+rate = 0.2
+price = 10
+qty = 3
+subtotal = price * qty
+tax = subtotal * rate
+reach = price |> affects |> nodes
+known = model |> nodes
+assert(reach, ["subtotal", "tax"])
+assert(known, ["rate", "price", "qty", "subtotal", "tax"])
+total = subtotal + tax
+assert(reach, ["subtotal", "tax", "total"])
+assert(known, ["rate", "price", "qty", "subtotal", "tax", "total"])
+tax = qty * rate
+assert(reach, ["subtotal", "total"])
+delete total
+assert(known, ["rate", "price", "qty", "subtotal", "tax"])
+reach
+# return: ["subtotal"]
+---
+# Nucleoid names the nodes behind class level rules with nodes
+
+fee = 2
+class Order(price, qty):
+    this.price = price
+    this.qty = qty
+$Order.total = $Order.price * $Order.qty
+$Order.basis = $Order.total |> why |> nodes
+first = Order(10, 2)
+assert(first.basis, ["first.total", "first.price", "first.qty"])
+$Order.total = $Order.price * $Order.qty + fee
+second = Order(4, 5)
+assert(first.basis, ["first.total", "first.price", "first.qty", "fee"])
+assert(second.basis, ["second.total", "second.price", "second.qty", "fee"])
+reach = fee |> affects |> nodes
+assert(reach, ["first.total", "second.total"])
+first.total |> why |> stated |> nodes
+# return: ["fee"]
+---
+# Nucleoid rolls back failed updates through node names
+
+price = 10
+qty = 3
+subtotal = price * qty
+names = subtotal |> why |> nodes
+failure = ""
+try:
+    names = 1 |> why |> nodes
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(names, ["subtotal", "price", "qty"])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(names, ["subtotal", "price", "qty", "fee"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(names, ["subtotal", "price", "qty"])
+inputs = subtotal |> why |> stated |> nodes
+[names, inputs]
+# return: [["subtotal","price","qty"],["price","qty"]]
 ---
 # Nucleoid flattens nested lists by one level
 

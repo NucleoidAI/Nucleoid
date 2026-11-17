@@ -19,6 +19,14 @@ impl<'a> Reason<'a> {
     }
 
     pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
+        if let Expr::Reason {
+            stage: Stage::Nodes,
+            source,
+        } = self.node
+        {
+            return runtime.node_names_of(source, scope);
+        }
+
         match runtime.reason(self.node, scope)? {
             Some(selection) => Ok(runtime.materialize(&selection)),
             None => Ok(Value::Undefined),
@@ -39,13 +47,17 @@ impl Link<'_> {
         matches!(self, Link::Depth(_))
     }
 
+    fn ends_pipeline(self) -> bool {
+        matches!(self, Link::Stage(Stage::Nodes))
+    }
+
     pub(crate) fn freezes_argument(self) -> bool {
         matches!(self, Link::Depth(_) | Link::Combine(..))
     }
 
     fn operation(self) -> Option<&'static str> {
         match self {
-            Link::Stage(stage @ (Stage::Stated | Stage::Derived | Stage::Diff)) => {
+            Link::Stage(stage @ (Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes)) => {
                 Some(stage.as_str())
             }
             Link::Stage(Stage::Why | Stage::Affects) => None,
@@ -60,6 +72,9 @@ pub(crate) fn pipeline(expression: &Expr) -> (Vec<Link<'_>>, &Expr) {
     let mut links = Vec::new();
     let mut base = expression;
     while let Some((link, source)) = split(base) {
+        if link.ends_pipeline() {
+            break;
+        }
         links.push(link);
         base = source;
     }
@@ -116,6 +131,14 @@ impl Runtime {
             }
         }
         Ok(Some(selection))
+    }
+
+    fn node_names_of(&mut self, source: &Expr, scope: &mut Scope) -> Result<Value> {
+        self.check_operation(Link::Stage(Stage::Nodes), scope)?;
+        Ok(match self.reason(source, scope)? {
+            Some(selection) => self.node_names(&selection),
+            None => Value::Undefined,
+        })
     }
 
     fn other_selection(&mut self, other: &Expr, scope: &mut Scope) -> Result<Option<Selection>> {
@@ -208,7 +231,7 @@ impl Runtime {
         match expression {
             Expr::Identifier(name) => {
                 if let Some(Value::Object(id)) = scope.retrieve(name) {
-                    return Ok(NodeKey::object(&id.clone()));
+                    return Ok(NodeKey::object(id));
                 }
 
                 self.reference_key(name)

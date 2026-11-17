@@ -6,6 +6,7 @@ use crate::error::{Error, Result};
 use crate::lang::ast::reason::{self, Link};
 use crate::lang::ast::{Expr, ObjectEntry, Stmt, TemplatePart, literal};
 use crate::nuc::Outcome;
+use crate::reasoning::Stage;
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 
@@ -69,6 +70,19 @@ impl Runtime {
     }
 
     fn freeze_pipeline(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
+        match expression {
+            Expr::Reason {
+                stage: Stage::Nodes,
+                source,
+            } => Ok(Expr::Reason {
+                stage: Stage::Nodes,
+                source: Box::new(self.freeze_links(source, scope)?),
+            }),
+            _ => self.freeze_links(expression, scope),
+        }
+    }
+
+    fn freeze_links(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {
         let (links, base) = reason::pipeline(expression);
         if !links.iter().copied().any(Link::freezes_argument) {
             return Ok(expression.clone());
@@ -100,6 +114,10 @@ impl Runtime {
 
     fn freeze_selection(&mut self, other: &Expr, scope: &mut Scope) -> Result<Expr> {
         match other {
+            Expr::Reason {
+                stage: Stage::Nodes,
+                ..
+            } => Ok(other.clone()),
             Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
                 self.freeze(other, scope)
             }

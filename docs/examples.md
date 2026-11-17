@@ -3874,6 +3874,35 @@ east.aisle = "EAST"
   not padded. See [NUC 111](nuc-0111.md) and the
   [root contract](../nucleoid.spec.md#reactive-string-padding).
 
+## Node names of reasoning selections
+
+**Nodes names the facts and rules behind a loan decision**
+
+```nuc
+income = 5000
+debt = 1200
+score = 700
+ratio = debt / income
+approved = ratio < 0.4 && score > 650
+facts = approved |> why |> stated |> nodes
+rules = approved |> why |> derived |> nodes
+assert([facts, rules], [["score", "debt", "income"], ["approved", "ratio"]])
+years = 3
+approved = ratio < 0.4 && score > 650 && years > 2
+moved = income |> affects |> nodes
+assert(moved, ["ratio", "approved"])
+[facts, rules]
+# return: [["score","years","debt","income"],["approved","ratio"]]
+```
+
+- `approved |> why |> stated |> nodes` names the facts the decision rests
+  on and `approved |> why |> derived |> nodes` the rules it passes through,
+  each in the order of the explanation. `income |> affects |> nodes` names
+  what a change of income reaches.
+- The names follow the model: once the decision also asks for more than two
+  years of history, `years` joins the facts. See [NUC 112](nuc-0112.md) and the
+  [root contract](../nucleoid.spec.md#node-names-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

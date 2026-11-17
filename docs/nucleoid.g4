@@ -489,7 +489,8 @@ stage
     | AFFECTS
     | STATED
     | DERIVED
-    | DIFF                                                // Expr::Reason
+    | DIFF
+    | NODES                                               // Expr::Reason
     | DEPTH LPAREN expression RPAREN                       // Expr::Depth
     | PATH LPAREN expression RPAREN                        // Expr::Path
     | (INTERSECT | EXCEPT) LPAREN expression RPAREN        // Expr::Combine
@@ -869,6 +870,7 @@ enumName
     | PATH
     | INTERSECT
     | EXCEPT
+    | NODES
     | MODEL
     | FIRST
     | LAST
@@ -954,6 +956,7 @@ DEPTH            : 'depth';
 PATH             : 'path';
 INTERSECT        : 'intersect';
 EXCEPT           : 'except';
+NODES            : 'nodes';
 MODEL            : 'model';
 FIRST            : 'first';
 LAST             : 'last';
@@ -1143,6 +1146,11 @@ fragment REGEX_CHAR
  * catch without a name     -> the binding "error".
  * model directly before |> -> Expr::Model.
  * |> intersect(model)      -> its other selection is Expr::Model; also except.
+ * s |> nodes               -> Expr::Reason with Stage::Nodes, the node names of
+ *                             s's selection. It ends the pipeline: a stage
+ *                             after it, or an intersect, except or path
+ *                             argument that ends with it, parses and then
+ *                             raises TypeError("Cannot explain <source>").
  * An object containing spread uses Expr::SpreadObject, with later entries
  * winning; otherwise it uses Expr::ObjectLiteral. Numeric keys become text.
  *

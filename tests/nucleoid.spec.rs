@@ -20178,6 +20178,109 @@ catch error:
 # return: [["007","042"],3]"#);
 }
 
+/// Nucleoid names the nodes of an explanation with nodes
+#[rustfmt::skip]
+#[test]
+fn names_the_nodes_of_an_explanation_with_nodes() {
+    let mut run = runner();
+    run("price = 10");
+    run("qty = 3");
+    run("shipping = 5");
+    run("subtotal = price * qty");
+    run("total = subtotal + shipping");
+    run("steps = total |> why |> nodes");
+    run("facts = total |> why |> stated |> nodes");
+    run("rules = total |> why |> derived |> nodes");
+    assert_eq!(run("steps"), serde_json::json!(["total", "subtotal", "shipping", "price", "qty"]));
+    assert_eq!(run("[facts, rules]"), serde_json::json!([["shipping", "price", "qty"], ["total", "subtotal"]]));
+    run("base = 4");
+    run("shipping = base + 1");
+    assert_eq!(run("steps"), serde_json::json!(["total", "subtotal", "shipping", "base", "price", "qty"]));
+    assert_eq!(run("facts"), serde_json::json!(["base", "price", "qty"]));
+    run(r#"rules
+
+# return: ["total","subtotal","shipping"]"#);
+}
+
+/// Nucleoid names what a change reaches and the model with nodes
+#[rustfmt::skip]
+#[test]
+fn names_what_a_change_reaches_and_the_model_with_nodes() {
+    let mut run = runner();
+    run("rate = 0.2");
+    run("price = 10");
+    run("qty = 3");
+    run("subtotal = price * qty");
+    run("tax = subtotal * rate");
+    run("reach = price |> affects |> nodes");
+    run("known = model |> nodes");
+    assert_eq!(run("reach"), serde_json::json!(["subtotal", "tax"]));
+    assert_eq!(run("known"), serde_json::json!(["rate", "price", "qty", "subtotal", "tax"]));
+    run("total = subtotal + tax");
+    assert_eq!(run("reach"), serde_json::json!(["subtotal", "tax", "total"]));
+    assert_eq!(run("known"), serde_json::json!(["rate", "price", "qty", "subtotal", "tax", "total"]));
+    run("tax = qty * rate");
+    assert_eq!(run("reach"), serde_json::json!(["subtotal", "total"]));
+    run("delete total");
+    assert_eq!(run("known"), serde_json::json!(["rate", "price", "qty", "subtotal", "tax"]));
+    run(r#"reach
+
+# return: ["subtotal"]"#);
+}
+
+/// Nucleoid names the nodes behind class level rules with nodes
+#[rustfmt::skip]
+#[test]
+fn names_the_nodes_behind_class_level_rules_with_nodes() {
+    let mut run = runner();
+    run("fee = 2");
+    run(r#"class Order(price, qty):
+    this.price = price
+    this.qty = qty"#);
+    run("$Order.total = $Order.price * $Order.qty");
+    run("$Order.basis = $Order.total |> why |> nodes");
+    run("first = Order(10, 2)");
+    assert_eq!(run("first.basis"), serde_json::json!(["first.total", "first.price", "first.qty"]));
+    run("$Order.total = $Order.price * $Order.qty + fee");
+    run("second = Order(4, 5)");
+    assert_eq!(run("first.basis"), serde_json::json!(["first.total", "first.price", "first.qty", "fee"]));
+    assert_eq!(run("second.basis"), serde_json::json!(["second.total", "second.price", "second.qty", "fee"]));
+    run("reach = fee |> affects |> nodes");
+    assert_eq!(run("reach"), serde_json::json!(["first.total", "second.total"]));
+    run(r#"first.total |> why |> stated |> nodes
+
+# return: ["fee"]"#);
+}
+
+/// Nucleoid rolls back failed updates through node names
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_node_names() {
+    let mut run = runner();
+    run(r#"price = 10
+qty = 3
+subtotal = price * qty
+names = subtotal |> why |> nodes
+failure = ""
+try:
+    names = 1 |> why |> nodes
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(names, ["subtotal", "price", "qty"])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(names, ["subtotal", "price", "qty", "fee"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(names, ["subtotal", "price", "qty"])
+inputs = subtotal |> why |> stated |> nodes
+[names, inputs]
+# return: [["subtotal","price","qty"],["price","qty"]]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

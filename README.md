@@ -2349,6 +2349,37 @@ assert(line, "honey... 12")
   `item + ".".repeat(8 - item.length)`, so a new item and price realign it.
   See the [root contract](nucleoid.spec.md#reactive-string-padding).
 
+## Node names of reasoning selections
+
+**Nodes names the facts a heater rests on and what insulation moves**
+
+```nuc
+outside = 4
+target = 21
+insulation = 0.8
+loss = (target - outside) * insulation
+heater = loss * 2
+causes = heater |> why |> stated |> nodes
+moved = insulation |> affects |> nodes
+assert(causes, ["target", "outside", "insulation"])
+assert(moved, ["loss", "heater"])
+solar = 5
+heater = loss * 2 - solar
+assert(causes, ["solar", "target", "outside", "insulation"])
+```
+
+- [NUC 112](docs/nuc-0112.md) adds the final reasoning stage `|> nodes`,
+  which names the nodes of a selection's steps in their order.
+  `heater |> why |> stated |> nodes` names the facts the heater rests on,
+  and `insulation |> affects |> nodes` what a change of the insulation
+  reaches.
+- Both lists are the names that
+  `(heater |> why |> stated).map(step => step.node)` and
+  `(insulation |> affects).map(step => step.node)` give, and they stay live
+  the same way: once the heater also accounts for the solar gain, `solar`
+  joins the facts it rests on. See the
+  [root contract](nucleoid.spec.md#node-names-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

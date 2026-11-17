@@ -3885,6 +3885,9 @@ pace
 - A selection is an ordered list of steps with `node`, `holds`, `rule`, `state`, and `from` fields.
 - `state` is `"stated"` for an independent fact or `"derived"` for a relationship or class-level rule.
 - List functions such as `map`, `find`, and `some` can inspect the steps.
+- `selection |> nodes` lists the steps' `node` names, as
+  `(selection).map(step => step.node)` does for the selection the pipeline
+  denotes ([NUC 112](nuc-0112.md)).
 
 ```
 a = 1
@@ -4096,6 +4099,58 @@ common.map(step => step.node)
   [intersect and except reasoning selections](../nucleoid.spec.md#intersect-and-except-reasoning-selections)
   section.
 
+### Node names of reasoning selections
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+facts = total |> why |> stated |> nodes
+reach = price |> affects |> nodes
+assert(facts, ["shipping", "price", "qty"])
+assert(reach, ["subtotal", "total"])
+base = 4
+shipping = base + 1
+facts
+```
+
+- This is the complete `Nucleoid names the nodes of selections with nodes`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `["base","price","qty"]`.
+- [NUC 112](nuc-0112.md) adds the final stage `selection |> nodes`. It gives
+  the `node` names of the selection's steps as a list of strings, in their
+  order, so `total |> why |> stated |> nodes` names the facts the total rests
+  on and `price |> affects |> nodes` what a change of the price reaches. It is
+  exactly `(selection).map(step => step.node)`, where `selection` is the
+  selection that the pipeline before `nodes` denotes, read as the stages read
+  their source.
+- The selection is written as a pipeline's source is: a reference, which
+  denotes its own one-step selection rather than its value, `model`, a prefix
+  stage such as `why total`, or a pipeline of any of the stages above. So
+  `total |> nodes` is `["total"]`, as
+  `(total |> why |> depth(0)).map(step => step.node)` is, while
+  `(total).map(step => step.node)` raises
+  `TypeError("number.map is not a function")`. An empty selection gives `[]`,
+  and a selection that a `depth(null)` makes undefined gives undefined.
+- The stage ends the pipeline: a stage after it, or an `intersect`, `except`
+  or `path` argument that ends with it, has a list of names rather than a
+  selection and raises `TypeError("Cannot explain <source>")`, as it does
+  after the accepted spelling.
+- Only `|>` followed by `nodes` is the stage; `nodes` stays an ordinary name
+  everywhere else, and there is no prefix form. A local or parameter,
+  variable, function or class named `nodes` shadows the stage, as bindings
+  shadow the state filters, `depth`, `diff`, `path`, `intersect` and
+  `except`: the pipeline then raises `TypeError("nodes is not an operation")`
+  before selecting its source.
+- The list stays live through every observation its selection made, and a
+  declaration that holds it is a reasoning observer. It renders as
+  `selection|>nodes`.
+- The authoritative contract is the
+  [node names of reasoning selections](../nucleoid.spec.md#node-names-of-reasoning-selections)
+  section.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -4134,8 +4189,11 @@ c = b * 2
   and its `before` and `after` fields, the [NUC 88](nuc-0088.md)
   candidate adds a `path(target)` stage that NUC 11 does not plan, and the
   [NUC 106](nuc-0106.md) candidate adds `intersect(other)` and
-  `except(other)` stages, which NUC 11 does not plan either. Other NUC 11
-  operations remain proposals, not dependencies.
+  `except(other)` stages, which NUC 11 does not plan either, and the
+  [NUC 112](nuc-0112.md) candidate adds a final `nodes` stage, which names
+  the nodes of a selection and, unlike NUC 11's operations, returns a list
+  rather than a selection. Other NUC 11 operations remain proposals, not
+  dependencies.
 
 ### Quantifiers
 
@@ -4614,6 +4672,11 @@ why a |> except(why b)                what a rests on and b does not (NUC 106)
 affects a |> intersect(affects b)     what a and b both move (NUC 106)
 selection |> intersect(other)         steps whose node other also selects (NUC 106)
 selection |> except(other)            steps whose node other does not select (NUC 106)
+reference |> why |> nodes             the node names of an explanation, in its order (NUC 112)
+reference |> why |> stated |> nodes   the names of the facts an explanation rests on (NUC 112)
+reference |> affects |> nodes         the names of what a change of the reference reaches (NUC 112)
+model |> nodes                        the names of the current model's nodes (NUC 112)
+selection |> nodes                    the list (selection).map(step => step.node); ends the pipeline (NUC 112)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)
